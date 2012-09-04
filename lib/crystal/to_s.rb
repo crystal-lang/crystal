@@ -9,12 +9,6 @@ module Crystal
     end
   end
 
-  class Module
-    def to_s
-      "<Module>"
-    end
-  end
-
   class ToSVisitor < Visitor
     def initialize
       @str = ""

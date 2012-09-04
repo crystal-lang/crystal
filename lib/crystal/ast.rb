@@ -4,15 +4,6 @@ module Crystal
     attr_accessor :parent
   end
 
-  class Module < ASTNode
-    def accept(visitor)
-      if visitor.visit_module self
-        expressions.each { |exp| exp.accept visitor }
-      end
-      visitor.end_visit_module self
-    end
-  end
-
   class Expression < ASTNode
   end
 
