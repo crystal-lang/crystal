@@ -10,7 +10,7 @@ module Crystal
   end
 
   # A container for one or many expressions.
-  # A function's body and a block's body, for
+  # A method's body and a block's body, for
   # example, are Expressions.
   class Expressions < Expression
     include Enumerable
@@ -227,7 +227,7 @@ module Crystal
     end
   end
 
-  # A function definition.
+  # A method definition.
   #
   #     [ receiver '.' ] 'def' name
   #       body
