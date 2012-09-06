@@ -76,18 +76,6 @@ module Crystal
       false
     end
 
-    def visit_yield(node)
-      @str << "yield"
-      unless node.args.empty?
-        @str << " "
-        node.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
-          arg.accept self
-        end
-      end
-      false
-    end
-
     def visit_block(node)
       @str << "do"
       unless node.args.empty?
@@ -209,31 +197,20 @@ module Crystal
       false
     end
 
-    def visit_return(node)
-      @str << "return"
-      if node.exp
-        @str << " "
-        node.exp.accept self
-      end
-      false
-    end
-
-    def visit_next(node)
-      @str << "next"
-      if node.exp
-        @str << " "
-        node.exp.accept self
-      end
-      false
-    end
-
-    def visit_break(node)
-      @str << "break"
-      if node.exp
-        @str << " "
-        node.exp.accept self
-      end
-      false
+    ['return', 'next', 'break', 'yield'].each do |keyword|
+      class_eval %Q(
+        def visit_#{keyword}(node)
+          @str << '#{keyword}'
+          if node.exps.length > 0
+            @str << ' '
+            node.exps.each_with_index do |exp, i|
+              @str << ", " if i > 0
+              exp.accept self
+            end
+          end
+          false
+        end
+      )
     end
 
     def with_indent

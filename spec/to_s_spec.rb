@@ -62,4 +62,10 @@ describe "ast nodes" do
   it "should to_s If" do
     If.new("foo".ref, 1.int).to_s.should eq("if foo\n  1\nend")
   end
+
+  ['return', 'break', 'next', 'yield'].each do |keyword|
+    it "should to_s #{keyword.capitalize}" do
+      eval(keyword.capitalize).new(["foo".ref, 1.int]).to_s.should eq("#{keyword} foo, 1")
+    end
+  end
 end

@@ -578,18 +578,15 @@ module Crystal
       node
     end
 
-    ['return', 'next', 'break'].each do |keyword|
+    ['return', 'next', 'break', 'yield'].each do |keyword|
       class_eval %Q(
         def parse_#{keyword}
+          next_token
+
+          args = parse_args
+
           line_number = @token.line_number
-
-          next_token_skip_space
-
-          node = if @token.type == :EOF || @token.type == :NEWLINE || @token.type == :';' || @token.type == :'}' || @token.value == :if || @token.value == :unless || @token.value == :while || @token.value == :until
-                   #{keyword.capitalize}.new
-                 else
-                   #{keyword.capitalize}.new parse_op_assign
-                 end
+          node = #{keyword.capitalize}.new(args || [])
           node.line_number = line_number
           node
         end
