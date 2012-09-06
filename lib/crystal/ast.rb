@@ -8,6 +8,8 @@ module Crystal
   end
 
   class Expressions < Expression
+    include Enumerable
+
     attr_accessor :expressions
 
     def self.from(obj)
@@ -26,6 +28,10 @@ module Crystal
     def initialize(expressions = nil)
       @expressions = expressions || []
       @expressions.each { |e| e.parent = self }
+    end
+
+    def each(&block)
+      @expressions.each(&block)
     end
 
     def <<(exp)
