@@ -237,7 +237,7 @@ module Crystal
   #       body
   #     'end'
   #   |
-  #     [ receiver '.' ] 'def' name arg [ ',' arg ]* [ ')' ]
+  #     [ receiver '.' ] 'def' name arg [ ',' arg ]*
   #       body
   #     'end'
   #
