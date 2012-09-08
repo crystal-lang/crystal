@@ -39,6 +39,10 @@ module Crystal
       @expressions.each(&block)
     end
 
+    def [](i)
+      @expressions[i]
+    end
+
     def <<(exp)
       exp.parent = self
       @expressions << exp
