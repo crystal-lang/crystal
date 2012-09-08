@@ -368,7 +368,9 @@ module Crystal
         skip_statement_end
       end
 
-      block_body = push_def(block_args) { parse_expressions }
+      push_var *block_args
+
+      block_body = parse_expressions
 
       yield
 
@@ -644,8 +646,10 @@ module Crystal
       ret
     end
 
-    def push_var(var)
-      @def_vars.last.add var.name
+    def push_var(*vars)
+      vars.each do |var|
+        @def_vars.last.add var.name
+      end
     end
 
     def is_var?(name)
