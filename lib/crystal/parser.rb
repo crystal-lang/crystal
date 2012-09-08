@@ -660,4 +660,8 @@ module Crystal
       node.is_a?(Var) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
   end
+
+  def parse(string)
+    Parser.parse string
+  end
 end
