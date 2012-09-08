@@ -8,7 +8,6 @@ module Crystal
       'float',
       'char',
       'def',
-      'ref',
       'var',
       'call',
       'if',

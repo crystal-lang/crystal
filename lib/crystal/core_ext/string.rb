@@ -3,7 +3,7 @@ class String
     Crystal::Var.new self
   end
 
-  def ref
-    Crystal::Ref.new self
+  def call(*args)
+    Crystal::Call.new nil, self, args
   end
 end

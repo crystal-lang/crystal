@@ -1,3 +1,5 @@
+require 'set'
+
 module Crystal
   class Parser < Lexer
     def self.parse(str)
@@ -6,6 +8,8 @@ module Crystal
 
     def initialize(str)
       super
+      @def_vars = []
+      @def_vars.push Set.new
       next_token_skip_statement_end
     end
 
@@ -84,7 +88,10 @@ module Crystal
             atomic.name = :'[]='
             atomic.args << parse_expression
           else
-            break unless atomic.is_a?(Ref)
+            break unless can_be_assigned?(atomic)
+
+            atomic = Var.new atomic.name
+            push_var atomic
 
             next_token_skip_space_or_newline
 
@@ -92,7 +99,10 @@ module Crystal
             atomic = Assign.new(atomic, value)
           end
         when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
-          break unless atomic.is_a?(Ref)
+          break unless can_be_assigned?(atomic)
+
+          atomic = Var.new atomic.name
+          push_var atomic
 
           method = @token.type.to_s[0 .. -2].to_sym
 
@@ -320,7 +330,13 @@ module Crystal
       if block
         Call.new nil, name, args, block
       else
-        args ? Call.new(nil, name, args) : Ref.new(name)
+        if args
+          Call.new(nil, name, args)
+        elsif is_var? name
+          Var.new name
+        else
+          Call.new nil, name
+        end
       end
     end
 
@@ -348,13 +364,14 @@ module Crystal
           end
         end
         next_token_skip_statement_end
-        block_body = parse_expressions
       else
         skip_statement_end
-        block_body = parse_expressions
       end
 
+      block_body = push_def(block_args) { parse_expressions }
+
       yield
+
       next_token_skip_statement_end
 
       Block.new(block_args, block_body)
@@ -450,7 +467,7 @@ module Crystal
       next_token_skip_space
 
       if @token.type == :'.'
-        receiver = Ref.new name
+        receiver = Var.new name
         next_token_skip_space
         check :IDENT, :"=", :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[]
         name = @token.type == :IDENT ? @token.value : @token.type
@@ -486,7 +503,7 @@ module Crystal
       if @token.type == :IDENT && @token.value == :end
         body = nil
       else
-        body = parse_expressions
+        body = push_def(args) { parse_expressions }
         skip_statement_end
         check_ident :end
       end
@@ -618,6 +635,25 @@ module Crystal
       else
         false
       end
+    end
+
+    def push_def(args)
+      @def_vars.push(Set.new args.map(&:name))
+      ret = yield
+      @def_vars.pop
+      ret
+    end
+
+    def push_var(var)
+      @def_vars.last.add var.name
+    end
+
+    def is_var?(name)
+      @def_vars.last.include? name
+    end
+
+    def can_be_assigned?(node)
+      node.is_a?(Var) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
   end
 end

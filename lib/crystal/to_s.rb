@@ -40,11 +40,6 @@ module Crystal
       @str << "'"
     end
 
-    def visit_ref(node)
-      @str << node.name
-      false
-    end
-
     def visit_call(node)
       if node.obj && node.name == :'[ ]'
         node.obj.accept self

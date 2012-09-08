@@ -277,9 +277,9 @@ module Crystal
     end
   end
 
-  # A reference to either a local variable
-  # or a method call without arguments and without parenthesis.
-  class Ref < Expression
+  # A local variable, instance variable, constant,
+  # or def or block argument.
+  class Var < ASTNode
     attr_accessor :name
 
     def initialize(name)
@@ -288,30 +288,6 @@ module Crystal
 
     def instance_var?
       @name.start_with? '@'
-    end
-
-    def accept(visitor)
-      visitor.visit_ref self
-      visitor.end_visit_ref self
-    end
-
-    def ==(other)
-      other.class == self.class && other.name == name
-    end
-
-    def clone
-      ref = self.class.new name
-      ref.line_number = line_number
-      ref
-    end
-  end
-
-  # A def or block argument.
-  class Var < ASTNode
-    attr_accessor :name
-
-    def initialize(name)
-      @name = name
     end
 
     def constant?
@@ -511,7 +487,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
 
-    def initialize(args, body)
+    def initialize(args = [], body = nil)
       @args = args
       @args.each { |arg| arg.parent = self } if @args
       @body = Expressions.from body

@@ -47,8 +47,8 @@ describe "ast nodes" do
     Def.new("foo", [], [1.int, 2.int]).to_s.should eq("def foo\n  1\n  2\nend")
   end
 
-  it "should to_s Ref" do
-    "foo".ref.to_s.should eq("foo")
+  it "should to_s Var" do
+    "foo".var.to_s.should eq("foo")
   end
 
   it "should to_s Call with no args" do
@@ -60,16 +60,16 @@ describe "ast nodes" do
   end
 
   it "should to_s If" do
-    If.new("foo".ref, 1.int).to_s.should eq("if foo\n  1\nend")
+    If.new("foo".var, 1.int).to_s.should eq("if foo\n  1\nend")
   end
 
   it "should to_s Not" do
-    Call.new("foo".ref, :'!@').to_s.should eq("!foo")
+    Call.new("foo".var, :'!@').to_s.should eq("!foo")
   end
 
   ['return', 'break', 'next', 'yield'].each do |keyword|
     it "should to_s #{keyword.capitalize}" do
-      eval(keyword.capitalize).new(["foo".ref, 1.int]).to_s.should eq("#{keyword} foo, 1")
+      eval(keyword.capitalize).new(["foo".var, 1.int]).to_s.should eq("#{keyword} foo, 1")
     end
   end
 end
