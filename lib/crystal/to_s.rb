@@ -213,7 +213,7 @@ module Crystal
     end
 
     def to_s
-      @str
+      @str.strip
     end
   end
 end
