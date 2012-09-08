@@ -95,7 +95,7 @@ module Crystal
 
             next_token_skip_space_or_newline
 
-            value = parse_question_colon
+            value = parse_op_assign
             atomic = Assign.new(atomic, value)
           end
         when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
@@ -108,7 +108,7 @@ module Crystal
 
           next_token_skip_space_or_newline
 
-          value = parse_question_colon
+          value = parse_op_assign
           atomic = Assign.new(atomic, Call.new(atomic, method, [value]))
         else
           break
