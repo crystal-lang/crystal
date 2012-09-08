@@ -57,6 +57,10 @@ describe "ast nodes" do
     Call.new(nil, "foo", [1.int, 2.int]).to_s.should eq("foo(1, 2)")
   end
 
+  it "should to_s Call with no block" do
+    Call.new(nil, "foo", [], Block.new).to_s.should eq("foo() do\nend")
+  end
+
   it "should to_s If" do
     If.new("foo".var, 1.int).to_s.should eq("if foo\n  1\nend")
   end
