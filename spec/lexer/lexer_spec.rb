@@ -1,6 +1,4 @@
-require(File.expand_path("../../lib/crystal",  __FILE__))
-
-include Crystal
+require 'spec_helper'
 
 describe Lexer do
   def self.it_lexes(string, type, value = nil)

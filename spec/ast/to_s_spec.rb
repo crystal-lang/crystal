@@ -1,6 +1,4 @@
-require(File.expand_path("../../lib/crystal",  __FILE__))
-
-include Crystal
+require 'spec_helper'
 
 describe "ast nodes" do
   it "should to_s Int" do
