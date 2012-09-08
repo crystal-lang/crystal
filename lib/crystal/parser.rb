@@ -121,7 +121,7 @@ module Crystal
       cond
     end
 
-    def self.parse_custom_operator(name, next_operator, node, *operators)
+    def self.parse_operator(name, next_operator, *operators)
       class_eval %Q(
         def parse_#{name}
           line_number = @token.line_number
@@ -138,7 +138,7 @@ module Crystal
 
               next_token_skip_space_or_newline
               right = parse_#{next_operator}
-              left = #{node}
+              left = Call.new left, method, [right]
             else
               return left
             end
@@ -147,12 +147,8 @@ module Crystal
       )
     end
 
-    def self.parse_operator(name, next_operator, *operators)
-      parse_custom_operator name, next_operator, "Call.new left, method, [right]", *operators
-    end
-
-    parse_custom_operator :or, :and, "Or.new left, right", :"||"
-    parse_custom_operator :and, :equality, "And.new left, right", :"&&"
+    parse_operator :or, :and, :'||'
+    parse_operator :and, :equality, :'&&'
     parse_operator :equality, :cmp, :<, :<=, :>, :>=
     parse_operator :cmp, :logical_or, :==, :"!="
     parse_operator :logical_or, :logical_and, :|, :^
@@ -251,9 +247,9 @@ module Crystal
         check :')'
         next_token_skip_statement_end
         exp
-      when :"!"
+      when :'!'
         next_token_skip_space_or_newline
-        Not.new parse_expression
+        Call.new parse_expression, :'!@'
       when :+
         next_token_skip_space_or_newline
         Call.new parse_expression, :+@

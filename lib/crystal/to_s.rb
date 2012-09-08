@@ -46,21 +46,32 @@ module Crystal
     end
 
     def visit_call(node)
-      node.obj.accept self if node.obj
       if node.obj && node.name == :'[ ]'
+        node.obj.accept self
         @str << "["
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           arg.accept self
         end
         @str << "]"
+      elsif node.obj && node.name.is_a?(Symbol) && node.args.length == 0
+        if node.name.to_s.end_with? '@'
+          @str << node.name[0 ... -1].to_s
+        else
+          @str << node.name.to_s
+        end
+        node.obj.accept self
       elsif node.obj && node.name.is_a?(Symbol) && node.args.length == 1
+        node.obj.accept self
         @str << " "
         @str << node.name.to_s
         @str << " "
         node.args[0].accept self
       else
-        @str << "." if node.obj
+        if node.obj
+          node.obj.accept self
+          @str << "."
+        end
         @str << node.name.to_s
         @str << "(" unless node.obj && node.args.empty?
         node.args.each_with_index do |arg, i|
@@ -173,27 +184,6 @@ module Crystal
       with_indent { node.body.accept self }
       append_indent
       @str << "end"
-      false
-    end
-
-    def visit_not(node)
-      @str << "!("
-      node.exp.accept self
-      @str << ")"
-      false
-    end
-
-    def visit_and(node)
-      node.left.accept self
-      @str << " && "
-      node.right.accept self
-      false
-    end
-
-    def visit_or(node)
-      node.left.accept self
-      @str << " || "
-      node.right.accept self
       false
     end
 
