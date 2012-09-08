@@ -2,6 +2,9 @@ require(File.expand_path("../../lib/crystal",  __FILE__))
 
 include Crystal
 
+# Extend some Ruby core classes to make it easier
+# to create Crystal AST nodes.
+
 class FalseClass
   def bool
     Crystal::Bool.new self
