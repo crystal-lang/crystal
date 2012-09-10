@@ -76,7 +76,7 @@ describe Parser do
 
   it_parses_single_node "def self.foo\n1\nend", Def.new("foo", [], [1.int], "self".var)
 
-  it_parses_single_node "def foo; a; end", Def.new('foo', [], [Call.new(nil, "a")])
+  it_parses_single_node "def foo; a; end", Def.new('foo', [], ["a".call])
   it_parses_single_node "def foo(a); a; end", Def.new('foo', ['a'.var], ["a".var])
   it_parses_single_node "def foo; a = 1; a; end", Def.new('foo', [], [Assign.new('a'.var, 1.int), 'a'.var])
   it_parses_single_node "def foo; a = 1; a {}; end", Def.new('foo', [], [Assign.new('a'.var, 1.int), Call.new(nil, "a", [], Block.new)])
