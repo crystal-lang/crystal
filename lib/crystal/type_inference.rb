@@ -9,7 +9,8 @@ module Crystal
 
   class TypeVisitor < Visitor
     def initialize
-      @vars = {}
+      @scope = [{}]
+      @defs = {}
     end
 
     def visit_bool(node)
@@ -28,17 +29,56 @@ module Crystal
       node.value.accept self
       node.type = node.target.type = node.value.type
 
-      @vars[node.target.name] = node.type
+      define_var node.target
 
       false
     end
 
     def visit_var(node)
-      node.type = @vars[node.name]
+      node.type = lookup_var node.name
     end
 
     def end_visit_expressions(node)
       node.type = node.expressions.last.type
+    end
+
+    def visit_def(node)
+      @defs[node.name] = node
+      false
+    end
+
+    def visit_call(node)
+      node.args.each do |arg|
+        arg.accept self
+      end
+
+      a_def = @defs[node.name].clone
+
+      with_new_scope do
+        a_def.args.each_with_index do |arg, i|
+          a_def.args[i].type = node.args[i].type
+          define_var a_def.args[i]
+        end
+        a_def.body.accept self
+      end
+
+      node.type = a_def.body.type
+
+      false
+    end
+
+    def define_var(var)
+      @scope.last[var.name] = var.type
+    end
+
+    def lookup_var(name)
+      @scope.last[name]
+    end
+
+    def with_new_scope
+      @scope.push({})
+      yield
+      @scope.pop
     end
   end
 end
