@@ -160,11 +160,7 @@ module Crystal
     attr_accessor :value
 
     def initialize(value)
-      @value = value
-    end
-
-    def has_sign?
-      @value[0] == '+' || @value[0] == '-'
+      @value = value.to_i
     end
 
     def accept(visitor)
@@ -189,11 +185,7 @@ module Crystal
     attr_accessor :value
 
     def initialize(value)
-      @value = value
-    end
-
-    def has_sign?
-      @value[0] == '+' || @value[0] == '-'
+      @value = value.to_f
     end
 
     def accept(visitor)

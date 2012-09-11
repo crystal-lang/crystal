@@ -39,12 +39,16 @@ module Crystal
       @builder.ret @last
     end
 
+    def visit_bool(node)
+      @last = LLVM::Int1.from_i(node.value ? 1 : 0)
+    end
+
     def visit_int(node)
-      @last = LLVM::Int(node.value.to_i)
+      @last = LLVM::Int(node.value)
     end
 
     def visit_float(node)
-      @last = LLVM::Float(node.value.to_f)
+      @last = LLVM::Float(node.value)
     end
 
     def visit_assign(node)
