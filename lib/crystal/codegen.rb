@@ -11,7 +11,7 @@ module Crystal
     node = parse code
     type node
 
-    visitor = CodeGenVisitor.new
+    visitor = CodeGenVisitor.new(node.type)
     node.accept visitor
 
     # visitor.mod.dump
@@ -24,9 +24,9 @@ module Crystal
     attr_reader :mod
     attr_reader :main
 
-    def initialize
+    def initialize(return_type)
       @mod = LLVM::Module.new("Crystal")
-      @main = @mod.functions.add("main", [], LLVM::Int)
+      @main = @mod.functions.add("crystal_main", [], return_type.llvm_type)
       @entry = @main.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
       @builder.position_at_end(@entry)
@@ -38,6 +38,10 @@ module Crystal
 
     def visit_int(node)
       @last = LLVM::Int(node.value.to_i)
+    end
+
+    def visit_float(node)
+      @last = LLVM::Float(node.value.to_f)
     end
   end
 end
