@@ -3,6 +3,15 @@ module Crystal
     attr_accessor :type
   end
 
+  class Def
+    attr_accessor :instances
+
+    def add_instance(a_def)
+      @instances ||= []
+      @instances << a_def
+    end
+  end
+
   def type(node)
     node.accept TypeVisitor.new
   end
@@ -52,17 +61,20 @@ module Crystal
         arg.accept self
       end
 
-      a_def = @defs[node.name].clone
+      untyped_def = @defs[node.name]
+      typed_def = untyped_def.clone
 
       with_new_scope do
-        a_def.args.each_with_index do |arg, i|
-          a_def.args[i].type = node.args[i].type
-          define_var a_def.args[i]
+        typed_def.args.each_with_index do |arg, i|
+          typed_def.args[i].type = node.args[i].type
+          define_var typed_def.args[i]
         end
-        a_def.body.accept self
+        typed_def.body.accept self
       end
 
-      node.type = a_def.body.type
+      node.type = typed_def.body.type
+
+      untyped_def.add_instance typed_def
 
       false
     end
