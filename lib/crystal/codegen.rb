@@ -14,7 +14,7 @@ module Crystal
     visitor = CodeGenVisitor.new(node.type)
     node.accept visitor
 
-    # visitor.mod.dump
+    visitor.mod.dump if ENV['DUMP_LLVM']
 
     engine = LLVM::JITCompiler.new(visitor.mod)
     engine.run_function visitor.main
@@ -30,6 +30,7 @@ module Crystal
       @entry = @main.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
       @builder.position_at_end(@entry)
+      @vars = {}
     end
 
     def end_visit_expressions(node)
@@ -42,6 +43,24 @@ module Crystal
 
     def visit_float(node)
       @last = LLVM::Float(node.value.to_f)
+    end
+
+    def visit_assign(node)
+      node.value.accept self
+
+      var = @vars[node.target.name]
+      unless var
+        var = @vars[node.target.name] = @builder.alloca node.type.llvm_type, node.target.name
+      end
+
+      @builder.store @last, var
+
+      false
+    end
+
+    def visit_var(node)
+      var = @vars[node.name]
+      @last = @builder.load var, node.name
     end
   end
 end
