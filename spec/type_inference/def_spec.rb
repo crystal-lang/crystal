@@ -14,9 +14,10 @@ describe 'Type inference: def' do
   end
 
   it "types a call with an argument" do
-    input = parse 'def foo(x); x; end; foo 1'
+    input = parse 'def foo(x); x; end; foo 1; foo 2.3'
     type input
-    input.last.type.should eq(Type::Int)
+    input[1].type.should eq(Type::Int)
+    input[2].type.should eq(Type::Float)
   end
 
   it "types a call with an argument uses a new scope" do
