@@ -75,15 +75,14 @@ module Crystal
 
     def visit_def(node)
       if node.instances
-        @old_builder = @builder
+        old_position = @builder.insert_block
         node.instances.each do |instance|
           fun = @defs[instance.name] = @mod.functions.add(instance.name, [], instance.body.type.llvm_type)
           entry = fun.basic_blocks.append("entry")
-          @builder = LLVM::Builder.new
           @builder.position_at_end(entry)
           instance.body.accept self
         end
-        @builder = @old_builder
+        @builder.position_at_end old_position
       end
       false
     end
