@@ -44,9 +44,6 @@ module Crystal
       elsif match = scan(/@?[a-zA-Z_][a-zA-Z_0-9]*(\?|!)?/)
         @token.type = :IDENT
         @token.value = match
-      elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*(\?|!)?/)
-        @token.type = :IDENT
-        @token.value = match
       elsif scan /#/
         if scan /.*\n/
           @token.type = :NEWLINE
