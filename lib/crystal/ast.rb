@@ -5,14 +5,10 @@ module Crystal
     attr_accessor :parent
   end
 
-  # Base class for nodes that are expressions
-  class Expression < ASTNode
-  end
-
   # A container for one or many expressions.
   # A method's body and a block's body, for
   # example, are Expressions.
-  class Expressions < Expression
+  class Expressions < ASTNode
     include Enumerable
 
     attr_accessor :expressions
@@ -80,7 +76,7 @@ module Crystal
   #       body
   #     'end'
   #
-  class ClassDef < Expression
+  class ClassDef < ASTNode
     attr_accessor :name
     attr_accessor :body
     attr_accessor :superclass
@@ -112,7 +108,7 @@ module Crystal
   #
   #     'nil'
   #
-  class Nil < Expression
+  class Nil < ASTNode
     def accept(visitor)
       visitor.visit_nil self
       visitor.end_visit_nil self
@@ -131,7 +127,7 @@ module Crystal
   #
   #     'true' | 'false'
   #
-  class Bool < Expression
+  class Bool < ASTNode
     attr_accessor :value
 
     def initialize(value)
@@ -156,7 +152,7 @@ module Crystal
   #
   #     \d+
   #
-  class Int < Expression
+  class Int < ASTNode
     attr_accessor :value
 
     def initialize(value)
@@ -181,7 +177,7 @@ module Crystal
   #
   #     \d+.\d+
   #
-  class Float < Expression
+  class Float < ASTNode
     attr_accessor :value
 
     def initialize(value)
@@ -206,7 +202,7 @@ module Crystal
   #
   #     "'" \w "'"
   #
-  class Char < Expression
+  class Char < ASTNode
     attr_accessor :value
 
     def initialize(value)
@@ -241,7 +237,7 @@ module Crystal
   #       body
   #     'end'
   #
-  class Def < Expression
+  class Def < ASTNode
     attr_accessor :receiver
     attr_accessor :name
     attr_accessor :args
@@ -323,7 +319,7 @@ module Crystal
   # The last syntax is for infix operators, and name will be
   # the symbol of that operator instead of a string.
   #
-  class Call < Expression
+  class Call < ASTNode
     attr_accessor :obj
     attr_accessor :name
     attr_accessor :args
@@ -371,7 +367,7 @@ module Crystal
   #
   # An if elsif end is parsed as an If whose
   # else is another If.
-  class If < Expression
+  class If < ASTNode
     attr_accessor :cond
     attr_accessor :then
     attr_accessor :else
@@ -409,7 +405,7 @@ module Crystal
   #
   #     target '=' value
   #
-  class Assign < Expression
+  class Assign < ASTNode
     attr_accessor :target
     attr_accessor :value
 
@@ -445,7 +441,7 @@ module Crystal
   #       body
   #     'end'
   #
-  class While < Expression
+  class While < ASTNode
     attr_accessor :cond
     attr_accessor :body
 
@@ -483,7 +479,7 @@ module Crystal
   #   |
   #     '{' [ '|' arg [ ',' arg ]* '|' ] body '}'
   #
-  class Block < Expression
+  class Block < ASTNode
     attr_accessor :args
     attr_accessor :body
 
@@ -523,7 +519,7 @@ module Crystal
     #     '#{keyword}' arg [ ',' arg ]*
     #
     class_eval %Q(
-      class #{keyword.capitalize} < Expression
+      class #{keyword.capitalize} < ASTNode
         attr_accessor :exps
 
         def initialize(exps = [])
