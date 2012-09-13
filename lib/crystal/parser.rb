@@ -27,12 +27,12 @@ module Crystal
     end
 
     def parse_expression
-      line_number = @token.line_number
+      location = @token.location
 
       atomic = parse_op_assign
 
       while true
-        atomic.line_number = line_number
+        atomic.location = location
 
         case @token.type
         when :SPACE
@@ -63,12 +63,12 @@ module Crystal
     end
 
     def parse_op_assign
-      line_number = @token.line_number
+      location = @token.location
 
       atomic = parse_question_colon
 
       while true
-        atomic.line_number = line_number
+        atomic.location = location
 
         case @token.type
         when :SPACE
@@ -97,11 +97,12 @@ module Crystal
           push_var atomic
 
           method = @token.type.to_s[0 .. -2].to_sym
+          method_column_number = @token.column_number
 
           next_token_skip_space_or_newline
 
           value = parse_op_assign
-          atomic = Assign.new(atomic, Call.new(atomic, method, [value]))
+          atomic = Assign.new(atomic, Call.new(atomic, method, [value], nil, method_column_number))
         else
           break
         end
@@ -126,21 +127,22 @@ module Crystal
     def self.parse_operator(name, next_operator, *operators)
       class_eval %Q(
         def parse_#{name}
-          line_number = @token.line_number
+          location = @token.location
 
           left = parse_#{next_operator}
           while true
-            left.line_number = line_number
+            left.location = location
 
             case @token.type
             when :SPACE
               next_token
             when #{operators.map{|x| ':"' + x.to_s + '"'}.join ', '}
               method = @token.type
+              method_column_number = @token.column_number
 
               next_token_skip_space_or_newline
               right = parse_#{next_operator}
-              left = Call.new left, method, [right]
+              left = Call.new left, method, [right], nil, method_column_number
             else
               return left
             end
@@ -158,23 +160,24 @@ module Crystal
     parse_operator :shift, :add_or_sub, :<<, :>>
 
     def parse_add_or_sub
-      line_number = @token.line_number
+      location = @token.location
 
       left = parse_mul_or_div
       while true
-        left.line_number = line_number
+        left.location = location
         case @token.type
         when :SPACE
           next_token
         when :+, :-
           method = @token.type
+          method_column_number = @token.column_number
           next_token_skip_space_or_newline
           right = parse_mul_or_div
-          left = Call.new left, method, [right]
+          left = Call.new left, method, [right], nil, method_column_number
         when :INT
           case @token.value[0]
           when '+', '-'
-            left = Call.new left, @token.value[0].to_sym, [Int.new(@token.value)]
+            left = Call.new left, @token.value[0].to_sym, [Int.new(@token.value)], nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -189,12 +192,12 @@ module Crystal
     parse_operator :pow, :atomic_with_method, :**
 
     def parse_atomic_with_method
-      line_number = @token.line_number
+      location = @token.location
 
       atomic = parse_atomic
 
       while true
-        atomic.line_number = line_number
+        atomic.location = location
 
         case @token.type
         when :SPACE
@@ -203,19 +206,22 @@ module Crystal
           next_token_skip_space_or_newline
           check :IDENT, :+, :-, :*, :/, :%, :|, :&, :^, :**, :<<, :<, :<=, :==, :"!=", :>>, :>, :>=
           name = @token.type == :IDENT ? @token.value : @token.type
+          name_column_number = @token.column_number
           next_token
 
           args = parse_args
           block = parse_block
           if block
-            atomic = Call.new atomic, name, args, block
+            atomic = Call.new atomic, name, args, block, name_column_number
           else
-            atomic = args ? (Call.new atomic, name, args) : (Call.new atomic, name)
+            atomic = args ? (Call.new atomic, name, args, nil, name_column_number) : (Call.new atomic, name, [], nil, name_column_number)
           end
         when :[]
+          column_number = @token.column_number
           next_token_skip_space
-          atomic = Call.new atomic, :[]
+          atomic = Call.new atomic, :[], [], nil, column_number
         when :'['
+          column_number = @token.column_number
           next_token_skip_space_or_newline
           args = []
           while true
@@ -232,7 +238,7 @@ module Crystal
               break
             end
           end
-          atomic = Call.new atomic, :'[ ]', args
+          atomic = Call.new atomic, :'[ ]', args, nil, column_number
         else
           break
         end
@@ -242,6 +248,7 @@ module Crystal
     end
 
     def parse_atomic
+      column_number = @token.column_number
       case @token.type
       when :'('
         next_token_skip_space_or_newline
@@ -251,16 +258,16 @@ module Crystal
         exp
       when :'!'
         next_token_skip_space_or_newline
-        Call.new parse_expression, :'!@'
+        Call.new parse_expression, :'!@', [], nil, column_number
       when :+
         next_token_skip_space_or_newline
-        Call.new parse_expression, :+@
+        Call.new parse_expression, :+@, [], nil, column_number
       when :-
         next_token_skip_space_or_newline
-        Call.new parse_expression, :-@
+        Call.new parse_expression, :-@, [], nil, column_number
       when :~
         next_token_skip_space_or_newline
-        Call.new parse_expression, :'~@'
+        Call.new parse_expression, :'~@', [], nil, column_number
       when :INT
         node_and_next_token Int.new(@token.value)
       when :FLOAT
@@ -313,6 +320,7 @@ module Crystal
 
     def parse_ref_or_call
       name = @token.value
+      name_column_number = @token.column_number
       next_token
 
       args = parse_args
@@ -320,14 +328,14 @@ module Crystal
       block = parse_block
 
       if block
-        Call.new nil, name, args, block
+        Call.new nil, name, args, block, name_column_number
       else
         if args
-          Call.new(nil, name, args)
+          Call.new(nil, name, args, nil, name_column_number)
         elsif is_var? name
           Var.new name
         else
-          Call.new nil, name
+          Call.new nil, name, [], nil, name_column_number
         end
       end
     end
@@ -422,7 +430,7 @@ module Crystal
     end
 
     def parse_class
-      line_number = @token.line_number
+      location = @token.location
 
       next_token_skip_space_or_newline
       check :IDENT
@@ -446,7 +454,7 @@ module Crystal
       next_token_skip_statement_end
 
       class_def = ClassDef.new name, body, superclass
-      class_def.line_number = line_number
+      class_def.location = location
       class_def
     end
 
@@ -510,7 +518,7 @@ module Crystal
     end
 
     def parse_if(check_end = true)
-      line_number = @token.line_number
+      location = @token.location
 
       next_token_skip_space_or_newline
 
@@ -537,12 +545,12 @@ module Crystal
       end
 
       node = If.new cond, a_then, a_else
-      node.line_number = line_number
+      node.location = location
       node
     end
 
     def parse_unless
-      line_number = @token.line_number
+      location = @token.location
 
       next_token_skip_space_or_newline
 
@@ -562,12 +570,12 @@ module Crystal
       next_token_skip_statement_end
 
       node = If.new cond, a_else, a_then
-      node.line_number = line_number
+      node.location = location
       node
     end
 
     def parse_while
-      line_number = @token.line_number
+      location = @token.location
 
       next_token_skip_space_or_newline
 
@@ -581,7 +589,7 @@ module Crystal
       next_token_skip_statement_end
 
       node = While.new cond, body
-      node.line_number = line_number
+      node.location = location
       node
     end
 
@@ -592,9 +600,9 @@ module Crystal
 
           args = parse_args
 
-          line_number = @token.line_number
+          location = @token.location
           node = #{keyword.capitalize}.new(args || [])
-          node.line_number = line_number
+          node.location = location
           node
         end
       )

@@ -5,6 +5,10 @@ module Crystal
     attr_accessor :line_number
     attr_accessor :column_number
 
+    def location
+      [line_number, column_number]
+    end
+
     def to_s
       value || type
     end
