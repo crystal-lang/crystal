@@ -13,12 +13,13 @@ module Crystal
   end
 
   def type(node)
-    node.accept TypeVisitor.new
+    node.accept TypeVisitor.new(node)
   end
 
   class TypeVisitor < Visitor
-    def initialize
-      @scope = [{}]
+    def initialize(root)
+      @root = root
+      @scopes = [{vars: {}}]
       @defs = {}
     end
 
@@ -57,14 +58,18 @@ module Crystal
     end
 
     def visit_call(node)
+      untyped_def = @defs[node.name]
+      unless untyped_def
+        compile_error "undefined local variable or method '#{node.name}'", node.line_number, node.column_number, node.name.length
+      end
+
       node.args.each do |arg|
         arg.accept self
       end
 
-      untyped_def = @defs[node.name]
       typed_def = untyped_def.clone
 
-      with_new_scope do
+      with_new_scope(node.line_number, untyped_def) do
         typed_def.args.each_with_index do |arg, i|
           typed_def.args[i].type = node.args[i].type
           define_var typed_def.args[i]
@@ -80,17 +85,39 @@ module Crystal
     end
 
     def define_var(var)
-      @scope.last[var.name] = var.type
+      @scopes.last[:vars][var.name] = var.type
     end
 
     def lookup_var(name)
-      @scope.last[name]
+      @scopes.last[:vars][name]
     end
 
-    def with_new_scope
-      @scope.push({})
+    def with_new_scope(line, obj)
+      scope[:line] = line
+      @scopes.push({vars: {}, obj: obj})
       yield
-      @scope.pop
+      @scopes.pop
+    end
+
+    def scope
+      @scopes.last
+    end
+
+    def compile_error(message, line, column, length)
+      str = "Error: #{message}"
+      str << " in '#{scope[:obj].name}'\n\n" if scope[:obj]
+      str << @root.source_code.each_line.at(line - 1).chomp
+      str << "\n"
+      str << (' ' * (column - 1))
+      str << '^'
+      str << ('~' * (length - 1))
+      str << "\n"
+      str << "\n"
+      @scopes.reverse_each do |scope|
+        str << "in line #{scope[:line] || line}"
+        str << ": '#{scope[:obj].name}'\n" if scope[:obj]
+      end
+      raise Crystal::Exception.new(str)
     end
   end
 end

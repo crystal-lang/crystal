@@ -3,6 +3,7 @@ module Crystal
   class ASTNode
     attr_accessor :line_number
     attr_accessor :column_number
+    attr_accessor :source_code
     attr_accessor :parent
 
     def location
