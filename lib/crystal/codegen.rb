@@ -8,6 +8,13 @@ LLVM.init_x86
 
 module Crystal
   def run(code)
+    mod = build code
+
+    engine = LLVM::JITCompiler.new(mod)
+    engine.run_function mod.functions["main"]
+  end
+
+  def build(code)
     node = parse code
     type node
 
@@ -18,8 +25,7 @@ module Crystal
 
     visitor.mod.dump if ENV['DUMP']
 
-    engine = LLVM::JITCompiler.new(visitor.mod)
-    engine.run_function visitor.main
+    visitor.mod
   end
 
   class CodeGenVisitor < Visitor
@@ -28,7 +34,7 @@ module Crystal
 
     def initialize(return_type)
       @mod = LLVM::Module.new("Crystal")
-      @main = @mod.functions.add("crystal_main", [], return_type.llvm_type)
+      @main = @mod.functions.add("main", [], return_type.llvm_type)
       entry = @main.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
       @builder.position_at_end(entry)

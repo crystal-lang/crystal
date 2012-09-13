@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+require 'bundler/setup'
+require_relative '../lib/crystal'
+include Crystal
+
+o_flag = ARGV.length == 0 ? '' : "-o #{File.basename(ARGV[0], File.extname(ARGV[0]))}"
+
+mod = build ARGF.read
+
+reader, writer = IO.pipe
+Thread.new do
+  mod.write_bitcode(writer)
+  writer.close
+end
+
+pid = spawn "llc | clang -x assembler #{o_flag} -", in: reader
+Process.waitpid pid
