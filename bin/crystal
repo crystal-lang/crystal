@@ -5,7 +5,12 @@ include Crystal
 
 o_flag = ARGV.length == 0 ? '' : "-o #{File.basename(ARGV[0], File.extname(ARGV[0]))}"
 
-mod = build ARGF.read
+begin
+  mod = build ARGF.read
+rescue Exception => ex
+  puts ex.message
+  exit 1
+end
 
 reader, writer = IO.pipe
 Thread.new do
