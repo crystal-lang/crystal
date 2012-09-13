@@ -26,4 +26,12 @@ in line 6: 'bar'
 in line 9
       ".strip)
   end
+
+  pending "reports undefined method" do
+    nodes = parse "foo()"
+
+    lambda {
+      type nodes
+    }.should raise_error(Crystal::Exception, /undefined method 'foo'/)
+  end
 end
