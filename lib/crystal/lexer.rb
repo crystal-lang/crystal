@@ -12,11 +12,18 @@ module Crystal
       @token.value = nil
       @token.line_number = @line_number
 
+      if @incremented_columns
+        @token.column_number += @incremented_columns
+      else
+        @token.column_number = 1
+      end
+
       if eos?
         @token.type = :EOF
       elsif scan /\n/
         @token.type = :NEWLINE
         @line_number += 1
+        @incremented_columns = nil
       elsif scan /\s+/
         @token.type = :SPACE
       elsif scan /;+/
@@ -48,6 +55,7 @@ module Crystal
         if scan /.*\n/
           @token.type = :NEWLINE
           @line_number += 1
+          @incremented_columns = nil
         else
           scan /.*/
           @token.type = :EOF
@@ -57,6 +65,13 @@ module Crystal
       end
 
       @token
+    end
+
+    def scan(regex)
+      if (match = super)
+        @incremented_columns = match.length
+      end
+      match
     end
 
     def next_token_skip_space
