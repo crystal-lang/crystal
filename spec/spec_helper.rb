@@ -1,3 +1,6 @@
+require 'bundler/setup'
+require 'pry'
+require 'pry-nav'
 require(File.expand_path("../../lib/crystal",  __FILE__))
 
 include Crystal
