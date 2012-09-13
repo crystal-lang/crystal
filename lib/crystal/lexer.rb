@@ -106,7 +106,7 @@ module Crystal
     end
 
     def raise_error(message)
-      raise Crystal::Exception.new("Syntax error on line #{@line_number}: #{message}", @line_number)
+      raise Crystal::Exception.new("Syntax error on line #{@line_number}: #{message}")
     end
   end
 end
