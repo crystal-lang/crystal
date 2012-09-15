@@ -72,7 +72,7 @@ module Crystal
         arg.accept self
       end
 
-      typed_def = untyped_def.clone
+      node.target_def = typed_def = untyped_def.clone
 
       with_new_scope(node.line_number, untyped_def) do
         typed_def.args.each_with_index do |arg, i|

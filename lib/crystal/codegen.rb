@@ -80,21 +80,19 @@ module Crystal
     end
 
     def visit_def(node)
-      if node.instances
-        old_position = @builder.insert_block
-        node.instances.each do |instance|
-          fun = @defs[instance.name] = @mod.functions.add(instance.name, [], instance.body.type.llvm_type)
-          entry = fun.basic_blocks.append("entry")
-          @builder.position_at_end(entry)
-          instance.body.accept self
-        end
-        @builder.position_at_end old_position
-      end
       false
     end
 
     def visit_call(node)
-      @last = @builder.call @defs[node.name], node.name
+      unless fun = @defs[node.name]
+        old_position = @builder.insert_block
+        fun = @defs[node.target_def.name] = @mod.functions.add(node.target_def.name, [], node.target_def.body.type.llvm_type)
+        entry = fun.basic_blocks.append("entry")
+        @builder.position_at_end(entry)
+        node.target_def.body.accept self
+        @builder.position_at_end old_position
+      end
+      @last = @builder.call fun, node.name
     end
   end
 end
