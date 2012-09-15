@@ -1,6 +1,5 @@
 module Enumerable
   def at(index)
-    index.times { self.next }
-    self.next
+    each_with_index.find{ |obj, i| i == index}.first
   end
 end

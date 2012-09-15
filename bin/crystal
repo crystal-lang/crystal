@@ -7,8 +7,12 @@ o_flag = ARGV.length == 0 ? '' : "-o #{File.basename(ARGV[0], File.extname(ARGV[
 
 begin
   mod = build ARGF.read
-rescue Exception => ex
+rescue Crystal::Exception => ex
   puts ex.message
+  exit 1
+rescue Exception => ex
+  puts ex
+  puts ex.backtrace
   exit 1
 end
 

@@ -112,7 +112,7 @@ module Crystal
       str = "Error: #{message}"
       str << " in '#{scope[:obj].name}'" if scope[:obj]
       str << "\n\n"
-      str << @root.source_code.each_line.at(line - 1).chomp
+      str << @root.source_code.lines.at(line - 1)
       str << "\n"
       str << (' ' * (column - 1))
       str << '^'
