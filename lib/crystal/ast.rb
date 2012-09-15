@@ -336,8 +336,9 @@ module Crystal
     attr_accessor :block
 
     attr_accessor :name_column_number
+    attr_accessor :has_parenthesis
 
-    def initialize(obj, name, args = [], block = nil, name_column_number = nil)
+    def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
       @obj = obj
       @obj.parent = self if @obj
       @name = name
@@ -346,6 +347,7 @@ module Crystal
       @block = block
       @block.parent = self if @block
       @name_column_number = name_column_number
+      @has_parenthesis = has_parenthesis
     end
 
     def accept(visitor)

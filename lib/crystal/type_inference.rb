@@ -60,7 +60,8 @@ module Crystal
     def visit_call(node)
       untyped_def = @defs[node.name]
       unless untyped_def
-        compile_error "undefined local variable or method '#{node.name}'", node.line_number, node.column_number, node.name.length
+        error = node.has_parenthesis ? "undefined method" : "undefined local variable or method"
+        compile_error "#{error} '#{node.name}'", node.line_number, node.column_number, node.name.length
       end
 
       node.args.each do |arg|
@@ -105,7 +106,8 @@ module Crystal
 
     def compile_error(message, line, column, length)
       str = "Error: #{message}"
-      str << " in '#{scope[:obj].name}'\n\n" if scope[:obj]
+      str << " in '#{scope[:obj].name}'" if scope[:obj]
+      str << "\n\n"
       str << @root.source_code.each_line.at(line - 1).chomp
       str << "\n"
       str << (' ' * (column - 1))
@@ -117,7 +119,7 @@ module Crystal
         str << "in line #{scope[:line] || line}"
         str << ": '#{scope[:obj].name}'\n" if scope[:obj]
       end
-      raise Crystal::Exception.new(str)
+      raise Crystal::Exception.new(str.strip)
     end
   end
 end

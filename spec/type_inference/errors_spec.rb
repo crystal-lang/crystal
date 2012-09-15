@@ -27,7 +27,7 @@ in line 9
       ".strip)
   end
 
-  pending "reports undefined method" do
+  it "reports undefined method" do
     nodes = parse "foo()"
 
     lambda {

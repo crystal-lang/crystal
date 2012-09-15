@@ -305,7 +305,7 @@ module Crystal
         when :break
           parse_break
         else
-          parse_ref_or_call
+          parse_var_or_call
         end
       else
         raise_error "unexpected token: #{@token.to_s}"
@@ -320,7 +320,7 @@ module Crystal
       exps
     end
 
-    def parse_ref_or_call
+    def parse_var_or_call
       name = @token.value
       name_column_number = @token.column_number
       next_token
@@ -330,14 +330,14 @@ module Crystal
       block = parse_block
 
       if block
-        Call.new nil, name, args, block, name_column_number
+        Call.new nil, name, args, block, name_column_number, @last_call_has_parenthesis
       else
         if args
-          Call.new(nil, name, args, nil, name_column_number)
+          Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
         elsif is_var? name
           Var.new name
         else
-          Call.new nil, name, [], nil, name_column_number
+          Call.new nil, name, [], nil, name_column_number, @last_call_has_parenthesis
         end
       end
     end
@@ -402,6 +402,7 @@ module Crystal
           end
         end
         next_token_skip_space
+        @last_call_has_parenthesis = true
         args
       when :SPACE
         next_token
