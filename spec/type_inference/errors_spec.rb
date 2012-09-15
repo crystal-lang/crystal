@@ -34,4 +34,12 @@ in line 9
       type nodes
     }.should raise_error(Crystal::Exception, /undefined method 'foo'/)
   end
+
+  it "reports wrong number of arguments" do
+    nodes = parse "def foo(x); x; end; foo"
+
+    lambda {
+      type nodes
+    }.should raise_error(Crystal::Exception, /wrong number of arguments for 'foo' \(0 for 1\)/)
+  end
 end
