@@ -61,11 +61,11 @@ module Crystal
       untyped_def = @defs[node.name]
       unless untyped_def
         error = node.has_parenthesis ? "undefined method" : "undefined local variable or method"
-        compile_error "#{error} '#{node.name}'", node.line_number, node.column_number, node.name.length
+        compile_error "#{error} '#{node.name}'", node.line_number, node.name_column_number, node.name.length
       end
 
       if node.args.length != untyped_def.args.length
-        compile_error "wrong number of arguments for '#{node.name}' (#{node.args.length} for #{untyped_def.args.length})", node.line_number, node.column_number, node.name.length
+        compile_error "wrong number of arguments for '#{node.name}' (#{node.args.length} for #{untyped_def.args.length})", node.line_number, node.name_column_number, node.name.length
       end
 
       node.args.each do |arg|
