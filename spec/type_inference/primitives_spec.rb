@@ -24,4 +24,10 @@ describe 'Type inference: primitives' do
     type input
     input.last.type.should eq(Type::Float)
   end
+
+  it "types +" do
+    input = parse '1 + 2'
+    type input
+    input.type.should eq(Type::Int)
+  end
 end

@@ -7,10 +7,15 @@ LLVM.init_x86
 module Crystal
   class Def
     def mangled_name
+      self.class.mangled_name(owner, name, args.map(&:type))
+    end
+
+    def self.mangled_name(owner, name, arg_types)
+      mangled_args = arg_types.map(&:name).join ', '
       if owner
-        "#{owner.name}##{name}"
+        "#{owner.name}##{name}<#{mangled_args}>"
       else
-        name
+        "#{name}<#{mangled_args}>"
       end
     end
   end
@@ -46,8 +51,26 @@ module Crystal
       entry = @main.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
       @builder.position_at_end(entry)
+
       @funs = {}
+
+      define_primitive(Type::Int, :+, [Type::Int], Type::Int) do |f, x, y|
+        x.name = 'self'
+        y.name = 'other'
+        entry = f.basic_blocks.append("entry")
+        entry.build do |b|
+          add = b.add x, y
+          b.ret add
+        end
+      end
+
       @vars = {}
+    end
+
+    def define_primitive(owner, name, arg_types, return_type, &block)
+      mangled_name = Def.mangled_name(owner, name, arg_types)
+      arg_types.insert 0, owner
+      @funs[mangled_name] = @mod.functions.add(mangled_name, arg_types.map(&:llvm_type), return_type.llvm_type, &block)
     end
 
     def end_visit_expressions(node)
@@ -128,6 +151,11 @@ module Crystal
       values = node.args.map do |arg|
         arg.accept self
         @last
+      end
+
+      if node.obj
+        node.obj.accept self
+        values.insert 0, @last
       end
 
       @last = @builder.call fun, *values, mangled_name

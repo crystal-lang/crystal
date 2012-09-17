@@ -20,4 +20,8 @@ describe 'Code gen: primitives' do
   it 'codegens int method with clashing name in global scope' do
     run('def foo; 5; end; class Int; def foo; 2; end; end; 1.foo; foo').to_i.should eq(5)
   end
+
+  it 'codegens Int#+' do
+    run('1 + 2').to_i.should eq(3)
+  end
 end

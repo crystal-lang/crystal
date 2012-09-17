@@ -50,4 +50,12 @@ in line 9
       type nodes
     }.should raise_error(Crystal::Exception, /undefined local variable or method 'foo'/)
   end
+
+  it "reports undefined instance method" do
+    nodes = parse "1.foo"
+
+    lambda {
+      type nodes
+    }.should raise_error(Crystal::Exception, /undefined method 'foo' for Int/)
+  end
 end

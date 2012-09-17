@@ -31,4 +31,10 @@ describe 'Type inference: def' do
     type input
     input.last.target_def.owner.should eq(Type::Int)
   end
+
+  it "reuses def instance" do
+    input = parse 'def foo; 1; end; foo; foo'
+    type input
+    input[1].target_def.should equal(input[2].target_def)
+  end
 end
