@@ -25,6 +25,7 @@ module Crystal
       @root = root
       @scopes = [{vars: {}}]
       @defs = {}
+      @classes = {}
     end
 
     def visit_bool(node)
@@ -57,12 +58,25 @@ module Crystal
     end
 
     def visit_def(node)
-      @defs[node.name] = node
+      class_def = node.parent.parent
+      if class_def
+        @classes[class_def.name][:defs][node.name] = node
+      else
+        @defs[node.name] = node
+      end
       false
     end
 
     def visit_call(node)
-      untyped_def = @defs[node.name]
+      if node.obj
+        node.obj.accept self
+        scope = @classes[node.obj.type.name][:defs]
+      else
+        scope = @defs
+      end
+
+      untyped_def = scope[node.name]
+
       unless untyped_def
         error = node.has_parenthesis ? "undefined method" : "undefined local variable or method"
         compile_error "#{error} '#{node.name}'", node.line_number, node.name_column_number, node.name.length
@@ -91,6 +105,10 @@ module Crystal
       untyped_def.add_instance typed_def
 
       false
+    end
+
+    def visit_class_def(node)
+      @classes[node.name] ||= {defs: {}}
     end
 
     def define_var(var)

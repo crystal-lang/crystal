@@ -42,4 +42,12 @@ in line 9
       type nodes
     }.should raise_error(Crystal::Exception, /wrong number of arguments for 'foo' \(0 for 1\)/)
   end
+
+  it "reports undefined method when method inside a class" do
+    nodes = parse "class Int; def foo; 1; end; end; foo"
+
+    lambda {
+      type nodes
+    }.should raise_error(Crystal::Exception, /undefined local variable or method 'foo'/)
+  end
 end

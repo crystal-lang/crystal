@@ -1,4 +1,5 @@
 require_relative 'core_ext/module'
+require_relative 'core_ext/string'
 
 module Crystal
   class Visitor
@@ -20,7 +21,7 @@ module Crystal
     end
 
     def self.inherited(klass)
-      name = klass.simple_name.downcase
+      name = klass.simple_name.underscore
 
       klass.class_eval %Q(
         def accept(visitor)
