@@ -3,6 +3,10 @@ module Crystal
     attr_accessor :type
   end
 
+  class Call
+    attr_accessor :target_def
+  end
+
   class Def
     attr_accessor :instances
 

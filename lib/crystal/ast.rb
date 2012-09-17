@@ -334,7 +334,6 @@ module Crystal
     attr_accessor :name
     attr_accessor :args
     attr_accessor :block
-    attr_accessor :target_def
 
     attr_accessor :name_column_number
     attr_accessor :has_parenthesis
