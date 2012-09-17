@@ -1,3 +1,6 @@
+require_relative 'core_ext/module'
+require_relative 'visitor'
+
 module Crystal
   # Base class for nodes in the grammar.
   class ASTNode
@@ -12,6 +15,31 @@ module Crystal
 
     def location=(line_and_column_number)
       @line_number, @column_number = line_and_column_number
+    end
+
+    def self.inherited(klass)
+      name = klass.simple_name.downcase
+
+      klass.class_eval %Q(
+        def accept(visitor)
+          if visitor.visit_#{name} self
+            accept_children visitor
+          end
+          visitor.end_visit_#{name} self
+        end
+      )
+
+      Visitor.class_eval %Q(
+        def visit_#{name}(node)
+          true
+        end
+
+        def end_visit_#{name}(node)
+        end
+      )
+    end
+
+    def accept_children(visitor)
     end
   end
 
@@ -62,11 +90,8 @@ module Crystal
       @expressions.empty?
     end
 
-    def accept(visitor)
-      if visitor.visit_expressions self
-        expressions.each { |exp| exp.accept visitor }
-      end
-      visitor.end_visit_expressions self
+    def accept_children(visitor)
+      expressions.each { |exp| exp.accept visitor }
     end
 
     def ==(other)
@@ -85,12 +110,6 @@ module Crystal
   #  '[' ( expression ( ',' expression )* ) ']'
   #
   class Array < Expressions
-    def accept(visitor)
-      if visitor.visit_array self
-        expressions.each { |exp| exp.accept visitor }
-      end
-      visitor.end_visit_array self
-    end
   end
 
   # Class definition:
@@ -111,9 +130,8 @@ module Crystal
       @superclass = superclass
     end
 
-    def accept(visitor)
-      visitor.visit_class_def self
-      visitor.end_visit_class_def self
+    def accept_children(visitor)
+      body.accept visitor
     end
 
     def ==(other)
@@ -132,11 +150,6 @@ module Crystal
   #     'nil'
   #
   class Nil < ASTNode
-    def accept(visitor)
-      visitor.visit_nil self
-      visitor.end_visit_nil self
-    end
-
     def ==(other)
       other.class == self.class
     end
@@ -155,11 +168,6 @@ module Crystal
 
     def initialize(value)
       @value = value
-    end
-
-    def accept(visitor)
-      visitor.visit_bool self
-      visitor.end_visit_bool self
     end
 
     def ==(other)
@@ -182,11 +190,6 @@ module Crystal
       @value = value.to_i
     end
 
-    def accept(visitor)
-      visitor.visit_int self
-      visitor.end_visit_int self
-    end
-
     def ==(other)
       other.class == self.class && other.value.to_i == value.to_i
     end
@@ -207,11 +210,6 @@ module Crystal
       @value = value.to_f
     end
 
-    def accept(visitor)
-      visitor.visit_float self
-      visitor.end_visit_float self
-    end
-
     def ==(other)
       other.class == self.class && other.value.to_f == value.to_f
     end
@@ -230,11 +228,6 @@ module Crystal
 
     def initialize(value)
       @value = value
-    end
-
-    def accept(visitor)
-      visitor.visit_char self
-      visitor.end_visit_char self
     end
 
     def ==(other)
@@ -276,13 +269,10 @@ module Crystal
       @receiver.parent = self if @receiver
     end
 
-    def accept(visitor)
-      if visitor.visit_def self
-        reciever.accept visitor if receiver
-        args.each { |arg| arg.accept visitor }
-        body.accept visitor
-      end
-      visitor.end_visit_def self
+    def accept_children(visitor)
+      reciever.accept visitor if receiver
+      args.each { |arg| arg.accept visitor }
+      body.accept visitor
     end
 
     def ==(other)
@@ -311,11 +301,6 @@ module Crystal
 
     def constant?
       name[0] == name[0].upcase
-    end
-
-    def accept(visitor)
-      visitor.visit_var self
-      visitor.end_visit_var self
     end
 
     def ==(other)
@@ -364,13 +349,10 @@ module Crystal
       @has_parenthesis = has_parenthesis
     end
 
-    def accept(visitor)
-      if visitor.visit_call self
-        obj.accept visitor if obj
-        args.each { |arg| arg.accept visitor }
-        block.accept visitor if block
-      end
-      visitor.end_visit_call self
+    def accept_children(visitor)
+      obj.accept visitor if obj
+      args.each { |arg| arg.accept visitor }
+      block.accept visitor if block
     end
 
     def ==(other)
@@ -414,13 +396,10 @@ module Crystal
       @else.parent = self
     end
 
-    def accept(visitor)
-      if visitor.visit_if self
-        self.cond.accept visitor
-        self.then.accept visitor
-        self.else.accept visitor if self.else
-      end
-      visitor.end_visit_if self
+    def accept_children(visitor)
+      self.cond.accept visitor
+      self.then.accept visitor
+      self.else.accept visitor if self.else
     end
 
     def ==(other)
@@ -449,12 +428,9 @@ module Crystal
       @value.parent = self
     end
 
-    def accept(visitor)
-      if visitor.visit_assign self
-        target.accept visitor
-        value.accept visitor
-      end
-      visitor.end_visit_assign self
+    def accept_children(visitor)
+      target.accept visitor
+      value.accept visitor
     end
 
     def ==(other)
@@ -485,12 +461,9 @@ module Crystal
       @body.parent = self
     end
 
-    def accept(visitor)
-      if visitor.visit_while self
-        cond.accept visitor
-        body.accept visitor
-      end
-      visitor.end_visit_while self
+    def accept_children(visitor)
+      cond.accept visitor
+      body.accept visitor
     end
 
     def ==(other)
@@ -523,12 +496,9 @@ module Crystal
       @body.parent = self
     end
 
-    def accept(visitor)
-      if visitor.visit_block self
-        args.each { |arg| arg.accept visitor }
-        body.accept visitor
-      end
-      visitor.end_visit_block self
+    def accept_children(visitor)
+      args.each { |arg| arg.accept visitor }
+      body.accept visitor
     end
 
     def ==(other)
@@ -560,11 +530,8 @@ module Crystal
           @exps.each { |exp| exp.parent = self }
         end
 
-        def accept(visitor)
-          if visitor.visit_#{keyword} self
-            exps.each { |e| e.accept visitor }
-          end
-          visitor.end_visit_#{keyword} self
+        def accept_children(visitor)
+          exps.each { |e| e.accept visitor }
         end
 
         def ==(other)
