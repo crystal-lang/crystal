@@ -25,4 +25,10 @@ describe 'Type inference: def' do
     type input
     input.last.type.should eq(Type::Float)
   end
+
+  it "assigns def owner" do
+    input = parse 'class Int; def foo; 2.5; end; end; 1.foo'
+    type input
+    input.last.target_def.owner.should eq(Type::Int)
+  end
 end

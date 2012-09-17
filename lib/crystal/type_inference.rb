@@ -8,6 +8,7 @@ module Crystal
   end
 
   class Def
+    attr_accessor :owner
     attr_accessor :instances
 
     def add_instance(a_def)
@@ -91,6 +92,8 @@ module Crystal
       end
 
       node.target_def = typed_def = untyped_def.clone
+
+      typed_def.owner = node.obj.type if node.obj
 
       with_new_scope(node.line_number, untyped_def) do
         typed_def.args.each_with_index do |arg, i|

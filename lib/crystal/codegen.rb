@@ -5,6 +5,16 @@ require 'llvm/transforms/scalar'
 LLVM.init_x86
 
 module Crystal
+  class Def
+    def mangled_name
+      if owner
+        "#{owner.name}##{name}"
+      else
+        name
+      end
+    end
+  end
+
   def run(code)
     mod = build code
 
@@ -36,7 +46,7 @@ module Crystal
       entry = @main.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
       @builder.position_at_end(entry)
-      @defs = {}
+      @funs = {}
       @vars = {}
     end
 
@@ -81,16 +91,22 @@ module Crystal
       false
     end
 
+    def visit_class_def(node)
+      false
+    end
+
     def visit_call(node)
-      unless fun = @defs[node.name]
+      mangled_name = node.target_def.mangled_name
+      unless fun = @funs[mangled_name]
         old_position = @builder.insert_block
-        fun = @defs[node.target_def.name] = @mod.functions.add(node.target_def.name, [], node.target_def.body.type.llvm_type)
+        fun = @funs[mangled_name] = @mod.functions.add(mangled_name, [], node.target_def.body.type.llvm_type)
         entry = fun.basic_blocks.append("entry")
         @builder.position_at_end(entry)
         node.target_def.body.accept self
         @builder.position_at_end old_position
       end
-      @last = @builder.call fun, node.name
+      @last = @builder.call fun, mangled_name
+      false
     end
   end
 end
