@@ -45,3 +45,9 @@ class String
     Crystal::Call.new nil, self, args
   end
 end
+
+class ::Array
+  def array
+    Crystal::Array.new self
+  end
+end

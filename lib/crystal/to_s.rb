@@ -40,6 +40,16 @@ module Crystal
       @str << "'"
     end
 
+    def visit_array(node)
+      @str << '['
+      node.expressions.each_with_index do |exp, i|
+        @str << ', ' if i > 0
+        exp.accept self
+      end
+      @str << ']'
+      false
+    end
+
     def visit_call(node)
       if node.obj && node.name == :'[ ]'
         node.obj.accept self

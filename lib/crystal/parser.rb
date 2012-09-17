@@ -258,6 +258,21 @@ module Crystal
         check :')'
         next_token_skip_statement_end
         exp
+      when :'[]'
+        next_token_skip_space
+        Crystal::Array.new
+      when :'['
+        next_token_skip_space
+        exps = []
+        while @token.type != :"]"
+          exps << parse_expression
+          skip_space
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_space
+        Crystal::Array.new exps
       when :'!'
         next_token_skip_space_or_newline
         Call.new parse_expression, :'!@', [], nil, column_number

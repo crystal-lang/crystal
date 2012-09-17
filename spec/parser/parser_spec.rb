@@ -27,6 +27,9 @@ describe Parser do
 
   it_parses_single_node "'a'", Char.new(?a.ord)
 
+  it_parses_single_node "[]", [].array
+  it_parses_single_node "[1, 2]", [1.int, 2.int].array
+
   it_parses_single_node "-x", Call.new("x".call, :"-@")
   it_parses_single_node "+x", Call.new("x".call, :"+@")
   it_parses_single_node "+ 1", Call.new(1.int, :"+@")
@@ -55,8 +58,6 @@ describe Parser do
 
   it_parses_single_node "a = 1", Assign.new("a".var, 1.int)
   it_parses_single_node "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int))
-
-  it_parses_single_node "(1)", 1.int
 
   it_parses_single_node "def foo\n1\nend", Def.new("foo", [], [1.int])
   it_parses_single_node "def downto(n)\n1\nend", Def.new("downto", ["n".var], [1.int])

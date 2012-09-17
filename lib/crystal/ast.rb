@@ -26,18 +26,18 @@ module Crystal
     def self.from(obj)
       case obj
       when nil
-        Expressions.new
+        new
       when Expressions
         obj
-      when Array
-        Expressions.new obj
+      when ::Array
+        new obj
       else
-        Expressions.new [obj]
+        new [obj]
       end
     end
 
-    def initialize(expressions = nil)
-      @expressions = expressions || []
+    def initialize(expressions = [])
+      @expressions = expressions
       @expressions.each { |e| e.parent = self }
     end
 
@@ -77,6 +77,19 @@ module Crystal
       exps = self.class.new expressions.map(&:clone)
       exps.location = location
       exps
+    end
+  end
+
+  # An array literal.
+  #
+  #  '[' ( expression ( ',' expression )* ) ']'
+  #
+  class Array < Expressions
+    def accept(visitor)
+      if visitor.visit_array self
+        expressions.each { |exp| exp.accept visitor }
+      end
+      visitor.end_visit_array self
     end
   end
 
