@@ -262,7 +262,7 @@ module Crystal
         next_token_skip_space
         Crystal::Array.new
       when :'['
-        next_token_skip_space
+        next_token_skip_space_or_newline
         exps = []
         while @token.type != :"]"
           exps << parse_expression

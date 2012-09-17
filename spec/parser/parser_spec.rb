@@ -29,6 +29,8 @@ describe Parser do
 
   it_parses_single_node "[]", [].array
   it_parses_single_node "[1, 2]", [1.int, 2.int].array
+  it_parses_single_node "[\n1, 2]", [1.int, 2.int].array
+  it_parses_single_node "[1,\n 2,]", [1.int, 2.int].array
 
   it_parses_single_node "-x", Call.new("x".call, :"-@")
   it_parses_single_node "+x", Call.new("x".call, :"+@")
