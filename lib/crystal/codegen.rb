@@ -1,5 +1,3 @@
-require_relative 'visitor'
-
 require 'llvm/core'
 require 'llvm/execution_engine'
 require 'llvm/transforms/scalar'

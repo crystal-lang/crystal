@@ -1,7 +1,9 @@
 require_relative 'core_ext/module'
-require_relative 'visitor'
 
 module Crystal
+  class Visitor
+  end
+
   # Base class for nodes in the grammar.
   class ASTNode
     attr_accessor :line_number

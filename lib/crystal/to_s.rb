@@ -1,5 +1,3 @@
-require(File.expand_path("../visitor",  __FILE__))
-
 module Crystal
   class ASTNode
     def to_s
