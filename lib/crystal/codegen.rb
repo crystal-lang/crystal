@@ -84,7 +84,11 @@ module Crystal
 
     def visit_var(node)
       var = @vars[node.name]
-      @last = @builder.load var[:ptr], node.name
+      if var[:is_arg]
+        @last = var[:ptr]
+      else
+        @last = @builder.load var[:ptr], node.name
+      end
     end
 
     def visit_def(node)
@@ -99,13 +103,34 @@ module Crystal
       mangled_name = node.target_def.mangled_name
       unless fun = @funs[mangled_name]
         old_position = @builder.insert_block
-        fun = @funs[mangled_name] = @mod.functions.add(mangled_name, [], node.target_def.body.type.llvm_type)
+        old_vars = @vars
+        @vars = {}
+
+        fun = @funs[mangled_name] = @mod.functions.add(
+          mangled_name,
+          node.target_def.args.map { |arg| arg.type.llvm_type },
+          node.target_def.body.type.llvm_type
+        )
+        node.target_def.args.each_with_index do |arg, i|
+          param = fun.params[i]
+          param.name = arg.name
+
+          @vars[param.name] = {type: arg.type, ptr: param, is_arg: true}
+        end
+
         entry = fun.basic_blocks.append("entry")
         @builder.position_at_end(entry)
         node.target_def.body.accept self
         @builder.position_at_end old_position
+        @vars = old_vars
       end
-      @last = @builder.call fun, mangled_name
+
+      values = node.args.map do |arg|
+        arg.accept self
+        @last
+      end
+
+      @last = @builder.call fun, *values, mangled_name
       false
     end
   end
