@@ -7,10 +7,5 @@ module Crystal
       @name = name
       @llvm_type = llvm_type
     end
-
-    Bool = Type.new "Bool", LLVM::Int1
-    Int = Type.new "Int", LLVM::Int
-    Float = Type.new "Float", LLVM::Float
-    Char = Type.new "Char", LLVM::Int8
   end
 end

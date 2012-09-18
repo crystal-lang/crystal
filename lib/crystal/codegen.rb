@@ -29,25 +29,26 @@ module Crystal
 
   def build(code)
     node = parse code
-    type node
+    mod = type node
 
-    visitor = CodeGenVisitor.new(node.type)
+    visitor = CodeGenVisitor.new(mod, node.type)
     node.accept visitor
 
-    visitor.mod.verify
+    visitor.llvm_mod.verify
 
-    visitor.mod.dump if ENV['DUMP']
+    visitor.llvm_mod.dump if ENV['DUMP']
 
-    visitor.mod
+    visitor.llvm_mod
   end
 
   class CodeGenVisitor < Visitor
-    attr_reader :mod
+    attr_reader :llvm_mod
     attr_reader :main
 
-    def initialize(return_type)
-      @mod = LLVM::Module.new("Crystal")
-      @main = @mod.functions.add("main", [], return_type.llvm_type)
+    def initialize(mod, return_type)
+      @mod = mod
+      @llvm_mod = LLVM::Module.new("Crystal")
+      @main = @llvm_mod.functions.add("main", [], return_type.llvm_type)
       entry = @main.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
       @builder.position_at_end(entry)
@@ -55,23 +56,17 @@ module Crystal
       @funs = {}
       @vars = {}
 
-      define_primitive(Type::Int, :+, [Type::Int], Type::Int) do |f, x, y|
-        x.name = 'self'
-        y.name = 'other'
-        entry = f.basic_blocks.append("entry")
-        entry.build do |b|
-          add = b.add x, y
-          b.ret add
-        end
+      define_primitive(mod.int, :+, [mod.int], mod.int) do |f, x, y|
+        f.basic_blocks.append("entry").build { |b| b.ret b.add(x, y) }
       end
 
-      @funs['putchar<Char>'] = @mod.functions.add('putchar', [Type::Char.llvm_type], Type::Char.llvm_type)
+      @funs['putchar<Char>'] = @llvm_mod.functions.add('putchar', [mod.char.llvm_type], mod.char.llvm_type)
     end
 
     def define_primitive(owner, name, arg_types, return_type, &block)
       mangled_name = Def.mangled_name(owner, name, arg_types)
       arg_types.insert 0, owner
-      @funs[mangled_name] = @mod.functions.add(mangled_name, arg_types.map(&:llvm_type), return_type.llvm_type, &block)
+      @funs[mangled_name] = @llvm_mod.functions.add(mangled_name, arg_types.map(&:llvm_type), return_type.llvm_type, &block)
     end
 
     def end_visit_expressions(node)
@@ -134,7 +129,7 @@ module Crystal
         old_vars = @vars
         @vars = {}
 
-        fun = @funs[mangled_name] = @mod.functions.add(
+        fun = @funs[mangled_name] = @llvm_mod.functions.add(
           mangled_name,
           node.target_def.args.map { |arg| arg.type.llvm_type },
           node.target_def.body.type.llvm_type

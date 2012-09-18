@@ -3,33 +3,33 @@ require 'spec_helper'
 describe 'Type inference: def' do
   it "types a call with an int" do
     input = parse 'def foo; 1; end; foo'
-    type input
-    input.last.type.should eq(Type::Int)
+    mod = type input
+    input.last.type.should eq(mod.int)
   end
 
   it "types a call with a float" do
     input = parse 'def foo; 2.3; end; foo'
-    type input
-    input.last.type.should eq(Type::Float)
+    mod = type input
+    input.last.type.should eq(mod.float)
   end
 
   it "types a call with an argument" do
     input = parse 'def foo(x); x; end; foo 1; foo 2.3'
-    type input
-    input[1].type.should eq(Type::Int)
-    input[2].type.should eq(Type::Float)
+    mod = type input
+    input[1].type.should eq(mod.int)
+    input[2].type.should eq(mod.float)
   end
 
   it "types a call with an argument uses a new scope" do
     input = parse 'x = 2.3; def foo(x); x; end; foo 1; x'
-    type input
-    input.last.type.should eq(Type::Float)
+    mod = type input
+    input.last.type.should eq(mod.float)
   end
 
   it "assigns def owner" do
     input = parse 'class Int; def foo; 2.5; end; end; 1.foo'
-    type input
-    input.last.target_def.owner.should eq(Type::Int)
+    mod = type input
+    input.last.target_def.owner.should eq(mod.int)
   end
 
   it "reuses def instance" do
@@ -40,7 +40,7 @@ describe 'Type inference: def' do
 
   it "types putchar with Char" do
     input = parse "putchar 'a'"
-    type input
-    input.last.type.should eq(Type::Char)
+    mod = type input
+    input.last.type.should eq(mod.char)
   end
 end

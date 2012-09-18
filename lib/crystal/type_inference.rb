@@ -22,11 +22,16 @@ module Crystal
   end
 
   def type(node)
-    node.accept TypeVisitor.new(node)
+    mod = Crystal::Module.new
+    node.accept TypeVisitor.new(mod, node)
+    mod
   end
 
   class TypeVisitor < Visitor
-    def initialize(root)
+    attr_accessor :mod
+
+    def initialize(mod, root)
+      @mod = mod
       @root = root
       @scopes = [{vars: {}}]
       @defs = {}
@@ -34,34 +39,34 @@ module Crystal
       @classes["Int"] = {defs: {
         :+ => Parser.parse('def +(other); end').last.tap do |fun|
           instance = fun.clone
-          instance.owner = Type::Int
-          instance.args[0].type = Type::Int
-          instance.body.type = Type::Int
+          instance.owner = mod.int
+          instance.args[0].type = mod.int
+          instance.body.type = mod.int
           fun.add_instance(instance)
         end
       }}
       @defs['putchar'] = Parser.parse('def putchar(c); end').last.tap do |fun|
         instance = fun.clone
-        instance.args[0].type = Type::Char
-        instance.body.type = Type::Char
+        instance.args[0].type = mod.char
+        instance.body.type = mod.char
         fun.add_instance(instance)
       end
     end
 
     def visit_bool(node)
-      node.type = Type::Bool
+      node.type = mod.bool
     end
 
     def visit_int(node)
-      node.type = Type::Int
+      node.type = mod.int
     end
 
     def visit_float(node)
-      node.type = Type::Float
+      node.type = mod.float
     end
 
     def visit_char(node)
-      node.type = Type::Char
+      node.type = mod.char
     end
 
     def visit_assign(node)
