@@ -671,7 +671,7 @@ module Crystal
     end
 
     def is_var?(name)
-      @def_vars.last.include? name
+      name == 'self' || @def_vars.last.include?(name)
     end
 
     def can_be_assigned?(node)

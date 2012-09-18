@@ -178,4 +178,6 @@ describe Parser do
   it_parses_single_node "foo[0] = 1", Call.new("foo".call, :[]=, [0.int, 1.int])
 
   it_parses_single_node "begin; 1; 2; 3; end;", Expressions.new([1.int, 2.int, 3.int])
+
+  it_parses_single_node "self", "self".var
 end

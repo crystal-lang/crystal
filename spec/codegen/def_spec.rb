@@ -16,4 +16,8 @@ describe 'Code gen: def' do
   it "call external function 'putchar'" do
     run("putchar '\0'").to_i.should eq(0)
   end
+
+  it "uses self" do
+    run("class Int; def foo; self + 1; end; end; 3.foo").to_i.should eq(4)
+  end
 end

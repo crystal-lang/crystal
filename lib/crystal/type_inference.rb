@@ -107,10 +107,15 @@ module Crystal
 
       unless typed_def = untyped_def.lookup_instance(node.args.map(&:type))
         typed_def = untyped_def.clone
-
         typed_def.owner = node.obj.type if node.obj
 
         with_new_scope(node.line_number, untyped_def) do
+          if node.obj
+            self_var = Var.new("self")
+            self_var.type = node.obj.type
+            define_var self_var
+          end
+
           typed_def.args.each_with_index do |arg, i|
             typed_def.args[i].type = node.args[i].type
             define_var typed_def.args[i]
@@ -136,7 +141,7 @@ module Crystal
     end
 
     def lookup_var(name)
-      @scopes.last[:vars][name]
+      @scopes.last[:vars][name] or raise "Bug: var '#{name}' not found"
     end
 
     def with_new_scope(line, obj)
