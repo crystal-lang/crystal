@@ -45,18 +45,21 @@ module Crystal
 
   class CodeGenVisitor < Visitor
     attr_reader :llvm_mod
-    attr_reader :main
 
     def initialize(mod, return_type)
       @mod = mod
       @llvm_mod = LLVM::Module.new("Crystal")
-      @main = @llvm_mod.functions.add("main", [], return_type.llvm_type)
-      entry = @main.basic_blocks.append("entry")
+      @fun = @llvm_mod.functions.add("main", [], return_type.llvm_type)
+      entry = @fun.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
       @builder.position_at_end(entry)
 
       @funs = {}
       @vars = {}
+    end
+
+    def main
+      @fun
     end
 
     def finish
@@ -105,8 +108,8 @@ module Crystal
     end
 
     def visit_if(node)
-      then_block = @main.basic_blocks.append("then")
-      exit_block = @main.basic_blocks.append("exit")
+      then_block = @fun.basic_blocks.append("then")
+      exit_block = @fun.basic_blocks.append("exit")
 
       node.cond.accept self
 
@@ -135,7 +138,9 @@ module Crystal
 
     def visit_call(node)
       mangled_name = node.target_def.mangled_name
-      unless fun = @funs[mangled_name]
+
+      old_fun = @fun
+      unless @fun = @funs[mangled_name]
         old_position = @builder.insert_block
         old_vars = @vars
 
@@ -149,27 +154,28 @@ module Crystal
         end
         args += node.target_def.args
 
-        fun = @funs[mangled_name] = @llvm_mod.functions.add(
+        @fun = @funs[mangled_name] = @llvm_mod.functions.add(
           mangled_name,
           args.map { |arg| arg.type.llvm_type },
           node.target_def.body.type.llvm_type
         )
 
         args.each_with_index do |arg, i|
-          param = fun.params[i]
+          param = @fun.params[i]
           param.name = arg.name
 
           @vars[param.name] = {type: arg.type, ptr: param, is_arg: true}
         end
 
         unless node.target_def.is_a? External
-          entry = fun.basic_blocks.append("entry")
+          entry = @fun.basic_blocks.append("entry")
           @builder.position_at_end(entry)
           node.target_def.body.accept self
           @builder.ret @last
           @builder.position_at_end old_position
-          @vars = old_vars
         end
+
+        @vars = old_vars
       end
 
       values = []
@@ -182,7 +188,9 @@ module Crystal
         values << @last
       end
 
-      @last = @builder.call fun, *values, mangled_name
+      @last = @builder.call @fun, *values, mangled_name
+      @fun = old_fun
+
       false
     end
   end
