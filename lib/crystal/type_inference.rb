@@ -60,6 +60,10 @@ module Crystal
       node.type = Type::Float
     end
 
+    def visit_char(node)
+      node.type = Type::Char
+    end
+
     def visit_assign(node)
       node.value.accept self
       node.type = node.target.type = node.value.type

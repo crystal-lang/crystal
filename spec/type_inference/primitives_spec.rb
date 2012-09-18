@@ -19,6 +19,12 @@ describe 'Type inference: primitives' do
     input.type.should eq(Type::Float)
   end
 
+  it "types a char" do
+    input = Char.new(?a.ord)
+    type input
+    input.type.should eq(Type::Char)
+  end
+
   it "types a primitive method" do
     input = parse 'class Int; def foo; 2.5; end; end; 1.foo'
     type input
