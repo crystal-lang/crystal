@@ -108,16 +108,28 @@ module Crystal
     end
 
     def visit_if(node)
+      has_else = !node.else.empty?
+
       then_block = @fun.basic_blocks.append("then")
       exit_block = @fun.basic_blocks.append("exit")
 
+      if has_else
+        else_block = @fun.basic_blocks.append("else")
+      end
+
       node.cond.accept self
 
-      @builder.cond(@last, then_block, exit_block)
+      @builder.cond(@last, then_block, has_else ? else_block : exit_block)
 
       @builder.position_at_end then_block
       node.then.accept self
       @builder.br exit_block
+
+      if has_else
+        @builder.position_at_end else_block
+        node.else.accept self
+        @builder.br exit_block
+      end
 
       @builder.position_at_end exit_block
 
