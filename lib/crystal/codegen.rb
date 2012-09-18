@@ -53,6 +53,7 @@ module Crystal
       @builder.position_at_end(entry)
 
       @funs = {}
+      @vars = {}
 
       define_primitive(Type::Int, :+, [Type::Int], Type::Int) do |f, x, y|
         x.name = 'self'
@@ -64,7 +65,7 @@ module Crystal
         end
       end
 
-      @vars = {}
+      @funs['putchar<Int>'] = @mod.functions.add('putchar', [Type::Int.llvm_type], Type::Int.llvm_type)
     end
 
     def define_primitive(owner, name, arg_types, return_type, &block)

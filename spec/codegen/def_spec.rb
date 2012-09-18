@@ -12,4 +12,8 @@ describe 'Code gen: def' do
   it "codegens call with args" do
     run('def foo(x); x; end; foo 1').to_i.should eq(1)
   end
+
+  it "call external function 'putchar'" do
+    run('putchar 0').to_i.should eq(0)
+  end
 end

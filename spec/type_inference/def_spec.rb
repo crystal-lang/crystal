@@ -37,4 +37,10 @@ describe 'Type inference: def' do
     type input
     input[1].target_def.should equal(input[2].target_def)
   end
+
+  it "types putchar" do
+    input = parse 'putchar 1'
+    type input
+    input.last.type.should eq(Type::Int)
+  end
 end
