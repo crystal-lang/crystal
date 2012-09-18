@@ -42,8 +42,8 @@ module Crystal
       }}
       @defs['putchar'] = Parser.parse('def putchar(c); end').last.tap do |fun|
         instance = fun.clone
-        instance.args[0].type = Type::Int
-        instance.body.type = Type::Int
+        instance.args[0].type = Type::Char
+        instance.body.type = Type::Char
         fun.add_instance(instance)
       end
     end

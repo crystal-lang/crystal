@@ -14,6 +14,6 @@ describe 'Code gen: def' do
   end
 
   it "call external function 'putchar'" do
-    run('putchar 0').to_i.should eq(0)
+    run("putchar '\0'").to_i.should eq(0)
   end
 end

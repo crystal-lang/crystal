@@ -65,7 +65,7 @@ module Crystal
         end
       end
 
-      @funs['putchar<Int>'] = @mod.functions.add('putchar', [Type::Int.llvm_type], Type::Int.llvm_type)
+      @funs['putchar<Char>'] = @mod.functions.add('putchar', [Type::Char.llvm_type], Type::Char.llvm_type)
     end
 
     def define_primitive(owner, name, arg_types, return_type, &block)
