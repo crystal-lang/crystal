@@ -40,7 +40,7 @@ in line 9
 
     lambda {
       type nodes
-    }.should raise_error(Crystal::Exception, /wrong number of arguments for 'foo' \(0 for 1\)/)
+    }.should raise_error(Crystal::Exception, regex("wrong number of arguments for 'foo' (0 for 1)"))
   end
 
   it "reports undefined method when method inside a class" do
@@ -57,5 +57,21 @@ in line 9
     lambda {
       type nodes
     }.should raise_error(Crystal::Exception, /undefined method 'foo' for Int/)
+  end
+
+  it "reports can't call primitive with args" do
+    nodes = parse "1 + 'a'"
+
+    lambda {
+      type nodes
+    }.should raise_error(Crystal::Exception, regex("can't call Int#+ with types [Char]"))
+  end
+
+  it "reports can't call external with args" do
+    nodes = parse "putchar 1"
+
+    lambda {
+      type nodes
+    }.should raise_error(Crystal::Exception, regex("can't call putchar with types [Int]"))
   end
 end

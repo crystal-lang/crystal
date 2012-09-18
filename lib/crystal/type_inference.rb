@@ -83,12 +83,12 @@ module Crystal
     def visit_call(node)
       if node.obj
         node.obj.accept self
-        scope = node.obj.type.defs
+        scope = node.obj.type
       else
-        scope = mod.defs
+        scope = mod
       end
 
-      untyped_def = scope[node.name]
+      untyped_def = scope.defs[node.name]
 
       unless untyped_def
         error = node.obj || node.has_parenthesis ? "undefined method" : "undefined local variable or method"
@@ -105,7 +105,15 @@ module Crystal
         arg.accept self
       end
 
-      unless typed_def = untyped_def.lookup_instance(node.args.map(&:type))
+      types = node.args.map(&:type)
+      unless typed_def = untyped_def.lookup_instance(types)
+        if untyped_def.is_a?(FrozenDef)
+          error = "can't call "
+          error << "#{scope.name}#" unless scope.is_a?(Module)
+          error << "#{node.name} with types [#{types.map(&:name).join ', '}]"
+          compile_error error, node.line_number, node.name_column_number, node.name.length
+        end
+
         typed_def = untyped_def.clone
         typed_def.owner = node.obj.type if node.obj
 

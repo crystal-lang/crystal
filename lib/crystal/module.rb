@@ -38,7 +38,7 @@ module Crystal
     end
 
     def primitive(owner, name, arg_names)
-      p = owner.defs[name] = Def.new(name, arg_names.map { |x| Var.new(x) })
+      p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Var.new(x) })
       p.owner = owner
       yield p
     end
@@ -78,7 +78,10 @@ module Crystal
     end
   end
 
-  class External < Def
+  class FrozenDef < Def
+  end
+
+  class External < FrozenDef
     def mangled_name
       name
     end
