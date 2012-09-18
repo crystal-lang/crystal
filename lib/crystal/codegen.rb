@@ -55,18 +55,6 @@ module Crystal
 
       @funs = {}
       @vars = {}
-
-      define_primitive(mod.int, :+, [mod.int], mod.int) do |f, x, y|
-        f.basic_blocks.append("entry").build { |b| b.ret b.add(x, y) }
-      end
-
-      @funs['putchar<Char>'] = @llvm_mod.functions.add('putchar', [mod.char.llvm_type], mod.char.llvm_type)
-    end
-
-    def define_primitive(owner, name, arg_types, return_type, &block)
-      mangled_name = Def.mangled_name(owner, name, arg_types)
-      arg_types.insert 0, owner
-      @funs[mangled_name] = @llvm_mod.functions.add(mangled_name, arg_types.map(&:llvm_type), return_type.llvm_type, &block)
     end
 
     def end_visit_expressions(node)
@@ -122,6 +110,10 @@ module Crystal
       false
     end
 
+    def visit_primitive_body(node)
+      node.block.call(@builder, Hash[@vars.map { |k, v| [k, v[:ptr]] }])
+    end
+
     def visit_call(node)
       mangled_name = node.target_def.mangled_name
       unless fun = @funs[mangled_name]
@@ -129,33 +121,44 @@ module Crystal
         old_vars = @vars
         @vars = {}
 
+        args = []
+        if node.obj
+          self_var = Var.new("self")
+          self_var.type = node.obj.type
+          args << self_var
+        end
+        args += node.target_def.args
+
         fun = @funs[mangled_name] = @llvm_mod.functions.add(
           mangled_name,
-          node.target_def.args.map { |arg| arg.type.llvm_type },
+          args.map { |arg| arg.type.llvm_type },
           node.target_def.body.type.llvm_type
         )
-        node.target_def.args.each_with_index do |arg, i|
+
+        args.each_with_index do |arg, i|
           param = fun.params[i]
           param.name = arg.name
 
           @vars[param.name] = {type: arg.type, ptr: param, is_arg: true}
         end
 
-        entry = fun.basic_blocks.append("entry")
-        @builder.position_at_end(entry)
-        node.target_def.body.accept self
-        @builder.position_at_end old_position
-        @vars = old_vars
+        unless node.target_def.is_a? External
+          entry = fun.basic_blocks.append("entry")
+          @builder.position_at_end(entry)
+          node.target_def.body.accept self
+          @builder.position_at_end old_position
+          @vars = old_vars
+        end
       end
 
-      values = node.args.map do |arg|
-        arg.accept self
-        @last
-      end
-
+      values = []
       if node.obj
         node.obj.accept self
-        values.insert 0, @last
+        values << @last
+      end
+      node.args.each do |arg|
+        arg.accept self
+        values << @last
       end
 
       @last = @builder.call fun, *values, mangled_name

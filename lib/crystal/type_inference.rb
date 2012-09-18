@@ -34,23 +34,6 @@ module Crystal
       @mod = mod
       @root = root
       @scopes = [{vars: {}}]
-      @defs = {}
-      @classes = {}
-      @classes["Int"] = {defs: {
-        :+ => Parser.parse('def +(other); end').last.tap do |fun|
-          instance = fun.clone
-          instance.owner = mod.int
-          instance.args[0].type = mod.int
-          instance.body.type = mod.int
-          fun.add_instance(instance)
-        end
-      }}
-      @defs['putchar'] = Parser.parse('def putchar(c); end').last.tap do |fun|
-        instance = fun.clone
-        instance.args[0].type = mod.char
-        instance.body.type = mod.char
-        fun.add_instance(instance)
-      end
     end
 
     def visit_bool(node)
@@ -90,9 +73,9 @@ module Crystal
     def visit_def(node)
       class_def = node.parent.parent
       if class_def
-        @classes[class_def.name][:defs][node.name] = node
+        mod.types[class_def.name].defs[node.name] = node
       else
-        @defs[node.name] = node
+        mod.defs[node.name] = node
       end
       false
     end
@@ -100,9 +83,9 @@ module Crystal
     def visit_call(node)
       if node.obj
         node.obj.accept self
-        scope = @classes[node.obj.type.name][:defs]
+        scope = node.obj.type.defs
       else
-        scope = @defs
+        scope = mod.defs
       end
 
       untyped_def = scope[node.name]
@@ -145,7 +128,7 @@ module Crystal
     end
 
     def visit_class_def(node)
-      @classes[node.name] ||= {defs: {}}
+      true
     end
 
     def define_var(var)
