@@ -66,8 +66,9 @@ module Crystal
     end
 
     def end_visit_expressions(node)
-      raise "No last expression" if node.expressions.empty?
-      node.type = node.expressions.last.type
+      unless node.expressions.empty?
+        node.type = node.expressions.last.type
+      end
     end
 
     def visit_def(node)

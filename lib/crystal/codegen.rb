@@ -34,6 +34,8 @@ module Crystal
     visitor = CodeGenVisitor.new(mod, node.type)
     node.accept visitor
 
+    visitor.finish
+
     visitor.llvm_mod.verify
 
     visitor.llvm_mod.dump if ENV['DUMP']
@@ -57,7 +59,7 @@ module Crystal
       @vars = {}
     end
 
-    def end_visit_expressions(node)
+    def finish
       @builder.ret @last
     end
 
@@ -102,6 +104,23 @@ module Crystal
       end
     end
 
+    def visit_if(node)
+      then_block = @main.basic_blocks.append("then")
+      exit_block = @main.basic_blocks.append("exit")
+
+      node.cond.accept self
+
+      @builder.cond(@last, then_block, exit_block)
+
+      @builder.position_at_end then_block
+      node.then.accept self
+      @builder.br exit_block
+
+      @builder.position_at_end exit_block
+
+      false
+    end
+
     def visit_def(node)
       false
     end
@@ -119,6 +138,7 @@ module Crystal
       unless fun = @funs[mangled_name]
         old_position = @builder.insert_block
         old_vars = @vars
+
         @vars = {}
 
         args = []
@@ -146,6 +166,7 @@ module Crystal
           entry = fun.basic_blocks.append("entry")
           @builder.position_at_end(entry)
           node.target_def.body.accept self
+          @builder.ret @last
           @builder.position_at_end old_position
           @vars = old_vars
         end
