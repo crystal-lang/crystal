@@ -13,6 +13,10 @@ describe 'Code gen: primitives' do
     run('1; 2.5').to_f.should eq(2.5)
   end
 
+  it 'codegens char' do
+    run("'a'").to_i.should eq(?a.ord)
+  end
+
   it 'codegens int method' do
     run('class Int; def foo; 3; end; end; 1.foo').to_i.should eq(3)
   end

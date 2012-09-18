@@ -90,6 +90,10 @@ module Crystal
       @last = LLVM::Float(node.value)
     end
 
+    def visit_char(node)
+      @last = LLVM::Int8.from_i(node.value)
+    end
+
     def visit_assign(node)
       node.value.accept self
 
