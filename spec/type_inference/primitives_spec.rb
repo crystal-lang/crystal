@@ -39,7 +39,7 @@ describe 'Type inference: primitives' do
     end
   end
 
-  ['==', '>', '>=', '<', '<='].each do |op|
+  ['==', '>', '>=', '<', '<=', '!='].each do |op|
     it "types Int #{op} Int" do
       input = parse "1 #{op} 2"
       mod = type input
