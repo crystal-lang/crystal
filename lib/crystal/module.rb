@@ -18,6 +18,12 @@ module Crystal
         end
       end
 
+      primitive(int, :==, ['other']) do |p|
+        p.overload([int], bool) do |b, args|
+          b.ret b.icmp(:eq, args['self'], args['other'], "test")
+        end
+      end
+
       external('putchar', {'c' => char}, char)
     end
 

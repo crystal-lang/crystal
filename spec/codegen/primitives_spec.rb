@@ -25,7 +25,15 @@ describe 'Code gen: primitives' do
     run('def foo; 5; end; class Int; def foo; 2; end; end; 1.foo; foo').to_i.should eq(5)
   end
 
-  it 'codegens Int#+' do
+  it 'codegens Int + Int' do
     run('1 + 2').to_i.should eq(3)
+  end
+
+  it 'codegens Int == Int gives false' do
+    run('1 == 2').to_b.should eq(false)
+  end
+
+  it 'codegens Int == Int gives true' do
+    run('1 == 1').to_b.should eq(true)
   end
 end
