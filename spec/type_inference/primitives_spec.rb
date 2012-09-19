@@ -31,11 +31,17 @@ describe 'Type inference: primitives' do
     input.last.type.should eq(mod.float)
   end
 
-  ['+', '-', '*'].each do |op|
+  ['+', '-', '*', '/'].each do |op|
     it "types Int #{op} Int" do
       input = parse "1 #{op} 2"
       mod = type input
       input.type.should eq(mod.int)
+    end
+
+    it "types Int #{op} Float" do
+      input = parse "1 #{op} 2.0"
+      mod = type input
+      input.type.should eq(mod.float)
     end
   end
 
@@ -46,4 +52,5 @@ describe 'Type inference: primitives' do
       input.type.should eq(mod.bool)
     end
   end
+
 end

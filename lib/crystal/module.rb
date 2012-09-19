@@ -14,14 +14,22 @@ module Crystal
 
       primitive(int, :+, ['other']) do |p|
         p.overload([int], int) { |b, f| b.add(f.params[0], f.params[1]) }
+        p.overload([float], float) { |b, f| b.fadd(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
       primitive(int, :-, ['other']) do |p|
         p.overload([int], int) { |b, f| b.sub(f.params[0], f.params[1]) }
+        p.overload([float], float) { |b, f| b.fsub(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
       primitive(int, :*, ['other']) do |p|
         p.overload([int], int) { |b, f| b.mul(f.params[0], f.params[1]) }
+        p.overload([float], float) { |b, f| b.fmul(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
+      end
+
+      primitive(int, :/, ['other']) do |p|
+        p.overload([int], int) { |b, f| b.sdiv(f.params[0], f.params[1]) }
+        p.overload([float], float) { |b, f| b.fdiv(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
       primitive(int, :==, ['other']) do |p|

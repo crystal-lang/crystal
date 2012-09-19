@@ -37,6 +37,26 @@ describe 'Code gen: primitives' do
     run('2 * 3').to_i.should eq(6)
   end
 
+  it 'codegens Int / Int' do
+    run('7 / 3').to_i.should eq(2)
+  end
+
+  it 'codegens Int + Float' do
+    run('1 + 1.5').to_f.should eq(2.5)
+  end
+
+  it 'codegens Int - Float' do
+    run('3 - 0.5').to_f.should eq(2.5)
+  end
+
+  it 'codegens Int * Float' do
+    run('2 * 1.25').to_f.should eq(2.5)
+  end
+
+  it 'codegens Int / Float' do
+    run('5 / 2.0').to_f.should eq(2.5)
+  end
+
   it 'codegens Int == Int gives false' do
     run('1 == 2').to_b.should eq(false)
   end
