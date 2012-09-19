@@ -48,4 +48,9 @@ describe 'Type inference: def' do
     input = parse "def foo; foo; end; foo"
     type input
   end
+
+  it "allows recursion with arg" do
+    input = parse "def foo(x); foo(x); end; foo 1"
+    type input
+  end
 end

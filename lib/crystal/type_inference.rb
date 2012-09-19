@@ -118,8 +118,6 @@ module Crystal
         typed_def = untyped_def.clone
         typed_def.owner = node.obj.type if node.obj
 
-        untyped_def.add_instance typed_def
-
         with_new_scope(node.line_number, untyped_def) do
           if node.obj
             self_var = Var.new("self")
@@ -131,6 +129,9 @@ module Crystal
             typed_def.args[i].type = node.args[i].type
             define_var typed_def.args[i]
           end
+
+          untyped_def.add_instance typed_def
+
           typed_def.body.accept self
         end
       end
