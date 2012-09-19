@@ -20,6 +20,10 @@ module Crystal
         p.overload([int], int) { |b, f| b.sub(f.params[0], f.params[1]) }
       end
 
+      primitive(int, :*, ['other']) do |p|
+        p.overload([int], int) { |b, f| b.mul(f.params[0], f.params[1]) }
+      end
+
       primitive(int, :==, ['other']) do |p|
         p.overload([int], bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
       end
