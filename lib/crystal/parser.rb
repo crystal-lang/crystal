@@ -178,8 +178,22 @@ module Crystal
           left = Call.new left, method, [right], nil, method_column_number
         when :INT
           case @token.value[0]
-          when '+', '-'
+          when '+'
             left = Call.new left, @token.value[0].to_sym, [Int.new(@token.value)], nil, @token.column_number
+            next_token_skip_space_or_newline
+          when '-'
+            left = Call.new left, @token.value[0].to_sym, [Int.new(@token.value[1 .. -1])], nil, @token.column_number
+            next_token_skip_space_or_newline
+          else
+            return left
+          end
+        when :FLOAT
+          case @token.value[0]
+          when '+'
+            left = Call.new left, @token.value[0].to_sym, [Float.new(@token.value)], nil, @token.column_number
+            next_token_skip_space_or_newline
+          when '-'
+            left = Call.new left, @token.value[0].to_sym, [Float.new(@token.value[1 .. -1])], nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
