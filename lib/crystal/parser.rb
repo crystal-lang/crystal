@@ -271,6 +271,7 @@ module Crystal
         exp = parse_expression
         check :')'
         next_token_skip_statement_end
+        raise_error "unexpected token: (" if @token.type == :'('
         exp
       when :'[]'
         next_token_skip_space
