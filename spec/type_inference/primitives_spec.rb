@@ -37,6 +37,12 @@ describe 'Type inference: primitives' do
     input.type.should eq(mod.int)
   end
 
+  it "types Int - Int" do
+    input = parse '1 - 2'
+    mod = type input
+    input.type.should eq(mod.int)
+  end
+
   it "types Int == Int" do
     input = parse '1 == 2'
     mod = type input

@@ -13,15 +13,15 @@ module Crystal
       @defs = {}
 
       primitive(int, :+, ['other']) do |p|
-        p.overload([int], int) do |b, f|
-          b.add(f.params[0], f.params[1])
-        end
+        p.overload([int], int) { |b, f| b.add(f.params[0], f.params[1]) }
+      end
+
+      primitive(int, :-, ['other']) do |p|
+        p.overload([int], int) { |b, f| b.sub(f.params[0], f.params[1]) }
       end
 
       primitive(int, :==, ['other']) do |p|
-        p.overload([int], bool) do |b, f|
-          b.icmp(:eq, f.params[0], f.params[1])
-        end
+        p.overload([int], bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
       end
 
       external('putchar', {'c' => char}, char)
