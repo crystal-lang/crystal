@@ -188,8 +188,10 @@ module Crystal
   #
   class Int < ASTNode
     attr_accessor :value
+    attr_reader :has_sign
 
     def initialize(value)
+      @has_sign = value.is_a?(String) && (value[0] == '+' || value[0] == '-')
       @value = value.to_i
     end
 
@@ -208,8 +210,10 @@ module Crystal
   #
   class Float < ASTNode
     attr_accessor :value
+    attr_reader :has_sign
 
     def initialize(value)
+      @has_sign = value.is_a?(String) && (value[0] == '+' || value[0] == '-')
       @value = value.to_f
     end
 
