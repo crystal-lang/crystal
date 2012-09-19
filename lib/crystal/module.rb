@@ -14,13 +14,13 @@ module Crystal
 
       primitive(int, :+, ['other']) do |p|
         p.overload([int], int) do |b, args|
-          b.ret b.add(args['self'], args['other'])
+          b.add(args['self'], args['other'])
         end
       end
 
       primitive(int, :==, ['other']) do |p|
         p.overload([int], bool) do |b, args|
-          b.ret b.icmp(:eq, args['self'], args['other'], "test")
+          b.icmp(:eq, args['self'], args['other'], "test")
         end
       end
 

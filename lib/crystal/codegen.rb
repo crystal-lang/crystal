@@ -145,7 +145,7 @@ module Crystal
     end
 
     def visit_primitive_body(node)
-      node.block.call(@builder, Hash[@vars.map { |k, v| [k, v[:ptr]] }])
+      @last = node.block.call(@builder, Hash[@vars.map { |k, v| [k, v[:ptr]] }])
     end
 
     def visit_call(node)
