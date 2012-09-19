@@ -33,15 +33,17 @@ describe 'Type inference: primitives' do
 
   ['+', '-', '*'].each do |op|
     it "types Int #{op} Int" do
-      input = parse '1 #{op} 2'
+      input = parse "1 #{op} 2"
       mod = type input
       input.type.should eq(mod.int)
     end
   end
 
-  it "types Int == Int" do
-    input = parse '1 == 2'
-    mod = type input
-    input.type.should eq(mod.bool)
+  ['==', '>', '>=', '<', '<='].each do |op|
+    it "types Int #{op} Int" do
+      input = parse "1 #{op} 2"
+      mod = type input
+      input.type.should eq(mod.bool)
+    end
   end
 end

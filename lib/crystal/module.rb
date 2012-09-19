@@ -28,6 +28,22 @@ module Crystal
         p.overload([int], bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
       end
 
+      primitive(int, :<, ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.icmp(:slt, f.params[0], f.params[1]) }
+      end
+
+      primitive(int, :<=, ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.icmp(:sle, f.params[0], f.params[1]) }
+      end
+
+      primitive(int, :>, ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.icmp(:sgt, f.params[0], f.params[1]) }
+      end
+
+      primitive(int, :>=, ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.icmp(:sge, f.params[0], f.params[1]) }
+      end
+
       external('putchar', {'c' => char}, char)
     end
 

@@ -44,4 +44,38 @@ describe 'Code gen: primitives' do
   it 'codegens Int == Int gives true' do
     run('1 == 1').to_b.should eq(true)
   end
+
+  it 'codegens Int < Int gives false' do
+    run('2 < 1').to_b.should eq(false)
+  end
+
+  it 'codegens Int < Int gives true' do
+    run('1 < 2').to_b.should eq(true)
+  end
+
+  it 'codegens Int <= Int gives false' do
+    run('2 <= 1').to_b.should eq(false)
+  end
+
+  it 'codegens Int <= Int gives true' do
+    run('1 <= 1').to_b.should eq(true)
+    run('1 <= 2').to_b.should eq(true)
+  end
+
+  it 'codegens Int > Int gives false' do
+    run('1 > 2').to_b.should eq(false)
+  end
+
+  it 'codegens Int > Int gives true' do
+    run('2 > 1').to_b.should eq(true)
+  end
+
+  it 'codegens Int >= Int gives false' do
+    run('1 >= 2').to_b.should eq(false)
+  end
+
+  it 'codegens Int >= Int gives true' do
+    run('1 >= 1').to_b.should eq(true)
+    run('2 >= 1').to_b.should eq(true)
+  end
 end
