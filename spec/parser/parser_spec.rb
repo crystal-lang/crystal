@@ -77,7 +77,7 @@ describe Parser do
   it_parses_single_node "def foo var1, var2\n end", Def.new("foo", ["var1".var, "var2".var], nil)
   it_parses_single_node "def foo var1,\nvar2\n end", Def.new("foo", ["var1".var, "var2".var], nil)
   it_parses_single_node "def foo; 1; 2; end", Def.new("foo", [], [1.int, 2.int])
-  it_parses_single_node "def foo(n); foo(n -1); end", Def.new("foo", ["n".var], Call.new(nil, "foo", [Call.new(nil, "n", [-1.int])]))
+  it_parses_single_node "def foo(n); foo(n -1); end", Def.new("foo", ["n".var], "foo".call(Call.new("n".var, :-, [1.int])))
 
   it_parses_single_node "def self.foo\n1\nend", Def.new("foo", [], [1.int], "self".var)
 
@@ -101,6 +101,8 @@ describe Parser do
 
   it_parses_single_node "foo + 1", Call.new("foo".call, :"+", [1.int])
   it_parses_single_node "foo +1", Call.new(nil, "foo", [1.int])
+  it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.int), Call.new("foo".var, :+, [1.int])]
+  it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int), Call.new("foo".var, :-, [1.int])]
 
   it_parses_single_node "foo !false", Call.new(nil, "foo", [Call.new(false.bool, :'!@')])
 

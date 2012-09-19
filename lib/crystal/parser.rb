@@ -362,7 +362,16 @@ module Crystal
         Call.new nil, name, args, block, name_column_number, @last_call_has_parenthesis
       else
         if args
-          Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
+          if is_var?(name) && args.length == 1 && (args[0].is_a?(Int) || args[0].is_a?(Float)) && args[0].has_sign
+            if args[0].value < 0
+              args[0].value = args[0].value.abs
+              Call.new(Var.new(name), :-, args)
+            else
+              Call.new(Var.new(name), :+, args)
+            end
+          else
+            Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
+          end
         elsif is_var? name
           Var.new name
         else
