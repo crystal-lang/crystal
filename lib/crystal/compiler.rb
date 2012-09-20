@@ -53,6 +53,12 @@ module Crystal
       pm = LLVM::PassManager.new engine
       pm.inline!
       pm.gdce!
+      pm.instcombine!
+      pm.reassociate!
+      pm.gvn!
+      pm.mem2reg!
+      pm.simplifycfg!
+
       pm.run mod
     end
   end
