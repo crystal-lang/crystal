@@ -1,3 +1,6 @@
+require 'llvm/transforms/ipo'
+require 'llvm/transforms/scalar'
+
 module Crystal
   class Compiler
     include Crystal
@@ -25,6 +28,7 @@ module Crystal
     def compile
       begin
         mod = build ARGF.read
+        optimize mod
       rescue Crystal::Exception => ex
         puts ex.message
         exit 1
@@ -42,6 +46,14 @@ module Crystal
 
       pid = spawn command, in: reader
       Process.waitpid pid
+    end
+
+    def optimize(mod)
+      engine = LLVM::JITCompiler.new mod
+      pm = LLVM::PassManager.new engine
+      pm.inline!
+      pm.gdce!
+      pm.run mod
     end
   end
 end

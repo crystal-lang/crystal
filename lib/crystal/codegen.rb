@@ -180,6 +180,7 @@ module Crystal
         end
 
         unless node.target_def.is_a? External
+          @fun.linkage = :internal
           entry = @fun.basic_blocks.append("entry")
           @builder.position_at_end(entry)
           node.target_def.body.accept self
