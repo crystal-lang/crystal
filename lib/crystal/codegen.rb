@@ -5,6 +5,12 @@ require 'llvm/transforms/scalar'
 LLVM.init_x86
 
 module Crystal
+  class ASTNode
+    def llvm_type
+      type.llvm_type
+    end
+  end
+
   class Def
     def mangled_name
       self.class.mangled_name(owner, name, args.map(&:type))
@@ -88,7 +94,7 @@ module Crystal
       var = @vars[node.target.name]
       unless var && var[:type] == node.type
         var = @vars[node.target.name] = {
-          ptr: @builder.alloca(node.type.llvm_type, node.target.name),
+          ptr: @builder.alloca(node.llvm_type, node.target.name),
           type: node.type
         }
       end
@@ -133,7 +139,7 @@ module Crystal
         @builder.br exit_block
 
         @builder.position_at_end exit_block
-        @last = @builder.phi node.type.llvm_type, {then_block => then_value, else_block => else_value}
+        @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
       else
         @builder.position_at_end exit_block
       end
@@ -194,8 +200,8 @@ module Crystal
 
         @fun = @funs[mangled_name] = @llvm_mod.functions.add(
           mangled_name,
-          args.map { |arg| arg.type.llvm_type },
-          node.target_def.body.type.llvm_type
+          args.map(&:llvm_type),
+          node.target_def.body.llvm_type
         )
 
         args.each_with_index do |arg, i|
