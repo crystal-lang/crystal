@@ -52,29 +52,64 @@ module Crystal
         p.overload([float], float) { |b, f| b.fdiv(f.params[0], f.params[1]) }
       end
 
-
       primitive(int, :==, ['other']) do |p|
         p.overload([int], bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
+        p.overload([float], bool) { |b, f| b.fcmp(:oeq, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
       primitive(int, :'!=', ['other']) do |p|
         p.overload([int], bool) { |b, f| b.icmp(:ne, f.params[0], f.params[1]) }
+        p.overload([float], bool) { |b, f| b.fcmp(:one, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
       primitive(int, :<, ['other']) do |p|
         p.overload([int], bool) { |b, f| b.icmp(:slt, f.params[0], f.params[1]) }
+        p.overload([float], bool) { |b, f| b.fcmp(:olt, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
       primitive(int, :<=, ['other']) do |p|
         p.overload([int], bool) { |b, f| b.icmp(:sle, f.params[0], f.params[1]) }
+        p.overload([float], bool) { |b, f| b.fcmp(:ole, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
       primitive(int, :>, ['other']) do |p|
         p.overload([int], bool) { |b, f| b.icmp(:sgt, f.params[0], f.params[1]) }
+        p.overload([float], bool) { |b, f| b.fcmp(:ogt, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
       primitive(int, :>=, ['other']) do |p|
         p.overload([int], bool) { |b, f| b.icmp(:sge, f.params[0], f.params[1]) }
+        p.overload([float], bool) { |b, f| b.fcmp(:oge, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
+      end
+
+      primitive(float, :==, ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.fcmp(:oeq, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], bool) { |b, f| b.fcmp(:oeq, f.params[0], f.params[1]) }
+      end
+
+      primitive(float, :'!=', ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.fcmp(:one, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], bool) { |b, f| b.fcmp(:one, f.params[0], f.params[1]) }
+      end
+
+      primitive(float, :<, ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.fcmp(:olt, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], bool) { |b, f| b.fcmp(:olt, f.params[0], f.params[1]) }
+      end
+
+      primitive(float, :<=, ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.fcmp(:ole, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], bool) { |b, f| b.fcmp(:ole, f.params[0], f.params[1]) }
+      end
+
+      primitive(float, :>, ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.fcmp(:ogt, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], bool) { |b, f| b.fcmp(:ogt, f.params[0], f.params[1]) }
+      end
+
+      primitive(float, :>=, ['other']) do |p|
+        p.overload([int], bool) { |b, f| b.fcmp(:oge, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], bool) { |b, f| b.fcmp(:oge, f.params[0], f.params[1]) }
       end
 
       external('putchar', {'c' => char}, char)

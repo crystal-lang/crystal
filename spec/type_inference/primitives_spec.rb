@@ -63,6 +63,24 @@ describe 'Type inference: primitives' do
       mod = type input
       input.type.should eq(mod.bool)
     end
+
+    it "types Int #{op} Float" do
+      input = parse "1 #{op} 2.0"
+      mod = type input
+      input.type.should eq(mod.bool)
+    end
+
+    it "types Float #{op} Int" do
+      input = parse "1.0 #{op} 2"
+      mod = type input
+      input.type.should eq(mod.bool)
+    end
+
+    it "types Float #{op} Float" do
+      input = parse "1.0 #{op} 2.0"
+      mod = type input
+      input.type.should eq(mod.bool)
+    end
   end
 
 end
