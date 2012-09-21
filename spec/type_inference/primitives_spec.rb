@@ -43,6 +43,18 @@ describe 'Type inference: primitives' do
       mod = type input
       input.type.should eq(mod.float)
     end
+
+    it "types Float #{op} Int" do
+      input = parse "1.0 #{op} 2"
+      mod = type input
+      input.type.should eq(mod.float)
+    end
+
+    it "types Float #{op} Float" do
+      input = parse "1.0 #{op} 2.0"
+      mod = type input
+      input.type.should eq(mod.float)
+    end
   end
 
   ['==', '>', '>=', '<', '<=', '!='].each do |op|

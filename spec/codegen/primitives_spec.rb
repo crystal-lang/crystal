@@ -57,6 +57,39 @@ describe 'Code gen: primitives' do
     run('5 / 2.0').to_f.should eq(2.5)
   end
 
+  it 'codegens Float + Float' do
+    run('1.0 + 1.5').to_f.should eq(2.5)
+  end
+
+  it 'codegens Float - Float' do
+    run('3.0 - 0.5').to_f.should eq(2.5)
+  end
+
+  it 'codegens Float * Float' do
+    run('2.0 * 1.25').to_f.should eq(2.5)
+  end
+
+  it 'codegens Float / Float' do
+    run('5.0 / 2.0').to_f.should eq(2.5)
+  end
+
+  it 'codegens Float + Int' do
+    run('1.5 + 1').to_f.should eq(2.5)
+  end
+
+  it 'codegens Float - Int' do
+    run('3.5 - 1').to_f.should eq(2.5)
+  end
+
+  it 'codegens Float * Int' do
+    run('1.25 * 2').to_f.should eq(2.5)
+  end
+
+  it 'codegens Float / Int' do
+    run('5.0 / 2').to_f.should eq(2.5)
+  end
+
+
   it 'codegens Int == Int gives false' do
     run('1 == 2').to_b.should eq(false)
   end

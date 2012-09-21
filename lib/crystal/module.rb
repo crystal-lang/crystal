@@ -32,6 +32,27 @@ module Crystal
         p.overload([float], float) { |b, f| b.fdiv(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
+      primitive(float, :+, ['other']) do |p|
+        p.overload([int], float) { |b, f| b.fadd(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], float) { |b, f| b.fadd(f.params[0], f.params[1]) }
+      end
+
+      primitive(float, :-, ['other']) do |p|
+        p.overload([int], float) { |b, f| b.fsub(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], float) { |b, f| b.fsub(f.params[0], f.params[1]) }
+      end
+
+      primitive(float, :*, ['other']) do |p|
+        p.overload([int], float) { |b, f| b.fmul(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], float) { |b, f| b.fmul(f.params[0], f.params[1]) }
+      end
+
+      primitive(float, :/, ['other']) do |p|
+        p.overload([int], float) { |b, f| b.fdiv(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
+        p.overload([float], float) { |b, f| b.fdiv(f.params[0], f.params[1]) }
+      end
+
+
       primitive(int, :==, ['other']) do |p|
         p.overload([int], bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
       end
