@@ -10,6 +10,12 @@ def regex(str)
   /#{Regexp.escape(str)}/
 end
 
+def type_str(str)
+  input = parse str
+  type input
+  input.type
+end
+
 # Extend some Ruby core classes to make it easier
 # to create Crystal AST nodes.
 

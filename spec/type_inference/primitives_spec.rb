@@ -83,4 +83,16 @@ describe 'Type inference: primitives' do
     end
   end
 
+  it "types Bool && Bool" do
+    input = parse "true && true"
+    mod = type input
+    input.type.should eq(mod.bool)
+  end
+
+  it "types Bool || Bool" do
+    input = parse "true || true"
+    mod = type input
+    input.type.should eq(mod.bool)
+  end
+
 end
