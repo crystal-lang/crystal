@@ -15,6 +15,9 @@ module Crystal
         opts.on('-o ', 'Output filename') do |output|
           options[:output_filename] = output
         end
+        opts.on('-run ', 'Execute filename') do |run|
+          @run = true
+        end
       end.parse!
 
       if !options[:output_filename] && ARGV.length > 0
@@ -28,7 +31,8 @@ module Crystal
     def compile
       begin
         mod = build ARGF.read
-        optimize mod
+        engine = LLVM::JITCompiler.new mod
+        optimize mod, engine
       rescue Crystal::Exception => ex
         puts ex.message
         exit 1
@@ -38,18 +42,21 @@ module Crystal
         exit 1
       end
 
-      reader, writer = IO.pipe
-      Thread.new do
-        mod.write_bitcode(writer)
-        writer.close
-      end
+      if @run
+        engine.run_function mod.functions["main"]
+      else
+        reader, writer = IO.pipe
+        Thread.new do
+          mod.write_bitcode(writer)
+          writer.close
+        end
 
-      pid = spawn command, in: reader
-      Process.waitpid pid
+        pid = spawn command, in: reader
+        Process.waitpid pid
+      end
     end
 
-    def optimize(mod)
-      engine = LLVM::JITCompiler.new mod
+    def optimize(mod, engine)
       pm = LLVM::PassManager.new engine
       pm.inline!
       pm.gdce!
