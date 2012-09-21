@@ -178,16 +178,20 @@ module Crystal
         )
 
         args.each_with_index do |arg, i|
-          param = @fun.params[i]
-          param.name = arg.name
-
-          @vars[param.name] = {type: arg.type, ptr: param, is_arg: true}
+          @fun.params[i].name = arg.name
         end
 
         unless node.target_def.is_a? External
           @fun.linkage = :internal
           entry = @fun.basic_blocks.append("entry")
           @builder.position_at_end(entry)
+
+          args.each_with_index do |arg, i|
+            ptr = @builder.alloca(arg.type.llvm_type, arg.name)
+            @vars[arg.name] = { ptr: ptr, type: arg.type }
+            @builder.store @fun.params[i], ptr
+          end
+
           node.target_def.body.accept self
           @builder.ret @last
           @builder.position_at_end old_position

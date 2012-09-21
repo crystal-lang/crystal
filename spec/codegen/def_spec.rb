@@ -24,4 +24,8 @@ describe 'Code gen: def' do
   it "uses var after external" do
     run("a = 1; putchar '\\0'; a").to_i.should eq(1)
   end
+
+  it "allows to change argument values" do
+    run("def foo(x); x = 1; x; end; foo(2)").to_i.should eq(1)
+  end
 end
