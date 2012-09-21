@@ -141,6 +141,27 @@ module Crystal
       false
     end
 
+    def visit_while(node)
+      while_block = @fun.basic_blocks.append("while")
+      body_block = @fun.basic_blocks.append("body")
+      exit_block = @fun.basic_blocks.append("exit")
+
+      @builder.br while_block
+
+      @builder.position_at_end while_block
+      node.cond.accept self
+
+      @builder.cond(@last, body_block, exit_block)
+
+      @builder.position_at_end body_block
+      node.body.accept self
+      @builder.br while_block
+
+      @builder.position_at_end exit_block
+
+      false
+    end
+
     def visit_def(node)
       false
     end
