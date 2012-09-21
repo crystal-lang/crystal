@@ -214,7 +214,7 @@ module Crystal
           @builder.position_at_end(entry)
 
           args.each_with_index do |arg, i|
-            ptr = @builder.alloca(arg.type.llvm_type, arg.name)
+            ptr = @builder.alloca(arg.llvm_type, arg.name)
             @vars[arg.name] = { ptr: ptr, type: arg.type }
             @builder.store @fun.params[i], ptr
           end
