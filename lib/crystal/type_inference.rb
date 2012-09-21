@@ -89,6 +89,11 @@ module Crystal
         scope = mod
       end
 
+      if scope == :unknown
+        node.type = :unknown
+        return false
+      end
+
       untyped_def = scope.defs[node.name]
 
       unless untyped_def
@@ -107,7 +112,19 @@ module Crystal
       end
 
       types = node.args.map(&:type)
-      unless typed_def = untyped_def.lookup_instance(types)
+      if types.include?(:unknown)
+        node.type = :unknown
+        return false
+      end
+
+      typed_def = untyped_def.lookup_instance(types)
+      if typed_def && typed_def.body.type == :unknown && @scopes.any? { |s| s[:obj] == untyped_def }
+        node.target_def = typed_def
+        node.type = typed_def.body.type
+        return
+      end
+
+      if !typed_def || typed_def.body.type == :unknown
         if untyped_def.is_a?(FrozenDef)
           error = "can't call "
           error << "#{scope.name}#" unless scope.is_a?(Module)
@@ -115,8 +132,9 @@ module Crystal
           compile_error error, node.line_number, node.name_column_number, node.name.length
         end
 
-        typed_def = untyped_def.clone
+        typed_def ||= untyped_def.clone
         typed_def.owner = node.obj.type if node.obj
+        typed_def.body.type = :unknown
 
         with_new_scope(node.line_number, untyped_def) do
           if node.obj
@@ -133,6 +151,10 @@ module Crystal
           untyped_def.add_instance typed_def
 
           typed_def.body.accept self
+          while typed_def.body.type.is_a?(::Array)
+            typed_def.body.type = Type.unmerge(typed_def.body.type, :unknown)
+            typed_def.body.accept self
+          end
         end
       end
 
@@ -144,6 +166,11 @@ module Crystal
 
     def visit_class_def(node)
       true
+    end
+
+    def end_visit_if(node)
+      node.type = node.then.type
+      node.type = Type.merge(node.type, node.else.type) if node.else.any?
     end
 
     def define_var(var)

@@ -58,8 +58,12 @@ module Crystal
       pm.gvn!
       pm.mem2reg!
       pm.simplifycfg!
+      pm.tailcallelim!
+      pm.loop_unroll!
+      pm.loop_deletion!
+      pm.loop_rotate!
 
-      pm.run mod
+      5.times { pm.run mod }
     end
   end
 end

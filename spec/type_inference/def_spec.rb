@@ -53,4 +53,25 @@ describe 'Type inference: def' do
     input = parse "def foo(x); foo(x); end; foo 1"
     type input
   end
+
+  it "types recursion" do
+    input = parse 'def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)'
+    mod = type input
+    input.last.type.should eq(mod.int)
+    input.last.target_def.body.first.then.type.should eq(mod.int)
+  end
+
+  it "types recursion 2" do
+    input = parse 'def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)'
+    mod = type input
+    input.last.type.should eq(mod.int)
+    input.last.target_def.body.first.then.type.should eq(mod.int)
+  end
+
+  it "types mutual recursion" do
+    input = parse 'def foo(x); if true; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)'
+    mod = type input
+    input.last.type.should eq(mod.int)
+    input.last.target_def.body.first.then.type.should eq(mod.int)
+  end
 end

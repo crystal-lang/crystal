@@ -123,15 +123,20 @@ module Crystal
 
       @builder.position_at_end then_block
       node.then.accept self
+      then_value = @last
       @builder.br exit_block
 
       if has_else
         @builder.position_at_end else_block
         node.else.accept self
+        else_value = @last
         @builder.br exit_block
-      end
 
-      @builder.position_at_end exit_block
+        @builder.position_at_end exit_block
+        @last = @builder.phi node.type.llvm_type, {then_block => then_value, else_block => else_value}
+      else
+        @builder.position_at_end exit_block
+      end
 
       false
     end
@@ -201,7 +206,7 @@ module Crystal
         values << @last
       end
 
-      @last = @builder.call @fun, *values, mangled_name
+      @last = @builder.call @fun, *values
       @fun = old_fun
 
       false

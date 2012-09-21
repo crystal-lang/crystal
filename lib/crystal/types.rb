@@ -9,5 +9,27 @@ module Crystal
       @llvm_type = llvm_type
       @defs = {}
     end
+
+    def self.merge(t1, t2)
+      if t1 == t2
+        t1
+      else
+        [t1, t2].flatten.uniq
+      end
+    end
+
+    def self.unmerge(t1, t2)
+      t1.delete t2
+      if t1.length == 1
+        t1.first
+      else
+        t1
+      end
+    end
+
+    def to_s
+      name
+    end
   end
+
 end
