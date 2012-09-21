@@ -66,7 +66,9 @@ module Crystal
     end
 
     def end_visit_expressions(node)
-      unless node.expressions.empty?
+      if node.expressions.empty?
+        node.type = mod.void
+      else
         node.type = node.expressions.last.type
       end
     end
@@ -171,6 +173,10 @@ module Crystal
     def end_visit_if(node)
       node.type = node.then.type
       node.type = Type.merge(node.type, node.else.type) if node.else.any?
+    end
+
+    def end_visit_while(node)
+      node.type = mod.void
     end
 
     def define_var(var)

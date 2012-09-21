@@ -54,6 +54,7 @@ module Crystal
 
     def initialize(mod, return_type)
       @mod = mod
+      @return_type = return_type
       @llvm_mod = LLVM::Module.new("Crystal")
       @fun = @llvm_mod.functions.add("main", [], return_type.llvm_type)
       entry = @fun.basic_blocks.append("entry")
@@ -69,7 +70,7 @@ module Crystal
     end
 
     def finish
-      @builder.ret @last
+      @builder.ret(@return_type == @mod.void ? nil : @last)
     end
 
     def visit_bool(node)
@@ -220,7 +221,7 @@ module Crystal
           end
 
           node.target_def.body.accept self
-          @builder.ret @last
+          @builder.ret(node.target_def.body.type == @mod.void ? nil : @last)
           @builder.position_at_end old_position
         end
 

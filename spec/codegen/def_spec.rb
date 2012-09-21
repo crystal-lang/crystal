@@ -28,4 +28,8 @@ describe 'Code gen: def' do
   it "allows to change argument values" do
     run("def foo(x); x = 1; x; end; foo(2)").to_i.should eq(1)
   end
+
+  it "runs empty def" do
+    run("def foo; end; foo")
+  end
 end

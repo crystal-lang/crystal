@@ -74,4 +74,10 @@ describe 'Type inference: def' do
     input.last.type.should eq(mod.int)
     input.last.target_def.body.first.then.type.should eq(mod.int)
   end
+
+  it "types empty body def" do
+    input = parse 'def foo; end; foo'
+    mod = type input
+    input.last.type.should eq(mod.void)
+  end
 end
