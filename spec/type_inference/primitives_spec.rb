@@ -95,4 +95,9 @@ describe 'Type inference: primitives' do
     input.type.should eq(mod.bool)
   end
 
+  it "types Int#chr" do
+    input = parse "65.chr"
+    mod = type input
+    input.type.should eq(mod.char)
+  end
 end

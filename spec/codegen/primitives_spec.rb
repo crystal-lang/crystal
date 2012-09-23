@@ -158,4 +158,8 @@ describe 'Code gen: primitives' do
       end
     end
   end
+
+  it 'codegens Int#chr' do
+    run("65.chr").to_i.should eq(65)
+  end
 end
