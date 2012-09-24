@@ -22,6 +22,12 @@ module Crystal
 
     def define_char_primitives
       no_args_primitive(char, 'ord', int) { |b, f| b.zext(f.params[0], int.llvm_type) }
+      singleton(char, :==, {'other' => char}, bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
+      singleton(char, :'!=', {'other' => char}, bool) { |b, f| b.icmp(:ne, f.params[0], f.params[1]) }
+      singleton(char, :<, {'other' => char}, bool) { |b, f| b.icmp(:ult, f.params[0], f.params[1]) }
+      singleton(char, :<=, {'other' => char}, bool) { |b, f| b.icmp(:ule, f.params[0], f.params[1]) }
+      singleton(char, :>, {'other' => char}, bool) { |b, f| b.icmp(:ugt, f.params[0], f.params[1]) }
+      singleton(char, :>=, {'other' => char}, bool) { |b, f| b.icmp(:uge, f.params[0], f.params[1]) }
     end
 
 		def define_int_primitives
@@ -135,7 +141,7 @@ module Crystal
       external('getchar', {}, char)
      end
 
-	  def primitive(owner, name, arg_names, return_type = nil)
+	  def primitive(owner, name, arg_names)
 	    p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Var.new(x) })
 	    p.owner = owner
 	    yield p
@@ -143,6 +149,12 @@ module Crystal
 
     def no_args_primitive(owner, name, return_type, &block)
       primitive(owner, name, []) { |p| p.overload([], return_type, &block) }
+    end
+
+    def singleton(owner, name, args, return_type, &block)
+      p = owner.defs[name] = FrozenDef.new(name, args.keys.map { |x| Var.new(x) })
+      p.owner = owner
+      p.overload(args.values, return_type, &block)
     end
 
 	  def external(name, args, return_type)

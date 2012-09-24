@@ -55,6 +55,10 @@ describe 'Type inference: primitives' do
     it "types Float #{op} Float" do
       assert_type("1.0 #{op} 2.0") { bool }
     end
+
+    it "types Char #{op} Char" do
+      assert_type("'a' #{op} 'b'") { bool }
+    end
   end
 
   it "types Bool && Bool" do
