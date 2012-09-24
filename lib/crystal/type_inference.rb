@@ -69,6 +69,10 @@ module Crystal
       node.type = lookup_var node.name
     end
 
+    def visit_instance_var(node)
+      node.type = scope[:type].instance_vars[node.name]
+    end
+
     def end_visit_expressions(node)
       if node.expressions.empty?
         node.type = mod.void
