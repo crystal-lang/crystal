@@ -2,15 +2,11 @@ require 'spec_helper'
 
 describe 'Type inference: class' do
 	it "types Const#new" do
-		input = parse "class Foo; end; Foo.new"
-		mod = infer_type input
-		input.last.type.should eq(mod.types['Foo'])
+		assert_type("class Foo; end; Foo.new") { types['Foo'] }
 	end
 
-	it "types Const#new" do
-		input = parse "class Foo; def coco; 1; end; end; Foo.new.coco"
-		mod = infer_type input
-		input.last.type.should eq(mod.int)
+	it "types Const#new#method" do
+		assert_type("class Foo; def coco; 1; end; end; Foo.new.coco") { int }
 	end
 
 	it "types instance variable" do

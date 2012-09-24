@@ -2,102 +2,70 @@ require 'spec_helper'
 
 describe 'Type inference: primitives' do
   it "types a bool" do
-    input = false.bool
-    mod = infer_type input
-    input.type.should eq(mod.bool)
+    assert_type('false') { bool }
   end
 
   it "types an int" do
-    input = 1.int
-    mod = infer_type input
-    input.type.should eq(mod.int)
+    assert_type('1') { int }
   end
 
   it "types a float" do
-    input = 2.3.float
-    mod = infer_type input
-    input.type.should eq(mod.float)
+    assert_type('2.3') { float }
   end
 
   it "types a char" do
-    input = Char.new(?a.ord)
-    mod = infer_type input
-    input.type.should eq(mod.char)
+    assert_type("'a'") { char }
   end
 
   it "types a primitive method" do
-    input = parse 'class Int; def foo; 2.5; end; end; 1.foo'
-    mod = infer_type input
-    input.last.type.should eq(mod.float)
+    assert_type('class Int; def foo; 2.5; end; end; 1.foo') { float }
   end
 
   ['+', '-', '*', '/'].each do |op|
     it "types Int #{op} Int" do
-      input = parse "1 #{op} 2"
-      mod = infer_type input
-      input.type.should eq(mod.int)
+      assert_type("1 #{op} 2") { int }
     end
 
     it "types Int #{op} Float" do
-      input = parse "1 #{op} 2.0"
-      mod = infer_type input
-      input.type.should eq(mod.float)
+      assert_type("1 #{op} 2.0") { float }
     end
 
     it "types Float #{op} Int" do
-      input = parse "1.0 #{op} 2"
-      mod = infer_type input
-      input.type.should eq(mod.float)
+      assert_type("1.0 #{op} 2") { float }
     end
 
     it "types Float #{op} Float" do
-      input = parse "1.0 #{op} 2.0"
-      mod = infer_type input
-      input.type.should eq(mod.float)
+      assert_type("1.0 #{op} 2.0") { float }
     end
   end
 
   ['==', '>', '>=', '<', '<=', '!='].each do |op|
     it "types Int #{op} Int" do
-      input = parse "1 #{op} 2"
-      mod = infer_type input
-      input.type.should eq(mod.bool)
+      assert_type("1 #{op} 2") { bool }
     end
 
     it "types Int #{op} Float" do
-      input = parse "1 #{op} 2.0"
-      mod = infer_type input
-      input.type.should eq(mod.bool)
+      assert_type("1 #{op} 2.0") { bool }
     end
 
     it "types Float #{op} Int" do
-      input = parse "1.0 #{op} 2"
-      mod = infer_type input
-      input.type.should eq(mod.bool)
+      assert_type("1.0 #{op} 2") { bool }
     end
 
     it "types Float #{op} Float" do
-      input = parse "1.0 #{op} 2.0"
-      mod = infer_type input
-      input.type.should eq(mod.bool)
+      assert_type("1.0 #{op} 2.0") { bool }
     end
   end
 
   it "types Bool && Bool" do
-    input = parse "true && true"
-    mod = infer_type input
-    input.type.should eq(mod.bool)
+    assert_type("true && true") { bool }
   end
 
   it "types Bool || Bool" do
-    input = parse "true || true"
-    mod = infer_type input
-    input.type.should eq(mod.bool)
+    assert_type("true || true") { bool }
   end
 
   it "types Int#chr" do
-    input = parse "65.chr"
-    mod = infer_type input
-    input.type.should eq(mod.char)
+    assert_type("65.chr") { char }
   end
 end

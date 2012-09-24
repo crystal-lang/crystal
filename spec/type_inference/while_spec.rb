@@ -2,8 +2,6 @@ require 'spec_helper'
 
 describe 'Type inference: while' do
   it "types while" do
-    nodes = parse 'while true; 1; end'
-    mod = infer_type nodes
-    nodes.first.type.should eq(mod.void)
+    assert_type('while true; 1; end') { void }
   end
 end

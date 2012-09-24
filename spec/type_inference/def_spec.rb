@@ -2,15 +2,11 @@ require 'spec_helper'
 
 describe 'Type inference: def' do
   it "types a call with an int" do
-    input = parse 'def foo; 1; end; foo'
-    mod = infer_type input
-    input.last.type.should eq(mod.int)
+    assert_type('def foo; 1; end; foo') { int }
   end
 
   it "types a call with a float" do
-    input = parse 'def foo; 2.3; end; foo'
-    mod = infer_type input
-    input.last.type.should eq(mod.float)
+    assert_type('def foo; 2.3; end; foo') { float }
   end
 
   it "types a call with an argument" do
@@ -21,9 +17,7 @@ describe 'Type inference: def' do
   end
 
   it "types a call with an argument uses a new scope" do
-    input = parse 'x = 2.3; def foo(x); x; end; foo 1; x'
-    mod = infer_type input
-    input.last.type.should eq(mod.float)
+    assert_type('x = 2.3; def foo(x); x; end; foo 1; x') { float }
   end
 
   it "assigns def owner" do
@@ -39,15 +33,11 @@ describe 'Type inference: def' do
   end
 
   it "types putchar with Char" do
-    input = parse "putchar 'a'"
-    mod = infer_type input
-    input.last.type.should eq(mod.char)
+    assert_type("putchar 'a'") { char }
   end
 
   it "types getchar with Char" do
-    input = parse "getchar"
-    mod = infer_type input
-    input.last.type.should eq(mod.char)
+    assert_type("getchar") { char }
   end
 
   it "allows recursion" do
@@ -82,8 +72,6 @@ describe 'Type inference: def' do
   end
 
   it "types empty body def" do
-    input = parse 'def foo; end; foo'
-    mod = infer_type input
-    input.last.type.should eq(mod.void)
+    assert_type('def foo; end; foo') { void }
   end
 end

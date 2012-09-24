@@ -10,10 +10,11 @@ def regex(str)
   /#{Regexp.escape(str)}/
 end
 
-def type_str(str)
+def assert_type(str, &block)
   input = parse str
-  infer_type input
-  input.type
+  mod = infer_type input
+  expected_type = mod.instance_eval &block
+  input.last.type.should eq(expected_type)
 end
 
 # Extend some Ruby core classes to make it easier
