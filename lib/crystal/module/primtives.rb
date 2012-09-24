@@ -129,6 +129,7 @@ module Crystal
 
 		def define_externals
       external('putchar', {'c' => char}, char)
+      external('getchar', {}, char)
      end
 
 	  def primitive(owner, name, arg_names)

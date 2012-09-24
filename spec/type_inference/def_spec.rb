@@ -44,6 +44,12 @@ describe 'Type inference: def' do
     input.last.type.should eq(mod.char)
   end
 
+  it "types getchar with Char" do
+    input = parse "getchar"
+    mod = infer_type input
+    input.last.type.should eq(mod.char)
+  end
+
   it "allows recursion" do
     input = parse "def foo; foo; end; foo"
     infer_type input
