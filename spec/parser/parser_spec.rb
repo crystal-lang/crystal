@@ -107,6 +107,8 @@ describe Parser do
   it_parses_single_node "foo !false", Call.new(nil, "foo", [Call.new(false.bool, :'!@')])
 
   it_parses_single_node "foo.bar.baz", Call.new(Call.new("foo".call, "bar"), "baz")
+  it_parses_single_node "f.x Foo.new", Call.new("f".call, "x", [Call.new("Foo".const, "new")])
+  it_parses_single_node "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".const, "new")])
 
   ["=", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "%", "&", "|", "^", "**", "+@", "-@"].each do |op|
     it_parses_single_node "def #{op}; end;", Def.new(op.to_sym, [], nil)

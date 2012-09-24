@@ -225,7 +225,21 @@ module Crystal
           name_column_number = @token.column_number
           next_token
 
-          args = parse_args
+          if @token.type == :SPACE
+            next_token
+            if @token.type == :'='
+              # Rewrite 'f.x = args' as f.x=(args)
+              next_token_skip_space_or_newline
+              args = parse_args_space_consumed
+              atomic = Call.new(atomic, "#{name}=", args)
+              next
+            else
+              args = parse_args_space_consumed
+            end
+          else
+            args = parse_args
+          end
+
           block = parse_block
           if block
             atomic = Call.new atomic, name, args, block, name_column_number
@@ -386,7 +400,7 @@ module Crystal
     end
 
     def parse_block
-      if @token.type == :IDENT && @token.value == :do
+      if @token.keyword?(:do)
         parse_block2 { check_ident :end }
       elsif @token.type == :'{'
         parse_block2 { check :'}' }
@@ -449,26 +463,30 @@ module Crystal
         args
       when :SPACE
         next_token
-        case @token.type
-        when :CHAR, :INT, :FLOAT, :IDENT, :'(', :'!'
-          case @token.value
-          when :if, :unless, :while
-            nil
-          else
-            args = []
-            while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :')' && @token.type != :':' && !is_end_token
-              args << parse_op_assign
-              skip_space
-              if @token.type == :","
-                next_token_skip_space_or_newline
-              else
-                break
-              end
-            end
-            args
-          end
-        else
+        parse_args_space_consumed
+      else
+        nil
+      end
+    end
+
+    def parse_args_space_consumed
+      case @token.type
+      when :CHAR, :INT, :FLOAT, :IDENT, :CONST, :'(', :'!'
+        case @token.value
+        when :if, :unless, :while
           nil
+        else
+          args = []
+          while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :')' && @token.type != :':' && !is_end_token
+            args << parse_op_assign
+            skip_space
+            if @token.type == :","
+              next_token_skip_space_or_newline
+            else
+              break
+            end
+          end
+          args
         end
       else
         nil
@@ -548,7 +566,7 @@ module Crystal
         skip_statement_end
       end
 
-      if @token.type == :IDENT && @token.value == :end
+      if @token.keyword?(:end)
         body = nil
       else
         body = push_def(args) { parse_expressions }
@@ -607,7 +625,7 @@ module Crystal
       skip_statement_end
 
       a_else = nil
-      if @token.type == :IDENT && @token.value == :else
+      if @token.keyword?(:else)
         next_token_skip_statement_end
         a_else = parse_expressions
       end
@@ -667,7 +685,7 @@ module Crystal
 
     def check_ident(value = nil)
       if value
-        raise_error "expecting token: #{value}" unless @token.type == :IDENT && @token.value == value
+        raise_error "expecting token: #{value}" unless @token.keyword?(value)
       else
         raise_error "unexpected token: #{@token.to_s}" unless @token.type == :IDENT && @token.value.is_a?(String)
       end

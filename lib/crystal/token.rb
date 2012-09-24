@@ -9,8 +9,12 @@ module Crystal
       [line_number, column_number]
     end
 
+    def keyword?(keyword)
+      @type == :IDENT && @value == keyword
+    end
+
     def to_s
-      value || type
+      @value || @type
     end
   end
 end
