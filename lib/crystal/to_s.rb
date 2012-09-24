@@ -144,6 +144,10 @@ module Crystal
       @str << node.name
     end
 
+    def visit_instance_var(node)
+      @str << node.name
+    end
+
     def visit_expressions(node)
       node.expressions.each do |exp|
         append_indent

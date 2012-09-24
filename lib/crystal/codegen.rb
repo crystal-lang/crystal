@@ -19,7 +19,7 @@ module Crystal
     def self.mangled_name(owner, name, arg_types)
       mangled_args = arg_types.map(&:name).join ', '
       if owner
-        "#{owner.name}##{name}<#{mangled_args}>"
+        "#{owner}##{name}<#{mangled_args}>"
       else
         "#{name}<#{mangled_args}>"
       end
@@ -63,6 +63,7 @@ module Crystal
 
       @funs = {}
       @vars = {}
+      @type = @mod
     end
 
     def main
@@ -92,15 +93,21 @@ module Crystal
     def visit_assign(node)
       node.value.accept self
 
-      var = @vars[node.target.name]
-      unless var && var[:type] == node.type
-        var = @vars[node.target.name] = {
-          ptr: @builder.alloca(node.llvm_type, node.target.name),
-          type: node.type
-        }
+      if node.target.is_a?(InstanceVar)
+        index = @type.index_of_instance_var(node.target.name)
+        ptr = @builder.gep(@fun.params[0], [LLVM::Int(0), LLVM::Int(index)], node.target.name)
+      else
+        var = @vars[node.target.name]
+        unless var && var[:type] == node.type
+          var = @vars[node.target.name] = {
+            ptr: @builder.alloca(node.llvm_type, node.target.name),
+            type: node.type
+          }
+        end
+        ptr = var[:ptr]
       end
 
-      @builder.store @last, var[:ptr]
+      @builder.store @last, ptr
 
       false
     end
@@ -112,6 +119,12 @@ module Crystal
       else
         @last = @builder.load var[:ptr], node.name
       end
+    end
+
+    def visit_instance_var(node)
+      index = @type.index_of_instance_var(node.name)
+      ptr = @builder.gep(@fun.params[0], [LLVM::Int(0), LLVM::Int(index)], node.name)
+      @last = @builder.load ptr, node.name
     end
 
     def visit_if(node)
@@ -183,7 +196,7 @@ module Crystal
 
     def visit_call(node)
       if node.obj.is_a?(Const) && node.name == 'new'
-        @last = LLVM::Int(1)
+        @last = @builder.malloc(node.type.llvm_struct_type)
         return false
       end
 
@@ -193,11 +206,14 @@ module Crystal
       unless @fun = @funs[mangled_name]
         old_position = @builder.insert_block
         old_vars = @vars
+        old_type = @type
 
         @vars = {}
 
         args = []
         if node.obj
+          @type = node.obj.type
+
           self_var = Var.new("self")
           self_var.type = node.obj.type
           args << self_var
@@ -231,6 +247,7 @@ module Crystal
         end
 
         @vars = old_vars
+        @type = old_type
       end
 
       values = []

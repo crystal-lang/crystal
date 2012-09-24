@@ -46,12 +46,20 @@ module Crystal
     end
 
     def llvm_type
-      LLVM::Int
+      @llvm_type ||= LLVM::Pointer(llvm_struct_type)
+    end
+
+    def llvm_struct_type
+      @llvm_struct_type ||= LLVM::Struct(*@instance_vars.values.map(&:llvm_type))
+    end
+
+    def index_of_instance_var(name)
+      @instance_vars.keys.index(name)
     end
 
     def clone
       obj = ObjectType.new name
-      obj.defs = defs.clone
+      obj.defs = Hash[defs.map { |key, value| [key, value.clone] }]
       obj
     end
 

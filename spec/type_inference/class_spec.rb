@@ -62,8 +62,13 @@ describe 'Type inference: class' do
 			f = Foo.new
 			f.set 2
 			f.get
+
+			g = Foo.new
+			g.set 2.5
+			g.get
 		)
 		mod = infer_type input
-		input.last.type.should eq(mod.int)
+		input[3].type.should eq(mod.int)
+		input.last.type.should eq(mod.float)
 	end
 end
