@@ -236,9 +236,13 @@ module Crystal
           @builder.position_at_end(entry)
 
           args.each_with_index do |arg, i|
-            ptr = @builder.alloca(arg.llvm_type, arg.name)
-            @vars[arg.name] = { ptr: ptr, type: arg.type }
-            @builder.store @fun.params[i], ptr
+            if node.obj && i == 0 || node.target_def.body.is_a?(PrimitiveBody)
+              @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, is_arg: true }
+            else
+              ptr = @builder.alloca(arg.llvm_type, arg.name)
+              @vars[arg.name] = { ptr: ptr, type: arg.type }
+              @builder.store @fun.params[i], ptr
+            end
           end
 
           node.target_def.body.accept self
