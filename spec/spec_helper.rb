@@ -55,6 +55,10 @@ class String
   def call(*args)
     Crystal::Call.new nil, self, args
   end
+
+  def const
+    Crystal::Const.new self
+  end
 end
 
 class ::Array

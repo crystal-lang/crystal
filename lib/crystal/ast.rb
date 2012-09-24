@@ -306,8 +306,23 @@ module Crystal
       @name.start_with? '@'
     end
 
-    def constant?
-      name[0] == name[0].upcase
+    def ==(other)
+      other.class == self.class && other.name == name
+    end
+
+    def clone
+      var = self.class.new name
+      var.location = location
+      var
+    end
+  end
+
+  # A Class name or constant name.
+  class Const < ASTNode
+    attr_accessor :name
+
+    def initialize(name)
+      @name = name
     end
 
     def ==(other)

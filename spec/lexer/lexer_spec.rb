@@ -52,6 +52,10 @@ describe Lexer do
     it_lexes string, :CHAR, value
   end
 
+  def self.it_lexes_const(string)
+    it_lexes string, :CONST, string
+  end
+
   it_lexes " ", :SPACE
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
@@ -65,6 +69,7 @@ describe Lexer do
   it_lexes_char "'\\t'", ?\t.ord
   it_lexes_char "'\\0'", ?\0.ord
   it_lexes_operators "=", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", "==", "!=", "!", ",", '.', "+@", "-@", "&&", "||", "|", "{", "}", '?', ':', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**=', '<<', '>>', '%', '&', '|', '^', '**', '<<=', '>>=', '~', '~@', '[]', '[', ']'
+  it_lexes_const "Foo"
 
   it "lexes comment and token" do
     lexer = Lexer.new "# comment\n1"

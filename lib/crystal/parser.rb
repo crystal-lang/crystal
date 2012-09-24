@@ -337,6 +337,8 @@ module Crystal
         else
           parse_var_or_call
         end
+      when :CONST
+        node_and_next_token Const.new(@token.value)
       else
         raise_error "unexpected token: #{@token.to_s}"
       end
@@ -475,7 +477,7 @@ module Crystal
       location = @token.location
 
       next_token_skip_space_or_newline
-      check :IDENT
+      check :CONST
 
       name = @token.value
       next_token_skip_space
@@ -484,7 +486,7 @@ module Crystal
 
       if @token.type == :<
         next_token_skip_space_or_newline
-        check :IDENT
+        check :CONST
         superclass = @token.value
         next_token
       end

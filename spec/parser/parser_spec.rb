@@ -169,13 +169,15 @@ describe Parser do
     it_parses_single_node "#{keyword} if true", If.new(true.bool, eval(keyword.capitalize).new)
   end
 
-  it_parses_single_node "Int[]", Call.new("Int".call, :[])
+  it_parses_single_node "Int", "Int".const
+
+  it_parses_single_node "Int[]", Call.new("Int".const, :[])
   it_parses_single_node "def []; end", Def.new(:[], [], nil)
   it_parses_single_node "def self.[]; end", Def.new(:[], [], nil, "self".var)
 
-  it_parses_single_node "Int[8]", Call.new("Int".call, :'[ ]', [8.int])
-  it_parses_single_node "Int[8, 4]", Call.new("Int".call, :'[ ]', [8.int, 4.int])
-  it_parses_single_node "Int[8, 4,]", Call.new("Int".call, :'[ ]', [8.int, 4.int])
+  it_parses_single_node "Int[8]", Call.new("Int".const, :'[ ]', [8.int])
+  it_parses_single_node "Int[8, 4]", Call.new("Int".const, :'[ ]', [8.int, 4.int])
+  it_parses_single_node "Int[8, 4,]", Call.new("Int".const, :'[ ]', [8.int, 4.int])
 
   it_parses_single_node "def [](x); end", Def.new(:'[ ]', ["x".var], nil)
 
