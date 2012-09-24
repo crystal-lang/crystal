@@ -68,4 +68,8 @@ describe 'Type inference: primitives' do
   it "types Int#chr" do
     assert_type("65.chr") { char }
   end
+
+  it "types Char#ord" do
+    assert_type("'a'.ord") { int }
+  end
 end

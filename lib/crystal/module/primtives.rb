@@ -4,6 +4,7 @@ module Crystal
 
 		def define_primitives
 			define_bool_primitives
+      define_char_primitives
 			define_int_primitives
 			define_float_primitives
 			define_externals
@@ -18,6 +19,10 @@ module Crystal
         p.overload([bool], bool) { |b, f| b.or(f.params[0], f.params[1]) }
       end
 		end
+
+    def define_char_primitives
+      no_args_primitive(char, 'ord', int) { |b, f| b.zext(f.params[0], int.llvm_type) }
+    end
 
 		def define_int_primitives
       primitive(int, :+, ['other']) do |p|
@@ -70,9 +75,7 @@ module Crystal
         p.overload([float], bool) { |b, f| b.fcmp(:oge, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
       end
 
-      primitive(int, 'chr', []) do |p|
-      	p.overload([], char) { |b, f| b.trunc(f.params[0], char.llvm_type) }
-      end
+      no_args_primitive(int, 'chr', char) { |b, f| b.trunc(f.params[0], char.llvm_type) }
 		end
 
 		def define_float_primitives
@@ -132,11 +135,15 @@ module Crystal
       external('getchar', {}, char)
      end
 
-	  def primitive(owner, name, arg_names)
+	  def primitive(owner, name, arg_names, return_type = nil)
 	    p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Var.new(x) })
 	    p.owner = owner
 	    yield p
 	  end
+
+    def no_args_primitive(owner, name, return_type, &block)
+      primitive(owner, name, []) { |p| p.overload([], return_type, &block) }
+    end
 
 	  def external(name, args, return_type)
 	    args = args.map do |name, type|

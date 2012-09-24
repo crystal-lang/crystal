@@ -162,4 +162,9 @@ describe 'Code gen: primitives' do
   it 'codegens Int#chr' do
     run("65.chr").to_i.should eq(65)
   end
+
+  it 'codegens Char#ord' do
+    run("'A'.ord").to_i.should eq(65)
+    run("255.chr.ord").to_i.should eq(255)
+  end
 end
