@@ -2,7 +2,7 @@ module Crystal
   class Type
     attr_reader :name
     attr_reader :llvm_type
-    attr_reader :defs
+    attr_accessor :defs
 
     def initialize(name, llvm_type)
       @name = name
@@ -47,6 +47,12 @@ module Crystal
 
     def llvm_type
       LLVM::Int
+    end
+
+    def clone
+      obj = ObjectType.new name
+      obj.defs = defs.clone
+      obj
     end
 
     def to_s

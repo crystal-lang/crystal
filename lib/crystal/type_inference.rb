@@ -90,7 +90,7 @@ module Crystal
     def visit_call(node)
       if node.obj.is_a?(Const) && node.name == 'new'
         type = mod.types[node.obj.name] or compile_error_on_node "uninitialized constant #{node.obj.name}", node.obj
-        node.type = type
+        node.type = type.clone
         return false
       end
 

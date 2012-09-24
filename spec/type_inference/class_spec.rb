@@ -19,17 +19,31 @@ describe 'Type inference: class' do
 				def set
 					@coco = 2
 				end
-				
-				def get
-					@coco
-				end
 			end
 
 			f = Foo.new
 			f.set
-			f.get
 		)
 		mod = infer_type input
 		input[1].type.should eq(ObjectType.new("Foo").with_var("@coco", mod.int))
+	end
+
+	it "types instance variable" do
+		input = parse %(
+			class Foo
+				def set(value)
+					@coco = value
+				end
+			end
+
+			f = Foo.new
+			f.set 2
+
+			g = Foo.new
+			g.set 2.5
+		)
+		mod = infer_type input
+		input[1].type.should eq(ObjectType.new("Foo").with_var("@coco", mod.int))
+		input[3].type.should eq(ObjectType.new("Foo").with_var("@coco", mod.float))
 	end
 end
