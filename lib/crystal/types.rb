@@ -32,4 +32,25 @@ module Crystal
     end
   end
 
+  class ObjectType < Type
+    attr_accessor :instance_vars
+
+    def initialize(name)
+      @name = name
+      @defs = {}
+      @instance_vars = {}
+    end
+
+    def ==(other)
+      other.class == self.class && name == other.name && instance_vars == other.instance_vars
+    end
+
+    def llvm_type
+      LLVM::Int
+    end
+
+    def to_s
+      "#{name}<#{@instance_vars.map{ |name, type| "#{name}: #{type}" }.join ', '}>"
+    end
+  end
 end

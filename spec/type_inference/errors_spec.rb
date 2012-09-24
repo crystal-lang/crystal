@@ -14,7 +14,7 @@ end
 bar).strip
 
     lambda {
-      type nodes
+      infer_type nodes
     }.should raise_error(Crystal::Exception, "
 Error: undefined local variable or method 'something' in 'foo'
 
@@ -31,7 +31,7 @@ in line 9
     nodes = parse "foo()"
 
     lambda {
-      type nodes
+      infer_type nodes
     }.should raise_error(Crystal::Exception, /undefined method 'foo'/)
   end
 
@@ -39,7 +39,7 @@ in line 9
     nodes = parse "def foo(x); x; end; foo"
 
     lambda {
-      type nodes
+      infer_type nodes
     }.should raise_error(Crystal::Exception, regex("wrong number of arguments for 'foo' (0 for 1)"))
   end
 
@@ -47,7 +47,7 @@ in line 9
     nodes = parse "class Int; def foo; 1; end; end; foo"
 
     lambda {
-      type nodes
+      infer_type nodes
     }.should raise_error(Crystal::Exception, /undefined local variable or method 'foo'/)
   end
 
@@ -55,7 +55,7 @@ in line 9
     nodes = parse "1.foo"
 
     lambda {
-      type nodes
+      infer_type nodes
     }.should raise_error(Crystal::Exception, /undefined method 'foo' for Int/)
   end
 
@@ -63,7 +63,7 @@ in line 9
     nodes = parse "1 + 'a'"
 
     lambda {
-      type nodes
+      infer_type nodes
     }.should raise_error(Crystal::Exception, regex("can't call Int#+ with types [Char]"))
   end
 
@@ -71,7 +71,15 @@ in line 9
     nodes = parse "putchar 1"
 
     lambda {
-      type nodes
+      infer_type nodes
     }.should raise_error(Crystal::Exception, regex("can't call putchar with types [Int]"))
+  end
+
+  it "reports uninitialized constant" do
+    nodes = parse "Foo.new"
+
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("uninitialized constant Foo"))
   end
 end

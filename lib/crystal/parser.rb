@@ -84,7 +84,7 @@ module Crystal
           else
             break unless can_be_assigned?(atomic)
 
-            atomic = Var.new atomic.name
+            atomic = Var.new(atomic.name) if atomic.is_a?(Call)
             push_var atomic
 
             next_token_skip_space_or_newline
@@ -95,7 +95,7 @@ module Crystal
         when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
           break unless can_be_assigned?(atomic)
 
-          atomic = Var.new atomic.name
+          atomic = Var.new(atomic.name) if atomic.is_a?(Call)
           push_var atomic
 
           method = @token.type.to_s[0 .. -2].to_sym
@@ -339,6 +339,8 @@ module Crystal
         end
       when :CONST
         node_and_next_token Const.new(@token.value)
+      when :INSTANCE_VAR
+        node_and_next_token InstanceVar.new(@token.value)
       else
         raise_error "unexpected token: #{@token.to_s}"
       end
@@ -701,7 +703,7 @@ module Crystal
     end
 
     def can_be_assigned?(node)
-      node.is_a?(Var) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
+      node.is_a?(Var) || node.is_a?(InstanceVar) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
   end
 

@@ -21,7 +21,7 @@ module Crystal
     end
   end
 
-  def type(node)
+  def infer_type(node)
     mod = Crystal::Module.new
     node.accept TypeVisitor.new(mod, node)
     mod
@@ -56,7 +56,11 @@ module Crystal
       node.value.accept self
       node.type = node.target.type = node.value.type
 
-      define_var node.target
+      if node.target.is_a?(InstanceVar)
+        scope[:type].instance_vars[node.target.name] = node.type 
+      else
+        define_var node.target
+      end
 
       false
     end
@@ -84,6 +88,12 @@ module Crystal
     end
 
     def visit_call(node)
+      if node.obj.is_a?(Const) && node.name == 'new'
+        type = mod.types[node.obj.name] or compile_error_on_node "uninitialized constant #{node.obj.name}", node.obj
+        node.type = type
+        return false
+      end
+
       if node.obj
         node.obj.accept self
         scope = node.obj.type
@@ -138,7 +148,7 @@ module Crystal
         typed_def.owner = node.obj.type if node.obj
         typed_def.body.type = :unknown
 
-        with_new_scope(node.line_number, untyped_def) do
+        with_new_scope(node.line_number, untyped_def, scope) do
           if node.obj
             self_var = Var.new("self")
             self_var.type = node.obj.type
@@ -167,6 +177,7 @@ module Crystal
     end
 
     def visit_class_def(node)
+      mod.types[node.name] ||= ObjectType.new node.name
       true
     end
 
@@ -187,15 +198,19 @@ module Crystal
       @scopes.last[:vars][name] or raise "Bug: var '#{name}' not found"
     end
 
-    def with_new_scope(line, obj)
+    def with_new_scope(line, obj, type)
       scope[:line] = line
-      @scopes.push({vars: {}, obj: obj})
+      @scopes.push({vars: {}, obj: obj, type: type})
       yield
       @scopes.pop
     end
 
     def scope
       @scopes.last
+    end
+
+    def compile_error_on_node(message, node)
+      compile_error message, node.line_number, node.column_number, node.name.length
     end
 
     def compile_error(message, line, column, length)

@@ -56,12 +56,15 @@ describe Lexer do
     it_lexes string, :CONST, string
   end
 
+  def self.it_lexes_instance_var(string)
+    it_lexes string, :INSTANCE_VAR, string
+  end
+
   it_lexes " ", :SPACE
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
   it_lexes_keywords "def", "if", "else", "elsif", "end", "true", "false", "class", "while", "nil", "do", "yield", "return", "unless", "next", "break", "begin"
   it_lexes_idents "ident", "something", "with_underscores", "with_1", "foo?", "bar!"
-  it_lexes_idents "@ident", "@something", "@with_underscores", "@with_1", "@foo?", "@bar!"
   it_lexes_ints "1", ["1hello", "1"], "+1", "-1"
   it_lexes_floats "1.0", ["1.0hello", "1.0"], "+1.0", "-1.0"
   it_lexes_char "'a'", ?a.ord
@@ -70,6 +73,7 @@ describe Lexer do
   it_lexes_char "'\\0'", ?\0.ord
   it_lexes_operators "=", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", "==", "!=", "!", ",", '.', "+@", "-@", "&&", "||", "|", "{", "}", '?', ':', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**=', '<<', '>>', '%', '&', '|', '^', '**', '<<=', '>>=', '~', '~@', '[]', '[', ']'
   it_lexes_const "Foo"
+  it_lexes_instance_var "@foo"
 
   it "lexes comment and token" do
     lexer = Lexer.new "# comment\n1"

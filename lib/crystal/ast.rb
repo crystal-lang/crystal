@@ -293,17 +293,12 @@ module Crystal
     end
   end
 
-  # A local variable, instance variable, constant,
-  # or def or block argument.
+  # A local variable or def or block argument.
   class Var < ASTNode
     attr_accessor :name
 
     def initialize(name)
       @name = name
-    end
-
-    def instance_var?
-      @name.start_with? '@'
     end
 
     def ==(other)
@@ -319,6 +314,25 @@ module Crystal
 
   # A Class name or constant name.
   class Const < ASTNode
+    attr_accessor :name
+
+    def initialize(name)
+      @name = name
+    end
+
+    def ==(other)
+      other.class == self.class && other.name == name
+    end
+
+    def clone
+      var = self.class.new name
+      var.location = location
+      var
+    end
+  end
+
+  # An instance variable.
+  class InstanceVar < ASTNode
     attr_accessor :name
 
     def initialize(name)

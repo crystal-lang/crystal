@@ -12,7 +12,7 @@ end
 
 def type_str(str)
   input = parse str
-  type input
+  infer_type input
   input.type
 end
 
@@ -59,10 +59,21 @@ class String
   def const
     Crystal::Const.new self
   end
+
+  def instance_var
+    Crystal::InstanceVar.new self
+  end
 end
 
 class ::Array
   def array
     Crystal::Array.new self
+  end
+end
+
+class Crystal::ObjectType
+  def with_var(name, type)
+    @instance_vars[name] = type
+    self
   end
 end

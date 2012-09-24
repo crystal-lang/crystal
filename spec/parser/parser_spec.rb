@@ -186,4 +186,7 @@ describe Parser do
   it_parses_single_node "begin; 1; 2; 3; end;", Expressions.new([1.int, 2.int, 3.int])
 
   it_parses_single_node "self", "self".var
+
+  it_parses_single_node "@foo", "@foo".instance_var
+  it_parses_single_node "@foo = 1", Assign.new("@foo".instance_var, 1.int)
 end

@@ -35,7 +35,7 @@ module Crystal
 
   def build(code)
     node = parse code
-    mod = type node
+    mod = infer_type node
 
     visitor = CodeGenVisitor.new(mod, node.type)
     node.accept visitor
@@ -182,6 +182,11 @@ module Crystal
     end
 
     def visit_call(node)
+      if node.obj.is_a?(Const) && node.name == 'new'
+        @last = LLVM::Int(1)
+        return false
+      end
+
       mangled_name = node.target_def.mangled_name
 
       old_fun = @fun
