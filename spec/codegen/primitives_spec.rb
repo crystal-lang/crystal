@@ -25,6 +25,14 @@ describe 'Code gen: primitives' do
     run('def foo; 5; end; class Int; def foo; 2; end; end; 1.foo; foo').to_i.should eq(5)
   end
 
+  it "codegens !Bool -> true" do
+    run('!false').to_b.should be_true
+  end
+
+  it "codegens !Bool -> false" do
+    run('!true').to_b.should be_false
+  end
+
   it "codegens Bool && Bool -> true" do
     run('true && true').to_b.should be_true
   end

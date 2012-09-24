@@ -11,13 +11,9 @@ module Crystal
 		end
 
 		def define_bool_primitives
-      primitive(bool, :'&&', ['other']) do |p|
-        p.overload([bool], bool) { |b, f| b.and(f.params[0], f.params[1]) }
-      end
-
-      primitive(bool, :'||', ['other']) do |p|
-        p.overload([bool], bool) { |b, f| b.or(f.params[0], f.params[1]) }
-      end
+      singleton(bool, :'!@', {}, bool) { |b, f| b.not(f.params[0]) }
+      singleton(bool, :'&&', {'other' => bool}, bool) { |b, f| b.and(f.params[0], f.params[1]) }
+      singleton(bool, :'||', {'other' => bool}, bool) { |b, f| b.or(f.params[0], f.params[1]) }
 		end
 
     def define_char_primitives

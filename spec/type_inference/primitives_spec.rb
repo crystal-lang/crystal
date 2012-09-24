@@ -61,6 +61,10 @@ describe 'Type inference: primitives' do
     end
   end
 
+  it "types !Bool" do
+    assert_type("!false") { bool }
+  end
+
   it "types Bool && Bool" do
     assert_type("true && true") { bool }
   end
