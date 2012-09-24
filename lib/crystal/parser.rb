@@ -95,6 +95,8 @@ module Crystal
         when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
           break unless can_be_assigned?(atomic)
 
+          # Rewrite 'a += b' as 'a = a + b'
+
           atomic = Var.new(atomic.name) if atomic.is_a?(Call)
           push_var atomic
 
@@ -227,11 +229,19 @@ module Crystal
 
           if @token.type == :SPACE
             next_token
-            if @token.type == :'='
+            case @token.type
+            when :'='
               # Rewrite 'f.x = args' as f.x=(args)
               next_token_skip_space_or_newline
               args = parse_args_space_consumed
               atomic = Call.new(atomic, "#{name}=", args)
+              next
+            when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
+              # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
+              method = @token.type.to_s[0 .. -2].to_sym
+              next_token_skip_space
+              value = parse_expression
+              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name), method, [value])])
               next
             else
               args = parse_args_space_consumed

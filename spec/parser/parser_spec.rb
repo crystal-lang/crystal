@@ -110,6 +110,10 @@ describe Parser do
   it_parses_single_node "f.x Foo.new", Call.new("f".call, "x", [Call.new("Foo".const, "new")])
   it_parses_single_node "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".const, "new")])
 
+  [:'+', :'-', :'*', :'/', :'%', :'|', :'&', :'^', :'**', :<<, :>>].each do |op|
+    it_parses_single_node "f.x #{op}= 2", Call.new("f".call, "x=", [Call.new(Call.new("f".call, "x"), op, [2.int])])
+  end
+
   ["=", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "%", "&", "|", "^", "**", "+@", "-@"].each do |op|
     it_parses_single_node "def #{op}; end;", Def.new(op.to_sym, [], nil)
   end
