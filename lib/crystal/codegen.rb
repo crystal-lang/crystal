@@ -33,15 +33,15 @@ module Crystal
   end
 
   def run(code)
-    mod = build code
-
-    engine = LLVM::JITCompiler.new(mod)
-    engine.run_function mod.functions["main"]
-  end
-
-  def build(code)
     node = parse code
     mod = infer_type node
+    llvm_mod = build node, mod
+
+    engine = LLVM::JITCompiler.new(llvm_mod)
+    engine.run_function llvm_mod.functions["main"]
+  end
+
+  def build(node, mod)
 
     visitor = CodeGenVisitor.new(mod, node.type)
     node.accept visitor

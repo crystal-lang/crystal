@@ -10,29 +10,36 @@ module Crystal
     def initialize
       require 'optparse'
 
-      options = {}
+      @options = {}
       OptionParser.new do |opts|
         opts.on('-o ', 'Output filename') do |output|
-          options[:output_filename] = output
+          @options[:output_filename] = output
         end
         opts.on('-run ', 'Execute filename') do |run|
           @run = true
         end
+        opts.on('-graph ', 'Render type graph') do |graph|
+          @graph = true
+        end
       end.parse!
 
-      if !options[:output_filename] && ARGV.length > 0
-        options[:output_filename] = File.basename(ARGV[0], File.extname(ARGV[0]))
+      if !@options[:output_filename] && ARGV.length > 0
+        @options[:output_filename] = File.basename(ARGV[0], File.extname(ARGV[0]))
       end
 
-      o_flag = options[:output_filename] ? "-o #{options[:output_filename]} " : ''
+      o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
       @command = "llc | clang -x assembler #{o_flag}-"
     end
 
     def compile
       begin
-        mod = build ARGF.read
-        engine = LLVM::JITCompiler.new mod
-        optimize mod, engine
+        node = parse ARGF.read
+        mod = infer_type node
+        graph node, mod, @options[:output_filename] if @graph
+
+        llvm_mod = build node, mod
+        engine = LLVM::JITCompiler.new llvm_mod
+        optimize llvm_mod, engine
       rescue Crystal::Exception => ex
         puts ex.message
         exit 1
