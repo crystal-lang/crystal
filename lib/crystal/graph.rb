@@ -1,7 +1,9 @@
 require 'graphviz'
 
 module Crystal
-  def graph(node, mod, output = 'crystal')
+  def graph(node, mod, output = nil)
+    output ||= 'crystal'
+
     visitor = GraphVisitor.new
     node.accept visitor
 
