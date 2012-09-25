@@ -40,7 +40,7 @@ module Crystal
       node = @g.get_node(type.object_id.to_s)
       unless node
         if type.is_a? ObjectType
-          node = @g.add_nodes type.object_id.to_s, :shape => 'record', :label => type.name
+          node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
           type.instance_vars.each do |ivar, type|
             @g.add_edges node, type_node(type), :label => ivar
           end
