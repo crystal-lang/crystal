@@ -129,8 +129,8 @@ module Crystal
 
     def visit_instance_var(node)
       index = @type.index_of_instance_var(node.name)
-      ptr = @builder.gep(@fun.params[0], [LLVM::Int(0), LLVM::Int(index)], node.name)
-      @last = @builder.load ptr, node.name
+      struct = @builder.load @fun.params[0]
+      @last = @builder.extract_value struct, index, node.name
     end
 
     def visit_if(node)
@@ -208,6 +208,16 @@ module Crystal
 
       mangled_name = node.target_def.mangled_name
 
+      call_args = []
+      if node.obj
+        node.obj.accept self
+        call_args << @last
+      end
+      node.args.each do |arg|
+        arg.accept self
+        call_args << @last
+      end
+
       old_fun = @fun
       unless @fun = @funs[mangled_name]
         old_position = @builder.insert_block
@@ -260,17 +270,7 @@ module Crystal
         @type = old_type
       end
 
-      values = []
-      if node.obj
-        node.obj.accept self
-        values << @last
-      end
-      node.args.each do |arg|
-        arg.accept self
-        values << @last
-      end
-
-      @last = @builder.call @fun, *values
+      @last = @builder.call @fun, *call_args
       @fun = old_fun
 
       false

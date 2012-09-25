@@ -17,6 +17,18 @@ def assert_type(str, &block)
   input.last.type.should eq(expected_type)
 end
 
+def rw(name)
+  %Q(
+  def #{name}=(value)
+    @#{name} = value
+  end
+
+  def #{name}
+    @#{name}
+  end
+  )
+end
+
 # Extend some Ruby core classes to make it easier
 # to create Crystal AST nodes.
 

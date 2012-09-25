@@ -8,22 +8,41 @@ describe 'Code gen: class' do
   it "codegens instance var" do
   	run(%Q(
 			class Foo
-				def set(value)
-					@coco = value
-				end
-
-				def get
-					@coco
-				end
+        #{rw 'coco'}
 			end
 
 			f = Foo.new
-			f.set 2
+			f.coco = 2
 
 			g = Foo.new
-			g.set 0.5
+			g.coco = 0.5
 
-			f.get + g.get
+			f.coco + g.coco
   		)).to_f.should eq(2.5)
+  end
+
+  it "codegens recursive type" do
+    run(%Q(
+      class Foo
+        #{rw 'next'}
+      end
+
+      f = Foo.new
+      f.next = f
+      ))
+  end
+
+  it "codegens method call of instance var" do
+    run(%Q(
+      class List
+        def foo
+          @last = 1
+          @last.to_f
+        end
+      end
+
+      l = List.new
+      l.foo
+      )).to_f.should eq(1.0)
   end
 end

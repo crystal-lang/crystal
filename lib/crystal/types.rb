@@ -35,10 +35,14 @@ module Crystal
   class ObjectType < Type
     attr_accessor :instance_vars
 
+    @@id = 0
+
     def initialize(name)
       @name = name
       @defs = {}
       @instance_vars = {}
+      @@id += 1
+      @id = @@id
     end
 
     def ==(other)
@@ -50,7 +54,11 @@ module Crystal
     end
 
     def llvm_struct_type
-      @llvm_struct_type ||= LLVM::Struct(*@instance_vars.values.map(&:llvm_type))
+      unless @llvm_struct_type
+        @llvm_struct_type = LLVM::Struct(to_s)
+        @llvm_struct_type.element_types = @instance_vars.values.map(&:llvm_type)
+      end
+      @llvm_struct_type
     end
 
     def index_of_instance_var(name)
@@ -64,7 +72,7 @@ module Crystal
     end
 
     def to_s
-      "#{name}<#{@instance_vars.map{ |name, type| "#{name}: #{type}" }.join ', '}>"
+      "#{name}#{@id}"
     end
   end
 end
