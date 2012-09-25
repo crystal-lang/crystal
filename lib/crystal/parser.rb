@@ -537,10 +537,21 @@ module Crystal
       check :IDENT, :"=", :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[]
 
       receiver = nil
-      name = @token.type == :IDENT ? @token.value : @token.type
-      args = []
+      if @token.type == :IDENT
+        name = @token.value
+        next_token
+        if @token.type == :'='
+          name = "#{name}="
+          next_token_skip_space
+        else
+          skip_space
+        end
+      else
+        name = @token.type
+        next_token_skip_space
+      end
 
-      next_token_skip_space
+      args = []
 
       if @token.type == :'.'
         receiver = Var.new name
