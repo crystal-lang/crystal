@@ -81,11 +81,19 @@ describe 'Type inference: primitives' do
     assert_type("'a'.ord") { int }
   end
 
+  it "types Int#to_i" do
+    assert_type("1.to_i") { int }
+  end
+
   it "types Int#to_f" do
     assert_type("1.to_f") { float }
   end
 
   it "types Float#to_i" do
     assert_type("1.5.to_i") { int }
+  end
+
+  it "types Float#to_f" do
+    assert_type("1.5.to_f") { float }
   end
 end

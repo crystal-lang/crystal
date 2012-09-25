@@ -226,11 +226,19 @@ describe 'Code gen: primitives' do
     run("255.chr.ord").to_i.should eq(255)
   end
 
+  it "codegens Int#to_i" do
+    run("1.to_i").to_i.should eq(1)
+  end
+
   it "codegens Int#to_f" do
     run("1.to_f").to_f.should eq(1.0)
   end
 
   it "codegens Float#to_i" do
     run("2.5.to_i").to_i.should eq(2)
+  end
+
+  it "codegens Float#to_f" do
+    run("2.5.to_f").to_f.should eq(2.5)
   end
 end
