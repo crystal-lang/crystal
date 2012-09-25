@@ -27,6 +27,8 @@ module Crystal
     end
 
 		def define_int_primitives
+      no_args_primitive(int, 'to_f', float) { |b, f| b.si2fp(f.params[0], float.llvm_type) }
+
       primitive(int, :+, ['other']) do |p|
         p.overload([int], int) { |b, f| b.add(f.params[0], f.params[1]) }
         p.overload([float], float) { |b, f| b.fadd(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
@@ -81,6 +83,8 @@ module Crystal
 		end
 
 		def define_float_primitives
+      no_args_primitive(float, 'to_i', int) { |b, f| b.fp2si(f.params[0], int.llvm_type) }
+
       primitive(float, :+, ['other']) do |p|
         p.overload([int], float) { |b, f| b.fadd(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
         p.overload([float], float) { |b, f| b.fadd(f.params[0], f.params[1]) }
