@@ -50,11 +50,11 @@ module Crystal
       end
 
       if @run
-        engine.run_function mod.functions["main"]
+        engine.run_function llvm_mod.functions["main"]
       else
         reader, writer = IO.pipe
         Thread.new do
-          mod.write_bitcode(writer)
+          llvm_mod.write_bitcode(writer)
           writer.close
         end
 
