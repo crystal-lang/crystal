@@ -17,12 +17,18 @@ module Crystal
     end
 
     def self.mangled_name(owner, name, arg_types)
-      mangled_args = arg_types.map(&:name).join ', '
+      str = ''
       if owner
-        "#{owner}##{name}<#{mangled_args}>"
-      else
-        "#{name}<#{mangled_args}>"
+        str << owner.to_s
+        str << '#'
       end
+      str << name.to_s
+      if arg_types.length > 0
+        str << '<'
+        str << arg_types.map(&:name).join(', ')
+        str << '>'
+      end
+      str
     end
   end
 
