@@ -19,10 +19,10 @@ module Crystal
           @options[:optimization_passes] = opt.to_i
         end
         opts.on('-run ', 'Execute filename') do |run|
-          @run = true
+          @options[:run] = true
         end
         opts.on('-graph ', 'Render type graph') do |graph|
-          @graph = true
+          @options[:graph] = true
         end
       end.parse!
 
@@ -38,7 +38,7 @@ module Crystal
       begin
         node = parse ARGF.read
         mod = infer_type node
-        graph node, mod, @options[:output_filename] if @graph
+        graph node, mod, @options[:output_filename] if @options[:graph]
 
         llvm_mod = build node, mod
         engine = LLVM::JITCompiler.new llvm_mod
@@ -52,7 +52,7 @@ module Crystal
         exit 1
       end
 
-      if @run
+      if @options[:run]
         engine.run_function llvm_mod.functions["main"]
       else
         reader, writer = IO.pipe
