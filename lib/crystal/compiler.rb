@@ -18,11 +18,14 @@ module Crystal
         opts.on('-O ', "Optimization passes (default: #{@options[:optimization_passes]})") do |opt|
           @options[:optimization_passes] = opt.to_i
         end
-        opts.on('-run ', 'Execute filename') do |run|
+        opts.on('-run ', 'Execute filename') do
           @options[:run] = true
         end
-        opts.on('-graph ', 'Render type graph') do |graph|
+        opts.on('-graph ', 'Render type graph') do
           @options[:graph] = true
+        end
+        opts.on('-ll', 'Dump ll to standard output') do
+          @options[:dump_ll] = true
         end
       end.parse!
 
@@ -51,6 +54,8 @@ module Crystal
         puts ex.backtrace
         exit 1
       end
+
+      llvm_mod.dump if @options[:dump_ll]
 
       if @options[:run]
         engine.run_function llvm_mod.functions["main"]
