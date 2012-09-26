@@ -10,10 +10,13 @@ module Crystal
     def initialize
       require 'optparse'
 
-      @options = {}
+      @options = {optimization_passes: 5}
       OptionParser.new do |opts|
         opts.on('-o ', 'Output filename') do |output|
           @options[:output_filename] = output
+        end
+        opts.on('-O ', "Optimization passes (default: #{@options[:optimization_passes]})") do |opt|
+          @options[:optimization_passes] = opt.to_i
         end
         opts.on('-run ', 'Execute filename') do |run|
           @run = true
@@ -77,7 +80,7 @@ module Crystal
       pm.loop_deletion!
       pm.loop_rotate!
 
-      5.times { pm.run mod }
+      @options[:optimization_passes].times { pm.run mod }
     end
   end
 end
