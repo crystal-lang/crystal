@@ -44,6 +44,8 @@ module Crystal
         graph node, mod, @options[:output_filename] if @options[:graph]
 
         llvm_mod = build node, mod
+        write_main llvm_mod unless @options[:run]
+
         engine = LLVM::JITCompiler.new llvm_mod
         optimize llvm_mod, engine
       rescue Crystal::Exception => ex
@@ -58,7 +60,7 @@ module Crystal
       llvm_mod.dump if @options[:dump_ll]
 
       if @options[:run]
-        engine.run_function llvm_mod.functions["main"]
+        engine.run_function llvm_mod.functions["crystal_main"]
       else
         reader, writer = IO.pipe
         Thread.new do
@@ -68,6 +70,16 @@ module Crystal
 
         pid = spawn command, in: reader
         Process.waitpid pid
+      end
+    end
+
+    def write_main(mod)
+      mod.functions.add('main', [], LLVM::Int) do |main|
+        entry = main.basic_blocks.append('entry')
+        entry.build do |b|
+          b.call mod.functions['crystal_main']
+          b.ret LLVM::Int(0)
+        end
       end
     end
 
