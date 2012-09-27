@@ -54,11 +54,19 @@ module Crystal
 
     def visit_assign(node)
       node.value.accept self
-      node.type = node.target.type = node.value.type
 
       if node.target.is_a?(InstanceVar)
         scope[:type].instance_vars[node.target.name] = node.type 
+        node.type = node.target.type = node.value.type
       else
+        type = lookup_var node.target.name
+        if type
+          type.add node.value.type
+        else
+          type = UnionType.new(node.value.type)
+        end
+
+        node.type = node.target.type = type
         define_var node.target
       end
 
@@ -155,12 +163,12 @@ module Crystal
         with_new_scope(node.line_number, untyped_def, scope) do
           if node.obj
             self_var = Var.new("self")
-            self_var.type = node.obj.type
+            self_var.type = UnionType.new(node.obj.type)
             define_var self_var
           end
 
           typed_def.args.each_with_index do |arg, i|
-            typed_def.args[i].type = node.args[i].type
+            typed_def.args[i].type = UnionType.new(node.args[i].type)
             define_var typed_def.args[i]
           end
 
@@ -199,7 +207,7 @@ module Crystal
     end
 
     def lookup_var(name)
-      @scopes.last[:vars][name] or raise "Bug: var '#{name}' not found"
+      @scopes.last[:vars][name]
     end
 
     def with_new_scope(line, obj, type)
