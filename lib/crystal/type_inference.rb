@@ -108,18 +108,25 @@ module Crystal
     end
 
     def end_visit_call(node)
-      typed_def = mod.defs[node.name].clone
-      node.target_def = typed_def
+      untyped_def = mod.defs[node.name]
 
-      typed_def.body.add_dependant node
+      typed_def = untyped_def.lookup_instance(node.args.map &:type)
+      unless typed_def
+        typed_def = untyped_def.clone
 
-      args = {}
-      typed_def.args.each_with_index do |arg, index|
-        args[arg.name] = Var.new(arg.name)
-        node.args[index].add_dependant args[arg.name]
+        args = {}
+        typed_def.args.each_with_index do |arg, index|
+          args[arg.name] = Var.new(arg.name)
+          node.args[index].add_dependant args[arg.name]
+          args[arg.name].add_dependant typed_def.args[index]
+        end
+
+        untyped_def.add_instance typed_def
+        typed_def.body.accept TypeVisitor.new(@mod, typed_def.body, args)
       end
 
-      typed_def.body.accept TypeVisitor.new(@mod, typed_def.body, args)
+      node.target_def = typed_def
+      typed_def.body.add_dependant node
     end
 
     def lookup_var(name)
