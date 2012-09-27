@@ -10,6 +10,12 @@ describe 'Type inference: def' do
   end
 
   it "types a call with an argument" do
+    input = parse 'def foo(x); x; end; foo 1'
+    mod = infer_type input
+    input.last.type.should eq(mod.int)
+  end
+
+  it "types a call with an argument" do
     input = parse 'def foo(x); x; end; foo 1; foo 2.3'
     mod = infer_type input
     input[1].type.should eq(mod.int)

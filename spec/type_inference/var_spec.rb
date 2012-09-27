@@ -21,8 +21,6 @@ describe 'Type inference: var' do
     input = parse 'a = 1; a; a = 2.3; a'
     mod = infer_type input
 
-    input[1].type.should eq(mod.int)
-    input[2].type.should eq(mod.float)
-    input[3].type.should eq(mod.float)
+    input.last.type.should eq([mod.int, mod.float])
   end
 end
