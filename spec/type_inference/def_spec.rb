@@ -55,6 +55,10 @@ describe 'Type inference: def' do
     input = parse "def foo(x); foo(x); end; foo 1"
     infer_type input
   end
+  
+  it "types simple recursion" do
+    assert_type('def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)') { int }
+  end
 
   it "types recursion" do
     input = parse 'def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)'

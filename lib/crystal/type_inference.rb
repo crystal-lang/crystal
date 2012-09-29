@@ -1,30 +1,85 @@
+require 'observer'
+
 module Crystal
   class ASTNode
     attr_accessor :type
-    attr_accessor :dependants
-
-    def add_dependant(target)
-      @dependants ||= []
-      @dependants << target
-      target.type = type
-    end
+    attr_accessor :observers
 
     def type=(type)
+      return if type.nil? || @type == type
+      @type = type
+      notify_observers
+    end
+
+    def add_observer(observer, func=:update)
+      @observers ||= {}
+      @observers[observer] = func
+      observer.send func, self, @type if @type
+    end
+
+    def notify_observers
+      return if @observers.nil?
+      @observers.each do |observer, func|
+        observer.send func, self, @type
+      end
+    end
+
+    def add_type(type)
       return if type.nil?
       if @type.nil?
-        @type = type
+        self.type = type
       else
-        @type = [@type, type].flatten.uniq
-        @type = @type.first if @type.length == 1
+        new_type = [@type, type].flatten.uniq
+        new_type = new_type.first if new_type.length == 1
+        return if new_type == @type
+        self.type = new_type
       end
-      @dependants && @dependants.each do |dependant|
-        dependant.type = type
-      end
+    end
+
+    def update(node, type)
+      add_type(type)
     end
   end
 
   class Call
     attr_accessor :target_def
+    attr_accessor :mod
+
+    def update_input(node, type)
+      recalculate
+    end
+
+    def recalculate
+      if can_calculate_type?
+        scope = obj ? obj.type : mod
+        untyped_def = scope.defs[name]
+
+        typed_def = untyped_def.lookup_instance(args.map &:type)
+        unless typed_def
+          typed_def = untyped_def.clone
+          typed_def.owner = scope
+
+          args = {}
+          typed_def.args.each_with_index do |arg, index|
+            args[arg.name] = Var.new(arg.name)
+            args[arg.name].type = self.args[index].type
+            typed_def.args[index].type = self.args[index].type
+          end
+
+          untyped_def.add_instance typed_def
+          typed_def.body.accept TypeVisitor.new(@mod, typed_def.body, args, scope)
+        end
+
+        typed_def.body.add_observer self
+        self.target_def = typed_def
+      end
+    end
+
+    def can_calculate_type?
+      return false if args.any? { |arg| arg.type.nil? }
+      return false if obj && obj.type.nil?
+      true
+    end
   end
 
   class Def
@@ -50,10 +105,11 @@ module Crystal
   class TypeVisitor < Visitor
     attr_accessor :mod
 
-    def initialize(mod, root, vars = {})
+    def initialize(mod, root, vars = {}, scope = nil)
       @mod = mod
       @root = root
       @vars = vars
+      @scope = scope
     end
 
     def visit_bool(node)
@@ -73,29 +129,47 @@ module Crystal
     end
 
     def visit_def(node)
-      # class_def = node.parent.parent
-      # if class_def
-      #   mod.types[class_def.name].defs[node.name] = node
-      # else
+      class_def = node.parent.parent
+      if class_def
+        mod.types[class_def.name].defs[node.name] = node
+      else
         mod.defs[node.name] = node
-      # end
+      end
       false
+    end
+
+    def visit_class_def(node)
+      mod.types[node.name] ||= ObjectType.new node.name
+      true
     end
 
     def visit_var(node)
       var = lookup_var node.name
-      var.add_dependant node
+      var.add_observer node
+    end
+
+    def visit_instance_var(node)
+      var = lookup_instance_var node.name
+      var.add_observer node
     end
 
     def end_visit_assign(node)
-      node.value.add_dependant node
+      node.value.add_observer node
 
-      var = lookup_var node.target.name
-      node.add_dependant var
+      if node.target.is_a?(InstanceVar)
+        var = lookup_instance_var node.target.name
+      else
+        var = lookup_var node.target.name
+      end
+      node.add_observer var
     end
 
     def end_visit_expressions(node)
-      node.last.add_dependant node if node.last
+      if node.last
+        node.last.add_observer node
+      else
+        node.type = mod.void
+      end
     end
 
     def end_visit_while(node)
@@ -103,30 +177,23 @@ module Crystal
     end
 
     def end_visit_if(node)
-      node.then.add_dependant node
-      node.else.add_dependant node if node.else
+      node.then.add_observer node
+      node.else.add_observer node if node.else.any?
     end
 
     def end_visit_call(node)
-      untyped_def = mod.defs[node.name]
-
-      typed_def = untyped_def.lookup_instance(node.args.map &:type)
-      unless typed_def
-        typed_def = untyped_def.clone
-
-        args = {}
-        typed_def.args.each_with_index do |arg, index|
-          args[arg.name] = Var.new(arg.name)
-          node.args[index].add_dependant args[arg.name]
-          args[arg.name].add_dependant typed_def.args[index]
-        end
-
-        untyped_def.add_instance typed_def
-        typed_def.body.accept TypeVisitor.new(@mod, typed_def.body, args)
+      if node.obj.is_a?(Const) && node.name == 'new'
+        type = mod.types[node.obj.name] or compile_error_on_node "uninitialized constant #{node.obj.name}", node.obj
+        node.type = type.clone
+        return false
       end
 
-      node.target_def = typed_def
-      typed_def.body.add_dependant node
+      node.mod = mod
+      node.args.each_with_index do |arg, index|
+        arg.add_observer node, :update_input
+      end
+      node.obj.add_observer node, :update_input if node.obj
+      node.recalculate
     end
 
     def lookup_var(name)
@@ -134,6 +201,15 @@ module Crystal
       unless var
         var = Var.new name
         @vars[name] = var
+      end
+      var
+    end
+
+    def lookup_instance_var(name)
+      var = @scope.instance_vars[name]
+      unless var
+        var = Var.new name
+        @scope.instance_vars[name] = var
       end
       var
     end
