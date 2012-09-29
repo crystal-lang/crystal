@@ -55,7 +55,7 @@ module Crystal
 
     def llvm_struct_type
       unless @llvm_struct_type
-        @llvm_struct_type = LLVM::Struct("#{name}#{@id}")
+        @llvm_struct_type = LLVM::Struct(to_s)
         @llvm_struct_type.element_types = @instance_vars.values.map(&:llvm_type)
       end
       @llvm_struct_type
@@ -72,11 +72,7 @@ module Crystal
     end
 
     def to_s
-      if @instance_vars.count > 0
-        "#{name}<#{instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '}>"
-      else
-        super
-      end
+      "#{name}#{@id}"
     end
   end
 end
