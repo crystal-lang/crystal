@@ -50,36 +50,34 @@ module Crystal
     end
 
     def recalculate
-      if can_calculate_type?
-        scope = obj ? obj.type : mod
-        untyped_def = scope.defs[name]
+      return unless can_calculate_type?
 
-        typed_def = untyped_def.lookup_instance(args.map &:type)
-        unless typed_def
-          typed_def = untyped_def.clone
-          typed_def.owner = scope
+      scope = obj ? obj.type : mod
+      untyped_def = scope.defs[name]
 
-          args = {}
-          args['self'] = Var.new('self').tap { |var| var.type = obj.type } if obj
-          typed_def.args.each_with_index do |arg, index|
-            args[arg.name] = Var.new(arg.name)
-            args[arg.name].type = self.args[index].type
-            typed_def.args[index].type = self.args[index].type
-          end
+      typed_def = untyped_def.lookup_instance(args.map &:type)
+      unless typed_def
+        typed_def = untyped_def.clone
+        typed_def.owner = scope
 
-          untyped_def.add_instance typed_def
-          typed_def.body.accept TypeVisitor.new(@mod, typed_def.body, args, scope)
+        args = {}
+        args['self'] = Var.new('self').tap { |var| var.type = obj.type } if obj
+        typed_def.args.each_with_index do |arg, index|
+          args[arg.name] = Var.new(arg.name)
+          args[arg.name].type = self.args[index].type
+          typed_def.args[index].type = self.args[index].type
         end
 
-        typed_def.body.add_observer self
-        self.target_def = typed_def
+        untyped_def.add_instance typed_def
+        typed_def.body.accept TypeVisitor.new(@mod, typed_def.body, args, scope)
       end
+
+      typed_def.body.add_observer self
+      self.target_def = typed_def
     end
 
     def can_calculate_type?
-      return false if args.any? { |arg| arg.type.nil? }
-      return false if obj && obj.type.nil?
-      true
+      args.all?(&:type) && (obj.nil? || obj.type)
     end
   end
 
