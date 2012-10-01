@@ -11,7 +11,11 @@ module Crystal
     end
 
     def ==(other)
-      eql?(other) || (other.is_a?(UnionType) && other == self)
+      equal?(other) || (other.is_a?(UnionType) && other == self)
+    end
+
+    def eql?(other)
+      self == other
     end
 
     def self.merge(t1, t2)
@@ -41,9 +45,17 @@ module Crystal
     end
 
     def ==(other)
-      eql?(other) ||
+      equal?(other) ||
         (other.class == self.class && name == other.name && instance_vars == other.instance_vars) ||
         (other.is_a?(UnionType) && other == self)
+    end
+
+    def eql?(other)
+      self == other
+    end
+
+    def hash
+      name.hash
     end
 
     def llvm_type
@@ -99,7 +111,7 @@ module Crystal
     end
 
     def ==(other)
-      return true if eql?(other)
+      return true if equal?(other)
 
       if @types.length == 1
         @types.first == other

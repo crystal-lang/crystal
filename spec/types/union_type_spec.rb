@@ -38,4 +38,10 @@ describe UnionType do
   it "merge union types" do
     Type.merge(UnionType.new(mod.int, mod.char), UnionType.new(mod.float, mod.int)).should eq(UnionType.new(mod.char, mod.float, mod.int))
   end
+
+  it "compares union of object types" do
+    union1 = UnionType.new(ObjectType.new("Foo").with_var("@value", mod.int), ObjectType.new("Foo").with_var("@value", mod.float))
+    union2 = UnionType.new(ObjectType.new("Foo").with_var("@value", mod.float), ObjectType.new("Foo").with_var("@value", mod.int))
+    union1.should eq(union2)
+  end
 end
