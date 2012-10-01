@@ -54,6 +54,14 @@ module Crystal
       return unless can_calculate_type?
 
       scope = obj ? obj.type : mod
+
+      if has_unions?
+        dispatch = Dispatch.new(mod, name, scope, args.map(&:type))
+        dispatch.add_observer self
+        self.target_def = dispatch
+        return
+      end
+
       untyped_def = scope.defs[name]
 
       check_method_exists untyped_def
@@ -90,6 +98,10 @@ module Crystal
 
     def can_calculate_type?
       args.all?(&:type) && (obj.nil? || obj.type)
+    end
+
+    def has_unions?
+      (obj && obj.type.is_a?(UnionType)) || args.any? { |a| a.type.is_a?(UnionType) }
     end
 
     def check_method_exists(untyped_def)
@@ -132,6 +144,15 @@ module Crystal
 
     def lookup_instance(arg_types)
       @instances && @instances[arg_types]
+    end
+  end
+
+  class Dispatch < ASTNode
+    def initialize(mod, name, scope, arg_types)
+      @mod = mod
+      @name = name
+      @scope = scope
+      @arg_types = arg_types
     end
   end
 

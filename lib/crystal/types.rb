@@ -1,5 +1,7 @@
 module Crystal
   class Type
+    include Enumerable
+
     attr_reader :name
     attr_reader :llvm_type
     attr_accessor :defs
@@ -8,6 +10,10 @@ module Crystal
       @name = name
       @llvm_type = llvm_type
       @defs = {}
+    end
+
+    def each
+      yield self
     end
 
     def ==(other)
@@ -103,16 +109,8 @@ module Crystal
       @types.add other
     end
 
-    def defs
-      @types.first.defs
-    end
-
-    def instance_vars
-      @types.first.instance_vars
-    end
-
-    def llvm_type
-      @types.first.llvm_type
+    def each(&block)
+      types.each(&block)
     end
 
     def ==(other)

@@ -1,5 +1,7 @@
 module Crystal
   class Module
+    include Enumerable
+
     attr_accessor :types
     attr_accessor :defs
 
@@ -33,6 +35,10 @@ module Crystal
 
     def char
       @types["Char"]
+    end
+
+    def each
+      yield self
     end
   end
 end
