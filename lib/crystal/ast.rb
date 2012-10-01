@@ -297,8 +297,9 @@ module Crystal
   class Var < ASTNode
     attr_accessor :name
 
-    def initialize(name)
+    def initialize(name, type = nil)
       @name = name
+      @type = type
     end
 
     def ==(other)

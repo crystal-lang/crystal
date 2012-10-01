@@ -229,10 +229,7 @@ module Crystal
         args = []
         if node.obj
           @type = node.obj.type
-
-          self_var = Var.new("self")
-          self_var.type = node.obj.type
-          args << self_var
+          args << Var.new("self", node.obj.type)
         end
         args += node.target_def.args
 

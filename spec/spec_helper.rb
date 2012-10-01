@@ -87,7 +87,7 @@ end
 
 class Crystal::ObjectType
   def with_var(name, type)
-    @instance_vars[name] = Var.new(name).tap { |var| var.type = type }
+    @instance_vars[name] = Var.new(name, type)
     self
   end
 end

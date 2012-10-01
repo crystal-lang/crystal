@@ -58,11 +58,11 @@ module Crystal
         typed_def.owner = scope
 
         args = {}
-        args['self'] = Var.new('self').tap { |var| var.type = obj.type } if obj
+        args['self'] = Var.new('self', obj.type) if obj
         typed_def.args.each_with_index do |arg, index|
-          args[arg.name] = Var.new(arg.name)
-          args[arg.name].type = self.args[index].type
-          typed_def.args[index].type = self.args[index].type
+          type = self.args[index].type
+          args[arg.name] = Var.new(arg.name, type)
+          typed_def.args[index].type = type
         end
 
         untyped_def.add_instance typed_def

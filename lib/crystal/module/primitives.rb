@@ -160,11 +160,7 @@ module Crystal
     end
 
 	  def external(name, args, return_type)
-	    args = args.map do |name, type|
-	      var = Var.new(name)
-	      var.type = type
-	      var
-	    end
+	    args = args.map { |name, type| Var.new(name, type) }
 
 	    instance = defs[name] = External.new(name, args)
 	    instance.body = Expressions.new
