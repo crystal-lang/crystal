@@ -88,4 +88,8 @@ describe 'Type inference: def' do
   it "types infinite recursion" do
     assert_type('def foo; foo; end; foo') { void }
   end
+
+  it "types mutual infinite recursion" do
+    assert_type('def foo; bar; end; def bar; foo; end; foo') { void }
+  end
 end
