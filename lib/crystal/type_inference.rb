@@ -29,10 +29,7 @@ module Crystal
       if @type.nil?
         self.type = type
       else
-        new_type = [@type, type].flatten.uniq
-        new_type = new_type.first if new_type.length == 1
-        return if new_type == @type
-        self.type = new_type
+        self.type = Type.merge(@type, type)
       end
     end
 

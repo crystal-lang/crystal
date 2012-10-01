@@ -10,20 +10,15 @@ module Crystal
       @defs = {}
     end
 
+    def ==(other)
+      eql?(other) || (other.is_a?(UnionType) && other == self)
+    end
+
     def self.merge(t1, t2)
       if t1 == t2
         t1
       else
-        [t1, t2].flatten.uniq
-      end
-    end
-
-    def self.unmerge(t1, t2)
-      t1.delete t2
-      if t1.length == 1
-        t1.first
-      else
-        t1
+        UnionType.new(t1, t2)
       end
     end
 
@@ -46,7 +41,9 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && name == other.name && instance_vars == other.instance_vars
+      eql?(other) ||
+        (other.class == self.class && name == other.name && instance_vars == other.instance_vars) ||
+        (other.is_a?(UnionType) && other == self)
     end
 
     def llvm_type
@@ -73,6 +70,44 @@ module Crystal
 
     def to_s
       "#{name}#{@id}"
+    end
+  end
+
+  class UnionType < Type
+    attr_reader :types
+
+    def initialize(*types)
+      types = types.map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.uniq
+      @name = "Union[#{types.join ', '}]"
+      @types = Set.new types
+    end
+
+    def add(other)
+      @types.add other
+    end
+
+    def defs
+      @types.first.defs
+    end
+
+    def instance_vars
+      @types.first.instance_vars
+    end
+
+    def llvm_type
+      @types.first.llvm_type
+    end
+
+    def ==(other)
+      return true if eql?(other)
+
+      if @types.length == 1
+        @types.first == other
+      elsif other.is_a?(UnionType)
+        @types == other.types
+      else
+        false
+      end
     end
   end
 end

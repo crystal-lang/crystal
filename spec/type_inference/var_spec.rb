@@ -18,9 +18,6 @@ describe 'Type inference: var' do
   end
 
   it "types a variable that gets a new type" do
-    input = parse 'a = 1; a; a = 2.3; a'
-    mod = infer_type input
-
-    input.last.type.should eq([mod.int, mod.float])
+    assert_type('a = 1; a; a = 2.3; a') { UnionType.new(int, float) }
   end
 end

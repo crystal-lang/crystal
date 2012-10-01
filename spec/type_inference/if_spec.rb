@@ -10,6 +10,6 @@ describe 'Type inference: if' do
   end
 
   it "types an if with else of different type" do
-    assert_type('if true; 1; else; 1.1; end') { [int, float] }
+    assert_type('if true; 1; else; 1.1; end') { UnionType.new(int, float) }
   end
 end
