@@ -31,7 +31,7 @@ module Crystal
     def visit_var(node)
       unless @vars.include? node.name
         var = @g.add_nodes node.name, :shape => :note
-        @g.add_edges var, type_node(node.type)
+        add_edges var, node.type
         @vars << node.name
       end
     end
@@ -42,13 +42,21 @@ module Crystal
         if type.is_a? ObjectType
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
           type.instance_vars.each do |ivar, var|
-            @g.add_edges node, type_node(var.type), :label => ivar
+            add_edges node, var.type, :label => ivar
           end
         else
           node = @g.add_nodes type.object_id.to_s, :label => type.name
         end
       end
       node
+    end
+
+    def add_edges(node, type, label = '')
+      if type.is_a?(UnionType)
+        type.types.each { |t| add_edges node, t, label }
+      else
+        @g.add_edges node, type_node(type), :label => label
+      end
     end
   end
 end
