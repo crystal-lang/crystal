@@ -14,9 +14,7 @@ module Crystal
     end
 
     def parse
-      exps = parse_expressions
-      exps.source_code = string
-      exps
+      parse_expressions
     end
 
     def parse_expressions

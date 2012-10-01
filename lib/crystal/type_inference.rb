@@ -78,7 +78,7 @@ module Crystal
         untyped_def.add_instance typed_def
 
         begin 
-          typed_def.body.accept TypeVisitor.new(@mod, typed_def.body, args, scope)
+          typed_def.body.accept TypeVisitor.new(@mod, args, scope)
         rescue Crystal::Exception => ex
           raise "instantiating '#{name}'", ex
         end
@@ -137,16 +137,15 @@ module Crystal
 
   def infer_type(node)
     mod = Crystal::Module.new
-    node.accept TypeVisitor.new(mod, node)
+    node.accept TypeVisitor.new(mod)
     mod
   end
 
   class TypeVisitor < Visitor
     attr_accessor :mod
 
-    def initialize(mod, root, vars = {}, scope = nil)
+    def initialize(mod, vars = {}, scope = nil)
       @mod = mod
-      @root = root
       @vars = vars
       @scope = scope
     end
@@ -251,28 +250,6 @@ module Crystal
         @scope.instance_vars[name] = var
       end
       var
-    end
-
-    def compile_error_on_node(message, node)
-      compile_error message, node.line_number, node.column_number, node.name.length
-    end
-
-    def compile_error(message, line, column, length)
-      str = "Error: #{message}"
-      str << " in '#{scope[:obj].name}'" if scope[:obj]
-      str << "\n\n"
-      str << @root.source_code.lines.at(line - 1).chomp
-      str << "\n"
-      str << (' ' * (column - 1))
-      str << '^'
-      str << ('~' * (length - 1))
-      str << "\n"
-      str << "\n"
-      @scopes.reverse_each do |scope|
-        str << "in line #{scope[:line] || line}"
-        str << ": '#{scope[:obj].name}'\n" if scope[:obj]
-      end
-      raise Crystal::Exception.new(str.strip)
     end
   end
 end
