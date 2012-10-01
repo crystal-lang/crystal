@@ -32,4 +32,10 @@ describe 'Code gen: def' do
   it "runs empty def" do
     run("def foo; end; foo")
   end
+
+  it "builds infinite recursive function" do
+    node = parse "def foo; foo; end; foo"
+    mod = infer_type node
+    build node, mod
+  end
 end

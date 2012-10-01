@@ -7,7 +7,7 @@ LLVM.init_x86
 module Crystal
   class ASTNode
     def llvm_type
-      type.llvm_type
+      type ? type.llvm_type : LLVM.Void
     end
   end
 
@@ -42,7 +42,6 @@ module Crystal
   end
 
   def build(node, mod)
-
     visitor = CodeGenVisitor.new(mod, node.type)
     node.accept visitor
 
@@ -62,7 +61,7 @@ module Crystal
       @mod = mod
       @return_type = return_type
       @llvm_mod = LLVM::Module.new("Crystal")
-      @fun = @llvm_mod.functions.add("crystal_main", [], return_type.llvm_type)
+      @fun = @llvm_mod.functions.add("crystal_main", [], return_type ? return_type.llvm_type : LLVM.Void)
       entry = @fun.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
       @builder.position_at_end(entry)

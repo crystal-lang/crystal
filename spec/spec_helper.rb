@@ -14,7 +14,6 @@ def assert_type(str, &block)
   input = parse str
   mod = infer_type input
   expected_type = mod.instance_eval &block
-  expected_type.should_not be_nil
   input.last.type.should eq(expected_type)
 end
 

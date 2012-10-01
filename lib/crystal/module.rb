@@ -5,7 +5,6 @@ module Crystal
 
     def initialize
       @types = {}
-      @types["Void"] = Type.new "Void", LLVM.Void
       @types["Bool"] = Type.new "Bool", LLVM::Int1
       @types["Int"] = Type.new "Int", LLVM::Int
       @types["Float"] = Type.new "Float", LLVM::Float
@@ -17,7 +16,7 @@ module Crystal
     end
 
     def void
-      @types["Void"]
+      nil
     end
 
     def int

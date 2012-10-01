@@ -84,4 +84,8 @@ describe 'Type inference: def' do
   it "types empty body def" do
     assert_type('def foo; end; foo') { void }
   end
+
+  it "types infinite recursion" do
+    assert_type('def foo; foo; end; foo') { void }
+  end
 end
