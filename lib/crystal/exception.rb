@@ -27,7 +27,11 @@ module Crystal
         str << lines[node.line_number - 1].chomp
         if node.respond_to?(:name)
           str << "\n"
-          str << (' ' * (node.column_number - 1))
+          if node.respond_to?(:name_column_number)
+            str << (' ' * (node.name_column_number - 1))
+          else
+            str << (' ' * (node.column_number - 1))
+          end
           str << '^'
           str << ('~' * (node.name.length - 1))
         end
