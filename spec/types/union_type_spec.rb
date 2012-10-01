@@ -44,4 +44,20 @@ describe UnionType do
     union2 = UnionType.new(ObjectType.new("Foo").with_var("@value", mod.float), ObjectType.new("Foo").with_var("@value", mod.int))
     union1.should eq(union2)
   end
+
+  it "compares object with different instance vars" do
+    obj_int = ObjectType.new("Foo").with_var("@value", mod.int)
+    obj_float = ObjectType.new("Foo").with_var("@value", mod.float)
+
+    obj_int.should_not eq(obj_float)
+    obj_float.should_not eq(obj_int)
+  end
+
+  it "compares union with single object" do
+    obj = ObjectType.new("Foo").with_var("@value", mod.float)
+    union = UnionType.new(ObjectType.new("Foo").with_var("@value", mod.int), ObjectType.new("Foo").with_var("@value", mod.float))
+
+    obj.should_not eq(union)
+    union.should_not eq(obj)
+  end
 end

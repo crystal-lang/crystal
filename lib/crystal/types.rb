@@ -81,7 +81,12 @@ module Crystal
     end
 
     def to_s
-      "#{name}#{@id}"
+      unless @to_s
+        @to_s = "..."
+        instance_vars_to_s = instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
+        @to_s = "#{name}<#{instance_vars_to_s}>"
+      end
+      @to_s
     end
   end
 
@@ -89,7 +94,7 @@ module Crystal
     attr_reader :types
 
     def initialize(*types)
-      types = types.map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.uniq
+      types = types.map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten
       @name = "Union[#{types.join ', '}]"
       @types = Set.new types
     end

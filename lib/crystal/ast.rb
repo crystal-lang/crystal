@@ -302,7 +302,7 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.name == name
+      other.class == self.class && other.name == name && other.type == type
     end
 
     def clone
