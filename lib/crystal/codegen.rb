@@ -63,7 +63,6 @@ module Crystal
       @return_type = return_type
       @llvm_mod = LLVM::Module.new("Crystal")
       @fun = @llvm_mod.functions.add("crystal_main", [], return_type.llvm_type)
-      @fun.linkage = :internal
       entry = @fun.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
       @builder.position_at_end(entry)

@@ -45,6 +45,9 @@ module Crystal
 
         llvm_mod = build node, mod
         write_main llvm_mod unless @options[:run]
+        
+        # Don't optimize crystal_main away if the user wants to run the program
+        llvm_mod.functions["crystal_main"].linkage = :internal unless @options[:run]
 
         engine = LLVM::JITCompiler.new llvm_mod
         optimize llvm_mod, engine
