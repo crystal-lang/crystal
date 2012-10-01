@@ -42,7 +42,7 @@ module Crystal
         if type.is_a? ObjectType
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
           type.instance_vars.each do |ivar, var|
-            add_edges node, var.type, :label => ivar
+            add_edges node, var.type, ivar
           end
         else
           node = @g.add_nodes type.object_id.to_s, :label => type.name
