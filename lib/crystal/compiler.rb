@@ -39,7 +39,8 @@ module Crystal
 
     def compile
       begin
-        node = parse ARGF.read
+        source = ARGF.read
+        node = parse source
         mod = infer_type node
         graph node, mod, @options[:output_filename] if @options[:graph]
 
@@ -52,7 +53,7 @@ module Crystal
         engine = LLVM::JITCompiler.new llvm_mod
         optimize llvm_mod, engine
       rescue Crystal::Exception => ex
-        puts ex.message
+        puts ex.to_s(source)
         exit 1
       rescue Exception => ex
         puts ex

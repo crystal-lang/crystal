@@ -36,6 +36,10 @@ module Crystal
     def update(node, type)
       add_type(type)
     end
+
+    def raise(message, inner = nil)
+      Kernel::raise Crystal::Exception.new(message, self, inner)
+    end
   end
 
   class Call
@@ -52,8 +56,14 @@ module Crystal
       scope = obj ? obj.type : mod
       untyped_def = scope.defs[name]
 
-      typed_def = untyped_def.lookup_instance(args.map &:type)
+      check_method_exists untyped_def
+      check_args_match untyped_def
+
+      arg_types = args.map &:type
+      typed_def = untyped_def.lookup_instance(arg_types)
       unless typed_def
+        check_frozen untyped_def, arg_types
+
         typed_def = untyped_def.clone
         typed_def.owner = scope
 
@@ -66,7 +76,12 @@ module Crystal
         end
 
         untyped_def.add_instance typed_def
-        typed_def.body.accept TypeVisitor.new(@mod, typed_def.body, args, scope)
+
+        begin 
+          typed_def.body.accept TypeVisitor.new(@mod, typed_def.body, args, scope)
+        rescue Crystal::Exception => ex
+          raise "instantiating '#{name}'", ex
+        end
       end
 
       typed_def.body.add_observer self
@@ -75,6 +90,34 @@ module Crystal
 
     def can_calculate_type?
       args.all?(&:type) && (obj.nil? || obj.type)
+    end
+
+    def check_method_exists(untyped_def)
+      return if untyped_def
+
+      if obj
+        raise "undefined method '#{name}' for #{obj.type.name}"
+      elsif args.length > 0 || has_parenthesis
+        raise "undefined method '#{name}'"
+      else
+        raise "undefined local variable or method '#{name}'"
+      end
+    end
+
+    def check_args_match(untyped_def)
+      return if untyped_def.args.length == args.length
+
+      raise "wrong number of arguments for '#{name}' (#{args.length} for #{untyped_def.args.length})"
+    end
+
+    def check_frozen(untyped_def, arg_types)
+      return unless untyped_def.is_a?(FrozenDef)
+
+      if untyped_def.is_a?(External)
+        raise "can't call #{name} with types [#{arg_types.join ', '}]"
+      else
+        raise "can't call #{obj.type.name}##{name} with types [#{arg_types.join ', '}]"
+      end
     end
   end
 
@@ -179,7 +222,7 @@ module Crystal
 
     def end_visit_call(node)
       if node.obj.is_a?(Const) && node.name == 'new'
-        type = mod.types[node.obj.name] or compile_error_on_node "uninitialized constant #{node.obj.name}", node.obj
+        type = mod.types[node.obj.name] or raise Crystal::Exception.new("uninitialized constant #{node.obj.name}", node.obj)
         node.type = type.clone
         return false
       end

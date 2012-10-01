@@ -3,28 +3,18 @@ require 'spec_helper'
 describe 'Type inference: errors' do
   it "reports undefined local variable or method" do
     nodes = parse %(
-def foo
-  a = something
-end
+      def foo
+        a = something
+      end
 
-def bar
-  foo
-end
+      def bar
+        foo
+      end
 
-bar).strip
-
+      bar).strip
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, "
-Error: undefined local variable or method 'something' in 'foo'
-
-  a = something
-      ^~~~~~~~~
-
-in line 2: 'foo'
-in line 6: 'bar'
-in line 9
-      ".strip)
+    }.should raise_error(Crystal::Exception, regex("undefined local variable or method 'something'"))
   end
 
   it "reports undefined method" do
@@ -48,7 +38,7 @@ in line 9
 
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, /undefined local variable or method 'foo'/)
+    }.should raise_error(Crystal::Exception, regex("undefined local variable or method 'foo'"))
   end
 
   it "reports undefined instance method" do
@@ -56,7 +46,7 @@ in line 9
 
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, /undefined method 'foo' for Int/)
+    }.should raise_error(Crystal::Exception, regex("undefined method 'foo' for Int"))
   end
 
   it "reports can't call primitive with args" do
