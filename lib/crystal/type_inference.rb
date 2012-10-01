@@ -221,7 +221,7 @@ module Crystal
 
     def end_visit_call(node)
       if node.obj.is_a?(Const) && node.name == 'new'
-        type = mod.types[node.obj.name] or raise Crystal::Exception.new("uninitialized constant #{node.obj.name}", node.obj)
+        type = mod.types[node.obj.name] or node.obj.raise("uninitialized constant #{node.obj.name}")
         node.type = type.clone
         return false
       end
