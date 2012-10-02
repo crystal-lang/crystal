@@ -150,7 +150,7 @@ module Crystal
   class Dispatch < ASTNode
     def initialize(mod, name, obj, args)
       for_each_obj(obj) do |obj_type|
-        for_each_args([], 0, args) do |arg_types|
+        for_each_args(args) do |arg_types|
           call = Call.new(obj_type && Var.new('self', obj_type), name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
           call.mod = mod
           call.add_observer self
@@ -167,13 +167,13 @@ module Crystal
       end
     end
 
-    def for_each_args(arg_types, index, args, &block)
+    def for_each_args(args, arg_types = [], index = 0, &block)
       if index == args.count
         yield arg_types
       else
         args[index].each do |arg_type|
           arg_types[index] = arg_type
-          for_each_args(arg_types, index + 1, args, &block)
+          for_each_args(args, arg_types, index + 1, &block)
         end
       end
     end
