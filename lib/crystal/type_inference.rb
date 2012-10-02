@@ -56,7 +56,7 @@ module Crystal
       scope = obj ? obj.type : mod
 
       if has_unions?
-        dispatch = Dispatch.new(mod, name, scope, args.map(&:type))
+        dispatch = Dispatch.new(mod, name, obj && obj.type, args.map(&:type))
         dispatch.add_observer self
         self.target_def = dispatch
         return
@@ -148,11 +148,34 @@ module Crystal
   end
 
   class Dispatch < ASTNode
-    def initialize(mod, name, scope, arg_types)
-      @mod = mod
-      @name = name
-      @scope = scope
-      @arg_types = arg_types
+    def initialize(mod, name, obj, args)
+      for_each_obj(obj) do |obj_type|
+        for_each_args([], 0, args) do |arg_types|
+          call = Call.new(obj_type && Var.new('self', obj_type), name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
+          call.mod = mod
+          call.add_observer self
+          call.recalculate
+        end
+      end
+    end
+
+    def for_each_obj(obj, &block)
+      if obj
+        obj.each &block
+      else
+        yield nil
+      end
+    end
+
+    def for_each_args(arg_types, index, args, &block)
+      if index == args.count
+        yield arg_types
+      else
+        args[index].each do |arg_type|
+          arg_types[index] = arg_type
+          for_each_args(arg_types, index + 1, args, &block)
+        end
+      end
     end
   end
 

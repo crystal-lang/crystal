@@ -55,7 +55,7 @@ describe 'Type inference: def' do
     input = parse "def foo(x); foo(x); end; foo 1"
     infer_type input
   end
-  
+
   it "types simple recursion" do
     assert_type('def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)') { int }
   end
@@ -91,5 +91,9 @@ describe 'Type inference: def' do
 
   it "types mutual infinite recursion" do
     assert_type('def foo; bar; end; def bar; foo; end; foo') { void }
+  end
+
+  it "types call with union argument" do
+    assert_type('def foo(x); x; end; a = 1; a = 1.1; foo(a)') { UnionType.new(int, float) }
   end
 end
