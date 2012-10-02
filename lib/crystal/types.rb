@@ -105,10 +105,6 @@ module Crystal
       @types = Set.new types
     end
 
-    def add(other)
-      @types.add other
-    end
-
     def each(&block)
       types.each(&block)
     end
