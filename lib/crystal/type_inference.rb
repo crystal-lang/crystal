@@ -85,7 +85,7 @@ module Crystal
 
         untyped_def.add_instance typed_def
 
-        begin 
+        begin
           typed_def.body.accept TypeVisitor.new(@mod, args, scope)
         rescue Crystal::Exception => ex
           raise "instantiating '#{name}'", ex
@@ -240,7 +240,7 @@ module Crystal
       node.else.add_observer node if node.else.any?
     end
 
-    def end_visit_call(node)
+    def visit_call(node)
       if node.obj.is_a?(Const) && node.name == 'new'
         type = mod.types[node.obj.name] or node.obj.raise("uninitialized constant #{node.obj.name}")
         node.type = type.clone
@@ -252,7 +252,8 @@ module Crystal
         arg.add_observer node, :update_input
       end
       node.obj.add_observer node, :update_input if node.obj
-      node.recalculate
+      node.recalculate unless node.obj || node.args.any?
+      true
     end
 
     def lookup_var(name)
