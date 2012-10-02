@@ -21,8 +21,12 @@ module Crystal
     end
 
     def append_to_s(str, lines)
-      str << "in line #{node.line_number}: #{@message}"
-      if lines
+      if node
+        str << "in line #{node.line_number}: #{@message}"
+      else
+        str << "#{@message}"
+      end
+      if lines && node
         str << "\n\n"
         str << lines[node.line_number - 1].chomp
         if node.respond_to?(:name)
