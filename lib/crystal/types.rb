@@ -12,6 +12,9 @@ module Crystal
       @defs = {}
     end
 
+    def add_observer(observer, func = nil)
+    end
+
     def each
       yield self
     end
@@ -28,7 +31,12 @@ module Crystal
       if t1 == t2
         t1
       else
-        UnionType.new(t1, t2)
+        types = [t1, t2].map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.uniq
+        if types.length == 1
+          types.first
+        else
+          UnionType.new(*types)
+        end
       end
     end
 
@@ -39,6 +47,7 @@ module Crystal
 
   class ObjectType < Type
     attr_accessor :instance_vars
+    attr_accessor :observers
 
     @@id = 0
 
@@ -48,6 +57,33 @@ module Crystal
       @instance_vars = {}
       @@id += 1
       @id = @@id
+    end
+
+    def add_observer(observer, func = :update_from_object_type)
+      @observers ||= {}
+      @observers[observer] = func
+      observer.send func, self
+    end
+
+    def update_from_instance_var(type)
+      notify_observers
+    end
+
+    def notify_observers
+      return unless @observers
+      @observers.each do |observer, func|
+        observer.send func, @type
+      end
+    end
+
+    def lookup_instance_var(name)
+      var = @instance_vars[name]
+      unless var
+        var = Var.new name
+        @instance_vars[name] = var
+        var.add_observer self, :update_from_instance_var
+      end
+      var
     end
 
     def ==(other)
@@ -100,8 +136,6 @@ module Crystal
     attr_reader :types
 
     def initialize(*types)
-      types = types.map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten
-      @name = "Union[#{types.join ', '}]"
       @types = Set.new types
     end
 
@@ -119,6 +153,10 @@ module Crystal
       else
         false
       end
+    end
+
+    def to_s
+      "Union[#{types.to_a.join ', '}]"
     end
   end
 end

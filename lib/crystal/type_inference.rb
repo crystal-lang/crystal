@@ -1,6 +1,12 @@
 require 'observer'
 
 module Crystal
+  def infer_type(node)
+    mod = Crystal::Module.new
+    node.accept TypeVisitor.new(mod)
+    mod
+  end
+
   class ASTNode
     attr_accessor :type
     attr_accessor :observers
@@ -11,29 +17,27 @@ module Crystal
       notify_observers
     end
 
-    def add_observer(observer, func=:update)
+    def add_observer(observer, func = :update)
       @observers ||= {}
       @observers[observer] = func
-      observer.send func, self, @type if @type
+      observer.send func, @type if @type
     end
 
     def notify_observers
-      return if @observers.nil?
+      return unless @observers
       @observers.each do |observer, func|
-        observer.send func, self, @type
+        observer.send func, @type
       end
     end
 
-    def add_type(type)
-      return if type.nil?
-      if @type.nil?
-        self.type = type
-      else
-        self.type = Type.merge(@type, type)
-      end
+    def add_type(new_type)
+      return unless new_type
+
+      self.type = @type ? Type.merge(@type, new_type) : new_type
+      new_type.add_observer self if is_a?(Var)
     end
 
-    def update(node, type)
+    def update(type)
       add_type(type)
     end
 
@@ -46,7 +50,7 @@ module Crystal
     attr_accessor :target_def
     attr_accessor :mod
 
-    def update_input(node, type)
+    def update_input(type)
       recalculate
     end
 
@@ -179,10 +183,12 @@ module Crystal
     end
   end
 
-  def infer_type(node)
-    mod = Crystal::Module.new
-    node.accept TypeVisitor.new(mod)
-    mod
+  class Var
+    def update_from_object_type(_)
+      if type.is_a?(UnionType)
+        add_type(type.types.to_a.first)
+      end
+    end
   end
 
   class TypeVisitor < Visitor
@@ -231,7 +237,7 @@ module Crystal
     end
 
     def visit_instance_var(node)
-      var = lookup_instance_var node.name
+      var = @scope.lookup_instance_var node.name
       var.add_observer node
     end
 
@@ -239,7 +245,7 @@ module Crystal
       node.value.add_observer node
 
       if node.target.is_a?(InstanceVar)
-        var = lookup_instance_var node.target.name
+        var = @scope.lookup_instance_var node.target.name
       else
         var = lookup_var node.target.name
       end
@@ -284,15 +290,6 @@ module Crystal
       unless var
         var = Var.new name
         @vars[name] = var
-      end
-      var
-    end
-
-    def lookup_instance_var(name)
-      var = @scope.instance_vars[name]
-      unless var
-        var = Var.new name
-        @scope.instance_vars[name] = var
       end
       var
     end
