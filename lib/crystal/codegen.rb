@@ -106,7 +106,7 @@ module Crystal
         unless var
           var = @vars[node.target.name] = {
             ptr: @builder.alloca(node.target.llvm_type, node.target.name),
-            type: node.type
+            type: node.target.type
           }
         end
         ptr = var[:ptr]
@@ -129,7 +129,7 @@ module Crystal
 
     def visit_var(node)
       var = @vars[node.name]
-      if var[:is_arg]
+      if var[:is_arg] || var[:type].is_a?(UnionType)
         @last = var[:ptr]
       else
         @last = @builder.load var[:ptr], node.name
@@ -215,6 +215,11 @@ module Crystal
         return false
       end
 
+      if node.target_def.is_a?(Dispatch)
+        codegen_dispatch(node)
+        return false
+      end
+
       call_args = []
       if node.obj
         node.obj.accept self
@@ -284,6 +289,53 @@ module Crystal
 
       @last = @builder.call @fun, *call_args
       @fun = old_fun
+    end
+
+    def codegen_dispatch(node)
+      dispatch = node.target_def
+
+      unreachable_block = @fun.basic_blocks.append("unreachable")
+      exit_block = @fun.basic_blocks.append("exit")
+
+      phi_table = {}
+
+      if dispatch.obj && dispatch.obj.is_a?(UnionType)
+        node.obj.accept self
+        obj_ptr = @last
+        type_index_ptr = @builder.gep obj_ptr, [LLVM::Int(0), LLVM::Int(0)]
+        value_ptr = @builder.gep obj_ptr, [LLVM::Int(0), LLVM::Int(1)]
+
+        switch_table = {}
+
+        old_block = @builder.insert_block
+        dispatch.obj.types.each_with_index.each do |obj_type, i|
+          label = @fun.basic_blocks.append("obj_type_#{i}")
+          @builder.position_at_end label
+
+          casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(obj_type.llvm_type)
+          value = @builder.load casted_value_ptr
+
+          call = dispatch.calls[[obj_type, []]]
+          codegen_call(call.target_def, obj_type, [value])
+
+          @builder.br exit_block
+
+          switch_table[LLVM::Int(i)] = label
+          phi_table[label] = @last
+        end
+        @builder.position_at_end old_block
+
+        type_index = @builder.load type_index_ptr
+        @builder.switch type_index, unreachable_block, switch_table
+      end
+
+      @builder.position_at_end unreachable_block
+      @builder.unreachable
+
+      @builder.position_at_end exit_block
+      @last = @builder.phi dispatch.llvm_type, phi_table
+
+      false
     end
   end
 end
