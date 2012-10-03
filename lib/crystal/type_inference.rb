@@ -168,7 +168,7 @@ module Crystal
           call.mod = mod
           call.add_observer self
           call.recalculate
-          @calls[[obj_type, arg_types]] = call
+          @calls[[obj_type] + arg_types] = call
         end
       end
     end
