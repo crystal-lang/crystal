@@ -136,6 +136,16 @@ module Crystal
       false
     end
 
+    def visit_frozen_def(node)
+      visit_def(node)
+      false
+    end
+
+    def visit_external(node)
+      visit_def(node)
+      false
+    end
+
     def visit_var(node)
       @str << node.name
     end

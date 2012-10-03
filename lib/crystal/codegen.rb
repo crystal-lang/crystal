@@ -215,8 +215,6 @@ module Crystal
         return false
       end
 
-      mangled_name = node.target_def.mangled_name
-
       call_args = []
       if node.obj
         node.obj.accept self
@@ -227,6 +225,14 @@ module Crystal
         call_args << @last
       end
 
+      codegen_call(node.target_def, node.obj && node.obj.type, call_args)
+
+      false
+    end
+
+    def codegen_call(target_def, obj_type, call_args)
+      mangled_name = target_def.mangled_name
+
       old_fun = @fun
       unless @fun = @funs[mangled_name]
         old_position = @builder.insert_block
@@ -236,29 +242,29 @@ module Crystal
         @vars = {}
 
         args = []
-        if node.obj
-          @type = node.obj.type
-          args << Var.new("self", node.obj.type)
+        if obj_type
+          @type = obj_type
+          args << Var.new("self", obj_type)
         end
-        args += node.target_def.args
+        args += target_def.args
 
         @fun = @funs[mangled_name] = @llvm_mod.functions.add(
           mangled_name,
           args.map(&:llvm_type),
-          node.target_def.body.llvm_type
+          target_def.body.llvm_type
         )
 
         args.each_with_index do |arg, i|
           @fun.params[i].name = arg.name
         end
 
-        unless node.target_def.is_a? External
+        unless target_def.is_a? External
           @fun.linkage = :internal
           entry = @fun.basic_blocks.append("entry")
           @builder.position_at_end(entry)
 
           args.each_with_index do |arg, i|
-            if node.obj && i == 0 || node.target_def.body.is_a?(PrimitiveBody)
+            if obj_type && i == 0 || target_def.body.is_a?(PrimitiveBody)
               @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, is_arg: true }
             else
               ptr = @builder.alloca(arg.llvm_type, arg.name)
@@ -267,8 +273,8 @@ module Crystal
             end
           end
 
-          node.target_def.body.accept self
-          @builder.ret(node.target_def.body.type == @mod.void ? nil : @last)
+          target_def.body.accept self
+          @builder.ret(target_def.body.type == @mod.void ? nil : @last)
           @builder.position_at_end old_position
         end
 
@@ -278,8 +284,6 @@ module Crystal
 
       @last = @builder.call @fun, *call_args
       @fun = old_fun
-
-      false
     end
   end
 end
