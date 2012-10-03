@@ -103,16 +103,26 @@ module Crystal
         ptr = @builder.gep(@fun.params[0], [LLVM::Int(0), LLVM::Int(index)], node.target.name)
       else
         var = @vars[node.target.name]
-        unless var && var[:type] == node.type
+        unless var
           var = @vars[node.target.name] = {
-            ptr: @builder.alloca(node.llvm_type, node.target.name),
+            ptr: @builder.alloca(node.target.llvm_type, node.target.name),
             type: node.type
           }
         end
         ptr = var[:ptr]
       end
 
-      @builder.store @last, ptr
+      if node.target.type == node.value.type
+        @builder.store @last, ptr
+      else
+        index = node.target.type.index_of_type(node.value.type)
+        index_ptr = @builder.gep ptr, [LLVM::Int(0), LLVM::Int(0)]
+        @builder.store LLVM::Int(index), index_ptr
+
+        value_ptr = @builder.gep ptr, [LLVM::Int(0), LLVM::Int(1)]
+        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(node.value.llvm_type)
+        @builder.store @last, casted_value_ptr
+      end
 
       false
     end

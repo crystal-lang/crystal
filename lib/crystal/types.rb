@@ -35,7 +35,10 @@ module Crystal
         if types.length == 1
           types.first
         else
-          UnionType.new(*types)
+          union = UnionType.new(*types)
+          return t1 if t1 == union
+          return t2 if t2 == union
+          union
         end
       end
     end
@@ -137,6 +140,18 @@ module Crystal
 
     def initialize(*types)
       @types = Set.new types
+    end
+
+    def llvm_type
+      unless @llvm_type
+        @llvm_type = LLVM::Struct(to_s)
+        @llvm_type.element_types = [LLVM::Int, LLVM::Type.array(LLVM::Int8, 100)]
+      end
+      @llvm_type
+    end
+
+    def index_of_type(type)
+      @types.to_a.index type
     end
 
     def each(&block)
