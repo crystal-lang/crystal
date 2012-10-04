@@ -32,4 +32,8 @@ describe "Type inference: union" do
       a
     )) { ObjectType.new("A").with_var("@next", UnionType.new(int, float)) }
   end
+
+  it "types union of classes" do
+    assert_type("class A; end; class B; end; a = A.new; a = B.new; a") { UnionType.new(ObjectType.new('A'), ObjectType.new('B')) }
+  end
 end

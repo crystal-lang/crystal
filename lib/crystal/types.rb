@@ -63,6 +63,7 @@ module Crystal
     end
 
     def add_observer(observer, func = :update_from_object_type)
+      return if @observers && @observers.has_key?(observer)
       @observers ||= {}
       @observers[observer] = func
       observer.send func, self
