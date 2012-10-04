@@ -315,11 +315,7 @@ module Crystal
     end
 
     def codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index = -1, &block)
-      if arg_index == -1
-        arg = node.obj
-      else
-        arg = node.args[arg_index]
-      end
+      arg = arg_index == -1 ? node.obj : node.args[arg_index]
 
       if arg.type.is_a?(UnionType)
         arg.accept self
