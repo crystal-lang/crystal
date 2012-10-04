@@ -99,8 +99,7 @@ module Crystal
       node.value.accept self
 
       if node.target.is_a?(InstanceVar)
-        index = @type.index_of_instance_var(node.target.name)
-        ptr = @builder.gep(@fun.params[0], [LLVM::Int(0), LLVM::Int(index)], node.target.name)
+        ptr = gep @fun.params[0], 0, @type.index_of_instance_var(node.target.name)
       else
         var = @vars[node.target.name]
         unless var
@@ -333,8 +332,7 @@ module Crystal
         arg.accept self
         arg_ptr = @last
 
-        type_index_ptr = @builder.gep arg_ptr, [LLVM::Int(0), LLVM::Int(0)]
-        value_ptr = @builder.gep arg_ptr, [LLVM::Int(0), LLVM::Int(1)]
+        index_ptr, value_ptr = union_index_and_value(arg_ptr)
 
         switch_table = {}
 
@@ -363,20 +361,30 @@ module Crystal
 
         @builder.position_at_end old_block
 
-        type_index = @builder.load type_index_ptr
+        type_index = @builder.load index_ptr
         @builder.switch type_index, unreachable_block, switch_table
       else
       end
     end
 
     def assign_to_union(union_pointer, union_type, type, value)
+      index_ptr, value_ptr = union_index_and_value(union_pointer)
+
       index = union_type.index_of_type(type)
-      index_ptr = @builder.gep union_pointer, [LLVM::Int(0), LLVM::Int(0)]
       @builder.store LLVM::Int(index), index_ptr
 
-      value_ptr = @builder.gep union_pointer, [LLVM::Int(0), LLVM::Int(1)]
       casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_type)
       @builder.store value, casted_value_ptr
+    end
+
+    def union_index_and_value(union_pointer)
+      index_ptr = gep union_pointer, 0, 0
+      value_ptr = gep union_pointer, 0, 1
+      [index_ptr, value_ptr]
+    end
+
+    def gep(ptr, *indices)
+      @builder.gep ptr, indices.map { |i| LLVM::Int(i) }
     end
   end
 end
