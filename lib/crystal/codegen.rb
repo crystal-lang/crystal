@@ -314,13 +314,12 @@ module Crystal
       false
     end
 
-    def codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index = -1, &block)
+    def codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index = -1, previous_label = nil, &block)
       arg = arg_index == -1 ? node.obj : node.args[arg_index]
+      arg.accept self
 
       if arg.type.is_a?(UnionType)
-        arg.accept self
         arg_ptr = @last
-
         index_ptr, value_ptr = union_index_and_value(arg_ptr)
 
         switch_table = {}
@@ -339,7 +338,7 @@ module Crystal
           if arg_index == node.args.length - 1
             yield label
           else
-            codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index + 1, &block)
+            codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index + 1, label, &block)
           end
 
           arg_types.pop
@@ -353,6 +352,17 @@ module Crystal
         type_index = @builder.load index_ptr
         @builder.switch type_index, unreachable_block, switch_table
       else
+        arg_types.push arg.type
+        arg_values.push @last
+
+        if arg_index == node.args.length - 1
+          yield previous_label
+        else
+          codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index + 1, previous_label, &block)
+        end
+
+        arg_types.pop
+        arg_values.pop
       end
     end
 
