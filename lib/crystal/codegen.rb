@@ -62,9 +62,9 @@ module Crystal
       @return_type = return_type
       @llvm_mod = LLVM::Module.new("Crystal")
       @fun = @llvm_mod.functions.add("crystal_main", [], return_type ? return_type.llvm_type : LLVM.Void)
-      entry = @fun.basic_blocks.append("entry")
       @builder = LLVM::Builder.new
-      @builder.position_at_end(entry)
+
+      new_entry_block
 
       @funs = {}
       @vars = {}
@@ -138,12 +138,8 @@ module Crystal
     def visit_if(node)
       has_else = !node.else.empty?
 
-      then_block = @fun.basic_blocks.append("then")
-      exit_block = @fun.basic_blocks.append("exit")
-
-      if has_else
-        else_block = @fun.basic_blocks.append("else")
-      end
+      then_block, exit_block = new_blocks "then", "exit"
+      else_block = new_block "else" if has_else
 
       node.cond.accept self
 
@@ -170,9 +166,7 @@ module Crystal
     end
 
     def visit_while(node)
-      while_block = @fun.basic_blocks.append("while")
-      body_block = @fun.basic_blocks.append("body")
-      exit_block = @fun.basic_blocks.append("exit")
+      while_block, body_block, exit_block = new_blocks "while", "body", "exit"
 
       @builder.br while_block
 
@@ -258,8 +252,7 @@ module Crystal
 
         unless target_def.is_a? External
           @fun.linkage = :internal
-          entry = @fun.basic_blocks.append("entry")
-          @builder.position_at_end(entry)
+          new_entry_block
 
           args.each_with_index do |arg, i|
             if obj_type && i == 0 || target_def.body.is_a?(PrimitiveBody)
@@ -286,8 +279,8 @@ module Crystal
 
     def codegen_dispatch(node)
       dispatch = node.target_def
-      unreachable_block = @fun.basic_blocks.append("unreachable")
-      exit_block = @fun.basic_blocks.append("exit")
+
+      unreachable_block, exit_block = new_blocks "unreachable", "exit"
 
       phi_table = {}
       arg_types = []
@@ -338,7 +331,7 @@ module Crystal
 
         old_block = @builder.insert_block
         arg.type.types.each_with_index.each do |arg_type, i|
-          label = @fun.basic_blocks.append("type_#{i}")
+          label = new_block "type_#{i}"
           @builder.position_at_end label
 
           casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(arg_type.llvm_type)
@@ -385,6 +378,18 @@ module Crystal
 
     def gep(ptr, *indices)
       @builder.gep ptr, indices.map { |i| LLVM::Int(i) }
+    end
+
+    def new_block(name)
+      @fun.basic_blocks.append(name)
+    end
+
+    def new_entry_block
+      @builder.position_at_end(new_block "entry")
+    end
+
+    def new_blocks(*names)
+      names.map { |name| new_block name }
     end
   end
 end
