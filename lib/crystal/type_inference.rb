@@ -164,7 +164,7 @@ module Crystal
       @calls = {}
       for_each_obj do |obj_type|
         for_each_args do |arg_types|
-          call = Call.new(obj_type && Var.new('self', obj_type), name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
+          call = Call.new(obj_type ? Var.new('self', obj_type) : nil, name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
           call.mod = mod
           call.add_observer self
           call.recalculate

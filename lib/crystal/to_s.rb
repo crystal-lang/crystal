@@ -147,7 +147,11 @@ module Crystal
     end
 
     def visit_var(node)
-      @str << node.name
+      if node.name
+        @str << node.name
+      else
+        @str << '?'
+      end
     end
 
     def visit_const(node)

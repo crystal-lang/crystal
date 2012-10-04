@@ -18,7 +18,7 @@ module Crystal
 
     def self.mangled_name(owner, name, arg_types)
       str = ''
-      if owner
+      if owner && !owner.is_a?(Crystal::Module)
         str << owner.to_s
         str << '#'
       end
@@ -288,7 +288,7 @@ module Crystal
 
       codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block) do |label|
         call = dispatch.calls[arg_types]
-        codegen_call(call.target_def, arg_types[0], arg_values)
+        codegen_call(call.target_def, (node.obj ? arg_types[0] : nil), arg_values)
 
         if dispatch.type.is_a?(UnionType) 
           phi_table[label] = phi_value = @builder.alloca dispatch.llvm_type
@@ -316,9 +316,9 @@ module Crystal
 
     def codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index = -1, previous_label = nil, &block)
       arg = arg_index == -1 ? node.obj : node.args[arg_index]
-      arg.accept self
+      arg.accept self if arg
 
-      if arg.type.is_a?(UnionType)
+      if arg && arg.type.is_a?(UnionType)
         arg_ptr = @last
         index_ptr, value_ptr = union_index_and_value(arg_ptr)
 
@@ -342,13 +342,13 @@ module Crystal
         type_index = @builder.load index_ptr
         @builder.switch type_index, unreachable_block, switch_table
       else
-        codegen_dispatch_next_arg node, arg_types, arg_values, arg.type, @last, unreachable_block, arg_index, previous_label, &block
+        codegen_dispatch_next_arg node, arg_types, arg_values, (arg ? arg.type : nil), @last, unreachable_block, arg_index, previous_label, &block
       end
     end
 
     def codegen_dispatch_next_arg(node, arg_types, arg_values, arg_type, arg_value, unreachable_block, arg_index, label, &block)
       arg_types.push arg_type
-      arg_values.push arg_value
+      arg_values.push arg_value unless arg_index == -1 && !node.obj
 
       if arg_index == node.args.length - 1
         block.call(label)
