@@ -111,11 +111,7 @@ module Crystal
         ptr = var[:ptr]
       end
 
-      if node.target.type == node.value.type
-        @builder.store @last, ptr
-      else
-        assign_to_union(ptr, node.target.type, node.value.type, @last)
-      end
+      codegen_assign(ptr, node.target.type, node.value.type, @last)
 
       false
     end
@@ -358,6 +354,14 @@ module Crystal
 
       arg_types.pop
       arg_values.pop
+    end
+
+    def codegen_assign(pointer, target_type, value_type, value)
+      if target_type == value_type
+        @builder.store value, pointer
+      else
+        assign_to_union(pointer, target_type, value_type, value)
+      end
     end
 
     def assign_to_union(union_pointer, union_type, type, value)
