@@ -332,17 +332,7 @@ module Crystal
           casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(arg_type.llvm_type)
           value = @builder.load casted_value_ptr
 
-          arg_types.push arg_type
-          arg_values.push value
-
-          if arg_index == node.args.length - 1
-            yield label
-          else
-            codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index + 1, label, &block)
-          end
-
-          arg_types.pop
-          arg_values.pop
+          codegen_dispatch_next_arg node, arg_types, arg_values, arg_type, value, unreachable_block, arg_index, label, &block
 
           switch_table[LLVM::Int(i)] = label
         end
@@ -352,18 +342,22 @@ module Crystal
         type_index = @builder.load index_ptr
         @builder.switch type_index, unreachable_block, switch_table
       else
-        arg_types.push arg.type
-        arg_values.push @last
-
-        if arg_index == node.args.length - 1
-          yield previous_label
-        else
-          codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index + 1, previous_label, &block)
-        end
-
-        arg_types.pop
-        arg_values.pop
+        codegen_dispatch_next_arg node, arg_types, arg_values, arg.type, @last, unreachable_block, arg_index, previous_label, &block
       end
+    end
+
+    def codegen_dispatch_next_arg(node, arg_types, arg_values, arg_type, arg_value, unreachable_block, arg_index, label, &block)
+      arg_types.push arg_type
+      arg_values.push arg_value
+
+      if arg_index == node.args.length - 1
+        block.call(label)
+      else
+        codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index + 1, label, &block)
+      end
+
+      arg_types.pop
+      arg_values.pop
     end
 
     def assign_to_union(union_pointer, union_type, type, value)
