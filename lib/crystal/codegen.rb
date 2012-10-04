@@ -286,6 +286,7 @@ module Crystal
     end
 
     def codegen_dispatch(node)
+      dispatch = node.target_def
       unreachable_block = @fun.basic_blocks.append("unreachable")
       exit_block = @fun.basic_blocks.append("exit")
 
@@ -293,14 +294,25 @@ module Crystal
       arg_types = []
       arg_values = []
 
-      codegen_dispatch_arg(node, arg_types, arg_values, phi_table, exit_block, unreachable_block)
+      codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block) do |label|
+        call = dispatch.calls[arg_types]
+        codegen_call(call.target_def, arg_types[0], arg_values)
+
+        if dispatch.type.is_a?(UnionType) 
+          phi_table[label] = phi_value = @builder.alloca dispatch.llvm_type
+          assign_to_union(phi_value, dispatch.type, call.type, @last)
+        else
+          phi_table[label] = @last
+        end
+
+        @builder.br exit_block
+      end
 
       @builder.position_at_end unreachable_block
       @builder.unreachable
 
       @builder.position_at_end exit_block
 
-      dispatch = node.target_def
       if dispatch.type.is_a?(UnionType)
         @last = @builder.phi LLVM::Pointer(dispatch.llvm_type), phi_table
       else
@@ -310,7 +322,7 @@ module Crystal
       false
     end
 
-    def codegen_dispatch_arg(node, arg_types, arg_values, phi_table, exit_block, unreachable_block, arg_index = -1)
+    def codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index = -1, &block)
       if arg_index == -1
         arg = node.obj
       else
@@ -338,21 +350,9 @@ module Crystal
           arg_values.push value
 
           if arg_index == node.args.length - 1
-            dispatch = node.target_def
-            call = dispatch.calls[arg_types]
-            codegen_call(call.target_def, arg_types[0], arg_values)
-
-            if dispatch.type.is_a?(UnionType) 
-              phi_table[label] = phi_value = @builder.alloca dispatch.llvm_type
-
-              assign_to_union(phi_value, dispatch.type, call.type, @last)
-            else
-              phi_table[label] = @last
-            end
-
-            @builder.br exit_block
+            yield label
           else
-            codegen_dispatch_arg(node, arg_types, arg_values, phi_table, exit_block, unreachable_block, arg_index + 1)
+            codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index + 1, &block)
           end
 
           arg_types.pop
