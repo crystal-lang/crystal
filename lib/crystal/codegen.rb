@@ -286,8 +286,6 @@ module Crystal
     end
 
     def codegen_dispatch(node)
-      dispatch = node.target_def
-
       unreachable_block = @fun.basic_blocks.append("unreachable")
       exit_block = @fun.basic_blocks.append("exit")
 
@@ -295,50 +293,14 @@ module Crystal
       arg_types = []
       arg_values = []
 
-      if dispatch.obj && dispatch.obj.is_a?(UnionType)
-        node.obj.accept self
-        obj_ptr = @last
-        type_index_ptr = @builder.gep obj_ptr, [LLVM::Int(0), LLVM::Int(0)]
-        value_ptr = @builder.gep obj_ptr, [LLVM::Int(0), LLVM::Int(1)]
-
-        switch_table = {}
-
-        old_block = @builder.insert_block
-        dispatch.obj.types.each_with_index.each do |obj_type, i|
-          label = @fun.basic_blocks.append("obj_type_#{i}")
-          @builder.position_at_end label
-
-          casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(obj_type.llvm_type)
-          value = @builder.load casted_value_ptr
-
-          arg_types.push obj_type
-          arg_values.push value
-
-          if node.args.empty?
-            call = dispatch.calls[arg_types]
-            codegen_call(call.target_def, obj_type, arg_values)
-            phi_table[label] = @last
-            @builder.br exit_block
-          else
-            codegen_dispatch_arg(node, dispatch, i, 0, phi_table, arg_types, arg_values, exit_block, unreachable_block)
-          end
-
-          arg_types.pop
-          arg_values.pop
-
-          switch_table[LLVM::Int(i)] = label
-        end
-        @builder.position_at_end old_block
-
-        type_index = @builder.load type_index_ptr
-        @builder.switch type_index, unreachable_block, switch_table
-      end
+      codegen_dispatch_arg(node, arg_types, arg_values, phi_table, exit_block, unreachable_block)
 
       @builder.position_at_end unreachable_block
       @builder.unreachable
 
       @builder.position_at_end exit_block
 
+      dispatch = node.target_def
       if dispatch.type.is_a?(UnionType)
         @last = @builder.phi LLVM::Pointer(dispatch.llvm_type), phi_table
       else
@@ -348,8 +310,13 @@ module Crystal
       false
     end
 
-    def codegen_dispatch_arg(node, dispatch, obj_index, arg_index, phi_table, arg_types, arg_values, exit_block, unreachable_block)
-      arg = node.args[arg_index]
+    def codegen_dispatch_arg(node, arg_types, arg_values, phi_table, exit_block, unreachable_block, arg_index = -1)
+      if arg_index == -1
+        arg = node.obj
+      else
+        arg = node.args[arg_index]
+      end
+
       if arg.type.is_a?(UnionType)
         arg.accept self
         arg_ptr = @last
@@ -361,7 +328,7 @@ module Crystal
 
         old_block = @builder.insert_block
         arg.type.types.each_with_index.each do |arg_type, i|
-          label = @fun.basic_blocks.append("obj_type_#{obj_index}_arg_#{arg_index}_type_#{i}")
+          label = @fun.basic_blocks.append("type_#{i}")
           @builder.position_at_end label
 
           casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(arg_type.llvm_type)
@@ -371,6 +338,7 @@ module Crystal
           arg_values.push value
 
           if arg_index == node.args.length - 1
+            dispatch = node.target_def
             call = dispatch.calls[arg_types]
             codegen_call(call.target_def, arg_types[0], arg_values)
 
@@ -384,7 +352,7 @@ module Crystal
 
             @builder.br exit_block
           else
-            codegen_dispatch_arg(node, dispatch, obj_index, arg_index + 1, phi_table, arg_types, arg_values, exit_block, unreachable_block)
+            codegen_dispatch_arg(node, arg_types, arg_values, phi_table, exit_block, unreachable_block, arg_index + 1)
           end
 
           arg_types.pop
