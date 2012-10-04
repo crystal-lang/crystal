@@ -397,6 +397,7 @@ module Crystal
     def clone
       call = self.class.new obj ? obj.clone : nil, name, args.map(&:clone), block ? block.clone : nil
       call.location = location
+      call.name_column_number = name_column_number
       call
     end
 
