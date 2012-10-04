@@ -13,9 +13,6 @@ module Crystal
       @indent = 0
     end
 
-    def visit_module(node)
-    end
-
     def visit_nil(node)
       @str << 'nil'
     end
@@ -126,6 +123,7 @@ module Crystal
           @str << ", " if i > 0
           arg.accept self
           i += 1
+
         end
         @str << ")"
       end
