@@ -115,13 +115,7 @@ module Crystal
       if node.target.type == node.value.type
         @builder.store @last, ptr
       else
-        index = node.target.type.index_of_type(node.value.type)
-        index_ptr = @builder.gep ptr, [LLVM::Int(0), LLVM::Int(0)]
-        @builder.store LLVM::Int(index), index_ptr
-
-        value_ptr = @builder.gep ptr, [LLVM::Int(0), LLVM::Int(1)]
-        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(node.value.llvm_type)
-        @builder.store @last, casted_value_ptr
+        assign_to_union(ptr, node.target.type, node.value.type, @last)
       end
 
       false
@@ -383,13 +377,7 @@ module Crystal
             if dispatch.type.is_a?(UnionType) 
               phi_table[label] = phi_value = @builder.alloca dispatch.llvm_type
 
-              index = dispatch.type.index_of_type(call.type)
-              index_ptr = @builder.gep phi_value, [LLVM::Int(0), LLVM::Int(0)]
-              @builder.store LLVM::Int(index), index_ptr
-
-              arg_value_ptr = @builder.gep phi_value, [LLVM::Int(0), LLVM::Int(1)]
-              casted_value_ptr = @builder.bit_cast arg_value_ptr, LLVM::Pointer(call.llvm_type)
-              @builder.store @last, casted_value_ptr
+              assign_to_union(phi_value, dispatch.type, call.type, @last)
             else
               phi_table[label] = @last
             end
@@ -411,6 +399,16 @@ module Crystal
         @builder.switch type_index, unreachable_block, switch_table
       else
       end
+    end
+
+    def assign_to_union(union_pointer, union_type, type, value)
+      index = union_type.index_of_type(type)
+      index_ptr = @builder.gep union_pointer, [LLVM::Int(0), LLVM::Int(0)]
+      @builder.store LLVM::Int(index), index_ptr
+
+      value_ptr = @builder.gep union_pointer, [LLVM::Int(0), LLVM::Int(1)]
+      casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_type)
+      @builder.store value, casted_value_ptr
     end
   end
 end
