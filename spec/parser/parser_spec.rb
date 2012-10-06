@@ -200,4 +200,5 @@ describe Parser do
   it_parses_single_node "@foo = 1", Assign.new("@foo".instance_var, 1.int)
 
   it_parses_single_node "call @foo.bar", Call.new(nil, "call", [Call.new("@foo".instance_var, "bar")])
+  it_parses_single_node 'call "foo"', Call.new(nil, "call", ["foo".string])
 end

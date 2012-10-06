@@ -81,6 +81,10 @@ class String
   def instance_var
     Crystal::InstanceVar.new self
   end
+
+  def string
+    Crystal::StringConst.new self
+  end
 end
 
 class ::Array

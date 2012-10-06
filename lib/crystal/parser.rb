@@ -481,7 +481,7 @@ module Crystal
 
     def parse_args_space_consumed
       case @token.type
-      when :CHAR, :INT, :FLOAT, :IDENT, :INSTANCE_VAR, :CONST, :'(', :'!'
+      when :CHAR, :STRING, :INT, :FLOAT, :IDENT, :INSTANCE_VAR, :CONST, :'(', :'!'
         case @token.value
         when :if, :unless, :while
           nil
