@@ -245,6 +245,22 @@ module Crystal
     end
   end
 
+  class StringConst < ASTNode
+    attr_accessor :value
+
+    def initialize(value)
+      @value = value
+    end
+
+    def ==(other)
+      other.class == self.class && other.value == value
+    end
+
+    def clone
+      self.class.new value
+    end
+  end
+
   # A method definition.
   #
   #     [ receiver '.' ] 'def' name

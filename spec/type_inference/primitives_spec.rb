@@ -17,6 +17,10 @@ describe 'Type inference: primitives' do
     assert_type("'a'") { char }
   end
 
+  it "types a string" do
+    assert_type('"foo"') { string }
+  end
+
   it "types a primitive method" do
     assert_type('class Int; def foo; 2.5; end; end; 1.foo') { float }
   end

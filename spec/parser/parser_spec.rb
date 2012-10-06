@@ -27,6 +27,8 @@ describe Parser do
 
   it_parses_single_node "'a'", Char.new(?a.ord)
 
+  it_parses_single_node %("foo"), StringConst.new("foo")
+
   it_parses_single_node "[]", [].array
   it_parses_single_node "[1, 2]", [1.int, 2.int].array
   it_parses_single_node "[\n1, 2]", [1.int, 2.int].array

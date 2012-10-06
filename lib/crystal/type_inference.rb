@@ -226,6 +226,10 @@ module Crystal
       node.type = mod.char
     end
 
+    def visit_string_const(node)
+      node.type = mod.string
+    end
+
     def visit_def(node)
       class_def = node.parent.parent
       if class_def

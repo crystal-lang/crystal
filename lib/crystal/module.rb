@@ -11,6 +11,7 @@ module Crystal
       @types["Int"] = Type.new "Int", LLVM::Int
       @types["Float"] = Type.new "Float", LLVM::Float
       @types["Char"] = Type.new "Char", LLVM::Int8
+      @types["String"] = Type.new "String", LLVM::Pointer(char.llvm_type)
 
       @defs = {}
 
@@ -38,19 +39,29 @@ module Crystal
       @types["Char"]
     end
 
+    def string
+      @types["String"]
+    end
+
     def each
       yield self
     end
 
     def define_builtins
-      @defs["puts"] = Parser.parse(%Q(
-        def puts(n)
+      @defs["putn"] = Parser.parse(%Q(
+        def putn(n)
           if n > 10
-            puts(n / 10)
-            puts(n - (n / 10) * 10)
+            putn(n / 10)
+            putn(n - (n / 10) * 10)
           else
             putchar (n + '0'.ord).chr
           end
+        end
+      )).first
+
+      string.defs['length'] = Parser.parse(%Q(
+        def length
+          strlen self
         end
       )).first
     end

@@ -328,6 +328,8 @@ module Crystal
         node_and_next_token Float.new(@token.value)
       when :CHAR
         node_and_next_token Char.new(@token.value)
+      when :STRING
+        node_and_next_token StringConst.new(@token.value)
       when :IDENT
         case @token.value
         when :begin

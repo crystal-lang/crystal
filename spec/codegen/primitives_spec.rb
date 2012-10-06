@@ -17,6 +17,11 @@ describe 'Code gen: primitives' do
     run("'a'").to_i.should eq(?a.ord)
   end
 
+  it 'codegens string' do
+    run('strlen("foo")').to_i.should eq("foo".size)
+    run('"foo".length').to_i.should eq("foo".size)
+  end
+
   it 'codegens int method' do
     run('class Int; def foo; 3; end; end; 1.foo').to_i.should eq(3)
   end

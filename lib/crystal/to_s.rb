@@ -35,6 +35,12 @@ module Crystal
       @str << "'"
     end
 
+    def visit_string_const(node)
+      @str << '"'
+      @str << node.value
+      @str << '"'
+    end
+
     def visit_array(node)
       @str << '['
       node.expressions.each_with_index do |exp, i|

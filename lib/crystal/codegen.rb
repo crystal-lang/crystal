@@ -95,6 +95,10 @@ module Crystal
       @last = LLVM::Int8.from_i(node.value)
     end
 
+    def visit_string_const(node)
+      @last = @builder.global_string_pointer(node.value)
+    end
+
     def visit_assign(node)
       node.value.accept self
 
@@ -297,7 +301,7 @@ module Crystal
         call = dispatch.calls[arg_types]
         codegen_call(call.target_def, (node.obj ? arg_types[0] : nil), arg_values)
 
-        if dispatch.type.is_a?(UnionType) 
+        if dispatch.type.is_a?(UnionType)
           phi_table[label] = phi_value = @builder.alloca dispatch.llvm_type
           assign_to_union(phi_value, dispatch.type, call.type, @last)
         else
