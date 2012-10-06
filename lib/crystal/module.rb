@@ -64,6 +64,12 @@ module Crystal
           strlen self
         end
       )).first
+
+      string.defs['to_i'] = Parser.parse(%Q(
+        def to_i
+          atoi self
+        end
+      )).first
     end
   end
 end

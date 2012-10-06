@@ -143,6 +143,7 @@ module Crystal
       external('getchar', {}, char)
       external('strlen', {'str' => string}, int)
       external('puts', {'str' => string}, int)
+      external('atoi', {'str' => string}, int)
      end
 
     def primitive(owner, name, arg_names)
