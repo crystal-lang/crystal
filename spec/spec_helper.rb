@@ -3,6 +3,11 @@ require 'pry'
 require 'pry-nav'
 require(File.expand_path("../../lib/crystal",  __FILE__))
 
+RSpec.configure do |c|
+  c.treat_symbols_as_metadata_keys_with_true_values = true
+  c.filter_run_excluding :integration
+end
+
 include Crystal
 
 # Escaped regexp
