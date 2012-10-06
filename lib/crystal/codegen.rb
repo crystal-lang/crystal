@@ -133,10 +133,12 @@ module Crystal
 
     def visit_if(node)
       has_else = !node.else.empty?
+      is_union = has_else && node.then.type != node.else.type
 
       then_block, exit_block = new_blocks "then", "exit"
       else_block = new_block "else" if has_else
 
+      union_ptr = @builder.alloca node.llvm_type if is_union
       node.cond.accept self
 
       @builder.cond(@last, then_block, has_else ? else_block : exit_block)
@@ -144,16 +146,25 @@ module Crystal
       @builder.position_at_end then_block
       node.then.accept self
       then_value = @last
+      assign_to_union(union_ptr, node.type, node.then.type, @last) if is_union
+
       @builder.br exit_block
 
       if has_else
         @builder.position_at_end else_block
         node.else.accept self
         else_value = @last
+        assign_to_union(union_ptr, node.type, node.else.type, @last) if is_union
+
         @builder.br exit_block
 
         @builder.position_at_end exit_block
-        @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
+
+        if is_union
+          @last = union_ptr
+        else
+          @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
+        end
       else
         @builder.position_at_end exit_block
       end
@@ -358,7 +369,12 @@ module Crystal
 
     def codegen_assign(pointer, target_type, value_type, value)
       if target_type == value_type
-        @builder.store value, pointer
+        if target_type.is_a?(UnionType)
+          @last = @builder.load @last
+          @builder.store @last, pointer
+        else
+          @builder.store value, pointer
+        end
       else
         assign_to_union(pointer, target_type, value_type, value)
       end
