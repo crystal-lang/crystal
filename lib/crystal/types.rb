@@ -2,29 +2,20 @@ module Crystal
   class Type
     include Enumerable
 
-    attr_reader :name
-    attr_reader :llvm_type
-    attr_accessor :defs
+    attr_accessor :observers
 
-    def initialize(name, llvm_type)
-      @name = name
-      @llvm_type = llvm_type
-      @defs = {}
+    def initialize
     end
 
     def add_observer(observer, func = nil)
     end
 
-    def each
-      yield self
-    end
-
-    def ==(other)
-      equal?(other) || (other.is_a?(UnionType) && other == self)
-    end
-
     def eql?(other)
       self == other
+    end
+
+    def each
+      yield self
     end
 
     def self.merge(t1, t2)
@@ -42,6 +33,23 @@ module Crystal
         end
       end
     end
+  end
+
+  class PrimitiveType < Type
+    attr_reader :name
+    attr_reader :llvm_type
+    attr_accessor :defs
+
+    def initialize(name, llvm_type)
+      @name = name
+      @llvm_type = llvm_type
+      @defs = {}
+    end
+
+    def ==(other)
+      equal?(other) || (other.is_a?(UnionType) && other == self)
+    end
+
 
     def to_s
       name
@@ -49,17 +57,14 @@ module Crystal
   end
 
   class ObjectType < Type
+    attr_accessor :name
+    attr_accessor :defs
     attr_accessor :instance_vars
-    attr_accessor :observers
-
-    @@id = 0
 
     def initialize(name)
       @name = name
       @defs = {}
       @instance_vars = {}
-      @@id += 1
-      @id = @@id
     end
 
     def add_observer(observer, func = :update_from_object_type)

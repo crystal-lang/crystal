@@ -7,11 +7,11 @@ module Crystal
 
     def initialize
       @types = {}
-      @types["Bool"] = Type.new "Bool", LLVM::Int1
-      @types["Int"] = Type.new "Int", LLVM::Int
-      @types["Float"] = Type.new "Float", LLVM::Float
-      @types["Char"] = Type.new "Char", LLVM::Int8
-      @types["String"] = Type.new "String", LLVM::Pointer(char.llvm_type)
+      @types["Bool"] = PrimitiveType.new "Bool", LLVM::Int1
+      @types["Int"] = PrimitiveType.new "Int", LLVM::Int
+      @types["Float"] = PrimitiveType.new "Float", LLVM::Float
+      @types["Char"] = PrimitiveType.new "Char", LLVM::Int8
+      @types["String"] = PrimitiveType.new "String", LLVM::Pointer(char.llvm_type)
 
       @defs = {}
 
