@@ -79,23 +79,23 @@ module Crystal
       @builder.ret(@return_type == @mod.void ? nil : @last)
     end
 
-    def visit_bool(node)
+    def visit_bool_literal(node)
       @last = LLVM::Int1.from_i(node.value ? 1 : 0)
     end
 
-    def visit_int(node)
+    def visit_int_literal(node)
       @last = LLVM::Int(node.value)
     end
 
-    def visit_float(node)
+    def visit_float_literal(node)
       @last = LLVM::Float(node.value)
     end
 
-    def visit_char(node)
+    def visit_char_literal(node)
       @last = LLVM::Int8.from_i(node.value)
     end
 
-    def visit_string_const(node)
+    def visit_string_literal(node)
       @last = @builder.global_string_pointer(node.value)
     end
 

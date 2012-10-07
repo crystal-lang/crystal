@@ -39,29 +39,29 @@ end
 
 class FalseClass
   def bool
-    Crystal::Bool.new self
+    Crystal::BoolLiteral.new self
   end
 end
 
 class TrueClass
   def bool
-    Crystal::Bool.new self
+    Crystal::BoolLiteral.new self
   end
 end
 
 class Fixnum
   def int
-    Crystal::Int.new self
+    Crystal::IntLiteral.new self
   end
 
   def float
-    Crystal::Float.new self.to_f
+    Crystal::FloatLiteral.new self.to_f
   end
 end
 
 class Float
   def float
-    Crystal::Float.new self
+    Crystal::FloatLiteral.new self
   end
 end
 
@@ -83,7 +83,7 @@ class String
   end
 
   def string
-    Crystal::StringConst.new self
+    Crystal::StringLiteral.new self
   end
 end
 

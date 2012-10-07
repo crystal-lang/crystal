@@ -17,25 +17,25 @@ module Crystal
       @str << 'nil'
     end
 
-    def visit_bool(node)
+    def visit_bool_literal(node)
       @str << (node.value ? 'true' : 'false')
     end
 
-    def visit_int(node)
+    def visit_int_literal(node)
       @str << node.value.to_s
     end
 
-    def visit_float(node)
+    def visit_float_literal(node)
       @str << node.value.to_s
     end
 
-    def visit_char(node)
+    def visit_char_literal(node)
       @str << "'"
       @str << node.value.chr
       @str << "'"
     end
 
-    def visit_string_const(node)
+    def visit_string_literal(node)
       @str << '"'
       @str << node.value
       @str << '"'

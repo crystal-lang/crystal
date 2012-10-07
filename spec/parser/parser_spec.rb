@@ -12,7 +12,7 @@ describe Parser do
     it_parses string, [expected_node], options
   end
 
-  it_parses_single_node "nil", Nil.new
+  it_parses_single_node "nil", NilLiteral.new
 
   it_parses_single_node "true", true.bool
   it_parses_single_node "false", false.bool
@@ -25,9 +25,9 @@ describe Parser do
   it_parses_single_node "+1.0", 1.0.float
   it_parses_single_node "-1.0", -1.0.float
 
-  it_parses_single_node "'a'", Char.new(?a.ord)
+  it_parses_single_node "'a'", CharLiteral.new(?a.ord)
 
-  it_parses_single_node %("foo"), StringConst.new("foo")
+  it_parses_single_node %("foo"), StringLiteral.new("foo")
 
   it_parses_single_node "[]", [].array
   it_parses_single_node "[1, 2]", [1.int, 2.int].array

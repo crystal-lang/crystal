@@ -151,7 +151,7 @@ module Crystal
   #
   #     'nil'
   #
-  class Nil < ASTNode
+  class NilLiteral < ASTNode
     def ==(other)
       other.class == self.class
     end
@@ -165,7 +165,7 @@ module Crystal
   #
   #     'true' | 'false'
   #
-  class Bool < ASTNode
+  class BoolLiteral < ASTNode
     attr_accessor :value
 
     def initialize(value)
@@ -185,7 +185,7 @@ module Crystal
   #
   #     \d+
   #
-  class Int < ASTNode
+  class IntLiteral < ASTNode
     attr_accessor :value
     attr_reader :has_sign
 
@@ -207,7 +207,7 @@ module Crystal
   #
   #     \d+.\d+
   #
-  class Float < ASTNode
+  class FloatLiteral < ASTNode
     attr_accessor :value
     attr_reader :has_sign
 
@@ -229,7 +229,7 @@ module Crystal
   #
   #     "'" \w "'"
   #
-  class Char < ASTNode
+  class CharLiteral < ASTNode
     attr_accessor :value
 
     def initialize(value)
@@ -245,7 +245,7 @@ module Crystal
     end
   end
 
-  class StringConst < ASTNode
+  class StringLiteral < ASTNode
     attr_accessor :value
 
     def initialize(value)

@@ -179,10 +179,10 @@ module Crystal
         when :INT
           case @token.value[0]
           when '+'
-            left = Call.new left, @token.value[0].to_sym, [Int.new(@token.value)], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [IntLiteral.new(@token.value)], nil, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value[0].to_sym, [Int.new(@token.value[1 .. -1])], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [IntLiteral.new(@token.value[1 .. -1])], nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -190,10 +190,10 @@ module Crystal
         when :FLOAT
           case @token.value[0]
           when '+'
-            left = Call.new left, @token.value[0].to_sym, [Float.new(@token.value)], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [FloatLiteral.new(@token.value)], nil, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value[0].to_sym, [Float.new(@token.value[1 .. -1])], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [FloatLiteral.new(@token.value[1 .. -1])], nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -323,23 +323,23 @@ module Crystal
         next_token_skip_space_or_newline
         Call.new parse_expression, :'~@', [], nil, column_number
       when :INT
-        node_and_next_token Int.new(@token.value)
+        node_and_next_token IntLiteral.new(@token.value)
       when :FLOAT
-        node_and_next_token Float.new(@token.value)
+        node_and_next_token FloatLiteral.new(@token.value)
       when :CHAR
-        node_and_next_token Char.new(@token.value)
+        node_and_next_token CharLiteral.new(@token.value)
       when :STRING
-        node_and_next_token StringConst.new(@token.value)
+        node_and_next_token StringLiteral.new(@token.value)
       when :IDENT
         case @token.value
         when :begin
           parse_begin
         when :nil
-          node_and_next_token Nil.new
+          node_and_next_token NilLiteral.new
         when :false
-          node_and_next_token Bool.new(false)
+          node_and_next_token BoolLiteral.new(false)
         when :true
-          node_and_next_token Bool.new(true)
+          node_and_next_token BoolLiteral.new(true)
         when :yield
           parse_yield
         when :class
@@ -391,7 +391,7 @@ module Crystal
         Call.new nil, name, args, block, name_column_number, @last_call_has_parenthesis
       else
         if args
-          if is_var?(name) && args.length == 1 && (args[0].is_a?(Int) || args[0].is_a?(Float)) && args[0].has_sign
+          if is_var?(name) && args.length == 1 && (args[0].is_a?(IntLiteral) || args[0].is_a?(FloatLiteral)) && args[0].has_sign
             if args[0].value < 0
               args[0].value = args[0].value.abs
               Call.new(Var.new(name), :-, args)

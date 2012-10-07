@@ -210,23 +210,23 @@ module Crystal
       @scope = scope
     end
 
-    def visit_bool(node)
+    def visit_bool_literal(node)
       node.type = mod.bool
     end
 
-    def visit_int(node)
+    def visit_int_literal(node)
       node.type = mod.int
     end
 
-    def visit_float(node)
+    def visit_float_literal(node)
       node.type = mod.float
     end
 
-    def visit_char(node)
+    def visit_char_literal(node)
       node.type = mod.char
     end
 
-    def visit_string_const(node)
+    def visit_string_literal(node)
       node.type = mod.string
     end
 
