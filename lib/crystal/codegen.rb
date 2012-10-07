@@ -276,6 +276,10 @@ module Crystal
           end
 
           target_def.body.accept self
+          if target_def.body.type.is_a?(UnionType)
+            @last = @builder.load @last
+          end
+
           @builder.ret(target_def.body.type == @mod.void ? nil : @last)
           @builder.position_at_end old_position
         end
@@ -285,6 +289,13 @@ module Crystal
       end
 
       @last = @builder.call @fun, *call_args
+
+      if target_def.body.type.is_a?(UnionType)
+        alloca = @builder.alloca target_def.body.llvm_type
+        @builder.store @last, alloca
+        @last = alloca
+      end
+
       @fun = old_fun
     end
 

@@ -21,6 +21,10 @@ describe 'Code gen: union type' do
     run("def foo(x); x; end; a = 1; a = 2.5; foo(a).to_f").to_f.should eq(2.5)
   end
 
+  it "codegens union type as return value" do
+    run("def foo; a = 1; a = 2.5; a; end; foo.to_f").to_f.should eq(2.5)
+  end
+
   pending "codegens union type for instance var" do
     run(%Q(
       class Foo
