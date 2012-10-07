@@ -63,7 +63,7 @@ module Crystal
       return unless can_calculate_type?
 
       if has_unions?
-        dispatch = Dispatch.new(mod, self.scope, name, obj && obj.type, args.map(&:type))
+        dispatch = Dispatch.new(self)
         dispatch.add_observer self
         self.target_def = dispatch
         return
@@ -177,19 +177,20 @@ module Crystal
     attr_accessor :args
     attr_accessor :calls
 
-    def initialize(mod, scope, name, obj, args)
-      @name = name
-      @obj = obj
-      @args = args
+    def initialize(call)
+      @name = call.name
+      @obj = call.obj && call.obj.type
+      @args = call.args.map(&:type)
       @calls = {}
       for_each_obj do |obj_type|
         for_each_args do |arg_types|
-          call = Call.new(obj_type ? Var.new('self', obj_type) : nil, name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
-          call.mod = mod
-          call.scope = scope
-          call.add_observer self
-          call.recalculate
-          @calls[[obj_type] + arg_types] = call
+          subcall = Call.new(obj_type ? Var.new('self', obj_type) : nil, name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
+          subcall.mod = call.mod
+          subcall.scope = call.scope
+          subcall.location = call.location
+          subcall.add_observer self
+          subcall.recalculate
+          @calls[[obj_type] + arg_types] = subcall
         end
       end
     end
