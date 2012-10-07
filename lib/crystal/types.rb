@@ -122,6 +122,7 @@ module Crystal
 
     def clone
       obj = ObjectType.new name
+      obj.instance_vars = Hash[instance_vars.map { |name, var| [name, Var.new(name, var.type)] }]
       obj.defs = Hash[defs.map { |key, value| [key, value.clone] }]
       obj
     end

@@ -9,6 +9,7 @@ module Crystal
 
   class ASTNode
     attr_accessor :type
+    attr_accessor :has_new_type
     attr_accessor :observers
 
     def type=(type)
@@ -18,6 +19,8 @@ module Crystal
     end
 
     def add_observer(observer, func = :update)
+      observer.has_new_type = has_new_type if observer.is_a?(ASTNode)
+
       @observers ||= {}
       @observers[observer] = func
       observer.send func, @type if @type
@@ -32,6 +35,8 @@ module Crystal
 
     def add_type(new_type)
       return unless new_type
+
+      new_type = new_type.clone if has_new_type && is_a?(Call)
 
       self.type = @type ? Type.merge(@type, new_type) : new_type
       new_type.add_observer self if is_a?(Var)
@@ -291,6 +296,7 @@ module Crystal
           type = mod.types[node.obj.name] or node.obj.raise("uninitialized constant #{node.obj.name}")
           node.type = type.clone
         end
+        node.has_new_type = true
         return false
       end
 

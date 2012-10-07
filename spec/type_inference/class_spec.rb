@@ -97,7 +97,7 @@ describe 'Type inference: class' do
     input.last.type.should eq(recursive_type)
   end
 
-  pending "types separately method calls that create instances" do
+  it "types separately method calls that create instances" do
     assert_type(%(
       class Node
         #{rw :value}
@@ -114,5 +114,27 @@ describe 'Type inference: class' do
       b.value = 2.5
       b
     )) { ObjectType.new('Node').with_var("@value", float) }
+  end
+
+  it "types separately method calls that create instances with two instance vars" do
+    assert_type(%(
+      class Node
+        #{rw :x}
+        #{rw :y}
+      end
+
+      def gen
+        node = Node.new
+        node.x = 1
+        node
+      end
+
+      a = gen
+      a.y = 1
+
+      b = gen
+      b.y = 2.5
+      b
+    )) { ObjectType.new('Node').with_var("@x", int).with_var("@y", float) }
   end
 end
