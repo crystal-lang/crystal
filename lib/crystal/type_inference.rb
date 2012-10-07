@@ -4,6 +4,7 @@ module Crystal
   def infer_type(node)
     mod = Crystal::Module.new
     node.accept TypeVisitor.new(mod)
+    unify node
     mod
   end
 
