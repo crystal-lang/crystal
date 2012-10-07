@@ -17,7 +17,7 @@ module Crystal
     attr_accessor :unified
   end
 
-  class UnifyVisitor
+  class UnifyVisitor < Visitor
     def initialize
       @types = {}
     end
@@ -29,12 +29,8 @@ module Crystal
       end
     end
 
-    def method_missing(name, *args)
-      if name.to_s.start_with? 'visit_'
-        node = args[0]
-        node.set_type unify_type(node.type)
-      end
-      true
+    def visit_any(node)
+      node.set_type unify_type(node.type)
     end
 
     def unify_type(type)

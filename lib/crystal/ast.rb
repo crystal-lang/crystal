@@ -3,6 +3,8 @@ require_relative 'core_ext/string'
 
 module Crystal
   class Visitor
+    def visit_any(node)
+    end
   end
 
   # Base class for nodes in the grammar.
@@ -24,6 +26,7 @@ module Crystal
 
       klass.class_eval %Q(
         def accept(visitor)
+          visitor.visit_any self
           if visitor.visit_#{name} self
             accept_children visitor
           end
