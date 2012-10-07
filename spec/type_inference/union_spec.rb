@@ -19,9 +19,6 @@ describe "Type inference: union" do
         def next=(n)
           @next = n
         end
-        def next
-          @next
-        end
       end
 
       a = A.new

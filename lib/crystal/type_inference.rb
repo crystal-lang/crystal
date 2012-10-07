@@ -1,5 +1,3 @@
-require 'observer'
-
 module Crystal
   def infer_type(node)
     mod = Crystal::Module.new
