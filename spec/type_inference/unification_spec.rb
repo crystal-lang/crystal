@@ -33,4 +33,20 @@ describe 'Type inference unification' do
     a_type = input.last.type
     a_type.instance_vars['@next'].type.instance_vars['@next'].type.should equal(a_type)
   end
+
+  it "unifies recursive type" do
+    input = parse %Q(
+      class Node
+        def add(x)
+          @left = x
+          @left.add(x)
+        end
+      end
+
+      root = Node.new
+      root.add Node.new
+      root
+    )
+    infer_type input
+  end
 end

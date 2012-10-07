@@ -39,10 +39,13 @@ module Crystal
 
     def unify_type(type)
       return type unless type.is_a?(ObjectType)
-      unified_type = @types[type] || (@types[type] = type)
+      unified_type = @types[type]
 
-      unified_type.instance_vars.each do |name, ivar|
-        ivar.set_type unify_type(ivar.type) unless @types[ivar.type].equal?(ivar.type)
+      unless unified_type
+        unified_type = @types[type] = type
+        unified_type.instance_vars.each do |name, ivar|
+          ivar.set_type unify_type(ivar.type) unless @types[ivar.type].equal?(ivar.type)
+        end
       end
 
       unified_type
