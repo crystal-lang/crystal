@@ -16,7 +16,6 @@ module Crystal
       @defs = {}
 
       define_primitives
-      define_builtins
     end
 
     def void
@@ -45,31 +44,6 @@ module Crystal
 
     def each
       yield self
-    end
-
-    def define_builtins
-      @defs["putn"] = Parser.parse(%Q(
-        def putn(n)
-          if n > 10
-            putn(n / 10)
-            putn(n - (n / 10) * 10)
-          else
-            putchar (n + '0'.ord).chr
-          end
-        end
-      )).first
-
-      string.defs['length'] = Parser.parse(%Q(
-        def length
-          strlen self
-        end
-      )).first
-
-      string.defs['to_i'] = Parser.parse(%Q(
-        def to_i
-          atoi self
-        end
-      )).first
     end
   end
 end

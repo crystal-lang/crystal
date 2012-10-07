@@ -8,6 +8,7 @@ module Crystal
       define_int_primitives
       define_float_primitives
       define_externals
+      define_builtins
     end
 
     def define_bool_primitives
@@ -144,7 +145,14 @@ module Crystal
       external('strlen', {'str' => string}, int)
       external('puts', {'str' => string}, int)
       external('atoi', {'str' => string}, int)
-     end
+    end
+
+    def define_builtins
+      Dir[File.expand_path("../../../../std/**/*.cr",  __FILE__)].each do |file|
+        node = Parser.parse(File.read(file))
+        node.accept TypeVisitor.new(self)
+      end
+    end
 
     def primitive(owner, name, arg_names)
       p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Var.new(x) })
