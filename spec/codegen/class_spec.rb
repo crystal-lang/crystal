@@ -49,4 +49,20 @@ describe 'Code gen: class' do
       l.foo
       )).to_f.should eq(1.0)
   end
+
+  pending "codegens method call that create instances" do
+    run(%Q(
+      class Foo
+        #{rw :value}
+      end
+
+      def gen
+        Foo.new
+      end
+
+      f = gen
+      f.value = 1
+      f.value
+    )).to_i.should eq(1)
+  end
 end
