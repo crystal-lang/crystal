@@ -53,6 +53,7 @@ module Crystal
   class Call
     attr_accessor :target_def
     attr_accessor :mod
+    attr_accessor :scope
 
     def update_input(type)
       recalculate
@@ -61,16 +62,14 @@ module Crystal
     def recalculate
       return unless can_calculate_type?
 
-      scope = obj ? obj.type : mod
-
       if has_unions?
-        dispatch = Dispatch.new(mod, name, obj && obj.type, args.map(&:type))
+        dispatch = Dispatch.new(mod, self.scope, name, obj && obj.type, args.map(&:type))
         dispatch.add_observer self
         self.target_def = dispatch
         return
       end
 
-      untyped_def = scope.defs[name]
+      scope, untyped_def = compute_scope_and_untyped_def
 
       check_method_exists untyped_def
       check_args_match untyped_def
@@ -110,6 +109,23 @@ module Crystal
 
     def has_unions?
       (obj && obj.type.is_a?(UnionType)) || args.any? { |a| a.type.is_a?(UnionType) }
+    end
+
+    def compute_scope_and_untyped_def
+      if obj
+        [obj.type, obj.type.defs[name]]
+      else
+        if self.scope
+          untyped_def = self.scope.defs[name]
+          if untyped_def
+            [self.scope, untyped_def]
+          else
+            [mod, mod.defs[name]]
+          end
+        else
+          [mod, mod.defs[name]]
+        end
+      end
     end
 
     def check_method_exists(untyped_def)
@@ -161,7 +177,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :calls
 
-    def initialize(mod, name, obj, args)
+    def initialize(mod, scope, name, obj, args)
       @name = name
       @obj = obj
       @args = args
@@ -170,6 +186,7 @@ module Crystal
         for_each_args do |arg_types|
           call = Call.new(obj_type ? Var.new('self', obj_type) : nil, name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
           call.mod = mod
+          call.scope = scope
           call.add_observer self
           call.recalculate
           @calls[[obj_type] + arg_types] = call
@@ -304,6 +321,7 @@ module Crystal
       end
 
       node.mod = mod
+      node.scope = @scope
       node.args.each_with_index do |arg, index|
         arg.add_observer node, :update_input
       end

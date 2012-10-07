@@ -5,6 +5,10 @@ describe 'Code gen: class' do
     run('class Foo; def coco; 1; end; end; Foo.new.coco').to_i.should eq(1)
   end
 
+  it "codegens call to same instance" do
+    run('class Foo; def foo; 1; end; def bar; foo; end; end; Foo.new.bar').to_i.should eq(1)
+  end
+
   it "codegens instance var" do
   	run(%Q(
 			class Foo
