@@ -25,7 +25,7 @@ describe 'Code gen: union type' do
     run("def foo; a = 1; a = 2.5; a; end; foo.to_f").to_f.should eq(2.5)
   end
 
-  pending "codegens union type for instance var" do
+  it "codegens union type for instance var" do
     run(%Q(
       class Foo
         #{rw :value}

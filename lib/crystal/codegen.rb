@@ -103,7 +103,15 @@ module Crystal
       node.value.accept self
 
       if node.target.is_a?(InstanceVar)
-        ptr = gep @fun.params[0], 0, @type.index_of_instance_var(node.target.name)
+        ivar = @type.instance_vars[node.target.name]
+        if ivar.type.is_a?(UnionType)
+          ptr = gep @fun.params[0], 0, @type.index_of_instance_var(node.target.name)
+          assign_to_union(ptr, ivar.type, node.type, @last)
+
+          return false
+        else
+          ptr = gep @fun.params[0], 0, @type.index_of_instance_var(node.target.name)
+        end
       else
         var = @vars[node.target.name]
         unless var
@@ -130,9 +138,14 @@ module Crystal
     end
 
     def visit_instance_var(node)
-      index = @type.index_of_instance_var(node.name)
-      struct = @builder.load @fun.params[0]
-      @last = @builder.extract_value struct, index, node.name
+      ivar = @type.instance_vars[node.name]
+      if ivar.type.is_a?(UnionType)
+        @last = gep @fun.params[0], 0, @type.index_of_instance_var(node.name)
+      else
+        index = @type.index_of_instance_var(node.name)
+        struct = @builder.load @fun.params[0]
+        @last = @builder.extract_value struct, index, node.name
+      end
     end
 
     def visit_if(node)
