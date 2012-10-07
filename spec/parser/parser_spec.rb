@@ -182,6 +182,7 @@ describe Parser do
 
   it_parses_single_node "Int[]", Call.new("Int".const, :[])
   it_parses_single_node "def []; end", Def.new(:[], [], nil)
+  it_parses_single_node "def []=(value); end", Def.new(:[]=, ["value".var], nil), focus: true
   it_parses_single_node "def self.[]; end", Def.new(:[], [], nil, "self".var)
 
   it_parses_single_node "Int[8]", Call.new("Int".const, :'[ ]', [8.int])

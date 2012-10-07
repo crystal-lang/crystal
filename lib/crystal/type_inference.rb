@@ -288,6 +288,10 @@ module Crystal
       node.else.add_observer node if node.else.any?
     end
 
+    def visit_const(node)
+      mod.types[node.obj.name] or node.obj.raise("uninitialized constant #{node.obj.name}")
+    end
+
     def visit_call(node)
       if node.obj.is_a?(Const) && node.name == 'new'
         if @scope.is_a?(ObjectType) && @scope.name == node.obj.name
