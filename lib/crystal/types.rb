@@ -133,12 +133,11 @@ module Crystal
     end
 
     def to_s
-      unless @to_s
-        @to_s = "..."
-        instance_vars_to_s = instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
-        @to_s = "#{name}<#{instance_vars_to_s}>"
-      end
-      @to_s
+      return @to_s if @to_s
+      @to_s = "..."
+      instance_vars_to_s = instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
+      @to_s = nil
+      "#{name}<#{instance_vars_to_s}>"
     end
   end
 
