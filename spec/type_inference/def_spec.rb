@@ -32,12 +32,6 @@ describe 'Type inference: def' do
     input.last.target_def.owner.should eq(mod.int)
   end
 
-  it "reuses def instance" do
-    input = parse 'def foo; 1; end; foo; foo'
-    infer_type input
-    input[1].target_def.should equal(input[2].target_def)
-  end
-
   it "types putchar with Char" do
     assert_type("putchar 'a'") { char }
   end

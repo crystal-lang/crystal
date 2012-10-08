@@ -8,7 +8,6 @@ module Crystal
 
   class ASTNode
     attr_accessor :type
-    attr_accessor :has_new_type
     attr_accessor :observers
 
     def type=(type)
@@ -18,8 +17,6 @@ module Crystal
     end
 
     def add_observer(observer, func = :update)
-      observer.has_new_type = has_new_type if observer.is_a?(ASTNode)
-
       @observers ||= {}
       @observers[observer] = func
       observer.send func, @type if @type
@@ -34,9 +31,6 @@ module Crystal
 
     def add_type(new_type)
       return unless new_type
-
-      new_type = new_type.clone if has_new_type && is_a?(Call)
-
       self.type = @type ? Type.merge(@type, new_type) : new_type
       new_type.add_observer self if is_a?(Var)
     end
@@ -54,6 +48,7 @@ module Crystal
     attr_accessor :target_def
     attr_accessor :mod
     attr_accessor :scope
+    attr_accessor :parent_visitor
 
     def update_input(type)
       recalculate
@@ -75,7 +70,7 @@ module Crystal
       check_args_match untyped_def
 
       arg_types = args.map &:type
-      typed_def = untyped_def.lookup_instance(arg_types)
+      typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
       unless typed_def
         check_frozen untyped_def, arg_types
 
@@ -90,10 +85,8 @@ module Crystal
           typed_def.args[index].type = type
         end
 
-        untyped_def.add_instance typed_def
-
         begin
-          typed_def.body.accept TypeVisitor.new(@mod, args, scope)
+          typed_def.body.accept TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def])
         rescue Crystal::Exception => ex
           if obj
             raise "instantiating '#{obj.type.name}##{name}'", ex
@@ -190,6 +183,7 @@ module Crystal
         for_each_args do |arg_types|
           subcall = Call.new(obj_type ? Var.new('self', obj_type) : nil, name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
           subcall.mod = call.mod
+          subcall.parent_visitor = call.parent_visitor
           subcall.scope = call.scope
           subcall.location = call.location
           subcall.name_column_number = call.name_column_number
@@ -231,10 +225,12 @@ module Crystal
   class TypeVisitor < Visitor
     attr_accessor :mod
 
-    def initialize(mod, vars = {}, scope = nil)
+    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
       @mod = mod
       @vars = vars
       @scope = scope
+      @parent = parent
+      @call = call
     end
 
     def visit_bool_literal(node)
@@ -314,20 +310,35 @@ module Crystal
       mod.types[node.obj.name] or node.obj.raise("uninitialized constant #{node.obj.name}")
     end
 
+    def lookup_object_type(name)
+      if @scope.is_a?(ObjectType) && @scope.name == name
+        @scope
+      elsif @parent
+        @parent.lookup_object_type(name)
+      end
+    end
+
+    def lookup_def_instance(scope, untyped_def, arg_types)
+      if @call && @call[0..2] == [scope, untyped_def, arg_types]
+        @call[3]
+      elsif @parent
+        @parent.lookup_def_instance(scope, untyped_def, arg_types)
+      end
+    end
+
     def visit_call(node)
       if node.obj.is_a?(Const) && node.name == 'new'
-        if @scope.is_a?(ObjectType) && @scope.name == node.obj.name
-          node.type = @scope
-        else
+        node.type = lookup_object_type(node.obj.name)
+        unless node.type
           type = mod.types[node.obj.name] or node.obj.raise("uninitialized constant #{node.obj.name}")
           node.type = type.clone
         end
-        node.has_new_type = true
         return false
       end
 
       node.mod = mod
       node.scope = @scope
+      node.parent_visitor = self
       node.args.each_with_index do |arg, index|
         arg.add_observer node, :update_input
       end

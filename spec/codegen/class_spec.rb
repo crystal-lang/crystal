@@ -10,19 +10,19 @@ describe 'Code gen: class' do
   end
 
   it "codegens instance var" do
-  	run(%Q(
-			class Foo
+    run(%Q(
+      class Foo
         #{rw 'coco'}
-			end
+      end
 
-			f = Foo.new
-			f.coco = 2
+      f = Foo.new
+      f.coco = 2
 
-			g = Foo.new
-			g.coco = 0.5
+      g = Foo.new
+      g.coco = 0.5
 
-			f.coco + g.coco
-  		)).to_f.should eq(2.5)
+      f.coco + g.coco
+      )).to_f.should eq(2.5)
   end
 
   it "codegens recursive type" do
@@ -50,7 +50,7 @@ describe 'Code gen: class' do
       )).to_f.should eq(1.0)
   end
 
-  pending "codegens method call that create instances" do
+  it "codegens method call that create instances" do
     run(%Q(
       class Foo
         #{rw :value}
