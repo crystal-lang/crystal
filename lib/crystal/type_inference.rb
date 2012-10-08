@@ -95,7 +95,11 @@ module Crystal
         begin
           typed_def.body.accept TypeVisitor.new(@mod, args, scope)
         rescue Crystal::Exception => ex
-          raise "instantiating '#{name}'", ex
+          if obj
+            raise "instantiating '#{obj.type.name}##{name}'", ex
+          else
+            raise "instantiating '#{name}'", ex
+          end
         end
       end
 
@@ -188,6 +192,7 @@ module Crystal
           subcall.mod = call.mod
           subcall.scope = call.scope
           subcall.location = call.location
+          subcall.name_column_number = call.name_column_number
           subcall.add_observer self
           subcall.recalculate
           @calls[[obj_type] + arg_types] = subcall

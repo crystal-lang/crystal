@@ -423,6 +423,10 @@ module Crystal
     def name_column_number
       @name_column_number || column_number
     end
+
+    def name_length
+      name.to_s.end_with?('=') || name.to_s.end_with?('@') ? name.length - 1 : name.length
+    end
   end
 
   # An if expression.

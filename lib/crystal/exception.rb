@@ -37,7 +37,7 @@ module Crystal
             str << (' ' * (node.column_number - 1))
           end
           str << '^'
-          str << ('~' * (node.name.length - 1))
+          str << ('~' * (node.name_length - 1))
         end
       end
       str << "\n"

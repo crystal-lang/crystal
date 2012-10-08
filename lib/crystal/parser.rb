@@ -232,14 +232,14 @@ module Crystal
               # Rewrite 'f.x = args' as f.x=(args)
               next_token_skip_space_or_newline
               args = parse_args_space_consumed
-              atomic = Call.new(atomic, "#{name}=", args)
+              atomic = Call.new(atomic, "#{name}=", args, nil, name_column_number)
               next
             when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
               # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
               method = @token.type.to_s[0 .. -2].to_sym
               next_token_skip_space
               value = parse_expression
-              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name), method, [value])])
+              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name, [], nil, name_column_number), method, [value], nil, name_column_number)], nil, name_column_number)
               next
             else
               args = parse_args_space_consumed
