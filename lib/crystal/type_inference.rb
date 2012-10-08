@@ -46,7 +46,7 @@ module Crystal
     end
 
     def raise(message, inner = nil)
-      Kernel::raise Crystal::Exception.new(message, self, inner)
+      Kernel::raise Crystal::TypeException.new(message, self, inner)
     end
   end
 

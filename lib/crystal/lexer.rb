@@ -24,7 +24,7 @@ module Crystal
         @token.type = :NEWLINE
         @line_number += 1
         @incremented_columns = nil
-      elsif scan /\s+/
+      elsif scan /[^\S\n]+/
         @token.type = :SPACE
       elsif scan /;+/
         @token.type = :";"
@@ -73,7 +73,7 @@ module Crystal
           @token.type = :EOF
         end
       else
-        raise_error "can't lex anymore: #{rest}"
+        raise "unknown token: #{rest}"
       end
 
       @token
@@ -117,8 +117,8 @@ module Crystal
       next_token while types.include? @token.type
     end
 
-    def raise_error(message)
-      raise Crystal::Exception.new("Syntax error on line #{@line_number}: #{message}")
+    def raise(message)
+      Kernel::raise Crystal::SyntaxException.new(message, @line_number, @token.column_number)
     end
   end
 end

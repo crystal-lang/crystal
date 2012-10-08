@@ -1,5 +1,32 @@
 module Crystal
   class Exception < StandardError
+    def message(source = nil)
+      to_s(source)
+    end
+  end
+
+  class SyntaxException < Exception
+    def initialize(message, line_number, column_number)
+      @message = message
+      @line_number = line_number
+      @column_number = column_number
+    end
+
+    def to_s(source = nil)
+      str = "Syntax error in line #{@line_number}: #{@message}"
+      if source
+        lines = source.lines.to_a
+        str << "\n\n"
+        str << lines[@line_number - 1].chomp
+        str << "\n"
+        str << (' ' * (@column_number - 1))
+        str << '^'
+        str << "\n"
+      end
+    end
+  end
+
+  class TypeException < Exception
     attr_accessor :node
     attr_accessor :inner
 
@@ -9,10 +36,6 @@ module Crystal
       @inner = inner
     end
 
-    def message(source = nil)
-      to_s(source)
-    end
-    
     def to_s(source = nil)
       lines = source ? source.lines.to_a : nil
       str = 'Error '

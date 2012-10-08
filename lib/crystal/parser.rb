@@ -293,7 +293,7 @@ module Crystal
         exp = parse_expression
         check :')'
         next_token_skip_statement_end
-        raise_error "unexpected token: (" if @token.type == :'('
+        raise "unexpected token: (" if @token.type == :'('
         exp
       when :'[]'
         next_token_skip_space
@@ -366,7 +366,7 @@ module Crystal
       when :INSTANCE_VAR
         node_and_next_token InstanceVar.new(@token.value)
       else
-        raise_error "unexpected token: #{@token.to_s}"
+        raise "unexpected token: #{@token.to_s}"
       end
     end
 
@@ -701,14 +701,18 @@ module Crystal
     private
 
     def check(*token_types)
-      raise_error "expecting token #{token_types}" unless token_types.any?{|type| @token.type == type}
+      if token_types.length == 1
+        raise "expecting token: #{token_types[0]}" unless token_types.any?{|type| @token.type == type}
+      else
+        raise "expecting any of these tokens: #{token_types.join ', '}" unless token_types.any?{|type| @token.type == type}
+      end
     end
 
     def check_ident(value = nil)
       if value
-        raise_error "expecting token: #{value}" unless @token.keyword?(value)
+        raise "expecting ident: #{value}" unless @token.keyword?(value)
       else
-        raise_error "unexpected token: #{@token.to_s}" unless @token.type == :IDENT && @token.value.is_a?(String)
+        raise "unexpected token: #{@token.to_s}" unless @token.type == :IDENT && @token.value.is_a?(String)
       end
     end
 
