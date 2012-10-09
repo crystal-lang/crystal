@@ -18,9 +18,14 @@ module Crystal
 
     def self.mangled_name(owner, name, return_type, arg_types)
       str = ''
-      if owner && !owner.is_a?(Crystal::Module)
-        str << owner.llvm_name
-        str << '#'
+      if owner
+        if owner.is_a?(Metaclass)
+          str << owner.type.name
+          str << '::'
+        elsif !owner.is_a?(Crystal::Module)
+          str << owner.llvm_name
+          str << '#'
+        end
       end
       str << name.to_s
       if arg_types.length > 0
