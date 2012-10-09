@@ -136,12 +136,21 @@ module Crystal
 
     def define_new(scope, name)
       alloc = Call.new(nil, 'alloc')
+      alloc.location = location
+      alloc.name_column_number = name_column_number
+
       if scope.type.defs.has_key?('initialize')
         var = Var.new('x')
         new_args = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
+
+        init = Call.new(var, 'initialize', new_args)
+        init.location = location
+        init.name_column_number = name_column_number
+        init.name_length = 3
+
         untyped_def = scope.defs['new'] = Def.new('new', new_args, [
           Assign.new(var, alloc),
-          Call.new(var, 'initialize', new_args),
+          init,
           var
         ])
       else

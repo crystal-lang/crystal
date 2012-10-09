@@ -209,6 +209,10 @@ module Crystal
       @defs['alloc'] = Def.new('alloc', [], Alloc.new(@type))
     end
 
+    def name
+      @name
+    end
+
     def llvm_name
       @name
     end

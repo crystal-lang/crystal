@@ -390,6 +390,7 @@ module Crystal
 
     attr_accessor :name_column_number
     attr_accessor :has_parenthesis
+    attr_accessor :name_length
 
     def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
       @obj = obj
@@ -417,6 +418,7 @@ module Crystal
       call = self.class.new obj ? obj.clone : nil, name, args.map(&:clone), block ? block.clone : nil
       call.location = location
       call.name_column_number = name_column_number
+      call.name_length = name_length
       call
     end
 
@@ -425,7 +427,7 @@ module Crystal
     end
 
     def name_length
-      name.to_s.end_with?('=') || name.to_s.end_with?('@') ? name.length - 1 : name.length
+      @name_length ||= name.to_s.end_with?('=') || name.to_s.end_with?('@') ? name.length - 1 : name.length
     end
   end
 
