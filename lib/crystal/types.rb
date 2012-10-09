@@ -63,6 +63,7 @@ module Crystal
     attr_accessor :name
     attr_accessor :defs
     attr_accessor :instance_vars
+    @@id = 0
 
     def initialize(name)
       @name = name
@@ -125,7 +126,8 @@ module Crystal
     end
 
     def llvm_name
-      "#{name}#{object_id}"
+      @id ||= (@@id += 1)
+      "#{name}#{@id}"
     end
 
     def index_of_instance_var(name)
@@ -157,7 +159,7 @@ module Crystal
 
     def llvm_type
       unless @llvm_type
-        @llvm_type = LLVM::Struct(to_s)
+        @llvm_type = LLVM::Struct(llvm_name)
         @llvm_type.element_types = [LLVM::Int, LLVM::Type.array(LLVM::Int8, 100)]
       end
       @llvm_type
