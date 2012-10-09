@@ -224,19 +224,18 @@ module Crystal
       @last = node.block.call(@builder, @fun)
     end
 
-    def visit_call(node)
-      if node.obj.is_a?(Const) && node.name == 'new'
-        @last = @builder.malloc(node.type.llvm_struct_type)
-        return false
-      end
+    def visit_alloc(node)
+      @last = @builder.malloc(node.type.llvm_struct_type)
+    end
 
+    def visit_call(node)
       if node.target_def.is_a?(Dispatch)
         codegen_dispatch(node)
         return false
       end
 
       call_args = []
-      if node.obj
+      if node.obj && !node.obj.type.is_a?(Metaclass)
         node.obj.accept self
         call_args << @last
       end
@@ -262,7 +261,7 @@ module Crystal
         @vars = {}
 
         args = []
-        if obj_type
+        if obj_type && !obj_type.is_a?(Metaclass)
           @type = obj_type
           args << Var.new("self", obj_type)
         end

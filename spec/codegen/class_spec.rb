@@ -1,7 +1,15 @@
 require 'spec_helper'
 
 describe 'Code gen: class' do
-  it "codegens instace method" do
+  it "codegens instace method with alloc" do
+    run('class Foo; def coco; 1; end; end; Foo.alloc.coco').to_i.should eq(1)
+  end
+
+  it "codegens instace method with alloc and instance var" do
+    run('class Foo; def coco; @coco = 1; @coco; end; end; f = Foo.alloc; f.coco').to_i.should eq(1)
+  end
+
+  it "codegens instace method with new" do
     run('class Foo; def coco; 1; end; end; Foo.new.coco').to_i.should eq(1)
   end
 

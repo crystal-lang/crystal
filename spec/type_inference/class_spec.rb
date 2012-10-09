@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe 'Type inference: class' do
+  it "types Const#alloc" do
+    assert_type("class Foo; end; Foo.alloc") { types['Foo'] }
+  end
+
   it "types Const#new" do
     assert_type("class Foo; end; Foo.new") { types['Foo'] }
   end

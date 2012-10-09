@@ -31,6 +31,7 @@ module Crystal
 
     def add_type(new_type)
       return unless new_type
+
       self.type = @type ? Type.merge(@type, new_type) : new_type
       new_type.add_observer self if is_a?(Var)
     end
@@ -110,10 +111,10 @@ module Crystal
 
     def compute_scope_and_untyped_def
       if obj
-        [obj.type, obj.type.defs[name]]
+        [obj.type, lookup_method(obj.type, name)]
       else
         if self.scope
-          untyped_def = self.scope.defs[name]
+          untyped_def = lookup_method(self.scope, name)
           if untyped_def
             [self.scope, untyped_def]
           else
@@ -123,6 +124,14 @@ module Crystal
           [mod, mod.defs[name]]
         end
       end
+    end
+
+    def lookup_method(scope, name)
+      untyped_def = scope.defs[name]
+      if !untyped_def && name == 'new' && scope.is_a?(Metaclass)
+        untyped_def = scope.defs['new'] = Def.new('new', [], [Call.new(nil, 'alloc')])
+      end
+      untyped_def
     end
 
     def check_method_exists(untyped_def)
@@ -307,7 +316,13 @@ module Crystal
     end
 
     def visit_const(node)
-      mod.types[node.obj.name] or node.obj.raise("uninitialized constant #{node.obj.name}")
+      type = mod.types[node.name] or node.raise("uninitialized constant #{node.name}")
+      node.type = type.metaclass
+    end
+
+    def visit_alloc(node)
+      type = lookup_object_type(node.type.name)
+      node.type = type ? type : node.type.clone
     end
 
     def lookup_object_type(name)
@@ -327,15 +342,6 @@ module Crystal
     end
 
     def visit_call(node)
-      if node.obj.is_a?(Const) && node.name == 'new'
-        node.type = lookup_object_type(node.obj.name)
-        unless node.type
-          type = mod.types[node.obj.name] or node.obj.raise("uninitialized constant #{node.obj.name}")
-          node.type = type.clone
-        end
-        return false
-      end
-
       node.mod = mod
       node.scope = @scope
       node.parent_visitor = self

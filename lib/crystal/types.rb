@@ -7,6 +7,10 @@ module Crystal
     def initialize
     end
 
+    def metaclass
+      @metaclass ||= Metaclass.new(self)
+    end
+
     def add_observer(observer, func = nil)
     end
 
@@ -191,6 +195,31 @@ module Crystal
 
     def to_s
       "Union[#{types.to_a.join ', '}]"
+    end
+  end
+
+  class Metaclass < Type
+    attr_accessor :defs
+
+    def initialize(type)
+      @name = "#{type.name}:Metaclass"
+      @type = type
+      @defs = {}
+      @defs['alloc'] = Def.new('alloc', [], Alloc.new(@type))
+    end
+
+    def llvm_name
+      @name
+    end
+  end
+
+  class Alloc < ASTNode
+    def initialize(type)
+      @type = type
+    end
+
+    def clone
+      Alloc.new(@type.clone)
     end
   end
 end

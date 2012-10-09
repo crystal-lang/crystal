@@ -60,4 +60,10 @@ describe UnionType do
     obj.should_not eq(union)
     union.should_not eq(obj)
   end
+
+  it "compares object type without vars to one with" do
+    obj1 = ObjectType.new("Foo")
+    obj2 = ObjectType.new("Foo").with_var("@value", mod.float)
+    obj1.should_not eq(obj2)
+  end
 end
