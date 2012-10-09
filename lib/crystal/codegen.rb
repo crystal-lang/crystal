@@ -13,10 +13,10 @@ module Crystal
 
   class Def
     def mangled_name
-      self.class.mangled_name(owner, name, args.map(&:type))
+      self.class.mangled_name(owner, name, body.type, args.map(&:type))
     end
 
-    def self.mangled_name(owner, name, arg_types)
+    def self.mangled_name(owner, name, return_type, arg_types)
       str = ''
       if owner && !owner.is_a?(Crystal::Module)
         str << owner.llvm_name
@@ -25,8 +25,12 @@ module Crystal
       str << name.to_s
       if arg_types.length > 0
         str << '<'
-        str << arg_types.map(&:name).join(', ')
+        str << arg_types.map(&:llvm_name).join(', ')
         str << '>'
+      end
+      if return_type
+        str << ':'
+        str << return_type.llvm_name
       end
       str
     end

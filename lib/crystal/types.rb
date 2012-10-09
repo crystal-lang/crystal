@@ -163,6 +163,10 @@ module Crystal
       @llvm_type
     end
 
+    def llvm_name
+      "[#{types.to_a.map(&:llvm_name).join ', '}]"
+    end
+
     def index_of_type(type)
       @types.to_a.index type
     end

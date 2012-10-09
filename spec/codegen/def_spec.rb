@@ -38,4 +38,24 @@ describe 'Code gen: def' do
     mod = infer_type node
     build node, mod
   end
+
+  it "includes return type in the mangled name" do
+    run(%Q(
+      class Foo
+        #{rw :value}
+      end
+
+      def gen
+        Foo.new
+      end
+
+      f = gen
+      f.value = 1
+
+      g = gen
+      g.value = 2.5
+
+      f.value + g.value
+    )).to_f.should eq(3.5)
+  end
 end
