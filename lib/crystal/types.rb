@@ -23,10 +23,10 @@ module Crystal
     end
 
     def self.merge(t1, t2)
-      if t1 == t2
+      if t1 === t2
         t1
       else
-        types = [t1, t2].map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.uniq
+        types = [t1, t2].map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.uniq(&:object_id)
         if types.length == 1
           types.first
         else
@@ -158,7 +158,7 @@ module Crystal
     attr_reader :types
 
     def initialize(*types)
-      @types = Set.new types
+      @types = types
     end
 
     def llvm_type
@@ -170,11 +170,11 @@ module Crystal
     end
 
     def llvm_name
-      "[#{types.to_a.map(&:llvm_name).join ', '}]"
+      "[#{types.map(&:llvm_name).join ', '}]"
     end
 
     def index_of_type(type)
-      @types.to_a.index type
+      @types.index type
     end
 
     def each(&block)
@@ -187,14 +187,14 @@ module Crystal
       if @types.length == 1
         @types.first == other
       elsif other.is_a?(UnionType)
-        @types == other.types
+        Set.new(@types) == Set.new(other.types)
       else
         false
       end
     end
 
     def to_s
-      "Union[#{types.to_a.join ', '}]"
+      "Union[#{types.join ', '}]"
     end
   end
 

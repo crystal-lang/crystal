@@ -91,7 +91,7 @@ describe 'Code gen: class' do
     )).to_i.should eq(1)
   end
 
-  pending "codegens instance with union instance var" do
+  it "codegens instance with union instance var" do
     run(%Q(
       class A
         #{rw :next}
