@@ -1,7 +1,7 @@
 # output: !$accklorrssty
 
 class Node
-  def init(v)
+  def initialize(v)
     @value = v
     @has_left = @has_right = false
     self
@@ -13,7 +13,7 @@ class Node
         @left.add(x)
         1
       else
-        @left = Node.new.init(x)
+        @left = Node.new(x)
         @has_left = true
         1
       end
@@ -22,7 +22,7 @@ class Node
         @right.add(x)
         1
       else
-        @right = Node.new.init(x)
+        @right = Node.new(x)
         @has_right = true
         1
       end
@@ -36,7 +36,7 @@ class Node
   end
 end
 
-root = Node.new.init('$')
+root = Node.new('$')
 root.add 'c'
 root.add 'r'
 root.add 'y'
