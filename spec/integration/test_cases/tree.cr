@@ -10,20 +10,16 @@ class Node
     if x < @value
       if @has_left
         @left.add(x)
-        1
       else
         @left = Node.new(x)
         @has_left = true
-        1
       end
     else
       if @has_right
         @right.add(x)
-        1
       else
         @right = Node.new(x)
         @has_right = true
-        1
       end
     end
   end
