@@ -13,8 +13,8 @@ describe "Type inference: union" do
     assert_type("a = 1; a = 2.3; a + a") { UnionType.new(int, float) }
   end
 
-  it "unifies unions when instance var changes" do
-    assert_type(%Q(
+  pending "unifies unions when instance var changes" do
+    nodes = parse(%Q(
       class A
         def next=(n)
           @next = n
@@ -27,7 +27,14 @@ describe "Type inference: union" do
       a = A.new
       a.next = 2.3
       a
-    )) { ObjectType.new("A").with_var("@next", UnionType.new(int, float)) }
+    ))
+    mod = infer_type nodes
+
+    expected_type = ObjectType.new("A").with_var("@next", UnionType.new(mod.int, mod.float))
+
+    nodes[1].type.should eq(expected_type)
+    nodes[3].type.should eq(expected_type)
+    nodes.last.type.should eq(expected_type)
   end
 
   it "types union of classes" do

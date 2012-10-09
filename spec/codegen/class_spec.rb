@@ -65,4 +65,19 @@ describe 'Code gen: class' do
       f.value
     )).to_i.should eq(1)
   end
+
+  pending "codegens instance with union instance var" do
+    run(%Q(
+      class A
+        #{rw :next}
+      end
+
+      a = A.new
+      a.next = 1
+
+      a = A.new
+      a.next = 2.5
+      a.next.to_f
+    )).to_f.should eq(2.5)
+  end
 end
