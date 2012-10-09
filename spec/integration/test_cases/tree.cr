@@ -4,7 +4,6 @@ class Node
   def initialize(v)
     @value = v
     @has_left = @has_right = false
-    self
   end
 
   def add(x)
