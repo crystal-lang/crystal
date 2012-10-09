@@ -199,6 +199,7 @@ module Crystal
   end
 
   class Metaclass < Type
+    attr_accessor :type
     attr_accessor :defs
 
     def initialize(type)

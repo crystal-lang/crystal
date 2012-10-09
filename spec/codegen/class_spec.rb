@@ -74,6 +74,23 @@ describe 'Code gen: class' do
     )).to_i.should eq(1)
   end
 
+  it "codegens new which calls initialize" do
+    run(%Q(
+      class Foo
+        def initialize(value)
+          @value = value
+        end
+
+        def value
+          @value
+        end
+      end
+
+      f = Foo.new 1
+      f.value
+    )).to_i.should eq(1)
+  end
+
   pending "codegens instance with union instance var" do
     run(%Q(
       class A

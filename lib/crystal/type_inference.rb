@@ -129,9 +129,24 @@ module Crystal
     def lookup_method(scope, name)
       untyped_def = scope.defs[name]
       if !untyped_def && name == 'new' && scope.is_a?(Metaclass)
-        untyped_def = scope.defs['new'] = Def.new('new', [], [Call.new(nil, 'alloc')])
+        untyped_def = define_new scope, name
       end
       untyped_def
+    end
+
+    def define_new(scope, name)
+      alloc = Call.new(nil, 'alloc')
+      if scope.type.defs.has_key?('initialize')
+        var = Var.new('x')
+        new_args = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
+        untyped_def = scope.defs['new'] = Def.new('new', new_args, [
+          Assign.new(var, alloc),
+          Call.new(var, 'initialize', new_args),
+          var
+        ])
+      else
+        untyped_def = scope.defs['new'] = Def.new('new', [], [alloc])
+      end
     end
 
     def check_method_exists(untyped_def)
