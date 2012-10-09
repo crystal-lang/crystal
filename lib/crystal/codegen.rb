@@ -171,6 +171,8 @@ module Crystal
 
       @builder.position_at_end then_block
       node.then.accept self
+      then_block = @builder.insert_block
+
       then_value = @last
       assign_to_union(union_ptr, node.type, node.then.type, @last) if is_union
 
@@ -179,6 +181,8 @@ module Crystal
       if has_else
         @builder.position_at_end else_block
         node.else.accept self
+        else_block = @builder.insert_block
+        
         else_value = @last
         assign_to_union(union_ptr, node.type, node.else.type, @last) if is_union
 
