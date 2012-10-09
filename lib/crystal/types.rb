@@ -50,6 +50,9 @@ module Crystal
       equal?(other) || (other.is_a?(UnionType) && other == self)
     end
 
+    def llvm_name
+      name
+    end
 
     def to_s
       name
@@ -115,10 +118,14 @@ module Crystal
 
     def llvm_struct_type
       unless @llvm_struct_type
-        @llvm_struct_type = LLVM::Struct(to_s)
+        @llvm_struct_type = LLVM::Struct(llvm_name)
         @llvm_struct_type.element_types = @instance_vars.values.map(&:llvm_type)
       end
       @llvm_struct_type
+    end
+
+    def llvm_name
+      "#{name}#{object_id}"
     end
 
     def index_of_instance_var(name)

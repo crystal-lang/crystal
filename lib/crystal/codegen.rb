@@ -19,7 +19,7 @@ module Crystal
     def self.mangled_name(owner, name, arg_types)
       str = ''
       if owner && !owner.is_a?(Crystal::Module)
-        str << owner.to_s
+        str << owner.llvm_name
         str << '#'
       end
       str << name.to_s
