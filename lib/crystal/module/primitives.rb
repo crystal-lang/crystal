@@ -1,43 +1,22 @@
 module Crystal
-  module Primitives
-    def primitive(owner, name, arg_names)
-      p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Var.new(x) })
-      p.owner = owner
-      yield p
-    end
-
-    def no_args_primitive(owner, name, return_type, &block)
-      primitive(owner, name, []) { |p| p.overload([], return_type, &block) }
-    end
-
-    def singleton(owner, name, args, return_type, &block)
-      p = owner.defs[name] = FrozenDef.new(name, args.keys.map { |x| Var.new(x) })
-      p.owner = owner
-      p.overload(args.values, return_type, &block)
-    end
-
-    def external(name, args, return_type)
-      args = args.map { |name, type| Var.new(name, type) }
-
-      instance = defs[name] = External.new(name, args)
-      instance.body = Expressions.new
-      instance.body.type = return_type
-      instance.add_instance instance
-    end
-  end
-
   class Module
-    include Primitives
-
-    private
-
     def define_primitives
+      define_object_primitives
+      define_value_primitives
       define_bool_primitives
       define_char_primitives
       define_int_primitives
       define_float_primitives
       define_externals
       define_builtins
+    end
+
+    def define_object_primitives
+      no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
+    end
+
+    def define_value_primitives
+      no_args_primitive(value, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
     end
 
     def define_bool_primitives
@@ -182,6 +161,31 @@ module Crystal
         node.accept TypeVisitor.new(self)
       end
     end
+
+    def primitive(owner, name, arg_names)
+      p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Var.new(x) })
+      p.owner = owner
+      yield p
+    end
+
+    def no_args_primitive(owner, name, return_type, &block)
+      primitive(owner, name, []) { |p| p.overload([], return_type, &block) }
+    end
+
+    def singleton(owner, name, args, return_type, &block)
+      p = owner.defs[name] = FrozenDef.new(name, args.keys.map { |x| Var.new(x) })
+      p.owner = owner
+      p.overload(args.values, return_type, &block)
+    end
+
+    def external(name, args, return_type)
+      args = args.map { |name, type| Var.new(name, type) }
+
+      instance = defs[name] = External.new(name, args)
+      instance.body = Expressions.new
+      instance.body.type = return_type
+      instance.add_instance instance
+    end
   end
 
   class Def
@@ -206,6 +210,11 @@ module Crystal
   end
 
   class FrozenDef < Def
+    def clone
+      frozen_def = super
+      frozen_def.instances = instances
+      frozen_def
+    end
   end
 
   class External < FrozenDef

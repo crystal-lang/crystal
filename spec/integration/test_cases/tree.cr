@@ -3,31 +3,28 @@
 class Node
   def initialize(v)
     @value = v
-    @has_left = @has_right = false
   end
 
   def add(x)
     if x < @value
-      if @has_left
-        @left.add(x)
-      else
+      if @left.nil?
         @left = Node.new(x)
-        @has_left = true
+      else
+        @left.add(x)
       end
     else
-      if @has_right
-        @right.add(x)
-      else
+      if @right.nil?
         @right = Node.new(x)
-        @has_right = true
+      else
+        @right.add(x)
       end
     end
   end
 
   def print
-    @left.print if @has_left
+    @left.print if !@left.nil?
     putchar @value
-    @right.print if @has_right
+    @right.print if !@right.nil?
   end
 end
 

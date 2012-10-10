@@ -27,7 +27,7 @@ module Crystal
           str << '#'
         end
       end
-      str << name.to_s
+      str << name.to_s.gsub('@', '.')
       if arg_types.length > 0
         str << '<'
         str << arg_types.map(&:llvm_name).join(', ')

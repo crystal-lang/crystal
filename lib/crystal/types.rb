@@ -144,7 +144,7 @@ module Crystal
     def clone
       obj = ObjectType.new name, @parent_type
       obj.instance_vars = Hash[instance_vars.map { |name, var| [name, Var.new(name, var.type)] }]
-      obj.defs = HashWithParent.new(@parent_type.defs)
+      obj.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
       defs.each do |key, value|
         obj.defs[key] = value.clone
       end

@@ -9,12 +9,13 @@ module Crystal
       @types = {}
 
       object = @types["Object"] = ObjectType.new "Object"
+      value = @types["Value"] = ObjectType.new "Value", object
 
-      @types["Bool"] = PrimitiveType.new "Bool", object, LLVM::Int1
-      @types["Int"] = PrimitiveType.new "Int", object, LLVM::Int
-      @types["Float"] = PrimitiveType.new "Float", object, LLVM::Float
-      @types["Char"] = PrimitiveType.new "Char", object, LLVM::Int8
-      @types["String"] = PrimitiveType.new "String", object, LLVM::Pointer(char.llvm_type)
+      @types["Bool"] = PrimitiveType.new "Bool", value, LLVM::Int1
+      @types["Int"] = PrimitiveType.new "Int", value, LLVM::Int
+      @types["Float"] = PrimitiveType.new "Float", value, LLVM::Float
+      @types["Char"] = PrimitiveType.new "Char", value, LLVM::Int8
+      @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type)
 
       @defs = {}
 
@@ -23,6 +24,10 @@ module Crystal
 
     def void
       nil
+    end
+
+    def value
+      @types["Value"]
     end
 
     def object
