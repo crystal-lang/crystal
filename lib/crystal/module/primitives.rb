@@ -1,5 +1,34 @@
 module Crystal
+  module Primitives
+    def primitive(owner, name, arg_names)
+      p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Var.new(x) })
+      p.owner = owner
+      yield p
+    end
+
+    def no_args_primitive(owner, name, return_type, &block)
+      primitive(owner, name, []) { |p| p.overload([], return_type, &block) }
+    end
+
+    def singleton(owner, name, args, return_type, &block)
+      p = owner.defs[name] = FrozenDef.new(name, args.keys.map { |x| Var.new(x) })
+      p.owner = owner
+      p.overload(args.values, return_type, &block)
+    end
+
+    def external(name, args, return_type)
+      args = args.map { |name, type| Var.new(name, type) }
+
+      instance = defs[name] = External.new(name, args)
+      instance.body = Expressions.new
+      instance.body.type = return_type
+      instance.add_instance instance
+    end
+  end
+
   class Module
+    include Primitives
+
     private
 
     def define_primitives
@@ -152,31 +181,6 @@ module Crystal
         node = Parser.parse(File.read(file))
         node.accept TypeVisitor.new(self)
       end
-    end
-
-    def primitive(owner, name, arg_names)
-      p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Var.new(x) })
-      p.owner = owner
-      yield p
-    end
-
-    def no_args_primitive(owner, name, return_type, &block)
-      primitive(owner, name, []) { |p| p.overload([], return_type, &block) }
-    end
-
-    def singleton(owner, name, args, return_type, &block)
-      p = owner.defs[name] = FrozenDef.new(name, args.keys.map { |x| Var.new(x) })
-      p.owner = owner
-      p.overload(args.values, return_type, &block)
-    end
-
-    def external(name, args, return_type)
-      args = args.map { |name, type| Var.new(name, type) }
-
-      instance = defs[name] = External.new(name, args)
-      instance.body = Expressions.new
-      instance.body.type = return_type
-      instance.add_instance instance
     end
   end
 
