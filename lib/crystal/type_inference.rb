@@ -86,18 +86,21 @@ module Crystal
           typed_def.args[index].type = type
         end
 
-        begin
-          typed_def.body.accept TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def])
-        rescue Crystal::Exception => ex
-          if obj
-            raise "instantiating '#{obj.type.name}##{name}'", ex
-          else
-            raise "instantiating '#{name}'", ex
+        if typed_def.body
+          begin
+            typed_def.body.accept TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def])
+          rescue Crystal::Exception => ex
+            if obj
+              raise "instantiating '#{obj.type.name}##{name}'", ex
+            else
+              raise "instantiating '#{name}'", ex
+            end
           end
         end
       end
 
-      typed_def.body.add_observer self
+      typed_def.body.add_observer self if typed_def.body
+
       self.target_def = typed_def
     end
 
@@ -284,6 +287,7 @@ module Crystal
       @scope = scope
       @parent = parent
       @call = call
+      @class_defs = []
     end
 
     def visit_bool_literal(node)
@@ -307,18 +311,23 @@ module Crystal
     end
 
     def visit_def(node)
-      class_def = node.parent.parent
-      if class_def
-        mod.types[class_def.name].defs[node.name] = node
-      else
+      if @class_defs.empty?
         mod.defs[node.name] = node
+      else
+        mod.types[@class_defs.last].defs[node.name] = node
       end
       false
     end
 
     def visit_class_def(node)
+      @class_defs.push node.name
+
       mod.types[node.name] ||= ObjectType.new node.name
       true
+    end
+
+    def end_visit_class_def(node)
+      @class_defs.pop
     end
 
     def visit_var(node)
@@ -356,7 +365,7 @@ module Crystal
 
     def end_visit_if(node)
       node.then.add_observer node
-      node.else.add_observer node if node.else.any?
+      node.else.add_observer node if node.else
     end
 
     def visit_const(node)

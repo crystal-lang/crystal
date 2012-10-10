@@ -19,7 +19,11 @@ def assert_type(str, &block)
   input = parse str
   mod = infer_type input
   expected_type = mod.instance_eval &block
-  input.last.type.should eq(expected_type)
+  if input.is_a?(Expressions)
+    input.last.type.should eq(expected_type)
+  else
+    input.type.should eq(expected_type)
+  end
 end
 
 def rw(name)

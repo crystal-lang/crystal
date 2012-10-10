@@ -23,7 +23,7 @@ module Crystal
         exps << parse_expression
         skip_statement_end
       end
-      Expressions.new exps
+      Expressions.from exps
     end
 
     def parse_expression

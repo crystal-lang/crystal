@@ -13,7 +13,7 @@ module Crystal
 
   class Def
     def mangled_name
-      self.class.mangled_name(owner, name, body.type, args.map(&:type))
+      self.class.mangled_name(owner, name, (body ? body.type : nil), args.map(&:type))
     end
 
     def self.mangled_name(owner, name, return_type, arg_types)
@@ -158,16 +158,15 @@ module Crystal
     end
 
     def visit_if(node)
-      has_else = !node.else.empty?
-      is_union = has_else && node.type.is_a?(UnionType)
+      is_union = node.else && node.type.is_a?(UnionType)
 
       then_block, exit_block = new_blocks "then", "exit"
-      else_block = new_block "else" if has_else
+      else_block = new_block "else" if node.else
 
       union_ptr = @builder.alloca node.llvm_type if is_union
       node.cond.accept self
 
-      @builder.cond(@last, then_block, has_else ? else_block : exit_block)
+      @builder.cond(@last, then_block, node.else ? else_block : exit_block)
 
       @builder.position_at_end then_block
       node.then.accept self
@@ -178,7 +177,7 @@ module Crystal
 
       @builder.br exit_block
 
-      if has_else
+      if node.else
         @builder.position_at_end else_block
         node.else.accept self
         else_block = @builder.insert_block
@@ -279,7 +278,7 @@ module Crystal
         @fun = @funs[mangled_name] = @llvm_mod.functions.add(
           mangled_name,
           args.map(&:llvm_type),
-          target_def.body.llvm_type
+          (target_def.body ? target_def.body.llvm_type : LLVM.Void)
         )
 
         args.each_with_index do |arg, i|
@@ -300,12 +299,17 @@ module Crystal
             end
           end
 
-          target_def.body.accept self
-          if target_def.body.type.is_a?(UnionType)
-            @last = @builder.load @last
+          if target_def.body
+            target_def.body.accept self
+            if target_def.body.type.is_a?(UnionType)
+              @last = @builder.load @last
+            end
+
+            @builder.ret(target_def.body.type == @mod.void ? nil : @last)
+          else
+            @builder.ret_void
           end
 
-          @builder.ret(target_def.body.type == @mod.void ? nil : @last)
           @builder.position_at_end old_position
         end
 
@@ -315,7 +319,7 @@ module Crystal
 
       @last = @builder.call @fun, *call_args
 
-      if target_def.body.type.is_a?(UnionType)
+      if target_def.body && target_def.body.type.is_a?(UnionType)
         alloca = @builder.alloca target_def.body.llvm_type
         @builder.store @last, alloca
         @last = alloca

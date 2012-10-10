@@ -59,13 +59,17 @@ module Crystal
     def self.from(obj)
       case obj
       when nil
-        new
-      when Expressions
-        obj
+        nil
       when ::Array
-        new obj
+        if obj.length == 0
+          nil
+        elsif obj.length == 1
+          obj[0]
+        else
+          new obj
+        end
       else
-        new [obj]
+        obj
       end
     end
 
@@ -131,12 +135,12 @@ module Crystal
     def initialize(name, body = nil, superclass = nil)
       @name = name
       @body = Expressions.from body
-      @body.parent = self
+      @body.parent = self if @body
       @superclass = superclass
     end
 
     def accept_children(visitor)
-      body.accept visitor
+      body.accept visitor if body
     end
 
     def ==(other)
@@ -144,7 +148,7 @@ module Crystal
     end
 
     def clone
-      class_def = self.class.new name, body.clone, superclass
+      class_def = self.class.new name, (body ? body.clone : nil), superclass
       class_def.location = location
       class_def
     end
@@ -289,7 +293,7 @@ module Crystal
       @args = args
       @args.each { |arg| arg.parent = self } if @args
       @body = Expressions.from body
-      @body.parent = self
+      @body.parent = self if @body
       @receiver = receiver
       @receiver.parent = self if @receiver
     end
@@ -297,7 +301,7 @@ module Crystal
     def accept_children(visitor)
       reciever.accept visitor if receiver
       args.each { |arg| arg.accept visitor }
-      body.accept visitor
+      body.accept visitor if body
     end
 
     def ==(other)
@@ -305,7 +309,7 @@ module Crystal
     end
 
     def clone
-      a_def = self.class.new name, args.map(&:clone), body.clone, receiver ? receiver.clone : nil
+      a_def = self.class.new name, args.map(&:clone), (body ? body.clone : nil), receiver ? receiver.clone : nil
       a_def.location = location
       a_def
     end
@@ -415,7 +419,7 @@ module Crystal
     end
 
     def clone
-      call = self.class.new obj ? obj.clone : nil, name, args.map(&:clone), block ? block.clone : nil
+      call = self.class.new (obj ? obj.clone : nil), name, args.map(&:clone), (block ? block.clone : nil)
       call.location = location
       call.name_column_number = name_column_number
       call.name_length = name_length
@@ -452,9 +456,9 @@ module Crystal
       @cond = cond
       @cond.parent = self
       @then = Expressions.from a_then
-      @then.parent = self
+      @then.parent = self if @then
       @else = Expressions.from a_else
-      @else.parent = self
+      @else.parent = self if @else
     end
 
     def accept_children(visitor)
@@ -468,7 +472,7 @@ module Crystal
     end
 
     def clone
-      a_if = self.class.new cond.clone, self.then.clone, self.else.clone
+      a_if = self.class.new cond.clone, self.then.clone, (self.else ? self.else.clone : nil)
       a_if.location = location
       a_if
     end
@@ -519,7 +523,7 @@ module Crystal
       @cond = cond
       @cond.parent = self
       @body = Expressions.from body
-      @body.parent = self
+      @body.parent = self if @body
     end
 
     def accept_children(visitor)
@@ -532,7 +536,7 @@ module Crystal
     end
 
     def clone
-      a_while = self.class.new cond.clone, body.clone
+      a_while = self.class.new cond.clone, (body ? body.clone : nil)
       a_while.location = location
       a_while
     end
@@ -554,7 +558,7 @@ module Crystal
       @args = args
       @args.each { |arg| arg.parent = self } if @args
       @body = Expressions.from body
-      @body.parent = self
+      @body.parent = self if @body
     end
 
     def accept_children(visitor)
@@ -567,7 +571,7 @@ module Crystal
     end
 
     def clone
-      block = self.class.new args.map(&:clone), body.clone
+      block = self.class.new args.map(&:clone), (body ? body.clone : nil)
       block.location = location
       block
     end
