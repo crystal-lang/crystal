@@ -193,11 +193,7 @@ module Crystal
         if is_union
           @last = union_ptr
         else
-          if is_union
-            @lat = union_ptr
-          else
-            @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
-          end
+          @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
         end
       else
         @builder.position_at_end exit_block
