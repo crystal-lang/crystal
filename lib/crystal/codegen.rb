@@ -159,7 +159,7 @@ module Crystal
 
     def visit_if(node)
       has_else = !node.else.empty?
-      is_union = has_else && node.then.type != node.else.type
+      is_union = has_else && node.type.is_a?(UnionType)
 
       then_block, exit_block = new_blocks "then", "exit"
       else_block = new_block "else" if has_else
@@ -174,7 +174,7 @@ module Crystal
       then_block = @builder.insert_block
 
       then_value = @last
-      assign_to_union(union_ptr, node.type, node.then.type, @last) if is_union
+      codegen_assign(union_ptr, node.type, node.then.type, @last) if is_union
 
       @builder.br exit_block
 
@@ -184,7 +184,7 @@ module Crystal
         else_block = @builder.insert_block
         
         else_value = @last
-        assign_to_union(union_ptr, node.type, node.else.type, @last) if is_union
+        codegen_assign(union_ptr, node.type, node.else.type, @last) if is_union
 
         @builder.br exit_block
 
@@ -193,7 +193,11 @@ module Crystal
         if is_union
           @last = union_ptr
         else
-          @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
+          if is_union
+            @lat = union_ptr
+          else
+            @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
+          end
         end
       else
         @builder.position_at_end exit_block

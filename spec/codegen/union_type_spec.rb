@@ -37,4 +37,22 @@ describe 'Code gen: union type' do
       (f.value + f.value).to_f
     )).to_f.should eq(3)
   end
+
+  it "codegens if with same nested union" do
+    run(%Q(
+      if true
+        if true
+          1
+        else
+          2.5
+        end
+      else
+        if true
+          1
+        else
+          2.5
+        end
+      end.to_i
+    )).to_i.should eq(1)
+  end
 end
