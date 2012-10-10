@@ -322,7 +322,7 @@ module Crystal
     def visit_class_def(node)
       @class_defs.push node.name
 
-      mod.types[node.name] ||= ObjectType.new node.name
+      mod.types[node.name] ||= ObjectType.new node.name, mod.object
       true
     end
 

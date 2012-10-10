@@ -4,9 +4,6 @@ module Crystal
 
     attr_accessor :observers
 
-    def initialize
-    end
-
     def metaclass
       @metaclass ||= Metaclass.new(self)
     end
@@ -39,15 +36,24 @@ module Crystal
     end
   end
 
-  class PrimitiveType < Type
+  class ClassType < Type
     attr_reader :name
-    attr_reader :llvm_type
     attr_accessor :defs
 
-    def initialize(name, llvm_type)
+    def initialize(name, parent_type)
       @name = name
+      @parent_type = parent_type
+      @defs = parent_type ? HashWithParent.new(parent_type.defs) : {}
+    end
+  end
+
+  class PrimitiveType < ClassType
+    attr_reader :name
+    attr_reader :llvm_type
+
+    def initialize(name, parent_type, llvm_type)
+      super(name, parent_type)
       @llvm_type = llvm_type
-      @defs = {}
     end
 
     def ==(other)
@@ -63,15 +69,12 @@ module Crystal
     end
   end
 
-  class ObjectType < Type
-    attr_accessor :name
-    attr_accessor :defs
+  class ObjectType < ClassType
     attr_accessor :instance_vars
     @@id = 0
 
-    def initialize(name)
-      @name = name
-      @defs = {}
+    def initialize(name, parent_type = nil)
+      super
       @instance_vars = {}
     end
 
@@ -139,9 +142,12 @@ module Crystal
     end
 
     def clone
-      obj = ObjectType.new name
+      obj = ObjectType.new name, @parent_type
       obj.instance_vars = Hash[instance_vars.map { |name, var| [name, Var.new(name, var.type)] }]
-      obj.defs = Hash[defs.map { |key, value| [key, value.clone] }]
+      obj.defs = HashWithParent.new(@parent_type.defs)
+      defs.each do |key, value|
+        obj.defs[key] = value.clone
+      end
       obj
     end
 
