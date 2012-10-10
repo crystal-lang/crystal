@@ -20,6 +20,7 @@ module Crystal
   class UnifyVisitor < Visitor
     def initialize
       @types = {}
+      @unions = {}
     end
 
     def end_visit_dispatch(node)
@@ -53,16 +54,17 @@ module Crystal
 
         unified_type
       when UnionType
-        unified_type = @types[type]
+        unified_types = type.types.map { |type| unify_type(type) }.uniq
+        union_key = unified_types.map(&:object_id).sort
+        unified_type = @unions[union_key]
 
         if unified_type
           unified_type
         else
-          unified_types = type.types.map { |type| unify_type(type) }.uniq
           if unified_types.length == 1
-            @types[type] = unified_types.first
+            @unions[union_key] = unified_types.first
           else
-            @types[type] = UnionType.new(*unified_types)
+            @unions[union_key] = UnionType.new(*unified_types)
           end
         end
       else

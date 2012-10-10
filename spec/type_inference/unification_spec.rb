@@ -49,4 +49,10 @@ describe 'Type inference unification' do
     )
     infer_type input
   end
+
+  it "unifies union types" do
+    input = parse 'a = 1; a = 1.1; b = 1; b = 1.1; c = a; c = b'
+    infer_type input
+    input[4].value.type.should equal(input[5].value.type)
+  end
 end
