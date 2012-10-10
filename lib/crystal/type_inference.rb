@@ -101,6 +101,15 @@ module Crystal
       self.target_def = typed_def
     end
 
+    def simplify
+      return unless target_def.is_a?(Dispatch)
+
+      target_def.simplify
+      if target_def.calls.length == 1
+        self.target_def = target_def.calls.values.first.target_def
+      end
+    end
+
     def can_calculate_type?
       args.all?(&:type) && (obj.nil? || obj.type)
     end
@@ -222,9 +231,20 @@ module Crystal
           subcall.name_column_number = call.name_column_number
           subcall.add_observer self
           subcall.recalculate
-          @calls[[obj_type] + arg_types] = subcall
+          @calls[[obj_type.object_id] + arg_types.map(&:object_id)] = subcall
         end
       end
+    end
+
+    def simplify
+      new_calls = {}
+      for_each_obj do |obj_type|
+        for_each_args do |arg_types|
+          call_key = [obj_type.object_id] + arg_types.map(&:object_id)
+          new_calls[call_key] = @calls[call_key]
+        end
+      end
+      @calls = new_calls
     end
 
     def for_each_obj(&block)

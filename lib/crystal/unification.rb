@@ -22,10 +22,16 @@ module Crystal
       @types = {}
     end
 
+    def end_visit_dispatch(node)
+      node.obj = unify_type(node.obj) if node.obj
+      node.args = node.args.map { |arg| unify_type(arg) }
+    end
+
     def end_visit_call(node)
       if node.target_def && !node.target_def.unified
         node.target_def.unified = true
         node.target_def.accept self
+        node.simplify
       end
     end
 

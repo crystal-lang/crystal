@@ -334,7 +334,7 @@ module Crystal
       arg_values = []
 
       codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block) do |label|
-        call = dispatch.calls[arg_types]
+        call = dispatch.calls[arg_types.map(&:object_id)]
         codegen_call(call.target_def, (node.obj ? arg_types[0] : nil), arg_values)
 
         if dispatch.type.is_a?(UnionType)
