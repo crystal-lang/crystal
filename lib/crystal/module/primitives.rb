@@ -25,7 +25,7 @@ module Crystal
     end
 
     def define_bool_primitives
-      no_args_primitive(bool, 'to_s', string) do |b, f, llvm_mod, self_type|
+      no_args_primitive(bool, 'to_s', string) do |b, f, llvm_mod|
         false_string = b.global_string_pointer("false")
         true_string = b.global_string_pointer("true")
         b.select f.params[0], true_string, false_string
@@ -37,6 +37,13 @@ module Crystal
     end
 
     def define_char_primitives
+      no_args_primitive(char, 'to_s', string) do |b, f, llvm_mod|
+        buffer = b.array_malloc(char.llvm_type, LLVM::Int(2))
+        b.store f.params[0], b.gep(buffer, LLVM::Int(0))
+        b.store LLVM::Int8.from_i(0), b.gep(buffer, LLVM::Int(1))
+        buffer
+      end
+
       no_args_primitive(char, 'ord', int) { |b, f| b.zext(f.params[0], int.llvm_type) }
       singleton(char, :==, {'other' => char}, bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
       singleton(char, :'!=', {'other' => char}, bool) { |b, f| b.icmp(:ne, f.params[0], f.params[1]) }
