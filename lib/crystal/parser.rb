@@ -510,6 +510,7 @@ module Crystal
       check :CONST
 
       name = @token.value
+      name_column_number = @token.column_number
       next_token_skip_space
 
       superclass = nil
@@ -518,6 +519,7 @@ module Crystal
         next_token_skip_space_or_newline
         check :CONST
         superclass = @token.value
+        superclass_column_number = @token.column_number
         next_token
       end
       skip_statement_end
@@ -527,7 +529,7 @@ module Crystal
       check_ident :end
       next_token_skip_statement_end
 
-      class_def = ClassDef.new name, body, superclass
+      class_def = ClassDef.new name, body, superclass, name_column_number, superclass_column_number
       class_def.location = location
       class_def
     end

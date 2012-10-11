@@ -131,12 +131,16 @@ module Crystal
     attr_accessor :name
     attr_accessor :body
     attr_accessor :superclass
+    attr_accessor :name_column_number
+    attr_accessor :superclass_column_number
 
-    def initialize(name, body = nil, superclass = nil)
+    def initialize(name, body = nil, superclass = nil, name_column_number = nil, superclass_column_number = nil)
       @name = name
       @body = Expressions.from body
       @body.parent = self if @body
       @superclass = superclass
+      @name_column_number = name_column_number
+      @superclass_column_number = superclass_column_number
     end
 
     def accept_children(visitor)
@@ -150,6 +154,8 @@ module Crystal
     def clone
       class_def = self.class.new name, (body ? body.clone : nil), superclass
       class_def.location = location
+      class_def.name_column_number = name_column_number
+      class_def.superclass_column_number = superclass_column_number
       class_def
     end
   end

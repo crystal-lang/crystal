@@ -41,7 +41,7 @@ module Crystal
     end
 
     def raise(message, inner = nil)
-      Kernel::raise Crystal::TypeException.new(message, self, inner)
+      Kernel::raise Crystal::TypeException.for_node(self, message, inner)
     end
   end
 
@@ -323,7 +323,7 @@ module Crystal
       @class_defs.push node.name
 
       parent = if node.superclass
-                 mod.types[node.superclass]
+                 mod.types[node.superclass] or raise Crystal::TypeException.new("unknown class #{node.superclass}", node.line_number, node.superclass_column_number, node.superclass.length)
                else
                  mod.object
                end

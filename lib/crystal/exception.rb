@@ -30,9 +30,24 @@ module Crystal
     attr_accessor :node
     attr_accessor :inner
 
-    def initialize(message, node = nil, inner = nil)
+    def self.for_node(node, message, inner = nil)
+      if node.respond_to?(:name)
+        length = node.respond_to?(:name_length) ? node.name_length : node.name.length
+        if node.respond_to?(:name_column_number)
+          new message, node.line_number, node.name_column_number, length, inner
+        else
+          new message, node.line_number, node.column_number, length, inner
+        end
+      else
+        new message, node.line_number, node.column_number, nil, inner
+      end
+    end
+
+    def initialize(message, line, column, length = nil, inner = nil)
       @message = message
-      @node = node
+      @line = line
+      @column = column
+      @length = length
       @inner = inner
     end
 
@@ -44,23 +59,15 @@ module Crystal
     end
 
     def append_to_s(str, lines)
-      if node
-        str << "in line #{node.line_number}: #{@message}"
-      else
-        str << "#{@message}"
-      end
-      if lines && node
+      str << "in line #{@line}: #{@message}"
+      if lines
         str << "\n\n"
-        str << lines[node.line_number - 1].chomp
-        if node.respond_to?(:name)
-          str << "\n"
-          if node.respond_to?(:name_column_number)
-            str << (' ' * (node.name_column_number - 1))
-          else
-            str << (' ' * (node.column_number - 1))
-          end
-          str << '^'
-          str << ('~' * (node.name_length - 1))
+        str << lines[@line - 1].chomp
+        str << "\n"
+        str << (' ' * (@column - 1))
+        str << '^'
+        if @length
+          str << ('~' * (@length - 1))
         end
       end
       str << "\n"

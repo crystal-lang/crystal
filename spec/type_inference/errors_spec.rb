@@ -72,4 +72,12 @@ describe 'Type inference: errors' do
       infer_type nodes
     }.should raise_error(Crystal::Exception, regex("uninitialized constant Foo"))
   end
+
+  it "reports unknown class when extending" do
+    nodes = parse "class Foo < Bar; end"
+
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("unknown class Bar"))
+  end
 end
