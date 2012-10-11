@@ -32,8 +32,13 @@ module Crystal
         @token.type = :FLOAT
         @token.value = match
       elsif match = scan(/(\+|-)?\d+/)
-        @token.type = :INT
-        @token.value = match
+        if scan(/L/)
+          @token.type = :LONG
+          @token.value = match
+        else
+          @token.type = :INT
+          @token.value = match
+        end
       elsif match = scan(/'\\n'/)
         @token.type = :CHAR
         @token.value = ?\n.ord

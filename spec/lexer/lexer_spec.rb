@@ -48,6 +48,16 @@ describe Lexer do
     end
   end
 
+  def self.it_lexes_longs(*args)
+    args.each do |arg|
+      if arg.is_a? Array
+        it_lexes arg[0], :LONG, arg[1]
+      else
+        it_lexes arg, :LONG, arg[0 ... -1]
+      end
+    end
+  end
+
   def self.it_lexes_char(string, value)
     it_lexes string, :CHAR, value
   end
@@ -73,6 +83,7 @@ describe Lexer do
   it_lexes_idents "def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"
   it_lexes_ints "1", ["1hello", "1"], "+1", "-1"
   it_lexes_floats "1.0", ["1.0hello", "1.0"], "+1.0", "-1.0"
+  it_lexes_longs "1L", ["1Lhello", "1"], "+1L", "-1L"
   it_lexes_char "'a'", ?a.ord
   it_lexes_char "'\\n'", ?\n.ord
   it_lexes_char "'\\t'", ?\t.ord
