@@ -232,7 +232,7 @@ module Crystal
     end
 
     def visit_primitive_body(node)
-      @last = node.block.call(@builder, @fun)
+      @last = node.block.call(@builder, @fun, @llvm_mod, @type)
     end
 
     def visit_alloc(node)

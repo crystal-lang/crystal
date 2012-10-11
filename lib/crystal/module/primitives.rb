@@ -13,6 +13,11 @@ module Crystal
 
     def define_object_primitives
       no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
+      no_args_primitive(object, 'to_s', string) do |b, f, llvm_mod, self_type|
+        buffer = b.array_malloc(char.llvm_type, LLVM::Int(self_type.name.length + 23))
+        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
+        buffer
+      end
     end
 
     def define_value_primitives
@@ -185,6 +190,10 @@ module Crystal
       instance.body = Expressions.new
       instance.body.type = return_type
       instance.add_instance instance
+    end
+
+    def sprintf(llvm_mod)
+      llvm_mod.functions['sprintf'] || llvm_mod.functions.add('sprintf', [string.llvm_type], int.llvm_type, varargs: true)
     end
   end
 
