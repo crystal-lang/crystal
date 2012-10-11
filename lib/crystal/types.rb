@@ -37,6 +37,7 @@ module Crystal
   end
 
   class ClassType < Type
+    attr_reader :parent_type
     attr_reader :name
     attr_accessor :defs
 

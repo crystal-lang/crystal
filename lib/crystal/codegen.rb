@@ -12,13 +12,16 @@ module Crystal
   end
 
   class Def
-    def mangled_name
-      self.class.mangled_name(owner, name, (body ? body.type : nil), args.map(&:type))
+    def mangled_name(obj_type)
+      self.class.mangled_name(obj_type, owner, name, (body ? body.type : nil), args.map(&:type))
     end
 
-    def self.mangled_name(owner, name, return_type, arg_types)
+    def self.mangled_name(obj_type, owner, name, return_type, arg_types)
       str = ''
-      if owner
+      if obj_type
+        str << obj_type.llvm_name
+        str << '#'
+      elsif owner
         if owner.is_a?(Metaclass)
           str << owner.type.name
           str << '::'
@@ -258,7 +261,7 @@ module Crystal
     end
 
     def codegen_call(target_def, obj_type, call_args)
-      mangled_name = target_def.mangled_name
+      mangled_name = target_def.mangled_name(obj_type)
 
       old_fun = @fun
       unless @fun = @funs[mangled_name]

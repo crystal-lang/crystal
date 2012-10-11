@@ -80,4 +80,12 @@ describe 'Type inference: errors' do
       infer_type nodes
     }.should raise_error(Crystal::Exception, regex("unknown class Bar"))
   end
+
+  it "reports superclass mismatch" do
+    nodes = parse "class Foo; end; class Bar; end; class Foo < Bar; end"
+
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("superclass mismatch for class Foo (Bar for Object)"))
+  end
 end

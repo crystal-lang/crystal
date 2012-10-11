@@ -218,7 +218,7 @@ module Crystal
   end
 
   class External < FrozenDef
-    def mangled_name
+    def mangled_name(obj_type)
       name
     end
   end

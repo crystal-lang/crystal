@@ -327,7 +327,15 @@ module Crystal
                else
                  mod.object
                end
-      mod.types[node.name] ||= ObjectType.new node.name, parent
+
+      existing = mod.types[node.name]
+      if existing
+        if node.superclass && existing.parent_type != parent
+          node.raise "superclass mismatch for class #{existing.name} (#{parent.name} for #{existing.parent_type.name})"
+        end
+      else
+        mod.types[node.name] = ObjectType.new node.name, parent
+      end
       true
     end
 
