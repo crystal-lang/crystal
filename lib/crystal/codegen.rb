@@ -12,14 +12,14 @@ module Crystal
   end
 
   class Def
-    def mangled_name(obj_type)
-      self.class.mangled_name(obj_type, owner, name, (body ? body.type : nil), args.map(&:type))
+    def mangled_name(self_type)
+      self.class.mangled_name(self_type, owner, name, (body ? body.type : nil), args.map(&:type))
     end
 
-    def self.mangled_name(obj_type, owner, name, return_type, arg_types)
+    def self.mangled_name(self_type, owner, name, return_type, arg_types)
       str = ''
-      if obj_type
-        str << obj_type.llvm_name
+      if self_type
+        str << self_type.llvm_name
         str << '#'
       elsif owner
         if owner.is_a?(Metaclass)
@@ -260,8 +260,8 @@ module Crystal
       false
     end
 
-    def codegen_call(target_def, obj_type, call_args)
-      mangled_name = target_def.mangled_name(obj_type)
+    def codegen_call(target_def, self_type, call_args)
+      mangled_name = target_def.mangled_name(self_type)
 
       old_fun = @fun
       unless @fun = @funs[mangled_name]
@@ -272,9 +272,9 @@ module Crystal
         @vars = {}
 
         args = []
-        if obj_type && !obj_type.is_a?(Metaclass)
-          @type = obj_type
-          args << Var.new("self", obj_type)
+        if self_type && !self_type.is_a?(Metaclass)
+          @type = self_type
+          args << Var.new("self", self_type)
         end
         args += target_def.args
 
@@ -293,7 +293,7 @@ module Crystal
           new_entry_block
 
           args.each_with_index do |arg, i|
-            if obj_type && i == 0 || target_def.body.is_a?(PrimitiveBody)
+            if self_type && i == 0 || target_def.body.is_a?(PrimitiveBody)
               @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, is_arg: true }
             else
               ptr = @builder.alloca(arg.llvm_type, arg.name)
