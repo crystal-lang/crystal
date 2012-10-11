@@ -294,16 +294,20 @@ module Crystal
       node.type = mod.bool
     end
 
+    def visit_char_literal(node)
+      node.type = mod.char
+    end
+
     def visit_int_literal(node)
       node.type = mod.int
     end
 
-    def visit_float_literal(node)
-      node.type = mod.float
+    def visit_long_literal(node)
+      node.type = mod.long
     end
 
-    def visit_char_literal(node)
-      node.type = mod.char
+    def visit_float_literal(node)
+      node.type = mod.float
     end
 
     def visit_string_literal(node)

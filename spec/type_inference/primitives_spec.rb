@@ -9,6 +9,10 @@ describe 'Type inference: primitives' do
     assert_type('1') { int }
   end
 
+  it "types a long" do
+    assert_type('1L') { long }
+  end
+
   it "types a float" do
     assert_type('2.3') { float }
   end
