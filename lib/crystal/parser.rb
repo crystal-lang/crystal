@@ -46,7 +46,7 @@ module Crystal
           when :unless
             next_token_skip_statement_end
             exp = parse_op_assign
-            atomic = If.new(exp, nil, atomic)
+            atomic = If.new(Call.new(exp, :"!@"), atomic)
           when :while
             next_token_skip_statement_end
             exp = parse_op_assign
@@ -654,7 +654,7 @@ module Crystal
       check_ident :end
       next_token_skip_statement_end
 
-      node = If.new cond, a_else, a_then
+      node = If.new Call.new(cond, :"!@"), a_then, a_else
       node.location = location
       node
     end

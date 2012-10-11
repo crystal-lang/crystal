@@ -103,3 +103,9 @@ class Crystal::ObjectType
     self
   end
 end
+
+class Crystal::ASTNode
+  def not
+    Call.new(self, :"!@")
+  end
+end
