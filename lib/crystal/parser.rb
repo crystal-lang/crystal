@@ -176,24 +176,14 @@ module Crystal
           next_token_skip_space_or_newline
           right = parse_mul_or_div
           left = Call.new left, method, [right], nil, method_column_number
-        when :INT
+        when :INT, :LONG, :FLOAT
+          type = @token.type == :INT ? IntLiteral : (@token.type == :LONG ? LongLiteral : FloatLiteral)
           case @token.value[0]
           when '+'
-            left = Call.new left, @token.value[0].to_sym, [IntLiteral.new(@token.value)], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [type.new(@token.value)], nil, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value[0].to_sym, [IntLiteral.new(@token.value[1 .. -1])], nil, @token.column_number
-            next_token_skip_space_or_newline
-          else
-            return left
-          end
-        when :FLOAT
-          case @token.value[0]
-          when '+'
-            left = Call.new left, @token.value[0].to_sym, [FloatLiteral.new(@token.value)], nil, @token.column_number
-            next_token_skip_space_or_newline
-          when '-'
-            left = Call.new left, @token.value[0].to_sym, [FloatLiteral.new(@token.value[1 .. -1])], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [type.new(@token.value[1 .. -1])], nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -324,6 +314,8 @@ module Crystal
         Call.new parse_expression, :'~@', [], nil, column_number
       when :INT
         node_and_next_token IntLiteral.new(@token.value)
+      when :LONG
+        node_and_next_token LongLiteral.new(@token.value)
       when :FLOAT
         node_and_next_token FloatLiteral.new(@token.value)
       when :CHAR
@@ -391,7 +383,7 @@ module Crystal
         Call.new nil, name, args, block, name_column_number, @last_call_has_parenthesis
       else
         if args
-          if is_var?(name) && args.length == 1 && (args[0].is_a?(IntLiteral) || args[0].is_a?(FloatLiteral)) && args[0].has_sign
+          if is_var?(name) && args.length == 1 && (args[0].is_a?(IntLiteral) || args[0].is_a?(FloatLiteral) || args[0].is_a?(LongLiteral)) && args[0].has_sign
             if args[0].value < 0
               args[0].value = args[0].value.abs
               Call.new(Var.new(name), :-, args)
@@ -481,7 +473,7 @@ module Crystal
 
     def parse_args_space_consumed
       case @token.type
-      when :CHAR, :STRING, :INT, :FLOAT, :IDENT, :INSTANCE_VAR, :CONST, :'(', :'!'
+      when :CHAR, :STRING, :INT, :LONG, :FLOAT, :IDENT, :INSTANCE_VAR, :CONST, :'(', :'!'
         case @token.value
         when :if, :unless, :while
           nil

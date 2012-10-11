@@ -58,6 +58,10 @@ class Fixnum
     Crystal::IntLiteral.new self
   end
 
+  def long
+    Crystal::LongLiteral.new self
+  end
+
   def float
     Crystal::FloatLiteral.new self.to_f
   end

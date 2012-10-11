@@ -216,6 +216,28 @@ module Crystal
     end
   end
 
+  # A long literal.
+  #
+  #     \d+L
+  #
+  class LongLiteral < ASTNode
+    attr_accessor :value
+    attr_reader :has_sign
+
+    def initialize(value)
+      @has_sign = value.is_a?(String) && (value[0] == '+' || value[0] == '-')
+      @value = value.to_i
+    end
+
+    def ==(other)
+      other.class == self.class && other.value.to_i == value.to_i
+    end
+
+    def clone
+      self.class.new value
+    end
+  end
+
   # A float literal.
   #
   #     \d+.\d+
