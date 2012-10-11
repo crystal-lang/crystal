@@ -161,6 +161,23 @@ module Crystal
     end
   end
 
+  class StaticArrayType < ClassType
+    attr_accessor :element_type
+
+    def initialize(parent_type = nil)
+      super("StaticArray", parent_type)
+      @element_type = Var.new('element_type')
+    end
+
+    def ==(other)
+      self.class == other.class && element_type == other.element_type
+    end
+
+    def to_s
+      "StaticArray<#{@element_type.type || '?'}>"
+    end
+  end
+
   class UnionType < Type
     attr_reader :types
 

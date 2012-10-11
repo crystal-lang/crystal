@@ -7,6 +7,7 @@ module Crystal
       define_char_primitives
       define_int_primitives
       define_float_primitives
+      define_static_array_primitives
       define_externals
       define_builtins
     end
@@ -171,6 +172,17 @@ module Crystal
       end
     end
 
+    def define_static_array_primitives
+      singleton(static_array.metaclass, 'new', {'size' => int}, static_array) do |b, f, llvm_mod, self_type|
+      end
+
+      no_args_primitive(static_array, 'length', int) do |b, f|
+      end
+
+      static_array.defs[:[]=] = Def.new(:[]=, [Var.new('index'), Var.new('value')], StaticArraySet.new)
+      static_array.defs[:[]] = Def.new(:[], [Var.new('index')], StaticArrayGet.new)
+    end
+
     def define_externals
       external('putchar', {'c' => char}, char)
       external('getchar', {}, char)
@@ -249,6 +261,12 @@ module Crystal
     def mangled_name(obj_type)
       name
     end
+  end
+
+  class StaticArraySet < ASTNode
+  end
+
+  class StaticArrayGet < ASTNode
   end
 end
 

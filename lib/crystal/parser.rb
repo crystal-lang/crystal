@@ -74,7 +74,7 @@ module Crystal
         when :SPACE
           next_token
         when :'='
-          if atomic.is_a?(Call) && atomic.name == :'[ ]'
+          if atomic.is_a?(Call) && atomic.name == :[]
             next_token_skip_space_or_newline
 
             atomic.name = :'[]='
@@ -266,7 +266,7 @@ module Crystal
               break
             end
           end
-          atomic = Call.new atomic, :'[ ]', args, nil, column_number
+          atomic = Call.new atomic, :[], args, nil, column_number
         else
           break
         end
@@ -590,8 +590,6 @@ module Crystal
       end
 
       next_token_skip_statement_end
-
-      name = :'[ ]' if name == :[] && args && args.length > 0
 
       Def.new name, args, body, receiver
     end

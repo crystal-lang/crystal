@@ -108,6 +108,13 @@ class Crystal::ObjectType
   end
 end
 
+class Crystal::StaticArrayType
+  def of(type)
+    @element_type.type = type
+    self
+  end
+end
+
 class Crystal::ASTNode
   def not
     Call.new(self, :"!@")

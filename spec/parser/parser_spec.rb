@@ -189,11 +189,11 @@ describe Parser do
   it_parses "def []=(value); end", Def.new(:[]=, ["value".var], nil)
   it_parses "def self.[]; end", Def.new(:[], [], nil, "self".var)
 
-  it_parses "Int[8]", Call.new("Int".const, :'[ ]', [8.int])
-  it_parses "Int[8, 4]", Call.new("Int".const, :'[ ]', [8.int, 4.int])
-  it_parses "Int[8, 4,]", Call.new("Int".const, :'[ ]', [8.int, 4.int])
+  it_parses "Int[8]", Call.new("Int".const, :[], [8.int])
+  it_parses "Int[8, 4]", Call.new("Int".const, :[], [8.int, 4.int])
+  it_parses "Int[8, 4,]", Call.new("Int".const, :[], [8.int, 4.int])
 
-  it_parses "def [](x); end", Def.new(:'[ ]', ["x".var], nil)
+  it_parses "def [](x); end", Def.new(:[], ["x".var], nil)
 
   it_parses "foo[0] = 1", Call.new("foo".call, :[]=, [0.int, 1.int])
 
