@@ -22,9 +22,9 @@ class Node
   end
 
   def print
-    @left.print if !@left.nil?
+    @left.print unless @left.nil?
     putchar @value
-    @right.print if !@right.nil?
+    @right.print unless @right.nil?
   end
 end
 
