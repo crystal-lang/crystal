@@ -68,7 +68,7 @@ module Crystal
           str << "\n"
           str << (' ' * (@column - 1))
           str << '^'
-          if @length
+          if @length && @length > 0
             str << ('~' * (@length - 1))
           end
         end

@@ -78,6 +78,7 @@ module Crystal
             next_token_skip_space_or_newline
 
             atomic.name = :'[]='
+            atomic.name_length = 0
             atomic.args << parse_expression
           else
             break unless can_be_assigned?(atomic)
@@ -248,6 +249,8 @@ module Crystal
           column_number = @token.column_number
           next_token_skip_space
           atomic = Call.new atomic, :[], [], nil, column_number
+          atomic.name_length = 0
+          atomic
         when :'['
           column_number = @token.column_number
           next_token_skip_space_or_newline
@@ -267,6 +270,8 @@ module Crystal
             end
           end
           atomic = Call.new atomic, :[], args, nil, column_number
+          atomic.name_length = 0
+          atomic
         else
           break
         end
