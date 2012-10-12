@@ -88,4 +88,12 @@ describe 'Type inference: errors' do
       infer_type nodes
     }.should raise_error(Crystal::Exception, regex("superclass mismatch for class Foo (Bar for Object)"))
   end
+
+  it "reports StaticArray.new argument must be an Int" do
+    nodes = parse "StaticArray.new 1.0"
+
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("StaticArray.new size must be Int, not Float"))
+  end
 end

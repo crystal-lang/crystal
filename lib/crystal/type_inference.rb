@@ -88,7 +88,7 @@ module Crystal
 
         if typed_def.body
           begin
-            typed_def.body.accept TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def])
+            typed_def.body.accept TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
           rescue Crystal::Exception => ex
             if obj
               raise "instantiating '#{obj.type.name}##{name}'", ex
@@ -396,6 +396,10 @@ module Crystal
     end
 
     def visit_static_array_new(node)
+      size_type = @vars['size'].type
+      if size_type != mod.int
+        @call[4].args[0].raise "StaticArray.new size must be Int, not #{size_type.name}"
+      end
       node.type = mod.static_array.clone
     end
 
