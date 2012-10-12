@@ -292,7 +292,7 @@ module Crystal
         exp
       when :'[]'
         next_token_skip_space
-        Crystal::Array.new
+        Crystal::ArrayLiteral.new
       when :'['
         next_token_skip_space_or_newline
         exps = []
@@ -304,7 +304,7 @@ module Crystal
           end
         end
         next_token_skip_space
-        Crystal::Array.new exps
+        Crystal::ArrayLiteral.new exps
       when :'!'
         next_token_skip_space_or_newline
         Call.new parse_expression, :'!@', [], nil, column_number

@@ -118,7 +118,7 @@ module Crystal
   #
   #  '[' ( expression ( ',' expression )* ) ']'
   #
-  class Array < Expressions
+  class ArrayLiteral < Expressions
   end
 
   # Class definition:

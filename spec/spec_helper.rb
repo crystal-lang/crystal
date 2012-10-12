@@ -95,9 +95,9 @@ class String
   end
 end
 
-class ::Array
+class Array
   def array
-    Crystal::Array.new self
+    Crystal::ArrayLiteral.new self
   end
 end
 
