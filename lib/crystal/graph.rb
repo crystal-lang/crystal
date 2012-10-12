@@ -39,11 +39,15 @@ module Crystal
     def type_node(type)
       node = @g.get_node(type.object_id.to_s)
       unless node
-        if type.is_a? ObjectType
+        case type
+        when ObjectType
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
           type.instance_vars.each do |ivar, var|
             add_edges node, var.type, ivar
           end
+        when StaticArrayType
+          node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
+          add_edges node, type.element_type, 'element'
         else
           node = @g.add_nodes type.object_id.to_s, :label => type.name
         end
