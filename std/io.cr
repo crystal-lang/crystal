@@ -1,5 +1,5 @@
 def putn(n)
-  if n > 10
+  if n >= 10
     putn(n / 10)
     putn(n - (n / 10) * 10)
   else
