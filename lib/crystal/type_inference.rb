@@ -400,12 +400,12 @@ module Crystal
     end
 
     def visit_static_array_set(node)
-      @vars['value'].add_observer @scope.element_type
+      @vars['value'].add_observer @scope.element_type_var
       @vars['value'].add_observer node
     end
 
     def visit_static_array_get(node)
-      @scope.element_type.add_observer node
+      @scope.element_type_var.add_observer node
     end
 
     def lookup_object_type(name)

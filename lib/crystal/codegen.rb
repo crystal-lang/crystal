@@ -9,10 +9,6 @@ module Crystal
     def llvm_type
       type.llvm_type
     end
-
-    def llvm_size
-      type.llvm_size
-    end
   end
 
   class Def
@@ -256,12 +252,12 @@ module Crystal
     end
 
     def visit_static_array_set(node)
-      codegen_assign(static_array_index_pointer, @type.element_type.type, node.type, @fun.params[2])
+      codegen_assign(static_array_index_pointer, @type.element_type, node.type, @fun.params[2])
       @last = @fun.params[2]
     end
 
     def visit_static_array_get(node)
-      if @type.element_type.type.is_a?(UnionType)
+      if @type.element_type.is_a?(UnionType)
         @last = static_array_index_pointer
       else
         @last = @builder.load static_array_index_pointer

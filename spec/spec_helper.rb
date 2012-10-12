@@ -111,7 +111,7 @@ end
 class Crystal::StaticArrayType
   def self.of(type)
     array = new
-    array.element_type.type = type
+    array.element_type_var.type = type
     array
   end
 end

@@ -168,11 +168,15 @@ module Crystal
   end
 
   class StaticArrayType < ClassType
-    attr_accessor :element_type
+    attr_accessor :element_type_var
 
     def initialize(parent_type = nil)
       super("StaticArray", parent_type)
-      @element_type = Var.new('element_type')
+      @element_type_var = Var.new('element')
+    end
+
+    def element_type
+      @element_type_var.type
     end
 
     def ==(other)
@@ -181,7 +185,7 @@ module Crystal
 
     def clone
       array = StaticArrayType.new @parent_type
-      array.element_type = @element_type.clone
+      array.element_type_var = @element_type_var.clone
       array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
       defs.each do |key, value|
         array.defs[key] = value.clone
@@ -198,11 +202,11 @@ module Crystal
     end
 
     def llvm_name
-      "StaticArray<#{@element_type.type.llvm_name}>"
+      "StaticArray<#{element_type.llvm_name}>"
     end
 
     def to_s
-      "StaticArray<#{@element_type.type || '?'}>"
+      "StaticArray<#{element_type || 'Void'}>"
     end
   end
 
