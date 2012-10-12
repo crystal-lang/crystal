@@ -167,6 +167,37 @@ module Crystal
     end
   end
 
+  class ArrayType < ClassType
+    attr_accessor :element_type_var
+
+    def initialize(parent_type = nil)
+      super("Array", parent_type)
+      @element_type_var = Var.new('element')
+    end
+
+    def element_type
+      @element_type_var.type
+    end
+
+    def ==(other)
+      self.class == other.class && element_type == other.element_type
+    end
+
+    def clone
+      array = ArrayType.new @parent_type
+      array.element_type_var = @element_type_var.clone
+      array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
+      defs.each do |key, value|
+        array.defs[key] = value.clone
+      end
+      array
+    end
+
+    def to_s
+      "Array<#{element_type || 'Void'}>"
+    end
+  end
+
   class StaticArrayType < ClassType
     attr_accessor :element_type_var
 

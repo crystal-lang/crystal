@@ -99,12 +99,24 @@ class Array
   def array
     Crystal::ArrayLiteral.new self
   end
+
+  def union
+    UnionType.new(*self)
+  end
 end
 
 class Crystal::ObjectType
   def with_var(name, type)
     @instance_vars[name] = Var.new(name, type)
     self
+  end
+end
+
+class Crystal::ArrayType
+  def self.of(type)
+    array = new
+    array.element_type_var.type = type
+    array
   end
 end
 

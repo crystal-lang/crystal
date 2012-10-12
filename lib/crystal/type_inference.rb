@@ -314,6 +314,13 @@ module Crystal
       node.type = mod.string
     end
 
+    def visit_array_literal(node)
+      node.type = mod.array.clone
+      node.elements.each do |elem|
+        elem.add_observer node.type.element_type_var
+      end
+    end
+
     def visit_def(node)
       if @class_defs.empty?
         mod.defs[node.name] = node

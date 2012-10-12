@@ -47,7 +47,7 @@ module Crystal
 
     def visit_array_literal(node)
       @str << '['
-      node.expressions.each_with_index do |exp, i|
+      node.elements.each_with_index do |exp, i|
         @str << ', ' if i > 0
         exp.accept self
       end

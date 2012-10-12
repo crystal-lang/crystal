@@ -118,7 +118,28 @@ module Crystal
   #
   #  '[' ( expression ( ',' expression )* ) ']'
   #
-  class ArrayLiteral < Expressions
+  class ArrayLiteral < ASTNode
+    attr_accessor :elements
+
+    def initialize(elements = [])
+      @elements = elements
+      @elements.each { |e| e.parent = self }
+    end
+
+
+    def accept_children(visitor)
+      elements.each { |exp| exp.accept visitor }
+    end
+
+    def ==(other)
+      other.class == self.class && other.elements == elements
+    end
+
+    def clone
+      exps = self.class.new elements.map(&:clone)
+      exps.location = location
+      exps
+    end
   end
 
   # Class definition:
