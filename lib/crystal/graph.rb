@@ -47,7 +47,7 @@ module Crystal
           end
         when StaticArrayType
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
-          add_edges node, type.element_type, 'element'
+          add_edges node, type.element_type
         else
           node = @g.add_nodes type.object_id.to_s, :label => type.name
         end
