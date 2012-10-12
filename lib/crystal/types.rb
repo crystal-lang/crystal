@@ -20,7 +20,7 @@ module Crystal
     end
 
     def self.merge(t1, t2)
-      if t1 === t2
+      if t1.equal? t2
         t1
       else
         types = [t1, t2].map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.uniq(&:object_id)

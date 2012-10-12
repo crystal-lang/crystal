@@ -32,4 +32,16 @@ describe 'Type inference: static array' do
   it "creates two static arrays" do
     assert_type("a = StaticArray.new(1); a[0] = 1; b = StaticArray.new(1); b[0] = 2.5; b") { StaticArrayType.of(float) }
   end
+
+  it "types array of arrays" do
+    assert_type(%Q(
+      a = StaticArray.new 2
+      b = StaticArray.new 3
+      c = StaticArray.new 3
+      a[0] = b
+      a[1] = c
+      a[0][0] = 1
+      c
+    )) { StaticArrayType.of(int) }
+  end
 end
