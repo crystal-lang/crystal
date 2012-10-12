@@ -353,6 +353,12 @@ module Crystal
     end
 
     def visit_instance_var(node)
+      if @scope.is_a?(Crystal::Module)
+        node.raise "can't use instance variables inside a module"
+      elsif @scope.is_a?(PrimitiveType)
+        node.raise "can't use instance variables inside #{@scope.name}"
+      end
+
       var = @scope.lookup_instance_var node.name
       var.add_observer node
     end

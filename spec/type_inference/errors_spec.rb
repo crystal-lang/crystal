@@ -112,4 +112,20 @@ describe 'Type inference: errors' do
       infer_type nodes
     }.should raise_error(Crystal::Exception, regex("index must be Int, not Float"))
   end
+
+  it "reports can't use instance variables inside module" do
+    nodes = parse "def foo; @a = 1; end; foo"
+
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("can't use instance variables inside a module"))
+  end
+
+  it "reports can't use instance variables inside a Value" do
+    nodes = parse "class Int; def foo; @a = 1; end; end; 2.foo"
+
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("can't use instance variables inside Int"))
+  end
 end
