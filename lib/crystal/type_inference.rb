@@ -398,18 +398,29 @@ module Crystal
     def visit_static_array_new(node)
       size_type = @vars['size'].type
       if size_type != mod.int
-        @call[4].args[0].raise "StaticArray.new size must be Int, not #{size_type.name}"
+        @call[4].args[0].raise "size must be Int, not #{size_type.name}"
       end
       node.type = mod.static_array.clone
     end
 
     def visit_static_array_set(node)
+      check_static_array_index_is_int
+
       @vars['value'].add_observer @scope.element_type_var
       @vars['value'].add_observer node
     end
 
     def visit_static_array_get(node)
+      check_static_array_index_is_int
+
       @scope.element_type_var.add_observer node
+    end
+
+    def check_static_array_index_is_int
+      index_type = @vars['index'].type
+      if index_type != mod.int
+        @call[4].args[0].raise "index must be Int, not #{index_type.name}"
+      end
     end
 
     def lookup_object_type(name)

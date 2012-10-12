@@ -89,11 +89,27 @@ describe 'Type inference: errors' do
     }.should raise_error(Crystal::Exception, regex("superclass mismatch for class Foo (Bar for Object)"))
   end
 
-  it "reports StaticArray.new argument must be an Int" do
+  it "reports StaticArray::new argument must be an Int" do
     nodes = parse "StaticArray.new 1.0"
 
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("StaticArray.new size must be Int, not Float"))
+    }.should raise_error(Crystal::Exception, regex("size must be Int, not Float"))
+  end
+
+  it "reports StaticArray#[]= argument must be an Int" do
+    nodes = parse "StaticArray.new(2)[1.0] = 1"
+
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("index must be Int, not Float"))
+  end
+
+  it "reports StaticArray#[] argument must be an Int" do
+    nodes = parse "StaticArray.new(2)[1.0]"
+
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("index must be Int, not Float"))
   end
 end
