@@ -408,6 +408,19 @@ module Crystal
       node.type = type ? type : node.type.clone
     end
 
+    def visit_array_get(node)
+      check_array_index_is_int
+
+      @scope.element_type_var.add_observer node
+    end
+
+    def visit_array_set(node)
+      check_array_index_is_int
+
+      @vars['value'].add_observer @scope.element_type_var
+      @vars['value'].add_observer node
+    end
+
     def visit_static_array_new(node)
       size_type = @vars['size'].type
       if size_type != mod.int
@@ -417,19 +430,19 @@ module Crystal
     end
 
     def visit_static_array_set(node)
-      check_static_array_index_is_int
+      check_array_index_is_int
 
       @vars['value'].add_observer @scope.element_type_var
       @vars['value'].add_observer node
     end
 
     def visit_static_array_get(node)
-      check_static_array_index_is_int
+      check_array_index_is_int
 
       @scope.element_type_var.add_observer node
     end
 
-    def check_static_array_index_is_int
+    def check_array_index_is_int
       index_type = @vars['index'].type
       if index_type != mod.int
         @call[4].args[0].raise "index must be Int, not #{index_type.name}"

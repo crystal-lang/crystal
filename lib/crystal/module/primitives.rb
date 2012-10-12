@@ -7,6 +7,7 @@ module Crystal
       define_char_primitives
       define_int_primitives
       define_float_primitives
+      define_array_primitives
       define_static_array_primitives
       define_externals
       define_builtins
@@ -172,6 +173,16 @@ module Crystal
       end
     end
 
+    def define_array_primitives
+      no_args_primitive(array, 'length', int) do |b, f|
+        #ptr = b.bit_cast f.params[0], LLVM::Pointer(LLVM::Int32)
+        #b.load ptr
+      end
+
+      array.defs[:[]=] = Def.new(:[]=, [Var.new('index'), Var.new('value')], ArraySet.new)
+      array.defs[:[]] = Def.new(:[], [Var.new('index')], ArrayGet.new)
+    end
+
     def define_static_array_primitives
       no_args_primitive(static_array, 'length', int) do |b, f|
         ptr = b.bit_cast f.params[0], LLVM::Pointer(LLVM::Int32)
@@ -261,6 +272,15 @@ module Crystal
     def mangled_name(obj_type)
       name
     end
+  end
+
+  class ArrayNew < ASTNode
+  end
+
+  class ArraySet < ASTNode
+  end
+
+  class ArrayGet < ASTNode
   end
 
   class StaticArrayNew < ASTNode
