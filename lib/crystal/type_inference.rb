@@ -395,9 +395,13 @@ module Crystal
       node.type = type ? type : node.type.clone
     end
 
+    def visit_static_array_new(node)
+      node.type = mod.static_array.clone
+    end
+
     def visit_static_array_set(node)
       @vars['value'].add_observer @scope.element_type
-      @scope.element_type.add_observer node
+      @vars['value'].add_observer node
     end
 
     def visit_static_array_get(node)

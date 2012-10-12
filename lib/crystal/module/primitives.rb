@@ -173,12 +173,12 @@ module Crystal
     end
 
     def define_static_array_primitives
-      singleton(static_array.metaclass, 'new', {'size' => int}, static_array) do |b, f, llvm_mod, self_type|
-      end
-
       no_args_primitive(static_array, 'length', int) do |b, f|
+        ptr = b.bit_cast f.params[0], LLVM::Pointer(LLVM::Int32)
+        b.load ptr
       end
 
+      static_array.metaclass.defs['new'] = Def.new('new', [Var.new('size')], StaticArrayNew.new)
       static_array.defs[:[]=] = Def.new(:[]=, [Var.new('index'), Var.new('value')], StaticArraySet.new)
       static_array.defs[:[]] = Def.new(:[], [Var.new('index')], StaticArrayGet.new)
     end
@@ -261,6 +261,9 @@ module Crystal
     def mangled_name(obj_type)
       name
     end
+  end
+
+  class StaticArrayNew < ASTNode
   end
 
   class StaticArraySet < ASTNode

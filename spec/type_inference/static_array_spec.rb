@@ -13,16 +13,23 @@ describe 'Type inference: static array' do
     assert_type("a = StaticArray.new(1); a[0] = 1") { int }
   end
 
+  it "creates a new typed array of union (return value)" do
+    assert_type("a = StaticArray.new(1); a[0] = 1; a[0] = 2.5") { float }
+  end
+
   it "creates a new typed array of int (setter)" do
-    assert_type("a = StaticArray.new(1); a[0] = 1; a") { StaticArrayType.new.of(int) }
+    assert_type("a = StaticArray.new(1); a[0] = 1; a") { StaticArrayType.of(int) }
   end
 
   it "creates a new typed array of union" do
-    assert_type("a = StaticArray.new(1); a[0] = 1; a[0] = 2.5; a") { StaticArrayType.new.of(UnionType.new(int, float)) }
+    assert_type("a = StaticArray.new(1); a[0] = 1; a[0] = 2.5; a") { StaticArrayType.of(UnionType.new(int, float)) }
   end
 
   it "creates a new typed array of int (getter)" do
     assert_type("a = StaticArray.new(1); a[0] = 1; a[0]") { int }
   end
 
+  it "creates two static arrays" do
+    assert_type("a = StaticArray.new(1); a[0] = 1; b = StaticArray.new(1); b[0] = 2.5; b") { StaticArrayType.of(float) }
+  end
 end

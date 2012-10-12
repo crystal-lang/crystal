@@ -60,14 +60,17 @@ module Crystal
 
     def append_to_s(str, lines)
       str << "in line #{@line}: #{@message}"
-      if lines
-        str << "\n\n"
-        str << lines[@line - 1].chomp
-        str << "\n"
-        str << (' ' * (@column - 1))
-        str << '^'
-        if @length
-          str << ('~' * (@length - 1))
+      if lines && @line
+        line = lines[@line - 1]
+        if line
+          str << "\n\n"
+          str << line.chomp
+          str << "\n"
+          str << (' ' * (@column - 1))
+          str << '^'
+          if @length
+            str << ('~' * (@length - 1))
+          end
         end
       end
       str << "\n"

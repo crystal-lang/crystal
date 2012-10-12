@@ -2,6 +2,8 @@ module Crystal
   class Module
     include Enumerable
 
+    POINTER_SIZE = 8
+
     attr_accessor :types
     attr_accessor :defs
 
@@ -11,12 +13,12 @@ module Crystal
       object = @types["Object"] = ObjectType.new "Object"
       value = @types["Value"] = ObjectType.new "Value", object
 
-      @types["Bool"] = PrimitiveType.new "Bool", value, LLVM::Int1
-      @types["Char"] = PrimitiveType.new "Char", value, LLVM::Int8
-      @types["Int"] = PrimitiveType.new "Int", value, LLVM::Int32
-      @types["Long"] = PrimitiveType.new "Long", value, LLVM::Int64
-      @types["Float"] = PrimitiveType.new "Float", value, LLVM::Float
-      @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type)
+      @types["Bool"] = PrimitiveType.new "Bool", value, LLVM::Int1, 1
+      @types["Char"] = PrimitiveType.new "Char", value, LLVM::Int8, 1
+      @types["Int"] = PrimitiveType.new "Int", value, LLVM::Int32, 4
+      @types["Long"] = PrimitiveType.new "Long", value, LLVM::Int64, 8
+      @types["Float"] = PrimitiveType.new "Float", value, LLVM::Float, 4
+      @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
       @types["StaticArray"] = StaticArrayType.new object
 
       @defs = {}

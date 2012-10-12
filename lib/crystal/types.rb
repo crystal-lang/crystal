@@ -51,10 +51,12 @@ module Crystal
   class PrimitiveType < ClassType
     attr_reader :name
     attr_reader :llvm_type
+    attr_reader :llvm_size
 
-    def initialize(name, parent_type, llvm_type)
+    def initialize(name, parent_type, llvm_type, llvm_size)
       super(name, parent_type)
       @llvm_type = llvm_type
+      @llvm_size = llvm_size
     end
 
     def ==(other)
@@ -125,6 +127,10 @@ module Crystal
       @llvm_type ||= LLVM::Pointer(llvm_struct_type)
     end
 
+    def llvm_size
+      Crystal::Module::POINTER_SIZE
+    end
+
     def llvm_struct_type
       unless @llvm_struct_type
         @llvm_struct_type = LLVM::Struct(llvm_name)
@@ -173,6 +179,28 @@ module Crystal
       self.class == other.class && element_type == other.element_type
     end
 
+    def clone
+      array = StaticArrayType.new @parent_type
+      array.element_type = @element_type.clone
+      array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
+      defs.each do |key, value|
+        array.defs[key] = value.clone
+      end
+      array
+    end
+
+    def llvm_type
+      @llvm_type ||= LLVM::Pointer(LLVM::Int8)
+    end
+
+    def llvm_size
+      Crystal::Module::POINTER_SIZE
+    end
+
+    def llvm_name
+      "StaticArray<#{@element_type.type.llvm_name}>"
+    end
+
     def to_s
       "StaticArray<#{@element_type.type || '?'}>"
     end
@@ -188,13 +216,21 @@ module Crystal
     def llvm_type
       unless @llvm_type
         @llvm_type = LLVM::Struct(llvm_name)
-        @llvm_type.element_types = [LLVM::Int, LLVM::Type.array(LLVM::Int8, 100)]
+        @llvm_type.element_types = [LLVM::Int, LLVM::Type.array(LLVM::Int8, llvm_value_size)]
       end
       @llvm_type
     end
 
     def llvm_name
       "[#{types.map(&:llvm_name).join ', '}]"
+    end
+
+    def llvm_size
+      @llvm_size ||= llvm_value_size + 4
+    end
+
+    def llvm_value_size
+      @llvm_value_size ||= @types.map(&:llvm_size).max
     end
 
     def index_of_type(type)

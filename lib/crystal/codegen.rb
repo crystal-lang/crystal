@@ -7,7 +7,11 @@ LLVM.init_x86
 module Crystal
   class ASTNode
     def llvm_type
-      type ? type.llvm_type : LLVM.Void
+      type.llvm_type
+    end
+
+    def llvm_size
+      type.llvm_size
     end
   end
 
@@ -19,8 +23,13 @@ module Crystal
     def self.mangled_name(self_type, owner, name, return_type, arg_types)
       str = ''
       if self_type
-        str << self_type.llvm_name
-        str << '#'
+        if self_type.is_a?(Metaclass)
+          str << self_type.type.name
+          str << '::'
+        else
+          str << self_type.llvm_name
+          str << '#'
+        end
       elsif owner
         if owner.is_a?(Metaclass)
           str << owner.type.name
@@ -73,7 +82,7 @@ module Crystal
       @mod = mod
       @return_type = return_type
       @llvm_mod = LLVM::Module.new("Crystal")
-      @fun = @llvm_mod.functions.add("crystal_main", [], return_type ? return_type.llvm_type : LLVM.Void)
+      @fun = @llvm_mod.functions.add("crystal_main", [], return_type.llvm_type)
       @builder = LLVM::Builder.new
 
       new_entry_block
@@ -239,6 +248,36 @@ module Crystal
       @last = @builder.malloc(node.type.llvm_struct_type)
     end
 
+    def visit_static_array_new(node)
+      size = static_array_offset(node.type, @fun.params[0])
+      @last = @builder.array_malloc(LLVM::Int8, size)
+      ptr = @builder.bit_cast @last, LLVM::Pointer(LLVM::Int32)
+      @builder.store @fun.params[0], ptr
+    end
+
+    def visit_static_array_set(node)
+      codegen_assign(static_array_index_pointer, @type.element_type.type, node.type, @fun.params[2])
+      @last = @fun.params[2]
+    end
+
+    def visit_static_array_get(node)
+      if @type.element_type.type.is_a?(UnionType)
+        @last = static_array_index_pointer
+      else
+        @last = @builder.load static_array_index_pointer
+      end
+    end
+
+    def static_array_index_pointer
+      ptr = gep @fun.params[0], static_array_offset(@type, @fun.params[1])
+      @builder.bit_cast ptr, LLVM::Pointer(@type.element_type.llvm_type)
+    end
+
+    def static_array_offset(type, index)
+      index = @builder.mul index, LLVM::Int(type.element_type.llvm_size)
+      @builder.add index, LLVM::Int(4)
+    end
+
     def visit_call(node)
       if node.target_def.is_a?(Dispatch)
         codegen_dispatch(node)
@@ -281,7 +320,7 @@ module Crystal
         @fun = @funs[mangled_name] = @llvm_mod.functions.add(
           mangled_name,
           args.map(&:llvm_type),
-          (target_def.body ? target_def.body.llvm_type : LLVM.Void)
+          target_def.body.llvm_type
         )
 
         args.each_with_index do |arg, i|

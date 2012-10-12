@@ -109,9 +109,10 @@ class Crystal::ObjectType
 end
 
 class Crystal::StaticArrayType
-  def of(type)
-    @element_type.type = type
-    self
+  def self.of(type)
+    array = new
+    array.element_type.type = type
+    array
   end
 end
 
