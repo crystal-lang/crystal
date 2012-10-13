@@ -242,27 +242,38 @@ module Crystal
     end
 
     def visit_array_literal(node)
-      size = node.elements.length
-      capacity = size < 16 ? 16 : 2 ** Math.log(size, 2).ceil
+      if node.type.element_type
+        size = node.elements.length
+        capacity = size < 16 ? 16 : 2 ** Math.log(size, 2).ceil
 
-      array = @builder.malloc(node.type.llvm_struct_type)
-      @builder.store LLVM::Int(size), gep(array, 0, 0)
-      @builder.store LLVM::Int(capacity), gep(array, 0, 1)
-      buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
-      @builder.store buffer, gep(array, 0, 2)
+        array = @builder.malloc(node.type.llvm_struct_type)
+        @builder.store LLVM::Int(size), gep(array, 0, 0)
+        @builder.store LLVM::Int(capacity), gep(array, 0, 1)
 
-      node.elements.each_with_index do |elem, index|
-        elem.accept self
-        codegen_assign gep(buffer, index), node.type.element_type, elem.type, @last
+        if node.type.element_type
+          buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
+          @builder.store buffer, gep(array, 0, 2)
+        end
+
+        node.elements.each_with_index do |elem, index|
+          elem.accept self
+          codegen_assign gep(buffer, index), node.type.element_type, elem.type, @last
+        end
+
+        @last = array
+      else
+        @last = LLVM::Int1.from_i(0)
       end
-
-      @last = array
 
       false
     end
 
     def visit_array_length(node)
-      @last = @builder.load gep(@fun.params[0], 0, 0)
+      if @type.element_type
+        @last = @builder.load gep(@fun.params[0], 0, 0)
+      else
+        @last = LLVM::Int(0)
+      end
     end
 
     def visit_array_get(node)

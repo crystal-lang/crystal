@@ -24,4 +24,8 @@ describe 'Code gen: array' do
   it "realloc array buffer when pushing" do
     run('a = []; j = 0; while j < 10000; a << 1; j += 1; end')
   end
+
+  it "codegens an empty array" do
+    run('a = []; a.length').to_i.should eq(0)
+  end
 end
