@@ -186,7 +186,7 @@ module Crystal
         @builder.position_at_end else_block
         node.else.accept self
         else_block = @builder.insert_block
-        
+
         else_value = @last
         codegen_assign(union_ptr, node.type, node.else.type, @last) if is_union
 
@@ -274,9 +274,17 @@ module Crystal
       codegen_assign(array_index_pointer, @type.element_type, node.type, @fun.params[2])
     end
 
-    def array_index_pointer
+    def visit_array_push(node)
+      size_ptr = gep(@fun.params[0], 0, 0)
+      size = @builder.load size_ptr
+      new_size = @builder.add size, LLVM::Int(1)
+      @builder.store new_size, size_ptr
+      codegen_assign(array_index_pointer(size), @type.element_type, @vars['value'][:type], @fun.params[1])
+    end
+
+    def array_index_pointer(index = @fun.params[1])
       buffer = @builder.load gep(@fun.params[0], 0, 2)
-      gep(buffer, @fun.params[1])
+      gep(buffer, index)
     end
 
     def visit_call(node)

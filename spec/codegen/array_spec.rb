@@ -16,4 +16,8 @@ describe 'Code gen: array' do
   it "codegens array set and get with union" do
     run('a = [0, 0]; a[0] = 1; a[1] = 1.5; a[0].to_i').to_i.should eq(1)
   end
+
+  it "codegens array push" do
+    run('a = []; a << 1; a << 2; a[0] + a[1]').to_i.should eq(3)
+  end
 end
