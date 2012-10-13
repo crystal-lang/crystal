@@ -242,10 +242,13 @@ module Crystal
     end
 
     def visit_array_literal(node)
+      size = node.elements.length
+      capacity = size < 16 ? 16 : 2 ** Math.log(size, 2).ceil
+
       array = @builder.malloc(node.type.llvm_struct_type)
-      @builder.store LLVM::Int(node.elements.length), gep(array, 0, 0)
-      @builder.store LLVM::Int(node.elements.length), gep(array, 0, 1)
-      buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(node.elements.length))
+      @builder.store LLVM::Int(size), gep(array, 0, 0)
+      @builder.store LLVM::Int(capacity), gep(array, 0, 1)
+      buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
       @builder.store buffer, gep(array, 0, 2)
 
       node.elements.each_with_index do |elem, index|
