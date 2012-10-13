@@ -227,6 +227,10 @@ module Crystal
     def realloc(llvm_mod)
       llvm_mod.functions['realloc'] || llvm_mod.functions.add('realloc', [LLVM::Pointer(LLVM::Int8), LLVM::Int], LLVM::Pointer(LLVM::Int8))
     end
+
+    def memset(llvm_mod)
+      llvm_mod.functions['memset'] || llvm_mod.functions.add('memset', [LLVM::Pointer(LLVM::Int8), LLVM::Int, LLVM::Int], LLVM::Pointer(LLVM::Int8))
+    end
   end
 
   class Def

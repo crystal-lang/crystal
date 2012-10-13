@@ -239,7 +239,9 @@ module Crystal
     end
 
     def visit_alloc(node)
-      @last = @builder.malloc(node.type.llvm_struct_type)
+      @last = malloc node.type.llvm_struct_type
+      memset @last, LLVM::Int(0), node.type.llvm_struct_type.size
+      @last
     end
 
     def visit_array_literal(node)
@@ -305,7 +307,7 @@ module Crystal
       new_buffer_size = @builder.mul new_capacity, @builder.trunc(llvm_type.size, LLVM::Int32)
       buffer = @builder.load buffer_ptr
       casted_buffer = @builder.bit_cast buffer, LLVM::Pointer(LLVM::Int8)
-      realloced_pointer = @builder.call @mod.realloc(@llvm_mod), casted_buffer, new_buffer_size
+      realloced_pointer = realloc casted_buffer, new_buffer_size
       casted_realloced_pointer = @builder.bit_cast realloced_pointer, LLVM::Pointer(@type.element_type.llvm_type)
       @builder.store casted_realloced_pointer, buffer_ptr
       @builder.store new_capacity, capacity_ptr
@@ -539,6 +541,19 @@ module Crystal
 
     def gep(ptr, *indices)
       @builder.gep ptr, indices.map { |i| LLVM::Int(i) }
+    end
+
+    def malloc(type)
+      @builder.malloc(type)
+    end
+
+    def memset(pointer, value, size)
+      pointer = @builder.bit_cast pointer, LLVM::Pointer(LLVM::Int8)
+      @builder.call @mod.memset(@llvm_mod), pointer, value, @builder.trunc(size, LLVM::Int32)
+    end
+
+    def realloc(buffer, size)
+      @builder.call @mod.realloc(@llvm_mod), buffer, size
     end
 
     def alloca(type, name = '')
