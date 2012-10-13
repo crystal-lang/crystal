@@ -44,3 +44,4 @@ root.add 's'
 root.add '!'
 
 root.print
+putchar '\n'
