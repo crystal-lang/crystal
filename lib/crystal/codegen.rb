@@ -275,8 +275,30 @@ module Crystal
     end
 
     def visit_array_push(node)
+      resize_block, exit_block = new_blocks "resize", "exit"
+
       size_ptr = gep(@fun.params[0], 0, 0)
+      capacity_ptr = gep(@fun.params[0], 0, 1)
       size = @builder.load size_ptr
+      capacity = @builder.load capacity_ptr
+      cmp = @builder.icmp(:eq, size, capacity)
+      @builder.cond(cmp, resize_block, exit_block)
+
+      @builder.position_at_end resize_block
+      buffer_ptr = gep(@fun.params[0], 0, 2)
+      new_capacity = @builder.mul capacity, LLVM::Int(2)
+      llvm_type = @type.element_type.llvm_type
+      llvm_type = llvm_type.is_a?(LLVM::Type) ? llvm_type : llvm_type.type
+      new_buffer_size = @builder.mul new_capacity, @builder.trunc(llvm_type.size, LLVM::Int32)
+      buffer = @builder.load buffer_ptr
+      casted_buffer = @builder.bit_cast buffer, LLVM::Pointer(LLVM::Int8)
+      realloced_pointer = @builder.call @mod.realloc(@llvm_mod), casted_buffer, new_buffer_size
+      casted_realloced_pointer = @builder.bit_cast realloced_pointer, LLVM::Pointer(@type.element_type.llvm_type)
+      @builder.store casted_realloced_pointer, buffer_ptr
+      @builder.store new_capacity, capacity_ptr
+      @builder.br exit_block
+
+      @builder.position_at_end exit_block
       new_size = @builder.add size, LLVM::Int(1)
       @builder.store new_size, size_ptr
       codegen_assign(array_index_pointer(size), @type.element_type, @vars['value'][:type], @fun.params[1])

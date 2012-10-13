@@ -223,6 +223,10 @@ module Crystal
     def sprintf(llvm_mod)
       llvm_mod.functions['sprintf'] || llvm_mod.functions.add('sprintf', [string.llvm_type], int.llvm_type, varargs: true)
     end
+
+    def realloc(llvm_mod)
+      llvm_mod.functions['realloc'] || llvm_mod.functions.add('realloc', [LLVM::Pointer(LLVM::Int8), LLVM::Int], LLVM::Pointer(LLVM::Int8))
+    end
   end
 
   class Def

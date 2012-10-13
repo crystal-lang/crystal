@@ -20,4 +20,8 @@ describe 'Code gen: array' do
   it "codegens array push" do
     run('a = []; a << 1; a << 2; a[0] + a[1]').to_i.should eq(3)
   end
+
+  it "realloc array buffer when pushing" do
+    run('a = []; j = 0; while j < 10000; a << 1; j += 1; end')
+  end
 end
