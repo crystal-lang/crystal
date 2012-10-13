@@ -86,6 +86,10 @@ describe 'Code gen: primitives' do
     run('5 / 2.0').to_f.should eq(2.5)
   end
 
+  it 'codegens Int % Int' do
+    run('8 % 3').to_i.should eq(2)
+  end
+
   it 'codegens Float + Float' do
     run('1.0 + 1.5').to_f.should eq(2.5)
   end
