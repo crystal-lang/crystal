@@ -168,24 +168,41 @@ module Crystal
   end
 
   class ArrayType < ClassType
-    attr_accessor :element_type_var
+    attr_accessor :vars
+    @@id = 0
 
     def initialize(parent_type = nil)
       super("Array", parent_type)
-      @element_type_var = Var.new('element')
+      @vars = [Var.new('element')]
+    end
+
+    def element_type_var
+      @vars[0]
+    end
+
+    def element_type_var=(x)
+      @vars[0] = x
     end
 
     def element_type
-      @element_type_var.type
+      element_type_var.type
     end
 
     def ==(other)
-      self.class == other.class && element_type == other.element_type
+      equal?(other) || (other.class == self.class && vars == other.vars)
+    end
+
+    def eql?(other)
+      self == other
+    end
+
+    def hash
+      1
     end
 
     def clone
       array = ArrayType.new @parent_type
-      array.element_type_var = @element_type_var.clone
+      array.element_type_var = element_type_var.clone
       array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
       defs.each do |key, value|
         array.defs[key] = value.clone
@@ -210,11 +227,16 @@ module Crystal
     end
 
     def llvm_name
-      "Array<#{element_type.llvm_name}>"
+      @id ||= (@@id += 1)
+      "Array#{@id}"
     end
 
     def to_s
-      "Array<#{element_type || 'Void'}>"
+      return @to_s if @to_s
+      @to_s = "..."
+      name = "Array<#{element_type || 'Void'}>"
+      @to_s = nil
+      name
     end
   end
 

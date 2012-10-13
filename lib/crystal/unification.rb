@@ -63,13 +63,14 @@ module Crystal
           end
         end
       when ArrayType
-        unified_element_type = unify_type(type.element_type)
-        unified_element_type_key = unified_element_type.object_id
-        unified_type = @arrays[unified_element_type_key]
+        unified_type = @arrays[type]
+
         unless unified_type
-          unified_type = @arrays[unified_element_type_key] = type
-          unified_type.element_type_var.set_type unified_element_type
+          unified_type = @arrays[type] = type
+          array_type_var = type.element_type_var
+          array_type_var.set_type unify_type(array_type_var.type) unless @arrays[array_type_var.type].equal?(array_type_var.type)
         end
+
         unified_type
       else
         type

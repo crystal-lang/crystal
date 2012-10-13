@@ -36,4 +36,8 @@ describe 'Type inference: array' do
   it "types array <<" do
     assert_type("a = []; a << 1") { ArrayType.of(int) }
   end
+
+  it "types recursive array" do
+    assert_type("a = []; a << a") { a = ArrayType.new; a.element_type_var.type = a; a }
+  end
 end
