@@ -3,12 +3,6 @@ module Crystal
     node.accept UnifyVisitor.new
   end
 
-  class ASTNode
-    def set_type(type)
-      @type = type
-    end
-  end
-
   class Def
     attr_accessor :unified
   end

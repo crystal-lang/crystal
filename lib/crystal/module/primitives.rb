@@ -174,6 +174,8 @@ module Crystal
 
     def define_array_primitives
       array.defs['length'] = Def.new('length', [], ArrayLength.new)
+      array.defs['push'] = Def.new('push', [Var.new('value')], [ArrayPush.new, Var.new('self')])
+      array.defs[:<<] = Def.new(:<<, [Var.new('value')], [ArrayPush.new, Var.new('self')])
       array.defs[:[]=] = Def.new(:[]=, [Var.new('index'), Var.new('value')], ArraySet.new)
       array.defs[:[]] = Def.new(:[], [Var.new('index')], ArrayGet.new)
     end
@@ -214,7 +216,7 @@ module Crystal
 
       instance = defs[name] = External.new(name, args)
       instance.body = Expressions.new
-      instance.body.type = return_type
+      instance.body.set_type(return_type)
       instance.add_instance instance
     end
 
@@ -228,7 +230,7 @@ module Crystal
       instance = clone
       instance.owner = owner
       arg_types.each_with_index do |arg_type, i|
-        instance.args[i].type = arg_type
+        instance.args[i].set_type(arg_type)
       end
       instance.body = PrimitiveBody.new(return_type, block)
       add_instance(instance)
@@ -258,13 +260,13 @@ module Crystal
     end
   end
 
-  class ArrayNew < ASTNode
-  end
-
   class ArraySet < ASTNode
   end
 
   class ArrayGet < ASTNode
+  end
+
+  class ArrayPush < ASTNode
   end
 
   class ArrayLength < ASTNode

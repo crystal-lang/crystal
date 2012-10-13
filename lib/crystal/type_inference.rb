@@ -9,6 +9,10 @@ module Crystal
   class ASTNode
     attr_accessor :type
     attr_accessor :observers
+    
+    def set_type(type)
+      @type = type
+    end
 
     def type=(type)
       return if type.nil? || @type == type
@@ -423,6 +427,10 @@ module Crystal
 
       @vars['value'].add_observer @scope.element_type_var
       @vars['value'].add_observer node
+    end
+
+    def visit_array_push(node)
+      @vars['value'].add_observer @scope.element_type_var
     end
 
     def check_array_index_is_int

@@ -28,4 +28,12 @@ describe 'Type inference: array' do
   it "types array union" do
     assert_type("a = [1, 2]; a[0] = 1; a[1] = 2.5; a") { ArrayType.of([int, float].union) }
   end
+
+  it "types array push" do
+    assert_type("a = []; a.push 1") { ArrayType.of(int) }
+  end
+
+  it "types array <<" do
+    assert_type("a = []; a << 1") { ArrayType.of(int) }
+  end
 end
