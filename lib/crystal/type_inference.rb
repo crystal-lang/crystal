@@ -431,6 +431,7 @@ module Crystal
 
     def visit_array_push(node)
       @vars['value'].add_observer @scope.element_type_var
+      @vars['self'].add_observer node
     end
 
     def check_array_index_is_int

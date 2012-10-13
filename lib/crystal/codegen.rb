@@ -315,6 +315,7 @@ module Crystal
       new_size = @builder.add size, LLVM::Int(1)
       @builder.store new_size, size_ptr
       codegen_assign(array_index_pointer(size), @type.element_type, @vars['value'][:type], @fun.params[1])
+      @last = @fun.params[0]
     end
 
     def array_index_pointer(index = @fun.params[1])
@@ -393,7 +394,7 @@ module Crystal
         new_entry_block
 
         args.each_with_index do |arg, i|
-          if self_type && i == 0 || target_def.body.is_a?(PrimitiveBody)
+          if self_type && i == 0 || target_def.body.is_a?(Primitive)
             @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, is_arg: true }
           else
             ptr = alloca(arg.llvm_type, arg.name)

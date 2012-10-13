@@ -174,8 +174,8 @@ module Crystal
 
     def define_array_primitives
       array.defs['length'] = Def.new('length', [], ArrayLength.new)
-      array.defs['push'] = Def.new('push', [Var.new('value')], [ArrayPush.new, Var.new('self')])
-      array.defs[:<<] = Def.new(:<<, [Var.new('value')], [ArrayPush.new, Var.new('self')])
+      array.defs['push'] = Def.new('push', [Var.new('value')], ArrayPush.new)
+      array.defs[:<<] = Def.new(:<<, [Var.new('value')], ArrayPush.new)
       array.defs[:[]=] = Def.new(:[]=, [Var.new('index'), Var.new('value')], ArraySet.new)
       array.defs[:[]] = Def.new(:[], [Var.new('index')], ArrayGet.new)
     end
@@ -241,15 +241,6 @@ module Crystal
     end
   end
 
-  class PrimitiveBody < ASTNode
-    attr_accessor :block
-
-    def initialize(type, block)
-      @type = type
-      @block = block
-    end
-  end
-
   class FrozenDef < Def
     def clone
       frozen_def = super
@@ -264,16 +255,28 @@ module Crystal
     end
   end
 
-  class ArraySet < ASTNode
+  class Primitive < ASTNode
   end
 
-  class ArrayGet < ASTNode
+  class PrimitiveBody < Primitive
+    attr_accessor :block
+
+    def initialize(type, block)
+      @type = type
+      @block = block
+    end
   end
 
-  class ArrayPush < ASTNode
+  class ArraySet < Primitive
   end
 
-  class ArrayLength < ASTNode
+  class ArrayGet < Primitive
+  end
+
+  class ArrayPush < Primitive
+  end
+
+  class ArrayLength < Primitive
   end
 end
 
