@@ -253,10 +253,8 @@ module Crystal
         @builder.store LLVM::Int(size), gep(array, 0, 0)
         @builder.store LLVM::Int(capacity), gep(array, 0, 1)
 
-        if node.type.element_type
-          buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
-          @builder.store buffer, gep(array, 0, 2)
-        end
+        buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
+        @builder.store buffer, gep(array, 0, 2)
 
         node.elements.each_with_index do |elem, index|
           elem.accept self
