@@ -594,7 +594,7 @@ module Crystal
         check_ident :end
       end
 
-      next_token_skip_statement_end
+      next_token_skip_space
 
       Def.new name, args, body, receiver
     end

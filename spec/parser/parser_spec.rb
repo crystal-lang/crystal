@@ -206,4 +206,6 @@ describe Parser do
 
   it_parses "call @foo.bar", Call.new(nil, "call", [Call.new("@foo".instance_var, "bar")])
   it_parses 'call "foo"', Call.new(nil, "call", ["foo".string])
+
+  it_parses "def foo; end; if false; 1; else; 2; end", [Def.new('foo', []), If.new(false.bool, 1.int, 2.int)]
 end
