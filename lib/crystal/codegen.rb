@@ -283,6 +283,7 @@ module Crystal
 
     def visit_array_set(node)
       codegen_assign(array_index_pointer, @type.element_type, node.type, @fun.params[2])
+      @last = @fun.params[2]
     end
 
     def visit_array_push(node)
