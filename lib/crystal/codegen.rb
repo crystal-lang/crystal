@@ -147,11 +147,8 @@ module Crystal
 
     def visit_var(node)
       var = @vars[node.name]
-      if var[:is_arg] || var[:type].is_a?(UnionType)
-        @last = var[:ptr]
-      else
-        @last = @builder.load var[:ptr], node.name
-      end
+      @last = var[:ptr]
+      @last = @builder.load @last, node.name unless var[:is_arg] || var[:type].is_a?(UnionType)
     end
 
     def visit_instance_var(node)
@@ -266,11 +263,8 @@ module Crystal
     end
 
     def visit_array_get(node)
-      if @type.element_type.is_a?(UnionType)
-        @last = array_index_pointer
-      else
-        @last = @builder.load array_index_pointer
-      end
+      @last = array_index_pointer
+      @last = @builder.load @last unless @type.element_type.is_a?(UnionType)
     end
 
     def visit_array_set(node)
@@ -295,11 +289,8 @@ module Crystal
     end
 
     def visit_static_array_get(node)
-      if @type.element_type.is_a?(UnionType)
-        @last = static_array_index_pointer
-      else
-        @last = @builder.load static_array_index_pointer
-      end
+      @last = static_array_index_pointer
+      @last = @builder.load @last unless @type.element_type.is_a?(UnionType)
     end
 
     def static_array_index_pointer
