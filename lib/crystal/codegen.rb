@@ -64,9 +64,9 @@ module Crystal
 
     visitor.finish
 
-    visitor.llvm_mod.verify
-
     visitor.llvm_mod.dump if ENV['DUMP']
+
+    visitor.llvm_mod.verify
 
     visitor.llvm_mod
   end
@@ -93,6 +93,7 @@ module Crystal
     end
 
     def finish
+      br_from_alloca_to_entry
       @builder.ret(@return_type == @mod.void ? nil : @last)
     end
 
@@ -133,7 +134,7 @@ module Crystal
         var = @vars[node.target.name]
         unless var
           var = @vars[node.target.name] = {
-            ptr: @builder.alloca(node.target.llvm_type, node.target.name),
+            ptr: alloca(node.target.llvm_type, node.target.name),
             type: node.target.type
           }
         end
@@ -168,7 +169,7 @@ module Crystal
       then_block, exit_block = new_blocks "then", "exit"
       else_block = new_block "else" if node.else
 
-      union_ptr = @builder.alloca node.llvm_type if is_union
+      union_ptr = alloca node.llvm_type if is_union
       node.cond.accept self
 
       @builder.cond(@last, then_block, node.else ? else_block : exit_block)
@@ -347,70 +348,80 @@ module Crystal
 
       old_fun = @fun
       unless @fun = @funs[mangled_name]
-        old_position = @builder.insert_block
-        old_vars = @vars
-        old_type = @type
-
-        @vars = {}
-
-        args = []
-        if self_type && !self_type.is_a?(Metaclass)
-          @type = self_type
-          args << Var.new("self", self_type)
-        end
-        args += target_def.args
-
-        @fun = @funs[mangled_name] = @llvm_mod.functions.add(
-          mangled_name,
-          args.map(&:llvm_type),
-          target_def.body.llvm_type
-        )
-
-        args.each_with_index do |arg, i|
-          @fun.params[i].name = arg.name
-        end
-
-        unless target_def.is_a? External
-          @fun.linkage = :internal
-          new_entry_block
-
-          args.each_with_index do |arg, i|
-            if self_type && i == 0 || target_def.body.is_a?(PrimitiveBody)
-              @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, is_arg: true }
-            else
-              ptr = @builder.alloca(arg.llvm_type, arg.name)
-              @vars[arg.name] = { ptr: ptr, type: arg.type }
-              @builder.store @fun.params[i], ptr
-            end
-          end
-
-          if target_def.body
-            target_def.body.accept self
-            if target_def.body.type.is_a?(UnionType)
-              @last = @builder.load @last
-            end
-
-            @builder.ret(target_def.body.type == @mod.void ? nil : @last)
-          else
-            @builder.ret_void
-          end
-
-          @builder.position_at_end old_position
-        end
-
-        @vars = old_vars
-        @type = old_type
+        codegen_fun(mangled_name, target_def, self_type)
       end
 
       @last = @builder.call @fun, *call_args
 
       if target_def.body && target_def.body.type.is_a?(UnionType)
-        alloca = @builder.alloca target_def.body.llvm_type
-        @builder.store @last, alloca
-        @last = alloca
+        union = alloca target_def.body.llvm_type
+        @builder.store @last, union
+        @last = union
       end
 
       @fun = old_fun
+    end
+
+    def codegen_fun(mangled_name, target_def, self_type)
+      old_position = @builder.insert_block
+      old_vars = @vars
+      old_type = @type
+      old_entry_block = @entry_block
+      old_alloca_block = @alloca_block
+
+      @vars = {}
+
+      args = []
+      if self_type && !self_type.is_a?(Metaclass)
+        @type = self_type
+        args << Var.new("self", self_type)
+      end
+      args += target_def.args
+
+      @fun = @funs[mangled_name] = @llvm_mod.functions.add(
+        mangled_name,
+        args.map(&:llvm_type),
+        target_def.body.llvm_type
+      )
+
+      args.each_with_index do |arg, i|
+        @fun.params[i].name = arg.name
+      end
+
+      unless target_def.is_a? External
+        @fun.linkage = :internal
+        new_entry_block
+
+        args.each_with_index do |arg, i|
+          if self_type && i == 0 || target_def.body.is_a?(PrimitiveBody)
+            @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, is_arg: true }
+          else
+            ptr = alloca(arg.llvm_type, arg.name)
+            @vars[arg.name] = { ptr: ptr, type: arg.type }
+            @builder.store @fun.params[i], ptr
+          end
+        end
+
+        if target_def.body
+          target_def.body.accept self
+          if target_def.body.type.is_a?(UnionType)
+            @last = @builder.load @last
+          end
+
+          @builder.ret(target_def.body.type == @mod.void ? nil : @last)
+        else
+          @builder.ret_void
+        end
+
+        br_from_alloca_to_entry
+
+        @builder.position_at_end old_position
+      end
+
+      @vars = old_vars
+      @type = old_type
+      @entry_block = old_entry_block
+      @alloca_block = old_alloca_block
     end
 
     def codegen_dispatch(node)
@@ -427,7 +438,7 @@ module Crystal
         codegen_call(call.target_def, (node.obj ? arg_types[0] : nil), arg_values)
 
         if dispatch.type.is_a?(UnionType)
-          phi_table[label] = phi_value = @builder.alloca dispatch.llvm_type
+          phi_table[label] = phi_value = alloca dispatch.llvm_type
           assign_to_union(phi_value, dispatch.type, call.type, @last)
         else
           phi_table[label] = @last
@@ -529,12 +540,28 @@ module Crystal
       @builder.gep ptr, indices.map { |i| LLVM::Int(i) }
     end
 
-    def new_block(name)
-      @fun.basic_blocks.append(name)
+    def alloca(type, name = '')
+      old_block = @builder.insert_block
+      @builder.position_at_end @alloca_block
+      ptr = @builder.alloca type, name
+      @builder.position_at_end old_block
+      ptr
     end
 
     def new_entry_block
-      @builder.position_at_end(new_block "entry")
+      @alloca_block, @entry_block = new_blocks "alloca", "entry"
+      @builder.position_at_end @entry_block
+    end
+
+    def br_from_alloca_to_entry
+      old_block = @builder.insert_block
+      @builder.position_at_end @alloca_block
+      @builder.br @entry_block
+      @builder.position_at_end old_block
+    end
+
+    def new_block(name)
+      @fun.basic_blocks.append(name)
     end
 
     def new_blocks(*names)
