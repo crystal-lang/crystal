@@ -56,12 +56,6 @@ describe 'Type inference unification' do
     input[4].value.type.should equal(input[5].value.type)
   end
 
-  it "unifies static array types" do
-    input = parse 'a = StaticArray.new(2); a[0] = 1; a[1] = 1.1; b = StaticArray.new(2); b[0] = 1; b[1] = 1.1; c = a; c = b'
-    infer_type input
-    input[-2].value.type.should equal(input[-1].value.type)
-  end
-
   it "unifies array types" do
     input = parse 'a = [0, 0]; a[0] = 1; a[1] = 1.1; b = [0, 0]; b[0] = 1; b[1] = 1.1; c = a; c = b'
     infer_type input

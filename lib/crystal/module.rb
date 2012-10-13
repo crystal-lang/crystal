@@ -20,7 +20,6 @@ module Crystal
       @types["Float"] = PrimitiveType.new "Float", value, LLVM::Float, 4
       @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
       @types["Array"] = ArrayType.new object
-      @types["StaticArray"] = StaticArrayType.new object
 
       @defs = {}
 
@@ -65,10 +64,6 @@ module Crystal
 
     def array
       @types["Array"]
-    end
-
-    def static_array
-      @types["StaticArray"]
     end
 
     def each

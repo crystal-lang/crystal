@@ -120,14 +120,6 @@ class Crystal::ArrayType
   end
 end
 
-class Crystal::StaticArrayType
-  def self.of(type)
-    array = new
-    array.element_type_var.type = type
-    array
-  end
-end
-
 class Crystal::ASTNode
   def not
     Call.new(self, :"!@")

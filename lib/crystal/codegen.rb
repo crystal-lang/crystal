@@ -276,33 +276,6 @@ module Crystal
       gep(buffer, @fun.params[1])
     end
 
-    def visit_static_array_new(node)
-      size = static_array_offset(node.type, @fun.params[0])
-      @last = @builder.array_malloc(LLVM::Int8, size)
-      ptr = @builder.bit_cast @last, LLVM::Pointer(LLVM::Int32)
-      @builder.store @fun.params[0], ptr
-    end
-
-    def visit_static_array_set(node)
-      codegen_assign(static_array_index_pointer, @type.element_type, node.type, @fun.params[2])
-      @last = @fun.params[2]
-    end
-
-    def visit_static_array_get(node)
-      @last = static_array_index_pointer
-      @last = @builder.load @last unless @type.element_type.is_a?(UnionType)
-    end
-
-    def static_array_index_pointer
-      ptr = gep @fun.params[0], static_array_offset(@type, @fun.params[1])
-      @builder.bit_cast ptr, LLVM::Pointer(@type.element_type.llvm_type)
-    end
-
-    def static_array_offset(type, index)
-      index = @builder.mul index, LLVM::Int(type.element_type.llvm_size)
-      @builder.add index, LLVM::Int(4)
-    end
-
     def visit_call(node)
       if node.target_def.is_a?(Dispatch)
         codegen_dispatch(node)

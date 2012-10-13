@@ -8,7 +8,6 @@ module Crystal
       define_int_primitives
       define_float_primitives
       define_array_primitives
-      define_static_array_primitives
       define_externals
       define_builtins
     end
@@ -179,17 +178,6 @@ module Crystal
       array.defs[:[]] = Def.new(:[], [Var.new('index')], ArrayGet.new)
     end
 
-    def define_static_array_primitives
-      no_args_primitive(static_array, 'length', int) do |b, f|
-        ptr = b.bit_cast f.params[0], LLVM::Pointer(LLVM::Int32)
-        b.load ptr
-      end
-
-      static_array.metaclass.defs['new'] = Def.new('new', [Var.new('size')], StaticArrayNew.new)
-      static_array.defs[:[]=] = Def.new(:[]=, [Var.new('index'), Var.new('value')], StaticArraySet.new)
-      static_array.defs[:[]] = Def.new(:[], [Var.new('index')], StaticArrayGet.new)
-    end
-
     def define_externals
       external('putchar', {'c' => char}, char)
       external('getchar', {}, char)
@@ -280,15 +268,6 @@ module Crystal
   end
 
   class ArrayLength < ASTNode
-  end
-
-  class StaticArrayNew < ASTNode
-  end
-
-  class StaticArraySet < ASTNode
-  end
-
-  class StaticArrayGet < ASTNode
   end
 end
 

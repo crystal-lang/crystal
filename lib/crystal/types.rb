@@ -218,49 +218,6 @@ module Crystal
     end
   end
 
-  class StaticArrayType < ClassType
-    attr_accessor :element_type_var
-
-    def initialize(parent_type = nil)
-      super("StaticArray", parent_type)
-      @element_type_var = Var.new('element')
-    end
-
-    def element_type
-      @element_type_var.type
-    end
-
-    def ==(other)
-      self.class == other.class && element_type == other.element_type
-    end
-
-    def clone
-      array = StaticArrayType.new @parent_type
-      array.element_type_var = @element_type_var.clone
-      array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
-      defs.each do |key, value|
-        array.defs[key] = value.clone
-      end
-      array
-    end
-
-    def llvm_type
-      @llvm_type ||= LLVM::Pointer(LLVM::Int8)
-    end
-
-    def llvm_size
-      Crystal::Module::POINTER_SIZE
-    end
-
-    def llvm_name
-      "StaticArray<#{element_type.llvm_name}>"
-    end
-
-    def to_s
-      "StaticArray<#{element_type || 'Void'}>"
-    end
-  end
-
   class UnionType < Type
     attr_reader :types
 

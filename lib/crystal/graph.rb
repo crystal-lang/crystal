@@ -45,7 +45,7 @@ module Crystal
           type.instance_vars.each do |ivar, var|
             add_edges node, var.type, ivar
           end
-        when ArrayType, StaticArrayType
+        when ArrayType
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
           add_edges node, type.element_type
         when nil
