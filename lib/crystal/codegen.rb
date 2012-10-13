@@ -244,6 +244,44 @@ module Crystal
       @last = @builder.malloc(node.type.llvm_struct_type)
     end
 
+    def visit_array_literal(node)
+      array = @builder.malloc(node.type.llvm_struct_type)
+      @builder.store LLVM::Int(node.elements.length), gep(array, 0, 0)
+      @builder.store LLVM::Int(node.elements.length), gep(array, 0, 1)
+      buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(node.elements.length))
+      @builder.store buffer, gep(array, 0, 2)
+
+      node.elements.each_with_index do |elem, index|
+        elem.accept self
+        codegen_assign gep(buffer, index), node.type.element_type, elem.type, @last
+      end
+
+      @last = array
+
+      false
+    end
+
+    def visit_array_length(node)
+      @last = @builder.load gep(@fun.params[0], 0, 0)
+    end
+
+    def visit_array_get(node)
+      if @type.element_type.is_a?(UnionType)
+        @last = array_index_pointer
+      else
+        @last = @builder.load array_index_pointer
+      end
+    end
+
+    def visit_array_set(node)
+      codegen_assign(array_index_pointer, @type.element_type, node.type, @fun.params[2])
+    end
+
+    def array_index_pointer
+      buffer = @builder.load gep(@fun.params[0], 0, 2)
+      gep(buffer, @fun.params[1])
+    end
+
     def visit_static_array_new(node)
       size = static_array_offset(node.type, @fun.params[0])
       @last = @builder.array_malloc(LLVM::Int8, size)
@@ -452,8 +490,8 @@ module Crystal
     def codegen_assign(pointer, target_type, value_type, value)
       if target_type == value_type
         if target_type.is_a?(UnionType)
-          @last = @builder.load @last
-          @builder.store @last, pointer
+          value = @builder.load value
+          @builder.store value, pointer
         else
           @builder.store value, pointer
         end

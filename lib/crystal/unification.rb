@@ -21,6 +21,7 @@ module Crystal
     def initialize
       @types = {}
       @unions = {}
+      @arrays = {}
       @static_arrays = {}
     end
 
@@ -68,6 +69,15 @@ module Crystal
             @unions[union_key] = UnionType.new(*unified_types)
           end
         end
+      when ArrayType
+        unified_element_type = unify_type(type.element_type)
+        unified_element_type_key = unified_element_type.object_id
+        unified_type = @arrays[unified_element_type_key]
+        unless unified_type
+          unified_type = @arrays[unified_element_type_key] = type
+          unified_type.element_type_var.set_type unified_element_type
+        end
+        unified_type
       when StaticArrayType
         unified_element_type = unify_type(type.element_type)
         unified_element_type_key = unified_element_type.object_id

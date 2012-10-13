@@ -174,11 +174,7 @@ module Crystal
     end
 
     def define_array_primitives
-      no_args_primitive(array, 'length', int) do |b, f|
-        #ptr = b.bit_cast f.params[0], LLVM::Pointer(LLVM::Int32)
-        #b.load ptr
-      end
-
+      array.defs['length'] = Def.new('length', [], ArrayLength.new)
       array.defs[:[]=] = Def.new(:[]=, [Var.new('index'), Var.new('value')], ArraySet.new)
       array.defs[:[]] = Def.new(:[], [Var.new('index')], ArrayGet.new)
     end
@@ -281,6 +277,9 @@ module Crystal
   end
 
   class ArrayGet < ASTNode
+  end
+
+  class ArrayLength < ASTNode
   end
 
   class StaticArrayNew < ASTNode

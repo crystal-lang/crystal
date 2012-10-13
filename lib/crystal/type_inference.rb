@@ -408,6 +408,10 @@ module Crystal
       node.type = type ? type : node.type.clone
     end
 
+    def visit_array_length(node)
+      node.type = mod.int
+    end
+
     def visit_array_get(node)
       check_array_index_is_int
 

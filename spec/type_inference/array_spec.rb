@@ -5,6 +5,10 @@ describe 'Type inference: array' do
     assert_type("[]") { ArrayType.new }
   end
 
+  it "types array literal" do
+    assert_type("[].length") { int }
+  end
+
   it "types array literal of int" do
     assert_type("[1, 2, 3]") { ArrayType.of(int) }
   end
