@@ -111,7 +111,7 @@ module Crystal
 
     def ==(other)
       equal?(other) ||
-        (other.class == self.class && name == other.name && instance_vars == other.instance_vars) ||
+        (other.is_a?(ObjectType) && name == other.name && instance_vars == other.instance_vars) ||
         (other.is_a?(UnionType) && other == self)
     end
 
@@ -189,7 +189,7 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) || (other.class == self.class && vars == other.vars)
+      equal?(other) || (other.is_a?(ArrayType) && vars == other.vars)
     end
 
     def eql?(other)

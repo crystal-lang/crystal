@@ -104,11 +104,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.expressions == expressions
+      other.is_a?(Expressions) && other.expressions == expressions
     end
 
     def clone
-      exps = self.class.new expressions.map(&:clone)
+      exps = Expressions.new expressions.map(&:clone)
       exps.location = location
       exps
     end
@@ -132,11 +132,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.elements == elements
+      other.is_a?(ArrayLiteral) && other.elements == elements
     end
 
     def clone
-      exps = self.class.new elements.map(&:clone)
+      exps = ArrayLiteral.new elements.map(&:clone)
       exps.location = location
       exps
     end
@@ -169,11 +169,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.name == name && other.body == body && other.superclass == superclass
+      other.is_a?(ClassDef) && other.name == name && other.body == body && other.superclass == superclass
     end
 
     def clone
-      class_def = self.class.new name, (body ? body.clone : nil), superclass
+      class_def = ClassDef.new name, (body ? body.clone : nil), superclass
       class_def.location = location
       class_def.name_column_number = name_column_number
       class_def.superclass_column_number = superclass_column_number
@@ -187,11 +187,11 @@ module Crystal
   #
   class NilLiteral < ASTNode
     def ==(other)
-      other.class == self.class
+      other.is_a?(NilLiteral)
     end
 
     def clone
-      self.class.new
+      NilLiteral.new
     end
   end
 
@@ -207,11 +207,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.value == value
+      other.is_a?(BoolLiteral) && other.value == value
     end
 
     def clone
-      self.class.new value
+      BoolLiteral.new value
     end
   end
 
@@ -229,11 +229,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.value.to_i == value.to_i
+      other.is_a?(IntLiteral) && other.value.to_i == value.to_i
     end
 
     def clone
-      self.class.new value
+      IntLiteral.new value
     end
   end
 
@@ -251,11 +251,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.value.to_i == value.to_i
+      other.is_a?(LongLiteral) && other.value.to_i == value.to_i
     end
 
     def clone
-      self.class.new value
+      LongLiteral.new value
     end
   end
 
@@ -273,11 +273,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.value.to_f == value.to_f
+      other.is_a?(FloatLiteral) && other.value.to_f == value.to_f
     end
 
     def clone
-      self.class.new value
+      FloatLiteral.new value
     end
   end
 
@@ -293,11 +293,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.value.to_i == value.to_i
+      other.is_a?(CharLiteral) && other.value.to_i == value.to_i
     end
 
     def clone
-      self.class.new value
+      CharLiteral.new value
     end
   end
 
@@ -309,11 +309,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.value == value
+      other.is_a?(StringLiteral) && other.value == value
     end
 
     def clone
-      self.class.new value
+      StringLiteral.new value
     end
   end
 
@@ -354,11 +354,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.receiver == receiver && other.name == name && other.args == args && other.body == body
+      other.is_a?(Def) && other.receiver == receiver && other.name == name && other.args == args && other.body == body
     end
 
     def clone
-      a_def = self.class.new name, args.map(&:clone), (body ? body.clone : nil), receiver ? receiver.clone : nil
+      a_def = Def.new name, args.map(&:clone), (body ? body.clone : nil), receiver ? receiver.clone : nil
       a_def.location = location
       a_def
     end
@@ -374,11 +374,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.name == name && other.type == type
+      other.is_a?(Var) && other.name == name && other.type == type
     end
 
     def clone
-      var = self.class.new name
+      var = Var.new name
       var.location = location
       var
     end
@@ -393,11 +393,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.name == name
+      other.is_a?(Const) && other.name == name
     end
 
     def clone
-      var = self.class.new name
+      var = Const.new name
       var.location = location
       var
     end
@@ -412,11 +412,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.name == name
+      other.is_a?(InstanceVar) && other.name == name
     end
 
     def clone
-      var = self.class.new name
+      var = InstanceVar.new name
       var.location = location
       var
     end
@@ -464,11 +464,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.obj == obj && other.name == name && other.args == args && other.block == block
+      other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block
     end
 
     def clone
-      call = self.class.new (obj ? obj.clone : nil), name, args.map(&:clone), (block ? block.clone : nil)
+      call = Call.new (obj ? obj.clone : nil), name, args.map(&:clone), (block ? block.clone : nil)
       call.location = location
       call.name_column_number = name_column_number
       call.name_length = name_length
@@ -517,11 +517,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.cond == cond && other.then == self.then && other.else == self.else
+      other.is_a?(If) && other.cond == cond && other.then == self.then && other.else == self.else
     end
 
     def clone
-      a_if = self.class.new cond.clone, self.then.clone, (self.else ? self.else.clone : nil)
+      a_if = If.new cond.clone, self.then.clone, (self.else ? self.else.clone : nil)
       a_if.location = location
       a_if
     end
@@ -548,11 +548,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.target == target && other.value == value
+      other.is_a?(Assign) && other.target == target && other.value == value
     end
 
     def clone
-      assign = self.class.new target.clone, value.clone
+      assign = Assign.new target.clone, value.clone
       assign.location = location
       assign
     end
@@ -581,11 +581,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.cond == cond && other.body == body
+      other.is_a?(While) && other.cond == cond && other.body == body
     end
 
     def clone
-      a_while = self.class.new cond.clone, (body ? body.clone : nil)
+      a_while = While.new cond.clone, (body ? body.clone : nil)
       a_while.location = location
       a_while
     end
@@ -616,11 +616,11 @@ module Crystal
     end
 
     def ==(other)
-      other.class == self.class && other.args == args && other.body == body
+      other.is_a?(Block) && other.args == args && other.body == body
     end
 
     def clone
-      block = self.class.new args.map(&:clone), (body ? body.clone : nil)
+      block = Block.new args.map(&:clone), (body ? body.clone : nil)
       block.location = location
       block
     end
@@ -649,11 +649,11 @@ module Crystal
         end
 
         def ==(other)
-          other.class == self.class && other.exps == exps
+          other.is_a?(#{keyword.capitalize}) && other.exps == exps
         end
 
         def clone
-          ret = self.class.new exps.clone
+          ret = #{keyword.capitalize}.new exps.clone
           ret.location = location
           ret
         end

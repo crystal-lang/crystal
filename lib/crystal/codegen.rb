@@ -13,7 +13,7 @@ module Crystal
 
   class Def
     def mangled_name(self_type)
-      self.class.mangled_name(self_type, owner, name, (body ? body.type : nil), args.map(&:type))
+      Def.mangled_name(self_type, owner, name, (body ? body.type : nil), args.map(&:type))
     end
 
     def self.mangled_name(self_type, owner, name, return_type, arg_types)
