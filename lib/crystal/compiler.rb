@@ -30,6 +30,9 @@ module Crystal
         opts.on('-stats', 'Enable statistics output') do
           @options[:stats] = true
         end
+        opts.on('-prof', 'Enable profile output') do
+          @options[:prof] = true
+        end
         opts.on('-no-build', 'Disable build output') do
           @options[:no_build] = true
         end
@@ -46,8 +49,21 @@ module Crystal
     def compile
       begin
         source = ARGF.read
+
+        if @options[:prof]
+          require 'ruby-prof'
+          RubyProf.start
+        end
+
         node = parse source
         mod = infer_type node, @options[:stats]
+
+        if @options[:prof]
+          result = RubyProf.stop
+          printer = RubyProf::GraphHtmlPrinter.new(result)
+          File.open("#{@options[:output_filename]}.html", "w") { |f| printer.print(f) }
+        end
+
         graph node, mod, @options[:output_filename] if @options[:graph]
         exit 0 if @options[:no_build]
 

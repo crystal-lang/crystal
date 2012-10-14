@@ -23,6 +23,7 @@ GEM
     ruby-graphviz (1.0.8)
     ruby-llvm (3.1.0.beta.1)
       ffi (>= 1.0.0)
+    ruby-prof (0.11.2)
     slop (3.3.3)
 
 PLATFORMS
@@ -35,3 +36,4 @@ DEPENDENCIES
   rspec
   ruby-graphviz
   ruby-llvm (~> 3.1.0.beta.1)
+  ruby-prof
