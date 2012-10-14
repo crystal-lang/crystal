@@ -30,6 +30,9 @@ module Crystal
         opts.on('-stats', 'Enable statistics output') do
           @options[:stats] = true
         end
+        opts.on('-no-build', 'Disable build output') do
+          @options[:no_build] = true
+        end
       end.parse!
 
       if !@options[:output_filename] && ARGV.length > 0
@@ -46,6 +49,7 @@ module Crystal
         node = parse source
         mod = infer_type node, @options[:stats]
         graph node, mod, @options[:output_filename] if @options[:graph]
+        exit 0 if @options[:no_build]
 
         llvm_mod = build node, mod
         write_main llvm_mod unless @options[:run]
