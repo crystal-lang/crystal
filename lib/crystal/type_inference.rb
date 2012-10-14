@@ -7,7 +7,7 @@ module Crystal
       Benchmark.bm(20, 'TOTAL:') do |bm|
         t1 = bm.report('type inference:') { node.accept TypeVisitor.new(mod) }
         t2 = bm.report('unification:') { unify node }
-        t1 + t2
+        [t1 + t2]
       end
     else
       node.accept TypeVisitor.new(mod)
