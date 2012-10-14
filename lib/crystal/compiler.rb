@@ -27,6 +27,9 @@ module Crystal
         opts.on('-ll', 'Dump ll to standard output') do
           @options[:dump_ll] = true
         end
+        opts.on('-stats', 'Enable statistics output') do
+          @options[:stats] = true
+        end
       end.parse!
 
       if !@options[:output_filename] && ARGV.length > 0
@@ -41,12 +44,12 @@ module Crystal
       begin
         source = ARGF.read
         node = parse source
-        mod = infer_type node
+        mod = infer_type node, @options[:stats]
         graph node, mod, @options[:output_filename] if @options[:graph]
 
         llvm_mod = build node, mod
         write_main llvm_mod unless @options[:run]
-        
+
         # Don't optimize crystal_main away if the user wants to run the program
         llvm_mod.functions["crystal_main"].linkage = :internal unless @options[:run]
 

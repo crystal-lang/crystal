@@ -1,15 +1,24 @@
+require 'benchmark'
+
 module Crystal
-  def infer_type(node)
+  def infer_type(node, stats = false)
     mod = Crystal::Module.new
-    node.accept TypeVisitor.new(mod)
-    unify node
+    if stats
+      Benchmark.bm(20) do |bm|
+        bm.report('type inference:') { node.accept TypeVisitor.new(mod) }
+        bm.report('unification:') { unify node }
+      end
+    else
+      node.accept TypeVisitor.new(mod)
+      unify node
+    end
     mod
   end
 
   class ASTNode
     attr_accessor :type
     attr_accessor :observers
-    
+
     def set_type(type)
       @type = type
     end
