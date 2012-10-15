@@ -249,7 +249,7 @@ module Crystal
 
   class FrozenDef < Def
     def clone
-      frozen_def = super
+      frozen_def = FrozenDef.new name, args.map(&:clone), (body ? body.clone : nil), receiver ? receiver.clone : nil
       frozen_def.instances = instances
       frozen_def
     end
