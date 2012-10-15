@@ -13,10 +13,6 @@ module Crystal
       @indent = 0
     end
 
-    def visit_any(node)
-      append_indent unless node.is_a?(Expressions)
-    end
-
     def visit_nil_literal(node)
       @str << 'nil'
     end
@@ -110,7 +106,7 @@ module Crystal
       end
 
       @str << "\n"
-      with_indent { node.body.accept self } if node.body
+      accept_with_indent(node.body)
 
       append_indent
       @str << "end"
@@ -136,8 +132,7 @@ module Crystal
         @str << ")"
       end
       @str << "\n"
-      with_indent { node.body.accept self } if node.body
-      @str << "\n"
+      accept_with_indent(node.body)
       append_indent
       @str << "end"
       false
@@ -170,10 +165,10 @@ module Crystal
     end
 
     def visit_expressions(node)
-      length = node.expressions.length
-      node.expressions.each_with_index do |exp, i|
+      node.expressions.each do |exp|
+        append_indent
         exp.accept self
-        @str << "\n" unless i == length - 1
+        @str << "\n"
       end
       false
     end
@@ -182,13 +177,11 @@ module Crystal
       @str << "if "
       node.cond.accept self
       @str << "\n"
-      with_indent { node.then.accept self }
-      @str << "\n"
+      accept_with_indent(node.then)
       if node.else
         append_indent
         @str << "else\n"
-        with_indent { node.else.accept self }
-        @str << "\n"
+        accept_with_indent(node.else)
       end
       append_indent
       @str << "end"
@@ -203,7 +196,7 @@ module Crystal
         @str << node.superclass
       end
       @str << "\n"
-      with_indent { node.body.accept self }
+      accept_with_indent(node.body)
       @str << "end"
       false
     end
@@ -219,7 +212,7 @@ module Crystal
       @str << "while "
       node.cond.accept self
       @str << "\n"
-      with_indent { node.body.accept self }
+      accept_with_indent(node.body)
       append_indent
       @str << "end"
       false
@@ -245,6 +238,16 @@ module Crystal
       @indent += 1
       yield
       @indent -= 1
+    end
+
+    def accept_with_indent(node)
+      return unless node
+      is_expressions = node.is_a?(Expressions)
+      with_indent do
+        append_indent unless is_expressions
+        node.accept self
+      end
+      @str << "\n" unless is_expressions
     end
 
     def append_indent
