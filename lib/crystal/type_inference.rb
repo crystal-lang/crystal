@@ -18,7 +18,7 @@ module Crystal
 
   class ASTNode
     attr_accessor :type
-    attr_accessor :observers
+    attr_accessor :dependencies
 
     def set_type(type)
       @type = type
@@ -30,28 +30,27 @@ module Crystal
       notify_observers
     end
 
+    def bind_to(node)
+      @dependencies ||= []
+      dependencies << node
+      node.add_observer self
+      update
+    end
+
     def add_observer(observer, func = :update)
       @observers ||= {}
       @observers[observer] = func
-      observer.send func, @type if @type
     end
 
     def notify_observers
       return unless @observers
       @observers.each do |observer, func|
-        observer.send func, @type
+        observer.send func, self
       end
     end
 
-    def add_type(new_type)
-      return unless new_type
-
-      self.type = @type ? Type.merge(@type, new_type) : new_type
-      new_type.add_observer self if is_a?(Var)
-    end
-
-    def update(type)
-      add_type(type)
+    def update(from = self)
+      self.type = Type.merge(*dependencies.map(&:type)) if dependencies
     end
 
     def raise(message, inner = nil)
@@ -74,7 +73,7 @@ module Crystal
 
       if has_unions?
         dispatch = Dispatch.new(self)
-        dispatch.add_observer self
+        self.bind_to dispatch
         self.target_def = dispatch
         return
       end
@@ -102,7 +101,8 @@ module Crystal
 
         if typed_def.body
           begin
-            typed_def.body.accept TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
+            visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
+            typed_def.body.accept visitor
           rescue Crystal::Exception => ex
             if obj
               raise "instantiating '#{obj.type.name}##{name}'", ex
@@ -113,8 +113,7 @@ module Crystal
         end
       end
 
-      typed_def.body.add_observer self if typed_def.body
-
+      self.bind_to typed_def.body if typed_def.body
       self.target_def = typed_def
     end
 
@@ -246,7 +245,7 @@ module Crystal
           subcall.scope = call.scope
           subcall.location = call.location
           subcall.name_column_number = call.name_column_number
-          subcall.add_observer self
+          self.bind_to subcall
           subcall.recalculate
           @calls[[obj_type.object_id] + arg_types.map(&:object_id)] = subcall
         end
@@ -280,14 +279,6 @@ module Crystal
           arg_types[index] = arg_type
           for_each_args(args, arg_types, index + 1, &block)
         end
-      end
-    end
-  end
-
-  class Var
-    def update_from_object_type(_)
-      if type.is_a?(UnionType)
-        add_type(type.types.to_a.first)
       end
     end
   end
@@ -331,7 +322,7 @@ module Crystal
     def visit_array_literal(node)
       node.type = mod.array.clone
       node.elements.each do |elem|
-        elem.add_observer node.type.element_type_var
+        node.type.element_type_var.bind_to elem
       end
     end
 
@@ -370,7 +361,7 @@ module Crystal
 
     def visit_var(node)
       var = lookup_var node.name
-      var.add_observer node
+      node.bind_to var
     end
 
     def visit_instance_var(node)
@@ -381,23 +372,24 @@ module Crystal
       end
 
       var = @scope.lookup_instance_var node.name
-      var.add_observer node
+      node.bind_to var
     end
 
     def end_visit_assign(node)
-      node.value.add_observer node
+      node.bind_to node.value
 
       if node.target.is_a?(InstanceVar)
         var = @scope.lookup_instance_var node.target.name
       else
         var = lookup_var node.target.name
       end
-      node.add_observer var
+      var.bind_to node
+      var.update
     end
 
     def end_visit_expressions(node)
       if node.last
-        node.last.add_observer node
+        node.bind_to node.last
       else
         node.type = mod.void
       end
@@ -408,8 +400,8 @@ module Crystal
     end
 
     def end_visit_if(node)
-      node.then.add_observer node
-      node.else.add_observer node if node.else
+      node.bind_to node.then
+      node.bind_to node.else if node.else
     end
 
     def visit_const(node)
@@ -429,19 +421,19 @@ module Crystal
     def visit_array_get(node)
       check_array_index_is_int
 
-      @scope.element_type_var.add_observer node
+      node.bind_to @scope.element_type_var
     end
 
     def visit_array_set(node)
       check_array_index_is_int
 
-      @vars['value'].add_observer @scope.element_type_var
-      @vars['value'].add_observer node
+      @scope.element_type_var.bind_to @vars['value']
+      node.bind_to @vars['value']
     end
 
     def visit_array_push(node)
-      @vars['value'].add_observer @scope.element_type_var
-      @vars['self'].add_observer node
+      @scope.element_type_var.bind_to @vars['value']
+      node.bind_to @vars['self']
     end
 
     def check_array_index_is_int

@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 require 'bundler/setup'
 require_relative '../lib/crystal'
+require 'pry'
+require 'pry-nav'
 
 compiler = Crystal::Compiler.new
 compiler.compile

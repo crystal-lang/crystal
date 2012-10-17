@@ -2,13 +2,8 @@ module Crystal
   class Type
     include Enumerable
 
-    attr_accessor :observers
-
     def metaclass
       @metaclass ||= Metaclass.new(self)
-    end
-
-    def add_observer(observer, func = nil)
     end
 
     def eql?(other)
@@ -19,19 +14,18 @@ module Crystal
       yield self
     end
 
-    def self.merge(t1, t2)
-      if t1.equal? t2
-        t1
+    def self.merge(*types)
+      all_types = types.map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.compact.uniq(&:object_id)
+      if all_types.length == 0
+        nil
+      elsif all_types.length == 1
+        all_types.first
       else
-        types = [t1, t2].map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.uniq(&:object_id)
-        if types.length == 1
-          types.first
-        else
-          union = UnionType.new(*types)
-          return t1 if t1 == union
-          return t2 if t2 == union
-          union
+        union = UnionType.new(*all_types)
+        types.each do |t|
+          return t if t == union
         end
+        union
       end
     end
   end
@@ -81,30 +75,11 @@ module Crystal
       @instance_vars = {}
     end
 
-    def add_observer(observer, func = :update_from_object_type)
-      return if @observers && @observers.has_key?(observer)
-      @observers ||= {}
-      @observers[observer] = func
-      observer.send func, self
-    end
-
-    def update_from_instance_var(type)
-      notify_observers
-    end
-
-    def notify_observers
-      return unless @observers
-      @observers.each do |observer, func|
-        observer.send func, @type
-      end
-    end
-
     def lookup_instance_var(name)
       var = @instance_vars[name]
       unless var
         var = Var.new name
         @instance_vars[name] = var
-        var.add_observer self, :update_from_instance_var
       end
       var
     end
