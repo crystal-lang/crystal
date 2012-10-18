@@ -135,7 +135,7 @@ module Crystal
             typed_def.body.accept visitor
 
             compute_return visitor, typed_def
-            compute_path typed_def
+            compute_parent_path typed_def
           rescue Crystal::Exception => ex
             if obj
               raise "instantiating '#{obj.type.name}##{name}'", ex
@@ -169,7 +169,7 @@ module Crystal
       typed_def.return = return_type
     end
 
-    def compute_path(typed_def)
+    def compute_parent_path(typed_def)
       return unless typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
 
       index = typed_def.return.index
