@@ -135,29 +135,7 @@ module Crystal
             typed_def.body.accept visitor
 
             compute_return visitor, typed_def
-
-            if typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
-              index = typed_def.return.index
-              search_id = if obj
-                if index == 0
-                  obj.type.object_id
-                else
-                  # TODO
-                end
-              end
-              return_id = typed_def.body.type.object_id
-
-              parent_scope = parent_visitor.call[0]
-              types = parent_scope.is_a?(Crystal::Type) ? [parent_scope] : []
-              types += parent_visitor.call[2]
-              parent_index = types.index { |arg| arg.object_id == search_id }
-              if parent_index
-                parent_visitor.paths[return_id] = typed_def.return.with_index(parent_index)
-              else
-                parent_path = parent_visitor.paths[search_id]
-                parent_visitor.paths[return_id] = parent_path.append(typed_def.return)
-              end
-            end
+            compute_path typed_def
           rescue Crystal::Exception => ex
             if obj
               raise "instantiating '#{obj.type.name}##{name}'", ex
@@ -189,6 +167,31 @@ module Crystal
       end
 
       typed_def.return = return_type
+    end
+
+    def compute_path(typed_def)
+      if typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
+        index = typed_def.return.index
+        search_id = if obj
+          if index == 0
+            obj.type.object_id
+          else
+            # TODO
+          end
+        end
+        return_id = typed_def.body.type.object_id
+
+        parent_scope = parent_visitor.call[0]
+        types = parent_scope.is_a?(Crystal::Type) ? [parent_scope] : []
+        types += parent_visitor.call[2]
+        parent_index = types.index { |arg| arg.object_id == search_id }
+        if parent_index
+          parent_visitor.paths[return_id] = typed_def.return.with_index(parent_index)
+        else
+          parent_path = parent_visitor.paths[search_id]
+          parent_visitor.paths[return_id] = parent_path.append(typed_def.return)
+        end
+      end
     end
 
     def simplify
