@@ -25,6 +25,14 @@ module Crystal
       @path = path
     end
 
+    def with_index(other_index)
+      Path.new(other_index, *path)
+    end
+
+    def append(other_path)
+      Path.new(index, *(path + other_path.path))
+    end
+
     def ==(other)
       index == other.index && path == other.path
     end
@@ -130,23 +138,24 @@ module Crystal
 
             if typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
               index = typed_def.return.index
-              search_type = if obj
+              search_id = if obj
                 if index == 0
-                  obj.type
+                  obj.type.object_id
                 else
                   # TODO
                 end
               end
+              return_id = typed_def.body.type.object_id
 
               parent_scope = parent_visitor.call[0]
               types = parent_scope.is_a?(Crystal::Type) ? [parent_scope] : []
               types += parent_visitor.call[2]
-              parent_index = types.index { |arg| arg.object_id == search_type.object_id }
+              parent_index = types.index { |arg| arg.object_id == search_id }
               if parent_index
-                parent_visitor.paths[typed_def.body.type.object_id] = Path.new(parent_index, *typed_def.return.path)
+                parent_visitor.paths[return_id] = typed_def.return.with_index(parent_index)
               else
-                parent_path = parent_visitor.paths[search_type.object_id]
-                parent_visitor.paths[typed_def.body.type.object_id] = Path.new(parent_path.index, *(parent_path.path + typed_def.return.path))
+                parent_path = parent_visitor.paths[search_id]
+                parent_visitor.paths[return_id] = parent_path.append(typed_def.return)
               end
             end
           rescue Crystal::Exception => ex
