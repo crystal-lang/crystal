@@ -16,6 +16,28 @@ module Crystal
     mod
   end
 
+  class Path
+    attr_accessor :index
+    attr_accessor :path
+
+    def initialize(index, *path)
+      @index = index
+      @path = path
+    end
+
+    def ==(other)
+      index == other.index && path == other.path
+    end
+
+    def to_s
+      str = "#{index}"
+      if path
+        str << '/' << path.join('/')
+      end
+      str
+    end
+  end
+
   class ASTNode
     attr_accessor :type
     attr_accessor :dependencies
@@ -103,6 +125,16 @@ module Crystal
           begin
             visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
             typed_def.body.accept visitor
+
+            compute_return visitor, typed_def
+
+            if typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
+              index = typed_def.return.index
+              if index == 0
+                parent_index = parent_visitor.call[2].index { |arg| arg.object_id == obj.type.object_id }
+                parent_visitor.paths[typed_def.body.type.object_id] = Path.new(parent_index, *typed_def.return.path)
+              end
+            end
           rescue Crystal::Exception => ex
             if obj
               raise "instantiating '#{obj.type.name}##{name}'", ex
@@ -115,6 +147,25 @@ module Crystal
 
       self.bind_to typed_def.body if typed_def.body
       self.target_def = typed_def
+    end
+
+    def compute_return(visitor, typed_def)
+      return_type = typed_def.body.type
+      unless return_type.is_a?(ObjectType)
+        return typed_def.return = typed_def.body.type
+      end
+
+      index = typed_def.args.find_index { |var| var.type.equal?(return_type) }
+      if index
+        return typed_def.return = Path.new(index) if index
+      end
+
+      path = visitor.paths[return_type.object_id]
+      if path
+        return typed_def.return = path
+      end
+
+      typed_def.return = return_type
     end
 
     def simplify
@@ -215,6 +266,7 @@ module Crystal
   class Def
     attr_accessor :owner
     attr_accessor :instances
+    attr_accessor :return
 
     def add_instance(a_def)
       @instances ||= {}
@@ -285,6 +337,8 @@ module Crystal
 
   class TypeVisitor < Visitor
     attr_accessor :mod
+    attr_accessor :paths
+    attr_accessor :call
 
     def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
       @mod = mod
@@ -293,6 +347,7 @@ module Crystal
       @parent = parent
       @call = call
       @class_defs = []
+      @paths = {}
     end
 
     def visit_bool_literal(node)
@@ -373,6 +428,7 @@ module Crystal
 
       var = @scope.lookup_instance_var node.name
       node.bind_to var
+      paths[var.type.object_id] = Path.new(0, node.name)
     end
 
     def end_visit_assign(node)
