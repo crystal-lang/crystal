@@ -52,4 +52,37 @@ describe 'Type inference: def instance' do
     input.last.target_def.return.should eq(Path.new(1, '@value'))
   end
 
+  it "types a call returning path of self" do
+    input = parse %Q(
+      #{test_type}
+      class Foo
+        def foo
+          self.value
+        end
+      end
+
+      x = Foo.new
+      x.value = Foo.new
+      x.foo)
+    mod = infer_type input
+    input.last.target_def.return.should eq(Path.new(0, '@value'))
+  end
+
+  it "types a call returning path of self" do
+    input = parse %Q(
+      #{test_type}
+      class Foo
+        def foo
+          self.value.value
+        end
+      end
+
+      x = Foo.new
+      x.value = Foo.new
+      x.value.value = Object.new
+      x.foo)
+    mod = infer_type input
+    input.last.target_def.return.should eq(Path.new(0, '@value', '@value'))
+  end
+
 end
