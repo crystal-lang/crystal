@@ -64,6 +64,10 @@ module Crystal
     def to_s
       name
     end
+
+    def clone(_ = nil)
+      self
+    end
   end
 
   class ObjectType < ClassType
@@ -123,9 +127,11 @@ module Crystal
       @instance_vars.keys.index(name)
     end
 
-    def clone
-      obj = ObjectType.new name, @parent_type
-      obj.instance_vars = Hash[instance_vars.map { |name, var| [name, Var.new(name, var.type)] }]
+    def clone(context = {})
+      obj = context[object_id] and return obj
+
+      obj = context[object_id] = ObjectType.new name, @parent_type
+      obj.instance_vars = Hash[instance_vars.map { |name, var| [name, Var.new(name, var.type.clone(context))] }]
       obj.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
       defs.each do |key, value|
         obj.defs[key] = value.clone
@@ -175,9 +181,9 @@ module Crystal
       1
     end
 
-    def clone
+    def clone(context = {})
       array = ArrayType.new @parent_type
-      array.element_type_var = element_type_var.clone
+      array.element_type_var.type = element_type ? element_type.clone(context) : nil
       array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
       defs.each do |key, value|
         array.defs[key] = value.clone
@@ -260,6 +266,10 @@ module Crystal
       else
         false
       end
+    end
+
+    def clone(context = {})
+      UnionType.new(*types.map { |type| type.clone(context) })
     end
 
     def to_s
