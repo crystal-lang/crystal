@@ -39,9 +39,7 @@ module Crystal
 
     def to_s
       str = "#{index}"
-      if path
-        str << '/' << path.join('/')
-      end
+      str << '/' << path.join('/')
       str
     end
   end
@@ -134,7 +132,7 @@ module Crystal
             visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
             typed_def.body.accept visitor
 
-            compute_return visitor, typed_def
+            compute_return visitor, typed_def, scope
             compute_parent_path typed_def
           rescue Crystal::Exception => ex
             if obj
@@ -150,15 +148,17 @@ module Crystal
       self.target_def = typed_def
     end
 
-    def compute_return(visitor, typed_def)
+    def compute_return(visitor, typed_def, scope)
       return_type = typed_def.body.type
       unless return_type.is_a?(ObjectType)
         return typed_def.return = typed_def.body.type
       end
 
-      index = typed_def.args.find_index { |var| var.type.equal?(return_type) }
+      args = scope.is_a?(Type) ? [scope] : []
+      args += typed_def.args.map &:type
+      index = args.find_index { |var| var.equal?(return_type) }
       if index
-        return typed_def.return = Path.new(index) if index
+        return typed_def.return = Path.new(index)
       end
 
       path = visitor.paths[return_type.object_id]
@@ -177,8 +177,10 @@ module Crystal
         if index == 0
           obj.type.object_id
         else
-          # TODO
+          args[index - 1].type.object_id
         end
+      else
+        args[index].type.object_id
       end
       return_id = typed_def.body.type.object_id
 

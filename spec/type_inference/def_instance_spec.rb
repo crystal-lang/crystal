@@ -85,4 +85,67 @@ describe 'Type inference: def instance' do
     input.last.target_def.return.should eq(Path.new(0, '@value', '@value'))
   end
 
+  it "types a call returning self" do
+    input = parse %Q(
+      class Foo
+        def foo
+          self
+        end
+      end
+      Foo.new.foo
+    )
+
+    mod = infer_type input
+    input.last.target_def.return.should eq(Path.new(0))
+  end
+
+  it "types a call returning path of argument of second level call" do
+    input = parse %Q(
+      def foo(x)
+        x
+      end
+
+      def bar(x)
+        foo(x)
+      end
+
+      bar(Object.new)
+    )
+    mod = infer_type input
+    input.last.target_def.return.should eq(Path.new(0))
+  end
+
+  it "types a call to object returning path of argument" do
+    input = parse %Q(
+      class Foo
+        def foo(x)
+          x
+        end
+      end
+      Foo.new.foo(Object.new)
+    )
+
+    mod = infer_type input
+    input.last.target_def.return.should eq(Path.new(1))
+  end
+
+  it "types a call returning path of self of second level call" do
+    input = parse %Q(
+      class Foo
+        def foo(x)
+          x
+        end
+      end
+
+      def bar(x)
+        Foo.new.foo(x)
+      end
+
+      bar(Object.new)
+    )
+    mod = infer_type input
+    input.last.target_def.return.should eq(Path.new(0))
+  end
+
+
 end
