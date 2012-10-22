@@ -146,6 +146,4 @@ describe 'Type inference: def instance' do
     mod = infer_type input
     input.last.target_def.return.should eq(Path.new(0))
   end
-
-
 end

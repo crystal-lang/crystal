@@ -120,7 +120,7 @@ module Crystal
         typed_def.owner = scope
 
         args = {}
-        args['self'] = Var.new('self', obj.type) if obj
+        args['self'] = Var.new('self', scope) if scope.is_a?(Type)
         typed_def.args.each_with_index do |arg, index|
           type = self.args[index].type
           args[arg.name] = Var.new(arg.name, type)
@@ -133,7 +133,7 @@ module Crystal
             typed_def.body.accept visitor
 
             compute_return visitor, typed_def, scope
-            compute_parent_path typed_def
+            compute_parent_path typed_def, scope
           rescue Crystal::Exception => ex
             if obj
               raise "instantiating '#{obj.type.name}##{name}'", ex
@@ -169,13 +169,13 @@ module Crystal
       typed_def.return = return_type
     end
 
-    def compute_parent_path(typed_def)
+    def compute_parent_path(typed_def, scope)
       return unless typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
 
       index = typed_def.return.index
-      search_id = if obj
+      search_id = if scope.is_a?(Type)
         if index == 0
-          obj.type.object_id
+          scope.object_id
         else
           args[index - 1].type.object_id
         end

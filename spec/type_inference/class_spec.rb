@@ -141,4 +141,20 @@ describe 'Type inference: class' do
       b
     )) { ObjectType.new('Node').with_var("@x", int).with_var("@y", float) }
   end
+
+  it "types self inside method call without obj" do
+    assert_type(%(
+      class Foo
+        def foo
+          bar
+        end
+
+        def bar
+          self
+        end
+      end
+
+      Foo.new.foo
+    )) { ObjectType.new('Foo') }
+  end
 end
