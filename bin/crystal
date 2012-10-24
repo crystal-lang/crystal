@@ -2,7 +2,7 @@
 require 'bundler/setup'
 require_relative '../lib/crystal'
 require 'pry'
-require 'pry-nav'
+require 'pry-debugger'
 
 compiler = Crystal::Compiler.new
 compiler.compile
