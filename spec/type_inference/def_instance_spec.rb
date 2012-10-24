@@ -170,6 +170,26 @@ describe 'Type inference: def instance' do
     mod.types['Foo'].defs['value='].lookup_instance([ObjectType.new('Foo'), ObjectType.new('Bar')]).mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1))])
   end
 
+  it "caches long path mutation" do
+    input = parse %Q(
+      #{test_type}
+
+      def foo(x, y)
+        x.value = y.value
+      end
+
+      f = Foo.new
+      f.value = Object.new
+
+      g = Foo.new
+      foo(g, f)
+      )
+
+    mod = infer_type input
+    mod.defs['foo'].lookup_instance([ObjectType.new('Foo'), ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))]).
+      mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1, '@value'))])
+  end
+
   it "reuses type mutation" do
     assert_type(%Q(
       #{test_type}
