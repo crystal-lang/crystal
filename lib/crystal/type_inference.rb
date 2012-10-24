@@ -34,13 +34,17 @@ module Crystal
     end
 
     def ==(other)
-      index == other.index && path == other.path
+      other.is_a?(Path) && index == other.index && path == other.path
     end
 
-    def evaluate(obj, args)
-      all = obj.is_a?(Type) ? [obj] : []
-      all += args.map &:type
-      type = all[index]
+    def evaluate_args(obj, args)
+      types = obj.is_a?(Type) ? [obj] : []
+      types += args.map &:type
+      evaluate_types(types)
+    end
+
+    def evaluate_types(types)
+      type = types[index]
       path.each do |ivar|
         type = type.lookup_instance_var(ivar).type
       end
@@ -56,11 +60,11 @@ module Crystal
 
   class Mutation
     attr_accessor :path
-    attr_accessor :type
+    attr_accessor :target
 
-    def initialize(path, type)
+    def initialize(path, target)
       @path = path
-      @type = type
+      @target = target
     end
 
     def apply(types)
@@ -70,19 +74,19 @@ module Crystal
         var = type.lookup_instance_var(ivar)
         type = var.type
       end
-      var.type = self.type
+      var.type = target.is_a?(Type) ? target : target.evaluate_types(types)
     end
 
     def ==(other)
-      path == other.path && type == other.type
+      path == other.path && target == other.target
     end
 
     def with_index(index)
-      Mutation.new(path.with_index(index), type)
+      Mutation.new(path.with_index(index), target)
     end
 
     def to_s
-      "#{path} -> #{type}"
+      "#{path} -> #{target}"
     end
   end
 
@@ -196,13 +200,17 @@ module Crystal
         begin
           typed_def.mutations = []
 
+          visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
+
           arg_types.each_with_index do |arg_type, i|
             if arg_type.is_a?(ObjectType)
-              arg_type.observe_mutations { |m| typed_def.mutations << m.with_index(i) }
+              arg_type.observe_mutations do |ivar, type| 
+                path = visitor.paths[type.object_id]
+                typed_def.mutations << Mutation.new(Path.new(i, ivar), path || type)
+              end
             end
           end
 
-          visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
           typed_def.body.accept visitor
 
           compute_return visitor, typed_def, scope
@@ -275,7 +283,7 @@ module Crystal
 
     def compute_new_type(typed_def, scope)
       if typed_def.return.is_a?(Path)
-        new_type = typed_def.return.evaluate(scope, self.args)
+        new_type = typed_def.return.evaluate_args(scope, self.args)
       elsif typed_def.body && typed_def.body.type
         if typed_def.body.type.is_a?(ObjectType)
           name = typed_def.body.type.name
@@ -475,6 +483,11 @@ module Crystal
       @call = call
       @class_defs = []
       @paths = {}
+      if @call
+        @call[2].each_with_index do |type, i|
+          @paths[type.object_id] = Path.new(i) if type.is_a?(ObjectType)
+        end
+      end
     end
 
     def visit_bool_literal(node)
@@ -555,7 +568,7 @@ module Crystal
 
       var = @scope.lookup_instance_var node.name
       node.bind_to var
-      paths[var.type.object_id] = Path.new(0, node.name)
+      paths[var.type.object_id] = Path.new(0, node.name) if var.type
     end
 
     def end_visit_assign(node)

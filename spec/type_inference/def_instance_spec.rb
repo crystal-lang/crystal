@@ -147,7 +147,7 @@ describe 'Type inference: def instance' do
     input.last.target_def.return.should eq(Path.new(0))
   end
 
-  it "cache mutations on accessor" do
+  it "cache type mutation" do
     input = parse %Q(
       #{test_type}
       f = Foo.new
@@ -158,7 +158,19 @@ describe 'Type inference: def instance' do
     mod.types['Foo'].defs['value='].lookup_instance([ObjectType.new('Foo'), mod.int]).mutations.should eq([Mutation.new(Path.new(0, '@value'), mod.int)])
   end
 
-  it "reuses mutation" do
+  it "caches path mutation" do
+    input = parse %Q(
+      #{test_type}
+      class Bar; end
+      f = Foo.new
+      f.value = Bar.new
+      )
+
+    mod = infer_type input
+    mod.types['Foo'].defs['value='].lookup_instance([ObjectType.new('Foo'), ObjectType.new('Bar')]).mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1))])
+  end
+
+  it "reuses type mutation" do
     assert_type(%Q(
       #{test_type}
 
@@ -174,5 +186,31 @@ describe 'Type inference: def instance' do
       g
       )
     ) { ObjectType.new("Foo").with_var("@value", int) }
+  end
+
+  it "reuses path mutation" do
+    assert_type(%Q(
+      #{test_type}
+
+      class Bar
+        #{rw :value}
+      end
+
+      def foo(x, y)
+        x.value = y
+      end
+
+      f1 = Foo.new
+      b1 = Bar.new
+      foo(f1, b1)
+
+      f2 = Foo.new
+      b2 = Bar.new
+      foo(f2, b2)
+
+      b2.value = 1
+      f2
+      )
+    ) { ObjectType.new("Foo").with_var("@value", ObjectType.new("Bar").with_var("@value", int)) }
   end
 end

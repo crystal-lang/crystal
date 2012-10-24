@@ -97,7 +97,7 @@ module Crystal
     def mutation(ivar)
       return unless @mutation_observers
       @mutation_observers.each do |observer|
-        observer.call Mutation.new(Path.new(-1, ivar.name), ivar.type)
+        observer.call(ivar.name, ivar.type)
       end
     end
 
