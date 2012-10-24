@@ -144,7 +144,7 @@ module Crystal
       obj = context[object_id] and return obj
 
       obj = context[object_id] = ObjectType.new name, @parent_type
-      obj.instance_vars = Hash[instance_vars.map { |name, var| [name, Var.new(name, var.type.clone(context))] }]
+      obj.instance_vars = Hash[instance_vars.map { |name, var| [name, Var.new(name, (var.type ? var.type.clone(context) : nil))] }]
       obj.defs = defs #@parent_type ? HashWithParent.new(@parent_type.defs) : {}
       # defs.each do |key, value|
       #   obj.defs[key] = value.clone

@@ -155,6 +155,24 @@ describe 'Type inference: def instance' do
       )
 
     mod = infer_type input
-    mod.types['Foo'].defs['value='].lookup_instance([mod.int]).mutations.should eq([Mutation.new(Path.new(0, '@value'), mod.int)])
+    mod.types['Foo'].defs['value='].lookup_instance([ObjectType.new('Foo'), mod.int]).mutations.should eq([Mutation.new(Path.new(0, '@value'), mod.int)])
+  end
+
+  it "reuses mutation" do
+    assert_type(%Q(
+      #{test_type}
+
+      def foo(x)
+        x.value = 1
+      end
+
+      f = Foo.new
+      foo(f)
+
+      g = Foo.new
+      foo(g)
+      g
+      )
+    ) { ObjectType.new("Foo").with_var("@value", int) }
   end
 end

@@ -63,6 +63,16 @@ module Crystal
       @type = type
     end
 
+    def apply(types)
+      type = types[path.index]
+      var = nil
+      path.path.each do |ivar|
+        var = type.lookup_instance_var(ivar)
+        type = var.type
+      end
+      var.type = self.type
+    end
+
     def ==(other)
       path == other.path && type == other.type
     end
@@ -147,8 +157,17 @@ module Crystal
       arg_types = scope.is_a?(ObjectType) ? [scope] : []
       arg_types += args.map &:type
       typed_def = untyped_def.lookup_instance(arg_types) || 
-                  parent_visitor.lookup_def_instance(scope, untyped_def, arg_types) ||
-                  instantiate(untyped_def, scope, arg_types)
+                  parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
+
+      if typed_def
+        if typed_def.mutations
+          typed_def.mutations.each do |mutation|
+            mutation.apply(arg_types)
+          end
+        end
+      else
+        typed_def = instantiate(untyped_def, scope, arg_types)
+      end
 
       new_type = compute_new_type typed_def, scope
       compute_parent_path typed_def, scope, new_type
@@ -171,11 +190,16 @@ module Crystal
         typed_def.args[index].type = type
       end
 
+      arg_types_cloned = arg_types.map(&:clone)
+
       if typed_def.body
         begin
-          if scope.is_a?(ObjectType)
-            typed_def.mutations = []
-            scope.observe_mutations { |m| typed_def.mutations << m.with_index(0) }
+          typed_def.mutations = []
+
+          arg_types.each_with_index do |arg_type, i|
+            if arg_type.is_a?(ObjectType)
+              arg_type.observe_mutations { |m| typed_def.mutations << m.with_index(i) }
+            end
           end
 
           visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
@@ -183,7 +207,7 @@ module Crystal
 
           compute_return visitor, typed_def, scope
 
-          untyped_def.add_instance(typed_def)
+          untyped_def.add_instance(typed_def, arg_types_cloned)
 
           if scope.is_a?(ObjectType)
             # scope.unobserve_mutations
@@ -371,9 +395,9 @@ module Crystal
     attr_accessor :return
     attr_accessor :mutations
 
-    def add_instance(a_def)
+    def add_instance(a_def, types = a_def.args.map(&:type))
       @instances ||= {}
-      @instances[a_def.args.map(&:type)] = a_def
+      @instances[types] = a_def
     end
 
     def lookup_instance(arg_types)
