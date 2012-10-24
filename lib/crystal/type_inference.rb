@@ -187,10 +187,11 @@ module Crystal
         end
       end
 
-      #self.bind_to typed_def.body if typed_def.body
-      self.type = typed_def.return.is_a?(Path) ? typed_def.return.evaluate(scope, self.args) : typed_def.body.type.clone
+      new_type = typed_def.return.is_a?(Path) ? typed_def.return.evaluate(scope, self.args) : typed_def.body.type.clone
+      compute_parent_path typed_def, scope, new_type
+
+      self.type = new_type
       self.target_def = typed_def
-      compute_parent_path typed_def, scope
     end
 
     def compute_return(visitor, typed_def, scope)
@@ -214,7 +215,7 @@ module Crystal
       typed_def.return = return_type
     end
 
-    def compute_parent_path(typed_def, scope)
+    def compute_parent_path(typed_def, scope, new_type)
       return unless typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
 
       index = typed_def.return.index
@@ -227,8 +228,7 @@ module Crystal
       else
         args[index].type.object_id
       end
-      return_id = self.type.object_id
-      # return_id = typed_def.body.type.object_id
+      return_id = new_type.object_id
 
       parent_scope = parent_visitor.call[0]
       types = parent_scope.is_a?(Crystal::Type) ? [parent_scope] : []
