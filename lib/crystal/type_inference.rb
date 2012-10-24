@@ -146,54 +146,58 @@ module Crystal
 
       arg_types = scope.is_a?(ObjectType) ? [scope] : []
       arg_types += args.map &:type
-      typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
-      unless typed_def
-        check_frozen untyped_def, arg_types
-
-        typed_def = untyped_def.clone
-        typed_def.owner = scope
-
-        args = {}
-        args['self'] = Var.new('self', scope) if scope.is_a?(Type)
-        typed_def.args.each_with_index do |arg, index|
-          type = self.args[index].type
-          args[arg.name] = Var.new(arg.name, type)
-          typed_def.args[index].type = type
-        end
-
-        if typed_def.body
-          begin
-            if scope.is_a?(ObjectType)
-              typed_def.mutations = []
-              scope.observe_mutations { |m| typed_def.mutations << m.with_index(0) }
-            end
-
-            visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
-            typed_def.body.accept visitor
-
-            compute_return visitor, typed_def, scope
-
-            untyped_def.add_instance(typed_def)
-
-            if scope.is_a?(ObjectType)
-              # scope.unobserve_mutations
-            end
-          rescue Crystal::Exception => ex
-            if obj
-              raise "instantiating '#{obj.type.name}##{name}'", ex
-            else
-              raise "instantiating '#{name}'", ex
-            end
-          end
-        end
-      end
-
+      typed_def = untyped_def.lookup_instance(arg_types) || 
+                  parent_visitor.lookup_def_instance(scope, untyped_def, arg_types) ||
+                  instantiate(untyped_def, scope, arg_types)
 
       new_type = compute_new_type typed_def, scope
       compute_parent_path typed_def, scope, new_type
 
       self.type = new_type
       self.target_def = typed_def
+    end
+
+    def instantiate(untyped_def, scope, arg_types)
+      check_frozen untyped_def, arg_types
+
+      typed_def = untyped_def.clone
+      typed_def.owner = scope
+
+      args = {}
+      args['self'] = Var.new('self', scope) if scope.is_a?(Type)
+      typed_def.args.each_with_index do |arg, index|
+        type = self.args[index].type
+        args[arg.name] = Var.new(arg.name, type)
+        typed_def.args[index].type = type
+      end
+
+      if typed_def.body
+        begin
+          if scope.is_a?(ObjectType)
+            typed_def.mutations = []
+            scope.observe_mutations { |m| typed_def.mutations << m.with_index(0) }
+          end
+
+          visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
+          typed_def.body.accept visitor
+
+          compute_return visitor, typed_def, scope
+
+          untyped_def.add_instance(typed_def)
+
+          if scope.is_a?(ObjectType)
+            # scope.unobserve_mutations
+          end
+        rescue Crystal::Exception => ex
+          if obj
+            raise "instantiating '#{obj.type.name}##{name}'", ex
+          else
+            raise "instantiating '#{name}'", ex
+          end
+        end
+      end
+
+      typed_def
     end
 
     def compute_return(visitor, typed_def, scope)
