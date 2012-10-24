@@ -144,7 +144,8 @@ module Crystal
       check_method_exists untyped_def
       check_args_match untyped_def
 
-      arg_types = args.map &:type
+      arg_types = scope.is_a?(ObjectType) ? [scope] : []
+      arg_types += args.map &:type
       typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
       unless typed_def
         check_frozen untyped_def, arg_types
