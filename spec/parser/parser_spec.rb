@@ -208,4 +208,6 @@ describe Parser do
   it_parses 'call "foo"', Call.new(nil, "call", ["foo".string])
 
   it_parses "def foo; end; if false; 1; else; 2; end", [Def.new('foo', []), If.new(false.bool, 1.int, 2.int)]
+
+  it_parses %Q(A.new("x", B.new("y"))), Call.new("A".const, "new", ["x".string, Call.new("B".const, "new", ["y".string])])
 end

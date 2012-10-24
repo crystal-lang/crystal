@@ -51,7 +51,7 @@ module Crystal
       elsif match = scan(/'.'/)
         @token.type = :CHAR
         @token.value = match[1 .. -2].ord
-      elsif match = scan(/".*"/)
+      elsif match = scan(/".*?"/)
         @token.type = :STRING
         @token.value = match[1 .. -2]
       elsif match = scan(%r(!=|!|==|=|<<=|<<|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.|&&|&|\|\||\||\{|\}|\?|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
