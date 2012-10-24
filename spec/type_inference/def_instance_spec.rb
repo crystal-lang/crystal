@@ -190,6 +190,24 @@ describe 'Type inference: def instance' do
       mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1, '@value'))])
   end
 
+  it "caches nested path mutation" do
+    input = parse %Q(
+      #{test_type}
+
+      def foo(x)
+        x.value.value = 1
+      end
+
+      f = Foo.new
+      f.value = Foo.new
+      foo(f)
+      )
+
+    mod = infer_type input
+    mod.defs['foo'].lookup_instance([ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo'))]).
+      mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), mod.int)])
+  end
+
   it "reuses type mutation" do
     assert_type(%Q(
       #{test_type}

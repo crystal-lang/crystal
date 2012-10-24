@@ -176,6 +176,10 @@ module Crystal
       new_type = compute_new_type typed_def, scope
       compute_parent_path typed_def, scope, new_type
 
+      if typed_def.mutations && parent_visitor.call && !typed_def.equal?(parent_visitor.call[3])
+        compute_parent_mutations typed_def, scope, new_type 
+      end
+
       self.type = new_type
       self.target_def = typed_def
     end
@@ -278,6 +282,30 @@ module Crystal
         parent_path = parent_visitor.paths[search_id]
         binding.pry unless parent_path
         parent_visitor.paths[return_id] = parent_path.append(typed_def.return)
+      end
+    end
+
+    def compute_parent_mutations(typed_def, scope, new_type)
+      typed_def.mutations.each do |mutation|
+        compute_parent_mutation(typed_def, scope, new_type, mutation)
+      end
+    end
+
+    def compute_parent_mutation(typed_def, scope, new_type, mutation)
+      index = mutation.path.index
+      search_id = if scope.is_a?(Type)
+        if index == 0
+          scope.object_id
+        else
+          args[index - 1].type.object_id
+        end
+      else
+        args[index].type.object_id
+      end
+
+      path = parent_visitor.paths[search_id]
+      if path && path.path.length > 0
+        parent_visitor.call[3].mutations << Mutation.new(path.append(mutation.path), mutation.target)
       end
     end
 
