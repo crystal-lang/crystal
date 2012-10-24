@@ -187,7 +187,14 @@ module Crystal
         end
       end
 
-      new_type = typed_def.return.is_a?(Path) ? typed_def.return.evaluate(scope, self.args) : typed_def.body.type.clone
+      if typed_def.return.is_a?(Path)
+        new_type = typed_def.return.evaluate(scope, self.args)
+      elsif typed_def.body && typed_def.body.type
+        new_type = typed_def.body.type.clone
+      else
+        self.bind_to typed_def.body if typed_def.body
+      end
+
       compute_parent_path typed_def, scope, new_type
 
       self.type = new_type
