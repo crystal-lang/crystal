@@ -1,6 +1,6 @@
 require 'bundler/setup'
 require 'pry'
-require 'pry-nav'
+require 'pry-debugger'
 require(File.expand_path("../../lib/crystal",  __FILE__))
 
 RSpec.configure do |c|

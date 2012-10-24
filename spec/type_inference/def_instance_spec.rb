@@ -146,4 +146,15 @@ describe 'Type inference: def instance' do
     mod = infer_type input
     input.last.target_def.return.should eq(Path.new(0))
   end
+
+  it "cache mutations on accessor" do
+    input = parse %Q(
+      #{test_type}
+      f = Foo.new
+      f.value = 1
+      )
+
+    mod = infer_type input
+    mod.types['Foo'].defs['value='].lookup_instance([mod.int]).mutations.should eq([Mutation.new(Path.new(0, '@value'), mod.int)])
+  end
 end

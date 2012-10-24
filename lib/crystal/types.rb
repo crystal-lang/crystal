@@ -83,9 +83,22 @@ module Crystal
       var = @instance_vars[name]
       unless var
         var = Var.new name
+        var.add_observer self, :mutation
         @instance_vars[name] = var
       end
       var
+    end
+
+    def observe_mutations(&block)
+      @mutation_observers ||= []
+      @mutation_observers << block
+    end
+
+    def mutation(ivar)
+      return unless @mutation_observers
+      @mutation_observers.each do |observer|
+        observer.call Mutation.new(Path.new(-1, ivar.name), ivar.type)
+      end
     end
 
     def ==(other)
@@ -132,10 +145,10 @@ module Crystal
 
       obj = context[object_id] = ObjectType.new name, @parent_type
       obj.instance_vars = Hash[instance_vars.map { |name, var| [name, Var.new(name, var.type.clone(context))] }]
-      obj.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
-      defs.each do |key, value|
-        obj.defs[key] = value.clone
-      end
+      obj.defs = defs #@parent_type ? HashWithParent.new(@parent_type.defs) : {}
+      # defs.each do |key, value|
+      #   obj.defs[key] = value.clone
+      # end
       obj
     end
 

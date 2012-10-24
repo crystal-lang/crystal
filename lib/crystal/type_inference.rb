@@ -37,10 +37,42 @@ module Crystal
       index == other.index && path == other.path
     end
 
+    def evaluate(obj, args)
+      all = obj.is_a?(Type) ? [obj] : []
+      all += args.map &:type
+      type = all[index]
+      path.each do |ivar|
+        type = type.lookup_instance_var(ivar).type
+      end
+      type
+    end
+
     def to_s
       str = "#{index}"
       str << '/' << path.join('/')
       str
+    end
+  end
+
+  class Mutation
+    attr_accessor :path
+    attr_accessor :type
+
+    def initialize(path, type)
+      @path = path
+      @type = type
+    end
+
+    def ==(other)
+      path == other.path && type == other.type
+    end
+
+    def with_index(index)
+      Mutation.new(path.with_index(index), type)
+    end
+
+    def to_s
+      "#{path} -> #{type}"
     end
   end
 
@@ -97,6 +129,7 @@ module Crystal
     end
 
     def recalculate
+      # binding.pry if name == 'foo'
       return unless can_calculate_type?
 
       if has_unions?
@@ -129,11 +162,21 @@ module Crystal
 
         if typed_def.body
           begin
+            if scope.is_a?(ObjectType)
+              typed_def.mutations = []
+              scope.observe_mutations { |m| typed_def.mutations << m.with_index(0) }
+            end
+
             visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
             typed_def.body.accept visitor
 
             compute_return visitor, typed_def, scope
-            compute_parent_path typed_def, scope
+
+            untyped_def.add_instance(typed_def)
+
+            if scope.is_a?(ObjectType)
+              # scope.unobserve_mutations
+            end
           rescue Crystal::Exception => ex
             if obj
               raise "instantiating '#{obj.type.name}##{name}'", ex
@@ -144,14 +187,16 @@ module Crystal
         end
       end
 
-      self.bind_to typed_def.body if typed_def.body
+      #self.bind_to typed_def.body if typed_def.body
+      self.type = typed_def.return.is_a?(Path) ? typed_def.return.evaluate(scope, self.args) : typed_def.body.type.clone
       self.target_def = typed_def
+      compute_parent_path typed_def, scope
     end
 
     def compute_return(visitor, typed_def, scope)
       return_type = typed_def.body.type
       unless return_type.is_a?(ObjectType)
-        return typed_def.return = typed_def.body.type
+        return typed_def.return = return_type
       end
 
       args = scope.is_a?(Type) ? [scope] : []
@@ -182,7 +227,8 @@ module Crystal
       else
         args[index].type.object_id
       end
-      return_id = typed_def.body.type.object_id
+      return_id = self.type.object_id
+      # return_id = typed_def.body.type.object_id
 
       parent_scope = parent_visitor.call[0]
       types = parent_scope.is_a?(Crystal::Type) ? [parent_scope] : []
@@ -192,6 +238,7 @@ module Crystal
         parent_visitor.paths[return_id] = typed_def.return.with_index(parent_index)
       else
         parent_path = parent_visitor.paths[search_id]
+        binding.pry unless parent_path
         parent_visitor.paths[return_id] = parent_path.append(typed_def.return)
       end
     end
@@ -295,6 +342,7 @@ module Crystal
     attr_accessor :owner
     attr_accessor :instances
     attr_accessor :return
+    attr_accessor :mutations
 
     def add_instance(a_def)
       @instances ||= {}
