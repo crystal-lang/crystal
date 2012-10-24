@@ -177,7 +177,7 @@ module Crystal
       compute_parent_path typed_def, scope, new_type
 
       if typed_def.mutations && parent_visitor.call && !typed_def.equal?(parent_visitor.call[3])
-        compute_parent_mutations typed_def, scope, new_type 
+        compute_parent_mutations typed_def, scope
       end
 
       self.type = new_type
@@ -261,21 +261,13 @@ module Crystal
       return unless typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
 
       index = typed_def.return.index
-      search_id = if scope.is_a?(Type)
-        if index == 0
-          scope.object_id
-        else
-          args[index - 1].type.object_id
-        end
-      else
-        args[index].type.object_id
-      end
+      search_id = lookup_arg_index(index, scope)
       return_id = new_type.object_id
 
       parent_scope = parent_visitor.call[0]
       types = parent_scope.is_a?(Crystal::Type) ? [parent_scope] : []
       types += parent_visitor.call[2]
-      parent_index = types.index { |arg| arg.object_id == search_id }
+      parent_index = types.index { |type| type.object_id == search_id }
       if parent_index
         parent_visitor.paths[return_id] = typed_def.return.with_index(parent_index)
       else
@@ -285,15 +277,36 @@ module Crystal
       end
     end
 
-    def compute_parent_mutations(typed_def, scope, new_type)
+    def compute_parent_mutations(typed_def, scope)
       typed_def.mutations.each do |mutation|
-        compute_parent_mutation(typed_def, scope, new_type, mutation)
+        compute_parent_mutation(mutation, scope)
       end
     end
 
-    def compute_parent_mutation(typed_def, scope, new_type, mutation)
+    def compute_parent_mutation(mutation, scope)
       index = mutation.path.index
-      search_id = if scope.is_a?(Type)
+      search_id = lookup_arg_index(index, scope)
+
+      path = parent_visitor.paths[search_id]
+      if path && path.path.length > 0
+        new_path = path.append(mutation.path)
+        if mutation.target.is_a?(Type)
+          new_target = mutation.target
+        else
+          search_id = lookup_arg_index(mutation.target.index, scope)
+          target_path = parent_visitor.paths[search_id]
+          if target_path
+            new_target = target_path.append(mutation.target)
+          else
+            new_target = mutation.target.evaluate_args(scope, args)
+          end
+        end
+        parent_visitor.call[3].mutations << Mutation.new(new_path, new_target)
+      end
+    end
+
+    def lookup_arg_index(index, scope)
+      if scope.is_a?(Type)
         if index == 0
           scope.object_id
         else
@@ -301,11 +314,6 @@ module Crystal
         end
       else
         args[index].type.object_id
-      end
-
-      path = parent_visitor.paths[search_id]
-      if path && path.path.length > 0
-        parent_visitor.call[3].mutations << Mutation.new(path.append(mutation.path), mutation.target)
       end
     end
 
