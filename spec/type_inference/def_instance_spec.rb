@@ -293,4 +293,14 @@ describe 'Type inference: def instance' do
       )
     ) { ObjectType.new("Foo").with_var("@value", ObjectType.new("Bar").with_var("@value", int)) }
   end
+
+  it "repoints new to correct type" do
+    input = parse %Q(
+      #{test_type}
+      f = Foo.new
+      f.value = 1
+      )
+    mod = infer_type input
+    input[1].value.target_def.body.type.should eq(ObjectType.new('Foo').with_var('@value', mod.int))
+  end
 end
