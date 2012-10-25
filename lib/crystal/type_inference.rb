@@ -142,7 +142,7 @@ module Crystal
       recalculate
     end
 
-    def recalculate
+    def recalculate(mutation = nil)
       return unless can_calculate_type?
 
       if has_unions?
@@ -159,17 +159,14 @@ module Crystal
 
       arg_types = scope.is_a?(ObjectType) ? [scope] : []
       arg_types += args.map &:type
-      typed_def = untyped_def.lookup_instance(arg_types) ||
-                  parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
+      typed_def = untyped_def.lookup_instance(arg_types, self.type) ||
+                  parent_visitor.lookup_def_instance(scope, untyped_def, arg_types) ||
+                  instantiate(untyped_def, scope, arg_types, mutation)
 
-      if typed_def
-        if typed_def.mutations
-          typed_def.mutations.each do |mutation|
-            mutation.apply(arg_types)
-          end
+      if typed_def.mutations
+        typed_def.mutations.each do |mutation|
+          mutation.apply(arg_types)
         end
-      else
-        typed_def = instantiate(untyped_def, scope, arg_types)
       end
 
       new_type = compute_new_type typed_def, scope
@@ -179,12 +176,23 @@ module Crystal
         compute_parent_mutations typed_def, scope
       end
 
+      if new_type.is_a?(ObjectType) && !typed_def.return.is_a?(Path)
+        token = new_type.observe_mutations do |ivar, type|
+          new_type.unobserve_mutations token
+          mutation = Mutation.new(Path.new(0, ivar), type)
+          recalculate mutation
+        end
+      end
       self.type = new_type
       self.target_def = typed_def
     end
 
-    def instantiate(untyped_def, scope, arg_types)
+    def instantiate(untyped_def, scope, arg_types, mutation)
       check_frozen untyped_def, arg_types
+      # scope = scope.clone if scope.is_a?(Type)
+      arg_types = arg_types.map &:clone
+      scope = arg_types[0] if scope.is_a?(ObjectType)
+      args_start_index = scope.is_a?(ObjectType) ? 1 : 0
 
       typed_def = untyped_def.clone
       typed_def.owner = scope
@@ -192,7 +200,7 @@ module Crystal
       args = {}
       args['self'] = Var.new('self', scope) if scope.is_a?(Type)
       typed_def.args.each_with_index do |arg, index|
-        type = self.args[index].type
+        type = arg_types[args_start_index + index]
         args[arg.name] = Var.new(arg.name, type)
         typed_def.args[index].type = type
       end
@@ -220,7 +228,8 @@ module Crystal
 
           compute_return visitor, typed_def, scope
 
-          untyped_def.add_instance(typed_def, arg_types_cloned)
+          mutation.apply [typed_def.body.type] if mutation
+          untyped_def.add_instance(typed_def, arg_types_cloned, self.type.clone)
 
           mutation_observers.values.each do |type, token|
             type.unobserve_mutations token
@@ -439,13 +448,13 @@ module Crystal
     attr_accessor :return
     attr_accessor :mutations
 
-    def add_instance(a_def, types = a_def.args.map(&:type))
+    def add_instance(a_def, types = a_def.args.map(&:type), return_type = nil)
       @instances ||= {}
-      @instances[types] = a_def
+      @instances[[types, return_type]] = a_def
     end
 
-    def lookup_instance(arg_types)
-      @instances && @instances[arg_types]
+    def lookup_instance(arg_types, return_type = nil)
+      @instances && @instances[[arg_types, return_type]]
     end
   end
 

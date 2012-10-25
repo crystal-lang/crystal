@@ -10,4 +10,8 @@ class NilClass
   def llvm_size
     0
   end
+
+  def clone
+    nil
+  end
 end
