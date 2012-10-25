@@ -14,34 +14,33 @@ module Crystal
       OptionParser.new do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
 
-        opts.on('-o ', 'Output filename') do |output|
-          @options[:output_filename] = output
-        end
-        opts.on('-O ', "Optimization passes (default: #{@options[:optimization_passes]})") do |opt|
-          @options[:optimization_passes] = opt.to_i
-        end
-        opts.on('-run ', 'Execute filename') do
-          @options[:run] = true
-        end
         opts.on('-graph ', 'Render type graph') do
           @options[:graph] = true
+        end
+        opts.on("-h", "--help", "Show this message") do
+          puts opts
+          exit
         end
         opts.on('-ll', 'Dump ll to standard output') do
           @options[:dump_ll] = true
         end
-        opts.on('-stats', 'Enable statistics output') do
-          @options[:stats] = true
-        end
-        opts.on('-prof', 'Enable profile output') do
-          @options[:prof] = true
-        end
         opts.on('-no-build', 'Disable build output') do
           @options[:no_build] = true
         end
-
-        opts.on_tail("-h", "--help", "Show this message") do
-          puts opts
-          exit
+        opts.on('-o ', 'Output filename') do |output|
+          @options[:output_filename] = output
+        end
+        opts.on('-O ', "Number of optimization passes (default: #{@options[:optimization_passes]})") do |opt|
+          @options[:optimization_passes] = opt.to_i
+        end
+        opts.on('-prof', 'Enable profiling output') do
+          @options[:prof] = true
+        end
+        opts.on('-run ', 'Execute program') do
+          @options[:run] = true
+        end
+        opts.on('-stats', 'Enable statistics output') do
+          @options[:stats] = true
         end
       end.parse!
 
