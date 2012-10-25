@@ -90,4 +90,18 @@ describe 'Type inference: def' do
   it "types call with union argument" do
     assert_type('def foo(x); x; end; a = 1; a = 1.1; foo(a)') { UnionType.new(int, float) }
   end
+
+  pending "doesn't incorrectly type as recursive type" do
+    assert_type(%Q(
+      class Foo
+        #{rw :value}
+      end
+
+      f = Foo.new
+      f.value = Foo.new
+      f.value.value = Foo.new
+      f
+      )
+  ) { ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo'))) }
+  end
 end
