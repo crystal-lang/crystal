@@ -143,7 +143,6 @@ module Crystal
     end
 
     def recalculate
-      # binding.pry if name == 'foo'
       return unless can_calculate_type?
 
       if has_unions?
@@ -160,7 +159,7 @@ module Crystal
 
       arg_types = scope.is_a?(ObjectType) ? [scope] : []
       arg_types += args.map &:type
-      typed_def = untyped_def.lookup_instance(arg_types) || 
+      typed_def = untyped_def.lookup_instance(arg_types) ||
                   parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
 
       if typed_def
@@ -274,7 +273,6 @@ module Crystal
         parent_visitor.paths[return_id] = typed_def.return.with_index(parent_index)
       else
         parent_path = parent_visitor.paths[search_id]
-        binding.pry unless parent_path
         parent_visitor.paths[return_id] = parent_path.append(typed_def.return)
       end
     end
