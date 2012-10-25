@@ -12,6 +12,8 @@ module Crystal
 
       @options = {optimization_passes: 5}
       OptionParser.new do |opts|
+        opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
+
         opts.on('-o ', 'Output filename') do |output|
           @options[:output_filename] = output
         end
@@ -36,6 +38,7 @@ module Crystal
         opts.on('-no-build', 'Disable build output') do
           @options[:no_build] = true
         end
+
         opts.on_tail("-h", "--help", "Show this message") do
           puts opts
           exit
