@@ -36,6 +36,10 @@ module Crystal
         opts.on('-no-build', 'Disable build output') do
           @options[:no_build] = true
         end
+        opts.on_tail("-h", "--help", "Show this message") do
+          puts opts
+          exit
+        end
       end.parse!
 
       if !@options[:output_filename] && ARGV.length > 0
