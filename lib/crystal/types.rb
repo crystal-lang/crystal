@@ -90,17 +90,23 @@ module Crystal
     end
 
     def observe_mutations(&block)
-      @mutation_observers ||= []
-      @mutation_observers << block
+      @mutation_observers ||= {}
+      token = block.object_id
+      @mutation_observers[token] = block
+      token
+    end
+
+    def unobserve_mutations(token)
+      @mutation_observers.delete token
+      @mutation_observers = nil if @mutation_observers.empty?
     end
 
     def mutation(ivar)
       return unless @mutation_observers
-      @mutation_observers.each do |observer|
+      @mutation_observers.values.each do |observer|
         observer.call(ivar.name, ivar.type)
       end
     end
-
     def ==(other)
       equal?(other) ||
         (other.is_a?(ObjectType) && name == other.name && instance_vars == other.instance_vars) ||

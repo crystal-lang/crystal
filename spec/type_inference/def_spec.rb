@@ -91,7 +91,7 @@ describe 'Type inference: def' do
     assert_type('def foo(x); x; end; a = 1; a = 1.1; foo(a)') { UnionType.new(int, float) }
   end
 
-  pending "doesn't incorrectly type as recursive type" do
+  it "doesn't incorrectly type as recursive type" do
     assert_type(%Q(
       class Foo
         #{rw :value}

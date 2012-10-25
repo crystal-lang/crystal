@@ -229,7 +229,7 @@ describe 'Type inference: def instance' do
       mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1, '@value'))])
   end
 
-  pending "caches nested path mutation with another nested recursive path" do
+  it "caches nested path mutation with another nested recursive path" do
     input = parse %Q(
       #{test_type}
 

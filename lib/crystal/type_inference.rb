@@ -206,12 +206,14 @@ module Crystal
 
           visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
 
+          mutation_observers = {}
           arg_types.each_with_index do |arg_type, i|
-            if arg_type.is_a?(ObjectType)
-              arg_type.observe_mutations do |ivar, type| 
+            if arg_type.is_a?(ObjectType) && !mutation_observers[arg_type.object_id]
+              token = arg_type.observe_mutations do |ivar, type|
                 path = visitor.paths[type.object_id]
                 typed_def.mutations << Mutation.new(Path.new(i, ivar), path || type)
               end
+              mutation_observers[arg_type.object_id] = [arg_type, token]
             end
           end
 
@@ -221,8 +223,8 @@ module Crystal
 
           untyped_def.add_instance(typed_def, arg_types_cloned)
 
-          if scope.is_a?(ObjectType)
-            # scope.unobserve_mutations
+          mutation_observers.values.each do |type, token|
+            type.unobserve_mutations token
           end
         rescue Crystal::Exception => ex
           if obj
