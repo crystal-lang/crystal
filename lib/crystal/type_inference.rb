@@ -319,19 +319,19 @@ module Crystal
 
     def compute_new_type(typed_def, scope)
       if typed_def.return.is_a?(Path)
-        new_type = typed_def.return.evaluate_args(scope, self.args)
+        typed_def.return.evaluate_args(scope, self.args)
       elsif typed_def.body && typed_def.body.type
         if typed_def.body.type.is_a?(ObjectType)
           name = typed_def.body.type.name
           if scope.is_a?(ObjectType) && scope.name == name
-            new_type = scope
+            scope
           elsif parent_visitor
-            new_type = parent_visitor.lookup_object_type(name) || typed_def.body.type.clone
+            parent_visitor.lookup_object_type(name) || typed_def.body.type.clone
           else
-            new_type = typed_def.body.type.clone
+            typed_def.body.type.clone
           end
         else
-          new_type = typed_def.body.type
+          typed_def.body.type
         end
       else
         self.bind_to typed_def.body if typed_def.body
