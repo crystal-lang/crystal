@@ -13,7 +13,7 @@ describe "Type inference: union" do
     assert_type("a = 1; a = 2.3; a + a") { UnionType.new(int, float) }
   end
 
-  it "unifies unions when instance var changes" do
+  pending "unifies unions when instance var changes" do
     nodes = parse(%Q(
       class A
         def next=(n)
@@ -31,10 +31,12 @@ describe "Type inference: union" do
     expected_type = ObjectType.new("A").with_var("@next", UnionType.new(mod.int, mod.float))
 
     nodes[1].type.should eq(expected_type)
+    nodes[2].target_def.owner.should eq(expected_type)
+    nodes[3].target_def.owner.should eq(expected_type)
     nodes.last.type.should eq(expected_type)
   end
 
-  it "unifies unions when instance var changes 2" do
+  pending "unifies unions when instance var changes 2" do
     nodes = parse(%Q(
       class A
         def next=(n)
@@ -54,7 +56,9 @@ describe "Type inference: union" do
     expected_type = ObjectType.new("A").with_var("@next", UnionType.new(mod.int, mod.float))
 
     nodes[1].type.should eq(expected_type)
+    nodes[2].target_def.owner.should eq(expected_type)
     nodes[3].type.should eq(expected_type)
+    nodes[4].target_def.owner.should eq(expected_type)
     nodes.last.type.should eq(expected_type)
   end
 
