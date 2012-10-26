@@ -140,10 +140,10 @@ module Crystal
     attr_accessor :parent_visitor
 
     def update_input(type)
-      recalculate
+      recalculate(nil, false)
     end
 
-    def recalculate(mutation = nil)
+    def recalculate(mutation = nil, apply_mutations = true)
       return unless can_calculate_type?
 
       if has_unions?
@@ -158,12 +158,14 @@ module Crystal
       check_method_exists untyped_def
       check_args_match untyped_def
 
+      type_was_nil = self.type.nil?
+
       arg_types = scope.is_a?(ObjectType) ? [scope] : []
       arg_types += args.map &:type
       typed_def = untyped_def.lookup_instance(arg_types, self.type) ||
                   instantiate(untyped_def, scope, arg_types, mutation)
 
-      if typed_def.mutations
+      if (type_was_nil || apply_mutations) && typed_def.mutations
         typed_def.mutations.each do |mutation|
           mutation.apply(arg_types)
         end
