@@ -28,6 +28,11 @@ module Crystal
         union
       end
     end
+
+    def self.clone(types)
+      context = {}
+      types.map { |type| type.clone(context) }
+    end
   end
 
   class ClassType < Type

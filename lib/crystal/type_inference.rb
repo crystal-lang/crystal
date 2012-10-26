@@ -192,7 +192,7 @@ module Crystal
 
     def instantiate(untyped_def, scope, arg_types, mutation)
       check_frozen untyped_def, arg_types
-      arg_types = arg_types.map &:clone
+      arg_types = Type.clone(arg_types)
       scope = arg_types[0] if scope.is_a?(MutableType)
       args_start_index = scope.is_a?(MutableType) ? 1 : 0
 
@@ -207,7 +207,7 @@ module Crystal
         typed_def.args[index].type = type
       end
 
-      arg_types_cloned = arg_types.map(&:clone)
+      arg_types_cloned = Type.clone(arg_types)
 
       if typed_def.body
         begin
@@ -655,7 +655,7 @@ module Crystal
 
     def visit_alloc(node)
       type = lookup_object_type(node.type.name)
-      node.type = type ? type : node.type.clone
+      node.type = type ? type : node.type
     end
 
     def visit_array_length(node)
