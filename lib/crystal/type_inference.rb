@@ -74,7 +74,8 @@ module Crystal
         var = type.lookup_instance_var(ivar)
         type = var.type
       end
-      var.type = target.is_a?(Type) ? target : target.evaluate_types(types)
+      new_type = target.is_a?(Type) ? target : target.evaluate_types(types)
+      var.type = var.type ? Type.merge(var.type, new_type) : new_type
     end
 
     def ==(other)
@@ -183,13 +184,13 @@ module Crystal
           recalculate mutation
         end
       end
+
       self.type = new_type
       self.target_def = typed_def
     end
 
     def instantiate(untyped_def, scope, arg_types, mutation)
       check_frozen untyped_def, arg_types
-      # scope = scope.clone if scope.is_a?(Type)
       arg_types = arg_types.map &:clone
       scope = arg_types[0] if scope.is_a?(ObjectType)
       args_start_index = scope.is_a?(ObjectType) ? 1 : 0
