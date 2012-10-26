@@ -70,25 +70,7 @@ module Crystal
     end
   end
 
-  class ObjectType < ClassType
-    attr_accessor :instance_vars
-    @@id = 0
-
-    def initialize(name, parent_type = nil)
-      super
-      @instance_vars = {}
-    end
-
-    def lookup_instance_var(name)
-      var = @instance_vars[name]
-      unless var
-        var = Var.new name
-        var.add_observer self, :mutation
-        @instance_vars[name] = var
-      end
-      var
-    end
-
+  module MutableType
     def observe_mutations(&block)
       @mutation_observers ||= {}
       token = block.object_id
@@ -107,6 +89,29 @@ module Crystal
         observer.call(ivar.name, ivar.type)
       end
     end
+  end
+
+  class ObjectType < ClassType
+    include MutableType
+    
+    attr_accessor :instance_vars
+    @@id = 0
+
+    def initialize(name, parent_type = nil)
+      super
+      @instance_vars = {}
+    end
+
+    def lookup_instance_var(name)
+      var = @instance_vars[name]
+      unless var
+        var = Var.new name
+        var.add_observer self, :mutation
+        @instance_vars[name] = var
+      end
+      var
+    end
+
     def ==(other)
       equal?(other) ||
         (other.is_a?(ObjectType) && name == other.name && instance_vars == other.instance_vars) ||
@@ -172,12 +177,20 @@ module Crystal
   end
 
   class ArrayType < ClassType
+    include MutableType
+
     attr_accessor :vars
     @@id = 0
 
     def initialize(parent_type = nil)
       super("Array", parent_type)
-      @vars = [Var.new('element')]
+      var = Var.new('element')
+      var.add_observer self, :mutation
+      @vars = [var]
+    end
+
+    def lookup_instance_var(name)
+      @vars[0]
     end
 
     def element_type_var

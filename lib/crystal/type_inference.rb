@@ -160,7 +160,7 @@ module Crystal
 
       type_was_nil = self.type.nil?
 
-      arg_types = scope.is_a?(ObjectType) ? [scope] : []
+      arg_types = scope.is_a?(MutableType) ? [scope] : []
       arg_types += args.map &:type
       typed_def = untyped_def.lookup_instance(arg_types, self.type) ||
                   instantiate(untyped_def, scope, arg_types, mutation)
@@ -178,7 +178,7 @@ module Crystal
         compute_parent_mutations typed_def, scope
       end
 
-      if new_type.is_a?(ObjectType) && !typed_def.return.is_a?(Path)
+      if new_type.is_a?(MutableType) && !typed_def.return.is_a?(Path)
         token = new_type.observe_mutations do |ivar, type|
           new_type.unobserve_mutations token
           mutation = Mutation.new(Path.new(0, ivar), type)
@@ -193,8 +193,8 @@ module Crystal
     def instantiate(untyped_def, scope, arg_types, mutation)
       check_frozen untyped_def, arg_types
       arg_types = arg_types.map &:clone
-      scope = arg_types[0] if scope.is_a?(ObjectType)
-      args_start_index = scope.is_a?(ObjectType) ? 1 : 0
+      scope = arg_types[0] if scope.is_a?(MutableType)
+      args_start_index = scope.is_a?(MutableType) ? 1 : 0
 
       typed_def = untyped_def.clone
       typed_def.owner = scope
@@ -217,7 +217,7 @@ module Crystal
 
           mutation_observers = {}
           arg_types.each_with_index do |arg_type, i|
-            if arg_type.is_a?(ObjectType) && !mutation_observers[arg_type.object_id]
+            if arg_type.is_a?(MutableType) && !mutation_observers[arg_type.object_id]
               token = arg_type.observe_mutations do |ivar, type|
                 path = visitor.paths[type.object_id]
                 typed_def.mutations << Mutation.new(Path.new(i, ivar), path || type)
@@ -250,7 +250,7 @@ module Crystal
 
     def compute_return(visitor, typed_def, scope)
       return_type = typed_def.body.type
-      unless return_type.is_a?(ObjectType)
+      unless return_type.is_a?(MutableType)
         return typed_def.return = return_type
       end
 
@@ -332,7 +332,7 @@ module Crystal
       if typed_def.return.is_a?(Path)
         typed_def.return.evaluate_args(scope, self.args)
       elsif typed_def.body && typed_def.body.type
-        if typed_def.body.type.is_a?(ObjectType)
+        if typed_def.body.type.is_a?(MutableType)
           name = typed_def.body.type.name
           if scope.is_a?(ObjectType) && scope.name == name
             scope
@@ -532,7 +532,7 @@ module Crystal
       @paths = {}
       if @call
         @call[2].each_with_index do |type, i|
-          @paths[type.object_id] = Path.new(i) if type.is_a?(ObjectType)
+          @paths[type.object_id] = Path.new(i) if type.is_a?(MutableType)
         end
       end
     end
