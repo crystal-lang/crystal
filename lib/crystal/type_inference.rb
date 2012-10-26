@@ -225,12 +225,12 @@ module Crystal
             end
           end
 
+          untyped_def.add_instance(typed_def, arg_types_cloned, self.type.clone)
           typed_def.body.accept visitor
 
           compute_return visitor, typed_def, scope
 
           mutation.apply [typed_def.body.type] if mutation
-          untyped_def.add_instance(typed_def, arg_types_cloned, self.type.clone)
 
           mutation_observers.values.each do |type, token|
             type.unobserve_mutations token
