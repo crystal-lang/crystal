@@ -161,7 +161,6 @@ module Crystal
       arg_types = scope.is_a?(ObjectType) ? [scope] : []
       arg_types += args.map &:type
       typed_def = untyped_def.lookup_instance(arg_types, self.type) ||
-                  parent_visitor.lookup_def_instance(scope, untyped_def, arg_types) ||
                   instantiate(untyped_def, scope, arg_types, mutation)
 
       if typed_def.mutations
@@ -690,14 +689,6 @@ module Crystal
         @scope
       elsif @parent
         @parent.lookup_object_type(name)
-      end
-    end
-
-    def lookup_def_instance(scope, untyped_def, arg_types)
-      if @call && @call[0..2] == [scope, untyped_def, arg_types]
-        @call[3]
-      elsif @parent
-        @parent.lookup_def_instance(scope, untyped_def, arg_types)
       end
     end
 
