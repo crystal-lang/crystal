@@ -160,7 +160,7 @@ module Crystal
 
       type_was_nil = self.type.nil?
 
-      arg_types = scope.is_a?(MutableType) ? [scope] : []
+      arg_types = !untyped_def.is_a?(FrozenDef) && scope.is_a?(MutableType) ? [scope] : []
       arg_types += args.map &:type
       typed_def = untyped_def.lookup_instance(arg_types, self.type) ||
                   instantiate(untyped_def, scope, arg_types, mutation)
