@@ -139,7 +139,7 @@ module Crystal
     attr_accessor :scope
     attr_accessor :parent_visitor
 
-    def update_input(type)
+    def update_input(*)
       recalculate(nil, false)
     end
 
@@ -178,11 +178,23 @@ module Crystal
         compute_parent_mutations typed_def, scope
       end
 
+      return_tokens = {}
+
       if new_type.is_a?(MutableType) && !typed_def.return.is_a?(Path)
         token = new_type.observe_mutations do |ivar, type|
-          new_type.unobserve_mutations token
-          mutation = Mutation.new(Path.new(0, ivar), type)
-          recalculate mutation
+          return_tokens.values.each { |type, token| type.unobserve_mutations token }
+          recalculate Mutation.new(Path.new(0, ivar), type)
+        end
+        return_tokens[new_type.object_id] = [new_type, token]
+      end
+
+      arg_types.each do |arg_type|
+        if arg_type.is_a?(MutableType)
+          token = arg_type.observe_mutations do
+            return_tokens.values.each { |type, token| type.unobserve_mutations token }
+            update_input
+          end
+          return_tokens[arg_type.object_id] = [arg_type, token]
         end
       end
 
