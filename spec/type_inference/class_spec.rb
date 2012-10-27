@@ -157,4 +157,21 @@ describe 'Type inference: class' do
       Foo.new.foo
     )) { ObjectType.new('Foo') }
   end
+
+  pending "types with two instance vars" do
+    nodes = parse %Q(
+      class Foo
+        #{rw :a}
+        #{rw :b}
+      end
+
+      f = Foo.new
+      f.a = 1
+      f.b = 2.3
+      )
+    mod = infer_type nodes
+
+    # The alloc
+    nodes[1].value.target_def.body.type.should eq(ObjectType.new('Foo').with_var('@a', mod.int).with_var('@b', mod.float))
+  end
 end
