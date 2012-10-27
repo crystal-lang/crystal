@@ -75,7 +75,7 @@ module Crystal
         type = var.type
       end
       new_type = target.is_a?(Type) ? target : target.evaluate_types(types)
-      var.type = var.type ? Type.merge(var.type, new_type) : new_type
+      var.type = new_type #var.type ? Type.merge(var.type, new_type) : new_type
     end
 
     def ==(other)

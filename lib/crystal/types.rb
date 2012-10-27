@@ -162,6 +162,7 @@ module Crystal
       obj = context[object_id] = ObjectType.new name, @parent_type
       obj.instance_vars = Hash[instance_vars.map do |name, var|
         cloned_var = Var.new(name, (var.type ? var.type.clone(context) : nil))
+        cloned_var.bind_to cloned_var
         cloned_var.add_observer obj, :mutation
         [name, cloned_var]
       end]
@@ -225,6 +226,7 @@ module Crystal
     def clone(context = {})
       array = ArrayType.new @parent_type
       array.element_type_var.type = element_type ? element_type.clone(context) : nil
+      array.element_type_var.bind_to array.element_type_var
       array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
       defs.each do |key, value|
         array.defs[key] = value.clone
