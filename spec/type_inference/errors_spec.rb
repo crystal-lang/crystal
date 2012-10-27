@@ -121,7 +121,7 @@ describe 'Type inference: errors' do
     }.should raise_error(Crystal::Exception, regex("can't use instance variables inside Int"))
   end
 
-  it "reports error when changing var type and something breaks" do
+  pending "reports error when changing var type and something breaks" do
     nodes = parse "class Foo; #{rw :value}; end; f = Foo.new; f.value = 1; f.value + 1; f.value = 'a'"
 
     lambda {

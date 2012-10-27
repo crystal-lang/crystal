@@ -158,7 +158,7 @@ describe 'Type inference: class' do
     )) { ObjectType.new('Foo') }
   end
 
-  pending "types with two instance vars" do
+  it "types with two instance vars" do
     nodes = parse %Q(
       class Foo
         #{rw :a}

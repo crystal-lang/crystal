@@ -74,8 +74,7 @@ module Crystal
         var = type.lookup_instance_var(ivar)
         type = var.type
       end
-      new_type = target.is_a?(Type) ? target : target.evaluate_types(types)
-      var.type = new_type #var.type ? Type.merge(var.type, new_type) : new_type
+      var.type = target.is_a?(Type) ? target : target.evaluate_types(types)
     end
 
     def ==(other)
@@ -140,10 +139,10 @@ module Crystal
     attr_accessor :parent_visitor
 
     def update_input(*)
-      recalculate(nil, false)
+      recalculate(false)
     end
 
-    def recalculate(mutation = nil, apply_mutations = true)
+    def recalculate(apply_mutations = true)
       return unless can_calculate_type?
 
       if has_unions?
@@ -163,7 +162,7 @@ module Crystal
       arg_types = !untyped_def.is_a?(FrozenDef) && scope.is_a?(MutableType) ? [scope] : []
       arg_types += args.map &:type
       typed_def = untyped_def.lookup_instance(arg_types, self.type) ||
-                  instantiate(untyped_def, scope, arg_types, mutation)
+                  instantiate(untyped_def, scope, arg_types)
 
       if (type_was_nil || apply_mutations) && typed_def.mutations
         typed_def.mutations.each do |mutation|
@@ -171,38 +170,33 @@ module Crystal
         end
       end
 
-      new_type = compute_new_type typed_def, scope
-      compute_parent_path typed_def, scope, new_type
+      unless self.type
+        return_type = compute_return_type typed_def, scope
+        compute_parent_path typed_def, scope, return_type
 
-      if typed_def.mutations && parent_visitor.call && !typed_def.equal?(parent_visitor.call[3])
-        compute_parent_mutations typed_def, scope
-      end
-
-      return_tokens = {}
-
-      if new_type.is_a?(MutableType) && !typed_def.return.is_a?(Path)
-        token = new_type.observe_mutations do |ivar, type|
-          return_tokens.values.each { |type, token| type.unobserve_mutations token }
-          recalculate Mutation.new(Path.new(0, ivar), type)
+        if typed_def.mutations && parent_visitor.call && !typed_def.equal?(parent_visitor.call[3])
+          compute_parent_mutations typed_def, scope
         end
-        return_tokens[new_type.object_id] = [new_type, token]
-      end
 
-      arg_types.each do |arg_type|
-        if arg_type.is_a?(MutableType)
-          token = arg_type.observe_mutations do
-            return_tokens.values.each { |type, token| type.unobserve_mutations token }
-            update_input
+        if return_type.is_a?(MutableType) && !typed_def.return.is_a?(Path)
+          return_type.observe_mutations do |ivar, type|
+            @return_type_mutations ||= []
+            @return_type_mutations << Mutation.new(Path.new(0, ivar), type)
+            recalculate
           end
-          return_tokens[arg_type.object_id] = [arg_type, token]
         end
+
+        arg_types.each do |arg_type|
+          arg_type.observe_mutations { update_input } if arg_type.is_a?(MutableType)
+        end
+
+        self.type = return_type
       end
 
-      self.type = new_type
       self.target_def = typed_def
     end
 
-    def instantiate(untyped_def, scope, arg_types, mutation)
+    def instantiate(untyped_def, scope, arg_types)
       check_frozen untyped_def, arg_types
       arg_types = Type.clone(arg_types)
       scope = arg_types[0] if scope.is_a?(MutableType)
@@ -244,7 +238,11 @@ module Crystal
 
           compute_return visitor, typed_def, scope
 
-          mutation.apply [typed_def.body.type] if mutation
+          if @return_type_mutations
+            @return_type_mutations.each do |mutation|
+              mutation.apply [typed_def.body.type]
+            end
+          end
 
           mutation_observers.values.each do |type, token|
             type.unobserve_mutations token
@@ -282,12 +280,12 @@ module Crystal
       typed_def.return = return_type
     end
 
-    def compute_parent_path(typed_def, scope, new_type)
+    def compute_parent_path(typed_def, scope, return_type)
       return unless typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
 
       index = typed_def.return.index
       search_id = lookup_arg_index(index, scope)
-      return_id = new_type.object_id
+      return_id = return_type.object_id
 
       parent_scope = parent_visitor.call[0]
       types = parent_scope.is_a?(Crystal::Type) ? [parent_scope] : []
@@ -341,7 +339,7 @@ module Crystal
       end
     end
 
-    def compute_new_type(typed_def, scope)
+    def compute_return_type(typed_def, scope)
       if typed_def.return.is_a?(Path)
         typed_def.return.evaluate_args(scope, self.args)
       elsif typed_def.body && typed_def.body.type
