@@ -94,7 +94,7 @@ module Crystal
         ivar.type.observe_mutations do |sub_ivar, type|
           if @mutation_observers
             @mutation_observers.values.each do |observer|
-              observer.call([ivar.name] + sub_ivar, type) unless sub_ivar.length > 5
+              observer.call([ivar] + sub_ivar, type) unless sub_ivar.include?(ivar)
             end
           end
         end
@@ -102,7 +102,7 @@ module Crystal
 
       return unless @mutation_observers
       @mutation_observers.values.each do |observer|
-        observer.call([ivar.name], ivar.type)
+        observer.call([ivar], ivar.type)
       end
     end
   end
