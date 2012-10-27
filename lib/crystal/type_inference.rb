@@ -161,12 +161,21 @@ module Crystal
 
       arg_types = !untyped_def.is_a?(FrozenDef) && scope.is_a?(MutableType) ? [scope] : []
       arg_types += args.map &:type
-      typed_def = untyped_def.lookup_instance(arg_types, self.type) ||
-                  instantiate(untyped_def, scope, arg_types)
 
-      if (type_was_nil || apply_mutations) && typed_def.mutations
-        typed_def.mutations.each do |mutation|
-          mutation.apply(arg_types)
+      begin
+        typed_def = untyped_def.lookup_instance(arg_types, self.type) ||
+                    instantiate(untyped_def, scope, arg_types)
+
+        if (type_was_nil || apply_mutations) && typed_def.mutations
+          typed_def.mutations.each do |mutation|
+            mutation.apply(arg_types)
+          end
+        end
+      rescue Crystal::Exception => ex
+        if obj
+          raise "instantiating '#{obj.type.name}##{name}'", ex
+        else
+          raise "instantiating '#{name}'", ex
         end
       end
 
@@ -228,42 +237,34 @@ module Crystal
       arg_types_cloned = Type.clone(arg_types)
 
       if typed_def.body
-        begin
-          typed_def.mutations = []
+        typed_def.mutations = []
 
-          visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
+        visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
 
-          mutation_observers = {}
-          arg_types.each_with_index do |arg_type, i|
-            if arg_type.is_a?(MutableType) && !mutation_observers[arg_type.object_id]
-              token = arg_type.observe_mutations do |ivar, type|
-                path = visitor.paths[type.object_id]
-                typed_def.mutations << Mutation.new(Path.new(i, *ivar), path || type)
-              end
-              mutation_observers[arg_type.object_id] = [arg_type, token]
+        mutation_observers = {}
+        arg_types.each_with_index do |arg_type, i|
+          if arg_type.is_a?(MutableType) && !mutation_observers[arg_type.object_id]
+            token = arg_type.observe_mutations do |ivar, type|
+              path = visitor.paths[type.object_id]
+              typed_def.mutations << Mutation.new(Path.new(i, *ivar), path || type)
             end
+            mutation_observers[arg_type.object_id] = [arg_type, token]
           end
+        end
 
-          untyped_def.add_instance(typed_def, arg_types_cloned, self.type.clone)
-          typed_def.body.accept visitor
+        untyped_def.add_instance(typed_def, arg_types_cloned, self.type.clone)
+        typed_def.body.accept visitor
 
-          compute_return visitor, typed_def, scope
+        compute_return visitor, typed_def, scope
 
-          if @return_type_mutations
-            @return_type_mutations.each do |mutation|
-              mutation.apply [typed_def.body.type]
-            end
+        if @return_type_mutations
+          @return_type_mutations.each do |mutation|
+            mutation.apply [typed_def.body.type]
           end
+        end
 
-          mutation_observers.values.each do |type, token|
-            type.unobserve_mutations token
-          end
-        rescue Crystal::Exception => ex
-          if obj
-            raise "instantiating '#{obj.type.name}##{name}'", ex
-          else
-            raise "instantiating '#{name}'", ex
-          end
+        mutation_observers.values.each do |type, token|
+          type.unobserve_mutations token
         end
       end
 
