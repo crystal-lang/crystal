@@ -327,4 +327,15 @@ describe 'Type inference: def instance' do
     input[3].target_def.args[0].type.should eq(sub)
     input[4].target_def.owner.should eq(sub)
   end
+
+  pending "apply all mutations to target def body type" do
+    input = parse %Q(
+      #{test_type}
+      f = Foo.new
+      f.value = Foo.new
+      f.value.value = "hola")
+    mod = infer_type input
+
+    input.last.obj.target_def.body.type.should eq(input.last.obj.type)
+  end
 end
