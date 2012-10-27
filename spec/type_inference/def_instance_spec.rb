@@ -328,7 +328,7 @@ describe 'Type inference: def instance' do
     input[4].target_def.owner.should eq(sub)
   end
 
-  it "apply all mutations to target def body type" do
+  it "applies all mutations to target def body type" do
     input = parse %Q(
       #{test_type}
       f = Foo.new
@@ -337,5 +337,23 @@ describe 'Type inference: def instance' do
     mod = infer_type input
 
     input.last.obj.target_def.body.type.should eq(input.last.obj.type)
+  end
+
+  pending "applies all mutations to target_def body type with recursive type" do
+    input = parse %Q(
+      class Node
+        def add(x)
+          @left = Node.alloc
+          @left.add(x)
+          @right = Node.alloc
+          @right.add(x)
+        end
+      end
+
+      root = Node.alloc
+      root.add 'c'
+      )
+    mod = infer_type input
+    input[2].target_def.body[2].value.target_def.body.type.should eq(input[1].type)
   end
 end
