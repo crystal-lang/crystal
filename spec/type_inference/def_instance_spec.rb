@@ -304,7 +304,7 @@ describe 'Type inference: def instance' do
     input[1].value.target_def.body.type.should eq(ObjectType.new('Foo').with_var('@value', mod.int))
   end
 
-  pending "repoints target defs to correct types" do
+  it "repoints target defs to correct types" do
     input = parse %Q(
       #{test_type}
       class Foo
@@ -325,6 +325,6 @@ describe 'Type inference: def instance' do
     input[3].target_def.owner.should eq(obj)
     input[3].args[0].type.should eq(sub)
     input[3].target_def.args[0].type.should eq(sub)
-    input[4].target_def.owner.should eq(obj)
+    input[4].target_def.owner.should eq(sub)
   end
 end
