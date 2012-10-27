@@ -170,8 +170,12 @@ module Crystal
         end
       end
 
-      unless self.type
-        return_type = compute_return_type typed_def, scope
+      return_type = compute_return_type typed_def, scope
+      if !self.type || self.type != return_type
+        if @end_mutation_observers && @end_mutation_observers.length > 0
+          @end_mutation_observers.values.each { |type, token| type.unobserve_mutations token }
+        end
+
         compute_parent_path typed_def, scope, return_type
 
         if typed_def.mutations && parent_visitor.call && !typed_def.equal?(parent_visitor.call[3])
@@ -179,15 +183,21 @@ module Crystal
         end
 
         if return_type.is_a?(MutableType) && !typed_def.return.is_a?(Path)
-          return_type.observe_mutations do |ivar, type|
+          token = return_type.observe_mutations do |ivar, type|
             @return_type_mutations ||= []
             @return_type_mutations << Mutation.new(Path.new(0, ivar), type)
             recalculate
           end
+          @end_mutation_observers ||= {}
+          @end_mutation_observers[return_type.object_id] = [return_type, token]
         end
 
         arg_types.each do |arg_type|
-          arg_type.observe_mutations { update_input } if arg_type.is_a?(MutableType)
+          if arg_type.is_a?(MutableType)
+            token = arg_type.observe_mutations { update_input } 
+            @end_mutation_observers ||= {}
+            @end_mutation_observers[arg_type.object_id] = [arg_type, token]
+          end
         end
 
         self.type = return_type
