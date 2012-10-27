@@ -89,16 +89,27 @@ module Crystal
     end
 
     def mutation(ivar)
+
+      if ivar.type.is_a?(MutableType)
+        ivar.type.observe_mutations do |sub_ivar, type|
+          if @mutation_observers
+            @mutation_observers.values.each do |observer|
+              observer.call([ivar.name] + sub_ivar, type) unless sub_ivar.length > 5
+            end
+          end
+        end
+      end
+
       return unless @mutation_observers
       @mutation_observers.values.each do |observer|
-        observer.call(ivar.name, ivar.type)
+        observer.call([ivar.name], ivar.type)
       end
     end
   end
 
   class ObjectType < ClassType
     include MutableType
-    
+
     attr_accessor :instance_vars
     @@id = 0
 

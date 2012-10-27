@@ -187,7 +187,7 @@ module Crystal
         if return_type.is_a?(MutableType) && !typed_def.return.is_a?(Path)
           token = return_type.observe_mutations do |ivar, type|
             @return_type_mutations ||= []
-            @return_type_mutations << Mutation.new(Path.new(0, ivar), type)
+            @return_type_mutations << Mutation.new(Path.new(0, *ivar), type)
             recalculate
           end
           @end_mutation_observers ||= {}
@@ -196,7 +196,7 @@ module Crystal
 
         arg_types.each do |arg_type|
           if arg_type.is_a?(MutableType)
-            token = arg_type.observe_mutations { update_input } 
+            token = arg_type.observe_mutations { update_input }
             @end_mutation_observers ||= {}
             @end_mutation_observers[arg_type.object_id] = [arg_type, token]
           end
@@ -238,7 +238,7 @@ module Crystal
             if arg_type.is_a?(MutableType) && !mutation_observers[arg_type.object_id]
               token = arg_type.observe_mutations do |ivar, type|
                 path = visitor.paths[type.object_id]
-                mutation2 = Mutation.new(Path.new(i, ivar), path || type)
+                mutation2 = Mutation.new(Path.new(i, *ivar), path || type)
                 typed_def.mutations << mutation2
               end
               mutation_observers[arg_type.object_id] = [arg_type, token]
