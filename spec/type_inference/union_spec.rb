@@ -36,7 +36,7 @@ describe "Type inference: union" do
     nodes.last.type.should eq(expected_type)
   end
 
-  it "unifies unions when instance var changes 2" do
+  pending "unifies unions when instance var changes 2" do
     nodes = parse(%Q(
       class A
         def next=(n)
@@ -60,6 +60,12 @@ describe "Type inference: union" do
     nodes[3].type.should eq(expected_type)
     nodes[4].target_def.owner.should eq(expected_type)
     nodes.last.type.should eq(expected_type)
+
+    # The alloc of the first A.new
+    nodes[1].value.target_def.body.target_def.body.type.should eq(expected_type)
+
+    # The alloc of the second A.new
+    nodes[3].value.target_def.body.target_def.body.type.should eq(expected_type)
   end
 
   it "types union of classes" do
