@@ -359,8 +359,8 @@ module Crystal
           name = typed_def.body.type.name
           if scope.is_a?(ObjectType) && scope.name == name
             [scope, false]
-          elsif parent_visitor
-            [parent_visitor.lookup_object_type(name) || typed_def.body.type.clone, false]
+          elsif parent_visitor && (parent_type = parent_visitor.lookup_object_type(name))
+            [parent_type, false]
           else
             [typed_def.body.type, true]
           end
