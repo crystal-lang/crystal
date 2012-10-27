@@ -304,10 +304,10 @@ module Crystal
       types += parent_visitor.call[2]
       parent_index = types.index { |type| type.object_id == search_id }
       if parent_index
-        parent_visitor.paths[return_id] = typed_def.return.with_index(parent_index)
+        parent_visitor.paths[return_id] ||= typed_def.return.with_index(parent_index)
       else
         parent_path = parent_visitor.paths[search_id]
-        parent_visitor.paths[return_id] = parent_path.append(typed_def.return)
+        parent_visitor.paths[return_id] ||= parent_path.append(typed_def.return)
       end
     end
 
@@ -639,7 +639,7 @@ module Crystal
 
       var = @scope.lookup_instance_var node.name
       node.bind_to var
-      paths[var.type.object_id] = Path.new(0, node.name) if var.type
+      paths[var.type.object_id] ||= Path.new(0, node.name) if var.type
     end
 
     def end_visit_assign(node)
