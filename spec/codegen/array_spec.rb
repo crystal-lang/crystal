@@ -29,11 +29,11 @@ describe 'Code gen: array' do
     run('a = []; a.length').to_i.should eq(0)
   end
 
-  pending "codegens recursive array" do
+  it "codegens recursive array" do
     run('a = []; a << a; a.length').to_i.should eq(1)
   end
 
-  pending "codegens array set in recursive union" do
+  it "codegens array set in recursive union" do
     run('a = [0] ; a[0] = a; a.length').to_i.should eq(1)
   end
 end

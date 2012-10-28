@@ -40,4 +40,8 @@ describe 'Type inference: array' do
   it "types recursive array" do
     assert_type("a = []; a << a") { a = ArrayType.new; a.element_type_var.type = a; a }
   end
+
+  it "types recursive array with length" do
+    assert_type("a = []; a << a; a.length; a") { a = ArrayType.new; a.element_type_var.type = a; a }
+  end
 end

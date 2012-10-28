@@ -232,7 +232,9 @@ module Crystal
     end
 
     def clone(context = {})
-      array = ArrayType.new @parent_type
+      array = context[object_id] and return array
+
+      array = context[object_id] = ArrayType.new @parent_type
       array.element_type_var.type = element_type ? element_type.clone(context) : nil
       array.element_type_var.bind_to array.element_type_var
       array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
