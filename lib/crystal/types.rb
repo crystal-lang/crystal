@@ -356,7 +356,7 @@ module Crystal
     end
 
     def clone
-      Alloc.new(@type)
+      Alloc.new(@type.clone)
     end
   end
 end
