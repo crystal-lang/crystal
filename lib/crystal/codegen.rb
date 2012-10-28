@@ -110,6 +110,10 @@ module Crystal
       @last = LLVM::Int(node.value)
     end
 
+    def visit_long_literal(node)
+      @last = LLVM::Int64.from_i(node.value)
+    end
+
     def visit_float_literal(node)
       @last = LLVM::Float(node.value)
     end
