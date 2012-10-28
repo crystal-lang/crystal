@@ -395,7 +395,7 @@ describe 'Type inference: def instance' do
     input[3].type.should eq(ObjectType.new('Node'))
   end
 
-  pending "types new when modifiying in place" do
+  it "types new when modifiying in place" do
     input = parse %Q(
       class A
         def foo

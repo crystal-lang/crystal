@@ -179,7 +179,10 @@ module Crystal
         end
       end
 
+      self.target_def = typed_def
+
       return_type, found_in_parent, must_clone = compute_return_type typed_def, scope
+
       if return_type && (!self.type || self.type != return_type)
         return_type = return_type.clone if must_clone && !self.type
 
@@ -220,8 +223,6 @@ module Crystal
 
         self.type = return_type
       end
-
-      self.target_def = typed_def
     end
 
     def instantiate(untyped_def, scope, arg_types)
