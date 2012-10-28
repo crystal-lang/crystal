@@ -15,6 +15,9 @@ module Crystal
 
     def define_object_primitives
       no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
+      no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
+        b.ptr2int(f.params[0], LLVM::Int64)
+      end
       no_args_primitive(object, 'to_s', string) do |b, f, llvm_mod, self_type|
         buffer = b.array_malloc(char.llvm_type, LLVM::Int(self_type.name.length + 23))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
