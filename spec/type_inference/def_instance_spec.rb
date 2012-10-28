@@ -374,4 +374,24 @@ describe 'Type inference: def instance' do
     mod = infer_type input
     input[2].target_def.body[2].value.target_def.body.type.should eq(input[1].type)
   end
+
+  it "doesn't infect other vars" do
+    input = parse %Q(
+      class Node
+        def add(x)
+          @left = Node.new
+          @left.add(x)
+          @right = Node.new
+          @right.add(x)
+        end
+      end
+
+      root = Node.new
+      root.add 'c'
+
+      other = Node.new
+      )
+    mod = infer_type input
+    input[3].type.should eq(ObjectType.new('Node'))
+  end
 end

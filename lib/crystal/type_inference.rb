@@ -183,8 +183,6 @@ module Crystal
       if return_type && (!self.type || self.type != return_type)
         return_type = return_type.clone if must_clone && !self.type
 
-        typed_def.body.type = return_type
-
         if @end_mutation_observers && @end_mutation_observers.length > 0
           @end_mutation_observers.values.each { |type, token| type.unobserve_mutations token }
         end
