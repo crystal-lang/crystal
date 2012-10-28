@@ -60,7 +60,12 @@ module Crystal
 
   def build(node, mod)
     visitor = CodeGenVisitor.new(mod, node.type)
-    node.accept visitor
+    begin
+      node.accept visitor
+    rescue StandardError => ex
+      visitor.llvm_mod.dump
+      raise
+    end
 
     visitor.finish
 
