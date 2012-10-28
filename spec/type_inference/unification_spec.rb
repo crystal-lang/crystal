@@ -61,4 +61,22 @@ describe 'Type inference unification' do
     infer_type input
     input[-2].value.type.should equal(input[-1].value.type)
   end
+
+  pending "unifies array of union of same type within def" do
+    input = parse %(
+      class Foo
+        def initialize
+          @x = [Bar.new, Bar.new]
+        end
+      end
+
+
+      class Bar
+      end
+
+      Foo.new
+    )
+    infer_type input
+    p input.last.type.should equal(input.last.target_def.body.type)
+  end
 end
