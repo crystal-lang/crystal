@@ -6,6 +6,7 @@ module Crystal
       define_bool_primitives
       define_char_primitives
       define_int_primitives
+      define_long_primitives
       define_float_primitives
       define_array_primitives
       define_externals
@@ -117,6 +118,14 @@ module Crystal
       singleton(int, :%, {'other' => int}, int) { |b, f| b.srem(f.params[0], f.params[1]) }
 
       no_args_primitive(int, 'chr', char) { |b, f| b.trunc(f.params[0], char.llvm_type) }
+    end
+
+    def define_long_primitives
+      no_args_primitive(long, 'to_s', string) do |b, f, llvm_mod|
+        buffer = b.array_malloc(char.llvm_type, LLVM::Int(22))
+        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%ld"), f.params[0]
+        buffer
+      end
     end
 
     def define_float_primitives
