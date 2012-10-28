@@ -181,7 +181,9 @@ module Crystal
 
       return_type, must_clone = compute_return_type typed_def, scope
       if return_type && (!self.type || self.type != return_type)
-        return_type = return_type.clone if must_clone
+        return_type = return_type.clone if must_clone && !self.type
+
+        typed_def.body.type = return_type
 
         if @end_mutation_observers && @end_mutation_observers.length > 0
           @end_mutation_observers.values.each { |type, token| type.unobserve_mutations token }
@@ -196,7 +198,8 @@ module Crystal
         if return_type.is_a?(MutableType) && !typed_def.return.is_a?(Path)
           token = return_type.observe_mutations do |ivar, type|
             @return_type_mutations ||= []
-            @return_type_mutations << Mutation.new(Path.new(0, *ivar.map(&:name)), type)
+            mutation = Mutation.new(Path.new(0, *ivar.map(&:name)), type)
+            @return_type_mutations << mutation
             recalculate
           end
           @end_mutation_observers ||= {}
@@ -246,7 +249,8 @@ module Crystal
           if arg_type.is_a?(MutableType) && !mutation_observers[arg_type.object_id]
             token = arg_type.observe_mutations do |ivar, type|
               path = visitor.paths[type.object_id]
-              typed_def.mutations << Mutation.new(Path.new(i, *ivar.map(&:name)), path || type)
+              mutation = Mutation.new(Path.new(i, *ivar.map(&:name)), path || type)
+              typed_def.mutations << mutation
             end
             mutation_observers[arg_type.object_id] = [arg_type, token]
           end
@@ -335,7 +339,8 @@ module Crystal
             new_target = mutation.target.evaluate_args(scope, args)
           end
         end
-        parent_visitor.call[3].mutations << Mutation.new(new_path, new_target)
+        parent_mutation = Mutation.new(new_path, new_target)
+        parent_visitor.call[3].mutations << parent_mutation
       end
     end
 

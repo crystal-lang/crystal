@@ -177,10 +177,7 @@ module Crystal
         cloned_var.add_observer obj, :mutation
         [name, cloned_var]
       end]
-      obj.defs = defs #@parent_type ? HashWithParent.new(@parent_type.defs) : {}
-      # defs.each do |key, value|
-      #   obj.defs[key] = value.clone
-      # end
+      obj.defs = defs
       obj
     end
 
@@ -357,7 +354,7 @@ module Crystal
     end
 
     def clone
-      Alloc.new(@type.clone)
+      Alloc.new(@type)
     end
   end
 end
