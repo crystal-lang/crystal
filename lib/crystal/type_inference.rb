@@ -179,9 +179,15 @@ module Crystal
         end
       end
 
-      return_type, must_clone = compute_return_type typed_def, scope
+      return_type, found_in_parent, must_clone = compute_return_type typed_def, scope
       if return_type && (!self.type || self.type != return_type)
         return_type = return_type.clone if must_clone && !self.type
+
+        if found_in_parent && typed_def.body.type != return_type
+          self.type = return_type
+          recalculate
+          return
+        end
 
         if @end_mutation_observers && @end_mutation_observers.length > 0
           @end_mutation_observers.values.each { |type, token| type.unobserve_mutations token }
@@ -356,19 +362,19 @@ module Crystal
 
     def compute_return_type(typed_def, scope)
       if typed_def.return.is_a?(Path)
-        [typed_def.return.evaluate_args(scope, self.args), false]
+        [typed_def.return.evaluate_args(scope, self.args), false, false]
       elsif typed_def.body && typed_def.body.type
         if typed_def.body.type.is_a?(MutableType)
           name = typed_def.body.type.name
           if scope.is_a?(ObjectType) && scope.name == name
-            [scope, false]
+            [scope, false, false]
           elsif parent_visitor && (parent_type = parent_visitor.lookup_object_type(name))
-            [parent_type, false]
+            [parent_type, true, false]
           else
-            [typed_def.body.type, true]
+            [typed_def.body.type, false, true]
           end
         else
-          [typed_def.body.type, false]
+          [typed_def.body.type, false, false]
         end
       else
         self.bind_to typed_def.body if typed_def.body
