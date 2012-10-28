@@ -49,7 +49,7 @@ module Crystal
 
             unified_type = type
             unified_type.instance_vars.each do |name, ivar|
-              ivar.set_type unify_type(ivar.type) unless @types[ivar.type].equal?(ivar.type)
+              ivar.set_type unify_type(ivar.type)
             end
 
             if existing_type = @types[type]
@@ -74,7 +74,7 @@ module Crystal
 
             unified_type = type
             array_type_var = type.element_type_var
-            array_type_var.set_type unify_type(array_type_var.type) unless @arrays[array_type_var.type].equal?(array_type_var.type)
+            array_type_var.set_type unify_type(array_type_var.type)
 
             if existing_type = @arrays[type]
               unified_type = existing_type
