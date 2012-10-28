@@ -16,6 +16,7 @@ module Crystal
       @types = {}
       @unions = {}
       @arrays = {}
+      @stack = []
     end
 
     def end_visit_dispatch(node)
@@ -32,7 +33,7 @@ module Crystal
     end
 
     def visit_any(node)
-      node.set_type unify_type(node.type)
+      node.set_type unify_type(node.type) if node.type && !node.type.is_a?(Metaclass)
     end
 
     def unify_type(type)
@@ -41,34 +42,67 @@ module Crystal
         unified_type = @types[type]
 
         unless unified_type
-          unified_type = @types[type] = type
-          unified_type.instance_vars.each do |name, ivar|
-            ivar.set_type unify_type(ivar.type) unless @types[ivar.type].equal?(ivar.type)
+          if index = @stack.index(type)
+            unified_type = @types[type] = @stack[index]
+          else
+            @stack.push type
+
+            unified_type = type
+            unified_type.instance_vars.each do |name, ivar|
+              ivar.set_type unify_type(ivar.type) unless @types[ivar.type].equal?(ivar.type)
+            end
+
+            if existing_type = @types[type]
+              unified_type = existing_type
+            else
+              @types[type] = unified_type
+            end
+
+            @stack.pop
+          end
+        end
+
+        unified_type
+      when ArrayType
+        unified_type = @arrays[type]
+
+        unless unified_type
+          if index = @stack.index(type)
+            unified_type = @types[type] = @stack[index]
+          else
+            @stack.push type
+
+            unified_type = type
+            array_type_var = type.element_type_var
+            array_type_var.set_type unify_type(array_type_var.type) unless @arrays[array_type_var.type].equal?(array_type_var.type)
+
+            if existing_type = @arrays[type]
+              unified_type = existing_type
+            else
+              @arrays[type] = unified_type
+            end
+
+            @stack.pop
           end
         end
 
         unified_type
       when UnionType
-        unified_types = type.types.map { |type| unify_type(type) }.uniq
-        union_key = unified_types.map(&:object_id).sort
-        unified_type = @unions[union_key]
-
-        if unified_type
-          unified_type
-        else
-          if unified_types.length == 1
-            @unions[union_key] = unified_types.first
-          else
-            @unions[union_key] = UnionType.new(*unified_types)
-          end
-        end
-      when ArrayType
-        unified_type = @arrays[type]
+        unified_type = @unions[type]
 
         unless unified_type
-          unified_type = @arrays[type] = type
-          array_type_var = type.element_type_var
-          array_type_var.set_type unify_type(array_type_var.type) unless @arrays[array_type_var.type].equal?(array_type_var.type)
+          if index = @stack.index(type)
+            unified_type = @unions[type] = @stack[index]
+          else
+            @stack.push type
+
+            unified_types = type.types.map { |subtype| unify_type(subtype) }.uniq
+            unified_types = unified_types.length == 1 ? unified_types[0] : UnionType.new(*unified_types)
+
+            unified_type = @unions[type] = unified_types
+
+            @stack.pop
+          end
         end
 
         unified_type

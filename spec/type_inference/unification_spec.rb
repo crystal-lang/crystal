@@ -61,7 +61,7 @@ describe 'Type inference unification' do
     input[-2].value.type.should equal(input[-1].value.type)
   end
 
-  pending "unifies two objects with arrays of unions" do
+  it "unifies two objects with arrays of unions" do
     mod = Crystal::Module.new
     nodes = Expressions.from [Var.new('a'), Var.new('b')]
     nodes[0].type = ObjectType.new('Foo').with_var('@x', ArrayType.of(UnionType.new(ObjectType.new('Bar'), ObjectType.new('Bar'))))
@@ -72,7 +72,7 @@ describe 'Type inference unification' do
     nodes[0].type.should equal(nodes[1].type)
   end
 
-  pending "unifies array of union of same type within def" do
+  it "unifies array of union of same type within def" do
     input = parse %(
       class Foo
         def initialize

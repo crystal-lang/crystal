@@ -89,7 +89,6 @@ module Crystal
     end
 
     def mutation(ivar)
-
       if ivar.type.is_a?(MutableType)
         ivar.type.observe_mutations do |sub_ivar, type|
           if @mutation_observers
@@ -220,7 +219,9 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) || (other.is_a?(ArrayType) && vars == other.vars)
+      equal?(other) || 
+        (other.is_a?(ArrayType) && vars == other.vars) ||
+        (other.is_a?(UnionType) && other == self)
     end
 
     def eql?(other)
@@ -281,6 +282,10 @@ module Crystal
       @types = types
     end
 
+    def set
+      @set ||= Set.new(@types)
+    end
+
     def llvm_type
       unless @llvm_type
         @llvm_type = LLVM::Struct(llvm_name)
@@ -309,13 +314,17 @@ module Crystal
       types.each(&block)
     end
 
+    def hash
+      set.hash
+    end
+
     def ==(other)
       return true if equal?(other)
 
       if @types.length == 1
         @types.first == other
       elsif other.is_a?(UnionType)
-        Set.new(@types) == Set.new(other.types)
+        set == other.set
       else
         false
       end
