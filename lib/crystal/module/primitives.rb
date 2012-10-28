@@ -120,6 +120,12 @@ module Crystal
     end
 
     def define_float_primitives
+      no_args_primitive(float, 'to_s', string) do |b, f, llvm_mod|
+        buffer = b.array_malloc(char.llvm_type, LLVM::Int(12))
+        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%g"), b.fp_ext(f.params[0], LLVM::Double)
+        buffer
+      end
+
       no_args_primitive(float, 'to_i', int) { |b, f| b.fp2si(f.params[0], int.llvm_type) }
       no_args_primitive(float, 'to_f', float) { |b, f| f.params[0] }
 
