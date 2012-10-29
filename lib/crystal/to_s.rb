@@ -56,7 +56,7 @@ module Crystal
     end
 
     def visit_call(node)
-      if node.obj && node.name == :'[ ]'
+      if node.obj && node.name == :'[]'
         node.obj.accept self
         @str << "["
         node.args.each_with_index do |arg, i|
