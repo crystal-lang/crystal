@@ -316,6 +316,7 @@ module Crystal
         parent_visitor.paths[return_id] ||= typed_def.return.with_index(parent_index)
       else
         parent_path = parent_visitor.paths[search_id]
+        binding.pry unless parent_path
         parent_visitor.paths[return_id] ||= parent_path.append(typed_def.return)
       end
     end
