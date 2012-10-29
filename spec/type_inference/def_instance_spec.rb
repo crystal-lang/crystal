@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe 'Type inference: def instance' do
-
   it "types a call with an int" do
     input = parse 'def foo; 1; end; foo'
     mod = infer_type input

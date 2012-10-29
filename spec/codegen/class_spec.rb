@@ -105,4 +105,21 @@ describe 'Code gen: class' do
       a.next.to_f
     )).to_f.should eq(2.5)
   end
+
+  it "codegens method from another method without obj and accesses instance vars" do
+    run(%Q(
+      class Foo
+        def foo
+          bar
+        end
+
+        def bar
+          @a = 1
+        end
+      end
+
+      f = Foo.new
+      f.foo
+      )).to_i.should eq(1)
+  end
 end

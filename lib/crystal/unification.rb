@@ -22,6 +22,7 @@ module Crystal
     def end_visit_call(node)
       if node.target_def && !node.target_def.unified
         node.target_def.unified = true
+        node.scope = unify_type(node.scope) if node.scope.is_a?(Type)
         node.target_def.accept self
         node.simplify
       end

@@ -338,17 +338,23 @@ module Crystal
         return false
       end
 
+      owner = ((node.obj && node.obj.type) || node.scope)
+      owner = owner.is_a?(Type) && !owner.is_a?(Metaclass) && owner
+
       call_args = []
       if node.obj && !node.obj.type.is_a?(Metaclass)
         node.obj.accept self
         call_args << @last
+      elsif owner
+        call_args << @fun.params[0]
       end
+
       node.args.each do |arg|
         arg.accept self
         call_args << @last
       end
 
-      codegen_call(node.target_def, node.obj && node.obj.type, call_args)
+      codegen_call(node.target_def, owner, call_args)
 
       false
     end
