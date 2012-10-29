@@ -702,6 +702,7 @@ module Crystal
       check_array_index_is_int
 
       node.bind_to @scope.element_type_var
+      paths[@scope.element_type.object_id] = Path.new(0, 'element')
     end
 
     def visit_array_set(node)

@@ -52,6 +52,12 @@ describe 'Type inference: def instance' do
     input.last.target_def.return.should eq(Path.new(1, '@value'))
   end
 
+  it "types a call to array getter" do
+    input = parse "a = [Object.new]; a[0]"
+    mod = infer_type input
+    input.last.target_def.return.should eq(Path.new(0, 'element'))
+  end
+
   it "types a call returning path of self" do
     input = parse %Q(
       #{test_type}
