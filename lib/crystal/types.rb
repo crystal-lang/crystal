@@ -219,7 +219,7 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) || 
+      equal?(other) ||
         (other.is_a?(ArrayType) && vars == other.vars) ||
         (other.is_a?(UnionType) && other == self)
     end
@@ -237,7 +237,7 @@ module Crystal
 
       array = context[object_id] = ArrayType.new @parent_type
       array.element_type_var.type = element_type ? element_type.clone(context) : nil
-      array.element_type_var.bind_to array.element_type_var
+      array.element_type_var.bind_to array.element_type_var if array.element_type
       array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
       defs.each do |key, value|
         array.defs[key] = value.clone
@@ -324,7 +324,7 @@ module Crystal
       if @types.length == 1
         @types.first == other
       elsif other.is_a?(UnionType)
-        set == other.set
+        @types.length == other.types.length && set == other.set
       else
         false
       end

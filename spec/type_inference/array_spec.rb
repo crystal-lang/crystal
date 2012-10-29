@@ -45,7 +45,7 @@ describe 'Type inference: array' do
     assert_type("a = []; a << a; a.length; a") { a = ArrayType.new; a.element_type_var.type = a; a }
   end
 
-  pending "types literal more than two elements" do
+  it "types literal more than two elements" do
     assert_type(%Q(
       class Foo
         def value=(value)
