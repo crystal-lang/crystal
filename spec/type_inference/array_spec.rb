@@ -44,4 +44,22 @@ describe 'Type inference: array' do
   it "types recursive array with length" do
     assert_type("a = []; a << a; a.length; a") { a = ArrayType.new; a.element_type_var.type = a; a }
   end
+
+  pending "types literal more than two elements" do
+    assert_type(%Q(
+      class Foo
+        def value=(value)
+          @value = value
+        end
+      end
+
+      f = Foo.alloc
+      g = Foo.alloc
+      h = Foo.alloc
+      a = [f, g, h]
+
+      h.value = 1
+      a
+    )) { ArrayType.of(UnionType.new(ObjectType.new('Foo'), ObjectType.new('Foo').with_var('@value', int))) }
+  end
 end
