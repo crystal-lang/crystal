@@ -504,7 +504,7 @@ module Crystal
       @name = call.name
       @obj = call.obj && call.obj.type
       @args = call.args.map(&:type)
-      @calls = {}
+      @calls = []
       for_each_obj do |obj_type|
         for_each_args do |arg_types|
           subcall = Call.new(obj_type ? Var.new('self', obj_type) : nil, name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
@@ -515,18 +515,15 @@ module Crystal
           subcall.name_column_number = call.name_column_number
           self.bind_to subcall
           subcall.recalculate
-          @calls[[obj_type.object_id] + arg_types.map(&:object_id)] = subcall
+          @calls << subcall
         end
       end
     end
 
     def simplify
       new_calls = {}
-      for_each_obj do |obj_type|
-        for_each_args do |arg_types|
-          call_key = [obj_type.object_id] + arg_types.map(&:object_id)
-          new_calls[call_key] = @calls[call_key]
-        end
+      @calls.each do |call|
+        new_calls[[(call.obj ? call.obj.type : nil).object_id] + call.args.map { |arg| arg.type.object_id }] = call
       end
       @calls = new_calls
     end
@@ -547,6 +544,12 @@ module Crystal
           arg_types[index] = arg_type
           for_each_args(args, arg_types, index + 1, &block)
         end
+      end
+    end
+
+    def accept_children(visitor)
+      @calls.each do |call|
+        call.accept visitor
       end
     end
   end

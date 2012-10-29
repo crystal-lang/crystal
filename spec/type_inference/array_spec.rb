@@ -63,7 +63,7 @@ describe 'Type inference: array' do
     )) { ArrayType.of(UnionType.new(ObjectType.new('Foo'), ObjectType.new('Foo').with_var('@value', int))) }
   end
 
-  pending "simplify dispatch call to array member" do
+  it "simplify dispatch call to array member" do
     assert_type(%Q(
       a = [[], []]
       s = a[1].to_s
