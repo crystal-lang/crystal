@@ -414,7 +414,7 @@ describe 'Type inference: def instance' do
     input[1].obj.target_def.body.type.should eq(input[1].obj.type)
   end
 
-  pending "two" do
+  it "do not try to compute parent path of new instance" do
     nodes = parse %Q(
       def foo
         [[]][0].push 1
