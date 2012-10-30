@@ -291,7 +291,10 @@ module Crystal
       buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
       @builder.store buffer, gep(array, 0, 2)
 
-      if node.type.element_type == @mod.int
+      case node.type.element_type
+      when @mod.char
+        memset buffer, @builder.zext(obj[:ptr], LLVM::Int), size
+      when @mod.int
         codegen_int_array_new_contents(node, buffer, obj, size)
       else
         codegen_array_new_contents(node, buffer, obj, size)
@@ -307,7 +310,7 @@ module Crystal
       @builder.cond cmp, memset_block, one_by_one_block
 
       @builder.position_at_end memset_block
-      bytes_count = @builder.mul size, LLVM::Int(4)
+      bytes_count = @builder.mul size, LLVM::Int(@mod.int.llvm_size)
       memset buffer, obj[:ptr], bytes_count
       @builder.br exit_block
 
