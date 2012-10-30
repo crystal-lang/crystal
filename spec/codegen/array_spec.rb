@@ -33,6 +33,14 @@ describe 'Code gen: array' do
     run('a = Array.new(10, 1); a.length').to_i.should eq(10)
   end
 
+  it "codegens Array new with bool getter false" do
+    run("a = Array.new(10, false); a[9]").to_b.should be_false
+  end
+
+  it "codegens Array new with bool getter true" do
+    run("a = Array.new(10, true); a[9]").to_b.should be_true
+  end
+
   it "codegens Array new with char getter" do
     run("a = Array.new(10, 'a'); a[9]").to_i.should eq(?a.ord)
   end

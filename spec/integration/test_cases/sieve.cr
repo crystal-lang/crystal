@@ -1,14 +1,8 @@
 #output: 78499
 max = 1000000
 
-sieve = []
-sieve.push false
-
-i = 1
-while i < max
-  sieve.push true
-  i += 1
-end
+sieve = Array.new max, true
+sieve[0] = false
 
 i = 2
 while i < max

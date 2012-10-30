@@ -292,7 +292,7 @@ module Crystal
       @builder.store buffer, gep(array, 0, 2)
 
       case node.type.element_type
-      when @mod.char
+      when @mod.bool, @mod.char
         memset buffer, @builder.zext(obj[:ptr], LLVM::Int), size
       when @mod.int
         codegen_int_array_new_contents(node, buffer, obj, size)
