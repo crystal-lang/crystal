@@ -282,8 +282,7 @@ module Crystal
       size = @vars['size'][:ptr]
       capacity = size # TODO: expand to next power of two using LLVM
 
-      obj = @vars['obj'][:ptr]
-      obj_type = @vars['obj'][:type]
+      obj = @vars['obj']
 
       array = @builder.malloc(node.type.llvm_struct_type)
       @builder.store LLVM::Int(size), gep(array, 0, 0)
@@ -292,6 +291,34 @@ module Crystal
       buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
       @builder.store buffer, gep(array, 0, 2)
 
+      if node.type.element_type == @mod.int
+        codegen_int_array_new_contents(node, buffer, obj, size)
+      else
+        codegen_array_new_contents(node, buffer, obj, size)
+      end
+
+      @last = array
+    end
+
+    def codegen_int_array_new_contents(node, buffer, obj, size)
+      memset_block, one_by_one_block, exit_block = new_blocks 'memset', 'one_by_one', 'exit'
+
+      cmp = @builder.icmp :eq, obj[:ptr], LLVM::Int(0)
+      @builder.cond cmp, memset_block, one_by_one_block
+
+      @builder.position_at_end memset_block
+      bytes_count = @builder.mul size, LLVM::Int(4)
+      memset buffer, obj[:ptr], bytes_count
+      @builder.br exit_block
+
+      @builder.position_at_end one_by_one_block
+      codegen_array_new_contents(node, buffer, obj, size)
+      @builder.br exit_block
+
+      @builder.position_at_end exit_block
+    end
+
+    def codegen_array_new_contents(node, buffer, obj, size)
       cmp_block, loop_block, exit_block = new_blocks 'cmp', 'loop', 'exit'
 
       index_ptr = alloca LLVM::Int
@@ -305,13 +332,11 @@ module Crystal
 
       @builder.position_at_end loop_block
       index = @builder.load(index_ptr)
-      codegen_assign gep(buffer, index), node.type.element_type, obj_type, obj
+      codegen_assign gep(buffer, index), node.type.element_type, obj[:type], obj[:ptr]
       @builder.store @builder.add(index, LLVM::Int(1)), index_ptr
       @builder.br cmp_block
 
       @builder.position_at_end exit_block
-
-      @last = array
     end
 
     def visit_array_length(node)

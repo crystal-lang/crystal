@@ -33,7 +33,11 @@ describe 'Code gen: array' do
     run('a = Array.new(10, 1); a.length').to_i.should eq(10)
   end
 
-  it "codegens Array new with int getter" do
+  it "codegens Array new with int getter with zero" do
+    run('a = Array.new(10, 0); a[9]').to_i.should eq(0)
+  end
+
+  it "codegens Array new with int getter with one" do
     run('a = Array.new(10, 1); a[9]').to_i.should eq(1)
   end
 
