@@ -403,7 +403,7 @@ module Crystal
       end
 
       owner = ((node.obj && node.obj.type) || node.scope)
-      owner = owner.is_a?(Type) && !owner.is_a?(Metaclass) && owner
+      owner = node.target_def.owner && owner.is_a?(Type) && !owner.is_a?(Metaclass) && owner
 
       call_args = []
       if node.obj && !node.obj.type.is_a?(Metaclass)
