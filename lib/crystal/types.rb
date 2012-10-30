@@ -87,6 +87,10 @@ module Crystal
       @mutation_observers.delete token
       @mutation_observers = nil if @mutation_observers.empty?
     end
+  end
+
+  module MutableClassType
+    include MutableType
 
     def mutation(ivar)
       if ivar.type.is_a?(MutableType)
@@ -106,8 +110,9 @@ module Crystal
     end
   end
 
+
   class ObjectType < ClassType
-    include MutableType
+    include MutableClassType
 
     attr_accessor :instance_vars
     @@id = 0
@@ -190,7 +195,7 @@ module Crystal
   end
 
   class ArrayType < ClassType
-    include MutableType
+    include MutableClassType
 
     attr_accessor :vars
     @@id = 0
@@ -276,10 +281,23 @@ module Crystal
   end
 
   class UnionType < Type
+    include MutableType
+
     attr_reader :types
 
     def initialize(*types)
       @types = types
+      types.each_with_index do |type, index|
+        if type.is_a?(MutableType)
+          type.observe_mutations do |ivar, type|
+            if @mutation_observers
+              @mutation_observers.values.each do |observer|
+                observer.call([index] + ivar, type)
+              end
+            end
+          end
+        end
+      end
     end
 
     def set
@@ -332,6 +350,10 @@ module Crystal
 
     def clone(context = {})
       UnionType.new(*types.map { |type| type.clone(context) })
+    end
+
+    def name
+      "Union"
     end
 
     def to_s

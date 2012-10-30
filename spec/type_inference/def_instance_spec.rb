@@ -414,19 +414,13 @@ describe 'Type inference: def instance' do
     input[1].obj.target_def.body.type.should eq(input[1].obj.type)
   end
 
-  pending "one" do
-    nodes = parse "[[], []][0].push 1"
-  end
-
   pending "two" do
     nodes = parse %Q(
-      class Foo
-        def initialize
-          [[], []][0].push 1
-        end
+      def foo
+        [[]][0].push 1
       end
 
-      Foo.new
+      foo
     )
     mod = infer_type nodes
   end
