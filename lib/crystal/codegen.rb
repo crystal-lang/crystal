@@ -278,6 +278,42 @@ module Crystal
       false
     end
 
+    def visit_array_new(node)
+      size = @vars['size'][:ptr]
+      capacity = size # TODO: expand to next power of two using LLVM
+
+      obj = @vars['obj'][:ptr]
+      obj_type = @vars['obj'][:type]
+
+      array = @builder.malloc(node.type.llvm_struct_type)
+      @builder.store LLVM::Int(size), gep(array, 0, 0)
+      @builder.store LLVM::Int(capacity), gep(array, 0, 1)
+
+      buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
+      @builder.store buffer, gep(array, 0, 2)
+
+      cmp_block, loop_block, exit_block = new_blocks 'cmp', 'loop', 'exit'
+
+      index_ptr = alloca LLVM::Int
+      @builder.store LLVM::Int(0), index_ptr
+
+      @builder.br cmp_block
+
+      @builder.position_at_end cmp_block
+      cmp = @builder.icmp(:eq, @builder.load(index_ptr), size)
+      @builder.cond(cmp, exit_block, loop_block)
+
+      @builder.position_at_end loop_block
+      index = @builder.load(index_ptr)
+      codegen_assign gep(buffer, index), node.type.element_type, obj_type, obj
+      @builder.store @builder.add(index, LLVM::Int(1)), index_ptr
+      @builder.br cmp_block
+
+      @builder.position_at_end exit_block
+
+      @last = array
+    end
+
     def visit_array_length(node)
       if @type.element_type
         @last = @builder.load gep(@fun.params[0], 0, 0)

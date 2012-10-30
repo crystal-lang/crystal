@@ -193,6 +193,8 @@ module Crystal
     end
 
     def define_array_primitives
+      array.metaclass.defs['new'] = Def.new('new', [Var.new('size'), Var.new('obj')], ArrayNew.new)
+
       array.defs['length'] = Def.new('length', [], ArrayLength.new)
       array.defs['push'] = Def.new('push', [Var.new('value')], ArrayPush.new)
       array.defs[:<<] = Def.new(:<<, [Var.new('value')], ArrayPush.new)
@@ -289,6 +291,9 @@ module Crystal
       @type = type
       @block = block
     end
+  end
+
+  class ArrayNew < Primitive
   end
 
   class ArraySet < Primitive

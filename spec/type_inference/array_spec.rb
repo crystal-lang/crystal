@@ -45,6 +45,10 @@ describe 'Type inference: array' do
     assert_type("a = []; a << a; a.length; a") { a = ArrayType.new; a.element_type_var.type = a; a }
   end
 
+  it "types Array.new" do
+    assert_type("Array.new(2, Object.new)") { ArrayType.of(ObjectType.new('Object')) }
+  end
+
   it "types literal more than two elements" do
     assert_type(%Q(
       class Foo

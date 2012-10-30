@@ -599,13 +599,6 @@ module Crystal
       node.type = mod.string
     end
 
-    def visit_array_literal(node)
-      node.type = mod.array.clone
-      node.elements.each do |elem|
-        node.type.element_type_var.bind_to elem
-      end
-    end
-
     def visit_def(node)
       if @class_defs.empty?
         mod.defs[node.name] = node
@@ -695,19 +688,33 @@ module Crystal
       node.type = type ? type : node.type
     end
 
+    def visit_array_literal(node)
+      node.type = mod.array.clone
+      node.elements.each do |elem|
+        node.type.element_type_var.bind_to elem
+      end
+    end
+
+    def visit_array_new(node)
+      check_var_type 'size', mod.int
+
+      node.type = mod.array.clone
+      node.type.element_type_var.bind_to @vars['obj']
+    end
+
     def visit_array_length(node)
       node.type = mod.int
     end
 
     def visit_array_get(node)
-      check_array_index_is_int
+      check_var_type 'index', mod.int
 
       node.bind_to @scope.element_type_var
       paths[@scope.element_type.object_id] = Path.new(0, 'element')
     end
 
     def visit_array_set(node)
-      check_array_index_is_int
+      check_var_type 'index', mod.int
 
       @scope.element_type_var.bind_to @vars['value']
       node.bind_to @vars['value']
@@ -718,10 +725,10 @@ module Crystal
       node.bind_to @vars['self']
     end
 
-    def check_array_index_is_int
-      index_type = @vars['index'].type
-      if index_type != mod.int
-        @call[4].args[0].raise "index must be Int, not #{index_type.name}"
+    def check_var_type(var_name, expected_type)
+      type = @vars[var_name].type
+      if type != expected_type
+        @call[4].args[0].raise "#{var_name} must be #{expected_type.name}, not #{type.name}"
       end
     end
 
