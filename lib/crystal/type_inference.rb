@@ -198,10 +198,6 @@ module Crystal
 
         compute_parent_path typed_def, scope, return_type
 
-        if typed_def.mutations && parent_visitor.call && !typed_def.equal?(parent_visitor.call[3])
-          compute_parent_mutations typed_def, scope
-        end
-
         if return_type.is_a?(MutableType) && !typed_def.return.is_a?(Path)
           token = return_type.observe_mutations do |ivar, type|
             @return_type_mutations ||= []
@@ -317,35 +313,6 @@ module Crystal
       else
         parent_path = parent_visitor.paths[search_id]
         parent_visitor.paths[return_id] ||= parent_path.append(typed_def.return) if parent_path
-      end
-    end
-
-    def compute_parent_mutations(typed_def, scope)
-      typed_def.mutations.each do |mutation|
-        compute_parent_mutation(mutation, scope)
-      end
-    end
-
-    def compute_parent_mutation(mutation, scope)
-      index = mutation.path.index
-      search_id = lookup_arg_index(index, scope)
-
-      path = parent_visitor.paths[search_id]
-      if path && path.path.length > 0
-        new_path = path.append(mutation.path)
-        if mutation.target.is_a?(Type)
-          new_target = mutation.target
-        else
-          search_id = lookup_arg_index(mutation.target.index, scope)
-          target_path = parent_visitor.paths[search_id]
-          if target_path
-            new_target = target_path.append(mutation.target)
-          else
-            new_target = mutation.target.evaluate_args(scope, args)
-          end
-        end
-        parent_mutation = Mutation.new(new_path, new_target)
-        parent_visitor.call[3].mutations << parent_mutation
       end
     end
 

@@ -93,19 +93,30 @@ module Crystal
     include MutableType
 
     def mutation(ivar)
+      hook_to_ivar_mutations(ivar)
+
+      return unless @mutation_observers
+      @mutation_observers.values.each do |observer|
+        observer.call([ivar], ivar.type)
+      end
+    end
+
+    def hook_to_ivar_mutations(ivar)
+      if @ivar_tokens && (type_and_token = @ivar_tokens[ivar.name])
+        type_and_token[0].unobserve_mutations(type_and_token[1])
+      end
+
       if ivar.type.is_a?(MutableType)
-        ivar.type.observe_mutations do |sub_ivar, type|
+        token = ivar.type.observe_mutations do |sub_ivar, type|
           if @mutation_observers
             @mutation_observers.values.each do |observer|
               observer.call([ivar] + sub_ivar, type) unless sub_ivar.include?(ivar)
             end
           end
         end
-      end
 
-      return unless @mutation_observers
-      @mutation_observers.values.each do |observer|
-        observer.call([ivar], ivar.type)
+        @ivar_tokens ||= {}
+        @ivar_tokens[ivar.name] = [ivar.type, token]
       end
     end
   end
@@ -177,6 +188,7 @@ module Crystal
       obj = context[object_id] = ObjectType.new name, @parent_type
       obj.instance_vars = Hash[instance_vars.map do |name, var|
         cloned_var = Var.new(name, (var.type ? var.type.clone(context) : nil))
+        obj.hook_to_ivar_mutations(cloned_var)
         cloned_var.bind_to cloned_var
         cloned_var.add_observer obj, :mutation
         [name, cloned_var]

@@ -424,4 +424,30 @@ describe 'Type inference: def instance' do
     )
     mod = infer_type nodes
   end
+
+  it "" do
+    nodes = parse %Q(    
+      class Foo
+        def bar
+          @value = 1
+        end
+      end
+
+      class Hash
+        def initialize
+          @a = Foo.new
+        end
+
+        def foo
+          @a.bar
+        end
+      end
+
+      Hash.new.foo
+      )
+    mod = infer_type nodes
+
+    type = ObjectType.new('Hash').with_var('@a', ObjectType.new('Foo').with_var('@value', mod.int))
+    nodes.last.obj.type.should eq(type)
+  end
 end
