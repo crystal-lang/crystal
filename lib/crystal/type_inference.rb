@@ -170,8 +170,10 @@ module Crystal
       arg_types += args.map &:type
 
       begin
-        typed_def = untyped_def.lookup_instance(arg_types, self.type) ||
-                    instantiate(untyped_def, scope, arg_types)
+        typed_def = untyped_def.lookup_instance(arg_types, self.type)
+        unless typed_def
+          typed_def = instantiate(untyped_def, scope, arg_types)
+        end
 
         if (type_was_nil || apply_mutations) && typed_def.mutations
           typed_def.mutations.each do |mutation|
@@ -294,29 +296,46 @@ module Crystal
     end
 
     def reinstantiate(mutation)
-      type_context = {}
+      scope, untyped_def = compute_scope_and_untyped_def
 
-      cloned_def = target_def.clone do |old_node, new_node|
-        new_node.set_type old_node.type.clone(type_context) if old_node.type
-        if old_node.is_a?(Call)
-          new_node.target_def = old_node.target_def
-          new_node.mod = old_node.mod
-          new_node.listen_return_type_and_args_mutations
+      arg_types = !untyped_def.is_a?(FrozenDef) && scope.is_a?(MutableType) ? [scope] : []
+      arg_types += args.map &:type
+
+      cloned_def = untyped_def.lookup_instance(arg_types, self.type)
+      unless cloned_def
+        new_context = {}
+        untyped_def.add_instance(arg_types.map { |type| type.clone(new_context) }, self.type.clone(new_context))
+
+        type_context = {}
+
+        cloned_def = target_def.clone do |old_node, new_node|
+          new_node.set_type old_node.type.clone(type_context) if old_node.type
+          if old_node.is_a?(Call)
+            new_node.target_def = old_node.target_def
+            new_node.mod = old_node.mod
+            if old_node.scope.is_a?(Type)
+              new_node.scope = old_node.scope.clone(type_context)
+            else
+              new_node.scope = old_node.scope
+            end
+            new_node.parent_visitor = old_node.parent_visitor
+            new_node.listen_return_type_and_args_mutations
+          end
         end
+
+        if target_def.owner.is_a?(Type)
+          cloned_def.owner = target_def.owner.clone(type_context)
+        else
+          cloned_def.owner = target_def.owner
+        end
+
+        all_types = [cloned_def.body.type]
+        all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)
+        all_types += cloned_def.args.map(&:type)
+        mutation.apply(all_types)
+
+        cloned_def.accept SetInstanceVarTypeVisitor.new(cloned_def.owner)
       end
-
-      if target_def.owner.is_a?(Type)
-        cloned_def.owner = target_def.owner.clone(type_context)
-      else
-        cloned_def.owner = target_def.owner
-      end
-
-      all_types = [cloned_def.body.type]
-      all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)
-      all_types += cloned_def.args.map(&:type)
-      mutation.apply(all_types)
-
-      cloned_def.accept SetInstanceVarTypeVisitor.new(cloned_def.owner)
 
       self.target_def = cloned_def
       self.type = cloned_def.body.type
