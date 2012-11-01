@@ -46,6 +46,12 @@ module Crystal
 
     def accept_children(visitor)
     end
+
+    def clone(&block)
+      new_node = self.class.new
+      block.call(self, new_node) if block
+      new_node
+    end
   end
 
   # A container for one or many expressions.
@@ -108,7 +114,7 @@ module Crystal
     end
 
     def clone(&block)
-      exps = Expressions.new expressions.map { |exp| exp.clone(&block) } 
+      exps = Expressions.new expressions.map { |exp| exp.clone(&block) }
       exps.location = location
       block.call(self, exps) if block
       exps

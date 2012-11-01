@@ -298,18 +298,18 @@ module Crystal
       cloned_def = target_def.clone do |old_node, new_node|
         new_node.set_type old_node.type.clone(type_context) if old_node.type
         if old_node.is_a?(Call)
-          new_node.target_def = old_node.target_def 
+          new_node.target_def = old_node.target_def
           new_node.mod = old_node.mod
           new_node.listen_return_type_and_args_mutations
         end
       end
 
       if target_def.owner.is_a?(Type)
-        cloned_def.owner = target_def.owner.clone(type_context) 
+        cloned_def.owner = target_def.owner.clone(type_context)
       else
         cloned_def.owner = target_def.owner
       end
-      all_types = [cloned_def.body.type] 
+      all_types = [cloned_def.body.type]
       all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type)
       all_types += cloned_def.args.map(&:type)
       mutation.apply(all_types)

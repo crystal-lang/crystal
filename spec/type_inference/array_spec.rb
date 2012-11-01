@@ -78,7 +78,7 @@ describe 'Type inference: array' do
     )) { string }
   end
 
-  pending "recalculate target_def of array obj" do
+  it "recalculate target_def of array obj" do
     input = parse '[[]][0].push 1'
     mod = infer_type input
     input.obj.target_def.body.type.should eq(ArrayType.of(mod.int))
