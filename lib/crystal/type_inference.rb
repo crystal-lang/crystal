@@ -312,11 +312,10 @@ module Crystal
         types_context = {}
         nodes_context = {}
 
-        if target_def.owner.is_a?(ObjectType)
-          target_def.owner.instance_vars.each do |name, ivar|
-            cloned_ivar = ivar.clone(nodes_context)
-            cloned_ivar.type = ivar.type.clone(types_context, nodes_context) if ivar.type
-          end
+        if target_def.owner.is_a?(Type)
+          new_owner = target_def.owner.clone(types_context, nodes_context)
+        else
+          new_owner = target_def.owner
         end
 
         clone_proc = proc do |old_node, new_node|
@@ -344,12 +343,7 @@ module Crystal
         end
 
         cloned_def = target_def.clone(nodes_context, &clone_proc)
-
-        if target_def.owner.is_a?(Type)
-          cloned_def.owner = target_def.owner.clone(types_context, nodes_context)
-        else
-          cloned_def.owner = target_def.owner
-        end
+        cloned_def.owner = new_owner
 
         all_types = [cloned_def.body.type]
         all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)

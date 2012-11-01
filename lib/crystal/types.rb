@@ -213,9 +213,8 @@ module Crystal
     attr_accessor :vars
     @@id = 0
 
-    def initialize(parent_type = nil)
+    def initialize(parent_type = nil, var = Var.new('element'))
       super("Array", parent_type)
-      var = Var.new('element')
       var.add_observer self, :mutation
       @vars = [var]
     end
@@ -253,8 +252,10 @@ module Crystal
     def clone(types_context = {}, nodes_context = {})
       array = types_context[object_id] and return array
 
-      array = types_context[object_id] = ArrayType.new @parent_type
-      array.element_type_var.type = element_type ? element_type.clone(types_context) : nil
+      cloned_element_type_var = element_type_var.clone(nodes_context)
+
+      array = types_context[object_id] = ArrayType.new @parent_type, cloned_element_type_var
+      array.element_type_var.type = element_type ? element_type.clone(types_context, nodes_context) : nil
       array.element_type_var.bind_to array.element_type_var if array.element_type
       array.defs = defs
       array
@@ -311,7 +312,7 @@ module Crystal
     end
 
     def set
-      @set ||= Set.new(@types)
+      Set.new(@types)
     end
 
     def llvm_type

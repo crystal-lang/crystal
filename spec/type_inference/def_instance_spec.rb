@@ -493,4 +493,22 @@ describe 'Type inference: def instance' do
     mod = infer_type nodes
     nodes[3].target_def.body[0].target.type.should eq(UnionType.new(mod.int, mod.float))
   end
+
+  it "" do
+    nodes = parse %Q(
+      class Hash
+        def initialize
+          @buckets = [[], []]
+        end
+
+        def foo
+          @buckets[0].push 1
+        end
+      end
+
+      Hash.new.foo
+      )
+    mod = infer_type nodes
+    nodes[1].obj.target_def.body[1].target_def.body.value.type.should eq(ArrayType.of(ArrayType.of(mod.int)))
+  end
 end
