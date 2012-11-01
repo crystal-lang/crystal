@@ -243,6 +243,7 @@ module Crystal
     def stop_listen_return_type_and_args_mutations
       if @end_mutation_observers && @end_mutation_observers.length > 0
         @end_mutation_observers.values.each { |type, token| type.unobserve_mutations token }
+        @end_mutation_observers = nil
       end
     end
 
