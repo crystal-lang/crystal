@@ -320,6 +320,11 @@ module Crystal
             end
             new_node.parent_visitor = old_node.parent_visitor
             new_node.listen_return_type_and_args_mutations
+
+            new_node.args.each_with_index do |arg, index|
+              arg.add_observer new_node, :update_input
+            end
+            new_node.obj.add_observer new_node, :update_input if new_node.obj
           end
         end
 

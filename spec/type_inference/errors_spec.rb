@@ -136,4 +136,25 @@ describe 'Type inference: errors' do
       infer_type nodes
     }.should raise_error(Crystal::Exception, regex("undefined method '+' for Char"))
   end
+
+  it "reports error when changing instance var type and something breaks" do
+    nodes = parse %Q(
+      class Foo
+        #{rw :value}
+      end
+
+      def foo(x)
+        x.value = 'a'
+        putchar x.value
+      end
+
+      f = Foo.new
+      foo(f)
+
+      f.value = 1
+      )
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("can't call putchar with types [Int]"))
+  end
 end
