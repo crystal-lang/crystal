@@ -47,8 +47,10 @@ module Crystal
     def accept_children(visitor)
     end
 
-    def clone(&block)
-      new_node = clone0(&block)
+    def clone(context = {}, &block)
+      new_node = context[object_id] and return new_node
+
+      new_node = context[object_id] = clone0(&block)
       block.call(self, new_node) if block
       new_node
     end

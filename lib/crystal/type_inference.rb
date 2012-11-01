@@ -109,10 +109,12 @@ module Crystal
       notify_observers
     end
 
-    def bind_to(node)
+    def bind_to(*nodes)
       @dependencies ||= []
-      dependencies << node
-      node.add_observer self
+      @dependencies += nodes
+      nodes.each do |node|
+        node.add_observer self
+      end
       update
     end
 
@@ -307,15 +309,27 @@ module Crystal
         new_context = {}
         untyped_def.add_instance(arg_types.map { |type| type.clone(new_context) }, self.type.clone(new_context))
 
-        type_context = {}
+        types_context = {}
+        nodes_context = {}
 
-        cloned_def = target_def.clone do |old_node, new_node|
-          new_node.set_type old_node.type.clone(type_context) if old_node.type
+        if target_def.owner.is_a?(ObjectType)
+          target_def.owner.instance_vars.each do |name, ivar|
+            cloned_ivar = ivar.clone(nodes_context)
+            cloned_ivar.type = ivar.type.clone(types_context, nodes_context) if ivar.type
+          end
+        end
+
+        clone_proc = proc do |old_node, new_node|
+          if old_node.dependencies
+            new_node.bind_to *old_node.dependencies.map { |node| node.clone(nodes_context, &clone_proc) }
+          end
+
+          new_node.set_type old_node.type.clone(types_context, nodes_context) if old_node.type
           if old_node.is_a?(Call)
             new_node.target_def = old_node.target_def
             new_node.mod = old_node.mod
             if old_node.scope.is_a?(Type)
-              new_node.scope = old_node.scope.clone(type_context)
+              new_node.scope = old_node.scope.clone(types_context, nodes_context)
             else
               new_node.scope = old_node.scope
             end
@@ -329,8 +343,10 @@ module Crystal
           end
         end
 
+        cloned_def = target_def.clone(nodes_context, &clone_proc)
+
         if target_def.owner.is_a?(Type)
-          cloned_def.owner = target_def.owner.clone(type_context)
+          cloned_def.owner = target_def.owner.clone(types_context, nodes_context)
         else
           cloned_def.owner = target_def.owner
         end
@@ -339,22 +355,10 @@ module Crystal
         all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)
         all_types += cloned_def.args.map(&:type)
         mutation.apply(all_types)
-
-        cloned_def.accept SetInstanceVarTypeVisitor.new(cloned_def.owner)
       end
 
       self.target_def = cloned_def
       self.type = cloned_def.body.type
-    end
-
-    class SetInstanceVarTypeVisitor < Visitor
-      def initialize(owner)
-        @owner = owner
-      end
-
-      def visit_instance_var(node)
-        node.set_type @owner.lookup_instance_var(node.name).type
-      end
     end
 
     def compute_return(visitor, typed_def, scope)

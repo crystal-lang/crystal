@@ -450,4 +450,47 @@ describe 'Type inference: def instance' do
     type = ObjectType.new('Hash').with_var('@a', ObjectType.new('Foo').with_var('@value', mod.int))
     nodes.last.obj.type.should eq(type)
   end
+
+  it "" do
+    nodes = parse %Q(
+      class Foo
+        def value=(value)
+          @value = value
+        end
+
+        def value
+          @value + 2.3
+        end
+      end
+
+      f = Foo.new
+      f.value = 1
+      f.value
+      f.value = 2.3
+      )
+    mod = infer_type nodes
+    nodes[3].target_def.body.target_def.should be_a_kind_of(Dispatch)
+  end
+
+  it "" do
+    nodes = parse %Q(
+      class Foo
+        def value=(value)
+          @value = value
+        end
+
+        def value
+          a = @value + 1
+          a + 2.3
+        end
+      end
+
+      f = Foo.new
+      f.value = 1
+      f.value
+      f.value = 2.3
+      )
+    mod = infer_type nodes
+    nodes[3].target_def.body[0].target.type.should eq(UnionType.new(mod.int, mod.float))
+  end
 end

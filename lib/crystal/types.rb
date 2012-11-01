@@ -30,8 +30,8 @@ module Crystal
     end
 
     def self.clone(types)
-      context = {}
-      types.map { |type| type.clone(context) }
+      types_context = {}
+      types.map { |type| type.clone(types_context) }
     end
   end
 
@@ -70,7 +70,7 @@ module Crystal
       name
     end
 
-    def clone(_ = nil)
+    def clone(types_context = nil, nodes_context = nil)
       self
     end
   end
@@ -182,12 +182,13 @@ module Crystal
       @instance_vars.keys.index(name)
     end
 
-    def clone(context = {})
-      obj = context[object_id] and return obj
+    def clone(types_context = {}, nodes_context = {})
+      obj = types_context[object_id] and return obj
 
-      obj = context[object_id] = ObjectType.new name, @parent_type
+      obj = types_context[object_id] = ObjectType.new name, @parent_type
       obj.instance_vars = Hash[instance_vars.map do |name, var|
-        cloned_var = Var.new(name, (var.type ? var.type.clone(context) : nil))
+        cloned_var = var.clone(nodes_context)
+        cloned_var.type = var.type.clone(types_context) if var.type
         obj.hook_to_ivar_mutations(cloned_var)
         cloned_var.bind_to cloned_var
         cloned_var.add_observer obj, :mutation
@@ -249,11 +250,11 @@ module Crystal
       1
     end
 
-    def clone(context = {})
-      array = context[object_id] and return array
+    def clone(types_context = {}, nodes_context = {})
+      array = types_context[object_id] and return array
 
-      array = context[object_id] = ArrayType.new @parent_type
-      array.element_type_var.type = element_type ? element_type.clone(context) : nil
+      array = types_context[object_id] = ArrayType.new @parent_type
+      array.element_type_var.type = element_type ? element_type.clone(types_context) : nil
       array.element_type_var.bind_to array.element_type_var if array.element_type
       array.defs = defs
       array
@@ -357,8 +358,8 @@ module Crystal
       end
     end
 
-    def clone(context = {})
-      UnionType.new(*types.map { |type| type.clone(context) })
+    def clone(types_context = {}, nodes_context = {})
+      UnionType.new(*types.map { |type| type.clone(types_context, nodes_context) })
     end
 
     def name
