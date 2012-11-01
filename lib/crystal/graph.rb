@@ -1,4 +1,5 @@
 require 'graphviz'
+require_relative 'ast.rb'
 
 module Crystal
   def graph(node, mod, output = nil)

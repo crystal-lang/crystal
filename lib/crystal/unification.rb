@@ -1,3 +1,5 @@
+require_relative 'type_inference.rb'
+
 module Crystal
   def unify(node)
     node.accept UnifyVisitor.new

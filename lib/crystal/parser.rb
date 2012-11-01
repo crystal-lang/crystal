@@ -1,4 +1,5 @@
 require 'set'
+require_relative 'lexer.rb'
 
 module Crystal
   class Parser < Lexer
