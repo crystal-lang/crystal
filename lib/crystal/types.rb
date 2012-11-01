@@ -255,10 +255,7 @@ module Crystal
       array = context[object_id] = ArrayType.new @parent_type
       array.element_type_var.type = element_type ? element_type.clone(context) : nil
       array.element_type_var.bind_to array.element_type_var if array.element_type
-      array.defs = @parent_type ? HashWithParent.new(@parent_type.defs) : {}
-      defs.each do |key, value|
-        array.defs[key] = value.clone
-      end
+      array.defs = defs
       array
     end
 
