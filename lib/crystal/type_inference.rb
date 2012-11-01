@@ -316,14 +316,10 @@ module Crystal
       all_types += cloned_def.args.map(&:type)
       mutation.apply(all_types)
 
-      old_body_type = cloned_def.body.type
       cloned_def.accept SetInstanceVarTypeVisitor.new(cloned_def.owner)
 
       self.target_def = cloned_def
-
-      if old_body_type != cloned_def.body.type
-        self.type = cloned_def.body.type
-      end
+      self.type = cloned_def.body.type
     end
 
     class SetInstanceVarTypeVisitor < Visitor
