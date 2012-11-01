@@ -151,6 +151,8 @@ module Crystal
       return unless can_calculate_type?
 
       if has_unions?
+        stop_listen_return_type_and_args_mutations
+
         dispatch = Dispatch.new(self)
         self.bind_to dispatch
         self.target_def = dispatch
@@ -197,10 +199,6 @@ module Crystal
           return
         end
 
-        if @end_mutation_observers && @end_mutation_observers.length > 0
-          @end_mutation_observers.values.each { |type, token| type.unobserve_mutations token }
-        end
-
         compute_parent_path typed_def, scope, return_type
 
         listen_return_type_and_args_mutations(return_type, arg_types)
@@ -210,6 +208,8 @@ module Crystal
     end
 
     def listen_return_type_and_args_mutations(return_type = self.type, arg_types = nil)
+      stop_listen_return_type_and_args_mutations
+
       unless arg_types
         scope, untyped_def = compute_scope_and_untyped_def
 
@@ -235,6 +235,12 @@ module Crystal
           @end_mutation_observers ||= {}
           @end_mutation_observers[arg_type.object_id] = [arg_type, token]
         end
+      end
+    end
+
+    def stop_listen_return_type_and_args_mutations
+      if @end_mutation_observers && @end_mutation_observers.length > 0
+        @end_mutation_observers.values.each { |type, token| type.unobserve_mutations token }
       end
     end
 
@@ -288,8 +294,6 @@ module Crystal
     end
 
     def reinstantiate(mutation)
-      return if target_def.is_a?(Dispatch)
-
       type_context = {}
       cloned_def = target_def.clone do |old_node, new_node|
         new_node.set_type old_node.type.clone(type_context) if old_node.type
