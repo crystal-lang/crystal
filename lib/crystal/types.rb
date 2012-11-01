@@ -391,6 +391,10 @@ module Crystal
     def llvm_name
       @name
     end
+
+    def clone(*)
+      self
+    end
   end
 
   class Alloc < ASTNode

@@ -71,8 +71,13 @@ module Crystal
       type = types[path.index]
       var = nil
       path.path.each do |ivar|
-        var = type.lookup_instance_var(ivar)
-        type = var.type
+        if type.is_a?(UnionType)
+          type = type.types[ivar]
+          var = nil
+        else
+          var = type.lookup_instance_var(ivar)
+          type = var.type
+        end
       end
       var.type = target.is_a?(Type) ? target : target.evaluate_types(types)
     end
@@ -198,26 +203,38 @@ module Crystal
 
         compute_parent_path typed_def, scope, return_type
 
-        if return_type.is_a?(MutableType) && !typed_def.return.is_a?(Path)
-          token = return_type.observe_mutations do |ivar, type|
-            @return_type_mutations ||= []
-            mutation = Mutation.new(Path.new(0, *ivar.map(&:name)), type)
-            @return_type_mutations << mutation
-            recalculate
-          end
-          @end_mutation_observers ||= {}
-          @end_mutation_observers[return_type.object_id] = [return_type, token]
-        end
-
-        arg_types.each do |arg_type|
-          if arg_type.is_a?(MutableType)
-            token = arg_type.observe_mutations { update_input }
-            @end_mutation_observers ||= {}
-            @end_mutation_observers[arg_type.object_id] = [arg_type, token]
-          end
-        end
+        listen_return_type_and_args_mutations(return_type, arg_types)
 
         self.type = return_type
+      end
+    end
+
+    def listen_return_type_and_args_mutations(return_type = self.type, arg_types = nil)
+      unless arg_types
+        scope, untyped_def = compute_scope_and_untyped_def
+
+        arg_types = !untyped_def.is_a?(FrozenDef) && scope.is_a?(MutableType) ? [scope] : []
+        arg_types += args.map &:type
+      end
+
+      if return_type.is_a?(MutableType) && !target_def.return.is_a?(Path)
+        token = return_type.observe_mutations do |ivar, type|
+          mutation = Mutation.new(Path.new(0, *ivar.map { |var| var.is_a?(Var) ? var.name : var }), type)
+          reinstantiate mutation
+        end
+        @end_mutation_observers ||= {}
+        @end_mutation_observers[return_type.object_id] = [return_type, token]
+      end
+
+      arg_types.each_with_index do |arg_type, i|
+        if arg_type.is_a?(MutableType)
+          token = arg_type.observe_mutations do |ivar, type|
+            mutation = Mutation.new(Path.new(i + 1, *ivar.map { |var| var.is_a?(Var) ? var.name : var }), type)
+            reinstantiate mutation
+          end
+          @end_mutation_observers ||= {}
+          @end_mutation_observers[arg_type.object_id] = [arg_type, token]
+        end
       end
     end
 
@@ -262,18 +279,38 @@ module Crystal
 
         compute_return visitor, typed_def, scope
 
-        if @return_type_mutations
-          @return_type_mutations.each do |mutation|
-            mutation.apply [typed_def.body.type]
-          end
-        end
-
         mutation_observers.values.each do |type, token|
           type.unobserve_mutations token
         end
       end
 
       typed_def
+    end
+
+    def reinstantiate(mutation)
+      return if target_def.is_a?(Dispatch)
+
+      type_context = {}
+      cloned_def = target_def.clone do |old_node, new_node|
+        new_node.set_type old_node.type.clone(type_context) if old_node.type
+        if old_node.is_a?(Call)
+          new_node.target_def = old_node.target_def 
+          new_node.mod = old_node.mod
+          new_node.listen_return_type_and_args_mutations
+        end
+      end
+
+      if target_def.owner.is_a?(Type)
+        cloned_def.owner = target_def.owner.clone(type_context) 
+      else
+        cloned_def.owner = target_def.owner
+      end
+      all_types = [cloned_def.body.type] 
+      all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type)
+      all_types += cloned_def.args.map(&:type)
+      mutation.apply(all_types)
+
+      self.target_def = cloned_def
     end
 
     def compute_return(visitor, typed_def, scope)
