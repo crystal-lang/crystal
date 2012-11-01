@@ -399,7 +399,7 @@ module Crystal
       @type = type
     end
 
-    def clone
+    def clone0
       Alloc.new(@type.clone)
     end
   end

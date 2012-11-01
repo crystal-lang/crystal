@@ -48,9 +48,13 @@ module Crystal
     end
 
     def clone(&block)
-      new_node = self.class.new
+      new_node = clone0(&block)
       block.call(self, new_node) if block
       new_node
+    end
+
+    def clone0(&block)
+      self.class.new
     end
   end
 
@@ -113,10 +117,9 @@ module Crystal
       other.is_a?(Expressions) && other.expressions == expressions
     end
 
-    def clone(&block)
+    def clone0(&block)
       exps = Expressions.new expressions.map { |exp| exp.clone(&block) }
       exps.location = location
-      block.call(self, exps) if block
       exps
     end
   end
@@ -142,10 +145,9 @@ module Crystal
       other.is_a?(ArrayLiteral) && other.elements == elements
     end
 
-    def clone(&block)
+    def clone0(&block)
       exps = ArrayLiteral.new elements.map { |exp| exp.clone(&block) }
       exps.location = location
-      block.call(self, exps) if block
       exps
     end
   end
@@ -180,12 +182,11 @@ module Crystal
       other.is_a?(ClassDef) && other.name == name && other.body == body && other.superclass == superclass
     end
 
-    def clone(&block)
+    def clone0(&block)
       class_def = ClassDef.new name, (body ? body.clone(&block) : nil), superclass
       class_def.location = location
       class_def.name_column_number = name_column_number
       class_def.superclass_column_number = superclass_column_number
-      block.call(self, class_def) if block
       class_def
     end
   end
@@ -199,10 +200,8 @@ module Crystal
       other.is_a?(NilLiteral)
     end
 
-    def clone(&block)
-      other = NilLiteral.new
-      block.call(self, other) if block
-      other
+    def clone0(&block)
+      NilLiteral.new
     end
   end
 
@@ -221,10 +220,8 @@ module Crystal
       other.is_a?(BoolLiteral) && other.value == value
     end
 
-    def clone(&block)
-      other = BoolLiteral.new value
-      block.call(self, other) if block
-      other
+    def clone0(&block)
+      BoolLiteral.new value
     end
   end
 
@@ -245,10 +242,8 @@ module Crystal
       other.is_a?(IntLiteral) && other.value.to_i == value.to_i
     end
 
-    def clone(&block)
-      other = IntLiteral.new value
-      block.call(self, other) if block
-      other
+    def clone0(&block)
+      IntLiteral.new value
     end
   end
 
@@ -269,10 +264,8 @@ module Crystal
       other.is_a?(LongLiteral) && other.value.to_i == value.to_i
     end
 
-    def clone(&block)
-      other = LongLiteral.new value
-      block.call(self, other) if block
-      other
+    def clone0(&block)
+      LongLiteral.new value
     end
   end
 
@@ -293,10 +286,8 @@ module Crystal
       other.is_a?(FloatLiteral) && other.value.to_f == value.to_f
     end
 
-    def clone(&block)
-      other = FloatLiteral.new value
-      block.call(self, other) if block
-      other
+    def clone0(&block)
+      FloatLiteral.new value
     end
   end
 
@@ -315,10 +306,8 @@ module Crystal
       other.is_a?(CharLiteral) && other.value.to_i == value.to_i
     end
 
-    def clone(&block)
-      other = CharLiteral.new value
-      block.call(self, other) if block
-      other
+    def clone0(&block)
+      CharLiteral.new value
     end
   end
 
@@ -333,10 +322,8 @@ module Crystal
       other.is_a?(StringLiteral) && other.value == value
     end
 
-    def clone(&block)
-      other = StringLiteral.new value
-      block.call(self, other) if block
-      other
+    def clone0(&block)
+      StringLiteral.new value
     end
   end
 
@@ -380,10 +367,9 @@ module Crystal
       other.is_a?(Def) && other.receiver == receiver && other.name == name && other.args == args && other.body == body
     end
 
-    def clone(&block)
+    def clone0(&block)
       a_def = Def.new name, args.map { |arg| arg.clone(&block) }, (body ? body.clone(&block) : nil), receiver ? receiver.clone(&block) : nil
       a_def.location = location
-      block.call(self, a_def) if block
       a_def
     end
   end
@@ -401,10 +387,9 @@ module Crystal
       other.is_a?(Var) && other.name == name && other.type == type
     end
 
-    def clone(&block)
+    def clone0(&block)
       var = Var.new name
       var.location = location
-      block.call(self, var) if block
       var
     end
   end
@@ -421,10 +406,9 @@ module Crystal
       other.is_a?(Const) && other.name == name
     end
 
-    def clone(&block)
+    def clone0(&block)
       var = Const.new name
       var.location = location
-      block.call(self, var) if block
       var
     end
   end
@@ -441,10 +425,9 @@ module Crystal
       other.is_a?(InstanceVar) && other.name == name
     end
 
-    def clone(&block)
+    def clone0(&block)
       var = InstanceVar.new name
       var.location = location
-      block.call(self, var) if block
       var
     end
   end
@@ -494,12 +477,11 @@ module Crystal
       other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block
     end
 
-    def clone(&block)
+    def clone0(&block)
       call = Call.new (obj ? obj.clone(&block) : nil), name, args.map { |arg| arg.clone(&block) }, (self.block ? self.block.clone(&block) : nil)
       call.location = location
       call.name_column_number = name_column_number
       call.name_length = name_length
-      block.call(self, call) if block
       call
     end
 
@@ -548,10 +530,9 @@ module Crystal
       other.is_a?(If) && other.cond == cond && other.then == self.then && other.else == self.else
     end
 
-    def clone(&block)
+    def clone0(&block)
       a_if = If.new cond.clone, self.then.clone(&block), (self.else ? self.else.clone(&block) : nil)
       a_if.location = location
-      block.call(self, a_if) if block
       a_if
     end
   end
@@ -580,10 +561,9 @@ module Crystal
       other.is_a?(Assign) && other.target == target && other.value == value
     end
 
-    def clone(&block)
+    def clone0(&block)
       assign = Assign.new target.clone(&block), value.clone(&block)
       assign.location = location
-      block.call(self, assign) if block
       assign
     end
   end
@@ -614,10 +594,9 @@ module Crystal
       other.is_a?(While) && other.cond == cond && other.body == body
     end
 
-    def clone(&block)
+    def clone0(&block)
       a_while = While.new cond.clone(&block), (body ? body.clone(&block) : nil)
       a_while.location = location
-      block.call(self, a_while) if block
       a_while
     end
   end
@@ -650,10 +629,9 @@ module Crystal
       other.is_a?(Block) && other.args == args && other.body == body
     end
 
-    def clone(&blk)
+    def clone0(&blk)
       block = Block.new args.map { |arg| arg.clone(&blk) }, (body ? body.clone(&blk) : nil)
       block.location = location
-      blk.call(self, block) if blk
       block
     end
   end
@@ -684,10 +662,9 @@ module Crystal
           other.is_a?(#{keyword.capitalize}) && other.exps == exps
         end
 
-        def clone(&block)
+        def clone0(&block)
           ret = #{keyword.capitalize}.new exps.clone(&block)
           ret.location = location
-          block.call(self, ret) if block
           ret
         end
       end
