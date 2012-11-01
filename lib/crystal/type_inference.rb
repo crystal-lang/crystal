@@ -295,6 +295,7 @@ module Crystal
 
     def reinstantiate(mutation)
       type_context = {}
+
       cloned_def = target_def.clone do |old_node, new_node|
         new_node.set_type old_node.type.clone(type_context) if old_node.type
         if old_node.is_a?(Call)
@@ -309,12 +310,30 @@ module Crystal
       else
         cloned_def.owner = target_def.owner
       end
+
       all_types = [cloned_def.body.type]
       all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type)
       all_types += cloned_def.args.map(&:type)
       mutation.apply(all_types)
 
+      old_body_type = cloned_def.body.type
+      cloned_def.accept SetInstanceVarTypeVisitor.new(cloned_def.owner)
+
       self.target_def = cloned_def
+
+      if old_body_type != cloned_def.body.type
+        self.type = cloned_def.body.type
+      end
+    end
+
+    class SetInstanceVarTypeVisitor < Visitor
+      def initialize(owner)
+        @owner = owner
+      end
+
+      def visit_instance_var(node)
+        node.set_type @owner.lookup_instance_var(node.name).type
+      end
     end
 
     def compute_return(visitor, typed_def, scope)
