@@ -312,7 +312,7 @@ module Crystal
       end
 
       all_types = [cloned_def.body.type]
-      all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type)
+      all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)
       all_types += cloned_def.args.map(&:type)
       mutation.apply(all_types)
 
