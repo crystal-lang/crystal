@@ -58,4 +58,30 @@ describe 'Code gen: def' do
       f.value + g.value
     )).to_f.should eq(3.5)
   end
+
+  it "unifies all calls to same def" do
+    run(%Q(
+      class Hash
+        def initialize
+          @buckets = [[1]]
+        end
+
+        def []=(key, value)
+          bucket.push value
+        end
+
+        def [](key)
+          bucket[0]
+        end
+
+        def bucket
+          @buckets[0]
+        end
+      end
+
+      hash = Hash.new
+      hash[1] = 2
+      hash[1]
+    )).to_i.should eq(1)
+  end
 end
