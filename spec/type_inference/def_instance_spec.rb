@@ -426,7 +426,7 @@ describe 'Type inference: def instance' do
   end
 
   it "" do
-    nodes = parse %Q(    
+    nodes = parse %Q(
       class Foo
         def bar
           @value = 1
@@ -510,5 +510,28 @@ describe 'Type inference: def instance' do
       )
     mod = infer_type nodes
     nodes[1].obj.target_def.body[1].target_def.body.value.type.should eq(ArrayType.of(ArrayType.of(mod.int)))
+  end
+
+  it "clone dispatch" do
+    nodes = parse %Q(
+      class Foo
+        def foo(a)
+          @buckets = [a]
+        end
+
+        def bar
+          @buckets.push 1
+        end
+      end
+
+      a = 1
+
+      h = Foo.new
+      h.foo(a)
+      h.bar
+
+      a = 2.3
+    )
+    mod = infer_type nodes
   end
 end

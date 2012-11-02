@@ -84,4 +84,23 @@ describe 'Code gen: def' do
       hash[1]
     )).to_i.should eq(1)
   end
+
+  it "mutates to union" do
+    run(%Q(
+      class Foo
+        def foo(x)
+          @buckets = [x]
+        end
+
+        def bar
+          @buckets.push 1
+        end
+      end
+
+      f = Foo.new
+      f.foo(1)
+      f.bar
+      f.foo(1.5)[0].to_f
+      )).to_f.should eq(1.5)
+  end
 end

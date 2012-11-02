@@ -155,9 +155,10 @@ module Crystal
       if has_unions?
         stop_listen_return_type_and_args_mutations
 
-        dispatch = Dispatch.new(self)
+        dispatch = Dispatch.new
         self.bind_to dispatch
         self.target_def = dispatch
+        dispatch.initialize_for_call(self)
         return
       end
 
@@ -305,7 +306,9 @@ module Crystal
       arg_types += args.map &:type
 
       cloned_def = untyped_def.lookup_instance(arg_types, self.type)
-      unless cloned_def
+      if cloned_def
+        self.target_def = cloned_def
+      else
         new_context = {}
         untyped_def.add_instance(arg_types.map { |type| type.clone(new_context) }, self.type.clone(new_context))
 
@@ -320,12 +323,19 @@ module Crystal
 
         clone_proc = proc do |old_node, new_node|
           if old_node.dependencies
-            new_node.bind_to *old_node.dependencies.map { |node| node.clone(nodes_context, &clone_proc) }
+            new_node.bind_to *old_node.dependencies.select { |x| !x.is_a?(Dispatch) }.map { |node| node.clone(nodes_context, &clone_proc) }
           end
 
-          new_node.set_type old_node.type.clone(types_context, nodes_context) if old_node.type
+          new_node.set_type old_node.type.clone(types_context, nodes_context) if old_node.type && !(old_node.is_a?(Call) && old_node.target_def.is_a?(Dispatch))
           if old_node.is_a?(Call)
-            new_node.target_def = old_node.target_def
+            if (old_node.target_def.is_a?(Dispatch))
+              dispatch = Dispatch.new
+              new_node.bind_to dispatch
+              new_node.target_def = dispatch
+              dispatch.initialize_for_call(new_node)
+            else
+              new_node.target_def = old_node.target_def
+            end
             new_node.mod = old_node.mod
             if old_node.scope.is_a?(Type)
               new_node.scope = old_node.scope.clone(types_context, nodes_context)
@@ -333,7 +343,7 @@ module Crystal
               new_node.scope = old_node.scope
             end
             new_node.parent_visitor = old_node.parent_visitor
-            new_node.listen_return_type_and_args_mutations
+            new_node.listen_return_type_and_args_mutations unless new_node.target_def.is_a?(Dispatch)
 
             new_node.args.each_with_index do |arg, index|
               arg.add_observer new_node, :update_input
@@ -348,10 +358,12 @@ module Crystal
         all_types = [cloned_def.body.type]
         all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)
         all_types += cloned_def.args.map(&:type)
+
+        self.target_def = cloned_def
+
         mutation.apply(all_types)
       end
 
-      self.target_def = cloned_def
       self.type = cloned_def.body.type
     end
 
@@ -546,7 +558,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :calls
 
-    def initialize(call)
+    def initialize_for_call(call)
       @name = call.name
       @obj = call.obj && call.obj.type
       @args = call.args.map(&:type)
