@@ -59,17 +59,19 @@ module Crystal
   end
 
   def build(node, mod)
-    visitor = CodeGenVisitor.new(mod, node.type)
-    begin
-      node.accept visitor
-    rescue StandardError => ex
-      visitor.llvm_mod.dump
-      raise
+    visitor = CodeGenVisitor.new(mod, node ? node.type : mod.void)
+    if node
+      begin
+        node.accept visitor
+      rescue StandardError => ex
+        visitor.llvm_mod.dump
+        raise
+      end
     end
 
     visitor.finish
 
-    visitor.llvm_mod.dump if ENV['DUMP']
+    visitor.llvm_mod.dump if Crystal::DUMP_LLVM
 
     visitor.llvm_mod.verify
 
