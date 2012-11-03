@@ -188,7 +188,7 @@ module Crystal
       obj = types_context[object_id] = ObjectType.new name, @parent_type
       obj.instance_vars = Hash[instance_vars.map do |name, var|
         cloned_var = var.clone(nodes_context)
-        cloned_var.type = var.type.clone(types_context) if var.type
+        cloned_var.type = var.type.clone(types_context, nodes_context) if var.type
         obj.hook_to_ivar_mutations(cloned_var)
         cloned_var.bind_to cloned_var
         cloned_var.add_observer obj, :mutation
@@ -360,7 +360,8 @@ module Crystal
     end
 
     def clone(types_context = {}, nodes_context = {})
-      UnionType.new(*types.map { |type| type.clone(types_context, nodes_context) })
+      cloned = types_context[object_id] and return cloned
+      types_context[object_id] = UnionType.new(*types.map { |type| type.clone(types_context, nodes_context) })
     end
 
     def name
