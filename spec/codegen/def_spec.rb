@@ -103,4 +103,24 @@ describe 'Code gen: def' do
       f.foo(1.5)[0].to_f
       )).to_f.should eq(1.5)
   end
+
+  it "mutates to union 2" do
+    run(%Q(
+      class Foo
+        def foo(x)
+          @buckets = [x]
+        end
+
+        def bar
+          @buckets.push 1
+        end
+      end
+
+      f = Foo.new
+      f.foo(1)
+      f.bar
+      f.foo(1.5)
+      f.foo(1)[0].to_f
+      )).to_f.should eq(1)
+  end
 end

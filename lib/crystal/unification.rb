@@ -25,7 +25,14 @@ module Crystal
       node.scope = unify_type(node.scope) if node.scope.is_a?(Type)
       if node.target_def && !node.target_def.unified
         node.target_def.unified = true
+
         node.target_def.accept self
+        if node.target_def.is_a?(Dispatch)
+          node.set_type unify_type(node.type)
+          node.target_def.set_type unify_type(node.target_def.type)
+        else
+          node.target_def.owner = unify_type(node.target_def.owner)
+        end
       end
       node.simplify
     end
@@ -71,8 +78,7 @@ module Crystal
             @stack.push type
 
             unified_type = type
-            array_type_var = type.element_type_var
-            array_type_var.set_type unify_type(array_type_var.type)
+            unified_type.element_type_var.set_type unify_type(type.element_type)
 
             if existing_type = @arrays[type]
               unified_type = existing_type
@@ -95,7 +101,7 @@ module Crystal
             @stack.push type
 
             unified_types = type.types.map { |subtype| unify_type(subtype) }.uniq
-            unified_types = unified_types.length == 1 ? unified_types[0] : UnionType.new(*unified_types)
+            unified_types = unified_types.length == 1 ? unified_types[0] : unify_type(UnionType.new(*unified_types))
 
             unified_type = @unions[type] = unified_types
 
