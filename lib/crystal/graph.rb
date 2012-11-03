@@ -9,6 +9,8 @@ module Crystal
     node.accept visitor
 
     visitor.graphviz.output :png => "#{output}.png"
+
+    `open #{output}.png &`
   end
 
   class GraphVisitor < Visitor
