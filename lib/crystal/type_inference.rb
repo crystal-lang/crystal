@@ -141,18 +141,8 @@ module Crystal
         check_frozen untyped_def, arg_types
         arg_types = Type.clone(arg_types)
         scope = arg_types[0] if scope.is_a?(MutableType)
-        args_start_index = scope.is_a?(MutableType) ? 1 : 0
 
-        typed_def = untyped_def.clone
-        typed_def.owner = scope
-
-        args = {}
-        args['self'] = Var.new('self', scope) if scope.is_a?(Type)
-        typed_def.args.each_with_index do |arg, index|
-          type = arg_types[args_start_index + index]
-          args[arg.name] = Var.new(arg.name, type)
-          typed_def.args[index].type = type
-        end
+        typed_def, args = prepare_typed_def_with_args(untyped_def, scope, arg_types)
 
         arg_types_cloned = Type.clone(arg_types)
 
@@ -208,16 +198,7 @@ module Crystal
         unless typed_def
           check_frozen untyped_def, arg_types
 
-          typed_def = untyped_def.clone
-          typed_def.owner = scope
-
-          args = {}
-          args['self'] = Var.new('self', scope) if scope.is_a?(Type)
-          typed_def.args.each_with_index do |arg, index|
-            type = self.args[index].type
-            args[arg.name] = Var.new(arg.name, type)
-            typed_def.args[index].type = type
-          end
+          typed_def, args = prepare_typed_def_with_args(untyped_def, scope, arg_types)
 
           if typed_def.body
             begin
@@ -236,6 +217,27 @@ module Crystal
         self.bind_to typed_def.body if typed_def.body
         self.target_def = typed_def
       end
+    end
+
+    def prepare_typed_def_with_args(untyped_def, scope, arg_types)
+      if Crystal::CACHE
+        args_start_index = scope.is_a?(MutableType) ? 1 : 0
+      else
+        args_start_index = 0
+      end
+
+      typed_def = untyped_def.clone
+      typed_def.owner = scope
+
+      args = {}
+      args['self'] = Var.new('self', scope) if scope.is_a?(Type)
+      typed_def.args.each_with_index do |arg, index|
+        type = arg_types[args_start_index + index]
+        args[arg.name] = Var.new(arg.name, type)
+        typed_def.args[index].type = type
+      end
+
+      [typed_def, args]
     end
 
     def listen_return_type_and_args_mutations(return_type = self.type, arg_types = nil)
