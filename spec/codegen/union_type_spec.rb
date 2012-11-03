@@ -55,4 +55,24 @@ describe 'Code gen: union type' do
       end.to_i
     )).to_i.should eq(1)
   end
+
+  it "assigns union to union" do
+    run(%Q(
+      class Foo
+        def foo(x)
+          @x = x
+          @x = @x
+        end
+
+        def x
+          @x
+        end
+      end
+
+      f = Foo.new
+      f.foo 1
+      f.foo 2.5
+      f.x.to_f
+      )).to_f.should eq(2.5)
+  end
 end

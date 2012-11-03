@@ -131,14 +131,7 @@ module Crystal
 
       if node.target.is_a?(InstanceVar)
         ivar = @type.instance_vars[node.target.name]
-        if ivar.type.is_a?(UnionType)
-          ptr = gep @fun.params[0], 0, @type.index_of_instance_var(node.target.name)
-          assign_to_union(ptr, ivar.type, node.type, @last)
-
-          return false
-        else
-          ptr = gep @fun.params[0], 0, @type.index_of_instance_var(node.target.name)
-        end
+        ptr = gep @fun.params[0], 0, @type.index_of_instance_var(node.target.name)
       else
         var = @vars[node.target.name]
         unless var
