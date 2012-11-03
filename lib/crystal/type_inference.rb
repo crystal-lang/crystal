@@ -73,6 +73,7 @@ module Crystal
     end
 
     if Crystal::CACHE
+      # WITH CACHE
       def recalculate(apply_mutations = true)
         return unless can_calculate_type?
 
@@ -185,6 +186,7 @@ module Crystal
         typed_def
       end
     else
+      # WITHOUT CACHE
       def recalculate(*)
         return unless can_calculate_type?
 
@@ -210,7 +212,7 @@ module Crystal
           typed_def.owner = scope
 
           args = {}
-          args['self'] = Var.new('self', obj.type) if obj
+          args['self'] = Var.new('self', scope) if scope.is_a?(Type)
           typed_def.args.each_with_index do |arg, index|
             type = self.args[index].type
             args[arg.name] = Var.new(arg.name, type)
