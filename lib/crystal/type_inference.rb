@@ -18,85 +18,6 @@ module Crystal
     mod
   end
 
-  class Path
-    attr_accessor :index
-    attr_accessor :path
-
-    def initialize(index, *path)
-      @index = index
-      @path = path
-    end
-
-    def with_index(other_index)
-      Path.new(other_index, *path)
-    end
-
-    def append(other_path)
-      Path.new(index, *(path + other_path.path))
-    end
-
-    def ==(other)
-      other.is_a?(Path) && index == other.index && path == other.path
-    end
-
-    def evaluate_args(obj, args)
-      types = obj.is_a?(Type) ? [obj] : []
-      types += args.map &:type
-      evaluate_types(types)
-    end
-
-    def evaluate_types(types)
-      type = types[index]
-      path.each do |ivar|
-        type = type.lookup_instance_var(ivar).type
-      end
-      type
-    end
-
-    def to_s
-      str = "#{index}"
-      str << '/' << path.join('/')
-      str
-    end
-  end
-
-  class Mutation
-    attr_accessor :path
-    attr_accessor :target
-
-    def initialize(path, target)
-      @path = path
-      @target = target
-    end
-
-    def apply(types)
-      type = types[path.index]
-      var = nil
-      path.path.each do |ivar|
-        if type.is_a?(UnionType)
-          type = type.types[ivar]
-          var = nil
-        else
-          var = type.lookup_instance_var(ivar)
-          type = var.type
-        end
-      end
-      var.type = target.is_a?(Type) ? target : target.evaluate_types(types)
-    end
-
-    def ==(other)
-      path == other.path && target == other.target
-    end
-
-    def with_index(index)
-      Mutation.new(path.with_index(index), target)
-    end
-
-    def to_s
-      "#{path} -> #{target}"
-    end
-  end
-
   class ASTNode
     attr_accessor :type
     attr_accessor :dependencies
@@ -151,66 +72,167 @@ module Crystal
       recalculate(false)
     end
 
-    def recalculate(apply_mutations = true)
-      return unless can_calculate_type?
+    if Crystal::CACHE
+      def recalculate(apply_mutations = true)
+        return unless can_calculate_type?
 
-      if has_unions?
-        stop_listen_return_type_and_args_mutations
+        if has_unions?
+          stop_listen_return_type_and_args_mutations
 
-        dispatch = Dispatch.new
-        self.bind_to dispatch
-        self.target_def = dispatch
-        dispatch.initialize_for_call(self)
-        return
-      end
-
-      scope, untyped_def = compute_scope_and_untyped_def
-
-      check_method_exists untyped_def
-      check_args_match untyped_def
-
-      type_was_nil = self.type.nil?
-
-      arg_types = !untyped_def.is_a?(FrozenDef) && scope.is_a?(MutableType) ? [scope] : []
-      arg_types += args.map &:type
-
-      begin
-        typed_def = untyped_def.lookup_instance(arg_types, self.type)
-        unless typed_def
-          typed_def = instantiate(untyped_def, scope, arg_types)
-        end
-
-        if (type_was_nil || apply_mutations) && typed_def.mutations
-          typed_def.mutations.each do |mutation|
-            mutation.apply(arg_types)
-          end
-        end
-      rescue Crystal::Exception => ex
-        if obj
-          raise "instantiating '#{obj.type.name}##{name}'", ex
-        else
-          raise "instantiating '#{name}'", ex
-        end
-      end
-
-      self.target_def = typed_def
-
-      return_type, found_in_parent, must_clone = compute_return_type typed_def, scope
-
-      if return_type && (!self.type || self.type != return_type)
-        return_type = return_type.clone if must_clone && !self.type
-
-        if found_in_parent && typed_def.body.type != return_type
-          self.type = return_type
-          recalculate
+          dispatch = Dispatch.new
+          self.bind_to dispatch
+          self.target_def = dispatch
+          dispatch.initialize_for_call(self)
           return
         end
 
-        compute_parent_path typed_def, scope, return_type
+        scope, untyped_def = compute_scope_and_untyped_def
 
-        listen_return_type_and_args_mutations(return_type, arg_types)
+        check_method_exists untyped_def
+        check_args_match untyped_def
 
-        self.type = return_type
+        type_was_nil = self.type.nil?
+
+        arg_types = !untyped_def.is_a?(FrozenDef) && scope.is_a?(MutableType) ? [scope] : []
+        arg_types += args.map &:type
+
+        begin
+          typed_def = untyped_def.lookup_instance(arg_types, self.type)
+          unless typed_def
+            typed_def = instantiate(untyped_def, scope, arg_types)
+          end
+
+          if (type_was_nil || apply_mutations) && typed_def.mutations
+            typed_def.mutations.each do |mutation|
+              mutation.apply(arg_types)
+            end
+          end
+        rescue Crystal::Exception => ex
+          if obj
+            raise "instantiating '#{obj.type.name}##{name}'", ex
+          else
+            raise "instantiating '#{name}'", ex
+          end
+        end
+
+        self.target_def = typed_def
+
+        return_type, found_in_parent, must_clone = compute_return_type typed_def, scope
+
+        if return_type && (!self.type || self.type != return_type)
+          return_type = return_type.clone if must_clone && !self.type
+
+          if found_in_parent && typed_def.body.type != return_type
+            self.type = return_type
+            recalculate
+            return
+          end
+
+          compute_parent_path typed_def, scope, return_type
+
+          listen_return_type_and_args_mutations(return_type, arg_types)
+
+          self.type = return_type
+        end
+      end
+
+      def instantiate(untyped_def, scope, arg_types)
+        check_frozen untyped_def, arg_types
+        arg_types = Type.clone(arg_types)
+        scope = arg_types[0] if scope.is_a?(MutableType)
+        args_start_index = scope.is_a?(MutableType) ? 1 : 0
+
+        typed_def = untyped_def.clone
+        typed_def.owner = scope
+
+        args = {}
+        args['self'] = Var.new('self', scope) if scope.is_a?(Type)
+        typed_def.args.each_with_index do |arg, index|
+          type = arg_types[args_start_index + index]
+          args[arg.name] = Var.new(arg.name, type)
+          typed_def.args[index].type = type
+        end
+
+        arg_types_cloned = Type.clone(arg_types)
+
+        if typed_def.body
+          typed_def.mutations = []
+
+          visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
+
+          mutation_observers = {}
+          arg_types.each_with_index do |arg_type, i|
+            if arg_type.is_a?(MutableType) && !mutation_observers[arg_type.object_id]
+              token = arg_type.observe_mutations do |ivar, type|
+                path = visitor.paths[type.object_id]
+                mutation = Mutation.new(Path.new(i, *ivar.map { |var| var.is_a?(Var) ? var.name : var }), path || type)
+                typed_def.mutations << mutation
+              end
+              mutation_observers[arg_type.object_id] = [arg_type, token]
+            end
+          end
+
+          untyped_def.add_instance(typed_def, arg_types_cloned, self.type.clone)
+          typed_def.body.accept visitor
+
+          compute_return visitor, typed_def, scope
+
+          mutation_observers.values.each do |type, token|
+            type.unobserve_mutations token
+          end
+        end
+
+        typed_def
+      end
+    else
+      def recalculate(*)
+        return unless can_calculate_type?
+
+        if has_unions?
+          dispatch = Dispatch.new
+          self.bind_to dispatch
+          self.target_def = dispatch
+          dispatch.initialize_for_call(self)
+          return
+        end
+
+        scope, untyped_def = compute_scope_and_untyped_def
+
+        check_method_exists untyped_def
+        check_args_match untyped_def
+
+        arg_types = args.map &:type
+        typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
+        unless typed_def
+          check_frozen untyped_def, arg_types
+
+          typed_def = untyped_def.clone
+          typed_def.owner = scope
+
+          args = {}
+          args['self'] = Var.new('self', obj.type) if obj
+          typed_def.args.each_with_index do |arg, index|
+            type = self.args[index].type
+            args[arg.name] = Var.new(arg.name, type)
+            typed_def.args[index].type = type
+          end
+
+          if typed_def.body
+            begin
+              visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
+              typed_def.body.accept visitor
+            rescue Crystal::Exception => ex
+              if obj
+                raise "instantiating '#{obj.type.name}##{name}'", ex
+              else
+                raise "instantiating '#{name}'", ex
+              end
+            end
+          end
+        end
+
+        self.bind_to typed_def.body if typed_def.body
+        self.target_def = typed_def
       end
     end
 
@@ -250,55 +272,6 @@ module Crystal
         @end_mutation_observers.values.each { |type, token| type.unobserve_mutations token }
         @end_mutation_observers = nil
       end
-    end
-
-    def instantiate(untyped_def, scope, arg_types)
-      check_frozen untyped_def, arg_types
-      arg_types = Type.clone(arg_types)
-      scope = arg_types[0] if scope.is_a?(MutableType)
-      args_start_index = scope.is_a?(MutableType) ? 1 : 0
-
-      typed_def = untyped_def.clone
-      typed_def.owner = scope
-
-      args = {}
-      args['self'] = Var.new('self', scope) if scope.is_a?(Type)
-      typed_def.args.each_with_index do |arg, index|
-        type = arg_types[args_start_index + index]
-        args[arg.name] = Var.new(arg.name, type)
-        typed_def.args[index].type = type
-      end
-
-      arg_types_cloned = Type.clone(arg_types)
-
-      if typed_def.body
-        typed_def.mutations = []
-
-        visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
-
-        mutation_observers = {}
-        arg_types.each_with_index do |arg_type, i|
-          if arg_type.is_a?(MutableType) && !mutation_observers[arg_type.object_id]
-            token = arg_type.observe_mutations do |ivar, type|
-              path = visitor.paths[type.object_id]
-              mutation = Mutation.new(Path.new(i, *ivar.map { |var| var.is_a?(Var) ? var.name : var }), path || type)
-              typed_def.mutations << mutation
-            end
-            mutation_observers[arg_type.object_id] = [arg_type, token]
-          end
-        end
-
-        untyped_def.add_instance(typed_def, arg_types_cloned, self.type.clone)
-        typed_def.body.accept visitor
-
-        compute_return visitor, typed_def, scope
-
-        mutation_observers.values.each do |type, token|
-          type.unobserve_mutations token
-        end
-      end
-
-      typed_def
     end
 
     def reinstantiate(mutation)
@@ -742,9 +715,16 @@ module Crystal
       node.type = type.metaclass
     end
 
-    def visit_alloc(node)
-      type = lookup_object_type(node.type.name)
-      node.type = type ? type : node.type
+    if Crystal::CACHE
+      def visit_alloc(node)
+        type = lookup_object_type(node.type.name)
+        node.type = type ? type : node.type
+      end
+    else
+      def visit_alloc(node)
+        type = lookup_object_type(node.type.name)
+        node.type = type ? type : node.type.clone
+      end
     end
 
     def visit_array_literal(node)
@@ -796,6 +776,14 @@ module Crystal
         @scope
       elsif @parent
         @parent.lookup_object_type(name)
+      end
+    end
+
+    def lookup_def_instance(scope, untyped_def, arg_types)
+      if @call && @call[0..2] == [scope, untyped_def, arg_types]
+        @call[3]
+      elsif @parent
+        @parent.lookup_def_instance(scope, untyped_def, arg_types)
       end
     end
 
