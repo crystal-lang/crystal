@@ -256,4 +256,29 @@ describe 'Type inference: return and mutation' do
     mod.defs['foo'].lookup_instance([foo, foo]).
       mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1, '@value'))])
   end
+
+  it "computes return to path if assigned to arg" do
+    input = parse %Q(
+      class Foo
+        def value=(value)
+          @value = value
+        end
+
+        def value
+          @value
+        end
+      end
+
+      def foo(x)
+        bar = Foo.new
+        x.value = bar
+        bar
+      end
+
+      f = Foo.new
+      b = foo(f)
+    )
+    mod = infer_type input
+    mod.defs['foo'].lookup_instance([ObjectType.new('Foo')]).return.should eq(Path.new(0, '@value'))
+  end
 end
