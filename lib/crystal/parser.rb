@@ -328,6 +328,8 @@ module Crystal
         node_and_next_token CharLiteral.new(@token.value)
       when :STRING
         node_and_next_token StringLiteral.new(@token.value)
+      when :SYMBOL
+        node_and_next_token SymbolLiteral.new(@token.value)
       when :IDENT
         case @token.value
         when :begin

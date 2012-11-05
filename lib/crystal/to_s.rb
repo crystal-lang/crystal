@@ -45,6 +45,11 @@ module Crystal
       @str << '"'
     end
 
+    def visit_symbol_literal(node)
+      @str << ':'
+      @str << node.value
+    end
+
     def visit_array_literal(node)
       @str << '['
       node.elements.each_with_index do |exp, i|

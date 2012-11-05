@@ -329,6 +329,22 @@ module Crystal
     end
   end
 
+  class SymbolLiteral < ASTNode
+    attr_accessor :value
+
+    def initialize(value)
+      @value = value
+    end
+
+    def ==(other)
+      other.is_a?(SymbolLiteral) && other.value == value
+    end
+
+    def clone0(&block)
+      SymbolLiteral.new value
+    end
+  end
+
   # A method definition.
   #
   #     [ receiver '.' ] 'def' name

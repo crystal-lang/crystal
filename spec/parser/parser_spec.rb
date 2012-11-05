@@ -28,6 +28,7 @@ describe Parser do
   it_parses "'a'", CharLiteral.new(?a.ord)
 
   it_parses %("foo"), StringLiteral.new("foo")
+  it_parses ":foo", SymbolLiteral.new("foo")
 
   it_parses "[]", [].array
   it_parses "[1, 2]", [1.int, 2.int].array
