@@ -10,7 +10,7 @@ module Crystal
         infer_type_with_prof node, mod
       else
         node.accept TypeVisitor.new(mod)
-        unify node
+        unify node if Crystal::UNIFY
       end
     end
     mod
@@ -19,7 +19,7 @@ module Crystal
   def infer_type_with_stats(node, mod)
     Benchmark.bm(20, 'TOTAL:') do |bm|
       t1 = bm.report('type inference:') { node.accept TypeVisitor.new(mod) }
-      t2 = bm.report('unification:') { unify node }
+      t2 = bm.report('unification:') { unify node if Crystal::UNIFY }
       [t1 + t2]
     end
   end
@@ -27,7 +27,7 @@ module Crystal
   def infer_type_with_prof(node, mod)
     require 'ruby-prof'
     profile_to('type_inference.html') { node.accept TypeVisitor.new(mod) }
-    profile_to('unification.html') { unify node }
+    profile_to('unification.html') { unify node if Crystal::UNIFY }
   end
 
   def profile_to(output_filename, &block)

@@ -59,8 +59,8 @@ module Crystal
         node = parse source
         mod = infer_type node, @options
 
-        graph node, mod, @options[:output_filename] if @options[:graph]
-        exit 0 if @options[:no_build]
+        graph node, mod, @options[:output_filename] if @options[:graph] || !Crystal::UNIFY
+        exit 0 if @options[:no_build] || !Crystal::UNIFY
 
         llvm_mod = build node, mod
         write_main llvm_mod unless @options[:run]
