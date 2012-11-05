@@ -194,8 +194,8 @@ module Crystal
     end
 
     def define_symbol_primitives
-      singleton(symbol, :==, {'other' => symbol}, bool) { }
-      singleton(symbol, :'!=', {'other' => symbol}, bool) { }
+      singleton(symbol, :==, {'other' => symbol}, bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
+      singleton(symbol, :'!=', {'other' => symbol}, bool) { |b, f| b.icmp(:ne, f.params[0], f.params[1]) }
     end
 
     def define_array_primitives

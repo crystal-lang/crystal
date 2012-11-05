@@ -666,6 +666,7 @@ module Crystal
 
     def visit_symbol_literal(node)
       node.type = mod.symbol
+      mod.symbols << node.value
     end
 
     def visit_def(node)

@@ -26,6 +26,20 @@ describe 'Code gen: primitives' do
     run('"foo".length').to_i.should eq("foo".size)
   end
 
+  it 'codegens symbol' do
+    run(':foo').to_i.should eq(0)
+  end
+
+  it 'codegens Symbol == Symbol' do
+    run(':foo == :foo').to_b.should be_true
+    run(':foo == :bar').to_b.should be_false
+  end
+
+  it 'codegens Symbol != Symbol' do
+    run(':foo != :foo').to_b.should be_false
+    run(':foo != :bar').to_b.should be_true
+  end
+
   it 'codegens int method' do
     run('class Int; def foo; 3; end; end; 1.foo').to_i.should eq(3)
   end

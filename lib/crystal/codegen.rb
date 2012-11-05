@@ -93,6 +93,11 @@ module Crystal
       @funs = {}
       @vars = {}
       @type = @mod
+
+      @symbols = {}
+      mod.symbols.to_a.sort.each_with_index do |sym, index|
+        @symbols[sym] = index
+      end
     end
 
     def main
@@ -126,6 +131,10 @@ module Crystal
 
     def visit_string_literal(node)
       @last = @builder.global_string_pointer(node.value)
+    end
+
+    def visit_symbol_literal(node)
+      @last = LLVM::Int32.from_i(@symbols[node.value])
     end
 
     def visit_assign(node)

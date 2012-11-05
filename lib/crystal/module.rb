@@ -6,6 +6,7 @@ module Crystal
 
     attr_accessor :types
     attr_accessor :defs
+    attr_accessor :symbols
 
     def initialize
       @types = {}
@@ -23,6 +24,7 @@ module Crystal
       @types["Array"] = ArrayType.new object
 
       @defs = {}
+      @symbols = Set.new
 
       define_primitives
     end
