@@ -29,6 +29,7 @@ describe Parser do
 
   it_parses %("foo"), StringLiteral.new("foo")
   it_parses ":foo", SymbolLiteral.new("foo")
+  it_parses "puts :foo.to_s", Call.new(nil, 'puts', [Call.new(SymbolLiteral.new("foo"), "to_s")])
 
   it_parses "[]", [].array
   it_parses "[1, 2]", [1.int, 2.int].array
