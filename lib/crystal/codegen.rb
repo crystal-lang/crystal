@@ -95,9 +95,15 @@ module Crystal
       @type = @mod
 
       @symbols = {}
+      symbol_table_values = []
       mod.symbols.to_a.sort.each_with_index do |sym, index|
         @symbols[sym] = index
+        symbol_table_values << @builder.global_string_pointer(sym, sym)
       end
+
+      symbol_table = @llvm_mod.globals.add(LLVM::Array(mod.string.llvm_type, symbol_table_values.count), "symbol_table")
+      symbol_table.linkage = :internal
+      symbol_table.initializer = LLVM::ConstantArray.const(mod.string.llvm_type, symbol_table_values)
     end
 
     def main
