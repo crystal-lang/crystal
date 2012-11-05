@@ -20,7 +20,7 @@ module Crystal
           type = var.type
         end
       end
-      var.type = target.is_a?(Type) ? target : target.evaluate_types(types)
+      var.type = target.is_a?(Type) ? target.clone : target.evaluate_types(types)
     end
 
     def ==(other)

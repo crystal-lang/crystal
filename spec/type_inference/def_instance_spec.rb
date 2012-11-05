@@ -282,4 +282,32 @@ describe 'Type inference: def instance' do
     )
     mod = infer_type nodes
   end
+
+  it "doesn't reuse new object" do
+    nodes = parse %Q(
+      class Foo
+        def value=(value)
+          @value = value
+        end
+
+        def value
+          @value
+        end
+      end
+
+      def foo(x)
+        x.value = Foo.new
+      end
+
+      f = Foo.new
+      foo(f)
+
+      g = Foo.new
+      foo(g)
+      g.value.value = 1
+    )
+    mod = infer_type nodes
+    nodes[2].target.type.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo')))
+    nodes[4].target.type.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', mod.int)))
+  end
 end
