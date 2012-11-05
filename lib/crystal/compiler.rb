@@ -56,19 +56,8 @@ module Crystal
       begin
         source = ARGF.read
 
-        if @options[:prof]
-          require 'ruby-prof'
-          RubyProf.start
-        end
-
         node = parse source
-        mod = infer_type node, @options[:stats]
-
-        if @options[:prof]
-          result = RubyProf.stop
-          printer = RubyProf::GraphHtmlPrinter.new(result)
-          File.open("#{@options[:output_filename] || 'crystal'}.html", "w") { |f| printer.print(f) }
-        end
+        mod = infer_type node, @options
 
         graph node, mod, @options[:output_filename] if @options[:graph]
         exit 0 if @options[:no_build]

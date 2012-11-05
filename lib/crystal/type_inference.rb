@@ -1,21 +1,39 @@
 require 'benchmark'
 
 module Crystal
-  def infer_type(node, stats = false)
+  def infer_type(node, options = {})
     mod = Crystal::Module.new
     if node
-      if stats
-        Benchmark.bm(20, 'TOTAL:') do |bm|
-          t1 = bm.report('type inference:') { node.accept TypeVisitor.new(mod) }
-          t2 = bm.report('unification:') { unify node }
-          [t1 + t2]
-        end
+      if options[:stats]
+        infer_type_with_stats node, mod
+      elsif options[:prof]
+        infer_type_with_prof node, mod
       else
         node.accept TypeVisitor.new(mod)
         unify node
       end
     end
     mod
+  end
+
+  def infer_type_with_stats(node, mod)
+    Benchmark.bm(20, 'TOTAL:') do |bm|
+      t1 = bm.report('type inference:') { node.accept TypeVisitor.new(mod) }
+      t2 = bm.report('unification:') { unify node }
+      [t1 + t2]
+    end
+  end
+
+  def infer_type_with_prof(node, mod)
+    require 'ruby-prof'
+    profile_to('type_inference.html') { node.accept TypeVisitor.new(mod) }
+    profile_to('unification.html') { unify node }
+  end
+
+  def profile_to(output_filename, &block)
+    result = RubyProf.profile(&block)
+    printer = RubyProf::GraphHtmlPrinter.new(result)
+    File.open(output_filename, "w") { |f| printer.print(f) }
   end
 
   class ASTNode
