@@ -166,7 +166,7 @@ module Crystal
           untyped_def.add_instance(typed_def, arg_types_cloned, self.type.clone)
           typed_def.body.accept visitor
 
-          compute_return visitor, typed_def, scope
+          typed_def.return = compute_return visitor, typed_def, scope
 
           mutation_observers.values.each do |type, token|
             type.unobserve_mutations token
@@ -349,22 +349,33 @@ module Crystal
     def compute_return(visitor, typed_def, scope)
       return_type = typed_def.body.type
       unless return_type.is_a?(MutableType)
-        return typed_def.return = return_type
+        return return_type
+      end
+
+      if scope.is_a?(ObjectType)
+        ivar = scope.instance_vars.find { |name, ivar| ivar.type.object_id == return_type.object_id }
+        if ivar
+          return Path.new(0, ivar[0])
+        end
+      elsif scope.is_a?(ArrayType)
+        if scope.element_type.object_id == return_type.object_id
+          return Path.new(0, scope.element_type_var.name)
+        end
       end
 
       args = scope.is_a?(Type) ? [scope] : []
       args += typed_def.args.map &:type
       index = args.find_index { |var| var.equal?(return_type) }
       if index
-        return typed_def.return = Path.new(index)
+        return Path.new(index)
       end
 
       path = visitor.paths[return_type.object_id]
       if path
-        return typed_def.return = path
+        return path
       end
 
-      typed_def.return = return_type
+      return_type
     end
 
     def compute_parent_path(typed_def, scope, return_type)

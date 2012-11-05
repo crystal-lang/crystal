@@ -41,6 +41,12 @@ describe 'Type inference: return and mutation' do
     input.last.target_def.return.should eq(Path.new(0, '@value'))
   end
 
+  it "when assining to instance variable, return path of instance variable even if in assign" do
+    input = parse "#{test_type}; f = Foo.new; f.value = Object.new"
+    mod = infer_type input
+    input.last.target_def.return.should eq(Path.new(0, '@value'))
+  end
+
   it "types a call returning path of argument" do
     input = parse "#{test_type}; def foo(x); x.value; end; f = Foo.new; f.value = Object.new; foo(f)"
     mod = infer_type input
