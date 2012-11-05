@@ -67,7 +67,7 @@ module Crystal
         if @options[:prof]
           result = RubyProf.stop
           printer = RubyProf::GraphHtmlPrinter.new(result)
-          File.open("#{@options[:output_filename]}.html", "w") { |f| printer.print(f) }
+          File.open("#{@options[:output_filename] || 'crystal'}.html", "w") { |f| printer.print(f) }
         end
 
         graph node, mod, @options[:output_filename] if @options[:graph]
