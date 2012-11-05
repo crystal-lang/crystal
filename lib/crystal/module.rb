@@ -19,6 +19,7 @@ module Crystal
       @types["Long"] = PrimitiveType.new "Long", value, LLVM::Int64, 8
       @types["Float"] = PrimitiveType.new "Float", value, LLVM::Float, 4
       @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
+      @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4
       @types["Array"] = ArrayType.new object
 
       @defs = {}
@@ -60,6 +61,10 @@ module Crystal
 
     def string
       @types["String"]
+    end
+
+    def symbol
+      @types["Symbol"]
     end
 
     def array

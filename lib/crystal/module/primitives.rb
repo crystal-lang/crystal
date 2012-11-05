@@ -8,6 +8,7 @@ module Crystal
       define_int_primitives
       define_long_primitives
       define_float_primitives
+      define_symbol_primitives
       define_array_primitives
       define_externals
       define_builtins
@@ -190,6 +191,11 @@ module Crystal
         p.overload([int], bool) { |b, f| b.fcmp(:oge, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
         p.overload([float], bool) { |b, f| b.fcmp(:oge, f.params[0], f.params[1]) }
       end
+    end
+
+    def define_symbol_primitives
+      singleton(symbol, :==, {'other' => symbol}, bool) { }
+      singleton(symbol, :'!=', {'other' => symbol}, bool) { }
     end
 
     def define_array_primitives

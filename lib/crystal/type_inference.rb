@@ -664,6 +664,10 @@ module Crystal
       node.type = mod.string
     end
 
+    def visit_symbol_literal(node)
+      node.type = mod.symbol
+    end
+
     def visit_def(node)
       if @class_defs.empty?
         mod.defs[node.name] = node
