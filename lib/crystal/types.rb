@@ -301,6 +301,7 @@ module Crystal
       types.each_with_index do |type, index|
         if type.is_a?(MutableType)
           type.observe_mutations do |ivar, type|
+            @set = nil
             if @mutation_observers
               @mutation_observers.values.each do |observer|
                 observer.call([index] + ivar, type)
@@ -312,7 +313,7 @@ module Crystal
     end
 
     def set
-      Set.new(@types)
+      @set ||= Set.new(@types)
     end
 
     def llvm_type
