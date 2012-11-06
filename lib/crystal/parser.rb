@@ -671,7 +671,7 @@ module Crystal
       skip_statement_end
 
       check_ident :end
-      next_token_skip_statement_end
+      next_token_skip_space
 
       node = While.new cond, body
       node.location = location
