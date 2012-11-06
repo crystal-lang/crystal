@@ -288,7 +288,7 @@ module Crystal
         next_token_skip_space_or_newline
         exp = parse_expression
         check :')'
-        next_token_skip_statement_end
+        next_token_skip_space
         raise "unexpected token: (" if @token.type == :'('
         exp
       when :'[]'
