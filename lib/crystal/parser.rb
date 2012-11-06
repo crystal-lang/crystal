@@ -374,7 +374,7 @@ module Crystal
       next_token_skip_statement_end
       exps = parse_expressions
       check_ident :end
-      next_token_skip_statement_end
+      next_token_skip_space
       exps
     end
 
@@ -443,7 +443,7 @@ module Crystal
 
       yield
 
-      next_token_skip_statement_end
+      next_token_skip_space
 
       Block.new(block_args, block_body)
     end
@@ -652,7 +652,7 @@ module Crystal
       end
 
       check_ident :end
-      next_token_skip_statement_end
+      next_token_skip_space
 
       node = If.new Call.new(cond, :"!@"), a_then, a_else
       node.location = location

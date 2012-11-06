@@ -221,4 +221,5 @@ describe Parser do
   it_parses "class Foo; end\nwhile true; end", [ClassDef.new('Foo'), While.new(true.bool)]
   it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
   it_parses "(1)\nif true; end", [1.int, If.new(true.bool)]
+  it_parses "begin\n1\nend\nif true; end", [1.int, If.new(true.bool)]
 end
