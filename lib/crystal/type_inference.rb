@@ -274,6 +274,10 @@ module Crystal
           parent_path = parent_visitor.paths[type.object_id]
           if parent_path
             parent_visitor.pending_mutations[return_type.object_id] << [mutation.path.path, parent_path]
+          else
+            parent_visitor.pending_mutations[type.object_id].each do |mutation_path, type_path|
+              parent_visitor.pending_mutations[return_type.object_id] << [mutation.path.path + mutation_path, type_path]
+            end
           end
           reinstantiate mutation
         end

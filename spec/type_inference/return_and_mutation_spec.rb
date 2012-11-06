@@ -302,4 +302,38 @@ describe 'Type inference: return and mutation' do
     input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Object')))
     input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1))])
   end
+
+  it "computes return type and nested mutation of it" do
+    input = parse %Q(
+      #{test_type}
+      def foo(x)
+        r = Foo.new
+        y = Foo.new
+        y.value = x
+        r.value = y
+        r
+      end
+      foo(Object.new)
+    )
+    mod = infer_type input
+    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))))
+    input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1))])
+  end
+
+  it "computes return type and nested mutation of it (2)" do
+    input = parse %Q(
+      #{test_type}
+      def foo(x)
+        r = Foo.new
+        r.value = Foo.new
+        r.value.value = x
+        r
+      end
+      foo(Object.new)
+    )
+    mod = infer_type input
+    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))))
+    input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1))])
+  end
+
 end
