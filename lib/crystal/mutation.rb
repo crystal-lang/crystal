@@ -28,8 +28,12 @@ module Crystal
       end
     end
 
-    def compute_target(target, types)
-      target.is_a?(Type) ? target.clone : target.evaluate_types(types)
+    def compute_target(target, types, clone = true)
+      target.is_a?(Type) ? (clone ? target.clone : target) : target.evaluate_types(types)
+    end
+
+    def evaluate_target(types)
+      compute_target(target, types, false)
     end
 
     def ==(other)

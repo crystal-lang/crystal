@@ -323,6 +323,7 @@ describe 'Type inference: return and mutation' do
   it "computes return type and nested mutation of it (2)" do
     input = parse %Q(
       #{test_type}
+
       def foo(x)
         r = Foo.new
         r.value = Foo.new
@@ -339,6 +340,7 @@ describe 'Type inference: return and mutation' do
   it "computes mutation to union" do
     input = parse %Q(
       #{test_type}
+
       def foo(x, y)
         x.value = 1
         x.value = y
@@ -348,5 +350,29 @@ describe 'Type inference: return and mutation' do
     )
     mod = infer_type input
     input.last.target_def.mutations.last.should eq(Mutation.new(Path.new(1, '@value'), [mod.int, Path.new(2)]))
+  end
+
+  it "computes mutation to type with an instance var that points to an argument" do
+    input = parse %Q(
+      class Foo
+        def foo(x)
+          @value = Bar.new(x)
+        end
+      end
+
+      class Bar
+        def initialize(x)
+          @x = x
+        end
+      end
+
+      f = Foo.new
+      f.foo(Object.new)
+    )
+    mod = infer_type input
+    input.last.target_def.mutations.should eq([
+      Mutation.new(Path.new(1, '@value'), ObjectType.new('Bar').with_var('@x', ObjectType.new('Object'))),
+      Mutation.new(Path.new(1, '@value', '@x'), Path.new(2)),
+      ])
   end
 end

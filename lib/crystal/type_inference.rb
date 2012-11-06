@@ -144,6 +144,11 @@ module Crystal
           if typed_def.mutations
             typed_def.mutations.each do |mutation|
               if mutation.path.index == 0
+                if mutation.target.is_a?(Path)
+                  parent_path = compute_parent_path(mutation.target, scope)
+                  parent_visitor.pending_mutations[return_type.object_id] << [mutation.path, parent_path]
+                end
+
                 mutation.apply([return_type] + arg_types, true) 
               end
             end
@@ -155,7 +160,10 @@ module Crystal
             return
           end
 
-          compute_parent_path typed_def, scope, return_type
+          parent_path = compute_parent_path typed_def.return, scope
+          if parent_path
+            parent_visitor.paths[return_type.object_id] ||= parent_path
+          end
 
           listen_return_type_and_args_mutations(return_type, arg_types)
 
@@ -187,6 +195,10 @@ module Crystal
                 end
                 mutation = Mutation.new(Path.new(i + 1, *ivar.map { |var| var.is_a?(Var) ? var.name : var }), path || type)
                 typed_def.mutations << mutation
+
+                visitor.pending_mutations[type.object_id].each do |path, target_path|
+                  typed_def.mutations << Mutation.new(mutation.path.append(path), target_path)
+                end
               end
               mutation_observers[arg_type.object_id] = [arg_type, token]
             end
@@ -419,27 +431,27 @@ module Crystal
       return_type
     end
 
-    def compute_parent_path(typed_def, scope, return_type)
-      return unless typed_def.return.is_a?(Path) && parent_visitor && parent_visitor.call
+    def compute_parent_path(path, scope)
+      return unless path.is_a?(Path) && parent_visitor && parent_visitor.call
 
-      index = typed_def.return.index
+      index = path.index
       search_id = lookup_arg_index(index, scope)
-      return_id = return_type.object_id
 
       parent_scope = parent_visitor.call[0]
-      types = parent_scope.is_a?(Crystal::Type) ? [parent_scope] : []
-      types += parent_visitor.call[2]
+      types = parent_visitor.call[2]
       parent_index = types.index { |type| type.object_id == search_id }
       if parent_index
-        parent_visitor.paths[return_id] ||= typed_def.return.with_index(parent_index + 1)
+        return path.with_index(parent_index + 1)
       else
         parent_path = parent_visitor.paths[search_id]
-        parent_visitor.paths[return_id] ||= parent_path.append(typed_def.return) if parent_path
+        return parent_path.append(path) if parent_path
       end
+
+      nil
     end
 
     def lookup_arg_index(index, scope)
-      if scope.is_a?(Type)
+      if scope.is_a?(Type) && !scope.is_a?(Metaclass)
         if index == 1
           scope.object_id
         else
