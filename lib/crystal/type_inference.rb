@@ -141,6 +141,14 @@ module Crystal
         if return_type && (!self.type || self.type != return_type)
           return_type = return_type.clone if must_clone && !self.type
 
+          if typed_def.mutations
+            typed_def.mutations.each do |mutation|
+              if mutation.path.index == 0
+                mutation.apply([return_type] + arg_types, true) 
+              end
+            end
+          end
+
           if found_in_parent && typed_def.body.type != return_type
             self.type = return_type
             recalculate

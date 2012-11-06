@@ -285,15 +285,7 @@ describe 'Type inference: def instance' do
 
   it "doesn't reuse new object" do
     nodes = parse %Q(
-      class Foo
-        def value=(value)
-          @value = value
-        end
-
-        def value
-          @value
-        end
-      end
+      #{test_type}
 
       def foo(x)
         x.value = Foo.new
@@ -309,5 +301,24 @@ describe 'Type inference: def instance' do
     mod = infer_type nodes
     nodes[2].target.type.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo')))
     nodes[4].target.type.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', mod.int)))
+  end
+
+  it "applies return mutation" do
+    nodes = parse %Q(
+      #{test_type}
+
+      def foo(x)
+        r = Foo.new
+        r.value = x
+        r
+      end
+
+      bar = Foo.new
+      r1 = foo(bar)
+      r1.value.value = 1
+    )
+
+    mod = infer_type nodes
+    nodes[2].value.type.should eq(ObjectType.new('Foo').with_var('@value', mod.int))
   end
 end

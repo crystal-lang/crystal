@@ -8,7 +8,7 @@ module Crystal
       @target = target
     end
 
-    def apply(types)
+    def apply(types, force = false)
       type = types[path.index]
       var = nil
       path.path.each do |ivar|
@@ -20,6 +20,7 @@ module Crystal
           type = var.type
         end
       end
+      var.set_type nil if force
       var.type = target.is_a?(Type) ? target.clone : target.evaluate_types(types)
     end
 
