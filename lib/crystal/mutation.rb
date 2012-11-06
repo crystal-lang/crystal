@@ -21,7 +21,15 @@ module Crystal
         end
       end
       var.set_type nil if force
-      var.type = target.is_a?(Type) ? target.clone : target.evaluate_types(types)
+      if target.is_a?(Array)
+        var.type = Type.merge(target.map { |t| compute_target(t, types) })
+      else
+        var.type = compute_target(target, types)
+      end
+    end
+
+    def compute_target(target, types)
+      target.is_a?(Type) ? target.clone : target.evaluate_types(types)
     end
 
     def ==(other)

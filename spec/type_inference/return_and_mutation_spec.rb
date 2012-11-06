@@ -336,4 +336,17 @@ describe 'Type inference: return and mutation' do
     input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1))])
   end
 
+  it "computes mutation to union" do
+    input = parse %Q(
+      #{test_type}
+      def foo(x, y)
+        x.value = 1
+        x.value = y
+      end
+
+      foo(Foo.new, Foo.new)
+    )
+    mod = infer_type input
+    input.last.target_def.mutations.last.should eq(Mutation.new(Path.new(1, '@value'), [mod.int, Path.new(2)]))
+  end
 end

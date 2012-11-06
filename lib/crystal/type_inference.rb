@@ -182,6 +182,9 @@ module Crystal
             if arg_type.is_a?(MutableType) && !mutation_observers[arg_type.object_id]
               token = arg_type.observe_mutations do |ivar, type|
                 path = visitor.paths[type.object_id]
+                if !path && type.is_a?(UnionType)
+                  type = type.types.map { |t| visitor.paths[t.object_id] || t }
+                end
                 mutation = Mutation.new(Path.new(i + 1, *ivar.map { |var| var.is_a?(Var) ? var.name : var }), path || type)
                 typed_def.mutations << mutation
               end
