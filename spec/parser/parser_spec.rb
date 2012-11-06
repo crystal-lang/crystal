@@ -217,4 +217,7 @@ describe Parser do
   it_parses "foo [1]", Call.new(nil, "foo", [[1.int].array])
   it_parses "foo.bar []", Call.new("foo".call, "bar", [[].array])
   it_parses "foo.bar [1]", Call.new("foo".call, "bar", [[1.int].array])
+
+  it_parses "class Foo; end\nwhile true; end", [ClassDef.new('Foo'), While.new(true.bool)]
+  #it_parses "while true; end\if true; end", [While.new(true.bool), If.new(true.bool)], focus: true
 end

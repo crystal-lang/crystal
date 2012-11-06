@@ -529,7 +529,7 @@ module Crystal
     attr_accessor :then
     attr_accessor :else
 
-    def initialize(cond, a_then, a_else = nil)
+    def initialize(cond, a_then = nil, a_else = nil)
       @cond = cond
       @cond.parent = self
       @then = Expressions.from a_then

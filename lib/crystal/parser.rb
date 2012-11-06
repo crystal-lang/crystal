@@ -343,7 +343,7 @@ module Crystal
         when :yield
           parse_yield
         when :class
-          parse_class
+          parse_class_def
         when :def
           parse_def
         when :if
@@ -503,7 +503,7 @@ module Crystal
       end
     end
 
-    def parse_class
+    def parse_class_def
       location = @token.location
 
       next_token_skip_space_or_newline
@@ -527,7 +527,7 @@ module Crystal
       body = parse_expressions
 
       check_ident :end
-      next_token_skip_statement_end
+      next_token_skip_space
 
       class_def = ClassDef.new name, body, superclass, name_column_number, superclass_column_number
       class_def.location = location
