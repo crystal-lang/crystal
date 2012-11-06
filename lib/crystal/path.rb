@@ -21,7 +21,7 @@ module Crystal
     end
 
     def evaluate_args(obj, args)
-      types = obj.is_a?(Type) ? [obj] : []
+      types = obj.is_a?(Type) ? [nil, obj] : [nil]
       types += args.map &:type
       evaluate_types(types)
     end

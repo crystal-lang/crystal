@@ -4,7 +4,7 @@ describe 'Type inference: return and mutation' do
   break unless Crystal::CACHE
 
   test_type = "class Foo; #{rw :value}; end"
-  
+
   it "types a call with an int" do
     input = parse 'def foo; 1; end; foo'
     mod = infer_type input
@@ -20,7 +20,7 @@ describe 'Type inference: return and mutation' do
   it "types a call with an object type argument" do
     input = parse 'def foo(x); x; end; foo Object.new'
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0))
+    input.last.target_def.return.should eq(Path.new(1))
   end
 
   it "types a call returning new type" do
@@ -38,31 +38,31 @@ describe 'Type inference: return and mutation' do
   it "types a call returning path of self" do
     input = parse "#{test_type}; f = Foo.new; f.value = Object.new; f.value"
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0, '@value'))
+    input.last.target_def.return.should eq(Path.new(1, '@value'))
   end
 
   it "when assining to instance variable, return path of instance variable even if in assign" do
     input = parse "#{test_type}; f = Foo.new; f.value = Object.new"
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0, '@value'))
+    input.last.target_def.return.should eq(Path.new(1, '@value'))
   end
 
   it "types a call returning path of argument" do
     input = parse "#{test_type}; def foo(x); x.value; end; f = Foo.new; f.value = Object.new; foo(f)"
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0, '@value'))
+    input.last.target_def.return.should eq(Path.new(1, '@value'))
   end
 
   it "types a call returning path of second argument" do
     input = parse "#{test_type}; def foo(y, x); x.value; end; f = Foo.new; f.value = Object.new; foo(0, f)"
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(1, '@value'))
+    input.last.target_def.return.should eq(Path.new(2, '@value'))
   end
 
   it "types a call to array getter" do
     input = parse "a = [Object.new]; a[0]"
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0, 'element'))
+    input.last.target_def.return.should eq(Path.new(1, 'element'))
   end
 
   it "types a call returning path of self" do
@@ -78,7 +78,7 @@ describe 'Type inference: return and mutation' do
       x.value = Foo.new
       x.foo)
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0, '@value'))
+    input.last.target_def.return.should eq(Path.new(1, '@value'))
   end
 
   it "types a call returning path of self" do
@@ -95,7 +95,7 @@ describe 'Type inference: return and mutation' do
       x.value.value = Object.new
       x.foo)
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0, '@value', '@value'))
+    input.last.target_def.return.should eq(Path.new(1, '@value', '@value'))
   end
 
   it "types a call returning self" do
@@ -109,7 +109,7 @@ describe 'Type inference: return and mutation' do
     )
 
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0))
+    input.last.target_def.return.should eq(Path.new(1))
   end
 
   it "types a call returning path of argument of second level call" do
@@ -125,7 +125,7 @@ describe 'Type inference: return and mutation' do
       bar(Object.new)
     )
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0))
+    input.last.target_def.return.should eq(Path.new(1))
   end
 
   it "types a call to object returning path of argument" do
@@ -139,7 +139,7 @@ describe 'Type inference: return and mutation' do
     )
 
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(1))
+    input.last.target_def.return.should eq(Path.new(2))
   end
 
   it "types a call returning path of self of second level call" do
@@ -157,7 +157,7 @@ describe 'Type inference: return and mutation' do
       bar(Object.new)
     )
     mod = infer_type input
-    input.last.target_def.return.should eq(Path.new(0))
+    input.last.target_def.return.should eq(Path.new(1))
   end
 
   it "cache type mutation" do
@@ -168,7 +168,7 @@ describe 'Type inference: return and mutation' do
       )
 
     mod = infer_type input
-    mod.types['Foo'].defs['value='].lookup_instance([ObjectType.new('Foo'), mod.int]).mutations.should eq([Mutation.new(Path.new(0, '@value'), mod.int)])
+    mod.types['Foo'].defs['value='].lookup_instance([ObjectType.new('Foo'), mod.int]).mutations.should eq([Mutation.new(Path.new(1, '@value'), mod.int)])
   end
 
   it "caches path mutation" do
@@ -180,7 +180,7 @@ describe 'Type inference: return and mutation' do
       )
 
     mod = infer_type input
-    mod.types['Foo'].defs['value='].lookup_instance([ObjectType.new('Foo'), ObjectType.new('Bar')]).mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1))])
+    mod.types['Foo'].defs['value='].lookup_instance([ObjectType.new('Foo'), ObjectType.new('Bar')]).mutations.should eq([Mutation.new(Path.new(1, '@value'), Path.new(2))])
   end
 
   it "caches long path mutation" do
@@ -200,7 +200,7 @@ describe 'Type inference: return and mutation' do
 
     mod = infer_type input
     mod.defs['foo'].lookup_instance([ObjectType.new('Foo'), ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))]).
-      mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1, '@value'))])
+      mutations.should eq([Mutation.new(Path.new(1, '@value'), Path.new(2, '@value'))])
   end
 
   it "caches nested path mutation" do
@@ -218,7 +218,7 @@ describe 'Type inference: return and mutation' do
 
     mod = infer_type input
     mod.defs['foo'].lookup_instance([ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo'))]).
-      mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), mod.int)])
+      mutations.should eq([Mutation.new(Path.new(1, '@value', '@value'), mod.int)])
   end
 
   it "caches nested path mutation with another nested path" do
@@ -239,7 +239,7 @@ describe 'Type inference: return and mutation' do
     mod = infer_type input
     foo = ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo'))
     mod.defs['foo'].lookup_instance([foo, ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))]).
-      mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1, '@value'))])
+      mutations.should eq([Mutation.new(Path.new(1, '@value', '@value'), Path.new(2, '@value'))])
   end
 
   it "caches nested path mutation with another nested recursive path" do
@@ -260,7 +260,7 @@ describe 'Type inference: return and mutation' do
     mod = infer_type input
     foo = ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo'))
     mod.defs['foo'].lookup_instance([foo, foo]).
-      mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1, '@value'))])
+      mutations.should eq([Mutation.new(Path.new(1, '@value', '@value'), Path.new(2, '@value'))])
   end
 
   it "computes return to path if assigned to arg" do
@@ -285,6 +285,21 @@ describe 'Type inference: return and mutation' do
       b = foo(f)
     )
     mod = infer_type input
-    mod.defs['foo'].lookup_instance([ObjectType.new('Foo')]).return.should eq(Path.new(0, '@value'))
+    mod.defs['foo'].lookup_instance([ObjectType.new('Foo')]).return.should eq(Path.new(1, '@value'))
+  end
+
+  it "computes return type and mutation of it" do
+    input = parse %Q(
+      #{test_type}
+      def foo(x)
+        r = Foo.alloc
+        r.value = x
+        r
+      end
+      foo(Object.new)
+    )
+    mod = infer_type input
+    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Object')))
+    input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1))])
   end
 end

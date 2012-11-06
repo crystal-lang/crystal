@@ -123,7 +123,7 @@ module Crystal
 
           if (type_was_nil || apply_mutations) && typed_def.mutations
             typed_def.mutations.each do |mutation|
-              mutation.apply(arg_types)
+              mutation.apply([nil] + arg_types) unless mutation.path.index == 0
             end
           end
         rescue Crystal::Exception => ex
@@ -174,7 +174,7 @@ module Crystal
             if arg_type.is_a?(MutableType) && !mutation_observers[arg_type.object_id]
               token = arg_type.observe_mutations do |ivar, type|
                 path = visitor.paths[type.object_id]
-                mutation = Mutation.new(Path.new(i, *ivar.map { |var| var.is_a?(Var) ? var.name : var }), path || type)
+                mutation = Mutation.new(Path.new(i + 1, *ivar.map { |var| var.is_a?(Var) ? var.name : var }), path || type)
                 typed_def.mutations << mutation
               end
               mutation_observers[arg_type.object_id] = [arg_type, token]
@@ -271,6 +271,10 @@ module Crystal
       if return_type.is_a?(MutableType) && !target_def.return.is_a?(Path)
         token = return_type.observe_mutations do |ivar, type|
           mutation = Mutation.new(Path.new(0, *ivar.map { |var| var.is_a?(Var) ? var.name : var }), type)
+          parent_path = parent_visitor.paths[type.object_id]
+          if parent_path
+            parent_visitor.pending_mutations[return_type.object_id] << [mutation.path.path, parent_path]
+          end
           reinstantiate mutation
         end
         @end_mutation_observers ||= {}
@@ -373,11 +377,11 @@ module Crystal
       if scope.is_a?(ObjectType)
         ivar = scope.instance_vars.find { |name, ivar| ivar.type.object_id == return_type.object_id }
         if ivar
-          return Path.new(0, ivar[0])
+          return Path.new(1, ivar[0])
         end
       elsif scope.is_a?(ArrayType)
         if scope.element_type.object_id == return_type.object_id
-          return Path.new(0, scope.element_type_var.name)
+          return Path.new(1, scope.element_type_var.name)
         end
       end
 
@@ -385,12 +389,16 @@ module Crystal
       args += typed_def.args.map &:type
       index = args.find_index { |var| var.equal?(return_type) }
       if index
-        return Path.new(index)
+        return Path.new(index + 1)
       end
 
       path = visitor.paths[return_type.object_id]
       if path
         return path
+      end
+
+      visitor.pending_mutations[return_type.object_id].each do |path, type|
+        typed_def.mutations << Mutation.new(Path.new(0, *path), type)
       end
 
       return_type
@@ -408,7 +416,7 @@ module Crystal
       types += parent_visitor.call[2]
       parent_index = types.index { |type| type.object_id == search_id }
       if parent_index
-        parent_visitor.paths[return_id] ||= typed_def.return.with_index(parent_index)
+        parent_visitor.paths[return_id] ||= typed_def.return.with_index(parent_index + 1)
       else
         parent_path = parent_visitor.paths[search_id]
         parent_visitor.paths[return_id] ||= parent_path.append(typed_def.return) if parent_path
@@ -417,13 +425,13 @@ module Crystal
 
     def lookup_arg_index(index, scope)
       if scope.is_a?(Type)
-        if index == 0
+        if index == 1
           scope.object_id
         else
-          args[index - 1].type.object_id
+          args[index - 2].type.object_id
         end
       else
-        args[index].type.object_id
+        args[index - 1].type.object_id
       end
     end
 
@@ -624,6 +632,7 @@ module Crystal
     attr_accessor :mod
     attr_accessor :paths
     attr_accessor :call
+    attr_accessor :pending_mutations
 
     def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
       @mod = mod
@@ -633,9 +642,10 @@ module Crystal
       @call = call
       @class_defs = []
       @paths = {}
+      @pending_mutations = Hash.new { |h,k| h[k] = [] }
       if @call
         @call[2].each_with_index do |type, i|
-          @paths[type.object_id] = Path.new(i) if type.is_a?(MutableType)
+          @paths[type.object_id] = Path.new(i + 1) if type.is_a?(MutableType)
         end
       end
     end
@@ -716,7 +726,7 @@ module Crystal
 
       var = @scope.lookup_instance_var node.name
       node.bind_to var
-      paths[var.type.object_id] ||= Path.new(0, node.name) if var.type
+      paths[var.type.object_id] ||= Path.new(1, node.name) if var.type
     end
 
     def end_visit_assign(node)
@@ -787,7 +797,7 @@ module Crystal
       check_var_type 'index', mod.int
 
       node.bind_to @scope.element_type_var
-      paths[@scope.element_type.object_id] = Path.new(0, 'element')
+      paths[@scope.element_type.object_id] = Path.new(1, 'element')
     end
 
     def visit_array_set(node)
