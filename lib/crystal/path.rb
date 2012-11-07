@@ -13,7 +13,8 @@ module Crystal
     end
 
     def append(other_path)
-      Path.new(index, *(path + other_path.path))
+      other_path = other_path.path if other_path.is_a?(Path)
+      Path.new(index, *(path + other_path))
     end
 
     def ==(other)

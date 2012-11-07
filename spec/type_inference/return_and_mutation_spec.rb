@@ -299,7 +299,7 @@ describe 'Type inference: return and mutation' do
       foo(Object.new)
     )
     mod = infer_type input
-    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Object')))
+    input.last.target_def.return.should eq(ObjectType.new('Foo'))
     input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1))])
   end
 
@@ -316,7 +316,7 @@ describe 'Type inference: return and mutation' do
       foo(Object.new)
     )
     mod = infer_type input
-    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))))
+    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo')))
     input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1))])
   end
 
@@ -333,7 +333,7 @@ describe 'Type inference: return and mutation' do
       foo(Object.new)
     )
     mod = infer_type input
-    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))))
+    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo')))
     input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1))])
   end
 
@@ -372,7 +372,7 @@ describe 'Type inference: return and mutation' do
     mod = infer_type input
     input.last.target_def.mutations.should eq([
       Mutation.new(Path.new(1, '@value'), ObjectType.new('Bar').with_var('@x', ObjectType.new('Object'))),
-      Mutation.new(Path.new(1, '@value', '@x'), Path.new(2)),
+      Mutation.new(Path.new(1, '@value', '@x'), Path.new(2), true),
       ])
   end
 end
