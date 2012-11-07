@@ -46,6 +46,7 @@ module Crystal
 
     def type=(type)
       return if type.nil? || @type == type
+
       @type = type
       notify_observers
     end
@@ -96,14 +97,22 @@ module Crystal
         return unless can_calculate_type?
 
         if has_unions?
+          Logger.log "recalculate with dispatch #{self}:#{line_number}:#{object_id}"
+          Logger.indent
+
           stop_listen_return_type_and_args_mutations
 
           dispatch = Dispatch.new
           self.bind_to dispatch
           self.target_def = dispatch
           dispatch.initialize_for_call(self)
+
+          Logger.unindent
           return
         end
+
+        Logger.log "recalculate #{self}:#{line_number}:#{object_id}"
+        Logger.indent
 
         scope, untyped_def = compute_scope_and_untyped_def
 
@@ -169,6 +178,8 @@ module Crystal
 
           self.type = return_type
         end
+
+        Logger.unindent
       end
 
       def instantiate(untyped_def, scope, arg_types)
@@ -329,6 +340,9 @@ module Crystal
     end
 
     def reinstantiate(mutation)
+      Logger.log "reinstantiate #{self}:#{line_number}:#{object_id} #{mutation}"
+      Logger.indent
+      
       scope, untyped_def = compute_scope_and_untyped_def
 
       arg_types = !untyped_def.is_a?(FrozenDef) && scope.is_a?(MutableType) ? [scope] : []
@@ -394,6 +408,8 @@ module Crystal
       end
 
       self.type = cloned_def.body.type
+
+      Logger.unindent
     end
 
     def compute_return(visitor, typed_def, scope)

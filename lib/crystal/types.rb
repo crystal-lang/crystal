@@ -108,9 +108,9 @@ module Crystal
 
       if ivar.type.is_a?(MutableType)
         token = ivar.type.observe_mutations do |sub_ivar, type|
-          if @mutation_observers
+          if @mutation_observers && !sub_ivar.map(&:object_id).include?(ivar.object_id)
             @mutation_observers.values.each do |observer|
-              observer.call([ivar] + sub_ivar, type) unless sub_ivar.include?(ivar)
+              observer.call([ivar] + sub_ivar, type)
             end
           end
         end
@@ -301,7 +301,6 @@ module Crystal
       types.each_with_index do |type, index|
         if type.is_a?(MutableType)
           type.observe_mutations do |ivar, type|
-            @set = nil
             if @mutation_observers
               @mutation_observers.values.each do |observer|
                 observer.call([index] + ivar, type)
@@ -313,7 +312,7 @@ module Crystal
     end
 
     def set
-      @set ||= Set.new(@types)
+      Set.new(@types)
     end
 
     def llvm_type

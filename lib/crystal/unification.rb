@@ -73,7 +73,7 @@ module Crystal
 
         unless unified_type
           if index = @stack.index(type)
-            unified_type = @types[type] = @stack[index]
+            unified_type = @arrays[type] = @stack[index]
           else
             @stack.push type
 
