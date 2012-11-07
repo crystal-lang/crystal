@@ -321,4 +321,33 @@ describe 'Type inference: def instance' do
     mod = infer_type nodes
     nodes[2].value.type.should eq(ObjectType.new('Foo').with_var('@value', mod.int))
   end
+
+  it "should apply second return mutation" do
+    nodes = parse %Q(
+      class Foo
+        def foo(x)
+          @value = Bar.new(x)
+        end
+      end
+
+      class Bar
+        def initialize(x)
+          @x = x
+        end
+      end
+
+      class Baz
+        def coco
+          @coco = 1
+        end
+      end
+
+      f = Foo.new
+      o = Baz.new
+      f.foo(o)
+      o.coco
+    )
+    mod = infer_type nodes
+    nodes[5].obj.type.instance_vars['@value'].type.instance_vars['@x'].type.should be(nodes.last.obj.type)
+  end
 end
