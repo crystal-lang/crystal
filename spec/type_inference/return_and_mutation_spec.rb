@@ -299,8 +299,8 @@ describe 'Type inference: return and mutation' do
       foo(Object.new)
     )
     mod = infer_type input
-    input.last.target_def.return.should eq(ObjectType.new('Foo'))
-    input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1))])
+    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Object')))
+    input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value'), Path.new(1), true)])
   end
 
   it "computes return type and nested mutation of it" do
@@ -316,8 +316,8 @@ describe 'Type inference: return and mutation' do
       foo(Object.new)
     )
     mod = infer_type input
-    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo')))
-    input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1))])
+    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))))
+    input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1), true)])
   end
 
   it "computes return type and nested mutation of it (2)" do
@@ -333,8 +333,8 @@ describe 'Type inference: return and mutation' do
       foo(Object.new)
     )
     mod = infer_type input
-    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo')))
-    input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1))])
+    input.last.target_def.return.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))))
+    input.last.target_def.mutations.should eq([Mutation.new(Path.new(0, '@value', '@value'), Path.new(1), true)])
   end
 
   it "computes mutation to union" do

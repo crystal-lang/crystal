@@ -141,7 +141,7 @@ module Crystal
         if return_type && (!self.type || self.type != return_type)
           return_type = return_type.clone if must_clone && !self.type
 
-          if typed_def.mutations
+          if typed_def.mutations && must_clone
             typed_def.mutations.each do |mutation|
               if mutation.path.index == 0
                 if mutation.target.is_a?(Path)
@@ -197,7 +197,8 @@ module Crystal
                 typed_def.mutations << mutation
 
                 visitor.pending_mutations[type.object_id].each do |path, target_path|
-                  typed_def.mutations << Mutation.new(mutation.path.append(path), target_path, true)
+                  mutation = Mutation.new(mutation.path.append(path), target_path, true)
+                  typed_def.mutations << mutation
                 end
               end
               mutation_observers[arg_type.object_id] = [arg_type, token]
@@ -387,16 +388,7 @@ module Crystal
         all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)
         all_types += cloned_def.args.map(&:type)
 
-        old_target_def = self.target_def
         self.target_def = cloned_def
-
-        if old_target_def && old_target_def.mutations && old_target_def.mutations.length > 0
-          old_target_def.mutations.each do |mutation|
-            if mutation.path.index == 0
-              mutation.apply(all_types) 
-            end
-          end
-        end
 
         mutation.apply(all_types)
       end
@@ -434,9 +426,7 @@ module Crystal
       end
 
       visitor.pending_mutations[return_type.object_id].each do |path, type|
-        mutation = Mutation.new(Path.new(0, *path), type)
-        mutation.blank [return_type]
-        typed_def.mutations << mutation
+        typed_def.mutations << Mutation.new(Path.new(0, *path), type, true)
       end
 
       return_type

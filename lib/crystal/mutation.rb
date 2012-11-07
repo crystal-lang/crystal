@@ -30,23 +30,6 @@ module Crystal
       end
     end
 
-    def blank(types)
-      type = types[path.index]
-      var = nil
-      last_type = nil
-      path.path.each do |ivar|
-        last_type = type
-        if type.is_a?(UnionType)
-          type = type.types[ivar]
-          var = nil
-        else
-          var = type.lookup_instance_var(ivar)
-          type = var.type
-        end
-      end
-      last_type.instance_vars.delete var.name
-    end
-
     def compute_target(target, types, clone = true)
       target.is_a?(Type) ? (clone ? target.clone : target) : target.evaluate_types(types)
     end
