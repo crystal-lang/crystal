@@ -62,7 +62,9 @@ module Crystal
 
     def add_edges(node, type, label = '')
       if type.is_a?(UnionType)
-        type.types.each { |t| add_edges node, t, label }
+        union = @g.add_nodes '', :shape => :point
+        @g.add_edges node, union, :label => label, :arrowhead => :none
+        type.types.each { |t| add_edges union, t }
       else
         @g.add_edges node, type_node(type), :label => label
       end
