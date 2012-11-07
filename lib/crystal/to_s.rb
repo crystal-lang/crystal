@@ -69,14 +69,14 @@ module Crystal
           arg.accept self
         end
         @str << "]"
-      elsif node.obj && node.name.is_a?(Symbol) && node.args.length == 0
+      elsif node.obj && !is_alpha(node.name) && node.args.length == 0
         if node.name.to_s.end_with? '@'
           @str << node.name[0 ... -1].to_s
         else
           @str << node.name.to_s
         end
         node.obj.accept self
-      elsif node.obj && node.name.is_a?(Symbol) && node.args.length == 1
+      elsif node.obj && !is_alpha(node.name) && node.args.length == 1
         node.obj.accept self
         @str << " "
         @str << node.name.to_s
@@ -100,6 +100,11 @@ module Crystal
         node.block.accept self
       end
       false
+    end
+
+    def is_alpha(string)
+      c = string.to_s[0].downcase
+      'a' <= c && c <= 'z'
     end
 
     def visit_block(node)
