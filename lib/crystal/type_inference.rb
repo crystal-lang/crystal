@@ -158,7 +158,7 @@ module Crystal
                   parent_visitor.pending_mutations[return_type.object_id] << [mutation.path.path, parent_path]
                 end
 
-                mutation.apply([return_type] + arg_types) 
+                mutation.apply([return_type] + arg_types)
               end
             end
           end
@@ -342,7 +342,7 @@ module Crystal
     def reinstantiate(mutation)
       Logger.log "reinstantiate #{self}:#{line_number}:#{object_id} #{mutation}"
       Logger.indent
-      
+
       scope, untyped_def = compute_scope_and_untyped_def
 
       arg_types = !untyped_def.is_a?(FrozenDef) && scope.is_a?(MutableType) ? [scope] : []
@@ -353,7 +353,7 @@ module Crystal
         self.target_def = cloned_def
       else
         new_context = {}
-        untyped_def.add_instance(arg_types.map { |type| type.clone(new_context) }, self.type.clone(new_context))
+        cloned_arg_types, cloned_return_type = arg_types.map { |type| type.clone(new_context) }, self.type.clone(new_context)
 
         types_context = {}
         nodes_context = {}
@@ -396,6 +396,7 @@ module Crystal
         end
 
         cloned_def = target_def.clone(nodes_context, &clone_proc)
+        untyped_def.add_instance(cloned_def, cloned_arg_types, cloned_return_type)
         cloned_def.owner = new_owner
 
         all_types = [cloned_def.body.type]
@@ -604,11 +605,24 @@ module Crystal
 
     def add_instance(a_def, types = a_def.args.map(&:type), return_type = nil)
       @instances ||= {}
-      @instances[[types, return_type]] = a_def
+      key = instance_key(types + [return_type])
+      @instances[key] = a_def
     end
 
     def lookup_instance(arg_types, return_type = nil)
-      @instances && @instances[[arg_types, return_type]]
+      key = instance_key(arg_types + [return_type])
+      @instances && @instances[key]
+    end
+
+    def instance_key(types)
+      types = Array.new(types)
+      types.each_with_index do |type, index|
+        found_at = types.index { |t| t.object_id == type.object_id }
+        if found_at < index
+          types[index] = found_at
+        end
+      end
+      types
     end
   end
 

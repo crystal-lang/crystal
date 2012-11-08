@@ -259,7 +259,7 @@ describe 'Type inference: return and mutation' do
 
     mod = infer_type input
     foo = ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo'))
-    mod.defs['foo'].lookup_instance([foo, foo]).
+    mod.defs['foo'].lookup_instance([foo, foo.clone]).
       mutations.should eq([Mutation.new(Path.new(1, '@value', '@value'), Path.new(2, '@value'))])
   end
 
