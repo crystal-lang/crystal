@@ -617,6 +617,8 @@ module Crystal
     def instance_key(types)
       types = Array.new(types)
       types.each_with_index do |type, index|
+        next unless type.is_a?(MutableType)
+
         found_at = types.index { |t| t.object_id == type.object_id }
         if found_at < index
           types[index] = found_at
