@@ -371,6 +371,7 @@ module Crystal
 
           new_node.set_type old_node.type.clone(types_context, nodes_context) if old_node.type && !(old_node.is_a?(Call) && old_node.target_def.is_a?(Dispatch))
           if old_node.is_a?(Call)
+            new_node.mod = old_node.mod
             if (old_node.target_def.is_a?(Dispatch))
               dispatch = Dispatch.new
               new_node.bind_to dispatch
@@ -379,7 +380,6 @@ module Crystal
             else
               new_node.target_def = old_node.target_def
             end
-            new_node.mod = old_node.mod
             if old_node.scope.is_a?(Type)
               new_node.scope = old_node.scope.clone(types_context, nodes_context)
             else
