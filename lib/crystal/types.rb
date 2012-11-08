@@ -33,6 +33,20 @@ module Crystal
       types_context = {}
       types.map { |type| type.clone(types_context) }
     end
+
+    def self.relationship(types)
+      path = []
+      relationships = []
+      relationships_context = {}
+
+      types.each_with_index do |type, i|
+        path.push i
+        relationships.push type.relationship(relationships_context, path)
+        path.pop
+      end
+
+      relationships
+    end
   end
 
   class ClassType < Type
@@ -70,7 +84,11 @@ module Crystal
       name
     end
 
-    def clone(types_context = nil, nodes_context = nil)
+    def clone(*)
+      self
+    end
+
+    def relationship(*)
       self
     end
   end
@@ -86,6 +104,23 @@ module Crystal
     def unobserve_mutations(token)
       @mutation_observers.delete token
       @mutation_observers = nil if @mutation_observers.empty?
+    end
+  end
+
+  module RelatableType
+    def relationship(relationships_context = {}, path = [], current_var = nil)
+      relationship_path = relationships_context[object_id]
+      if relationship_path
+        path = Path.new(relationship_path[0], *relationship_path[1 .. -1])
+        current_var.type = path if current_var
+        return path
+      end
+
+      relationships_context[object_id] = path.dup
+
+      obj = relationship0(relationships_context, path)
+      current_var.type = obj if current_var
+      obj
     end
   end
 
@@ -121,9 +156,9 @@ module Crystal
     end
   end
 
-
   class ObjectType < ClassType
     include MutableClassType
+    include RelatableType
 
     attr_accessor :instance_vars
     @@id = 0
@@ -198,6 +233,19 @@ module Crystal
       obj
     end
 
+    def relationship0(relationships_context = {}, path = [])
+      obj = ObjectType.new(name)
+      instance_vars.each do |name, var|
+        path.push name
+
+        next_var = obj.lookup_instance_var(name)
+        var.type.relationship(relationships_context, path, next_var) if var.type
+
+        path.pop
+      end
+      obj
+    end
+
     def to_s
       return @to_s if @to_s
       @to_s = "..."
@@ -209,6 +257,7 @@ module Crystal
 
   class ArrayType < ClassType
     include MutableClassType
+    include RelatableType
 
     attr_accessor :vars
     @@id = 0
@@ -261,6 +310,18 @@ module Crystal
       array
     end
 
+    def relationship0(relationships_context = {}, path = [])
+      array = ArrayType.new
+      if element_type
+        path.push element_type_var.name
+
+        element_type.relationship(relationships_context, path, array.element_type_var)
+
+        path.pop
+      end
+      array
+    end
+
     def llvm_type
       @llvm_type ||= element_type ? LLVM::Pointer(llvm_struct_type) : LLVM::Int1
     end
@@ -293,6 +354,7 @@ module Crystal
 
   class UnionType < Type
     include MutableType
+    include RelatableType
 
     attr_reader :types
 
@@ -362,6 +424,16 @@ module Crystal
     def clone(types_context = {}, nodes_context = {})
       cloned = types_context[object_id] and return cloned
       types_context[object_id] = UnionType.new(*types.map { |type| type.clone(types_context, nodes_context) })
+    end
+
+    def relationship0(relationships_context = {}, path = [])
+      union = UnionType.new
+      types.each_with_index do |type, i|
+        path.push i
+        union.types.push type.relationship(relationships_context, path)
+        path.pop
+      end
+      union
     end
 
     def name
