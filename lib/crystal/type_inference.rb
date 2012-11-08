@@ -605,26 +605,17 @@ module Crystal
 
     def add_instance(a_def, types = a_def.args.map(&:type), return_type = nil)
       @instances ||= {}
-      key = instance_key(types + [return_type])
+      key = instance_key(types, return_type)
       @instances[key] = a_def
     end
 
     def lookup_instance(arg_types, return_type = nil)
-      key = instance_key(arg_types + [return_type])
+      key = instance_key(arg_types, return_type)
       @instances && @instances[key]
     end
 
-    def instance_key(types)
-      types = Array.new(types)
-      types.each_with_index do |type, index|
-        next unless type.is_a?(MutableType)
-
-        found_at = types.index { |t| t.object_id == type.object_id }
-        if found_at < index
-          types[index] = found_at
-        end
-      end
-      types
+    def instance_key(arg_types, return_type)
+      [Type.relationship(arg_types), return_type]
     end
   end
 

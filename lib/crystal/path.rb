@@ -35,6 +35,16 @@ module Crystal
       type
     end
 
+    def hash
+      @hash ||= begin
+        hash = index.hash
+        path.each do |piece|
+          hash ^= piece.hash
+        end
+        hash
+      end
+    end
+
     def to_s
       str = "#{index}"
       str << '/' << path.join('/')

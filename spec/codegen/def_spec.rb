@@ -141,4 +141,42 @@ describe 'Code gen: def' do
       a = a.next
       ))
   end
+
+  it "codegens with related types" do
+    run(%Q(
+      class A
+       def next=(n)
+         @next = n
+       end
+
+       def next
+         @next
+       end
+      end
+
+      class B
+       def next=(n)
+         @next = n
+       end
+
+       def next
+         @next
+       end
+      end
+
+      def foo(x, y)
+        x.next.next = y
+      end
+
+      a = A.alloc
+      a.next = B.alloc
+
+      foo(a, B.alloc)
+
+      c = A.alloc
+      c.next = B.alloc
+
+      foo(c, c.next)
+      ))
+  end
 end

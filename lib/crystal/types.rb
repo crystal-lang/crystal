@@ -108,19 +108,15 @@ module Crystal
   end
 
   module RelatableType
-    def relationship(relationships_context = {}, path = [], current_var = nil)
+    def relationship(relationships_context = {}, path = [])
       relationship_path = relationships_context[object_id]
       if relationship_path
-        path = Path.new(relationship_path[0], *relationship_path[1 .. -1])
-        current_var.type = path if current_var
-        return path
+        return Path.new(relationship_path[0], *relationship_path[1 .. -1])
       end
 
       relationships_context[object_id] = path.dup
 
-      obj = relationship0(relationships_context, path)
-      current_var.type = obj if current_var
-      obj
+      relationship_object(relationships_context, path)
     end
   end
 
@@ -233,15 +229,16 @@ module Crystal
       obj
     end
 
-    def relationship0(relationships_context = {}, path = [])
+    def relationship_object(relationships_context = {}, path = [])
       obj = ObjectType.new(name)
       instance_vars.each do |name, var|
-        path.push name
+        if var.type
+          path.push name
 
-        next_var = obj.lookup_instance_var(name)
-        var.type.relationship(relationships_context, path, next_var) if var.type
+          obj.lookup_instance_var(name).set_type var.type.relationship(relationships_context, path)
 
-        path.pop
+          path.pop
+        end
       end
       obj
     end
@@ -310,12 +307,12 @@ module Crystal
       array
     end
 
-    def relationship0(relationships_context = {}, path = [])
+    def relationship_object(relationships_context = {}, path = [])
       array = ArrayType.new
       if element_type
         path.push element_type_var.name
 
-        element_type.relationship(relationships_context, path, array.element_type_var)
+        array.element_type_var.set_type element_type.relationship(relationships_context, path)
 
         path.pop
       end
@@ -426,7 +423,7 @@ module Crystal
       types_context[object_id] = UnionType.new(*types.map { |type| type.clone(types_context, nodes_context) })
     end
 
-    def relationship0(relationships_context = {}, path = [])
+    def relationship_object(relationships_context = {}, path = [])
       union = UnionType.new
       types.each_with_index do |type, i|
         path.push i
