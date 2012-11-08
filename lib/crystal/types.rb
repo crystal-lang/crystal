@@ -37,11 +37,11 @@ module Crystal
     def self.relationship(types)
       path = []
       relationships = []
-      relationships_context = {}
+      known_paths = {}
 
       types.each_with_index do |type, i|
         path.push i
-        relationships.push type.relationship(relationships_context, path)
+        relationships.push type.relationship(known_paths, path)
         path.pop
       end
 
@@ -108,15 +108,15 @@ module Crystal
   end
 
   module RelatableType
-    def relationship(relationships_context = {}, path = [])
-      relationship_path = relationships_context[object_id]
-      if relationship_path
-        return Path.new(relationship_path[0], *relationship_path[1 .. -1])
+    def relationship(known_paths = {}, path = [])
+      known_path = known_paths[object_id]
+      if known_path
+        return Path.new(*known_path)
       end
 
-      relationships_context[object_id] = path.dup
+      known_paths[object_id] = path.dup
 
-      relationship_object(relationships_context, path)
+      relationship_object(known_paths, path)
     end
   end
 
@@ -229,13 +229,13 @@ module Crystal
       obj
     end
 
-    def relationship_object(relationships_context = {}, path = [])
+    def relationship_object(known_paths = {}, path = [])
       obj = ObjectType.new(name)
       instance_vars.each do |name, var|
         if var.type
           path.push name
 
-          obj.lookup_instance_var(name).set_type var.type.relationship(relationships_context, path)
+          obj.lookup_instance_var(name).set_type var.type.relationship(known_paths, path)
 
           path.pop
         end
@@ -307,12 +307,12 @@ module Crystal
       array
     end
 
-    def relationship_object(relationships_context = {}, path = [])
+    def relationship_object(known_paths = {}, path = [])
       array = ArrayType.new
       if element_type
         path.push element_type_var.name
 
-        array.element_type_var.set_type element_type.relationship(relationships_context, path)
+        array.element_type_var.set_type element_type.relationship(known_paths, path)
 
         path.pop
       end
@@ -423,11 +423,11 @@ module Crystal
       types_context[object_id] = UnionType.new(*types.map { |type| type.clone(types_context, nodes_context) })
     end
 
-    def relationship_object(relationships_context = {}, path = [])
+    def relationship_object(known_paths = {}, path = [])
       union = UnionType.new
       types.each_with_index do |type, i|
         path.push i
-        union.types.push type.relationship(relationships_context, path)
+        union.types.push type.relationship(known_paths, path)
         path.pop
       end
       union
