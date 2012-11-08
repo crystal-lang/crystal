@@ -123,4 +123,22 @@ describe 'Code gen: def' do
       f.foo(1)[0].to_f
       )).to_f.should eq(1)
   end
+
+  it "codegens recursive type with union" do
+    run(%Q(
+      class A
+       def next=(n)
+         @next = n
+       end
+
+       def next
+         @next
+       end
+      end
+
+      a = A.alloc
+      a.next = A.alloc
+      a = a.next
+      ))
+  end
 end
