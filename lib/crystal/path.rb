@@ -21,6 +21,10 @@ module Crystal
       other.is_a?(Path) && index == other.index && path == other.path
     end
 
+    def eql?(other)
+      self == other
+    end
+
     def evaluate_args(obj, args)
       types = obj.is_a?(Type) ? [nil, obj] : [nil]
       types += args.map &:type
