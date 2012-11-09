@@ -180,10 +180,6 @@ module Crystal
         (other.is_a?(UnionType) && other == self)
     end
 
-    def eql?(other)
-      self == other
-    end
-
     def hash
       name.hash
     end
@@ -287,10 +283,6 @@ module Crystal
         (other.is_a?(UnionType) && other == self)
     end
 
-    def eql?(other)
-      self == other
-    end
-
     def hash
       1
     end
@@ -370,8 +362,12 @@ module Crystal
       end
     end
 
-    def set
-      Set.new(@types)
+    def set_with_count
+      hash = Hash.new(0)
+      @types.each do |type|
+        hash[type] += 1
+      end
+      hash
     end
 
     def llvm_type
@@ -403,7 +399,7 @@ module Crystal
     end
 
     def hash
-      set.hash
+      set_with_count.hash
     end
 
     def ==(other)
@@ -412,7 +408,7 @@ module Crystal
       if @types.length == 1
         @types.first == other
       elsif other.is_a?(UnionType)
-        @types.length == other.types.length && set == other.set
+        @types.length == other.types.length && set_with_count == other.set_with_count
       else
         false
       end
