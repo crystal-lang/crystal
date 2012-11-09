@@ -66,4 +66,12 @@ describe UnionType do
     obj2 = ObjectType.new("Foo").with_var("@value", mod.float)
     obj1.should_not eq(obj2)
   end
+
+  it "compares union with arrays" do
+    union1 = UnionType.new ArrayType.of(mod.int), ArrayType.new, ArrayType.new
+    union2 = UnionType.new ArrayType.of(mod.int), ArrayType.of(mod.int), ArrayType.new
+
+    union1.should_not eq(union2)
+    union2.should_not eq(union1)
+  end
 end
