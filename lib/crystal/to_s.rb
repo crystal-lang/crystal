@@ -69,6 +69,12 @@ module Crystal
           arg.accept self
         end
         @str << "]"
+      elsif node.obj && node.name == :'[]='
+        node.obj.accept self
+        @str << "["
+        node.args[0].accept self
+        @str << "] = "
+        node.args[1].accept self
       elsif node.obj && !is_alpha(node.name) && node.args.length == 0
         if node.name.to_s.end_with? '@'
           @str << node.name[0 ... -1].to_s
