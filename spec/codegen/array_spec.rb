@@ -68,4 +68,8 @@ describe 'Code gen: array' do
   it "codegens method with array mutation" do
     run('def foo(x); end; a = []; foo a; a.push(1)')
   end
+
+  it "codegens method with array mutation and while" do
+    run('def foo(x); while false; end; end; a = []; foo a; a.push(1)')
+  end
 end
