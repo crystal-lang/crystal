@@ -277,10 +277,9 @@ module Crystal
   end
 
   class FrozenDef < Def
-    def clone0(&block)
-      frozen_def = FrozenDef.new name, args.map { |arg| arg.clone(&block) }, (body ? body.clone(&block) : nil), receiver ? receiver.clone(&block) : nil
-      frozen_def.instances = instances
-      frozen_def
+    def clone_from(other, &block)
+      super
+      @instances = other.instances
     end
   end
 

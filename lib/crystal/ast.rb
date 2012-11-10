@@ -50,13 +50,14 @@ module Crystal
     def clone(context = {}, &block)
       new_node = context[object_id] and return new_node
 
-      new_node = context[object_id] = clone0(&block)
+      new_node = context[object_id] = self.class.allocate
+      new_node.location = location
+      new_node.clone_from(self, &block)
       block.call(self, new_node) if block
       new_node
     end
 
-    def clone0(&block)
-      self.class.new
+    def clone_from(other, &block)
     end
   end
 
@@ -119,10 +120,8 @@ module Crystal
       other.is_a?(Expressions) && other.expressions == expressions
     end
 
-    def clone0(&block)
-      exps = Expressions.new expressions.map { |exp| exp.clone(&block) }
-      exps.location = location
-      exps
+    def clone_from(other, &block)
+      @expressions = other.expressions.map { |exp| exp.clone(&block) }
     end
   end
 
@@ -147,10 +146,8 @@ module Crystal
       other.is_a?(ArrayLiteral) && other.elements == elements
     end
 
-    def clone0(&block)
-      exps = ArrayLiteral.new elements.map { |exp| exp.clone(&block) }
-      exps.location = location
-      exps
+    def clone_from(other, &block)
+      @elements = other.elements.map { |exp| exp.clone(&block) }
     end
   end
 
@@ -184,12 +181,12 @@ module Crystal
       other.is_a?(ClassDef) && other.name == name && other.body == body && other.superclass == superclass
     end
 
-    def clone0(&block)
-      class_def = ClassDef.new name, (body ? body.clone(&block) : nil), superclass
-      class_def.location = location
-      class_def.name_column_number = name_column_number
-      class_def.superclass_column_number = superclass_column_number
-      class_def
+    def clone_from(other, &block)
+      @name = other.name
+      @body = other.body.clone(&block)
+      @superclass = other.superclass
+      @name_column_number = other.name_column_number
+      @superclass_column_number = other.superclass_column_number
     end
   end
 
@@ -200,10 +197,6 @@ module Crystal
   class NilLiteral < ASTNode
     def ==(other)
       other.is_a?(NilLiteral)
-    end
-
-    def clone0(&block)
-      NilLiteral.new
     end
   end
 
@@ -222,8 +215,8 @@ module Crystal
       other.is_a?(BoolLiteral) && other.value == value
     end
 
-    def clone0(&block)
-      BoolLiteral.new value
+    def clone_from(other, &block)
+      @value = other.value
     end
   end
 
@@ -244,8 +237,8 @@ module Crystal
       other.is_a?(IntLiteral) && other.value.to_i == value.to_i
     end
 
-    def clone0(&block)
-      IntLiteral.new value
+    def clone_from(other, &block)
+      @value = other.value
     end
   end
 
@@ -266,8 +259,9 @@ module Crystal
       other.is_a?(LongLiteral) && other.value.to_i == value.to_i
     end
 
-    def clone0(&block)
-      LongLiteral.new value
+    def clone_from(other, &block)
+      @value = other.value
+      @has_sign = other.has_sign
     end
   end
 
@@ -288,8 +282,8 @@ module Crystal
       other.is_a?(FloatLiteral) && other.value.to_f == value.to_f
     end
 
-    def clone0(&block)
-      FloatLiteral.new value
+    def clone_from(other, &block)
+      @value = other.value
     end
   end
 
@@ -308,8 +302,8 @@ module Crystal
       other.is_a?(CharLiteral) && other.value.to_i == value.to_i
     end
 
-    def clone0(&block)
-      CharLiteral.new value
+    def clone_from(other, &block)
+      @value = other.value
     end
   end
 
@@ -324,8 +318,8 @@ module Crystal
       other.is_a?(StringLiteral) && other.value == value
     end
 
-    def clone0(&block)
-      StringLiteral.new value
+    def clone_from(other, &block)
+      @value = other.value
     end
   end
 
@@ -340,8 +334,8 @@ module Crystal
       other.is_a?(SymbolLiteral) && other.value == value
     end
 
-    def clone0(&block)
-      SymbolLiteral.new value
+    def clone_from(other, &block)
+      @value = other.value
     end
   end
 
@@ -385,10 +379,11 @@ module Crystal
       other.is_a?(Def) && other.receiver == receiver && other.name == name && other.args == args && other.body == body
     end
 
-    def clone0(&block)
-      a_def = Def.new name, args.map { |arg| arg.clone(&block) }, (body ? body.clone(&block) : nil), receiver ? receiver.clone(&block) : nil
-      a_def.location = location
-      a_def
+    def clone_from(other, &block)
+      @name = other.name
+      @args = other.args.map { |arg| arg.clone(&block) }
+      @body = other.body.clone(&block)
+      @receiver = other.receiver.clone(&block)
     end
   end
 
@@ -405,10 +400,8 @@ module Crystal
       other.is_a?(Var) && other.name == name && other.type == type
     end
 
-    def clone0(&block)
-      var = Var.new name
-      var.location = location
-      var
+    def clone_from(other, &block)
+      @name = other.name
     end
   end
 
@@ -424,10 +417,8 @@ module Crystal
       other.is_a?(Const) && other.name == name
     end
 
-    def clone0(&block)
-      var = Const.new name
-      var.location = location
-      var
+    def clone_from(other, &block)
+      @name = other.name
     end
   end
 
@@ -443,10 +434,8 @@ module Crystal
       other.is_a?(InstanceVar) && other.name == name
     end
 
-    def clone0(&block)
-      var = InstanceVar.new name
-      var.location = location
-      var
+    def clone_from(other, &block)
+      @name = other.name
     end
   end
 
@@ -495,12 +484,13 @@ module Crystal
       other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block
     end
 
-    def clone0(&block)
-      call = Call.new (obj ? obj.clone(&block) : nil), name, args.map { |arg| arg.clone(&block) }, (self.block ? self.block.clone(&block) : nil)
-      call.location = location
-      call.name_column_number = name_column_number
-      call.name_length = name_length
-      call
+    def clone_from(other, &block)
+      @obj = other.obj.clone(&block)
+      @name = other.name
+      @args = other.args.map { |arg| arg.clone(&block) }
+      @block = other.block.clone(&block)
+      @name_column_number = other.name_column_number
+      @name_length = other.name_length
     end
 
     def name_column_number
@@ -548,10 +538,10 @@ module Crystal
       other.is_a?(If) && other.cond == cond && other.then == self.then && other.else == self.else
     end
 
-    def clone0(&block)
-      a_if = If.new cond.clone, self.then.clone(&block), (self.else ? self.else.clone(&block) : nil)
-      a_if.location = location
-      a_if
+    def clone_from(other, &block)
+      @cond = other.cond.clone(&block)
+      @then = other.then.clone(&block)
+      @else = other.else.clone(&block)
     end
   end
 
@@ -579,10 +569,9 @@ module Crystal
       other.is_a?(Assign) && other.target == target && other.value == value
     end
 
-    def clone0(&block)
-      assign = Assign.new target.clone(&block), value.clone(&block)
-      assign.location = location
-      assign
+    def clone_from(other, &block)
+      @target = other.target.clone(&block)
+      @value = other.value.clone(&block)
     end
   end
 
@@ -612,10 +601,9 @@ module Crystal
       other.is_a?(While) && other.cond == cond && other.body == body
     end
 
-    def clone0(&block)
-      a_while = While.new cond.clone(&block), (body ? body.clone(&block) : nil)
-      a_while.location = location
-      a_while
+    def clone_from(other, &block)
+      @cond = other.cond.clone(&block)
+      @body = other.body.clone(&block)
     end
   end
 
@@ -647,10 +635,9 @@ module Crystal
       other.is_a?(Block) && other.args == args && other.body == body
     end
 
-    def clone0(&blk)
-      block = Block.new args.map { |arg| arg.clone(&blk) }, (body ? body.clone(&blk) : nil)
-      block.location = location
-      block
+    def clone_from(other, &block)
+      @args = other.args.map { |arg| arg.clone(&block) }
+      @body = other.body.clone(&block)
     end
   end
 
@@ -680,10 +667,8 @@ module Crystal
           other.is_a?(#{keyword.capitalize}) && other.exps == exps
         end
 
-        def clone0(&block)
-          ret = #{keyword.capitalize}.new exps.clone(&block)
-          ret.location = location
-          ret
+        def clone_from(other, &block)
+          @exps = other.exps.clone(&block)
         end
       end
     )

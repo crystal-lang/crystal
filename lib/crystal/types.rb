@@ -467,8 +467,8 @@ module Crystal
       @type = type
     end
 
-    def clone0
-      Alloc.new(@type.clone)
+    def clone_from(other, &block)
+      @type = other.type.clone
     end
   end
 end
