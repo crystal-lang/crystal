@@ -64,4 +64,8 @@ describe 'Code gen: array' do
   it "codegens array set in recursive union" do
     run('a = [0] ; a[0] = a; a.length').to_i.should eq(1)
   end
+
+  it "codegens method with array mutation" do
+    run('def foo(x); end; a = []; foo a; a.push(1)')
+  end
 end
