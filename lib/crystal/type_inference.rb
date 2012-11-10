@@ -405,6 +405,8 @@ module Crystal
         all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)
         all_types += cloned_def.args.map(&:type)
 
+        check_reinstantiate_consitency(all_types, cloned_arg_types, cloned_return_type, mutation)
+
         self.target_def = cloned_def
 
         mutation.apply(all_types)
@@ -413,6 +415,24 @@ module Crystal
       self.type = cloned_def.body ? cloned_def.body.type : nil
 
       Logger.unindent
+    end
+
+    def check_reinstantiate_consitency(all_types, cloned_arg_types, cloned_return_type, mutation)
+      original_types = [cloned_return_type] + cloned_arg_types
+
+      another_all_types = Type.clone(all_types)
+      another_original_types = Type.clone(original_types)
+      mutation.apply(another_all_types)
+
+      if another_all_types != another_original_types
+        Logger.log "==="
+        Logger.log all_types[mutation.path.index].to_s
+        Logger.log mutation
+        Logger.log original_types[mutation.path.index].to_s
+        Logger.log "==="
+
+        binding.pry
+      end
     end
 
     def compute_return(visitor, typed_def, scope)
