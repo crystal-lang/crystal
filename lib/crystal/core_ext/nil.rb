@@ -11,7 +11,7 @@ class NilClass
     0
   end
 
-  def clone
+  def clone(*)
     nil
   end
 end

@@ -177,6 +177,8 @@ module Crystal
           listen_return_type_and_args_mutations(return_type, arg_types)
 
           self.type = return_type
+        else
+          listen_return_type_and_args_mutations(return_type, arg_types) unless target_def.body
         end
 
         Logger.unindent
@@ -399,7 +401,7 @@ module Crystal
         untyped_def.add_instance(cloned_def, cloned_arg_types, cloned_return_type)
         cloned_def.owner = new_owner
 
-        all_types = [cloned_def.body.type]
+        all_types = [cloned_def.body ? cloned_def.body.type : nil]
         all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)
         all_types += cloned_def.args.map(&:type)
 
@@ -408,7 +410,7 @@ module Crystal
         mutation.apply(all_types)
       end
 
-      self.type = cloned_def.body.type
+      self.type = cloned_def.body ? cloned_def.body.type : nil
 
       Logger.unindent
     end
