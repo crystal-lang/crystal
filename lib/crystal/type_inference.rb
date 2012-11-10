@@ -398,6 +398,8 @@ module Crystal
         end
 
         cloned_def = target_def.clone(nodes_context, &clone_proc)
+
+        # TODO check if adding it here is ok: the return type can mutate afterwards
         untyped_def.add_instance(cloned_def, cloned_arg_types, cloned_return_type)
         cloned_def.owner = new_owner
 
