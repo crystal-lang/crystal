@@ -605,7 +605,7 @@ module Crystal
 
     def accept_children(visitor)
       cond.accept visitor
-      body.accept visitor
+      body.accept visitor if body
     end
 
     def ==(other)

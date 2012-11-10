@@ -237,7 +237,7 @@ module Crystal
       @builder.cond(@last, body_block, exit_block)
 
       @builder.position_at_end body_block
-      node.body.accept self
+      node.body.accept self if node.body
       @builder.br while_block
 
       @builder.position_at_end exit_block
