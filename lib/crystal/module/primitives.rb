@@ -125,6 +125,7 @@ module Crystal
     end
 
     def define_long_primitives
+      no_args_primitive(long, 'to_i', int) { |b, f| b.trunc(f.params[0], int.llvm_type) }
       no_args_primitive(long, 'to_s', string) do |b, f, llvm_mod|
         buffer = b.array_malloc(char.llvm_type, LLVM::Int(22))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%ld"), f.params[0]
@@ -217,6 +218,10 @@ module Crystal
       external('strlen', {'str' => string}, int)
       external('puts', {'str' => string}, int)
       external('atoi', {'str' => string}, int)
+
+      external('rand', {}, int)
+      external('srand', {'seed' => int}, nil)
+      external('time', {'t' => long}, long)
     end
 
     def define_builtins
