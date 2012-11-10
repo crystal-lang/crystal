@@ -402,7 +402,7 @@ module Crystal
         cloned_def.owner = new_owner
 
         all_types = [cloned_def.body ? cloned_def.body.type : nil]
-        all_types.push cloned_def.owner if cloned_def.owner.is_a?(Type) && !cloned_def.owner.is_a?(Metaclass)
+        all_types.push cloned_def.owner if cloned_def.owner.is_a?(MutableType) && !cloned_def.owner.is_a?(Metaclass)
         all_types += cloned_def.args.map(&:type)
 
         check_reinstantiate_consitency(all_types, cloned_arg_types, cloned_return_type, mutation)

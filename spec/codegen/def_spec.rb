@@ -179,4 +179,18 @@ describe 'Code gen: def' do
       foo(c, c.next)
       ))
   end
+
+  it "codegens and doesn't break if obj is int and there's a mutation" do
+    run(%Q(
+      class Int
+        def baz(x)
+        end
+      end
+
+      elems = [1]
+      elems[0].baz [1]
+        end
+      end
+    ))
+  end
 end
