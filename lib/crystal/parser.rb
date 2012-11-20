@@ -410,16 +410,16 @@ module Crystal
             next_token_skip_space_or_newline
           end
         end
-        next_token_skip_statement_end
+        next_token_skip_space_or_newline
       end
 
-      check :':'
-      next_token_skip_space_or_newline
+      if @token.type == :':'
+        next_token_skip_space_or_newline
+        check :CONST
 
-      check :CONST
-
-      return_type = Const.new(@token.value)
-      next_token_skip_statement_end
+        return_type = Const.new(@token.value)
+        next_token_skip_statement_end
+      end
 
       Extern.new name, args, return_type
     end

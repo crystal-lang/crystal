@@ -702,7 +702,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :return_type
 
-    def initialize(name, args, return_type)
+    def initialize(name, args = [], return_type = nil)
       @name = name
       @args = args
       @args.each { |arg| arg.parent = self }
@@ -712,7 +712,7 @@ module Crystal
 
     def accept_children(visitor)
       args.each { |arg| arg.accept visitor }
-      return_type.accept visitor
+      return_type.accept visitor if return_type
     end
 
     def ==(other)
@@ -722,7 +722,7 @@ module Crystal
     def clone_from(other, &block)
       @name = other.name
       @args = other.args.map { |arg| arg.clone(&block) }
-      @return_type = other.return_type.clone(&block)
+      @return_type = other.return_type.clone(&block) if other.return_type
     end
   end
 end

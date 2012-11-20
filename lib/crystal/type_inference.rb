@@ -788,7 +788,7 @@ module Crystal
     end
 
     def end_visit_extern(node)
-      mod.external node.name, node.args.map { |arg| [arg.name, arg.type.type.type] }, node.return_type.type.type
+      mod.external node.name, node.args.map { |arg| [arg.name, arg.type.type.type] }, (node.return_type ? node.return_type.type.type : nil)
     end
 
     def visit_var(node)
