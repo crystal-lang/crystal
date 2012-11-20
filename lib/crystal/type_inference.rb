@@ -787,6 +787,10 @@ module Crystal
       @class_defs.pop
     end
 
+    def end_visit_extern(node)
+      mod.external node.name, node.args.map { |arg| [arg.name, arg.type.type.type] }, node.return_type.type.type
+    end
+
     def visit_var(node)
       var = lookup_var node.name
       node.bind_to var
