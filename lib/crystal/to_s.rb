@@ -60,6 +60,26 @@ module Crystal
       false
     end
 
+    def visit_extern(node)
+      @str << 'extern '
+      @str << node.name
+      @str << '('
+      node.args.each_with_index do |arg, i|
+        @str << ', ' if i > 0
+        arg.accept self
+      end
+      @str << ') : '
+      node.return_type.accept self
+      false
+    end
+
+    def visit_arg(node)
+      @str << node.name
+      @str << ' : '
+      node.type.accept self
+      false
+    end
+
     def visit_call(node)
       if node.obj && node.name == :'[]'
         node.obj.accept self

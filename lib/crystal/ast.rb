@@ -405,6 +405,25 @@ module Crystal
     end
   end
 
+  class Arg < ASTNode
+    attr_accessor :name
+    attr_accessor :type
+
+    def initialize(name, type)
+      @name = name
+      @type = type
+    end
+
+    def ==(other)
+      other.is_a?(Arg) && other.name == name && other.type == type
+    end
+
+    def clone_from(other, &block)
+      @name = other.name
+      @type = other.type
+    end
+  end
+
   # A Class name or constant name.
   class Const < ASTNode
     attr_accessor :name
@@ -672,5 +691,34 @@ module Crystal
         end
       end
     )
+  end
+
+  class Extern < ASTNode
+    attr_accessor :name
+    attr_accessor :args
+    attr_accessor :return_type
+
+    def initialize(name, args, return_type)
+      @name = name
+      @args = args
+      @args.each { |arg| arg.parent = self }
+      @return_type = return_type
+      @return_type.parent = self if @return_type
+    end
+
+    def accept_children(visitor)
+      args.each { |arg| arg.accept visitor }
+      return_type.accept visitor
+    end
+
+    def ==(other)
+      other.is_a?(Extern) && other.name == name && other.args == args && other.return_type == return_type
+    end
+
+    def clone_from(other, &block)
+      @name = other.name
+      @args = other.args.map { |arg| arg.clone(&block) }
+      @return_type = other.return_type.clone(&block)
+    end
   end
 end

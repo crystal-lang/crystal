@@ -358,6 +358,8 @@ module Crystal
           parse_next
         when :break
           parse_break
+        when :extern
+          parse_extern
         else
           parse_var_or_call
         end
@@ -376,6 +378,50 @@ module Crystal
       check_ident :end
       next_token_skip_space
       exps
+    end
+
+    def parse_extern
+      next_token_skip_space_or_newline
+
+      check_ident
+      name = @token.value
+
+      next_token_skip_space_or_newline
+
+      args = []
+
+      if @token.type == :'('
+        next_token_skip_space_or_newline
+        while @token.type != :')'
+          check_ident
+          arg_name = @token.value
+
+          next_token_skip_space_or_newline
+          check :':'
+          next_token_skip_space_or_newline
+
+          check :CONST
+          arg_type = Const.new(@token.value)
+
+          args << Arg.new(arg_name, arg_type)
+
+          next_token_skip_space_or_newline
+          if @token.type == :','
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_statement_end
+      end
+
+      check :':'
+      next_token_skip_space_or_newline
+
+      check :CONST
+
+      return_type = Const.new(@token.value)
+      next_token_skip_statement_end
+
+      Extern.new name, args, return_type
     end
 
     def parse_var_or_call
