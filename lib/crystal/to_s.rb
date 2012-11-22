@@ -253,30 +253,38 @@ module Crystal
       false
     end
 
-     def visit_fun_def(node)
-       @str << 'fun '
-       @str << node.name
-       if node.args.length > 0
-         @str << '('
-         node.args.each_with_index do |arg, i|
-           @str << ', ' if i > 0
-           arg.accept self
-         end
-         @str << ')'
-       end
-       if node.return_type
-         @str << ' : '
-         node.return_type.accept self
-       end
-       false
-     end
+    def visit_fun_def(node)
+      @str << 'fun '
+      @str << node.name
+      if node.args.length > 0
+        @str << '('
+        node.args.each_with_index do |arg, i|
+          @str << ', ' if i > 0
+          arg.accept self
+        end
+        @str << ')'
+      end
+      if node.return_type
+        @str << ' : '
+        node.return_type.accept self
+      end
+      false
+    end
 
-     def visit_fun_def_arg(node)
-       @str << node.name
-       @str << ' : '
-       node.type.accept self
-       false
-     end
+    def visit_fun_def_arg(node)
+      @str << node.name
+      @str << ' : '
+      node.type.accept self
+      false
+    end
+
+    def visit_type_def(node)
+      @str << ' type '
+      @str << node.name
+      @str << ' : '
+      node.type.accept self
+      false
+    end
 
     ['return', 'next', 'break', 'yield'].each do |keyword|
       class_eval %Q(

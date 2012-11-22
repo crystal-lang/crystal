@@ -729,7 +729,11 @@ module Crystal
           case @token.value
           when :fun
             expressions << parse_fun_def
+          when :type
+            expressions << parse_type_def
           when :end
+            break
+          else
             break
           end
         end
@@ -778,6 +782,23 @@ module Crystal
       end
 
       FunDef.new name, args, return_type
+    end
+
+    def parse_type_def
+      next_token_skip_space_or_newline
+
+      check :CONST
+      name = @token.value
+      next_token_skip_space_or_newline
+
+      check :':'
+      next_token_skip_space_or_newline
+
+      check :CONST
+      type = Const.new(@token.value)
+      next_token_skip_statement_end
+
+      TypeDef.new name, type
     end
 
     def node_and_next_token(node)

@@ -734,10 +734,23 @@ module Crystal
     def ==(other)
       other.is_a?(FunDefArg) && other.name == name && other.type == type
     end
+  end
 
-    def clone_from(other, &block)
-      @name = other.name
-      @type = other.type
+  class TypeDef < ASTNode
+    attr_accessor :name
+    attr_accessor :type
+
+    def initialize(name, type)
+      @name = name
+      @type = type
+    end
+
+    def accept_children(visitor)
+      type.accept visitor
+    end
+
+    def ==(other)
+      other.is_a?(TypeDef) && other.name == name && other.type == type
     end
   end
 end
