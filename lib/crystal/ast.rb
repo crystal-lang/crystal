@@ -414,10 +414,6 @@ module Crystal
       @type = type
     end
 
-    def accept_children(visitor)
-      type.accept visitor
-    end
-
     def ==(other)
       other.is_a?(Arg) && other.name == name && other.type == type
     end
