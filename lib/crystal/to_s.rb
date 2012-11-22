@@ -68,11 +68,8 @@ module Crystal
         @str << ', ' if i > 0
         arg.accept self
       end
-      @str << ')'
-      if node.return_type
-        @str << ' : '
-        node.return_type.accept self
-      end
+      @str << ') : '
+      node.return_type.accept self
       false
     end
 

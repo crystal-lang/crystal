@@ -223,8 +223,6 @@ describe Parser do
   it_parses "(1)\nif true; end", [1.int, If.new(true.bool)]
   it_parses "begin\n1\nend\nif true; end", [1.int, If.new(true.bool)]
 
-  it_parses "extern foo", Extern.new('foo', [])
-  it_parses "extern foo\nextern bar", [Extern.new('foo'), Extern.new('bar')]
   it_parses "extern foo : Int", Extern.new('foo', [], 'Int'.const)
   it_parses "extern foo : Int", Extern.new('foo', [], 'Int'.const)
   it_parses "extern foo(a : Int, b : Float) : Int", Extern.new('foo', [Arg.new('a', 'Int'.const), Arg.new('b', 'Float'.const)], 'Int'.const)
