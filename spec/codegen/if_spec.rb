@@ -32,4 +32,8 @@ describe 'Code gen: if' do
   it 'codegens if with union' do
     run('a = if true; 2.5; else; 1; end; a.to_f').to_f.should eq(2.5)
   end
+
+  it 'codes if with two whiles' do
+    run('if true; while false; end; else; while false; end; end')
+  end
 end

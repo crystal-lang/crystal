@@ -216,8 +216,10 @@ module Crystal
 
         if is_union
           @last = union_ptr
-        else
+        elsif node.type
           @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
+        else
+          @last = nil
         end
       else
         @builder.position_at_end exit_block
