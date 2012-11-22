@@ -1,12 +1,12 @@
 def print_density(d)
   if d > 8
-    putchar ' '
+    C.putchar ' '
   elsif d > 4
-    putchar '.'
+    C.putchar '.'
   elsif d > 2
-    putchar '*'
+    C.putchar '*'
   else
-    putchar '+'
+    C.putchar '+'
   end
 end
 
@@ -30,7 +30,7 @@ def mandelhelp(xmin, xmax, xstep, ymin, ymax, ystep)
       print_density mandelconverge(x, y)
       x += xstep
     end
-    putchar '\n'
+    C.putchar '\n'
     y += ystep
   end
 end

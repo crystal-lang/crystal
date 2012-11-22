@@ -22,7 +22,7 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens string' do
-    run('strlen("foo")').to_i.should eq("foo".size)
+    run('C.strlen("foo")').to_i.should eq("foo".size)
     run('"foo".length').to_i.should eq("foo".size)
   end
 

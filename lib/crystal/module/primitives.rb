@@ -10,7 +10,6 @@ module Crystal
       define_float_primitives
       define_symbol_primitives
       define_array_primitives
-      define_externals
       define_builtins
     end
 
@@ -210,18 +209,6 @@ module Crystal
       array.defs[:<<] = Def.new(:<<, [Var.new('value')], ArrayPush.new)
       array.defs[:[]=] = Def.new(:[]=, [Var.new('index'), Var.new('value')], ArraySet.new)
       array.defs[:[]] = Def.new(:[], [Var.new('index')], ArrayGet.new)
-    end
-
-    def define_externals
-      external('putchar', {'c' => char}, char)
-      external('getchar', {}, char)
-      external('strlen', {'str' => string}, int)
-      external('puts', {'str' => string}, int)
-      external('atoi', {'str' => string}, int)
-
-      external('rand', {}, int)
-      external('srand', {'seed' => int}, nil)
-      external('time', {'t' => long}, long)
     end
 
     def define_builtins

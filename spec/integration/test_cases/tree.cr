@@ -23,7 +23,7 @@ class Node
 
   def print
     @left.print unless @left.nil?
-    putchar @value
+    C.putchar @value
     @right.print unless @right.nil?
   end
 end
@@ -44,4 +44,4 @@ root.add 's'
 root.add '!'
 
 root.print
-putchar '\n'
+C.putchar '\n'

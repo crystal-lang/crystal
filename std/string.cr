@@ -1,10 +1,10 @@
 class String
   def length
-    strlen self
+    C.strlen self
   end
 
   def to_i
-    atoi self
+    C.atoi self
   end
 
   def to_s

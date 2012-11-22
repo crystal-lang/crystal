@@ -58,7 +58,7 @@ describe 'Type inference: errors' do
   end
 
   it "reports can't call external with args" do
-    nodes = parse "putchar 1"
+    nodes = parse "C.putchar 1"
 
     lambda {
       infer_type nodes
@@ -145,7 +145,7 @@ describe 'Type inference: errors' do
 
       def foo(x)
         x.value = 'a'
-        putchar x.value
+        C.putchar x.value
       end
 
       f = Foo.new

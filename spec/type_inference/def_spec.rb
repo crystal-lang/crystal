@@ -33,11 +33,11 @@ describe 'Type inference: def' do
   end
 
   it "types putchar with Char" do
-    assert_type("putchar 'a'") { char }
+    assert_type("C.putchar 'a'") { char }
   end
 
   it "types getchar with Char" do
-    assert_type("getchar") { char }
+    assert_type("C.getchar") { char }
   end
 
   it "allows recursion" do

@@ -24,4 +24,4 @@ while i < max
   i += 1
 end
 
-puts found.to_s
+puts found

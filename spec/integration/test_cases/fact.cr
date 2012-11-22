@@ -8,4 +8,4 @@ def fact(n)
   end
 end
 
-putn fact(4)
+puts fact(4)
