@@ -416,7 +416,7 @@ module Crystal
       owner = node.target_def.owner && owner.is_a?(Type) && !owner.is_a?(Metaclass) && owner
 
       call_args = []
-      if node.obj && !node.obj.type.is_a?(Metaclass)
+      if node.obj && node.obj.type.passed_as_self?
         node.obj.accept self
         call_args << @last
       elsif owner
@@ -462,7 +462,7 @@ module Crystal
       @vars = {}
 
       args = []
-      if self_type && !self_type.is_a?(Metaclass)
+      if self_type && self_type.passed_as_self?
         @type = self_type
         args << Var.new("self", self_type)
       end

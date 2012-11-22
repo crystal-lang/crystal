@@ -708,9 +708,9 @@ module Crystal
         libname = @token.value
         next_token_skip_space_or_newline
         check :')'
-        next_token_skip_space_or_newline
+        next_token_skip_statement_end
       else
-        skip_space_or_newline
+        skip_statement_end
       end
 
       body = parse_lib_body

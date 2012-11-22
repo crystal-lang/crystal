@@ -683,6 +683,7 @@ module Crystal
       @name = name
       @libname = libname
       @body = Expressions.from body
+      @body.parent = self if @body
     end
 
     def accept_children(visitor)
@@ -724,6 +725,10 @@ module Crystal
     def initialize(name, type)
       @name = name
       @type = type
+    end
+
+    def accept_children(visitor)
+      type.accept visitor
     end
 
     def ==(other)

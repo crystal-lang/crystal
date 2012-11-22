@@ -715,7 +715,7 @@ module Crystal
       @scope = scope
       @parent = parent
       @call = call
-      @class_defs = []
+      @types = [mod]
       @paths = {}
       @pending_mutations = Hash.new { |h,k| h[k] = [] }
       if @call
@@ -755,36 +755,48 @@ module Crystal
     end
 
     def visit_def(node)
-      if @class_defs.empty?
-        mod.defs[node.name] = node
-      else
-        mod.types[@class_defs.last].defs[node.name] = node
-      end
+      @types.last.defs[node.name] = node
       false
     end
 
     def visit_class_def(node)
-      @class_defs.push node.name
-
       parent = if node.superclass
                  mod.types[node.superclass] or raise Crystal::TypeException.new("unknown class #{node.superclass}", node.line_number, node.superclass_column_number, node.superclass.length)
                else
                  mod.object
                end
 
-      existing = mod.types[node.name]
-      if existing
-        if node.superclass && existing.parent_type != parent
-          node.raise "superclass mismatch for class #{existing.name} (#{parent.name} for #{existing.parent_type.name})"
+      type = mod.types[node.name]
+      if type
+        if node.superclass && type.parent_type != parent
+          node.raise "superclass mismatch for class #{type.name} (#{parent.name} for #{type.parent_type.name})"
         end
       else
-        mod.types[node.name] = ObjectType.new node.name, parent
+        mod.types[node.name] = type = ObjectType.new node.name, parent
       end
+
+      @types.push type
+
       true
     end
 
     def end_visit_class_def(node)
-      @class_defs.pop
+      @types.pop
+    end
+
+    def visit_lib_def(node)
+      mod.types[node.name] = type = LibType.new node.name, node.libname
+      @types.push type
+    end
+
+    def end_visit_lib_def(node)
+      @types.pop
+    end
+
+    def end_visit_fun_def(node)
+      @types.last.fun node.name,
+        node.args.map { |arg| [arg.name, arg.type.type.type] },
+        (node.return_type ? node.return_type.type.type : nil)
     end
 
     def visit_var(node)
@@ -835,7 +847,12 @@ module Crystal
 
     def visit_const(node)
       type = mod.types[node.name] or node.raise("uninitialized constant #{node.name}")
-      node.type = type.metaclass
+      case type
+      when ClassType
+        node.type = type.metaclass
+      else
+        node.type = type
+      end
     end
 
     if Crystal::CACHE

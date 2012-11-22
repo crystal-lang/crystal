@@ -14,6 +14,10 @@ module Crystal
       yield self
     end
 
+    def passed_as_self?
+      true
+    end
+
     def self.merge(*types)
       all_types = types.map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.compact.uniq(&:object_id)
       if all_types.length == 0
@@ -457,6 +461,10 @@ module Crystal
       @name
     end
 
+    def passed_as_self?
+      false
+    end
+
     def clone(*)
       self
     end
@@ -469,6 +477,39 @@ module Crystal
 
     def clone_from(other, &block)
       @type = other.type.clone
+    end
+  end
+
+  class LibType < Type
+    attr_accessor :name
+    attr_accessor :libname
+    attr_accessor :defs
+
+    def initialize(name, libname = nil)
+      @name = name
+      @libname = libname
+      @defs = {}
+    end
+
+    def fun(name, args, return_type)
+      args = args.map { |name, type| Var.new(name, type) }
+
+      instance = @defs[name] = External.new(name, args)
+      instance.body = Expressions.new
+      instance.body.set_type(return_type)
+      instance.add_instance instance
+    end
+
+    def passed_as_self?
+      false
+    end
+
+    def ==(other)
+      other.is_a?(LibType) && other.name == name && other.libname == libname
+    end
+
+    def to_s
+      "LibType(#{name}, #{libname})"
     end
   end
 end

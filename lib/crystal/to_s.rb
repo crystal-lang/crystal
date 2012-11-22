@@ -256,12 +256,14 @@ module Crystal
      def visit_fun_def(node)
        @str << 'fun '
        @str << node.name
-       @str << '('
-       node.args.each_with_index do |arg, i|
-         @str << ', ' if i > 0
-         arg.accept self
+       if node.args.length > 0
+         @str << '('
+         node.args.each_with_index do |arg, i|
+           @str << ', ' if i > 0
+           arg.accept self
+         end
+         @str << ')'
        end
-       @str << ')'
        if node.return_type
          @str << ' : '
          node.return_type.accept self
