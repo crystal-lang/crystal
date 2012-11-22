@@ -49,6 +49,7 @@ module Crystal
       end
 
       o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
+
       @command = "llc | clang -x assembler #{o_flag}-"
     end
 
@@ -90,8 +91,27 @@ module Crystal
           writer.close
         end
 
+        append_libs mod
+
         pid = spawn command, in: reader
         Process.waitpid pid
+      end
+    end
+
+    def append_libs(mod)
+      libs = []
+      mod.types.values.each do |type|
+        if type.is_a?(LibType) && type.libname
+          libs << type.libname
+        end
+      end
+
+      if libs.length > 0
+        @command << " -Wl"
+        libs.each do |lib|
+          @command << ",-l"
+          @command << lib
+        end
       end
     end
 
