@@ -10,4 +10,8 @@ lib C
   fun fork : Int
   fun exit(status : Int)
   fun getenv(str : String) : String
+
+  fun fopen(filename : String, mode : String) : Pointer
+  fun fputs(str : String, file : Pointer) : Int
+  fun fclose(file : Pointer) : Int
 end
