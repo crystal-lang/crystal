@@ -673,4 +673,20 @@ module Crystal
       end
     )
   end
+
+  class LibDef < ASTNode
+    attr_reader :name
+    attr_reader :libname
+    attr_reader :body
+
+    def initialize(name, libname = nil, body = nil)
+      @name = name
+      @libname = libname
+      @body = Expressions.from body
+    end
+
+    def ==(other)
+      other.is_a?(LibDef) && other.name == name && other.libname == libname && other.body == body
+    end
+  end
 end

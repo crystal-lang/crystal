@@ -238,6 +238,21 @@ module Crystal
       false
     end
 
+    def visit_lib_def(node)
+      @str << "lib "
+      @str << node.name
+      if node.libname
+        @str << "('"
+        @str << node.libname
+        @str << "')"
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      append_indent
+      @str << 'end'
+      false
+    end
+
     ['return', 'next', 'break', 'yield'].each do |keyword|
       class_eval %Q(
         def visit_#{keyword}(node)

@@ -23,6 +23,7 @@ module Crystal
         str << '^'
         str << "\n"
       end
+      str
     end
   end
 
@@ -76,7 +77,7 @@ module Crystal
       str << "\n"
       if inner
         str << "\n"
-        inner.append_to_s(str, lines) 
+        inner.append_to_s(str, lines)
       end
     end
   end

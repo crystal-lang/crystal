@@ -358,6 +358,8 @@ module Crystal
           parse_next
         when :break
           parse_break
+        when :lib
+          parse_lib
         else
           parse_var_or_call
         end
@@ -691,6 +693,30 @@ module Crystal
           node
         end
       )
+    end
+
+    def parse_lib
+      next_token_skip_space_or_newline
+
+      check :CONST
+      name = @token.value
+      next_token_skip_space
+
+      if @token.type == :'('
+        next_token_skip_space_or_newline
+        check :STRING
+        libname = @token.value
+        next_token_skip_space_or_newline
+        check :')'
+        next_token_skip_space_or_newline
+      else
+        skip_space_or_newline
+      end
+
+      check_ident :end
+      next_token_skip_statement_end
+
+      LibDef.new name, libname
     end
 
     def node_and_next_token(node)
