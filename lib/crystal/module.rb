@@ -21,6 +21,7 @@ module Crystal
       @types["Float"] = PrimitiveType.new "Float", value, LLVM::Float, 4
       @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
       @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4
+      @types["Pointer"] = PrimitiveType.new "Pointer", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
       @types["Array"] = ArrayType.new object
 
       @defs = {}
