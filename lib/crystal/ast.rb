@@ -685,8 +685,54 @@ module Crystal
       @body = Expressions.from body
     end
 
+    def accept_children(visitor)
+      body.accept visitor if body
+    end
+
     def ==(other)
       other.is_a?(LibDef) && other.name == name && other.libname == libname && other.body == body
+    end
+  end
+
+  class FunDef < ASTNode
+    attr_accessor :name
+    attr_accessor :args
+    attr_accessor :return_type
+
+    def initialize(name, args = [], return_type = nil)
+      @name = name
+      @args = args
+      @args.each { |arg| arg.parent = self }
+      @return_type = return_type
+      @return_type.parent = self if @return_type
+    end
+
+    def accept_children(visitor)
+      args.each { |arg| arg.accept visitor }
+      return_type.accept visitor if return_type
+    end
+
+    def ==(other)
+      other.is_a?(FunDef) && other.name == name && other.args == args && other.return_type == return_type
+    end
+  end
+
+  class FunDefArg < ASTNode
+    attr_accessor :name
+    attr_accessor :type
+
+    def initialize(name, type)
+      @name = name
+      @type = type
+    end
+
+    def ==(other)
+      other.is_a?(FunDefArg) && other.name == name && other.type == type
+    end
+
+    def clone_from(other, &block)
+      @name = other.name
+      @type = other.type
     end
   end
 end

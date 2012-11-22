@@ -713,10 +713,71 @@ module Crystal
         skip_space_or_newline
       end
 
+      body = parse_lib_body
+
       check_ident :end
       next_token_skip_statement_end
 
-      LibDef.new name, libname
+      LibDef.new name, libname, body
+    end
+
+    def parse_lib_body
+      expressions = []
+      while true
+        case @token.type
+        when :IDENT
+          case @token.value
+          when :fun
+            expressions << parse_fun_def
+          when :end
+            break
+          end
+        end
+      end
+      expressions
+    end
+
+    def parse_fun_def
+      next_token_skip_space_or_newline
+
+      check_ident
+      name = @token.value
+
+      next_token_skip_space_or_newline
+
+      args = []
+
+      if @token.type == :'('
+        next_token_skip_space_or_newline
+        while @token.type != :')'
+          check_ident
+          arg_name = @token.value
+
+          next_token_skip_space_or_newline
+          check :':'
+          next_token_skip_space_or_newline
+
+          check :CONST
+          arg_type = Const.new(@token.value)
+
+          args << FunDefArg.new(arg_name, arg_type)
+
+          next_token_skip_space_or_newline
+          if @token.type == :','
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_statement_end
+      end
+
+      if @token.type == :':'
+        next_token_skip_space_or_newline
+        check :CONST
+        return_type = Const.new(@token.value)
+        next_token_skip_statement_end
+      end
+
+      FunDef.new name, args, return_type
     end
 
     def node_and_next_token(node)

@@ -225,4 +225,8 @@ describe Parser do
 
   it_parses "lib C\nend", LibDef.new('C')
   it_parses %Q(lib C("libc")\nend), LibDef.new('C', 'libc')
+  it_parses "lib C\nfun getchar\nend", LibDef.new('C', nil, [FunDef.new('getchar')])
+  it_parses "lib C\nfun getchar : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [], 'Int'.const)])
+  it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.const), FunDefArg.new('b', 'Float'.const)])])
+  it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.const), FunDefArg.new('b', 'Float'.const)], 'Int'.const)])
 end

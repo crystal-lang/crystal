@@ -253,6 +253,29 @@ module Crystal
       false
     end
 
+     def visit_fun_def(node)
+       @str << 'fun '
+       @str << node.name
+       @str << '('
+       node.args.each_with_index do |arg, i|
+         @str << ', ' if i > 0
+         arg.accept self
+       end
+       @str << ')'
+       if node.return_type
+         @str << ' : '
+         node.return_type.accept self
+       end
+       false
+     end
+
+     def visit_fun_def_arg(node)
+       @str << node.name
+       @str << ' : '
+       node.type.accept self
+       false
+     end
+
     ['return', 'next', 'break', 'yield'].each do |keyword|
       class_eval %Q(
         def visit_#{keyword}(node)
