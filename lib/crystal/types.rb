@@ -53,12 +53,21 @@ module Crystal
     end
   end
 
-  class ClassType < Type
+  class ContainerType < Type
+    attr_accessor :types
+
+    def initialize
+      @types = {}
+    end
+  end
+
+  class ClassType < ContainerType
     attr_reader :parent_type
     attr_reader :name
     attr_accessor :defs
 
     def initialize(name, parent_type)
+      super()
       @name = name
       @parent_type = parent_type
       @defs = parent_type ? HashWithParent.new(parent_type.defs) : {}
@@ -465,6 +474,10 @@ module Crystal
       false
     end
 
+    def instance_type
+      type
+    end
+
     def clone(*)
       self
     end
@@ -480,12 +493,13 @@ module Crystal
     end
   end
 
-  class LibType < Type
+  class LibType < ContainerType
     attr_accessor :name
     attr_accessor :libname
     attr_accessor :defs
 
     def initialize(name, libname = nil)
+      super()
       @name = name
       @libname = libname
       @defs = {}
@@ -510,6 +524,40 @@ module Crystal
 
     def to_s
       "LibType(#{name}, #{libname})"
+    end
+  end
+
+  class TypeDefType < Type
+    attr_accessor :name
+    attr_accessor :type
+
+    def initialize(name, type)
+      @name = name
+      @type = type
+    end
+
+    def ==(other)
+      other.is_a?(TypeDefType) && other.name == name && other.type == type
+    end
+
+    def llvm_type
+      type.llvm_type
+    end
+
+    def instance_type
+      self
+    end
+
+    def clone(*)
+      self
+    end
+
+    def relationship(*)
+      self
+    end
+
+    def to_s
+      name
     end
   end
 end

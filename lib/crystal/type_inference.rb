@@ -795,8 +795,12 @@ module Crystal
 
     def end_visit_fun_def(node)
       @types.last.fun node.name,
-        node.args.map { |arg| [arg.name, arg.type.type.type] },
-        (node.return_type ? node.return_type.type.type : nil)
+        node.args.map { |arg| [arg.name, arg.type.type.instance_type] },
+        (node.return_type ? node.return_type.type.instance_type : nil)
+    end
+
+    def end_visit_type_def(node)
+      @types.last.types[node.name] = TypeDefType.new node.name, node.type.type.instance_type
     end
 
     def visit_var(node)
@@ -846,12 +850,22 @@ module Crystal
     end
 
     def visit_const(node)
-      type = mod.types[node.name] or node.raise("uninitialized constant #{node.name}")
-      case type
+      target_type = nil
+      @types.reverse_each do |type|
+        if !type.is_a?(Module) && type.name == node.name
+          target_type = type
+          break
+        end
+        target_type = type.types[node.name] and break
+      end
+
+      node.raise("uninitialized constant #{node.name}") unless target_type
+
+      case target_type
       when ClassType
-        node.type = type.metaclass
+        node.type = target_type.metaclass
       else
-        node.type = type
+        node.type = target_type
       end
     end
 

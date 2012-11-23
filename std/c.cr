@@ -11,7 +11,9 @@ lib C
   fun exit(status : Int)
   fun getenv(str : String) : String
 
-  fun fopen(filename : String, mode : String) : Pointer
-  fun fputs(str : String, file : Pointer) : Int
-  fun fclose(file : Pointer) : Int
+  type File : Pointer
+
+  fun fopen(filename : String, mode : String) : File
+  fun fputs(str : String, file : File) : Int
+  fun fclose(file : File) : Int
 end
