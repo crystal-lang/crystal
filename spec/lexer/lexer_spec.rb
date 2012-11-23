@@ -77,7 +77,7 @@ describe Lexer do
   it_lexes " ", :SPACE
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
-  it_lexes_keywords "def", "if", "else", "elsif", "end", "true", "false", "class", "while", "nil", "do", "yield", "return", "unless", "next", "break", "begin", "lib", "fun", "type"
+  it_lexes_keywords "def", "if", "else", "elsif", "end", "true", "false", "class", "while", "nil", "do", "yield", "return", "unless", "next", "break", "begin", "lib", "fun", "type", "struct"
   it_lexes_idents "ident", "something", "with_underscores", "with_1", "foo?", "bar!"
   it_lexes_idents "def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"
   it_lexes_idents "def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"

@@ -231,4 +231,6 @@ describe Parser do
   it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.const), FunDefArg.new('b', 'Float'.const)], 'Int'.const)])
   it_parses "lib C; fun getchar(a : Int, b : Float) : Int; end", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.const), FunDefArg.new('b', 'Float'.const)], 'Int'.const)])
   it_parses "lib C; type A : B; end", LibDef.new('C', nil, [TypeDef.new('A', 'B'.const)])
+  it_parses "lib C; struct Foo; end end", LibDef.new('C', nil, [StructDef.new('Foo')])
+  it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.const), FunDefArg.new('y', 'Float'.const)])])
 end

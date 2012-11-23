@@ -279,10 +279,26 @@ module Crystal
     end
 
     def visit_type_def(node)
-      @str << ' type '
+      @str << 'type '
       @str << node.name
       @str << ' : '
       node.type.accept self
+      false
+    end
+
+    def visit_struct_def(node)
+      @str << 'struct '
+      @str << node.name
+      @str << "\n"
+      with_indent do
+        node.fields.each do |field|
+          append_indent
+          field.accept self
+          @str << "\n"
+        end
+      end
+      append_indent
+      @str << 'end'
       false
     end
 

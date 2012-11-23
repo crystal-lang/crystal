@@ -753,4 +753,22 @@ module Crystal
       other.is_a?(TypeDef) && other.name == name && other.type == type
     end
   end
+
+  class StructDef < ASTNode
+    attr_accessor :name
+    attr_accessor :fields
+
+    def initialize(name, fields = [])
+      @name = name
+      @fields = fields
+    end
+
+    def accept_children(visitor)
+      fields.each { |field| field.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(StructDef) && other.name == name && other.fields == fields
+    end
+  end
 end

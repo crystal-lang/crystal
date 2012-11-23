@@ -731,6 +731,8 @@ module Crystal
             expressions << parse_fun_def
           when :type
             expressions << parse_type_def
+          when :struct
+            expressions << parse_struct_def
           when :end
             break
           else
@@ -799,6 +801,52 @@ module Crystal
       next_token_skip_statement_end
 
       TypeDef.new name, type
+    end
+
+    def parse_struct_def
+      next_token_skip_space_or_newline
+
+      check :CONST
+      name = @token.value
+      next_token_skip_statement_end
+
+      fields = parse_struct_def_fields
+
+      check_ident :end
+
+      next_token_skip_statement_end
+
+      StructDef.new name, fields
+    end
+
+    def parse_struct_def_fields
+      fields = []
+
+      while true
+        case @token.type
+        when :IDENT
+          case @token.value
+          when :end
+            break
+          else
+            name = @token.value
+            next_token_skip_space_or_newline
+
+            check :':'
+            next_token_skip_space_or_newline
+
+            check :CONST
+            type = Const.new(@token.value)
+            next_token_skip_statement_end
+
+            fields << FunDefArg.new(name, type)
+          end
+        else
+          break
+        end
+      end
+
+      fields
     end
 
     def node_and_next_token(node)
