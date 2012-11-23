@@ -83,6 +83,8 @@ module Crystal
       llvm_mod.dump if @options[:dump_ll]
 
       if @options[:run]
+        load_libs mod
+
         engine.run_function llvm_mod.functions["crystal_main"]
       else
         reader, writer = IO.pipe
@@ -91,26 +93,36 @@ module Crystal
           writer.close
         end
 
-        append_libs mod
+        append_libs_to_command mod
 
         pid = spawn command, in: reader
         Process.waitpid pid
       end
     end
 
-    def append_libs(mod)
-      libs = []
-      mod.types.values.each do |type|
-        if type.is_a?(LibType) && type.libname
-          libs << type.libname
-        end
-      end
-
+    def append_libs_to_command(mod)
+      libs = mod.library_names
       if libs.length > 0
         @command << " -Wl"
         libs.each do |lib|
           @command << ",-l"
           @command << lib
+        end
+      end
+    end
+
+    def load_libs(mod)
+      libs = mod.library_names
+      if libs.length > 0
+        require 'dl'
+        if RUBY_PLATFORM =~ /darwin/
+          libs.each do |lib|
+            DL.dlopen "lib#{lib}.dylib"
+          end
+        else
+          libs.each do |lib|
+            DL.dlopen "lib#{lib}.so"
+          end
         end
       end
     end

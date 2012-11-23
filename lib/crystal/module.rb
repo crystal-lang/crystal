@@ -74,6 +74,16 @@ module Crystal
       @types["Array"]
     end
 
+    def library_names
+      libs = []
+      @types.values.each do |type|
+        if type.is_a?(LibType) && type.libname
+          libs << type.libname
+        end
+      end
+      libs
+    end
+
     def each
       yield self
     end
