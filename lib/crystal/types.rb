@@ -544,6 +544,10 @@ module Crystal
       type.llvm_type
     end
 
+    def llvm_name
+      type.llvm_name
+    end
+
     def instance_type
       self
     end
