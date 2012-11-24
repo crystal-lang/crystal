@@ -10,6 +10,7 @@ module Crystal
       define_float_primitives
       define_symbol_primitives
       define_array_primitives
+      define_string_primitives
       define_builtins
     end
 
@@ -211,6 +212,21 @@ module Crystal
       array.defs[:[]] = Def.new(:[], [Var.new('index')], ArrayGet.new)
     end
 
+    def define_string_primitives
+      singleton(string, :+, {'other' => string}, string) do |b, f, llvm_mod|
+        l1 = b.call strlen(llvm_mod), f.params[0]
+        l2 = b.call strlen(llvm_mod), f.params[1]
+        new_string = b.array_malloc LLVM::Int8, b.add(b.add(l1, l2), LLVM::Int(1))
+        b.call strcpy(llvm_mod), new_string, f.params[0]
+        b.call strcat(llvm_mod), new_string, f.params[1]
+        new_string
+      end
+
+      no_args_primitive(string, 'length', int) do |b, f, llvm_mod|
+        b.call strlen(llvm_mod), f.params[0]
+      end
+    end
+
     def define_builtins
       Dir[File.expand_path("../../../../std/**/*.cr",  __FILE__)].each do |file|
         node = Parser.parse(File.read(file))
@@ -245,6 +261,18 @@ module Crystal
 
     def sprintf(llvm_mod)
       llvm_mod.functions['sprintf'] || llvm_mod.functions.add('sprintf', [string.llvm_type], int.llvm_type, varargs: true)
+    end
+
+    def strcpy(llvm_mod)
+      llvm_mod.functions['strcpy'] || llvm_mod.functions.add('strcpy', [string.llvm_type, string.llvm_type], string.llvm_type)
+    end
+
+    def strcat(llvm_mod)
+      llvm_mod.functions['strcat'] || llvm_mod.functions.add('strcat', [string.llvm_type, string.llvm_type], string.llvm_type)
+    end
+
+    def strlen(llvm_mod)
+      llvm_mod.functions['strlen'] || llvm_mod.functions.add('strlen', [string.llvm_type], int.llvm_type)
     end
 
     def realloc(llvm_mod)

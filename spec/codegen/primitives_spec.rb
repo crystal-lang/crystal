@@ -22,8 +22,11 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens string' do
-    run('C.strlen("foo")').to_i.should eq("foo".size)
     run('"foo".length').to_i.should eq("foo".size)
+  end
+
+  it 'codegens string concatenation' do
+    run('("foo" + "bar").length').to_i.should eq(6)
   end
 
   it 'codegens symbol' do
