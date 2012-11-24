@@ -713,6 +713,7 @@ module Crystal
 
       check :CONST
       name = @token.value
+      name_column_number = @token.column_number
       next_token_skip_space
 
       if @token.type == :'('
@@ -731,21 +732,29 @@ module Crystal
       check_ident :end
       next_token_skip_statement_end
 
-      LibDef.new name, libname, body
+      LibDef.new name, libname, body, name_column_number
     end
 
     def parse_lib_body
       expressions = []
       while true
+        location = @token.location
+
         case @token.type
         when :IDENT
           case @token.value
           when :fun
-            expressions << parse_fun_def
+            exp = parse_fun_def
+            exp.location = location
+            expressions << exp
           when :type
-            expressions << parse_type_def
+            exp = parse_type_def
+            exp.location = location
+            expressions << exp
           when :struct
-            expressions << parse_struct_def
+            exp = parse_struct_def
+            exp.location = location
+            expressions << exp
           when :end
             break
           else
@@ -803,6 +812,7 @@ module Crystal
 
       check :CONST
       name = @token.value
+      name_column_number = @token.column_number
       next_token_skip_space_or_newline
 
       check :':'
@@ -811,7 +821,7 @@ module Crystal
       type = parse_const
       skip_statement_end
 
-      TypeDef.new name, type
+      TypeDef.new name, type, name_column_number
     end
 
     def parse_struct_def

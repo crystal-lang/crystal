@@ -768,6 +768,7 @@ module Crystal
 
       type = current_type.types[node.name]
       if type
+        node.raise "#{node.name} is not a class" unless type.is_a?(ClassType)
         if node.superclass && type.parent_type != parent
           node.raise "superclass mismatch for class #{type.name} (#{parent.name} for #{type.parent_type.name})"
         end
@@ -785,7 +786,12 @@ module Crystal
     end
 
     def visit_lib_def(node)
-      mod.types[node.name] = type = LibType.new node.name, node.libname
+      type = current_type.types[node.name]
+      if type
+        node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
+      else
+        current_type.types[node.name] = type = LibType.new node.name, node.libname
+      end
       @types.push type
     end
 
@@ -800,11 +806,21 @@ module Crystal
     end
 
     def end_visit_type_def(node)
-      current_type.types[node.name] = TypeDefType.new node.name, node.type.type.instance_type
+      type = current_type.types[node.name]
+      if type
+        node.raise "#{node.name} is already defined"
+      else
+        current_type.types[node.name] = TypeDefType.new node.name, node.type.type.instance_type
+      end
     end
 
     def end_visit_struct_def(node)
-      current_type.types[node.name] = StructType.new(node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) })
+      type = current_type.types[node.name]
+      if type
+        node.raise "#{node.name} is already defined"
+      else
+        current_type.types[node.name] = StructType.new(node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) })
+      end
     end
 
     def visit_struct_alloc(node)

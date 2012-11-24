@@ -672,15 +672,17 @@ module Crystal
   end
 
   class LibDef < ASTNode
-    attr_reader :name
-    attr_reader :libname
-    attr_reader :body
+    attr_accessor :name
+    attr_accessor :libname
+    attr_accessor :body
+    attr_accessor :name_column_number
 
-    def initialize(name, libname = nil, body = nil)
+    def initialize(name, libname = nil, body = nil, name_column_number = nil)
       @name = name
       @libname = libname
       @body = Expressions.from body
       @body.parent = self if @body
+      @name_column_number = name_column_number
     end
 
     def accept_children(visitor)
@@ -736,10 +738,12 @@ module Crystal
   class TypeDef < ASTNode
     attr_accessor :name
     attr_accessor :type
+    attr_accessor :name_column_number
 
-    def initialize(name, type)
+    def initialize(name, type, name_column_number)
       @name = name
       @type = type
+      @name_column_number = name_column_number
     end
 
     def accept_children(visitor)
