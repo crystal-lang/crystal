@@ -854,14 +854,7 @@ module Crystal
     end
 
     def visit_const(node)
-      type = find_const_type node
-
-      case type
-      when ClassType
-        node.type = type.metaclass
-      else
-        node.type = type
-      end
+      node.type = find_const_type(node).metaclass
     end
 
     def find_const_type(node)

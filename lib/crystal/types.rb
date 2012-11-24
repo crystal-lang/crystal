@@ -452,8 +452,9 @@ module Crystal
   end
 
   class Metaclass < Type
-    attr_accessor :type
-    attr_accessor :defs
+    attr_reader :name
+    attr_reader :type
+    attr_reader :defs
 
     def initialize(type)
       @name = "#{type.name}:Metaclass"
@@ -462,24 +463,12 @@ module Crystal
       @defs['alloc'] = Def.new('alloc', [], Alloc.new(@type))
     end
 
-    def name
-      @name
-    end
-
-    def llvm_name
-      @name
-    end
-
     def passed_as_self?
       false
     end
 
     def instance_type
       type
-    end
-
-    def clone(*)
-      self
     end
   end
 
@@ -503,6 +492,10 @@ module Crystal
       @name = name
       @libname = libname
       @defs = {}
+    end
+
+    def metaclass
+      self
     end
 
     def fun(name, args, return_type)
