@@ -51,9 +51,8 @@ module Crystal
       elsif match = scan(/'.'/)
         @token.type = :CHAR
         @token.value = match[1 .. -2].ord
-      elsif match = scan(/".*?"/)
-        @token.type = :STRING
-        @token.value = match[1 .. -2]
+      elsif match = scan(/"/)
+        @token.type = :STRING_START
       elsif match = scan(/:[a-zA-Z_][a-zA-Z_0-9]*/)
         @token.type = :SYMBOL
         @token.value = match[1 .. -1]
@@ -82,6 +81,45 @@ module Crystal
         end
       else
         raise "unknown token: #{rest}"
+      end
+
+      @token
+    end
+
+    def next_string_token
+      @token.value = nil
+      @token.line_number = @line_number
+
+      if @incremented_columns
+        @token.column_number += @incremented_columns
+      else
+        @token.column_number = 1
+      end
+
+      if eos?
+        @token.type = :EOF
+      elsif scan(/"/)
+        @token.type = :STRING_END
+      elsif scan(/\\n/)
+        @token.type = :STRING
+        @token.value = "\n"
+      elsif scan(/\\"/)
+        @token.type = :STRING
+        @token.value = '"'
+      elsif scan(/\\t/)
+        @token.type = :STRING
+        @token.value = "\t"
+      elsif scan(/\\/)
+        @token.type = :STRING
+        @token.value = "\\"
+      elsif scan(/\#{/)
+        @token.type = :INTERPOLATION_START
+      elsif scan(/\#/)
+        @token.type = :STRING
+        @token.value = '#'
+      elsif match = scan(/[^"\\\#]+/)
+        @token.type = :STRING
+        @token.value = match
       end
 
       @token

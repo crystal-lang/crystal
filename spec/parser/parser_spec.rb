@@ -225,6 +225,7 @@ describe Parser do
   it_parses "begin\n1\nend\nif true; end", [1.int, If.new(true.bool)]
 
   it_parses %q("foo #{bar}"), Call.new(StringLiteral.new("foo "), :+, [Call.new(Call.new(nil, "bar"), 'to_s')])
+  it_parses %q("foo #{ bar}"), Call.new(StringLiteral.new("foo "), :+, [Call.new(Call.new(nil, "bar"), 'to_s')])
   it_parses %q("#{foo} bar"), Call.new(Call.new(Call.new(nil, "foo"), 'to_s'), :+, [StringLiteral.new(" bar")])
 
   it_parses "Foo::Bar", Const.new('Foo', 'Bar')

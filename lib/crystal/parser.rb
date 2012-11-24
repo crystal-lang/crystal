@@ -325,7 +325,7 @@ module Crystal
         node_and_next_token FloatLiteral.new(@token.value)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value)
-      when :STRING
+      when :STRING_START
         parse_string
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value)
@@ -499,7 +499,7 @@ module Crystal
 
     def parse_args_space_consumed
       case @token.type
-      when :CHAR, :STRING, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :'(', :'!', :'[', :'[]'
+      when :CHAR, :STRING_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :'(', :'!', :'[', :'[]'
         case @token.value
         when :if, :unless, :while
           nil
@@ -718,9 +718,8 @@ module Crystal
 
       if @token.type == :'('
         next_token_skip_space_or_newline
-        check :STRING
-        libname = @token.value
-        next_token_skip_space_or_newline
+        libname = parse_string.value # TODO disallow string interpolation? Use another syntax?
+        skip_space_or_newline
         check :')'
         next_token_skip_statement_end
       else
@@ -870,26 +869,64 @@ module Crystal
     end
 
     def parse_string
-      if @token.value.length > 0
-        interpolations = []
-        str = @token.value.gsub(/#\{([^\}]*)\}/) do |match|
-          interpolations << Parser.parse($1, @def_vars)
-          "\0"
-        end
-        pieces = str.split("\0").map { |piece| StringLiteral.new(piece) }
-        node = pieces.shift
-        node = nil if node.value.length == 0
+      check :STRING_START
+      next_string_token
 
-        while interpolations.length > 0
-          interpolation = Call.new(interpolations.shift, 'to_s')
-          node = node ? Call.new(node, :+, [interpolation]) : interpolation
-          node = Call.new(node, :+, [pieces.shift]) if pieces.length > 0
+      pieces = []
+      last_piece = nil
+      last_piece_is_a_string = false
+      has_interpolation = false
+
+      while true
+        case @token.type
+        when :STRING
+          if last_piece_is_a_string
+            last_piece << @token.value
+          else
+            last_piece = @token.value
+            last_piece_is_a_string = true
+            pieces << last_piece
+          end
+          next_string_token
+        when :STRING_END
+          next_token
+          break
+        when :EOF
+          raise "Unterminated string literal"
+        else
+          has_interpolation = true
+
+          next_token_skip_space_or_newline
+          pieces << parse_expression
+          last_piece_is_a_string = false
+
+          if @token.type != :'}'
+            raise "Unterminated string interpolation"
+          end
+
+          next_string_token
         end
-      else
-        node = StringLiteral.new(@token.value)
       end
 
-      node_and_next_token(node)
+      if has_interpolation
+        node = nil
+        pieces.each do |piece|
+          if piece.is_a?(String)
+            piece = StringLiteral.new piece
+          else
+            piece = Call.new(piece, 'to_s')
+          end
+
+          if node
+            node = Call.new(node, :+, [piece])
+          else
+            node = piece
+          end
+        end
+        node
+      else
+        StringLiteral.new pieces.join
+      end
     end
 
     def node_and_next_token(node)

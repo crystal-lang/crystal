@@ -62,10 +62,6 @@ describe Lexer do
     it_lexes string, :CHAR, value
   end
 
-  def self.it_lexes_string(string, value)
-    it_lexes string, :STRING, value
-  end
-
   def self.it_lexes_const(string)
     it_lexes string, :CONST, string
   end
@@ -88,7 +84,6 @@ describe Lexer do
   it_lexes_char "'\\n'", ?\n.ord
   it_lexes_char "'\\t'", ?\t.ord
   it_lexes_char "'\\0'", ?\0.ord
-  it_lexes_string %("foo"), "foo"
   it_lexes_operators "=", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", "==", "!=", "!", ",", '.', "+@", "-@", "&&", "||", "|", "{", "}", '?', ':', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**=', '<<', '>>', '%', '&', '|', '^', '**', '<<=', '>>=', '~', '~@', '[]', '[', ']', '::'
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
