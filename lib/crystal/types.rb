@@ -177,6 +177,14 @@ module Crystal
       @instance_vars = {}
     end
 
+    def metaclass
+      @metaclass ||= begin
+        metaclass = Metaclass.new(self)
+        metaclass.defs['alloc'] = Def.new('alloc', [], Alloc.new(self))
+        metaclass
+      end
+    end
+
     def lookup_instance_var(name)
       var = @instance_vars[name]
       unless var
@@ -460,7 +468,6 @@ module Crystal
       @name = "#{type.name}:Metaclass"
       @type = type
       @defs = {}
-      @defs['alloc'] = Def.new('alloc', [], Alloc.new(@type))
     end
 
     def passed_as_self?
