@@ -265,6 +265,26 @@ module Crystal
       @last
     end
 
+    def visit_struct_alloc(node)
+      @last = malloc node.type.llvm_struct_type
+      memset @last, LLVM::Int(0), node.type.llvm_struct_type.size
+      @last
+    end
+
+    def visit_struct_get(node)
+      var = @type.vars[node.name]
+
+      index = @type.index_of_var(node.name)
+      struct = @builder.load @fun.params[0]
+      @last = @builder.extract_value struct, index, node.name
+    end
+
+    def visit_struct_set(node)
+      var = @type.vars[node.name]
+      ptr = gep @fun.params[0], 0, @type.index_of_var(node.name)
+      @builder.store @last, ptr
+    end
+
     def visit_array_literal(node)
       if node.type.element_type
         size = node.elements.length
