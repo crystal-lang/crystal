@@ -740,7 +740,7 @@ module Crystal
     attr_accessor :type
     attr_accessor :name_column_number
 
-    def initialize(name, type, name_column_number)
+    def initialize(name, type, name_column_number = nil)
       @name = name
       @type = type
       @name_column_number = name_column_number
