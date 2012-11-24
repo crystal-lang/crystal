@@ -14,7 +14,11 @@ module Crystal
     end
 
     def parse
-      parse_expressions
+      expressions = parse_expressions
+
+      check :EOF
+
+      expressions
     end
 
     def parse_expressions

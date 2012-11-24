@@ -189,8 +189,6 @@ describe 'Code gen: def' do
 
       elems = [1]
       elems[0].baz [1]
-        end
-      end
     ))
   end
 end
