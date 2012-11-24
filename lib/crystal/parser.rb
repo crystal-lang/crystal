@@ -364,12 +364,29 @@ module Crystal
           parse_var_or_call
         end
       when :CONST
-        node_and_next_token Const.new(@token.value)
+        parse_const
       when :INSTANCE_VAR
         node_and_next_token InstanceVar.new(@token.value)
       else
         raise "unexpected token: #{@token.to_s}"
       end
+    end
+
+    def parse_const
+      check :CONST
+      names = [@token.value]
+
+      next_token
+      while @token.type == :'::'
+        next_token_skip_space_or_newline
+
+        check :CONST
+        names << @token.value
+
+        next_token
+      end
+
+      Const.new *names
     end
 
     def parse_begin
@@ -519,10 +536,7 @@ module Crystal
 
       if @token.type == :<
         next_token_skip_space_or_newline
-        check :CONST
-        superclass = @token.value
-        superclass_column_number = @token.column_number
-        next_token
+        superclass = parse_const
       end
       skip_statement_end
 
@@ -531,7 +545,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      class_def = ClassDef.new name, body, superclass, name_column_number, superclass_column_number
+      class_def = ClassDef.new name, body, superclass, name_column_number
       class_def.location = location
       class_def
     end
@@ -738,6 +752,8 @@ module Crystal
           else
             break
           end
+        else
+          break
         end
       end
       expressions
@@ -763,12 +779,10 @@ module Crystal
           check :':'
           next_token_skip_space_or_newline
 
-          check :CONST
-          arg_type = Const.new(@token.value)
-
+          arg_type = parse_const
+          skip_space_or_newline
           args << FunDefArg.new(arg_name, arg_type)
 
-          next_token_skip_space_or_newline
           if @token.type == :','
             next_token_skip_space_or_newline
           end
@@ -778,9 +792,8 @@ module Crystal
 
       if @token.type == :':'
         next_token_skip_space_or_newline
-        check :CONST
-        return_type = Const.new(@token.value)
-        next_token_skip_statement_end
+        return_type = parse_const
+        skip_statement_end
       end
 
       FunDef.new name, args, return_type
@@ -796,9 +809,8 @@ module Crystal
       check :':'
       next_token_skip_space_or_newline
 
-      check :CONST
-      type = Const.new(@token.value)
-      next_token_skip_statement_end
+      type = parse_const
+      skip_statement_end
 
       TypeDef.new name, type
     end
@@ -835,9 +847,8 @@ module Crystal
             check :':'
             next_token_skip_space_or_newline
 
-            check :CONST
-            type = Const.new(@token.value)
-            next_token_skip_statement_end
+            type = parse_const
+            skip_statement_end
 
             fields << FunDefArg.new(name, type)
           end
@@ -858,17 +869,17 @@ module Crystal
 
     def check(*token_types)
       if token_types.length == 1
-        raise "expecting token: #{token_types[0]}" unless token_types.any?{|type| @token.type == type}
+        raise "expecting token '#{token_types[0]}', not '#{@token.to_s}'" unless token_types.any?{|type| @token.type == type}
       else
-        raise "expecting any of these tokens: #{token_types.join ', '}" unless token_types.any?{|type| @token.type == type}
+        raise "expecting any of these tokens: #{token_types.join ', '} (not '#{@token.to_s}')" unless token_types.any?{|type| @token.type == type}
       end
     end
 
     def check_ident(value = nil)
       if value
-        raise "expecting ident: #{value}" unless @token.keyword?(value)
+        raise "expecting identifier '#{value}', not '#{@token.to_s}'" unless @token.keyword?(value)
       else
-        raise "unexpected token: #{@token.to_s}" unless @token.type == :IDENT && @token.value.is_a?(String)
+        raise "expecting identifier, not '#{@token.to_s}'" unless @token.type == :IDENT && @token.value.is_a?(String)
       end
     end
 

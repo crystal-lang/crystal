@@ -14,7 +14,7 @@ module Crystal
     end
 
     def to_s
-      @value || @type
+      @value ? @value.to_s : @type.to_s
     end
   end
 end

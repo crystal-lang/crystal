@@ -564,4 +564,38 @@ module Crystal
       name
     end
   end
+
+  class StructType < Type
+    attr_accessor :name
+    attr_accessor :vars
+
+    def initialize(name, vars)
+      @name = name
+      @vars = Hash[vars.map { |var| [var.name, var] }]
+    end
+
+    def ==(other)
+      other.is_a?(StructType) && other.name == name && other.vars == vars
+    end
+
+    def instance_type
+      self
+    end
+
+    def clone(*)
+      self
+    end
+
+    def relationship(*)
+      self
+    end
+
+    def to_s
+      return @to_s if @to_s
+      @to_s = "..."
+      vars_to_s = vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
+      @to_s = nil
+      "#{name}<#{vars_to_s}>"
+    end
+  end
 end

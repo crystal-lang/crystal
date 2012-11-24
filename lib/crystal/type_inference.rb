@@ -755,24 +755,24 @@ module Crystal
     end
 
     def visit_def(node)
-      @types.last.defs[node.name] = node
+      current_type.defs[node.name] = node
       false
     end
 
     def visit_class_def(node)
       parent = if node.superclass
-                 mod.types[node.superclass] or raise Crystal::TypeException.new("unknown class #{node.superclass}", node.line_number, node.superclass_column_number, node.superclass.length)
+                 find_const_type node.superclass
                else
                  mod.object
                end
 
-      type = mod.types[node.name]
+      type = current_type.types[node.name]
       if type
         if node.superclass && type.parent_type != parent
           node.raise "superclass mismatch for class #{type.name} (#{parent.name} for #{type.parent_type.name})"
         end
       else
-        mod.types[node.name] = type = ObjectType.new node.name, parent
+        current_type.types[node.name] = type = ObjectType.new node.name, parent
       end
 
       @types.push type
@@ -794,13 +794,17 @@ module Crystal
     end
 
     def end_visit_fun_def(node)
-      @types.last.fun node.name,
+      current_type.fun node.name,
         node.args.map { |arg| [arg.name, arg.type.type.instance_type] },
         (node.return_type ? node.return_type.type.instance_type : nil)
     end
 
     def end_visit_type_def(node)
-      @types.last.types[node.name] = TypeDefType.new node.name, node.type.type.instance_type
+      current_type.types[node.name] = TypeDefType.new node.name, node.type.type.instance_type
+    end
+
+    def end_visit_struct_def(node)
+      current_type.types[node.name] = StructType.new(node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) })
     end
 
     def visit_var(node)
@@ -850,23 +854,37 @@ module Crystal
     end
 
     def visit_const(node)
+      type = find_const_type node
+
+      case type
+      when ClassType
+        node.type = type.metaclass
+      else
+        node.type = type
+      end
+    end
+
+    def find_const_type(node)
+      name = node.names[0]
+
       target_type = nil
       @types.reverse_each do |type|
-        if !type.is_a?(Module) && type.name == node.name
+        if !type.is_a?(Module) && type.name == name
           target_type = type
           break
         end
-        target_type = type.types[node.name] and break
+        target_type = type.types[name] and break
       end
 
-      node.raise("uninitialized constant #{node.name}") unless target_type
-
-      case target_type
-      when ClassType
-        node.type = target_type.metaclass
-      else
-        node.type = target_type
+      unless target_type
+        node.raise("uninitialized constant #{name}")
       end
+
+      node.names[1 .. -1].each_with_index do |name, i|
+        target_type = target_type.types[name] or node.raise("uninitialized constant #{node.names[0 .. i + 1].join '::'}")
+      end
+
+      target_type
     end
 
     if Crystal::CACHE
@@ -960,6 +978,10 @@ module Crystal
         @vars[name] = var
       end
       var
+    end
+
+    def current_type
+      @types.last
     end
   end
 end

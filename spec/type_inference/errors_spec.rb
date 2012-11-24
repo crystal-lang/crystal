@@ -78,7 +78,7 @@ describe 'Type inference: errors' do
 
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("unknown class Bar"))
+    }.should raise_error(Crystal::Exception, regex("uninitialized constant Bar"))
   end
 
   it "reports superclass mismatch" do

@@ -177,7 +177,10 @@ module Crystal
     end
 
     def visit_const(node)
-      @str << node.name
+      node.names.each_with_index do |name, i|
+        @str << '::' if i > 0
+        @str << name
+      end
     end
 
     def visit_instance_var(node)
@@ -213,7 +216,7 @@ module Crystal
       @str << node.name
       if node.superclass
         @str << " < "
-        @str << node.superclass
+        node.superclass.accept self
       end
       @str << "\n"
       accept_with_indent(node.body)

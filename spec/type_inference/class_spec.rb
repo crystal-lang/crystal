@@ -13,6 +13,10 @@ describe 'Type inference: class' do
     assert_type("class Foo; def coco; 1; end; end; Foo.new.coco") { int }
   end
 
+  it "types class inside class" do
+    assert_type("class Foo; class Bar; end; end; Foo::Bar.alloc") { types['Foo'].types['Bar'] }
+  end
+
   it "types instance variable" do
     input = parse %(
       class Foo

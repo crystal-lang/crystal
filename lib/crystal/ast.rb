@@ -162,15 +162,13 @@ module Crystal
     attr_accessor :body
     attr_accessor :superclass
     attr_accessor :name_column_number
-    attr_accessor :superclass_column_number
 
-    def initialize(name, body = nil, superclass = nil, name_column_number = nil, superclass_column_number = nil)
+    def initialize(name, body = nil, superclass = nil, name_column_number = nil)
       @name = name
       @body = Expressions.from body
       @body.parent = self if @body
       @superclass = superclass
       @name_column_number = name_column_number
-      @superclass_column_number = superclass_column_number
     end
 
     def accept_children(visitor)
@@ -186,7 +184,6 @@ module Crystal
       @body = other.body.clone(&block)
       @superclass = other.superclass
       @name_column_number = other.name_column_number
-      @superclass_column_number = other.superclass_column_number
     end
   end
 
@@ -407,18 +404,18 @@ module Crystal
 
   # A Class name or constant name.
   class Const < ASTNode
-    attr_accessor :name
+    attr_accessor :names
 
-    def initialize(name)
-      @name = name
+    def initialize(*names)
+      @names = names
     end
 
     def ==(other)
-      other.is_a?(Const) && other.name == name
+      other.is_a?(Const) && other.names == names
     end
 
     def clone_from(other, &block)
-      @name = other.name
+      @names = other.names
     end
   end
 

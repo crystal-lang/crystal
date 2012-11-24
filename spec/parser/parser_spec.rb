@@ -153,7 +153,7 @@ describe Parser do
   it_parses "class Foo; end", ClassDef.new("Foo")
   it_parses "class Foo\nend", ClassDef.new("Foo")
   it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
-  it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar")
+  it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".const)
 
   it_parses "while true; 1; end;", While.new(true.bool, 1.int)
 
@@ -222,6 +222,8 @@ describe Parser do
   it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
   it_parses "(1)\nif true; end", [1.int, If.new(true.bool)]
   it_parses "begin\n1\nend\nif true; end", [1.int, If.new(true.bool)]
+
+  it_parses "Foo::Bar", Const.new('Foo', 'Bar')
 
   it_parses "lib C\nend", LibDef.new('C')
   it_parses %Q(lib C("libc")\nend), LibDef.new('C', 'libc')
