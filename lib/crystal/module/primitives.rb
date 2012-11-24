@@ -222,6 +222,10 @@ module Crystal
         new_string
       end
 
+      singleton(string, :[], {'index' => int}, char) do |b, f|
+        b.load(b.gep f.params[0], f.params[1])
+      end
+
       no_args_primitive(string, 'length', int) do |b, f, llvm_mod|
         b.call strlen(llvm_mod), f.params[0]
       end

@@ -29,6 +29,10 @@ describe 'Code gen: primitives' do
     run('("foo" + "bar").length').to_i.should eq(6)
   end
 
+  it 'codegens string indexer' do
+    run('"foo"[1]').to_i.should eq(?o.ord)
+  end
+
   it 'codegens symbol' do
     run(':foo').to_i.should eq(0)
   end
