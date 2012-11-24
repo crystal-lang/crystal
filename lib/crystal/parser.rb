@@ -3,14 +3,13 @@ require_relative 'lexer.rb'
 
 module Crystal
   class Parser < Lexer
-    def self.parse(str)
-      new(str).parse
+    def self.parse(str, def_vars = nil)
+      new(str, def_vars).parse
     end
 
-    def initialize(str)
-      super
-      @def_vars = []
-      @def_vars.push Set.new
+    def initialize(str, def_vars = nil)
+      super(str)
+      @def_vars = def_vars || [Set.new]
       next_token_skip_statement_end
     end
 
@@ -327,7 +326,7 @@ module Crystal
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value)
       when :STRING
-        node_and_next_token StringLiteral.new(@token.value)
+        parse_string
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value)
       when :IDENT
@@ -858,6 +857,30 @@ module Crystal
       end
 
       fields
+    end
+
+    def parse_string
+      if @token.value.length > 0
+        interpolations = []
+        str = @token.value.gsub(/#\{([^\}]*)\}/) do |match|
+          interpolations << Parser.parse($1, @def_vars)
+          "\0"
+        end
+        pieces = str.split("\0").map { |piece| StringLiteral.new(piece) }
+        node = pieces.shift
+        node = nil if node.value.length == 0
+
+        while interpolations.length > 0
+          interpolation = Call.new(interpolations.shift, 'to_s')
+          node = node ? Call.new(node, :+, [interpolation]) : interpolation
+          node = Call.new(node, :+, [pieces.shift]) if pieces.length > 0
+        end
+      else
+        node = StringLiteral.new(@token.value)
+      end
+
+      next_token
+      node
     end
 
     def node_and_next_token(node)

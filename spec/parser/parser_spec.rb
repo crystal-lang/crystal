@@ -28,6 +28,7 @@ describe Parser do
   it_parses "'a'", CharLiteral.new(?a.ord)
 
   it_parses %("foo"), StringLiteral.new("foo")
+  it_parses %(""), StringLiteral.new("")
   it_parses ":foo", SymbolLiteral.new("foo")
   it_parses "puts :foo.to_s", Call.new(nil, 'puts', [Call.new(SymbolLiteral.new("foo"), "to_s")])
 
@@ -222,6 +223,9 @@ describe Parser do
   it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
   it_parses "(1)\nif true; end", [1.int, If.new(true.bool)]
   it_parses "begin\n1\nend\nif true; end", [1.int, If.new(true.bool)]
+
+  it_parses %q("foo #{bar}"), Call.new(StringLiteral.new("foo "), :+, [Call.new(Call.new(nil, "bar"), 'to_s')])
+  it_parses %q("#{foo} bar"), Call.new(Call.new(Call.new(nil, "foo"), 'to_s'), :+, [StringLiteral.new(" bar")])
 
   it_parses "Foo::Bar", Const.new('Foo', 'Bar')
 
