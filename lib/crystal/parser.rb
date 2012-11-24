@@ -879,8 +879,7 @@ module Crystal
         node = StringLiteral.new(@token.value)
       end
 
-      next_token
-      node
+      node_and_next_token(node)
     end
 
     def node_and_next_token(node)
