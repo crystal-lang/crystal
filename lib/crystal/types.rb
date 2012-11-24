@@ -479,16 +479,6 @@ module Crystal
     end
   end
 
-  class Alloc < ASTNode
-    def initialize(type)
-      @type = type
-    end
-
-    def clone_from(other, &block)
-      @type = other.type.clone
-    end
-  end
-
   class LibType < ContainerType
     attr_accessor :name
     attr_accessor :libname
@@ -568,10 +558,24 @@ module Crystal
   class StructType < Type
     attr_accessor :name
     attr_accessor :vars
+    attr_accessor :defs
 
     def initialize(name, vars)
       @name = name
       @vars = Hash[vars.map { |var| [var.name, var] }]
+      @defs = {}
+      @vars.keys.each do |var_name|
+        @defs["#{var_name}="] = Def.new("#{var_name}=", [Var.new('value')], StructSet.new(var_name))
+        @defs[var_name] = Def.new(var_name, [], StructGet.new(var_name))
+      end
+    end
+
+    def metaclass
+      @metaclass ||= begin
+        metaclass = Metaclass.new(self)
+        metaclass.defs['new'] = Def.new('new', [], StructAlloc.new(self))
+        metaclass
+      end
     end
 
     def ==(other)

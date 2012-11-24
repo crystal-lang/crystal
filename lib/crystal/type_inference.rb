@@ -562,7 +562,7 @@ module Crystal
 
     def lookup_method(scope, name)
       untyped_def = scope.defs[name]
-      if !untyped_def && name == 'new' && scope.is_a?(Metaclass)
+      if !untyped_def && name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
         untyped_def = define_new scope, name
       end
       untyped_def
@@ -805,6 +805,23 @@ module Crystal
 
     def end_visit_struct_def(node)
       current_type.types[node.name] = StructType.new(node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) })
+    end
+
+    def visit_struct_alloc(node)
+      node.type = node.type
+    end
+
+    def visit_struct_set(node)
+      struct_var = @scope.vars[node.name]
+
+      check_var_type 'value', struct_var.type
+
+      node.bind_to @vars['value']
+    end
+
+    def visit_struct_get(node)
+      struct_var = @scope.vars[node.name]
+      node.bind_to struct_var
     end
 
     def visit_var(node)

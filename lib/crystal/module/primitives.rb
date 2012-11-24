@@ -307,5 +307,51 @@ module Crystal
 
   class ArrayLength < Primitive
   end
+
+  class Alloc < Primitive
+    def initialize(type)
+      @type = type
+    end
+
+    def clone_from(other)
+      @type = other.type.clone
+    end
+  end
+
+  class StructAlloc < Primitive
+    attr_reader :type
+
+    def initialize(type)
+      @type = type
+    end
+
+    def clone_from(other)
+      @type = other.type
+    end
+  end
+
+  class StructSet < Primitive
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
+    end
+
+    def clone_from(other)
+      @name = other.name
+    end
+  end
+
+  class StructGet < Primitive
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
+    end
+
+    def clone_from(other)
+      @name = other.name
+    end
+  end
 end
 
