@@ -329,7 +329,7 @@ module Crystal
         node_and_next_token FloatLiteral.new(@token.value)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value)
-      when :STRING_START
+      when :STRING, :STRING_START
         parse_string
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value)
@@ -503,7 +503,7 @@ module Crystal
 
     def parse_args_space_consumed
       case @token.type
-      when :CHAR, :STRING_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :'(', :'!', :'[', :'[]'
+      when :CHAR, :STRING, :STRING_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :'(', :'!', :'[', :'[]'
         case @token.value
         when :if, :unless, :while
           nil
@@ -873,6 +873,10 @@ module Crystal
     end
 
     def parse_string
+      if @token.type == :STRING
+        return node_and_next_token StringLiteral.new(@token.value)
+      end
+
       check :STRING_START
       next_string_token
 
