@@ -142,4 +142,18 @@ describe 'Code gen: block' do
       Foo.new.foo { bar }
     )).to_i.should eq(1)
   end
+
+  pending "nested yields" do
+    run(%q(
+      def bar
+        yield
+      end
+
+      def foo
+        bar { yield }
+      end
+
+      a = foo { 1 }
+    )).to_i.should eq(1)
+  end
 end
