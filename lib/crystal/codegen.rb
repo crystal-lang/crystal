@@ -92,6 +92,7 @@ module Crystal
 
       @funs = {}
       @vars = {}
+      @block_context = []
       @type = @mod
 
       @symbols = {}
@@ -451,10 +452,8 @@ module Crystal
       end
 
       if node.block
-        @block_vars = @vars
-        @block = node.block
+        @block_context << { block: node.block, vars: @vars, type: @type }
         @vars = {}
-        old_type = @type
         @type = owner
 
         if owner && owner.passed_as_self?
@@ -470,10 +469,9 @@ module Crystal
 
         node.target_def.body.accept self
 
-        @vars = @block_vars
-        @block = nil
-        @block_vars = nil
-        @type = old_type
+        old_context = @block_context.pop
+        @vars = old_context[:vars]
+        @type = old_context[:type]
       else
         codegen_call(node.target_def, owner, call_args)
       end
@@ -482,18 +480,26 @@ module Crystal
     end
 
     def visit_yield(node)
-      if @block
-        new_vars = @block_vars.clone
-        @block.args.each_with_index do |arg, i|
+      if @block_context.any?
+        context = @block_context.pop
+        new_vars = context[:vars].clone
+        block = context[:block]
+
+        block.args.each_with_index do |arg, i|
           node.exps[i].accept self
           new_vars[arg.name] = { ptr: @last, type: arg.type, is_arg: true }
         end
 
         old_vars = @vars
+        old_type = @type
         @vars = new_vars
+        @type = context[:type]
 
-        @block.accept self
+        block.accept self
+
         @vars = old_vars
+        @type = old_type
+        @block_context << context
       end
       false
     end

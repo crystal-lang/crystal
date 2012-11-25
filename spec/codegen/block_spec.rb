@@ -143,7 +143,7 @@ describe 'Code gen: block' do
     )).to_i.should eq(1)
   end
 
-  pending "nested yields" do
+  it "nested yields" do
     run(%q(
       def bar
         yield
