@@ -451,7 +451,7 @@ module Crystal
       end
 
       if node.block
-        old_vars = @vars
+        @block_vars = @vars
         @block = node.block
         @vars = {}
 
@@ -468,8 +468,9 @@ module Crystal
 
         node.target_def.body.accept self
 
+        @vars = @block_vars
         @block = nil
-        @vars = old_vars
+        @block_vars = nil
       else
         codegen_call(node.target_def, owner, call_args)
       end
@@ -479,7 +480,7 @@ module Crystal
 
     def visit_yield(node)
       if @block
-        new_vars = {}
+        new_vars = @block_vars.clone
         @block.args.each_with_index do |arg, i|
           node.exps[i].accept self
           new_vars[arg.name] = { ptr: @last, type: arg.type, is_arg: true }

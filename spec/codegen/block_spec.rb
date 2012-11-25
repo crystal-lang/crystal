@@ -64,4 +64,17 @@ describe 'Code gen: block' do
       end
     )).to_i.should eq(5)
   end
+
+  it "allows access to local variables" do
+    run(%q(
+      def foo
+        yield
+      end
+
+      x = 1
+      foo do
+        x + 1
+      end
+    )).to_i.should eq(2)
+  end
 end
