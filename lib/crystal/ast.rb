@@ -367,7 +367,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      reciever.accept visitor if receiver
+      receiver.accept visitor if receiver
       args.each { |arg| arg.accept visitor }
       body.accept visitor if body
     end

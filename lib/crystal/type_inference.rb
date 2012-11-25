@@ -755,7 +755,12 @@ module Crystal
     end
 
     def visit_def(node)
-      current_type.defs[node.name] = node
+      if node.receiver
+        target_type = find_const_type(node.receiver).metaclass
+      else
+        target_type = current_type
+      end
+      target_type.defs[node.name] = node
       false
     end
 

@@ -555,10 +555,13 @@ module Crystal
 
     def parse_def
       next_token_skip_space_or_newline
-      check :IDENT, :"=", :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=
+      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=
 
       receiver = nil
-      if @token.type == :IDENT
+
+      if @token.type == :CONST
+        receiver = parse_const
+      elsif @token.type == :IDENT
         name = @token.value
         next_token
         if @token.type == :'='
@@ -575,7 +578,7 @@ module Crystal
       args = []
 
       if @token.type == :'.'
-        receiver = Var.new name
+        receiver = Var.new name unless receiver
         next_token_skip_space
         check :IDENT, :"=", :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=
         name = @token.type == :IDENT ? @token.value : @token.type

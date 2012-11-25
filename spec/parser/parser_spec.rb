@@ -88,6 +88,8 @@ describe Parser do
   it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".var], "foo".call(Call.new("n".var, :-, [1.int])))
 
   it_parses "def self.foo\n1\nend", Def.new("foo", [], [1.int], "self".var)
+  it_parses "def Foo.foo\n1\nend", Def.new("foo", [], [1.int], "Foo".const)
+  it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", [], [1.int], Const.new("Foo", "Bar"))
 
   it_parses "def foo; a; end", Def.new('foo', [], ["a".call])
   it_parses "def foo(a); a; end", Def.new('foo', ['a'.var], ["a".var])

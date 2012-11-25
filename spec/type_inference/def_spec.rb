@@ -104,4 +104,8 @@ describe 'Type inference: def' do
       )
   ) { ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo'))) }
   end
+
+  it "defines class method" do
+    assert_type("def Int.foo; 2.5; end; Int.foo") { float }
+  end
 end
