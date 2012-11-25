@@ -985,6 +985,12 @@ module Crystal
       end
     end
 
+    def end_visit_yield(node)
+      @call[4].block.args.each_with_index do |arg, i|
+        arg.bind_to node.exps[i]
+      end
+    end
+
     def visit_call(node)
       node.mod = mod
       node.scope = @scope
