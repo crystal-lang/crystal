@@ -52,4 +52,18 @@ describe 'Block inference' do
     mod = infer_type input
     input.last.type.should eq(UnionType.new(mod.char, mod.int))
   end
+
+  it "infer type of yield" do
+    input = parse %q(
+      def foo
+        yield
+      end
+
+      foo do
+        1
+      end
+    )
+    mod = infer_type input
+    input.last.type.should eq(mod.int)
+  end
 end
