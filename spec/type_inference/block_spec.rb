@@ -66,4 +66,13 @@ describe 'Block inference' do
     mod = infer_type input
     input.last.type.should eq(mod.int)
   end
+
+  it "infer type with union" do
+    input = parse %q(
+      a = [1]
+      a = [1.1]
+      a.each { |x| x }
+    )
+    mod = infer_type input, load_std: true
+  end
 end

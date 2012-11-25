@@ -111,4 +111,35 @@ describe 'Code gen: block' do
       a.value
     )).to_i.should eq(2)
   end
+
+  it "can use instance methods from yielder function" do
+    run(%q(
+      class Foo
+        def foo
+          yield value
+        end
+        def value
+          1
+        end
+      end
+
+      Foo.new.foo { |x| x + 1 }
+    )).to_i.should eq(2)
+  end
+
+  it "can call methods from block when yielder is an instance method" do
+    run(%q(
+      class Foo
+        def foo
+          yield
+        end
+      end
+
+      def bar
+        1
+      end
+
+      Foo.new.foo { bar }
+    )).to_i.should eq(1)
+  end
 end

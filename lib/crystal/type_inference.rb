@@ -662,6 +662,7 @@ module Crystal
           subcall.scope = call.scope
           subcall.location = call.location
           subcall.name_column_number = call.name_column_number
+          subcall.block = call.block
           self.bind_to subcall
           subcall.recalculate
           @calls << subcall
@@ -670,11 +671,13 @@ module Crystal
     end
 
     def simplify
+      return if @simplified
       new_calls = {}
       @calls.each do |call|
         new_calls[[(call.obj ? call.obj.type : nil).object_id] + call.args.map { |arg| arg.type.object_id }] = call
       end
       @calls = new_calls
+      @simplified = true
     end
 
     def for_each_obj(&block)
