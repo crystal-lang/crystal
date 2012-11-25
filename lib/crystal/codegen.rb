@@ -148,7 +148,7 @@ module Crystal
 
       if node.target.is_a?(InstanceVar)
         ivar = @type.instance_vars[node.target.name]
-        ptr = gep @fun.params[0], 0, @type.index_of_instance_var(node.target.name)
+        ptr = gep llvm_self, 0, @type.index_of_instance_var(node.target.name)
       else
         var = @vars[node.target.name]
         unless var
@@ -174,10 +174,10 @@ module Crystal
     def visit_instance_var(node)
       ivar = @type.instance_vars[node.name]
       if ivar.type.is_a?(UnionType)
-        @last = gep @fun.params[0], 0, @type.index_of_instance_var(node.name)
+        @last = gep llvm_self, 0, @type.index_of_instance_var(node.name)
       else
         index = @type.index_of_instance_var(node.name)
-        struct = @builder.load @fun.params[0]
+        struct = @builder.load llvm_self
         @last = @builder.extract_value struct, index, node.name
       end
     end
@@ -275,13 +275,13 @@ module Crystal
       var = @type.vars[node.name]
 
       index = @type.index_of_var(node.name)
-      struct = @builder.load @fun.params[0]
+      struct = @builder.load llvm_self
       @last = @builder.extract_value struct, index, node.name
     end
 
     def visit_struct_set(node)
       var = @type.vars[node.name]
-      ptr = gep @fun.params[0], 0, @type.index_of_var(node.name)
+      ptr = gep llvm_self, 0, @type.index_of_var(node.name)
       @builder.store @last, ptr
     end
 
@@ -376,7 +376,7 @@ module Crystal
 
     def visit_array_length(node)
       if @type.element_type
-        @last = @builder.load gep(@fun.params[0], 0, 0)
+        @last = @builder.load gep(llvm_self, 0, 0)
       else
         @last = LLVM::Int(0)
       end
@@ -395,15 +395,15 @@ module Crystal
     def visit_array_push(node)
       resize_block, exit_block = new_blocks "resize", "exit"
 
-      size_ptr = gep(@fun.params[0], 0, 0)
-      capacity_ptr = gep(@fun.params[0], 0, 1)
+      size_ptr = gep(llvm_self, 0, 0)
+      capacity_ptr = gep(llvm_self, 0, 1)
       size = @builder.load size_ptr
       capacity = @builder.load capacity_ptr
       cmp = @builder.icmp(:eq, size, capacity)
       @builder.cond(cmp, resize_block, exit_block)
 
       @builder.position_at_end resize_block
-      buffer_ptr = gep(@fun.params[0], 0, 2)
+      buffer_ptr = gep(llvm_self, 0, 2)
       new_capacity = @builder.mul capacity, LLVM::Int(2)
       llvm_type = @type.element_type.llvm_type
       llvm_type = llvm_type.is_a?(LLVM::Type) ? llvm_type : llvm_type.type
@@ -420,11 +420,11 @@ module Crystal
       new_size = @builder.add size, LLVM::Int(1)
       @builder.store new_size, size_ptr
       codegen_assign(array_index_pointer(size), @type.element_type, @vars['value'][:type], @fun.params[1])
-      @last = @fun.params[0]
+      @last = llvm_self
     end
 
     def array_index_pointer(index = @fun.params[1])
-      buffer = @builder.load gep(@fun.params[0], 0, 2)
+      buffer = @builder.load gep(llvm_self, 0, 2)
       gep(buffer, index)
     end
 
@@ -442,7 +442,7 @@ module Crystal
         node.obj.accept self
         call_args << @last
       elsif owner
-        call_args << @fun.params[0]
+        call_args << llvm_self
       end
 
       node.args.each do |arg|
@@ -454,6 +454,8 @@ module Crystal
         @block_vars = @vars
         @block = node.block
         @vars = {}
+        old_type = @type
+        @type = owner
 
         if owner && owner.passed_as_self?
           args_base_index = 1
@@ -471,6 +473,7 @@ module Crystal
         @vars = @block_vars
         @block = nil
         @block_vars = nil
+        @type = old_type
       else
         codegen_call(node.target_def, owner, call_args)
       end
@@ -711,6 +714,10 @@ module Crystal
       ptr = @builder.alloca type, name
       @builder.position_at_end old_block
       ptr
+    end
+
+    def llvm_self
+      @vars['self'][:ptr]
     end
 
     def new_entry_block
