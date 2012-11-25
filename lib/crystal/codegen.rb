@@ -455,8 +455,15 @@ module Crystal
         @block = node.block
         @vars = {}
 
+        if owner && owner.passed_as_self?
+          args_base_index = 1
+          @vars['self'] = { ptr: call_args[0], type: owner, is_arg: true }
+        else
+          args_base_index = 0
+        end
+
         node.target_def.args.each_with_index do |arg, i|
-          @vars[arg.name] = { ptr: call_args[i], type: arg.type, is_arg: true }
+          @vars[arg.name] = { ptr: call_args[args_base_index + i], type: arg.type, is_arg: true }
         end
 
         node.target_def.body.accept self

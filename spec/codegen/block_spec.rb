@@ -36,4 +36,32 @@ describe 'Code gen: block' do
       end
     )).to_i.should eq(4)
   end
+
+  it "pass self to yielder function" do
+    run(%q(
+      class Int
+        def foo
+          yield self
+        end
+      end
+
+      3.foo do |x|
+        x + 1
+      end
+    )).to_i.should eq(4)
+  end
+
+  it "pass self and arguments to yielder function" do
+    run(%q(
+      class Int
+        def foo(i)
+          yield self, i
+        end
+      end
+
+      3.foo(2) do |x, i|
+        x + i
+      end
+    )).to_i.should eq(5)
+  end
 end
