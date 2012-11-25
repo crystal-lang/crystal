@@ -13,12 +13,13 @@ module Crystal
 
       object = @types["Object"] = ObjectType.new "Object"
       value = @types["Value"] = ObjectType.new "Value", object
+      numeric = @types["Numeric"] = ObjectType.new "Numeric", value
 
       @types["Bool"] = PrimitiveType.new "Bool", value, LLVM::Int1, 1
       @types["Char"] = PrimitiveType.new "Char", value, LLVM::Int8, 1
-      @types["Int"] = PrimitiveType.new "Int", value, LLVM::Int32, 4
-      @types["Long"] = PrimitiveType.new "Long", value, LLVM::Int64, 8
-      @types["Float"] = PrimitiveType.new "Float", value, LLVM::Float, 4
+      @types["Int"] = PrimitiveType.new "Int", numeric, LLVM::Int32, 4
+      @types["Long"] = PrimitiveType.new "Long", numeric, LLVM::Int64, 8
+      @types["Float"] = PrimitiveType.new "Float", numeric, LLVM::Float, 4
       @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
       @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4
       @types["Pointer"] = PrimitiveType.new "Pointer", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
