@@ -991,6 +991,19 @@ module Crystal
       end
     end
 
+    def visit_block(node)
+      if node.body
+        block_vars = @vars.clone
+        node.args.each do |arg|
+          block_vars[arg.name] = arg
+        end
+
+        block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call)
+        node.body.accept block_visitor
+      end
+      false
+    end
+
     def visit_call(node)
       node.mod = mod
       node.scope = @scope

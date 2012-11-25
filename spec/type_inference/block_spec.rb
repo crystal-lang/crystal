@@ -45,7 +45,7 @@ describe 'Block inference' do
 
       y = 'a'
       foo do |x|
-        y = 1
+        y = x
       end
       y
     )
