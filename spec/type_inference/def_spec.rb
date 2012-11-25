@@ -108,4 +108,8 @@ describe 'Type inference: def' do
   it "defines class method" do
     assert_type("def Int.foo; 2.5; end; Int.foo") { float }
   end
+
+  it "defines class method with self" do
+    assert_type("class Int; def self.foo; 2.5; end; end; Int.foo") { float }
+  end
 end

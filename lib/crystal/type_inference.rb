@@ -756,7 +756,12 @@ module Crystal
 
     def visit_def(node)
       if node.receiver
-        target_type = find_const_type(node.receiver).metaclass
+        # TODO: hack
+        if node.receiver.is_a?(Var) && node.receiver.name == 'self'
+          target_type = current_type.metaclass
+        else
+          target_type = find_const_type(node.receiver).metaclass
+        end
       else
         target_type = current_type
       end
