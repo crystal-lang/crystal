@@ -49,9 +49,9 @@ module Crystal
     end
   end
 
-  def run(code)
+  def run(code, options = {})
     node = parse code
-    mod = infer_type node
+    mod = infer_type node, options
     llvm_mod = build node, mod
 
     engine = LLVM::JITCompiler.new(llvm_mod)

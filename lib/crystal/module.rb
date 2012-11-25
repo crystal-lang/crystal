@@ -8,7 +8,7 @@ module Crystal
     attr_accessor :defs
     attr_accessor :symbols
 
-    def initialize
+    def initialize(options = {})
       @types = {}
 
       object = @types["Object"] = ObjectType.new "Object"
@@ -28,6 +28,7 @@ module Crystal
       @symbols = Set.new
 
       define_primitives
+      define_builtins if options[:load_std]
     end
 
     def void
@@ -72,6 +73,13 @@ module Crystal
 
     def array
       @types["Array"]
+    end
+
+    def define_builtins
+      Dir[File.expand_path("../../../std/**/*.cr",  __FILE__)].each do |file|
+        node = Parser.parse(File.read(file))
+        node.accept TypeVisitor.new(self)
+      end
     end
 
     def library_names

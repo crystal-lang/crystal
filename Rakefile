@@ -9,7 +9,7 @@ task :console do
 
   if ARGV[1]
     @nodes = parse File.read(File.expand_path("../#{ARGV[1]}", __FILE__))
-    @mod = infer_type @nodes
+    @mod = infer_type @nodes, load_std: true
 
     def nodes; @nodes; end
     def mod; @mod; end

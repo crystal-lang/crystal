@@ -61,7 +61,7 @@ describe 'Type inference: errors' do
     nodes = parse "C.putchar 1"
 
     lambda {
-      infer_type nodes
+      infer_type nodes, load_std: true
     }.should raise_error(Crystal::Exception, regex("can't call putchar with types [Int]"))
   end
 
@@ -154,7 +154,7 @@ describe 'Type inference: errors' do
       f.value = 1
       )
     lambda {
-      infer_type nodes
+      infer_type nodes, load_std: true
     }.should raise_error(Crystal::Exception, regex("can't call putchar with types [Int]"))
   end
 end

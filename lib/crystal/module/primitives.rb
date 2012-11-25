@@ -11,7 +11,6 @@ module Crystal
       define_symbol_primitives
       define_array_primitives
       define_string_primitives
-      define_builtins
     end
 
     def define_object_primitives
@@ -228,13 +227,6 @@ module Crystal
 
       no_args_primitive(string, 'length', int) do |b, f, llvm_mod|
         b.call strlen(llvm_mod), f.params[0]
-      end
-    end
-
-    def define_builtins
-      Dir[File.expand_path("../../../../std/**/*.cr",  __FILE__)].each do |file|
-        node = Parser.parse(File.read(file))
-        node.accept TypeVisitor.new(self)
       end
     end
 

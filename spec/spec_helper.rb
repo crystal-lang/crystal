@@ -15,9 +15,9 @@ def regex(str)
   /#{Regexp.escape(str)}/
 end
 
-def assert_type(str, &block)
+def assert_type(str, options = {}, &block)
   input = parse str
-  mod = infer_type input
+  mod = infer_type input, options
   expected_type = mod.instance_eval &block
   if input.is_a?(Expressions)
     input.last.type.should eq(expected_type)

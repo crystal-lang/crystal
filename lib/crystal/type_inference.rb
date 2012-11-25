@@ -2,7 +2,7 @@ require 'benchmark'
 
 module Crystal
   def infer_type(node, options = {})
-    mod = Crystal::Module.new
+    mod = Crystal::Module.new options
     if node
       if options[:stats]
         infer_type_with_stats node, mod
