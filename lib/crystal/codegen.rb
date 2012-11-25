@@ -450,8 +450,40 @@ module Crystal
         call_args << @last
       end
 
-      codegen_call(node.target_def, owner, call_args)
+      if node.block
+        old_vars = @vars
+        @block = node.block
+        @vars = {}
 
+        node.target_def.args.each_with_index do |arg, i|
+          @vars[arg.name] = { ptr: call_args[i], type: arg.type, is_arg: true }
+        end
+
+        node.target_def.body.accept self
+
+        @block = nil
+        @vars = old_vars
+      else
+        codegen_call(node.target_def, owner, call_args)
+      end
+
+      false
+    end
+
+    def visit_yield(node)
+      if @block
+        new_vars = {}
+        @block.args.each_with_index do |arg, i|
+          node.exps[i].accept self
+          new_vars[arg.name] = { ptr: @last, type: arg.type, is_arg: true }
+        end
+
+        old_vars = @vars
+        @vars = new_vars
+
+        @block.accept self
+        @vars = old_vars
+      end
       false
     end
 
