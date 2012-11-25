@@ -1002,7 +1002,7 @@ module Crystal
       @call[4].block.args.each_with_index do |arg, i|
         arg.bind_to node.exps[i]
       end
-      node.bind_to @call[4].block.body
+      node.bind_to @call[4].block.body if @call[4].block.body
     end
 
     def visit_block(node)

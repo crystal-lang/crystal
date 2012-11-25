@@ -11,6 +11,19 @@ describe 'Block inference' do
     mod = infer_type input
   end
 
+  it "infer type of yield with empty block" do
+    input = parse %q(
+      def foo
+        yield
+      end
+
+      foo do
+      end
+    )
+    mod = infer_type input
+    input.last.type.should be_nil
+  end
+
   it "infer type of block body" do
     input = parse %q(
       def foo; end
