@@ -87,6 +87,10 @@ module Crystal
           else
             break unless can_be_assigned?(atomic)
 
+            if atomic.is_a?(Const) && @def_vars.length > 1
+              raise "dynamic constant assignment"
+            end
+
             atomic = Var.new(atomic.name) if atomic.is_a?(Call)
             push_var atomic if atomic.is_a?(Var)
 
@@ -97,6 +101,10 @@ module Crystal
           end
         when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
           break unless can_be_assigned?(atomic)
+
+          if atomic.is_a?(Const)
+            raise "can't reassign to constant"
+          end
 
           # Rewrite 'a += b' as 'a = a + b'
 
