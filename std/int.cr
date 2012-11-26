@@ -7,4 +7,26 @@ class Int
     end
     self
   end
+
+  def upto(n)
+    if self <= n
+      x = self
+      while x <= n
+        yield x
+        x += 1
+      end
+    end
+    self
+  end
+
+  def downto(n)
+    if self >= n
+      x = self
+      while x >= n
+        yield x
+        x -= 1
+      end
+    end
+    self
+  end
 end
