@@ -185,7 +185,7 @@ module Crystal
       end
 
       def instantiate(untyped_def, scope, arg_types)
-        check_frozen untyped_def, arg_types
+        check_frozen scope, untyped_def, arg_types
         arg_types = Type.clone(arg_types)
         scope = arg_types[0] if scope.is_a?(MutableType)
 
@@ -251,7 +251,7 @@ module Crystal
         arg_types = args.map &:type
         typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
         unless typed_def
-          check_frozen untyped_def, arg_types
+          check_frozen scope, untyped_def, arg_types
 
           typed_def, args = prepare_typed_def_with_args(untyped_def, scope, arg_types)
 
@@ -610,11 +610,11 @@ module Crystal
       raise "wrong number of arguments for '#{name}' (#{args.length} for #{untyped_def.args.length})"
     end
 
-    def check_frozen(untyped_def, arg_types)
+    def check_frozen(scope, untyped_def, arg_types)
       return unless untyped_def.is_a?(FrozenDef)
 
       if untyped_def.is_a?(External)
-        raise "can't call #{name} with types [#{arg_types.join ', '}]"
+        raise "can't call #{scope.name}.#{name} with types [#{arg_types.join ', '}]"
       else
         raise "can't call #{obj.type.name}##{name} with types [#{arg_types.join ', '}]"
       end

@@ -1,3 +1,7 @@
+lib C
+  fun atoi(str : String) : Int
+end
+
 class String
   def to_i
     C.atoi self

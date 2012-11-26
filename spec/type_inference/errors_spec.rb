@@ -58,11 +58,11 @@ describe 'Type inference: errors' do
   end
 
   it "reports can't call external with args" do
-    nodes = parse "C.putchar 1"
+    nodes = parse "lib Foo; fun foo(x : Char); end; Foo.foo 1"
 
     lambda {
-      infer_type nodes, load_std: 'c'
-    }.should raise_error(Crystal::Exception, regex("can't call putchar with types [Int]"))
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("can't call Foo.foo with types [Int]"))
   end
 
   it "reports uninitialized constant" do
@@ -139,13 +139,17 @@ describe 'Type inference: errors' do
 
   it "reports error when changing instance var type and something breaks" do
     nodes = parse %Q(
+      lib Lib
+        fun bar(c : Char)
+      end
+
       class Foo
         #{rw :value}
       end
 
       def foo(x)
         x.value = 'a'
-        C.putchar x.value
+        Lib.bar x.value
       end
 
       f = Foo.new
@@ -154,7 +158,7 @@ describe 'Type inference: errors' do
       f.value = 1
       )
     lambda {
-      infer_type nodes, load_std: 'c'
-    }.should raise_error(Crystal::Exception, regex("can't call putchar with types [Int]"))
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("can't call Lib.bar with types [Int]"))
   end
 end
