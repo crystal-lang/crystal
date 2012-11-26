@@ -698,7 +698,7 @@ module Crystal
         end
 
         def clone_from(other, &block)
-          @exps = other.exps.clone(&block)
+          @exps = other.exps.map { |exp| exp.clone(&block) }
         end
       end
     )
