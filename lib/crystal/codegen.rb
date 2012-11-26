@@ -88,9 +88,7 @@ module Crystal
       @fun = @llvm_mod.functions.add("crystal_main", [], return_type.llvm_type)
       @builder = LLVM::Builder.new
 
-      new_entry_block
-      @const_block = new_block 'const'
-      @builder.position_at_end @entry_block
+      @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
 
       @funs = {}
       @vars = {}
@@ -114,13 +112,7 @@ module Crystal
     end
 
     def finish
-      old_block = @builder.insert_block
-      @builder.position_at_end @alloca_block
-      @builder.br @const_block
-      @builder.position_at_end @const_block
-      @builder.br @entry_block
-      @builder.position_at_end old_block
-
+      br_block_chain @alloca_block, @const_block, @entry_block
       @builder.ret(@return_type == @mod.void ? nil : @last)
     end
 
@@ -780,14 +772,27 @@ module Crystal
     end
 
     def new_entry_block
-      @alloca_block, @entry_block = new_blocks "alloca", "entry"
-      @builder.position_at_end @entry_block
+      @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
+    end
+
+    def new_entry_block_chain *names
+      blocks = new_blocks *names
+      @builder.position_at_end blocks.last
+      blocks
     end
 
     def br_from_alloca_to_entry
+      br_block_chain @alloca_block, @entry_block
+    end
+
+    def br_block_chain *blocks
       old_block = @builder.insert_block
-      @builder.position_at_end @alloca_block
-      @builder.br @entry_block
+
+      0.upto(blocks.count - 2) do |i|
+        @builder.position_at_end blocks[i]
+        @builder.br blocks[i + 1]
+      end
+
       @builder.position_at_end old_block
     end
 
