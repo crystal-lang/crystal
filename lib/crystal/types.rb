@@ -43,28 +43,27 @@ module Crystal
     attr_accessor :name
     attr_accessor :defs
     attr_accessor :types
+    attr_accessor :parents
 
-    def initialize(name, defs = {}, types = {})
+    def initialize(name, parents = [])
       @name = name
-      @defs = defs
-      @types = types
-    end
-  end
-
-  class ClassType < ModuleType
-    attr_reader :parents
-
-    def initialize(name, parent_type)
-      super(name, HashWithParent.new(self))
-      @parents = parent_type ? [parent_type] : []
-    end
-
-    def superclass
-      @parents.find { |parent| parent.is_a?(ClassType) }
+      @defs = HashWithParent.new(self)
+      @types = {}
+      @parents = parents
     end
 
     def include(mod)
       @parents.insert 0, mod
+    end
+  end
+
+  class ClassType < ModuleType
+    def initialize(name, parent_type)
+      super(name, parent_type ? [parent_type] : [])
+    end
+
+    def superclass
+      @parents.find { |parent| parent.is_a?(ClassType) }
     end
   end
 

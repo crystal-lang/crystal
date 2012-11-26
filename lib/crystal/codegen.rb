@@ -283,6 +283,10 @@ module Crystal
       false
     end
 
+    def visit_include(node)
+      false
+    end
+
     def visit_primitive_body(node)
       @last = node.block.call(@builder, @fun, @llvm_mod, @type)
     end
