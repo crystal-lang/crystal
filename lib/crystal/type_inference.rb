@@ -820,7 +820,7 @@ module Crystal
         node.name.raise "#{node.name} is not a module"
       end
 
-      current_type.parents.insert 0, node.name.type.instance_type
+      current_type.include node.name.type.instance_type
     end
 
     def visit_lib_def(node)

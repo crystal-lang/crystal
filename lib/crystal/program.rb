@@ -14,6 +14,9 @@ module Crystal
       object = @types["Object"] = ObjectType.new "Object"
       value = @types["Value"] = ObjectType.new "Value", object
       numeric = @types["Numeric"] = ObjectType.new "Numeric", value
+      enumerable = @types["Enumerable"] = ModuleType.new "Enumerable"
+      array = @types["Array"] = ArrayType.new object
+      array.include enumerable
 
       @types["Bool"] = PrimitiveType.new "Bool", value, LLVM::Int1, 1
       @types["Char"] = PrimitiveType.new "Char", value, LLVM::Int8, 1
@@ -23,7 +26,6 @@ module Crystal
       @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
       @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4
       @types["Pointer"] = PrimitiveType.new "Pointer", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
-      @types["Array"] = ArrayType.new object
 
       @symbols = Set.new
 

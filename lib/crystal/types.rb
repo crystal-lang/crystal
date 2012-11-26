@@ -76,6 +76,10 @@ module Crystal
     def superclass
       @parents.find { |parent| parent.is_a?(ClassType) }
     end
+
+    def include(mod)
+      @parents.insert 0, mod
+    end
   end
 
   class PrimitiveType < ClassType
