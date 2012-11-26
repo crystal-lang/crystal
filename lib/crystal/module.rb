@@ -29,7 +29,7 @@ module Crystal
       @symbols = Set.new
 
       define_primitives
-      define_builtins if options[:load_std]
+      define_builtins options[:load_std]
     end
 
     def void
@@ -76,11 +76,23 @@ module Crystal
       @types["Array"]
     end
 
-    def define_builtins
-      Dir[File.expand_path("../../../std/**/*.cr",  __FILE__)].each do |file|
-        node = Parser.parse(File.read(file))
-        node.accept TypeVisitor.new(self)
+    def define_builtins(load_std)
+      if load_std == true
+        Dir[File.expand_path("../../../std/**/*.cr",  __FILE__)].each do |file|
+          load_std file
+        end
+      elsif load_std.is_a?(Array)
+        load_std.each do |filename|
+          load_std File.expand_path("../../../std/#{filename}.cr", __FILE__)
+        end
+      elsif load_std
+        load_std File.expand_path("../../../std/#{load_std}.cr", __FILE__)
       end
+    end
+
+    def load_std(file)
+      node = Parser.parse(File.read(file))
+      node.accept TypeVisitor.new(self)
     end
 
     def library_names
