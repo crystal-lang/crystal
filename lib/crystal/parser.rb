@@ -88,7 +88,7 @@ module Crystal
             break unless can_be_assigned?(atomic)
 
             atomic = Var.new(atomic.name) if atomic.is_a?(Call)
-            push_var atomic
+            push_var atomic if atomic.is_a?(Var)
 
             next_token_skip_space_or_newline
 
@@ -1077,7 +1077,7 @@ module Crystal
     end
 
     def can_be_assigned?(node)
-      node.is_a?(Var) || node.is_a?(InstanceVar) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
+      node.is_a?(Var) || node.is_a?(InstanceVar) || node.is_a?(Const) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
   end
 

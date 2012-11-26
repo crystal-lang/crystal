@@ -253,4 +253,6 @@ describe Parser do
 
   it_parses "1 .. 2", Call.new('Range'.const, 'new', [1.int, 2.int, false.bool])
   it_parses "1 ... 2", Call.new('Range'.const, 'new', [1.int, 2.int, true.bool])
+
+  it_parses "A = 1", Assign.new("A".const, 1.int)
 end
