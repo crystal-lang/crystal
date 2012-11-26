@@ -96,55 +96,7 @@ module Crystal
     end
   end
 
-  module MutableType
-    def observe_mutations(&block)
-      @mutation_observers ||= {}
-      token = block.object_id
-      @mutation_observers[token] = block
-      token
-    end
-
-    def unobserve_mutations(token)
-      @mutation_observers.delete token
-      @mutation_observers = nil if @mutation_observers.empty?
-    end
-  end
-
-  module MutableClassType
-    include MutableType
-
-    def mutation(ivar)
-      hook_to_ivar_mutations(ivar)
-
-      return unless @mutation_observers
-      @mutation_observers.values.each do |observer|
-        observer.call([ivar], ivar.type)
-      end
-    end
-
-    def hook_to_ivar_mutations(ivar)
-      if @ivar_tokens && (type_and_token = @ivar_tokens[ivar.name])
-        type_and_token[0].unobserve_mutations(type_and_token[1])
-      end
-
-      if ivar.type.is_a?(MutableType)
-        token = ivar.type.observe_mutations do |sub_ivar, type|
-          if @mutation_observers && !sub_ivar.map(&:object_id).include?(ivar.object_id)
-            @mutation_observers.values.each do |observer|
-              observer.call([ivar] + sub_ivar, type)
-            end
-          end
-        end
-
-        @ivar_tokens ||= {}
-        @ivar_tokens[ivar.name] = [ivar.type, token]
-      end
-    end
-  end
-
   class ObjectType < ClassType
-    include MutableClassType
-
     attr_accessor :instance_vars
     @@id = 0
 
@@ -162,13 +114,7 @@ module Crystal
     end
 
     def lookup_instance_var(name)
-      var = @instance_vars[name]
-      unless var
-        var = Var.new name
-        var.add_observer self, :mutation
-        @instance_vars[name] = var
-      end
-      var
+      @instance_vars[name] ||= Var.new name
     end
 
     def ==(other)
@@ -213,9 +159,7 @@ module Crystal
       obj.instance_vars = Hash[instance_vars.map do |name, var|
         cloned_var = var.clone(nodes_context)
         cloned_var.type = var.type.clone(types_context, nodes_context) if var.type
-        obj.hook_to_ivar_mutations(cloned_var)
         cloned_var.bind_to cloned_var
-        cloned_var.add_observer obj, :mutation
         [name, cloned_var]
       end]
       obj.defs = defs
@@ -233,14 +177,11 @@ module Crystal
   end
 
   class ArrayType < ClassType
-    include MutableClassType
-
     attr_accessor :vars
     @@id = 0
 
     def initialize(parent_type = nil, var = Var.new('element'))
       super("Array", parent_type)
-      var.add_observer self, :mutation
       @vars = [var]
     end
 
@@ -313,23 +254,10 @@ module Crystal
   end
 
   class UnionType < Type
-    include MutableType
-
     attr_reader :types
 
     def initialize(*types)
       @types = types
-      types.each_with_index do |type, index|
-        if type.is_a?(MutableType)
-          type.observe_mutations do |ivar, type|
-            if @mutation_observers
-              @mutation_observers.values.each do |observer|
-                observer.call([index] + ivar, type)
-              end
-            end
-          end
-        end
-      end
     end
 
     def set_with_count
