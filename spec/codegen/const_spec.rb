@@ -5,7 +5,37 @@ describe 'Codegen: const' do
     run("A = 1; A").to_i.should eq(1)
   end
 
-  it "types a nested constant" do
+  it "support nested constant" do
     run("class B; A = 1; end; B::A").to_i.should eq(1)
+  end
+
+  it "support constant inside a def" do
+    run(%q(
+      class Foo
+        A = 1
+
+        def foo
+          A
+        end
+      end
+
+      Foo.new.foo
+      )).to_i.should eq(1)
+  end
+
+  it "finds nearest constant first" do
+    run(%q(
+      A = 1
+
+      class Foo
+        A = 2.5
+
+        def foo
+          A
+        end
+      end
+
+      Foo.new.foo
+      )).to_f.should eq(2.5)
   end
 end
