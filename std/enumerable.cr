@@ -18,4 +18,10 @@ module Enumerable
     each { |e| ary << e if yield e }
     ary
   end
+
+  def to_a
+    ary = []
+    each { |e| ary << e }
+    ary
+  end
 end

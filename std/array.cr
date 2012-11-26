@@ -7,4 +7,8 @@ class Array
     end
     self
   end
+
+  def to_a
+    self
+  end
 end

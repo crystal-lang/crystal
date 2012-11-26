@@ -290,8 +290,19 @@ module Crystal
       when :'('
         next_token_skip_space_or_newline
         exp = parse_expression
+
+        case @token.type
+        when :'..'
+          next_token_skip_space_or_newline
+          exp = Call.new(Const.new('Range'), 'new', [exp, parse_expression, BoolLiteral.new(false)])
+        when :'...'
+          next_token_skip_space_or_newline
+          exp = Call.new(Const.new('Range'), 'new', [exp, parse_expression, BoolLiteral.new(true)])
+        end
+
         check :')'
         next_token_skip_space
+
         raise "unexpected token: (" if @token.type == :'('
         exp
       when :'[]'

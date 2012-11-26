@@ -1,4 +1,8 @@
 class Int
+  def succ
+    self + 1
+  end
+
   def times
     i = 0
     while i < self
