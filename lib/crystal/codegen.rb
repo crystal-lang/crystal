@@ -49,10 +49,6 @@ module Crystal
     end
   end
 
-  class Const
-    attr_accessor :llvm_global
-  end
-
   def run(code, options = {})
     node = parse code
     mod = infer_type node, options
