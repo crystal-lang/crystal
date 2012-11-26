@@ -39,17 +39,26 @@ module Crystal
     end
   end
 
-  class ModuleType < Type
+  class ContainedType < Type
+    attr_accessor :container
+
+    def initialize(container)
+      @container = container
+    end
+  end
+
+  class ModuleType < ContainedType
     attr_accessor :name
     attr_accessor :defs
     attr_accessor :types
     attr_accessor :parents
 
-    def initialize(name, parents = [])
+    def initialize(name, container = nil, parents = [])
+      super(container)
       @name = name
+      @parents = parents
       @defs = HashWithParent.new(self)
       @types = {}
-      @parents = parents
     end
 
     def include(mod)
@@ -58,8 +67,8 @@ module Crystal
   end
 
   class ClassType < ModuleType
-    def initialize(name, parent_type)
-      super(name, parent_type ? [parent_type] : [])
+    def initialize(name, parent_type, container = nil)
+      super(name, container, parent_type ? [parent_type] : [])
     end
 
     def superclass
@@ -72,8 +81,8 @@ module Crystal
     attr_reader :llvm_type
     attr_reader :llvm_size
 
-    def initialize(name, parent_type, llvm_type, llvm_size)
-      super(name, parent_type)
+    def initialize(name, parent_type, llvm_type, llvm_size, container = nil)
+      super(name, parent_type, container)
       @llvm_type = llvm_type
       @llvm_size = llvm_size
     end
@@ -99,7 +108,7 @@ module Crystal
     attr_accessor :instance_vars
     @@id = 0
 
-    def initialize(name, parent_type = nil)
+    def initialize(name, parent_type = nil, container = nil)
       super
       @instance_vars = {}
     end
@@ -154,7 +163,7 @@ module Crystal
     def clone(types_context = {}, nodes_context = {})
       obj = types_context[object_id] and return obj
 
-      obj = types_context[object_id] = ObjectType.new name, @parent_type
+      obj = types_context[object_id] = ObjectType.new name, @parent_type, @container
       obj.instance_vars = Hash[instance_vars.map do |name, var|
         cloned_var = var.clone(nodes_context)
         cloned_var.type = var.type.clone(types_context, nodes_context) if var.type
@@ -179,8 +188,8 @@ module Crystal
     attr_accessor :vars
     @@id = 0
 
-    def initialize(parent_type = nil, var = Var.new('element'))
-      super("Array", parent_type)
+    def initialize(parent_type = nil, container = nil, var = Var.new('element'))
+      super("Array", parent_type, container)
       @vars = [var]
     end
 
@@ -215,7 +224,7 @@ module Crystal
 
       cloned_element_type_var = element_type_var.clone(nodes_context)
 
-      array = types_context[object_id] = ArrayType.new @parent_type, cloned_element_type_var
+      array = types_context[object_id] = ArrayType.new @parent_type, @container, cloned_element_type_var
       array.element_type_var.type = element_type.clone(types_context, nodes_context)
       array.element_type_var.bind_to array.element_type_var if array.element_type
       array.defs = defs
@@ -330,7 +339,7 @@ module Crystal
     attr_reader :type
 
     def initialize(type)
-      super("#{type.name}:Metaclass")
+      super("#{type.name}:Metaclass", type.container)
       @type = type
     end
 
@@ -346,8 +355,8 @@ module Crystal
   class LibType < ModuleType
     attr_accessor :libname
 
-    def initialize(name, libname = nil)
-      super(name)
+    def initialize(name, libname = nil, container = nil)
+      super(name, container)
       @libname = libname
     end
 
@@ -377,11 +386,12 @@ module Crystal
     end
   end
 
-  class TypeDefType < Type
+  class TypeDefType < ContainedType
     attr_accessor :name
     attr_accessor :type
 
-    def initialize(name, type)
+    def initialize(name, type, container = nil)
+      super(container)
       @name = name
       @type = type
     end
@@ -411,12 +421,13 @@ module Crystal
     end
   end
 
-  class StructType < Type
+  class StructType < ContainedType
     attr_accessor :name
     attr_accessor :vars
     attr_accessor :defs
 
-    def initialize(name, vars)
+    def initialize(name, vars, container = nil)
+      super(container)
       @name = name
       @vars = Hash[vars.map { |var| [var.name, var] }]
       @defs = {}

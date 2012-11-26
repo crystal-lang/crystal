@@ -393,7 +393,7 @@ module Crystal
           node.raise "superclass mismatch for class #{type.name} (#{parent.name} for #{type.superclass.name})"
         end
       else
-        current_type.types[node.name] = type = ObjectType.new node.name, parent
+        current_type.types[node.name] = type = ObjectType.new node.name, parent, current_type
       end
 
       @types.push type
@@ -410,7 +410,7 @@ module Crystal
       if type
         node.raise "#{node.name} is not a module" unless type.class == ModuleType
       else
-        current_type.types[node.name] = type = ModuleType.new node.name
+        current_type.types[node.name] = type = ModuleType.new node.name, current_type
       end
 
       @types.push type
@@ -435,7 +435,7 @@ module Crystal
       if type
         node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
       else
-        current_type.types[node.name] = type = LibType.new node.name, node.libname
+        current_type.types[node.name] = type = LibType.new node.name, node.libname, current_type
       end
       @types.push type
     end
@@ -455,7 +455,7 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
-        current_type.types[node.name] = TypeDefType.new node.name, node.type.type.instance_type
+        current_type.types[node.name] = TypeDefType.new node.name, node.type.type.instance_type, current_type
       end
     end
 
@@ -464,7 +464,7 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
-        current_type.types[node.name] = StructType.new(node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) })
+        current_type.types[node.name] = StructType.new(node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) }, current_type)
       end
     end
 
