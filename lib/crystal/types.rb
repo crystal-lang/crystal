@@ -398,15 +398,13 @@ module Crystal
     end
   end
 
-  class Metaclass < Type
+  class Metaclass < ModuleType
     attr_reader :name
     attr_reader :type
-    attr_reader :defs
 
     def initialize(type)
-      @name = "#{type.name}:Metaclass"
+      super("#{type.name}:Metaclass")
       @type = type
-      @defs = {}
     end
 
     def passed_as_self?

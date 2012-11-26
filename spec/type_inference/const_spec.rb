@@ -28,4 +28,20 @@ describe 'Type inference: const' do
       Foo.new.foo
       )) { int }
   end
+
+  it "finds nearest constant first" do
+    assert_type(%q(
+      A = 1
+
+      class Foo
+        A = 2.5
+
+        def foo
+          A
+        end
+      end
+
+      Foo.new.foo
+      )) { float }
+  end
 end

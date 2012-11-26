@@ -563,17 +563,16 @@ module Crystal
     def find_const_type(node)
       name = node.names[0]
 
-      target_type = nil
-      @types.reverse_each do |type|
-        if !type.is_a?(Module) && type.name == name
-          target_type = type
-          break
-        end
-        target_type = type.types[name] and break
-      end
+      target_type = @scope.types[name] if @scope
 
-      if !target_type && @scope
-        target_type = @scope.types[name]
+      unless target_type
+        @types.reverse_each do |type|
+          if !type.is_a?(Module) && type.name == name
+            target_type = type
+            break
+          end
+          target_type = type.types[name] and break
+        end
       end
 
       unless target_type
