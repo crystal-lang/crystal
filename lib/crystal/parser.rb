@@ -331,6 +331,8 @@ module Crystal
         node_and_next_token CharLiteral.new(@token.value)
       when :STRING, :STRING_START
         parse_string
+      when :STRING_ARRAY_START
+        parse_string_array
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value)
       when :IDENT
@@ -979,6 +981,26 @@ module Crystal
       else
         StringLiteral.new pieces.join
       end
+    end
+
+    def parse_string_array
+      strings = []
+
+      next_string_array_token
+      while true
+        case @token.type
+        when :STRING
+          strings << StringLiteral.new(@token.value)
+          next_string_array_token
+        when :STRING_ARRAY_END
+          next_token
+          break
+        when :EOF
+          raise "Unterminated string array literal"
+        end
+      end
+
+      ArrayLiteral.new strings
     end
 
     def node_and_next_token(node)

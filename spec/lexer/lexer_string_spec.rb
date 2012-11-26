@@ -126,4 +126,30 @@ describe 'Lexer string' do
     token = lexer.next_string_token
     token.type.should eq(:STRING_END)
   end
+
+  it "lexes string with literal newline" do
+    lexer = Lexer.new(%("hello\nworld".))
+
+    token = lexer.next_token
+    token.type.should eq(:STRING_START)
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING)
+    token.value.should eq("hello")
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING)
+    token.value.should eq("\n")
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING)
+    token.value.should eq("world")
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING_END)
+
+    token = lexer.next_token
+    token.line_number.should eq(2)
+    token.column_number.should eq(7)
+  end
 end

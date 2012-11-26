@@ -6,24 +6,20 @@ module Crystal
       super
       @token = Token.new
       @line_number = 1
+      @column_number = 1
     end
 
     def next_token
       @token.value = nil
       @token.line_number = @line_number
-
-      if @incremented_columns
-        @token.column_number += @incremented_columns
-      else
-        @token.column_number = 1
-      end
+      @token.column_number = @column_number
 
       if eos?
         @token.type = :EOF
       elsif scan /\n/
         @token.type = :NEWLINE
         @line_number += 1
-        @incremented_columns = nil
+        @column_number = 1
       elsif scan /[^\S\n]+/
         @token.type = :SPACE
       elsif scan /;+/
@@ -51,7 +47,7 @@ module Crystal
       elsif match = scan(/'.'/)
         @token.type = :CHAR
         @token.value = match[1 .. -2].ord
-      elsif match = scan(/"[^\\#]*?"/)
+      elsif match = scan(/"[^\\#\n]*?"/)
         @token.type = :STRING
         @token.value = match[1 .. -2]
       elsif match = scan(/"/)
@@ -59,6 +55,8 @@ module Crystal
       elsif match = scan(/:[a-zA-Z_][a-zA-Z_0-9]*/)
         @token.type = :SYMBOL
         @token.value = match[1 .. -1]
+      elsif match = scan(/\%w\(/)
+        @token.type = :STRING_ARRAY_START
       elsif match = scan(%r(!=|!|==|=|<<=|<<|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.|&&|&|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
         @token.type = match.to_sym
       elsif match = scan(/(def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct)((\?|!)|\b)/)
@@ -77,7 +75,7 @@ module Crystal
         if scan /.*\n/
           @token.type = :NEWLINE
           @line_number += 1
-          @incremented_columns = nil
+          @column_number = 1
         else
           scan /.*/
           @token.type = :EOF
@@ -92,17 +90,16 @@ module Crystal
     def next_string_token
       @token.value = nil
       @token.line_number = @line_number
-
-      if @incremented_columns
-        @token.column_number += @incremented_columns
-      else
-        @token.column_number = 1
-      end
+      @token.column_number = @column_number
 
       if eos?
         @token.type = :EOF
       elsif scan(/"/)
         @token.type = :STRING_END
+      elsif scan(/\n/)
+        @line_number += 1
+        @column_number = 1
+        @token.value = "\n"
       elsif scan(/\\n/)
         @token.type = :STRING
         @token.value = "\n"
@@ -120,7 +117,7 @@ module Crystal
       elsif scan(/\#/)
         @token.type = :STRING
         @token.value = '#'
-      elsif match = scan(/[^"\\\#]+/)
+      elsif match = scan(/[^"\\\#\n]+/)
         @token.type = :STRING
         @token.value = match
       end
@@ -128,9 +125,37 @@ module Crystal
       @token
     end
 
+    def next_string_array_token
+      @token.value = nil
+      @token.line_number = @line_number
+      @token.column_number = @column_number
+
+      if eos?
+        @token.type = :EOF
+      else
+        while true
+          if match = scan(/\n/)
+            @line_number += 1
+            @column_number = 1
+          elsif scan /[^\S\n]+/
+            next
+          elsif match = scan(/\)/)
+            @token.type = :STRING_ARRAY_END
+            break
+          else match = scan(/[^\s\)]+/)
+            @token.type = :STRING
+            @token.value = match
+            break
+          end
+        end
+      end
+
+      @token
+    end
+
     def scan(regex)
       if (match = super)
-        @incremented_columns = match.length
+        @column_number += match.length
       end
       match
     end
