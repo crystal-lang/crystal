@@ -481,6 +481,17 @@ module Crystal
       gep(buffer, index)
     end
 
+    def visit_argv(node)
+      array = @builder.malloc(node.type.llvm_struct_type)
+
+      length = @builder.sub(@argc, LLVM::Int(1))
+
+      @builder.store LLVM::Int(length), gep(array, 0, 0)
+      @builder.store LLVM::Int(length), gep(array, 0, 1)
+
+      @last = array
+    end
+
     def visit_call(node)
       if node.target_def.is_a?(Dispatch)
         codegen_dispatch(node)
