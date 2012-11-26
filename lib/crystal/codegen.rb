@@ -144,8 +144,21 @@ module Crystal
       @last = LLVM::Int32.from_i(@symbols[node.value])
     end
 
+    def visit_const(node)
+      @last = @builder.load @llvm_mod.globals[node.names.join('::')]
+    end
+
     def visit_assign(node)
       node.value.accept self
+
+      if node.target.is_a?(Const)
+        global = @llvm_mod.globals.add(node.value.llvm_type, node.target.names.join('::'))
+        global.linkage = :internal
+        global.initializer = @last
+        global.global_constant = 1
+        @last = nil
+        return false
+      end
 
       if node.target.is_a?(InstanceVar)
         ivar = @type.instance_vars[node.target.name]
@@ -253,6 +266,10 @@ module Crystal
     end
 
     def visit_class_def(node)
+      false
+    end
+
+    def visit_struct_def(node)
       false
     end
 
