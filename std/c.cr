@@ -6,3 +6,7 @@ lib C
   fun exit(status : Int)
   fun getenv(str : String) : String
 end
+
+def exit(error_code)
+  C.exit error_code
+end
