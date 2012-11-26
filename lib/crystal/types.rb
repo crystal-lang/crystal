@@ -219,6 +219,7 @@ module Crystal
         [name, cloned_var]
       end]
       obj.defs = defs
+      obj.types = types
       obj
     end
 

@@ -572,6 +572,10 @@ module Crystal
         target_type = type.types[name] and break
       end
 
+      if !target_type && @scope
+        target_type = @scope.types[name]
+      end
+
       unless target_type
         node.raise("uninitialized constant #{name}")
       end

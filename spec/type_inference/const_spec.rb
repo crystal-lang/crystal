@@ -14,4 +14,18 @@ describe 'Type inference: const' do
   it "types a nested constant" do
     assert_type("class B; A = 1; end; B::A") { int }
   end
+
+  it "types a constant inside a def" do
+    assert_type(%q(
+      class Foo
+        A = 1
+
+        def foo
+          A
+        end
+      end
+
+      Foo.new.foo
+      )) { int }
+  end
 end
