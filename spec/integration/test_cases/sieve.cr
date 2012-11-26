@@ -17,11 +17,9 @@ while i < max
   i += 1
 end
 
-i = 0
 found = 0
-while i < max
-  found += 1 if sieve[i]
-  i += 1
+sieve.each do |prime|
+  found += 1 if prime
 end
 
 puts found
