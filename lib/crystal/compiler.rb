@@ -85,7 +85,7 @@ module Crystal
       if @options[:run]
         load_libs mod
 
-        engine.run_function llvm_mod.functions["crystal_main"]
+        engine.run_function llvm_mod.functions["crystal_main"], 0, nil
       else
         reader, writer = IO.pipe
         Thread.new do
