@@ -158,6 +158,9 @@ describe Parser do
   it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
   it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".const)
 
+  it_parses "module Foo; end", ModuleDef.new("Foo")
+  it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [], nil)])
+
   it_parses "while true; 1; end;", While.new(true.bool, 1.int)
 
   it_parses "foo do; 1; end", Call.new(nil, "foo", [], Block.new([], 1.int))

@@ -187,6 +187,39 @@ module Crystal
     end
   end
 
+  # Module definition:
+  #
+  #     'module' name
+  #       body
+  #     'end'
+  #
+  class ModuleDef < ASTNode
+    attr_accessor :name
+    attr_accessor :body
+    attr_accessor :name_column_number
+
+    def initialize(name, body = nil, name_column_number = nil)
+      @name = name
+      @body = Expressions.from body
+      @body.parent = self if @body
+      @name_column_number = name_column_number
+    end
+
+    def accept_children(visitor)
+      body.accept visitor if body
+    end
+
+    def ==(other)
+      other.is_a?(ModuleDef) && other.name == name && other.body == body
+    end
+
+    def clone_from(other, &block)
+      @name = other.name
+      @body = other.body.clone(&block)
+      @name_column_number = other.name_column_number
+    end
+  end
+
   # The nil literal.
   #
   #     'nil'

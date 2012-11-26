@@ -347,6 +347,8 @@ module Crystal
           parse_yield
         when :class
           parse_class_def
+        when :module
+          parse_module_def
         when :def
           parse_def
         when :if
@@ -551,6 +553,26 @@ module Crystal
       class_def = ClassDef.new name, body, superclass, name_column_number
       class_def.location = location
       class_def
+    end
+
+    def parse_module_def
+      location = @token.location
+
+      next_token_skip_space_or_newline
+      check :CONST
+
+      name = @token.value
+      name_column_number = @token.column_number
+      next_token_skip_statement_end
+
+      body = parse_expressions
+
+      check_ident :end
+      next_token_skip_space
+
+      module_def = ModuleDef.new name, body, name_column_number
+      module_def.location = location
+      module_def
     end
 
     def parse_def

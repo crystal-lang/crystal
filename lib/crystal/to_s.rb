@@ -224,6 +224,15 @@ module Crystal
       false
     end
 
+    def visit_module_def(node)
+      @str << "module "
+      @str << node.name
+      @str << "\n"
+      accept_with_indent(node.body)
+      @str << "end"
+      false
+    end
+
     def visit_assign(node)
       node.target.accept self
       @str << " = "
