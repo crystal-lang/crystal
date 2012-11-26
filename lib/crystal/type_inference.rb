@@ -511,6 +511,8 @@ module Crystal
         end
 
         node.value.accept self
+        node.target.bind_to node.value
+
         current_type.types[node.target.names.first] = node.value
         false
       else
