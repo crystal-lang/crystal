@@ -503,7 +503,24 @@ module Crystal
       node.bind_to var
     end
 
+    def visit_assign(node)
+      if node.target.is_a?(Const)
+        type = current_type.types[node.target.names.first]
+        if type
+          node.raise "already initialized constant #{node.target}"
+        end
+
+        node.value.accept self
+        current_type.types[node.target.names.first] = node.value
+        false
+      else
+        true
+      end
+    end
+
     def end_visit_assign(node)
+      return if node.target.is_a?(Const)
+
       node.bind_to node.value
 
       if node.target.is_a?(InstanceVar)
@@ -533,7 +550,12 @@ module Crystal
     end
 
     def visit_const(node)
-      node.type = find_const_type(node).metaclass
+      type = find_const_type(node)
+      if type.is_a?(ASTNode)
+        node.bind_to(type)
+      else
+        node.type = type.metaclass
+      end
     end
 
     def find_const_type(node)
