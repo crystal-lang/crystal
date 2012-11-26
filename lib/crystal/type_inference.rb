@@ -1024,6 +1024,10 @@ module Crystal
     end
 
     def end_visit_yield(node)
+      unless @call[4].block
+        node.raise "no block given"
+      end
+
       @call[4].block.args.each_with_index do |arg, i|
         arg.bind_to node.exps[i]
       end
