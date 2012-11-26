@@ -20,7 +20,7 @@ describe 'Codegen: const' do
       end
 
       Foo.new.foo
-      )).to_i.should eq(1)
+    )).to_i.should eq(1)
   end
 
   it "finds nearest constant first" do
@@ -36,6 +36,23 @@ describe 'Codegen: const' do
       end
 
       Foo.new.foo
-      )).to_f.should eq(2.5)
+    )).to_f.should eq(2.5)
+  end
+
+  it "allows constants with same name" do
+    run(%q(
+      A = 1
+
+      class Foo
+        A = 2.5
+
+        def foo
+          A
+        end
+      end
+
+      A
+      Foo.new.foo
+    )).to_f.should eq(2.5)
   end
 end

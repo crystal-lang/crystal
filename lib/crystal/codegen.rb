@@ -49,6 +49,10 @@ module Crystal
     end
   end
 
+  class Const
+    attr_accessor :llvm_global
+  end
+
   def run(code, options = {})
     node = parse code
     mod = infer_type node, options
@@ -145,16 +149,20 @@ module Crystal
     end
 
     def visit_const(node)
-      global = @llvm_mod.globals[node.names.join('::')]
+      const = @type
+      parent = nil
+      node.names.each do |name|
+        parent = const
+        const = const.types[name]
+      end
+
+      global_name = "#{parent.object_id}::#{node.names.last}"
+      global = @llvm_mod.globals[global_name]
+
       unless global
-        type = @type
-        node.names.each do |name|
-          type = type.types[name]
-        end
+        const.accept self
 
-        type.accept self
-
-        global = @llvm_mod.globals.add(type.type.llvm_type, node.names.join('::'))
+        global = @llvm_mod.globals.add(const.type.llvm_type, global_name)
         global.linkage = :internal
         global.initializer = @last
         global.global_constant = 1
