@@ -37,20 +37,6 @@ module Crystal
       types_context = {}
       types.map { |type| type.clone(types_context) }
     end
-
-    def self.relationship(types)
-      path = []
-      relationships = []
-      known_paths = {}
-
-      types.each_with_index do |type, i|
-        path.push i
-        relationships.push type.relationship(known_paths, path)
-        path.pop
-      end
-
-      relationships
-    end
   end
 
   class ModuleType < Type
@@ -108,10 +94,6 @@ module Crystal
     def clone(*)
       self
     end
-
-    def relationship(*)
-      self
-    end
   end
 
   module MutableType
@@ -125,19 +107,6 @@ module Crystal
     def unobserve_mutations(token)
       @mutation_observers.delete token
       @mutation_observers = nil if @mutation_observers.empty?
-    end
-  end
-
-  module RelatableType
-    def relationship(known_paths = {}, path = [])
-      known_path = known_paths[object_id]
-      if known_path
-        return Path.new(*known_path)
-      end
-
-      known_paths[object_id] = path.dup
-
-      relationship_object(known_paths, path)
     end
   end
 
@@ -175,7 +144,6 @@ module Crystal
 
   class ObjectType < ClassType
     include MutableClassType
-    include RelatableType
 
     attr_accessor :instance_vars
     @@id = 0
@@ -254,20 +222,6 @@ module Crystal
       obj
     end
 
-    def relationship_object(known_paths = {}, path = [])
-      obj = ObjectType.new(name)
-      instance_vars.each do |name, var|
-        if var.type
-          path.push name
-
-          obj.lookup_instance_var(name).set_type var.type.relationship(known_paths, path)
-
-          path.pop
-        end
-      end
-      obj
-    end
-
     def to_s
       return @to_s if @to_s
       @to_s = "..."
@@ -279,7 +233,6 @@ module Crystal
 
   class ArrayType < ClassType
     include MutableClassType
-    include RelatableType
 
     attr_accessor :vars
     @@id = 0
@@ -328,18 +281,6 @@ module Crystal
       array
     end
 
-    def relationship_object(known_paths = {}, path = [])
-      array = ArrayType.new
-      if element_type
-        path.push element_type_var.name
-
-        array.element_type_var.set_type element_type.relationship(known_paths, path)
-
-        path.pop
-      end
-      array
-    end
-
     def llvm_type
       @llvm_type ||= element_type ? LLVM::Pointer(llvm_struct_type) : LLVM::Int1
     end
@@ -372,7 +313,6 @@ module Crystal
 
   class UnionType < Type
     include MutableType
-    include RelatableType
 
     attr_reader :types
 
@@ -446,16 +386,6 @@ module Crystal
     def clone(types_context = {}, nodes_context = {})
       cloned = types_context[object_id] and return cloned
       types_context[object_id] = UnionType.new(*types.map { |type| type.clone(types_context, nodes_context) })
-    end
-
-    def relationship_object(known_paths = {}, path = [])
-      union = UnionType.new
-      types.each_with_index do |type, i|
-        path.push i
-        union.types.push type.relationship(known_paths, path)
-        path.pop
-      end
-      union
     end
 
     def name
@@ -550,10 +480,6 @@ module Crystal
       self
     end
 
-    def relationship(*)
-      self
-    end
-
     def to_s
       name
     end
@@ -615,10 +541,6 @@ module Crystal
     end
 
     def clone(*)
-      self
-    end
-
-    def relationship(*)
       self
     end
 
