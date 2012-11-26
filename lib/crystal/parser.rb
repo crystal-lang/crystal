@@ -349,6 +349,8 @@ module Crystal
           parse_class_def
         when :module
           parse_module_def
+        when :include
+          parse_include
         when :def
           parse_def
         when :if
@@ -378,6 +380,8 @@ module Crystal
     end
 
     def parse_const
+      location = @token.location
+
       check :CONST
       names = [@token.value]
 
@@ -391,7 +395,9 @@ module Crystal
         next_token
       end
 
-      Const.new *names
+      const = Const.new *names
+      const.location = location
+      const
     end
 
     def parse_begin
@@ -573,6 +579,19 @@ module Crystal
       module_def = ModuleDef.new name, body, name_column_number
       module_def.location = location
       module_def
+    end
+
+    def parse_include
+      location = @token.location
+
+      next_token_skip_space_or_newline
+
+      name = parse_const
+      skip_statement_end
+
+      inc = Include.new name
+      inc.location = location
+      inc
     end
 
     def parse_def

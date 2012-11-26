@@ -1,9 +1,15 @@
 class HashWithParent < Hash
-  def initialize(parent)
-    @parent = parent
+  def initialize(obj)
+    @obj = obj
   end
 
   def [](key)
-    value = super || @parent[key]
+    value = super
+    unless value
+      @obj.parents.each do |parent|
+        value = parent.defs[key] and break
+      end
+    end
+    value
   end
 end

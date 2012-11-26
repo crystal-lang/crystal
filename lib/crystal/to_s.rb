@@ -233,6 +233,12 @@ module Crystal
       false
     end
 
+    def visit_include(node)
+      @str << "include "
+      node.name.accept self
+      false
+    end
+
     def visit_assign(node)
       node.target.accept self
       @str << " = "

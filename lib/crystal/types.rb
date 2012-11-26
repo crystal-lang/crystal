@@ -66,11 +66,15 @@ module Crystal
   end
 
   class ClassType < ModuleType
-    attr_reader :parent_type
+    attr_reader :parents
 
     def initialize(name, parent_type)
-      super(name, parent_type ? HashWithParent.new(parent_type.defs) : {})
-      @parent_type = parent_type
+      super(name, HashWithParent.new(self))
+      @parents = parent_type ? [parent_type] : []
+    end
+
+    def superclass
+      @parents.find { |parent| parent.is_a?(ClassType) }
     end
   end
 

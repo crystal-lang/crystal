@@ -782,8 +782,8 @@ module Crystal
       type = current_type.types[node.name]
       if type
         node.raise "#{node.name} is not a class" unless type.is_a?(ClassType)
-        if node.superclass && type.parent_type != parent
-          node.raise "superclass mismatch for class #{type.name} (#{parent.name} for #{type.parent_type.name})"
+        if node.superclass && type.superclass != parent
+          node.raise "superclass mismatch for class #{type.name} (#{parent.name} for #{type.superclass.name})"
         end
       else
         current_type.types[node.name] = type = ObjectType.new node.name, parent
@@ -796,6 +796,31 @@ module Crystal
 
     def end_visit_class_def(node)
       @types.pop
+    end
+
+    def visit_module_def(node)
+      type = current_type.types[node.name]
+      if type
+        node.raise "#{node.name} is not a module" unless type.class == ModuleType
+      else
+        current_type.types[node.name] = type = ModuleType.new node.name
+      end
+
+      @types.push type
+
+      true
+    end
+
+    def end_visit_module_def(node)
+      @types.pop
+    end
+
+    def end_visit_include(node)
+      if node.name.type.instance_type.class != ModuleType
+        node.name.raise "#{node.name} is not a module"
+      end
+
+      current_type.parents.insert 0, node.name.type.instance_type
     end
 
     def visit_lib_def(node)

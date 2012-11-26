@@ -805,4 +805,25 @@ module Crystal
       other.is_a?(StructDef) && other.name == name && other.fields == fields
     end
   end
+
+  class Include < ASTNode
+    attr_accessor :name
+
+    def initialize(name)
+      @name = name
+      @name.parent = self
+    end
+
+    def accept_children(visitor)
+      name.accept visitor
+    end
+
+    def ==(other)
+      other.is_a?(Include) && other.name == name
+    end
+
+    def clone_from(other, &block)
+      @name = other.name
+    end
+  end
 end
