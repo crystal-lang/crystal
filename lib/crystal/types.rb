@@ -53,24 +53,24 @@ module Crystal
     end
   end
 
-  class ContainerType < Type
+  class ModuleType < Type
+    attr_accessor :name
+    attr_accessor :defs
     attr_accessor :types
 
-    def initialize
-      @types = {}
+    def initialize(name, defs = {}, types = {})
+      @name = name
+      @defs = defs
+      @types = types
     end
   end
 
-  class ClassType < ContainerType
+  class ClassType < ModuleType
     attr_reader :parent_type
-    attr_reader :name
-    attr_accessor :defs
 
     def initialize(name, parent_type)
-      super()
-      @name = name
+      super(name, parent_type ? HashWithParent.new(parent_type.defs) : {})
       @parent_type = parent_type
-      @defs = parent_type ? HashWithParent.new(parent_type.defs) : {}
     end
   end
 
@@ -479,16 +479,12 @@ module Crystal
     end
   end
 
-  class LibType < ContainerType
-    attr_accessor :name
+  class LibType < ModuleType
     attr_accessor :libname
-    attr_accessor :defs
 
     def initialize(name, libname = nil)
-      super()
-      @name = name
+      super(name)
       @libname = libname
-      @defs = {}
     end
 
     def metaclass
