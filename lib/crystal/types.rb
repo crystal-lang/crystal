@@ -210,7 +210,7 @@ module Crystal
     end
 
     def llvm_size
-      Crystal::Module::POINTER_SIZE
+      Crystal::Program::POINTER_SIZE
     end
 
     def llvm_struct_type
@@ -345,7 +345,7 @@ module Crystal
     end
 
     def llvm_size
-      4 + 4 + Crystal::Module::POINTER_SIZE
+      4 + 4 + Crystal::Program::POINTER_SIZE
     end
 
     def llvm_name
@@ -583,7 +583,7 @@ module Crystal
     end
 
     def llvm_size
-      Crystal::Module::POINTER_SIZE
+      Crystal::Program::POINTER_SIZE
     end
 
     def llvm_struct_type

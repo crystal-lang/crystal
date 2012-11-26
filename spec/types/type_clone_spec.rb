@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe "Type clone" do
-  let(:mod) { Crystal::Module.new }
+  let(:mod) { Crystal::Program.new }
 
   it "clone primitive type" do
     type = mod.int

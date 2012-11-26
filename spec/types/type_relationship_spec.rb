@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe "Type relationship" do
-  let(:mod) { Crystal::Module.new }
+  let(:mod) { Crystal::Program.new }
 
   it "computes simple relationships" do
     type = ObjectType.new("Foo")

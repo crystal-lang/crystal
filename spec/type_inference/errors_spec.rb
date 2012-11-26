@@ -118,7 +118,7 @@ describe 'Type inference: errors' do
 
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("can't use instance variables inside a module"))
+    }.should raise_error(Crystal::Exception, regex("can't use instance variables at the top level"))
   end
 
   it "reports can't use instance variables inside a Value" do

@@ -2,7 +2,7 @@ require 'benchmark'
 
 module Crystal
   def infer_type(node, options = {})
-    mod = Crystal::Module.new options
+    mod = Crystal::Program.new options
     if node
       if options[:stats]
         infer_type_with_stats node, mod
@@ -859,8 +859,8 @@ module Crystal
     end
 
     def visit_instance_var(node)
-      if @scope.is_a?(Crystal::Module)
-        node.raise "can't use instance variables inside a module"
+      if @scope.is_a?(Crystal::Program)
+        node.raise "can't use instance variables at the top level"
       elsif @scope.is_a?(PrimitiveType)
         node.raise "can't use instance variables inside #{@scope.name}"
       end

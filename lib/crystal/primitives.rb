@@ -1,5 +1,7 @@
+require_relative 'program'
+
 module Crystal
-  class Module
+  class Program
     def define_primitives
       define_object_primitives
       define_value_primitives

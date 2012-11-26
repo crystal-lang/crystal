@@ -1,15 +1,15 @@
+require_relative 'types'
+
 module Crystal
-  class Module
+  class Program < ModuleType
     include Enumerable
 
     POINTER_SIZE = 8
 
-    attr_accessor :types
-    attr_accessor :defs
     attr_accessor :symbols
 
     def initialize(options = {})
-      @types = {}
+      super('main')
 
       object = @types["Object"] = ObjectType.new "Object"
       value = @types["Value"] = ObjectType.new "Value", object
@@ -25,7 +25,6 @@ module Crystal
       @types["Pointer"] = PrimitiveType.new "Pointer", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE
       @types["Array"] = ArrayType.new object
 
-      @defs = {}
       @symbols = Set.new
 
       define_primitives
@@ -103,10 +102,6 @@ module Crystal
         end
       end
       libs
-    end
-
-    def each
-      yield self
     end
   end
 end

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe UnionType do
-  let(:mod) { Crystal::Module.new }
+  let(:mod) { Crystal::Program.new }
 
   it "compares to single type" do
     union = UnionType.new(mod.int)

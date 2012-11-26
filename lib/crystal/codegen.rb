@@ -30,7 +30,7 @@ module Crystal
         if owner.is_a?(Metaclass)
           str << owner.type.name
           str << '::'
-        elsif !owner.is_a?(Crystal::Module)
+        elsif !owner.is_a?(Crystal::Program)
           str << owner.llvm_name
           str << '#'
         end
@@ -436,7 +436,7 @@ module Crystal
       end
 
       owner = ((node.obj && node.obj.type) || node.scope)
-      owner = node.target_def.owner && owner.is_a?(Type) && !owner.is_a?(Metaclass) && owner
+      owner = node.target_def.owner && owner.is_a?(Type) && !owner.is_a?(Metaclass) && !owner.is_a?(Program) && owner
 
       call_args = []
       if node.obj && node.obj.type.passed_as_self?
