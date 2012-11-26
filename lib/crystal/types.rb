@@ -40,22 +40,30 @@ module Crystal
   end
 
   class ContainedType < Type
+    attr_accessor :name
     attr_accessor :container
 
-    def initialize(container)
+    def initialize(name, container)
+      @name = name
       @container = container
+    end
+
+    def full_name
+      if @container && !@container.is_a?(Program)
+        "#{@container.full_name}::#{@name}"
+      else
+        @name
+      end
     end
   end
 
   class ModuleType < ContainedType
-    attr_accessor :name
     attr_accessor :defs
     attr_accessor :types
     attr_accessor :parents
 
     def initialize(name, container = nil, parents = [])
-      super(container)
-      @name = name
+      super(name, container)
       @parents = parents
       @defs = HashWithParent.new(self)
       @types = {}
@@ -77,7 +85,6 @@ module Crystal
   end
 
   class PrimitiveType < ClassType
-    attr_reader :name
     attr_reader :llvm_type
     attr_reader :llvm_size
 
@@ -387,12 +394,10 @@ module Crystal
   end
 
   class TypeDefType < ContainedType
-    attr_accessor :name
     attr_accessor :type
 
     def initialize(name, type, container = nil)
-      super(container)
-      @name = name
+      super(name, container)
       @type = type
     end
 
@@ -422,12 +427,11 @@ module Crystal
   end
 
   class StructType < ContainedType
-    attr_accessor :name
     attr_accessor :vars
     attr_accessor :defs
 
     def initialize(name, vars, container = nil)
-      super(container)
+      super(name, container)
       @name = name
       @vars = Hash[vars.map { |var| [var.name, var] }]
       @defs = {}

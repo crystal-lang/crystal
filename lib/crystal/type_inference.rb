@@ -219,7 +219,7 @@ module Crystal
       return if untyped_def
 
       if obj
-        raise "undefined method '#{name}' for #{obj.type.name}"
+        raise "undefined method '#{name}' for #{obj.type.full_name}"
       elsif args.length > 0 || has_parenthesis
         raise "undefined method '#{name}'"
       else
@@ -561,9 +561,17 @@ module Crystal
     def find_const_type(node)
       name = node.names[0]
 
-      target_type = @scope.types[name] if @scope
+      target_type = nil
 
-      unless target_type
+      if @scope && @scope.container
+        target_type = @scope.container.types[name]
+      end
+
+      if !target_type && @scope
+        target_type = @scope.types[name]
+      end
+
+      if !target_type
         @types.reverse_each do |type|
           if !type.is_a?(Module) && type.name == name
             target_type = type
