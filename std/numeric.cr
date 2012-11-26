@@ -6,4 +6,8 @@ class Numeric
       x += step
     end
   end
+
+  def abs
+    self < 0 ? -self : self
+  end
 end

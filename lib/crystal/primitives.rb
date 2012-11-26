@@ -70,6 +70,9 @@ module Crystal
       no_args_primitive(int, 'to_i', int) { |b, f| f.params[0] }
       no_args_primitive(int, 'to_f', float) { |b, f| b.si2fp(f.params[0], float.llvm_type) }
 
+      no_args_primitive(int, :-@, int) { |b, f| b.sub(LLVM::Int(0), f.params[0]) }
+      no_args_primitive(int, :+@, int) { |b, f| f.params[0] }
+
       primitive(int, :+, ['other']) do |p|
         p.overload([int], int) { |b, f| b.add(f.params[0], f.params[1]) }
         p.overload([float], float) { |b, f| b.fadd(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
@@ -132,6 +135,9 @@ module Crystal
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%ld"), f.params[0]
         buffer
       end
+
+      no_args_primitive(long, :-@, long) { |b, f| b.sub(LLVM::Int64.from_i(0), f.params[0]) }
+      no_args_primitive(long, :+@, long) { |b, f| f.params[0] }
     end
 
     def define_float_primitives
@@ -143,6 +149,9 @@ module Crystal
 
       no_args_primitive(float, 'to_i', int) { |b, f| b.fp2si(f.params[0], int.llvm_type) }
       no_args_primitive(float, 'to_f', float) { |b, f| f.params[0] }
+
+      no_args_primitive(float, :-@, float) { |b, f| b.fsub(LLVM::Float(0), f.params[0]) }
+      no_args_primitive(float, :+@, float) { |b, f| f.params[0] }
 
       primitive(float, :+, ['other']) do |p|
         p.overload([int], float) { |b, f| b.fadd(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }

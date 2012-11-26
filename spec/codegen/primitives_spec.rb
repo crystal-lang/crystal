@@ -79,6 +79,14 @@ describe 'Code gen: primitives' do
     run('false || true').to_b.should be_true
   end
 
+  it 'codegens - Int' do
+    run('- 1').to_i.should eq(-1)
+  end
+
+  it 'codegens + Int' do
+    run('+ 1').to_i.should eq(1)
+  end
+
   it 'codegens Int + Int' do
     run('1 + 2').to_i.should eq(3)
   end
