@@ -5,7 +5,7 @@ describe 'Codegen: const' do
     run("A = 1; A").to_i.should eq(1)
   end
 
-  pending "types a nested constant" do
+  it "types a nested constant" do
     run("class B; A = 1; end; B::A").to_i.should eq(1)
   end
 end

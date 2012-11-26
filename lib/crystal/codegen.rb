@@ -145,20 +145,30 @@ module Crystal
     end
 
     def visit_const(node)
-      @last = @builder.load @llvm_mod.globals[node.names.join('::')]
-    end
+      global = @llvm_mod.globals[node.names.join('::')]
+      unless global
+        type = @type
+        node.names.each do |name|
+          type = type.types[name]
+        end
 
-    def visit_assign(node)
-      node.value.accept self
+        type.accept self
 
-      if node.target.is_a?(Const)
-        global = @llvm_mod.globals.add(node.value.llvm_type, node.target.names.join('::'))
+        global = @llvm_mod.globals.add(type.type.llvm_type, node.names.join('::'))
         global.linkage = :internal
         global.initializer = @last
         global.global_constant = 1
-        @last = nil
+      end
+
+      @last = @builder.load global
+    end
+
+    def visit_assign(node)
+      if node.target.is_a?(Const)
         return false
       end
+
+      node.value.accept self
 
       if node.target.is_a?(InstanceVar)
         ivar = @type.instance_vars[node.target.name]
