@@ -55,4 +55,11 @@ describe 'Codegen: const' do
       Foo.new.foo
     )).to_f.should eq(2.5)
   end
+
+  it "constants with expression" do
+    run(%q(
+      A = 1 + 1
+      A
+    )).to_i.should eq(2)
+  end
 end

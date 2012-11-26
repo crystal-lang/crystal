@@ -89,6 +89,8 @@ module Crystal
       @builder = LLVM::Builder.new
 
       new_entry_block
+      @const_block = new_block 'const'
+      @builder.position_at_end @entry_block
 
       @funs = {}
       @vars = {}
@@ -112,7 +114,13 @@ module Crystal
     end
 
     def finish
-      br_from_alloca_to_entry
+      old_block = @builder.insert_block
+      @builder.position_at_end @alloca_block
+      @builder.br @const_block
+      @builder.position_at_end @const_block
+      @builder.br @entry_block
+      @builder.position_at_end old_block
+
       @builder.ret(@return_type == @mod.void ? nil : @last)
     end
 
@@ -156,12 +164,22 @@ module Crystal
       global = @llvm_mod.globals[global_name]
 
       unless global
-        const.accept self
-
         global = @llvm_mod.globals.add(const.type.llvm_type, global_name)
         global.linkage = :internal
-        global.initializer = @last
-        global.global_constant = 1
+
+        old_position = @builder.insert_block
+        @builder.position_at_end @const_block
+
+        const.accept self
+        if @last.constant?
+          global.initializer = @last
+          global.global_constant = 1
+        else
+          global.initializer = LLVM::Constant.null(@last.type)
+          @builder.store @last, global
+        end
+
+        @builder.position_at_end old_position
       end
 
       @last = @builder.load global
