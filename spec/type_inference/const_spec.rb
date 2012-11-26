@@ -44,4 +44,22 @@ describe 'Type inference: const' do
       Foo.new.foo
       )) { float }
   end
+
+  pending "finds current type first" do
+    assert_type(%q(
+      class Foo
+        class Bar
+          def self.foo
+            Bar.new.foo
+          end
+
+          def foo
+            1
+          end
+        end
+      end
+
+      Foo::Bar.foo
+      )) { int }
+  end
 end

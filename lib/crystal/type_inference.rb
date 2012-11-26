@@ -563,15 +563,11 @@ module Crystal
 
       target_type = nil
 
-      if @scope && @scope.container
-        target_type = @scope.container.types[name]
-      end
-
-      if !target_type && @scope
+      if @scope
         target_type = @scope.types[name]
       end
 
-      if !target_type
+      unless target_type
         @types.reverse_each do |type|
           if !type.is_a?(Module) && type.name == name
             target_type = type

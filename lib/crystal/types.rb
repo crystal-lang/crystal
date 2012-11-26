@@ -6,6 +6,10 @@ module Crystal
       @metaclass ||= Metaclass.new(self)
     end
 
+    def instance_type
+      self
+    end
+
     def eql?(other)
       self == other
     end
@@ -413,10 +417,6 @@ module Crystal
       type.llvm_name
     end
 
-    def instance_type
-      self
-    end
-
     def clone(*)
       self
     end
@@ -475,10 +475,6 @@ module Crystal
 
     def ==(other)
       other.is_a?(StructType) && other.name == name && other.vars == vars
-    end
-
-    def instance_type
-      self
     end
 
     def clone(*)
