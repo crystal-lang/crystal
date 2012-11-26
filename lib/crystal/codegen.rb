@@ -55,7 +55,7 @@ module Crystal
     llvm_mod = build node, mod
 
     engine = LLVM::JITCompiler.new(llvm_mod)
-    engine.run_function llvm_mod.functions["crystal_main"]
+    engine.run_function llvm_mod.functions["crystal_main"], 0, nil
   end
 
   def build(node, mod)
@@ -85,7 +85,14 @@ module Crystal
       @mod = mod
       @return_type = return_type
       @llvm_mod = LLVM::Module.new("Crystal")
-      @fun = @llvm_mod.functions.add("crystal_main", [], return_type.llvm_type)
+      @fun = @llvm_mod.functions.add("crystal_main", [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], return_type.llvm_type)
+
+      @argc = @fun.params[0]
+      @argc.name = 'argc'
+
+      @argv = @fun.params[1]
+      @argv.name = 'argv'
+
       @builder = LLVM::Builder.new
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"

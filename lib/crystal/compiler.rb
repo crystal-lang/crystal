@@ -128,10 +128,13 @@ module Crystal
     end
 
     def write_main(mod)
-      mod.functions.add('main', [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], LLVM::Int) do |main|
+      mod.functions.add('main', [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], LLVM::Int) do |main, argc, argv|
+        main.params[0].name = 'argc'
+        main.params[1].name = 'argv'
+
         entry = main.basic_blocks.append('entry')
         entry.build do |b|
-          b.call mod.functions['crystal_main']
+          b.call mod.functions['crystal_main'], argc, argv
           b.ret LLVM::Int(0)
         end
       end
