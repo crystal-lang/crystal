@@ -44,8 +44,8 @@ module Crystal
         end
       end.parse!
 
-      if !@options[:output_filename] && ARGV.length > 0
-        @options[:output_filename] = File.basename(ARGV[0], File.extname(ARGV[0]))
+      if !@options[:output_filename] && ::ARGV.length > 0
+        @options[:output_filename] = File.basename(::ARGV[0], File.extname(::ARGV[0]))
       end
 
       o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''

@@ -388,5 +388,15 @@ module Crystal
       @name = other.name
     end
   end
+
+  class ARGV < Primitive
+    def initialize(type)
+      @type = type
+    end
+
+    def clone_from(other)
+      @type = other.type
+    end
+  end
 end
 

@@ -27,6 +27,10 @@ module Crystal
       @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4, self
       @types["Pointer"] = PrimitiveType.new "Pointer", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE, self
 
+      string_array = array.clone
+      string_array.element_type = @types["String"]
+      @types["ARGV"] = Crystal::ARGV.new string_array
+
       @symbols = Set.new
 
       define_primitives

@@ -116,4 +116,8 @@ describe 'Type inference: primitives' do
   it "types Float#to_f" do
     assert_type("1.5.to_f") { float }
   end
+
+  it "types ARGV" do
+    assert_type("ARGV") { ArrayType.of(string) }
+  end
 end

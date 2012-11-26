@@ -220,6 +220,10 @@ module Crystal
       element_type_var.type
     end
 
+    def element_type=(type)
+      element_type_var.type = type
+    end
+
     def ==(other)
       equal?(other) ||
         (other.is_a?(ArrayType) && vars == other.vars) ||
