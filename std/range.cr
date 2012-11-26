@@ -9,7 +9,7 @@ class Range
 
   def each
     current = @begin
-    while current != @end
+    while current < @end
       yield current
       current = current.succ
     end
