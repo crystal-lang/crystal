@@ -489,6 +489,10 @@ module Crystal
       @builder.store LLVM::Int(length), gep(array, 0, 0)
       @builder.store LLVM::Int(length), gep(array, 0, 1)
 
+      # Pointer to the second element
+      argv_ptr = gep(@argv, 1)
+      @builder.store argv_ptr, gep(array, 0, 2)
+
       @last = array
     end
 
