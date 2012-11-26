@@ -10,4 +10,8 @@ class Numeric
   def abs
     self < 0 ? -self : self
   end
+
+  def <=>(other)
+    self - other
+  end
 end
