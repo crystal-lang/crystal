@@ -251,6 +251,6 @@ describe Parser do
   it_parses "lib C; struct Foo; end end", LibDef.new('C', nil, [StructDef.new('Foo')])
   it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.const), FunDefArg.new('y', 'Float'.const)])])
 
-  it_parses "(1 .. 2)", Call.new('Range'.const, 'new', [1.int, 2.int, false.bool])
-  it_parses "(1 ... 2)", Call.new('Range'.const, 'new', [1.int, 2.int, true.bool])
+  it_parses "1 .. 2", Call.new('Range'.const, 'new', [1.int, 2.int, false.bool])
+  it_parses "1 ... 2", Call.new('Range'.const, 'new', [1.int, 2.int, true.bool])
 end

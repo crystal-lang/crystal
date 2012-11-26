@@ -119,16 +119,35 @@ module Crystal
     end
 
     def parse_question_colon
-      cond = parse_or
+      cond = parse_range
       while @token.type == :'?'
         next_token_skip_space_or_newline
-        true_val = parse_or
+        true_val = parse_range
         check :':'
         next_token_skip_space_or_newline
-        false_val = parse_or
+        false_val = parse_range
         cond = If.new(cond, true_val, false_val)
       end
       cond
+    end
+
+    def parse_range
+      location = @token.location
+      exp = parse_or
+      while true
+        exp.location = location
+
+        case @token.type
+        when :'..'
+          next_token_skip_space_or_newline
+          exp = Call.new(Const.new('Range'), 'new', [exp, parse_or, BoolLiteral.new(false)])
+        when :'...'
+          next_token_skip_space_or_newline
+          exp = Call.new(Const.new('Range'), 'new', [exp, parse_or, BoolLiteral.new(true)])
+        else
+          return exp
+        end
+      end
     end
 
     def self.parse_operator(name, next_operator, *operators)
@@ -290,15 +309,6 @@ module Crystal
       when :'('
         next_token_skip_space_or_newline
         exp = parse_expression
-
-        case @token.type
-        when :'..'
-          next_token_skip_space_or_newline
-          exp = Call.new(Const.new('Range'), 'new', [exp, parse_expression, BoolLiteral.new(false)])
-        when :'...'
-          next_token_skip_space_or_newline
-          exp = Call.new(Const.new('Range'), 'new', [exp, parse_expression, BoolLiteral.new(true)])
-        end
 
         check :')'
         next_token_skip_space
