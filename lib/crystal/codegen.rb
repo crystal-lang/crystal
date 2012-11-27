@@ -17,7 +17,7 @@ module Crystal
     end
 
     def self.mangled_name(self_type, owner, name, return_type, arg_types)
-      str = ''
+      str = '*'
       if self_type
         if self_type.is_a?(Metaclass)
           str << self_type.type.name
