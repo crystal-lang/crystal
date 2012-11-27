@@ -4,6 +4,6 @@ lib C
   fun puts(str : String) : Int
 end
 
-def puts(obj)
+def puts(obj = "")
   C.puts obj.to_s
 end
