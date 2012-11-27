@@ -1,5 +1,5 @@
 class Numeric
-  def step(limit, step)
+  def step(limit, step = 1)
     x = self
     while x <= limit
       yield x
