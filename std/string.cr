@@ -19,6 +19,10 @@ class String
     end
   end
 
+  def inspect
+    "\"#{to_s}\""
+  end
+
   def to_s
     self
   end
