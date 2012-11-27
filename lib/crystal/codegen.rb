@@ -189,6 +189,10 @@ module Crystal
       @builder.ret @last
     end
 
+    def visit_lib_def(node)
+      false
+    end
+
     def visit_const(node)
       const = @type
       parent = nil

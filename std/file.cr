@@ -11,10 +11,6 @@ class File
     @file = C.fopen filename, mode
   end
 
-  def ptr
-    @file
-  end
-
   def print(string)
     C.fputs string, @file
   end
