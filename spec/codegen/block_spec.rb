@@ -156,4 +156,14 @@ describe 'Code gen: block' do
       a = foo { 1 }
     )).to_i.should eq(1)
   end
+
+  it "assigns yield to argument" do
+    run(%q(
+      def foo(x)
+        x = 1
+      end
+
+      foo(1) { 1 }
+      )).to_i.should eq(1)
+  end
 end
