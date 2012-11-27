@@ -712,6 +712,12 @@ module Crystal
       true
     end
 
+    def end_visit_return(node)
+      node.exps.each do |exp|
+        @call[3].body.bind_to exp
+      end
+    end
+
     def lookup_var(name)
       var = @vars[name]
       unless var
