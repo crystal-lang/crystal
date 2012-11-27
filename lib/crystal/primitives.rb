@@ -32,12 +32,6 @@ module Crystal
     end
 
     def define_bool_primitives
-      no_args_primitive(bool, 'to_s', string) do |b, f, llvm_mod|
-        false_string = b.global_string_pointer("false")
-        true_string = b.global_string_pointer("true")
-        b.select f.params[0], true_string, false_string
-      end
-
       singleton(bool, :'!@', {}, bool) { |b, f| b.not(f.params[0]) }
       singleton(bool, :'&&', {'other' => bool}, bool) { |b, f| b.and(f.params[0], f.params[1]) }
       singleton(bool, :'||', {'other' => bool}, bool) { |b, f| b.or(f.params[0], f.params[1]) }
