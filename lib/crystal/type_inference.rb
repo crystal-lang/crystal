@@ -140,10 +140,31 @@ module Crystal
 
       args = {}
       args['self'] = Var.new('self', scope) if scope.is_a?(Type)
-      typed_def.args.each_with_index do |arg, index|
+
+      0.upto(self.args.length - 1).each do |index|
+        arg = typed_def.args[index]
         type = arg_types[args_start_index + index]
         args[arg.name] = Var.new(arg.name, type)
-        typed_def.args[index].type = type
+        arg.type = type
+      end
+
+      if self.args.length < untyped_def.args.length
+        typed_def.args = typed_def.args[0 ... self.args.length]
+      end
+
+      # Declare name = default_value for each default value that wasn't given
+      self.args.length.upto(untyped_def.args.length - 1).each do |index|
+        arg = untyped_def.args[index]
+        assign = Assign.new(Var.new(arg.name), arg.default_value)
+        if typed_def.body
+          if typed_def.body.is_a?(Expressions)
+            typed_def.body.expressions.insert 0, assign
+          else
+            typed_def.body = Expressions.new [assign, typed_def.body]
+          end
+        else
+          typed_def.body = assign
+        end
       end
 
       [typed_def, args]
@@ -198,9 +219,10 @@ module Crystal
 
       if scope.type.defs.has_key?('initialize')
         var = Var.new('x')
-        new_args = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
+        new_vars = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
+        new_args = args.each_with_index.map { |x, i| Arg.new("arg#{i}") }
 
-        init = Call.new(var, 'initialize', new_args)
+        init = Call.new(var, 'initialize', new_vars)
         init.location = location
         init.name_column_number = name_column_number
         init.name_length = 3
@@ -228,7 +250,11 @@ module Crystal
     end
 
     def check_args_match(untyped_def)
-      return if untyped_def.args.length == args.length
+      required_args_count = untyped_def.args.count { |arg| !arg.default_value }
+      all_args_count = untyped_def.args.length
+      call_args_count = args.length
+
+      return if required_args_count <= call_args_count && call_args_count <= all_args_count
 
       raise "wrong number of arguments for '#{name}' (#{args.length} for #{untyped_def.args.length})"
     end

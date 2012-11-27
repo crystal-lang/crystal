@@ -447,7 +447,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      default_value.accept self if default_value
+      default_value.accept visitor if default_value
     end
 
     def ==(other)

@@ -213,13 +213,13 @@ module Crystal
     end
 
     def define_array_primitives
-      array.metaclass.defs['new'] = Def.new('new', [Var.new('size'), Var.new('obj')], ArrayNew.new)
+      array.metaclass.defs['new'] = Def.new('new', [Arg.new('size'), Arg.new('obj')], ArrayNew.new)
 
       array.defs['length'] = Def.new('length', [], ArrayLength.new)
-      array.defs['push'] = Def.new('push', [Var.new('value')], ArrayPush.new)
-      array.defs[:<<] = Def.new(:<<, [Var.new('value')], ArrayPush.new)
-      array.defs[:[]=] = Def.new(:[]=, [Var.new('index'), Var.new('value')], ArraySet.new)
-      array.defs[:[]] = Def.new(:[], [Var.new('index')], ArrayGet.new)
+      array.defs['push'] = Def.new('push', [Arg.new('value')], ArrayPush.new)
+      array.defs[:<<] = Def.new(:<<, [Arg.new('value')], ArrayPush.new)
+      array.defs[:[]=] = Def.new(:[]=, [Arg.new('index'), Arg.new('value')], ArraySet.new)
+      array.defs[:[]] = Def.new(:[], [Arg.new('index')], ArrayGet.new)
     end
 
     def define_string_primitives
@@ -242,7 +242,7 @@ module Crystal
     end
 
     def primitive(owner, name, arg_names)
-      p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Var.new(x) })
+      p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Arg.new(x) })
       p.owner = owner
       yield p
     end
@@ -252,13 +252,13 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.defs[name] = FrozenDef.new(name, args.keys.map { |x| Var.new(x) })
+      p = owner.defs[name] = FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
       p.owner = owner
       p.overload(args.values, return_type, &block)
     end
 
     def external(name, args, return_type)
-      args = args.map { |name, type| Var.new(name, type) }
+      args = args.map { |name, type| arg = Arg.new(name); arg.type = type; arg }
 
       instance = defs[name] = External.new(name, args)
       instance.body = Expressions.new

@@ -186,6 +186,7 @@ module Crystal
         @str << ' = '
         node.default_value.accept self
       end
+      false
     end
 
     def visit_const(node)

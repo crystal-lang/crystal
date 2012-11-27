@@ -191,4 +191,32 @@ describe 'Code gen: def' do
       elems[0].baz [1]
     ))
   end
+
+  it "codegens with and witout default arguments" do
+    run(%Q(
+      def foo(x = 1)
+        x + 1
+      end
+
+      foo(2) + foo
+      )).to_i.should eq(5)
+  end
+
+  it "codegens with interesting default argument" do
+    run(%Q(
+      class Foo
+        def foo(x = self.bar)
+          x + 1
+        end
+
+        def bar
+          1
+        end
+      end
+
+      f = Foo.new
+
+      f.foo(2) + f.foo
+      )).to_i.should eq(5)
+  end
 end

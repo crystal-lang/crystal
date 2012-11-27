@@ -38,7 +38,7 @@ describe "ast nodes" do
   end
 
   it "should to_s Def with args" do
-    Def.new("foo", ['var'.var], [1.int]).to_s.should eq("def foo(var)\n  1\nend")
+    Def.new("foo", ['var'.arg], [1.int]).to_s.should eq("def foo(var)\n  1\nend")
   end
 
   it "should to_s Def with many expressions" do

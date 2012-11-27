@@ -112,4 +112,8 @@ describe 'Type inference: def' do
   it "defines class method with self" do
     assert_type("class Int; def self.foo; 2.5; end; end; Int.foo") { float }
   end
+
+  it "calls with default argument" do
+    assert_type("def foo(x = 1); x; end; foo") { int }
+  end
 end

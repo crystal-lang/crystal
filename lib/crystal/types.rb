@@ -380,7 +380,7 @@ module Crystal
     end
 
     def fun(name, args, return_type)
-      args = args.map { |name, type| Var.new(name, type) }
+      args = args.map { |name, type| arg = Arg.new(name); arg.type = type; arg }
 
       instance = @defs[name] = External.new(name, args)
       instance.body = Expressions.new
@@ -440,7 +440,7 @@ module Crystal
       @vars = Hash[vars.map { |var| [var.name, var] }]
       @defs = {}
       @vars.keys.each do |var_name|
-        @defs["#{var_name}="] = Def.new("#{var_name}=", [Var.new('value')], StructSet.new(var_name))
+        @defs["#{var_name}="] = Def.new("#{var_name}=", [Arg.new('value')], StructSet.new(var_name))
         @defs[var_name] = Def.new(var_name, [], StructGet.new(var_name))
       end
     end
