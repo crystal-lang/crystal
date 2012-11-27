@@ -1,10 +1,18 @@
 class Numeric
   def step(limit, step = 1)
     x = self
-    while x <= limit
-      yield x
-      x += step
+    if step > 0 && self < limit
+      while x <= limit
+        yield x
+        x += step
+      end
+    elsif step < 0 && self > limit
+      while x >= limit
+        yield x
+        x += step
+      end
     end
+    self
   end
 
   def abs
