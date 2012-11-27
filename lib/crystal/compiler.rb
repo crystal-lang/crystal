@@ -57,7 +57,10 @@ module Crystal
       begin
         source = ARGF.read
 
-        node = parse source
+        parser = Parser.new(source)
+        parser.filename = ARGF.filename unless ARGF.filename == '-'
+
+        node = parser.parse
         mod = infer_type node, @options
 
         graph node, mod, @options[:output_filename] if @options[:graph] || !Crystal::UNIFY
