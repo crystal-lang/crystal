@@ -10,10 +10,11 @@ module Crystal
     def initialize(str, def_vars = nil)
       super(str)
       @def_vars = def_vars || [Set.new]
-      next_token_skip_statement_end
     end
 
     def parse
+      next_token_skip_statement_end
+
       expressions = parse_expressions
 
       check :EOF
@@ -117,7 +118,9 @@ module Crystal
           next_token_skip_space_or_newline
 
           value = parse_op_assign
-          atomic = Assign.new(atomic, Call.new(atomic, method, [value], nil, method_column_number))
+          call = Call.new(atomic, method, [value], nil, method_column_number)
+          call.location = location
+          atomic = Assign.new(atomic, call)
         else
           break
         end

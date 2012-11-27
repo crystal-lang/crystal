@@ -6,14 +6,24 @@ module Crystal
   end
 
   class SyntaxException < Exception
-    def initialize(message, line_number, column_number)
+    def initialize(message, line_number, column_number, filename)
       @message = message
       @line_number = line_number
       @column_number = column_number
+      @filename = filename
     end
 
     def to_s(source = nil)
-      str = "Syntax error in line #{@line_number}: #{@message}"
+      if @filename
+        str = "Syntax error in #{@filename}:#{@line_number}: #{@message}"
+      else
+        str = "Syntax error in line #{@line_number}: #{@message}"
+      end
+
+      if @filename
+        source = File.read(@filename)
+      end
+
       if source
         lines = source.lines.to_a
         str << "\n\n"
@@ -35,32 +45,43 @@ module Crystal
       if node.respond_to?(:name)
         length = node.respond_to?(:name_length) ? node.name_length : node.name.length
         if node.respond_to?(:name_column_number)
-          new message, node.line_number, node.name_column_number, length, inner
+          new message, node.line_number, node.name_column_number, node.filename, length, inner
         else
-          new message, node.line_number, node.column_number, length, inner
+          new message, node.line_number, node.column_number, node.filename, length, inner
         end
       else
-        new message, node.line_number, node.column_number, nil, inner
+        new message, node.line_number, node.column_number, node.filename, nil, inner
       end
     end
 
-    def initialize(message, line, column, length = nil, inner = nil)
+    def initialize(message, line, column, filename, length = nil, inner = nil)
       @message = message
       @line = line
       @column = column
+      @filename = filename
       @length = length
       @inner = inner
     end
 
     def to_s(source = nil)
-      lines = source ? source.lines.to_a : nil
       str = 'Error '
-      append_to_s(str, lines)
+      append_to_s(str, source)
       str
     end
 
-    def append_to_s(str, lines)
-      str << "in line #{@line}: #{@message}"
+    def append_to_s(str, source)
+      if @filename
+        lines = File.readlines @filename
+      else
+        lines = source ? source.lines.to_a : nil
+      end
+
+      if @filename
+        str << "in #{@filename}:#{@line}: #{@message}"
+      else
+        str << "in line #{@line}: #{@message}"
+      end
+
       if lines && @line
         line = lines[@line - 1]
         if line
@@ -77,7 +98,7 @@ module Crystal
       str << "\n"
       if inner
         str << "\n"
-        inner.append_to_s(str, lines)
+        inner.append_to_s(str, source)
       end
     end
   end

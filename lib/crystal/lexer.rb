@@ -9,10 +9,12 @@ module Crystal
       @column_number = 1
     end
 
+    def filename=(filename)
+      @filename = filename
+    end
+
     def next_token
-      @token.value = nil
-      @token.line_number = @line_number
-      @token.column_number = @column_number
+      reset_token
 
       if eos?
         @token.type = :EOF
@@ -88,9 +90,7 @@ module Crystal
     end
 
     def next_string_token
-      @token.value = nil
-      @token.line_number = @line_number
-      @token.column_number = @column_number
+      reset_token
 
       if eos?
         @token.type = :EOF
@@ -126,9 +126,7 @@ module Crystal
     end
 
     def next_string_array_token
-      @token.value = nil
-      @token.line_number = @line_number
-      @token.column_number = @column_number
+      reset_token
 
       if eos?
         @token.type = :EOF
@@ -158,6 +156,13 @@ module Crystal
         @column_number += match.length
       end
       match
+    end
+
+    def reset_token
+      @token.value = nil
+      @token.line_number = @line_number
+      @token.column_number = @column_number
+      @token.filename = @filename
     end
 
     def next_token_skip_space
@@ -192,7 +197,7 @@ module Crystal
     end
 
     def raise(message)
-      Kernel::raise Crystal::SyntaxException.new(message, @line_number, @token.column_number)
+      Kernel::raise Crystal::SyntaxException.new(message, @line_number, @token.column_number, @filename)
     end
   end
 end

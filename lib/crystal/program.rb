@@ -96,7 +96,9 @@ module Crystal
     end
 
     def load_std(file)
-      node = Parser.parse(File.read(file))
+      parser = Parser.new File.read(file)
+      parser.filename = file
+      node = parser.parse
       node.accept TypeVisitor.new(self)
     end
 

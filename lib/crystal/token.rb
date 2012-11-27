@@ -4,9 +4,10 @@ module Crystal
     attr_accessor :value
     attr_accessor :line_number
     attr_accessor :column_number
+    attr_accessor :filename
 
     def location
-      [line_number, column_number]
+      [line_number, column_number, filename]
     end
 
     def keyword?(keyword)
