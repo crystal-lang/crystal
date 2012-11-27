@@ -7,6 +7,13 @@ module Enumerable
     end
   end
 
+  def each_with_object(obj)
+    each do |elem|
+      yield elem, obj
+    end
+    obj
+  end
+
   def map
     ary = []
     each { |e| ary << yield e }
