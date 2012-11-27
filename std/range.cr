@@ -17,7 +17,7 @@ class Range
     self
   end
 
-  def step(n)
+  def step(n = 1)
     current = @begin
     while current < @end
       yield current
