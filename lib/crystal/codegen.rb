@@ -78,6 +78,32 @@ module Crystal
     visitor.llvm_mod
   end
 
+  class CrystalBuilder
+    def initialize(builder)
+      @builder = builder
+    end
+
+    def ret(*args)
+      return if @end
+      @builder.ret *args
+      @end = true
+    end
+
+    def position_at_end(*args)
+      @builder.position_at_end *args
+      @end = false
+    end
+
+    def insert_block(*args)
+      @builder.insert_block *args
+    end
+
+    def method_missing(name, *args)
+      return if @end
+      @builder.send name, *args
+    end
+  end
+
   class CodeGenVisitor < Visitor
     attr_reader :llvm_mod
 
@@ -93,7 +119,7 @@ module Crystal
       @argv = @fun.params[1]
       @argv.name = 'argv'
 
-      @builder = LLVM::Builder.new
+      @builder = CrystalBuilder.new LLVM::Builder.new
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
 
@@ -149,6 +175,18 @@ module Crystal
 
     def visit_symbol_literal(node)
       @last = LLVM::Int32.from_i(@symbols[node.value])
+    end
+
+    def visit_expressions(node)
+      node.expressions.each do |exp|
+        exp.accept self
+        break if exp.is_a?(Return)
+      end
+      false
+    end
+
+    def end_visit_return(node)
+      @builder.ret @last
     end
 
     def visit_const(node)
