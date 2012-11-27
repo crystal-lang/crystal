@@ -74,32 +74,35 @@ describe Parser do
   it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int))
 
   it_parses "def foo\n1\nend", Def.new("foo", [], [1.int])
-  it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".var], [1.int])
+  it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], [1.int])
   it_parses "def foo ; 1 ; end", Def.new("foo", [], [1.int])
   it_parses "def foo; end", Def.new("foo", [], nil)
-  it_parses "def foo(var); end", Def.new("foo", ["var".var], nil)
-  it_parses "def foo(\nvar); end", Def.new("foo", ["var".var], nil)
-  it_parses "def foo(\nvar\n); end", Def.new("foo", ["var".var], nil)
-  it_parses "def foo(var1, var2); end", Def.new("foo", ["var1".var, "var2".var], nil)
-  it_parses "def foo(\nvar1\n,\nvar2\n)\n end", Def.new("foo", ["var1".var, "var2".var], nil)
-  it_parses "def foo var; end", Def.new("foo", ["var".var], nil)
-  it_parses "def foo var\n end", Def.new("foo", ["var".var], nil)
-  it_parses "def foo var1, var2\n end", Def.new("foo", ["var1".var, "var2".var], nil)
-  it_parses "def foo var1,\nvar2\n end", Def.new("foo", ["var1".var, "var2".var], nil)
+  it_parses "def foo(var); end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo(\nvar); end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo(\nvar\n); end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo(var1, var2); end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo(\nvar1\n,\nvar2\n)\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo var; end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo var\n end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo var1, var2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo var1,\nvar2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
   it_parses "def foo; 1; 2; end", Def.new("foo", [], [1.int, 2.int])
-  it_parses "def foo=(value); end", Def.new("foo=", ["value".var], [])
-  it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".var], "foo".call(Call.new("n".var, :-, [1.int])))
+  it_parses "def foo=(value); end", Def.new("foo=", ["value".arg], [])
+  it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call(Call.new("n".var, :-, [1.int])))
 
   it_parses "def self.foo\n1\nend", Def.new("foo", [], [1.int], "self".var)
   it_parses "def Foo.foo\n1\nend", Def.new("foo", [], [1.int], "Foo".const)
   it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", [], [1.int], Const.new("Foo", "Bar"))
 
   it_parses "def foo; a; end", Def.new('foo', [], ["a".call])
-  it_parses "def foo(a); a; end", Def.new('foo', ['a'.var], ["a".var])
+  it_parses "def foo(a); a; end", Def.new('foo', ['a'.arg], ["a".var])
   it_parses "def foo; a = 1; a; end", Def.new('foo', [], [Assign.new('a'.var, 1.int), 'a'.var])
   it_parses "def foo; a = 1; a {}; end", Def.new('foo', [], [Assign.new('a'.var, 1.int), Call.new(nil, "a", [], Block.new)])
   it_parses "def foo; a = 1; x { a }; end", Def.new('foo', [], [Assign.new('a'.var, 1.int), Call.new(nil, "x", [], Block.new([], ['a'.var]))])
   it_parses "def foo; x { |a| a }; end", Def.new('foo', [], [Call.new(nil, "x", [], Block.new(['a'.var], ['a'.var]))])
+
+  it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int)], nil)
+  it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int)], nil)
 
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call
@@ -199,14 +202,14 @@ describe Parser do
 
   it_parses "Int[]", Call.new("Int".const, :[])
   it_parses "def []; end", Def.new(:[], [], nil)
-  it_parses "def []=(value); end", Def.new(:[]=, ["value".var], nil)
+  it_parses "def []=(value); end", Def.new(:[]=, ["value".arg], nil)
   it_parses "def self.[]; end", Def.new(:[], [], nil, "self".var)
 
   it_parses "Int[8]", Call.new("Int".const, :[], [8.int])
   it_parses "Int[8, 4]", Call.new("Int".const, :[], [8.int, 4.int])
   it_parses "Int[8, 4,]", Call.new("Int".const, :[], [8.int, 4.int])
 
-  it_parses "def [](x); end", Def.new(:[], ["x".var], nil)
+  it_parses "def [](x); end", Def.new(:[], ["x".arg], nil)
 
   it_parses "foo[0] = 1", Call.new("foo".call, :[]=, [0.int, 1.int])
 

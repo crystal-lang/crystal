@@ -662,8 +662,16 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :')'
           check_ident
-          args << Var.new(@token.value)
+          arg_name = @token.value
+
           next_token_skip_space_or_newline
+          if @token.type == :'='
+            next_token_skip_space_or_newline
+            default_value = parse_expression
+          end
+
+          args << Arg.new(arg_name, default_value)
+
           if @token.type == :','
             next_token_skip_space_or_newline
           end
@@ -672,8 +680,16 @@ module Crystal
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
           check_ident
-          args << Var.new(@token.value)
+          arg_name = @token.value
+
           next_token_skip_space
+          if @token.type == :'='
+            next_token_skip_space_or_newline
+            default_value = parse_expression
+          end
+
+          args << Arg.new(arg_name, default_value)
+
           if @token.type == :','
             next_token_skip_space_or_newline
           end

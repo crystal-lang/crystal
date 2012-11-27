@@ -417,7 +417,7 @@ module Crystal
     end
   end
 
-  # A local variable or def or block argument.
+  # A local variable or block argument.
   class Var < ASTNode
     attr_accessor :name
 
@@ -432,6 +432,31 @@ module Crystal
 
     def clone_from(other, &block)
       @name = other.name
+    end
+  end
+
+  # A def argument.
+  class Arg < ASTNode
+    attr_accessor :name
+    attr_accessor :default_value
+
+    def initialize(name, default_value = nil)
+      @name = name
+      @default_value = default_value
+      @default_value.parent = self if @default_value
+    end
+
+    def accept_children(visitor)
+      default_value.accept self if default_value
+    end
+
+    def ==(other)
+      other.is_a?(Arg) && other.name == name && other.default_value == default_value
+    end
+
+    def clone_from(other, &block)
+      @name = other.name
+      @default_value = other.default_value
     end
   end
 

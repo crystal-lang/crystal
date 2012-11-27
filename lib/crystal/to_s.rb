@@ -176,6 +176,18 @@ module Crystal
       end
     end
 
+    def visit_arg(node)
+      if node.name
+        @str << node.name
+      else
+        @str << '?'
+      end
+      if node.default_value
+        @str << ' = '
+        node.default_value.accept self
+      end
+    end
+
     def visit_const(node)
       node.names.each_with_index do |name, i|
         @str << '::' if i > 0

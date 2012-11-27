@@ -78,6 +78,10 @@ class String
     Crystal::Var.new self
   end
 
+  def arg
+    Crystal::Arg.new self
+  end
+
   def call(*args)
     Crystal::Call.new nil, self, args
   end
