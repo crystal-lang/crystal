@@ -14,6 +14,13 @@ module Enumerable
     obj
   end
 
+  def inject(memo)
+    each do |elem|
+      memo = yield memo, elem
+    end
+    memo
+  end
+
   def map
     ary = []
     each { |e| ary << yield e }
