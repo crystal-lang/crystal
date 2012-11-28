@@ -23,15 +23,11 @@ def mandelconverge(real, imag)
 end
 
 def mandelhelp(xmin, xmax, xstep, ymin, ymax, ystep)
-  y = ymin
-  while y <= ymax
-    x = xmin
-    while x <= xmax
+  ymin.step(ymax, ystep) do |y|
+    xmin.step(xmax, xstep) do |x|
       print_density mandelconverge(x, y)
-      x += xstep
     end
-    C.putchar '\n'
-    y += ystep
+    puts
   end
 end
 

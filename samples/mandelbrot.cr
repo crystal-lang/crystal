@@ -27,7 +27,7 @@ def mandelhelp(xmin, xmax, xstep, ymin, ymax, ystep)
     xmin.step(xmax, xstep) do |x|
       print_density mandelconverge(x, y)
     end
-    C.putchar '\n'
+    puts
   end
 end
 
