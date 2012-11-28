@@ -563,9 +563,9 @@ module Crystal
       if node.block
         @block_context << { block: node.block, vars: @vars, type: @type }
         @vars = {}
-        @type = owner
 
         if owner && owner.passed_as_self?
+          @type = owner
           args_base_index = 1
           @vars['self'] = { ptr: call_args[0], type: owner, is_arg: true }
         else

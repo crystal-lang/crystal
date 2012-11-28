@@ -166,4 +166,14 @@ describe 'Code gen: block' do
       foo(1) { 1 }
       )).to_i.should eq(1)
   end
+
+  it "can use global constant" do
+    run(%q(
+      FOO = 1
+      def foo
+        FOO
+      end
+      foo { }
+    )).to_i.should eq(1)
+  end
 end
