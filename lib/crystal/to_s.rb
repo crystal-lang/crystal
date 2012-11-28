@@ -189,7 +189,7 @@ module Crystal
       false
     end
 
-    def visit_const(node)
+    def visit_ident(node)
       node.names.each_with_index do |name, i|
         @str << '::' if i > 0
         @str << name

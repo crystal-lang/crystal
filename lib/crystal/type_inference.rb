@@ -396,7 +396,7 @@ module Crystal
         if node.receiver.is_a?(Var) && node.receiver.name == 'self'
           target_type = current_type.metaclass
         else
-          target_type = find_const_type(node.receiver).metaclass
+          target_type = find_ident_type(node.receiver).metaclass
         end
       else
         target_type = current_type
@@ -407,7 +407,7 @@ module Crystal
 
     def visit_class_def(node)
       parent = if node.superclass
-                 find_const_type node.superclass
+                 find_ident_type node.superclass
                else
                  mod.object
                end
@@ -528,7 +528,7 @@ module Crystal
     end
 
     def visit_assign(node)
-      if node.target.is_a?(Const)
+      if node.target.is_a?(Ident)
         type = current_type.types[node.target.names.first]
         if type
           node.raise "already initialized constant #{node.target}"
@@ -545,7 +545,7 @@ module Crystal
     end
 
     def end_visit_assign(node)
-      return if node.target.is_a?(Const)
+      return if node.target.is_a?(Ident)
 
       node.bind_to node.value
 
@@ -575,8 +575,8 @@ module Crystal
       node.bind_to node.else if node.else
     end
 
-    def visit_const(node)
-      type = find_const_type(node)
+    def visit_ident(node)
+      type = find_ident_type(node)
       if type.is_a?(ASTNode)
         node.bind_to(type)
       else
@@ -584,7 +584,7 @@ module Crystal
       end
     end
 
-    def find_const_type(node)
+    def find_ident_type(node)
       name = node.names[0]
 
       target_type = nil

@@ -88,7 +88,7 @@ module Crystal
           else
             break unless can_be_assigned?(atomic)
 
-            if atomic.is_a?(Const) && @def_vars.length > 1
+            if atomic.is_a?(Ident) && @def_vars.length > 1
               raise "dynamic constant assignment"
             end
 
@@ -103,7 +103,7 @@ module Crystal
         when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
           break unless can_be_assigned?(atomic)
 
-          if atomic.is_a?(Const)
+          if atomic.is_a?(Ident)
             raise "can't reassign to constant"
           end
 
@@ -151,10 +151,10 @@ module Crystal
         case @token.type
         when :'..'
           next_token_skip_space_or_newline
-          exp = Call.new(Const.new('Range'), 'new', [exp, parse_or, BoolLiteral.new(false)])
+          exp = Call.new(Ident.new('Range'), 'new', [exp, parse_or, BoolLiteral.new(false)])
         when :'...'
           next_token_skip_space_or_newline
-          exp = Call.new(Const.new('Range'), 'new', [exp, parse_or, BoolLiteral.new(true)])
+          exp = Call.new(Ident.new('Range'), 'new', [exp, parse_or, BoolLiteral.new(true)])
         else
           return exp
         end
@@ -429,7 +429,7 @@ module Crystal
         next_token
       end
 
-      const = Const.new *names
+      const = Ident.new *names
       const.location = location
       const
     end
@@ -1104,7 +1104,7 @@ module Crystal
     end
 
     def can_be_assigned?(node)
-      node.is_a?(Var) || node.is_a?(InstanceVar) || node.is_a?(Const) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
+      node.is_a?(Var) || node.is_a?(InstanceVar) || node.is_a?(Ident) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
   end
 

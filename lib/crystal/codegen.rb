@@ -193,7 +193,7 @@ module Crystal
       false
     end
 
-    def visit_const(node)
+    def visit_ident(node)
       const = @type
       parent = nil
       node.names.each do |name|
@@ -227,7 +227,7 @@ module Crystal
     end
 
     def visit_assign(node)
-      if node.target.is_a?(Const)
+      if node.target.is_a?(Ident)
         return false
       end
 

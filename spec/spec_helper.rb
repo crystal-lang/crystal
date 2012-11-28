@@ -86,8 +86,8 @@ class String
     Crystal::Call.new nil, self, args
   end
 
-  def const
-    Crystal::Const.new self
+  def ident
+    Crystal::Ident.new self
   end
 
   def instance_var
@@ -100,6 +100,10 @@ class String
 end
 
 class Array
+  def ident
+    Ident.new *self
+  end
+
   def array
     Crystal::ArrayLiteral.new self
   end

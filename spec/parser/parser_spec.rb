@@ -91,8 +91,8 @@ describe Parser do
   it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call(Call.new("n".var, :-, [1.int])))
 
   it_parses "def self.foo\n1\nend", Def.new("foo", [], [1.int], "self".var)
-  it_parses "def Foo.foo\n1\nend", Def.new("foo", [], [1.int], "Foo".const)
-  it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", [], [1.int], Const.new("Foo", "Bar"))
+  it_parses "def Foo.foo\n1\nend", Def.new("foo", [], [1.int], "Foo".ident)
+  it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", [], [1.int], ['Foo', 'Bar'].ident)
 
   it_parses "def foo; a; end", Def.new('foo', [], ["a".call])
   it_parses "def foo(a); a; end", Def.new('foo', ['a'.arg], ["a".var])
@@ -125,8 +125,8 @@ describe Parser do
   it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, :'!@')])
 
   it_parses "foo.bar.baz", Call.new(Call.new("foo".call, "bar"), "baz")
-  it_parses "f.x Foo.new", Call.new("f".call, "x", [Call.new("Foo".const, "new")])
-  it_parses "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".const, "new")])
+  it_parses "f.x Foo.new", Call.new("f".call, "x", [Call.new("Foo".ident, "new")])
+  it_parses "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".ident, "new")])
 
   [:'+', :'-', :'*', :'/', :'%', :'|', :'&', :'^', :'**', :<<, :>>].each do |op|
     it_parses "f.x #{op}= 2", Call.new("f".call, "x=", [Call.new(Call.new("f".call, "x"), op, [2.int])])
@@ -156,7 +156,7 @@ describe Parser do
   it_parses "if foo\n1\nelse\n2\nend", If.new("foo".call, 1.int, 2.int)
   it_parses "if foo; 1; elsif bar; 2; else 3; end", If.new("foo".call, 1.int, If.new("bar".call, 2.int, 3.int))
 
-  it_parses "include Foo", Include.new("Foo".const)
+  it_parses "include Foo", Include.new("Foo".ident)
 
   it_parses "unless foo; 1; end", If.new("foo".call.not, 1.int)
   it_parses "unless foo; 1; else; 2; end", If.new("foo".call.not, 1.int, 2.int)
@@ -164,7 +164,7 @@ describe Parser do
   it_parses "class Foo; end", ClassDef.new("Foo")
   it_parses "class Foo\nend", ClassDef.new("Foo")
   it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
-  it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".const)
+  it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
 
   it_parses "module Foo; end", ModuleDef.new("Foo")
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [], nil)])
@@ -198,16 +198,16 @@ describe Parser do
     it_parses "#{keyword} if true", If.new(true.bool, eval(keyword.capitalize).new)
   end
 
-  it_parses "Int", "Int".const
+  it_parses "Int", "Int".ident
 
-  it_parses "Int[]", Call.new("Int".const, :[])
+  it_parses "Int[]", Call.new("Int".ident, :[])
   it_parses "def []; end", Def.new(:[], [], nil)
   it_parses "def []=(value); end", Def.new(:[]=, ["value".arg], nil)
   it_parses "def self.[]; end", Def.new(:[], [], nil, "self".var)
 
-  it_parses "Int[8]", Call.new("Int".const, :[], [8.int])
-  it_parses "Int[8, 4]", Call.new("Int".const, :[], [8.int, 4.int])
-  it_parses "Int[8, 4,]", Call.new("Int".const, :[], [8.int, 4.int])
+  it_parses "Int[8]", Call.new("Int".ident, :[], [8.int])
+  it_parses "Int[8, 4]", Call.new("Int".ident, :[], [8.int, 4.int])
+  it_parses "Int[8, 4,]", Call.new("Int".ident, :[], [8.int, 4.int])
 
   it_parses "def [](x); end", Def.new(:[], ["x".arg], nil)
 
@@ -225,7 +225,7 @@ describe Parser do
 
   it_parses "def foo; end; if false; 1; else; 2; end", [Def.new('foo', []), If.new(false.bool, 1.int, 2.int)]
 
-  it_parses %Q(A.new("x", B.new("y"))), Call.new("A".const, "new", ["x".string, Call.new("B".const, "new", ["y".string])])
+  it_parses %Q(A.new("x", B.new("y"))), Call.new("A".ident, "new", ["x".string, Call.new("B".ident, "new", ["y".string])])
 
   it_parses "foo []", Call.new(nil, "foo", [[].array])
   it_parses "foo [1]", Call.new(nil, "foo", [[1.int].array])
@@ -241,23 +241,23 @@ describe Parser do
   it_parses %q("foo #{ bar}"), Call.new(StringLiteral.new("foo "), :+, [Call.new(Call.new(nil, "bar"), 'to_s')])
   it_parses %q("#{foo} bar"), Call.new(Call.new(Call.new(nil, "foo"), 'to_s'), :+, [StringLiteral.new(" bar")])
 
-  it_parses "Foo::Bar", Const.new('Foo', 'Bar')
+  it_parses "Foo::Bar", ['Foo', 'Bar'].ident
 
   it_parses "lib C\nend", LibDef.new('C')
   it_parses %Q(lib C("libc")\nend), LibDef.new('C', 'libc')
   it_parses "lib C\nfun getchar\nend", LibDef.new('C', nil, [FunDef.new('getchar')])
-  it_parses "lib C\nfun getchar : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [], 'Int'.const)])
-  it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.const), FunDefArg.new('b', 'Float'.const)])])
-  it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.const), FunDefArg.new('b', 'Float'.const)], 'Int'.const)])
-  it_parses "lib C; fun getchar(a : Int, b : Float) : Int; end", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.const), FunDefArg.new('b', 'Float'.const)], 'Int'.const)])
-  it_parses "lib C; type A : B; end", LibDef.new('C', nil, [TypeDef.new('A', 'B'.const)])
+  it_parses "lib C\nfun getchar : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [], 'Int'.ident)])
+  it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.ident), FunDefArg.new('b', 'Float'.ident)])])
+  it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.ident), FunDefArg.new('b', 'Float'.ident)], 'Int'.ident)])
+  it_parses "lib C; fun getchar(a : Int, b : Float) : Int; end", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.ident), FunDefArg.new('b', 'Float'.ident)], 'Int'.ident)])
+  it_parses "lib C; type A : B; end", LibDef.new('C', nil, [TypeDef.new('A', 'B'.ident)])
   it_parses "lib C; struct Foo; end end", LibDef.new('C', nil, [StructDef.new('Foo')])
-  it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.const), FunDefArg.new('y', 'Float'.const)])])
+  it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident), FunDefArg.new('y', 'Float'.ident)])])
 
-  it_parses "1 .. 2", Call.new('Range'.const, 'new', [1.int, 2.int, false.bool])
-  it_parses "1 ... 2", Call.new('Range'.const, 'new', [1.int, 2.int, true.bool])
+  it_parses "1 .. 2", Call.new('Range'.ident, 'new', [1.int, 2.int, false.bool])
+  it_parses "1 ... 2", Call.new('Range'.ident, 'new', [1.int, 2.int, true.bool])
 
-  it_parses "A = 1", Assign.new("A".const, 1.int)
+  it_parses "A = 1", Assign.new("A".ident, 1.int)
 
   it_parses "puts %w(one)", Call.new(nil, 'puts', [['one'.string].array])
 end

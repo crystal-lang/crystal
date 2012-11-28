@@ -461,8 +461,11 @@ module Crystal
     end
   end
 
-  # A Class name or constant name.
-  class Const < ASTNode
+  # A qualified identifier.
+  #
+  #     const [ '::' const ]*
+  #
+  class Ident < ASTNode
     attr_accessor :names
 
     def initialize(*names)
@@ -470,7 +473,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(Const) && other.names == names
+      other.is_a?(Ident) && other.names == names
     end
 
     def clone_from(other, &block)
