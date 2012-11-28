@@ -76,6 +76,20 @@ module Crystal
     def include(mod)
       @parents.insert 0, mod
     end
+
+    def lookup_type(names)
+      type = self
+      names.each do |name|
+        type = type.types[name]
+        break unless type
+      end
+
+      if type
+        type
+      elsif container
+        container.lookup_type(names)
+      end
+    end
   end
 
   class ClassType < ModuleType

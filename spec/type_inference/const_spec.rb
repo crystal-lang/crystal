@@ -45,7 +45,7 @@ describe 'Type inference: const' do
       )) { float }
   end
 
-  pending "finds current type first" do
+  it "finds current type first" do
     assert_type(%q(
       class Foo
         class Bar

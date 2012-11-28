@@ -400,7 +400,7 @@ module Crystal
         if node.receiver.is_a?(Var) && node.receiver.name == 'self'
           target_type = current_type.metaclass
         else
-          target_type = find_ident_type(node.receiver).metaclass
+          target_type = lookup_ident_type(node.receiver).metaclass
         end
       else
         target_type = current_type
@@ -411,7 +411,7 @@ module Crystal
 
     def visit_class_def(node)
       parent = if node.superclass
-                 find_ident_type node.superclass
+                 lookup_ident_type node.superclass
                else
                  mod.object
                end
@@ -580,7 +580,7 @@ module Crystal
     end
 
     def visit_ident(node)
-      type = find_ident_type(node)
+      type = lookup_ident_type(node)
       if type.is_a?(Const)
         node.target_const = type
         node.bind_to(type.value)
@@ -589,31 +589,11 @@ module Crystal
       end
     end
 
-    def find_ident_type(node)
-      name = node.names[0]
-
-      target_type = nil
-
-      if @scope
-        target_type = @scope.types[name]
-      end
+    def lookup_ident_type(node)
+      target_type = (@scope || @types.last).lookup_type node.names
 
       unless target_type
-        @types.reverse_each do |type|
-          if !type.is_a?(Module) && type.name == name
-            target_type = type
-            break
-          end
-          target_type = type.types[name] and break
-        end
-      end
-
-      unless target_type
-        node.raise("uninitialized constant #{name}")
-      end
-
-      node.names[1 .. -1].each_with_index do |name, i|
-        target_type = target_type.types[name] or node.raise("uninitialized constant #{node.names[0 .. i + 1].join '::'}")
+        node.raise("uninitialized constant #{node}")
       end
 
       target_type
