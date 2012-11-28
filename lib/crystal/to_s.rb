@@ -191,7 +191,7 @@ module Crystal
 
     def visit_ident(node)
       node.names.each_with_index do |name, i|
-        @str << '::' if i > 0
+        @str << '::' if i > 0 || node.global
         @str << name
       end
     end

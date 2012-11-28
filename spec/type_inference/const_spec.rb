@@ -62,4 +62,37 @@ describe 'Type inference: const' do
       Foo::Bar.foo
       )) { int }
   end
+
+  it "types a global constant reference in method" do
+    assert_type(%q(
+      A = 2.5
+
+      class B
+        A = 1
+
+        def foo
+          ::A
+        end
+      end
+
+      B.new.foo
+      )) { float }
+  end
+
+  it "types a global constant reference in static method" do
+    assert_type(%q(
+      A = 2.5
+
+      class B
+        A = 1
+
+        def self.foo
+          A
+        end
+      end
+
+      B.foo
+      )) { int }
+  end
+
 end

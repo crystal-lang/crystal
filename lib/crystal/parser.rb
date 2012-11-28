@@ -151,10 +151,10 @@ module Crystal
         case @token.type
         when :'..'
           next_token_skip_space_or_newline
-          exp = Call.new(Ident.new('Range'), 'new', [exp, parse_or, BoolLiteral.new(false)])
+          exp = Call.new(Ident.new(['Range']), 'new', [exp, parse_or, BoolLiteral.new(false)])
         when :'...'
           next_token_skip_space_or_newline
-          exp = Call.new(Ident.new('Range'), 'new', [exp, parse_or, BoolLiteral.new(true)])
+          exp = Call.new(Ident.new(['Range']), 'new', [exp, parse_or, BoolLiteral.new(true)])
         else
           return exp
         end
@@ -353,6 +353,8 @@ module Crystal
       when :~
         next_token_skip_space_or_newline
         Call.new parse_expression, :'~@', [], nil, column_number
+      when :'::'
+        parse_ident
       when :INT
         node_and_next_token IntLiteral.new(@token.value)
       when :LONG
@@ -405,7 +407,7 @@ module Crystal
           parse_var_or_call
         end
       when :CONST
-        parse_const
+        parse_ident
       when :INSTANCE_VAR
         node_and_next_token InstanceVar.new(@token.value)
       else
@@ -413,11 +415,19 @@ module Crystal
       end
     end
 
-    def parse_const
+    def parse_ident
       location = @token.location
 
+      names = []
+      global = false
+
+      if @token.type == :'::'
+        global = true
+        next_token_skip_space_or_newline
+      end
+
       check :CONST
-      names = [@token.value]
+      names << @token.value
 
       next_token
       while @token.type == :'::'
@@ -429,7 +439,7 @@ module Crystal
         next_token
       end
 
-      const = Ident.new *names
+      const = Ident.new names, global
       const.location = location
       const
     end
@@ -581,7 +591,7 @@ module Crystal
 
       if @token.type == :<
         next_token_skip_space_or_newline
-        superclass = parse_const
+        superclass = parse_ident
       end
       skip_statement_end
 
@@ -620,7 +630,7 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      name = parse_const
+      name = parse_ident
       skip_statement_end
 
       inc = Include.new name
@@ -635,7 +645,7 @@ module Crystal
       receiver = nil
 
       if @token.type == :CONST
-        receiver = parse_const
+        receiver = parse_ident
       elsif @token.type == :IDENT
         name = @token.value
         next_token
@@ -884,7 +894,7 @@ module Crystal
           check :':'
           next_token_skip_space_or_newline
 
-          arg_type = parse_const
+          arg_type = parse_ident
           skip_space_or_newline
           args << FunDefArg.new(arg_name, arg_type)
 
@@ -897,7 +907,7 @@ module Crystal
 
       if @token.type == :':'
         next_token_skip_space_or_newline
-        return_type = parse_const
+        return_type = parse_ident
         skip_statement_end
       end
 
@@ -915,7 +925,7 @@ module Crystal
       check :':'
       next_token_skip_space_or_newline
 
-      type = parse_const
+      type = parse_ident
       skip_statement_end
 
       TypeDef.new name, type, name_column_number
@@ -953,7 +963,7 @@ module Crystal
             check :':'
             next_token_skip_space_or_newline
 
-            type = parse_const
+            type = parse_ident
             skip_statement_end
 
             fields << FunDefArg.new(name, type)

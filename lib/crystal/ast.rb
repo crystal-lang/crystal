@@ -467,17 +467,20 @@ module Crystal
   #
   class Ident < ASTNode
     attr_accessor :names
+    attr_accessor :global
 
-    def initialize(*names)
+    def initialize(names, global = false)
       @names = names
+      @global = global
     end
 
     def ==(other)
-      other.is_a?(Ident) && other.names == names
+      other.is_a?(Ident) && other.names == names && other.global == global
     end
 
     def clone_from(other, &block)
       @names = other.names
+      @global = other.global
     end
   end
 

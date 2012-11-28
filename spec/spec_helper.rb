@@ -87,7 +87,7 @@ class String
   end
 
   def ident
-    Crystal::Ident.new self
+    Crystal::Ident.new [self]
   end
 
   def instance_var
@@ -101,7 +101,7 @@ end
 
 class Array
   def ident
-    Ident.new *self
+    Ident.new self
   end
 
   def array

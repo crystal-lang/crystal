@@ -379,6 +379,14 @@ module Crystal
     def instance_type
       type
     end
+
+    def lookup_type(names)
+      instance_type.lookup_type(names)
+    end
+
+    def to_s
+      name
+    end
   end
 
   class LibType < ModuleType

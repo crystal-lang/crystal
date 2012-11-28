@@ -260,4 +260,6 @@ describe Parser do
   it_parses "A = 1", Assign.new("A".ident, 1.int)
 
   it_parses "puts %w(one)", Call.new(nil, 'puts', [['one'.string].array])
+
+  it_parses "::A::B", Ident.new(['A', 'B'], true)
 end
