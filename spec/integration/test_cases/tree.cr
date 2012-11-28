@@ -29,19 +29,9 @@ class Node
 end
 
 root = Node.new('$')
-root.add 'c'
-root.add 'r'
-root.add 'y'
-root.add 's'
-root.add 't'
-root.add 'a'
-root.add 'l'
-root.add 'r'
-root.add 'o'
-root.add 'c'
-root.add 'k'
-root.add 's'
-root.add '!'
+"crystalrocks!".chars do |c|
+  root.add c
+end
 
 root.print
 C.putchar '\n'
