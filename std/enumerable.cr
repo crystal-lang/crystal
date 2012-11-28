@@ -31,4 +31,10 @@ module Enumerable
     each { |e| ary << e }
     ary
   end
+
+  def count
+    count = 0
+    each { |e| count += 1 if yield e }
+    count
+  end
 end
