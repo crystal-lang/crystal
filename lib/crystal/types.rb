@@ -493,4 +493,17 @@ module Crystal
       "#{name}<#{vars_to_s}>"
     end
   end
+
+  class Const < ContainedType
+    attr_accessor :value
+
+    def initialize(name, value, container = nil)
+      super(name, container)
+      @value = value
+    end
+
+    def to_s
+      "#{full_name} = #{value}"
+    end
+  end
 end

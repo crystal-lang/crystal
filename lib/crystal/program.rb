@@ -29,7 +29,7 @@ module Crystal
 
       string_array = array.clone
       string_array.element_type = @types["String"]
-      @types["ARGV"] = Crystal::ARGV.new string_array
+      @types["ARGV"] = Const.new "ARGV", Crystal::ARGV.new(string_array), self
 
       @symbols = Set.new
 

@@ -81,6 +81,10 @@ module Crystal
     end
   end
 
+  class Ident
+    attr_accessor :target_const
+  end
+
   class Call
     attr_accessor :target_def
     attr_accessor :mod
@@ -537,7 +541,7 @@ module Crystal
         node.value.accept self
         node.target.bind_to node.value
 
-        current_type.types[node.target.names.first] = node.value
+        current_type.types[node.target.names.first] = Const.new(node.target.names.first, node.value, current_type)
         false
       else
         true
@@ -577,8 +581,9 @@ module Crystal
 
     def visit_ident(node)
       type = find_ident_type(node)
-      if type.is_a?(ASTNode)
-        node.bind_to(type)
+      if type.is_a?(Const)
+        node.target_const = type
+        node.bind_to(type.value)
       else
         node.type = type.metaclass
       end

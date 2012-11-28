@@ -62,4 +62,18 @@ describe 'Codegen: const' do
       A
     )).to_i.should eq(2)
   end
+
+  it "finds global constant" do
+    run(%q(
+      A = 1
+
+      class Foo
+        def foo
+          A
+        end
+      end
+
+      Foo.new.foo
+    )).to_i.should eq(1)
+  end
 end

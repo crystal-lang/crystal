@@ -194,24 +194,18 @@ module Crystal
     end
 
     def visit_ident(node)
-      const = @type
-      parent = nil
-      node.names.each do |name|
-        parent = const
-        const = const.types[name]
-      end
-
-      global_name = "#{parent.object_id}::#{node.names.last}"
+      const = node.target_const
+      global_name = const.full_name
       global = @llvm_mod.globals[global_name]
 
       unless global
-        global = @llvm_mod.globals.add(const.type.llvm_type, global_name)
+        global = @llvm_mod.globals.add(const.value.type.llvm_type, global_name)
         global.linkage = :internal
 
         old_position = @builder.insert_block
         @builder.position_at_end @const_block
 
-        const.accept self
+        const.value.accept self
         if @last.constant?
           global.initializer = @last
           global.global_constant = 1
