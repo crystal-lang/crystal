@@ -103,6 +103,18 @@ describe 'Code gen: primitives' do
     run('7 / 3').to_i.should eq(2)
   end
 
+  it 'codegens Int << Int' do
+    run('12 << 3').to_i.should eq(96)
+  end
+
+  it 'codegens Int | Int' do
+    run('45 | 23').to_i.should eq(63)
+  end
+
+  it 'codegens Int & Int' do
+    run('45 & 23').to_i.should eq(5)
+  end
+
   it 'codegens Int + Float' do
     run('1 + 1.5').to_f.should eq(2.5)
   end

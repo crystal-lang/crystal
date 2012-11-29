@@ -109,6 +109,10 @@ describe 'Type inference: primitives' do
     assert_type("1.to_f") { float }
   end
 
+  it "types Int#<<" do
+    assert_type("1 << 2") { int }
+  end
+
   it "types Float#to_i" do
     assert_type("1.5.to_i") { int }
   end

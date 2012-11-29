@@ -118,6 +118,9 @@ module Crystal
       end
 
       singleton(int, :%, {'other' => int}, int) { |b, f| b.srem(f.params[0], f.params[1]) }
+      singleton(int, :<<, {'other' => int}, int) { |b, f| b.shl(f.params[0], f.params[1]) }
+      singleton(int, :|, {'other' => int}, int) { |b, f| b.or(f.params[0], f.params[1]) }
+      singleton(int, :&, {'other' => int}, int) { |b, f| b.and(f.params[0], f.params[1]) }
 
       no_args_primitive(int, 'chr', char) { |b, f| b.trunc(f.params[0], char.llvm_type) }
     end
