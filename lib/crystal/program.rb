@@ -33,7 +33,7 @@ module Crystal
       @types["ARGV"] = Const.new "ARGV", Crystal::ARGV.new(string_array), self
 
       @symbols = Set.new
-      @global_vars = Hash.new { |h, k| h[k] = Var.new(k) }
+      @global_vars = {}
 
       define_primitives
       define_builtins options[:load_std]

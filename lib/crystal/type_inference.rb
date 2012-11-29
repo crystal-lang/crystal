@@ -527,7 +527,7 @@ module Crystal
     end
 
     def visit_global(node)
-      var = mod.global_vars[node.name]
+      var = mod.global_vars[node.name] or node.raise "uninitialized global #{node}"
       node.bind_to var
     end
 
@@ -543,7 +543,8 @@ module Crystal
     end
 
     def visit_assign(node)
-      if node.target.is_a?(Ident)
+      case node.target
+      when Ident
         type = current_type.types[node.target.names.first]
         if type
           node.raise "already initialized constant #{node.target}"
@@ -554,21 +555,31 @@ module Crystal
 
         current_type.types[node.target.names.first] = Const.new(node.target.names.first, node.value, current_type)
         false
+      when Global
+        var = mod.global_vars[node.target.name] ||= Var.new(node.target.name)
+
+        node.value.accept self
+        node.target.bind_to var
+
+        node.bind_to node.value
+
+        var.bind_to node
+        var.update
+
+        false
       else
         true
       end
     end
 
     def end_visit_assign(node)
-      return if node.target.is_a?(Ident)
+      return if node.target.is_a?(Ident) || node.target.is_a?(Global)
 
       node.bind_to node.value
 
       case node.target
       when InstanceVar
         var = @scope.lookup_instance_var node.target.name
-      when Global
-        var = mod.global_vars[node.target.name]
       else
         var = lookup_var node.target.name
       end

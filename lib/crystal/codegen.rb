@@ -227,9 +227,17 @@ module Crystal
 
       node.value.accept self
 
-      if node.target.is_a?(InstanceVar)
+      case node.target
+      when InstanceVar
         ivar = @type.instance_vars[node.target.name]
         ptr = gep llvm_self, 0, @type.index_of_instance_var(node.target.name)
+      when Global
+        ptr = @llvm_mod.globals[node.target.name]
+        unless ptr
+          ptr = @llvm_mod.globals.add(node.target.llvm_type, node.target.name)
+          ptr.linkage = :internal
+          ptr.initializer = LLVM::Constant.null(node.target.llvm_type)
+        end
       else
         var = @vars[node.target.name]
         unless var
@@ -250,6 +258,10 @@ module Crystal
       var = @vars[node.name]
       @last = var[:ptr]
       @last = @builder.load @last, node.name unless var[:is_arg] || var[:type].is_a?(UnionType)
+    end
+
+    def visit_global(node)
+      @last = @builder.load @llvm_mod.globals[node.name]
     end
 
     def visit_instance_var(node)
