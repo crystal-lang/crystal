@@ -261,7 +261,11 @@ module Crystal
     end
 
     def visit_global(node)
-      @last = @builder.load @llvm_mod.globals[node.name]
+      if @mod.global_vars[node.name].type.is_a?(UnionType)
+        @last = @llvm_mod.globals[node.name]
+      else
+        @last = @builder.load @llvm_mod.globals[node.name]
+      end
     end
 
     def visit_instance_var(node)
