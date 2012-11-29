@@ -262,4 +262,6 @@ describe Parser do
   it_parses "puts %w(one)", Call.new(nil, 'puts', [['one'.string].array])
 
   it_parses "::A::B", Ident.new(['A', 'B'], true)
+
+  it_parses "$foo", Global.new('$foo')
 end

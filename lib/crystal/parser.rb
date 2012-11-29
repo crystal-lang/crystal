@@ -369,6 +369,8 @@ module Crystal
         parse_string_array
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value)
+      when :GLOBAL
+        node_and_next_token Global.new(@token.value)
       when :IDENT
         case @token.value
         when :begin

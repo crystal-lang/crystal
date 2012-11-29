@@ -73,6 +73,9 @@ module Crystal
       elsif match = scan(/@[a-zA-Z_][a-zA-Z_0-9]*/)
         @token.type = :INSTANCE_VAR
         @token.value = match
+      elsif match = scan(/\$[a-zA-Z_][a-zA-Z_0-9]*/)
+        @token.type = :GLOBAL
+        @token.value = match
       elsif scan /#/
         if scan /.*\n/
           @token.type = :NEWLINE

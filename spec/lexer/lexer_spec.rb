@@ -22,6 +22,12 @@ describe Lexer do
     end
   end
 
+  def self.it_lexes_globals(*args)
+    args.each do |arg|
+      it_lexes arg, :GLOBAL, arg
+    end
+  end
+
   def self.it_lexes_keywords(*args)
     args.each do |arg|
       it_lexes arg, :IDENT, arg.to_sym
@@ -87,6 +93,7 @@ describe Lexer do
   it_lexes_operators "=", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", "==", "!=", "!", ",", '.', '..', '...', "+@", "-@", "&&", "||", "|", "{", "}", '?', ':', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**=', '<<', '>>', '%', '&', '|', '^', '**', '<<=', '>>=', '~', '~@', '[]', '[', ']', '::', '<=>'
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
+  it_lexes_globals "$foo", "$FOO", "$_foo", "$foo123"
 
   it "lexes comment and token" do
     lexer = Lexer.new "# comment\n1"

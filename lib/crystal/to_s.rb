@@ -176,6 +176,10 @@ module Crystal
       end
     end
 
+    def visit_global(node)
+      @str << node.name
+    end
+
     def visit_arg(node)
       if node.name
         @str << node.name

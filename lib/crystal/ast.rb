@@ -436,6 +436,23 @@ module Crystal
     end
   end
 
+  # A global variable.
+  class Global < ASTNode
+    attr_accessor :name
+
+    def initialize(name)
+      @name = name
+    end
+
+    def ==(other)
+      other.is_a?(Global) && other.name == name
+    end
+
+    def clone_from(other, &block)
+      @name = other.name
+    end
+  end
+
   # A def argument.
   class Arg < ASTNode
     attr_accessor :name
