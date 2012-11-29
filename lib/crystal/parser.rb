@@ -1116,7 +1116,7 @@ module Crystal
     end
 
     def can_be_assigned?(node)
-      node.is_a?(Var) || node.is_a?(InstanceVar) || node.is_a?(Ident) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
+      node.is_a?(Var) || node.is_a?(InstanceVar) || node.is_a?(Ident) || node.is_a?(Global) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
   end
 

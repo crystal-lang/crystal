@@ -526,6 +526,11 @@ module Crystal
       node.bind_to var
     end
 
+    def visit_global(node)
+      var = mod.global_vars[node.name]
+      node.bind_to var
+    end
+
     def visit_instance_var(node)
       if @scope.is_a?(Crystal::Program)
         node.raise "can't use instance variables at the top level"
@@ -559,11 +564,15 @@ module Crystal
 
       node.bind_to node.value
 
-      if node.target.is_a?(InstanceVar)
+      case node.target
+      when InstanceVar
         var = @scope.lookup_instance_var node.target.name
+      when Global
+        var = mod.global_vars[node.target.name]
       else
         var = lookup_var node.target.name
       end
+
       var.bind_to node
       var.update
     end

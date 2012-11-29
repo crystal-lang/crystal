@@ -7,6 +7,7 @@ module Crystal
     POINTER_SIZE = 8
 
     attr_accessor :symbols
+    attr_accessor :global_vars
 
     def initialize(options = {})
       super('main')
@@ -32,6 +33,7 @@ module Crystal
       @types["ARGV"] = Const.new "ARGV", Crystal::ARGV.new(string_array), self
 
       @symbols = Set.new
+      @global_vars = Hash.new { |h, k| h[k] = Var.new(k) }
 
       define_primitives
       define_builtins options[:load_std]
