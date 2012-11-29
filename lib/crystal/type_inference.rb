@@ -389,6 +389,10 @@ module Crystal
       @types = [mod]
     end
 
+    def visit_nil_literal(node)
+      node.type = mod.nil
+    end
+
     def visit_bool_literal(node)
       node.type = mod.bool
     end
