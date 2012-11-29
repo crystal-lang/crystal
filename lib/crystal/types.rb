@@ -261,13 +261,17 @@ module Crystal
     end
 
     def llvm_type
-      @llvm_type ||= element_type ? LLVM::Pointer(llvm_struct_type) : LLVM::Int1
+      @llvm_type ||= LLVM::Pointer(llvm_struct_type)
+    end
+
+    def element_llvm_type
+      element_type ? element_type.llvm_type : LLVM::Int1
     end
 
     def llvm_struct_type
       unless @llvm_struct_type
         @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = [LLVM::Int, LLVM::Int, LLVM::Pointer(element_type.llvm_type)]
+        @llvm_struct_type.element_types = [LLVM::Int, LLVM::Int, LLVM::Pointer(element_llvm_type)]
       end
       @llvm_struct_type
     end

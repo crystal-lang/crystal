@@ -149,6 +149,10 @@ module Crystal
       @builder.ret(@return_type == @mod.void ? nil : @last)
     end
 
+    def visit_nil_literal(node)
+      @last = LLVM::Int1.from_i(0)
+    end
+
     def visit_bool_literal(node)
       @last = LLVM::Int1.from_i(node.value ? 1 : 0)
     end
@@ -391,26 +395,22 @@ module Crystal
     end
 
     def visit_array_literal(node)
-      if node.type.element_type
-        size = node.elements.length
-        capacity = size < 16 ? 16 : 2 ** Math.log(size, 2).ceil
+      size = node.elements.length
+      capacity = size < 16 ? 16 : 2 ** Math.log(size, 2).ceil
 
-        array = @builder.malloc(node.type.llvm_struct_type)
-        @builder.store LLVM::Int(size), gep(array, 0, 0)
-        @builder.store LLVM::Int(capacity), gep(array, 0, 1)
+      array = @builder.malloc(node.type.llvm_struct_type)
+      @builder.store LLVM::Int(size), gep(array, 0, 0)
+      @builder.store LLVM::Int(capacity), gep(array, 0, 1)
 
-        buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
-        @builder.store buffer, gep(array, 0, 2)
+      buffer = @builder.array_malloc(node.type.element_llvm_type, LLVM::Int(capacity))
+      @builder.store buffer, gep(array, 0, 2)
 
-        node.elements.each_with_index do |elem, index|
-          elem.accept self
-          codegen_assign gep(buffer, index), node.type.element_type, elem.type, @last
-        end
-
-        @last = array
-      else
-        @last = LLVM::Int1.from_i(0)
+      node.elements.each_with_index do |elem, index|
+        elem.accept self
+        codegen_assign gep(buffer, index), node.type.element_type, elem.type, @last
       end
+
+      @last = array
 
       false
     end
@@ -425,7 +425,7 @@ module Crystal
       @builder.store LLVM::Int(size), gep(array, 0, 0)
       @builder.store LLVM::Int(capacity), gep(array, 0, 1)
 
-      buffer = @builder.array_malloc(node.type.element_type.llvm_type, LLVM::Int(capacity))
+      buffer = @builder.array_malloc(node.type.element_llvm_type, LLVM::Int(capacity))
       @builder.store buffer, gep(array, 0, 2)
 
       case node.type.element_type
@@ -510,13 +510,13 @@ module Crystal
       @builder.position_at_end resize_block
       buffer_ptr = gep(llvm_self, 0, 2)
       new_capacity = @builder.mul capacity, LLVM::Int(2)
-      llvm_type = @type.element_type.llvm_type
+      llvm_type = @type.element_llvm_type
       llvm_type = llvm_type.is_a?(LLVM::Type) ? llvm_type : llvm_type.type
       new_buffer_size = @builder.mul new_capacity, @builder.trunc(llvm_type.size, LLVM::Int32)
       buffer = @builder.load buffer_ptr
       casted_buffer = @builder.bit_cast buffer, LLVM::Pointer(LLVM::Int8)
       realloced_pointer = realloc casted_buffer, new_buffer_size
-      casted_realloced_pointer = @builder.bit_cast realloced_pointer, LLVM::Pointer(@type.element_type.llvm_type)
+      casted_realloced_pointer = @builder.bit_cast realloced_pointer, LLVM::Pointer(@type.element_llvm_type)
       @builder.store casted_realloced_pointer, buffer_ptr
       @builder.store new_capacity, capacity_ptr
       @builder.br exit_block
