@@ -199,14 +199,20 @@ module Crystal
 
     def compute_scope_and_untyped_def
       if obj
-        [obj.type, lookup_method(obj.type, name)]
+        [obj.type, lookup_method(obj.type, name, true)]
       else
-        if self.scope
-          untyped_def = lookup_method(self.scope, name)
+        if scope
+          untyped_def = lookup_method(scope, name)
           if untyped_def
-            [self.scope, untyped_def]
+            [scope, untyped_def]
           else
-            [mod, mod.defs[name]]
+            mod_def = mod.defs[name]
+            if mod_def || !(missing = scope.defs['method_missing'])
+              [mod, mod.defs[name]]
+            else
+              untyped_def = define_missing scope, name
+              [scope, untyped_def]
+            end
           end
         else
           [mod, mod.defs[name]]
@@ -214,10 +220,14 @@ module Crystal
       end
     end
 
-    def lookup_method(scope, name)
+    def lookup_method(scope, name, use_method_missing = false)
       untyped_def = scope.defs[name]
-      if !untyped_def && name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
-        untyped_def = define_new scope, name
+      unless untyped_def
+        if name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
+          untyped_def = define_new scope, name
+        elsif use_method_missing && scope.defs['method_missing']
+          untyped_def = define_missing scope, name
+        end
       end
       untyped_def
     end
@@ -245,6 +255,14 @@ module Crystal
       else
         untyped_def = scope.defs['new'] = Def.new('new', [], [alloc])
       end
+    end
+
+    def define_missing(scope, name)
+      missing_args = self.args.each_with_index.map { |arg, i| Arg.new("arg#{i}") }
+      missing_vars = self.args.each_with_index.map { |arg, i| Var.new("arg#{i}") }
+      scope.defs[name] = Def.new(name, missing_args, [
+        Call.new(nil, 'method_missing', [SymbolLiteral.new(name), ArrayLiteral.new(missing_vars)])
+      ])
     end
 
     def check_method_exists(untyped_def)
