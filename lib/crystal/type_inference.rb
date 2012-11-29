@@ -119,21 +119,27 @@ module Crystal
         typed_def, args = prepare_typed_def_with_args(untyped_def, scope, arg_types)
 
         if typed_def.body
-          begin
+          bubbling_exception do
             visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
             typed_def.body.accept visitor
-          rescue Crystal::Exception => ex
-            if obj
-              raise "instantiating '#{obj.type.name}##{name}'", ex
-            else
-              raise "instantiating '#{name}'", ex
-            end
           end
         end
       end
 
       self.bind_to typed_def.body if typed_def.body
       self.target_def = typed_def
+    end
+
+    def bubbling_exception
+      begin
+        yield
+      rescue Crystal::Exception => ex
+        if obj
+          raise "instantiating '#{obj.type.name}##{name}'", ex
+        else
+          raise "instantiating '#{name}'", ex
+        end
+      end
     end
 
     def prepare_typed_def_with_args(untyped_def, scope, arg_types)
@@ -698,7 +704,15 @@ module Crystal
       end
       node.obj.add_observer node, :update_input if node.obj
       node.recalculate unless node.obj || node.args.any?
-      true
+
+      node.obj.accept self if node.obj
+      node.args.each { |arg| arg.accept self }
+
+      node.bubbling_exception do
+        node.block.accept self if node.block
+      end
+
+      false
     end
 
     def end_visit_return(node)
