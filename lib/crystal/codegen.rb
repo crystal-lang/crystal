@@ -18,15 +18,7 @@ module Crystal
 
     def self.mangled_name(self_type, owner, name, return_type, arg_types)
       str = '*'
-      if self_type
-        if self_type.is_a?(Metaclass)
-          str << self_type.type.name
-          str << '::'
-        else
-          str << self_type.llvm_name
-          str << '#'
-        end
-      elsif owner
+      if owner
         if owner.is_a?(Metaclass)
           str << owner.type.name
           str << '::'
@@ -36,11 +28,15 @@ module Crystal
         end
       end
       str << name.to_s.gsub('@', '.')
-      if arg_types.length > 0
-        str << '<'
-        str << arg_types.map(&:llvm_name).join(', ')
-        str << '>'
+      str << '<'
+      if self_type
+        str << self_type.llvm_name
       end
+      if arg_types.length > 0
+        str << ', ' if self_type
+        str << arg_types.map(&:llvm_name).join(', ')
+      end
+      str << '>'
       if return_type
         str << ':'
         str << return_type.llvm_name
