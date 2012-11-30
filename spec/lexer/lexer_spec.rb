@@ -116,4 +116,12 @@ describe Lexer do
     token.type.should eq(:INT)
     token.value.should eq(1)
   end
+
+  it "lexes __FILE__" do
+    lexer = Lexer.new "__FILE__"
+    lexer.filename = 'foo'
+    token = lexer.next_token
+    token.type.should eq(:STRING)
+    token.value.should eq('foo')
+  end
 end

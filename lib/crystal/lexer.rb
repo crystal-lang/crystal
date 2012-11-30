@@ -70,6 +70,9 @@ module Crystal
       elsif match = scan(/__LINE__\b/)
         @token.type = :INT
         @token.value = @token.line_number
+      elsif match = scan(/__FILE__\b/)
+        @token.type = :STRING
+        @token.value = @filename || '-'
       elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*((\?|!)|\b)/)
         @token.type = :IDENT
         @token.value = match
