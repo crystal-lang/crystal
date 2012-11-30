@@ -14,6 +14,9 @@ module Crystal
       OptionParser.new do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
 
+        opts.on("-e 'command'", 'one line script') do |command|
+          @options[:command] = command
+        end
         opts.on('-graph ', 'Render type graph') do
           @options[:graph] = true
         end
@@ -55,7 +58,7 @@ module Crystal
 
     def compile
       begin
-        source = ARGF.read
+        source = @options[:command] || ARGF.read
 
         parser = Parser.new(source)
         parser.filename = ARGF.filename unless ARGF.filename == '-'
@@ -67,10 +70,10 @@ module Crystal
         exit 0 if @options[:no_build] || !Crystal::UNIFY
 
         llvm_mod = build node, mod
-        write_main llvm_mod unless @options[:run]
+        write_main llvm_mod unless @options[:run] || @options[:command]
 
         # Don't optimize crystal_main away if the user wants to run the program
-        llvm_mod.functions["crystal_main"].linkage = :internal unless @options[:run]
+        llvm_mod.functions["crystal_main"].linkage = :internal unless @options[:run] || @options[:command]
 
         engine = LLVM::JITCompiler.new llvm_mod
         optimize llvm_mod, engine
@@ -85,7 +88,7 @@ module Crystal
 
       llvm_mod.dump if @options[:dump_ll]
 
-      if @options[:run]
+      if @options[:run] || @options[:command]
         load_libs mod
 
         engine.run_function llvm_mod.functions["crystal_main"], 0, nil
