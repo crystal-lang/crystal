@@ -14,8 +14,9 @@ module Crystal
       OptionParser.new do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
 
-        opts.on("-e 'command'", 'one line script') do |command|
-          @options[:command] = command
+        opts.on("-e 'command'", "one line script. Several -e's allowed. Omit [programfile]") do |command|
+          @options[:command] ||= []
+          @options[:command] << command
         end
         opts.on('-graph ', 'Render type graph') do
           @options[:graph] = true
@@ -58,7 +59,7 @@ module Crystal
 
     def compile
       begin
-        source = @options[:command] || ARGF.read
+        source = @options[:command] ? @options[:command].join(";") : ARGF.read
 
         parser = Parser.new(source)
         parser.filename = ARGF.filename unless ARGF.filename == '-'
