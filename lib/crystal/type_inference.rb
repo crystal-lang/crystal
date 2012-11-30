@@ -264,7 +264,7 @@ module Crystal
       missing_args = self.args.each_with_index.map { |arg, i| Arg.new("arg#{i}") }
       missing_vars = self.args.each_with_index.map { |arg, i| Var.new("arg#{i}") }
       scope.defs[name] = Def.new(name, missing_args, [
-        Call.new(nil, 'method_missing', [SymbolLiteral.new(name), ArrayLiteral.new(missing_vars)])
+        Call.new(nil, 'method_missing', [SymbolLiteral.new(name.to_s), ArrayLiteral.new(missing_vars)])
       ])
     end
 
