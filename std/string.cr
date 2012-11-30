@@ -1,5 +1,6 @@
 lib C
   fun atoi(str : String) : Int
+  fun strncmp(s1 : String, s2 : String, n : Int) : Int
 end
 
 class String
@@ -27,6 +28,10 @@ class String
 
   def inspect
     "\"#{to_s}\""
+  end
+
+  def starts_with?(str)
+    C.strncmp(self, str, str.length) == 0
   end
 
   def to_s
