@@ -1,4 +1,4 @@
-require 'benchmark'
+require_relative 'ast'
 
 module Crystal
   def infer_type(node, options = {})
@@ -18,6 +18,7 @@ module Crystal
   end
 
   def infer_type_with_stats(node, mod)
+    require 'benchmark'
     Benchmark.bm(20, 'TOTAL:') do |bm|
       t1 = bm.report('type inference:') { node.accept TypeVisitor.new(mod) }
       t2 = bm.report('fix_empty_arrays:') { fix_empty_arrays node, mod }
