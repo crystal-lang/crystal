@@ -64,16 +64,19 @@ module Crystal
       elsif match = scan(/(def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct)((\?|!)|\b)/)
         @token.type = :IDENT
         @token.value = match.end_with?('?') || match.end_with?('!') ? match : match.to_sym
-      elsif match = scan(/[A-Z][a-zA-Z_0-9]*/)
+      elsif match = scan(/[A-Z][a-zA-Z_0-9]*\b/)
         @token.type = :CONST
         @token.value = match
-      elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*(\?|!)?/)
+      elsif match = scan(/__LINE__\b/)
+        @token.type = :INT
+        @token.value = @token.line_number
+      elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*((\?|!)|\b)/)
         @token.type = :IDENT
         @token.value = match
-      elsif match = scan(/@[a-zA-Z_][a-zA-Z_0-9]*/)
+      elsif match = scan(/@[a-zA-Z_][a-zA-Z_0-9]*\b/)
         @token.type = :INSTANCE_VAR
         @token.value = match
-      elsif match = scan(/\$[a-zA-Z_][a-zA-Z_0-9]*/)
+      elsif match = scan(/\$[a-zA-Z_][a-zA-Z_0-9]*\b/)
         @token.type = :GLOBAL
         @token.value = match
       elsif scan /#/
