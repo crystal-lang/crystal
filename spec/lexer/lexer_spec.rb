@@ -28,6 +28,12 @@ describe Lexer do
     end
   end
 
+  def self.it_lexes_symbols(*args)
+    args.each do |arg|
+      it_lexes arg, :SYMBOL, arg[1 .. -1]
+    end
+  end
+
   def self.it_lexes_keywords(*args)
     args.each do |arg|
       it_lexes arg, :IDENT, arg.to_sym
@@ -94,6 +100,7 @@ describe Lexer do
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
   it_lexes_globals "$foo", "$FOO", "$_foo", "$foo123"
+  it_lexes_symbols ":foo", ":foo!", ":foo?"
 
   it "lexes comment and token" do
     lexer = Lexer.new "# comment\n1"
