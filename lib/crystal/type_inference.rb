@@ -203,25 +203,38 @@ module Crystal
 
     def compute_scope_and_untyped_def
       if obj
-        [obj.type, lookup_method(obj.type, name, true)]
-      else
-        if scope
-          untyped_def = lookup_method(scope, name)
-          if untyped_def
-            [scope, untyped_def]
-          else
-            mod_def = mod.defs[name]
-            if mod_def || !(missing = scope.defs['method_missing'])
-              [mod, mod.defs[name]]
-            else
-              untyped_def = define_missing scope, name
-              [scope, untyped_def]
-            end
-          end
-        else
-          [mod, mod.defs[name]]
-        end
+        return [obj.type, lookup_method(obj.type, name, true)]
       end
+
+      unless scope
+        return [mod, mod.defs[name]]
+      end
+
+      if name == 'super'
+        parent = scope.parents.first
+        if args.empty? && !has_parenthesis
+          self.args = parent_visitor.call[3].args.map do |arg|
+            var = Var.new(arg.name)
+            var.bind_to arg
+            var
+          end
+        end
+
+        return [parent, lookup_method(parent, parent_visitor.call[1].name)]
+      end
+
+      untyped_def = lookup_method(scope, name)
+      if untyped_def
+        return [scope, untyped_def]
+      end
+
+      mod_def = mod.defs[name]
+      if mod_def || !(missing = scope.defs['method_missing'])
+        return [mod, mod.defs[name]]
+      end
+
+      untyped_def = define_missing scope, name
+      [scope, untyped_def]
     end
 
     def lookup_method(scope, name, use_method_missing = false)

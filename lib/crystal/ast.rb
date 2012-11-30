@@ -570,6 +570,7 @@ module Crystal
       @block = other.block.clone(&block)
       @name_column_number = other.name_column_number
       @name_length = other.name_length
+      @has_parenthesis = other.has_parenthesis
     end
 
     def name_column_number

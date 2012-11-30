@@ -197,6 +197,7 @@ module Crystal
       end]
       obj.defs = defs
       obj.types = types
+      obj.parents = parents
       obj
     end
 
