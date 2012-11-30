@@ -72,4 +72,8 @@ describe 'Code gen: array' do
   it "codegens method with array mutation and while" do
     run('def foo(x); while false; end; end; a = []; foo a; a.push(1)')
   end
+
+  it "codegens empty array loop" do
+    run('def bar(x); end; a = []; i = 0; while i < a.length; bar a[i]; i += 1; end')
+  end
 end

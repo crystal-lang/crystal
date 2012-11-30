@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Type inference: array' do
   it "types empty array literal" do
-    assert_type("[]") { ArrayType.new }
+    assert_type("[]") { ArrayType.of(self.nil) }
   end
 
   it "types array literal" do
@@ -82,5 +82,9 @@ describe 'Type inference: array' do
     input = parse '[[]][0].push 1'
     mod = infer_type input
     input.obj.target_def.body.type.should eq(ArrayType.of(mod.int))
+  end
+
+  it "types array literal element" do
+    assert_type("[][0]") { self.nil }
   end
 end
