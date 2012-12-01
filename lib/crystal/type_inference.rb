@@ -820,17 +820,23 @@ module Crystal
         parser = Parser.new(generated_source)
         generated_nodes = parser.parse
       rescue Crystal::SyntaxException => ex
-        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{'-' * 80}\n#{generated_source}\n#{'-' * 80}"
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{'=' * 80}\n#{'-' * 80}\n#{number_lines generated_source}\n#{'-' * 80}\n#{ex.to_s(generated_source)}#{'=' * 80}"
       end
 
-      node.bubbling_exception do
+      begin
         generated_nodes.accept self
+      rescue Crystal::Exception => ex
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{'=' * 80}\n#{'-' * 80}\n#{number_lines generated_source}\n#{'-' * 80}\n#{ex.to_s(generated_source)}#{'=' * 80}"
       end
 
       node.target_macro = generated_nodes
       node.type = generated_nodes.type
 
       true
+    end
+
+    def number_lines(source)
+      source.lines.each_with_index.map { |line, i| "#{'%3d' % (i + 1)}. #{line.chomp}" }.join "\n"
     end
 
     def end_visit_return(node)
