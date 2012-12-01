@@ -41,7 +41,7 @@ module Crystal
 
     def visit_string_literal(node)
       @str << '"'
-      @str << node.value
+      @str << node.value.gsub('"', "\\\"")
       @str << '"'
     end
 
@@ -136,6 +136,30 @@ module Crystal
 
     def visit_def(node)
       @str << "def "
+      if node.receiver
+        node.receiver.accept self
+        @str << "."
+      end
+      @str << node.name.to_s
+      if node.args.length > 0
+        @str << "("
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+          i += 1
+
+        end
+        @str << ")"
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit_macro(node)
+      @str << "macro "
       if node.receiver
         node.receiver.accept self
         @str << "."

@@ -16,6 +16,8 @@ module Crystal
     end
 
     def end_visit_call(node)
+      return unless node.target_def
+
       return if @fixed[node.target_def]
       @fixed[node.target_def] = true
 

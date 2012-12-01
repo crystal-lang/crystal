@@ -264,4 +264,6 @@ describe Parser do
   it_parses "::A::B", Ident.new(['A', 'B'], true)
 
   it_parses "$foo", Global.new('$foo')
+
+  it_parses "macro foo;end", Macro.new('foo', [])
 end

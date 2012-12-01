@@ -405,6 +405,8 @@ module Crystal
           parse_break
         when :lib
           parse_lib
+        when :macro
+          parse_macro
         else
           parse_var_or_call
         end
@@ -725,6 +727,93 @@ module Crystal
       next_token_skip_space
 
       Def.new name, args, body, receiver
+    end
+
+    def parse_macro
+      next_token_skip_space_or_newline
+      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>'
+
+      receiver = nil
+
+      if @token.type == :CONST
+        receiver = parse_ident
+      elsif @token.type == :IDENT
+        name = @token.value
+        next_token
+        if @token.type == :'='
+          name = "#{name}="
+          next_token_skip_space
+        else
+          skip_space
+        end
+      else
+        name = @token.type
+        next_token_skip_space
+      end
+
+      args = []
+
+      if @token.type == :'.'
+        receiver = Var.new name unless receiver
+        next_token_skip_space
+        check :IDENT, :"=", :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>'
+        name = @token.type == :IDENT ? @token.value : @token.type
+        next_token_skip_space
+      end
+
+      case @token.type
+      when :'('
+        next_token_skip_space_or_newline
+        while @token.type != :')'
+          check_ident
+          arg_name = @token.value
+
+          next_token_skip_space_or_newline
+          if @token.type == :'='
+            next_token_skip_space_or_newline
+            default_value = parse_expression
+          end
+
+          args << Arg.new(arg_name, default_value)
+
+          if @token.type == :','
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_statement_end
+      when :IDENT
+        while @token.type != :NEWLINE && @token.type != :";"
+          check_ident
+          arg_name = @token.value
+
+          next_token_skip_space
+          if @token.type == :'='
+            next_token_skip_space_or_newline
+            default_value = parse_expression
+          end
+
+          args << Arg.new(arg_name, default_value)
+
+          if @token.type == :','
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_statement_end
+      else
+        skip_statement_end
+      end
+
+      if @token.keyword?(:end)
+        body = nil
+      else
+        body = push_def(args) { parse_expressions }
+        skip_statement_end
+        check_ident :end
+      end
+
+      next_token_skip_space
+
+      Macro.new name, args, body, receiver
     end
 
     def parse_if(check_end = true)

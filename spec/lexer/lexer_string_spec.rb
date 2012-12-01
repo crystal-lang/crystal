@@ -128,7 +128,7 @@ describe 'Lexer string' do
   end
 
   it "lexes string with literal newline" do
-    lexer = Lexer.new(%("hello\nworld".))
+    lexer = Lexer.new(%("hello\nworld"))
 
     token = lexer.next_token
     token.type.should eq(:STRING_START)
