@@ -152,4 +152,18 @@ describe 'Lexer string' do
     token.line_number.should eq(2)
     token.column_number.should eq(7)
   end
+
+  it "lexes string with only newline" do
+    lexer = Lexer.new(%("\n"))
+
+    token = lexer.next_token
+    token.type.should eq(:STRING_START)
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING)
+    token.value.should eq("\n")
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING_END)
+  end
 end

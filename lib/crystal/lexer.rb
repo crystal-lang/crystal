@@ -108,6 +108,7 @@ module Crystal
       elsif scan(/\n/)
         @line_number += 1
         @column_number = 1
+        @token.type = :STRING
         @token.value = "\n"
       elsif scan(/\\n/)
         @token.type = :STRING
