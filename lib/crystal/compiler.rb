@@ -90,7 +90,7 @@ module Crystal
       llvm_mod.dump if @options[:dump_ll]
 
       if @options[:run] || @options[:command]
-        load_libs mod
+        mod.load_libs
 
         engine.run_function llvm_mod.functions["crystal_main"], 0, nil
       else
@@ -114,22 +114,6 @@ module Crystal
         libs.each do |lib|
           @command << ",-l"
           @command << lib
-        end
-      end
-    end
-
-    def load_libs(mod)
-      libs = mod.library_names
-      if libs.length > 0
-        require 'dl'
-        if RUBY_PLATFORM =~ /darwin/
-          libs.each do |lib|
-            DL.dlopen "lib#{lib}.dylib"
-          end
-        else
-          libs.each do |lib|
-            DL.dlopen "lib#{lib}.so"
-          end
         end
       end
     end

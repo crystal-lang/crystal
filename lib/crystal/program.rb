@@ -118,5 +118,21 @@ module Crystal
       end
       libs
     end
+
+    def load_libs
+      libs = library_names
+      if libs.length > 0
+        require 'dl'
+        if RUBY_PLATFORM =~ /darwin/
+          libs.each do |lib|
+            DL.dlopen "lib#{lib}.dylib"
+          end
+        else
+          libs.each do |lib|
+            DL.dlopen "lib#{lib}.so"
+          end
+        end
+      end
+    end
   end
 end

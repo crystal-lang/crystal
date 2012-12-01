@@ -810,14 +810,22 @@ module Crystal
 
       macro_llvm_mod = Crystal.build macro_nodes, mod
 
+      mod.load_libs
       macro_engine = LLVM::JITCompiler.new macro_llvm_mod
       macro_value = macro_engine.run_function macro_llvm_mod.functions["crystal_main"], 0, nil
 
       generated_source = macro_value.to_ptr.read_pointer.read_string
-      parser = Parser.new(generated_source)
-      generated_nodes = parser.parse
 
-      generated_nodes.accept self
+      begin
+        parser = Parser.new(generated_source)
+        generated_nodes = parser.parse
+      rescue Crystal::SyntaxException => ex
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{'-' * 80}\n#{generated_source}\n#{'-' * 80}"
+      end
+
+      node.bubbling_exception do
+        generated_nodes.accept self
+      end
 
       node.target_macro = generated_nodes
       node.type = generated_nodes.type
