@@ -300,6 +300,11 @@ module Crystal
       false
     end
 
+    def visit_pointer_malloc(node)
+      size = @vars['size'][:ptr]
+      @last = @builder.array_malloc(node.type.var.llvm_type, LLVM::Int(size))
+    end
+
     def visit_pointer_get_value(node)
       if @type.var.type.is_a?(UnionType)
         @last = llvm_self

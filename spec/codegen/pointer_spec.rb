@@ -68,4 +68,8 @@ describe 'Code gen: pointer' do
       Foo.new.value
     )).to_i.should eq(2)
   end
+
+  it "codegens malloc" do
+    run(%q(p = Pointer.malloc(10); p.value = 1; p.value + 1)).to_i.should eq(2)
+  end
 end
