@@ -13,6 +13,7 @@ module Crystal
       define_symbol_primitives
       define_array_primitives
       define_string_primitives
+      define_pointer_primitives
     end
 
     def define_object_primitives
@@ -238,6 +239,10 @@ module Crystal
       end
     end
 
+    def define_pointer_primitives
+      pointer.defs['value'] = Def.new('value', [], PointerGetValue.new)
+    end
+
     def primitive(owner, name, arg_names)
       p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Arg.new(x) })
       p.owner = owner
@@ -338,6 +343,9 @@ module Crystal
   end
 
   class ArrayLength < Primitive
+  end
+
+  class PointerGetValue < Primitive
   end
 
   class Alloc < Primitive
