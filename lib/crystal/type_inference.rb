@@ -780,6 +780,11 @@ module Crystal
       end
     end
 
+    def end_visit_pointer_of(node)
+      node.type = mod.pointer.clone
+      node.type.var = node.var
+    end
+
     def lookup_var(name)
       var = @vars[name]
       unless var

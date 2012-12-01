@@ -405,6 +405,8 @@ module Crystal
           parse_break
         when :lib
           parse_lib
+        when :ptr
+          parse_pointer_of
         else
           parse_var_or_call
         end
@@ -799,6 +801,16 @@ module Crystal
       next_token_skip_space
 
       node = While.new cond, body
+      node.location = location
+      node
+    end
+
+    def parse_pointer_of
+      next_token
+      args = parse_args
+
+      location = @token.location
+      node = PointerOf.new args[0]
       node.location = location
       node
     end

@@ -128,6 +128,14 @@ class Crystal::ArrayType
   end
 end
 
+class Crystal::PointerType
+  def self.of(type)
+    pointer = new
+    pointer.var.type = type
+    pointer
+  end
+end
+
 class Crystal::ASTNode
   def not
     Call.new(self, :"!@")

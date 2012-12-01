@@ -264,4 +264,6 @@ describe Parser do
   it_parses "::A::B", Ident.new(['A', 'B'], true)
 
   it_parses "$foo", Global.new('$foo')
+
+  it_parses "a = 1; ptr(a)", [Assign.new("a".var, 1.int), PointerOf.new('a'.var)]
 end
