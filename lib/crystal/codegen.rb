@@ -309,7 +309,8 @@ module Crystal
     end
 
     def visit_pointer_set_value(node)
-      @builder.store @last, llvm_self
+      codegen_assign llvm_self, @type.var.type, node.type, @fun.params[1]
+      @last = @fun.params[1]
     end
 
     def visit_if(node)

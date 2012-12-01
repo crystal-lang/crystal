@@ -47,4 +47,8 @@ describe 'Code gen: pointer' do
   it "get value of pointer to union" do
     run('a = 1.1; a = 1; b = ptr(a); b.value.to_i').to_i.should eq(1)
   end
+
+  it "set value of pointer to union" do
+    run('a = 1.1; p = ptr(a); p.value = 1; a.to_i').to_i.should eq(1)
+  end
 end
