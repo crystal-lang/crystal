@@ -224,6 +224,10 @@ module Crystal
         (other.is_a?(UnionType) && other == self)
     end
 
+    def hash
+      1
+    end
+
     def to_s
       "Pointer<#{var.type}>"
     end
