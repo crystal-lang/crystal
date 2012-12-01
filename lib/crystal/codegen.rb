@@ -304,6 +304,10 @@ module Crystal
       @last = @builder.load llvm_self
     end
 
+    def visit_pointer_set_value(node)
+      @builder.store @last, llvm_self
+    end
+
     def visit_if(node)
       is_union = node.else && node.type.is_a?(UnionType)
 

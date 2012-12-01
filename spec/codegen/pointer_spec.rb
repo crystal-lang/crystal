@@ -22,4 +22,25 @@ describe 'Code gen: pointer' do
       value_ptr.value
       )).to_i.should eq(10)
   end
+
+  it "set pointer value" do
+    run('a = 1; b = ptr(a); b.value = 2; a').to_i.should eq(2)
+  end
+
+  it "set pointer of instance var value" do
+    run(%q(
+      class Foo
+        def foo
+          p = ptr(@value)
+          p.value = 1
+        end
+        def value
+          @value
+        end
+      end
+
+      f = Foo.new
+      f.foo
+      f.value)).to_i.should eq(1)
+  end
 end
