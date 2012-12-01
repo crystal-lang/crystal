@@ -796,6 +796,8 @@ module Crystal
     end
 
     def expand_macro(node)
+      return false if !node.obj && node.name == 'super'
+
       scope, untyped_def = node.compute_scope_and_untyped_def
       return false unless untyped_def.is_a?(Macro)
 
