@@ -290,8 +290,13 @@ module Crystal
     end
 
     def visit_pointer_of(node)
-      var = @vars[node.var.name]
-      @last = var[:ptr]
+      if node.var.is_a?(Var)
+        var = @vars[node.var.name]
+        @last = var[:ptr]
+      else
+        var = @type.instance_vars[node.var.name]
+        @last = gep llvm_self, 0, @type.index_of_instance_var(node.var.name)
+      end
       false
     end
 
