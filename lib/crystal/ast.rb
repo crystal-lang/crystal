@@ -908,6 +908,8 @@ module Crystal
       @args = other.args.map { |arg| arg.clone(&block) }
       @body = other.body.clone(&block)
       @receiver = other.receiver.clone(&block)
+    end
+  end
 
   class PointerOf < ASTNode
     attr_accessor :var
