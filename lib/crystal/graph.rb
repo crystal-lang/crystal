@@ -51,6 +51,9 @@ module Crystal
         when ArrayType
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
           add_edges node, type.element_type
+        when PointerType
+          node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
+          add_edges node, type.var.type
         when nil
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => 'Nil'
         else
