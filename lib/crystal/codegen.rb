@@ -301,7 +301,11 @@ module Crystal
     end
 
     def visit_pointer_get_value(node)
-      @last = @builder.load llvm_self
+      if @type.var.type.is_a?(UnionType)
+        @last = llvm_self
+      else
+        @last = @builder.load llvm_self
+      end
     end
 
     def visit_pointer_set_value(node)
