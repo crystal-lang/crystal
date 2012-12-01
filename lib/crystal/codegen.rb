@@ -85,6 +85,12 @@ module Crystal
       @end = true
     end
 
+    def br(*args)
+      return if @end
+      @builder.br *args
+      @end = true
+    end
+
     def position_at_end(*args)
       @builder.position_at_end *args
       @end = false
@@ -186,7 +192,11 @@ module Crystal
     end
 
     def end_visit_return(node)
-      @builder.ret @last
+      if @return_block
+        @builder.br @return_block
+      else
+        @builder.ret @last
+      end
     end
 
     def visit_lib_def(node)
@@ -567,7 +577,7 @@ module Crystal
       end
 
       if node.block
-        @block_context << { block: node.block, vars: @vars, type: @type }
+        @block_context << { block: node.block, vars: @vars, type: @type, return_block: @return_block }
         @vars = {}
 
         if owner && owner.passed_as_self?
@@ -584,11 +594,15 @@ module Crystal
           @builder.store call_args[args_base_index + i], ptr
         end
 
+        @return_block = new_block 'return'
         node.target_def.body.accept self
+        @builder.br @return_block
+        @builder.position_at_end @return_block
 
         old_context = @block_context.pop
         @vars = old_context[:vars]
         @type = old_context[:type]
+        @return_block = old_context[:return_block]
       else
         codegen_call(node.target_def, owner, call_args)
       end
@@ -609,13 +623,16 @@ module Crystal
 
         old_vars = @vars
         old_type = @type
+        old_return_block = @return_block
         @vars = new_vars
         @type = context[:type]
+        @return_block = context[:return_block]
 
         block.accept self
 
         @vars = old_vars
         @type = old_type
+        @return_block = old_return_block
         @block_context << context
       end
       false
