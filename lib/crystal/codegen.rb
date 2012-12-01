@@ -301,14 +301,12 @@ module Crystal
     end
 
     def visit_pointer_malloc(node)
-      size = @vars['size'][:ptr]
-      @last = @builder.array_malloc(node.type.var.llvm_type, LLVM::Int(size))
+      @last = @builder.array_malloc(node.type.var.llvm_type, @vars['size'][:ptr])
     end
 
     def visit_pointer_realloc(node)
-      size = @vars['size'][:ptr]
       casted_ptr = @builder.bit_cast llvm_self, LLVM::Pointer(LLVM::Int8)
-      reallocated_ptr = realloc casted_ptr, size
+      reallocated_ptr = realloc casted_ptr, @vars['size'][:ptr]
       @last = @builder.bit_cast reallocated_ptr, LLVM::Pointer(@type.var.llvm_type)
     end
 
@@ -468,10 +466,10 @@ module Crystal
       obj = @vars['obj']
 
       array = @builder.malloc(node.type.llvm_struct_type)
-      @builder.store LLVM::Int(size), gep(array, 0, 0)
-      @builder.store LLVM::Int(capacity), gep(array, 0, 1)
+      @builder.store size, gep(array, 0, 0)
+      @builder.store capacity, gep(array, 0, 1)
 
-      buffer = @builder.array_malloc(node.type.element_llvm_type, LLVM::Int(capacity))
+      buffer = @builder.array_malloc(node.type.element_llvm_type, capacity)
       @builder.store buffer, gep(array, 0, 2)
 
       case node.type.element_type
