@@ -305,6 +305,13 @@ module Crystal
       @last = @builder.array_malloc(node.type.var.llvm_type, LLVM::Int(size))
     end
 
+    def visit_pointer_realloc(node)
+      size = @vars['size'][:ptr]
+      casted_ptr = @builder.bit_cast llvm_self, LLVM::Pointer(LLVM::Int8)
+      reallocated_ptr = realloc casted_ptr, size
+      @last = @builder.bit_cast reallocated_ptr, LLVM::Pointer(@type.var.llvm_type)
+    end
+
     def visit_pointer_get_value(node)
       if @type.var.type.is_a?(UnionType)
         @last = llvm_self

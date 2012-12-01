@@ -793,6 +793,13 @@ module Crystal
       node.type = mod.pointer.clone
     end
 
+    def visit_pointer_realloc(node)
+      check_var_type 'size', mod.int
+
+      node.type = mod.pointer.clone
+      node.type.var.bind_to @scope.var
+    end
+
     def visit_pointer_get_value(node)
       node.bind_to @scope.var
     end

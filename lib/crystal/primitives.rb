@@ -243,6 +243,7 @@ module Crystal
       pointer.metaclass.defs['malloc'] = Def.new('malloc', [Arg.new('size')], PointerMalloc.new)
       pointer.defs['value'] = Def.new('value', [], PointerGetValue.new)
       pointer.defs['value='] = Def.new('value=', [Arg.new('value')], PointerSetValue.new)
+      pointer.defs['realloc'] = Def.new('realloc', [Arg.new('size')], PointerRealloc.new)
       pointer.defs[:+] = Def.new(:+, [Arg.new('offset')], PointerAdd.new)
     end
 
@@ -358,6 +359,9 @@ module Crystal
   end
 
   class PointerAdd < Primitive
+  end
+
+  class PointerRealloc < Primitive
   end
 
   class Alloc < Primitive
