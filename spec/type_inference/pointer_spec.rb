@@ -25,4 +25,8 @@ describe 'Type inference: pointer' do
       f.foo
       f.value)) { int }
   end
+
+  it "types pointer add" do
+    assert_type('a = 1; ptr(a) + 1') { PointerType.of(int) }
+  end
 end

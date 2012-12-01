@@ -313,6 +313,10 @@ module Crystal
       @last = @fun.params[1]
     end
 
+    def visit_pointer_add(node)
+      @last = gep(llvm_self, @fun.params[1])
+    end
+
     def visit_if(node)
       is_union = node.else && node.type.is_a?(UnionType)
 

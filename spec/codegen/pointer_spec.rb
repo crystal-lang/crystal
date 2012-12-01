@@ -51,4 +51,21 @@ describe 'Code gen: pointer' do
   it "set value of pointer to union" do
     run('a = 1.1; p = ptr(a); p.value = 1; a.to_i').to_i.should eq(1)
   end
+
+  it "increment pointer" do
+    run(%q(
+      class Foo
+        def initialize
+          @a = 1
+          @b = 2
+        end
+        def value
+          p = ptr(@a)
+          p += 1
+          p.value
+        end
+      end
+      Foo.new.value
+    )).to_i.should eq(2)
+  end
 end

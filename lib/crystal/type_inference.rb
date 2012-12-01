@@ -798,6 +798,11 @@ module Crystal
       node.bind_to @vars['value']
     end
 
+    def visit_pointer_add(node)
+      check_var_type 'offset', mod.int
+      node.type = @scope
+    end
+
     def lookup_var(name)
       var = @vars[name]
       unless var
