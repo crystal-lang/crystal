@@ -789,6 +789,10 @@ module Crystal
                       end
     end
 
+    def visit_pointer_malloc(node)
+      node.type = mod.pointer.clone
+    end
+
     def visit_pointer_get_value(node)
       node.bind_to @scope.var
     end

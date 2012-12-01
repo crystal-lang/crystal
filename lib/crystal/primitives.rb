@@ -240,6 +240,7 @@ module Crystal
     end
 
     def define_pointer_primitives
+      pointer.metaclass.defs['malloc'] = Def.new('malloc', [Arg.new('size')], PointerMalloc.new)
       pointer.defs['value'] = Def.new('value', [], PointerGetValue.new)
       pointer.defs['value='] = Def.new('value=', [Arg.new('value')], PointerSetValue.new)
       pointer.defs[:+] = Def.new(:+, [Arg.new('offset')], PointerAdd.new)
@@ -345,6 +346,9 @@ module Crystal
   end
 
   class ArrayLength < Primitive
+  end
+
+  class PointerMalloc < Primitive
   end
 
   class PointerGetValue < Primitive
