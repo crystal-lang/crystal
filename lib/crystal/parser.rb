@@ -806,13 +806,47 @@ module Crystal
     end
 
     def parse_pointer_of
-      next_token
-      args = parse_args
-
       location = @token.location
-      node = PointerOf.new args[0]
-      node.location = location
-      node
+
+      next_token
+
+      check_paren = false
+
+      case @token.type
+      when :SPACE
+        next_token
+      when :'('
+        next_token_skip_space_or_newline
+        check_paren = true
+      else
+        raise "unexpected token: #{@token}"
+      end
+
+      case @token.type
+      when :IDENT
+        unless @def_vars.last.include?(@token.value)
+          raise "argument to ptr must be a variable or instance variable, not a call"
+        end
+
+        var = Var.new(@token.value)
+        var.location = @token.location
+      when :INSTANCE_VAR
+        var = InstanceVar.new(@token.value)
+        var.location = @token.location
+      else
+        raise "argument to ptr must be a variable or instance variable, not #{@token}"
+      end
+
+      if check_paren
+        next_token_skip_space_or_newline
+        check :')'
+      end
+
+      next_token_skip_space
+
+      ptr = PointerOf.new(var)
+      ptr.location = location
+      ptr
     end
 
     ['return', 'next', 'break', 'yield'].each do |keyword|
