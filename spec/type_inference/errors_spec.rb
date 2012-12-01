@@ -161,4 +161,10 @@ describe 'Type inference: errors' do
       infer_type nodes
     }.should raise_error(Crystal::Exception, regex("can't call Lib.bar with types [Int]"))
   end
+
+  it "reports can only get pointer of variable" do
+    lambda {
+      parse %Q(ptr a)
+    }.should raise_error(Crystal::SyntaxException, regex("argument to ptr must be a variable or instance variable, not a call"))
+  end
 end

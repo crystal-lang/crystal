@@ -908,6 +908,24 @@ module Crystal
       @args = other.args.map { |arg| arg.clone(&block) }
       @body = other.body.clone(&block)
       @receiver = other.receiver.clone(&block)
+
+  class PointerOf < ASTNode
+    attr_accessor :var
+
+    def initialize(var)
+      @var = var
+    end
+
+    def accept_children(visitor)
+      var.accept visitor
+    end
+
+    def ==(other)
+      other.is_a?(PointerOf) && other.var == var
+    end
+
+    def clone_from(other, &block)
+      @var = other.var.clone(&block)
     end
   end
 end

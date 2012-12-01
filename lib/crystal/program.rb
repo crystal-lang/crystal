@@ -27,7 +27,8 @@ module Crystal
       @types["Float"] = PrimitiveType.new "Float", numeric, LLVM::Float, 4, self
       @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE, self
       @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4, self
-      @types["Pointer"] = PrimitiveType.new "Pointer", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE, self
+      # @types["Pointer"] = PrimitiveType.new "Pointer", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE, self
+      @types["Pointer"] = PointerType.new value, self
 
       string_array = array.clone
       string_array.element_type = @types["String"]
@@ -86,6 +87,10 @@ module Crystal
 
     def array
       @types["Array"]
+    end
+
+    def pointer
+      @types["Pointer"]
     end
 
     def define_builtins(load_std)

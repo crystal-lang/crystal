@@ -266,4 +266,8 @@ describe Parser do
   it_parses "$foo", Global.new('$foo')
 
   it_parses "macro foo;end", Macro.new('foo', [])
+
+  it_parses "a = 1; ptr(a)", [Assign.new("a".var, 1.int), PointerOf.new('a'.var)]
+  it_parses "a = 1; ptr a", [Assign.new("a".var, 1.int), PointerOf.new('a'.var)]
+  it_parses "ptr(@a)", PointerOf.new('@a'.instance_var)
 end

@@ -18,6 +18,7 @@ module Crystal
       @types = {}
       @unions = {}
       @arrays = {}
+      @pointers = {}
       @stack = []
     end
 
@@ -84,6 +85,29 @@ module Crystal
               unified_type = existing_type
             else
               @arrays[type] = unified_type
+            end
+
+            @stack.pop
+          end
+        end
+
+        unified_type
+      when PointerType
+        unified_type = @pointers[type]
+
+        unless unified_type
+          if index = @stack.index(type)
+            unified_type = @pointers[type] = @stack[index]
+          else
+            @stack.push type
+
+            unified_type = type
+            unified_type.var.set_type unify_type(type.var.type)
+
+            if existing_type = @pointers[type]
+              unified_type = existing_type
+            else
+              @pointers[type] = unified_type
             end
 
             @stack.pop

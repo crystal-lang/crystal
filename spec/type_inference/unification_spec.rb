@@ -61,6 +61,12 @@ describe 'Type inference unification' do
     input[-2].value.type.should equal(input[-1].value.type)
   end
 
+  it "unifies pointer types" do
+    input = parse 'a = 1; b = ptr(a); c = ptr(a)'
+    infer_type input
+    input[1].target.type.should equal(input[2].target.type)
+  end
+
   it "unifies two objects with arrays of unions" do
     mod = Crystal::Program.new
     nodes = Expressions.from [Var.new('a'), Var.new('b')]

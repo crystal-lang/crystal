@@ -13,6 +13,7 @@ module Crystal
       define_symbol_primitives
       define_array_primitives
       define_string_primitives
+      define_pointer_primitives
     end
 
     def define_object_primitives
@@ -238,6 +239,14 @@ module Crystal
       end
     end
 
+    def define_pointer_primitives
+      pointer.metaclass.defs['malloc'] = Def.new('malloc', [Arg.new('size')], PointerMalloc.new)
+      pointer.defs['value'] = Def.new('value', [], PointerGetValue.new)
+      pointer.defs['value='] = Def.new('value=', [Arg.new('value')], PointerSetValue.new)
+      pointer.defs['realloc'] = Def.new('realloc', [Arg.new('size')], PointerRealloc.new)
+      pointer.defs[:+] = Def.new(:+, [Arg.new('offset')], PointerAdd.new)
+    end
+
     def primitive(owner, name, arg_names)
       p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Arg.new(x) })
       p.owner = owner
@@ -338,6 +347,21 @@ module Crystal
   end
 
   class ArrayLength < Primitive
+  end
+
+  class PointerMalloc < Primitive
+  end
+
+  class PointerGetValue < Primitive
+  end
+
+  class PointerSetValue < Primitive
+  end
+
+  class PointerAdd < Primitive
+  end
+
+  class PointerRealloc < Primitive
   end
 
   class Alloc < Primitive

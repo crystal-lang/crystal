@@ -210,6 +210,37 @@ module Crystal
     end
   end
 
+  class PointerType < ClassType
+    attr_accessor :var
+
+    def initialize(parent_type = nil, container = nil, var = Var.new('var'))
+      super("Pointer", parent_type, container)
+      @var = var
+    end
+
+    def ==(other)
+      equal?(other) ||
+        (other.is_a?(PointerType) && var.type == other.var.type) ||
+        (other.is_a?(UnionType) && other == self)
+    end
+
+    def hash
+      1
+    end
+
+    def to_s
+      "Pointer<#{var.type}>"
+    end
+
+    def llvm_type
+      @llvm_type ||= LLVM::Pointer(var.type.llvm_type)
+    end
+
+    def llvm_name
+      @llvm_name ||= "Pointer<#{var.type.llvm_name}>"
+    end
+  end
+
   class ArrayType < ClassType
     attr_accessor :vars
     @@id = 0

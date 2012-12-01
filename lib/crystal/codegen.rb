@@ -289,6 +289,44 @@ module Crystal
       end
     end
 
+    def visit_pointer_of(node)
+      if node.var.is_a?(Var)
+        var = @vars[node.var.name]
+        @last = var[:ptr]
+      else
+        var = @type.instance_vars[node.var.name]
+        @last = gep llvm_self, 0, @type.index_of_instance_var(node.var.name)
+      end
+      false
+    end
+
+    def visit_pointer_malloc(node)
+      @last = @builder.array_malloc(node.type.var.llvm_type, @vars['size'][:ptr])
+    end
+
+    def visit_pointer_realloc(node)
+      casted_ptr = @builder.bit_cast llvm_self, LLVM::Pointer(LLVM::Int8)
+      reallocated_ptr = realloc casted_ptr, @vars['size'][:ptr]
+      @last = @builder.bit_cast reallocated_ptr, LLVM::Pointer(@type.var.llvm_type)
+    end
+
+    def visit_pointer_get_value(node)
+      if @type.var.type.is_a?(UnionType)
+        @last = llvm_self
+      else
+        @last = @builder.load llvm_self
+      end
+    end
+
+    def visit_pointer_set_value(node)
+      codegen_assign llvm_self, @type.var.type, node.type, @fun.params[1]
+      @last = @fun.params[1]
+    end
+
+    def visit_pointer_add(node)
+      @last = gep(llvm_self, @fun.params[1])
+    end
+
     def visit_if(node)
       is_union = node.else && node.type.is_a?(UnionType)
 
@@ -432,10 +470,10 @@ module Crystal
       obj = @vars['obj']
 
       array = @builder.malloc(node.type.llvm_struct_type)
-      @builder.store LLVM::Int(size), gep(array, 0, 0)
-      @builder.store LLVM::Int(capacity), gep(array, 0, 1)
+      @builder.store size, gep(array, 0, 0)
+      @builder.store capacity, gep(array, 0, 1)
 
-      buffer = @builder.array_malloc(node.type.element_llvm_type, LLVM::Int(capacity))
+      buffer = @builder.array_malloc(node.type.element_llvm_type, capacity)
       @builder.store buffer, gep(array, 0, 2)
 
       case node.type.element_type

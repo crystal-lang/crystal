@@ -361,6 +361,13 @@ module Crystal
       false
     end
 
+    def visit_pointer_of(node)
+      @str << 'ptr('
+      node.var.accept(self)
+      @str << ')'
+      false
+    end
+
     ['return', 'next', 'break', 'yield'].each do |keyword|
       class_eval %Q(
         def visit_#{keyword}(node)

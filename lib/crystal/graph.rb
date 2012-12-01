@@ -60,11 +60,13 @@ module Crystal
       node
     end
 
-    def add_edges(node, type, label = '')
+    def add_edges(node, type, label = '', style = 'solid')
       if type.is_a?(UnionType)
-        type.types.each { |t| add_edges node, t, label }
+        type.types.each { |t| add_edges node, t, label, style }
+      elsif type.is_a?(PointerType)
+        add_edges node, type.var.type, label, 'dashed'
       else
-        @g.add_edges node, type_node(type), :label => label
+        @g.add_edges node, type_node(type), :label => label, :style => style
       end
     end
   end
