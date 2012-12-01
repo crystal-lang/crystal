@@ -227,6 +227,14 @@ module Crystal
     def to_s
       "Pointer<#{var.type}>"
     end
+
+    def llvm_type
+      @llvm_type ||= LLVM::Pointer(var.type.llvm_type)
+    end
+
+    def llvm_name
+      @llvm_name ||= "Pointer<#{var.type.llvm_name}>"
+    end
   end
 
   class ArrayType < ClassType

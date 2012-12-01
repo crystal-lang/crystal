@@ -289,6 +289,16 @@ module Crystal
       end
     end
 
+    def visit_pointer_of(node)
+      var = @vars[node.var.name]
+      @last = var[:ptr]
+      false
+    end
+
+    def visit_pointer_get_value(node)
+      @last = @builder.load llvm_self
+    end
+
     def visit_if(node)
       is_union = node.else && node.type.is_a?(UnionType)
 
