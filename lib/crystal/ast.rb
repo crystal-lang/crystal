@@ -876,4 +876,38 @@ module Crystal
       @name = other.name
     end
   end
+
+  class Macro < ASTNode
+    attr_accessor :receiver
+    attr_accessor :name
+    attr_accessor :args
+    attr_accessor :body
+
+    def initialize(name, args, body = nil, receiver = nil)
+      @name = name
+      @args = args
+      @args.each { |arg| arg.parent = self } if @args
+      @body = Expressions.from body
+      @body.parent = self if @body
+      @receiver = receiver
+      @receiver.parent = self if @receiver
+    end
+
+    def accept_children(visitor)
+      receiver.accept visitor if receiver
+      args.each { |arg| arg.accept visitor }
+      body.accept visitor if body
+    end
+
+    def ==(other)
+      other.is_a?(Macro) && other.receiver == receiver && other.name == name && other.args == args && other.body == body
+    end
+
+    def clone_from(other, &block)
+      @name = other.name
+      @args = other.args.map { |arg| arg.clone(&block) }
+      @body = other.body.clone(&block)
+      @receiver = other.receiver.clone(&block)
+    end
+  end
 end

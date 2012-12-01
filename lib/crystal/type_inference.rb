@@ -2,7 +2,7 @@ require_relative 'ast'
 
 module Crystal
   def infer_type(node, options = {})
-    mod = Crystal::Program.new options
+    mod = options[:mod] || Crystal::Program.new(options)
     if node
       if options[:stats]
         infer_type_with_stats node, mod
@@ -91,6 +91,7 @@ module Crystal
 
   class Call
     attr_accessor :target_def
+    attr_accessor :target_macro
     attr_accessor :mod
     attr_accessor :scope
     attr_accessor :parent_visitor
@@ -202,7 +203,7 @@ module Crystal
     end
 
     def compute_scope_and_untyped_def
-      if obj
+      if obj && obj.type
         return [obj.type, lookup_method(obj.type, name, true)]
       end
 
@@ -440,6 +441,21 @@ module Crystal
     end
 
     def visit_def(node)
+      if node.receiver
+        # TODO: hack
+        if node.receiver.is_a?(Var) && node.receiver.name == 'self'
+          target_type = current_type.metaclass
+        else
+          target_type = lookup_ident_type(node.receiver).metaclass
+        end
+      else
+        target_type = current_type
+      end
+      target_type.defs[node.name] = node
+      false
+    end
+
+    def visit_macro(node)
       if node.receiver
         # TODO: hack
         if node.receiver.is_a?(Var) && node.receiver.name == 'self'
@@ -758,6 +774,11 @@ module Crystal
       node.mod = mod
       node.scope = @scope
       node.parent_visitor = self
+
+      if expand_macro(node)
+        return false
+      end
+
       node.args.each_with_index do |arg, index|
         arg.add_observer node, :update_input
       end
@@ -772,6 +793,36 @@ module Crystal
       end
 
       false
+    end
+
+    def expand_macro(node)
+      scope, untyped_def = node.compute_scope_and_untyped_def
+      return false unless untyped_def.is_a?(Macro)
+
+      typed_def = Def.new(untyped_def.name, untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
+
+      macro_nodes = Expressions.new [typed_def, node]
+      Crystal.infer_type macro_nodes, mod: mod
+
+      if macro_nodes.type != mod.string
+        node.raise "macro return value must be a String, not #{macro_nodes.type}"
+      end
+
+      macro_llvm_mod = Crystal.build macro_nodes, mod
+
+      macro_engine = LLVM::JITCompiler.new macro_llvm_mod
+      macro_value = macro_engine.run_function macro_llvm_mod.functions["crystal_main"], 0, nil
+
+      generated_source = macro_value.to_ptr.read_pointer.read_string
+      parser = Parser.new(generated_source)
+      generated_nodes = parser.parse
+
+      generated_nodes.accept self
+
+      node.target_macro = generated_nodes
+      node.type = generated_nodes.type
+
+      true
     end
 
     def end_visit_return(node)

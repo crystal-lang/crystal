@@ -348,6 +348,10 @@ module Crystal
       false
     end
 
+    def visit_macro(node)
+      false
+    end
+
     def visit_class_def(node)
       false
     end
@@ -545,6 +549,11 @@ module Crystal
     end
 
     def visit_call(node)
+      if node.target_macro
+        node.target_macro.accept self
+        return false
+      end
+
       if node.target_def.is_a?(Dispatch)
         codegen_dispatch(node)
         return false
