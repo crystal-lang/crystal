@@ -782,11 +782,20 @@ module Crystal
 
     def end_visit_pointer_of(node)
       node.type = mod.pointer.clone
-      node.type.var.bind_to node.var
+      node.type.var = if node.var.is_a?(Var)
+                        lookup_var node.var.name
+                      else
+                        @scope.lookup_instance_var node.var.name
+                      end
     end
 
     def visit_pointer_get_value(node)
       node.bind_to @scope.var
+    end
+
+    def visit_pointer_set_value(node)
+      @scope.var.bind_to @vars['value']
+      node.bind_to @vars['value']
     end
 
     def lookup_var(name)

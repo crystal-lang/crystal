@@ -241,6 +241,7 @@ module Crystal
 
     def define_pointer_primitives
       pointer.defs['value'] = Def.new('value', [], PointerGetValue.new)
+      pointer.defs['value='] = Def.new('value=', [Arg.new('value')], PointerSetValue.new)
     end
 
     def primitive(owner, name, arg_names)
@@ -346,6 +347,9 @@ module Crystal
   end
 
   class PointerGetValue < Primitive
+  end
+
+  class PointerSetValue < Primitive
   end
 
   class Alloc < Primitive
