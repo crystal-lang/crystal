@@ -12,7 +12,6 @@ module Crystal
       define_float_primitives
       define_symbol_primitives
       define_array_primitives
-      define_string_primitives
       define_pointer_primitives
     end
 
@@ -43,7 +42,7 @@ module Crystal
         buffer = b.array_malloc(char.llvm_type, LLVM::Int(2))
         b.store f.params[0], b.gep(buffer, LLVM::Int(0))
         b.store LLVM::Int8.from_i(0), b.gep(buffer, LLVM::Int(1))
-        buffer
+        b.bit_cast buffer, string.llvm_type
       end
 
       no_args_primitive(char, 'ord', int) { |b, f| b.zext(f.params[0], int.llvm_type) }
@@ -57,7 +56,7 @@ module Crystal
 
     def define_int_primitives
       no_args_primitive(int, 'to_s', string) do |b, f, llvm_mod|
-        buffer = b.array_malloc(char.llvm_type, LLVM::Int(12))
+        buffer = b.bit_cast(b.array_malloc(char.llvm_type, LLVM::Int(12)), string.llvm_type)
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%d"), f.params[0]
         buffer
       end
@@ -218,25 +217,6 @@ module Crystal
       array.defs[:<<] = Def.new(:<<, [Arg.new('value')], ArrayPush.new)
       array.defs[:[]=] = Def.new(:[]=, [Arg.new('index'), Arg.new('value')], ArraySet.new)
       array.defs[:[]] = Def.new(:[], [Arg.new('index')], ArrayGet.new)
-    end
-
-    def define_string_primitives
-      singleton(string, :+, {'other' => string}, string) do |b, f, llvm_mod|
-        l1 = b.call strlen(llvm_mod), f.params[0]
-        l2 = b.call strlen(llvm_mod), f.params[1]
-        new_string = b.array_malloc LLVM::Int8, b.add(b.add(l1, l2), LLVM::Int(1))
-        b.call strcpy(llvm_mod), new_string, f.params[0]
-        b.call strcat(llvm_mod), new_string, f.params[1]
-        new_string
-      end
-
-      singleton(string, :[], {'index' => int}, char) do |b, f|
-        b.load(b.gep f.params[0], f.params[1])
-      end
-
-      no_args_primitive(string, 'length', int) do |b, f, llvm_mod|
-        b.call strlen(llvm_mod), f.params[0]
-      end
     end
 
     def define_pointer_primitives

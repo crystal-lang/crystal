@@ -25,13 +25,14 @@ module Crystal
       @types["Int"] = PrimitiveType.new "Int", numeric, LLVM::Int32, 4, self
       @types["Long"] = PrimitiveType.new "Long", numeric, LLVM::Int64, 8, self
       @types["Float"] = PrimitiveType.new "Float", numeric, LLVM::Float, 4, self
-      @types["String"] = PrimitiveType.new "String", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE, self
       @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4, self
-      # @types["Pointer"] = PrimitiveType.new "Pointer", value, LLVM::Pointer(char.llvm_type), POINTER_SIZE, self
       @types["Pointer"] = PointerType.new value, self
 
+      @types["String"] = ObjectType.new "String", object, self
+      string.lookup_instance_var('@c').type = char
+
       string_array = array.clone
-      string_array.element_type = @types["String"]
+      string_array.element_type = string
       @types["ARGV"] = Const.new "ARGV", Crystal::ARGV.new(string_array), self
 
       @symbols = Set.new

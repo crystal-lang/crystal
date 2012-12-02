@@ -134,7 +134,7 @@ module Crystal
       symbol_table_values = []
       mod.symbols.to_a.sort.each_with_index do |sym, index|
         @symbols[sym] = index
-        symbol_table_values << @builder.global_string_pointer(sym, sym)
+        symbol_table_values << @builder.bit_cast(@builder.global_string_pointer(sym, sym), mod.string.llvm_type)
       end
 
       symbol_table = @llvm_mod.globals.add(LLVM::Array(mod.string.llvm_type, symbol_table_values.count), "symbol_table")
@@ -176,7 +176,7 @@ module Crystal
     end
 
     def visit_string_literal(node)
-      @last = @builder.global_string_pointer(node.value)
+      @last = @builder.bit_cast(@builder.global_string_pointer(node.value), node.type.llvm_type)
     end
 
     def visit_symbol_literal(node)

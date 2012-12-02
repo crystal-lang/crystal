@@ -22,15 +22,15 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens string' do
-    run('"foo".length').to_i.should eq("foo".size)
+    run('"foo"').to_ptr.read_pointer.read_string.should eq("foo")
   end
 
   it 'codegens string concatenation' do
-    run('("foo" + "bar").length').to_i.should eq(6)
+    run('("foo" + "bar").length', load_std: 'string').to_i.should eq(6)
   end
 
   it 'codegens string indexer' do
-    run('"foo"[1]').to_i.should eq(?o.ord)
+    run('"foo"[1]', load_std: ['string', 'pointer']).to_i.should eq(?o.ord)
   end
 
   it 'codegens symbol' do
