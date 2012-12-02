@@ -37,4 +37,12 @@ describe 'Type inference: pointer' do
   it "types realloc" do
     assert_type('p = Pointer.malloc(10); p.value = 1; x = p.realloc(20); x') { PointerType.of(int) }
   end
+
+  it "type pointer casting" do
+    assert_type('a = 1; ptr(a).as(Char)') { PointerType.of(char) }
+  end
+
+  it "type pointer casting of object type" do
+    assert_type('a = 1; ptr(a).as(String)') { string }
+  end
 end

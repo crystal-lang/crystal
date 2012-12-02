@@ -434,6 +434,10 @@ module Crystal
     def to_s
       name
     end
+
+    def llvm_name
+      name
+    end
   end
 
   class LibType < ModuleType

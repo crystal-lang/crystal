@@ -2,8 +2,8 @@ lib C
   fun atoi(str : ptr Char) : Int
   fun strncmp(s1 : ptr Char, s2 : ptr Char, n : Int) : Int
   fun strlen(s : ptr Char) : Int
-  fun strcpy(dest : ptr Char, src : ptr Char) : String
-  fun strcat(dest : ptr Char, src : ptr Char) : String
+  fun strcpy(dest : ptr Char, src : ptr Char) : ptr Char
+  fun strcat(dest : ptr Char, src : ptr Char) : ptr Char
   fun strcmp(s1 : ptr Char, s2 : ptr Char) : Int
 end
 
@@ -21,10 +21,10 @@ class String
   end
 
   def +(other)
-    new_string_buffer = Pointer.malloc(length + other.length + 1)
-    new_string = C.strcpy(new_string_buffer, ptr(@c))
+    new_string_buffer = Pointer.malloc(length + other.length + 1).as(Char)
+    C.strcpy(new_string_buffer, ptr(@c))
     C.strcat(new_string_buffer, other.cstr)
-    new_string
+    new_string_buffer.as(String)
   end
 
   def length

@@ -95,6 +95,14 @@ module Crystal
       @types["Pointer"]
     end
 
+    def void_pointer
+      @void_pointer ||= begin
+        p = pointer.clone
+        p.var.type = @types["Void"]
+        p
+      end
+    end
+
     def define_builtins(load_std)
       if load_std == true
         Dir[File.expand_path("../../../std/**/*.cr",  __FILE__)].each do |file|

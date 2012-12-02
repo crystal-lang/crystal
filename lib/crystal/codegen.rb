@@ -327,6 +327,10 @@ module Crystal
       @last = gep(llvm_self, @fun.params[1])
     end
 
+    def visit_pointer_cast(node)
+      @last = @builder.bit_cast(@fun.params[0], node.type.llvm_type)
+    end
+
     def visit_if(node)
       is_union = node.else && node.type.is_a?(UnionType)
 
@@ -620,6 +624,7 @@ module Crystal
       end
 
       node.args.each do |arg|
+        next if arg.type.is_a?(Metaclass)
         arg.accept self
         call_args << @last
       end
@@ -719,7 +724,7 @@ module Crystal
         @type = self_type
         args << Var.new("self", self_type)
       end
-      args += target_def.args
+      args += target_def.args.select { |arg| !arg.type.is_a?(Metaclass) }
 
       @fun = @funs[mangled_name] = @llvm_mod.functions.add(
         mangled_name,

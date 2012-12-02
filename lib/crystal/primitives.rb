@@ -225,6 +225,7 @@ module Crystal
       pointer.defs['value='] = Def.new('value=', [Arg.new('value')], PointerSetValue.new)
       pointer.defs['realloc'] = Def.new('realloc', [Arg.new('size')], PointerRealloc.new)
       pointer.defs[:+] = Def.new(:+, [Arg.new('offset')], PointerAdd.new)
+      pointer.defs['as'] = Def.new('as', [Arg.new('type')], PointerCast.new)
     end
 
     def primitive(owner, name, arg_names)
@@ -330,6 +331,9 @@ module Crystal
   end
 
   class PointerRealloc < Primitive
+  end
+
+  class PointerCast < Primitive
   end
 
   class Alloc < Primitive

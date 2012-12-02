@@ -872,7 +872,7 @@ module Crystal
     end
 
     def visit_pointer_malloc(node)
-      node.type = mod.pointer.clone
+      node.type = mod.void_pointer
     end
 
     def visit_pointer_realloc(node)
@@ -894,6 +894,17 @@ module Crystal
     def visit_pointer_add(node)
       check_var_type 'offset', mod.int
       node.type = @scope
+    end
+
+    def visit_pointer_cast(node)
+      type = @vars['type'].type.instance_type
+      if type.is_a?(ObjectType)
+        node.type = type
+      else
+        pointer_type = mod.pointer.clone
+        pointer_type.var.type = type
+        node.type = pointer_type
+      end
     end
 
     def lookup_var(name)

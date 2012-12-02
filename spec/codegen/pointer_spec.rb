@@ -76,4 +76,8 @@ describe 'Code gen: pointer' do
   it "codegens realloc" do
     run(%q(p = Pointer.malloc(10); p.value = 1; x = p.realloc(20); x.value + 1)).to_i.should eq(2)
   end
+
+  it "codegens pointer cast" do
+    run('a = 1L; ptr(a).as(Int).value').to_i.should eq(1)
+  end
 end

@@ -26,7 +26,7 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens string concatenation' do
-    run('("foo" + "bar").length', load_std: 'string').to_i.should eq(6)
+    run('"foo" + "bar"', load_std: 'string').to_ptr.read_pointer.read_string.should eq("foobar")
   end
 
   it 'codegens string indexer' do
