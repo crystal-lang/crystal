@@ -1031,9 +1031,15 @@ module Crystal
           check :':'
           next_token_skip_space_or_newline
 
+          options = {}
+          if @token.type == :IDENT && @token.value == :ptr
+            options[:ptr] = true
+            next_token_skip_space_or_newline
+          end
+
           arg_type = parse_ident
           skip_space_or_newline
-          args << FunDefArg.new(arg_name, arg_type)
+          args << FunDefArg.new(arg_name, arg_type, options)
 
           if @token.type == :','
             next_token_skip_space_or_newline

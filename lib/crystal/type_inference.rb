@@ -536,9 +536,16 @@ module Crystal
     end
 
     def end_visit_fun_def(node)
-      current_type.fun node.name,
-        node.args.map { |arg| [arg.name, arg.type.type.instance_type] },
-        (node.return_type ? node.return_type.type.instance_type : nil)
+      args = node.args.map do |arg|
+        if arg.options[:ptr]
+          type = mod.pointer.clone
+          type.var.type = arg.type.type.instance_type
+        else
+          type = arg.type.type.instance_type
+        end
+        [arg.name, type]
+      end
+      current_type.fun node.name, args, (node.return_type ? node.return_type.type.instance_type : nil)
     end
 
     def end_visit_type_def(node)
