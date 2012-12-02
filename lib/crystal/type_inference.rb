@@ -862,12 +862,13 @@ module Crystal
     end
 
     def end_visit_pointer_of(node)
-      node.type = mod.pointer.clone
-      node.type.var = if node.var.is_a?(Var)
-                        lookup_var node.var.name
-                      else
-                        @scope.lookup_instance_var node.var.name
-                      end
+      ptr = mod.pointer.clone
+      ptr.var = if node.var.is_a?(Var)
+                  lookup_var node.var.name
+                else
+                  @scope.lookup_instance_var node.var.name
+                end
+      node.type = ptr
     end
 
     def visit_pointer_malloc(node)

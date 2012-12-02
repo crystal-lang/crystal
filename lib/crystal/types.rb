@@ -228,6 +228,17 @@ module Crystal
       1
     end
 
+    def clone(types_context = {}, nodes_context = {})
+      pointer = types_context[object_id] and return pointer
+
+      cloned_var = var.clone(nodes_context)
+
+      pointer = types_context[object_id] = PointerType.new @parent_type, @container, cloned_var
+      pointer.var.type = var.type.clone(types_context, nodes_context)
+      pointer.defs = defs
+      pointer
+    end
+
     def to_s
       "Pointer<#{var.type}>"
     end
