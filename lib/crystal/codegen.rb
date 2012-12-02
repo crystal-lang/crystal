@@ -591,7 +591,8 @@ module Crystal
 
       # Pointer to the second element
       argv_ptr = gep(@argv, 1)
-      @builder.store argv_ptr, gep(array, 0, 2)
+      argv_ptr_as_string = @builder.bit_cast(argv_ptr, LLVM::Pointer(@mod.string.llvm_type))
+      @builder.store argv_ptr_as_string, gep(array, 0, 2)
 
       @last = array
     end
