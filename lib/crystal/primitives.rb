@@ -256,18 +256,6 @@ module Crystal
       llvm_mod.functions['sprintf'] || llvm_mod.functions.add('sprintf', [string.llvm_type], int.llvm_type, varargs: true)
     end
 
-    def strcpy(llvm_mod)
-      llvm_mod.functions['strcpy'] || llvm_mod.functions.add('strcpy', [string.llvm_type, string.llvm_type], string.llvm_type)
-    end
-
-    def strcat(llvm_mod)
-      llvm_mod.functions['strcat'] || llvm_mod.functions.add('strcat', [string.llvm_type, string.llvm_type], string.llvm_type)
-    end
-
-    def strlen(llvm_mod)
-      llvm_mod.functions['strlen'] || llvm_mod.functions.add('strlen', [string.llvm_type], int.llvm_type)
-    end
-
     def realloc(llvm_mod)
       llvm_mod.functions['realloc'] || llvm_mod.functions.add('realloc', [LLVM::Pointer(LLVM::Int8), LLVM::Int], LLVM::Pointer(LLVM::Int8))
     end
