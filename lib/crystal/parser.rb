@@ -1068,10 +1068,16 @@ module Crystal
       check :':'
       next_token_skip_space_or_newline
 
+      ptr = false
+      if @token.type == :IDENT && @token.value == :ptr
+        ptr = true
+        next_token_skip_space_or_newline
+      end
+
       type = parse_ident
       skip_statement_end
 
-      TypeDef.new name, type, name_column_number
+      TypeDef.new name, type, ptr, name_column_number
     end
 
     def parse_struct_def

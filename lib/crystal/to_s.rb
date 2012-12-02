@@ -342,6 +342,7 @@ module Crystal
       @str << 'type '
       @str << node.name
       @str << ' : '
+      @str << 'ptr ' if node.ptr
       node.type.accept self
       false
     end

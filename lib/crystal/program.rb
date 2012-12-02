@@ -19,6 +19,7 @@ module Crystal
       array = @types["Array"] = ArrayType.new object, self
       array.include enumerable
 
+      @types["Void"] = PrimitiveType.new "Void", value, LLVM::Int8, 1, self
       @types["Nil"] = PrimitiveType.new "Nil", value, LLVM::Int1, 1, self
       @types["Bool"] = PrimitiveType.new "Bool", value, LLVM::Int1, 1, self
       @types["Char"] = PrimitiveType.new "Char", value, LLVM::Int8, 1, self

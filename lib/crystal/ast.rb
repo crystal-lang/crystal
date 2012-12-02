@@ -823,11 +823,14 @@ module Crystal
   class TypeDef < ASTNode
     attr_accessor :name
     attr_accessor :type
+    attr_accessor :ptr
     attr_accessor :name_column_number
 
-    def initialize(name, type, name_column_number = nil)
+    def initialize(name, type, ptr = false, name_column_number = nil)
       @name = name
       @type = type
+      @ptr = ptr
+
       @name_column_number = name_column_number
     end
 
@@ -836,7 +839,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(TypeDef) && other.name == name && other.type == type
+      other.is_a?(TypeDef) && other.name == name && other.type == type && other.ptr == ptr
     end
   end
 

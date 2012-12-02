@@ -1,5 +1,5 @@
 lib C
-  type File : Pointer
+  type File : ptr Void
 
   fun fopen(filename : String, mode : String) : File
   fun fputs(str : String, file : File) : Int

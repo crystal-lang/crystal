@@ -537,12 +537,7 @@ module Crystal
 
     def end_visit_fun_def(node)
       args = node.args.map do |arg|
-        if arg.options[:ptr]
-          type = mod.pointer.clone
-          type.var.type = arg.type.type.instance_type
-        else
-          type = arg.type.type.instance_type
-        end
+        type = maybe_ptr_type(arg.type.type.instance_type, arg.options[:ptr])
         [arg.name, type]
       end
       current_type.fun node.name, args, (node.return_type ? node.return_type.type.instance_type : nil)
@@ -553,7 +548,9 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
-        current_type.types[node.name] = TypeDefType.new node.name, node.type.type.instance_type, current_type
+        typed_def_type = maybe_ptr_type(node.type.type.instance_type, node.ptr)
+
+        current_type.types[node.name] = TypeDefType.new node.name, typed_def_type, current_type
       end
     end
 
@@ -564,6 +561,15 @@ module Crystal
       else
         current_type.types[node.name] = StructType.new(node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) }, current_type)
       end
+    end
+
+    def maybe_ptr_type(type, ptr)
+      if ptr
+        ptr_type = mod.pointer.clone
+        ptr_type.var.type = type
+        type = ptr_type
+      end
+      type
     end
 
     def visit_struct_alloc(node)
