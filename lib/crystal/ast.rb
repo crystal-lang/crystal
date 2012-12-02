@@ -781,13 +781,15 @@ module Crystal
     attr_accessor :name
     attr_accessor :args
     attr_accessor :return_type
+    attr_accessor :ptr
 
-    def initialize(name, args = [], return_type = nil)
+    def initialize(name, args = [], return_type = nil, ptr = false)
       @name = name
       @args = args
       @args.each { |arg| arg.parent = self }
       @return_type = return_type
       @return_type.parent = self if @return_type
+      @ptr = ptr
     end
 
     def accept_children(visitor)
@@ -796,7 +798,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(FunDef) && other.name == name && other.args == args && other.return_type == return_type
+      other.is_a?(FunDef) && other.name == name && other.args == args && other.return_type == return_type && other.ptr == ptr
     end
   end
 

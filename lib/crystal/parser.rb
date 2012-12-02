@@ -1048,13 +1048,21 @@ module Crystal
         next_token_skip_statement_end
       end
 
+      ptr = false
+
       if @token.type == :':'
         next_token_skip_space_or_newline
+
+        if @token.type == :IDENT && @token.value == :ptr
+          ptr = true
+          next_token_skip_space_or_newline
+        end
+
         return_type = parse_ident
         skip_statement_end
       end
 
-      FunDef.new name, args, return_type
+      FunDef.new name, args, return_type, ptr
     end
 
     def parse_type_def

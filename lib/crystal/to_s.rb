@@ -325,6 +325,7 @@ module Crystal
       end
       if node.return_type
         @str << ' : '
+        @str << 'ptr ' if node.ptr
         node.return_type.accept self
       end
       false
