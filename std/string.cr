@@ -4,6 +4,7 @@ lib C
   fun strlen(s : ptr Char) : Int
   fun strcpy(dest : ptr Char, src : ptr Char) : String
   fun strcat(dest : ptr Char, src : ptr Char) : String
+  fun strcmp(s1 : ptr Char, s2 : ptr Char) : Int
 end
 
 class String
@@ -16,15 +17,7 @@ class String
   end
 
   def ==(other)
-    if length == other.length
-      i = 0
-      while i < length && self[i] == other[i]
-        i += 1
-      end
-      i == length
-    else
-      false
-    end
+    C.strcmp(ptr(@c), other.cstr) == 0
   end
 
   def +(other)
