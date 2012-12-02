@@ -1,14 +1,14 @@
 lib C
-  fun atoi(str : String) : Int
-  fun strncmp(s1 : String, s2 : String, n : Int) : Int
-  fun strlen(s : String) : Int
-  fun strcpy(dest : ptr Char, src : String) : String
-  fun strcat(dest : ptr Char, src : String) : String
+  fun atoi(str : ptr Char) : Int
+  fun strncmp(s1 : ptr Char, s2 : ptr Char, n : Int) : Int
+  fun strlen(s : ptr Char) : Int
+  fun strcpy(dest : ptr Char, src : ptr Char) : String
+  fun strcat(dest : ptr Char, src : ptr Char) : String
 end
 
 class String
   def to_i
-    C.atoi self
+    C.atoi ptr(@c)
   end
 
   def [](index)
@@ -16,32 +16,33 @@ class String
   end
 
   def ==(other)
-    if self.length == other.length
+    if length == other.length
       i = 0
-      while i < self.length && self[i] == other[i]
+      while i < length && self[i] == other[i]
         i += 1
       end
-      i == self.length
+      i == length
     else
       false
     end
   end
 
   def +(other)
-    new_string_buffer = Pointer.malloc(self.length + other.length + 1)
-    new_string = C.strcpy(new_string_buffer, self)
-    C.strcat(new_string_buffer, other)
+    new_string_buffer = Pointer.malloc(length + other.length + 1)
+    new_string = C.strcpy(new_string_buffer, ptr(@c))
+    C.strcat(new_string_buffer, other.cstr)
     new_string
   end
 
   def length
-    C.strlen self
+    C.strlen ptr(@c)
   end
 
   def chars
     p = ptr(@c)
-    (0...length).each do |i|
-      yield p[i]
+    length.times do
+      yield p.value
+      p += 1
     end
   end
 
@@ -50,10 +51,14 @@ class String
   end
 
   def starts_with?(str)
-    C.strncmp(self, str, str.length) == 0
+    C.strncmp(cstr, str.cstr, str.length) == 0
   end
 
   def to_s
     self
+  end
+
+  def cstr
+    ptr(@c)
   end
 end
