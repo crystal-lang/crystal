@@ -239,20 +239,20 @@ module Crystal
 
       case node.target
       when InstanceVar
-        ivar = @type.instance_vars[node.target.name]
-        ptr = gep llvm_self, 0, @type.index_of_instance_var(node.target.name)
+        ivar = @type.instance_vars[node.target.name.to_s]
+        ptr = gep llvm_self, 0, @type.index_of_instance_var(node.target.name.to_s)
       when Global
-        ptr = @llvm_mod.globals[node.target.name]
+        ptr = @llvm_mod.globals[node.target.name.to_s]
         unless ptr
-          ptr = @llvm_mod.globals.add(node.target.llvm_type, node.target.name)
+          ptr = @llvm_mod.globals.add(node.target.llvm_type, node.target.name.to_s)
           ptr.linkage = :internal
           ptr.initializer = LLVM::Constant.null(node.target.llvm_type)
         end
       else
-        var = @vars[node.target.name]
+        var = @vars[node.target.name.to_s]
         unless var
-          var = @vars[node.target.name] = {
-            ptr: alloca(node.target.llvm_type, node.target.name),
+          var = @vars[node.target.name.to_s] = {
+            ptr: alloca(node.target.llvm_type, node.target.name.to_s),
             type: node.target.type
           }
         end

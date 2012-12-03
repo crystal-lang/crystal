@@ -1234,11 +1234,12 @@ module Crystal
 
     def push_var(*vars)
       vars.each do |var|
-        @def_vars.last.add var.name
+        @def_vars.last.add var.name.to_s
       end
     end
 
     def is_var?(name)
+      name = name.to_s
       name == 'self' || @def_vars.last.include?(name)
     end
 

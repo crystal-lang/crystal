@@ -423,7 +423,7 @@ module Crystal
     attr_accessor :name
 
     def initialize(name, type = nil)
-      @name = name
+      @name = name.to_s
       @type = type
     end
 
