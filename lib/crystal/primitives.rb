@@ -138,7 +138,7 @@ module Crystal
     def define_long_primitives
       no_args_primitive(long, 'to_i', int) { |b, f| b.trunc(f.params[0], int.llvm_type) }
       no_args_primitive(long, 'to_s', string) do |b, f, llvm_mod|
-        buffer = b.array_malloc(char.llvm_type, LLVM::Int(22))
+        buffer = b.bit_cast(b.array_malloc(char.llvm_type, LLVM::Int(22)), string.llvm_type)
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%ld"), f.params[0]
         buffer
       end
@@ -149,7 +149,7 @@ module Crystal
 
     def define_float_primitives
       no_args_primitive(float, 'to_s', string) do |b, f, llvm_mod|
-        buffer = b.array_malloc(char.llvm_type, LLVM::Int(12))
+        buffer = b.bit_cast(b.array_malloc(char.llvm_type, LLVM::Int(12)), string.llvm_type)
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%g"), b.fp_ext(f.params[0], LLVM::Double)
         buffer
       end
