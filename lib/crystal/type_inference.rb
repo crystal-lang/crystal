@@ -786,7 +786,7 @@ module Crystal
 
     def visit_call(node)
       node.mod = mod
-      node.scope = @scope
+      node.scope = @scope || (@types.last ? @types.last.metaclass : nil)
       node.parent_visitor = self
 
       if expand_macro(node)
@@ -815,9 +815,10 @@ module Crystal
       scope, untyped_def = node.compute_scope_and_untyped_def
       return false unless untyped_def.is_a?(Macro)
 
-      typed_def = Def.new(untyped_def.name, untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
+      typed_def = Def.new("", untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
+      macro_call = Call.new(nil, "", node.args.map(&:to_crystal))
+      macro_nodes = Expressions.new [typed_def, macro_call]
 
-      macro_nodes = Expressions.new [typed_def, node]
       Crystal.infer_type macro_nodes, mod: mod
 
       if macro_nodes.type != mod.string
@@ -833,7 +834,7 @@ module Crystal
       generated_source = macro_value.to_ptr.read_pointer.read_string
 
       begin
-        parser = Parser.new(generated_source)
+        parser = Parser.new(generated_source, [Set.new(@vars.keys)])
         generated_nodes = parser.parse
       rescue Crystal::SyntaxException => ex
         node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{'=' * 80}\n#{'-' * 80}\n#{number_lines generated_source}\n#{'-' * 80}\n#{ex.to_s(generated_source)}#{'=' * 80}"

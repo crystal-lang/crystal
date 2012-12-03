@@ -419,6 +419,10 @@ module Crystal
       @type = type
     end
 
+    def parents
+      type.parents.map(&:metaclass)
+    end
+
     def passed_as_self?
       false
     end

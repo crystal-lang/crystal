@@ -166,4 +166,18 @@ describe 'Lexer string' do
     token = lexer.next_string_token
     token.type.should eq(:STRING_END)
   end
+
+  it "lexes double numeral" do
+    lexer = Lexer.new(%("##"))
+
+    token = lexer.next_token
+    token.type.should eq(:STRING_START)
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING)
+    token.value.should eq("#")
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING_END)
+  end
 end

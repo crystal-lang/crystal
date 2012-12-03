@@ -11,3 +11,7 @@ end
 def p(obj)
   puts obj.inspect
 end
+
+macro pp(var)
+  "puts \"#{var} = ##{#{var}}\""
+end

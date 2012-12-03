@@ -3,13 +3,13 @@ require_relative 'lexer.rb'
 
 module Crystal
   class Parser < Lexer
-    def self.parse(str, def_vars = nil)
+    def self.parse(str, def_vars = [Set.new])
       new(str, def_vars).parse
     end
 
-    def initialize(str, def_vars = nil)
+    def initialize(str, def_vars = [Set.new])
       super(str)
-      @def_vars = def_vars || [Set.new]
+      @def_vars = def_vars
     end
 
     def parse
