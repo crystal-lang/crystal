@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Code gen: pointer' do
   it "get pointer and value of it" do
-    run('a = 1; b = ptr(a); b.value').to_i.should eq(1)
+    run('a = 1; b = a.ptr; b.value').to_i.should eq(1)
   end
 
   it "get pointer of instance var" do
@@ -13,7 +13,7 @@ describe 'Code gen: pointer' do
         end
 
         def value_ptr
-          ptr(@value)
+          @value.ptr
         end
       end
 
@@ -24,14 +24,14 @@ describe 'Code gen: pointer' do
   end
 
   it "set pointer value" do
-    run('a = 1; b = ptr(a); b.value = 2; a').to_i.should eq(2)
+    run('a = 1; b = a.ptr; b.value = 2; a').to_i.should eq(2)
   end
 
   it "set pointer of instance var value" do
     run(%q(
       class Foo
         def foo
-          p = ptr(@value)
+          p = @value.ptr
           p.value = 1
         end
         def value
@@ -45,11 +45,11 @@ describe 'Code gen: pointer' do
   end
 
   it "get value of pointer to union" do
-    run('a = 1.1; a = 1; b = ptr(a); b.value.to_i').to_i.should eq(1)
+    run('a = 1.1; a = 1; b = a.ptr; b.value.to_i').to_i.should eq(1)
   end
 
   it "set value of pointer to union" do
-    run('a = 1.1; p = ptr(a); p.value = 1; a.to_i').to_i.should eq(1)
+    run('a = 1.1; p = a.ptr; p.value = 1; a.to_i').to_i.should eq(1)
   end
 
   it "increment pointer" do
@@ -60,7 +60,7 @@ describe 'Code gen: pointer' do
           @b = 2
         end
         def value
-          p = ptr(@a)
+          p = @a.ptr
           p += 1
           p.value
         end
@@ -78,6 +78,6 @@ describe 'Code gen: pointer' do
   end
 
   it "codegens pointer cast" do
-    run('a = 1L; ptr(a).as(Int).value').to_i.should eq(1)
+    run('a = 1L; a.ptr.as(Int).value').to_i.should eq(1)
   end
 end

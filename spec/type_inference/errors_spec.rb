@@ -164,7 +164,19 @@ describe 'Type inference: errors' do
 
   it "reports can only get pointer of variable" do
     lambda {
-      parse %Q(ptr a)
-    }.should raise_error(Crystal::SyntaxException, regex("argument to ptr must be a variable or instance variable, not a call"))
+      parse %Q(a.ptr)
+    }.should raise_error(Crystal::SyntaxException, regex("can only get 'ptr' of variable or instance variable"))
+  end
+
+  it "reports wrong number of arguments for ptr" do
+    lambda {
+      parse %Q(a = 1; a.ptr 1)
+    }.should raise_error(Crystal::SyntaxException, regex("wrong number of arguments for 'ptr' (1 for 0)"))
+  end
+
+  it "reports ptr can't receive a block" do
+    lambda {
+      parse %Q(a = 1; a.ptr {})
+    }.should raise_error(Crystal::SyntaxException, regex("'ptr' can't receive a block"))
   end
 end

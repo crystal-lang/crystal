@@ -9,30 +9,30 @@ end
 
 class String
   def to_i
-    C.atoi ptr(@c)
+    C.atoi @c.ptr
   end
 
   def [](index)
-    ptr(@c)[index]
+    @c.ptr[index]
   end
 
   def ==(other)
-    C.strcmp(ptr(@c), other.cstr) == 0
+    C.strcmp(@c.ptr, other.cstr) == 0
   end
 
   def +(other)
     new_string_buffer = Pointer.malloc(length + other.length + 1).as(Char)
-    C.strcpy(new_string_buffer, ptr(@c))
+    C.strcpy(new_string_buffer, @c.ptr)
     C.strcat(new_string_buffer, other.cstr)
     new_string_buffer.as(String)
   end
 
   def length
-    C.strlen ptr(@c)
+    C.strlen @c.ptr
   end
 
   def chars
-    p = ptr(@c)
+    p = @c.ptr
     length.times do
       yield p.value
       p += 1
@@ -52,6 +52,6 @@ class String
   end
 
   def cstr
-    ptr(@c)
+    @c.ptr
   end
 end

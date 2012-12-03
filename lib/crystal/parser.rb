@@ -279,6 +279,8 @@ module Crystal
           else
             atomic = args ? (Call.new atomic, name, args, nil, name_column_number) : (Call.new atomic, name, [], nil, name_column_number)
           end
+
+          atomic = check_pointer_of(atomic)
         when :[]
           column_number = @token.column_number
           next_token_skip_space
@@ -311,6 +313,22 @@ module Crystal
         end
       end
 
+      atomic
+    end
+
+    def check_pointer_of(atomic)
+      if atomic.obj && atomic.name == :ptr
+        if !(atomic.obj.is_a?(Var) || atomic.obj.is_a?(InstanceVar))
+          raise "can only get 'ptr' of variable or instance variable"
+        end
+        if atomic.args.length != 0
+          raise "wrong number of arguments for 'ptr' (#{atomic.args.length} for 0)"
+        end
+        if atomic.block
+          raise "'ptr' can't receive a block"
+        end
+        atomic = PointerOf.new(atomic.obj)
+      end
       atomic
     end
 
@@ -407,8 +425,6 @@ module Crystal
           parse_lib
         when :macro
           parse_macro
-        when :ptr
-          parse_pointer_of
         else
           parse_var_or_call
         end
@@ -892,50 +908,6 @@ module Crystal
       node = While.new cond, body
       node.location = location
       node
-    end
-
-    def parse_pointer_of
-      location = @token.location
-
-      next_token
-
-      check_paren = false
-
-      case @token.type
-      when :SPACE
-        next_token
-      when :'('
-        next_token_skip_space_or_newline
-        check_paren = true
-      else
-        raise "unexpected token: #{@token}"
-      end
-
-      case @token.type
-      when :IDENT
-        unless @def_vars.last.include?(@token.value)
-          raise "argument to ptr must be a variable or instance variable, not a call"
-        end
-
-        var = Var.new(@token.value)
-        var.location = @token.location
-      when :INSTANCE_VAR
-        var = InstanceVar.new(@token.value)
-        var.location = @token.location
-      else
-        raise "argument to ptr must be a variable or instance variable, not #{@token}"
-      end
-
-      if check_paren
-        next_token_skip_space_or_newline
-        check :')'
-      end
-
-      next_token_skip_space
-
-      ptr = PointerOf.new(var)
-      ptr.location = location
-      ptr
     end
 
     ['return', 'next', 'break', 'yield'].each do |keyword|

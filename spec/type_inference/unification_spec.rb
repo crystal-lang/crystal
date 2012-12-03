@@ -62,7 +62,7 @@ describe 'Type inference unification' do
   end
 
   it "unifies pointer types" do
-    input = parse 'a = 1; b = ptr(a); c = ptr(a)'
+    input = parse 'a = 1; b = a.ptr; c = a.ptr'
     infer_type input
     input[1].target.type.should equal(input[2].target.type)
   end

@@ -2,18 +2,18 @@ require 'spec_helper'
 
 describe 'Type inference: pointer' do
   it "types int pointer" do
-    assert_type('a = 1; ptr(a)') { PointerType.of(int) }
+    assert_type('a = 1; a.ptr') { PointerType.of(int) }
   end
 
   it "types pointer value" do
-    assert_type('a = 1; b = ptr(a); b.value') { int }
+    assert_type('a = 1; b = a.ptr; b.value') { int }
   end
 
   it "types pointer set value" do
     assert_type(%q(
       class Foo
         def foo
-          p = ptr(@value)
+          p = @value.ptr
           p.value = 1
         end
         def value
@@ -27,7 +27,7 @@ describe 'Type inference: pointer' do
   end
 
   it "types pointer add" do
-    assert_type('a = 1; ptr(a) + 1') { PointerType.of(int) }
+    assert_type('a = 1; a.ptr + 1') { PointerType.of(int) }
   end
 
   it "types Pointer.malloc" do
@@ -39,10 +39,10 @@ describe 'Type inference: pointer' do
   end
 
   it "type pointer casting" do
-    assert_type('a = 1; ptr(a).as(Char)') { PointerType.of(char) }
+    assert_type('a = 1; a.ptr.as(Char)') { PointerType.of(char) }
   end
 
   it "type pointer casting of object type" do
-    assert_type('a = 1; ptr(a).as(String)') { string }
+    assert_type('a = 1; a.ptr.as(String)') { string }
   end
 end

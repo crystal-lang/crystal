@@ -270,7 +270,6 @@ describe Parser do
 
   it_parses "macro foo;end", Macro.new('foo', [])
 
-  it_parses "a = 1; ptr(a)", [Assign.new("a".var, 1.int), PointerOf.new('a'.var)]
-  it_parses "a = 1; ptr a", [Assign.new("a".var, 1.int), PointerOf.new('a'.var)]
-  it_parses "ptr(@a)", PointerOf.new('@a'.instance_var)
+  it_parses "a = 1; a.ptr", [Assign.new("a".var, 1.int), PointerOf.new('a'.var)], focus: true
+  it_parses "@a.ptr", PointerOf.new('@a'.instance_var)
 end

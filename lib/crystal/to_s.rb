@@ -365,9 +365,8 @@ module Crystal
     end
 
     def visit_pointer_of(node)
-      @str << 'ptr('
       node.var.accept(self)
-      @str << ')'
+      @str << '.ptr'
       false
     end
 
