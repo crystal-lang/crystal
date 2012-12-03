@@ -73,6 +73,11 @@ module Crystal
       @types = {}
     end
 
+    def add_def(a_def)
+      @defs[a_def.name] = a_def
+      a_def
+    end
+
     def include(mod)
       @parents.insert 0, mod
     end
@@ -141,7 +146,7 @@ module Crystal
     def metaclass
       @metaclass ||= begin
         metaclass = Metaclass.new(self)
-        metaclass.defs['alloc'] = Def.new('alloc', [], Alloc.new(self))
+        metaclass.add_def Def.new('alloc', [], Alloc.new(self))
         metaclass
       end
     end
@@ -459,7 +464,7 @@ module Crystal
     def fun(name, args, return_type)
       args = args.map { |name, type| arg = Arg.new(name); arg.type = type; arg }
 
-      instance = @defs[name] = External.new(name, args)
+      instance = add_def External.new(name, args)
       instance.body = Expressions.new
       instance.body.set_type(return_type)
       instance.add_instance instance
@@ -517,15 +522,20 @@ module Crystal
       @vars = Hash[vars.map { |var| [var.name, var] }]
       @defs = {}
       @vars.keys.each do |var_name|
-        @defs["#{var_name}="] = Def.new("#{var_name}=", [Arg.new('value')], StructSet.new(var_name))
-        @defs[var_name] = Def.new(var_name, [], StructGet.new(var_name))
+        add_def Def.new("#{var_name}=", [Arg.new('value')], StructSet.new(var_name))
+        add_def Def.new(var_name, [], StructGet.new(var_name))
       end
+    end
+
+    def add_def(a_def)
+      @defs[a_def.name] = a_def
+      a_def
     end
 
     def metaclass
       @metaclass ||= begin
         metaclass = Metaclass.new(self)
-        metaclass.defs['new'] = Def.new('new', [], StructAlloc.new(self))
+        metaclass.add_def Def.new('new', [], StructAlloc.new(self))
         metaclass
       end
     end

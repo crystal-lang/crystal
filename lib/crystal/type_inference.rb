@@ -265,20 +265,20 @@ module Crystal
         init.name_column_number = name_column_number
         init.name_length = 3
 
-        untyped_def = scope.defs['new'] = Def.new('new', new_args, [
+        untyped_def = scope.add_def Def.new('new', new_args, [
           Assign.new(var, alloc),
           init,
           var
         ])
       else
-        untyped_def = scope.defs['new'] = Def.new('new', [], [alloc])
+        untyped_def = scope.add_def Def.new('new', [], [alloc])
       end
     end
 
     def define_missing(scope, name)
       missing_args = self.args.each_with_index.map { |arg, i| Arg.new("arg#{i}") }
       missing_vars = self.args.each_with_index.map { |arg, i| Var.new("arg#{i}") }
-      scope.defs[name] = Def.new(name, missing_args, [
+      scope.add_def Def.new(name, missing_args, [
         Call.new(nil, 'method_missing', [SymbolLiteral.new(name.to_s), ArrayLiteral.new(missing_vars)])
       ])
     end
@@ -451,7 +451,7 @@ module Crystal
       else
         target_type = current_type
       end
-      target_type.defs[node.name] = node
+      target_type.add_def node
       false
     end
 
@@ -466,7 +466,7 @@ module Crystal
       else
         target_type = current_type
       end
-      target_type.defs[node.name] = node
+      target_type.add_def node
       false
     end
 

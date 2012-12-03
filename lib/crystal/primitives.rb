@@ -170,26 +170,26 @@ module Crystal
     end
 
     def define_array_primitives
-      array.metaclass.defs['new'] = Def.new('new', [Arg.new('size'), Arg.new('obj')], ArrayNew.new)
+      array.metaclass.add_def Def.new('new', [Arg.new('size'), Arg.new('obj')], ArrayNew.new)
 
-      array.defs['length'] = Def.new('length', [], ArrayLength.new)
-      array.defs['push'] = Def.new('push', [Arg.new('value')], ArrayPush.new)
-      array.defs[:<<] = Def.new(:<<, [Arg.new('value')], ArrayPush.new)
-      array.defs[:[]=] = Def.new(:[]=, [Arg.new('index'), Arg.new('value')], ArraySet.new)
-      array.defs[:[]] = Def.new(:[], [Arg.new('index')], ArrayGet.new)
+      array.add_def Def.new('length', [], ArrayLength.new)
+      array.add_def Def.new('push', [Arg.new('value')], ArrayPush.new)
+      array.add_def Def.new(:<<, [Arg.new('value')], ArrayPush.new)
+      array.add_def Def.new(:[]=, [Arg.new('index'), Arg.new('value')], ArraySet.new)
+      array.add_def Def.new(:[], [Arg.new('index')], ArrayGet.new)
     end
 
     def define_pointer_primitives
-      pointer.metaclass.defs['malloc'] = Def.new('malloc', [Arg.new('size')], PointerMalloc.new)
-      pointer.defs['value'] = Def.new('value', [], PointerGetValue.new)
-      pointer.defs['value='] = Def.new('value=', [Arg.new('value')], PointerSetValue.new)
-      pointer.defs['realloc'] = Def.new('realloc', [Arg.new('size')], PointerRealloc.new)
-      pointer.defs[:+] = Def.new(:+, [Arg.new('offset')], PointerAdd.new)
-      pointer.defs['as'] = Def.new('as', [Arg.new('type')], PointerCast.new)
+      pointer.metaclass.add_def Def.new('malloc', [Arg.new('size')], PointerMalloc.new)
+      pointer.add_def Def.new('value', [], PointerGetValue.new)
+      pointer.add_def Def.new('value=', [Arg.new('value')], PointerSetValue.new)
+      pointer.add_def Def.new('realloc', [Arg.new('size')], PointerRealloc.new)
+      pointer.add_def Def.new(:+, [Arg.new('offset')], PointerAdd.new)
+      pointer.add_def Def.new('as', [Arg.new('type')], PointerCast.new)
     end
 
     def primitive(owner, name, arg_names)
-      p = owner.defs[name] = FrozenDef.new(name, arg_names.map { |x| Arg.new(x) })
+      p = owner.add_def FrozenDef.new(name, arg_names.map { |x| Arg.new(x) })
       p.owner = owner
       yield p
     end
@@ -199,7 +199,7 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.defs[name] ||= FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
+      p = owner.add_def FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
       p.owner = owner
       p.overload(args.values, return_type, &block)
     end
@@ -207,7 +207,7 @@ module Crystal
     def external(name, args, return_type)
       args = args.map { |name, type| arg = Arg.new(name); arg.type = type; arg }
 
-      instance = defs[name] = External.new(name, args)
+      instance = add_def External.new(name, args)
       instance.body = Expressions.new
       instance.body.set_type(return_type)
       instance.add_instance instance
