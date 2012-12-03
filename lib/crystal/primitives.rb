@@ -13,6 +13,8 @@ module Crystal
       define_symbol_primitives
       define_array_primitives
       define_pointer_primitives
+
+      define_numeric_operations
     end
 
     def define_object_primitives
@@ -54,6 +56,64 @@ module Crystal
       singleton(char, :>=, {'other' => char}, bool) { |b, f| b.icmp(:uge, f.params[0], f.params[1]) }
     end
 
+    CALC_OP_MAP = {
+      'Int' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
+      'Long' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
+      'Float' => { :+ => :fadd, :- => :fsub, :* => :fmul, :/ => :fdiv },
+    }
+
+    COMP_OP_FUN_MAP = {
+      'Int' => :icmp, 'Long' => :icmp, 'Float' => :fcmp
+    }
+
+    COMP_OP_ARG_MAP = {
+      'Int' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
+      'Long' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
+      'Float' => { :== => :oeq, :> => :ogt, :>= => :oge, :< => :olt, :<= => :ole, :'!=' => :one }
+    }
+
+    def build_calc_op(b, ret_type, op, arg1, arg2)
+      b.send CALC_OP_MAP[ret_type.name][op], arg1, arg2
+    end
+
+    def build_comp_op(b, comp_type, op, arg1, arg2)
+      b.send COMP_OP_FUN_MAP[comp_type.name], COMP_OP_ARG_MAP[comp_type.name][op], arg1, arg2
+    end
+
+    def greatest_type(type1, type2)
+      return float if type1 == float || type2 == float
+      return long if type1 == long || type2 == long
+      return int
+    end
+
+    def adjust_calc_type(b, ret_type, type, arg)
+      return arg if ret_type == type
+      return b.si2fp(arg, float.llvm_type) if ret_type == float
+      return b.zext(arg, long.llvm_type) if ret_type == long
+    end
+
+    def define_numeric_operations
+      [int, long, float].repeated_permutation(2) do |type1, type2|
+        [:+, :-, :*, :/].each do |op|
+          ret_type = greatest_type(type1, type2)
+          singleton(type1, op, {'other' => type2}, ret_type) do |b, f|
+            arg1 = adjust_calc_type(b, ret_type, type1, f.params[0])
+            arg2 = adjust_calc_type(b, ret_type, type2, f.params[1])
+            build_calc_op(b, ret_type, op, arg1, arg2)
+          end
+        end
+
+        [:==, :>, :>=, :<, :<=, :!=].each do |op|
+          comp_type = greatest_type(type1, type2)
+          singleton(type1, op, {'other' => type2}, bool) do |b, f|
+            arg1 = adjust_calc_type(b, comp_type, type1, f.params[0])
+            arg2 = adjust_calc_type(b, comp_type, type2, f.params[1])
+            build_comp_op(b, comp_type, op, arg1, arg2)
+          end
+        end
+      end
+    end
+
     def define_int_primitives
       no_args_primitive(int, 'to_s', string) do |b, f, llvm_mod|
         buffer = b.bit_cast(b.array_malloc(char.llvm_type, LLVM::Int(12)), string.llvm_type)
@@ -66,56 +126,6 @@ module Crystal
 
       no_args_primitive(int, :-@, int) { |b, f| b.sub(LLVM::Int(0), f.params[0]) }
       no_args_primitive(int, :+@, int) { |b, f| f.params[0] }
-
-      primitive(int, :+, ['other']) do |p|
-        p.overload([int], int) { |b, f| b.add(f.params[0], f.params[1]) }
-        p.overload([float], float) { |b, f| b.fadd(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
-
-      primitive(int, :-, ['other']) do |p|
-        p.overload([int], int) { |b, f| b.sub(f.params[0], f.params[1]) }
-        p.overload([float], float) { |b, f| b.fsub(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
-
-      primitive(int, :*, ['other']) do |p|
-        p.overload([int], int) { |b, f| b.mul(f.params[0], f.params[1]) }
-        p.overload([float], float) { |b, f| b.fmul(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
-
-      primitive(int, :/, ['other']) do |p|
-        p.overload([int], int) { |b, f| b.sdiv(f.params[0], f.params[1]) }
-        p.overload([float], float) { |b, f| b.fdiv(b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
-
-      primitive(int, :==, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
-        p.overload([float], bool) { |b, f| b.fcmp(:oeq, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
-
-      primitive(int, :'!=', ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.icmp(:ne, f.params[0], f.params[1]) }
-        p.overload([float], bool) { |b, f| b.fcmp(:one, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
-
-      primitive(int, :<, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.icmp(:slt, f.params[0], f.params[1]) }
-        p.overload([float], bool) { |b, f| b.fcmp(:olt, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
-
-      primitive(int, :<=, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.icmp(:sle, f.params[0], f.params[1]) }
-        p.overload([float], bool) { |b, f| b.fcmp(:ole, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
-
-      primitive(int, :>, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.icmp(:sgt, f.params[0], f.params[1]) }
-        p.overload([float], bool) { |b, f| b.fcmp(:ogt, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
-
-      primitive(int, :>=, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.icmp(:sge, f.params[0], f.params[1]) }
-        p.overload([float], bool) { |b, f| b.fcmp(:oge, b.si2fp(f.params[0], float.llvm_type), f.params[1]) }
-      end
 
       singleton(int, :%, {'other' => int}, int) { |b, f| b.srem(f.params[0], f.params[1]) }
       singleton(int, :<<, {'other' => int}, int) { |b, f| b.shl(f.params[0], f.params[1]) }
@@ -149,56 +159,6 @@ module Crystal
 
       no_args_primitive(float, :-@, float) { |b, f| b.fsub(LLVM::Float(0), f.params[0]) }
       no_args_primitive(float, :+@, float) { |b, f| f.params[0] }
-
-      primitive(float, :+, ['other']) do |p|
-        p.overload([int], float) { |b, f| b.fadd(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], float) { |b, f| b.fadd(f.params[0], f.params[1]) }
-      end
-
-      primitive(float, :-, ['other']) do |p|
-        p.overload([int], float) { |b, f| b.fsub(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], float) { |b, f| b.fsub(f.params[0], f.params[1]) }
-      end
-
-      primitive(float, :*, ['other']) do |p|
-        p.overload([int], float) { |b, f| b.fmul(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], float) { |b, f| b.fmul(f.params[0], f.params[1]) }
-      end
-
-      primitive(float, :/, ['other']) do |p|
-        p.overload([int], float) { |b, f| b.fdiv(f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], float) { |b, f| b.fdiv(f.params[0], f.params[1]) }
-      end
-
-      primitive(float, :==, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.fcmp(:oeq, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], bool) { |b, f| b.fcmp(:oeq, f.params[0], f.params[1]) }
-      end
-
-      primitive(float, :'!=', ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.fcmp(:one, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], bool) { |b, f| b.fcmp(:one, f.params[0], f.params[1]) }
-      end
-
-      primitive(float, :<, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.fcmp(:olt, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], bool) { |b, f| b.fcmp(:olt, f.params[0], f.params[1]) }
-      end
-
-      primitive(float, :<=, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.fcmp(:ole, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], bool) { |b, f| b.fcmp(:ole, f.params[0], f.params[1]) }
-      end
-
-      primitive(float, :>, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.fcmp(:ogt, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], bool) { |b, f| b.fcmp(:ogt, f.params[0], f.params[1]) }
-      end
-
-      primitive(float, :>=, ['other']) do |p|
-        p.overload([int], bool) { |b, f| b.fcmp(:oge, f.params[0], b.si2fp(f.params[1], float.llvm_type)) }
-        p.overload([float], bool) { |b, f| b.fcmp(:oge, f.params[0], f.params[1]) }
-      end
     end
 
     def define_symbol_primitives
@@ -239,7 +199,7 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.defs[name] = FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
+      p = owner.defs[name] ||= FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
       p.owner = owner
       p.overload(args.values, return_type, &block)
     end

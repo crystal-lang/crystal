@@ -26,6 +26,20 @@ def assert_type(str, options = {}, &block)
   end
 end
 
+def permutate_primitive_types
+  [['Int', ''], ['Long', 'L'], ['Float', '.0']].repeated_permutation(2) do |p1, p2|
+    type1, suffix1 = p1
+    type2, suffix2 = p2
+    yield type1, type2, suffix1, suffix2
+  end
+end
+
+def primitive_operation_type(*types)
+  return float if types.include?('Float')
+  return long if types.include?('Long')
+  return int if types.include?('Int')
+end
+
 def rw(name)
   %Q(
   def #{name}=(value)

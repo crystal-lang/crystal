@@ -41,43 +41,17 @@ describe 'Type inference: primitives' do
     assert_type('class Int; def foo; 2.5; end; end; 1.foo') { float }
   end
 
-  ['+', '-', '*', '/'].each do |op|
-    it "types Int #{op} Int" do
-      assert_type("1 #{op} 2") { int }
+  permutate_primitive_types do |type1, type2, suffix1, suffix2|
+    ['+', '-', '*', '/'].each do |op|
+      it "types #{type1} #{op} #{type2}" do
+        assert_type("1#{suffix1} #{op} 2#{suffix2}") { primitive_operation_type(type1, type2) }
+      end
     end
 
-    it "types Int #{op} Float" do
-      assert_type("1 #{op} 2.0") { float }
-    end
-
-    it "types Float #{op} Int" do
-      assert_type("1.0 #{op} 2") { float }
-    end
-
-    it "types Float #{op} Float" do
-      assert_type("1.0 #{op} 2.0") { float }
-    end
-  end
-
-  ['==', '>', '>=', '<', '<=', '!='].each do |op|
-    it "types Int #{op} Int" do
-      assert_type("1 #{op} 2") { bool }
-    end
-
-    it "types Int #{op} Float" do
-      assert_type("1 #{op} 2.0") { bool }
-    end
-
-    it "types Float #{op} Int" do
-      assert_type("1.0 #{op} 2") { bool }
-    end
-
-    it "types Float #{op} Float" do
-      assert_type("1.0 #{op} 2.0") { bool }
-    end
-
-    it "types Char #{op} Char" do
-      assert_type("'a' #{op} 'b'") { bool }
+    ['==', '>', '>=', '<', '<=', '!='].each do |op|
+      it "types #{type1} #{op} #{type2}" do
+        assert_type("1#{suffix1} #{op} 2#{suffix2}") { bool }
+      end
     end
   end
 

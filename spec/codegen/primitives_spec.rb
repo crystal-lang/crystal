@@ -167,57 +167,63 @@ describe 'Code gen: primitives' do
     run('5.0 / 2').to_f.should eq(2.5)
   end
 
-  [['Int', ''], ['Float', '.0']].each do |type1, suffix1|
-    [['Int', ''], ['Float', '.0']].each do |type2, suffix2|
-      it 'codegens #{type1} == #{type2} gives false' do
-        run("1#{suffix1} == 2#{suffix2}").to_b.should be_false
-      end
+  it 'codegens Int + Long' do
+    run('1 + 2L').to_i.should eq(3)
+  end
 
-      it 'codegens #{type1} == #{type2} gives true' do
-        run("1#{suffix1} == 1#{suffix2}").to_b.should be_true
-      end
+  it 'codegens Long + Int' do
+    run('1L + 2').to_i.should eq(3)
+  end
 
-      it 'codegens #{type1} != #{type2} gives false' do
-        run("1#{suffix1} != 1#{suffix2}").to_b.should be_false
-      end
+  permutate_primitive_types do |type1, type2, suffix1, suffix2|
+    it 'codegens #{type1} == #{type2} gives false' do
+      run("1#{suffix1} == 2#{suffix2}").to_b.should be_false
+    end
 
-      it 'codegens #{type1} != #{type2} gives true' do
-        run("1#{suffix1} != 2#{suffix2}").to_b.should be_true
-      end
+    it 'codegens #{type1} == #{type2} gives true' do
+      run("1#{suffix1} == 1#{suffix2}").to_b.should be_true
+    end
 
-      it 'codegens #{type1} < #{type2} gives false' do
-        run("2#{suffix1} < 1#{suffix2}").to_b.should be_false
-      end
+    it 'codegens #{type1} != #{type2} gives false' do
+      run("1#{suffix1} != 1#{suffix2}").to_b.should be_false
+    end
 
-      it 'codegens #{type1} < #{type2} gives true' do
-        run("1#{suffix1} < 2#{suffix2}").to_b.should be_true
-      end
+    it 'codegens #{type1} != #{type2} gives true' do
+      run("1#{suffix1} != 2#{suffix2}").to_b.should be_true
+    end
 
-      it 'codegens #{type1} <= #{type2} gives false' do
-        run("2#{suffix1} <= 1#{suffix2}").to_b.should be_false
-      end
+    it 'codegens #{type1} < #{type2} gives false' do
+      run("2#{suffix1} < 1#{suffix2}").to_b.should be_false
+    end
 
-      it 'codegens #{type1} <= #{type2} gives true' do
-        run("1#{suffix1} <= 1#{suffix2}").to_b.should be_true
-        run("1#{suffix1} <= 2#{suffix2}").to_b.should be_true
-      end
+    it 'codegens #{type1} < #{type2} gives true' do
+      run("1#{suffix1} < 2#{suffix2}").to_b.should be_true
+    end
 
-      it 'codegens #{type1} > #{type2} gives false' do
-        run("1#{suffix1} > 2#{suffix2}").to_b.should be_false
-      end
+    it 'codegens #{type1} <= #{type2} gives false' do
+      run("2#{suffix1} <= 1#{suffix2}").to_b.should be_false
+    end
 
-      it 'codegens #{type1} > #{type2} gives true' do
-        run("2#{suffix1} > 1#{suffix2}").to_b.should be_true
-      end
+    it 'codegens #{type1} <= #{type2} gives true' do
+      run("1#{suffix1} <= 1#{suffix2}").to_b.should be_true
+      run("1#{suffix1} <= 2#{suffix2}").to_b.should be_true
+    end
 
-      it 'codegens #{type1} >= #{type2} gives false' do
-        run("1#{suffix1} >= 2#{suffix2}").to_b.should be_false
-      end
+    it 'codegens #{type1} > #{type2} gives false' do
+      run("1#{suffix1} > 2#{suffix2}").to_b.should be_false
+    end
 
-      it 'codegens #{type1} >= #{type2} gives true' do
-        run("1#{suffix1} >= 1#{suffix2}").to_b.should be_true
-        run("2#{suffix1} >= 1#{suffix2}").to_b.should be_true
-      end
+    it 'codegens #{type1} > #{type2} gives true' do
+      run("2#{suffix1} > 1#{suffix2}").to_b.should be_true
+    end
+
+    it 'codegens #{type1} >= #{type2} gives false' do
+      run("1#{suffix1} >= 2#{suffix2}").to_b.should be_false
+    end
+
+    it 'codegens #{type1} >= #{type2} gives true' do
+      run("1#{suffix1} >= 1#{suffix2}").to_b.should be_true
+      run("2#{suffix1} >= 1#{suffix2}").to_b.should be_true
     end
   end
 
