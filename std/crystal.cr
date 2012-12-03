@@ -51,6 +51,12 @@ module Crystal
     def elements
       @elements
     end
+
+    def each
+      @elements.each do |elem|
+        yield elem
+      end
+    end
   end
 
   class Var
