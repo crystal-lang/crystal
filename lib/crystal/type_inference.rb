@@ -208,7 +208,7 @@ module Crystal
       end
 
       unless scope
-        return [mod, mod.defs[name]]
+        return [mod, mod.lookup_def(name)]
       end
 
       if name == 'super'
@@ -229,9 +229,9 @@ module Crystal
         return [scope, untyped_def]
       end
 
-      mod_def = mod.defs[name]
-      if mod_def || !(missing = scope.defs['method_missing'])
-        return [mod, mod.defs[name]]
+      mod_def = mod.lookup_def(name)
+      if mod_def || !(missing = scope.lookup_def('method_missing'))
+        return [mod, mod_def]
       end
 
       untyped_def = define_missing scope, name
@@ -239,11 +239,11 @@ module Crystal
     end
 
     def lookup_method(scope, name, use_method_missing = false)
-      untyped_def = scope.defs[name]
+      untyped_def = scope.lookup_def(name)
       unless untyped_def
         if name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
           untyped_def = define_new scope, name
-        elsif use_method_missing && scope.defs['method_missing']
+        elsif use_method_missing && scope.lookup_def('method_missing')
           untyped_def = define_missing scope, name
         end
       end
@@ -255,7 +255,7 @@ module Crystal
       alloc.location = location
       alloc.name_column_number = name_column_number
 
-      if scope.type.defs.has_key?('initialize')
+      if scope.type.lookup_def('initialize')
         var = Var.new('x')
         new_vars = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
         new_args = args.each_with_index.map { |x, i| Arg.new("arg#{i}") }

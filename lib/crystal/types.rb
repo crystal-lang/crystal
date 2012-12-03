@@ -78,6 +78,10 @@ module Crystal
       a_def
     end
 
+    def lookup_def(name)
+      @defs[name]
+    end
+
     def include(mod)
       @parents.insert 0, mod
     end
@@ -530,6 +534,10 @@ module Crystal
     def add_def(a_def)
       @defs[a_def.name] = a_def
       a_def
+    end
+
+    def lookup_def(name)
+      @defs[name]
     end
 
     def metaclass

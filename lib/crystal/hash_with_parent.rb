@@ -7,7 +7,7 @@ class HashWithParent < Hash
     value = super
     unless value
       @obj.parents.each do |parent|
-        value = parent.defs[key] and break
+        value = parent.lookup_def(key) and break
       end
     end
     value
