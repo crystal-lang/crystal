@@ -33,6 +33,15 @@ module Enumerable
     ary
   end
 
+  def join(sep = "")
+    str = ""
+    each_with_index do |elem, i|
+      str += sep if i > 0
+      str += elem.to_s
+    end
+    str
+  end
+
   def to_a
     ary = []
     each { |e| ary << e }
