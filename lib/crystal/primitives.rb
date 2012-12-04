@@ -23,7 +23,7 @@ module Crystal
         b.ptr2int(f.params[0], LLVM::Int64)
       end
       no_args_primitive(object, 'to_s', string) do |b, f, llvm_mod, self_type|
-        buffer = b.array_malloc(char.llvm_type, LLVM::Int(self_type.name.length + 23))
+        buffer = b.bit_cast(b.array_malloc(char.llvm_type, LLVM::Int(self_type.name.length + 23)), string.llvm_type)
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
         buffer
       end
