@@ -1,3 +1,5 @@
+require_relative 'ast'
+
 module Crystal
   class ASTNode
     def to_crystal
