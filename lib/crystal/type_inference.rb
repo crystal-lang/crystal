@@ -662,6 +662,13 @@ module Crystal
       end
     end
 
+    def visit_while(node)
+      node.cond = Call.new(node.cond, 'to_b')
+      node.cond.accept self
+      node.body.accept self if node.body
+      false
+    end
+
     def end_visit_while(node)
       node.type = mod.void
     end
