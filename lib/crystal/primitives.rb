@@ -199,7 +199,8 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.add_def FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
+      p = owner.lookup_def(name)
+      p ||= owner.add_def FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
       p.owner = owner
       p.overload(args.values, return_type, &block)
     end
