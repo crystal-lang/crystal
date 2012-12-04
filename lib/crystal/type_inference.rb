@@ -715,12 +715,13 @@ module Crystal
       node.type = type ? type : node.type.clone
     end
 
-    def visit_array_literal(node)
-      node.type = mod.array.clone
-      buffer = node.type.lookup_instance_var('@buffer').type.var
+    def end_visit_array_literal(node)
+      type = mod.array.clone
+      buffer = type.lookup_instance_var('@buffer').type.var
       node.elements.each do |elem|
         buffer.bind_to elem
       end
+      node.type = type
     end
 
     def check_var_type(var_name, expected_type)
