@@ -259,90 +259,9 @@ module Crystal
     def llvm_name
       @llvm_name ||= "Pointer<#{var.type.llvm_name}>"
     end
-  end
-
-  class ArrayType < ClassType
-    attr_accessor :vars
-    @@id = 0
-
-    def initialize(parent_type = nil, container = nil, var = Var.new('element'))
-      super("Array", parent_type, container)
-      @vars = [var]
-    end
-
-    def lookup_instance_var(name)
-      @vars[0]
-    end
-
-    def element_type_var
-      @vars[0]
-    end
-
-    def element_type_var=(x)
-      @vars[0] = x
-    end
-
-    def element_type
-      element_type_var.type
-    end
-
-    def element_type=(type)
-      element_type_var.type = type
-    end
-
-    def ==(other)
-      equal?(other) ||
-        (other.is_a?(ArrayType) && vars == other.vars) ||
-        (other.is_a?(UnionType) && other == self)
-    end
-
-    def hash
-      1
-    end
-
-    def clone(types_context = {}, nodes_context = {})
-      array = types_context[object_id] and return array
-
-      cloned_element_type_var = element_type_var.clone(nodes_context)
-
-      array = types_context[object_id] = ArrayType.new @parent_type, @container, cloned_element_type_var
-      array.element_type_var.type = element_type.clone(types_context, nodes_context)
-      array.element_type_var.bind_to array.element_type_var if array.element_type
-      array.defs = defs
-      array
-    end
-
-    def llvm_type
-      @llvm_type ||= LLVM::Pointer(llvm_struct_type)
-    end
-
-    def element_llvm_type
-      element_type ? element_type.llvm_type : LLVM::Int1
-    end
-
-    def llvm_struct_type
-      unless @llvm_struct_type
-        @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = [LLVM::Int, LLVM::Int, LLVM::Pointer(element_llvm_type)]
-      end
-      @llvm_struct_type
-    end
 
     def llvm_size
-      4 + 4 + Crystal::Program::POINTER_SIZE
-    end
-
-    def llvm_name
-      @id ||= (@@id += 1)
-      "Array#{@id}"
-    end
-
-    def to_s
-      return @to_s if @to_s
-      @to_s = "..."
-      name = "Array<#{element_type || 'Void'}>"
-      @to_s = nil
-      name
+      Crystal::Program::POINTER_SIZE
     end
   end
 

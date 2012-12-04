@@ -82,7 +82,7 @@ describe 'Code gen: def' do
       hash = Hash.new
       hash[1] = 2
       hash[1]
-    )).to_i.should eq(1)
+    ), load_std: ['pointer', 'array']).to_i.should eq(1)
   end
 
   it "mutates to union" do
@@ -101,7 +101,7 @@ describe 'Code gen: def' do
       f.foo(1)
       f.bar
       f.foo(1.5)[0].to_f
-      )).to_f.should eq(1.5)
+      ), load_std: ['pointer', 'array']).to_f.should eq(1.5)
   end
 
   it "mutates to union 2" do
@@ -121,7 +121,7 @@ describe 'Code gen: def' do
       f.bar
       f.foo(1.5)
       f.foo(1)[0].to_f
-      )).to_f.should eq(1)
+      ), load_std: ['pointer', 'array']).to_f.should eq(1)
   end
 
   it "codegens recursive type with union" do
@@ -189,7 +189,7 @@ describe 'Code gen: def' do
 
       elems = [1]
       elems[0].baz [1]
-    ))
+    ), load_std: ['pointer', 'array'])
   end
 
   it "codegens with and witout default arguments" do

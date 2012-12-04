@@ -89,30 +89,6 @@ describe 'Type inference: errors' do
     }.should raise_error(Crystal::Exception, regex("superclass mismatch for class Foo (Bar for Object)"))
   end
 
-  it "reports Array#[]= argument must be an Int" do
-    nodes = parse "[1][1.0] = 1"
-
-    lambda {
-      infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("index must be Int, not Float"))
-  end
-
-  it "reports Array#[] argument must be an Int" do
-    nodes = parse "[1][1.0]"
-
-    lambda {
-      infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("index must be Int, not Float"))
-  end
-
-  it "reports Array::new argument must be an Int" do
-    nodes = parse "Array.new 1.3, Object.new"
-
-    lambda {
-      infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("size must be Int, not Float"))
-  end
-
   it "reports can't use instance variables inside module" do
     nodes = parse "def foo; @a = 1; end; foo"
 

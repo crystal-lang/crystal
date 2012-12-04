@@ -22,16 +22,8 @@ describe "Type clone" do
   end
 
   it "clone array type" do
-    type = ArrayType.of(mod.int)
+    type = mod.array_of(mod.int)
     type.clone.should eq(type)
-  end
-
-  it "clone object type with recursive array" do
-    type = ObjectType.new("Foo")
-    type.with_var("@foo", ArrayType.of(type))
-    type_clone = type.clone
-    type_clone.should eq(type)
-    type_clone.instance_vars["@foo"].type.element_type.should be(type_clone)
   end
 
   it "clone object type with recursive union type" do

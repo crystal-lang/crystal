@@ -1,4 +1,40 @@
 class Array
+  def initialize
+    @length = 0
+    @capacity = 16
+    @buffer = Pointer.malloc(1000)
+  end
+
+  def length
+    @length
+  end
+
+  def [](index)
+    @buffer[index]
+  end
+
+  def []=(index, value)
+    @buffer[index] = value
+  end
+
+  def push(value)
+    if @length == @capacity
+      @capacity *= 2
+      @buffer = @buffer.realloc(1000)
+    end
+    @buffer[@length] = value
+    @length += 1
+  end
+
+  def <<(value)
+    if @length == @capacity
+      @capacity *= 2
+      @buffer = @buffer.realloc(@capacity)
+    end
+    @buffer[@length] = value
+    @length += 1
+  end
+
   def each
     i = 0
     while i < length

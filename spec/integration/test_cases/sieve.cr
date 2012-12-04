@@ -1,8 +1,11 @@
 #output: 78499
 max = 1000000
 
-sieve = Array.new max, true
-sieve[0] = false
+sieve = Array.new
+sieve.push false
+(max - 1).times do
+  sieve.push true
+end
 
 (2...max).each do |i|
   if sieve[i]

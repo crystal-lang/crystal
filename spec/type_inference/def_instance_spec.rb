@@ -170,7 +170,7 @@ describe 'Type inference: def instance' do
 
       foo
     )
-    mod = infer_type nodes
+    mod = infer_type nodes, load_std: ['pointer', 'array']
   end
 
   it "" do
@@ -256,8 +256,8 @@ describe 'Type inference: def instance' do
 
       Hash.new.foo
       )
-    mod = infer_type nodes
-    nodes[1].obj.target_def.body[1].target_def.body.value.type.should eq(ArrayType.of(ArrayType.of(mod.int)))
+    mod = infer_type nodes, load_std: ['pointer', 'array']
+    nodes[1].obj.target_def.body[1].target_def.body.value.type.should eq(mod.array_of(mod.array_of(mod.int)))
   end
 
   it "clone dispatch" do
@@ -280,7 +280,7 @@ describe 'Type inference: def instance' do
 
       a = 2.3
     )
-    mod = infer_type nodes
+    mod = infer_type nodes, load_std: ['pointer', 'array']
   end
 
   it "doesn't reuse new object" do

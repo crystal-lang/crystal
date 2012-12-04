@@ -127,18 +127,16 @@ class Array
   end
 end
 
+class Crystal::Program
+  def array_of(type = nil)
+    types['Array'].clone.with_var('@buffer', PointerType.of(type))
+  end
+end
+
 class Crystal::ObjectType
   def with_var(name, type)
     @instance_vars[name] = Var.new(name, type)
     self
-  end
-end
-
-class Crystal::ArrayType
-  def self.of(type)
-    array = new
-    array.element_type_var.type = type
-    array
   end
 end
 

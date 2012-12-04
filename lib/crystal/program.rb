@@ -15,9 +15,6 @@ module Crystal
       object = @types["Object"] = ObjectType.new "Object", nil, self
       value = @types["Value"] = ObjectType.new "Value", object, self
       numeric = @types["Numeric"] = ObjectType.new "Numeric", value, self
-      enumerable = @types["Enumerable"] = ModuleType.new "Enumerable", self
-      array = @types["Array"] = ArrayType.new object, self
-      array.include enumerable
 
       @types["Void"] = PrimitiveType.new "Void", value, LLVM::Int8, 1, self
       @types["Nil"] = PrimitiveType.new "Nil", value, LLVM::Int1, 1, self
@@ -32,8 +29,15 @@ module Crystal
       @types["String"] = ObjectType.new "String", object, self
       string.lookup_instance_var('@c').type = char
 
+      enumerable = @types["Enumerable"] = ModuleType.new "Enumerable", self
+      array = @types["Array"] = ObjectType.new "Array", object, self
+      array.lookup_instance_var('@length').type = int
+      array.lookup_instance_var('@capacity').type = int
+      array.lookup_instance_var('@buffer').type = void_pointer
+      array.include enumerable
+
       string_array = array.clone
-      string_array.element_type = string
+      string_array.lookup_instance_var('@buffer').type.var.type = string
       @types["ARGV"] = Const.new "ARGV", Crystal::ARGV.new(string_array), self
 
       @symbols = Set.new

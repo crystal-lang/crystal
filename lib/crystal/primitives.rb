@@ -11,7 +11,6 @@ module Crystal
       define_long_primitives
       define_float_primitives
       define_symbol_primitives
-      define_array_primitives
       define_pointer_primitives
 
       define_numeric_operations
@@ -169,16 +168,6 @@ module Crystal
       end
     end
 
-    def define_array_primitives
-      array.metaclass.add_def Def.new('new', [Arg.new('size'), Arg.new('obj')], ArrayNew.new)
-
-      array.add_def Def.new('length', [], ArrayLength.new)
-      array.add_def Def.new('push', [Arg.new('value')], ArrayPush.new)
-      array.add_def Def.new(:<<, [Arg.new('value')], ArrayPush.new)
-      array.add_def Def.new(:[]=, [Arg.new('index'), Arg.new('value')], ArraySet.new)
-      array.add_def Def.new(:[], [Arg.new('index')], ArrayGet.new)
-    end
-
     def define_pointer_primitives
       pointer.metaclass.add_def Def.new('malloc', [Arg.new('size')], PointerMalloc.new)
       pointer.add_def Def.new('value', [], PointerGetValue.new)
@@ -262,21 +251,6 @@ module Crystal
       @type = type
       @block = block
     end
-  end
-
-  class ArrayNew < Primitive
-  end
-
-  class ArraySet < Primitive
-  end
-
-  class ArrayGet < Primitive
-  end
-
-  class ArrayPush < Primitive
-  end
-
-  class ArrayLength < Primitive
   end
 
   class PointerMalloc < Primitive

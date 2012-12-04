@@ -57,7 +57,7 @@ describe 'Type inference unification' do
 
   it "unifies array types" do
     input = parse 'a = [0, 0]; a[0] = 1; a[1] = 1.1; b = [0, 0]; b[0] = 1; b[1] = 1.1; c = a; c = b'
-    infer_type input
+    infer_type input, load_std: ['pointer', 'array']
     input[-2].value.type.should equal(input[-1].value.type)
   end
 
@@ -70,8 +70,8 @@ describe 'Type inference unification' do
   it "unifies two objects with arrays of unions" do
     mod = Crystal::Program.new
     nodes = Expressions.from [Var.new('a'), Var.new('b')]
-    nodes[0].type = ObjectType.new('Foo').with_var('@x', ArrayType.of(UnionType.new(ObjectType.new('Bar'), ObjectType.new('Bar'))))
-    nodes[1].type = ObjectType.new('Foo').with_var('@x', ArrayType.of(UnionType.new(ObjectType.new('Bar'), ObjectType.new('Bar'))))
+    nodes[0].type = ObjectType.new('Foo').with_var('@x', mod.array_of(UnionType.new(ObjectType.new('Bar'), ObjectType.new('Bar'))))
+    nodes[1].type = ObjectType.new('Foo').with_var('@x', mod.array_of(UnionType.new(ObjectType.new('Bar'), ObjectType.new('Bar'))))
 
     unify nodes
 

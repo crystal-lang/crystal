@@ -68,8 +68,8 @@ describe UnionType do
   end
 
   it "compares union with arrays" do
-    union1 = UnionType.new ArrayType.of(mod.int), ArrayType.new, ArrayType.new
-    union2 = UnionType.new ArrayType.of(mod.int), ArrayType.of(mod.int), ArrayType.new
+    union1 = UnionType.new mod.array_of(mod.int), mod.array_of, mod.array_of
+    union2 = UnionType.new mod.array_of(mod.int), mod.array_of(mod.int), mod.array_of
 
     union1.should_not eq(union2)
     union2.should_not eq(union1)

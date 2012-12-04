@@ -306,7 +306,9 @@ module Crystal
 
     def visit_pointer_realloc(node)
       casted_ptr = @builder.bit_cast llvm_self, LLVM::Pointer(LLVM::Int8)
-      reallocated_ptr = realloc casted_ptr, @vars['size'][:ptr]
+      size = @vars['size'][:ptr]
+      size = @builder.mul size, LLVM::Int(@type.var.type.llvm_size)
+      reallocated_ptr = realloc casted_ptr, size
       @last = @builder.bit_cast reallocated_ptr, LLVM::Pointer(@type.var.llvm_type)
     end
 
@@ -454,135 +456,17 @@ module Crystal
       @builder.store LLVM::Int(size), gep(array, 0, 0)
       @builder.store LLVM::Int(capacity), gep(array, 0, 1)
 
-      buffer = @builder.array_malloc(node.type.element_llvm_type, LLVM::Int(capacity))
+      buffer = @builder.array_malloc(node.type.lookup_instance_var('@buffer').type.var.llvm_type, LLVM::Int(capacity))
       @builder.store buffer, gep(array, 0, 2)
 
       node.elements.each_with_index do |elem, index|
         elem.accept self
-        codegen_assign gep(buffer, index), node.type.element_type, elem.type, @last
+        codegen_assign gep(buffer, index), node.type.lookup_instance_var('@buffer').type.var.type, elem.type, @last
       end
 
       @last = array
 
       false
-    end
-
-    def visit_array_new(node)
-      size = @vars['size'][:ptr]
-      capacity = size # TODO: expand to next power of two using LLVM
-
-      obj = @vars['obj']
-
-      array = @builder.malloc(node.type.llvm_struct_type)
-      @builder.store size, gep(array, 0, 0)
-      @builder.store capacity, gep(array, 0, 1)
-
-      buffer = @builder.array_malloc(node.type.element_llvm_type, capacity)
-      @builder.store buffer, gep(array, 0, 2)
-
-      case node.type.element_type
-      when @mod.bool, @mod.char
-        memset buffer, @builder.zext(obj[:ptr], LLVM::Int), size
-      when @mod.int
-        codegen_int_array_new_contents(node, buffer, obj, size)
-      else
-        codegen_array_new_contents(node, buffer, obj, size)
-      end
-
-      @last = array
-    end
-
-    def codegen_int_array_new_contents(node, buffer, obj, size)
-      memset_block, one_by_one_block, exit_block = new_blocks 'memset', 'one_by_one', 'exit'
-
-      cmp = @builder.icmp :eq, obj[:ptr], LLVM::Int(0)
-      @builder.cond cmp, memset_block, one_by_one_block
-
-      @builder.position_at_end memset_block
-      bytes_count = @builder.mul size, LLVM::Int(@mod.int.llvm_size)
-      memset buffer, obj[:ptr], bytes_count
-      @builder.br exit_block
-
-      @builder.position_at_end one_by_one_block
-      codegen_array_new_contents(node, buffer, obj, size)
-      @builder.br exit_block
-
-      @builder.position_at_end exit_block
-    end
-
-    def codegen_array_new_contents(node, buffer, obj, size)
-      cmp_block, loop_block, exit_block = new_blocks 'cmp', 'loop', 'exit'
-
-      index_ptr = alloca LLVM::Int
-      @builder.store LLVM::Int(0), index_ptr
-
-      @builder.br cmp_block
-
-      @builder.position_at_end cmp_block
-      cmp = @builder.icmp(:eq, @builder.load(index_ptr), size)
-      @builder.cond(cmp, exit_block, loop_block)
-
-      @builder.position_at_end loop_block
-      index = @builder.load(index_ptr)
-      codegen_assign gep(buffer, index), node.type.element_type, obj[:type], obj[:ptr]
-      @builder.store @builder.add(index, LLVM::Int(1)), index_ptr
-      @builder.br cmp_block
-
-      @builder.position_at_end exit_block
-    end
-
-    def visit_array_length(node)
-      if @type.element_type
-        @last = @builder.load gep(llvm_self, 0, 0)
-      else
-        @last = LLVM::Int(0)
-      end
-    end
-
-    def visit_array_get(node)
-      @last = array_index_pointer
-      @last = @builder.load @last unless @type.element_type.is_a?(UnionType)
-    end
-
-    def visit_array_set(node)
-      codegen_assign(array_index_pointer, @type.element_type, node.type, @fun.params[2])
-      @last = @fun.params[2]
-    end
-
-    def visit_array_push(node)
-      resize_block, exit_block = new_blocks "resize", "exit"
-
-      size_ptr = gep(llvm_self, 0, 0)
-      capacity_ptr = gep(llvm_self, 0, 1)
-      size = @builder.load size_ptr
-      capacity = @builder.load capacity_ptr
-      cmp = @builder.icmp(:eq, size, capacity)
-      @builder.cond(cmp, resize_block, exit_block)
-
-      @builder.position_at_end resize_block
-      buffer_ptr = gep(llvm_self, 0, 2)
-      new_capacity = @builder.mul capacity, LLVM::Int(2)
-      llvm_type = @type.element_llvm_type
-      llvm_type = llvm_type.is_a?(LLVM::Type) ? llvm_type : llvm_type.type
-      new_buffer_size = @builder.mul new_capacity, @builder.trunc(llvm_type.size, LLVM::Int32)
-      buffer = @builder.load buffer_ptr
-      casted_buffer = @builder.bit_cast buffer, LLVM::Pointer(LLVM::Int8)
-      realloced_pointer = realloc casted_buffer, new_buffer_size
-      casted_realloced_pointer = @builder.bit_cast realloced_pointer, LLVM::Pointer(@type.element_llvm_type)
-      @builder.store casted_realloced_pointer, buffer_ptr
-      @builder.store new_capacity, capacity_ptr
-      @builder.br exit_block
-
-      @builder.position_at_end exit_block
-      new_size = @builder.add size, LLVM::Int(1)
-      @builder.store new_size, size_ptr
-      codegen_assign(array_index_pointer(size), @type.element_type, @vars['value'][:type], @fun.params[1])
-      @last = llvm_self
-    end
-
-    def array_index_pointer(index = @fun.params[1])
-      buffer = @builder.load gep(llvm_self, 0, 2)
-      gep(buffer, index)
     end
 
     def visit_argv(node)

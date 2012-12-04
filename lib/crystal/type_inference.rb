@@ -10,7 +10,6 @@ module Crystal
         infer_type_with_prof node, mod
       else
         node.accept TypeVisitor.new(mod)
-        fix_empty_arrays node, mod
         unify node if Crystal::UNIFY
       end
     end
@@ -21,16 +20,14 @@ module Crystal
     require 'benchmark'
     Benchmark.bm(20, 'TOTAL:') do |bm|
       t1 = bm.report('type inference:') { node.accept TypeVisitor.new(mod) }
-      t2 = bm.report('fix_empty_arrays:') { fix_empty_arrays node, mod }
-      t3 = bm.report('unification:') { unify node if Crystal::UNIFY }
-      [t1 + t2 + t3]
+      t2 = bm.report('unification:') { unify node if Crystal::UNIFY }
+      [t1 + t2]
     end
   end
 
   def infer_type_with_prof(node, mod)
     require 'ruby-prof'
     profile_to('type_inference.html') { node.accept TypeVisitor.new(mod) }
-    profile_to('fix_empty_arrays.html') { fix_empty_arrays node, mod }
     profile_to('unification.html') { unify node if Crystal::UNIFY }
   end
 
@@ -705,38 +702,10 @@ module Crystal
 
     def visit_array_literal(node)
       node.type = mod.array.clone
+      buffer = node.type.lookup_instance_var('@buffer').type.var
       node.elements.each do |elem|
-        node.type.element_type_var.bind_to elem
+        buffer.bind_to elem
       end
-    end
-
-    def visit_array_new(node)
-      check_var_type 'size', mod.int
-
-      node.type = mod.array.clone
-      node.type.element_type_var.bind_to @vars['obj']
-    end
-
-    def visit_array_length(node)
-      node.type = mod.int
-    end
-
-    def visit_array_get(node)
-      check_var_type 'index', mod.int
-
-      node.bind_to @scope.element_type_var
-    end
-
-    def visit_array_set(node)
-      check_var_type 'index', mod.int
-
-      @scope.element_type_var.bind_to @vars['value']
-      node.bind_to @vars['value']
-    end
-
-    def visit_array_push(node)
-      @scope.element_type_var.bind_to @vars['value']
-      node.bind_to @vars['self']
     end
 
     def check_var_type(var_name, expected_type)
@@ -879,8 +848,7 @@ module Crystal
     def visit_pointer_realloc(node)
       check_var_type 'size', mod.int
 
-      node.type = mod.pointer.clone
-      node.type.var.bind_to @scope.var
+      node.type = @scope
     end
 
     def visit_pointer_get_value(node)
