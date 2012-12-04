@@ -2,7 +2,7 @@ class Array
   def initialize
     @length = 0
     @capacity = 16
-    @buffer = Pointer.malloc(1000)
+    @buffer = Pointer.malloc(16)
   end
 
   def length
@@ -20,7 +20,7 @@ class Array
   def push(value)
     if @length == @capacity
       @capacity *= 2
-      @buffer = @buffer.realloc(1000)
+      @buffer = @buffer.realloc(@capacity)
     end
     @buffer[@length] = value
     @length += 1
