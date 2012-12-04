@@ -5,6 +5,7 @@ lib C
   fun strcpy(dest : ptr Char, src : ptr Char) : ptr Char
   fun strcat(dest : ptr Char, src : ptr Char) : ptr Char
   fun strcmp(s1 : ptr Char, s2 : ptr Char) : Int
+  fun strncpy(s1 : ptr Char, s2 : ptr Char, n : Int) : ptr Char
 end
 
 class String
@@ -37,6 +38,13 @@ class String
       yield p.value
       p += 1
     end
+  end
+
+  def slice(start, count)
+    new_string_buffer = Pointer.malloc(count + 1).as(Char)
+    C.strncpy(new_string_buffer, @c.ptr + start, count)
+    new_string_buffer[count] = '\0'
+    new_string_buffer.as(String)
   end
 
   def inspect
