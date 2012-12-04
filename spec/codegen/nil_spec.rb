@@ -12,6 +12,7 @@ describe 'Code gen: nil' do
           if false
             @x = Object.new
           end
+          1
         end
 
         def x

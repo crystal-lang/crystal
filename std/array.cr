@@ -36,10 +36,8 @@ class Array
   end
 
   def each
-    i = 0
-    while i < length
-      yield self[i]
-      i += 1
+    length.times do |i|
+      yield @buffer[i]
     end
     self
   end
@@ -75,7 +73,7 @@ class Array
     pivot_value = self[pivot_index]
     swap pivot_index, right
     store_index = left
-    (left...right).each do |i|
+    left.upto(right) do |i|
       if self[i] < pivot_value
         swap i, store_index
         store_index += 1

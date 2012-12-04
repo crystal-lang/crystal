@@ -4,6 +4,7 @@ module Crystal
   class Program
     def define_primitives
       define_object_primitives
+      define_nil_primitives
       define_value_primitives
       define_bool_primitives
       define_char_primitives
@@ -18,6 +19,7 @@ module Crystal
 
     def define_object_primitives
       no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
+      no_args_primitive(object, 'to_b', bool) { |b, f| LLVM::Int1.from_i(1) }
       no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end
@@ -28,11 +30,17 @@ module Crystal
       end
     end
 
+    def define_nil_primitives
+      no_args_primitive(self.nil, 'to_b', bool) { |b, f| LLVM::Int1.from_i(0) }
+      no_args_primitive(self.nil, 'nil?', bool) { |b, f| LLVM::Int1.from_i(1) }
+    end
+
     def define_value_primitives
       no_args_primitive(value, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
     end
 
     def define_bool_primitives
+      no_args_primitive(bool, 'to_b', bool) { |b, f| f.params[0] }
       singleton(bool, :'!@', {}, bool) { |b, f| b.not(f.params[0]) }
       singleton(bool, :'&&', {'other' => bool}, bool) { |b, f| b.and(f.params[0], f.params[1]) }
       singleton(bool, :'||', {'other' => bool}, bool) { |b, f| b.or(f.params[0], f.params[1]) }

@@ -86,6 +86,6 @@ describe 'Block inference' do
       a = [1.1]
       a.each { |x| x }
     )
-    mod = infer_type input, load_std: ['pointer', 'array']
+    mod = infer_type input, load_std: ['int', 'pointer', 'array']
   end
 end

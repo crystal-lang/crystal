@@ -1,12 +1,4 @@
 class Nil
-  def nil?
-    true
-  end
-
-  def to_b
-    false
-  end
-
   def to_s
     ""
   end
