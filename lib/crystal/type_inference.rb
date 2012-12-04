@@ -666,8 +666,16 @@ module Crystal
       node.type = mod.void
     end
 
+    def visit_if(node)
+      node.cond = Call.new(node.cond, 'to_b')
+      node.cond.accept self
+      node.then.accept self if node.then
+      node.else.accept self if node.else
+      false
+    end
+
     def end_visit_if(node)
-      node.bind_to node.then
+      node.bind_to node.then if node.then
       node.bind_to node.else if node.else
     end
 

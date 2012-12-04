@@ -36,4 +36,12 @@ describe 'Code gen: if' do
   it 'codes if with two whiles' do
     run('if true; while false; end; else; while false; end; end')
   end
+
+  it 'codegens if with int' do
+    run('if 1; 2; else 3; end', load_std: ['object']).to_i.should eq(2)
+  end
+
+  it 'codegens if with nil' do
+    run('if nil; 2; else 3; end', load_std: ['nil']).to_i.should eq(3)
+  end
 end

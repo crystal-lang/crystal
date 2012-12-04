@@ -20,6 +20,10 @@ class Object
     attr :#{symbol_or_name}
   "end
 
+  def to_b
+    true
+  end
+
   def inspect
     to_s
   end
