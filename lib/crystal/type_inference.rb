@@ -86,6 +86,10 @@ module Crystal
     attr_accessor :target_const
   end
 
+  class RegexpLiteral
+    attr_accessor :expanded
+  end
+
   class Call
     attr_accessor :target_def
     attr_accessor :target_macro
@@ -435,6 +439,12 @@ module Crystal
     def visit_symbol_literal(node)
       node.type = mod.symbol
       mod.symbols << node.value
+    end
+
+    def visit_regexp_literal(node)
+      node.expanded = Call.new(Ident.new(['Regexp'], true), 'new', [StringLiteral.new(node.value)])
+      node.expanded.accept self
+      node.type = node.expanded.type
     end
 
     def visit_def(node)

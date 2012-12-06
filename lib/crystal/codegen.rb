@@ -183,6 +183,10 @@ module Crystal
       @last = LLVM::Int32.from_i(@symbols[node.value])
     end
 
+    def visit_regexp_literal(node)
+      node.expanded.accept self
+    end
+
     def visit_expressions(node)
       node.expressions.each do |exp|
         exp.accept self
