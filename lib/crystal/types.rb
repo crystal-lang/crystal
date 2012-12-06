@@ -253,7 +253,7 @@ module Crystal
     end
 
     def llvm_type
-      @llvm_type ||= LLVM::Pointer(var.type.llvm_type)
+      @llvm_type ||= var.type.is_a?(StructType) ? var.type.llvm_type : LLVM::Pointer(var.type.llvm_type)
     end
 
     def llvm_name

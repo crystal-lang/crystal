@@ -293,6 +293,9 @@ module Crystal
       if node.var.is_a?(Var)
         var = @vars[node.var.name]
         @last = var[:ptr]
+        if node.var.type.is_a?(StructType)
+          @last = @builder.load @last
+        end
       else
         var = @type.instance_vars[node.var.name]
         @last = gep llvm_self, 0, @type.index_of_instance_var(node.var.name)
@@ -313,7 +316,7 @@ module Crystal
     end
 
     def visit_pointer_get_value(node)
-      if @type.var.type.is_a?(UnionType)
+      if @type.var.type.is_a?(UnionType) || @type.var.type.is_a?(StructType)
         @last = llvm_self
       else
         @last = @builder.load llvm_self

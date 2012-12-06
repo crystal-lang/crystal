@@ -1,22 +1,23 @@
 lib C
   struct Regex
-    re_magic : Int
-    re_endp : String
-    re_guts : Long
+    magic : Int
+    nsub : Long
+    endp : String
+    guts : Long
   end
 
   struct Regmatch
-    rm_so : Long
-    rm_eo : Long
+    start_match : Long
+    end_match : Long
   end
 
-  fun regcomp(re : Regex, str : String, flags : Int) : Int
-  fun regexec(re : Regex, str : String, nmatch : Int, pmatch : Regmatch, flags : Int) : Int
+  fun regcomp(re : ptr Regex, str : String, flags : Int) : Int
+  fun regexec(re : ptr Regex, str : String, nmatch : Long, pmatch : ptr Regmatch, flags : Int) : Int
 end
 
 class Regexp
   def initialize(str)
-    @re = C::Regex.new
+    @re = Pointer.malloc(100).as(C::Regex)
     unless C.regcomp(@re, str, 1) == 0
       puts "Error compiling regex: #{str}"
       exit 1
@@ -24,11 +25,11 @@ class Regexp
   end
 
   def match(str)
-    match = C::Regmatch.new
-    if C.regexec(@re, str, 1, match, 0) != 0
+    matches = Pointer.malloc(16 * (@re.value.nsub + 1)).as(C::Regmatch)
+    if C.regexec(@re, str, @re.value.nsub + 1, matches, 0) != 0
       nil
     else
-      MatchData.new self, str, [match]
+      MatchData.new self, str, matches
     end
   end
 end
@@ -45,11 +46,11 @@ class MatchData
   end
 
   def begin(n)
-    @matches[n].rm_so
+    @matches[n].start_match
   end
 
   def end(n)
-    @matches[n].rm_eo
+    @matches[n].end_match
   end
 
   def string
@@ -58,6 +59,6 @@ class MatchData
 
   def [](index)
     m = @matches[index]
-    @string.slice(m.rm_so.to_i, (m.rm_eo - m.rm_so).to_i)
+    @string.slice(m.start_match.to_i, (m.end_match - m.start_match).to_i)
   end
 end
