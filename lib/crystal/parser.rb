@@ -191,7 +191,7 @@ module Crystal
     parse_operator :or, :and, :'||'
     parse_operator :and, :equality, :'&&'
     parse_operator :equality, :cmp, :<, :<=, :>, :>=, :'<=>'
-    parse_operator :cmp, :logical_or, :==, :"!="
+    parse_operator :cmp, :logical_or, :==, :"!=", :=~
     parse_operator :logical_or, :logical_and, :|, :^
     parse_operator :logical_and, :shift, :&
     parse_operator :shift, :add_or_sub, :<<, :>>
@@ -245,7 +245,7 @@ module Crystal
           next_token
         when :'.'
           next_token_skip_space_or_newline
-          check :IDENT, :+, :-, :*, :/, :%, :|, :&, :^, :**, :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :'<=>'
+          check :IDENT, :+, :-, :*, :/, :%, :|, :&, :^, :**, :<<, :<, :<=, :==, :"!=", :=~, :>>, :>, :>=, :'<=>'
           name = @token.type == :IDENT ? @token.value : @token.type
           name_column_number = @token.column_number
           next_token
@@ -664,7 +664,7 @@ module Crystal
 
     def parse_def
       next_token_skip_space_or_newline
-      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>'
+      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>'
 
       receiver = nil
 

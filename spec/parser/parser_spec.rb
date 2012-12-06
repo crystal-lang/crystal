@@ -274,4 +274,8 @@ describe Parser do
   it_parses "@a.ptr", PointerOf.new('@a'.instance_var)
 
   it_parses "/foo/", RegexpLiteral.new("foo")
+
+  it_parses "1 =~ 2", Call.new(1.int, :=~, [2.int])
+  it_parses "1.=~(2)", Call.new(1.int, :=~, [2.int])
+  it_parses "def =~; end", Def.new(:=~, [])
 end
