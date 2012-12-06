@@ -278,4 +278,6 @@ describe Parser do
   it_parses "1 =~ 2", Call.new(1.int, :=~, [2.int])
   it_parses "1.=~(2)", Call.new(1.int, :=~, [2.int])
   it_parses "def =~; end", Def.new(:=~, [])
+
+  it_parses "foo $a", Call.new(nil, 'foo', [Global.new('$a')])
 end
