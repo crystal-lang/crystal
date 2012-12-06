@@ -103,7 +103,7 @@ describe Lexer do
   it_lexes_operators "=", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", "==", "!=", '=~', "!", ",", '.', '..', '...', "+@", "-@", "&&", "||", "|", "{", "}", '?', ':', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**=', '<<', '>>', '%', '&', '|', '^', '**', '<<=', '>>=', '~', '~@', '[]', '[', ']', '::', '<=>'
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
-  it_lexes_globals "$foo", "$FOO", "$_foo", "$foo123"
+  it_lexes_globals "$foo", "$FOO", "$_foo", "$foo123", "$~"
   it_lexes_symbols ":foo", ":foo!", ":foo?"
   it_lexes_regex "/foo/"
 
