@@ -44,14 +44,14 @@ module Crystal
       unless node
         case type
         when ObjectType
-          node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.name
+          node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.full_name
           type.instance_vars.each do |ivar, var|
             add_edges node, var.type, ivar
           end
         when nil
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => 'Nil'
         else
-          node = @g.add_nodes type.object_id.to_s, :label => type.name
+          node = @g.add_nodes type.object_id.to_s, :label => type.full_name
         end
       end
       node
