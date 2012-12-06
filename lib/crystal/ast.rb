@@ -370,6 +370,22 @@ module Crystal
     end
   end
 
+  class RegexpLiteral < ASTNode
+    attr_accessor :value
+
+    def initialize(value)
+      @value = value
+    end
+
+    def ==(other)
+      other.is_a?(RegexpLiteral) && other.value == value
+    end
+
+    def clone_from(other, &block)
+      @value = other.value
+    end
+  end
+
   # A method definition.
   #
   #     [ receiver '.' ] 'def' name

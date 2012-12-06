@@ -83,7 +83,7 @@ describe Lexer do
   end
 
   def self.it_lexes_regex(string)
-    it_lexes string, :REGEX, string[1 .. -2]
+    it_lexes string, :REGEXP, string[1 .. -2]
   end
 
   it_lexes " ", :SPACE

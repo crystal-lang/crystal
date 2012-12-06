@@ -50,6 +50,12 @@ module Crystal
       @str << node.value
     end
 
+    def visit_regexp_literal(node)
+      @str << '/'
+      @str << node.value
+      @str << '/'
+    end
+
     def visit_array_literal(node)
       @str << '['
       node.elements.each_with_index do |exp, i|
