@@ -151,10 +151,10 @@ module Crystal
         case @token.type
         when :'..'
           next_token_skip_space_or_newline
-          exp = Call.new(Ident.new(['Range']), 'new', [exp, parse_or, BoolLiteral.new(false)])
+          exp = RangeLiteral.new(exp, parse_or, false)
         when :'...'
           next_token_skip_space_or_newline
-          exp = Call.new(Ident.new(['Range']), 'new', [exp, parse_or, BoolLiteral.new(true)])
+          exp = RangeLiteral.new(exp, parse_or, true)
         else
           return exp
         end

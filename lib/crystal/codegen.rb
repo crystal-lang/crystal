@@ -183,6 +183,11 @@ module Crystal
       @last = LLVM::Int32.from_i(@symbols[node.value])
     end
 
+    def visit_range_literal(node)
+      node.expanded.accept self
+      false
+    end
+
     def visit_regexp_literal(node)
       node.expanded.accept self
     end

@@ -370,6 +370,28 @@ module Crystal
     end
   end
 
+  class RangeLiteral < ASTNode
+    attr_accessor :from
+    attr_accessor :to
+    attr_accessor :exclusive
+
+    def initialize(from, to, exclusive)
+      @from = from
+      @to = to
+      @exclusive = exclusive
+    end
+
+    def ==(other)
+      other.is_a?(RangeLiteral) && other.from == from && other.to == to && other.exclusive == exclusive
+    end
+
+    def clone_from(other, &block)
+      @from = other.from
+      @to = other.to
+      @exclusive = other.exclusive
+    end
+  end
+
   class RegexpLiteral < ASTNode
     attr_accessor :value
 

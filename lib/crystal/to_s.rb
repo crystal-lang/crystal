@@ -50,6 +50,17 @@ module Crystal
       @str << node.value
     end
 
+    def visit_range_literal(node)
+      node.from.accept self
+      if node.exclusive
+        @str << '..'
+      else
+        @str << '...'
+      end
+      node.to.accept self
+      false
+    end
+
     def visit_regexp_literal(node)
       @str << '/'
       @str << node.value
