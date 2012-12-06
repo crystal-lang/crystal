@@ -82,6 +82,10 @@ describe Lexer do
     it_lexes string, :INSTANCE_VAR, string
   end
 
+  def self.it_lexes_regex(string)
+    it_lexes string, :REGEX, string[1 .. -2]
+  end
+
   it_lexes " ", :SPACE
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
@@ -101,6 +105,7 @@ describe Lexer do
   it_lexes_instance_var "@foo"
   it_lexes_globals "$foo", "$FOO", "$_foo", "$foo123"
   it_lexes_symbols ":foo", ":foo!", ":foo?"
+  it_lexes_regex "/foo/"
 
   it "lexes comment and token" do
     lexer = Lexer.new "# comment\n1"

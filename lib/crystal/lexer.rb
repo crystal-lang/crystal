@@ -57,6 +57,9 @@ module Crystal
       elsif match = scan(/:[a-zA-Z_][a-zA-Z_0-9]*((\?|!)|\b)/)
         @token.type = :SYMBOL
         @token.value = match[1 .. -1]
+      elsif match = scan(/\/\S+\//)
+        @token.type = :REGEX
+        @token.value = match[1 .. -2]
       elsif match = scan(/\%w\(/)
         @token.type = :STRING_ARRAY_START
       elsif match = scan(%r(!=|!|==|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&|&|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
