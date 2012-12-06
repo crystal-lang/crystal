@@ -391,6 +391,8 @@ module Crystal
         node_and_next_token RegexpLiteral.new(@token.value)
       when :GLOBAL
         node_and_next_token Global.new(@token.value)
+      when :GLOBAL_MATCH
+        node_and_next_token Call.new(Global.new('$~'), :[], [IntLiteral.new(@token.value)])
       when :IDENT
         case @token.value
         when :begin
@@ -579,7 +581,7 @@ module Crystal
 
     def parse_args_space_consumed
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :'(', :'!', :'[', :'[]'
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :'(', :'!', :'[', :'[]'
         case @token.value
         when :if, :unless, :while
           nil

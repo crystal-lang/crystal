@@ -86,6 +86,12 @@ describe Lexer do
     it_lexes string, :REGEXP, string[1 .. -2]
   end
 
+  def self.it_lexes_global_match(*args)
+    args.each do |arg|
+      it_lexes arg, :GLOBAL_MATCH, arg[1 .. -1].to_i
+    end
+  end
+
   it_lexes " ", :SPACE
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
@@ -106,6 +112,7 @@ describe Lexer do
   it_lexes_globals "$foo", "$FOO", "$_foo", "$foo123", "$~"
   it_lexes_symbols ":foo", ":foo!", ":foo?"
   it_lexes_regex "/foo/"
+  it_lexes_global_match "$1", "$10"
 
   it "lexes comment and token" do
     lexer = Lexer.new "# comment\n1"

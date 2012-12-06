@@ -85,6 +85,9 @@ module Crystal
       elsif match = scan(/\$\~/)
         @token.type = :GLOBAL
         @token.value = match
+      elsif match = scan(/\$\d+/)
+        @token.type = :GLOBAL_MATCH
+        @token.value = match[1 .. -1].to_i
       elsif match = scan(/\$[a-zA-Z_][a-zA-Z_0-9]*\b/)
         @token.type = :GLOBAL
         @token.value = match

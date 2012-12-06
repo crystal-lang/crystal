@@ -280,4 +280,7 @@ describe Parser do
   it_parses "def =~; end", Def.new(:=~, [])
 
   it_parses "foo $a", Call.new(nil, 'foo', [Global.new('$a')])
+
+  it_parses "$1", Call.new(Global.new('$~'), :[], [1.int])
+  it_parses "foo $1", Call.new(nil, 'foo', [Call.new(Global.new('$~'), :[], [1.int])])
 end
