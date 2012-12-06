@@ -452,8 +452,17 @@ module Crystal
     end
 
     def visit_regexp_literal(node)
-      node.expanded = Call.new(Ident.new(['Regexp'], true), 'new', [StringLiteral.new(node.value)])
+      name = "/#{node.value}/"
+
+      unless mod.types[name]
+        value = Call.new(Ident.new(['Regexp'], true), 'new', [StringLiteral.new(node.value)])
+        value.accept self
+        mod.types[name] = Const.new name, value, mod
+      end
+
+      node.expanded = Ident.new([name], true)
       node.expanded.accept self
+
       node.type = node.expanded.type
     end
 
