@@ -21,6 +21,11 @@ class String
     C.strcmp(@c.ptr, other.cstr) == 0
   end
 
+  def =~(regex)
+    $~ = regex.match(self)
+    $~ ? $~.begin(0) : nil
+  end
+
   def +(other)
     new_string_buffer = Pointer.malloc(length + other.length + 1).as(Char)
     C.strcpy(new_string_buffer, @c.ptr)
