@@ -11,33 +11,34 @@ lib C
     end_match : Long
   end
 
-  fun regcomp(re : ptr Regex, str : String, flags : Int) : Int
-  fun regexec(re : ptr Regex, str : String, nmatch : Long, pmatch : ptr Regmatch, flags : Int) : Int
+  fun regcomp(re : ptr Regex, str : ptr Char, flags : Int) : Int
+  fun regexec(re : ptr Regex, str : ptr Char, nmatch : Long, pmatch : ptr Regmatch, flags : Int) : Int
 end
 
 class Regexp
   def initialize(str)
     @re = C::Regex.new
-    unless C.regcomp(@re.ptr, str, 1) == 0
+    unless C.regcomp(@re.ptr, str.cstr, 1) == 0
       puts "Error compiling regex: #{str}"
       exit 1
     end
   end
 
-  def match(str)
+  def match(str, pos = 0)
     matches = Pointer.malloc(16 * (@re.nsub + 1)).as(C::Regmatch)
-    if C.regexec(@re.ptr, str, @re.nsub + 1, matches, 0) != 0
+    if C.regexec(@re.ptr, str.cstr + pos, @re.nsub + 1, matches, 0) != 0
       nil
     else
-      MatchData.new self, str, matches
+      MatchData.new self, str, pos, matches
     end
   end
 end
 
 class MatchData
-  def initialize(regexp, string, matches)
+  def initialize(regexp, string, pos, matches)
     @regexp = regexp
     @string = string
+    @pos = pos
     @matches = matches
   end
 
@@ -46,11 +47,11 @@ class MatchData
   end
 
   def begin(n)
-    @matches[n].start_match
+    @matches[n].start_match + @pos
   end
 
   def end(n)
-    @matches[n].end_match
+    @matches[n].end_match + @pos
   end
 
   def string
@@ -59,6 +60,6 @@ class MatchData
 
   def [](index)
     m = @matches[index]
-    @string.slice(m.start_match.to_i, (m.end_match - m.start_match).to_i)
+    @string.slice(m.start_match.to_i + @pos, (m.end_match - m.start_match).to_i + @pos)
   end
 end
