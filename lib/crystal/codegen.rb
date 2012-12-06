@@ -293,12 +293,12 @@ module Crystal
       if node.var.is_a?(Var)
         var = @vars[node.var.name]
         @last = var[:ptr]
-        if node.var.type.is_a?(StructType)
-          @last = @builder.load @last
-        end
       else
         var = @type.instance_vars[node.var.name]
         @last = gep llvm_self, 0, @type.index_of_instance_var(node.var.name)
+      end
+      if node.var.type.is_a?(StructType)
+        @last = @builder.load @last
       end
       false
     end

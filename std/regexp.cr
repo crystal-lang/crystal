@@ -17,16 +17,16 @@ end
 
 class Regexp
   def initialize(str)
-    @re = Pointer.malloc(100).as(C::Regex)
-    unless C.regcomp(@re, str, 1) == 0
+    @re = C::Regex.new
+    unless C.regcomp(@re.ptr, str, 1) == 0
       puts "Error compiling regex: #{str}"
       exit 1
     end
   end
 
   def match(str)
-    matches = Pointer.malloc(16 * (@re.value.nsub + 1)).as(C::Regmatch)
-    if C.regexec(@re, str, @re.value.nsub + 1, matches, 0) != 0
+    matches = Pointer.malloc(16 * (@re.nsub + 1)).as(C::Regmatch)
+    if C.regexec(@re.ptr, str, @re.nsub + 1, matches, 0) != 0
       nil
     else
       MatchData.new self, str, matches
