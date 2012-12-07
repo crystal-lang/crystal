@@ -389,7 +389,6 @@ module Crystal
       instance.owner = self
       instance.body = Expressions.new
       instance.body.set_type(return_type)
-      instance.add_instance instance
     end
 
     def passed_as_self?

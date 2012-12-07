@@ -62,7 +62,7 @@ describe 'Type inference: errors' do
 
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("can't call Foo.foo with types [Int]"))
+    }.should raise_error(Crystal::Exception, regex("argument #1 to Foo.foo must be Char, not Int"))
   end
 
   it "reports uninitialized constant" do
@@ -135,7 +135,7 @@ describe 'Type inference: errors' do
       )
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("can't call Lib.bar with types [Int]"))
+    }.should raise_error(Crystal::Exception, regex("argument #1 to Lib.bar must be Char, not Int"))
   end
 
   it "reports can only get pointer of variable" do

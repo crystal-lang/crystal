@@ -124,7 +124,14 @@ module Crystal
       check_args_match untyped_def
 
       arg_types = args.map &:type
-      typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
+
+      if untyped_def.is_a?(External)
+        typed_def = untyped_def
+        check_args_type_match owner, typed_def
+      else
+        typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
+      end
+
       unless typed_def
         check_frozen owner, untyped_def, arg_types
 
@@ -327,14 +334,19 @@ module Crystal
       raise "wrong number of arguments for '#{name}' (#{args.length} for #{untyped_def.args.length})"
     end
 
+    def check_args_type_match(owner, typed_def)
+      typed_def.args.each_with_index do |typed_def_arg, i|
+        expected_type = typed_def_arg.type
+        if self.args[i].type != expected_type
+          self.args[i].raise "argument \##{i + 1} to #{owner.name}.#{typed_def.name} must be #{expected_type.full_name}, not #{self.args[i].type}"
+        end
+      end
+    end
+
     def check_frozen(owner, untyped_def, arg_types)
       return unless untyped_def.is_a?(FrozenDef)
 
-      if untyped_def.is_a?(External)
-        raise "can't call #{owner.name}.#{name} with types [#{arg_types.join ', '}]"
-      else
-        raise "can't call #{obj.type.name}##{name} with types [#{arg_types.join ', '}]"
-      end
+      raise "can't call #{obj.type.name}##{name} with types [#{arg_types.join ', '}]"
     end
   end
 
