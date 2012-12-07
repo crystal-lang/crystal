@@ -1008,12 +1008,7 @@ module Crystal
           next_token_skip_space_or_newline
 
           arg_type = parse_ident
-
-          ptr = false
-          if @token.type == :*
-            ptr = true
-            next_token
-          end
+          ptr = parse_trailing_pointers
 
           skip_space_or_newline
           args << FunDefArg.new(arg_name, arg_type, ptr)
@@ -1025,17 +1020,14 @@ module Crystal
         next_token_skip_statement_end
       end
 
-      ptr = false
+      ptr = 0
 
       if @token.type == :':'
         next_token_skip_space_or_newline
 
         return_type = parse_ident
 
-        if @token.type == :*
-          ptr = true
-          next_token
-        end
+        ptr = parse_trailing_pointers
 
         skip_statement_end
       end
@@ -1055,12 +1047,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       type = parse_ident
-
-      ptr = false
-      if @token.type == :*
-        ptr = true
-        next_token
-      end
+      ptr = parse_trailing_pointers
 
       skip_statement_end
 
@@ -1100,12 +1087,7 @@ module Crystal
             next_token_skip_space_or_newline
 
             type = parse_ident
-
-            ptr = false
-            if @token.type == :*
-              ptr = true
-              next_token
-            end
+            ptr = parse_trailing_pointers
 
             skip_statement_end
 
@@ -1117,6 +1099,23 @@ module Crystal
       end
 
       fields
+    end
+
+    def parse_trailing_pointers
+      ptr = 0
+      while true
+        case @token.type
+        when :*
+          ptr += 1
+          next_token_skip_space_or_newline
+        when :**
+          ptr += 2
+          next_token_skip_space_or_newline
+        else
+          break
+        end
+      end
+      ptr
     end
 
     def parse_string

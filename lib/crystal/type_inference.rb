@@ -591,7 +591,7 @@ module Crystal
     end
 
     def maybe_ptr_type(type, ptr)
-      if ptr
+      ptr.times do
         ptr_type = mod.pointer.clone
         ptr_type.var.type = type
         type = ptr_type

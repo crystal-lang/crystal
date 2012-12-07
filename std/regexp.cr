@@ -1,6 +1,5 @@
 lib PCRE("pcre")
-  type CharPtr : Char*
-  fun pcre_compile(pattern : Char*, options : Int, errptr : CharPtr*, erroffset : Int*, tableptr : Long) : Long
+  fun pcre_compile(pattern : Char*, options : Int, errptr : Char**, erroffset : Int*, tableptr : Long) : Long
   fun pcre_exec(code : Long, extra : Long, subject : Char*, length : Int, offset : Int, options : Int,
                 ovector : Int*, ovecsize : Int) : Int
 end
@@ -9,7 +8,7 @@ class Regexp
   def initialize(str)
     errptr = Pointer.malloc(0).as(Char)
     erroffset = 1
-    @re = PCRE.pcre_compile(str.cstr, 8, errptr.ptr.as(PCRE::CharPtr), erroffset.ptr, 0L)
+    @re = PCRE.pcre_compile(str.cstr, 8, errptr.ptr, erroffset.ptr, 0L)
     if @re == 0
       puts "#{errptr.as(String)} at #{erroffset}"
       exit 1

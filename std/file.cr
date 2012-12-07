@@ -1,12 +1,11 @@
 lib C
   type File : Void*
-  type CharPtr : Char*
 
   fun fopen(filename : String, mode : String) : File
   fun fputs(str : String, file : File) : Int
   fun fclose(file : File) : Int
   fun feof(file : File) : Int
-  fun getline(linep : CharPtr*, linecap : Long*, file : File) : Long
+  fun getline(linep : Char**, linecap : Long*, file : File) : Long
 end
 
 class File
@@ -25,7 +24,7 @@ class File
 
   def gets
     buffer = Pointer.malloc(0).as(Char)
-    buffer_ptr = buffer.ptr.as(C::CharPtr)
+    buffer_ptr = buffer.ptr
     cap = 0L
     length = C.getline(buffer_ptr, cap.ptr, @file)
     length > 0 ? buffer.as(String) : nil

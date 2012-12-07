@@ -821,7 +821,7 @@ module Crystal
     attr_accessor :return_type
     attr_accessor :ptr
 
-    def initialize(name, args = [], return_type = nil, ptr = false)
+    def initialize(name, args = [], return_type = nil, ptr = 0)
       @name = name
       @args = args
       @args.each { |arg| arg.parent = self }
@@ -845,7 +845,7 @@ module Crystal
     attr_accessor :type
     attr_accessor :ptr
 
-    def initialize(name, type, ptr = false)
+    def initialize(name, type, ptr = 0)
       @name = name
       @type = type
       @ptr = ptr
@@ -866,7 +866,7 @@ module Crystal
     attr_accessor :ptr
     attr_accessor :name_column_number
 
-    def initialize(name, type, ptr = false, name_column_number = nil)
+    def initialize(name, type, ptr = 0, name_column_number = nil)
       @name = name
       @type = type
       @ptr = ptr
