@@ -30,7 +30,9 @@ describe Lexer do
 
   def self.it_lexes_symbols(*args)
     args.each do |arg|
-      it_lexes arg, :SYMBOL, arg[1 .. -1]
+      value = arg[1 .. -1]
+      value = value[1 .. -2] if value.start_with?('"')
+      it_lexes arg, :SYMBOL, value
     end
   end
 
@@ -110,7 +112,7 @@ describe Lexer do
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
   it_lexes_globals "$foo", "$FOO", "$_foo", "$foo123", "$~"
-  it_lexes_symbols ":foo", ":foo!", ":foo?"
+  it_lexes_symbols ":foo", ":foo!", ":foo?", %q(:"foo")
   it_lexes_regex "/foo/"
   it_lexes_global_match "$1", "$10"
 
