@@ -353,6 +353,7 @@ module Crystal
     def visit_fun_def_arg(node)
       @str << node.name
       @str << ' : '
+      @str << 'out ' if node.out
       node.type.accept self
       node.ptr.times do
         @str << '*'

@@ -248,6 +248,7 @@ describe Parser do
   it_parses "lib C\nfun getchar\nend", LibDef.new('C', nil, [FunDef.new('getchar')])
   it_parses "lib C\nfun getchar : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [], 'Int'.ident)])
   it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.ident), FunDefArg.new('b', 'Float'.ident)])])
+  it_parses "lib C\nfun getchar(a : out Int)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.ident, 0, true)])])
   it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.ident), FunDefArg.new('b', 'Float'.ident)], 'Int'.ident)])
   it_parses "lib C; fun getchar(a : Int, b : Float) : Int; end", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.ident), FunDefArg.new('b', 'Float'.ident)], 'Int'.ident)])
   it_parses "lib C; fun foo(a : Int*); end", LibDef.new('C', nil, [FunDef.new('foo', [FunDefArg.new('a', 'Int'.ident, 1)])])

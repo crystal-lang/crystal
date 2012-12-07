@@ -64,7 +64,7 @@ module Crystal
         @token.type = :STRING_ARRAY_START
       elsif match = scan(%r(!=|!|==|=~|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&|&|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
         @token.type = match.to_sym
-      elsif match = scan(/(def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct|macro|ptr)((\?|!)|\b)/)
+      elsif match = scan(/(def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct|macro|ptr|out)((\?|!)|\b)/)
         @token.type = :IDENT
         @token.value = match.end_with?('?') || match.end_with?('!') ? match : match.to_sym
       elsif match = scan(/[A-Z][a-zA-Z_0-9]*\b/)

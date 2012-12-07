@@ -844,11 +844,13 @@ module Crystal
     attr_accessor :name
     attr_accessor :type
     attr_accessor :ptr
+    attr_accessor :out
 
-    def initialize(name, type, ptr = 0)
+    def initialize(name, type, ptr = 0, out = false)
       @name = name
       @type = type
       @ptr = ptr
+      @out = out
     end
 
     def accept_children(visitor)
@@ -856,7 +858,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(FunDefArg) && other.name == name && other.type == type && other.ptr == ptr
+      other.is_a?(FunDefArg) && other.name == name && other.type == type && other.ptr == ptr && other.out == out
     end
   end
 
