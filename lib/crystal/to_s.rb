@@ -222,6 +222,7 @@ module Crystal
     end
 
     def visit_arg(node)
+      @str << 'out ' if node.out
       if node.name
         @str << node.name
       else

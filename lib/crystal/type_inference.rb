@@ -106,6 +106,8 @@ module Crystal
     end
 
     def recalculate(*)
+      set_external_out_args_type
+
       return unless can_calculate_type?
 
       if has_unions?
@@ -138,6 +140,21 @@ module Crystal
 
       self.bind_to typed_def.body if typed_def.body
       self.target_def = typed_def
+    end
+
+    def set_external_out_args_type
+      if obj && obj.type.is_a?(LibType)
+        scope, untyped_def = obj.type, obj.type.defs[name]
+        if untyped_def
+          # External call: set type of out arguments
+          untyped_def.args.each_with_index do |arg, i|
+            if arg.out && self.args[i]
+              var = parent_visitor.lookup_var_or_instance_var(self.args[i])
+              var.bind_to arg
+            end
+          end
+        end
+      end
     end
 
     def bubbling_exception
@@ -563,8 +580,10 @@ module Crystal
 
     def end_visit_fun_def(node)
       args = node.args.map do |arg|
-        type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
-        [arg.name, type]
+        fun_arg = Arg.new(arg.name)
+        fun_arg.type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
+        fun_arg.out = arg.out
+        fun_arg
       end
       return_type = maybe_ptr_type(node.return_type ? node.return_type.type.instance_type : nil, node.ptr)
       current_type.fun node.name, args, return_type
@@ -928,6 +947,14 @@ module Crystal
         @vars[name] = var
       end
       var
+    end
+
+    def lookup_var_or_instance_var(var)
+      if var.is_a?(Var)
+        lookup_var(var.name)
+      else
+        @scope.lookup_instance_var(var.name)
+      end
     end
 
     def current_type

@@ -385,8 +385,6 @@ module Crystal
     end
 
     def fun(name, args, return_type)
-      args = args.map { |name, type| arg = Arg.new(name); arg.type = type; arg }
-
       instance = add_def External.new(name, args)
       instance.body = Expressions.new
       instance.body.set_type(return_type)

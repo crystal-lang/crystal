@@ -21,4 +21,8 @@ describe 'Type inference: class' do
   it "types lib fun with args" do
     assert_type("lib Foo; fun bar(a : Int) : Int; end; Foo.bar(1)") { int }
   end
+
+  it "types call with out" do
+    assert_type("lib Foo; fun bar(a : out Int); end; Foo.bar(out x); x") { int }
+  end
 end

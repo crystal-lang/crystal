@@ -495,11 +495,13 @@ module Crystal
   class Arg < ASTNode
     attr_accessor :name
     attr_accessor :default_value
+    attr_accessor :out
 
-    def initialize(name, default_value = nil)
+    def initialize(name, default_value = nil, out = false)
       @name = name
       @default_value = default_value
       @default_value.parent = self if @default_value
+      @out = out
     end
 
     def accept_children(visitor)
@@ -507,12 +509,13 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(Arg) && other.name == name && other.default_value == default_value
+      other.is_a?(Arg) && other.name == name && other.default_value == default_value && other.out == out
     end
 
     def clone_from(other, &block)
       @name = other.name
       @default_value = other.default_value
+      @out = other.out
     end
   end
 
