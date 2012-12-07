@@ -107,6 +107,10 @@ module Crystal
       end
     end
 
+    def passed_as_self?
+      false
+    end
+
     def define_builtins(load_std)
       if load_std == true
         Dir[File.expand_path("../../../std/**/*.cr",  __FILE__)].each do |file|

@@ -524,7 +524,7 @@ module Crystal
       declare_out_arguments node
 
       owner = ((node.obj && node.obj.type) || node.scope)
-      owner = node.target_def.owner && owner.is_a?(Type) && !owner.is_a?(Metaclass) && !owner.is_a?(Program) && owner
+      owner = nil unless owner.passed_as_self?
 
       call_args = []
       if node.obj && node.obj.type.passed_as_self?

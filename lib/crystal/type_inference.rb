@@ -118,7 +118,7 @@ module Crystal
         return
       end
 
-      scope, untyped_def = compute_scope_and_untyped_def
+      owner, self_type, untyped_def = compute_owner_self_type_and_untyped_def
 
       check_method_exists untyped_def
       check_args_match untyped_def
@@ -126,13 +126,13 @@ module Crystal
       arg_types = args.map &:type
       typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
       unless typed_def
-        check_frozen scope, untyped_def, arg_types
+        check_frozen owner, untyped_def, arg_types
 
-        typed_def, args = prepare_typed_def_with_args(untyped_def, scope, arg_types)
+        typed_def, args = prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
 
         if typed_def.body
           bubbling_exception do
-            visitor = TypeVisitor.new(@mod, args, scope, parent_visitor, [scope, untyped_def, arg_types, typed_def, self])
+            visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, [self_type, untyped_def, arg_types, typed_def, self])
             typed_def.body.accept visitor
           end
         end
@@ -169,14 +169,14 @@ module Crystal
       end
     end
 
-    def prepare_typed_def_with_args(untyped_def, scope, arg_types)
+    def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
       args_start_index = 0
 
       typed_def = untyped_def.clone
-      typed_def.owner = scope
+      typed_def.owner = owner
 
       args = {}
-      args['self'] = Var.new('self', scope) if scope.is_a?(Type)
+      args['self'] = Var.new('self', self_type) if self_type.is_a?(Type)
 
       0.upto(self.args.length - 1).each do |index|
         arg = typed_def.args[index]
@@ -224,13 +224,13 @@ module Crystal
       (obj && obj.type.is_a?(UnionType)) || args.any? { |a| a.type.is_a?(UnionType) }
     end
 
-    def compute_scope_and_untyped_def
+    def compute_owner_self_type_and_untyped_def
       if obj && obj.type
-        return [obj.type, lookup_method(obj.type, name, true)]
+        return [obj.type, obj.type, lookup_method(obj.type, name, true)]
       end
 
       unless scope
-        return [mod, mod.lookup_def(name)]
+        return [mod, mod, mod.lookup_def(name)]
       end
 
       if name == 'super'
@@ -243,21 +243,21 @@ module Crystal
           end
         end
 
-        return [parent, lookup_method(parent, parent_visitor.call[1].name)]
+        return [parent, scope, lookup_method(parent, parent_visitor.call[1].name)]
       end
 
       untyped_def = lookup_method(scope, name)
       if untyped_def
-        return [scope, untyped_def]
+        return [scope, scope, untyped_def]
       end
 
       mod_def = mod.lookup_def(name)
       if mod_def || !(missing = scope.lookup_def('method_missing'))
-        return [mod, mod_def]
+        return [mod, mod, mod_def]
       end
 
       untyped_def = define_missing scope, name
-      [scope, untyped_def]
+      [scope, scope, untyped_def]
     end
 
     def lookup_method(scope, name, use_method_missing = false)
@@ -327,11 +327,11 @@ module Crystal
       raise "wrong number of arguments for '#{name}' (#{args.length} for #{untyped_def.args.length})"
     end
 
-    def check_frozen(scope, untyped_def, arg_types)
+    def check_frozen(owner, untyped_def, arg_types)
       return unless untyped_def.is_a?(FrozenDef)
 
       if untyped_def.is_a?(External)
-        raise "can't call #{scope.name}.#{name} with types [#{arg_types.join ', '}]"
+        raise "can't call #{owner.name}.#{name} with types [#{arg_types.join ', '}]"
       else
         raise "can't call #{obj.type.name}##{name} with types [#{arg_types.join ', '}]"
       end
@@ -845,7 +845,7 @@ module Crystal
     def expand_macro(node)
       return false if !node.obj && node.name == 'super'
 
-      scope, untyped_def = node.compute_scope_and_untyped_def
+      owner, self_type, untyped_def = node.compute_owner_self_type_and_untyped_def
       return false unless untyped_def.is_a?(Macro)
 
       typed_def = Def.new("", untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
