@@ -5,6 +5,8 @@ lib PCRE("pcre")
 end
 
 class Regexp
+  ANCHORED = 16
+
   def initialize(str)
     errptr = Pointer.malloc(0).as(Char)
     erroffset = 1
@@ -15,9 +17,9 @@ class Regexp
     end
   end
 
-  def match(str, pos = 0)
+  def match(str, pos = 0, options = 0)
     ovector = Pointer.malloc(3 * 4).as(Int)
-    ret = PCRE.pcre_exec(@re, 0L, str.cstr, str.length, pos, 0, ovector, 3)
+    ret = PCRE.pcre_exec(@re, 0L, str.cstr, str.length, pos, options, ovector, 3)
     if ret > 0
       MatchData.new(self, str, pos, ovector)
     else
@@ -39,11 +41,11 @@ class MatchData
   end
 
   def begin(n)
-    @ovector[n * 2] + @pos
+    @ovector[n * 2]
   end
 
   def end(n)
-    @ovector[n * 2 + 1] + @pos
+    @ovector[n * 2 + 1]
   end
 
   def string
