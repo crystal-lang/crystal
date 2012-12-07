@@ -557,6 +557,7 @@ module Crystal
     def parse_args
       case @token.type
       when :'{'
+        @last_call_has_parenthesis = false
         nil
       when :"("
         args = []
@@ -594,6 +595,7 @@ module Crystal
         args
       when :SPACE
         next_token
+        @last_call_has_parenthesis = false
         parse_args_space_consumed
       else
         nil
