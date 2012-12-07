@@ -602,7 +602,7 @@ module Crystal
 
     def parse_args_space_consumed
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :'(', :'!', :'[', :'[]'
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]'
         case @token.value
         when :if, :unless, :while
           nil

@@ -289,6 +289,7 @@ describe Parser do
 
   it_parses "$1", Call.new(Global.new('$~'), :[], [1.int])
   it_parses "foo $1", Call.new(nil, 'foo', [Call.new(Global.new('$~'), :[], [1.int])])
+  it_parses "foo /a/", Call.new(nil, 'foo', [RegexpLiteral.new('a')])
 
   it_parses "foo out x; x", [Call.new(nil, 'foo', [Var.new('x')]), Var.new('x')]
   it_parses "foo(out x); x", [Call.new(nil, 'foo', [Var.new('x')]), Var.new('x')]
