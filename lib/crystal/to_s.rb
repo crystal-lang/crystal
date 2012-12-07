@@ -342,8 +342,10 @@ module Crystal
       end
       if node.return_type
         @str << ' : '
-        @str << 'ptr ' if node.ptr
         node.return_type.accept self
+        node.ptr.times do
+          @str << '*'
+        end
       end
       false
     end
@@ -351,8 +353,10 @@ module Crystal
     def visit_fun_def_arg(node)
       @str << node.name
       @str << ' : '
-      @str << 'ptr ' if node.ptr
       node.type.accept self
+      node.ptr.times do
+        @str << '*'
+      end
       false
     end
 
@@ -360,8 +364,10 @@ module Crystal
       @str << 'type '
       @str << node.name
       @str << ' : '
-      @str << 'ptr ' if node.ptr
       node.type.accept self
+      node.ptr.times do
+        @str << '*'
+      end
       false
     end
 
