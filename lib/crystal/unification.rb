@@ -37,6 +37,18 @@ module Crystal
       node.simplify
     end
 
+    def end_visit_range_literal(node)
+      node.expanded.accept self if node.expanded
+    end
+
+    def end_visit_regexp_literal(node)
+      node.expanded.accept self if node.expanded
+    end
+
+    def end_visit_ident(node)
+      node.target_const.value.accept self if node.target_const
+    end
+
     def visit_any(node)
       node.set_type unify_type(node.type) if node.type && !node.type.is_a?(Metaclass)
     end
