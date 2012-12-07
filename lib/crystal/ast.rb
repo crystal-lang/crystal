@@ -459,6 +459,7 @@ module Crystal
   # A local variable or block argument.
   class Var < ASTNode
     attr_accessor :name
+    attr_accessor :out
 
     def initialize(name, type = nil)
       @name = name.to_s
@@ -466,11 +467,12 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(Var) && other.name == name && other.type == type
+      other.is_a?(Var) && other.name == name && other.type == type && other.out == out
     end
 
     def clone_from(other, &block)
       @name = other.name
+      @out = other.out
     end
   end
 
@@ -545,17 +547,19 @@ module Crystal
   # An instance variable.
   class InstanceVar < ASTNode
     attr_accessor :name
+    attr_accessor :out
 
     def initialize(name)
       @name = name
     end
 
     def ==(other)
-      other.is_a?(InstanceVar) && other.name == name
+      other.is_a?(InstanceVar) && other.name == name && other.out == out
     end
 
     def clone_from(other, &block)
       @name = other.name
+      @out = other.out
     end
   end
 

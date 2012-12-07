@@ -127,7 +127,7 @@ module Crystal
 
       if untyped_def.is_a?(External)
         typed_def = untyped_def
-        check_args_type_match owner, typed_def
+        check_args_type_match typed_def
       else
         typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
       end
@@ -156,6 +156,9 @@ module Crystal
           # External call: set type of out arguments
           untyped_def.args.each_with_index do |arg, i|
             if arg.out && self.args[i]
+              unless self.args[i].out
+                self.args[i].raise "argument #1 to #{untyped_def.owner.full_name}.#{untyped_def.name} must be passed as 'out'"
+              end
               var = parent_visitor.lookup_var_or_instance_var(self.args[i])
               var.bind_to arg
             end
@@ -334,11 +337,11 @@ module Crystal
       raise "wrong number of arguments for '#{name}' (#{args.length} for #{untyped_def.args.length})"
     end
 
-    def check_args_type_match(owner, typed_def)
+    def check_args_type_match(typed_def)
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type
         if self.args[i].type != expected_type
-          self.args[i].raise "argument \##{i + 1} to #{owner.name}.#{typed_def.name} must be #{expected_type.full_name}, not #{self.args[i].type}"
+          self.args[i].raise "argument \##{i + 1} to #{typed_def.owner.full_name}.#{typed_def.name} must be #{expected_type.full_name}, not #{self.args[i].type}"
         end
       end
     end

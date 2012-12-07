@@ -113,6 +113,14 @@ describe 'Type inference: errors' do
     }.should raise_error(Crystal::Exception, regex("undefined method '+' for Char"))
   end
 
+  it "reports must be called with out" do
+    nodes = parse "lib Foo; fun x(c : out Int); end; a = 1; Foo.x(a)"
+
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("argument #1 to Foo.x must be passed as 'out'"))
+  end
+
   it "reports error when changing instance var type and something breaks" do
     nodes = parse %Q(
       lib Lib

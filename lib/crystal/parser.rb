@@ -569,11 +569,13 @@ module Crystal
             case @token.type
             when :IDENT
               var = Var.new(@token.value)
+              var.out = true
               var.location = @token.location
               push_var var
               args << var
             when :INSTANCE_VAR
               var = InstanceVar.new(@token.value)
+              var.out = true
               var.location = @token.location
               args << var
             else
@@ -617,11 +619,13 @@ module Crystal
               case @token.type
               when :IDENT
                 var = Var.new(@token.value)
+                var.out = true
                 var.location = @token.location
                 push_var var
                 args << var
               when :INSTANCE_VAR
                 var = InstanceVar.new(@token.value)
+                var.out = true
                 var.location = @token.location
                 args << var
               else
