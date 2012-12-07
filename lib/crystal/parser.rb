@@ -562,7 +562,28 @@ module Crystal
         args = []
         next_token_skip_space
         while @token.type != :")"
-          args << parse_expression
+          if @token.type == :IDENT && @token.value == :out
+            next_token_skip_space_or_newline
+
+            case @token.type
+            when :IDENT
+              var = Var.new(@token.value)
+              var.location = @token.location
+              push_var var
+              args << var
+            when :INSTANCE_VAR
+              var = InstanceVar.new(@token.value)
+              var.location = @token.location
+              args << var
+            else
+              raise "expecting variable or instance variable after out"
+            end
+
+            next_token_skip_space
+          else
+            args << parse_expression
+          end
+
           skip_space
           if @token.type == :","
             next_token_skip_space_or_newline
@@ -588,8 +609,30 @@ module Crystal
         else
           args = []
           while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :')' && @token.type != :':' && !is_end_token
-            args << parse_op_assign
+            if @token.type == :IDENT && @token.value == :out
+              next_token_skip_space_or_newline
+
+              case @token.type
+              when :IDENT
+                var = Var.new(@token.value)
+                var.location = @token.location
+                push_var var
+                args << var
+              when :INSTANCE_VAR
+                var = InstanceVar.new(@token.value)
+                var.location = @token.location
+                args << var
+              else
+                raise "expecting variable or instance variable after out"
+              end
+
+              next_token
+            else
+              args << parse_op_assign
+            end
+
             skip_space
+
             if @token.type == :","
               next_token_skip_space_or_newline
             else
