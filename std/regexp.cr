@@ -1,57 +1,50 @@
-lib C
-  struct Regex
-    magic : Int
-    nsub : Long
-    endp : String
-    guts : Long
-  end
-
-  struct Regmatch
-    start_match : Long
-    end_match : Long
-  end
-
-  fun regcomp(re : ptr Regex, str : ptr Char, flags : Int) : Int
-  fun regexec(re : ptr Regex, str : ptr Char, nmatch : Long, pmatch : ptr Regmatch, flags : Int) : Int
+lib PCRE("pcre")
+  type CharPtr : ptr Char
+  fun pcre_compile(pattern : ptr Char, options : Int, errptr : ptr CharPtr, erroffset : ptr Int, tableptr : Long) : Long
+  fun pcre_exec(code : Long, extra : Long, subject : ptr Char, length : Int, offset : Int, options : Int,
+                ovector : ptr Int, ovecsize : Int) : Int
 end
 
 class Regexp
   def initialize(str)
-    @re = C::Regex.new
-    unless C.regcomp(@re.ptr, str.cstr, 1) == 0
-      puts "Error compiling regex: #{str}"
+    errptr = Pointer.malloc(0).as(Char)
+    erroffset = 1
+    @re = PCRE.pcre_compile(str.cstr, 8, errptr.ptr.as(PCRE::CharPtr), erroffset.ptr, 0L)
+    if @re == 0
+      puts "#{errptr.as(String)} at #{erroffset}"
       exit 1
     end
   end
 
   def match(str, pos = 0)
-    matches = Pointer.malloc(16 * (@re.nsub + 1)).as(C::Regmatch)
-    if C.regexec(@re.ptr, str.cstr + pos, @re.nsub + 1, matches, 0) != 0
-      nil
+    ovector = Pointer.malloc(3 * 4).as(Int)
+    ret = PCRE.pcre_exec(@re, 0L, str.cstr, str.length, pos, 0, ovector, 3)
+    if ret > 0
+      MatchData.new(self, str, pos, ovector)
     else
-      MatchData.new self, str, pos, matches
+      nil
     end
   end
 end
 
 class MatchData
-  def initialize(regexp, string, pos, matches)
-    @regexp = regexp
+  def initialize(regex, string, pos, ovector)
+    @regex = regex
     @string = string
     @pos = pos
-    @matches = matches
+    @ovector = ovector
   end
 
-  def regexp
-    @regexp
+  def regex
+    @regex
   end
 
   def begin(n)
-    @matches[n].start_match + @pos
+    @ovector[n * 2] + @pos
   end
 
   def end(n)
-    @matches[n].end_match + @pos
+    @ovector[n * 2 + 1] + @pos
   end
 
   def string
@@ -59,7 +52,6 @@ class MatchData
   end
 
   def [](index)
-    m = @matches[index]
-    @string.slice(m.start_match.to_i + @pos, (m.end_match - m.start_match).to_i + @pos)
+    @string.slice(self.begin(index), self.end(index) - self.begin(index))
   end
 end
