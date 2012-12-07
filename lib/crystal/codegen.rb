@@ -11,6 +11,14 @@ module Crystal
     end
   end
 
+  class Arg
+    def llvm_type
+      llvm_type = type.llvm_type
+      llvm_type = LLVM::Pointer(llvm_type) if out
+      llvm_type
+    end
+  end
+
   class Def
     def mangled_name(self_type)
       Def.mangled_name(self_type, owner, name, (body ? body.type : nil), args.map(&:type))
@@ -258,19 +266,24 @@ module Crystal
           ptr.initializer = LLVM::Constant.null(node.target.llvm_type)
         end
       else
-        var = @vars[node.target.name.to_s]
-        unless var
-          var = @vars[node.target.name.to_s] = {
-            ptr: alloca(node.target.llvm_type, node.target.name.to_s),
-            type: node.target.type
-          }
-        end
+        var = declare_var(node.target)
         ptr = var[:ptr]
       end
 
       codegen_assign(ptr, node.target.type, node.value.type, @last)
 
       false
+    end
+
+    def declare_var(var)
+      llvm_var = @vars[var.name.to_s]
+      unless llvm_var
+        llvm_var = @vars[var.name.to_s] = {
+          ptr: alloca(var.llvm_type, var.name.to_s),
+          type: var.type
+        }
+      end
+      llvm_var
     end
 
     def visit_var(node)
@@ -508,6 +521,8 @@ module Crystal
         return false
       end
 
+      declare_out_arguments node
+
       owner = ((node.obj && node.obj.type) || node.scope)
       owner = node.target_def.owner && owner.is_a?(Type) && !owner.is_a?(Metaclass) && !owner.is_a?(Program) && owner
 
@@ -519,10 +534,15 @@ module Crystal
         call_args << llvm_self
       end
 
-      node.args.each do |arg|
+      node.args.each_with_index do |arg, i|
         next if arg.type.is_a?(Metaclass)
-        arg.accept self
-        call_args << @last
+
+        if node.target_def.args[i].out && arg.is_a?(Var)
+          call_args << @vars[arg.name][:ptr]
+        else
+          arg.accept self
+          call_args << @last
+        end
       end
 
       if node.block
@@ -557,6 +577,17 @@ module Crystal
       end
 
       false
+    end
+
+    def declare_out_arguments(call)
+      return unless call.target_def.is_a?(External)
+
+      call.target_def.args.each_with_index do |arg, i|
+        if arg.out
+          var = call.args[i]
+          declare_var(var) if var.is_a?(Var)
+        end
+      end
     end
 
     def visit_yield(node)
