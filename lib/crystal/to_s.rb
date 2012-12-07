@@ -351,7 +351,7 @@ module Crystal
     def visit_fun_def_arg(node)
       @str << node.name
       @str << ' : '
-      @str << 'ptr ' if node.options[:ptr]
+      @str << 'ptr ' if node.ptr
       node.type.accept self
       false
     end

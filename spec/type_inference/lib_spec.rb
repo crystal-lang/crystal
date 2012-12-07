@@ -9,7 +9,7 @@ describe 'Type inference: class' do
   end
 
   it "types pointer type" do
-    input = parse "lib Foo; fun bar(a : ptr Int); end"
+    input = parse "lib Foo; fun bar(a : Int*); end"
     mod = infer_type input
     mod.types['Foo'].lookup_def('bar').args.first.type.should eq(PointerType.of(mod.int))
   end

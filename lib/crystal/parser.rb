@@ -1009,14 +1009,14 @@ module Crystal
 
           arg_type = parse_ident
 
-          options = {}
+          ptr = false
           if @token.type == :*
-            options[:ptr] = true
+            ptr = true
             next_token
           end
 
           skip_space_or_newline
-          args << FunDefArg.new(arg_name, arg_type, options)
+          args << FunDefArg.new(arg_name, arg_type, ptr)
 
           if @token.type == :','
             next_token_skip_space_or_newline
@@ -1101,15 +1101,15 @@ module Crystal
 
             type = parse_ident
 
-            options = {}
+            ptr = false
             if @token.type == :*
-              options[:ptr] = true
+              ptr = true
               next_token
             end
 
             skip_statement_end
 
-            fields << FunDefArg.new(name, type, options)
+            fields << FunDefArg.new(name, type, ptr)
           end
         else
           break

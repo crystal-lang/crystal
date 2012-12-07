@@ -843,12 +843,12 @@ module Crystal
   class FunDefArg < ASTNode
     attr_accessor :name
     attr_accessor :type
-    attr_accessor :options
+    attr_accessor :ptr
 
-    def initialize(name, type, options = {})
+    def initialize(name, type, ptr = false)
       @name = name
       @type = type
-      @options = options
+      @ptr = ptr
     end
 
     def accept_children(visitor)
@@ -856,7 +856,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(FunDefArg) && other.name == name && other.type == type && other.options == options
+      other.is_a?(FunDefArg) && other.name == name && other.type == type && other.ptr == ptr
     end
   end
 
