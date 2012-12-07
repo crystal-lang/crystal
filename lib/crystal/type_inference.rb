@@ -563,7 +563,7 @@ module Crystal
 
     def end_visit_fun_def(node)
       args = node.args.map do |arg|
-        type = maybe_ptr_type(arg.type.type.instance_type, arg.options[:ptr])
+        type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
         [arg.name, type]
       end
       return_type = maybe_ptr_type(node.return_type ? node.return_type.type.instance_type : nil, node.ptr)

@@ -1,8 +1,8 @@
 lib PCRE("pcre")
-  type CharPtr : ptr Char
-  fun pcre_compile(pattern : ptr Char, options : Int, errptr : ptr CharPtr, erroffset : ptr Int, tableptr : Long) : Long
-  fun pcre_exec(code : Long, extra : Long, subject : ptr Char, length : Int, offset : Int, options : Int,
-                ovector : ptr Int, ovecsize : Int) : Int
+  type CharPtr : Char*
+  fun pcre_compile(pattern : Char*, options : Int, errptr : CharPtr*, erroffset : Int*, tableptr : Long) : Long
+  fun pcre_exec(code : Long, extra : Long, subject : Char*, length : Int, offset : Int, options : Int,
+                ovector : Int*, ovecsize : Int) : Int
 end
 
 class Regexp

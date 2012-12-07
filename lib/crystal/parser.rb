@@ -1007,13 +1007,14 @@ module Crystal
           check :':'
           next_token_skip_space_or_newline
 
+          arg_type = parse_ident
+
           options = {}
-          if @token.type == :IDENT && @token.value == :ptr
+          if @token.type == :*
             options[:ptr] = true
-            next_token_skip_space_or_newline
+            next_token
           end
 
-          arg_type = parse_ident
           skip_space_or_newline
           args << FunDefArg.new(arg_name, arg_type, options)
 
@@ -1029,12 +1030,13 @@ module Crystal
       if @token.type == :':'
         next_token_skip_space_or_newline
 
-        if @token.type == :IDENT && @token.value == :ptr
+        return_type = parse_ident
+
+        if @token.type == :*
           ptr = true
-          next_token_skip_space_or_newline
+          next_token
         end
 
-        return_type = parse_ident
         skip_statement_end
       end
 
@@ -1052,13 +1054,14 @@ module Crystal
       check :':'
       next_token_skip_space_or_newline
 
+      type = parse_ident
+
       ptr = false
-      if @token.type == :IDENT && @token.value == :ptr
+      if @token.type == :*
         ptr = true
-        next_token_skip_space_or_newline
+        next_token
       end
 
-      type = parse_ident
       skip_statement_end
 
       TypeDef.new name, type, ptr, name_column_number
@@ -1097,9 +1100,16 @@ module Crystal
             next_token_skip_space_or_newline
 
             type = parse_ident
+
+            options = {}
+            if @token.type == :*
+              options[:ptr] = true
+              next_token
+            end
+
             skip_statement_end
 
-            fields << FunDefArg.new(name, type)
+            fields << FunDefArg.new(name, type, options)
           end
         else
           break

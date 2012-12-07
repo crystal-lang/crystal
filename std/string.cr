@@ -1,11 +1,11 @@
 lib C
-  fun atoi(str : ptr Char) : Int
-  fun strncmp(s1 : ptr Char, s2 : ptr Char, n : Int) : Int
-  fun strlen(s : ptr Char) : Int
-  fun strcpy(dest : ptr Char, src : ptr Char) : ptr Char
-  fun strcat(dest : ptr Char, src : ptr Char) : ptr Char
-  fun strcmp(s1 : ptr Char, s2 : ptr Char) : Int
-  fun strncpy(s1 : ptr Char, s2 : ptr Char, n : Int) : ptr Char
+  fun atoi(str : Char*) : Int
+  fun strncmp(s1 : Char*, s2 : Char*, n : Int) : Int
+  fun strlen(s : Char*) : Int
+  fun strcpy(dest : Char*, src : Char*) : Char*
+  fun strcat(dest : Char*, src : Char*) : Char*
+  fun strcmp(s1 : Char*, s2 : Char*) : Int
+  fun strncpy(s1 : Char*, s2 : Char*, n : Int) : Char*
 end
 
 class String

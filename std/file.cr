@@ -1,12 +1,12 @@
 lib C
-  type File : ptr Void
-  type CharPtr : ptr Char
+  type File : Void*
+  type CharPtr : Char*
 
   fun fopen(filename : String, mode : String) : File
   fun fputs(str : String, file : File) : Int
   fun fclose(file : File) : Int
   fun feof(file : File) : Int
-  fun getline(linep : ptr CharPtr, linecap : ptr Long, file : File) : Long
+  fun getline(linep : CharPtr*, linecap : Long*, file : File) : Long
 end
 
 class File
