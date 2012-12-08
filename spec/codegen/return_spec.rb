@@ -12,4 +12,8 @@ describe 'Code gen: return' do
   it "codegens return inside if" do
     run('def foo; if true; return 1; end; 2; end; foo').to_i.should eq(1)
   end
+
+  it "return from function with union type" do
+    run('def foo; return 1 if true; 1.1; end; foo.to_i').to_i.should eq(1)
+  end
 end

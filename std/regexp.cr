@@ -20,11 +20,8 @@ class Regexp
   def match(str, pos = 0, options = 0)
     ovector = Pointer.malloc(3 * 4).as(Int)
     ret = PCRE.pcre_exec(@re, 0L, str.cstr, str.length, pos, options, ovector, 3)
-    if ret > 0
-      MatchData.new(self, str, pos, ovector)
-    else
-      nil
-    end
+    return nil unless ret > 0
+    MatchData.new(self, str, pos, ovector)
   end
 end
 

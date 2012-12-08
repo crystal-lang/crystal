@@ -211,6 +211,10 @@ module Crystal
     def end_visit_return(node)
       if @return_block
         @builder.br @return_block
+      elsif @return_type.is_a?(UnionType)
+        assign_to_union(@return_union, @return_type, node.exps[0].type, @last)
+        union = @builder.load @return_union
+        @builder.ret union
       else
         @builder.ret @last
       end
@@ -678,12 +682,26 @@ module Crystal
         end
 
         if target_def.body
+          old_return_type = @return_type
+          old_return_union = @return_union
+          @return_type = target_def.body.type
+          @return_union = alloca(target_def.body.llvm_type, 'return') if @return_type.is_a?(UnionType)
+
           target_def.body.accept self
-          if target_def.body.type.is_a?(UnionType)
-            @last = @builder.load @last
+
+          if @return_type.is_a?(UnionType)
+            if target_def.body.is_a?(Expressions) && target_def.body.last.type != @return_type
+              assign_to_union(@return_union, @return_type, target_def.body.last.type, @last)
+              @last = @builder.load @return_union
+            else
+              @last = @builder.load @last
+            end
           end
 
-          @builder.ret(target_def.body.type == @mod.void ? nil : @last)
+          @builder.ret(@return_type == @mod.void ? nil : @last)
+
+          @return_type = old_return_type
+          @return_union = old_return_union
         else
           @builder.ret_void
         end
