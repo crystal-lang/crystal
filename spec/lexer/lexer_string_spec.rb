@@ -32,7 +32,7 @@ describe 'Lexer string' do
   end
 
   it "lexes string with slash" do
-    lexer = Lexer.new(%("hello\\world"))
+    lexer = Lexer.new(%("hello\\\\world"))
 
     token = lexer.next_token
     token.type.should eq(:STRING_START)
@@ -176,6 +176,20 @@ describe 'Lexer string' do
     token = lexer.next_string_token
     token.type.should eq(:STRING)
     token.value.should eq("#")
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING_END)
+  end
+
+  it "lexes slash with no-escape char" do
+    lexer = Lexer.new(%("\\h"))
+
+    token = lexer.next_token
+    token.type.should eq(:STRING_START)
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING)
+    token.value.should eq("h")
 
     token = lexer.next_string_token
     token.type.should eq(:STRING_END)
