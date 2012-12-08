@@ -63,7 +63,7 @@ module Crystal
   end
 
   def build(node, mod)
-    visitor = CodeGenVisitor.new(mod, node ? node.type : mod.void)
+    visitor = CodeGenVisitor.new(mod, node, node ? node.type : mod.void)
     if node
       begin
         node.accept visitor
@@ -117,8 +117,9 @@ module Crystal
   class CodeGenVisitor < Visitor
     attr_reader :llvm_mod
 
-    def initialize(mod, return_type)
+    def initialize(mod, node, return_type)
       @mod = mod
+      @node = node
       @return_type = return_type
       @llvm_mod = LLVM::Module.new("Crystal")
       @fun = @llvm_mod.functions.add("crystal_main", [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], return_type.llvm_type)
@@ -155,6 +156,16 @@ module Crystal
     end
 
     def finish
+      if @return_type.is_a?(UnionType)
+        @return_union = alloca(@return_type.llvm_type, 'return')
+        if @node.type != @return_type
+          assign_to_union(@return_union, @return_type, @node.type, @last)
+          @last = @builder.load @return_union
+        else
+          @last = @builder.load @last
+        end
+      end
+
       br_block_chain @alloca_block, @const_block, @entry_block
       @builder.ret(@return_type == @mod.void ? nil : @last)
     end
