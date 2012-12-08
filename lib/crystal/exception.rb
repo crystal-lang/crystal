@@ -26,12 +26,15 @@ module Crystal
 
       if source
         lines = source.lines.to_a
-        str << "\n\n"
-        str << lines[@line_number - 1].to_s
-        str << "\n"
-        str << (' ' * (@column_number - 1))
-        str << '^'
-        str << "\n"
+        line = lines[@line_number - 1]
+        if line
+          str << "\n\n"
+          str << line.chomp
+          str << "\n"
+          str << (' ' * (@column_number - 1))
+          str << '^'
+          str << "\n"
+        end
       end
       str
     end
@@ -86,7 +89,8 @@ module Crystal
         line = lines[@line - 1]
         if line
           str << "\n\n"
-          str << line.to_s
+          str << line.chomp
+          str << "\n"
           str << (' ' * (@column - 1))
           str << '^'
           if @length && @length > 0
