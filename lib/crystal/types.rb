@@ -297,7 +297,7 @@ module Crystal
     end
 
     def llvm_value_type
-      @llvm_value_type ||= LLVM::Type.array(LLVM::Int8, llvm_value_size)
+      @llvm_value_type ||= LLVM::Type.array(LLVM::Int, llvm_value_size.fdiv(LLVM::Int.type.width / 8).ceil)
     end
 
     def llvm_value_size
