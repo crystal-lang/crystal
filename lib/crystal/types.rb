@@ -283,7 +283,7 @@ module Crystal
     def llvm_type
       unless @llvm_type
         @llvm_type = LLVM::Struct(llvm_name)
-        @llvm_type.element_types = [LLVM::Int, LLVM::Type.array(LLVM::Int8, llvm_value_size)]
+        @llvm_type.element_types = [LLVM::Int, llvm_value_type]
       end
       @llvm_type
     end
@@ -294,6 +294,10 @@ module Crystal
 
     def llvm_size
       @llvm_size ||= llvm_value_size + 4
+    end
+
+    def llvm_value_type
+      @llvm_value_type ||= LLVM::Type.array(LLVM::Int8, llvm_value_size)
     end
 
     def llvm_value_size

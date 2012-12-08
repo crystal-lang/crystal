@@ -75,4 +75,15 @@ describe 'Code gen: union type' do
       f.x.to_f
       )).to_f.should eq(2.5)
   end
+
+  it "assigns union to larger union" do
+    run(%q(
+      a = 1
+      a = 1.1
+      b = "c"
+      b = 'd'
+      a = b
+      a.to_s
+    )).to_ptr.read_pointer.read_string.should eq("d")
+  end
 end

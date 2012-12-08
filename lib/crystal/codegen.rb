@@ -798,11 +798,41 @@ module Crystal
     def assign_to_union(union_pointer, union_type, type, value)
       index_ptr, value_ptr = union_index_and_value(union_pointer)
 
-      index = union_type.index_of_type(type)
-      @builder.store LLVM::Int(index), index_ptr
+      if type.is_a?(UnionType)
+        value_index_ptr, value_value_ptr = union_index_and_value(value)
+        value_index = @builder.load value_index_ptr
+        value_value = @builder.load value_value_ptr
 
-      casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_type)
-      @builder.store value, casted_value_ptr
+        old_block = @builder.insert_block
+        type_blocks = new_blocks *type.types.map(&:name)
+        exit_block = new_block 'exit_assign'
+        switch_table = {}
+        phi_table = {}
+
+        type.types.each_with_index do |value_type, value_type_index|
+          block = type_blocks[value_type_index]
+          @builder.position_at_end block
+          switch_table[LLVM::Int(value_type_index)] = block unless value_type_index == 0
+          phi_table[block] = LLVM::Int(union_type.index_of_type(value_type))
+          @builder.br exit_block
+        end
+
+        @builder.position_at_end old_block
+        @builder.switch value_index, type_blocks[0], switch_table
+
+        @builder.position_at_end exit_block
+        index = @builder.phi LLVM::Int, phi_table
+        @builder.store LLVM::Int(index), index_ptr
+
+        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_value_type)
+        @builder.store value_value, casted_value_ptr
+      else
+        index = union_type.index_of_type(type)
+        @builder.store LLVM::Int(index), index_ptr
+
+        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_type)
+        @builder.store value, casted_value_ptr
+      end
     end
 
     def union_index_and_value(union_pointer)
