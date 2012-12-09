@@ -464,13 +464,13 @@ module Crystal
 
     def visit_alloc(node)
       @last = malloc node.type.llvm_struct_type
-      memset @last, LLVM::Int(0), node.type.llvm_struct_type.size
+      memset @last, LLVM::Int8.from_i(0), node.type.llvm_struct_type.size
       @last
     end
 
     def visit_struct_alloc(node)
       @last = malloc node.type.llvm_struct_type
-      memset @last, LLVM::Int(0), node.type.llvm_struct_type.size
+      memset @last, LLVM::Int8.from_i(0), node.type.llvm_struct_type.size
       @last
     end
 
@@ -880,7 +880,7 @@ module Crystal
 
     def memset(pointer, value, size)
       pointer = @builder.bit_cast pointer, LLVM::Pointer(LLVM::Int8)
-      @builder.call @mod.memset(@llvm_mod), pointer, value, @builder.trunc(size, LLVM::Int32)
+      @builder.call @mod.memset(@llvm_mod), pointer, value, @builder.trunc(size, LLVM::Int32), LLVM::Int32.from_i(4), LLVM::Int1.from_i(0)
     end
 
     def realloc(buffer, size)

@@ -220,7 +220,7 @@ module Crystal
     end
 
     def memset(llvm_mod)
-      llvm_mod.functions['memset'] || llvm_mod.functions.add('memset', [LLVM::Pointer(LLVM::Int8), LLVM::Int, LLVM::Int], LLVM::Pointer(LLVM::Int8))
+      llvm_mod.functions['llvm.memset.p0i8.i32'] || llvm_mod.functions.add('llvm.memset.p0i8.i32', [LLVM::Pointer(LLVM::Int8), LLVM::Int8, LLVM::Int, LLVM::Int32, LLVM::Int1], LLVM.Void)
     end
   end
 
