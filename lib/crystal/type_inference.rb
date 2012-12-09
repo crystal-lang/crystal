@@ -129,7 +129,7 @@ module Crystal
         typed_def = untyped_def
         check_args_type_match typed_def
       else
-        typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(scope, untyped_def, arg_types)
+        typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(owner, untyped_def, arg_types)
         unless typed_def
           check_frozen owner, untyped_def, arg_types
 
@@ -137,7 +137,7 @@ module Crystal
 
           if typed_def.body
             bubbling_exception do
-              visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, [self_type, untyped_def, arg_types, typed_def, self])
+              visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, [owner, untyped_def, arg_types, typed_def, self])
               typed_def.body.accept visitor
             end
           end

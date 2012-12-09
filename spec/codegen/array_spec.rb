@@ -44,4 +44,8 @@ describe 'Code gen: array' do
   it "codegens empty array loop" do
     run('def bar(x); end; a = []; i = 0; while i < a.length; bar a[i]; i += 1; end', load_std: ['pointer', 'array'])
   end
+
+  it "inspects array" do
+    run('[1, 2, 3].inspect', load_std: ['object', 'int', 'string', 'enumerable', 'pointer', 'array']).to_ptr.read_pointer.read_string.should eq('[1, 2, 3]')
+  end
 end
