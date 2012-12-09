@@ -27,12 +27,7 @@ class Array
   end
 
   def <<(value)
-    if @length == @capacity
-      @capacity *= 2
-      @buffer = @buffer.realloc(@capacity)
-    end
-    @buffer[@length] = value
-    @length += 1
+    push(value)
   end
 
   def each
