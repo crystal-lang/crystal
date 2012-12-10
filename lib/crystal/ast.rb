@@ -655,7 +655,7 @@ module Crystal
 
     def accept_children(visitor)
       self.cond.accept visitor
-      self.then.accept visitor
+      self.then.accept visitor if self.then
       self.else.accept visitor if self.else
     end
 
