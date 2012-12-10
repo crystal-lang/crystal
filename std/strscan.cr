@@ -17,4 +17,8 @@ class StringScanner
   def eos?
     @offset >= @str.length
   end
+
+  def rest
+    @str.slice(@offset, @str.length - @offset)
+  end
 end
