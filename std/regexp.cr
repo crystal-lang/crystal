@@ -8,6 +8,7 @@ class Regexp
   ANCHORED = 16
 
   def initialize(str)
+    @source = str
     errptr = Pointer.malloc(0).as(Char)
     erroffset = 1
     @re = PCRE.pcre_compile(str.cstr, 8, errptr.ptr, erroffset.ptr, 0L)
@@ -22,6 +23,14 @@ class Regexp
     ret = PCRE.pcre_exec(@re, 0L, str.cstr, str.length, pos, options, ovector, 3)
     return nil unless ret > 0
     MatchData.new(self, str, pos, ovector)
+  end
+
+  def source
+    @source
+  end
+
+  def to_s
+    "/#{source}/"
   end
 end
 
