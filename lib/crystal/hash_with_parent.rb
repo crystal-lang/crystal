@@ -3,6 +3,8 @@ class HashWithParent < Hash
     @obj = obj
   end
 
+  alias_method :lookup_without_hierarchy, :[]
+
   def [](key)
     value = super
     unless value

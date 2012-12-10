@@ -20,6 +20,7 @@ module Crystal
     def define_object_primitives
       no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
       no_args_primitive(object, 'to_b', bool) { |b, f| LLVM::Int1.from_i(1) }
+      singleton(object, :'!@', {}, bool) { |b, f| LLVM::Int1.from_i(0) }
       no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end
@@ -33,6 +34,7 @@ module Crystal
     def define_nil_primitives
       no_args_primitive(self.nil, 'to_b', bool) { |b, f| LLVM::Int1.from_i(0) }
       no_args_primitive(self.nil, 'nil?', bool) { |b, f| LLVM::Int1.from_i(1) }
+      singleton(self.nil, :'!@', {}, bool) { |b, f| LLVM::Int1.from_i(1) }
     end
 
     def define_value_primitives
@@ -196,7 +198,7 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.lookup_def(name)
+      p = owner.lookup_def_without_hierarchy(name)
       p ||= owner.add_def FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
       p.owner = owner
       p.overload(args.values, return_type, &block)

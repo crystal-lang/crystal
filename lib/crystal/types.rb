@@ -82,6 +82,10 @@ module Crystal
       @defs[name]
     end
 
+    def lookup_def_without_hierarchy(name)
+      @defs.lookup_without_hierarchy(name)
+    end
+
     def include(mod)
       @parents.insert 0, mod
     end

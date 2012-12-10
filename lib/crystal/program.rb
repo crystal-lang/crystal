@@ -129,7 +129,7 @@ module Crystal
       parser = Parser.new File.read(file)
       parser.filename = file
       node = parser.parse
-      node.accept TypeVisitor.new(self)
+      node.accept TypeVisitor.new(self) if node
     end
 
     def library_names
