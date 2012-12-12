@@ -184,6 +184,7 @@ module Crystal
     end
 
     def reset_token
+      @token.value = nil
       @token.line_number = @line_number
       @token.column_number = @column_number
       @token.filename = @filename
