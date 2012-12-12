@@ -162,7 +162,7 @@ module Crystal
           untyped_def.args.each_with_index do |arg, i|
             if arg.out && self.args[i]
               unless self.args[i].out
-                self.args[i].raise "argument #1 to #{untyped_def.owner.full_name}.#{untyped_def.name} must be passed as 'out'"
+                self.args[i].raise "argument \##{i + 1} to #{untyped_def.owner.full_name}.#{untyped_def.name} must be passed as 'out'"
               end
               var = parent_visitor.lookup_var_or_instance_var(self.args[i])
               var.bind_to arg
