@@ -61,18 +61,7 @@ module Crystal
     end
   end
 
-  class ModuleType < ContainedType
-    attr_accessor :defs
-    attr_accessor :types
-    attr_accessor :parents
-
-    def initialize(name, container = nil, parents = [])
-      super(name, container)
-      @parents = parents
-      @defs = HashWithParent.new(self)
-      @types = {}
-    end
-
+  module DefContainer
     def add_def(a_def)
       @defs[a_def.name] = a_def
       a_def
@@ -84,6 +73,30 @@ module Crystal
 
     def lookup_def_without_hierarchy(name)
       @defs.lookup_without_hierarchy(name)
+    end
+
+    def add_def_instance(name, arg_types, typed_def)
+      @def_instances[[name] + arg_types.map(&:object_id)] = typed_def
+    end
+
+    def lookup_def_instance(name, arg_types)
+      @def_instances[[name] + arg_types.map(&:object_id)]
+    end
+  end
+
+  class ModuleType < ContainedType
+    include DefContainer
+
+    attr_accessor :defs
+    attr_accessor :types
+    attr_accessor :parents
+
+    def initialize(name, container = nil, parents = [])
+      super(name, container)
+      @parents = parents
+      @defs = HashWithParent.new(self)
+      @def_instances = {}
+      @types = {}
     end
 
     def include(mod)
@@ -442,6 +455,8 @@ module Crystal
   end
 
   class StructType < ContainedType
+    include DefContainer
+
     attr_accessor :vars
     attr_accessor :defs
 
@@ -450,19 +465,11 @@ module Crystal
       @name = name
       @vars = Hash[vars.map { |var| [var.name, var] }]
       @defs = {}
+      @def_instances = {}
       @vars.keys.each do |var_name|
         add_def Def.new("#{var_name}=", [Arg.new('value')], StructSet.new(var_name))
         add_def Def.new(var_name, [], StructGet.new(var_name))
       end
-    end
-
-    def add_def(a_def)
-      @defs[a_def.name] = a_def
-      a_def
-    end
-
-    def lookup_def(name)
-      @defs[name]
     end
 
     def metaclass

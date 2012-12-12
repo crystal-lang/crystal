@@ -40,6 +40,7 @@ module Crystal
   class ASTNode
     attr_accessor :type
     attr_accessor :dependencies
+    attr_accessor :creates_new_type
 
     def set_type(type)
       @type = type
@@ -129,7 +130,9 @@ module Crystal
         typed_def = untyped_def
         check_args_type_match typed_def
       else
-        typed_def = untyped_def.lookup_instance(arg_types) || parent_visitor.lookup_def_instance(owner, untyped_def, arg_types)
+        typed_def = untyped_def.lookup_instance(arg_types) ||
+                    self_type.lookup_def_instance(name, arg_types) ||
+                    parent_visitor.lookup_def_instance(owner, untyped_def, arg_types)
         unless typed_def
           check_frozen owner, untyped_def, arg_types
 
@@ -139,8 +142,11 @@ module Crystal
             bubbling_exception do
               visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, [owner, untyped_def, arg_types, typed_def, self])
               typed_def.body.accept visitor
+              self.creates_new_type = typed_def.creates_new_type = typed_def.body.creates_new_type
             end
           end
+
+          self_type.add_def_instance(name, arg_types, typed_def) if Crystal::CACHE && !block && !creates_new_type
         end
       end
 
@@ -363,6 +369,10 @@ module Crystal
 
     def lookup_instance(arg_types)
       @instances && @instances[arg_types]
+    end
+
+    def new_type?
+      @new_type
     end
   end
 
@@ -652,6 +662,7 @@ module Crystal
     def visit_var(node)
       var = lookup_var node.name
       node.bind_to var
+      node.creates_new_type = var.creates_new_type
     end
 
     def visit_global(node)
@@ -714,11 +725,14 @@ module Crystal
 
       var.bind_to node
       var.update
+
+      node.creates_new_type = var.creates_new_type ||= node.value.creates_new_type
     end
 
     def end_visit_expressions(node)
       if node.last
         node.bind_to node.last
+        node.creates_new_type = node.last.creates_new_type
       else
         node.type = mod.void
       end
@@ -775,6 +789,7 @@ module Crystal
     def visit_alloc(node)
       type = lookup_object_type(node.type.name)
       node.type = type ? type : node.type.clone
+      node.creates_new_type = true
     end
 
     def end_visit_array_literal(node)
@@ -862,8 +877,10 @@ module Crystal
       owner, self_type, untyped_def = node.compute_owner_self_type_and_untyped_def
       return false unless untyped_def.is_a?(Macro)
 
-      typed_def = Def.new("", untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
-      macro_call = Call.new(nil, "", node.args.map(&:to_crystal))
+      macro_name = "#macro_#{untyped_def.object_id}"
+
+      typed_def = Def.new(macro_name, untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
+      macro_call = Call.new(nil, macro_name, node.args.map(&:to_crystal))
       macro_nodes = Expressions.new [typed_def, macro_call]
 
       Crystal.infer_type macro_nodes, mod: mod
