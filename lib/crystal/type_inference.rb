@@ -370,10 +370,6 @@ module Crystal
     def lookup_instance(arg_types)
       @instances && @instances[arg_types]
     end
-
-    def new_type?
-      @new_type
-    end
   end
 
   class Dispatch < ASTNode
