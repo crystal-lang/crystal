@@ -33,7 +33,7 @@ module Crystal
       array = @types["Array"] = ObjectType.new "Array", object, self
       array.lookup_instance_var('@length').type = int
       array.lookup_instance_var('@capacity').type = int
-      array.lookup_instance_var('@buffer').type = void_pointer
+      array.lookup_instance_var('@buffer').type = pointer.clone
       array.include enumerable
 
       string_array = array.clone
