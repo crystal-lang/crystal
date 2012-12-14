@@ -1,6 +1,7 @@
 class Hash
   def initialize
     @buckets = []
+    @length = 0
     17.times { @buckets.push [] }
   end
 
@@ -14,6 +15,7 @@ class Hash
         return entry.value
       end
     end
+    @length += 1
     entry = Entry.new(key, value)
     bucket.push entry
     value
@@ -33,17 +35,27 @@ class Hash
     nil
   end
 
+  def length
+    @length
+  end
+
+  def each
+    @buckets.each do |bucket|
+      bucket.each do |entry|
+        yield entry.key, entry.value
+      end
+    end
+  end
+
   def to_s
     str = "{"
     found_one = false
-    @buckets.each do |bucket|
-      bucket.each do |entry|
-        str += ", " if found_one
-        str += entry.key.inspect
-        str += "=>"
-        str += entry.value.inspect
-        found_one = true
-      end
+    each do |key, value|
+      str += ", " if found_one
+      str += key.inspect
+      str += "=>"
+      str += value.inspect
+      found_one = true
     end
     str += "}"
   end
