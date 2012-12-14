@@ -22,6 +22,18 @@ module Crystal
       node.target_def.accept self if node.target_def
     end
 
+    def end_visit_range_literal(node)
+      node.expanded.accept self
+    end
+
+    def end_visit_regexp_literal(node)
+      node.expanded.accept self
+    end
+
+    def end_visit_hash_literal(node)
+      node.expanded.accept self
+    end
+
     def fix_node(node)
       fix_type(node.type) if node.type
     end

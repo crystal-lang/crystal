@@ -138,7 +138,6 @@ module Crystal
       @elements.each { |e| e.parent = self }
     end
 
-
     def accept_children(visitor)
       elements.each { |exp| exp.accept visitor }
     end
@@ -149,6 +148,27 @@ module Crystal
 
     def clone_from(other, &block)
       @elements = other.elements.map { |exp| exp.clone(&block) }
+    end
+  end
+
+  class HashLiteral < ASTNode
+    attr_accessor :key_values
+
+    def initialize(key_values = [])
+      @key_values = key_values
+      @key_values.each { |kv| kv.parent = self }
+    end
+
+    def accept_children(visitor)
+      key_values.each { |kv| kv.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(HashLiteral) && other.key_values == key_values
+    end
+
+    def clone_from(other, &block)
+      @key_values = other.key_values.map { |kv| kv.clone(&block) }
     end
   end
 

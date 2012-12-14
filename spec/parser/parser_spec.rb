@@ -293,4 +293,6 @@ describe Parser do
 
   it_parses "foo out x; x", [Call.new(nil, 'foo', [Var.new('x').tap { |v| v.out = true }]), Var.new('x')]
   it_parses "foo(out x); x", [Call.new(nil, 'foo', [Var.new('x').tap { |v| v.out = true }]), Var.new('x')]
+
+  it_parses "{1 => 2, 3 => 4}", HashLiteral.new([1.int, 2.int, 3.int, 4.int])
 end

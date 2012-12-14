@@ -211,6 +211,11 @@ module Crystal
       node.expanded.accept self
     end
 
+    def visit_hash_literal(node)
+      node.expanded.accept self
+      false
+    end
+
     def visit_expressions(node)
       node.expressions.each do |exp|
         exp.accept self

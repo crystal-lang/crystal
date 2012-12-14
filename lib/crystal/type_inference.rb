@@ -98,6 +98,10 @@ module Crystal
     attr_accessor :expanded
   end
 
+  class HashLiteral
+    attr_accessor :expanded
+  end
+
   class Call
     attr_accessor :target_def
     attr_accessor :target_macro
@@ -798,6 +802,28 @@ module Crystal
         buffer.bind_to elem
       end
       node.type = type
+    end
+
+    def visit_hash_literal(node)
+      @@hash_count ||= 0
+      @@hash_count += 1
+
+      hash_name = "#hash_#{@@hash_count}"
+
+      hash_new = Call.new(Ident.new(['Hash'], true), 'new')
+      hash_assign = Assign.new(Var.new(hash_name), hash_new)
+
+      exps = [hash_assign]
+      node.key_values.each_slice(2) do |key, value|
+        exps << Call.new(Var.new(hash_name), :[]=, [key, value])
+      end
+      exps << Var.new(hash_name)
+
+      node.expanded = Expressions.new exps
+      node.expanded.accept self
+
+      node.type = node.expanded.type
+      false
     end
 
     def check_var_type(var_name, expected_type)

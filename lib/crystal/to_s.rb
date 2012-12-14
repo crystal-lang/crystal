@@ -77,6 +77,21 @@ module Crystal
       false
     end
 
+    def visit_hash_literal(node)
+      @str << '{'
+      node.key_values.each_with_index do |kv, i|
+        @str << ', ' if i > 1
+        if i % 2 == 0
+          kv.accept self
+        else
+          kv.accept self
+        end
+        @str << ' => ' if i % 2 == 0
+      end
+      @str << '}'
+      false
+    end
+
     def visit_call(node)
       if node.obj && node.name == :'[]'
         node.obj.accept self

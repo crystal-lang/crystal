@@ -352,13 +352,29 @@ module Crystal
         exps = []
         while @token.type != :"]"
           exps << parse_expression
-          skip_space
+          skip_space_or_newline
           if @token.type == :","
             next_token_skip_space_or_newline
           end
         end
         next_token_skip_space
         Crystal::ArrayLiteral.new exps
+      when :'{'
+        next_token_skip_space_or_newline
+        key_values = []
+        while @token.type != :'}'
+          key_values << parse_expression
+          skip_space_or_newline
+          check :'=>'
+          next_token_skip_space_or_newline
+          key_values << parse_expression
+          skip_space_or_newline
+          if @token.type == :','
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_space
+        Crystal::HashLiteral.new key_values
       when :'!'
         next_token_skip_space_or_newline
         Call.new parse_expression, :'!@', [], nil, column_number
