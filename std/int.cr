@@ -1,4 +1,8 @@
 class Int
+  def hash
+    self
+  end
+
   def succ
     self + 1
   end
