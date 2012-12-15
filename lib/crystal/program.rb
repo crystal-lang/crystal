@@ -115,11 +115,7 @@ module Crystal
     end
 
     def define_builtins(load_std)
-      if load_std == true
-        %w(array bool c char comparable crystal enumerable env file hash int io math nil numeric object pointer range regexp string symbol).each do |file|
-          require file
-        end
-      end
+      require "prelude" if load_std == true
     end
 
     def require(filename)
