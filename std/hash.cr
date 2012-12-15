@@ -12,12 +12,15 @@ class Hash
     end
     bucket.each do |entry|
       if key == entry.key
-        return entry.value
+        return entry.value = value
       end
     end
     @length += 1
     entry = Entry.new(key, value)
     bucket.push entry
+    @last.next = entry unless @last.nil?
+    @last = entry
+    @first = entry if @first.nil?
     value
   end
 
@@ -40,10 +43,10 @@ class Hash
   end
 
   def each
-    @buckets.each do |bucket|
-      bucket.each do |entry|
-        yield entry.key, entry.value
-      end
+    current = @first
+    while !current.nil?
+      yield current.key, current.value
+      current = current.next
     end
   end
 
@@ -78,6 +81,18 @@ class Hash
 
     def value
       @value
+    end
+
+    def value=(v)
+      @value = v
+    end
+
+    def next
+      @next
+    end
+
+    def next=(n)
+      @next = n
     end
 
     def to_s
