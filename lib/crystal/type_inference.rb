@@ -446,6 +446,7 @@ module Crystal
     attr_accessor :mod
     attr_accessor :paths
     attr_accessor :call
+    @@regexps = {}
 
     def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
       @mod = mod
@@ -496,7 +497,8 @@ module Crystal
     end
 
     def visit_regexp_literal(node)
-      name = "/#{node.value}/"
+      name = @@regexps[node.value]
+      name = @@regexps[node.value] = "Regexp#{@@regexps.length}" unless name
 
       unless mod.types[name]
         value = Call.new(Ident.new(['Regexp'], true), 'new', [StringLiteral.new(node.value)])
