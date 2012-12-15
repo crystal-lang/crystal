@@ -5,7 +5,7 @@ puts "Listening on http://0.0.0.0:8080"
 
 while true
   sock = server.accept
-  while !(str = sock.gets).nil?
+  while str = sock.gets
     if str == "\r\n"
       sock.print "HTTP/1.1 200 OK\r\n"
       sock.print "Content-Type: text/plain\r\n"
