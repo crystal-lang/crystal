@@ -15,11 +15,19 @@ module Crystal
       fix_node(node)
     end
 
+    def visit_def(node)
+      false
+    end
+
+    def visit_macro(node)
+      false
+    end
+
     def end_visit_call(node)
       return if @fixed[node.target_def]
       @fixed[node.target_def] = true
 
-      node.target_def.accept self if node.target_def
+      node.target_def.accept_children self if node.target_def
     end
 
     def end_visit_range_literal(node)

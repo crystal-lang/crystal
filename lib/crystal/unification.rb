@@ -36,12 +36,20 @@ module Crystal
       false
     end
 
+    def visit_def(node)
+      false
+    end
+
+    def visit_macro(node)
+      false
+    end
+
     def end_visit_call(node)
       node.scope = unify_type(node.scope) if node.scope.is_a?(Type)
       if node.target_def && !node.target_def.unified
         node.target_def.unified = true
 
-        node.target_def.accept self
+        node.target_def.accept_children self
         if node.target_def.is_a?(Dispatch)
           node.set_type unify_type(node.type)
           node.target_def.set_type unify_type(node.target_def.type)
@@ -53,15 +61,15 @@ module Crystal
     end
 
     def end_visit_range_literal(node)
-      node.expanded.accept self if node.expanded
+      node.expanded.accept self
     end
 
     def end_visit_regexp_literal(node)
-      node.expanded.accept self if node.expanded
+      node.expanded.accept self
     end
 
     def end_visit_hash_literal(node)
-      node.expanded.accept self if node.expanded
+      node.expanded.accept self
     end
 
     def end_visit_ident(node)
