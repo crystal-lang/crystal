@@ -111,6 +111,10 @@ class String
   def string
     Crystal::StringLiteral.new self
   end
+
+  def symbol
+    Crystal::SymbolLiteral.new self
+  end
 end
 
 class Array

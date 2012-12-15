@@ -336,45 +336,14 @@ module Crystal
       column_number = @token.column_number
       case @token.type
       when :'('
-        next_token_skip_space_or_newline
-        exp = parse_expression
-
-        check :')'
-        next_token_skip_space
-
-        raise "unexpected token: (" if @token.type == :'('
-        exp
+        parse_parenthesized_expression
       when :'[]'
         next_token_skip_space
         Crystal::ArrayLiteral.new
       when :'['
-        next_token_skip_space_or_newline
-        exps = []
-        while @token.type != :"]"
-          exps << parse_expression
-          skip_space_or_newline
-          if @token.type == :","
-            next_token_skip_space_or_newline
-          end
-        end
-        next_token_skip_space
-        Crystal::ArrayLiteral.new exps
+        parse_array_literal
       when :'{'
-        next_token_skip_space_or_newline
-        key_values = []
-        while @token.type != :'}'
-          key_values << parse_expression
-          skip_space_or_newline
-          check :'=>'
-          next_token_skip_space_or_newline
-          key_values << parse_expression
-          skip_space_or_newline
-          if @token.type == :','
-            next_token_skip_space_or_newline
-          end
-        end
-        next_token_skip_space
-        Crystal::HashLiteral.new key_values
+        parse_hash_literal
       when :'!'
         next_token_skip_space_or_newline
         Call.new parse_expression, :'!@', [], nil, column_number
@@ -455,6 +424,54 @@ module Crystal
       else
         raise "unexpected token: #{@token.to_s}"
       end
+    end
+
+    def parse_parenthesized_expression
+      next_token_skip_space_or_newline
+      exp = parse_expression
+
+      check :')'
+      next_token_skip_space
+
+      raise "unexpected token: (" if @token.type == :'('
+      exp
+    end
+
+    def parse_array_literal
+      next_token_skip_space_or_newline
+      exps = []
+      while @token.type != :"]"
+        exps << parse_expression
+        skip_space_or_newline
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        end
+      end
+      next_token_skip_space
+      Crystal::ArrayLiteral.new exps
+    end
+
+    def parse_hash_literal
+      next_token_skip_space_or_newline
+      key_values = []
+      while @token.type != :'}'
+        if @token.type == :IDENT && string[pos] == ':'
+          key_values << SymbolLiteral.new(@token.value)
+          next_token
+        else
+          key_values << parse_expression
+          skip_space_or_newline
+          check :'=>'
+        end
+        next_token_skip_space_or_newline
+        key_values << parse_expression
+        skip_space_or_newline
+        if @token.type == :','
+          next_token_skip_space_or_newline
+        end
+      end
+      next_token_skip_space
+      Crystal::HashLiteral.new key_values
     end
 
     def parse_ident
