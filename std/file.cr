@@ -11,45 +11,52 @@ end
 
 class IO
   def print(string)
-    C.fputs string, @out
+    C.fputs string, output
   end
 
   def puts(string)
     print string
-    C.fputs "\n", @out
+    C.fputs "\n", output
   end
 
   def gets
     buffer = Pointer.malloc(0).as(Char)
     buffer_ptr = buffer.ptr
     cap = 0L
-    length = C.getline(buffer_ptr, cap.ptr, @in)
+    length = C.getline(buffer_ptr, cap.ptr, input)
     length > 0 ? buffer.as(String) : nil
   end
 
   def eof?
-    C.feof(@in) != 0
+    C.feof(input) != 0
   end
 
   def flush
-    C.fflush @out
-  end
-
-  def close
-    C.fclose @in
-    C.fclose @out
+    C.fflush output
   end
 end
 
 class File < IO
   def initialize(filename, mode)
-    @in = @out = C.fopen filename, mode
+    @file = C.fopen filename, mode
   end
 
   def self.open(filename, mode)
     file = File.new filename, mode
     yield file
     file.close
+  end
+
+  def input
+    @file
+  end
+
+  def output
+    @file
+  end
+
+  def close
+    C.fclose @file
   end
 end
 

@@ -16,8 +16,16 @@ end
 
 class Socket < IO
   def initialize(fd)
-    @in = C.fdopen(fd, "r")
-    @out = C.fdopen(fd, "w")
+    @input = C.fdopen(fd, "r")
+    @output = C.fdopen(fd, "w")
+  end
+
+  def input
+    @input
+  end
+
+  def output
+    @output
   end
 end
 
