@@ -6,36 +6,44 @@ lib C
   fun fclose(file : File) : Int
   fun feof(file : File) : Int
   fun getline(linep : Char**, linecap : Long*, file : File) : Long
+  fun fflush(file : File) : Int
 end
 
-class File
-  def initialize(filename, mode)
-    @file = C.fopen filename, mode
-  end
-
+class IO
   def print(string)
-    C.fputs string, @file
+    C.fputs string, @out
   end
 
   def puts(string)
     print string
-    C.fputs "\n", @file
+    C.fputs "\n", @out
   end
 
   def gets
     buffer = Pointer.malloc(0).as(Char)
     buffer_ptr = buffer.ptr
     cap = 0L
-    length = C.getline(buffer_ptr, cap.ptr, @file)
+    length = C.getline(buffer_ptr, cap.ptr, @in)
     length > 0 ? buffer.as(String) : nil
   end
 
   def eof?
-    C.feof(@file) != 0
+    C.feof(@in) != 0
+  end
+
+  def flush
+    C.fflush @out
   end
 
   def close
-    C.fclose @file
+    C.fclose @in
+    C.fclose @out
+  end
+end
+
+class File < IO
+  def initialize(filename, mode)
+    @in = @out = C.fopen filename, mode
   end
 
   def self.open(filename, mode)

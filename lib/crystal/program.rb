@@ -20,6 +20,7 @@ module Crystal
       @types["Nil"] = PrimitiveType.new "Nil", value, LLVM::Int1, 1, self
       @types["Bool"] = PrimitiveType.new "Bool", value, LLVM::Int1, 1, self
       @types["Char"] = PrimitiveType.new "Char", value, LLVM::Int8, 1, self
+      @types["Short"] = PrimitiveType.new "Short", value, LLVM::Int16, 2, self
       @types["Int"] = PrimitiveType.new "Int", numeric, LLVM::Int32, 4, self
       @types["Long"] = PrimitiveType.new "Long", numeric, LLVM::Int64, 8, self
       @types["Float"] = PrimitiveType.new "Float", numeric, LLVM::Float, 4, self
