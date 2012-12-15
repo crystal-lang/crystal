@@ -480,16 +480,14 @@ module Crystal
     end
 
     def visit_struct_get(node)
-      var = @type.vars[node.name]
-
       index = @type.index_of_var(node.name)
       struct = @builder.load llvm_self
       @last = @builder.extract_value struct, index, node.name
     end
 
     def visit_struct_set(node)
-      var = @type.vars[node.name]
       ptr = gep llvm_self, 0, @type.index_of_var(node.name)
+      @last = @vars['value'][:ptr]
       @builder.store @last, ptr
     end
 
