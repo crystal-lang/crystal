@@ -999,7 +999,7 @@ module Crystal
     end
 
     def visit_require(node)
-      mod.require node.string.value
+      mod.require node.string.value, node.filename
       false
     end
 

@@ -115,11 +115,22 @@ module Crystal
     end
 
     def define_builtins(load_std)
-      require "prelude" if load_std == true
+      require_absolute File.expand_path("../../../std/prelude.cr", __FILE__) if load_std
     end
 
-    def require(filename)
-      require_absolute File.expand_path("../../../std/#{filename}.cr", __FILE__)
+    def require(filename, relative_to)
+      filename = "#{filename}.cr" unless filename.end_with? ".cr"
+      if relative_to
+        dir = File.dirname relative_to
+        relative_filename = File.join(dir, filename)
+        if File.exists?(relative_filename)
+          require_absolute relative_filename
+        else
+          require_from_load_path filename
+        end
+      else
+        require_from_load_path filename
+      end
     end
 
     def require_absolute(file)
@@ -131,6 +142,10 @@ module Crystal
       parser.filename = file
       node = parser.parse
       node.accept TypeVisitor.new(self) if node
+    end
+
+    def require_from_load_path(file)
+      require_absolute File.expand_path("../../../std/#{file}", __FILE__)
     end
 
     def library_names
