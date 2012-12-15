@@ -14,7 +14,7 @@ describe 'Code gen: def' do
   end
 
   it "call external function 'putchar'" do
-    run("C.putchar '\\0'", load_std: 'io').to_i.should eq(0)
+    run(%q(require "io"; C.putchar '\\0')).to_i.should eq(0)
   end
 
   it "uses self" do
@@ -22,7 +22,7 @@ describe 'Code gen: def' do
   end
 
   it "uses var after external" do
-    run("a = 1; C.putchar '\\0'; a", load_std: 'io').to_i.should eq(1)
+    run(%q(require "io"; a = 1; C.putchar '\\0'; a)).to_i.should eq(1)
   end
 
   it "allows to change argument values" do
@@ -61,6 +61,9 @@ describe 'Code gen: def' do
 
   it "unifies all calls to same def" do
     run(%Q(
+      require "pointer"
+      require "array"
+
       class Hash
         def initialize
           @buckets = [[1]]
@@ -82,11 +85,14 @@ describe 'Code gen: def' do
       hash = Hash.new
       hash[1] = 2
       hash[1]
-    ), load_std: ['pointer', 'array']).to_i.should eq(1)
+    )).to_i.should eq(1)
   end
 
   it "mutates to union" do
     run(%Q(
+      require "pointer"
+      require "array"
+
       class Foo
         def foo(x)
           @buckets = [x]
@@ -101,11 +107,14 @@ describe 'Code gen: def' do
       f.foo(1)
       f.bar
       f.foo(1.5)[0].to_f
-      ), load_std: ['pointer', 'array']).to_f.should eq(1.5)
+      )).to_f.should eq(1.5)
   end
 
   it "mutates to union 2" do
     run(%Q(
+      require "pointer"
+      require "array"
+
       class Foo
         def foo(x)
           @buckets = [x]
@@ -121,7 +130,7 @@ describe 'Code gen: def' do
       f.bar
       f.foo(1.5)
       f.foo(1)[0].to_f
-      ), load_std: ['pointer', 'array']).to_f.should eq(1)
+      )).to_f.should eq(1)
   end
 
   it "codegens recursive type with union" do
@@ -182,6 +191,9 @@ describe 'Code gen: def' do
 
   it "codegens and doesn't break if obj is int and there's a mutation" do
     run(%Q(
+      require "pointer"
+      require "array"
+
       class Int
         def baz(x)
         end
@@ -189,7 +201,7 @@ describe 'Code gen: def' do
 
       elems = [1]
       elems[0].baz [1]
-    ), load_std: ['pointer', 'array'])
+    ))
   end
 
   it "codegens with and witout default arguments" do

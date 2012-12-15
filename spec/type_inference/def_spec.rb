@@ -33,11 +33,11 @@ describe 'Type inference: def' do
   end
 
   it "types putchar with Char" do
-    assert_type("C.putchar 'a'", load_std: 'io') { char }
+    assert_type(%q(require "io"; C.putchar 'a')) { char }
   end
 
   it "types getchar with Char" do
-    assert_type("C.getchar", load_std: 'io') { char }
+    assert_type(%q(require "io"; C.getchar)) { char }
   end
 
   it "allows recursion" do

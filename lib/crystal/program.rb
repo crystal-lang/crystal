@@ -44,6 +44,8 @@ module Crystal
       @symbols = Set.new
       @global_vars = {}
 
+      @requires = Set.new
+
       define_primitives
       define_builtins options[:load_std]
     end
@@ -114,19 +116,21 @@ module Crystal
 
     def define_builtins(load_std)
       if load_std == true
-        Dir[File.expand_path("../../../std/**/*.cr",  __FILE__)].each do |file|
-          load_std file
+        %w(array bool c char comparable crystal enumerable env file hash int io math nil numeric object pointer range regexp string symbol).each do |file|
+          require file
         end
-      elsif load_std.is_a?(Array)
-        load_std.each do |filename|
-          load_std File.expand_path("../../../std/#{filename}.cr", __FILE__)
-        end
-      elsif load_std
-        load_std File.expand_path("../../../std/#{load_std}.cr", __FILE__)
       end
     end
 
-    def load_std(file)
+    def require(filename)
+      require_absolute File.expand_path("../../../std/#{filename}.cr", __FILE__)
+    end
+
+    def require_absolute(file)
+      return if @requires.include? file
+
+      @requires.add file
+
       parser = Parser.new File.read(file)
       parser.filename = file
       node = parser.parse
@@ -146,7 +150,7 @@ module Crystal
     def load_libs
       libs = library_names
       if libs.length > 0
-        require 'dl'
+        Kernel::require 'dl'
         if RUBY_PLATFORM =~ /darwin/
           libs.each do |lib|
             DL.dlopen "lib#{lib}.dylib"

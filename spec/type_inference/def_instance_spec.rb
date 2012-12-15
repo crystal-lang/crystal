@@ -164,13 +164,15 @@ describe 'Type inference: def instance' do
 
   it "do not try to compute parent path of new instance" do
     nodes = parse %Q(
+      require "pointer"
+      require "array"
       def foo
         [[]][0].push 1
       end
 
       foo
     )
-    mod = infer_type nodes, load_std: ['pointer', 'array']
+    mod = infer_type nodes
   end
 
   it "" do
@@ -244,6 +246,9 @@ describe 'Type inference: def instance' do
 
   it "" do
     nodes = parse %Q(
+      require "pointer"
+      require "array"
+
       class Hash
         def initialize
           @buckets = [[], []]
@@ -256,12 +261,15 @@ describe 'Type inference: def instance' do
 
       Hash.new.foo
       )
-    mod = infer_type nodes, load_std: ['pointer', 'array']
-    nodes[1].obj.target_def.body[1].target_def.body.value.type.should eq(mod.array_of(mod.array_of(mod.int)))
+    mod = infer_type nodes
+    nodes[3].obj.target_def.body[1].target_def.body.value.type.should eq(mod.array_of(mod.array_of(mod.int)))
   end
 
   it "clone dispatch" do
     nodes = parse %Q(
+      require "pointer"
+      require "array"
+
       class Foo
         def foo(a)
           @buckets = [a]
@@ -280,7 +288,7 @@ describe 'Type inference: def instance' do
 
       a = 2.3
     )
-    mod = infer_type nodes, load_std: ['pointer', 'array']
+    mod = infer_type nodes
   end
 
   it "doesn't reuse new object" do

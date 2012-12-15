@@ -137,6 +137,12 @@ module Crystal
       false
     end
 
+    def visit_require(node)
+      @str << 'require '
+      node.string.accept self
+      false
+    end
+
     def is_alpha(string)
       c = string.to_s[0].downcase
       'a' <= c && c <= 'z'

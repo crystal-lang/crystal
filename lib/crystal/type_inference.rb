@@ -998,6 +998,11 @@ module Crystal
       end
     end
 
+    def visit_require(node)
+      mod.require node.string.value
+      false
+    end
+
     def lookup_var(name)
       var = @vars[name]
       unless var

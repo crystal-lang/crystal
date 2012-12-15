@@ -1004,4 +1004,25 @@ module Crystal
       @var = other.var.clone(&block)
     end
   end
+
+  class Require < ASTNode
+    attr_accessor :string
+
+    def initialize(string)
+      @string = string
+      @string.parent = self
+    end
+
+    def accept_children(visitor)
+      string.accept visitor
+    end
+
+    def ==(other)
+      other.is_a?(Require) && other.string == string
+    end
+
+    def clone_from(other, &block)
+      @string = other.string.clone(&block)
+    end
+  end
 end

@@ -277,7 +277,7 @@ describe Parser do
 
   it_parses "macro foo;end", Macro.new('foo', [])
 
-  it_parses "a = 1; a.ptr", [Assign.new("a".var, 1.int), PointerOf.new('a'.var)], focus: true
+  it_parses "a = 1; a.ptr", [Assign.new("a".var, 1.int), PointerOf.new('a'.var)]
   it_parses "@a.ptr", PointerOf.new('@a'.instance_var)
 
   it_parses "/foo/", RegexpLiteral.new("foo")
@@ -298,4 +298,7 @@ describe Parser do
   it_parses "{1 => 2, 3 => 4}", HashLiteral.new([1.int, 2.int, 3.int, 4.int])
   it_parses "{a: 1, b: 2}", HashLiteral.new(['a'.symbol, 1.int, 'b'.symbol, 2.int])
   it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(['a'.symbol, 1.int, 3.int, 4.int, 'b'.symbol, 2.int])
+
+  it_parses %q(require "foo"), Require.new('foo'.string)
+  it_parses %q(require "foo"; []), [Require.new('foo'.string), [].array], focus: true
 end

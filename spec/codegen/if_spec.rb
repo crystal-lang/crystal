@@ -42,6 +42,6 @@ describe 'Code gen: if' do
   end
 
   it 'codegens if with nil' do
-    run('if nil; 2; else 3; end', load_std: ['nil']).to_i.should eq(3)
+    run('require "nil"; if nil; 2; else 3; end').to_i.should eq(3)
   end
 end

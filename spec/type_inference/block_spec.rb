@@ -82,10 +82,13 @@ describe 'Block inference' do
 
   it "infer type with union" do
     input = parse %q(
+      require "int"
+      require "pointer"
+      require "array"
       a = [1]
       a = [1.1]
       a.each { |x| x }
     )
-    mod = infer_type input, load_std: ['int', 'pointer', 'array']
+    mod = infer_type input
   end
 end

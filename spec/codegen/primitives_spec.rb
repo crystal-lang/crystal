@@ -26,11 +26,11 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens string concatenation' do
-    run('"foo" + "bar"', load_std: 'string').to_ptr.read_pointer.read_string.should eq("foobar")
+    run('require "string"; "foo" + "bar"').to_ptr.read_pointer.read_string.should eq("foobar")
   end
 
   it 'codegens string indexer' do
-    run('"foo"[1]', load_std: ['string', 'pointer']).to_i.should eq(?o.ord)
+    run('require "string"; require "pointer"; "foo"[1]').to_i.should eq(?o.ord)
   end
 
   it 'codegens symbol' do

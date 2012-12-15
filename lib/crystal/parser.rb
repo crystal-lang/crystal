@@ -414,6 +414,8 @@ module Crystal
           parse_lib
         when :macro
           parse_macro
+        when :require
+          parse_require
         else
           parse_var_or_call
         end
@@ -472,6 +474,14 @@ module Crystal
       end
       next_token_skip_space
       Crystal::HashLiteral.new key_values
+    end
+
+    def parse_require
+      next_token_skip_space
+      check :STRING
+      string = StringLiteral.new(@token.value)
+      next_token_skip_space_or_newline
+      Crystal::Require.new string
     end
 
     def parse_ident
