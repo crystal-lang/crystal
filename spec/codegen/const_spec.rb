@@ -76,4 +76,8 @@ describe 'Codegen: const' do
       Foo.new.foo
     )).to_i.should eq(1)
   end
+
+  it "define a constant in lib" do
+    run("lib Foo; A = 1; end; Foo::A").to_i.should eq(1)
+  end
 end

@@ -1062,6 +1062,14 @@ module Crystal
           else
             break
           end
+        when :CONST
+          ident = parse_ident
+          next_token_skip_space
+          check :'='
+          next_token_skip_space_or_newline
+          value = parse_expression
+          skip_statement_end
+          expressions << Assign.new(ident, value)
         else
           break
         end
