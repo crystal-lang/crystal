@@ -6,7 +6,8 @@ require 'pry-debugger'
 
 include Crystal
 
-mod = Program.new load_std: true
+mod = Program.new
+mod.require "prelude"
 
 loop do
   nodes = parse gets

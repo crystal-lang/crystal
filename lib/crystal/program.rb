@@ -9,7 +9,7 @@ module Crystal
     attr_accessor :symbols
     attr_accessor :global_vars
 
-    def initialize(options = {})
+    def initialize
       super('main')
 
       object = @types["Object"] = ObjectType.new "Object", nil, self
@@ -113,7 +113,7 @@ module Crystal
       false
     end
 
-    def require(filename, relative_to)
+    def require(filename, relative_to = nil)
       filename = "#{filename}.cr" unless filename.end_with? ".cr"
       if relative_to
         dir = File.dirname relative_to

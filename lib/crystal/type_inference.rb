@@ -2,7 +2,7 @@ require_relative 'ast'
 
 module Crystal
   def infer_type(node, options = {})
-    mod = options[:mod] || Crystal::Program.new(options)
+    mod = options[:mod] || Crystal::Program.new
     if node
       if options[:stats]
         infer_type_with_stats node, mod
