@@ -56,8 +56,11 @@ module Crystal
   def run(code, options = {})
     node = parse code
     mod = infer_type node, options
-    llvm_mod = build node, mod
+    evaluate node, mod
+  end
 
+  def evaluate(node, mod)
+    llvm_mod = build node, mod
     engine = LLVM::JITCompiler.new(llvm_mod)
     engine.run_function llvm_mod.functions["crystal_main"], 0, nil
   end

@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+require 'bundler/setup'
+require_relative '../lib/crystal'
+require 'pry'
+require 'pry-debugger'
+
+include Crystal
+
+mod = Program.new load_std: true
+
+loop do
+  nodes = parse gets
+  infer_type nodes, mod: mod
+  evaluate nodes, mod
+end
