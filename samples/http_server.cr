@@ -1,3 +1,5 @@
+require "socket"
+
 server = TCPServer.new(8080)
 puts "Listening on http://0.0.0.0:8080"
 
