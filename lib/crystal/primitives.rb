@@ -173,6 +173,7 @@ module Crystal
     def define_symbol_primitives
       singleton(symbol, :==, {'other' => symbol}, bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
       singleton(symbol, :'!=', {'other' => symbol}, bool) { |b, f| b.icmp(:ne, f.params[0], f.params[1]) }
+      singleton(symbol, 'hash', {}, int) { |b, f| f.params[0] }
       no_args_primitive(symbol, 'to_s', string) do |b, f, llvm_mod|
         b.load(b.gep llvm_mod.globals['symbol_table'], [LLVM::Int(0), f.params[0]])
       end
