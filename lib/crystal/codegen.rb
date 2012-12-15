@@ -467,6 +467,7 @@ module Crystal
     end
 
     def visit_require(node)
+      node.expanded.accept self if node.expanded
       false
     end
 

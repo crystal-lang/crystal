@@ -10,7 +10,7 @@ module Crystal
     def initialize
       require 'optparse'
 
-      @options = {optimization_passes: 5, load_std: true}
+      @options = {optimization_passes: 5}
       OptionParser.new do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
 
@@ -65,6 +65,7 @@ module Crystal
         parser.filename = ARGF.filename unless ARGF.filename == '-'
 
         node = parser.parse
+        node = Expressions.new [Require.new(StringLiteral.new("prelude")), node]
         mod = infer_type node, @options
 
         graph node, mod, @options[:output_filename] if @options[:graph] || !Crystal::UNIFY

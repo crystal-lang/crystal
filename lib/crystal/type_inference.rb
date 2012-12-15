@@ -102,6 +102,10 @@ module Crystal
     attr_accessor :expanded
   end
 
+  class Require
+    attr_accessor :expanded
+  end
+
   class Call
     attr_accessor :target_def
     attr_accessor :target_macro
@@ -999,7 +1003,7 @@ module Crystal
     end
 
     def visit_require(node)
-      mod.require node.string.value, node.filename
+      node.expanded = mod.require(node.string.value, node.filename)
       false
     end
 

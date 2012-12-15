@@ -42,6 +42,10 @@ module Crystal
       node.expanded.accept self
     end
 
+    def end_visit_require(node)
+      node.expanded.accept self if node.expanded
+    end
+
     def fix_node(node)
       fix_type(node.type) if node.type
     end

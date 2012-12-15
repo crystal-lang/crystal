@@ -47,7 +47,6 @@ module Crystal
       @requires = Set.new
 
       define_primitives
-      define_builtins options[:load_std]
     end
 
     def void
@@ -114,10 +113,6 @@ module Crystal
       false
     end
 
-    def define_builtins(load_std)
-      require_absolute File.expand_path("../../../std/prelude.cr", __FILE__) if load_std
-    end
-
     def require(filename, relative_to)
       filename = "#{filename}.cr" unless filename.end_with? ".cr"
       if relative_to
@@ -134,7 +129,7 @@ module Crystal
     end
 
     def require_absolute(file)
-      return if @requires.include? file
+      return nil if @requires.include? file
 
       @requires.add file
 
@@ -142,6 +137,7 @@ module Crystal
       parser.filename = file
       node = parser.parse
       node.accept TypeVisitor.new(self) if node
+      node
     end
 
     def require_from_load_path(file)
