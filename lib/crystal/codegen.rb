@@ -763,6 +763,8 @@ module Crystal
         if dispatch.type.union?
           phi_table[label] = phi_value = alloca dispatch.llvm_type
           assign_to_union(phi_value, dispatch.type, call.type, @last)
+        elsif dispatch.type.nilable? && @last.type.kind == :integer
+          phi_table[label] = @builder.int2ptr @last, dispatch.llvm_type
         else
           phi_table[label] = @last
         end

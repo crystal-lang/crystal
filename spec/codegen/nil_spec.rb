@@ -27,4 +27,17 @@ describe 'Code gen: nil' do
   it "codegens nil? for primitives gives false" do
     run("0.nil?").to_b.should be_false
   end
+
+  it "codegens nilable dispatch" do
+    run(%q(
+      def foo(x)
+        x
+      end
+
+      a = nil
+      a = "foo"
+
+      foo(a)
+      )).to_ptr.read_pointer.read_string.should eq('foo')
+  end
 end
