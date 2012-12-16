@@ -46,6 +46,6 @@ describe 'Code gen: array' do
   end
 
   it "inspects array" do
-    run('require "object"; require "int"; require "string"; require "enumerable"; require "pointer"; require "array"; [1, 2, 3].inspect').to_ptr.read_pointer.read_string.should eq('[1, 2, 3]')
+    run('require "object"; require "int"; require "string"; require "enumerable"; require "pointer"; require "array"; [1, 2, 3].inspect').to_string.should eq('[1, 2, 3]')
   end
 end

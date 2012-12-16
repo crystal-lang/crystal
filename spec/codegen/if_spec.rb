@@ -46,10 +46,10 @@ describe 'Code gen: if' do
   end
 
   it 'codegens if of nilable type in then' do
-    run('if false; nil; else; "foo"; end').to_ptr.read_pointer.read_string.should eq("foo")
+    run('if false; nil; else; "foo"; end').to_string.should eq("foo")
   end
 
   it 'codegens if of nilable type in else' do
-    run('if true; "foo"; else; nil; end').to_ptr.read_pointer.read_string.should eq("foo")
+    run('if true; "foo"; else; nil; end').to_string.should eq("foo")
   end
 end

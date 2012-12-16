@@ -22,11 +22,11 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens string' do
-    run('"foo"').to_ptr.read_pointer.read_string.should eq("foo")
+    run('"foo"').to_string.should eq("foo")
   end
 
   it 'codegens string concatenation' do
-    run('require "string"; "foo" + "bar"').to_ptr.read_pointer.read_string.should eq("foobar")
+    run('require "string"; "foo" + "bar"').to_string.should eq("foobar")
   end
 
   it 'codegens string indexer' do

@@ -38,6 +38,6 @@ describe 'Code gen: nil' do
       a = "foo"
 
       foo(a)
-      )).to_ptr.read_pointer.read_string.should eq('foo')
+      )).to_string.should eq('foo')
   end
 end

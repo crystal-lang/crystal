@@ -84,6 +84,6 @@ describe 'Code gen: union type' do
       b = 'd'
       a = b
       a.to_s
-    )).to_ptr.read_pointer.read_string.should eq("d")
+    )).to_string.should eq("d")
   end
 end

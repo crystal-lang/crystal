@@ -926,7 +926,7 @@ module Crystal
       macro_engine = LLVM::JITCompiler.new macro_llvm_mod
       macro_value = macro_engine.run_function macro_llvm_mod.functions["crystal_main"], 0, nil
 
-      generated_source = macro_value.to_ptr.read_pointer.read_string
+      generated_source = macro_value.to_string
 
       begin
         parser = Parser.new(generated_source, [Set.new(@vars.keys)])
