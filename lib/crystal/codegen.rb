@@ -914,7 +914,11 @@ module Crystal
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_value_type)
         @builder.store value_value, casted_value_ptr
       else
-        index = union_type.index_of_type(type)
+        if type.nilable?
+          index = union_type.index_of_type(type.nilable_type)
+        else
+          index = union_type.index_of_type(type)
+        end
         @builder.store LLVM::Int(index), index_ptr
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_type)

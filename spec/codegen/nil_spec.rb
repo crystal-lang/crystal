@@ -40,4 +40,17 @@ describe 'Code gen: nil' do
       foo(a)
       )).to_string.should eq('foo')
   end
+
+  it "assigns nilable to union" do
+    run(%q(
+      a = nil
+      a = "foo"
+      a = Object.new
+
+      b = nil
+      b = "foo"
+
+      a = b
+      )).to_string.should eq('foo')
+  end
 end
