@@ -18,6 +18,14 @@ module Crystal
       yield self
     end
 
+    def union?
+      false
+    end
+
+    def nilable?
+      false
+    end
+
     def passed_as_self?
       true
     end
@@ -289,6 +297,20 @@ module Crystal
       @types = types
     end
 
+    def nilable?
+      @nilable ||= (@types.length == 2 &&
+        (@types[0].is_a?(PrimitiveType) && types[0].name == "Nil" && types[1].is_a?(ObjectType) && types[1] ||
+         @types[1].is_a?(PrimitiveType) && types[1].name == "Nil" && types[0].is_a?(ObjectType) && types[0]))
+    end
+
+    def nilable_type
+      @nilable
+    end
+
+    def union?
+      !nilable?
+    end
+
     def set_with_count
       hash = Hash.new(0)
       @types.each do |type|
@@ -299,8 +321,12 @@ module Crystal
 
     def llvm_type
       unless @llvm_type
-        @llvm_type = LLVM::Struct(llvm_name)
-        @llvm_type.element_types = [LLVM::Int, llvm_value_type]
+        if nilable?
+          @llvm_type = nilable_type.llvm_type
+        else
+          @llvm_type = LLVM::Struct(llvm_name)
+          @llvm_type.element_types = [LLVM::Int, llvm_value_type]
+        end
       end
       @llvm_type
     end

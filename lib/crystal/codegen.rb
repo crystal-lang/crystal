@@ -159,7 +159,7 @@ module Crystal
     end
 
     def finish
-      if @return_type.is_a?(UnionType)
+      if @return_type.union?
         @return_union = alloca(@return_type.llvm_type, 'return')
         if @node.type != @return_type
           assign_to_union(@return_union, @return_type, @node.type, @last)
@@ -230,7 +230,7 @@ module Crystal
     def end_visit_return(node)
       if @return_block
         @builder.br @return_block
-      elsif @return_type.is_a?(UnionType)
+      elsif @return_type.union?
         assign_to_union(@return_union, @return_type, node.exps[0].type, @last)
         union = @builder.load @return_union
         @builder.ret union
@@ -312,11 +312,11 @@ module Crystal
     def visit_var(node)
       var = @vars[node.name]
       @last = var[:ptr]
-      @last = @builder.load @last, node.name unless var[:is_arg] || var[:type].is_a?(UnionType)
+      @last = @builder.load @last, node.name unless var[:is_arg] || var[:type].union?
     end
 
     def visit_global(node)
-      if @mod.global_vars[node.name].type.is_a?(UnionType)
+      if @mod.global_vars[node.name].type.union?
         @last = @llvm_mod.globals[node.name]
       else
         @last = @builder.load @llvm_mod.globals[node.name]
@@ -325,7 +325,7 @@ module Crystal
 
     def visit_instance_var(node)
       ivar = @type.instance_vars[node.name]
-      if ivar.type.is_a?(UnionType)
+      if ivar.type.union?
         @last = gep llvm_self, 0, @type.index_of_instance_var(node.name)
       else
         index = @type.index_of_instance_var(node.name)
@@ -361,7 +361,7 @@ module Crystal
     end
 
     def visit_pointer_get_value(node)
-      if @type.var.type.is_a?(UnionType) || @type.var.type.is_a?(StructType)
+      if @type.var.type.union? || @type.var.type.is_a?(StructType)
         @last = llvm_self
       else
         @last = @builder.load llvm_self
@@ -382,7 +382,8 @@ module Crystal
     end
 
     def visit_if(node)
-      is_union = node.else && node.type.is_a?(UnionType)
+      is_union = node.else && node.type.union?
+      nilable = node.type.nilable?
 
       then_block, exit_block = new_blocks "then", "exit"
       else_block = new_block "else" if node.else
@@ -394,6 +395,10 @@ module Crystal
 
       @builder.position_at_end then_block
       node.then.accept self
+      if nilable && node.then.type == @mod.nil
+        @last = @builder.zext, LLVM::Int
+        @last = @builder.int2ptr @last, node.llvm_type
+      end
       then_block = @builder.insert_block
 
       then_value = @last
@@ -404,6 +409,9 @@ module Crystal
       if node.else
         @builder.position_at_end else_block
         node.else.accept self
+        if nilable && node.else.type == @mod.nil
+          @last = @builder.int2ptr LLVM::Int1.from_i(0), node.llvm_type
+        end
         else_block = @builder.insert_block
 
         else_value = @last
@@ -654,7 +662,7 @@ module Crystal
 
       @last = @builder.call @fun, *call_args
 
-      if target_def.body && target_def.body.type.is_a?(UnionType)
+      if target_def.body && target_def.body.type.union?
         union = alloca target_def.body.llvm_type
         @builder.store @last, union
         @last = union
@@ -707,11 +715,11 @@ module Crystal
           old_return_type = @return_type
           old_return_union = @return_union
           @return_type = target_def.body.type
-          @return_union = alloca(target_def.body.llvm_type, 'return') if @return_type.is_a?(UnionType)
+          @return_union = alloca(target_def.body.llvm_type, 'return') if @return_type.union?
 
           target_def.body.accept self
 
-          if @return_type.is_a?(UnionType)
+          if @return_type.union?
             if target_def.body.is_a?(Expressions) && target_def.body.last.type != @return_type
               assign_to_union(@return_union, @return_type, target_def.body.last.type, @last)
               @last = @builder.load @return_union
@@ -752,7 +760,7 @@ module Crystal
         call = dispatch.calls[arg_types.map(&:object_id)]
         codegen_call(call.target_def, (node.obj ? arg_types[0] : nil), arg_values)
 
-        if dispatch.type.is_a?(UnionType)
+        if dispatch.type.union?
           phi_table[label] = phi_value = alloca dispatch.llvm_type
           assign_to_union(phi_value, dispatch.type, call.type, @last)
         else
@@ -767,7 +775,7 @@ module Crystal
 
       @builder.position_at_end exit_block
 
-      if dispatch.type.is_a?(UnionType)
+      if dispatch.type.union?
         @last = @builder.phi LLVM::Pointer(dispatch.llvm_type), phi_table
       else
         @last = @builder.phi dispatch.llvm_type, phi_table
@@ -780,7 +788,7 @@ module Crystal
       arg = arg_index == -1 ? node.obj : node.args[arg_index]
       arg.accept self if arg
 
-      if arg && arg.type.is_a?(UnionType)
+      if arg && arg.type.union?
         arg_ptr = @last
         index_ptr, value_ptr = union_index_and_value(arg_ptr)
 
@@ -803,6 +811,35 @@ module Crystal
 
         type_index = @builder.load index_ptr
         @builder.switch type_index, unreachable_block, switch_table
+      elsif arg && arg.type.nilable?
+        arg_ptr = @last
+        old_block = @builder.insert_block
+        nil_block = nil
+        not_nil_block = nil
+        arg.type.types.each_with_index do |arg_type, i|
+          if arg_type == @mod.nil
+            nil_block = new_block "nil"
+            @builder.position_at_end nil_block
+
+            value = LLVM::Int1.from_i(0)
+
+            codegen_dispatch_next_arg node, arg_types, arg_values, arg_type, value, unreachable_block, arg_index, nil_block, &block
+          else
+            not_nil_block = new_block "not_nil"
+
+            @builder.position_at_end not_nil_block
+
+            value = arg_ptr
+
+            codegen_dispatch_next_arg node, arg_types, arg_values, arg_type, value, unreachable_block, arg_index, not_nil_block, &block
+          end
+        end
+
+        @builder.position_at_end old_block
+
+        value = @builder.ptr2int arg_ptr, LLVM::Int
+        value = @builder.icmp :eq, value, LLVM::Int(0)
+        @builder.cond value, nil_block, not_nil_block
       else
         codegen_dispatch_next_arg node, arg_types, arg_values, (arg ? arg.type : nil), @last, unreachable_block, arg_index, previous_label, &block
       end
@@ -824,7 +861,7 @@ module Crystal
 
     def codegen_assign(pointer, target_type, value_type, value)
       if target_type == value_type
-        if target_type.is_a?(UnionType)
+        if target_type.union?
           value = @builder.load value
           @builder.store value, pointer
         else
@@ -836,9 +873,17 @@ module Crystal
     end
 
     def assign_to_union(union_pointer, union_type, type, value)
+      if union_type.nilable?
+        if value.type.kind == :integer
+          value = @builder.int2ptr value, union_type.nilable_type.llvm_type
+        end
+        @builder.store value, union_pointer
+        return
+      end
+
       index_ptr, value_ptr = union_index_and_value(union_pointer)
 
-      if type.is_a?(UnionType)
+      if type.union?
         value_index_ptr, value_value_ptr = union_index_and_value(value)
         value_index = @builder.load value_index_ptr
         value_value = @builder.load value_value_ptr

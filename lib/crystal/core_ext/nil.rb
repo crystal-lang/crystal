@@ -11,6 +11,14 @@ class NilClass
     0
   end
 
+  def union?
+    false
+  end
+
+  def nilable?
+    false
+  end
+
   def clone(*)
     nil
   end
