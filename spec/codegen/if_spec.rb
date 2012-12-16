@@ -44,4 +44,8 @@ describe 'Code gen: if' do
   it 'codegens if with nil' do
     run('require "nil"; if nil; 2; else 3; end').to_i.should eq(3)
   end
+
+  it 'codegens if of nilable type' do
+    run('if false; nil; else; "foo"; end').to_ptr.read_pointer.read_string.should eq("foo")
+  end
 end

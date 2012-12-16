@@ -396,7 +396,7 @@ module Crystal
       @builder.position_at_end then_block
       node.then.accept self
       if nilable && node.then.type == @mod.nil
-        @last = @builder.zext, LLVM::Int
+        @last = @builder.zext @last, LLVM::Int
         @last = @builder.int2ptr @last, node.llvm_type
       end
       then_block = @builder.insert_block
