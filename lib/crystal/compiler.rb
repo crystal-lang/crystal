@@ -65,7 +65,8 @@ module Crystal
         parser.filename = ARGF.filename unless ARGF.filename == '-'
 
         node = parser.parse
-        node = Expressions.new [Require.new(StringLiteral.new("prelude")), node]
+        require_node = Require.new(StringLiteral.new("prelude"))
+        node = node ? Expressions.new([require_node, node]) : require_node
         mod = infer_type node, @options
 
         graph node, mod, @options[:output_filename] if @options[:graph] || !Crystal::UNIFY
