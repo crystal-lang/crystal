@@ -7,6 +7,13 @@ lib C
   fun feof(file : File) : Int
   fun getline(linep : Char**, linecap : Long*, file : File) : Long
   fun fflush(file : File) : Int
+  fun fseek(file : File, offset : Long, whence : Int) : Int
+  fun ftell(file : File) : Long
+  fun fread(buffer : Void*, size : Long, nitems : Long, file : File) : Int
+
+  SEEK_SET = 0
+  SEEK_CUR = 1
+  SEEK_END = 2
 end
 
 class IO
@@ -45,6 +52,17 @@ class File < IO
     file = File.new filename, mode
     yield file
     file.close
+  end
+
+  def self.read(filename)
+    f = C.fopen(filename, "r")
+    C.fseek(f, 0L, C::SEEK_END)
+    size = C.ftell(f)
+    C.fseek(f, 0L, C::SEEK_SET)
+    str = Pointer.malloc(size)
+    C.fread(str, size, 1L, f)
+    C.fclose(f)
+    str.as(String)
   end
 
   def input
