@@ -234,6 +234,12 @@ module Crystal
         assign_to_union(@return_union, @return_type, node.exps[0].type, @last)
         union = @builder.load @return_union
         @builder.ret union
+      elsif @return_type.nilable?
+        if @last.type.kind == :integer
+          @builder.ret @builder.int2ptr(@last, @return_type.llvm_type)
+        else
+          @builder.ret @last
+        end
       else
         @builder.ret @last
       end
