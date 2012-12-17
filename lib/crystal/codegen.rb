@@ -136,6 +136,7 @@ module Crystal
       @builder = CrystalBuilder.new LLVM::Builder.new
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
+      @const_block_entry = @const_block
 
       @funs = {}
       @vars = {}
@@ -169,7 +170,8 @@ module Crystal
         end
       end
 
-      br_block_chain @alloca_block, @const_block, @entry_block
+      br_block_chain @alloca_block, @const_block_entry
+      br_block_chain @const_block, @entry_block
       @builder.ret(@return_type == @mod.void ? nil : @last)
     end
 
@@ -271,6 +273,8 @@ module Crystal
         @builder.position_at_end @const_block
 
         const.value.accept self
+        @const_block = @builder.insert_block
+
         if @last.constant?
           global.initializer = @last
           global.global_constant = 1
