@@ -5,7 +5,7 @@ lib C
 end
 
 def puts(obj = "")
-  C.puts obj.to_s.cstr
+  C.puts obj.to_s
 end
 
 def p(obj)

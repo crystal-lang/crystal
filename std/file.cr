@@ -18,12 +18,12 @@ end
 
 class IO
   def print(string)
-    C.fputs string.cstr, output
+    C.fputs string, output
   end
 
   def puts(string)
     print string
-    C.fputs "\n".cstr, output
+    C.fputs "\n", output
   end
 
   def gets
@@ -45,7 +45,7 @@ end
 
 class File < IO
   def initialize(filename, mode)
-    @file = C.fopen filename.cstr, mode.cstr
+    @file = C.fopen filename, mode
   end
 
   def self.open(filename, mode)
@@ -55,7 +55,7 @@ class File < IO
   end
 
   def self.read(filename)
-    f = C.fopen(filename.cstr, "r".cstr)
+    f = C.fopen(filename, "r")
     C.fseek(f, 0L, C::SEEK_END)
     size = C.ftell(f)
     C.fseek(f, 0L, C::SEEK_SET)

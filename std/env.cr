@@ -5,10 +5,10 @@ end
 
 module ENV
   def self.[](name)
-    String.from_cstr(C.getenv name.cstr)
+    String.from_cstr(C.getenv name)
   end
 
   def self.[]=(name, value)
-    C.setenv name.cstr, value.cstr, 1
+    C.setenv name, value, 1
   end
 end

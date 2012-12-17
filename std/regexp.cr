@@ -14,7 +14,7 @@ class Regexp
     @source = str
     errptr = Pointer.malloc(0).as(Char)
     erroffset = 1
-    @re = PCRE.pcre_compile(str.cstr, 8, errptr.ptr, erroffset.ptr, 0L)
+    @re = PCRE.pcre_compile(str, 8, errptr.ptr, erroffset.ptr, 0L)
     if @re == 0
       puts "#{errptr.as(String)} at #{erroffset}"
       exit 1
@@ -26,7 +26,7 @@ class Regexp
   def match(str, pos = 0, options = 0)
     ovector_size = (@captures + 1) * 3
     ovector = Pointer.malloc(ovector_size * 4).as(Int)
-    ret = PCRE.pcre_exec(@re, 0L, str.cstr, str.length, pos, options, ovector, ovector_size)
+    ret = PCRE.pcre_exec(@re, 0L, str, str.length, pos, options, ovector, ovector_size)
     return nil unless ret > 0
     MatchData.new(self, str, pos, ovector)
   end

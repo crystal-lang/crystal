@@ -27,7 +27,7 @@ class String
   end
 
   def ==(other)
-    C.strcmp(@c.ptr, other.cstr) == 0
+    C.strcmp(@c.ptr, other) == 0
   end
 
   def =~(regex)
@@ -38,7 +38,7 @@ class String
   def +(other)
     new_string_buffer = Pointer.malloc(length + other.length + 1).as(Char)
     C.strcpy(new_string_buffer, @c.ptr)
-    C.strcat(new_string_buffer, other.cstr)
+    C.strcat(new_string_buffer, other)
     # new_string_buffer.as(String)
     String.from_cstr(new_string_buffer)
   end
@@ -68,7 +68,7 @@ class String
   end
 
   def starts_with?(str)
-    C.strncmp(cstr, str.cstr, str.length) == 0
+    C.strncmp(cstr, str, str.length) == 0
   end
 
   def to_s

@@ -37,8 +37,4 @@ class Int
     end
     self
   end
-
-  def to_s
-    String.from_cstr(to_cstr)
-  end
 end
