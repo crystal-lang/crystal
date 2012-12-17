@@ -1,14 +1,14 @@
 lib C
-  fun getenv(name : String) : String
-  fun setenv(name : String, value : String, overwrite : Int) : Int
+  fun getenv(name : Char*) : Char*
+  fun setenv(name : Char*, value : Char*, overwrite : Int) : Int
 end
 
 module ENV
   def self.[](name)
-    C.getenv name
+    String.from_cstr(C.getenv name.cstr)
   end
 
   def self.[]=(name, value)
-    C.setenv name, value, 1
+    C.setenv name.cstr, value.cstr, 1
   end
 end
