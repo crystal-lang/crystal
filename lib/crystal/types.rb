@@ -147,7 +147,7 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) || (other.is_a?(UnionType) && other == self)
+      equal?(other)
     end
 
     def llvm_name
@@ -186,8 +186,7 @@ module Crystal
 
     def ==(other)
       equal?(other) ||
-        (other.is_a?(ObjectType) && name == other.name && instance_vars == other.instance_vars) ||
-        (other.is_a?(UnionType) && other == self)
+        (other.is_a?(ObjectType) && name == other.name && instance_vars == other.instance_vars)
     end
 
     def hash
@@ -254,8 +253,7 @@ module Crystal
 
     def ==(other)
       equal?(other) ||
-        (other.is_a?(PointerType) && var.type == other.var.type) ||
-        (other.is_a?(UnionType) && other == self)
+        (other.is_a?(PointerType) && var.type == other.var.type)
     end
 
     def hash
@@ -360,15 +358,7 @@ module Crystal
     end
 
     def ==(other)
-      return true if equal?(other)
-
-      if @types.length == 1
-        @types.first == other
-      elsif other.is_a?(UnionType)
-        @types.length == other.types.length && set_with_count == other.set_with_count
-      else
-        false
-      end
+      equal?(other) || (other.is_a?(UnionType) && @types.length == other.types.length && set_with_count == other.set_with_count)
     end
 
     def clone(types_context = {}, nodes_context = {})

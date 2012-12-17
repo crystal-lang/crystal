@@ -28,7 +28,7 @@ describe "Type clone" do
 
   it "clone object type with recursive union type" do
     type = ObjectType.new("Foo")
-    type.with_var("@foo", [type].union)
+    type.with_var("@foo", [type, mod.int].union)
     type_clone = type.clone
     type_clone.should eq(type)
     type_clone.instance_vars["@foo"].type.types.first.should be(type_clone)
