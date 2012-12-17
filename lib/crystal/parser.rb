@@ -480,7 +480,7 @@ module Crystal
       next_token_skip_space
       check :STRING
       string = StringLiteral.new(@token.value)
-      next_token_skip_space_or_newline
+      next_token_skip_space
       Crystal::Require.new string
     end
 

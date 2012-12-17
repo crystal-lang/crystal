@@ -300,5 +300,6 @@ describe Parser do
   it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(['a'.symbol, 1.int, 3.int, 4.int, 'b'.symbol, 2.int])
 
   it_parses %q(require "foo"), Require.new('foo'.string)
-  it_parses %q(require "foo"; []), [Require.new('foo'.string), [].array], focus: true
+  it_parses %q(require "foo"; []), [Require.new('foo'.string), [].array]
+  it_parses %Q(require "foo"\nif true; end), [Require.new('foo'.string), If.new(true.bool)]
 end
