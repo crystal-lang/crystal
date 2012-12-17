@@ -1,11 +1,11 @@
 lib C
   fun getchar : Char
   fun putchar(c : Char) : Char
-  fun puts(str : String) : Int
+  fun puts(str : Char*) : Int
 end
 
 def puts(obj = "")
-  C.puts obj.to_s
+  C.puts obj.to_s.cstr
 end
 
 def p(obj)

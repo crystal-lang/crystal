@@ -146,7 +146,7 @@ module Crystal
       symbol_table_values = []
       mod.symbols.to_a.sort.each_with_index do |sym, index|
         @symbols[sym] = index
-        symbol_table_values << @builder.bit_cast(@builder.global_string_pointer(sym, sym), mod.string.llvm_type)
+        symbol_table_values << build_string_constant(sym, sym)
       end
 
       symbol_table = @llvm_mod.globals.add(LLVM::Array(mod.string.llvm_type, symbol_table_values.count), "symbol_table")
@@ -198,7 +198,16 @@ module Crystal
     end
 
     def visit_string_literal(node)
-      @last = @builder.bit_cast(@builder.global_string_pointer(node.value), node.type.llvm_type)
+      @last = build_string_constant(node.value)
+    end
+
+    def build_string_constant(str, name = "str")
+      global = @llvm_mod.globals.add(LLVM.Array(LLVM::Int8, str.length + 5), name)
+      global.linkage = :private
+      global.global_constant = 1
+      bytes = "#{[str.length].pack("l")}#{str}\0".chars.to_a.map { |c| LLVM::Int8.from_i(c.ord) }
+      global.initializer = LLVM::ConstantArray.const(LLVM::Int8, bytes)
+      @builder.bit_cast(global, @mod.string.llvm_type)
     end
 
     def visit_symbol_literal(node)
@@ -544,7 +553,7 @@ module Crystal
 
       # Pointer to the second element
       argv_ptr = gep(@argv, 1)
-      argv_ptr_as_string = @builder.bit_cast(argv_ptr, LLVM::Pointer(@mod.string.llvm_type))
+      argv_ptr_as_string = @builder.bit_cast(argv_ptr, LLVM::Pointer(@mod.char_pointer.llvm_type))
       @builder.store argv_ptr_as_string, gep(array, 0, 2)
 
       @last = array

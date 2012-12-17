@@ -1,15 +1,15 @@
 lib C
   type File : Void*
 
-  fun fopen(filename : String, mode : String) : File
-  fun fputs(str : String, file : File) : Int
+  fun fopen(filename : Char*, mode : Char*) : File
+  fun fputs(str : Char*, file : File) : Int
   fun fclose(file : File) : Int
   fun feof(file : File) : Int
   fun getline(linep : Char**, linecap : Long*, file : File) : Long
   fun fflush(file : File) : Int
   fun fseek(file : File, offset : Long, whence : Int) : Int
   fun ftell(file : File) : Long
-  fun fread(buffer : Void*, size : Long, nitems : Long, file : File) : Int
+  fun fread(buffer : Char*, size : Long, nitems : Long, file : File) : Int
 
   SEEK_SET = 0
   SEEK_CUR = 1
@@ -18,12 +18,12 @@ end
 
 class IO
   def print(string)
-    C.fputs string, output
+    C.fputs string.cstr, output
   end
 
   def puts(string)
     print string
-    C.fputs "\n", output
+    C.fputs "\n".cstr, output
   end
 
   def gets
@@ -31,7 +31,7 @@ class IO
     buffer_ptr = buffer.ptr
     cap = 0L
     length = C.getline(buffer_ptr, cap.ptr, input)
-    length > 0 ? buffer.as(String) : nil
+    length > 0 ? String.from_cstr(buffer) : nil
   end
 
   def eof?
@@ -45,7 +45,7 @@ end
 
 class File < IO
   def initialize(filename, mode)
-    @file = C.fopen filename, mode
+    @file = C.fopen filename.cstr, mode.cstr
   end
 
   def self.open(filename, mode)
@@ -55,14 +55,14 @@ class File < IO
   end
 
   def self.read(filename)
-    f = C.fopen(filename, "r")
+    f = C.fopen(filename.cstr, "r".cstr)
     C.fseek(f, 0L, C::SEEK_END)
     size = C.ftell(f)
     C.fseek(f, 0L, C::SEEK_SET)
-    str = Pointer.malloc(size)
+    str = Pointer.malloc(size).as(Char)
     C.fread(str, size, 1L, f)
     C.fclose(f)
-    str.as(String)
+    String.from_cstr(str)
   end
 
   def input

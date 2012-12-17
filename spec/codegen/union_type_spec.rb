@@ -78,6 +78,7 @@ describe 'Code gen: union type' do
 
   it "assigns union to larger union" do
     run(%q(
+      require "prelude"
       a = 1
       a = 1.1
       b = "c"

@@ -6,9 +6,18 @@ lib C
   fun strcat(dest : Char*, src : Char*) : Char*
   fun strcmp(s1 : Char*, s2 : Char*) : Int
   fun strncpy(s1 : Char*, s2 : Char*, n : Int) : Char*
+  fun sprintf(str : Char*, format : Char*, )
 end
 
 class String
+  def self.from_cstr(chars)
+    length = C.strlen(chars)
+    str = Pointer.malloc(length + 5)
+    str.as(Int).value = length
+    C.strcpy((str + 4).as(Char), chars)
+    str.as(String)
+  end
+
   def to_i
     C.atoi @c.ptr
   end
@@ -30,11 +39,12 @@ class String
     new_string_buffer = Pointer.malloc(length + other.length + 1).as(Char)
     C.strcpy(new_string_buffer, @c.ptr)
     C.strcat(new_string_buffer, other.cstr)
-    new_string_buffer.as(String)
+    # new_string_buffer.as(String)
+    String.from_cstr(new_string_buffer)
   end
 
   def length
-    C.strlen @c.ptr
+    @length
   end
 
   def chars
@@ -49,7 +59,8 @@ class String
     new_string_buffer = Pointer.malloc(count + 1).as(Char)
     C.strncpy(new_string_buffer, @c.ptr + start, count)
     new_string_buffer[count] = '\0'
-    new_string_buffer.as(String)
+    # new_string_buffer.as(String)
+    String.from_cstr(new_string_buffer)
   end
 
   def inspect

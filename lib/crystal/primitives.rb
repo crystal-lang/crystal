@@ -24,8 +24,8 @@ module Crystal
       no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end
-      no_args_primitive(object, 'to_s', string) do |b, f, llvm_mod, self_type|
-        buffer = b.bit_cast(b.array_malloc(char.llvm_type, LLVM::Int(self_type.name.length + 23)), string.llvm_type)
+      no_args_primitive(object, 'to_cstr', char_pointer) do |b, f, llvm_mod, self_type|
+        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
         buffer
       end
@@ -49,11 +49,11 @@ module Crystal
     end
 
     def define_char_primitives
-      no_args_primitive(char, 'to_s', string) do |b, f, llvm_mod|
-        buffer = b.array_malloc(char.llvm_type, LLVM::Int(2))
+      no_args_primitive(char, 'to_cstr', char_pointer) do |b, f, llvm_mod|
+        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(2))
         b.store f.params[0], b.gep(buffer, LLVM::Int(0))
         b.store LLVM::Int8.from_i(0), b.gep(buffer, LLVM::Int(1))
-        b.bit_cast buffer, string.llvm_type
+        buffer
       end
 
       no_args_primitive(char, 'ord', int) { |b, f| b.zext(f.params[0], int.llvm_type) }
@@ -124,8 +124,8 @@ module Crystal
     end
 
     def define_int_primitives
-      no_args_primitive(int, 'to_s', string) do |b, f, llvm_mod|
-        buffer = b.bit_cast(b.array_malloc(char.llvm_type, LLVM::Int(12)), string.llvm_type)
+      no_args_primitive(int, 'to_cstr', char_pointer) do |b, f, llvm_mod|
+        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(12))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%d"), f.params[0]
         buffer
       end
@@ -146,8 +146,8 @@ module Crystal
 
     def define_long_primitives
       no_args_primitive(long, 'to_i', int) { |b, f| b.trunc(f.params[0], int.llvm_type) }
-      no_args_primitive(long, 'to_s', string) do |b, f, llvm_mod|
-        buffer = b.bit_cast(b.array_malloc(char.llvm_type, LLVM::Int(22)), string.llvm_type)
+      no_args_primitive(long, 'to_cstr', char_pointer) do |b, f, llvm_mod|
+        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(22))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%ld"), f.params[0]
         buffer
       end
@@ -157,8 +157,8 @@ module Crystal
     end
 
     def define_float_primitives
-      no_args_primitive(float, 'to_s', string) do |b, f, llvm_mod|
-        buffer = b.bit_cast(b.array_malloc(char.llvm_type, LLVM::Int(12)), string.llvm_type)
+      no_args_primitive(float, 'to_cstr', char_pointer) do |b, f, llvm_mod|
+        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(12))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%g"), b.fp_ext(f.params[0], LLVM::Double)
         buffer
       end
@@ -215,7 +215,7 @@ module Crystal
     end
 
     def sprintf(llvm_mod)
-      llvm_mod.functions['sprintf'] || llvm_mod.functions.add('sprintf', [string.llvm_type], int.llvm_type, varargs: true)
+      llvm_mod.functions['sprintf'] || llvm_mod.functions.add('sprintf', [LLVM::Pointer(LLVM::Int8)], int.llvm_type, varargs: true)
     end
 
     def realloc(llvm_mod)

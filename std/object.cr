@@ -24,6 +24,10 @@ class Object
     to_s
   end
 
+  def to_s
+    String.from_cstr(to_cstr)
+  end
+
   def tap
     yield self
     self

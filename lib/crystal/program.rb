@@ -28,6 +28,7 @@ module Crystal
       @types["Pointer"] = PointerType.new value, self
 
       @types["String"] = ObjectType.new "String", object, self
+      string.lookup_instance_var('@length').type = int
       string.lookup_instance_var('@c').type = char
 
       enumerable = @types["Enumerable"] = ModuleType.new "Enumerable", self
@@ -38,7 +39,7 @@ module Crystal
       array.include enumerable
 
       string_array = array.clone
-      string_array.lookup_instance_var('@buffer').type.var.type = string
+      string_array.lookup_instance_var('@buffer').type.var.type = char_pointer
       @types["ARGV"] = Const.new "ARGV", Crystal::ARGV.new(string_array), self
 
       @symbols = Set.new
@@ -105,6 +106,14 @@ module Crystal
       @void_pointer ||= begin
         p = pointer.clone
         p.var.type = @types["Void"]
+        p
+      end
+    end
+
+    def char_pointer
+      @char_pointer ||= begin
+        p = pointer.clone
+        p.var.type = @types["Char"]
         p
       end
     end
