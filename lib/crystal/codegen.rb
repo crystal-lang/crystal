@@ -786,7 +786,7 @@ module Crystal
 
       codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block) do |label|
         call = dispatch.calls[arg_types.map(&:object_id)]
-        codegen_call(call.target_def, (node.obj ? arg_types[0] : nil), arg_values)
+        codegen_call(call.target_def, (node.obj && node.obj.type.passed_as_self? ? arg_types[0] : nil), arg_values)
 
         if dispatch.type.union?
           phi_table[label] = phi_value = alloca dispatch.llvm_type
@@ -815,8 +815,9 @@ module Crystal
     end
 
     def codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index = -1, previous_label = nil, &block)
+      must_accept = arg_index != -1 || (node.obj && node.obj.type.passed_as_self?)
       arg = arg_index == -1 ? node.obj : node.args[arg_index]
-      arg.accept self if arg
+      arg.accept self if must_accept
 
       if arg && arg.type.union?
         arg_ptr = @last
@@ -876,8 +877,9 @@ module Crystal
     end
 
     def codegen_dispatch_next_arg(node, arg_types, arg_values, arg_type, arg_value, unreachable_block, arg_index, label, &block)
+      must_push_value = arg_index != -1 || (node.obj && node.obj.type.passed_as_self?)
       arg_types.push arg_type
-      arg_values.push arg_value unless arg_index == -1 && !node.obj
+      arg_values.push arg_value if must_push_value
 
       if arg_index == node.args.length - 1
         block.call(label)
@@ -886,7 +888,7 @@ module Crystal
       end
 
       arg_types.pop
-      arg_values.pop
+      arg_values.pop if must_push_value
     end
 
     def codegen_assign(pointer, target_type, value_type, value)

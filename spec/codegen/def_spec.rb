@@ -231,4 +231,16 @@ describe 'Code gen: def' do
       f.foo(2) + f.foo
       )).to_i.should eq(5)
   end
+
+  it "codegens dispatch on static method" do
+    run(%Q(
+      def Object.foo(x)
+        1
+      end
+
+      a = 1
+      a = 1.5
+      Object.foo(a)
+      )).to_i.should eq(1)
+  end
 end
