@@ -1025,4 +1025,60 @@ module Crystal
       @string = other.string.clone(&block)
     end
   end
+
+  class Case < ASTNode
+    attr_accessor :cond
+    attr_accessor :whens
+    attr_accessor :else
+
+    def initialize(cond, whens, a_else = nil)
+      @cond = cond
+      @cond.parent = self
+      @whens = whens
+      @whens.each { |w| w.parent = self }
+      @else = a_else
+      @else.parent = self if @else
+    end
+
+    def accept_children(visitor)
+      @whens.each { |w| w.accept visitor }
+      @else.acccept self if @else
+    end
+
+    def ==(other)
+      other.is_a?(Case) && other.cond == cond && other.whens == whens && other.else == @else
+    end
+
+    def clone_from(other, &block)
+      @cond = other.cond.clone(&block)
+      @whens = other.whens.map { |w| w.clone(&block) }
+      @else = other.else.clone(&block)
+    end
+  end
+
+  class When < ASTNode
+    attr_accessor :cond
+    attr_accessor :body
+
+    def initialize(cond, body = nil)
+      @cond = cond
+      @cond.parent = self
+      @body = Expressions.from body
+      @body.parent = self if @body
+    end
+
+    def accept_children(visitor)
+      cond.accept visitor
+      body.accept visitor if body
+    end
+
+    def ==(other)
+      other.is_a?(When) && other.cond == cond && other.body == body
+    end
+
+    def clone_from(other, &block)
+      @cond = other.cond.clone(&block)
+      @body = other.body.clone(&block)
+    end
+  end
 end

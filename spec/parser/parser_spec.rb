@@ -302,4 +302,8 @@ describe Parser do
   it_parses %q(require "foo"), Require.new('foo'.string)
   it_parses %q(require "foo"; []), [Require.new('foo'.string), [].array]
   it_parses %Q(require "foo"\nif true; end), [Require.new('foo'.string), If.new(true.bool)]
+
+  it_parses %q(case 1; when 1; 2; else; 3; end), Case.new(1.int, [When.new(1.int, 2.int)], 3.int)
+  it_parses %Q(case 1\nwhen 1\n2\nelse\n3\nend), Case.new(1.int, [When.new(1.int, 2.int)], 3.int)
+  it_parses %Q(case 1\nwhen 1\n2\nend), Case.new(1.int, [When.new(1.int, 2.int)])
 end

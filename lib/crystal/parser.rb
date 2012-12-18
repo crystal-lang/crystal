@@ -416,6 +416,8 @@ module Crystal
           parse_macro
         when :require
           parse_require
+        when :case
+          parse_case
         else
           parse_var_or_call
         end
@@ -482,6 +484,49 @@ module Crystal
       string = StringLiteral.new(@token.value)
       next_token_skip_space
       Crystal::Require.new string
+    end
+
+    def parse_case
+      next_token_skip_space_or_newline
+      cond = parse_expression
+      skip_statement_end
+
+      whens = []
+      a_else = nil
+
+      while true
+        case @token.type
+        when :IDENT
+          case @token.value
+          when :when
+            next_token_skip_space_or_newline
+            when_cond = parse_expression
+            skip_statement_end
+            when_body = parse_expression
+            skip_statement_end
+            whens << When.new(when_cond, when_body)
+          when :else
+            if whens.length == 0
+              raise "unexpected token: #{@token.to_s} (expecting when)"
+            end
+            next_token_skip_statement_end
+            a_else = parse_expression
+            skip_statement_end
+            check_ident :end
+            next_token_skip_space_or_newline
+            break
+          when :end
+            next_token_skip_statement_end
+            break
+          else
+            raise "unexpected token: #{@token.to_s} (expecting when, else or end)"
+          end
+        else
+          raise "unexpected token: #{@token.to_s} (expecting when, else or end)"
+        end
+      end
+
+      Case.new(cond, whens, a_else)
     end
 
     def parse_ident

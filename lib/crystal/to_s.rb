@@ -413,6 +413,29 @@ module Crystal
       false
     end
 
+    def visit_case(node)
+      @str << 'case '
+      node.cond.accept self
+      @str << "\n"
+      node.whens.each do |wh|
+        wh.accept self
+      end
+      if node.else
+        @str << "else\n"
+        accept_with_indent node.else
+      end
+      @str << 'end'
+      false
+    end
+
+    def visit_when(node)
+      @str << 'when '
+      node.cond.accept self
+      @str << "\n"
+      accept_with_indent node.body
+      false
+    end
+
     ['return', 'next', 'break', 'yield'].each do |keyword|
       class_eval %Q(
         def visit_#{keyword}(node)
