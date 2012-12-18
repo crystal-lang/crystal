@@ -20,4 +20,8 @@ class Nil
   def ||(other)
     other
   end
+
+  def &&(other)
+    self
+  end
 end

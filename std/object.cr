@@ -36,4 +36,8 @@ class Object
   def ||(other)
     self
   end
+
+  def &&(other)
+    other
+  end
 end

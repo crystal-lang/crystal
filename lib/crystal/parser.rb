@@ -100,7 +100,7 @@ module Crystal
             value = parse_op_assign
             atomic = Assign.new(atomic, value)
           end
-        when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>=', :'||='
+        when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>=', :'||=', :'&&='
           break unless can_be_assigned?(atomic)
 
           if atomic.is_a?(Ident)
@@ -245,7 +245,7 @@ module Crystal
           next_token
         when :'.'
           next_token_skip_space_or_newline
-          check :IDENT, :+, :-, :*, :/, :%, :|, :&, :^, :**, :<<, :<, :<=, :==, :"!=", :=~, :>>, :>, :>=, :'<=>', :'||'
+          check :IDENT, :+, :-, :*, :/, :%, :|, :&, :^, :**, :<<, :<, :<=, :==, :"!=", :=~, :>>, :>, :>=, :'<=>', :'||', :'&&'
           name = @token.type == :IDENT ? @token.value : @token.type
           name_column_number = @token.column_number
           next_token
@@ -758,7 +758,7 @@ module Crystal
 
     def parse_def
       next_token_skip_space_or_newline
-      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>', :'||'
+      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>', :'||', :'&&'
 
       receiver = nil
 
