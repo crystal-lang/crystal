@@ -20,6 +20,10 @@ class Object
     attr :#{symbol_or_name}
   "end
 
+  def ===(other)
+    self == other
+  end
+
   def inspect
     to_s
   end

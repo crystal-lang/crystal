@@ -106,6 +106,10 @@ module Crystal
     attr_accessor :expanded
   end
 
+  class Case
+    attr_accessor :expanded
+  end
+
   class Call
     attr_accessor :target_def
     attr_accessor :target_macro
@@ -1021,6 +1025,25 @@ module Crystal
 
     def visit_require(node)
       node.expanded = mod.require(node.string.value, node.filename)
+      false
+    end
+
+    def visit_case(node)
+      a_if = nil
+      final_if = nil
+      node.whens.each do |wh|
+        wh_if = If.new(Call.new(wh.cond, :'===', [node.cond]), wh.body)
+        if a_if
+          a_if.else = wh_if
+        else
+          final_if = wh_if
+        end
+        a_if = wh_if
+      end
+      a_if.else = node.else if node.else
+      final_if.accept self
+      node.bind_to final_if
+      node.expanded = final_if
       false
     end
 

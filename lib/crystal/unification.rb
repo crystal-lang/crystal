@@ -80,6 +80,11 @@ module Crystal
       node.target_const.value.accept self if node.target_const
     end
 
+    def visit_case(node)
+      node.expanded.accept self
+      false
+    end
+
     def visit_any(node)
       node.set_type unify_type(node.type) if node.type && !node.type.is_a?(Metaclass)
     end

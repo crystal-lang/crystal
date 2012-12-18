@@ -1042,7 +1042,7 @@ module Crystal
 
     def accept_children(visitor)
       @whens.each { |w| w.accept visitor }
-      @else.acccept self if @else
+      @else.accept visitor if @else
     end
 
     def ==(other)
