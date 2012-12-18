@@ -65,8 +65,8 @@ module Crystal
     engine.run_function llvm_mod.functions["crystal_main"], 0, nil
   end
 
-  def build(node, mod)
-    visitor = CodeGenVisitor.new(mod, node, node ? node.type : mod.void)
+  def build(node, mod, llvm_mod = nil)
+    visitor = CodeGenVisitor.new(mod, node, node ? node.type : mod.void, llvm_mod)
     if node
       begin
         node.accept visitor
@@ -120,11 +120,11 @@ module Crystal
   class CodeGenVisitor < Visitor
     attr_reader :llvm_mod
 
-    def initialize(mod, node, return_type)
+    def initialize(mod, node, return_type, llvm_mod = nil)
       @mod = mod
       @node = node
       @return_type = return_type
-      @llvm_mod = LLVM::Module.new("Crystal")
+      @llvm_mod = llvm_mod || LLVM::Module.new("Crystal")
       @fun = @llvm_mod.functions.add("crystal_main", [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], return_type.llvm_type)
 
       @argc = @fun.params[0]
@@ -138,7 +138,6 @@ module Crystal
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
       @const_block_entry = @const_block
 
-      @funs = {}
       @vars = {}
       @block_context = []
       @type = @mod
@@ -689,7 +688,7 @@ module Crystal
       mangled_name = target_def.mangled_name(self_type)
 
       old_fun = @fun
-      unless @fun = @funs[mangled_name]
+      unless @fun = @llvm_mod.functions[mangled_name]
         codegen_fun(mangled_name, target_def, self_type)
       end
 
@@ -720,7 +719,7 @@ module Crystal
       end
       args += target_def.args.select { |arg| !arg.type.is_a?(Metaclass) }
 
-      @fun = @funs[mangled_name] = @llvm_mod.functions.add(
+      @fun = @llvm_mod.functions.add(
         mangled_name,
         args.map(&:llvm_type),
         target_def.body.llvm_type

@@ -404,6 +404,19 @@ module Crystal
     end
   end
 
+  class Macro
+    attr_accessor :instances
+
+    def add_instance(fun, arg_types)
+      @instances ||= {}
+      @instances[arg_types] = fun
+    end
+
+    def lookup_instance(arg_types)
+      @instances && @instances[arg_types]
+    end
+  end
+
   class Dispatch < ASTNode
     attr_accessor :name
     attr_accessor :obj
@@ -929,10 +942,13 @@ module Crystal
       owner, self_type, untyped_def = node.compute_owner_self_type_and_untyped_def
       return false unless untyped_def.is_a?(Macro)
 
+      @@macro_llvm_mod ||= LLVM::Module.new "macros"
+      @@macro_engine ||= LLVM::JITCompiler.new @@macro_llvm_mod
+
       macro_name = "#macro_#{untyped_def.object_id}"
 
       typed_def = Def.new(macro_name, untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
-      macro_call = Call.new(nil, macro_name, node.args.map(&:to_crystal))
+      macro_call = Call.new(nil, macro_name, node.args.map(&:to_crystal_node))
       macro_nodes = Expressions.new [typed_def, macro_call]
 
       Crystal.infer_type macro_nodes, mod: mod
@@ -941,11 +957,18 @@ module Crystal
         node.raise "macro return value must be a String, not #{macro_nodes.type}"
       end
 
-      macro_llvm_mod = Crystal.build macro_nodes, mod
+      macro_arg_types = macro_call.args.map(&:type)
+      fun = untyped_def.lookup_instance(macro_arg_types)
+      unless fun
+        Crystal.build macro_nodes, mod, @@macro_llvm_mod
+        fun = @@macro_llvm_mod.functions[macro_call.target_def.mangled_name(nil)]
+        untyped_def.add_instance fun, macro_arg_types
+      end
 
       mod.load_libs
-      macro_engine = LLVM::JITCompiler.new macro_llvm_mod
-      macro_value = macro_engine.run_function macro_llvm_mod.functions["crystal_main"], 0, nil
+
+      macro_args = node.args.map &:to_crystal_binary
+      macro_value = @@macro_engine.run_function fun, *macro_args
 
       generated_source = macro_value.to_string
 
