@@ -12,4 +12,22 @@ describe 'Type inference: super' do
   it "types super without arguments but parent has arguments" do
     assert_type("class Foo; def foo(x); x; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)") { int }
   end
+
+  it "types super when container method is defined in parent class" do
+    assert_type(%Q(
+      class Foo
+        def initialize
+          @x = 1
+        end
+      end
+      class Bar < Foo
+        def initialize
+          super
+        end
+      end
+      class Baz < Bar
+      end
+      Baz.new
+      )) { ObjectType.new("Baz").with_var("@x", int) }
+  end
 end

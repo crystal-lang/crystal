@@ -260,7 +260,7 @@ module Crystal
       end
 
       if name == 'super'
-        parent = scope.parents.first
+        parent = parent_visitor.call[0].parents.first
         if args.empty? && !has_parenthesis
           self.args = parent_visitor.call[3].args.map do |arg|
             var = Var.new(arg.name)
