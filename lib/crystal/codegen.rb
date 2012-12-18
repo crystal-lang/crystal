@@ -240,6 +240,7 @@ module Crystal
 
     def end_visit_return(node)
       if @return_block
+        @return_block_table[@builder.insert_block] = @last
         @builder.br @return_block
       elsif @return_type.union?
         assign_to_union(@return_union, @return_type, node.exps[0].type, @last)
@@ -599,7 +600,8 @@ module Crystal
       end
 
       if node.block
-        @block_context << { block: node.block, vars: @vars, type: @type, return_block: @return_block }
+        @block_context << { block: node.block, vars: @vars, type: @type,
+          return_block: @return_block, return_block_table: @return_block_table }
         @vars = {}
 
         if owner && owner.passed_as_self?
@@ -617,14 +619,18 @@ module Crystal
         end
 
         @return_block = new_block 'return'
+        @return_block_table = {}
         node.target_def.body.accept self
+        @return_block_table[@builder.insert_block] = @last if node.type
         @builder.br @return_block
         @builder.position_at_end @return_block
+        @last = @builder.phi node.type.llvm_type, @return_block_table if node.type
 
         old_context = @block_context.pop
         @vars = old_context[:vars]
         @type = old_context[:type]
         @return_block = old_context[:return_block]
+        @return_block_table = old_context[:return_block_table]
       else
         codegen_call(node.target_def, owner, call_args)
       end
@@ -657,15 +663,18 @@ module Crystal
         old_vars = @vars
         old_type = @type
         old_return_block = @return_block
+        old_return_block_table = @return_block_table
         @vars = new_vars
         @type = context[:type]
         @return_block = context[:return_block]
+        @return_block_table = context[:return_block_table]
 
         block.accept self
 
         @vars = old_vars
         @type = old_type
         @return_block = old_return_block
+        @return_block_table = old_return_block_table
         @block_context << context
       end
       false
