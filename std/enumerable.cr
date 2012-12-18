@@ -53,4 +53,13 @@ module Enumerable
     each { |e| count += 1 if yield e }
     count
   end
+
+  def any?
+    each { |e| return true if yield e }
+    false
+  end
+
+  def include?(obj)
+    any? { |e| e == obj }
+  end
 end
