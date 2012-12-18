@@ -16,4 +16,8 @@ class Nil
     exit 1
     nil
   end
+
+  def ||(other)
+    other
+  end
 end

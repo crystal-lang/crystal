@@ -132,21 +132,21 @@ describe Parser do
     it_parses "f.x #{op}= 2", Call.new("f".call, "x=", [Call.new(Call.new("f".call, "x"), op, [2.int])])
   end
 
-  ["=", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "%", "&", "|", "^", "**", "+@", "-@"].each do |op|
+  ["=", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "%", "&", "|", "^", "**", "+@", "-@", "||"].each do |op|
     it_parses "def #{op}; end;", Def.new(op.to_sym, [], nil)
   end
 
-  ['<<', '<', '<=', '==', '>>', '>', '>=', '+', '-', '*', '/', '%', '|', '&', '^', '**'].each do |op|
+  ['<<', '<', '<=', '==', '>>', '>', '>=', '+', '-', '*', '/', '%', '|', '&', '^', '**', '||'].each do |op|
     it_parses "1 #{op} 2", Call.new(1.int, op.to_sym, [2.int])
     it_parses "n #{op} 2", Call.new("n".call, op.to_sym, [2.int])
   end
 
-  ['bar', :'+', :'-', :'*', :'/', :'<', :'<=', :'==', :'>', :'>=', :'%', :'|', :'&', :'^', :'**'].each do |name|
+  ['bar', :'+', :'-', :'*', :'/', :'<', :'<=', :'==', :'>', :'>=', :'%', :'|', :'&', :'^', :'**', :'||'].each do |name|
     it_parses "foo.#{name}", Call.new("foo".call, name)
     it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, [1.int, 2.int])
   end
 
-  [:'+', :'-', :'*', :'/', :'%', :'|', :'&', :'^', :'**', :<<, :>>].each do |op|
+  [:'+', :'-', :'*', :'/', :'%', :'|', :'&', :'^', :'**', :<<, :>>, :'||'].each do |op|
     it_parses "a #{op}= 1", Assign.new("a".var, Call.new("a".var, op.to_sym, [1.int]))
   end
 

@@ -32,4 +32,8 @@ class Object
     yield self
     self
   end
+
+  def ||(other)
+    self
+  end
 end
