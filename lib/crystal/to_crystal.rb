@@ -61,22 +61,19 @@ module Crystal
     end
 
     def visit_symbol_literal(node)
-      string_ptr = FFI::MemoryPointer.new(:char, node.value.length + 5)
-      string_ptr.put_int32(0, node.value.length)
-      string_ptr.put_string(4, node.value)
-
-      ptr = FFI::MemoryPointer.new(:pointer, 1)
-      ptr.put_pointer(0, string_ptr)
-
-      @last = ptr
+      visit_string_literal(node)
     end
 
     def visit_string_literal(node)
-      new_node 'StringLiteral', node
+      ptr = FFI::MemoryPointer.new(:pointer, 1)
+      ptr.put_pointer(0, string(node.value))
+      @last = ptr
     end
 
     def visit_var(node)
-      new_node 'Var', StringLiteral.new(node.name)
+      ptr = FFI::MemoryPointer.new(:pointer, 1)
+      ptr.put_pointer(0, string(node.name))
+      @last = ptr
     end
 
     def visit_array_literal(node)
@@ -89,8 +86,11 @@ module Crystal
       false
     end
 
-    def new_node(name, *args)
-      @last = Call.new(Ident.new(['Crystal', name]), 'new', args)
+    def string(str)
+      string_ptr = FFI::MemoryPointer.new(:char, str.length + 5)
+      string_ptr.put_int32(0, str.length)
+      string_ptr.put_string(4, str)
+      string_ptr
     end
 
     def value
