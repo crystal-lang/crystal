@@ -688,6 +688,7 @@ module Crystal
         @last_call_has_parenthesis = false
         parse_args_space_consumed
       else
+        @last_call_has_parenthesis = false
         nil
       end
     end
