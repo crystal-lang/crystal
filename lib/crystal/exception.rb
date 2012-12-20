@@ -20,7 +20,7 @@ module Crystal
         str = "Syntax error in line #{@line_number}: #{@message}"
       end
 
-      if @filename
+      if @filename && File.file?(@filename)
         source = File.read(@filename)
       end
 
@@ -73,15 +73,11 @@ module Crystal
     end
 
     def append_to_s(str, source)
-      if @filename
+      if @filename && File.file?(@filename)
         lines = File.readlines @filename
-      else
-        lines = source ? source.lines.to_a : nil
-      end
-
-      if @filename
         str << "in #{@filename}:#{@line}: #{@message}"
       else
+        lines = source ? source.lines.to_a : nil
         str << "in line #{@line}: #{@message}"
       end
 
