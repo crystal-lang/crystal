@@ -380,7 +380,7 @@ module Crystal
     attr_reader :type
 
     def initialize(type)
-      super("#{type.name}:Metaclass", type.container)
+      super("#{type.name}:Class", type.container)
       @type = type
     end
 
