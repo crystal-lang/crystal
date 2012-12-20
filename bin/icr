@@ -87,7 +87,7 @@ loop do
   end
 
   if line.strip == "dump"
-    if llvm.mod
+    if llvm_mod
       llvm_mod.dump
     end
     next
