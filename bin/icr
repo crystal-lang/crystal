@@ -70,6 +70,7 @@ incomplete_expression = false
 line_number = 1
 last_line = line_number
 llvm_mod = nil
+engine = nil
 
 loop do
   line = Readline.readline "icr:#{'%03d' % line_number}:#{openings}#{incomplete_expression ? '*' : '>'} #{ '  ' * openings }", true
@@ -79,8 +80,24 @@ loop do
     next
   end
 
-  break if line.strip =~ /^(exit|quit)(\s*\(\s*\))?$/
-  next (llvm_mod ? llvm_mod.dump : nil) if line.strip == "dump"
+  if line.strip =~ /^(exit|quit)(\s*\(\s*\))?$/
+    break
+  end
+
+  if line.strip == "dump"
+    if llvm.mod
+      llvm_mod.dump
+    end
+    next
+  end
+
+  if line.strip == "opt"
+    if llvm_mod
+      Compiler.optimize llvm_mod, engine, 5
+      llvm_mod.dump
+    end
+    next
+  end
 
   buffer << line << "\n"
   openings = count_openings buffer
