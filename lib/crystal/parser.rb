@@ -500,11 +500,24 @@ module Crystal
           case @token.value
           when :when
             next_token_skip_space_or_newline
-            when_cond = parse_expression
-            skip_statement_end
+            when_conds = []
+            while true
+              when_conds << parse_expression
+              skip_space
+              case @token.type
+              when :','
+                next_token_skip_space_or_newline
+              when :NEWLINE, :';'
+                skip_statement_end
+                break
+              else
+                raise "unexpected token: #{@token.to_s} (expecting ',', ';' or '\n')"
+              end
+            end
+
             when_body = parse_expression
             skip_statement_end
-            whens << When.new(when_cond, when_body)
+            whens << When.new(when_conds, when_body)
           when :else
             if whens.length == 0
               raise "unexpected token: #{@token.to_s} (expecting when)"

@@ -430,7 +430,10 @@ module Crystal
 
     def visit_when(node)
       @str << 'when '
-      node.cond.accept self
+      node.conds.each_with_index do |cond, i|
+        @str << ', ' if i > 0
+        cond.accept self
+      end
       @str << "\n"
       accept_with_indent node.body
       false

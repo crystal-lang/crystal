@@ -1055,7 +1055,16 @@ module Crystal
       a_if = nil
       final_if = nil
       node.whens.each do |wh|
-        wh_if = If.new(Call.new(wh.cond, :'===', [node.cond]), wh.body)
+        final_comp = nil
+        wh.conds.each do |cond|
+          comp = Call.new(cond, :'===', [node.cond])
+          if final_comp
+            final_comp = Call.new(final_comp, :'||', [comp])
+          else
+            final_comp = comp
+          end
+        end
+        wh_if = If.new(final_comp, wh.body)
         if a_if
           a_if.else = wh_if
         else

@@ -1057,27 +1057,27 @@ module Crystal
   end
 
   class When < ASTNode
-    attr_accessor :cond
+    attr_accessor :conds
     attr_accessor :body
 
-    def initialize(cond, body = nil)
-      @cond = cond
-      @cond.parent = self
+    def initialize(conds, body = nil)
+      @conds = conds
+      @conds.each { |cond| cond.parent = self }
       @body = Expressions.from body
       @body.parent = self if @body
     end
 
     def accept_children(visitor)
-      cond.accept visitor
+      conds.each { |cond| cond.accept visitor }
       body.accept visitor if body
     end
 
     def ==(other)
-      other.is_a?(When) && other.cond == cond && other.body == body
+      other.is_a?(When) && other.conds == conds && other.body == body
     end
 
     def clone_from(other, &block)
-      @cond = other.cond.clone(&block)
+      @conds = other.conds.map { |x| x.clone(&block) }
       @body = other.body.clone(&block)
     end
   end
