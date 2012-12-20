@@ -134,6 +134,10 @@ module Crystal
     end
 
     def optimize(mod, engine)
+      self.class.optimize mod, engine, @options[:optimization_passes]
+    end
+
+    def self.optimize(mod, engine, optimization_passes)
       pm = LLVM::PassManager.new engine
       pm.inline!
       pm.gdce!
@@ -147,7 +151,7 @@ module Crystal
       pm.loop_deletion!
       pm.loop_rotate!
 
-      @options[:optimization_passes].times { pm.run mod }
+      optimization_passes.times { pm.run mod }
     end
   end
 end
