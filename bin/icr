@@ -114,7 +114,9 @@ loop do
   if openings == 0
     total_buffer << buffer
     begin
-      nodes = parse total_buffer
+      parser = Parser.new total_buffer
+      parser.filename = "."
+      nodes = parser.parse
       if is_evaluatable?(nodes)
         nodes = Expressions.new [Require.new(StringLiteral.new('prelude')), nodes]
         nodes = Call.new(nodes, 'inspect')
