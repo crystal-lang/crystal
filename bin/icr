@@ -6,11 +6,120 @@ require 'pry-debugger'
 
 include Crystal
 
-mod = Program.new
-mod.require "prelude"
+def count_openings(string)
+  openings = 0
+
+  lexer = Lexer.new string
+  last_token = nil
+  while (token = lexer.next_token).type != :EOF
+    case token.type
+    when :SPACE
+      next
+    when :IDENT
+      case token.value
+      when :begin, :class, :def, :if, :unless, :while, :macro
+        openings += 1
+      when :do
+        openings += 1
+      when :end
+        openings -= 1
+      end
+    end
+    last_token = token.type
+  end
+  openings
+end
+
+def is_evaluatable?(node)
+  if node.is_a?(Expressions)
+    is_evaluatable?(node.last)
+  elsif node.is_a?(ClassDef) || node.is_a?(StructDef) || node.is_a?(LibDef) || node.is_a?(Def)
+    false
+  else
+    true
+  end
+end
+
+module Readline
+  LOG = "#{ENV['HOME']}/.crystal-history"
+
+  class << self
+    alias :old_readline :readline
+    def readline(*args)
+      line = old_readline(*args)
+      File.open(LOG, 'ab') {|file| file << "#{line}\n"} rescue nil
+      line
+    end
+
+    def read_history
+      if File.exists? LOG
+        File.readlines(LOG).each do |line|
+          HISTORY.push line
+        end
+      end
+    end
+  end
+end
+
+Readline.read_history
+
+buffer = ""
+total_buffer = ""
+openings = 0
+incomplete_expression = false
+line_number = 1
+last_line = line_number
+llvm_mod = nil
 
 loop do
-  nodes = parse gets
-  infer_type nodes, mod: mod
-  evaluate nodes, mod
+  line = Readline.readline "icr:#{'%03d' % line_number}:#{openings}#{incomplete_expression ? '*' : '>'} #{ '  ' * openings }", true
+  if line.strip.empty?
+    incomplete_expression = true
+    line_number += 1
+    next
+  end
+
+  break if line.strip =~ /^(exit|quit)(\s*\(\s*\))?$/
+  next (llvm_mod ? llvm_mod.dump : nil) if line.strip == "dump"
+
+  buffer << line << "\n"
+  openings = count_openings buffer
+
+  if openings == 0
+    total_buffer << buffer
+    begin
+      nodes = parse total_buffer
+      if is_evaluatable?(nodes)
+        nodes = Expressions.new [Require.new(StringLiteral.new('prelude')), nodes]
+        nodes = Call.new(nodes, 'inspect')
+        mod = infer_type nodes
+        if nodes.type
+          mod.load_libs
+          llvm_mod = build nodes, mod
+          engine = LLVM::JITCompiler.new(llvm_mod)
+          result = engine.run_function llvm_mod.functions["crystal_main"], 0, nil
+          puts " => #{result.to_string}"
+        else
+          puts " => nil"
+        end
+      else
+        puts " => nil"
+      end
+      incomplete_expression = false
+    rescue => ex
+      if ex.message =~ /unexpected\stoken:\sEOF/
+        incomplete_expression = true
+      else
+        puts ex
+        # puts ex.backtrace
+        total_buffer = total_buffer[0 .. -(buffer.length + 1)]
+        line_number = last_line - 1
+      end
+    end
+
+    buffer = ""
+  end
+
+  line_number += 1
+  last_line = line_number
 end
