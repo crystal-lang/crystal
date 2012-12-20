@@ -124,12 +124,12 @@ loop do
           llvm_mod = build nodes, mod
           engine = LLVM::JITCompiler.new(llvm_mod)
           result = engine.run_function llvm_mod.functions["crystal_main"], 0, nil
-          puts " => #{result.to_string}"
+          puts "=> #{result.to_string}"
         else
-          puts " => nil"
+          puts "=> nil"
         end
       else
-        puts " => nil"
+        puts "=> nil"
       end
       incomplete_expression = false
     rescue => ex
