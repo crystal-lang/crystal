@@ -69,8 +69,10 @@ openings = 0
 incomplete_expression = false
 line_number = 1
 last_line = line_number
+mod = nil
 llvm_mod = nil
 engine = nil
+nodes = nil
 
 loop do
   line = Readline.readline "icr:#{'%03d' % line_number}:#{openings}#{incomplete_expression ? '*' : '>'} #{ '  ' * openings }", true
@@ -95,6 +97,13 @@ loop do
     if llvm_mod
       Compiler.optimize llvm_mod, engine, 5
       llvm_mod.dump
+    end
+    next
+  end
+
+  if line.strip == "graph"
+    if nodes
+      graph nodes, mod
     end
     next
   end
