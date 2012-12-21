@@ -71,16 +71,36 @@ module Crystal
 
   module DefContainer
     def add_def(a_def)
-      @defs[a_def.name] = a_def
+      @defs[a_def.name] ||= {}
+      @defs[a_def.name][a_def.args.length] = a_def
+
+      index = a_def.args.length - 1
+      while index >= 0 && a_def.args[index].default_value
+        @defs[a_def.name][index] = a_def
+        index -= 1
+      end
+
       a_def
     end
 
-    def lookup_def(name)
-      @defs[name]
+    def lookup_def(name, args)
+      defs = @defs[name]
+      result = defs && defs[args.length]
+      return result if result
+
+      if parents
+        parents.each do |parent|
+          result = parent.lookup_def(name, args)
+          return result if result
+        end
+      end
+
+      nil
     end
 
-    def lookup_def_without_hierarchy(name)
-      @defs.lookup_without_hierarchy(name)
+    def lookup_def_without_hierarchy(name, args)
+      all = @defs[name]
+      all && all[args.length]
     end
 
     def add_def_instance(name, arg_types, typed_def)
@@ -102,7 +122,7 @@ module Crystal
     def initialize(name, container = nil, parents = [])
       super(name, container)
       @parents = parents
-      @defs = HashWithParent.new(self)
+      @defs = {}
       @def_instances = {}
       @types = {}
     end
@@ -486,6 +506,10 @@ module Crystal
         add_def Def.new("#{var_name}=", [Arg.new('value')], StructSet.new(var_name))
         add_def Def.new(var_name, [], StructGet.new(var_name))
       end
+    end
+
+    def parents
+      nil
     end
 
     def metaclass

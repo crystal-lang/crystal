@@ -171,7 +171,7 @@ module Crystal
 
     def set_external_out_args_type
       if obj && obj.type.is_a?(LibType)
-        scope, untyped_def = obj.type, obj.type.defs[name]
+        scope, untyped_def = obj.type, obj.type.lookup_def(name, args)
         if untyped_def
           # External call: set type of out arguments
           untyped_def.args.each_with_index do |arg, i|
@@ -260,7 +260,7 @@ module Crystal
       end
 
       unless scope
-        return [mod, mod, mod.lookup_def(name)]
+        return [mod, mod, mod.lookup_def(name, args)]
       end
 
       if name == 'super'
@@ -281,8 +281,8 @@ module Crystal
         return [scope, scope, untyped_def]
       end
 
-      mod_def = mod.lookup_def(name)
-      if mod_def || !(missing = scope.lookup_def('method_missing'))
+      mod_def = mod.lookup_def(name, args)
+      if mod_def || !(missing = scope.lookup_def('method_missing', [nil, nil]))
         return [mod, mod, mod_def]
       end
 
@@ -291,11 +291,11 @@ module Crystal
     end
 
     def lookup_method(scope, name, use_method_missing = false)
-      untyped_def = scope.lookup_def(name)
+      untyped_def = scope.lookup_def(name, args)
       unless untyped_def
         if name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
           untyped_def = define_new scope, name
-        elsif use_method_missing && scope.lookup_def('method_missing')
+        elsif use_method_missing && scope.lookup_def('method_missing', [nil, nil])
           untyped_def = define_missing scope, name
         end
       end
@@ -307,7 +307,7 @@ module Crystal
       alloc.location = location
       alloc.name_column_number = name_column_number
 
-      if scope.type.lookup_def('initialize')
+      if scope.type.lookup_def('initialize', args)
         var = Var.new('x')
         new_vars = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
         new_args = args.each_with_index.map { |x, i| Arg.new("arg#{i}") }
@@ -937,7 +937,7 @@ module Crystal
     end
 
     def expand_macro(node)
-      return false if !node.obj && node.name == 'super'
+      return false if node.obj || node.name == 'super'
 
       owner, self_type, untyped_def = node.compute_owner_self_type_and_untyped_def
       return false unless untyped_def.is_a?(Macro)
