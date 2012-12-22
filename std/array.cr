@@ -1,8 +1,17 @@
 class Array
-  def initialize
+  def initialize(initial_capacity = 16)
     @length = 0
-    @capacity = 16
-    @buffer = Pointer.malloc(16)
+    @capacity = initial_capacity
+    @buffer = Pointer.malloc(initial_capacity)
+  end
+
+  def initialize(size, value)
+    @length = size
+    @capacity = size
+    @buffer = Pointer.malloc(size)
+    size.times do |i|
+      @buffer[i] = value
+    end
   end
 
   def length
