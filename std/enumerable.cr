@@ -54,12 +54,21 @@ module Enumerable
     count
   end
 
+  def count(item)
+    count { |e| e == item }
+  end
+
   def any?
     each { |e| return true if yield e }
     false
   end
 
-  def include?(obj)
+  def all?
+    each { |e| return false unless yield e }
+    true
+  end
+
+  def includes?(obj)
     any? { |e| e == obj }
   end
 end
