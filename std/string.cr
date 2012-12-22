@@ -14,7 +14,7 @@ class String
     length = C.strlen(chars)
     str = Pointer.malloc(length + 5)
     str.as(Int).value = length
-    C.strcpy((str + 4).as(Char), chars)
+    C.strcpy(str.as(Char) + 4, chars)
     str.as(String)
   end
 
