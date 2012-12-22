@@ -103,19 +103,17 @@ module Crystal
     end
 
     def void_pointer
-      @void_pointer ||= begin
-        p = pointer.clone
-        p.var.type = @types["Void"]
-        p
-      end
+      pointer_of 'Void'
     end
 
     def char_pointer
-      @char_pointer ||= begin
-        p = pointer.clone
-        p.var.type = @types["Char"]
-        p
-      end
+      pointer_of 'Char'
+    end
+
+    def pointer_of(type_name)
+      p = pointer.clone
+      p.var.type = @types[type_name]
+      p
     end
 
     def passed_as_self?

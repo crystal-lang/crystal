@@ -1013,6 +1013,7 @@ module Crystal
 
     def visit_pointer_malloc(node)
       node.type = mod.void_pointer
+      node.creates_new_type = true
     end
 
     def visit_pointer_realloc(node)

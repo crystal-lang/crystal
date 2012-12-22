@@ -45,4 +45,8 @@ describe 'Type inference: pointer' do
   it "type pointer casting of object type" do
     assert_type('a = 1; a.ptr.as(String)') { string }
   end
+
+  it "pointer malloc creates new type" do
+    assert_type('p = Pointer.malloc(1); p.value = 1; p2 = Pointer.malloc(1); p2.value = 1.5; p2.value') { float }
+  end
 end
