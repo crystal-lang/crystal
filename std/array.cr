@@ -24,6 +24,10 @@ class Array
     @length
   end
 
+  def count
+    length
+  end
+
   def [](index)
     @buffer[index]
   end
