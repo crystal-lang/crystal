@@ -857,6 +857,9 @@ module Crystal
           when :':'
             next_token_skip_space_or_newline
             type_restriction = parse_ident
+          else
+            default_value = nil
+            type_restriction = nil
           end
 
           args << Arg.new(arg_name, default_value, type_restriction)
@@ -879,6 +882,9 @@ module Crystal
           when :':'
             next_token_skip_space_or_newline
             type_restriction = parse_ident
+          else
+            default_value = nil
+            type_restriction = nil
           end
 
           args << Arg.new(arg_name, default_value, type_restriction)
