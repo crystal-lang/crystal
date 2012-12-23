@@ -45,6 +45,12 @@ class Array
     @length += 1
   end
 
+  def pop
+    return nil if @length == 0
+    @length -= 1
+    @buffer[@length]
+  end
+
   def <<(value)
     push(value)
   end
