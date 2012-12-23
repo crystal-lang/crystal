@@ -71,12 +71,13 @@ module Crystal
 
   module DefContainer
     def add_def(a_def)
+      types = a_def.args.map(&:type)
       @defs[a_def.name] ||= {}
-      @defs[a_def.name][[a_def.args.length, a_def.yields]] = a_def
+      @defs[a_def.name][[types, a_def.yields]] = a_def
 
       index = a_def.args.length - 1
       while index >= 0 && a_def.args[index].default_value
-        @defs[a_def.name][[index, a_def.yields]] = a_def
+        @defs[a_def.name][[types[0 ... index], a_def.yields]] = a_def
         index -= 1
       end
 
@@ -85,8 +86,14 @@ module Crystal
 
     def lookup_def(name, args, yields)
       defs = @defs[name]
-      result = defs && defs[[args.length, yields]]
-      return result if result
+      if defs
+        types = args.map(&:type).map { |x| x ? x.metaclass : nil }
+        matches = defs.select do |def_types_and_yields, a_def|
+          def_types, def_yields = def_types_and_yields
+          # TODO ...
+        end
+        return matches[0] if matches.length == 1
+      end
 
       if parents
         parents.each do |parent|

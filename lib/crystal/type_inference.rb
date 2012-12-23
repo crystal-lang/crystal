@@ -561,6 +561,12 @@ module Crystal
       else
         target_type = current_type
       end
+      node.args.each do |arg|
+        if arg.type_restriction
+          arg.type = lookup_ident_type(arg.type_restriction).metaclass
+        end
+      end
+
       target_type.add_def node
       false
     end
