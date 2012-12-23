@@ -22,8 +22,12 @@ class String
     C.atoi @c.ptr
   end
 
-  def [](index)
+  def [](index : Int)
     @c.ptr[index]
+  end
+
+  def [](range : Range)
+    slice(range.begin, range.end - range.begin + (range.excludes_end? ? 0 : 1))
   end
 
   def ==(other)
@@ -39,7 +43,6 @@ class String
     new_string_buffer = Pointer.malloc(length + other.length + 1).as(Char)
     C.strcpy(new_string_buffer, @c.ptr)
     C.strcat(new_string_buffer, other)
-    # new_string_buffer.as(String)
     String.from_cstr(new_string_buffer)
   end
 
@@ -59,7 +62,6 @@ class String
     new_string_buffer = Pointer.malloc(count + 1).as(Char)
     C.strncpy(new_string_buffer, @c.ptr + start, count)
     new_string_buffer[count] = '\0'
-    # new_string_buffer.as(String)
     String.from_cstr(new_string_buffer)
   end
 
