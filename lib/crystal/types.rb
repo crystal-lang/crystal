@@ -104,6 +104,7 @@ module Crystal
 
     def lookup_def(name, args, yields)
       defs = @defs[name]
+      error_matches = defs.values if defs
       if defs
         if args
           types = args.map(&:type)
@@ -115,11 +116,15 @@ module Crystal
           end
           return matches.first[1] if matches.length == 1
 
+          error_matches = matches.values if matches.length > 0
+
           matches = matches.values
           minimals = matches.select do |match|
             !matches.any? { |m| m != match && m.is_restriction_of?(match) }
           end
           return minimals[0] if minimals.length == 1
+
+          error_matches = minimals if minimals.length > 0
         else
           return defs.first[1] if defs.length == 1
         end
@@ -127,12 +132,12 @@ module Crystal
 
       if parents
         parents.each do |parent|
-          result = parent.lookup_def(name, args, yields)
-          return result if result
+          result, errors = parent.lookup_def(name, args, yields)
+          return [result, errors] if result
         end
       end
 
-      nil
+      [nil, error_matches]
     end
 
     def lookup_first_def(name)

@@ -25,7 +25,7 @@ describe 'Type inference: errors' do
     }.should raise_error(Crystal::Exception, /undefined method 'foo'/)
   end
 
-  pending "reports wrong number of arguments" do
+  it "reports wrong number of arguments" do
     nodes = parse "def foo(x); x; end; foo"
 
     lambda {
@@ -49,12 +49,12 @@ describe 'Type inference: errors' do
     }.should raise_error(Crystal::Exception, regex("undefined method 'foo' for Int"))
   end
 
-  pending "reports can't call primitive with args" do
+  it "reports can't call primitive with args" do
     nodes = parse "1 + 'a'"
 
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("can't call Int#+ with types [Char]"))
+    }.should raise_error(Crystal::Exception, regex("no overload or ambiguos call"))
   end
 
   it "reports can't call external with args" do

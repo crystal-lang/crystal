@@ -142,9 +142,10 @@ module Crystal
         return
       end
 
-      owner, self_type, untyped_def = compute_owner_self_type_and_untyped_def
+      owner, self_type, untyped_def_and_error_matches = compute_owner_self_type_and_untyped_def
+      untyped_def, error_matches = untyped_def_and_error_matches
 
-      check_method_exists untyped_def
+      check_method_exists untyped_def, error_matches
       check_args_match untyped_def
 
       arg_types = args.map &:type
@@ -286,14 +287,14 @@ module Crystal
         return [parent, scope, lookup_method(parent, parent_visitor.call[1].name)]
       end
 
-      untyped_def = lookup_method(scope, name)
+      untyped_def, error_matches = lookup_method(scope, name)
       if untyped_def
-        return [scope, scope, untyped_def]
+        return [scope, scope, [untyped_def, error_matches]]
       end
 
-      mod_def = mod.lookup_def(name, args, !!block)
+      mod_def, error_matches = mod.lookup_def(name, args, !!block)
       if mod_def || !(missing = scope.lookup_first_def('method_missing'))
-        return [mod, mod, mod_def]
+        return [mod, mod, [mod_def, error_matches]]
       end
 
       untyped_def = define_missing scope, name
@@ -301,7 +302,7 @@ module Crystal
     end
 
     def lookup_method(scope, name, use_method_missing = false)
-      untyped_def = scope.lookup_def(name, args, !!block)
+      untyped_def, error_matches = scope.lookup_def(name, args, !!block)
       unless untyped_def
         if name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
           untyped_def = define_new scope, name
@@ -309,7 +310,7 @@ module Crystal
           untyped_def = define_missing scope, name
         end
       end
-      untyped_def
+      [untyped_def, error_matches]
     end
 
     def define_new(scope, name)
@@ -317,7 +318,8 @@ module Crystal
       alloc.location = location
       alloc.name_column_number = name_column_number
 
-      if scope.type.lookup_def('initialize', args, !!block)
+      the_initialize, error_matches = scope.type.lookup_def('initialize', args, !!block)
+      if the_initialize
         var = Var.new('x')
         new_vars = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
         new_args = args.each_with_index.map { |x, i| Arg.new("arg#{i}") }
@@ -345,15 +347,34 @@ module Crystal
       ])
     end
 
-    def check_method_exists(untyped_def)
+    def check_method_exists(untyped_def, error_matches)
       return if untyped_def
 
-      if obj
-        raise "undefined method '#{name}' for #{obj.type.full_name}"
-      elsif args.length > 0 || has_parenthesis
-        raise "undefined method '#{name}'"
+      if !error_matches || error_matches.length == 0
+        if obj
+          raise "undefined method '#{name}' for #{obj.type.full_name}"
+        elsif args.length > 0 || has_parenthesis
+          raise "undefined method '#{name}'"
+        else
+          raise "undefined local variable or method '#{name}'"
+        end
+      elsif error_matches.length == 1 && args.length != error_matches[0].args.length
+        if obj
+          raise "wrong number of arguments for '#{obj.type.full_name}##{name}' (#{args.length} for #{error_matches[0].args.length})"
+        else
+          raise "wrong number of arguments for '#{name}' (#{args.length} for #{error_matches[0].args.length})"
+        end
       else
-        raise "undefined local variable or method '#{name}'"
+        if obj
+          msg = "no overload or ambiguos call for '#{obj.type.full_name}##{name}' with types [#{args.map { |arg| arg.type.full_name }.join ', '}]\n"
+        else
+          msg = "no overload or ambiguos call for '#{name}' with types [#{args.map { |arg| arg.type.full_name }.join ', '}].\n"
+        end
+        msg << "Overload types are:"
+        error_matches.each do |error_match|
+          msg << "\n - [#{error_match.args.map { |arg| arg.type ? arg.type.full_name : '?' }.join ', '}]"
+        end
+        raise msg
       end
     end
 
@@ -940,7 +961,8 @@ module Crystal
     def expand_macro(node)
       return false if node.obj || node.name == 'super'
 
-      owner, self_type, untyped_def = node.compute_owner_self_type_and_untyped_def
+      owner, self_type, untyped_def_and_error_matches = node.compute_owner_self_type_and_untyped_def
+      untyped_def, error_matches = untyped_def_and_error_matches
       return false unless untyped_def.is_a?(Macro)
 
       @@macro_llvm_mod ||= LLVM::Module.new "macros"
