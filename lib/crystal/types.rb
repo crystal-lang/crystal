@@ -522,9 +522,9 @@ module Crystal
       @vars = Hash[vars.map { |var| [var.name, var] }]
       @defs = {}
       @def_instances = {}
-      @vars.keys.each do |var_name|
-        add_def Def.new("#{var_name}=", [Arg.new('value')], StructSet.new(var_name))
-        add_def Def.new(var_name, [], StructGet.new(var_name))
+      @vars.values.each do |var|
+        add_def Def.new("#{var.name}=", [Arg.new_with_type('value', var.type)], StructSet.new(var.name))
+        add_def Def.new(var.name, [], StructGet.new(var.name))
       end
     end
 

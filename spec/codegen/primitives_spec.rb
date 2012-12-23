@@ -26,11 +26,11 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens string concatenation' do
-    run('require "string"; "foo" + "bar"').to_string.should eq("foobar")
+    run('require "range"; require "string"; "foo" + "bar"').to_string.should eq("foobar")
   end
 
   it 'codegens string indexer' do
-    run('require "string"; require "pointer"; "foo"[1]').to_i.should eq(?o.ord)
+    run('require "range"; require "string"; require "pointer"; "foo"[1]').to_i.should eq(?o.ord)
   end
 
   it 'codegens symbol' do

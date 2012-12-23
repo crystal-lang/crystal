@@ -180,12 +180,12 @@ module Crystal
     end
 
     def define_pointer_primitives
-      pointer.metaclass.add_def Def.new('malloc', [Arg.new('size')], PointerMalloc.new)
-      pointer.metaclass.add_def Def.new('malloc', [Arg.new('size'), Arg.new('value')], PointerMallocWithValue.new)
+      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_type('size', int)], PointerMalloc.new)
+      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_type('size', int), Arg.new('value')], PointerMallocWithValue.new)
       pointer.add_def Def.new('value', [], PointerGetValue.new)
       pointer.add_def Def.new('value=', [Arg.new('value')], PointerSetValue.new)
-      pointer.add_def Def.new('realloc', [Arg.new('size')], PointerRealloc.new)
-      pointer.add_def Def.new(:+, [Arg.new('offset')], PointerAdd.new)
+      pointer.add_def Def.new('realloc', [Arg.new_with_type('size', int)], PointerRealloc.new)
+      pointer.add_def Def.new(:+, [Arg.new_with_type('offset', int)], PointerAdd.new)
       pointer.add_def Def.new('as', [Arg.new('type')], PointerCast.new)
     end
 
@@ -200,13 +200,13 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.add_def FrozenDef.new(name, args.map { |name, type| Arg.new(name).tap { |a| a.type = type } })
+      p = owner.add_def FrozenDef.new(name, args.map { |name, type| Arg.new_with_type(name, type) })
       p.owner = owner
       p.overload(args.values, return_type, &block)
     end
 
     def external(name, args, return_type)
-      args = args.map { |name, type| Arg.new(name).tap { |a| a.type = type } }
+      args = args.map { |name, type| Arg.new_with_type(name, type) }
 
       instance = add_def External.new(name, args)
       instance.body = Expressions.new

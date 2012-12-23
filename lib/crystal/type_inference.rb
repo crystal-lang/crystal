@@ -110,6 +110,14 @@ module Crystal
     attr_accessor :expanded
   end
 
+  class Arg
+    def self.new_with_type(name, type)
+      arg = Arg.new(name)
+      arg.type = type
+      arg
+    end
+  end
+
   class Call
     attr_accessor :target_def
     attr_accessor :target_macro
@@ -702,8 +710,6 @@ module Crystal
     def visit_struct_set(node)
       struct_var = @scope.vars[node.name]
 
-      check_var_type 'value', struct_var.type
-
       node.bind_to @vars['value']
     end
 
@@ -876,13 +882,6 @@ module Crystal
       false
     end
 
-    def check_var_type(var_name, expected_type)
-      type = @vars[var_name].type
-      if type != expected_type
-        @call[4].args[0].raise "#{var_name} must be #{expected_type.name}, not #{type.name}"
-      end
-    end
-
     def lookup_object_type(name)
       if @scope.is_a?(ObjectType) && @scope.name == name
         @scope
@@ -1034,8 +1033,6 @@ module Crystal
     end
 
     def visit_pointer_realloc(node)
-      check_var_type 'size', mod.int
-
       node.type = @scope
     end
 
@@ -1049,7 +1046,6 @@ module Crystal
     end
 
     def visit_pointer_add(node)
-      check_var_type 'offset', mod.int
       node.type = @scope
     end
 
