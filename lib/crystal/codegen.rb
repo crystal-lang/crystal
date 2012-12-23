@@ -690,7 +690,11 @@ module Crystal
         @return_block_table[@builder.insert_block] = @last if node.type
         @builder.br @return_block
         @builder.position_at_end @return_block
-        @last = @builder.phi node.type.llvm_type, @return_block_table if node.type
+        if node.type
+          phi_type = node.type.llvm_type
+          phi_type = LLVM::Pointer(phi_type) if node.type.union?
+          @last = @builder.phi phi_type, @return_block_table
+        end
 
         old_context = @block_context.pop
         @vars = old_context[:vars]

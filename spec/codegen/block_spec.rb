@@ -221,4 +221,17 @@ describe 'Code gen: block' do
       bar
     )).to_i.should eq(1)
   end
+
+  it "union value of yielder function" do
+    run(%q(
+      def foo
+        yield
+        a = 1.1
+        a = 1
+        a
+      end
+
+      foo {}.to_i
+    )).to_i.should eq(1)
+  end
 end
