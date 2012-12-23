@@ -157,8 +157,6 @@ module Crystal
                     self_type.lookup_def_instance(name, arg_types) ||
                     parent_visitor.lookup_def_instance(owner, untyped_def, arg_types)
         unless typed_def
-          check_frozen owner, untyped_def, arg_types
-
           typed_def, args = prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
 
           if typed_def.body
@@ -393,12 +391,6 @@ module Crystal
           self.args[i] = call
         end
       end
-    end
-
-    def check_frozen(owner, untyped_def, arg_types)
-      return unless untyped_def.is_a?(FrozenDef)
-
-      raise "can't call #{obj.type.name}##{name} with types [#{arg_types.join ', '}]"
     end
   end
 

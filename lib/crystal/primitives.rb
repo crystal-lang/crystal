@@ -190,7 +190,7 @@ module Crystal
     end
 
     def primitive(owner, name, arg_names)
-      p = owner.add_def FrozenDef.new(name, arg_names.map { |x| Arg.new(x) })
+      p = owner.add_def Def.new(name, arg_names.map { |x| Arg.new(x) })
       p.owner = owner
       yield p
     end
@@ -200,7 +200,7 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.add_def FrozenDef.new(name, args.map { |name, type| Arg.new_with_type(name, type) })
+      p = owner.add_def Def.new(name, args.map { |name, type| Arg.new_with_type(name, type) })
       p.owner = owner
       p.overload(args.values, return_type, &block)
     end
@@ -239,17 +239,7 @@ module Crystal
     end
   end
 
-  class FrozenDef < Def
-    def clone_from(other, &block)
-      super
-      @instances = other.instances
-    end
-  end
-
-  class External < FrozenDef
-    def mangled_name(obj_type)
-      name
-    end
+  class External < Def
   end
 
   class Primitive < ASTNode

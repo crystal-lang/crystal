@@ -53,6 +53,12 @@ module Crystal
     end
   end
 
+  class External < Def
+    def mangled_name(obj_type)
+      name
+    end
+  end
+
   def run(code, options = {})
     node = parse code
     mod = infer_type node, options
