@@ -371,6 +371,62 @@ module Crystal
       @last = @builder.array_malloc(node.type.var.llvm_type, @vars['size'][:ptr])
     end
 
+    def visit_pointer_malloc_with_value(node)
+      size = @vars['size'][:ptr]
+      @last = @builder.array_malloc(node.type.var.llvm_type, size)
+
+      value = @vars['value']
+
+      case node.type.var.type
+      when @mod.bool, @mod.char
+        memset @last, @builder.zext(value[:ptr], LLVM::Int8), size
+      when @mod.int
+        codegen_int_malloc_contents(node, @last, size, value)
+      else
+        codegen_generic_malloc_contents(node, @last, size, value)
+      end
+    end
+
+    def codegen_int_malloc_contents(node, buffer, size, value)
+      memset_block, one_by_one_block, exit_block = new_blocks 'memset', 'one_by_one', 'exit'
+
+      cmp = @builder.icmp :eq, value[:ptr], LLVM::Int(0)
+      @builder.cond cmp, memset_block, one_by_one_block
+
+      @builder.position_at_end memset_block
+      bytes_count = @builder.mul size, LLVM::Int(@mod.int.llvm_size)
+      memset buffer, @builder.trunc(value[:ptr], LLVM::Int8), bytes_count
+      @builder.br exit_block
+
+      @builder.position_at_end one_by_one_block
+      codegen_generic_malloc_contents(node, buffer, size, value)
+      @builder.br exit_block
+
+      @builder.position_at_end exit_block
+    end
+
+    def codegen_generic_malloc_contents(node, buffer, size, value)
+      cmp_block, loop_block, exit_block = new_blocks 'cmp', 'loop', 'exit'
+
+      index_ptr = alloca LLVM::Int
+      @builder.store LLVM::Int(0), index_ptr
+
+      @builder.br cmp_block
+
+      @builder.position_at_end cmp_block
+      cmp = @builder.icmp(:eq, @builder.load(index_ptr), size)
+      @builder.cond(cmp, exit_block, loop_block)
+
+      @builder.position_at_end loop_block
+      index = @builder.load(index_ptr)
+      codegen_assign gep(buffer, index), node.type.var.type, value[:type], value[:ptr]
+      @builder.store @builder.add(index, LLVM::Int(1)), index_ptr
+      @builder.br cmp_block
+
+      @builder.position_at_end exit_block
+    end
+
+
     def visit_pointer_realloc(node)
       casted_ptr = @builder.bit_cast llvm_self, LLVM::Pointer(LLVM::Int8)
       size = @vars['size'][:ptr]

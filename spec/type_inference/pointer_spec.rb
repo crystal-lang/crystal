@@ -34,6 +34,10 @@ describe 'Type inference: pointer' do
     assert_type('p = Pointer.malloc(10); p.value = 1; p') { PointerType.of(int) }
   end
 
+  it "types Pointer.malloc with value" do
+    assert_type('p = Pointer.malloc(10, 1); p') { PointerType.of(int) }
+  end
+
   it "types realloc" do
     assert_type('p = Pointer.malloc(10); p.value = 1; x = p.realloc(20); x') { PointerType.of(int) }
   end

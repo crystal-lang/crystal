@@ -1016,6 +1016,13 @@ module Crystal
       node.creates_new_type = true
     end
 
+    def visit_pointer_malloc_with_value(node)
+      type = mod.pointer.clone
+      type.var.bind_to @vars['value']
+      node.type = type
+      node.creates_new_type = true
+    end
+
     def visit_pointer_realloc(node)
       check_var_type 'size', mod.int
 
