@@ -54,6 +54,10 @@ module Enumerable
     count
   end
 
+  def count
+    count { true }
+  end
+
   def count(item)
     count { |e| e == item }
   end
