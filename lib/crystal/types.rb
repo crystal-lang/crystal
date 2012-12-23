@@ -73,6 +73,20 @@ module Crystal
     end
   end
 
+  class Def
+    def is_restriction_of?(other)
+      self_types = args.map(&:type)
+      other_types = other.args.map(&:type)
+      self_types.zip(other_types).each do |self_type, other_type|
+        return false if self_type == nil && other_type != nil
+        if self_type != nil && other_type != nil
+          return false unless self_type.is_restriction_of?(other_type)
+        end
+      end
+      true
+    end
+  end
+
   module DefContainer
     def add_def(a_def)
       types = a_def.args.map(&:type)
@@ -100,6 +114,12 @@ module Crystal
             types.zip(def_types).all? { |type, def_type| !def_type || def_type.is_restriction_of?(type) }
           end
           return matches.first[1] if matches.length == 1
+
+          matches = matches.values
+          minimals = matches.select do |match|
+            !matches.any? { |m| m != match && m.is_restriction_of?(match) }
+          end
+          return minimals[0] if minimals.length == 1
         else
           return defs.first[1] if defs.length == 1
         end
