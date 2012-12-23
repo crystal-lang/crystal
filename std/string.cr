@@ -27,7 +27,14 @@ class String
   end
 
   def [](range : Range)
-    slice(range.begin, range.end - range.begin + (range.excludes_end? ? 0 : 1))
+    self[range.begin, range.end - range.begin + (range.excludes_end? ? 0 : 1)]
+  end
+
+  def [](start : Int, count : Int)
+    new_string_buffer = Pointer.malloc(count + 1).as(Char)
+    C.strncpy(new_string_buffer, @c.ptr + start, count)
+    new_string_buffer[count] = '\0'
+    String.from_cstr(new_string_buffer)
   end
 
   def ==(other)
@@ -56,13 +63,6 @@ class String
       yield p.value
       p += 1
     end
-  end
-
-  def slice(start, count)
-    new_string_buffer = Pointer.malloc(count + 1).as(Char)
-    C.strncpy(new_string_buffer, @c.ptr + start, count)
-    new_string_buffer[count] = '\0'
-    String.from_cstr(new_string_buffer)
   end
 
   def inspect
