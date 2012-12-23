@@ -49,7 +49,7 @@ describe 'Type inference: errors' do
     }.should raise_error(Crystal::Exception, regex("undefined method 'foo' for Int"))
   end
 
-  it "reports can't call primitive with args" do
+  pending "reports can't call primitive with args" do
     nodes = parse "1 + 'a'"
 
     lambda {

@@ -200,14 +200,13 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.lookup_def_without_hierarchy(name, args, false)
-      p ||= owner.add_def FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
+      p = owner.add_def FrozenDef.new(name, args.map { |name, type| Arg.new(name).tap { |a| a.type = type } })
       p.owner = owner
       p.overload(args.values, return_type, &block)
     end
 
     def external(name, args, return_type)
-      args = args.map { |name, type| arg = Arg.new(name); arg.type = type; arg }
+      args = args.map { |name, type| Arg.new(name).tap { |a| a.type = type } }
 
       instance = add_def External.new(name, args)
       instance.body = Expressions.new

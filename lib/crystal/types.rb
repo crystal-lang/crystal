@@ -30,6 +30,10 @@ module Crystal
       true
     end
 
+    def is_restriction_of?(type)
+      self == type
+    end
+
     def self.merge(*types)
       all_types = types.map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.compact.uniq(&:object_id)
       if all_types.length == 0
@@ -87,12 +91,18 @@ module Crystal
     def lookup_def(name, args, yields)
       defs = @defs[name]
       if defs
-        types = args.map(&:type).map { |x| x ? x.metaclass : nil }
-        matches = defs.select do |def_types_and_yields, a_def|
-          def_types, def_yields = def_types_and_yields
-          # TODO ...
+        if args
+          types = args.map(&:type)
+          matches = defs.select do |def_types_and_yields, a_def|
+            def_types, def_yields = def_types_and_yields
+            next false if def_yields != yields
+            next false if def_types.length != types.length
+            types.zip(def_types).all? { |type, def_type| !def_type || def_type.is_restriction_of?(type) }
+          end
+          return matches.first[1] if matches.length == 1
+        else
+          return defs.first[1] if defs.length == 1
         end
-        return matches[0] if matches.length == 1
       end
 
       if parents
@@ -105,9 +115,12 @@ module Crystal
       nil
     end
 
-    def lookup_def_without_hierarchy(name, args, yields)
-      all = @defs[name]
-      all && all[[args.length, yields]]
+    def lookup_first_def(name)
+      defs = @defs[name]
+      if defs && defs.length == 1
+        return defs.first[1]
+      end
+      nil
     end
 
     def add_def_instance(name, arg_types, typed_def)

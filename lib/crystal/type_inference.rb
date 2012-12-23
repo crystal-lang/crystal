@@ -171,7 +171,7 @@ module Crystal
 
     def set_external_out_args_type
       if obj && obj.type.is_a?(LibType)
-        scope, untyped_def = obj.type, obj.type.lookup_def(name, args, !!block)
+        scope, untyped_def = obj.type, obj.type.lookup_first_def(name)
         if untyped_def
           # External call: set type of out arguments
           untyped_def.args.each_with_index do |arg, i|
@@ -256,7 +256,11 @@ module Crystal
 
     def compute_owner_self_type_and_untyped_def
       if obj && obj.type
-        return [obj.type, obj.type, lookup_method(obj.type, name, true)]
+        if obj.type.is_a?(LibType)
+          return [obj.type, obj.type, obj.type.lookup_first_def(name)]
+        else
+          return [obj.type, obj.type, lookup_method(obj.type, name, true)]
+        end
       end
 
       unless scope
@@ -282,7 +286,7 @@ module Crystal
       end
 
       mod_def = mod.lookup_def(name, args, !!block)
-      if mod_def || !(missing = scope.lookup_def('method_missing', [nil, nil], !!block))
+      if mod_def || !(missing = scope.lookup_first_def('method_missing'))
         return [mod, mod, mod_def]
       end
 
@@ -295,7 +299,7 @@ module Crystal
       unless untyped_def
         if name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
           untyped_def = define_new scope, name
-        elsif use_method_missing && scope.lookup_def('method_missing', [nil, nil], !!block)
+        elsif use_method_missing && scope.lookup_first_def('method_missing')
           untyped_def = define_missing scope, name
         end
       end
@@ -563,7 +567,7 @@ module Crystal
       end
       node.args.each do |arg|
         if arg.type_restriction
-          arg.type = lookup_ident_type(arg.type_restriction).metaclass
+          arg.type = lookup_ident_type(arg.type_restriction)
         end
       end
 
