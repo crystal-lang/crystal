@@ -14,6 +14,15 @@ class Array
     end
   end
 
+  def self.new(size)
+    ary = Array.new(size)
+    ary.length = size
+    size.times do |i|
+      ary.buffer[i] = yield i
+    end
+    ary
+  end
+
   def length
     @length
   end
@@ -46,6 +55,10 @@ class Array
     self
   end
 
+  def buffer
+    @buffer
+  end
+
   def to_a
     self
   end
@@ -63,6 +76,12 @@ class Array
   def sort!
     quicksort 0, length - 1
     self
+  end
+
+  # protected
+
+  def length=(length)
+    @length = length
   end
 
   # private
