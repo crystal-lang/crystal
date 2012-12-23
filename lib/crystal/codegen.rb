@@ -702,7 +702,14 @@ module Crystal
         @return_block = old_context[:return_block]
         @return_block_table = old_context[:return_block_table]
       else
+        old_return_block = @return_block
+        old_return_block_table = @return_block_table
+        @return_block = @return_block_table = nil
+
         codegen_call(node.target_def, owner, call_args)
+
+        @return_block = old_return_block
+        @return_block_table = old_return_block_table
       end
 
       false

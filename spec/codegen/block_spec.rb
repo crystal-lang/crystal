@@ -234,4 +234,20 @@ describe 'Code gen: block' do
       foo {}.to_i
     )).to_i.should eq(1)
   end
+
+  it "allow return from function called from yielder function" do
+    run(%q(
+      def foo
+        return 2
+      end
+
+      def bar
+        yield
+        foo
+        1
+      end
+
+      bar {}
+    )).to_i.should eq(1)
+  end
 end
