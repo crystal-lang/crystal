@@ -8,10 +8,7 @@ class Array
   def initialize(size, value)
     @length = size
     @capacity = size
-    @buffer = Pointer.malloc(size)
-    size.times do |i|
-      @buffer[i] = value
-    end
+    @buffer = Pointer.malloc(size, value)
   end
 
   def self.new(size)
