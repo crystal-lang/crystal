@@ -37,6 +37,7 @@ describe 'Type inference: def overload' do
 
       def foo(x : Foo); 2.5; end; def foo(x : Bar); 1; end; foo(Foo.new)
       )) { float }
+  end
 
   it "types a call with overload selecting the most restrictive" do
     assert_type('def foo(x); 1; end; def foo(x : Float); 1.1; end; foo(1.5)') { float }
