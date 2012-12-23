@@ -250,6 +250,10 @@ module Crystal
         @str << ' = '
         node.default_value.accept self
       end
+      if node.type_restriction
+        @str << ' : '
+        node.type_restriction.accept self
+      end
       false
     end
 

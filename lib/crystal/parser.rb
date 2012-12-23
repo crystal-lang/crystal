@@ -850,12 +850,16 @@ module Crystal
           arg_name = @token.value
 
           next_token_skip_space_or_newline
-          if @token.type == :'='
+          case @token.type
+          when :'='
             next_token_skip_space_or_newline
             default_value = parse_expression
+          when :':'
+            next_token_skip_space_or_newline
+            type_restriction = parse_ident
           end
 
-          args << Arg.new(arg_name, default_value)
+          args << Arg.new(arg_name, default_value, type_restriction)
 
           if @token.type == :','
             next_token_skip_space_or_newline
@@ -868,12 +872,16 @@ module Crystal
           arg_name = @token.value
 
           next_token_skip_space
-          if @token.type == :'='
+          case @token.type
+          when :'='
             next_token_skip_space_or_newline
             default_value = parse_expression
+          when :':'
+            next_token_skip_space_or_newline
+            type_restriction = parse_ident
           end
 
-          args << Arg.new(arg_name, default_value)
+          args << Arg.new(arg_name, default_value, type_restriction)
 
           if @token.type == :','
             next_token_skip_space_or_newline

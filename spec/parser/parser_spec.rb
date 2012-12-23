@@ -103,6 +103,8 @@ describe Parser do
 
   it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int)], nil)
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int)], nil)
+  it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", nil, 'Int'.ident)], nil)
+  it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, 'Int'.ident)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, true), focus: true
 
   it_parses "foo", "foo".call
