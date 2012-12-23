@@ -72,25 +72,25 @@ module Crystal
   module DefContainer
     def add_def(a_def)
       @defs[a_def.name] ||= {}
-      @defs[a_def.name][a_def.args.length] = a_def
+      @defs[a_def.name][[a_def.args.length, a_def.yields]] = a_def
 
       index = a_def.args.length - 1
       while index >= 0 && a_def.args[index].default_value
-        @defs[a_def.name][index] = a_def
+        @defs[a_def.name][[index, a_def.yields]] = a_def
         index -= 1
       end
 
       a_def
     end
 
-    def lookup_def(name, args)
+    def lookup_def(name, args, yields)
       defs = @defs[name]
-      result = defs && defs[args.length]
+      result = defs && defs[[args.length, yields]]
       return result if result
 
       if parents
         parents.each do |parent|
-          result = parent.lookup_def(name, args)
+          result = parent.lookup_def(name, args, yields)
           return result if result
         end
       end
@@ -98,9 +98,9 @@ module Crystal
       nil
     end
 
-    def lookup_def_without_hierarchy(name, args)
+    def lookup_def_without_hierarchy(name, args, yields)
       all = @defs[name]
-      all && all[args.length]
+      all && all[[args.length, yields]]
     end
 
     def add_def_instance(name, arg_types, typed_def)

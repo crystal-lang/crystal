@@ -649,12 +649,6 @@ module Crystal
       Block.new(block_args, block_body)
     end
 
-    def parse_yield
-      next_token
-
-      Yield.new parse_args
-    end
-
     def parse_args
       case @token.type
       when :'{'
@@ -820,6 +814,7 @@ module Crystal
       check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :===, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>', :'||', :'&&'
 
       receiver = nil
+      @yields = false
 
       if @token.type == :CONST
         receiver = parse_ident
@@ -899,7 +894,7 @@ module Crystal
 
       next_token_skip_space
 
-      Def.new name, args, body, receiver
+      Def.new name, args, body, receiver, @yields
     end
 
     def parse_macro
@@ -1070,6 +1065,8 @@ module Crystal
         def parse_#{keyword}
           next_token
 
+          #{keyword == 'yield' ? '@yields = true' : ''}
+
           args = parse_args
 
           location = @token.location
@@ -1079,6 +1076,7 @@ module Crystal
         end
       )
     end
+
 
     def parse_lib
       next_token_skip_space_or_newline

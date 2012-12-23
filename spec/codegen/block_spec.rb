@@ -160,6 +160,7 @@ describe 'Code gen: block' do
   it "assigns yield to argument" do
     run(%q(
       def foo(x)
+        yield
         x = 1
       end
 
@@ -171,6 +172,7 @@ describe 'Code gen: block' do
     run(%q(
       FOO = 1
       def foo
+        yield
         FOO
       end
       foo { }
@@ -180,6 +182,7 @@ describe 'Code gen: block' do
   it "return from yielder function" do
     run(%q(
       def foo
+        yield
         return 1
       end
 
@@ -206,6 +209,7 @@ describe 'Code gen: block' do
   it "return from yielder function (2)" do
     run(%q(
       def foo
+        yield
         return 1 if true
         return 2
       end

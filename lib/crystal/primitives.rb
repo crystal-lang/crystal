@@ -199,7 +199,7 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.lookup_def_without_hierarchy(name, args)
+      p = owner.lookup_def_without_hierarchy(name, args, false)
       p ||= owner.add_def FrozenDef.new(name, args.keys.map { |x| Arg.new(x) })
       p.owner = owner
       p.overload(args.values, return_type, &block)

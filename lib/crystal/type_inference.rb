@@ -171,7 +171,7 @@ module Crystal
 
     def set_external_out_args_type
       if obj && obj.type.is_a?(LibType)
-        scope, untyped_def = obj.type, obj.type.lookup_def(name, args)
+        scope, untyped_def = obj.type, obj.type.lookup_def(name, args, !!block)
         if untyped_def
           # External call: set type of out arguments
           untyped_def.args.each_with_index do |arg, i|
@@ -260,7 +260,7 @@ module Crystal
       end
 
       unless scope
-        return [mod, mod, mod.lookup_def(name, args)]
+        return [mod, mod, mod.lookup_def(name, args, !!block)]
       end
 
       if name == 'super'
@@ -281,8 +281,8 @@ module Crystal
         return [scope, scope, untyped_def]
       end
 
-      mod_def = mod.lookup_def(name, args)
-      if mod_def || !(missing = scope.lookup_def('method_missing', [nil, nil]))
+      mod_def = mod.lookup_def(name, args, !!block)
+      if mod_def || !(missing = scope.lookup_def('method_missing', [nil, nil], !!block))
         return [mod, mod, mod_def]
       end
 
@@ -291,11 +291,11 @@ module Crystal
     end
 
     def lookup_method(scope, name, use_method_missing = false)
-      untyped_def = scope.lookup_def(name, args)
+      untyped_def = scope.lookup_def(name, args, !!block)
       unless untyped_def
         if name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
           untyped_def = define_new scope, name
-        elsif use_method_missing && scope.lookup_def('method_missing', [nil, nil])
+        elsif use_method_missing && scope.lookup_def('method_missing', [nil, nil], !!block)
           untyped_def = define_missing scope, name
         end
       end
@@ -307,7 +307,7 @@ module Crystal
       alloc.location = location
       alloc.name_column_number = name_column_number
 
-      if scope.type.lookup_def('initialize', args)
+      if scope.type.lookup_def('initialize', args, !!block)
         var = Var.new('x')
         new_vars = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
         new_args = args.each_with_index.map { |x, i| Arg.new("arg#{i}") }

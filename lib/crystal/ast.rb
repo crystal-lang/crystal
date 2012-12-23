@@ -447,8 +447,9 @@ module Crystal
     attr_accessor :name
     attr_accessor :args
     attr_accessor :body
+    attr_accessor :yields
 
-    def initialize(name, args, body = nil, receiver = nil)
+    def initialize(name, args, body = nil, receiver = nil, yields = false)
       @name = name
       @args = args
       @args.each { |arg| arg.parent = self } if @args
@@ -456,6 +457,7 @@ module Crystal
       @body.parent = self if @body
       @receiver = receiver
       @receiver.parent = self if @receiver
+      @yields = yields
     end
 
     def accept_children(visitor)
@@ -465,7 +467,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(Def) && other.receiver == receiver && other.name == name && other.args == args && other.body == body
+      other.is_a?(Def) && other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields
     end
 
     def clone_from(other, &block)
@@ -473,6 +475,7 @@ module Crystal
       @args = other.args.map { |arg| arg.clone(&block) }
       @body = other.body.clone(&block)
       @receiver = other.receiver.clone(&block)
+      @yields = other.yields
     end
   end
 
@@ -982,6 +985,10 @@ module Crystal
       @args = other.args.map { |arg| arg.clone(&block) }
       @body = other.body.clone(&block)
       @receiver = other.receiver.clone(&block)
+    end
+
+    def yields
+      false
     end
   end
 

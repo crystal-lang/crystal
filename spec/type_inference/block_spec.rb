@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Block inference' do
   it "infer type of empty block body" do
     input = parse %q(
-      def foo; end
+      def foo; yield; end
 
       foo do
       end
@@ -26,7 +26,7 @@ describe 'Block inference' do
 
   it "infer type of block body" do
     input = parse %q(
-      def foo; end
+      def foo; yield; end
 
       foo do
         x = 1
