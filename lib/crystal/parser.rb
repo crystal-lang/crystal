@@ -517,7 +517,7 @@ module Crystal
               end
             end
 
-            when_body = parse_expression
+            when_body = parse_expressions
             skip_statement_end
             whens << When.new(when_conds, when_body)
           when :else
@@ -525,7 +525,7 @@ module Crystal
               raise "unexpected token: #{@token.to_s} (expecting when)"
             end
             next_token_skip_statement_end
-            a_else = parse_expression
+            a_else = parse_expressions
             skip_statement_end
             check_ident :end
             next_token_skip_space_or_newline
