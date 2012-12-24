@@ -7,6 +7,10 @@ class Pointer
     (self + offset).value = value
   end
 
+  def map(times)
+    Array.new(times) { |i| yield self[i] }
+  end
+
   def self.malloc(size : Int, value)
     ptr = malloc(size)
     size.times { |i| ptr[i] = value }
