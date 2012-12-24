@@ -2,7 +2,7 @@ require "strscan"
 
 class String
   def slice_range(from, to)
-    slice(from, length + to - from + 1)
+    self[from, length + to - from + 1]
   end
 end
 

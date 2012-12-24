@@ -19,6 +19,6 @@ class StringScanner
   end
 
   def rest
-    @str.slice(@offset, @str.length - @offset)
+    @str[@offset, @str.length - @offset]
   end
 end

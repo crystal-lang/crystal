@@ -65,6 +65,6 @@ class MatchData
   end
 
   def [](index)
-    @string.slice(self.begin(index), self.end(index) - self.begin(index))
+    @string[self.begin(index), self.end(index) - self.begin(index)]
   end
 end
