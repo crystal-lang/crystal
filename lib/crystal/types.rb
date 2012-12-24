@@ -333,6 +333,8 @@ module Crystal
       pointer = types_context[object_id] = PointerType.new @parent_type, @container, cloned_var
       pointer.var.type = var.type.clone(types_context, nodes_context)
       pointer.defs = defs
+      pointer.types = types
+      pointer.parents = parents
       pointer
     end
 
