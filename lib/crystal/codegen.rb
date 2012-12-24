@@ -276,10 +276,12 @@ module Crystal
         global.linkage = :internal
 
         old_position = @builder.insert_block
-        @builder.position_at_end @const_block
+        old_fun = @fun
+        @fun = @llvm_mod.functions["crystal_main"]
+        const_block = new_block "const_#{global_name}"
+        @builder.position_at_end const_block
 
         const.value.accept self
-        @const_block = @builder.insert_block
 
         if @last.constant?
           global.initializer = @last
@@ -289,7 +291,13 @@ module Crystal
           @builder.store @last, global
         end
 
+        new_const_block = @builder.insert_block
+        @builder.position_at_end @const_block
+        @builder.br const_block
+        @const_block = new_const_block
+
         @builder.position_at_end old_position
+        @fun = old_fun
       end
 
       @last = @builder.load global

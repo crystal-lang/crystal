@@ -84,4 +84,8 @@ describe 'Codegen: const' do
   it "invokes block in const" do
     run(%q(require "prelude"; A = ["1"].map { |x| x.to_i }; A[0])).to_i.should eq(1)
   end
+
+  it "declare constants in right order" do
+    run("A = 1 + 1; B = true ? A : 0; B").to_i.should eq(2)
+  end
 end
