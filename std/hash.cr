@@ -1,3 +1,7 @@
+require "array"
+require "int"
+require "nil"
+
 class Hash
   def initialize
     @buckets = []

@@ -72,6 +72,10 @@ module Crystal
       node.expanded.accept self
     end
 
+    def end_visit_array_literal(node)
+      node.expanded.accept self
+    end
+
     def end_visit_require(node)
       node.expanded.accept self if node.expanded
     end

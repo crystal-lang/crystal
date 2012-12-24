@@ -80,6 +80,8 @@ describe 'Type inference unification' do
 
   it "unifies array of union of same type within def" do
     input = parse %(
+      require "array"
+
       class Foo
         def initialize
           @x = [Bar.new, Bar.new]

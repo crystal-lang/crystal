@@ -23,4 +23,8 @@ class Complex
   def abs
     Math.sqrt(real * real + imag * imag)
   end
+
+  def to_s
+    "#{real} + #{imag}i"
+  end
 end

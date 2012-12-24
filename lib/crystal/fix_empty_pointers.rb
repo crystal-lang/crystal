@@ -30,6 +30,10 @@ module Crystal
       node.target_def.accept_children self if node.target_def
     end
 
+    def end_visit_array_literal(node)
+      node.expanded.accept self
+    end
+
     def end_visit_range_literal(node)
       node.expanded.accept self
     end

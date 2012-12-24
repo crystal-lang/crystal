@@ -1,3 +1,5 @@
+require "range"
+
 lib C
   fun atoi(str : Char*) : Int
   fun strncmp(s1 : Char*, s2 : Char*, n : Int) : Int

@@ -1,4 +1,9 @@
+require "enumerable"
+require "pointer"
+
 class Array
+  include Enumerable
+
   def initialize(initial_capacity = 16)
     @length = 0
     @capacity = initial_capacity

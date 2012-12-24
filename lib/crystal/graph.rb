@@ -49,7 +49,7 @@ module Crystal
             add_edges node, var.type, ivar
           end
         when nil
-          node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => 'Nil'
+          node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => 'nil'
         else
           node = @g.add_nodes type.object_id.to_s, :label => type.full_name
         end

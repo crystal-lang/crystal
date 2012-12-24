@@ -73,26 +73,6 @@ describe 'Code gen: pointer' do
     run(%q(p = Pointer.malloc(10); p.value = 1; p.value + 1)).to_i.should eq(2)
   end
 
-  it "codegens malloc with bool false value" do
-    run(%q(p = Pointer.malloc(10, false); p.value)).to_b.should eq(false)
-  end
-
-  it "codegens malloc with bool true value" do
-    run(%q(p = Pointer.malloc(10, true); p.value)).to_b.should eq(true)
-  end
-
-  it "codegens malloc with int value zero" do
-    run(%q(p = Pointer.malloc(10, 0); p.value)).to_i.should eq(0)
-  end
-
-  it "codegens malloc with int value two" do
-    run(%q(p = Pointer.malloc(10, 2); p.value)).to_i.should eq(2)
-  end
-
-  it "codegens malloc with float" do
-    run(%q(p = Pointer.malloc(10, 2.5); p.value)).to_f.should eq(2.5)
-  end
-
   it "codegens realloc" do
     run(%q(p = Pointer.malloc(10); p.value = 1; x = p.realloc(20); x.value + 1)).to_i.should eq(2)
   end

@@ -181,7 +181,6 @@ module Crystal
 
     def define_pointer_primitives
       pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_type('size', int)], PointerMalloc.new)
-      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_type('size', int), Arg.new('value')], PointerMallocWithValue.new)
       pointer.add_def Def.new('value', [], PointerGetValue.new)
       pointer.add_def Def.new('value=', [Arg.new('value')], PointerSetValue.new)
       pointer.add_def Def.new('realloc', [Arg.new_with_type('size', int)], PointerRealloc.new)

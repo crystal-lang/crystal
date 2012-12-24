@@ -90,6 +90,10 @@ module Crystal
     attr_accessor :target_const
   end
 
+  class ArrayLiteral
+    attr_accessor :expanded
+  end
+
   class RangeLiteral
     attr_accessor :expanded
   end
@@ -864,13 +868,35 @@ module Crystal
       node.creates_new_type = true
     end
 
-    def end_visit_array_literal(node)
-      type = mod.array.clone
-      buffer = type.lookup_instance_var('@buffer').type.var
-      node.elements.each do |elem|
-        buffer.bind_to elem
+    def visit_array_literal(node)
+      @@array_count ||= 0
+      @@array_count += 1
+
+      ary_name = "#array_#{@@array_count}"
+
+      length = node.elements.length
+      capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
+
+      ary_new = Call.new(Ident.new(['Array'], true), 'new', [IntLiteral.new(capacity)])
+      ary_assign = Assign.new(Var.new(ary_name), ary_new)
+      ary_assign_length = Call.new(Var.new(ary_name), 'length=', [IntLiteral.new(length)])
+
+      exps = [ary_assign, ary_assign_length]
+      node.elements.each_with_index do |elem, i|
+        get_buffer = Call.new(Var.new(ary_name), 'buffer')
+        exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
       end
-      node.type = type
+      exps << Var.new(ary_name)
+
+      exps = Expressions.new exps
+      exps.accept self
+
+      node.expanded = exps
+      node.bind_to exps
+
+      node.creates_new_type = node.expanded.creates_new_type
+
+      false
     end
 
     def visit_hash_literal(node)
@@ -897,7 +923,11 @@ module Crystal
 
     def lookup_object_type(name)
       if @scope.is_a?(ObjectType) && @scope.name == name
-        @scope
+        if @call && @call[1].maybe_recursive
+          @scope
+        else
+          nil
+        end
       elsif @parent
         @parent.lookup_object_type(name)
       end
@@ -1035,14 +1065,7 @@ module Crystal
     end
 
     def visit_pointer_malloc(node)
-      node.type = mod.void_pointer
-      node.creates_new_type = true
-    end
-
-    def visit_pointer_malloc_with_value(node)
-      type = mod.pointer.clone
-      type.var.bind_to @vars['value']
-      node.type = type
+      node.type = mod.pointer.clone
       node.creates_new_type = true
     end
 

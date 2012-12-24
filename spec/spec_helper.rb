@@ -133,7 +133,10 @@ end
 
 class Crystal::Program
   def array_of(type = nil)
-    types['Array'].clone.with_var('@buffer', PointerType.of(type))
+    types['Array'].clone.
+      with_var('@length', int).
+      with_var('@capacity', int).
+      with_var('@buffer', PointerType.of(type))
   end
 end
 
