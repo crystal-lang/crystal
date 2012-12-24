@@ -415,54 +415,55 @@ module Crystal
     end
 
     def visit_if(node)
-      is_union = node.else && node.type.union?
+      is_union = node.type.union?
       nilable = node.type.nilable?
 
-      then_block, exit_block = new_blocks "then", "exit"
-      else_block = new_block "else" if node.else
-
+      then_block, else_block, exit_block = new_blocks "then", "else", "exit"
       union_ptr = alloca node.llvm_type if is_union
-      node.cond.accept self
 
-      @builder.cond(@last, then_block, node.else ? else_block : exit_block)
+      node.cond.accept self
+      @builder.cond(@last, then_block, else_block)
 
       @builder.position_at_end then_block
-      node.then.accept self
-      if nilable && node.then.type == @mod.nil
-        @last = @builder.zext @last, LLVM::Int
-        @last = @builder.int2ptr @last, node.llvm_type
+      if node.then
+        node.then.accept self
+        then_block = @builder.insert_block
       end
-      then_block = @builder.insert_block
-
+      if node.then.nil? || node.then.type.nil? || node.then.type == @mod.nil
+        if nilable
+          @last = @builder.int2ptr LLVM::Int1.from_i(0), node.llvm_type
+        else
+          @last = LLVM::Int1.from_i(0)
+        end
+      end
       then_value = @last
-      codegen_assign(union_ptr, node.type, node.then.type, @last) if is_union
-
+      codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last) if is_union
       @builder.br exit_block
 
+      @builder.position_at_end else_block
       if node.else
-        @builder.position_at_end else_block
         node.else.accept self
-        if nilable && node.else.type == @mod.nil
-          @last = @builder.int2ptr LLVM::Int1.from_i(0), node.llvm_type
-        end
         else_block = @builder.insert_block
-
-        else_value = @last
-        codegen_assign(union_ptr, node.type, node.else.type, @last) if is_union
-
-        @builder.br exit_block
-
-        @builder.position_at_end exit_block
-
-        if is_union
-          @last = union_ptr
-        elsif node.type
-          @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
+      end
+      if node.else.nil? || node.else.type.nil? || node.else.type == @mod.nil
+        if nilable
+          @last = @builder.int2ptr LLVM::Int1.from_i(0), node.llvm_type
         else
-          @last = nil
+          @last = LLVM::Int1.from_i(0)
         end
+      end
+      else_value = @last
+      codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union
+      @builder.br exit_block
+
+      @builder.position_at_end exit_block
+
+      if is_union
+        @last = union_ptr
+      elsif node.type
+        @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
       else
-        @builder.position_at_end exit_block
+        @last = nil
       end
 
       false
