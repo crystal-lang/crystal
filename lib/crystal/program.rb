@@ -33,11 +33,8 @@ module Crystal
 
       array = @types["Array"] = ObjectType.new "Array", object, self
 
-      string_array = array.clone
-      string_array.lookup_instance_var('@length').type = int
-      string_array.lookup_instance_var('@capacity').type = int
-      string_array.lookup_instance_var('@buffer').type = pointer_of(char_pointer)
-      @types["ARGV"] = Const.new "ARGV", Crystal::ARGV.new(string_array), self
+      @types["ARGC_UNSAFE"] = Const.new "ARGC_UNSAFE", Crystal::ARGC.new(int), self
+      @types["ARGV_UNSAFE"] = Const.new "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char))), self
 
       @symbols = Set.new
       @global_vars = {}

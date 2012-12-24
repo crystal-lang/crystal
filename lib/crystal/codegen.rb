@@ -542,20 +542,12 @@ module Crystal
       false
     end
 
+    def visit_argc(node)
+      @last = @argc
+    end
+
     def visit_argv(node)
-      array = @builder.malloc(node.type.llvm_struct_type)
-
-      length = @builder.sub(@argc, LLVM::Int(1))
-
-      @builder.store LLVM::Int(length), gep(array, 0, 0)
-      @builder.store LLVM::Int(length), gep(array, 0, 1)
-
-      # Pointer to the second element
-      argv_ptr = gep(@argv, 1)
-      argv_ptr_as_string = @builder.bit_cast(argv_ptr, LLVM::Pointer(@mod.char_pointer.llvm_type))
-      @builder.store argv_ptr_as_string, gep(array, 0, 2)
-
-      @last = array
+      @last = @argv
     end
 
     def visit_call(node)

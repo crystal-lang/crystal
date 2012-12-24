@@ -96,6 +96,6 @@ describe 'Type inference: primitives' do
   end
 
   it "types ARGV" do
-    assert_type("ARGV") { array_of(char_pointer) }
+    assert_type(%q(require "argv"; ARGV)) { array_of(string) }
   end
 end
