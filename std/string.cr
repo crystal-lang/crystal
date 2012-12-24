@@ -1,4 +1,5 @@
 require "range"
+require "comparable"
 
 lib C
   fun atoi(str : Char*) : Int
@@ -12,6 +13,8 @@ lib C
 end
 
 class String
+  include Comparable
+
   def self.from_cstr(chars)
     length = C.strlen(chars)
     str = Pointer.malloc(length + 5)
@@ -39,8 +42,8 @@ class String
     String.from_cstr(new_string_buffer)
   end
 
-  def ==(other)
-    C.strcmp(@c.ptr, other) == 0
+  def <=>(other)
+    C.strcmp(@c.ptr, other)
   end
 
   def =~(regex)
