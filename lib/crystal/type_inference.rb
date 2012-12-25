@@ -876,25 +876,29 @@ module Crystal
       @@array_count ||= 0
       @@array_count += 1
 
-      ary_name = "#array_#{@@array_count}"
+      if node.elements.empty?
+        exps = Call.new(Ident.new(['Array'], true), 'new')
+      else
+        ary_name = "#array_#{@@array_count}"
 
-      length = node.elements.length
-      capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
+        length = node.elements.length
+        capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
 
-      ary_new = Call.new(Ident.new(['Array'], true), 'new', [IntLiteral.new(capacity)])
-      ary_assign = Assign.new(Var.new(ary_name), ary_new)
-      ary_assign_length = Call.new(Var.new(ary_name), 'length=', [IntLiteral.new(length)])
+        ary_new = Call.new(Ident.new(['Array'], true), 'new', [IntLiteral.new(capacity)])
+        ary_assign = Assign.new(Var.new(ary_name), ary_new)
+        ary_assign_length = Call.new(Var.new(ary_name), 'length=', [IntLiteral.new(length)])
 
-      exps = [ary_assign, ary_assign_length]
-      node.elements.each_with_index do |elem, i|
-        get_buffer = Call.new(Var.new(ary_name), 'buffer')
-        exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+        exps = [ary_assign, ary_assign_length]
+        node.elements.each_with_index do |elem, i|
+          get_buffer = Call.new(Var.new(ary_name), 'buffer')
+          exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+        end
+        exps << Var.new(ary_name)
+
+        exps = Expressions.new exps
       end
-      exps << Var.new(ary_name)
 
-      exps = Expressions.new exps
       exps.accept self
-
       node.expanded = exps
       node.bind_to exps
 
@@ -907,21 +911,28 @@ module Crystal
       @@hash_count ||= 0
       @@hash_count += 1
 
-      hash_name = "#hash_#{@@hash_count}"
+      if node.key_values.empty?
+        exps = Call.new(Ident.new(['Hash'], true), 'new')
+      else
+        hash_name = "#hash_#{@@hash_count}"
 
-      hash_new = Call.new(Ident.new(['Hash'], true), 'new')
-      hash_assign = Assign.new(Var.new(hash_name), hash_new)
+        hash_new = Call.new(Ident.new(['Hash'], true), 'new')
+        hash_assign = Assign.new(Var.new(hash_name), hash_new)
 
-      exps = [hash_assign]
-      node.key_values.each_slice(2) do |key, value|
-        exps << Call.new(Var.new(hash_name), :[]=, [key, value])
+        exps = [hash_assign]
+        node.key_values.each_slice(2) do |key, value|
+          exps << Call.new(Var.new(hash_name), :[]=, [key, value])
+        end
+        exps << Var.new(hash_name)
+        exps = Expressions.new exps
       end
-      exps << Var.new(hash_name)
 
-      node.expanded = Expressions.new exps
-      node.expanded.accept self
+      exps.accept self
+      node.expanded = exps
+      node.bind_to exps
 
-      node.type = node.expanded.type
+      node.creates_new_type = node.expanded.creates_new_type
+
       false
     end
 
