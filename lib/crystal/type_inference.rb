@@ -748,18 +748,51 @@ module Crystal
     end
 
     def visit_instance_var(node)
+      lookup_instance_var node
+    end
+
+    def lookup_instance_var(node, mark_as_nilable = true)
       if @scope.is_a?(Crystal::Program)
         node.raise "can't use instance variables at the top level"
       elsif @scope.is_a?(PrimitiveType)
         node.raise "can't use instance variables inside #{@scope.name}"
       end
 
+      new_instance_var = mark_as_nilable && !@scope.has_instance_var?(node.name)
+
       var = @scope.lookup_instance_var node.name
+      var.bind_to mod.nil_var if mark_as_nilable && new_instance_var
       node.bind_to var
+      var
     end
 
     def visit_assign(node)
       case node.target
+      when Var
+        var = lookup_var node.target.name
+        node.target.bind_to var
+
+        node.value.accept self
+
+        node.bind_to node.value
+
+        var.bind_to node
+        var.update
+
+        node.creates_new_type = var.creates_new_type ||= node.value.creates_new_type
+        false
+      when InstanceVar
+        var = lookup_instance_var node.target, false
+
+        node.value.accept self
+
+        node.bind_to node.value
+
+        var.bind_to node
+        var.update
+
+        node.creates_new_type = var.creates_new_type ||= node.value.creates_new_type
+        false
       when Ident
         type = current_type.types[node.target.names.first]
         if type
@@ -786,24 +819,6 @@ module Crystal
       else
         true
       end
-    end
-
-    def end_visit_assign(node)
-      return if node.target.is_a?(Ident) || node.target.is_a?(Global)
-
-      node.bind_to node.value
-
-      case node.target
-      when InstanceVar
-        var = @scope.lookup_instance_var node.target.name
-      else
-        var = lookup_var node.target.name
-      end
-
-      var.bind_to node
-      var.update
-
-      node.creates_new_type = var.creates_new_type ||= node.value.creates_new_type
     end
 
     def end_visit_expressions(node)
@@ -1069,14 +1084,17 @@ module Crystal
       end
     end
 
-    def end_visit_pointer_of(node)
+    def visit_pointer_of(node)
       ptr = mod.pointer.clone
       ptr.var = if node.var.is_a?(Var)
-                  lookup_var node.var.name
+                  var = lookup_var node.var.name
+                  node.var.bind_to var
+                  var
                 else
-                  @scope.lookup_instance_var node.var.name
+                  lookup_instance_var node.var, false
                 end
       node.type = ptr
+      false
     end
 
     def visit_pointer_malloc(node)

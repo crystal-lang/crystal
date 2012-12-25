@@ -94,6 +94,8 @@ describe 'Type inference: def instance' do
 
   it "applies all mutations to target_def body type with recursive type" do
     input = parse %Q(
+      require "prelude"
+
       class Node
         def add(x)
           @left = Node.alloc
@@ -107,7 +109,7 @@ describe 'Type inference: def instance' do
       root.add 'c'
       )
     mod = infer_type input
-    input[2].target_def.body[2].value.target_def.body.type.should eq(input[1].type)
+    input[3].target_def.body[2].value.target_def.body.type.should eq(input[2].type)
   end
 
   it "applies all mutations to target_def body type with recursive type 2" do

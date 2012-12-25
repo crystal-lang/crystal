@@ -78,30 +78,25 @@ describe 'Type inference: class' do
 
   it "types recursive type" do
     input = parse %(
-      class Node
-        def init
-          @has_next = false
-          self
-        end
+      require "prelude"
 
+      class Node
         def add
-          if @has_next
+          if @next
             @next.add
           else
             @next = Node.new
-            @next.init
-            @has_next = true
           end
         end
       end
 
-      n = Node.new.init
+      n = Node.new
       n.add
       n
     )
     mod = infer_type input
-    recursive_type = ObjectType.new('Node').with_var("@has_next", mod.bool)
-    recursive_type.with_var("@next", recursive_type)
+    recursive_type = ObjectType.new('Node')
+    recursive_type.with_var("@next", [recursive_type, mod.nil].union)
     input.last.type.should eq(recursive_type)
   end
 
@@ -177,5 +172,18 @@ describe 'Type inference: class' do
 
     # The alloc
     nodes[1].value.target_def.body.type.should eq(ObjectType.new('Foo').with_var('@a', mod.int).with_var('@b', mod.float))
+  end
+
+  it "types instance variable as nilable if read before write" do
+    assert_type(%(
+      class Foo
+        def initialize
+          a = @coco
+          @coco = 2
+        end
+      end
+
+      Foo.new
+    )) { ObjectType.new("Foo").with_var("@coco", [int, self.nil].union) }
   end
 end

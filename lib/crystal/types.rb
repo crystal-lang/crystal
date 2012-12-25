@@ -245,6 +245,10 @@ module Crystal
       end
     end
 
+    def has_instance_var?(name)
+      @instance_vars[name]
+    end
+
     def lookup_instance_var(name)
       @instance_vars[name] ||= Var.new name
     end
