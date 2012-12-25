@@ -116,4 +116,11 @@ describe 'Type inference: def' do
   it "calls with default argument" do
     assert_type("def foo(x = 1); x; end; foo") { int }
   end
+
+  it "do not use body for the def type" do
+    input = parse 'def foo; if false; return 0; end; end; foo'
+    mod = infer_type input
+    input.last.type.should eq(UnionType.new(mod.int, mod.nil))
+    input.last.target_def.body.type.should eq(mod.nil)
+  end
 end

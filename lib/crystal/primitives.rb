@@ -207,15 +207,6 @@ module Crystal
       p.overload(args.values, return_type, &block)
     end
 
-    def external(name, args, return_type)
-      args = args.map { |name, type| Arg.new_with_type(name, type) }
-
-      instance = add_def External.new(name, args)
-      instance.body = Expressions.new
-      instance.body.set_type(return_type)
-      instance.add_instance instance
-    end
-
     def sprintf(llvm_mod)
       llvm_mod.functions['sprintf'] || llvm_mod.functions.add('sprintf', [LLVM::Pointer(LLVM::Int8)], int.llvm_type, varargs: true)
     end
@@ -236,7 +227,8 @@ module Crystal
       arg_types.each_with_index do |arg_type, i|
         instance.args[i].set_type(arg_type)
       end
-      instance.body = PrimitiveBody.new(return_type, block)
+      instance.body = PrimitiveBody.new(block)
+      instance.type = return_type
       add_instance(instance)
     end
   end
@@ -250,8 +242,7 @@ module Crystal
   class PrimitiveBody < Primitive
     attr_accessor :block
 
-    def initialize(type, block)
-      @type = type
+    def initialize(block)
       @block = block
     end
   end

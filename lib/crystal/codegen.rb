@@ -21,7 +21,7 @@ module Crystal
 
   class Def
     def mangled_name(self_type)
-      Def.mangled_name(self_type, owner, name, (body ? body.type : nil), args.map(&:type))
+      Def.mangled_name(self_type, owner, name, type, args.map(&:type))
     end
 
     def self.mangled_name(self_type, owner, name, return_type, arg_types)
@@ -696,8 +696,8 @@ module Crystal
 
       @last = @builder.call @fun, *call_args
 
-      if target_def.body && target_def.body.type.union?
-        union = alloca target_def.body.llvm_type
+      if target_def.type.union?
+        union = alloca target_def.llvm_type
         @builder.store @last, union
         @last = union
       end
@@ -724,7 +724,7 @@ module Crystal
       @fun = @llvm_mod.functions.add(
         mangled_name,
         args.map(&:llvm_type),
-        target_def.body.llvm_type
+        target_def.llvm_type
       )
 
       args.each_with_index do |arg, i|
@@ -748,14 +748,14 @@ module Crystal
         if target_def.body
           old_return_type = @return_type
           old_return_union = @return_union
-          @return_type = target_def.body.type
-          @return_union = alloca(target_def.body.llvm_type, 'return') if @return_type.union?
+          @return_type = target_def.type
+          @return_union = alloca(target_def.llvm_type, 'return') if @return_type.union?
 
           target_def.body.accept self
 
           if @return_type.union?
-            if target_def.body.is_a?(Expressions) && target_def.body.last.type != @return_type
-              assign_to_union(@return_union, @return_type, target_def.body.last.type, @last)
+            if target_def.body.type != @return_type
+              assign_to_union(@return_union, @return_type, target_def.body.type, @last)
               @last = @builder.load @return_union
             else
               @last = @builder.load @last

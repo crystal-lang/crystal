@@ -39,10 +39,10 @@ module Crystal
         node.target_def.accept_children self
         if node.target_def.is_a?(Dispatch)
           node.set_type unify_type(node.type)
-          node.target_def.set_type unify_type(node.target_def.type)
         else
           node.target_def.owner = unify_type(node.target_def.owner)
         end
+        node.target_def.set_type unify_type(node.target_def.type)
       end
       node.simplify
     end

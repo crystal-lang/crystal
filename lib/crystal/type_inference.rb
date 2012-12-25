@@ -176,7 +176,7 @@ module Crystal
         end
       end
 
-      self.bind_to typed_def.body if typed_def.body
+      self.bind_to typed_def
       self.target_def = typed_def
     end
 
@@ -215,6 +215,7 @@ module Crystal
 
       typed_def = untyped_def.clone
       typed_def.owner = owner
+      typed_def.bind_to typed_def.body if typed_def.body
 
       args = {}
       args['self'] = Var.new('self', self_type) if self_type.is_a?(Type)
@@ -1055,7 +1056,7 @@ module Crystal
 
     def end_visit_return(node)
       node.exps.each do |exp|
-        @call[3].body.bind_to exp
+        @call[3].bind_to exp
       end
     end
 

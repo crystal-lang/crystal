@@ -243,4 +243,16 @@ describe 'Code gen: def' do
       Object.foo(a)
       )).to_i.should eq(1)
   end
+
+  it "use target def type as return type" do
+    run(%Q(
+      def foo
+        if false
+          return 0
+        end
+      end
+
+      foo.nil? ? 1 : 0
+    )).to_i.should eq(1)
+  end
 end

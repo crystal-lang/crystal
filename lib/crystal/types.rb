@@ -491,8 +491,7 @@ module Crystal
     def fun(name, args, return_type)
       instance = add_def External.new(name, args)
       instance.owner = self
-      instance.body = Expressions.new
-      instance.body.set_type(return_type)
+      instance.type = return_type
     end
 
     def passed_as_self?
