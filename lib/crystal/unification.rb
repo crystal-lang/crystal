@@ -3,11 +3,8 @@ require_relative 'type_inference.rb'
 module Crystal
   def unify(node)
     visitor = UnifyVisitor.new
-    while true
-      visitor.start
-      node.accept visitor
-      break unless visitor.more?
-    end
+    visitor.start
+    node.accept visitor
   end
 
   class Def
@@ -24,16 +21,6 @@ module Crystal
       @unions = {}
       @pointers = {}
       @stack = []
-      @pending_unions = []
-    end
-
-    def more?
-      @pending_unions.each do |union|
-        if unify_type(union).object_id != union.object_id
-          return true
-        end
-      end
-      false
     end
 
     def visit_def(node)
@@ -147,19 +134,10 @@ module Crystal
         unified_type = @unions[type]
 
         unless unified_type
-          if index = @stack.index(type)
-            unified_type = @unions[type] = @stack[index]
-            @pending_unions << unified_type
-          else
-            @stack.push type
+          unified_types = type.types.map { |subtype| unify_type(subtype) }.uniq
+          unified_types = unified_types.length == 1 ? unified_types[0] : UnionType.new(*unified_types)
 
-            unified_types = type.types.map { |subtype| unify_type(subtype) }.uniq
-            unified_types = unified_types.length == 1 ? unified_types[0] : unify_type(UnionType.new(*unified_types))
-
-            unified_type = @unions[type] = unified_types
-
-            @stack.pop
-          end
+          unified_type = @unions[type] = unified_types
         end
 
         unified_type
