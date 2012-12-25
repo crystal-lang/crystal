@@ -31,7 +31,7 @@ module Crystal
     end
 
     def is_restriction_of?(type)
-      type && full_name == type.full_name
+      type && (full_name == type.full_name || type.parents.any? { |parent| is_restriction_of?(parent) })
     end
 
     def self.merge(*types)
