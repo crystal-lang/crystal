@@ -838,9 +838,7 @@ module Crystal
       node.bind_to node.then if node.then
       node.bind_to node.else if node.else
       unless node.then && node.else
-        nil_var = Var.new("nil")
-        nil_var.type = mod.nil
-        node.bind_to nil_var
+        node.bind_to mod.nil_var
       end
     end
 

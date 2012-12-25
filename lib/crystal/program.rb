@@ -41,7 +41,13 @@ module Crystal
 
       @requires = Set.new
 
+      @nil_var = Var.new('nil', self.nil)
+
       define_primitives
+    end
+
+    def nil_var
+      @nil_var
     end
 
     def value
