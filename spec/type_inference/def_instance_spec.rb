@@ -168,6 +168,7 @@ describe 'Type inference: def instance' do
     nodes = parse %Q(
       require "pointer"
       require "array"
+
       def foo
         [[]][0].push 1
       end

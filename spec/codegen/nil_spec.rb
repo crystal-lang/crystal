@@ -7,6 +7,8 @@ describe 'Code gen: nil' do
 
   it "codegens nil? for Object gives true" do
     run(%Q(
+      require "nil"
+
       class Foo
         def initialize
           if false

@@ -186,4 +186,47 @@ describe 'Type inference: class' do
       Foo.new
     )) { ObjectType.new("Foo").with_var("@coco", [int, self.nil].union) }
   end
+
+  it "types instance variable as nilable if inside if" do
+    assert_type(%(
+      class Foo
+        def initialize
+          if false
+            @coco = 2
+          end
+        end
+      end
+
+      Foo.new
+    )) { ObjectType.new("Foo").with_var("@coco", [int, self.nil].union) }
+  end
+
+  it "doesn't type instance variable as nilable if inside if but had type" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @coco = 2
+          if false
+            @coco = 2
+          end
+        end
+      end
+
+      Foo.new
+    )) { ObjectType.new("Foo").with_var("@coco", int) }
+  end
+
+  it "types instance variable as nilable if inside while" do
+    assert_type(%(
+      class Foo
+        def initialize
+          while false
+            @coco = 2
+          end
+        end
+      end
+
+      Foo.new
+    )) { ObjectType.new("Foo").with_var("@coco", [int, self.nil].union) }
+  end
 end

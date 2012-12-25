@@ -523,6 +523,7 @@ module Crystal
       @parent = parent
       @call = call
       @types = [mod]
+      @logic_count = 0
     end
 
     def visit_nil_literal(node)
@@ -782,7 +783,7 @@ module Crystal
         node.creates_new_type = var.creates_new_type ||= node.value.creates_new_type
         false
       when InstanceVar
-        var = lookup_instance_var node.target, false
+        var = lookup_instance_var node.target, (@logic_count > 0)
 
         node.value.accept self
 
@@ -833,7 +834,11 @@ module Crystal
     def visit_while(node)
       node.cond = Call.new(node.cond, 'to_b')
       node.cond.accept self
+
+      @logic_count += 1
       node.body.accept self if node.body
+      @logic_count -= 1
+
       false
     end
 
@@ -844,8 +849,12 @@ module Crystal
     def visit_if(node)
       node.cond = Call.new(node.cond, 'to_b')
       node.cond.accept self
+
+      @logic_count += 1
       node.then.accept self if node.then
       node.else.accept self if node.else
+      @logic_count -= 1
+
       false
     end
 
@@ -1091,7 +1100,7 @@ module Crystal
                   node.var.bind_to var
                   var
                 else
-                  lookup_instance_var node.var, false
+                  lookup_instance_var node.var
                 end
       node.type = ptr
       false

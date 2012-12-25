@@ -29,6 +29,8 @@ describe 'Code gen: pointer' do
 
   it "set pointer of instance var value" do
     run(%q(
+      require "nil"
+
       class Foo
         def foo
           p = @value.ptr
@@ -41,7 +43,7 @@ describe 'Code gen: pointer' do
 
       f = Foo.new
       f.foo
-      f.value)).to_i.should eq(1)
+      f.value.to_i)).to_i.should eq(1)
   end
 
   it "get value of pointer to union" do

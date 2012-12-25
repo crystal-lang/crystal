@@ -23,7 +23,7 @@ describe 'Type inference: pointer' do
 
       f = Foo.new
       f.foo
-      f.value)) { int }
+      f.value)) { [int, self.nil].union }
   end
 
   it "types pointer add" do
