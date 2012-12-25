@@ -816,7 +816,7 @@ module Crystal
 
     def parse_def
       next_token_skip_space_or_newline
-      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :===, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>', :'||', :'&&'
+      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :===, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :'!@', :&, :|, :^, :**, :[], :[]=, :'<=>', :'||', :'&&'
 
       receiver = nil
       @yields = false
@@ -845,7 +845,7 @@ module Crystal
       if @token.type == :'.'
         receiver = Var.new name unless receiver
         next_token_skip_space
-        check :IDENT, :"=", :<<, :<, :<=, :==, :===, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>'
+        check :IDENT, :"=", :<<, :<, :<=, :==, :===, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :'!@', :&, :|, :^, :**, :[], :[]=, :'<=>'
         name = @token.type == :IDENT ? @token.value : @token.type
         next_token_skip_space
       end

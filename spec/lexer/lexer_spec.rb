@@ -108,13 +108,22 @@ describe Lexer do
   it_lexes_char "'\\n'", ?\n.ord
   it_lexes_char "'\\t'", ?\t.ord
   it_lexes_char "'\\0'", ?\0.ord
-  it_lexes_operators "=", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", "==", "!=", '=~', "!", ",", '.', '..', '...', "+@", "-@", "&&", "||", "|", "{", "}", '?', ':', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**=', '<<', '>>', '%', '&', '|', '^', '**', '<<=', '>>=', '~', '~@', '[]', '[', ']', '::', '<=>', '=>', '||=', '&&=', '==='
+  it_lexes_operators "=", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", "==", "!=", '=~', "!", ",", '.', '..', '...', "!@", "+@", "-@", "&&", "||", "|", "{", "}", '?', ':', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**=', '<<', '>>', '%', '&', '|', '^', '**', '<<=', '>>=', '~', '~@', '[]', '[', ']', '::', '<=>', '=>', '||=', '&&=', '==='
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
   it_lexes_globals "$foo", "$FOO", "$_foo", "$foo123", "$~"
   it_lexes_symbols ":foo", ":foo!", ":foo?", %q(:"foo")
   it_lexes_regex "/foo/"
   it_lexes_global_match "$1", "$10"
+
+  it "lexer not instance var" do
+    lexer = Lexer.new "!@foo"
+    token = lexer.next_token
+    token.type.should eq(:'!')
+    token = lexer.next_token
+    token.type.should eq(:INSTANCE_VAR)
+    token.value.should eq('@foo')
+  end
 
   it "lexes comment and token" do
     lexer = Lexer.new "# comment\n1"
