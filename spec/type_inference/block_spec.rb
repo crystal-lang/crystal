@@ -21,7 +21,7 @@ describe 'Block inference' do
       end
     )
     mod = infer_type input
-    input.last.type.should be_nil
+    input.last.type.should eq(mod.nil)
   end
 
   it "infer type of block body" do

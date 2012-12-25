@@ -44,10 +44,6 @@ module Crystal
       define_primitives
     end
 
-    def void
-      nil
-    end
-
     def value
       @types["Value"]
     end
@@ -94,10 +90,6 @@ module Crystal
 
     def pointer
       @types["Pointer"]
-    end
-
-    def void_pointer
-      pointer_of @types['Void']
     end
 
     def char_pointer

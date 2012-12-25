@@ -76,15 +76,15 @@ describe 'Type inference: def' do
   end
 
   it "types empty body def" do
-    assert_type('def foo; end; foo') { void }
+    assert_type('def foo; end; foo') { self.nil }
   end
 
   it "types infinite recursion" do
-    assert_type('def foo; foo; end; foo') { void }
+    assert_type('def foo; foo; end; foo') { self.nil }
   end
 
   it "types mutual infinite recursion" do
-    assert_type('def foo; bar; end; def bar; foo; end; foo') { void }
+    assert_type('def foo; bar; end; def bar; foo; end; foo') { self.nil }
   end
 
   it "types call with union argument" do

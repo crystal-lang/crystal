@@ -10,7 +10,7 @@ module Crystal
         infer_type_with_prof node, mod
       else
         node.accept TypeVisitor.new(mod)
-        fix_empty_pointers node, mod
+        fix_empty_types node, mod
         unify node if Crystal::UNIFY
       end
     end
@@ -21,7 +21,7 @@ module Crystal
     require 'benchmark'
     Benchmark.bm(20, 'TOTAL:') do |bm|
       t1 = bm.report('type inference:') { node.accept TypeVisitor.new(mod) }
-      t2 = bm.report('fix empty pointers') { fix_empty_pointers node, mod }
+      t2 = bm.report('fix empty types') { fix_empty_types node, mod }
       t3 = bm.report('unification:') { unify node if Crystal::UNIFY }
       [t1 + t2 + t3]
     end
@@ -30,7 +30,7 @@ module Crystal
   def infer_type_with_prof(node, mod)
     require 'ruby-prof'
     profile_to('type_inference.html') { node.accept TypeVisitor.new(mod) }
-    profile_to('fix_empty_pointers.html') { fix_empty_pointers node, mod }
+    profile_to('fix_empty_types.html') { fix_empty_types node, mod }
     profile_to('unification.html') { unify node if Crystal::UNIFY }
   end
 
@@ -811,7 +811,7 @@ module Crystal
         node.bind_to node.last
         node.creates_new_type = node.last.creates_new_type
       else
-        node.type = mod.void
+        node.type = mod.nil
       end
     end
 
@@ -823,7 +823,7 @@ module Crystal
     end
 
     def end_visit_while(node)
-      node.type = mod.void
+      node.type = mod.nil
     end
 
     def visit_if(node)

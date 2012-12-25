@@ -68,6 +68,7 @@ module Crystal
   def evaluate(node, mod)
     llvm_mod = build node, mod
     engine = LLVM::JITCompiler.new(llvm_mod)
+    Compiler.optimize llvm_mod, engine, 1
     engine.run_function llvm_mod.functions["crystal_main"], 0, nil
   end
 
@@ -177,11 +178,11 @@ module Crystal
 
       br_block_chain @alloca_block, @const_block_entry
       br_block_chain @const_block, @entry_block
-      @builder.ret(@return_type == @mod.void ? nil : @last)
+      @builder.ret(@last)
     end
 
     def visit_nil_literal(node)
-      @last = LLVM::Int1.from_i(0)
+      @last = llvm_nil
     end
 
     def visit_bool_literal(node)
@@ -431,9 +432,9 @@ module Crystal
       end
       if node.then.nil? || node.then.type.nil? || node.then.type == @mod.nil
         if nilable
-          @last = @builder.int2ptr LLVM::Int1.from_i(0), node.llvm_type
+          @last = @builder.int2ptr llvm_nil, node.llvm_type
         else
-          @last = LLVM::Int1.from_i(0)
+          @last = llvm_nil
         end
       end
       then_value = @last
@@ -447,9 +448,9 @@ module Crystal
       end
       if node.else.nil? || node.else.type.nil? || node.else.type == @mod.nil
         if nilable
-          @last = @builder.int2ptr LLVM::Int1.from_i(0), node.llvm_type
+          @last = @builder.int2ptr llvm_nil, node.llvm_type
         else
-          @last = LLVM::Int1.from_i(0)
+          @last = llvm_nil
         end
       end
       else_value = @last
@@ -484,6 +485,8 @@ module Crystal
       @builder.br while_block
 
       @builder.position_at_end exit_block
+
+      @last = llvm_nil
 
       false
     end
@@ -677,6 +680,8 @@ module Crystal
 
         block.accept self
 
+        @last = llvm_nil unless node.type
+
         @vars = old_vars
         @type = old_type
         @return_block = old_return_block
@@ -762,12 +767,12 @@ module Crystal
             end
           end
 
-          @builder.ret(@return_type == @mod.void ? nil : @last)
+          @builder.ret(@last)
 
           @return_type = old_return_type
           @return_union = old_return_union
         else
-          @builder.ret_void
+          @builder.ret llvm_nil
         end
 
         br_from_alloca_to_entry
@@ -858,7 +863,7 @@ module Crystal
             nil_block = new_block "nil"
             @builder.position_at_end nil_block
 
-            value = LLVM::Int1.from_i(0)
+            value = llvm_nil
 
             codegen_dispatch_next_arg node, arg_types, arg_values, arg_type, value, unreachable_block, arg_index, nil_block, &block
           else
@@ -995,6 +1000,10 @@ module Crystal
 
     def llvm_self
       @vars['self'][:ptr]
+    end
+
+    def llvm_nil
+      LLVM::Int1.from_i(0)
     end
 
     def new_entry_block

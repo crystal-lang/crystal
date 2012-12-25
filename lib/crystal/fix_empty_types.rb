@@ -1,11 +1,11 @@
 require_relative 'type_inference.rb'
 
 module Crystal
-  def fix_empty_pointers(node, mod)
-    node.accept FixEmptyPointersVisitor.new(mod)
+  def fix_empty_types(node, mod)
+    node.accept FixEmptyTypesVisitor.new(mod)
   end
 
-  class FixEmptyPointersVisitor < Visitor
+  class FixEmptyTypesVisitor < Visitor
     def initialize(mod)
       @mod = mod
       @fixed = {}
@@ -27,7 +27,10 @@ module Crystal
       return if @fixed[node.target_def]
       @fixed[node.target_def] = true
 
-      node.target_def.accept_children self if node.target_def
+      if node.target_def
+        node.target_def.type = @mod.nil unless node.target_def.type
+        node.target_def.accept_children self
+      end
     end
 
     def end_visit_array_literal(node)
