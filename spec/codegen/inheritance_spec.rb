@@ -10,6 +10,6 @@ describe 'Codegen: inheritance' do
   end
 
   it "calls same method from different subclasses" do
-    run("1.nil?; false.nil?")
+    run('require "object"; require "bool"; 1.nil?; false.nil?')
   end
 end

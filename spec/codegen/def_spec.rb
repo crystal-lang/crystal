@@ -250,6 +250,9 @@ describe 'Code gen: def' do
 
   it "use target def type as return type" do
     run(%Q(
+      require "nil"
+      require "object"
+
       def foo
         if false
           return 0

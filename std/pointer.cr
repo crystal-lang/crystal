@@ -1,4 +1,12 @@
 class Pointer
+  def ==(other : Pointer)
+    address == other.address
+  end
+
+  def ==(other)
+    false
+  end
+
   def [](offset)
     (self + offset).value
   end

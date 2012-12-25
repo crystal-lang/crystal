@@ -38,7 +38,7 @@ describe 'Code gen: if' do
   end
 
   it 'codegens if with int' do
-    run('if 1; 2; else 3; end').to_i.should eq(2)
+    run('require "object"; if 1; 2; else 3; end').to_i.should eq(2)
   end
 
   it 'codegens if with nil' do

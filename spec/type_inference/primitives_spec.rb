@@ -34,7 +34,7 @@ describe 'Type inference: primitives' do
   end
 
   it "types Symbol != Symbol" do
-    assert_type(":foo != :bar") { bool }
+    assert_type(%q(require "object"; :foo != :bar)) { bool }
   end
 
   it "types a primitive method" do

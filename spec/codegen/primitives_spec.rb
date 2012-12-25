@@ -43,8 +43,8 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens Symbol != Symbol' do
-    run(':foo != :foo').to_b.should be_false
-    run(':foo != :bar').to_b.should be_true
+    run('require "object"; :foo != :foo').to_b.should be_false
+    run('require "object"; :foo != :bar').to_b.should be_true
   end
 
   it 'codegens int method' do
@@ -80,11 +80,11 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens - Int' do
-    run('- 1').to_i.should eq(-1)
+    run('require "int"; - 1').to_i.should eq(-1)
   end
 
   it 'codegens + Int' do
-    run('+ 1').to_i.should eq(1)
+    run('require "int"; + 1').to_i.should eq(1)
   end
 
   it 'codegens Int + Int' do

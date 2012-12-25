@@ -1,4 +1,16 @@
 class Int
+  def ==(other)
+    false
+  end
+
+  def -@
+    0 - self
+  end
+
+  def +@
+    self
+  end
+
   def hash
     self
   end

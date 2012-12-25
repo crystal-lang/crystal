@@ -4,7 +4,6 @@ module Crystal
   class Program
     def define_primitives
       define_object_primitives
-      define_nil_primitives
       define_value_primitives
       define_bool_primitives
       define_char_primitives
@@ -19,8 +18,6 @@ module Crystal
 
     def define_object_primitives
       no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
-      no_args_primitive(object, 'to_b', bool) { |b, f| LLVM::Int1.from_i(1) }
-      singleton(object, :'!@', {}, bool) { |b, f| LLVM::Int1.from_i(0) }
       no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end
@@ -31,18 +28,13 @@ module Crystal
       end
     end
 
-    def define_nil_primitives
-      no_args_primitive(self.nil, 'to_b', bool) { |b, f| LLVM::Int1.from_i(0) }
-      no_args_primitive(self.nil, 'nil?', bool) { |b, f| LLVM::Int1.from_i(1) }
-      singleton(self.nil, :'!@', {}, bool) { |b, f| LLVM::Int1.from_i(1) }
-    end
-
     def define_value_primitives
       no_args_primitive(value, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
     end
 
     def define_bool_primitives
-      no_args_primitive(bool, 'to_b', bool) { |b, f| f.params[0] }
+      self_primitive(bool, 'to_b')
+      singleton(bool, :==, {'other' => bool}, bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
       singleton(bool, :'!@', {}, bool) { |b, f| b.not(f.params[0]) }
       singleton(bool, :'&&', {'other' => bool}, bool) { |b, f| b.and(f.params[0], f.params[1]) }
       singleton(bool, :'||', {'other' => bool}, bool) { |b, f| b.or(f.params[0], f.params[1]) }
@@ -130,11 +122,8 @@ module Crystal
         buffer
       end
 
-      no_args_primitive(int, 'to_i', int) { |b, f| f.params[0] }
+      self_primitive(int, 'to_i')
       no_args_primitive(int, 'to_f', float) { |b, f| b.si2fp(f.params[0], float.llvm_type) }
-
-      no_args_primitive(int, :-@, int) { |b, f| b.sub(LLVM::Int(0), f.params[0]) }
-      no_args_primitive(int, :+@, int) { |b, f| f.params[0] }
 
       singleton(int, :%, {'other' => int}, int) { |b, f| b.srem(f.params[0], f.params[1]) }
       singleton(int, :<<, {'other' => int}, int) { |b, f| b.shl(f.params[0], f.params[1]) }
@@ -164,15 +153,11 @@ module Crystal
       end
 
       no_args_primitive(float, 'to_i', int) { |b, f| b.fp2si(f.params[0], int.llvm_type) }
-      no_args_primitive(float, 'to_f', float) { |b, f| f.params[0] }
-
-      no_args_primitive(float, :-@, float) { |b, f| b.fsub(LLVM::Float(0), f.params[0]) }
-      no_args_primitive(float, :+@, float) { |b, f| f.params[0] }
+      self_primitive(float, 'to_f')
     end
 
     def define_symbol_primitives
       singleton(symbol, :==, {'other' => symbol}, bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
-      singleton(symbol, :'!=', {'other' => symbol}, bool) { |b, f| b.icmp(:ne, f.params[0], f.params[1]) }
       singleton(symbol, 'hash', {}, int) { |b, f| f.params[0] }
       no_args_primitive(symbol, 'to_s', string) do |b, f, llvm_mod|
         b.load(b.gep llvm_mod.globals['symbol_table'], [LLVM::Int(0), f.params[0]])
@@ -189,6 +174,9 @@ module Crystal
       pointer.add_def Def.new(:+, [Arg.new_with_type('offset', int)], PointerAdd.new)
       pointer.add_def Def.new(:+, [Arg.new_with_type('offset', long)], PointerAdd.new)
       pointer.add_def Def.new('as', [Arg.new('type')], PointerCast.new)
+      no_args_primitive(object, 'address', long) do |b, f, llvm_mod, self_type|
+        b.ptr2int(f.params[0], LLVM::Int64)
+      end
     end
 
     def primitive(owner, name, arg_names)
@@ -199,6 +187,10 @@ module Crystal
 
     def no_args_primitive(owner, name, return_type, &block)
       primitive(owner, name, []) { |p| p.overload([], return_type, &block) }
+    end
+
+    def self_primitive(owner, name)
+      no_args_primitive(owner, name, owner) { |b, f| f.params[0] }
     end
 
     def singleton(owner, name, args, return_type, &block)

@@ -20,16 +20,36 @@ class Object
     attr :#{symbol_or_name}
   "end
 
+  def !=(other)
+    !(self == other)
+  end
+
+  def ==(other : Value)
+    false
+  end
+
+  def ==(other)
+    object_id == other.object_id
+  end
+
   def ===(other)
     self == other
   end
 
-  def inspect
-    to_s
+  def !@
+    false
+  end
+
+  def to_b
+    true
   end
 
   def to_s
     String.from_cstr(to_cstr)
+  end
+
+  def inspect
+    to_s
   end
 
   def tap

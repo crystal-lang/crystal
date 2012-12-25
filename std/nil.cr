@@ -1,4 +1,24 @@
 class Nil
+  def ==(other : Nil)
+    true
+  end
+
+  def ==(other)
+    false
+  end
+
+  def to_b
+    false
+  end
+
+  def nil?
+    true
+  end
+
+  def !@
+    true
+  end
+
   def to_i
     0
   end

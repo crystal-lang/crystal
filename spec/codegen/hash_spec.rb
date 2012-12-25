@@ -6,10 +6,10 @@ describe 'Code gen: hash' do
   end
 
   it "codegens hash set/get" do
-    run('require "hash"; a = {}; a[1] = 2; a[1].to_i').to_i.should eq(2)
+    run('require "prelude"; a = {}; a[1] = 2; a[1].to_i').to_i.should eq(2)
   end
 
   it "codegens hash get" do
-    run('require "hash"; a = {1 => 2}; a[1].to_i').to_i.should eq(2)
+    run('require "prelude"; a = {1 => 2}; a[1].to_i').to_i.should eq(2)
   end
 end
