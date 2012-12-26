@@ -78,6 +78,14 @@ class String
     C.strncmp(cstr, str, str.length) == 0
   end
 
+  def hash
+    h = 0
+    chars do |c|
+      h = 31 * h + c.ord
+    end
+    h
+  end
+
   def to_s
     self
   end
