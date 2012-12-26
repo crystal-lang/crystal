@@ -135,9 +135,13 @@ module Crystal
 
         unless unified_type
           unified_types = type.types.map { |subtype| unify_type(subtype) }.uniq
-          unified_types = unified_types.length == 1 ? unified_types[0] : UnionType.new(*unified_types)
+          unified_type = unified_types.length == 1 ? unified_types[0] : UnionType.new(*unified_types)
 
-          unified_type = @unions[type] = unified_types
+          if existing_type = @unions[type]
+            unified_type = existing_type
+          else
+            @unions[type] = unified_type
+          end
         end
 
         unified_type
