@@ -841,8 +841,9 @@ module Crystal
         codegen_call(call.target_def, (node.obj && node.obj.type.passed_as_self? ? arg_types[0] : nil), arg_values)
 
         if dispatch.type.union?
-          phi_table[label] = phi_value = alloca dispatch.llvm_type
+          phi_value = alloca dispatch.llvm_type
           assign_to_union(phi_value, dispatch.type, call.type, @last)
+          phi_table[@builder.insert_block] = phi_value
         elsif dispatch.type.nilable? && @last.type.kind == :integer
           phi_table[label] = @builder.int2ptr @last, dispatch.llvm_type
         else

@@ -12,4 +12,8 @@ describe 'Code gen: hash' do
   it "codegens hash get" do
     run('require "prelude"; a = {1 => 2}; a[1].to_i').to_i.should eq(2)
   end
+
+  it "codegens hash with union keys and values" do
+    run('require "prelude"; a = {1 => 2, :foo => 1.1}; a[1].to_i').to_i.should eq(2)
+  end
 end
