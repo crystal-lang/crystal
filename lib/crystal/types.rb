@@ -120,7 +120,7 @@ module Crystal
 
           matches = matches.values
           minimals = matches.select do |match|
-            matches.all? { |m| m == match || m.is_restriction_of?(match) }
+            matches.all? { |m| m.equal?(match) || m.is_restriction_of?(match) }
           end
           return minimals[0] if minimals.length == 1
 
