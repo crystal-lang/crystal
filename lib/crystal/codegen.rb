@@ -339,6 +339,9 @@ module Crystal
           ptr: alloca(var.llvm_type, var.name.to_s),
           type: var.type
         }
+        if var.type.is_a?(UnionType) && union_index = var.type.types.any? { |type| type.equal?(@mod.nil) }
+          in_alloca_block { assign_to_union(llvm_var[:ptr], var.type, @mod.nil, llvm_nil) }
+        end
       end
       llvm_var
     end
@@ -991,11 +994,15 @@ module Crystal
     end
 
     def alloca(type, name = '')
+      in_alloca_block { @builder.alloca type, name }
+    end
+
+    def in_alloca_block
       old_block = @builder.insert_block
       @builder.position_at_end @alloca_block
-      ptr = @builder.alloca type, name
+      value = yield
       @builder.position_at_end old_block
-      ptr
+      value
     end
 
     def llvm_self
