@@ -133,4 +133,16 @@ describe 'Type inference: def' do
     mod = infer_type input
     input.then.target.type.should eq(mod.int)
   end
+
+  pending "types as nilable if used in another outer scope where defined" do
+    input = parse 'if false; a = 1; end; if true; a; end'
+    mod = infer_type input
+    input[1].then.type.should eq([mod.int, mod.nil].union)
+  end
+
+  pending "types as nilable if used in another outer scope where defined" do
+    input = parse 'if false; a = 1; end; if true; if true; a; end; end'
+    mod = infer_type input
+    input[1].then.then.type.should eq([mod.int, mod.nil].union)
+  end
 end
