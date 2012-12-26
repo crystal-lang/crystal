@@ -75,9 +75,9 @@ module Crystal
 
   class Def
     def is_restriction_of?(other)
-      self_types = args.map(&:type)
-      other_types = other.args.map(&:type)
-      self_types.zip(other_types).each do |self_type, other_type|
+      args.zip(other.args).each do |self_arg, other_arg|
+        self_type = self_arg.type
+        other_type = other_arg.type
         return false if self_type != nil && other_type == nil
         if self_type != nil && other_type != nil
           return false unless self_type.is_restriction_of?(other_type)
@@ -107,12 +107,11 @@ module Crystal
       error_matches = defs.values if defs
       if defs
         if args
-          types = args.map(&:type)
           matches = defs.select do |def_types_and_yields, a_def|
             def_types, def_yields = def_types_and_yields
             next false if def_yields != yields
-            next false if def_types.length != types.length
-            types.zip(def_types).all? { |type, def_type| !def_type || def_type.is_restriction_of?(type) }
+            next false if def_types.length != args.length
+            args.zip(def_types).all? { |arg, def_type| !def_type || def_type.is_restriction_of?(arg.type) }
           end
           return matches.first[1] if matches.length == 1
 
