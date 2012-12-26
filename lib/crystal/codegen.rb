@@ -155,11 +155,8 @@ module Crystal
     end
 
     visitor.finish
-
     visitor.llvm_mod.dump if Crystal::DUMP_LLVM
-
     visitor.llvm_mod.verify!
-
     visitor.llvm_mod
   end
 
@@ -207,9 +204,9 @@ module Crystal
     def initialize(mod, node, return_type, llvm_mod = nil)
       @mod = mod
       @node = node
-      @return_type = return_type
+      @return_type = return_type.union? ? nil : return_type
       @llvm_mod = llvm_mod || LLVM::Module.new("Crystal")
-      @fun = @llvm_mod.functions.add("crystal_main", [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], return_type.llvm_type)
+      @fun = @llvm_mod.functions.add("crystal_main", [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], @return_type ? @return_type.llvm_type : LLVM.Void)
 
       @argc = @fun.params[0]
       @argc.name = 'argc'
@@ -246,19 +243,9 @@ module Crystal
     end
 
     def finish
-      if @return_type.union?
-        @return_union = alloca(@return_type.llvm_type, 'return')
-        if @node.type != @return_type
-          assign_to_union(@return_union, @return_type, @node.type, @last)
-          @last = @builder.load @return_union
-        else
-          @last = @builder.load @last
-        end
-      end
-
       br_block_chain @alloca_block, @const_block_entry
       br_block_chain @const_block, @entry_block
-      @builder.ret(@last)
+      @builder.ret(@return_type ? @last : nil)
     end
 
     def visit_nil_literal(node)
