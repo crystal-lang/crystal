@@ -52,6 +52,11 @@ module Crystal
       self.then && self.then.returns? &&
       self.else && self.else.returns?
     end
+
+    def yields?
+      self.then && self.then.yields? &&
+      self.else && self.else.yields?
+    end
   end
 
   class Case
