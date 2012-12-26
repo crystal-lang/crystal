@@ -34,6 +34,12 @@ module Crystal
     end
   end
 
+  class Case
+    def returns?
+      expanded.returns?
+    end
+  end
+
   class Arg
     def llvm_type
       llvm_type = type.llvm_type

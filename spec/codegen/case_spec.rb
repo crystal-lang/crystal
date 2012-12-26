@@ -12,4 +12,21 @@ describe 'Code gen: case' do
   it "codegens case with else" do
     run('require "object"; case 1; when 0; 2; else; 3; end').to_i.should eq(3)
   end
+
+  it "codegens case that always returns" do
+    run(%q(
+      require "object"
+      def foo
+        if true
+          case 0
+          when 1; return 2
+          else return 3
+          end
+        end
+        4
+      end
+
+      foo
+    )).to_i.should eq(3)
+  end
 end
