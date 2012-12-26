@@ -237,6 +237,8 @@ module Crystal
       symbol_table = @llvm_mod.globals.add(LLVM::Array(mod.string.llvm_type, symbol_table_values.count), "symbol_table")
       symbol_table.linkage = :internal
       symbol_table.initializer = LLVM::ConstantArray.const(mod.string.llvm_type, symbol_table_values)
+
+      @union_maps = {}
     end
 
     def main
@@ -1040,25 +1042,18 @@ module Crystal
         value_index = @builder.load value_index_ptr
         value_value = @builder.load value_value_ptr
 
-        old_block = @builder.insert_block
-        type_blocks = new_blocks *type.types.map(&:name)
-        exit_block = new_block 'exit_assign'
-        switch_table = {}
-        phi_table = {}
-
-        type.types.each_with_index do |value_type, value_type_index|
-          block = type_blocks[value_type_index]
-          @builder.position_at_end block
-          switch_table[LLVM::Int(value_type_index)] = block unless value_type_index == 0
-          phi_table[block] = LLVM::Int(union_type.index_of_type(value_type))
-          @builder.br exit_block
+        unless union_map = @union_maps[[type, union_type]]
+          union_map = @llvm_mod.globals.add(LLVM::Array(LLVM::Int, type.types.count), "union_map")
+          union_map.linkage = :private
+          union_map.global_constant = 1
+          union_map_values = type.types.map.with_index do |value_type, value_type_index|
+            LLVM::Int(union_type.index_of_type(value_type))
+          end
+          union_map.initializer = LLVM::ConstantArray.const(LLVM::Int, union_map_values)
+          @union_maps[[type, union_type]] = union_map
         end
 
-        @builder.position_at_end old_block
-        @builder.switch value_index, type_blocks[0], switch_table
-
-        @builder.position_at_end exit_block
-        index = @builder.phi LLVM::Int, phi_table
+        index = @builder.load(@builder.gep(union_map, [LLVM::Int(0), value_index]))
         @builder.store LLVM::Int(index), index_ptr
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_value_type)
