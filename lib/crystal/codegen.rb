@@ -9,6 +9,22 @@ module Crystal
     def llvm_type
       type.llvm_type
     end
+
+    def returns?
+      false
+    end
+  end
+
+  class Return
+    def returns?
+      true
+    end
+  end
+
+  class Expressions
+    def returns?
+      any? &:returns?
+    end
   end
 
   class Arg
@@ -87,7 +103,7 @@ module Crystal
 
     visitor.llvm_mod.dump if Crystal::DUMP_LLVM
 
-    visitor.llvm_mod.verify
+    visitor.llvm_mod.verify!
 
     visitor.llvm_mod
   end
@@ -440,7 +456,7 @@ module Crystal
           @last = llvm_nil
         end
       end
-      then_value = @last
+      then_value = @last unless node.then && node.then.returns?
       codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last) if is_union
       @builder.br exit_block
 
@@ -456,7 +472,7 @@ module Crystal
           @last = llvm_nil
         end
       end
-      else_value = @last
+      else_value = @last unless node.else && node.else.returns?
       codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union
       @builder.br exit_block
 
@@ -465,7 +481,13 @@ module Crystal
       if is_union
         @last = union_ptr
       elsif node.type
-        @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
+        if then_value && else_value
+          @last = @builder.phi node.llvm_type, {then_block => then_value, else_block => else_value}
+        elsif then_value
+          @last = then_value
+        elsif else_value
+          @last = else_value
+        end
       else
         @last = nil
       end
@@ -622,10 +644,10 @@ module Crystal
         @return_block = new_block 'return'
         @return_block_table = {}
         node.target_def.body.accept self
-        @return_block_table[@builder.insert_block] = @last if node.type
+        @return_block_table[@builder.insert_block] = @last if node.type && node.type != @mod.nil
         @builder.br @return_block
         @builder.position_at_end @return_block
-        if node.type
+        if node.type && node.type != @mod.nil
           phi_type = node.type.llvm_type
           phi_type = LLVM::Pointer(phi_type) if node.type.union?
           @last = @builder.phi phi_type, @return_block_table

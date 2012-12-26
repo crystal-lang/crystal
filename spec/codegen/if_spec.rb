@@ -52,4 +52,8 @@ describe 'Code gen: if' do
   it 'codegens if of nilable type in else' do
     run('if true; "foo"; else; nil; end').to_string.should eq("foo")
   end
+
+  it "codegens if with return and no else" do
+    run('def foo; if true; return 1; end; 2; end; foo').to_i.should eq(1)
+  end
 end
