@@ -29,6 +29,17 @@ module Crystal
     def yields?
       true
     end
+
+    def returns?
+      returns = false
+      block_context = Thread.current[:block_context]
+      if block_context.any?
+        context = block_context.pop
+        returns = context[:block].returns?
+        block_context.push context
+      end
+      returns
+    end
   end
 
   class Expressions
@@ -212,7 +223,7 @@ module Crystal
       @const_block_entry = @const_block
 
       @vars = {}
-      @block_context = []
+      Thread.current[:block_context] = @block_context = []
       @type = @mod
 
       @symbols = {}
