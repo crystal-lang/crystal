@@ -56,4 +56,25 @@ describe 'Code gen: if' do
   it "codegens if with return and no else" do
     run('def foo; if true; return 1; end; 2; end; foo').to_i.should eq(1)
   end
+
+  it "codegens if with return in both branches" do
+    run('def foo; if true; return 1; else; return 2; end; end; foo').to_i.should eq(1)
+  end
+
+  it "codegen if with nested if that returns" do
+    run(%q(
+      def foo
+        if true
+          if true
+            return 1
+          else
+            return 2
+          end
+        end
+        0
+      end
+
+      foo
+    )).to_i.should eq(1)
+  end
 end

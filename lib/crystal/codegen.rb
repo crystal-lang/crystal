@@ -27,6 +27,13 @@ module Crystal
     end
   end
 
+  class If
+    def returns?
+      self.then && self.then.returns? &&
+      self.else && self.else.returns?
+    end
+  end
+
   class Arg
     def llvm_type
       llvm_type = type.llvm_type
@@ -122,6 +129,12 @@ module Crystal
     def br(*args)
       return if @end
       @builder.br *args
+      @end = true
+    end
+
+    def unreachable
+      return if @end
+      @builder.unreachable
       @end = true
     end
 
@@ -435,8 +448,8 @@ module Crystal
     end
 
     def visit_if(node)
-      is_union = node.type.union?
-      nilable = node.type.nilable?
+      is_union = node.type && node.type.union?
+      nilable = node.type && node.type.nilable?
 
       then_block, else_block, exit_block = new_blocks "then", "else", "exit"
       union_ptr = alloca node.llvm_type if is_union
@@ -489,6 +502,9 @@ module Crystal
           @last = else_value
         end
       else
+        if node.then && node.then.returns? && node.else && node.else.returns?
+          @builder.unreachable
+        end
         @last = nil
       end
 
