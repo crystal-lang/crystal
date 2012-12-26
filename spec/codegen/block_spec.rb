@@ -250,4 +250,23 @@ describe 'Code gen: block' do
       bar {}
     )).to_i.should eq(1)
   end
+
+  it "return from block that always returns from function that always yields inside if block" do
+    run(%q(
+      def bar
+        yield
+        2
+      end
+
+      def foo
+        if true
+          bar { return 1 }
+        else
+          0
+        end
+      end
+
+      foo
+    )).to_i.should eq(1)
+  end
 end

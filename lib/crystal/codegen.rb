@@ -13,6 +13,10 @@ module Crystal
     def returns?
       false
     end
+
+    def yields?
+      false
+    end
   end
 
   class Return
@@ -21,9 +25,25 @@ module Crystal
     end
   end
 
+  class Yield
+    def yields?
+      true
+    end
+  end
+
   class Expressions
     def returns?
       any? &:returns?
+    end
+
+    def yields?
+      any? &:yields?
+    end
+  end
+
+  class Block
+    def returns?
+      body.returns?
     end
   end
 
@@ -37,6 +57,12 @@ module Crystal
   class Case
     def returns?
       expanded.returns?
+    end
+  end
+
+  class Call
+    def returns?
+      block && block.returns? && target_def.body.yields?
     end
   end
 
@@ -669,10 +695,14 @@ module Crystal
         @return_block_table[@builder.insert_block] = @last if node.type && node.type != @mod.nil
         @builder.br @return_block
         @builder.position_at_end @return_block
-        if node.type && node.type != @mod.nil
-          phi_type = node.type.llvm_type
-          phi_type = LLVM::Pointer(phi_type) if node.type.union?
-          @last = @builder.phi phi_type, @return_block_table
+        if node.returns?
+          @builder.unreachable
+        else
+          if node.type && node.type != @mod.nil
+            phi_type = node.type.llvm_type
+            phi_type = LLVM::Pointer(phi_type) if node.type.union?
+            @last = @builder.phi phi_type, @return_block_table
+          end
         end
 
         old_context = @block_context.pop
