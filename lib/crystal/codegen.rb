@@ -890,16 +890,27 @@ module Crystal
 
       codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block) do |label|
         call = dispatch.calls[arg_types.map(&:object_id)]
-        codegen_call(call.target_def, (node.obj && node.obj.type.passed_as_self? ? arg_types[0] : nil), arg_values)
+        old_vars = @vars
+        @vars = old_vars.clone
+        arg_values_base_index = 0
+        if node.obj && node.obj.type.passed_as_self?
+          @vars['self'] = { ptr: arg_values[0], type: arg_types[0], is_arg: true }
+          arg_values_base_index = 1
+        end
+        0.upto(call.args.length - 1) do |i|
+          @vars["%arg#{i}"] = { ptr: arg_values[i + arg_values_base_index], type: arg_types[i + arg_values_base_index], is_arg: true }
+        end
+        call.accept self
+        @vars = old_vars
 
         if dispatch.type.union?
           phi_value = alloca dispatch.llvm_type
           assign_to_union(phi_value, dispatch.type, call.type, @last)
           phi_table[@builder.insert_block] = phi_value
         elsif dispatch.type.nilable? && @last.type.kind == :integer
-          phi_table[label] = @builder.int2ptr @last, dispatch.llvm_type
+          phi_table[@builder.insert_block] = @builder.int2ptr @last, dispatch.llvm_type
         else
-          phi_table[label] = @last
+          phi_table[@builder.insert_block] = @last
         end
 
         @builder.br exit_block

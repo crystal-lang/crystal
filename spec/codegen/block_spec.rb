@@ -286,4 +286,41 @@ describe 'Code gen: block' do
       foo
     )).to_i.should eq(1)
   end
+
+  it "call block from dispatch" do
+    run(%q(
+      def bar(y)
+        yield y
+      end
+
+      def foo
+        x = 1.1
+        x = 1
+        bar(x) { |z| z }
+      end
+
+      foo.to_i
+    )).to_i.should eq(1)
+  end
+
+  it "call block from dispatch and use local vars" do
+    run(%q(
+      def bar(y)
+        yield y
+      end
+
+      def foo
+        total = 0
+        x = 1.5
+        bar(x) { |z| total += z }
+        x = 1
+        bar(x) { |z| total += z }
+        x = 1.5
+        bar(x) { |z| total += z }
+        total
+      end
+
+      foo.to_i
+    )).to_i.should eq(4)
+  end
 end

@@ -254,7 +254,9 @@ module Crystal
 
       target_def.simplify
       if target_def.calls.length == 1
-        self.target_def = target_def.calls.values.first.target_def
+        call = target_def.calls.values.first
+        self.target_def = call.target_def
+        self.block = call.block
       end
     end
 
@@ -460,13 +462,14 @@ module Crystal
       @calls = []
       for_each_obj do |obj_type|
         for_each_args do |arg_types|
-          subcall = Call.new(obj_type ? Var.new('self', obj_type) : nil, name, arg_types.map { |arg_type| Var.new(nil, arg_type) })
+          subcall = Call.new(obj_type ? Var.new('self', obj_type) : nil, name, arg_types.map.with_index { |arg_type, i| Var.new("%arg#{i}", arg_type) })
           subcall.mod = call.mod
           subcall.parent_visitor = call.parent_visitor
           subcall.scope = call.scope
           subcall.location = call.location
           subcall.name_column_number = call.name_column_number
-          subcall.block = call.block
+          subcall.block = call.block.clone
+          subcall.block.accept call.parent_visitor if subcall.block
           self.bind_to subcall
           subcall.recalculate
           @calls << subcall
