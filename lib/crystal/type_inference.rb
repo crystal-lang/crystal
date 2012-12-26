@@ -519,11 +519,12 @@ module Crystal
     def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
       @mod = mod
       @vars = vars
+      @vars_nest = {}
       @scope = scope
       @parent = parent
       @call = call
       @types = [mod]
-      @logic_count = 0
+      @nest_count = 0
     end
 
     def visit_nil_literal(node)
@@ -783,7 +784,7 @@ module Crystal
         node.creates_new_type = var.creates_new_type ||= node.value.creates_new_type
         false
       when InstanceVar
-        var = lookup_instance_var node.target, (@logic_count > 0)
+        var = lookup_instance_var node.target, (@nest_count > 0)
 
         node.value.accept self
 
@@ -835,9 +836,9 @@ module Crystal
       node.cond = Call.new(node.cond, 'to_b')
       node.cond.accept self
 
-      @logic_count += 1
+      @nest_count += 1
       node.body.accept self if node.body
-      @logic_count -= 1
+      @nest_count -= 1
 
       false
     end
@@ -850,10 +851,10 @@ module Crystal
       node.cond = Call.new(node.cond, 'to_b')
       node.cond.accept self
 
-      @logic_count += 1
+      @nest_count += 1
       node.then.accept self if node.then
       node.else.accept self if node.else
-      @logic_count -= 1
+      @nest_count -= 1
 
       false
     end
@@ -1174,9 +1175,16 @@ module Crystal
 
     def lookup_var(name)
       var = @vars[name]
-      unless var
+      if var
+        var_nest_count = @vars_nest[name]
+        if var_nest_count && var_nest_count > @nest_count
+          var.bind_to mod.nil_var
+          @vars_nest.delete name
+        end
+      else
         var = Var.new name
         @vars[name] = var
+        @vars_nest[name] = @nest_count
       end
       var
     end
