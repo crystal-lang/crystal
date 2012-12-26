@@ -31,7 +31,7 @@ module Crystal
     end
 
     def is_restriction_of?(type)
-      type && (full_name == type.full_name || type.parents.any? { |parent| is_restriction_of?(parent) })
+      type && (equal?(type) || full_name == type.full_name || type.parents.any? { |parent| is_restriction_of?(parent) })
     end
 
     def self.merge(*types)
@@ -78,7 +78,7 @@ module Crystal
       self_types = args.map(&:type)
       other_types = other.args.map(&:type)
       self_types.zip(other_types).each do |self_type, other_type|
-        return false if self_type == nil && other_type != nil
+        return false if self_type != nil && other_type == nil
         if self_type != nil && other_type != nil
           return false unless self_type.is_restriction_of?(other_type)
         end
@@ -120,7 +120,7 @@ module Crystal
 
           matches = matches.values
           minimals = matches.select do |match|
-            !matches.any? { |m| m != match && m.is_restriction_of?(match) }
+            matches.all? { |m| m == match || m.is_restriction_of?(match) }
           end
           return minimals[0] if minimals.length == 1
 

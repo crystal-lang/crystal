@@ -72,4 +72,44 @@ describe 'Type inference: def overload' do
       foo(A.new)
     )) { int }
   end
+
+  it "types a call with overload matches hierarchy 2" do
+    assert_type(%Q(
+      class A
+      end
+
+      class B < A
+      end
+
+      def foo(x : A)
+        1
+      end
+
+      def foo(x : B)
+        1.5
+      end
+
+      foo(B.new)
+    )) { float }
+  end
+
+  it "types a call with overload matches hierarchy 3" do
+    assert_type(%Q(
+      class A
+      end
+
+      class B < A
+      end
+
+      def foo(x : A)
+        1
+      end
+
+      def foo(x : B)
+        1.5
+      end
+
+      foo(A.new)
+    )) { int }
+  end
 end
