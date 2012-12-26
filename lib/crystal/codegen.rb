@@ -43,7 +43,7 @@ module Crystal
 
   class Block
     def returns?
-      body.returns?
+      body && body.returns?
     end
   end
 
