@@ -226,6 +226,7 @@ module Crystal
       Thread.current[:block_context] = @block_context = []
       @type = @mod
 
+      @strings = {}
       @symbols = {}
       symbol_table_values = []
       mod.symbols.to_a.sort.each_with_index do |sym, index|
@@ -287,12 +288,15 @@ module Crystal
     end
 
     def build_string_constant(str, name = "str")
-      global = @llvm_mod.globals.add(LLVM.Array(LLVM::Int8, str.length + 5), name)
-      global.linkage = :private
-      global.global_constant = 1
-      bytes = "#{[str.length].pack("l")}#{str}\0".chars.to_a.map { |c| LLVM::Int8.from_i(c.ord) }
-      global.initializer = LLVM::ConstantArray.const(LLVM::Int8, bytes)
-      @builder.bit_cast(global, @mod.string.llvm_type)
+      unless string = @strings[str]
+        global = @llvm_mod.globals.add(LLVM.Array(LLVM::Int8, str.length + 5), name)
+        global.linkage = :private
+        global.global_constant = 1
+        bytes = "#{[str.length].pack("l")}#{str}\0".chars.to_a.map { |c| LLVM::Int8.from_i(c.ord) }
+        global.initializer = LLVM::ConstantArray.const(LLVM::Int8, bytes)
+        @strings[str] = string = @builder.bit_cast(global, @mod.string.llvm_type)
+      end
+      string
     end
 
     def visit_symbol_literal(node)
