@@ -16,4 +16,12 @@ describe 'Codegen: while' do
   it "codegens while as modifier" do
     run('a = 1; begin; a += 1; end while false; a').to_i.should eq(2)
   end
+
+  it "break without value" do
+    run('a = 0; while a < 10; a += 1; break; end; a').to_i.should eq(1)
+  end
+
+  it "conditional break without value" do
+    run('a = 0; while a < 10; a += 1; break if a > 5; end; a').to_i.should eq(6)
+  end
 end

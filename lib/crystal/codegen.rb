@@ -82,6 +82,12 @@ module Crystal
     end
   end
 
+  class Break
+    def returns?
+      true
+    end
+  end
+
   class Arg
     def llvm_type
       llvm_type = type.llvm_type
@@ -563,7 +569,10 @@ module Crystal
       @builder.cond(@last, body_block, exit_block)
 
       @builder.position_at_end body_block
+      old_while_exit_block = @while_exit_block
+      @while_exit_block = exit_block
       node.body.accept self if node.body
+      @while_exit_block = old_while_exit_block
       @builder.br while_block
 
       @builder.position_at_end exit_block
@@ -571,6 +580,10 @@ module Crystal
       @last = llvm_nil
 
       false
+    end
+
+    def visit_break(node)
+      @builder.br @while_exit_block
     end
 
     def visit_def(node)
