@@ -91,4 +91,15 @@ describe 'Block inference' do
     )
     mod = infer_type input
   end
+
+  it "break from block without value" do
+    input = parse %q(
+      def foo; yield; end
+
+      foo do
+        break
+      end
+    )
+    mod = infer_type input
+  end
 end

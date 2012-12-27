@@ -517,6 +517,7 @@ module Crystal
     attr_accessor :mod
     attr_accessor :paths
     attr_accessor :call
+    attr_accessor :block
     @@regexps = {}
 
     def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
@@ -854,11 +855,11 @@ module Crystal
     end
 
     def end_visit_break(node)
-      while_node = @while_stack.last
-      node.raise "Invalid break" unless while_node
+      container = @while_stack.last || block
+      node.raise "Invalid break" unless container
 
       if node.exps.length > 0
-        while_node.bind_to node.exps[0]
+        container.bind_to node.exps[0]
       end
     end
 
@@ -1013,6 +1014,7 @@ module Crystal
         end
 
         block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call)
+        block_visitor.block = node
         node.body.accept block_visitor
       end
       false
