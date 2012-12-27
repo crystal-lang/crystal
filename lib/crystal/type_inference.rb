@@ -528,6 +528,7 @@ module Crystal
       @call = call
       @types = [mod]
       @nest_count = 0
+      @while_stack = []
     end
 
     def visit_nil_literal(node)
@@ -840,14 +841,25 @@ module Crystal
       node.cond.accept self
 
       @nest_count += 1
+      @while_stack.push node
       node.body.accept self if node.body
+      @while_stack.pop
       @nest_count -= 1
 
       false
     end
 
     def end_visit_while(node)
-      node.type = mod.nil
+      node.bind_to mod.nil_var
+    end
+
+    def end_visit_break(node)
+      while_node = @while_stack.last
+      node.raise "Invalid break" unless while_node
+
+      if node.exps.length > 0
+        while_node.bind_to node.exps[0]
+      end
     end
 
     def visit_if(node)

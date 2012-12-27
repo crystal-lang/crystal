@@ -163,4 +163,11 @@ describe 'Type inference: errors' do
       parse %Q(a = 1; a.ptr {})
     }.should raise_error(Crystal::SyntaxException, regex("'ptr' can't receive a block"))
   end
+
+  it "reports break cannot be used outside a while" do
+    nodes = parse 'break'
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("Invalid break"))
+  end
 end
