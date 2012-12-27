@@ -555,7 +555,7 @@ module Crystal
     def visit_while(node)
       while_block, body_block, exit_block = new_blocks "while", "body", "exit"
 
-      @builder.br while_block
+      @builder.br node.run_once ? body_block : while_block
 
       @builder.position_at_end while_block
       node.cond.accept self

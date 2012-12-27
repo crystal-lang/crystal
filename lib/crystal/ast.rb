@@ -738,12 +738,14 @@ module Crystal
   class While < ASTNode
     attr_accessor :cond
     attr_accessor :body
+    attr_accessor :run_once
 
-    def initialize(cond, body = nil)
+    def initialize(cond, body = nil, run_once = false)
       @cond = cond
       @cond.parent = self
       @body = Expressions.from body
       @body.parent = self if @body
+      @run_once = run_once
     end
 
     def accept_children(visitor)
@@ -752,7 +754,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(While) && other.cond == cond && other.body == body
+      other.is_a?(While) && other.cond == cond && other.body == body && other.run_once == run_once
     end
 
     def clone_from(other, &block)

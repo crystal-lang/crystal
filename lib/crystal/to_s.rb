@@ -328,12 +328,25 @@ module Crystal
     end
 
     def visit_while(node)
-      @str << "while "
-      node.cond.accept self
-      @str << "\n"
-      accept_with_indent(node.body)
-      append_indent
-      @str << "end"
+      if node.run_once
+        if node.body.is_a?(Expressions)
+          @str << "begin\n"
+          accept_with_indent(node.body)
+          append_indent
+          @str << "end while "
+        else
+          node.body.accept self
+          @str << " while "
+        end
+        node.cond.accept self
+      else
+        @str << "while "
+        node.cond.accept self
+        @str << "\n"
+        accept_with_indent(node.body)
+        append_indent
+        @str << "end"
+      end
       false
     end
 

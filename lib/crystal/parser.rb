@@ -55,7 +55,7 @@ module Crystal
           when :while
             next_token_skip_statement_end
             exp = parse_op_assign
-            atomic = While.new(exp, atomic)
+            atomic = While.new(exp, atomic, true)
           else
             break
           end
