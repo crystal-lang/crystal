@@ -24,12 +24,20 @@ class Object
     !(self == other)
   end
 
-  def ==(other : self)
-    object_id == other.object_id
+  def ==(other : Value)
+    false
   end
 
   def ==(other)
-    false
+    same?(other)
+  end
+
+  def same?(other)
+    Object.same?(self, other)
+  end
+
+  def self.same?(object1, object2)
+    object1.object_id == object2.object_id
   end
 
   def ===(other)

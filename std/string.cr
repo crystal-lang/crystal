@@ -43,7 +43,7 @@ class String
   end
 
   def <=>(other : self)
-    C.strcmp(@c.ptr, other)
+    Object.same?(self, other) ? 0 : C.strcmp(@c.ptr, other)
   end
 
   def =~(regex)

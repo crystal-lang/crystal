@@ -631,5 +631,9 @@ module Crystal
     def self.full_name
       "self"
     end
+
+    def self.parents
+      []
+    end
   end
 end

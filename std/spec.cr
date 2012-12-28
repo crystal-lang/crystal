@@ -31,7 +31,17 @@ end
 
 class Object
   def should(expectation)
-    expectation.match self
+    unless expectation.match self
+      $spec_results << "In #{$spec_context.join(" ")}, #{expectation.failure_message}"
+      $spec_success = false
+    end
+  end
+
+  def should_not(expectation)
+    if expectation.match self
+      $spec_results << "In #{$spec_context.join(" ")}, #{expectation.negative_failure_message}"
+      $spec_success = false
+    end
   end
 end
 
@@ -41,10 +51,16 @@ class EqualExpectation
   end
 
   def match(value)
-    unless value == @value
-      $spec_results << "In #{$spec_context.join(" ")}, expected #{@value.inspect} but got #{value.inspect}"
-      $spec_success = false
-    end
+    @target = value
+    value == @value
+  end
+
+  def failure_message
+    "expected #{@value.inspect} but got #{@target.inspect}"
+  end
+
+  def negative_failure_message
+    "didn't expect #{@value.inspect} but got #{@target.inspect}"
   end
 end
 
