@@ -2,26 +2,23 @@ require 'spec_helper'
 
 describe 'Block inference' do
   it "infer type of empty block body" do
-    input = parse %q(
+    assert_type(%q(
       def foo; yield; end
 
       foo do
       end
-    )
-    mod = infer_type input
+    )) { self.nil }
   end
 
   it "infer type of yield with empty block" do
-    input = parse %q(
+    assert_type(%q(
       def foo
         yield
       end
 
       foo do
       end
-    )
-    mod = infer_type input
-    input.last.type.should eq(mod.nil)
+    )) { self.nil }
   end
 
   it "infer type of block body" do
@@ -81,25 +78,32 @@ describe 'Block inference' do
   end
 
   it "infer type with union" do
-    input = parse %q(
+    assert_type(%q(
       require "int"
       require "pointer"
       require "array"
       a = [1]
       a = [1.1]
       a.each { |x| x }
-    )
-    mod = infer_type input
+    )) { [array_of(int), array_of(float)].union }
   end
 
   it "break from block without value" do
-    input = parse %q(
+    assert_type(%q(
       def foo; yield; end
 
       foo do
         break
       end
-    )
-    mod = infer_type input
+    )) { self.nil }
+  end
+
+  it "break without value has nil type" do
+    assert_type(%q(
+      def foo; yield; 1; end
+      foo do
+        break if false
+      end
+    )) { [self.nil, int].union }
   end
 end

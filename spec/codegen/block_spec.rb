@@ -251,6 +251,17 @@ describe 'Code gen: block' do
     )).to_i.should eq(1)
   end
 
+  it "" do
+    run(%q(
+      def foo
+        yield
+        true ? return 1 : return 1.1
+      end
+
+      foo {}.to_i
+    )).to_i.should eq(1)
+  end
+
   it "return from block that always returns from function that always yields inside if block" do
     run(%q(
       def bar
@@ -322,5 +333,107 @@ describe 'Code gen: block' do
 
       foo.to_i
     )).to_i.should eq(4)
+  end
+
+  it "break without value returns nil" do
+    run(%q(
+      require "nil"
+
+      def foo
+        yield
+        1
+      end
+
+      x = foo do
+        break if true
+      end
+
+      x.nil?
+    )).to_b.should be_true
+  end
+
+  it "break block with yielder inside while" do
+    run(%q(
+      require "int"
+      a = 0
+      10.times do
+        a += 1
+        break if a > 5
+      end
+      a
+    )).to_i.should eq(6)
+  end
+
+  it "break from block returns from yielder" do
+    run(%q(
+      def foo
+        yield
+        yield
+      end
+
+      a = 0
+      foo { a += 1; break }
+      a
+    )).to_i.should eq(1)
+  end
+
+  it "break from block with value" do
+    run(%q(
+      require "nil"
+
+      def foo
+        while true
+          yield
+          a = 3
+        end
+      end
+
+      foo do
+        break 1
+      end.to_i
+    )).to_i.should eq(1)
+  end
+
+  it "break from block with value" do
+    run(%q(
+      require "nil"
+
+      def foo
+        while true
+          yield
+          a = 3
+        end
+      end
+
+      def bar
+        foo do
+          return 1
+        end
+      end
+
+      bar.to_i
+    )).to_i.should eq(1)
+  end
+
+  it "doesn't codegen after while that always yields and breaks" do
+    run(%q(
+      def foo
+        while true
+          yield
+        end
+        1
+      end
+
+      foo do
+        break 2
+      end
+    )).to_i.should eq(2)
+  end
+
+  it "break from block with value" do
+    run(%q(
+      require "int"
+      10.times { break 20 }
+    )).to_i.should eq(20)
   end
 end

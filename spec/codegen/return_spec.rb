@@ -16,4 +16,8 @@ describe 'Code gen: return' do
   it "return from function with union type" do
     run('def foo; return 1 if true; 1.1; end; foo.to_i').to_i.should eq(1)
   end
+
+  it "return union" do
+    run('def foo; true ? return 1 : return 1.1; end; foo.to_i').to_i.should eq(1)
+  end
 end

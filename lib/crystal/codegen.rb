@@ -17,6 +17,10 @@ module Crystal
     def yields?
       false
     end
+
+    def breaks?
+      false
+    end
   end
 
   class Return
@@ -29,16 +33,11 @@ module Crystal
     def yields?
       true
     end
+  end
 
-    def returns?
-      returns = false
-      block_context = Thread.current[:block_context]
-      if block_context.any?
-        context = block_context.pop
-        returns = context[:block].returns?
-        block_context.push context
-      end
-      returns
+  class Break
+    def breaks?
+      true
     end
   end
 
@@ -50,11 +49,23 @@ module Crystal
     def yields?
       any? &:yields?
     end
+
+    def breaks?
+      any? &:breaks?
+    end
   end
 
   class Block
     def returns?
       body && body.returns?
+    end
+
+    def breaks?
+      body && body.breaks?
+    end
+
+    def yields?
+      body && body.yields?
     end
   end
 
@@ -68,23 +79,34 @@ module Crystal
       self.then && self.then.yields? &&
       self.else && self.else.yields?
     end
+
+    def breaks?
+      self.then && self.then.breaks? &&
+      self.else && self.else.breaks?
+    end
   end
 
   class Case
     def returns?
       expanded.returns?
     end
+
+    def yields?
+      expanded.yields?
+    end
+
+    def breaks?
+      expanded.breaks?
+    end
   end
 
   class Call
     def returns?
-      block && block.returns? && target_def.body.yields?
+      block && block.returns? && target_def.body && target_def.body.yields?
     end
-  end
 
-  class Break
-    def returns?
-      true
+    def yields?
+      block && block.yields? && target_def.body && target_def.body.yields?
     end
   end
 
@@ -189,8 +211,8 @@ module Crystal
       @end = true
     end
 
-    def position_at_end(*args)
-      @builder.position_at_end *args
+    def position_at_end(block)
+      @builder.position_at_end block
       @end = false
     end
 
@@ -226,7 +248,7 @@ module Crystal
       @const_block_entry = @const_block
 
       @vars = {}
-      Thread.current[:block_context] = @block_context = []
+      @block_context = []
       @type = @mod
 
       @strings = {}
@@ -315,13 +337,17 @@ module Crystal
     def visit_expressions(node)
       node.expressions.each do |exp|
         exp.accept self
-        break if exp.is_a?(Return)
+        break if exp.returns? || exp.breaks? || (exp.yields? && (block_returns? || block_breaks?))
       end
       false
     end
 
     def end_visit_return(node)
       if @return_block
+        if @return_type.union?
+          assign_to_union(@return_union, @return_type, node.exps[0].type, @last)
+          @last = @builder.load @return_union
+        end
         @return_block_table[@builder.insert_block] = @last
         @builder.br @return_block
       elsif @return_type.union?
@@ -425,7 +451,7 @@ module Crystal
     def visit_var(node)
       var = @vars[node.name]
       @last = var[:ptr]
-      @last = @builder.load @last, node.name unless var[:is_arg] || var[:type].union?
+      @last = @builder.load(@last, node.name) unless (var[:is_arg] || var[:type].union?)
     end
 
     def visit_global(node)
@@ -516,7 +542,7 @@ module Crystal
           @last = llvm_nil
         end
       end
-      then_value = @last unless node.then && node.then.returns?
+      then_value = @last unless node.then && (node.then.returns? || node.then.breaks? || (node.then.yields? && block_returns?))
       codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last) if is_union
       @builder.br exit_block
 
@@ -532,7 +558,7 @@ module Crystal
           @last = llvm_nil
         end
       end
-      else_value = @last unless node.else && node.else.returns?
+      else_value = @last unless node.else && (node.else.returns? || node.else.breaks? || (node.then.yields? && block_returns?))
       codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union
       @builder.br exit_block
 
@@ -549,7 +575,7 @@ module Crystal
           @last = else_value
         end
       else
-        if node.then && node.then.returns? && node.else && node.else.returns?
+        if node.then && !then_value && node.else && !else_value
           @builder.unreachable
         end
         @last = nil
@@ -576,14 +602,36 @@ module Crystal
       @builder.br while_block
 
       @builder.position_at_end exit_block
+      @builder.unreachable if node.body && node.body.yields? && block_breaks?
+      # returns = node.body.returns? || node.body.yields? && block.breaks?
+      # @builder.unreachable if node.body && node.body.returns?
 
       @last = llvm_nil
 
       false
     end
 
-    def visit_break(node)
+    def end_visit_break(node)
+      if @break_type && @break_type.union?
+        if node.exps.length > 0
+          assign_to_union(@break_union, @break_type, node.exps[0].type, @last)
+        else
+          assign_to_union(@break_union, @break_type, @mod.nil, llvm_nil)
+        end
+      else
+        @break_table[@builder.insert_block] = @last if @break_table
+      end
       @builder.br @while_exit_block
+    end
+
+    def block_returns?
+      context = @block_context.last
+      context && context[:block].returns?
+    end
+
+    def block_breaks?
+      context = @block_context.last
+      context && context[:block].breaks?
     end
 
     def visit_def(node)
@@ -694,7 +742,8 @@ module Crystal
 
       if node.block
         @block_context << { block: node.block, vars: @vars, type: @type,
-          return_block: @return_block, return_block_table: @return_block_table }
+          return_block: @return_block, return_block_table: @return_block_table,
+          return_type: @return_type, return_union: @return_union }
         @vars = {}
 
         if owner && owner.passed_as_self?
@@ -713,17 +762,33 @@ module Crystal
 
         @return_block = new_block 'return'
         @return_block_table = {}
+        @return_type = node.type
+        if @return_type.union?
+          @return_union = alloca(node.llvm_type, 'return')
+        else
+          @return_union = nil
+        end
         node.target_def.body.accept self
-        @return_block_table[@builder.insert_block] = @last if node.type && node.type != @mod.nil
+        if node.target_def.body.type && node.target_def.body.type != @mod.nil && !node.block.breaks?
+          if @return_union
+            assign_to_union(@return_union, @return_type, node.target_def.body.type, @last)
+          else
+            @return_block_table[@builder.insert_block] = @last
+          end
+        end
         @builder.br @return_block
         @builder.position_at_end @return_block
         if node.returns?
           @builder.unreachable
         else
           if node.type && node.type != @mod.nil
-            phi_type = node.type.llvm_type
-            phi_type = LLVM::Pointer(phi_type) if node.type.union?
-            @last = @builder.phi phi_type, @return_block_table
+            if @return_union
+              @last = @return_union
+            else
+              phi_type = node.type.llvm_type
+              phi_type = LLVM::Pointer(phi_type) if node.type.union?
+              @last = @builder.phi phi_type, @return_block_table
+            end
           end
         end
 
@@ -732,6 +797,8 @@ module Crystal
         @type = old_context[:type]
         @return_block = old_context[:return_block]
         @return_block_table = old_context[:return_block_table]
+        @return_type = old_context[:return_type]
+        @return_union = old_context[:return_union]
       else
         old_return_block = @return_block
         old_return_block_table = @return_block_table
@@ -772,19 +839,37 @@ module Crystal
         old_type = @type
         old_return_block = @return_block
         old_return_block_table = @return_block_table
+        old_return_type = @return_type
+        old_return_union = @return_union
+        old_while_exit_block = @while_exit_block
+        old_break_table = @break_table
+        old_break_type = @break_type
+        old_break_union = @break_union
+        @while_exit_block = @return_block
+        @break_table = @return_block_table
+        @break_type = @return_type
+        @break_union = @return_union
         @vars = new_vars
         @type = context[:type]
         @return_block = context[:return_block]
         @return_block_table = context[:return_block_table]
+        @return_type = context[:return_type]
+        @return_union = context[:return_union]
 
         block.accept self
 
         @last = llvm_nil unless node.type
 
+        @while_exit_block = old_while_exit_block
+        @break_table = old_break_table
+        @break_type = old_break_type
+        @break_union = old_break_union
         @vars = old_vars
         @type = old_type
         @return_block = old_return_block
         @return_block_table = old_return_block_table
+        @return_type = old_return_type
+        @return_union = old_return_union
         @block_context << context
       end
       false
@@ -858,7 +943,7 @@ module Crystal
           target_def.body.accept self
 
           if @return_type.union?
-            if target_def.body.type != @return_type
+            if target_def.body.type != @return_type && !target_def.body.returns?
               assign_to_union(@return_union, @return_type, target_def.body.type, @last)
               @last = @builder.load @return_union
             else

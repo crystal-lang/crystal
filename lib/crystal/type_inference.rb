@@ -122,6 +122,12 @@ module Crystal
     end
   end
 
+  class Block
+    def break
+      @break ||= Var.new("%break")
+    end
+  end
+
   class Call
     attr_accessor :target_def
     attr_accessor :target_macro
@@ -177,6 +183,7 @@ module Crystal
       end
 
       self.bind_to typed_def
+      self.bind_to(block.break) if block
       self.target_def = typed_def
     end
 
@@ -855,11 +862,13 @@ module Crystal
     end
 
     def end_visit_break(node)
-      container = @while_stack.last || block
+      container = @while_stack.last || (block && block.break)
       node.raise "Invalid break" unless container
 
       if node.exps.length > 0
         container.bind_to node.exps[0]
+      else
+        container.bind_to mod.nil_var
       end
     end
 
