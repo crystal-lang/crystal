@@ -30,7 +30,11 @@ class Array
   end
 
   def count
-    length
+    @length
+  end
+
+  def empty?
+    @length == 0
   end
 
   def [](index)

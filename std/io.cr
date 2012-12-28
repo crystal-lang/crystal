@@ -4,6 +4,10 @@ lib C
   fun puts(str : Char*) : Int
 end
 
+def print(obj)
+  C.putchar obj
+end
+
 def puts(obj = "")
   C.puts obj.to_s
 end
