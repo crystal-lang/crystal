@@ -173,7 +173,7 @@ module Crystal
   end
 
   def build(node, mod, llvm_mod = nil)
-    visitor = CodeGenVisitor.new(mod, node, node ? node.type : mod.void, llvm_mod)
+    visitor = CodeGenVisitor.new(mod, node, node ? node.type : nil, llvm_mod)
     if node
       begin
         node.accept visitor
@@ -233,7 +233,7 @@ module Crystal
     def initialize(mod, node, return_type, llvm_mod = nil)
       @mod = mod
       @node = node
-      @return_type = return_type.union? ? nil : return_type
+      @return_type = return_type && return_type.union? ? nil : return_type
       @llvm_mod = llvm_mod || LLVM::Module.new("Crystal")
       @fun = @llvm_mod.functions.add("crystal_main", [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], @return_type ? @return_type.llvm_type : LLVM.Void)
 

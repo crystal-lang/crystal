@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe 'Code gen: nil' do
+  it "codegens empty program" do
+    run('')
+  end
+
   it "codegens nil? for Object gives false" do
     run('require "object"; Object.new.nil?').to_b.should be_false
   end
