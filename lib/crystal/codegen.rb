@@ -106,7 +106,8 @@ module Crystal
     end
 
     def yields?
-      block && block.yields? && target_def.body && target_def.body.yields?
+      (block && block.yields? && target_def.body && target_def.body.yields?) ||
+        args.any?(&:yields?)
     end
   end
 

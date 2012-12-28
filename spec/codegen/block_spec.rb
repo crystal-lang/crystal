@@ -482,4 +482,19 @@ describe 'Code gen: block' do
       foo { break 2 }
     )).to_i.should eq(2)
   end
+
+  it "codegens call with block with call with arg that yields" do
+    run(%q(
+      def bar
+        yield
+        a = 2
+      end
+
+      def foo
+        bar { 1 + yield }
+      end
+
+      foo { break 3 }
+    )).to_i.should eq(3)
+  end
 end
