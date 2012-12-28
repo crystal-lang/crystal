@@ -787,7 +787,7 @@ module Crystal
         @builder.br @return_block
         @builder.position_at_end @return_block
 
-        if node.returns? || block_returns?
+        if node.returns? || block_returns? || (node.block.yields? && block_breaks?)
           @builder.unreachable
         else
           if node.type && node.type != @mod.nil
