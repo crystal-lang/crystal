@@ -436,4 +436,16 @@ describe 'Code gen: block' do
       10.times { break 20 }
     )).to_i.should eq(20)
   end
+
+  it "doesn't codegen call if arg yields and always breaks" do
+    run(%q(
+      require "nil"
+
+      def foo
+        1 + yield
+      end
+
+      foo { break 2 }.to_i
+    )).to_i.should eq(2)
+  end
 end

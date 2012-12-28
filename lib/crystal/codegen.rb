@@ -732,13 +732,15 @@ module Crystal
       node.args.each_with_index do |arg, i|
         next if arg.type.is_a?(Metaclass)
 
-        if node.target_def.args[i].out && arg.is_a?(Var)
+        if node.target_def && node.target_def.args[i].out && arg.is_a?(Var)
           call_args << @vars[arg.name][:ptr]
         else
           arg.accept self
           call_args << @last
         end
       end
+
+      return if node.args.any?(&:yields?) && block_breaks?
 
       if node.block
         @block_context << { block: node.block, vars: @vars, type: @type,
