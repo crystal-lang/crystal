@@ -4,7 +4,6 @@ module Crystal
   class Program
     def define_primitives
       define_object_primitives
-      define_value_primitives
       define_bool_primitives
       define_char_primitives
       define_int_primitives
@@ -17,7 +16,7 @@ module Crystal
     end
 
     def define_object_primitives
-      no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
+      no_args_primitive(object, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
       no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end
@@ -26,10 +25,6 @@ module Crystal
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
         buffer
       end
-    end
-
-    def define_value_primitives
-      no_args_primitive(value, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
     end
 
     def define_bool_primitives
