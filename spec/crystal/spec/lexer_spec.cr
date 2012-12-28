@@ -1,4 +1,4 @@
-require "../bootstrap/crystal/lexer"
+require "../../../bootstrap/crystal/lexer"
 
 def it_lexes(string, token_type)
   it "lexes #{string}" do
