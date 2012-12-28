@@ -603,8 +603,6 @@ module Crystal
 
       @builder.position_at_end exit_block
       @builder.unreachable if node.body && node.body.yields? && block_breaks?
-      # returns = node.body.returns? || node.body.yields? && block.breaks?
-      # @builder.unreachable if node.body && node.body.returns?
 
       @last = llvm_nil
 
@@ -625,13 +623,21 @@ module Crystal
     end
 
     def block_returns?
-      context = @block_context.last
-      context && context[:block].returns?
+      return false if @block_context.empty?
+
+      context = @block_context.pop
+      breaks = context && (context[:block].returns? || (context[:block].yields? && block_returns?))
+      @block_context.push context
+      breaks
     end
 
     def block_breaks?
-      context = @block_context.last
-      context && context[:block].breaks?
+      return false if @block_context.empty?
+
+      context = @block_context.pop
+      breaks = context && (context[:block].breaks? || (context[:block].yields? && block_breaks?))
+      @block_context.push context
+      breaks
     end
 
     def visit_def(node)
@@ -780,7 +786,8 @@ module Crystal
         end
         @builder.br @return_block
         @builder.position_at_end @return_block
-        if node.returns?
+
+        if node.returns? || block_returns?
           @builder.unreachable
         else
           if node.type && node.type != @mod.nil

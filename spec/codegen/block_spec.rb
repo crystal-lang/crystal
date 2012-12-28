@@ -448,4 +448,23 @@ describe 'Code gen: block' do
       foo { break 2 }.to_i
     )).to_i.should eq(2)
   end
+
+  it "codegens nested return" do
+    run(%q(
+      def bar
+        yield
+        a = 1
+      end
+
+      def foo
+        bar { yield }
+      end
+
+      def z
+        foo { return 2 }
+      end
+
+      z
+    )).to_i.should eq(2)
+  end
 end
