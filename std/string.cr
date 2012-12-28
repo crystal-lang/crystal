@@ -42,7 +42,7 @@ class String
     String.from_cstr(new_string_buffer)
   end
 
-  def <=>(other : String)
+  def <=>(other : self)
     C.strcmp(@c.ptr, other)
   end
 

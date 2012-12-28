@@ -864,7 +864,12 @@ module Crystal
             default_value = parse_expression
           when :':'
             next_token_skip_space_or_newline
-            type_restriction = parse_ident
+            if @token.type == :IDENT && @token.value == 'self'
+              type_restriction = :self
+              next_token_skip_space
+            else
+              type_restriction = parse_ident
+            end
           else
             default_value = nil
             type_restriction = nil
@@ -889,7 +894,12 @@ module Crystal
             default_value = parse_expression
           when :':'
             next_token_skip_space_or_newline
-            type_restriction = parse_ident
+            if @token.type == :IDENT && @token.value == 'self'
+              type_restriction = :self
+              next_token_skip_space
+            else
+              type_restriction = parse_ident
+            end
           else
             default_value = nil
             type_restriction = nil

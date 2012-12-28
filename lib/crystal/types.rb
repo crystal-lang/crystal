@@ -30,8 +30,8 @@ module Crystal
       true
     end
 
-    def is_restriction_of?(type)
-      type && (equal?(type) || full_name == type.full_name || type.parents.any? { |parent| is_restriction_of?(parent) })
+    def is_restriction_of?(type, owner)
+      type && (equal?(type) || full_name == type.full_name || type.parents.any? { |parent| is_restriction_of?(parent, owner) })
     end
 
     def self.merge(*types)
@@ -74,13 +74,13 @@ module Crystal
   end
 
   class Def
-    def is_restriction_of?(other)
+    def is_restriction_of?(other, owner)
       args.zip(other.args).each do |self_arg, other_arg|
         self_type = self_arg.type
         other_type = other_arg.type
         return false if self_type != nil && other_type == nil
         if self_type != nil && other_type != nil
-          return false unless self_type.is_restriction_of?(other_type)
+          return false unless self_type.is_restriction_of?(other_type, owner)
         end
       end
       true
@@ -102,7 +102,7 @@ module Crystal
       a_def
     end
 
-    def lookup_def(name, args, yields)
+    def lookup_def(name, args, yields, owner = self)
       defs = @defs[name]
       error_matches = defs.values if defs
       if defs
@@ -111,7 +111,7 @@ module Crystal
             def_types, def_yields = def_types_and_yields
             next false if def_yields != yields
             next false if def_types.length != args.length
-            args.zip(def_types).all? { |arg, def_type| !def_type || def_type.is_restriction_of?(arg.type) }
+            args.zip(def_types).all? { |arg, def_type| !def_type || def_type.is_restriction_of?(arg.type, owner) }
           end
           return matches.first[1] if matches.length == 1
 
@@ -119,7 +119,7 @@ module Crystal
 
           matches = matches.values
           minimals = matches.select do |match|
-            matches.all? { |m| m.equal?(match) || m.is_restriction_of?(match) }
+            matches.all? { |m| m.equal?(match) || m.is_restriction_of?(match, owner) }
           end
           return minimals[0] if minimals.length == 1
 
@@ -131,7 +131,7 @@ module Crystal
 
       if parents
         parents.each do |parent|
-          result, errors = parent.lookup_def(name, args, yields)
+          result, errors = parent.lookup_def(name, args, yields, owner)
           return [result, errors] if result
         end
       end
@@ -620,6 +620,16 @@ module Crystal
 
     def to_s
       "#{full_name} = #{value}"
+    end
+  end
+
+  class SelfType
+    def self.is_restriction_of?(type, owner)
+      type && type.full_name == owner.full_name
+    end
+
+    def self.full_name
+      "self"
     end
   end
 end

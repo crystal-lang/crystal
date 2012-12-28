@@ -607,7 +607,11 @@ module Crystal
       end
       node.args.each do |arg|
         if arg.type_restriction
-          arg.type = lookup_ident_type(arg.type_restriction)
+          if arg.type_restriction == :self
+            arg.type = SelfType
+          else
+            arg.type = lookup_ident_type(arg.type_restriction)
+          end
         end
       end
 

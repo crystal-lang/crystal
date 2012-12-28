@@ -252,7 +252,11 @@ module Crystal
       end
       if node.type_restriction
         @str << ' : '
-        node.type_restriction.accept self
+        if node.type_restriction == :self
+          @str << 'self'
+        else
+          node.type_restriction.accept self
+        end
       end
       false
     end

@@ -112,4 +112,84 @@ describe 'Type inference: def overload' do
       foo(A.new)
     )) { int }
   end
+
+  it "types a call with overload self" do
+    assert_type(%Q(
+      class A
+        def foo(x : self)
+          1
+        end
+
+        def foo(x)
+          1.5
+        end
+      end
+
+      a = A.new
+      a.foo(a)
+    )) { int }
+  end
+
+  it "types a call with overload self other match" do
+    assert_type(%Q(
+      class A
+        def foo(x : self)
+          1
+        end
+
+        def foo(x)
+          1.5
+        end
+      end
+
+      a = A.new
+      a.foo(1)
+    )) { float }
+  end
+
+  it "types a call with overload self in included module" do
+    assert_type(%Q(
+      module Foo
+        def foo(x : self)
+          1
+        end
+      end
+
+      class A
+        def foo(x)
+          1.5
+        end
+      end
+
+      class B < A
+        include Foo
+      end
+
+      b = B.new
+      b.foo(b)
+    )) { int }
+  end
+
+  it "types a call with overload self in included module other type" do
+    assert_type(%Q(
+      module Foo
+        def foo(x : self)
+          1
+        end
+      end
+
+      class A
+        def foo(x)
+          1.5
+        end
+      end
+
+      class B < A
+        include Foo
+      end
+
+      b = B.new
+      b.foo(A.new)
+    )) { float }
+  end
 end

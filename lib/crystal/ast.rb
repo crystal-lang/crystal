@@ -530,12 +530,12 @@ module Crystal
       @default_value = default_value
       @default_value.parent = self if @default_value
       @type_restriction = type_restriction
-      @type_restriction.parent = self if @type_restriction
+      @type_restriction.parent = self if @type_restriction && @type_restriction != :self
     end
 
     def accept_children(visitor)
       default_value.accept visitor if default_value
-      type_restriction.accept visitor if type_restriction
+      type_restriction.accept visitor if type_restriction && type_restriction != :self
     end
 
     def ==(other)
@@ -545,7 +545,11 @@ module Crystal
     def clone_from(other, &block)
       @name = other.name
       @default_value = other.default_value.clone(&block)
-      @type_restriction = other.type_restriction.clone(&block)
+      if other.type_restriction == :self
+        @type_restriction = :self
+      else
+        @type_restriction = other.type_restriction.clone(&block)
+      end
       @out = other.out
     end
   end
