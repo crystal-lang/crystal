@@ -625,7 +625,7 @@ module Crystal
 
   class SelfType
     def self.is_restriction_of?(type, owner)
-      type && type.full_name == owner.full_name
+      owner.is_restriction_of?(type, owner)
     end
 
     def self.full_name

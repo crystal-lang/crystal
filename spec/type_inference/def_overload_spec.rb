@@ -192,4 +192,20 @@ describe 'Type inference: def overload' do
       b.foo(A.new)
     )) { float }
   end
+
+  it "types a call with overload self with inherited type" do
+    assert_type(%Q(
+      class A
+        def foo(x : self)
+          1
+        end
+      end
+
+      class B < A
+      end
+
+      a = A.new
+      a.foo(B.new)
+    )) { int }
+  end
 end
