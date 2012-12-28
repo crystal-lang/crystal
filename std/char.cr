@@ -1,4 +1,8 @@
 class Char
+  def ==(other)
+    false
+  end
+
   def succ
     (ord + 1).chr
   end

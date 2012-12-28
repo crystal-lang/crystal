@@ -1,4 +1,5 @@
 require "strscan"
+require "token"
 
 class String
   def slice_range(from, to)
@@ -45,16 +46,16 @@ module Crystal
         end
       elsif match = scan(/'\\n'/)
         @token.type = :CHAR
-        @token.value = '\n'.ord
+        @token.value = '\n'
       elsif match = scan(/'\\t'/)
         @token.type = :CHAR
-        @token.value = '\t'.ord
+        @token.value = '\t'
       elsif match = scan(/'\\0'/)
         @token.type = :CHAR
-        @token.value = '\0'.ord
+        @token.value = '\0'
       elsif match = scan(/'.'/)
         @token.type = :CHAR
-        @token.value = match[1].ord
+        @token.value = match[1]
       elsif match = scan(/"[^\\#\n]*?"/)
         @token.type = :STRING
         @token.value = match.slice_range(1, -2)
@@ -71,13 +72,10 @@ module Crystal
         @token.value = match.slice_range(1, -2)
       elsif match = scan(/\%w\(/)
         @token.type = :STRING_ARRAY_START
-      # elsif match = scan(%r(!=|!|==|=~|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&|&|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
-      elsif match = scan(/!=|!|==|=~|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&|&|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]/)
+      elsif match = scan(/!=|!@\B|!|===|==|=~|=>|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&=|&&|&|\|\|=|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\])/)
+      # elsif match = scan(/!=|!@\B|!|==|=~|=>|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&|&|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]/)
         @token.type = :TOKEN
         @token.value = match
-      elsif match = scan(/(def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct|macro|ptr|out)((\?|!)|\b)/)
-        @token.type = :IDENT
-        @token.value = match #.end_with?('?') || match.end_with?('!') ? match : match.to_sym
       elsif match = scan(/[A-Z][a-zA-Z_0-9]*\b/)
         @token.type = :CONST
         @token.value = match
@@ -87,7 +85,7 @@ module Crystal
       elsif match = scan(/__FILE__\b/)
         @token.type = :STRING
         @token.value = @filename
-      elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*\b/)
+      elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*((\?|!)|\b)/)
         @token.type = :IDENT
         @token.value = match
       elsif match = scan(/@[a-zA-Z_][a-zA-Z_0-9]*\b/)
@@ -99,7 +97,7 @@ module Crystal
       elsif match = scan(/\$\d+/)
         @token.type = :GLOBAL_MATCH
         @token.value = match.slice_range(1, -1).to_i
-      elsif match = scan(/\$[a-zA-Z_][a-zA-Z_0-9]*\b/)
+      elsif match = scan(/\$[a-zA-Z_][a-zA-Z_0-9]*/)
         @token.type = :GLOBAL
         @token.value = match
       elsif scan /#/

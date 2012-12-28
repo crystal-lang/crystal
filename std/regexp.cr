@@ -16,7 +16,7 @@ class Regexp
     erroffset = 1
     @re = PCRE.pcre_compile(str, 8, errptr.ptr, erroffset.ptr, 0L)
     if @re == 0
-      puts "#{errptr.as(String)} at #{erroffset}"
+      puts "#{String.from_cstr(errptr)} at #{erroffset}"
       exit 1
     end
     @captures = 0
