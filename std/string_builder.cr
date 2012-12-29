@@ -4,7 +4,7 @@ class StringBuilder
     @parts = []
   end
 
-  def append(part)
+  def <<(part)
     str = part.to_s
     @parts << str
     @length += str.length
