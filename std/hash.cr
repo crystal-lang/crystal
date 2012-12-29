@@ -4,9 +4,8 @@ require "nil"
 
 class Hash
   def initialize
-    @buckets = []
+    @buckets = Array.new(17, nil)
     @length = 0
-    17.times { @buckets.push [] }
   end
 
   def []=(key, value)
@@ -22,9 +21,9 @@ class Hash
     @length += 1
     entry = Entry.new(key, value)
     bucket.push entry
-    @last.next = entry unless @last.nil?
+    @last.next = entry if @last
     @last = entry
-    @first = entry if @first.nil?
+    @first = entry unless @first
     value
   end
 
@@ -48,23 +47,25 @@ class Hash
 
   def each
     current = @first
-    while !current.nil?
+    while current
       yield current.key, current.value
       current = current.next
     end
   end
 
   def to_s
-    str = "{"
+    str = StringBuilder.new
+    str << "{"
     found_one = false
     each do |key, value|
-      str += ", " if found_one
-      str += key.inspect
-      str += "=>"
-      str += value.inspect
+      str << ", " if found_one
+      str << key.inspect
+      str << "=>"
+      str << value.inspect
       found_one = true
     end
-    str += "}"
+    str << "}"
+    str.to_s
   end
 
   # private
@@ -97,10 +98,6 @@ class Hash
 
     def next=(n)
       @next = n
-    end
-
-    def to_s
-      "Entry[#{@key}, #{@value}]"
     end
   end
 end
