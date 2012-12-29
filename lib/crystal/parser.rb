@@ -109,7 +109,12 @@ module Crystal
 
           # Rewrite 'a += b' as 'a = a + b'
 
-          atomic = Var.new(atomic.name) if atomic.is_a?(Call)
+          if atomic.is_a?(Call) && !@def_vars.last.include?(atomic.name)
+            raise "'#{@token.type}' before definition of '#{atomic.name}'"
+
+            atomic = Var.new(atomic.name)
+          end
+
           push_var atomic
 
           method = @token.type.to_s[0 .. -2].to_sym

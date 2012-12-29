@@ -170,4 +170,10 @@ describe 'Type inference: errors' do
       infer_type nodes
     }.should raise_error(Crystal::Exception, regex("Invalid break"))
   end
+
+  it "reports read before assignment" do
+    lambda {
+      parse %Q(a += 1)
+    }.should raise_error(Crystal::SyntaxException, regex("'+=' before definition of 'a'"))
+  end
 end

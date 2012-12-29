@@ -152,7 +152,7 @@ describe Parser do
   end
 
   [:'+', :'-', :'*', :'/', :'%', :'|', :'&', :'^', :'**', :<<, :>>, :'||', :'&&'].each do |op|
-    it_parses "a #{op}= 1", Assign.new("a".var, Call.new("a".var, op.to_sym, [1.int]))
+    it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, Call.new("a".var, op.to_sym, [1.int]))]
   end
 
   it_parses "if foo; 1; end", If.new("foo".call, 1.int)
@@ -190,7 +190,7 @@ describe Parser do
   it_parses "1 if 3", If.new(3.int, 1.int)
   it_parses "1 unless 3", If.new(3.int.not, 1.int)
   it_parses "1 while 3", While.new(3.int, 1.int, true)
-  it_parses "a += 10 if a += 20", If.new(Assign.new("a".var, Call.new("a".var, :+, [20.int])), Assign.new("a".var, Call.new("a".var, :+, [10.int])))
+  it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int), If.new(Assign.new("a".var, Call.new("a".var, :+, [20.int])), Assign.new("a".var, Call.new("a".var, :+, [10.int])))]
   it_parses "puts a if true", If.new(true.bool, Call.new(nil, 'puts', ["a".call]))
   it_parses "puts a unless true", If.new(true.bool.not, Call.new(nil, 'puts', ["a".call]))
   it_parses "puts a while true", While.new(true.bool, Call.new(nil, 'puts', ["a".call]), true)
