@@ -19,6 +19,10 @@ describe "String" do
   end
 
   it "interpolates string" do
-    "foo#{1+2}bar".should eq("foo3bar")
+    foo = "<foo>"
+    bar = 123
+    "foo #{bar}".should eq("foo 123")
+    "foo #{ bar}".should eq("foo 123")
+    "#{foo} bar".should eq("<foo> bar")
   end
 end
