@@ -1,6 +1,6 @@
 #!/usr/bin/env bin/crystal -run
 require "spec"
-require "../../../bootstrap/crystal/lexer"
+require "../../../../bootstrap/crystal/lexer"
 
 def it_lexes(string, type)
   it "lexes #{string}" do
