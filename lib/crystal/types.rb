@@ -129,7 +129,7 @@ module Crystal
         end
       end
 
-      if parents
+      if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
           result, errors = parent.lookup_def(name, args, yields, owner)
           return [result, errors] if result
