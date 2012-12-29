@@ -1,3 +1,5 @@
+require "spec"
+
 describe "String" do
   it "compares strings: different length" do
     "foo".should_not eq("fo")
@@ -14,5 +16,9 @@ describe "String" do
 
   it "compares strings: same length, different string" do
     "foo".should_not eq("bar")
+  end
+
+  it "interpolates string" do
+    "foo#{1+2}bar".should eq("foo3bar")
   end
 end
