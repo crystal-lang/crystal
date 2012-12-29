@@ -49,7 +49,7 @@ class Object
   end
 
   def to_b
-    true
+    !nil?
   end
 
   def to_s

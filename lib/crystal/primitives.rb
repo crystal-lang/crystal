@@ -16,7 +16,7 @@ module Crystal
     end
 
     def define_object_primitives
-      no_args_primitive(object, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
+      no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
       no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end
