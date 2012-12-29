@@ -19,7 +19,7 @@ describe 'Code gen: class' do
 
   it "codegens instance var" do
     run(%Q(
-      class Foo
+      generic class Foo
         #{rw 'coco'}
       end
 

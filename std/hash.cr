@@ -2,7 +2,7 @@ require "array"
 require "int"
 require "nil"
 
-class Hash
+generic class Hash
   def initialize
     @buckets = Array.new(17, nil)
     @length = 0
@@ -74,7 +74,7 @@ class Hash
     key.hash % @buckets.length
   end
 
-  class Entry
+  generic class Entry
     def initialize(key, value)
       @key = key
       @value = value

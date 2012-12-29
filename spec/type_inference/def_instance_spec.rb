@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Type inference: def instance' do
-  test_type = "class Foo; #{rw :value}; end"
+  test_type = "generic class Foo; #{rw :value}; end"
 
   it "reuses type mutation" do
     assert_type(%Q(
@@ -132,7 +132,7 @@ describe 'Type inference: def instance' do
 
   it "doesn't infect other vars" do
     input = parse %Q(
-      class Node
+      generic class Node
         def add(x)
           @left = Node.new
           @left.add(x)

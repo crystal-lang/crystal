@@ -397,6 +397,9 @@ module Crystal
           node_and_next_token BoolLiteral.new(true)
         when :yield
           parse_yield
+        when :generic
+          next_token_skip_space_or_newline
+          parse_class_def(true)
         when :class
           parse_class_def
         when :module
@@ -758,7 +761,7 @@ module Crystal
       end
     end
 
-    def parse_class_def
+    def parse_class_def(generic = false)
       location = @token.location
 
       next_token_skip_space_or_newline
@@ -781,7 +784,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      class_def = ClassDef.new name, body, superclass, name_column_number
+      class_def = ClassDef.new name, body, superclass, generic, name_column_number
       class_def.location = location
       class_def
     end

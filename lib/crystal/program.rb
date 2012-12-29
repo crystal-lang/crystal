@@ -32,6 +32,7 @@ module Crystal
       string.lookup_instance_var('@c').type = char
 
       array = @types["Array"] = ObjectType.new "Array", object, self
+      array.generic = true
 
       @types["ARGC_UNSAFE"] = Const.new "ARGC_UNSAFE", Crystal::ARGC.new(int), self
       @types["ARGV_UNSAFE"] = Const.new "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char))), self

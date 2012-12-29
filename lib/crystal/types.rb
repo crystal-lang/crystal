@@ -229,6 +229,7 @@ module Crystal
 
   class ObjectType < ClassType
     attr_accessor :instance_vars
+    attr_accessor :generic
     @@id = 0
 
     def initialize(name, parent_type = nil, container = nil)
@@ -287,6 +288,8 @@ module Crystal
     end
 
     def clone(types_context = {}, nodes_context = {})
+      return self if !generic && Crystal::GENERIC
+
       obj = types_context[object_id] and return obj
 
       obj = types_context[object_id] = ObjectType.new name, @parent_type, @container
@@ -299,6 +302,7 @@ module Crystal
       obj.defs = defs
       obj.types = types
       obj.parents = parents
+      obj.generic = generic
       obj
     end
 

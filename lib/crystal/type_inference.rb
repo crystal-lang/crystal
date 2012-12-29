@@ -648,7 +648,9 @@ module Crystal
           node.raise "superclass mismatch for class #{type.name} (#{parent.name} for #{type.superclass.name})"
         end
       else
-        current_type.types[node.name] = type = ObjectType.new node.name, parent, current_type
+        type = ObjectType.new node.name, parent, current_type
+        type.generic = node.generic
+        current_type.types[node.name] = type
       end
 
       @types.push type
@@ -921,6 +923,8 @@ module Crystal
     end
 
     def visit_alloc(node)
+      return if !node.type.generic && Crystal::GENERIC
+
       type = lookup_object_type(node.type.name)
       node.type = type ? type : node.type.clone
       node.creates_new_type = true

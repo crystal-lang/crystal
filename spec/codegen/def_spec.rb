@@ -45,7 +45,7 @@ describe 'Code gen: def' do
 
   it "includes return type in the mangled name" do
     run(%Q(
-      class Foo
+      generic class Foo
         #{rw :value}
       end
 

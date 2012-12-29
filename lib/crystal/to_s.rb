@@ -297,6 +297,7 @@ module Crystal
     end
 
     def visit_class_def(node)
+      @str << "generic " if node.generic
       @str << "class "
       @str << node.name
       if node.superclass

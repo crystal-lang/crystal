@@ -1,7 +1,7 @@
 require "enumerable"
 require "pointer"
 
-class Array
+generic class Array
   include Enumerable
 
   def initialize(initial_capacity = 16)
