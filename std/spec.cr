@@ -2,6 +2,7 @@ $spec_context = []
 $spec_results = []
 $spec_count = 0
 $spec_failures = 0
+$spec_manual_results = false
 
 def it(description)
   $spec_context << description
@@ -21,6 +22,7 @@ def describe(description)
   $spec_context << description
   yield
   $spec_context.pop
+  spec_results unless $spec_manual_results
 end
 
 def spec_results
