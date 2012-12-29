@@ -1,3 +1,5 @@
+require "spec"
+
 describe "Hash" do
   describe "empty" do
     it "length should be zero" do

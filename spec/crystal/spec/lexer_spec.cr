@@ -1,3 +1,4 @@
+require "spec"
 require "../../../bootstrap/crystal/lexer"
 
 def it_lexes(string, token_type)

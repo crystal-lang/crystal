@@ -1,3 +1,5 @@
+require "spec"
+
 describe "Array" do
   describe "empty" do
     it "is empty" do

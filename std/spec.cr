@@ -22,7 +22,7 @@ def describe(description)
   $spec_context << description
   yield
   $spec_context.pop
-  spec_results unless $spec_manual_results
+  spec_results unless $spec_manual_results || !$spec_context.empty?
 end
 
 def spec_results

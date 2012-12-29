@@ -1,3 +1,5 @@
+require "spec"
+
 describe "Object" do
   it "compares object to other objects" do
     o1 = Object.new
