@@ -23,6 +23,12 @@ class String
     str.as(String)
   end
 
+  def self.new(length)
+    str = Pointer.malloc(length + 5)
+    str.as(Int).value = length
+    str.as(String)
+  end
+
   def to_i
     C.atoi @c.ptr
   end
