@@ -668,7 +668,7 @@ module Crystal
         args = []
         next_token_skip_space
         while @token.type != :")"
-          if @token.type == :IDENT && @token.value == :out
+          if @token.keyword?(:out)
             next_token_skip_space_or_newline
 
             case @token.type
@@ -719,7 +719,7 @@ module Crystal
         else
           args = []
           while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :')' && @token.type != :':' && !is_end_token
-            if @token.type == :IDENT && @token.value == :out
+            if @token.keyword?(:out)
               next_token_skip_space_or_newline
 
               case @token.type
@@ -859,7 +859,7 @@ module Crystal
       when :'('
         next_token_skip_space_or_newline
         while @token.type != :')'
-          check_ident
+          check :IDENT
           arg_name = @token.value
 
           next_token_skip_space_or_newline
@@ -869,7 +869,7 @@ module Crystal
             default_value = parse_expression
           when :':'
             next_token_skip_space_or_newline
-            if @token.type == :IDENT && @token.value == 'self'
+            if @token.keyword?('self')
               type_restriction = :self
               next_token_skip_space
             else
@@ -889,7 +889,7 @@ module Crystal
         next_token_skip_statement_end
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          check_ident
+          check :IDENT
           arg_name = @token.value
 
           next_token_skip_space
@@ -899,7 +899,7 @@ module Crystal
             default_value = parse_expression
           when :':'
             next_token_skip_space_or_newline
-            if @token.type == :IDENT && @token.value == 'self'
+            if @token.keyword?('self')
               type_restriction = :self
               next_token_skip_space
             else
@@ -972,7 +972,7 @@ module Crystal
       when :'('
         next_token_skip_space_or_newline
         while @token.type != :')'
-          check_ident
+          check :IDENT
           arg_name = @token.value
 
           next_token_skip_space_or_newline
@@ -990,7 +990,7 @@ module Crystal
         next_token_skip_statement_end
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          check_ident
+          check :IDENT
           arg_name = @token.value
 
           next_token_skip_space
@@ -1186,7 +1186,7 @@ module Crystal
     def parse_fun_def
       next_token_skip_space_or_newline
 
-      check_ident
+      check :IDENT
       name = @token.value
 
       next_token_skip_space_or_newline
@@ -1196,7 +1196,7 @@ module Crystal
       if @token.type == :'('
         next_token_skip_space_or_newline
         while @token.type != :')'
-          check_ident
+          check :IDENT
           arg_name = @token.value
 
           next_token_skip_space_or_newline
@@ -1204,7 +1204,7 @@ module Crystal
           next_token_skip_space_or_newline
 
           out = false
-          if @token.type == :IDENT && @token.value == :out
+          if @token.keyword?(:out)
             out = true
             next_token_skip_space_or_newline
           end
@@ -1418,12 +1418,8 @@ module Crystal
       end
     end
 
-    def check_ident(value = nil)
-      if value
-        raise "expecting identifier '#{value}', not '#{@token.to_s}'" unless @token.keyword?(value)
-      else
-        raise "expecting identifier, not '#{@token.to_s}'" unless @token.type == :IDENT && @token.value.is_a?(String)
-      end
+    def check_ident(value)
+      raise "expecting identifier '#{value}', not '#{@token.to_s}'" unless @token.keyword?(value)
     end
 
     def is_end_token

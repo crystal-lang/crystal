@@ -506,7 +506,7 @@ module Crystal
     attr_accessor :name
 
     def initialize(name)
-      @name = name
+      @name = name.to_s
     end
 
     def ==(other)
@@ -526,7 +526,7 @@ module Crystal
     attr_accessor :out
 
     def initialize(name, default_value = nil, type_restriction = nil)
-      @name = name
+      @name = name.to_s
       @default_value = default_value
       @default_value.parent = self if @default_value
       @type_restriction = type_restriction
