@@ -37,7 +37,7 @@ module Crystal
     end
 
     def new_node(name, *args)
-      @last = Call.new(Ident.new(['Crystal', name]), 'new', args)
+      @last = Call.new(Ident.new(['Macro', name]), 'new', args)
     end
 
     def value

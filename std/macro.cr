@@ -1,4 +1,4 @@
-module Crystal
+module Macro
   class SymbolLiteral
     def initialize(value)
       @value = value
