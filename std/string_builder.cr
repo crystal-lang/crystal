@@ -8,6 +8,7 @@ class StringBuilder
     str = part.to_s
     @parts << str
     @length += str.length
+    self
   end
 
   def to_s
