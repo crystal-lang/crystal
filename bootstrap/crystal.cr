@@ -1,5 +1,4 @@
-require "crystal/token"
-require "crystal/lexer"
+require "crystal/**"
 
 if ARGV.length == 0
   puts "Usage: test2 [file]"

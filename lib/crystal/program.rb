@@ -114,12 +114,12 @@ module Crystal
     end
 
     def require(filename, relative_to = nil)
-      if relative_to && filename =~ /(.+)\/\*/
+      if relative_to && (single = filename =~ /(.+)\/\*\Z/ || multi = filename =~ /(.+)\/\*\*\Z/)
         dir = File.dirname relative_to
         relative_dir = File.join(dir, $1)
         if File.directory?(relative_dir)
           nodes = []
-          Dir["#{relative_dir}/*.cr"].each do |file|
+          Dir["#{relative_dir}/#{multi ? '**/' : ''}*.cr"].each do |file|
             node = require_absolute(file)
             nodes.push node if node
           end
