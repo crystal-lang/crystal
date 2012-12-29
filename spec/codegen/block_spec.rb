@@ -497,4 +497,39 @@ describe 'Code gen: block' do
       foo { break 3 }
     )).to_i.should eq(3)
   end
-end
+
+  it "can break without value from yielder that returns nilable" do
+    run(%q(
+      require "nil"
+
+      def foo
+        yield
+        ""
+      end
+
+      a = foo do
+        break
+      end
+
+      a.nil?
+    )).to_b.should be_true
+  end
+
+  it "break with value from yielder that returns a nilable" do
+    run(%q(
+      require "nil"
+
+      def foo
+        yield
+        ""
+      end
+
+      a = foo do
+        break if false
+        break ""
+      end
+
+      a.nil?
+    )).to_b.should be_false
+  end
+ end

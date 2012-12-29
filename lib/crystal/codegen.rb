@@ -617,8 +617,12 @@ module Crystal
         else
           assign_to_union(@break_union, @break_type, @mod.nil, llvm_nil)
         end
-      else
-        @break_table[@builder.insert_block] = @last if @break_table
+      elsif @break_table
+        if @break_type.nilable? && node.exps.empty?
+          @break_table[@builder.insert_block] = @builder.int2ptr llvm_nil, @break_type.llvm_type
+        else
+          @break_table[@builder.insert_block] = @last
+        end
       end
       @builder.br @while_exit_block
     end
