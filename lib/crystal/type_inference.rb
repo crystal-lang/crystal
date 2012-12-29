@@ -306,9 +306,9 @@ module Crystal
         return [scope, scope, [untyped_def, error_matches]]
       end
 
-      mod_def, error_matches = mod.lookup_def(name, args, !!block)
+      mod_def, mod_error_matches = mod.lookup_def(name, args, !!block)
       if mod_def || !(missing = scope.lookup_first_def('method_missing'))
-        return [mod, mod, [mod_def, error_matches]]
+        return [mod, mod, [mod_def, mod_error_matches || error_matches]]
       end
 
       untyped_def = define_missing scope, name
