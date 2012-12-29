@@ -34,12 +34,12 @@ module Enumerable
   end
 
   def join(sep = "")
-    str = ""
+    str = StringBuilder.new
     each_with_index do |elem, i|
-      str += sep if i > 0
-      str += elem.to_s
+      str << sep if i > 0
+      str << elem
     end
-    str
+    str.to_s
   end
 
   def to_a
