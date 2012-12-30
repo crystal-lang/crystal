@@ -2,6 +2,14 @@
 require "spec"
 
 describe "String" do
+  it "does to_i" do
+    "1234".to_i.should eq(1234)
+  end
+
+  it "does to_f" do
+    "1234.56".to_f.should eq(1234.56)
+  end
+
   it "compares strings: different length" do
     "foo".should_not eq("fo")
   end

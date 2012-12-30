@@ -8,6 +8,22 @@ class Bool
   end
 end
 
+class Int
+  def int
+    Crystal::IntLiteral.new self.to_s
+  end
+
+  def long
+    Crystal::LongLiteral.new self.to_s
+  end
+end
+
+class Float
+  def float
+    Crystal::FloatLiteral.new self.to_s
+  end
+end
+
 require "spec/**"
 
 spec_results

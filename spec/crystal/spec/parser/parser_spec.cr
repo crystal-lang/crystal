@@ -14,4 +14,16 @@ describe "Parser" do
 
   it_parses "true", true.bool
   it_parses "false", false.bool
+
+  it_parses "1", 1.int
+  it_parses "+1", 1.int
+  it_parses "-1", -1.int
+
+  it_parses "1L", 1.long
+  it_parses "+1L", 1.long
+  it_parses "-1L", -1.long
+
+  it_parses "1.0", 1.0.float
+  it_parses "+1.0", 1.0.float
+  it_parses "-1.0", -1.0.float
 end

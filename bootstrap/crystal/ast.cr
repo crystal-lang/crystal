@@ -102,4 +102,59 @@ module Crystal
       other.value == value
     end
   end
+
+  class NumberLiteral < ASTNode
+    def value
+      @value
+    end
+
+    def has_sign
+      @has_sign
+    end
+  end
+
+  # An integer literal.
+  #
+  #     \d+
+  #
+  class IntLiteral < NumberLiteral
+    def initialize(value)
+      @value = value.to_i
+      @has_sign = value[0] == '+' || value[0] == '-'
+    end
+
+    def ==(other : IntLiteral)
+      other.value == value
+    end
+  end
+
+  # A long literal.
+  #
+  #     \d+L
+  #
+  class LongLiteral < NumberLiteral
+    def initialize(value)
+      @has_sign = value[0] == '+' || value[0] == '-'
+      @value = value.to_i
+    end
+
+    def ==(other : LongLiteral)
+      other.value == value
+    end
+  end
+
+  # A float literal.
+  #
+  #     \d+.\d+
+  #
+  class FloatLiteral < NumberLiteral
+    def initialize(value)
+      @has_sign = value[0] == '+' || value[0] == '-'
+      @value = value.to_f
+    end
+
+    def ==(other : FloatLiteral)
+      other.value == value
+    end
+  end
 end

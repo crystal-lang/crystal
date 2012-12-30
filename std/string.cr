@@ -3,6 +3,8 @@ require "comparable"
 
 lib C
   fun atoi(str : Char*) : Int
+  fun strtof(str : Char*, endp : Char**) : Float
+  fun atoff(str : Char*) : Float
   fun strncmp(s1 : Char*, s2 : Char*, n : Int) : Int
   fun strlen(s : Char*) : Int
   fun strcpy(dest : Char*, src : Char*) : Char*
@@ -31,6 +33,11 @@ class String
 
   def to_i
     C.atoi @c.ptr
+  end
+
+  def to_f
+    endp = Pointer.malloc(0).as(Char)
+    C.strtof @c.ptr, endp.ptr
   end
 
   def [](index : Int)

@@ -50,6 +50,12 @@ module Crystal
         else
           raise "unexpected token #{@token}"
         end
+      when :INT
+        node_and_next_token IntLiteral.new(@token.value.to_s)
+      when :LONG
+        node_and_next_token LongLiteral.new(@token.value.to_s)
+      when :FLOAT
+        node_and_next_token FloatLiteral.new(@token.value.to_s)
       else
         raise "unexpected token #{@token}"
       end
