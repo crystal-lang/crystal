@@ -708,7 +708,7 @@ module Crystal
         fun_arg.out = arg.out
         fun_arg
       end
-      return_type = maybe_ptr_type(node.return_type ? node.return_type.type.instance_type : nil, node.ptr)
+      return_type = maybe_ptr_type(node.return_type ? node.return_type.type.instance_type : mod.nil, node.ptr)
       current_type.fun node.name, args, return_type
     end
 
