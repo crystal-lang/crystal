@@ -53,6 +53,12 @@ generic class Hash
     end
   end
 
+  def keys
+    keys = []
+    each { |key| keys << key }
+    keys
+  end
+
   def to_s
     str = StringBuilder.new
     str << "{"

@@ -23,4 +23,12 @@ describe "Hash" do
     a = {1 => 2, :foo => 1.1}
     a[1].should eq(2)
   end
+
+  it "get array of keys" do
+    a = {}
+    a.keys.should eq([])
+    a[:foo] = 1
+    a[:bar] = 2
+    a.keys.should eq([:foo, :bar])
+  end
 end
