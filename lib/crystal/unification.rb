@@ -48,19 +48,19 @@ module Crystal
     end
 
     def end_visit_range_literal(node)
-      node.expanded.accept self
+      node.expanded.accept self if node.expanded
     end
 
     def end_visit_regexp_literal(node)
-      node.expanded.accept self
+      node.expanded.accept self if node.expanded
     end
 
     def end_visit_hash_literal(node)
-      node.expanded.accept self
+      node.expanded.accept self if node.expanded
     end
 
     def end_visit_array_literal(node)
-      node.expanded.accept self
+      node.expanded.accept self if node.expanded
     end
 
     def end_visit_require(node)

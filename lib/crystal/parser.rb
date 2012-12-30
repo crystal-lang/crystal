@@ -1430,7 +1430,7 @@ module Crystal
       return false unless @token.type == :IDENT
 
       case @token.value
-      when :do, :end, :else, :elsif
+      when :do, :end, :else, :elsif, :when
         true
       else
         false

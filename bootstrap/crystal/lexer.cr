@@ -1,5 +1,6 @@
 require "strscan"
 require "token"
+require "parser"
 
 class String
   def slice_range(from, to)
@@ -183,7 +184,6 @@ module Crystal
     # end
 
     def scan(regex)
-      # puts "Matching #{rest} with #{regex}"
       if (match = super)
         @column_number += match.length.to_i
       end
@@ -213,20 +213,20 @@ module Crystal
     end
 
     def skip_space
-      next_token_if :SPACE
+      next_token_if [:SPACE]
     end
 
     def skip_space_or_newline
-      next_token_if :SPACE, :NEWLINE
+      next_token_if [:SPACE, :NEWLINE]
     end
 
     def skip_statement_end
-      next_token_if :SPACE, :NEWLINE, :";"
+      next_token_if [:SPACE, :NEWLINE, :";"]
     end
 
-    # def next_token_if(*types)
-    #   next_token while types.include? @token.type
-    # end
+    def next_token_if(types)
+      next_token while types.includes? @token.type
+    end
 
     def raise(message)
       puts message

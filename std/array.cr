@@ -64,6 +64,10 @@ generic class Array
     push(value)
   end
 
+  def first
+    self[0]
+  end
+
   def each
     length.times do |i|
       yield @buffer[i]

@@ -63,8 +63,6 @@ module Crystal
   end
 
   # A container for one or many expressions.
-  # A method's body and a block's body, for
-  # example, are Expressions.
   class Expressions < ASTNode
     include Enumerable
 
