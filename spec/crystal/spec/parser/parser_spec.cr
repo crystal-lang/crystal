@@ -11,4 +11,7 @@ end
 
 describe "Parser" do
   it_parses "nil", Crystal::NilLiteral.new
+
+  it_parses "true", true.bool
+  it_parses "false", false.bool
 end

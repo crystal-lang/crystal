@@ -43,7 +43,15 @@ module Crystal
         case @token.value
         when "nil"
           node_and_next_token NilLiteral.new
+        when "true"
+          node_and_next_token BoolLiteral.new(true)
+        when "false"
+          node_and_next_token BoolLiteral.new(false)
+        else
+          raise "unexpected token #{@token}"
         end
+      else
+        raise "unexpected token #{@token}"
       end
     end
 

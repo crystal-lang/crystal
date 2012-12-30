@@ -84,4 +84,22 @@ module Crystal
       true
     end
   end
+
+  # A bool literal.
+  #
+  #     'true' | 'false'
+  #
+  class BoolLiteral < ASTNode
+    def initialize(value)
+      @value = value
+    end
+
+    def value
+      @value
+    end
+
+    def ==(other : BoolLiteral)
+      other.value == value
+    end
+  end
 end
