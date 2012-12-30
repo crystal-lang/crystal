@@ -1,4 +1,5 @@
-require_relative 'types'
+require_relative "types"
+require_relative "unification"
 
 module Crystal
   class Program < ModuleType
@@ -45,6 +46,11 @@ module Crystal
       @nil_var = Var.new('nil', self.nil)
 
       define_primitives
+    end
+
+    def unify(node)
+      @unify_visitor ||= UnifyVisitor.new
+      Crystal.unify node, @unify_visitor
     end
 
     def nil_var

@@ -1,9 +1,7 @@
 require_relative 'type_inference.rb'
 
 module Crystal
-  def unify(node)
-    visitor = UnifyVisitor.new
-    visitor.start
+  def unify(node, visitor = UnifyVisitor.new)
     node.accept visitor
   end
 
@@ -16,7 +14,7 @@ module Crystal
   end
 
   class UnifyVisitor < Visitor
-    def start
+    def initialize
       @types = {}
       @unions = {}
       @pointers = {}
