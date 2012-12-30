@@ -149,4 +149,16 @@ module Crystal
       other.value == value
     end
   end
+
+  class SymbolLiteral < ASTNode
+    attr_accessor :value
+
+    def initialize(value)
+      @value = value
+    end
+
+    def ==(other : SymbolLiteral)
+      other.value == value
+    end
+  end
 end

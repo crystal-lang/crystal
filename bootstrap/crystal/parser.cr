@@ -60,6 +60,8 @@ module Crystal
         node_and_next_token CharLiteral.new(@token.value.to_i)
       when :STRING, :STRING_START
         parse_string
+      when :SYMBOL
+        node_and_next_token SymbolLiteral.new(@token.value.to_s)
       else
         raise "unexpected token #{@token}"
       end

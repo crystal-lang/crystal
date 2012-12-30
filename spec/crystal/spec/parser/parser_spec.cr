@@ -31,4 +31,6 @@ describe "Parser" do
 
   it_parses "\"foo\"", Crystal::StringLiteral.new("foo")
   it_parses "\"\"", Crystal::StringLiteral.new("")
+
+  it_parses ":foo", Crystal::SymbolLiteral.new("foo")
 end
