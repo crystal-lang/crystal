@@ -148,6 +148,7 @@ module Crystal
     end
 
     def require_absolute(file)
+      file = File.absolute_path(file)
       return nil if @requires.include? file
 
       @requires.add file
