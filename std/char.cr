@@ -3,6 +3,10 @@ class Char
     false
   end
 
+  def to_i
+    ord
+  end
+
   def succ
     (ord + 1).chr
   end

@@ -121,4 +121,20 @@ module Crystal
       other.value == value
     end
   end
+
+  # A char literal.
+  #
+  #     "'" \w "'"
+  #
+  class CharLiteral < ASTNode
+    attr :value
+
+    def initialize(value)
+      @value = value
+    end
+
+    def ==(other : CharLiteral)
+      other.value == value
+    end
+  end
 end

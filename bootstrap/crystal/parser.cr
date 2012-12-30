@@ -56,6 +56,8 @@ module Crystal
         node_and_next_token LongLiteral.new(@token.value.to_s)
       when :FLOAT
         node_and_next_token FloatLiteral.new(@token.value.to_s)
+      when :CHAR
+        node_and_next_token CharLiteral.new(@token.value.to_i)
       else
         raise "unexpected token #{@token}"
       end

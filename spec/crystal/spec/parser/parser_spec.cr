@@ -26,4 +26,6 @@ describe "Parser" do
   it_parses "1.0", 1.0.float
   it_parses "+1.0", 1.0.float
   it_parses "-1.0", -1.0.float
+
+  it_parses "'a'", Crystal::CharLiteral.new('a'.ord)
 end
