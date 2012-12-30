@@ -716,6 +716,10 @@ module Crystal
       @last = @argv
     end
 
+    def visit_nil_pointer(node)
+      @last = LLVM::Constant.null(node.llvm_type)
+    end
+
     def visit_call(node)
       if node.target_macro
         node.target_macro.accept self

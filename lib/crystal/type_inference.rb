@@ -404,10 +404,14 @@ module Crystal
 
     def check_args_type_match(typed_def)
       string_conversions = nil
+      nil_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type
         if self.args[i].type != expected_type
-          if mod.string.equal?(self.args[i].type) && expected_type.is_a?(PointerType) && mod.char.equal?(expected_type.var.type)
+          if mod.nil.equal?(self.args[i].type) && expected_type.is_a?(PointerType)
+            nil_conversions ||= []
+            nil_conversions << i
+          elsif mod.string.equal?(self.args[i].type) && expected_type.is_a?(PointerType) && mod.char.equal?(expected_type.var.type)
             string_conversions ||= []
             string_conversions << i
           else
@@ -424,6 +428,12 @@ module Crystal
           call.parent_visitor = parent_visitor
           call.recalculate
           self.args[i] = call
+        end
+      end
+
+      if nil_conversions
+        nil_conversions.each do |i|
+          self.args[i] = NilPointer.new(typed_def.args[i].type)
         end
       end
     end

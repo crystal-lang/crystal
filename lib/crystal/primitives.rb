@@ -325,5 +325,15 @@ module Crystal
       @type = other.type
     end
   end
+
+  class NilPointer < Primitive
+    def initialize(type)
+      @type = type
+    end
+
+    def clone_from(other)
+      @type = other.type
+    end
+  end
 end
 

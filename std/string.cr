@@ -36,8 +36,7 @@ class String
   end
 
   def to_f
-    endp = Pointer.malloc(0).as(Char)
-    C.strtof @c.ptr, endp.ptr
+    C.strtof @c.ptr, nil
   end
 
   def [](index : Int)
