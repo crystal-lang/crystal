@@ -4,7 +4,6 @@ module Crystal
     attr :line_number
     attr :column_number
     attr :filename
-    attr :parent
 
     def location
       [@line_number, @column_number, @filename]
@@ -42,7 +41,6 @@ module Crystal
 
     def initialize(expressions = [])
       @expressions = expressions
-      @expressions.each { |e| e.parent = self }
     end
 
     def ==(other : self)
@@ -175,7 +173,6 @@ module Crystal
 
     def initialize(elements = [])
       @elements = elements
-      @elements.each { |e| e.parent = self }
     end
 
     def ==(other : self)

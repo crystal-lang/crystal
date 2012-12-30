@@ -35,7 +35,7 @@ describe "Parser" do
   it_parses ":foo", Crystal::SymbolLiteral.new("foo")
 
   it_parses "[]", [].array
-  # it_parses "[1, 2]", [1.int, 2.int].array
-  # it_parses "[\n1, 2]", [1.int, 2.int].array
-  # it_parses "[1,\n 2,]", [1.int, 2.int].array
+  it_parses "[1, 2]", [1.int, 2.int].array
+  it_parses "[\n1, 2]", [1.int, 2.int].array
+  it_parses "[1,\n 2,]", [1.int, 2.int].array
 end

@@ -44,6 +44,8 @@ module Crystal
         when "[]"
           next_token_skip_space
           ArrayLiteral.new
+        when "["
+          parse_array_literal
         else
           raise "unexpected token #{@token}"
         end
@@ -79,6 +81,20 @@ module Crystal
       if @token.type == :STRING
         node_and_next_token StringLiteral.new(@token.value.to_s)
       end
+    end
+
+    def parse_array_literal
+      next_token_skip_space_or_newline
+      exps = []
+      while !@token.token?("]")
+        exps << parse_expression
+        skip_space_or_newline
+        if @token.token?(",")
+          next_token_skip_space_or_newline
+        end
+      end
+      next_token_skip_space
+      ArrayLiteral.new exps
     end
 
     def node_and_next_token(node)
