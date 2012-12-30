@@ -79,6 +79,14 @@ generic class Array
     self
   end
 
+  def ==(other : Array)
+    return false if @length != other.length
+    each_with_index do |item, i|
+      return false if item != other[i]
+    end
+    true
+  end
+
   def to_s
     str = "["
     each_with_index do |elem, i|
