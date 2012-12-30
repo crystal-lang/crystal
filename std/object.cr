@@ -45,7 +45,7 @@ class Object
   end
 
   def !@
-    false
+    nil?
   end
 
   def to_b
@@ -66,10 +66,10 @@ class Object
   end
 
   def ||(other)
-    self
+    nil? ? other : self
   end
 
   def &&(other)
-    other
+    nil? ? self : other
   end
 end
