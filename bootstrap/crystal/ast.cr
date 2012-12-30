@@ -51,7 +51,7 @@ module Crystal
   #     'nil'
   #
   class NilLiteral < ASTNode
-    def ==(other : NilLiteral)
+    def ==(other : self)
       true
     end
   end
@@ -67,7 +67,7 @@ module Crystal
       @value = value
     end
 
-    def ==(other : BoolLiteral)
+    def ==(other : self)
       other.value == value
     end
   end
@@ -87,7 +87,7 @@ module Crystal
       @has_sign = value[0] == '+' || value[0] == '-'
     end
 
-    def ==(other : IntLiteral)
+    def ==(other : self)
       other.value == value
     end
   end
@@ -102,7 +102,7 @@ module Crystal
       @value = value.to_i
     end
 
-    def ==(other : LongLiteral)
+    def ==(other : self)
       other.value == value
     end
   end
@@ -117,7 +117,7 @@ module Crystal
       @value = value.to_f
     end
 
-    def ==(other : FloatLiteral)
+    def ==(other : self)
       other.value == value
     end
   end
@@ -133,7 +133,7 @@ module Crystal
       @value = value
     end
 
-    def ==(other : CharLiteral)
+    def ==(other : self)
       other.value == value
     end
   end
@@ -145,7 +145,7 @@ module Crystal
       @value = value
     end
 
-    def ==(other : StringLiteral)
+    def ==(other : self)
       other.value == value
     end
   end
@@ -157,8 +157,25 @@ module Crystal
       @value = value
     end
 
-    def ==(other : SymbolLiteral)
+    def ==(other : self)
       other.value == value
+    end
+  end
+
+  # An array literal.
+  #
+  #  '[' ( expression ( ',' expression )* ) ']'
+  #
+  class ArrayLiteral < ASTNode
+    attr_accessor :elements
+
+    def initialize(elements = [])
+      @elements = elements
+      @elements.each { |e| e.parent = self }
+    end
+
+    def ==(other : self)
+      other.elements == elements
     end
   end
 end

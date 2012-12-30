@@ -39,6 +39,14 @@ module Crystal
     def parse_atomic
       column_number = @token.column_number
       case @token.type
+      when :TOKEN
+        case @token.value
+        when "[]"
+          next_token_skip_space
+          ArrayLiteral.new
+        else
+          raise "unexpected token #{@token}"
+        end
       when :IDENT
         case @token.value
         when "nil"

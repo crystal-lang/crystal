@@ -24,6 +24,12 @@ class Float
   end
 end
 
+class Array
+  def array
+    Crystal::ArrayLiteral.new self
+  end
+end
+
 require "spec/**"
 
 spec_results
