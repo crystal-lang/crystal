@@ -2,6 +2,34 @@
 require "spec"
 require "../../../../bootstrap/crystal/parser"
 
+class Bool
+  def bool
+    Crystal::BoolLiteral.new self
+  end
+end
+
+class Int
+  def int
+    Crystal::IntLiteral.new self.to_s
+  end
+
+  def long
+    Crystal::LongLiteral.new self.to_s
+  end
+end
+
+class Float
+  def float
+    Crystal::FloatLiteral.new self.to_s
+  end
+end
+
+class Array
+  def array
+    Crystal::ArrayLiteral.new self
+  end
+end
+
 def it_parses(string, expected_node)
   it "parses #{string}" do
     node = Crystal::Parser.parse(string)
@@ -38,4 +66,6 @@ describe "Parser" do
   it_parses "[1, 2]", [1.int, 2.int].array
   it_parses "[\n1, 2]", [1.int, 2.int].array
   it_parses "[1,\n 2,]", [1.int, 2.int].array
+
+  it_parses "1 + 2", Crystal::Call.new(1.int, "+", [2.int])
 end

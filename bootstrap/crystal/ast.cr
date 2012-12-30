@@ -179,4 +179,49 @@ module Crystal
       other.elements == elements
     end
   end
+
+  # A method call.
+  #
+  #     [ obj '.' ] name '(' ')' [ block ]
+  #   |
+  #     [ obj '.' ] name '(' arg [ ',' arg ]* ')' [ block]
+  #   |
+  #     [ obj '.' ] name arg [ ',' arg ]* [ block ]
+  #   |
+  #     arg name arg
+  #
+  # The last syntax is for infix operators, and name will be
+  # the symbol of that operator instead of a string.
+  #
+  class Call < ASTNode
+    attr_accessor :obj
+    attr_accessor :name
+    attr_accessor :args
+    attr_accessor :block
+
+    attr_accessor :name_column_number
+    attr_accessor :has_parenthesis
+    attr_accessor :name_length
+
+    def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
+      @obj = obj
+      @name = name
+      @args = args || []
+      @block = block
+      @name_column_number = name_column_number
+      @has_parenthesis = has_parenthesis
+    end
+
+    def ==(other : self)
+      other.obj == obj && other.name == name && other.args == args && other.block == block
+    end
+
+    # def name_column_number
+    #   @name_column_number || column_number
+    # end
+
+    # def name_length
+    #   @name_length ||= name.to_s.ends_with?('=') || name.to_s.ends_with?('@') ? name.length - 1 : name.length
+    # end
+  end
 end

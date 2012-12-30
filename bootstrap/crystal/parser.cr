@@ -33,6 +33,68 @@ module Crystal
     end
 
     def parse_expression
+      parse_op_assign
+    end
+
+    def parse_op_assign
+      parse_question_colon
+    end
+
+    def parse_question_colon
+      parse_range
+    end
+
+    def parse_range
+      parse_or
+    end
+
+    macro self.parse_operator(name, next_operator, operators)"
+      def parse_#{name}
+        location = @token.location
+
+        left = parse_#{next_operator}
+        while true
+          left.location = location
+
+          case @token.type
+          when :SPACE
+            next_token
+          when :TOKEN
+            case @token.value
+            when #{operators}
+              method = @token.value
+              method_column_number = @token.column_number
+
+              next_token_skip_space_or_newline
+              right = parse_#{next_operator}
+              left = Call.new left, method, [right], nil, method_column_number
+            else
+              return left
+            end
+          else
+            return left
+          end
+        end
+      end
+    "end
+
+    # parse_operator :or, :and, "\"||\""
+    # parse_operator :and, :equality, "\"&&\""
+    # parse_operator :equality, :cmp, "\"<\", \"<=\", \">\", \">=\", \"<=>\""
+    # parse_operator :cmp, :logical_or, "\"==\", \"!=\", \"=~\", \"===\""
+    # parse_operator :logical_or, :logical_and, "\"|\", \"^\""
+    # parse_operator :logical_and, :shift, "\"&\""
+    # parse_operator :shift, :add_or_sub, "\"<<\", \">>\""
+
+    # parse_operator :or, :add_or_sub, "\"||\""
+
+    def parse_or
+      right = parse_add_or_sub
+      left = parse_add_or_sub
+      Call.new left, right, nil, nil, nil
+    end
+
+    def parse_add_or_sub
       parse_atomic
     end
 
