@@ -45,9 +45,7 @@ module Crystal
         case type
         when ObjectType
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.full_name
-          type.instance_vars.each do |ivar, var|
-            add_edges node, var.type, ivar
-          end
+          add_object_type_edges node, type
         when nil
           node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => 'nil'
         else
@@ -55,6 +53,31 @@ module Crystal
         end
       end
       node
+    end
+
+    def add_object_type_edges(node, type)
+      if type.name == "String"
+        # nothing
+      elsif type.name == "Array"
+        add_edges node, type.instance_vars["@buffer"].type.var.type
+      elsif type.name == "Hash"
+        entry_type = type.instance_vars["@first"].type
+        if entry_type.is_a?(UnionType)
+          keys = Set.new
+          values = Set.new
+          entry_type.types.each do |t|
+            next if t.name == "Nil"
+            keys << t.instance_vars["@key"].type
+            values << t.instance_vars["@value"].type
+          end
+          keys.each { |key| add_edges node, key, "key" }
+          values.each { |value| add_edges node, value, "value" }
+        end
+      else
+        type.instance_vars.each do |ivar, var|
+          add_edges node, var.type, ivar
+        end
+      end
     end
 
     def add_edges(node, type, label = '', style = 'solid')
