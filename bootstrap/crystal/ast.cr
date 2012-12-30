@@ -1,37 +1,10 @@
 module Crystal
   # Base class for nodes in the grammar.
   class ASTNode
-    def line_number=(line_number)
-      @line_number = line_number
-    end
-
-    def line_number
-      @line_number
-    end
-
-    def column_number=(column_number)
-      @column_number = column_number
-    end
-
-    def column_number
-      @column_number
-    end
-
-    def filename=(filename)
-      @filename = filename
-    end
-
-    def filename
-      @filename
-    end
-
-    def parent=(parent)
-      @parent = parent
-    end
-
-    def parent
-      @parent
-    end
+    attr :line_number
+    attr :column_number
+    attr :filename
+    attr :parent
 
     def location
       [@line_number, @column_number, @filename]
@@ -46,6 +19,8 @@ module Crystal
 
   # A container for one or many expressions.
   class Expressions < ASTNode
+    attr :expressions
+
     def self.from(obj : Nil)
       nil
     end
@@ -69,10 +44,6 @@ module Crystal
       @expressions = expressions
       @expressions.each { |e| e.parent = self }
     end
-
-    def expressions
-      @expressions
-    end
   end
 
   # The nil literal.
@@ -90,12 +61,10 @@ module Crystal
   #     'true' | 'false'
   #
   class BoolLiteral < ASTNode
+    attr :value
+
     def initialize(value)
       @value = value
-    end
-
-    def value
-      @value
     end
 
     def ==(other : BoolLiteral)
@@ -104,13 +73,8 @@ module Crystal
   end
 
   class NumberLiteral < ASTNode
-    def value
-      @value
-    end
-
-    def has_sign
-      @has_sign
-    end
+    attr :value
+    attr :has_sign
   end
 
   # An integer literal.

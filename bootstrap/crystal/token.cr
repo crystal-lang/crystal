@@ -1,44 +1,10 @@
 module Crystal
   class Token
-    def type
-      @type
-    end
-
-    def type=(t)
-      @type = t
-    end
-
-    def value
-      @value
-    end
-
-    def value=(value)
-      @value = value
-    end
-
-    def line_number
-      @line_number
-    end
-
-    def line_number=(line_number)
-      @line_number = line_number
-    end
-
-    def column_number
-      @column_number
-    end
-
-    def column_number=(column_number)
-      @column_number = column_number
-    end
-
-    def filename
-      @filename
-    end
-
-    def filename=(filename)
-      @filename = filename
-    end
+    attr :type
+    attr :value
+    attr :line_number
+    attr :column_number
+    attr :filename
 
     def location
       [line_number, column_number, filename]
