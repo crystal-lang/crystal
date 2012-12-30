@@ -28,4 +28,7 @@ describe "Parser" do
   it_parses "-1.0", -1.0.float
 
   it_parses "'a'", Crystal::CharLiteral.new('a'.ord)
+
+  it_parses "\"foo\"", Crystal::StringLiteral.new("foo")
+  it_parses "\"\"", Crystal::StringLiteral.new("")
 end

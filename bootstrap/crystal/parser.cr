@@ -58,8 +58,16 @@ module Crystal
         node_and_next_token FloatLiteral.new(@token.value.to_s)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value.to_i)
+      when :STRING, :STRING_START
+        parse_string
       else
         raise "unexpected token #{@token}"
+      end
+    end
+
+    def parse_string
+      if @token.type == :STRING
+        node_and_next_token StringLiteral.new(@token.value.to_s)
       end
     end
 
