@@ -1,6 +1,5 @@
 require "strscan"
 require "token"
-require "parser"
 
 class String
   def slice_range(from, to)
