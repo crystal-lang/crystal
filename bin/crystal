@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+GC.disable
 require 'bundler/setup'
 require_relative '../lib/crystal'
 require 'pry'
