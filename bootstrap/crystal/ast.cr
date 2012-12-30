@@ -44,6 +44,10 @@ module Crystal
       @expressions = expressions
       @expressions.each { |e| e.parent = self }
     end
+
+    def ==(other : self)
+      other.expressions == expressions
+    end
   end
 
   # The nil literal.
