@@ -44,6 +44,10 @@ module Crystal
       [line_number, column_number, filename]
     end
 
+    def token?(token)
+      @type == :TOKEN && @value == token
+    end
+
     def keyword?(keyword)
       @type == :IDENT && @value == keyword
     end

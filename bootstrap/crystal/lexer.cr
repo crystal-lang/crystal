@@ -212,19 +212,15 @@ module Crystal
     end
 
     def skip_space
-      next_token_if [:SPACE]
+      next_token while @token.type == :SPACE
     end
 
     def skip_space_or_newline
-      next_token_if [:SPACE, :NEWLINE]
+      next_token while (@token.type == :SPACE || @token.type == :NEWLINE)
     end
 
     def skip_statement_end
-      next_token_if [:SPACE, :NEWLINE, :";"]
-    end
-
-    def next_token_if(types)
-      next_token while types.includes? @token.type
+      next_token while (@token.type == :SPACE || @token.type == :NEWLINE || @token.token?(";"))
     end
 
     def raise(message)
