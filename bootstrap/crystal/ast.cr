@@ -206,7 +206,7 @@ module Crystal
     def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
       @obj = obj
       @name = name
-      @args = args || []
+      @args = args
       @block = block
       @name_column_number = name_column_number
       @has_parenthesis = has_parenthesis
