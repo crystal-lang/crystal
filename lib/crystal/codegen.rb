@@ -1003,7 +1003,7 @@ module Crystal
         @vars = old_vars.clone
         arg_values_base_index = 0
         if node.obj && node.obj.type.passed_as_self?
-          @vars['self'] = { ptr: arg_values[0], type: arg_types[0], is_arg: true }
+          @vars['%self'] = { ptr: arg_values[0], type: arg_types[0], is_arg: true }
           arg_values_base_index = 1
         end
         0.upto(call.args.length - 1) do |i|

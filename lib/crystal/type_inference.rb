@@ -479,7 +479,7 @@ module Crystal
       @calls = []
       for_each_obj do |obj_type|
         for_each_args do |arg_types|
-          subcall = Call.new(obj_type ? Var.new('self', obj_type) : nil, name, arg_types.map.with_index { |arg_type, i| Var.new("%arg#{i}", arg_type) })
+          subcall = Call.new(obj_type ? Var.new('%self', obj_type) : nil, name, arg_types.map.with_index { |arg_type, i| Var.new("%arg#{i}", arg_type) })
           subcall.mod = call.mod
           subcall.parent_visitor = call.parent_visitor
           subcall.scope = call.scope

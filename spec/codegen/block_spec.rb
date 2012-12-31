@@ -532,4 +532,26 @@ describe 'Code gen: block' do
       a.nil?
     )).to_b.should be_false
   end
+
+  it "can use self inside a block called from dispatch" do
+    run(%q(
+      class Foo
+        def do; yield; end
+      end
+      class Bar < Foo
+      end
+
+
+      class Int
+        def foo
+          x = Foo.new
+          x = Bar.new
+          x.do { $x = self }
+        end
+      end
+
+      123.foo
+      $x
+    )).to_i.should eq(123)
+  end
  end
