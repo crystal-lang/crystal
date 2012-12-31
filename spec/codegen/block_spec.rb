@@ -554,4 +554,23 @@ describe 'Code gen: block' do
       $x
     )).to_i.should eq(123)
   end
+
+  it "return from block called from dispatch" do
+    run(%q(
+      class Foo
+        def do; yield; end
+      end
+      class Bar < Foo
+      end
+
+      def foo
+        x = Foo.new
+        x = Bar.new
+        x.do { return 1 }
+        0
+      end
+
+      foo
+    )).to_i.should eq(1)
+  end
  end

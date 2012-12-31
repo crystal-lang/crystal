@@ -102,7 +102,8 @@ module Crystal
 
   class Call
     def returns?
-      block && block.returns? && target_def.body && target_def.body.yields?
+      block && block.returns? &&
+      ((target_def.is_a?(Dispatch) && target_def.calls.values.all?(&:returns?)) || (target_def.body && target_def.body.yields?))
     end
 
     def yields?
@@ -1012,14 +1013,16 @@ module Crystal
         call.accept self
         @vars = old_vars
 
-        if dispatch.type.union?
-          phi_value = alloca dispatch.llvm_type
-          assign_to_union(phi_value, dispatch.type, call.type, @last)
-          phi_table[@builder.insert_block] = phi_value
-        elsif dispatch.type.nilable? && @last.type.kind == :integer
-          phi_table[@builder.insert_block] = @builder.int2ptr @last, dispatch.llvm_type
-        else
-          phi_table[@builder.insert_block] = @last
+        unless call.returns?
+          if dispatch.type.union?
+            phi_value = alloca dispatch.llvm_type
+            assign_to_union(phi_value, dispatch.type, call.type, @last)
+            phi_table[@builder.insert_block] = phi_value
+          elsif dispatch.type.nilable? && @last.type.kind == :integer
+            phi_table[@builder.insert_block] = @builder.int2ptr @last, dispatch.llvm_type
+          else
+            phi_table[@builder.insert_block] = @last
+          end
         end
 
         @builder.br exit_block
@@ -1030,10 +1033,14 @@ module Crystal
 
       @builder.position_at_end exit_block
 
-      if dispatch.type.union?
-        @last = @builder.phi LLVM::Pointer(dispatch.llvm_type), phi_table
+      if node.returns?
+        @builder.unreachable
       else
-        @last = @builder.phi dispatch.llvm_type, phi_table
+        if dispatch.type.union?
+          @last = @builder.phi LLVM::Pointer(dispatch.llvm_type), phi_table
+        else
+          @last = @builder.phi dispatch.llvm_type, phi_table
+        end
       end
 
       false
