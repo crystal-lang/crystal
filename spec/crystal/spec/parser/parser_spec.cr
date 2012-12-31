@@ -97,4 +97,10 @@ describe "Parser" do
   it_parses "1 / -2", Call.new(1.int, "/", [-2.int])
   it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int, "/", [3.int]), "+", [Call.new(4.int, "/", [5.int])])
   it_parses "2 * (3 + 4)", Call.new(2.int, "*", [Call.new(3.int, "+", [4.int])])
+
+  it_parses "!1", Call.new(1.int, "!@")
+  it_parses "1 && 2", Call.new(1.int, "&&", [2.int])
+  it_parses "1 || 2", Call.new(1.int, "||", [2.int])
+
+  it_parses "1 <=> 2", Call.new(1.int, "<=>", [2.int])
 end

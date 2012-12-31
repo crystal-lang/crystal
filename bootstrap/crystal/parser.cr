@@ -170,6 +170,9 @@ module Crystal
           ArrayLiteral.new
         when "["
           parse_array_literal
+        when "!"
+          next_token_skip_space_or_newline
+          Call.new parse_expression, "!@", [], nil, column_number
         else
           raise "unexpected token #{@token}"
         end
