@@ -20,4 +20,8 @@ describe 'Code gen: return' do
   it "return union" do
     run('def foo; true ? return 1 : return 1.1; end; foo.to_i').to_i.should eq(1)
   end
+
+  it "return from function with nilable type" do
+    run('def foo; return Object.new if true; end; foo.nil?').to_b.should be_false
+  end
 end

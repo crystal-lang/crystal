@@ -970,7 +970,11 @@ module Crystal
             end
           end
 
-          @builder.ret(@last)
+          if @return_type.nilable? && target_def.body.type == @mod.nil
+            @builder.ret LLVM::Constant.null(@return_type.llvm_type)
+          else
+            @builder.ret(@last)
+          end
 
           @return_type = old_return_type
           @return_union = old_return_union
