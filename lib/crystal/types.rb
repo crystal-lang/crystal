@@ -35,6 +35,8 @@ module Crystal
     end
 
     def self.merge(*types)
+      return types[0] if types.length == 1
+
       all_types = types.map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.compact.uniq(&:object_id)
       if all_types.length == 0
         nil
