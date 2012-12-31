@@ -184,11 +184,14 @@ module Crystal
         break unless type
       end
 
-      if type
-        type
-      elsif container
-        container.lookup_type(names)
+      return type if type
+
+      parents.each do |parent|
+        match = parent.lookup_type(names)
+        return match if match
       end
+
+      container ? container.lookup_type(names) : nil
     end
   end
 

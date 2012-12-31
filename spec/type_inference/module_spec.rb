@@ -24,4 +24,18 @@ describe 'Type inference: module' do
       X.new.foo
       )) { int }
   end
+
+  it "finds in module when included" do
+    assert_type(%q(
+      module A
+        class B
+          def foo; 1; end
+        end
+      end
+
+      include A
+
+      B.new.foo
+    )) { int }
+  end
 end
