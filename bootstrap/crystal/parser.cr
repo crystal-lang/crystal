@@ -78,23 +78,62 @@ module Crystal
       end
     "end
 
-    # parse_operator :or, :and, "\"||\""
-    # parse_operator :and, :equality, "\"&&\""
-    # parse_operator :equality, :cmp, "\"<\", \"<=\", \">\", \">=\", \"<=>\""
-    # parse_operator :cmp, :logical_or, "\"==\", \"!=\", \"=~\", \"===\""
-    # parse_operator :logical_or, :logical_and, "\"|\", \"^\""
-    # parse_operator :logical_and, :shift, "\"&\""
-    # parse_operator :shift, :add_or_sub, "\"<<\", \">>\""
+    parse_operator :or, :and, "\"||\""
+    parse_operator :and, :equality, "\"&&\""
+    parse_operator :equality, :cmp, "\"<\", \"<=\", \">\", \">=\", \"<=>\""
+    parse_operator :cmp, :logical_or, "\"==\", \"!=\", \"=~\", \"===\""
+    parse_operator :logical_or, :logical_and, "\"|\", \"^\""
+    parse_operator :logical_and, :shift, "\"&\""
+    parse_operator :shift, :add_or_sub, "\"<<\", \">>\""
 
-    # parse_operator :or, :add_or_sub, "\"||\""
-
-    def parse_or
-      right = parse_add_or_sub
-      left = parse_add_or_sub
-      Call.new left, right, nil, nil, nil
-    end
+    # def parse_or
+    #   right = parse_add_or_sub
+    #   left = parse_add_or_sub
+    #   Call.new left, right, nil, nil, nil
+    # end
 
     def parse_add_or_sub
+      location = @token.location
+
+      left = parse_mul_or_div
+      while true
+        left.location = location
+        case @token.type
+        when :SPACE
+          next_token
+        when :TOKEN
+          case @token.value
+          when "+", "-"
+            method = @token.value
+            method_column_number = @token.column_number
+            next_token_skip_space_or_newline
+            right = parse_mul_or_div
+            left = Call.new left, method, [right], nil, method_column_number
+          else
+            return left
+          end
+        # when :INT, :LONG, :FLOAT
+        #   type = @token.type == :INT ? IntLiteral : (@token.type == :LONG ? LongLiteral : FloatLiteral)
+        #   case @token.value[0]
+        #   when '+'
+        #     left = Call.new left, @token.value[0].to_sym, [type.new(@token.value)], nil, @token.column_number
+        #     next_token_skip_space_or_newline
+        #   when '-'
+        #     left = Call.new left, @token.value[0].to_sym, [type.new(@token.value[1 .. -1])], nil, @token.column_number
+        #     next_token_skip_space_or_newline
+        #   else
+        #     return left
+        #   end
+        else
+          return left
+        end
+      end
+    end
+
+    parse_operator :mul_or_div, :pow, "\"*\", \"/\", \"%\""
+    parse_operator :pow, :atomic_with_method, "\"**\""
+
+    def parse_atomic_with_method
       parse_atomic
     end
 
