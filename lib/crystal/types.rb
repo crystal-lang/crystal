@@ -230,11 +230,13 @@ module Crystal
   class ObjectType < ClassType
     attr_accessor :instance_vars
     attr_accessor :generic
+    attr_reader :hash
     @@id = 0
 
     def initialize(name, parent_type = nil, container = nil)
       super
       @instance_vars = {}
+      @hash = name.hash
     end
 
     def metaclass
@@ -254,12 +256,11 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) ||
-        (other.is_a?(ObjectType) && name == other.name && instance_vars == other.instance_vars)
+      equal?(other) || (generic && structurally_equal?(other))
     end
 
-    def hash
-      name.hash
+    def structurally_equal?(other)
+      other.is_a?(ObjectType) && name == other.name && instance_vars == other.instance_vars
     end
 
     def llvm_type

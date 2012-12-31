@@ -70,8 +70,8 @@ describe 'Type inference unification' do
   it "unifies two objects with arrays of unions" do
     mod = Crystal::Program.new
     nodes = Expressions.from [Var.new('a'), Var.new('b')]
-    nodes[0].type = ObjectType.new('Foo').with_var('@x', mod.array_of(UnionType.new(ObjectType.new('Bar'), ObjectType.new('Bar'))))
-    nodes[1].type = ObjectType.new('Foo').with_var('@x', mod.array_of(UnionType.new(ObjectType.new('Bar'), ObjectType.new('Bar'))))
+    nodes[0].type = ObjectType.new('Foo').generic!.with_var('@x', mod.array_of(UnionType.new(ObjectType.new('Bar').generic!, ObjectType.new('Bar').generic!)))
+    nodes[1].type = ObjectType.new('Foo').generic!.with_var('@x', mod.array_of(UnionType.new(ObjectType.new('Bar').generic!, ObjectType.new('Bar').generic!)))
 
     unify nodes
 

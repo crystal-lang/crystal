@@ -25,7 +25,7 @@ describe 'Type inference: def instance' do
     assert_type(%Q(
       #{test_type}
 
-      class Bar
+      generic class Bar
         #{rw :value}
       end
 
@@ -44,7 +44,7 @@ describe 'Type inference: def instance' do
       b2.value = 1
       f2
       )
-    ) { ObjectType.new("Foo").with_var("@value", ObjectType.new("Bar").with_var("@value", int)) }
+    ) { ObjectType.new("Foo").generic!.with_var("@value", ObjectType.new("Bar").generic!.with_var("@value", int)) }
   end
 
   it "repoints new to correct type" do
@@ -66,19 +66,22 @@ describe 'Type inference: def instance' do
         end
       end
 
+      generic class Bar
+      end
+
       x = Foo.new
       x.value = Foo.new
-      x.value.value = Object.new
+      x.value.value = Bar.new
       x.foo)
     mod = infer_type input
 
-    sub = ObjectType.new('Foo').with_var('@value', ObjectType.new('Object'))
-    obj = ObjectType.new('Foo').with_var('@value', sub)
-    input[2].value.target_def.body.type.should eq(obj)
-    input[3].target_def.owner.should eq(obj)
-    input[3].args[0].type.should eq(sub)
-    input[3].target_def.args[0].type.should eq(sub)
-    input[4].target_def.owner.should eq(sub)
+    sub = ObjectType.new('Foo').generic!.with_var('@value', ObjectType.new('Bar').generic!)
+    obj = ObjectType.new('Foo').generic!.with_var('@value', sub)
+    input[3].value.target_def.body.type.should eq(obj)
+    input[4].target_def.owner.should eq(obj)
+    input[4].args[0].type.should eq(sub)
+    input[4].target_def.args[0].type.should eq(sub)
+    input[5].target_def.owner.should eq(sub)
   end
 
   it "applies all mutations to target def body type" do
@@ -180,13 +183,13 @@ describe 'Type inference: def instance' do
 
   it "" do
     nodes = parse %Q(
-      class Foo
+      generic class Foo
         def bar
           @value = 1
         end
       end
 
-      class Hash
+      generic class Hash
         def initialize
           @a = Foo.new
         end
@@ -200,7 +203,7 @@ describe 'Type inference: def instance' do
       )
     mod = infer_type nodes
 
-    type = ObjectType.new('Hash').with_var('@a', ObjectType.new('Foo').with_var('@value', mod.int))
+    type = ObjectType.new('Hash').generic!.with_var('@a', ObjectType.new('Foo').generic!.with_var('@value', mod.int))
     nodes.last.obj.type.should eq(type)
   end
 
@@ -310,8 +313,8 @@ describe 'Type inference: def instance' do
       g.value.value = 1
     )
     mod = infer_type nodes
-    nodes[2].target.type.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo')))
-    nodes[4].target.type.should eq(ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', mod.int)))
+    nodes[2].target.type.should eq(ObjectType.new('Foo').generic!.with_var('@value', ObjectType.new('Foo').generic!))
+    nodes[4].target.type.should eq(ObjectType.new('Foo').generic!.with_var('@value', ObjectType.new('Foo').generic!.with_var('@value', mod.int)))
   end
 
   it "applies return mutation" do

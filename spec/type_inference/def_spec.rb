@@ -102,7 +102,7 @@ describe 'Type inference: def' do
       f.value.value = Foo.new
       f
       )
-  ) { ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo').with_var('@value', ObjectType.new('Foo'))) }
+  ) { ObjectType.new('Foo').generic!.with_var('@value', ObjectType.new('Foo').generic!.with_var('@value', ObjectType.new('Foo').generic!)) }
   end
 
   it "defines class method" do

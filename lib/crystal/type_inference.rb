@@ -659,7 +659,7 @@ module Crystal
         end
       else
         type = ObjectType.new node.name, parent, current_type
-        type.generic = node.generic
+        type.generic = node.generic || parent.generic
         current_type.types[node.name] = type
       end
 

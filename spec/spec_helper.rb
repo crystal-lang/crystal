@@ -146,6 +146,11 @@ class Crystal::ObjectType
     @instance_vars[name] = Var.new(name, type)
     self
   end
+
+  def generic!
+    @generic = true
+    self
+  end
 end
 
 class Crystal::PointerType

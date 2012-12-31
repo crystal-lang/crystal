@@ -29,8 +29,10 @@ describe UnionType do
   end
 
   it "compares union of object types" do
-    union1 = UnionType.new(ObjectType.new("Foo").with_var("@value", mod.int), ObjectType.new("Foo").with_var("@value", mod.float))
-    union2 = UnionType.new(ObjectType.new("Foo").with_var("@value", mod.float), ObjectType.new("Foo").with_var("@value", mod.int))
+    foo1 = ObjectType.new("Foo").with_var("@value", mod.int)
+    foo2 = ObjectType.new("Foo").with_var("@value", mod.float)
+    union1 = UnionType.new(foo1, foo2)
+    union2 = UnionType.new(foo2, foo1)
     union1.should eq(union2)
   end
 
