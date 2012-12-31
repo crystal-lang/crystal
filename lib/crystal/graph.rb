@@ -61,7 +61,7 @@ module Crystal
       elsif type.name == "Array"
         add_edges node, type.instance_vars["@buffer"].type.var.type
       elsif type.name == "Hash"
-        entry_type = type.instance_vars["@first"].type
+        entry_type = type.instance_vars["@first"] && type.instance_vars["@first"].type
         if entry_type.is_a?(UnionType)
           keys = Set.new
           values = Set.new
