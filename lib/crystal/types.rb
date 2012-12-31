@@ -219,10 +219,6 @@ module Crystal
       @llvm_size = llvm_size
     end
 
-    def ==(other)
-      equal?(other)
-    end
-
     def llvm_name
       name
     end
