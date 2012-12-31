@@ -33,7 +33,7 @@ module Crystal
 
     def visit_var(node)
       unless @vars.include? node.name
-        var = @g.add_nodes node.name, :shape => :note
+        var = @g.add_nodes node.object_id.to_s, :label => node.name, :shape => :note
         add_edges var, node.type
         @vars << node.name
       end
