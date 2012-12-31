@@ -48,17 +48,14 @@ module Crystal
     def accept_children(visitor)
     end
 
-    def clone(context = {}, &block)
-      new_node = context[object_id] and return new_node
-
-      new_node = context[object_id] = self.class.allocate
+    def clone
+      new_node = self.class.allocate
       new_node.location = location
-      new_node.clone_from(self, &block)
-      block.call(self, new_node) if block
+      new_node.clone_from self
       new_node
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
     end
   end
 
@@ -119,8 +116,8 @@ module Crystal
       other.is_a?(Expressions) && other.expressions == expressions
     end
 
-    def clone_from(other, &block)
-      @expressions = other.expressions.map { |exp| exp.clone(&block) }
+    def clone_from(other)
+      @expressions = other.expressions.map(&:clone)
     end
   end
 
@@ -144,8 +141,8 @@ module Crystal
       other.is_a?(ArrayLiteral) && other.elements == elements
     end
 
-    def clone_from(other, &block)
-      @elements = other.elements.map { |exp| exp.clone(&block) }
+    def clone_from(other)
+      @elements = other.elements.map(&:clone)
     end
   end
 
@@ -165,8 +162,8 @@ module Crystal
       other.is_a?(HashLiteral) && other.key_values == key_values
     end
 
-    def clone_from(other, &block)
-      @key_values = other.key_values.map { |kv| kv.clone(&block) }
+    def clone_from(other)
+      @key_values = other.key_values.map(&:clone)
     end
   end
 
@@ -200,9 +197,9 @@ module Crystal
       other.is_a?(ClassDef) && other.name == name && other.body == body && other.superclass == superclass && other.generic == generic
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @name = other.name
-      @body = other.body.clone(&block)
+      @body = other.body.clone
       @superclass = other.superclass
       @generic = other.generic
       @name_column_number = other.name_column_number
@@ -235,9 +232,9 @@ module Crystal
       other.is_a?(ModuleDef) && other.name == name && other.body == body
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @name = other.name
-      @body = other.body.clone(&block)
+      @body = other.body.clone
       @name_column_number = other.name_column_number
     end
   end
@@ -267,7 +264,7 @@ module Crystal
       other.is_a?(BoolLiteral) && other.value == value
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @value = other.value
     end
   end
@@ -289,7 +286,7 @@ module Crystal
       other.is_a?(IntLiteral) && other.value.to_i == value.to_i
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @value = other.value
     end
   end
@@ -311,7 +308,7 @@ module Crystal
       other.is_a?(LongLiteral) && other.value.to_i == value.to_i
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @value = other.value
       @has_sign = other.has_sign
     end
@@ -334,7 +331,7 @@ module Crystal
       other.is_a?(FloatLiteral) && other.value.to_f == value.to_f
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @value = other.value
     end
   end
@@ -354,7 +351,7 @@ module Crystal
       other.is_a?(CharLiteral) && other.value.to_i == value.to_i
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @value = other.value
     end
   end
@@ -370,7 +367,7 @@ module Crystal
       other.is_a?(StringLiteral) && other.value == value
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @value = other.value
     end
   end
@@ -386,7 +383,7 @@ module Crystal
       other.is_a?(SymbolLiteral) && other.value == value
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @value = other.value
     end
   end
@@ -406,7 +403,7 @@ module Crystal
       other.is_a?(RangeLiteral) && other.from == from && other.to == to && other.exclusive == exclusive
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @from = other.from
       @to = other.to
       @exclusive = other.exclusive
@@ -424,7 +421,7 @@ module Crystal
       other.is_a?(RegexpLiteral) && other.value == value
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @value = other.value
     end
   end
@@ -472,11 +469,11 @@ module Crystal
       other.is_a?(Def) && other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @name = other.name
-      @args = other.args.map { |arg| arg.clone(&block) }
-      @body = other.body.clone(&block)
-      @receiver = other.receiver.clone(&block)
+      @args = other.args.map(&:clone)
+      @body = other.body.clone
+      @receiver = other.receiver.clone
       @yields = other.yields
       @maybe_recursive = other.maybe_recursive
     end
@@ -496,7 +493,7 @@ module Crystal
       other.is_a?(Var) && other.name == name && other.type == type && other.out == out
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @name = other.name
       @out = other.out
     end
@@ -514,7 +511,7 @@ module Crystal
       other.is_a?(Global) && other.name == name
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @name = other.name
     end
   end
@@ -543,13 +540,13 @@ module Crystal
       other.is_a?(Arg) && other.name == name && other.default_value == default_value && other.type_restriction == type_restriction && other.out == out
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @name = other.name
-      @default_value = other.default_value.clone(&block)
+      @default_value = other.default_value.clone
       if other.type_restriction == :self
         @type_restriction = :self
       else
-        @type_restriction = other.type_restriction.clone(&block)
+        @type_restriction = other.type_restriction.clone
       end
       @out = other.out
     end
@@ -572,7 +569,7 @@ module Crystal
       other.is_a?(Ident) && other.names == names && other.global == global
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @names = other.names
       @global = other.global
     end
@@ -591,7 +588,7 @@ module Crystal
       other.is_a?(InstanceVar) && other.name == name && other.out == out
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @name = other.name
       @out = other.out
     end
@@ -642,11 +639,11 @@ module Crystal
       other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block
     end
 
-    def clone_from(other, &block)
-      @obj = other.obj.clone(&block)
+    def clone_from(other)
+      @obj = other.obj.clone
       @name = other.name
-      @args = other.args.map { |arg| arg.clone(&block) }
-      @block = other.block.clone(&block)
+      @args = other.args.map(&:clone)
+      @block = other.block.clone
       @name_column_number = other.name_column_number
       @name_length = other.name_length
       @has_parenthesis = other.has_parenthesis
@@ -697,10 +694,10 @@ module Crystal
       other.is_a?(If) && other.cond == cond && other.then == self.then && other.else == self.else
     end
 
-    def clone_from(other, &block)
-      @cond = other.cond.clone(&block)
-      @then = other.then.clone(&block)
-      @else = other.else.clone(&block)
+    def clone_from(other)
+      @cond = other.cond.clone
+      @then = other.then.clone
+      @else = other.else.clone
     end
   end
 
@@ -728,9 +725,9 @@ module Crystal
       other.is_a?(Assign) && other.target == target && other.value == value
     end
 
-    def clone_from(other, &block)
-      @target = other.target.clone(&block)
-      @value = other.value.clone(&block)
+    def clone_from(other)
+      @target = other.target.clone
+      @value = other.value.clone
     end
   end
 
@@ -762,9 +759,9 @@ module Crystal
       other.is_a?(While) && other.cond == cond && other.body == body && other.run_once == run_once
     end
 
-    def clone_from(other, &block)
-      @cond = other.cond.clone(&block)
-      @body = other.body.clone(&block)
+    def clone_from(other)
+      @cond = other.cond.clone
+      @body = other.body.clone
     end
   end
 
@@ -796,9 +793,9 @@ module Crystal
       other.is_a?(Block) && other.args == args && other.body == body
     end
 
-    def clone_from(other, &block)
-      @args = other.args.map { |arg| arg.clone(&block) }
-      @body = other.body.clone(&block)
+    def clone_from(other)
+      @args = other.args.map(&:clone)
+      @body = other.body.clone
     end
   end
 
@@ -828,8 +825,8 @@ module Crystal
           other.is_a?(#{keyword.capitalize}) && other.exps == exps
         end
 
-        def clone_from(other, &block)
-          @exps = other.exps.map { |exp| exp.clone(&block) }
+        def clone_from(other)
+          @exps = other.exps.map(&:clone)
         end
       end
     )
@@ -962,7 +959,7 @@ module Crystal
       other.is_a?(Include) && other.name == name
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @name = other.name
     end
   end
@@ -993,11 +990,11 @@ module Crystal
       other.is_a?(Macro) && other.receiver == receiver && other.name == name && other.args == args && other.body == body
     end
 
-    def clone_from(other, &block)
+    def clone_from(other)
       @name = other.name
-      @args = other.args.map { |arg| arg.clone(&block) }
-      @body = other.body.clone(&block)
-      @receiver = other.receiver.clone(&block)
+      @args = other.args.map(&:clone)
+      @body = other.body.clone
+      @receiver = other.receiver.clone
     end
 
     def yields
@@ -1020,8 +1017,8 @@ module Crystal
       other.is_a?(PointerOf) && other.var == var
     end
 
-    def clone_from(other, &block)
-      @var = other.var.clone(&block)
+    def clone_from(other)
+      @var = other.var.clone
     end
   end
 
@@ -1041,8 +1038,8 @@ module Crystal
       other.is_a?(Require) && other.string == string
     end
 
-    def clone_from(other, &block)
-      @string = other.string.clone(&block)
+    def clone_from(other)
+      @string = other.string.clone
     end
   end
 
@@ -1069,10 +1066,10 @@ module Crystal
       other.is_a?(Case) && other.cond == cond && other.whens == whens && other.else == @else
     end
 
-    def clone_from(other, &block)
-      @cond = other.cond.clone(&block)
-      @whens = other.whens.map { |w| w.clone(&block) }
-      @else = other.else.clone(&block)
+    def clone_from(other)
+      @cond = other.cond.clone
+      @whens = other.whens.map(&:clone)
+      @else = other.else.clone
     end
   end
 
@@ -1096,9 +1093,9 @@ module Crystal
       other.is_a?(When) && other.conds == conds && other.body == body
     end
 
-    def clone_from(other, &block)
-      @conds = other.conds.map { |x| x.clone(&block) }
-      @body = other.body.clone(&block)
+    def clone_from(other)
+      @conds = other.conds.map(&:clone)
+      @body = other.body.clone
     end
   end
 end

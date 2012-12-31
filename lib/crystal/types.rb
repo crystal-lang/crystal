@@ -292,15 +292,15 @@ module Crystal
       @instance_vars.keys.index(name)
     end
 
-    def clone(types_context = {}, nodes_context = {})
+    def clone(types_context = {})
       return self if !generic && Crystal::GENERIC
 
       obj = types_context[object_id] and return obj
 
       obj = types_context[object_id] = ObjectType.new name, @parent_type, @container
       obj.instance_vars = Hash[instance_vars.map do |name, var|
-        cloned_var = var.clone(nodes_context)
-        cloned_var.type = var.type.clone(types_context, nodes_context) if var.type
+        cloned_var = var.clone
+        cloned_var.type = var.type.clone(types_context) if var.type
         cloned_var.bind_to cloned_var
         [name, cloned_var]
       end]
@@ -337,13 +337,13 @@ module Crystal
       1
     end
 
-    def clone(types_context = {}, nodes_context = {})
+    def clone(types_context = {})
       pointer = types_context[object_id] and return pointer
 
-      cloned_var = var.clone(nodes_context)
+      cloned_var = var.clone
 
       pointer = types_context[object_id] = PointerType.new @parent_type, @container, cloned_var
-      pointer.var.type = var.type.clone(types_context, nodes_context)
+      pointer.var.type = var.type.clone(types_context)
       pointer.defs = defs
       pointer.types = types
       pointer.parents = parents
@@ -440,9 +440,9 @@ module Crystal
       equal?(other) || (other.is_a?(UnionType) && @types.length == other.types.length && set_with_count == other.set_with_count)
     end
 
-    def clone(types_context = {}, nodes_context = {})
+    def clone(types_context = {})
       cloned = types_context[object_id] and return cloned
-      types_context[object_id] = UnionType.new(*types.map { |type| type.clone(types_context, nodes_context) })
+      types_context[object_id] = UnionType.new(*types.map { |type| type.clone(types_context) })
     end
 
     def name
