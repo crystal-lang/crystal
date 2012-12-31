@@ -534,6 +534,10 @@ module Crystal
       type.llvm_name
     end
 
+    def llvm_size
+      type.llvm_size
+    end
+
     def clone(*)
       self
     end
