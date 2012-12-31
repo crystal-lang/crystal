@@ -234,6 +234,9 @@ module Crystal
     def initialize(mod, node, return_type, llvm_mod = nil)
       @mod = mod
       @node = node
+      @ints = {}
+      @ints_1 = {}
+      @ints_8 = {}
       @return_type = return_type && return_type.union? ? nil : return_type
       @llvm_mod = llvm_mod || LLVM::Module.new("Crystal")
       @fun = @llvm_mod.functions.add("crystal_main", [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], @return_type ? @return_type.llvm_type : LLVM.Void)
@@ -268,6 +271,18 @@ module Crystal
       @union_maps = {}
     end
 
+    def int(n)
+      @ints[n] ||= LLVM::Int(n)
+    end
+
+    def int1(n)
+      @ints_1[n] ||= LLVM::Int1.from_i(n)
+    end
+
+    def int8(n)
+      @ints_8[n] ||= LLVM::Int8.from_i(n)
+    end
+
     def main
       @fun
     end
@@ -283,11 +298,11 @@ module Crystal
     end
 
     def visit_bool_literal(node)
-      @last = LLVM::Int1.from_i(node.value ? 1 : 0)
+      @last = int1(node.value ? 1 : 0)
     end
 
     def visit_int_literal(node)
-      @last = LLVM::Int(node.value)
+      @last = int(node.value)
     end
 
     def visit_long_literal(node)
@@ -299,7 +314,7 @@ module Crystal
     end
 
     def visit_char_literal(node)
-      @last = LLVM::Int8.from_i(node.value)
+      @last = int8(node.value)
     end
 
     def visit_string_literal(node)
@@ -311,7 +326,7 @@ module Crystal
         global = @llvm_mod.globals.add(LLVM.Array(LLVM::Int8, str.length + 5), name)
         global.linkage = :private
         global.global_constant = 1
-        bytes = "#{[str.length].pack("l")}#{str}\0".chars.to_a.map { |c| LLVM::Int8.from_i(c.ord) }
+        bytes = "#{[str.length].pack("l")}#{str}\0".chars.to_a.map { |c| int8(c.ord) }
         global.initializer = LLVM::ConstantArray.const(LLVM::Int8, bytes)
         @strings[str] = string = @builder.bit_cast(global, @mod.string.llvm_type)
       end
@@ -319,7 +334,7 @@ module Crystal
     end
 
     def visit_symbol_literal(node)
-      @last = LLVM::Int32.from_i(@symbols[node.value])
+      @last = int(@symbols[node.value])
     end
 
     def visit_range_literal(node)
@@ -496,7 +511,7 @@ module Crystal
     def visit_pointer_realloc(node)
       casted_ptr = @builder.bit_cast llvm_self, LLVM::Pointer(LLVM::Int8)
       size = @vars['size'][:ptr]
-      size = @builder.mul size, LLVM::Int(@type.var.type.llvm_size)
+      size = @builder.mul size, int(@type.var.type.llvm_size)
       reallocated_ptr = realloc casted_ptr, size
       @last = @builder.bit_cast reallocated_ptr, LLVM::Pointer(@type.var.llvm_type)
     end
@@ -682,13 +697,13 @@ module Crystal
 
     def visit_alloc(node)
       @last = malloc node.type.llvm_struct_type
-      memset @last, LLVM::Int8.from_i(0), node.type.llvm_struct_type.size
+      memset @last, int8(0), node.type.llvm_struct_type.size
       @last
     end
 
     def visit_struct_alloc(node)
       @last = malloc node.type.llvm_struct_type
-      memset @last, LLVM::Int8.from_i(0), node.type.llvm_struct_type.size
+      memset @last, int8(0), node.type.llvm_struct_type.size
       @last
     end
 
@@ -1071,7 +1086,7 @@ module Crystal
 
           codegen_dispatch_next_arg node, arg_types, arg_values, arg_type, value, unreachable_block, arg_index, label, &block
 
-          switch_table[LLVM::Int(i)] = label
+          switch_table[int(i)] = label
         end
 
         @builder.position_at_end old_block
@@ -1105,7 +1120,7 @@ module Crystal
         @builder.position_at_end old_block
 
         value = @builder.ptr2int arg_ptr, LLVM::Int
-        value = @builder.icmp :eq, value, LLVM::Int(0)
+        value = @builder.icmp :eq, value, int(0)
         @builder.cond value, nil_block, not_nil_block
       else
         codegen_dispatch_next_arg node, arg_types, arg_values, (arg ? arg.type : nil), @last, unreachable_block, arg_index, previous_label, &block
@@ -1161,14 +1176,14 @@ module Crystal
           union_map.linkage = :private
           union_map.global_constant = 1
           union_map_values = type.types.map.with_index do |value_type, value_type_index|
-            LLVM::Int(union_type.index_of_type(value_type))
+            int(union_type.index_of_type(value_type))
           end
           union_map.initializer = LLVM::ConstantArray.const(LLVM::Int, union_map_values)
           @union_maps[[type, union_type]] = union_map
         end
 
-        index = @builder.load(@builder.gep(union_map, [LLVM::Int(0), value_index]))
-        @builder.store LLVM::Int(index), index_ptr
+        index = @builder.load(@builder.gep(union_map, [int(0), value_index]))
+        @builder.store int(index), index_ptr
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_value_type)
         @builder.store value_value, casted_value_ptr
@@ -1178,7 +1193,7 @@ module Crystal
         else
           index = union_type.index_of_type(type)
         end
-        @builder.store LLVM::Int(index), index_ptr
+        @builder.store int(index), index_ptr
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_type)
         @builder.store value, casted_value_ptr
@@ -1192,7 +1207,7 @@ module Crystal
     end
 
     def gep(ptr, *indices)
-      @builder.gep ptr, indices.map { |i| LLVM::Int(i) }
+      @builder.gep ptr, indices.map { |i| int(i) }
     end
 
     def malloc(type)
@@ -1201,7 +1216,7 @@ module Crystal
 
     def memset(pointer, value, size)
       pointer = @builder.bit_cast pointer, LLVM::Pointer(LLVM::Int8)
-      @builder.call @mod.memset(@llvm_mod), pointer, value, @builder.trunc(size, LLVM::Int32), LLVM::Int32.from_i(4), LLVM::Int1.from_i(0)
+      @builder.call @mod.memset(@llvm_mod), pointer, value, @builder.trunc(size, LLVM::Int32), int(4), int1(0)
     end
 
     def realloc(buffer, size)
@@ -1225,7 +1240,7 @@ module Crystal
     end
 
     def llvm_nil
-      LLVM::Int1.from_i(0)
+      int1(0)
     end
 
     def new_entry_block
