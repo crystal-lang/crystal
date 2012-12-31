@@ -181,7 +181,10 @@ module Crystal
       @parents.insert 0, mod unless @parents.any? { |parent| parent.equal?(mod) }
     end
 
-    def lookup_type(names)
+    def lookup_type(names, already_looked_up = {})
+      return nil if already_looked_up[object_id]
+      already_looked_up[object_id] = true
+
       type = self
       names.each do |name|
         type = type.types[name]
@@ -191,11 +194,11 @@ module Crystal
       return type if type
 
       parents.each do |parent|
-        match = parent.lookup_type(names)
+        match = parent.lookup_type(names, already_looked_up)
         return match if match
       end
 
-      container ? container.lookup_type(names) : nil
+      container ? container.lookup_type(names, already_looked_up) : nil
     end
   end
 
