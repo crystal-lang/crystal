@@ -279,8 +279,12 @@ module Crystal
     end
 
     def llvm_name
-      @id ||= (@@id += 1)
-      "#{name}#{@id}"
+      if generic
+        @id ||= (@@id += 1)
+        "#{name}#{@id}"
+      else
+        name
+      end
     end
 
     def index_of_instance_var(name)
