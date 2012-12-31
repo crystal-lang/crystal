@@ -34,6 +34,10 @@ module Crystal
       type && (equal?(type) || full_name == type.full_name || type.parents.any? { |parent| is_restriction_of?(parent, owner) })
     end
 
+    def to_s
+      name
+    end
+
     def self.merge(*types)
       return types[0] if types.length == 1
 
@@ -174,7 +178,7 @@ module Crystal
     end
 
     def include(mod)
-      @parents.insert 0, mod
+      @parents.insert 0, mod unless @parents.any? { |parent| parent.equal?(mod) }
     end
 
     def lookup_type(names)
@@ -220,10 +224,6 @@ module Crystal
     end
 
     def llvm_name
-      name
-    end
-
-    def to_s
       name
     end
 
