@@ -58,13 +58,30 @@ module Crystal
     end
 
     def compile
+      if @options[:stats]
+        require 'benchmark'
+        Benchmark.bm(20, 'TOTAL:') do |bm|
+          @options[:bm] = bm
+          @options[:total_bm] = Benchmark::Tms.new
+          compile_with_stats_and_profile
+          [@options[:total_bm]]
+        end
+      else
+        compile_with_stats_and_profile
+      end
+    end
+
+    def compile_with_stats_and_profile
       begin
         source = @options[:command] ? @options[:command].join(";") : ARGF.read
 
-        parser = Parser.new(source)
-        parser.filename = ARGF.filename unless ARGF.filename == '-'
+        node = nil
+        with_stats_or_profile('parse') do
+          parser = Parser.new(source)
+          parser.filename = ARGF.filename unless ARGF.filename == '-'
+          node = parser.parse
+        end
 
-        node = parser.parse
         require_node = Require.new(StringLiteral.new("prelude"))
         node = node ? Expressions.new([require_node, node]) : require_node
         mod = infer_type node, @options
@@ -72,14 +89,18 @@ module Crystal
         graph node, mod, @options[:output_filename] if @options[:graph] || !Crystal::UNIFY
         exit 0 if @options[:no_build] || !Crystal::UNIFY
 
-        llvm_mod = build node, mod
-        write_main llvm_mod unless @options[:run] || @options[:command]
+        llvm_mod = nil
+        engine = nil
+        with_stats_or_profile('codegen') do
+          llvm_mod = build node, mod
+          write_main llvm_mod unless @options[:run] || @options[:command]
 
-        # Don't optimize crystal_main away if the user wants to run the program
-        llvm_mod.functions["crystal_main"].linkage = :internal unless @options[:run] || @options[:command]
+          # Don't optimize crystal_main away if the user wants to run the program
+          llvm_mod.functions["crystal_main"].linkage = :internal unless @options[:run] || @options[:command]
 
-        engine = LLVM::JITCompiler.new llvm_mod
-        optimize llvm_mod, engine
+          engine = LLVM::JITCompiler.new llvm_mod
+          optimize llvm_mod, engine
+        end
       rescue Crystal::Exception => ex
         puts ex.to_s(source)
         exit 1
@@ -106,6 +127,16 @@ module Crystal
 
         pid = spawn command, in: reader
         Process.waitpid pid
+      end
+    end
+
+    def with_stats_or_profile(description, &block)
+      if @options[:prof]
+        node = Profiler.profile_to("#{description}.html", &block)
+      elsif @options[:stats]
+        @options[:total_bm] += @options[:bm].report(description, &block)
+      else
+        block.call
       end
     end
 

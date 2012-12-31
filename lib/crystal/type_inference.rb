@@ -5,7 +5,7 @@ module Crystal
     mod = options[:mod] || Crystal::Program.new
     if node
       if options[:stats]
-        infer_type_with_stats node, mod
+        infer_type_with_stats node, mod, options
       elsif options[:prof]
         infer_type_with_prof node, mod
       else
@@ -17,27 +17,16 @@ module Crystal
     mod
   end
 
-  def infer_type_with_stats(node, mod)
-    require 'benchmark'
-    Benchmark.bm(20, 'TOTAL:') do |bm|
-      t1 = bm.report('type inference:') { node.accept TypeVisitor.new(mod) }
-      t2 = bm.report('fix empty types') { fix_empty_types node, mod }
-      t3 = bm.report('unification:') { mod.unify node if Crystal::UNIFY }
-      [t1 + t2 + t3]
-    end
+  def infer_type_with_stats(node, mod, options)
+    options[:total_bm] += options[:bm].report('type inference:') { node.accept TypeVisitor.new(mod) }
+    options[:total_bm] += options[:bm].report('fix empty types') { fix_empty_types node, mod }
+    options[:total_bm] += options[:bm].report('unification:') { mod.unify node if Crystal::UNIFY }
   end
 
   def infer_type_with_prof(node, mod)
-    require 'ruby-prof'
-    profile_to('type_inference.html') { node.accept TypeVisitor.new(mod) }
-    profile_to('fix_empty_types.html') { fix_empty_types node, mod }
-    profile_to('unification.html') { mod.unify node if Crystal::UNIFY }
-  end
-
-  def profile_to(output_filename, &block)
-    result = RubyProf.profile(&block)
-    printer = RubyProf::GraphHtmlPrinter.new(result)
-    File.open(output_filename, "w") { |f| printer.print(f) }
+    Profiler.profile_to('type_inference.html') { node.accept TypeVisitor.new(mod) }
+    Profiler.profile_to('fix_empty_types.html') { fix_empty_types node, mod }
+    Profiler.profile_to('unification.html') { mod.unify node if Crystal::UNIFY }
   end
 
   class ASTNode
