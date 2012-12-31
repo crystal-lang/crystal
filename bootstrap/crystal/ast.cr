@@ -153,7 +153,7 @@ module Crystal
   end
 
   class SymbolLiteral < ASTNode
-    attr_accessor :value
+    attr :value
 
     def initialize(value)
       @value = value
@@ -169,7 +169,7 @@ module Crystal
   #  '[' ( expression ( ',' expression )* ) ']'
   #
   class ArrayLiteral < ASTNode
-    attr_accessor :elements
+    attr :elements
 
     def initialize(elements = [])
       @elements = elements
@@ -194,14 +194,14 @@ module Crystal
   # the symbol of that operator instead of a string.
   #
   class Call < ASTNode
-    attr_accessor :obj
-    attr_accessor :name
-    attr_accessor :args
-    attr_accessor :block
+    attr :obj
+    attr :name
+    attr :args
+    attr :block
 
-    attr_accessor :name_column_number
-    attr_accessor :has_parenthesis
-    attr_accessor :name_length
+    attr :name_column_number
+    attr :has_parenthesis
+    attr :name_length
 
     def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
       @obj = obj
@@ -223,5 +223,39 @@ module Crystal
     # def name_length
     #   @name_length ||= name.to_s.ends_with?('=') || name.to_s.ends_with?('@') ? name.length - 1 : name.length
     # end
+  end
+
+  # Assign expression.
+  #
+  #     target '=' value
+  #
+  class Assign < ASTNode
+    attr :target
+    attr :value
+
+    def initialize(target, value)
+      @target = target
+      @value = value
+    end
+
+    def ==(other : self)
+      other.target == target && other.value == value
+    end
+  end
+
+  # A local variable or block argument.
+  class Var < ASTNode
+    attr :name
+    attr :out
+    attr :type
+
+    def initialize(name, type = nil)
+      @name = name.to_s
+      @type = type
+    end
+
+    def ==(other : self)
+      other.name == name && other.type == type && other.out == out
+    end
   end
 end

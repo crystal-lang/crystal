@@ -45,6 +45,10 @@ generic class Hash
     @length
   end
 
+  def empty?
+    @length == 0
+  end
+
   def each
     current = @first
     while current

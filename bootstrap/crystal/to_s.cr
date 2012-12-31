@@ -85,6 +85,21 @@ module Crystal
       false
     end
 
+    def visit(node : Assign)
+      node.target.accept self
+      @str << " = "
+      node.value.accept self
+      false
+    end
+
+    def visit(node : Var)
+      if node.name
+        @str << node.name
+      else
+        @str << '?'
+      end
+    end
+
     def append_indent
       @indent.times do
         @str << "  "

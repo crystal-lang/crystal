@@ -37,7 +37,78 @@ module Crystal
     end
 
     def parse_op_assign
-      parse_question_colon
+      location = @token.location
+
+      atomic = parse_question_colon
+
+      while true
+        atomic.location = location
+
+        case @token.type
+        when :SPACE
+          next_token
+        when :TOKEN
+          # case @token.value
+          # when "="
+          #   if is_hash_indexer?(atomic)
+          #     next_token_skip_space_or_newline
+
+          #     make_hash_setter(atomic)
+          #   else
+          #     break unless can_be_assigned?(atomic)
+
+          #     check_dynamic_constant_assignment(atomic)
+
+          #     atomic = make_var_from_call(atomic)
+          #     push_var atomic
+
+          #     next_token_skip_space_or_newline
+
+          #     value = parse_op_assign
+          #     atomic = Assign.new(atomic, value)
+          #   end
+          # else
+            # break
+          # end
+        # else
+        #   break
+        end
+      end
+
+      atomic
+    end
+
+    def is_hash_indexer?(node : Call)
+      node.name == "[]"
+    end
+
+    def is_hash_indexer?(node)
+      false
+    end
+
+    # def check_dynamic_constant_assignment(atomic : Ident)
+    #   raise "dynamic constant assignment" if @def_vars.length > 1
+    # end
+
+    def check_dynamic_constant_assignment(atomic)
+    end
+
+    def make_hash_setter(node : Call)
+      node.name = "[]="
+      node.name_length = 0
+      node.args << parse_expression
+    end
+
+    def make_hash_setter(node)
+      nil
+    end
+
+    def make_var_from_call(node : Call)
+      Var.new(node.name)
+    end
+
+    def make_var_from_call(node)
+      node
     end
 
     def parse_question_colon
@@ -250,6 +321,37 @@ module Crystal
       else
         false
       end
+    end
+
+    def can_be_assigned?(node : Var)
+      true
+    end
+
+    # def can_be_assigned?(node : InstanceVar)
+    #   true
+    # end
+
+    # def can_be_assigned?(node : Ident)
+    #   true
+    # end
+
+    # def can_be_assigned?(node : Global)
+    #   true
+    # end
+
+    def can_be_assigned?(node : Call)
+      node.obj.nil? && node.args.length == 0 && node.block.nil?
+    end
+
+    def can_be_assigned?(node)
+      false
+    end
+
+    def push_var(var : Var)
+      @def_vars.last.add var.name.to_s
+    end
+
+    def push_var(node)
     end
 
     def check(token_types : Array)

@@ -68,6 +68,10 @@ generic class Array
     self[0]
   end
 
+  def last
+    self[@length - 1]
+  end
+
   def each
     length.times do |i|
       yield @buffer[i]
