@@ -5,15 +5,9 @@ if ARGV.length == 0
   exit(1)
 end
 
-str = File.read String.from_cstr(ARGV[0])
+str = File.read ARGV[0]
 
-lexer = Crystal::Lexer.new(str)
-lexer.filename = ARGV[0]
-while !lexer.eos?
-  token = lexer.next_token
-  if token.value.nil?
-    puts token.type
-  else
-    puts "#{token.type} (#{token.value})"
-  end
-end
+parser = Crystal::Parser.new(str)
+parser.filename = ARGV[0]
+nodes = parser.parse
+puts nodes

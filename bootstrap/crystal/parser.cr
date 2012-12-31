@@ -112,18 +112,39 @@ module Crystal
           else
             return left
           end
-        # when :INT, :LONG, :FLOAT
-        #   type = @token.type == :INT ? IntLiteral : (@token.type == :LONG ? LongLiteral : FloatLiteral)
-        #   case @token.value[0]
-        #   when '+'
-        #     left = Call.new left, @token.value[0].to_sym, [type.new(@token.value)], nil, @token.column_number
-        #     next_token_skip_space_or_newline
-        #   when '-'
-        #     left = Call.new left, @token.value[0].to_sym, [type.new(@token.value[1 .. -1])], nil, @token.column_number
-        #     next_token_skip_space_or_newline
-        #   else
-        #     return left
-        #   end
+        when :INT
+          case @token.value.to_s[0]
+          when '+'
+            left = Call.new left, @token.value.to_s[0].to_s, [IntLiteral.new(@token.value.to_s)], nil, @token.column_number
+            next_token_skip_space_or_newline
+          when '-'
+            left = Call.new left, @token.value.to_s[0].to_s, [IntLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
+            next_token_skip_space_or_newline
+          else
+            return left
+          end
+        when :LONG
+          case @token.value.to_s[0]
+          when '+'
+            left = Call.new left, @token.value.to_s[0].to_s, [LongLiteral.new(@token.value.to_s)], nil, @token.column_number
+            next_token_skip_space_or_newline
+          when '-'
+            left = Call.new left, @token.value.to_s[0].to_s, [LongLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
+            next_token_skip_space_or_newline
+          else
+            return left
+          end
+        when :FLOAT
+          case @token.value.to_s[0]
+          when '+'
+            left = Call.new left, @token.value.to_s[0].to_s, [FloatLiteral.new(@token.value.to_s)], nil, @token.column_number
+            next_token_skip_space_or_newline
+          when '-'
+            left = Call.new left, @token.value.to_s[0].to_s, [FloatLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
+            next_token_skip_space_or_newline
+          else
+            return left
+          end
         else
           return left
         end
@@ -142,6 +163,8 @@ module Crystal
       case @token.type
       when :TOKEN
         case @token.value
+        when "("
+          parse_parenthesized_expression
         when "[]"
           next_token_skip_space
           ArrayLiteral.new
@@ -176,6 +199,17 @@ module Crystal
       else
         raise "unexpected token #{@token}"
       end
+    end
+
+    def parse_parenthesized_expression
+      next_token_skip_space_or_newline
+      exp = parse_expression
+
+      check_token ")"
+      next_token_skip_space
+
+      raise "unexpected token: (" if @token.token?("(")
+      exp
     end
 
     def parse_string
@@ -221,6 +255,10 @@ module Crystal
 
     def check(token_type)
       raise "expecting token '#{token_type}', not '#{@token.to_s}'" unless token_type == @token.type
+    end
+
+    def check_token(value)
+      raise "expecting token '#{value}', not '#{@token.to_s}'" unless @token.type == :TOKEN && @token.value == value
     end
   end
 end

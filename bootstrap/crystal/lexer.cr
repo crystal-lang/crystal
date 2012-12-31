@@ -220,7 +220,7 @@ module Crystal
     end
 
     def skip_statement_end
-      next_token while (@token.type == :SPACE || @token.type == :NEWLINE || @token.token?(";"))
+      next_token while (@token.type == :SPACE || @token.type == :NEWLINE || @token.type == :";")
     end
 
     def raise(message)

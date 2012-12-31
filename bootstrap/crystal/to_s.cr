@@ -57,6 +57,62 @@ module Crystal
       @str << "nil"
     end
 
+    def visit(node : Expressions)
+      node.expressions.each do |exp|
+        append_indent
+        exp.accept self
+        @str << "\n"
+      end
+      false
+    end
+
+    def visit(node : Call)
+      if node.obj
+        node.obj.accept self
+        @str << "."
+      end
+      @str << node.name
+      @str << "(" unless node.obj && node.args.empty?
+      node.args.each_with_index do |arg, i|
+        @str << ", " if i > 0
+        arg.accept self
+      end
+      @str << ")" unless node.obj && node.args.empty?
+      if node.block
+        @str << " "
+        node.block.accept self
+      end
+      false
+    end
+
+    def append_indent
+      @indent.times do
+        @str << "  "
+      end
+    end
+
+    def with_indent
+      @indent += 1
+      yield
+      @indent -= 1
+    end
+
+    def accept_with_indent(node : Expressions)
+      return unless node
+      with_indent do
+        node.accept self
+      end
+    end
+
+    def accept_with_indent(node)
+      return unless node
+      with_indent do
+        append_indent
+        node.accept self
+      end
+      @str << "\n"
+    end
+
     def to_s
       @str.to_s
     end
