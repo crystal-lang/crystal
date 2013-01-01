@@ -145,6 +145,12 @@ module Crystal
 
       return unless can_calculate_type?
 
+      # Ignore extra recalculations when more than one argument changes at the same time
+      types_signature = args.map { |arg| arg.type.object_id }
+      types_signature << obj.type.object_id if obj
+      return if @types_signature == types_signature
+      @types_signature = types_signature
+
       if has_unions?
         dispatch = Dispatch.new
         self.bind_to dispatch
