@@ -428,10 +428,26 @@ module Crystal
     end
 
     def visit_multi_assign(node)
+      llvm_values = []
+
       node.targets.each_with_index do |target, i|
-        codegen_assign_node(target, node.values[i])
+        if target.is_a?(Ident)
+          llvm_values << nil
+        else
+          node.values[i].accept self
+          llvm_values << @last
+        end
       end
+
+      node.targets.each_with_index do |target, i|
+        llvm_value = llvm_values[i]
+        if llvm_value
+          codegen_assign_target(target, node.values[i], llvm_value)
+        end
+      end
+
       @last = llvm_nil
+
       false
     end
 
@@ -442,6 +458,12 @@ module Crystal
 
       value.accept self
 
+      codegen_assign_target(target, value, @last)
+
+      false
+    end
+
+    def codegen_assign_target(target, value, llvm_value)
       case target
       when InstanceVar
         ivar = @type.instance_vars[target.name.to_s]
@@ -458,9 +480,7 @@ module Crystal
         ptr = var[:ptr]
       end
 
-      codegen_assign(ptr, target.type, value.type, @last)
-
-      false
+      codegen_assign(ptr, target.type, value.type, llvm_value)
     end
 
     def declare_var(var)
