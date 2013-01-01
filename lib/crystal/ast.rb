@@ -731,6 +731,36 @@ module Crystal
     end
   end
 
+  # Assign expression.
+  #
+  #     target [',' target]+ '=' value [',' value]*
+  #
+  class MultiAssign < ASTNode
+    attr_accessor :targets
+    attr_accessor :values
+
+    def initialize(targets, values)
+      @targets = targets
+      @targets.each { |target| target.parent = self }
+      @values = values
+      @values.each { |value| value.parent = self }
+    end
+
+    def accept_children(visitor)
+      @targets.each { |target| target.accept visitor }
+      @values.each { |value| value.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(MultiAssign) && other.targets == targets && other.values == values
+    end
+
+    def clone_from(other)
+      @targets = other.targets.map(&:clone)
+      @values = other.values.map(&:clone)
+    end
+  end
+
   # While expression.
   #
   #     'while' cond

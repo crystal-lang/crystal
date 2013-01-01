@@ -424,29 +424,41 @@ module Crystal
     end
 
     def visit_assign(node)
-      if node.target.is_a?(Ident)
+      codegen_assign_node(node.target, node.value)
+    end
+
+    def visit_multi_assign(node)
+      node.targets.each_with_index do |target, i|
+        codegen_assign_node(target, node.values[i])
+      end
+      @last = llvm_nil
+      false
+    end
+
+    def codegen_assign_node(target, value)
+      if target.is_a?(Ident)
         return false
       end
 
-      node.value.accept self
+      value.accept self
 
-      case node.target
+      case target
       when InstanceVar
-        ivar = @type.instance_vars[node.target.name.to_s]
-        ptr = gep llvm_self, 0, @type.index_of_instance_var(node.target.name.to_s)
+        ivar = @type.instance_vars[target.name.to_s]
+        ptr = gep llvm_self, 0, @type.index_of_instance_var(target.name.to_s)
       when Global
-        ptr = @llvm_mod.globals[node.target.name.to_s]
+        ptr = @llvm_mod.globals[target.name.to_s]
         unless ptr
-          ptr = @llvm_mod.globals.add(node.target.llvm_type, node.target.name.to_s)
+          ptr = @llvm_mod.globals.add(target.llvm_type, target.name.to_s)
           ptr.linkage = :internal
-          ptr.initializer = LLVM::Constant.null(node.target.llvm_type)
+          ptr.initializer = LLVM::Constant.null(target.llvm_type)
         end
       else
-        var = declare_var(node.target)
+        var = declare_var(target)
         ptr = var[:ptr]
       end
 
-      codegen_assign(ptr, node.target.type, node.value.type, @last)
+      codegen_assign(ptr, target.type, value.type, @last)
 
       false
     end

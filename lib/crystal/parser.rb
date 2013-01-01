@@ -25,10 +25,58 @@ module Crystal
     def parse_expressions
       exps = []
       while @token.type != :EOF && !is_end_token
-        exps << parse_expression
+        exps << parse_multi_expression
         skip_statement_end
       end
       Expressions.from exps
+    end
+
+    def parse_multi_expression
+      exps = []
+      i = 0
+      assign_index = nil
+      indexer_index = nil
+      exps << (last = parse_expression)
+      while true
+        case @token.type
+        when :SPACE
+          next_token
+        when :','
+          assign_index = i if !assign_index && last.is_a?(Assign)
+          i += 1
+
+          next_token_skip_space_or_newline
+          exps << (last = parse_expression)
+        else
+          break
+        end
+      end
+
+      if exps.length == 1
+        exps[0]
+      else
+        assign_index = i if !assign_index && last.is_a?(Assign)
+
+        if assign_index
+          targets = exps[0 ... assign_index].map { |exp| to_lhs(exp) }
+          targets.push to_lhs(exps[assign_index].target)
+          values = [exps[assign_index].value]
+          values.concat exps[assign_index + 1 .. -1]
+          MultiAssign.new(targets, values)
+        else
+          Expressions.from exps
+        end
+      end
+    end
+
+    def to_lhs(exp)
+      if exp.is_a?(Ident) && @def_vars.length > 1
+        raise "dynamic constant assignment"
+      end
+
+      exp = Var.new(exp.name) if exp.is_a?(Call)
+      push_var exp if exp.is_a?(Var)
+      exp
     end
 
     def parse_expression

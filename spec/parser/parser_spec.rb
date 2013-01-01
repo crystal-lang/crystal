@@ -73,6 +73,10 @@ describe Parser do
   it_parses "a = 1", Assign.new("a".var, 1.int)
   it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int))
 
+  it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var], [1.int, 2.int])
+  it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var], [1.int])
+  it_parses "a = 1, 2", MultiAssign.new(["a".var], [1.int, 2.int])
+
   it_parses "def foo\n1\nend", Def.new("foo", [], [1.int])
   it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], [1.int])
   it_parses "def foo ; 1 ; end", Def.new("foo", [], [1.int])
@@ -106,9 +110,9 @@ describe Parser do
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int)], nil)
   it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", nil, 'Int'.ident)], nil)
   it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, 'Int'.ident)], nil)
-  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, :self)], nil), focus: true
+  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, :self)], nil)
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, :self)], nil)
-  it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, true), focus: true
+  it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, true)
 
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call

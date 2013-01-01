@@ -786,57 +786,77 @@ module Crystal
     end
 
     def visit_assign(node)
-      case node.target
+      type_assign(node.target, node.value, node)
+      false
+    end
+
+    def visit_multi_assign(node)
+      node.targets.each_with_index do |target, i|
+        type_assign(target, node.values[i])
+      end
+      node.bind_to mod.nil_var
+      false
+    end
+
+    def type_assign(target, value, node = nil)
+      case target
       when Var
-        var = lookup_var node.target.name
-        node.target.bind_to var
+        var = lookup_var target.name
+        target.bind_to var
 
-        node.value.accept self
+        value.accept self
 
-        node.bind_to node.value
-
-        var.bind_to node
-        var.update
-
-        node.creates_new_type = var.creates_new_type ||= node.value.creates_new_type
-        false
-      when InstanceVar
-        var = lookup_instance_var node.target, (@nest_count > 0)
-
-        node.value.accept self
-
-        node.bind_to node.value
-
-        var.bind_to node
-        var.update
-
-        node.creates_new_type = var.creates_new_type ||= node.value.creates_new_type
-        false
-      when Ident
-        type = current_type.types[node.target.names.first]
-        if type
-          node.raise "already initialized constant #{node.target}"
+        if node
+          node.bind_to value
+          var.bind_to node
+        else
+          var.bind_to value
         end
 
-        node.value.accept self
-        node.target.bind_to node.value
-
-        current_type.types[node.target.names.first] = Const.new(node.target.names.first, node.value, current_type)
-        false
-      when Global
-        var = mod.global_vars[node.target.name] ||= Var.new(node.target.name)
-
-        node.value.accept self
-        node.target.bind_to var
-
-        node.bind_to node.value
-
-        var.bind_to node
         var.update
 
-        false
-      else
-        true
+        if node
+          node.creates_new_type = var.creates_new_type ||= value.creates_new_type
+        end
+      when InstanceVar
+        var = lookup_instance_var target, (@nest_count > 0)
+
+        value.accept self
+
+        if node
+          node.bind_to value
+          var.bind_to node
+        else
+          var.bind_to value
+        end
+
+        var.update
+
+        if node
+          node.creates_new_type = var.creates_new_type ||= value.creates_new_type
+        end
+      when Ident
+        type = current_type.types[target.names.first]
+        if type
+          target.raise "already initialized constant #{target}"
+        end
+
+        value.accept self
+        target.bind_to value
+
+        current_type.types[target.names.first] = Const.new(target.names.first, value, current_type)
+      when Global
+        var = mod.global_vars[target.name] ||= Var.new(target.name)
+
+        value.accept self
+        target.bind_to var
+
+        if node
+          node.bind_to value
+          var.bind_to node
+        end
+
+        var.update
       end
     end
 

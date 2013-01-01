@@ -332,6 +332,19 @@ module Crystal
       false
     end
 
+    def visit_multi_assign(node)
+      node.targets.each_with_index do |target, i|
+        @str << ", " if i > 0
+        target.accept self
+      end
+      @str << " = "
+      node.values.each_with_index do |value, i|
+        @str << ", " if i > 0
+        value.accept self
+      end
+      false
+    end
+
     def visit_while(node)
       if node.run_once
         if node.body.is_a?(Expressions)
