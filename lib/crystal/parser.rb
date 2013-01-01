@@ -717,7 +717,7 @@ module Crystal
         nil
       when :"("
         args = []
-        next_token_skip_space
+        next_token_skip_space_or_newline
         while @token.type != :")"
           if @token.keyword?(:out)
             next_token_skip_space_or_newline
