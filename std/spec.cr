@@ -6,11 +6,11 @@ $spec_manual_results = false
 
 def it(description)
   $spec_context << description
-  it { yield }
+  assert { yield }
   $spec_context.pop
 end
 
-def it
+def assert
   $spec_success = true
   $spec_count += 1
   yield

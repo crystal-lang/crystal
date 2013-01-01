@@ -38,6 +38,8 @@ module Crystal
       @types["ARGC_UNSAFE"] = Const.new "ARGC_UNSAFE", Crystal::ARGC.new(int), self
       @types["ARGV_UNSAFE"] = Const.new "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char))), self
 
+      @types["Math"] = ModuleType.new "Math", self
+
       @symbols = Set.new
       @global_vars = {}
 

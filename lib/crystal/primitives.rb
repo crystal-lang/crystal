@@ -14,6 +14,7 @@ module Crystal
       define_pointer_primitives
 
       define_numeric_operations
+      define_math_primitives
     end
 
     def define_object_primitives
@@ -55,6 +56,11 @@ module Crystal
       singleton(char, :<=, {'other' => char}, bool) { |b, f| b.icmp(:ule, f.params[0], f.params[1]) }
       singleton(char, :>, {'other' => char}, bool) { |b, f| b.icmp(:ugt, f.params[0], f.params[1]) }
       singleton(char, :>=, {'other' => char}, bool) { |b, f| b.icmp(:uge, f.params[0], f.params[1]) }
+    end
+
+    def define_math_primitives
+      math = types['Math'].metaclass
+      singleton(math, 'sqrt', {'other' => float}, float) { |b, f, llvm_mod| b.call(sqrt(llvm_mod), f.params[0]) }
     end
 
     CALC_OP_MAP = {
@@ -214,6 +220,10 @@ module Crystal
 
     def pow(llvm_mod)
       llvm_mod.functions['llvm.pow.f32'] || llvm_mod.functions.add('llvm.pow.f32', [LLVM::Float, LLVM::Float], LLVM::Float)
+    end
+
+    def sqrt(llvm_mod)
+      llvm_mod.functions['llvm.sqrt.f32'] || llvm_mod.functions.add('llvm.sqrt.f32', [LLVM::Float], LLVM::Float)
     end
   end
 
