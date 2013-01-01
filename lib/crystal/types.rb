@@ -237,6 +237,7 @@ module Crystal
   class ObjectType < ClassType
     attr_accessor :instance_vars
     attr_accessor :generic
+    attr_accessor :string_rep
     attr_reader :hash
     @@id = 0
 
@@ -315,10 +316,13 @@ module Crystal
       obj.types = types
       obj.parents = parents
       obj.generic = generic
+      obj.string_rep = string_rep
       obj
     end
 
     def to_s
+      return string_rep.call(self) if string_rep
+      return name unless generic
       return @to_s if @to_s
       @to_s = "..."
       instance_vars_to_s = instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
