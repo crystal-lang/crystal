@@ -154,6 +154,7 @@ module Crystal
 
       no_args_primitive(float, 'to_i', int) { |b, f| b.fp2si(f.params[0], int.llvm_type) }
       self_primitive(float, 'to_f')
+      singleton(float, :**, {'other' => float}, float) { |b, f, llvm_mod| b.call(pow(llvm_mod), f.params[0], f.params[1]) }
     end
 
     def define_symbol_primitives
@@ -209,6 +210,10 @@ module Crystal
 
     def memset(llvm_mod)
       llvm_mod.functions['llvm.memset.p0i8.i32'] || llvm_mod.functions.add('llvm.memset.p0i8.i32', [LLVM::Pointer(LLVM::Int8), LLVM::Int8, LLVM::Int, LLVM::Int32, LLVM::Int1], LLVM.Void)
+    end
+
+    def pow(llvm_mod)
+      llvm_mod.functions['llvm.pow.f32'] || llvm_mod.functions.add('llvm.pow.f32', [LLVM::Float, LLVM::Float], LLVM::Float)
     end
   end
 

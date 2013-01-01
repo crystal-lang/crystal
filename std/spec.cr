@@ -6,6 +6,11 @@ $spec_manual_results = false
 
 def it(description)
   $spec_context << description
+  it { yield }
+  $spec_context.pop
+end
+
+def it
   $spec_success = true
   $spec_count += 1
   yield
@@ -15,7 +20,6 @@ def it(description)
     print 'F'
     $spec_failures += 1
   end
-  $spec_context.pop
 end
 
 def describe(description)

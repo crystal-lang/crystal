@@ -10,4 +10,8 @@ class Float
   def +@
     self
   end
+
+  def **(other : Int)
+    self ** other.to_f
+  end
 end

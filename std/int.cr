@@ -11,6 +11,10 @@ class Int
     self
   end
 
+  def **(other)
+    to_f ** other
+  end
+
   def hash
     self
   end
