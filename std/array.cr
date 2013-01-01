@@ -33,6 +33,10 @@ generic class Array
     @length
   end
 
+  def size
+    @length
+  end
+
   def empty?
     @length == 0
   end
