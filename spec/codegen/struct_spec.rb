@@ -7,11 +7,11 @@ describe 'Code gen: struct' do
   end
 
   it "codegens struct property setter" do
-    run("#{struct}; bar = Foo::Bar.new; bar.y = 2.5; bar.y").to_f.should eq(2.5)
+    run("#{struct}; bar = Foo::Bar.new; bar.y = 2.5f; bar.y").to_f.should eq(2.5)
   end
 
   it "codegens struct property setter" do
-    run("#{struct}; bar = Foo::Bar.new; p = bar.ptr; p.value.y = 2.5; bar.y").to_f.should eq(2.5)
+    run("#{struct}; bar = Foo::Bar.new; p = bar.ptr; p.value.y = 2.5f; bar.y").to_f.should eq(2.5)
   end
 
   it "codegens set struct value with constant" do

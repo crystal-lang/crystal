@@ -28,7 +28,7 @@ describe 'Codegen: const' do
       A = 1
 
       class Foo
-        A = 2.5
+        A = 2.5f
 
         def foo
           A
@@ -44,7 +44,7 @@ describe 'Codegen: const' do
       A = 1
 
       class Foo
-        A = 2.5
+        A = 2.5f
 
         def foo
           A

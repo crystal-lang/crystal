@@ -562,6 +562,10 @@ module Crystal
       node.type = mod.float
     end
 
+    def visit_double_literal(node)
+      node.type = mod.double
+    end
+
     def visit_string_literal(node)
       node.type = mod.string
     end

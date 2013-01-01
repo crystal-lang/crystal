@@ -6,6 +6,6 @@ describe 'Type inference: return' do
   end
 
   it "infers return type with many returns" do
-    assert_type("def foo; if true; return 1; end; 2.5 end; foo") { [int, float].union }
+    assert_type("def foo; if true; return 1; end; 2.5 end; foo") { [int, double].union }
   end
 end

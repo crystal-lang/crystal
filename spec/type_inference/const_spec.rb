@@ -42,7 +42,7 @@ describe 'Type inference: const' do
       end
 
       Foo.new.foo
-      )) { float }
+      )) { double }
   end
 
   it "finds current type first" do
@@ -76,7 +76,7 @@ describe 'Type inference: const' do
       end
 
       B.new.foo
-      )) { float }
+      )) { double }
   end
 
   it "types a global constant reference in static method" do

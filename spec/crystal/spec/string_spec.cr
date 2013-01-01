@@ -7,7 +7,11 @@ describe "String" do
   end
 
   it "does to_f" do
-    "1234.56".to_f.should eq(1234.56)
+    "1234.56".to_f.should eq(1234.56f)
+  end
+
+  it "does to_d" do
+    "1234.56".to_d.should eq(1234.56)
   end
 
   it "compares strings: different length" do

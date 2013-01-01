@@ -302,15 +302,19 @@ module Crystal
     end
 
     def visit_int_literal(node)
-      @last = int(node.value)
+      @last = int(node.value.to_i)
     end
 
     def visit_long_literal(node)
-      @last = LLVM::Int64.from_i(node.value)
+      @last = LLVM::Int64.from_i(node.value.to_i)
     end
 
     def visit_float_literal(node)
-      @last = LLVM::Float(node.value)
+      @last = LLVM::Float.parse(node.type.llvm_type, node.value)
+    end
+
+    def visit_double_literal(node)
+      @last = LLVM::Double.parse(node.type.llvm_type, node.value)
     end
 
     def visit_char_literal(node)

@@ -12,7 +12,7 @@ class Int
   end
 
   def **(other)
-    to_f ** other
+    to_d ** other
   end
 
   def hash

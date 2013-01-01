@@ -10,6 +10,7 @@ module Crystal
       define_int_primitives
       define_long_primitives
       define_float_primitives
+      define_double_primitives
       define_symbol_primitives
       define_pointer_primitives
 
@@ -60,23 +61,26 @@ module Crystal
 
     def define_math_primitives
       math = types['Math'].metaclass
-      singleton(math, 'sqrt', {'other' => float}, float) { |b, f, llvm_mod| b.call(sqrt(llvm_mod), f.params[0]) }
+      singleton(math, 'sqrt', {'other' => float}, float) { |b, f, llvm_mod| b.call(sqrtf(llvm_mod), f.params[0]) }
+      singleton(math, 'sqrt', {'other' => double}, double) { |b, f, llvm_mod| b.call(sqrt(llvm_mod), f.params[0]) }
     end
 
     CALC_OP_MAP = {
       'Int' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
       'Long' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
       'Float' => { :+ => :fadd, :- => :fsub, :* => :fmul, :/ => :fdiv },
+      'Double' => { :+ => :fadd, :- => :fsub, :* => :fmul, :/ => :fdiv },
     }
 
     COMP_OP_FUN_MAP = {
-      'Int' => :icmp, 'Long' => :icmp, 'Float' => :fcmp
+      'Int' => :icmp, 'Long' => :icmp, 'Float' => :fcmp, 'Double' => :fcmp,
     }
 
     COMP_OP_ARG_MAP = {
       'Int' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
       'Long' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
-      'Float' => { :== => :oeq, :> => :ogt, :>= => :oge, :< => :olt, :<= => :ole, :'!=' => :one }
+      'Float' => { :== => :oeq, :> => :ogt, :>= => :oge, :< => :olt, :<= => :ole, :'!=' => :one },
+      'Double' => { :== => :oeq, :> => :ogt, :>= => :oge, :< => :olt, :<= => :ole, :'!=' => :one },
     }
 
     def build_calc_op(b, ret_type, op, arg1, arg2)
@@ -88,6 +92,7 @@ module Crystal
     end
 
     def greatest_type(type1, type2)
+      return double if type1 == double || type2 == double
       return float if type1 == float || type2 == float
       return long if type1 == long || type2 == long
       return int
@@ -95,12 +100,20 @@ module Crystal
 
     def adjust_calc_type(b, ret_type, type, arg)
       return arg if ret_type == type
+      if ret_type == double
+        if type == float
+          return b.fp_ext(arg, double.llvm_type)
+        else
+          return b.si2fp(arg, double.llvm_type)
+        end
+      end
+
       return b.si2fp(arg, float.llvm_type) if ret_type == float
       return b.zext(arg, long.llvm_type) if ret_type == long
     end
 
     def define_numeric_operations
-      [int, long, float].repeated_permutation(2) do |type1, type2|
+      [int, long, float, double].repeated_permutation(2) do |type1, type2|
         [:+, :-, :*, :/].each do |op|
           ret_type = greatest_type(type1, type2)
           singleton(type1, op, {'other' => type2}, ret_type) do |b, f|
@@ -130,6 +143,7 @@ module Crystal
 
       self_primitive(int, 'to_i')
       no_args_primitive(int, 'to_f', float) { |b, f| b.si2fp(f.params[0], float.llvm_type) }
+      no_args_primitive(int, 'to_d', double) { |b, f| b.si2fp(f.params[0], double.llvm_type) }
 
       singleton(int, :%, {'other' => int}, int) { |b, f| b.srem(f.params[0], f.params[1]) }
       singleton(int, :<<, {'other' => int}, int) { |b, f| b.shl(f.params[0], f.params[1]) }
@@ -140,12 +154,15 @@ module Crystal
     end
 
     def define_long_primitives
-      no_args_primitive(long, 'to_i', int) { |b, f| b.trunc(f.params[0], int.llvm_type) }
       no_args_primitive(long, 'to_cstr', char_pointer) do |b, f, llvm_mod|
         buffer = b.array_malloc(LLVM::Int8, LLVM::Int(22))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%ld"), f.params[0]
         buffer
       end
+
+      no_args_primitive(long, 'to_i', int) { |b, f| b.trunc(f.params[0], int.llvm_type) }
+      no_args_primitive(long, 'to_f', float) { |b, f| b.si2fp(f.params[0], float.llvm_type) }
+      no_args_primitive(long, 'to_d', double) { |b, f| b.si2fp(f.params[0], double.llvm_type) }
 
       no_args_primitive(long, :-@, long) { |b, f| b.sub(LLVM::Int64.from_i(0), f.params[0]) }
       no_args_primitive(long, :+@, long) { |b, f| f.params[0] }
@@ -160,7 +177,21 @@ module Crystal
 
       no_args_primitive(float, 'to_i', int) { |b, f| b.fp2si(f.params[0], int.llvm_type) }
       self_primitive(float, 'to_f')
-      singleton(float, :**, {'other' => float}, float) { |b, f, llvm_mod| b.call(pow(llvm_mod), f.params[0], f.params[1]) }
+      no_args_primitive(float, 'to_d', double) { |b, f| b.fp_ext(f.params[0], double.llvm_type) }
+      singleton(float, :**, {'other' => float}, float) { |b, f, llvm_mod| b.call(powf(llvm_mod), f.params[0], f.params[1]) }
+    end
+
+    def define_double_primitives
+      no_args_primitive(double, 'to_cstr', char_pointer) do |b, f, llvm_mod|
+        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(12))
+        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%g"), b.fp_ext(f.params[0], LLVM::Double)
+        buffer
+      end
+
+      no_args_primitive(double, 'to_i', int) { |b, f| b.fp2si(f.params[0], int.llvm_type) }
+      no_args_primitive(double, 'to_f', float) { |b, f| b.fp_trunc(f.params[0], float.llvm_type) }
+      self_primitive(double, 'to_d')
+      singleton(double, :**, {'other' => double}, double) { |b, f, llvm_mod| b.call(pow(llvm_mod), f.params[0], f.params[1]) }
     end
 
     def define_symbol_primitives
@@ -219,10 +250,18 @@ module Crystal
     end
 
     def pow(llvm_mod)
+      llvm_mod.functions['llvm.pow.f64'] || llvm_mod.functions.add('llvm.pow.f64', [LLVM::Double, LLVM::Double], LLVM::Double)
+    end
+
+    def powf(llvm_mod)
       llvm_mod.functions['llvm.pow.f32'] || llvm_mod.functions.add('llvm.pow.f32', [LLVM::Float, LLVM::Float], LLVM::Float)
     end
 
     def sqrt(llvm_mod)
+      llvm_mod.functions['llvm.sqrt.f64'] || llvm_mod.functions.add('llvm.sqrt.f64', [LLVM::Double], LLVM::Double)
+    end
+
+    def sqrtf(llvm_mod)
       llvm_mod.functions['llvm.sqrt.f32'] || llvm_mod.functions.add('llvm.sqrt.f32', [LLVM::Float], LLVM::Float)
     end
   end

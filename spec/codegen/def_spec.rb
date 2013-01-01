@@ -57,7 +57,7 @@ describe 'Code gen: def' do
       f.value = 1
 
       g = gen
-      g.value = 2.5
+      g.value = 2.5f
 
       f.value + g.value
     )).to_f.should eq(3.5)
@@ -110,7 +110,7 @@ describe 'Code gen: def' do
       f = Foo.new
       f.foo(1)
       f.bar
-      f.foo(1.5)[0].to_f
+      f.foo(1.5f)[0].to_f
       )).to_f.should eq(1.5)
   end
 

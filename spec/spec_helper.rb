@@ -28,7 +28,7 @@ def assert_type(str, options = {}, &block)
 end
 
 def permutate_primitive_types
-  [['Int', ''], ['Long', 'L'], ['Float', '.0']].repeated_permutation(2) do |p1, p2|
+  [['Int', ''], ['Long', 'L'], ['Float', '.0f'], ['Double', '.0']].repeated_permutation(2) do |p1, p2|
     type1, suffix1 = p1
     type2, suffix2 = p2
     yield type1, type2, suffix1, suffix2
@@ -36,6 +36,7 @@ def permutate_primitive_types
 end
 
 def primitive_operation_type(*types)
+  return double if types.include?('Double')
   return float if types.include?('Float')
   return long if types.include?('Long')
   return int if types.include?('Int')
@@ -80,11 +81,19 @@ class Fixnum
   def float
     Crystal::FloatLiteral.new self.to_f
   end
+
+  def double
+    Crystal::DoubleLiteral.new self.to_f
+  end
 end
 
 class Float
   def float
     Crystal::FloatLiteral.new self
+  end
+
+  def double
+    Crystal::DoubleLiteral.new self
   end
 end
 

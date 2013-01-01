@@ -33,6 +33,10 @@ module Crystal
       @str << node.value.to_s
     end
 
+    def visit_double_literal(node)
+      @str << node.value.to_s
+    end
+
     def visit_char_literal(node)
       @str << "'"
       @str << node.value.chr

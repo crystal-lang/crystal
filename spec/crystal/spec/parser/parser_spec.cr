@@ -25,7 +25,7 @@ class Int
   end
 end
 
-class Float
+class Double
   def float
     FloatLiteral.new to_s
   end

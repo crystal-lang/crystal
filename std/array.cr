@@ -91,6 +91,14 @@ generic class Array
     self
   end
 
+  def max
+    max = self[0]
+    1.upto(length - 1) do |i|
+      max = self[i] if self[i] > max
+    end
+    max
+  end
+
   def ==(other : Array)
     return false if @length != other.length
     each_with_index do |item, i|

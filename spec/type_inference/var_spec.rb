@@ -18,6 +18,6 @@ describe 'Type inference: var' do
   end
 
   it "types a variable that gets a new type" do
-    assert_type('a = 1; a; a = 2.3; a') { UnionType.new(int, float) }
+    assert_type('a = 1; a; a = 2.3; a') { UnionType.new(int, double) }
   end
 end

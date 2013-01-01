@@ -264,8 +264,13 @@ module Crystal
           next_token_skip_space_or_newline
           right = parse_mul_or_div
           left = Call.new left, method, [right], nil, method_column_number
-        when :INT, :LONG, :FLOAT
-          type = @token.type == :INT ? IntLiteral : (@token.type == :LONG ? LongLiteral : FloatLiteral)
+        when :INT, :LONG, :FLOAT, :DOUBLE
+          type = case @token.type
+                 when :INT then IntLiteral
+                 when :LONG then LongLiteral
+                 when :FLOAT then FloatLiteral
+                 else DoubleLiteral
+                 end
           case @token.value[0]
           when '+'
             left = Call.new left, @token.value[0].to_sym, [type.new(@token.value)], nil, @token.column_number
@@ -419,6 +424,8 @@ module Crystal
         node_and_next_token LongLiteral.new(@token.value)
       when :FLOAT
         node_and_next_token FloatLiteral.new(@token.value)
+      when :DOUBLE
+        node_and_next_token DoubleLiteral.new(@token.value)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value)
       when :STRING, :STRING_START
@@ -651,13 +658,10 @@ module Crystal
         Call.new nil, name, args, block, name_column_number, @last_call_has_parenthesis
       else
         if args
-          if is_var?(name) && args.length == 1 && (args[0].is_a?(IntLiteral) || args[0].is_a?(FloatLiteral) || args[0].is_a?(LongLiteral)) && args[0].has_sign
-            if args[0].value < 0
-              args[0].value = args[0].value.abs
-              Call.new(Var.new(name), :-, args)
-            else
-              Call.new(Var.new(name), :+, args)
-            end
+          if is_var?(name) && args.length == 1 && args[0].is_a?(NumberLiteral)&& args[0].has_sign
+            sign = args[0].value[0].to_sym
+            args[0].value = args[0].value[1 .. -1]
+            Call.new(Var.new(name), sign, args)
           else
             check_maybe_recursive name
             Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
@@ -763,7 +767,7 @@ module Crystal
 
     def parse_args_space_consumed(allow_plus_and_minus = false)
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-'
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :DOUBLE, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-'
         if !allow_plus_and_minus && (@token.type == :'+' || @token.type == :'-')
           return nil
         end

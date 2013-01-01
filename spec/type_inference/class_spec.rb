@@ -48,7 +48,7 @@ describe 'Type inference: class' do
     )
     mod = infer_type input
     input[1].type.should eq(ObjectType.new("Foo").with_var("@coco", mod.int))
-    input[3].type.should eq(ObjectType.new("Foo").with_var("@coco", mod.float))
+    input[3].type.should eq(ObjectType.new("Foo").with_var("@coco", mod.double))
   end
 
   it "types instance variable on getter" do
@@ -73,7 +73,7 @@ describe 'Type inference: class' do
     )
     mod = infer_type input
     input[3].type.should eq(mod.int)
-    input.last.type.should eq(mod.float)
+    input.last.type.should eq(mod.double)
   end
 
   it "types recursive type" do
@@ -117,7 +117,7 @@ describe 'Type inference: class' do
       b = gen
       b.value = 2.5
       b
-    )) { ObjectType.new('Node').with_var("@value", float) }
+    )) { ObjectType.new('Node').with_var("@value", double) }
   end
 
   it "types separately method calls that create instances with two instance vars" do
@@ -139,7 +139,7 @@ describe 'Type inference: class' do
       b = gen
       b.y = 2.5
       b
-    )) { ObjectType.new('Node').with_var("@x", int).with_var("@y", float) }
+    )) { ObjectType.new('Node').with_var("@x", int).with_var("@y", double) }
   end
 
   it "types self inside method call without obj" do
@@ -172,7 +172,7 @@ describe 'Type inference: class' do
     mod = infer_type nodes
 
     # The alloc
-    nodes[1].value.target_def.body.type.should eq(ObjectType.new('Foo').with_var('@a', mod.int).with_var('@b', mod.float))
+    nodes[1].value.target_def.body.type.should eq(ObjectType.new('Foo').with_var('@a', mod.int).with_var('@b', mod.double))
   end
 
   it "types instance variable as nilable if read before write" do

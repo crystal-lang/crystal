@@ -269,25 +269,27 @@ module Crystal
     end
   end
 
-  # An integer literal.
-  #
-  #     \d+
-  #
-  class IntLiteral < ASTNode
+  class NumberLiteral < ASTNode
     attr_accessor :value
     attr_reader :has_sign
 
     def initialize(value)
       @has_sign = value.is_a?(String) && (value[0] == '+' || value[0] == '-')
-      @value = value.to_i
-    end
-
-    def ==(other)
-      other.is_a?(IntLiteral) && other.value.to_i == value.to_i
+      @value = value
     end
 
     def clone_from(other)
       @value = other.value
+    end
+  end
+
+  # An integer literal.
+  #
+  #     \d+
+  #
+  class IntLiteral < NumberLiteral
+    def ==(other)
+      other.is_a?(IntLiteral) && other.value.to_i == value.to_i
     end
   end
 
@@ -295,44 +297,29 @@ module Crystal
   #
   #     \d+L
   #
-  class LongLiteral < ASTNode
-    attr_accessor :value
-    attr_reader :has_sign
-
-    def initialize(value)
-      @has_sign = value.is_a?(String) && (value[0] == '+' || value[0] == '-')
-      @value = value.to_i
-    end
-
+  class LongLiteral < NumberLiteral
     def ==(other)
       other.is_a?(LongLiteral) && other.value.to_i == value.to_i
-    end
-
-    def clone_from(other)
-      @value = other.value
-      @has_sign = other.has_sign
     end
   end
 
   # A float literal.
   #
-  #     \d+.\d+
+  #     \d+.\d+f
   #
-  class FloatLiteral < ASTNode
-    attr_accessor :value
-    attr_reader :has_sign
-
-    def initialize(value)
-      @has_sign = value.is_a?(String) && (value[0] == '+' || value[0] == '-')
-      @value = value.to_f
-    end
-
+  class FloatLiteral < NumberLiteral
     def ==(other)
       other.is_a?(FloatLiteral) && other.value.to_f == value.to_f
     end
+  end
 
-    def clone_from(other)
-      @value = other.value
+  # A double literal.
+  #
+  #     \d+.\d+
+  #
+  class DoubleLiteral < NumberLiteral
+    def ==(other)
+      other.is_a?(DoubleLiteral) && other.value.to_f == value.to_f
     end
   end
 

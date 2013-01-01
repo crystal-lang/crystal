@@ -6,7 +6,7 @@ describe 'Type inference: def overload' do
   end
 
   it "types a call with overload with yield" do
-    assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo') { float }
+    assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo') { double }
   end
 
   it "types a call with overload with yield the other way" do
@@ -14,15 +14,15 @@ describe 'Type inference: def overload' do
   end
 
   it "types a call with overload type first overload" do
-    assert_type('def foo(x : Int); 2.5; end; def foo(x : Float); 1; end; foo(1)') { float }
+    assert_type('def foo(x : Int); 2.5; end; def foo(x : Float); 1; end; foo(1)') { double }
   end
 
   it "types a call with overload type second overload" do
-    assert_type('def foo(x : Int); 2.5; end; def foo(x : Float); 1; end; foo(1.5)') { int }
+    assert_type('def foo(x : Int); 2.5; end; def foo(x : Double); 1; end; foo(1.5)') { int }
   end
 
   it "types a call with overload Object type first overload" do
-    assert_type('class Foo; end; class Bar; end; def foo(x : Foo); 2.5; end; def foo(x : Bar); 1; end; foo(Foo.new)') { float }
+    assert_type('class Foo; end; class Bar; end; def foo(x : Foo); 2.5; end; def foo(x : Bar); 1; end; foo(Foo.new)') { double }
   end
 
   it "types a call with overload Object type first overload" do
@@ -36,11 +36,11 @@ describe 'Type inference: def overload' do
       end
 
       def foo(x : Foo); 2.5; end; def foo(x : Bar); 1; end; foo(Foo.new)
-      )) { float }
+      )) { double }
   end
 
   it "types a call with overload selecting the most restrictive" do
-    assert_type('def foo(x); 1; end; def foo(x : Float); 1.1; end; foo(1.5)') { float }
+    assert_type('def foo(x); 1; end; def foo(x : Double); 1.1; end; foo(1.5)') { double }
   end
 
   it "types a call with overload selecting the most restrictive" do
@@ -90,7 +90,7 @@ describe 'Type inference: def overload' do
       end
 
       foo(B.new)
-    )) { float }
+    )) { double }
   end
 
   it "types a call with overload matches hierarchy 3" do
@@ -144,7 +144,7 @@ describe 'Type inference: def overload' do
 
       a = A.new
       a.foo(1)
-    )) { float }
+    )) { double }
   end
 
   it "types a call with overload self in included module" do
@@ -190,7 +190,7 @@ describe 'Type inference: def overload' do
 
       b = B.new
       b.foo(A.new)
-    )) { float }
+    )) { double }
   end
 
   it "types a call with overload self with inherited type" do

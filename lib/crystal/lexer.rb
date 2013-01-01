@@ -27,20 +27,17 @@ module Crystal
       elsif scan /;+/
         @token.type = :";"
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*\.\d(?:(_\d)|\d)*(?:e(?:\+|-)?\d+)?/)
-        @token.type = :FLOAT
-        @token.value = self[1] || self[2] ? match.gsub('_', '') : match
+        has_underscore = self[1] || self[2]
+        @token.type = scan(/f/i) ? :FLOAT : :DOUBLE
+        @token.value = has_underscore ? match.gsub('_', '') : match
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*e(?:\+|-)?\d+/)
-        @token.type = :FLOAT
-        @token.value = self[1] || self[2] ? match.gsub('_', '') : match
+        has_underscore = self[1] || self[2]
+        @token.type = scan(/f/i) ? :FLOAT : :DOUBLE
+        @token.value = has_underscore ? match.gsub('_', '') : match
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*/)
         has_underscore = self[1]
-        if scan(/L/)
-          @token.type = :LONG
-          @token.value = has_underscore ? match.gsub('_', '') : match
-        else
-          @token.type = :INT
-          @token.value = has_underscore ? match.gsub('_', '') : match
-        end
+        @token.type = scan(/L/) ? :LONG : :INT
+        @token.value = has_underscore ? match.gsub('_', '') : match
       elsif match = scan(/'\\n'/)
         @token.type = :CHAR
         @token.value = ?\n.ord

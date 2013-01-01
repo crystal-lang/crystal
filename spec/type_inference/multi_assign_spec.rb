@@ -6,7 +6,7 @@ describe 'Type inference: multi assign' do
   end
 
   it "types multi assign second exp" do
-    assert_type("a, b = 1, 1.5; b") { float }
+    assert_type("a, b = 1, 1.5; b") { double }
   end
 
   it "types multi assign as nil" do

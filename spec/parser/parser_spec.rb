@@ -21,9 +21,13 @@ describe Parser do
   it_parses "+1L", 1.long
   it_parses "-1L", -1.long
 
-  it_parses "1.0", 1.0.float
-  it_parses "+1.0", 1.0.float
-  it_parses "-1.0", -1.0.float
+  it_parses "1.0f", 1.0.float
+  it_parses "+1.0f", 1.0.float
+  it_parses "-1.0f", -1.0.float
+
+  it_parses "1.0", 1.0.double
+  it_parses "+1.0", 1.0.double
+  it_parses "-1.0", -1.0.double
 
   it_parses "'a'", CharLiteral.new(?a.ord)
 
@@ -46,8 +50,8 @@ describe Parser do
   it_parses "1 +\n2", Call.new(1.int, :"+", [2.int])
   it_parses "1 +2", Call.new(1.int, :"+", [2.int])
   it_parses "1 -2", Call.new(1.int, :"-", [2.int])
-  it_parses "1 +2.0", Call.new(1.int, :"+", [2.float])
-  it_parses "1 -2.0", Call.new(1.int, :"-", [2.float])
+  it_parses "1 +2.0", Call.new(1.int, :"+", [2.double])
+  it_parses "1 -2.0", Call.new(1.int, :"-", [2.double])
   it_parses "1 +2L", Call.new(1.int, :"+", [2.long])
   it_parses "1 -2L", Call.new(1.int, :"-", [2.long])
   it_parses "1\n+2", [1.int, 2.int]
@@ -123,12 +127,12 @@ describe Parser do
   it_parses "foo 1, 2", "foo".call(1.int, 2.int)
   it_parses "foo (1 + 2), 3", "foo".call(Call.new(1.int, :"+", [2.int]), 3.int)
   it_parses "foo(1 + 2)", "foo".call(Call.new(1.int, :"+", [2.int]))
-  it_parses "foo -1.0, -2.0", "foo".call(-1.float, -2.float)
+  it_parses "foo -1.0, -2.0", "foo".call(-1.double, -2.double)
   it_parses "foo(\n1)", "foo".call(1.int)
 
   it_parses "foo + 1", Call.new("foo".call, :"+", [1.int])
   it_parses "foo +1", Call.new(nil, "foo", [1.int])
-  it_parses "foo +1.0", Call.new(nil, "foo", [1.float])
+  it_parses "foo +1.0", Call.new(nil, "foo", [1.double])
   it_parses "foo +1L", Call.new(nil, "foo", [1.long])
   it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.int), Call.new("foo".var, :+, [1.int])]
   it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int), Call.new("foo".var, :-, [1.int])]

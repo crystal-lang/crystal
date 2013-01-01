@@ -10,6 +10,6 @@ describe 'Type inference: array' do
   end
 
   it "types array literal of union" do
-    assert_type(%q(require "array"; [1, 2.5])) { array_of([int, float].union) }
+    assert_type(%q(require "array"; [1, 2.5])) { array_of([int, double].union) }
   end
 end

@@ -47,6 +47,6 @@ describe 'Type inference: pointer' do
   end
 
   it "pointer malloc creates new type" do
-    assert_type('p = Pointer.malloc(1); p.value = 1; p2 = Pointer.malloc(1); p2.value = 1.5; p2.value') { float }
+    assert_type('p = Pointer.malloc(1); p.value = 1; p2 = Pointer.malloc(1); p2.value = 1.5; p2.value') { double }
   end
 end

@@ -27,7 +27,7 @@ describe 'Code gen: class' do
       f.coco = 2
 
       g = Foo.new
-      g.coco = 0.5
+      g.coco = 0.5f
 
       f.coco + g.coco
       )).to_f.should eq(2.5)
@@ -101,7 +101,7 @@ describe 'Code gen: class' do
       a.next = 1
 
       a = A.new
-      a.next = 2.5
+      a.next = 2.5f
       a.next.to_f
     )).to_f.should eq(2.5)
   end

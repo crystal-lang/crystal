@@ -2,15 +2,15 @@ require 'spec_helper'
 
 describe "Type inference: union" do
   it "types union when obj is union" do
-    assert_type("a = 1; a = 2.3; a + 1") { UnionType.new(int, float) }
+    assert_type("a = 1; a = 2.3; a + 1") { UnionType.new(int, double) }
   end
 
   it "types union when arg is union" do
-    assert_type("a = 1; a = 2.3; 1 + a") { UnionType.new(int, float) }
+    assert_type("a = 1; a = 2.3; 1 + a") { UnionType.new(int, double) }
   end
 
   it "types union when both obj and arg are union" do
-    assert_type("a = 1; a = 2.3; a + a") { UnionType.new(int, float) }
+    assert_type("a = 1; a = 2.3; a + a") { UnionType.new(int, double) }
   end
 
   it "unifies unions when instance var changes" do
@@ -28,7 +28,7 @@ describe "Type inference: union" do
     ))
     mod = infer_type nodes
 
-    expected_type = ObjectType.new("A").with_var("@next", UnionType.new(mod.int, mod.float))
+    expected_type = ObjectType.new("A").with_var("@next", UnionType.new(mod.int, mod.double))
 
     nodes[1].type.should eq(expected_type)
     nodes[2].target_def.owner.should eq(expected_type)
@@ -53,7 +53,7 @@ describe "Type inference: union" do
     ))
     mod = infer_type nodes
 
-    expected_type = ObjectType.new("A").with_var("@next", UnionType.new(mod.int, mod.float))
+    expected_type = ObjectType.new("A").with_var("@next", UnionType.new(mod.int, mod.double))
 
     nodes[1].type.should eq(expected_type)
     nodes[2].target_def.owner.should eq(expected_type)

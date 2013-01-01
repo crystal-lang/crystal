@@ -247,7 +247,7 @@ describe 'Type inference: def instance' do
       f.value = 2.3
       )
     mod = infer_type nodes
-    nodes[3].target_def.body[0].target.type.should eq(UnionType.new(mod.int, mod.float))
+    nodes[3].target_def.body[0].target.type.should eq(UnionType.new(mod.int, mod.double))
   end
 
   it "" do

@@ -6,7 +6,11 @@ describe 'Type inference: def' do
   end
 
   it "types a call with a float" do
-    assert_type('def foo; 2.3; end; foo') { float }
+    assert_type('def foo; 2.3f; end; foo') { float }
+  end
+
+  it "types a call with a double" do
+    assert_type('def foo; 2.3; end; foo') { double }
   end
 
   it "types a call with an argument" do
@@ -19,11 +23,11 @@ describe 'Type inference: def' do
     input = parse 'def foo(x); x; end; foo 1; foo 2.3'
     mod = infer_type input
     input[1].type.should eq(mod.int)
-    input[2].type.should eq(mod.float)
+    input[2].type.should eq(mod.double)
   end
 
   it "types a call with an argument uses a new scope" do
-    assert_type('x = 2.3; def foo(x); x; end; foo 1; x') { float }
+    assert_type('x = 2.3; def foo(x); x; end; foo 1; x') { double }
   end
 
   it "assigns def owner" do
@@ -88,7 +92,7 @@ describe 'Type inference: def' do
   end
 
   it "types call with union argument" do
-    assert_type('def foo(x); x; end; a = 1; a = 1.1; foo(a)') { UnionType.new(int, float) }
+    assert_type('def foo(x); x; end; a = 1; a = 1.1; foo(a)') { UnionType.new(int, double) }
   end
 
   it "doesn't incorrectly type as recursive type" do
@@ -106,11 +110,11 @@ describe 'Type inference: def' do
   end
 
   it "defines class method" do
-    assert_type("def Int.foo; 2.5; end; Int.foo") { float }
+    assert_type("def Int.foo; 2.5; end; Int.foo") { double }
   end
 
   it "defines class method with self" do
-    assert_type("class Int; def self.foo; 2.5; end; end; Int.foo") { float }
+    assert_type("class Int; def self.foo; 2.5; end; end; Int.foo") { double }
   end
 
   it "calls with default argument" do

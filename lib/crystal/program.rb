@@ -25,6 +25,7 @@ module Crystal
       @types["Int"] = PrimitiveType.new "Int", numeric, LLVM::Int32, 4, self
       @types["Long"] = PrimitiveType.new "Long", numeric, LLVM::Int64, 8, self
       @types["Float"] = PrimitiveType.new "Float", numeric, LLVM::Float, 4, self
+      @types["Double"] = PrimitiveType.new "Double", numeric, LLVM::Double, 8, self
       @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4, self
       @types["Pointer"] = PointerType.new value, self
 
@@ -89,6 +90,10 @@ module Crystal
 
     def float
       @types["Float"]
+    end
+
+    def double
+      @types["Double"]
     end
 
     def string

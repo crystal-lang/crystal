@@ -14,7 +14,11 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens float' do
-    run('1; 2.5').to_f.should eq(2.5)
+    run('1; 2.5f').to_f.should eq(2.5)
+  end
+
+  it 'codegens double' do
+    run('1; 2.5').to_f(LLVM::Double).should eq(2.5)
   end
 
   it 'codegens char' do
@@ -116,19 +120,19 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens Int + Float' do
-    run('1 + 1.5').to_f.should eq(2.5)
+    run('1 + 1.5f').to_f.should eq(2.5)
   end
 
   it 'codegens Int - Float' do
-    run('3 - 0.5').to_f.should eq(2.5)
+    run('3 - 0.5f').to_f.should eq(2.5)
   end
 
   it 'codegens Int * Float' do
-    run('2 * 1.25').to_f.should eq(2.5)
+    run('2 * 1.25f').to_f.should eq(2.5)
   end
 
   it 'codegens Int / Float' do
-    run('5 / 2.0').to_f.should eq(2.5)
+    run('5 / 2.0f').to_f.should eq(2.5)
   end
 
   it 'codegens Int % Int' do
@@ -136,35 +140,35 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens Float + Float' do
-    run('1.0 + 1.5').to_f.should eq(2.5)
+    run('1.0f + 1.5f').to_f.should eq(2.5)
   end
 
   it 'codegens Float - Float' do
-    run('3.0 - 0.5').to_f.should eq(2.5)
+    run('3.0f - 0.5f').to_f.should eq(2.5)
   end
 
   it 'codegens Float * Float' do
-    run('2.0 * 1.25').to_f.should eq(2.5)
+    run('2.0f * 1.25f').to_f.should eq(2.5)
   end
 
   it 'codegens Float / Float' do
-    run('5.0 / 2.0').to_f.should eq(2.5)
+    run('5.0f / 2.0f').to_f.should eq(2.5)
   end
 
   it 'codegens Float + Int' do
-    run('1.5 + 1').to_f.should eq(2.5)
+    run('1.5f + 1').to_f.should eq(2.5)
   end
 
   it 'codegens Float - Int' do
-    run('3.5 - 1').to_f.should eq(2.5)
+    run('3.5f - 1').to_f.should eq(2.5)
   end
 
   it 'codegens Float * Int' do
-    run('1.25 * 2').to_f.should eq(2.5)
+    run('1.25f * 2').to_f.should eq(2.5)
   end
 
   it 'codegens Float / Int' do
-    run('5.0 / 2').to_f.should eq(2.5)
+    run('5.0f / 2').to_f.should eq(2.5)
   end
 
   it 'codegens Int + Long' do
@@ -299,6 +303,6 @@ describe 'Code gen: primitives' do
   end
 
   it "codegens Float#to_f" do
-    run("2.5.to_f").to_f.should eq(2.5)
+    run("2.5f.to_f").to_f.should eq(2.5)
   end
 end

@@ -14,7 +14,11 @@ describe 'Type inference: primitives' do
   end
 
   it "types a float" do
-    assert_type('2.3') { float }
+    assert_type('2.3f') { float }
+  end
+
+  it "types a double" do
+    assert_type('2.3') { double }
   end
 
   it "types a char" do
@@ -38,7 +42,7 @@ describe 'Type inference: primitives' do
   end
 
   it "types a primitive method" do
-    assert_type('class Int; def foo; 2.5; end; end; 1.foo') { float }
+    assert_type('class Int; def foo; 2.5; end; end; 1.foo') { double }
   end
 
   permutate_primitive_types do |type1, type2, suffix1, suffix2|
@@ -88,11 +92,11 @@ describe 'Type inference: primitives' do
   end
 
   it "types Float#to_i" do
-    assert_type("1.5.to_i") { int }
+    assert_type("1.5f.to_i") { int }
   end
 
   it "types Float#to_f" do
-    assert_type("1.5.to_f") { float }
+    assert_type("1.5f.to_f") { float }
   end
 
   it "types ARGV" do
