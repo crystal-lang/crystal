@@ -309,7 +309,7 @@ module Crystal
             when :'='
               # Rewrite 'f.x = args' as f.x=(args)
               next_token_skip_space_or_newline
-              args = parse_args_space_consumed
+              args = parse_args_space_consumed(true)
               atomic = Call.new(atomic, "#{name}=", args, nil, name_column_number)
               next
             when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
@@ -761,9 +761,13 @@ module Crystal
       end
     end
 
-    def parse_args_space_consumed
+    def parse_args_space_consumed(allow_plus_and_minus = false)
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]'
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-'
+        if !allow_plus_and_minus && (@token.type == :'+' || @token.type == :'-')
+          return nil
+        end
+
         case @token.value
         when :if, :unless, :while
           nil

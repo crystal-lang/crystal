@@ -138,6 +138,7 @@ describe Parser do
   it_parses "foo.bar.baz", Call.new(Call.new("foo".call, "bar"), "baz")
   it_parses "f.x Foo.new", Call.new("f".call, "x", [Call.new("Foo".ident, "new")])
   it_parses "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".ident, "new")])
+  it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int, :'-@')])
 
   [:'+', :'-', :'*', :'/', :'%', :'|', :'&', :'^', :'**', :<<, :>>].each do |op|
     it_parses "f.x #{op}= 2", Call.new("f".call, "x=", [Call.new(Call.new("f".call, "x"), op, [2.int])])
