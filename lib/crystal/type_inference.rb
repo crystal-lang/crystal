@@ -52,6 +52,7 @@ module Crystal
         node.add_observer self
       end
       update
+      propagate
     end
 
     def add_observer(observer, func = :update)
@@ -64,10 +65,21 @@ module Crystal
       @observers.each do |observer, func|
         observer.send func, self
       end
+      @observers.keys.each &:propagate
     end
 
     def update(from = self)
-      self.type = Type.merge(*dependencies.map(&:type)) if dependencies
+      new_type = Type.merge(*dependencies.map(&:type)) if dependencies
+      return if new_type.nil? || @type == new_type
+      @type = new_type
+      @dirty = true
+    end
+
+    def propagate
+      if @dirty
+        @dirty = false
+        notify_observers
+      end
     end
 
     def raise(message, inner = nil)
