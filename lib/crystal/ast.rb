@@ -877,9 +877,11 @@ module Crystal
     attr_accessor :args
     attr_accessor :return_type
     attr_accessor :ptr
+    attr_accessor :real_name
 
-    def initialize(name, args = [], return_type = nil, ptr = 0)
+    def initialize(name, args = [], return_type = nil, ptr = 0, real_name = name)
       @name = name
+      @real_name = real_name
       @args = args
       @args.each { |arg| arg.parent = self }
       @return_type = return_type
@@ -893,7 +895,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(FunDef) && other.name == name && other.args == args && other.return_type == return_type && other.ptr == ptr
+      other.is_a?(FunDef) && other.name == name && other.args == args && other.return_type == return_type && other.ptr == ptr && other.real_name == real_name
     end
   end
 

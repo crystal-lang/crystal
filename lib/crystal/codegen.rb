@@ -155,8 +155,10 @@ module Crystal
   end
 
   class External < Def
+    attr_accessor :real_name
+
     def mangled_name(obj_type)
-      name
+      real_name
     end
   end
 

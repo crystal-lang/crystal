@@ -1250,6 +1250,15 @@ module Crystal
 
       next_token_skip_space_or_newline
 
+      if @token.type == :'='
+        next_token_skip_space_or_newline
+        check :IDENT, :CONST
+        real_name = @token.value
+        next_token_skip_space_or_newline
+      else
+        real_name = name
+      end
+
       args = []
 
       if @token.type == :'('
@@ -1293,7 +1302,7 @@ module Crystal
         skip_statement_end
       end
 
-      FunDef.new name, args, return_type, ptr
+      FunDef.new name, args, return_type, ptr, real_name
     end
 
     def parse_type_def

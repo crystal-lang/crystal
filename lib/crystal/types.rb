@@ -504,8 +504,9 @@ module Crystal
       self
     end
 
-    def fun(name, args, return_type)
+    def fun(name, real_name, args, return_type)
       instance = add_def External.new(name, args)
+      instance.real_name = real_name
       instance.owner = self
       instance.type = return_type
     end

@@ -389,7 +389,13 @@ module Crystal
 
     def visit_fun_def(node)
       @str << 'fun '
-      @str << node.name
+      if node.name == node.real_name
+        @str << node.name
+      else
+        @str << node.name
+        @str << ' = '
+        @str << node.real_name
+      end
       if node.args.length > 0
         @str << '('
         node.args.each_with_index do |arg, i|
