@@ -26,7 +26,10 @@ module Crystal
         @token.type = :SPACE
       elsif scan /;+/
         @token.type = :";"
-      elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*\.\d(?:(_\d)|\d)*/)
+      elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*\.\d(?:(_\d)|\d)*(?:e(?:\+|-)?\d+)?/)
+        @token.type = :FLOAT
+        @token.value = self[1] || self[2] ? match.gsub('_', '') : match
+      elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*e(?:\+|-)?\d+/)
         @token.type = :FLOAT
         @token.value = self[1] || self[2] ? match.gsub('_', '') : match
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*/)

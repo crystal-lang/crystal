@@ -103,6 +103,7 @@ describe Lexer do
   it_lexes_idents "def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"
   it_lexes_ints "1", ["1hello", "1"], ["1_000", "1000"], ["100_000", "100000"], ["1__0", "1"], "+1", "-1"
   it_lexes_floats "1.0", ["1.0hello", "1.0"], ["1234.567_890", "1234.567890"], ["1_234.567_890", "1234.567890"], "+1.0", "-1.0"
+  it_lexes_floats "1e10", "1.0e+12", "+1.0e-12", "-2.0e+34", ["-1_000.0e+34", "-1000.0e+34"]
   it_lexes_longs "1L", ["1Lhello", "1"], ["1_000L", "1000"], "+1L", "-1L"
   it_lexes_char "'a'", ?a.ord
   it_lexes_char "'\\n'", ?\n.ord
