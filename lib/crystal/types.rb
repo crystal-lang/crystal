@@ -321,9 +321,12 @@ module Crystal
     end
 
     def to_s
-      return string_rep.call(self) if string_rep
       return name unless generic
       return @to_s if @to_s
+      if string_rep
+        @to_s = string_rep.call(self)
+        return @to_s if @to_s
+      end
       @to_s = "..."
       instance_vars_to_s = instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
       @to_s = nil

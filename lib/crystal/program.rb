@@ -35,8 +35,13 @@ module Crystal
 
       array = @types["Array"] = ObjectType.new "Array", object, self
       array.string_rep = proc do |type|
-        element_type = type.instance_vars["@buffer"].type.var.type
-        "Array<#{element_type}>"
+        buffer = type.instance_vars["@buffer"]
+        if buffer
+          element_type = buffer.type.var.type
+          "Array<#{element_type}>"
+        else
+          nil
+        end
       end
       array.generic = true
 
