@@ -38,4 +38,10 @@ describe "String" do
     "foo #{ bar}".should eq("foo 123")
     "#{foo} bar".should eq("<foo> bar")
   end
+
+  it "multiplies" do
+    str = "foo"
+    (str * 0).should eq("")
+    (str * 3).should eq("foofoofoo")
+  end
 end

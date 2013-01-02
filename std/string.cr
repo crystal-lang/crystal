@@ -74,6 +74,13 @@ class String
     String.from_cstr(new_string_buffer)
   end
 
+  def *(times : Int)
+    return "" if times <= 0
+    str = StringBuilder.new
+    times.times { str << self }
+    str.inspect
+  end
+
   def length
     @length
   end
