@@ -24,4 +24,8 @@ describe "Array" do
       [1, 2, 3].should_not eq([3, 2, 1])
     end
   end
+
+  describe "inspect" do
+    assert { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
+  end
 end

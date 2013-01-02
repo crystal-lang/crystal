@@ -44,8 +44,4 @@ describe 'Code gen: array' do
   it "codegens empty array loop" do
     run('require "array"; def bar(x); end; a = []; i = 0; while i < a.length; bar a[i]; i += 1; end')
   end
-
-  it "inspects array" do
-    run('require "object"; require "int"; require "string"; require "array"; [1, 2, 3].inspect').to_string.should eq('[1, 2, 3]')
-  end
 end
