@@ -315,12 +315,14 @@ module Crystal
   end
 
   class Alloc < Primitive
+    attr_reader :alloc_type
+
     def initialize(type)
-      @type = type
+      @alloc_type = type
     end
 
     def clone_from(other)
-      @type = other.type.clone
+      @alloc_type = other.alloc_type.clone
     end
   end
 

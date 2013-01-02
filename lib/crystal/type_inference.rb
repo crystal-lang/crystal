@@ -853,8 +853,6 @@ module Crystal
           var.bind_to value
         end
 
-        var.update
-
         if node
           node.creates_new_type = var.creates_new_type ||= value.creates_new_type
         end
@@ -869,8 +867,6 @@ module Crystal
         else
           var.bind_to value
         end
-
-        var.update
 
         if node
           node.creates_new_type = var.creates_new_type ||= value.creates_new_type
@@ -895,8 +891,6 @@ module Crystal
           node.bind_to value
           var.bind_to node
         end
-
-        var.update
       end
     end
 
@@ -982,11 +976,13 @@ module Crystal
     end
 
     def visit_alloc(node)
-      return if !node.type.generic && Crystal::GENERIC
-
-      type = lookup_object_type(node.type.name)
-      node.type = type ? type : node.type.clone
-      node.creates_new_type = true
+      if !node.alloc_type.generic && Crystal::GENERIC
+        node.type = node.alloc_type
+      else
+        type = lookup_object_type(node.alloc_type.name)
+        node.type = type ? type : node.alloc_type.clone
+        node.creates_new_type = true
+      end
     end
 
     def visit_array_literal(node)
