@@ -1,4 +1,4 @@
-class Set
+generic class Set
   def initialize
     @hash = {}
   end
