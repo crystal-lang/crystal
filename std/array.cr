@@ -108,13 +108,14 @@ generic class Array
   end
 
   def to_s
-    str = "["
+    str = StringBuilder.new
+    str << "["
     each_with_index do |elem, i|
-      str += ", " if i > 0
-      str += elem.inspect
+      str << ", " if i > 0
+      str << elem.inspect
     end
-    str += "]"
-    str
+    str << "]"
+    str.inspect
   end
 
   def sort!
