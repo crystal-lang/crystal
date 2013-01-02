@@ -18,4 +18,10 @@ generic class Set
   def empty?
     @hash.empty?
   end
+
+  def each
+    @hash.each do |key, value|
+      yield key
+    end
+  end
 end
