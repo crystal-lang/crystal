@@ -39,7 +39,7 @@ module Crystal
     end
 
     def type=(type)
-      return if type.nil? || @type == type
+      return if type.nil? || @type.object_id == type.object_id
 
       @type = type
       notify_observers
@@ -51,7 +51,15 @@ module Crystal
       nodes.each do |node|
         node.add_observer self
       end
-      update
+
+      if @dependencies.length > 1 && nodes.length == 1 && nodes[0].type
+        new_type = Type.merge(@type, nodes[0].type)
+      else
+        new_type = Type.merge(*dependencies.map(&:type))
+      end
+      return if @type.object_id == new_type.object_id
+      @type = new_type
+      @dirty = true
       propagate
     end
 
