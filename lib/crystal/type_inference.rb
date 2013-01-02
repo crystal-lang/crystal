@@ -66,8 +66,8 @@ module Crystal
     end
 
     def add_observer(observer, func = :update)
-      @observers ||= {}
-      @observers[observer] = func
+      @observers ||= []
+      @observers << [observer, func]
     end
 
     def notify_observers
@@ -75,7 +75,9 @@ module Crystal
       @observers.each do |observer, func|
         observer.send func, self
       end
-      @observers.keys.each &:propagate
+      @observers.each do |observer, func|
+        observer.propagate
+      end
     end
 
     def update(from)
