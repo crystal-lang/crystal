@@ -34,6 +34,10 @@ module Crystal
       string.lookup_instance_var('@c').type = char
 
       array = @types["Array"] = ObjectType.new "Array", object, self
+      array.string_rep = proc do |type|
+        element_type = type.instance_vars["@buffer"].type.var.type
+        "Array<#{element_type}>"
+      end
       array.generic = true
 
       @types["ARGC_UNSAFE"] = Const.new "ARGC_UNSAFE", Crystal::ARGC.new(int), self

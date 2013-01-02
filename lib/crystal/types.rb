@@ -39,9 +39,12 @@ module Crystal
     end
 
     def self.merge(*types)
+      return nil if types.length == 0
+
+      types = types.uniq(&:object_id)
       return types[0] if types.length == 1
 
-      all_types = types.map { |type| type.is_a?(UnionType) ? type.types.to_a : type }.flatten.compact.uniq(&:object_id)
+      all_types = types.map { |type| type.is_a?(UnionType) ? type.types : type }.flatten.compact.uniq(&:object_id)
       if all_types.length == 0
         nil
       elsif all_types.length == 1
@@ -234,6 +237,7 @@ module Crystal
   class ObjectType < ClassType
     attr_accessor :instance_vars
     attr_accessor :generic
+    attr_accessor :string_rep
     attr_reader :hash
     @@id = 0
 
@@ -312,10 +316,13 @@ module Crystal
       obj.types = types
       obj.parents = parents
       obj.generic = generic
+      obj.string_rep = string_rep
       obj
     end
 
     def to_s
+      return string_rep.call(self) if string_rep
+      return name unless generic
       return @to_s if @to_s
       @to_s = "..."
       instance_vars_to_s = instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
