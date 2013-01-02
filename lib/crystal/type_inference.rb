@@ -152,10 +152,14 @@ module Crystal
       @types_signature = types_signature
 
       if has_unions?
-        dispatch = Dispatch.new
-        self.bind_to dispatch
-        self.target_def = dispatch
-        dispatch.initialize_for_call(self)
+        if @dispatch
+          @dispatch.recalculate_for_call(self)
+        else
+          @dispatch = Dispatch.new
+          self.bind_to @dispatch
+          self.target_def = @dispatch
+          @dispatch.initialize_for_call(self)
+        end
         return
       end
 
@@ -483,9 +487,23 @@ module Crystal
       @name = call.name
       @obj = call.obj && call.obj.type
       @args = call.args.map(&:type)
-      @calls = []
+      @calls = {}
+      recalculate(call)
+    end
+
+    def recalculate_for_call(call)
+      @name = call.name
+      @obj = call.obj && call.obj.type
+      @args = call.args.map(&:type)
+      recalculate(call)
+    end
+
+    def recalculate(call)
       for_each_obj do |obj_type|
         for_each_args do |arg_types|
+          call_key = [obj_type.object_id, arg_types.map(&:object_id)]
+          next if @calls[call_key]
+
           subcall = Call.new(obj_type ? Var.new('%self', obj_type) : nil, name, arg_types.map.with_index { |arg_type, i| Var.new("%arg#{i}", arg_type) })
           subcall.mod = call.mod
           subcall.parent_visitor = call.parent_visitor
@@ -494,9 +512,9 @@ module Crystal
           subcall.name_column_number = call.name_column_number
           subcall.block = call.block.clone
           subcall.block.accept call.parent_visitor if subcall.block
-          self.bind_to subcall
           subcall.recalculate
-          @calls << subcall
+          self.bind_to subcall
+          @calls[call_key] = subcall
         end
       end
     end
@@ -504,7 +522,7 @@ module Crystal
     def simplify
       return if @simplified
       new_calls = {}
-      @calls.each do |call|
+      @calls.values.each do |call|
         new_calls[[(call.obj ? call.obj.type : nil).object_id] + call.args.map { |arg| arg.type.object_id }] = call
       end
       @calls = new_calls
@@ -531,7 +549,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @calls.each do |call|
+      @calls.values.each do |call|
         call.accept visitor
       end
     end
