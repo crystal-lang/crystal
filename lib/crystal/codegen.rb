@@ -271,6 +271,7 @@ module Crystal
       symbol_table.initializer = LLVM::ConstantArray.const(mod.string.llvm_type, symbol_table_values)
 
       @union_maps = {}
+      @is_a_maps = {}
     end
 
     def int(n)
@@ -529,8 +530,47 @@ module Crystal
     end
 
     def visit_is_a(node)
-      is_a = node.obj.type == node.const.type.instance_type
-      @last = int1(is_a ? 1 : 0)
+      node.obj.accept self
+
+      obj_type = node.obj.type
+      const_type = node.const.type.instance_type
+
+      if obj_type.union?
+        found_count = 0
+        found_index = nil
+        is_a_array = obj_type.types.map.with_index do |t, i|
+          match = t == const_type
+          if match
+            found_count += 1
+            found_index = i
+          end
+          int1(match ? 1 : 0)
+        end
+
+        if found_count == 0
+          @last = int1(0)
+        elsif found_count == 1
+          index = @builder.load union_index(@last)
+          @last = @builder.icmp :eq, index, int(found_index)
+        elsif found_count == obj_type.types.count
+          @last = int(1)
+        else
+          unless is_a_map = @is_a_maps[[obj_type, const_type]]
+            is_a_map = @llvm_mod.globals.add(LLVM::Array(LLVM::Int1, obj_type.types.count), "is_a_map")
+            is_a_map.linkage = :private
+            is_a_map.global_constant = 1
+            is_a_map.initializer = LLVM::ConstantArray.const(LLVM::Int1, is_a_array)
+            @is_a_maps[[obj_type, const_type]] = is_a_map
+          end
+
+          index = @builder.load union_index(@last)
+          @last = @builder.load @builder.gep(is_a_map, [int(0), index])
+        end
+      else
+        is_a = obj_type == const_type
+        @last = int1(is_a ? 1 : 0)
+      end
+
       false
     end
 
@@ -1245,9 +1285,13 @@ module Crystal
     end
 
     def union_index_and_value(union_pointer)
-      index_ptr = gep union_pointer, 0, 0
+      index_ptr = union_index(union_pointer)
       value_ptr = gep union_pointer, 0, 1
       [index_ptr, value_ptr]
+    end
+
+    def union_index(union_pointer)
+      gep union_pointer, 0, 0
     end
 
     def gep(ptr, *indices)
