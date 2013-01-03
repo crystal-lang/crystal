@@ -528,6 +528,12 @@ module Crystal
       end
     end
 
+    def visit_is_a(node)
+      is_a = node.obj.type == node.const.type.instance_type
+      @last = int1(is_a ? 1 : 0)
+      false
+    end
+
     def visit_pointer_of(node)
       if node.var.is_a?(Var)
         var = @vars[node.var.name]
