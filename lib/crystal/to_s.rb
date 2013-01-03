@@ -458,6 +458,14 @@ module Crystal
       false
     end
 
+    def visit_is_a(node)
+      node.obj.accept self
+      @str << ".is_a?("
+      node.const.accept self
+      @str << ")"
+      false
+    end
+
     def visit_case(node)
       @str << 'case '
       node.cond.accept self

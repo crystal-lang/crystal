@@ -1041,6 +1041,30 @@ module Crystal
     end
   end
 
+  class IsA < ASTNode
+    attr_accessor :obj
+    attr_accessor :const
+
+    def initialize(obj, const)
+      @obj = obj
+      @const = const
+    end
+
+    def accept_children(visitor)
+      obj.accept visitor
+      const.accept visitor
+    end
+
+    def ==(other)
+      other.is_a?(IsA) && other.obj == obj && other.const == const
+    end
+
+    def clone_from(other)
+      @obj = other.obj.clone
+      @const = other.const.clone
+    end
+  end
+
   class Require < ASTNode
     attr_accessor :string
 

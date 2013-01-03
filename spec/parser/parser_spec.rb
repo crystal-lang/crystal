@@ -294,6 +294,8 @@ describe Parser do
   it_parses "a = 1; a.ptr", [Assign.new("a".var, 1.int), PointerOf.new('a'.var)]
   it_parses "@a.ptr", PointerOf.new('@a'.instance_var)
 
+  it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".ident)
+
   it_parses "/foo/", RegexpLiteral.new("foo")
 
   it_parses "1 =~ 2", Call.new(1.int, :=~, [2.int])

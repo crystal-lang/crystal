@@ -340,7 +340,7 @@ module Crystal
             atomic = args ? (Call.new atomic, name, args, nil, name_column_number) : (Call.new atomic, name, [], nil, name_column_number)
           end
 
-          atomic = check_pointer_of(atomic)
+          atomic = check_special_call(atomic)
         when :[]
           column_number = @token.column_number
           next_token_skip_space
@@ -376,18 +376,32 @@ module Crystal
       atomic
     end
 
-    def check_pointer_of(atomic)
-      if atomic.obj && atomic.name == :ptr
-        if !(atomic.obj.is_a?(Var) || atomic.obj.is_a?(InstanceVar))
-          raise "can only get 'ptr' of variable or instance variable"
+    def check_special_call(atomic)
+      if atomic.obj
+        case atomic.name
+        when "ptr"
+          if !(atomic.obj.is_a?(Var) || atomic.obj.is_a?(InstanceVar))
+            raise "can only get 'ptr' of variable or instance variable"
+          end
+          if atomic.args.length != 0
+            raise "wrong number of arguments for 'ptr' (#{atomic.args.length} for 0)"
+          end
+          if atomic.block
+            raise "'ptr' can't receive a block"
+          end
+          atomic = PointerOf.new(atomic.obj)
+        when "is_a?"
+          if atomic.args.length != 1
+            raise "wrong number of arguments for 'is_a?' (#{atomic.args.length} for 0)"
+          end
+          if !atomic.args[0].is_a?(Ident)
+            raise "'is_a?' argument must be a Constant"
+          end
+          if atomic.block
+            raise "'is_a?' can't receive a block"
+          end
+          atomic = IsA.new(atomic.obj, atomic.args[0])
         end
-        if atomic.args.length != 0
-          raise "wrong number of arguments for 'ptr' (#{atomic.args.length} for 0)"
-        end
-        if atomic.block
-          raise "'ptr' can't receive a block"
-        end
-        atomic = PointerOf.new(atomic.obj)
       end
       atomic
     end
