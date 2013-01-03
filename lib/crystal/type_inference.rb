@@ -1203,6 +1203,10 @@ module Crystal
       end
     end
 
+    def visit_is_a(node)
+      node.type = mod.bool
+    end
+
     def visit_pointer_of(node)
       ptr = mod.pointer.clone
       ptr.var = if node.var.is_a?(Var)
