@@ -566,6 +566,16 @@ module Crystal
           index = @builder.load union_index(@last)
           @last = @builder.load @builder.gep(is_a_map, [int(0), index])
         end
+      elsif obj_type.nilable?
+        if @mod.nil == const_type
+          ptr2int = @builder.ptr2int @last, LLVM::Int
+          @last = @builder.icmp :eq, ptr2int, int(0)
+        elsif obj_type.types.any? { |t| t == const_type }
+          ptr2int = @builder.ptr2int @last, LLVM::Int
+          @last = @builder.icmp :ne, ptr2int, int(0)
+        else
+          @last = int1(0)
+        end
       else
         is_a = obj_type == const_type
         @last = int1(is_a ? 1 : 0)
