@@ -87,4 +87,26 @@ describe 'Code gen: union type' do
       a.to_s
     )).to_string.should eq("d")
   end
+
+  it "assigns union to larger union when source is nilable 1" do
+    run(%q(
+      require "prelude"
+      a = 1
+      b = nil
+      b = Object.new
+      a = b
+      a.to_s
+    )).to_string.should =~ /Object/
+  end
+
+  pending "assigns union to larger union when source is nilable 2" do
+    run(%q(
+      require "prelude"
+      a = 1
+      b = Object.new
+      b = nil
+      a = b
+      a.to_s
+    )).to_string.should eq("")
+  end
 end
