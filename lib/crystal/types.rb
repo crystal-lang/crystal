@@ -34,6 +34,18 @@ module Crystal
       type && (equal?(type) || full_name == type.full_name || type.parents.any? { |parent| is_restriction_of?(parent, owner) })
     end
 
+    def implements?(other_type)
+      full_name == other_type.full_name
+    end
+
+    def filter_by(other_type)
+      implements?(other_type) ? self : nil
+    end
+
+    def full_name
+      name
+    end
+
     def to_s
       name
     end
@@ -182,6 +194,10 @@ module Crystal
 
     def include(mod)
       @parents.insert 0, mod unless @parents.any? { |parent| parent.equal?(mod) }
+    end
+
+    def implements?(other_type)
+      super || parents.any? { |parent| parent.implements?(other_type) }
     end
 
     def lookup_type(names, already_looked_up = {})
@@ -386,6 +402,22 @@ module Crystal
 
     def initialize(*types)
       @types = types
+    end
+
+    def implements?(other_type)
+      raise "'implements?' shouln't be invoked on a UnionType"
+    end
+
+    def filter_by(other_type)
+      filtered_types = @types.map { |type| type.filter_by(other_type) }.compact
+      case filtered_types.length
+      when 0
+        nil
+      when 1
+        filtered_types[0]
+      else
+        UnionType.new(*filtered_types)
+      end
     end
 
     def nilable?

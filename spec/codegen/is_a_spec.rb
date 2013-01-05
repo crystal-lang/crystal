@@ -36,4 +36,8 @@ describe 'Codegen: is_a?' do
   it "codegens is_a? with nilable gives false becuase no type" do
     run("(false ? nil : Object.new).is_a?(String)").to_b.should be_false
   end
+
+  it "codegens is_a? with nilable gives false becuase no type" do
+    run("1.is_a?(Object)").to_b.should be_true
+  end
 end

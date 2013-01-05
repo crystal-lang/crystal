@@ -33,6 +33,7 @@ module Crystal
     attr_accessor :type
     attr_accessor :dependencies
     attr_accessor :creates_new_type
+    attr_accessor :type_filters
 
     def set_type(type)
       @type = type
@@ -575,6 +576,21 @@ module Crystal
     end
   end
 
+  class TypeFilter < ASTNode
+    def initialize(types)
+      @types = types
+    end
+
+    def bind_to(node)
+      node.add_observer self
+      update(node)
+    end
+
+    def update(from)
+      self.type = from.type.filter_by(@types[0])
+    end
+  end
+
   class TypeVisitor < Visitor
     attr_accessor :mod
     attr_accessor :paths
@@ -592,6 +608,7 @@ module Crystal
       @types = [mod]
       @nest_count = 0
       @while_stack = []
+      @type_filter_stack = []
     end
 
     def visit_nil_literal(node)
@@ -817,8 +834,18 @@ module Crystal
 
     def visit_var(node)
       var = lookup_var node.name
-      node.bind_to var
+      filter = build_var_filter var
+      node.bind_to(filter || var)
       node.creates_new_type = var.creates_new_type
+    end
+
+    def build_var_filter(var)
+      types = @type_filter_stack.map { |hash| hash[var.name] }.compact
+      return if types.empty?
+
+      filter = TypeFilter.new(types)
+      filter.bind_to var
+      filter
     end
 
     def visit_global(node)
@@ -956,8 +983,18 @@ module Crystal
       node.cond.accept self
 
       @nest_count += 1
-      node.then.accept self if node.then
-      node.else.accept self if node.else
+
+      if node.then
+        @type_filter_stack.push node.cond.obj.type_filters if node.cond.obj.type_filters
+
+        node.then.accept self
+
+        @type_filter_stack.pop if node.cond.obj.type_filters
+      end
+
+      if node.else
+        node.else.accept self
+      end
       @nest_count -= 1
 
       false
@@ -1203,8 +1240,11 @@ module Crystal
       end
     end
 
-    def visit_is_a(node)
+    def end_visit_is_a(node)
       node.type = mod.bool
+      if node.obj.is_a?(Var)
+        node.type_filters = {node.obj.name => node.const.type.instance_type}
+      end
     end
 
     def visit_pointer_of(node)

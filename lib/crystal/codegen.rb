@@ -539,7 +539,7 @@ module Crystal
         found_count = 0
         found_index = nil
         is_a_array = obj_type.types.map.with_index do |t, i|
-          match = t == const_type
+          match = t.implements?(const_type)
           if match
             found_count += 1
             found_index = i
@@ -570,14 +570,14 @@ module Crystal
         if @mod.nil == const_type
           ptr2int = @builder.ptr2int @last, LLVM::Int
           @last = @builder.icmp :eq, ptr2int, int(0)
-        elsif obj_type.types.any? { |t| t == const_type }
+        elsif obj_type.types.any? { |t| t.implements?(const_type) }
           ptr2int = @builder.ptr2int @last, LLVM::Int
           @last = @builder.icmp :ne, ptr2int, int(0)
         else
           @last = int1(0)
         end
       else
-        is_a = obj_type == const_type
+        is_a = obj_type.implements?(const_type)
         @last = int1(is_a ? 1 : 0)
       end
 
