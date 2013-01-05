@@ -509,6 +509,8 @@ module Crystal
       if var[:type] == node.type
         @last = var[:ptr]
         @last = @builder.load(@last, node.name) unless (var[:is_arg] || var[:type].union?)
+      elsif node.type.union?
+        @last = var[:ptr]
       else
         value_ptr = union_value(var[:ptr])
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(node.llvm_type)
@@ -1119,6 +1121,12 @@ module Crystal
 
       codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block) do |label|
         call = dispatch.calls[arg_types.map(&:object_id)]
+
+        unless call
+          @builder.unreachable
+          next
+        end
+
         old_vars = @vars
         @vars = old_vars.clone
         arg_values_base_index = 0
@@ -1170,14 +1178,14 @@ module Crystal
       arg = arg_index == -1 ? node.obj : node.args[arg_index]
       arg.accept self if must_accept
 
-      if arg && arg.type.union?
+      if arg && arg.real_type.union?
         arg_ptr = @last
         index_ptr, value_ptr = union_index_and_value(arg_ptr)
 
         switch_table = {}
 
         old_block = @builder.insert_block
-        arg.type.types.each_with_index.each do |arg_type, i|
+        arg.real_type.types.each_with_index.each do |arg_type, i|
           label = new_block "type_#{i}"
           @builder.position_at_end label
 
@@ -1193,12 +1201,12 @@ module Crystal
 
         type_index = @builder.load index_ptr
         @builder.switch type_index, unreachable_block, switch_table
-      elsif arg && arg.type.nilable?
+      elsif arg && arg.real_type.nilable?
         arg_ptr = @last
         old_block = @builder.insert_block
         nil_block = nil
         not_nil_block = nil
-        arg.type.types.each_with_index do |arg_type, i|
+        arg.real_type.types.each_with_index do |arg_type, i|
           if arg_type == @mod.nil
             nil_block = new_block "nil"
             @builder.position_at_end nil_block
@@ -1223,7 +1231,7 @@ module Crystal
         value = @builder.icmp :eq, value, int(0)
         @builder.cond value, nil_block, not_nil_block
       else
-        codegen_dispatch_next_arg node, arg_types, arg_values, (arg ? arg.type : nil), @last, unreachable_block, arg_index, previous_label, &block
+        codegen_dispatch_next_arg node, arg_types, arg_values, (arg ? arg.real_type : nil), @last, unreachable_block, arg_index, previous_label, &block
       end
     end
 

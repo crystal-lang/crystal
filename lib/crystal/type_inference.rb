@@ -46,6 +46,14 @@ module Crystal
       notify_observers
     end
 
+    def real_type
+      if dependencies && dependencies.length == 1
+        dependencies[0].real_type
+      else
+        @type
+      end
+    end
+
     def bind_to(*nodes)
       @dependencies ||= []
       @dependencies += nodes
@@ -578,6 +586,10 @@ module Crystal
         call.accept visitor
       end
     end
+
+    def to_s
+      "#<Dispatch: #{@calls.length} calls>"
+    end
   end
 
   class TypeFilter < ASTNode
@@ -586,12 +598,17 @@ module Crystal
     end
 
     def bind_to(node)
+      @node = node
       node.add_observer self
       update(node)
     end
 
     def update(from)
       self.type = from.type.filter_by(@types[0])
+    end
+
+    def real_type
+      @node.real_type
     end
   end
 

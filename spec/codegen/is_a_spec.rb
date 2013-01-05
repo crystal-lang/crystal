@@ -48,4 +48,19 @@ describe 'Codegen: is_a?' do
   it "evaluate method on filtered type" do
     run("a = 1; a = 'a'; if a.is_a?(Char); a.ord; else; 0; end").to_i.should eq(?a.ord)
   end
+
+  it "evaluate method on filtered union type" do
+    run(%q(
+      require "array"
+      a = 1
+      a = [1.1]
+      a = [5]
+
+      if a.is_a?(Enumerable)
+        a[0]
+      else
+        0
+      end.to_i
+    )).to_i.should eq(5)
+  end
 end
