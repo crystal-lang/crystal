@@ -1,6 +1,6 @@
 require "enumerable"
 
-class Range
+generic class Range
   include Enumerable
 
   def initialize(the_start, the_end, exclusive)
