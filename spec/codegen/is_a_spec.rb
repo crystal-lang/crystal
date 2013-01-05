@@ -21,6 +21,10 @@ describe 'Codegen: is_a?' do
     run("(true ? 1 : 'a').is_a?(Float)").to_b.should be_false
   end
 
+  it "codegens is_a? with union gives true" do
+    run("(true ? 1 : 'a').is_a?(Object)").to_b.should be_true
+  end
+
   it "codegens is_a? with nilable gives true" do
     run("(true ? nil : Object.new).is_a?(Nil)").to_b.should be_true
   end

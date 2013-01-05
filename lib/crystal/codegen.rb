@@ -559,7 +559,7 @@ module Crystal
           index = @builder.load union_index(@last)
           @last = @builder.icmp :eq, index, int(found_index)
         elsif found_count == obj_type.types.count
-          @last = int(1)
+          @last = int1(1)
         else
           unless is_a_map = @is_a_maps[[obj_type, const_type]]
             is_a_map = @llvm_mod.globals.add(LLVM::Array(LLVM::Int1, obj_type.types.count), "is_a_map")
