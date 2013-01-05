@@ -40,4 +40,8 @@ describe 'Codegen: is_a?' do
   it "codegens is_a? with nilable gives false becuase no type" do
     run("1.is_a?(Object)").to_b.should be_true
   end
+
+  it "evaluate method on filtered type" do
+    run("a = 1; a = 'a'; if a.is_a?(Char); a.ord; else; 0; end").to_i.should eq(?a.ord)
+  end
 end

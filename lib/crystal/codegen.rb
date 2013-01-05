@@ -506,8 +506,14 @@ module Crystal
 
     def visit_var(node)
       var = @vars[node.name]
-      @last = var[:ptr]
-      @last = @builder.load(@last, node.name) unless (var[:is_arg] || var[:type].union?)
+      if var[:type] == node.type
+        @last = var[:ptr]
+        @last = @builder.load(@last, node.name) unless (var[:is_arg] || var[:type].union?)
+      else
+        value_ptr = union_value(var[:ptr])
+        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(node.llvm_type)
+        @last = @builder.load(casted_value_ptr)
+      end
     end
 
     def visit_global(node)
@@ -1121,7 +1127,7 @@ module Crystal
           arg_values_base_index = 1
         end
         0.upto(call.args.length - 1) do |i|
-          @vars["%arg#{i}"] = { ptr: arg_values[i + arg_values_base_index], type: arg_types[i + arg_values_base_index], is_arg: true }
+          @vars["%arg#{i}"] = { ptr: arg_values[i + arg_values_base_index], type: arg_types[i + 1], is_arg: true }
         end
         call.accept self
         @vars = old_vars
@@ -1296,12 +1302,16 @@ module Crystal
 
     def union_index_and_value(union_pointer)
       index_ptr = union_index(union_pointer)
-      value_ptr = gep union_pointer, 0, 1
+      value_ptr = union_value(union_pointer)
       [index_ptr, value_ptr]
     end
 
     def union_index(union_pointer)
       gep union_pointer, 0, 0
+    end
+
+    def union_value(union_pointer)
+      gep union_pointer, 0, 1
     end
 
     def gep(ptr, *indices)
