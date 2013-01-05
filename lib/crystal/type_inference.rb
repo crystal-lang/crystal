@@ -410,6 +410,10 @@ module Crystal
         else
           raise "wrong number of arguments for '#{name}' (#{args.length} for #{error_matches[0].args.length})"
         end
+      elsif error_matches.length == 1 && !block && error_matches[0].yields
+        raise "#{obj.type.full_name}##{name} expects a block"
+      elsif error_matches.length == 1 && block && !error_matches[0].yields
+        raise "#{obj.type.full_name}##{name} doesn't expect a block"
       else
         if obj
           msg = "no overload or ambiguos call for '#{obj.type.full_name}##{name}' with types [#{args.map { |arg| arg.type.full_name }.join ', '}]\n"
