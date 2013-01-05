@@ -181,6 +181,7 @@ module Crystal
       pm.loop_unroll!
       pm.loop_deletion!
       pm.loop_rotate!
+      pm.scalarrepl!
 
       optimization_passes.times { pm.run mod }
     end
