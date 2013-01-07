@@ -1,12 +1,12 @@
 def print_density(d)
   if d > 8
-    C.putchar ' '
+    print ' '
   elsif d > 4
-    C.putchar '.'
+    print '.'
   elsif d > 2
-    C.putchar '*'
+    print '*'
   else
-    C.putchar '+'
+    print '+'
   end
 end
 

@@ -16,7 +16,7 @@ class Node
 
   def print
     @left.print if @left
-    C.putchar @value
+    print @value
     @right.print if @right
   end
 end
@@ -27,4 +27,4 @@ root = Node.new('$')
 end
 
 root.print
-C.putchar '\n'
+puts
