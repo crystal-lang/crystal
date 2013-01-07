@@ -1100,12 +1100,20 @@ module Crystal
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_value_type)
         @builder.store value_value, casted_value_ptr
+      elsif type.nilable?
+        nil_index = union_type.types.index { |t| t.equal?(@mod.nil) }
+        not_nil_index = union_type.types.index { |t| t.equal?(type.nilable_type) }
+
+        nilable_ptr = @builder.ptr2int value, LLVM::Int
+        cmp = @builder.icmp :eq, nilable_ptr, int(0)
+        index = @builder.select cmp, int(nil_index), int(not_nil_index)
+
+        @builder.store index, index_ptr
+
+        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.nilable_type.llvm_type)
+        @builder.store value, casted_value_ptr
       else
-        if type.nilable?
-          index = union_type.index_of_type(type.nilable_type)
-        else
-          index = union_type.index_of_type(type)
-        end
+        index = union_type.index_of_type(type)
         @builder.store int(index), index_ptr
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_type)

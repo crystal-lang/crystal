@@ -99,7 +99,7 @@ describe 'Code gen: union type' do
     )).to_string.should =~ /Object/
   end
 
-  pending "assigns union to larger union when source is nilable 2" do
+  it "assigns union to larger union when source is nilable 2" do
     run(%q(
       require "prelude"
       a = 1
