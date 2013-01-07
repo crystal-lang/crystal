@@ -59,6 +59,7 @@ module Crystal
     attr_accessor :call
     attr_accessor :block
     @@regexps = {}
+    @@counter = 0
 
     def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
       @mod = mod
@@ -413,7 +414,6 @@ module Crystal
     end
 
     def visit_while(node)
-      node.cond = Call.new(node.cond, 'to_b')
       node.cond.accept self
 
       @nest_count += 1
@@ -441,17 +441,16 @@ module Crystal
     end
 
     def visit_if(node)
-      node.cond = Call.new(node.cond, 'to_b')
       node.cond.accept self
 
       @nest_count += 1
 
       if node.then
-        @type_filter_stack.push node.cond.obj.type_filters if node.cond.obj.type_filters
+        @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
 
         node.then.accept self
 
-        @type_filter_stack.pop if node.cond.obj.type_filters
+        @type_filter_stack.pop if node.cond.type_filters
       end
 
       if node.else
@@ -505,13 +504,10 @@ module Crystal
     end
 
     def visit_array_literal(node)
-      @@array_count ||= 0
-      @@array_count += 1
-
       if node.elements.empty?
         exps = Call.new(Ident.new(['Array'], true), 'new')
       else
-        ary_name = "#array_#{@@array_count}"
+        ary_name = temp_name()
 
         length = node.elements.length
         capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
@@ -540,13 +536,10 @@ module Crystal
     end
 
     def visit_hash_literal(node)
-      @@hash_count ||= 0
-      @@hash_count += 1
-
       if node.key_values.empty?
         exps = Call.new(Ident.new(['Hash'], true), 'new')
       else
-        hash_name = "#hash_#{@@hash_count}"
+        hash_name = temp_name()
 
         hash_new = Call.new(Ident.new(['Hash'], true), 'new')
         hash_assign = Assign.new(Var.new(hash_name), hash_new)
@@ -608,6 +601,24 @@ module Crystal
         block_visitor.block = node
         node.body.accept block_visitor
       end
+      false
+    end
+
+    def visit_and(node)
+      temp_var = Var.new(temp_name())
+      node.expanded = If.new(Assign.new(temp_var, node.left), node.right, temp_var)
+      node.expanded.accept self
+      node.bind_to node.expanded
+
+      false
+    end
+
+    def visit_or(node)
+      temp_var = Var.new(temp_name())
+      node.expanded = If.new(Assign.new(temp_var, node.left), temp_var, node.right)
+      node.expanded.accept self
+      node.bind_to node.expanded
+
       false
     end
 
@@ -768,7 +779,7 @@ module Crystal
         wh.conds.each do |cond|
           comp = Call.new(cond, :'===', [node.cond])
           if final_comp
-            final_comp = Call.new(final_comp, :'||', [comp])
+            final_comp = Or.new(final_comp, comp)
           else
             final_comp = comp
           end
@@ -814,6 +825,11 @@ module Crystal
 
     def current_type
       @types.last
+    end
+
+    def temp_name
+      @@counter += 1
+      "#temp_#{@@counter}"
     end
   end
 end

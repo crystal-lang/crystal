@@ -93,6 +93,23 @@ module Crystal
       false
     end
 
+    def visit_and(node)
+      to_s_binary node, '&&'
+    end
+
+    def visit_or(node)
+      to_s_binary node, '||'
+    end
+
+    def to_s_binary(node, op)
+      node.left.accept self
+      @str << ' '
+      @str << op
+      @str << ' '
+      node.right.accept self
+      false
+    end
+
     def visit_call(node)
       if node.obj && node.name == :'[]'
         node.obj.accept self

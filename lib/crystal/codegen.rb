@@ -381,11 +381,9 @@ module Crystal
         end
       elsif obj_type.nilable?
         if @mod.nil == const_type
-          ptr2int = @builder.ptr2int @last, LLVM::Int
-          @last = @builder.icmp :eq, ptr2int, int(0)
+          @last = null_pointer?(@last)
         elsif obj_type.types.any? { |t| t.implements?(const_type) }
-          ptr2int = @builder.ptr2int @last, LLVM::Int
-          @last = @builder.icmp :ne, ptr2int, int(0)
+          @last = not_null_pointer?(@last)
         else
           @last = int1(0)
         end
@@ -444,6 +442,16 @@ module Crystal
       @last = @builder.bit_cast(@fun.params[0], node.type.llvm_type)
     end
 
+    def visit_and(node)
+      node.expanded.accept self
+      false
+    end
+
+    def visit_or(node)
+      node.expanded.accept self
+      false
+    end
+
     def visit_if(node)
       is_union = node.type && node.type.union?
       nilable = node.type && node.type.nilable?
@@ -451,8 +459,7 @@ module Crystal
       then_block, else_block, exit_block = new_blocks "then", "else", "exit"
       union_ptr = alloca node.llvm_type if is_union
 
-      node.cond.accept self
-      @builder.cond(@last, then_block, else_block)
+      codegen_cond(node.cond, then_block,else_block)
 
       @builder.position_at_end then_block
       if node.then
@@ -514,9 +521,8 @@ module Crystal
       @builder.br node.run_once ? body_block : while_block
 
       @builder.position_at_end while_block
-      node.cond.accept self
 
-      @builder.cond(@last, body_block, exit_block)
+      codegen_cond(node.cond, body_block, exit_block)
 
       @builder.position_at_end body_block
       old_while_exit_block = @while_exit_block
@@ -531,6 +537,46 @@ module Crystal
       @last = llvm_nil
 
       false
+    end
+
+    def codegen_cond(node_cond, then_block, else_block)
+      node_cond.accept self
+      if @mod.nil == node_cond.type
+        cond = int1(0)
+      elsif @mod.bool == node_cond.type
+        cond = @builder.icmp :ne, @last, int1(0)
+      elsif node_cond.type.nilable?
+        cond = not_null_pointer?(@last)
+      elsif node_cond.type.union?
+        nil_index = node_cond.type.types.index { |t| @mod.nil == t }
+        bool_index = node_cond.type.types.index { |t| @mod.bool == t }
+
+        if nil_index && bool_index
+          index = @builder.load union_index(@last)
+          value = @builder.load(@builder.bit_cast union_value(@last), LLVM::Pointer(LLVM::Int1))
+
+          is_nil = @builder.icmp :eq, index, int(nil_index)
+          is_bool = @builder.icmp :eq, index, int(bool_index)
+          is_false = @builder.icmp(:eq, value, int1(0))
+          cond = @builder.not(@builder.or(is_nil, @builder.and(is_bool, is_false)))
+        elsif nil_index
+          index = @builder.load union_index(@last)
+          cond = @builder.icmp :ne, index, int(nil_index)
+        elsif bool_index
+          index = @builder.load union_index(@last)
+          value = @builder.load(@builder.bit_cast union_value(@last), LLVM::Pointer(LLVM::Int1))
+
+          is_bool = @builder.icmp :eq, index, int(bool_index)
+          is_false = @builder.icmp(:eq, value, int1(0))
+          cond = @builder.not(@builder.and(is_bool, is_false))
+        else
+          cond = int1(1)
+        end
+      else
+        cond = int1(1)
+      end
+
+      @builder.cond(cond, then_block, else_block)
     end
 
     def end_visit_break(node)
@@ -1031,10 +1077,7 @@ module Crystal
         end
 
         @builder.position_at_end old_block
-
-        value = @builder.ptr2int arg_ptr, LLVM::Int
-        value = @builder.icmp :eq, value, int(0)
-        @builder.cond value, nil_block, not_nil_block
+        @builder.cond null_pointer?(arg_ptr), nil_block, not_nil_block
       else
         codegen_dispatch_next_arg node, arg_types, arg_values, (arg ? arg.real_type : nil), @last, unreachable_block, arg_index, previous_label, &block
       end
@@ -1104,9 +1147,7 @@ module Crystal
         nil_index = union_type.types.index { |t| t.equal?(@mod.nil) }
         not_nil_index = union_type.types.index { |t| t.equal?(type.nilable_type) }
 
-        nilable_ptr = @builder.ptr2int value, LLVM::Int
-        cmp = @builder.icmp :eq, nilable_ptr, int(0)
-        index = @builder.select cmp, int(nil_index), int(not_nil_index)
+        index = @builder.select null_pointer?(value), int(nil_index), int(not_nil_index)
 
         @builder.store index, index_ptr
 
@@ -1137,6 +1178,14 @@ module Crystal
 
     def gep(ptr, *indices)
       @builder.gep ptr, indices.map { |i| int(i) }
+    end
+
+    def null_pointer?(value)
+      @builder.icmp :eq, @builder.ptr2int(value, LLVM::Int), int(0)
+    end
+
+    def not_null_pointer?(value)
+      @builder.icmp :ne, @builder.ptr2int(value, LLVM::Int), int(0)
     end
 
     def malloc(type)

@@ -168,10 +168,19 @@ module Crystal
           method = @token.type.to_s[0 .. -2].to_sym
           method_column_number = @token.column_number
 
+          token_type = @token.type
+
           next_token_skip_space_or_newline
 
           value = parse_op_assign
-          call = Call.new(atomic, method, [value], nil, method_column_number)
+          case token_type
+          when :'&&='
+            call = And.new(atomic, value)
+          when :'||='
+            call = Or.new(atomic, value)
+          else
+            call = Call.new(atomic, method, [value], nil, method_column_number)
+          end
           call.location = location
           atomic = Assign.new(atomic, call)
         else
@@ -214,7 +223,7 @@ module Crystal
       end
     end
 
-    def self.parse_operator(name, next_operator, *operators)
+    def self.parse_custom_operator(name, next_operator, node, *operators)
       class_eval %Q(
         def parse_#{name}
           location = @token.location
@@ -232,7 +241,7 @@ module Crystal
 
               next_token_skip_space_or_newline
               right = parse_#{next_operator}
-              left = Call.new left, method, [right], nil, method_column_number
+              left = #{node}
             else
               return left
             end
@@ -241,8 +250,12 @@ module Crystal
       )
     end
 
-    parse_operator :or, :and, :'||'
-    parse_operator :and, :equality, :'&&'
+    def self.parse_operator(name, next_operator, *operators)
+      parse_custom_operator name, next_operator, "Call.new left, method, [right], nil, method_column_number", *operators
+    end
+
+    parse_custom_operator :or, :and, "Or.new left, right", :"||"
+    parse_custom_operator :and, :equality, "And.new left, right", :"&&"
     parse_operator :equality, :cmp, :<, :<=, :>, :>=, :'<=>'
     parse_operator :cmp, :logical_or, :==, :"!=", :=~, :'==='
     parse_operator :logical_or, :logical_and, :|, :^

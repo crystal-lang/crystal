@@ -7,10 +7,6 @@ class Nil
     false
   end
 
-  def to_b
-    false
-  end
-
   def nil?
     true
   end
@@ -35,13 +31,5 @@ class Nil
     puts "Called #{name}(#{args.join ", "}) for nil"
     exit 1
     nil
-  end
-
-  def ||(other)
-    other
-  end
-
-  def &&(other)
-    self
   end
 end

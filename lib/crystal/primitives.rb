@@ -35,11 +35,8 @@ module Crystal
     end
 
     def define_bool_primitives
-      self_primitive(bool, 'to_b')
       singleton(bool, :==, {'other' => bool}, bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
       singleton(bool, :'!@', {}, bool) { |b, f| b.not(f.params[0]) }
-      singleton(bool, :'&&', {'other' => bool}, bool) { |b, f| b.and(f.params[0], f.params[1]) }
-      singleton(bool, :'||', {'other' => bool}, bool) { |b, f| b.or(f.params[0], f.params[1]) }
     end
 
     def define_char_primitives

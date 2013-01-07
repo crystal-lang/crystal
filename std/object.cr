@@ -48,10 +48,6 @@ class Object
     nil?
   end
 
-  def to_b
-    !nil?
-  end
-
   def to_s
     String.from_cstr(to_cstr)
   end
@@ -63,13 +59,5 @@ class Object
   def tap
     yield self
     self
-  end
-
-  def ||(other)
-    nil? ? other : self
-  end
-
-  def &&(other)
-    nil? ? self : other
   end
 end

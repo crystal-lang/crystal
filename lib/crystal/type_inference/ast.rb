@@ -27,6 +27,10 @@ module Crystal
     attr_accessor :expanded
   end
 
+  class BinaryOp
+    attr_accessor :expanded
+  end
+
   class Arg
     def self.new_with_type(name, type)
       arg = Arg.new(name)
