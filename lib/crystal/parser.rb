@@ -1469,18 +1469,11 @@ module Crystal
 
       if has_interpolation
         node = Call.new(Ident.new(["StringBuilder"]), "new")
-        body = Expressions.new
-        node = Call.new(node, "tap", [], Block.new([Var.new("s")], body))
-        node = Call.new(node, "to_s")
         pieces.each do |piece|
-          if piece.is_a?(String)
-            piece = StringLiteral.new piece
-          else
-            piece = Call.new(piece, 'to_s')
-          end
-          body << Call.new(Var.new("s"), :<<, [piece])
+          piece = StringLiteral.new piece if piece.is_a?(String)
+          node = Call.new(node, :<<, [piece])
         end
-        node
+        Call.new(node, "to_s")
       else
         StringLiteral.new pieces.join
       end
