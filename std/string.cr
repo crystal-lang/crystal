@@ -25,9 +25,11 @@ class String
     str.as(String)
   end
 
-  def self.new(length)
-    str = Pointer.malloc(length + 5)
-    str.as(Int).value = length
+  def self.new(capacity)
+    str = Pointer.malloc(capacity + 5)
+    buffer = str.as(String).cstr
+    yield buffer
+    str.as(Int).value = C.strlen(buffer)
     str.as(String)
   end
 

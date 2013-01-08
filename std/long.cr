@@ -12,8 +12,8 @@ class Long
   end
 
   def to_s
-    str = String.new(22)
-    C.sprintf(str.cstr, "%ld", self)
-    str
+    String.new(22) do |buffer|
+      C.sprintf(buffer, "%ld", self)
+    end
   end
 end

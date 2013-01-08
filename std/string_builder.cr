@@ -12,12 +12,13 @@ class StringBuilder
   end
 
   def to_s
-    str = String.new(@length)
-    buffer = str.cstr
-    @parts.each do |part|
-      C.strcpy(buffer, part.cstr)
-      buffer += part.length
+    String.new(@length) do |cstr|
+      buffer = cstr
+      @parts.each do |part|
+        C.strcpy(buffer, part.cstr)
+        buffer += part.length
+      end
+      @length
     end
-    str
   end
 end

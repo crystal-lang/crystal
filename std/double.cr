@@ -16,8 +16,9 @@ class Double
   end
 
   def to_s
-    str = String.new(12)
-    C.sprintf(str.cstr, "%g", self)
+    str = String.new(12) do |buffer|
+      C.sprintf(buffer, "%g", self)
+    end
     str
   end
 end

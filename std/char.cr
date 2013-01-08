@@ -16,8 +16,8 @@ class Char
   end
 
   def to_s
-    str = String.new(2)
-    str.cstr.value = self
-    str
+    String.new(2) do |buffer|
+      buffer.value = self
+    end
   end
 end

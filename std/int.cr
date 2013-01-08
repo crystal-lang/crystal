@@ -55,8 +55,8 @@ class Int
   end
 
   def to_s
-    str = String.new(12)
-    C.sprintf(str.cstr, "%d", self)
-    str
+    String.new(12) do |buffer|
+      C.sprintf(buffer, "%d", self)
+    end
   end
 end
