@@ -278,9 +278,14 @@ module Crystal
     end
 
     def check_args_match(untyped_def)
-      required_args_count = untyped_def.args.count { |arg| !arg.default_value }
-      all_args_count = untyped_def.args.length
       call_args_count = args.length
+      all_args_count = untyped_def.args.length
+
+      if untyped_def.is_a?(External) && untyped_def.varargs && call_args_count >= all_args_count
+        return
+      end
+
+      required_args_count = untyped_def.args.count { |arg| !arg.default_value }
 
       return if required_args_count <= call_args_count && call_args_count <= all_args_count
 
@@ -301,6 +306,15 @@ module Crystal
             string_conversions << i
           else
             self.args[i].raise "argument \##{i + 1} to #{typed_def.owner.full_name}.#{typed_def.name} must be #{expected_type.full_name}, not #{self.args[i].type}"
+          end
+        end
+      end
+
+      if typed_def.varargs
+        typed_def.args.length.upto(args.length - 1) do |i|
+          if mod.string.equal?(self.args[i].type)
+            string_conversions ||= []
+            string_conversions << i
           end
         end
       end

@@ -2,7 +2,8 @@ lib C
   fun getchar : Char
   fun putchar(c : Char) : Char
   fun puts(str : Char*) : Int
-  fun printf(str : Char*) : Char
+  fun printf(str : Char*, ...) : Char
+  fun sprintf(str : Char*, template : Char*, ...) : Char
 end
 
 def print(obj : Char)

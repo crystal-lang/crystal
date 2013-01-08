@@ -262,6 +262,7 @@ describe Parser do
   it_parses "lib C\nend", LibDef.new('C')
   it_parses %Q(lib C("libc")\nend), LibDef.new('C', 'libc')
   it_parses "lib C\nfun getchar\nend", LibDef.new('C', nil, [FunDef.new('getchar')])
+  it_parses "lib C\nfun getchar(...)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [], nil, 0, true)])
   it_parses "lib C\nfun getchar : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [], 'Int'.ident)])
   it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.ident), FunDefArg.new('b', 'Float'.ident)])])
   it_parses "lib C\nfun getchar(a : out Int)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [FunDefArg.new('a', 'Int'.ident, 0, true)])])
@@ -279,7 +280,7 @@ describe Parser do
   it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident, 1)])])
   it_parses "lib C; struct Foo; x : Int**; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident, 2)])])
   it_parses "lib C; Foo = 1; end", LibDef.new('C', nil, [Assign.new("Foo".ident, 1.int)])
-  it_parses "lib C\nfun getch = GetChar\nend", LibDef.new('C', nil, [FunDef.new('getch', [], nil, 0, 'GetChar')])
+  it_parses "lib C\nfun getch = GetChar\nend", LibDef.new('C', nil, [FunDef.new('getch', [], nil, 0, false, 'GetChar')])
 
   it_parses "1 .. 2", RangeLiteral.new(1.int, 2.int, false)
   it_parses "1 ... 2", RangeLiteral.new(1.int, 2.int, true)

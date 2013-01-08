@@ -716,7 +716,7 @@ module Crystal
       node.args.each_with_index do |arg, i|
         next if arg.type.is_a?(Metaclass)
 
-        if node.target_def && node.target_def.args[i].out && arg.is_a?(Var)
+        if node.target_def && node.target_def.args[i] && node.target_def.args[i].out && arg.is_a?(Var)
           call_args << @vars[arg.name][:ptr]
         else
           arg.accept self
@@ -897,10 +897,13 @@ module Crystal
       end
       args += target_def.args.select { |arg| !arg.type.is_a?(Metaclass) }
 
+      varargs = target_def.is_a?(External) && target_def.varargs
+
       @fun = @llvm_mod.functions.add(
         mangled_name,
         args.map(&:llvm_type),
-        target_def.llvm_type
+        target_def.llvm_type,
+        varargs: varargs
       )
 
       args.each_with_index do |arg, i|

@@ -1287,10 +1287,18 @@ module Crystal
       end
 
       args = []
+      varargs = false
 
       if @token.type == :'('
         next_token_skip_space_or_newline
         while @token.type != :')'
+          if @token.type == :'...'
+            varargs = true
+            next_token_skip_space_or_newline
+            check :')'
+            break
+          end
+
           check :IDENT
           arg_name = @token.value
 
@@ -1329,7 +1337,7 @@ module Crystal
         skip_statement_end
       end
 
-      FunDef.new name, args, return_type, ptr, real_name
+      FunDef.new name, args, return_type, ptr, varargs, real_name
     end
 
     def parse_type_def

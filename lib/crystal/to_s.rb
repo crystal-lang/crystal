@@ -419,6 +419,9 @@ module Crystal
           @str << ', ' if i > 0
           arg.accept self
         end
+        if node.varargs
+          @str << ', ...'
+        end
         @str << ')'
       end
       if node.return_type
