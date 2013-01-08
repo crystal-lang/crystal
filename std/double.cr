@@ -14,4 +14,10 @@ class Double
   def **(other)
     self ** other.to_d
   end
+
+  def to_s
+    str = String.new(12)
+    C.sprintf(str.cstr, "%g", self)
+    str
+  end
 end

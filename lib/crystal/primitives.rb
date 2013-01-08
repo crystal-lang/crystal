@@ -40,13 +40,6 @@ module Crystal
     end
 
     def define_char_primitives
-      no_args_primitive(char, 'to_cstr', char_pointer) do |b, f, llvm_mod|
-        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(2))
-        b.store f.params[0], b.gep(buffer, LLVM::Int(0))
-        b.store LLVM::Int8.from_i(0), b.gep(buffer, LLVM::Int(1))
-        buffer
-      end
-
       no_args_primitive(char, 'ord', int) { |b, f| b.zext(f.params[0], int.llvm_type) }
       singleton(char, :==, {'other' => char}, bool) { |b, f| b.icmp(:eq, f.params[0], f.params[1]) }
       singleton(char, :'!=', {'other' => char}, bool) { |b, f| b.icmp(:ne, f.params[0], f.params[1]) }
@@ -132,12 +125,6 @@ module Crystal
     end
 
     def define_int_primitives
-      no_args_primitive(int, 'to_cstr', char_pointer) do |b, f, llvm_mod|
-        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(12))
-        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%d"), f.params[0]
-        buffer
-      end
-
       self_primitive(int, 'to_i')
       no_args_primitive(int, 'to_f', float) { |b, f| b.si2fp(f.params[0], float.llvm_type) }
       no_args_primitive(int, 'to_d', double) { |b, f| b.si2fp(f.params[0], double.llvm_type) }
@@ -151,12 +138,6 @@ module Crystal
     end
 
     def define_long_primitives
-      no_args_primitive(long, 'to_cstr', char_pointer) do |b, f, llvm_mod|
-        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(22))
-        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%ld"), f.params[0]
-        buffer
-      end
-
       no_args_primitive(long, 'to_i', int) { |b, f| b.trunc(f.params[0], int.llvm_type) }
       no_args_primitive(long, 'to_f', float) { |b, f| b.si2fp(f.params[0], float.llvm_type) }
       no_args_primitive(long, 'to_d', double) { |b, f| b.si2fp(f.params[0], double.llvm_type) }
@@ -166,12 +147,6 @@ module Crystal
     end
 
     def define_float_primitives
-      no_args_primitive(float, 'to_cstr', char_pointer) do |b, f, llvm_mod|
-        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(12))
-        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%g"), b.fp_ext(f.params[0], LLVM::Double)
-        buffer
-      end
-
       no_args_primitive(float, 'to_i', int) { |b, f| b.fp2si(f.params[0], int.llvm_type) }
       self_primitive(float, 'to_f')
       no_args_primitive(float, 'to_d', double) { |b, f| b.fp_ext(f.params[0], double.llvm_type) }
@@ -179,12 +154,6 @@ module Crystal
     end
 
     def define_double_primitives
-      no_args_primitive(double, 'to_cstr', char_pointer) do |b, f, llvm_mod|
-        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(12))
-        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("%g"), b.fp_ext(f.params[0], LLVM::Double)
-        buffer
-      end
-
       no_args_primitive(double, 'to_i', int) { |b, f| b.fp2si(f.params[0], int.llvm_type) }
       no_args_primitive(double, 'to_f', float) { |b, f| b.fp_trunc(f.params[0], float.llvm_type) }
       self_primitive(double, 'to_d')

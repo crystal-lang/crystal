@@ -14,4 +14,10 @@ class Char
   def inspect
     "'#{to_s}'"
   end
+
+  def to_s
+    str = String.new(2)
+    str.cstr.value = self
+    str
+  end
 end

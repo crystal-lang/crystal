@@ -53,4 +53,10 @@ class Int
     end
     self
   end
+
+  def to_s
+    str = String.new(12)
+    C.sprintf(str.cstr, "%d", self)
+    str
+  end
 end
