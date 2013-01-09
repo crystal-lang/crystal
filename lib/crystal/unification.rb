@@ -17,6 +17,10 @@ module Crystal
     attr_accessor :unified
   end
 
+  class InstanceVar
+    attr_accessor :unified
+  end
+
   class UnifyVisitor < Visitor
     def initialize
       @types = {}
@@ -82,6 +86,13 @@ module Crystal
     end
 
     def end_visit_var(node)
+      node.unified = true
+      node.dependencies && node.dependencies.each do |dep|
+        dep.accept self if dep.is_a?(Var) && !dep.unified
+      end
+    end
+
+    def end_visit_instance_var(node)
       node.unified = true
       node.dependencies && node.dependencies.each do |dep|
         dep.accept self if dep.is_a?(Var) && !dep.unified
