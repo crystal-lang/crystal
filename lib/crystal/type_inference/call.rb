@@ -247,36 +247,20 @@ module Crystal
 
       if !error_matches || error_matches.length == 0
         if obj
-          raise "undefined method '#{name}' for #{obj.type.full_name}"
+          raise "undefined method '#{name}' for #{full_name}"
         elsif args.length > 0 || has_parenthesis
           raise "undefined method '#{name}'"
         else
           raise "undefined local variable or method '#{name}'"
         end
       elsif error_matches.length == 1 && args.length != error_matches[0].args.length
-        if obj
-          raise "wrong number of arguments for '#{obj.type.full_name}##{name}' (#{args.length} for #{error_matches[0].args.length})"
-        else
-          raise "wrong number of arguments for '#{name}' (#{args.length} for #{error_matches[0].args.length})"
-        end
+        raise "wrong number of arguments for '#{full_name}' (#{args.length} for #{error_matches[0].args.length})"
       elsif error_matches.length == 1 && !block && error_matches[0].yields
-        if obj
-          raise "#{obj.type.full_name}##{name} expects a block"
-        else
-          raise "#{name} expects a block"
-        end
+        raise "#{full_name} expects a block"
       elsif error_matches.length == 1 && block && !error_matches[0].yields
-        if obj
-          raise "#{obj.type.full_name}##{name} doesn't expect a block"
-        else
-          raise "#{name} doesn't expect a block"
-        end
+        raise "#{full_name} doesn't expect a block"
       else
-        if obj
-          msg = "no overload or ambiguos call for '#{obj.type.full_name}##{name}' with types [#{args.map { |arg| arg.type.full_name }.join ', '}]\n"
-        else
-          msg = "no overload or ambiguos call for '#{name}' with types [#{args.map { |arg| arg.type.full_name }.join ', '}].\n"
-        end
+        msg = "no overload or ambiguos call for '#{full_name}' with types [#{args.map { |arg| arg.type.full_name }.join ', '}]\n"
         msg << "Overload types are:"
         error_matches.each do |error_match|
           msg << "\n - [#{error_match.args.map { |arg| arg.type ? arg.type.full_name : '?' }.join ', '}]"
@@ -297,7 +281,11 @@ module Crystal
 
       return if required_args_count <= call_args_count && call_args_count <= all_args_count
 
-      raise "wrong number of arguments for '#{name}' (#{args.length} for #{untyped_def.args.length})"
+      raise "wrong number of arguments for '#{full_name}' (#{args.length} for #{untyped_def.args.length})"
+    end
+
+    def full_name
+      obj ? "#{obj.type.full_name}##{name}" : name
     end
 
     def check_args_type_match(typed_def)
