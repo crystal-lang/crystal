@@ -77,4 +77,34 @@ describe 'Code gen: if' do
       foo
     )).to_i.should eq(1)
   end
+
+  it "codegen if with union type and then without type" do
+    run(%q(
+      def foo
+        if true
+          return 1
+        else
+          1 || 1.1
+        end
+        return 0
+      end
+
+      foo
+    )).to_i.should eq(1)
+  end
+
+  it "codegen if with union type and else without type" do
+    run(%q(
+      def foo
+        if false
+          1 || 1.1
+        else
+          return 1
+        end
+        return 0
+      end
+
+      foo
+    )).to_i.should eq(1)
+  end
 end
