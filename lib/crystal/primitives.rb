@@ -19,6 +19,7 @@ module Crystal
     end
 
     def define_object_primitives
+      object.add_def Def.new(:class, [], ClassMethod.new)
       no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
       no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
@@ -356,6 +357,9 @@ module Crystal
     def clone_from(other)
       @type = other.type
     end
+  end
+
+  class ClassMethod < Primitive
   end
 end
 

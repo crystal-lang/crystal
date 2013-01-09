@@ -48,6 +48,7 @@ module Crystal
         when :SPACE
           next_token
         when :TOKEN
+          break
           # case @token.value
           # when "="
           #   if is_hash_indexer?(atomic)

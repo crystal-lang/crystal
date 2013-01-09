@@ -131,6 +131,10 @@ module Crystal
       p
     end
 
+    def metaclass
+      self
+    end
+
     def passed_as_self?
       false
     end

@@ -505,16 +505,15 @@ module Crystal
     attr_reader :type
 
     def initialize(type)
-      super("#{type.name}:Class", type.container)
+      super("#{type.full_name}:Class", type.container)
       @type = type
+      add_def Def.new('name', [], StringLiteral.new(type.full_name))
+      add_def Def.new('simple_name', [], StringLiteral.new(type.name))
+      add_def Def.new('to_s', [], StringLiteral.new(type.full_name))
     end
 
     def parents
       type.parents.map(&:metaclass)
-    end
-
-    def passed_as_self?
-      false
     end
 
     def instance_type
@@ -525,11 +524,23 @@ module Crystal
       instance_type.lookup_type(names)
     end
 
-    def to_s
-      name
+    def llvm_type
+      LLVM::Int
     end
 
     def llvm_name
+      name
+    end
+
+    def llvm_size
+      4
+    end
+
+    def full_name
+      name
+    end
+
+    def to_s
       name
     end
   end

@@ -163,6 +163,10 @@ module Crystal
       false
     end
 
+    def visit_class_method(node)
+      @last = int(0)
+    end
+
     def visit_expressions(node)
       node.expressions.each do |exp|
         exp.accept self
@@ -200,39 +204,43 @@ module Crystal
 
     def visit_ident(node)
       const = node.target_const
-      global_name = const.full_name
-      global = @llvm_mod.globals[global_name]
+      if const
+        global_name = const.full_name
+        global = @llvm_mod.globals[global_name]
 
-      unless global
-        global = @llvm_mod.globals.add(const.value.type.llvm_type, global_name)
-        global.linkage = :internal
+        unless global
+          global = @llvm_mod.globals.add(const.value.type.llvm_type, global_name)
+          global.linkage = :internal
 
-        old_position = @builder.insert_block
-        old_fun = @fun
-        @fun = @llvm_mod.functions["crystal_main"]
-        const_block = new_block "const_#{global_name}"
-        @builder.position_at_end const_block
+          old_position = @builder.insert_block
+          old_fun = @fun
+          @fun = @llvm_mod.functions["crystal_main"]
+          const_block = new_block "const_#{global_name}"
+          @builder.position_at_end const_block
 
-        const.value.accept self
+          const.value.accept self
 
-        if @last.constant?
-          global.initializer = @last
-          global.global_constant = 1
-        else
-          global.initializer = LLVM::Constant.null(@last.type)
-          @builder.store @last, global
+          if @last.constant?
+            global.initializer = @last
+            global.global_constant = 1
+          else
+            global.initializer = LLVM::Constant.null(@last.type)
+            @builder.store @last, global
+          end
+
+          new_const_block = @builder.insert_block
+          @builder.position_at_end @const_block
+          @builder.br const_block
+          @const_block = new_const_block
+
+          @builder.position_at_end old_position
+          @fun = old_fun
         end
 
-        new_const_block = @builder.insert_block
-        @builder.position_at_end @const_block
-        @builder.br const_block
-        @const_block = new_const_block
-
-        @builder.position_at_end old_position
-        @fun = old_fun
+        @last = @builder.load global
+      else
+        @last = int(0)
       end
-
-      @last = @builder.load global
     end
 
     def visit_assign(node)
@@ -714,8 +722,6 @@ module Crystal
       end
 
       node.args.each_with_index do |arg, i|
-        next if arg.type.is_a?(Metaclass)
-
         if node.target_def && node.target_def.args[i] && node.target_def.args[i].out && arg.is_a?(Var)
           call_args << @vars[arg.name][:ptr]
         else
@@ -895,7 +901,7 @@ module Crystal
         @type = self_type
         args << Var.new("self", self_type)
       end
-      args += target_def.args.select { |arg| !arg.type.is_a?(Metaclass) }
+      args += target_def.args
 
       varargs = target_def.is_a?(External) && target_def.varargs
 

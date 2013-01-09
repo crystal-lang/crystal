@@ -133,6 +133,10 @@ module Crystal
       node.type = node.expanded.type
     end
 
+    def visit_class_method(node)
+      node.type = @scope.metaclass
+    end
+
     def visit_def(node)
       if node.receiver
         # TODO: hack
