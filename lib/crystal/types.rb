@@ -509,7 +509,8 @@ module Crystal
       @type = type
       add_def Def.new('name', [], StringLiteral.new(type.full_name))
       add_def Def.new('simple_name', [], StringLiteral.new(type.name))
-      add_def Def.new('to_s', [], StringLiteral.new(type.full_name))
+      add_def Def.new('inspect', [], Call.new(nil, 'to_s'))
+      add_def Def.new('to_s', [], Call.new(nil, 'name'))
     end
 
     def parents
