@@ -37,6 +37,7 @@ module Crystal
 
   class CodeGenVisitor < Visitor
     attr_reader :llvm_mod
+    attr_reader :current_node
 
     def initialize(mod, node, return_type, llvm_mod = nil)
       @mod = mod
@@ -54,7 +55,9 @@ module Crystal
       @argv = @fun.params[1]
       @argv.name = 'argv'
 
-      @builder = CrystalLLVMBuilder.new LLVM::Builder.new
+      @builder = LLVM::Builder.new
+      @builder = DebugLLVMBuilder.new @builder, self
+      @builder = CrystalLLVMBuilder.new @builder
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
       @const_block_entry = @const_block
@@ -77,6 +80,9 @@ module Crystal
 
       @union_maps = {}
       @is_a_maps = {}
+
+      @empty_md_list = metadata(metadata(0))
+      @subprograms = [fun_metadata(@fun, "crystal_main", File.expand_path("test.cr"), 1)]
     end
 
     def int(n)
@@ -99,6 +105,18 @@ module Crystal
       br_block_chain @alloca_block, @const_block_entry
       br_block_chain @const_block, @entry_block
       @builder.ret(@return_type ? @last : nil)
+
+      add_compile_unit_metadata File.expand_path("test.cr")
+    end
+
+    def visit_any(node)
+      @current_node = node
+    end
+
+    def accept(node)
+      old_current_node = @current_node
+      node.accept self
+      @current_node = old_current_node
     end
 
     def visit_nil_literal(node)
@@ -150,16 +168,16 @@ module Crystal
     end
 
     def visit_range_literal(node)
-      node.expanded.accept self
+      accept(node.expanded)
       false
     end
 
     def visit_regexp_literal(node)
-      node.expanded.accept self
+      accept(node.expanded)
     end
 
     def visit_hash_literal(node)
-      node.expanded.accept self
+      accept(node.expanded)
       false
     end
 
@@ -169,7 +187,7 @@ module Crystal
 
     def visit_expressions(node)
       node.expressions.each do |exp|
-        exp.accept self
+        accept(exp)
         break if exp.returns? || exp.breaks? || (exp.yields? && (block_returns? || block_breaks?))
       end
       false
@@ -218,7 +236,7 @@ module Crystal
           const_block = new_block "const_#{global_name}"
           @builder.position_at_end const_block
 
-          const.value.accept self
+          accept(const.value)
 
           if @last.constant?
             global.initializer = @last
@@ -254,7 +272,7 @@ module Crystal
         if target.is_a?(Ident)
           llvm_values << nil
         else
-          node.values[i].accept self
+          accept(node.values[i])
           llvm_values << @last
         end
       end
@@ -276,7 +294,7 @@ module Crystal
         return false
       end
 
-      value.accept self
+      accept(value)
 
       codegen_assign_target(target, value, @last)
 
@@ -351,7 +369,7 @@ module Crystal
     end
 
     def visit_is_a(node)
-      node.obj.accept self
+      accept(node.obj)
 
       obj_type = node.obj.type
       const_type = node.const.type.instance_type
@@ -451,12 +469,12 @@ module Crystal
     end
 
     def visit_and(node)
-      node.expanded.accept self
+      accept(node.expanded)
       false
     end
 
     def visit_or(node)
-      node.expanded.accept self
+      accept(node.expanded)
       false
     end
 
@@ -471,7 +489,7 @@ module Crystal
 
       @builder.position_at_end then_block
       if node.then
-        node.then.accept self
+        accept(node.then)
         then_block = @builder.insert_block
       end
       if node.then.nil? || node.then.type.nil? || node.then.type == @mod.nil
@@ -487,7 +505,7 @@ module Crystal
 
       @builder.position_at_end else_block
       if node.else
-        node.else.accept self
+        accept(node.else)
         else_block = @builder.insert_block
       end
       if node.else.nil? || node.else.type.nil? || node.else.type == @mod.nil
@@ -535,7 +553,7 @@ module Crystal
       @builder.position_at_end body_block
       old_while_exit_block = @while_exit_block
       @while_exit_block = exit_block
-      node.body.accept self if node.body
+      accept(node.body) if node.body
       @while_exit_block = old_while_exit_block
       @builder.br while_block
 
@@ -548,7 +566,7 @@ module Crystal
     end
 
     def codegen_cond(node_cond, then_block, else_block)
-      node_cond.accept self
+      accept(node_cond)
       if @mod.nil == node_cond.type
         cond = int1(0)
       elsif @mod.bool == node_cond.type
@@ -643,12 +661,12 @@ module Crystal
     end
 
     def visit_require(node)
-      node.expanded.accept self if node.expanded
+      accept(node.expanded) if node.expanded
       false
     end
 
     def visit_case(node)
-      node.expanded.accept self
+      accept(node.expanded)
       false
     end
 
@@ -681,7 +699,7 @@ module Crystal
     end
 
     def visit_array_literal(node)
-      node.expanded.accept self
+      accept(node.expanded)
       false
     end
 
@@ -699,7 +717,7 @@ module Crystal
 
     def visit_call(node)
       if node.target_macro
-        node.target_macro.accept self
+        accept(node.target_macro)
         return false
       end
 
@@ -715,7 +733,7 @@ module Crystal
 
       call_args = []
       if node.obj && node.obj.type.passed_as_self?
-        node.obj.accept self
+        accept(node.obj)
         call_args << @last
       elsif owner
         call_args << llvm_self
@@ -725,7 +743,7 @@ module Crystal
         if node.target_def && node.target_def.args[i] && node.target_def.args[i].out && arg.is_a?(Var)
           call_args << @vars[arg.name][:ptr]
         else
-          arg.accept self
+          accept(arg)
           call_args << @last
         end
       end
@@ -760,7 +778,7 @@ module Crystal
         else
           @return_union = nil
         end
-        node.target_def.body.accept self
+        accept(node.target_def.body)
         if node.target_def.body.type && node.target_def.body.type != @mod.nil && !node.block.breaks?
           if @return_union
             assign_to_union(@return_union, @return_type, node.target_def.body.type, @last)
@@ -824,7 +842,7 @@ module Crystal
         block = context[:block]
 
         block.args.each_with_index do |arg, i|
-          node.exps[i].accept self
+          accept(node.exps[i])
           new_vars[arg.name] = { ptr: @last, type: arg.type, is_arg: true }
         end
 
@@ -849,7 +867,7 @@ module Crystal
         @return_type = context[:return_type]
         @return_union = context[:return_union]
 
-        block.accept self
+        accept(block)
 
         @last = llvm_nil unless node.type
 
@@ -911,6 +929,7 @@ module Crystal
         target_def.llvm_type,
         varargs: varargs
       )
+      @subprograms << def_metadata(@fun, target_def)
 
       args.each_with_index do |arg, i|
         @fun.params[i].name = arg.name
@@ -936,7 +955,7 @@ module Crystal
           @return_type = target_def.type
           @return_union = alloca(target_def.llvm_type, 'return') if @return_type.union?
 
-          target_def.body.accept self
+          accept(target_def.body)
 
           if @return_type.union?
             if target_def.body.type != @return_type && !target_def.body.returns?
@@ -997,7 +1016,7 @@ module Crystal
         0.upto(call.args.length - 1) do |i|
           @vars["%arg#{i}"] = { ptr: arg_values[i + arg_values_base_index], type: arg_types[i + 1], is_arg: true }
         end
-        call.accept self
+        accept(call)
         @vars = old_vars
 
         unless call.returns?
@@ -1036,7 +1055,7 @@ module Crystal
     def codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block, arg_index = -1, previous_label = nil, &block)
       must_accept = arg_index != -1 || (node.obj && node.obj.type.passed_as_self?)
       arg = arg_index == -1 ? node.obj : node.args[arg_index]
-      arg.accept self if must_accept
+      accept(arg) if must_accept
 
       if arg && arg.real_type.union?
         arg_ptr = @last
