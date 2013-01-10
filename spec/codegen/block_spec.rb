@@ -573,4 +573,23 @@ describe 'Code gen: block' do
       foo
     )).to_i.should eq(1)
   end
+
+  it "breaks from while in function called from block" do
+    run(%q(
+      def foo
+        yield
+      end
+
+      def bar
+        while true
+          break 1
+        end
+        2
+      end
+
+      foo do
+        bar
+      end
+    )).to_i.should eq(2)
+  end
  end

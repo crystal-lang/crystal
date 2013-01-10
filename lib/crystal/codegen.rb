@@ -795,12 +795,14 @@ module Crystal
       else
         old_return_block = @return_block
         old_return_block_table = @return_block_table
-        @return_block = @return_block_table = nil
+        old_break_table = @break_table
+        @return_block = @return_block_table = @break_table = nil
 
         codegen_call(node.target_def, owner, call_args)
 
         @return_block = old_return_block
         @return_block_table = old_return_block_table
+        @break_table = old_break_table
       end
 
       false
