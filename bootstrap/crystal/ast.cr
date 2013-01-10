@@ -250,7 +250,7 @@ module Crystal
     attr :type
 
     def initialize(name, type = nil)
-      @name = name.to_s
+      @name = name
       @type = type
     end
 

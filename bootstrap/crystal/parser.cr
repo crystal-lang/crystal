@@ -51,16 +51,25 @@ module Crystal
           # break
           case @token.value
           when "="
-            if is_hash_indexer?(atomic)
+            if atomic.is_a?(Call) && atomic.name == "[]"
               next_token_skip_space_or_newline
 
-              make_hash_setter(atomic)
+              atomic.name = "[]="
+              atomic.name_length = 0
+              atomic.args << parse_expression
             else
               break unless can_be_assigned?(atomic)
 
-              check_dynamic_constant_assignment(atomic)
+              # if atomic.is_a?(Ident)
+              #   raise "can't reassign to constant"
+              # end
 
-              atomic = make_var_from_call(atomic)
+              if atomic.is_a?(Call) && !@def_vars.last.includes?(atomic.name)
+                raise "'#{@token.type}' before definition of '#{atomic.name}'"
+
+                atomic = Var.new(atomic.name)
+              end
+
               push_var atomic
 
               next_token_skip_space_or_newline
@@ -77,39 +86,6 @@ module Crystal
       end
 
       atomic
-    end
-
-    def is_hash_indexer?(node : Call)
-      node.name == "[]"
-    end
-
-    def is_hash_indexer?(node)
-      false
-    end
-
-    # def check_dynamic_constant_assignment(atomic : Ident)
-    #   raise "dynamic constant assignment" if @def_vars.length > 1
-    # end
-
-    def check_dynamic_constant_assignment(atomic)
-    end
-
-    def make_hash_setter(node : Call)
-      node.name = "[]="
-      node.name_length = 0
-      node.args << parse_expression
-    end
-
-    def make_hash_setter(node)
-      nil
-    end
-
-    def make_var_from_call(node : Call)
-      Var.new(node.name)
-    end
-
-    def make_var_from_call(node)
-      node
     end
 
     def parse_question_colon
@@ -266,7 +242,7 @@ module Crystal
       when :FLOAT
         node_and_next_token FloatLiteral.new(@token.value.to_s)
       when :CHAR
-        node_and_next_token CharLiteral.new(@token.value.to_i)
+        node_and_next_token CharLiteral.new(@token.value.to_s)
       when :STRING, :STRING_START
         parse_string
       when :SYMBOL

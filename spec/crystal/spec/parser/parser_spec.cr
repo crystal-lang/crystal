@@ -70,7 +70,7 @@ describe "Parser" do
   it_parses "+1.0", 1.0.float
   it_parses "-1.0", -1.0.float
 
-  it_parses "'a'", CharLiteral.new('a'.ord)
+  it_parses "'a'", CharLiteral.new("a")
 
   it_parses "\"foo\"", StringLiteral.new("foo")
   it_parses "\"\"", StringLiteral.new("")

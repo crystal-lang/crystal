@@ -32,7 +32,7 @@ module Crystal
     end
 
     def visit(node : CharLiteral)
-      @str << "'" << node.value.chr << "'"
+      @str << "'" << node.value << "'"
     end
 
     def visit(node : SymbolLiteral)

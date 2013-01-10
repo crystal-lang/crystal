@@ -46,16 +46,16 @@ module Crystal
         end
       elsif match = scan(/'\\n'/)
         @token.type = :CHAR
-        @token.value = '\n'
+        @token.value = "\n"
       elsif match = scan(/'\\t'/)
         @token.type = :CHAR
-        @token.value = '\t'
+        @token.value = "\t"
       elsif match = scan(/'\\0'/)
         @token.type = :CHAR
-        @token.value = '\0'
+        @token.value = "\0"
       elsif match = scan(/'.'/)
         @token.type = :CHAR
-        @token.value = match[1]
+        @token.value = match[1].to_s
       elsif match = scan(/"[^\\#\n]*?"/)
         @token.type = :STRING
         @token.value = match.slice_range(1, -2)

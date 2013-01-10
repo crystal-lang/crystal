@@ -341,6 +341,7 @@ module Crystal
 
     def visit_assign(node)
       type_assign(node.target, node.value, node)
+      node.type_filters = node.value.type_filters
       false
     end
 
@@ -613,6 +614,7 @@ module Crystal
       node.expanded = If.new(Assign.new(temp_var, node.left), node.right, temp_var)
       node.expanded.accept self
       node.bind_to node.expanded
+      node.type_filters = node.left.type_filters
 
       false
     end
