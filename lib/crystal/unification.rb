@@ -86,18 +86,6 @@ module Crystal
       unify_var_dependencies(node)
     end
 
-    def end_visit_instance_var(node)
-      unify_var_dependencies(node)
-    end
-
-    def end_visit_pointer_get_value(node)
-      unify_var_dependencies(node)
-    end
-
-    def end_visit_global(node)
-      unify_var_dependencies(node)
-    end
-
     def visit_case(node)
       node.expanded.accept self
       false
@@ -105,6 +93,7 @@ module Crystal
 
     def visit_any(node)
       node.set_type unify_type(node.type) if node.type && !node.type.is_a?(Metaclass)
+      unify_var_dependencies(node) unless node.is_a?(Var)
     end
 
     def unify_var_dependencies(node)
