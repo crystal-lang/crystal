@@ -48,31 +48,31 @@ module Crystal
         when :SPACE
           next_token
         when :TOKEN
+          # break
+          case @token.value
+          when "="
+            if is_hash_indexer?(atomic)
+              next_token_skip_space_or_newline
+
+              make_hash_setter(atomic)
+            else
+              break unless can_be_assigned?(atomic)
+
+              check_dynamic_constant_assignment(atomic)
+
+              atomic = make_var_from_call(atomic)
+              push_var atomic
+
+              next_token_skip_space_or_newline
+
+              value = parse_op_assign
+              atomic = Assign.new(atomic, value)
+            end
+          else
+            break
+          end
+        else
           break
-          # case @token.value
-          # when "="
-          #   if is_hash_indexer?(atomic)
-          #     next_token_skip_space_or_newline
-
-          #     make_hash_setter(atomic)
-          #   else
-          #     break unless can_be_assigned?(atomic)
-
-          #     check_dynamic_constant_assignment(atomic)
-
-          #     atomic = make_var_from_call(atomic)
-          #     push_var atomic
-
-          #     next_token_skip_space_or_newline
-
-          #     value = parse_op_assign
-          #     atomic = Assign.new(atomic, value)
-          #   end
-          # else
-            # break
-          # end
-        # else
-        #   break
         end
       end
 
@@ -239,7 +239,7 @@ module Crystal
           parse_parenthesized_expression
         when "[]"
           next_token_skip_space
-          ArrayLiteral.new
+          ArrayLiteral.new []
         when "["
           parse_array_literal
         when "!"

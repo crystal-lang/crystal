@@ -169,6 +169,7 @@ module Crystal
             unified_type = existing_type
           else
             @unions[type] = unified_type
+            @unions[unified_type] = unified_type
           end
         end
 
