@@ -1,10 +1,10 @@
 module Crystal
   class Token
-    attr :type
-    attr :value
-    attr :line_number
-    attr :column_number
-    attr :filename
+    attr_accessor :type
+    attr_accessor :value
+    attr_accessor :line_number
+    attr_accessor :column_number
+    attr_accessor :filename
 
     def location
       [line_number, column_number, filename]

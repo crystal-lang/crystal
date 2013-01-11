@@ -160,35 +160,19 @@ module Crystal
           else
             return left
           end
-        when :INT
+        when :INT, :LONG, :FLOAT, :DOUBLE
+          type = case @token.type
+                 when :INT then IntLiteral
+                 when :LONG then LongLiteral
+                 when :FLOAT then FloatLiteral
+                 else DoubleLiteral
+                 end
           case @token.value.to_s[0]
           when '+'
-            left = Call.new left, @token.value.to_s[0].to_s, [IntLiteral.new(@token.value.to_s)], nil, @token.column_number
+            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s)], nil, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value.to_s[0].to_s, [IntLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
-            next_token_skip_space_or_newline
-          else
-            return left
-          end
-        when :LONG
-          case @token.value.to_s[0]
-          when '+'
-            left = Call.new left, @token.value.to_s[0].to_s, [LongLiteral.new(@token.value.to_s)], nil, @token.column_number
-            next_token_skip_space_or_newline
-          when '-'
-            left = Call.new left, @token.value.to_s[0].to_s, [LongLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
-            next_token_skip_space_or_newline
-          else
-            return left
-          end
-        when :FLOAT
-          case @token.value.to_s[0]
-          when '+'
-            left = Call.new left, @token.value.to_s[0].to_s, [FloatLiteral.new(@token.value.to_s)], nil, @token.column_number
-            next_token_skip_space_or_newline
-          when '-'
-            left = Call.new left, @token.value.to_s[0].to_s, [FloatLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
+            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -233,7 +217,7 @@ module Crystal
         when "false"
           node_and_next_token BoolLiteral.new(false)
         else
-          raise "unexpected token #{@token}"
+          node_and_next_token Var.new(@token.value)
         end
       when :INT
         node_and_next_token IntLiteral.new(@token.value.to_s)
@@ -241,6 +225,8 @@ module Crystal
         node_and_next_token LongLiteral.new(@token.value.to_s)
       when :FLOAT
         node_and_next_token FloatLiteral.new(@token.value.to_s)
+      when :DOUBLE
+        node_and_next_token DoubleLiteral.new(@token.value.to_s)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value.to_s)
       when :STRING, :STRING_START

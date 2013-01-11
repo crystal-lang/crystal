@@ -1,9 +1,9 @@
 module Crystal
   # Base class for nodes in the grammar.
   class ASTNode
-    attr :line_number
-    attr :column_number
-    attr :filename
+    attr_accessor :line_number
+    attr_accessor :column_number
+    attr_accessor :filename
 
     def location
       [@line_number, @column_number, @filename]
@@ -18,7 +18,7 @@ module Crystal
 
   # A container for one or many expressions.
   class Expressions < ASTNode
-    attr :expressions
+    attr_accessor :expressions
 
     def self.from(obj : Nil)
       nil
@@ -63,7 +63,7 @@ module Crystal
   #     'true' | 'false'
   #
   class BoolLiteral < ASTNode
-    attr :value
+    attr_accessor :value
 
     def initialize(value)
       @value = value
@@ -75,8 +75,13 @@ module Crystal
   end
 
   class NumberLiteral < ASTNode
-    attr :value
-    attr :has_sign
+    attr_accessor :value
+    attr_accessor :has_sign
+
+    def initialize(value)
+      @has_sign = value[0] == '+' || value[0] == '-'
+      @value = value
+    end
   end
 
   # An integer literal.
@@ -84,13 +89,8 @@ module Crystal
   #     \d+
   #
   class IntLiteral < NumberLiteral
-    def initialize(value)
-      @value = value.to_i
-      @has_sign = value[0] == '+' || value[0] == '-'
-    end
-
     def ==(other : self)
-      other.value == value
+      other.value.to_i == value.to_i
     end
   end
 
@@ -99,28 +99,28 @@ module Crystal
   #     \d+L
   #
   class LongLiteral < NumberLiteral
-    def initialize(value)
-      @has_sign = value[0] == '+' || value[0] == '-'
-      @value = value.to_i
-    end
-
     def ==(other : self)
-      other.value == value
+      other.value.to_i == value.to_i
     end
   end
 
   # A float literal.
   #
-  #     \d+.\d+
+  #     \d+.\d+f
   #
   class FloatLiteral < NumberLiteral
-    def initialize(value)
-      @has_sign = value[0] == '+' || value[0] == '-'
-      @value = value.to_f
-    end
-
     def ==(other : self)
-      other.value == value
+      other.value.to_f == value.to_f
+    end
+  end
+
+  # A double literal.
+  #
+  #     \d+.\d+f
+  #
+  class DoubleLiteral < NumberLiteral
+    def ==(other : self)
+      other.value.to_d == value.to_d
     end
   end
 
@@ -129,7 +129,7 @@ module Crystal
   #     "'" \w "'"
   #
   class CharLiteral < ASTNode
-    attr :value
+    attr_accessor :value
 
     def initialize(value)
       @value = value
@@ -141,7 +141,7 @@ module Crystal
   end
 
   class StringLiteral < ASTNode
-    attr :value
+    attr_accessor :value
 
     def initialize(value)
       @value = value
@@ -153,7 +153,7 @@ module Crystal
   end
 
   class SymbolLiteral < ASTNode
-    attr :value
+    attr_accessor :value
 
     def initialize(value)
       @value = value
@@ -169,7 +169,7 @@ module Crystal
   #  '[' ( expression ( ',' expression )* ) ']'
   #
   class ArrayLiteral < ASTNode
-    attr :elements
+    attr_accessor :elements
 
     def initialize(elements = [])
       @elements = elements
@@ -194,14 +194,14 @@ module Crystal
   # the symbol of that operator instead of a string.
   #
   class Call < ASTNode
-    attr :obj
-    attr :name
-    attr :args
-    attr :block
+    attr_accessor :obj
+    attr_accessor :name
+    attr_accessor :args
+    attr_accessor :block
 
-    attr :name_column_number
-    attr :has_parenthesis
-    attr :name_length
+    attr_accessor :name_column_number
+    attr_accessor :has_parenthesis
+    attr_accessor :name_length
 
     def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
       @obj = obj
@@ -230,8 +230,8 @@ module Crystal
   #     target '=' value
   #
   class Assign < ASTNode
-    attr :target
-    attr :value
+    attr_accessor :target
+    attr_accessor :value
 
     def initialize(target, value)
       @target = target
@@ -245,9 +245,9 @@ module Crystal
 
   # A local variable or block argument.
   class Var < ASTNode
-    attr :name
-    attr :out
-    attr :type
+    attr_accessor :name
+    attr_accessor :out
+    attr_accessor :type
 
     def initialize(name, type = nil)
       @name = name

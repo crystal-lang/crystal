@@ -1,4 +1,8 @@
 class Object
+  macro self.attr(name)"
+    attr_reader :#{name}
+  "end
+
   macro self.attr_reader(name)"
     def #{name}
       @#{name}
@@ -11,13 +15,9 @@ class Object
     end
   "end
 
-  macro self.attr(name)"
+  macro self.attr_accessor(name)"
     attr_reader :#{name}
     attr_writer :#{name}
-  "end
-
-  macro self.attr_accessor(symbol_or_name)"
-    attr :#{symbol_or_name}
   "end
 
   def !=(other)

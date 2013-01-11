@@ -33,8 +33,11 @@ module Crystal
         @token.type = :SPACE
       elsif scan /;+/
         @token.type = :";"
-      elsif match = scan(/(\+|-)?\d+\.\d+/)
+      elsif match = scan(/(\+|-)?\d+\.\d+f/)
         @token.type = :FLOAT
+        @token.value = match.slice_range(0, -2)
+      elsif match = scan(/(\+|-)?\d+\.\d+/)
+        @token.type = :DOUBLE
         @token.value = match
       elsif match = scan(/[\+-]?\d+/)
         if scan(/L/)
