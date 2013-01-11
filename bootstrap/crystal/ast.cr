@@ -243,6 +243,29 @@ module Crystal
     end
   end
 
+  # Assign expression.
+  #
+  #     target [',' target]+ '=' value [',' value]*
+  #
+  class MultiAssign < ASTNode
+    attr_accessor :targets
+    attr_accessor :values
+
+    def initialize(targets, values)
+      @targets = targets
+      @values = values
+    end
+
+    def accept_children(visitor)
+      @targets.each { |target| target.accept visitor }
+      @values.each { |value| value.accept visitor }
+    end
+
+    def ==(other : self)
+      other.targets == targets && other.values == values
+    end
+  end
+
   # A local variable or block argument.
   class Var < ASTNode
     attr_accessor :name
@@ -256,6 +279,47 @@ module Crystal
 
     def ==(other : self)
       other.name == name && other.type == type && other.out == out
+    end
+  end
+
+  # A method definition.
+  #
+  #     [ receiver '.' ] 'def' name
+  #       body
+  #     'end'
+  #   |
+  #     [ receiver '.' ] 'def' name '(' [ arg [ ',' arg ]* ] ')'
+  #       body
+  #     'end'
+  #   |
+  #     [ receiver '.' ] 'def' name arg [ ',' arg ]*
+  #       body
+  #     'end'
+  #
+  class Def < ASTNode
+    attr_accessor :receiver
+    attr_accessor :name
+    attr_accessor :args
+    attr_accessor :body
+    attr_accessor :yields
+    attr_accessor :maybe_recursive
+
+    def initialize(name, args, body = nil, receiver = nil, yields = false)
+      @name = name
+      @args = args
+      @body = Expressions.from body
+      @receiver = receiver
+      @yields = yields
+    end
+
+    def accept_children(visitor)
+      receiver.accept visitor if receiver
+      args.each { |arg| arg.accept visitor }
+      body.accept visitor if body
+    end
+
+    def ==(other : self)
+      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields
     end
   end
 end

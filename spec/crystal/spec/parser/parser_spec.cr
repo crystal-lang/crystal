@@ -113,4 +113,11 @@ describe "Parser" do
   it_parses "1 <=> 2", Call.new(1.int, "<=>", [2.int])
 
   it_parses "a = 1", Assign.new("a".var, 1.int)
+  it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int))
+
+  # it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var], [1.int, 2.int])
+  # it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var], [1.int])
+  # it_parses "a = 1, 2", MultiAssign.new(["a".var], [1.int, 2.int])
+
+  # it_parses "def foo\n1\nend", D:wef.new("foo", [], [1.int])
 end
