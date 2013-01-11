@@ -596,14 +596,19 @@ module Crystal
             while true
               when_conds << parse_expression
               skip_space
-              case @token.type
-              when :','
+              if @token.keyword?(:then)
                 next_token_skip_space_or_newline
-              when :NEWLINE, :';'
-                skip_statement_end
                 break
               else
-                raise "unexpected token: #{@token.to_s} (expecting ',', ';' or '\n')"
+                case @token.type
+                when :','
+                  next_token_skip_space_or_newline
+                when :NEWLINE, :';'
+                  skip_statement_end
+                  break
+                else
+                  raise "unexpected token: #{@token.to_s} (expecting ',', ';' or '\n')"
+                end
               end
             end
 
