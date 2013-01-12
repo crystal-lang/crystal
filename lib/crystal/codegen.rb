@@ -18,8 +18,8 @@ module Crystal
     engine.run_function llvm_mod.functions["crystal_main"], 0, nil
   end
 
-  def build(node, mod, llvm_mod = nil)
-    visitor = CodeGenVisitor.new(mod, node, node ? node.type : nil, llvm_mod)
+  def build(node, mod, filename = nil, debug = false, llvm_mod = nil)
+    visitor = CodeGenVisitor.new(mod, node, node ? node.type : nil, filename, debug, llvm_mod)
     if node
       begin
         node.accept visitor
@@ -39,7 +39,9 @@ module Crystal
     attr_reader :llvm_mod
     attr_reader :current_node
 
-    def initialize(mod, node, return_type, llvm_mod = nil)
+    def initialize(mod, node, return_type, filename = nil, debug = false, llvm_mod = nil)
+      @filename = filename
+      @debug = debug
       @mod = mod
       @node = node
       @ints = {}
@@ -56,7 +58,7 @@ module Crystal
       @argv.name = 'argv'
 
       @builder = LLVM::Builder.new
-      @builder = DebugLLVMBuilder.new @builder, self
+      @builder = DebugLLVMBuilder.new @builder, self if debug
       @builder = CrystalLLVMBuilder.new @builder
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
@@ -81,8 +83,10 @@ module Crystal
       @union_maps = {}
       @is_a_maps = {}
 
-      @empty_md_list = metadata(metadata(0))
-      @subprograms = [fun_metadata(@fun, "crystal_main", File.expand_path("test.cr"), 1)]
+      if debug
+        @empty_md_list = metadata(metadata(0))
+        @subprograms = [fun_metadata(@fun, "crystal_main", @filename, 1)]
+      end
     end
 
     def int(n)
@@ -106,7 +110,7 @@ module Crystal
       br_block_chain @const_block, @entry_block
       @builder.ret(@return_type ? @last : nil)
 
-      add_compile_unit_metadata File.expand_path("test.cr")
+      add_compile_unit_metadata @filename if @debug
     end
 
     def visit_any(node)
@@ -962,20 +966,23 @@ module Crystal
     def codegen_call(target_def, self_type, call_args)
       mangled_name = target_def.mangled_name(self_type)
 
-      old_fun = @fun
-      unless @fun = @llvm_mod.functions[mangled_name]
+      unless fun = @llvm_mod.functions[mangled_name]
+        old_current_node = @current_node
+        old_fun = @fun
+        @current_node = target_def
         codegen_fun(mangled_name, target_def, self_type)
+        @current_node = old_current_node
+        fun = @fun
+        @fun = old_fun
       end
 
-      @last = @builder.call @fun, *call_args
+      @last = @builder.call fun, *call_args
 
       if target_def.type.union?
         union = alloca target_def.llvm_type
         @builder.store @last, union
         @last = union
       end
-
-      @fun = old_fun
     end
 
     def codegen_fun(mangled_name, target_def, self_type)
@@ -1002,7 +1009,7 @@ module Crystal
         target_def.llvm_type,
         varargs: varargs
       )
-      @subprograms << def_metadata(@fun, target_def)
+      @subprograms << def_metadata(@fun, target_def) if @debug
 
       args.each_with_index do |arg, i|
         @fun.params[i].name = arg.name

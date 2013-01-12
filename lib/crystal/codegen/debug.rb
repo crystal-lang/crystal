@@ -22,24 +22,38 @@ module Crystal
     end
 
     def fun_metadata(fun, name, file, line)
+      @fun_metadatas ||= {}
+      unless md = @fun_metadatas[fun]
+        md = metadata(
+          46 + LLVMDebugVersion,        # Tag
+          0,                            # Unused
+          file_metadata(file),          # Context
+          name,                         # Name
+          name,                         # Display name
+          fun.name,                     # Linkage name
+          file_metadata(file),          # File
+          line,                         # Line number
+          fun_type,                            # Type
+          false,                        # Is local
+          true,                         # Is definition
+          0,                            # Virtuality attribute, e.g. pure virtual function
+          0,                            # Index into virtual table for C++ methods
+          nil,                          # Type that holds virtual table.
+          0,                            # Flags
+          false,                        # True if this function is optimized
+          fun                           # Pointer to llvm::Function
+        )
+      end
+      @fun_metadatas[fun] = md
+      md
+    end
+
+    def fun_type
+      # TODO: fill with something meaningful
       metadata(
-        46 + LLVMDebugVersion,        # Tag
-        0,                            # Unused
-        file_metadata(file),          # Context
-        name,                         # Name
-        name,                         # Display name
-        fun.name,                     # Linkage name
-        file_metadata(file),          # File
-        line,                         # Line number
-        0,                            # Type
-        false,                        # Is local
-        true,                         # Is definition
-        0,                            # Virtuality attribute, e.g. pure virtual function
-        0,                            # Index into virtual table for C++ methods
-        0,                            # Type that holds virtual table.
-        0,                            # Flags
-        false,                        # True if this function is optimized
-        fun                           # Pointer to llvm::Function
+        786453, 0, "", 0, 0, 0, 0, 0, 0, nil, metadata(metadata(
+          786468, nil, "int", nil, 0, 32, 32, 0, 0, 5
+        )), 0, 0
       )
     end
 
@@ -51,18 +65,29 @@ module Crystal
       file ||= ""
       @file_metadata ||= {}
       @file_metadata[file] ||= metadata(
-        41 + LLVMDebugVersion,                                   # Tag
+        41 + LLVMDebugVersion,                # Tag
         File.basename(file),                  # File
         File.dirname(file)                    # Directory
       )
     end
 
+    def lexical_block_metadata(fun, node)
+      metadata(
+        11 + LLVMDebugVersion,                  # Tag
+        @fun_metadatas[fun],
+        node.line_number,
+        node.column_number,
+        file_metadata(node.filename),
+        0
+      )
+    end
+
     def dbg_metadata
-      return unless @current_node.line_number && @current_node.filename
+      return unless @current_node && @current_node.line_number && @current_node.filename
       metadata(
         @current_node.line_number,
         @current_node.column_number,
-        file_metadata(@current_node.filename),
+        lexical_block_metadata(@fun, @current_node),
         nil
       )
     end
@@ -71,6 +96,7 @@ module Crystal
       values = values.map do |value|
         case value
         when String then LLVM::C.md_string(value, value.length)
+        when Symbol then LLVM::C.md_string(value.to_s, value.to_s.length)
         when Numeric then LLVM::Int(value)
         when TrueClass then LLVM::Int.from_i(1)
         when FalseClass then LLVM::Int.from_i(0)

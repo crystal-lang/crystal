@@ -7,6 +7,7 @@ module Crystal
     end
 
     undef :load
+    undef :select
 
     def method_missing(name, *args)
       ret = @builder.send name, *args

@@ -31,6 +31,9 @@ module Crystal
         opts.on('-no-build', 'Disable build output') do
           @options[:no_build] = true
         end
+        opts.on('-debug', 'Produce debugging information') do
+          @options[:debug] = true
+        end
         opts.on('-o ', 'Output filename') do |output|
           @options[:output_filename] = output
         end
@@ -51,10 +54,6 @@ module Crystal
       if !@options[:output_filename] && ::ARGV.length > 0
         @options[:output_filename] = File.basename(::ARGV[0], File.extname(::ARGV[0]))
       end
-
-      o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
-
-      @command = "llc | clang -x assembler #{o_flag}-"
     end
 
     def compile
@@ -74,11 +73,12 @@ module Crystal
     def compile_with_stats_and_profile
       begin
         source = @options[:command] ? @options[:command].join(";") : ARGF.read
+        filename = File.expand_path(ARGF.filename) unless ARGF.filename == '-'
 
         node = nil
         with_stats_or_profile('parse') do
           parser = Parser.new(source)
-          parser.filename = ARGF.filename unless ARGF.filename == '-'
+          parser.filename = filename
           node = parser.parse
         end
 
@@ -92,14 +92,14 @@ module Crystal
         llvm_mod = nil
         engine = nil
         with_stats_or_profile('codegen') do
-          llvm_mod = build node, mod
+          llvm_mod = build node, mod, filename, @options[:debug]
           write_main llvm_mod unless @options[:run] || @options[:command]
 
           # Don't optimize crystal_main away if the user wants to run the program
           llvm_mod.functions["crystal_main"].linkage = :internal unless @options[:run] || @options[:command]
 
           engine = LLVM::JITCompiler.new llvm_mod
-          optimize llvm_mod, engine
+          optimize llvm_mod, engine unless @options[:debug]
         end
       rescue Crystal::Exception => ex
         puts ex.to_s(source)
@@ -123,10 +123,19 @@ module Crystal
           writer.close
         end
 
-        append_libs_to_command mod
+        o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
 
-        pid = spawn command, in: reader
-        Process.waitpid pid
+        if @options[:debug]
+          obj_file = "#{@options[:output_filename]}.o"
+
+          pid = spawn "llc | clang -x assembler -c -o #{obj_file} -", in: reader
+          Process.waitpid pid
+
+          `clang #{o_flag} #{obj_file} #{lib_flags(mod)}`
+        else
+          pid = spawn "llc | clang -x assembler #{o_flag}- #{lib_flags(mod)}", in: reader
+          Process.waitpid pid
+        end
       end
     end
 
@@ -140,15 +149,17 @@ module Crystal
       end
     end
 
-    def append_libs_to_command(mod)
+    def lib_flags(mod)
       libs = mod.library_names
+      flags = ""
       if libs.length > 0
-        @command << " -Wl"
+        flags << " -Wl"
         libs.each do |lib|
-          @command << ",-l"
-          @command << lib
+          flags << ",-l"
+          flags << lib
         end
       end
+      flags
     end
 
     def write_main(mod)
