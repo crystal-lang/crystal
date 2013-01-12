@@ -780,12 +780,24 @@ module Crystal
     end
 
     def visit_case(node)
+      temp_var = Var.new(temp_name())
+      assign = Assign.new(temp_var, node.cond)
+
+      used_assign = false
+
       a_if = nil
       final_if = nil
       node.whens.each do |wh|
         final_comp = nil
         wh.conds.each do |cond|
-          comp = Call.new(cond, :'===', [node.cond])
+          if used_assign
+            right_side = temp_var
+          else
+            right_side = assign
+            used_assign = true
+          end
+
+          comp = Call.new(cond, :'===', [right_side])
           if final_comp
             final_comp = Or.new(final_comp, comp)
           else
