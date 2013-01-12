@@ -603,7 +603,10 @@ module Crystal
                 case @token.type
                 when :','
                   next_token_skip_space_or_newline
-                when :NEWLINE, :';'
+                when :NEWLINE
+                  skip_space_or_newline
+                  break
+                when :';'
                   skip_statement_end
                   break
                 else
@@ -613,7 +616,7 @@ module Crystal
             end
 
             when_body = parse_expressions
-            skip_statement_end
+            skip_space_or_newline
             whens << When.new(when_conds, when_body)
           when :else
             if whens.length == 0
@@ -623,10 +626,10 @@ module Crystal
             a_else = parse_expressions
             skip_statement_end
             check_ident :end
-            next_token_skip_space_or_newline
+            next_token
             break
           when :end
-            next_token_skip_statement_end
+            next_token
             break
           else
             raise "unexpected token: #{@token.to_s} (expecting when, else or end)"
