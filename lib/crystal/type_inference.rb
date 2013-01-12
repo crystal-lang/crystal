@@ -612,6 +612,7 @@ module Crystal
     def visit_and(node)
       temp_var = Var.new(temp_name())
       node.expanded = If.new(Assign.new(temp_var, node.left), node.right, temp_var)
+      node.expanded.binary = :and
       node.expanded.accept self
       node.bind_to node.expanded
       node.type_filters = node.left.type_filters
@@ -622,6 +623,7 @@ module Crystal
     def visit_or(node)
       temp_var = Var.new(temp_name())
       node.expanded = If.new(Assign.new(temp_var, node.left), temp_var, node.right)
+      node.expanded.binary = :or
       node.expanded.accept self
       node.bind_to node.expanded
 

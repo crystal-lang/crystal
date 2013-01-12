@@ -470,10 +470,12 @@ module Crystal
       when true
         node.else = node.then # So if the then returns, also the whole if
 
-        if node.then
-          node.then.accept self
-        else
-          @last = llvm_nil
+        unless node.binary == :or
+          if node.then
+            node.then.accept self
+          else
+            @last = llvm_nil
+          end
         end
 
         if is_union && (!node.then || node.then.type)
@@ -487,10 +489,12 @@ module Crystal
       when false
         node.then = node.else # So if the else returns, also the whole if
 
-        if node.else
-          node.else.accept self
-        else
-          @last = llvm_nil
+        unless node.binary == :and
+          if node.else
+            node.else.accept self
+          else
+            @last = llvm_nil
+          end
         end
 
         if is_union && (!node.else || node.else.type)

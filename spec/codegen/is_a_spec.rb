@@ -71,7 +71,7 @@ describe 'Codegen: is_a?' do
       end
 
       foo = 1
-      foo.is_a?(Foo) && foo.obj
+      foo.is_a?(Foo) && foo.obj && foo.obj
     )).to_b.should be_false
   end
 end
