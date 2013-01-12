@@ -619,7 +619,7 @@ module Crystal
 
     def codegen_cond(node_cond, then_block, else_block)
       if @mod.nil == node_cond.type
-        return false
+        cond = int1(0)
       elsif @mod.bool == node_cond.type
         cond = @builder.icmp :ne, @last, int1(0)
       elsif node_cond.type.nilable?
@@ -647,10 +647,10 @@ module Crystal
           is_false = @builder.icmp(:eq, value, int1(0))
           cond = @builder.not(@builder.and(is_bool, is_false))
         else
-          return true
+          cond = int1(1)
         end
       else
-        return true
+        cond = int1(1)
       end
 
       @builder.cond(cond, then_block, else_block)
