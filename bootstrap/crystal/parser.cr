@@ -286,24 +286,12 @@ module Crystal
       end
     end
 
-    def can_be_assigned?(node : Var)
-      true
-    end
-
-    # def can_be_assigned?(node : InstanceVar)
-    #   true
-    # end
-
-    # def can_be_assigned?(node : Ident)
-    #   true
-    # end
-
-    # def can_be_assigned?(node : Global)
-    #   true
-    # end
-
-    def can_be_assigned?(node : Call)
-      node.obj.nil? && node.args.length == 0 && node.block.nil?
+    def can_be_assigned?(node)
+      node.is_a?(Var) ||
+        # node.is_a?(InstanceVar) ||
+        # node.is_a?(Ident) ||
+        # node.is_a?(Global) ||
+        (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
 
     def can_be_assigned?(node)
