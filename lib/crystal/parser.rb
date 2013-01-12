@@ -224,7 +224,7 @@ module Crystal
     end
 
     def self.parse_custom_operator(name, next_operator, node, *operators)
-      class_eval %Q(
+      class_eval <<-EVAL, __FILE__, __LINE__ + 1
         def parse_#{name}
           location = @token.location
 
@@ -247,7 +247,7 @@ module Crystal
             end
           end
         end
-      )
+      EVAL
     end
 
     def self.parse_operator(name, next_operator, *operators)
@@ -1191,7 +1191,7 @@ module Crystal
     end
 
     ['return', 'next', 'break', 'yield'].each do |keyword|
-      class_eval %Q(
+      class_eval <<-EVAL, __FILE__, __LINE__ + 1
         def parse_#{keyword}
           next_token
 
@@ -1204,7 +1204,7 @@ module Crystal
           node.location = location
           node
         end
-      )
+      EVAL
     end
 
 
