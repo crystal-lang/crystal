@@ -5,13 +5,7 @@ require "../../../../bootstrap/crystal/to_s"
 
 include Crystal
 
-class Bool
-  def bool
-    BoolLiteral.new self
-  end
-end
-
-class Int
+class Numeric
   def int
     IntLiteral.new to_s
   end
@@ -23,11 +17,15 @@ class Int
   def float
     FloatLiteral.new to_f.to_s
   end
+
+  def double
+    DoubleLiteral.new to_d.to_s
+  end
 end
 
-class Double
-  def float
-    FloatLiteral.new to_s
+class Bool
+  def bool
+    BoolLiteral.new self
   end
 end
 
@@ -66,11 +64,15 @@ describe "Parser" do
   it_parses "+1L", 1.long
   it_parses "-1L", -1.long
 
-  it_parses "1.0", 1.0.float
-  it_parses "+1.0", 1.0.float
-  it_parses "-1.0", -1.0.float
+  it_parses "1.0", 1.0.double
+  it_parses "+1.0", 1.0.double
+  it_parses "-1.0", -1.0.double
 
-  it_parses "'a'", CharLiteral.new('a'.ord)
+  it_parses "1.0f", 1.0.float
+  it_parses "+1.0f", 1.0.float
+  it_parses "-1.0f", -1.0.float
+
+  it_parses "'a'", CharLiteral.new("a")
 
   it_parses "\"foo\"", StringLiteral.new("foo")
   it_parses "\"\"", StringLiteral.new("")
@@ -86,8 +88,8 @@ describe "Parser" do
   it_parses "1 +\n2", Call.new(1.int, "+", [2.int])
   it_parses "1 +2", Call.new(1.int, "+", [2.int])
   it_parses "1 -2", Call.new(1.int, "-", [2.int])
-  it_parses "1 +2.0", Call.new(1.int, "+", [2.float])
-  it_parses "1 -2.0", Call.new(1.int, "-", [2.float])
+  it_parses "1 +2.0", Call.new(1.int, "+", [2.double])
+  it_parses "1 -2.0", Call.new(1.int, "-", [2.double])
   it_parses "1 +2L", Call.new(1.int, "+", [2.long])
   it_parses "1 -2L", Call.new(1.int, "-", [2.long])
   it_parses "1\n+2", [1.int, 2.int]
@@ -110,5 +112,12 @@ describe "Parser" do
 
   it_parses "1 <=> 2", Call.new(1.int, "<=>", [2.int])
 
-  # it_parses "a = 1", Assign.new("a".var, 1.int)
+  it_parses "a = 1", Assign.new("a".var, 1.int)
+  it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int))
+
+  # it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var], [1.int, 2.int])
+  # it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var], [1.int])
+  # it_parses "a = 1, 2", MultiAssign.new(["a".var], [1.int, 2.int])
+
+  # it_parses "def foo\n1\nend", D:wef.new("foo", [], [1.int])
 end

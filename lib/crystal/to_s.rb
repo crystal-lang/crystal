@@ -513,7 +513,7 @@ module Crystal
     end
 
     ['return', 'next', 'break', 'yield'].each do |keyword|
-      class_eval %Q(
+      class_eval <<-EVAL, __FILE__, __LINE__ + 1
         def visit_#{keyword}(node)
           @str << '#{keyword}'
           if node.exps.length > 0
@@ -525,7 +525,7 @@ module Crystal
           end
           false
         end
-      )
+      EVAL
     end
 
     def with_indent

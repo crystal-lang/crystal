@@ -52,8 +52,8 @@ module Crystal
 
     def define_math_primitives
       math = types['Math'].metaclass
-      singleton(math, 'sqrt', {'other' => float}, float) { |b, f, llvm_mod| b.call(sqrtf(llvm_mod), f.params[0]) }
-      singleton(math, 'sqrt', {'other' => double}, double) { |b, f, llvm_mod| b.call(sqrt(llvm_mod), f.params[0]) }
+      singleton(math, 'sqrt', {'other' => float}, float) { |b, f, llvm_mod| b.call(sqrtf(llvm_mod), f.params[1]) }
+      singleton(math, 'sqrt', {'other' => double}, double) { |b, f, llvm_mod| b.call(sqrt(llvm_mod), f.params[1]) }
     end
 
     CALC_OP_MAP = {

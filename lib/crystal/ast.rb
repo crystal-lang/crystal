@@ -25,7 +25,7 @@ module Crystal
     def self.inherited(klass)
       name = klass.simple_name.underscore
 
-      klass.class_eval %Q(
+      klass.class_eval <<-EVAL, __FILE__, __LINE__ + 1
         def accept(visitor)
           visitor.visit_any self
           if visitor.visit_#{name} self
@@ -33,16 +33,16 @@ module Crystal
           end
           visitor.end_visit_#{name} self
         end
-      )
+      EVAL
 
-      Visitor.class_eval %Q(
+      Visitor.class_eval <<-EVAL, __FILE__, __LINE__ + 1
         def visit_#{name}(node)
           true
         end
 
         def end_visit_#{name}(node)
         end
-      )
+      EVAL
     end
 
     def accept_children(visitor)
@@ -865,7 +865,7 @@ module Crystal
     #   |
     #     '#{keyword}' arg [ ',' arg ]*
     #
-    class_eval %Q(
+    class_eval <<-EVAL, __FILE__, __LINE__ + 1
       class #{keyword.capitalize} < ASTNode
         attr_accessor :exps
 
@@ -886,7 +886,7 @@ module Crystal
           @exps = other.exps.map(&:clone)
         end
       end
-    )
+    EVAL
   end
 
   class LibDef < ASTNode

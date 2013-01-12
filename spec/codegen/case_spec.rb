@@ -29,4 +29,25 @@ describe 'Code gen: case' do
       foo
     )).to_i.should eq(3)
   end
+
+  it "codegens case when cond is a call" do
+    run(%q(
+      require "object"
+
+      $a = 0
+
+      def foo
+        $a += 1
+      end
+
+      case foo
+      when 2
+        1
+      when 1
+        2
+      else
+        3
+      end
+    )).to_i.should eq(2)
+  end
 end

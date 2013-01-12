@@ -341,6 +341,7 @@ module Crystal
 
     def visit_assign(node)
       type_assign(node.target, node.value, node)
+      node.type_filters = node.value.type_filters
       false
     end
 
@@ -611,8 +612,10 @@ module Crystal
     def visit_and(node)
       temp_var = Var.new(temp_name())
       node.expanded = If.new(Assign.new(temp_var, node.left), node.right, temp_var)
+      node.expanded.binary = :and
       node.expanded.accept self
       node.bind_to node.expanded
+      node.type_filters = node.left.type_filters
 
       false
     end
@@ -620,6 +623,7 @@ module Crystal
     def visit_or(node)
       temp_var = Var.new(temp_name())
       node.expanded = If.new(Assign.new(temp_var, node.left), temp_var, node.right)
+      node.expanded.binary = :or
       node.expanded.accept self
       node.bind_to node.expanded
 
@@ -776,12 +780,24 @@ module Crystal
     end
 
     def visit_case(node)
+      temp_var = Var.new(temp_name())
+      assign = Assign.new(temp_var, node.cond)
+
+      used_assign = false
+
       a_if = nil
       final_if = nil
       node.whens.each do |wh|
         final_comp = nil
         wh.conds.each do |cond|
-          comp = Call.new(cond, :'===', [node.cond])
+          if used_assign
+            right_side = temp_var
+          else
+            right_side = assign
+            used_assign = true
+          end
+
+          comp = Call.new(cond, :'===', [right_side])
           if final_comp
             final_comp = Or.new(final_comp, comp)
           else

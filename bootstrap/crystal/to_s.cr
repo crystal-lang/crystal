@@ -32,7 +32,7 @@ module Crystal
     end
 
     def visit(node : CharLiteral)
-      @str << "'" << node.value.chr << "'"
+      @str << "'" << node.value << "'"
     end
 
     def visit(node : SymbolLiteral)
@@ -92,12 +92,49 @@ module Crystal
       false
     end
 
+    def visit(node : MultiAssign)
+      node.targets.each_with_index do |target, i|
+        @str << ", " if i > 0
+        target.accept self
+      end
+      @str << " = "
+      node.values.each_with_index do |value, i|
+        @str << ", " if i > 0
+        value.accept self
+      end
+      false
+    end
+
     def visit(node : Var)
       if node.name
         @str << node.name
       else
         @str << '?'
       end
+    end
+
+    def visit(node : Def)
+      @str << "def "
+      if node.receiver
+        node.receiver.accept self
+        @str << "."
+      end
+      @str << node.name.to_s
+      if node.args.length > 0
+        @str << "("
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+          i += 1
+
+        end
+        @str << ")"
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      append_indent
+      @str << "end"
+      false
     end
 
     def append_indent

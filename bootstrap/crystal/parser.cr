@@ -48,68 +48,44 @@ module Crystal
         when :SPACE
           next_token
         when :TOKEN
+          # break
+          case @token.value
+          when "="
+            if atomic.is_a?(Call) && atomic.name == "[]"
+              next_token_skip_space_or_newline
+
+              atomic.name = "[]="
+              atomic.name_length = 0
+              atomic.args << parse_expression
+            else
+              break unless can_be_assigned?(atomic)
+
+              # if atomic.is_a?(Ident)
+              #   raise "can't reassign to constant"
+              # end
+
+              if atomic.is_a?(Call) && !@def_vars.last.includes?(atomic.name)
+                raise "'#{@token.type}' before definition of '#{atomic.name}'"
+
+                atomic = Var.new(atomic.name)
+              end
+
+              push_var atomic
+
+              next_token_skip_space_or_newline
+
+              value = parse_op_assign
+              atomic = Assign.new(atomic, value)
+            end
+          else
+            break
+          end
+        else
           break
-          # case @token.value
-          # when "="
-          #   if is_hash_indexer?(atomic)
-          #     next_token_skip_space_or_newline
-
-          #     make_hash_setter(atomic)
-          #   else
-          #     break unless can_be_assigned?(atomic)
-
-          #     check_dynamic_constant_assignment(atomic)
-
-          #     atomic = make_var_from_call(atomic)
-          #     push_var atomic
-
-          #     next_token_skip_space_or_newline
-
-          #     value = parse_op_assign
-          #     atomic = Assign.new(atomic, value)
-          #   end
-          # else
-            # break
-          # end
-        # else
-        #   break
         end
       end
 
       atomic
-    end
-
-    def is_hash_indexer?(node : Call)
-      node.name == "[]"
-    end
-
-    def is_hash_indexer?(node)
-      false
-    end
-
-    # def check_dynamic_constant_assignment(atomic : Ident)
-    #   raise "dynamic constant assignment" if @def_vars.length > 1
-    # end
-
-    def check_dynamic_constant_assignment(atomic)
-    end
-
-    def make_hash_setter(node : Call)
-      node.name = "[]="
-      node.name_length = 0
-      node.args << parse_expression
-    end
-
-    def make_hash_setter(node)
-      nil
-    end
-
-    def make_var_from_call(node : Call)
-      Var.new(node.name)
-    end
-
-    def make_var_from_call(node)
-      node
     end
 
     def parse_question_colon
@@ -184,35 +160,19 @@ module Crystal
           else
             return left
           end
-        when :INT
+        when :INT, :LONG, :FLOAT, :DOUBLE
+          type = case @token.type
+                 when :INT then IntLiteral
+                 when :LONG then LongLiteral
+                 when :FLOAT then FloatLiteral
+                 else DoubleLiteral
+                 end
           case @token.value.to_s[0]
           when '+'
-            left = Call.new left, @token.value.to_s[0].to_s, [IntLiteral.new(@token.value.to_s)], nil, @token.column_number
+            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s)], nil, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value.to_s[0].to_s, [IntLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
-            next_token_skip_space_or_newline
-          else
-            return left
-          end
-        when :LONG
-          case @token.value.to_s[0]
-          when '+'
-            left = Call.new left, @token.value.to_s[0].to_s, [LongLiteral.new(@token.value.to_s)], nil, @token.column_number
-            next_token_skip_space_or_newline
-          when '-'
-            left = Call.new left, @token.value.to_s[0].to_s, [LongLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
-            next_token_skip_space_or_newline
-          else
-            return left
-          end
-        when :FLOAT
-          case @token.value.to_s[0]
-          when '+'
-            left = Call.new left, @token.value.to_s[0].to_s, [FloatLiteral.new(@token.value.to_s)], nil, @token.column_number
-            next_token_skip_space_or_newline
-          when '-'
-            left = Call.new left, @token.value.to_s[0].to_s, [FloatLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
+            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s[1, @token.value.to_s.length - 1])], nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -239,7 +199,7 @@ module Crystal
           parse_parenthesized_expression
         when "[]"
           next_token_skip_space
-          ArrayLiteral.new
+          ArrayLiteral.new []
         when "["
           parse_array_literal
         when "!"
@@ -257,7 +217,7 @@ module Crystal
         when "false"
           node_and_next_token BoolLiteral.new(false)
         else
-          raise "unexpected token #{@token}"
+          node_and_next_token Var.new(@token.value)
         end
       when :INT
         node_and_next_token IntLiteral.new(@token.value.to_s)
@@ -265,8 +225,10 @@ module Crystal
         node_and_next_token LongLiteral.new(@token.value.to_s)
       when :FLOAT
         node_and_next_token FloatLiteral.new(@token.value.to_s)
+      when :DOUBLE
+        node_and_next_token DoubleLiteral.new(@token.value.to_s)
       when :CHAR
-        node_and_next_token CharLiteral.new(@token.value.to_i)
+        node_and_next_token CharLiteral.new(@token.value.to_s)
       when :STRING, :STRING_START
         parse_string
       when :SYMBOL
@@ -324,28 +286,12 @@ module Crystal
       end
     end
 
-    def can_be_assigned?(node : Var)
-      true
-    end
-
-    # def can_be_assigned?(node : InstanceVar)
-    #   true
-    # end
-
-    # def can_be_assigned?(node : Ident)
-    #   true
-    # end
-
-    # def can_be_assigned?(node : Global)
-    #   true
-    # end
-
-    def can_be_assigned?(node : Call)
-      node.obj.nil? && node.args.length == 0 && node.block.nil?
-    end
-
     def can_be_assigned?(node)
-      false
+      node.is_a?(Var) ||
+        # node.is_a?(InstanceVar) ||
+        # node.is_a?(Ident) ||
+        # node.is_a?(Global) ||
+        (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
 
     def push_var(var : Var)

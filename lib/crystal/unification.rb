@@ -83,9 +83,7 @@ module Crystal
 
     def end_visit_var(node)
       node.unified = true
-      node.dependencies && node.dependencies.each do |dep|
-        dep.accept self if dep.is_a?(Var) && !dep.unified
-      end
+      unify_var_dependencies(node)
     end
 
     def visit_case(node)
@@ -95,6 +93,13 @@ module Crystal
 
     def visit_any(node)
       node.set_type unify_type(node.type) if node.type && !node.type.is_a?(Metaclass)
+      unify_var_dependencies(node) unless node.is_a?(Var)
+    end
+
+    def unify_var_dependencies(node)
+      node.dependencies && node.dependencies.each do |dep|
+        dep.accept self if dep.is_a?(Var) && !dep.unified
+      end
     end
 
     def unify_type(type)
@@ -158,6 +163,7 @@ module Crystal
             unified_type = existing_type
           else
             @unions[type] = unified_type
+            @unions[unified_type] = unified_type
           end
         end
 

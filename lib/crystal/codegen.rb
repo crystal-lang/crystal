@@ -480,10 +480,52 @@ module Crystal
 
     def visit_if(node)
       is_union = node.type && node.type.union?
-      nilable = node.type && node.type.nilable?
+      is_nilable = node.type && node.type.nilable?
+      union_ptr = alloca node.llvm_type if is_union
+
+      const_value = check_const(node.cond)
+      case const_value
+      when true
+        node.else = node.then # So if the then returns, also the whole if
+
+        unless node.binary == :or
+          if node.then
+            accept(node.then)
+          else
+            @last = llvm_nil
+          end
+        end
+
+        if is_union && (!node.then || node.then.type)
+          codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last)
+          @last = union_ptr
+        elsif is_nilable && @last.type.kind == :integer
+          @last = @builder.int2ptr @last, node.llvm_type
+        end
+
+        return false
+      when false
+        node.then = node.else # So if the else returns, also the whole if
+
+        unless node.binary == :and
+          if node.else
+            accept(node.else)
+          else
+            @last = llvm_nil
+          end
+        end
+
+        if is_union && (!node.else || node.else.type)
+          codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last)
+          @last = union_ptr
+        elsif is_nilable && @last.type.kind == :integer
+          @last = @builder.int2ptr @last, node.llvm_type
+        end
+
+        return false
+      end
 
       then_block, else_block, exit_block = new_blocks "then", "else", "exit"
-      union_ptr = alloca node.llvm_type if is_union
 
       codegen_cond(node.cond, then_block,else_block)
 
@@ -493,14 +535,14 @@ module Crystal
         then_block = @builder.insert_block
       end
       if node.then.nil? || node.then.type.nil? || node.then.type == @mod.nil
-        if nilable
+        if is_nilable
           @last = @builder.int2ptr llvm_nil, node.llvm_type
         else
           @last = llvm_nil
         end
       end
       then_value = @last unless node.then && (node.then.returns? || node.then.breaks? || (node.then.yields? && block_returns?))
-      codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last) if is_union
+      codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last) if is_union && (!node.then || node.then.type)
       @builder.br exit_block
 
       @builder.position_at_end else_block
@@ -509,14 +551,14 @@ module Crystal
         else_block = @builder.insert_block
       end
       if node.else.nil? || node.else.type.nil? || node.else.type == @mod.nil
-        if nilable
+        if is_nilable
           @last = @builder.int2ptr llvm_nil, node.llvm_type
         else
           @last = llvm_nil
         end
       end
       else_value = @last unless node.else && (node.else.returns? || node.else.breaks? || (node.then.yields? && block_returns?))
-      codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union
+      codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union && (!node.else || node.else.type)
       @builder.br exit_block
 
       @builder.position_at_end exit_block
@@ -548,6 +590,7 @@ module Crystal
 
       @builder.position_at_end while_block
 
+      accept(node.cond)
       codegen_cond(node.cond, body_block, exit_block)
 
       @builder.position_at_end body_block
@@ -565,10 +608,36 @@ module Crystal
       false
     end
 
-    def codegen_cond(node_cond, then_block, else_block)
+    def check_const(node_cond)
       accept(node_cond)
+
       if @mod.nil == node_cond.type
-        cond = int1(0)
+        return false
+      elsif @mod.bool == node_cond.type
+        # Nothing
+      elsif node_cond.type.nilable?
+        # Nothing
+      elsif node_cond.type.union?
+        nil_or_bool_index = node_cond.type.types.index { |t| @mod.nil == t || @mod.bool == t }
+        return true unless nil_or_bool_index
+      else
+        return true
+      end
+
+      if @last.constant?
+        if @last == int1(0)
+          return false
+        elsif @last == int1(1)
+          return true
+        end
+      end
+
+      nil
+    end
+
+    def codegen_cond(node_cond, then_block, else_block)
+      if @mod.nil == node_cond.type
+        return false
       elsif @mod.bool == node_cond.type
         cond = @builder.icmp :ne, @last, int1(0)
       elsif node_cond.type.nilable?
@@ -596,13 +665,15 @@ module Crystal
           is_false = @builder.icmp(:eq, value, int1(0))
           cond = @builder.not(@builder.and(is_bool, is_false))
         else
-          cond = int1(1)
+          return true
         end
       else
-        cond = int1(1)
+        return true
       end
 
       @builder.cond(cond, then_block, else_block)
+
+      nil
     end
 
     def end_visit_break(node)
@@ -813,12 +884,14 @@ module Crystal
       else
         old_return_block = @return_block
         old_return_block_table = @return_block_table
-        @return_block = @return_block_table = nil
+        old_break_table = @break_table
+        @return_block = @return_block_table = @break_table = nil
 
         codegen_call(node.target_def, owner, call_args)
 
         @return_block = old_return_block
         @return_block_table = old_return_block_table
+        @break_table = old_break_table
       end
 
       false

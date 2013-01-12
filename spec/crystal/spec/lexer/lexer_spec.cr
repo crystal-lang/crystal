@@ -50,11 +50,23 @@ def it_lexes_floats(values)
 end
 
 def it_lexes_float(value : Array)
-  it_lexes value[0], :FLOAT, value[1]
+  it_lexes value[0], :FLOAT, value[1][0, value[1].length - 1]
 end
 
 def it_lexes_float(value)
-  it_lexes value, :FLOAT, value
+  it_lexes value, :FLOAT, value[0, value.length - 1]
+end
+
+def it_lexes_doubles(values)
+  values.each { |value| it_lexes_double value }
+end
+
+def it_lexes_double(value : Array)
+  it_lexes value[0], :DOUBLE, value[1]
+end
+
+def it_lexes_double(value)
+  it_lexes value, :DOUBLE, value
 end
 
 def it_lexes_longs(values)
@@ -121,7 +133,8 @@ describe "Lexer" do
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
   it_lexes_ints ["1", ["1hello", "1"], "+1", "-1"]
-  it_lexes_floats ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0"]
+  it_lexes_floats ["1.0f", ["1.0fhello", "1.0f"], "+1.0f", "-1.0f"]
+  it_lexes_doubles ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0"]
   it_lexes_longs ["1L", ["1Lhello", "1"], "+1L", "-1L"]
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\n'", '\n'

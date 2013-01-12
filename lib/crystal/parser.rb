@@ -224,7 +224,7 @@ module Crystal
     end
 
     def self.parse_custom_operator(name, next_operator, node, *operators)
-      class_eval %Q(
+      class_eval <<-EVAL, __FILE__, __LINE__ + 1
         def parse_#{name}
           location = @token.location
 
@@ -247,7 +247,7 @@ module Crystal
             end
           end
         end
-      )
+      EVAL
     end
 
     def self.parse_operator(name, next_operator, *operators)
@@ -596,19 +596,27 @@ module Crystal
             while true
               when_conds << parse_expression
               skip_space
-              case @token.type
-              when :','
+              if @token.keyword?(:then)
                 next_token_skip_space_or_newline
-              when :NEWLINE, :';'
-                skip_statement_end
                 break
               else
-                raise "unexpected token: #{@token.to_s} (expecting ',', ';' or '\n')"
+                case @token.type
+                when :','
+                  next_token_skip_space_or_newline
+                when :NEWLINE
+                  skip_space_or_newline
+                  break
+                when :';'
+                  skip_statement_end
+                  break
+                else
+                  raise "unexpected token: #{@token.to_s} (expecting ',', ';' or '\n')"
+                end
               end
             end
 
             when_body = parse_expressions
-            skip_statement_end
+            skip_space_or_newline
             whens << When.new(when_conds, when_body)
           when :else
             if whens.length == 0
@@ -618,10 +626,10 @@ module Crystal
             a_else = parse_expressions
             skip_statement_end
             check_ident :end
-            next_token_skip_space_or_newline
+            next_token
             break
           when :end
-            next_token_skip_statement_end
+            next_token
             break
           else
             raise "unexpected token: #{@token.to_s} (expecting when, else or end)"
@@ -1186,7 +1194,7 @@ module Crystal
     end
 
     ['return', 'next', 'break', 'yield'].each do |keyword|
-      class_eval %Q(
+      class_eval <<-EVAL, __FILE__, __LINE__ + 1
         def parse_#{keyword}
           next_token
 
@@ -1199,7 +1207,7 @@ module Crystal
           node.location = location
           node
         end
-      )
+      EVAL
     end
 
 
