@@ -93,7 +93,7 @@ module Crystal
             next_char :"!@"
           end
         else
-          next_char :"!"
+          @token.type = :"!"
         end
       when '<'
         case next_char
@@ -208,6 +208,7 @@ module Crystal
       when ']' then next_char :"]"
       when ',' then next_char :","
       when '?' then next_char :"?"
+      when ';' then next_char :";"
       when ':'
         char = next_char
         if char == ':'
@@ -310,11 +311,15 @@ module Crystal
         if next_char != '\''
           raise "unterminated char literal"
         end
+        next_char
       when '"'
         start = @buffer + 1
         count = 0
-        while next_char != '"'
+        while (char = next_char) != '"' && char != :EOF
           count += 1
+        end
+        if char != '"'
+          raise "unterminated string literal"
         end
         next_char
         @token.type = :STRING

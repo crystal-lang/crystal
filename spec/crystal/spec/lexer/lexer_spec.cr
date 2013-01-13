@@ -152,7 +152,7 @@ describe "Lexer" do
   it_lexes_char "'\\0'", '\0'
   it_lexes_char "'\\''", '\''
   it_lexes_char "'\\\\'", '\\'
-  it_lexes_operators [:"=", :"<", :"<=" :">" :">=" :"+" :"-" :"*" :"/" :"(" :")" :"==" :"!=" :"=~" :"!" :"," :"." :".." :"..." :"!@" :"+@" :"-@" :"&&" :"||" :"|" :"{" :"}" :"?" :":" :"+=" :"-=" :"*=" :"/=" :"%=" :"&=" :"|=" :"^=" :"**=" :"<<" :">>" :"%" :"&" :"|" :"^" :"**" :"<<=" :">>=" :"~" :"~@" :"[]" :"[" :"]" :"::" :"<=>" :"=>" :"||=" :"&&=" :"==="]
+  it_lexes_operators [:"=", :"<", :"<=" :">" :">=" :"+" :"-" :"*" :"/" :"(" :")" :"==" :"!=" :"=~" :"!" :"," :"." :".." :"..." :"!@" :"+@" :"-@" :"&&" :"||" :"|" :"{" :"}" :"?" :":" :"+=" :"-=" :"*=" :"/=" :"%=" :"&=" :"|=" :"^=" :"**=" :"<<" :">>" :"%" :"&" :"|" :"^" :"**" :"<<=" :">>=" :"~" :"~@" :"[]" :"[" :"]" :"::" :"<=>" :"=>" :"||=" :"&&=" :"===", :";"]
   it_lexes "!@foo", :"!"
   it_lexes "+@foo", :"+"
   it_lexes "-@foo", :"-"
@@ -177,6 +177,15 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:IDENT)
     token.value.should eq(:end)
+    token = lexer.next_token
+    token.type.should eq(:SPACE)
+  end
+
+  it "lexes space after char" do
+    lexer = Crystal::Lexer.new "'a' "
+    token = lexer.next_token
+    token.type.should eq(:CHAR)
+    token.value.should eq('a')
     token = lexer.next_token
     token.type.should eq(:SPACE)
   end

@@ -47,38 +47,32 @@ module Crystal
         case @token.type
         when :SPACE
           next_token
-        when :TOKEN
-          # break
-          case @token.value
-          when "="
-            if atomic.is_a?(Call) && atomic.name == "[]"
-              next_token_skip_space_or_newline
+        when :"="
+          if atomic.is_a?(Call) && atomic.name == "[]"
+            next_token_skip_space_or_newline
 
-              atomic.name = "[]="
-              atomic.name_length = 0
-              atomic.args << parse_expression
-            else
-              break unless can_be_assigned?(atomic)
-
-              # if atomic.is_a?(Ident)
-              #   raise "can't reassign to constant"
-              # end
-
-              if atomic.is_a?(Call) && !@def_vars.last.includes?(atomic.name)
-                raise "'#{@token.type}' before definition of '#{atomic.name}'"
-
-                atomic = Var.new(atomic.name)
-              end
-
-              push_var atomic
-
-              next_token_skip_space_or_newline
-
-              value = parse_op_assign
-              atomic = Assign.new(atomic, value)
-            end
+            atomic.name = "[]="
+            atomic.name_length = 0
+            atomic.args << parse_expression
           else
-            break
+            break unless can_be_assigned?(atomic)
+
+            # if atomic.is_a?(Ident)
+            #   raise "can't reassign to constant"
+            # end
+
+            if atomic.is_a?(Call) && !@def_vars.last.includes?(atomic.name)
+              raise "'#{@token.type}' before definition of '#{atomic.name}'"
+
+              atomic = Var.new(atomic.name)
+            end
+
+            push_var atomic
+
+            next_token_skip_space_or_newline
+
+            value = parse_op_assign
+            atomic = Assign.new(atomic, value)
           end
         else
           break
@@ -107,18 +101,13 @@ module Crystal
           case @token.type
           when :SPACE
             next_token
-          when :TOKEN
-            case @token.value
-            when #{operators}
-              method = @token.value
-              method_column_number = @token.column_number
+          when #{operators}
+            method = @token.type.to_s
+            method_column_number = @token.column_number
 
-              next_token_skip_space_or_newline
-              right = parse_#{next_operator}
-              left = Call.new left, method, [right], nil, method_column_number
-            else
-              return left
-            end
+            next_token_skip_space_or_newline
+            right = parse_#{next_operator}
+            left = Call.new left, method, [right], nil, method_column_number
           else
             return left
           end
@@ -126,19 +115,13 @@ module Crystal
       end
     "end
 
-    parse_operator :or, :and, "\"||\""
-    parse_operator :and, :equality, "\"&&\""
-    parse_operator :equality, :cmp, "\"<\", \"<=\", \">\", \">=\", \"<=>\""
-    parse_operator :cmp, :logical_or, "\"==\", \"!=\", \"=~\", \"===\""
-    parse_operator :logical_or, :logical_and, "\"|\", \"^\""
-    parse_operator :logical_and, :shift, "\"&\""
-    parse_operator :shift, :add_or_sub, "\"<<\", \">>\""
-
-    # def parse_or
-    #   right = parse_add_or_sub
-    #   left = parse_add_or_sub
-    #   Call.new left, right, nil, nil, nil
-    # end
+    parse_operator :or, :and, ":\"||\""
+    parse_operator :and, :equality, ":\"&&\""
+    parse_operator :equality, :cmp, ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
+    parse_operator :cmp, :logical_or, ":\"==\", :\"!=\", :\"=~\", :\"===\""
+    parse_operator :logical_or, :logical_and, ":\"|\", :\"^\""
+    parse_operator :logical_and, :shift, ":\"&\""
+    parse_operator :shift, :add_or_sub, ":\"<<\", :\">>\""
 
     def parse_add_or_sub
       location = @token.location
@@ -149,17 +132,12 @@ module Crystal
         case @token.type
         when :SPACE
           next_token
-        when :TOKEN
-          case @token.value
-          when "+", "-"
-            method = @token.value
-            method_column_number = @token.column_number
-            next_token_skip_space_or_newline
-            right = parse_mul_or_div
-            left = Call.new left, method, [right], nil, method_column_number
-          else
-            return left
-          end
+        when :"+", :"-"
+          method = @token.type.to_s
+          method_column_number = @token.column_number
+          next_token_skip_space_or_newline
+          right = parse_mul_or_div
+          left = Call.new left, method, [right], nil, method_column_number
         when :INT, :LONG, :FLOAT, :DOUBLE
           type = case @token.type
                  when :INT then IntLiteral
@@ -183,8 +161,8 @@ module Crystal
       end
     end
 
-    parse_operator :mul_or_div, :pow, "\"*\", \"/\", \"%\""
-    parse_operator :pow, :atomic_with_method, "\"**\""
+    parse_operator :mul_or_div, :pow, ":\"*\", :\"/\", :\"%\""
+    parse_operator :pow, :atomic_with_method, ":\"**\""
 
     def parse_atomic_with_method
       parse_atomic
@@ -193,28 +171,23 @@ module Crystal
     def parse_atomic
       column_number = @token.column_number
       case @token.type
-      when :TOKEN
-        case @token.value
-        when "("
-          parse_parenthesized_expression
-        when "[]"
-          next_token_skip_space
-          ArrayLiteral.new []
-        when "["
-          parse_array_literal
-        when "!"
-          next_token_skip_space_or_newline
-          Call.new parse_expression, "!@", [], nil, column_number
-        else
-          raise "unexpected token #{@token}"
-        end
+      when :"("
+        parse_parenthesized_expression
+      when :"[]"
+        next_token_skip_space
+        ArrayLiteral.new []
+      when :"["
+        parse_array_literal
+      when :"!"
+        next_token_skip_space_or_newline
+        Call.new parse_expression, "!@", [], nil, column_number
       when :IDENT
         case @token.value
-        when "nil"
+        when :nil
           node_and_next_token NilLiteral.new
-        when "true"
+        when :true
           node_and_next_token BoolLiteral.new(true)
-        when "false"
+        when :false
           node_and_next_token BoolLiteral.new(false)
         else
           node_and_next_token Var.new(@token.value)
@@ -242,10 +215,10 @@ module Crystal
       next_token_skip_space_or_newline
       exp = parse_expression
 
-      check_token ")"
+      check :")"
       next_token_skip_space
 
-      raise "unexpected token: (" if @token.token?("(")
+      raise "unexpected token: (" if @token.type == :"("
       exp
     end
 
@@ -258,10 +231,10 @@ module Crystal
     def parse_array_literal
       next_token_skip_space_or_newline
       exps = []
-      while !@token.token?("]")
+      while @token.type != :"]"
         exps << parse_expression
         skip_space_or_newline
-        if @token.token?(",")
+        if @token.type == :","
           next_token_skip_space_or_newline
         end
       end
@@ -275,11 +248,11 @@ module Crystal
     end
 
     def is_end_token
-      return true if @token.type == :TOKEN && (@token.value == "}" || @token.value == "]")
+      return true if @token.type == :"}" || @token.type == :"]"
       return false unless @token.type == :IDENT
 
       case @token.value
-      when "do", "end", "else", "elsif", "when"
+      when :do, :end, :else, :elsif, :when
         true
       else
         false
