@@ -310,6 +310,15 @@ module Crystal
         if next_char != '\''
           raise "unterminated char literal"
         end
+      when '"'
+        start = @buffer + 1
+        count = 0
+        while next_char != '"'
+          count += 1
+        end
+        next_char
+        @token.type = :STRING
+        @token.value = String.from_cstr(start, count)
       when '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
         scan_number @buffer, 1
       when '@'
@@ -588,7 +597,9 @@ module Crystal
       if (@buffer + 1).value.ident_part_or_end?
         scan_ident(start, start_column)
       else
-        @token.type = symbol
+        next_char
+        @token.type = :IDENT
+        @token.value = symbol
       end
       @token
     end

@@ -27,7 +27,7 @@ end
 
 def it_lexes_keywords(keywords)
   keywords.each do |keyword|
-    it_lexes keyword.to_s, keyword
+    it_lexes keyword.to_s, :IDENT, keyword
   end
 end
 
@@ -136,6 +136,7 @@ describe "Lexer" do
   it_lexes "\t", :SPACE
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
+  it_lexes "\"foo\"", :STRING, "foo"
   it_lexes_keywords [:"def", :"if", :"else", :"elsif", :"end", :"true", :"false", :"class", :"module", :"include", :"while", :"nil", :"do", :"yield", :"return", :"unless", :"next", :"break", :"begin", :"lib", :"fun", :"type", :"struct", :"macro", :"ptr", :"out", :"require", :"case", :"when", :"generic", :"then"]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
@@ -169,6 +170,15 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:INSTANCE_VAR)
     token.value.should eq("@foo")
+  end
+
+  it "lexes space after keyword" do
+    lexer = Crystal::Lexer.new "end 1"
+    token = lexer.next_token
+    token.type.should eq(:IDENT)
+    token.value.should eq(:end)
+    token = lexer.next_token
+    token.type.should eq(:SPACE)
   end
 
   it "lexes comment and token" do
