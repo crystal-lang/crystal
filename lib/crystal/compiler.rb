@@ -10,7 +10,7 @@ module Crystal
     def initialize
       require 'optparse'
 
-      @options = {optimization_passes: 5}
+      @options = {optimization_passes: 0}
       OptionParser.new do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
 
