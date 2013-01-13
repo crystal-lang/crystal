@@ -715,6 +715,13 @@ module Crystal
       source.lines.each_with_index.map { |line, i| "#{'%3d' % (i + 1)}. #{line.chomp}" }.join "\n"
     end
 
+    def visit_return(node)
+      if node.exps.empty?
+        node.exps << NilLiteral.new
+      end
+      true
+    end
+
     def end_visit_return(node)
       node.exps.each do |exp|
         @call[3].bind_to exp

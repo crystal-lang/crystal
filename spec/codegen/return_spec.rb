@@ -24,4 +24,16 @@ describe 'Code gen: return' do
   it "return from function with nilable type" do
     run('def foo; return Object.new if true; end; foo.nil?').to_b.should be_false
   end
+
+  it "returns empty from function" do
+    run(%q(
+      class Nil; def to_i; 0; end; end
+      def foo(x)
+        return if x == 1
+        1
+      end
+
+      foo(2).to_i
+    )).to_i.should eq(1)
+  end
 end
