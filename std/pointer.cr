@@ -1,4 +1,8 @@
 class Pointer
+  def nil?
+    address == 0
+  end
+
   def -(other : Int)
     self + (-other)
   end

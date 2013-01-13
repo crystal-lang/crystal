@@ -603,6 +603,8 @@ module Crystal
       elsif node_cond.type.union?
         nil_or_bool_index = node_cond.type.types.index { |t| @mod.nil == t || @mod.bool == t }
         return true unless nil_or_bool_index
+      elsif node_cond.type.is_a?(PointerType)
+        # Nothing
       else
         return true
       end
@@ -650,6 +652,8 @@ module Crystal
         else
           cond = int1(1)
         end
+      elsif node_cond.type.is_a?(PointerType)
+        cond = not_null_pointer?(@last)
       else
         cond = int1(1)
       end

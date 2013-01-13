@@ -6,6 +6,8 @@ require "llvm"
 LLVM.init_x86
 
 module Crystal
+  DUMP_LLVM = ENV["DUMP"] == "1"
+
   def run(code)
     node = Parser.parse(code)
     mod = infer_type node
@@ -22,6 +24,7 @@ module Crystal
     visitor = CodeGenVisitor.new(mod, node)
     node.accept visitor
     visitor.finish
+    visitor.llvm_mod.dump if Crystal::DUMP_LLVM
     visitor.llvm_mod
   end
 
