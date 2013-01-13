@@ -46,6 +46,10 @@ module Crystal
     def ==(other : self)
       other.expressions == expressions
     end
+
+    def last
+      @expressions.last
+    end
   end
 
   # The nil literal.
