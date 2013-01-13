@@ -134,6 +134,7 @@ module Crystal
     end
 
     def build_string_constant(str, name = "str")
+      name = name.gsub('@', '.')
       unless string = @strings[str]
         global = @llvm_mod.globals.add(LLVM.Array(LLVM::Int8, str.length + 5), name)
         global.linkage = :private
