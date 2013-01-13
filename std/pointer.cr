@@ -1,4 +1,8 @@
 class Pointer
+  def -(other : Int)
+    self + (-other)
+  end
+
   def ==(other : Pointer)
     address == other.address
   end

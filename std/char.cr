@@ -3,6 +3,19 @@ class Char
     false
   end
 
+  def -(other : Char)
+    ord - other.ord
+  end
+
+  def digit?
+    '0' <= self && self <= '9'
+  end
+
+  def alpha?
+    ('a' <= self && self <= 'z') ||
+      ('A' <= self && self <= 'Z')
+  end
+
   def to_i
     ord
   end

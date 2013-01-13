@@ -26,11 +26,15 @@ def it_lexes_many(values, type)
 end
 
 def it_lexes_keywords(keywords)
-  it_lexes_many keywords, :IDENT
+  keywords.each do |keyword|
+    it_lexes keyword.to_s, keyword
+  end
 end
 
-def it_lexes_idents(keywords)
-  it_lexes_keywords keywords
+def it_lexes_idents(idents)
+  idents.each do |ident|
+    it_lexes ident, :IDENT, ident
+  end
 end
 
 def it_lexes_ints(values)
@@ -91,7 +95,9 @@ def it_lexes_char(string, value)
 end
 
 def it_lexes_operators(ops)
-  it_lexes_many ops, :TOKEN
+  ops.each do |op|
+    it_lexes op.to_s, op
+  end
 end
 
 def it_lexes_const(value)
@@ -125,22 +131,30 @@ def it_lexes_global_match(globals)
 end
 
 describe "Lexer" do
+  it_lexes "", :EOF
   it_lexes " ", :SPACE
+  it_lexes "\t", :SPACE
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
-  it_lexes_keywords ["def", "if", "else", "elsif", "end", "true", "false", "class", "module", "include", "while", "nil", "do", "yield", "return", "unless", "next", "break", "begin", "lib", "fun", "type", "struct", "macro", "ptr", "out", "require", "case", "when", "generic"]
+  it_lexes_keywords [:"def", :"if", :"else", :"elsif", :"end", :"true", :"false", :"class", :"module", :"include", :"while", :"nil", :"do", :"yield", :"return", :"unless", :"next", :"break", :"begin", :"lib", :"fun", :"type", :"struct", :"macro", :"ptr", :"out", :"require", :"case", :"when", :"generic", :"then"]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
-  it_lexes_ints ["1", ["1hello", "1"], "+1", "-1"]
-  it_lexes_floats ["1.0f", ["1.0fhello", "1.0f"], "+1.0f", "-1.0f"]
+  it_lexes_ints ["1", ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234"]
+  it_lexes_floats ["1f", "1.0f", ["1.0fhello", "1.0f"], "+1.0f", "-1.0f"]
   it_lexes_doubles ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0"]
   it_lexes_longs ["1L", ["1Lhello", "1"], "+1L", "-1L"]
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'
   it_lexes_char "'\\0'", '\0'
-  it_lexes_operators ["=", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", "==", "!=", "=~", "!", ",", ".", "..", "...", "!@", "+@", "-@", "&&", "||", "|", "{", "}", "?", ":", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "**=", "<<", ">>", "%", "&", "|", "^", "**", "<<=", ">>=", "~", "~@", "[]", "[", "]", "::", "<=>", "=>", "||=", "&&=", "==="]
+  it_lexes_char "'\\0'", '\0'
+  it_lexes_char "'\\''", '\''
+  it_lexes_char "'\\\\'", '\\'
+  it_lexes_operators [:"=", :"<", :"<=" :">" :">=" :"+" :"-" :"*" :"/" :"(" :")" :"==" :"!=" :"=~" :"!" :"," :"." :".." :"..." :"!@" :"+@" :"-@" :"&&" :"||" :"|" :"{" :"}" :"?" :":" :"+=" :"-=" :"*=" :"/=" :"%=" :"&=" :"|=" :"^=" :"**=" :"<<" :">>" :"%" :"&" :"|" :"^" :"**" :"<<=" :">>=" :"~" :"~@" :"[]" :"[" :"]" :"::" :"<=>" :"=>" :"||=" :"&&=" :"==="]
+  it_lexes "!@foo", :"!"
+  it_lexes "+@foo", :"+"
+  it_lexes "-@foo", :"-"
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123", "$~"]
@@ -151,20 +165,18 @@ describe "Lexer" do
   it "lexes not instance var" do
     lexer = Crystal::Lexer.new "!@foo"
     token = lexer.next_token
-    token.type.should eq(:TOKEN)
-    token.value.should eq("!")
+    token.type.should eq(:"!")
     token = lexer.next_token
     token.type.should eq(:INSTANCE_VAR)
     token.value.should eq("@foo")
   end
 
   it "lexes comment and token" do
-    lexer = Crystal::Lexer.new "# comment\n1"
+    lexer = Crystal::Lexer.new "# comment\n="
     token = lexer.next_token
     token.type.should eq(:NEWLINE)
     token = lexer.next_token
-    token.type.should eq(:INT)
-    token.value.should eq("1")
+    token.type.should eq(:"=")
   end
 
   it "lexes comment at the end" do

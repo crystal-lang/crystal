@@ -25,6 +25,14 @@ class String
     str.as(String)
   end
 
+  def self.from_cstr(chars, length)
+    str = Pointer.malloc(length + 5)
+    str.as(Int).value = length
+    C.strncpy(str.as(Char) + 4, chars, length)
+    (str + length + 4).as(Char).value = '\0'
+    str.as(String)
+  end
+
   def self.new(capacity)
     str = Pointer.malloc(capacity + 5)
     buffer = str.as(String).cstr
