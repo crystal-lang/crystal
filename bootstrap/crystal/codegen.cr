@@ -36,7 +36,8 @@ module Crystal
       @mod = mod
       @node = node
       @llvm_mod = LLVM::Module.new("Crystal")
-      @fun = @llvm_mod.functions.add("crystal_main", [], LLVM::Int32)
+      ret_type = node.type.llvm_type
+      @fun = @llvm_mod.functions.add("crystal_main", [], ret_type.is_a?(LLVM::Type) ? ret_type : LLVM::Void)
 
       @builder = LLVM::Builder.new
       entry_block_chain = new_entry_block_chain ["alloca", "const", "entry"]
@@ -52,11 +53,19 @@ module Crystal
     end
 
     def visit(node : IntLiteral)
-      @last = LLVM::Int32.from_i(1)
+      @last = LLVM::Int32.from_i(node.value.to_i)
     end
 
     def visit(node : BoolLiteral)
-      @last = LLVM::Int32.from_i(node.value ? 1 : 0)
+      @last = LLVM::Int1.from_i(node.value ? 1 : 0)
+    end
+
+    def visit(node : LongLiteral)
+      @last = LLVM::Int64.from_i(node.value.to_i)
+    end
+
+    def visit(node : FloatLiteral)
+      @last = LLVM::Float.from_s(node.value)
     end
 
     # def new_entry_block

@@ -21,13 +21,17 @@ lib LibLLVM("LLVM-3.1")
   fun build_ret = LLVMBuildRet(builder : BuilderRef, value : ValueRef) : ValueRef
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
   fun int_type = LLVMIntType(bits : Int) : TypeRef
+  fun float_type = LLVMFloatType() : TypeRef
+  fun double_type = LLVMDoubleType() : TypeRef
   fun const_int = LLVMConstInt(int_type : TypeRef, value : Int, sign_extend : Int) : ValueRef
+  fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : out ExecutionEngineRef, m : ModuleRef, opt_level : Int, error : out Char*) : Int
   fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int, args : Int) : GenericValueRef
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
   fun initialize_x86_target = LLVMInitializeX86Target()
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int) : Int
+  fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Double
 end
 
 module LLVM
@@ -113,7 +117,11 @@ module LLVM
     end
   end
 
-  class IntType
+  class Type
+    attr_reader :type
+  end
+
+  class IntType < Type
     def initialize(bits)
       @type = LibLLVM.int_type(bits)
     end
@@ -121,9 +129,27 @@ module LLVM
     def from_i(value)
       LibLLVM.const_int(@type, value, 0)
     end
+  end
 
-    def type
-      @type
+  class FloatType < Type
+    def initialize
+      @type = LibLLVM.float_type
+    end
+
+    def from_s(value)
+      LibLLVM.const_real_of_string(@type, value)
+    end
+  end
+
+  class DoubleType < Type
+    def initialize
+      @type = LibLLVM.double_type
+    end
+  end
+
+  class VoidType < Type
+    def initialize
+      @type = LibLLVM.void_type
     end
   end
 
@@ -138,6 +164,10 @@ module LLVM
 
     def to_b
       to_i != 0
+    end
+
+    def to_f
+      LibLLVM.generic_value_to_float(LLVM::Float.type, @value)
     end
   end
 
@@ -156,6 +186,13 @@ module LLVM
     end
   end
 
-  Void = LibLLVM.void_type()
+  Void = VoidType.new
+  Int1 = IntType.new(1)
+  Int8 = IntType.new(8)
+  Int16 = IntType.new(16)
   Int32 = IntType.new(32)
+  Int64 = IntType.new(64)
+  Float = FloatType.new
+  Double = DoubleType.new
+
 end

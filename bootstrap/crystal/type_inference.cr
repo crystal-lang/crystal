@@ -49,5 +49,9 @@ module Crystal
     def visit(node : SymbolLiteral)
       node.type = mod.symbol
     end
+
+    def end_visit(node : Expressions)
+      node.type = node.last.type
+    end
   end
 end

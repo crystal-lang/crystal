@@ -50,6 +50,10 @@ module Crystal
     def last
       @expressions.last
     end
+
+    def accept_children(visitor)
+      @expressions.each { |exp| exp.accept visitor }
+    end
   end
 
   # The nil literal.

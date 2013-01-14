@@ -479,7 +479,8 @@ module Crystal
     end
 
     def hash
-      set_with_count.hash
+      # set_with_count.hash
+      1
     end
 
     def ==(other)
