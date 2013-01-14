@@ -1,4 +1,8 @@
 class Nil
+  def object_id
+    0
+  end
+
   def ==(other : Nil)
     true
   end

@@ -1,6 +1,7 @@
 require "program"
 require "visitor"
 require "ast"
+require "type_inference/ast_node"
 
 module Crystal
   def infer_type(node, options = {})
@@ -9,10 +10,6 @@ module Crystal
       node.accept TypeVisitor.new(mod)
     end
     mod
-  end
-
-  class ASTNode
-    attr_accessor :type
   end
 
   class TypeVisitor < Visitor
@@ -51,7 +48,7 @@ module Crystal
     end
 
     def end_visit(node : Expressions)
-      node.type = node.last.type
+      node.bind_to node.last unless node.empty?
     end
   end
 end

@@ -1,4 +1,5 @@
 require "types"
+require "llvm"
 
 module Crystal
   class Program < ModuleType

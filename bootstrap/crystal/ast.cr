@@ -47,6 +47,10 @@ module Crystal
       other.expressions == expressions
     end
 
+    def empty?
+      @expressions.empty?
+    end
+
     def last
       @expressions.last
     end

@@ -24,17 +24,15 @@ module Crystal
       end
     end
 
-    def bind_to(*nodes)
+    def bind_to(node)
       @dependencies ||= []
-      @dependencies += nodes
-      nodes.each do |node|
-        node.add_observer self
-      end
+      @dependencies << node
+      node.add_observer self
 
       if @dependencies.length == 1
         new_type = @dependencies[0].type
-      elsif @dependencies.length > 1 && nodes.length == 1 && nodes[0].type
-        new_type = Type.merge(@type, nodes[0].type)
+      elsif @dependencies.length > 1 && node.type
+        new_type = Type.merge(@type, node.type)
       else
         new_type = Type.merge(*dependencies.map(&:type))
       end
@@ -66,7 +64,6 @@ module Crystal
         new_type = from.type
       else
         new_type = Type.merge(@type, from.type)
-        # new_type = Type.merge(*dependencies.map(&:type))
       end
 
       return if @type.object_id == new_type.object_id
