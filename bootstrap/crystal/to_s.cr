@@ -125,8 +125,6 @@ module Crystal
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           arg.accept self
-          i += 1
-
         end
         @str << ")"
       end
