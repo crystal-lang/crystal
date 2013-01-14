@@ -906,7 +906,6 @@ module Crystal
       next_token_skip_space_or_newline
 
       name = parse_ident
-      skip_statement_end
 
       inc = Include.new name
       inc.location = location
