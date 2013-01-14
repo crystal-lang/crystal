@@ -135,6 +135,28 @@ module Crystal
       false
     end
 
+    def visit(node : Arg)
+      @str << "out " if node.out
+      if node.name
+        @str << node.name
+      else
+        @str << "?"
+      end
+      if node.default_value
+        @str << " = "
+        node.default_value.accept self
+      end
+      if node.type_restriction
+        @str << " : "
+        node.type_restriction.accept self
+      end
+      false
+    end
+
+    def visit(node : SelfRestriction)
+      @str << "self"
+    end
+
     def append_indent
       @indent.times do
         @str << "  "

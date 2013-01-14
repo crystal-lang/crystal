@@ -11,6 +11,7 @@ module Crystal
     def initialize(str, def_vars = [Set.new])
       super(str)
       @def_vars = def_vars
+      @def_name = nil
     end
 
     def parse
@@ -57,15 +58,11 @@ module Crystal
           else
             break unless can_be_assigned?(atomic)
 
-            # if atomic.is_a?(Ident)
-            #   raise "can't reassign to constant"
-            # end
-
-            if atomic.is_a?(Call) && !@def_vars.last.includes?(atomic.name)
-              raise "'#{@token.type}' before definition of '#{atomic.name}'"
-
-              atomic = Var.new(atomic.name)
+            if atomic.is_a?(Ident) && @def_vars.length > 1
+              raise "dynamic constant assignment"
             end
+
+            atomic = Var.new(atomic.name) if atomic.is_a?(Call)
 
             push_var atomic
 
@@ -189,8 +186,10 @@ module Crystal
           node_and_next_token BoolLiteral.new(true)
         when :false
           node_and_next_token BoolLiteral.new(false)
+        when :def
+          parse_def
         else
-          node_and_next_token Var.new(@token.value)
+          parse_var_or_call
         end
       when :INT
         node_and_next_token IntLiteral.new(@token.value.to_s)
@@ -242,6 +241,182 @@ module Crystal
       ArrayLiteral.new exps
     end
 
+    def parse_def
+      next_token_skip_space_or_newline
+      check [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
+
+      receiver = nil
+      @yields = false
+
+      if @token.type == :CONST
+        receiver = parse_ident
+      elsif @token.type == :IDENT
+        name = @token.value
+        next_token
+        if @token.type == :"="
+          name = "#{name}="
+          next_token_skip_space
+        else
+          skip_space
+        end
+      else
+        name = @token.type
+        next_token_skip_space
+      end
+
+      @def_name = name
+      @maybe_recursive = false
+
+      args = []
+
+      if @token.type == :"."
+        receiver = Var.new name unless receiver
+        next_token_skip_space
+        check [:IDENT, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
+        name = @token.type == :IDENT ? @token.value : @token.type
+        next_token_skip_space
+      end
+
+      case @token.type
+      when :"("
+        next_token_skip_space_or_newline
+        while @token.type != :")"
+          check :IDENT
+          arg_name = @token.value
+
+          next_token_skip_space_or_newline
+          case @token.type
+          when :"="
+            next_token_skip_space_or_newline
+            default_value = parse_expression
+          when :":"
+            next_token_skip_space_or_newline
+            if @token.keyword?("self")
+              type_restriction = SelfRestriction.new
+              next_token_skip_space
+            else
+              type_restriction = parse_ident
+            end
+          else
+            default_value = nil
+            type_restriction = nil
+          end
+
+          args << Arg.new(arg_name, default_value, type_restriction)
+
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_statement_end
+      when :IDENT
+        while @token.type != :NEWLINE && @token.type != :";"
+          check :IDENT
+          arg_name = @token.value
+
+          next_token_skip_space
+          case @token.type
+          when :"="
+            next_token_skip_space_or_newline
+            default_value = parse_expression
+          when :":"
+            next_token_skip_space_or_newline
+            if @token.keyword?("self")
+              type_restriction = SelfRestriction.new
+              next_token_skip_space
+            else
+              type_restriction = parse_ident
+            end
+          else
+            default_value = nil
+            type_restriction = nil
+          end
+
+          args << Arg.new(arg_name, default_value, type_restriction)
+
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_statement_end
+      else
+        skip_statement_end
+      end
+
+      if @token.keyword?(:end)
+        body = nil
+      else
+        body = push_def(args) { parse_expressions }
+        skip_statement_end
+        check_ident :end
+      end
+
+      next_token_skip_space
+
+      a_def = Def.new name, args, body, receiver, @yields
+      a_def.maybe_recursive = @maybe_recursive
+      a_def
+    end
+
+    def parse_var_or_call
+      name = @token.value.to_s
+      name_column_number = @token.column_number
+      next_token
+
+      args = nil # parse_args
+      block = nil # parse_block
+
+      if block
+        check_maybe_recursive name
+        Call.new nil, name, args, block, name_column_number, @last_call_has_parenthesis
+      else
+        if args
+          if is_var?(name) && args.length == 1 && args[0].is_a?(NumberLiteral)&& args[0].has_sign
+            sign = args[0].value[0]
+            args[0].value = args[0].value[1 .. -1]
+            Call.new(Var.new(name), sign, args)
+          else
+            check_maybe_recursive name
+            Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
+          end
+        elsif is_var? name
+          Var.new name
+        else
+          check_maybe_recursive name
+          Call.new nil, name, [], nil, name_column_number, @last_call_has_parenthesis
+        end
+      end
+    end
+
+    def parse_ident
+      location = @token.location
+
+      names = []
+      global = false
+
+      if @token.type == :"::"
+        global = true
+        next_token_skip_space_or_newline
+      end
+
+      check :CONST
+      names << @token.value
+
+      next_token
+      while @token.type == :"::"
+        next_token_skip_space_or_newline
+
+        check :CONST
+        names << @token.value
+
+        next_token
+      end
+
+      const = Ident.new names, global
+      const.location = location
+      const
+    end
+
     def node_and_next_token(node)
       next_token
       node
@@ -267,6 +442,13 @@ module Crystal
         (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
 
+    def push_def(args)
+      @def_vars.push(Set.new(args.map { |arg| arg.name }))
+      ret = yield
+      @def_vars.pop
+      ret
+    end
+
     def push_var(var : Var)
       @def_vars.last.add var.name.to_s
     end
@@ -284,6 +466,19 @@ module Crystal
 
     def check_token(value)
       raise "expecting token '#{value}', not '#{@token.to_s}'" unless @token.type == :TOKEN && @token.value == value
+    end
+
+    def check_ident(value)
+      raise "expecting identifier '#{value}', not '#{@token.to_s}'" unless @token.keyword?(value)
+    end
+
+    def is_var?(name)
+      name = name.to_s
+      name == "self" || @def_vars.last.includes?(name)
+    end
+
+    def check_maybe_recursive(name)
+      @maybe_recursive ||= @def_name == name
     end
   end
 end

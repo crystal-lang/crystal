@@ -330,4 +330,51 @@ module Crystal
       other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields
     end
   end
+
+  # A qualified identifier.
+  #
+  #     const [ '::' const ]*
+  #
+  class Ident < ASTNode
+    attr_accessor :names
+    attr_accessor :global
+
+    def initialize(names, global = false)
+      @names = names
+      @global = global
+    end
+
+    def ==(other : self)
+      other.names == names && other.global == global
+    end
+  end
+
+  # A def argument.
+  class Arg < ASTNode
+    attr_accessor :name
+    attr_accessor :default_value
+    attr_accessor :type_restriction
+    attr_accessor :out
+
+    def initialize(name, default_value = nil, type_restriction = nil)
+      @name = name.to_s
+      @default_value = default_value
+      @type_restriction = type_restriction
+    end
+
+    def accept_children(visitor)
+      default_value.accept visitor if default_value
+      type_restriction.accept visitor if type_restriction.is_a?(ASTNode)
+    end
+
+    def ==(other : self)
+      other.name == name && other.default_value == default_value && other.type_restriction == type_restriction && other.out == out
+    end
+  end
+
+  class SelfRestriction < ASTNode
+    def ==(other : self)
+      true
+    end
+  end
 end

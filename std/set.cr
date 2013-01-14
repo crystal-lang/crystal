@@ -1,6 +1,15 @@
 generic class Set
+  include Enumerable
+
   def initialize
     @hash = {}
+  end
+
+  def initialize(array : Array)
+    @hash = {}
+    array.each do |elem|
+      add(elem)
+    end
   end
 
   def add(object)
@@ -23,5 +32,9 @@ generic class Set
     @hash.each do |key, value|
       yield key
     end
+  end
+
+  def to_s
+    "Set{#{join ", "}}"
   end
 end
