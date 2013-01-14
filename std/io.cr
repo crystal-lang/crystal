@@ -4,6 +4,7 @@ lib C
   fun puts(str : Char*) : Int
   fun printf(str : Char*, ...) : Char
   fun sprintf(str : Char*, template : Char*, ...) : Char
+  fun system(str : Char*) : Int
 end
 
 def print(obj : Char)
@@ -56,6 +57,10 @@ end
 
 def p(obj)
   puts obj.inspect
+end
+
+def system(command)
+  C.system command
 end
 
 macro pp(var)

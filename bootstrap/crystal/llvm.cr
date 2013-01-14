@@ -20,6 +20,7 @@ lib LibLLVM("LLVM-3.1")
   fun build_ret_void = LLVMBuildRetVoid(builder : BuilderRef) : ValueRef
   fun build_ret = LLVMBuildRet(builder : BuilderRef, value : ValueRef) : ValueRef
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
+  fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -32,6 +33,7 @@ lib LibLLVM("LLVM-3.1")
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int) : Int
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Double
+  fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int
 end
 
 module LLVM
@@ -57,6 +59,10 @@ module LLVM
 
     def llvm_module
       @module
+    end
+
+    def write_bitcode(filename : String)
+      LibLLVM.write_bitcode_to_file @module, filename
     end
   end
 
@@ -114,6 +120,10 @@ module LLVM
 
     def br(block)
       LibLLVM.build_br(@builder, block)
+    end
+
+    def call(fun)
+      LibLLVM.build_call(@builder, fun.llvm_function, nil, 0, "")
     end
   end
 

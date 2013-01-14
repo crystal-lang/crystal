@@ -1,13 +1,23 @@
 require "crystal/**"
 
+include Crystal
+
 if ARGV.length == 0
   puts "Usage: test2 [file]"
   exit(1)
 end
 
-str = File.read ARGV[0]
+filename = ARGV[0]
+bitcode_filename = "foo.bc"
+output_filename = "foo"
 
-parser = Crystal::Parser.new(str)
-parser.filename = ARGV[0]
+str = File.read filename
+
+parser = Parser.new(str)
+parser.filename = filename
 nodes = parser.parse
-puts nodes
+mod = infer_type nodes
+llvm_mod = build nodes, mod
+llvm_mod.write_bitcode bitcode_filename
+
+system "llc #{bitcode_filename} -o - | clang -x assembler -o #{output_filename} -"

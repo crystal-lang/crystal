@@ -50,6 +50,12 @@ module Crystal
       br_block_chain [@const_block, @entry_block]
       last = @last
       last.is_a?(LibLLVM::ValueRef) ? @builder.ret(last) : @builder.ret
+
+      @fun = @llvm_mod.functions.add "main", [], LLVM::Int32
+      entry = new_block "entry"
+      @builder.position_at_end entry
+      @builder.call @llvm_mod.functions["crystal_main"]
+      @builder.ret LLVM::Int32.from_i(0)
     end
 
     def visit(node : IntLiteral)
