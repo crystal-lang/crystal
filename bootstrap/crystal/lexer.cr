@@ -1,12 +1,6 @@
 require "strscan"
 require "token"
 
-class String
-  def slice_range(from, to)
-    self[from, length + to - from + 1]
-  end
-end
-
 class Char
   def ident_start?
     alpha? || self == '_'
