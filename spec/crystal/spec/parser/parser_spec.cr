@@ -125,4 +125,17 @@ describe "Parser" do
 
   it_parses "def foo\n1\nend", Def.new("foo", [], [1.int])
   it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], [1.int])
+  it_parses "def foo ; 1 ; end", Def.new("foo", [], [1.int])
+  it_parses "def foo; end", Def.new("foo", [], nil)
+  it_parses "def foo(var); end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo(\nvar); end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo(\nvar\n); end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo(var1, var2); end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo(\nvar1\n,\nvar2\n)\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo var; end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo var\n end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo var1, var2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo var1,\nvar2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo; 1; 2; end", Def.new("foo", [], [1.int, 2.int])
+  it_parses "def foo=(value); end", Def.new("foo=", ["value".arg], [])
 end

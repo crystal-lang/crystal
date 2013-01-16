@@ -122,7 +122,7 @@ module Crystal
       # Declare name = default_value for each default value that wasn't given
       self.args.length.upto(untyped_def.args.length - 1).each do |index|
         arg = untyped_def.args[index]
-        assign = Assign.new(Var.new(arg.name), arg.default_value)
+        assign = Assign.new(Var.new(arg.name), arg.default_value.clone)
         if typed_def.body
           if typed_def.body.is_a?(Expressions)
             typed_def.body.expressions.insert 0, assign

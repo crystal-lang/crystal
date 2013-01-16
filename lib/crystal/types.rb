@@ -434,12 +434,8 @@ module Crystal
       !nilable?
     end
 
-    def set_with_count
-      hash = Hash.new(0)
-      @types.each do |type|
-        hash[type] += 1
-      end
-      hash
+    def set
+      Set.new(types)
     end
 
     def llvm_type
@@ -479,12 +475,11 @@ module Crystal
     end
 
     def hash
-      # set_with_count.hash
-      1
+      set.hash
     end
 
     def ==(other)
-      equal?(other) || (other.is_a?(UnionType) && @types.length == other.types.length && set_with_count == other.set_with_count)
+      equal?(other) || (other.is_a?(UnionType) && set == other.set)
     end
 
     def clone(types_context = {})
