@@ -247,7 +247,7 @@ module Crystal
 
       if !error_matches || error_matches.length == 0
         if obj
-          raise "undefined method '#{name}' for #{full_name}"
+          raise "undefined method '#{name}' for #{obj.type.full_name}"
         elsif args.length > 0 || has_parenthesis
           raise "undefined method '#{name}'"
         else
