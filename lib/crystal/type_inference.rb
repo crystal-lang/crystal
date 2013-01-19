@@ -15,8 +15,8 @@ module Crystal
       else
         node.accept TypeVisitor.new(mod)
         fix_empty_types node, mod
-        check_correctness node if Crystal.check_correctness?
         mod.unify node if Crystal::UNIFY
+        check_correctness node if Crystal.check_correctness?
       end
     end
     mod
