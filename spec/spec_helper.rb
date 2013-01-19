@@ -11,6 +11,8 @@ end
 
 include Crystal
 
+Crystal.check_correctness!
+
 # Escaped regexp
 def regex(str)
   /#{Regexp.escape(str)}/

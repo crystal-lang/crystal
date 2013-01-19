@@ -15,6 +15,7 @@ module Crystal
       else
         node.accept TypeVisitor.new(mod)
         fix_empty_types node, mod
+        check_correctness node if Crystal.check_correctness?
         mod.unify node if Crystal::UNIFY
       end
     end
@@ -247,6 +248,7 @@ module Crystal
     def end_visit_fun_def(node)
       args = node.args.map do |arg|
         fun_arg = Arg.new(arg.name)
+        fun_arg.location = arg.location
         fun_arg.type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
         fun_arg.out = arg.out
         fun_arg

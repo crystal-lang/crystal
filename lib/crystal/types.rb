@@ -492,7 +492,7 @@ module Crystal
     end
 
     def to_s
-      nilable? ? "#{nilable_type}?" : "Union[#{types.join ', '}]"
+      "Union[#{types.join ', '}]"
     end
   end
 

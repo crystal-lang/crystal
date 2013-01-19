@@ -111,7 +111,9 @@ module Crystal
       0.upto(self.args.length - 1).each do |index|
         arg = typed_def.args[index]
         type = arg_types[args_start_index + index]
-        args[arg.name] = Var.new(arg.name, type)
+        var = Var.new(arg.name, type)
+        var.location = arg.location
+        args[arg.name] = var
         arg.type = type
       end
 

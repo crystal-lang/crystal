@@ -727,7 +727,11 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :|
           check :IDENT
-          block_args << Var.new(@token.value)
+
+          var = Var.new(@token.value)
+          var.location = @token.location
+          block_args << var
+
           next_token_skip_space_or_newline
           if @token.type == :','
             next_token_skip_space_or_newline
@@ -954,6 +958,7 @@ module Crystal
         while @token.type != :')'
           check :IDENT
           arg_name = @token.value
+          arg_location = @token.location
 
           next_token_skip_space_or_newline
           case @token.type
@@ -973,7 +978,9 @@ module Crystal
             type_restriction = nil
           end
 
-          args << Arg.new(arg_name, default_value, type_restriction)
+          arg = Arg.new(arg_name, default_value, type_restriction)
+          arg.location = arg_location
+          args << arg
 
           if @token.type == :','
             next_token_skip_space_or_newline
@@ -1308,6 +1315,7 @@ module Crystal
 
           check :IDENT
           arg_name = @token.value
+          arg_location = @token.location
 
           next_token_skip_space_or_newline
           check :':'
@@ -1323,7 +1331,10 @@ module Crystal
           ptr = parse_trailing_pointers
 
           skip_space_or_newline
-          args << FunDefArg.new(arg_name, arg_type, ptr, out)
+
+          fun_def_arg = FunDefArg.new(arg_name, arg_type, ptr, out)
+          fun_def_arg.location = arg_location
+          args << fun_def_arg
 
           if @token.type == :','
             next_token_skip_space_or_newline
