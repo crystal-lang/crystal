@@ -102,8 +102,8 @@ module Crystal
       saved_node, saved_type, saved_description = @types[type]
       if saved_type && saved_type.object_id != type.object_id
         msg =  "\nCorrectness check failed for #{type} vs. #{saved_type} :-(\n"
-        msg << "First node: #{saved_node} (#{saved_node.class}) at #{saved_node.filename}:#{saved_node.line_number}:#{saved_node.column_number}\n"
-        msg << "Second node: #{node} (#{node.class}) at #{node.filename}:#{node.line_number}:#{node.column_number}"
+        msg << "First node: #{saved_node} (#{saved_node.class}##{saved_description}) at #{saved_node.filename}:#{saved_node.line_number}:#{saved_node.column_number}\n"
+        msg << "Second node: #{node} (#{node.class}##{description}) at #{node.filename}:#{node.line_number}:#{node.column_number}"
         raise msg
       end
       @types[type] = [node, type, description]
