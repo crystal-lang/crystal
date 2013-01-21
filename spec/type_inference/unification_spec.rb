@@ -96,4 +96,34 @@ describe 'Type inference unification' do
     infer_type input
     input.last.type.should equal(input.last.target_def.body.type)
   end
+
+  it "unifies recursive generic types" do
+    input = parse %(
+      generic class Entry
+        def next=(n)
+          @next = n
+        end
+
+        def next
+          @next
+        end
+      end
+
+      entry1 = Entry.new
+      entry1.next = entry1
+
+      entry2 = Entry.new
+      entry2.next = entry1
+      entry2.next = entry2
+
+      union = entry1
+      union = entry2
+      )
+    infer_type input
+
+    type = input.last.type
+
+    type.should be_a(ObjectType)
+    type.instance_vars['@next'].type.should be_a(ObjectType)
+  end
 end

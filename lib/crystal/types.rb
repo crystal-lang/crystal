@@ -10,6 +10,10 @@ module Crystal
       self
     end
 
+    def ==(other)
+      equal?(other) || other.is_a?(UnionType) && other == self
+    end
+
     def eql?(other)
       self == other
     end
@@ -64,7 +68,7 @@ module Crystal
       else
         union = UnionType.new(*all_types)
         types.each do |t|
-          return t if t == union
+          return t if t.is_a?(UnionType) && t == union
         end
         union
       end
@@ -280,7 +284,7 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) || (generic && structurally_equal?(other))
+      super || (generic && structurally_equal?(other))
     end
 
     def structurally_equal?(other)
@@ -359,8 +363,7 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) ||
-        (other.is_a?(PointerType) && var.type == other.var.type)
+      super || (other.is_a?(PointerType) && var.type == other.var.type)
     end
 
     def hash
@@ -479,7 +482,9 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) || (other.is_a?(UnionType) && set == other.set)
+      return true if equal?(other)
+      set = set()
+      (other.is_a?(UnionType) && set == other.set) || (!other.is_a?(UnionType) && set.length == 1 && set.first == other)
     end
 
     def clone(types_context = {})
