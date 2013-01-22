@@ -126,4 +126,16 @@ describe 'Type inference unification' do
     type.should be_a(ObjectType)
     type.instance_vars['@next'].type.should be_a(ObjectType)
   end
+
+  pending "unifies int, empty array and int array" do
+    input = parse %q(
+      require "prelude"
+      a = 1
+      a = []
+      a = []
+      a << 1
+      )
+    mod = infer_type input
+    input.last.obj.type.types.length.should eq(3)
+  end
 end
