@@ -12,7 +12,7 @@ module Crystal
     def type=(type)
       return if type.nil? || @type.object_id == type.object_id
 
-      @type = type
+      set_type(type)
       notify_observers
     end
 
@@ -37,7 +37,7 @@ module Crystal
         new_type = Type.merge(*dependencies.map(&:type))
       end
       return if @type.object_id == new_type.object_id
-      @type = new_type
+      set_type(new_type)
       @dirty = true
       propagate
     end
@@ -67,7 +67,7 @@ module Crystal
       end
 
       return if @type.object_id == new_type.object_id
-      @type = new_type
+      set_type(new_type)
       @dirty = true
     end
 
