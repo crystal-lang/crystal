@@ -67,8 +67,9 @@ module Crystal
         all_types.first
       else
         union = UnionType.new(*all_types)
+        union_object_ids = nil
         types.each do |t|
-          return t if t.is_a?(UnionType) && t == union
+          return t if t.is_a?(UnionType) && t.types.length == union.types.length && t.types.map(&:object_id) == (union_object_ids ||= union.types.map(&:object_id))
         end
         union
       end
