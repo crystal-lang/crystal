@@ -345,7 +345,10 @@ module Crystal
       return @to_s if @to_s
       if string_rep
         @to_s = string_rep.call(self)
-        return @to_s if @to_s
+        if @to_s
+          to_s, @to_s = @to_s, nil
+          return to_s
+        end
       end
       @to_s = "..."
       instance_vars_to_s = instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
