@@ -7,7 +7,7 @@ class Char
   end
 
   def ident_part?
-    alpha? || digit? || self == '_'
+    ident_start? || digit?
   end
 
   def ident_part_or_end?
@@ -655,79 +655,6 @@ module Crystal
     def next_char(token_type)
       next_char
       @token.type = token_type
-    end
-
-    # def next_string_token
-    #   reset_token
-
-    #   if eos?
-    #     @token.type = :EOF
-    #   elsif scan(/"/)
-    #     @token.type = :STRING_END
-    #   elsif scan(/\n/)
-    #     @line_number += 1
-    #     @column_number = 1
-    #     @token.type = :STRING
-    #     @token.value = "\n"
-    #   elsif scan(/\\n/)
-    #     @token.type = :STRING
-    #     @token.value = "\n"
-    #   elsif scan(/\\"/)
-    #     @token.type = :STRING
-    #     @token.value = '"'
-    #   elsif scan(/\\t/)
-    #     @token.type = :STRING
-    #     @token.value = "\t"
-    #   elsif match = scan(/\\./)
-    #     @token.type = :STRING
-    #     @token.value = match[1]
-    #   elsif scan(/\#{/)
-    #     @token.type = :INTERPOLATION_START
-    #   elsif scan(/\#\#/)
-    #     @token.type = :STRING
-    #     @token.value = '#'
-    #   elsif scan(/\#/)
-    #     @token.type = :STRING
-    #     @token.value = '#'
-    #   elsif match = scan(/[^"\\\#\n]+/)
-    #     @token.type = :STRING
-    #     @token.value = match
-    #   end
-
-    #   @token
-    # end
-
-    # def next_string_array_token
-    #   reset_token
-
-    #   if eos?
-    #     @token.type = :EOF
-    #   else
-    #     while true
-    #       if match = scan(/\n/)
-    #         @line_number += 1
-    #         @column_number = 1
-    #       elsif scan /[^\S\n]+/
-    #         next
-    #       elsif match = scan(/\)/)
-    #         @token.type = :STRING_ARRAY_END
-    #         break
-    #       else match = scan(/[^\s\)]+/)
-    #         @token.type = :STRING
-    #         @token.value = match
-    #         break
-    #       end
-    #     end
-    #   end
-
-    #   @token
-    # end
-
-    def scan(regex)
-      if (match = super)
-        @column_number += match.length.to_i
-      end
-      match
     end
 
     def reset_token

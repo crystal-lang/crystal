@@ -363,18 +363,22 @@ module Crystal
       name_column_number = @token.column_number
       next_token
 
-      args = nil # parse_args
-      block = nil # parse_block
+      args = parse_args
+      block = parse_block
 
       if block
         check_maybe_recursive name
         Call.new nil, name, args, block, name_column_number, @last_call_has_parenthesis
       else
         if args
-          if is_var?(name) && args.length == 1 && args[0].is_a?(NumberLiteral)&& args[0].has_sign
-            sign = args[0].value[0]
-            args[0].value = args[0].value[1 .. -1]
-            Call.new(Var.new(name), sign, args)
+          if is_var?(name) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign)
+            # TODO: don't repeat this
+            num = args[0]
+            if num.is_a?(NumberLiteral)
+              sign = num.value[0]
+              num.value = num.value[1 .. -1]
+              Call.new(Var.new(name), sign, args)
+            end
           else
             check_maybe_recursive name
             Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
@@ -385,6 +389,152 @@ module Crystal
           check_maybe_recursive name
           Call.new nil, name, [], nil, name_column_number, @last_call_has_parenthesis
         end
+      end
+    end
+
+    def parse_block
+      if @token.keyword?(:do)
+        parse_block2 { check_ident :end }
+      elsif @token.type == :"{"
+        parse_block2 { check :"}" }
+      end
+    end
+
+    def parse_block2
+      block_args = []
+      block_body = nil
+
+      next_token_skip_space
+      if @token.type == :"|"
+        next_token_skip_space_or_newline
+        while @token.type != :"|"
+          check :IDENT
+
+          var = Var.new(@token.value)
+          var.location = @token.location
+          block_args << var
+
+          next_token_skip_space_or_newline
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_statement_end
+      else
+        skip_statement_end
+      end
+
+      push_vars block_args
+
+      block_body = parse_expressions
+
+      yield
+
+      next_token_skip_space
+
+      Block.new(block_args, block_body)
+    end
+
+    def parse_args
+      case @token.type
+      when :"{"
+        @last_call_has_parenthesis = false
+        nil
+      when :"("
+        args = []
+        next_token_skip_space_or_newline
+        while @token.type != :")"
+          if @token.keyword?(:out)
+            next_token_skip_space_or_newline
+
+            case @token.type
+            when :IDENT
+              var = Var.new(@token.value)
+              var.out = true
+              var.location = @token.location
+              push_var var
+              args << var
+            when :INSTANCE_VAR
+              var = InstanceVar.new(@token.value)
+              var.out = true
+              var.location = @token.location
+              args << var
+            else
+              raise "expecting variable or instance variable after out"
+            end
+
+            next_token_skip_space
+          else
+            args << parse_expression
+          end
+
+          skip_space
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_space
+        @last_call_has_parenthesis = true
+        args
+      when :SPACE
+        next_token
+        @last_call_has_parenthesis = false
+        parse_args_space_consumed
+      else
+        @last_call_has_parenthesis = false
+        nil
+      end
+    end
+
+    def parse_args_space_consumed(allow_plus_and_minus = false)
+      case @token.type
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :DOUBLE, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-"
+        if !allow_plus_and_minus && (@token.type == :"+" || @token.type == :"-")
+          return nil
+        end
+
+        case @token.value
+        when :if, :unless, :while
+          nil
+        else
+          args = []
+          while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :")" && @token.type != :":" && !is_end_token
+            if @token.keyword?(:out)
+              next_token_skip_space_or_newline
+
+              case @token.type
+              when :IDENT
+                var = Var.new(@token.value)
+                var.out = true
+                var.location = @token.location
+                push_var var
+                args << var
+              when :INSTANCE_VAR
+                var = InstanceVar.new(@token.value)
+                var.out = true
+                var.location = @token.location
+                args << var
+              else
+                raise "expecting variable or instance variable after out"
+              end
+
+              next_token
+            else
+              args << parse_op_assign
+            end
+
+            skip_space
+
+            if @token.type == :","
+              next_token_skip_space_or_newline
+            else
+              break
+            end
+          end
+          args
+        end
+      else
+        nil
       end
     end
 
@@ -449,11 +599,18 @@ module Crystal
       ret
     end
 
+    def push_vars(vars)
+      vars.each do |var|
+        push_var var
+      end
+    end
+
     def push_var(var : Var)
       @def_vars.last.add var.name.to_s
     end
 
     def push_var(node)
+      # Nothing
     end
 
     def check(token_types : Array)

@@ -43,6 +43,10 @@ class String
   def arg
     Arg.new self
   end
+
+  def call(args)
+    Call.new nil, self, args
+  end
 end
 
 def it_parses(string, expected_node)
@@ -138,4 +142,6 @@ describe "Parser" do
   it_parses "def foo var1,\nvar2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
   it_parses "def foo; 1; 2; end", Def.new("foo", [], [1.int, 2.int])
   it_parses "def foo=(value); end", Def.new("foo=", ["value".arg], [])
+  it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call([Call.new("n".var, "-", [1.int])]))
+  it_parses "def type(type); end", Def.new("type", ["type".arg], nil)
 end

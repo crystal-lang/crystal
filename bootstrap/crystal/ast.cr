@@ -294,6 +294,20 @@ module Crystal
     end
   end
 
+  # An instance variable.
+  class InstanceVar < ASTNode
+    attr_accessor :name
+    attr_accessor :out
+
+    def initialize(name)
+      @name = name
+    end
+
+    def ==(other : self)
+      other.name == name && other.out == out
+    end
+  end
+
   # A method definition.
   #
   #     [ receiver '.' ] 'def' name
@@ -373,6 +387,33 @@ module Crystal
 
     def ==(other : self)
       other.name == name && other.default_value == default_value && other.type_restriction == type_restriction && other.out == out
+    end
+  end
+
+  # A code block.
+  #
+  #     'do' [ '|' arg [ ',' arg ]* '|' ]
+  #       body
+  #     'end'
+  #   |
+  #     '{' [ '|' arg [ ',' arg ]* '|' ] body '}'
+  #
+  class Block < ASTNode
+    attr_accessor :args
+    attr_accessor :body
+
+    def initialize(args = [], body = nil)
+      @args = args
+      @body = Expressions.from body
+    end
+
+    def accept_children(visitor)
+      args.each { |arg| arg.accept visitor }
+      body.accept visitor if body
+    end
+
+    def ==(other : self)
+      other.args == args && other.body == body
     end
   end
 
