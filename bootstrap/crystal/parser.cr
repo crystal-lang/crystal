@@ -251,7 +251,7 @@ module Crystal
       if @token.type == :CONST
         receiver = parse_ident
       elsif @token.type == :IDENT
-        name = @token.value
+        name = @token.value.to_s
         next_token
         if @token.type == :"="
           name = "#{name}="
@@ -260,7 +260,7 @@ module Crystal
           skip_space
         end
       else
-        name = @token.type
+        name = @token.type.to_s
         next_token_skip_space
       end
 
@@ -273,7 +273,7 @@ module Crystal
         receiver = Var.new name unless receiver
         next_token_skip_space
         check [:IDENT, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
-        name = @token.type == :IDENT ? @token.value : @token.type
+        name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
         next_token_skip_space
       end
 
@@ -282,7 +282,7 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :")"
           check :IDENT
-          arg_name = @token.value
+          arg_name = @token.value.to_s
 
           next_token_skip_space_or_newline
           case @token.type
@@ -312,7 +312,7 @@ module Crystal
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
           check :IDENT
-          arg_name = @token.value
+          arg_name = @token.value.to_s
 
           next_token_skip_space
           case @token.type
