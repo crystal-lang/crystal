@@ -483,6 +483,17 @@ module Crystal
       false
     end
 
+    def visit_simple_or(node)
+      node.left.accept self
+      left = codegen_cond(node.left)
+
+      node.right.accept self
+      right = codegen_cond(node.right)
+
+      @last = @builder.or left, right
+      false
+    end
+
     def visit_if(node)
       is_union = node.type && node.type.union?
       is_nilable = node.type && node.type.nilable?
@@ -532,7 +543,7 @@ module Crystal
 
       then_block, else_block, exit_block = new_blocks "then", "else", "exit"
 
-      codegen_cond(node.cond, then_block,else_block)
+      codegen_cond_branch(node.cond, then_block,else_block)
 
       @builder.position_at_end then_block
       if node.then
@@ -596,7 +607,7 @@ module Crystal
       @builder.position_at_end while_block
 
       accept(node.cond)
-      codegen_cond(node.cond, body_block, exit_block)
+      codegen_cond_branch(node.cond, body_block, exit_block)
 
       @builder.position_at_end body_block
       old_while_exit_block = @while_exit_block
@@ -642,7 +653,13 @@ module Crystal
       nil
     end
 
-    def codegen_cond(node_cond, then_block, else_block)
+    def codegen_cond_branch(node_cond, then_block, else_block)
+      @builder.cond(codegen_cond(node_cond), then_block, else_block)
+
+      nil
+    end
+
+    def codegen_cond(node_cond)
       if @mod.nil == node_cond.type
         cond = int1(0)
       elsif @mod.bool == node_cond.type
@@ -679,10 +696,6 @@ module Crystal
       else
         cond = int1(1)
       end
-
-      @builder.cond(cond, then_block, else_block)
-
-      nil
     end
 
     def end_visit_break(node)

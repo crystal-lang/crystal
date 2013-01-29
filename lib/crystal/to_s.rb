@@ -101,6 +101,10 @@ module Crystal
       to_s_binary node, '||'
     end
 
+    def visit_simple_or(node)
+      to_s_binary node, '||'
+    end
+
     def to_s_binary(node, op)
       node.left.accept self
       @str << ' '
@@ -435,7 +439,7 @@ module Crystal
     end
 
     def visit_fun_def_arg(node)
-      @str << node.name
+      @str << node.name.to_s
       @str << ' : '
       @str << 'out ' if node.out
       node.type.accept self
@@ -447,7 +451,7 @@ module Crystal
 
     def visit_type_def(node)
       @str << 'type '
-      @str << node.name
+      @str << node.name.to_s
       @str << ' : '
       node.type.accept self
       node.ptr.times do
@@ -458,7 +462,7 @@ module Crystal
 
     def visit_struct_def(node)
       @str << 'struct '
-      @str << node.name
+      @str << node.name.to_s
       @str << "\n"
       with_indent do
         node.fields.each do |field|

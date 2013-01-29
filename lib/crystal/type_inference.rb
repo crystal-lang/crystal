@@ -632,6 +632,13 @@ module Crystal
       false
     end
 
+    def end_visit_simple_or(node)
+      node.bind_to node.left
+      node.bind_to node.right
+
+      false
+    end
+
     def visit_call(node)
       node.mod = mod
       node.scope = @scope || (@types.last ? @types.last.metaclass : nil)
@@ -808,7 +815,7 @@ module Crystal
 
           comp = Call.new(cond, :'===', [right_side])
           if final_comp
-            final_comp = Or.new(final_comp, comp)
+            final_comp = SimpleOr.new(final_comp, comp)
           else
             final_comp = comp
           end

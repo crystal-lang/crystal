@@ -621,6 +621,13 @@ module Crystal
   class Or < BinaryOp
   end
 
+  # Expressions simple or (no short-circuit).
+  #
+  #     expression '||' expression
+  #
+  class SimpleOr < BinaryOp
+  end
+
   # A method call.
   #
   #     [ obj '.' ] name '(' ')' [ block ]
