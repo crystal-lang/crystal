@@ -33,6 +33,10 @@ class Array
   def array
     ArrayLiteral.new self
   end
+
+  def ident
+    Ident.new self
+  end
 end
 
 class String
@@ -44,8 +48,16 @@ class String
     Arg.new self
   end
 
+  def call
+    Call.new nil, self
+  end
+
   def call(args)
     Call.new nil, self, args
+  end
+
+  def ident
+    Ident.new [self]
   end
 end
 
@@ -144,4 +156,44 @@ describe "Parser" do
   it_parses "def foo=(value); end", Def.new("foo=", ["value".arg], [])
   it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call([Call.new("n".var, "-", [1.int])]))
   it_parses "def type(type); end", Def.new("type", ["type".arg], nil)
+
+  it_parses "def self.foo\n1\nend", Def.new("foo", [], [1.int], "self".var)
+  it_parses "def Foo.foo\n1\nend", Def.new("foo", [], [1.int], "Foo".ident)
+  it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", [], [1.int], ["Foo", "Bar"].ident)
+
+  it_parses "def foo; a; end", Def.new("foo", [], ["a".call])
+  it_parses "def foo(a); a; end", Def.new("foo", ["a".arg], ["a".var])
+  it_parses "def foo; a = 1; a; end", Def.new("foo", [], [Assign.new("a".var, 1.int), "a".var])
+  it_parses "def foo; a = 1; a {}; end", Def.new("foo", [], [Assign.new("a".var, 1.int), Call.new(nil, "a", [], Block.new)])
+  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [], [Assign.new("a".var, 1.int), Call.new(nil, "x", [], Block.new([], ["a".var]))])
+  it_parses "def foo; x { |a| a }; end", Def.new("foo", [], [Call.new(nil, "x", [], Block.new(["a".var], ["a".var]))])
+
+  it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int)], nil)
+  it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int)], nil)
+  it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
+  it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
+  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfRestriction.new)], nil)
+  it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfRestriction.new)], nil)
+  it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, true)
+
+  it_parses "foo", "foo".call
+  it_parses "foo()", "foo".call
+  it_parses "foo(1)", "foo".call([1.int])
+  it_parses "foo 1", "foo".call([1.int])
+  it_parses "foo 1\n", "foo".call([1.int])
+  it_parses "foo 1;", "foo".call([1.int])
+  it_parses "foo 1, 2", "foo".call([1.int, 2.int])
+  it_parses "foo (1 + 2), 3", "foo".call([Call.new(1.int, "+", [2.int]), 3.int])
+  it_parses "foo(1 + 2)", "foo".call([Call.new(1.int, "+", [2.int])])
+  it_parses "foo -1.0, -2.0", "foo".call([-1.double, -2.double])
+  it_parses "foo(\n1)", "foo".call([1.int])
+
+  it_parses "foo + 1", Call.new("foo".call, "+", [1.int])
+  it_parses "foo +1", Call.new(nil, "foo", [1.int])
+  it_parses "foo +1.0", Call.new(nil, "foo", [1.double])
+  it_parses "foo +1L", Call.new(nil, "foo", [1.long])
+  it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.int), Call.new("foo".var, "+", [1.int])]
+  it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int), Call.new("foo".var, "-", [1.int])]
+
+  it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, "!@")])
 end

@@ -158,7 +158,28 @@ module Crystal
       end
     end
 
-    parse_operator :mul_or_div, :pow, ":\"*\", :\"/\", :\"%\""
+    parse_operator :mul_or_div, :prefix, ":\"*\", :\"/\", :\"%\""
+
+    def parse_prefix
+      column_number = @token.column_number
+      case @token.type
+      when :"!"
+        next_token_skip_space_or_newline
+        Call.new parse_prefix, "!@", [], nil, column_number
+      when :"+"
+        next_token_skip_space_or_newline
+        Call.new parse_prefix, "+@", [], nil, column_number
+      when :"-"
+        next_token_skip_space_or_newline
+        Call.new parse_prefix, "-@", [], nil, column_number
+      when :"~"
+        next_token_skip_space_or_newline
+        Call.new parse_prefix, "~@", [], nil, column_number
+      else
+        parse_pow
+      end
+    end
+
     parse_operator :pow, :atomic_with_method, ":\"**\""
 
     def parse_atomic_with_method
@@ -175,9 +196,6 @@ module Crystal
         ArrayLiteral.new []
       when :"["
         parse_array_literal
-      when :"!"
-        next_token_skip_space_or_newline
-        Call.new parse_expression, "!@", [], nil, column_number
       when :IDENT
         case @token.value
         when :nil
@@ -186,6 +204,8 @@ module Crystal
           node_and_next_token BoolLiteral.new(true)
         when :false
           node_and_next_token BoolLiteral.new(false)
+        when :yield
+          parse_yield
         when :def
           parse_def
         else
@@ -368,15 +388,15 @@ module Crystal
 
       if block
         check_maybe_recursive name
-        Call.new nil, name, args, block, name_column_number, @last_call_has_parenthesis
+        Call.new nil, name, (args || []), block, name_column_number, @last_call_has_parenthesis
       else
         if args
           if is_var?(name) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign)
             # TODO: don't repeat this
             num = args[0]
             if num.is_a?(NumberLiteral)
-              sign = num.value[0]
-              num.value = num.value[1 .. -1]
+              sign = num.value[0].to_s
+              num.value = num.value[1, num.value.length - 1]
               Call.new(Var.new(name), sign, args)
             end
           else
@@ -565,6 +585,52 @@ module Crystal
       const = Ident.new names, global
       const.location = location
       const
+    end
+
+    def parse_yield
+      next_token
+
+      @yields = true
+
+      args = parse_args
+
+      location = @token.location
+      node = Yield.new(args || [])
+      node.location = location
+      node
+    end
+
+    def parse_break
+      next_token
+
+      args = parse_args
+
+      location = @token.location
+      node = Break.new(args || [])
+      node.location = location
+      node
+    end
+
+    def parse_return
+      next_token
+
+      args = parse_args
+
+      location = @token.location
+      node = Return.new(args || [])
+      node.location = location
+      node
+    end
+
+    def parse_next
+      next_token
+
+      args = parse_args
+
+      location = @token.location
+      node = Next.new(args || [])
+      node.location = location
+      node
     end
 
     def node_and_next_token(node)

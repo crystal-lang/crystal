@@ -72,12 +72,12 @@ module Crystal
         @str << "."
       end
       @str << node.name
-      @str << "(" unless node.obj && node.args.empty?
+      @str << "("
       node.args.each_with_index do |arg, i|
         @str << ", " if i > 0
         arg.accept self
       end
-      @str << ")" unless node.obj && node.args.empty?
+      @str << ")"
       if node.block
         @str << " "
         node.block.accept self
@@ -155,6 +155,34 @@ module Crystal
 
     def visit(node : SelfRestriction)
       @str << "self"
+    end
+
+    def visit(node : Yield)
+      visit_control node, "yield"
+    end
+
+    def visit(node : Return)
+      visit_control node, "return"
+    end
+
+    def visit(node : Break)
+      visit_control node, "break"
+    end
+
+    def visit(node : Next)
+      visit_control node, "next"
+    end
+
+    def visit_control(node, keyword)
+      @str << keyword
+      if node.exps.length > 0
+        @str << " "
+        node.exps.each_with_index do |exp, i|
+          @str << ", " if i > 0
+          exp.accept self
+        end
+      end
+      false
     end
 
     def append_indent

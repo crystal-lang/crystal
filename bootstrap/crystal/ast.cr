@@ -382,7 +382,7 @@ module Crystal
 
     def accept_children(visitor)
       default_value.accept visitor if default_value
-      type_restriction.accept visitor if type_restriction.is_a?(ASTNode)
+      type_restriction.accept visitor if type_restriction
     end
 
     def ==(other : self)
@@ -421,5 +421,33 @@ module Crystal
     def ==(other : self)
       true
     end
+  end
+
+  class ControlExpression < ASTNode
+    attr_accessor :exps
+
+    def initialize(exps = [])
+      @exps = exps
+    end
+
+    def accept_children(visitor)
+      exps.each { |e| e.accept visitor }
+    end
+
+    def ==(other : self)
+      other.exps == exps
+    end
+  end
+
+  class Return < ControlExpression
+  end
+
+  class Break < ControlExpression
+  end
+
+  class Yield < ControlExpression
+  end
+
+  class Next < ControlExpression
   end
 end
