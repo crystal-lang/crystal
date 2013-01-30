@@ -308,6 +308,51 @@ module Crystal
     end
   end
 
+  class BinaryOp < ASTNode
+    attr_accessor :left
+    attr_accessor :right
+
+    def initialize(left, right)
+      @left = left
+      @right = right
+    end
+
+    def accept_children(visitor)
+      left.accept visitor
+      right.accept visitor
+    end
+
+    def ==(other : self)
+      other.left == left && other.right == right
+    end
+
+    def clone_from(other)
+      @left = other.left.clone
+      @right = other.right.clone
+    end
+  end
+
+  # Expressions and.
+  #
+  #     expression '&&' expression
+  #
+  class And < BinaryOp
+  end
+
+  # Expressions or.
+  #
+  #     expression '||' expression
+  #
+  class Or < BinaryOp
+  end
+
+  # Expressions simple or (no short-circuit).
+  #
+  #     expression '||' expression
+  #
+  class SimpleOr < BinaryOp
+  end
+
   # A method definition.
   #
   #     [ receiver '.' ] 'def' name

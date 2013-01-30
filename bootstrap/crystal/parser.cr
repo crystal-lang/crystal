@@ -87,7 +87,7 @@ module Crystal
       parse_or
     end
 
-    macro self.parse_operator(name, next_operator, operators)"
+    macro self.parse_operator(name, next_operator, node, operators)"
       def parse_#{name}
         location = @token.location
 
@@ -104,7 +104,7 @@ module Crystal
 
             next_token_skip_space_or_newline
             right = parse_#{next_operator}
-            left = Call.new left, method, [right], nil, method_column_number
+            left = #{node}
           else
             return left
           end
@@ -112,13 +112,13 @@ module Crystal
       end
     "end
 
-    parse_operator :or, :and, ":\"||\""
-    parse_operator :and, :equality, ":\"&&\""
-    parse_operator :equality, :cmp, ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
-    parse_operator :cmp, :logical_or, ":\"==\", :\"!=\", :\"=~\", :\"===\""
-    parse_operator :logical_or, :logical_and, ":\"|\", :\"^\""
-    parse_operator :logical_and, :shift, ":\"&\""
-    parse_operator :shift, :add_or_sub, ":\"<<\", :\">>\""
+    parse_operator :or, :and, "Or.new left, right", ":\"||\""
+    parse_operator :and, :equality, "And.new left, right", ":\"&&\""
+    parse_operator :equality, :cmp, "Call.new left, method, [right], nil, method_column_number", ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
+    parse_operator :cmp, :logical_or, "Call.new left, method, [right], nil, method_column_number", ":\"==\", :\"!=\", :\"=~\", :\"===\""
+    parse_operator :logical_or, :logical_and, "Call.new left, method, [right], nil, method_column_number", ":\"|\", :\"^\""
+    parse_operator :logical_and, :shift, "Call.new left, method, [right], nil, method_column_number", ":\"&\""
+    parse_operator :shift, :add_or_sub, "Call.new left, method, [right], nil, method_column_number", ":\"<<\", :\">>\""
 
     def parse_add_or_sub
       location = @token.location
@@ -158,7 +158,7 @@ module Crystal
       end
     end
 
-    parse_operator :mul_or_div, :prefix, ":\"*\", :\"/\", :\"%\""
+    parse_operator :mul_or_div, :prefix, "Call.new left, method, [right], nil, method_column_number", ":\"*\", :\"/\", :\"%\""
 
     def parse_prefix
       column_number = @token.column_number
@@ -180,7 +180,7 @@ module Crystal
       end
     end
 
-    parse_operator :pow, :atomic_with_method, ":\"**\""
+    parse_operator :pow, :atomic_with_method, "Call.new left, method, [right], nil, method_column_number", ":\"**\""
 
     def parse_atomic_with_method
       parse_atomic

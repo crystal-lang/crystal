@@ -127,8 +127,8 @@ describe "Parser" do
   it_parses "2 * (3 + 4)", Call.new(2.int, "*", [Call.new(3.int, "+", [4.int])])
 
   it_parses "!1", Call.new(1.int, "!@")
-  it_parses "1 && 2", Call.new(1.int, "&&", [2.int])
-  it_parses "1 || 2", Call.new(1.int, "||", [2.int])
+  it_parses "1 && 2", And.new(1.int, 2.int)
+  it_parses "1 || 2", Or.new(1.int, 2.int)
 
   it_parses "1 <=> 2", Call.new(1.int, "<=>", [2.int])
 
@@ -196,4 +196,5 @@ describe "Parser" do
   it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int), Call.new("foo".var, "-", [1.int])]
 
   it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, "!@")])
+  it_parses "!a && b", And.new(Call.new("a".call, "!@"), "b".call)
 end
