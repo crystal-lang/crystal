@@ -342,6 +342,10 @@ module Crystal
           parse_yield
         when :def
           parse_def
+        when :if
+          parse_if
+        when :include
+          parse_include
         else
           parse_var_or_call
         end
@@ -383,6 +387,18 @@ module Crystal
       end
       next_token_skip_space
       ArrayLiteral.new exps
+    end
+
+    def parse_include
+      location = @token.location
+
+      next_token_skip_space_or_newline
+
+      name = parse_ident
+
+      inc = Include.new name
+      inc.location = location
+      inc
     end
 
     def parse_def
@@ -500,6 +516,38 @@ module Crystal
       a_def = Def.new name, args, body, receiver, @yields
       a_def.maybe_recursive = @maybe_recursive
       a_def
+    end
+
+    def parse_if(check_end = true)
+      location = @token.location
+
+      next_token_skip_space_or_newline
+
+      cond = parse_expression
+      skip_statement_end
+
+      a_then = parse_expressions
+      skip_statement_end
+
+      a_else = nil
+      if @token.type == :IDENT
+        case @token.value
+        when :else
+          next_token_skip_statement_end
+          a_else = parse_expressions
+        when :elsif
+          a_else = parse_if false
+        end
+      end
+
+      if check_end
+        check_ident :end
+        next_token_skip_space
+      end
+
+      node = If.new cond, a_then, a_else
+      node.location = location
+      node
     end
 
     def parse_var_or_call

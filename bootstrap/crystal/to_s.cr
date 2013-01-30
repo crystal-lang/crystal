@@ -66,6 +66,21 @@ module Crystal
       false
     end
 
+    def visit(node : If)
+      @str << "if "
+      node.cond.accept self
+      @str << "\n"
+      accept_with_indent(node.then)
+      if node.else
+        append_indent
+        @str << "else\n"
+        accept_with_indent(node.else)
+      end
+      append_indent
+      @str << "end"
+      false
+    end
+
     def visit(node : Call)
       if node.obj
         node.obj.accept self
@@ -193,6 +208,12 @@ module Crystal
           exp.accept self
         end
       end
+      false
+    end
+
+    def visit(node : Include)
+      @str << "include "
+      node.name.accept self
       false
     end
 

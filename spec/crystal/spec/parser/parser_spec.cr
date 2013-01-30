@@ -227,4 +227,13 @@ describe "Parser" do
 
   it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, And.new("a".var, 1.int))]
   it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, Or.new("a".var, 1.int))]
+
+  it_parses "if foo; 1; end", If.new("foo".call, 1.int)
+  it_parses "if foo\n1\nend", If.new("foo".call, 1.int)
+  it_parses "if foo; 1; else; 2; end", If.new("foo".call, 1.int, 2.int)
+  it_parses "if foo\n1\nelse\n2\nend", If.new("foo".call, 1.int, 2.int)
+  it_parses "if foo; 1; elsif bar; 2; else 3; end", If.new("foo".call, 1.int, If.new("bar".call, 2.int, 3.int))
+
+  it_parses "include Foo", Include.new("Foo".ident)
+  it_parses "include Foo\nif true; end", [Include.new("Foo".ident), If.new(true.bool)]
 end
