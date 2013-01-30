@@ -54,28 +54,21 @@ module Crystal
       name
     end
 
-    def self.merge(*types)
-      return nil if types.length == 0
+    def self.merge(type1, type2)
+      return type1 if type1.equal?(type2)
 
-      types = types.uniq(&:object_id)
-      return types[0] if types.length == 1
+      types = [type1, type2]
+      count = 0
 
-      all_types = types.map { |type| type.is_a?(UnionType) ? type.types : type }.flatten.compact.uniq(&:object_id)
-      if all_types.length == 0
-        nil
-      elsif all_types.length == 1
-        all_types.first
-      else
-        union_object_ids = nil
+      all_types = types.map { |type| type.is_a?(UnionType) ? type.types : type }.flatten.uniq(&:object_id)
 
-        types.each do |t|
-          if t.is_a?(UnionType) && t.types.length == all_types.length && t.types.map(&:object_id) == (union_object_ids ||= all_types.map(&:object_id))
-            return t
-          end
-        end
+      union_object_ids = nil
 
-        UnionType.new(*all_types)
+      types.each do |t|
+        return t if t.is_a?(UnionType) && t.types.length == all_types.length && t.types.map(&:object_id) == (union_object_ids ||= all_types.map(&:object_id))
       end
+
+      UnionType.new(*all_types)
     end
 
     def self.clone(types)
