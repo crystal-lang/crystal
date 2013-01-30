@@ -300,7 +300,28 @@ module Crystal
       end
     end
 
-    parse_operator :mul_or_div, :pow, :*, :/, :%
+    parse_operator :mul_or_div, :prefix, :*, :/, :%
+
+    def parse_prefix
+      column_number = @token.column_number
+      case @token.type
+      when :'!'
+        next_token_skip_space_or_newline
+        Call.new parse_prefix, :'!@', [], nil, column_number
+      when :+
+        next_token_skip_space_or_newline
+        Call.new parse_prefix, :+@, [], nil, column_number
+      when :-
+        next_token_skip_space_or_newline
+        Call.new parse_prefix, :-@, [], nil, column_number
+      when :~
+        next_token_skip_space_or_newline
+        Call.new parse_prefix, :'~@', [], nil, column_number
+      else
+        parse_pow
+      end
+    end
+
     parse_operator :pow, :atomic_with_method, :**
 
     def parse_atomic_with_method
@@ -431,18 +452,6 @@ module Crystal
         parse_array_literal
       when :'{'
         parse_hash_literal
-      when :'!'
-        next_token_skip_space_or_newline
-        Call.new parse_expression, :'!@', [], nil, column_number
-      when :+
-        next_token_skip_space_or_newline
-        Call.new parse_expression, :+@, [], nil, column_number
-      when :-
-        next_token_skip_space_or_newline
-        Call.new parse_expression, :-@, [], nil, column_number
-      when :~
-        next_token_skip_space_or_newline
-        Call.new parse_expression, :'~@', [], nil, column_number
       when :'::'
         parse_ident
       when :INT

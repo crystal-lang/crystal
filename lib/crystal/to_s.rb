@@ -135,7 +135,9 @@ module Crystal
         else
           @str << node.name.to_s
         end
+        @str << "("
         node.obj.accept self
+        @str << ")"
       elsif node.obj && !is_alpha(node.name) && node.args.length == 1
         node.obj.accept self
         @str << " "

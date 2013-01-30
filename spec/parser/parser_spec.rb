@@ -138,6 +138,7 @@ describe Parser do
   it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int), Call.new("foo".var, :-, [1.int])]
 
   it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, :'!@')])
+  it_parses "!a && b", And.new(Call.new("a".call, :'!@'), "b".call)
 
   it_parses "foo.bar.baz", Call.new(Call.new("foo".call, "bar"), "baz")
   it_parses "f.x Foo.new", Call.new("f".call, "x", [Call.new("Foo".ident, "new")])

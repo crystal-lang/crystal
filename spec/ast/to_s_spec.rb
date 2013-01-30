@@ -66,7 +66,7 @@ describe "ast nodes" do
   end
 
   it "should to_s Not" do
-    Call.new("foo".var, :'!@').to_s.should eq("!foo")
+    Call.new("foo".var, :'!@').to_s.should eq("!(foo)")
   end
 
   ['return', 'break', 'next', 'yield'].each do |keyword|
