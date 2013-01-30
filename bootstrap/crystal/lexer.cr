@@ -170,7 +170,7 @@ module Crystal
         char = next_char
         if char == '='
           next_char :"/="
-        elsif char == ' ' || char == '\n' || char == '\t' || char == '\0'
+        elsif char == ' ' || char == '\n' || char == '\t' || char == '\0' || char == ';'
           @token.type = :"/"
         else
           start = @buffer

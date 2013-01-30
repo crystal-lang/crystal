@@ -1,18 +1,14 @@
+require "location"
+
 module Crystal
   # Base class for nodes in the grammar.
   class ASTNode
-    attr_accessor :line_number
-    attr_accessor :column_number
-    attr_accessor :filename
-
     def location
-      [@line_number, @column_number, @filename]
+      @location
     end
 
     def location=(location)
-      @line_number = location[0]
-      @column_number = location[1]
-      @filename = location[2]
+      @location = location.clone
     end
   end
 

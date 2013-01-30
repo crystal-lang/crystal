@@ -4,7 +4,7 @@ class Profiler
     block_result = nil
     result = RubyProf.profile { block_result = block.call }
     printer = RubyProf::GraphHtmlPrinter.new(result)
-    File.open(output_filename, "w") { |f| printer.print(f, sort_method: :self_time) }
+    File.open(output_filename, "w") { |f| printer.print(f) }
     block_result
   end
 end

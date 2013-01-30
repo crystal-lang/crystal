@@ -56,6 +56,7 @@ generic class Array
     end
     @buffer[@length] = value
     @length += 1
+    self
   end
 
   def pop

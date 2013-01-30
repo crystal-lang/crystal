@@ -157,6 +157,17 @@ module Crystal
       @str << "self"
     end
 
+    def visit(node : Ident)
+      node.names.each_with_index do |name, i|
+        @str << "::" if i > 0 || node.global
+        @str << name
+      end
+    end
+
+    def visit(node : InstanceVar)
+      @str << node.name
+    end
+
     def visit(node : Yield)
       visit_control node, "yield"
     end

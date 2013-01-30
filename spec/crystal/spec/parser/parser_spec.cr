@@ -197,4 +197,34 @@ describe "Parser" do
 
   it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, "!@")])
   it_parses "!a && b", And.new(Call.new("a".call, "!@"), "b".call)
+
+  it_parses "foo.bar.baz", Call.new(Call.new("foo".call, "bar"), "baz")
+  it_parses "f.x Foo.new", Call.new("f".call, "x", [Call.new("Foo".ident, "new")])
+  it_parses "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".ident, "new")])
+  it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int, "-@")])
+
+  ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
+    it_parses "f.x #{op}= 2", Call.new("f".call, "x=", [Call.new(Call.new("f".call, "x"), op, [2.int])])
+  end
+
+  ["/", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "%", "&", "|", "^", "**", "+@", "-@", "~@", "!@", "==="].each do |op|
+    it_parses "def #{op}; end;", Def.new(op, [], nil)
+  end
+
+  ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "==="].each do |op|
+    it_parses "1 #{op} 2", Call.new(1.int, op, [2.int])
+    it_parses "n #{op} 2", Call.new("n".call, op, [2.int])
+  end
+
+  ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "==="].each do |name|
+    it_parses "foo.#{name}", Call.new("foo".call, name)
+    it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, [1.int, 2.int])
+  end
+
+  ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
+    it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, Call.new("a".var, op, [1.int]))]
+  end
+
+  it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, And.new("a".var, 1.int))]
+  it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, Or.new("a".var, 1.int))]
 end

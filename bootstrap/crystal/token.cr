@@ -1,3 +1,5 @@
+require "location"
+
 module Crystal
   class Token
     attr_accessor :type
@@ -7,7 +9,7 @@ module Crystal
     attr_accessor :filename
 
     def location
-      [line_number, column_number, filename]
+      Location.new(line_number, column_number, filename)
     end
 
     def token?(token)

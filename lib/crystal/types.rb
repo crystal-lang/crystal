@@ -58,8 +58,6 @@ module Crystal
       return type1 if type1.equal?(type2)
 
       types = [type1, type2]
-      count = 0
-
       all_types = types.map { |type| type.is_a?(UnionType) ? type.types : type }.flatten.uniq(&:object_id)
 
       union_object_ids = nil
