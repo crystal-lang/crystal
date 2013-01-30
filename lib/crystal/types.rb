@@ -11,7 +11,7 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) || other.is_a?(UnionType) && other == self
+      equal?(other) || (other.is_a?(UnionType) && other == self)
     end
 
     def eql?(other)
@@ -66,12 +66,15 @@ module Crystal
       elsif all_types.length == 1
         all_types.first
       else
-        union = UnionType.new(*all_types)
         union_object_ids = nil
+
         types.each do |t|
-          return t if t.is_a?(UnionType) && t.types.length == union.types.length && t.types.map(&:object_id) == (union_object_ids ||= union.types.map(&:object_id))
+          if t.is_a?(UnionType) && t.types.length == all_types.length && t.types.map(&:object_id) == (union_object_ids ||= all_types.map(&:object_id))
+            return t
+          end
         end
-        union
+
+        UnionType.new(*all_types)
       end
     end
 
@@ -442,7 +445,7 @@ module Crystal
     end
 
     def set
-      Set.new(types)
+      @set ||= types.to_set
     end
 
     def llvm_type
@@ -488,7 +491,7 @@ module Crystal
     def ==(other)
       return true if equal?(other)
       set = set()
-      (other.is_a?(UnionType) && set == other.set) || (!other.is_a?(UnionType) && set.length == 1 && set.first == other)
+      (other.is_a?(UnionType) && set == other.set) || (!other.is_a?(UnionType) && set.length == 1 && types[0] == other)
     end
 
     def clone(types_context = {})
