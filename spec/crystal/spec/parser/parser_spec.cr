@@ -61,6 +61,14 @@ class String
   end
 end
 
+module Crystal
+  class ASTNode
+    def not
+      Call.new(self, "!@")
+    end
+  end
+end
+
 def it_parses(string, expected_node)
   it "parses #{string}" do
     node = Parser.parse(string)
@@ -236,4 +244,7 @@ describe "Parser" do
 
   it_parses "include Foo", Include.new("Foo".ident)
   it_parses "include Foo\nif true; end", [Include.new("Foo".ident), If.new(true.bool)]
+
+  it_parses "unless foo; 1; end", If.new("foo".call.not, 1.int)
+  it_parses "unless foo; 1; else; 2; end", If.new("foo".call.not, 1.int, 2.int)
 end

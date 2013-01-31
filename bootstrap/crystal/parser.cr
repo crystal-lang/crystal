@@ -344,6 +344,8 @@ module Crystal
           parse_def
         when :if
           parse_if
+        when :unless
+          parse_unless
         when :include
           parse_include
         else
@@ -546,6 +548,31 @@ module Crystal
       end
 
       node = If.new cond, a_then, a_else
+      node.location = location
+      node
+    end
+
+    def parse_unless
+      location = @token.location
+
+      next_token_skip_space_or_newline
+
+      cond = parse_expression
+      skip_statement_end
+
+      a_then = parse_expressions
+      skip_statement_end
+
+      a_else = nil
+      if @token.keyword?(:else)
+        next_token_skip_statement_end
+        a_else = parse_expressions
+      end
+
+      check_ident :end
+      next_token_skip_space
+
+      node = If.new Call.new(cond, "!@"), a_then, a_else
       node.location = location
       node
     end
