@@ -253,4 +253,7 @@ describe "Parser" do
   it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
   it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
   it_parses "generic class Foo; end", ClassDef.new("Foo", nil, nil, true)
+
+  it_parses "module Foo; end", ModuleDef.new("Foo")
+  it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [], nil)])
 end

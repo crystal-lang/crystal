@@ -454,6 +454,32 @@ module Crystal
     end
   end
 
+  # Module definition:
+  #
+  #     'module' name
+  #       body
+  #     'end'
+  #
+  class ModuleDef < ASTNode
+    attr_accessor :name
+    attr_accessor :body
+    attr_accessor :name_column_number
+
+    def initialize(name, body = nil, name_column_number = nil)
+      @name = name
+      @body = Expressions.from body
+      @name_column_number = name_column_number
+    end
+
+    def accept_children(visitor)
+      body.accept visitor if body
+    end
+
+    def ==(other : self)
+      other.name == name && other.body == body
+    end
+  end
+
   # A qualified identifier.
   #
   #     const [ '::' const ]*
