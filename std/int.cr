@@ -11,8 +11,16 @@ class Int
     self
   end
 
+  def abs
+    self >= 0 ? self : -self
+  end
+
   def **(other)
     to_d ** other
+  end
+
+  def gcd(other : Int)
+    self == 0 ? other.abs : (other % self).gcd(self)
   end
 
   def hash
