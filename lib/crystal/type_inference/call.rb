@@ -262,10 +262,10 @@ module Crystal
       elsif error_matches.length == 1 && block && !error_matches[0].yields
         raise "#{full_name} doesn't expect a block"
       else
-        msg = "no overload or ambiguos call for '#{full_name}' with types [#{args.map { |arg| arg.type.full_name }.join ', '}]\n"
-        msg << "Overload types are:"
+        msg = "no overload or ambiguos call for '#{full_name}' with types #{args.map { |arg| arg.type.full_name }.join ', '}\n"
+        msg << "Overloads are:"
         error_matches.each do |error_match|
-          msg << "\n - [#{error_match.args.map { |arg| arg.type ? arg.type.full_name : '?' }.join ', '}]"
+          msg << "\n - #{full_name}(#{error_match.args.map { |arg| arg.name + (arg.type ? (" : " + arg.type.full_name) : '') }.join ', '})"
         end
         raise msg
       end
