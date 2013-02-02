@@ -115,11 +115,35 @@ module Crystal
     end
 
     def parse_question_colon
-      parse_range
+      cond = parse_range
+      while @token.type == :"?"
+        next_token_skip_space_or_newline
+        true_val = parse_range
+        check :":"
+        next_token_skip_space_or_newline
+        false_val = parse_range
+        cond = If.new(cond, true_val, false_val)
+      end
+      cond
     end
 
     def parse_range
-      parse_or
+      location = @token.location
+      exp = parse_or
+      while true
+        exp.location = location
+
+        case @token.type
+        when :".."
+          next_token_skip_space_or_newline
+          exp = RangeLiteral.new(exp, parse_or, false)
+        when :"..."
+          next_token_skip_space_or_newline
+          exp = RangeLiteral.new(exp, parse_or, true)
+        else
+          return exp
+        end
+      end
     end
 
     macro self.parse_operator(name, next_operator, node, operators)"
@@ -355,6 +379,8 @@ module Crystal
           parse_class_def
         when :module
           parse_module_def
+        when :while
+          parse_while
         else
           parse_var_or_call
         end
@@ -365,6 +391,25 @@ module Crystal
       else
         raise "unexpected token #{@token}"
       end
+    end
+
+    def parse_while
+      location = @token.location
+
+      next_token_skip_space_or_newline
+
+      cond = parse_expression
+      skip_statement_end
+
+      body = parse_expressions
+      skip_statement_end
+
+      check_ident :end
+      next_token_skip_space
+
+      node = While.new cond, body
+      node.location = location
+      node
     end
 
     def parse_class_def(is_generic = false)

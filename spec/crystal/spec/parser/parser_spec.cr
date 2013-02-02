@@ -256,4 +256,17 @@ describe "Parser" do
 
   it_parses "module Foo; end", ModuleDef.new("Foo")
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [], nil)])
+
+  it_parses "while true; 1; end;", While.new(true.bool, 1.int)
+
+  it_parses "foo do; 1; end", Call.new(nil, "foo", [], Block.new([], 1.int))
+  it_parses "foo do |a|; 1; end", Call.new(nil, "foo", [], Block.new(["a".var], 1.int))
+
+  it_parses "foo { 1 }", Call.new(nil, "foo", [], Block.new([], 1.int))
+  it_parses "foo { |a| 1 }", Call.new(nil, "foo", [], Block.new(["a".var], 1.int))
+  it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", [], Block.new(["a".var, "b".var], 1.int))
+  # it_parses "1.foo do; 1; end", Call.new(1.int, "foo", [], Block.new([], 1.int))
+
+  it_parses "1 ? 2 : 3", If.new(1.int, 2.int, 3.int)
+  it_parses "1 ? a : b", If.new(1.int, "a".call, "b".call)
 end

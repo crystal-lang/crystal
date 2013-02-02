@@ -480,6 +480,49 @@ module Crystal
     end
   end
 
+  # While expression.
+  #
+  #     'while' cond
+  #       body
+  #     'end'
+  #
+  class While < ASTNode
+    attr_accessor :cond
+    attr_accessor :body
+    attr_accessor :run_once
+
+    def initialize(cond, body = nil, run_once = false)
+      @cond = cond
+      @body = Expressions.from body
+      @run_once = run_once
+    end
+
+    def accept_children(visitor)
+      cond.accept visitor
+      body.accept visitor if body
+    end
+
+    def ==(other : self)
+      other.cond == cond && other.body == body && other.run_once == run_once
+    end
+  end
+
+  class RangeLiteral < ASTNode
+    attr_accessor :from
+    attr_accessor :to
+    attr_accessor :exclusive
+
+    def initialize(from, to, exclusive)
+      @from = from
+      @to = to
+      @exclusive = exclusive
+    end
+
+    def ==(other : self)
+      other.from == from && other.to == to && other.exclusive == exclusive
+    end
+  end
+
   # A qualified identifier.
   #
   #     const [ '::' const ]*
