@@ -247,4 +247,10 @@ describe "Parser" do
 
   it_parses "unless foo; 1; end", If.new("foo".call.not, 1.int)
   it_parses "unless foo; 1; else; 2; end", If.new("foo".call.not, 1.int, 2.int)
+
+  it_parses "class Foo; end", ClassDef.new("Foo")
+  it_parses "class Foo\nend", ClassDef.new("Foo")
+  it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
+  it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
+  it_parses "generic class Foo; end", ClassDef.new("Foo", nil, nil, true)
 end

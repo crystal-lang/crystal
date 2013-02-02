@@ -348,6 +348,11 @@ module Crystal
           parse_unless
         when :include
           parse_include
+        when :generic
+          next_token_skip_space_or_newline
+          parse_class_def(true)
+        when :class
+          parse_class_def
         else
           parse_var_or_call
         end
@@ -358,6 +363,34 @@ module Crystal
       else
         raise "unexpected token #{@token}"
       end
+    end
+
+    def parse_class_def(is_generic = false)
+      location = @token.location
+
+      next_token_skip_space_or_newline
+      check :CONST
+
+      name = @token.value
+      name_column_number = @token.column_number
+      next_token_skip_space
+
+      superclass = nil
+
+      if @token.type == :"<"
+        next_token_skip_space_or_newline
+        superclass = parse_ident
+      end
+      skip_statement_end
+
+      body = parse_expressions
+
+      check_ident :end
+      next_token_skip_space
+
+      class_def = ClassDef.new name, body, superclass, is_generic, name_column_number
+      class_def.location = location
+      class_def
     end
 
     def parse_parenthesized_expression
