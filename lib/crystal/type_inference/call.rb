@@ -21,15 +21,8 @@ module Crystal
       return if @types_signature == types_signature
       @types_signature = types_signature
 
-      if has_unions?
-        if @dispatch
-          @dispatch.recalculate_for_call(self)
-        else
-          @dispatch = Dispatch.new
-          self.bind_to @dispatch
-          self.target_def = @dispatch
-          @dispatch.initialize_for_call(self)
-        end
+      if has_unions_in_obj? || (obj && obj.type.has_restricted_defs?(name) && has_unions_in_args?)
+        compute_dispatch
         return
       end
 
@@ -39,16 +32,16 @@ module Crystal
       check_method_exists untyped_def, error_matches
       check_args_match untyped_def
 
-      arg_types = args.map &:type
-
       if untyped_def.is_a?(External)
         typed_def = untyped_def
         check_args_type_match typed_def
       else
+        arg_types = args.map &:type
         typed_def = untyped_def.lookup_instance(arg_types) ||
                     self_type.lookup_def_instance(name, arg_types) ||
                     parent_visitor.lookup_def_instance(owner, untyped_def, arg_types)
         unless typed_def
+          # puts "#{obj ? obj.type : scope}.#{name}"
           typed_def, args = prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
 
           if typed_def.body
@@ -66,6 +59,17 @@ module Crystal
       self.bind_to typed_def
       self.bind_to(block.break) if block
       self.target_def = typed_def
+    end
+
+    def compute_dispatch
+      if @dispatch
+        @dispatch.recalculate_for_call(self)
+      else
+        @dispatch = Dispatch.new
+        self.bind_to @dispatch
+        self.target_def = @dispatch
+        @dispatch.initialize_for_call(self)
+      end
     end
 
     def set_external_out_args_type
@@ -91,9 +95,9 @@ module Crystal
         yield
       rescue Crystal::Exception => ex
         if obj
-          raise "instantiating '#{obj.type.name}##{name}'", ex
+          raise "instantiating '#{obj.type.name}##{name}(#{args.map(&:type).join ', '})'", ex
         else
-          raise "instantiating '#{name}'", ex
+          raise "instantiating '#{name}(#{args.map(&:type).join ', '})'", ex
         end
       end
     end
@@ -155,7 +159,15 @@ module Crystal
     end
 
     def has_unions?
-      (obj && obj.type.is_a?(UnionType)) || args.any? { |a| a.type.is_a?(UnionType) }
+      has_unions_in_obj? || has_unions_in_args?
+    end
+
+    def has_unions_in_obj?
+      obj && obj.type.is_a?(UnionType)
+    end
+
+    def has_unions_in_args?
+      args.any? { |a| a.type.is_a?(UnionType) }
     end
 
     def compute_owner_self_type_and_untyped_def

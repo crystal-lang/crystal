@@ -319,7 +319,7 @@ module Crystal
               break
             end
           end
-          atomic = Call.new atomic, :"[]", args, nil, column_number
+          atomic = Call.new atomic, "[]", args, nil, column_number
           atomic.name_length = 0 if atomic.is_a?(Call)
           atomic
         else

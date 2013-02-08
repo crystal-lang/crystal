@@ -20,6 +20,10 @@ class Char
     ord
   end
 
+  def hash
+    to_i
+  end
+
   def succ
     (ord + 1).chr
   end

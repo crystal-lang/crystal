@@ -31,7 +31,7 @@ module Crystal
       end
     end
 
-    def self.from(obj)
+    def self.from(obj : ASTNode)
       obj
     end
 

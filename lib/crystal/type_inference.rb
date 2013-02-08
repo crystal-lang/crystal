@@ -45,7 +45,7 @@ module Crystal
     end
 
     def update(from)
-      self.type = from.type.filter_by(@types[0])
+      self.type = from.type.filter_by(@types[0]) if from.type
     end
 
     def real_type

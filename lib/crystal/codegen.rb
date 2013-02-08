@@ -461,8 +461,14 @@ module Crystal
     end
 
     def visit_pointer_set_value(node)
-      codegen_assign llvm_self, @type.var.type, node.type, @fun.params[1]
-      @last = @fun.params[1]
+      value = @fun.params[1]
+      if node.type.union?
+        value = @builder.alloca node.llvm_type
+        @builder.store @fun.params[1], value
+      end
+
+      codegen_assign llvm_self, @type.var.type, node.type, value
+      @last = value
     end
 
     def visit_pointer_add(node)
@@ -837,6 +843,7 @@ module Crystal
           call_args << @vars[arg.name][:ptr]
         else
           accept(arg)
+          @last = @builder.load @last if arg.type && arg.type.union?
           call_args << @last
         end
       end
