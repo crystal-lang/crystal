@@ -4,7 +4,7 @@ include Crystal
 
 if ARGV.length == 0
   puts "Usage: test2 [file]"
-  exit(1)
+  exit 1
 end
 
 filename = ARGV[0]

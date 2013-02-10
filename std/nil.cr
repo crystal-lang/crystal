@@ -36,8 +36,6 @@ class Nil
   end
 
   def method_missing(name, args)
-    puts "Called #{name}(#{args.join ", "}) for nil"
-    exit 1
-    nil
+    raise "Called #{name}(#{args.join ", "}) for nil"
   end
 end

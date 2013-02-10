@@ -184,8 +184,7 @@ module LLVM
   class JITCompiler
     def initialize(mod)
       if LibLLVM.create_jit_compiler_for_module(out jit, mod.llvm_module, 3, out error) != 0
-        puts String.from_cstr(error)
-        exit 1
+        raise String.from_cstr(error)
       end
       @jit = jit
     end

@@ -24,3 +24,9 @@ require "string"
 require "string_builder"
 require "symbol"
 require "argv"
+
+def raise(msg)
+  puts msg
+  exit 1
+  nil
+end
