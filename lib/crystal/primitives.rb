@@ -281,15 +281,15 @@ module Crystal
   class PointerCast < Primitive
   end
 
-  class Alloc < Primitive
-    attr_reader :alloc_type
+  class Allocate < Primitive
+    attr_reader :allocate_type
 
     def initialize(type)
-      @alloc_type = type
+      @allocate_type = type
     end
 
     def clone_from(other)
-      @alloc_type = other.alloc_type.clone
+      @allocate_type = other.allocate_type.clone
     end
   end
 

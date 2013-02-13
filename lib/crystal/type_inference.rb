@@ -499,12 +499,12 @@ module Crystal
       target_type
     end
 
-    def visit_alloc(node)
-      if !node.alloc_type.generic && Crystal::GENERIC
-        node.type = node.alloc_type
+    def visit_allocate(node)
+      if !node.allocate_type.generic && Crystal::GENERIC
+        node.type = node.allocate_type
       else
-        type = lookup_object_type(node.alloc_type.name)
-        node.type = type ? type : node.alloc_type.clone
+        type = lookup_object_type(node.allocate_type.name)
+        node.type = type ? type : node.allocate_type.clone
         node.creates_new_type = true
       end
     end

@@ -61,10 +61,10 @@ describe "Type inference: union" do
     nodes[4].target_def.owner.should eq(expected_type)
     nodes.last.type.should eq(expected_type)
 
-    # The alloc of the first A.new
+    # The allocate of the first A.new
     nodes[1].value.target_def.body.target_def.body.type.should eq(expected_type)
 
-    # The alloc of the second A.new
+    # The allocate of the second A.new
     nodes[3].value.target_def.body.target_def.body.type.should eq(expected_type)
   end
 

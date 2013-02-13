@@ -13,8 +13,8 @@ module Crystal
       @indent = 0
     end
 
-    def visit_alloc(node)
-      @str << 'alloc()'
+    def visit_allocate(node)
+      @str << 'allocate()'
     end
 
     def visit_nil_literal(node)

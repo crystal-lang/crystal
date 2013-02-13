@@ -211,7 +211,7 @@ module Crystal
     end
 
     def define_new(scope, name)
-      alloc = Call.new(nil, 'alloc')
+      alloc = Call.new(nil, 'allocate')
       alloc.location = location
       alloc.name_column_number = name_column_number
 

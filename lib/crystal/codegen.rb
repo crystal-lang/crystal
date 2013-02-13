@@ -767,7 +767,7 @@ module Crystal
       @last = node.block.call(@builder, @fun, @llvm_mod, @type)
     end
 
-    def visit_alloc(node)
+    def visit_allocate(node)
       @last = malloc node.type.llvm_struct_type
       memset @last, int8(0), node.type.llvm_struct_type.size
       @last

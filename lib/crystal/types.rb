@@ -265,7 +265,7 @@ module Crystal
     def metaclass
       @metaclass ||= begin
         metaclass = Metaclass.new(self)
-        metaclass.add_def Def.new('alloc', [], Alloc.new(self))
+        metaclass.add_def Def.new('allocate', [], Allocate.new(self))
         metaclass
       end
     end

@@ -149,8 +149,8 @@ describe 'Code gen: def' do
        end
       end
 
-      a = A.alloc
-      a.next = A.alloc
+      a = A.allocate
+      a.next = A.allocate
       a = a.next
       ))
   end
@@ -181,13 +181,13 @@ describe 'Code gen: def' do
         x.next.next = y
       end
 
-      a = A.alloc
-      a.next = B.alloc
+      a = A.allocate
+      a.next = B.allocate
 
-      foo(a, B.alloc)
+      foo(a, B.allocate)
 
-      c = A.alloc
-      c.next = B.alloc
+      c = A.allocate
+      c.next = B.allocate
 
       foo(c, c.next)
       ))

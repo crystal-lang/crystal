@@ -101,14 +101,14 @@ describe 'Type inference: def instance' do
 
       class Node
         def add(x)
-          @left = Node.alloc
+          @left = Node.allocate
           @left.add(x)
-          @right = Node.alloc
+          @right = Node.allocate
           @right.add(x)
         end
       end
 
-      root = Node.alloc
+      root = Node.allocate
       root.add 'c'
       )
     mod = infer_type input

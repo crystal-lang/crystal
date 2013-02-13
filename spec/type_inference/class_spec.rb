@@ -1,8 +1,8 @@
 require 'spec_helper'
 
 describe 'Type inference: class' do
-  it "types Const#alloc" do
-    assert_type("class Foo; end; Foo.alloc") { types['Foo'] }
+  it "types Const#allocate" do
+    assert_type("class Foo; end; Foo.allocate") { types['Foo'] }
   end
 
   it "types Const#new" do
@@ -14,7 +14,7 @@ describe 'Type inference: class' do
   end
 
   it "types class inside class" do
-    assert_type("class Foo; class Bar; end; end; Foo::Bar.alloc") { types['Foo'].types['Bar'] }
+    assert_type("class Foo; class Bar; end; end; Foo::Bar.allocate") { types['Foo'].types['Bar'] }
   end
 
   it "types instance variable" do
@@ -171,7 +171,7 @@ describe 'Type inference: class' do
       )
     mod = infer_type nodes
 
-    # The alloc
+    # The allocate
     nodes[1].value.target_def.body.type.should eq(ObjectType.new('Foo').with_var('@a', mod.int).with_var('@b', mod.double))
   end
 
