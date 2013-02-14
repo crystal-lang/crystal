@@ -319,7 +319,7 @@ module Crystal
               break
             end
           end
-          atomic = Call.new atomic, :"[]", args, nil, column_number
+          atomic = Call.new atomic, "[]", args, nil, column_number
           atomic.name_length = 0 if atomic.is_a?(Call)
           atomic
         else
@@ -869,14 +869,14 @@ module Crystal
       end
 
       check :CONST
-      names << @token.value
+      names << @token.value.to_s
 
       next_token
       while @token.type == :"::"
         next_token_skip_space_or_newline
 
         check :CONST
-        names << @token.value
+        names << @token.value.to_s
 
         next_token
       end

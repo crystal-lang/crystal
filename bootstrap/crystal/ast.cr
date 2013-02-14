@@ -31,7 +31,7 @@ module Crystal
       end
     end
 
-    def self.from(obj)
+    def self.from(obj : ASTNode)
       obj
     end
 
@@ -354,11 +354,6 @@ module Crystal
 
     def ==(other : self)
       other.left == left && other.right == right
-    end
-
-    def clone_from(other)
-      @left = other.left.clone
-      @right = other.right.clone
     end
   end
 

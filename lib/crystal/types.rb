@@ -11,7 +11,7 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) || (other.is_a?(UnionType) && other == self)
+      equal?(other)
     end
 
     def eql?(other)
@@ -78,18 +78,12 @@ module Crystal
   class ContainedType < Type
     attr_accessor :name
     attr_accessor :container
+    attr_reader :full_name
 
     def initialize(name, container)
       @name = name
       @container = container
-    end
-
-    def full_name
-      if @container && !@container.is_a?(Program)
-        "#{@container.full_name}::#{@name}"
-      else
-        @name
-      end
+      @full_name = @container && !@container.is_a?(Program) ? "#{@container.full_name}::#{@name}" : @name
     end
   end
 
@@ -173,6 +167,11 @@ module Crystal
 
     def lookup_def_instance(name, arg_types)
       @def_instances[[name] + arg_types.map(&:object_id)]
+    end
+
+    def has_restricted_defs?(name)
+      defs = @defs[name]
+      (defs && defs.keys.any? { |ary| ary[0].any? }) || (parents && parents.any? { |p| p.has_restricted_defs?(name) })
     end
   end
 
@@ -279,7 +278,7 @@ module Crystal
     end
 
     def ==(other)
-      super || (generic && structurally_equal?(other))
+      equal?(other) || (generic && (structurally_equal?(other) || (other.is_a?(UnionType) && other == self)))
     end
 
     def structurally_equal?(other)
@@ -361,7 +360,7 @@ module Crystal
     end
 
     def ==(other)
-      super || (other.is_a?(PointerType) && var.type == other.var.type)
+      equal?(other) || (other.is_a?(PointerType) && var.type == other.var.type) || (other.is_a?(UnionType) && other == self)
     end
 
     def hash
@@ -471,12 +470,16 @@ module Crystal
       @types.index type
     end
 
+    def parents
+      []
+    end
+
     def each(&block)
       types.each(&block)
     end
 
     def hash
-      set.hash
+      @hash ||= set.hash
     end
 
     def ==(other)
