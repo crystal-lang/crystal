@@ -262,4 +262,29 @@ describe 'Code gen: def' do
       foo.nil? ? 1 : 0
     )).to_i.should eq(1)
   end
+
+  it "codegens recursive nasty code" do
+    run(%Q(
+      require "prelude"
+      class Foo
+        def initialize(x)
+        end
+      end
+
+      class Bar
+        def initialize(x)
+        end
+      end
+
+      def fun
+        exps = []
+        sub = fun
+        t = Foo.new(sub) || Bar.new(sub)
+        exps.push t
+        exps[0] || 1
+      end
+
+      fun
+      ))
+  end
 end
