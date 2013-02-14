@@ -217,6 +217,23 @@ module Crystal
       false
     end
 
+    def visit(node : And)
+      to_s_binary node, "&&"
+    end
+
+    def visit(node : Or)
+      to_s_binary node, "||"
+    end
+
+    def to_s_binary(node, op)
+      node.left.accept self
+      @str << " "
+      @str << op
+      @str << " "
+      node.right.accept self
+      false
+    end
+
     def append_indent
       @indent.times do
         @str << "  "

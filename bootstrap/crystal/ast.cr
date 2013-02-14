@@ -355,11 +355,6 @@ module Crystal
     def ==(other : self)
       other.left == left && other.right == right
     end
-
-    def clone_from(other)
-      @left = other.left.clone
-      @right = other.right.clone
-    end
   end
 
   # Expressions and.
