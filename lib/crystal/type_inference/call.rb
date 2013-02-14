@@ -56,9 +56,16 @@ module Crystal
         end
       end
 
+      @recalculate_count ||= 0
+      @recalculate_count += 1
+      recalculate_count = @recalculate_count
+
       self.bind_to typed_def
       self.bind_to(block.break) if block
-      self.target_def = typed_def
+
+      if recalculate_count == @recalculate_count
+        self.target_def = typed_def
+      end
     end
 
     def compute_dispatch
