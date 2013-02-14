@@ -21,7 +21,7 @@ module Crystal
       return if @types_signature == types_signature
       @types_signature = types_signature
 
-      if has_unions_in_obj? || (obj && obj.type.has_restricted_defs?(name) && has_unions_in_args?)
+      if has_unions_in_obj? || (obj && obj.type.has_restricted_defs?(name) && has_unions_in_args?) || (scope && scope.has_restricted_defs?(name) && has_unions_in_args?)
         compute_dispatch
         return
       end
