@@ -869,14 +869,14 @@ module Crystal
       end
 
       check :CONST
-      names << @token.value
+      names << @token.value.to_s
 
       next_token
       while @token.type == :"::"
         next_token_skip_space_or_newline
 
         check :CONST
-        names << @token.value
+        names << @token.value.to_s
 
         next_token
       end
