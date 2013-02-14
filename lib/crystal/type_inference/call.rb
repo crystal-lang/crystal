@@ -34,15 +34,19 @@ module Crystal
 
       if untyped_def.is_a?(External)
         typed_def = untyped_def
+        self.target_def = typed_def
         check_args_type_match typed_def
       else
         arg_types = args.map &:type
         typed_def = untyped_def.lookup_instance(arg_types) ||
                     self_type.lookup_def_instance(name, arg_types) ||
                     parent_visitor.lookup_def_instance(owner, untyped_def, arg_types)
-        unless typed_def
+        if typed_def
+          self.target_def = typed_def
+        else
           # puts "#{obj ? obj.type : scope}.#{name}"
           typed_def, args = prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
+          self.target_def = typed_def
 
           if typed_def.body
             bubbling_exception do
@@ -55,8 +59,6 @@ module Crystal
           self_type.add_def_instance(name, arg_types, typed_def) if Crystal::CACHE && !block && !creates_new_type
         end
       end
-
-      self.target_def = typed_def
 
       self.bind_to typed_def
       self.bind_to(block.break) if block

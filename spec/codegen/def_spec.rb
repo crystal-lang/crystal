@@ -293,7 +293,7 @@ describe 'Code gen: def' do
         exps.get || 1
       end
 
-      fun
+      false && fun
       ))
   end
 end
