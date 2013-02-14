@@ -516,7 +516,7 @@ module Crystal
     end
 
     def parents
-      type.parents.map(&:metaclass)
+      type.parents ? type.parents.map(&:metaclass) : nil
     end
 
     def instance_type
