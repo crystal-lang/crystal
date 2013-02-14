@@ -62,12 +62,6 @@ def puts(obj : Double)
   nil
 end
 
-def puts(obj : Enumerable)
-  obj.each do |item|
-    puts item
-  end
-end
-
 def puts(obj = "")
   C.puts obj.to_s
   nil
