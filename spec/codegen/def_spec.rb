@@ -265,7 +265,6 @@ describe 'Code gen: def' do
 
   it "codegens recursive nasty code" do
     run(%Q(
-      require "prelude"
       class Foo
         def initialize(x)
         end
@@ -276,12 +275,22 @@ describe 'Code gen: def' do
         end
       end
 
+      class Box
+        def set(elem)
+          @elem = elem
+        end
+
+        def get
+          @elem
+        end
+      end
+
       def fun
-        exps = []
+        exps = Box.new
         sub = fun
         t = Foo.new(sub) || Bar.new(sub)
-        exps.push t
-        exps[0] || 1
+        exps.set t
+        exps.get || 1
       end
 
       fun
