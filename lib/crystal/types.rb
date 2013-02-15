@@ -50,6 +50,10 @@ module Crystal
       name
     end
 
+    def typedef_type
+      self
+    end
+
     def to_s
       name
     end
@@ -603,6 +607,10 @@ module Crystal
 
     def llvm_size
       type.llvm_size
+    end
+
+    def typedef_type
+      type.typedef_type
     end
 
     def clone(*)

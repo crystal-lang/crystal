@@ -323,7 +323,7 @@ module Crystal
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type
         if self.args[i].type != expected_type
-          if mod.nil.equal?(self.args[i].type) && expected_type.is_a?(PointerType)
+          if mod.nil.equal?(self.args[i].type) && expected_type.typedef_type.is_a?(PointerType)
             nil_conversions ||= []
             nil_conversions << i
           elsif mod.string.equal?(self.args[i].type) && expected_type.is_a?(PointerType) && mod.char.equal?(expected_type.var.type)
