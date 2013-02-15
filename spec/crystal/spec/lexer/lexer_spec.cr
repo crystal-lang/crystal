@@ -141,7 +141,7 @@ describe "Lexer" do
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
-  it_lexes_ints ["1", ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234"]
+  it_lexes_ints ["1", ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234", ["1.foo", "1"]]
   it_lexes_floats ["1f", "1.0f", ["1.0fhello", "1.0f"], "+1.0f", "-1.0f"]
   it_lexes_doubles ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0"]
   it_lexes_longs ["1L", ["1Lhello", "1"], "+1L", "-1L"]

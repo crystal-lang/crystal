@@ -633,6 +633,8 @@ module Crystal
           else
             @token.type = :DOUBLE
           end
+        else
+          @token.type = :INT
         end
       when 'f', 'F'
         next_char
