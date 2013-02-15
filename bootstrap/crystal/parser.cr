@@ -34,7 +34,39 @@ module Crystal
     end
 
     def parse_expression
-      parse_op_assign
+      location = @token.location
+
+      atomic = parse_op_assign
+
+      while true
+        atomic.location = location
+
+        case @token.type
+        when :SPACE
+          next_token
+        when :IDENT
+          case @token.value
+          when :if
+            next_token_skip_statement_end
+            exp = parse_op_assign
+            atomic = If.new(exp, atomic)
+          when :unless
+            next_token_skip_statement_end
+            exp = parse_op_assign
+            atomic = If.new(Call.new(exp, "!@"), atomic)
+          when :while
+            next_token_skip_statement_end
+            exp = parse_op_assign
+            atomic = While.new(exp, atomic, true)
+          else
+            break
+          end
+        else
+          break
+        end
+      end
+
+      atomic
     end
 
     def parse_op_assign
@@ -356,6 +388,8 @@ module Crystal
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :IDENT
         case @token.value
+        when :begin
+          parse_begin
         when :nil
           node_and_next_token NilLiteral.new
         when :true
@@ -381,6 +415,12 @@ module Crystal
           parse_module_def
         when :while
           parse_while
+        when :return
+          parse_return
+        when :next
+          parse_next
+        when :break
+          parse_break
         else
           parse_var_or_call
         end
@@ -391,6 +431,14 @@ module Crystal
       else
         raise "unexpected token #{@token}"
       end
+    end
+
+    def parse_begin
+      next_token_skip_statement_end
+      exps = parse_expressions
+      check_ident :end
+      next_token_skip_space
+      exps
     end
 
     def parse_while
@@ -951,9 +999,9 @@ module Crystal
 
     def can_be_assigned?(node)
       node.is_a?(Var) ||
-        # node.is_a?(InstanceVar) ||
-        # node.is_a?(Ident) ||
-        # node.is_a?(Global) ||
+        node.is_a?(InstanceVar) ||
+        node.is_a?(Ident) ||
+        node.is_a?(Global) ||
         (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
     end
 

@@ -195,7 +195,11 @@ module Crystal
       when '['
         case next_char
         when ']'
-          next_char :"[]"
+          if next_char == '='
+            next_char :"[]="
+          else
+            @token.type = :"[]"
+          end
         else
           @token.type = :"["
         end

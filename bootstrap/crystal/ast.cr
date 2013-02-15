@@ -338,6 +338,19 @@ module Crystal
     end
   end
 
+  # A global variable.
+  class Global < ASTNode
+    attr_accessor :name
+
+    def initialize(name)
+      @name = name
+    end
+
+    def ==(other)
+      other.is_a?(Global) && other.name == name
+    end
+  end
+
   class BinaryOp < ASTNode
     attr_accessor :left
     attr_accessor :right

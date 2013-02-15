@@ -59,6 +59,14 @@ class String
   def ident
     Ident.new [self]
   end
+
+  def instance_var
+    InstanceVar.new self
+  end
+
+  def string
+    StringLiteral.new self
+  end
 end
 
 module Crystal
@@ -265,8 +273,81 @@ describe "Parser" do
   it_parses "foo { 1 }", Call.new(nil, "foo", [], Block.new([], 1.int))
   it_parses "foo { |a| 1 }", Call.new(nil, "foo", [], Block.new(["a".var], 1.int))
   it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", [], Block.new(["a".var, "b".var], 1.int))
-  # it_parses "1.foo do; 1; end", Call.new(1.int, "foo", [], Block.new([], 1.int))
+  it_parses "1.foo do; 1; end", Call.new(1.int, "foo", [], Block.new([], 1.int))
 
   it_parses "1 ? 2 : 3", If.new(1.int, 2.int, 3.int)
   it_parses "1 ? a : b", If.new(1.int, "a".call, "b".call)
+
+  it_parses "1 if 3", If.new(3.int, 1.int)
+  it_parses "1 unless 3", If.new(3.int.not, 1.int)
+  it_parses "1 while 3", While.new(3.int, 1.int, true)
+  it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int), If.new(Assign.new("a".var, Call.new("a".var, "+", [20.int])), Assign.new("a".var, Call.new("a".var, "+", [10.int])))]
+  it_parses "puts a if true", If.new(true.bool, Call.new(nil, "puts", ["a".call]))
+  it_parses "puts a unless true", If.new(true.bool.not, Call.new(nil, "puts", ["a".call]))
+  it_parses "puts a while true", While.new(true.bool, Call.new(nil, "puts", ["a".call]), true)
+
+  it_parses "return", Return.new
+  it_parses "return;", Return.new
+  it_parses "return 1", Return.new([1.int])
+  it_parses "return 1 if true", If.new(true.bool, Return.new([1.int]))
+  it_parses "return if true", If.new(true.bool, Return.new)
+
+  it_parses "break", Break.new
+  it_parses "break;", Break.new
+  it_parses "break 1", Break.new([1.int])
+  it_parses "break 1 if true", If.new(true.bool, Break.new([1.int]))
+  it_parses "break if true", If.new(true.bool, Break.new)
+
+  it_parses "next", Next.new
+  it_parses "next;", Next.new
+  it_parses "next 1", Next.new([1.int])
+  it_parses "next 1 if true", If.new(true.bool, Next.new([1.int]))
+  it_parses "next if true", If.new(true.bool, Next.new)
+
+  it_parses "yield", Yield.new
+  it_parses "yield;", Yield.new
+  it_parses "yield 1", Yield.new([1.int])
+  it_parses "yield 1 if true", If.new(true.bool, Yield.new([1.int]))
+  it_parses "yield if true", If.new(true.bool, Yield.new)
+
+  it_parses "Int", "Int".ident
+
+  it_parses "Int[]", Call.new("Int".ident, "[]")
+  it_parses "def []; end", Def.new("[]", [], nil)
+  it_parses "def []=(value); end", Def.new("[]=", ["value".arg], nil)
+  it_parses "def self.[]; end", Def.new("[]", [], nil, "self".var)
+
+  it_parses "Int[8]", Call.new("Int".ident, "[]", [8.int])
+  it_parses "Int[8, 4]", Call.new("Int".ident, "[]", [8.int, 4.int])
+  it_parses "Int[8, 4,]", Call.new("Int".ident, "[]", [8.int, 4.int])
+
+  it_parses "def [](x); end", Def.new("[]", ["x".arg], nil)
+
+  it_parses "foo[0] = 1", Call.new("foo".call, "[]=", [0.int, 1.int])
+
+  it_parses "begin; 1; 2; 3; end;", Expressions.new([1.int, 2.int, 3.int])
+
+  it_parses "self", "self".var
+
+  it_parses "@foo", "@foo".instance_var
+  it_parses "@foo = 1", Assign.new("@foo".instance_var, 1.int)
+
+  it_parses "call @foo.bar", Call.new(nil, "call", [Call.new("@foo".instance_var, "bar")])
+  it_parses "call \"foo\"", Call.new(nil, "call", ["foo".string])
+
+  it_parses "def foo; end; if false; 1; else; 2; end", [Def.new("foo", []), If.new(false.bool, 1.int, 2.int)]
+
+  it_parses "A.new(\"x\", B.new(\"y\"))", Call.new("A".ident, "new", ["x".string, Call.new("B".ident, "new", ["y".string])])
+
+  it_parses "foo []", Call.new(nil, "foo", [[].array])
+  it_parses "foo [1]", Call.new(nil, "foo", [[1.int].array])
+  it_parses "foo.bar []", Call.new("foo".call, "bar", [[].array])
+  it_parses "foo.bar [1]", Call.new("foo".call, "bar", [[1.int].array])
+
+  it_parses "class Foo; end\nwhile true; end", [ClassDef.new("Foo"), While.new(true.bool)]
+  it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
+  it_parses "(1)\nif true; end", [1.int, If.new(true.bool)]
+  it_parses "begin\n1\nend\nif true; end", [1.int, If.new(true.bool)]
+
+  it_parses "Foo::Bar", ["Foo", "Bar"].ident
 end
