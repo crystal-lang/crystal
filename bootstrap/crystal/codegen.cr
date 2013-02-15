@@ -37,6 +37,8 @@ module Crystal
       @node = node
       @llvm_mod = LLVM::Module.new("Crystal")
       ret_type = node.type.llvm_type
+      magic_ret_type = ret_type.is_a?(LLVM::Type) ? ret_type : LLVM::Void
+      puts magic_ret_type
       @fun = @llvm_mod.functions.add("crystal_main", [], ret_type.is_a?(LLVM::Type) ? ret_type : LLVM::Void)
 
       @builder = LLVM::Builder.new
@@ -72,6 +74,10 @@ module Crystal
 
     def visit(node : FloatLiteral)
       @last = LLVM::Float.from_s(node.value)
+    end
+
+    def visit(node : DoubleLiteral)
+      @last = LLVM::Double.from_s(node.value)
     end
 
     # def new_entry_block

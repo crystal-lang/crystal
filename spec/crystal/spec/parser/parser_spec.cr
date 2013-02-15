@@ -350,4 +350,40 @@ describe "Parser" do
   it_parses "begin\n1\nend\nif true; end", [1.int, If.new(true.bool)]
 
   it_parses "Foo::Bar", ["Foo", "Bar"].ident
+
+  it_parses "lib C\nend", LibDef.new("C")
+  it_parses "lib C(\"libc\")\nend", LibDef.new("C", "libc")
+  it_parses "lib C\nfun getchar\nend", LibDef.new("C", nil, [FunDef.new("getchar")])
+  it_parses "lib C\nfun getchar(...)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [], nil, 0, true)])
+  it_parses "lib C\nfun getchar : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [], "Int".ident)])
+  it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident), FunDefArg.new("b", "Float".ident)])])
+  it_parses "lib C\nfun getchar(a : out Int)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident, 0, true)])])
+  it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident), FunDefArg.new("b", "Float".ident)], "Int".ident)])
+  it_parses "lib C; fun getchar(a : Int, b : Float) : Int; end", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident), FunDefArg.new("b", "Float".ident)], "Int".ident)])
+  it_parses "lib C; fun foo(a : Int*); end", LibDef.new("C", nil, [FunDef.new("foo", [FunDefArg.new("a", "Int".ident, 1)])])
+  it_parses "lib C; fun foo(a : Int**); end", LibDef.new("C", nil, [FunDef.new("foo", [FunDefArg.new("a", "Int".ident, 2)])])
+  it_parses "lib C; fun foo : Int*; end", LibDef.new("C", nil, [FunDef.new("foo", [], "Int".ident, 1)])
+  it_parses "lib C; fun foo : Int**; end", LibDef.new("C", nil, [FunDef.new("foo", [], "Int".ident, 2)])
+  it_parses "lib C; type A : B; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident)])
+  it_parses "lib C; type A : B*; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident, 1)])
+  it_parses "lib C; type A : B**; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident, 2)])
+  it_parses "lib C; struct Foo; end end", LibDef.new("C", nil, [StructDef.new("Foo")])
+  it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new("C", nil, [StructDef.new("Foo", [FunDefArg.new("x", "Int".ident), FunDefArg.new("y", "Float".ident)])])
+  it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new("C", nil, [StructDef.new("Foo", [FunDefArg.new("x", "Int".ident, 1)])])
+  it_parses "lib C; struct Foo; x : Int**; end end", LibDef.new("C", nil, [StructDef.new("Foo", [FunDefArg.new("x", "Int".ident, 2)])])
+  it_parses "lib C; Foo = 1; end", LibDef.new("C", nil, [Assign.new("Foo".ident, 1.int)])
+  it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", nil, [FunDef.new("getch", [], nil, 0, false, "GetChar")])
+
+  it_parses "1 .. 2", RangeLiteral.new(1.int, 2.int, false)
+  it_parses "1 ... 2", RangeLiteral.new(1.int, 2.int, true)
+
+  it_parses "A = 1", Assign.new("A".ident, 1.int)
+
+  # it_parses "puts %w(one)", Call.new(nil, "puts", [["one".string].array])
+
+  it_parses "::A::B", Ident.new(["A", "B"], true)
+
+  it_parses "$foo", Global.new("$foo")
+
+  # it_parses "macro foo;end", Macro.new("foo", [])
 end

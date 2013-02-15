@@ -234,6 +234,104 @@ module Crystal
       false
     end
 
+    def visit(node : Global)
+      @str << node.name
+    end
+
+    def visit(node : LibDef)
+      @str << "lib "
+      @str << node.name
+      if node.libname
+        @str << "('"
+        @str << node.libname
+        @str << "')"
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit(node : FunDef)
+      @str << "fun "
+      if node.name == node.real_name
+        @str << node.name
+      else
+        @str << node.name
+        @str << " = "
+        @str << node.real_name
+      end
+      if node.args.length > 0
+        @str << "("
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+        end
+        if node.varargs
+          @str << ", ..."
+        end
+        @str << ")"
+      end
+      if node.return_type
+        @str << " : "
+        node.return_type.accept self
+        node.pointer.times do
+          @str << "*"
+        end
+      end
+      false
+    end
+
+    def visit(node : FunDefArg)
+      @str << node.name.to_s
+      @str << " : "
+      @str << "out " if node.out
+      node.type_spec.accept self
+      node.pointer.times do
+        @str << "*"
+      end
+      false
+    end
+
+    def visit(node : TypeDef)
+      @str << "type "
+      @str << node.name.to_s
+      @str << " : "
+      node.type_spec.accept self
+      node.pointer.times do
+        @str << "*"
+      end
+      false
+    end
+
+    def visit(node : StructDef)
+      @str << "struct "
+      @str << node.name.to_s
+      @str << "\n"
+      with_indent do
+        node.fields.each do |field|
+          append_indent
+          field.accept self
+          @str << "\n"
+        end
+      end
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit(node : RangeLiteral)
+      node.from.accept self
+      if node.exclusive
+        @str << ".."
+      else
+        @str << "..."
+      end
+      node.to.accept self
+      false
+    end
+
     def append_indent
       @indent.times do
         @str << "  "

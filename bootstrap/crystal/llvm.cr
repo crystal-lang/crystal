@@ -155,6 +155,10 @@ module LLVM
     def initialize
       @type = LibLLVM.double_type
     end
+
+    def from_s(value)
+      LibLLVM.const_real_of_string(@type, value)
+    end
   end
 
   class VoidType < Type
@@ -178,6 +182,10 @@ module LLVM
 
     def to_f
       LibLLVM.generic_value_to_float(LLVM::Float.type, @value)
+    end
+
+    def to_d
+      LibLLVM.generic_value_to_float(LLVM::Double.type, @value)
     end
   end
 

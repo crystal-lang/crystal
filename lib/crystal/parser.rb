@@ -990,6 +990,7 @@ module Crystal
           arg = Arg.new(arg_name, default_value, type_restriction)
           arg.location = arg_location
           args << arg
+          push_var arg
 
           if @token.type == :','
             next_token_skip_space_or_newline
@@ -1224,7 +1225,6 @@ module Crystal
         end
       EVAL
     end
-
 
     def parse_lib
       next_token_skip_space_or_newline

@@ -372,6 +372,8 @@ module Crystal
         ArrayLiteral.new []
       when :"["
         parse_array_literal
+      when :"::"
+        parse_ident
       when :INT
         node_and_next_token IntLiteral.new(@token.value.to_s)
       when :LONG
@@ -386,6 +388,8 @@ module Crystal
         parse_string
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
+      when :GLOBAL
+        node_and_next_token Global.new(@token.value.to_s)
       when :IDENT
         case @token.value
         when :begin
@@ -421,6 +425,8 @@ module Crystal
           parse_next
         when :break
           parse_break
+        when :lib
+          parse_lib
         else
           parse_var_or_call
         end
@@ -520,9 +526,9 @@ module Crystal
     end
 
     def parse_string
-      if @token.type == :STRING
+      # if @token.type == :STRING
         node_and_next_token StringLiteral.new(@token.value.to_s)
-      end
+      # end
     end
 
     def parse_array_literal
@@ -978,6 +984,230 @@ module Crystal
       node = Next.new(args || [])
       node.location = location
       node
+    end
+
+    def parse_lib
+      next_token_skip_space_or_newline
+
+      check :CONST
+      name = @token.value.to_s
+      name_column_number = @token.column_number
+      next_token_skip_space
+
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        libname = parse_string.value # TODO disallow string interpolation? Use another syntax?
+        skip_space_or_newline
+        check :")"
+        next_token_skip_statement_end
+      else
+        skip_statement_end
+      end
+
+      body = parse_lib_body
+
+      check_ident :end
+      next_token_skip_statement_end
+
+      LibDef.new name, libname, body, name_column_number
+    end
+
+    def parse_lib_body
+      expressions = []
+      while true
+        location = @token.location
+
+        case @token.type
+        when :IDENT
+          case @token.value
+          when :fun
+            exp = parse_fun_def
+            exp.location = location
+            expressions << exp
+          when :type
+            exp = parse_type_def
+            exp.location = location
+            expressions << exp
+          when :struct
+            exp = parse_struct_def
+            exp.location = location
+            expressions << exp
+          when :end
+            break
+          else
+            break
+          end
+        when :CONST
+          ident = parse_ident
+          next_token_skip_space
+          check :"="
+          next_token_skip_space_or_newline
+          value = parse_expression
+          skip_statement_end
+          expressions << Assign.new(ident, value)
+        else
+          break
+        end
+      end
+      expressions
+    end
+
+    def parse_fun_def
+      next_token_skip_space_or_newline
+
+      check :IDENT
+      name = @token.value.to_s
+
+      next_token_skip_space_or_newline
+
+      if @token.type == :"="
+        next_token_skip_space_or_newline
+        check [:IDENT, :CONST]
+        real_name = @token.value.to_s
+        next_token_skip_space_or_newline
+      else
+        real_name = name
+      end
+
+      args = []
+      varargs = false
+
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        while @token.type != :")"
+          if @token.type == :"..."
+            varargs = true
+            next_token_skip_space_or_newline
+            check :")"
+            break
+          end
+
+          check :IDENT
+          arg_name = @token.value.to_s
+          arg_location = @token.location
+
+          next_token_skip_space_or_newline
+          check :":"
+          next_token_skip_space_or_newline
+
+          is_out = false
+          if @token.keyword?(:out)
+            is_out = true
+            next_token_skip_space_or_newline
+          end
+
+          arg_type = parse_ident
+          pointer = parse_trailing_pointers
+
+          skip_space_or_newline
+
+          fun_def_arg = FunDefArg.new(arg_name, arg_type, pointer, is_out)
+          fun_def_arg.location = arg_location
+          args << fun_def_arg
+
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_statement_end
+      end
+
+      pointer = 0
+
+      if @token.type == :":"
+        next_token_skip_space_or_newline
+
+        return_type = parse_ident
+
+        pointer = parse_trailing_pointers
+
+        skip_statement_end
+      end
+
+      FunDef.new name, args, return_type, pointer, varargs, real_name
+    end
+
+    def parse_type_def
+      next_token_skip_space_or_newline
+
+      check :CONST
+      name = @token.value.to_s
+      name_column_number = @token.column_number
+      next_token_skip_space_or_newline
+
+      check :":"
+      next_token_skip_space_or_newline
+
+      type = parse_ident
+      pointer = parse_trailing_pointers
+
+      skip_statement_end
+
+      TypeDef.new name, type, pointer, name_column_number
+    end
+
+    def parse_struct_def
+      next_token_skip_space_or_newline
+
+      check :CONST
+      name = @token.value.to_s
+      next_token_skip_statement_end
+
+      fields = parse_struct_def_fields
+
+      check_ident :end
+
+      next_token_skip_statement_end
+
+      StructDef.new name, fields
+    end
+
+    def parse_struct_def_fields
+      fields = []
+
+      while true
+        case @token.type
+        when :IDENT
+          case @token.value
+          when :end
+            break
+          else
+            name = @token.value.to_s
+            next_token_skip_space_or_newline
+
+            check :":"
+            next_token_skip_space_or_newline
+
+            type = parse_ident
+            pointer = parse_trailing_pointers
+
+            skip_statement_end
+
+            fields << FunDefArg.new(name, type, pointer)
+          end
+        else
+          break
+        end
+      end
+
+      fields
+    end
+
+    def parse_trailing_pointers
+      pointer = 0
+      while true
+        case @token.type
+        when :"*"
+          pointer += 1
+          next_token_skip_space_or_newline
+        when :"**"
+          pointer += 2
+          next_token_skip_space_or_newline
+        else
+          break
+        end
+      end
+      pointer
     end
 
     def node_and_next_token(node)

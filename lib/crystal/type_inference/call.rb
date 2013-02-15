@@ -21,12 +21,24 @@ module Crystal
       return if @types_signature == types_signature
       @types_signature = types_signature
 
-      if has_unions_in_obj? || (obj && obj.type.has_restricted_defs?(name) && has_unions_in_args?) || (scope && scope.has_restricted_defs?(name) && has_unions_in_args?)
+      if has_unions_in_obj?
+        compute_dispatch
+        return
+      end
+
+      has_unions_in_args = has_unions_in_args?
+
+      if has_unions_in_args && ((obj && obj.type.has_restricted_defs?(name)) || (scope && scope.has_restricted_defs?(name)))
         compute_dispatch
         return
       end
 
       owner, self_type, untyped_def_and_error_matches = compute_owner_self_type_and_untyped_def
+      if has_unions_in_args && owner.is_a?(Program) && owner.has_restricted_defs?(name)
+        compute_dispatch
+        return
+      end
+
       untyped_def, error_matches = untyped_def_and_error_matches
 
       check_method_exists untyped_def, error_matches

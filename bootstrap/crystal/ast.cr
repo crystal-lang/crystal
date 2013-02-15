@@ -188,6 +188,22 @@ module Crystal
     end
   end
 
+  class RangeLiteral < ASTNode
+    attr_accessor :from
+    attr_accessor :to
+    attr_accessor :exclusive
+
+    def initialize(from, to, exclusive)
+      @from = from
+      @to = to
+      @exclusive = exclusive
+    end
+
+    def ==(other : self)
+      other.from == from && other.to == to && other.exclusive == exclusive
+    end
+  end
+
   # A method call.
   #
   #     [ obj '.' ] name '(' ')' [ block ]
@@ -646,6 +662,117 @@ module Crystal
 
     def ==(other : self)
       other.name == name
+    end
+  end
+
+  class LibDef < ASTNode
+    attr_accessor :name
+    attr_accessor :libname
+    attr_accessor :body
+    attr_accessor :name_column_number
+
+    def initialize(name, libname = nil, body = nil, name_column_number = nil)
+      @name = name
+      @libname = libname
+      @body = Expressions.from body
+      @name_column_number = name_column_number
+    end
+
+    def accept_children(visitor)
+      body.accept visitor if body
+    end
+
+    def ==(other : self)
+      other.name == name && other.libname == libname && other.body == body
+    end
+  end
+
+  class FunDef < ASTNode
+    attr_accessor :name
+    attr_accessor :args
+    attr_accessor :return_type
+    attr_accessor :pointer
+    attr_accessor :varargs
+    attr_accessor :real_name
+
+    def initialize(name, args = [], return_type = nil, pointer = 0, varargs = false, real_name = name)
+      @name = name
+      @real_name = real_name
+      @args = args
+      @return_type = return_type
+      @pointer = pointer
+      @varargs = varargs
+    end
+
+    def accept_children(visitor)
+      args.each { |arg| arg.accept visitor }
+      return_type.accept visitor if return_type
+    end
+
+    def ==(other : self)
+      other.name == name && other.args == args && other.return_type == return_type && other.pointer == pointer && other.real_name == real_name && other.varargs == varargs
+    end
+  end
+
+  class FunDefArg < ASTNode
+    attr_accessor :name
+    attr_accessor :type_spec
+    attr_accessor :pointer
+    attr_accessor :out
+
+    def initialize(name, type_spec, pointer = 0, out = false)
+      @name = name
+      @type_spec = type_spec
+      @pointer = pointer
+      @out = out
+    end
+
+    def accept_children(visitor)
+      type_spec.accept visitor
+    end
+
+    def ==(other : self)
+      other.name == name && other.type_spec == type_spec && other.pointer == pointer && other.out == out
+    end
+  end
+
+  class TypeDef < ASTNode
+    attr_accessor :name
+    attr_accessor :type_spec
+    attr_accessor :pointer
+    attr_accessor :name_column_number
+
+    def initialize(name, type_spec, pointer = 0, name_column_number = nil)
+      @name = name
+      @type_spec = type_spec
+      @pointer = pointer
+      @name_column_number = name_column_number
+    end
+
+    def accept_children(visitor)
+      type_spec.accept visitor
+    end
+
+    def ==(other : self)
+      other.name == name && other.type_spec == type_spec && other.pointer == pointer
+    end
+  end
+
+  class StructDef < ASTNode
+    attr_accessor :name
+    attr_accessor :fields
+
+    def initialize(name, fields = [])
+      @name = name
+      @fields = fields
+    end
+
+    def accept_children(visitor)
+      fields.each { |field| field.accept visitor }
+    end
+
+    def ==(other : self)
+      other.name == name && other.fields == fields
     end
   end
 end
