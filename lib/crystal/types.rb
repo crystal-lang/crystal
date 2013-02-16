@@ -30,6 +30,18 @@ module Crystal
       false
     end
 
+    def nil_type?
+      false
+    end
+
+    def nilable_able?
+      false
+    end
+
+    def pointer_type?
+      false
+    end
+
     def passed_as_self?
       true
     end
@@ -48,10 +60,6 @@ module Crystal
 
     def full_name
       name
-    end
-
-    def typedef_type
-      self
     end
 
     def to_s
@@ -243,6 +251,10 @@ module Crystal
       @llvm_size = llvm_size
     end
 
+    def nil_type?
+      @nil_type ||= name == 'Nil'
+    end
+
     def llvm_name
       name
     end
@@ -312,6 +324,10 @@ module Crystal
       else
         name
       end
+    end
+
+    def nilable_able?
+      true
     end
 
     def index_of_instance_var(name)
@@ -384,6 +400,14 @@ module Crystal
       pointer
     end
 
+    def nilable_able?
+      true
+    end
+
+    def pointer_type?
+      true
+    end
+
     def to_s
       "Pointer<#{var.type}>"
     end
@@ -426,8 +450,8 @@ module Crystal
 
     def nilable?
       @nilable ||= (@types.length == 2 &&
-        (@types[0].is_a?(PrimitiveType) && types[0].name == "Nil" && types[1].is_a?(ObjectType) && types[1] ||
-         @types[1].is_a?(PrimitiveType) && types[1].name == "Nil" && types[0].is_a?(ObjectType) && types[0]))
+        (@types[0].nil_type? && types[1].nilable_able? && types[1] ||
+         @types[1].nil_type? && types[0].nilable_able? && types[0]))
     end
 
     def nilable_type
@@ -609,8 +633,12 @@ module Crystal
       type.llvm_size
     end
 
-    def typedef_type
-      type.typedef_type
+    def nilable_able?
+      type.nilable_able?
+    end
+
+    def pointer_type?
+      type.pointer_type?
     end
 
     def clone(*)

@@ -57,7 +57,7 @@ module Crystal
     end
 
     def llvm_type
-      nil
+      LLVM::Void
     end
   end
 end

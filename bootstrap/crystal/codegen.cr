@@ -37,10 +37,7 @@ module Crystal
       @node = node
       @llvm_mod = LLVM::Module.new("Crystal")
       ret_type = node.type.llvm_type
-      magic_ret_type = ret_type.is_a?(LLVM::Type) ? ret_type : LLVM::Void
-      puts magic_ret_type
-      @fun = @llvm_mod.functions.add("crystal_main", [], ret_type.is_a?(LLVM::Type) ? ret_type : LLVM::Void)
-
+      @fun = @llvm_mod.functions.add("crystal_main", [], ret_type)
       @builder = LLVM::Builder.new
       entry_block_chain = new_entry_block_chain ["alloca", "const", "entry"]
       @alloca_block, @const_block, @entry_block = entry_block_chain[0], entry_block_chain[1], entry_block_chain[2]
