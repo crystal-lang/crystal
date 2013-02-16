@@ -20,8 +20,11 @@ module Crystal
   class UnifyVisitor < Visitor
     def initialize
       @types = {}
+      @types_by_id = {}
       @unions = {}
+      @unions_by_id = {}
       @pointers = {}
+      @pointers_by_id = {}
       @stack = []
     end
 
@@ -105,11 +108,14 @@ module Crystal
     def unify_type(type)
       case type
       when ObjectType
+        unified_type = @types_by_id[type.object_id]
+        return unified_type if unified_type
+
         unified_type = @types[type]
 
         unless unified_type
           if index = @stack.index(type)
-            unified_type = @types[type] = @stack[index]
+            unified_type = @types[type] = @types_by_id[type.object_id] = @stack[index]
           else
             @stack.push type
 
@@ -118,11 +124,18 @@ module Crystal
               ivar.set_type unify_type(ivar.type)
             end
 
+            existing_type = @types_by_id[type.object_id]
+            if existing_type
+              @stack.pop
+              return existing_type
+            end
+
             if existing_type = @types[type]
               unified_type = existing_type
             else
               @types[type] = unified_type
             end
+            @types_by_id[unified_type.object_id] = unified_type
 
             @stack.pop
           end
@@ -130,11 +143,16 @@ module Crystal
 
         unified_type
       when PointerType
+        unified_type = @pointers_by_id[type.object_id]
+        if unified_type
+          return unified_type
+        end
+
         unified_type = @pointers[type]
 
         unless unified_type
           if index = @stack.index(type)
-            unified_type = @pointers[type] = @stack[index]
+            unified_type = @pointers[type] = @pointers_by_id[type.object_id] = @stack[index]
           else
             @stack.push type
 
@@ -146,6 +164,7 @@ module Crystal
             else
               @pointers[type] = unified_type
             end
+            @pointers_by_id[unified_type.object_id] = unified_type
 
             @stack.pop
           end
@@ -153,6 +172,9 @@ module Crystal
 
         unified_type
       when UnionType
+        unified_type = @unions_by_id[type.object_id]
+        return unified_type if unified_type
+
         unified_type = @unions[type]
 
         unless unified_type
@@ -165,6 +187,8 @@ module Crystal
             @unions[type] = unified_type
             @unions[unified_type] = unified_type
           end
+
+          @unions_by_id[unified_type.object_id] = unified_type
         end
 
         unified_type
