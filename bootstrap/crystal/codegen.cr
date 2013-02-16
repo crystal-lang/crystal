@@ -77,6 +77,10 @@ module Crystal
       @last = LLVM::Double.from_s(node.value)
     end
 
+    def visit(node : CharLiteral)
+      @last = LLVM::Int8.from_i(node.value[0].ord)
+    end
+
     # def new_entry_block
     #   @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
     # end

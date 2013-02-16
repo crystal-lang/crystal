@@ -10,7 +10,6 @@ module Crystal
       value = @types["Value"] = ObjectType.new "Value", object, self
       numeric = @types["Numeric"] = ObjectType.new "Numeric", value, self
 
-
       @types["Void"] = PrimitiveType.new "Void", value, LLVM::Int8, 1, self
       @types["Nil"] = PrimitiveType.new "Nil", value, LLVM::Int1, 1, self
       @types["Bool"] = PrimitiveType.new "Bool", value, LLVM::Int1, 1, self

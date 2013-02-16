@@ -17,6 +17,10 @@ describe "Code gen: primitives" do
     run("1L").to_i.should eq(1)
   end
 
+  it "codegens char" do
+    run("'a'").to_i.should eq('a'.ord)
+  end
+
   it "codegens float" do
     run("1; 2.5f").to_f.should eq(2.5f)
   end
