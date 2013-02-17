@@ -400,6 +400,14 @@ module Crystal
       pointer
     end
 
+    def full_name
+      if @var.type
+        "#{@var.type.full_name}*"
+      else
+        super
+      end
+    end
+
     def nilable_able?
       true
     end
