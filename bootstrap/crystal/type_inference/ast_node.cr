@@ -15,7 +15,7 @@ module Crystal
     end
 
     def bind_to(node)
-      @dependencies ||= (nil || [])
+      @dependencies ||= []
       @dependencies << node
       node.add_observer self
 

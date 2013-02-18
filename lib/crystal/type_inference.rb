@@ -355,12 +355,13 @@ module Crystal
     end
 
     def type_assign(target, value, node = nil)
+      value.accept self
+
       case target
       when Var
         var = lookup_var target.name
         target.bind_to var
 
-        value.accept self
 
         if node
           node.bind_to value
@@ -374,8 +375,6 @@ module Crystal
         end
       when InstanceVar
         var = lookup_instance_var target, (@nest_count > 0)
-
-        value.accept self
 
         if node
           node.bind_to value
@@ -393,14 +392,12 @@ module Crystal
           target.raise "already initialized constant #{target}"
         end
 
-        value.accept self
         target.bind_to value
 
         current_type.types[target.names.first] = Const.new(target.names.first, value, current_type)
       when Global
         var = mod.global_vars[target.name] ||= Var.new(target.name)
 
-        value.accept self
         target.bind_to var
 
         if node

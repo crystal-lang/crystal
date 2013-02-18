@@ -230,4 +230,19 @@ describe 'Type inference: class' do
       Foo.new
     )) { ObjectType.new("Foo").with_var("@coco", [int, self.nil].union) }
   end
+
+  it "types instance variable as nilable in ||=" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @coco ||= 1
+        end
+        def coco
+          @coco
+        end
+      end
+
+      Foo.new.coco
+    )) { [int, self.nil].union }
+  end
 end
