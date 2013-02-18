@@ -19,6 +19,10 @@ class Int
     to_d ** other
   end
 
+  def [](bit)
+    self & (1 << bit) == 0 ? 0 : 1
+  end
+
   def gcd(other : Int)
     self == 0 ? other.abs : (other % self).gcd(self)
   end
