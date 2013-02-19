@@ -76,6 +76,11 @@ nodes = nil
 
 loop do
   line = Readline.readline "icr:#{'%03d' % line_number}:#{openings}#{incomplete_expression ? '*' : '>'} #{ '  ' * openings }", true
+  if line.nil? # ctrl+d
+    puts
+    exit
+  end
+
   if line.strip.empty?
     incomplete_expression = true
     line_number += 1
