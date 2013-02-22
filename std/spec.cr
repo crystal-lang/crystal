@@ -22,6 +22,11 @@ def assert
   end
 end
 
+def fail(msg)
+  $spec_results << "In #{$spec_context.join(" ")}, #{msg}"
+  $spec_success = false
+end
+
 def describe(description)
   $spec_context << description
   yield
@@ -38,15 +43,13 @@ end
 class Object
   def should(expectation)
     unless expectation.match self
-      $spec_results << "In #{$spec_context.join(" ")}, #{expectation.failure_message}"
-      $spec_success = false
+      fail expectation.failure_message
     end
   end
 
   def should_not(expectation)
     if expectation.match self
-      $spec_results << "In #{$spec_context.join(" ")}, #{expectation.negative_failure_message}"
-      $spec_success = false
+      fail expectation.negative_failure_message
     end
   end
 end
