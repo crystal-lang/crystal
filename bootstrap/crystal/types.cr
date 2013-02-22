@@ -1,7 +1,7 @@
 module Crystal
   class Type
-    def self.merge(types)
-      types.first
+    def self.merge(type1, type2)
+      type1
     end
 
     def to_s

@@ -15,8 +15,9 @@ module Crystal
   class TypeVisitor < Visitor
     attr_reader :mod
 
-    def initialize(mod)
+    def initialize(mod, vars = {})
       @mod = mod
+      @vars = vars
     end
 
     def visit(node : BoolLiteral)
@@ -47,8 +48,40 @@ module Crystal
       node.type = mod.symbol
     end
 
+    def visit(node : Var)
+      var = lookup_var node.name
+      node.bind_to var
+    end
+
     def end_visit(node : Expressions)
       node.bind_to node.last unless node.empty?
+    end
+
+    def visit(node : Assign)
+      type_assign node.target, node.value, node
+    end
+
+    def type_assign(target, value, node)
+      value.accept self
+
+      if target.is_a?(Var)
+        var = lookup_var target.name
+        target.bind_to var
+
+        node.bind_to value
+        var.bind_to node
+      end
+
+      false
+    end
+
+    def lookup_var(name)
+      var = @vars[name]
+      unless var
+        var = Var.new name
+        @vars[name] = var
+      end
+      var
     end
   end
 end

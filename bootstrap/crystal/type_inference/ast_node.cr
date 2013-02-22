@@ -19,15 +19,15 @@ module Crystal
       @dependencies << node
       node.add_observer self
 
-      if @dependencies.length == 1
-        new_type = @dependencies[0].type
-      elsif @dependencies.length > 1 && node.type
-        new_type = Type.merge([@type, node.type])
+      return unless node.type
+
+      if @dependencies.length == 1 || !@type
+        new_type = node.type
       else
-        new_type = Type.merge(dependencies.map { |d| d.type })
+        new_type = Type.merge(@type, node.type)
       end
       return if @type.object_id == new_type.object_id
-      @type = new_type
+      set_type(new_type)
       @dirty = true
       propagate
     end
@@ -53,11 +53,11 @@ module Crystal
       if @type.nil? || dependencies.length == 1
         new_type = from.type
       else
-        new_type = Type.merge [@type, from.type]
+        new_type = Type.merge @type, from.type
       end
 
       return if @type.object_id == new_type.object_id
-      @type = new_type
+      set_type(new_type)
       @dirty = true
     end
 

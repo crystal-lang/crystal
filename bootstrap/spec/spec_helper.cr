@@ -8,3 +8,7 @@ def assert_type(str)
     input.type.should eq(expected_type)
   end
 end
+
+def parse(string)
+  Parser.parse string
+end

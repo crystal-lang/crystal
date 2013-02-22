@@ -296,6 +296,11 @@ module Crystal
       @value = value
     end
 
+    def accept_children(visitor)
+      @target.accept visitor
+      @value.accept visitor
+    end
+
     def ==(other : self)
       other.target == target && other.value == value
     end
