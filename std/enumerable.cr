@@ -75,4 +75,15 @@ module Enumerable
   def includes?(obj)
     any? { |e| e == obj }
   end
+
+  def index(obj)
+    index { |e| e == obj }
+  end
+
+  def index
+    each_with_index do |e, i|
+      return i if yield e
+    end
+    -1
+  end
 end

@@ -38,4 +38,18 @@ describe "Array" do
       0.upto(4) { |i| c[i].should eq(i + 1) }
     end
   end
+
+  describe "index" do
+    it "performs without a block" do
+      a = [1, 2, 3]
+      a.index(3).should eq(2)
+      a.index(4).should eq(-1)
+    end
+
+    it "performs with a block" do
+      a = [1, 2, 3]
+      a.index { |i| i > 1 }.should eq(1)
+      a.index { |i| i > 3 }.should eq(-1)
+    end
+  end
 end
