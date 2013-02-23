@@ -100,6 +100,15 @@ generic class Array
     max
   end
 
+  def +(other : Array)
+    new_length = length + other.length
+    ary = Array.new(new_length)
+    ary.length = new_length
+    length.times { |i| ary.buffer[i] = buffer[i] }
+    other.length.times { |i| ary.buffer[i + length] = other.buffer[i] }
+    ary
+  end
+
   def ==(other : Array)
     return false if @length != other.length
     each_with_index do |item, i|

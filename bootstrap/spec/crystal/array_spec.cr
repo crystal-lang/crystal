@@ -28,4 +28,14 @@ describe "Array" do
   describe "inspect" do
     assert { [1, 2, 3].inspect.should eq("[1, 2, 3]") }
   end
+
+  describe "+" do
+    assert do
+      a = [1, 2, 3]
+      b = [4, 5]
+      c = a + b
+      c.length.should eq(5)
+      0.upto(4) { |i| c[i].should eq(i + 1) }
+    end
+  end
 end
