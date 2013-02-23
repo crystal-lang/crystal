@@ -50,10 +50,7 @@ generic class Array
   end
 
   def push(value)
-    if @length == @capacity
-      @capacity *= 2
-      @buffer = @buffer.realloc(@capacity)
-    end
+    check_needs_resize
     @buffer[@length] = value
     @length += 1
     self
@@ -140,6 +137,15 @@ generic class Array
   end
 
   # private
+
+  def check_needs_resize
+    resize_to_double_capacity if @length == @capacity
+  end
+
+  def resize_to_double_capacity
+    @capacity *= 2
+    @buffer = @buffer.realloc(@capacity)
+  end
 
   def swap(i, j)
     temp = self[i]
