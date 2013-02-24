@@ -4,11 +4,27 @@ require "spec"
 describe "String" do
   describe "[]" do
     it "gets with positive index" do
-      "hello"[1].should eq('e')
+      "hello!"[1].should eq('e')
     end
 
     it "gets with negative index" do
-      "hello"[-1].should eq('o')
+      "hello!"[-1].should eq('!')
+    end
+
+    it "gets with inclusive range" do
+      "hello!"[1 .. 4].should eq("ello")
+    end
+
+    it "gets with inclusive range with negative indices" do
+      "hello!"[-5 .. -2].should eq("ello")
+    end
+
+    it "gets with exclusive range" do
+      "hello!"[1 ... 4].should eq("ell")
+    end
+
+    it "gets with start and count" do
+      "hello"[1, 3].should eq("ell")
     end
   end
 

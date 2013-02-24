@@ -59,7 +59,13 @@ class String
   end
 
   def [](range : Range)
-    self[range.begin, range.end - range.begin + (range.excludes_end? ? 0 : 1)]
+    from = range.begin
+    from += length if from < 0
+    to = range.end
+    to += length if to < 0
+    to -= 1 if range.excludes_end?
+    length = to - from + 1
+    self[from, length]
   end
 
   def [](start : Int, count : Int)
