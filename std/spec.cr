@@ -78,9 +78,13 @@ def eq(value)
 end
 
 def be_true
-  eq(true)
+  eq true
 end
 
 def be_false
-  eq(false)
+  eq false
+end
+
+def be_nil
+  eq nil
 end

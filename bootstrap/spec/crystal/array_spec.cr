@@ -4,13 +4,31 @@ require "spec"
 describe "Array" do
   describe "[]" do
     it "gets on positive index" do
-      a = [1, 2, 3]
-      a[1].should eq(2)
+      [1, 2, 3][1].should eq(2)
     end
 
     it "gets on negative index" do
-      a = [1, 2, 3]
-      a[-1].should eq(3)
+      [1, 2, 3][-1].should eq(3)
+    end
+
+    it "gets on inclusive range" do
+      [1, 2, 3, 4, 5, 6][1 .. 4].should eq([2, 3, 4, 5])
+    end
+
+    it "gets on inclusive range with negative indices" do
+      [1, 2, 3, 4, 5, 6][-5 .. -2].should eq([2, 3, 4, 5])
+    end
+
+    it "gets on exclusive range" do
+      [1, 2, 3, 4, 5, 6][1 ... 4].should eq([2, 3, 4])
+    end
+
+    it "gets on exclusive range with negative indices" do
+      [1, 2, 3, 4, 5, 6][-5 ... -2].should eq([2, 3, 4])
+    end
+
+    it "gets on empty range" do
+      [1, 2, 3][3 .. 1].should be_nil
     end
   end
 

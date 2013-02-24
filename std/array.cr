@@ -1,5 +1,6 @@
 require "enumerable"
 require "pointer"
+require "range"
 
 generic class Array
   include Enumerable
@@ -41,14 +42,24 @@ generic class Array
     @length == 0
   end
 
-  def [](index)
+  def [](index : Int)
     index += length if index < 0
     @buffer[index]
   end
 
-  def []=(index, value)
+  def []=(index : Int, value)
     index += length if index < 0
     @buffer[index] = value
+  end
+
+  def [](range : Range)
+    from = range.begin
+    from += length if from < 0
+    to = range.end
+    to += length if to < 0
+    to -= 1 if range.excludes_end?
+    length = to - from + 1
+    Array.new(length) { |i| @buffer[from + i] }
   end
 
   def push(value)
