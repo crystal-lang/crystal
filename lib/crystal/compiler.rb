@@ -193,6 +193,7 @@ module Crystal
       pm.loop_deletion!
       pm.loop_rotate!
       pm.scalarrepl!
+      pm.memcpyopt!
 
       optimization_passes.times { pm.run mod }
     end
