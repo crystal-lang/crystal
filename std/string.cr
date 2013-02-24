@@ -54,6 +54,7 @@ class String
   end
 
   def [](index : Int)
+    index += length if index < 0
     @c.ptr[index]
   end
 

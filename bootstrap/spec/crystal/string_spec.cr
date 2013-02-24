@@ -2,6 +2,16 @@
 require "spec"
 
 describe "String" do
+  describe "[]" do
+    it "gets with positive index" do
+      "hello"[1].should eq('e')
+    end
+
+    it "gets with negative index" do
+      "hello"[-1].should eq('o')
+    end
+  end
+
   it "does to_i" do
     "1234".to_i.should eq(1234)
   end
