@@ -59,7 +59,11 @@ generic class Array
     to += length if to < 0
     to -= 1 if range.excludes_end?
     length = to - from + 1
-    Array.new(length) { |i| @buffer[from + i] }
+    length <= 0 ? [] : self[from, length]
+  end
+
+  def [](start : Int, count : Int)
+    Array.new(count) { |i| @buffer[start + i] }
   end
 
   def push(value)

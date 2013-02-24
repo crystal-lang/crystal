@@ -28,7 +28,11 @@ describe "Array" do
     end
 
     it "gets on empty range" do
-      [1, 2, 3][3 .. 1].should be_nil
+      [1, 2, 3][3 .. 1].should eq([])
+    end
+
+    it "gets with start and count" do
+      [1, 2, 3, 4, 5, 6][1, 3].should eq([2, 3, 4])
     end
   end
 
