@@ -2,6 +2,32 @@
 require "spec"
 
 describe "Array" do
+  describe "[]" do
+    it "gets on positive index" do
+      a = [1, 2, 3]
+      a[1].should eq(2)
+    end
+
+    it "gets on negative index" do
+      a = [1, 2, 3]
+      a[-1].should eq(3)
+    end
+  end
+
+  describe "[]=" do
+    it "sets on positive index" do
+      a = [1, 2, 3]
+      a[1] = 4
+      a[1].should eq(4)
+    end
+
+    it "sets on negative index" do
+      a = [1, 2, 3]
+      a[-1] = 4
+      a[2].should eq(4)
+    end
+  end
+
   describe "empty" do
     it "is empty" do
       [].empty?.should be_true

@@ -42,10 +42,12 @@ generic class Array
   end
 
   def [](index)
+    index += length if index < 0
     @buffer[index]
   end
 
   def []=(index, value)
+    index += length if index < 0
     @buffer[index] = value
   end
 
