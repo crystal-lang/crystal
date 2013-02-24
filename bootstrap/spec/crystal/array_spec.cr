@@ -39,6 +39,14 @@ describe "Array" do
     end
   end
 
+  describe "concat" do
+    assert do
+      a = [1, 2, 3]
+      a.concat([4, 5, 6])
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+  end
+
   describe "index" do
     it "performs without a block" do
       a = [1, 2, 3]

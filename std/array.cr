@@ -106,6 +106,13 @@ generic class Array
     ary
   end
 
+  def concat(other : Enumerable)
+    other.each do |elem|
+      push elem
+    end
+    self
+  end
+
   def ==(other : Array)
     return false if @length != other.length
     each_with_index do |item, i|
