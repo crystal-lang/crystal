@@ -23,6 +23,13 @@ class Pointer
     (self + offset).value = value
   end
 
+  def memcpy(other : Pointer, count : Int)
+    count.times do |i|
+      self[i] = other[i]
+    end
+    self
+  end
+
   def map(times)
     Array.new(times) { |i| yield self[i] }
   end

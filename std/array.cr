@@ -118,8 +118,8 @@ generic class Array
     new_length = length + other.length
     ary = Array.new(new_length)
     ary.length = new_length
-    length.times { |i| ary.buffer[i] = buffer[i] }
-    other.length.times { |i| ary.buffer[i + length] = other.buffer[i] }
+    ary.buffer.memcpy(buffer, length)
+    (ary.buffer + length).memcpy(other.buffer, other.length)
     ary
   end
 

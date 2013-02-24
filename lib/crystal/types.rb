@@ -47,7 +47,7 @@ module Crystal
     end
 
     def is_restriction_of?(type, owner)
-      type && (equal?(type) || full_name == type.full_name || type.parents.any? { |parent| is_restriction_of?(parent, owner) })
+      type && (equal?(type) || internal_full_name == type.internal_full_name || type.parents.any? { |parent| is_restriction_of?(parent, owner) })
     end
 
     def implements?(other_type)
@@ -59,6 +59,10 @@ module Crystal
     end
 
     def full_name
+      name
+    end
+
+    def internal_full_name
       name
     end
 
@@ -96,6 +100,10 @@ module Crystal
       @name = name
       @container = container
       @full_name = @container && !@container.is_a?(Program) ? "#{@container.full_name}::#{@name}" : @name
+    end
+
+    def internal_full_name
+      @full_name
     end
   end
 
