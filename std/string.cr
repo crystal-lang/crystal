@@ -105,6 +105,22 @@ class String
     String.from_cstr(new_string_buffer)
   end
 
+  def chomp
+    excess = 0
+    while (c = @c.ptr[length - 1 - excess]) == '\r' || c == '\n'
+      excess += 1
+    end
+
+    if excess == 0
+      self
+    else
+      new_string_buffer = Pointer.malloc(length + 1 - excess).as(Char)
+      new_string_buffer.memcpy(@c.ptr, length - 1)
+      new_string_buffer[length - excess] = '\0'
+      String.from_cstr(new_string_buffer)
+    end
+  end
+
   def empty?
     length == 0
   end

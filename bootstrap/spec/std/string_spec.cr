@@ -86,6 +86,13 @@ describe "String" do
     assert { "HELLO MAN!".capitalize.should eq("Hello man!") }
   end
 
+  describe "chomp" do
+    assert { "hello\n".chomp.should eq("hello") }
+    assert { "hello\r".chomp.should eq("hello") }
+    assert { "hello\r\n".chomp.should eq("hello") }
+    assert { "hello".chomp.should eq("hello") }
+  end
+
   describe "empty?" do
     assert { "a".empty?.should be_false }
     assert { "".empty?.should be_true }
