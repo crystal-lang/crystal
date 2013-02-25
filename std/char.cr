@@ -16,6 +16,10 @@ class Char
       ('A' <= self && self <= 'Z')
   end
 
+  def whitespace?
+    self == ' ' || self == '\t' || self == '\n' || self == '\v' || self == '\f' || self == '\r'
+  end
+
   def downcase
     if 'A' <= self && self <= 'Z'
       (self.ord + 32).chr
