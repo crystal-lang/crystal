@@ -2,6 +2,54 @@
 require "spec"
 
 describe "Array" do
+  describe "[]" do
+    it "gets on positive index" do
+      [1, 2, 3][1].should eq(2)
+    end
+
+    it "gets on negative index" do
+      [1, 2, 3][-1].should eq(3)
+    end
+
+    it "gets on inclusive range" do
+      [1, 2, 3, 4, 5, 6][1 .. 4].should eq([2, 3, 4, 5])
+    end
+
+    it "gets on inclusive range with negative indices" do
+      [1, 2, 3, 4, 5, 6][-5 .. -2].should eq([2, 3, 4, 5])
+    end
+
+    it "gets on exclusive range" do
+      [1, 2, 3, 4, 5, 6][1 ... 4].should eq([2, 3, 4])
+    end
+
+    it "gets on exclusive range with negative indices" do
+      [1, 2, 3, 4, 5, 6][-5 ... -2].should eq([2, 3, 4])
+    end
+
+    it "gets on empty range" do
+      [1, 2, 3][3 .. 1].should eq([])
+    end
+
+    it "gets with start and count" do
+      [1, 2, 3, 4, 5, 6][1, 3].should eq([2, 3, 4])
+    end
+  end
+
+  describe "[]=" do
+    it "sets on positive index" do
+      a = [1, 2, 3]
+      a[1] = 4
+      a[1].should eq(4)
+    end
+
+    it "sets on negative index" do
+      a = [1, 2, 3]
+      a[-1] = 4
+      a[2].should eq(4)
+    end
+  end
+
   describe "empty" do
     it "is empty" do
       [].empty?.should be_true
