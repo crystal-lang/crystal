@@ -128,4 +128,18 @@ describe "Array" do
       a.should eq([1, 2, 3, 4])
     end
   end
+
+  describe "delete" do
+    it "deletes many" do
+      a = [1, 2, 3, 1, 2, 3]
+      a.delete(2).should be_true
+      a.should eq([1, 3, 1, 3])
+    end
+
+    it "delete not found" do
+      a = [1, 2]
+      a.delete(4).should be_false
+      a.should eq([1, 2])
+    end
+  end
 end

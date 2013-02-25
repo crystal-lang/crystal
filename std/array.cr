@@ -101,6 +101,28 @@ generic class Array
     elem
   end
 
+  def delete(obj)
+    i1 = 0
+    i2 = 0
+    while i1 < @length
+      e = @buffer[i1]
+      unless obj == e
+        if i1 != i2
+          @buffer[i2] = e
+        end
+        i2 += 1
+      end
+
+      i1 += 1
+    end
+    if i2 != i1
+      @length -= (i1 - i2)
+      true
+    else
+      false
+    end
+  end
+
   def each
     length.times do |i|
       yield @buffer[i]
