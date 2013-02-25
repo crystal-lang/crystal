@@ -150,6 +150,12 @@ module Crystal
       elsif scan(/\\t/)
         @token.type = :STRING
         @token.value = "\t"
+      elsif scan(/\\v/)
+        @token.type = :STRING
+        @token.value = "\v"
+      elsif scan(/\\f/)
+        @token.type = :STRING
+        @token.value = "\f"
       elsif scan(/\\0/)
         @token.type = :STRING
         @token.value = "\0"
