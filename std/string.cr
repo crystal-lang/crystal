@@ -80,7 +80,7 @@ class String
     length.times do |i|
       new_string_buffer[i] = @c.ptr[i].downcase
     end
-    new_string_buffer[length + 1] = '\0'
+    new_string_buffer[length] = '\0'
     String.from_cstr(new_string_buffer)
   end
 
@@ -89,7 +89,19 @@ class String
     length.times do |i|
       new_string_buffer[i] = @c.ptr[i].upcase
     end
-    new_string_buffer[length + 1] = '\0'
+    new_string_buffer[length] = '\0'
+    String.from_cstr(new_string_buffer)
+  end
+
+  def capitalize
+    new_string_buffer = Pointer.malloc(length + 1).as(Char)
+    if length > 0
+      new_string_buffer[0] = @c.ptr[0].upcase
+      (length - 1).times do |i|
+        new_string_buffer[i + 1] = @c.ptr[i + 1].downcase
+      end
+    end
+    new_string_buffer[length] = '\0'
     String.from_cstr(new_string_buffer)
   end
 

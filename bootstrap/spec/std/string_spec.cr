@@ -73,9 +73,16 @@ describe "String" do
 
   describe "downcase" do
     assert { "HELLO!".downcase.should eq("hello!") }
+    assert { "HELLO MAN!".downcase.should eq("hello man!") }
   end
 
   describe "upcase" do
     assert { "hello!".upcase.should eq("HELLO!") }
+    assert { "hello man!".upcase.should eq("HELLO MAN!") }
+  end
+
+  describe "capitalize" do
+    assert { "HELLO!".capitalize.should eq("Hello!") }
+    assert { "HELLO MAN!".capitalize.should eq("Hello man!") }
   end
 end
