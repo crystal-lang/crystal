@@ -148,6 +148,8 @@ describe "Lexer" do
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'
+  it_lexes_char "'\\v'", '\v'
+  it_lexes_char "'\\f'", '\f'
   it_lexes_char "'\\0'", '\0'
   it_lexes_char "'\\0'", '\0'
   it_lexes_char "'\\''", '\''

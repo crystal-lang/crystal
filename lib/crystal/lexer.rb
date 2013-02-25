@@ -47,6 +47,12 @@ module Crystal
       elsif match = scan(/'\\t'/)
         @token.type = :CHAR
         @token.value = ?\t.ord
+      elsif match = scan(/'\\v'/)
+        @token.type = :CHAR
+        @token.value = ?\v.ord
+      elsif match = scan(/'\\f'/)
+        @token.type = :CHAR
+        @token.value = ?\f.ord
       elsif match = scan(/'\\0'/)
         @token.type = :CHAR
         @token.value = ?\0.ord
