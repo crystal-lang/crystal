@@ -84,6 +84,7 @@ describe "String" do
   describe "capitalize" do
     assert { "HELLO!".capitalize.should eq("Hello!") }
     assert { "HELLO MAN!".capitalize.should eq("Hello man!") }
+    assert { "".capitalize.should eq("") }
   end
 
   describe "chomp" do

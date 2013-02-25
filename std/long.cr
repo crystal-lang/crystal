@@ -12,7 +12,7 @@ class Long
   end
 
   def to_s
-    String.new(22) do |buffer|
+    String.new_with_capacity(22) do |buffer|
       C.sprintf(buffer, "%ld", self)
     end
   end

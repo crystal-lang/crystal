@@ -67,7 +67,7 @@ class Int
   end
 
   def to_s
-    String.new(12) do |buffer|
+    String.new_with_capacity(12) do |buffer|
       C.sprintf(buffer, "%d", self)
     end
   end

@@ -33,11 +33,20 @@ class String
     str.as(String)
   end
 
-  def self.new(capacity)
+  def self.new_with_capacity(capacity)
     str = Pointer.malloc(capacity + 5)
     buffer = str.as(String).cstr
     yield buffer
     str.as(Int).value = C.strlen(buffer)
+    str.as(String)
+  end
+
+  def self.new_with_length(length)
+    str = Pointer.malloc(length + 5)
+    buffer = str.as(String).cstr
+    yield buffer
+    buffer[length] = '\0'
+    str.as(Int).value = length
     str.as(String)
   end
 
@@ -69,40 +78,36 @@ class String
   end
 
   def [](start : Int, count : Int)
-    new_string_buffer = Pointer.malloc(count + 1).as(Char)
-    C.strncpy(new_string_buffer, @c.ptr + start, count)
-    new_string_buffer[count] = '\0'
-    String.from_cstr(new_string_buffer)
+    String.new_with_length(count) do |buffer|
+      C.strncpy(buffer, @c.ptr + start, count)
+    end
   end
 
   def downcase
-    new_string_buffer = Pointer.malloc(length + 1).as(Char)
-    length.times do |i|
-      new_string_buffer[i] = @c.ptr[i].downcase
+    String.new_with_length(length) do |buffer|
+      length.times do |i|
+        buffer[i] = @c.ptr[i].downcase
+      end
     end
-    new_string_buffer[length] = '\0'
-    String.from_cstr(new_string_buffer)
   end
 
   def upcase
-    new_string_buffer = Pointer.malloc(length + 1).as(Char)
-    length.times do |i|
-      new_string_buffer[i] = @c.ptr[i].upcase
+    String.new_with_length(length) do |buffer|
+      length.times do |i|
+        buffer[i] = @c.ptr[i].upcase
+      end
     end
-    new_string_buffer[length] = '\0'
-    String.from_cstr(new_string_buffer)
   end
 
   def capitalize
-    new_string_buffer = Pointer.malloc(length + 1).as(Char)
-    if length > 0
-      new_string_buffer[0] = @c.ptr[0].upcase
+    return self if length == 0
+
+    String.new_with_length(length) do |buffer|
+      buffer[0] = @c.ptr[0].upcase
       (length - 1).times do |i|
-        new_string_buffer[i + 1] = @c.ptr[i + 1].downcase
+        buffer[i + 1] = @c.ptr[i + 1].downcase
       end
     end
-    new_string_buffer[length] = '\0'
-    String.from_cstr(new_string_buffer)
   end
 
   def chomp
@@ -114,10 +119,7 @@ class String
     if excess == 0
       self
     else
-      new_string_buffer = Pointer.malloc(length + 1 - excess).as(Char)
-      new_string_buffer.memcpy(@c.ptr, length - excess)
-      new_string_buffer[length - excess] = '\0'
-      String.from_cstr(new_string_buffer)
+      self[0, length - excess]
     end
   end
 
@@ -135,10 +137,7 @@ class String
     if excess_right == 0 && excess_left == 0
       self
     else
-      new_string_buffer = Pointer.malloc(length + 1 - excess_left - excess_right).as(Char)
-      new_string_buffer.memcpy(@c.ptr + excess_left, length - excess_left - excess_right)
-      new_string_buffer[length - excess_left - excess_right] = '\0'
-      String.from_cstr(new_string_buffer)
+      self[excess_left, length - excess_left - excess_right]
     end
   end
 
@@ -151,10 +150,7 @@ class String
     if excess_right == 0
       self
     else
-      new_string_buffer = Pointer.malloc(length + 1 - excess_right).as(Char)
-      new_string_buffer.memcpy(@c.ptr, length - excess_right)
-      new_string_buffer[length - excess_right] = '\0'
-      String.from_cstr(new_string_buffer)
+      self[0, length - excess_right]
     end
   end
 
@@ -167,10 +163,7 @@ class String
     if excess_left == 0
       self
     else
-      new_string_buffer = Pointer.malloc(length + 1 - excess_left).as(Char)
-      new_string_buffer.memcpy(@c.ptr + excess_left, length - excess_left)
-      new_string_buffer[length - excess_left] = '\0'
-      String.from_cstr(new_string_buffer)
+      self[excess_left, length - excess_left]
     end
   end
 
