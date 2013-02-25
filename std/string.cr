@@ -115,7 +115,7 @@ class String
       self
     else
       new_string_buffer = Pointer.malloc(length + 1 - excess).as(Char)
-      new_string_buffer.memcpy(@c.ptr, length - 1)
+      new_string_buffer.memcpy(@c.ptr, length - excess)
       new_string_buffer[length - excess] = '\0'
       String.from_cstr(new_string_buffer)
     end
