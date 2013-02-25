@@ -91,6 +91,16 @@ generic class Array
     self[@length - 1]
   end
 
+  def delete_at(index : Int)
+    index += length if index < 0
+    return nil if index < 0 || index >= length
+
+    elem = @buffer[index]
+    (@buffer + index).memcpy(@buffer + index + 1, length - index - 1)
+    @length -= 1
+    elem
+  end
+
   def each
     length.times do |i|
       yield @buffer[i]

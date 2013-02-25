@@ -108,4 +108,24 @@ describe "Array" do
       a.index { |i| i > 3 }.should eq(-1)
     end
   end
+
+  describe "delete_at" do
+    it "deletes positive index" do
+      a = [1, 2, 3, 4]
+      a.delete_at(1).should eq(2)
+      a.should eq([1, 3, 4])
+    end
+
+    it "deletes negative index" do
+      a = [1, 2, 3, 4]
+      a.delete_at(-3).should eq(2)
+      a.should eq([1, 3, 4])
+    end
+
+    it "deletes out of bounds" do
+      a = [1, 2, 3, 4]
+      a.delete_at(4).should be_nil
+      a.should eq([1, 2, 3, 4])
+    end
+  end
 end
