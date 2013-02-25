@@ -16,6 +16,14 @@ class Char
       ('A' <= self && self <= 'Z')
   end
 
+  def upcase
+    if 'a' <= self && self <= 'z'
+      (self.ord - 32).chr
+    else
+      self
+    end
+  end
+
   def to_i
     ord
   end
