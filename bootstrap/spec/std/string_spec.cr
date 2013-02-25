@@ -85,4 +85,9 @@ describe "String" do
     assert { "HELLO!".capitalize.should eq("Hello!") }
     assert { "HELLO MAN!".capitalize.should eq("Hello man!") }
   end
+
+  describe "empty?" do
+    assert { "a".empty?.should be_false }
+    assert { "".empty?.should be_true }
+  end
 end

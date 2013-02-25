@@ -105,6 +105,10 @@ class String
     String.from_cstr(new_string_buffer)
   end
 
+  def empty?
+    length == 0
+  end
+
   def <=>(other : self)
     Object.same?(self, other) ? 0 : C.strcmp(@c.ptr, other)
   end
