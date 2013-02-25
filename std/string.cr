@@ -121,6 +121,27 @@ class String
     end
   end
 
+  def strip
+    excess_right = 0
+    while @c.ptr[length - 1 - excess_right].whitespace?
+      excess_right += 1
+    end
+
+    excess_left = 0
+    while @c.ptr[excess_left].whitespace?
+      excess_left += 1
+    end
+
+    if excess_right == 0 && excess_left == 0
+      self
+    else
+      new_string_buffer = Pointer.malloc(length + 1 - excess_left - excess_right).as(Char)
+      new_string_buffer.memcpy(@c.ptr + excess_left, length - excess_left - excess_right)
+      new_string_buffer[length - excess_left - excess_right] = '\0'
+      String.from_cstr(new_string_buffer)
+    end
+  end
+
   def empty?
     length == 0
   end

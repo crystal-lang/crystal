@@ -93,6 +93,11 @@ describe "String" do
     assert { "hello".chomp.should eq("hello") }
   end
 
+  describe "strip" do
+    assert { "  hello  \n\t\f\v\r".strip.should eq("hello") }
+    assert { "hello".strip.should eq("hello") }
+  end
+
   describe "empty?" do
     assert { "a".empty?.should be_false }
     assert { "".empty?.should be_true }
