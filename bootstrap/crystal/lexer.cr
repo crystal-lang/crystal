@@ -294,10 +294,16 @@ module Crystal
         case char1 = next_char
         when '\\'
           case char2 = next_char
+          when 'f'
+            @token.value = '\f'
           when 'n'
             @token.value = '\n'
+          when 'r'
+            @token.value = '\r'
           when 't'
             @token.value = '\t'
+          when 'v'
+            @token.value = '\v'
           when '0'
             @token.value = '\0'
           else
