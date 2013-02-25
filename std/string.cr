@@ -142,6 +142,38 @@ class String
     end
   end
 
+  def rstrip
+    excess_right = 0
+    while @c.ptr[length - 1 - excess_right].whitespace?
+      excess_right += 1
+    end
+
+    if excess_right == 0
+      self
+    else
+      new_string_buffer = Pointer.malloc(length + 1 - excess_right).as(Char)
+      new_string_buffer.memcpy(@c.ptr, length - excess_right)
+      new_string_buffer[length - excess_right] = '\0'
+      String.from_cstr(new_string_buffer)
+    end
+  end
+
+  def lstrip
+    excess_left = 0
+    while @c.ptr[excess_left].whitespace?
+      excess_left += 1
+    end
+
+    if excess_left == 0
+      self
+    else
+      new_string_buffer = Pointer.malloc(length + 1 - excess_left).as(Char)
+      new_string_buffer.memcpy(@c.ptr + excess_left, length - excess_left)
+      new_string_buffer[length - excess_left] = '\0'
+      String.from_cstr(new_string_buffer)
+    end
+  end
+
   def empty?
     length == 0
   end

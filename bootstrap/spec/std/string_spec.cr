@@ -98,6 +98,16 @@ describe "String" do
     assert { "hello".strip.should eq("hello") }
   end
 
+  describe "rstrip" do
+    assert { "  hello  ".rstrip.should eq("  hello") }
+    assert { "hello".rstrip.should eq("hello") }
+  end
+
+  describe "lstrip" do
+    assert { "  hello  ".lstrip.should eq("hello  ") }
+    assert { "hello".lstrip.should eq("hello") }
+  end
+
   describe "empty?" do
     assert { "a".empty?.should be_false }
     assert { "".empty?.should be_true }
