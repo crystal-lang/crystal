@@ -75,6 +75,24 @@ class String
     String.from_cstr(new_string_buffer)
   end
 
+  def downcase
+    new_string_buffer = Pointer.malloc(length + 1).as(Char)
+    length.times do |i|
+      new_string_buffer[i] = @c.ptr[i].downcase
+    end
+    new_string_buffer[length + 1] = '\0'
+    String.from_cstr(new_string_buffer)
+  end
+
+  def upcase
+    new_string_buffer = Pointer.malloc(length + 1).as(Char)
+    length.times do |i|
+      new_string_buffer[i] = @c.ptr[i].upcase
+    end
+    new_string_buffer[length + 1] = '\0'
+    String.from_cstr(new_string_buffer)
+  end
+
   def <=>(other : self)
     Object.same?(self, other) ? 0 : C.strcmp(@c.ptr, other)
   end
@@ -102,7 +120,7 @@ class String
     @length
   end
 
-  def chars
+  def each_char
     p = @c.ptr
     length.times do
       yield p.value
@@ -120,7 +138,7 @@ class String
 
   def hash
     h = 0
-    chars do |c|
+    each_char do |c|
       h = 31 * h + c.ord
     end
     h
