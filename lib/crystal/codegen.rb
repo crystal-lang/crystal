@@ -579,7 +579,7 @@ module Crystal
           @last = llvm_nil
         end
       end
-      else_value = @last unless node.else && (node.else.returns? || node.else.breaks? || (node.then.yields? && block_returns?))
+      else_value = @last unless node.else && (node.else.returns? || node.else.breaks? || (node.else.yields? && block_returns?))
       codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union && (!node.else || node.else.type)
       @builder.br exit_block
 
