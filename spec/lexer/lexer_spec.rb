@@ -120,6 +120,7 @@ describe Lexer do
   it_lexes_char "'a'", ?a.ord
   it_lexes_char "'\\n'", ?\n.ord
   it_lexes_char "'\\t'", ?\t.ord
+  it_lexes_char "'\\r'", ?\r.ord
   it_lexes_char "'\\0'", ?\0.ord
   it_lexes_char "'\\''", ?'.ord
   it_lexes_char "'\\\\'", "\\".ord
