@@ -96,7 +96,7 @@ generic class Array
     return nil if index < 0 || index >= length
 
     elem = @buffer[index]
-    (@buffer + index).memcpy(@buffer + index + 1, length - index - 1)
+    (@buffer + index).memmove(@buffer + index + 1, length - index - 1)
     @length -= 1
     elem
   end

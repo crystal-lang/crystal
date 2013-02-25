@@ -23,9 +23,20 @@ class Pointer
     (self + offset).value = value
   end
 
-  def memcpy(other : Pointer, count : Int)
-    count.times do |i|
-      self[i] = other[i]
+  def memcpy(source : Pointer, count : Int)
+    while (count -= 1) >= 0
+      self[count] = source[count]
+    end
+    self
+  end
+
+  def memmove(source : Pointer, count : Int)
+    if source.address < address
+      memcpy(source, count)
+    else
+      count.times do |i|
+        self[i] = source[i]
+      end
     end
     self
   end
