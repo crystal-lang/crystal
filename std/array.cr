@@ -125,11 +125,9 @@ generic class Array
 
   def &(other : Array)
     hash = other.each_with_object({}) { |obj, hash| hash[obj] = true }
-    ary = []
-    each do |obj|
+    each_with_object([]) do |obj, ary|
       ary << obj if hash[obj]
     end
-    ary
   end
 
   def |(other : Array)
