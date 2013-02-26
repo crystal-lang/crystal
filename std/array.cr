@@ -125,13 +125,15 @@ generic class Array
 
   def &(other : Array)
     hash = other.each_with_object({}) { |obj, hash| hash[obj] = true }
-    each_with_object([]) do |obj, ary|
+    ary = Array.new(Math.min(length, other.length))
+    each do |obj|
       ary << obj if hash[obj]
     end
+    ary
   end
 
   def |(other : Array)
-    ary = []
+    ary = Array.new(length + other.length)
     hash = {}
     each do |obj|
       ary << obj
