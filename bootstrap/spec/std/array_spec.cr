@@ -146,4 +146,8 @@ describe "Array" do
   describe "&" do
     assert { ([1, 2, 3] & [3, 2, 4]).should eq([2, 3]) }
   end
+
+  describe "|" do
+    assert { ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4]) }
+  end
 end

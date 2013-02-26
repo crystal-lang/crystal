@@ -132,6 +132,19 @@ generic class Array
     ary
   end
 
+  def |(other : Array)
+    ary = []
+    hash = {}
+    each do |obj|
+      ary << obj
+      hash[obj] = true
+    end
+    other.each do |obj|
+      ary << obj unless hash[obj]
+    end
+    ary
+  end
+
   def each
     length.times do |i|
       yield @buffer[i]
