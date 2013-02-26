@@ -142,4 +142,8 @@ describe "Array" do
       a.should eq([1, 2])
     end
   end
+
+  describe "&" do
+    assert { ([1, 2, 3] & [3, 2, 4]).should eq([2, 3]) }
+  end
 end

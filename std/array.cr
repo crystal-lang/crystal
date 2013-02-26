@@ -123,6 +123,15 @@ generic class Array
     end
   end
 
+  def &(other : Array)
+    hash = other.each_with_object({}) { |obj, hash| hash[obj] = true }
+    ary = []
+    each do |obj|
+      ary << obj if hash[obj]
+    end
+    ary
+  end
+
   def each
     length.times do |i|
       yield @buffer[i]
