@@ -154,4 +154,12 @@ describe "Array" do
   describe "-" do
     assert { ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5]) }
   end
+
+  describe "clear" do
+    assert do
+      a = [1, 2, 3]
+      a.clear
+      a.should eq([])
+    end
+  end
 end

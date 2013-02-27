@@ -154,6 +154,10 @@ generic class Array
     ary
   end
 
+  def clear
+    @length = 0
+  end
+
   def each
     length.times do |i|
       yield @buffer[i]
