@@ -150,4 +150,8 @@ describe "Array" do
   describe "|" do
     assert { ([1, 2, 3] | [5, 3, 2, 4]).should eq([1, 2, 3, 5, 4]) }
   end
+
+  describe "-" do
+    assert { ([1, 2, 3, 4, 5] - [4, 2]).should eq([1, 3, 5]) }
+  end
 end

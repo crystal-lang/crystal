@@ -145,6 +145,15 @@ generic class Array
     ary
   end
 
+  def -(other : Array)
+    ary = Array.new(length - other.length)
+    hash = other.each_with_object({}) { |obj, hash| hash[obj] = true }
+    each do |obj|
+      ary << obj unless hash[obj]
+    end
+    ary
+  end
+
   def each
     length.times do |i|
       yield @buffer[i]
