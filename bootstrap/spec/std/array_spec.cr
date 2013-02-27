@@ -162,4 +162,26 @@ describe "Array" do
       a.should eq([])
     end
   end
+
+  describe "compact" do
+    assert do
+      a = [1, nil, 2, nil, 3]
+      b = a.compact.should eq([1, 2, 3])
+      a.should eq([1, nil, 2, nil, 3])
+    end
+  end
+
+  describe "compact!" do
+    it "returns true if removed" do
+      a = [1, nil, 2, nil, 3]
+      b = a.compact!.should be_true
+      a.should eq([1, 2, 3])
+    end
+
+    it "returns false if not removed" do
+      a = [1]
+      b = a.compact!.should be_false
+      a.should eq([1])
+    end
+  end
 end

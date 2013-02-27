@@ -154,6 +154,14 @@ generic class Array
     ary
   end
 
+  def compact
+    select { |x| !x.nil? }
+  end
+
+  def compact!
+    delete nil
+  end
+
   def clear
     @length = 0
   end
