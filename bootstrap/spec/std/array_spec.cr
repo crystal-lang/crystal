@@ -184,4 +184,12 @@ describe "Array" do
       a.should eq([1])
     end
   end
+
+  describe "flatten" do
+    assert do
+      a = [[1, 2], 3, [4, [5, 6]]]
+      a.flatten.should eq([1, 2, 3, 4, 5, 6])
+      a.should eq([[1, 2], 3, [4, [5, 6]]])
+    end
+  end
 end

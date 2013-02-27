@@ -162,6 +162,12 @@ generic class Array
     delete nil
   end
 
+  def flatten
+    ary = Array.new(length)
+    flatten_append ary, self
+    ary
+  end
+
   def clear
     @length = 0
   end
@@ -244,6 +250,16 @@ generic class Array
   def resize_to_double_capacity
     @capacity *= 2
     @buffer = @buffer.realloc(@capacity)
+  end
+
+  def flatten_append(target, source : Array)
+    source.each do |obj|
+      flatten_append target, obj
+    end
+  end
+
+  def flatten_append(target, source)
+    target.push source
   end
 
   def swap(i, j)
