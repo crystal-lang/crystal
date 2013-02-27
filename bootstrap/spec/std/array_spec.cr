@@ -192,4 +192,18 @@ describe "Array" do
       a.should eq([[1, 2], 3, [4, [5, 6]]])
     end
   end
+
+  describe "flatten!" do
+    it "returns true if modifications were made" do
+      a = [[1, 2], 3, [4, [5, 6]]]
+      a.flatten!.should be_true
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "returns false if no modifications were made" do
+      a = [1, 2]
+      a.flatten!.should be_false
+      a.should eq([1, 2])
+    end
+  end
 end

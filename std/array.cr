@@ -175,8 +175,16 @@ generic class Array
 
   def flatten
     ary = Array.new(length)
-    flatten_append ary, self
+    flatten_append ary, self, false
     ary
+  end
+
+  def flatten!
+    ary = Array.new(length)
+    modified = flatten_append ary, self, false
+    @length = ary.length
+    @buffer.memcpy(ary.buffer, ary.length)
+    modified
   end
 
   def clear
@@ -263,14 +271,16 @@ generic class Array
     @buffer = @buffer.realloc(@capacity)
   end
 
-  def flatten_append(target, source : Array)
+  def flatten_append(target, source : Array, modified)
     source.each do |obj|
-      flatten_append target, obj
+      modified |= flatten_append target, obj, true
     end
+    modified
   end
 
-  def flatten_append(target, source)
+  def flatten_append(target, source, modified)
     target.push source
+    false
   end
 
   def swap(i, j)
