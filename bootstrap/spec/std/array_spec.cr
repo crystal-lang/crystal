@@ -206,4 +206,20 @@ describe "Array" do
       a.should eq([1, 2])
     end
   end
+
+  describe "map" do
+    assert do
+      a = [1, 2, 3]
+      a.map { |x| x * 2 }.should eq([2, 4, 6])
+      a.should eq([1, 2, 3])
+    end
+  end
+
+  describe "map!" do
+    assert do
+      a = [1, 2, 3]
+      a.map! { |x| x * 2 }
+      a.should eq([2, 4, 6])
+    end
+  end
 end

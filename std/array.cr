@@ -187,6 +187,13 @@ generic class Array
     modified
   end
 
+  def map!
+    length.times do |i|
+      @buffer[i] = yield @buffer[i]
+    end
+    nil
+  end
+
   def clear
     @length = 0
   end
