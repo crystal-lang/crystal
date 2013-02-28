@@ -236,4 +236,13 @@ describe "Array" do
       a.should eq([])
     end
   end
+
+  describe "unshift" do
+    assert do
+      a = [2, 3]
+      expected = [1, 2, 3]
+      a.unshift(1).should eq(expected)
+      a.should eq(expected)
+    end
+  end
 end

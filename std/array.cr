@@ -87,6 +87,14 @@ generic class Array
     value
   end
 
+  def unshift(obj)
+    check_needs_resize
+    (@buffer + 1).memmove(@buffer, @length)
+    @buffer[0] = obj
+    @length += 1
+    self
+  end
+
   def <<(value)
     push(value)
   end
