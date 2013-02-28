@@ -222,4 +222,18 @@ describe "Array" do
       a.should eq([2, 4, 6])
     end
   end
+
+  describe "shift" do
+    it "shifts when non empty" do
+      a = [1, 2, 3]
+      a.shift.should eq(1)
+      a.should eq([2, 3])
+    end
+
+    it "shifts when empty" do
+      a = []
+      a.shift.should be_nil
+      a.should eq([])
+    end
+  end
 end

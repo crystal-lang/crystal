@@ -79,6 +79,14 @@ generic class Array
     @buffer[@length]
   end
 
+  def shift
+    return nil if @length == 0
+    value = @buffer[0]
+    @length -=1
+    @buffer.memmove(@buffer + 1, @length)
+    value
+  end
+
   def <<(value)
     push(value)
   end
