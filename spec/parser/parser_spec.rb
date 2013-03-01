@@ -166,10 +166,14 @@ describe Parser do
 
   [:'+', :'-', :'*', :'/', :'%', :'|', :'&', :'^', :'**', :<<, :>>].each do |op|
     it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, Call.new("a".var, op.to_sym, [1.int]))]
+    it_parses "a = 1; a[2] #{op}= 3", [Assign.new("a".var, 1.int), Call.new("a".var, :"[]=", [2.int, Call.new(Call.new("a".var, :"[]", [2.int]), op.to_sym, [3.int])])]
   end
 
   it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int), And.new("a".var, Assign.new("a".var, 1.int))]
   it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int), Or.new("a".var, Assign.new("a".var, 1.int))]
+
+  it_parses "a = 1; a[2] &&= 3", [Assign.new("a".var, 1.int), And.new(Call.new("a".var, :"[]", [2.int]), Call.new("a".var, :"[]=", [2.int, 3.int]))]
+  it_parses "a = 1; a[2] ||= 3", [Assign.new("a".var, 1.int), Or.new(Call.new("a".var, :"[]", [2.int]), Call.new("a".var, :"[]=", [2.int, 3.int]))]
 
   it_parses "if foo; 1; end", If.new("foo".call, 1.int)
   it_parses "if foo\n1\nend", If.new("foo".call, 1.int)
@@ -178,7 +182,7 @@ describe Parser do
   it_parses "if foo; 1; elsif bar; 2; else 3; end", If.new("foo".call, 1.int, If.new("bar".call, 2.int, 3.int))
 
   it_parses "include Foo", Include.new("Foo".ident)
-  it_parses "include Foo\nif true; end", [Include.new("Foo".ident), If.new(true.bool)], focus: true
+  it_parses "include Foo\nif true; end", [Include.new("Foo".ident), If.new(true.bool)]
 
   it_parses "unless foo; 1; end", If.new("foo".call.not, 1.int)
   it_parses "unless foo; 1; else; 2; end", If.new("foo".call.not, 1.int, 2.int)

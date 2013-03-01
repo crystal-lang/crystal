@@ -156,14 +156,13 @@ module Crystal
           end
 
           # Rewrite 'a += b' as 'a = a + b'
-
-          if atomic.is_a?(Call) && !@def_vars.last.include?(atomic.name)
+          if atomic.is_a?(Call) && atomic.name != :"[]" && !@def_vars.last.include?(atomic.name)
             raise "'#{@token.type}' before definition of '#{atomic.name}'"
 
             atomic = Var.new(atomic.name)
           end
 
-          push_var atomic
+          push_var atomic if atomic.is_a?(Var)
 
           method = @token.type.to_s[0 .. -2].to_sym
           method_column_number = @token.column_number
@@ -173,19 +172,38 @@ module Crystal
           next_token_skip_space_or_newline
 
           value = parse_op_assign
-          case token_type
-          when :'&&='
-            assign = Assign.new(atomic, value)
-            assign.location = location
-            atomic = And.new(atomic, assign)
-          when :'||='
-            assign = Assign.new(atomic, value)
-            assign.location = location
-            atomic = Or.new(atomic, assign)
+          if atomic.is_a?(Call) && atomic.name == :"[]"
+            obj = atomic.obj
+
+            case token_type
+            when :'&&='
+              assign = Call.new(obj, :"[]=", atomic.args + [value], nil, method_column_number)
+              assign.location = location
+              atomic = And.new(atomic, assign)
+            when :'||='
+              assign = Call.new(obj, :"[]=", atomic.args + [value], nil, method_column_number)
+              assign.location = location
+              atomic = Or.new(atomic, assign)
+            else
+              call = Call.new(atomic, method, [value], nil, method_column_number)
+              call.location = location
+              atomic = Call.new(obj, :"[]=", atomic.args + [call], nil, method_column_number)
+            end
           else
-            call = Call.new(atomic, method, [value], nil, method_column_number)
-            call.location = location
-            atomic = Assign.new(atomic, call)
+            case token_type
+            when :'&&='
+              assign = Assign.new(atomic, value)
+              assign.location = location
+              atomic = And.new(atomic, assign)
+            when :'||='
+              assign = Assign.new(atomic, value)
+              assign.location = location
+              atomic = Or.new(atomic, assign)
+            else
+              call = Call.new(atomic, method, [value], nil, method_column_number)
+              call.location = location
+              atomic = Assign.new(atomic, call)
+            end
           end
         else
           break
@@ -1580,7 +1598,14 @@ module Crystal
     end
 
     def can_be_assigned?(node)
-      node.is_a?(Var) || node.is_a?(InstanceVar) || node.is_a?(Ident) || node.is_a?(Global) || (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
+      node.is_a?(Var) ||
+        node.is_a?(InstanceVar) ||
+        node.is_a?(Ident) ||
+        node.is_a?(Global) ||
+          (node.is_a?(Call) &&
+            (node.obj.nil? && node.args.length == 0 && node.block.nil?) ||
+              node.name == :"[]"
+          )
     end
 
     def check_maybe_recursive(name)
