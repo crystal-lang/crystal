@@ -175,14 +175,18 @@ module Crystal
           value = parse_op_assign
           case token_type
           when :'&&='
-            call = And.new(atomic, value)
+            assign = Assign.new(atomic, value)
+            assign.location = location
+            atomic = And.new(atomic, assign)
           when :'||='
-            call = Or.new(atomic, value)
+            assign = Assign.new(atomic, value)
+            assign.location = location
+            atomic = Or.new(atomic, assign)
           else
             call = Call.new(atomic, method, [value], nil, method_column_number)
+            call.location = location
+            atomic = Assign.new(atomic, call)
           end
-          call.location = location
-          atomic = Assign.new(atomic, call)
         else
           break
         end

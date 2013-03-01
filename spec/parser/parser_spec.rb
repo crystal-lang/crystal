@@ -168,8 +168,8 @@ describe Parser do
     it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, Call.new("a".var, op.to_sym, [1.int]))]
   end
 
-  it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, And.new("a".var, 1.int))]
-  it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, Or.new("a".var, 1.int))]
+  it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int), And.new("a".var, Assign.new("a".var, 1.int))]
+  it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int), Or.new("a".var, Assign.new("a".var, 1.int))]
 
   it_parses "if foo; 1; end", If.new("foo".call, 1.int)
   it_parses "if foo\n1\nend", If.new("foo".call, 1.int)
