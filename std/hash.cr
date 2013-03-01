@@ -28,9 +28,21 @@ generic class Hash
   end
 
   def [](key)
+    fetch key
+  end
+
+  def fetch(key)
+    fetch key, nil
+  end
+
+  def fetch(key, default)
+    fetch(key) { default }
+  end
+
+  def fetch(key)
     index = bucket_index key
     bucket = @buckets[index]
-    return nil unless bucket
+    return yield key unless bucket
 
     bucket.each do |entry|
       if entry.key == key
@@ -38,7 +50,7 @@ generic class Hash
       end
     end
 
-    nil
+    yield key
   end
 
   def length
@@ -61,6 +73,14 @@ generic class Hash
     keys = []
     each { |key| keys << key }
     keys
+  end
+
+  def ==(other : self)
+    return false unless length == other.length
+    each do |key, value|
+      return false unless other[key] == value
+    end
+    true
   end
 
   def to_s
