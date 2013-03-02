@@ -123,11 +123,15 @@ generic class Array
   end
 
   def delete(obj)
+    delete_if { |e| e == obj }
+  end
+
+  def delete_if
     i1 = 0
     i2 = 0
     while i1 < @length
       e = @buffer[i1]
-      unless obj == e
+      unless yield e
         if i1 != i2
           @buffer[i2] = e
         end
