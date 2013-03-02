@@ -592,4 +592,26 @@ describe 'Code gen: block' do
       end
     )).to_i.should eq(2)
   end
+
+  it "allows modifying yielded value (with literal)" do
+    run(%q(
+      def foo
+        yield 1
+      end
+
+      foo { |x| x = 2; x }
+    )).to_i.should eq(2)
+  end
+
+  it "allows modifying yielded value (with variable)" do
+    run(%q(
+      def foo
+        a = 1
+        yield a
+        a
+      end
+
+      foo { |x| x = 2; x }
+    )).to_i.should eq(1)
+  end
  end

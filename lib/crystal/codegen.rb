@@ -344,7 +344,7 @@ module Crystal
       var = @vars[node.name]
       if var[:type] == node.type
         @last = var[:ptr]
-        @last = @builder.load(@last, node.name) unless (var[:is_arg] || var[:type].union?)
+        @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
       elsif node.type.union?
         @last = var[:ptr]
       else
@@ -859,7 +859,7 @@ module Crystal
         if owner && owner.passed_as_self?
           @type = owner
           args_base_index = 1
-          @vars['self'] = { ptr: call_args[0], type: owner, is_arg: true }
+          @vars['self'] = { ptr: call_args[0], type: owner, treated_as_pointer: true }
         else
           args_base_index = 0
         end
@@ -944,8 +944,12 @@ module Crystal
         block = context[:block]
 
         block.args.each_with_index do |arg, i|
-          accept(node.exps[i])
-          new_vars[arg.name] = { ptr: @last, type: arg.type, is_arg: true }
+          exp = node.exps[i]
+          exp.accept self
+
+          copy = alloca exp.llvm_type, "block_#{arg.name}"
+          codegen_assign copy, exp.type, exp.type, @last
+          new_vars[arg.name] = { ptr: copy, type: arg.type }
         end
 
         old_vars = @vars
@@ -1046,7 +1050,7 @@ module Crystal
 
         args.each_with_index do |arg, i|
           if self_type && i == 0 || target_def.body.is_a?(Primitive)
-            @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, is_arg: true }
+            @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
           else
             ptr = alloca(arg.llvm_type, arg.name)
             @vars[arg.name] = { ptr: ptr, type: arg.type }
@@ -1115,11 +1119,11 @@ module Crystal
         @vars = old_vars.clone
         arg_values_base_index = 0
         if node.obj && node.obj.type.passed_as_self?
-          @vars['%self'] = { ptr: arg_values[0], type: arg_types[0], is_arg: true }
+          @vars['%self'] = { ptr: arg_values[0], type: arg_types[0], treated_as_pointer: true }
           arg_values_base_index = 1
         end
         0.upto(call.args.length - 1) do |i|
-          @vars["%arg#{i}"] = { ptr: arg_values[i + arg_values_base_index], type: arg_types[i + 1], is_arg: true }
+          @vars["%arg#{i}"] = { ptr: arg_values[i + arg_values_base_index], type: arg_types[i + 1], treated_as_pointer: true }
         end
         accept(call)
         @vars = old_vars
