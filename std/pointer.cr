@@ -1,4 +1,8 @@
+require "comparable"
+
 class Pointer
+  include Comparable
+
   def nil?
     address == 0
   end
@@ -7,8 +11,8 @@ class Pointer
     self + (-other)
   end
 
-  def ==(other : Pointer)
-    address == other.address
+  def <=>(other : self)
+    address - other.address
   end
 
   def ==(other)
