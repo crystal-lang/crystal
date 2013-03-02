@@ -120,5 +120,12 @@ describe "String" do
       assert { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(',').should eq(["foo"]) }
     end
+
+    describe "by string" do
+      assert { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz"]) }
+      assert { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
+      assert { "foo".split(":-").should eq(["foo"]) }
+      assert { "foo".split("").should eq(["f", "o", "o"]) }
+    end
   end
 end

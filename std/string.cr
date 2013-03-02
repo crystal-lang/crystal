@@ -209,6 +209,34 @@ class String
     end
     ary
   end
+
+  def split(separator : String)
+    ary = []
+    index = 0
+    buffer = @c.ptr
+    separator_length = separator.length
+
+    # Special case: return all chars as strings
+    if separator_length == 0
+      each_char do |c|
+        ary.push c.to_s
+      end
+      return ary
+    end
+
+    i = 0
+    stop = length - separator.length + 1
+    while i < stop
+      if (buffer + i).memcmp(separator.cstr, separator_length)
+        ary.push String.from_cstr(buffer + index, i - index)
+        index = i + separator_length
+        i += separator_length - 1
+      end
+      i += 1
+    end
+    if index != length
+        ary.push String.from_cstr(buffer + index, length - index)
+    end
     ary
   end
 
