@@ -21,4 +21,15 @@ describe "Pointer" do
       p1[3].should eq(2)
     end
   end
+
+  describe "memcmp" do
+    assert do
+      p1 = Pointer.malloc(4) { |i| i }
+      p2 = Pointer.malloc(4) { |i| i }
+      p3 = Pointer.malloc(4) { |i| i + 1 }
+
+      p1.memcmp(p2, 4).should be_true
+      p1.memcmp(p3, 4).should be_false
+    end
+  end
 end

@@ -41,6 +41,13 @@ class Pointer
     self
   end
 
+  def memcmp(other : Pointer, count : Int)
+    count.times do |i|
+      return false unless self[i] == other[i]
+    end
+    true
+  end
+
   def map(times)
     Array.new(times) { |i| yield self[i] }
   end
