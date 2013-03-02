@@ -245,4 +245,20 @@ describe "Array" do
       a.should eq(expected)
     end
   end
+
+  describe "insert" do
+    it "inserts with positive index" do
+      a = [1, 3, 4]
+      expected = [1, 2, 3, 4]
+      a.insert(1, 2).should eq(expected)
+      a.should eq(expected)
+    end
+
+    it "inserts with negative index" do
+      a = [1, 3, 4]
+      expected = [1, 2, 3, 4]
+      a.insert(-2, 2).should eq(expected)
+      a.should eq(expected)
+    end
+  end
 end

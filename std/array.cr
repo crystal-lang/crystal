@@ -88,11 +88,7 @@ generic class Array
   end
 
   def unshift(obj)
-    check_needs_resize
-    (@buffer + 1).memmove(@buffer, @length)
-    @buffer[0] = obj
-    @length += 1
-    self
+    insert 0, obj
   end
 
   def <<(value)
@@ -105,6 +101,15 @@ generic class Array
 
   def last
     self[@length - 1]
+  end
+
+  def insert(index : Int, obj)
+    check_needs_resize
+    index += length if index < 0
+    (@buffer + index + 1).memmove(@buffer + index, length - index)
+    @buffer[index] = obj
+    @length += 1
+    self
   end
 
   def delete_at(index : Int)
