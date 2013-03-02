@@ -113,4 +113,11 @@ describe "String" do
     assert { "a".empty?.should be_false }
     assert { "".empty?.should be_true }
   end
+
+  describe "split" do
+    describe "by char" do
+      assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz"]) }
+      assert { "foo".split(',').should eq(["foo"]) }
+    end
+  end
 end

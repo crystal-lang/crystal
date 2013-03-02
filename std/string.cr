@@ -194,6 +194,20 @@ class String
     str.inspect
   end
 
+  def split(separator : Char)
+    ary = []
+    index = 0
+    buffer = @c.ptr
+    length.times do |i|
+      if buffer[i] == separator
+        ary.push String.from_cstr(buffer + index, i - index)
+        index = i + 1
+      end
+    end
+    ary.push self if ary.empty?
+    ary
+  end
+
   def length
     @length
   end
