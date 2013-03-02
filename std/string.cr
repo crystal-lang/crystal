@@ -202,6 +202,14 @@ class String
     -1
   end
 
+  def index(c : String, offset = 0)
+    while offset < length
+      return offset if (cstr + offset).memcmp(c.cstr, c.length)
+      offset += 1
+    end
+    -1
+  end
+
   def split(separator : Char)
     ary = []
     index = 0

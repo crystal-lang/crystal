@@ -124,6 +124,16 @@ describe "String" do
         assert { "foo".index('g', 1).should eq(-1) }
       end
     end
+
+    describe "by string" do
+      assert { "foo bar".index("o b").should eq(2) }
+      assert { "foo".index("fg").should eq(-1) }
+
+      describe "with offset" do
+        assert { "foobarbaz".index("ba", 4).should eq(6) }
+        assert { "foo".index("ba", 1).should eq(-1) }
+      end
+    end
   end
 
   describe "split" do
