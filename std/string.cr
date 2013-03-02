@@ -195,6 +195,7 @@ class String
   end
 
   def index(c : Char, offset = 0)
+    offset += length if offset < 0
     while offset < length
       return offset if cstr[offset] == c
       offset += 1
@@ -203,6 +204,7 @@ class String
   end
 
   def index(c : String, offset = 0)
+    offset += length if offset < 0
     while offset < length
       return offset if (cstr + offset).memcmp(c.cstr, c.length)
       offset += 1
