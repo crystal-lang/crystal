@@ -114,6 +114,18 @@ describe "String" do
     assert { "".empty?.should be_true }
   end
 
+  describe "index" do
+    describe "by char" do
+      assert { "foo".index('o').should eq(1) }
+      assert { "foo".index('g').should eq(-1) }
+
+      describe "with offset" do
+        assert { "foobarbaz".index('a', 5).should eq(7) }
+        assert { "foo".index('g', 1).should eq(-1) }
+      end
+    end
+  end
+
   describe "split" do
     describe "by char" do
       assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz"]) }

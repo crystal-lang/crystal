@@ -194,6 +194,14 @@ class String
     str.inspect
   end
 
+  def index(c : Char, offset = 0)
+    while offset < length
+      return offset if cstr[offset] == c
+      offset += 1
+    end
+    -1
+  end
+
   def split(separator : Char)
     ary = []
     index = 0
