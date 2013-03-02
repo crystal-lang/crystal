@@ -604,6 +604,9 @@ module Crystal
           check :IDENT
           arg_name = @token.value.to_s
 
+          default_value = nil
+          type_restriction = nil
+
           next_token_skip_space_or_newline
           case @token.type
           when :"="
@@ -617,9 +620,6 @@ module Crystal
             else
               type_restriction = parse_ident
             end
-          else
-            default_value = nil
-            type_restriction = nil
           end
 
           args << Arg.new(arg_name, default_value, type_restriction)
@@ -634,6 +634,9 @@ module Crystal
           check :IDENT
           arg_name = @token.value.to_s
 
+          default_value = nil
+          type_restriction = nil
+
           next_token_skip_space
           case @token.type
           when :"="
@@ -647,9 +650,6 @@ module Crystal
             else
               type_restriction = parse_ident
             end
-          else
-            default_value = nil
-            type_restriction = nil
           end
 
           args << Arg.new(arg_name, default_value, type_restriction)
