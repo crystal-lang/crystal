@@ -204,7 +204,11 @@ class String
         index = i + 1
       end
     end
-    ary.push self if ary.empty?
+    if index != length
+      ary.push String.from_cstr(buffer + index, length - index)
+    end
+    ary
+  end
     ary
   end
 

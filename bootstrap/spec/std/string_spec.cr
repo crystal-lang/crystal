@@ -117,6 +117,7 @@ describe "String" do
   describe "split" do
     describe "by char" do
       assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz"]) }
+      assert { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(',').should eq(["foo"]) }
     end
   end
