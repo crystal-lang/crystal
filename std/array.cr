@@ -207,8 +207,7 @@ generic class Array
   def flatten!
     ary = Array.new(length)
     modified = flatten_append ary, self, false
-    @length = ary.length
-    @buffer.memcpy(ary.buffer, ary.length)
+    replace ary
     modified
   end
 
@@ -217,6 +216,13 @@ generic class Array
       @buffer[i] = yield @buffer[i]
     end
     nil
+  end
+
+  def replace(other : Array)
+    @length = other.length
+    resize_to_capacity(@length) if @length > @capacity
+    @buffer.memcpy(other.buffer, other.length)
+    self
   end
 
   def clear
@@ -295,11 +301,11 @@ generic class Array
   # private
 
   def check_needs_resize
-    resize_to_double_capacity if @length == @capacity
+    resize_to_capacity(@capacity * 2) if @length == @capacity
   end
 
-  def resize_to_double_capacity
-    @capacity *= 2
+  def resize_to_capacity(capacity)
+    @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
   end
 
