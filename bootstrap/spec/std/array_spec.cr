@@ -269,4 +269,20 @@ describe "Array" do
       a.should eq(expected)
     end
   end
+
+  describe "reverse" do
+    assert do
+      a = [1, 2, 3]
+      a.reverse.should eq([3, 2, 1])
+      a.should eq([1, 2, 3])
+    end
+  end
+
+  describe "reverse!" do
+    assert do
+      a = [1, 2, 3, 4, 5]
+      a.reverse!
+      a.should eq([5, 4, 3, 2, 1])
+    end
+  end
 end

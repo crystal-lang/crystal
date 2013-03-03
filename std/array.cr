@@ -225,12 +225,43 @@ generic class Array
     self
   end
 
+  def reverse
+    ary = Array.new(length)
+    i = 0
+    reverse_each do |obj|
+      ary.buffer[i] = obj
+      i += 1
+    end
+    ary.length = length
+    ary
+  end
+
+  def reverse!
+    i = 0
+    j = length - 1
+    while i != j
+      tmp = @buffer[i]
+      @buffer[i] = @buffer[j]
+      @buffer[j] = tmp
+      i += 1
+      j -= 1
+    end
+    self
+  end
+
   def clear
     @length = 0
   end
 
   def each
     length.times do |i|
+      yield @buffer[i]
+    end
+    self
+  end
+
+  def reverse_each
+    (length - 1).downto(0) do |i|
       yield @buffer[i]
     end
     self
