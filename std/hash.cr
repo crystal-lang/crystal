@@ -36,7 +36,17 @@ generic class Hash
   end
 
   def fetch(key, default)
-    fetch(key) { default }
+    index = bucket_index key
+    bucket = @buckets[index]
+    return default unless bucket
+
+    bucket.each do |entry|
+      if entry.key == key
+        return entry.value
+      end
+    end
+
+    default
   end
 
   def fetch(key)
