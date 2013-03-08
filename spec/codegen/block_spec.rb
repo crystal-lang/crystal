@@ -614,4 +614,21 @@ describe 'Code gen: block' do
       foo { |x| x = 2; x }
     )).to_i.should eq(1)
   end
+
+  pending "it yields nil from another call" do
+    run(%q(
+      def foo(key, default)
+        foo(key) { default }
+      end
+
+      def foo(key)
+        if !(true)
+          return yield key
+        end
+        yield key
+      end
+
+      foo(1, nil)
+    ))
+  end
  end
