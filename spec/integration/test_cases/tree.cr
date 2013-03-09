@@ -22,7 +22,7 @@ class Node
 end
 
 root = Node.new('$')
-"crystalrocks!".chars do |c|
+"crystalrocks!".each_char do |c|
   root.add c
 end
 
