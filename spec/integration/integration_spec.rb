@@ -4,6 +4,11 @@ describe "integration" do
   COMPILER = File.expand_path("../../../bin/crystal",  __FILE__)
   SPECS = File.expand_path("../../../spec/crystal/crystal_spec.cr",  __FILE__)
 
+  Dir[File.expand_path("../pending/**/*.cr",  __FILE__)].each do |file|
+    pending "compiles #{File.basename file}", integration: true do
+    end
+  end
+
   Dir[File.expand_path("../test_cases/**/*.cr",  __FILE__)].each do |file|
     it "compiles #{File.basename file}", integration: true do
       first_line = File.open(file, &:readline)
