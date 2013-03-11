@@ -153,4 +153,18 @@ describe "String" do
       assert { "foo".split("").should eq(["f", "o", "o"]) }
     end
   end
+
+  describe "starts_with?" do
+    assert { "foobar".starts_with?("foo").should be_true }
+    assert { "foobar".starts_with?("").should be_true }
+    assert { "foobar".starts_with?("foobarbaz").should be_false }
+    assert { "foobar".starts_with?("foox").should be_false }
+  end
+
+  describe "ends_with?" do
+    assert { "foobar".ends_with?("bar").should be_true }
+    assert { "foobar".ends_with?("").should be_true }
+    assert { "foobar".ends_with?("foobarbaz").should be_false }
+    assert { "foobar".ends_with?("xbar").should be_false }
+  end
 end

@@ -275,7 +275,13 @@ class String
   end
 
   def starts_with?(str)
+    return false if str.length > length
     C.strncmp(cstr, str, str.length) == 0
+  end
+
+  def ends_with?(str)
+    return false if str.length > length
+    C.strncmp(cstr + length - str.length, str, str.length) == 0
   end
 
   def hash
