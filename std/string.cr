@@ -212,6 +212,14 @@ class String
     -1
   end
 
+  def includes?(c : Char)
+    index(c) >= 0
+  end
+
+  def includes?(str : String)
+    index(str) >= 0
+  end
+
   def split(separator : Char)
     ary = []
     index = 0

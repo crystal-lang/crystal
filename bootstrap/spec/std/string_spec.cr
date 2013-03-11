@@ -139,6 +139,19 @@ describe "String" do
     end
   end
 
+  describe "includes?" do
+    describe "by char" do
+      assert { "foo".includes?('o').should be_true }
+      assert { "foo".includes?('g').should be_false }
+    end
+
+    describe "by string" do
+      assert { "foo bar".includes?("o b").should be_true }
+      assert { "foo".includes?("fg").should be_false }
+      assert { "foo".includes?("").should be_true }
+    end
+  end
+
   describe "split" do
     describe "by char" do
       assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz"]) }
