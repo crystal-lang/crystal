@@ -8,6 +8,6 @@ module Crystal
   GENERIC = ENV['GENERIC'] != '0'
 end
 
-Dir["#{File.expand_path('../',  __FILE__)}/**/*.rb"].each do |filename|
+Dir["#{File.expand_path('../',  __FILE__)}/**/*.rb"].sort.each do |filename|
   require filename
 end
