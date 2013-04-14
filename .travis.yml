@@ -1,4 +1,4 @@
 language: ruby
 before_install:
  - sudo apt-get update -qq
- - sudo apt-get install -qq llvm-3.1-dev
+ - sudo apt-get install -qq llvm-3.1-dev llvm
