@@ -192,7 +192,7 @@ module Crystal
         end
       else
         type = ObjectType.new node.name, parent, current_type
-        type.generic = node.generic || parent.generic
+        type.type_vars = Hash[node.type_vars.map { |type_var| [type_var, Var.new(type_var)] }] if node.type_vars
         current_type.types[node.name] = type
       end
 
@@ -496,13 +496,9 @@ module Crystal
     end
 
     def visit_allocate(node)
-      if !node.allocate_type.generic && Crystal::GENERIC
-        node.type = node.allocate_type
-      else
-        type = lookup_object_type(node.allocate_type.name)
-        node.type = type ? type : node.allocate_type.clone
-        node.creates_new_type = true
-      end
+      type = lookup_object_type(node.allocate_type.name)
+      node.type = type ? type : node.allocate_type.clone
+      node.creates_new_type = true
     end
 
     def visit_array_literal(node)
@@ -656,6 +652,12 @@ module Crystal
         node.block.accept self if node.block
       end
 
+      false
+    end
+
+    def end_visit_new_generic_class(node)
+      generic_type = mod.lookup_generic_type node.name.type.instance_type, node.type_vars.map { |var| var.type.instance_type }
+      node.type = generic_type.metaclass
       false
     end
 

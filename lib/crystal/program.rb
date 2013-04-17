@@ -13,6 +13,8 @@ module Crystal
     def initialize
       super('main')
 
+      @generic_types = {}
+
       object = @types["Object"] = ObjectType.new "Object", nil, self
       value = @types["Value"] = ObjectType.new "Value", object, self
       numeric = @types["Numeric"] = ObjectType.new "Numeric", value, self
@@ -43,7 +45,6 @@ module Crystal
           nil
         end
       end
-      array.generic = true
 
       @types["ARGC_UNSAFE"] = Const.new "ARGC_UNSAFE", Crystal::ARGC.new(int), self
       @types["ARGV_UNSAFE"] = Const.new "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char))), self
@@ -63,6 +64,21 @@ module Crystal
     def unify(node)
       @unify_visitor ||= UnifyVisitor.new
       Crystal.unify node, @unify_visitor
+    end
+
+    def lookup_generic_type(base_class, type_vars)
+      key = [base_class.object_id, type_vars.map(&:object_id)]
+      unless generic_type = @generic_types[key]
+        generic_type = base_class.clone
+        i = 0
+        generic_type.type_vars.each do |name, var|
+          var.type = type_vars[i]
+          i += 1
+        end
+        generic_type.metaclass.defs = base_class.metaclass.defs
+        @generic_types[key] = generic_type
+      end
+      generic_type
     end
 
     def nil_var

@@ -66,6 +66,10 @@ module Crystal
       name
     end
 
+    def generic
+      false
+    end
+
     def to_s
       name
     end
@@ -201,6 +205,7 @@ module Crystal
     attr_accessor :defs
     attr_accessor :types
     attr_accessor :parents
+    attr_accessor :type_vars
 
     def initialize(name, container = nil, parents = [])
       super(name, container)
@@ -221,6 +226,10 @@ module Crystal
     def lookup_type(names, already_looked_up = {})
       return nil if already_looked_up[object_id]
       already_looked_up[object_id] = true
+
+      if type_vars && names.length == 1 && type_var = type_vars[names[0]]
+        # Return type var type
+      end
 
       type = self
       names.each do |name|
@@ -274,7 +283,6 @@ module Crystal
 
   class ObjectType < ClassType
     attr_accessor :instance_vars
-    attr_accessor :generic
     attr_accessor :string_rep
     attr_reader :hash
     @@id = 0
@@ -283,6 +291,10 @@ module Crystal
       super
       @instance_vars = {}
       @hash = name.hash
+    end
+
+    def generic
+      @type_vars
     end
 
     def metaclass
@@ -343,7 +355,7 @@ module Crystal
     end
 
     def clone(types_context = {})
-      return self if !generic && Crystal::GENERIC
+      return self if !generic
 
       obj = types_context[object_id] and return obj
 
@@ -357,7 +369,7 @@ module Crystal
       obj.defs = defs
       obj.types = types
       obj.parents = parents
-      obj.generic = generic
+      obj.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
       obj.string_rep = string_rep
       obj
     end
@@ -365,17 +377,11 @@ module Crystal
     def to_s
       return name unless generic
       return @to_s if @to_s
-      if string_rep
-        @to_s = string_rep.call(self)
-        if @to_s
-          to_s, @to_s = @to_s, nil
-          return to_s
-        end
-      end
       @to_s = "..."
       instance_vars_to_s = instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
       @to_s = nil
-      "#{name}<#{instance_vars_to_s}>"
+      type_vars_to_s = type_vars.map {|name, var| "#{name}: #{var.type ? var.type : '?'}"}.join ', '
+      "#{name}(#{type_vars_to_s})<#{instance_vars_to_s}>"
     end
   end
 

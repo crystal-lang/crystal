@@ -49,6 +49,10 @@ module Crystal
         self.target_def = typed_def
         check_args_type_match typed_def
       else
+        if self_type.is_a?(Metaclass) && self_type.instance_type.generic && !self_type.instance_type.type_vars.all? { |name, var| var.type }
+          raise "Can't invoke class methods without specifying type vars"
+        end
+
         arg_types = args.map &:type
         typed_def = untyped_def.lookup_instance(arg_types) ||
                     self_type.lookup_def_instance(name, arg_types) ||

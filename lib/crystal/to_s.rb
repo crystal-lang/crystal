@@ -324,9 +324,16 @@ module Crystal
     end
 
     def visit_class_def(node)
-      @str << "generic " if node.generic
       @str << "class "
       @str << node.name
+      if node.type_vars
+        @str << "("
+        node.type_vars.each_with_index do |type_var, i|
+          @str << ", " if i > 0
+          @str << type_var.to_s
+        end
+        @str << ")"
+      end
       if node.superclass
         @str << " < "
         node.superclass.accept self
@@ -515,6 +522,17 @@ module Crystal
       end
       @str << "\n"
       accept_with_indent node.body
+      false
+    end
+
+    def visit_new_generic_class(node)
+      node.name.accept self
+      @str << "("
+      node.type_vars.each_with_index do |var, i|
+        @str << ', ' if i > 0
+        var.accept self
+      end
+      @str << ")"
       false
     end
 

@@ -510,9 +510,6 @@ module Crystal
           node_and_next_token BoolLiteral.new(true)
         when :yield
           parse_yield
-        when :generic
-          next_token_skip_space_or_newline
-          parse_class_def(true)
         when :class
           parse_class_def
         when :module
@@ -699,6 +696,30 @@ module Crystal
 
       const = Ident.new names, global
       const.location = location
+      const
+
+      if @token.type == :'('
+        next_token_skip_space_or_newline
+
+        type_vars = []
+        while @token.type != :')'
+          type_vars.push parse_ident
+
+          if @token.type == :','
+            next_token_skip_space_or_newline
+          end
+        end
+
+        if type_vars.empty?
+          raise "must specify at least one type var"
+        end
+
+        next_token_skip_space
+
+        const = NewGenericClass.new const, type_vars
+        const.location = location
+      end
+
       const
     end
 
@@ -887,7 +908,7 @@ module Crystal
       end
     end
 
-    def parse_class_def(generic = false)
+    def parse_class_def
       location = @token.location
 
       next_token_skip_space_or_newline
@@ -896,6 +917,29 @@ module Crystal
       name = @token.value
       name_column_number = @token.column_number
       next_token_skip_space
+
+      type_vars = nil
+
+      if @token.type == :'('
+        type_vars = []
+
+        next_token_skip_space_or_newline
+        while @token.type != :")"
+          check :CONST
+          type_vars.push @token.value
+
+          next_token_skip_space_or_newline
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+
+        if type_vars.empty?
+          raise "must specify at least one type var"
+        end
+
+        next_token_skip_space
+      end
 
       superclass = nil
 
@@ -910,7 +954,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      class_def = ClassDef.new name, body, superclass, generic, name_column_number
+      class_def = ClassDef.new name, body, superclass, type_vars, name_column_number
       class_def.location = location
       class_def
     end
