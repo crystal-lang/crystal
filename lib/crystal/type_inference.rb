@@ -153,7 +153,13 @@ module Crystal
           if arg.type_restriction == :self
             arg.type = SelfType
           else
-            arg.type = lookup_ident_type(arg.type_restriction)
+            if target_type.generic &&
+                arg.type_restriction.names.length == 1 &&
+                type_var = target_type.type_vars[arg.type_restriction.names.first]
+              arg.type = TypeVarType.new(type_var.name)
+            else
+              arg.type = lookup_ident_type(arg.type_restriction)
+            end
           end
         end
       end

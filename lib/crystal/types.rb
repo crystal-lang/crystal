@@ -246,6 +246,15 @@ module Crystal
 
       container ? container.lookup_type(names, already_looked_up) : nil
     end
+
+    def full_name
+      if type_vars
+        type_vars_to_s = type_vars.map { |k, v| v.type ? v.type.full_name : k }.join ', '
+        "#{name}(#{type_vars_to_s})"
+      else
+        super
+      end
+    end
   end
 
   class ClassType < ModuleType
@@ -764,6 +773,27 @@ module Crystal
 
     def self.parents
       []
+    end
+  end
+
+  class TypeVarType
+    attr_accessor :name
+
+    def initialize(name)
+      @name = name
+    end
+
+    def is_restriction_of?(type, owner)
+      @type_var = owner.type_vars[name]
+      @type_var.type.is_restriction_of?(type, owner)
+    end
+
+    def full_name
+      @type_var ? @type_var.type.full_name : name
+    end
+
+    def to_s
+      name
     end
   end
 end
