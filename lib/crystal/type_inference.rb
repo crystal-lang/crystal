@@ -304,7 +304,6 @@ module Crystal
       var = lookup_var node.name
       filter = build_var_filter var
       node.bind_to(filter || var)
-      node.creates_new_type = var.creates_new_type
     end
 
     def build_var_filter(var)
@@ -369,9 +368,6 @@ module Crystal
           var.bind_to value
         end
 
-        if node
-          node.creates_new_type = var.creates_new_type ||= value.creates_new_type
-        end
       when InstanceVar
         var = lookup_instance_var target, (@nest_count > 0)
 
@@ -380,10 +376,6 @@ module Crystal
           var.bind_to node
         else
           var.bind_to value
-        end
-
-        if node
-          node.creates_new_type = var.creates_new_type ||= value.creates_new_type
         end
       when Ident
         type = current_type.types[target.names.first]
@@ -409,7 +401,6 @@ module Crystal
     def end_visit_expressions(node)
       if node.last
         node.bind_to node.last
-        node.creates_new_type = node.last.creates_new_type
       else
         node.type = mod.nil
       end
@@ -499,7 +490,6 @@ module Crystal
       allocate_type = @scope.instance_type
       type = lookup_object_type(allocate_type.name)
       node.type = type ? type : allocate_type
-      node.creates_new_type = true
     end
 
     def visit_array_literal(node)
@@ -529,8 +519,6 @@ module Crystal
       node.expanded = exps
       node.bind_to exps
 
-      node.creates_new_type = node.expanded.creates_new_type
-
       false
     end
 
@@ -554,8 +542,6 @@ module Crystal
       exps.accept self
       node.expanded = exps
       node.bind_to exps
-
-      node.creates_new_type = node.expanded.creates_new_type
 
       false
     end
@@ -757,7 +743,6 @@ module Crystal
 
     def visit_pointer_malloc(node)
       node.type = mod.pointer.clone
-      node.creates_new_type = true
     end
 
     def visit_pointer_realloc(node)

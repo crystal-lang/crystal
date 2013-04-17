@@ -2,7 +2,6 @@ module Crystal
   class ASTNode
     attr_accessor :type
     attr_accessor :dependencies
-    attr_accessor :creates_new_type
     attr_accessor :type_filters
 
     def set_type(type)

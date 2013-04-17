@@ -68,11 +68,10 @@ module Crystal
             bubbling_exception do
               visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, [owner, untyped_def, arg_types, typed_def, self])
               typed_def.body.accept visitor
-              self.creates_new_type = typed_def.creates_new_type = typed_def.body.creates_new_type
             end
           end
 
-          self_type.add_def_instance(name, arg_types, typed_def) if Crystal::CACHE && !block && !creates_new_type
+          self_type.add_def_instance(name, arg_types, typed_def) if Crystal::CACHE && !block
         end
       end
 
