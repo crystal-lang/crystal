@@ -228,7 +228,7 @@ module Crystal
       already_looked_up[object_id] = true
 
       if type_vars && names.length == 1 && type_var = type_vars[names[0]]
-        # Return type var type
+        return type_var.type
       end
 
       type = self
@@ -300,7 +300,7 @@ module Crystal
     def metaclass
       @metaclass ||= begin
         metaclass = Metaclass.new(self)
-        metaclass.add_def Def.new('allocate', [], Allocate.new(self))
+        metaclass.add_def Def.new('allocate', [], Allocate.new)
         metaclass
       end
     end

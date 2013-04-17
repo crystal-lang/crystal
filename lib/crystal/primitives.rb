@@ -283,15 +283,6 @@ module Crystal
   end
 
   class Allocate < Primitive
-    attr_reader :allocate_type
-
-    def initialize(type)
-      @allocate_type = type
-    end
-
-    def clone_from(other)
-      @allocate_type = other.allocate_type.clone
-    end
   end
 
   class StructAlloc < Primitive

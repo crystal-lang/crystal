@@ -496,8 +496,9 @@ module Crystal
     end
 
     def visit_allocate(node)
-      type = lookup_object_type(node.allocate_type.name)
-      node.type = type ? type : node.allocate_type.clone
+      allocate_type = @scope.instance_type
+      type = lookup_object_type(allocate_type.name)
+      node.type = type ? type : allocate_type
       node.creates_new_type = true
     end
 
