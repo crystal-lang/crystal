@@ -591,7 +591,7 @@ module Crystal
     end
 
     def to_s
-      name
+      "#{instance_type}:Class"
     end
   end
 

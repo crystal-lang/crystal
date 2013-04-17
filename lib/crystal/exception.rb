@@ -45,7 +45,7 @@ module Crystal
     attr_accessor :inner
 
     def self.for_node(node, message, inner = nil)
-      if node.respond_to?(:name)
+      if node.respond_to?(:name) && node.name.respond_to?(:length)
         length = node.respond_to?(:name_length) ? node.name_length : node.name.length
         if node.respond_to?(:name_column_number)
           new message, node.line_number, node.name_column_number, node.filename, length, inner
