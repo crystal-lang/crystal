@@ -283,7 +283,6 @@ module Crystal
 
   class ObjectType < ClassType
     attr_accessor :instance_vars
-    attr_accessor :string_rep
     attr_reader :hash
     @@id = 0
 
@@ -370,7 +369,6 @@ module Crystal
       obj.types = types
       obj.parents = parents
       obj.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
-      obj.string_rep = string_rep
       obj
     end
 
@@ -378,10 +376,9 @@ module Crystal
       return name unless generic
       return @to_s if @to_s
       @to_s = "..."
-      instance_vars_to_s = instance_vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
       @to_s = nil
-      type_vars_to_s = type_vars.map {|name, var| "#{name}: #{var.type ? var.type : '?'}"}.join ', '
-      "#{name}(#{type_vars_to_s})<#{instance_vars_to_s}>"
+      type_vars_to_s = type_vars.map {|name, var| var.type ? "#{name}: #{var.type}" : name}.join ', '
+      "#{name}(#{type_vars_to_s})"
     end
   end
 
