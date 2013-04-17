@@ -2,7 +2,7 @@ require "array"
 require "int"
 require "nil"
 
-generic class Hash
+class Hash(K, V)
   def initialize
     @buckets = Array.new(17, nil)
     @length = 0
@@ -114,7 +114,7 @@ generic class Hash
     key.hash % @buckets.length
   end
 
-  generic class Entry
+  class Entry(K, V)
     def initialize(key, value)
       @key = key
       @value = value

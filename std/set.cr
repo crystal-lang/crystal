@@ -1,4 +1,4 @@
-generic class Set
+class Set(T)
   include Enumerable
 
   def initialize

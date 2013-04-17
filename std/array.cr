@@ -2,7 +2,7 @@ require "enumerable"
 require "pointer"
 require "range"
 
-generic class Array
+class Array(T)
   include Enumerable
 
   def initialize(initial_capacity = 16)
