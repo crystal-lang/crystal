@@ -93,4 +93,18 @@ module Crystal
       mod.lookup_generic_type(mod.pointer, [type])
     end
   end
+
+  class ArrayLiteral
+    attr_accessor :mod
+    attr_accessor :new_generic_class
+
+    def map_type(type)
+      mod.lookup_generic_type mod.array, [type]
+    end
+
+    def set_type(type)
+      super
+      new_generic_class.type = type.metaclass
+    end
+  end
 end

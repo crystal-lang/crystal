@@ -474,7 +474,11 @@ module Crystal
         node.target_const = type
         node.bind_to(type.value)
       else
-        node.type = type.metaclass
+        if type.is_a?(UnionType)
+          node.type = type
+        else
+          node.type = type.metaclass
+        end
       end
     end
 
@@ -498,32 +502,40 @@ module Crystal
       node.type = type ? type : allocate_type
     end
 
-    def visit_array_literal(node)
+    def end_visit_array_literal(node)
       if node.elements.empty?
-        exps = Call.new(Ident.new(['Array'], true), 'new')
-      else
-        ary_name = temp_name()
-
-        length = node.elements.length
-        capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
-
-        ary_new = Call.new(Ident.new(['Array'], true), 'new', [IntLiteral.new(capacity)])
-        ary_assign = Assign.new(Var.new(ary_name), ary_new)
-        ary_assign_length = Call.new(Var.new(ary_name), 'length=', [IntLiteral.new(length)])
-
-        exps = [ary_assign, ary_assign_length]
-        node.elements.each_with_index do |elem, i|
-          get_buffer = Call.new(Var.new(ary_name), 'buffer')
-          exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
-        end
-        exps << Var.new(ary_name)
-
-        exps = Expressions.new exps
+        node.raise "for empty arrays use '[] of Type'"
+        return
       end
+
+      ary_name = temp_name()
+
+      length = node.elements.length
+      capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
+
+      ary_new_generic = NewGenericClass.new(Ident.new(['Array'], true), [Ident.new(["Nil"], true)])
+
+      node.mod = mod
+      node.new_generic_class = ary_new_generic
+      node.elements.each do |elem|
+        node.bind_to elem
+      end
+
+      ary_new = Call.new(ary_new_generic, 'new', [IntLiteral.new(capacity)])
+      ary_assign = Assign.new(Var.new(ary_name), ary_new)
+      ary_assign_length = Call.new(Var.new(ary_name), 'length=', [IntLiteral.new(length)])
+
+      exps = [ary_assign, ary_assign_length]
+      node.elements.each_with_index do |elem, i|
+        get_buffer = Call.new(Var.new(ary_name), 'buffer')
+        exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+      end
+      exps << Var.new(ary_name)
+
+      exps = Expressions.new exps
 
       exps.accept self
       node.expanded = exps
-      node.bind_to exps
 
       false
     end
@@ -638,6 +650,7 @@ module Crystal
       node.obj.add_observer node, :update_input if node.obj
       node.recalculate unless node.obj || node.args.any?
 
+      @call__ = node
       node.obj.accept self if node.obj
       node.args.each { |arg| arg.accept self }
 
@@ -649,7 +662,13 @@ module Crystal
     end
 
     def end_visit_new_generic_class(node)
-      instance_type = node.name.type.instance_type
+      return if node.type
+
+      if node.name.type.is_a?(UnionType)
+        instance_type = node.name.type
+      else
+        instance_type = node.name.type.instance_type
+      end
       unless instance_type.type_vars
         node.raise "#{instance_type} is not a generic class"
       end
