@@ -1,7 +1,7 @@
 class StringBuilder
   def initialize
     @length = 0
-    @parts = []
+    @parts = Array(String).new
   end
 
   def <<(part)

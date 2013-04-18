@@ -19,14 +19,14 @@ class String
 
   def self.from_cstr(chars)
     length = C.strlen(chars)
-    str = Pointer.malloc(length + 5)
+    str = Pointer(Char).malloc(length + 5)
     str.as(Int).value = length
     C.strcpy(str.as(Char) + 4, chars)
     str.as(String)
   end
 
   def self.from_cstr(chars, length)
-    str = Pointer.malloc(length + 5)
+    str = Pointer(Char).malloc(length + 5)
     str.as(Int).value = length
     C.strncpy(str.as(Char) + 4, chars, length)
     (str + length + 4).as(Char).value = '\0'
@@ -34,7 +34,7 @@ class String
   end
 
   def self.new_with_capacity(capacity)
-    str = Pointer.malloc(capacity + 5)
+    str = Pointer(Char).malloc(capacity + 5)
     buffer = str.as(String).cstr
     yield buffer
     str.as(Int).value = C.strlen(buffer)
@@ -42,7 +42,7 @@ class String
   end
 
   def self.new_with_length(length)
-    str = Pointer.malloc(length + 5)
+    str = Pointer(Char).malloc(length + 5)
     buffer = str.as(String).cstr
     yield buffer
     buffer[length] = '\0'
@@ -181,7 +181,7 @@ class String
   end
 
   def +(other)
-    new_string_buffer = Pointer.malloc(length + other.length + 1).as(Char)
+    new_string_buffer = Pointer(Char).malloc(length + other.length + 1).as(Char)
     C.strcpy(new_string_buffer, @c.ptr)
     C.strcat(new_string_buffer, other)
     String.from_cstr(new_string_buffer)
