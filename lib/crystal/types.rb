@@ -210,6 +210,10 @@ module Crystal
       @types = {}
     end
 
+    def generic
+      @type_vars
+    end
+
     def include(mod)
       @parents.insert 0, mod unless @parents.any? { |parent| parent.equal?(mod) }
     end
@@ -249,6 +253,12 @@ module Crystal
       else
         super
       end
+    end
+
+    def to_s
+      return name unless generic
+      type_vars_to_s = type_vars.map { |name, var| var.type ? var.type.full_name : name }.join ', '
+      "#{name}(#{type_vars_to_s})"
     end
   end
 
@@ -294,10 +304,6 @@ module Crystal
       super
       @instance_vars = {}
       @hash = name.hash
-    end
-
-    def generic
-      @type_vars
     end
 
     def metaclass
@@ -374,12 +380,6 @@ module Crystal
       obj.parents = parents
       obj.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
       obj
-    end
-
-    def to_s
-      return name unless generic
-      type_vars_to_s = type_vars.map { |name, var| var.type ? var.type.full_name : name }.join ', '
-      "#{name}(#{type_vars_to_s})"
     end
   end
 
