@@ -779,9 +779,7 @@ module Crystal
       if type.is_a?(ObjectType)
         node.type = type
       else
-        pointer_type = mod.pointer.clone
-        pointer_type.var.type = type
-        node.type = pointer_type
+        node.type = mod.lookup_generic_type(mod.pointer, [type])
       end
     end
 
