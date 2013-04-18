@@ -23,6 +23,10 @@ module Crystal
       end
     end
 
+    def map_type(type)
+      type
+    end
+
     def bind_to(node)
       @dependencies ||= []
       @dependencies << node
@@ -36,7 +40,7 @@ module Crystal
         new_type = Type.merge(@type, node.type)
       end
       return if @type.object_id == new_type.object_id
-      set_type(new_type)
+      set_type(map_type(new_type))
       @dirty = true
       propagate
     end
@@ -66,7 +70,7 @@ module Crystal
       end
 
       return if @type.object_id == new_type.object_id
-      set_type(new_type)
+      set_type(map_type new_type)
       @dirty = true
     end
 
@@ -85,12 +89,8 @@ module Crystal
   class PointerOf
     attr_accessor :mod
 
-    def set_type(type)
-      @type = mod.lookup_generic_type(mod.pointer, [type])
-    end
-
-    def type=(type)
-      raise "shouldn't be invoked"
+    def map_type(type)
+      mod.lookup_generic_type(mod.pointer, [type])
     end
   end
 end
