@@ -42,9 +42,9 @@ def primitive_operation_type(*types)
   return int if types.include?('Int')
 end
 
-def rw(name)
+def rw(name, restriction = nil)
   %Q(
-  def #{name}=(value)
+  def #{name}=(value#{restriction ? " : #{restriction}" : ""})
     @#{name} = value
   end
 

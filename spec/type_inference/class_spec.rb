@@ -19,13 +19,13 @@ describe 'Type inference: class' do
 
   it "types instance variable" do
     input = parse %(
-      generic class Foo
+      class Foo(T)
         def set
           @coco = 2
         end
       end
 
-      f = Foo.new
+      f = Foo(Int).new
       f.set
     )
     mod = infer_type input
@@ -34,16 +34,16 @@ describe 'Type inference: class' do
 
   it "types instance variable" do
     input = parse %(
-      generic class Foo
-        def set(value)
+      class Foo(T)
+        def set(value : T)
           @coco = value
         end
       end
 
-      f = Foo.new
+      f = Foo(Int).new
       f.set 2
 
-      g = Foo.new
+      g = Foo(Double).new
       g.set 2.5
     )
     mod = infer_type input
@@ -53,8 +53,8 @@ describe 'Type inference: class' do
 
   it "types instance variable on getter" do
     input = parse %(
-      generic class Foo
-        def set(value)
+      class Foo(T)
+        def set(value : T)
           @coco = value
         end
 
@@ -63,11 +63,11 @@ describe 'Type inference: class' do
         end
       end
 
-      f = Foo.new
+      f = Foo(Int).new
       f.set 2
       f.get
 
-      g = Foo.new
+      g = Foo(Double).new
       g.set 2.5
       g.get
     )
@@ -80,7 +80,7 @@ describe 'Type inference: class' do
     input = parse %(
       require "prelude"
 
-      generic class Node
+      class Node
         def add
           if @next
             @next.add

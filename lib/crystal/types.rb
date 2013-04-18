@@ -47,11 +47,11 @@ module Crystal
     end
 
     def is_restriction_of?(type, owner)
-      type && (equal?(type) || internal_full_name == type.internal_full_name || type.parents.any? { |parent| is_restriction_of?(parent, owner) })
+      type && (equal?(type) || type.parents.any? { |parent| is_restriction_of?(parent, owner) })
     end
 
     def implements?(other_type)
-      full_name == other_type.full_name
+      equal?(other_type)
     end
 
     def filter_by(other_type)
@@ -59,10 +59,6 @@ module Crystal
     end
 
     def full_name
-      name
-    end
-
-    def internal_full_name
       name
     end
 
@@ -103,11 +99,10 @@ module Crystal
     def initialize(name, container)
       @name = name
       @container = container
-      @full_name = @container && !@container.is_a?(Program) ? "#{@container.full_name}::#{@name}" : @name
     end
 
-    def internal_full_name
-      @full_name
+    def full_name
+      @container && !@container.is_a?(Program) ? "#{@container.full_name}::#{@name}" : @name
     end
   end
 
@@ -383,10 +378,7 @@ module Crystal
 
     def to_s
       return name unless generic
-      return @to_s if @to_s
-      @to_s = "..."
-      @to_s = nil
-      type_vars_to_s = type_vars.map {|name, var| var.type ? "#{name}: #{var.type}" : name}.join ', '
+      type_vars_to_s = type_vars.map { |name, var| var.type ? var.type.full_name : name }.join ', '
       "#{name}(#{type_vars_to_s})"
     end
   end
@@ -597,6 +589,14 @@ module Crystal
 
     def full_name
       name
+    end
+
+    def generic
+      type.generic
+    end
+
+    def type_vars
+      type.type_vars
     end
 
     def to_s

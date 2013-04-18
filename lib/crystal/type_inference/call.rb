@@ -50,7 +50,7 @@ module Crystal
         check_args_type_match typed_def
       else
         if self_type.is_a?(Metaclass) && self_type.instance_type.generic && !self_type.instance_type.type_vars.all? { |name, var| var.type }
-          raise "can't invoke class methods on #{self_type} without specifying type vars: #{self_type.instance_type.type_vars.keys.join ', '}"
+          raise "can't invoke class method '#{name}' on #{self_type} without specifying type vars: #{self_type.instance_type.type_vars.keys.join ', '}"
         end
 
         arg_types = args.map &:type

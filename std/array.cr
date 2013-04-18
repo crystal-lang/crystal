@@ -8,17 +8,17 @@ class Array(T)
   def initialize(initial_capacity = 16)
     @length = 0
     @capacity = initial_capacity
-    @buffer = Pointer.malloc(initial_capacity)
+    @buffer = Pointer(T).malloc(initial_capacity)
   end
 
-  def initialize(size, value)
+  def initialize(size, value : T)
     @length = size
     @capacity = size
-    @buffer = Pointer.malloc(size, value)
+    @buffer = Pointer(T).malloc(size, value)
   end
 
   def self.new(size)
-    ary = Array.new(size)
+    ary = Array(T).new(size)
     ary.length = size
     size.times do |i|
       ary.buffer[i] = yield i
@@ -47,7 +47,7 @@ class Array(T)
     @buffer[index]
   end
 
-  def []=(index : Int, value)
+  def []=(index : Int, value : T)
     index += length if index < 0
     @buffer[index] = value
   end
@@ -66,7 +66,7 @@ class Array(T)
     Array.new(count) { |i| @buffer[start + i] }
   end
 
-  def push(value)
+  def push(value : T)
     check_needs_resize
     @buffer[@length] = value
     @length += 1
@@ -87,11 +87,11 @@ class Array(T)
     value
   end
 
-  def unshift(obj)
+  def unshift(obj : T)
     insert 0, obj
   end
 
-  def <<(value)
+  def <<(value : T)
     push(value)
   end
 
@@ -103,7 +103,7 @@ class Array(T)
     self[@length - 1]
   end
 
-  def insert(index : Int, obj)
+  def insert(index : Int, obj : T)
     check_needs_resize
     index += length if index < 0
     (@buffer + index + 1).memmove(@buffer + index, length - index)

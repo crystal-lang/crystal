@@ -19,14 +19,14 @@ describe 'Code gen: class' do
 
   it "codegens instance var" do
     run(%Q(
-      generic class Foo
-        #{rw 'coco'}
+      class Foo(T)
+        #{rw 'coco', 'T'}
       end
 
-      f = Foo.new
+      f = Foo(Int).new
       f.coco = 2
 
-      g = Foo.new
+      g = Foo(Float).new
       g.coco = 0.5f
 
       f.coco + g.coco
