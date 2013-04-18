@@ -650,6 +650,10 @@ module Crystal
 
     def end_visit_new_generic_class(node)
       instance_type = node.name.type.instance_type
+      unless instance_type.type_vars
+        node.raise "#{instance_type} is not a generic class"
+      end
+
       if instance_type.type_vars.length != node.type_vars.length
         node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
       end
@@ -739,20 +743,18 @@ module Crystal
     end
 
     def visit_pointer_of(node)
-      ptr = mod.pointer.clone
-      ptr.var = if node.var.is_a?(Var)
-                  var = lookup_var node.var.name
-                  node.var.bind_to var
-                  var
-                else
-                  lookup_instance_var node.var
-                end
-      node.type = ptr
+      node.mod = mod
+      var = if node.var.is_a?(Var)
+              lookup_var node.var.name
+            else
+              lookup_instance_var node.var
+            end
+      node.bind_to var
       false
     end
 
     def visit_pointer_malloc(node)
-      node.type = mod.pointer.clone
+      node.type = @scope.instance_type
     end
 
     def visit_pointer_realloc(node)

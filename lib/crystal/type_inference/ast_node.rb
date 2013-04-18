@@ -81,4 +81,16 @@ module Crystal
       Kernel::raise Crystal::TypeException.for_node(self, message, inner)
     end
   end
+
+  class PointerOf
+    attr_accessor :mod
+
+    def set_type(type)
+      @type = mod.lookup_generic_type(mod.pointer, [type])
+    end
+
+    def type=(type)
+      raise "shouldn't be invoked"
+    end
+  end
 end

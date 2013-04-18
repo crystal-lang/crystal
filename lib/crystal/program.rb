@@ -29,7 +29,8 @@ module Crystal
       @types["Float"] = PrimitiveType.new "Float", numeric, LLVM::Float, 4, self
       @types["Double"] = PrimitiveType.new "Double", numeric, LLVM::Double, 8, self
       @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4, self
-      @types["Pointer"] = PointerType.new value, self
+      pointer = @types["Pointer"] = PointerType.new value, self
+      pointer.type_vars = {"T" => Var.new("T")}
 
       @types["String"] = ObjectType.new "String", object, self
       string.lookup_instance_var('@length').type = int

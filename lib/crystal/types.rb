@@ -384,15 +384,16 @@ module Crystal
   end
 
   class PointerType < ClassType
-    attr_accessor :var
-
-    def initialize(parent_type = nil, container = nil, var = Var.new('var'))
+    def initialize(parent_type = nil, container = nil)
       super("Pointer", parent_type, container)
-      @var = var
+    end
+
+    def var
+      @type_vars["T"]
     end
 
     def ==(other)
-      equal?(other) || (other.is_a?(PointerType) && var.type == other.var.type) || (other.is_a?(UnionType) && other == self)
+      equal?(other) || (other.is_a?(PointerType) && type_vars == other.type_vars) || (other.is_a?(UnionType) && other == self)
     end
 
     def hash
@@ -402,22 +403,12 @@ module Crystal
     def clone(types_context = {})
       pointer = types_context[object_id] and return pointer
 
-      cloned_var = var.clone
-
-      pointer = types_context[object_id] = PointerType.new @parent_type, @container, cloned_var
-      pointer.var.type = var.type.clone(types_context)
+      pointer = types_context[object_id] = PointerType.new @parent_type, @container
       pointer.defs = defs
       pointer.types = types
       pointer.parents = parents
+      pointer.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
       pointer
-    end
-
-    def full_name
-      if @var.type
-        "#{@var.type.full_name}*"
-      else
-        super
-      end
     end
 
     def nilable_able?
@@ -426,10 +417,6 @@ module Crystal
 
     def pointer_type?
       true
-    end
-
-    def to_s
-      "Pointer<#{var.type}>"
     end
 
     def llvm_type
