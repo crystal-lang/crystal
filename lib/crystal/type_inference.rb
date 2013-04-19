@@ -526,9 +526,8 @@ module Crystal
 
       exps = [ary_assign, ary_assign_length]
       node.elements.each_with_index do |elem, i|
-        exps << Call.new(Var.new(ary_name), :[]=, [IntLiteral.new(i), elem])
-        # get_buffer = Call.new(Var.new(ary_name), 'buffer')
-        # exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+        get_buffer = Call.new(Var.new(ary_name), 'buffer')
+        exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
       end
       exps << Var.new(ary_name)
 
