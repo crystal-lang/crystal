@@ -284,8 +284,7 @@ module Crystal
 
     def maybe_ptr_type(type, ptr)
       ptr.times do
-        ptr_type = mod.pointer.clone
-        ptr_type.var.type = type
+        ptr_type = mod.pointer_of(type)
         type = ptr_type
       end
       type
@@ -527,13 +526,13 @@ module Crystal
 
       exps = [ary_assign, ary_assign_length]
       node.elements.each_with_index do |elem, i|
-        get_buffer = Call.new(Var.new(ary_name), 'buffer')
-        exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+        exps << Call.new(Var.new(ary_name), :[]=, [IntLiteral.new(i), elem])
+        # get_buffer = Call.new(Var.new(ary_name), 'buffer')
+        # exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
       end
       exps << Var.new(ary_name)
 
       exps = Expressions.new exps
-
       exps.accept self
       node.expanded = exps
 
@@ -785,7 +784,6 @@ module Crystal
     end
 
     def visit_pointer_set_value(node)
-      @scope.var.bind_to @vars['value']
       node.bind_to @vars['value']
     end
 
@@ -798,7 +796,7 @@ module Crystal
       if type.is_a?(ObjectType)
         node.type = type
       else
-        node.type = mod.lookup_generic_type(mod.pointer, [type])
+        node.type = mod.pointer_of(type)
       end
     end
 

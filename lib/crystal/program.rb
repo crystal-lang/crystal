@@ -14,6 +14,7 @@ module Crystal
       super('main')
 
       @generic_types = {}
+      @unions = {}
 
       object = @types["Object"] = ObjectType.new "Object", nil, self
       value = @types["Value"] = ObjectType.new "Value", object, self
@@ -54,9 +55,27 @@ module Crystal
       define_primitives
     end
 
+    def program
+      self
+    end
+
     def unify(node)
       @unify_visitor ||= UnifyVisitor.new
       Crystal.unify node, @unify_visitor
+    end
+
+    def type_merge(*types)
+      all_types = types.map! { |type| type.is_a?(UnionType) ? type.types : type }
+      all_types.flatten!
+      all_types.compact!
+      all_types.uniq!(&:object_id)
+      all_types.sort_by!(&:object_id)
+      if all_types.length == 1
+        return all_types[0]
+      end
+
+      all_types_ids = all_types.map(&:object_id)
+      @unions[all_types_ids] ||= UnionType.new(*all_types)
     end
 
     def lookup_generic_type(base_class, type_vars)
@@ -135,9 +154,11 @@ module Crystal
     end
 
     def pointer_of(type)
-      p = pointer.clone
-      p.var.type = type
-      p
+      lookup_generic_type pointer, [type]
+    end
+
+    def array_of(type)
+      lookup_generic_type array, [type]
     end
 
     def metaclass

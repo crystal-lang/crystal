@@ -44,6 +44,8 @@ module Crystal
       check_method_exists untyped_def, error_matches
       check_args_match untyped_def
 
+      old_target_def = self.target_def
+
       if untyped_def.is_a?(External)
         typed_def = untyped_def
         self.target_def = typed_def
@@ -75,8 +77,13 @@ module Crystal
         end
       end
 
-      self.bind_to typed_def
-      self.bind_to(block.break) if block
+      if old_target_def
+        self.unbind_from old_target_def
+        self.bind_to typed_def
+      else
+        self.bind_to typed_def
+        self.bind_to(block.break) if block
+      end
     end
 
     def compute_dispatch
@@ -98,7 +105,7 @@ module Crystal
           untyped_def.args.each_with_index do |arg, i|
             if arg.out && self.args[i]
               unless self.args[i].out
-                self.args[i].raise "argument \##{i + 1} to #{untyped_def.owner.full_name}.#{untyped_def.name} must be passed as 'out'"
+                self.args[i].raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} must be passed as 'out'"
               end
               var = parent_visitor.lookup_var_or_instance_var(self.args[i])
               var.bind_to arg
@@ -113,7 +120,7 @@ module Crystal
         yield
       rescue Crystal::Exception => ex
         if obj
-          raise "instantiating '#{obj.type.name}##{name}(#{args.map(&:type).join ', '})'", ex
+          raise "instantiating '#{obj.type}##{name}(#{args.map(&:type).join ', '})'", ex
         else
           raise "instantiating '#{name}(#{args.map(&:type).join ', '})'", ex
         end
@@ -279,7 +286,7 @@ module Crystal
 
       if !error_matches || error_matches.length == 0
         if obj
-          raise "undefined method '#{name}' for #{obj.type.full_name}"
+          raise "undefined method '#{name}' for #{obj.type}"
         elsif args.length > 0 || has_parenthesis
           raise "undefined method '#{name}'"
         else
@@ -292,10 +299,10 @@ module Crystal
       elsif error_matches.length == 1 && block && !error_matches[0].yields
         raise "#{full_name} doesn't expect a block"
       else
-        msg = "no overload or ambiguos call for '#{full_name}' with types #{args.map { |arg| arg.type.full_name }.join ', '}\n"
+        msg = "no overload or ambiguos call for '#{full_name}' with types #{args.map { |arg| arg.type }.join ', '}\n"
         msg << "Overloads are:"
         error_matches.each do |error_match|
-          msg << "\n - #{full_name}(#{error_match.args.map { |arg| arg.name + (arg.type ? (" : " + arg.type.full_name) : '') }.join ', '})"
+          msg << "\n - #{full_name}(#{error_match.args.map { |arg| arg.name + (arg.type ? (" : #{arg.type}") : '') }.join ', '})"
         end
         raise msg
       end
@@ -317,7 +324,7 @@ module Crystal
     end
 
     def full_name
-      obj ? "#{obj.type.full_name}##{name}" : name
+      obj ? "#{obj.type}##{name}" : name
     end
 
     def check_args_type_match(typed_def)
@@ -333,7 +340,7 @@ module Crystal
             string_conversions ||= []
             string_conversions << i
           else
-            self.args[i].raise "argument \##{i + 1} to #{typed_def.owner.full_name}.#{typed_def.name} must be #{expected_type.full_name}, not #{self.args[i].type}"
+            self.args[i].raise "argument \##{i + 1} to #{typed_def.owner}.#{typed_def.name} must be #{expected_type}, not #{self.args[i].type}"
           end
         end
       end

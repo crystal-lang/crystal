@@ -58,10 +58,6 @@ module Crystal
       implements?(other_type) ? self : nil
     end
 
-    def full_name
-      name
-    end
-
     def generic
       false
     end
@@ -70,19 +66,10 @@ module Crystal
       name
     end
 
-    def self.merge(type1, type2)
-      return type1 if type1.equal?(type2)
-
-      types = [type1, type2]
-      all_types = types.map { |type| type.is_a?(UnionType) ? type.types : type }.flatten.uniq(&:object_id)
-
-      union_object_ids = nil
-
-      types.each do |t|
-        return t if t.is_a?(UnionType) && t.types.length == all_types.length && t.types.map(&:object_id) == (union_object_ids ||= all_types.map(&:object_id))
-      end
-
-      UnionType.new(*all_types)
+    def self.merge(*types)
+      types = types.compact
+      return nil if types.empty?
+      types.first.program.type_merge(*types)
     end
 
     def self.clone(types)
@@ -94,15 +81,18 @@ module Crystal
   class ContainedType < Type
     attr_accessor :name
     attr_accessor :container
-    attr_reader :full_name
 
     def initialize(name, container)
       @name = name
       @container = container
     end
 
-    def full_name
-      @container && !@container.is_a?(Program) ? "#{@container.full_name}::#{@name}" : @name
+    def program
+      @container.program
+    end
+
+    def to_s
+      @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
     end
   end
 
@@ -246,18 +236,9 @@ module Crystal
       container ? container.lookup_type(names, already_looked_up) : nil
     end
 
-    def full_name
-      if type_vars
-        type_vars_to_s = type_vars.map { |k, v| v.type ? v.type.full_name : k }.join ', '
-        "#{name}(#{type_vars_to_s})"
-      else
-        super
-      end
-    end
-
     def to_s
       return name unless generic
-      type_vars_to_s = type_vars.map { |name, var| var.type ? var.type.full_name : name }.join ', '
+      type_vars_to_s = type_vars.map { |name, var| var.type ? var.type.to_s : name }.join ', '
       "#{name}(#{type_vars_to_s})"
     end
   end
@@ -439,6 +420,10 @@ module Crystal
       @types = types
     end
 
+    def program
+      @types[0].program
+    end
+
     def implements?(other_type)
       raise "'implements?' shouln't be invoked on a UnionType"
     end
@@ -532,8 +517,12 @@ module Crystal
       "Union"
     end
 
+    def is_restriction_of?(type, owner)
+      types.any? { |sub| sub.is_restriction_of?(type, owner) }
+    end
+
     def to_s
-      "Union[#{types.join ', '}]"
+      types.join " | "
     end
   end
 
@@ -542,9 +531,9 @@ module Crystal
     attr_reader :type
 
     def initialize(type)
-      super("#{type.full_name}:Class", type.container)
+      super("#{type}:Class", type.container)
       @type = type
-      add_def Def.new('name', [], StringLiteral.new(type.full_name))
+      add_def Def.new('name', [], StringLiteral.new(type.to_s))
       add_def Def.new('simple_name', [], StringLiteral.new(type.name))
       add_def Def.new('inspect', [], Call.new(nil, 'to_s'))
       add_def Def.new('to_s', [], Call.new(nil, 'name'))
@@ -572,10 +561,6 @@ module Crystal
 
     def llvm_size
       4
-    end
-
-    def full_name
-      name
     end
 
     def generic
@@ -745,7 +730,7 @@ module Crystal
     end
 
     def to_s
-      "#{full_name} = #{value}"
+      "#{super} = #{value}"
     end
   end
 
@@ -754,7 +739,7 @@ module Crystal
       owner.is_restriction_of?(type, owner)
     end
 
-    def self.full_name
+    def self.to_s
       "self"
     end
 
@@ -775,12 +760,8 @@ module Crystal
       @type_var.type.is_restriction_of?(type, owner)
     end
 
-    def full_name
-      @type_var ? @type_var.type.full_name : name
-    end
-
     def to_s
-      name
+      @type_var ? @type_var.type.to_s : name
     end
   end
 end
