@@ -115,6 +115,7 @@ describe Parser do
   it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, 'Int'.ident)], nil)
   it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, :self)], nil)
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, :self)], nil)
+  it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Double'.ident]))], nil)
   it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, true)
   it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)], nil)
 

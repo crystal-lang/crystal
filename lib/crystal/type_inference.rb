@@ -156,7 +156,8 @@ module Crystal
                 type_var = target_type.type_vars[arg.type_restriction.names.first]
               arg.type = TypeVarType.new(type_var.name)
             else
-              arg.type = lookup_ident_type(arg.type_restriction)
+              arg.type_restriction.accept self
+              arg.type = arg.type_restriction.type.instance_type
             end
           end
         end

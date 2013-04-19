@@ -1075,7 +1075,7 @@ module Crystal
               type_restriction = :self
               next_token_skip_space
             else
-              type_restriction = parse_ident
+              type_restriction = parse_type_var
             end
           end
 
@@ -1108,7 +1108,7 @@ module Crystal
               type_restriction = :self
               next_token_skip_space
             else
-              type_restriction = parse_ident
+              type_restriction = parse_type_var
             end
           end
 
