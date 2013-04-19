@@ -99,7 +99,7 @@ describe 'Type inference: primitives' do
     assert_type("1.5f.to_f") { float }
   end
 
-  it "types ARGV" do
+  pending "types ARGV" do
     assert_type(%q(require "argv"; ARGV)) { array_of(string) }
   end
 end

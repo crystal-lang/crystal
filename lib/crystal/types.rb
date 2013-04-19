@@ -605,7 +605,7 @@ module Crystal
     end
 
     def to_s
-      "LibType(#{name}, #{libname})"
+      name
     end
   end
 

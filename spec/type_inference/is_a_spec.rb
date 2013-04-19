@@ -21,7 +21,7 @@ describe 'Type inference: is_a?' do
     nodes = parse %q(
       require "array"
 
-      a = []
+      a = Array(Int).new
       if a.is_a?(Enumerable)
         a
       end

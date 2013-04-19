@@ -56,7 +56,7 @@ describe 'Type inference unification' do
   end
 
   it "unifies array types" do
-    input = parse 'require "pointer"; require "array"; a = [0, 0]; a[0] = 1; a[1] = 1.1; b = [0, 0]; b[0] = 1; b[1] = 1.1; c = a; c = b'
+    input = parse 'require "pointer"; require "array"; a = [0, 0.0]; a[0] = 1; a[1] = 1.1; b = [0, 0.0]; b[0] = 1; b[1] = 1.1; c = a; c = b'
     infer_type input
     input[-2].value.type.should equal(input[-1].value.type)
   end
@@ -67,7 +67,7 @@ describe 'Type inference unification' do
     input[1].target.type.should equal(input[2].target.type)
   end
 
-  it "unifies two objects with arrays of unions" do
+  pending "unifies two objects with arrays of unions" do
     mod = Crystal::Program.new
     nodes = Expressions.from [Var.new('a'), Var.new('b')]
     nodes[0].type = ObjectType.new('Foo').generic!.with_var('@x', mod.array_of(UnionType.new(ObjectType.new('Bar').generic!, ObjectType.new('Bar').generic!)))

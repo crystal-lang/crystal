@@ -95,20 +95,6 @@ describe 'Type inference: def' do
     assert_type('def foo(x); x; end; a = 1; a = 1.1; foo(a)') { UnionType.new(int, double) }
   end
 
-  it "doesn't incorrectly type as recursive type" do
-    assert_type(%Q(
-      class Foo
-        #{rw :value}
-      end
-
-      f = Foo.new
-      f.value = Foo.new
-      f.value.value = Foo.new
-      f
-      )
-  ) { ObjectType.new('Foo').generic!.with_var('@value', ObjectType.new('Foo').generic!.with_var('@value', ObjectType.new('Foo').generic!)) }
-  end
-
   it "defines class method" do
     assert_type("def Int.foo; 2.5; end; Int.foo") { double }
   end
@@ -124,12 +110,12 @@ describe 'Type inference: def' do
   it "do not use body for the def type" do
     input = parse 'def foo; if false; return 0; end; end; foo'
     mod = infer_type input
-    input.last.type.should eq(UnionType.new(mod.int, mod.nil))
+    input.last.type.should eq(mod.union_of(mod.int, mod.nil))
     input.last.target_def.body.type.should eq(mod.nil)
   end
 
   it "types as nilable if used after scope where defined" do
-    assert_type("if false; a = 1; end; a") { [int, self.nil].union }
+    assert_type("if false; a = 1; end; a") { union_of(int, self.nil) }
   end
 
   it "doesn't type as nilable if used inside same scope" do
