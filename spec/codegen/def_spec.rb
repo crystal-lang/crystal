@@ -43,26 +43,6 @@ describe 'Code gen: def' do
     build node, mod
   end
 
-  it "includes return type in the mangled name" do
-    run(%Q(
-      class Foo
-        #{rw :value}
-      end
-
-      def gen
-        Foo.new
-      end
-
-      f = gen
-      f.value = 1
-
-      g = gen
-      g.value = 2.5f
-
-      f.value + g.value
-    )).to_f.should eq(3.5)
-  end
-
   it "unifies all calls to same def" do
     run(%Q(
       require "pointer"
