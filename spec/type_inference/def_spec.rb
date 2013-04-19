@@ -97,7 +97,7 @@ describe 'Type inference: def' do
 
   it "doesn't incorrectly type as recursive type" do
     assert_type(%Q(
-      generic class Foo
+      class Foo
         #{rw :value}
       end
 

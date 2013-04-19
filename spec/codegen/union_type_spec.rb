@@ -109,14 +109,4 @@ describe 'Code gen: union type' do
       a.to_s
     )).to_string.should eq("")
   end
-
-  it "codegens int, empty array and int array union" do
-    run(%q(
-      require "prelude"
-      a = 1
-      a = []
-      a = []
-      a << 1
-      ))
-  end
 end

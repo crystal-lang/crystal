@@ -99,7 +99,7 @@ describe 'Type inference unification' do
 
   it "unifies recursive generic types" do
     input = parse %(
-      generic class Entry
+      class Entry
         def next=(n)
           @next = n
         end

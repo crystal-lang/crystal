@@ -15,7 +15,7 @@ describe "Type inference: union" do
 
   it "unifies unions when instance var changes" do
     nodes = parse(%Q(
-      generic class A
+      class A
         def next=(n)
           @next = n
         end
@@ -38,7 +38,7 @@ describe "Type inference: union" do
 
   it "unifies unions when instance var changes 2" do
     nodes = parse(%Q(
-      generic class A
+      class A
         def next=(n)
           @next = n
         end
@@ -69,6 +69,6 @@ describe "Type inference: union" do
   end
 
   it "types union of classes" do
-    assert_type("generic class A; end; generic class B; end; a = A.new; a = B.new; a") { UnionType.new(ObjectType.new('A'), ObjectType.new('B')) }
+    assert_type("class A; end; class B; end; a = A.new; a = B.new; a") { UnionType.new(ObjectType.new('A'), ObjectType.new('B')) }
   end
 end

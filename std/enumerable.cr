@@ -22,7 +22,7 @@ module Enumerable
   end
 
   def map
-    ary = []
+    ary = Array(U).new
     each { |e| ary << yield e }
     ary
   end

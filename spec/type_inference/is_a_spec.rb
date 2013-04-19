@@ -32,7 +32,7 @@ describe 'Type inference: is_a?' do
 
   it "restricts type inside if scope 3" do
     nodes = parse %q(
-      generic class Foo
+      class Foo
         def initialize(x)
           @x = x
         end

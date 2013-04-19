@@ -100,50 +100,9 @@ describe 'Type inference: class' do
     input.last.type.should eq(node)
   end
 
-  it "types separately method calls that create instances" do
-    assert_type(%(
-      generic class Node
-        #{rw :value}
-      end
-
-      def gen
-        Node.new
-      end
-
-      a = gen
-      a.value = 1
-
-      b = gen
-      b.value = 2.5
-      b
-    )) { ObjectType.new('Node').with_var("@value", double) }
-  end
-
-  it "types separately method calls that create instances with two instance vars" do
-    assert_type(%(
-      generic class Node
-        #{rw :x}
-        #{rw :y}
-      end
-
-      def gen
-        node = Node.new
-        node.x = 1
-        node
-      end
-
-      a = gen
-      a.y = 1
-
-      b = gen
-      b.y = 2.5
-      b
-    )) { ObjectType.new('Node').with_var("@x", int).with_var("@y", double) }
-  end
-
   it "types self inside method call without obj" do
     assert_type(%(
-      generic class Foo
+      class Foo
         def foo
           bar
         end
@@ -154,80 +113,75 @@ describe 'Type inference: class' do
       end
 
       Foo.new.foo
-    )) { ObjectType.new('Foo') }
-  end
-
-  it "types with two instance vars" do
-    nodes = parse %Q(
-      generic class Foo
-        #{rw :a}
-        #{rw :b}
-      end
-
-      f = Foo.new
-      f.a = 1
-      f.b = 2.3
-      )
-    mod = infer_type nodes
-
-    # The allocate
-    nodes[1].value.target_def.body.type.should eq(ObjectType.new('Foo').with_var('@a', mod.int).with_var('@b', mod.double))
+    )) { types["Foo"] }
   end
 
   it "types instance variable as nilable if read before write" do
     assert_type(%(
-      generic class Foo
+      class Foo
         def initialize
           a = @coco
           @coco = 2
         end
+        def coco
+          @coco
+        end
       end
 
-      Foo.new
-    )) { ObjectType.new("Foo").with_var("@coco", [int, self.nil].union) }
+      Foo.new.coco
+    )) { union_of(int, self.nil) }
   end
 
   it "types instance variable as nilable if inside if" do
     assert_type(%(
-      generic class Foo
+      class Foo
         def initialize
           if false
             @coco = 2
           end
         end
+        def coco
+          @coco
+        end
       end
 
-      Foo.new
-    )) { ObjectType.new("Foo").with_var("@coco", [int, self.nil].union) }
+      Foo.new.coco
+    )) { union_of(int, self.nil) }
   end
 
   it "doesn't type instance variable as nilable if inside if but had type" do
     assert_type(%(
-      generic class Foo
+      class Foo
         def initialize
           @coco = 2
           if false
             @coco = 2
           end
         end
+        def coco
+          @coco
+        end
       end
 
-      Foo.new
-    )) { ObjectType.new("Foo").with_var("@coco", int) }
+      Foo.new.coco
+    )) { int }
   end
 
   it "types instance variable as nilable if inside while" do
     assert_type(%(
-      generic class Foo
+      class Foo
         def initialize
           while false
             @coco = 2
           end
         end
+        def coco
+          @coco
+        end
       end
 
-      Foo.new
-    )) { ObjectType.new("Foo").with_var("@coco", [int, self.nil].union) }
+      Foo.new.coco
+    )) { union_of(int, self.nil) }
   end
 
   it "types instance variable as nilable in ||=" do
@@ -242,6 +196,6 @@ describe 'Type inference: class' do
       end
 
       Foo.new.coco
-    )) { [int, self.nil].union }
+    )) { union_of(int, self.nil) }
   end
 end
