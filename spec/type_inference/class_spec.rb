@@ -95,10 +95,9 @@ describe 'Type inference: class' do
       n
     )
     mod = infer_type input
-    recursive_type = ObjectType.new('Node')
-    recursive_type.generic = true
-    recursive_type.with_var("@next", [recursive_type, mod.nil].union)
-    input.last.type.should eq(recursive_type)
+    node = mod.types["Node"]
+    node.instance_vars["@next"].type.should eq(mod.union_of(node, mod.nil))
+    input.last.type.should eq(node)
   end
 
   it "types separately method calls that create instances" do

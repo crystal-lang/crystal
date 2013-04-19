@@ -135,38 +135,12 @@ class Array
   def array
     Crystal::ArrayLiteral.new self
   end
-
-  def union
-    UnionType.new(*self)
-  end
-end
-
-class Crystal::Program
-  def array_of(type = nil)
-    types['Array'].clone.
-      with_var('@length', int).
-      with_var('@capacity', int).
-      with_var('@buffer', PointerType.of(type))
-  end
 end
 
 class Crystal::ObjectType
   def with_var(name, type)
     @instance_vars[name] = Var.new(name, type)
     self
-  end
-
-  def generic!
-    @generic = true
-    self
-  end
-end
-
-class Crystal::PointerType
-  def self.of(type)
-    pointer = new
-    pointer.var.type = type
-    pointer
   end
 end
 

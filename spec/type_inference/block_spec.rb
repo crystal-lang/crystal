@@ -85,7 +85,7 @@ describe 'Block inference' do
       a = [1]
       a = [1.1]
       a.each { |x| x }
-    )) { [array_of(int), array_of(double)].union }
+    )) { union_of(array_of(int), array_of(double)) }
   end
 
   it "break from block without value" do
@@ -104,6 +104,6 @@ describe 'Block inference' do
       foo do
         break if false
       end
-    )) { [self.nil, int].union }
+    )) { union_of(self.nil, int) }
   end
 end

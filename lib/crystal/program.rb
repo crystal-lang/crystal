@@ -69,13 +69,17 @@ module Crystal
       all_types.flatten!
       all_types.compact!
       all_types.uniq!(&:object_id)
-      all_types.sort_by!(&:object_id)
-      if all_types.length == 1
-        return all_types[0]
+      union_of *types
+    end
+
+    def union_of(*types)
+      types.sort_by!(&:object_id)
+      if types.length == 1
+        return types[0]
       end
 
-      all_types_ids = all_types.map(&:object_id)
-      @unions[all_types_ids] ||= UnionType.new(*all_types)
+      types_ids = types.map(&:object_id)
+      @unions[types_ids] ||= UnionType.new(*types)
     end
 
     def lookup_generic_type(base_class, type_vars)
