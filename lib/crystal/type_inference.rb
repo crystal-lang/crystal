@@ -639,6 +639,10 @@ module Crystal
       false
     end
 
+    def end_visit_ident_union(node)
+      node.type = mod.union_of *node.idents.map { |ident| ident.type.instance_type }
+    end
+
     def end_visit_new_generic_class(node)
       return if node.type
 

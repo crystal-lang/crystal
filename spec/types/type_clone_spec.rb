@@ -20,9 +20,4 @@ describe "Type clone" do
     type_clone.should eq(type)
     type_clone.instance_vars["@foo"].type.should be(type_clone)
   end
-
-  it "clone array type" do
-    type = mod.array_of(mod.int)
-    type.clone.should eq(type)
-  end
 end

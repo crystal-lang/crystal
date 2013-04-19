@@ -4,11 +4,11 @@ require "nil"
 
 class Hash(K, V)
   def initialize
-    @buckets = Array.new(17, nil)
+    @buckets = Array(Entry(K, V)).new(17, nil)
     @length = 0
   end
 
-  def []=(key, value)
+  def []=(key : K, value : V)
     index = bucket_index key
     unless bucket = @buckets[index]
       @buckets[index] = bucket = Array(Entry(K, V))
@@ -115,7 +115,7 @@ class Hash(K, V)
   end
 
   class Entry(K, V)
-    def initialize(key, value)
+    def initialize(key : K, value : V)
       @key = key
       @value = value
     end
@@ -128,7 +128,7 @@ class Hash(K, V)
       @value
     end
 
-    def value=(v)
+    def value=(v : V)
       @value = v
     end
 

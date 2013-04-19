@@ -29,7 +29,7 @@ describe 'Type inference: class' do
       f.set
     )
     mod = infer_type input
-    input[1].type.should eq(ObjectType.new("Foo").with_var("@coco", mod.int))
+    input[1].type.should eq(ObjectType.new("Foo").of("T" => mod.int).with_var("@coco", mod.int))
   end
 
   it "types instance variable" do
@@ -47,8 +47,8 @@ describe 'Type inference: class' do
       g.set 2.5
     )
     mod = infer_type input
-    input[1].type.should eq(ObjectType.new("Foo").with_var("@coco", mod.int))
-    input[3].type.should eq(ObjectType.new("Foo").with_var("@coco", mod.double))
+    input[1].type.should eq(ObjectType.new("Foo").of("T" => mod.int).with_var("@coco", mod.int))
+    input[3].type.should eq(ObjectType.new("Foo").of("T" => mod.double).with_var("@coco", mod.double))
   end
 
   it "types instance variable on getter" do
@@ -114,5 +114,15 @@ describe 'Type inference: class' do
 
       Foo.new.foo
     )) { types["Foo"] }
+  end
+
+  it "types type var union" do
+
+    assert_type(%(
+      class Foo(T)
+      end
+
+      Foo(Int | Double).new
+      )) { ObjectType.new("Foo").of("T" => union_of(int, double)) }
   end
 end

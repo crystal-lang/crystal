@@ -295,6 +295,14 @@ module Crystal
       end
     end
 
+    def visit_ident_union(node)
+      node.idents.each_with_index do |ident, i|
+        @str << " | " if  i > 0
+        ident.accept self
+      end
+      false
+    end
+
     def visit_instance_var(node)
       @str << node.name
     end

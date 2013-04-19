@@ -142,6 +142,11 @@ class Crystal::ObjectType
     @instance_vars[name] = Var.new(name, type)
     self
   end
+
+  def of(type_vars)
+    @type_vars = Hash[type_vars.map { |name, type| [name, Var.new(name, type)] }]
+    self
+  end
 end
 
 class Crystal::ASTNode

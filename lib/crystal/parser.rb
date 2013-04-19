@@ -701,11 +701,16 @@ module Crystal
         next_token_skip_space_or_newline
 
         type_vars = []
-        while @token.type != :')'
-          type_vars.push parse_ident
+        while true
+          type_vars.push parse_type_var
 
-          if @token.type == :','
+          case @token.type
+          when :","
             next_token_skip_space_or_newline
+          when :")"
+            break
+          else
+            raise "expecting ',' or ')'"
           end
         end
 
@@ -720,6 +725,28 @@ module Crystal
       end
 
       const
+    end
+
+    def parse_type_var
+      idents = []
+      while true
+        ident = parse_ident
+        idents.push ident
+
+        skip_space
+
+        if @token.type == :"|"
+          next_token_skip_space_or_newline
+        else
+          break
+        end
+      end
+
+      if idents.length == 1
+        idents[0]
+      else
+        IdentUnion.new idents
+      end
     end
 
     def parse_begin

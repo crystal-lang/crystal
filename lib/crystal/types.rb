@@ -308,7 +308,7 @@ module Crystal
     end
 
     def structurally_equal?(other)
-      other.is_a?(ObjectType) && name == other.name && instance_vars == other.instance_vars
+      other.is_a?(ObjectType) && name == other.name && type_vars == other.type_vars && instance_vars == other.instance_vars
     end
 
     def llvm_type

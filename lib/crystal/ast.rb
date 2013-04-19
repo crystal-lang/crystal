@@ -562,6 +562,26 @@ module Crystal
     end
   end
 
+  class IdentUnion < ASTNode
+    attr_accessor :idents
+
+    def initialize(idents)
+      @idents = idents
+    end
+
+    def ==(other)
+      other.is_a?(IdentUnion) && other.idents == idents
+    end
+
+    def accept_children(visitor)
+      @idents.each { |ident| ident.accept visitor }
+    end
+
+    def clone_from(other)
+      @idents = other.idents.map(&:clone)
+    end
+  end
+
   # An instance variable.
   class InstanceVar < ASTNode
     attr_accessor :name
