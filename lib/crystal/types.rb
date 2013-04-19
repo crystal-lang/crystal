@@ -428,6 +428,14 @@ module Crystal
       raise "'implements?' shouln't be invoked on a UnionType"
     end
 
+    def metaclass
+      self
+    end
+
+    def target_type
+      self
+    end
+
     def filter_by(other_type)
       filtered_types = @types.map { |type| type.filter_by(other_type) }.compact
       case filtered_types.length

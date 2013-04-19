@@ -463,11 +463,7 @@ module Crystal
         node.target_const = type
         node.bind_to(type.value)
       else
-        if type.is_a?(UnionType)
-          node.type = type
-        else
-          node.type = type.metaclass
-        end
+        node.type = type.metaclass
       end
     end
 
@@ -646,11 +642,7 @@ module Crystal
     def end_visit_new_generic_class(node)
       return if node.type
 
-      if node.name.type.is_a?(UnionType)
-        instance_type = node.name.type
-      else
-        instance_type = node.name.type.instance_type
-      end
+      instance_type = node.name.type.instance_type
       unless instance_type.type_vars
         node.raise "#{instance_type} is not a generic class"
       end
