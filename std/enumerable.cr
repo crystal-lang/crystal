@@ -22,13 +22,13 @@ module Enumerable
   end
 
   def map
-    ary = Array(U).new
+    ary = Array.new
     each { |e| ary << yield e }
     ary
   end
 
   def select
-    ary = []
+    ary = Array.new
     each { |e| ary << e if yield e }
     ary
   end
@@ -43,7 +43,7 @@ module Enumerable
   end
 
   def to_a
-    ary = []
+    ary = Array.new
     each { |e| ary << e }
     ary
   end

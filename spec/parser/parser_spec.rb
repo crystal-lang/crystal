@@ -36,7 +36,6 @@ describe Parser do
   it_parses ":foo", SymbolLiteral.new("foo")
   it_parses "puts :foo.to_s", Call.new(nil, 'puts', [Call.new(SymbolLiteral.new("foo"), "to_s")])
 
-  it_parses "[]", [].array
   it_parses "[1, 2]", [1.int, 2.int].array
   it_parses "[\n1, 2]", [1.int, 2.int].array
   it_parses "[1,\n 2,]", [1.int, 2.int].array
@@ -256,9 +255,7 @@ describe Parser do
 
   it_parses %Q(A.new("x", B.new("y"))), Call.new("A".ident, "new", ["x".string, Call.new("B".ident, "new", ["y".string])])
 
-  it_parses "foo []", Call.new(nil, "foo", [[].array])
   it_parses "foo [1]", Call.new(nil, "foo", [[1.int].array])
-  it_parses "foo.bar []", Call.new("foo".call, "bar", [[].array])
   it_parses "foo.bar [1]", Call.new("foo".call, "bar", [[1.int].array])
 
   it_parses "class Foo; end\nwhile true; end", [ClassDef.new('Foo'), While.new(true.bool)]
@@ -329,7 +326,7 @@ describe Parser do
   it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(['a'.symbol, 1.int, 3.int, 4.int, 'b'.symbol, 2.int])
 
   it_parses %q(require "foo"), Require.new('foo'.string)
-  it_parses %q(require "foo"; []), [Require.new('foo'.string), [].array]
+  it_parses %q(require "foo"; [1]), [Require.new('foo'.string), [1.int].array]
   it_parses %Q(require "foo"\nif true; end), [Require.new('foo'.string), If.new(true.bool)]
 
   it_parses %q(case 1; when 1; 2; else; 3; end), Case.new(1.int, [When.new([1.int], 2.int)], 3.int)

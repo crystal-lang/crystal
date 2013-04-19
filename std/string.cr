@@ -221,7 +221,7 @@ class String
   end
 
   def split(separator : Char)
-    ary = []
+    ary = Array(String).new
     index = 0
     buffer = @c.ptr
     length.times do |i|
@@ -237,7 +237,7 @@ class String
   end
 
   def split(separator : String)
-    ary = []
+    ary = Array(String).new
     index = 0
     buffer = @c.ptr
     separator_length = separator.length

@@ -59,7 +59,7 @@ class Array(T)
     to += length if to < 0
     to -= 1 if range.excludes_end?
     length = to - from + 1
-    length <= 0 ? [] : self[from, length]
+    length <= 0 ? Array(T).new : self[from, length]
   end
 
   def [](start : Int, count : Int)

@@ -64,12 +64,10 @@ module Crystal
     def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
       @mod = mod
       @vars = vars
-      @vars_nest = {}
       @scope = scope
       @parent = parent
       @call = call
       @types = [mod]
-      @nest_count = 0
       @while_stack = []
       @type_filter_stack = []
     end
@@ -329,17 +327,14 @@ module Crystal
       lookup_instance_var node
     end
 
-    def lookup_instance_var(node, mark_as_nilable = true)
+    def lookup_instance_var(node)
       if @scope.is_a?(Crystal::Program)
         node.raise "can't use instance variables at the top level"
       elsif @scope.is_a?(PrimitiveType)
         node.raise "can't use instance variables inside #{@scope.name}"
       end
 
-      new_instance_var = mark_as_nilable && !@scope.has_instance_var?(node.name)
-
       var = @scope.lookup_instance_var node.name
-      var.bind_to mod.nil_var if mark_as_nilable && new_instance_var
       node.bind_to var
       var
     end
@@ -374,7 +369,7 @@ module Crystal
         end
 
       when InstanceVar
-        var = lookup_instance_var target, (@nest_count > 0)
+        var = lookup_instance_var target
 
         if node
           node.bind_to value
@@ -414,11 +409,9 @@ module Crystal
     def visit_while(node)
       node.cond.accept self
 
-      @nest_count += 1
       @while_stack.push node
       node.body.accept self if node.body
       @while_stack.pop
-      @nest_count -= 1
 
       false
     end
@@ -441,8 +434,6 @@ module Crystal
     def visit_if(node)
       node.cond.accept self
 
-      @nest_count += 1
-
       if node.then
         @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
 
@@ -454,7 +445,6 @@ module Crystal
       if node.else
         node.else.accept self
       end
-      @nest_count -= 1
 
       false
     end
@@ -502,11 +492,6 @@ module Crystal
     end
 
     def end_visit_array_literal(node)
-      if node.elements.empty?
-        node.raise "for empty arrays use '[] of Type'"
-        return
-      end
-
       ary_name = temp_name()
 
       length = node.elements.length
@@ -648,7 +633,6 @@ module Crystal
       node.obj.add_observer node, :update_input if node.obj
       node.recalculate unless node.obj || node.args.any?
 
-      @call__ = node
       node.obj.accept self if node.obj
       node.args.each { |arg| arg.accept self }
 
@@ -846,16 +830,9 @@ module Crystal
 
     def lookup_var(name)
       var = @vars[name]
-      if var
-        var_nest_count = @vars_nest[name]
-        if var_nest_count && var_nest_count > @nest_count
-          var.bind_to mod.nil_var
-          @vars_nest.delete name
-        end
-      else
+      unless var
         var = Var.new name
         @vars[name] = var
-        @vars_nest[name] = @nest_count
       end
       var
     end

@@ -96,7 +96,7 @@ describe 'Type inference: class' do
     )
     mod = infer_type input
     node = mod.types["Node"]
-    node.instance_vars["@next"].type.should eq(mod.union_of(node, mod.nil))
+    node.instance_vars["@next"].type.should eq(node)
     input.last.type.should eq(node)
   end
 
@@ -114,88 +114,5 @@ describe 'Type inference: class' do
 
       Foo.new.foo
     )) { types["Foo"] }
-  end
-
-  it "types instance variable as nilable if read before write" do
-    assert_type(%(
-      class Foo
-        def initialize
-          a = @coco
-          @coco = 2
-        end
-        def coco
-          @coco
-        end
-      end
-
-      Foo.new.coco
-    )) { union_of(int, self.nil) }
-  end
-
-  it "types instance variable as nilable if inside if" do
-    assert_type(%(
-      class Foo
-        def initialize
-          if false
-            @coco = 2
-          end
-        end
-        def coco
-          @coco
-        end
-      end
-
-      Foo.new.coco
-    )) { union_of(int, self.nil) }
-  end
-
-  it "doesn't type instance variable as nilable if inside if but had type" do
-    assert_type(%(
-      class Foo
-        def initialize
-          @coco = 2
-          if false
-            @coco = 2
-          end
-        end
-        def coco
-          @coco
-        end
-      end
-
-      Foo.new.coco
-    )) { int }
-  end
-
-  it "types instance variable as nilable if inside while" do
-    assert_type(%(
-      class Foo
-        def initialize
-          while false
-            @coco = 2
-          end
-        end
-        def coco
-          @coco
-        end
-      end
-
-      Foo.new.coco
-    )) { union_of(int, self.nil) }
-  end
-
-  it "types instance variable as nilable in ||=" do
-    assert_type(%(
-      class Foo
-        def initialize
-          @coco ||= 1
-        end
-        def coco
-          @coco
-        end
-      end
-
-      Foo.new.coco
-    )) { union_of(int, self.nil) }
   end
 end

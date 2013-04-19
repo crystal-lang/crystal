@@ -11,7 +11,7 @@ class Hash(K, V)
   def []=(key, value)
     index = bucket_index key
     unless bucket = @buckets[index]
-      @buckets[index] = bucket = []
+      @buckets[index] = bucket = Array(Entry(K, V))
     end
     bucket.each do |entry|
       if key == entry.key
@@ -80,7 +80,7 @@ class Hash(K, V)
   end
 
   def keys
-    keys = []
+    keys = Array(K).new
     each { |key| keys << key }
     keys
   end

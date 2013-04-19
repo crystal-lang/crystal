@@ -114,10 +114,6 @@ describe 'Type inference: def' do
     input.last.target_def.body.type.should eq(mod.nil)
   end
 
-  it "types as nilable if used after scope where defined" do
-    assert_type("if false; a = 1; end; a") { union_of(int, self.nil) }
-  end
-
   it "doesn't type as nilable if used inside same scope" do
     input = parse 'if false; a = 1; end'
     mod = infer_type input

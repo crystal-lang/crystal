@@ -468,8 +468,7 @@ module Crystal
       when :'('
         parse_parenthesized_expression
       when :'[]'
-        next_token_skip_space
-        Crystal::ArrayLiteral.new
+        raise "for empty arrays use '[] of Type'"
       when :'['
         parse_array_literal
       when :'{'
