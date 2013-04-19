@@ -4,14 +4,14 @@ require "nil"
 
 class Hash(K, V)
   def initialize
-    @buckets = Array(Entry(K, V)).new(17, nil)
+    @buckets = Array(Array(Entry(K, V)) | Nil).new(17, nil)
     @length = 0
   end
 
   def []=(key : K, value : V)
     index = bucket_index key
-    unless bucket = @buckets[index]
-      @buckets[index] = bucket = Array(Entry(K, V))
+    if (bucket = @buckets[index]).nil?
+      @buckets[index] = bucket = Array(Entry(K, V)).new
     end
     bucket.each do |entry|
       if key == entry.key
@@ -19,11 +19,11 @@ class Hash(K, V)
       end
     end
     @length += 1
-    entry = Entry.new(key, value)
+    entry = Entry(K, V).new(key, value)
     bucket.push entry
-    @last.next = entry if @last
+    @last.next = entry unless @last.nil?
     @last = entry
-    @first = entry unless @first
+    @first = entry if @first.nil?
     value
   end
 
@@ -73,7 +73,7 @@ class Hash(K, V)
 
   def each
     current = @first
-    while current
+    while !current.nil?
       yield current.key, current.value
       current = current.next
     end

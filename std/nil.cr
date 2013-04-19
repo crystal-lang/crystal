@@ -36,6 +36,10 @@ class Nil
   end
 
   def method_missing(name, args)
-    raise "Called #{name}(#{args.join ", "}) for nil"
+    if args.nil?
+      raise "Called #{name} for nil"
+    else
+      raise "Called #{name}(#{args.join ", "}) for nil"
+    end
   end
 end
