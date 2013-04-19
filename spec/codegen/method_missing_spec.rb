@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Codegen: method missing' do
-  pending "codegens method missing" do
+  it "codegens method missing" do
     run(%q(
       require "pointer"
       require "array"
