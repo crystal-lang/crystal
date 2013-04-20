@@ -1,5 +1,4 @@
 require_relative "types"
-require_relative "unification"
 
 module Crystal
   class Program < ModuleType
@@ -57,11 +56,6 @@ module Crystal
 
     def program
       self
-    end
-
-    def unify(node)
-      @unify_visitor ||= UnifyVisitor.new
-      Crystal.unify node, @unify_visitor
     end
 
     def type_merge(*types)

@@ -86,8 +86,8 @@ module Crystal
         node = node ? Expressions.new([require_node, node]) : require_node
         mod = infer_type node, @options
 
-        graph node, mod, @options[:output_filename] if @options[:graph] || !Crystal::UNIFY
-        exit 0 if @options[:no_build] || !Crystal::UNIFY
+        graph node, mod, @options[:output_filename] if @options[:graph]
+        exit 0 if @options[:no_build]
 
         llvm_mod = nil
         engine = nil
