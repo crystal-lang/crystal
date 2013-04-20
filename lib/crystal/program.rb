@@ -159,6 +159,10 @@ module Crystal
       lookup_generic_type array, [type]
     end
 
+    def range_of(a_begin, a_end)
+      lookup_generic_type types["Range"], [a_begin, a_end]
+    end
+
     def metaclass
       self
     end

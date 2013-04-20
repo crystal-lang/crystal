@@ -124,4 +124,22 @@ module Crystal
       new_generic_class.type = type.metaclass unless of
     end
   end
+
+  class RangeLiteral
+    attr_accessor :mod
+    attr_accessor :new_generic_class
+
+    def map_type(type)
+      if @dependencies.length == 2 && @dependencies.all?(&:type)
+        mod.range_of(@dependencies[0].type, @dependencies[1].type)
+      else
+        mod.range_of(type, type)
+      end
+    end
+
+    def set_type(type)
+      super
+      new_generic_class.type = type.metaclass
+    end
+  end
 end

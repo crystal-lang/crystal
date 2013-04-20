@@ -107,7 +107,14 @@ module Crystal
     end
 
     def visit_range_literal(node)
-      node.expanded = Call.new(Ident.new(['Range'], true), 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
+      range_new_generic = NewGenericClass.new(Ident.new(['Range'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])
+
+      node.mod = mod
+      node.new_generic_class = range_new_generic
+      node.bind_to node.from
+      node.bind_to node.to
+
+      node.expanded = Call.new(range_new_generic, 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
       node.expanded.accept self
       node.type = node.expanded.type
     end
