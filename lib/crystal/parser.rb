@@ -468,7 +468,14 @@ module Crystal
       when :'('
         parse_parenthesized_expression
       when :'[]'
-        raise "for empty arrays use '[] of Type'"
+        next_token_skip_space
+        if @token.keyword?(:"of")
+          next_token_skip_space_or_newline
+          of = parse_type_var
+          ArrayLiteral.new([], of)
+        else
+          raise "for empty arrays use '[] of Type'"
+        end
       when :'['
         parse_array_literal
       when :'{'
@@ -571,7 +578,14 @@ module Crystal
         end
       end
       next_token_skip_space
-      Crystal::ArrayLiteral.new exps
+
+      of = nil
+      if @token.keyword?(:"of")
+        next_token_skip_space_or_newline
+        of = parse_type_var
+      end
+
+      Crystal::ArrayLiteral.new exps, of
     end
 
     def parse_hash_literal

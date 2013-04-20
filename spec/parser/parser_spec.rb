@@ -41,6 +41,9 @@ describe Parser do
   it_parses "[1,\n 2,]", [1.int, 2.int].array
   it_parses "%w(one two three)", ["one".string, "two".string, "three".string].array
 
+  it_parses "[] of Int", [].array_of(Ident.new(["Int"]))
+  it_parses "[1, 2] of Int", [1.int, 2.int].array_of(Ident.new(["Int"]))
+
   it_parses "-x", Call.new("x".call, :"-@")
   it_parses "+x", Call.new("x".call, :"+@")
   it_parses "+ 1", Call.new(1.int, :"+@")

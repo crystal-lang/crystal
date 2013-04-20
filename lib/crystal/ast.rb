@@ -127,22 +127,26 @@ module Crystal
   #
   class ArrayLiteral < ASTNode
     attr_accessor :elements
+    attr_accessor :of
 
-    def initialize(elements = [])
+    def initialize(elements = [], of = nil)
       @elements = elements
       @elements.each { |e| e.parent = self }
+      @of = of
     end
 
     def accept_children(visitor)
       elements.each { |exp| exp.accept visitor }
+      of.accept visitor if of
     end
 
     def ==(other)
-      other.is_a?(ArrayLiteral) && other.elements == elements
+      other.is_a?(ArrayLiteral) && other.elements == elements && other.of == of
     end
 
     def clone_from(other)
       @elements = other.elements.map(&:clone)
+      @of = other.of.clone if other.of
     end
   end
 

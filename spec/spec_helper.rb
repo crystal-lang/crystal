@@ -135,6 +135,10 @@ class Array
   def array
     Crystal::ArrayLiteral.new self
   end
+
+  def array_of(type)
+    Crystal::ArrayLiteral.new self, type
+  end
 end
 
 class Crystal::ObjectType

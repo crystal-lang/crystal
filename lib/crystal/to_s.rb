@@ -78,6 +78,10 @@ module Crystal
         exp.accept self
       end
       @str << ']'
+      if node.of
+        @str << ' of '
+        node.of.accept self
+      end
       false
     end
 
