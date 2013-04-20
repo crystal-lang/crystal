@@ -4,7 +4,7 @@ require "nil"
 
 class Hash(K, V)
   def initialize
-    @buckets = Array(Array(Entry(K, V)) | Nil).new(17, nil)
+    @buckets = Array(Array(Entry(K, V))?).new(17, nil)
     @length = 0
   end
 

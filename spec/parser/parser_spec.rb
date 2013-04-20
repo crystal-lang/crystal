@@ -196,6 +196,7 @@ describe Parser do
   it_parses "Foo(T)", NewGenericClass.new("Foo".ident, ["T".ident])
   it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident])])
   it_parses "Foo(Bar(T | U))", NewGenericClass.new("Foo".ident, [NewGenericClass.new("Bar".ident, [IdentUnion.new(["T".ident, "U".ident])])])
+  it_parses "Foo(T?)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, Ident.new(["Nil"], true)])])
 
   it_parses "module Foo; end", ModuleDef.new("Foo")
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [], nil)])
