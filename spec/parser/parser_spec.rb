@@ -328,9 +328,11 @@ describe Parser do
   it_parses "foo out x; x", [Call.new(nil, 'foo', [Var.new('x').tap { |v| v.out = true }]), Var.new('x')]
   it_parses "foo(out x); x", [Call.new(nil, 'foo', [Var.new('x').tap { |v| v.out = true }]), Var.new('x')]
 
-  it_parses "{1 => 2, 3 => 4}", HashLiteral.new([1.int, 2.int, 3.int, 4.int])
-  it_parses "{a: 1, b: 2}", HashLiteral.new(['a'.symbol, 1.int, 'b'.symbol, 2.int])
-  it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(['a'.symbol, 1.int, 3.int, 4.int, 'b'.symbol, 2.int])
+  it_parses "{1 => 2, 3 => 4}", HashLiteral.new([1.int, 3.int], [2.int, 4.int])
+  it_parses "{a: 1, b: 2}", HashLiteral.new(['a'.symbol, 'b'.symbol], [1.int, 2.int])
+  it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(['a'.symbol, 3.int, 'b'.symbol], [1.int, 4.int, 2.int])
+
+  it_parses "{} of Int => Double", HashLiteral.new([], [], Ident.new(["Int"]), Ident.new(["Double"]))
 
   it_parses %q(require "foo"), Require.new('foo'.string)
   it_parses %q(require "foo"; [1]), [Require.new('foo'.string), [1.int].array]

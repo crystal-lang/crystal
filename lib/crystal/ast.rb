@@ -151,23 +151,34 @@ module Crystal
   end
 
   class HashLiteral < ASTNode
-    attr_accessor :key_values
+    attr_accessor :keys
+    attr_accessor :values
+    attr_accessor :of_key
+    attr_accessor :of_value
 
-    def initialize(key_values = [])
-      @key_values = key_values
-      @key_values.each { |kv| kv.parent = self }
+    def initialize(keys = [], values = [], of_key = nil, of_value = nil)
+      @keys = keys
+      @values = values
+      @of_key = of_key
+      @of_value = of_value
     end
 
     def accept_children(visitor)
-      key_values.each { |kv| kv.accept visitor }
+      keys.each { |key| key.accept visitor }
+      values.each { |value| value.accept visitor }
+      of_key.accept visitor if of_key
+      of_value.accept visitor if of_value
     end
 
     def ==(other)
-      other.is_a?(HashLiteral) && other.key_values == key_values
+      other.is_a?(HashLiteral) && other.keys == keys && other.values == values && other.of_key == of_key && other.of_value == of_value
     end
 
     def clone_from(other)
-      @key_values = other.key_values.map(&:clone)
+      @keys = other.keys.map(&:clone)
+      @values = other.values.map(&:clone)
+      @of_key = other.of_key.clone if of_key
+      @of_value = other.of_value.clone if of_value
     end
   end
 

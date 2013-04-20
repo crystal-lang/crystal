@@ -477,7 +477,7 @@ module Crystal
           of = parse_type_var
           ArrayLiteral.new([], of)
         else
-          raise "for empty arrays use '[] of Type'", line, column
+          raise "for empty arrays use '[] of ElementType'", line, column
         end
       when :'['
         parse_array_literal
@@ -592,26 +592,45 @@ module Crystal
     end
 
     def parse_hash_literal
+      column = @token.column_number
+      line = @line_number
+
       next_token_skip_space_or_newline
-      key_values = []
+      keys = []
+      values = []
       while @token.type != :'}'
         if @token.type == :IDENT && string[pos] == ':'
-          key_values << SymbolLiteral.new(@token.value)
+          keys << SymbolLiteral.new(@token.value)
           next_token
         else
-          key_values << parse_expression
+          keys << parse_expression
           skip_space_or_newline
           check :'=>'
         end
         next_token_skip_space_or_newline
-        key_values << parse_expression
+        values << parse_expression
         skip_space_or_newline
         if @token.type == :','
           next_token_skip_space_or_newline
         end
       end
       next_token_skip_space
-      Crystal::HashLiteral.new key_values
+
+      of_key = nil
+      of_value = nil
+      if @token.keyword?(:"of")
+        next_token_skip_space_or_newline
+        of_key = parse_type_var
+        check :"=>"
+        next_token_skip_space_or_newline
+        of_value = parse_type_var
+      end
+
+      if keys.length == 0 && !of_key
+        raise "for empty hashes use '{} of KeyType => ValueType'", line, column
+      end
+
+      Crystal::HashLiteral.new keys, values, of_key, of_value
     end
 
     def parse_require

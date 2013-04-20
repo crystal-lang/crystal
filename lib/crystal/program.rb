@@ -163,6 +163,10 @@ module Crystal
       lookup_generic_type types["Range"], [a_begin, a_end]
     end
 
+    def hash_of(key, value)
+      lookup_generic_type types["Hash"], [key, value]
+    end
+
     def metaclass
       self
     end

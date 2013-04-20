@@ -107,13 +107,13 @@ module Crystal
     end
 
     def visit_range_literal(node)
-      range_new_generic = NewGenericClass.new(Ident.new(['Range'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])
+      new_generic = NewGenericClass.new(Ident.new(['Range'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])
 
       node.mod = mod
-      node.new_generic_class = range_new_generic
+      node.new_generic_class = new_generic
       node.bind_to node.from, node.to
 
-      node.expanded = Call.new(range_new_generic, 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
+      node.expanded = Call.new(new_generic, 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
       node.expanded.accept self
       node.type = node.expanded.type
     end
@@ -505,18 +505,18 @@ module Crystal
       capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
 
       if node.of
-        ary_new_generic = NewGenericClass.new(Ident.new(['Array'], true), [node.of])
+        new_generic = NewGenericClass.new(Ident.new(['Array'], true), [node.of])
       else
-        ary_new_generic = NewGenericClass.new(Ident.new(['Array'], true), [Ident.new(["Nil"], true)])
+        new_generic = NewGenericClass.new(Ident.new(['Array'], true), [Ident.new(["Nil"], true)])
 
         node.mod = mod
-        node.new_generic_class = ary_new_generic
+        node.new_generic_class = new_generic
         node.bind_to *node.elements
       end
 
-      ary_new_generic.location = node.location
+      new_generic.location = node.location
 
-      ary_new = Call.new(ary_new_generic, 'new', [IntLiteral.new(capacity)])
+      ary_new = Call.new(new_generic, 'new', [IntLiteral.new(capacity)])
       ary_new.location = node.location
 
       ary_assign = Assign.new(Var.new(ary_name), ary_new)
@@ -548,18 +548,35 @@ module Crystal
       false
     end
 
-    def visit_hash_literal(node)
-      if node.key_values.empty?
-        exps = Call.new(Ident.new(['Hash'], true), 'new')
+    def end_visit_hash_literal(node)
+      if node.keys.empty?
+        new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [node.of_key, node.of_value])
+        exps = Call.new(new_generic, 'new')
       else
         hash_name = temp_name()
 
-        hash_new = Call.new(Ident.new(['Hash'], true), 'new')
+        if node.of_key
+          new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [node.of_key, node.of_value])
+        else
+          new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])
+
+          key_var = Var.new("K")
+          key_var.bind_to *node.keys
+
+          value_var = Var.new("V")
+          value_var.bind_to *node.values
+
+          node.mod = mod
+          node.new_generic_class = new_generic
+          node.bind_to key_var, value_var
+        end
+
+        hash_new = Call.new(new_generic, 'new')
         hash_assign = Assign.new(Var.new(hash_name), hash_new)
 
         exps = [hash_assign]
-        node.key_values.each_slice(2) do |key, value|
-          exps << Call.new(Var.new(hash_name), :[]=, [key, value])
+        node.keys.each_with_index do |key, i|
+          exps << Call.new(Var.new(hash_name), :[]=, [key, node.values[i]])
         end
         exps << Var.new(hash_name)
         exps = Expressions.new exps
@@ -567,7 +584,10 @@ module Crystal
 
       exps.accept self
       node.expanded = exps
-      node.bind_to exps
+
+      if node.of_key
+        node.bind_to exps
+      end
 
       false
     end
@@ -656,7 +676,7 @@ module Crystal
         arg.add_observer node, :update_input
       end
       node.obj.add_observer node, :update_input if node.obj
-      node.recalculate unless node.obj || node.args.any?
+      node.recalculate
 
       node.obj.accept self if node.obj
       node.args.each { |arg| arg.accept self }

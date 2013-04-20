@@ -87,13 +87,20 @@ module Crystal
 
     def visit_hash_literal(node)
       @str << '{'
-      node.key_values.each_slice(2).each_with_index do |kv, i|
+      node.keys.each_with_index do |key, i|
         @str << ', ' if i > 0
-        kv[0].accept self
+        key.accept self
         @str << ' => '
-        kv[1].accept self
+        node.values[i].accept self
       end
       @str << '}'
+
+      if node.of_key
+        @str << " of "
+        node.of_key.accept self
+        @str << " => "
+        node.of_value.accept self
+      end
       false
     end
 

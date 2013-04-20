@@ -123,16 +123,30 @@ module Crystal
     end
   end
 
+  class HashLiteral
+    attr_accessor :mod
+    attr_accessor :new_generic_class
+
+    def map_type(type)
+      if of_key
+        type
+      else
+        mod.hash_of(@dependencies[0].type, @dependencies[1].type)
+      end
+    end
+
+    def set_type(type)
+      super
+      new_generic_class.type = type.metaclass unless of_key
+    end
+  end
+
   class RangeLiteral
     attr_accessor :mod
     attr_accessor :new_generic_class
 
     def map_type(type)
-      if @dependencies.length == 2 && @dependencies.all?(&:type)
-        mod.range_of(@dependencies[0].type, @dependencies[1].type)
-      else
-        mod.range_of(type, type)
-      end
+      mod.range_of(@dependencies[0].type, @dependencies[1].type)
     end
 
     def set_type(type)
