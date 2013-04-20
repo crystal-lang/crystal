@@ -85,6 +85,12 @@ class Hash(K, V)
     keys
   end
 
+  def values
+    values = Array(V).new
+    each { |key, value| values << value }
+    values
+  end
+
   def ==(other : self)
     return false unless length == other.length
     each do |key, value|
