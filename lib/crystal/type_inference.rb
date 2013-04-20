@@ -111,8 +111,7 @@ module Crystal
 
       node.mod = mod
       node.new_generic_class = range_new_generic
-      node.bind_to node.from
-      node.bind_to node.to
+      node.bind_to node.from, node.to
 
       node.expanded = Call.new(range_new_generic, 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
       node.expanded.accept self
@@ -512,9 +511,7 @@ module Crystal
 
         node.mod = mod
         node.new_generic_class = ary_new_generic
-        node.elements.each do |elem|
-          node.bind_to elem
-        end
+        node.bind_to *node.elements
       end
 
       ary_new_generic.location = node.location
