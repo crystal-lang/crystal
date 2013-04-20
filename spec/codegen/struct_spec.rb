@@ -11,7 +11,7 @@ describe 'Code gen: struct' do
     run("#{struct}; bar = Foo::Bar.new; bar.y = 2.5f; bar.y").to_f.should eq(2.5)
   end
 
-  pending "codegens struct property setter" do
+  it "codegens struct property setter" do
     run("#{struct}; bar = Foo::Bar.new; p = bar.ptr; p.value.y = 2.5f; bar.y").to_f.should eq(2.5)
   end
 
