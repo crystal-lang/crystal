@@ -6,18 +6,25 @@ class Node
   end
 
   def add(x)
-    node_ptr = x < @value ? @left.ptr : @right.ptr
-    if node_ptr.value.nil?
-      node_ptr.value = Node.new(x)
+    if x < @value
+      if @left.nil?
+        @left = Node.new(x)
+      else
+        @left.add(x)
+      end
     else
-      node_ptr.value.add(x)
+      if @right.nil?
+        @right = Node.new(x)
+      else
+        @right.add(x)
+      end
     end
   end
 
   def print
-    @left.print if @left
+    @left.print unless @left.nil?
     print @value
-    @right.print if @right
+    @right.print unless @right.nil?
   end
 end
 

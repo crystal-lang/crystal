@@ -1,7 +1,7 @@
 #output: 78499
 max = 1000000
 
-sieve = Array.new
+sieve = [] of Bool
 sieve.push false
 (max - 1).times do
   sieve.push true
