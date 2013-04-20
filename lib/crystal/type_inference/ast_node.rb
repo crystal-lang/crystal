@@ -112,12 +112,16 @@ module Crystal
     attr_accessor :new_generic_class
 
     def map_type(type)
-      mod.array_of(type)
+      if of
+        type
+      else
+        mod.array_of(type)
+      end
     end
 
     def set_type(type)
       super
-      new_generic_class.type = type.metaclass
+      new_generic_class.type = type.metaclass unless of
     end
   end
 end

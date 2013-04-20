@@ -486,33 +486,60 @@ module Crystal
     end
 
     def end_visit_array_literal(node)
+      if node.elements.length == 0
+        node.expanded = Call.new(NewGenericClass.new(Ident.new(['Array'], true), [node.of]), 'new')
+        node.expanded.accept self
+        node.bind_to node.expanded
+        return false
+      end
+
       ary_name = temp_name()
 
       length = node.elements.length
       capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
 
-      ary_new_generic = NewGenericClass.new(Ident.new(['Array'], true), [Ident.new(["Nil"], true)])
+      if node.of
+        ary_new_generic = NewGenericClass.new(Ident.new(['Array'], true), [node.of])
+      else
+        ary_new_generic = NewGenericClass.new(Ident.new(['Array'], true), [Ident.new(["Nil"], true)])
 
-      node.mod = mod
-      node.new_generic_class = ary_new_generic
-      node.elements.each do |elem|
-        node.bind_to elem
+        node.mod = mod
+        node.new_generic_class = ary_new_generic
+        node.elements.each do |elem|
+          node.bind_to elem
+        end
       end
 
+      ary_new_generic.location = node.location
+
       ary_new = Call.new(ary_new_generic, 'new', [IntLiteral.new(capacity)])
+      ary_new.location = node.location
+
       ary_assign = Assign.new(Var.new(ary_name), ary_new)
+      ary_assign.location = node.location
+
       ary_assign_length = Call.new(Var.new(ary_name), 'length=', [IntLiteral.new(length)])
+      ary_assign_length.location = node.location
 
       exps = [ary_assign, ary_assign_length]
       node.elements.each_with_index do |elem, i|
         get_buffer = Call.new(Var.new(ary_name), 'buffer')
-        exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+        get_buffer.location = node.location
+
+        assign_index = Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+        assign_index.location = node.location
+
+        exps << assign_index
       end
       exps << Var.new(ary_name)
 
       exps = Expressions.new exps
       exps.accept self
       node.expanded = exps
+
+      if node.of
+        node.bind_to exps
+      end
 
       false
     end
