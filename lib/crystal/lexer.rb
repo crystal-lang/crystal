@@ -249,8 +249,8 @@ module Crystal
       next_token while types.include? @token.type
     end
 
-    def raise(message)
-      Kernel::raise Crystal::SyntaxException.new(message, @line_number, @token.column_number, @filename)
+    def raise(message, line_number = @line_number, column_number = @token.column_number, filename = @filename)
+      Kernel::raise Crystal::SyntaxException.new(message, line_number, column_number, filename)
     end
   end
 end

@@ -468,13 +468,16 @@ module Crystal
       when :'('
         parse_parenthesized_expression
       when :'[]'
+        line = @line_number
+        column = @token.column_number
+
         next_token_skip_space
         if @token.keyword?(:"of")
           next_token_skip_space_or_newline
           of = parse_type_var
           ArrayLiteral.new([], of)
         else
-          raise "for empty arrays use '[] of Type'"
+          raise "for empty arrays use '[] of Type'", line, column
         end
       when :'['
         parse_array_literal
