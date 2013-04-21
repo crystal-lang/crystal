@@ -2,11 +2,11 @@ class Set(T)
   include Enumerable
 
   def initialize
-    @hash = {}
+    @hash = Hash(T, Bool).new
   end
 
-  def initialize(array : Array)
-    @hash = {}
+  def initialize(array : Array(T))
+    @hash = Hash(T, Bool).new
     array.each do |elem|
       add(elem)
     end
