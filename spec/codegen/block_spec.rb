@@ -631,4 +631,27 @@ describe 'Code gen: block' do
       foo(1, nil)
     ))
   end
+
+  it "allows yield from dispatch call" do
+    run(%q(
+      def foo(x : Value)
+        yield 1
+      end
+
+      def foo(x : Int)
+        yield 2
+      end
+
+      def bar
+        a = 1; a = 1.1
+        foo(a) do |i|
+          yield i
+        end
+      end
+
+      x = 0
+      bar { |i| x = i }
+      x
+    )).to_i.should eq(1)
+  end
  end
