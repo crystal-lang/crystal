@@ -47,7 +47,9 @@ module Crystal
     end
 
     def is_restriction_of?(type, owner)
-      type && (equal?(type) || type.parents.any? { |parent| is_restriction_of?(parent, owner) })
+      type.nil? || equal?(type) ||
+        type.union? && type.types.any? { |union_type| self.is_restriction_of?(union_type, owner) } ||
+        parents.any? { |parent| parent.is_restriction_of?(type, owner) }
     end
 
     def implements?(other_type)
@@ -99,9 +101,9 @@ module Crystal
   class Def
     def is_restriction_of?(other, owner)
       args.zip(other.args).each do |self_arg, other_arg|
-        self_type = self_arg.type
-        other_type = other_arg.type
-        return false if self_type != nil && other_type == nil
+        self_type = self_arg.type || self_arg.type_restriction
+        other_type = other_arg.type || other_arg.type_restriction
+        return false if self_type == nil && other_type != nil
         if self_type != nil && other_type != nil
           return false unless self_type.is_restriction_of?(other_type, owner)
         end
@@ -112,17 +114,66 @@ module Crystal
 
   module DefContainer
     def add_def(a_def)
+      a_def.owner = self if a_def.respond_to?(:owner=)
       types = a_def.args.map(&:type)
+      restrictions = a_def.args.map(&:type_restriction)
       @defs[a_def.name] ||= {}
-      @defs[a_def.name][[types, a_def.yields]] = a_def
+      @defs[a_def.name][[types, restrictions, a_def.yields]] = a_def
 
       index = a_def.args.length - 1
       while index >= 0 && a_def.args[index].default_value
-        @defs[a_def.name][[types[0 ... index], a_def.yields]] = a_def
+        @defs[a_def.name][[types[0 ... index], restrictions, a_def.yields]] = a_def
         index -= 1
       end
 
       a_def
+    end
+
+    def match_def_args(args, def_types, def_restrictions, owner)
+      free_vars = {}
+      0.upto(args.length - 1) do |i|
+        arg_type = args[i]
+        def_type = def_types[i]
+        restriction = def_restrictions[i]
+
+        if def_type
+          return nil unless arg_type == def_type
+        else
+          return nil unless match_arg(arg_type, restriction, owner, free_vars)
+        end
+      end
+      free_vars
+    end
+
+    def match_arg(arg_type, def_type, owner, free_vars)
+      case def_type
+      when nil
+        true
+      when :self
+        arg_type.is_restriction_of?(owner, owner)
+      when NewGenericClass
+        arg_type.is_a?(ObjectType) && arg_type.generic && match_generic_type(arg_type, def_type, owner, free_vars)
+      when Ident
+        type = free_vars[def_type.names] || owner.lookup_type(def_type.names)
+        if type
+          arg_type && arg_type.is_restriction_of?(type, owner)
+        else
+          free_vars[def_type.names] = arg_type
+          true
+        end
+      end
+    end
+
+    def match_generic_type(arg_type, def_type, owner, free_vars)
+      return false unless arg_type.name == def_type.name.names.last
+      return false unless arg_type.type_vars.length == def_type.type_vars.length
+
+      arg_type.type_vars.each.with_index do |name_and_type_var, i|
+        arg_type_var = name_and_type_var[1]
+        def_type_var = def_type.type_vars[i]
+        return false unless match_arg(arg_type_var.type, def_type_var, owner, free_vars)
+      end
+      true
     end
 
     def lookup_def(name, args, yields, owner = self)
@@ -131,10 +182,10 @@ module Crystal
       if defs
         if args
           matches = defs.select do |def_types_and_yields, a_def|
-            def_types, def_yields = def_types_and_yields
+            def_types, def_restrictions, def_yields = def_types_and_yields
             next false if def_yields != yields
             next false if def_types.length != args.length
-            args.zip(def_types).all? { |arg, def_type| !def_type || def_type.is_restriction_of?(arg.type, owner) }
+            free_vars = match_def_args(args.map(&:type), def_types, def_restrictions, owner)
           end
           return matches.first[1] if matches.length == 1
 
@@ -142,7 +193,7 @@ module Crystal
 
           matches = matches.values
           minimals = matches.select do |match|
-            matches.all? { |m| m.equal?(match) || m.is_restriction_of?(match, owner) }
+            matches.all? { |m| m.equal?(match) || match.is_restriction_of?(m, owner) }
           end
           return minimals[0] if minimals.length == 1
 

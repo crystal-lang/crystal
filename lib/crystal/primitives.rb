@@ -174,7 +174,7 @@ module Crystal
       pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_type('size', int)], PointerMalloc.new)
       pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_type('size', long)], PointerMalloc.new)
       pointer.add_def Def.new('value', [], PointerGetValue.new)
-      pointer.add_def Def.new('value=', [Arg.new_with_type('value', TypeVarType.new("T"))], PointerSetValue.new)
+      pointer.add_def Def.new('value=', [Arg.new_with_restriction('value', Ident.new(["T"]))], PointerSetValue.new)
       pointer.add_def Def.new('realloc', [Arg.new_with_type('size', int)], PointerRealloc.new)
       pointer.add_def Def.new('realloc', [Arg.new_with_type('size', long)], PointerRealloc.new)
       pointer.add_def Def.new(:+, [Arg.new_with_type('offset', int)], PointerAdd.new)

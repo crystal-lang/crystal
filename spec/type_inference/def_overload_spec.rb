@@ -208,4 +208,34 @@ describe 'Type inference: def overload' do
       a.foo(B.new)
     )) { int }
   end
+
+  it "matches types with free variables" do
+    assert_type(%Q(
+      require "array"
+      def foo(x : Array(T), y : T)
+        1
+      end
+
+      def foo(x, y)
+        1.5
+      end
+
+      foo([1], 1)
+    )) { int }
+  end
+
+  it "prefer more specifc overload than one with free variables" do
+    assert_type(%Q(
+      require "array"
+      def foo(x : Array(T), y : T)
+        1
+      end
+
+      def foo(x : Array(Int), y : Int)
+        1.5
+      end
+
+      foo([1], 1)
+    )) { double }
+  end
 end

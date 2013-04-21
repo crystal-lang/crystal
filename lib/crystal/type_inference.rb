@@ -149,22 +149,6 @@ module Crystal
       else
         target_type = current_type
       end
-      node.args.each do |arg|
-        if arg.type_restriction
-          if arg.type_restriction == :self
-            arg.type = SelfType
-          else
-            if target_type.generic &&
-                arg.type_restriction.names.length == 1 &&
-                type_var = target_type.type_vars[arg.type_restriction.names.first]
-              arg.type = TypeVarType.new(type_var.name)
-            else
-              arg.type_restriction.accept self
-              arg.type = arg.type_restriction.type.instance_type
-            end
-          end
-        end
-      end
 
       target_type.add_def node
       false
