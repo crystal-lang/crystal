@@ -302,7 +302,7 @@ module Crystal
         msg = "no overload or ambiguos call for '#{full_name}' with types #{args.map { |arg| arg.type }.join ', '}\n"
         msg << "Overloads are:"
         error_matches.each do |error_match|
-          msg << "\n - #{full_name}(#{error_match.args.map { |arg| arg.name + (arg.type ? (" : #{arg.type}") : '') }.join ', '})"
+          msg << "\n - #{full_name}(#{error_match.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '})"
         end
         raise msg
       end
