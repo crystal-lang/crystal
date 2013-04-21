@@ -235,7 +235,7 @@ module Crystal
 
     def has_restricted_defs?(name)
       defs = @defs[name]
-      (defs && defs.keys.any? { |ary| ary[0].any? }) || (parents && parents.any? { |p| p.has_restricted_defs?(name) })
+      (defs && defs.keys.any? { |ary| ary[0].any? || ary[1].any? }) || (parents && parents.any? { |p| p.has_restricted_defs?(name) })
     end
   end
 

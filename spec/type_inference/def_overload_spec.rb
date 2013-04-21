@@ -248,4 +248,19 @@ describe 'Type inference: def overload' do
       foo(1)
     )) { int }
   end
+
+  it "dispatch call to def with restrictions" do
+    assert_type(%Q(
+      def foo(x : Value)
+        1.1
+      end
+
+      def foo(x : Int)
+        1
+      end
+
+      a = 1; a = 1.1
+      foo(a)
+    )) { union_of(int, double) }
+  end
 end
