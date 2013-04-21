@@ -238,4 +238,14 @@ describe 'Type inference: def overload' do
       foo([1], 1)
     )) { double }
   end
+
+  it "accept overload with nilable type restriction" do
+    assert_type(%Q(
+      def foo(x : Int?)
+        1
+      end
+
+      foo(1)
+    )) { int }
+  end
 end

@@ -161,6 +161,10 @@ module Crystal
           free_vars[def_type.names] = arg_type
           true
         end
+      when IdentUnion
+        def_type.idents.any? do |ident|
+          match_arg(arg_type, ident, owner, free_vars)
+        end
       end
     end
 
