@@ -9,6 +9,15 @@ describe 'Type inference: def overload' do
     assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo') { double }
   end
 
+  it "types a call with overload with yield after typing another call without yield" do
+    assert_type(%q(
+      def foo; yield; 1; end
+      def foo; 2.5; end
+      foo
+      foo {}
+    )) { int }
+  end
+
   it "types a call with overload with yield the other way" do
     assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo { 1 }') { int }
   end

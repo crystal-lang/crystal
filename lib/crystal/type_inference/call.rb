@@ -54,7 +54,7 @@ module Crystal
         arg_types = args.map &:type
         typed_def = untyped_def.lookup_instance(arg_types) ||
                     self_type.lookup_def_instance(name, arg_types) ||
-                    parent_visitor.lookup_def_instance(owner, untyped_def, arg_types)
+                    parent_visitor.lookup_def_instance(owner, untyped_def, arg_types) unless block
         if typed_def
           self.target_def = typed_def
         else
