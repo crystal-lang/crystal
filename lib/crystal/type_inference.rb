@@ -115,7 +115,7 @@ module Crystal
       mod.symbols << node.value
     end
 
-    def visit_range_literal(node)
+    def end_visit_range_literal(node)
       return if node.expanded
 
       new_generic = NewGenericClass.new(Ident.new(['Range'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])

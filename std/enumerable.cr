@@ -21,14 +21,12 @@ module Enumerable
     memo
   end
 
-  def map
-    ary = Array.new
-    each { |e| ary << yield e }
-    ary
+  def map(target : Array(U))
+    each { |e| target << yield e }
   end
 
   def select
-    ary = Array.new
+    ary = Array(T).new
     each { |e| ary << e if yield e }
     ary
   end

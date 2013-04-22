@@ -405,6 +405,11 @@ module Crystal
       other.is_a?(RangeLiteral) && other.from == from && other.to == to && other.exclusive == exclusive
     end
 
+    def accept_children(visitor)
+      from.accept visitor
+      to.accept visitor
+    end
+
     def clone_from(other)
       @from = other.from
       @to = other.to

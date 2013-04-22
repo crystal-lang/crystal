@@ -52,7 +52,7 @@ class Array(T)
     @buffer[index] = value
   end
 
-  def [](range : Range)
+  def [](range : Range(Int, Int))
     from = range.begin
     from += length if from < 0
     to = range.end
@@ -63,7 +63,7 @@ class Array(T)
   end
 
   def [](start : Int, count : Int)
-    Array.new(count) { |i| @buffer[start + i] }
+    Array(T).new(count) { |i| @buffer[start + i] }
   end
 
   def push(value : T)
@@ -148,7 +148,7 @@ class Array(T)
     end
   end
 
-  def &(other : Array)
+  def &(other : Array(U))
     hash = other.each_with_object(Hash(T, Bool).new) { |obj, hash| hash[obj] = true }
     ary = Array(T).new(Math.min(length, other.length))
     i = 0
@@ -162,8 +162,8 @@ class Array(T)
     ary
   end
 
-  def |(other : Array)
-    ary = Array(T).new(length + other.length)
+  def |(other : Array(U))
+    ary = Array(T | U).new(length + other.length)
     hash = Hash(T, Bool).new
     i = 0
     each do |obj|
@@ -181,7 +181,7 @@ class Array(T)
     ary
   end
 
-  def -(other : Array)
+  def -(other : Array(U))
     ary = Array(T).new(length - other.length)
     hash = other.each_with_object(Hash(T, Bool).new) { |obj, hash| hash[obj] = true }
     each do |obj|
@@ -198,17 +198,9 @@ class Array(T)
     delete nil
   end
 
-  def flatten
-    ary = Array.new(length)
-    flatten_append ary, self, false
-    ary
-  end
-
-  def flatten!
-    ary = Array.new(length)
-    modified = flatten_append ary, self, false
-    replace ary
-    modified
+  def flatten(target : Array(U))
+    flatten_append target, self, false
+    target
   end
 
   def map!
@@ -226,7 +218,7 @@ class Array(T)
   end
 
   def reverse
-    ary = Array.new(length)
+    ary = Array(T).new(length)
     i = 0
     reverse_each do |obj|
       ary.buffer[i] = obj
@@ -340,7 +332,7 @@ class Array(T)
     @buffer = @buffer.realloc(@capacity)
   end
 
-  def flatten_append(target, source : Array, modified)
+  def flatten_append(target, source : Array(U), modified)
     source.each do |obj|
       modified |= flatten_append target, obj, true
     end
