@@ -33,32 +33,39 @@ module Crystal
       end
     end
 
-    def end_visit_array_literal(node)
+    def visit_array_literal(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_range_literal(node)
+    def visit_range_literal(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_regexp_literal(node)
+    def visit_regexp_literal(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_hash_literal(node)
+    def visit_hash_literal(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_require(node)
+    def visit_require(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_and(node)
+    def visit_and(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_or(node)
+    def visit_or(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
     def end_visit_ident(node)

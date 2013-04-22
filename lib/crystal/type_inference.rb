@@ -115,6 +115,8 @@ module Crystal
     end
 
     def visit_range_literal(node)
+      return if node.expanded
+
       new_generic = NewGenericClass.new(Ident.new(['Range'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])
 
       node.mod = mod
@@ -127,6 +129,8 @@ module Crystal
     end
 
     def visit_regexp_literal(node)
+      return if node.expanded
+
       name = @@regexps[node.value]
       name = @@regexps[node.value] = "Regexp#{@@regexps.length}" unless name
 
@@ -482,6 +486,8 @@ module Crystal
     end
 
     def end_visit_array_literal(node)
+      return if node.expanded
+
       if node.elements.length == 0
         node.expanded = Call.new(NewGenericClass.new(Ident.new(['Array'], true), [node.of]), 'new')
         node.expanded.accept self
@@ -539,6 +545,8 @@ module Crystal
     end
 
     def end_visit_hash_literal(node)
+      return if node.expanded
+
       if node.keys.empty?
         new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [node.of_key, node.of_value])
         exps = Call.new(new_generic, 'new')
@@ -622,6 +630,8 @@ module Crystal
     end
 
     def visit_and(node)
+      return if node.expanded
+
       temp_var = Var.new(temp_name())
       node.expanded = If.new(Assign.new(temp_var, node.left), node.right, temp_var)
       node.expanded.binary = :and
@@ -633,6 +643,8 @@ module Crystal
     end
 
     def visit_or(node)
+      return if node.expanded
+
       temp_var = Var.new(temp_name())
       node.expanded = If.new(Assign.new(temp_var, node.left), temp_var, node.right)
       node.expanded.binary = :or
