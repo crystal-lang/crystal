@@ -68,7 +68,7 @@ module Crystal
 
           if typed_def.body
             bubbling_exception do
-              visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, [owner, untyped_def, arg_types, typed_def, self])
+              visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, self, owner, untyped_def, typed_def, arg_types)
               typed_def.body.accept visitor
             end
           end
@@ -209,16 +209,16 @@ module Crystal
       end
 
       if name == 'super'
-        parent = parent_visitor.call[0].parents.first
+        parent = parent_visitor.owner.parents.first
         if args.empty? && !has_parenthesis
-          self.args = parent_visitor.call[3].args.map do |arg|
+          self.args = parent_visitor.typed_def.args.map do |arg|
             var = Var.new(arg.name)
             var.bind_to arg
             var
           end
         end
 
-        return [parent, scope, lookup_method(parent, parent_visitor.call[1].name)]
+        return [parent, scope, lookup_method(parent, parent_visitor.untyped_def.name)]
       end
 
       untyped_def, error_matches = lookup_method(scope, name)

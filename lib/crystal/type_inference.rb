@@ -54,16 +54,24 @@ module Crystal
     attr_accessor :mod
     attr_accessor :paths
     attr_accessor :call
+    attr_accessor :owner
+    attr_accessor :untyped_def
+    attr_accessor :typed_def
+    attr_accessor :arg_types
     attr_accessor :block
     @@regexps = {}
     @@counter = 0
 
-    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
+    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil, owner = nil, untyped_def = nil, typed_def = nil, arg_types = nil)
       @mod = mod
       @vars = vars
       @scope = scope
       @parent = parent
       @call = call
+      @owner = owner
+      @untyped_def = untyped_def
+      @typed_def = typed_def
+      @arg_types = arg_types
       @types = [mod]
       @while_stack = []
       @type_filter_stack = []
@@ -575,15 +583,23 @@ module Crystal
     end
 
     def lookup_def_instance(scope, untyped_def, arg_types)
-      if @call && @call[0..2] == [scope, untyped_def, arg_types]
-        @call[3]
+      if @call && @owner.equal?(scope) && @untyped_def.equal?(untyped_def) && same_arg_types_as_current_call(arg_types)
+        @typed_def
       elsif @parent
         @parent.lookup_def_instance(scope, untyped_def, arg_types)
       end
     end
 
+    def same_arg_types_as_current_call(arg_types)
+      return false unless arg_types.length == @arg_types.length
+      arg_types.each_with_index do |arg_type, i|
+        return false unless arg_type.equal?(@arg_types[i])
+      end
+      true
+    end
+
     def end_visit_yield(node)
-      block = @call[4].block or node.raise "no block given"
+      block = @call.block or node.raise "no block given"
 
       block.args.each_with_index do |arg, i|
         arg.bind_to node.exps[i]
@@ -598,7 +614,7 @@ module Crystal
           block_vars[arg.name] = arg
         end
 
-        block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call)
+        block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types)
         block_visitor.block = node
         node.body.accept block_visitor
       end
@@ -747,7 +763,7 @@ module Crystal
 
     def end_visit_return(node)
       node.exps.each do |exp|
-        @call[3].bind_to exp
+        @typed_def.bind_to exp
       end
     end
 
