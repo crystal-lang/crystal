@@ -23,6 +23,7 @@ module Enumerable
 
   def map(target : Array(U))
     each { |e| target << yield e }
+    target
   end
 
   def select
