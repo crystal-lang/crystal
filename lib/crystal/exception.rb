@@ -73,12 +73,23 @@ module Crystal
     end
 
     def append_to_s(str, source)
+      # If the inner exception has no location it means that they came from virtual nodes.
+      # In that case, get the deepest error message and only show that.
+      if inner && !inner.has_location?
+        msg = deepest_error_message.to_s
+      else
+        msg = @message.to_s
+      end
+
       if @filename && File.file?(@filename)
         lines = File.readlines @filename
-        str << "in #{@filename}:#{@line}: #{@message}"
+        str << "in #{@filename}:#{@line}: #{msg}"
       else
         lines = source ? source.lines.to_a : nil
-        str << "in line #{@line}: #{@message}"
+        if @line
+          str << "in line #{@line}: "
+        end
+        str << msg
       end
 
       if lines && @line
@@ -95,9 +106,21 @@ module Crystal
         end
       end
       str << "\n"
-      if inner
+      if inner && inner.has_location?
         str << "\n"
         inner.append_to_s(str, source)
+      end
+    end
+
+    def has_location?
+      @filename || @line
+    end
+
+    def deepest_error_message
+      if inner
+        inner.deepest_error_message
+      else
+        @message
       end
     end
   end

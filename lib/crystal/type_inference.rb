@@ -482,6 +482,9 @@ module Crystal
     end
 
     def visit_allocate(node)
+      if @scope.generic && @scope.type_vars.any? { |k, v| !v.type }
+        node.raise "can't create instance of generic class #{@scope.instance_type} without specifying its type vars"
+      end
       node.type = @scope.instance_type
     end
 

@@ -51,10 +51,6 @@ module Crystal
         self.target_def = typed_def
         check_args_type_match typed_def
       else
-        if self_type.is_a?(Metaclass) && self_type.instance_type.generic && !self_type.instance_type.type_vars.all? { |name, var| var.type }
-          raise "can't invoke class method '#{name}' on #{self_type} without specifying type vars: #{self_type.instance_type.type_vars.keys.join ', '}"
-        end
-
         arg_types = args.map &:type
         typed_def = untyped_def.lookup_instance(arg_types) ||
                     self_type.lookup_def_instance(name, arg_types) ||
@@ -249,8 +245,6 @@ module Crystal
 
     def define_new(scope, name)
       alloc = Call.new(nil, 'allocate')
-      alloc.location = location
-      alloc.name_column_number = name_column_number
 
       the_initialize, error_matches = scope.type.lookup_def('initialize', args, !!block)
       if the_initialize
@@ -259,9 +253,6 @@ module Crystal
         new_args = args.each_with_index.map { |x, i| Arg.new("arg#{i}") }
 
         init = Call.new(var, 'initialize', new_vars)
-        init.location = location
-        init.name_column_number = name_column_number
-        init.name_length = 3
 
         untyped_def = scope.add_def Def.new('new', new_args, [
           Assign.new(var, alloc),
