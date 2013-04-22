@@ -695,7 +695,7 @@ module Crystal
     end
 
     def end_visit_ident_union(node)
-      node.type = mod.union_of *node.idents.map { |ident| ident.type.instance_type }
+      node.type = mod.type_merge *node.idents.map { |ident| ident.type.instance_type }
     end
 
     def end_visit_new_generic_class(node)
