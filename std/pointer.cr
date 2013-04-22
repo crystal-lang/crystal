@@ -1,6 +1,6 @@
 require "comparable"
 
-class Pointer
+class Pointer(T)
   include Comparable
 
   def nil?
@@ -27,14 +27,14 @@ class Pointer
     (self + offset).value = value
   end
 
-  def memcpy(source : Pointer, count : Int)
+  def memcpy(source : Pointer(T), count : Int)
     while (count -= 1) >= 0
       self[count] = source[count]
     end
     self
   end
 
-  def memmove(source : Pointer, count : Int)
+  def memmove(source : Pointer(T), count : Int)
     if source.address < address
       memcpy(source, count)
     else

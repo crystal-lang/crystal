@@ -263,4 +263,17 @@ describe 'Type inference: def overload' do
       foo(a)
     )) { union_of(int, double) }
   end
+
+  it "dispatch call to def with restrictions" do
+    assert_type(%Q(
+      class Foo(T)
+      end
+
+      def foo(x : T)
+        Foo(T).new
+      end
+
+      foo 1
+    )) { ObjectType.new("Foo").of("T" => int) }
+  end
 end

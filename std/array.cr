@@ -283,9 +283,9 @@ class Array(T)
     max
   end
 
-  def +(other : Array)
+  def +(other : Array(U))
     new_length = length + other.length
-    ary = Array.new(new_length)
+    ary = Array(T | U).new(new_length)
     ary.length = new_length
     ary.buffer.memcpy(buffer, length)
     (ary.buffer + length).memcpy(other.buffer, other.length)

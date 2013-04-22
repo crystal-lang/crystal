@@ -150,9 +150,9 @@ module Crystal
       when nil
         true
       when :self
-        arg_type.is_restriction_of?(owner, owner)
+        arg_type && arg_type.is_restriction_of?(owner, owner)
       when NewGenericClass
-        arg_type.is_a?(ObjectType) && arg_type.generic && match_generic_type(arg_type, def_type, owner, free_vars)
+        arg_type && arg_type.generic && match_generic_type(arg_type, def_type, owner, free_vars)
       when Ident
         type = free_vars[def_type.names] || owner.lookup_type(def_type.names)
         if type
@@ -185,21 +185,25 @@ module Crystal
       error_matches = defs.values if defs
       if defs
         if args
-          matches = defs.select do |def_types_and_yields, a_def|
+          matches = []
+          defs.each do |def_types_and_yields, a_def|
             def_types, def_restrictions, def_yields = def_types_and_yields
             next false if def_yields != yields
             next false if def_types.length != args.length
             free_vars = match_def_args(args.map(&:type), def_types, def_restrictions, owner)
+            if free_vars
+              matches.push [a_def, free_vars]
+            end
           end
-          return matches.first[1] if matches.length == 1
 
-          error_matches = matches.values if matches.length > 0
+          return matches.first if matches.length == 1
 
-          matches = matches.values
-          minimals = matches.select do |match|
-            matches.all? { |m| m.equal?(match) || match.is_restriction_of?(m, owner) }
+          error_matches = matches.map { |m| m[0] } if matches.length > 0
+
+          minimals = matches.select do |a_def, free_vars|
+            matches.all? { |m| m[0].equal?(a_def) || a_def.is_restriction_of?(m[0], owner) }
           end
-          return minimals[0] if minimals.length == 1
+          return minimals.first if minimals.length == 1
 
           error_matches = minimals if minimals.length > 0
         else
@@ -209,12 +213,12 @@ module Crystal
 
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
-          result, errors = parent.lookup_def(name, args, yields, owner)
-          return [result, errors] if result
+          result, free_vars, errors = parent.lookup_def(name, args, yields, owner)
+          return [result, free_vars, errors] if result
         end
       end
 
-      [nil, error_matches]
+      [nil, nil, error_matches]
     end
 
     def lookup_first_def(name)

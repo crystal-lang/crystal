@@ -62,7 +62,7 @@ module Crystal
     @@regexps = {}
     @@counter = 0
 
-    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil, owner = nil, untyped_def = nil, typed_def = nil, arg_types = nil)
+    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil, owner = nil, untyped_def = nil, typed_def = nil, arg_types = nil, free_vars = nil)
       @mod = mod
       @vars = vars
       @scope = scope
@@ -72,6 +72,7 @@ module Crystal
       @untyped_def = untyped_def
       @typed_def = typed_def
       @arg_types = arg_types
+      @free_vars = free_vars
       @types = [mod]
       @while_stack = []
       @type_filter_stack = []
@@ -468,6 +469,10 @@ module Crystal
     end
 
     def lookup_ident_type(node)
+      if node.names.length == 1 && @free_vars && type = @free_vars[node.names]
+        return type
+      end
+
       if node.global
         target_type = mod.lookup_type node.names
       else

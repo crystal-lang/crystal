@@ -39,7 +39,7 @@ module Crystal
         return
       end
 
-      untyped_def, error_matches = untyped_def_and_error_matches
+      untyped_def, free_vars, error_matches = untyped_def_and_error_matches
 
       check_method_exists untyped_def, error_matches
       check_args_match untyped_def
@@ -64,7 +64,7 @@ module Crystal
 
           if typed_def.body
             bubbling_exception do
-              visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, self, owner, untyped_def, typed_def, arg_types)
+              visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, self, owner, untyped_def, typed_def, arg_types, free_vars)
               typed_def.body.accept visitor
             end
           end
@@ -222,9 +222,9 @@ module Crystal
         return [scope, scope, [untyped_def, error_matches]]
       end
 
-      mod_def, mod_error_matches = mod.lookup_def(name, args, !!block)
+      mod_def, free_vars, mod_error_matches = mod.lookup_def(name, args, !!block)
       if mod_def || !(missing = scope.lookup_first_def('method_missing'))
-        return [mod, mod, [mod_def, mod_error_matches || error_matches]]
+        return [mod, mod, [mod_def, free_vars, mod_error_matches || error_matches]]
       end
 
       untyped_def = define_missing scope, name
@@ -232,7 +232,7 @@ module Crystal
     end
 
     def lookup_method(scope, name, use_method_missing = false)
-      untyped_def, error_matches = scope.lookup_def(name, args, !!block)
+      untyped_def, free_vars, error_matches = scope.lookup_def(name, args, !!block)
       unless untyped_def
         if name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
           untyped_def = define_new scope, name
@@ -240,7 +240,7 @@ module Crystal
           untyped_def = define_missing scope, name
         end
       end
-      [untyped_def, error_matches]
+      [untyped_def, free_vars, error_matches]
     end
 
     def define_new(scope, name)
