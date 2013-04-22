@@ -448,7 +448,6 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
     attr_accessor :yields
-    attr_accessor :maybe_recursive
 
     def initialize(name, args, body = nil, receiver = nil, yields = false)
       @name = name
@@ -477,7 +476,6 @@ module Crystal
       @body = other.body.clone
       @receiver = other.receiver.clone
       @yields = other.yields
-      @maybe_recursive = other.maybe_recursive
     end
   end
 

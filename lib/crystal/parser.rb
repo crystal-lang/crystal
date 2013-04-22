@@ -387,8 +387,6 @@ module Crystal
             args = parse_args
           end
 
-          check_maybe_recursive name
-
           block = parse_block
           if block
             atomic = Call.new atomic, name, args, block, name_column_number
@@ -808,7 +806,6 @@ module Crystal
       block = parse_block
 
       if block
-        check_maybe_recursive name
         Call.new nil, name, args, block, name_column_number, @last_call_has_parenthesis
       else
         if args
@@ -817,13 +814,11 @@ module Crystal
             args[0].value = args[0].value[1 .. -1]
             Call.new(Var.new(name), sign, args)
           else
-            check_maybe_recursive name
             Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
           end
         elsif is_var? name
           Var.new name
         else
-          check_maybe_recursive name
           Call.new nil, name, [], nil, name_column_number, @last_call_has_parenthesis
         end
       end
@@ -1082,7 +1077,6 @@ module Crystal
       end
 
       @def_name = name
-      @maybe_recursive = false
 
       args = []
 
@@ -1174,9 +1168,7 @@ module Crystal
 
       next_token_skip_space
 
-      a_def = Def.new name, args, body, receiver, @yields
-      a_def.maybe_recursive = @maybe_recursive
-      a_def
+      Def.new name, args, body, receiver, @yields
     end
 
     def parse_macro
@@ -1717,10 +1709,6 @@ module Crystal
             (node.obj.nil? && node.args.length == 0 && node.block.nil?) ||
               node.name == :"[]"
           )
-    end
-
-    def check_maybe_recursive(name)
-      @maybe_recursive ||= @def_name == name
     end
   end
 

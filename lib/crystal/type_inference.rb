@@ -470,9 +470,7 @@ module Crystal
     end
 
     def visit_allocate(node)
-      allocate_type = @scope.instance_type
-      type = lookup_object_type(allocate_type.name)
-      node.type = type ? type : allocate_type
+      node.type = @scope.instance_type
     end
 
     def end_visit_array_literal(node)
@@ -574,18 +572,6 @@ module Crystal
       end
 
       false
-    end
-
-    def lookup_object_type(name)
-      if @scope.is_a?(ObjectType) && @scope.name == name
-        if @call && @call[1].maybe_recursive
-          @scope
-        else
-          nil
-        end
-      elsif @parent
-        @parent.lookup_object_type(name)
-      end
     end
 
     def lookup_def_instance(scope, untyped_def, arg_types)
