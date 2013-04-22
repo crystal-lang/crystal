@@ -291,7 +291,7 @@ class Array(T)
     self
   end
 
-  def ==(other : Array)
+  def ==(other : Array(U))
     return false if @length != other.length
     each_with_index do |item, i|
       return false if item != other[i]
