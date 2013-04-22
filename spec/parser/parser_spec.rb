@@ -345,4 +345,6 @@ describe Parser do
 
   it_parses %q(case 1; when 1 then 2; else; 3; end), Case.new(1.int, [When.new([1.int], 2.int)], 3.int)
   it_parses %Q(case 1\nwhen 1\n2\nend\nif a\nend), [Case.new(1.int, [When.new([1.int], 2.int)]), If.new('a'.call)]
+
+  it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
 end

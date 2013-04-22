@@ -1071,7 +1071,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
 
-    def initialize(name, args, body = nil, receiver = nil)
+    def initialize(name, args, body = nil, receiver = nil, yields = nil)
       @name = name
       @args = args
       @args.each { |arg| arg.parent = self } if @args

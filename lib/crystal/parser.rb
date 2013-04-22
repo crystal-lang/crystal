@@ -1054,6 +1054,16 @@ module Crystal
     end
 
     def parse_def
+      parse_def_or_macro Def
+    end
+
+    def parse_macro
+      parse_def_or_macro Macro
+    end
+
+    def parse_def_or_macro(klass)
+      push_def
+
       next_token_skip_space_or_newline
       check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :===, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :'!@', :&, :|, :^, :**, :[], :[]=, :'<=>'
 
@@ -1092,66 +1102,12 @@ module Crystal
       when :'('
         next_token_skip_space_or_newline
         while @token.type != :')'
-          check :IDENT
-          arg_name = @token.value
-          arg_location = @token.location
-
-          default_value = nil
-          type_restriction = nil
-
-          next_token_skip_space_or_newline
-          case @token.type
-          when :'='
-            next_token_skip_space_or_newline
-            default_value = parse_expression
-          when :':'
-            next_token_skip_space_or_newline
-            if @token.keyword?('self')
-              type_restriction = :self
-              next_token_skip_space
-            else
-              type_restriction = parse_type_var
-            end
-          end
-
-          arg = Arg.new(arg_name, default_value, type_restriction)
-          arg.location = arg_location
-          args << arg
-          push_var arg
-
-          if @token.type == :','
-            next_token_skip_space_or_newline
-          end
+          parse_arg(args, true)
         end
         next_token_skip_statement_end
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          check :IDENT
-          arg_name = @token.value
-
-          default_value = nil
-          type_restriction = nil
-
-          next_token_skip_space
-          case @token.type
-          when :'='
-            next_token_skip_space_or_newline
-            default_value = parse_expression
-          when :':'
-            next_token_skip_space_or_newline
-            if @token.keyword?('self')
-              type_restriction = :self
-              next_token_skip_space
-            else
-              type_restriction = parse_type_var
-            end
-          end
-
-          args << Arg.new(arg_name, default_value, type_restriction)
-
-          if @token.type == :','
-            next_token_skip_space_or_newline
-          end
+          parse_arg(args, false)
         end
         next_token_skip_statement_end
       else
@@ -1161,101 +1117,53 @@ module Crystal
       if @token.keyword?(:end)
         body = nil
       else
-        body = push_def(args) { parse_expressions }
+        body = parse_expressions
         skip_statement_end
         check_ident :end
       end
 
       next_token_skip_space
 
-      Def.new name, args, body, receiver, @yields
+      pop_def
+
+      klass.new name, args, body, receiver, @yields
     end
 
-    def parse_macro
-      next_token_skip_space_or_newline
-      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :===, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>'
+    def parse_arg(args, parenthesis = false)
+      check :IDENT
+      arg_name = @token.value
+      arg_location = @token.location
 
-      receiver = nil
+      default_value = nil
+      type_restriction = nil
 
-      if @token.type == :CONST
-        receiver = parse_ident
-      elsif @token.type == :IDENT
-        name = @token.value
-        next_token
-        if @token.type == :'='
-          name = "#{name}="
+      if parenthesis
+        next_token_skip_space_or_newline
+      else
+        next_token_skip_space
+      end
+      case @token.type
+      when :'='
+        next_token_skip_space_or_newline
+        default_value = parse_expression
+      when :':'
+        next_token_skip_space_or_newline
+        if @token.keyword?('self')
+          type_restriction = :self
           next_token_skip_space
         else
-          skip_space
+          type_restriction = parse_type_var
         end
-      else
-        name = @token.type
-        next_token_skip_space
       end
 
-      args = []
+      arg = Arg.new(arg_name, default_value, type_restriction)
+      arg.location = arg_location
+      args << arg
+      push_var arg
 
-      if @token.type == :'.'
-        receiver = Var.new name unless receiver
-        next_token_skip_space
-        check :IDENT, :"=", :<<, :<, :<=, :==, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :&, :|, :^, :**, :[], :[]=, :'<=>'
-        name = @token.type == :IDENT ? @token.value : @token.type
-        next_token_skip_space
-      end
-
-      case @token.type
-      when :'('
+      if @token.type == :','
         next_token_skip_space_or_newline
-        while @token.type != :')'
-          check :IDENT
-          arg_name = @token.value
-
-          next_token_skip_space_or_newline
-          if @token.type == :'='
-            next_token_skip_space_or_newline
-            default_value = parse_expression
-          end
-
-          args << Arg.new(arg_name, default_value)
-
-          if @token.type == :','
-            next_token_skip_space_or_newline
-          end
-        end
-        next_token_skip_statement_end
-      when :IDENT
-        while @token.type != :NEWLINE && @token.type != :";"
-          check :IDENT
-          arg_name = @token.value
-
-          next_token_skip_space
-          if @token.type == :'='
-            next_token_skip_space_or_newline
-            default_value = parse_expression
-          end
-
-          args << Arg.new(arg_name, default_value)
-
-          if @token.type == :','
-            next_token_skip_space_or_newline
-          end
-        end
-        next_token_skip_statement_end
-      else
-        skip_statement_end
       end
-
-      if @token.keyword?(:end)
-        body = nil
-      else
-        body = push_def(args) { parse_expressions }
-        skip_statement_end
-        check_ident :end
-      end
-
-      next_token_skip_space
-
-      Macro.new name, args, body, receiver
     end
 
     def parse_if(check_end = true)
@@ -1682,11 +1590,12 @@ module Crystal
       end
     end
 
-    def push_def(args)
-      @def_vars.push(Set.new args.map(&:name))
-      ret = yield
+    def push_def
+      @def_vars.push(Set.new)
+    end
+
+    def pop_def
       @def_vars.pop
-      ret
     end
 
     def push_var(*vars)
