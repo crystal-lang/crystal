@@ -21,6 +21,7 @@ module Crystal
     end
 
     def recalculate(call)
+      subcalls = []
       for_each_obj do |obj_type|
         for_each_args do |arg_types|
           call_key = [obj_type.object_id] + arg_types.map(&:object_id)
@@ -35,10 +36,11 @@ module Crystal
           subcall.block = call.block.clone
           subcall.block.accept call.parent_visitor if subcall.block
           subcall.recalculate
-          self.bind_to subcall
+          subcalls << subcall
           @calls[call_key] = subcall
         end
       end
+      bind_to *subcalls
     end
 
     def simplify
