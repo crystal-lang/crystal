@@ -32,4 +32,12 @@ describe 'Type inference: pointer' do
   it "pointer malloc creates new type" do
     assert_type('p = Pointer(Int).malloc(1); p.value = 1; p2 = Pointer(Double).malloc(1); p2.value = 1.5; p2.value') { double }
   end
+
+  it "allows using pointer with subclass" do
+    assert_type(%q(
+      a = Pointer(Object).malloc(1)
+      a.value = 1
+      a.value
+    )) { union_of(object, int) }
+  end
 end

@@ -16,7 +16,7 @@ module Crystal
     end
 
     def real_type
-      if dependencies && dependencies.length == 1
+      if dependencies && dependencies.length == 1 && !dependencies[0].eql?(self)
         dependencies[0].real_type
       else
         @type

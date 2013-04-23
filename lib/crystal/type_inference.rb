@@ -818,6 +818,7 @@ module Crystal
     end
 
     def visit_pointer_set_value(node)
+      @scope.var.bind_to @vars['value']
       node.bind_to @vars['value']
     end
 

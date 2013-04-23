@@ -83,6 +83,7 @@ module Crystal
         i = 0
         generic_type.type_vars.each do |name, var|
           var.type = type_vars[i]
+          var.bind_to var
           i += 1
         end
         generic_type.metaclass.defs = base_class.metaclass.defs
