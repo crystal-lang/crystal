@@ -45,7 +45,7 @@ class Pointer(T)
     self
   end
 
-  def memcmp(other : Pointer, count : Int)
+  def memcmp(other : Pointer(T), count : Int)
     count.times do |i|
       return false unless self[i] == other[i]
     end

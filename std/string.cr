@@ -67,7 +67,7 @@ class String
     @c.ptr[index]
   end
 
-  def [](range : Range)
+  def [](range : Range(Int, Int))
     from = range.begin
     from += length if from < 0
     to = range.end
