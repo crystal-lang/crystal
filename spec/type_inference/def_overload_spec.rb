@@ -285,4 +285,17 @@ describe 'Type inference: def overload' do
       foo 1
     )) { ObjectType.new("Foo").of("T" => int) }
   end
+
+  it "can call overload with generic restriction" do
+    assert_type(%q(
+      class Foo(T)
+      end
+
+      def foo(x : Foo)
+        1
+      end
+
+      foo(Foo(Int).new)
+    )) { int }
+  end
 end
