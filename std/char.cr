@@ -53,7 +53,7 @@ class Char
   end
 
   def to_s
-    String.new_with_length(2) do |buffer|
+    String.new_with_length(1) do |buffer|
       buffer.value = self
     end
   end

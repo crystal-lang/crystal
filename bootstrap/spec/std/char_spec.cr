@@ -17,4 +17,8 @@ describe "Char" do
       assert { char.whitespace?.should be_true }
     end
   end
+
+  describe "inspect" do
+    'a'.inspect.should eq("'a'")
+  end
 end
