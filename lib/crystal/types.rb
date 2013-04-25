@@ -94,8 +94,12 @@ module Crystal
       @container.program
     end
 
-    def to_s
+    def full_name
       @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
+    end
+
+    def to_s
+      full_name
     end
   end
 
@@ -297,9 +301,9 @@ module Crystal
     end
 
     def to_s
-      return name unless generic
+      return full_name unless generic
       type_vars_to_s = type_vars.map { |name, var| var.type ? var.type.to_s : name }.join ', '
-      "#{name}(#{type_vars_to_s})"
+      "#{full_name}(#{type_vars_to_s})"
     end
   end
 
