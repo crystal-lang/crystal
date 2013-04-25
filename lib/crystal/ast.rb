@@ -177,8 +177,8 @@ module Crystal
     def clone_from(other)
       @keys = other.keys.map(&:clone)
       @values = other.values.map(&:clone)
-      @of_key = other.of_key.clone if of_key
-      @of_value = other.of_value.clone if of_value
+      @of_key = other.of_key.clone if other.of_key
+      @of_value = other.of_value.clone if other.of_value
     end
   end
 
