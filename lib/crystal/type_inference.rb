@@ -542,6 +542,7 @@ module Crystal
       exps << Var.new(ary_name)
 
       exps = Expressions.new exps
+      exps.parent = node
       exps.accept self
       node.expanded = exps
 

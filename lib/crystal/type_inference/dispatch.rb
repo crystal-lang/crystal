@@ -35,6 +35,7 @@ module Crystal
           subcall.name_column_number = call.name_column_number
           subcall.block = call.block.clone
           subcall.block.accept call.parent_visitor if subcall.block
+          subcall.parent = call
           subcall.recalculate
           subcalls << subcall
           @calls[call_key] = subcall

@@ -23,7 +23,7 @@ class Pointer(T)
     (self + offset).value
   end
 
-  def []=(offset, value)
+  def []=(offset, value : T)
     (self + offset).value = value
   end
 

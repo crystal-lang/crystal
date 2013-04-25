@@ -22,6 +22,7 @@ module Crystal
       @token = Token.new
       @line_number = 1
       @column_number = 1
+      @filename = ""
     end
 
     def filename=(filename)
