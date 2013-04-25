@@ -120,67 +120,63 @@ module Crystal
   module DefContainer
     def add_def(a_def)
       a_def.owner = self if a_def.respond_to?(:owner=)
-      types = a_def.args.map(&:type)
       restrictions = a_def.args.map(&:type_restriction)
       @defs[a_def.name] ||= {}
-      @defs[a_def.name][[types, restrictions, a_def.yields]] = a_def
+      @defs[a_def.name][[restrictions, a_def.yields]] = a_def
 
       index = a_def.args.length - 1
       while index >= 0 && a_def.args[index].default_value
-        @defs[a_def.name][[types[0 ... index], restrictions, a_def.yields]] = a_def
+        @defs[a_def.name][[restrictions[0 ... index], a_def.yields]] = a_def
         index -= 1
       end
 
       a_def
     end
 
-    def match_def_args(args, def_types, def_restrictions, owner)
+    def match_def_args(args, def_restrictions, owner)
       free_vars = {}
       0.upto(args.length - 1) do |i|
         arg_type = args[i]
-        def_type = def_types[i]
         restriction = def_restrictions[i]
 
-        if def_type
-          return nil unless arg_type == def_type
-        else
-          return nil unless match_arg(arg_type, restriction, owner, free_vars)
-        end
+        return nil unless match_arg(arg_type, restriction, owner, free_vars)
       end
       free_vars
     end
 
-    def match_arg(arg_type, def_type, owner, free_vars)
-      case def_type
+    def match_arg(arg_type, restriction, owner, free_vars)
+      case restriction
       when nil
         true
       when :self
         arg_type && arg_type.is_restriction_of?(owner, owner)
       when NewGenericClass
-        arg_type && arg_type.generic && match_generic_type(arg_type, def_type, owner, free_vars)
+        arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, free_vars)
       when Ident
-        type = free_vars[def_type.names] || owner.lookup_type(def_type.names)
+        type = free_vars[restriction.names] || owner.lookup_type(restriction.names)
         if type
           arg_type && arg_type.is_restriction_of?(type, owner)
         else
-          free_vars[def_type.names] = arg_type
+          free_vars[restriction.names] = arg_type
           true
         end
       when IdentUnion
-        def_type.idents.any? do |ident|
+        restriction.idents.any? do |ident|
           match_arg(arg_type, ident, owner, free_vars)
         end
+      when Type
+        arg_type.equal?(restriction)
       end
     end
 
-    def match_generic_type(arg_type, def_type, owner, free_vars)
-      return false unless arg_type.name == def_type.name.names.last
-      return false unless arg_type.type_vars.length == def_type.type_vars.length
+    def match_generic_type(arg_type, restriction, owner, free_vars)
+      return false unless arg_type.name == restriction.name.names.last
+      return false unless arg_type.type_vars.length == restriction.type_vars.length
 
       arg_type.type_vars.each.with_index do |name_and_type_var, i|
         arg_type_var = name_and_type_var[1]
-        def_type_var = def_type.type_vars[i]
-        return false unless match_arg(arg_type_var.type, def_type_var, owner, free_vars)
+        restriction_var = restriction.type_vars[i]
+        return false unless match_arg(arg_type_var.type, restriction_var, owner, free_vars)
       end
       true
     end
@@ -191,11 +187,11 @@ module Crystal
       if defs
         if args
           matches = []
-          defs.each do |def_types_and_yields, a_def|
-            def_types, def_restrictions, def_yields = def_types_and_yields
+          defs.each do |def_restrictions_and_yields, a_def|
+            def_restrictions, def_yields = def_restrictions_and_yields
             next false if def_yields != yields
-            next false if def_types.length != args.length
-            free_vars = match_def_args(args.map(&:type), def_types, def_restrictions, owner)
+            next false if def_restrictions.length != args.length
+            free_vars = match_def_args(args.map(&:type), def_restrictions, owner)
             if free_vars
               matches.push [a_def, free_vars]
             end
@@ -244,7 +240,7 @@ module Crystal
 
     def has_restricted_defs?(name)
       defs = @defs[name]
-      (defs && defs.keys.any? { |ary| ary[0].any? || ary[1].any? }) || (parents && parents.any? { |p| p.has_restricted_defs?(name) })
+      (defs && defs.keys.any? { |ary| ary[0].any? }) || (parents && parents.any? { |p| p.has_restricted_defs?(name) })
     end
   end
 

@@ -533,12 +533,12 @@ module Crystal
       @default_value = default_value
       @default_value.parent = self if @default_value
       @type_restriction = type_restriction
-      @type_restriction.parent = self if @type_restriction && @type_restriction != :self
+      @type_restriction.parent = self if @type_restriction && @type_restriction != :self && !@type_restriction.is_a?(Type)
     end
 
     def accept_children(visitor)
       default_value.accept visitor if default_value
-      type_restriction.accept visitor if type_restriction && type_restriction != :self
+      type_restriction.accept visitor if type_restriction && type_restriction != :self && !type_restriction.is_a?(Type)
     end
 
     def ==(other)

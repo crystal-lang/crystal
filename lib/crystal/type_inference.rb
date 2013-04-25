@@ -253,7 +253,7 @@ module Crystal
       args = node.args.map do |arg|
         fun_arg = Arg.new(arg.name)
         fun_arg.location = arg.location
-        fun_arg.type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
+        fun_arg.type_restriction = fun_arg.type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
         fun_arg.out = arg.out
         fun_arg
       end

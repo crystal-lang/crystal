@@ -322,7 +322,7 @@ module Crystal
       string_conversions = nil
       nil_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
-        expected_type = typed_def_arg.type
+        expected_type = typed_def_arg.type_restriction
         if self.args[i].type != expected_type
           if mod.nil.equal?(self.args[i].type) && expected_type.pointer_type?
             nil_conversions ||= []

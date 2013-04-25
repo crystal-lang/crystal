@@ -171,14 +171,14 @@ module Crystal
     end
 
     def define_pointer_primitives
-      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_type('size', int)], PointerMalloc.new)
-      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_type('size', long)], PointerMalloc.new)
+      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', int)], PointerMalloc.new)
+      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', long)], PointerMalloc.new)
       pointer.add_def Def.new('value', [], PointerGetValue.new)
       pointer.add_def Def.new('value=', [Arg.new_with_restriction('value', Ident.new(["T"]))], PointerSetValue.new)
-      pointer.add_def Def.new('realloc', [Arg.new_with_type('size', int)], PointerRealloc.new)
-      pointer.add_def Def.new('realloc', [Arg.new_with_type('size', long)], PointerRealloc.new)
-      pointer.add_def Def.new(:+, [Arg.new_with_type('offset', int)], PointerAdd.new)
-      pointer.add_def Def.new(:+, [Arg.new_with_type('offset', long)], PointerAdd.new)
+      pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', int)], PointerRealloc.new)
+      pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', long)], PointerRealloc.new)
+      pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', int)], PointerAdd.new)
+      pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', long)], PointerAdd.new)
       pointer.add_def Def.new('as', [Arg.new('type')], PointerCast.new)
       no_args_primitive(object, 'address', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
@@ -200,7 +200,7 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.add_def Def.new(name, args.map { |name, type| Arg.new_with_type(name, type) })
+      p = owner.add_def Def.new(name, args.map { |name, type| Arg.new_with_restriction(name, type) })
       p.owner = owner
       p.overload(args.values, return_type, &block)
     end
