@@ -11,6 +11,8 @@ Crystal is a programming language with the following goals:
 
 Interested? Read the [introduction](https://github.com/manastech/crystal/wiki/Introduction) or the [docs for developers](https://github.com/manastech/crystal/wiki/Developers).
 
+Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang)
+
 Why?
 ----
 
