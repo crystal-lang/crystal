@@ -23,23 +23,23 @@ module Crystal
     def recalculate(call)
       subcalls = []
       for_each_obj do |obj_type|
-        for_each_args do |arg_types|
-          call_key = [obj_type.object_id] + arg_types.map(&:object_id)
-          next if @calls[call_key]
+        # for_each_args do |arg_types|
+        #   call_key = [obj_type.object_id] + arg_types.map(&:object_id)
+        #   next if @calls[call_key]
 
-          subcall = Call.new(obj_type ? Var.new('%self', obj_type) : nil, name, arg_types.map.with_index { |arg_type, i| Var.new("%arg#{i}", arg_type) })
-          subcall.mod = call.mod
-          subcall.parent_visitor = call.parent_visitor
-          subcall.scope = call.scope
-          subcall.location = call.location
-          subcall.name_column_number = call.name_column_number
-          subcall.block = call.block.clone
-          subcall.block.accept call.parent_visitor if subcall.block
-          subcall.parent = call
-          subcall.recalculate
-          subcalls << subcall
-          @calls[call_key] = subcall
-        end
+        #   subcall = Call.new(obj_type ? Var.new('%self', obj_type) : nil, name, arg_types.map.with_index { |arg_type, i| Var.new("%arg#{i}", arg_type) })
+        #   subcall.mod = call.mod
+        #   subcall.parent_visitor = call.parent_visitor
+        #   subcall.scope = call.scope
+        #   subcall.location = call.location
+        #   subcall.name_column_number = call.name_column_number
+        #   subcall.block = call.block.clone
+        #   subcall.block.accept call.parent_visitor if subcall.block
+        #   subcall.parent = call
+        #   subcall.recalculate
+        #   subcalls << subcall
+        #   @calls[call_key] = subcall
+        # end
       end
       bind_to *subcalls
     end

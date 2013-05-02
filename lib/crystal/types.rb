@@ -338,13 +338,22 @@ module Crystal
 
   class ObjectType < ClassType
     attr_accessor :instance_vars
+    attr_accessor :depth
+    attr_accessor :subclasses
     attr_reader :hash
     @@id = 0
 
     def initialize(name, parent_type = nil, container = nil)
       super
       @instance_vars = {}
+      @subclasses = []
       @hash = name.hash
+      if parent_type
+        @depth = parent_type.depth + 1
+        parent_type.subclasses.push self
+      else
+        @depth = 0
+      end
     end
 
     def metaclass
@@ -353,6 +362,10 @@ module Crystal
         metaclass.add_def Def.new('allocate', [], Allocate.new)
         metaclass
       end
+    end
+
+    def hierarchy_type
+      @hierarchy_type ||= HierarchyType.new(self)
     end
 
     def has_instance_var?(name)
@@ -830,6 +843,37 @@ module Crystal
 
     def to_s
       @type_var ? @type_var.type.to_s : name
+    end
+  end
+
+  class HierarchyType
+    attr_accessor :base_type
+
+    def initialize(base_type)
+      @base_type = base_type
+    end
+
+    def ==(other)
+      other.is_a?(HierarchyType) && base_type == other.base_type
+    end
+
+    def each(&block)
+      each2 base_type, &block
+    end
+
+    def each2(type, &block)
+      block.call type
+      type.subclasses.each do |subclass|
+        each2 subclass, &block
+      end
+    end
+
+    def program
+      base_type.program
+    end
+
+    def to_s
+      "#{base_type}+"
     end
   end
 end

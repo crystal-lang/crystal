@@ -72,8 +72,57 @@ module Crystal
         return types[0]
       end
 
-      types_ids = types.map(&:object_id)
-      @unions[types_ids] ||= UnionType.new(*types)
+      combined_types = type_combine *types
+      if combined_types.length == 1
+        return combined_types[0]
+      end
+
+      types_ids = combined_types.map(&:object_id)
+      @unions[types_ids] ||= UnionType.new(*combined_types)
+    end
+
+    def type_combine(*types)
+      all_types = [types.shift]
+
+      types.each do |t2|
+        not_found = all_types.each do |t1|
+          ancestor = common_ancestor t1, t2
+          if ancestor
+            all_types.delete t1
+            all_types << ancestor.hierarchy_type
+            break nil
+          end
+        end
+        if not_found
+          all_types << t2
+        end
+      end
+
+      all_types
+    end
+
+    def common_ancestor(t1, t2)
+      t1 = t1.base_type if t1.is_a?(HierarchyType)
+      t2 = t2.base_type if t2.is_a?(HierarchyType)
+
+      unless t1.is_a?(ObjectType) && t2.is_a?(ObjectType)
+        return nil
+      end
+
+      depth = [t1.depth, t2.depth].min
+      while t1.depth > depth
+        t1 = t1.superclass
+      end
+      while t2.depth > depth
+        t2 = t2.superclass
+      end
+
+      while !t1.equal?(t2)
+        t1 = t1.superclass
+        t2 = t2.superclass
+      end
+
+      t1
     end
 
     def lookup_generic_type(base_class, type_vars)

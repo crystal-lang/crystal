@@ -21,7 +21,7 @@ module Crystal
       return if @types_signature == types_signature
       @types_signature = types_signature
 
-      if has_unions_in_obj?
+      if obj && (obj.type.is_a?(UnionType) || obj.type.is_a?(HierarchyType))
         compute_dispatch
         return
       end
@@ -180,10 +180,10 @@ module Crystal
     end
 
     def has_unions?
-      has_unions_in_obj? || has_unions_in_args?
+      has_union_in_obj? || has_unions_in_args?
     end
 
-    def has_unions_in_obj?
+    def has_union_in_obj?
       obj && obj.type.is_a?(UnionType)
     end
 

@@ -117,12 +117,53 @@ describe 'Type inference: class' do
   end
 
   it "types type var union" do
-
     assert_type(%(
       class Foo(T)
       end
 
       Foo(Int | Double).new
       )) { ObjectType.new("Foo").of("T" => union_of(int, double)) }
+  end
+
+  it "types class and subclass as one type" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      a = Foo.new || Bar.new
+      )) { HierarchyType.new(self.types["Foo"]) }
+  end
+
+  it "types class and subclass as one type" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      a = Bar.new || Baz.new
+      )) { HierarchyType.new(self.types["Foo"]) }
+  end
+
+  it "types class and subclass as one type" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      a = Foo.new || Bar.new || Baz.new
+      )) { HierarchyType.new(self.types["Foo"]) }
   end
 end
