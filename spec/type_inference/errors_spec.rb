@@ -143,7 +143,7 @@ describe 'Type inference: errors' do
       )
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("argument #1 to Lib.bar must be Char, not Int"))
+    }.should raise_error(Crystal::Exception, regex("argument #1 to Lib.bar must be Char"))
   end
 
   it "reports can only get pointer of variable" do

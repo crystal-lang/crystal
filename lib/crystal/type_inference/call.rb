@@ -1,10 +1,17 @@
 module Crystal
   class Call
-    attr_accessor :target_def
-    attr_accessor :target_macro
     attr_accessor :mod
     attr_accessor :scope
     attr_accessor :parent_visitor
+    attr_accessor :target_defs
+
+    def target_def
+      if target_defs && target_defs.length == 1
+        target_defs[0]
+      else
+        raise "Zero or more than one target def"
+      end
+    end
 
     def update_input(*)
       recalculate(false)
@@ -24,63 +31,121 @@ module Crystal
       return if @types_signature == types_signature
       @types_signature = types_signature
 
-      if obj && (obj.type.is_a?(UnionType) || obj.type.is_a?(HierarchyType))
-        compute_dispatch
-        return
-      end
+      # - no hay obj
+      #   - si no hay scope, buscar en mod
+      #   - si hay scope, buscar en scope
+      #   - si no encuentra, buscar en mod
+      # - hay obj con type Union
+      #   - buscar en cada tipo
+      # - hay obj con type Type
+      #   - buscar en este tipo
+      # - hay obj con type HierarchyType
+      #   - buscar en este tipo
 
-      has_unions_in_args = has_unions_in_args?
-
-      if has_unions_in_args && ((obj && obj.type.has_restricted_defs?(name)) || (scope && scope.has_restricted_defs?(name)))
-        compute_dispatch
-        return
-      end
-
-      owner, self_type, untyped_def_and_error_matches = compute_owner_self_type_and_untyped_def
-      if has_unions_in_args && owner.is_a?(Program) && owner.has_restricted_defs?(name)
-        compute_dispatch
-        return
-      end
-
-      untyped_def, free_vars, error_matches = untyped_def_and_error_matches
-
-      check_method_exists untyped_def, error_matches
-      check_args_length_match untyped_def
-
-      old_target_def = self.target_def
-
-      arg_types = args.map &:type
-      typed_def = untyped_def.lookup_instance(arg_types) ||
-                  self_type.lookup_def_instance(name, arg_types) ||
-                  parent_visitor.lookup_def_instance(owner, untyped_def, arg_types) unless block
-      if typed_def
-        self.target_def = typed_def
+      if obj
+        if obj.type.is_a?(UnionType)
+          matches = []
+          obj.type.types.each do |type|
+            matches.concat lookup_matches_in(type)
+          end
+        else
+          matches = lookup_matches_in(obj.type)
+        end
       else
-        # puts "#{obj ? obj.type : scope}.#{name}"
-        typed_def, args = prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
-        self.target_def = typed_def
+        matches = lookup_matches_in(scope) || lookup_matches_in(mod)
+      end
 
-        if typed_def.body
-          bubbling_exception do
-            visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, self, owner, untyped_def, typed_def, arg_types, free_vars)
-            typed_def.body.accept visitor
+      @target_defs = matches
+
+      bind_to *matches
+
+      # if obj && (obj.type.is_a?(UnionType) || obj.type.is_a?(HierarchyType))
+      #   compute_dispatch
+      #   return
+      # end
+
+      # has_unions_in_args = has_unions_in_args?
+
+      # if has_unions_in_args && ((obj && obj.type.has_restricted_defs?(name)) || (scope && scope.has_restricted_defs?(name)))
+      #   compute_dispatch
+      #   return
+      # end
+
+      # owner, self_type, untyped_def_and_error_matches = compute_owner_self_type_and_untyped_def
+      # if has_unions_in_args && owner.is_a?(Program) && owner.has_restricted_defs?(name)
+      #   compute_dispatch
+      #   return
+      # end
+
+      # untyped_def, free_vars, error_matches = untyped_def_and_error_matches
+
+      # check_method_exists untyped_def, error_matches
+      # check_args_length_match untyped_def
+
+      # old_target_def = self.target_def
+
+      # arg_types = args.map &:type
+      # typed_def = untyped_def.lookup_instance(arg_types) ||
+      #             self_type.lookup_def_instance(name, arg_types) ||
+      #             parent_visitor.lookup_def_instance(owner, untyped_def, arg_types) unless block
+      # if typed_def
+      #   self.target_def = typed_def
+      # else
+      #   # puts "#{obj ? obj.type : scope}.#{name}"
+      #   typed_def, args = prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
+      #   self.target_def = typed_def
+
+      #   if typed_def.body
+      #     bubbling_exception do
+      #       visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, self, owner, untyped_def, typed_def, arg_types, free_vars)
+      #       typed_def.body.accept visitor
+      #     end
+      #   end
+
+      #   self_type.add_def_instance(name, arg_types, typed_def) if Crystal::CACHE && !block
+      # end
+
+      # if old_target_def
+      #   self.unbind_from old_target_def
+      #   self.bind_to typed_def
+      # else
+      #   self.bind_to typed_def
+      #   self.bind_to(block.break) if block
+      # end
+    end
+
+    def lookup_matches_in(def_container)
+      owner = def_container
+      self_type = def_container
+      arg_types = args.map(&:type)
+      matches = def_container.lookup_matches(name, arg_types, !!block)
+
+      if !matches && name == 'new' && def_container.is_a?(Metaclass) && def_container.instance_type.is_a?(ObjectType)
+        match = Match.new
+        match.def = define_new def_container, name
+        match.arg_types = arg_types
+        matches = [match]
+      end
+
+      typed_defs = matches.map do |match|
+        typed_def = match.def.lookup_instance(match.arg_types) ||
+                    self_type.lookup_def_instance(name, match.arg_types) unless block
+        unless typed_def
+          typed_def, typed_def_args = prepare_typed_def_with_args(match.def, owner, self_type, match.arg_types)
+          self_type.add_def_instance(name, match.arg_types, typed_def) unless block
+          if typed_def.body
+            bubbling_exception do
+              visitor = TypeVisitor.new(@mod, typed_def_args, self_type, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars)
+              typed_def.body.accept visitor
+            end
           end
         end
-
-        self_type.add_def_instance(name, arg_types, typed_def) if Crystal::CACHE && !block
-      end
-
-      if old_target_def
-        self.unbind_from old_target_def
-        self.bind_to typed_def
-      else
-        self.bind_to typed_def
-        self.bind_to(block.break) if block
+        typed_def
       end
     end
 
     def recalculate_lib_call
-      old_target_def = @target_def
+      old_target_defs = @target_defs
 
       untyped_def = obj.type.lookup_first_def(name) or raise "undefined fun '#{name}' for #{obj.type}"
 
@@ -90,10 +155,10 @@ module Crystal
 
       check_fun_args_types_match untyped_def
 
-      @target_def = untyped_def
+      @target_defs = [untyped_def]
 
-      self.unbind_from old_target_def if old_target_def
-      self.bind_to @target_def
+      self.unbind_from *old_target_defs if old_target_defs
+      self.bind_to *@target_defs
     end
 
     def check_out_args(untyped_def)

@@ -130,42 +130,48 @@ module Crystal
         index -= 1
       end
 
+      @minimals ||= Hash.new { |h, k| h[k] = [] }
+      minimals = @minimals[a_def.name]
+      if minimals.length == 0
+        minimals.push a_def
+      end
+
       a_def
     end
 
     def match_def_args(args, def_restrictions, owner)
-      free_vars = {}
+      match = Match.new
       0.upto(args.length - 1) do |i|
         arg_type = args[i]
         restriction = def_restrictions[i]
 
-        return nil unless match_arg(arg_type, restriction, owner, free_vars)
+        match_arg_type = match_arg(arg_type, restriction, owner, match.free_vars) or return nil
+        match.arg_types.push match_arg_type
       end
-      free_vars
+      match
     end
 
     def match_arg(arg_type, restriction, owner, free_vars)
       case restriction
       when nil
-        true
+        arg_type
       when :self
-        arg_type && arg_type.is_restriction_of?(owner, owner)
+        arg_type && arg_type.is_restriction_of?(owner, owner) && owner
       when NewGenericClass
         arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, free_vars)
       when Ident
         type = free_vars[restriction.names] || owner.lookup_type(restriction.names)
         if type
-          arg_type && arg_type.is_restriction_of?(type, owner)
+          arg_type && arg_type.is_restriction_of?(type, owner) && type
         else
           free_vars[restriction.names] = arg_type
-          true
         end
       when IdentUnion
         restriction.idents.any? do |ident|
           match_arg(arg_type, ident, owner, free_vars)
         end
       when Type
-        arg_type.equal?(restriction)
+        arg_type.is_restriction_of?(restriction, owner) && restriction
       end
     end
 
@@ -179,6 +185,24 @@ module Crystal
         return false unless match_arg(arg_type_var.type, restriction_var, owner, free_vars)
       end
       true
+    end
+
+    def lookup_matches(name, arg_types, yields, owner = self)
+      defs = @defs[name]
+      if defs
+        matches = []
+        defs.each do |def_restrictions_and_yields, a_def|
+          def_restrictions, def_yields = def_restrictions_and_yields
+          next false if def_yields != yields
+          next false if def_restrictions.length != arg_types.length
+          match = match_def_args(arg_types, def_restrictions, owner)
+          if match
+            match.def = a_def
+            matches.push match
+          end
+        end
+        return matches
+      end
     end
 
     def lookup_def(name, args, yields, owner = self)

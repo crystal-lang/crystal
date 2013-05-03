@@ -43,11 +43,14 @@ module Crystal
       propagate
     end
 
-    def unbind_from(node)
+    def unbind_from(*nodes)
       return unless @dependencies
-      idx = @dependencies.index { |d| d.object_id == node.object_id }
-      @dependencies.delete_at(idx) if idx
-      node.remove_observer self
+
+      nodes.each do |node|
+        idx = @dependencies.index { |d| d.object_id == node.object_id }
+        @dependencies.delete_at(idx) if idx
+        node.remove_observer self
+      end
     end
 
     def add_observer(observer, func = :update)

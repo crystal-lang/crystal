@@ -293,7 +293,11 @@ module Crystal
         if node.type_restriction == :self
           @str << 'self'
         else
-          node.type_restriction.accept self if node.type_restriction.is_a?(ASTNode)
+          if node.type_restriction.is_a?(ASTNode)
+            node.type_restriction.accept self
+          else
+            @str << node.type_restriction.to_s
+          end
         end
       end
       false

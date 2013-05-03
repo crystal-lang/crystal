@@ -24,12 +24,14 @@ module Crystal
     end
 
     def end_visit_call(node)
-      return if @fixed[node.target_def]
-      @fixed[node.target_def] = true
+      node.target_defs.each do |target_def|
+        next if @fixed[target_def]
+        @fixed[target_def] = true
 
-      if node.target_def
-        node.target_def.type = @mod.nil unless node.target_def.type
-        node.target_def.accept_children self
+        if target_def
+          target_def.type = @mod.nil unless target_def.type
+          target_def.accept_children self
+        end
       end
     end
 
