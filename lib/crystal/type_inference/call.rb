@@ -11,9 +11,12 @@ module Crystal
     end
 
     def recalculate(*)
-      set_external_out_args_type
+      if obj && obj.type.is_a?(LibType)
+        recalculate_lib_call
+        return
+      end
 
-      return unless can_calculate_type?
+      return unless obj_and_args_types_set?
 
       # Ignore extra recalculations when more than one argument changes at the same time
       types_signature = args.map { |arg| arg.type.object_id }
@@ -42,35 +45,29 @@ module Crystal
       untyped_def, free_vars, error_matches = untyped_def_and_error_matches
 
       check_method_exists untyped_def, error_matches
-      check_args_match untyped_def
+      check_args_length_match untyped_def
 
       old_target_def = self.target_def
 
-      if untyped_def.is_a?(External)
-        typed_def = untyped_def
+      arg_types = args.map &:type
+      typed_def = untyped_def.lookup_instance(arg_types) ||
+                  self_type.lookup_def_instance(name, arg_types) ||
+                  parent_visitor.lookup_def_instance(owner, untyped_def, arg_types) unless block
+      if typed_def
         self.target_def = typed_def
-        check_args_type_match typed_def
       else
-        arg_types = args.map &:type
-        typed_def = untyped_def.lookup_instance(arg_types) ||
-                    self_type.lookup_def_instance(name, arg_types) ||
-                    parent_visitor.lookup_def_instance(owner, untyped_def, arg_types) unless block
-        if typed_def
-          self.target_def = typed_def
-        else
-          # puts "#{obj ? obj.type : scope}.#{name}"
-          typed_def, args = prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
-          self.target_def = typed_def
+        # puts "#{obj ? obj.type : scope}.#{name}"
+        typed_def, args = prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
+        self.target_def = typed_def
 
-          if typed_def.body
-            bubbling_exception do
-              visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, self, owner, untyped_def, typed_def, arg_types, free_vars)
-              typed_def.body.accept visitor
-            end
+        if typed_def.body
+          bubbling_exception do
+            visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, self, owner, untyped_def, typed_def, arg_types, free_vars)
+            typed_def.body.accept visitor
           end
-
-          self_type.add_def_instance(name, arg_types, typed_def) if Crystal::CACHE && !block
         end
+
+        self_type.add_def_instance(name, arg_types, typed_def) if Crystal::CACHE && !block
       end
 
       if old_target_def
@@ -82,6 +79,95 @@ module Crystal
       end
     end
 
+    def recalculate_lib_call
+      old_target_def = @target_def
+
+      untyped_def = obj.type.lookup_first_def(name) or raise "undefined fun '#{name}' for #{obj.type}"
+
+      check_args_length_match untyped_def
+      check_out_args untyped_def
+      return unless obj_and_args_types_set?
+
+      check_fun_args_types_match untyped_def
+
+      @target_def = untyped_def
+
+      self.unbind_from old_target_def if old_target_def
+      self.bind_to @target_def
+    end
+
+    def check_out_args(untyped_def)
+      untyped_def.args.each_with_index do |arg, i|
+        if arg.out && self.args[i]
+          unless self.args[i].out
+            self.args[i].raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} must be passed as 'out'"
+          end
+          var = parent_visitor.lookup_var_or_instance_var(self.args[i])
+          var.bind_to arg
+        end
+      end
+    end
+
+    def check_fun_args_types_match(typed_def)
+      string_conversions = nil
+      nil_conversions = nil
+      typed_def.args.each_with_index do |typed_def_arg, i|
+        expected_type = typed_def_arg.type_restriction
+        if self.args[i].type != expected_type
+          if mod.nil.equal?(self.args[i].type) && expected_type.pointer_type?
+            nil_conversions ||= []
+            nil_conversions << i
+          elsif mod.string.equal?(self.args[i].type) && expected_type.is_a?(PointerType) && mod.char.equal?(expected_type.var.type)
+            string_conversions ||= []
+            string_conversions << i
+          else
+            self.args[i].raise "argument \##{i + 1} to #{typed_def.owner}.#{typed_def.name} must be #{expected_type}, not #{self.args[i].type}"
+          end
+        end
+      end
+
+      if typed_def.varargs
+        typed_def.args.length.upto(args.length - 1) do |i|
+          if mod.string.equal?(self.args[i].type)
+            string_conversions ||= []
+            string_conversions << i
+          end
+        end
+      end
+
+      if string_conversions
+        string_conversions.each do |i|
+          call = Call.new(self.args[i], 'cstr')
+          call.mod = mod
+          call.scope = scope
+          call.parent_visitor = parent_visitor
+          call.recalculate
+          self.args[i] = call
+        end
+      end
+
+      if nil_conversions
+        nil_conversions.each do |i|
+          self.args[i] = NilPointer.new(typed_def.args[i].type)
+        end
+      end
+    end
+
+    def check_args_length_match(untyped_def)
+      call_args_count = args.length
+      all_args_count = untyped_def.args.length
+
+      if untyped_def.is_a?(External) && untyped_def.varargs && call_args_count >= all_args_count
+        return
+      end
+
+      required_args_count = untyped_def.args.count { |arg| !arg.default_value }
+
+      return if required_args_count <= call_args_count && call_args_count <= all_args_count
+
+      raise "wrong number of arguments for '#{full_name}' (#{args.length} for #{untyped_def.args.length})"
+    end
+
     def compute_dispatch
       if @dispatch
         @dispatch.recalculate_for_call(self)
@@ -90,24 +176,6 @@ module Crystal
         self.bind_to @dispatch
         self.target_def = @dispatch
         @dispatch.initialize_for_call(self)
-      end
-    end
-
-    def set_external_out_args_type
-      if obj && obj.type.is_a?(LibType)
-        scope, untyped_def = obj.type, obj.type.lookup_first_def(name)
-        if untyped_def
-          # External call: set type of out arguments
-          untyped_def.args.each_with_index do |arg, i|
-            if arg.out && self.args[i]
-              unless self.args[i].out
-                self.args[i].raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} must be passed as 'out'"
-              end
-              var = parent_visitor.lookup_var_or_instance_var(self.args[i])
-              var.bind_to arg
-            end
-          end
-        end
       end
     end
 
@@ -175,7 +243,7 @@ module Crystal
       end
     end
 
-    def can_calculate_type?
+    def obj_and_args_types_set?
       args.all?(&:type) && (obj.nil? || obj.type)
     end
 
@@ -193,11 +261,7 @@ module Crystal
 
     def compute_owner_self_type_and_untyped_def
       if obj && obj.type
-        if obj.type.is_a?(LibType)
-          return [obj.type, obj.type, obj.type.lookup_first_def(name)]
-        else
-          return [obj.type, obj.type, lookup_method(obj.type, name, true)]
-        end
+        return [obj.type, obj.type, lookup_method(obj.type, name, true)]
       end
 
       unless scope
@@ -217,9 +281,9 @@ module Crystal
         return [parent, scope, lookup_method(parent, parent_visitor.untyped_def.name)]
       end
 
-      untyped_def, error_matches = lookup_method(scope, name)
+      untyped_def, free_vars, error_matches = lookup_method(scope, name)
       if untyped_def
-        return [scope, scope, [untyped_def, error_matches]]
+        return [scope, scope, [untyped_def, free_vars, error_matches]]
       end
 
       mod_def, free_vars, mod_error_matches = mod.lookup_def(name, args, !!block)
@@ -299,68 +363,8 @@ module Crystal
       end
     end
 
-    def check_args_match(untyped_def)
-      call_args_count = args.length
-      all_args_count = untyped_def.args.length
-
-      if untyped_def.is_a?(External) && untyped_def.varargs && call_args_count >= all_args_count
-        return
-      end
-
-      required_args_count = untyped_def.args.count { |arg| !arg.default_value }
-
-      return if required_args_count <= call_args_count && call_args_count <= all_args_count
-
-      raise "wrong number of arguments for '#{full_name}' (#{args.length} for #{untyped_def.args.length})"
-    end
-
     def full_name
       obj ? "#{obj.type}##{name}" : name
-    end
-
-    def check_args_type_match(typed_def)
-      string_conversions = nil
-      nil_conversions = nil
-      typed_def.args.each_with_index do |typed_def_arg, i|
-        expected_type = typed_def_arg.type_restriction
-        if self.args[i].type != expected_type
-          if mod.nil.equal?(self.args[i].type) && expected_type.pointer_type?
-            nil_conversions ||= []
-            nil_conversions << i
-          elsif mod.string.equal?(self.args[i].type) && expected_type.is_a?(PointerType) && mod.char.equal?(expected_type.var.type)
-            string_conversions ||= []
-            string_conversions << i
-          else
-            self.args[i].raise "argument \##{i + 1} to #{typed_def.owner}.#{typed_def.name} must be #{expected_type}, not #{self.args[i].type}"
-          end
-        end
-      end
-
-      if typed_def.varargs
-        typed_def.args.length.upto(args.length - 1) do |i|
-          if mod.string.equal?(self.args[i].type)
-            string_conversions ||= []
-            string_conversions << i
-          end
-        end
-      end
-
-      if string_conversions
-        string_conversions.each do |i|
-          call = Call.new(self.args[i], 'cstr')
-          call.mod = mod
-          call.scope = scope
-          call.parent_visitor = parent_visitor
-          call.recalculate
-          self.args[i] = call
-        end
-      end
-
-      if nil_conversions
-        nil_conversions.each do |i|
-          self.args[i] = NilPointer.new(typed_def.args[i].type)
-        end
-      end
     end
   end
 end
