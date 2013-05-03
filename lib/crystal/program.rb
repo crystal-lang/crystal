@@ -63,7 +63,16 @@ module Crystal
       all_types.flatten!
       all_types.compact!
       all_types.uniq!(&:object_id)
-      union_of *types
+      combined_union_of *types
+    end
+
+    def combined_union_of(*types)
+      if types.length == 1
+        return types[0]
+      end
+
+      combined_types = type_combine *types
+      union_of *combined_types
     end
 
     def union_of(*types)
@@ -72,13 +81,8 @@ module Crystal
         return types[0]
       end
 
-      combined_types = type_combine *types
-      if combined_types.length == 1
-        return combined_types[0]
-      end
-
-      types_ids = combined_types.map(&:object_id)
-      @unions[types_ids] ||= UnionType.new(*combined_types)
+      types_ids = types.map(&:object_id)
+      @unions[types_ids] ||= UnionType.new(*types)
     end
 
     def type_combine(*types)
@@ -122,7 +126,7 @@ module Crystal
         t2 = t2.superclass
       end
 
-      t1
+      t1.depth == 0 ? nil : t1
     end
 
     def lookup_generic_type(base_class, type_vars)

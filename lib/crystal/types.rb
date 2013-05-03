@@ -422,7 +422,7 @@ module Crystal
 
       obj = types_context[object_id] and return obj
 
-      obj = types_context[object_id] = ObjectType.new name, @parent_type, @container
+      obj = types_context[object_id] = ObjectType.new name, superclass, @container
       obj.instance_vars = Hash[instance_vars.map do |name, var|
         cloned_var = var.clone
         cloned_var.type = var.type.clone(types_context) if var.type

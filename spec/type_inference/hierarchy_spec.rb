@@ -1,6 +1,18 @@
 require 'spec_helper'
 
 describe 'Type inference: hierarchy' do
+  it "types two classes without a shared hierarchy" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar
+      end
+
+      a = Foo.new || Bar.new
+      )) { union_of(self.types["Foo"], self.types["Bar"]) }
+  end
+
   it "types class and subclass as one type" do
     assert_type(%(
       class Foo
@@ -13,7 +25,7 @@ describe 'Type inference: hierarchy' do
       )) { HierarchyType.new(self.types["Foo"]) }
   end
 
-  it "types class and subclass as one type" do
+  it "types two subclasses" do
     assert_type(%(
       class Foo
       end
@@ -28,7 +40,7 @@ describe 'Type inference: hierarchy' do
       )) { HierarchyType.new(self.types["Foo"]) }
   end
 
-  it "types class and subclass as one type" do
+  it "types class and two subclasses" do
     assert_type(%(
       class Foo
       end
