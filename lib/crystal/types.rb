@@ -130,11 +130,8 @@ module Crystal
         index -= 1
       end
 
-      @minimals ||= Hash.new { |h, k| h[k] = [] }
-      minimals = @minimals[a_def.name]
-      if minimals.length == 0
-        minimals.push a_def
-      end
+      @posets ||= Hash.new { |h, k| h[k] = Poset.new(->(x, y) { x.is_restriction_of?(y, self) }) }
+      @posets[[a_def.name, a_def.args.length]].add a_def
 
       a_def
     end
