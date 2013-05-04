@@ -200,6 +200,15 @@ module Crystal
         end
         return matches
       end
+
+      if parents && !(name == 'new' && owner.is_a?(Metaclass))
+        parents.each do |parent|
+          matches = parent.lookup_matches(name, arg_types, yields, owner)
+          return matches if matches
+        end
+      end
+
+      nil
     end
 
     def lookup_def(name, args, yields, owner = self)

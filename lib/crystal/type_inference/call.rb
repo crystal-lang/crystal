@@ -31,108 +31,63 @@ module Crystal
       return if @types_signature == types_signature
       @types_signature = types_signature
 
-      # - no hay obj
-      #   - si no hay scope, buscar en mod
-      #   - si hay scope, buscar en scope
-      #   - si no encuentra, buscar en mod
-      # - hay obj con type Union
-      #   - buscar en cada tipo
-      # - hay obj con type Type
-      #   - buscar en este tipo
-      # - hay obj con type HierarchyType
-      #   - buscar en este tipo
+      unbind_from *@target_defs if @target_defs
+      unbind_from block.break if block
 
       if obj
-        if obj.type.is_a?(UnionType)
+        if obj.type.is_a?(UnionType) || obj.type.is_a?(HierarchyType)
           matches = []
-          obj.type.types.each do |type|
+          obj.type.each do |type|
             matches.concat lookup_matches_in(type)
           end
         else
           matches = lookup_matches_in(obj.type)
         end
       else
-        matches = lookup_matches_in(scope) || lookup_matches_in(mod)
+        if name == 'super'
+          matches = lookup_matches_in_super
+        else
+          matches = lookup_matches_in(scope) || lookup_matches_in(mod)
+        end
       end
 
       @target_defs = matches
 
       bind_to *matches
-
-      # if obj && (obj.type.is_a?(UnionType) || obj.type.is_a?(HierarchyType))
-      #   compute_dispatch
-      #   return
-      # end
-
-      # has_unions_in_args = has_unions_in_args?
-
-      # if has_unions_in_args && ((obj && obj.type.has_restricted_defs?(name)) || (scope && scope.has_restricted_defs?(name)))
-      #   compute_dispatch
-      #   return
-      # end
-
-      # owner, self_type, untyped_def_and_error_matches = compute_owner_self_type_and_untyped_def
-      # if has_unions_in_args && owner.is_a?(Program) && owner.has_restricted_defs?(name)
-      #   compute_dispatch
-      #   return
-      # end
-
-      # untyped_def, free_vars, error_matches = untyped_def_and_error_matches
-
-      # check_method_exists untyped_def, error_matches
-      # check_args_length_match untyped_def
-
-      # old_target_def = self.target_def
-
-      # arg_types = args.map &:type
-      # typed_def = untyped_def.lookup_instance(arg_types) ||
-      #             self_type.lookup_def_instance(name, arg_types) ||
-      #             parent_visitor.lookup_def_instance(owner, untyped_def, arg_types) unless block
-      # if typed_def
-      #   self.target_def = typed_def
-      # else
-      #   # puts "#{obj ? obj.type : scope}.#{name}"
-      #   typed_def, args = prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
-      #   self.target_def = typed_def
-
-      #   if typed_def.body
-      #     bubbling_exception do
-      #       visitor = TypeVisitor.new(@mod, args, self_type, parent_visitor, self, owner, untyped_def, typed_def, arg_types, free_vars)
-      #       typed_def.body.accept visitor
-      #     end
-      #   end
-
-      #   self_type.add_def_instance(name, arg_types, typed_def) if Crystal::CACHE && !block
-      # end
-
-      # if old_target_def
-      #   self.unbind_from old_target_def
-      #   self.bind_to typed_def
-      # else
-      #   self.bind_to typed_def
-      #   self.bind_to(block.break) if block
-      # end
+      bind_to block.break if block
     end
 
-    def lookup_matches_in(def_container)
-      owner = def_container
-      self_type = def_container
+    def lookup_matches_in(owner, self_type = owner, def_name = self.name)
       arg_types = args.map(&:type)
-      matches = def_container.lookup_matches(name, arg_types, !!block)
+      matches = owner.lookup_matches(def_name, arg_types, !!block)
 
-      if !matches && name == 'new' && def_container.is_a?(Metaclass) && def_container.instance_type.is_a?(ObjectType)
-        match = Match.new
-        match.def = define_new def_container, name
-        match.arg_types = arg_types
-        matches = [match]
+      if !matches || matches.empty?
+        if def_name == 'new' && owner.is_a?(Metaclass) && owner.instance_type.is_a?(ObjectType)
+          match = Match.new
+          match.def = define_new owner, def_name
+          match.arg_types = arg_types
+          matches = [match]
+        else
+          # This is tricky: if no matches are found we might want to use method missing,
+          # but first we need to check if the program defines that method.
+          unless owner.equal?(mod)
+            matches = mod.lookup_matches(def_name, arg_types, !!block)
+            if !matches && owner.lookup_first_def('method_missing')
+              match = Match.new
+              match.def = define_method_missing owner, def_name
+              match.arg_types = arg_types
+              matches = [match]
+            end
+          end
+        end
       end
 
       typed_defs = matches.map do |match|
         typed_def = match.def.lookup_instance(match.arg_types) ||
-                    self_type.lookup_def_instance(name, match.arg_types) unless block
+                    owner.lookup_def_instance(def_name, match.arg_types) unless block
         unless typed_def
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, owner, self_type, match.arg_types)
-          self_type.add_def_instance(name, match.arg_types, typed_def) unless block
+          self_type.add_def_instance(def_name, match.arg_types, typed_def) unless block
           if typed_def.body
             bubbling_exception do
               visitor = TypeVisitor.new(@mod, typed_def_args, self_type, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars)
@@ -142,6 +97,19 @@ module Crystal
         end
         typed_def
       end
+    end
+
+    def lookup_matches_in_super
+      parent = parent_visitor.owner.parents.first
+      if args.empty? && !has_parenthesis
+        self.args = parent_visitor.typed_def.args.map do |arg|
+          var = Var.new(arg.name)
+          var.bind_to arg
+          var
+        end
+      end
+
+      lookup_matches_in(parent, scope, parent_visitor.untyped_def.name)
     end
 
     def recalculate_lib_call
@@ -297,79 +265,8 @@ module Crystal
       [typed_def, args]
     end
 
-    def simplify
-      return unless target_def.is_a?(Dispatch)
-
-      target_def.simplify
-      if target_def.calls.length == 1
-        call = target_def.calls.values.first
-        self.target_def = call.target_def
-        self.block = call.block
-      end
-    end
-
     def obj_and_args_types_set?
       args.all?(&:type) && (obj.nil? || obj.type)
-    end
-
-    def has_unions?
-      has_union_in_obj? || has_unions_in_args?
-    end
-
-    def has_union_in_obj?
-      obj && obj.type.is_a?(UnionType)
-    end
-
-    def has_unions_in_args?
-      args.any? { |a| a.type.is_a?(UnionType) }
-    end
-
-    def compute_owner_self_type_and_untyped_def
-      if obj && obj.type
-        return [obj.type, obj.type, lookup_method(obj.type, name, true)]
-      end
-
-      unless scope
-        return [mod, mod, mod.lookup_def(name, args, !!block)]
-      end
-
-      if name == 'super'
-        parent = parent_visitor.owner.parents.first
-        if args.empty? && !has_parenthesis
-          self.args = parent_visitor.typed_def.args.map do |arg|
-            var = Var.new(arg.name)
-            var.bind_to arg
-            var
-          end
-        end
-
-        return [parent, scope, lookup_method(parent, parent_visitor.untyped_def.name)]
-      end
-
-      untyped_def, free_vars, error_matches = lookup_method(scope, name)
-      if untyped_def
-        return [scope, scope, [untyped_def, free_vars, error_matches]]
-      end
-
-      mod_def, free_vars, mod_error_matches = mod.lookup_def(name, args, !!block)
-      if mod_def || !(missing = scope.lookup_first_def('method_missing'))
-        return [mod, mod, [mod_def, free_vars, mod_error_matches || error_matches]]
-      end
-
-      untyped_def = define_missing scope, name
-      [scope, scope, untyped_def]
-    end
-
-    def lookup_method(scope, name, use_method_missing = false)
-      untyped_def, free_vars, error_matches = scope.lookup_def(name, args, !!block)
-      unless untyped_def
-        if name == 'new' && scope.is_a?(Metaclass) && scope.instance_type.is_a?(ObjectType)
-          untyped_def = define_new scope, name
-        elsif use_method_missing && scope.lookup_first_def('method_missing')
-          untyped_def = define_missing scope, name
-        end
-      end
-      [untyped_def, free_vars, error_matches]
     end
 
     def define_new(scope, name)
@@ -393,7 +290,7 @@ module Crystal
       end
     end
 
-    def define_missing(scope, name)
+    def define_method_missing(scope, name)
       missing_args = self.args.each_with_index.map { |arg, i| Arg.new("arg#{i}") }
       missing_vars = self.args.each_with_index.map { |arg, i| Var.new("arg#{i}") }
       scope.add_def Def.new(name, missing_args, [
@@ -401,32 +298,32 @@ module Crystal
       ])
     end
 
-    def check_method_exists(untyped_def, error_matches)
-      return if untyped_def
+    # def check_method_exists(untyped_def, error_matches)
+    #   return if untyped_def
 
-      if !error_matches || error_matches.length == 0
-        if obj
-          raise "undefined method '#{name}' for #{obj.type}"
-        elsif args.length > 0 || has_parenthesis
-          raise "undefined method '#{name}'"
-        else
-          raise "undefined local variable or method '#{name}'"
-        end
-      elsif error_matches.length == 1 && args.length != error_matches[0].args.length
-        raise "wrong number of arguments for '#{full_name}' (#{args.length} for #{error_matches[0].args.length})"
-      elsif error_matches.length == 1 && !block && error_matches[0].yields
-        raise "#{full_name} expects a block"
-      elsif error_matches.length == 1 && block && !error_matches[0].yields
-        raise "#{full_name} doesn't expect a block"
-      else
-        msg = "no overload or ambiguos call for '#{full_name}' with types #{args.map { |arg| arg.type }.join ', '}\n"
-        msg << "Overloads are:"
-        error_matches.each do |error_match|
-          msg << "\n - #{full_name}(#{error_match.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '})"
-        end
-        raise msg
-      end
-    end
+    #   if !error_matches || error_matches.length == 0
+    #     if obj
+    #       raise "undefined method '#{name}' for #{obj.type}"
+    #     elsif args.length > 0 || has_parenthesis
+    #       raise "undefined method '#{name}'"
+    #     else
+    #       raise "undefined local variable or method '#{name}'"
+    #     end
+    #   elsif error_matches.length == 1 && args.length != error_matches[0].args.length
+    #     raise "wrong number of arguments for '#{full_name}' (#{args.length} for #{error_matches[0].args.length})"
+    #   elsif error_matches.length == 1 && !block && error_matches[0].yields
+    #     raise "#{full_name} expects a block"
+    #   elsif error_matches.length == 1 && block && !error_matches[0].yields
+    #     raise "#{full_name} doesn't expect a block"
+    #   else
+    #     msg = "no overload or ambiguos call for '#{full_name}' with types #{args.map { |arg| arg.type }.join ', '}\n"
+    #     msg << "Overloads are:"
+    #     error_matches.each do |error_match|
+    #       msg << "\n - #{full_name}(#{error_match.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '})"
+    #     end
+    #     raise msg
+    #   end
+    # end
 
     def full_name
       obj ? "#{obj.type}##{name}" : name

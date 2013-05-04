@@ -2,7 +2,7 @@ require_relative 'ast'
 require_relative 'type_inference/ast'
 require_relative 'type_inference/ast_node'
 require_relative 'type_inference/call'
-require_relative 'type_inference/dispatch'
+require_relative 'type_inference/match'
 
 module Crystal
   def infer_type(node, options = {})
@@ -599,14 +599,6 @@ module Crystal
       false
     end
 
-    def lookup_def_instance(scope, untyped_def, arg_types)
-      if @call && @owner.equal?(scope) && @untyped_def.equal?(untyped_def) && same_arg_types_as_current_call(arg_types)
-        @typed_def
-      elsif @parent
-        @parent.lookup_def_instance(scope, untyped_def, arg_types)
-      end
-    end
-
     def same_arg_types_as_current_call(arg_types)
       return false unless arg_types.length == @arg_types.length
       arg_types.each_with_index do |arg_type, i|
@@ -716,6 +708,8 @@ module Crystal
     end
 
     def expand_macro(node)
+      return nil
+
       return false if node.obj || node.name == 'super'
 
       owner, self_type, untyped_def_and_error_matches = node.compute_owner_self_type_and_untyped_def
