@@ -21,6 +21,9 @@ module Crystal
         opts.on('-graph ', 'Render type graph') do
           @options[:graph] = true
         end
+        opts.on('-types', 'Prints types of global variables') do
+          @options[:types] = true
+        end
         opts.on("-h", "--help", "Show this message") do
           puts opts
           exit
@@ -87,6 +90,7 @@ module Crystal
         mod = infer_type node, @options
 
         graph node, mod, @options[:output_filename] if @options[:graph]
+        print_types node if @options[:types]
         exit 0 if @options[:no_build]
 
         llvm_mod = nil
