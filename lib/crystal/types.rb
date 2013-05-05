@@ -65,6 +65,17 @@ module Crystal
       false
     end
 
+    def rank
+      1
+    end
+
+    def restrict(other, owner)
+      ((other.nil? || equal?(other)) && self) ||
+      (other.is_a?(UnionType) && program.union_of(*other.types.each { |union_type| self.restrict(union_type, owner) })) ||
+      (generic && container.equal?(other.container) && name == other.name && !other.type_vars.values.any?(&:type) && self) ||
+      (parents.first && parents.first.restrict(other, owner))
+    end
+
     def to_s
       name
     end
@@ -166,18 +177,18 @@ module Crystal
       when :self
         arg_type && arg_type.is_restriction_of?(owner, owner) && owner
       when NewGenericClass
-        arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, free_vars)
+        arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, free_vars) && arg_type
       when Ident
         type = free_vars[restriction.names] || owner.lookup_type(restriction.names)
         if type
-          arg_type && arg_type.is_restriction_of?(type, owner) && type
+          arg_type && arg_type.is_restriction_of?(type, owner) && arg_type.restrict(type, owner)
         else
           free_vars[restriction.names] = arg_type
         end
       when IdentUnion
         restriction.idents.any? do |ident|
           match_arg(arg_type, ident, owner, free_vars)
-        end
+        end && arg_type
       when Type
         arg_type.is_restriction_of?(restriction, owner) && restriction
       end
@@ -197,15 +208,19 @@ module Crystal
 
     def lookup_matches(name, arg_types, yields, owner = self)
       if @sorted_defs && @sorted_defs.has_key?([name, arg_types.length, yields])
+        target_rank = arg_types.map(&:rank).inject(1, :*)
         defs = @sorted_defs[[name, arg_types.length, yields]]
         matches = []
+        matches_rank = 0
         defs.each do |a_def|
           def_restrictions = a_def.args.map(&:type_restriction)
           match = match_def_args(arg_types, def_restrictions, owner)
           if match
             match.def = a_def
             matches.push match
+            matches_rank += match.arg_types.map(&:rank).inject(1, :*)
           end
+          break if matches_rank >= target_rank
         end
         return matches
       end
@@ -564,6 +579,10 @@ module Crystal
       end
     end
 
+    def rank
+      @types.map(&:rank).inject(0, :+)
+    end
+
     def nilable?
       @nilable ||= (@types.length == 2 &&
         (@types[0].nil_type? && types[1].nilable_able? && types[1] ||
@@ -643,6 +662,10 @@ module Crystal
 
     def is_restriction_of?(type, owner)
       types.any? { |sub| sub.is_restriction_of?(type, owner) }
+    end
+
+    def restrict(type, owner)
+      program.union_of(*types.select { |sub| sub.is_restriction_of?(type, owner) })
     end
 
     def to_s
