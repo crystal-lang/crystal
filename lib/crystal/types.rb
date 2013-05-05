@@ -127,13 +127,24 @@ module Crystal
       index = a_def.args.length - 1
       while index >= 0 && a_def.args[index].default_value
         @defs[a_def.name][[restrictions[0 ... index], a_def.yields]] = a_def
+        add_sorted_def(a_def, index)
         index -= 1
       end
 
-      @posets ||= Hash.new { |h, k| h[k] = Poset.new(->(x, y) { x.is_restriction_of?(y, self) }) }
-      @posets[[a_def.name, a_def.args.length]].add a_def
+      add_sorted_def(a_def, a_def.args.length)
 
       a_def
+    end
+
+    def add_sorted_def(a_def, args_length)
+      sorted_defs = @sorted_defs[[a_def.name, args_length, a_def.yields]]
+      append = sorted_defs.each_with_index do |ex_def, i|
+        if a_def.is_restriction_of?(ex_def, self)
+          sorted_defs.insert(i, a_def)
+          break false
+        end
+      end
+      sorted_defs << a_def if append
     end
 
     def match_def_args(args, def_restrictions, owner)
@@ -185,13 +196,11 @@ module Crystal
     end
 
     def lookup_matches(name, arg_types, yields, owner = self)
-      defs = @defs[name]
-      if defs
+      if @sorted_defs && @sorted_defs.has_key?([name, arg_types.length, yields])
+        defs = @sorted_defs[[name, arg_types.length, yields]]
         matches = []
-        defs.each do |def_restrictions_and_yields, a_def|
-          def_restrictions, def_yields = def_restrictions_and_yields
-          next false if def_yields != yields
-          next false if def_restrictions.length != arg_types.length
+        defs.each do |a_def|
+          def_restrictions = a_def.args.map(&:type_restriction)
           match = match_def_args(arg_types, def_restrictions, owner)
           if match
             match.def = a_def
@@ -204,7 +213,7 @@ module Crystal
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
           matches = parent.lookup_matches(name, arg_types, yields, owner)
-          return matches if matches
+          return matches if matches && matches.any?
         end
       end
 
@@ -278,6 +287,7 @@ module Crystal
     include DefContainer
 
     attr_accessor :defs
+    attr_accessor :sorted_defs
     attr_accessor :types
     attr_accessor :parents
     attr_accessor :type_vars
@@ -286,6 +296,7 @@ module Crystal
       super(name, container)
       @parents = parents
       @defs = {}
+      @sorted_defs ||= Hash.new { |h, k| h[k] = [] }
       @def_instances = {}
       @types = {}
     end
@@ -460,6 +471,7 @@ module Crystal
         [name, cloned_var]
       end]
       obj.defs = defs
+      obj.sorted_defs = sorted_defs
       obj.types = types
       obj.parents = parents
       obj.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
@@ -489,6 +501,7 @@ module Crystal
 
       pointer = types_context[object_id] = PointerType.new @parent_type, @container
       pointer.defs = defs
+      pointer.sorted_defs = sorted_defs
       pointer.types = types
       pointer.parents = parents
       pointer.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
@@ -766,12 +779,14 @@ module Crystal
 
     attr_accessor :vars
     attr_accessor :defs
+    attr_accessor :sorted_defs
 
     def initialize(name, vars, container = nil)
       super(name, container)
       @name = name
       @vars = Hash[vars.map { |var| [var.name, var] }]
       @defs = {}
+      @sorted_defs ||= Hash.new { |h, k| h[k] = [] }
       @def_instances = {}
       @vars.values.each do |var|
         add_def Def.new("#{var.name}=", [Arg.new_with_type('value', var.type)], StructSet.new(var.name))

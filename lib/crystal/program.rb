@@ -140,6 +140,7 @@ module Crystal
           i += 1
         end
         generic_type.metaclass.defs = base_class.metaclass.defs
+        generic_type.metaclass.sorted_defs = base_class.metaclass.sorted_defs
         @generic_types[key] = generic_type
       end
       generic_type
