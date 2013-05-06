@@ -243,7 +243,7 @@ module Crystal
       end
       instance.body = PrimitiveBody.new(block)
       instance.type = return_type
-      add_instance(instance)
+      add_instance(instance, owner, arg_types)
     end
   end
 

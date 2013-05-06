@@ -65,10 +65,6 @@ module Crystal
       false
     end
 
-    def rank
-      1
-    end
-
     def restrict(other, owner)
       ((other.nil? || equal?(other)) && self) ||
       (other.is_a?(UnionType) && program.union_of(*other.types.each { |union_type| self.restrict(union_type, owner) })) ||
@@ -208,19 +204,16 @@ module Crystal
 
     def lookup_matches(name, arg_types, yields, owner = self)
       if @sorted_defs && @sorted_defs.has_key?([name, arg_types.length, yields])
-        target_rank = arg_types.map(&:rank).inject(1, :*)
         defs = @sorted_defs[[name, arg_types.length, yields]]
         matches = []
-        matches_rank = 0
         defs.each do |a_def|
           def_restrictions = a_def.args.map(&:type_restriction)
           match = match_def_args(arg_types, def_restrictions, owner)
           if match
             match.def = a_def
             matches.push match
-            matches_rank += match.arg_types.map(&:rank).inject(1, :*)
+            break if match.arg_types == arg_types
           end
-          break if matches_rank >= target_rank
         end
         return matches
       end
@@ -577,10 +570,6 @@ module Crystal
       else
         UnionType.new(*filtered_types)
       end
-    end
-
-    def rank
-      @types.map(&:rank).inject(0, :+)
     end
 
     def nilable?

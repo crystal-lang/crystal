@@ -298,4 +298,14 @@ describe 'Type inference: def overload' do
       foo(Foo(Int).new)
     )) { int }
   end
+
+  it "restrict matches to minimum necessary 1" do
+    assert_type(%q(
+      def coco(x : Int, y); 1; end
+      def coco(x, y : Int); 1.5; end
+      def coco(x, y); 'a'; end
+
+      coco 1, 1
+    )) { int }
+  end
 end

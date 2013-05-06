@@ -82,12 +82,15 @@ module Crystal
         end
       end
 
+      unless matches
+        owner.lookup_matches(def_name, arg_types, !!block)
+      end
+
       typed_defs = matches.map do |match|
-        typed_def = match.def.lookup_instance(match.arg_types) ||
-                    owner.lookup_def_instance(def_name, match.arg_types) unless block
+        typed_def = match.def.lookup_instance(owner, match.arg_types) unless block
         unless typed_def
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, owner, self_type, match.arg_types)
-          self_type.add_def_instance(def_name, match.arg_types, typed_def) unless block
+          match.def.add_instance(typed_def, owner, match.arg_types) unless block
           if typed_def.body
             bubbling_exception do
               visitor = TypeVisitor.new(@mod, typed_def_args, self_type, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars)
