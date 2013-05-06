@@ -68,13 +68,13 @@ module Crystal
     attr_accessor :owner
     attr_accessor :instances
 
-    def add_instance(a_def, obj_type, arg_types)
+    def add_instance(a_def, arg_types = a_def.args.map(&:type))
       @instances ||= {}
-      @instances[[obj_type, arg_types]] = a_def
+      @instances[arg_types] = a_def
     end
 
-    def lookup_instance(obj_type, arg_types)
-      @instances && @instances[[obj_type, arg_types]]
+    def lookup_instance(arg_types)
+      @instances && @instances[arg_types]
     end
   end
 
