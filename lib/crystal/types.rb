@@ -72,6 +72,10 @@ module Crystal
       (parents.first && parents.first.is_restriction_of?(other, owner) && self)
     end
 
+    def is_subclass_of?(type)
+      false
+    end
+
     def to_s
       name
     end
@@ -359,6 +363,13 @@ module Crystal
 
     def superclass
       @parents.find { |parent| parent.is_a?(ClassType) }
+    end
+
+    def is_subclass_of?(type)
+      return true if equal?(type)
+
+      s = superclass
+      s ? s.is_subclass_of?(type) : false
     end
   end
 
@@ -912,6 +923,20 @@ module Crystal
 
     def ==(other)
       other.is_a?(HierarchyType) && base_type == other.base_type
+    end
+
+    def is_restriction_of?(type, owner)
+      type.is_subclass_of?(self.base_type) || self.base_type.is_subclass_of?(type)
+    end
+
+    def restrict(type, owner)
+      if type.is_subclass_of?(self.base_type)
+        type.hierarchy_type
+      elsif self.base_type.is_subclass_of?(type)
+        self
+      else
+        nil
+      end
     end
 
     def each(&block)
