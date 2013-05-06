@@ -73,7 +73,7 @@ module Crystal
       ((other.nil? || equal?(other)) && self) ||
       (other.is_a?(UnionType) && program.union_of(*other.types.each { |union_type| self.restrict(union_type, owner) })) ||
       (generic && container.equal?(other.container) && name == other.name && !other.type_vars.values.any?(&:type) && self) ||
-      (parents.first && parents.first.restrict(other, owner))
+      (parents.first && parents.first.is_restriction_of?(other, owner) && self)
     end
 
     def to_s
