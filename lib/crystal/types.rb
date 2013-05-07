@@ -296,12 +296,18 @@ module Crystal
     end
 
     def lookup_macro(name, args_length)
-      return nil unless @macros
+      if @macros && (macros = @macros[name]) && (macro = macros[args_length])
+        return macro
+      end
 
-      macros = @macros[name]
-      return nil unless macros
+      if parents
+        parents.each do |parent|
+          macro = parent.lookup_macro(name, args_length)
+          return macro if macro
+        end
+      end
 
-      macros[args_length]
+      nil
     end
   end
 

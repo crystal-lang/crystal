@@ -83,6 +83,10 @@ module Crystal
         end
       end
 
+      unless matches
+        raise "No method #{name}"
+      end
+
       typed_defs = matches.map do |match|
         typed_def = match.def.lookup_instance(match.arg_types) ||
                     owner.lookup_def_instance(match.def.object_id, match.arg_types) unless block
