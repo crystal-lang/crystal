@@ -887,10 +887,10 @@ module Crystal
                 push_var var
                 args << var
               when :INSTANCE_VAR
-                var = InstanceVar.new(@token.value.to_s)
-                var.out = true
-                var.location = @token.location
-                args << var
+                ivar = InstanceVar.new(@token.value.to_s)
+                ivar.out = true
+                ivar.location = @token.location
+                args << ivar
               else
                 raise "expecting variable or instance variable after out"
               end
