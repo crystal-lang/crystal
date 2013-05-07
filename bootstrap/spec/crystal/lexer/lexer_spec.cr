@@ -45,7 +45,7 @@ def it_lexes_int(value : Array)
   it_lexes value[0], :INT, value[1]
 end
 
-def it_lexes_int(value)
+def it_lexes_int(value : String)
   it_lexes value, :INT, value
 end
 
@@ -57,7 +57,7 @@ def it_lexes_float(value : Array)
   it_lexes value[0], :FLOAT, value[1][0, value[1].length - 1]
 end
 
-def it_lexes_float(value)
+def it_lexes_float(value : String)
   it_lexes value, :FLOAT, value[0, value.length - 1]
 end
 
@@ -69,7 +69,7 @@ def it_lexes_double(value : Array)
   it_lexes value[0], :DOUBLE, value[1]
 end
 
-def it_lexes_double(value)
+def it_lexes_double(value : String)
   it_lexes value, :DOUBLE, value
 end
 
@@ -81,7 +81,7 @@ def it_lexes_long(value : Array)
   it_lexes value[0], :LONG, value[1]
 end
 
-def it_lexes_long(value)
+def it_lexes_long(value : String)
   it_lexes value, :LONG, value[0, value.length - 1]
 end
 
