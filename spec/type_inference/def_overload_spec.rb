@@ -359,4 +359,26 @@ describe 'Type inference: def overload' do
       Bar.new.foo(1)
     )) { int }
   end
+
+  it "lookup matches in hierarchy type inside union" do
+    assert_type(%q(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz
+        def foo
+          'a'
+        end
+      end
+
+      a = Foo.new || Bar.new || Baz.new
+      a.foo
+    )) { union_of(int, char) }
+  end
 end

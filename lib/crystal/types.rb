@@ -670,7 +670,7 @@ module Crystal
     end
 
     def each(&block)
-      types.each(&block)
+      types.each {|t| t.each(&block) }
     end
 
     def hash
