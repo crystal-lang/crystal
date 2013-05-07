@@ -89,7 +89,7 @@ module Crystal
 
       case type
       when ObjectType
-        type.instance_vars.each do |name, ivar|
+        type.each_instance_var do |name, ivar|
           fix_node(ivar)
         end
       when PointerType

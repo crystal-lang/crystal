@@ -551,6 +551,7 @@ module Crystal
       when :CONST
         parse_ident
       when :INSTANCE_VAR
+        @instance_vars.add @token.value if @instance_vars
         node_and_next_token InstanceVar.new(@token.value)
       else
         raise "unexpected token: #{@token.to_s}"
@@ -1054,7 +1055,11 @@ module Crystal
     end
 
     def parse_def
-      parse_def_or_macro Def
+      @instance_vars = Set.new
+      a_def = parse_def_or_macro Def
+      a_def.instance_vars = @instance_vars
+      @instance_vars = nil
+      a_def
     end
 
     def parse_macro

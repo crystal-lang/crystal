@@ -309,7 +309,7 @@ module Crystal
     def codegen_assign_target(target, value, llvm_value)
       case target
       when InstanceVar
-        ivar = @type.instance_vars[target.name.to_s]
+        ivar = @type.lookup_instance_var(target.name.to_s)
         ptr = gep llvm_self, 0, @type.index_of_instance_var(target.name.to_s)
       when Global
         ptr = @llvm_mod.globals[target.name.to_s]
@@ -363,7 +363,7 @@ module Crystal
     end
 
     def visit_instance_var(node)
-      ivar = @type.instance_vars[node.name]
+      ivar = @type.lookup_instance_var(node.name)
       if ivar.type.union?
         @last = gep llvm_self, 0, @type.index_of_instance_var(node.name)
       else
@@ -431,7 +431,7 @@ module Crystal
         var = @vars[node.var.name]
         @last = var[:ptr]
       else
-        var = @type.instance_vars[node.var.name]
+        var = @type.lookup_instance_var(node.var.name)
         @last = gep llvm_self, 0, @type.index_of_instance_var(node.var.name)
       end
       if node.type.var.type.is_a?(StructType)

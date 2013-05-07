@@ -362,14 +362,13 @@ module Crystal
     end
 
     def superclass
-      @parents.find { |parent| parent.is_a?(ClassType) }
+      @superclass ||= @parents.find { |parent| parent.is_a?(ClassType) }
     end
 
     def is_subclass_of?(type)
       return true if equal?(type)
 
-      s = superclass
-      s ? s.is_subclass_of?(type) : false
+      superclass && superclass.is_subclass_of?(type)
     end
   end
 
@@ -428,12 +427,50 @@ module Crystal
       @hierarchy_type ||= HierarchyType.new(self)
     end
 
-    def has_instance_var?(name)
-      @instance_vars[name]
+    def add_def(a_def)
+      super
+
+      if a_def.instance_vars
+        a_def.instance_vars.each do |ivar|
+          unless superclass.has_instance_var?(ivar)
+            @instance_vars[ivar] ||= Var.new(ivar)
+          end
+        end
+      end
+
+      a_def
     end
 
-    def lookup_instance_var(name)
-      @instance_vars[name] ||= Var.new name
+    def has_instance_var?(name)
+      (superclass &&  superclass.has_instance_var?(name)) || @instance_vars[name]
+    end
+
+    def lookup_instance_var(name, create = true)
+      if superclass && (var = superclass.lookup_instance_var(name, false))
+        return var
+      end
+
+      if create
+        @instance_vars[name] ||= Var.new name
+      else
+        @instance_vars[name]
+      end
+    end
+
+    def each_instance_var(&block)
+      if superclass
+        superclass.each_instance_var(&block)
+      end
+
+      @instance_vars.each(&block)
+    end
+
+    def all_instance_vars
+      if superclass
+        superclass.all_instance_vars.merge(@instance_vars)
+      else
+        @instance_vars
+      end
     end
 
     def ==(other)
@@ -441,7 +478,7 @@ module Crystal
     end
 
     def structurally_equal?(other)
-      other.is_a?(ObjectType) && name == other.name && type_vars == other.type_vars && instance_vars == other.instance_vars
+      other.is_a?(ObjectType) && name == other.name && type_vars == other.type_vars && all_instance_vars == other.all_instance_vars
     end
 
     def llvm_type

@@ -96,7 +96,7 @@ describe 'Type inference: class' do
     )
     mod = infer_type input
     node = mod.types["Node"]
-    node.instance_vars["@next"].type.should eq(node)
+    node.lookup_instance_var("@next").type.should eq(node)
     input.last.type.should eq(node)
   end
 

@@ -347,4 +347,9 @@ describe Parser do
   it_parses %Q(case 1\nwhen 1\n2\nend\nif a\nend), [Case.new(1.int, [When.new([1.int], 2.int)]), If.new('a'.call)]
 
   it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
+
+  it "keeps instance variables declared in def" do
+    node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
+    node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
+  end
 end

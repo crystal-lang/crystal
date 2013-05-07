@@ -18,6 +18,6 @@ describe "Type clone" do
     type.with_var("@foo", type)
     type_clone = type.clone
     type_clone.should eq(type)
-    type_clone.instance_vars["@foo"].type.should be(type_clone)
+    type_clone.lookup_instance_var("@foo").type.should be(type_clone)
   end
 end

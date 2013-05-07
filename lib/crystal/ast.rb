@@ -453,6 +453,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
     attr_accessor :yields
+    attr_accessor :instance_vars
 
     def initialize(name, args, body = nil, receiver = nil, yields = false)
       @name = name

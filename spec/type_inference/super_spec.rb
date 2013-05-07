@@ -8,7 +8,7 @@ describe 'Type inference: super' do
   it "codegens super without arguments and instance variable" do
     input = parse "class Foo; def foo; @x = 1; end; end; class Bar < Foo; def foo; super; end; end; bar = Bar.new; bar.foo; bar"
     mod = infer_type input
-    mod.types["Bar"].instance_vars["@x"].type.should eq(mod.int)
+    mod.types["Bar"].lookup_instance_var("@x").type.should eq(mod.int)
   end
 
   it "types super without arguments but parent has arguments" do
@@ -32,6 +32,6 @@ describe 'Type inference: super' do
       Baz.new
       ))
     mod = infer_type input
-    mod.types["Baz"].instance_vars["@x"].type.should eq(mod.int)
+    mod.types["Baz"].lookup_instance_var("@x").type.should eq(mod.int)
   end
 end
