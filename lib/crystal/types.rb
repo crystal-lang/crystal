@@ -289,9 +289,19 @@ module Crystal
       @def_instances[[name] + arg_types.map(&:object_id)]
     end
 
-    def has_restricted_defs?(name)
-      defs = @defs[name]
-      (defs && defs.keys.any? { |ary| ary[0].any? }) || (parents && parents.any? { |p| p.has_restricted_defs?(name) })
+    def add_macro(a_def)
+      @macros ||= {}
+      @macros[a_def.name] ||= {}
+      @macros[a_def.name][a_def.args.length] = a_def
+    end
+
+    def lookup_macro(name, args_length)
+      return nil unless @macros
+
+      macros = @macros[name]
+      return nil unless macros
+
+      macros[args_length]
     end
   end
 

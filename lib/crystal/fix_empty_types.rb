@@ -24,6 +24,8 @@ module Crystal
     end
 
     def end_visit_call(node)
+      return unless node.target_defs
+
       node.target_defs.each do |target_def|
         next if @fixed[target_def]
         @fixed[target_def] = true

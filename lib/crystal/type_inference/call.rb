@@ -4,6 +4,7 @@ module Crystal
     attr_accessor :scope
     attr_accessor :parent_visitor
     attr_accessor :target_defs
+    attr_accessor :target_macro
 
     def target_def
       if target_defs && target_defs.length == 1

@@ -178,7 +178,7 @@ module Crystal
       else
         target_type = current_type
       end
-      target_type.add_def node
+      target_type.add_macro node
       false
     end
 
@@ -708,13 +708,10 @@ module Crystal
     end
 
     def expand_macro(node)
-      return nil
-
       return false if node.obj || node.name == 'super'
 
-      owner, self_type, untyped_def_and_error_matches = node.compute_owner_self_type_and_untyped_def
-      untyped_def, error_matches = untyped_def_and_error_matches
-      return false unless untyped_def.is_a?(Macro)
+      untyped_def = node.scope.lookup_macro(node.name, node.args.length) || mod.lookup_macro(node.name, node.args.length)
+      return false unless untyped_def
 
       @@macro_llvm_mod ||= LLVM::Module.new "macros"
       @@macro_engine ||= LLVM::JITCompiler.new @@macro_llvm_mod

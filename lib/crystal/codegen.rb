@@ -820,10 +820,10 @@ module Crystal
         return false
       end
 
-      if node.target_def.is_a?(Dispatch)
-        codegen_dispatch(node)
-        return false
-      end
+      # if node.target_def.is_a?(Dispatch)
+      #   codegen_dispatch(node)
+      #   return false
+      # end
 
       declare_out_arguments node
 
