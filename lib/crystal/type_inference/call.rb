@@ -84,7 +84,13 @@ module Crystal
       end
 
       unless matches
-        raise "No method #{name}"
+        if obj
+          raise "undefined method '#{name}' for #{obj.type}"
+        elsif args.length > 0 || has_parenthesis
+          raise "undefined method '#{name}'"
+        else
+          raise "undefined local variable or method '#{name}'"
+        end
       end
 
       typed_defs = matches.map do |match|
