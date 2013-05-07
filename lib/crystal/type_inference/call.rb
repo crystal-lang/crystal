@@ -80,15 +80,7 @@ module Crystal
         end
       end
 
-      unless matches
-        if obj
-          raise "undefined method '#{name}' for #{owner}"
-        elsif args.length > 0 || has_parenthesis
-          raise "undefined method '#{name}'"
-        else
-          raise "undefined local variable or method '#{name}'"
-        end
-      end
+      raise_matches_not_found(owner, def_name) unless matches
 
       typed_defs = matches.map do |match|
         typed_def = match.def.lookup_instance(match.arg_types) ||
@@ -105,6 +97,32 @@ module Crystal
         end
         typed_def
       end
+    end
+
+    def raise_matches_not_found(owner, def_name)
+      defs = owner.lookup_defs(def_name)
+      unless defs
+        if obj
+          raise "undefined method '#{name}' for #{owner}"
+        elsif args.length > 0 || has_parenthesis
+          raise "undefined method '#{name}'"
+        else
+          raise "undefined local variable or method '#{name}'"
+        end
+      end
+
+      defs_matching_args_length = defs.select { |a_def| a_def.args.length == self.args.length }
+      if defs_matching_args_length.empty?
+        all_arguments_lengths = defs.map { |a_def| a_def.args.length }.uniq
+        raise "wrong number of arguments for '#{full_name(owner)}' (#{self.args.length} for #{all_arguments_lengths.join ', '})"
+      end
+
+      msg = "no overload matches '#{full_name(owner)}' with types #{args.map(&:type).join ', '}\n"
+      msg << "Overloads are:"
+      defs.each do |a_def|
+        msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '})"
+      end
+      raise msg
     end
 
     def lookup_matches_in_super
@@ -341,8 +359,8 @@ module Crystal
     #   end
     # end
 
-    def full_name
-      obj ? "#{obj.type}##{name}" : name
+    def full_name(owner)
+      owner.is_a?(Program) ? name : "#{owner}##{name}"
     end
   end
 end

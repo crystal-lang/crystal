@@ -220,6 +220,11 @@ module Crystal
       nil
     end
 
+    def lookup_defs(name)
+      defs = @defs[name]
+      defs && defs.values
+    end
+
     def add_def_instance(name, arg_types, typed_def)
       @def_instances[[name] + arg_types.map(&:object_id)] = typed_def
     end

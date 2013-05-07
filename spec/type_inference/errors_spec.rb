@@ -54,7 +54,7 @@ describe 'Type inference: errors' do
 
     lambda {
       infer_type nodes
-    }.should raise_error(Crystal::Exception, regex("no overload or ambiguos call"))
+    }.should raise_error(Crystal::Exception, regex("no overload matches"))
   end
 
   it "reports can't call external with args" do
