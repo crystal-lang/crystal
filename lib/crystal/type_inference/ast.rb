@@ -4,6 +4,11 @@ module Crystal
 
     def is_restriction_of?(other, owner)
       return true if self == other
+
+      if other.is_a?(IdentUnion)
+        return other.idents.any? { |o| self.is_restriction_of?(o, owner) }
+      end
+
       return false unless other.is_a?(Ident)
 
       if self_type = owner.lookup_type(names)

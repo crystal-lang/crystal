@@ -308,4 +308,21 @@ describe 'Type inference: def overload' do
       coco 1, 1
     )) { int }
   end
+
+  it "single type restriction wins over union" do
+    assert_type(%q(
+      class Foo; end
+      class Bar < Foo ;end
+
+      def foo(x : Foo | Bar)
+        1.1
+      end
+
+      def foo(x : Foo)
+        1
+      end
+
+      foo(Foo.new || Bar.new)
+    )) { int }
+  end
 end
