@@ -212,47 +212,6 @@ module Crystal
       nil
     end
 
-    def lookup_def(name, args, yields, owner = self)
-      defs = @defs[name]
-      error_matches = defs.values if defs
-      if defs
-        if args
-          matches = []
-          defs.each do |def_restrictions_and_yields, a_def|
-            def_restrictions, def_yields = def_restrictions_and_yields
-            next false if def_yields != yields
-            next false if def_restrictions.length != args.length
-            free_vars = match_def_args(args.map(&:type), def_restrictions, owner)
-            if free_vars
-              matches.push [a_def, free_vars]
-            end
-          end
-
-          return matches.first if matches.length == 1
-
-          error_matches = matches.map { |m| m[0] } if matches.length > 0
-
-          minimals = matches.select do |a_def, free_vars|
-            matches.all? { |m| m[0].equal?(a_def) || a_def.is_restriction_of?(m[0], owner) }
-          end
-          return minimals.first if minimals.length == 1
-
-          error_matches = minimals if minimals.length > 0
-        else
-          return defs.first[1] if defs.length == 1
-        end
-      end
-
-      if parents && !(name == 'new' && owner.is_a?(Metaclass))
-        parents.each do |parent|
-          result, free_vars, errors = parent.lookup_def(name, args, yields, owner)
-          return [result, free_vars, errors] if result
-        end
-      end
-
-      [nil, nil, error_matches]
-    end
-
     def lookup_first_def(name)
       defs = @defs[name]
       if defs && defs.length == 1

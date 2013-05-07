@@ -64,10 +64,7 @@ module Crystal
 
       if !matches || matches.empty?
         if def_name == 'new' && owner.is_a?(Metaclass) && owner.instance_type.is_a?(ObjectType)
-          match = Match.new
-          match.def = define_new owner, def_name
-          match.arg_types = arg_types
-          matches = [match]
+          matches = define_new owner, arg_types
         else
           # This is tricky: if no matches are found we might want to use method missing,
           # but first we need to check if the program defines that method.
@@ -85,7 +82,7 @@ module Crystal
 
       unless matches
         if obj
-          raise "undefined method '#{name}' for #{obj.type}"
+          raise "undefined method '#{name}' for #{owner}"
         elsif args.length > 0 || has_parenthesis
           raise "undefined method '#{name}'"
         else
@@ -280,24 +277,32 @@ module Crystal
       args.all?(&:type) && (obj.nil? || obj.type)
     end
 
-    def define_new(scope, name)
+    def define_new(scope, arg_types)
       alloc = Call.new(nil, 'allocate')
 
-      the_initialize, error_matches = scope.type.lookup_def('initialize', args, !!block)
-      if the_initialize
-        var = Var.new('x')
-        new_vars = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
-        new_args = args.each_with_index.map { |x, i| Arg.new("arg#{i}") }
+      matches = scope.type.lookup_matches('initialize', arg_types, !!block)
+      if matches
+        matches.map do |match|
+          var = Var.new('x')
+          new_vars = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
+          new_args = args.each_with_index.map { |x, i| Arg.new("arg#{i}") }
 
-        init = Call.new(var, 'initialize', new_vars)
+          init = Call.new(var, 'initialize', new_vars)
 
-        untyped_def = scope.add_def Def.new('new', new_args, [
-          Assign.new(var, alloc),
-          init,
-          var
-        ])
+          new_match = Match.new
+          new_match.def = scope.add_def Def.new('new', new_args, [
+            Assign.new(var, alloc),
+            init,
+            var
+          ])
+          new_match.arg_types = match.arg_types
+          new_match
+        end
       else
-        untyped_def = scope.add_def Def.new('new', [], [alloc])
+        match = Match.new
+        match.def = scope.add_def Def.new('new', [], [alloc])
+        match.arg_types = arg_types
+        [match]
       end
     end
 
