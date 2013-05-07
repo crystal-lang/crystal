@@ -198,7 +198,7 @@ module Crystal
             break if match.arg_types == arg_types
           end
         end
-        return matches
+        return matches if matches.any?
       end
 
       if parents && !(name == 'new' && owner.is_a?(Metaclass))

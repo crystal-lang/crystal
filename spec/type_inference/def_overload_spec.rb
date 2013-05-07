@@ -341,4 +341,22 @@ describe 'Type inference: def overload' do
       x = Foo.new.foo(Foo.new)
     )) { int }
   end
+
+  it "uses method defined in base class if the restriction doesn't match" do
+    assert_type(%q(
+      class Foo
+        def foo(x)
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo(x : Double)
+          1.1
+        end
+      end
+
+      Bar.new.foo(1)
+    )) { int }
+  end
 end
