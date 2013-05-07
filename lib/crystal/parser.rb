@@ -1154,7 +1154,7 @@ module Crystal
       when :':'
         next_token_skip_space_or_newline
         if @token.keyword?('self')
-          type_restriction = :self
+          type_restriction = SelfType.instance
           next_token_skip_space
         else
           type_restriction = parse_type_var

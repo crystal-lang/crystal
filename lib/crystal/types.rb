@@ -46,13 +46,6 @@ module Crystal
       true
     end
 
-    def is_restriction_of?(type, owner)
-      type.nil? || equal?(type) ||
-        type.is_a?(UnionType) && type.types.any? { |union_type| self.is_restriction_of?(union_type, owner) } ||
-        generic && container.equal?(type.container) && name == type.name && type.type_vars.values.map(&:type).compact.length == 0 ||
-        parents.any? { |parent| parent.is_restriction_of?(type, owner) }
-    end
-
     def implements?(other_type)
       equal?(other_type)
     end
@@ -114,20 +107,6 @@ module Crystal
     end
   end
 
-  class Def
-    def is_restriction_of?(other, owner)
-      args.zip(other.args).each do |self_arg, other_arg|
-        self_type = self_arg.type || self_arg.type_restriction
-        other_type = other_arg.type || other_arg.type_restriction
-        return false if self_type == nil && other_type != nil
-        if self_type != nil && other_type != nil
-          return false unless self_type.is_restriction_of?(other_type, owner)
-        end
-      end
-      true
-    end
-  end
-
   module DefContainer
     def add_def(a_def)
       a_def.owner = self if a_def.respond_to?(:owner=)
@@ -174,7 +153,7 @@ module Crystal
       case restriction
       when nil
         arg_type
-      when :self
+      when SelfType
         arg_type && arg_type.is_restriction_of?(owner, owner) && owner
       when NewGenericClass
         arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, free_vars) && arg_type
@@ -713,10 +692,6 @@ module Crystal
       "Union"
     end
 
-    def is_restriction_of?(type, owner)
-      types.any? { |sub| sub.is_restriction_of?(type, owner) }
-    end
-
     def restrict(type, owner)
       program.union_of(*types.select { |sub| sub.is_restriction_of?(type, owner) })
     end
@@ -936,37 +911,6 @@ module Crystal
     end
   end
 
-  class SelfType
-    def self.is_restriction_of?(type, owner)
-      owner.is_restriction_of?(type, owner)
-    end
-
-    def self.to_s
-      "self"
-    end
-
-    def self.parents
-      []
-    end
-  end
-
-  class TypeVarType
-    attr_accessor :name
-
-    def initialize(name)
-      @name = name
-    end
-
-    def is_restriction_of?(type, owner)
-      @type_var = owner.type_vars[name]
-      @type_var.type.is_restriction_of?(type, owner)
-    end
-
-    def to_s
-      @type_var ? @type_var.type.to_s : name
-    end
-  end
-
   class HierarchyType
     attr_accessor :base_type
 
@@ -976,10 +920,6 @@ module Crystal
 
     def ==(other)
       other.is_a?(HierarchyType) && base_type == other.base_type
-    end
-
-    def is_restriction_of?(type, owner)
-      type.is_subclass_of?(self.base_type) || self.base_type.is_subclass_of?(type)
     end
 
     def restrict(type, owner)

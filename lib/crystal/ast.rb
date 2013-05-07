@@ -1,5 +1,6 @@
 require_relative 'core_ext/module'
 require_relative 'core_ext/string'
+require 'singleton'
 
 module Crystal
   class Visitor
@@ -534,12 +535,12 @@ module Crystal
       @default_value = default_value
       @default_value.parent = self if @default_value
       @type_restriction = type_restriction
-      @type_restriction.parent = self if @type_restriction && @type_restriction != :self && !@type_restriction.is_a?(Type)
+      @type_restriction.parent = self if @type_restriction && !@type_restriction.is_a?(Type)
     end
 
     def accept_children(visitor)
       default_value.accept visitor if default_value
-      type_restriction.accept visitor if type_restriction && type_restriction != :self && !type_restriction.is_a?(Type)
+      type_restriction.accept visitor if type_restriction && !type_restriction.is_a?(Type)
     end
 
     def ==(other)
@@ -549,11 +550,7 @@ module Crystal
     def clone_from(other)
       @name = other.name
       @default_value = other.default_value.clone
-      if other.type_restriction == :self
-        @type_restriction = :self
-      else
-        @type_restriction = other.type_restriction.clone
-      end
+      @type_restriction = other.type_restriction.clone
       @out = other.out
     end
   end
@@ -598,6 +595,14 @@ module Crystal
 
     def clone_from(other)
       @idents = other.idents.map(&:clone)
+    end
+  end
+
+  class SelfType < ASTNode
+    include Singleton
+
+    def clone
+      self
     end
   end
 

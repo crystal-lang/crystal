@@ -290,14 +290,10 @@ module Crystal
       end
       if node.type_restriction
         @str << ' : '
-        if node.type_restriction == :self
-          @str << 'self'
+        if node.type_restriction.is_a?(ASTNode)
+          node.type_restriction.accept self
         else
-          if node.type_restriction.is_a?(ASTNode)
-            node.type_restriction.accept self
-          else
-            @str << node.type_restriction.to_s
-          end
+          @str << node.type_restriction.to_s
         end
       end
       false
@@ -316,6 +312,10 @@ module Crystal
         ident.accept self
       end
       false
+    end
+
+    def visit_self_type(node)
+      @str << "self"
     end
 
     def visit_instance_var(node)
