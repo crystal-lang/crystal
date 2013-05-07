@@ -381,4 +381,44 @@ describe 'Type inference: def overload' do
       a.foo
     )) { union_of(int, char) }
   end
+
+  it "filter union type with hierarchy" do
+    assert_type(%q(
+      class Foo
+      end
+
+      class Bar < Foo
+        def bar
+          1
+        end
+      end
+
+      def foo(x : Bar)
+        x.bar
+      end
+
+      def foo(x)
+        1.1
+      end
+
+      foo(nil || Foo.new || Bar.new)
+    )) { union_of(int, double) }
+  end
+
+  it "restrict hierarchy type with hierarchy type" do
+    assert_type(%q(
+      def foo(x : T, y : T)
+        1
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      x = Foo.new || Bar.new
+      foo(x, x)
+    )) { int }
+  end
 end

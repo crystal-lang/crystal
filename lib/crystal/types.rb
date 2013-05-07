@@ -62,7 +62,8 @@ module Crystal
       ((other.nil? || equal?(other)) && self) ||
       (other.is_a?(UnionType) && program.union_of(*other.types.each { |union_type| self.restrict(union_type, owner) })) ||
       (generic && container.equal?(other.container) && name == other.name && !other.type_vars.values.any?(&:type) && self) ||
-      (parents.first && parents.first.is_restriction_of?(other, owner) && self)
+      (parents.first && parents.first.is_restriction_of?(other, owner) && self) ||
+      nil
     end
 
     def is_subclass_of?(type)
@@ -160,7 +161,7 @@ module Crystal
       when Ident
         type = free_vars[restriction.names] || owner.lookup_type(restriction.names)
         if type
-          arg_type && arg_type.is_restriction_of?(type, owner) && arg_type.restrict(type, owner)
+          arg_type && arg_type.restrict(type, owner)
         else
           free_vars[restriction.names] = arg_type
         end
@@ -693,7 +694,7 @@ module Crystal
     end
 
     def restrict(type, owner)
-      program.union_of(*types.select { |sub| sub.is_restriction_of?(type, owner) })
+      program.union_of(*types.map { |sub| sub.restrict(type, owner) }.compact.uniq)
     end
 
     def to_s
@@ -923,13 +924,21 @@ module Crystal
     end
 
     def restrict(type, owner)
-      if type.is_subclass_of?(self.base_type)
+      if equal?(type)
+        self
+      elsif type.is_a?(UnionType)
+        program.union_of *type.types.each { |t| self.restrict(t, owner) }
+      elsif type.is_subclass_of?(self.base_type)
         type.hierarchy_type
       elsif self.base_type.is_subclass_of?(type)
         self
       else
         nil
       end
+    end
+
+    def filter_by(type)
+      restrict(type, nil)
     end
 
     def each(&block)
