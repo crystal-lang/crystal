@@ -176,4 +176,31 @@ describe 'Type inference: errors' do
       parse %Q(a += 1)
     }.should raise_error(Crystal::SyntaxException, regex("'+=' before definition of 'a'"))
   end
+
+  it "reports no overload matches" do
+    nodes = parse %(
+      def foo(x : Int)
+      end
+
+      foo 1 || 1.5
+      )
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("no overload matches"))
+  end
+
+  it "reports no overload matches 2" do
+    nodes = parse %(
+      def foo(x : Int, y : Int)
+      end
+
+      def foo(x : Int, y : Double)
+      end
+
+      foo(1 || 'a', 1 || 1.5)
+      )
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("no overload matches"))
+  end
 end

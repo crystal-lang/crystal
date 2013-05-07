@@ -60,7 +60,7 @@ module Crystal
 
     def restrict(other, owner)
       ((other.nil? || equal?(other)) && self) ||
-      (other.is_a?(UnionType) && program.union_of(*other.types.each { |union_type| self.restrict(union_type, owner) })) ||
+      (other.is_a?(UnionType) && other.types.any? { |union_type| self.is_restriction_of?(union_type, owner) } && self) ||
       (generic && container.equal?(other.container) && name == other.name && !other.type_vars.values.any?(&:type) && self) ||
       (parents.first && parents.first.is_restriction_of?(other, owner) && self) ||
       nil
@@ -196,10 +196,31 @@ module Crystal
           if match
             match.def = a_def
             matches.push match
-            break if match.arg_types == arg_types
+            return matches if match.arg_types == arg_types
           end
         end
-        return matches if matches.any?
+
+        unless matches.empty?
+          cover = Array.new(arg_types.inject(1) { |num, type| num * (type.is_a?(UnionType) ? type.types.length : 1) })
+
+          cover_arg_types = arg_types.map do |type|
+            if type.is_a?(UnionType)
+              type.types.map { |t| t.is_a?(HierarchyType) ? t.base_type : t }
+            elsif type.is_a?(HierarchyType)
+              type.base_type
+            else
+              type
+            end
+          end
+
+          matches.each do |match|
+            mark_cover(cover, cover_arg_types, match)
+          end
+
+          if cover.all?
+            return matches
+          end
+        end
       end
 
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
@@ -210,6 +231,31 @@ module Crystal
       end
 
       nil
+    end
+
+    def mark_cover(cover, arg_types, match, index = 0, position = 0, multiplier = 1)
+      if index == arg_types.length
+        cover[position] = true
+        return
+      end
+
+      arg_type = arg_types[index]
+      match_arg_type = match.arg_types[index]
+
+      match_arg_type.each do |match_arg_type2|
+        if arg_type.is_a?(Array)
+          offset = arg_type.index(match_arg_type2)
+          next unless offset
+          new_multiplier = multiplier * arg_type.length
+        elsif arg_type.equal?(match_arg_type2)
+          offset = 0
+          new_multiplier = multiplier
+        else
+          next
+        end
+
+        mark_cover cover, arg_types, match, index + 1, position + offset * multiplier, new_multiplier
+      end
     end
 
     def lookup_first_def(name)
