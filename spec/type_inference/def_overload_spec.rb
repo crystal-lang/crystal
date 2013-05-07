@@ -325,4 +325,20 @@ describe 'Type inference: def overload' do
       foo(Foo.new || Bar.new)
     )) { int }
   end
+
+  it "compare self type with others" do
+    assert_type(%q(
+      class Foo
+        def foo(x : Int)
+          1.1
+        end
+
+        def foo(x : self)
+          1
+        end
+      end
+
+      x = Foo.new.foo(Foo.new)
+    )) { int }
+  end
 end

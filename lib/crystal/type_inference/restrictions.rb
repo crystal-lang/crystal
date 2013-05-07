@@ -57,7 +57,7 @@ module Crystal
   end
 
   class SelfType
-    def self.is_restriction_of?(type, owner)
+    def is_restriction_of?(type, owner)
       owner.is_restriction_of?(type, owner)
     end
   end
