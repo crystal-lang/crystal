@@ -156,7 +156,7 @@ module Crystal
       when nil
         arg_type
       when SelfType
-        arg_type && arg_type.is_restriction_of?(owner, owner) && owner
+        arg_type && arg_type.is_restriction_of?(owner, owner) && arg_type
       when NewGenericClass
         arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, free_vars) && arg_type
       when Ident
