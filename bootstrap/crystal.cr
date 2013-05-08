@@ -17,7 +17,7 @@ parser = Parser.new(str)
 parser.filename = filename
 nodes = parser.parse
 mod = infer_type nodes
-llvm_mod = build nodes, mod
-llvm_mod.write_bitcode bitcode_filename
+# llvm_mod = build nodes, mod
+# llvm_mod.write_bitcode bitcode_filename
 
-system "llc #{bitcode_filename} -o - | clang -x assembler -o #{output_filename} -"
+# system "llc #{bitcode_filename} -o - | clang -x assembler -o #{output_filename} -"

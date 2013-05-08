@@ -4,6 +4,10 @@ module Crystal
       type1
     end
 
+    def llvm_type
+      LLVM::Void
+    end
+
     def to_s
       name
     end

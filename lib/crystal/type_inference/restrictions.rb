@@ -55,6 +55,15 @@ module Crystal
         generic && container.equal?(type.container) && name == type.name && type.type_vars.values.map(&:type).compact.length == 0 ||
         parents.any? { |parent| parent.is_restriction_of?(type, owner) }
     end
+
+    def restrict(other, owner)
+      ((other.nil? || equal?(other)) && self) ||
+      (other.is_a?(UnionType) && other.types.any? { |union_type| self.is_restriction_of?(union_type, owner) } && self) ||
+      (other.is_a?(HierarchyType) && self.is_subclass_of?(other) && self) ||
+      (generic && container.equal?(other.container) && name == other.name && !other.type_vars.values.any?(&:type) && self) ||
+      (parents.first && parents.first.is_restriction_of?(other, owner) && self) ||
+      nil
+    end
   end
 
   class SelfType
@@ -67,13 +76,36 @@ module Crystal
     def is_restriction_of?(type, owner)
       types.any? { |sub| sub.is_restriction_of?(type, owner) }
     end
-  end
 
-  class HierarchyType
-    def is_restriction_of?(type, owner)
-      type.is_subclass_of?(self.base_type) || self.base_type.is_subclass_of?(type)
+    def restrict(type, owner)
+      program.type_merge(*types.map { |sub| sub.restrict(type, owner) })
     end
   end
 
+  class HierarchyType
+    def is_restriction_of?(other, owner)
+      other.is_subclass_of?(self.base_type) || self.base_type.is_subclass_of?(other)
+    end
 
+    def restrict(other, owner)
+      if equal?(other)
+        self
+      elsif other.is_a?(UnionType)
+        program.union_of *other.types.each { |t| self.restrict(t, owner) }
+      elsif other.is_a?(HierarchyType)
+        result = base_type.restrict(other.base_type, owner) || other.base_type.restrict(base_type, owner)
+        result ? result.hierarchy_type : nil
+      elsif other.is_subclass_of?(self.base_type)
+        other.hierarchy_type
+      elsif self.base_type.is_subclass_of?(other)
+        self
+      else
+        nil
+      end
+    end
+
+    def is_subclass_of?(other)
+      binding.pry
+    end
+  end
 end
