@@ -51,6 +51,7 @@ module Crystal
     def is_restriction_of?(type, owner)
       type.nil? || equal?(type) ||
         type.is_a?(UnionType) && type.types.any? { |union_type| self.is_restriction_of?(union_type, owner) } ||
+        type.is_a?(HierarchyType) && self.is_subclass_of?(type.base_type) ||
         generic && container.equal?(type.container) && name == type.name && type.type_vars.values.map(&:type).compact.length == 0 ||
         parents.any? { |parent| parent.is_restriction_of?(type, owner) }
     end

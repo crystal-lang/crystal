@@ -61,6 +61,7 @@ module Crystal
     def restrict(other, owner)
       ((other.nil? || equal?(other)) && self) ||
       (other.is_a?(UnionType) && other.types.any? { |union_type| self.is_restriction_of?(union_type, owner) } && self) ||
+      (other.is_a?(HierarchyType) && self.is_subclass_of?(other) && self) ||
       (generic && container.equal?(other.container) && name == other.name && !other.type_vars.values.any?(&:type) && self) ||
       (parents.first && parents.first.is_restriction_of?(other, owner) && self) ||
       nil
@@ -704,7 +705,7 @@ module Crystal
     end
 
     def restrict(type, owner)
-      program.union_of(*types.map { |sub| sub.restrict(type, owner) }.compact.uniq)
+      program.type_merge(*types.map { |sub| sub.restrict(type, owner) })
     end
 
     def to_s
