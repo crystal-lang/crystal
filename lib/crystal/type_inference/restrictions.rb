@@ -91,7 +91,7 @@ module Crystal
       if equal?(other)
         self
       elsif other.is_a?(UnionType)
-        program.union_of *other.types.each { |t| self.restrict(t, owner) }
+        program.type_merge *other.types.map { |t| self.restrict(t, owner) }
       elsif other.is_a?(HierarchyType)
         result = base_type.restrict(other.base_type, owner) || other.base_type.restrict(base_type, owner)
         result ? result.hierarchy_type : nil

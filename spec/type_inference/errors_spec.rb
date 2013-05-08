@@ -203,4 +203,22 @@ describe 'Type inference: errors' do
       infer_type nodes
     }.should raise_error(Crystal::Exception, regex("no overload matches"))
   end
+
+  it "reports no matches for hierarchy type" do
+    nodes = parse %(
+      class Foo
+      end
+
+      class Bar < Foo
+        def foo
+        end
+      end
+
+      x = Foo.new || Bar.new
+      x.foo
+    )
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("undefined method 'foo'"))
+  end
 end

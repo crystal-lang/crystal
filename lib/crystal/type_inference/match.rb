@@ -1,5 +1,6 @@
 class Match
   attr_accessor :def
+  attr_accessor :owner
   attr_accessor :arg_types
   attr_accessor :free_vars
 

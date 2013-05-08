@@ -100,7 +100,19 @@ module Crystal
     end
   end
 
+  module DefInstanceContainer
+    def add_def_instance(name, arg_types, typed_def)
+      @def_instances[[name] + arg_types.map(&:object_id)] = typed_def
+    end
+
+    def lookup_def_instance(name, arg_types)
+      @def_instances[[name] + arg_types.map(&:object_id)]
+    end
+  end
+
   module DefContainer
+    include DefInstanceContainer
+
     def add_def(a_def)
       a_def.owner = self if a_def.respond_to?(:owner=)
       restrictions = a_def.args.map(&:type_restriction)
@@ -178,7 +190,7 @@ module Crystal
       true
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self)
+    def lookup_matches_without_parents(name, arg_types, yields, owner = self)
       if @sorted_defs && @sorted_defs.has_key?([name, arg_types.length, yields])
         defs = @sorted_defs[[name, arg_types.length, yields]]
         matches = []
@@ -187,6 +199,7 @@ module Crystal
           match = match_def_args(arg_types, def_restrictions, owner)
           if match
             match.def = a_def
+            match.owner = owner
             matches.push match
             return matches if match.arg_types == arg_types
           end
@@ -214,6 +227,13 @@ module Crystal
           end
         end
       end
+
+      nil
+    end
+
+    def lookup_matches(name, arg_types, yields, owner = self)
+      matches = lookup_matches_without_parents(name, arg_types, yields, owner)
+      return matches if matches
 
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
@@ -261,14 +281,6 @@ module Crystal
     def lookup_defs(name)
       defs = @defs[name]
       defs && defs.values
-    end
-
-    def add_def_instance(name, arg_types, typed_def)
-      @def_instances[[name] + arg_types.map(&:object_id)] = typed_def
-    end
-
-    def lookup_def_instance(name, arg_types)
-      @def_instances[[name] + arg_types.map(&:object_id)]
     end
 
     def add_macro(a_def)
@@ -673,7 +685,7 @@ module Crystal
     end
 
     def each(&block)
-      types.each {|t| t.each(&block) }
+      types.each(&block)
     end
 
     def hash
@@ -910,11 +922,47 @@ module Crystal
     end
   end
 
-  class HierarchyType
+  class HierarchyType < Type
+    include DefInstanceContainer
+
     attr_accessor :base_type
 
     def initialize(base_type)
       @base_type = base_type
+      @def_instances = {}
+    end
+
+    def lookup_matches(name, arg_types, yields)
+      matches = []
+      base_type_matches = base_type.lookup_matches(name, arg_types, yields, self)
+      return nil unless base_type_matches
+
+      matches.concat base_type_matches
+      each_subtype(base_type) do |subtype|
+        subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type)
+        matches.concat subtype_matches if subtype_matches
+      end
+      matches.length > 0 ? matches : nil
+    end
+
+    def lookup_first_def(name)
+      base_type.lookup_first_def(name)
+    end
+
+    def lookup_defs(name)
+      base_type.lookup_defs(name)
+    end
+
+    def lookup_instance_var(name)
+      base_type.lookup_instance_var(name)
+    end
+
+    def lookup_macro(name, args_length)
+      base_type.lookup_macro(name, args_length)
+    end
+
+    def lookup_type(names)
+      base_type.lookup_type(names)
     end
 
     def ==(other)
@@ -931,9 +979,17 @@ module Crystal
 
     def each2(type, &block)
       block.call type
+      each_subtype(type, &block)
+    end
+
+    def each_subtype(type, &block)
       type.subclasses.each do |subclass|
         each2 subclass, &block
       end
+    end
+
+    def metaclass
+      base_type.metaclass
     end
 
     def program
