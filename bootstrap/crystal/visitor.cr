@@ -3,9 +3,9 @@ module Crystal
     def visit_any(node)
     end
 
-    def visit(node)
-      true
-    end
+    # def visit(node)
+    #   true
+    # end
 
     def end_visit(node)
     end

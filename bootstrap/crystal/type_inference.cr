@@ -20,6 +20,9 @@ module Crystal
       @vars = vars
     end
 
+    def visit(node : ASTNode)
+    end
+
     def visit(node : BoolLiteral)
       node.type = mod.bool
     end

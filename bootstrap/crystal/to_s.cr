@@ -15,6 +15,9 @@ module Crystal
       @indent = 0
     end
 
+    def visit(node : ASTNode)
+    end
+
     def visit(node : BoolLiteral)
       @str << (node.value ? "true" : "false")
     end
