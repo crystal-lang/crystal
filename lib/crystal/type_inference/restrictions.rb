@@ -105,7 +105,7 @@ module Crystal
     end
 
     def is_subclass_of?(other)
-      binding.pry
+      base_type.is_subclass_of?(other)
     end
   end
 end
