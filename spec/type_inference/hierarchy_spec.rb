@@ -155,4 +155,23 @@ describe 'Type inference: hierarchy' do
       ))
     infer_type nodes
   end
+
+  it "doesn't check cover for subclasses" do
+    assert_type(%(
+      class Foo
+        def foo(other)
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo(other : Bar)
+          1.5
+        end
+      end
+
+      f = Foo.new || Bar.new
+      x = f.foo(f)
+      )) { union_of(int, double) }
+  end
 end

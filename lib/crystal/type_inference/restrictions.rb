@@ -52,7 +52,7 @@ module Crystal
       type.nil? || equal?(type) ||
         type.is_a?(UnionType) && type.types.any? { |union_type| self.is_restriction_of?(union_type, owner) } ||
         type.is_a?(HierarchyType) && self.is_subclass_of?(type.base_type) ||
-        generic && container.equal?(type.container) && name == type.name && type.type_vars.values.map(&:type).compact.length == 0 ||
+        generic && type.generic && container.equal?(type.container) && name == type.name && type.type_vars.values.map(&:type).compact.length == 0 ||
         parents.any? { |parent| parent.is_restriction_of?(type, owner) }
     end
 
@@ -60,7 +60,7 @@ module Crystal
       ((other.nil? || equal?(other)) && self) ||
       (other.is_a?(UnionType) && other.types.any? { |union_type| self.is_restriction_of?(union_type, owner) } && self) ||
       (other.is_a?(HierarchyType) && self.is_subclass_of?(other.base_type) && self) ||
-      (generic && container.equal?(other.container) && name == other.name && !other.type_vars.values.any?(&:type) && self) ||
+      (generic && other.generic && container.equal?(other.container) && name == other.name && !other.type_vars.values.any?(&:type) && self) ||
       (parents.first && parents.first.is_restriction_of?(other, owner) && self) ||
       nil
     end
@@ -84,7 +84,8 @@ module Crystal
 
   class HierarchyType
     def is_restriction_of?(other, owner)
-      other.is_subclass_of?(self.base_type) || self.base_type.is_subclass_of?(other)
+      other = other.base_type if other.is_a?(HierarchyType)
+      self.base_type.is_subclass_of?(other)
     end
 
     def restrict(other, owner)

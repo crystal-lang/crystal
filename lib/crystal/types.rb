@@ -190,7 +190,7 @@ module Crystal
       true
     end
 
-    def lookup_matches_without_parents(name, arg_types, yields, owner = self)
+    def lookup_matches_without_parents(name, arg_types, yields, owner = self, check_cover = true)
       if @sorted_defs && @sorted_defs.has_key?([name, arg_types.length, yields])
         defs = @sorted_defs[[name, arg_types.length, yields]]
         matches = []
@@ -205,24 +205,28 @@ module Crystal
           end
         end
 
-        unless matches.empty?
-          cover = Array.new(arg_types.inject(1) { |num, type| num * (type.is_a?(UnionType) ? type.types.length : 1) })
+        if matches.length > 0
+          if check_cover
+            cover = Array.new(arg_types.inject(1) { |num, type| num * (type.is_a?(UnionType) ? type.types.length : 1) })
 
-          cover_arg_types = arg_types.map do |type|
-            if type.is_a?(UnionType)
-              type.types.map { |t| t.is_a?(HierarchyType) ? t.base_type : t }
-            elsif type.is_a?(HierarchyType)
-              type.base_type
-            else
-              type
+            cover_arg_types = arg_types.map do |type|
+              if type.is_a?(UnionType)
+                type.types.map { |t| t.is_a?(HierarchyType) ? t.base_type : t }
+              elsif type.is_a?(HierarchyType)
+                type.base_type
+              else
+                type
+              end
             end
-          end
 
-          matches.each do |match|
-            mark_cover(cover, cover_arg_types, match)
-          end
+            matches.each do |match|
+              mark_cover(cover, cover_arg_types, match)
+            end
 
-          if cover.all?
+            if cover.all?
+              return matches
+            end
+          else
             return matches
           end
         end
@@ -237,7 +241,13 @@ module Crystal
 
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
-          matches = parent.lookup_matches(name, arg_types, yields, owner)
+          if parent.is_a?(ObjectType)
+            matches = parent.hierarchy_type.lookup_matches(name, arg_types, yields, parent.hierarchy_type)
+            matches = matches.select { |match| owner.is_restriction_of?(match.owner, owner) } if matches
+            matches
+          else
+            matches = parent.lookup_matches(name, arg_types, yields, owner)
+          end
           return matches if matches && matches.any?
         end
       end
@@ -932,14 +942,14 @@ module Crystal
       @def_instances = {}
     end
 
-    def lookup_matches(name, arg_types, yields)
+    def lookup_matches(name, arg_types, yields, owner = self)
       matches = []
       base_type_matches = base_type.lookup_matches(name, arg_types, yields, self)
       return nil unless base_type_matches
 
       matches.concat base_type_matches
       each_subtype(base_type) do |subtype|
-        subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type)
+        subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type, false)
         matches.concat subtype_matches if subtype_matches
       end
       matches.length > 0 ? matches : nil
