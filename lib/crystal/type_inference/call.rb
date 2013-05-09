@@ -91,7 +91,7 @@ module Crystal
         unless typed_def
           # puts "#{owner}##{name}(#{arg_types.join ', '})"
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, owner, match.owner, match.arg_types)
-          self_type.add_def_instance(match.def.object_id, match.arg_types, typed_def) unless block
+          match.owner.add_def_instance(match.def.object_id, match.arg_types, typed_def) unless block
           if typed_def.body
             bubbling_exception do
               visitor = TypeVisitor.new(@mod, typed_def_args, match.owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars)
