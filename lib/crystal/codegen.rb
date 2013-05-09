@@ -1102,9 +1102,9 @@ module Crystal
       node.obj.accept(self)
       old_block = @builder.insert_block
 
-      unreachable_block, exit_block = new_blocks "unreachable", "exit"
-      index = @builder.load union_index(@last)
-      switch_table = {}
+      exit_block = new_block "exit"
+
+      obj_type_id = @builder.load union_index(@last)
       phi_table = {}
       call = Call.new(Var.new("%self"), node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") })
 
@@ -1114,12 +1114,25 @@ module Crystal
         @vars['%self'] = { ptr: @last, type: node.obj.type, treated_as_pointer: true }
       end
 
-      node.target_defs.each do |a_def|
-        type_id = a_def.owner.type_id
-        label = new_block "type_#{type_id}"
-        switch_table[int(type_id)] = label
+      arg_type_ids = []
+      node.args.each_with_index do |arg, i|
+        arg.accept self
+        arg_type_ids[i] = @builder.load union_index(@last)
+        @vars["%arg#{i}"] = { ptr: @last, type: arg.type, treated_as_pointer: true }
+      end
 
-        @builder.position_at_end label
+      next_def_label = nil
+      node.target_defs.each do |a_def|
+        current_obj_type_id = a_def.owner.type_id
+        result = @builder.icmp :eq, int(current_obj_type_id), obj_type_id
+        a_def.args.each_with_index do |arg, i|
+          result = @builder.and(result, @builder.icmp(:eq, int(arg.type.type_id), arg_type_ids[i]))
+        end
+
+        current_def_label, next_def_label = new_blocks "current_def", "next_def"
+        @builder.cond result, current_def_label, next_def_label
+
+        @builder.position_at_end current_def_label
         call.obj.set_type a_def.owner
         call.target_defs = [a_def]
         call.args.each_with_index do |arg, i|
@@ -1127,18 +1140,37 @@ module Crystal
         end
         call.accept self
 
-        phi_table[@builder.insert_block] = @last
+        # phi_table[@builder.insert_block] = @last
+
+        unless call.returns?
+          if node.type.union?
+            phi_value = alloca node.llvm_type
+            assign_to_union(phi_value, node.type, a_def.type, @last)
+            phi_table[@builder.insert_block] = phi_value
+          elsif node.type.nilable? && @last.type.kind == :integer
+            phi_table[@builder.insert_block] = @builder.int2ptr @last, node.llvm_type
+          else
+            phi_table[@builder.insert_block] = @last
+          end
+        end
+
         @builder.br exit_block
+
+        @builder.position_at_end next_def_label
       end
 
-      @builder.position_at_end unreachable_block
       @builder.unreachable
 
-      @builder.position_at_end old_block
-      @builder.switch index, unreachable_block, switch_table
-
       @builder.position_at_end exit_block
-      @last = @builder.phi node.llvm_type, phi_table
+      if node.returns?
+        @builder.unreachable
+      else
+        if node.type.union?
+          @last = @builder.phi LLVM::Pointer(node.llvm_type), phi_table
+        else
+          @last = @builder.phi node.llvm_type, phi_table
+        end
+      end
 
       @vars = old_vars
     end
@@ -1336,7 +1368,7 @@ module Crystal
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.nilable_type.llvm_type)
         @builder.store value, casted_value_ptr
       else
-        index = union_type.index_of_type(type)
+        index = type.type_id
         @builder.store int(index), index_ptr
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_type)

@@ -1,8 +1,7 @@
 module Crystal
-  @@type_id = 0
-
   class Type
     include Enumerable
+    @@type_id = 0
 
     def metaclass
       @metaclass ||= Metaclass.new(self)
@@ -692,9 +691,9 @@ module Crystal
       @llvm_value_size ||= @types.map(&:llvm_size).max
     end
 
-    def index_of_type(type)
-      @types.index type
-    end
+    # def index_of_type(type)
+    #   @types.index type
+    # end
 
     def parents
       []
