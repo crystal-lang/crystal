@@ -1104,7 +1104,7 @@ module Crystal
 
       exit_block = new_block "exit"
 
-      obj_type_id = @builder.load union_index(@last)
+      obj_type_id = @builder.load union_index(@last) if node.obj.type.union?
       phi_table = {}
       call = Call.new(Var.new("%self"), node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") })
 
@@ -1117,15 +1117,20 @@ module Crystal
       arg_type_ids = []
       node.args.each_with_index do |arg, i|
         arg.accept self
-        arg_type_ids[i] = @builder.load union_index(@last)
+        arg_type_ids[i] = @builder.load union_index(@last) if arg.type.union?
         @vars["%arg#{i}"] = { ptr: @last, type: arg.type, treated_as_pointer: true }
       end
 
       next_def_label = nil
       node.target_defs.each do |a_def|
         current_obj_type_id = a_def.owner.type_id
-        result = @builder.icmp :eq, int(current_obj_type_id), obj_type_id
+        if node.obj.type.union?
+          result = @builder.icmp :eq, int(current_obj_type_id), obj_type_id
+        else
+          result = int1(1)
+        end
         a_def.args.each_with_index do |arg, i|
+          next unless node.args[i].type.union?
           result = @builder.and(result, @builder.icmp(:eq, int(arg.type.type_id), arg_type_ids[i]))
         end
 
