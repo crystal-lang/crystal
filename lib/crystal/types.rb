@@ -1,4 +1,6 @@
 module Crystal
+  @@type_id = 0
+
   class Type
     include Enumerable
 
@@ -75,6 +77,10 @@ module Crystal
     def self.clone(types)
       types_context = {}
       types.map { |type| type.clone(types_context) }
+    end
+
+    def type_id
+      @type_id ||= (@@type_id += 1)
     end
   end
 

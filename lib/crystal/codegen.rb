@@ -820,10 +820,10 @@ module Crystal
         return false
       end
 
-      # if node.target_def.is_a?(Dispatch)
-      #   codegen_dispatch(node)
-      #   return false
-      # end
+      if node.target_defs.length > 1
+        codegen_dispatch(node)
+        return false
+      end
 
       declare_out_arguments node
 
@@ -1099,6 +1099,51 @@ module Crystal
     end
 
     def codegen_dispatch(node)
+      node.obj.accept(self)
+      old_block = @builder.insert_block
+
+      unreachable_block, exit_block = new_blocks "unreachable", "exit"
+      index = @builder.load union_index(@last)
+      switch_table = {}
+      phi_table = {}
+      call = Call.new(Var.new("%self"), node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") })
+
+      old_vars = @vars
+      @vars = old_vars.clone
+      if node.obj && node.obj.type.passed_as_self?
+        @vars['%self'] = { ptr: @last, type: node.obj.type, treated_as_pointer: true }
+      end
+
+      node.target_defs.each do |a_def|
+        type_id = a_def.owner.type_id
+        label = new_block "type_#{type_id}"
+        switch_table[int(type_id)] = label
+
+        @builder.position_at_end label
+        call.obj.set_type a_def.owner
+        call.target_defs = [a_def]
+        call.args.each_with_index do |arg, i|
+          arg.set_type a_def.args[i].type
+        end
+        call.accept self
+
+        phi_table[@builder.insert_block] = @last
+        @builder.br exit_block
+      end
+
+      @builder.position_at_end unreachable_block
+      @builder.unreachable
+
+      @builder.position_at_end old_block
+      @builder.switch index, unreachable_block, switch_table
+
+      @builder.position_at_end exit_block
+      @last = @builder.phi node.llvm_type, phi_table
+
+      @vars = old_vars
+    end
+
+    def codegen_dispatch_old(node)
       dispatch = node.target_def
 
       unreachable_block, exit_block = new_blocks "unreachable", "exit"
