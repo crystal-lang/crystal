@@ -1346,27 +1346,12 @@ module Crystal
         value_index = @builder.load value_index_ptr
         value_value = @builder.load value_value_ptr
 
-        unless union_map = @union_maps[[type, union_type]]
-          union_map = @llvm_mod.globals.add(LLVM::Array(LLVM::Int, type.types.count), "union_map")
-          union_map.linkage = :private
-          union_map.global_constant = 1
-          union_map_values = type.types.map.with_index do |value_type, value_type_index|
-            int(union_type.index_of_type(value_type))
-          end
-          union_map.initializer = LLVM::ConstantArray.const(LLVM::Int, union_map_values)
-          @union_maps[[type, union_type]] = union_map
-        end
-
-        index = @builder.load(@builder.gep(union_map, [int(0), value_index]))
-        @builder.store int(index), index_ptr
+        @builder.store value_index, index_ptr
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_value_type)
         @builder.store value_value, casted_value_ptr
       elsif type.nilable?
-        nil_index = union_type.types.index { |t| t.equal?(@mod.nil) }
-        not_nil_index = union_type.types.index { |t| t.equal?(type.nilable_type) }
-
-        index = @builder.select null_pointer?(value), int(nil_index), int(not_nil_index)
+        index = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.nilable_type.type_id)
 
         @builder.store index, index_ptr
 
