@@ -691,10 +691,6 @@ module Crystal
       @llvm_value_size ||= @types.map(&:llvm_size).max
     end
 
-    # def index_of_type(type)
-    #   @types.index type
-    # end
-
     def parents
       []
     end
