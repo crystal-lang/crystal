@@ -96,19 +96,13 @@ module Crystal
 
   class Call
     def returns?
-      block && block.returns? &&
-      ((#target_def.is_a?(Dispatch) &&
-        target_def.calls.values.all?(&:returns?)) || (target_def.body && target_def.body.yields?))
+      block && block.returns? && target_defs.all? { |t| t.body && t.body.yields? }
     end
 
     def yields?
       return true if args.any?(&:yields?)
       if block && block.yields?
-        # if target_def.is_a?(Dispatch)
-        #   target_def.calls.values.any?(&:yields?)
-        # else
-          target_def.body && target_def.body.yields?
-        # end
+        target_defs.any? { |t| t.body.yields? }
       end
     end
   end
