@@ -1099,12 +1099,12 @@ module Crystal
     end
 
     def codegen_dispatch(node)
-      node.obj.accept(self)
+      node.obj.accept(self) if node.obj
       old_block = @builder.insert_block
 
       exit_block = new_block "exit"
 
-      obj_type_id = @builder.load union_index(@last) if node.obj.type.union?
+      obj_type_id = @builder.load union_index(@last) if node.obj && node.obj.type.union?
       phi_table = {}
       call = Call.new(Var.new("%self"), node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") })
 
@@ -1124,7 +1124,7 @@ module Crystal
       next_def_label = nil
       node.target_defs.each do |a_def|
         current_obj_type_id = a_def.owner.type_id
-        if node.obj.type.union?
+        if node.obj && node.obj.type.union?
           result = @builder.icmp :eq, int(current_obj_type_id), obj_type_id
         else
           result = int1(1)
