@@ -1342,14 +1342,8 @@ module Crystal
       type_id_ptr, value_ptr = union_type_id_and_value(union_pointer)
 
       if type.union?
-        value_type_id_ptr, value_value_ptr = union_type_id_and_value(value)
-        value_index = @builder.load value_type_id_ptr
-        value_value = @builder.load value_value_ptr
-
-        @builder.store value_index, type_id_ptr
-
-        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_value_type)
-        @builder.store value_value, casted_value_ptr
+        casted_value = @builder.bit_cast(value, LLVM::Pointer(union_type.llvm_type))
+        @builder.store @builder.load(casted_value), union_pointer
       elsif type.nilable?
         index = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.nilable_type.type_id)
 
