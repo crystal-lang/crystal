@@ -498,6 +498,14 @@ module Crystal
       end
     end
 
+    def all_instance_vars_count
+      if superclass
+        superclass.all_instance_vars_count + @instance_vars.length
+      else
+        @instance_vars.length
+      end
+    end
+
     def ==(other)
       equal?(other) || (generic && (structurally_equal?(other) || (other.is_a?(UnionType) && other == self)))
     end
@@ -517,7 +525,7 @@ module Crystal
     def llvm_struct_type
       unless @llvm_struct_type
         @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = @instance_vars.values.map(&:llvm_type)
+        @llvm_struct_type.element_types = all_instance_vars.values.map(&:llvm_type)
       end
       @llvm_struct_type
     end
@@ -536,7 +544,21 @@ module Crystal
     end
 
     def index_of_instance_var(name)
-      @instance_vars.keys.index(name)
+      if superclass
+        index = superclass.index_of_instance_var(name)
+        if index
+          index
+        else
+          index = @instance_vars.keys.index(name)
+          if index
+            superclass.all_instance_vars_count + index
+          else
+            nil
+          end
+        end
+      else
+        @instance_vars.keys.index(name)
+      end
     end
 
     def clone(types_context = {})
