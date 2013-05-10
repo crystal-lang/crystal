@@ -820,12 +820,12 @@ module Crystal
         return false
       end
 
-      if node.target_defs.length > 1
+      if node.target_defs && node.target_defs.length > 1
         codegen_dispatch(node)
         return false
       end
 
-      declare_out_arguments node
+      declare_out_arguments(node) if node.target_defs
 
       owner = ((node.obj && node.obj.type) || node.scope)
       owner = nil unless owner.passed_as_self?
@@ -839,7 +839,7 @@ module Crystal
       end
 
       node.args.each_with_index do |arg, i|
-        if node.target_def && node.target_def.args[i] && node.target_def.args[i].out && arg.is_a?(Var)
+        if node.target_defs && node.target_def.args[i] && node.target_def.args[i].out && arg.is_a?(Var)
           call_args << @vars[arg.name][:ptr]
         else
           accept(arg)
