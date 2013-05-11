@@ -372,12 +372,19 @@ module Crystal
     end
 
     def visit_instance_var(node)
+      if @type.is_a?(HierarchyType)
+        ptr = @builder.extract_value llvm_self, 1
+        self_ptr = @builder.bit_cast ptr, @type.base_type.llvm_type
+      else
+        self_ptr = llvm_self
+      end
+
       ivar = @type.lookup_instance_var(node.name)
       if ivar.type.union?
-        @last = gep llvm_self, 0, @type.index_of_instance_var(node.name)
+        @last = gep self_ptr, 0, @type.index_of_instance_var(node.name)
       else
         index = @type.index_of_instance_var(node.name)
-        struct = @builder.load llvm_self
+        struct = @builder.load self_ptr
         @last = @builder.extract_value struct, index, node.name
       end
     end

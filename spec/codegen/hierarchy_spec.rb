@@ -95,6 +95,27 @@ describe 'Code gen: hierarchy type' do
       x = Baz.new
       x.foo
     )).to_i.should eq(2)
+  end
 
+  it "lookup instance variables in parent types" do
+    run(%q(
+      class Foo
+        def initialize
+          @x = 1
+        end
+        def foo
+          @x
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          @x + 1
+        end
+      end
+
+      a = Bar.new || Foo.new
+      a.foo
+    )).to_i.should eq(2)
   end
 end

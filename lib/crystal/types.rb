@@ -987,6 +987,10 @@ module Crystal
       base_type.lookup_instance_var(name)
     end
 
+    def index_of_instance_var(name)
+      base_type.index_of_instance_var(name)
+    end
+
     def lookup_macro(name, args_length)
       base_type.lookup_macro(name, args_length)
     end
