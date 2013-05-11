@@ -114,7 +114,7 @@ describe 'Code gen: union type' do
     )).to_string.should eq("")
   end
 
-  it "" do
+  it "dispatch call to object method on nilable" do
     run(%q(
       require "prelude"
       class Foo
