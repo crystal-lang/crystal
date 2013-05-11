@@ -1146,7 +1146,11 @@ module Crystal
       arg_type_ids = []
       node.args.each_with_index do |arg, i|
         arg.accept self
-        arg_type_ids[i] = @builder.load union_type_id(@last) if arg.type.union?
+        if arg.type.union?
+          arg_type_ids[i] = @builder.load union_type_id(@last)
+        elsif arg.type.nilable?
+          arg_type_ids[i] = @last
+        end
         new_vars["%arg#{i}"] = { ptr: @last, type: arg.type, treated_as_pointer: true }
       end
 
@@ -1168,9 +1172,16 @@ module Crystal
         end
 
         a_def.args.each_with_index do |arg, i|
-          next unless node.args[i].type.union?
-          comp = match_any_type_id(arg.type, arg_type_ids[i])
-          result = @builder.and(result, comp)
+          if node.args[i].type.union?
+            comp = match_any_type_id(arg.type, arg_type_ids[i])
+            result = @builder.and(result, comp)
+          elsif node.args[i].type.nilable?
+            if arg.type.equal?(@mod.nil)
+              result = @builder.and(result, null_pointer?(arg_type_ids[i]))
+            else
+              result = @builder.and(result, not_null_pointer?(arg_type_ids[i]))
+            end
+          end
         end
 
         current_def_label, next_def_label = new_blocks "current_def", "next_def"
