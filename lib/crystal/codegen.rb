@@ -1106,20 +1106,24 @@ module Crystal
 
       obj_type_id = @builder.load union_type_id(@last) if node.obj && node.obj.type.union?
       phi_table = {}
-      call = Call.new(Var.new("%self"), node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") })
+      call = Call.new(node.obj ? Var.new("%self") : nil, node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") }, node.block)
+      call.scope = node.scope
 
-      old_vars = @vars
-      @vars = old_vars.clone
+      new_vars = @vars.clone
+
       if node.obj && node.obj.type.passed_as_self?
-        @vars['%self'] = { ptr: @last, type: node.obj.type, treated_as_pointer: true }
+        new_vars['%self'] = { ptr: @last, type: node.obj.type, treated_as_pointer: true }
       end
 
       arg_type_ids = []
       node.args.each_with_index do |arg, i|
         arg.accept self
         arg_type_ids[i] = @builder.load union_type_id(@last) if arg.type.union?
-        @vars["%arg#{i}"] = { ptr: @last, type: arg.type, treated_as_pointer: true }
+        new_vars["%arg#{i}"] = { ptr: @last, type: arg.type, treated_as_pointer: true }
       end
+
+      old_vars = @vars
+      @vars = new_vars
 
       next_def_label = nil
       node.target_defs.each do |a_def|
@@ -1138,14 +1142,13 @@ module Crystal
         @builder.cond result, current_def_label, next_def_label
 
         @builder.position_at_end current_def_label
-        call.obj.set_type a_def.owner
+        call.obj.set_type a_def.owner if call.obj
         call.target_defs = [a_def]
         call.args.each_with_index do |arg, i|
           arg.set_type a_def.args[i].type
         end
+        call.set_type node.type
         call.accept self
-
-        # phi_table[@builder.insert_block] = @last
 
         unless call.returns?
           if node.type.union?
@@ -1160,7 +1163,6 @@ module Crystal
         end
 
         @builder.br exit_block
-
         @builder.position_at_end next_def_label
       end
 
