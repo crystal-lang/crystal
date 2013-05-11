@@ -9,13 +9,13 @@ describe "Type clone" do
   end
 
   it "clone object type" do
-    type = ObjectType.new("Foo").with_var("@foo", mod.int)
+    type = "Foo".object(foo: mod.int)
     type.clone.should eq(type)
   end
 
   it "clone recursive object type" do
-    type = ObjectType.new("Foo")
-    type.with_var("@foo", type)
+    type = "Foo".object
+    type.with_vars(foo: type)
     type_clone = type.clone
     type_clone.should eq(type)
     type_clone.lookup_instance_var("@foo").type.should be(type_clone)

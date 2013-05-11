@@ -11,14 +11,6 @@ module Crystal
       self
     end
 
-    def ==(other)
-      equal?(other)
-    end
-
-    def eql?(other)
-      self == other
-    end
-
     def each
       yield self
     end
@@ -424,20 +416,22 @@ module Crystal
     attr_accessor :instance_vars
     attr_accessor :depth
     attr_accessor :subclasses
-    attr_reader :hash
     @@id = 0
 
     def initialize(name, parent_type = nil, container = nil)
       super
       @instance_vars = {}
       @subclasses = []
-      @hash = name.hash
       if parent_type
         @depth = parent_type.depth + 1
         parent_type.subclasses.push self
       else
         @depth = 0
       end
+    end
+
+    def hash
+      full_name.hash
     end
 
     def metaclass
@@ -507,7 +501,11 @@ module Crystal
     end
 
     def ==(other)
-      equal?(other) || (generic && (structurally_equal?(other) || (other.is_a?(UnionType) && other == self)))
+      equal?(other) || structurally_equal?(other) || (other.is_a?(UnionType) && other == self)
+    end
+
+    def eql?(other)
+      self == other
     end
 
     def structurally_equal?(other)
@@ -593,10 +591,6 @@ module Crystal
 
     def ==(other)
       equal?(other) || (other.is_a?(PointerType) && type_vars == other.type_vars) || (other.is_a?(UnionType) && other == self)
-    end
-
-    def hash
-      1
     end
 
     def clone(types_context = {})
@@ -719,10 +713,6 @@ module Crystal
 
     def each(&block)
       types.each(&block)
-    end
-
-    def hash
-      @hash ||= set.hash
     end
 
     def ==(other)

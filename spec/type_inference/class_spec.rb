@@ -2,11 +2,11 @@ require 'spec_helper'
 
 describe 'Type inference: class' do
   it "types Const#allocate" do
-    assert_type("class Foo; end; Foo.allocate") { types['Foo'] }
+    assert_type("class Foo; end; Foo.allocate") { "Foo".object }
   end
 
   it "types Const#new" do
-    assert_type("class Foo; end; Foo.new") { types['Foo'] }
+    assert_type("class Foo; end; Foo.new") { "Foo".object }
   end
 
   it "types Const#new#method" do
@@ -14,7 +14,7 @@ describe 'Type inference: class' do
   end
 
   it "types class inside class" do
-    assert_type("class Foo; class Bar; end; end; Foo::Bar.allocate") { types['Foo'].types['Bar'] }
+    assert_type("class Foo; class Bar; end; end; Foo::Bar.allocate") { "Bar".object }
   end
 
   it "types instance variable" do
@@ -29,7 +29,7 @@ describe 'Type inference: class' do
       f.set
     )
     mod = infer_type input
-    input[1].type.should eq(ObjectType.new("Foo").of("T" => mod.int).with_var("@coco", mod.int))
+    input[1].type.should eq("Foo".generic("T" => mod.int).with_vars("@coco" => mod.int))
   end
 
   it "types instance variable" do
@@ -47,8 +47,8 @@ describe 'Type inference: class' do
       g.set 2.5
     )
     mod = infer_type input
-    input[1].type.should eq(ObjectType.new("Foo").of("T" => mod.int).with_var("@coco", mod.int))
-    input[3].type.should eq(ObjectType.new("Foo").of("T" => mod.double).with_var("@coco", mod.double))
+    input[1].type.should eq("Foo".generic("T" => mod.int).with_vars("@coco" => mod.int))
+    input[3].type.should eq(("Foo").generic("T" => mod.double).with_vars("@coco" => mod.double))
   end
 
   it "types instance variable on getter" do
@@ -113,7 +113,7 @@ describe 'Type inference: class' do
       end
 
       Foo.new.foo
-    )) { types["Foo"] }
+    )) { "Foo".object }
   end
 
   it "types type var union" do
@@ -122,7 +122,7 @@ describe 'Type inference: class' do
       end
 
       Foo(Int | Double).new
-      )) { ObjectType.new("Foo").of("T" => union_of(int, double)) }
+      )) { "Foo".generic("T" => union_of(int, double)) }
   end
 
   it "types class and subclass as one type" do
@@ -134,7 +134,7 @@ describe 'Type inference: class' do
       end
 
       a = Foo.new || Bar.new
-      )) { HierarchyType.new(self.types["Foo"]) }
+      )) { "Foo".hierarchy }
   end
 
   it "types class and subclass as one type" do
@@ -149,7 +149,7 @@ describe 'Type inference: class' do
       end
 
       a = Bar.new || Baz.new
-      )) { HierarchyType.new(self.types["Foo"]) }
+      )) { "Foo".hierarchy }
   end
 
   it "types class and subclass as one type" do
@@ -164,6 +164,6 @@ describe 'Type inference: class' do
       end
 
       a = Foo.new || Bar.new || Baz.new
-      )) { HierarchyType.new(self.types["Foo"]) }
+      )) { "Foo".hierarchy }
   end
 end

@@ -10,7 +10,7 @@ describe 'Type inference: hierarchy' do
       end
 
       a = Foo.new || Bar.new
-      )) { union_of(self.types["Foo"], self.types["Bar"]) }
+      )) { union_of("Foo".object, "Bar".object) }
   end
 
   it "types class and subclass as one type" do
@@ -22,7 +22,7 @@ describe 'Type inference: hierarchy' do
       end
 
       a = Foo.new || Bar.new
-      )) { HierarchyType.new(self.types["Foo"]) }
+      )) { "Foo".hierarchy }
   end
 
   it "types two subclasses" do
@@ -37,7 +37,7 @@ describe 'Type inference: hierarchy' do
       end
 
       a = Bar.new || Baz.new
-      )) { HierarchyType.new(self.types["Foo"]) }
+      )) { "Foo".hierarchy }
   end
 
   it "types class and two subclasses" do
@@ -52,7 +52,7 @@ describe 'Type inference: hierarchy' do
       end
 
       a = Foo.new || Bar.new || Baz.new
-      )) { HierarchyType.new(self.types["Foo"]) }
+      )) { "Foo".hierarchy }
   end
 
   it "types method call of hierarchy type" do
@@ -134,7 +134,7 @@ describe 'Type inference: hierarchy' do
 
   it "works with restriction alpha" do
     nodes = parse(%Q(
-      require "prelude"
+      require "array"
 
       class Foo
       end

@@ -283,7 +283,7 @@ describe 'Type inference: def overload' do
       end
 
       foo 1
-    )) { ObjectType.new("Foo").of("T" => int) }
+    )) { "Foo".generic("T" => int) }
   end
 
   it "can call overload with generic restriction" do
