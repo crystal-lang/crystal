@@ -387,35 +387,23 @@ module Crystal
       const_type = node.const.type.instance_type
 
       if obj_type.union?
-        found_count = 0
-        found_index = nil
-        is_a_array = obj_type.types.map.with_index do |t, i|
-          match = t.implements?(const_type)
-          if match
-            found_count += 1
-            found_index = i
-          end
-          int1(match ? 1 : 0)
-        end
+        matching_ids = obj_type.types.select { |t| t.implements?(const_type) }.map { |t| int(t.type_id) }
 
-        if found_count == 0
+        case matching_ids.length
+        when 0
           @last = int1(0)
-        elsif found_count == 1
-          type_id = @builder.load union_type_id(@last)
-          @last = @builder.icmp :eq, type_id, int(found_index)
-        elsif found_count == obj_type.types.count
+        when obj_type.types.count
           @last = int1(1)
         else
-          unless is_a_map = @is_a_maps[[obj_type, const_type]]
-            is_a_map = @llvm_mod.globals.add(LLVM::Array(LLVM::Int1, obj_type.types.count), "is_a_map")
-            is_a_map.linkage = :private
-            is_a_map.global_constant = 1
-            is_a_map.initializer = LLVM::ConstantArray.const(LLVM::Int1, is_a_array)
-            @is_a_maps[[obj_type, const_type]] = is_a_map
+          type_id = @builder.load union_type_id(@last)
+
+          result = nil
+          matching_ids.each do |matching_id|
+            cmp = @builder.icmp :eq, type_id, matching_id
+            result = result ? @builder.or(result, cmp) : cmp
           end
 
-          type_id = @builder.load union_type_id(@last)
-          @last = @builder.load @builder.gep(is_a_map, [int(0), type_id])
+          @last = result
         end
       elsif obj_type.nilable?
         if @mod.nil == const_type
