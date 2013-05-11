@@ -824,25 +824,40 @@ module Crystal
 
       declare_out_arguments(node) if node.target_defs
 
-      owner = node.target_def.owner
+      if !node.target_defs || node.target_def.owner.is_subclass_of?(@mod.value)
+        owner = ((node.obj && node.obj.type) || node.scope)
+      else
+        owner = node.target_def.owner
+      end
       owner = nil unless owner.passed_as_self?
 
       call_args = []
       if node.obj && node.obj.type.passed_as_self?
         accept(node.obj)
 
-        # Box object into hierarchy type
-        unless node.obj.type.equal?(node.target_def.owner)
-          hierarchy_type = alloca node.target_def.owner.llvm_type
-          type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
-          @builder.store int(node.obj.type.type_id), type_id_ptr
-          @builder.store @builder.bit_cast(@last, LLVM::Pointer(LLVM::Int8)), value_ptr
-          @last = @builder.load(hierarchy_type)
+        if node.obj.type.is_a?(ObjectType) && !node.obj.type.equal?(node.target_def.owner)
+          if node.target_def.owner.is_a?(HierarchyType)
+            # Box object into hierarchy type
+            hierarchy_type = alloca node.target_def.owner.llvm_type
+            type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
+            @builder.store int(node.obj.type.type_id), type_id_ptr
+            @builder.store @builder.bit_cast(@last, LLVM::Pointer(LLVM::Int8)), value_ptr
+            @last = @builder.load(hierarchy_type)
+          else
+            # Cast value
+            @last = @builder.bit_cast(@last, LLVM::Pointer(node.target_def.owner.llvm_type))
+            # TODO: why is this load needed here but not if we don't enter this case?
+            @last = @builder.load(@last)
+          end
         end
 
         call_args << (node.obj.type.is_a?(HierarchyType) ? @builder.load(@last) : @last)
       elsif owner
-        call_args << llvm_self
+        if owner.is_a?(ObjectType) && !owner.equal?(@vars['self'][:type])
+          call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
+        else
+          call_args << llvm_self
+        end
       end
 
       node.args.each_with_index do |arg, i|

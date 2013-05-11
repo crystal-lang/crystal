@@ -122,4 +122,23 @@ describe 'Code gen: class' do
       f.foo
       )).to_i.should eq(1)
   end
+
+  it "codegens virtual call that calls another method" do
+    run(%Q(
+      class Foo
+        def foo
+          foo2
+        end
+
+        def foo2
+          1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.new.foo
+      )).to_i.should eq(1)
+  end
 end
