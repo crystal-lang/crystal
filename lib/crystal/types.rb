@@ -1045,5 +1045,9 @@ module Crystal
       end
       @llvm_type
     end
+
+    def llvm_size
+      4 + Crystal::Program::POINTER_SIZE
+    end
   end
 end

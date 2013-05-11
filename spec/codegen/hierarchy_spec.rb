@@ -79,4 +79,22 @@ describe 'Code gen: hierarchy type' do
       coco(a)
     )).to_i.should eq(2)
   end
+
+  it "can belong to union" do
+    run(%q(
+      class Foo
+        def foo; 1; end
+      end
+      class Bar < Foo; end
+      class Baz
+        def foo; 2; end
+      end
+
+      x = Foo.new
+      x = Bar.new
+      x = Baz.new
+      x.foo
+    )).to_i.should eq(2)
+
+  end
 end
