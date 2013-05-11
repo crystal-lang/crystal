@@ -348,6 +348,8 @@ module Crystal
       elsif var[:type].nilable?
         if node.type.equal?(@mod.nil)
           @last = null_pointer?(var[:ptr])
+        elsif node.type.equal?(@mod.object)
+          @last = @builder.bit_cast var[:ptr], @mod.object.llvm_type
         else
           @last = var[:ptr]
           @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)

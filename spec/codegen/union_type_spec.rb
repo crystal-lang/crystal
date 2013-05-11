@@ -113,4 +113,16 @@ describe 'Code gen: union type' do
       a.to_s
     )).to_string.should eq("")
   end
+
+  it "" do
+    run(%q(
+      require "prelude"
+      class Foo
+      end
+
+      a = nil
+      a = Foo.new
+      a.nil?
+    ))
+  end
 end
