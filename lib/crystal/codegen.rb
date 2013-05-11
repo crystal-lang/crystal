@@ -346,7 +346,7 @@ module Crystal
         @last = var[:ptr]
         @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
       elsif node.type.union?
-        @last = var[:ptr]
+        @last = @builder.bit_cast var[:ptr], LLVM::Pointer(node.llvm_type)
       else
         value_ptr = union_value(var[:ptr])
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(node.llvm_type)
@@ -833,7 +833,7 @@ module Crystal
       call_args = []
       if node.obj && node.obj.type.passed_as_self?
         accept(node.obj)
-        call_args << @last
+        call_args << (node.obj.type.is_a?(HierarchyType) ? @builder.load(@last) : @last)
       elsif owner
         call_args << llvm_self
       end

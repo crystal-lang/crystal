@@ -950,14 +950,15 @@ module Crystal
     end
 
     def lookup_matches(name, arg_types, yields, owner = self)
-      matches = []
-      base_type_matches = base_type.lookup_matches(name, arg_types, yields, self)
-      return nil unless base_type_matches
+      matches = base_type.lookup_matches(name, arg_types, yields, self)
+      return nil unless matches
 
-      matches.concat base_type_matches
       each_subtype(base_type) do |subtype|
         subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type, false)
-        matches.concat subtype_matches if subtype_matches
+        if subtype_matches
+          subtype_matches.concat matches
+          matches = subtype_matches
+        end
       end
       matches.length > 0 ? matches : nil
     end
@@ -987,7 +988,7 @@ module Crystal
     end
 
     def filter_by(type)
-      restrict(type, nil)
+      restrict(type)
     end
 
     def each(&block)
@@ -1015,6 +1016,22 @@ module Crystal
 
     def to_s
       "#{base_type}+"
+    end
+
+    def union?
+      true
+    end
+
+    def llvm_name
+      to_s
+    end
+
+    def llvm_type
+      unless @llvm_type
+        @llvm_type = LLVM::Struct(llvm_name)
+        @llvm_type.element_types = [LLVM::Int, LLVM::Pointer(LLVM::Int8)]
+      end
+      @llvm_type
     end
   end
 end

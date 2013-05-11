@@ -258,7 +258,7 @@ module Crystal
       args_start_index = 0
 
       typed_def = untyped_def.clone
-      typed_def.owner = owner
+      typed_def.owner = self_type
       typed_def.bind_to typed_def.body if typed_def.body
 
       args = {}
