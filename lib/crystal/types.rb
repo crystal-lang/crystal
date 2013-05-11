@@ -156,13 +156,13 @@ module Crystal
       when nil
         arg_type
       when SelfType
-        arg_type && arg_type.restrict(owner, owner)
+        arg_type && arg_type.restrict(owner)
       when NewGenericClass
         arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, free_vars) && arg_type
       when Ident
         type = free_vars[restriction.names] || owner.lookup_type(restriction.names)
         if type
-          arg_type && arg_type.restrict(type, owner)
+          arg_type && arg_type.restrict(type)
         else
           free_vars[restriction.names] = arg_type
         end
