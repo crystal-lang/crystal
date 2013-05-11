@@ -57,4 +57,26 @@ describe 'Code gen: hierarchy type' do
       a.coco
     )).to_i.should eq(1)
   end
+
+  it "dispatch call with hierarchy type argument" do
+    run(%q(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def coco(x : Bar)
+        1
+      end
+
+      def coco(x)
+        2
+      end
+
+      a = Bar.new
+      a = Foo.new
+      coco(a)
+    )).to_i.should eq(2)
+  end
 end

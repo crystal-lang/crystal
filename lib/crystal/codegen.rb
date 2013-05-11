@@ -1098,7 +1098,20 @@ module Crystal
       @alloca_block = old_alloca_block
     end
 
+    def match_any_type_id(type, type_id)
+      if type.union?
+        result = int1(0)
+        type.each do |sub_type|
+          result = @builder.or(result, @builder.icmp(:eq, int(sub_type.type_id), type_id))
+        end
+        result
+      else
+        result = @builder.icmp :eq, int(type.type_id), type_id
+      end
+    end
+
     def codegen_dispatch(node)
+      binding.pry
       node.obj.accept(self) if node.obj
       old_block = @builder.insert_block
 
@@ -1128,20 +1141,15 @@ module Crystal
       next_def_label = nil
       node.target_defs.each do |a_def|
         if node.obj && node.obj.type.union?
-          if a_def.owner.union?
-            result = int1(0)
-            a_def.owner.each do |owner_type|
-              result = @builder.or(result, @builder.icmp(:eq, int(owner_type.type_id), obj_type_id))
-            end
-          else
-            result = @builder.icmp :eq, int(a_def.owner.type_id), obj_type_id
-          end
+          result = match_any_type_id(a_def.owner, obj_type_id)
         else
           result = int1(1)
         end
+
         a_def.args.each_with_index do |arg, i|
           next unless node.args[i].type.union?
-          result = @builder.and(result, @builder.icmp(:eq, int(arg.type.type_id), arg_type_ids[i]))
+          comp = match_any_type_id(arg.type, arg_type_ids[i])
+          result = @builder.and(result, comp)
         end
 
         current_def_label, next_def_label = new_blocks "current_def", "next_def"
