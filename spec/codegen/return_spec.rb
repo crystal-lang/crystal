@@ -22,7 +22,7 @@ describe 'Code gen: return' do
   end
 
   it "return from function with nilable type" do
-    run('def foo; return Object.new if true; end; foo.nil?').to_b.should be_false
+    run('require "prelude"; def foo; return Object.new if true; end; foo.nil?').to_b.should be_false
   end
 
   it "returns empty from function" do
