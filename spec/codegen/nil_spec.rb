@@ -47,6 +47,26 @@ describe 'Code gen: nil' do
       )).to_string.should eq('foo')
   end
 
+  it "codegens nilable dispatch with obj nilable" do
+    run(%q(
+      class Nil
+        def foo
+          1
+        end
+      end
+
+      class Foo
+        def foo
+          2
+        end
+      end
+
+      a = Foo.new
+      a = nil
+      a.foo
+      )).to_i.should eq(1)
+  end
+
   it "assigns nilable to union" do
     run(%q(
       a = nil

@@ -1111,13 +1111,21 @@ module Crystal
     end
 
     def codegen_dispatch(node)
-      binding.pry
-      node.obj.accept(self) if node.obj
+      if node.obj
+        node.obj.accept(self)
+      end
+
       old_block = @builder.insert_block
 
       exit_block = new_block "exit"
 
-      obj_type_id = @builder.load union_type_id(@last) if node.obj && node.obj.type.union?
+      if node.obj
+        if node.obj.type.union?
+          obj_type_id = @builder.load union_type_id(@last)
+        elsif node.obj.type.nilable?
+          obj_type_id = @last
+        end
+      end
       phi_table = {}
       call = Call.new(node.obj ? Var.new("%self") : nil, node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") }, node.block)
       call.scope = node.scope
@@ -1141,7 +1149,13 @@ module Crystal
       next_def_label = nil
       node.target_defs.each do |a_def|
         if node.obj && node.obj.type.union?
-          result = match_any_type_id(a_def.owner, obj_type_id)
+            result = match_any_type_id(a_def.owner, obj_type_id)
+        elsif node.obj && node.obj.type.nilable?
+          if a_def.owner.equal?(@mod.nil)
+            result = null_pointer?(obj_type_id)
+          else
+            result = not_null_pointer?(obj_type_id)
+          end
         else
           result = int1(1)
         end
