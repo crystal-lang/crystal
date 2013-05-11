@@ -1127,9 +1127,15 @@ module Crystal
 
       next_def_label = nil
       node.target_defs.each do |a_def|
-        current_obj_type_id = a_def.owner.type_id
         if node.obj && node.obj.type.union?
-          result = @builder.icmp :eq, int(current_obj_type_id), obj_type_id
+          if a_def.owner.union?
+            result = int1(0)
+            a_def.owner.each do |owner_type|
+              result = @builder.or(result, @builder.icmp(:eq, int(owner_type.type_id), obj_type_id))
+            end
+          else
+            result = @builder.icmp :eq, int(a_def.owner.type_id), obj_type_id
+          end
         else
           result = int1(1)
         end
