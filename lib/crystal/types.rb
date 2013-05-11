@@ -238,13 +238,7 @@ module Crystal
 
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
-          if parent.is_a?(ObjectType)
-            matches = parent.hierarchy_type.lookup_matches(name, arg_types, yields, parent.hierarchy_type)
-            matches = matches.select { |match| owner.is_restriction_of?(match.owner, owner) } if matches
-            matches
-          else
-            matches = parent.lookup_matches(name, arg_types, yields, owner)
-          end
+          matches = parent.lookup_matches(name, arg_types, yields, owner)
           return matches if matches && matches.any?
         end
       end
