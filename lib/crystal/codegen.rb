@@ -310,7 +310,7 @@ module Crystal
       case target
       when InstanceVar
         ivar = @type.lookup_instance_var(target.name.to_s)
-        ptr = gep llvm_self, 0, @type.index_of_instance_var(target.name.to_s)
+        ptr = gep llvm_self_ptr, 0, @type.index_of_instance_var(target.name.to_s)
       when Global
         ptr = @llvm_mod.globals[target.name.to_s]
         unless ptr
@@ -372,19 +372,12 @@ module Crystal
     end
 
     def visit_instance_var(node)
-      if @type.is_a?(HierarchyType)
-        ptr = @builder.extract_value llvm_self, 1
-        self_ptr = @builder.bit_cast ptr, @type.base_type.llvm_type
-      else
-        self_ptr = llvm_self
-      end
-
       ivar = @type.lookup_instance_var(node.name)
       if ivar.type.union?
-        @last = gep self_ptr, 0, @type.index_of_instance_var(node.name)
+        @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.name)
       else
         index = @type.index_of_instance_var(node.name)
-        struct = @builder.load self_ptr
+        struct = @builder.load llvm_self_ptr
         @last = @builder.extract_value struct, index, node.name
       end
     end
@@ -1458,6 +1451,15 @@ module Crystal
 
     def llvm_self
       @vars['self'][:ptr]
+    end
+
+    def llvm_self_ptr
+      if @type.is_a?(HierarchyType)
+        ptr = @builder.extract_value llvm_self, 1
+        self_ptr = @builder.bit_cast ptr, @type.base_type.llvm_type
+      else
+        self_ptr = llvm_self
+      end
     end
 
     def llvm_nil

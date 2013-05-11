@@ -118,4 +118,20 @@ describe 'Code gen: hierarchy type' do
       a.foo
     )).to_i.should eq(2)
   end
+
+  it "assign instance variable in hierarchy type" do
+    run(%q(
+      class Foo
+        def foo
+          @x = 1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      f = Foo.new || Bar.new
+      f.foo
+    )).to_i.should eq(1)
+  end
 end
