@@ -355,10 +355,10 @@ module Crystal
     end
 
     def type_assign(target, value, node = nil)
-      value.accept self
-
       case target
       when Var
+        value.accept self
+
         var = lookup_var target.name
         target.bind_to var
 
@@ -370,6 +370,8 @@ module Crystal
         end
 
       when InstanceVar
+        value.accept self
+
         var = lookup_instance_var target
 
         if node
@@ -388,6 +390,8 @@ module Crystal
 
         current_type.types[target.names.first] = Const.new(target.names.first, value, current_type)
       when Global
+        value.accept self
+
         var = mod.global_vars[target.name] ||= Var.new(target.name)
 
         target.bind_to var
@@ -461,6 +465,7 @@ module Crystal
     def visit_ident(node)
       type = lookup_ident_type(node)
       if type.is_a?(Const)
+        type.value.accept self unless type.value.type
         node.target_const = type
         node.bind_to(type.value)
       else
