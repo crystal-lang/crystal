@@ -195,4 +195,18 @@ describe 'Code gen: hierarchy type' do
       a.to_s
       ))
   end
+
+  it "codegens call to Object#to_s from nilable type" do
+    run(%q(
+      require "object"
+      require "nil"
+      require "string"
+
+      class Foo
+      end
+
+      a = nil || Foo.new
+      a.to_s
+      ))
+  end
 end

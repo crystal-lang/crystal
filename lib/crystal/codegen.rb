@@ -350,6 +350,8 @@ module Crystal
           @last = null_pointer?(var[:ptr])
         elsif node.type.equal?(@mod.object)
           @last = @builder.bit_cast var[:ptr], @mod.object.llvm_type
+        elsif node.type.equal?(@mod.object.hierarchy_type)
+          @last = box_object_in_hierarchy(var[:type], node.type, var[:ptr], !var[:treated_as_pointer])
         else
           @last = var[:ptr]
           @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
@@ -950,12 +952,16 @@ module Crystal
       false
     end
 
-    def box_object_in_hierarchy(object, hierarchy, value)
+    def box_object_in_hierarchy(object, hierarchy, value, load = true)
       hierarchy_type = alloca hierarchy.llvm_type
       type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
       @builder.store int(object.type_id), type_id_ptr
       @builder.store @builder.bit_cast(value, LLVM::Pointer(LLVM::Int8)), value_ptr
-      @builder.load(hierarchy_type)
+      if load
+        @builder.load(hierarchy_type)
+      else
+        hierarchy_type
+      end
     end
 
     def declare_out_arguments(call)
