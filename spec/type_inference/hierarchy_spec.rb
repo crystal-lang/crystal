@@ -174,4 +174,30 @@ describe 'Type inference: hierarchy' do
       x = f.foo(f)
       )) { union_of(int, double) }
   end
+
+  it "removes instance var from subclasses" do
+    nodes = parse %(
+      class Base
+      end
+
+      class Var < Base
+        def x=(x)
+          @x = x
+        end
+      end
+
+      class Base
+        def x=(x)
+          @x = x
+        end
+      end
+
+      v = Var.new
+      v.x = 1
+      v
+      )
+    mod = infer_type nodes
+    mod.types["Var"].instance_vars.should be_empty
+    mod.types["Base"].instance_vars["@x"].type.should eq(mod.int)
+  end
 end

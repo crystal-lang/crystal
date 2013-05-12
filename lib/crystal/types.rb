@@ -458,12 +458,24 @@ module Crystal
       if a_def.instance_vars
         a_def.instance_vars.each do |ivar|
           unless superclass.has_instance_var?(ivar)
-            @instance_vars[ivar] ||= Var.new(ivar)
+            unless @instance_vars.has_key?(ivar)
+              @instance_vars[ivar] = Var.new(ivar)
+              each_subclass(self) do |subclass|
+                subclass.instance_vars.delete ivar
+              end
+            end
           end
         end
       end
 
       a_def
+    end
+
+    def each_subclass(type, &block)
+      type.subclasses.each do |subclass|
+        block.call subclass
+        each_subclass subclass, &block
+      end
     end
 
     def has_instance_var?(name)
