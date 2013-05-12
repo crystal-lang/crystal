@@ -179,4 +179,20 @@ describe 'Code gen: hierarchy type' do
       f.foo
       )).to_i.should eq(1)
   end
+
+  it "codegens call to Object#to_s from hierarchy type" do
+    run(%q(
+      require "object"
+      require "string"
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      a = Foo.new || Bar.new
+      a.to_s
+      ))
+  end
 end

@@ -852,7 +852,11 @@ module Crystal
         if different && owner.is_a?(HierarchyType) && @vars['self'][:type].is_a?(ObjectType)
           call_args = box_object_in_hierarchy(@vars['self'][:type], owner, llvm_self)
         elsif different && owner.is_a?(ObjectType)
-          call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
+          if @vars['self'][:type].is_a?(HierarchyType)
+            call_args = llvm_self_ptr
+          else
+            call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
+          end
         else
           call_args << llvm_self
         end
