@@ -636,7 +636,7 @@ module Crystal
         # Nothing
       elsif node_cond.type.nilable?
         # Nothing
-      elsif node_cond.type.union?
+      elsif node_cond.type.is_a?(UnionType)
         nil_or_bool = node_cond.type.types.any? { |t| t.equal?(@mod.nil) || t.equal?(@mod.bool) }
         return true unless nil_or_bool
       elsif node_cond.type.is_a?(PointerType)

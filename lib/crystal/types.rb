@@ -1034,6 +1034,10 @@ module Crystal
       "#{base_type}+"
     end
 
+    def name
+      to_s
+    end
+
     def union?
       true
     end
