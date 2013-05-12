@@ -972,6 +972,12 @@ module Crystal
 
     attr_accessor :base_type
 
+    LLVM_TYPE = begin
+      llvm_type = LLVM::Struct("Object+")
+      llvm_type.element_types = [LLVM::Int, LLVM::Pointer(LLVM::Int8)]
+      llvm_type
+    end
+
     def initialize(base_type)
       @base_type = base_type
       @def_instances = {}
@@ -1063,11 +1069,7 @@ module Crystal
     end
 
     def llvm_type
-      unless @llvm_type
-        @llvm_type = LLVM::Struct(llvm_name)
-        @llvm_type.element_types = [LLVM::Int, LLVM::Pointer(LLVM::Int8)]
-      end
-      @llvm_type
+      LLVM_TYPE
     end
 
     def llvm_size

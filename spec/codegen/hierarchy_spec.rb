@@ -157,4 +157,26 @@ describe 'Code gen: hierarchy type' do
       bar.bar
       )).to_i.should eq(1)
   end
+
+  it "casts hierarchy type to base hierarchy type" do
+    run(%q(
+      class Object
+        def bar
+          1
+        end
+      end
+
+      class Foo
+        def foo
+          bar
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      f = Foo.new || Bar.new
+      f.foo
+      )).to_i.should eq(1)
+  end
 end

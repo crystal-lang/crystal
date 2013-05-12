@@ -848,9 +848,10 @@ module Crystal
 
         call_args << (node.obj.type.is_a?(HierarchyType) ? @builder.load(@last) : @last)
       elsif owner
-        if owner.is_a?(HierarchyType) && !owner.equal?(@vars['self'][:type])
+        different = !owner.equal?(@vars['self'][:type])
+        if different && owner.is_a?(HierarchyType) && @vars['self'][:type].is_a?(ObjectType)
           call_args = box_object_in_hierarchy(@vars['self'][:type], owner, llvm_self)
-        elsif owner.is_a?(ObjectType) && !owner.equal?(@vars['self'][:type])
+        elsif different && owner.is_a?(ObjectType)
           call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
         else
           call_args << llvm_self
