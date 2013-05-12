@@ -2,7 +2,7 @@ require_relative 'ast'
 require_relative 'type_inference/ast'
 require_relative 'type_inference/ast_node'
 require_relative 'type_inference/call'
-require_relative 'type_inference/dispatch'
+require_relative 'type_inference/match'
 
 module Crystal
   def infer_type(node, options = {})
@@ -15,7 +15,6 @@ module Crystal
       else
         node.accept TypeVisitor.new(mod)
         fix_empty_types node, mod
-        mod.unify node if Crystal::UNIFY
       end
     end
     mod
@@ -24,13 +23,11 @@ module Crystal
   def infer_type_with_stats(node, mod, options)
     options[:total_bm] += options[:bm].report('type inference:') { node.accept TypeVisitor.new(mod) }
     options[:total_bm] += options[:bm].report('fix empty types') { fix_empty_types node, mod }
-    options[:total_bm] += options[:bm].report('unification:') { mod.unify node if Crystal::UNIFY }
   end
 
   def infer_type_with_prof(node, mod)
     Profiler.profile_to('type_inference.html') { node.accept TypeVisitor.new(mod) }
     Profiler.profile_to('fix_empty_types.html') { fix_empty_types node, mod }
-    Profiler.profile_to('unification.html') { mod.unify node if Crystal::UNIFY }
   end
 
   class TypeFilter < ASTNode
@@ -57,19 +54,26 @@ module Crystal
     attr_accessor :mod
     attr_accessor :paths
     attr_accessor :call
+    attr_accessor :owner
+    attr_accessor :untyped_def
+    attr_accessor :typed_def
+    attr_accessor :arg_types
     attr_accessor :block
     @@regexps = {}
     @@counter = 0
 
-    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil)
+    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil, owner = nil, untyped_def = nil, typed_def = nil, arg_types = nil, free_vars = nil)
       @mod = mod
       @vars = vars
-      @vars_nest = {}
       @scope = scope
       @parent = parent
       @call = call
+      @owner = owner
+      @untyped_def = untyped_def
+      @typed_def = typed_def
+      @arg_types = arg_types
+      @free_vars = free_vars
       @types = [mod]
-      @nest_count = 0
       @while_stack = []
       @type_filter_stack = []
     end
@@ -111,13 +115,23 @@ module Crystal
       mod.symbols << node.value
     end
 
-    def visit_range_literal(node)
-      node.expanded = Call.new(Ident.new(['Range'], true), 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
+    def end_visit_range_literal(node)
+      return if node.expanded
+
+      new_generic = NewGenericClass.new(Ident.new(['Range'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])
+
+      node.mod = mod
+      node.new_generic_class = new_generic
+      node.bind_to node.from, node.to
+
+      node.expanded = Call.new(new_generic, 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
       node.expanded.accept self
       node.type = node.expanded.type
     end
 
     def visit_regexp_literal(node)
+      return if node.expanded
+
       name = @@regexps[node.value]
       name = @@regexps[node.value] = "Regexp#{@@regexps.length}" unless name
 
@@ -148,15 +162,6 @@ module Crystal
       else
         target_type = current_type
       end
-      node.args.each do |arg|
-        if arg.type_restriction
-          if arg.type_restriction == :self
-            arg.type = SelfType
-          else
-            arg.type = lookup_ident_type(arg.type_restriction)
-          end
-        end
-      end
 
       target_type.add_def node
       false
@@ -173,7 +178,7 @@ module Crystal
       else
         target_type = current_type
       end
-      target_type.add_def node
+      target_type.add_macro node
       false
     end
 
@@ -192,7 +197,7 @@ module Crystal
         end
       else
         type = ObjectType.new node.name, parent, current_type
-        type.generic = node.generic || parent.generic
+        type.type_vars = Hash[node.type_vars.map { |type_var| [type_var, Var.new(type_var)] }] if node.type_vars
         current_type.types[node.name] = type
       end
 
@@ -248,7 +253,7 @@ module Crystal
       args = node.args.map do |arg|
         fun_arg = Arg.new(arg.name)
         fun_arg.location = arg.location
-        fun_arg.type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
+        fun_arg.type_restriction = fun_arg.type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
         fun_arg.out = arg.out
         fun_arg
       end
@@ -278,8 +283,7 @@ module Crystal
 
     def maybe_ptr_type(type, ptr)
       ptr.times do
-        ptr_type = mod.pointer.clone
-        ptr_type.var.type = type
+        ptr_type = mod.pointer_of(type)
         type = ptr_type
       end
       type
@@ -304,7 +308,6 @@ module Crystal
       var = lookup_var node.name
       filter = build_var_filter var
       node.bind_to(filter || var)
-      node.creates_new_type = var.creates_new_type
     end
 
     def build_var_filter(var)
@@ -325,17 +328,14 @@ module Crystal
       lookup_instance_var node
     end
 
-    def lookup_instance_var(node, mark_as_nilable = true)
+    def lookup_instance_var(node)
       if @scope.is_a?(Crystal::Program)
         node.raise "can't use instance variables at the top level"
       elsif @scope.is_a?(PrimitiveType)
         node.raise "can't use instance variables inside #{@scope.name}"
       end
 
-      new_instance_var = mark_as_nilable && !@scope.has_instance_var?(node.name)
-
       var = @scope.lookup_instance_var node.name
-      var.bind_to mod.nil_var if mark_as_nilable && new_instance_var
       node.bind_to var
       var
     end
@@ -355,10 +355,10 @@ module Crystal
     end
 
     def type_assign(target, value, node = nil)
-      value.accept self
-
       case target
       when Var
+        value.accept self
+
         var = lookup_var target.name
         target.bind_to var
 
@@ -369,21 +369,16 @@ module Crystal
           var.bind_to value
         end
 
-        if node
-          node.creates_new_type = var.creates_new_type ||= value.creates_new_type
-        end
       when InstanceVar
-        var = lookup_instance_var target, (@nest_count > 0)
+        value.accept self
+
+        var = lookup_instance_var target
 
         if node
           node.bind_to value
           var.bind_to node
         else
           var.bind_to value
-        end
-
-        if node
-          node.creates_new_type = var.creates_new_type ||= value.creates_new_type
         end
       when Ident
         type = current_type.types[target.names.first]
@@ -393,8 +388,10 @@ module Crystal
 
         target.bind_to value
 
-        current_type.types[target.names.first] = Const.new(target.names.first, value, current_type)
+        current_type.types[target.names.first] = Const.new(target.names.first, value, current_type, @types.clone, @scope)
       when Global
+        value.accept self
+
         var = mod.global_vars[target.name] ||= Var.new(target.name)
 
         target.bind_to var
@@ -409,7 +406,6 @@ module Crystal
     def end_visit_expressions(node)
       if node.last
         node.bind_to node.last
-        node.creates_new_type = node.last.creates_new_type
       else
         node.type = mod.nil
       end
@@ -418,11 +414,9 @@ module Crystal
     def visit_while(node)
       node.cond.accept self
 
-      @nest_count += 1
       @while_stack.push node
       node.body.accept self if node.body
       @while_stack.pop
-      @nest_count -= 1
 
       false
     end
@@ -445,8 +439,6 @@ module Crystal
     def visit_if(node)
       node.cond.accept self
 
-      @nest_count += 1
-
       if node.then
         @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
 
@@ -458,7 +450,6 @@ module Crystal
       if node.else
         node.else.accept self
       end
-      @nest_count -= 1
 
       false
     end
@@ -474,6 +465,12 @@ module Crystal
     def visit_ident(node)
       type = lookup_ident_type(node)
       if type.is_a?(Const)
+        unless type.value.type
+          old_types, old_scope = @types, @scope
+          @types, @scope = type.types, type.scope
+          type.value.accept self
+          @types, @scope = old_types, old_scope
+        end
         node.target_const = type
         node.bind_to(type.value)
       else
@@ -482,6 +479,10 @@ module Crystal
     end
 
     def lookup_ident_type(node)
+      if node.names.length == 1 && @free_vars && type = @free_vars[node.names]
+        return type
+      end
+
       if node.global
         target_type = mod.lookup_type node.names
       else
@@ -496,59 +497,103 @@ module Crystal
     end
 
     def visit_allocate(node)
-      if !node.allocate_type.generic && Crystal::GENERIC
-        node.type = node.allocate_type
-      else
-        type = lookup_object_type(node.allocate_type.name)
-        node.type = type ? type : node.allocate_type.clone
-        node.creates_new_type = true
+      if @scope.generic && @scope.type_vars.any? { |k, v| !v.type }
+        node.raise "can't create instance of generic class #{@scope.instance_type} without specifying its type vars"
       end
+      node.type = @scope.instance_type
     end
 
-    def visit_array_literal(node)
-      if node.elements.empty?
-        exps = Call.new(Ident.new(['Array'], true), 'new')
-      else
-        ary_name = temp_name()
+    def end_visit_array_literal(node)
+      return if node.expanded
 
-        length = node.elements.length
-        capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
-
-        ary_new = Call.new(Ident.new(['Array'], true), 'new', [IntLiteral.new(capacity)])
-        ary_assign = Assign.new(Var.new(ary_name), ary_new)
-        ary_assign_length = Call.new(Var.new(ary_name), 'length=', [IntLiteral.new(length)])
-
-        exps = [ary_assign, ary_assign_length]
-        node.elements.each_with_index do |elem, i|
-          get_buffer = Call.new(Var.new(ary_name), 'buffer')
-          exps << Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
-        end
-        exps << Var.new(ary_name)
-
-        exps = Expressions.new exps
+      if node.elements.length == 0
+        node.expanded = Call.new(NewGenericClass.new(Ident.new(['Array'], true), [node.of]), 'new')
+        node.expanded.accept self
+        node.bind_to node.expanded
+        return false
       end
 
+      ary_name = temp_name()
+
+      length = node.elements.length
+      capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
+
+      if node.of
+        new_generic = NewGenericClass.new(Ident.new(['Array'], true), [node.of])
+      else
+        new_generic = NewGenericClass.new(Ident.new(['Array'], true), [Ident.new(["Nil"], true)])
+
+        node.mod = mod
+        node.new_generic_class = new_generic
+        node.bind_to *node.elements
+      end
+
+      new_generic.location = node.location
+
+      ary_new = Call.new(new_generic, 'new', [IntLiteral.new(capacity)])
+      ary_new.location = node.location
+
+      ary_assign = Assign.new(Var.new(ary_name), ary_new)
+      ary_assign.location = node.location
+
+      ary_assign_length = Call.new(Var.new(ary_name), 'length=', [IntLiteral.new(length)])
+      ary_assign_length.location = node.location
+
+      exps = [ary_assign, ary_assign_length]
+      node.elements.each_with_index do |elem, i|
+        get_buffer = Call.new(Var.new(ary_name), 'buffer')
+        get_buffer.location = node.location
+
+        assign_index = Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+        assign_index.location = node.location
+
+        exps << assign_index
+      end
+      exps << Var.new(ary_name)
+
+      exps = Expressions.new exps
+      exps.parent = node
       exps.accept self
       node.expanded = exps
-      node.bind_to exps
 
-      node.creates_new_type = node.expanded.creates_new_type
+      if node.of
+        node.bind_to exps
+      end
 
       false
     end
 
-    def visit_hash_literal(node)
-      if node.key_values.empty?
-        exps = Call.new(Ident.new(['Hash'], true), 'new')
+    def end_visit_hash_literal(node)
+      return if node.expanded
+
+      if node.keys.empty?
+        new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [node.of_key, node.of_value])
+        exps = Call.new(new_generic, 'new')
       else
         hash_name = temp_name()
 
-        hash_new = Call.new(Ident.new(['Hash'], true), 'new')
+        if node.of_key
+          new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [node.of_key, node.of_value])
+        else
+          new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])
+
+          key_var = Var.new("K")
+          key_var.bind_to *node.keys
+
+          value_var = Var.new("V")
+          value_var.bind_to *node.values
+
+          node.mod = mod
+          node.new_generic_class = new_generic
+          node.bind_to key_var, value_var
+        end
+
+        hash_new = Call.new(new_generic, 'new')
         hash_assign = Assign.new(Var.new(hash_name), hash_new)
 
         exps = [hash_assign]
-        node.key_values.each_slice(2) do |key, value|
-          exps << Call.new(Var.new(hash_name), :[]=, [key, value])
+        node.keys.each_with_index do |key, i|
+          exps << Call.new(Var.new(hash_name), :[]=, [key, node.values[i]])
         end
         exps << Var.new(hash_name)
         exps = Expressions.new exps
@@ -556,35 +601,24 @@ module Crystal
 
       exps.accept self
       node.expanded = exps
-      node.bind_to exps
 
-      node.creates_new_type = node.expanded.creates_new_type
+      if node.of_key
+        node.bind_to exps
+      end
 
       false
     end
 
-    def lookup_object_type(name)
-      if @scope.is_a?(ObjectType) && @scope.name == name
-        if @call && @call[1].maybe_recursive
-          @scope
-        else
-          nil
-        end
-      elsif @parent
-        @parent.lookup_object_type(name)
+    def same_arg_types_as_current_call(arg_types)
+      return false unless arg_types.length == @arg_types.length
+      arg_types.each_with_index do |arg_type, i|
+        return false unless arg_type.equal?(@arg_types[i])
       end
-    end
-
-    def lookup_def_instance(scope, untyped_def, arg_types)
-      if @call && @call[0..2] == [scope, untyped_def, arg_types]
-        @call[3]
-      elsif @parent
-        @parent.lookup_def_instance(scope, untyped_def, arg_types)
-      end
+      true
     end
 
     def end_visit_yield(node)
-      block = @call[4].block or node.raise "no block given"
+      block = @call.block or node.raise "no block given"
 
       block.args.each_with_index do |arg, i|
         arg.bind_to node.exps[i]
@@ -599,7 +633,7 @@ module Crystal
           block_vars[arg.name] = arg
         end
 
-        block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call)
+        block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types)
         block_visitor.block = node
         node.body.accept block_visitor
       end
@@ -607,6 +641,8 @@ module Crystal
     end
 
     def visit_and(node)
+      return if node.expanded
+
       temp_var = Var.new(temp_name())
       node.expanded = If.new(Assign.new(temp_var, node.left), node.right, temp_var)
       node.expanded.binary = :and
@@ -618,6 +654,8 @@ module Crystal
     end
 
     def visit_or(node)
+      return if node.expanded
+
       temp_var = Var.new(temp_name())
       node.expanded = If.new(Assign.new(temp_var, node.left), temp_var, node.right)
       node.expanded.binary = :or
@@ -647,7 +685,7 @@ module Crystal
         arg.add_observer node, :update_input
       end
       node.obj.add_observer node, :update_input if node.obj
-      node.recalculate unless node.obj || node.args.any?
+      node.recalculate
 
       node.obj.accept self if node.obj
       node.args.each { |arg| arg.accept self }
@@ -659,19 +697,43 @@ module Crystal
       false
     end
 
+    def end_visit_ident_union(node)
+      node.type = mod.type_merge *node.idents.map { |ident| ident.type.instance_type }
+    end
+
+    def end_visit_new_generic_class(node)
+      return if node.type
+
+      instance_type = node.name.type.instance_type
+      unless instance_type.type_vars
+        node.raise "#{instance_type} is not a generic class"
+      end
+
+      if instance_type.type_vars.length != node.type_vars.length
+        node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
+      end
+      generic_type = mod.lookup_generic_type instance_type, node.type_vars.map { |var| var.type.instance_type }
+      node.type = generic_type.metaclass
+      false
+    end
+
     def expand_macro(node)
       return false if node.obj || node.name == 'super'
 
-      owner, self_type, untyped_def_and_error_matches = node.compute_owner_self_type_and_untyped_def
-      untyped_def, error_matches = untyped_def_and_error_matches
-      return false unless untyped_def.is_a?(Macro)
+      untyped_def = node.scope.lookup_macro(node.name, node.args.length) || mod.lookup_macro(node.name, node.args.length)
+      return false unless untyped_def
 
       @@macro_llvm_mod ||= LLVM::Module.new "macros"
       @@macro_engine ||= LLVM::JITCompiler.new @@macro_llvm_mod
 
       macro_name = "#macro_#{untyped_def.object_id}"
 
-      typed_def = Def.new(macro_name, untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
+      macros_cache_key = [untyped_def.object_id] + node.args.map { | arg| arg.class.object_id }
+      unless typed_def = mod.macros_cache[macros_cache_key]
+        typed_def = Def.new(macro_name, untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
+        mod.macros_cache[macros_cache_key] = typed_def
+      end
+
       macro_call = Call.new(nil, macro_name, node.args.map(&:to_crystal_node))
       macro_nodes = Expressions.new [typed_def, macro_call]
 
@@ -728,7 +790,7 @@ module Crystal
 
     def end_visit_return(node)
       node.exps.each do |exp|
-        @call[3].bind_to exp
+        @typed_def.bind_to exp
       end
     end
 
@@ -740,21 +802,18 @@ module Crystal
     end
 
     def visit_pointer_of(node)
-      ptr = mod.pointer.clone
-      ptr.var = if node.var.is_a?(Var)
-                  var = lookup_var node.var.name
-                  node.var.bind_to var
-                  var
-                else
-                  lookup_instance_var node.var
-                end
-      node.type = ptr
+      node.mod = mod
+      var = if node.var.is_a?(Var)
+              lookup_var node.var.name
+            else
+              lookup_instance_var node.var
+            end
+      node.bind_to var
       false
     end
 
     def visit_pointer_malloc(node)
-      node.type = mod.pointer.clone
-      node.creates_new_type = true
+      node.type = @scope.instance_type
     end
 
     def visit_pointer_realloc(node)
@@ -779,9 +838,7 @@ module Crystal
       if type.is_a?(ObjectType)
         node.type = type
       else
-        pointer_type = mod.pointer.clone
-        pointer_type.var.type = type
-        node.type = pointer_type
+        node.type = mod.pointer_of(type)
       end
     end
 
@@ -832,16 +889,9 @@ module Crystal
 
     def lookup_var(name)
       var = @vars[name]
-      if var
-        var_nest_count = @vars_nest[name]
-        if var_nest_count && var_nest_count > @nest_count
-          var.bind_to mod.nil_var
-          @vars_nest.delete name
-        end
-      else
+      unless var
         var = Var.new name
         @vars[name] = var
-        @vars_nest[name] = @nest_count
       end
       var
     end

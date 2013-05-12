@@ -9,28 +9,15 @@ describe "Type clone" do
   end
 
   it "clone object type" do
-    type = ObjectType.new("Foo").with_var("@foo", mod.int)
+    type = "Foo".object(foo: mod.int)
     type.clone.should eq(type)
   end
 
   it "clone recursive object type" do
-    type = ObjectType.new("Foo")
-    type.with_var("@foo", type)
+    type = "Foo".object
+    type.with_vars(foo: type)
     type_clone = type.clone
     type_clone.should eq(type)
-    type_clone.instance_vars["@foo"].type.should be(type_clone)
-  end
-
-  it "clone array type" do
-    type = mod.array_of(mod.int)
-    type.clone.should eq(type)
-  end
-
-  it "clone object type with recursive union type" do
-    type = ObjectType.new("Foo")
-    type.with_var("@foo", [type, mod.int].union)
-    type_clone = type.clone
-    type_clone.should eq(type)
-    type_clone.instance_vars["@foo"].type.types.first.should be(type_clone)
+    type_clone.lookup_instance_var("@foo").type.should be(type_clone)
   end
 end

@@ -1,3 +1,9 @@
+GIT
+  remote: https://github.com/ruby-prof/ruby-prof.git
+  revision: ef0d3f5ab07590756f4367a3f54ec2680d489ca9
+  specs:
+    ruby-prof (0.13.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -32,7 +38,6 @@ GEM
     ruby-graphviz (1.0.8)
     ruby-llvm (3.1.0.beta.1)
       ffi (>= 1.0.0)
-    ruby-prof (0.12.2)
     slop (3.4.3)
 
 PLATFORMS
@@ -45,4 +50,4 @@ DEPENDENCIES
   rspec
   ruby-graphviz
   ruby-llvm (~> 3.1.0.beta.1)
-  ruby-prof
+  ruby-prof!

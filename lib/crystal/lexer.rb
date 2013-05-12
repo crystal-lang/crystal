@@ -83,7 +83,7 @@ module Crystal
         @token.type = :STRING_ARRAY_START
       elsif match = scan(%r(!=|!@\B|!|===|==|=~|=>|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&=|&&|&|\|\|=|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
         @token.type = match.to_sym
-      elsif match = scan(/(def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct|macro|out|require|case|when|generic|then)((\?|!)|\b)/)
+      elsif match = scan(/(def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct|macro|out|require|case|when|then|of)((\?|!)|\b)/)
         @token.type = :IDENT
         @token.value = match.end_with?('?') || match.end_with?('!') ? match : match.to_sym
       elsif match = scan(/[A-Z][a-zA-Z_0-9]*\b/)
@@ -249,8 +249,8 @@ module Crystal
       next_token while types.include? @token.type
     end
 
-    def raise(message)
-      Kernel::raise Crystal::SyntaxException.new(message, @line_number, @token.column_number, @filename)
+    def raise(message, line_number = @line_number, column_number = @token.column_number, filename = @filename)
+      Kernel::raise Crystal::SyntaxException.new(message, line_number, column_number, filename)
     end
   end
 end

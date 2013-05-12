@@ -21,6 +21,10 @@ describe 'Code gen: union type' do
     run("def foo(x); x; end; a = 1; a = 2.5f; foo(a).to_f").to_f.should eq(2.5)
   end
 
+  it "codegens union type when no obj and restrictions" do
+    run("def foo(x : Int); 1.5; end; def foo(x : Float); 2.5; end; a = 1; a = 3.5f; foo(a).to_f").to_f.should eq(2.5)
+  end
+
   it "codegens union type as return value" do
     run("def foo; a = 1; a = 2.5f; a; end; foo.to_f").to_f.should eq(2.5)
   end
@@ -110,13 +114,15 @@ describe 'Code gen: union type' do
     )).to_string.should eq("")
   end
 
-  it "codegens int, empty array and int array union" do
+  it "dispatch call to object method on nilable" do
     run(%q(
       require "prelude"
-      a = 1
-      a = []
-      a = []
-      a << 1
-      ))
+      class Foo
+      end
+
+      a = nil
+      a = Foo.new
+      a.nil?
+    ))
   end
 end

@@ -2,7 +2,6 @@ module Crystal
   class ASTNode
     attr_accessor :type
     attr_accessor :dependencies
-    attr_accessor :creates_new_type
     attr_accessor :type_filters
 
     def set_type(type)
@@ -17,34 +16,52 @@ module Crystal
     end
 
     def real_type
-      if dependencies && dependencies.length == 1
+      if dependencies && dependencies.length == 1 && !dependencies[0].eql?(self)
         dependencies[0].real_type
       else
         @type
       end
     end
 
-    def bind_to(node)
+    def map_type(type)
+      type
+    end
+
+    def bind_to(*nodes)
       @dependencies ||= []
-      @dependencies << node
-      node.add_observer self
+      @dependencies.concat nodes
+      nodes.each { |node| node.add_observer self }
 
-      return unless node.type
-
-      if @dependencies.length == 1 || !@type
-        new_type = node.type
+      if @dependencies.length == 1
+        new_type = nodes[0].type
       else
-        new_type = Type.merge(@type, node.type)
+        new_type = Type.merge *@dependencies.map(&:type)
       end
       return if @type.object_id == new_type.object_id
-      set_type(new_type)
+      set_type(map_type(new_type))
       @dirty = true
       propagate
+    end
+
+    def unbind_from(*nodes)
+      return unless @dependencies
+
+      nodes.each do |node|
+        idx = @dependencies.index { |d| d.object_id == node.object_id }
+        @dependencies.delete_at(idx) if idx
+        node.remove_observer self
+      end
     end
 
     def add_observer(observer, func = :update)
       @observers ||= []
       @observers << [observer, func]
+    end
+
+    def remove_observer(observer)
+      return unless @observers
+      idx = @observers.index { |o| o.object_id == observer.object_id }
+      @observers.delete_at(idx) if idx
     end
 
     def notify_observers
@@ -63,11 +80,11 @@ module Crystal
       if @type.nil? || dependencies.length == 1
         new_type = from.type
       else
-        new_type = Type.merge(@type, from.type)
+        new_type = Type.merge *@dependencies.map(&:type)
       end
 
       return if @type.object_id == new_type.object_id
-      set_type(new_type)
+      set_type(map_type new_type)
       @dirty = true
     end
 
@@ -80,6 +97,64 @@ module Crystal
 
     def raise(message, inner = nil)
       Kernel::raise Crystal::TypeException.for_node(self, message, inner)
+    end
+  end
+
+  class PointerOf
+    attr_accessor :mod
+
+    def map_type(type)
+      mod.pointer_of(type)
+    end
+  end
+
+  class ArrayLiteral
+    attr_accessor :mod
+    attr_accessor :new_generic_class
+
+    def map_type(type)
+      if of
+        type
+      else
+        mod.array_of(type)
+      end
+    end
+
+    def set_type(type)
+      super
+      new_generic_class.type = type.metaclass unless of
+    end
+  end
+
+  class HashLiteral
+    attr_accessor :mod
+    attr_accessor :new_generic_class
+
+    def map_type(type)
+      if of_key
+        type
+      else
+        mod.hash_of(@dependencies[0].type, @dependencies[1].type)
+      end
+    end
+
+    def set_type(type)
+      super
+      new_generic_class.type = type.metaclass unless of_key
+    end
+  end
+
+  class RangeLiteral
+    attr_accessor :mod
+    attr_accessor :new_generic_class
+
+    def map_type(type)
+      mod.range_of(@dependencies[0].type, @dependencies[1].type)
+    end
+
+    def set_type(type)
+      super
+      new_generic_class.type = type.metaclass
     end
   end
 end

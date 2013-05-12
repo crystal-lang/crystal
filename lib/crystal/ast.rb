@@ -1,5 +1,6 @@
 require_relative 'core_ext/module'
 require_relative 'core_ext/string'
+require 'singleton'
 
 module Crystal
   class Visitor
@@ -127,43 +128,58 @@ module Crystal
   #
   class ArrayLiteral < ASTNode
     attr_accessor :elements
+    attr_accessor :of
 
-    def initialize(elements = [])
+    def initialize(elements = [], of = nil)
       @elements = elements
       @elements.each { |e| e.parent = self }
+      @of = of
     end
 
     def accept_children(visitor)
       elements.each { |exp| exp.accept visitor }
+      of.accept visitor if of
     end
 
     def ==(other)
-      other.is_a?(ArrayLiteral) && other.elements == elements
+      other.is_a?(ArrayLiteral) && other.elements == elements && other.of == of
     end
 
     def clone_from(other)
       @elements = other.elements.map(&:clone)
+      @of = other.of.clone if other.of
     end
   end
 
   class HashLiteral < ASTNode
-    attr_accessor :key_values
+    attr_accessor :keys
+    attr_accessor :values
+    attr_accessor :of_key
+    attr_accessor :of_value
 
-    def initialize(key_values = [])
-      @key_values = key_values
-      @key_values.each { |kv| kv.parent = self }
+    def initialize(keys = [], values = [], of_key = nil, of_value = nil)
+      @keys = keys
+      @values = values
+      @of_key = of_key
+      @of_value = of_value
     end
 
     def accept_children(visitor)
-      key_values.each { |kv| kv.accept visitor }
+      keys.each { |key| key.accept visitor }
+      values.each { |value| value.accept visitor }
+      of_key.accept visitor if of_key
+      of_value.accept visitor if of_value
     end
 
     def ==(other)
-      other.is_a?(HashLiteral) && other.key_values == key_values
+      other.is_a?(HashLiteral) && other.keys == keys && other.values == values && other.of_key == of_key && other.of_value == of_value
     end
 
     def clone_from(other)
-      @key_values = other.key_values.map(&:clone)
+      @keys = other.keys.map(&:clone)
+      @values = other.values.map(&:clone)
+      @of_key = other.of_key.clone if other.of_key
+      @of_value = other.of_value.clone if other.of_value
     end
   end
 
@@ -177,14 +193,14 @@ module Crystal
     attr_accessor :name
     attr_accessor :body
     attr_accessor :superclass
-    attr_accessor :generic
+    attr_accessor :type_vars
     attr_accessor :name_column_number
 
-    def initialize(name, body = nil, superclass = nil, generic = false, name_column_number = nil)
+    def initialize(name, body = nil, superclass = nil, type_vars = nil, name_column_number = nil)
       @name = name
       @body = Expressions.from body
       @body.parent = self if @body
-      @generic = generic
+      @type_vars = type_vars
       @superclass = superclass
       @name_column_number = name_column_number
     end
@@ -194,14 +210,14 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(ClassDef) && other.name == name && other.body == body && other.superclass == superclass && other.generic == generic
+      other.is_a?(ClassDef) && other.name == name && other.body == body && other.superclass == superclass && other.type_vars == type_vars
     end
 
     def clone_from(other)
       @name = other.name
       @body = other.body.clone
       @superclass = other.superclass
-      @generic = other.generic
+      @type_vars = other.type_vars.clone
       @name_column_number = other.name_column_number
     end
   end
@@ -390,6 +406,11 @@ module Crystal
       other.is_a?(RangeLiteral) && other.from == from && other.to == to && other.exclusive == exclusive
     end
 
+    def accept_children(visitor)
+      from.accept visitor
+      to.accept visitor
+    end
+
     def clone_from(other)
       @from = other.from
       @to = other.to
@@ -433,7 +454,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
     attr_accessor :yields
-    attr_accessor :maybe_recursive
+    attr_accessor :instance_vars
 
     def initialize(name, args, body = nil, receiver = nil, yields = false)
       @name = name
@@ -462,7 +483,6 @@ module Crystal
       @body = other.body.clone
       @receiver = other.receiver.clone
       @yields = other.yields
-      @maybe_recursive = other.maybe_recursive
     end
   end
 
@@ -515,12 +535,12 @@ module Crystal
       @default_value = default_value
       @default_value.parent = self if @default_value
       @type_restriction = type_restriction
-      @type_restriction.parent = self if @type_restriction && @type_restriction != :self
+      @type_restriction.parent = self if @type_restriction && !@type_restriction.is_a?(Type)
     end
 
     def accept_children(visitor)
       default_value.accept visitor if default_value
-      type_restriction.accept visitor if type_restriction && type_restriction != :self
+      type_restriction.accept visitor if type_restriction && !type_restriction.is_a?(Type)
     end
 
     def ==(other)
@@ -530,11 +550,7 @@ module Crystal
     def clone_from(other)
       @name = other.name
       @default_value = other.default_value.clone
-      if other.type_restriction == :self
-        @type_restriction = :self
-      else
-        @type_restriction = other.type_restriction.clone
-      end
+      @type_restriction = other.type_restriction.clone
       @out = other.out
     end
   end
@@ -559,6 +575,34 @@ module Crystal
     def clone_from(other)
       @names = other.names
       @global = other.global
+    end
+  end
+
+  class IdentUnion < ASTNode
+    attr_accessor :idents
+
+    def initialize(idents)
+      @idents = idents
+    end
+
+    def ==(other)
+      other.is_a?(IdentUnion) && other.idents == idents
+    end
+
+    def accept_children(visitor)
+      @idents.each { |ident| ident.accept visitor }
+    end
+
+    def clone_from(other)
+      @idents = other.idents.map(&:clone)
+    end
+  end
+
+  class SelfType < ASTNode
+    include Singleton
+
+    def clone
+      self
     end
   end
 
@@ -1038,7 +1082,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
 
-    def initialize(name, args, body = nil, receiver = nil)
+    def initialize(name, args, body = nil, receiver = nil, yields = nil)
       @name = name
       @args = args
       @args.each { |arg| arg.parent = self } if @args
@@ -1188,6 +1232,30 @@ module Crystal
     def clone_from(other)
       @conds = other.conds.map(&:clone)
       @body = other.body.clone
+    end
+  end
+
+  class NewGenericClass < ASTNode
+    attr_accessor :name
+    attr_accessor :type_vars
+
+    def initialize(name, type_vars)
+      @name = name
+      @type_vars = type_vars
+    end
+
+    def accept_children(visitor)
+      name.accept visitor
+      type_vars.each { |v| v.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(NewGenericClass) && other.name == name && other.type_vars == type_vars
+    end
+
+    def clone_from(other)
+      @name = other.name
+      @type_vars = other.type_vars.map(&:clone)
     end
   end
 end

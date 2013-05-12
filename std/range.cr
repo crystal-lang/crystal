@@ -1,9 +1,9 @@
 require "enumerable"
 
-generic class Range
+class Range(B, E)
   include Enumerable
 
-  def initialize(the_start, the_end, exclusive)
+  def initialize(the_start : B, the_end : E, exclusive)
     @begin = the_start
     @end = the_end
     @exclusive = exclusive

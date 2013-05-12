@@ -4,6 +4,10 @@ module Crystal
       type1
     end
 
+    def llvm_type
+      LLVM::Void
+    end
+
     def to_s
       name
     end
@@ -23,16 +27,16 @@ module Crystal
     attr_accessor :types
     attr_accessor :parents
 
-    def initialize(name, container = nil, parents = [])
+    def initialize(name, container = nil, parents = [] of Type?)
       super(name, container)
       @parents = parents
-      @types = {}
+      @types = {} of String => Type?
     end
   end
 
   class ClassType < ModuleType
     def initialize(name, parent_type, container = nil)
-      super(name, container, parent_type ? [parent_type] : [])
+      super(name, container, parent_type ? [parent_type] of Type? : [] of Type?)
     end
   end
 

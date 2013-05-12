@@ -78,18 +78,29 @@ module Crystal
         exp.accept self
       end
       @str << ']'
+      if node.of
+        @str << ' of '
+        node.of.accept self
+      end
       false
     end
 
     def visit_hash_literal(node)
       @str << '{'
-      node.key_values.each_slice(2).each_with_index do |kv, i|
+      node.keys.each_with_index do |key, i|
         @str << ', ' if i > 0
-        kv[0].accept self
+        key.accept self
         @str << ' => '
-        kv[1].accept self
+        node.values[i].accept self
       end
       @str << '}'
+
+      if node.of_key
+        @str << " of "
+        node.of_key.accept self
+        @str << " => "
+        node.of_value.accept self
+      end
       false
     end
 
@@ -279,10 +290,10 @@ module Crystal
       end
       if node.type_restriction
         @str << ' : '
-        if node.type_restriction == :self
-          @str << 'self'
-        else
+        if node.type_restriction.is_a?(ASTNode)
           node.type_restriction.accept self
+        else
+          @str << node.type_restriction.to_s
         end
       end
       false
@@ -293,6 +304,18 @@ module Crystal
         @str << '::' if i > 0 || node.global
         @str << name
       end
+    end
+
+    def visit_ident_union(node)
+      node.idents.each_with_index do |ident, i|
+        @str << " | " if  i > 0
+        ident.accept self
+      end
+      false
+    end
+
+    def visit_self_type(node)
+      @str << "self"
     end
 
     def visit_instance_var(node)
@@ -324,9 +347,16 @@ module Crystal
     end
 
     def visit_class_def(node)
-      @str << "generic " if node.generic
       @str << "class "
       @str << node.name
+      if node.type_vars
+        @str << "("
+        node.type_vars.each_with_index do |type_var, i|
+          @str << ", " if i > 0
+          @str << type_var.to_s
+        end
+        @str << ")"
+      end
       if node.superclass
         @str << " < "
         node.superclass.accept self
@@ -515,6 +545,17 @@ module Crystal
       end
       @str << "\n"
       accept_with_indent node.body
+      false
+    end
+
+    def visit_new_generic_class(node)
+      node.name.accept self
+      @str << "("
+      node.type_vars.each_with_index do |var, i|
+        @str << ', ' if i > 0
+        var.accept self
+      end
+      @str << ")"
       false
     end
 

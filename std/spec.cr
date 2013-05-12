@@ -1,5 +1,5 @@
-$spec_context = []
-$spec_results = []
+$spec_context = [] of String
+$spec_results = [] of String
 $spec_count = 0
 $spec_failures = 0
 $spec_manual_results = false

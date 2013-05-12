@@ -10,6 +10,18 @@ module Crystal
     def location=(location)
       @location = location.clone
     end
+
+    def self.[]
+      [] of ASTNode?
+    end
+
+    def self.[](node)
+      [node] of ASTNode?
+    end
+
+    def self.[](node1, node2)
+      [node1, node2] of ASTNode?
+    end
   end
 
   # A container for one or many expressions.
@@ -35,7 +47,7 @@ module Crystal
       obj
     end
 
-    def initialize(expressions = [])
+    def initialize(expressions = ASTNode[])
       @expressions = expressions
     end
 
@@ -179,7 +191,7 @@ module Crystal
   class ArrayLiteral < ASTNode
     attr_accessor :elements
 
-    def initialize(elements = [])
+    def initialize(elements = ASTNode[])
       @elements = elements
     end
 
@@ -227,7 +239,7 @@ module Crystal
     attr_accessor :has_parenthesis
     attr_accessor :name_length
 
-    def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
+    def initialize(obj, name, args = ASTNode[], block = nil, name_column_number = nil, has_parenthesis = false)
       @obj = obj
       @name = name
       @args = args
@@ -335,9 +347,10 @@ module Crystal
     attr_accessor :out
     attr_accessor :type
 
-    def initialize(name, type = nil)
+    def initialize(name : String?, type = nil)
       @name = name
       @type = type
+      @out = false
     end
 
     def ==(other : self)
@@ -352,6 +365,7 @@ module Crystal
 
     def initialize(name)
       @name = name
+      @out = false
     end
 
     def ==(other : self)
@@ -581,6 +595,7 @@ module Crystal
       @name = name.to_s
       @default_value = default_value
       @type_restriction = type_restriction
+      @out = false
     end
 
     def accept_children(visitor)
@@ -605,7 +620,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
 
-    def initialize(args = [], body = nil)
+    def initialize(args = ASTNode[], body = nil)
       @args = args
       @body = Expressions.from body
     end
@@ -629,7 +644,7 @@ module Crystal
   class ControlExpression < ASTNode
     attr_accessor :exps
 
-    def initialize(exps = [])
+    def initialize(exps = ASTNode[])
       @exps = exps
     end
 
@@ -700,7 +715,7 @@ module Crystal
     attr_accessor :varargs
     attr_accessor :real_name
 
-    def initialize(name, args = [], return_type = nil, pointer = 0, varargs = false, real_name = name)
+    def initialize(name, args = ASTNode[], return_type = nil, pointer = 0, varargs = false, real_name = name)
       @name = name
       @real_name = real_name
       @args = args
@@ -767,7 +782,7 @@ module Crystal
     attr_accessor :name
     attr_accessor :fields
 
-    def initialize(name, fields = [])
+    def initialize(name, fields = ASTNode[])
       @name = name
       @fields = fields
     end

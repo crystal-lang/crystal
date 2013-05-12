@@ -12,7 +12,7 @@ class Regexp
 
   def initialize(str)
     @source = str
-    errptr = Pointer.malloc(0).as(Char)
+    errptr = Pointer(Char).malloc(0)
     erroffset = 1
     @re = PCRE.compile(str, 8, errptr.ptr, erroffset.ptr, 0L)
     if @re == 0
@@ -24,7 +24,7 @@ class Regexp
 
   def match(str, pos = 0, options = 0)
     ovector_size = (@captures + 1) * 3
-    ovector = Pointer.malloc(ovector_size * 4).as(Int)
+    ovector = Pointer(Int).malloc(ovector_size * 4)
     ret = PCRE.exec(@re, 0L, str, str.length, pos, options, ovector, ovector_size)
     return nil unless ret > 0
     MatchData.new(self, str, pos, ovector)

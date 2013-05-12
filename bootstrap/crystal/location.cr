@@ -11,7 +11,7 @@ module Crystal
     end
 
     def clone
-      self.class.new(@line_number, @column_number, @filename)
+      Location.new(@line_number, @column_number, @filename)
     end
   end
 end

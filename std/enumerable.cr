@@ -21,14 +21,13 @@ module Enumerable
     memo
   end
 
-  def map
-    ary = []
-    each { |e| ary << yield e }
-    ary
+  def map(target : Array(U))
+    each { |e| target << yield e }
+    target
   end
 
   def select
-    ary = []
+    ary = Array(T).new
     each { |e| ary << e if yield e }
     ary
   end
@@ -43,7 +42,7 @@ module Enumerable
   end
 
   def to_a
-    ary = []
+    ary = Array.new
     each { |e| ary << e }
     ary
   end

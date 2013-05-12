@@ -43,26 +43,6 @@ describe 'Code gen: def' do
     build node, mod
   end
 
-  it "includes return type in the mangled name" do
-    run(%Q(
-      generic class Foo
-        #{rw :value}
-      end
-
-      def gen
-        Foo.new
-      end
-
-      f = gen
-      f.value = 1
-
-      g = gen
-      g.value = 2.5f
-
-      f.value + g.value
-    )).to_f.should eq(3.5)
-  end
-
   it "unifies all calls to same def" do
     run(%Q(
       require "pointer"
@@ -90,51 +70,6 @@ describe 'Code gen: def' do
       hash[1] = 2
       hash[1]
     )).to_i.should eq(1)
-  end
-
-  it "mutates to union" do
-    run(%Q(
-      require "pointer"
-      require "array"
-
-      class Foo
-        def foo(x)
-          @buckets = [x]
-        end
-
-        def bar
-          @buckets.push 1
-        end
-      end
-
-      f = Foo.new
-      f.foo(1)
-      f.bar
-      f.foo(1.5f)[0].to_f
-      )).to_f.should eq(1.5)
-  end
-
-  it "mutates to union 2" do
-    run(%Q(
-      require "pointer"
-      require "array"
-
-      class Foo
-        def foo(x)
-          @buckets = [x]
-        end
-
-        def bar
-          @buckets.push 1
-        end
-      end
-
-      f = Foo.new
-      f.foo(1)
-      f.bar
-      f.foo(1.5)
-      f.foo(1)[0].to_f
-      )).to_f.should eq(1)
   end
 
   it "codegens recursive type with union" do

@@ -1,5 +1,4 @@
 require_relative "types"
-require_relative "unification"
 
 module Crystal
   class Program < ModuleType
@@ -9,9 +8,14 @@ module Crystal
 
     attr_accessor :symbols
     attr_accessor :global_vars
+    attr_accessor :macros_cache
 
     def initialize
       super('main')
+
+      @generic_types = {}
+      @unions = {}
+      @macros_cache = {}
 
       object = @types["Object"] = ObjectType.new "Object", nil, self
       value = @types["Value"] = ObjectType.new "Value", object, self
@@ -27,23 +31,15 @@ module Crystal
       @types["Float"] = PrimitiveType.new "Float", numeric, LLVM::Float, 4, self
       @types["Double"] = PrimitiveType.new "Double", numeric, LLVM::Double, 8, self
       @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4, self
-      @types["Pointer"] = PointerType.new value, self
+      pointer = @types["Pointer"] = PointerType.new value, self
+      pointer.type_vars = {"T" => Var.new("T")}
 
       @types["String"] = ObjectType.new "String", object, self
       string.lookup_instance_var('@length').type = int
       string.lookup_instance_var('@c').type = char
 
       array = @types["Array"] = ObjectType.new "Array", object, self
-      array.string_rep = proc do |type|
-        buffer = type.instance_vars["@buffer"]
-        if buffer
-          element_type = buffer.type.var.type
-          "Array<#{element_type}>"
-        else
-          nil
-        end
-      end
-      array.generic = true
+      array.type_vars = {"T" => Var.new("T")}
 
       @types["ARGC_UNSAFE"] = Const.new "ARGC_UNSAFE", Crystal::ARGC.new(int), self
       @types["ARGV_UNSAFE"] = Const.new "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char))), self
@@ -60,9 +56,96 @@ module Crystal
       define_primitives
     end
 
-    def unify(node)
-      @unify_visitor ||= UnifyVisitor.new
-      Crystal.unify node, @unify_visitor
+    def program
+      self
+    end
+
+    def type_merge(*types)
+      all_types = types.map! { |type| type.is_a?(UnionType) ? type.types : type }
+      all_types.flatten!
+      all_types.compact!
+      all_types.uniq!(&:object_id)
+      combined_union_of *types
+    end
+
+    def combined_union_of(*types)
+      if types.length == 1
+        return types[0]
+      end
+
+      combined_types = type_combine *types
+      union_of *combined_types
+    end
+
+    def union_of(*types)
+      types.sort_by!(&:object_id)
+      if types.length == 1
+        return types[0]
+      end
+
+      types_ids = types.map(&:object_id)
+      @unions[types_ids] ||= UnionType.new(*types)
+    end
+
+    def type_combine(*types)
+      all_types = [types.shift]
+
+      types.each do |t2|
+        not_found = all_types.each do |t1|
+          ancestor = common_ancestor t1, t2
+          if ancestor
+            all_types.delete t1
+            all_types << ancestor.hierarchy_type
+            break nil
+          end
+        end
+        if not_found
+          all_types << t2
+        end
+      end
+
+      all_types
+    end
+
+    def common_ancestor(t1, t2)
+      t1 = t1.base_type if t1.is_a?(HierarchyType)
+      t2 = t2.base_type if t2.is_a?(HierarchyType)
+
+      unless t1.is_a?(ObjectType) && t2.is_a?(ObjectType)
+        return nil
+      end
+
+      depth = [t1.depth, t2.depth].min
+      while t1.depth > depth
+        t1 = t1.superclass
+      end
+      while t2.depth > depth
+        t2 = t2.superclass
+      end
+
+      while !t1.equal?(t2)
+        t1 = t1.superclass
+        t2 = t2.superclass
+      end
+
+      t1.depth == 0 ? nil : t1
+    end
+
+    def lookup_generic_type(base_class, type_vars)
+      key = [base_class.object_id, type_vars.map(&:object_id)]
+      unless generic_type = @generic_types[key]
+        generic_type = base_class.clone
+        i = 0
+        generic_type.type_vars.each do |name, var|
+          var.type = type_vars[i]
+          var.bind_to var
+          i += 1
+        end
+        generic_type.metaclass.defs = base_class.metaclass.defs
+        generic_type.metaclass.sorted_defs = base_class.metaclass.sorted_defs
+        @generic_types[key] = generic_type
+      end
+      generic_type
     end
 
     def nil_var
@@ -126,9 +209,19 @@ module Crystal
     end
 
     def pointer_of(type)
-      p = pointer.clone
-      p.var.type = type
-      p
+      lookup_generic_type pointer, [type]
+    end
+
+    def array_of(type)
+      lookup_generic_type array, [type]
+    end
+
+    def range_of(a_begin, a_end)
+      lookup_generic_type types["Range"], [a_begin, a_end]
+    end
+
+    def hash_of(key, value)
+      lookup_generic_type types["Hash"], [key, value]
     end
 
     def metaclass

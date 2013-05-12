@@ -228,7 +228,7 @@ module Crystal
     def visit_ident(node)
       const = node.target_const
       if const
-        global_name = const.full_name
+        global_name = const.to_s
         global = @llvm_mod.globals[global_name]
 
         unless global
@@ -309,8 +309,8 @@ module Crystal
     def codegen_assign_target(target, value, llvm_value)
       case target
       when InstanceVar
-        ivar = @type.instance_vars[target.name.to_s]
-        ptr = gep llvm_self, 0, @type.index_of_instance_var(target.name.to_s)
+        ivar = @type.lookup_instance_var(target.name.to_s)
+        ptr = gep llvm_self_ptr, 0, @type.index_of_instance_var(target.name.to_s)
       when Global
         ptr = @llvm_mod.globals[target.name.to_s]
         unless ptr
@@ -333,7 +333,7 @@ module Crystal
           ptr: alloca(var.llvm_type, var.name.to_s),
           type: var.type
         }
-        if var.type.is_a?(UnionType) && union_index = var.type.types.any? { |type| type.equal?(@mod.nil) }
+        if var.type.is_a?(UnionType) && union_type_id = var.type.types.any? { |type| type.equal?(@mod.nil) }
           in_alloca_block { assign_to_union(llvm_var[:ptr], var.type, @mod.nil, llvm_nil) }
         end
       end
@@ -345,8 +345,19 @@ module Crystal
       if var[:type] == node.type
         @last = var[:ptr]
         @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+      elsif var[:type].nilable?
+        if node.type.equal?(@mod.nil)
+          @last = null_pointer?(var[:ptr])
+        elsif node.type.equal?(@mod.object)
+          @last = @builder.bit_cast var[:ptr], @mod.object.llvm_type
+        elsif node.type.equal?(@mod.object.hierarchy_type)
+          @last = box_object_in_hierarchy(var[:type], node.type, var[:ptr], !var[:treated_as_pointer])
+        else
+          @last = var[:ptr]
+          @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+        end
       elsif node.type.union?
-        @last = var[:ptr]
+        @last = @builder.bit_cast var[:ptr], LLVM::Pointer(node.llvm_type)
       else
         value_ptr = union_value(var[:ptr])
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(node.llvm_type)
@@ -363,12 +374,12 @@ module Crystal
     end
 
     def visit_instance_var(node)
-      ivar = @type.instance_vars[node.name]
+      ivar = @type.lookup_instance_var(node.name)
       if ivar.type.union?
-        @last = gep llvm_self, 0, @type.index_of_instance_var(node.name)
+        @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.name)
       else
         index = @type.index_of_instance_var(node.name)
-        struct = @builder.load llvm_self
+        struct = @builder.load llvm_self_ptr
         @last = @builder.extract_value struct, index, node.name
       end
     end
@@ -380,35 +391,23 @@ module Crystal
       const_type = node.const.type.instance_type
 
       if obj_type.union?
-        found_count = 0
-        found_index = nil
-        is_a_array = obj_type.types.map.with_index do |t, i|
-          match = t.implements?(const_type)
-          if match
-            found_count += 1
-            found_index = i
-          end
-          int1(match ? 1 : 0)
-        end
+        matching_ids = obj_type.types.select { |t| t.implements?(const_type) }.map { |t| int(t.type_id) }
 
-        if found_count == 0
+        case matching_ids.length
+        when 0
           @last = int1(0)
-        elsif found_count == 1
-          index = @builder.load union_index(@last)
-          @last = @builder.icmp :eq, index, int(found_index)
-        elsif found_count == obj_type.types.count
+        when obj_type.types.count
           @last = int1(1)
         else
-          unless is_a_map = @is_a_maps[[obj_type, const_type]]
-            is_a_map = @llvm_mod.globals.add(LLVM::Array(LLVM::Int1, obj_type.types.count), "is_a_map")
-            is_a_map.linkage = :private
-            is_a_map.global_constant = 1
-            is_a_map.initializer = LLVM::ConstantArray.const(LLVM::Int1, is_a_array)
-            @is_a_maps[[obj_type, const_type]] = is_a_map
+          type_id = @builder.load union_type_id(@last)
+
+          result = nil
+          matching_ids.each do |matching_id|
+            cmp = @builder.icmp :eq, type_id, matching_id
+            result = result ? @builder.or(result, cmp) : cmp
           end
 
-          index = @builder.load union_index(@last)
-          @last = @builder.load @builder.gep(is_a_map, [int(0), index])
+          @last = result
         end
       elsif obj_type.nilable?
         if @mod.nil == const_type
@@ -431,10 +430,10 @@ module Crystal
         var = @vars[node.var.name]
         @last = var[:ptr]
       else
-        var = @type.instance_vars[node.var.name]
+        var = @type.lookup_instance_var(node.var.name)
         @last = gep llvm_self, 0, @type.index_of_instance_var(node.var.name)
       end
-      if node.var.type.is_a?(StructType)
+      if node.type.var.type.is_a?(StructType)
         @last = @builder.load @last
       end
       false
@@ -639,9 +638,9 @@ module Crystal
         # Nothing
       elsif node_cond.type.nilable?
         # Nothing
-      elsif node_cond.type.union?
-        nil_or_bool_index = node_cond.type.types.index { |t| @mod.nil == t || @mod.bool == t }
-        return true unless nil_or_bool_index
+      elsif node_cond.type.is_a?(UnionType)
+        nil_or_bool = node_cond.type.types.any? { |t| t.equal?(@mod.nil) || t.equal?(@mod.bool) }
+        return true unless nil_or_bool
       elsif node_cond.type.is_a?(PointerType)
         # Nothing
       else
@@ -666,32 +665,32 @@ module Crystal
     end
 
     def codegen_cond(node_cond)
-      if @mod.nil == node_cond.type
+      if @mod.nil.equal?(node_cond.type)
         cond = int1(0)
-      elsif @mod.bool == node_cond.type
+      elsif @mod.bool.equal?(node_cond.type)
         cond = @builder.icmp :ne, @last, int1(0)
       elsif node_cond.type.nilable?
         cond = not_null_pointer?(@last)
       elsif node_cond.type.union?
-        nil_index = node_cond.type.types.index { |t| @mod.nil == t }
-        bool_index = node_cond.type.types.index { |t| @mod.bool == t }
+        has_nil = node_cond.type.types.any? { |t| t.equal?(@mod.nil) }
+        has_bool = node_cond.type.types.any? { |t| t.equal?(@mod.bool) }
 
-        if nil_index && bool_index
-          index = @builder.load union_index(@last)
+        if has_nil || has_bool
+          type_id = @builder.load union_type_id(@last)
           value = @builder.load(@builder.bit_cast union_value(@last), LLVM::Pointer(LLVM::Int1))
 
-          is_nil = @builder.icmp :eq, index, int(nil_index)
-          is_bool = @builder.icmp :eq, index, int(bool_index)
+          is_nil = @builder.icmp :eq, type_id, int(@mod.nil.type_id)
+          is_bool = @builder.icmp :eq, type_id, int(@mod.bool.type_id)
           is_false = @builder.icmp(:eq, value, int1(0))
           cond = @builder.not(@builder.or(is_nil, @builder.and(is_bool, is_false)))
-        elsif nil_index
-          index = @builder.load union_index(@last)
-          cond = @builder.icmp :ne, index, int(nil_index)
-        elsif bool_index
-          index = @builder.load union_index(@last)
+        elsif has_nil
+          type_id = @builder.load union_type_id(@last)
+          cond = @builder.icmp :ne, type_id, int(@mod.nil.type_id)
+        elsif has_bool
+          type_id = @builder.load union_type_id(@last)
           value = @builder.load(@builder.bit_cast union_value(@last), LLVM::Pointer(LLVM::Int1))
 
-          is_bool = @builder.icmp :eq, index, int(bool_index)
+          is_bool = @builder.icmp :eq, type_id, int(@mod.bool.type_id)
           is_false = @builder.icmp(:eq, value, int1(0))
           cond = @builder.not(@builder.and(is_bool, is_false))
         else
@@ -820,26 +819,53 @@ module Crystal
         return false
       end
 
-      if node.target_def.is_a?(Dispatch)
+      if node.target_defs && node.target_defs.length > 1
         codegen_dispatch(node)
         return false
       end
 
-      declare_out_arguments node
+      declare_out_arguments(node) if node.target_defs
 
-      owner = ((node.obj && node.obj.type) || node.scope)
+      if !node.target_defs || node.target_def.owner.is_subclass_of?(@mod.value)
+        owner = ((node.obj && node.obj.type) || node.scope)
+      else
+        owner = node.target_def.owner
+      end
       owner = nil unless owner.passed_as_self?
 
       call_args = []
       if node.obj && node.obj.type.passed_as_self?
         accept(node.obj)
-        call_args << @last
+
+        if node.obj.type.is_a?(ObjectType) && !node.obj.type.equal?(node.target_def.owner)
+          if node.target_def.owner.is_a?(HierarchyType)
+            @last = box_object_in_hierarchy(node.obj.type, node.target_def.owner, @last)
+          else
+            # Cast value
+            @last = @builder.bit_cast(@last, LLVM::Pointer(node.target_def.owner.llvm_type))
+            # TODO: why is this load needed here but not if we don't enter this case?
+            @last = @builder.load(@last)
+          end
+        end
+
+        call_args << (node.obj.type.is_a?(HierarchyType) ? @builder.load(@last) : @last)
       elsif owner
-        call_args << llvm_self
+        different = !owner.equal?(@vars['self'][:type])
+        if different && owner.is_a?(HierarchyType) && @vars['self'][:type].is_a?(ObjectType)
+          call_args = box_object_in_hierarchy(@vars['self'][:type], owner, llvm_self)
+        elsif different && owner.is_a?(ObjectType)
+          if @vars['self'][:type].is_a?(HierarchyType)
+            call_args = llvm_self_ptr
+          else
+            call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
+          end
+        else
+          call_args << llvm_self
+        end
       end
 
       node.args.each_with_index do |arg, i|
-        if node.target_def && node.target_def.args[i] && node.target_def.args[i].out && arg.is_a?(Var)
+        if node.target_defs && node.target_def.args[i] && node.target_def.args[i].out && arg.is_a?(Var)
           call_args << @vars[arg.name][:ptr]
         else
           accept(arg)
@@ -924,6 +950,18 @@ module Crystal
       end
 
       false
+    end
+
+    def box_object_in_hierarchy(object, hierarchy, value, load = true)
+      hierarchy_type = alloca hierarchy.llvm_type
+      type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
+      @builder.store int(object.type_id), type_id_ptr
+      @builder.store @builder.bit_cast(value, LLVM::Pointer(LLVM::Int8)), value_ptr
+      if load
+        @builder.load(hierarchy_type)
+      else
+        hierarchy_type
+      end
     end
 
     def declare_out_arguments(call)
@@ -1098,7 +1136,130 @@ module Crystal
       @alloca_block = old_alloca_block
     end
 
+    def match_any_type_id(type, type_id)
+      if type.union?
+        result = int1(0)
+        type.each do |sub_type|
+          result = @builder.or(result, @builder.icmp(:eq, int(sub_type.type_id), type_id))
+        end
+        result
+      else
+        result = @builder.icmp :eq, int(type.type_id), type_id
+      end
+    end
+
     def codegen_dispatch(node)
+      if node.obj
+        node.obj.accept(self)
+      end
+
+      old_block = @builder.insert_block
+
+      exit_block = new_block "exit"
+
+      if node.obj
+        if node.obj.type.union?
+          obj_type_id = @builder.load union_type_id(@last)
+        elsif node.obj.type.nilable?
+          obj_type_id = @last
+        end
+      end
+      phi_table = {}
+      call = Call.new(node.obj ? Var.new("%self") : nil, node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") }, node.block)
+      call.scope = node.scope
+
+      new_vars = @vars.clone
+
+      if node.obj && node.obj.type.passed_as_self?
+        new_vars['%self'] = { ptr: @last, type: node.obj.type, treated_as_pointer: true }
+      end
+
+      arg_type_ids = []
+      node.args.each_with_index do |arg, i|
+        arg.accept self
+        if arg.type.union?
+          arg_type_ids[i] = @builder.load union_type_id(@last)
+        elsif arg.type.nilable?
+          arg_type_ids[i] = @last
+        end
+        new_vars["%arg#{i}"] = { ptr: @last, type: arg.type, treated_as_pointer: true }
+      end
+
+      old_vars = @vars
+      @vars = new_vars
+
+      next_def_label = nil
+      node.target_defs.each do |a_def|
+        if node.obj && node.obj.type.union?
+            result = match_any_type_id(a_def.owner, obj_type_id)
+        elsif node.obj && node.obj.type.nilable?
+          if a_def.owner.equal?(@mod.nil)
+            result = null_pointer?(obj_type_id)
+          else
+            result = not_null_pointer?(obj_type_id)
+          end
+        else
+          result = int1(1)
+        end
+
+        a_def.args.each_with_index do |arg, i|
+          if node.args[i].type.union?
+            comp = match_any_type_id(arg.type, arg_type_ids[i])
+            result = @builder.and(result, comp)
+          elsif node.args[i].type.nilable?
+            if arg.type.equal?(@mod.nil)
+              result = @builder.and(result, null_pointer?(arg_type_ids[i]))
+            else
+              result = @builder.and(result, not_null_pointer?(arg_type_ids[i]))
+            end
+          end
+        end
+
+        current_def_label, next_def_label = new_blocks "current_def", "next_def"
+        @builder.cond result, current_def_label, next_def_label
+
+        @builder.position_at_end current_def_label
+        call.obj.set_type a_def.owner if call.obj
+        call.target_defs = [a_def]
+        call.args.each_with_index do |arg, i|
+          arg.set_type a_def.args[i].type
+        end
+        call.set_type node.type
+        call.accept self
+
+        unless call.returns?
+          if node.type.union?
+            phi_value = alloca node.llvm_type
+            assign_to_union(phi_value, node.type, a_def.type, @last)
+            phi_table[@builder.insert_block] = phi_value
+          elsif node.type.nilable? && @last.type.kind == :integer
+            phi_table[@builder.insert_block] = @builder.int2ptr @last, node.llvm_type
+          else
+            phi_table[@builder.insert_block] = @last
+          end
+        end
+
+        @builder.br exit_block
+        @builder.position_at_end next_def_label
+      end
+
+      @builder.unreachable
+
+      @builder.position_at_end exit_block
+      if node.returns?
+        @builder.unreachable
+      else
+        if node.type.union?
+          @last = @builder.phi LLVM::Pointer(node.llvm_type), phi_table
+        else
+          @last = @builder.phi node.llvm_type, phi_table
+        end
+      end
+
+      @vars = old_vars
+    end
+
+    def codegen_dispatch_old(node)
       dispatch = node.target_def
 
       unreachable_block, exit_block = new_blocks "unreachable", "exit"
@@ -1168,7 +1329,7 @@ module Crystal
 
       if arg && arg.real_type.union?
         arg_ptr = @last
-        index_ptr, value_ptr = union_index_and_value(arg_ptr)
+        type_id_ptr, value_ptr = union_type_id_and_value(arg_ptr)
 
         switch_table = {}
 
@@ -1187,7 +1348,7 @@ module Crystal
 
         @builder.position_at_end old_block
 
-        type_index = @builder.load index_ptr
+        type_index = @builder.load type_id_ptr
         @builder.switch type_index, unreachable_block, switch_table
       elsif arg && arg.real_type.nilable?
         arg_ptr = @last
@@ -1257,55 +1418,34 @@ module Crystal
         return
       end
 
-      index_ptr, value_ptr = union_index_and_value(union_pointer)
+      type_id_ptr, value_ptr = union_type_id_and_value(union_pointer)
 
       if type.union?
-        value_index_ptr, value_value_ptr = union_index_and_value(value)
-        value_index = @builder.load value_index_ptr
-        value_value = @builder.load value_value_ptr
-
-        unless union_map = @union_maps[[type, union_type]]
-          union_map = @llvm_mod.globals.add(LLVM::Array(LLVM::Int, type.types.count), "union_map")
-          union_map.linkage = :private
-          union_map.global_constant = 1
-          union_map_values = type.types.map.with_index do |value_type, value_type_index|
-            int(union_type.index_of_type(value_type))
-          end
-          union_map.initializer = LLVM::ConstantArray.const(LLVM::Int, union_map_values)
-          @union_maps[[type, union_type]] = union_map
-        end
-
-        index = @builder.load(@builder.gep(union_map, [int(0), value_index]))
-        @builder.store int(index), index_ptr
-
-        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_value_type)
-        @builder.store value_value, casted_value_ptr
+        casted_value = @builder.bit_cast(value, LLVM::Pointer(union_type.llvm_type))
+        @builder.store @builder.load(casted_value), union_pointer
       elsif type.nilable?
-        nil_index = union_type.types.index { |t| t.equal?(@mod.nil) }
-        not_nil_index = union_type.types.index { |t| t.equal?(type.nilable_type) }
+        index = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.nilable_type.type_id)
 
-        index = @builder.select null_pointer?(value), int(nil_index), int(not_nil_index)
-
-        @builder.store index, index_ptr
+        @builder.store index, type_id_ptr
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.nilable_type.llvm_type)
         @builder.store value, casted_value_ptr
       else
-        index = union_type.index_of_type(type)
-        @builder.store int(index), index_ptr
+        index = type.type_id
+        @builder.store int(index), type_id_ptr
 
         casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(type.llvm_type)
         @builder.store value, casted_value_ptr
       end
     end
 
-    def union_index_and_value(union_pointer)
-      index_ptr = union_index(union_pointer)
+    def union_type_id_and_value(union_pointer)
+      type_id_ptr = union_type_id(union_pointer)
       value_ptr = union_value(union_pointer)
-      [index_ptr, value_ptr]
+      [type_id_ptr, value_ptr]
     end
 
-    def union_index(union_pointer)
+    def union_type_id(union_pointer)
       gep union_pointer, 0, 0
     end
 
@@ -1352,6 +1492,15 @@ module Crystal
 
     def llvm_self
       @vars['self'][:ptr]
+    end
+
+    def llvm_self_ptr
+      if @type.is_a?(HierarchyType)
+        ptr = @builder.extract_value llvm_self, 1
+        self_ptr = @builder.bit_cast ptr, @type.base_type.llvm_type
+      else
+        self_ptr = llvm_self
+      end
     end
 
     def llvm_nil

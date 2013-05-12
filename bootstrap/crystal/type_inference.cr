@@ -4,7 +4,7 @@ require "ast"
 require "type_inference/ast_node"
 
 module Crystal
-  def infer_type(node, options = {})
+  def infer_type(node, options = {} of Symbol => Object)
     mod = Crystal::Program.new
     if node
       node.accept TypeVisitor.new(mod)
@@ -15,9 +15,12 @@ module Crystal
   class TypeVisitor < Visitor
     attr_reader :mod
 
-    def initialize(mod, vars = {})
+    def initialize(mod, vars = {} of String => Var?)
       @mod = mod
       @vars = vars
+    end
+
+    def visit(node : ASTNode)
     end
 
     def visit(node : BoolLiteral)

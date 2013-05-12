@@ -42,9 +42,9 @@ def primitive_operation_type(*types)
   return int if types.include?('Int')
 end
 
-def rw(name)
+def rw(name, restriction = nil)
   %Q(
-  def #{name}=(value)
+  def #{name}=(value#{restriction ? " : #{restriction}" : ""})
     @#{name} = value
   end
 
@@ -125,6 +125,24 @@ class String
   def symbol
     Crystal::SymbolLiteral.new self
   end
+
+  def object(instance_vars = {})
+    Crystal::ObjectType.new(self).with_vars(instance_vars)
+  end
+
+  def struct(instance_vars = {})
+    ivars = instance_vars.map { |name, type| Var.new(name.to_s, type) }
+    Crystal::StructType.new(self, ivars)
+  end
+
+  def generic(type_vars)
+    @generic = true
+    object.of(type_vars)
+  end
+
+  def hierarchy
+    object.hierarchy_type
+  end
 end
 
 class Array
@@ -136,37 +154,29 @@ class Array
     Crystal::ArrayLiteral.new self
   end
 
-  def union
-    UnionType.new(*self)
-  end
-end
-
-class Crystal::Program
-  def array_of(type = nil)
-    types['Array'].clone.
-      with_var('@length', int).
-      with_var('@capacity', int).
-      with_var('@buffer', PointerType.of(type))
+  def array_of(type)
+    Crystal::ArrayLiteral.new self, type
   end
 end
 
 class Crystal::ObjectType
   def with_var(name, type)
+    name = name.to_s
+    name = "@#{name}" unless name[0] == '@'
     @instance_vars[name] = Var.new(name, type)
     self
   end
 
-  def generic!
-    @generic = true
+  def with_vars(hash)
+    hash.each do |name, type|
+      with_var name, type
+    end
     self
   end
-end
 
-class Crystal::PointerType
-  def self.of(type)
-    pointer = new
-    pointer.var.type = type
-    pointer
+  def of(type_vars)
+    @type_vars = Hash[type_vars.map { |name, type| [name.to_s, Var.new(name.to_s, type)] }]
+    self
   end
 end
 

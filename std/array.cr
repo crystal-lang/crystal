@@ -2,23 +2,23 @@ require "enumerable"
 require "pointer"
 require "range"
 
-generic class Array
+class Array(T)
   include Enumerable
 
   def initialize(initial_capacity = 16)
     @length = 0
     @capacity = initial_capacity
-    @buffer = Pointer.malloc(initial_capacity)
+    @buffer = Pointer(T).malloc(initial_capacity)
   end
 
-  def initialize(size, value)
+  def initialize(size, value : T)
     @length = size
     @capacity = size
-    @buffer = Pointer.malloc(size, value)
+    @buffer = Pointer(T).malloc(size, value)
   end
 
   def self.new(size)
-    ary = Array.new(size)
+    ary = Array(T).new(size)
     ary.length = size
     size.times do |i|
       ary.buffer[i] = yield i
@@ -47,26 +47,26 @@ generic class Array
     @buffer[index]
   end
 
-  def []=(index : Int, value)
+  def []=(index : Int, value : T)
     index += length if index < 0
     @buffer[index] = value
   end
 
-  def [](range : Range)
+  def [](range : Range(Int, Int))
     from = range.begin
     from += length if from < 0
     to = range.end
     to += length if to < 0
     to -= 1 if range.excludes_end?
     length = to - from + 1
-    length <= 0 ? [] : self[from, length]
+    length <= 0 ? Array(T).new : self[from, length]
   end
 
   def [](start : Int, count : Int)
-    Array.new(count) { |i| @buffer[start + i] }
+    Array(T).new(count) { |i| @buffer[start + i] }
   end
 
-  def push(value)
+  def push(value : T)
     check_needs_resize
     @buffer[@length] = value
     @length += 1
@@ -87,11 +87,11 @@ generic class Array
     value
   end
 
-  def unshift(obj)
+  def unshift(obj : T)
     insert 0, obj
   end
 
-  def <<(value)
+  def <<(value : T)
     push(value)
   end
 
@@ -103,7 +103,7 @@ generic class Array
     self[@length - 1]
   end
 
-  def insert(index : Int, obj)
+  def insert(index : Int, obj : T)
     check_needs_resize
     index += length if index < 0
     (@buffer + index + 1).memmove(@buffer + index, length - index)
@@ -148,9 +148,9 @@ generic class Array
     end
   end
 
-  def &(other : Array)
-    hash = other.each_with_object({}) { |obj, hash| hash[obj] = true }
-    ary = Array.new(Math.min(length, other.length))
+  def &(other : Array(U))
+    hash = other.each_with_object(Hash(T, Bool).new) { |obj, hash| hash[obj] = true }
+    ary = Array(T).new(Math.min(length, other.length))
     i = 0
     each do |obj|
       if hash[obj]
@@ -162,9 +162,9 @@ generic class Array
     ary
   end
 
-  def |(other : Array)
-    ary = Array.new(length + other.length)
-    hash = {}
+  def |(other : Array(U))
+    ary = Array(T | U).new(length + other.length)
+    hash = Hash(T, Bool).new
     i = 0
     each do |obj|
       ary.buffer[i] = obj
@@ -181,9 +181,9 @@ generic class Array
     ary
   end
 
-  def -(other : Array)
-    ary = Array.new(length - other.length)
-    hash = other.each_with_object({}) { |obj, hash| hash[obj] = true }
+  def -(other : Array(U))
+    ary = Array(T).new(length - other.length)
+    hash = other.each_with_object(Hash(T, Bool).new) { |obj, hash| hash[obj] = true }
     each do |obj|
       ary << obj unless hash[obj]
     end
@@ -198,17 +198,9 @@ generic class Array
     delete nil
   end
 
-  def flatten
-    ary = Array.new(length)
-    flatten_append ary, self, false
-    ary
-  end
-
-  def flatten!
-    ary = Array.new(length)
-    modified = flatten_append ary, self, false
-    replace ary
-    modified
+  def flatten(target : Array(U))
+    flatten_append target, self, false
+    target
   end
 
   def map!
@@ -226,7 +218,7 @@ generic class Array
   end
 
   def reverse
-    ary = Array.new(length)
+    ary = Array(T).new(length)
     i = 0
     reverse_each do |obj|
       ary.buffer[i] = obj
@@ -283,9 +275,9 @@ generic class Array
     max
   end
 
-  def +(other : Array)
+  def +(other : Array(U))
     new_length = length + other.length
-    ary = Array.new(new_length)
+    ary = Array(T | U).new(new_length)
     ary.length = new_length
     ary.buffer.memcpy(buffer, length)
     (ary.buffer + length).memcpy(other.buffer, other.length)
@@ -299,7 +291,7 @@ generic class Array
     self
   end
 
-  def ==(other : Array)
+  def ==(other : Array(U))
     return false if @length != other.length
     each_with_index do |item, i|
       return false if item != other[i]
@@ -340,7 +332,7 @@ generic class Array
     @buffer = @buffer.realloc(@capacity)
   end
 
-  def flatten_append(target, source : Array, modified)
+  def flatten_append(target, source : Array(U), modified)
     source.each do |obj|
       modified |= flatten_append target, obj, true
     end

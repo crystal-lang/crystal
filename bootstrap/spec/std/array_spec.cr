@@ -28,7 +28,7 @@ describe "Array" do
     end
 
     it "gets on empty range" do
-      [1, 2, 3][3 .. 1].should eq([])
+      [1, 2, 3][3 .. 1].should eq([] of Int)
     end
 
     it "gets with start and count" do
@@ -52,19 +52,19 @@ describe "Array" do
 
   describe "empty" do
     it "is empty" do
-      [].empty?.should be_true
+      ([] of Int).empty?.should be_true
     end
 
     it "has length 0" do
-      [].length.should eq(0)
+      ([] of Int).length.should eq(0)
     end
   end
 
   describe "==" do
     it "compare empty" do
-      [].should eq([])
-      [1].should_not eq([])
-      [].should_not eq([1])
+      ([] of Int).should eq([] of Int)
+      [1].should_not eq([] of Int)
+      ([] of Int).should_not eq([1])
     end
 
     it "compare elements" do
@@ -167,7 +167,7 @@ describe "Array" do
     assert do
       a = [1, 2, 3]
       a.clear
-      a.should eq([])
+      a.should eq([] of Int)
     end
   end
 
@@ -196,29 +196,15 @@ describe "Array" do
   describe "flatten" do
     assert do
       a = [[1, 2], 3, [4, [5, 6]]]
-      a.flatten.should eq([1, 2, 3, 4, 5, 6])
+      a.flatten([] of Int).should eq([1, 2, 3, 4, 5, 6])
       a.should eq([[1, 2], 3, [4, [5, 6]]])
-    end
-  end
-
-  describe "flatten!" do
-    it "returns true if modifications were made" do
-      a = [[1, 2], 3, [4, [5, 6]]]
-      a.flatten!.should be_true
-      a.should eq([1, 2, 3, 4, 5, 6])
-    end
-
-    it "returns false if no modifications were made" do
-      a = [1, 2]
-      a.flatten!.should be_false
-      a.should eq([1, 2])
     end
   end
 
   describe "map" do
     assert do
       a = [1, 2, 3]
-      a.map { |x| x * 2 }.should eq([2, 4, 6])
+      a.map([] of Int) { |x| x * 2 }.should eq([2, 4, 6])
       a.should eq([1, 2, 3])
     end
   end
@@ -239,9 +225,9 @@ describe "Array" do
     end
 
     it "shifts when empty" do
-      a = []
+      a = [] of Int
       a.shift.should be_nil
-      a.should eq([])
+      a.should eq([] of Int)
     end
   end
 

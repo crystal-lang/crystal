@@ -9,6 +9,15 @@ describe 'Type inference: def overload' do
     assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo') { double }
   end
 
+  it "types a call with overload with yield after typing another call without yield" do
+    assert_type(%q(
+      def foo; yield; 1; end
+      def foo; 2.5; end
+      foo
+      foo {}
+    )) { int }
+  end
+
   it "types a call with overload with yield the other way" do
     assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo { 1 }') { int }
   end
@@ -206,6 +215,210 @@ describe 'Type inference: def overload' do
 
       a = A.new
       a.foo(B.new)
+    )) { int }
+  end
+
+  it "matches types with free variables" do
+    assert_type(%Q(
+      require "array"
+      def foo(x : Array(T), y : T)
+        1
+      end
+
+      def foo(x, y)
+        1.5
+      end
+
+      foo([1], 1)
+    )) { int }
+  end
+
+  it "prefer more specifc overload than one with free variables" do
+    assert_type(%Q(
+      require "array"
+      def foo(x : Array(T), y : T)
+        1
+      end
+
+      def foo(x : Array(Int), y : Int)
+        1.5
+      end
+
+      foo([1], 1)
+    )) { double }
+  end
+
+  it "accept overload with nilable type restriction" do
+    assert_type(%Q(
+      def foo(x : Int?)
+        1
+      end
+
+      foo(1)
+    )) { int }
+  end
+
+  it "dispatch call to def with restrictions" do
+    assert_type(%Q(
+      def foo(x : Value)
+        1.1
+      end
+
+      def foo(x : Int)
+        1
+      end
+
+      a = 1; a = 1.1
+      foo(a)
+    )) { union_of(int, double) }
+  end
+
+  it "dispatch call to def with restrictions" do
+    assert_type(%Q(
+      class Foo(T)
+      end
+
+      def foo(x : T)
+        Foo(T).new
+      end
+
+      foo 1
+    )) { "Foo".generic("T" => int) }
+  end
+
+  it "can call overload with generic restriction" do
+    assert_type(%q(
+      class Foo(T)
+      end
+
+      def foo(x : Foo)
+        1
+      end
+
+      foo(Foo(Int).new)
+    )) { int }
+  end
+
+  it "restrict matches to minimum necessary 1" do
+    assert_type(%q(
+      def coco(x : Int, y); 1; end
+      def coco(x, y : Int); 1.5; end
+      def coco(x, y); 'a'; end
+
+      coco 1, 1
+    )) { int }
+  end
+
+  it "single type restriction wins over union" do
+    assert_type(%q(
+      class Foo; end
+      class Bar < Foo ;end
+
+      def foo(x : Foo | Bar)
+        1.1
+      end
+
+      def foo(x : Foo)
+        1
+      end
+
+      foo(Foo.new || Bar.new)
+    )) { int }
+  end
+
+  it "compare self type with others" do
+    assert_type(%q(
+      class Foo
+        def foo(x : Int)
+          1.1
+        end
+
+        def foo(x : self)
+          1
+        end
+      end
+
+      x = Foo.new.foo(Foo.new)
+    )) { int }
+  end
+
+  it "uses method defined in base class if the restriction doesn't match" do
+    assert_type(%q(
+      class Foo
+        def foo(x)
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo(x : Double)
+          1.1
+        end
+      end
+
+      Bar.new.foo(1)
+    )) { int }
+  end
+
+  it "lookup matches in hierarchy type inside union" do
+    assert_type(%q(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz
+        def foo
+          'a'
+        end
+      end
+
+      a = Foo.new || Bar.new || Baz.new
+      a.foo
+    )) { union_of(int, char) }
+  end
+
+  it "filter union type with hierarchy" do
+    assert_type(%q(
+      class Foo
+      end
+
+      class Bar < Foo
+        def bar
+          1
+        end
+      end
+
+      def foo(x : Bar)
+        x.bar
+      end
+
+      def foo(x)
+        1.1
+      end
+
+      foo(nil || Foo.new || Bar.new)
+    )) { union_of(int, double) }
+  end
+
+  it "restrict hierarchy type with hierarchy type" do
+    assert_type(%q(
+      def foo(x : T, y : T)
+        1
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      x = Foo.new || Bar.new
+      foo(x, x)
     )) { int }
   end
 end

@@ -24,41 +24,52 @@ module Crystal
     end
 
     def end_visit_call(node)
-      return if @fixed[node.target_def]
-      @fixed[node.target_def] = true
+      return unless node.target_defs
 
-      if node.target_def
-        node.target_def.type = @mod.nil unless node.target_def.type
-        node.target_def.accept_children self
+      node.target_defs.each do |target_def|
+        next if @fixed[target_def]
+        @fixed[target_def] = true
+
+        if target_def
+          target_def.type = @mod.nil unless target_def.type
+          target_def.accept_children self
+        end
       end
     end
 
-    def end_visit_array_literal(node)
+    def visit_array_literal(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_range_literal(node)
+    def visit_range_literal(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_regexp_literal(node)
+    def visit_regexp_literal(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_hash_literal(node)
+    def visit_hash_literal(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_require(node)
+    def visit_require(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_and(node)
+    def visit_and(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
-    def end_visit_or(node)
+    def visit_or(node)
       node.expanded.accept self if node.expanded
+      false
     end
 
     def end_visit_ident(node)
@@ -80,7 +91,8 @@ module Crystal
 
       case type
       when ObjectType
-        type.instance_vars.each do |name, ivar|
+        type.each_instance_var do |name, ivar|
+          ivar.type = @mod.nil unless ivar.type
           fix_node(ivar)
         end
       when PointerType

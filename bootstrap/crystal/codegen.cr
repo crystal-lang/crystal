@@ -37,7 +37,7 @@ module Crystal
       @node = node
       @llvm_mod = LLVM::Module.new("Crystal")
       ret_type = node.type.llvm_type
-      @fun = @llvm_mod.functions.add("crystal_main", [], ret_type)
+      @fun = @llvm_mod.functions.add("crystal_main", [] of LLVM::Type, ret_type)
       @builder = LLVM::Builder.new
       entry_block_chain = new_entry_block_chain ["alloca", "const", "entry"]
       @alloca_block, @const_block, @entry_block = entry_block_chain[0], entry_block_chain[1], entry_block_chain[2]
@@ -50,7 +50,7 @@ module Crystal
       last = @last
       last.is_a?(LibLLVM::ValueRef) ? @builder.ret(last) : @builder.ret
 
-      @fun = @llvm_mod.functions.add "main", [], LLVM::Int32
+      @fun = @llvm_mod.functions.add "main", [] of LLVM::Type, LLVM::Int32
       entry = new_block "entry"
       @builder.position_at_end entry
       @builder.call @llvm_mod.functions["crystal_main"]
@@ -111,7 +111,7 @@ module Crystal
     end
 
     def new_blocks(names)
-      names.map { |name| new_block name }
+      names.map([] of LibLLVM::BasicBlockRef) { |name| new_block name }
     end
   end
 end

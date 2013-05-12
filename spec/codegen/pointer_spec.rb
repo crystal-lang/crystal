@@ -27,31 +27,8 @@ describe 'Code gen: pointer' do
     run('a = 1; b = a.ptr; b.value = 2; a').to_i.should eq(2)
   end
 
-  it "set pointer of instance var value" do
-    run(%q(
-      require "nil"
-
-      class Foo
-        def foo
-          p = @value.ptr
-          p.value = 1
-        end
-        def value
-          @value
-        end
-      end
-
-      f = Foo.new
-      f.foo
-      f.value.to_i)).to_i.should eq(1)
-  end
-
   it "get value of pointer to union" do
     run('a = 1.1; a = 1; b = a.ptr; b.value.to_i').to_i.should eq(1)
-  end
-
-  it "set value of pointer to union" do
-    run('a = 1.1; p = a.ptr; p.value = 1; a.to_i').to_i.should eq(1)
   end
 
   it "increment pointer" do
@@ -72,11 +49,11 @@ describe 'Code gen: pointer' do
   end
 
   it "codegens malloc" do
-    run(%q(p = Pointer.malloc(10); p.value = 1; p.value + 1)).to_i.should eq(2)
+    run(%q(p = Pointer(Int).malloc(10); p.value = 1; p.value + 1)).to_i.should eq(2)
   end
 
   it "codegens realloc" do
-    run(%q(p = Pointer.malloc(10); p.value = 1; x = p.realloc(20); x.value + 1)).to_i.should eq(2)
+    run(%q(p = Pointer(Int).malloc(10); p.value = 1; x = p.realloc(20); x.value + 1)).to_i.should eq(2)
   end
 
   it "codegens pointer cast" do

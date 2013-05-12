@@ -36,11 +36,13 @@ describe Parser do
   it_parses ":foo", SymbolLiteral.new("foo")
   it_parses "puts :foo.to_s", Call.new(nil, 'puts', [Call.new(SymbolLiteral.new("foo"), "to_s")])
 
-  it_parses "[]", [].array
   it_parses "[1, 2]", [1.int, 2.int].array
   it_parses "[\n1, 2]", [1.int, 2.int].array
   it_parses "[1,\n 2,]", [1.int, 2.int].array
   it_parses "%w(one two three)", ["one".string, "two".string, "three".string].array
+
+  it_parses "[] of Int", [].array_of(Ident.new(["Int"]))
+  it_parses "[1, 2] of Int", [1.int, 2.int].array_of(Ident.new(["Int"]))
 
   it_parses "-x", Call.new("x".call, :"-@")
   it_parses "+x", Call.new("x".call, :"+@")
@@ -114,8 +116,9 @@ describe Parser do
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int)], nil)
   it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", nil, 'Int'.ident)], nil)
   it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, 'Int'.ident)], nil)
-  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, :self)], nil)
-  it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, :self)], nil)
+  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfType.instance)], nil)
+  it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.instance)], nil)
+  it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Double'.ident]))], nil)
   it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, true)
   it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)], nil)
 
@@ -191,7 +194,12 @@ describe Parser do
   it_parses "class Foo\nend", ClassDef.new("Foo")
   it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
   it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
-  it_parses "generic class Foo; end", ClassDef.new("Foo", nil, nil, true)
+  it_parses "class Foo(T); end", ClassDef.new("Foo", nil, nil, ["T"])
+
+  it_parses "Foo(T)", NewGenericClass.new("Foo".ident, ["T".ident])
+  it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident])])
+  it_parses "Foo(Bar(T | U))", NewGenericClass.new("Foo".ident, [NewGenericClass.new("Bar".ident, [IdentUnion.new(["T".ident, "U".ident])])])
+  it_parses "Foo(T?)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, Ident.new(["Nil"], true)])])
 
   it_parses "module Foo; end", ModuleDef.new("Foo")
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [], nil)])
@@ -254,9 +262,7 @@ describe Parser do
 
   it_parses %Q(A.new("x", B.new("y"))), Call.new("A".ident, "new", ["x".string, Call.new("B".ident, "new", ["y".string])])
 
-  it_parses "foo []", Call.new(nil, "foo", [[].array])
   it_parses "foo [1]", Call.new(nil, "foo", [[1.int].array])
-  it_parses "foo.bar []", Call.new("foo".call, "bar", [[].array])
   it_parses "foo.bar [1]", Call.new("foo".call, "bar", [[1.int].array])
 
   it_parses "class Foo; end\nwhile true; end", [ClassDef.new('Foo'), While.new(true.bool)]
@@ -322,12 +328,14 @@ describe Parser do
   it_parses "foo out x; x", [Call.new(nil, 'foo', [Var.new('x').tap { |v| v.out = true }]), Var.new('x')]
   it_parses "foo(out x); x", [Call.new(nil, 'foo', [Var.new('x').tap { |v| v.out = true }]), Var.new('x')]
 
-  it_parses "{1 => 2, 3 => 4}", HashLiteral.new([1.int, 2.int, 3.int, 4.int])
-  it_parses "{a: 1, b: 2}", HashLiteral.new(['a'.symbol, 1.int, 'b'.symbol, 2.int])
-  it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(['a'.symbol, 1.int, 3.int, 4.int, 'b'.symbol, 2.int])
+  it_parses "{1 => 2, 3 => 4}", HashLiteral.new([1.int, 3.int], [2.int, 4.int])
+  it_parses "{a: 1, b: 2}", HashLiteral.new(['a'.symbol, 'b'.symbol], [1.int, 2.int])
+  it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(['a'.symbol, 3.int, 'b'.symbol], [1.int, 4.int, 2.int])
+
+  it_parses "{} of Int => Double", HashLiteral.new([], [], Ident.new(["Int"]), Ident.new(["Double"]))
 
   it_parses %q(require "foo"), Require.new('foo'.string)
-  it_parses %q(require "foo"; []), [Require.new('foo'.string), [].array]
+  it_parses %q(require "foo"; [1]), [Require.new('foo'.string), [1.int].array]
   it_parses %Q(require "foo"\nif true; end), [Require.new('foo'.string), If.new(true.bool)]
 
   it_parses %q(case 1; when 1; 2; else; 3; end), Case.new(1.int, [When.new([1.int], 2.int)], 3.int)
@@ -337,4 +345,11 @@ describe Parser do
 
   it_parses %q(case 1; when 1 then 2; else; 3; end), Case.new(1.int, [When.new([1.int], 2.int)], 3.int)
   it_parses %Q(case 1\nwhen 1\n2\nend\nif a\nend), [Case.new(1.int, [When.new([1.int], 2.int)]), If.new('a'.call)]
+
+  it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
+
+  it "keeps instance variables declared in def" do
+    node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
+    node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
+  end
 end

@@ -2,16 +2,16 @@ require "array"
 require "int"
 require "nil"
 
-generic class Hash
+class Hash(K, V)
   def initialize
-    @buckets = Array.new(17, nil)
+    @buckets = Array(Array(Entry(K, V))?).new(17, nil)
     @length = 0
   end
 
-  def []=(key, value)
+  def []=(key : K, value : V)
     index = bucket_index key
-    unless bucket = @buckets[index]
-      @buckets[index] = bucket = []
+    if (bucket = @buckets[index]).nil?
+      @buckets[index] = bucket = Array(Entry(K, V)).new
     end
     bucket.each do |entry|
       if key == entry.key
@@ -19,11 +19,11 @@ generic class Hash
       end
     end
     @length += 1
-    entry = Entry.new(key, value)
+    entry = Entry(K, V).new(key, value)
     bucket.push entry
-    @last.next = entry if @last
+    @last.next = entry unless @last.nil?
     @last = entry
-    @first = entry unless @first
+    @first = entry if @first.nil?
     value
   end
 
@@ -73,16 +73,22 @@ generic class Hash
 
   def each
     current = @first
-    while current
+    while !current.nil?
       yield current.key, current.value
       current = current.next
     end
   end
 
   def keys
-    keys = []
+    keys = Array(K).new
     each { |key| keys << key }
     keys
+  end
+
+  def values
+    values = Array(V).new
+    each { |key, value| values << value }
+    values
   end
 
   def ==(other : self)
@@ -114,8 +120,8 @@ generic class Hash
     key.hash % @buckets.length
   end
 
-  generic class Entry
-    def initialize(key, value)
+  class Entry(K, V)
+    def initialize(key : K, value : V)
       @key = key
       @value = value
     end
@@ -128,7 +134,7 @@ generic class Hash
       @value
     end
 
-    def value=(v)
+    def value=(v : V)
       @value = v
     end
 

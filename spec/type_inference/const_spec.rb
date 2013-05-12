@@ -4,7 +4,7 @@ describe 'Type inference: const' do
   it "types a constant" do
     input = parse "A = 1"
     mod = infer_type input
-    input.target.type.should eq(mod.int)
+    input.target.type.should be_nil # Don't type value until needed
   end
 
   it "types a constant reference" do

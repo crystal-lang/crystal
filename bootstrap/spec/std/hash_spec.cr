@@ -4,12 +4,12 @@ require "spec"
 describe "Hash" do
   describe "empty" do
     it "length should be zero" do
-      {}.length.should eq(0)
+      ({} of Int => Int).length.should eq(0)
     end
   end
 
   it "sets and gets" do
-    a = {}
+    a = {} of Int => Int
     a[1] = 2
     a[1].should eq(2)
   end
@@ -25,8 +25,8 @@ describe "Hash" do
   end
 
   it "get array of keys" do
-    a = {}
-    a.keys.should eq([])
+    a = {} of Symbol => Int
+    a.keys.should eq([] of Symbol)
     a[:foo] = 1
     a[:bar] = 2
     a.keys.should eq([:foo, :bar])
