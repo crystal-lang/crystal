@@ -209,4 +209,24 @@ describe 'Code gen: hierarchy type' do
       a.to_s
       ))
   end
+
+  pending "codegens virtual call with explicit self" do
+    run(%q(
+      class Foo
+        def foo
+          self.bar
+        end
+
+        def bar
+          1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      f = Foo.new || Bar.new
+      f.foo
+      )).to_i.should eq(1)
+  end
 end
