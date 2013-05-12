@@ -837,12 +837,7 @@ module Crystal
 
         if node.obj.type.is_a?(ObjectType) && !node.obj.type.equal?(node.target_def.owner)
           if node.target_def.owner.is_a?(HierarchyType)
-            # Box object into hierarchy type
-            hierarchy_type = alloca node.target_def.owner.llvm_type
-            type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
-            @builder.store int(node.obj.type.type_id), type_id_ptr
-            @builder.store @builder.bit_cast(@last, LLVM::Pointer(LLVM::Int8)), value_ptr
-            @last = @builder.load(hierarchy_type)
+            @last = box_object_in_hierarchy(node.obj.type, node.target_def.owner, @last)
           else
             # Cast value
             @last = @builder.bit_cast(@last, LLVM::Pointer(node.target_def.owner.llvm_type))
@@ -853,7 +848,13 @@ module Crystal
 
         call_args << (node.obj.type.is_a?(HierarchyType) ? @builder.load(@last) : @last)
       elsif owner
-        if owner.is_a?(ObjectType) && !owner.equal?(@vars['self'][:type])
+        if owner.is_a?(HierarchyType) && !owner.equal?(@vars['self'][:type])
+          hierarchy_type = alloca owner.llvm_type
+          type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
+          @builder.store int(@vars['self'][:type].type_id), type_id_ptr
+          @builder.store @builder.bit_cast(llvm_self, LLVM::Pointer(LLVM::Int8)), value_ptr
+          call_args << @builder.load(hierarchy_type)
+        elsif owner.is_a?(ObjectType) && !owner.equal?(@vars['self'][:type])
           call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
         else
           call_args << llvm_self
@@ -946,6 +947,14 @@ module Crystal
       end
 
       false
+    end
+
+    def box_object_in_hierarchy(object, hierarchy, value)
+      hierarchy_type = alloca hierarchy.llvm_type
+      type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
+      @builder.store int(object.type_id), type_id_ptr
+      @builder.store @builder.bit_cast(value, LLVM::Pointer(LLVM::Int8)), value_ptr
+      @builder.load(hierarchy_type)
     end
 
     def declare_out_arguments(call)

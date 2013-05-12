@@ -134,4 +134,27 @@ describe 'Code gen: hierarchy type' do
       f.foo
     )).to_i.should eq(1)
   end
+
+  it "codegens non-virtual call that calls virtual call to another virtual call" do
+    run(%q(
+      class Foo
+        def foo
+          foo2
+        end
+
+        def foo2
+          1
+        end
+      end
+
+      class Bar < Foo
+        def bar
+          foo
+        end
+      end
+
+      bar = Bar.new
+      bar.bar
+      )).to_i.should eq(1)
+  end
 end
