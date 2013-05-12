@@ -28,6 +28,11 @@ We want full OOP.
 
 Oh, and we don't want to write C code to make the code run faster.
 
+Status
+------
+
+The project is in pre-alpha stage: we are still designing the language and prototying a compiler in Ruby, while at the same time writing a compiler in Crystal.
+
 Installing
 ----------
 
