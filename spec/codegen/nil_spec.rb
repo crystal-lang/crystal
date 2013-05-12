@@ -131,4 +131,17 @@ describe 'Code gen: nil' do
       a = b
       )).to_string.should eq('foo')
   end
+
+  it "codegens nil instance var" do
+    run(%q(
+      class Foo
+        def bar
+          @x
+        end
+      end
+
+      f = Foo.new
+      f.bar
+      ))
+  end
 end
