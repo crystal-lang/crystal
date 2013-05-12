@@ -952,10 +952,14 @@ module Crystal
 
   class Const < ContainedType
     attr_accessor :value
+    attr_accessor :types
+    attr_accessor :scope
 
-    def initialize(name, value, container = nil)
+    def initialize(name, value, container = nil, types = nil, scope = nil)
       super(name, container)
       @value = value
+      @types = types
+      @scope = scope
     end
 
     def to_s

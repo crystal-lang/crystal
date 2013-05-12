@@ -388,7 +388,7 @@ module Crystal
 
         target.bind_to value
 
-        current_type.types[target.names.first] = Const.new(target.names.first, value, current_type)
+        current_type.types[target.names.first] = Const.new(target.names.first, value, current_type, @types.clone, @scope)
       when Global
         value.accept self
 
@@ -465,7 +465,12 @@ module Crystal
     def visit_ident(node)
       type = lookup_ident_type(node)
       if type.is_a?(Const)
-        type.value.accept self unless type.value.type
+        unless type.value.type
+          old_types, old_scope = @types, @scope
+          @types, @scope = type.types, type.scope
+          type.value.accept self
+          @types, @scope = old_types, old_scope
+        end
         node.target_const = type
         node.bind_to(type.value)
       else
