@@ -728,7 +728,12 @@ module Crystal
 
       macro_name = "#macro_#{untyped_def.object_id}"
 
-      typed_def = Def.new(macro_name, untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
+      macros_cache_key = [untyped_def.object_id] + node.args.map { | arg| arg.class.object_id }
+      unless typed_def = mod.macros_cache[macros_cache_key]
+        typed_def = Def.new(macro_name, untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
+        mod.macros_cache[macros_cache_key] = typed_def
+      end
+
       macro_call = Call.new(nil, macro_name, node.args.map(&:to_crystal_node))
       macro_nodes = Expressions.new [typed_def, macro_call]
 

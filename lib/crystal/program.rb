@@ -8,12 +8,14 @@ module Crystal
 
     attr_accessor :symbols
     attr_accessor :global_vars
+    attr_accessor :macros_cache
 
     def initialize
       super('main')
 
       @generic_types = {}
       @unions = {}
+      @macros_cache = {}
 
       object = @types["Object"] = ObjectType.new "Object", nil, self
       value = @types["Value"] = ObjectType.new "Value", object, self
