@@ -27,7 +27,7 @@ class IO
   end
 
   def gets
-    buffer = Pointer.malloc(0).as(Char)
+    buffer = Pointer(Char).malloc(0)
     buffer_ptr = buffer.ptr
     cap = 0L
     length = C.getline(buffer_ptr, cap.ptr, input)
@@ -59,7 +59,7 @@ class File < IO
     C.fseek(f, 0L, C::SEEK_END)
     size = C.ftell(f)
     C.fseek(f, 0L, C::SEEK_SET)
-    str = Pointer.malloc(size).as(Char)
+    str = Pointer(Char).malloc(size)
     C.fread(str, size, 1L, f)
     C.fclose(f)
     String.from_cstr(str)
