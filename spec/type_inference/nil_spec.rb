@@ -28,6 +28,6 @@ describe 'Type inference: nil' do
 
       f = Foo.new
       f.var.last
-    )) { union_of(int) }
+    )) { int }
   end
 end
