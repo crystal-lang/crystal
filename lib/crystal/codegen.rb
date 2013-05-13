@@ -355,6 +355,9 @@ module Crystal
         else
           @last = var[:ptr]
           @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+          if node.type.is_a?(HierarchyType)
+            @last = box_object_in_hierarchy(var[:type].nilable_type, node.type, @last, !var[:treated_as_pointer])
+          end
         end
       elsif node.type.union?
         @last = @builder.bit_cast var[:ptr], LLVM::Pointer(node.llvm_type)

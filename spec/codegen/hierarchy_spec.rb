@@ -229,4 +229,26 @@ describe 'Code gen: hierarchy type' do
       f.foo
       )).to_i.should eq(1)
   end
+
+  it "codegens virtual call with explicit self and nilable type" do
+    run(%q(
+      require "prelude"
+
+      class Foo
+        def foo
+          self.bar
+        end
+
+        def bar
+          1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      f = Bar.new || nil
+      f.foo.to_i
+      )).to_i.should eq(1)
+  end
 end
