@@ -251,4 +251,39 @@ describe 'Code gen: hierarchy type' do
       f.foo.to_i
       )).to_i.should eq(1)
   end
+
+  it "initializes ivars to nil even if object never instantiated" do
+    run(%q(
+      require "prelude"
+
+      class Foo
+        def foo
+          bar self
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+        def initialize
+          @x = Object.new
+        end
+
+        def x
+          @x
+        end
+      end
+
+      def bar(x)
+      end
+
+      def bar(x : Baz)
+        x.x.to_s
+      end
+
+      f = Foo.new || Bar.new
+      f.foo
+      ))
+  end
 end

@@ -8,6 +8,7 @@ module Crystal
 
     attr_accessor :symbols
     attr_accessor :global_vars
+    attr_accessor :generic_types
     attr_accessor :macros_cache
 
     def initialize
@@ -58,6 +59,14 @@ module Crystal
 
     def program
       self
+    end
+
+    def macro_llvm_mod
+      @macro_llvm_mod ||= LLVM::Module.new "macros"
+    end
+
+    def macro_engine
+      @macro_engine ||= LLVM::JITCompiler.new macro_llvm_mod
     end
 
     def type_merge(*types)

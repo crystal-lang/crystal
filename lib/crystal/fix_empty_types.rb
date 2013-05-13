@@ -2,7 +2,21 @@ require_relative 'type_inference.rb'
 
 module Crystal
   def fix_empty_types(node, mod)
-    node.accept FixEmptyTypesVisitor.new(mod)
+    visitor = FixEmptyTypesVisitor.new(mod)
+    node.accept visitor
+    fix_empty_types_in_types mod.types, visitor, true
+    fix_empty_types_in_types mod.generic_types, visitor, false
+  end
+
+  def fix_empty_types_in_types(types, visitor, skip_generics)
+    types.each do |name, type|
+      unless type.generic && skip_generics
+        visitor.fix_type type
+      end
+      if type.is_a?(ModuleType) && type.types
+        fix_empty_types_in_types type.types, visitor, skip_generics
+      end
+    end
   end
 
   class FixEmptyTypesVisitor < Visitor

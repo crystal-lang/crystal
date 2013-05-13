@@ -723,9 +723,6 @@ module Crystal
       untyped_def = node.scope.lookup_macro(node.name, node.args.length) || mod.lookup_macro(node.name, node.args.length)
       return false unless untyped_def
 
-      @@macro_llvm_mod ||= LLVM::Module.new "macros"
-      @@macro_engine ||= LLVM::JITCompiler.new @@macro_llvm_mod
-
       macro_name = "#macro_#{untyped_def.object_id}"
 
       macros_cache_key = [untyped_def.object_id] + node.args.map { | arg| arg.class.object_id }
@@ -746,15 +743,15 @@ module Crystal
       macro_arg_types = macro_call.args.map(&:type)
       fun = untyped_def.lookup_instance(macro_arg_types)
       unless fun
-        Crystal.build macro_nodes, mod, nil, false, @@macro_llvm_mod
-        fun = @@macro_llvm_mod.functions[macro_call.target_def.mangled_name(nil)]
+        Crystal.build macro_nodes, mod, nil, false, mod.macro_llvm_mod
+        fun = mod.macro_llvm_mod.functions[macro_call.target_def.mangled_name(nil)]
         untyped_def.add_instance fun, macro_arg_types
       end
 
       mod.load_libs
 
       macro_args = node.args.map &:to_crystal_binary
-      macro_value = @@macro_engine.run_function fun, *macro_args
+      macro_value = mod.macro_engine.run_function fun, *macro_args
 
       generated_source = macro_value.to_string
 
