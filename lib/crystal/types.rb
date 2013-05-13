@@ -380,12 +380,11 @@ module Crystal
   end
 
   class ClassType < ModuleType
+    attr_reader :superclass
+
     def initialize(name, parent_type, container = nil)
       super(name, container, parent_type ? [parent_type] : [])
-    end
-
-    def superclass
-      @superclass ||= @parents.find { |parent| parent.is_a?(ClassType) }
+      @superclass = parent_type
     end
 
     def is_subclass_of?(type)
