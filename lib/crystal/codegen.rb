@@ -860,7 +860,7 @@ module Crystal
             call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
           end
         else
-          call_args << llvm_self
+          call_args << (owner.union? ? @builder.load(llvm_self) : llvm_self)
         end
       end
 
@@ -1087,7 +1087,7 @@ module Crystal
         new_entry_block
 
         args.each_with_index do |arg, i|
-          if self_type && i == 0 || target_def.body.is_a?(Primitive)
+          if self_type && i == 0 && !self_type.union? || target_def.body.is_a?(Primitive)
             @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
           else
             ptr = alloca(arg.llvm_type, arg.name)
@@ -1496,7 +1496,7 @@ module Crystal
 
     def llvm_self_ptr
       if @type.is_a?(HierarchyType)
-        ptr = @builder.extract_value llvm_self, 1
+        ptr = @builder.load(union_value(llvm_self))
         self_ptr = @builder.bit_cast ptr, @type.base_type.llvm_type
       else
         self_ptr = llvm_self

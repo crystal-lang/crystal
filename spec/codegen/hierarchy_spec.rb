@@ -210,7 +210,7 @@ describe 'Code gen: hierarchy type' do
       ))
   end
 
-  pending "codegens virtual call with explicit self" do
+  it "codegens virtual call with explicit self" do
     run(%q(
       class Foo
         def foo
