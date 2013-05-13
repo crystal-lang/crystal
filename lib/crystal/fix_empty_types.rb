@@ -25,10 +25,6 @@ module Crystal
       @fixed = {}
     end
 
-    def visit_any(node)
-      fix_node(node)
-    end
-
     def visit_def(node)
       false
     end
@@ -95,10 +91,6 @@ module Crystal
       false
     end
 
-    def fix_node(node)
-      fix_type(node.type) if node.type
-    end
-
     def fix_type(type)
       return if @fixed[type.object_id]
       @fixed[type.object_id] = true
@@ -107,7 +99,6 @@ module Crystal
       when ObjectType
         type.each_instance_var do |name, ivar|
           ivar.type = @mod.nil unless ivar.type
-          fix_node(ivar)
         end
       when PointerType
         type.var.type = @mod.nil unless type.var.type
