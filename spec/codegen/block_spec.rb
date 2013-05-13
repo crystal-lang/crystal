@@ -654,4 +654,45 @@ describe 'Code gen: block' do
       x
     )).to_i.should eq(1)
   end
+
+  it "block with nilable type" do
+    run(%q(
+      class Foo
+        def foo
+          yield 1
+        end
+      end
+
+      class Bar
+        def foo
+          yield 2
+          Object.new
+        end
+      end
+
+      a = Foo.new || Bar.new
+      a.foo {}
+    ))
+  end
+
+  it "block with nilable type 2" do
+    run(%q(
+      class Foo
+        def foo
+          yield 1
+          nil
+        end
+      end
+
+      class Bar
+        def foo
+          yield 2
+          Object.new
+        end
+      end
+
+      a = Foo.new || Bar.new
+      a.foo {}
+    ))
+  end
  end

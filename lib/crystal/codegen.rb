@@ -914,6 +914,8 @@ module Crystal
           else
             @return_block_table[@builder.insert_block] = @last
           end
+        elsif (node.target_def.body.type.nil? || node.target_def.body.type.equal?(@mod.nil)) && node.type.nilable?
+          @return_block_table[@builder.insert_block] = @builder.int2ptr llvm_nil, node.llvm_type
         end
         @builder.br @return_block
         @builder.position_at_end @return_block
