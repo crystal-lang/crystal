@@ -221,4 +221,13 @@ describe 'Type inference: errors' do
       infer_type nodes
     }.should raise_error(Crystal::Exception, regex("undefined method 'foo'"))
   end
+
+  it "can't do Pointer.malloc without type var" do
+    nodes = parse %(
+      Pointer.malloc(1)
+    )
+    lambda {
+      infer_type nodes
+    }.should raise_error(Crystal::Exception, regex("can't malloc pointer without type, use Pointer(Type).malloc(size)"))
+  end
 end

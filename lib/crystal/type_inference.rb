@@ -810,6 +810,10 @@ module Crystal
     end
 
     def visit_pointer_malloc(node)
+      unless @scope.type_vars["T"].type
+        node.raise "can't malloc pointer without type, use Pointer(Type).malloc(size)"
+      end
+
       node.type = @scope.instance_type
     end
 
