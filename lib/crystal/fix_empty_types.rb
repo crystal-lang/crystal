@@ -4,19 +4,6 @@ module Crystal
   def fix_empty_types(node, mod)
     visitor = FixEmptyTypesVisitor.new(mod)
     node.accept visitor
-    fix_empty_types_in_types mod.types, visitor, true
-    fix_empty_types_in_types mod.generic_types, visitor, false
-  end
-
-  def fix_empty_types_in_types(types, visitor, skip_generics)
-    types.each do |name, type|
-      unless type.generic && skip_generics
-        visitor.fix_type type
-      end
-      if type.is_a?(ModuleType) && type.types
-        fix_empty_types_in_types type.types, visitor, skip_generics
-      end
-    end
   end
 
   class FixEmptyTypesVisitor < Visitor
@@ -89,20 +76,6 @@ module Crystal
     def visit_case(node)
       node.expanded.accept self
       false
-    end
-
-    def fix_type(type)
-      return if @fixed[type.object_id]
-      @fixed[type.object_id] = true
-
-      case type
-      when PointerType
-        type.var.type = @mod.nil unless type.var.type
-      when UnionType
-        type.types.each do |type|
-          fix_type(type)
-        end
-      end
     end
   end
 end
