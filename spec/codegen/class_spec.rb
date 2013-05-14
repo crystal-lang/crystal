@@ -5,8 +5,8 @@ describe 'Code gen: class' do
     run('class Foo; def coco; 1; end; end; Foo.allocate.coco').to_i.should eq(1)
   end
 
-  it "codegens instace method with allocate and instance var" do
-    run('class Foo; def coco; @coco = 1; @coco; end; end; f = Foo.allocate; f.coco').to_i.should eq(1)
+  it "codegens instace method with new and instance var" do
+    run('class Foo; def initialize; @coco = 2; end; def coco; @coco = 1; @coco; end; end; f = Foo.new; f.coco').to_i.should eq(1)
   end
 
   it "codegens instace method with new" do
@@ -20,15 +20,16 @@ describe 'Code gen: class' do
   it "codegens instance var" do
     run(%Q(
       class Foo(T)
-        #{rw 'coco', 'T'}
+        def initialize(coco : T)
+          @coco = coco
+        end
+        def coco
+          @coco
+        end
       end
 
-      f = Foo(Int).new
-      f.coco = 2
-
-      g = Foo(Float).new
-      g.coco = 0.5f
-
+      f = Foo(Int).new(2)
+      g = Foo(Float).new(0.5f)
       f.coco + g.coco
       )).to_f.should eq(2.5)
   end
@@ -47,6 +48,10 @@ describe 'Code gen: class' do
   it "codegens method call of instance var" do
     run(%Q(
       class List
+        def initialize
+          @last = 0
+        end
+
         def foo
           @last = 1
           @last.to_f
@@ -56,22 +61,6 @@ describe 'Code gen: class' do
       l = List.new
       l.foo
       )).to_f.should eq(1.0)
-  end
-
-  it "codegens method call that create instances" do
-    run(%Q(
-      class Foo
-        #{rw :value}
-      end
-
-      def gen
-        Foo.new
-      end
-
-      f = gen
-      f.value = 1
-      f.value
-    )).to_i.should eq(1)
   end
 
   it "codegens new which calls initialize" do
@@ -89,21 +78,6 @@ describe 'Code gen: class' do
       f = Foo.new 1
       f.value
     )).to_i.should eq(1)
-  end
-
-  it "codegens instance with union instance var" do
-    run(%Q(
-      class A
-        #{rw :next}
-      end
-
-      a = A.new
-      a.next = 1
-
-      a = A.new
-      a.next = 2.5f
-      a.next.to_f
-    )).to_f.should eq(2.5)
   end
 
   it "codegens method from another method without obj and accesses instance vars" do

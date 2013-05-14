@@ -32,11 +32,13 @@ describe 'Code gen: union type' do
   it "codegens union type for instance var" do
     run(%Q(
       class Foo
+        def initialize(value)
+          @value = value
+        end
         #{rw :value}
       end
 
-      f = Foo.new
-      f.value = 1
+      f = Foo.new(1)
       f.value = 1.5f
       (f.value + f.value).to_f
     )).to_f.should eq(3)
@@ -62,6 +64,8 @@ describe 'Code gen: union type' do
 
   it "assigns union to union" do
     run(%Q(
+      require "prelude"
+
       class Foo
         def foo(x)
           @x = x
@@ -75,9 +79,9 @@ describe 'Code gen: union type' do
 
       f = Foo.new
       f.foo 1
-      f.foo 2.5f
-      f.x.to_f
-      )).to_f.should eq(2.5)
+      f.foo 'a'
+      f.x.to_i
+      )).to_i.should eq(97)
   end
 
   it "assigns union to larger union" do

@@ -98,6 +98,10 @@ describe 'Code gen: block' do
   it "can set instance vars from yielder function" do
     run(%q(
       class Foo
+        def initialize
+          @x = 1
+        end
+
         def foo
           @x = yield
         end

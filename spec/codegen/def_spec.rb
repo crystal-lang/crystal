@@ -74,6 +74,8 @@ describe 'Code gen: def' do
 
   it "codegens recursive type with union" do
     run(%Q(
+      require "prelude"
+
       class A
        def next=(n)
          @next = n
@@ -92,6 +94,8 @@ describe 'Code gen: def' do
 
   it "codegens with related types" do
     run(%Q(
+      require "prelude"
+
       class A
        def next=(n)
          @next = n

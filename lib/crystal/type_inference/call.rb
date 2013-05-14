@@ -86,8 +86,7 @@ module Crystal
       end
 
       typed_defs = matches.map do |match|
-        typed_def = match.def.lookup_instance(match.arg_types) ||
-                    match.owner.lookup_def_instance(match.def.object_id, match.arg_types) unless block
+        typed_def = match.owner.lookup_def_instance(match.def.object_id, match.arg_types) unless block
         unless typed_def
           # puts "#{owner}##{name}(#{arg_types.join ', '})"
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, owner, match.owner, match.arg_types)

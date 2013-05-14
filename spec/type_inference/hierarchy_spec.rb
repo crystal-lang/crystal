@@ -198,6 +198,6 @@ describe 'Type inference: hierarchy' do
       )
     mod = infer_type nodes
     mod.types["Var"].instance_vars.should be_empty
-    mod.types["Base"].instance_vars["@x"].type.should eq(mod.int)
+    mod.types["Base"].instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int))
   end
 end

@@ -29,7 +29,7 @@ describe 'Type inference: class' do
       f.set
     )
     mod = infer_type input
-    input[1].type.should eq("Foo".generic("T" => mod.int).with_vars("@coco" => mod.int))
+    input[1].type.should eq("Foo".generic("T" => mod.int).with_vars("@coco" => mod.union_of(mod.nil, mod.int)))
   end
 
   it "types instance variable" do
@@ -47,8 +47,8 @@ describe 'Type inference: class' do
       g.set 2.5
     )
     mod = infer_type input
-    input[1].type.should eq("Foo".generic("T" => mod.int).with_vars("@coco" => mod.int))
-    input[3].type.should eq(("Foo").generic("T" => mod.double).with_vars("@coco" => mod.double))
+    input[1].type.should eq("Foo".generic("T" => mod.int).with_vars("@coco" => mod.union_of(mod.nil, mod.int)))
+    input[3].type.should eq(("Foo").generic("T" => mod.double).with_vars("@coco" => mod.union_of(mod.nil, mod.double)))
   end
 
   it "types instance variable on getter" do
@@ -72,8 +72,8 @@ describe 'Type inference: class' do
       g.get
     )
     mod = infer_type input
-    input[3].type.should eq(mod.int)
-    input.last.type.should eq(mod.double)
+    input[3].type.should eq(mod.union_of(mod.nil, mod.int))
+    input.last.type.should eq(mod.union_of(mod.nil, mod.double))
   end
 
   it "types recursive type" do
@@ -96,7 +96,7 @@ describe 'Type inference: class' do
     )
     mod = infer_type input
     node = mod.types["Node"]
-    node.lookup_instance_var("@next").type.should eq(node)
+    node.lookup_instance_var("@next").type.should eq(mod.union_of(mod.nil, node))
     input.last.type.should eq(node)
   end
 

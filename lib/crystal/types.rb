@@ -98,12 +98,12 @@ module Crystal
   end
 
   module DefInstanceContainer
-    def add_def_instance(name, arg_types, typed_def)
-      @def_instances[[name] + arg_types.map(&:object_id)] = typed_def
+    def add_def_instance(def_object_id, arg_types, typed_def)
+      @def_instances[[def_object_id] + arg_types.map(&:object_id)] = typed_def
     end
 
-    def lookup_def_instance(name, arg_types)
-      @def_instances[[name] + arg_types.map(&:object_id)]
+    def lookup_def_instance(def_object_id, arg_types)
+      @def_instances[[def_object_id] + arg_types.map(&:object_id)]
     end
   end
 

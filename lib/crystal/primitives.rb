@@ -4,6 +4,7 @@ module Crystal
   class Program
     def define_primitives
       define_object_primitives
+
       define_value_primitives
       define_bool_primitives
       define_char_primitives
@@ -20,15 +21,43 @@ module Crystal
 
     def define_object_primitives
       object.add_def Def.new(:class, [], ClassMethod.new)
-      no_args_primitive(object, 'nil?', bool) { |b, f| b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0)) }
-      no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
+
+      a_def = no_args_primitive(object, 'nil?', bool) do |b, f|
+        b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0))
+      end
+      instance = a_def.overload [], bool do |b, f|
+        obj = b.extract_value f.params[0], 1
+        b.icmp(:eq, b.ptr2int(obj, LLVM::Int), LLVM::Int(0))
+      end
+      instance.owner = object.hierarchy_type
+      object.hierarchy_type.add_def_instance(a_def.object_id, [], instance)
+
+      a_def = no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end
-      no_args_primitive(object, 'to_cstr', char_pointer) do |b, f, llvm_mod, self_type|
+
+      instance = a_def.overload [], long do |b, f, llvm_mod, self_type|
+        obj = b.extract_value f.params[0], 1
+        b.ptr2int(obj, LLVM::Int64)
+      end
+      instance.owner = object.hierarchy_type
+      object.hierarchy_type.add_def_instance(a_def.object_id, [], instance)
+
+      a_def = no_args_primitive(object, 'to_cstr', char_pointer) do |b, f, llvm_mod, self_type|
         buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
         buffer
       end
+
+      instance = a_def.overload [], char_pointer do |b, f, llvm_mod, self_type|
+        obj = b.extract_value f.params[0], 1
+        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
+        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), obj
+        buffer
+      end
+
+      instance.owner = object.hierarchy_type
+      object.hierarchy_type.add_def_instance(a_def.object_id, [], instance)
     end
 
     def define_value_primitives
@@ -186,13 +215,17 @@ module Crystal
     end
 
     def primitive(owner, name, arg_names)
-      p = owner.add_def Def.new(name, arg_names.map { |x| Arg.new(x) })
-      p.owner = owner
-      yield p
+      a_def = owner.add_def Def.new(name, arg_names.map { |x| Arg.new(x) })
+      a_def.owner = owner
+      yield a_def
+      a_def
     end
 
     def no_args_primitive(owner, name, return_type, &block)
-      primitive(owner, name, []) { |p| p.overload([], return_type, &block) }
+      primitive(owner, name, []) do |a_def|
+        instance = a_def.overload([], return_type, &block)
+        owner.add_def_instance(a_def.object_id, [], instance)
+      end
     end
 
     def self_primitive(owner, name)
@@ -200,9 +233,10 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      p = owner.add_def Def.new(name, args.map { |name, type| Arg.new_with_restriction(name, type) })
-      p.owner = owner
-      p.overload(args.values, return_type, &block)
+      a_def = owner.add_def Def.new(name, args.map { |name, type| Arg.new_with_restriction(name, type) })
+      a_def.owner = owner
+      instance = a_def.overload(args.values, return_type, &block)
+      owner.add_def_instance(a_def.object_id, args.values, instance)
     end
 
     def sprintf(llvm_mod)
@@ -247,7 +281,7 @@ module Crystal
       end
       instance.body = PrimitiveBody.new(block)
       instance.type = return_type
-      add_instance(instance)
+      instance
     end
   end
 

@@ -96,10 +96,6 @@ module Crystal
       @fixed[type.object_id] = true
 
       case type
-      when ObjectType
-        type.each_instance_var do |name, ivar|
-          ivar.type = @mod.nil unless ivar.type
-        end
       when PointerType
         type.var.type = @mod.nil unless type.var.type
       when UnionType

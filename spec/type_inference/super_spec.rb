@@ -7,7 +7,7 @@ describe 'Type inference: super' do
 
   it "types super without arguments and instance variable" do
     assert_type("class Foo; def foo; @x = 1; end; end; class Bar < Foo; def foo; super; end; end; bar = Bar.new; bar.foo; bar") do
-      "Bar".object(x: int)
+      "Bar".object(x: union_of(self.nil, int))
     end
   end
 

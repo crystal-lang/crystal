@@ -336,6 +336,11 @@ module Crystal
       end
 
       var = @scope.lookup_instance_var node.name
+
+      if !var.type && @untyped_def && @untyped_def.name != "initialize"
+        var.bind_to mod.nil_var
+      end
+
       node.bind_to var
       var
     end
@@ -525,7 +530,7 @@ module Crystal
 
         node.mod = mod
         node.new_generic_class = new_generic
-        node.bind_to *node.elements
+        node.set_type(mod.array_of(mod.type_merge(*node.elements.map(&:type))))
       end
 
       new_generic.location = node.location
@@ -558,6 +563,8 @@ module Crystal
 
       if node.of
         node.bind_to exps
+      else
+        node.bind_to *node.elements
       end
 
       false

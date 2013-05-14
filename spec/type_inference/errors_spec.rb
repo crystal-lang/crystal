@@ -106,7 +106,7 @@ describe 'Type inference: errors' do
   end
 
   it "reports error when changing var type and something breaks" do
-    nodes = parse "class Foo; #{rw :value}; end; f = Foo.new; f.value = 1; f.value + 1; f.value = 'a'"
+    nodes = parse "class Foo; def initialize; @value = 1; end; #{rw :value}; end; f = Foo.new; f.value + 1; f.value = 'a'"
 
     lambda {
       infer_type nodes

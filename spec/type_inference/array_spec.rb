@@ -16,4 +16,8 @@ describe 'Type inference: array' do
   it "types non-empty typed array literal of int" do
     assert_type(%q(require "array"; [1, 2, 3] of Int)) { array_of(int) }
   end
+
+  it "types array literal length correctly" do
+    assert_type(%q(require "array"; [1].length)) { int }
+  end
 end
