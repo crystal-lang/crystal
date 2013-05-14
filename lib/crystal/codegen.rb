@@ -1483,6 +1483,10 @@ module Crystal
       @builder.call @mod.realloc(@llvm_mod), buffer, size
     end
 
+    def llvm_puts(string)
+      @builder.call @mod.llvm_puts(@llvm_mod), @builder.global_string_pointer(string)
+    end
+
     def alloca(type, name = '')
       in_alloca_block { @builder.alloca type, name }
     end

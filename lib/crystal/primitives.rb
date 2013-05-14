@@ -232,6 +232,10 @@ module Crystal
     def sqrtf(llvm_mod)
       llvm_mod.functions['llvm.sqrt.f32'] || llvm_mod.functions.add('llvm.sqrt.f32', [LLVM::Float], LLVM::Float)
     end
+
+    def llvm_puts(llvm_mod)
+      llvm_mod.functions['puts'] || llvm_mod.functions.add('puts', [LLVM::Pointer(LLVM::Int8)], LLVM::Int)
+    end
   end
 
   class Def
