@@ -701,8 +701,7 @@ module Crystal
         if nilable?
           @llvm_type = nilable_type.llvm_type
         else
-          @llvm_type = LLVM::Struct(llvm_name)
-          @llvm_type.element_types = [LLVM::Int, llvm_value_type]
+          @llvm_type = LLVM::Type.struct([LLVM::Int, llvm_value_type], true, llvm_name)
         end
       end
       @llvm_type
@@ -971,11 +970,7 @@ module Crystal
 
     attr_accessor :base_type
 
-    LLVM_TYPE = begin
-      llvm_type = LLVM::Struct("Object+")
-      llvm_type.element_types = [LLVM::Int, LLVM::Pointer(LLVM::Int8)]
-      llvm_type
-    end
+    LLVM_TYPE = LLVM::Type.struct([LLVM::Int, LLVM::Pointer(LLVM::Int8)], true, "Object+")
 
     def initialize(base_type)
       @base_type = base_type
