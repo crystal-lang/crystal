@@ -36,6 +36,9 @@ module Crystal
       pointer.type_vars = {"T" => Var.new("T")}
 
       @types["String"] = ObjectType.new "String", object, self
+      string.instance_vars_in_initialize = ['@length', '@c']
+      string.allocated = true
+
       string.lookup_instance_var('@length').type = int
       string.lookup_instance_var('@c').type = char
 

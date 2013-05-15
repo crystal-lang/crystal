@@ -337,8 +337,7 @@ module Crystal
       end
 
       var = @scope.lookup_instance_var node.name
-
-      if !var.type && @untyped_def && @untyped_def.name != "initialize"
+      if !@scope.has_instance_var_in_initialize?(node.name)
         var.bind_to mod.nil_var
       end
 
@@ -506,6 +505,7 @@ module Crystal
       if @scope.generic && @scope.type_vars.any? { |k, v| !v.type }
         node.raise "can't create instance of generic class #{@scope.instance_type} without specifying its type vars"
       end
+      @scope.instance_type.allocated = true
       node.type = @scope.instance_type
     end
 

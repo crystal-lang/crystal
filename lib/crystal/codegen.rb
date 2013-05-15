@@ -827,6 +827,12 @@ module Crystal
         return false
       end
 
+      if node.args.any? { |arg| arg.type && !arg.type.allocated }
+        @builder.unreachable
+        @last = :unreachable
+        return
+      end
+
       declare_out_arguments(node) if node.target_defs
 
       if !node.target_defs || node.target_def.owner.is_subclass_of?(@mod.value)
@@ -1232,15 +1238,17 @@ module Crystal
         call.set_type node.type
         call.accept self
 
-        unless call.returns?
-          if node.type.union?
-            phi_value = alloca node.llvm_type
-            assign_to_union(phi_value, node.type, a_def.type, @last)
-            phi_table[@builder.insert_block] = phi_value
-          elsif node.type.nilable? && @last.type.kind == :integer
-            phi_table[@builder.insert_block] = @builder.int2ptr @last, node.llvm_type
-          else
-            phi_table[@builder.insert_block] = @last
+        if @last != :unreachable
+          unless call.returns?
+            if node.type.union?
+              phi_value = alloca node.llvm_type
+              assign_to_union(phi_value, node.type, a_def.type, @last)
+              phi_table[@builder.insert_block] = phi_value
+            elsif node.type.nilable? && @last.type.kind == :integer
+              phi_table[@builder.insert_block] = @builder.int2ptr @last, node.llvm_type
+            else
+              phi_table[@builder.insert_block] = @last
+            end
           end
         end
 

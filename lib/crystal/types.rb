@@ -55,6 +55,10 @@ module Crystal
       false
     end
 
+    def allocated
+      true
+    end
+
     def to_s
       name
     end
@@ -420,8 +424,10 @@ module Crystal
   class ObjectType < ClassType
     attr_accessor :instance_vars
     attr_accessor :owned_instance_vars
+    attr_accessor :instance_vars_in_initialize
     attr_accessor :depth
     attr_accessor :subclasses
+    attr_accessor :allocated
     @@id = 0
 
     def initialize(name, parent_type = nil, container = nil)
@@ -465,6 +471,14 @@ module Crystal
                 subclass.remove_instance_var(ivar)
               end
             end
+          end
+        end
+
+        if a_def.name == 'initialize'
+          if @instance_vars_in_initialize
+            @instance_vars_in_initialize = @instance_vars_in_initialize & a_def.instance_vars
+          else
+            @instance_vars_in_initialize = a_def.instance_vars
           end
         end
       end
@@ -522,6 +536,10 @@ module Crystal
       else
         @instance_vars.length
       end
+    end
+
+    def has_instance_var_in_initialize?(name)
+      @instance_vars_in_initialize && @instance_vars_in_initialize.include?(name) || (superclass && superclass.has_instance_var_in_initialize?(name))
     end
 
     def ==(other)
@@ -595,6 +613,8 @@ module Crystal
         cloned_var.bind_to cloned_var
         [name, cloned_var]
       end]
+      obj.owned_instance_vars = owned_instance_vars
+      obj.instance_vars_in_initialize = instance_vars_in_initialize
       obj.defs = defs
       obj.sorted_defs = sorted_defs
       obj.types = types
@@ -1020,6 +1040,18 @@ module Crystal
 
     def lookup_type(names)
       base_type.lookup_type(names)
+    end
+
+    def has_instance_var_in_initialize?(name)
+      base_type.has_instance_var_in_initialize?(name)
+    end
+
+    def allocated
+      return true if base_type.allocated
+      each_subtype(base_type) do |subtype|
+        return true if subtype.allocated
+      end
+      false
     end
 
     def ==(other)
