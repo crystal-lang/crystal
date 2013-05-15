@@ -1009,6 +1009,8 @@ module Crystal
       return nil unless matches
 
       each_subtype(base_type) do |subtype|
+        next if subtype.is_subclass_of?(program.value)
+
         subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type, false)
         if subtype_matches
           subtype_matches.concat matches

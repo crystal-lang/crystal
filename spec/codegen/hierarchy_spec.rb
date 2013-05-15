@@ -286,4 +286,20 @@ describe 'Code gen: hierarchy type' do
       f.foo
       ))
   end
+
+  it "doesn't lookup in Value+ when hierarchy type is Object+" do
+    run(%Q(
+      class Object
+        def foo
+          !nil?
+        end
+      end
+
+      class Foo
+      end
+
+      a = Foo.new
+      a.foo
+      )).to_b.should be_true
+  end
 end
