@@ -419,6 +419,7 @@ module Crystal
 
   class ObjectType < ClassType
     attr_accessor :instance_vars
+    attr_accessor :owned_instance_vars
     attr_accessor :depth
     attr_accessor :subclasses
     @@id = 0
@@ -426,6 +427,7 @@ module Crystal
     def initialize(name, parent_type = nil, container = nil)
       super
       @instance_vars = {}
+      @owned_instance_vars = Set.new
       @subclasses = []
       if parent_type
         @depth = parent_type.depth + 1
@@ -456,11 +458,11 @@ module Crystal
 
       if a_def.instance_vars
         a_def.instance_vars.each do |ivar|
-          unless superclass.has_instance_var?(ivar)
-            unless @instance_vars.has_key?(ivar)
-              @instance_vars[ivar] = Var.new(ivar)
+          unless superclass.owns_instance_var?(ivar)
+            unless @owned_instance_vars.include?(ivar)
+              @owned_instance_vars.add(ivar)
               each_subclass(self) do |subclass|
-                subclass.instance_vars.delete ivar
+                subclass.remove_instance_var(ivar)
               end
             end
           end
@@ -477,8 +479,13 @@ module Crystal
       end
     end
 
-    def has_instance_var?(name)
-      (superclass &&  superclass.has_instance_var?(name)) || @instance_vars[name]
+    def owns_instance_var?(name)
+      @owned_instance_vars.include?(name) || (superclass && superclass.owns_instance_var?(name))
+    end
+
+    def remove_instance_var(name)
+      @owned_instance_vars.delete(name)
+      @instance_vars.delete(name)
     end
 
     def lookup_instance_var(name, create = true)
@@ -486,7 +493,7 @@ module Crystal
         return var
       end
 
-      if create
+      if create || @owned_instance_vars.include?(name)
         @instance_vars[name] ||= Var.new name
       else
         @instance_vars[name]
