@@ -200,4 +200,15 @@ describe 'Type inference: hierarchy' do
     mod.types["Var"].instance_vars.should be_empty
     mod.types["Base"].instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int))
   end
+
+  it "types inspect" do
+    assert_type(%q(
+      require "prelude"
+
+      class Foo
+      end
+
+      Foo.new.inspect
+      )) { string.hierarchy_type }
+  end
 end

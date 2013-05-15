@@ -28,7 +28,9 @@ module Crystal
         @fixed[target_def] = true
 
         if target_def
-          target_def.type = @mod.nil unless target_def.type
+          if !target_def.type && target_def.owner.allocated
+            target_def.type = @mod.nil
+          end
           target_def.accept_children self
         end
       end
