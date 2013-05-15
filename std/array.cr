@@ -307,7 +307,7 @@ class Array(T)
       str << elem.inspect
     end
     str << "]"
-    str.inspect
+    str.to_s
   end
 
   def sort!
