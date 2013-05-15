@@ -827,12 +827,6 @@ module Crystal
         return false
       end
 
-      if node.args.any? { |arg| arg.type && !arg.type.allocated }
-        @builder.unreachable
-        @last = :unreachable
-        return
-      end
-
       declare_out_arguments(node) if node.target_defs
 
       if !node.target_defs || node.target_def.owner.is_subclass_of?(@mod.value)
@@ -841,12 +835,6 @@ module Crystal
         owner = node.target_def.owner
       end
       owner = nil unless owner.passed_as_self?
-
-      if owner && !owner.allocated
-        @builder.unreachable
-        @last = :unreachable
-        return
-      end
 
       call_args = []
       if node.obj && node.obj.type.passed_as_self?
@@ -1236,15 +1224,17 @@ module Crystal
         @builder.cond result, current_def_label, next_def_label
 
         @builder.position_at_end current_def_label
-        call.obj.set_type a_def.owner if call.obj
-        call.target_defs = [a_def]
-        call.args.each_with_index do |arg, i|
-          arg.set_type a_def.args[i].type
-        end
-        call.set_type node.type
-        call.accept self
 
-        if @last != :unreachable
+        allocated = a_def.owner.allocated && a_def.args.all? { |arg| arg.type.allocated }
+        if allocated
+          call.obj.set_type a_def.owner if call.obj
+          call.target_defs = [a_def]
+          call.args.each_with_index do |arg, i|
+            arg.set_type a_def.args[i].type
+          end
+          call.set_type node.type
+          call.accept self
+
           unless call.returns?
             if node.type.union?
               phi_value = alloca node.llvm_type
@@ -1256,9 +1246,12 @@ module Crystal
               phi_table[@builder.insert_block] = @last
             end
           end
+
+          @builder.br exit_block
+        else
+          @builder.unreachable
         end
 
-        @builder.br exit_block
         @builder.position_at_end next_def_label
       end
 
