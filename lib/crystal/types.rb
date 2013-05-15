@@ -443,6 +443,11 @@ module Crystal
       end
     end
 
+    def allocated=(allocated)
+      @allocated = allocated
+      superclass.allocated = allocated if superclass
+    end
+
     def hash
       full_name.hash
     end
