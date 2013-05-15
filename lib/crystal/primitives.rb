@@ -61,7 +61,9 @@ module Crystal
     end
 
     def define_value_primitives
-      no_args_primitive(value, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
+      [value, bool, char, int, long, float, double, symbol, pointer].each do |klass|
+        no_args_primitive(klass, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
+      end
     end
 
     def define_bool_primitives
