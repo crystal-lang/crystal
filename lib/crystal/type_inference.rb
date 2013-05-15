@@ -122,11 +122,12 @@ module Crystal
 
       node.mod = mod
       node.new_generic_class = new_generic
-      node.bind_to node.from, node.to
+      node.set_type(mod.range_of(node.from.type, node.to.type))
 
       node.expanded = Call.new(new_generic, 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
       node.expanded.accept self
-      node.type = node.expanded.type
+
+      node.bind_to node.from, node.to
     end
 
     def visit_regexp_literal(node)
