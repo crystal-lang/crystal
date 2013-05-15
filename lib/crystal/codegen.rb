@@ -842,6 +842,13 @@ module Crystal
       end
       owner = nil unless owner.passed_as_self?
 
+      # TODO: 'super' here is a hack, we are missing invoking the super initializer in implicit initialize
+      if owner && !owner.allocated && node.name != 'super'
+        @builder.unreachable
+        @last = :unreachable
+        return
+      end
+
       call_args = []
       if node.obj && node.obj.type.passed_as_self?
         accept(node.obj)
