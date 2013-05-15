@@ -299,14 +299,37 @@ module Crystal
     end
 
     def define_new(scope, arg_types)
-      alloc = Call.new(nil, 'allocate')
-
       matches = scope.type.lookup_matches('initialize', arg_types, !!block)
       if matches
         matches.map do |match|
+          if match.free_vars.empty?
+            alloc = Call.new(nil, 'allocate')
+          else
+            type_vars = Array.new(scope.type_vars.length)
+            match.free_vars.each do |names, type|
+              if names.length == 1
+                idx = scope.type_vars.keys.index(names[0])
+                if idx
+                  type_vars[idx] = Ident.new(names)
+                end
+              end
+            end
+
+            if type_vars.all?
+              new_generic = NewGenericClass.new(Ident.new([scope.instance_type.full_name]), type_vars)
+              alloc = Call.new(new_generic, 'allocate')
+            else
+              alloc = Call.new(nil, 'allocate')
+            end
+          end
+
           var = Var.new('x')
           new_vars = args.each_with_index.map { |x, i| Var.new("arg#{i}") }
-          new_args = args.each_with_index.map { |x, i| Arg.new("arg#{i}") }
+          new_args = args.each_with_index.map do |x, i|
+            arg = Arg.new("arg#{i}")
+            arg.type_restriction = match.def.args[i].type_restriction if match.def.args[i]
+            arg
+          end
 
           init = Call.new(var, 'initialize', new_vars)
 
@@ -318,9 +341,12 @@ module Crystal
           ])
           new_match.owner = scope
           new_match.arg_types = match.arg_types
+          new_match.free_vars = match.free_vars
           new_match
         end
       else
+        alloc = Call.new(nil, 'allocate')
+
         match = Match.new
         match.def = scope.add_def Def.new('new', [], [alloc])
         match.owner = scope

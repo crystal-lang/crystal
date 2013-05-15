@@ -166,4 +166,29 @@ describe 'Type inference: class' do
       a = Foo.new || Bar.new || Baz.new
       )) { "Foo".hierarchy }
   end
+
+  it "does automatic inference of new for generic types" do
+    assert_type(%(
+      class Box(T)
+        def initialize(value : T)
+          @value = value
+        end
+      end
+
+      b = Box.new(10)
+      )) { "Box".generic(T: int).with_vars(value: int) }
+  end
+
+  it "does automatic type inference of new for generic types 2" do
+    assert_type(%q(
+      class Box(T)
+        def initialize(x, value : T)
+          @value = value
+        end
+      end
+
+      b1 = Box.new(1, 10)
+      b2 = Box.new(1, false)
+      )) { "Box".generic(T: bool).with_vars(value: bool) }
+  end
 end
