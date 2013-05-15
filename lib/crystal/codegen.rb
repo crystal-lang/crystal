@@ -434,7 +434,7 @@ module Crystal
         @last = var[:ptr]
       else
         var = @type.lookup_instance_var(node.var.name)
-        @last = gep llvm_self, 0, @type.index_of_instance_var(node.var.name)
+        @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.var.name)
       end
       if node.type.var.type.is_a?(StructType)
         @last = @builder.load @last

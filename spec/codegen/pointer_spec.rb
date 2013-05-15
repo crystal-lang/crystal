@@ -59,4 +59,25 @@ describe 'Code gen: pointer' do
   it "codegens pointer cast" do
     run('a = 1L; a.ptr.as(Int).value').to_i.should eq(1)
   end
+
+  it "gets pointer of instance variable in hierarchy type" do
+    run(%q(
+      class Foo
+        def initialize
+          @a = 1
+        end
+
+        def foo
+          @a.ptr
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      foo = Foo.new || Bar.new
+      x = foo.foo
+      x.value
+      )).to_i.should eq(1)
+  end
 end
