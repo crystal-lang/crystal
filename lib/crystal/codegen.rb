@@ -1154,21 +1154,31 @@ module Crystal
     end
 
     def codegen_dispatch(node)
-      if node.obj
-        node.obj.accept(self)
-      end
-
       old_block = @builder.insert_block
 
       exit_block = new_block "exit"
 
       if node.obj
-        if node.obj.type.union?
+        owner = node.obj.type
+        node.obj.accept(self)
+
+        if owner.union?
           obj_type_id = @builder.load union_type_id(@last)
-        elsif node.obj.type.nilable?
+        elsif owner.nilable?
           obj_type_id = @last
         end
+      else
+        owner = node.scope
+
+        if owner.equal?(@mod.program)
+          # Nothing
+        elsif owner.union?
+          obj_type_id = @builder.load union_type_id(llvm_self)
+        else
+          obj_type_id = llvm_self
+        end
       end
+
       phi_table = {}
       call = Call.new(node.obj ? Var.new("%self") : nil, node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") }, node.block)
       call.scope = node.scope
@@ -1195,9 +1205,9 @@ module Crystal
 
       next_def_label = nil
       node.target_defs.each do |a_def|
-        if node.obj && node.obj.type.union?
+        if owner.union?
             result = match_any_type_id(a_def.owner, obj_type_id)
-        elsif node.obj && node.obj.type.nilable?
+        elsif owner.nilable?
           if a_def.owner.equal?(@mod.nil)
             result = null_pointer?(obj_type_id)
           else
