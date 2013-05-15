@@ -191,4 +191,21 @@ describe 'Type inference: class' do
       b2 = Box.new(1, false)
       )) { "Box".generic(T: bool).with_vars(value: bool) }
   end
+
+  it "does automatic type inference of new for nested generic type" do
+    nodes = parse %q(
+      class Foo
+        class Bar(T)
+          def initialize(x : T)
+            @x = x
+          end
+        end
+      end
+
+      Foo::Bar.new(1)
+      )
+    mod = infer_type nodes
+    nodes.last.type.type_vars["T"].type.should eq(mod.int)
+    nodes.last.type.instance_vars["@x"].type.should eq(mod.int)
+  end
 end

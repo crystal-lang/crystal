@@ -316,7 +316,7 @@ module Crystal
             end
 
             if type_vars.all?
-              new_generic = NewGenericClass.new(Ident.new([scope.instance_type.full_name]), type_vars)
+              new_generic = NewGenericClass.new(Ident.new([scope.instance_type.name]), type_vars)
               alloc = Call.new(new_generic, 'allocate')
             else
               alloc = Call.new(nil, 'allocate')
