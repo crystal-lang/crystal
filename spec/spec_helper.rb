@@ -27,6 +27,15 @@ def assert_type(str, options = {}, &block)
   end
 end
 
+def assert_error(str, message)
+  nodes = parse(str)
+  lambda { infer_type nodes }.should raise_error(Crystal::Exception, regex(message))
+end
+
+def assert_syntax_error(str, message)
+  lambda { parse(str) }.should raise_error(Crystal::SyntaxException, regex(message))
+end
+
 def permutate_primitive_types
   [['Int', ''], ['Long', 'L'], ['Float', '.0f'], ['Double', '.0']].repeated_permutation(2) do |p1, p2|
     type1, suffix1 = p1
