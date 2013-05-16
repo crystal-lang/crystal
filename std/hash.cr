@@ -19,7 +19,7 @@ class Hash(K, V)
       end
     end
     @length += 1
-    entry = Entry.new(key, value)
+    entry = Entry(K, V).new(key, value)
     bucket.push entry
     @last.next = entry unless @last.nil?
     @last = entry
