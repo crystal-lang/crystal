@@ -981,8 +981,28 @@ module Crystal
       name_column_number = @token.column_number
       next_token_skip_space
 
-      type_vars = nil
+      type_vars = parse_type_vars
 
+      superclass = nil
+
+      if @token.type == :<
+        next_token_skip_space_or_newline
+        superclass = parse_ident
+      end
+      skip_statement_end
+
+      body = parse_expressions
+
+      check_ident :end
+      next_token_skip_space
+
+      class_def = ClassDef.new name, body, superclass, type_vars, name_column_number
+      class_def.location = location
+      class_def
+    end
+
+    def parse_type_vars
+      type_vars = nil
       if @token.type == :'('
         type_vars = []
 
@@ -1003,23 +1023,7 @@ module Crystal
 
         next_token_skip_space
       end
-
-      superclass = nil
-
-      if @token.type == :<
-        next_token_skip_space_or_newline
-        superclass = parse_ident
-      end
-      skip_statement_end
-
-      body = parse_expressions
-
-      check_ident :end
-      next_token_skip_space
-
-      class_def = ClassDef.new name, body, superclass, type_vars, name_column_number
-      class_def.location = location
-      class_def
+      type_vars
     end
 
     def parse_module_def
@@ -1030,14 +1034,17 @@ module Crystal
 
       name = @token.value
       name_column_number = @token.column_number
-      next_token_skip_statement_end
+      next_token_skip_space
+
+      type_vars = parse_type_vars
+      skip_statement_end
 
       body = parse_expressions
 
       check_ident :end
       next_token_skip_space
 
-      module_def = ModuleDef.new name, body, name_column_number
+      module_def = ModuleDef.new name, body, type_vars, name_column_number
       module_def.location = location
       module_def
     end

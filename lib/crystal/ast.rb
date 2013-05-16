@@ -231,26 +231,30 @@ module Crystal
   class ModuleDef < ASTNode
     attr_accessor :name
     attr_accessor :body
+    attr_accessor :type_vars
     attr_accessor :name_column_number
 
-    def initialize(name, body = nil, name_column_number = nil)
+    def initialize(name, body = nil, type_vars = nil, name_column_number = nil)
       @name = name
       @body = Expressions.from body
       @body.parent = self if @body
+      @type_vars = type_vars
       @name_column_number = name_column_number
     end
 
     def accept_children(visitor)
+      type_vars.each { |tv| tv.accept visitor} if type_vars
       body.accept visitor if body
     end
 
     def ==(other)
-      other.is_a?(ModuleDef) && other.name == name && other.body == body
+      other.is_a?(ModuleDef) && other.name == name && other.body == body && other.type_vars == type_vars
     end
 
     def clone_from(other)
       @name = other.name
       @body = other.body.clone
+      @type_vars = other.type_vars.map(&:clone) if other.type_vars
       @name_column_number = other.name_column_number
     end
   end

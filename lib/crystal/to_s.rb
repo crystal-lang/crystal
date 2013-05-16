@@ -370,6 +370,14 @@ module Crystal
     def visit_module_def(node)
       @str << "module "
       @str << node.name
+      if node.type_vars
+        @str << "("
+        node.type_vars.each_with_index do |type_var, i|
+          @str << ", " if i > 0
+          @str << type_var.to_s
+        end
+        @str << ")"
+      end
       @str << "\n"
       accept_with_indent(node.body)
       @str << "end"

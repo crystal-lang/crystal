@@ -195,6 +195,7 @@ describe Parser do
   it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
   it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
   it_parses "class Foo(T); end", ClassDef.new("Foo", nil, nil, ["T"])
+  it_parses "class Foo(T); end", ClassDef.new("Foo", nil, nil, ["T"])
 
   it_parses "Foo(T)", NewGenericClass.new("Foo".ident, ["T".ident])
   it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident])])
@@ -203,6 +204,7 @@ describe Parser do
 
   it_parses "module Foo; end", ModuleDef.new("Foo")
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [], nil)])
+  it_parses "module Foo(T); end", ModuleDef.new("Foo", nil, ["T"])
 
   it_parses "while true; 1; end;", While.new(true.bool, 1.int)
 
