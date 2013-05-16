@@ -297,7 +297,16 @@ module Crystal
 
     def lookup_defs(name)
       defs = @defs[name]
-      defs && defs.values
+      return defs.values if defs
+
+      if parents
+        parents.each do |parent|
+          defs = parent.lookup_defs(name)
+          return defs if defs
+        end
+      end
+
+      nil
     end
 
     def add_macro(a_def)
