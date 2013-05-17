@@ -82,7 +82,6 @@ module Crystal
       end
 
       if matches.empty?
-        owner.lookup_matches(def_name, arg_types, !!block)
         raise_matches_not_found(owner, def_name)
       end
 
