@@ -89,6 +89,30 @@ module Crystal
       end
 
       typed_defs = matches.map do |match|
+        if (block_arg = match.def.block_arg)
+          if block_arg.inputs
+            input_types = lookup_block_inputs(match.owner, block_arg.inputs)
+            block.args.each_with_index do |arg, i|
+              var = input_types[i]
+              if var
+                arg.bind_to var
+              else
+                arg.bind_to mod.nil_var
+              end
+            end
+          else
+            block.args.each do |arg|
+              arg.bind_to mod.nil_var
+            end
+          end
+
+          block.accept parent_visitor
+
+          if block_arg.output
+            match.free_vars[block_arg.output.names] = block.body.type
+          end
+        end
+
         typed_def = match.owner.lookup_def_instance(match.def.object_id, match.arg_types) unless block
         unless typed_def
           # puts "#{owner}##{name}(#{arg_types.join ', '})"
@@ -102,6 +126,35 @@ module Crystal
           end
         end
         typed_def
+      end
+    end
+
+    def lookup_block_inputs(owner, inputs)
+      visitor = IdentLookupVisitor.new(mod, owner)
+      inputs.each_with_index.map do |input, i|
+        input.accept visitor
+        Var.new("var#{i}", visitor.type)
+      end
+    end
+
+    class IdentLookupVisitor < Visitor
+      attr_reader :type
+
+      def initialize(mod, owner)
+        @mod = mod
+        @owner = owner
+      end
+
+      def visit_ident(node)
+        if node.global
+          @type = mod.lookup_type node.names
+        else
+          @type = @owner.lookup_type node.names
+        end
+
+        unless @type
+          node.raise("uninitialized constant #{node}")
+        end
       end
     end
 

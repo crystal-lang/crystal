@@ -111,7 +111,7 @@ module Crystal
     end
 
     def new_blocks(names)
-      names.map([] of LibLLVM::BasicBlockRef) { |name| new_block name }
+      names.map { |name| new_block name }
     end
   end
 end

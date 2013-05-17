@@ -204,7 +204,7 @@ describe "Array" do
   describe "map" do
     assert do
       a = [1, 2, 3]
-      a.map([] of Int) { |x| x * 2 }.should eq([2, 4, 6])
+      a.map { |x| x * 2 }.should eq([2, 4, 6])
       a.should eq([1, 2, 3])
     end
   end

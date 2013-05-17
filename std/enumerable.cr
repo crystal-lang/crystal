@@ -21,9 +21,10 @@ module Enumerable(T)
     memo
   end
 
-  def map(target : Array(U))
-    each { |e| target << yield e }
-    target
+  def map(&block : T -> U)
+    ary = Array(U).new
+    each { |e| ary << yield e }
+    ary
   end
 
   def select

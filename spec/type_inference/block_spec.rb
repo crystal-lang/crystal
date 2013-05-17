@@ -106,4 +106,26 @@ describe 'Block inference' do
       end
     )) { union_of(self.nil, int) }
   end
+
+  it "infers type of block before call" do
+    assert_type(%q(
+      class Int
+        def foo
+          10.5
+        end
+      end
+
+      class Foo(T)
+        def initialize(x : T)
+          @x = x
+        end
+      end
+
+      def bar(&block : Int -> U)
+        Foo(U).new(yield 1)
+      end
+
+      bar { |x| x.foo }
+      )) { "Foo".generic(T: double).with_vars(x: double) }
+  end
 end

@@ -202,13 +202,13 @@ module Crystal
             match.owner = owner
             matches.push match
             if match.arg_types == arg_types
-              return Matches.new(matches, true, self)
+              return Matches.new(matches, true, owner)
             end
           end
         end
       end
 
-      Matches.new(matches, Cover.new(arg_types, matches), self)
+      Matches.new(matches, Cover.new(arg_types, matches), owner)
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
@@ -239,7 +239,7 @@ module Crystal
         end
       end
 
-      Matches.new(matches.matches, matches.cover, self, false)
+      Matches.new(matches.matches, matches.cover, owner, false)
     end
 
     def mark_cover(cover, arg_types, match, index = 0, position = 0, multiplier = 1)
@@ -404,11 +404,19 @@ module Crystal
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      @module.lookup_matches(name, arg_types, yields, owner, type_lookup)
+      @module.lookup_matches(name, arg_types, yields, self, type_lookup)
     end
 
     def lookup_defs(name)
       @module.lookup_defs(name)
+    end
+
+    def add_def_instance(def_object_id, arg_types, typed_def)
+      @class.add_def_instance(def_object_id, arg_types, typed_def)
+    end
+
+    def lookup_def_instance(def_object_id, arg_types)
+      @class.lookup_def_instance(def_object_id, arg_types)
     end
 
     def parents

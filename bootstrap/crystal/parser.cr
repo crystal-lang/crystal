@@ -1241,7 +1241,7 @@ module Crystal
     end
 
     def push_def(args)
-      @def_vars.push(Set(String).new(args.map([] of String) { |arg| arg.name }))
+      @def_vars.push(Set(String).new(args.map { |arg| arg.name }))
       ret = yield
       @def_vars.pop
       ret
