@@ -699,8 +699,14 @@ module Crystal
       block = @call.block or node.raise "no block given"
 
       block.args.each_with_index do |arg, i|
-        arg.bind_to node.exps[i]
+        exp = node.exps[i]
+        if exp
+          arg.bind_to exp
+        else
+          arg.type = mod.nil
+        end
       end
+
       node.bind_to block.body if block.body
     end
 

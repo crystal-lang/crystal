@@ -699,4 +699,20 @@ describe 'Code gen: block' do
       a.foo {}
     ))
   end
+
+  it "allows yields with less arguments than in block" do
+    run(%(
+      require "nil"
+
+      def foo
+        yield 1
+      end
+
+      a = 0
+      foo do |x, y|
+        a += x + y.to_i
+      end
+      a
+      )).to_i.should eq(1)
+  end
  end

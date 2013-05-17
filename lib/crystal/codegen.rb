@@ -988,10 +988,16 @@ module Crystal
 
         block.args.each_with_index do |arg, i|
           exp = node.exps[i]
-          exp.accept self
+          if exp
+            exp_type = exp.type
+            exp.accept self
+          else
+            exp_type = @mod.nil
+            @last = llvm_nil
+          end
 
-          copy = alloca exp.llvm_type, "block_#{arg.name}"
-          codegen_assign copy, exp.type, exp.type, @last
+          copy = alloca exp_type.llvm_type, "block_#{arg.name}"
+          codegen_assign copy, exp_type, exp_type, @last
           new_vars[arg.name] = { ptr: copy, type: arg.type }
         end
 
