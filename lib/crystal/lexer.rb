@@ -81,7 +81,7 @@ module Crystal
         @token.value = match[1 .. -2]
       elsif match = scan(/\%w\(/)
         @token.type = :STRING_ARRAY_START
-      elsif match = scan(%r(!=|!@\B|!|===|==|=~|=>|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&=|&&|&|\|\|=|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
+      elsif match = scan(%r(!=|!@\B|!|===|==|=~|=>|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|->|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&=|&&|&|\|\|=|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
         @token.type = match.to_sym
       elsif match = scan(/(abstract|def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct|macro|out|require|case|when|then|of)((\?|!)|\b)/)
         @token.type = :IDENT

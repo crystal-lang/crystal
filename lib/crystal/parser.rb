@@ -1105,6 +1105,7 @@ module Crystal
       @def_name = name
 
       args = []
+      block_arg = nil
 
       if @token.type == :'.'
         receiver = Var.new name unless receiver
@@ -1118,12 +1119,19 @@ module Crystal
       when :'('
         next_token_skip_space_or_newline
         while @token.type != :')'
-          parse_arg(args, true)
+          block_arg = parse_arg(args, true)
+          if block_arg
+            check :')'
+            break
+          end
         end
         next_token_skip_statement_end
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          parse_arg(args, false)
+          block_arg = parse_arg(args, false)
+          if block_arg
+            break
+          end
         end
         next_token_skip_statement_end
       else
@@ -1142,10 +1150,15 @@ module Crystal
 
       pop_def
 
-      klass.new name, args, body, receiver, @yields
+      klass.new name, args, body, receiver, block_arg, @yields
     end
 
     def parse_arg(args, parenthesis = false)
+      if @token.type == :"&"
+        next_token_skip_space_or_newline
+        return parse_block_arg
+      end
+
       check :IDENT
       arg_name = @token.value
       arg_location = @token.location
@@ -1180,6 +1193,48 @@ module Crystal
       if @token.type == :','
         next_token_skip_space_or_newline
       end
+
+      nil
+    end
+
+    def parse_block_arg
+      check :IDENT
+      name = @token.value
+      name_location = @token.location
+
+      next_token_skip_space_or_newline
+
+      inputs = nil
+      output = nil
+
+      if @token.type == :":"
+        next_token_skip_space_or_newline
+
+        if @token.type == :CONST
+          inputs = []
+          while true
+            inputs << parse_ident
+            skip_space_or_newline
+            if @token.type == :"->"
+              break
+            end
+            check :","
+            next_token_skip_space
+          end
+        end
+
+        check :"->"
+        next_token_skip_space_or_newline
+
+        if @token.type == :CONST
+          output = parse_ident
+          skip_space_or_newline
+        end
+      end
+
+      block_arg = BlockArg.new(name, inputs, output)
+      block_arg.location = name_location
+      block_arg
     end
 
     def parse_if(check_end = true)

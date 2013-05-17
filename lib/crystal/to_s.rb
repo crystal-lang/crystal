@@ -299,6 +299,22 @@ module Crystal
       false
     end
 
+    def visit_block_arg(node)
+      @str << node.name
+      if node.inputs || node.output
+        @str << " : "
+        if node.inputs
+          node.inputs.each_with_index do |input, i|
+            @str << ", " if i > 0
+            input.accept self
+          end
+        end
+        @str << " -> "
+        node.output.accept self if node.output
+      end
+      false
+    end
+
     def visit_ident(node)
       node.names.each_with_index do |name, i|
         @str << '::' if i > 0 || node.global

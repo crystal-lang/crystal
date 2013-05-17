@@ -460,9 +460,10 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
     attr_accessor :yields
+    attr_accessor :block_arg
     attr_accessor :instance_vars
 
-    def initialize(name, args, body = nil, receiver = nil, yields = false)
+    def initialize(name, args, body = nil, receiver = nil, block_arg = nil, yields = false)
       @name = name
       @args = args
       @args.each { |arg| arg.parent = self } if @args
@@ -470,6 +471,7 @@ module Crystal
       @body.parent = self if @body
       @receiver = receiver
       @receiver.parent = self if @receiver
+      @block_arg = block_arg
       @yields = yields
     end
 
@@ -477,10 +479,11 @@ module Crystal
       receiver.accept visitor if receiver
       args.each { |arg| arg.accept visitor }
       body.accept visitor if body
+      block_arg.accept visitor if block_arg
     end
 
     def ==(other)
-      other.is_a?(Def) && other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields
+      other.is_a?(Def) && other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
     end
 
     def clone_from(other)
@@ -489,6 +492,7 @@ module Crystal
       @body = other.body.clone
       @receiver = other.receiver.clone
       @yields = other.yields
+      @block_arg = other.block_arg
     end
   end
 
@@ -558,6 +562,33 @@ module Crystal
       @default_value = other.default_value.clone
       @type_restriction = other.type_restriction.clone
       @out = other.out
+    end
+  end
+
+  class BlockArg < ASTNode
+    attr_accessor :name
+    attr_accessor :inputs
+    attr_accessor :output
+
+    def initialize(name, inputs = nil, output = nil)
+      @name = name
+      @inputs = inputs
+      @output = output
+    end
+
+    def accept_children(visitor)
+      inputs.each { |input| input.accept visitor } if inputs
+      output.accept visitor if output
+    end
+
+    def ==(other)
+      other.is_a?(BlockArg) && other.name == name && other.inputs == inputs && other.output == output
+    end
+
+    def clone_from(other)
+      @name = other.name
+      @inputs = other.inputs.map(&:clone) if other.inputs
+      @output = other.output.clone
     end
   end
 
@@ -1087,8 +1118,9 @@ module Crystal
     attr_accessor :name
     attr_accessor :args
     attr_accessor :body
+    attr_accessor :block_arg
 
-    def initialize(name, args, body = nil, receiver = nil, yields = nil)
+    def initialize(name, args, body = nil, receiver = nil, block_arg = nil, yields = nil)
       @name = name
       @args = args
       @args.each { |arg| arg.parent = self } if @args
@@ -1096,16 +1128,18 @@ module Crystal
       @body.parent = self if @body
       @receiver = receiver
       @receiver.parent = self if @receiver
+      @block_arg = block_arg
     end
 
     def accept_children(visitor)
       receiver.accept visitor if receiver
       args.each { |arg| arg.accept visitor }
       body.accept visitor if body
+      block_arg.accept visitor if block_arg
     end
 
     def ==(other)
-      other.is_a?(Macro) && other.receiver == receiver && other.name == name && other.args == args && other.body == body
+      other.is_a?(Macro) && other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.block_arg == block_arg
     end
 
     def clone_from(other)
@@ -1113,6 +1147,7 @@ module Crystal
       @args = other.args.map(&:clone)
       @body = other.body.clone
       @receiver = other.receiver.clone
+      @block_arg = other.block_arg
     end
 
     def yields

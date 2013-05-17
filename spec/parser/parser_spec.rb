@@ -119,8 +119,13 @@ describe Parser do
   it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfType.instance)], nil)
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.instance)], nil)
   it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Double'.ident]))], nil)
-  it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, true)
+  it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, nil, true)
   it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)], nil)
+  it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block"))
+  it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident], "Double".ident)), focus: true
+  it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident, "Float".ident], "Double".ident))
+  it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", nil, "Double".ident))
+  it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident]))
 
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call
