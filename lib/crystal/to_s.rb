@@ -214,13 +214,17 @@ module Crystal
         @str << "."
       end
       @str << node.name.to_s
-      if node.args.length > 0
+      if node.args.length > 0 || node.block_arg
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           arg.accept self
           i += 1
-
+        end
+        if node.block_arg
+          @str << ", " if node.args.length > 0
+          @str << "&"
+          node.block_arg.accept self
         end
         @str << ")"
       end
