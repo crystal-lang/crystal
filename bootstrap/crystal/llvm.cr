@@ -128,13 +128,17 @@ module LLVM
     end
   end
 
-  class Type
+  abstract class Type
     attr_reader :type
+
+    def initialize(type)
+      @type = type
+    end
   end
 
   class IntType < Type
     def initialize(bits)
-      @type = LibLLVM.int_type(bits)
+      super LibLLVM.int_type(bits)
     end
 
     def from_i(value)
@@ -144,7 +148,7 @@ module LLVM
 
   class FloatType < Type
     def initialize
-      @type = LibLLVM.float_type
+      super LibLLVM.float_type
     end
 
     def from_s(value)
@@ -154,7 +158,7 @@ module LLVM
 
   class DoubleType < Type
     def initialize
-      @type = LibLLVM.double_type
+      super LibLLVM.double_type
     end
 
     def from_s(value)
@@ -164,7 +168,7 @@ module LLVM
 
   class VoidType < Type
     def initialize
-      @type = LibLLVM.void_type
+      super LibLLVM.void_type
     end
   end
 
@@ -212,5 +216,4 @@ module LLVM
   Int64 = IntType.new(64)
   Float = FloatType.new
   Double = DoubleType.new
-
 end

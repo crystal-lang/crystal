@@ -2,7 +2,7 @@ require "location"
 
 module Crystal
   # Base class for nodes in the grammar.
-  class ASTNode
+  abstract class ASTNode
     def location
       @location
     end
@@ -94,7 +94,7 @@ module Crystal
     end
   end
 
-  class NumberLiteral < ASTNode
+  abstract class NumberLiteral < ASTNode
     attr_accessor :value
     attr_accessor :has_sign
 
