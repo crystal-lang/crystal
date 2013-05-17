@@ -326,6 +326,11 @@ module Crystal
           new_match
         end
       else
+        defs = scope.type.lookup_defs('initialize')
+        if defs && defs.length > 0
+          raise_matches_not_found scope.type, 'initialize'
+        end
+
         alloc = Call.new(nil, 'allocate')
 
         match = Match.new

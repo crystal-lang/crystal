@@ -233,4 +233,16 @@ describe 'Type inference: class' do
     assert_error "class Foo; end; class Bar; end; class Foo < Bar; end",
       "superclass mismatch for class Foo (Bar for Object)"
   end
+
+  it "reports wrong number of arguments for initialize" do
+    assert_error %(
+      class Foo
+        def initialize(x, y)
+        end
+      end
+
+      f = Foo.new
+      ),
+      "wrong number of arguments"
+  end
 end
