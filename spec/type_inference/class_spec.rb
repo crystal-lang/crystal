@@ -245,4 +245,20 @@ describe 'Type inference: class' do
       ),
       "wrong number of arguments"
   end
+
+  it "reports can't instantiate abstract class on new" do
+    assert_error %q(
+      abstract class Foo; end
+      Foo.new
+      ),
+      "can't instantiate abstract class Foo"
+  end
+
+  it "reports can't instantiate abstract class on allocate" do
+    assert_error %q(
+      abstract class Foo; end
+      Foo.allocate
+      ),
+      "can't instantiate abstract class Foo"
+  end
 end

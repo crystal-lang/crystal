@@ -470,6 +470,7 @@ module Crystal
     attr_accessor :depth
     attr_accessor :subclasses
     attr_accessor :allocated
+    attr_accessor :abstract
     @@id = 0
 
     def initialize(name, parent_type = nil, container = nil)

@@ -205,6 +205,7 @@ module Crystal
         end
       else
         type = ObjectType.new node.name, parent, current_type
+        type.abstract = node.abstract
         type.type_vars = Hash[node.type_vars.map { |type_var| [type_var, Var.new(type_var)] }] if node.type_vars
         current_type.types[node.name] = type
       end
@@ -569,6 +570,11 @@ module Crystal
       if @scope.generic && @scope.type_vars.any? { |k, v| !v.type }
         node.raise "can't create instance of generic class #{@scope.instance_type} without specifying its type vars"
       end
+
+      if @scope.instance_type.abstract
+        node.raise "can't instantiate abstract class #{@scope.instance_type}"
+      end
+
       @scope.instance_type.allocated = true
       node.type = @scope.instance_type
     end
