@@ -703,7 +703,7 @@ module Crystal
         if exp
           arg.bind_to exp
         else
-          arg.type = mod.nil
+          arg.bind_to mod.nil_var
         end
       end
 
