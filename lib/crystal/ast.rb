@@ -243,7 +243,6 @@ module Crystal
     end
 
     def accept_children(visitor)
-      type_vars.each { |tv| tv.accept visitor} if type_vars
       body.accept visitor if body
     end
 

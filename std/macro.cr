@@ -41,10 +41,10 @@ module Macro
     end
   end
 
-  class ArrayLiteral
+  class ArrayLiteral(T)
     include Enumerable
 
-    def initialize(elements)
+    def initialize(elements : Array(T))
       @elements = elements
     end
 

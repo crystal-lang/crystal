@@ -1,7 +1,7 @@
 require "enumerable"
 
 class Range(B, E)
-  include Enumerable
+  include Enumerable(B)
 
   def initialize(the_start : B, the_end : E, exclusive)
     @begin = the_start

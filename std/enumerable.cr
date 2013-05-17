@@ -1,4 +1,4 @@
-module Enumerable
+module Enumerable(T)
   def each_with_index
     i = 0
     each do |elem|

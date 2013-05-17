@@ -143,28 +143,28 @@ module Crystal
       sorted_defs << a_def if append
     end
 
-    def match_def_args(args, def_restrictions, owner)
+    def match_def_args(args, def_restrictions, owner, type_lookup)
       match = Match.new
       0.upto(args.length - 1) do |i|
         arg_type = args[i]
         restriction = def_restrictions[i]
 
-        match_arg_type = match_arg(arg_type, restriction, owner, match.free_vars) or return nil
+        match_arg_type = match_arg(arg_type, restriction, owner, type_lookup, match.free_vars) or return nil
         match.arg_types.push match_arg_type
       end
       match
     end
 
-    def match_arg(arg_type, restriction, owner, free_vars)
+    def match_arg(arg_type, restriction, owner, type_lookup, free_vars)
       case restriction
       when nil
         arg_type
       when SelfType
         arg_type && arg_type.restrict(owner)
       when NewGenericClass
-        arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, free_vars) && arg_type
+        arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, type_lookup, free_vars) && arg_type
       when Ident
-        type = free_vars[restriction.names] || owner.lookup_type(restriction.names)
+        type = free_vars[restriction.names] || type_lookup.lookup_type(restriction.names)
         if type
           arg_type && arg_type.restrict(type)
         else
@@ -172,32 +172,32 @@ module Crystal
         end
       when IdentUnion
         restriction.idents.any? do |ident|
-          match_arg(arg_type, ident, owner, free_vars)
+          match_arg(arg_type, ident, owner, type_lookup, free_vars)
         end && arg_type
       when Type
         arg_type.is_restriction_of?(restriction, owner) && restriction
       end
     end
 
-    def match_generic_type(arg_type, restriction, owner, free_vars)
+    def match_generic_type(arg_type, restriction, owner, type_lookup, free_vars)
       return false unless arg_type.name == restriction.name.names.last
       return false unless arg_type.type_vars.length == restriction.type_vars.length
 
       arg_type.type_vars.each.with_index do |name_and_type_var, i|
         arg_type_var = name_and_type_var[1]
         restriction_var = restriction.type_vars[i]
-        return false unless match_arg(arg_type_var.type, restriction_var, owner, free_vars)
+        return false unless match_arg(arg_type_var.type, restriction_var, owner, type_lookup, free_vars)
       end
       true
     end
 
-    def lookup_matches_without_parents(name, arg_types, yields, owner = self, check_cover = true)
+    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, check_cover = true)
       if @sorted_defs && @sorted_defs.has_key?([name, arg_types.length, yields])
         defs = @sorted_defs[[name, arg_types.length, yields]]
         matches = []
         defs.each do |a_def|
           def_restrictions = a_def.args.map(&:type_restriction)
-          match = match_def_args(arg_types, def_restrictions, owner)
+          match = match_def_args(arg_types, def_restrictions, owner, type_lookup)
           if match
             match.def = a_def
             match.owner = owner
@@ -236,8 +236,8 @@ module Crystal
       nil
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self)
-      matches = lookup_matches_without_parents(name, arg_types, yields, owner)
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
       return matches if matches
 
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
@@ -250,11 +250,14 @@ module Crystal
               parent_owner = parent.hierarchy_type
             when ModuleType
               parent_owner = owner
+            when IncludedGenericModule
+              parent = IncludedGenericModule.new(parent.module, self, parent.mapping)
+              parent_owner = owner
             else
               parent_owner = parent
             end
           end
-          matches = parent.lookup_matches(name, arg_types, yields, parent_owner)
+          matches = parent.lookup_matches(name, arg_types, yields, parent_owner, parent)
           return matches if matches && matches.any?
         end
       end
@@ -389,6 +392,54 @@ module Crystal
       return full_name unless generic
       type_vars_to_s = type_vars.map { |name, var| var.type ? var.type.to_s : name }.join ', '
       "#{full_name}(#{type_vars_to_s})"
+    end
+  end
+
+  class IncludedGenericModule < Type
+    attr_reader :module
+    attr_reader :class
+    attr_reader :mapping
+
+    def initialize(a_module, a_class, mapping)
+      @module = a_module
+      @class = a_class
+      @mapping = mapping
+    end
+
+    def lookup_type(names, already_looked_up = {})
+      if names.length == 1 && m = @mapping[names[0]]
+        if m.is_a?(Type)
+          m
+        else
+          @class.lookup_type([m], already_looked_up)
+        end
+      else
+        @module.lookup_type(names, already_looked_up)
+      end
+    end
+
+    def container
+      @module.container
+    end
+
+    def name
+      @module.name
+    end
+
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+      @module.lookup_matches(name, arg_types, yields, owner, type_lookup)
+    end
+
+    def lookup_defs(name)
+      @module.lookup_defs(name)
+    end
+
+    def parents
+      @module.parents
+    end
+
+    def to_s
+      "#{@module}#{@mapping}"
     end
   end
 
@@ -813,8 +864,8 @@ module Crystal
       type
     end
 
-    def lookup_type(names)
-      instance_type.lookup_type(names)
+    def lookup_type(names, already_looked_up = {})
+      instance_type.lookup_type(names, already_looked_up)
     end
 
     def llvm_type
@@ -1018,14 +1069,14 @@ module Crystal
       @def_instances = {}
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self)
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
       matches = base_type.lookup_matches(name, arg_types, yields, self)
       return nil unless matches
 
       each_subtype(base_type) do |subtype|
         next if subtype.is_subclass_of?(program.value)
 
-        subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type, false)
+        subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type, subtype.hierarchy_type, false)
         if subtype_matches
           subtype_matches.concat matches
           matches = subtype_matches
@@ -1054,8 +1105,8 @@ module Crystal
       base_type.lookup_macro(name, args_length)
     end
 
-    def lookup_type(names)
-      base_type.lookup_type(names)
+    def lookup_type(names, already_looked_up = {})
+      base_type.lookup_type(names, already_looked_up)
     end
 
     def has_instance_var_in_initialize?(name)

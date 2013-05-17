@@ -216,7 +216,9 @@ module Crystal
       if type
         node.raise "#{node.name} is not a module" unless type.class == ModuleType
       else
-        current_type.types[node.name] = type = ModuleType.new node.name, current_type
+        type = ModuleType.new node.name, current_type
+        type.type_vars = Hash[node.type_vars.map { |type_var| [type_var, Var.new(type_var)] }] if node.type_vars
+        current_type.types[node.name] = type
       end
 
       @types.push type
@@ -228,12 +230,67 @@ module Crystal
       @types.pop
     end
 
-    def end_visit_include(node)
-      if node.name.type.instance_type.class != ModuleType
+    def visit_include(node)
+      if node.name.is_a?(NewGenericClass)
+        type = lookup_ident_type(node.name.name)
+      else
+        type = lookup_ident_type(node.name)
+      end
+
+      if type.class != ModuleType
         node.name.raise "#{node.name} is not a module"
       end
 
-      current_type.include node.name.type.instance_type
+      if node.name.is_a?(NewGenericClass)
+        unless type.generic
+          node.name.raise "#{type} is not a generic module"
+        end
+
+        if type.type_vars.length != node.name.type_vars.length
+          node.name.raise "wrong number of type vars for #{type} (#{node.name.type_vars.length} for #{type.type_vars.length})"
+        end
+
+        type_vars_types = node.name.type_vars.map do |type_var|
+          type_var_name = type_var.names[0]
+          if current_type.generic && current_type.type_vars.has_key?(type_var_name)
+            type_var_name
+          else
+            lookup_ident_type(type_var)
+          end
+        end
+
+        mapping = Hash[type.type_vars.keys.zip(type_vars_types)]
+        current_type.include IncludedGenericModule.new(type, current_type, mapping)
+      else
+        if type.generic
+          if current_type.generic
+            current_type_type_vars_length = current_type.type_vars.length
+          else
+            current_type_type_vars_length = 0
+          end
+
+          if current_type_type_vars_length != type.type_vars.length
+            node.name.raise "#{type} is a generic module"
+          end
+
+          # This is the case where we have:
+          #
+          #   module Foo(T), class Bar(T) include Foo
+          #
+          # Since the type vars' names are the same, we can just include the module
+          if current_type.type_vars.keys == type.type_vars.keys
+            current_type.include type
+          else
+            # Otherwise we remap the names
+            mapping = Hash[type.type_vars.keys.zip(current_type.type_vars.keys)]
+            current_type.include IncludedGenericModule.new(type, current_type, mapping)
+          end
+        else
+          current_type.include type
+        end
+      end
+
+      false
     end
 
     def visit_lib_def(node)
