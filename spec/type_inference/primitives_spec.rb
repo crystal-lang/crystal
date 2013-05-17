@@ -102,4 +102,14 @@ describe 'Type inference: primitives' do
   it "types ARGV" do
     assert_type(%q(require "argv"; ARGV)) { array_of(string) }
   end
+
+  it "reports can't call primitive with args" do
+    assert_error "1 + 'a'",
+      "no overload matches"
+  end
+
+  it "reports can't use instance variables inside a Value" do
+    assert_error "class Int; def foo; @a = 1; end; end; 2.foo",
+      "can't use instance variables inside Int"
+  end
 end

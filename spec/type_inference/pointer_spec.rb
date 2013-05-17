@@ -40,4 +40,25 @@ describe 'Type inference: pointer' do
       a.value
     )) { union_of(object, int) }
   end
+
+  it "reports can only get pointer of variable" do
+    assert_syntax_error "a.ptr",
+      "can only get 'ptr' of variable or instance variable"
+  end
+
+  it "reports wrong number of arguments for ptr" do
+    assert_syntax_error "a = 1; a.ptr 1",
+      "wrong number of arguments for 'ptr' (1 for 0)"
+  end
+
+  it "reports ptr can't receive a block" do
+    assert_syntax_error "a = 1; a.ptr {}",
+      "'ptr' can't receive a block"
+  end
+
+  it "can't do Pointer.malloc without type var" do
+    assert_error %(
+      Pointer.malloc(1)
+    ), "can't malloc pointer without type, use Pointer(Type).malloc(size)"
+  end
 end

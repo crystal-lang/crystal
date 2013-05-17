@@ -119,4 +119,32 @@ describe 'Type inference: def' do
     mod = infer_type input
     input.then.target.type.should eq(mod.int)
   end
+
+  it "reports undefined method" do
+    assert_error "foo()",
+      "undefined method 'foo'"
+  end
+
+  it "reports no overload matches" do
+    assert_error %(
+      def foo(x : Int)
+      end
+
+      foo 1 || 1.5
+      ),
+      "no overload matches"
+  end
+
+  it "reports no overload matches 2" do
+    assert_error %(
+      def foo(x : Int, y : Int)
+      end
+
+      def foo(x : Int, y : Double)
+      end
+
+      foo(1 || 'a', 1 || 1.5)
+      ),
+      "no overload matches"
+  end
 end

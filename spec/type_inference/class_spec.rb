@@ -208,4 +208,29 @@ describe 'Type inference: class' do
     nodes.last.type.type_vars["T"].type.should eq(mod.int)
     nodes.last.type.instance_vars["@x"].type.should eq(mod.int)
   end
+
+  it "reports uninitialized constant" do
+    assert_error "Foo.new",
+      "uninitialized constant Foo"
+  end
+
+  it "reports undefined method when method inside a class" do
+    assert_error "class Int; def foo; 1; end; end; foo",
+      "undefined local variable or method 'foo'"
+  end
+
+  it "reports undefined instance method" do
+    assert_error "1.foo",
+      "undefined method 'foo' for Int"
+  end
+
+  it "reports unknown class when extending" do
+    assert_error "class Foo < Bar; end",
+      "uninitialized constant Bar"
+  end
+
+  it "reports superclass mismatch" do
+    assert_error "class Foo; end; class Bar; end; class Foo < Bar; end",
+      "superclass mismatch for class Foo (Bar for Object)"
+  end
 end

@@ -211,4 +211,20 @@ describe 'Type inference: hierarchy' do
       Foo.new.inspect
       )) { string.hierarchy_type }
   end
+
+  it "reports no matches for hierarchy type" do
+    assert_error %(
+      class Foo
+      end
+
+      class Bar < Foo
+        def foo
+        end
+      end
+
+      x = Foo.new || Bar.new
+      x.foo
+      ),
+      "undefined method 'foo'"
+  end
 end

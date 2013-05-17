@@ -12,4 +12,9 @@ describe 'Type inference: while' do
   it "types while with break with value" do
     assert_type('while true; break 1; end') { UnionType.new(self.nil, int) }
   end
+
+  it "reports break cannot be used outside a while" do
+    assert_error 'break',
+      "Invalid break"
+  end
 end

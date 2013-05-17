@@ -20,4 +20,23 @@ describe 'Type inference: var' do
   it "types a variable that gets a new type" do
     assert_type('a = 1; a; a = 2.3; a') { UnionType.new(int, double) }
   end
+
+  it "reports undefined local variable or method" do
+    assert_error %(
+      def foo
+        a = something
+      end
+
+      def bar
+        foo
+      end
+
+      bar),
+      "undefined local variable or method 'something'"
+  end
+
+  it "reports read before assignment" do
+    assert_syntax_error "a += 1",
+      "'+=' before definition of 'a'"
+  end
 end

@@ -194,4 +194,10 @@ describe 'Type inference: module' do
       ),
       "no overload matches"
   end
+
+  it "reports can't use instance variables inside module" do
+    assert_error "def foo; @a = 1; end; foo",
+      "can't use instance variables at the top level"
+  end
+
 end
