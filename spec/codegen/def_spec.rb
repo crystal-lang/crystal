@@ -157,6 +157,16 @@ describe 'Code gen: def' do
       )).to_i.should eq(5)
   end
 
+  it "codegens with and witout many default arguments" do
+    run(%Q(
+      def foo(x = 1, y = 2, z = 3)
+        x + y + z
+      end
+
+      foo + foo(9) + foo(3, 4) + foo(6, 3, 1)
+      )).to_i.should eq(40)
+  end
+
   it "codegens with interesting default argument" do
     run(%Q(
       class Foo

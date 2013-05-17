@@ -153,6 +153,13 @@ module Crystal
     end
 
     def visit_def(node)
+      if node.has_default_arguments?
+        node.expand_default_arguments.each do |expansion|
+          expansion.accept self
+        end
+        return
+      end
+
       if node.receiver
         # TODO: hack
         if node.receiver.is_a?(Var) && node.receiver.name == 'self'

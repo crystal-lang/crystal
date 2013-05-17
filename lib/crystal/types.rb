@@ -119,16 +119,7 @@ module Crystal
       restrictions = a_def.args.map(&:type_restriction)
       @defs[a_def.name] ||= {}
       @defs[a_def.name][[restrictions, a_def.yields]] = a_def
-
-      index = a_def.args.length - 1
-      while index >= 0 && a_def.args[index].default_value
-        @defs[a_def.name][[restrictions[0 ... index], a_def.yields]] = a_def
-        add_sorted_def(a_def, index)
-        index -= 1
-      end
-
       add_sorted_def(a_def, a_def.args.length)
-
       a_def
     end
 

@@ -63,6 +63,31 @@ module Crystal
     def lookup_instance(arg_types)
       @instances && @instances[arg_types]
     end
+
+    def has_default_arguments?
+      args.length > 0 && args.last.default_value
+    end
+
+    def expand_default_arguments
+      return [self] unless has_default_arguments?
+
+      self_def = clone
+      self_def.args.each { |arg| arg.default_value = nil }
+
+      expansions = [self_def]
+
+      i = args.length - 1
+      while i >= 0 && (arg = args[i]).default_value
+        expansion = Def.new(name, self_def.args[0 ... i].map(&:clone), nil, receiver.clone, self_def.yields)
+        default_value = Assign.new(Var.new(arg.name), arg.default_value)
+        call = Call.new(nil, name, self_def.args[0 .. i].map { |arg| Var.new(arg.name) })
+        expansion.body = Expressions.new([default_value, call])
+        expansions << expansion
+        i -= 1
+      end
+
+      expansions
+    end
   end
 
   class Macro

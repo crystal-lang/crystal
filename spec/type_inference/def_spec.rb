@@ -1,6 +1,23 @@
 require 'spec_helper'
 
 describe 'Type inference: def' do
+  it "expands a def without default arguments" do
+    a_def = parse "def foo(x); x + 1; end"
+    expanded = a_def.expand_default_arguments
+    expanded.should eq([a_def])
+  end
+
+  it "expands a def with default arguments" do
+    a_def = parse "def foo(x, y = 1, z = 2); x + y + z; end"
+    expanded = a_def.expand_default_arguments
+
+    expanded1 = parse "def foo(x, y, z); x + y + z; end"
+    expanded2 = parse "def foo(x, y); z = 2; foo(x, y, z); end"
+    expanded3 = parse "def foo(x); y = 1; foo(x, y); end"
+
+    expanded.should eq([expanded1, expanded2, expanded3])
+  end
+
   it "types a call with an int" do
     assert_type('def foo; 1; end; foo') { int }
   end
