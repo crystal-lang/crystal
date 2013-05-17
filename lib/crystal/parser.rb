@@ -1318,9 +1318,9 @@ module Crystal
         def parse_#{keyword}
           next_token
 
-          #{keyword == 'yield' ? '@yields = true' : ''}
-
           args = parse_args
+
+          #{keyword == 'yield' ? '@yields ||= 0; if args && args.length > @yields; @yields = args.length; end' : ''}
 
           location = @token.location
           node = #{keyword.capitalize}.new(args || [])

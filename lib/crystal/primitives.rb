@@ -30,7 +30,7 @@ module Crystal
         b.icmp(:eq, b.ptr2int(obj, LLVM::Int), LLVM::Int(0))
       end
       instance.owner = object.hierarchy_type
-      object.hierarchy_type.add_def_instance(a_def.object_id, [], instance)
+      object.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
 
       a_def = no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
@@ -41,7 +41,7 @@ module Crystal
         b.ptr2int(obj, LLVM::Int64)
       end
       instance.owner = object.hierarchy_type
-      object.hierarchy_type.add_def_instance(a_def.object_id, [], instance)
+      object.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
 
       a_def = no_args_primitive(object, 'to_cstr', char_pointer) do |b, f, llvm_mod, self_type|
         buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
@@ -57,7 +57,7 @@ module Crystal
       end
 
       instance.owner = object.hierarchy_type
-      object.hierarchy_type.add_def_instance(a_def.object_id, [], instance)
+      object.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
     end
 
     def define_value_primitives
@@ -226,7 +226,7 @@ module Crystal
     def no_args_primitive(owner, name, return_type, &block)
       primitive(owner, name, []) do |a_def|
         instance = a_def.overload([], return_type, &block)
-        owner.add_def_instance(a_def.object_id, [], instance)
+        owner.add_def_instance(a_def.object_id, [], nil, instance)
       end
     end
 
@@ -238,7 +238,7 @@ module Crystal
       a_def = owner.add_def Def.new(name, args.map { |name, type| Arg.new_with_restriction(name, type) })
       a_def.owner = owner
       instance = a_def.overload(args.values, return_type, &block)
-      owner.add_def_instance(a_def.object_id, args.values, instance)
+      owner.add_def_instance(a_def.object_id, args.values, nil, instance)
     end
 
     def sprintf(llvm_mod)

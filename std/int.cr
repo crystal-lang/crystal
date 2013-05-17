@@ -35,7 +35,7 @@ class Int
     self + 1
   end
 
-  def times
+  def times(&block : Int -> )
     i = 0
     while i < self
       yield i

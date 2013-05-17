@@ -110,12 +110,19 @@ module Crystal
   end
 
   module DefInstanceContainer
-    def add_def_instance(def_object_id, arg_types, typed_def)
-      @def_instances[[def_object_id] + arg_types.map(&:object_id)] = typed_def
+    def add_def_instance(def_object_id, arg_types, block_type, typed_def)
+      @def_instances[def_instance_key(def_object_id, arg_types, block_type)] = typed_def
     end
 
-    def lookup_def_instance(def_object_id, arg_types)
-      @def_instances[[def_object_id] + arg_types.map(&:object_id)]
+    def lookup_def_instance(def_object_id, arg_types, block_type)
+      @def_instances[def_instance_key(def_object_id, arg_types, block_type)]
+    end
+
+    def def_instance_key(def_object_id, arg_types, block_type)
+      key = [def_object_id]
+      key.concat arg_types.map(&:object_id)
+      key.push block_type.object_id if block_type
+      key
     end
   end
 
@@ -126,13 +133,13 @@ module Crystal
       a_def.owner = self if a_def.respond_to?(:owner=)
       restrictions = a_def.args.map(&:type_restriction)
       @defs[a_def.name] ||= {}
-      @defs[a_def.name][[restrictions, a_def.yields]] = a_def
+      @defs[a_def.name][[restrictions, !!a_def.yields]] = a_def
       add_sorted_def(a_def, a_def.args.length)
       a_def
     end
 
     def add_sorted_def(a_def, args_length)
-      sorted_defs = @sorted_defs[[a_def.name, args_length, a_def.yields]]
+      sorted_defs = @sorted_defs[[a_def.name, args_length, !!a_def.yields]]
       append = sorted_defs.each_with_index do |ex_def, i|
         if a_def.is_restriction_of?(ex_def, self)
           sorted_defs.insert(i, a_def)
@@ -411,12 +418,12 @@ module Crystal
       @module.lookup_defs(name)
     end
 
-    def add_def_instance(def_object_id, arg_types, typed_def)
-      @class.add_def_instance(def_object_id, arg_types, typed_def)
+    def add_def_instance(def_object_id, arg_types, typed_def, block_type)
+      @class.add_def_instance(def_object_id, arg_types, typed_def, block_type)
     end
 
-    def lookup_def_instance(def_object_id, arg_types)
-      @class.lookup_def_instance(def_object_id, arg_types)
+    def lookup_def_instance(def_object_id, arg_types, block_type)
+      @class.lookup_def_instance(def_object_id, arg_types, block_type)
     end
 
     def parents

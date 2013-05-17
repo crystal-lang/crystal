@@ -89,8 +89,8 @@ module Crystal
       end
 
       typed_defs = matches.map do |match|
-        if (block_arg = match.def.block_arg)
-          if block_arg.inputs
+        if (block_arg = match.def.block_arg) || match.def.yields == 0
+          if block_arg && block_arg.inputs
             input_types = lookup_block_inputs(match.owner, block_arg.inputs)
             block.args.each_with_index do |arg, i|
               var = input_types[i]
@@ -108,16 +108,19 @@ module Crystal
 
           block.accept parent_visitor
 
-          if block_arg.output
+          if block_arg && block_arg.output
             match.free_vars[block_arg.output.names] = block.body.type
           end
         end
 
-        typed_def = match.owner.lookup_def_instance(match.def.object_id, match.arg_types) unless block
+        use_cache = !block || block_arg || match.def.yields == 0
+        block_type = block && block.body && block_arg ? block.body.type : nil
+
+        typed_def = match.owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
         unless typed_def
-          # puts "#{owner}##{name}(#{arg_types.join ', '})"
+          # puts "#{owner}##{name}(#{arg_types.join ', '})#{block_type ? "{ #{block_type} }" : ""}"
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, owner, match.owner, match.arg_types)
-          match.owner.add_def_instance(match.def.object_id, match.arg_types, typed_def) unless block
+          match.owner.add_def_instance(match.def.object_id, match.arg_types, block_type, typed_def) if use_cache
           if typed_def.body
             bubbling_exception do
               visitor = TypeVisitor.new(@mod, typed_def_args, match.owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars)
