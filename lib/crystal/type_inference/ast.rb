@@ -77,7 +77,7 @@ module Crystal
 
       i = args.length - 1
       while i >= 0 && (arg = args[i]).default_value
-        expansion = Def.new(name, self_def.args[0 ... i].map(&:clone), nil, receiver.clone, self_def.yields)
+        expansion = Def.new(name, self_def.args[0 ... i].map(&:clone), nil, receiver.clone, self_def.block_arg.clone, self_def.yields)
         expansion.instance_vars = instance_vars
         default_value = Assign.new(Var.new(arg.name), arg.default_value)
 
