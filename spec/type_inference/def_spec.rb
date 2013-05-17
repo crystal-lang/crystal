@@ -1,12 +1,6 @@
 require 'spec_helper'
 
 describe 'Type inference: def' do
-  it "expands a def without default arguments" do
-    a_def = parse "def foo(x); x + 1; end"
-    expanded = a_def.expand_default_arguments
-    expanded.should eq([a_def])
-  end
-
   it "expands a def with default arguments" do
     a_def = parse "def foo(x, y = 1, z = 2); x + y + z; end"
     expanded = a_def.expand_default_arguments

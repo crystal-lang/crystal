@@ -69,9 +69,8 @@ module Crystal
     end
 
     def expand_default_arguments
-      return [self] unless has_default_arguments?
-
       self_def = clone
+      self_def.instance_vars = instance_vars
       self_def.args.each { |arg| arg.default_value = nil }
 
       expansions = [self_def]
@@ -79,9 +78,12 @@ module Crystal
       i = args.length - 1
       while i >= 0 && (arg = args[i]).default_value
         expansion = Def.new(name, self_def.args[0 ... i].map(&:clone), nil, receiver.clone, self_def.yields)
+        expansion.instance_vars = instance_vars
         default_value = Assign.new(Var.new(arg.name), arg.default_value)
+
         call = Call.new(nil, name, self_def.args[0 .. i].map { |arg| Var.new(arg.name) })
         expansion.body = Expressions.new([default_value, call])
+
         expansions << expansion
         i -= 1
       end
