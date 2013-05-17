@@ -59,6 +59,10 @@ module Crystal
       true
     end
 
+    def cover
+      self
+    end
+
     def to_s
       name
     end
@@ -200,21 +204,8 @@ module Crystal
         if matches.length > 0
           if check_cover
             cover = Array.new(arg_types.inject(1) { |num, type| num * (type.is_a?(UnionType) ? type.types.length : 1) })
-
-            cover_arg_types = arg_types.map do |type|
-              if type.is_a?(UnionType)
-                type.types.map { |t| t.is_a?(HierarchyType) ? t.base_type : t }
-              elsif type.is_a?(HierarchyType)
-                type.base_type
-              else
-                type
-              end
-            end
-
-            matches.each do |match|
-              mark_cover(cover, cover_arg_types, match)
-            end
-
+            cover_arg_types = arg_types.map(&:cover)
+            matches.each { |match| mark_cover(cover, cover_arg_types, match) }
             if cover.all?
               return matches
             end
@@ -749,6 +740,10 @@ module Crystal
       self
     end
 
+    def cover
+      types.map { |t| t.cover }.flatten
+    end
+
     def filter_by(other_type)
       filtered_types = @types.map { |type| type.filter_by(other_type) }.compact
       case filtered_types.length
@@ -1058,6 +1053,10 @@ module Crystal
     def initialize(base_type)
       @base_type = base_type
       @def_instances = {}
+    end
+
+    def cover
+      base_type
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
