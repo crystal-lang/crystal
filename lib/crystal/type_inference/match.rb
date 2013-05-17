@@ -15,10 +15,12 @@ class Matches
 
   attr_accessor :matches
   attr_accessor :cover
+  attr_accessor :owner
 
-  def initialize(matches, cover)
+  def initialize(matches, cover, owner = nil)
     @matches = matches
     @cover = cover
+    @owner = owner
   end
 
   def cover_all?

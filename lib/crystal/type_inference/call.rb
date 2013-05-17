@@ -64,25 +64,28 @@ module Crystal
 
       if matches.empty?
         if def_name == 'new' && owner.is_a?(Metaclass) && owner.instance_type.is_a?(ObjectType)
-          matches = define_new owner, arg_types
+          new_matches = define_new owner, arg_types
+          matches = new_matches unless new_matches.empty?
         else
           # This is tricky: if no matches are found we might want to use method missing,
           # but first we need to check if the program defines that method.
           unless owner.equal?(mod)
-            matches = mod.lookup_matches(def_name, arg_types, !!block)
-            if matches.empty? && owner.lookup_first_def('method_missing')
+            mod_matches = mod.lookup_matches(def_name, arg_types, !!block)
+            if mod_matches.empty? && owner.lookup_first_def('method_missing')
               match = Match.new
               match.def = define_method_missing owner, def_name
               match.owner = self_type
               match.arg_types = arg_types
               matches = Matches.new([match], true)
+            else
+              matches = mod_matches unless mod_matches.empty?
             end
           end
         end
       end
 
       if matches.empty?
-        raise_matches_not_found(owner, def_name)
+        raise_matches_not_found(matches.owner || owner, def_name)
       end
 
       typed_defs = matches.map do |match|

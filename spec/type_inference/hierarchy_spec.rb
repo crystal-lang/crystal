@@ -225,7 +225,7 @@ describe 'Type inference: hierarchy' do
       x = Foo.new || Bar.new
       x.foo
       ),
-      "undefined method 'foo'"
+      "undefined method 'foo' for Foo"
   end
 
   it "doesn't check methods on abstract classes" do
@@ -307,7 +307,7 @@ describe 'Type inference: hierarchy' do
       f = Bar2.new || Bar3.new || Baz.new
       x = f.foo
       ),
-      "undefined method 'foo'"
+      "undefined method 'foo' for Bar3"
   end
 
   it "doesn't check cover for abstract classes" do
@@ -440,7 +440,7 @@ describe 'Type inference: hierarchy' do
       f = Bar1.new || Bar2.new || Baz.new
       f.foo(f)
       ),
-      "undefined method 'foo'"
+      "no overload matches"
   end
 
   it "checks cover in every concrete subclass 3" do
