@@ -85,7 +85,7 @@ module Crystal
       end
 
       if matches.empty?
-        raise_matches_not_found(matches.owner || owner, def_name)
+        raise_matches_not_found(matches.owner || owner, def_name, matches)
       end
 
       typed_defs = matches.map do |match|
@@ -105,7 +105,7 @@ module Crystal
       end
     end
 
-    def raise_matches_not_found(owner, def_name)
+    def raise_matches_not_found(owner, def_name, matches = nil)
       defs = owner.lookup_defs(def_name)
       unless defs
         if obj
@@ -123,13 +123,34 @@ module Crystal
         raise "wrong number of arguments for '#{full_name(owner)}' (#{self.args.length} for #{all_arguments_lengths.join ', '})"
       end
 
+      arg_names = []
+
       msg = "no overload matches '#{full_name(owner)}'"
       msg << " with types #{args.map(&:type).join ', '}" if args.length < 0
       msg << "\n"
       msg << "Overloads are:"
       defs.each do |a_def|
+        arg_names.push a_def.args.map(&:name)
+
         msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '})"
       end
+
+      if matches && matches.cover.is_a?(Cover)
+        missing = matches.cover.missing
+        arg_names = arg_names.uniq
+        arg_names = arg_names.length == 1 ? arg_names[0] : nil
+        unless missing.empty?
+          msg << "\nCouldn't find overloads for these types:"
+          missing.each_with_index do |missing_types|
+            if arg_names
+              msg << "\n - #{full_name(owner)}(#{missing_types.each_with_index.map { |missing_type, i| "#{arg_names[i]} : #{missing_type}" }.join ', '})"
+            else
+              msg << "\n - #{full_name(owner)}(#{missing_types.join ', '})"
+            end
+          end
+        end
+      end
+
       raise msg
     end
 

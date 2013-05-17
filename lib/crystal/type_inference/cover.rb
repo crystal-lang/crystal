@@ -8,16 +8,27 @@ class Cover
   end
 
   def all?
-    unless @cover
-      @cover = Array.new(@arg_types.inject(1) { |num, type| num * type.cover_length })
-      @cover_arg_types = @arg_types.map(&:cover)
-      @matches.each { |match| mark_cover(match) }
-    end
-
+    compute_cover
     @cover.all?
   end
 
+  def missing
+    compute_cover
+
+    missing = []
+    add_missing missing
+    missing
+  end
+
   private
+
+  def compute_cover
+    unless @cover
+      @cover = Array.new(@arg_types.inject(1) { |num, type| num * type.cover_length })
+      @cover_arg_types = @arg_types.map(&:cover)
+      @matches.each { |match| mark_cover(match) } if @matches
+    end
+  end
 
   def mark_cover(match, index = 0, position = 0, multiplier = 1)
     if index == @cover_arg_types.length
@@ -41,6 +52,23 @@ class Cover
       end
 
       mark_cover match, index + 1, position + offset * multiplier, new_multiplier
+    end
+  end
+
+  def add_missing(missing, types = [], index = 0, position = 0, multiplier = 1)
+    if index == @cover_arg_types.length
+      unless @cover[position]
+        missing.push types.clone
+      end
+      return
+    end
+
+    arg_types = Array(@cover_arg_types[index])
+    arg_types.each_with_index do |arg_type, offset|
+      types.push arg_type
+      new_multiplier = multiplier * arg_types.length
+      add_missing missing, types, index + 1, position + offset * multiplier, new_multiplier
+      types.pop
     end
   end
 end

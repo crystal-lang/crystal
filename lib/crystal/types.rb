@@ -232,12 +232,14 @@ module Crystal
               parent_owner = parent
             end
           end
-          matches = parent.lookup_matches(name, arg_types, yields, parent_owner, parent)
-          return matches if matches.cover_all?
+          parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, parent)
+          return parent_matches if parent_matches.cover_all?
+
+          matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
         end
       end
 
-      Matches.new(nil, false, self)
+      Matches.new(matches.matches, matches.cover, self, false)
     end
 
     def mark_cover(cover, arg_types, match, index = 0, position = 0, multiplier = 1)
@@ -1078,7 +1080,7 @@ module Crystal
 
       base_type_matches = base_type.lookup_matches(name, arg_types, yields, self)
       if !base_type.abstract && !base_type_matches.cover_all?
-        return Matches.new(nil, false, base_type)
+        return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type, false)
       end
 
       all_matches = {}
@@ -1102,11 +1104,11 @@ module Crystal
           end
 
           unless covered_by_superclass
-            return Matches.new(nil, false, subtype)
+            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype, false)
           end
         end
 
-        if subtype_matches.matches
+        if !subtype_matches.empty? && subtype_matches.matches
           subtype_matches.matches.concat matches
           matches = subtype_matches.matches
         end

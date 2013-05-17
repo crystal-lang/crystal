@@ -17,25 +17,22 @@ class Matches
   attr_accessor :cover
   attr_accessor :owner
 
-  def initialize(matches, cover, owner = nil)
+  def initialize(matches, cover, owner = nil, success = true)
     @matches = matches
     @cover = cover
     @owner = owner
+    @success = success
   end
 
   def cover_all?
-    @matches && @matches.length > 0 && (@cover == true || (@cover.is_a?(Cover) && @cover.all?))
+    @success && @matches && @matches.length > 0 && (@cover == true || (@cover.is_a?(Cover) && @cover.all?))
   end
 
   def empty?
-    !@matches || @matches.empty?
+    !@success || !@matches || @matches.empty?
   end
 
   def each(&block)
-    @matches.each(&block) if @matches
-  end
-
-  def length
-    @matches ? @matches.length : 0
+    @matches.each(&block) if @success && @matches
   end
 end
