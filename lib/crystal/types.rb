@@ -63,6 +63,10 @@ module Crystal
       self
     end
 
+    def cover_length
+      1
+    end
+
     def to_s
       name
     end
@@ -186,7 +190,7 @@ module Crystal
       true
     end
 
-    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, check_cover = true)
+    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self)
       if @sorted_defs && @sorted_defs.has_key?([name, arg_types.length, yields])
         defs = @sorted_defs[[name, arg_types.length, yields]]
         matches = []
@@ -197,30 +201,19 @@ module Crystal
             match.def = a_def
             match.owner = owner
             matches.push match
-            return matches if match.arg_types == arg_types
-          end
-        end
-
-        if matches.length > 0
-          if check_cover
-            cover = Array.new(arg_types.inject(1) { |num, type| num * (type.is_a?(UnionType) ? type.types.length : 1) })
-            cover_arg_types = arg_types.map(&:cover)
-            matches.each { |match| mark_cover(cover, cover_arg_types, match) }
-            if cover.all?
-              return matches
+            if match.arg_types == arg_types
+              return Matches.new(matches, true)
             end
-          else
-            return matches
           end
         end
       end
 
-      nil
+      Matches.new(matches, Cover.new(arg_types, matches))
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
       matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
-      return matches if matches
+      return matches if matches.cover_all?
 
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
@@ -240,11 +233,11 @@ module Crystal
             end
           end
           matches = parent.lookup_matches(name, arg_types, yields, parent_owner, parent)
-          return matches if matches && matches.any?
+          return matches if matches.cover_all?
         end
       end
 
-      nil
+      Matches.new(nil, false)
     end
 
     def mark_cover(cover, arg_types, match, index = 0, position = 0, multiplier = 1)
@@ -745,6 +738,12 @@ module Crystal
       types.map { |t| t.cover }.flatten
     end
 
+    def cover_length
+      sum = 0
+      types.each { |t| sum += t.cover_length }
+      sum
+    end
+
     def filter_by(other_type)
       filtered_types = @types.map { |type| type.filter_by(other_type) }.compact
       case filtered_types.length
@@ -1057,23 +1056,63 @@ module Crystal
     end
 
     def cover
-      base_type
+      if base_type.abstract
+        base_type.subclasses.map { |s| s.hierarchy_type.cover }.flatten
+      else
+        base_type
+      end
+    end
+
+    def cover_length
+      if base_type.abstract
+        sum = 0
+        base_type.subclasses.each { |s| sum += s.cover_length }
+        sum
+      else
+        1
+      end
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      matches = base_type.lookup_matches(name, arg_types, yields, self)
-      return nil unless matches
+      concrete_classes = Array(cover())
+
+      base_type_matches = base_type.lookup_matches(name, arg_types, yields, self)
+      if !base_type.abstract && !base_type_matches.cover_all?
+        return Matches.new(nil, false)
+      end
+
+      all_matches = {}
+      matches = base_type_matches.matches || []
 
       each_subtype(base_type) do |subtype|
         next if subtype.is_subclass_of?(program.value)
 
-        subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type, subtype.hierarchy_type, false)
-        if subtype_matches
-          subtype_matches.concat matches
-          matches = subtype_matches
+        subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type, subtype.hierarchy_type)
+        concrete = concrete_classes.any? { |c| c.object_id == subtype.object_id }
+        if concrete && !subtype_matches.cover_all? && !base_type_matches.cover_all?
+          covered_by_superclass = false
+          superclass = subtype.superclass
+          while !superclass.equal?(base_type)
+            superclass_matches = all_matches[superclass.object_id] ||= superclass.lookup_matches_without_parents(name, arg_types, yields, superclass.hierarchy_type, superclass.hierarchy_type)
+            if superclass_matches.cover_all?
+              covered_by_superclass = true
+              break
+            end
+            superclass = superclass.superclass
+          end
+
+          unless covered_by_superclass
+            return Matches.new(nil, false)
+          end
+        end
+
+        if subtype_matches.matches
+          subtype_matches.matches.concat matches
+          matches = subtype_matches.matches
         end
       end
-      matches.length > 0 ? matches : nil
+
+      Matches.new(matches, matches.length > 0)
     end
 
     def lookup_first_def(name)

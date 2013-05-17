@@ -62,7 +62,7 @@ module Crystal
       arg_types = args.map(&:type)
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 
-      if !matches || matches.empty?
+      if matches.empty?
         if def_name == 'new' && owner.is_a?(Metaclass) && owner.instance_type.is_a?(ObjectType)
           matches = define_new owner, arg_types
         else
@@ -70,18 +70,19 @@ module Crystal
           # but first we need to check if the program defines that method.
           unless owner.equal?(mod)
             matches = mod.lookup_matches(def_name, arg_types, !!block)
-            if !matches && owner.lookup_first_def('method_missing')
+            if matches.empty? && owner.lookup_first_def('method_missing')
               match = Match.new
               match.def = define_method_missing owner, def_name
               match.owner = self_type
               match.arg_types = arg_types
-              matches = [match]
+              matches = Matches.new([match], true)
             end
           end
         end
       end
 
-      unless matches
+      if matches.empty?
+        owner.lookup_matches(def_name, arg_types, !!block)
         raise_matches_not_found(owner, def_name)
       end
 
@@ -283,8 +284,8 @@ module Crystal
 
     def define_new(scope, arg_types)
       matches = scope.type.lookup_matches('initialize', arg_types, !!block)
-      if matches
-        matches.map do |match|
+      unless matches.empty?
+        ms = matches.map do |match|
           if match.free_vars.empty?
             alloc = Call.new(nil, 'allocate')
           else
@@ -327,6 +328,7 @@ module Crystal
           new_match.free_vars = match.free_vars
           new_match
         end
+        Matches.new(ms, true)
       else
         defs = scope.type.lookup_defs('initialize')
         if defs && defs.length > 0
@@ -339,7 +341,7 @@ module Crystal
         match.def = scope.add_def Def.new('new', [], [alloc])
         match.owner = scope
         match.arg_types = arg_types
-        [match]
+        Matches.new([match], true)
       end
     end
 

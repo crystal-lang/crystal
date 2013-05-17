@@ -227,4 +227,268 @@ describe 'Type inference: hierarchy' do
       ),
       "undefined method 'foo'"
   end
+
+  it "doesn't check methods on abstract classes" do
+    assert_type(%(
+      abstract class Foo
+      end
+
+      class Bar1 < Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar2 < Foo
+        def foo
+          2.5
+        end
+      end
+
+      f = Bar1.new || Bar2.new
+      x = f.foo
+      )) { union_of(int, double) }
+  end
+
+  it "doesn't check methods on abstract classes 2" do
+    assert_type(%(
+      abstract class Foo
+      end
+
+      abstract class Bar < Foo
+      end
+
+      class Bar2 < Bar
+        def foo
+          1
+        end
+      end
+
+      class Bar3 < Foo
+        def foo
+          2.5
+        end
+      end
+
+      class Baz < Foo
+        def foo
+          'a'
+        end
+      end
+
+      f = Bar2.new || Bar3.new || Baz.new
+      x = f.foo
+      )) { union_of(int, double, char) }
+  end
+
+  it "reports undefined method in subclass of abstract class" do
+    assert_error %(
+      abstract class Foo
+      end
+
+      abstract class Bar < Foo
+      end
+
+      class Bar2 < Bar
+        def foo
+          1
+        end
+      end
+
+      class Bar3 < Bar
+      end
+
+      class Baz < Foo
+        def foo
+          'a'
+        end
+      end
+
+      f = Bar2.new || Bar3.new || Baz.new
+      x = f.foo
+      ),
+      "undefined method 'foo'"
+  end
+
+  it "doesn't check cover for abstract classes" do
+    assert_type(%(
+      abstract class Foo
+        def foo(other)
+          1
+        end
+      end
+
+      abstract class Bar < Foo
+      end
+
+      class Bar1 < Bar
+      end
+
+      class Bar2 < Bar
+      end
+
+      class Baz < Foo
+      end
+
+      def foo(other : Bar1)
+        1
+      end
+
+      def foo(other : Bar2)
+        2.5
+      end
+
+      def foo(other : Baz)
+        'a'
+      end
+
+      f = Bar1.new || Bar2.new || Baz.new
+      foo(f)
+      )) { union_of(int, double, char) }
+  end
+
+  it "reports missing cover for subclass of abstract class" do
+    assert_error %(
+      abstract class Foo
+        def foo(other)
+          1
+        end
+      end
+
+      abstract class Bar < Foo
+      end
+
+      class Bar1 < Bar
+      end
+
+      class Bar2 < Bar
+      end
+
+      class Baz < Foo
+      end
+
+      def foo(other : Bar1)
+        1
+      end
+
+      def foo(other : Baz)
+        'a'
+      end
+
+      f = Bar1.new || Bar2.new || Baz.new
+      foo(f)
+      ),
+      "no overload matches"
+  end
+
+  it "checks cover in every concrete subclass" do
+    assert_type(%(
+      abstract class Foo
+      end
+
+      abstract class Bar < Foo
+      end
+
+      class Bar1 < Bar
+        def foo(x : Bar1); end
+        def foo(x : Bar2); end
+        def foo(x : Baz); end
+      end
+
+      class Bar2 < Bar
+        def foo(x : Bar1); end
+        def foo(x : Bar2); end
+        def foo(x : Baz); end
+      end
+
+      class Baz < Foo
+        def foo(x : Bar1); end
+        def foo(x : Bar2); end
+        def foo(x : Baz); end
+      end
+
+      f = Bar1.new || Bar2.new || Baz.new
+      f.foo(f)
+      )) { self.nil }
+  end
+
+  it "checks cover in every concrete subclass 2" do
+    assert_error %(
+      abstract class Foo
+      end
+
+      abstract class Bar < Foo
+      end
+
+      class Bar1 < Bar
+        def foo(x : Bar1); end
+        def foo(x : Bar2); end
+        def foo(x : Baz); end
+      end
+
+      class Bar2 < Bar
+        def foo(x : Bar1); end
+        def foo(x : Bar2); end
+        def foo(x : Baz); end
+      end
+
+      class Baz < Foo
+        def foo(x : Bar1); end
+        def foo(x : Baz); end
+      end
+
+      f = Bar1.new || Bar2.new || Baz.new
+      f.foo(f)
+      ),
+      "undefined method 'foo'"
+  end
+
+  it "checks cover in every concrete subclass 3" do
+    assert_type(%(
+      abstract class Foo
+      end
+
+      abstract class Bar < Foo
+        def foo(x : Bar1); end
+        def foo(x : Bar2); end
+        def foo(x : Baz); end
+      end
+
+      class Bar1 < Bar
+      end
+
+      class Bar2 < Bar
+      end
+
+      class Baz < Foo
+        def foo(x : Bar1); end
+        def foo(x : Bar2); end
+        def foo(x : Baz); end
+      end
+
+      f = Bar1.new || Bar2.new || Baz.new
+      f.foo(f)
+      )) { self.nil }
+  end
+
+  it "checks method in every concrete subclass but method in Object" do
+    assert_type(%(
+      class Object
+        def foo
+        end
+      end
+
+      abstract class Foo
+      end
+
+      class Bar1 < Foo
+      end
+
+      class Bar2 < Foo
+      end
+
+      f = Bar1.new || Bar2.new
+      f.foo
+      )) { self.nil }
+  end
 end
