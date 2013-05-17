@@ -196,6 +196,7 @@ describe Parser do
   it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
   it_parses "class Foo(T); end", ClassDef.new("Foo", nil, nil, ["T"])
   it_parses "class Foo(T); end", ClassDef.new("Foo", nil, nil, ["T"])
+  it_parses "abstract class Foo; end", ClassDef.new("Foo", nil, nil, nil, true)
 
   it_parses "Foo(T)", NewGenericClass.new("Foo".ident, ["T".ident])
   it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident])])

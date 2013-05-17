@@ -347,6 +347,7 @@ module Crystal
     end
 
     def visit_class_def(node)
+      @str << "abstract " if node.abstract
       @str << "class "
       @str << node.name
       if node.type_vars
