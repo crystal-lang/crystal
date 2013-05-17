@@ -120,7 +120,9 @@ module Crystal
         raise "wrong number of arguments for '#{full_name(owner)}' (#{self.args.length} for #{all_arguments_lengths.join ', '})"
       end
 
-      msg = "no overload matches '#{full_name(owner)}' with types #{args.map(&:type).join ', '}\n"
+      msg = "no overload matches '#{full_name(owner)}'"
+      msg << " with types #{args.map(&:type).join ', '}" if args.length < 0
+      msg << "\n"
       msg << "Overloads are:"
       defs.each do |a_def|
         msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '})"
