@@ -888,7 +888,13 @@ module Crystal
         if owner && owner.passed_as_self?
           @type = owner
           args_base_index = 1
-          @vars['self'] = { ptr: call_args[0], type: owner, treated_as_pointer: true }
+          if owner.union?
+            ptr = alloca(owner.llvm_type)
+            @builder.store call_args[0], ptr
+            @vars['self'] = { ptr: ptr, type: owner, treated_as_pointer: false }
+          else
+            @vars['self'] = { ptr: call_args[0], type: owner, treated_as_pointer: true }
+          end
         else
           args_base_index = 0
         end

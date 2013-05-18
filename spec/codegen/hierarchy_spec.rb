@@ -302,4 +302,31 @@ describe 'Code gen: hierarchy type' do
       a.foo
       )).to_b.should be_true
   end
+
+  it "correctly dispatch call with block when the obj is a hierarchy type" do
+    run(%q(
+      class Foo
+        def each
+          yield self
+        end
+
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      a = Foo.new
+      a = Bar.new
+
+      y = 0
+      a.each {|x| y = x.foo}
+      y
+    )).to_i.should eq(2)
+  end
 end
