@@ -200,4 +200,21 @@ describe 'Type inference: module' do
       "can't use instance variables at the top level"
   end
 
+  it "works with int including enumerable" do
+    assert_type(%q(
+      require "prelude"
+
+      class Int
+        include Enumerable(Int)
+
+        def each
+          yield self
+          yield self + 2
+        end
+      end
+
+      1.map { |x| x * 0.5 }
+      )) { array_of(double) }
+  end
+
 end

@@ -128,4 +128,8 @@ module Crystal
       end
     end
   end
+
+  class FrozenTypeException < TypeException
+  end
+
 end

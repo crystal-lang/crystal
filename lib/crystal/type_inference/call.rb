@@ -27,8 +27,8 @@ module Crystal
       return unless obj_and_args_types_set?
 
       # Ignore extra recalculations when more than one argument changes at the same time
-      types_signature = args.map { |arg| arg.type.object_id }
-      types_signature << obj.type.object_id if obj
+      types_signature = args.map { |arg| arg.type.type_id }
+      types_signature << obj.type.type_id if obj
       return if @types_signature == types_signature
       @types_signature = types_signature
 

@@ -415,7 +415,7 @@ module Crystal
       type_assign(node.target, node.value, node)
       node.type_filters = node.value.type_filters
       false
-    rescue Crystal::Exception => ex
+    rescue Crystal::FrozenTypeException => ex
       node.raise "assinging to #{node.target}", ex
     end
 

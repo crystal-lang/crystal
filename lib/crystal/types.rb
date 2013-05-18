@@ -120,8 +120,8 @@ module Crystal
 
     def def_instance_key(def_object_id, arg_types, block_type)
       key = [def_object_id]
-      key.concat arg_types.map(&:object_id)
-      key.push block_type.object_id if block_type
+      key.concat arg_types.map(&:type_id)
+      key.push block_type.type_id if block_type
       key
     end
   end
@@ -349,8 +349,8 @@ module Crystal
     end
 
     def lookup_type(names, already_looked_up = {})
-      return nil if already_looked_up[object_id]
-      already_looked_up[object_id] = true
+      return nil if already_looked_up[type_id]
+      already_looked_up[type_id] = true
 
       if type_vars && names.length == 1 && type_var = type_vars[names[0]]
         return type_var.type
@@ -411,7 +411,11 @@ module Crystal
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      @module.lookup_matches(name, arg_types, yields, self, type_lookup)
+      matches = @module.lookup_matches(name, arg_types, yields, self, type_lookup)
+      if matches.empty? && owner.equal?(self)
+        matches = @class.lookup_matches(name, arg_types, yields, self, type_lookup)
+      end
+      matches
     end
 
     def lookup_defs(name)
@@ -426,8 +430,40 @@ module Crystal
       @class.lookup_def_instance(def_object_id, arg_types, block_type)
     end
 
+    def match_arg(arg_type, restriction, owner, type_lookup, free_vars)
+      @module.match_arg(arg_type, restriction, owner, type_lookup, free_vars)
+    end
+
+    def lookup_macro(name, args_length)
+      @module.lookup_macro(name, args_length)
+    end
+
+    def lookup_first_def(name)
+      @module.lookup_first_def(name)
+    end
+
     def parents
       @module.parents
+    end
+
+    def program
+      @class.program
+    end
+
+    def llvm_type
+      @class.llvm_type
+    end
+
+    def llvm_size
+      @class.llvm_size
+    end
+
+    def llvm_name
+      @class.llvm_name
+    end
+
+    def type_id
+      @class.type_id
     end
 
     def to_s
@@ -662,9 +698,9 @@ module Crystal
     def clone(types_context = {})
       return self if !generic
 
-      obj = types_context[object_id] and return obj
+      obj = types_context[type_id] and return obj
 
-      obj = types_context[object_id] = ObjectType.new name, superclass, @container
+      obj = types_context[type_id] = ObjectType.new name, superclass, @container
       obj.instance_vars = Hash[instance_vars.map do |name, var|
         cloned_var = var.clone
         cloned_var.type = var.type.clone(types_context) if var.type
@@ -696,9 +732,9 @@ module Crystal
     end
 
     def clone(types_context = {})
-      pointer = types_context[object_id] and return pointer
+      pointer = types_context[type_id] and return pointer
 
-      pointer = types_context[object_id] = PointerType.new @parent_type, @container
+      pointer = types_context[type_id] = PointerType.new @parent_type, @container
       pointer.defs = defs
       pointer.sorted_defs = sorted_defs
       pointer.types = types
@@ -833,8 +869,8 @@ module Crystal
     end
 
     def clone(types_context = {})
-      cloned = types_context[object_id] and return cloned
-      types_context[object_id] = UnionType.new(*types.map { |type| type.clone(types_context) })
+      cloned = types_context[type_id] and return cloned
+      types_context[type_id] = UnionType.new(*types.map { |type| type.clone(types_context) })
     end
 
     def name
@@ -1105,12 +1141,12 @@ module Crystal
         next if subtype.is_subclass_of?(program.value)
 
         subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type, subtype.hierarchy_type)
-        concrete = concrete_classes.any? { |c| c.object_id == subtype.object_id }
+        concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
         if concrete && !subtype_matches.cover_all? && !base_type_matches.cover_all?
           covered_by_superclass = false
           superclass = subtype.superclass
           while !superclass.equal?(base_type)
-            superclass_matches = all_matches[superclass.object_id] ||= superclass.lookup_matches_without_parents(name, arg_types, yields, superclass.hierarchy_type, superclass.hierarchy_type)
+            superclass_matches = all_matches[superclass.type_id] ||= superclass.lookup_matches_without_parents(name, arg_types, yields, superclass.hierarchy_type, superclass.hierarchy_type)
             if superclass_matches.cover_all?
               covered_by_superclass = true
               break

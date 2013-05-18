@@ -33,23 +33,23 @@ module Crystal
 
     def visit_var(node)
       unless @vars.include? node.name
-        var = @g.add_nodes node.object_id.to_s, :label => node.name, :shape => :note
+        var = @g.add_nodes node.type_id.to_s, :label => node.name, :shape => :note
         add_edges var, node.type
         @vars << node.name
       end
     end
 
     def type_node(type)
-      node = @g.get_node(type.object_id.to_s)
+      node = @g.get_node(type.type_id.to_s)
       unless node
         case type
         when ObjectType
-          node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => type.to_s.gsub("|", "\\|")
+          node = @g.add_nodes type.type_id.to_s, :shape => :record, :label => type.to_s.gsub("|", "\\|")
           add_object_type_edges node, type
         when nil
-          node = @g.add_nodes type.object_id.to_s, :shape => :record, :label => 'nil'
+          node = @g.add_nodes type.type_id.to_s, :shape => :record, :label => 'nil'
         else
-          node = @g.add_nodes type.object_id.to_s, :label => type.to_s
+          node = @g.add_nodes type.type_id.to_s, :label => type.to_s
         end
       end
       node

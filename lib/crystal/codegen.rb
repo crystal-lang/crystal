@@ -1297,7 +1297,7 @@ module Crystal
       arg_values = []
 
       codegen_dispatch_arg(node, arg_types, arg_values, unreachable_block) do |label|
-        call = dispatch.calls[arg_types.map(&:object_id)]
+        call = dispatch.calls[arg_types.map(&:type_id)]
 
         unless call
           @builder.unreachable

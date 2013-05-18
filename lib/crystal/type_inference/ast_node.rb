@@ -7,13 +7,13 @@ module Crystal
 
     def set_type(type)
       if @freeze_type
-        raise "type must be #{@type}, not #{type}"
+        raise "type must be #{@type}, not #{type}", nil, Crystal::FrozenTypeException
       end
       @type = type
     end
 
     def type=(type)
-      return if type.nil? || @type.object_id == type.object_id
+      return if type.nil? || @type.type_id == type.type_id
 
       set_type(type)
       notify_observers
@@ -41,7 +41,7 @@ module Crystal
       else
         new_type = Type.merge *@dependencies.map(&:type)
       end
-      return if @type.object_id == new_type.object_id
+      return if @type.type_id == new_type.type_id
       set_type(map_type(new_type))
       @dirty = true
       propagate
@@ -51,7 +51,7 @@ module Crystal
       return unless @dependencies
 
       nodes.each do |node|
-        idx = @dependencies.index { |d| d.object_id == node.object_id }
+        idx = @dependencies.index { |d| d.equal?(node) }
         @dependencies.delete_at(idx) if idx
         node.remove_observer self
       end
@@ -64,7 +64,7 @@ module Crystal
 
     def remove_observer(observer)
       return unless @observers
-      idx = @observers.index { |o| o.object_id == observer.object_id }
+      idx = @observers.index { |o| o.equal?(observer) }
       @observers.delete_at(idx) if idx
     end
 
@@ -87,7 +87,7 @@ module Crystal
         new_type = Type.merge *@dependencies.map(&:type)
       end
 
-      return if @type.object_id == new_type.object_id
+      return if @type.type_id == new_type.type_id
       set_type(map_type new_type)
       @dirty = true
     end
@@ -99,8 +99,8 @@ module Crystal
       end
     end
 
-    def raise(message, inner = nil)
-      Kernel::raise Crystal::TypeException.for_node(self, message, inner)
+    def raise(message, inner = nil, exception_type = Crystal::TypeException)
+      Kernel::raise exception_type.for_node(self, message, inner)
     end
   end
 
