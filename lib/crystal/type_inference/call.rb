@@ -91,7 +91,7 @@ module Crystal
       typed_defs = matches.map do |match|
         if (block_arg = match.def.block_arg) || match.def.yields == 0
           if block_arg && block_arg.inputs
-            input_types = lookup_block_inputs(match.owner, block_arg.inputs)
+            input_types = lookup_block_inputs(match, block_arg.inputs)
             block.args.each_with_index do |arg, i|
               var = input_types[i]
               if var
@@ -132,8 +132,8 @@ module Crystal
       end
     end
 
-    def lookup_block_inputs(owner, inputs)
-      visitor = IdentLookupVisitor.new(mod, owner)
+    def lookup_block_inputs(match, inputs)
+      visitor = IdentLookupVisitor.new(mod, match)
       inputs.each_with_index.map do |input, i|
         input.accept visitor
         Var.new("var#{i}", visitor.type)
@@ -143,16 +143,21 @@ module Crystal
     class IdentLookupVisitor < Visitor
       attr_reader :type
 
-      def initialize(mod, owner)
+      def initialize(mod, match)
         @mod = mod
-        @owner = owner
+        @match = match
       end
 
       def visit_ident(node)
+        if node.names.length == 1 && @match.free_vars && type = @match.free_vars[node.names]
+          @type = type
+          return
+        end
+
         if node.global
           @type = mod.lookup_type node.names
         else
-          @type = @owner.lookup_type node.names
+          @type = @match.owner.lookup_type node.names
         end
 
         unless @type

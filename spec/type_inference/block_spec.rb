@@ -128,4 +128,22 @@ describe 'Block inference' do
       bar { |x| x.foo }
       )) { "Foo".generic(T: double).with_vars(x: double) }
   end
+
+  it "infers type of block before call taking other args free vars into account" do
+    assert_type(%q(
+      class Foo(X)
+        def initialize(x : X)
+          @x = x
+        end
+      end
+
+      def foo(x : U, &block: U -> T)
+        Foo(T).new(yield x)
+      end
+
+      a = foo(1) do |x|
+        10.5
+      end
+      )) { "Foo".generic(X: double).with_vars(x: double) }
+  end
 end
