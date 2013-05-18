@@ -1181,7 +1181,10 @@ module Crystal
     end
 
     def each2(type, &block)
-      block.call type
+      # TODO: what if self is Object+ and we have Array(T)
+      unless type.generic && type.type_vars.any? { |n, v| !v.type }
+        block.call type
+      end
       each_subtype(type, &block)
     end
 
