@@ -167,15 +167,33 @@ module Crystal
           return
         end
 
-        if node.global
-          @type = mod.lookup_type node.names
-        else
-          @type = @match.owner.lookup_type node.names
-        end
+        @type = (node.global ? mod : @match.owner).lookup_type(node.names)
 
         unless @type
           node.raise("uninitialized constant #{node}")
         end
+      end
+
+      def visit_new_generic_class(node)
+        node.name.accept self
+
+        instance_type = @type
+        unless instance_type.type_vars
+          node.raise "#{instance_type} is not a generic class"
+        end
+
+        if instance_type.type_vars.length != node.type_vars.length
+          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
+        end
+
+        type_vars = []
+        node.type_vars.each do |type_var|
+          type_var.accept self
+          type_vars.push @type
+        end
+
+        @type = @mod.lookup_generic_type instance_type, type_vars
+        false
       end
     end
 

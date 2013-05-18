@@ -229,4 +229,19 @@ describe 'Block inference' do
       foo { Foo(Double).new }
       )) { "Foo".generic(T: double) }
   end
+
+  it "infers type of block with generic type" do
+    assert_type(%q(
+      class Foo(T)
+      end
+
+      def foo(&block: Foo(Int) -> )
+        yield Foo(Int).new
+      end
+
+      foo do |x|
+        10.5
+      end
+      )) { double }
+  end
 end
