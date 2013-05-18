@@ -442,6 +442,18 @@ module Crystal
       @module.lookup_first_def(name)
     end
 
+    def lookup_instance_var(name, create = true)
+      @class.lookup_instance_var(name, create)
+    end
+
+    def has_instance_var_in_initialize?(name)
+      @class.has_instance_var_in_initialize?(name)
+    end
+
+    def index_of_instance_var(name)
+      @class.index_of_instance_var(name)
+    end
+
     def parents
       @module.parents
     end

@@ -217,4 +217,11 @@ describe 'Type inference: module' do
       )) { array_of(double) }
   end
 
+  it "works with range and map" do
+    assert_type(%q(
+      require "prelude"
+      (1..3).map { |x| x * 0.5 }
+      )) { array_of(double) }
+  end
+
 end
