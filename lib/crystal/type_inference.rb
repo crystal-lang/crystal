@@ -62,7 +62,7 @@ module Crystal
     @@regexps = {}
     @@counter = 0
 
-    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil, owner = nil, untyped_def = nil, typed_def = nil, arg_types = nil, free_vars = nil)
+    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil, owner = nil, untyped_def = nil, typed_def = nil, arg_types = nil, free_vars = nil, yield_vars = nil)
       @mod = mod
       @vars = vars
       @scope = scope
@@ -73,6 +73,7 @@ module Crystal
       @typed_def = typed_def
       @arg_types = arg_types
       @free_vars = free_vars
+      @yield_vars = yield_vars
       @types = [mod]
       @while_stack = []
       @type_filter_stack = []
@@ -414,6 +415,8 @@ module Crystal
       type_assign(node.target, node.value, node)
       node.type_filters = node.value.type_filters
       false
+    rescue Crystal::Exception => ex
+      node.raise "assinging to #{node.target}", ex
     end
 
     def visit_multi_assign(node)
@@ -697,6 +700,20 @@ module Crystal
 
     def end_visit_yield(node)
       block = @call.block or node.raise "no block given"
+
+      if @yield_vars
+        @yield_vars.each_with_index do |var, i|
+          exp = node.exps[i]
+          if exp
+            if !exp.type.equal?(var.type)
+              exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp.type}"
+            end
+            exp.freeze_type = true
+          elsif !var.type.equal?(mod.nil)
+            node.raise "missing argument ##{i + 1} of yield with type #{var.type}"
+          end
+        end
+      end
 
       block.args.each_with_index do |arg, i|
         exp = node.exps[i]

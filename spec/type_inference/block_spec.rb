@@ -146,4 +146,50 @@ describe 'Block inference' do
       end
       )) { "Foo".generic(X: double).with_vars(x: double) }
   end
+
+  it "reports error if yields a type that's not that one in the block specification" do
+    assert_error %q(
+      def foo(&block: Int -> )
+        yield 10.5
+      end
+
+      foo {}
+      ),
+      "argument #1 of yield expected to be Int, not Double"
+  end
+
+  it "reports error if yields a type that's not that one in the block specification and type changes" do
+    assert_error %q(
+      def foo(&block: Int -> )
+        a = 1
+        yield a
+        a = 10.5
+      end
+
+      foo {}
+      ),
+      "type must be Int, not Double | Int"
+  end
+
+  it "doesn't report error if yields nil but nothing is yielded" do
+    assert_type(%q(
+      def foo(&block: Int, Nil -> )
+        yield 1
+      end
+
+      foo { |x| x }
+      )) { int }
+  end
+
+  it "reports error if missing arguments to yield" do
+    assert_error %q(
+      def foo(&block: Int, Int -> )
+        yield 1
+      end
+
+      foo { |x| x }
+      ),
+      "missing argument #2 of yield with type Int"
+  end
+
 end

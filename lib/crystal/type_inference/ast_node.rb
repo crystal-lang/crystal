@@ -3,8 +3,12 @@ module Crystal
     attr_accessor :type
     attr_accessor :dependencies
     attr_accessor :type_filters
+    attr_accessor :freeze_type
 
     def set_type(type)
+      if @freeze_type
+        raise "type must be #{@type}, not #{type}"
+      end
       @type = type
     end
 

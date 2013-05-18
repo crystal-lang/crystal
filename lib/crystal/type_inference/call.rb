@@ -89,11 +89,12 @@ module Crystal
       end
 
       typed_defs = matches.map do |match|
+        yield_vars = nil
         if (block_arg = match.def.block_arg) || match.def.yields == 0
           if block_arg && block_arg.inputs
-            input_types = lookup_block_inputs(match, block_arg.inputs)
+            yield_vars = lookup_block_inputs(match, block_arg.inputs)
             block.args.each_with_index do |arg, i|
-              var = input_types[i]
+              var = yield_vars[i]
               if var
                 arg.bind_to var
               else
@@ -123,7 +124,7 @@ module Crystal
           match.owner.add_def_instance(match.def.object_id, match.arg_types, block_type, typed_def) if use_cache
           if typed_def.body
             bubbling_exception do
-              visitor = TypeVisitor.new(@mod, typed_def_args, match.owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars)
+              visitor = TypeVisitor.new(@mod, typed_def_args, match.owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars, yield_vars)
               typed_def.body.accept visitor
             end
           end
