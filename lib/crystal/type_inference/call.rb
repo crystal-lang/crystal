@@ -89,33 +89,9 @@ module Crystal
       end
 
       typed_defs = matches.map do |match|
-        yield_vars = nil
-        if (block_arg = match.def.block_arg) || match.def.yields == 0
-          if block_arg && block_arg.inputs
-            yield_vars = lookup_block_inputs(match, block_arg.inputs)
-            block.args.each_with_index do |arg, i|
-              var = yield_vars[i]
-              if var
-                arg.bind_to var
-              else
-                arg.bind_to mod.nil_var
-              end
-            end
-          else
-            block.args.each do |arg|
-              arg.bind_to mod.nil_var
-            end
-          end
-
-          block.accept parent_visitor
-
-          if block_arg && block_arg.output
-            match.free_vars[block_arg.output.names] = block.body.type
-          end
-        end
-
-        use_cache = !block || block_arg || match.def.yields == 0
-        block_type = block && block.body && block_arg ? block.body.type : nil
+        yield_vars = match_block_arg(match)
+        use_cache = !block || match.def.block_arg || match.def.yields == 0
+        block_type = block && block.body && match.def.block_arg ? block.body.type : nil
 
         typed_def = match.owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
         unless typed_def
@@ -133,12 +109,48 @@ module Crystal
       end
     end
 
-    def lookup_block_inputs(match, inputs)
-      visitor = IdentLookupVisitor.new(mod, match)
-      inputs.each_with_index.map do |input, i|
-        input.accept visitor
-        Var.new("var#{i}", visitor.type)
+    def match_block_arg(match)
+      yield_vars = nil
+
+      if (block_arg = match.def.block_arg) || match.def.yields == 0
+        ident_lookup = IdentLookupVisitor.new(mod, match)
+
+        if block_arg && block_arg.inputs
+          yield_vars = block_arg.inputs.each_with_index.map do |input, i|
+            Var.new("var#{i}", lookup_node_type(ident_lookup, input))
+          end
+          block.args.each_with_index do |arg, i|
+            var = yield_vars[i]
+            if var
+              arg.bind_to var
+            else
+              arg.bind_to mod.nil_var
+            end
+          end
+        else
+          block.args.each do |arg|
+            arg.bind_to mod.nil_var
+          end
+        end
+
+        block.accept parent_visitor
+
+        if block_arg && block_arg.output
+          block_type = block.body ? block.body.type : mod.nil
+          matched = match.owner.match_arg(block_type, block_arg.output, match.owner, match.owner, match.free_vars)
+          unless matched
+            raise "block expected to return #{block_arg.output}, not #{block_type}"
+          end
+          block.body.freeze_type = true if block.body
+        end
       end
+
+      yield_vars
+    end
+
+    def lookup_node_type(visitor, node)
+      node.accept visitor
+      visitor.type
     end
 
     class IdentLookupVisitor < Visitor

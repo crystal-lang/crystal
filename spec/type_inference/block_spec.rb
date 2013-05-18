@@ -168,7 +168,7 @@ describe 'Block inference' do
 
       foo {}
       ),
-      "type must be Int, not Double | Int"
+      "type must be Int, not"
   end
 
   it "doesn't report error if yields nil but nothing is yielded" do
@@ -192,4 +192,41 @@ describe 'Block inference' do
       "missing argument #2 of yield with type Int"
   end
 
+  it "reports error if block didn't return expected type" do
+    assert_error %q(
+      def foo(&block: Int -> Double)
+        yield 1
+      end
+
+      foo { 'a' }
+      ),
+      "block expected to return Double, not Char"
+  end
+
+  it "reports error if block changes type" do
+    assert_error %q(
+      def foo(&block: Int -> Double)
+        yield 1
+      end
+
+      a = 10.5
+      foo { a }
+      a = 1
+      ),
+      "type must be Double"
+  end
+
+  it "matches block arg return type" do
+    assert_type(%q(
+      class Foo(T)
+      end
+
+      def foo(&block: Int -> Foo(T))
+        yield 1
+        Foo(T).new
+      end
+
+      foo { Foo(Double).new }
+      )) { "Foo".generic(T: double) }
+  end
 end
