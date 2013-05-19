@@ -803,7 +803,7 @@ module Crystal
       if instance_type.type_vars.length != node.type_vars.length
         node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
       end
-      generic_type = mod.lookup_generic_type instance_type, node.type_vars.map { |var| var.type.instance_type }
+      generic_type = instance_type.instantiate(node.type_vars.map { |var| var.type.instance_type })
       node.type = generic_type.metaclass
       false
     end

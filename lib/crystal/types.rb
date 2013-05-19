@@ -480,7 +480,29 @@ module Crystal
     end
   end
 
+  module GenericType
+    def instantiate(type_vars)
+      @generic_types ||= {}
+      key = type_vars.map(&:type_id)
+      unless generic_type = @generic_types[key]
+        generic_type = clone
+        i = 0
+        generic_type.type_vars.each do |name, var|
+          var.type = type_vars[i]
+          var.bind_to var
+          i += 1
+        end
+        generic_type.metaclass.defs = metaclass.defs
+        generic_type.metaclass.sorted_defs = metaclass.sorted_defs
+        @generic_types[key] = generic_type
+      end
+      generic_type
+    end
+  end
+
   class ObjectType < ClassType
+    include GenericType
+
     attr_accessor :instance_vars
     attr_accessor :owned_instance_vars
     attr_accessor :instance_vars_in_initialize
@@ -690,6 +712,8 @@ module Crystal
   end
 
   class PointerType < ClassType
+    include GenericType
+
     def initialize(parent_type = nil, container = nil)
       super("Pointer", parent_type, container)
     end

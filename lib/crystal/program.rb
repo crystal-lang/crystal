@@ -14,7 +14,6 @@ module Crystal
     def initialize
       super('main')
 
-      @generic_types = {}
       @unions = {}
       @macros_cache = {}
 
@@ -143,23 +142,6 @@ module Crystal
       t1.depth == 0 ? nil : t1
     end
 
-    def lookup_generic_type(base_class, type_vars)
-      key = [base_class.type_id, type_vars.map(&:type_id)]
-      unless generic_type = @generic_types[key]
-        generic_type = base_class.clone
-        i = 0
-        generic_type.type_vars.each do |name, var|
-          var.type = type_vars[i]
-          var.bind_to var
-          i += 1
-        end
-        generic_type.metaclass.defs = base_class.metaclass.defs
-        generic_type.metaclass.sorted_defs = base_class.metaclass.sorted_defs
-        @generic_types[key] = generic_type
-      end
-      generic_type
-    end
-
     def nil_var
       @nil_var
     end
@@ -221,19 +203,19 @@ module Crystal
     end
 
     def pointer_of(type)
-      lookup_generic_type pointer, [type]
+      pointer.instantiate [type]
     end
 
     def array_of(type)
-      lookup_generic_type array, [type]
+      array.instantiate [type]
     end
 
     def range_of(a_begin, a_end)
-      lookup_generic_type types["Range"], [a_begin, a_end]
+      types["Range"].instantiate [a_begin, a_end]
     end
 
     def hash_of(key, value)
-      lookup_generic_type types["Hash"], [key, value]
+      types["Hash"].instantiate [key, value]
     end
 
     def metaclass

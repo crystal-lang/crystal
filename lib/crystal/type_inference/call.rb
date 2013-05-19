@@ -167,7 +167,7 @@ module Crystal
           return
         end
 
-        @type = (node.global ? mod : @match.type_lookup).lookup_type(node.names)
+        @type = (node.global ? @mod : @match.type_lookup).lookup_type(node.names)
 
         unless @type
           node.raise("uninitialized constant #{node}")
@@ -192,7 +192,7 @@ module Crystal
           type_vars.push @type
         end
 
-        @type = @mod.lookup_generic_type instance_type, type_vars
+        @type = instance_type.instantiate(type_vars)
         false
       end
     end
