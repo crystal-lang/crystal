@@ -235,8 +235,7 @@ module Crystal
             when ModuleType
               parent_owner = owner
             when IncludedGenericModule
-              included = IncludedGenericModule.new(parent.module, self, parent.mapping)
-              type_lookup = included
+              type_lookup = parent
               parent_owner = owner
             else
               parent_owner = parent
@@ -705,7 +704,13 @@ module Crystal
       obj.defs = defs
       obj.sorted_defs = sorted_defs
       obj.types = types
-      obj.parents = parents
+      obj.parents = parents.map do |parent|
+        if parent.is_a?(IncludedGenericModule)
+          IncludedGenericModule.new(parent.module, obj, parent.mapping)
+        else
+          parent
+        end
+      end
       obj.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
       obj
     end
@@ -733,7 +738,13 @@ module Crystal
       pointer.defs = defs
       pointer.sorted_defs = sorted_defs
       pointer.types = types
-      pointer.parents = parents
+      pointer.parents = parents.map do |parent|
+        if parent.is_a?(IncludedGenericModule)
+          IncludedGenericModule.new(parent.module, pointer, parent.mapping)
+        else
+          parent
+        end
+      end
       pointer.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
       pointer
     end
