@@ -219,6 +219,32 @@ module Crystal
       Matches.new(matches, Cover.new(arg_types, matches), owner)
     end
 
+    def lookup_matches_with_modules(name, arg_types, yields, owner = self, type_lookup = self)
+      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
+      return matches unless matches.empty?
+
+      if parents && !(name == 'new' && owner.is_a?(Metaclass))
+        parents.each do |parent|
+          type_lookup = parent
+          if parent.class == ModuleType
+            parent_owner = owner
+          elsif parent.class == IncludedGenericModule
+            type_lookup = parent
+              parent_owner = owner
+          else
+            break
+          end
+
+          parent_matches = parent.lookup_matches_without_parents(name, arg_types, yields, parent_owner, type_lookup)
+          return parent_matches unless parent_matches.empty?
+
+          matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
+        end
+      end
+
+      Matches.new(matches.matches, matches.cover, owner, false)
+    end
+
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
       matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
       return matches if matches.cover_all?
@@ -383,12 +409,12 @@ module Crystal
 
   class IncludedGenericModule < Type
     attr_reader :module
-    attr_reader :class
+    attr_reader :including_class
     attr_reader :mapping
 
     def initialize(a_module, a_class, mapping)
       @module = a_module
-      @class = a_class
+      @including_class = a_class
       @mapping = mapping
     end
 
@@ -397,7 +423,7 @@ module Crystal
         if m.is_a?(Type)
           m
         else
-          @class.lookup_type([m], already_looked_up)
+          @including_class.lookup_type([m], already_looked_up)
         end
       else
         @module.lookup_type(names, already_looked_up)
@@ -420,6 +446,10 @@ module Crystal
       @module.lookup_matches(name, arg_types, yields, owner, type_lookup)
     end
 
+    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self)
+      @module.lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
+    end
+
     def lookup_defs(name)
       @module.lookup_defs(name)
     end
@@ -437,7 +467,7 @@ module Crystal
     end
 
     def to_s
-      "#{@module}(#{@class})"
+      "#{@module}(#{@including_class})"
     end
   end
 
@@ -1146,13 +1176,13 @@ module Crystal
       each_subtype(base_type) do |subtype|
         next if subtype.is_subclass_of?(program.value)
 
-        subtype_matches = subtype.lookup_matches_without_parents(name, arg_types, yields, subtype.hierarchy_type, subtype.hierarchy_type)
+        subtype_matches = subtype.lookup_matches_with_modules(name, arg_types, yields, subtype.hierarchy_type, subtype.hierarchy_type)
         concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
         if concrete && !subtype_matches.cover_all? && !base_type_matches.cover_all?
           covered_by_superclass = false
           superclass = subtype.superclass
           while !superclass.equal?(base_type)
-            superclass_matches = all_matches[superclass.type_id] ||= superclass.lookup_matches_without_parents(name, arg_types, yields, superclass.hierarchy_type, superclass.hierarchy_type)
+            superclass_matches = all_matches[superclass.type_id] ||= superclass.lookup_matches_with_modules(name, arg_types, yields, superclass.hierarchy_type, superclass.hierarchy_type)
             if superclass_matches.cover_all?
               covered_by_superclass = true
               break
