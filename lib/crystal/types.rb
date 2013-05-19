@@ -151,6 +151,7 @@ module Crystal
 
     def match_def_args(args, def_restrictions, owner, type_lookup)
       match = Match.new
+      match.type_lookup = type_lookup
       0.upto(args.length - 1) do |i|
         arg_type = args[i]
         restriction = def_restrictions[i]
@@ -224,6 +225,7 @@ module Crystal
 
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
+          type_lookup = parent
           if is_subclass_of?(program.value)
             parent_owner = owner
           else
@@ -233,13 +235,14 @@ module Crystal
             when ModuleType
               parent_owner = owner
             when IncludedGenericModule
-              parent = IncludedGenericModule.new(parent.module, self, parent.mapping)
+              included = IncludedGenericModule.new(parent.module, self, parent.mapping)
+              type_lookup = included
               parent_owner = owner
             else
               parent_owner = parent
             end
           end
-          parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, parent)
+          parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, type_lookup)
           return parent_matches if parent_matches.cover_all?
 
           matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
@@ -410,24 +413,16 @@ module Crystal
       @module.name
     end
 
+    def implements?(other_type)
+      @module.implements?(other_type)
+    end
+
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      matches = @module.lookup_matches(name, arg_types, yields, self, type_lookup)
-      if matches.empty? && owner.equal?(self)
-        matches = @class.lookup_matches(name, arg_types, yields, self, type_lookup)
-      end
-      matches
+      @module.lookup_matches(name, arg_types, yields, owner, type_lookup)
     end
 
     def lookup_defs(name)
       @module.lookup_defs(name)
-    end
-
-    def add_def_instance(def_object_id, arg_types, typed_def, block_type)
-      @class.add_def_instance(def_object_id, arg_types, typed_def, block_type)
-    end
-
-    def lookup_def_instance(def_object_id, arg_types, block_type)
-      @class.lookup_def_instance(def_object_id, arg_types, block_type)
     end
 
     def match_arg(arg_type, restriction, owner, type_lookup, free_vars)
@@ -438,48 +433,12 @@ module Crystal
       @module.lookup_macro(name, args_length)
     end
 
-    def lookup_first_def(name)
-      @module.lookup_first_def(name)
-    end
-
-    def lookup_instance_var(name, create = true)
-      @class.lookup_instance_var(name, create)
-    end
-
-    def has_instance_var_in_initialize?(name)
-      @class.has_instance_var_in_initialize?(name)
-    end
-
-    def index_of_instance_var(name)
-      @class.index_of_instance_var(name)
-    end
-
     def parents
       @module.parents
     end
 
-    def program
-      @class.program
-    end
-
-    def llvm_type
-      @class.llvm_type
-    end
-
-    def llvm_size
-      @class.llvm_size
-    end
-
-    def llvm_name
-      @class.llvm_name
-    end
-
-    def type_id
-      @class.type_id
-    end
-
     def to_s
-      "#{@module}#{@mapping}"
+      "#{@module}(#{@class})"
     end
   end
 

@@ -282,18 +282,8 @@ module Crystal
             node.name.raise "#{type} is a generic module"
           end
 
-          # This is the case where we have:
-          #
-          #   module Foo(T), class Bar(T) include Foo
-          #
-          # Since the type vars' names are the same, we can just include the module
-          if current_type.type_vars.keys == type.type_vars.keys
-            current_type.include type
-          else
-            # Otherwise we remap the names
-            mapping = Hash[type.type_vars.keys.zip(current_type.type_vars.keys)]
-            current_type.include IncludedGenericModule.new(type, current_type, mapping)
-          end
+          mapping = Hash[type.type_vars.keys.zip(current_type.type_vars.keys)]
+          current_type.include IncludedGenericModule.new(type, current_type, mapping)
         else
           current_type.include type
         end

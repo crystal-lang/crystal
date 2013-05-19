@@ -137,7 +137,7 @@ module Crystal
 
         if block_arg && block_arg.output
           block_type = block.body ? block.body.type : mod.nil
-          matched = match.owner.match_arg(block_type, block_arg.output, match.owner, match.owner, match.free_vars)
+          matched = match.type_lookup.match_arg(block_type, block_arg.output, match.owner, match.owner, match.free_vars)
           unless matched
             raise "block expected to return #{block_arg.output}, not #{block_type}"
           end
@@ -167,7 +167,7 @@ module Crystal
           return
         end
 
-        @type = (node.global ? mod : @match.owner).lookup_type(node.names)
+        @type = (node.global ? mod : @match.type_lookup).lookup_type(node.names)
 
         unless @type
           node.raise("uninitialized constant #{node}")
