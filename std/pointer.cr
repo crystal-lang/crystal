@@ -56,14 +56,14 @@ class Pointer(T)
     Array.new(times) { |i| yield self[i] }
   end
 
-  def self.malloc(size : Int, value)
-    ptr = malloc(size)
+  def self.malloc(size : Int, value : T)
+    ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = value }
     ptr
   end
 
-  def self.malloc(size : Int)
-    ptr = malloc(size)
+  def self.malloc(size : Int, &block : Int -> T)
+    ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = yield i }
     ptr
   end

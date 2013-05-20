@@ -61,7 +61,7 @@ module Crystal
     end
 
     def define_value_primitives
-      [value, bool, char, int, long, float, double, symbol, pointer].each do |klass|
+      [value, bool, char, int, long, float, double, symbol].each do |klass|
         no_args_primitive(klass, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
       end
     end
@@ -211,7 +211,7 @@ module Crystal
       pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', int)], PointerAdd.new)
       pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', long)], PointerAdd.new)
       pointer.add_def Def.new('as', [Arg.new('type')], PointerCast.new)
-      no_args_primitive(object, 'address', long) do |b, f, llvm_mod, self_type|
+      shared_singleton(pointer, 'address', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end
     end
@@ -239,6 +239,12 @@ module Crystal
       a_def.owner = owner
       instance = a_def.overload(args.values, return_type, &block)
       owner.add_def_instance(a_def.object_id, args.values, nil, instance)
+    end
+
+    def shared_singleton(owner, name, return_type, &block)
+      body = PrimitiveBody.new(&block)
+      body.type = return_type
+      owner.add_def Def.new(name, [], body)
     end
 
     def sprintf(llvm_mod)
@@ -281,7 +287,7 @@ module Crystal
       arg_types.each_with_index do |arg_type, i|
         instance.args[i].set_type(arg_type)
       end
-      instance.body = PrimitiveBody.new(block)
+      instance.body = PrimitiveBody.new(&block)
       instance.type = return_type
       instance
     end
@@ -296,8 +302,12 @@ module Crystal
   class PrimitiveBody < Primitive
     attr_accessor :block
 
-    def initialize(block)
+    def initialize(&block)
       @block = block
+    end
+
+    def clone
+      self
     end
   end
 
