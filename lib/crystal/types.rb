@@ -77,11 +77,6 @@ module Crystal
       types.first.program.type_merge(*types)
     end
 
-    def self.clone(types)
-      types_context = {}
-      types.map { |type| type.clone(types_context) }
-    end
-
     def type_id
       @type_id ||= (@@type_id += 1)
     end
@@ -503,10 +498,6 @@ module Crystal
     def llvm_name
       name
     end
-
-    def clone(*)
-      self
-    end
   end
 
   module GenericType
@@ -514,7 +505,18 @@ module Crystal
       @generic_types ||= {}
       key = type_vars.map(&:type_id)
       unless generic_type = @generic_types[key]
-        generic_type = clone
+        generic_type = prepare_instance
+        generic_type.defs = defs
+        generic_type.sorted_defs = sorted_defs
+        generic_type.types = types
+        generic_type.parents = parents.map do |parent|
+          if parent.is_a?(IncludedGenericModule)
+            IncludedGenericModule.new(parent.module, generic_type, parent.mapping)
+          else
+            parent
+          end
+        end
+        generic_type.type_vars = Hash[self.type_vars.map { |k, v| [k, Var.new(k)] }]
         i = 0
         generic_type.type_vars.each do |name, var|
           var.type = type_vars[i]
@@ -717,31 +719,10 @@ module Crystal
       end
     end
 
-    def clone(types_context = {})
-      return self if !generic
-
-      obj = types_context[type_id] and return obj
-
-      obj = types_context[type_id] = ObjectType.new name, superclass, @container
-      obj.instance_vars = Hash[instance_vars.map do |name, var|
-        cloned_var = var.clone
-        cloned_var.type = var.type.clone(types_context) if var.type
-        cloned_var.bind_to cloned_var
-        [name, cloned_var]
-      end]
+    def prepare_instance
+      obj = ObjectType.new name, superclass, @container
       obj.owned_instance_vars = owned_instance_vars
       obj.instance_vars_in_initialize = instance_vars_in_initialize
-      obj.defs = defs
-      obj.sorted_defs = sorted_defs
-      obj.types = types
-      obj.parents = parents.map do |parent|
-        if parent.is_a?(IncludedGenericModule)
-          IncludedGenericModule.new(parent.module, obj, parent.mapping)
-        else
-          parent
-        end
-      end
-      obj.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
       obj
     end
   end
@@ -761,22 +742,8 @@ module Crystal
       equal?(other) || (other.is_a?(PointerType) && type_vars == other.type_vars) || (other.is_a?(UnionType) && other == self)
     end
 
-    def clone(types_context = {})
-      pointer = types_context[type_id] and return pointer
-
-      pointer = types_context[type_id] = PointerType.new @parent_type, @container
-      pointer.defs = defs
-      pointer.sorted_defs = sorted_defs
-      pointer.types = types
-      pointer.parents = parents.map do |parent|
-        if parent.is_a?(IncludedGenericModule)
-          IncludedGenericModule.new(parent.module, pointer, parent.mapping)
-        else
-          parent
-        end
-      end
-      pointer.type_vars = Hash[type_vars.map { |k, v| [k, Var.new(k)] }] if type_vars
-      pointer
+    def prepare_instance
+      PointerType.new @parent_type, @container
     end
 
     def nilable_able?
@@ -904,11 +871,6 @@ module Crystal
       (other.is_a?(UnionType) && set == other.set) || (!other.is_a?(UnionType) && set.length == 1 && types[0] == other)
     end
 
-    def clone(types_context = {})
-      cloned = types_context[type_id] and return cloned
-      types_context[type_id] = UnionType.new(*types.map { |type| type.clone(types_context) })
-    end
-
     def name
       "Union"
     end
@@ -1033,10 +995,6 @@ module Crystal
       type.pointer_type?
     end
 
-    def clone(*)
-      self
-    end
-
     def to_s
       name
     end
@@ -1100,10 +1058,6 @@ module Crystal
 
     def ==(other)
       other.is_a?(StructType) && other.name == name && other.vars == vars
-    end
-
-    def clone(*)
-      self
     end
 
     def to_s
