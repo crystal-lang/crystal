@@ -1,6 +1,8 @@
 module Crystal
   class Type
+    extend Forwardable
     include Enumerable
+
     @@type_id = 0
 
     def metaclass
@@ -676,6 +678,8 @@ module Crystal
     attr_reader :type_vars
     attr_accessor :allocated
 
+    delegate [:program, :abstract, :superclass, :depth, :defs, :sorted_defs, :macros, :instance_vars_in_initialize, :owned_instance_vars] => :generic_class
+
     def initialize(generic_class, type_vars)
       @generic_class = generic_class
       @type_vars = type_vars
@@ -693,24 +697,8 @@ module Crystal
       @metaclass ||= GenericClassInstanceMetaclass.new(self)
     end
 
-    def program
-      generic_class.program
-    end
-
-    def abstract
-      generic_class.abstract
-    end
-
-    def superclass
-      generic_class.superclass
-    end
-
     def is_subclass_of?(type)
       super || generic_class.is_subclass_of?(type)
-    end
-
-    def depth
-      generic_class.depth
     end
 
     def implements?(other_type)
@@ -733,26 +721,6 @@ module Crystal
           t
         end
       end
-    end
-
-    def defs
-      generic_class.defs
-    end
-
-    def sorted_defs
-      generic_class.sorted_defs
-    end
-
-    def macros
-      generic_class.macros
-    end
-
-    def instance_vars_in_initialize
-      generic_class.instance_vars_in_initialize
-    end
-
-    def owned_instance_vars
-      generic_class.owned_instance_vars
     end
 
     def to_s
@@ -793,6 +761,8 @@ module Crystal
     attr_reader :including_class
     attr_reader :mapping
 
+    delegate [:container, :name, :implements?, :lookup_matches, :lookup_matches_without_parents, :lookup_defs, :match_arg, :lookup_macro, :parents] => :@module
+
     def initialize(a_module, a_class, mapping)
       @module = a_module
       @including_class = a_class
@@ -809,42 +779,6 @@ module Crystal
       else
         @module.lookup_type(names, already_looked_up)
       end
-    end
-
-    def container
-      @module.container
-    end
-
-    def name
-      @module.name
-    end
-
-    def implements?(other_type)
-      @module.implements?(other_type)
-    end
-
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      @module.lookup_matches(name, arg_types, yields, owner, type_lookup)
-    end
-
-    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self)
-      @module.lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
-    end
-
-    def lookup_defs(name)
-      @module.lookup_defs(name)
-    end
-
-    def match_arg(arg_type, restriction, owner, type_lookup, free_vars)
-      @module.match_arg(arg_type, restriction, owner, type_lookup, free_vars)
-    end
-
-    def lookup_macro(name, args_length)
-      @module.lookup_macro(name, args_length)
-    end
-
-    def parents
-      @module.parents
     end
 
     def to_s
@@ -872,10 +806,6 @@ module Crystal
     end
 
     def instance_type
-      self
-    end
-
-    def target_type
       self
     end
 
@@ -946,10 +876,6 @@ module Crystal
       types.each(&block)
     end
 
-    def name
-      "Union"
-    end
-
     def to_s
       types.join " | "
     end
@@ -961,6 +887,8 @@ module Crystal
 
     attr_reader :instance_type
 
+    delegate [:program, :lookup_type] => :instance_type
+
     def initialize(instance_type)
       @instance_type = instance_type
     end
@@ -971,14 +899,6 @@ module Crystal
 
     def metaclass?
       true
-    end
-
-    def program
-      instance_type.program
-    end
-
-    def lookup_type(names, already_looked_up = {})
-      instance_type.lookup_type(names, already_looked_up)
     end
 
     def llvm_type
@@ -1000,6 +920,9 @@ module Crystal
 
     attr_reader :instance_type
 
+    delegate [:add_def, :defs, :sorted_defs, :macros] => :'instance_type.generic_class.metaclass'
+    delegate [:program, :type_vars, :lookup_type] => :'instance_type'
+
     def initialize(instance_type)
       @instance_type = instance_type
     end
@@ -1008,36 +931,8 @@ module Crystal
       true
     end
 
-    def add_def(a_def)
-      instance_type.generic_class.metaclass.add_def(a_def)
-    end
-
-    def defs
-      instance_type.generic_class.metaclass.defs
-    end
-
-    def sorted_defs
-      instance_type.generic_class.metaclass.sorted_defs
-    end
-
-    def macros
-      instance_type.generic_class.metaclass.macros
-    end
-
     def parents
       instance_type.parents.map(&:metaclass)
-    end
-
-    def program
-      instance_type.program
-    end
-
-    def type_vars
-      instance_type.type_vars
-    end
-
-    def lookup_type(names, already_looked_up = {})
-      instance_type.lookup_type(names, already_looked_up)
     end
 
     def llvm_type
@@ -1049,7 +944,7 @@ module Crystal
     end
 
     def to_s
-      "#{@instance_type}:Class"
+      "#{instance_type}:Class"
     end
   end
 
@@ -1086,26 +981,12 @@ module Crystal
     attr_accessor :name
     attr_accessor :type
 
+    delegate [:llvm_type, :llvm_name, :llvm_size, :pointer?] => :type
+
     def initialize(container, name, type)
       super(container)
       @name = name
       @type = type
-    end
-
-    def llvm_type
-      type.llvm_type
-    end
-
-    def llvm_name
-      type.llvm_name
-    end
-
-    def llvm_size
-      type.llvm_size
-    end
-
-    def pointer?
-      type.pointer?
     end
 
     def to_s
@@ -1201,9 +1082,12 @@ module Crystal
   class HierarchyType < Type
     include DefInstanceContainer
 
+    LLVM_TYPE = LLVM::Type.struct([LLVM::Int, LLVM::Pointer(LLVM::Int8)], true, "Object+")
+
     attr_accessor :base_type
 
-    LLVM_TYPE = LLVM::Type.struct([LLVM::Int, LLVM::Pointer(LLVM::Int8)], true, "Object+")
+    delegate [:lookup_first_def, :lookup_defs, :lookup_instance_var, :index_of_instance_var, :lookup_macro,
+              :lookup_type, :has_instance_var_in_initialize?, :allocated, :program, :metaclass] => :base_type
 
     def initialize(base_type)
       @base_type = base_type
@@ -1274,42 +1158,6 @@ module Crystal
       Matches.new(matches, matches.length > 0)
     end
 
-    def lookup_first_def(name)
-      base_type.lookup_first_def(name)
-    end
-
-    def lookup_defs(name)
-      base_type.lookup_defs(name)
-    end
-
-    def lookup_instance_var(name)
-      base_type.lookup_instance_var(name)
-    end
-
-    def index_of_instance_var(name)
-      base_type.index_of_instance_var(name)
-    end
-
-    def lookup_macro(name, args_length)
-      base_type.lookup_macro(name, args_length)
-    end
-
-    def lookup_type(names, already_looked_up = {})
-      base_type.lookup_type(names, already_looked_up)
-    end
-
-    def has_instance_var_in_initialize?(name)
-      base_type.has_instance_var_in_initialize?(name)
-    end
-
-    def allocated
-      return true if base_type.allocated
-      each_subtype(base_type) do |subtype|
-        return true if subtype.allocated
-      end
-      false
-    end
-
     def filter_by(type)
       restrict(type)
     end
@@ -1330,14 +1178,6 @@ module Crystal
       type.subclasses.each do |subclass|
         each2 subclass, &block
       end
-    end
-
-    def metaclass
-      base_type.metaclass
-    end
-
-    def program
-      base_type.program
     end
 
     def to_s
