@@ -588,11 +588,6 @@ module Crystal
     include InstanceVarContainer
     include DefInstanceContainer
 
-    def initialize(container, name, superclass)
-      super
-      @instance_vars = {}
-    end
-
     def metaclass
       @metaclass ||= begin
         metaclass = Metaclass.new(self)
@@ -684,7 +679,6 @@ module Crystal
     def initialize(generic_class, type_vars)
       @generic_class = generic_class
       @type_vars = type_vars
-      @instance_vars = {}
     end
 
     def class?
