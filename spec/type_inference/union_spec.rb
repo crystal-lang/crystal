@@ -14,6 +14,6 @@ describe "Type inference: union" do
   end
 
   it "types union of classes" do
-    assert_type("class A; end; class B; end; a = A.new; a = B.new; a") { union_of("A".object, "B".object) }
+    assert_type("class A; end; class B; end; a = A.new; a = B.new; a") { union_of(types["A"], types["B"]) }
   end
 end

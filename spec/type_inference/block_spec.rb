@@ -60,7 +60,7 @@ describe 'Block inference' do
       y
     )
     mod = infer_type input
-    input.last.type.should eq(UnionType.new(mod.char, mod.int))
+    input.last.type.should eq(mod.union_of(mod.char, mod.int))
   end
 
   it "infer type of yield" do
@@ -108,7 +108,7 @@ describe 'Block inference' do
   end
 
   it "infers type of block before call" do
-    assert_type(%q(
+    mod, type = assert_type(%q(
       class Int
         def foo
           10.5
@@ -126,11 +126,15 @@ describe 'Block inference' do
       end
 
       bar { |x| x.foo }
-      )) { "Foo".generic(T: double).with_vars(x: double) }
+      )) { types["Foo"].instantiate([double]) }
+    type.should be_class
+    type.should be_generic
+    type.type_vars["T"].type.should eq(mod.double)
+    type.instance_vars["@x"].type.should eq(mod.double)
   end
 
   it "infers type of block before call taking other args free vars into account" do
-    assert_type(%q(
+    mod, type = assert_type(%q(
       class Foo(X)
         def initialize(x : X)
           @x = x
@@ -144,7 +148,11 @@ describe 'Block inference' do
       a = foo(1) do |x|
         10.5
       end
-      )) { "Foo".generic(X: double).with_vars(x: double) }
+      )) { types["Foo"].instantiate([double]) }
+    type.should be_class
+    type.should be_generic
+    type.type_vars["X"].type.should eq(mod.double)
+    type.instance_vars["@x"].type.should eq(mod.double)
   end
 
   it "reports error if yields a type that's not that one in the block specification" do
@@ -227,7 +235,7 @@ describe 'Block inference' do
       end
 
       foo { Foo(Double).new }
-      )) { "Foo".generic(T: double) }
+      )) { types["Foo"].instantiate([double]) }
   end
 
   it "infers type of block with generic type" do

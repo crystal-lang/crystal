@@ -2,15 +2,15 @@ require 'spec_helper'
 
 describe 'Type inference: struct' do
   it "types struct" do
-    input = parse "lib Foo; struct Bar; x : Int; y : Float; end; end; Foo::Bar"
-    mod = infer_type input
-    mod.types['Foo'].types['Bar'].should eq("Bar".struct(x: mod.int, y: mod.float))
-    input.last.type.should eq(mod.types['Foo'].types['Bar'].metaclass)
+    mod, type = assert_type("lib Foo; struct Bar; x : Int; y : Float; end; end; Foo::Bar") { types['Foo'].types['Bar'].metaclass }
+    mod.types['Foo'].types['Bar'].should be_struct
+    mod.types['Foo'].types['Bar'].vars['x'].type.should eq(mod.int)
+    mod.types['Foo'].types['Bar'].vars['y'].type.should eq(mod.float)
   end
 
   it "types Struct#new" do
-    assert_type("lib Foo; struct Bar; x : Int; y : Float; end; end; Foo::Bar.new") do
-      "Bar".struct(x: int, y: float)
+    mod, type = assert_type("lib Foo; struct Bar; x : Int; y : Float; end; end; Foo::Bar.new") do
+      types['Foo'].types['Bar']
     end
   end
 

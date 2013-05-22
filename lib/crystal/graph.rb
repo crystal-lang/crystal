@@ -43,7 +43,7 @@ module Crystal
       node = @g.get_node(type.type_id.to_s)
       unless node
         case type
-        when ObjectType
+        when NonGenericClassType, GenericClassInstanceType
           node = @g.add_nodes type.type_id.to_s, :shape => :record, :label => type.to_s.gsub("|", "\\|")
           add_object_type_edges node, type
         when nil
@@ -56,27 +56,8 @@ module Crystal
     end
 
     def add_object_type_edges(node, type)
-      if type.name == "String"
-        # nothing
-      elsif type.name == "Array"
-        add_edges node, type.lookup_instance_var("@buffer").type.var.type
-      elsif type.name == "Hash"
-        entry_type = type.lookup_instance_var("@first") && type.lookup_instance_var("@first").type
-        if entry_type.is_a?(UnionType)
-          keys = Set.new
-          values = Set.new
-          entry_type.types.each do |t|
-            next if t.name == "Nil"
-            keys << t.lookup_instance_var("@key").type
-            values << t.lookup_instance_var("@value").type
-          end
-          keys.each { |key| add_edges node, key, "key" }
-          values.each { |value| add_edges node, value, "value" }
-        end
-      else
-        type.each_instance_var do |ivar, var|
-          add_edges node, var.type, ivar
-        end
+      type.each_instance_var do |ivar, var|
+        add_edges node, var.type, ivar
       end
     end
 

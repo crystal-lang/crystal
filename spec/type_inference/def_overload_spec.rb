@@ -283,7 +283,7 @@ describe 'Type inference: def overload' do
       end
 
       foo 1
-    )) { "Foo".generic("T" => int) }
+    )) { types["Foo"].instantiate([int]) }
   end
 
   it "can call overload with generic restriction" do

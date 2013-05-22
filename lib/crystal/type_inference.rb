@@ -140,7 +140,7 @@ module Crystal
       unless mod.types[name]
         value = Call.new(Ident.new(['Regexp'], true), 'new', [StringLiteral.new(node.value)])
         value.accept self
-        mod.types[name] = Const.new name, value, mod
+        mod.types[name] = Const.new mod, name, value
       end
 
       node.expanded = Ident.new([name], true)
@@ -192,7 +192,7 @@ module Crystal
     end
 
     def visit_class_def(node)
-      parent = if node.superclass
+      superclass = if node.superclass
                  lookup_ident_type node.superclass
                else
                  mod.object
@@ -201,13 +201,16 @@ module Crystal
       type = current_type.types[node.name]
       if type
         node.raise "#{node.name} is not a class" unless type.is_a?(ClassType)
-        if node.superclass && type.superclass != parent
-          node.raise "superclass mismatch for class #{type.name} (#{parent.name} for #{type.superclass.name})"
+        if node.superclass && type.superclass != superclass
+          node.raise "superclass mismatch for class #{type.name} (#{superclass.name} for #{type.superclass.name})"
         end
       else
-        type = ObjectType.new node.name, parent, current_type
+        if node.type_vars
+          type = GenericClassType.new current_type, node.name, superclass, node.type_vars
+        else
+          type = NonGenericClassType.new current_type, node.name, superclass
+        end
         type.abstract = node.abstract
-        type.type_vars = Hash[node.type_vars.map { |type_var| [type_var, Var.new(type_var)] }] if node.type_vars
         current_type.types[node.name] = type
       end
 
@@ -223,10 +226,13 @@ module Crystal
     def visit_module_def(node)
       type = current_type.types[node.name]
       if type
-        node.raise "#{node.name} is not a module" unless type.class == ModuleType
+        node.raise "#{node.name} is not a module" unless type.module?
       else
-        type = ModuleType.new node.name, current_type
-        type.type_vars = Hash[node.type_vars.map { |type_var| [type_var, Var.new(type_var)] }] if node.type_vars
+        if node.type_vars
+          type = GenericModuleType.new current_type, node.name, node.type_vars
+        else
+          type = NonGenericModuleType.new current_type, node.name
+        end
         current_type.types[node.name] = type
       end
 
@@ -246,12 +252,12 @@ module Crystal
         type = lookup_ident_type(node.name)
       end
 
-      if type.class != ModuleType
+      unless type.module?
         node.name.raise "#{node.name} is not a module"
       end
 
       if node.name.is_a?(NewGenericClass)
-        unless type.generic
+        unless type.generic?
           node.name.raise "#{type} is not a generic module"
         end
 
@@ -261,18 +267,18 @@ module Crystal
 
         type_vars_types = node.name.type_vars.map do |type_var|
           type_var_name = type_var.names[0]
-          if current_type.generic && current_type.type_vars.has_key?(type_var_name)
+          if current_type.generic? && current_type.type_vars.include?(type_var_name)
             type_var_name
           else
             lookup_ident_type(type_var)
           end
         end
 
-        mapping = Hash[type.type_vars.keys.zip(type_vars_types)]
+        mapping = Hash[type.type_vars.zip(type_vars_types)]
         current_type.include IncludedGenericModule.new(type, current_type, mapping)
       else
-        if type.generic
-          if current_type.generic
+        if type.generic?
+          if current_type.generic?
             current_type_type_vars_length = current_type.type_vars.length
           else
             current_type_type_vars_length = 0
@@ -282,7 +288,7 @@ module Crystal
             node.name.raise "#{type} is a generic module"
           end
 
-          mapping = Hash[type.type_vars.keys.zip(current_type.type_vars.keys)]
+          mapping = Hash[type.type_vars.zip(current_type.type_vars)]
           current_type.include IncludedGenericModule.new(type, current_type, mapping)
         else
           current_type.include type
@@ -297,7 +303,7 @@ module Crystal
       if type
         node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
       else
-        current_type.types[node.name] = type = LibType.new node.name, node.libname, current_type
+        current_type.types[node.name] = type = LibType.new current_type, node.name, node.libname
       end
       @types.push type
     end
@@ -325,7 +331,7 @@ module Crystal
       else
         typed_def_type = maybe_ptr_type(node.type.type.instance_type, node.ptr)
 
-        current_type.types[node.name] = TypeDefType.new node.name, typed_def_type, current_type
+        current_type.types[node.name] = TypeDefType.new current_type, node.name, typed_def_type
       end
     end
 
@@ -334,7 +340,7 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
-        current_type.types[node.name] = StructType.new(node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) }, current_type)
+        current_type.types[node.name] = StructType.new(current_type, node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) })
       end
     end
 
@@ -451,7 +457,7 @@ module Crystal
 
         target.bind_to value
 
-        current_type.types[target.names.first] = Const.new(target.names.first, value, current_type, @types.clone, @scope)
+        current_type.types[target.names.first] = Const.new(current_type, target.names.first, value, @types.clone, @scope)
       when Global
         value.accept self
 
@@ -560,7 +566,7 @@ module Crystal
     end
 
     def visit_allocate(node)
-      if @scope.generic && @scope.type_vars.any? { |k, v| !v.type }
+      if @scope.instance_type.is_a?(GenericClassType)
         node.raise "can't create instance of generic class #{@scope.instance_type} without specifying its type vars"
       end
 
@@ -699,7 +705,7 @@ module Crystal
               exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp.type}"
             end
             exp.freeze_type = true
-          elsif !var.type.equal?(mod.nil)
+          elsif !var.type.nil_type?
             node.raise "missing argument ##{i + 1} of yield with type #{var.type}"
           end
         end
@@ -901,7 +907,7 @@ module Crystal
     end
 
     def visit_pointer_malloc(node)
-      unless @scope.type_vars["T"].type
+      if @scope.instance_type.is_a?(GenericClassType)
         node.raise "can't malloc pointer without type, use Pointer(Type).malloc(size)"
       end
 
@@ -927,7 +933,7 @@ module Crystal
 
     def visit_pointer_cast(node)
       type = @vars['type'].type.instance_type
-      if type.is_a?(ObjectType)
+      if type.class?
         node.type = type
       else
         node.type = mod.pointer_of(type)

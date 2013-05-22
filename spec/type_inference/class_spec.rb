@@ -2,11 +2,13 @@ require 'spec_helper'
 
 describe 'Type inference: class' do
   it "types Const#allocate" do
-    assert_type("class Foo; end; Foo.allocate") { "Foo".object }
+    mod, type = assert_type("class Foo; end; Foo.allocate") { types["Foo"] }
+    type.should be_class
   end
 
   it "types Const#new" do
-    assert_type("class Foo; end; Foo.new") { "Foo".object }
+    mod, type = assert_type("class Foo; end; Foo.new") { types["Foo"] }
+    type.should be_class
   end
 
   it "types Const#new#method" do
@@ -14,11 +16,11 @@ describe 'Type inference: class' do
   end
 
   it "types class inside class" do
-    assert_type("class Foo; class Bar; end; end; Foo::Bar.allocate") { "Bar".object }
+    assert_type("class Foo; class Bar; end; end; Foo::Bar.allocate") { types["Foo"].types["Bar"] }
   end
 
   it "types instance variable" do
-    input = parse %(
+    mod, type = assert_type(%(
       class Foo(T)
         def set
           @coco = 2
@@ -27,9 +29,9 @@ describe 'Type inference: class' do
 
       f = Foo(Int).new
       f.set
-    )
-    mod = infer_type input
-    input[1].type.should eq("Foo".generic("T" => mod.int).with_vars("@coco" => mod.union_of(mod.nil, mod.int)))
+      f
+    )) { types["Foo"].instantiate([int]) }
+    type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int))
   end
 
   it "types instance variable" do
@@ -45,10 +47,13 @@ describe 'Type inference: class' do
 
       g = Foo(Double).new
       g.set 2.5
+      g
     )
     mod = infer_type input
-    input[1].type.should eq("Foo".generic("T" => mod.int).with_vars("@coco" => mod.union_of(mod.nil, mod.int)))
-    input[3].type.should eq(("Foo").generic("T" => mod.double).with_vars("@coco" => mod.union_of(mod.nil, mod.double)))
+    input[1].type.should eq(mod.types["Foo"].instantiate([mod.int]))
+    input[1].type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int))
+    input[3].type.should eq(mod.types["Foo"].instantiate([mod.double]))
+    input[3].type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.double))
   end
 
   it "types instance variable on getter" do
@@ -101,7 +106,7 @@ describe 'Type inference: class' do
   end
 
   it "types self inside method call without obj" do
-    assert_type(%(
+    mod, type = assert_type(%(
       class Foo
         def foo
           bar
@@ -113,16 +118,16 @@ describe 'Type inference: class' do
       end
 
       Foo.new.foo
-    )) { "Foo".object }
+    )) { types["Foo"] }
   end
 
   it "types type var union" do
-    assert_type(%(
+    mod, type = assert_type(%(
       class Foo(T)
       end
 
       Foo(Int | Double).new
-      )) { "Foo".generic("T" => union_of(int, double)) }
+      )) { types["Foo"].instantiate([union_of(int, double)]) }
   end
 
   it "types class and subclass as one type" do
@@ -134,7 +139,7 @@ describe 'Type inference: class' do
       end
 
       a = Foo.new || Bar.new
-      )) { "Foo".hierarchy }
+      )) { types["Foo"].hierarchy_type }
   end
 
   it "types class and subclass as one type" do
@@ -149,7 +154,7 @@ describe 'Type inference: class' do
       end
 
       a = Bar.new || Baz.new
-      )) { "Foo".hierarchy }
+      )) { types["Foo"].hierarchy_type }
   end
 
   it "types class and subclass as one type" do
@@ -164,11 +169,11 @@ describe 'Type inference: class' do
       end
 
       a = Foo.new || Bar.new || Baz.new
-      )) { "Foo".hierarchy }
+      )) { types["Foo"].hierarchy_type }
   end
 
   it "does automatic inference of new for generic types" do
-    assert_type(%(
+    mod, type = assert_type(%(
       class Box(T)
         def initialize(value : T)
           @value = value
@@ -176,11 +181,13 @@ describe 'Type inference: class' do
       end
 
       b = Box.new(10)
-      )) { "Box".generic(T: int).with_vars(value: int) }
+      )) { types["Box"].instantiate([int]) }
+    type.type_vars["T"].type.should eq(mod.int)
+    type.instance_vars["@value"].type.should eq(mod.int)
   end
 
   it "does automatic type inference of new for generic types 2" do
-    assert_type(%q(
+    mod, type = assert_type(%q(
       class Box(T)
         def initialize(x, value : T)
           @value = value
@@ -189,7 +196,9 @@ describe 'Type inference: class' do
 
       b1 = Box.new(1, 10)
       b2 = Box.new(1, false)
-      )) { "Box".generic(T: bool).with_vars(value: bool) }
+      )) { types["Box"].instantiate([bool]) }
+    type.type_vars["T"].type.should eq(mod.bool)
+    type.instance_vars["@value"].type.should eq(mod.bool)
   end
 
   it "does automatic type inference of new for nested generic type" do

@@ -63,7 +63,7 @@ module Crystal
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 
       if matches.empty?
-        if def_name == 'new' && owner.is_a?(Metaclass) && owner.instance_type.is_a?(ObjectType)
+        if def_name == 'new' && owner.metaclass? && owner.instance_type.class?
           new_matches = define_new owner, arg_types
           matches = new_matches unless new_matches.empty?
         else
@@ -199,7 +199,7 @@ module Crystal
 
     def raise_matches_not_found(owner, def_name, matches = nil)
       defs = owner.lookup_defs(def_name)
-      unless defs
+      if defs.empty?
         if obj
           raise "undefined method '#{name}' for #{owner}"
         elsif args.length > 0 || has_parenthesis
@@ -294,10 +294,10 @@ module Crystal
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type_restriction
         if self.args[i].type != expected_type
-          if mod.nil.equal?(self.args[i].type) && expected_type.pointer_type?
+          if self.args[i].type.nil_type? && expected_type.pointer?
             nil_conversions ||= []
             nil_conversions << i
-          elsif (mod.string.equal?(self.args[i].type) || mod.string.hierarchy_type.equal?(self.args[i].type)) && expected_type.is_a?(PointerType) && mod.char.equal?(expected_type.var.type)
+          elsif (mod.string.equal?(self.args[i].type) || mod.string.hierarchy_type.equal?(self.args[i].type)) && expected_type.pointer? && mod.char.equal?(expected_type.var.type)
             string_conversions ||= []
             string_conversions << i
           else
@@ -398,16 +398,16 @@ module Crystal
     end
 
     def define_new(scope, arg_types)
-      matches = scope.type.lookup_matches('initialize', arg_types, !!block)
+      matches = scope.instance_type.lookup_matches('initialize', arg_types, !!block)
       unless matches.empty?
         ms = matches.map do |match|
           if match.free_vars.empty?
             alloc = Call.new(nil, 'allocate')
           else
-            type_vars = Array.new(scope.type_vars.length)
+            type_vars = Array.new(scope.instance_type.type_vars.length)
             match.free_vars.each do |names, type|
               if names.length == 1
-                idx = scope.type_vars.keys.index(names[0])
+                idx = scope.instance_type.type_vars.index(names[0])
                 if idx
                   type_vars[idx] = Ident.new(names)
                 end
@@ -445,9 +445,9 @@ module Crystal
         end
         Matches.new(ms, true)
       else
-        defs = scope.type.lookup_defs('initialize')
+        defs = scope.instance_type.lookup_defs('initialize')
         if defs && defs.length > 0
-          raise_matches_not_found scope.type, 'initialize'
+          raise_matches_not_found scope.instance_type, 'initialize'
         end
 
         alloc = Call.new(nil, 'allocate')

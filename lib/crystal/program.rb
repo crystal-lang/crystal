@@ -1,7 +1,7 @@
 require_relative "types"
 
 module Crystal
-  class Program < ModuleType
+  class Program < NonGenericModuleType
     include Enumerable
 
     POINTER_SIZE = 8
@@ -12,42 +12,40 @@ module Crystal
     attr_accessor :macros_cache
 
     def initialize
-      super('main')
+      super(nil, 'main')
 
       @unions = {}
       @macros_cache = {}
 
-      object = @types["Object"] = ObjectType.new "Object", nil, self
-      value = @types["Value"] = ObjectType.new "Value", object, self
-      numeric = @types["Numeric"] = ObjectType.new "Numeric", value, self
+      object = @types["Object"] = NonGenericClassType.new self, "Object", nil
+      value = @types["Value"] = ValueType.new self, "Value", object
+      numeric = @types["Numeric"] = ValueType.new self, "Numeric", value
 
-      @types["Void"] = PrimitiveType.new "Void", value, LLVM::Int8, 1, self
-      @types["Nil"] = PrimitiveType.new "Nil", value, LLVM::Int1, 1, self
-      @types["Bool"] = PrimitiveType.new "Bool", value, LLVM::Int1, 1, self
-      @types["Char"] = PrimitiveType.new "Char", value, LLVM::Int8, 1, self
-      @types["Short"] = PrimitiveType.new "Short", value, LLVM::Int16, 2, self
-      @types["Int"] = PrimitiveType.new "Int", numeric, LLVM::Int32, 4, self
-      @types["Long"] = PrimitiveType.new "Long", numeric, LLVM::Int64, 8, self
-      @types["Float"] = PrimitiveType.new "Float", numeric, LLVM::Float, 4, self
-      @types["Double"] = PrimitiveType.new "Double", numeric, LLVM::Double, 8, self
-      @types["Symbol"] = PrimitiveType.new "Symbol", value, LLVM::Int32, 4, self
-      pointer = @types["Pointer"] = PointerType.new value, self
-      pointer.type_vars = {"T" => Var.new("T")}
+      @types["Void"] = PrimitiveType.new self, "Void", value, LLVM::Int8, 1
+      @types["Nil"] = NilType.new self, "Nil", value, LLVM::Int1, 1
+      @types["Bool"] = PrimitiveType.new self, "Bool", value, LLVM::Int1, 1
+      @types["Char"] = PrimitiveType.new self, "Char", value, LLVM::Int8, 1
+      @types["Short"] = PrimitiveType.new self, "Short", value, LLVM::Int16, 2
+      @types["Int"] = PrimitiveType.new self, "Int", numeric, LLVM::Int32, 4
+      @types["Long"] = PrimitiveType.new self, "Long", numeric, LLVM::Int64, 8
+      @types["Float"] = PrimitiveType.new self, "Float", numeric, LLVM::Float, 4
+      @types["Double"] = PrimitiveType.new self, "Double", numeric, LLVM::Double, 8
+      @types["Symbol"] = PrimitiveType.new self, "Symbol", value, LLVM::Int32, 4
+      @types["Pointer"] = PointerType.new self, "Pointer", value, ["T"]
 
-      @types["String"] = ObjectType.new "String", object, self
+      string = @types["String"] = NonGenericClassType.new self, "String", object
       string.instance_vars_in_initialize = ['@length', '@c']
       string.allocated = true
 
       string.lookup_instance_var('@length').type = int
       string.lookup_instance_var('@c').type = char
 
-      array = @types["Array"] = ObjectType.new "Array", object, self
-      array.type_vars = {"T" => Var.new("T")}
+      @types["Array"] = GenericClassType.new self, "Array", object, ["T"]
 
-      @types["ARGC_UNSAFE"] = Const.new "ARGC_UNSAFE", Crystal::ARGC.new(int), self
-      @types["ARGV_UNSAFE"] = Const.new "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char))), self
+      @types["ARGC_UNSAFE"] = Const.new self, "ARGC_UNSAFE", Crystal::ARGC.new(int)
+      @types["ARGV_UNSAFE"] = Const.new self, "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char)))
 
-      @types["Math"] = ModuleType.new "Math", self
+      @types["Math"] = NonGenericModuleType.new self, "Math"
 
       @symbols = Set.new
       @global_vars = {}
@@ -119,10 +117,10 @@ module Crystal
     end
 
     def common_ancestor(t1, t2)
-      t1 = t1.base_type if t1.is_a?(HierarchyType)
-      t2 = t2.base_type if t2.is_a?(HierarchyType)
+      t1 = t1.base_type if t1.hierarchy?
+      t2 = t2.base_type if t2.hierarchy?
 
-      unless t1.is_a?(ObjectType) && t2.is_a?(ObjectType)
+      unless t1.class? && t2.class?
         return nil
       end
 

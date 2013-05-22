@@ -7,12 +7,24 @@ module Crystal
       @metaclass ||= Metaclass.new(self)
     end
 
-    def instance_type
-      self
-    end
-
     def each
       yield self
+    end
+
+    def module?
+      false
+    end
+
+    def class?
+      false
+    end
+
+    def struct?
+      false
+    end
+
+    def metaclass?
+      false
     end
 
     def union?
@@ -27,11 +39,15 @@ module Crystal
       false
     end
 
-    def nilable_able?
+    def pointer?
       false
     end
 
-    def pointer_type?
+    def hierarchy?
+      false
+    end
+
+    def value?
       false
     end
 
@@ -47,12 +63,12 @@ module Crystal
       implements?(other_type) ? self : nil
     end
 
-    def generic
+    def generic?
       false
     end
 
     def is_subclass_of?(type)
-      false
+      equal?(type)
     end
 
     def allocated
@@ -67,8 +83,8 @@ module Crystal
       1
     end
 
-    def to_s
-      name
+    def llvm_name
+      to_s
     end
 
     def self.merge(*types)
@@ -83,67 +99,20 @@ module Crystal
   end
 
   class ContainedType < Type
-    attr_accessor :name
-    attr_accessor :container
+    attr_reader :container
+    attr_reader :types
 
-    def initialize(name, container)
-      @name = name
+    def initialize(container)
       @container = container
+      @types = {}
     end
 
     def program
-      @container.program
-    end
-
-    def full_name
-      @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
-    end
-
-    def to_s
-      full_name
+      container.program
     end
   end
 
-  module DefInstanceContainer
-    def add_def_instance(def_object_id, arg_types, block_type, typed_def)
-      @def_instances[def_instance_key(def_object_id, arg_types, block_type)] = typed_def
-    end
-
-    def lookup_def_instance(def_object_id, arg_types, block_type)
-      @def_instances[def_instance_key(def_object_id, arg_types, block_type)]
-    end
-
-    def def_instance_key(def_object_id, arg_types, block_type)
-      key = [def_object_id]
-      key.concat arg_types.map(&:type_id)
-      key.push block_type.type_id if block_type
-      key
-    end
-  end
-
-  module DefContainer
-    include DefInstanceContainer
-
-    def add_def(a_def)
-      a_def.owner = self if a_def.respond_to?(:owner=)
-      restrictions = a_def.args.map(&:type_restriction)
-      @defs[a_def.name] ||= {}
-      @defs[a_def.name][[restrictions, !!a_def.yields]] = a_def
-      add_sorted_def(a_def, a_def.args.length)
-      a_def
-    end
-
-    def add_sorted_def(a_def, args_length)
-      sorted_defs = @sorted_defs[[a_def.name, args_length, !!a_def.yields]]
-      append = sorted_defs.each_with_index do |ex_def, i|
-        if a_def.is_restriction_of?(ex_def, self)
-          sorted_defs.insert(i, a_def)
-          break false
-        end
-      end
-      sorted_defs << a_def if append
-    end
-
+  module MatchesLookup
     def match_def_args(args, def_restrictions, owner, type_lookup)
       match = Match.new
       match.type_lookup = type_lookup
@@ -164,7 +133,7 @@ module Crystal
       when SelfType
         arg_type && arg_type.restrict(owner)
       when NewGenericClass
-        arg_type && arg_type.generic && match_generic_type(arg_type, restriction, owner, type_lookup, free_vars) && arg_type
+        arg_type && arg_type.generic? && match_generic_type(arg_type, restriction, owner, type_lookup, free_vars) && arg_type
       when Ident
         type = free_vars[restriction.names] || type_lookup.lookup_type(restriction.names)
         if type
@@ -182,7 +151,9 @@ module Crystal
     end
 
     def match_generic_type(arg_type, restriction, owner, type_lookup, free_vars)
-      return false unless arg_type.name == restriction.name.names.last
+      restriction_type = type_lookup.lookup_type(restriction.name.names)
+      return false unless restriction_type
+      return false unless arg_type.generic_class.equal?(restriction_type)
       return false unless arg_type.type_vars.length == restriction.type_vars.length
 
       arg_type.type_vars.each.with_index do |name_and_type_var, i|
@@ -194,8 +165,7 @@ module Crystal
     end
 
     def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self)
-      if @sorted_defs && @sorted_defs.has_key?([name, arg_types.length, yields])
-        defs = @sorted_defs[[name, arg_types.length, yields]]
+      if defs = self.sorted_defs[[name, arg_types.length, yields]]
         matches = []
         defs.each do |a_def|
           def_restrictions = a_def.args.map(&:type_restriction)
@@ -221,11 +191,11 @@ module Crystal
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
           type_lookup = parent
-          if parent.class == ModuleType
-            parent_owner = owner
-          elsif parent.class == IncludedGenericModule
+          if parent.is_a?(IncludedGenericModule)
             type_lookup = parent
-              parent_owner = owner
+            parent_owner = owner
+          elsif parent.module?
+            parent_owner = owner
           else
             break
           end
@@ -247,20 +217,17 @@ module Crystal
       if parents && !(name == 'new' && owner.is_a?(Metaclass))
         parents.each do |parent|
           type_lookup = parent
-          if is_subclass_of?(program.value)
+          if value?
+            parent_owner = owner
+          elsif parent.class?
+            parent_owner = parent.hierarchy_type
+          elsif parent.is_a?(IncludedGenericModule)
+            type_lookup = parent
+            parent_owner = owner
+          elsif parent.module?
             parent_owner = owner
           else
-            case parent
-            when ObjectType
-              parent_owner = parent.hierarchy_type
-            when ModuleType
-              parent_owner = owner
-            when IncludedGenericModule
-              type_lookup = parent
-              parent_owner = owner
-            else
-              parent_owner = parent
-            end
+            parent_owner = parent
           end
           parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, type_lookup)
           return parent_matches if parent_matches.cover_all?
@@ -272,99 +239,113 @@ module Crystal
       Matches.new(matches.matches, matches.cover, owner, false)
     end
 
-    def mark_cover(cover, arg_types, match, index = 0, position = 0, multiplier = 1)
-      if index == arg_types.length
-        cover[position] = true
-        return
-      end
-
-      arg_type = arg_types[index]
-      match_arg_type = match.arg_types[index]
-
-      match_arg_type.each do |match_arg_type2|
-        if arg_type.is_a?(Array)
-          offset = arg_type.index(match_arg_type2)
-          next unless offset
-          new_multiplier = multiplier * arg_type.length
-        elsif arg_type.equal?(match_arg_type2)
-          offset = 0
-          new_multiplier = multiplier
-        else
-          next
-        end
-
-        mark_cover cover, arg_types, match, index + 1, position + offset * multiplier, new_multiplier
-      end
-    end
-
     def lookup_first_def(name)
-      defs = @defs[name]
-      if defs && defs.length == 1
-        return defs.first[1]
-      end
-      nil
+      defs = self.defs[name]
+      defs.length == 1 ? defs.first[1] : nil
     end
 
     def lookup_defs(name)
-      defs = @defs[name]
-      return defs.values if defs
+      defs = self.defs[name]
+      return defs.values unless defs.empty?
 
-      if parents
-        parents.each do |parent|
-          defs = parent.lookup_defs(name)
-          return defs if defs
-        end
+      parents.each do |parent|
+        defs = parent.lookup_defs(name)
+        return defs unless defs.empty?
       end
 
-      nil
-    end
-
-    def add_macro(a_def)
-      @macros ||= {}
-      @macros[a_def.name] ||= {}
-      @macros[a_def.name][a_def.args.length] = a_def
+      []
     end
 
     def lookup_macro(name, args_length)
-      if @macros && (macros = @macros[name]) && (macro = macros[args_length])
+      if (macros = self.macros[name]) && (macro = macros[args_length])
         return macro
       end
 
-      if parents
-        parents.each do |parent|
-          macro = parent.lookup_macro(name, args_length)
-          return macro if macro
-        end
+      parents.each do |parent|
+        macro = parent.lookup_macro(name, args_length)
+        return macro if macro
       end
 
       nil
     end
   end
 
+  module DefContainer
+    include MatchesLookup
+
+    def defs
+      @defs ||= Hash.new { |h, k| h[k] = {} }
+    end
+
+    def sorted_defs
+      @sorted_defs ||= Hash.new { |h, k| h[k] = [] }
+    end
+
+    def macros
+      @macros ||= Hash.new { |h, k| h[k] = {} }
+    end
+
+    def add_def(a_def)
+      a_def.owner = self if a_def.respond_to?(:owner=)
+      restrictions = a_def.args.map(&:type_restriction)
+      self.defs[a_def.name][[restrictions, !!a_def.yields]] = a_def
+      add_sorted_def(a_def, a_def.args.length)
+      a_def
+    end
+
+    def add_sorted_def(a_def, args_length)
+      sorted_defs = self.sorted_defs[[a_def.name, args_length, !!a_def.yields]]
+      append = sorted_defs.each_with_index do |ex_def, i|
+        if a_def.is_restriction_of?(ex_def, self)
+          sorted_defs.insert(i, a_def)
+          break false
+        end
+      end
+      sorted_defs << a_def if append
+    end
+
+    def add_macro(a_def)
+      self.macros[a_def.name][a_def.args.length] = a_def
+    end
+  end
+
+  module DefInstanceContainer
+    def def_instances
+      @def_instances ||= {}
+    end
+
+    def add_def_instance(def_object_id, arg_types, block_type, typed_def)
+      def_instances[def_instance_key(def_object_id, arg_types, block_type)] = typed_def
+    end
+
+    def lookup_def_instance(def_object_id, arg_types, block_type)
+      def_instances[def_instance_key(def_object_id, arg_types, block_type)]
+    end
+
+    def def_instance_key(def_object_id, arg_types, block_type)
+      key = [def_object_id]
+      key.concat arg_types.map(&:type_id)
+      key.push block_type.type_id if block_type
+      key
+    end
+  end
+
   class ModuleType < ContainedType
     include DefContainer
 
-    attr_accessor :defs
-    attr_accessor :sorted_defs
-    attr_accessor :types
-    attr_accessor :parents
-    attr_accessor :type_vars
+    attr_reader :name
 
-    def initialize(name, container = nil, parents = [])
-      super(name, container)
-      @parents = parents
-      @defs = {}
-      @sorted_defs ||= Hash.new { |h, k| h[k] = [] }
-      @def_instances = {}
-      @types = {}
+    def initialize(container, name)
+      super(container)
+      @name = name
     end
 
-    def generic
-      @type_vars
+    def parents
+      @parents ||= []
     end
 
     def include(mod)
-      @parents.insert 0, mod unless @parents.any? { |parent| parent.equal?(mod) }
+      parents.insert 0, mod unless parents.any? { |parent| parent.equal?(mod) }
     end
 
     def implements?(other_type)
@@ -374,10 +355,6 @@ module Crystal
     def lookup_type(names, already_looked_up = {})
       return nil if already_looked_up[type_id]
       already_looked_up[type_id] = true
-
-      if type_vars && names.length == 1 && type_var = type_vars[names[0]]
-        return type_var.type
-      end
 
       type = self
       names.each do |name|
@@ -395,10 +372,425 @@ module Crystal
       container ? container.lookup_type(names, already_looked_up) : nil
     end
 
+    def full_name
+      container && !container.is_a?(Program) ? "#{container.to_s}::#{name}" : name
+    end
+
     def to_s
-      return full_name unless generic
-      type_vars_to_s = type_vars.map { |name, var| var.type ? var.type.to_s : name }.join ', '
-      "#{full_name}(#{type_vars_to_s})"
+      full_name
+    end
+  end
+
+  class NonGenericModuleType < ModuleType
+    include DefInstanceContainer
+
+    def module?
+      true
+    end
+  end
+
+  module GenericType
+    attr_reader :type_vars
+
+    def generic_types
+      @generic_types ||= {}
+    end
+
+    def instantiate(type_vars)
+      generic_types[type_vars.map(&:type_id)] ||= instance_class.new(self, Hash[
+        self.type_vars.zip(type_vars).map do |name, type|
+          var = Var.new(name, type)
+          var.bind_to var
+          [name, var]
+        end
+      ])
+    end
+
+    def generic?
+      true
+    end
+  end
+
+  class GenericModuleType < ModuleType
+    include GenericType
+
+    def initialize(container, name, type_vars)
+      super(container, name)
+      @type_vars = type_vars
+    end
+
+    def module?
+      true
+    end
+
+    def to_s
+      "#{super}(#{type_vars.join ', '})"
+    end
+  end
+
+  module InstanceVarContainer
+    def instance_vars
+      @instance_vars ||= {}
+    end
+
+    def owns_instance_var?(name)
+      owned_instance_vars.include?(name) || (superclass && superclass.owns_instance_var?(name))
+    end
+
+    def remove_instance_var(name)
+      owned_instance_vars.delete(name)
+      instance_vars.delete(name)
+    end
+
+    def lookup_instance_var(name, create = true)
+      if superclass && (var = superclass.lookup_instance_var(name, false))
+        return var
+      end
+
+      if create || owned_instance_vars.include?(name)
+        instance_vars[name] ||= Var.new name
+      else
+        instance_vars[name]
+      end
+    end
+
+    def index_of_instance_var(name)
+      if superclass
+        index = superclass.index_of_instance_var(name)
+        if index
+          index
+        else
+          index = instance_vars.keys.index(name)
+          if index
+            superclass.all_instance_vars_count + index
+          else
+            nil
+          end
+        end
+      else
+        instance_vars.keys.index(name)
+      end
+    end
+
+    def each_instance_var(&block)
+      if superclass
+        superclass.each_instance_var(&block)
+      end
+
+      instance_vars.each(&block)
+    end
+
+    def all_instance_vars
+      if superclass
+        superclass.all_instance_vars.merge(instance_vars)
+      else
+        instance_vars
+      end
+    end
+
+    def all_instance_vars_count
+      if superclass
+        superclass.all_instance_vars_count + instance_vars.length
+      else
+        instance_vars.length
+      end
+    end
+
+    def has_instance_var_in_initialize?(name)
+      instance_vars_in_initialize && instance_vars_in_initialize.include?(name) || (superclass && superclass.has_instance_var_in_initialize?(name))
+    end
+
+    def llvm_type
+      @llvm_type ||= LLVM::Pointer(llvm_struct_type)
+    end
+
+    def llvm_size
+      Crystal::Program::POINTER_SIZE
+    end
+
+    def llvm_struct_type
+      unless @llvm_struct_type
+        @llvm_struct_type = LLVM::Struct(llvm_name)
+        @llvm_struct_type.element_types = all_instance_vars.values.map(&:llvm_type)
+      end
+      @llvm_struct_type
+    end
+  end
+
+  class ClassType < ModuleType
+    attr_reader :superclass
+    attr_reader :subclasses
+    attr_reader :depth
+    attr_reader :allocated
+    attr_accessor :abstract
+    attr_accessor :owned_instance_vars
+    attr_accessor :instance_vars_in_initialize
+
+    def initialize(container, name, superclass)
+      super(container, name)
+      if superclass
+        @superclass = superclass
+        @superclass.subclasses << self
+        @depth = superclass.depth + 1
+      else
+        @depth = 0
+      end
+      @subclasses = []
+      @parents = [superclass] if superclass
+      @owned_instance_vars = Set.new
+    end
+
+     def allocated=(allocated)
+      @allocated = allocated
+      superclass.allocated = allocated if superclass
+    end
+
+    def is_subclass_of?(type)
+      super || (superclass && superclass.is_subclass_of?(type))
+    end
+
+    def add_def(a_def)
+      super
+
+      if a_def.instance_vars
+        a_def.instance_vars.each do |ivar|
+          unless superclass.owns_instance_var?(ivar)
+            unless owned_instance_vars.include?(ivar)
+              owned_instance_vars.add(ivar)
+              each_subclass(self) do |subclass|
+                subclass.remove_instance_var(ivar)
+              end
+            end
+          end
+        end
+
+        if a_def.name == 'initialize'
+          if @instance_vars_in_initialize
+            @instance_vars_in_initialize = @instance_vars_in_initialize & a_def.instance_vars
+          else
+            @instance_vars_in_initialize = a_def.instance_vars
+          end
+        end
+      end
+
+      a_def
+    end
+
+    def each_subclass(type, &block)
+      type.subclasses.each do |subclass|
+        block.call subclass
+        each_subclass subclass, &block
+      end
+    end
+  end
+
+  class NonGenericClassType < ClassType
+    include InstanceVarContainer
+    include DefInstanceContainer
+
+    def initialize(container, name, superclass)
+      super
+      @instance_vars = {}
+    end
+
+    def metaclass
+      @metaclass ||= begin
+        metaclass = Metaclass.new(self)
+        metaclass.add_def Def.new('allocate', [], Allocate.new)
+        metaclass
+      end
+    end
+
+    def hierarchy_type
+      @hierarchy_type ||= HierarchyType.new(self)
+    end
+
+    def class?
+      true
+    end
+  end
+
+  class PrimitiveType < ClassType
+    include DefInstanceContainer
+
+    attr_reader :llvm_type
+    attr_reader :llvm_size
+
+    def initialize(container, name, superclass, llvm_type, llvm_size)
+      super(container, name, superclass)
+      @llvm_type = llvm_type
+      @llvm_size = llvm_size
+    end
+
+    def allocated
+      true
+    end
+
+    def value?
+      true
+    end
+  end
+
+  class NilType < PrimitiveType
+    def nil_type?
+      true
+    end
+  end
+
+  class ValueType < NonGenericClassType
+    def value?
+      true
+    end
+  end
+
+  class GenericClassType < ClassType
+    include GenericType
+
+    def initialize(container, name, superclass, type_vars)
+      super(container, name, superclass)
+      @type_vars = type_vars
+    end
+
+    def instance_class
+      GenericClassInstanceType
+    end
+
+    def class?
+      true
+    end
+
+    def metaclass
+      @metaclass ||= begin
+        metaclass = Metaclass.new(self)
+        metaclass.add_def Def.new('allocate', [], Allocate.new)
+        metaclass
+      end
+    end
+
+    def to_s
+      "#{super}(#{type_vars.join ', '})"
+    end
+  end
+
+  class GenericClassInstanceType < Type
+    include InstanceVarContainer
+    include DefInstanceContainer
+    include MatchesLookup
+
+    attr_reader :generic_class
+    attr_reader :type_vars
+    attr_accessor :allocated
+
+    def initialize(generic_class, type_vars)
+      @generic_class = generic_class
+      @type_vars = type_vars
+      @instance_vars = {}
+    end
+
+    def class?
+      true
+    end
+
+    def generic?
+      true
+    end
+
+    def metaclass
+      @metaclass ||= GenericClassInstanceMetaclass.new(self)
+    end
+
+    def program
+      generic_class.program
+    end
+
+    def abstract
+      generic_class.abstract
+    end
+
+    def superclass
+      generic_class.superclass
+    end
+
+    def is_subclass_of?(type)
+      super || generic_class.is_subclass_of?(type)
+    end
+
+    def depth
+      generic_class.depth
+    end
+
+    def implements?(other_type)
+      super || generic_class.parents.any? { |parent| parent.implements?(other_type) }
+    end
+
+    def lookup_type(names, already_looked_up = {})
+      if names.length == 1 && type_var = type_vars[names[0]]
+        return type_var.type
+      end
+
+      generic_class.lookup_type(names, already_looked_up)
+    end
+
+    def parents
+      generic_class.parents.map do |t|
+        if t.is_a?(IncludedGenericModule)
+          IncludedGenericModule.new(t.module, self, t.mapping)
+        else
+          t
+        end
+      end
+    end
+
+    def defs
+      generic_class.defs
+    end
+
+    def sorted_defs
+      generic_class.sorted_defs
+    end
+
+    def macros
+      generic_class.macros
+    end
+
+    def instance_vars_in_initialize
+      generic_class.instance_vars_in_initialize
+    end
+
+    def owned_instance_vars
+      generic_class.owned_instance_vars
+    end
+
+    def to_s
+      "#{generic_class.full_name}(#{type_vars.values.map(&:type).join ', '})"
+    end
+  end
+
+  class PointerType < GenericClassType
+    def instance_class
+      PointerInstanceType
+    end
+
+    def pointer?
+      true
+    end
+  end
+
+  class PointerInstanceType < GenericClassInstanceType
+    def var
+      type_vars["T"]
+    end
+
+    def pointer?
+      true
+    end
+
+    def llvm_type
+      @llvm_type ||= var.type.struct? ? var.type.llvm_type : LLVM::Pointer(var.type.llvm_type)
+    end
+
+    def llvm_size
+      Crystal::Program::POINTER_SIZE
     end
   end
 
@@ -466,307 +858,6 @@ module Crystal
     end
   end
 
-  class ClassType < ModuleType
-    attr_reader :superclass
-
-    def initialize(name, parent_type, container = nil)
-      super(name, container, parent_type ? [parent_type] : [])
-      @superclass = parent_type
-    end
-
-    def is_subclass_of?(type)
-      return true if equal?(type)
-
-      superclass && superclass.is_subclass_of?(type)
-    end
-  end
-
-  class PrimitiveType < ClassType
-    attr_reader :llvm_type
-    attr_reader :llvm_size
-
-    def initialize(name, parent_type, llvm_type, llvm_size, container = nil)
-      super(name, parent_type, container)
-      @llvm_type = llvm_type
-      @llvm_size = llvm_size
-    end
-
-    def nil_type?
-      @nil_type ||= name == 'Nil'
-    end
-
-    def llvm_name
-      name
-    end
-  end
-
-  module GenericType
-    def instantiate(type_vars)
-      @generic_types ||= {}
-      key = type_vars.map(&:type_id)
-      unless generic_type = @generic_types[key]
-        generic_type = prepare_instance
-        generic_type.defs = defs
-        generic_type.sorted_defs = sorted_defs
-        generic_type.types = types
-        generic_type.parents = parents.map do |parent|
-          if parent.is_a?(IncludedGenericModule)
-            IncludedGenericModule.new(parent.module, generic_type, parent.mapping)
-          else
-            parent
-          end
-        end
-        generic_type.type_vars = Hash[self.type_vars.map { |k, v| [k, Var.new(k)] }]
-        i = 0
-        generic_type.type_vars.each do |name, var|
-          var.type = type_vars[i]
-          var.bind_to var
-          i += 1
-        end
-        generic_type.metaclass.defs = metaclass.defs
-        generic_type.metaclass.sorted_defs = metaclass.sorted_defs
-        @generic_types[key] = generic_type
-      end
-      generic_type
-    end
-  end
-
-  class ObjectType < ClassType
-    include GenericType
-
-    attr_accessor :instance_vars
-    attr_accessor :owned_instance_vars
-    attr_accessor :instance_vars_in_initialize
-    attr_accessor :depth
-    attr_accessor :subclasses
-    attr_accessor :allocated
-    attr_accessor :abstract
-    @@id = 0
-
-    def initialize(name, parent_type = nil, container = nil)
-      super
-      @instance_vars = {}
-      @owned_instance_vars = Set.new
-      @subclasses = []
-      if parent_type
-        @depth = parent_type.depth + 1
-        parent_type.subclasses.push self
-      else
-        @depth = 0
-      end
-    end
-
-    def allocated=(allocated)
-      @allocated = allocated
-      superclass.allocated = allocated if superclass
-    end
-
-    def hash
-      full_name.hash
-    end
-
-    def metaclass
-      @metaclass ||= begin
-        metaclass = Metaclass.new(self)
-        metaclass.add_def Def.new('allocate', [], Allocate.new)
-        metaclass
-      end
-    end
-
-    def hierarchy_type
-      @hierarchy_type ||= HierarchyType.new(self)
-    end
-
-    def add_def(a_def)
-      super
-
-      if a_def.instance_vars
-        a_def.instance_vars.each do |ivar|
-          unless superclass.owns_instance_var?(ivar)
-            unless @owned_instance_vars.include?(ivar)
-              @owned_instance_vars.add(ivar)
-              each_subclass(self) do |subclass|
-                subclass.remove_instance_var(ivar)
-              end
-            end
-          end
-        end
-
-        if a_def.name == 'initialize'
-          if @instance_vars_in_initialize
-            @instance_vars_in_initialize = @instance_vars_in_initialize & a_def.instance_vars
-          else
-            @instance_vars_in_initialize = a_def.instance_vars
-          end
-        end
-      end
-
-      a_def
-    end
-
-    def each_subclass(type, &block)
-      type.subclasses.each do |subclass|
-        block.call subclass
-        each_subclass subclass, &block
-      end
-    end
-
-    def owns_instance_var?(name)
-      @owned_instance_vars.include?(name) || (superclass && superclass.owns_instance_var?(name))
-    end
-
-    def remove_instance_var(name)
-      @owned_instance_vars.delete(name)
-      @instance_vars.delete(name)
-    end
-
-    def lookup_instance_var(name, create = true)
-      if superclass && (var = superclass.lookup_instance_var(name, false))
-        return var
-      end
-
-      if create || @owned_instance_vars.include?(name)
-        @instance_vars[name] ||= Var.new name
-      else
-        @instance_vars[name]
-      end
-    end
-
-    def each_instance_var(&block)
-      if superclass
-        superclass.each_instance_var(&block)
-      end
-
-      @instance_vars.each(&block)
-    end
-
-    def all_instance_vars
-      if superclass
-        superclass.all_instance_vars.merge(@instance_vars)
-      else
-        @instance_vars
-      end
-    end
-
-    def all_instance_vars_count
-      if superclass
-        superclass.all_instance_vars_count + @instance_vars.length
-      else
-        @instance_vars.length
-      end
-    end
-
-    def has_instance_var_in_initialize?(name)
-      @instance_vars_in_initialize && @instance_vars_in_initialize.include?(name) || (superclass && superclass.has_instance_var_in_initialize?(name))
-    end
-
-    def ==(other)
-      equal?(other) || structurally_equal?(other) || (other.is_a?(UnionType) && other == self)
-    end
-
-    def eql?(other)
-      self == other
-    end
-
-    def structurally_equal?(other)
-      other.is_a?(ObjectType) && name == other.name && type_vars == other.type_vars && all_instance_vars == other.all_instance_vars
-    end
-
-    def llvm_type
-      @llvm_type ||= LLVM::Pointer(llvm_struct_type)
-    end
-
-    def llvm_size
-      Crystal::Program::POINTER_SIZE
-    end
-
-    def llvm_struct_type
-      unless @llvm_struct_type
-        @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = all_instance_vars.values.map(&:llvm_type)
-      end
-      @llvm_struct_type
-    end
-
-    def llvm_name
-      if generic
-        @id ||= (@@id += 1)
-        "#{name}#{@id}"
-      else
-        name
-      end
-    end
-
-    def nilable_able?
-      true
-    end
-
-    def index_of_instance_var(name)
-      if superclass
-        index = superclass.index_of_instance_var(name)
-        if index
-          index
-        else
-          index = @instance_vars.keys.index(name)
-          if index
-            superclass.all_instance_vars_count + index
-          else
-            nil
-          end
-        end
-      else
-        @instance_vars.keys.index(name)
-      end
-    end
-
-    def prepare_instance
-      obj = ObjectType.new name, superclass, @container
-      obj.owned_instance_vars = owned_instance_vars
-      obj.instance_vars_in_initialize = instance_vars_in_initialize
-      obj
-    end
-  end
-
-  class PointerType < ClassType
-    include GenericType
-
-    def initialize(parent_type = nil, container = nil)
-      super("Pointer", parent_type, container)
-    end
-
-    def var
-      @type_vars["T"]
-    end
-
-    def ==(other)
-      equal?(other) || (other.is_a?(PointerType) && type_vars == other.type_vars) || (other.is_a?(UnionType) && other == self)
-    end
-
-    def prepare_instance
-      PointerType.new @parent_type, @container
-    end
-
-    def nilable_able?
-      true
-    end
-
-    def pointer_type?
-      true
-    end
-
-    def llvm_type
-      @llvm_type ||= var.type.is_a?(StructType) ? var.type.llvm_type : LLVM::Pointer(var.type.llvm_type)
-    end
-
-    def llvm_name
-      @llvm_name ||= "Pointer<#{var.type.llvm_name}>"
-    end
-
-    def llvm_size
-      Crystal::Program::POINTER_SIZE
-    end
-  end
-
   class UnionType < Type
     attr_reader :types
 
@@ -783,6 +874,10 @@ module Crystal
     end
 
     def metaclass
+      self
+    end
+
+    def instance_type
       self
     end
 
@@ -814,8 +909,8 @@ module Crystal
 
     def nilable?
       @nilable ||= (@types.length == 2 &&
-        (@types[0].nil_type? && types[1].nilable_able? && types[1] ||
-         @types[1].nil_type? && types[0].nilable_able? && types[0]))
+        (@types[0].nil_type? && types[1].class? && types[1] ||
+         @types[1].nil_type? && types[0].class? && types[0]))
     end
 
     def nilable_type
@@ -824,10 +919,6 @@ module Crystal
 
     def union?
       !nilable?
-    end
-
-    def set
-      @set ||= types.to_set
     end
 
     def llvm_type
@@ -839,10 +930,6 @@ module Crystal
         end
       end
       @llvm_type
-    end
-
-    def llvm_name
-      "[#{types.map(&:llvm_name).join ', '}]"
     end
 
     def llvm_size
@@ -865,12 +952,6 @@ module Crystal
       types.each(&block)
     end
 
-    def ==(other)
-      return true if equal?(other)
-      set = set()
-      (other.is_a?(UnionType) && set == other.set) || (!other.is_a?(UnionType) && set.length == 1 && types[0] == other)
-    end
-
     def name
       "Union"
     end
@@ -880,25 +961,26 @@ module Crystal
     end
   end
 
-  class Metaclass < ModuleType
-    attr_reader :name
-    attr_reader :type
+  class Metaclass < Type
+    include DefContainer
+    include DefInstanceContainer
 
-    def initialize(type)
-      super("#{type}:Class", type.container)
-      @type = type
-      add_def Def.new('name', [], StringLiteral.new(type.to_s))
-      add_def Def.new('simple_name', [], StringLiteral.new(type.name))
-      add_def Def.new('inspect', [], Call.new(nil, 'to_s'))
-      add_def Def.new('to_s', [], Call.new(nil, 'name'))
+    attr_reader :instance_type
+
+    def initialize(instance_type)
+      @instance_type = instance_type
     end
 
     def parents
-      type.parents ? type.parents.map(&:metaclass) : nil
+      instance_type.parents.map(&:metaclass)
     end
 
-    def instance_type
-      type
+    def metaclass?
+      true
+    end
+
+    def program
+      instance_type.program
     end
 
     def lookup_type(names, already_looked_up = {})
@@ -909,20 +991,8 @@ module Crystal
       LLVM::Int
     end
 
-    def llvm_name
-      name
-    end
-
     def llvm_size
       4
-    end
-
-    def generic
-      type.generic
-    end
-
-    def type_vars
-      type.type_vars
     end
 
     def to_s
@@ -930,11 +1000,70 @@ module Crystal
     end
   end
 
+  class GenericClassInstanceMetaclass < Type
+    include MatchesLookup
+    include DefInstanceContainer
+
+    attr_reader :instance_type
+
+    def initialize(instance_type)
+      @instance_type = instance_type
+    end
+
+    def metaclass?
+      true
+    end
+
+    def add_def(a_def)
+      instance_type.generic_class.metaclass.add_def(a_def)
+    end
+
+    def defs
+      instance_type.generic_class.metaclass.defs
+    end
+
+    def sorted_defs
+      instance_type.generic_class.metaclass.sorted_defs
+    end
+
+    def macros
+      instance_type.generic_class.metaclass.macros
+    end
+
+    def parents
+      instance_type.parents.map(&:metaclass)
+    end
+
+    def program
+      instance_type.program
+    end
+
+    def type_vars
+      instance_type.type_vars
+    end
+
+    def lookup_type(names, already_looked_up = {})
+      instance_type.lookup_type(names, already_looked_up)
+    end
+
+    def llvm_type
+      LLVM::Int
+    end
+
+    def llvm_size
+      4
+    end
+
+    def to_s
+      "#{@instance_type}:Class"
+    end
+  end
+
   class LibType < ModuleType
     attr_accessor :libname
 
-    def initialize(name, libname = nil, container = nil)
-      super(name, container)
+    def initialize(container, name, libname = nil)
+      super(container, name)
       @libname = libname
     end
 
@@ -954,25 +1083,19 @@ module Crystal
       false
     end
 
-    def ==(other)
-      other.is_a?(LibType) && other.name == name && other.libname == libname
-    end
-
     def to_s
       name
     end
   end
 
   class TypeDefType < ContainedType
+    attr_accessor :name
     attr_accessor :type
 
-    def initialize(name, type, container = nil)
-      super(name, container)
+    def initialize(container, name, type)
+      super(container)
+      @name = name
       @type = type
-    end
-
-    def ==(other)
-      other.is_a?(TypeDefType) && other.name == name && other.type == type
     end
 
     def llvm_type
@@ -987,12 +1110,8 @@ module Crystal
       type.llvm_size
     end
 
-    def nilable_able?
-      type.nilable_able?
-    end
-
-    def pointer_type?
-      type.pointer_type?
+    def pointer?
+      type.pointer?
     end
 
     def to_s
@@ -1002,22 +1121,23 @@ module Crystal
 
   class StructType < ContainedType
     include DefContainer
+    include DefInstanceContainer
 
-    attr_accessor :vars
-    attr_accessor :defs
-    attr_accessor :sorted_defs
+    attr_reader :name
+    attr_reader :vars
 
-    def initialize(name, vars, container = nil)
-      super(name, container)
+    def initialize(container, name, vars)
+      super(container)
       @name = name
       @vars = Hash[vars.map { |var| [var.name, var] }]
-      @defs = {}
-      @sorted_defs ||= Hash.new { |h, k| h[k] = [] }
-      @def_instances = {}
       @vars.values.each do |var|
         add_def Def.new("#{var.name}=", [Arg.new_with_type('value', var.type)], StructSet.new(var.name))
         add_def Def.new(var.name, [], StructGet.new(var.name))
       end
+    end
+
+    def struct?
+      true
     end
 
     def parents
@@ -1056,10 +1176,6 @@ module Crystal
       @vars.keys.index(name)
     end
 
-    def ==(other)
-      other.is_a?(StructType) && other.name == name && other.vars == vars
-    end
-
     def to_s
       return @to_s if @to_s
       @to_s = "..."
@@ -1070,12 +1186,14 @@ module Crystal
   end
 
   class Const < ContainedType
-    attr_accessor :value
-    attr_accessor :types
-    attr_accessor :scope
+    attr_reader :name
+    attr_reader :value
+    attr_reader :types
+    attr_reader :scope
 
-    def initialize(name, value, container = nil, types = nil, scope = nil)
-      super(name, container)
+    def initialize(container, name, value, types = nil, scope = nil)
+      super(container)
+      @name = name
       @value = value
       @types = types
       @scope = scope
@@ -1096,6 +1214,10 @@ module Crystal
     def initialize(base_type)
       @base_type = base_type
       @def_instances = {}
+    end
+
+    def hierarchy?
+      true
     end
 
     def cover
@@ -1128,7 +1250,7 @@ module Crystal
       matches = base_type_matches.matches || []
 
       each_subtype(base_type) do |subtype|
-        next if subtype.is_subclass_of?(program.value)
+        next if subtype.value?
 
         subtype_matches = subtype.lookup_matches_with_modules(name, arg_types, yields, subtype.hierarchy_type, subtype.hierarchy_type)
         concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
@@ -1194,10 +1316,6 @@ module Crystal
       false
     end
 
-    def ==(other)
-      other.is_a?(HierarchyType) && base_type == other.base_type
-    end
-
     def filter_by(type)
       restrict(type)
     end
@@ -1208,7 +1326,7 @@ module Crystal
 
     def each2(type, &block)
       # TODO: what if self is Object+ and we have Array(T)
-      unless type.generic && type.type_vars.any? { |n, v| !v.type }
+      unless type.is_a?(GenericClassType)
         block.call type
       end
       each_subtype(type, &block)

@@ -10,7 +10,7 @@ describe 'Type inference: hierarchy' do
       end
 
       a = Foo.new || Bar.new
-      )) { union_of("Foo".object, "Bar".object) }
+      )) { union_of(types["Foo"], types["Bar"]) }
   end
 
   it "types class and subclass as one type" do
@@ -22,7 +22,7 @@ describe 'Type inference: hierarchy' do
       end
 
       a = Foo.new || Bar.new
-      )) { "Foo".hierarchy }
+      )) { types["Foo"].hierarchy_type }
   end
 
   it "types two subclasses" do
@@ -37,7 +37,7 @@ describe 'Type inference: hierarchy' do
       end
 
       a = Bar.new || Baz.new
-      )) { "Foo".hierarchy }
+      )) { types["Foo"].hierarchy_type }
   end
 
   it "types class and two subclasses" do
@@ -52,7 +52,7 @@ describe 'Type inference: hierarchy' do
       end
 
       a = Foo.new || Bar.new || Baz.new
-      )) { "Foo".hierarchy }
+      )) { types["Foo"].hierarchy_type }
   end
 
   it "types method call of hierarchy type" do

@@ -333,7 +333,7 @@ module Crystal
           ptr: alloca(var.llvm_type, var.name.to_s),
           type: var.type
         }
-        if var.type.is_a?(UnionType) && union_type_id = var.type.types.any? { |type| type.equal?(@mod.nil) }
+        if var.type.is_a?(UnionType) && union_type_id = var.type.types.any?(&:nil_type?)
           in_alloca_block { assign_to_union(llvm_var[:ptr], var.type, @mod.nil, llvm_nil) }
         end
       end
@@ -346,7 +346,7 @@ module Crystal
         @last = var[:ptr]
         @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
       elsif var[:type].nilable?
-        if node.type.equal?(@mod.nil)
+        if node.type.nil_type?
           @last = null_pointer?(var[:ptr])
         elsif node.type.equal?(@mod.object)
           @last = @builder.bit_cast var[:ptr], @mod.object.llvm_type
@@ -355,7 +355,7 @@ module Crystal
         else
           @last = var[:ptr]
           @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
-          if node.type.is_a?(HierarchyType)
+          if node.type.hierarchy?
             @last = box_object_in_hierarchy(var[:type].nilable_type, node.type, @last, !var[:treated_as_pointer])
           end
         end
@@ -413,7 +413,7 @@ module Crystal
           @last = result
         end
       elsif obj_type.nilable?
-        if @mod.nil == const_type
+        if const_type.nil_type?
           @last = null_pointer?(@last)
         elsif obj_type.types.any? { |t| t.implements?(const_type) }
           @last = not_null_pointer?(@last)
@@ -558,7 +558,7 @@ module Crystal
         accept(node.then)
         then_block = @builder.insert_block
       end
-      if node.then.nil? || node.then.type.nil? || node.then.type == @mod.nil
+      if node.then.nil? || node.then.type.nil? || node.then.type.nil_type?
         if is_nilable
           @last = @builder.int2ptr llvm_nil, node.llvm_type
         else
@@ -574,7 +574,7 @@ module Crystal
         accept(node.else)
         else_block = @builder.insert_block
       end
-      if node.else.nil? || node.else.type.nil? || node.else.type == @mod.nil
+      if node.else.nil? || node.else.type.nil? || node.else.type.nil_type?
         if is_nilable
           @last = @builder.int2ptr llvm_nil, node.llvm_type
         else
@@ -642,7 +642,7 @@ module Crystal
       elsif node_cond.type.nilable?
         # Nothing
       elsif node_cond.type.is_a?(UnionType)
-        nil_or_bool = node_cond.type.types.any? { |t| t.equal?(@mod.nil) || t.equal?(@mod.bool) }
+        nil_or_bool = node_cond.type.types.any? { |t| t.nil_type? || t.equal?(@mod.bool) }
         return true unless nil_or_bool
       elsif node_cond.type.is_a?(PointerType)
         # Nothing
@@ -675,7 +675,7 @@ module Crystal
       elsif node_cond.type.nilable?
         cond = not_null_pointer?(@last)
       elsif node_cond.type.union?
-        has_nil = node_cond.type.types.any? { |t| t.equal?(@mod.nil) }
+        has_nil = node_cond.type.types.any?(&:nil_type?)
         has_bool = node_cond.type.types.any? { |t| t.equal?(@mod.bool) }
 
         if has_nil || has_bool
@@ -840,8 +840,8 @@ module Crystal
       if node.obj && node.obj.type.passed_as_self?
         accept(node.obj)
 
-        if node.obj.type.is_a?(ObjectType) && !node.obj.type.equal?(node.target_def.owner)
-          if node.target_def.owner.is_a?(HierarchyType)
+        if node.obj.type.class? && !node.obj.type.equal?(node.target_def.owner)
+          if node.target_def.owner.hierarchy?
             @last = box_object_in_hierarchy(node.obj.type, node.target_def.owner, @last)
           else
             # Cast value
@@ -851,13 +851,13 @@ module Crystal
           end
         end
 
-        call_args << (node.obj.type.is_a?(HierarchyType) ? @builder.load(@last) : @last)
+        call_args << (node.obj.type.hierarchy? ? @builder.load(@last) : @last)
       elsif owner
         different = !owner.equal?(@vars['self'][:type])
-        if different && owner.is_a?(HierarchyType) && @vars['self'][:type].is_a?(ObjectType)
+        if different && owner.hierarchy? && @vars['self'][:type].class?
           call_args = box_object_in_hierarchy(@vars['self'][:type], owner, llvm_self)
-        elsif different && owner.is_a?(ObjectType)
-          if @vars['self'][:type].is_a?(HierarchyType)
+        elsif different && owner.class?
+          if @vars['self'][:type].hierarchy?
             call_args = llvm_self_ptr
           else
             call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
@@ -914,13 +914,13 @@ module Crystal
           @return_union = nil
         end
         accept(node.target_def.body)
-        if node.target_def.body.type && node.target_def.body.type != @mod.nil && !node.block.breaks?
+        if node.target_def.body.type && !node.target_def.body.type.nil_type? && !node.block.breaks?
           if @return_union
             assign_to_union(@return_union, @return_type, node.target_def.body.type, @last)
           else
             @return_block_table[@builder.insert_block] = @last
           end
-        elsif (node.target_def.body.type.nil? || node.target_def.body.type.equal?(@mod.nil)) && node.type.nilable?
+        elsif (node.target_def.body.type.nil? || node.target_def.body.type.nil_type?) && node.type.nilable?
           @return_block_table[@builder.insert_block] = @builder.int2ptr llvm_nil, node.llvm_type
         end
         @builder.br @return_block
@@ -929,7 +929,7 @@ module Crystal
         if node.returns? || block_returns? || (node.block.yields? && block_breaks?)
           @builder.unreachable
         else
-          if node.type && node.type != @mod.nil
+          if node.type && !node.type.nil_type?
             if @return_union
               @last = @return_union
             else
@@ -1130,7 +1130,7 @@ module Crystal
             end
           end
 
-          if @return_type.nilable? && target_def.body.type == @mod.nil
+          if @return_type.nilable? && target_def.body.type.nil_type?
             @builder.ret LLVM::Constant.null(@return_type.llvm_type)
           else
             @builder.ret(@last)
@@ -1220,7 +1220,7 @@ module Crystal
         if owner.union?
             result = match_any_type_id(a_def.owner, obj_type_id)
         elsif owner.nilable?
-          if a_def.owner.equal?(@mod.nil)
+          if a_def.owner.nil_type?
             result = null_pointer?(obj_type_id)
           else
             result = not_null_pointer?(obj_type_id)
@@ -1234,7 +1234,7 @@ module Crystal
             comp = match_any_type_id(arg.type, arg_type_ids[i])
             result = @builder.and(result, comp)
           elsif node.args[i].type.nilable?
-            if arg.type.equal?(@mod.nil)
+            if arg.type.nil_type?
               result = @builder.and(result, null_pointer?(arg_type_ids[i]))
             else
               result = @builder.and(result, not_null_pointer?(arg_type_ids[i]))
@@ -1390,7 +1390,7 @@ module Crystal
         nil_block = nil
         not_nil_block = nil
         arg.real_type.types.each_with_index do |arg_type, i|
-          if arg_type == @mod.nil
+          if arg_type.nil_type?
             nil_block = new_block "nil"
             @builder.position_at_end nil_block
 
@@ -1533,7 +1533,7 @@ module Crystal
     end
 
     def llvm_self_ptr
-      if @type.is_a?(HierarchyType)
+      if @type.hierarchy?
         ptr = @builder.load(union_value(llvm_self))
         self_ptr = @builder.bit_cast ptr, @type.base_type.llvm_type
       else

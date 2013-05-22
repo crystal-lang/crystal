@@ -103,7 +103,7 @@ describe 'Type inference: def' do
   end
 
   it "types call with union argument" do
-    assert_type('def foo(x); x; end; a = 1; a = 1.1; foo(a)') { UnionType.new(int, double) }
+    assert_type('def foo(x); x; end; a = 1; a = 1.1; foo(a)') { union_of(int, double) }
   end
 
   it "defines class method" do

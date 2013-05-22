@@ -21,10 +21,12 @@ def assert_type(str, options = {}, &block)
   mod = infer_type input, options
   expected_type = mod.instance_eval &block
   if input.is_a?(Expressions)
-    input.last.type.should eq(expected_type)
+    actual_type = input.last.type
   else
-    input.type.should eq(expected_type)
+    actual_type = input.type
   end
+  actual_type.should eq(expected_type)
+  [mod, actual_type]
 end
 
 def assert_error(str, message)
@@ -134,24 +136,6 @@ class String
   def symbol
     Crystal::SymbolLiteral.new self
   end
-
-  def object(instance_vars = {})
-    Crystal::ObjectType.new(self).with_vars(instance_vars)
-  end
-
-  def struct(instance_vars = {})
-    ivars = instance_vars.map { |name, type| Var.new(name.to_s, type) }
-    Crystal::StructType.new(self, ivars)
-  end
-
-  def generic(type_vars)
-    @generic = true
-    object.of(type_vars)
-  end
-
-  def hierarchy
-    object.hierarchy_type
-  end
 end
 
 class Array
@@ -165,27 +149,6 @@ class Array
 
   def array_of(type)
     Crystal::ArrayLiteral.new self, type
-  end
-end
-
-class Crystal::ObjectType
-  def with_var(name, type)
-    name = name.to_s
-    name = "@#{name}" unless name[0] == '@'
-    @instance_vars[name] = Var.new(name, type)
-    self
-  end
-
-  def with_vars(hash)
-    hash.each do |name, type|
-      with_var name, type
-    end
-    self
-  end
-
-  def of(type_vars)
-    @type_vars = Hash[type_vars.map { |name, type| [name.to_s, Var.new(name.to_s, type)] }]
-    self
   end
 end
 

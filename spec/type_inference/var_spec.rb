@@ -18,7 +18,7 @@ describe 'Type inference: var' do
   end
 
   it "types a variable that gets a new type" do
-    assert_type('a = 1; a; a = 2.3; a') { UnionType.new(int, double) }
+    assert_type('a = 1; a; a = 2.3; a') { union_of(int, double) }
   end
 
   it "reports undefined local variable or method" do

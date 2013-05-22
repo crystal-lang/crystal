@@ -123,8 +123,8 @@ module Crystal
     def self.mangled_name(self_type, owner, name, return_type, arg_types)
       str = '*'
       if owner
-        if owner.is_a?(Metaclass)
-          str << owner.type.name
+        if owner.metaclass?
+          str << owner.instance_type.llvm_name
           str << '::'
         elsif !owner.is_a?(Crystal::Program)
           str << owner.llvm_name

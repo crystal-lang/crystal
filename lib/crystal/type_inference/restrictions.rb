@@ -52,15 +52,15 @@ module Crystal
       type.nil? || equal?(type) ||
         type.is_a?(UnionType) && type.types.any? { |union_type| self.is_restriction_of?(union_type, owner) } ||
         type.is_a?(HierarchyType) && self.is_subclass_of?(type.base_type) ||
-        generic && type.generic && container.equal?(type.container) && name == type.name && type.type_vars.values.map(&:type).compact.length == 0 ||
-        parents.any? { |parent| parent.is_restriction_of?(type, owner) }
+        generic? && type.generic? && generic_class.equal?(type) ||
+        parents && parents.any? { |parent| parent.is_restriction_of?(type, owner) }
     end
 
     def restrict(other)
       ((other.nil? || equal?(other)) && self) ||
       (other.is_a?(UnionType) && other.types.any? { |union_type| self.is_restriction_of?(union_type, nil) } && self) ||
       (other.is_a?(HierarchyType) && self.is_subclass_of?(other.base_type) && self) ||
-      (generic && other.generic && container.equal?(other.container) && name == other.name && !other.type_vars.values.any?(&:type) && self) ||
+      (generic? && other.generic? && generic_class.equal?(other) && self) ||
       (parents.first && parents.first.is_restriction_of?(other, nil) && self) ||
       nil
     end
@@ -93,7 +93,7 @@ module Crystal
         self
       elsif other.is_a?(UnionType)
         program.type_merge *other.types.map { |t| self.restrict(t) }
-      elsif other.is_a?(HierarchyType)
+      elsif other.hierarchy?
         result = base_type.restrict(other.base_type) || other.base_type.restrict(base_type)
         result ? result.hierarchy_type : nil
       elsif other.is_subclass_of?(self.base_type)
