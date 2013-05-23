@@ -2,6 +2,10 @@ GC.disable
 require 'bundler/setup'
 require 'pry'
 require 'pry-debugger'
+
+require 'coveralls'
+Coveralls.wear!
+
 require(File.expand_path("../../lib/crystal",  __FILE__))
 
 RSpec.configure do |c|
