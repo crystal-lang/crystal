@@ -855,10 +855,10 @@ module Crystal
       elsif owner
         different = !owner.equal?(@vars['self'][:type])
         if different && owner.hierarchy? && @vars['self'][:type].class?
-          call_args = box_object_in_hierarchy(@vars['self'][:type], owner, llvm_self)
+          call_args << box_object_in_hierarchy(@vars['self'][:type], owner, llvm_self)
         elsif different && owner.class?
           if @vars['self'][:type].hierarchy?
-            call_args = llvm_self_ptr
+            call_args << llvm_self_ptr
           else
             call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
           end
