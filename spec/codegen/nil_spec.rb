@@ -6,7 +6,7 @@ describe 'Code gen: nil' do
   end
 
   it "codegens nil? for Object gives false" do
-    run('require "object"; Object.new.nil?').to_b.should be_false
+    run('require "object"; Reference.new.nil?').to_b.should be_false
   end
 
   it "codegens nil? for Object gives true" do
@@ -16,7 +16,7 @@ describe 'Code gen: nil' do
       class Foo
         def initialize
           if false
-            @x = Object.new
+            @x = Reference.new
           end
           1
         end
@@ -97,7 +97,7 @@ describe 'Code gen: nil' do
         2
       end
 
-      a = Object.new
+      a = Reference.new
       a = nil
       foo(a)
       )).to_i.should eq(2)
@@ -114,7 +114,7 @@ describe 'Code gen: nil' do
       end
 
       a = nil
-      a = Object.new
+      a = Reference.new
       foo(a)
       )).to_i.should eq(1)
   end
@@ -123,7 +123,7 @@ describe 'Code gen: nil' do
     run(%q(
       a = nil
       a = "foo"
-      a = Object.new
+      a = Reference.new
 
       b = nil
       b = "foo"

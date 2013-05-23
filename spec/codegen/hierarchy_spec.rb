@@ -183,6 +183,7 @@ describe 'Code gen: hierarchy type' do
   it "codegens call to Object#to_s from hierarchy type" do
     run(%q(
       require "object"
+      require "reference"
       require "string"
 
       class Foo
@@ -199,6 +200,7 @@ describe 'Code gen: hierarchy type' do
   it "codegens call to Object#to_s from nilable type" do
     run(%q(
       require "object"
+      require "reference"
       require "nil"
       require "string"
 
@@ -267,7 +269,7 @@ describe 'Code gen: hierarchy type' do
 
       class Baz < Foo
         def initialize
-          @x = Object.new
+          @x = Reference.new
         end
 
         def x

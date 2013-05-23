@@ -670,7 +670,7 @@ describe 'Code gen: block' do
       class Bar
         def foo
           yield 2
-          Object.new
+          Reference.new
         end
       end
 
@@ -691,7 +691,7 @@ describe 'Code gen: block' do
       class Bar
         def foo
           yield 2
-          Object.new
+          Reference.new
         end
       end
 

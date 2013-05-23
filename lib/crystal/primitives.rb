@@ -4,6 +4,7 @@ module Crystal
   class Program
     def define_primitives
       define_object_primitives
+      define_reference_primitives
 
       define_value_primitives
       define_bool_primitives
@@ -21,18 +22,20 @@ module Crystal
 
     def define_object_primitives
       object.add_def Def.new(:class, [], ClassMethod.new)
+    end
 
-      a_def = no_args_primitive(object, 'nil?', bool) do |b, f|
+    def define_reference_primitives
+      a_def = no_args_primitive(reference, 'nil?', bool) do |b, f|
         b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0))
       end
       instance = a_def.overload [], bool do |b, f|
         obj = b.extract_value f.params[0], 1
         b.icmp(:eq, b.ptr2int(obj, LLVM::Int), LLVM::Int(0))
       end
-      instance.owner = object.hierarchy_type
-      object.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
+      instance.owner = reference.hierarchy_type
+      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
 
-      a_def = no_args_primitive(object, 'object_id', long) do |b, f, llvm_mod, self_type|
+      a_def = no_args_primitive(reference, 'object_id', long) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end
 
@@ -40,10 +43,10 @@ module Crystal
         obj = b.extract_value f.params[0], 1
         b.ptr2int(obj, LLVM::Int64)
       end
-      instance.owner = object.hierarchy_type
-      object.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
+      instance.owner = reference.hierarchy_type
+      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
 
-      a_def = no_args_primitive(object, 'to_cstr', char_pointer) do |b, f, llvm_mod, self_type|
+      a_def = no_args_primitive(reference, 'to_cstr', char_pointer) do |b, f, llvm_mod, self_type|
         buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
         buffer
@@ -56,8 +59,8 @@ module Crystal
         buffer
       end
 
-      instance.owner = object.hierarchy_type
-      object.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
+      instance.owner = reference.hierarchy_type
+      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
     end
 
     def define_value_primitives

@@ -172,7 +172,7 @@ class String
   end
 
   def <=>(other : self)
-    Object.same?(self, other) ? 0 : C.strcmp(@c.ptr, other)
+    same?(other) ? 0 : C.strcmp(@c.ptr, other)
   end
 
   def =~(regex)

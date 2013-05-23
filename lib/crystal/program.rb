@@ -18,6 +18,9 @@ module Crystal
       @macros_cache = {}
 
       object = @types["Object"] = NonGenericClassType.new self, "Object", nil
+      object.abstract = true
+
+      reference = @types["Reference"] = NonGenericClassType.new self, "Reference", object
       value = @types["Value"] = ValueType.new self, "Value", object
       numeric = @types["Numeric"] = ValueType.new self, "Numeric", value
 
@@ -33,14 +36,14 @@ module Crystal
       @types["Symbol"] = PrimitiveType.new self, "Symbol", value, LLVM::Int32, 4
       @types["Pointer"] = PointerType.new self, "Pointer", value, ["T"]
 
-      string = @types["String"] = NonGenericClassType.new self, "String", object
+      string = @types["String"] = NonGenericClassType.new self, "String", reference
       string.instance_vars_in_initialize = ['@length', '@c']
       string.allocated = true
 
       string.lookup_instance_var('@length').type = int
       string.lookup_instance_var('@c').type = char
 
-      @types["Array"] = GenericClassType.new self, "Array", object, ["T"]
+      @types["Array"] = GenericClassType.new self, "Array", reference, ["T"]
 
       @types["ARGC_UNSAFE"] = Const.new self, "ARGC_UNSAFE", Crystal::ARGC.new(int)
       @types["ARGV_UNSAFE"] = Const.new self, "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char)))
@@ -137,7 +140,7 @@ module Crystal
         t2 = t2.superclass
       end
 
-      t1.depth == 0 ? nil : t1
+      t1.depth <= 1 ? nil : t1
     end
 
     def nil_var
@@ -154,6 +157,10 @@ module Crystal
 
     def object
       @types["Object"]
+    end
+
+    def reference
+      @types["Reference"]
     end
 
     def bool

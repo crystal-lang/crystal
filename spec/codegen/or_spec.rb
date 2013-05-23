@@ -41,7 +41,7 @@ describe 'Code gen: or' do
     run('
       require "nil"
       class Object; def to_i; -1; end; end
-      a = Object.new
+      a = Reference.new
       a = nil
       (a || 2).to_i
     ').to_i.should eq(2)
@@ -51,7 +51,7 @@ describe 'Code gen: or' do
     run('
       class Object; def to_i; -1; end; end
       a = nil
-      a = Object.new
+      a = Reference.new
       (a || 2).to_i
     ').to_i.should eq(-1)
   end

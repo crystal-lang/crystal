@@ -101,17 +101,17 @@ describe 'Code gen: union type' do
       require "prelude"
       a = 1
       b = nil
-      b = Object.new
+      b = Reference.new
       a = b
       a.to_s
-    )).to_string.should =~ /Object/
+    )).to_string.should =~ /Reference/
   end
 
   it "assigns union to larger union when source is nilable 2" do
     run(%q(
       require "prelude"
       a = 1
-      b = Object.new
+      b = Reference.new
       b = nil
       a = b
       a.to_s

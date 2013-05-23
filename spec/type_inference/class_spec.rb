@@ -240,7 +240,7 @@ describe 'Type inference: class' do
 
   it "reports superclass mismatch" do
     assert_error "class Foo; end; class Bar; end; class Foo < Bar; end",
-      "superclass mismatch for class Foo (Bar for Object)"
+      "superclass mismatch for class Foo (Bar for Reference)"
   end
 
   it "reports wrong number of arguments for initialize" do

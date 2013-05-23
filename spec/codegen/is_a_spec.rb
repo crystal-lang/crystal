@@ -26,19 +26,19 @@ describe 'Codegen: is_a?' do
   end
 
   it "codegens is_a? with nilable gives true" do
-    run("(true ? nil : Object.new).is_a?(Nil)").to_b.should be_true
+    run("(true ? nil : Reference.new).is_a?(Nil)").to_b.should be_true
   end
 
   it "codegens is_a? with nilable gives false becuase other type 1" do
-    run("(true ? nil : Object.new).is_a?(Object)").to_b.should be_false
+    run("(true ? nil : Reference.new).is_a?(Object)").to_b.should be_false
   end
 
   it "codegens is_a? with nilable gives false becuase other type 2" do
-    run("(false ? nil : Object.new).is_a?(Object)").to_b.should be_true
+    run("(false ? nil : Reference.new).is_a?(Object)").to_b.should be_true
   end
 
   it "codegens is_a? with nilable gives false becuase no type" do
-    run("(false ? nil : Object.new).is_a?(String)").to_b.should be_false
+    run("(false ? nil : Reference.new).is_a?(String)").to_b.should be_false
   end
 
   it "codegens is_a? with nilable gives false becuase no type" do

@@ -61,7 +61,7 @@ module Crystal
       (other.is_a?(UnionType) && other.types.any? { |union_type| self.is_restriction_of?(union_type, nil) } && self) ||
       (other.is_a?(HierarchyType) && self.is_subclass_of?(other.base_type) && self) ||
       (generic? && other.generic? && generic_class.equal?(other) && self) ||
-      (parents.first && parents.first.is_restriction_of?(other, nil) && self) ||
+      (parents && parents.any? { |parent| parent.is_restriction_of?(other, nil) } && self) ||
       nil
     end
   end

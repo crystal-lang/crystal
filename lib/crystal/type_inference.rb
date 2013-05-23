@@ -195,7 +195,7 @@ module Crystal
       superclass = if node.superclass
                  lookup_ident_type node.superclass
                else
-                 mod.object
+                 mod.reference
                end
 
       type = current_type.types[node.name]
