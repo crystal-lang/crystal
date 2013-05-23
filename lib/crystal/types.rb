@@ -57,6 +57,10 @@ module Crystal
       true
     end
 
+    def instance_type
+      self
+    end
+
     def implements?(other_type)
       equal?(other_type)
     end
