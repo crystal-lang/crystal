@@ -10,7 +10,7 @@ class Hash(K, V)
 
   def []=(key : K, value : V)
     index = bucket_index key
-    if (bucket = @buckets[index]).nil?
+    unless (bucket = @buckets[index])
       @buckets[index] = bucket = Array(Entry(K, V)).new
     end
     bucket.each do |entry|
@@ -21,9 +21,9 @@ class Hash(K, V)
     @length += 1
     entry = Entry(K, V).new(key, value)
     bucket.push entry
-    @last.next = entry unless @last.nil?
+    @last.next = entry if @last
     @last = entry
-    @first = entry if @first.nil?
+    @first = entry unless @first
     value
   end
 
@@ -73,7 +73,7 @@ class Hash(K, V)
 
   def each
     current = @first
-    while !current.nil?
+    while current
       yield current.key, current.value
       current = current.next
     end

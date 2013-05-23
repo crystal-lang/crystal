@@ -6,11 +6,11 @@ class StringScanner
 
   def scan(re)
     match = re.match(@str, @offset, Regexp::ANCHORED)
-    if match.nil?
-      nil
-    else
+    if match
       @offset = match.end(0).to_i
       match[0]
+    else
+      nil
     end
   end
 

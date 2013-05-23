@@ -7,24 +7,24 @@ class Node
 
   def add(x)
     if x < @value
-      if @left.nil?
-        @left = Node.new(x)
-      else
+      if @left
         @left.add(x)
+      else
+        @left = Node.new(x)
       end
     else
-      if @right.nil?
-        @right = Node.new(x)
-      else
+      if @right
         @right.add(x)
+      else
+        @right = Node.new(x)
       end
     end
   end
 
   def print
-    @left.print unless @left.nil?
+    @left.print if @left
     print @value
-    @right.print unless @right.nil?
+    @right.print if @right
   end
 end
 
