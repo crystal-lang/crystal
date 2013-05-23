@@ -193,13 +193,13 @@ describe "Array" do
     end
   end
 
-  describe "flatten" do
-    assert do
-      a = [[1, 2], 3, [4, [5, 6]]]
-      a.flatten([] of Int).should eq([1, 2, 3, 4, 5, 6])
-      a.should eq([[1, 2], 3, [4, [5, 6]]])
-    end
-  end
+  # describe "flatten" do
+  #   assert do
+  #     a = [[1, 2], 3, [4, [5, 6]]]
+  #     a.flatten([] of Int).should eq([1, 2, 3, 4, 5, 6])
+  #     a.should eq([[1, 2], 3, [4, [5, 6]]])
+  #   end
+  # end
 
   describe "map" do
     assert do

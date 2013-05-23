@@ -198,10 +198,10 @@ class Array(T)
     delete nil
   end
 
-  def flatten(target : Array(U))
-    flatten_append target, self, false
-    target
-  end
+  # def flatten(target : Array(U))
+  #   flatten_append target, self, false
+  #   target
+  # end
 
   def map!
     length.times do |i|
@@ -284,7 +284,7 @@ class Array(T)
     ary
   end
 
-  def concat(other : Enumerable)
+  def concat(other : Array(T))
     other.each do |elem|
       push elem
     end
@@ -332,17 +332,17 @@ class Array(T)
     @buffer = @buffer.realloc(@capacity)
   end
 
-  def flatten_append(target, source : Array(U), modified)
-    source.each do |obj|
-      modified |= flatten_append target, obj, true
-    end
-    modified
-  end
+  # def flatten_append(target, source : Array(U), modified)
+  #   source.each do |obj|
+  #     modified |= flatten_append target, obj, true
+  #   end
+  #   modified
+  # end
 
-  def flatten_append(target, source, modified)
-    target.push source
-    false
-  end
+  # def flatten_append(target, source, modified)
+  #   target.push source
+  #   false
+  # end
 
   def swap(i, j)
     temp = self[i]
