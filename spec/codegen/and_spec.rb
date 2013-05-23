@@ -37,7 +37,7 @@ describe 'Code gen: and' do
     run('require "nil"; (nil && 2).to_i').to_i.should eq(0)
   end
 
-  pending "codegens and with nilable as left node 1" do
+  it "codegens and with nilable as left node 1" do
     run('
       require "nil"
       class Object; def to_i; -1; end; end

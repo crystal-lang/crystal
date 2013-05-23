@@ -1154,6 +1154,10 @@ module Crystal
     end
 
     def match_any_type_id(type, type_id)
+      # Special case: if the type is Object+ we want to match against Reference+,
+      # because Object+ can only mean a Reference type (so we exclude Nil, for example).
+      type = @mod.reference.hierarchy_type if type.equal?(@mod.object.hierarchy_type)
+
       if type.union?
         result = int1(0)
         type.each do |sub_type|
