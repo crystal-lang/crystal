@@ -270,4 +270,14 @@ describe 'Type inference: class' do
       ),
       "can't instantiate abstract class Foo"
   end
+
+  it "doesn't lookup new in supermetaclass" do
+    assert_type(%q(
+      class Foo(T)
+      end
+
+      Reference.new
+      Foo(Int).new
+      )) { types["Foo"].instantiate([int]) }
+  end
 end

@@ -194,7 +194,7 @@ module Crystal
       matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
       return matches unless matches.empty?
 
-      if parents && !(name == 'new' && owner.is_a?(Metaclass))
+      if parents && !(name == 'new' && owner.metaclass?)
         parents.each do |parent|
           type_lookup = parent
           if parent.is_a?(IncludedGenericModule)
@@ -220,7 +220,7 @@ module Crystal
       matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
       return matches if matches.cover_all?
 
-      if parents && !(name == 'new' && owner.is_a?(Metaclass))
+      if parents && !(name == 'new' && owner.metaclass?)
         parents.each do |parent|
           type_lookup = parent
           if value?
