@@ -386,6 +386,7 @@ module Crystal
         type = arg_types[args_start_index + index]
         var = Var.new(arg.name, type)
         var.location = arg.location
+        var.bind_to(var)
         args[arg.name] = var
         arg.type = type
       end

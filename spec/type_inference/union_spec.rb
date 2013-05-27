@@ -16,4 +16,15 @@ describe "Type inference: union" do
   it "types union of classes" do
     assert_type("class A; end; class B; end; a = A.new; a = B.new; a") { union_of(types["A"], types["B"]) }
   end
+
+  it "assigns to union and keeps new union type in call" do
+    assert_type("
+      def foo(x)
+        x = 'a'
+        x
+      end
+
+      foo(1 || 2.5)
+      ") { union_of(int, double, char) }
+  end
 end
