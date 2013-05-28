@@ -31,6 +31,10 @@ describe 'Code gen: pointer' do
     run('a = 1.1; a = 1; b = a.ptr; b.value.to_i').to_i.should eq(1)
   end
 
+  it "sets value of pointer to union" do
+    run('p = Pointer(Int|Double).malloc(1); a = 1; a = 2.5; p.value = a; p.value.to_i').to_i.should eq(2)
+  end
+
   it "increment pointer" do
     run(%q(
       class Foo

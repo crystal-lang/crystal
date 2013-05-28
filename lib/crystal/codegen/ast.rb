@@ -4,6 +4,10 @@ module Crystal
       type.llvm_type
     end
 
+    def llvm_arg_type
+      type.llvm_arg_type
+    end
+
     def returns?
       false
     end
@@ -155,6 +159,18 @@ module Crystal
 
     def mangled_name(obj_type)
       real_name
+    end
+  end
+
+  class CastedVar < ASTNode
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
+    end
+
+    def to_s
+      "#{name} as #{casted_type}"
     end
   end
 end

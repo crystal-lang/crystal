@@ -29,7 +29,7 @@ module Crystal
         b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0))
       end
       instance = a_def.overload [], bool do |b, f|
-        obj = b.extract_value f.params[0], 1
+        obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
         b.icmp(:eq, b.ptr2int(obj, LLVM::Int), LLVM::Int(0))
       end
       instance.owner = reference.hierarchy_type
@@ -40,7 +40,7 @@ module Crystal
       end
 
       instance = a_def.overload [], long do |b, f, llvm_mod, self_type|
-        obj = b.extract_value f.params[0], 1
+        obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
         b.ptr2int(obj, LLVM::Int64)
       end
       instance.owner = reference.hierarchy_type
@@ -53,7 +53,7 @@ module Crystal
       end
 
       instance = a_def.overload [], char_pointer do |b, f, llvm_mod, self_type|
-        obj = b.extract_value f.params[0], 1
+        obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
         buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), obj
         buffer

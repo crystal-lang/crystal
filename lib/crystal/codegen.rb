@@ -348,6 +348,29 @@ module Crystal
       elsif var[:type].nilable?
         if node.type.nil_type?
           @last = null_pointer?(var[:ptr])
+        else
+          @last = var[:ptr]
+          @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+        end
+      else
+        if node.type.union?
+          @last = @builder.bit_cast(var[:ptr], LLVM::Pointer(node.llvm_type))
+        else
+          value_ptr = union_value(var[:ptr])
+          @last = @builder.bit_cast value_ptr, LLVM::Pointer(node.llvm_type)
+          @last = @builder.load(@last) unless node.type.passed_by_val?
+        end
+      end
+    end
+
+    def visit_casted_var(node)
+      var = @vars[node.name]
+      if var[:type] == node.type
+        @last = var[:ptr]
+        @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+      elsif var[:type].nilable?
+        if node.type.nil_type?
+          @last = null_pointer?(var[:ptr])
         elsif node.type.equal?(@mod.object)
           @last = @builder.bit_cast var[:ptr], @mod.object.llvm_type
         elsif node.type.equal?(@mod.object.hierarchy_type)
@@ -466,7 +489,9 @@ module Crystal
       value = @fun.params[1]
       if node.type.union?
         value = @builder.alloca node.llvm_type
-        @builder.store @fun.params[1], value
+        target = @fun.params[1]
+        target = @builder.load(target) if node.type.passed_by_val?
+        @builder.store target, value
       end
 
       codegen_assign llvm_self, @type.var.type, node.type, value
@@ -842,7 +867,7 @@ module Crystal
 
         if node.obj.type.class? && !node.obj.type.equal?(node.target_def.owner)
           if node.target_def.owner.hierarchy?
-            @last = box_object_in_hierarchy(node.obj.type, node.target_def.owner, @last)
+            @last = box_object_in_hierarchy(node.obj.type, node.target_def.owner, @last, false)
           else
             # Cast value
             @last = @builder.bit_cast(@last, LLVM::Pointer(node.target_def.owner.llvm_type))
@@ -851,11 +876,11 @@ module Crystal
           end
         end
 
-        call_args << (node.obj.type.hierarchy? ? @builder.load(@last) : @last)
+        call_args << @last
       elsif owner
         different = !owner.equal?(@vars['self'][:type])
         if different && owner.hierarchy? && @vars['self'][:type].class?
-          call_args << box_object_in_hierarchy(@vars['self'][:type], owner, llvm_self)
+          call_args << box_object_in_hierarchy(@vars['self'][:type], owner, llvm_self, false)
         elsif different && owner.class?
           if @vars['self'][:type].hierarchy?
             call_args << llvm_self_ptr
@@ -863,7 +888,7 @@ module Crystal
             call_args << @builder.bit_cast(llvm_self, owner.llvm_type)
           end
         else
-          call_args << (owner.union? ? @builder.load(llvm_self) : llvm_self)
+          call_args << llvm_self
         end
       end
 
@@ -872,7 +897,6 @@ module Crystal
           call_args << @vars[arg.name][:ptr]
         else
           accept(arg)
-          @last = @builder.load @last if arg.type && arg.type.union?
           call_args << @last
         end
       end
@@ -890,7 +914,9 @@ module Crystal
           args_base_index = 1
           if owner.union?
             ptr = alloca(owner.llvm_type)
-            @builder.store call_args[0], ptr
+            value = call_args[0]
+            value = @builder.load(value) if owner.passed_by_val?
+            @builder.store value, ptr
             @vars['self'] = { ptr: ptr, type: owner, treated_as_pointer: false }
           else
             @vars['self'] = { ptr: call_args[0], type: owner, treated_as_pointer: true }
@@ -902,7 +928,9 @@ module Crystal
         node.target_def.args.each_with_index do |arg, i|
           ptr = alloca(arg.llvm_type, arg.name)
           @vars[arg.name] = { ptr: ptr, type: arg.type }
-          @builder.store call_args[args_base_index + i], ptr
+          value = call_args[args_base_index + i]
+          value = @builder.load(value) if arg.type.passed_by_val?
+          @builder.store value, ptr
         end
 
         @return_block = new_block 'return'
@@ -1089,7 +1117,7 @@ module Crystal
 
       @fun = @llvm_mod.functions.add(
         mangled_name,
-        args.map(&:llvm_type),
+        args.map(&:llvm_arg_type),
         target_def.llvm_type,
         varargs: varargs
       )
@@ -1097,6 +1125,7 @@ module Crystal
 
       args.each_with_index do |arg, i|
         @fun.params[i].name = arg.name
+        @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
       end
 
       unless target_def.is_a? External
@@ -1104,7 +1133,7 @@ module Crystal
         new_entry_block
 
         args.each_with_index do |arg, i|
-          if self_type && i == 0 && !self_type.union? || target_def.body.is_a?(Primitive)
+          if (self_type && i == 0 && !self_type.union?) || target_def.body.is_a?(Primitive) || arg.type.passed_by_val?
             @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
           else
             ptr = alloca(arg.llvm_type, arg.name)
@@ -1196,7 +1225,7 @@ module Crystal
       end
 
       phi_table = {}
-      call = Call.new(node.obj ? Var.new("%self") : nil, node.name, node.args.length.times.map { |i| Var.new("%arg#{i}") }, node.block)
+      call = Call.new(node.obj ? CastedVar.new("%self") : nil, node.name, node.args.length.times.map { |i| CastedVar.new("%arg#{i}") }, node.block)
       call.scope = node.scope
 
       new_vars = @vars.clone
@@ -1253,10 +1282,10 @@ module Crystal
 
         allocated = a_def.owner.allocated && a_def.args.all? { |arg| arg.type.allocated }
         if allocated
-          call.obj.set_type a_def.owner if call.obj
+          call.obj.set_type(a_def.owner) if call.obj
           call.target_defs = [a_def]
           call.args.each_with_index do |arg, i|
-            arg.set_type a_def.args[i].type
+            arg.set_type(a_def.args[i].type)
           end
           call.set_type node.type
           call.accept self

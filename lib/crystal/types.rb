@@ -57,6 +57,10 @@ module Crystal
       true
     end
 
+    def passed_by_val?
+      false
+    end
+
     def instance_type
       self
     end
@@ -91,6 +95,10 @@ module Crystal
 
     def llvm_name
       to_s
+    end
+
+    def llvm_arg_type
+      llvm_type
     end
 
     def self.merge(*types)
@@ -849,6 +857,10 @@ module Crystal
       !nilable?
     end
 
+    def passed_by_val?
+      union?
+    end
+
     def llvm_type
       unless @llvm_type
         if nilable?
@@ -858,6 +870,10 @@ module Crystal
         end
       end
       @llvm_type
+    end
+
+    def llvm_arg_type
+      @llvm_arg_type ||= union? ? LLVM::Pointer(llvm_type) : llvm_type
     end
 
     def llvm_size
@@ -1087,6 +1103,7 @@ module Crystal
     include DefInstanceContainer
 
     LLVM_TYPE = LLVM::Type.struct([LLVM::Int, LLVM::Pointer(LLVM::Int8)], true, "Object+")
+    LLVM_ARG_TYPE = LLVM::Pointer(LLVM_TYPE)
 
     attr_accessor :base_type
 
@@ -1196,12 +1213,20 @@ module Crystal
       true
     end
 
+    def passed_by_val?
+      true
+    end
+
     def llvm_name
       to_s
     end
 
     def llvm_type
       LLVM_TYPE
+    end
+
+    def llvm_arg_type
+      LLVM_ARG_TYPE
     end
 
     def llvm_size

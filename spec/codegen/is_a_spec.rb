@@ -49,7 +49,103 @@ describe 'Codegen: is_a?' do
     run("a = 1; a = 'a'; if a.is_a?(Char); a.ord; else; 0; end").to_i.should eq(?a.ord)
   end
 
-  it "evaluate method on filtered union type" do
+  it "evaluate method on filtered type nilable type not-nil" do
+    run("
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      a = nil
+      a = Foo.new
+      if a.is_a?(Foo)
+        a.foo
+      else
+        2
+      end
+      ").to_i.should eq(1)
+  end
+
+  it "evaluate method on filtered type nilable type nil" do
+    run("
+      class Nil
+        def foo
+          1
+        end
+      end
+
+      class Foo
+      end
+
+      a = Foo.new
+      a = nil
+      if a.is_a?(Nil)
+        a.foo
+      else
+        2
+      end
+      ").to_i.should eq(1)
+  end
+
+  it "evaluates method on filtered union type" do
+    run(%q(
+      class Foo
+        def initialize(x)
+          @x = x
+        end
+
+        def x
+          @x
+        end
+      end
+
+      a = 1
+      a = Foo.new(2)
+
+      if a.is_a?(Reference)
+        a.x
+      else
+        0
+      end
+      )).to_i.should eq(2)
+  end
+
+  it "evaluates method on filtered union type 2" do
+    run(%q(
+      class Foo
+        def initialize(x)
+          @x = x
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def initialize(x)
+          @x = x
+        end
+
+        def x
+          @x
+        end
+      end
+
+      a = 1
+      a = Foo.new(2)
+      a = Bar.new(3)
+
+      if a.is_a?(Reference)
+        a.x
+      else
+        0
+      end
+      )).to_i.should eq(3)
+  end
+
+  it "evaluates method on filtered union type 3" do
     run(%q(
       require "array"
       a = 1
