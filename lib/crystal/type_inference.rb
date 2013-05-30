@@ -686,14 +686,6 @@ module Crystal
       false
     end
 
-    def same_arg_types_as_current_call(arg_types)
-      return false unless arg_types.length == @arg_types.length
-      arg_types.each_with_index do |arg_type, i|
-        return false unless arg_type.equal?(@arg_types[i])
-      end
-      true
-    end
-
     def end_visit_yield(node)
       block = @call.block or node.raise "no block given"
 
