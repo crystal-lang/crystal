@@ -1,38 +1,41 @@
 require 'llvm/core'
 require 'llvm/execution_engine'
 require 'llvm/transforms/scalar'
+require_relative "program"
 
 LLVM.init_x86
 
 module Crystal
-  def run(code, options = {})
-    node = parse code
-    mod = infer_type node, options
-    evaluate node, mod
-  end
-
-  def evaluate(node, mod)
-    llvm_mod = build node, mod
-    engine = LLVM::JITCompiler.new(llvm_mod)
-    Compiler.optimize llvm_mod, engine, 1
-    engine.run_function llvm_mod.functions["crystal_main"], 0, nil
-  end
-
-  def build(node, mod, filename = nil, debug = false, llvm_mod = nil)
-    visitor = CodeGenVisitor.new(mod, node, node ? node.type : nil, filename, debug, llvm_mod)
-    if node
-      begin
-        node.accept visitor
-      rescue StandardError => ex
-        visitor.llvm_mod.dump
-        raise
-      end
+  class Program
+    def run(code, options = {})
+      node = parse code
+      infer_type node, options
+      evaluate node
     end
 
-    visitor.finish
-    visitor.llvm_mod.dump if Crystal::DUMP_LLVM
-    visitor.llvm_mod.verify!
-    visitor.llvm_mod
+    def evaluate(node)
+      llvm_mod = build node
+      engine = LLVM::JITCompiler.new(llvm_mod)
+      Compiler.optimize llvm_mod, engine, 1
+      engine.run_function llvm_mod.functions["crystal_main"], 0, nil
+    end
+
+    def build(node, filename = nil, debug = false, llvm_mod = nil)
+      visitor = CodeGenVisitor.new(self, node, node ? node.type : nil, filename, debug, llvm_mod)
+      if node
+        begin
+          node.accept visitor
+        rescue StandardError => ex
+          visitor.llvm_mod.dump
+          raise
+        end
+      end
+
+      visitor.finish
+      visitor.llvm_mod.dump if Crystal::DUMP_LLVM
+      visitor.llvm_mod.verify!
+      visitor.llvm_mod
+    end
   end
 
   class CodeGenVisitor < Visitor

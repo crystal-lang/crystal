@@ -75,6 +75,7 @@ module Crystal
 
     def compile_with_stats_and_profile
       begin
+        program = Program.new
         source = @options[:command] ? @options[:command].join(";") : ARGF.read
         filename = File.expand_path(ARGF.filename) unless ARGF.filename == '-'
 
@@ -87,7 +88,7 @@ module Crystal
 
         require_node = Require.new(StringLiteral.new("prelude"))
         node = node ? Expressions.new([require_node, node]) : require_node
-        mod = infer_type node, @options
+        program.infer_type node, @options
 
         graph node, mod, @options[:output_filename] if @options[:graph]
         print_types node if @options[:types]

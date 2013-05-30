@@ -1,3 +1,4 @@
+require_relative "program"
 require_relative 'ast'
 require_relative 'type_inference/ast'
 require_relative 'type_inference/ast_node'
@@ -5,29 +6,29 @@ require_relative 'type_inference/call'
 require_relative 'type_inference/match'
 
 module Crystal
-  def infer_type(node, options = {})
-    mod = options[:mod] || Crystal::Program.new
-    if node
-      if options[:stats]
-        infer_type_with_stats node, mod, options
-      elsif options[:prof]
-        infer_type_with_prof node, mod
-      else
-        node.accept TypeVisitor.new(mod)
-        fix_empty_types node, mod
+  class Program
+    def infer_type(node, options = {})
+      if node
+        if options[:stats]
+          infer_type_with_stats node, options
+        elsif options[:prof]
+          infer_type_with_prof node
+        else
+          node.accept TypeVisitor.new(self)
+          fix_empty_types node, self
+        end
       end
     end
-    mod
-  end
 
-  def infer_type_with_stats(node, mod, options)
-    options[:total_bm] += options[:bm].report('type inference:') { node.accept TypeVisitor.new(mod) }
-    options[:total_bm] += options[:bm].report('fix empty types') { fix_empty_types node, mod }
-  end
+    def infer_type_with_stats(node, options)
+      options[:total_bm] += options[:bm].report('type inference:') { node.accept TypeVisitor.new(self) }
+      options[:total_bm] += options[:bm].report('fix empty types') { fix_empty_types node, self }
+    end
 
-  def infer_type_with_prof(node, mod)
-    Profiler.profile_to('type_inference.html') { node.accept TypeVisitor.new(mod) }
-    Profiler.profile_to('fix_empty_types.html') { fix_empty_types node, mod }
+    def infer_type_with_prof(node)
+      Profiler.profile_to('type_inference.html') { node.accept TypeVisitor.new(self) }
+      Profiler.profile_to('fix_empty_types.html') { fix_empty_types node, self }
+    end
   end
 
   class TypeFilter < ASTNode
@@ -627,7 +628,6 @@ module Crystal
       exps << Var.new(ary_name)
 
       exps = Expressions.new exps
-      exps.parent = node
       exps.accept self
       node.expanded = exps
 
@@ -823,7 +823,7 @@ module Crystal
       macro_call = Call.new(nil, macro_name, node.args.map(&:to_crystal_node))
       macro_nodes = Expressions.new [typed_def, macro_call]
 
-      Crystal.infer_type macro_nodes, mod: mod
+      mod.infer_type macro_nodes
 
       if macro_nodes.type != mod.string
         node.raise "macro return value must be a String, not #{macro_nodes.type}"
@@ -832,7 +832,7 @@ module Crystal
       macro_arg_types = macro_call.args.map(&:type)
       fun = untyped_def.lookup_instance(macro_arg_types)
       unless fun
-        Crystal.build macro_nodes, mod, nil, false, mod.macro_llvm_mod
+        mod.build macro_nodes, nil, false, mod.macro_llvm_mod
         fun = mod.macro_llvm_mod.functions[macro_call.target_def.mangled_name(nil)]
         untyped_def.add_instance fun, macro_arg_types
       end

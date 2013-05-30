@@ -28,15 +28,21 @@ end
 
 def assert_type(str, options = {}, &block)
   input = parse str
-  mod = infer_type input, options
-  expected_type = mod.instance_eval &block
+  program = infer_type input
+  expected_type = program.instance_eval &block
   if input.is_a?(Expressions)
     actual_type = input.last.type
   else
     actual_type = input.type
   end
   actual_type.should eq(expected_type)
-  [mod, actual_type]
+  [program, actual_type]
+end
+
+def infer_type(node)
+  program = Program.new
+  program.infer_type node
+  program
 end
 
 def assert_error(str, message)
@@ -54,6 +60,11 @@ def assert_normalize(from, to)
   from_nodes = Parser.parse(from)
   to_nodes = normalizer.normalize(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip)
+end
+
+def run(code)
+  program = Program.new
+  program.run(code)
 end
 
 def permutate_primitive_types

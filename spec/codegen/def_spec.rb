@@ -40,7 +40,7 @@ describe 'Code gen: def' do
   it "builds infinite recursive function" do
     node = parse "def foo; foo; end; foo"
     mod = infer_type node
-    build node, mod
+    mod.build node
   end
 
   it "unifies all calls to same def" do
