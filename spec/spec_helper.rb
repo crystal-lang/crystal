@@ -48,6 +48,14 @@ def assert_syntax_error(str, message)
   lambda { parse(str) }.should raise_error(Crystal::SyntaxException, regex(message))
 end
 
+def assert_normalize(from, to)
+  program = Program.new
+  normalizer = Normalizer.new(program)
+  from_nodes = Parser.parse(from)
+  to_nodes = normalizer.normalize(from_nodes)
+  to_nodes.to_s.strip.should eq(to.strip)
+end
+
 def permutate_primitive_types
   [['Int', ''], ['Long', 'L'], ['Float', '.0f'], ['Double', '.0']].repeated_permutation(2) do |p1, p2|
     type1, suffix1 = p1

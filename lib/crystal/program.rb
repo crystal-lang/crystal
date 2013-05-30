@@ -56,6 +56,7 @@ module Crystal
       @requires = Set.new
 
       @nil_var = Var.new('nil', self.nil)
+      @temp_var_counter = 0
 
       define_primitives
     end
@@ -70,6 +71,10 @@ module Crystal
 
     def macro_engine
       @macro_engine ||= LLVM::JITCompiler.new macro_llvm_mod
+    end
+
+    def new_temp_var
+      Var.new("#temp_#{@temp_var_counter += 1}")
     end
 
     def type_merge(*types)

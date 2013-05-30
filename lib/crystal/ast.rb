@@ -8,12 +8,14 @@ module Crystal
     end
   end
 
+  class Transformer
+  end
+
   # Base class for nodes in the grammar.
   class ASTNode
     attr_accessor :line_number
     attr_accessor :column_number
     attr_accessor :filename
-    attr_accessor :parent
 
     def location
       [@line_number, @column_number, @filename]
@@ -34,6 +36,10 @@ module Crystal
           end
           visitor.end_visit_#{name} self
         end
+
+        def transform(transformer)
+          transformer.transform_#{name} self
+        end
       EVAL
 
       Visitor.class_eval <<-EVAL, __FILE__, __LINE__ + 1
@@ -42,6 +48,12 @@ module Crystal
         end
 
         def end_visit_#{name}(node)
+        end
+      EVAL
+
+      Transformer.class_eval <<-EVAL, __FILE__, __LINE__ + 1
+        def transform_#{name}(node)
+          node
         end
       EVAL
     end
@@ -85,7 +97,6 @@ module Crystal
 
     def initialize(expressions = [])
       @expressions = expressions
-      @expressions.each { |e| e.parent = self }
     end
 
     def each(&block)
@@ -101,7 +112,6 @@ module Crystal
     end
 
     def <<(exp)
-      exp.parent = self
       @expressions << exp
     end
 
@@ -132,7 +142,6 @@ module Crystal
 
     def initialize(elements = [], of = nil)
       @elements = elements
-      @elements.each { |e| e.parent = self }
       @of = of
     end
 
@@ -200,7 +209,6 @@ module Crystal
     def initialize(name, body = nil, superclass = nil, type_vars = nil, abstract = false, name_column_number = nil)
       @name = name
       @body = Expressions.from body
-      @body.parent = self if @body
       @superclass = superclass
       @type_vars = type_vars
       @abstract = abstract
@@ -240,7 +248,6 @@ module Crystal
     def initialize(name, body = nil, type_vars = nil, name_column_number = nil)
       @name = name
       @body = Expressions.from body
-      @body.parent = self if @body
       @type_vars = type_vars
       @name_column_number = name_column_number
     end
@@ -466,11 +473,8 @@ module Crystal
     def initialize(name, args, body = nil, receiver = nil, block_arg = nil, yields = false)
       @name = name
       @args = args
-      @args.each { |arg| arg.parent = self } if @args
       @body = Expressions.from body
-      @body.parent = self if @body
       @receiver = receiver
-      @receiver.parent = self if @receiver
       @block_arg = block_arg
       @yields = yields
     end
@@ -543,9 +547,7 @@ module Crystal
     def initialize(name, default_value = nil, type_restriction = nil)
       @name = name.to_s
       @default_value = default_value
-      @default_value.parent = self if @default_value
       @type_restriction = type_restriction
-      @type_restriction.parent = self if @type_restriction && !@type_restriction.is_a?(Type)
     end
 
     def accept_children(visitor)
@@ -668,9 +670,7 @@ module Crystal
 
     def initialize(left, right)
       @left = left
-      @left.parent = self
       @right = right
-      @right.parent = self
     end
 
     def accept_children(visitor)
@@ -734,12 +734,9 @@ module Crystal
 
     def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
       @obj = obj
-      @obj.parent = self if @obj
       @name = name
       @args = args || []
-      @args.each { |arg| arg.parent = self }
       @block = block
-      @block.parent = self if @block
       @name_column_number = name_column_number
       @has_parenthesis = has_parenthesis
     end
@@ -792,11 +789,8 @@ module Crystal
 
     def initialize(cond, a_then = nil, a_else = nil)
       @cond = cond
-      @cond.parent = self
       @then = Expressions.from a_then
-      @then.parent = self if @then
       @else = Expressions.from a_else
-      @else.parent = self if @else
     end
 
     def accept_children(visitor)
@@ -826,9 +820,7 @@ module Crystal
 
     def initialize(target, value)
       @target = target
-      @target.parent = self
       @value = value
-      @value.parent = self
     end
 
     def accept_children(visitor)
@@ -856,9 +848,7 @@ module Crystal
 
     def initialize(targets, values)
       @targets = targets
-      @targets.each { |target| target.parent = self }
       @values = values
-      @values.each { |value| value.parent = self }
     end
 
     def accept_children(visitor)
@@ -889,9 +879,7 @@ module Crystal
 
     def initialize(cond, body = nil, run_once = false)
       @cond = cond
-      @cond.parent = self
       @body = Expressions.from body
-      @body.parent = self if @body
       @run_once = run_once
     end
 
@@ -924,9 +912,7 @@ module Crystal
 
     def initialize(args = [], body = nil)
       @args = args
-      @args.each { |arg| arg.parent = self } if @args
       @body = Expressions.from body
-      @body.parent = self if @body
     end
 
     def accept_children(visitor)
@@ -959,7 +945,6 @@ module Crystal
 
         def initialize(exps = [])
           @exps = exps
-          @exps.each { |exp| exp.parent = self }
         end
 
         def accept_children(visitor)
@@ -987,7 +972,6 @@ module Crystal
       @name = name
       @libname = libname
       @body = Expressions.from body
-      @body.parent = self if @body
       @name_column_number = name_column_number
     end
 
@@ -1012,9 +996,7 @@ module Crystal
       @name = name
       @real_name = real_name
       @args = args
-      @args.each { |arg| arg.parent = self }
       @return_type = return_type
-      @return_type.parent = self if @return_type
       @ptr = ptr
       @varargs = varargs
     end
@@ -1097,7 +1079,6 @@ module Crystal
 
     def initialize(name)
       @name = name
-      @name.parent = self
     end
 
     def accept_children(visitor)
@@ -1123,11 +1104,8 @@ module Crystal
     def initialize(name, args, body = nil, receiver = nil, block_arg = nil, yields = nil)
       @name = name
       @args = args
-      @args.each { |arg| arg.parent = self } if @args
       @body = Expressions.from body
-      @body.parent = self if @body
       @receiver = receiver
-      @receiver.parent = self if @receiver
       @block_arg = block_arg
     end
 
@@ -1204,7 +1182,6 @@ module Crystal
 
     def initialize(string)
       @string = string
-      @string.parent = self
     end
 
     def accept_children(visitor)
@@ -1227,11 +1204,8 @@ module Crystal
 
     def initialize(cond, whens, a_else = nil)
       @cond = cond
-      @cond.parent = self
       @whens = whens
-      @whens.each { |w| w.parent = self }
       @else = a_else
-      @else.parent = self if @else
     end
 
     def accept_children(visitor)
@@ -1256,9 +1230,7 @@ module Crystal
 
     def initialize(conds, body = nil)
       @conds = conds
-      @conds.each { |cond| cond.parent = self }
       @body = Expressions.from body
-      @body.parent = self if @body
     end
 
     def accept_children(visitor)
