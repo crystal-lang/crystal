@@ -194,8 +194,8 @@ describe Parser do
   it_parses "include Foo", Include.new("Foo".ident)
   it_parses "include Foo\nif true; end", [Include.new("Foo".ident), If.new(true.bool)]
 
-  it_parses "unless foo; 1; end", If.new("foo".call.not, 1.int)
-  it_parses "unless foo; 1; else; 2; end", If.new("foo".call.not, 1.int, 2.int)
+  it_parses "unless foo; 1; end", Unless.new("foo".call, 1.int)
+  it_parses "unless foo; 1; else; 2; end", Unless.new("foo".call, 1.int, 2.int)
 
   it_parses "class Foo; end", ClassDef.new("Foo")
   it_parses "class Foo\nend", ClassDef.new("Foo")
@@ -228,11 +228,11 @@ describe Parser do
   it_parses "1 ? a : b", If.new(1.int, "a".call, "b".call)
 
   it_parses "1 if 3", If.new(3.int, 1.int)
-  it_parses "1 unless 3", If.new(3.int.not, 1.int)
+  it_parses "1 unless 3", Unless.new(3.int, 1.int)
   it_parses "1 while 3", While.new(3.int, 1.int, true)
   it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int), If.new(Assign.new("a".var, Call.new("a".var, :+, [20.int])), Assign.new("a".var, Call.new("a".var, :+, [10.int])))]
   it_parses "puts a if true", If.new(true.bool, Call.new(nil, 'puts', ["a".call]))
-  it_parses "puts a unless true", If.new(true.bool.not, Call.new(nil, 'puts', ["a".call]))
+  it_parses "puts a unless true", Unless.new(true.bool, Call.new(nil, 'puts', ["a".call]))
   it_parses "puts a while true", While.new(true.bool, Call.new(nil, 'puts', ["a".call]), true)
 
   ['return', 'next', 'break', 'yield'].each do |keyword|

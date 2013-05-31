@@ -114,6 +114,14 @@ module Crystal
       node
     end
 
+    def transform_unless(node)
+      node.cond = node.cond.transform(self)
+      node.then = node.then.transform(self) if node.then
+      node.else = node.else.transform(self) if node.else
+
+      If.new(node.cond, node.else, node.then)
+    end
+
     def transform_while(node)
       node.cond = node.cond.transform(self)
       node.body = node.body.transform(self) if node.body

@@ -366,6 +366,21 @@ module Crystal
       false
     end
 
+    def visit_unless(node)
+      @str << "if "
+      node.cond.accept self
+      @str << "\n"
+      accept_with_indent(node.then)
+      if node.else
+        append_indent
+        @str << "else\n"
+        accept_with_indent(node.else)
+      end
+      append_indent
+      @str << "end"
+      false
+    end
+
     def visit_class_def(node)
       @str << "abstract " if node.abstract
       @str << "class "

@@ -479,20 +479,22 @@ module Crystal
     def visit_if(node)
       node.cond.accept self
 
+      node.type_filters = node.cond.type_filters
+
       if node.then
         @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
 
         node.then.accept self
 
         @type_filter_stack.pop if node.cond.type_filters
+
+        # TODO: this is a hack to make foo.is_a?(Bar) && foo.obj work. This needs to be rethought once we have SSA.
+        node.type_filters = merge_type_filters(node.type_filters, node.then.type_filters)
       end
 
       if node.else
         node.else.accept self
       end
-
-      # TODO: this is a hack to make foo.is_a?(Bar) && foo.obj work. This needs to be rethought once we have SSA.
-      node.type_filters = merge_type_filters(node.cond.type_filters, node.then.type_filters)
 
       false
     end
@@ -934,6 +936,10 @@ module Crystal
 
     def visit_regexp_literal(node)
       raise "Bug: RegexpLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit_unless(node)
+      raise "Bug: Unless node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end

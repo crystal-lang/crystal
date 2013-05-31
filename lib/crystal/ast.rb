@@ -810,6 +810,46 @@ module Crystal
     end
   end
 
+  # An unless expression.
+  #
+  #     'unless' cond
+  #       then
+  #     [
+  #     'else'
+  #       else
+  #     ]
+  #     'end'
+  #
+  # An if elsif end is parsed as an If whose
+  # else is another If.
+  class Unless < ASTNode
+    attr_accessor :cond
+    attr_accessor :then
+    attr_accessor :else
+
+    def initialize(cond, a_then = nil, a_else = nil)
+      @cond = cond
+      @then = Expressions.from a_then
+      @else = Expressions.from a_else
+    end
+
+    def accept_children(visitor)
+      self.cond.accept visitor
+      self.then.accept visitor if self.then
+      self.else.accept visitor if self.else
+    end
+
+    def ==(other)
+      other.is_a?(Unless) && other.cond == cond && other.then == self.then && other.else == self.else
+    end
+
+    def clone_from(other)
+      @cond = other.cond.clone
+      @then = other.then.clone
+      @else = other.else.clone
+    end
+  end
+
   # Assign expression.
   #
   #     target '=' value
