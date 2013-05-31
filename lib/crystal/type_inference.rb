@@ -898,46 +898,6 @@ module Crystal
       end
     end
 
-    def visit_case(node)
-      temp_var = Var.new(temp_name())
-      assign = Assign.new(temp_var, node.cond)
-
-      used_assign = false
-
-      a_if = nil
-      final_if = nil
-      node.whens.each do |wh|
-        final_comp = nil
-        wh.conds.each do |cond|
-          if used_assign
-            right_side = temp_var
-          else
-            right_side = assign
-            used_assign = true
-          end
-
-          comp = Call.new(cond, :'===', [right_side])
-          if final_comp
-            final_comp = SimpleOr.new(final_comp, comp)
-          else
-            final_comp = comp
-          end
-        end
-        wh_if = If.new(final_comp, wh.body)
-        if a_if
-          a_if.else = wh_if
-        else
-          final_if = wh_if
-        end
-        a_if = wh_if
-      end
-      a_if.else = node.else if node.else
-      final_if.accept self
-      node.bind_to final_if
-      node.expanded = final_if
-      false
-    end
-
     def lookup_var(name)
       var = @vars[name]
       unless var
@@ -974,12 +934,18 @@ module Crystal
 
     def visit_require(node)
       raise "Bug: Require node '#{node}' (#{node.location}) should have been eliminated in normalize"
-      false
     end
 
     def visit_range_literal(node)
       raise "Bug: RangeLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
-      false
+    end
+
+    def visit_case(node)
+      raise "Bug: Case node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit_when(node)
+      raise "Bug: When node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end

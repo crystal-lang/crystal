@@ -129,7 +129,42 @@ module Crystal
       node.cond = node.cond.transform(self)
       node.whens.map! { |w| w.transform(self) }
       node.else = node.else.transform(self) if node.else
-      node
+
+      if node.cond.is_a?(Var) || node.cond.is_a?(InstanceVar)
+        temp_var = node.cond
+      else
+        temp_var = program.new_temp_var
+        assign = Assign.new(temp_var, node.cond)
+      end
+
+      a_if = nil
+      final_if = nil
+      node.whens.each do |wh|
+        final_comp = nil
+        wh.conds.each do |cond|
+          right_side = temp_var
+
+          comp = Call.new(cond, :'===', [right_side])
+          if final_comp
+            final_comp = SimpleOr.new(final_comp, comp)
+          else
+            final_comp = comp
+          end
+        end
+        wh_if = If.new(final_comp, wh.body)
+        if a_if
+          a_if.else = wh_if
+        else
+          final_if = wh_if
+        end
+        a_if = wh_if
+      end
+      a_if.else = node.else if node.else
+      if assign
+        Expressions.new([assign, final_if])
+      else
+        final_if
+      end
     end
 
     def transform_when(node)

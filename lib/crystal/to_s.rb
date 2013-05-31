@@ -113,7 +113,7 @@ module Crystal
     end
 
     def visit_simple_or(node)
-      to_s_binary node, '||'
+      to_s_binary node, 'or'
     end
 
     def to_s_binary(node, op)

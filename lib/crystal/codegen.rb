@@ -774,11 +774,6 @@ module Crystal
       false
     end
 
-    def visit_case(node)
-      accept(node.expanded)
-      false
-    end
-
     def visit_primitive_body(node)
       @last = node.block.call(@builder, @fun, @llvm_mod, @type)
     end
