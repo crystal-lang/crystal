@@ -6,7 +6,11 @@ module Crystal
     output ||= 'crystal'
 
     visitor = GraphVisitor.new
-    node.accept visitor if node
+    if node
+      # Jump over the require "prelude" that's inserted by the compiler
+      node = node[1] if node.is_a?(Expressions)
+      node.accept visitor
+    end
 
     visitor.graphviz.output :png => "#{output}.png"
 

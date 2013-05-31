@@ -3,7 +3,11 @@ require_relative 'ast.rb'
 module Crystal
   def print_types(node)
     visitor = PrintTypesVisitor.new
-    node.accept visitor if node
+    if node
+      # Jump over the require "prelude" that's inserted by the compiler
+      node = node[1] if node.is_a?(Expressions)
+      node.accept visitor
+    end
   end
 
   class PrintTypesVisitor < Visitor

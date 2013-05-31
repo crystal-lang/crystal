@@ -94,7 +94,7 @@ module Crystal
         end
         program.infer_type node, @options
 
-        graph node, mod, @options[:output_filename] if @options[:graph]
+        graph node, program, @options[:output_filename] if @options[:graph]
         print_types node if @options[:types]
         exit 0 if @options[:no_build]
 
