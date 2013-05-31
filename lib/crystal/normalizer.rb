@@ -78,33 +78,6 @@ module Crystal
       Call.new(call, "to_s")
     end
 
-    def transform_call(node)
-      node.obj = node.obj.transform(self) if node.obj
-      node.args.map! { |arg| arg.transform(self) }
-      node.block.transform(self) if node.block
-      node
-    end
-
-    def transform_assign(node)
-      node.value = node.value.transform(self)
-      node
-    end
-
-    def transform_multi_assign(node)
-      node.values.map! { |v| v.transform(self) }
-      node
-    end
-
-    def transform_class_def(node)
-      node.body = node.body.transform(self) if node.body
-      node
-    end
-
-    def transform_module_def(node)
-      node.body = node.body.transform(self) if node.body
-      node
-    end
-
     def transform_def(node)
       if node.has_default_arguments?
         exps = node.expand_default_arguments.map! { |a_def| a_def.transform(self) }
@@ -115,30 +88,12 @@ module Crystal
       end
     end
 
-    def transform_if(node)
-      node.cond = node.cond.transform(self)
-      node.then = node.then.transform(self) if node.then
-      node.else = node.else.transform(self) if node.else
-      node
-    end
-
     def transform_unless(node)
       node.cond = node.cond.transform(self)
       node.then = node.then.transform(self) if node.then
       node.else = node.else.transform(self) if node.else
 
       If.new(node.cond, node.else, node.then)
-    end
-
-    def transform_while(node)
-      node.cond = node.cond.transform(self)
-      node.body = node.body.transform(self) if node.body
-      node
-    end
-
-    def transform_block(node)
-      node.body = node.body.transform(self) if node.body
-      node
     end
 
     def transform_case(node)
@@ -183,23 +138,6 @@ module Crystal
       end
     end
 
-    def transform_when(node)
-      node.conds.map! { |w| w.transform(self) }
-      node.body = node.body.transform(self) if node.body
-      node
-    end
-
-    def transform_array_literal(node)
-      node.elements.map! { |e| e.transform(self) }
-      node
-    end
-
-    def transform_hash_literal(node)
-      node.keys.map! { |k| k.transform(self) }
-      node.values.map! { |v| v.transform(self) }
-      node
-    end
-
     def transform_range_literal(node)
       node.from = node.from.transform(self)
       node.to = node.to.transform(self)
@@ -215,6 +153,68 @@ module Crystal
       end
 
       Ident.new([const_name], true)
+    end
+
+    def transform_call(node)
+      node.obj = node.obj.transform(self) if node.obj
+      node.args.map! { |arg| arg.transform(self) }
+      node.block.transform(self) if node.block
+      node
+    end
+
+    def transform_assign(node)
+      node.value = node.value.transform(self)
+      node
+    end
+
+    def transform_multi_assign(node)
+      node.values.map! { |v| v.transform(self) }
+      node
+    end
+
+    def transform_class_def(node)
+      node.body = node.body.transform(self) if node.body
+      node
+    end
+
+    def transform_module_def(node)
+      node.body = node.body.transform(self) if node.body
+      node
+    end
+
+    def transform_if(node)
+      node.cond = node.cond.transform(self)
+      node.then = node.then.transform(self) if node.then
+      node.else = node.else.transform(self) if node.else
+      node
+    end
+
+    def transform_while(node)
+      node.cond = node.cond.transform(self)
+      node.body = node.body.transform(self) if node.body
+      node
+    end
+
+    def transform_block(node)
+      node.body = node.body.transform(self) if node.body
+      node
+    end
+
+    def transform_when(node)
+      node.conds.map! { |w| w.transform(self) }
+      node.body = node.body.transform(self) if node.body
+      node
+    end
+
+    def transform_array_literal(node)
+      node.elements.map! { |e| e.transform(self) }
+      node
+    end
+
+    def transform_hash_literal(node)
+      node.keys.map! { |k| k.transform(self) }
+      node.values.map! { |v| v.transform(self) }
+      node
     end
 
     def transform_simple_or(node)
