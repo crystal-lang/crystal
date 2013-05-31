@@ -98,8 +98,13 @@ module Crystal
     end
 
     def transform_def(node)
-      node.body = node.body.transform(self) if node.body
-      node
+      if node.has_default_arguments?
+        exps = node.expand_default_arguments.map! { |a_def| a_def.transform(self) }
+        Expressions.new(exps)
+      else
+        node.body = node.body.transform(self) if node.body
+        node
+      end
     end
 
     def transform_if(node)
