@@ -509,6 +509,7 @@ module Crystal
         node.else.accept self
       end
 
+      # TODO: this is a hack to make foo.is_a?(Bar) && foo.obj work. This needs to be rethought once we have SSA.
       node.type_filters = merge_type_filters(node.cond.type_filters, node.then.type_filters)
 
       false
