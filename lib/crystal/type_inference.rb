@@ -817,6 +817,8 @@ module Crystal
         node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{'=' * 80}\n#{'-' * 80}\n#{number_lines generated_source}\n#{'-' * 80}\n#{ex.to_s(generated_source)}#{'=' * 80}"
       end
 
+      generated_nodes = mod.normalize(generated_nodes)
+
       begin
         generated_nodes.accept self
       rescue Crystal::Exception => ex
