@@ -191,6 +191,16 @@ module Crystal
       Call.new(Ident.new(['Range'], true), 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
     end
 
+    def transform_regexp_literal(node)
+      const_name = "#Regexp_#{node.value}"
+      unless program.types[const_name]
+        constructor = Call.new(Ident.new(['Regexp'], true), 'new', [StringLiteral.new(node.value)])
+        program.types[const_name] = Const.new program, const_name, constructor, [program], program
+      end
+
+      Ident.new([const_name], true)
+    end
+
     def transform_simple_or(node)
       node.left = node.left.transform(self)
       node.right = node.right.transform(self)

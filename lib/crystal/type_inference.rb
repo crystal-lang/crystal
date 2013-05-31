@@ -117,24 +117,6 @@ module Crystal
       mod.symbols << node.value
     end
 
-    def visit_regexp_literal(node)
-      return if node.expanded
-
-      name = @@regexps[node.value]
-      name = @@regexps[node.value] = "Regexp#{@@regexps.length}" unless name
-
-      unless mod.types[name]
-        value = Call.new(Ident.new(['Regexp'], true), 'new', [StringLiteral.new(node.value)])
-        value.accept self
-        mod.types[name] = Const.new mod, name, value
-      end
-
-      node.expanded = Ident.new([name], true)
-      node.expanded.accept self
-
-      node.type = node.expanded.type
-    end
-
     def visit_class_method(node)
       node.type = @scope.metaclass
     end
@@ -948,6 +930,10 @@ module Crystal
 
     def visit_when(node)
       raise "Bug: When node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit_regexp_literal(node)
+      raise "Bug: RegexpLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end

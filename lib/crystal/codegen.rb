@@ -176,10 +176,6 @@ module Crystal
       @last = int(@symbols[node.value])
     end
 
-    def visit_regexp_literal(node)
-      accept(node.expanded)
-    end
-
     def visit_hash_literal(node)
       accept(node.expanded)
       false

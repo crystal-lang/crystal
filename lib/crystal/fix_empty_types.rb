@@ -43,11 +43,6 @@ module Crystal
       false
     end
 
-    def visit_regexp_literal(node)
-      node.expanded.accept self if node.expanded
-      false
-    end
-
     def visit_hash_literal(node)
       node.expanded.accept self if node.expanded
       false
