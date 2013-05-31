@@ -273,6 +273,7 @@ module Crystal
       parser = Parser.new File.read(file)
       parser.filename = file
       node = parser.parse
+      node = normalize node
       node.accept TypeVisitor.new(self) if node
       node
     end

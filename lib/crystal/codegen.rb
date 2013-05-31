@@ -420,7 +420,7 @@ module Crystal
       obj_type = node.obj.type
       const_type = node.const.type.instance_type
 
-      if obj_type.union?
+      if obj_type.is_a?(UnionType)
         matching_ids = obj_type.types.select { |t| t.implements?(const_type) }.map { |t| int(t.type_id) }
 
         case matching_ids.length
@@ -439,6 +439,9 @@ module Crystal
 
           @last = result
         end
+      elsif obj_type.is_a?(HierarchyType)
+        is_a = obj_type.base_type.implements?(const_type)
+        @last = int1(is_a ? 1 : 0)
       elsif obj_type.nilable?
         if const_type.nil_type?
           @last = null_pointer?(@last)
@@ -508,16 +511,6 @@ module Crystal
 
     def visit_pointer_cast(node)
       @last = @builder.bit_cast(@fun.params[0], node.type.llvm_type)
-    end
-
-    def visit_and(node)
-      accept(node.expanded)
-      false
-    end
-
-    def visit_or(node)
-      accept(node.expanded)
-      false
     end
 
     def visit_simple_or(node)

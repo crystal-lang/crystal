@@ -991,11 +991,11 @@ module Crystal
     end
 
     def visit_and(node)
-      raise "Bug: And node '#{node}' should have been eliminated in normalize"
+      raise "Bug: And node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
 
     def visit_or(node)
-      raise "Bug: Or node '#{node}' should have been eliminated in normalize"
+      raise "Bug: Or node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end
