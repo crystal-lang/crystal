@@ -155,6 +155,40 @@ module Crystal
       Ident.new([const_name], true)
     end
 
+    def transform_array_literal(node)
+      node.elements.map! { |e| e.transform(self) }
+
+      if node.of
+        if node.elements.length == 0
+          return Call.new(NewGenericClass.new(Ident.new(['Array'], true), [node.of]), 'new')
+        end
+
+        type_var = node.of
+      else
+        type_var = TypeMerge.new(program, node.elements)
+      end
+
+      length = node.elements.length
+      capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
+
+      constructor = Call.new(NewGenericClass.new(Ident.new(['Array'], true), [type_var]), 'new', [IntLiteral.new(capacity)])
+      temp_var = program.new_temp_var
+      assign = Assign.new(temp_var, constructor)
+      set_length = Call.new(temp_var, 'length=', [IntLiteral.new(length)])
+
+      exps = [assign, set_length]
+
+      node.elements.each_with_index do |elem, i|
+        get_buffer = Call.new(temp_var, 'buffer')
+        assign_index = Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+        exps << assign_index
+      end
+
+      exps << temp_var
+
+      Expressions.new(exps)
+    end
+
     def transform_call(node)
       node.obj = node.obj.transform(self) if node.obj
       node.args.map! { |arg| arg.transform(self) }
@@ -203,11 +237,6 @@ module Crystal
     def transform_when(node)
       node.conds.map! { |w| w.transform(self) }
       node.body = node.body.transform(self) if node.body
-      node
-    end
-
-    def transform_array_literal(node)
-      node.elements.map! { |e| e.transform(self) }
       node
     end
 

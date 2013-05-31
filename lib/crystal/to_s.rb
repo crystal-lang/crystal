@@ -177,13 +177,22 @@ module Crystal
           @str << ")" if node.obj.is_a?(Call)
           @str << "."
         end
-        @str << node.name.to_s
-        @str << "(" unless node.obj && node.args.empty?
-        node.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
-          arg.accept self
+        if node.name.to_s.end_with?('=')
+          @str << node.name.to_s[0 .. -2]
+          @str << " = "
+          node.args.each_with_index do |arg, i|
+            @str << ", " if i > 0
+            arg.accept self
+          end
+        else
+          @str << node.name.to_s
+          @str << "(" unless node.obj && node.args.empty?
+          node.args.each_with_index do |arg, i|
+            @str << ", " if i > 0
+            arg.accept self
+          end
+          @str << ")" unless node.obj && node.args.empty?
         end
-        @str << ")" unless node.obj && node.args.empty?
       end
       if node.block
         @str << " "
@@ -634,6 +643,16 @@ module Crystal
           false
         end
       EVAL
+    end
+
+    def visit_type_merge(node)
+      @str << "<type_merge>("
+      node.expressions.each_with_index do |exp, i|
+        @str << ', ' if i > 0
+        exp.accept self
+      end
+      @str << ")"
+      false
     end
 
     def with_indent

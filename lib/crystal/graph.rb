@@ -36,7 +36,7 @@ module Crystal
     end
 
     def visit_var(node)
-      unless @vars.include? node.name
+      if !node.name.start_with?('#') && !@vars.include?(node.name)
         var = @g.add_nodes node.object_id.to_s, :label => node.name, :shape => :note
         add_edges var, node.type
         @vars << node.name
@@ -47,6 +47,9 @@ module Crystal
       node = @g.get_node(type.type_id.to_s)
       unless node
         case type
+        when PointerInstanceType
+          node = @g.add_nodes type.type_id.to_s, :shape => :record, :label => type.to_s.gsub("|", "\\|")
+          add_edges node, type.var.type, '', 'dashed'
         when NonGenericClassType, GenericClassInstanceType
           node = @g.add_nodes type.type_id.to_s, :shape => :record, :label => type.to_s.gsub("|", "\\|")
           add_object_type_edges node, type

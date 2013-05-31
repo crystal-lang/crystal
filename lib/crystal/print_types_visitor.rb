@@ -24,7 +24,7 @@ module Crystal
     end
 
     def visit_var(node)
-      unless @vars.include? node.name
+      if !node.name.start_with?('#') && !@vars.include?(node.name)
         puts "#{node.name} : #{node.type}"
         @vars << node.name
       end

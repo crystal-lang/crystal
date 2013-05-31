@@ -112,21 +112,9 @@ module Crystal
     end
   end
 
-  class ArrayLiteral
-    attr_accessor :mod
-    attr_accessor :new_generic_class
-
+  class TypeMerge
     def map_type(type)
-      if of
-        type
-      else
-        mod.array_of(type)
-      end
-    end
-
-    def set_type(type)
-      super
-      new_generic_class.type = type.metaclass unless of
+      type.metaclass
     end
   end
 

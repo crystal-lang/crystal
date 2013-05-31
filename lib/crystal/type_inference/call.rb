@@ -464,8 +464,14 @@ module Crystal
     def define_method_missing(scope, name)
       missing_args = self.args.each_with_index.map { |arg, i| Arg.new("arg#{i}") }
       missing_vars = self.args.each_with_index.map { |arg, i| Var.new("arg#{i}") }
+      if missing_vars.empty?
+        args = NilLiteral.new
+      else
+        args = ArrayLiteral.new(missing_vars)
+        args = mod.normalize(args)
+      end
       scope.add_def Def.new(name, missing_args, [
-        Call.new(nil, 'method_missing', [SymbolLiteral.new(name.to_s), missing_vars.empty? ? NilLiteral.new : ArrayLiteral.new(missing_vars)])
+        Call.new(nil, 'method_missing', [SymbolLiteral.new(name.to_s), args])
       ])
     end
 

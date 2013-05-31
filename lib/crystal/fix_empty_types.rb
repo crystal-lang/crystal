@@ -38,11 +38,6 @@ module Crystal
       end
     end
 
-    def visit_array_literal(node)
-      node.expanded.accept self if node.expanded
-      false
-    end
-
     def visit_hash_literal(node)
       node.expanded.accept self if node.expanded
       false

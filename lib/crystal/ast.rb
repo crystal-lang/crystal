@@ -1331,4 +1331,28 @@ module Crystal
       @type_vars = other.type_vars.map(&:clone)
     end
   end
+
+  # Ficticious node that means: merge the type of the arguments
+  class TypeMerge < ASTNode
+    attr_accessor :program
+    attr_accessor :expressions
+
+    def initialize(program, expressions)
+      @program = program
+      @expressions = expressions
+    end
+
+    def accept_children(visitor)
+      @expressions.each { |e| e.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(TypeMerge) && other.expressions == expressions
+    end
+
+    def clone_from(other)
+      @program = other.program
+      @expressions = other.expressions.map(&:clone)
+    end
+  end
 end

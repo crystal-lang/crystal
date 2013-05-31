@@ -220,6 +220,10 @@ module Crystal
       false
     end
 
+    def visit_type_merge(node)
+      false
+    end
+
     def visit_ident(node)
       const = node.target_const
       if const
@@ -796,11 +800,6 @@ module Crystal
       ptr = gep llvm_self, 0, @type.index_of_var(node.name)
       @last = @vars['value'][:ptr]
       @builder.store @last, ptr
-    end
-
-    def visit_array_literal(node)
-      accept(node.expanded)
-      false
     end
 
     def visit_argc(node)

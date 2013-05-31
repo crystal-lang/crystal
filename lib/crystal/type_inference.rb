@@ -554,67 +554,6 @@ module Crystal
       node.type = @scope.instance_type
     end
 
-    def end_visit_array_literal(node)
-      return if node.expanded
-
-      if node.elements.length == 0
-        node.expanded = Call.new(NewGenericClass.new(Ident.new(['Array'], true), [node.of]), 'new')
-        node.expanded.accept self
-        node.bind_to node.expanded
-        return false
-      end
-
-      ary_name = temp_name()
-
-      length = node.elements.length
-      capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
-
-      if node.of
-        new_generic = NewGenericClass.new(Ident.new(['Array'], true), [node.of])
-      else
-        new_generic = NewGenericClass.new(Ident.new(['Array'], true), [Ident.new(["Nil"], true)])
-
-        node.mod = mod
-        node.new_generic_class = new_generic
-        node.set_type(mod.array_of(mod.type_merge(*node.elements.map(&:type))))
-      end
-
-      new_generic.location = node.location
-
-      ary_new = Call.new(new_generic, 'new', [IntLiteral.new(capacity)])
-      ary_new.location = node.location
-
-      ary_assign = Assign.new(Var.new(ary_name), ary_new)
-      ary_assign.location = node.location
-
-      ary_assign_length = Call.new(Var.new(ary_name), 'length=', [IntLiteral.new(length)])
-      ary_assign_length.location = node.location
-
-      exps = [ary_assign, ary_assign_length]
-      node.elements.each_with_index do |elem, i|
-        get_buffer = Call.new(Var.new(ary_name), 'buffer')
-        get_buffer.location = node.location
-
-        assign_index = Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
-        assign_index.location = node.location
-
-        exps << assign_index
-      end
-      exps << Var.new(ary_name)
-
-      exps = Expressions.new exps
-      exps.accept self
-      node.expanded = exps
-
-      if node.of
-        node.bind_to exps
-      else
-        node.bind_to *node.elements
-      end
-
-      false
-    end
-
     def end_visit_hash_literal(node)
       return if node.expanded
 
@@ -840,6 +779,10 @@ module Crystal
       end
     end
 
+    def end_visit_type_merge(node)
+      node.bind_to *node.expressions
+    end
+
     def visit_pointer_of(node)
       node.mod = mod
       var = if node.var.is_a?(Var)
@@ -937,6 +880,10 @@ module Crystal
 
     def visit_regexp_literal(node)
       raise "Bug: RegexpLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit_array_literal(node)
+      raise "Bug: ArrayLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
 
     def visit_unless(node)
