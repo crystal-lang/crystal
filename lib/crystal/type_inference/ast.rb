@@ -3,34 +3,6 @@ module Crystal
     attr_accessor :target_const
   end
 
-  class ArrayLiteral
-    attr_accessor :expanded
-  end
-
-  class RangeLiteral
-    attr_accessor :expanded
-  end
-
-  class RegexpLiteral
-    attr_accessor :expanded
-  end
-
-  class HashLiteral
-    attr_accessor :expanded
-  end
-
-  class Require
-    attr_accessor :expanded
-  end
-
-  class Case
-    attr_accessor :expanded
-  end
-
-  class BinaryOp
-    attr_accessor :expanded
-  end
-
   class Arg
     def self.new_with_type(name, type)
       arg = Arg.new(name)

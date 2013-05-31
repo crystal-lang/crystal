@@ -165,7 +165,7 @@ module Crystal
 
         type_var = node.of
       else
-        type_var = TypeMerge.new(program, node.elements)
+        type_var = TypeMerge.new(node.elements)
       end
 
       length = node.elements.length
@@ -187,6 +187,32 @@ module Crystal
       exps << temp_var
 
       Expressions.new(exps)
+    end
+
+    def transform_hash_literal(node)
+      node.keys.map! { |k| k.transform(self) }
+      node.values.map! { |v| v.transform(self) }
+
+      if node.of_key
+        type_vars = [node.of_key, node.of_value]
+      else
+        type_vars = [TypeMerge.new(node.keys), TypeMerge.new(node.values)]
+      end
+
+      constructor = Call.new(NewGenericClass.new(Ident.new(['Hash'], true), type_vars), 'new')
+      if node.keys.length == 0
+        constructor
+      else
+        temp_var = program.new_temp_var
+        assign = Assign.new(temp_var, constructor)
+
+        exps = [assign]
+        node.keys.each_with_index do |key, i|
+          exps << Call.new(temp_var, :[]=, [key, node.values[i]])
+        end
+        exps << temp_var
+        Expressions.new exps
+      end
     end
 
     def transform_call(node)
@@ -237,12 +263,6 @@ module Crystal
     def transform_when(node)
       node.conds.map! { |w| w.transform(self) }
       node.body = node.body.transform(self) if node.body
-      node
-    end
-
-    def transform_hash_literal(node)
-      node.keys.map! { |k| k.transform(self) }
-      node.values.map! { |v| v.transform(self) }
       node
     end
 

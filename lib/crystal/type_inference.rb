@@ -554,52 +554,6 @@ module Crystal
       node.type = @scope.instance_type
     end
 
-    def end_visit_hash_literal(node)
-      return if node.expanded
-
-      if node.keys.empty?
-        new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [node.of_key, node.of_value])
-        exps = Call.new(new_generic, 'new')
-      else
-        hash_name = temp_name()
-
-        if node.of_key
-          new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [node.of_key, node.of_value])
-        else
-          new_generic = NewGenericClass.new(Ident.new(['Hash'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])
-
-          key_var = Var.new("K")
-          key_var.bind_to *node.keys
-
-          value_var = Var.new("V")
-          value_var.bind_to *node.values
-
-          node.mod = mod
-          node.new_generic_class = new_generic
-          node.bind_to key_var, value_var
-        end
-
-        hash_new = Call.new(new_generic, 'new')
-        hash_assign = Assign.new(Var.new(hash_name), hash_new)
-
-        exps = [hash_assign]
-        node.keys.each_with_index do |key, i|
-          exps << Call.new(Var.new(hash_name), :[]=, [key, node.values[i]])
-        end
-        exps << Var.new(hash_name)
-        exps = Expressions.new exps
-      end
-
-      exps.accept self
-      node.expanded = exps
-
-      if node.of_key
-        node.bind_to exps
-      end
-
-      false
-    end
-
     def end_visit_yield(node)
       block = @call.block or node.raise "no block given"
 
@@ -884,6 +838,10 @@ module Crystal
 
     def visit_array_literal(node)
       raise "Bug: ArrayLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit_hash_literal(node)
+      raise "Bug: HashLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
 
     def visit_unless(node)
