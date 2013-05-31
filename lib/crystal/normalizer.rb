@@ -26,6 +26,9 @@ module Crystal
       node.expressions.each do |exp|
         new_exp = exp.transform(self)
         exps << new_exp if new_exp
+        if exp.is_a?(Return) || exp.is_a?(Next) || exp.is_a?(Break)
+          break
+        end
       end
       case exps.length
       when 0
