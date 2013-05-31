@@ -45,7 +45,7 @@ module Crystal
       node.left = node.left.transform(self)
       node.right = node.right.transform(self)
 
-      if node.left.is_a?(Var) || node.left.is_a?(IsA)
+      if node.left.is_a?(Var) || (node.left.is_a?(IsA) && node.left.obj.is_a?(Var))
         If.new(node.left, node.right, node.left)
       else
         temp_var = program.new_temp_var
