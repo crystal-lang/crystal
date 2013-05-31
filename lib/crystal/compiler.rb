@@ -88,6 +88,10 @@ module Crystal
 
         require_node = Require.new(StringLiteral.new("prelude"))
         node = node ? Expressions.new([require_node, node]) : require_node
+
+        with_stats_or_profile('normalize') do
+          node = program.normalize node
+        end
         program.infer_type node, @options
 
         graph node, mod, @options[:output_filename] if @options[:graph]
@@ -97,7 +101,7 @@ module Crystal
         llvm_mod = nil
         engine = nil
         with_stats_or_profile('codegen') do
-          llvm_mod = build node, mod, filename, @options[:debug]
+          llvm_mod = program.build node, filename, @options[:debug]
           write_main llvm_mod unless @options[:run] || @options[:command]
 
           # Don't optimize crystal_main away if the user wants to run the program
@@ -118,7 +122,7 @@ module Crystal
       llvm_mod.dump if @options[:dump_ll]
 
       if @options[:run] || @options[:command]
-        mod.load_libs
+        program.load_libs
 
         engine.run_function llvm_mod.functions["crystal_main"], 0, nil
       else
@@ -136,9 +140,9 @@ module Crystal
           pid = spawn "llc | clang -x assembler -c -o #{obj_file} -", in: reader
           Process.waitpid pid
 
-          `clang #{o_flag} #{obj_file} #{lib_flags(mod)}`
+          `clang #{o_flag} #{obj_file} #{lib_flags(program)}`
         else
-          pid = spawn "llc | clang -x assembler #{o_flag}- #{lib_flags(mod)}", in: reader
+          pid = spawn "llc | clang -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
           Process.waitpid pid
         end
       end

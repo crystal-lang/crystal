@@ -27,8 +27,10 @@ def regex(str)
 end
 
 def assert_type(str, options = {}, &block)
+  program = Program.new
   input = parse str
-  program = infer_type input
+  input = program.normalize input
+  program.infer_type input
   expected_type = program.instance_eval &block
   if input.is_a?(Expressions)
     actual_type = input.last.type
@@ -41,6 +43,7 @@ end
 
 def infer_type(node)
   program = Program.new
+  node = program.normalize node
   program.infer_type node
   program
 end

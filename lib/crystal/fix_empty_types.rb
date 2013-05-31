@@ -1,9 +1,11 @@
 require_relative 'type_inference.rb'
 
 module Crystal
-  def fix_empty_types(node, mod)
-    visitor = FixEmptyTypesVisitor.new(mod)
-    node.accept visitor
+  class Program
+    def fix_empty_types(node)
+      visitor = FixEmptyTypesVisitor.new(self)
+      node.accept visitor
+    end
   end
 
   class FixEmptyTypesVisitor < Visitor

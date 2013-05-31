@@ -15,19 +15,19 @@ module Crystal
           infer_type_with_prof node
         else
           node.accept TypeVisitor.new(self)
-          fix_empty_types node, self
+          fix_empty_types node
         end
       end
     end
 
     def infer_type_with_stats(node, options)
       options[:total_bm] += options[:bm].report('type inference:') { node.accept TypeVisitor.new(self) }
-      options[:total_bm] += options[:bm].report('fix empty types') { fix_empty_types node, self }
+      options[:total_bm] += options[:bm].report('fix empty types') { fix_empty_types node }
     end
 
     def infer_type_with_prof(node)
       Profiler.profile_to('type_inference.html') { node.accept TypeVisitor.new(self) }
-      Profiler.profile_to('fix_empty_types.html') { fix_empty_types node, self }
+      Profiler.profile_to('fix_empty_types.html') { fix_empty_types node }
     end
   end
 
@@ -383,6 +383,16 @@ module Crystal
       filter
     end
 
+    def merge_type_filters(filter1, filter2)
+      if filter1 && filter2
+        filter1.merge(filter2)
+      elsif filter1
+        filter1
+      else
+        filter2
+      end
+    end
+
     def visit_global(node)
       var = mod.global_vars[node.name] or node.raise "uninitialized global #{node}"
       node.bind_to var
@@ -520,6 +530,8 @@ module Crystal
       if node.else
         node.else.accept self
       end
+
+      node.type_filters = merge_type_filters(node.cond.type_filters, node.then.type_filters)
 
       false
     end
@@ -726,31 +738,6 @@ module Crystal
         block_visitor.block = node
         node.body.accept block_visitor
       end
-      false
-    end
-
-    def visit_and(node)
-      return if node.expanded
-
-      temp_var = Var.new(temp_name())
-      node.expanded = If.new(Assign.new(temp_var, node.left), node.right, temp_var)
-      node.expanded.binary = :and
-      node.expanded.accept self
-      node.bind_to node.expanded
-      node.type_filters = node.left.type_filters
-
-      false
-    end
-
-    def visit_or(node)
-      return if node.expanded
-
-      temp_var = Var.new(temp_name())
-      node.expanded = If.new(Assign.new(temp_var, node.left), temp_var, node.right)
-      node.expanded.binary = :or
-      node.expanded.accept self
-      node.bind_to node.expanded
-
       false
     end
 
@@ -1001,6 +988,14 @@ module Crystal
     def temp_name
       @@counter += 1
       "#temp_#{@@counter}"
+    end
+
+    def visit_and(node)
+      raise "Bug: And node '#{node}' should have been eliminated in normalize"
+    end
+
+    def visit_or(node)
+      raise "Bug: Or node '#{node}' should have been eliminated in normalize"
     end
   end
 end

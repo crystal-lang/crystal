@@ -104,8 +104,4 @@ module Crystal
       @instances && @instances[arg_types]
     end
   end
-
-  class If
-    attr_accessor :binary
-  end
 end

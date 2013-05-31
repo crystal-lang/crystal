@@ -9,6 +9,7 @@ module Crystal
   class Program
     def run(code, options = {})
       node = parse code
+      node = normalize node
       infer_type node, options
       evaluate node
     end
@@ -540,12 +541,10 @@ module Crystal
       when true
         node.else = node.then # So if the then returns, also the whole if
 
-        unless node.binary == :or
-          if node.then
-            accept(node.then)
-          else
-            @last = llvm_nil
-          end
+        if node.then
+          accept(node.then)
+        else
+          @last = llvm_nil
         end
 
         if is_union && (!node.then || node.then.type)
@@ -559,12 +558,10 @@ module Crystal
       when false
         node.then = node.else # So if the else returns, also the whole if
 
-        unless node.binary == :and
-          if node.else
-            accept(node.else)
-          else
-            @last = llvm_nil
-          end
+        if node.else
+          accept(node.else)
+        else
+          @last = llvm_nil
         end
 
         if is_union && (!node.else || node.else.type)
