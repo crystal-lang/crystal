@@ -56,6 +56,11 @@ describe 'Type inference: pointer' do
       "'ptr' can't receive a block"
   end
 
+  it "reports undefined method new" do
+    assert_error "Pointer.new",
+      "undefined method 'new' for Pointer(T):Class"
+  end
+
   it "can't do Pointer.malloc without type var" do
     assert_error %(
       Pointer.malloc(1)
