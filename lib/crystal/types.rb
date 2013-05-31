@@ -800,14 +800,16 @@ module Crystal
     def lookup_type(names, already_looked_up = {})
       if names.length == 1 && m = @mapping[names[0]]
         if m.is_a?(Type)
-          m
-        else
-          type_var = @including_class.type_vars[m[0]]
-          type_var ? type_var.type : nil
+          return m
         end
-      else
-        @module.lookup_type(names, already_looked_up)
+
+        if @including_class.is_a?(GenericClassInstanceType)
+          type_var = @including_class.type_vars[m[0]]
+          return type_var ? type_var.type : nil
+        end
       end
+
+      @module.lookup_type(names, already_looked_up)
     end
 
     def to_s
