@@ -43,7 +43,7 @@ module Enumerable(T)
   end
 
   def to_a
-    ary = Array.new
+    ary = Array(T).new
     each { |e| ary << e }
     ary
   end

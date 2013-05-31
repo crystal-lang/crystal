@@ -263,9 +263,9 @@ class Array(T)
     @buffer
   end
 
-  def to_a
-    self
-  end
+  # def to_a
+  #   self
+  # end
 
   def max
     max = self[0]

@@ -117,21 +117,6 @@ module Crystal
       mod.symbols << node.value
     end
 
-    def end_visit_range_literal(node)
-      return if node.expanded
-
-      new_generic = NewGenericClass.new(Ident.new(['Range'], true), [Ident.new(["Nil"], true), Ident.new(["Nil"], true)])
-
-      node.mod = mod
-      node.new_generic_class = new_generic
-      node.set_type(mod.range_of(node.from.type, node.to.type))
-
-      node.expanded = Call.new(new_generic, 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
-      node.expanded.accept self
-
-      node.bind_to node.from, node.to
-    end
-
     def visit_regexp_literal(node)
       return if node.expanded
 
@@ -988,6 +973,11 @@ module Crystal
 
     def visit_require(node)
       raise "Bug: Require node '#{node}' (#{node.location}) should have been eliminated in normalize"
+      false
+    end
+
+    def visit_range_literal(node)
+      raise "Bug: RangeLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
       false
     end
   end

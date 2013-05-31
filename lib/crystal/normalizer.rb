@@ -152,7 +152,8 @@ module Crystal
     def transform_range_literal(node)
       node.from = node.from.transform(self)
       node.to = node.to.transform(self)
-      node
+
+      Call.new(Ident.new(['Range'], true), 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
     end
 
     def transform_simple_or(node)

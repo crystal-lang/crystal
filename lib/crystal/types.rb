@@ -718,11 +718,27 @@ module Crystal
     end
 
     def lookup_type(names, already_looked_up = {})
+      return nil if already_looked_up[type_id]
+      already_looked_up[type_id] = true
+
       if names.length == 1 && type_var = type_vars[names[0]]
         return type_var.type
       end
 
-      generic_class.lookup_type(names, already_looked_up)
+      type = generic_class
+      names.each do |name|
+        type = type.types[name]
+        break unless type
+      end
+
+      return type if type
+
+      parents.each do |parent|
+        match = parent.lookup_type(names, already_looked_up)
+        return match if match
+      end
+
+      generic_class.container ? generic_class.container.lookup_type(names, already_looked_up) : nil
     end
 
     def parents
@@ -786,7 +802,8 @@ module Crystal
         if m.is_a?(Type)
           m
         else
-          @including_class.lookup_type([m], already_looked_up)
+          type_var = @including_class.type_vars[m[0]]
+          type_var ? type_var.type : nil
         end
       else
         @module.lookup_type(names, already_looked_up)

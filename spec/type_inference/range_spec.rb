@@ -13,4 +13,12 @@ describe 'Type inference: range' do
   it "types range literal method call" do
     assert_type(%(require "range"; (1..2).begin)) { int }
   end
+
+  it "types range literal to_a" do
+    assert_type(%q(
+      require "prelude"
+      a = 1 .. 5
+      a.to_a
+      )) { array_of(int) }
+  end
 end
