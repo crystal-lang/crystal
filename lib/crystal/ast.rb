@@ -388,6 +388,26 @@ module Crystal
     end
   end
 
+  class StringInterpolation < ASTNode
+    attr_accessor :expressions
+
+    def initialize(expressions)
+      @expressions = expressions
+    end
+
+    def accept_children(visitor)
+      @expressions.each { |e| e.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(StringInterpolation) && other.expressions == expressions
+    end
+
+    def clone_from(other)
+      @expressions = other.expressions.map(&:clone)
+    end
+  end
+
   class SymbolLiteral < ASTNode
     attr_accessor :value
 

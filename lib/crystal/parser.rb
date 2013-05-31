@@ -1599,12 +1599,10 @@ module Crystal
       end
 
       if has_interpolation
-        node = Call.new(Ident.new(["StringBuilder"]), "new")
-        pieces.each do |piece|
-          piece = StringLiteral.new piece if piece.is_a?(String)
-          node = Call.new(node, :<<, [piece])
+        pieces.map! do |piece|
+          piece.is_a?(String) ? StringLiteral.new(piece) : piece
         end
-        Call.new(node, "to_s")
+        StringInterpolation.new(pieces)
       else
         StringLiteral.new pieces.join
       end

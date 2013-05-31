@@ -772,6 +772,7 @@ module Crystal
 
       macro_call = Call.new(nil, macro_name, node.args.map(&:to_crystal_node))
       macro_nodes = Expressions.new [typed_def, macro_call]
+      macro_nodes = mod.normalize(macro_nodes)
 
       mod.infer_type macro_nodes
 
@@ -940,6 +941,10 @@ module Crystal
 
     def visit_unless(node)
       raise "Bug: Unless node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit_string_interpolation(node)
+      raise "Bug: StringInterpolation node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end

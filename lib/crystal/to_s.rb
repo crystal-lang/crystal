@@ -49,6 +49,21 @@ module Crystal
       @str << '"'
     end
 
+    def visit_string_interpolation(node)
+      @str << '"'
+      node.expressions.each do |exp|
+        if exp.is_a?(StringLiteral)
+          @str << exp.value.gsub('"', "\\\"")
+        else
+          @str << '#{'
+          exp.accept(self)
+          @str << '}'
+        end
+      end
+      @str << '"'
+      false
+    end
+
     def visit_symbol_literal(node)
       @str << ':'
       @str << node.value
@@ -157,7 +172,9 @@ module Crystal
         node.args[0].accept self
       else
         if node.obj
+          @str << "(" if node.obj.is_a?(Call)
           node.obj.accept self
+          @str << ")" if node.obj.is_a?(Call)
           @str << "."
         end
         @str << node.name.to_s

@@ -70,6 +70,14 @@ module Crystal
       required ? required.transform(self) : nil
     end
 
+    def transform_string_interpolation(node)
+      call = Call.new(Ident.new(["StringBuilder"], true), "new")
+      node.expressions.each do |piece|
+        call = Call.new(call, :<<, [piece])
+      end
+      Call.new(call, "to_s")
+    end
+
     def transform_call(node)
       node.obj = node.obj.transform(self) if node.obj
       node.args.map! { |arg| arg.transform(self) }

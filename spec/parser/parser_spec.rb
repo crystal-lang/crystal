@@ -358,6 +358,8 @@ describe Parser do
 
   it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
 
+  it_parses %q("foo#{bar}baz"), StringInterpolation.new([StringLiteral.new("foo"), "bar".call, StringLiteral.new("baz")])
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
