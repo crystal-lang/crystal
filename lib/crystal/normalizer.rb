@@ -137,7 +137,7 @@ module Crystal
 
     def transform_hash_literal(node)
       node.keys.map! { |k| k.transform(self) }
-      node.values.map! { |v| k.transform(self) }
+      node.values.map! { |v| v.transform(self) }
       node
     end
 
@@ -170,6 +170,11 @@ module Crystal
 
     def transform_yield(node)
       node.exps.map! { |e| e.transform(self) }
+      node
+    end
+
+    def transform_is_a(node)
+      node.obj = node.obj.transform(self)
       node
     end
   end
