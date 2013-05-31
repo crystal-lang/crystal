@@ -79,10 +79,11 @@ module Crystal
       while i >= 0 && (arg = args[i]).default_value
         expansion = Def.new(name, self_def.args[0 ... i].map(&:clone), nil, receiver.clone, self_def.block_arg.clone, self_def.yields)
         expansion.instance_vars = instance_vars
-        default_value = Assign.new(Var.new(arg.name), arg.default_value)
 
-        call = Call.new(nil, name, self_def.args[0 .. i].map { |arg| Var.new(arg.name) })
-        expansion.body = Expressions.new([default_value, call])
+        new_args = self_def.args[0 ... i].map { |arg| Var.new(arg.name) }
+        new_args.push arg.default_value
+
+        expansion.body = Call.new(nil, name, new_args)
 
         expansions << expansion
         i -= 1

@@ -6,8 +6,8 @@ describe 'Type inference: def' do
     expanded = a_def.expand_default_arguments
 
     expanded1 = parse "def foo(x, y, z); x + y + z; end"
-    expanded2 = parse "def foo(x, y); z = 2; foo(x, y, z); end"
-    expanded3 = parse "def foo(x); y = 1; foo(x, y); end"
+    expanded2 = parse "def foo(x, y); foo(x, y, 2); end"
+    expanded3 = parse "def foo(x); foo(x, 1); end"
 
     expanded.should eq([expanded1, expanded2, expanded3])
   end
