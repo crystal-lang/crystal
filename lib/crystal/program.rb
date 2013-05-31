@@ -237,14 +237,20 @@ module Crystal
     end
 
     def require(filename, relative_to = nil)
+      if File.exists?(filename) && File.absolute_path(filename) == filename
+        return require_absolute filename
+      end
+
       if relative_to && (single = filename =~ /(.+)\/\*\Z/ || multi = filename =~ /(.+)\/\*\*\Z/)
         dir = File.dirname relative_to
         relative_dir = File.join(dir, $1)
         if File.directory?(relative_dir)
           nodes = []
           Dir["#{relative_dir}/#{multi ? '**/' : ''}*.cr"].each do |file|
-            node = require_absolute(file)
-            nodes.push node if node
+            node = Require.new(StringLiteral.new(file))
+            nodes.push node
+            # node = require_absolute(file)
+            # nodes.push node if node
           end
           return Expressions.new(nodes)
         end
@@ -272,10 +278,7 @@ module Crystal
 
       parser = Parser.new File.read(file)
       parser.filename = file
-      node = parser.parse
-      node = normalize node
-      node.accept TypeVisitor.new(self) if node
-      node
+      parser.parse
     end
 
     def require_from_load_path(file)

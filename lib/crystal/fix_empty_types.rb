@@ -58,11 +58,6 @@ module Crystal
       false
     end
 
-    def visit_require(node)
-      node.expanded.accept self if node.expanded
-      false
-    end
-
     def end_visit_ident(node)
       node.target_const.value.accept self if node.target_const
     end

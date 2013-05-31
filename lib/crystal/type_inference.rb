@@ -919,11 +919,6 @@ module Crystal
       end
     end
 
-    def visit_require(node)
-      node.expanded = mod.require(node.string.value, node.filename)
-      false
-    end
-
     def visit_case(node)
       temp_var = Var.new(temp_name())
       assign = Assign.new(temp_var, node.cond)
@@ -996,6 +991,11 @@ module Crystal
 
     def visit_or(node)
       raise "Bug: Or node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit_require(node)
+      raise "Bug: Require node '#{node}' (#{node.location}) should have been eliminated in normalize"
+      false
     end
   end
 end

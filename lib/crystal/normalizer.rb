@@ -22,8 +22,20 @@ module Crystal
     end
 
     def transform_expressions(node)
-      node.expressions.map! { |exp| exp.transform(self) }
-      node
+      exps = []
+      node.expressions.each do |exp|
+        new_exp = exp.transform(self)
+        exps << new_exp if new_exp
+      end
+      case exps.length
+      when 0
+        nil
+      when 1
+        exps[0]
+      else
+        node.expressions = exps
+        node
+      end
     end
 
     def transform_and(node)
@@ -48,6 +60,11 @@ module Crystal
         temp_var = program.new_temp_var
         If.new(Assign.new(temp_var, node.left), temp_var, node.right)
       end
+    end
+
+    def transform_require(node)
+      required = program.require(node.string.value, node.filename)
+      required ? required.transform(self) : nil
     end
 
     def transform_call(node)

@@ -779,11 +779,6 @@ module Crystal
       false
     end
 
-    def visit_require(node)
-      accept(node.expanded) if node.expanded
-      false
-    end
-
     def visit_case(node)
       accept(node.expanded)
       false
