@@ -25,6 +25,20 @@ module Crystal
       node.transform(self)
     end
 
+    def before_transform(node)
+      @dead_code = false
+    end
+
+    def after_transform(node)
+      case node
+      when Return, Break, Next
+        @dead_code = true
+      when If, Case, Unless, And, Or, Expressions
+      else
+        @dead_code = false
+      end
+    end
+
     def transform_expressions(node)
       exps = []
       node.expressions.each do |exp|
@@ -36,9 +50,7 @@ module Crystal
             exps << new_exp
           end
         end
-        if exp.is_a?(Return) || exp.is_a?(Next) || exp.is_a?(Break)
-          break
-        end
+        break if @dead_code
       end
       case exps.length
       when 0
@@ -286,6 +298,7 @@ module Crystal
       if node.then
         node.then = node.then.transform(self)
         then_vars = @vars.clone
+        then_dead_code = @dead_code
       end
 
       if node.else
@@ -304,6 +317,7 @@ module Crystal
           node.else = node.else.transform(self)
           else_vars = @vars.clone
         end
+        else_dead_code = @dead_code
       end
 
       new_then_vars = []
@@ -350,6 +364,9 @@ module Crystal
 
       node.then = concat_preserving_return_value(node.then, new_then_vars)
       node.else = concat_preserving_return_value(node.else, new_else_vars)
+
+      @dead_code = then_dead_code && else_dead_code
+
       node
     end
 

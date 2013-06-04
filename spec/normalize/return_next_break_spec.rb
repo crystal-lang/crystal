@@ -16,4 +16,8 @@ describe 'Normalize: return next break' do
   it "removes nodes after if that returns in both branches" do
     assert_normalize "if true; break; else; return; end; 1", "if true\n  break\nelse\n  return\nend"
   end
+
+  it "doesn't remove nodes after if that returns in one branch" do
+    assert_normalize "if true; 1; else; return; end; 1", "if true\n  1\nelse\n  return\nend\n1"
+  end
 end

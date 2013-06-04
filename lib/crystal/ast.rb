@@ -35,7 +35,10 @@ module Crystal
         end
 
         def transform(transformer)
-          transformer.transform_#{name} self
+          transformer.before_transform self
+          node = transformer.transform_#{name} self
+          transformer.after_transform self
+          node
         end
       EVAL
 
