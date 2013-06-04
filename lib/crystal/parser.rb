@@ -145,7 +145,11 @@ module Crystal
 
             next_token_skip_space_or_newline
 
+            # Constants need a new scope for their value
+            push_def if atomic.is_a?(Ident)
             value = parse_op_assign
+            pop_def if atomic.is_a?(Ident)
+
             atomic = Assign.new(atomic, value)
           end
         when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>=', :'||=', :'&&='
@@ -179,13 +183,13 @@ module Crystal
             when :'&&='
               assign = Call.new(obj, :"[]=", atomic.args + [value], nil, method_column_number)
               assign.location = location
-              atomic = And.new(atomic, assign)
+              atomic = And.new(atomic.clone, assign)
             when :'||='
               assign = Call.new(obj, :"[]=", atomic.args + [value], nil, method_column_number)
               assign.location = location
-              atomic = Or.new(atomic, assign)
+              atomic = Or.new(atomic.clone, assign)
             else
-              call = Call.new(atomic, method, [value], nil, method_column_number)
+              call = Call.new(atomic.clone, method, [value], nil, method_column_number)
               call.location = location
               atomic = Call.new(obj, :"[]=", atomic.args + [call], nil, method_column_number)
             end
@@ -194,15 +198,15 @@ module Crystal
             when :'&&='
               assign = Assign.new(atomic, value)
               assign.location = location
-              atomic = And.new(atomic, assign)
+              atomic = And.new(atomic.clone, assign)
             when :'||='
               assign = Assign.new(atomic, value)
               assign.location = location
-              atomic = Or.new(atomic, assign)
+              atomic = Or.new(atomic.clone, assign)
             else
               call = Call.new(atomic, method, [value], nil, method_column_number)
               call.location = location
-              atomic = Assign.new(atomic, call)
+              atomic = Assign.new(atomic.clone, call)
             end
           end
         else

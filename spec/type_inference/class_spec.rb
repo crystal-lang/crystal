@@ -49,7 +49,7 @@ describe 'Type inference: class' do
       g.set 2.5
       g
     )
-    mod = infer_type input
+    mod, input = infer_type input
     input[1].type.should eq(mod.types["Foo"].instantiate([mod.int]))
     input[1].type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int))
     input[3].type.should eq(mod.types["Foo"].instantiate([mod.double]))
@@ -76,7 +76,7 @@ describe 'Type inference: class' do
       g.set 2.5
       g.get
     )
-    mod = infer_type input
+    mod, input = infer_type input
     input[3].type.should eq(mod.union_of(mod.nil, mod.int))
     input.last.type.should eq(mod.union_of(mod.nil, mod.double))
   end
@@ -99,7 +99,7 @@ describe 'Type inference: class' do
       n.add
       n
     )
-    mod = infer_type input
+    mod, input = infer_type input
     node = mod.types["Node"]
     node.lookup_instance_var("@next").type.should eq(mod.union_of(mod.nil, node))
     input.last.type.should eq(node)
@@ -213,7 +213,7 @@ describe 'Type inference: class' do
 
       Foo::Bar.new(1)
       )
-    mod = infer_type nodes
+    mod, nodes = infer_type nodes
     nodes.last.type.type_vars["T"].type.should eq(mod.int)
     nodes.last.type.instance_vars["@x"].type.should eq(mod.int)
   end
@@ -279,5 +279,10 @@ describe 'Type inference: class' do
       Reference.new
       Foo(Int).new
       )) { types["Foo"].instantiate([int]) }
+  end
+
+  it "errors when wrong arguments for new" do
+    assert_error "Reference.new 1",
+      "wrong number of arguments"
   end
 end

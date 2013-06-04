@@ -8,8 +8,13 @@ module Crystal
     visitor = GraphVisitor.new
     if node
       # Jump over the require "prelude" that's inserted by the compiler
-      node = node[1] if node.is_a?(Expressions)
-      node.accept visitor
+      if node.is_a?(Expressions)
+        node.expressions[1 .. -1].each do |exp|
+          exp.accept visitor
+        end
+      else
+        node.accept visitor
+      end
     end
 
     visitor.graphviz.output :png => "#{output}.png"
@@ -33,6 +38,14 @@ module Crystal
 
     def visit_def(node)
       false
+    end
+
+    def visit_macro(node)
+      false
+    end
+
+    def visit_assign(node)
+      !node.target.is_a?(Ident)
     end
 
     def visit_var(node)

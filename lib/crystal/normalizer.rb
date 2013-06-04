@@ -1,4 +1,5 @@
 require_relative "program"
+require_relative "transformer"
 
 module Crystal
   class Program
@@ -6,6 +7,7 @@ module Crystal
       return nil unless node
       normalizer = Normalizer.new(self)
       node = normalizer.normalize(node)
+      puts node if ENV['SSA'] == '1'
       node
     end
   end
@@ -15,6 +17,8 @@ module Crystal
 
     def initialize(program)
       @program = program
+      @vars = {}
+      @vars_stack = []
     end
 
     def normalize(node)
@@ -25,7 +29,13 @@ module Crystal
       exps = []
       node.expressions.each do |exp|
         new_exp = exp.transform(self)
-        exps << new_exp if new_exp
+        if new_exp
+          if new_exp.is_a?(Expressions)
+            exps.concat new_exp.expressions
+          else
+            exps << new_exp
+          end
+        end
         if exp.is_a?(Return) || exp.is_a?(Next) || exp.is_a?(Break)
           break
         end
@@ -42,25 +52,23 @@ module Crystal
     end
 
     def transform_and(node)
-      node.left = node.left.transform(self)
-      node.right = node.right.transform(self)
+      super
 
       if node.left.is_a?(Var) || (node.left.is_a?(IsA) && node.left.obj.is_a?(Var))
         If.new(node.left, node.right, node.left)
       else
-        temp_var = program.new_temp_var
+        temp_var = new_temp_var
         If.new(Assign.new(temp_var, node.left), node.right, temp_var)
       end
     end
 
     def transform_or(node)
-      node.left = node.left.transform(self)
-      node.right = node.right.transform(self)
+      super
 
       if node.left.is_a?(Var)
         If.new(node.left, node.left, node.right)
       else
-        temp_var = program.new_temp_var
+        temp_var = new_temp_var
         If.new(Assign.new(temp_var, node.left), temp_var, node.right)
       end
     end
@@ -71,6 +79,8 @@ module Crystal
     end
 
     def transform_string_interpolation(node)
+      super
+
       call = Call.new(Ident.new(["StringBuilder"], true), "new")
       node.expressions.each do |piece|
         call = Call.new(call, :<<, [piece])
@@ -81,30 +91,46 @@ module Crystal
     def transform_def(node)
       if node.has_default_arguments?
         exps = node.expand_default_arguments.map! { |a_def| a_def.transform(self) }
-        Expressions.new(exps)
-      else
-        node.body = node.body.transform(self) if node.body
-        node
+        return Expressions.new(exps)
       end
+
+      if node.body
+        pushing_vars(Hash[node.args.map { |arg| [arg.name, {read: 0, write: 1}] }]) do
+          node.body = node.body.transform(self)
+        end
+      end
+
+      node
+    end
+
+    def transform_macro(node)
+      # if node.has_default_arguments?
+      #   exps = node.expand_default_arguments.map! { |a_def| a_def.transform(self) }
+      #   return Expressions.new(exps)
+      # end
+
+      if node.body
+        pushing_vars(Hash[node.args.map { |arg| [arg.name, {read: 0, write: 1}] }]) do
+          node.body = node.body.transform(self)
+        end
+      end
+
+      node
     end
 
     def transform_unless(node)
-      node.cond = node.cond.transform(self)
-      node.then = node.then.transform(self) if node.then
-      node.else = node.else.transform(self) if node.else
+      super
 
       If.new(node.cond, node.else, node.then)
     end
 
     def transform_case(node)
       node.cond = node.cond.transform(self)
-      node.whens.map! { |w| w.transform(self) }
-      node.else = node.else.transform(self) if node.else
 
       if node.cond.is_a?(Var) || node.cond.is_a?(InstanceVar)
         temp_var = node.cond
       else
-        temp_var = program.new_temp_var
+        temp_var = new_temp_var
         assign = Assign.new(temp_var, node.cond)
       end
 
@@ -131,6 +157,7 @@ module Crystal
         a_if = wh_if
       end
       a_if.else = node.else if node.else
+      final_if = final_if.transform(self)
       if assign
         Expressions.new([assign, final_if])
       else
@@ -139,8 +166,7 @@ module Crystal
     end
 
     def transform_range_literal(node)
-      node.from = node.from.transform(self)
-      node.to = node.to.transform(self)
+      super
 
       Call.new(Ident.new(['Range'], true), 'new', [node.from, node.to, BoolLiteral.new(node.exclusive)])
     end
@@ -156,7 +182,7 @@ module Crystal
     end
 
     def transform_array_literal(node)
-      node.elements.map! { |e| e.transform(self) }
+      super
 
       if node.of
         if node.elements.length == 0
@@ -172,7 +198,7 @@ module Crystal
       capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
 
       constructor = Call.new(NewGenericClass.new(Ident.new(['Array'], true), [type_var]), 'new', [IntLiteral.new(capacity)])
-      temp_var = program.new_temp_var
+      temp_var = new_temp_var
       assign = Assign.new(temp_var, constructor)
       set_length = Call.new(temp_var, 'length=', [IntLiteral.new(length)])
 
@@ -190,8 +216,7 @@ module Crystal
     end
 
     def transform_hash_literal(node)
-      node.keys.map! { |k| k.transform(self) }
-      node.values.map! { |v| v.transform(self) }
+      super
 
       if node.of_key
         type_vars = [node.of_key, node.of_value]
@@ -203,7 +228,7 @@ module Crystal
       if node.keys.length == 0
         constructor
       else
-        temp_var = program.new_temp_var
+        temp_var = new_temp_var
         assign = Assign.new(temp_var, constructor)
 
         exps = [assign]
@@ -215,86 +240,253 @@ module Crystal
       end
     end
 
-    def transform_call(node)
-      node.obj = node.obj.transform(self) if node.obj
-      node.args.map! { |arg| arg.transform(self) }
-      node.block.transform(self) if node.block
-      node
-    end
-
     def transform_assign(node)
-      node.value = node.value.transform(self)
+      if node.target.is_a?(Var)
+        node.value = node.value.transform(self)
+        transform_assign_var(node.target)
+      elsif node.target.is_a?(Ident)
+        pushing_vars do
+          node.value = node.value.transform(self)
+        end
+      else
+        node.value = node.value.transform(self)
+      end
+
       node
     end
 
     def transform_multi_assign(node)
-      node.values.map! { |v| v.transform(self) }
+      node.values.map! { |exp| exp.transform(self) }
+      node.targets.each do |target|
+        if target.is_a?(Var)
+          transform_assign_var(target)
+        end
+      end
+
       node
     end
 
-    def transform_class_def(node)
-      node.body = node.body.transform(self) if node.body
-      node
-    end
-
-    def transform_module_def(node)
-      node.body = node.body.transform(self) if node.body
-      node
+    def transform_assign_var(node)
+      indices = @vars[node.name]
+      if indices
+        increment_var node.name, indices
+        node.name = var_name_with_index(node.name, indices[:write])
+      else
+        @vars[node.name] = {read: 0, write: 1}
+      end
     end
 
     def transform_if(node)
       node.cond = node.cond.transform(self)
-      node.then = node.then.transform(self) if node.then
-      node.else = node.else.transform(self) if node.else
+
+      before_vars = @vars.clone
+      then_vars = nil
+      else_vars = nil
+
+      if node.then
+        node.then = node.then.transform(self)
+        then_vars = @vars.clone
+      end
+
+      if node.else
+        if then_vars
+          before_else_vars = {}
+          then_vars.each do |var_name, indices|
+            before_indices = before_vars[var_name]
+            read_index = before_indices ? before_indices[:read] : nil
+            before_else_vars[var_name] = {read: read_index, write: indices[:write]}
+          end
+          pushing_vars(before_else_vars) do
+            node.else = node.else.transform(self)
+            else_vars = @vars.clone
+          end
+        else
+          node.else = node.else.transform(self)
+          else_vars = @vars.clone
+        end
+      end
+
+      new_then_vars = []
+      new_else_vars = []
+
+      all_vars = []
+      all_vars.concat then_vars.keys if then_vars
+      all_vars.concat else_vars.keys if else_vars
+      all_vars.uniq!
+
+      all_vars.each do |var_name|
+        before_indices = before_vars[var_name]
+        then_indices = then_vars && then_vars[var_name]
+        else_indices = else_vars && else_vars[var_name]
+        if else_indices.nil?
+          if before_indices
+            if then_indices != before_indices
+              push_assign_var_with_indices new_else_vars, var_name, before_indices[:write], before_indices[:read]
+            end
+          else
+            push_assign_var_with_indices new_then_vars, var_name, then_indices[:write], then_indices[:read]
+            push_assign_var_with_indices new_else_vars, var_name, then_indices[:write], nil
+            @vars[var_name] = {read: then_indices[:write], write: then_indices[:write] + 1}
+          end
+        elsif then_indices.nil?
+          if before_indices
+            if else_indices != before_indices
+              push_assign_var_with_indices new_then_vars, var_name, before_indices[:write], before_indices[:read]
+            end
+          else
+            push_assign_var_with_indices new_else_vars, var_name, else_indices[:write], else_indices[:read]
+            push_assign_var_with_indices new_then_vars, var_name, else_indices[:write], nil
+            @vars[var_name] = {read: else_indices[:write], write: else_indices[:write] + 1}
+          end
+        elsif then_indices != else_indices
+          then_write = then_indices[:write]
+          else_write = else_indices[:write]
+          max_write = then_write > else_write ? then_write : else_write
+          push_assign_var_with_indices new_then_vars, var_name, max_write, then_indices[:read]
+          push_assign_var_with_indices new_else_vars, var_name, max_write, else_indices[:read]
+          @vars[var_name] = {read: max_write, write: max_write + 1}
+        end
+      end
+
+      node.then = concat_preserving_return_value(node.then, new_then_vars)
+      node.else = concat_preserving_return_value(node.else, new_else_vars)
       node
     end
 
     def transform_while(node)
+      before_cond_vars = @vars.clone
       node.cond = node.cond.transform(self)
+      after_cond_vars = @vars.clone
+
       node.body = node.body.transform(self) if node.body
+
+      after_body_vars = get_loop_vars(after_cond_vars, false)
+      after_body_vars.concat get_loop_vars(before_cond_vars, false)
+      after_body_vars.uniq!
+
+      @vars.each do |var_name, indices|
+        after_indices = after_cond_vars[var_name]
+        if after_indices && after_indices != indices
+          @vars[var_name] = {read: after_indices[:read], write: indices[:write]}
+        end
+      end
+
+      node.body = concat_preserving_return_value(node.body, after_body_vars)
+
       node
     end
 
-    def transform_block(node)
-      node.body = node.body.transform(self) if node.body
+    def transform_call(node)
+      node.obj = node.obj.transform(self) if node.obj
+      node.args.map! { |arg| arg.transform(self) }
+
+      if node.block
+        before_vars = @vars.clone
+
+        node.block.args.each do |arg|
+          @vars[arg.name] = {read: 0, write: 1}
+        end
+
+        node.block.transform(self)
+
+        node.block.args.each do |arg|
+          @vars.delete arg.name
+        end
+
+        after_body_vars = get_loop_vars(before_vars)
+
+        node.block.body = concat_preserving_return_value(node.block.body, after_body_vars)
+      end
+
       node
     end
 
-    def transform_when(node)
-      node.conds.map! { |w| w.transform(self) }
-      node.body = node.body.transform(self) if node.body
+    def concat_preserving_return_value(node, vars)
+      return node if vars.empty?
+
+      unless node
+        vars.push NilLiteral.new
+        return Expressions.from(vars)
+      end
+
+      temp_var = new_temp_var
+      assign = Assign.new(temp_var, node)
+      vars.push temp_var
+
+      Expressions.concat(assign, vars)
+    end
+
+    def increment_var(name, indices = @vars[name])
+      @vars[name] = {read: indices[:write], write: indices[:write] + 1}
+    end
+
+    def get_loop_vars(before_vars, restore = true)
+      loop_vars = []
+
+      @vars.each do |var_name, indices|
+        before_indices = before_vars[var_name]
+        if before_indices && before_indices[:read] && before_indices[:read] < indices[:read]
+          loop_vars << assign_var_with_indices(var_name, before_indices[:read], indices[:read])
+          if restore
+            @vars[var_name] = {read: before_indices[:read], write: indices[:write]}
+          end
+        end
+      end
+
+      loop_vars
+    end
+
+    def transform_var(node)
+      return node if node.name == 'self' || node.name.start_with?('#')
+
+      if node.out
+        @vars[node.name] = {read: 0, write: 1}
+        return node
+      end
+
+      indices = @vars[node.name]
+      binding.pry unless indices
+      node.name = var_name_with_index(node.name, indices[:read])
       node
     end
 
-    def transform_simple_or(node)
-      node.left = node.left.transform(self)
-      node.right = node.right.transform(self)
-      node
+    def pushing_vars(vars = {})
+      @vars, old_vars = vars, @vars
+      @vars = vars
+      @vars_stack.push vars
+      yield
+      @vars = old_vars
+      @vars_stack.pop
     end
 
-    def transform_return(node)
-      node.exps.map! { |e| e.transform(self) }
-      node
+    def var_name_with_index(name, index)
+      if index && index > 0
+        "#{name}:#{index}"
+      else
+        name
+      end
     end
 
-    def transform_break(node)
-      node.exps.map! { |e| e.transform(self) }
-      node
+    def var_with_index(name, index)
+      Var.new(var_name_with_index(name, index))
     end
 
-    def transform_next(node)
-      node.exps.map! { |e| e.transform(self) }
-      node
+    def new_temp_var
+      program.new_temp_var
     end
 
-    def transform_yield(node)
-      node.exps.map! { |e| e.transform(self) }
-      node
+    def assign_var_with_indices(name, to_index, from_index)
+      if from_index
+        from_var = var_with_index(name, from_index)
+      else
+        from_var = NilLiteral.new
+      end
+      Assign.new(var_with_index(name, to_index), from_var)
     end
 
-    def transform_is_a(node)
-      node.obj = node.obj.transform(self)
-      node
+    def push_assign_var_with_indices(vars, name, to_index, from_index)
+      return if to_index == from_index
+      vars << assign_var_with_indices(name, to_index, from_index)
     end
   end
 end

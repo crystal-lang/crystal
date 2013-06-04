@@ -39,7 +39,18 @@ module Crystal
 
     def visit_char_literal(node)
       @str << "'"
-      @str << node.value.chr
+      case node.value.chr
+      when ?\t
+        @str << '\t'
+      when ?\n
+        @str << '\n'
+      when ?\r
+        @str << '\r'
+      when ?\0
+        @str << '\0'
+      else
+        @str << node.value.chr
+      end
       @str << "'"
     end
 
@@ -296,6 +307,7 @@ module Crystal
     end
 
     def visit_var(node)
+      @str << "out " if node.out
       if node.name
         @str << node.name
       else
@@ -455,7 +467,14 @@ module Crystal
     def visit_assign(node)
       node.target.accept self
       @str << " = "
-      node.value.accept self
+      if node.value.is_a?(Expressions)
+        @str << "begin\n"
+        accept_with_indent(node.value)
+        append_indent
+        @str << "end"
+      else
+        node.value.accept self
+      end
       false
     end
 

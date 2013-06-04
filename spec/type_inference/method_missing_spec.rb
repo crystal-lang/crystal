@@ -11,7 +11,7 @@ describe 'Type inference: method missing' do
 
   it "create symbol literal with method name as string" do
     input = parse %q(require "array"; class Foo; def method_missing(name, args); 1; end; end; Foo.new < 1)
-    mod = infer_type input
+    mod, input = infer_type input
     mod.symbols.to_a.should eq(['<'])
   end
 end

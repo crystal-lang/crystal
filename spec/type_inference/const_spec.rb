@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Type inference: const' do
   it "types a constant" do
     input = parse "A = 1"
-    mod = infer_type input
+    mod, input = infer_type input
     input.target.type.should be_nil # Don't type value until needed
   end
 
@@ -93,6 +93,11 @@ describe 'Type inference: const' do
 
       B.foo
       )) { int }
+  end
+
+  it "doesn't share variables with global scope" do
+    assert_error "a = 1; A = a; A",
+      "undefined local variable or method 'a'"
   end
 
 end

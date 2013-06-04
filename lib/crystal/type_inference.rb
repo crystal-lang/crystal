@@ -511,10 +511,10 @@ module Crystal
       type = lookup_ident_type(node)
       if type.is_a?(Const)
         unless type.value.type
-          old_types, old_scope = @types, @scope
-          @types, @scope = type.types, type.scope
+          old_types, old_scope, old_vars = @types, @scope, @vars
+          @types, @scope, @vars = type.types, type.scope, {}
           type.value.accept self
-          @types, @scope = old_types, old_scope
+          @types, @scope, @vars = old_types, old_scope, old_vars
         end
         node.target_const = type
         node.bind_to(type.value)

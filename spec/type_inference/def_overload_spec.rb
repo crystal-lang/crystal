@@ -268,7 +268,7 @@ describe 'Type inference: def overload' do
         1
       end
 
-      a = 1; a = 1.1
+      a = 1 || 1.1
       foo(a)
     )) { union_of(int, double) }
   end

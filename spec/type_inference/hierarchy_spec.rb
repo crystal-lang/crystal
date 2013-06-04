@@ -106,7 +106,7 @@ describe 'Type inference: hierarchy' do
       x = Foo.new || Bar.new || Baz.new
       x.foo
       ))
-    mod = infer_type nodes
+    mod, nodes = infer_type nodes
     nodes.last.target_defs.length.should eq(1)
   end
 
@@ -128,7 +128,7 @@ describe 'Type inference: hierarchy' do
       x = Foo.new || Bar.new || Baz.new
       x.foo
       ))
-    mod = infer_type nodes
+    mod, nodes = infer_type nodes
     nodes.last.target_defs.length.should eq(2)
   end
 
@@ -196,7 +196,7 @@ describe 'Type inference: hierarchy' do
       v.x = 1
       v
       )
-    mod = infer_type nodes
+    mod, nodes = infer_type nodes
     mod.types["Var"].instance_vars.should be_empty
     mod.types["Base"].instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int))
   end

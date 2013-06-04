@@ -29,7 +29,7 @@ describe 'Block inference' do
         x = 1
       end
     )
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.block.body.target.type.should eq(mod.int)
   end
 
@@ -43,7 +43,7 @@ describe 'Block inference' do
         1
       end
     )
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.block.args[0].type.should eq(mod.int)
   end
 
@@ -59,7 +59,7 @@ describe 'Block inference' do
       end
       y
     )
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.type.should eq(mod.union_of(mod.char, mod.int))
   end
 
@@ -73,7 +73,7 @@ describe 'Block inference' do
         1
       end
     )
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.type.should eq(mod.int)
   end
 
@@ -82,8 +82,7 @@ describe 'Block inference' do
       require "int"
       require "pointer"
       require "array"
-      a = [1]
-      a = [1.1]
+      a = [1] || [1.1]
       a.each { |x| x }
     )) { union_of(array_of(int), array_of(double)) }
   end
@@ -168,10 +167,11 @@ describe 'Block inference' do
 
   it "reports error if yields a type that's not that one in the block specification and type changes" do
     assert_error %q(
+      $global = 1
+
       def foo(&block: Int -> )
-        a = 1
-        yield a
-        a = 10.5
+        yield $global
+        $global = 10.5
       end
 
       foo {}
@@ -217,9 +217,9 @@ describe 'Block inference' do
         yield 1
       end
 
-      a = 10.5
-      foo { a }
-      a = 1
+      $global = 10.5
+      foo { $global }
+      $global = 1
       ),
       "type must be Double"
   end

@@ -8,9 +8,6 @@ module Crystal
     end
   end
 
-  class Transformer
-  end
-
   # Base class for nodes in the grammar.
   class ASTNode
     attr_accessor :line_number
@@ -50,12 +47,6 @@ module Crystal
         def end_visit_#{name}(node)
         end
       EVAL
-
-      Transformer.class_eval <<-EVAL, __FILE__, __LINE__ + 1
-        def transform_#{name}(node)
-          node
-        end
-      EVAL
     end
 
     def accept_children(visitor)
@@ -82,7 +73,7 @@ module Crystal
       case obj
       when nil
         nil
-      when ::Array
+      when Array
         if obj.length == 0
           nil
         elsif obj.length == 1
@@ -92,6 +83,26 @@ module Crystal
         end
       else
         obj
+      end
+    end
+
+    def self.concat(exp, expressions)
+      return exp if expressions.empty?
+
+      while expressions.length == 1 && expressions[0].is_a?(Expressions)
+        expressions = expressions[0].expressions
+      end
+
+      if exp
+        if exp.is_a?(Expressions)
+          exp.expressions.concat expressions
+          exp
+        else
+          expressions.unshift exp
+          Expressions.from(expressions)
+        end
+      else
+        Expressions.from(expressions)
       end
     end
 
@@ -534,6 +545,14 @@ module Crystal
       other.is_a?(Var) && other.name == name && other.type == type && other.out == out
     end
 
+    def eql?(other)
+      self == other
+    end
+
+    def hash
+      name.hash ^ out.hash
+    end
+
     def clone_from(other)
       @name = other.name
       @out = other.out
@@ -890,6 +909,14 @@ module Crystal
 
     def ==(other)
       other.is_a?(Assign) && other.target == target && other.value == value
+    end
+
+    def eql?(other)
+      self == other
+    end
+
+    def hash
+      target.hash ^ value.hash
     end
 
     def clone_from(other)

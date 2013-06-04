@@ -83,6 +83,8 @@ describe Parser do
   it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var], [1.int])
   it_parses "a = 1, 2", MultiAssign.new(["a".var], [1.int, 2.int])
 
+  it_parses "a = 1; A = a", [Assign.new("a".var, 1.int), Assign.new("A".ident, "a".call)]
+
   it_parses "def foo\n1\nend", Def.new("foo", [], [1.int])
   it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], [1.int])
   it_parses "def foo ; 1 ; end", Def.new("foo", [], [1.int])

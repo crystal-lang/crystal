@@ -32,7 +32,7 @@ describe 'Type inference: super' do
       end
       Baz.new
       )
-    mod = infer_type nodes
+    mod, nodes = infer_type nodes
     nodes.last.type.should eq(mod.types["Baz"])
     nodes.last.type.superclass.superclass.instance_vars["@x"].type.should eq(mod.int)
   end

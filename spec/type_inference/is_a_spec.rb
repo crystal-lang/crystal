@@ -7,27 +7,31 @@ describe 'Type inference: is_a?' do
 
   it "restricts type inside if scope 1" do
     nodes = parse %q(
-      a = 1
-      a = 'a'
+      a = 1 || 'a'
       if a.is_a?(Int)
         a
       end
       )
-    mod = infer_type nodes
+    mod, nodes = infer_type nodes
     nodes.last.then.type.should eq(mod.int)
   end
 
   it "restricts type inside if scope 2" do
     nodes = parse %q(
-      require "array"
+      module Bar
+      end
 
-      a = Array(Int).new
-      if a.is_a?(Enumerable)
+      class Foo(T)
+        include Bar
+      end
+
+      a = Foo(Int).new
+      if a.is_a?(Bar)
         a
       end
       )
-    mod = infer_type nodes
-    nodes.last.then.type.should eq(nodes[1].type)
+    mod, nodes = infer_type nodes
+    nodes.last.then.type.should eq(nodes[2].type)
   end
 
   it "restricts type inside if scope 3" do
@@ -43,7 +47,7 @@ describe 'Type inference: is_a?' do
         a
       end
       )
-    mod = infer_type nodes
+    mod, nodes = infer_type nodes
     nodes.last.then.type.should eq(nodes[1].type)
   end
 end

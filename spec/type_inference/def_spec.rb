@@ -26,13 +26,13 @@ describe 'Type inference: def' do
 
   it "types a call with an argument" do
     input = parse 'def foo(x); x; end; foo 1'
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.type.should eq(mod.int)
   end
 
   it "types a call with an argument" do
     input = parse 'def foo(x); x; end; foo 1; foo 2.3'
-    mod = infer_type input
+    mod, input = infer_type input
     input[1].type.should eq(mod.int)
     input[2].type.should eq(mod.double)
   end
@@ -43,7 +43,7 @@ describe 'Type inference: def' do
 
   it "assigns def owner" do
     input = parse 'class Int; def foo; 2.5; end; end; 1.foo'
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.target_def.owner.should eq(mod.int)
   end
 
@@ -71,21 +71,21 @@ describe 'Type inference: def' do
 
   it "types recursion" do
     input = parse 'def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)'
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.type.should eq(mod.int)
     input.last.target_def.body.then.type.should eq(mod.int)
   end
 
   it "types recursion 2" do
     input = parse 'def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)'
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.type.should eq(mod.int)
     input.last.target_def.body.then.type.should eq(mod.int)
   end
 
   it "types mutual recursion" do
     input = parse 'def foo(x); if true; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)'
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.type.should eq(mod.int)
     input.last.target_def.body.then.type.should eq(mod.int)
   end
@@ -103,7 +103,7 @@ describe 'Type inference: def' do
   end
 
   it "types call with union argument" do
-    assert_type('def foo(x); x; end; a = 1; a = 1.1; foo(a)') { union_of(int, double) }
+    assert_type('def foo(x); x; end; a = 1 || 1.1; foo(a)') { union_of(int, double) }
   end
 
   it "defines class method" do
@@ -120,15 +120,9 @@ describe 'Type inference: def' do
 
   it "do not use body for the def type" do
     input = parse 'def foo; if false; return 0; end; end; foo'
-    mod = infer_type input
+    mod, input = infer_type input
     input.last.type.should eq(mod.union_of(mod.int, mod.nil))
     input.last.target_def.body.type.should eq(mod.nil)
-  end
-
-  it "doesn't type as nilable if used inside same scope" do
-    input = parse 'if false; a = 1; end'
-    mod = infer_type input
-    input.then.target.type.should eq(mod.int)
   end
 
   it "reports undefined method" do

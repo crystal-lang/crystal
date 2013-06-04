@@ -45,7 +45,7 @@ def infer_type(node)
   program = Program.new
   node = program.normalize node
   program.infer_type node
-  program
+  [program, node]
 end
 
 def assert_error(str, message)

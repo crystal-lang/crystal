@@ -400,7 +400,24 @@ module Crystal
 
     def define_new(scope, arg_types)
       matches = scope.instance_type.lookup_matches('initialize', arg_types, !!block)
-      unless matches.empty?
+      if matches.empty?
+        defs = scope.instance_type.lookup_defs('initialize')
+        if defs.length > 0
+          raise_matches_not_found scope.instance_type, 'initialize'
+        end
+
+        if defs.length == 0 && arg_types.length > 0
+          raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.length} for 0)"
+        end
+
+        alloc = Call.new(nil, 'allocate')
+
+        match = Match.new
+        match.def = scope.add_def Def.new('new', [], [alloc])
+        match.owner = scope
+        match.arg_types = arg_types
+        Matches.new([match], true)
+      else
         ms = matches.map do |match|
           if match.free_vars.empty?
             alloc = Call.new(nil, 'allocate')
@@ -445,34 +462,19 @@ module Crystal
           new_match
         end
         Matches.new(ms, true)
-      else
-        defs = scope.instance_type.lookup_defs('initialize')
-        if defs && defs.length > 0
-          raise_matches_not_found scope.instance_type, 'initialize'
-        end
-
-        alloc = Call.new(nil, 'allocate')
-
-        match = Match.new
-        match.def = scope.add_def Def.new('new', [], [alloc])
-        match.owner = scope
-        match.arg_types = arg_types
-        Matches.new([match], true)
       end
     end
 
     def define_method_missing(scope, name)
       missing_args = self.args.each_with_index.map { |arg, i| Arg.new("arg#{i}") }
       missing_vars = self.args.each_with_index.map { |arg, i| Var.new("arg#{i}") }
-      if missing_vars.empty?
-        args = NilLiteral.new
-      else
-        args = ArrayLiteral.new(missing_vars)
-        args = mod.normalize(args)
-      end
-      scope.add_def Def.new(name, missing_args, [
+      args = missing_vars.empty? ? NilLiteral.new : ArrayLiteral.new(missing_vars)
+
+      missing_def = Def.new(name, missing_args, [
         Call.new(nil, 'method_missing', [SymbolLiteral.new(name.to_s), args])
       ])
+      missing_def = mod.normalize(missing_def)
+      scope.add_def missing_def
     end
 
     def full_name(owner)

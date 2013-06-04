@@ -39,7 +39,7 @@ describe 'Code gen: def' do
 
   it "builds infinite recursive function" do
     node = parse "def foo; foo; end; foo"
-    mod = infer_type node
+    mod, node = infer_type node
     mod.build node
   end
 
