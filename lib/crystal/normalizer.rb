@@ -362,8 +362,15 @@ module Crystal
         end
       end
 
-      node.then = concat_preserving_return_value(node.then, new_then_vars)
-      node.else = concat_preserving_return_value(node.else, new_else_vars)
+      node.then = append_before_exits(node.then, new_then_vars) if node.then && new_then_vars.length > 0
+      unless then_dead_code
+        node.then = concat_preserving_return_value(node.then, new_then_vars)
+      end
+
+      node.else = append_before_exits(node.else, new_else_vars) if node.else && new_else_vars.length > 0
+      unless else_dead_code
+        node.else = concat_preserving_return_value(node.else, new_else_vars)
+      end
 
       @dead_code = then_dead_code && else_dead_code
 
@@ -388,7 +395,7 @@ module Crystal
         end
       end
 
-      append_before_exits(node.body, after_body_vars) if node.body && after_body_vars.length > 0
+      node.body = append_before_exits(node.body, after_body_vars) if node.body && after_body_vars.length > 0
 
       unless @dead_code
         node.body = concat_preserving_return_value(node.body, after_body_vars)
@@ -412,7 +419,7 @@ module Crystal
 
       after_body_vars = get_loop_vars(before_vars)
 
-      append_before_exits(node.body, after_body_vars) if node.body && after_body_vars.length > 0
+      node.body = append_before_exits(node.body, after_body_vars) if node.body && after_body_vars.length > 0
 
       unless @dead_code
         node.body = concat_preserving_return_value(node.body, after_body_vars)
