@@ -127,6 +127,11 @@ describe 'Normalize: ssa' do
       assert_normalize "a = 1; while a < 10; a = a + 1; foo { #{keyword} }; end; a",
         "a = 1\nwhile a < 10\n  #temp_1 = begin\n    a:1 = a + 1\n    foo() do\n      #{keyword}\n    end\n  end\n  a = a:1\n  #temp_1\nend\na"
     end
+
+    it "performs ssa on while with #{keyword} inside if altering var afterwards" do
+      assert_normalize "a = 1; while a < 10; a = a + 1; if false; #{keyword}; end; a = a + 1; end; a",
+        "a = 1\nwhile a < 10\n  #temp_1 = begin\n    a:1 = a + 1\n    if false\n      a = a:1\n      #{keyword}\n    end\n    a:2 = a:1 + 1\n  end\n  a = a:2\n  #temp_1\nend\na"
+    end
   end
 
   it "performs ssa on simple assignment inside def" do

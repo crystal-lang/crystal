@@ -1,5 +1,6 @@
 require_relative "program"
 require_relative "transformer"
+require "set"
 
 module Crystal
   class Program
@@ -523,20 +524,45 @@ module Crystal
   class AppendBeforeExits < Transformer
     def initialize(vars)
       @vars = vars
+      @vars_indices = {}
+      @names = Set.new(vars.select { |var| !var.target.name.index(':') }.map { |var| var.target.name })
       @nest_count = 0
     end
 
-    def transform_break(node)
-      if @nest_count == 0
-        Expressions.from(@vars + [node])
-      else
-        node
+    def transform_assign(node)
+      node = super
+
+      if node.target.is_a?(Var)
+        name, index = node.target.name.split(':')
+        if index && @names.include?(name)
+          @vars_indices[name] = index
+        end
       end
+
+      node
+    end
+
+    def transform_break(node)
+      transform_break_or_next(node)
     end
 
     def transform_next(node)
+      transform_break_or_next(node)
+    end
+
+    def transform_break_or_next(node)
       if @nest_count == 0
-        Expressions.from(@vars + [node])
+        new_vars = @vars.map do |assign|
+          target = assign.target
+          name, index = target.name.split(':')
+          value_index = @vars_indices[name]
+          if value_index
+            Assign.new(assign.target, Var.new("#{name}:#{value_index}"))
+          else
+            Assign.new(assign.target, Var.new(name))
+          end
+        end
+        Expressions.from(new_vars + [node])
       else
         node
       end
