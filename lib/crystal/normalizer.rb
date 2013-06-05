@@ -33,7 +33,7 @@ module Crystal
       case node
       when Return, Break, Next
         @dead_code = true
-      when If, Case, Unless, And, Or, Expressions
+      when If, Case, Unless, And, Or, Expressions, Block
       else
         @dead_code = false
       end
@@ -388,31 +388,34 @@ module Crystal
         end
       end
 
-      node.body = concat_preserving_return_value(node.body, after_body_vars)
+      append_before_exists(node.body, after_body_vars) if node.body && after_body_vars.length > 0
+
+      unless @dead_code
+        node.body = concat_preserving_return_value(node.body, after_body_vars)
+      end
 
       node
     end
 
-    def transform_call(node)
-      node.obj = node.obj.transform(self) if node.obj
-      node.args.map! { |arg| arg.transform(self) }
+    def transform_block(node)
+      before_vars = @vars.clone
 
-      if node.block
-        before_vars = @vars.clone
+      node.args.each do |arg|
+        @vars[arg.name] = {read: 0, write: 1}
+      end
 
-        node.block.args.each do |arg|
-          @vars[arg.name] = {read: 0, write: 1}
-        end
+      super
 
-        node.block.transform(self)
+      node.args.each do |arg|
+        @vars.delete arg.name
+      end
 
-        node.block.args.each do |arg|
-          @vars.delete arg.name
-        end
+      after_body_vars = get_loop_vars(before_vars)
 
-        after_body_vars = get_loop_vars(before_vars)
+      append_before_exists(node.body, after_body_vars) if node.body && after_body_vars.length > 0
 
-        node.block.body = concat_preserving_return_value(node.block.body, after_body_vars)
+      unless @dead_code
+        node.body = concat_preserving_return_value(node.body, after_body_vars)
       end
 
       node
@@ -422,15 +425,13 @@ module Crystal
       return node if vars.empty?
 
       unless node
-        vars.push NilLiteral.new
-        return Expressions.from(vars)
+        return Expressions.from(vars + [NilLiteral.new])
       end
 
       temp_var = new_temp_var
       assign = Assign.new(temp_var, node)
-      vars.push temp_var
 
-      Expressions.concat(assign, vars)
+      Expressions.concat(assign, vars + [temp_var])
     end
 
     def increment_var(name, indices = @vars[name])
@@ -504,6 +505,48 @@ module Crystal
     def push_assign_var_with_indices(vars, name, to_index, from_index)
       return if to_index == from_index
       vars << assign_var_with_indices(name, to_index, from_index)
+    end
+
+    def append_before_exists(node, vars)
+      transformer = AppendBeforeExists.new(vars)
+      node.transform(transformer)
+    end
+  end
+
+  class AppendBeforeExists < Transformer
+    def initialize(vars)
+      @vars = vars
+      @nest_count = 0
+    end
+
+    def transform_break(node)
+      if @nest_count == 0
+        Expressions.from(@vars + [node])
+      else
+        node
+      end
+    end
+
+    def transform_next(node)
+      if @nest_count == 0
+        Expressions.from(@vars + [node])
+      else
+        node
+      end
+    end
+
+    def transform_while(node)
+      @nest_count += 1
+      node = super
+      @nest_count -= 1
+      node
+    end
+
+    def transform_block(node)
+      @nest_count += 1
+      node = super
+      @nest_count -= 1
+      node
     end
   end
 end

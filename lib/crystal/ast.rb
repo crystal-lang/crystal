@@ -101,8 +101,7 @@ module Crystal
           exp.expressions.concat expressions
           exp
         else
-          expressions.unshift exp
-          Expressions.from(expressions)
+          Expressions.new([exp] + expressions)
         end
       else
         Expressions.from(expressions)
