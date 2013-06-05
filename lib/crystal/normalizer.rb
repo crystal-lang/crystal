@@ -388,7 +388,7 @@ module Crystal
         end
       end
 
-      append_before_exists(node.body, after_body_vars) if node.body && after_body_vars.length > 0
+      append_before_exits(node.body, after_body_vars) if node.body && after_body_vars.length > 0
 
       unless @dead_code
         node.body = concat_preserving_return_value(node.body, after_body_vars)
@@ -412,7 +412,7 @@ module Crystal
 
       after_body_vars = get_loop_vars(before_vars)
 
-      append_before_exists(node.body, after_body_vars) if node.body && after_body_vars.length > 0
+      append_before_exits(node.body, after_body_vars) if node.body && after_body_vars.length > 0
 
       unless @dead_code
         node.body = concat_preserving_return_value(node.body, after_body_vars)
@@ -507,13 +507,13 @@ module Crystal
       vars << assign_var_with_indices(name, to_index, from_index)
     end
 
-    def append_before_exists(node, vars)
-      transformer = AppendBeforeExists.new(vars)
+    def append_before_exits(node, vars)
+      transformer = AppendBeforeExits.new(vars)
       node.transform(transformer)
     end
   end
 
-  class AppendBeforeExists < Transformer
+  class AppendBeforeExits < Transformer
     def initialize(vars)
       @vars = vars
       @nest_count = 0
