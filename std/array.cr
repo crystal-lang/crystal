@@ -17,7 +17,7 @@ class Array(T)
     @buffer = Pointer(T).malloc(size, value)
   end
 
-  def self.new(size)
+  def self.new(size, &block : Int -> T)
     ary = Array(T).new(size)
     ary.length = size
     size.times do |i|
