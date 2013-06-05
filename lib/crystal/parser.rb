@@ -853,6 +853,10 @@ module Crystal
 
           var = Var.new(@token.value)
           var.location = @token.location
+          if @def_vars.last.include?(var.name)
+            raise "block argument '#{var.name}' shadows local variable '#{var.name}'"
+          end
+
           block_args << var
 
           next_token_skip_space_or_newline
@@ -865,9 +869,13 @@ module Crystal
         skip_statement_end
       end
 
+      current_vars = @def_vars.last.clone
+      push_def current_vars
       push_var *block_args
 
       block_body = parse_expressions
+
+      pop_def
 
       yield
 
@@ -1663,8 +1671,8 @@ module Crystal
       end
     end
 
-    def push_def
-      @def_vars.push(Set.new)
+    def push_def(set = Set.new)
+      @def_vars.push set
     end
 
     def pop_def

@@ -215,6 +215,14 @@ module Crystal
         raise "wrong number of arguments for '#{full_name(owner)}' (#{self.args.length} for #{all_arguments_lengths.join ', '})"
       end
 
+      if defs_matching_args_length.length > 0
+        if block && defs_matching_args_length.all? { |a_def| !a_def.yields }
+          raise "'#{full_name(owner)}' is not expected to be invoked with a block, but a block was given"
+        elsif !block && defs_matching_args_length.all?(&:yields)
+          raise "'#{full_name(owner)}' is expected to be invoked with a block, but no block was given"
+        end
+      end
+
       arg_names = []
 
       msg = "no overload matches '#{full_name(owner)}'"
@@ -224,7 +232,9 @@ module Crystal
       defs.each do |a_def|
         arg_names.push a_def.args.map(&:name)
 
-        msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '})"
+        msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '}"
+          msg << ", &block" if a_def.yields
+        msg << ")"
       end
 
       if matches && matches.cover.is_a?(Cover)
@@ -235,10 +245,12 @@ module Crystal
           msg << "\nCouldn't find overloads for these types:"
           missing.each_with_index do |missing_types|
             if arg_names
-              msg << "\n - #{full_name(owner)}(#{missing_types.each_with_index.map { |missing_type, i| "#{arg_names[i]} : #{missing_type}" }.join ', '})"
+              msg << "\n - #{full_name(owner)}(#{missing_types.each_with_index.map { |missing_type, i| "#{arg_names[i]} : #{missing_type}" }.join ', '}"
             else
-              msg << "\n - #{full_name(owner)}(#{missing_types.join ', '})"
+              msg << "\n - #{full_name(owner)}(#{missing_types.join ', '}"
             end
+            msg << ", &block" if block
+            msg << ")"
           end
         end
       end

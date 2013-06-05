@@ -714,6 +714,8 @@ module Crystal
     end
 
     def visit_return(node)
+      node.raise "can't return from top level" unless @typed_def
+
       if node.exps.empty?
         node.exps << NilLiteral.new
       end

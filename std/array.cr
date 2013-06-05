@@ -149,7 +149,7 @@ class Array(T)
   end
 
   def &(other : Array(U))
-    hash = other.each_with_object(Hash(T, Bool).new) { |obj, hash| hash[obj] = true }
+    hash = other.each_with_object(Hash(T, Bool).new) { |o, h| h[o] = true }
     ary = Array(T).new(Math.min(length, other.length))
     i = 0
     each do |obj|
@@ -183,7 +183,7 @@ class Array(T)
 
   def -(other : Array(U))
     ary = Array(T).new(length - other.length)
-    hash = other.each_with_object(Hash(T, Bool).new) { |obj, hash| hash[obj] = true }
+    hash = other.each_with_object(Hash(T, Bool).new) { |o| h[o] = true }
     each do |obj|
       ary << obj unless hash[obj]
     end
