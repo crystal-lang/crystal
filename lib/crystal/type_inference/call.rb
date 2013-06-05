@@ -232,7 +232,9 @@ module Crystal
       defs.each do |a_def|
         arg_names.push a_def.args.map(&:name)
 
-        msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '})"
+        msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '}"
+          msg << ", &block" if a_def.yields
+        msg << ")"
       end
 
       if matches && matches.cover.is_a?(Cover)
@@ -243,10 +245,12 @@ module Crystal
           msg << "\nCouldn't find overloads for these types:"
           missing.each_with_index do |missing_types|
             if arg_names
-              msg << "\n - #{full_name(owner)}(#{missing_types.each_with_index.map { |missing_type, i| "#{arg_names[i]} : #{missing_type}" }.join ', '})"
+              msg << "\n - #{full_name(owner)}(#{missing_types.each_with_index.map { |missing_type, i| "#{arg_names[i]} : #{missing_type}" }.join ', '}"
             else
-              msg << "\n - #{full_name(owner)}(#{missing_types.join ', '})"
+              msg << "\n - #{full_name(owner)}(#{missing_types.join ', '}"
             end
+            msg << ", &block" if block
+            msg << ")"
           end
         end
       end
