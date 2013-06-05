@@ -61,6 +61,10 @@ module Crystal
       false
     end
 
+    def no_return?
+      false
+    end
+
     def instance_type
       self
     end
@@ -109,6 +113,26 @@ module Crystal
 
     def type_id
       @type_id ||= (@@type_id += 1)
+    end
+  end
+
+  class NoReturnType < Type
+    attr_reader :program
+
+    def initialize(program)
+      @program = program
+    end
+
+    def llvm_type
+      LLVM.Void
+    end
+
+    def no_return?
+      true
+    end
+
+    def to_s
+      "NoReturn"
     end
   end
 

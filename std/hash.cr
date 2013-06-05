@@ -28,7 +28,17 @@ class Hash(K, V)
   end
 
   def [](key)
-    fetch key
+    index = bucket_index key
+    bucket = @buckets[index]
+    raise "Missing value" unless bucket
+
+    bucket.each do |entry|
+      if entry.key == key
+        return entry.value
+      end
+    end
+
+    raise "Missing value"
   end
 
   def fetch(key)

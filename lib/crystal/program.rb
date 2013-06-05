@@ -24,6 +24,7 @@ module Crystal
       value = @types["Value"] = ValueType.new self, "Value", object
       numeric = @types["Numeric"] = ValueType.new self, "Numeric", value
 
+      @types["NoReturn"] = NoReturnType.new self
       @types["Void"] = PrimitiveType.new self, "Void", value, LLVM::Int8, 1
       @types["Nil"] = NilType.new self, "Nil", value, LLVM::Int1, 1
       @types["Bool"] = PrimitiveType.new self, "Bool", value, LLVM::Int1, 1
@@ -82,6 +83,7 @@ module Crystal
       all_types.flatten!
       all_types.compact!
       all_types.uniq!(&:type_id)
+      all_types.delete_if { |type| type.no_return? } if all_types.length > 1
       combined_union_of *types
     end
 
@@ -158,6 +160,10 @@ module Crystal
 
     def nil
       @types["Nil"]
+    end
+
+    def no_return
+      @types["NoReturn"]
     end
 
     def object

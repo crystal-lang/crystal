@@ -19,6 +19,10 @@ module Crystal
     def breaks?
       false
     end
+
+    def no_returns?
+      type && type.no_return?
+    end
   end
 
   class Return
