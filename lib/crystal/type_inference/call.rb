@@ -215,6 +215,14 @@ module Crystal
         raise "wrong number of arguments for '#{full_name(owner)}' (#{self.args.length} for #{all_arguments_lengths.join ', '})"
       end
 
+      if defs_matching_args_length.length > 0
+        if block && defs_matching_args_length.all? { |a_def| !a_def.yields }
+          raise "'#{full_name(owner)}' is not expected to be invoked with a block, but a block was given"
+        elsif !block && defs_matching_args_length.all?(&:yields)
+          raise "'#{full_name(owner)}' is expected to be invoked with a block, but no block was given"
+        end
+      end
+
       arg_names = []
 
       msg = "no overload matches '#{full_name(owner)}'"
