@@ -849,6 +849,10 @@ module Crystal
 
           var = Var.new(@token.value)
           var.location = @token.location
+          if @def_vars.last.include?(var.name)
+            raise "block argument '#{var.name}' shadows local variable '#{var.name}'"
+          end
+
           block_args << var
 
           next_token_skip_space_or_newline

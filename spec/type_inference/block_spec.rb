@@ -252,4 +252,9 @@ describe 'Block inference' do
       end
       )) { double }
   end
+
+  it "errors when block varaible shadows local variable" do
+    assert_syntax_error "a = 1; foo { |a| }",
+      "block argument 'a' shadows local variable 'a'"
+  end
 end
