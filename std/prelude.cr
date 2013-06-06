@@ -27,7 +27,6 @@ require "symbol"
 require "argv"
 
 def raise(msg)
-  puts msg
+  puts "ERROR: #{msg}"
   exit 1
-  nil
 end

@@ -112,7 +112,7 @@ module Crystal
     def finish
       br_block_chain @alloca_block, @const_block_entry
       br_block_chain @const_block, @entry_block
-      @builder.ret(@return_type ? @last : nil)
+      @builder.ret(@return_type ? @last : nil) unless @return_type && @return_type.no_return?
 
       add_compile_unit_metadata @filename if @debug
     end
@@ -578,7 +578,7 @@ module Crystal
           @last = llvm_nil
         end
       end
-      then_value = @last unless node.then && (node.then.returns? || node.then.breaks? || (node.then.yields? && block_returns?))
+      then_value = @last unless node.then && (node.then.no_returns? || node.then.returns? || node.then.breaks? || (node.then.yields? && block_returns?))
       codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last) if is_union && (!node.then || node.then.type)
       @builder.br exit_block
 
@@ -594,7 +594,7 @@ module Crystal
           @last = llvm_nil
         end
       end
-      else_value = @last unless node.else && (node.else.returns? || node.else.breaks? || (node.else.yields? && block_returns?))
+      else_value = @last unless node.else && (node.else.no_returns? || node.else.returns? || node.else.breaks? || (node.else.yields? && block_returns?))
       codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union && (!node.else || node.else.type)
       @builder.br exit_block
 
@@ -609,6 +609,8 @@ module Crystal
           @last = then_value
         elsif else_value
           @last = else_value
+        else
+          @builder.unreachable
         end
       else
         if node.then && !then_value && node.else && !else_value
@@ -915,19 +917,25 @@ module Crystal
           @return_union = nil
         end
         accept(node.target_def.body)
-        if node.target_def.body.type && !node.target_def.body.type.nil_type? && !node.block.breaks?
-          if @return_union
-            assign_to_union(@return_union, @return_type, node.target_def.body.type, @last)
-          else
-            @return_block_table[@builder.insert_block] = @last
+
+        if node.target_def.type && node.target_def.type.no_return?
+          @builder.unreachable
+        else
+          if node.target_def.type && !node.target_def.type.nil_type? && !node.block.breaks?
+            if @return_union
+              assign_to_union(@return_union, @return_type, node.target_def.type, @last)
+            else
+              @return_block_table[@builder.insert_block] = @last
+            end
+          elsif (node.target_def.type.nil? || node.target_def.type.nil_type?) && node.type.nilable?
+            @return_block_table[@builder.insert_block] = @builder.int2ptr llvm_nil, node.llvm_type
           end
-        elsif (node.target_def.body.type.nil? || node.target_def.body.type.nil_type?) && node.type.nilable?
-          @return_block_table[@builder.insert_block] = @builder.int2ptr llvm_nil, node.llvm_type
+          @builder.br @return_block
         end
-        @builder.br @return_block
+
         @builder.position_at_end @return_block
 
-        if node.returns? || block_returns? || (node.block.yields? && block_breaks?)
+        if node.no_returns? || node.returns? || block_returns? || (node.block.yields? && block_breaks?)
           @builder.unreachable
         else
           if node.type && !node.type.nil_type?
@@ -936,7 +944,7 @@ module Crystal
             else
               phi_type = node.type.llvm_type
               phi_type = LLVM::Pointer(phi_type) if node.type.union?
-              @last = @builder.phi phi_type, @return_block_table
+              @last = @builder.phi phi_type, @return_block_table rescue binding.pry
             end
           end
         end
@@ -1062,6 +1070,9 @@ module Crystal
       end
 
       @last = @builder.call fun, *call_args
+      if target_def.type.no_return?
+        @builder.unreachable
+      end
 
       if target_def.type.union?
         union = alloca target_def.llvm_type
@@ -1094,6 +1105,7 @@ module Crystal
         target_def.llvm_type,
         varargs: varargs
       )
+      @fun.add_attribute :no_return_attribute if target_def.type.no_return?
       @subprograms << def_metadata(@fun, target_def) if @debug
 
       args.each_with_index do |arg, i|
@@ -1123,19 +1135,23 @@ module Crystal
 
           accept(target_def.body)
 
-          if @return_type.union?
-            if target_def.body.type != @return_type && !target_def.body.returns?
-              assign_to_union(@return_union, @return_type, target_def.body.type, @last)
-              @last = @builder.load @return_union
-            else
-              @last = @builder.load @last
-            end
-          end
-
-          if @return_type.nilable? && target_def.body.type.nil_type?
-            @builder.ret LLVM::Constant.null(@return_type.llvm_type)
+          if target_def.body.no_returns?
+            @builder.unreachable
           else
-            @builder.ret(@last)
+            if @return_type.union?
+              if target_def.body.type != @return_type && !target_def.body.returns?
+                assign_to_union(@return_union, @return_type, target_def.body.type, @last) rescue binding.pry
+                @last = @builder.load @return_union
+              else
+                @last = @builder.load @last rescue binding.pry
+              end
+            end
+
+            if @return_type.nilable? && target_def.type.nil_type?
+              @builder.ret LLVM::Constant.null(@return_type.llvm_type)
+            else
+              @builder.ret(@last)
+            end
           end
 
           @return_type = old_return_type
@@ -1260,22 +1276,26 @@ module Crystal
           call.args.each_with_index do |arg, i|
             arg.set_type(a_def.args[i].type)
           end
-          call.set_type node.type
+          call.set_type a_def.type
           call.accept self
 
-          unless call.returns?
-            if node.type.union?
-              phi_value = alloca node.llvm_type
-              assign_to_union(phi_value, node.type, a_def.type, @last)
-              phi_table[@builder.insert_block] = phi_value
-            elsif node.type.nilable? && @last.type.kind == :integer
-              phi_table[@builder.insert_block] = @builder.int2ptr @last, node.llvm_type
-            else
-              phi_table[@builder.insert_block] = @last
+          if a_def.type.no_return?
+            @builder.unreachable
+          else
+            unless call.returns?
+              if node.type.union?
+                phi_value = alloca node.llvm_type
+                assign_to_union(phi_value, node.type, a_def.type, @last)
+                phi_table[@builder.insert_block] = phi_value
+              elsif node.type.nilable? && @last.type.kind == :integer
+                phi_table[@builder.insert_block] = @builder.int2ptr @last, node.llvm_type
+              else
+                phi_table[@builder.insert_block] = @last
+              end
             end
-          end
 
-          @builder.br exit_block
+            @builder.br exit_block
+          end
         else
           @builder.unreachable
         end

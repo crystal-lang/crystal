@@ -60,7 +60,7 @@ module Crystal
 
     def lookup_matches_in(owner, self_type = owner, def_name = self.name)
       arg_types = args.map(&:type)
-      matches = owner.lookup_matches(def_name, arg_types, !!block)
+      matches = owner.lookup_matches(def_name, arg_types, !!block) rescue binding.pry
 
       if matches.empty?
         if def_name == 'new' && owner.metaclass? && owner.instance_type.class? && !owner.instance_type.pointer?
