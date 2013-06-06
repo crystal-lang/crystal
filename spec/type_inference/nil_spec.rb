@@ -78,4 +78,18 @@ describe 'Type inference: nil' do
       f.foo
       )) { int }
   end
+
+  it "restricts type of 'if foo'" do
+    assert_type(%q(
+      class Foo
+        def bar
+          1
+        end
+      end
+
+      f = nil
+      f = Foo.new
+      f ? f.bar : 10
+      )) { int }
+  end
 end

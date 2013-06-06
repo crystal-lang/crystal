@@ -16,7 +16,7 @@ lib C
   SEEK_END = 2
 end
 
-class IO
+abstract class IO
   def print(string)
     C.fputs string, output
   end
