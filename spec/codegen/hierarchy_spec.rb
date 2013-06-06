@@ -234,8 +234,6 @@ describe 'Code gen: hierarchy type' do
 
   it "codegens virtual call with explicit self and nilable type" do
     run(%q(
-      require "prelude"
-
       class Foo
         def foo
           self.bar
@@ -247,6 +245,12 @@ describe 'Code gen: hierarchy type' do
       end
 
       class Bar < Foo
+      end
+
+      class Nil
+        def foo
+          2
+        end
       end
 
       f = Bar.new || nil

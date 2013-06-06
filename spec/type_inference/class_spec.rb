@@ -83,8 +83,6 @@ describe 'Type inference: class' do
 
   it "types recursive type" do
     input = parse %(
-      require "prelude"
-
       class Node
         def add
           if @next

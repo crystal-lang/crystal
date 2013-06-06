@@ -34,12 +34,4 @@ class Nil
   def inspect
     "nil"
   end
-
-  def method_missing(name, args)
-    if args
-      raise "Called #{name}(#{args.join ", "}) for nil"
-    else
-      raise "Called #{name} for nil"
-    end
-  end
 end
