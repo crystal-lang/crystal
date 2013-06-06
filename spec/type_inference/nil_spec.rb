@@ -87,9 +87,65 @@ describe 'Type inference: nil' do
         end
       end
 
-      f = nil
-      f = Foo.new
+      f = nil || Foo.new
       f ? f.bar : 10
+      )) { int }
+  end
+
+  it "restricts type of 'if foo' on assign" do
+    assert_type(%q(
+      class Foo
+        def bar
+          1
+        end
+      end
+
+      if foo = (Foo.new || nil)
+        foo.bar
+      else
+        10
+      end
+      )) { int }
+  end
+
+  it "restricts type of 'if @foo'" do
+    assert_type(%q(
+      class Foo
+        def initialize
+          @foo = Foo.new || nil
+        end
+        def foo
+          if @foo
+            @foo.bar
+          else
+            10
+          end
+        end
+        def bar
+          1
+        end
+      end
+
+      Foo.new.foo
+      )) { int }
+  end
+
+  it "restricts type of 'if @foo' on assign" do
+    assert_type(%q(
+      class Foo
+        def foo
+          if @foo = (Foo.new || nil)
+            @foo.bar
+          else
+            10
+          end
+        end
+        def bar
+          1
+        end
+      end
+
+      Foo.new.foo
       )) { int }
   end
 end
