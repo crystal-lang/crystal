@@ -31,26 +31,6 @@ module Crystal
     end
   end
 
-  class TypeFilter < ASTNode
-    def initialize(types)
-      @types = types
-    end
-
-    def bind_to(node)
-      @node = node
-      node.add_observer self
-      update(node)
-    end
-
-    def update(from)
-      self.type = from.type.filter_by(@types[0]) if from.type
-    end
-
-    def real_type
-      @node.real_type
-    end
-  end
-
   class TypeVisitor < Visitor
     attr_accessor :mod
     attr_accessor :paths
@@ -332,15 +312,16 @@ module Crystal
       var = lookup_var node.name
       filter = build_var_filter var
       node.bind_to(filter || var)
+      node.type_filters = {node.name => NotNilFilter}
     end
 
     def build_var_filter(var)
-      types = @type_filter_stack.map { |hash| hash[var.name] }.compact
-      return if types.empty?
+      filters = @type_filter_stack.map { |hash| hash[var.name] }.compact
+      return if filters.empty?
 
-      filter = TypeFilter.new(types)
-      filter.bind_to var
-      filter
+      filtered_node = TypeFilteredNode.new(filters.last)
+      filtered_node.bind_to var
+      filtered_node
     end
 
     def merge_type_filters(filter1, filter2)
@@ -731,7 +712,7 @@ module Crystal
     def end_visit_is_a(node)
       node.type = mod.bool
       if node.obj.is_a?(Var)
-        node.type_filters = {node.obj.name => node.const.type.instance_type}
+        node.type_filters = {node.obj.name => SimpleTypeFilter.new(node.const.type.instance_type)}
       end
     end
 

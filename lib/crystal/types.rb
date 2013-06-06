@@ -858,7 +858,7 @@ module Crystal
       when 1
         filtered_types[0]
       else
-        UnionType.new(*filtered_types)
+        program.type_merge(*filtered_types)
       end
     end
 
