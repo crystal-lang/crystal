@@ -30,15 +30,16 @@ class Hash(K, V)
   def [](key)
     index = bucket_index key
     bucket = @buckets[index]
-    raise "Missing value" unless bucket
 
-    bucket.each do |entry|
-      if entry.key == key
-        return entry.value
+    if bucket
+      bucket.each do |entry|
+        if entry.key == key
+          return entry.value
+        end
       end
     end
 
-    raise "Missing value"
+    raise "Missing value: #{key}"
   end
 
   def fetch(key)
