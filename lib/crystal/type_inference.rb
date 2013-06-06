@@ -340,7 +340,10 @@ module Crystal
     end
 
     def visit_instance_var(node)
-      lookup_instance_var node
+      var = lookup_instance_var node
+      filter = build_var_filter var
+      node.bind_to(filter || var)
+      node.type_filters = {node.name => NotNilFilter}
     end
 
     def lookup_instance_var(node)
@@ -355,13 +358,11 @@ module Crystal
         var.bind_to mod.nil_var
       end
 
-      node.bind_to var
       var
     end
 
     def visit_assign(node)
       type_assign(node.target, node.value, node)
-      node.type_filters = node.value.type_filters
       false
     rescue Crystal::FrozenTypeException => ex
       node.raise "assinging to #{node.target}", ex
@@ -390,10 +391,12 @@ module Crystal
           var.bind_to value
         end
 
+        node.type_filters = {target.name => NotNilFilter} if node
       when InstanceVar
         value.accept self
 
         var = lookup_instance_var target
+        target.bind_to var
 
         if node
           node.bind_to value
@@ -401,6 +404,8 @@ module Crystal
         else
           var.bind_to value
         end
+
+        node.type_filters = {target.name => NotNilFilter} if node
       when Ident
         type = current_type.types[target.names.first]
         if type
