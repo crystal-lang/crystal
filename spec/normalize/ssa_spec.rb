@@ -94,7 +94,7 @@ describe 'Normalize: ssa' do
 
   it "performs ssa on while" do
     assert_normalize "a = 1; a = 2; while a = a.parent; a = a.parent; end; a = a + 1; a",
-      "a = 1\na:1 = 2\nwhile a:2 = a:1.parent\n  #temp_1 = a:3 = a:2.parent\n  a:2 = a:3\n  a:1 = a:3\n  #temp_1\nend\na:4 = a:2 + 1\na:4"
+      "a = 1\na:1 = 2\nwhile a:2 = a:1.parent\n  #temp_1 = a:3 = a:2.parent\n  a:1 = a:3\n  #temp_1\nend\na:4 = a:2 + 1\na:4"
   end
 
   it "performs ssa on while with +=" do

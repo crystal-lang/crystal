@@ -383,9 +383,8 @@ module Crystal
 
       node.body = node.body.transform(self) if node.body
 
-      after_body_vars = get_loop_vars(after_cond_vars, false)
-      after_body_vars.concat get_loop_vars(before_cond_vars, false)
-      after_body_vars.uniq!
+      after_cond_loop_vars = get_loop_vars(after_cond_vars, false)
+      before_cond_loop_vars = get_loop_vars(before_cond_vars, false)
 
       @vars.each do |var_name, indices|
         after_indices = after_cond_vars[var_name]
@@ -394,10 +393,10 @@ module Crystal
         end
       end
 
-      node.body = append_before_exits(node.body, after_body_vars) if node.body && after_body_vars.length > 0
+      node.body = append_before_exits(node.body, after_cond_loop_vars) if node.body && after_cond_loop_vars.length > 0
 
       unless @dead_code
-        node.body = concat_preserving_return_value(node.body, after_body_vars)
+        node.body = concat_preserving_return_value(node.body, before_cond_loop_vars)
       end
 
       node
