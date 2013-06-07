@@ -434,7 +434,7 @@ describe 'Code gen: block' do
     )).to_i.should eq(2)
   end
 
-  it "break from block with value" do
+  pending "break from block with value" do
     run(%q(
       require "int"
       10.times { break 20 }
