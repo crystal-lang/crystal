@@ -940,7 +940,11 @@ module Crystal
     end
 
     def to_s
-      types.join " | "
+      if nilable?
+        "#{nilable_type}?"
+      else
+        types.join " | "
+      end
     end
   end
 
