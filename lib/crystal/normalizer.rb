@@ -65,25 +65,23 @@ module Crystal
     end
 
     def transform_and(node)
-      super
-
-      if node.left.is_a?(Var) || (node.left.is_a?(IsA) && node.left.obj.is_a?(Var))
-        If.new(node.left, node.right, node.left)
-      else
-        temp_var = new_temp_var
-        If.new(Assign.new(temp_var, node.left), node.right, temp_var)
-      end
+      new_node = if node.left.is_a?(Var) || (node.left.is_a?(IsA) && node.left.obj.is_a?(Var))
+               If.new(node.left, node.right, node.left.clone)
+             else
+               temp_var = new_temp_var
+               If.new(Assign.new(temp_var, node.left), node.right, temp_var)
+             end
+      new_node.transform(self)
     end
 
     def transform_or(node)
-      super
-
-      if node.left.is_a?(Var)
-        If.new(node.left, node.left, node.right)
-      else
-        temp_var = new_temp_var
-        If.new(Assign.new(temp_var, node.left), temp_var, node.right)
-      end
+      new_node = if node.left.is_a?(Var)
+                   If.new(node.left, node.left.clone, node.right)
+                 else
+                   temp_var = new_temp_var
+                   If.new(Assign.new(temp_var, node.left), temp_var, node.right)
+                 end
+      new_node.transform(self)
     end
 
     def transform_require(node)
