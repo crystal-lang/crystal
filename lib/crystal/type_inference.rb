@@ -441,7 +441,11 @@ module Crystal
       node.cond.accept self
 
       @while_stack.push node
+      @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
+
       node.body.accept self if node.body
+
+      @type_filter_stack.pop
       @while_stack.pop
 
       false

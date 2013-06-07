@@ -148,4 +148,20 @@ describe 'Type inference: nil' do
       Foo.new.foo
       )) { int }
   end
+
+  it "restricts type of 'while foo'" do
+    assert_type(%q(
+      class Foo
+        def bar
+          1
+        end
+      end
+
+      foo = Foo.new || nil
+      while foo
+        foo.bar
+      end
+      1
+      )) { int }
+  end
 end
