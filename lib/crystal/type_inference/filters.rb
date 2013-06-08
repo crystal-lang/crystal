@@ -17,6 +17,10 @@ module Crystal
     def real_type
       @node.real_type
     end
+
+    def to_s
+      @filter.to_s
+    end
   end
 
   class SimpleTypeFilter
@@ -30,6 +34,21 @@ module Crystal
 
     def to_s
       "F(#{@type})"
+    end
+  end
+
+  class AndTypeFilter
+    def initialize(filter1, filter2)
+      @filter1 = filter1
+      @filter2 = filter2
+    end
+
+    def apply(other)
+      @filter2.apply(@filter1.apply(other))
+    end
+
+    def to_s
+      "(#{@filter1} && #{@filter2})"
     end
   end
 

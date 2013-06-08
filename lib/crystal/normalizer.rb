@@ -71,6 +71,7 @@ module Crystal
                temp_var = new_temp_var
                If.new(Assign.new(temp_var, node.left), node.right, temp_var)
              end
+      new_node.binary = :and
       new_node.transform(self)
     end
 
@@ -81,6 +82,7 @@ module Crystal
                    temp_var = new_temp_var
                    If.new(Assign.new(temp_var, node.left), temp_var, node.right)
                  end
+      new_node.binary = :or
       new_node.transform(self)
     end
 

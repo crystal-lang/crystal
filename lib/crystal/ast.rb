@@ -827,6 +827,7 @@ module Crystal
     attr_accessor :cond
     attr_accessor :then
     attr_accessor :else
+    attr_accessor :binary
 
     def initialize(cond, a_then = nil, a_else = nil)
       @cond = cond
@@ -848,6 +849,7 @@ module Crystal
       @cond = other.cond.clone
       @then = other.then.clone
       @else = other.else.clone
+      @binary = other.binary
     end
   end
 

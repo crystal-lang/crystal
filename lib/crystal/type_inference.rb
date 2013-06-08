@@ -324,14 +324,32 @@ module Crystal
       filtered_node
     end
 
-    def merge_type_filters(filter1, filter2)
-      if filter1 && filter2
-        filter1.merge(filter2)
-      elsif filter1
-        filter1
+    def and_type_filters(filters1, filters2)
+      if filters1 && filters2
+        new_filters = {}
+        all_keys = (filters1.keys + filters2.keys).uniq
+        all_keys.each do |name|
+          filter1 = filters1[name]
+          filter2 = filters2[name]
+          if filter1 && filter2
+            new_filters[name] = AndTypeFilter.new(filter1, filter2)
+          elsif filter1
+            new_filters[name] = filter1
+          else
+            new_filters[name] = filter2
+          end
+        end
+        new_filters
+      elsif filters1
+        filters1
       else
-        filter2
+        filters2
       end
+    end
+
+    def or_type_filters(filters1, filters2)
+      # TODO: or type filters
+      nil
     end
 
     def visit_global(node)
@@ -391,7 +409,7 @@ module Crystal
           var.bind_to value
         end
 
-        node.type_filters = {target.name => NotNilFilter} if node
+        node.type_filters = and_type_filters({target.name => NotNilFilter}, node.value.type_filters) if node
       when InstanceVar
         value.accept self
 
@@ -405,7 +423,7 @@ module Crystal
           var.bind_to value
         end
 
-        node.type_filters = {target.name => NotNilFilter} if node
+        node.type_filters = and_type_filters({target.name => NotNilFilter}, node.value.type_filters) if node
       when Ident
         type = current_type.types[target.names.first]
         if type
@@ -469,21 +487,23 @@ module Crystal
     def visit_if(node)
       node.cond.accept self
 
-      node.type_filters = node.cond.type_filters
-
       if node.then
         @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
 
         node.then.accept self
 
         @type_filter_stack.pop if node.cond.type_filters
-
-        # TODO: this is a hack to make foo.is_a?(Bar) && foo.obj work. This needs to be rethought once we have SSA.
-        node.type_filters = merge_type_filters(node.type_filters, node.then.type_filters)
       end
 
       if node.else
         node.else.accept self
+      end
+
+      case node.binary
+      when :and
+        node.type_filters = and_type_filters(node.then.type_filters, node.else.type_filters)
+      when :or
+        node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
       end
 
       false

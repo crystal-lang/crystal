@@ -160,7 +160,7 @@ describe 'Codegen: is_a?' do
     )).to_i.should eq(5)
   end
 
-  pending "codegens when is_a? is always false but properties are used" do
+  it "codegens when is_a? is always false but properties are used" do
     run(%q(
       class Foo
         def obj; 1 end
@@ -169,5 +169,22 @@ describe 'Codegen: is_a?' do
       foo = 1
       foo.is_a?(Foo) && foo.obj && foo.obj
     )).to_b.should be_false
+  end
+
+  it "codegens is_a? on right side of and" do
+    run(%q(
+      class Foo
+        def bar
+          true
+        end
+      end
+
+      foo = Foo.new || nil
+      if true && foo.is_a?(Foo) && foo.bar
+        1
+      else
+        2
+      end
+      )).to_i.should eq(1)
   end
 end
