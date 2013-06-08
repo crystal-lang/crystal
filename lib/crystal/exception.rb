@@ -81,9 +81,15 @@ module Crystal
         msg = @message.to_s
       end
 
-      if @filename && File.file?(@filename)
-        lines = File.readlines @filename
-        str << "in #{@filename}:#{@line}: #{msg}"
+      if @filename && file_exists?(@filename)
+        if @filename.is_a?(VirtualFile)
+          lines = @filename.source.lines.to_a
+          str << "in macro '#{@filename.macro.name}' #{@filename.macro.filename}:#{@filename.macro.line_number}, line #{@line}:\n\n"
+          str << lines.to_s_with_line_numbers
+        else
+          lines = File.readlines @filename
+          str << "in #{@filename}:#{@line}: #{msg}"
+        end
       else
         lines = source ? source.lines.to_a : nil
         if @line
@@ -112,6 +118,10 @@ module Crystal
       end
     end
 
+    def file_exists?(filename)
+      filename.is_a?(VirtualFile) || File.file?(filename)
+    end
+
     def has_location?
       if inner && inner.has_location?
         true
@@ -131,5 +141,4 @@ module Crystal
 
   class FrozenTypeException < TypeException
   end
-
 end

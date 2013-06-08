@@ -700,6 +700,7 @@ module Crystal
 
       begin
         parser = Parser.new(generated_source, [Set.new(@vars.keys)])
+        parser.filename = VirtualFile.new(untyped_def, generated_source)
         generated_nodes = parser.parse
       rescue Crystal::SyntaxException => ex
         node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{'=' * 80}\n#{'-' * 80}\n#{number_lines generated_source}\n#{'-' * 80}\n#{ex.to_s(generated_source)}#{'=' * 80}"
@@ -720,7 +721,7 @@ module Crystal
     end
 
     def number_lines(source)
-      source.lines.each_with_index.map { |line, i| "#{'%3d' % (i + 1)}. #{line.chomp}" }.join "\n"
+      source.lines.to_s_with_line_numbers
     end
 
     def visit_return(node)
