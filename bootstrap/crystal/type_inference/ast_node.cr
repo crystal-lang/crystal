@@ -15,7 +15,7 @@ module Crystal
     end
 
     def bind_to(node)
-      @dependencies ||= [] of ASTNode?
+      @dependencies ||= [] of ASTNode
       @dependencies << node
       node.add_observer self
 
@@ -33,7 +33,7 @@ module Crystal
     end
 
     def add_observer(observer)
-      @observers ||= [] of ASTNode?
+      @observers ||= [] of ASTNode
       @observers << observer
     end
 

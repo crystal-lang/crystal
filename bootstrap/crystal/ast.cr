@@ -12,15 +12,15 @@ module Crystal
     end
 
     def self.[]
-      [] of ASTNode?
+      [] of ASTNode
     end
 
     def self.[](node)
-      [node] of ASTNode?
+      [node] of ASTNode
     end
 
     def self.[](node1, node2)
-      [node1, node2] of ASTNode?
+      [node1, node2] of ASTNode
     end
   end
 

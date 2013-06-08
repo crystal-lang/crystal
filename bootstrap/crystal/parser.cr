@@ -138,7 +138,7 @@ module Crystal
             assign.location = location
             atomic = Or.new(atomic, assign)
           else
-            call = Call.new(atomic, method, [value] of ASTNode?, nil, method_column_number)
+            call = Call.new(atomic, method, [value] of ASTNode, nil, method_column_number)
             call.location = location
             atomic = Assign.new(atomic, call)
           end
@@ -209,11 +209,11 @@ module Crystal
 
     parse_operator :or, :and, "Or.new left, right", ":\"||\""
     parse_operator :and, :equality, "And.new left, right", ":\"&&\""
-    parse_operator :equality, :cmp, "Call.new left, method, [right] of ASTNode?, nil, method_column_number", ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
-    parse_operator :cmp, :logical_or, "Call.new left, method, [right] of ASTNode?, nil, method_column_number", ":\"==\", :\"!=\", :\"=~\", :\"===\""
-    parse_operator :logical_or, :logical_and, "Call.new left, method, [right] of ASTNode?, nil, method_column_number", ":\"|\", :\"^\""
-    parse_operator :logical_and, :shift, "Call.new left, method, [right] of ASTNode?, nil, method_column_number", ":\"&\""
-    parse_operator :shift, :add_or_sub, "Call.new left, method, [right] of ASTNode?, nil, method_column_number", ":\"<<\", :\">>\""
+    parse_operator :equality, :cmp, "Call.new left, method, [right] of ASTNode, nil, method_column_number", ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
+    parse_operator :cmp, :logical_or, "Call.new left, method, [right] of ASTNode, nil, method_column_number", ":\"==\", :\"!=\", :\"=~\", :\"===\""
+    parse_operator :logical_or, :logical_and, "Call.new left, method, [right] of ASTNode, nil, method_column_number", ":\"|\", :\"^\""
+    parse_operator :logical_and, :shift, "Call.new left, method, [right] of ASTNode, nil, method_column_number", ":\"&\""
+    parse_operator :shift, :add_or_sub, "Call.new left, method, [right] of ASTNode, nil, method_column_number", ":\"<<\", :\">>\""
 
     def parse_add_or_sub
       location = @token.location
@@ -229,7 +229,7 @@ module Crystal
           method_column_number = @token.column_number
           next_token_skip_space_or_newline
           right = parse_mul_or_div
-          left = Call.new left, method, [right] of ASTNode?, nil, method_column_number
+          left = Call.new left, method, [right] of ASTNode, nil, method_column_number
         when :INT, :LONG, :FLOAT, :DOUBLE
           type = case @token.type
                  when :INT then IntLiteral
@@ -239,10 +239,10 @@ module Crystal
                  end
           case @token.value.to_s[0]
           when '+'
-            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s)] of ASTNode?, nil, @token.column_number
+            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s)] of ASTNode, nil, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s[1, @token.value.to_s.length - 1])] of ASTNode?, nil, @token.column_number
+            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s[1, @token.value.to_s.length - 1])] of ASTNode, nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -253,7 +253,7 @@ module Crystal
       end
     end
 
-    parse_operator :mul_or_div, :prefix, "Call.new left, method, [right] of ASTNode?, nil, method_column_number", ":\"*\", :\"/\", :\"%\""
+    parse_operator :mul_or_div, :prefix, "Call.new left, method, [right] of ASTNode, nil, method_column_number", ":\"*\", :\"/\", :\"%\""
 
     def parse_prefix
       column_number = @token.column_number
@@ -275,7 +275,7 @@ module Crystal
       end
     end
 
-    parse_operator :pow, :atomic_with_method, "Call.new left, method, [right] of ASTNode?, nil, method_column_number", ":\"**\""
+    parse_operator :pow, :atomic_with_method, "Call.new left, method, [right] of ASTNode, nil, method_column_number", ":\"**\""
 
     def parse_atomic_with_method
       location = @token.location
@@ -304,14 +304,14 @@ module Crystal
               # Rewrite 'f.x = args' as f.x=(args)
               next_token_skip_space_or_newline
               args = parse_args_space_consumed(true)
-              atomic = Call.new(atomic, "#{name}=", args, nil, name_column_number)
+              atomic = Call.new(atomic, "#{name}=", (args || ASTNode[]), nil, name_column_number)
               keep_processing = false
             when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
               # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
               method = @token.type.to_s[0, @token.type.to_s.length - 1]
               next_token_skip_space
               value = parse_expression
-              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name, ASTNode[], nil, name_column_number), method, [value] of ASTNode?, nil, name_column_number)] of ASTNode?, nil, name_column_number)
+              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name, ASTNode[], nil, name_column_number), method, [value] of ASTNode, nil, name_column_number)] of ASTNode, nil, name_column_number)
               keep_processing = false
             else
               args = parse_args_space_consumed
