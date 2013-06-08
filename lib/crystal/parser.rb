@@ -1364,7 +1364,7 @@ module Crystal
       body = parse_lib_body
 
       check_ident :end
-      next_token_skip_statement_end
+      next_token_skip_space
 
       LibDef.new name, libname, body, name_column_number
     end
