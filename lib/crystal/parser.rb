@@ -141,7 +141,6 @@ module Crystal
             end
 
             atomic = Var.new(atomic.name) if atomic.is_a?(Call)
-            push_var atomic if atomic.is_a?(Var)
 
             next_token_skip_space_or_newline
 
@@ -149,6 +148,8 @@ module Crystal
             push_def if atomic.is_a?(Ident)
             value = parse_op_assign
             pop_def if atomic.is_a?(Ident)
+
+            push_var atomic if atomic.is_a?(Var)
 
             atomic = Assign.new(atomic, value)
           end

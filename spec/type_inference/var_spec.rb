@@ -39,4 +39,9 @@ describe 'Type inference: var' do
     assert_syntax_error "a += 1",
       "'+=' before definition of 'a'"
   end
+
+  it "reports read before assignment" do
+    assert_error "a = a + 1",
+      "undefined local variable or method 'a'"
+  end
 end
