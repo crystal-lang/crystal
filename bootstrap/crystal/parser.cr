@@ -749,13 +749,9 @@ module Crystal
       else
         if args
           if is_var?(name) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign)
-            # TODO: don't repeat this
-            num = args[0]
-            if num.is_a?(NumberLiteral)
-              sign = num.value[0].to_s
-              num.value = num.value[1, num.value.length - 1]
-              Call.new(Var.new(name), sign, args)
-            end
+            sign = num.value[0].to_s
+            num.value = num.value[1, num.value.length - 1]
+            Call.new(Var.new(name), sign, args)
           else
             check_maybe_recursive name
             Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
