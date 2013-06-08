@@ -712,13 +712,20 @@ module Crystal
 
     attr_reader :generic_class
     attr_reader :type_vars
+    attr_reader :subclasses
     attr_accessor :allocated
 
     delegate [:program, :abstract, :superclass, :depth, :defs, :sorted_defs, :macros, :instance_vars_in_initialize, :owned_instance_vars] => :generic_class
 
     def initialize(generic_class, type_vars)
       @generic_class = generic_class
+      @generic_class.superclass.subclasses << self
+      @subclasses = []
       @type_vars = type_vars
+    end
+
+    def hierarchy_type
+      @hierarchy_type ||= HierarchyType.new(self)
     end
 
     def class?

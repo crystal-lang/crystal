@@ -115,4 +115,28 @@ describe 'Code gen: class' do
       Bar.new.foo
       )).to_i.should eq(1)
   end
+
+  it "codgens virtual method of generic class" do
+    run(%Q(
+      require "char"
+
+      class Object
+        def foo
+          bar
+        end
+
+        def bar
+          'a'
+        end
+      end
+
+      class Foo(T)
+        def bar
+          1
+        end
+      end
+
+      Foo(Int).new.foo.to_i
+      )).to_i.should eq(1)
+  end
 end

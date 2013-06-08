@@ -283,4 +283,28 @@ describe 'Type inference: class' do
     assert_error "Reference.new 1",
       "wrong number of arguments"
   end
+
+  it "types virtual method of generic class" do
+    assert_type(%q(
+      require "char"
+
+      class Object
+        def foo
+          bar
+        end
+
+        def bar
+          'a'
+        end
+      end
+
+      class Foo(T)
+        def bar
+          1
+        end
+      end
+
+      Foo(Int).new.foo
+      )) { union_of(int, char) }
+  end
 end
