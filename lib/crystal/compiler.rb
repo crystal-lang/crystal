@@ -52,6 +52,9 @@ module Crystal
         opts.on('-stats', 'Enable statistics output') do
           @options[:stats] = true
         end
+        opts.on('-no-prelude', "Don't require \"prelude\"") do
+          @options[:no_prelude] = true
+        end
       end.parse!
 
       if !@options[:output_filename] && ::ARGV.length > 0
@@ -86,8 +89,10 @@ module Crystal
           node = parser.parse
         end
 
-        require_node = Require.new(StringLiteral.new("prelude"))
-        node = node ? Expressions.new([require_node, node]) : require_node
+        unless @options[:no_prelude]
+          require_node = Require.new(StringLiteral.new("prelude"))
+          node = node ? Expressions.new([require_node, node]) : require_node
+        end
 
         with_stats_or_profile('normalize') do
           node = program.normalize node
