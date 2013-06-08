@@ -416,6 +416,7 @@ module Crystal
       const_type = node.const.type.instance_type
 
       if obj_type.is_a?(HierarchyType)
+        # TODO: this is wrong: we must check if the *runtime* type implements const_type
         is_a = obj_type.base_type.implements?(const_type)
         @last = int1(is_a ? 1 : 0)
       elsif obj_type.union?
@@ -1321,12 +1322,8 @@ module Crystal
 
     def codegen_assign(pointer, target_type, value_type, value)
       if target_type == value_type
-        if target_type.union?
-          value = @builder.load value
-          @builder.store value, pointer
-        else
-          @builder.store value, pointer
-        end
+        value = @builder.load value if target_type.union?
+        @builder.store value, pointer
       else
         assign_to_union(pointer, target_type, value_type, value)
       end
