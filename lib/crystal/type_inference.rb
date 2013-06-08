@@ -470,12 +470,20 @@ module Crystal
     end
 
     def end_visit_while(node)
-      node.bind_to mod.nil_var
+      if !node.has_breaks && node.cond.is_a?(BoolLiteral) && node.cond.value == true
+        node.type = mod.no_return
+      else
+        node.bind_to mod.nil_var
+      end
     end
 
     def end_visit_break(node)
       container = @while_stack.last || (block && block.break)
       node.raise "Invalid break" unless container
+
+      if container.is_a?(While)
+        container.has_breaks = true
+      end
 
       if node.exps.length > 0
         container.bind_to node.exps[0]

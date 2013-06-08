@@ -383,8 +383,6 @@ describe 'Code gen: block' do
 
   it "break from block with value" do
     run(%q(
-      require "nil"
-
       def foo
         while true
           yield
@@ -394,7 +392,7 @@ describe 'Code gen: block' do
 
       foo do
         break 1
-      end.to_i
+      end
     )).to_i.should eq(1)
   end
 

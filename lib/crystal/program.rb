@@ -56,7 +56,7 @@ module Crystal
 
       @requires = Set.new
 
-      @nil_var = Var.new('nil', self.nil)
+      @nil_var = Var.new('<nil_var>', self.nil)
       @temp_var_counter = 0
 
       define_primitives

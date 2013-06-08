@@ -77,4 +77,8 @@ module Crystal
       @instances && @instances[arg_types]
     end
   end
+
+  class While
+    attr_accessor :has_breaks
+  end
 end
