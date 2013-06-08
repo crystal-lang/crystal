@@ -38,17 +38,20 @@ module Crystal
   end
 
   class AndTypeFilter
-    def initialize(filter1, filter2)
-      @filter1 = filter1
-      @filter2 = filter2
+    def initialize(*filters)
+      @filters = filters.uniq
     end
 
     def apply(other)
-      @filter2.apply(@filter1.apply(other))
+      type = other
+      @filters.each do |filter|
+        type = filter.apply(type)
+      end
+      type
     end
 
     def to_s
-      "(#{@filter1} && #{@filter2})"
+      "(#{@filters.join ' && '})"
     end
   end
 

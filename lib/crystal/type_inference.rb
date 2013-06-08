@@ -312,14 +312,16 @@ module Crystal
       var = lookup_var node.name
       filter = build_var_filter var
       node.bind_to(filter || var)
-      node.type_filters = {node.name => NotNilFilter}
+      node.type_filters = and_type_filters({node.name => NotNilFilter}, var.type_filters)
     end
 
     def build_var_filter(var)
       filters = @type_filter_stack.map { |hash| hash[var.name] }.compact
       return if filters.empty?
 
-      filtered_node = TypeFilteredNode.new(filters.last)
+      final_filter = filters.length == 1 ? filters[0] : AndTypeFilter.new(*filters)
+
+      filtered_node = TypeFilteredNode.new(final_filter)
       filtered_node.bind_to var
       filtered_node
     end
@@ -409,7 +411,7 @@ module Crystal
           var.bind_to value
         end
 
-        node.type_filters = and_type_filters({target.name => NotNilFilter}, node.value.type_filters) if node
+        var.type_filters = node.type_filters = and_type_filters({target.name => NotNilFilter}, node.value.type_filters) if node
       when InstanceVar
         value.accept self
 

@@ -179,4 +179,22 @@ describe 'Type inference: nil' do
       1
       )) { int }
   end
+
+  it "restricts type when using previously assigned var" do
+    assert_type(%q(
+      class Foo
+        def bar
+          1
+        end
+      end
+
+      f = Foo.new || nil
+      x = f
+      if x
+        f.bar
+      else
+        2
+      end
+      )) { int }
+  end
 end
