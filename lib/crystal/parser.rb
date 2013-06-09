@@ -1529,8 +1529,17 @@ module Crystal
           when :end
             break
           else
-            name = @token.value
+            names = []
+            names << @token.value
+
             next_token_skip_space_or_newline
+
+            while @token.type == :','
+              next_token_skip_space_or_newline
+              check :IDENT
+              names << @token.value
+              next_token_skip_space_or_newline
+            end
 
             check :':'
             next_token_skip_space_or_newline
@@ -1540,7 +1549,9 @@ module Crystal
 
             skip_statement_end
 
-            fields << FunDefArg.new(name, type, ptr)
+            names.each do |name|
+              fields << FunDefArg.new(name, type, ptr)
+            end
           end
         else
           break

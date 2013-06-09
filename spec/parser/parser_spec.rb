@@ -304,8 +304,10 @@ describe Parser do
   it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident), FunDefArg.new('y', 'Float'.ident)])])
   it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident, 1)])])
   it_parses "lib C; struct Foo; x : Int**; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident, 2)])])
+  it_parses "lib C; struct Foo; x, y, z : Int; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident), FunDefArg.new('y', 'Int'.ident), FunDefArg.new('z', 'Int'.ident)])]), focus: true
   it_parses "lib C; Foo = 1; end", LibDef.new('C', nil, [Assign.new("Foo".ident, 1.int)])
   it_parses "lib C\nfun getch = GetChar\nend", LibDef.new('C', nil, [FunDef.new('getch', [], nil, 0, false, 'GetChar')])
+
 
   it_parses "1 .. 2", RangeLiteral.new(1.int, 2.int, false)
   it_parses "1 ... 2", RangeLiteral.new(1.int, 2.int, true)
@@ -362,7 +364,7 @@ describe Parser do
 
   it_parses %q("foo#{bar}baz"), StringInterpolation.new([StringLiteral.new("foo"), "bar".call, StringLiteral.new("baz")])
 
-  it_parses %Q(lib Foo\nend\nif true\nend), [LibDef.new("Foo"), If.new(true.bool)], focus: true
+  it_parses %Q(lib Foo\nend\nif true\nend), [LibDef.new("Foo"), If.new(true.bool)]
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
