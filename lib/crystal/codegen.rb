@@ -1070,7 +1070,31 @@ module Crystal
         @fun = old_fun
       end
 
+      # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call
+      has_struct_out_arguments = target_def.is_a?(External) && target_def.args.any? { |arg| arg.out && arg.type.struct? }
+      if has_struct_out_arguments
+        old_call_args = call_args.clone
+        call_args = call_args.each_with_index.map do |call_arg, i|
+          arg = target_def.args[i]
+          if arg.out && arg.type.struct?
+            alloca arg.type.llvm_struct_type
+          else
+            call_arg
+          end
+        end
+      end
+
       @last = @builder.call fun, *call_args
+
+      if has_struct_out_arguments
+        call_args.each_with_index do |call_arg, i|
+          arg = target_def.args[i]
+          if arg.out && arg.type.struct?
+            @builder.store call_arg, old_call_args[i]
+          end
+        end
+      end
+
       if target_def.type.no_return?
         @builder.unreachable
       end
