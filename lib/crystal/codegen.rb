@@ -1193,6 +1193,9 @@ module Crystal
 
       exit_block = new_block "exit"
 
+      is_union = node.type.union?
+      union_ptr = alloca node.llvm_type if is_union
+
       if node.obj
         owner = node.obj.type
         node.obj.accept(self)
@@ -1214,7 +1217,7 @@ module Crystal
         end
       end
 
-      phi_table = {}
+      phi_table = {} unless is_union
       call = Call.new(node.obj ? CastedVar.new("%self") : nil, node.name, node.args.length.times.map { |i| CastedVar.new("%arg#{i}") }, node.block)
       call.scope = node.scope
 
@@ -1284,10 +1287,8 @@ module Crystal
             @builder.unreachable
           else
             unless call.returns?
-              if node.type.union?
-                phi_value = alloca node.llvm_type
-                assign_to_union(phi_value, node.type, a_def.type, @last)
-                phi_table[@builder.insert_block] = phi_value
+              if is_union
+                assign_to_union(union_ptr, node.type, a_def.type, @last)
               elsif node.type.nilable? && @last.type.kind == :integer
                 phi_table[@builder.insert_block] = @builder.int2ptr @last, node.llvm_type
               else
@@ -1310,8 +1311,8 @@ module Crystal
       if node.returns?
         @builder.unreachable
       else
-        if node.type.union?
-          @last = @builder.phi LLVM::Pointer(node.llvm_type), phi_table
+        if is_union
+          @last = union_ptr
         else
           @last = @builder.phi node.llvm_type, phi_table
         end
