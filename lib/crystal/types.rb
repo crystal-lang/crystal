@@ -1085,12 +1085,18 @@ module Crystal
       end
     end
 
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+      # Convert name to String, because when using a keyword as a field it comes as s Symbol.
+      # TODO: this should actually be fixed in the parser: it should never generate symbols, always strings for names
+      super(name.to_s, arg_types, yields, owner, type_lookup)
+    end
+
     def struct?
       true
     end
 
     def parents
-      nil
+      []
     end
 
     def metaclass

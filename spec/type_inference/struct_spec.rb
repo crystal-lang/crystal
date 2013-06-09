@@ -21,4 +21,8 @@ describe 'Type inference: struct' do
   it "types struct getter" do
     assert_type("lib Foo; struct Bar; x : Int; y : Float; end; end; bar = Foo::Bar.new; bar.x") { int }
   end
+
+  it "types struct getter with keyword name" do
+    assert_type("lib Foo; struct Bar; type : Int; end; end; bar = Foo::Bar.new; bar.type") { int }
+  end
 end
