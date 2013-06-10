@@ -38,6 +38,10 @@ module Crystal
         has_underscore = self[1]
         @token.type = scan(/L/) ? :LONG : :INT
         @token.value = (has_underscore ? match.gsub('_', '') : match).to_i(16).to_s
+      elsif match = scan(/(?:\+|-)?0b(?:0|1)(?:(_(?:0|1))|(?:0|1))*/)
+        has_underscore = self[1]
+        @token.type = scan(/L/) ? :LONG : :INT
+        @token.value = (has_underscore ? match.gsub('_', '') : match).to_i(2).to_s
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*/)
         has_underscore = self[1]
         @token.type = scan(/L/) ? :LONG : :INT
