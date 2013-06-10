@@ -2,6 +2,8 @@ require 'strscan'
 
 module Crystal
   class Lexer < StringScanner
+    MAX_INT = 2 ** 31 - 1
+
     def initialize(str)
       super
       @token = Token.new
@@ -37,7 +39,9 @@ module Crystal
       elsif match = scan(/(?:\+|-)?0x(?:\d|a|A|b|B|c|C|d|D|e|E|f|F)(?:(_(?:\d|a|A|b|B|c|C|d|D|e|E|f|F))|(?:\d|a|A|b|B|c|C|d|D|e|E|f|F))*/)
         has_underscore = self[1]
         @token.type = scan(/L/) ? :LONG : :INT
-        @token.value = (has_underscore ? match.gsub('_', '') : match).to_i(16).to_s
+        num = (has_underscore ? match.gsub('_', '') : match).to_i(16)
+        @token.type = :LONG if num > MAX_INT
+        @token.value = num.to_s
       elsif match = scan(/(?:\+|-)?0b(?:0|1)(?:(_(?:0|1))|(?:0|1))*/)
         has_underscore = self[1]
         @token.type = scan(/L/) ? :LONG : :INT
@@ -45,7 +49,9 @@ module Crystal
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*/)
         has_underscore = self[1]
         @token.type = scan(/L/) ? :LONG : :INT
-        @token.value = has_underscore ? match.gsub('_', '') : match
+        str = has_underscore ? match.gsub('_', '') : match
+        @token.type = :LONG if str.to_i > MAX_INT
+        @token.value = str
       elsif match = scan(/'\\n'/)
         @token.type = :CHAR
         @token.value = ?\n.ord
