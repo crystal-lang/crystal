@@ -171,7 +171,16 @@ module Crystal
       when SelfType
         arg_type && arg_type.restrict(owner)
       when NewGenericClass
+        if arg_type.is_a?(UnionType)
+          arg_type.each do |arg_type2|
+            if match_arg(arg_type2, restriction, owner, type_lookup, free_vars)
+              return arg_type2
+            end
+          end
+          nil
+        else
         arg_type && arg_type.generic? && match_generic_type(arg_type, restriction, owner, type_lookup, free_vars) && arg_type
+        end
       when Ident
         type = free_vars[restriction.names] || type_lookup.lookup_type(restriction.names)
         if type

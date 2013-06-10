@@ -421,4 +421,22 @@ describe 'Type inference: def overload' do
       foo(x, x)
     )) { int }
   end
+
+  it "restricts union to generic class" do
+    assert_type(%q(
+      class Foo(T)
+      end
+
+      def foo(x : Foo(T))
+        1
+      end
+
+      def foo(x : Int)
+        'a'
+      end
+
+      x = 1 || Foo(Int).new
+      foo(x)
+      )) { union_of(int, char) }
+  end
 end
