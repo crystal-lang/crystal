@@ -3,6 +3,7 @@ require 'strscan'
 module Crystal
   class Lexer < StringScanner
     MAX_INT = 2 ** 31 - 1
+    MIN_INT = -2 ** 31
 
     def initialize(str)
       super
@@ -40,7 +41,7 @@ module Crystal
         has_underscore = self[1]
         @token.type = scan(/L/) ? :LONG : :INT
         num = (has_underscore ? match.gsub('_', '') : match).to_i(16)
-        @token.type = :LONG if num > MAX_INT
+        @token.type = :LONG if num > MAX_INT || num < MIN_INT
         @token.value = num.to_s
       elsif match = scan(/(?:\+|-)?0b(?:0|1)(?:(_(?:0|1))|(?:0|1))*/)
         has_underscore = self[1]
@@ -50,7 +51,8 @@ module Crystal
         has_underscore = self[1]
         @token.type = scan(/L/) ? :LONG : :INT
         str = has_underscore ? match.gsub('_', '') : match
-        @token.type = :LONG if str.to_i > MAX_INT
+        num = str.to_i
+        @token.type = :LONG if num > MAX_INT || num < MIN_INT
         @token.value = str
       elsif match = scan(/'\\n'/)
         @token.type = :CHAR
