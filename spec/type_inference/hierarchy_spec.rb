@@ -491,4 +491,34 @@ describe 'Type inference: hierarchy' do
       f.foo
       )) { self.nil }
   end
+
+  it "recalcualtes hierarchy type when subclass is added" do
+    assert_type(%q(
+      class Foo
+        def foo
+          nil
+        end
+      end
+
+      class Bar(T) < Foo
+        def initialize(x : T)
+          @x = x
+        end
+
+        def foo
+          @x
+        end
+      end
+
+      def coco(x)
+        x.foo
+      end
+
+      a = Foo.new || Bar.new(1)
+      b = coco(a)
+
+      a2 = Foo.new || Bar.new('a')
+      b2 = coco(a2)
+      )) { union_of(self.nil, int, char) }
+  end
 end

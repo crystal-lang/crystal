@@ -34,6 +34,7 @@ module Crystal
 
       unbind_from *@target_defs if @target_defs
       unbind_from block.break if block
+      @subclass_notifier.remove_subclass_observer(self) if @subclass_notifier
 
       if obj
         if obj.type.is_a?(UnionType)
@@ -60,7 +61,7 @@ module Crystal
 
     def lookup_matches_in(owner, self_type = owner, def_name = self.name)
       arg_types = args.map(&:type)
-      matches = owner.lookup_matches(def_name, arg_types, !!block) rescue binding.pry
+      matches = owner.lookup_matches(def_name, arg_types, !!block)
 
       if matches.empty?
         if def_name == 'new' && owner.metaclass? && owner.instance_type.class? && !owner.instance_type.pointer?
@@ -88,6 +89,11 @@ module Crystal
         raise_matches_not_found(matches.owner || owner, def_name, matches)
       end
 
+      if owner.hierarchy?
+        owner.base_type.add_subclass_observer(self)
+        @subclass_notifier = owner.base_type
+      end
+
       typed_defs = matches.map do |match|
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg || match.def.yields == 0
@@ -107,6 +113,11 @@ module Crystal
         end
         typed_def
       end
+    end
+
+    def on_new_subclass
+      @types_signature = nil
+      recalculate
     end
 
     def match_block_arg(match)

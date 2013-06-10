@@ -555,7 +555,34 @@ module Crystal
     end
   end
 
+  module InheritableClass
+    def add_subclass(subclass)
+      subclasses << subclass
+      notify_subclass_added
+      superclass.notify_subclass_added if superclass
+    end
+
+    def add_subclass_observer(observer)
+      @subclass_observers ||= []
+      @subclass_observers << observer
+    end
+
+    def remove_subclass_observer(observer)
+      @subclass_observers.delete(observer) if @subclass_observers
+    end
+
+    def notify_subclass_added
+      if @subclass_observers
+        @subclass_observers.each do |observer|
+          observer.on_new_subclass
+        end
+      end
+    end
+  end
+
   class ClassType < ModuleType
+    include InheritableClass
+
     attr_reader :superclass
     attr_reader :subclasses
     attr_reader :depth
@@ -568,7 +595,6 @@ module Crystal
       super(container, name)
       if superclass
         @superclass = superclass
-        @superclass.subclasses << self
         @depth = superclass.depth + 1
       else
         @depth = 0
@@ -576,6 +602,8 @@ module Crystal
       @subclasses = []
       @parents = [superclass] if superclass
       @owned_instance_vars = Set.new
+
+      @superclass.add_subclass(self) if @superclass
     end
 
      def allocated=(allocated)
@@ -706,6 +734,7 @@ module Crystal
   end
 
   class GenericClassInstanceType < Type
+    include InheritableClass
     include InstanceVarContainer
     include DefInstanceContainer
     include MatchesLookup
@@ -719,9 +748,10 @@ module Crystal
 
     def initialize(generic_class, type_vars)
       @generic_class = generic_class
-      @generic_class.superclass.subclasses << self
       @subclasses = []
       @type_vars = type_vars
+
+      @generic_class.superclass.add_subclass(self)
     end
 
     def hierarchy_type
