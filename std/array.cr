@@ -153,7 +153,7 @@ class Array(T)
     ary = Array(T).new(Math.min(length, other.length))
     i = 0
     each do |obj|
-      if hash[obj]
+      if hash.has_key?(obj)
         ary.buffer[i] = obj
         i += 1
       end
@@ -172,7 +172,7 @@ class Array(T)
       hash[obj] = true
     end
     other.each do |obj|
-      unless hash[obj]
+      unless hash.has_key?(obj)
         ary.buffer[i] = obj
         i += 1
       end
@@ -185,7 +185,7 @@ class Array(T)
     ary = Array(T).new(length - other.length)
     hash = other.each_with_object(Hash(T, Bool).new) { |o, h| h[o] = true }
     each do |obj|
-      ary << obj unless hash[obj]
+      ary << obj unless hash.has_key?(obj)
     end
     ary
   end
