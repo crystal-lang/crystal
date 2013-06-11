@@ -32,29 +32,29 @@ module Crystal
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*\.\d(?:(_\d)|\d)*(?:e(?:\+|-)?\d+)?/)
         has_underscore = self[1] || self[2]
         @token.type = :NUMBER
-        @token.number_kind = scan(/f/i) ? :f32 : :f64
+        lex_float_suffix :f64
         @token.value = has_underscore ? match.gsub('_', '') : match
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*e(?:\+|-)?\d+/)
         has_underscore = self[1] || self[2]
         @token.type = :NUMBER
-        @token.number_kind = scan(/f/i) ? :f32 : :f64
+        lex_float_suffix :f64
         @token.value = has_underscore ? match.gsub('_', '') : match
       elsif match = scan(/(?:\+|-)?0x(?:\d|a|A|b|B|c|C|d|D|e|E|f|F)(?:(_(?:\d|a|A|b|B|c|C|d|D|e|E|f|F))|(?:\d|a|A|b|B|c|C|d|D|e|E|f|F))*/)
         has_underscore = self[1]
         @token.type = :NUMBER
-        @token.number_kind = scan(/L/) ? :i64 : :i32
+        lex_integer_suffix :i32
         num = (has_underscore ? match.gsub('_', '') : match).to_i(16)
         @token.number_kind = :i64 if num > MAX_INT || num < MIN_INT
         @token.value = num.to_s
       elsif match = scan(/(?:\+|-)?0b(?:0|1)(?:(_(?:0|1))|(?:0|1))*/)
         has_underscore = self[1]
         @token.type = :NUMBER
-        @token.number_kind = scan(/L/) ? :i64 : :i32
+        lex_integer_suffix :i32
         @token.value = (has_underscore ? match.gsub('_', '') : match).to_i(2).to_s
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*/)
         has_underscore = self[1]
         @token.type = :NUMBER
-        @token.number_kind = scan(/L/) ? :i64 : :i32
+        lex_suffix :i32
         str = has_underscore ? match.gsub('_', '') : match
         num = str.to_i
         @token.number_kind = :i64 if num > MAX_INT || num < MIN_INT
@@ -145,6 +145,30 @@ module Crystal
       end
 
       @token
+    end
+
+    def lex_suffix(default)
+      if scan(/_?((?:i|u|f)(?:8|16|32|64))/)
+        @token.number_kind = self[1].to_sym
+      else
+        @token.number_kind = default
+      end
+    end
+
+    def lex_integer_suffix(default)
+      if scan(/_?((?:i|u)(?:8|16|32|64))/)
+        @token.number_kind = self[1].to_sym
+      else
+        @token.number_kind = default
+      end
+    end
+
+    def lex_float_suffix(default)
+      if scan(/_?(f(?:8|16|32|64))/)
+        @token.number_kind = self[1].to_sym
+      else
+        @token.number_kind = default
+      end
     end
 
     def next_string_token

@@ -71,7 +71,7 @@ def run(code)
 end
 
 def permutate_primitive_types
-  [['Int32', ''], ['Int64', 'L'], ['Float32', '.0f'], ['Float64', '.0']].repeated_permutation(2) do |p1, p2|
+  [['Int32', ''], ['Int64', 'i64'], ['Float32', 'f32'], ['Float64', 'f64']].repeated_permutation(2) do |p1, p2|
     type1, suffix1 = p1
     type2, suffix2 = p2
     yield type1, type2, suffix1, suffix2

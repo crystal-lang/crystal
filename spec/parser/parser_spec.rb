@@ -17,17 +17,18 @@ describe Parser do
   it_parses "+1", 1.int32
   it_parses "-1", -1.int32
 
-  it_parses "1L", 1.int64
-  it_parses "+1L", 1.int64
-  it_parses "-1L", -1.int64
+  it_parses "1_i64", 1.int64
+  it_parses "+1_i64", 1.int64
+  it_parses "-1_i64", -1.int64
 
-  it_parses "1.0f", 1.0.float32
-  it_parses "+1.0f", 1.0.float32
-  it_parses "-1.0f", -1.0.float32
+  it_parses "1.0_f32", 1.0.float32
+  it_parses "+1.0_f32", 1.0.float32
+  it_parses "-1.0_f32", -1.0.float32
 
   it_parses "1.0", 1.0.float64
   it_parses "+1.0", 1.0.float64
   it_parses "-1.0", -1.0.float64
+  it_parses "-1.0_f64", -1.0.float64
 
   it_parses "'a'", CharLiteral.new(?a.ord)
 
@@ -54,8 +55,8 @@ describe Parser do
   it_parses "1 -2", Call.new(1.int32, :"-", [2.int32])
   it_parses "1 +2.0", Call.new(1.int32, :"+", [2.float64])
   it_parses "1 -2.0", Call.new(1.int32, :"-", [2.float64])
-  it_parses "1 +2L", Call.new(1.int32, :"+", [2.int64])
-  it_parses "1 -2L", Call.new(1.int32, :"-", [2.int64])
+  it_parses "1 + 2_i64", Call.new(1.int32, :"+", [2.int64])
+  it_parses "1 -2_i64", Call.new(1.int32, :"-", [2.int64])
   it_parses "1\n+2", [1.int32, 2.int32]
   it_parses "1;+2", [1.int32, 2.int32]
   it_parses "1 - 2", Call.new(1.int32, :"-", [2.int32])
@@ -146,7 +147,7 @@ describe Parser do
   it_parses "foo + 1", Call.new("foo".call, :"+", [1.int32])
   it_parses "foo +1", Call.new(nil, "foo", [1.int32])
   it_parses "foo +1.0", Call.new(nil, "foo", [1.float64])
-  it_parses "foo +1L", Call.new(nil, "foo", [1.int64])
+  it_parses "foo +1_i64", Call.new(nil, "foo", [1.int64])
   it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, :+, [1.int32])]
   it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, :-, [1.int32])]
 

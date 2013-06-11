@@ -61,7 +61,7 @@ describe 'Code gen: pointer' do
   end
 
   it "codegens pointer cast" do
-    run('a = 1L; a.ptr.as(Int32).value').to_i.should eq(1)
+    run('a = 1_i64; a.ptr.as(Int32).value').to_i.should eq(1)
   end
 
   it "gets pointer of instance variable in hierarchy type" do

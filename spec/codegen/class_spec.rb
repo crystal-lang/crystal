@@ -29,7 +29,7 @@ describe 'Code gen: class' do
       end
 
       f = Foo(Int).new(2)
-      g = Foo(Float).new(0.5f)
+      g = Foo(Float).new(0.5_f32)
       f.coco + g.coco
       )).to_f.should eq(2.5)
   end

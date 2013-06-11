@@ -14,18 +14,18 @@ class Regexp
     @source = str
     errptr = Pointer(Char).malloc(0)
     erroffset = 1
-    @re = PCRE.compile(str, 8, errptr.ptr, erroffset.ptr, 0L)
+    @re = PCRE.compile(str, 8, errptr.ptr, erroffset.ptr, 0_i64)
     if @re == 0
       raise "#{String.from_cstr(errptr)} at #{erroffset}"
     end
     @captures = 0
-    PCRE.full_info(@re, 0L, PCRE::INFO_CAPTURECOUNT, @captures.ptr.as(Void))
+    PCRE.full_info(@re, 0_i64, PCRE::INFO_CAPTURECOUNT, @captures.ptr.as(Void))
   end
 
   def match(str, pos = 0, options = 0)
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size * 4)
-    ret = PCRE.exec(@re, 0L, str, str.length, pos, options, ovector, ovector_size)
+    ret = PCRE.exec(@re, 0_i64, str, str.length, pos, options, ovector, ovector_size)
     return nil unless ret > 0
     MatchData.new(self, str, pos, ovector)
   end

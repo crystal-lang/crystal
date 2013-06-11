@@ -65,7 +65,17 @@ describe Lexer do
         it_lexes arg[0], :NUMBER, arg[1], number_kind
       else
         arg_match = arg
-        arg_match = arg[0 ... -1] if arg.end_with?('L') || arg.end_with?('f')
+        if arg.end_with?('_i16') || arg.end_with?('_i32') || arg.end_with?('_i64') ||
+           arg.end_with?('_u16') || arg.end_with?('_u32') || arg.end_with?('_u64') ||
+           arg.end_with?('_f32') || arg.end_with?('_f64')
+          arg_match = arg[0 ... -4]
+        elsif arg.end_with?('i16') || arg.end_with?('i32') || arg.end_with?('i64') || arg.end_with?('_i8') ||
+              arg.end_with?('u16') || arg.end_with?('u32') || arg.end_with?('u64') || arg.end_with?('_u8') ||
+              arg.end_with?('f32') || arg.end_with?('f64')
+          arg_match = arg[0 ... -3]
+        elsif arg.end_with?('i8') || arg.end_with?('u8')
+          arg_match = arg[0 ... -2]
+        end
         it_lexes arg, :NUMBER, arg_match, number_kind
       end
     end
@@ -101,11 +111,25 @@ describe Lexer do
   it_lexes_idents "def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"
   it_lexes_idents "def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"
   it_lexes_i32 "1", ["1hello", "1"], ["1_000", "1000"], ["100_000", "100000"], ["1__0", "1"], "+1", "-1", ["0xFFFF", "65535"], ["0xabcdef", "11259375"], ["0b1010", "10"]
-  it_lexes_f32 "1.0f", ["1.0fhello", "1.0"], ["1234.567_890f", "1234.567890"], ["1_234.567_890f", "1234.567890"], "+1.0f", "-1.0f"
-  it_lexes_f32 "1e10f", "1.0e+12f", "+1.0e-12f", "-2.0e+34f", ["-1_000.0e+34f", "-1000.0e+34"]
+  it_lexes_i64 "1i64", ["1i64hello", "1"], ["1_000i64", "1000"], "+1_i64", "-1_i64", ["0x80000000", "2147483648"], ["2147483648", "2147483648"], ["-0x80000001", "-2147483649"]
+  it_lexes_f32 "1.0f32", ["1.0f32hello", "1.0"], ["1234.567_890f32", "1234.567890"], ["1_234.567_890_f32", "1234.567890"], "+1.0f32", "-1.0f32"
+  it_lexes_f32 "1e10f32", "1.0e+12f32", "+1.0e-12f32", "-2.0e+34f32", ["-1_000.0e+34f32", "-1000.0e+34"]
   it_lexes_f64 "1.0", ["1.0hello", "1.0"], ["1234.567_890", "1234.567890"], ["1_234.567_890", "1234.567890"], "+1.0", "-1.0"
   it_lexes_f64 "1e10", "1.0e+12", "+1.0e-12", "-2.0e+34", ["-1_000.0e+34", "-1000.0e+34"]
-  it_lexes_i64 "1L", ["1Lhello", "1"], ["1_000L", "1000"], "+1L", "-1L", ["0x80000000", "2147483648"], ["2147483648", "2147483648"], ["-0x80000001", "-2147483649"]
+
+  it_lexes_numbers :i8, "1i8", "1_i8"
+  it_lexes_numbers :i16, "1i16", "1_i16"
+  it_lexes_numbers :i32, "132", "1_i32"
+  it_lexes_numbers :i64, "1i64", "1_i64"
+
+  it_lexes_numbers :u8, "1u8", "1_u8"
+  it_lexes_numbers :u16, "1u16", "1_u16"
+  it_lexes_numbers :u32, "1u32", "1_u32"
+  it_lexes_numbers :u64, "1u64", "1_u64"
+
+  it_lexes_numbers :f32, "1f32", "1_f32"
+  it_lexes_numbers :f64, "1f64", "1_f64"
+
   it_lexes_char "'a'", ?a.ord
   it_lexes_char "'\\n'", ?\n.ord
   it_lexes_char "'\\t'", ?\t.ord

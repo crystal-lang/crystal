@@ -10,11 +10,11 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens long' do
-    run('1L').to_i.should eq(1)
+    run('1_i64').to_i.should eq(1)
   end
 
   it 'codegens float' do
-    run('1; 2.5f').to_f.should eq(2.5)
+    run('1; 2.5_f32').to_f.should eq(2.5)
   end
 
   it 'codegens double' do
@@ -120,19 +120,19 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens Int + Float' do
-    run('1 + 1.5f').to_f.should eq(2.5)
+    run('1 + 1.5_f32').to_f.should eq(2.5)
   end
 
   it 'codegens Int - Float' do
-    run('3 - 0.5f').to_f.should eq(2.5)
+    run('3 - 0.5_f32').to_f.should eq(2.5)
   end
 
   it 'codegens Int * Float' do
-    run('2 * 1.25f').to_f.should eq(2.5)
+    run('2 * 1.25_f32').to_f.should eq(2.5)
   end
 
   it 'codegens Int / Float' do
-    run('5 / 2.0f').to_f.should eq(2.5)
+    run('5 / 2.0_f32').to_f.should eq(2.5)
   end
 
   it 'codegens Int % Int' do
@@ -140,43 +140,43 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens Float + Float' do
-    run('1.0f + 1.5f').to_f.should eq(2.5)
+    run('1.0_f32 + 1.5_f32').to_f.should eq(2.5)
   end
 
   it 'codegens Float - Float' do
-    run('3.0f - 0.5f').to_f.should eq(2.5)
+    run('3.0_f32 - 0.5_f32').to_f.should eq(2.5)
   end
 
   it 'codegens Float * Float' do
-    run('2.0f * 1.25f').to_f.should eq(2.5)
+    run('2.0_f32 * 1.25_f32').to_f.should eq(2.5)
   end
 
   it 'codegens Float / Float' do
-    run('5.0f / 2.0f').to_f.should eq(2.5)
+    run('5.0_f32 / 2.0_f32').to_f.should eq(2.5)
   end
 
   it 'codegens Float + Int' do
-    run('1.5f + 1').to_f.should eq(2.5)
+    run('1.5_f32 + 1').to_f.should eq(2.5)
   end
 
   it 'codegens Float - Int' do
-    run('3.5f - 1').to_f.should eq(2.5)
+    run('3.5_f32 - 1').to_f.should eq(2.5)
   end
 
   it 'codegens Float * Int' do
-    run('1.25f * 2').to_f.should eq(2.5)
+    run('1.25_f32 * 2').to_f.should eq(2.5)
   end
 
   it 'codegens Float / Int' do
-    run('5.0f / 2').to_f.should eq(2.5)
+    run('5.0_f32 / 2').to_f.should eq(2.5)
   end
 
   it 'codegens Int + Long' do
-    run('1 + 2L').to_i.should eq(3)
+    run('1 + 2_i64').to_i.should eq(3)
   end
 
   it 'codegens Long + Int' do
-    run('1L + 2').to_i.should eq(3)
+    run('1_i64 + 2').to_i.should eq(3)
   end
 
   permutate_primitive_types do |type1, type2, suffix1, suffix2|
@@ -303,6 +303,6 @@ describe 'Code gen: primitives' do
   end
 
   it "codegens Float#to_f" do
-    run("2.5f.to_f").to_f.should eq(2.5)
+    run("2.5_f32.to_f").to_f.should eq(2.5)
   end
 end

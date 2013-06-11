@@ -17,7 +17,7 @@ describe 'Type inference: def' do
   end
 
   it "types a call with a float" do
-    assert_type('def foo; 2.3f; end; foo') { float32 }
+    assert_type('def foo; 2.3f32; end; foo') { float32 }
   end
 
   it "types a call with a double" do

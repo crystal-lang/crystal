@@ -10,15 +10,19 @@ describe 'Type inference: primitives' do
   end
 
   it "types a long" do
-    assert_type('1L') { int64 }
+    assert_type('1_i64') { int64 }
   end
 
   it "types a float" do
-    assert_type('2.3f') { float32 }
+    assert_type('2.3_f32') { float32 }
   end
 
   it "types a double" do
     assert_type('2.3') { float64 }
+  end
+
+  it "types a double with suffix" do
+    assert_type('2.3_f64') { float64 }
   end
 
   it "types a char" do
@@ -92,11 +96,11 @@ describe 'Type inference: primitives' do
   end
 
   it "types Float#to_i" do
-    assert_type("1.5f.to_i") { int32 }
+    assert_type("1.5f32.to_i") { int32 }
   end
 
   it "types Float#to_f" do
-    assert_type("1.5f.to_f") { float32 }
+    assert_type("1.5f32.to_f") { float32 }
   end
 
   it "types ARGV" do
