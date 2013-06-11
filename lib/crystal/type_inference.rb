@@ -73,19 +73,19 @@ module Crystal
     end
 
     def visit_int_literal(node)
-      node.type = mod.int
+      node.type = mod.int32
     end
 
     def visit_long_literal(node)
-      node.type = mod.long
+      node.type = mod.int64
     end
 
     def visit_float_literal(node)
-      node.type = mod.float
+      node.type = mod.float32
     end
 
     def visit_double_literal(node)
-      node.type = mod.double
+      node.type = mod.float64
     end
 
     def visit_string_literal(node)

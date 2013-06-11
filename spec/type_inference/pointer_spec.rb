@@ -2,23 +2,23 @@ require 'spec_helper'
 
 describe 'Type inference: pointer' do
   it "types int pointer" do
-    assert_type('a = 1; a.ptr') { pointer_of(int) }
+    assert_type('a = 1; a.ptr') { pointer_of(int32) }
   end
 
   it "types pointer value" do
-    assert_type('a = 1; b = a.ptr; b.value') { int }
+    assert_type('a = 1; b = a.ptr; b.value') { int32 }
   end
 
   it "types pointer add" do
-    assert_type('a = 1; a.ptr + 1') { pointer_of(int) }
+    assert_type('a = 1; a.ptr + 1') { pointer_of(int32) }
   end
 
   it "types Pointer.malloc" do
-    assert_type('p = Pointer(Int).malloc(10); p.value = 1; p') { pointer_of(int) }
+    assert_type('p = Pointer(Int32).malloc(10); p.value = 1; p') { pointer_of(int32) }
   end
 
   it "types realloc" do
-    assert_type('p = Pointer(Int).malloc(10); p.value = 1; x = p.realloc(20); x') { pointer_of(int) }
+    assert_type('p = Pointer(Int32).malloc(10); p.value = 1; x = p.realloc(20); x') { pointer_of(int32) }
   end
 
   it "type pointer casting" do
@@ -30,7 +30,7 @@ describe 'Type inference: pointer' do
   end
 
   it "pointer malloc creates new type" do
-    assert_type('p = Pointer(Int).malloc(1); p.value = 1; p2 = Pointer(Double).malloc(1); p2.value = 1.5; p2.value') { double }
+    assert_type('p = Pointer(Int32).malloc(1); p.value = 1; p2 = Pointer(Float64).malloc(1); p2.value = 1.5; p2.value') { float64 }
   end
 
   it "allows using pointer with subclass" do
@@ -38,7 +38,7 @@ describe 'Type inference: pointer' do
       a = Pointer(Object).malloc(1)
       a.value = 1
       a.value
-    )) { union_of(object, int) }
+    )) { union_of(object, int32) }
   end
 
   it "reports can only get pointer of variable" do

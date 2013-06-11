@@ -2,15 +2,15 @@ require "range"
 require "comparable"
 
 lib C
-  fun atoi(str : Char*) : Int
-  fun atof(str : Char*) : Double
-  fun strtof(str : Char*, endp : Char**) : Float
-  fun strncmp(s1 : Char*, s2 : Char*, n : Int) : Int
-  fun strlen(s : Char*) : Int
+  fun atoi(str : Char*) : Int32
+  fun atof(str : Char*) : Float64
+  fun strtof(str : Char*, endp : Char**) : Float32
+  fun strncmp(s1 : Char*, s2 : Char*, n : Int32) : Int32
+  fun strlen(s : Char*) : Int32
   fun strcpy(dest : Char*, src : Char*) : Char*
   fun strcat(dest : Char*, src : Char*) : Char*
-  fun strcmp(s1 : Char*, s2 : Char*) : Int
-  fun strncpy(s1 : Char*, s2 : Char*, n : Int) : Char*
+  fun strcmp(s1 : Char*, s2 : Char*) : Int32
+  fun strncpy(s1 : Char*, s2 : Char*, n : Int32) : Char*
   fun sprintf(str : Char*, format : Char*, ...)
 end
 
@@ -20,14 +20,14 @@ class String
   def self.from_cstr(chars)
     length = C.strlen(chars)
     str = Pointer(Char).malloc(length + 5)
-    str.as(Int).value = length
+    str.as(Int32).value = length
     C.strcpy(str.as(Char) + 4, chars)
     str.as(String)
   end
 
   def self.from_cstr(chars, length)
     str = Pointer(Char).malloc(length + 5)
-    str.as(Int).value = length
+    str.as(Int32).value = length
     C.strncpy(str.as(Char) + 4, chars, length)
     (str + length + 4).as(Char).value = '\0'
     str.as(String)
@@ -37,7 +37,7 @@ class String
     str = Pointer(Char).malloc(capacity + 5)
     buffer = str.as(String).cstr
     yield buffer
-    str.as(Int).value = C.strlen(buffer)
+    str.as(Int32).value = C.strlen(buffer)
     str.as(String)
   end
 
@@ -46,7 +46,7 @@ class String
     buffer = str.as(String).cstr
     yield buffer
     buffer[length] = '\0'
-    str.as(Int).value = length
+    str.as(Int32).value = length
     str.as(String)
   end
 

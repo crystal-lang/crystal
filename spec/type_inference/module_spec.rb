@@ -7,7 +7,7 @@ describe 'Type inference: module' do
   end
 
   it "includes module in a class" do
-    assert_type("module Foo; def foo; 1; end; end; class Bar; include Foo; end; Bar.new.foo") { int }
+    assert_type("module Foo; def foo; 1; end; end; class Bar; include Foo; end; Bar.new.foo") { int32 }
   end
 
   it "includes module in a module" do
@@ -27,7 +27,7 @@ describe 'Type inference: module' do
       end
 
       X.new.foo
-      )) { int }
+      )) { int32 }
   end
 
   it "finds in module when included" do
@@ -41,7 +41,7 @@ describe 'Type inference: module' do
       include A
 
       B.new.foo
-    )) { int }
+    )) { int32 }
   end
 
   it "includes generic module with type" do
@@ -57,7 +57,7 @@ describe 'Type inference: module' do
       end
 
       Bar.new.foo(1)
-      )) { int }
+      )) { int32 }
   end
 
   it "includes generic module and errors in call" do
@@ -126,7 +126,7 @@ describe 'Type inference: module' do
       end
 
       Bar(Int).new.foo(1)
-      )) { int }
+      )) { int32 }
   end
 
   it "includes generic module implicitly 2" do
@@ -142,7 +142,7 @@ describe 'Type inference: module' do
       end
 
       Bar(Int).new.foo(1)
-      )) { int }
+      )) { int32 }
   end
 
   it "includes generic module implicitly and errors on call" do
@@ -175,7 +175,7 @@ describe 'Type inference: module' do
       end
 
       Bar(Int).new.foo(1)
-      )) { int }
+      )) { int32 }
   end
 
   it "includes generic module explicitly and errors" do
@@ -204,8 +204,8 @@ describe 'Type inference: module' do
     assert_type(%q(
       require "prelude"
 
-      class Int
-        include Enumerable(Int)
+      class Int32
+        include Enumerable(Int32)
 
         def each
           yield self
@@ -214,14 +214,14 @@ describe 'Type inference: module' do
       end
 
       1.map { |x| x * 0.5 }
-      )) { array_of(double) }
+      )) { array_of(float64) }
   end
 
   it "works with range and map" do
     assert_type(%q(
       require "prelude"
       (1..3).map { |x| x * 0.5 }
-      )) { array_of(double) }
+      )) { array_of(float64) }
   end
 
 end

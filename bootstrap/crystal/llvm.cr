@@ -10,7 +10,7 @@ lib LibLLVM("LLVM-3.1")
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun void_type = LLVMVoidType() : TypeRef
-  fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : Int, is_var_arg : Int) : TypeRef
+  fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : Int32, is_var_arg : Int32) : TypeRef
   fun add_function = LLVMAddFunction(module : ModuleRef, name : Char*, type : TypeRef) : ValueRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : Char*) : ValueRef
   fun append_basic_block = LLVMAppendBasicBlock(fn : ValueRef, name : Char*) : BasicBlockRef
@@ -20,20 +20,20 @@ lib LibLLVM("LLVM-3.1")
   fun build_ret_void = LLVMBuildRetVoid(builder : BuilderRef) : ValueRef
   fun build_ret = LLVMBuildRet(builder : BuilderRef, value : ValueRef) : ValueRef
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
-  fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int, name : Char*) : ValueRef
-  fun int_type = LLVMIntType(bits : Int) : TypeRef
+  fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : Char*) : ValueRef
+  fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
-  fun const_int = LLVMConstInt(int_type : TypeRef, value : Int, sign_extend : Int) : ValueRef
+  fun const_int = LLVMConstInt(int_type : TypeRef, value : Int32, sign_extend : Int32) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
-  fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : out ExecutionEngineRef, m : ModuleRef, opt_level : Int, error : out Char*) : Int
-  fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int, args : Int) : GenericValueRef
+  fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : out ExecutionEngineRef, m : ModuleRef, opt_level : Int32, error : out Char*) : Int32
+  fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : Int32) : GenericValueRef
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
   fun initialize_x86_target = LLVMInitializeX86Target()
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
-  fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int) : Int
-  fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Double
-  fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int
+  fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : Int32
+  fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
+  fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int32
 end
 
 module LLVM

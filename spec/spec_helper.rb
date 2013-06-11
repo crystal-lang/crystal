@@ -71,7 +71,7 @@ def run(code)
 end
 
 def permutate_primitive_types
-  [['Int', ''], ['Long', 'L'], ['Float', '.0f'], ['Double', '.0']].repeated_permutation(2) do |p1, p2|
+  [['Int32', ''], ['Int64', 'L'], ['Float32', '.0f'], ['Float64', '.0']].repeated_permutation(2) do |p1, p2|
     type1, suffix1 = p1
     type2, suffix2 = p2
     yield type1, type2, suffix1, suffix2
@@ -79,10 +79,10 @@ def permutate_primitive_types
 end
 
 def primitive_operation_type(*types)
-  return double if types.include?('Double')
-  return float if types.include?('Float')
-  return long if types.include?('Long')
-  return int if types.include?('Int')
+  return float64 if types.include?('Float64')
+  return float32 if types.include?('Float32')
+  return int64 if types.include?('Int64')
+  return int32 if types.include?('Int32')
 end
 
 def rw(name, restriction = nil)
@@ -113,29 +113,29 @@ class TrueClass
 end
 
 class Fixnum
-  def int
+  def int32
     Crystal::IntLiteral.new self
   end
 
-  def long
+  def int64
     Crystal::LongLiteral.new self
   end
 
-  def float
+  def float32
     Crystal::FloatLiteral.new self.to_f
   end
 
-  def double
+  def float64
     Crystal::DoubleLiteral.new self.to_f
   end
 end
 
 class Float
-  def float
+  def float32
     Crystal::FloatLiteral.new self
   end
 
-  def double
+  def float64
     Crystal::DoubleLiteral.new self
   end
 end

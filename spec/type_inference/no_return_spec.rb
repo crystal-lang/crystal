@@ -10,7 +10,7 @@ describe 'Type inference: NoReturn' do
   end
 
   it "types union of NoReturn and something else" do
-    assert_type(%q(require "prelude"; true ? raise "foo" : 1)) { int }
+    assert_type(%q(require "prelude"; true ? raise "foo" : 1)) { int32 }
   end
 
   it "types union of NoReturns" do

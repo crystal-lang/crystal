@@ -6,19 +6,19 @@ describe 'Type inference: primitives' do
   end
 
   it "types an int" do
-    assert_type('1') { int }
+    assert_type('1') { int32 }
   end
 
   it "types a long" do
-    assert_type('1L') { long }
+    assert_type('1L') { int64 }
   end
 
   it "types a float" do
-    assert_type('2.3f') { float }
+    assert_type('2.3f') { float32 }
   end
 
   it "types a double" do
-    assert_type('2.3') { double }
+    assert_type('2.3') { float64 }
   end
 
   it "types a char" do
@@ -42,7 +42,7 @@ describe 'Type inference: primitives' do
   end
 
   it "types a primitive method" do
-    assert_type('class Int; def foo; 2.5; end; end; 1.foo') { double }
+    assert_type('class Int; def foo; 2.5; end; end; 1.foo') { float64 }
   end
 
   permutate_primitive_types do |type1, type2, suffix1, suffix2|
@@ -76,27 +76,27 @@ describe 'Type inference: primitives' do
   end
 
   it "types Char#ord" do
-    assert_type("'a'.ord") { int }
+    assert_type("'a'.ord") { int32 }
   end
 
   it "types Int#to_i" do
-    assert_type("1.to_i") { int }
+    assert_type("1.to_i") { int32 }
   end
 
   it "types Int#to_f" do
-    assert_type("1.to_f") { float }
+    assert_type("1.to_f") { float32 }
   end
 
   it "types Int#<<" do
-    assert_type("1 << 2") { int }
+    assert_type("1 << 2") { int32 }
   end
 
   it "types Float#to_i" do
-    assert_type("1.5f.to_i") { int }
+    assert_type("1.5f.to_i") { int32 }
   end
 
   it "types Float#to_f" do
-    assert_type("1.5f.to_f") { float }
+    assert_type("1.5f.to_f") { float32 }
   end
 
   it "types ARGV" do
@@ -109,7 +109,7 @@ describe 'Type inference: primitives' do
   end
 
   it "reports can't use instance variables inside a Value" do
-    assert_error "class Int; def foo; @a = 1; end; end; 2.foo",
+    assert_error "class Int32; def foo; @a = 1; end; end; 2.foo",
       "can't use instance variables inside Int"
   end
 end

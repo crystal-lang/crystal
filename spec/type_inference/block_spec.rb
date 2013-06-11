@@ -30,7 +30,7 @@ describe 'Block inference' do
       end
     )
     mod, input = infer_type input
-    input.last.block.body.target.type.should eq(mod.int)
+    input.last.block.body.target.type.should eq(mod.int32)
   end
 
   it "infer type of block argument" do
@@ -44,7 +44,7 @@ describe 'Block inference' do
       end
     )
     mod, input = infer_type input
-    input.last.block.args[0].type.should eq(mod.int)
+    input.last.block.args[0].type.should eq(mod.int32)
   end
 
   it "infer type of local variable" do
@@ -60,7 +60,7 @@ describe 'Block inference' do
       y
     )
     mod, input = infer_type input
-    input.last.type.should eq(mod.union_of(mod.char, mod.int))
+    input.last.type.should eq(mod.union_of(mod.char, mod.int32))
   end
 
   it "infer type of yield" do
@@ -74,7 +74,7 @@ describe 'Block inference' do
       end
     )
     mod, input = infer_type input
-    input.last.type.should eq(mod.int)
+    input.last.type.should eq(mod.int32)
   end
 
   it "infer type with union" do
@@ -84,7 +84,7 @@ describe 'Block inference' do
       require "array"
       a = [1] || [1.1]
       a.each { |x| x }
-    )) { union_of(array_of(int), array_of(double)) }
+    )) { union_of(array_of(int32), array_of(float64)) }
   end
 
   it "break from block without value" do
@@ -103,12 +103,12 @@ describe 'Block inference' do
       foo do
         break if false
       end
-    )) { union_of(self.nil, int) }
+    )) { union_of(self.nil, int32) }
   end
 
   it "infers type of block before call" do
     mod, type = assert_type(%q(
-      class Int
+      class Int32
         def foo
           10.5
         end
@@ -120,16 +120,16 @@ describe 'Block inference' do
         end
       end
 
-      def bar(&block : Int -> U)
+      def bar(&block : Int32 -> U)
         Foo(U).new(yield 1)
       end
 
       bar { |x| x.foo }
-      )) { types["Foo"].instantiate([double]) }
+      )) { types["Foo"].instantiate([float64]) }
     type.should be_class
     type.should be_generic
-    type.type_vars["T"].type.should eq(mod.double)
-    type.instance_vars["@x"].type.should eq(mod.double)
+    type.type_vars["T"].type.should eq(mod.float64)
+    type.instance_vars["@x"].type.should eq(mod.float64)
   end
 
   it "infers type of block before call taking other args free vars into account" do
@@ -147,73 +147,73 @@ describe 'Block inference' do
       a = foo(1) do |x|
         10.5
       end
-      )) { types["Foo"].instantiate([double]) }
+      )) { types["Foo"].instantiate([float64]) }
     type.should be_class
     type.should be_generic
-    type.type_vars["X"].type.should eq(mod.double)
-    type.instance_vars["@x"].type.should eq(mod.double)
+    type.type_vars["X"].type.should eq(mod.float64)
+    type.instance_vars["@x"].type.should eq(mod.float64)
   end
 
   it "reports error if yields a type that's not that one in the block specification" do
     assert_error %q(
-      def foo(&block: Int -> )
+      def foo(&block: Int32 -> )
         yield 10.5
       end
 
       foo {}
       ),
-      "argument #1 of yield expected to be Int, not Double"
+      "argument #1 of yield expected to be Int32, not Float64"
   end
 
   it "reports error if yields a type that's not that one in the block specification and type changes" do
     assert_error %q(
       $global = 1
 
-      def foo(&block: Int -> )
+      def foo(&block: Int32 -> )
         yield $global
         $global = 10.5
       end
 
       foo {}
       ),
-      "type must be Int, not"
+      "type must be Int32, not"
   end
 
   it "doesn't report error if yields nil but nothing is yielded" do
     assert_type(%q(
-      def foo(&block: Int, Nil -> )
+      def foo(&block: Int32, Nil -> )
         yield 1
       end
 
       foo { |x| x }
-      )) { int }
+      )) { int32 }
   end
 
   it "reports error if missing arguments to yield" do
     assert_error %q(
-      def foo(&block: Int, Int -> )
+      def foo(&block: Int32, Int32 -> )
         yield 1
       end
 
       foo { |x| x }
       ),
-      "missing argument #2 of yield with type Int"
+      "missing argument #2 of yield with type Int32"
   end
 
   it "reports error if block didn't return expected type" do
     assert_error %q(
-      def foo(&block: Int -> Double)
+      def foo(&block: Int32 -> Float64)
         yield 1
       end
 
       foo { 'a' }
       ),
-      "block expected to return Double, not Char"
+      "block expected to return Float64, not Char"
   end
 
   it "reports error if block changes type" do
     assert_error %q(
-      def foo(&block: Int -> Double)
+      def foo(&block: Int32 -> Float64)
         yield 1
       end
 
@@ -221,7 +221,7 @@ describe 'Block inference' do
       foo { $global }
       $global = 1
       ),
-      "type must be Double"
+      "type must be Float64"
   end
 
   it "matches block arg return type" do
@@ -229,13 +229,13 @@ describe 'Block inference' do
       class Foo(T)
       end
 
-      def foo(&block: Int -> Foo(T))
+      def foo(&block: Int32 -> Foo(T))
         yield 1
         Foo(T).new
       end
 
-      foo { Foo(Double).new }
-      )) { types["Foo"].instantiate([double]) }
+      foo { Foo(Float64).new }
+      )) { types["Foo"].instantiate([float64]) }
   end
 
   it "infers type of block with generic type" do
@@ -243,14 +243,14 @@ describe 'Block inference' do
       class Foo(T)
       end
 
-      def foo(&block: Foo(Int) -> )
-        yield Foo(Int).new
+      def foo(&block: Foo(Int32) -> )
+        yield Foo(Int32).new
       end
 
       foo do |x|
         10.5
       end
-      )) { double }
+      )) { float64 }
   end
 
   it "errors when block varaible shadows local variable" do

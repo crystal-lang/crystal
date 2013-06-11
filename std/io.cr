@@ -1,10 +1,10 @@
 lib C
   fun getchar : Char
   fun putchar(c : Char) : Char
-  fun puts(str : Char*) : Int
+  fun puts(str : Char*) : Int32
   fun printf(str : Char*, ...) : Char
   fun sprintf(str : Char*, template : Char*, ...) : Char
-  fun system(str : Char*) : Int
+  fun system(str : Char*) : Int32
 end
 
 def print(obj : Char)
@@ -12,22 +12,22 @@ def print(obj : Char)
   nil
 end
 
-def print(obj : Int)
+def print(obj : Int32)
   C.printf "%d", obj
   nil
 end
 
-def print(obj : Long)
+def print(obj : Int64)
   C.printf "%ld", obj
   nil
 end
 
-def print(obj : Float)
+def print(obj : Float32)
   C.printf "%f", obj
   nil
 end
 
-def print(obj : Double)
+def print(obj : Float64)
   C.printf "%g", obj
   nil
 end
@@ -42,22 +42,22 @@ def puts(obj : Char)
   nil
 end
 
-def puts(obj : Int)
+def puts(obj : Int32)
   C.printf "%d\n", obj
   nil
 end
 
-def puts(obj : Long)
+def puts(obj : Int64)
   C.printf "%ld\n", obj
   nil
 end
 
-def puts(obj : Float)
+def puts(obj : Float32)
   C.printf "%f\n", obj
   nil
 end
 
-def puts(obj : Double)
+def puts(obj : Float64)
   C.printf "%g\n", obj
   nil
 end

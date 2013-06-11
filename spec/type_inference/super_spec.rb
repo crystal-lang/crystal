@@ -2,18 +2,18 @@ require 'spec_helper'
 
 describe 'Type inference: super' do
   it "types super without arguments" do
-    assert_type("class Foo; def foo; 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo") { int }
+    assert_type("class Foo; def foo; 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo") { int32 }
   end
 
   it "types super without arguments and instance variable" do
     mod, type = assert_type("class Foo; def foo; @x = 1; end; end; class Bar < Foo; def foo; super; end; end; bar = Bar.new; bar.foo; bar") do
       types["Bar"]
     end
-    type.superclass.instance_vars['@x'].type.should eq(mod.union_of(mod.nil, mod.int))
+    type.superclass.instance_vars['@x'].type.should eq(mod.union_of(mod.nil, mod.int32))
   end
 
   it "types super without arguments but parent has arguments" do
-    assert_type("class Foo; def foo(x); x; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)") { int }
+    assert_type("class Foo; def foo(x); x; end; end; class Bar < Foo; def foo(x); super; end; end; Bar.new.foo(1)") { int32 }
   end
 
   it "types super when container method is defined in parent class" do
@@ -34,6 +34,6 @@ describe 'Type inference: super' do
       )
     mod, nodes = infer_type nodes
     nodes.last.type.should eq(mod.types["Baz"])
-    nodes.last.type.superclass.superclass.instance_vars["@x"].type.should eq(mod.int)
+    nodes.last.type.superclass.superclass.instance_vars["@x"].type.should eq(mod.int32)
   end
 end

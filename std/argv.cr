@@ -1,5 +1,5 @@
 require "array"
-require "int"
+require "int32"
 require "string"
 require "pointer"
 

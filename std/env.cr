@@ -1,6 +1,6 @@
 lib C
   fun getenv(name : Char*) : Char*
-  fun setenv(name : Char*, value : Char*, overwrite : Int) : Int
+  fun setenv(name : Char*, value : Char*, overwrite : Int32) : Int32
 end
 
 module ENV

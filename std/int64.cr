@@ -1,14 +1,10 @@
-class Long
+class Int64
   def ==(other)
     false
   end
 
   def -@
     0L - self
-  end
-
-  def +@
-    self
   end
 
   def to_s

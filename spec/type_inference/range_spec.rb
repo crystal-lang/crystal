@@ -6,12 +6,12 @@ describe 'Type inference: range' do
     mod, node = infer_type node
     node.last.type.should be_class
     node.last.type.generic_class.name.should eq('Range')
-    node.last.type.type_vars["B"].type.should eq(mod.int)
-    node.last.type.type_vars["E"].type.should eq(mod.int)
+    node.last.type.type_vars["B"].type.should eq(mod.int32)
+    node.last.type.type_vars["E"].type.should eq(mod.int32)
   end
 
   it "types range literal method call" do
-    assert_type(%(require "range"; (1..2).begin)) { int }
+    assert_type(%(require "range"; (1..2).begin)) { int32 }
   end
 
   it "types range literal to_a" do
@@ -19,6 +19,6 @@ describe 'Type inference: range' do
       require "prelude"
       a = 1 .. 5
       a.to_a
-      )) { array_of(int) }
+      )) { array_of(int32) }
   end
 end

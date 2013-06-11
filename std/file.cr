@@ -2,14 +2,14 @@ lib C
   type File : Void*
 
   fun fopen(filename : Char*, mode : Char*) : File
-  fun fputs(str : Char*, file : File) : Int
-  fun fclose(file : File) : Int
-  fun feof(file : File) : Int
-  fun getline(linep : Char**, linecap : Long*, file : File) : Long
-  fun fflush(file : File) : Int
-  fun fseek(file : File, offset : Long, whence : Int) : Int
-  fun ftell(file : File) : Long
-  fun fread(buffer : Char*, size : Long, nitems : Long, file : File) : Int
+  fun fputs(str : Char*, file : File) : Int32
+  fun fclose(file : File) : Int32
+  fun feof(file : File) : Int32
+  fun getline(linep : Char**, linecap : Int64*, file : File) : Int64
+  fun fflush(file : File) : Int32
+  fun fseek(file : File, offset : Int64, whence : Int32) : Int32
+  fun ftell(file : File) : Int64
+  fun fread(buffer : Char*, size : Int64, nitems : Int64, file : File) : Int32
 
   SEEK_SET = 0
   SEEK_CUR = 1

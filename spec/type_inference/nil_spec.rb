@@ -6,11 +6,11 @@ describe 'Type inference: nil' do
   end
 
   it "can call a fun with nil for pointer" do
-    assert_type(%q(lib A; fun a(c : Char*) : Int; end; A.a(nil))) { int }
+    assert_type(%q(lib A; fun a(c : Char*) : Int32; end; A.a(nil))) { int32 }
   end
 
   it "can call a fun with nil for typedef pointer" do
-    assert_type(%q(lib A; type Foo : Char*; fun a(c : Foo) : Int; end; A.a(nil))) { int }
+    assert_type(%q(lib A; type Foo : Char*; fun a(c : Foo) : Int32; end; A.a(nil))) { int32 }
   end
 
   it "marks instance variables as nil but doesn't explode on macros" do
@@ -28,7 +28,7 @@ describe 'Type inference: nil' do
 
       f = Foo.new
       f.var.last
-    )) { int }
+    )) { int32 }
   end
 
   it "marks instance variables as nil when not in initialize" do
@@ -50,7 +50,7 @@ describe 'Type inference: nil' do
       f = Foo.new
       f.bar = 1
       f.bar
-      )) { union_of(self.nil, int) }
+      )) { union_of(self.nil, int32) }
   end
 
   it "marks instance variables as nil when not in initialize 2" do
@@ -76,7 +76,7 @@ describe 'Type inference: nil' do
       f = Foo.new
       f.bar = 1
       f.foo
-      )) { int }
+      )) { int32 }
   end
 
   it "restricts type of 'if foo'" do
@@ -89,7 +89,7 @@ describe 'Type inference: nil' do
 
       f = nil || Foo.new
       f ? f.bar : 10
-      )) { int }
+      )) { int32 }
   end
 
   it "restricts type of 'if foo' on assign" do
@@ -105,7 +105,7 @@ describe 'Type inference: nil' do
       else
         10
       end
-      )) { int }
+      )) { int32 }
   end
 
   it "restricts type of 'if @foo'" do
@@ -127,7 +127,7 @@ describe 'Type inference: nil' do
       end
 
       Foo.new.foo
-      )) { int }
+      )) { int32 }
   end
 
   it "restricts type of 'if @foo' on assign" do
@@ -146,7 +146,7 @@ describe 'Type inference: nil' do
       end
 
       Foo.new.foo
-      )) { int }
+      )) { int32 }
   end
 
   it "restricts type of 'while foo'" do
@@ -162,7 +162,7 @@ describe 'Type inference: nil' do
         foo.bar
       end
       1
-      )) { int }
+      )) { int32 }
   end
 
   it "restricts type of 'while foo' on assign" do
@@ -177,7 +177,7 @@ describe 'Type inference: nil' do
         foo.bar
       end
       1
-      )) { int }
+      )) { int32 }
   end
 
   it "restricts type when using previously assigned var" do
@@ -195,6 +195,6 @@ describe 'Type inference: nil' do
       else
         2
       end
-      )) { int }
+      )) { int32 }
   end
 end

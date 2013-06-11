@@ -136,7 +136,7 @@ describe 'Code gen: class' do
         end
       end
 
-      Foo(Int).new.foo.to_i
+      Foo(Int32).new.foo.to_i
       )).to_i.should eq(1)
   end
 end

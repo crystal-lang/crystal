@@ -2,11 +2,11 @@ require 'spec_helper'
 
 describe 'Type inference: def overload' do
   it "types a call with overload" do
-    assert_type('def foo; 1; end; def foo(x); 2.5; end; foo') { int }
+    assert_type('def foo; 1; end; def foo(x); 2.5; end; foo') { int32 }
   end
 
   it "types a call with overload with yield" do
-    assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo') { double }
+    assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo') { float64 }
   end
 
   it "types a call with overload with yield after typing another call without yield" do
@@ -15,23 +15,23 @@ describe 'Type inference: def overload' do
       def foo; 2.5; end
       foo
       foo {}
-    )) { int }
+    )) { int32 }
   end
 
   it "types a call with overload with yield the other way" do
-    assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo { 1 }') { int }
+    assert_type('def foo; yield; 1; end; def foo; 2.5; end; foo { 1 }') { int32 }
   end
 
   it "types a call with overload type first overload" do
-    assert_type('def foo(x : Int); 2.5; end; def foo(x : Float); 1; end; foo(1)') { double }
+    assert_type('def foo(x : Int); 2.5; end; def foo(x : Float); 1; end; foo(1)') { float64 }
   end
 
   it "types a call with overload type second overload" do
-    assert_type('def foo(x : Int); 2.5; end; def foo(x : Double); 1; end; foo(1.5)') { int }
+    assert_type('def foo(x : Int); 2.5; end; def foo(x : Double); 1; end; foo(1.5)') { int32 }
   end
 
   it "types a call with overload Object type first overload" do
-    assert_type('class Foo; end; class Bar; end; def foo(x : Foo); 2.5; end; def foo(x : Bar); 1; end; foo(Foo.new)') { double }
+    assert_type('class Foo; end; class Bar; end; def foo(x : Foo); 2.5; end; def foo(x : Bar); 1; end; foo(Foo.new)') { float64 }
   end
 
   it "types a call with overload Object type first overload" do
@@ -45,11 +45,11 @@ describe 'Type inference: def overload' do
       end
 
       def foo(x : Foo); 2.5; end; def foo(x : Bar); 1; end; foo(Foo.new)
-      )) { double }
+      )) { float64 }
   end
 
   it "types a call with overload selecting the most restrictive" do
-    assert_type('def foo(x); 1; end; def foo(x : Double); 1.1; end; foo(1.5)') { double }
+    assert_type('def foo(x); 1; end; def foo(x : Double); 1.1; end; foo(1.5)') { float64 }
   end
 
   it "types a call with overload selecting the most restrictive" do
@@ -79,7 +79,7 @@ describe 'Type inference: def overload' do
       end
 
       foo(A.new)
-    )) { int }
+    )) { int32 }
   end
 
   it "types a call with overload matches hierarchy 2" do
@@ -99,7 +99,7 @@ describe 'Type inference: def overload' do
       end
 
       foo(B.new)
-    )) { double }
+    )) { float64 }
   end
 
   it "types a call with overload matches hierarchy 3" do
@@ -119,7 +119,7 @@ describe 'Type inference: def overload' do
       end
 
       foo(A.new)
-    )) { int }
+    )) { int32 }
   end
 
   it "types a call with overload self" do
@@ -136,7 +136,7 @@ describe 'Type inference: def overload' do
 
       a = A.new
       a.foo(a)
-    )) { int }
+    )) { int32 }
   end
 
   it "types a call with overload self other match" do
@@ -153,7 +153,7 @@ describe 'Type inference: def overload' do
 
       a = A.new
       a.foo(1)
-    )) { double }
+    )) { float64 }
   end
 
   it "types a call with overload self in included module" do
@@ -176,7 +176,7 @@ describe 'Type inference: def overload' do
 
       b = B.new
       b.foo(b)
-    )) { int }
+    )) { int32 }
   end
 
   it "types a call with overload self in included module other type" do
@@ -199,7 +199,7 @@ describe 'Type inference: def overload' do
 
       b = B.new
       b.foo(A.new)
-    )) { double }
+    )) { float64 }
   end
 
   it "types a call with overload self with inherited type" do
@@ -215,7 +215,7 @@ describe 'Type inference: def overload' do
 
       a = A.new
       a.foo(B.new)
-    )) { int }
+    )) { int32 }
   end
 
   it "matches types with free variables" do
@@ -230,7 +230,7 @@ describe 'Type inference: def overload' do
       end
 
       foo([1], 1)
-    )) { int }
+    )) { int32 }
   end
 
   it "prefer more specifc overload than one with free variables" do
@@ -245,7 +245,7 @@ describe 'Type inference: def overload' do
       end
 
       foo([1], 1)
-    )) { double }
+    )) { float64 }
   end
 
   it "accept overload with nilable type restriction" do
@@ -255,7 +255,7 @@ describe 'Type inference: def overload' do
       end
 
       foo(1)
-    )) { int }
+    )) { int32 }
   end
 
   it "dispatch call to def with restrictions" do
@@ -264,13 +264,13 @@ describe 'Type inference: def overload' do
         1.1
       end
 
-      def foo(x : Int)
+      def foo(x : Int32)
         1
       end
 
       a = 1 || 1.1
       foo(a)
-    )) { union_of(int, double) }
+    )) { union_of(int32, float64) }
   end
 
   it "dispatch call to def with restrictions" do
@@ -283,7 +283,7 @@ describe 'Type inference: def overload' do
       end
 
       foo 1
-    )) { types["Foo"].instantiate([int]) }
+    )) { types["Foo"].instantiate([int32]) }
   end
 
   it "can call overload with generic restriction" do
@@ -296,7 +296,7 @@ describe 'Type inference: def overload' do
       end
 
       foo(Foo(Int).new)
-    )) { int }
+    )) { int32 }
   end
 
   it "restrict matches to minimum necessary 1" do
@@ -306,7 +306,7 @@ describe 'Type inference: def overload' do
       def coco(x, y); 'a'; end
 
       coco 1, 1
-    )) { int }
+    )) { int32 }
   end
 
   it "single type restriction wins over union" do
@@ -323,7 +323,7 @@ describe 'Type inference: def overload' do
       end
 
       foo(Foo.new || Bar.new)
-    )) { int }
+    )) { int32 }
   end
 
   it "compare self type with others" do
@@ -339,7 +339,7 @@ describe 'Type inference: def overload' do
       end
 
       x = Foo.new.foo(Foo.new)
-    )) { int }
+    )) { int32 }
   end
 
   it "uses method defined in base class if the restriction doesn't match" do
@@ -351,13 +351,13 @@ describe 'Type inference: def overload' do
       end
 
       class Bar < Foo
-        def foo(x : Double)
+        def foo(x : Float64)
           1.1
         end
       end
 
       Bar.new.foo(1)
-    )) { int }
+    )) { int32 }
   end
 
   it "lookup matches in hierarchy type inside union" do
@@ -379,7 +379,7 @@ describe 'Type inference: def overload' do
 
       a = Foo.new || Bar.new || Baz.new
       a.foo
-    )) { union_of(int, char) }
+    )) { union_of(int32, char) }
   end
 
   it "filter union type with hierarchy" do
@@ -402,7 +402,7 @@ describe 'Type inference: def overload' do
       end
 
       foo(nil || Foo.new || Bar.new)
-    )) { union_of(int, double) }
+    )) { union_of(int32, float64) }
   end
 
   it "restrict hierarchy type with hierarchy type" do
@@ -419,7 +419,7 @@ describe 'Type inference: def overload' do
 
       x = Foo.new || Bar.new
       foo(x, x)
-    )) { int }
+    )) { int32 }
   end
 
   it "restricts union to generic class" do
@@ -437,6 +437,6 @@ describe 'Type inference: def overload' do
 
       x = 1 || Foo(Int).new
       foo(x)
-      )) { union_of(int, char) }
+      )) { union_of(int32, char) }
   end
 end

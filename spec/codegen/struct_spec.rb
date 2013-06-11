@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Code gen: struct' do
-  let(:struct) { 'lib Foo; struct Bar; x : Int; y : Float; end; end' }
+  let(:struct) { 'lib Foo; struct Bar; x : Int32; y : Float32; end; end' }
 
   it "codegens struct property default value" do
     run("#{struct}; bar = Foo::Bar.new; bar.x").to_i.should eq(0)

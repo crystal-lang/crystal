@@ -4,18 +4,18 @@ describe UnionType do
   let(:mod) { Crystal::Program.new }
 
   it "merge equal types" do
-    Type.merge(mod.int, mod.int).should eq(mod.int)
+    Type.merge(mod.int32, mod.int32).should eq(mod.int32)
   end
 
   it "merge distinct types" do
-    Type.merge(mod.int, mod.float).should eq(mod.union_of(mod.int, mod.float))
+    Type.merge(mod.int32, mod.float32).should eq(mod.union_of(mod.int32, mod.float32))
   end
 
   it "merge simple type with union" do
-    Type.merge(mod.int, mod.union_of(mod.float, mod.char)).should eq(mod.union_of(mod.int, mod.float, mod.char))
+    Type.merge(mod.int32, mod.union_of(mod.float32, mod.char)).should eq(mod.union_of(mod.int32, mod.float32, mod.char))
   end
 
   it "merge union types" do
-    Type.merge(mod.union_of(mod.int, mod.char), mod.union_of(mod.float, mod.int)).should eq(mod.union_of(mod.char, mod.float, mod.int))
+    Type.merge(mod.union_of(mod.int32, mod.char), mod.union_of(mod.float32, mod.int32)).should eq(mod.union_of(mod.char, mod.float32, mod.int32))
   end
 end

@@ -1,26 +1,26 @@
 lib C
-  fun acos(x : Double) : Double
-  fun acosh(x : Double) : Double
-  fun asin(x : Double) : Double
-  fun asinh(x : Double) : Double
-  fun atan(x : Double) : Double
-  fun atan2(y : Double, x : Double) : Double
-  fun cbrt(x : Double) : Double
-  fun cos(x : Double) : Double
-  fun erf(x : Double) : Double
-  fun erfc(x : Double) : Double
-  fun exp(x : Double) : Double
-  fun hypot(x : Double, y : Double) : Double
-  fun ldexp(flt : Double, int : Int) : Double
-  fun lgamma(x : Double) : Double
-  fun log(x : Double) : Double
-  fun log10(x : Double) : Double
-  fun log2(x : Double) : Double
-  fun sin(x : Double) : Double
-  fun sinh(x : Double) : Double
-  fun tan(x : Double) : Double
-  fun tanh(x : Double) : Double
-  fun tgamma(x : Double) : Double
+  fun acos(x : Float64) : Float64
+  fun acosh(x : Float64) : Float64
+  fun asin(x : Float64) : Float64
+  fun asinh(x : Float64) : Float64
+  fun atan(x : Float64) : Float64
+  fun atan2(y : Float64, x : Float64) : Float64
+  fun cbrt(x : Float64) : Float64
+  fun cos(x : Float64) : Float64
+  fun erf(x : Float64) : Float64
+  fun erfc(x : Float64) : Float64
+  fun exp(x : Float64) : Float64
+  fun hypot(x : Float64, y : Float64) : Float64
+  fun ldexp(flt : Float64, int : Int32) : Float64
+  fun lgamma(x : Float64) : Float64
+  fun log(x : Float64) : Float64
+  fun log10(x : Float64) : Float64
+  fun log2(x : Float64) : Float64
+  fun sin(x : Float64) : Float64
+  fun sinh(x : Float64) : Float64
+  fun tan(x : Float64) : Float64
+  fun tanh(x : Float64) : Float64
+  fun tgamma(x : Float64) : Float64
 end
 
 module Math

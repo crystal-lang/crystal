@@ -8,11 +8,11 @@ describe 'Type inference: const' do
   end
 
   it "types a constant reference" do
-    assert_type("A = 1; A") { int }
+    assert_type("A = 1; A") { int32 }
   end
 
   it "types a nested constant" do
-    assert_type("class B; A = 1; end; B::A") { int }
+    assert_type("class B; A = 1; end; B::A") { int32 }
   end
 
   it "types a constant inside a def" do
@@ -26,7 +26,7 @@ describe 'Type inference: const' do
       end
 
       Foo.new.foo
-      )) { int }
+      )) { int32 }
   end
 
   it "finds nearest constant first" do
@@ -42,7 +42,7 @@ describe 'Type inference: const' do
       end
 
       Foo.new.foo
-      )) { double }
+      )) { float64 }
   end
 
   it "finds current type first" do
@@ -60,7 +60,7 @@ describe 'Type inference: const' do
       end
 
       Foo::Bar.foo
-      )) { int }
+      )) { int32 }
   end
 
   it "types a global constant reference in method" do
@@ -76,7 +76,7 @@ describe 'Type inference: const' do
       end
 
       B.new.foo
-      )) { double }
+      )) { float64 }
   end
 
   it "types a global constant reference in static method" do
@@ -92,7 +92,7 @@ describe 'Type inference: const' do
       end
 
       B.foo
-      )) { int }
+      )) { int32 }
   end
 
   it "doesn't share variables with global scope" do

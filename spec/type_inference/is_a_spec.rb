@@ -13,7 +13,7 @@ describe 'Type inference: is_a?' do
       end
       )
     mod, nodes = infer_type nodes
-    nodes.last.then.type.should eq(mod.int)
+    nodes.last.then.type.should eq(mod.int32)
   end
 
   it "restricts type inside if scope 2" do

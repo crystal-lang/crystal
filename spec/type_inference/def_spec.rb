@@ -13,38 +13,38 @@ describe 'Type inference: def' do
   end
 
   it "types a call with an int" do
-    assert_type('def foo; 1; end; foo') { int }
+    assert_type('def foo; 1; end; foo') { int32 }
   end
 
   it "types a call with a float" do
-    assert_type('def foo; 2.3f; end; foo') { float }
+    assert_type('def foo; 2.3f; end; foo') { float32 }
   end
 
   it "types a call with a double" do
-    assert_type('def foo; 2.3; end; foo') { double }
+    assert_type('def foo; 2.3; end; foo') { float64 }
   end
 
   it "types a call with an argument" do
     input = parse 'def foo(x); x; end; foo 1'
     mod, input = infer_type input
-    input.last.type.should eq(mod.int)
+    input.last.type.should eq(mod.int32)
   end
 
   it "types a call with an argument" do
     input = parse 'def foo(x); x; end; foo 1; foo 2.3'
     mod, input = infer_type input
-    input[1].type.should eq(mod.int)
-    input[2].type.should eq(mod.double)
+    input[1].type.should eq(mod.int32)
+    input[2].type.should eq(mod.float64)
   end
 
   it "types a call with an argument uses a new scope" do
-    assert_type('x = 2.3; def foo(x); x; end; foo 1; x') { double }
+    assert_type('x = 2.3; def foo(x); x; end; foo 1; x') { float64 }
   end
 
   it "assigns def owner" do
     input = parse 'class Int; def foo; 2.5; end; end; 1.foo'
     mod, input = infer_type input
-    input.last.target_def.owner.should eq(mod.int)
+    input.last.target_def.owner.should eq(mod.int32)
   end
 
   it "types putchar with Char" do
@@ -66,28 +66,28 @@ describe 'Type inference: def' do
   end
 
   it "types simple recursion" do
-    assert_type('def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)') { int }
+    assert_type('def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)') { int32 }
   end
 
   it "types recursion" do
     input = parse 'def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)'
     mod, input = infer_type input
-    input.last.type.should eq(mod.int)
-    input.last.target_def.body.then.type.should eq(mod.int)
+    input.last.type.should eq(mod.int32)
+    input.last.target_def.body.then.type.should eq(mod.int32)
   end
 
   it "types recursion 2" do
     input = parse 'def foo(x); if x > 0; 1 + foo(x - 1); else; 1; end; end; foo(5)'
     mod, input = infer_type input
-    input.last.type.should eq(mod.int)
-    input.last.target_def.body.then.type.should eq(mod.int)
+    input.last.type.should eq(mod.int32)
+    input.last.target_def.body.then.type.should eq(mod.int32)
   end
 
   it "types mutual recursion" do
     input = parse 'def foo(x); if true; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)'
     mod, input = infer_type input
-    input.last.type.should eq(mod.int)
-    input.last.target_def.body.then.type.should eq(mod.int)
+    input.last.type.should eq(mod.int32)
+    input.last.target_def.body.then.type.should eq(mod.int32)
   end
 
   it "types empty body def" do
@@ -103,25 +103,25 @@ describe 'Type inference: def' do
   end
 
   it "types call with union argument" do
-    assert_type('def foo(x); x; end; a = 1 || 1.1; foo(a)') { union_of(int, double) }
+    assert_type('def foo(x); x; end; a = 1 || 1.1; foo(a)') { union_of(int32, float64) }
   end
 
   it "defines class method" do
-    assert_type("def Int.foo; 2.5; end; Int.foo") { double }
+    assert_type("def Int.foo; 2.5; end; Int.foo") { float64 }
   end
 
   it "defines class method with self" do
-    assert_type("class Int; def self.foo; 2.5; end; end; Int.foo") { double }
+    assert_type("class Int; def self.foo; 2.5; end; end; Int.foo") { float64 }
   end
 
   it "calls with default argument" do
-    assert_type("def foo(x = 1); x; end; foo") { int }
+    assert_type("def foo(x = 1); x; end; foo") { int32 }
   end
 
   it "do not use body for the def type" do
     input = parse 'def foo; if false; return 0; end; end; foo'
     mod, input = infer_type input
-    input.last.type.should eq(mod.union_of(mod.int, mod.nil))
+    input.last.type.should eq(mod.union_of(mod.int32, mod.nil))
     input.last.target_def.body.type.should eq(mod.nil)
   end
 

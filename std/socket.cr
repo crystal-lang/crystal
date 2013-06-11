@@ -2,16 +2,16 @@ lib C
   struct SockAddrIn
     len : Char
     family : Char
-    port : Short
-    addr : Int
-    zero : Long
+    port : Int16
+    addr : Int32
+    zero : Int64
   end
-  fun socket(domain : Int, t : Int, protocol : Int) : Int
-  fun htons(n : Int) : Short
-  fun bind(fd : Int, addr : SockAddrIn*, addr_len : Int) : Int
-  fun listen(fd : Int, backlog : Int) : Int
-  fun accept(fd : Int, addr : SockAddrIn*, addr_len : Int*) : Int
-  fun fdopen(fd : Int, mode : Char*) : File
+  fun socket(domain : Int32, t : Int32, protocol : Int32) : Int32
+  fun htons(n : Int32) : Int16
+  fun bind(fd : Int32, addr : SockAddrIn*, addr_len : Int32) : Int32
+  fun listen(fd : Int32, backlog : Int32) : Int32
+  fun accept(fd : Int32, addr : SockAddrIn*, addr_len : Int32*) : Int32
+  fun fdopen(fd : Int32, mode : Char*) : File
 end
 
 class Socket < IO

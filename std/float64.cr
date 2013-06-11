@@ -1,14 +1,10 @@
-class Double
+class Float64
   def ==(other)
     false
   end
 
   def -@
     0.0 - self
-  end
-
-  def +@
-    self
   end
 
   def **(other)

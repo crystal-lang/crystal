@@ -2,23 +2,23 @@ require 'spec_helper'
 
 describe 'Type inference: var' do
   it "types an assign" do
-    input = Assign.new('a'.var, 1.int)
+    input = Assign.new('a'.var, 1.int32)
     mod, input = infer_type input
-    input.target.type.should eq(mod.int)
-    input.value.type.should eq(mod.int)
-    input.type.should eq(mod.int)
+    input.target.type.should eq(mod.int32)
+    input.value.type.should eq(mod.int32)
+    input.type.should eq(mod.int32)
   end
 
   it "types a variable" do
     input = parse 'a = 1; a'
     mod, input = infer_type input
 
-    input.last.type.should eq(mod.int)
-    input.type.should eq(mod.int)
+    input.last.type.should eq(mod.int32)
+    input.type.should eq(mod.int32)
   end
 
   it "types a variable that gets a new type" do
-    assert_type('a = 1 || 2.3; a') { union_of(int, double) }
+    assert_type('a = 1 || 2.3; a') { union_of(int32, float64) }
   end
 
   it "reports undefined local variable or method" do

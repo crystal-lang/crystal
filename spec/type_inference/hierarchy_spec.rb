@@ -68,7 +68,7 @@ describe 'Type inference: hierarchy' do
 
       a = Foo.new || Bar.new
       a.foo
-      )) { int }
+      )) { int32 }
   end
 
   it "types method call of hierarchy type with override" do
@@ -87,7 +87,7 @@ describe 'Type inference: hierarchy' do
 
       a = Foo.new || Bar.new
       a.foo
-      )) { union_of(int, double) }
+      )) { union_of(int32, float64) }
   end
 
   it "dispatches virtual method" do
@@ -172,7 +172,7 @@ describe 'Type inference: hierarchy' do
 
       f = Foo.new || Bar.new
       x = f.foo(f)
-      )) { union_of(int, double) }
+      )) { union_of(int32, float64) }
   end
 
   it "removes instance var from subclasses" do
@@ -198,7 +198,7 @@ describe 'Type inference: hierarchy' do
       )
     mod, nodes = infer_type nodes
     mod.types["Var"].instance_vars.should be_empty
-    mod.types["Base"].instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int))
+    mod.types["Base"].instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32))
   end
 
   it "types inspect" do
@@ -247,7 +247,7 @@ describe 'Type inference: hierarchy' do
 
       f = Bar1.new || Bar2.new
       x = f.foo
-      )) { union_of(int, double) }
+      )) { union_of(int32, float64) }
   end
 
   it "doesn't check methods on abstract classes 2" do
@@ -278,7 +278,7 @@ describe 'Type inference: hierarchy' do
 
       f = Bar2.new || Bar3.new || Baz.new
       x = f.foo
-      )) { union_of(int, double, char) }
+      )) { union_of(int32, float64, char) }
   end
 
   it "reports undefined method in subclass of abstract class" do
@@ -344,7 +344,7 @@ describe 'Type inference: hierarchy' do
 
       f = Bar1.new || Bar2.new || Baz.new
       foo(f)
-      )) { union_of(int, double, char) }
+      )) { union_of(int32, float64, char) }
   end
 
   it "reports missing cover for subclass of abstract class" do
@@ -519,6 +519,6 @@ describe 'Type inference: hierarchy' do
 
       a2 = Foo.new || Bar.new('a')
       b2 = coco(a2)
-      )) { union_of(self.nil, int, char) }
+      )) { union_of(self.nil, int32, char) }
   end
 end

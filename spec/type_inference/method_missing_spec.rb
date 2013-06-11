@@ -6,7 +6,7 @@ describe 'Type inference: method missing' do
   end
 
   it "doesn't use method missing if defined in the module" do
-    assert_type(%q(require "array"; def bar; 1; end; class Foo; def foo; bar; end; def method_missing(name, args); name; end; end; Foo.new.foo)) { int }
+    assert_type(%q(require "array"; def bar; 1; end; class Foo; def foo; bar; end; def method_missing(name, args); name; end; end; Foo.new.foo)) { int32 }
   end
 
   it "create symbol literal with method name as string" do

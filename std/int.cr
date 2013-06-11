@@ -1,12 +1,7 @@
+require "int32"
+require "int64"
+
 class Int
-  def ==(other)
-    false
-  end
-
-  def -@
-    0 - self
-  end
-
   def +@
     self
   end
@@ -35,15 +30,6 @@ class Int
     self + 1
   end
 
-  def times(&block : Int -> )
-    i = 0
-    while i < self
-      yield i
-      i += 1
-    end
-    self
-  end
-
   def upto(n)
     if self <= n
       x = self
@@ -64,11 +50,5 @@ class Int
       end
     end
     self
-  end
-
-  def to_s
-    String.new_with_capacity(12) do |buffer|
-      C.sprintf(buffer, "%d", self)
-    end
   end
 end

@@ -29,11 +29,19 @@ module Crystal
       @types["Nil"] = NilType.new self, "Nil", value, LLVM::Int1, 1
       @types["Bool"] = PrimitiveType.new self, "Bool", value, LLVM::Int1, 1
       @types["Char"] = PrimitiveType.new self, "Char", value, LLVM::Int8, 1
-      @types["Short"] = PrimitiveType.new self, "Short", value, LLVM::Int16, 2
-      @types["Int"] = PrimitiveType.new self, "Int", numeric, LLVM::Int32, 4
-      @types["Long"] = PrimitiveType.new self, "Long", numeric, LLVM::Int64, 8
-      @types["Float"] = PrimitiveType.new self, "Float", numeric, LLVM::Float, 4
-      @types["Double"] = PrimitiveType.new self, "Double", numeric, LLVM::Double, 8
+
+      @types["Int"] = int = ValueType.new self, "Int", numeric
+      int.abstract = true
+
+      @types["Int16"] = PrimitiveType.new self, "Int16", int, LLVM::Int16, 2
+      @types["Int32"] = PrimitiveType.new self, "Int32", int, LLVM::Int32, 4
+      @types["Int64"] = PrimitiveType.new self, "Int64", int, LLVM::Int64, 8
+
+      @types["Float"] = float = ValueType.new self, "Float", numeric
+      float.abstract = true
+
+      @types["Float32"] = PrimitiveType.new self, "Float32", float, LLVM::Float, 4
+      @types["Float64"] = PrimitiveType.new self, "Float64", float, LLVM::Double, 8
       @types["Symbol"] = PrimitiveType.new self, "Symbol", value, LLVM::Int32, 4
       @types["Pointer"] = PointerType.new self, "Pointer", value, ["T"]
 
@@ -41,12 +49,12 @@ module Crystal
       string.instance_vars_in_initialize = ['@length', '@c']
       string.allocated = true
 
-      string.lookup_instance_var('@length').type = int
+      string.lookup_instance_var('@length').type = int32
       string.lookup_instance_var('@c').type = char
 
       @types["Array"] = GenericClassType.new self, "Array", reference, ["T"]
 
-      @types["ARGC_UNSAFE"] = Const.new self, "ARGC_UNSAFE", Crystal::ARGC.new(int)
+      @types["ARGC_UNSAFE"] = Const.new self, "ARGC_UNSAFE", Crystal::ARGC.new(int32)
       @types["ARGV_UNSAFE"] = Const.new self, "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char)))
 
       @types["Math"] = NonGenericModuleType.new self, "Math"
@@ -182,20 +190,20 @@ module Crystal
       @types["Char"]
     end
 
-    def int
-      @types["Int"]
+    def int32
+      @types["Int32"]
     end
 
-    def long
-      @types["Long"]
+    def int64
+      @types["Int64"]
     end
 
-    def float
-      @types["Float"]
+    def float32
+      @types["Float32"]
     end
 
-    def double
-      @types["Double"]
+    def float64
+      @types["Float64"]
     end
 
     def string
