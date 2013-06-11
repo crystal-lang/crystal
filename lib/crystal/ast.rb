@@ -311,57 +311,26 @@ module Crystal
     end
   end
 
+  # Any number literal.
+  # kind stores a symbol indicating which type is it: i32, u16, f32, f64, etc.
   class NumberLiteral < ASTNode
     attr_accessor :value
     attr_reader :has_sign
+    attr_reader :kind
 
-    def initialize(value)
+    def initialize(value, kind)
       @has_sign = value.is_a?(String) && (value[0] == '+' || value[0] == '-')
       @value = value
+      @kind = kind
+    end
+
+    def ==(other)
+      other.is_a?(NumberLiteral) && other.value.to_f == value.to_f && other.kind == kind
     end
 
     def clone_from(other)
       @value = other.value
-    end
-  end
-
-  # An integer literal.
-  #
-  #     \d+
-  #
-  class IntLiteral < NumberLiteral
-    def ==(other)
-      other.is_a?(IntLiteral) && other.value.to_i == value.to_i
-    end
-  end
-
-  # A long literal.
-  #
-  #     \d+L
-  #
-  class LongLiteral < NumberLiteral
-    def ==(other)
-      other.is_a?(LongLiteral) && other.value.to_i == value.to_i
-    end
-  end
-
-  # A float literal.
-  #
-  #     \d+.\d+f
-  #
-  class FloatLiteral < NumberLiteral
-    def ==(other)
-      other.is_a?(FloatLiteral) && other.value.to_f == value.to_f
-    end
-  end
-
-  # A double literal.
-  #
-  #     \d+.\d+
-  #
-  class DoubleLiteral < NumberLiteral
-    def ==(other)
-      other.is_a?(DoubleLiteral) && other.value.to_f == value.to_f
+      @kind = other.kind
     end
   end
 

@@ -114,29 +114,29 @@ end
 
 class Fixnum
   def int32
-    Crystal::IntLiteral.new self
+    Crystal::NumberLiteral.new self, :i32
   end
 
   def int64
-    Crystal::LongLiteral.new self
+    Crystal::NumberLiteral.new self, :i64
   end
 
   def float32
-    Crystal::FloatLiteral.new self.to_f
+    Crystal::NumberLiteral.new self.to_f, :f32
   end
 
   def float64
-    Crystal::DoubleLiteral.new self.to_f
+    Crystal::NumberLiteral.new self.to_f, :f64
   end
 end
 
 class Float
   def float32
-    Crystal::FloatLiteral.new self
+    Crystal::NumberLiteral.new self, :f32
   end
 
   def float64
-    Crystal::DoubleLiteral.new self
+    Crystal::NumberLiteral.new self, :f64
   end
 end
 

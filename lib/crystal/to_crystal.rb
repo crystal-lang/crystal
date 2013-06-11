@@ -10,7 +10,7 @@ module Crystal
   end
 
   class ToCrystalNodeVisitor < Visitor
-    def visit_int_literal(node)
+    def visit_number_literal(node)
       new_node 'IntLiteral', node
     end
 
@@ -54,7 +54,7 @@ module Crystal
   end
 
   class ToCrystalBinaryVisitor < Visitor
-    def visit_int_literal(node)
+    def visit_number_literal(node)
       ptr = FFI::MemoryPointer.new(:int, 1)
       ptr.put_int32(0, node.value.to_i)
       @last = ptr

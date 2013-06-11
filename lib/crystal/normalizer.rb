@@ -210,16 +210,16 @@ module Crystal
       length = node.elements.length
       capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
 
-      constructor = Call.new(NewGenericClass.new(Ident.new(['Array'], true), [type_var]), 'new', [IntLiteral.new(capacity)])
+      constructor = Call.new(NewGenericClass.new(Ident.new(['Array'], true), [type_var]), 'new', [NumberLiteral.new(capacity, :i32)])
       temp_var = new_temp_var
       assign = Assign.new(temp_var, constructor)
-      set_length = Call.new(temp_var, 'length=', [IntLiteral.new(length)])
+      set_length = Call.new(temp_var, 'length=', [NumberLiteral.new(length, :i32)])
 
       exps = [assign, set_length]
 
       node.elements.each_with_index do |elem, i|
         get_buffer = Call.new(temp_var, 'buffer')
-        assign_index = Call.new(get_buffer, :[]=, [IntLiteral.new(i), elem])
+        assign_index = Call.new(get_buffer, :[]=, [NumberLiteral.new(i, :i32), elem])
         exps << assign_index
       end
 

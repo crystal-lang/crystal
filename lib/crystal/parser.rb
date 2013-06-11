@@ -305,18 +305,18 @@ module Crystal
           right = parse_mul_or_div
           left = Call.new left, method, [right], nil, method_column_number
         when :INT, :LONG, :FLOAT, :DOUBLE
-          type = case @token.type
-                 when :INT then IntLiteral
-                 when :LONG then LongLiteral
-                 when :FLOAT then FloatLiteral
-                 else DoubleLiteral
+          kind = case @token.type
+                 when :INT then :i32
+                 when :LONG then :i64
+                 when :FLOAT then :f32
+                 else :f64
                  end
           case @token.value[0]
           when '+'
-            left = Call.new left, @token.value[0].to_sym, [type.new(@token.value)], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [NumberLiteral.new(@token.value, kind)], nil, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value[0].to_sym, [type.new(@token.value[1 .. -1])], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [NumberLiteral.new(@token.value[1 .. -1], kind)], nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -489,13 +489,13 @@ module Crystal
       when :'::'
         parse_ident
       when :INT
-        node_and_next_token IntLiteral.new(@token.value)
+        node_and_next_token NumberLiteral.new(@token.value, :i32)
       when :LONG
-        node_and_next_token LongLiteral.new(@token.value)
+        node_and_next_token NumberLiteral.new(@token.value, :i64)
       when :FLOAT
-        node_and_next_token FloatLiteral.new(@token.value)
+        node_and_next_token NumberLiteral.new(@token.value, :f32)
       when :DOUBLE
-        node_and_next_token DoubleLiteral.new(@token.value)
+        node_and_next_token NumberLiteral.new(@token.value, :f64)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value)
       when :STRING, :STRING_START
@@ -509,7 +509,7 @@ module Crystal
       when :GLOBAL
         node_and_next_token Global.new(@token.value)
       when :GLOBAL_MATCH
-        node_and_next_token Call.new(Global.new('$~'), :[], [IntLiteral.new(@token.value)])
+        node_and_next_token Call.new(Global.new('$~'), :[], [NumberLiteral.new(@token.value, :i32)])
       when :IDENT
         case @token.value
         when :begin
