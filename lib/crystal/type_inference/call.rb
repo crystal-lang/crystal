@@ -381,7 +381,7 @@ module Crystal
 
       return if required_args_count <= call_args_count && call_args_count <= all_args_count
 
-      raise "wrong number of arguments for '#{full_name}' (#{args.length} for #{untyped_def.args.length})"
+      raise "wrong number of arguments for '#{full_name(obj.type)}' (#{args.length} for #{untyped_def.args.length})"
     end
 
     def compute_dispatch
