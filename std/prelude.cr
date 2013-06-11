@@ -23,6 +23,7 @@ require "string"
 require "string_builder"
 require "symbol"
 require "argv"
+require "time"
 
 def raise(msg)
   print "ERROR: "
