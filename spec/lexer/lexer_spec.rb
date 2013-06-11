@@ -1,12 +1,13 @@
 require 'spec_helper'
 
 describe Lexer do
-  def self.it_lexes(string, type, value = nil)
+  def self.it_lexes(string, type, value = nil, number_kind = nil)
     it "lexes #{string}" do
       lexer = Lexer.new(string)
       token = lexer.next_token
       token.type.should eq(type)
       token.value.should eq(value)
+      token.number_kind.should eq(number_kind)
     end
   end
 
@@ -42,42 +43,30 @@ describe Lexer do
     end
   end
 
-  def self.it_lexes_ints(*args)
-    args.each do |arg|
-      if arg.is_a? Array
-        it_lexes arg[0], :INT, arg[1]
-      else
-        it_lexes arg, :INT, arg
-      end
-    end
+  def self.it_lexes_i32(*args)
+    it_lexes_numbers :i32, *args
   end
 
-  def self.it_lexes_floats(*args)
-    args.each do |arg|
-      if arg.is_a? Array
-        it_lexes arg[0], :FLOAT, arg[1]
-      else
-        it_lexes arg, :FLOAT, arg[0 .. -2]
-      end
-    end
+  def self.it_lexes_i64(*args)
+    it_lexes_numbers :i64, *args
   end
 
-  def self.it_lexes_doubles(*args)
-    args.each do |arg|
-      if arg.is_a? Array
-        it_lexes arg[0], :DOUBLE, arg[1]
-      else
-        it_lexes arg, :DOUBLE, arg
-      end
-    end
+  def self.it_lexes_f32(*args)
+    it_lexes_numbers :f32, *args
   end
 
-  def self.it_lexes_longs(*args)
+  def self.it_lexes_f64(*args)
+    it_lexes_numbers :f64, *args
+  end
+
+  def self.it_lexes_numbers(number_kind, *args)
     args.each do |arg|
       if arg.is_a? Array
-        it_lexes arg[0], :LONG, arg[1]
+        it_lexes arg[0], :NUMBER, arg[1], number_kind
       else
-        it_lexes arg, :LONG, arg[0 ... -1]
+        arg_match = arg
+        arg_match = arg[0 ... -1] if arg.end_with?('L') || arg.end_with?('f')
+        it_lexes arg, :NUMBER, arg_match, number_kind
       end
     end
   end
@@ -111,12 +100,12 @@ describe Lexer do
   it_lexes_idents "ident", "something", "with_underscores", "with_1", "foo?", "bar!"
   it_lexes_idents "def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"
   it_lexes_idents "def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"
-  it_lexes_ints "1", ["1hello", "1"], ["1_000", "1000"], ["100_000", "100000"], ["1__0", "1"], "+1", "-1", ["0xFFFF", "65535"], ["0xabcdef", "11259375"], ["0b1010", "10"]
-  it_lexes_floats "1.0f", ["1.0fhello", "1.0"], ["1234.567_890f", "1234.567890"], ["1_234.567_890f", "1234.567890"], "+1.0f", "-1.0f"
-  it_lexes_floats "1e10f", "1.0e+12f", "+1.0e-12f", "-2.0e+34f", ["-1_000.0e+34f", "-1000.0e+34"]
-  it_lexes_doubles "1.0", ["1.0hello", "1.0"], ["1234.567_890", "1234.567890"], ["1_234.567_890", "1234.567890"], "+1.0", "-1.0"
-  it_lexes_doubles "1e10", "1.0e+12", "+1.0e-12", "-2.0e+34", ["-1_000.0e+34", "-1000.0e+34"]
-  it_lexes_longs "1L", ["1Lhello", "1"], ["1_000L", "1000"], "+1L", "-1L", ["0x80000000", "2147483648"], ["2147483648", "2147483648"], ["-0x80000001", "-2147483649"]
+  it_lexes_i32 "1", ["1hello", "1"], ["1_000", "1000"], ["100_000", "100000"], ["1__0", "1"], "+1", "-1", ["0xFFFF", "65535"], ["0xabcdef", "11259375"], ["0b1010", "10"]
+  it_lexes_f32 "1.0f", ["1.0fhello", "1.0"], ["1234.567_890f", "1234.567890"], ["1_234.567_890f", "1234.567890"], "+1.0f", "-1.0f"
+  it_lexes_f32 "1e10f", "1.0e+12f", "+1.0e-12f", "-2.0e+34f", ["-1_000.0e+34f", "-1000.0e+34"]
+  it_lexes_f64 "1.0", ["1.0hello", "1.0"], ["1234.567_890", "1234.567890"], ["1_234.567_890", "1234.567890"], "+1.0", "-1.0"
+  it_lexes_f64 "1e10", "1.0e+12", "+1.0e-12", "-2.0e+34", ["-1_000.0e+34", "-1000.0e+34"]
+  it_lexes_i64 "1L", ["1Lhello", "1"], ["1_000L", "1000"], "+1L", "-1L", ["0x80000000", "2147483648"], ["2147483648", "2147483648"], ["-0x80000001", "-2147483649"]
   it_lexes_char "'a'", ?a.ord
   it_lexes_char "'\\n'", ?\n.ord
   it_lexes_char "'\\t'", ?\t.ord
@@ -146,7 +135,8 @@ describe Lexer do
     token = lexer.next_token
     token.type.should eq(:NEWLINE)
     token = lexer.next_token
-    token.type.should eq(:INT)
+    token.type.should eq(:NUMBER)
+    token.number_kind.should eq(:i32)
     token.value.should eq("1")
   end
 

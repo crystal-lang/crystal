@@ -304,19 +304,13 @@ module Crystal
           next_token_skip_space_or_newline
           right = parse_mul_or_div
           left = Call.new left, method, [right], nil, method_column_number
-        when :INT, :LONG, :FLOAT, :DOUBLE
-          kind = case @token.type
-                 when :INT then :i32
-                 when :LONG then :i64
-                 when :FLOAT then :f32
-                 else :f64
-                 end
+        when :NUMBER
           case @token.value[0]
           when '+'
-            left = Call.new left, @token.value[0].to_sym, [NumberLiteral.new(@token.value, kind)], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [NumberLiteral.new(@token.value, @token.number_kind)], nil, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value[0].to_sym, [NumberLiteral.new(@token.value[1 .. -1], kind)], nil, @token.column_number
+            left = Call.new left, @token.value[0].to_sym, [NumberLiteral.new(@token.value[1 .. -1], @token.number_kind)], nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -488,14 +482,8 @@ module Crystal
         parse_hash_literal
       when :'::'
         parse_ident
-      when :INT
-        node_and_next_token NumberLiteral.new(@token.value, :i32)
-      when :LONG
-        node_and_next_token NumberLiteral.new(@token.value, :i64)
-      when :FLOAT
-        node_and_next_token NumberLiteral.new(@token.value, :f32)
-      when :DOUBLE
-        node_and_next_token NumberLiteral.new(@token.value, :f64)
+      when :NUMBER
+        node_and_next_token NumberLiteral.new(@token.value, @token.number_kind)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value)
       when :STRING, :STRING_START
@@ -938,7 +926,7 @@ module Crystal
 
     def parse_args_space_consumed(allow_plus_and_minus = false)
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :DOUBLE, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-'
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-'
         if !allow_plus_and_minus && (@token.type == :'+' || @token.type == :'-')
           return nil
         end
