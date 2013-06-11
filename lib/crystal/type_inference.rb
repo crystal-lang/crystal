@@ -255,12 +255,17 @@ module Crystal
 
     def end_visit_fun_def(node)
       args = node.args.map do |arg|
+        check_primitive_like arg.type
+
         fun_arg = Arg.new(arg.name)
         fun_arg.location = arg.location
         fun_arg.type_restriction = fun_arg.type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
         fun_arg.out = arg.out
         fun_arg
       end
+
+      check_primitive_like node.return_type if node.return_type
+
       return_type = maybe_ptr_type(node.return_type ? node.return_type.type.instance_type : mod.nil, node.ptr)
       current_type.fun node.name, node.real_name, args, return_type, node.varargs
     end
@@ -270,6 +275,8 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
+        check_primitive_like node.type
+
         typed_def_type = maybe_ptr_type(node.type.type.instance_type, node.ptr)
 
         current_type.types[node.name] = TypeDefType.new current_type, node.name, typed_def_type
@@ -281,7 +288,12 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
-        current_type.types[node.name] = StructType.new(current_type, node.name, node.fields.map { |field| Var.new(field.name, field.type.type.instance_type) })
+        fields = node.fields.map do |field|
+          check_primitive_like field.type
+
+          Var.new(field.name, field.type.type.instance_type)
+        end
+        current_type.types[node.name] = StructType.new(current_type, node.name, fields)
       end
     end
 
@@ -291,6 +303,12 @@ module Crystal
         type = ptr_type
       end
       type
+    end
+
+    def check_primitive_like(node)
+      unless node.type.instance_type.primitive_like?
+        node.raise "only primitive types and structs are allowed in lib declarations"
+      end
     end
 
     def visit_struct_alloc(node)

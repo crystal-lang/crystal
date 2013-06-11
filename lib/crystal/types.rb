@@ -65,6 +65,10 @@ module Crystal
       false
     end
 
+    def primitive_like?
+      false
+    end
+
     def instance_type
       self
     end
@@ -128,6 +132,10 @@ module Crystal
     end
 
     def no_return?
+      true
+    end
+
+    def primitive_like?
       true
     end
 
@@ -699,6 +707,10 @@ module Crystal
     def value?
       true
     end
+
+    def primitive_like?
+      true
+    end
   end
 
   class NilType < PrimitiveType
@@ -1102,6 +1114,10 @@ module Crystal
       @type = type
     end
 
+    def primitive_like?
+      true
+    end
+
     def to_s
       name
     end
@@ -1131,6 +1147,10 @@ module Crystal
     end
 
     def struct?
+      true
+    end
+
+    def primitive_like?
       true
     end
 

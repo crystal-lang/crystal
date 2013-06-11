@@ -42,4 +42,24 @@ describe 'Type inference: lib' do
       ),
       "argument #1 to Lib.bar must be Char"
   end
+
+  it "reports error on fun argument type not primitive like" do
+    assert_error "lib Foo; fun foo(x : Reference); end",
+      "only primitive types and structs are allowed in lib declarations"
+  end
+
+  it "reports error on fun return type not primitive like" do
+    assert_error "lib Foo; fun foo : Reference; end",
+      "only primitive types and structs are allowed in lib declarations"
+  end
+
+  it "reports error on struct field type not primitive like" do
+    assert_error "lib Foo; struct Foo; x : Reference; end; end",
+      "only primitive types and structs are allowed in lib declarations"
+  end
+
+  it "reports error on typedef type not primitive like" do
+    assert_error "lib Foo; type Foo : Reference; end",
+      "only primitive types and structs are allowed in lib declarations"
+  end
 end
