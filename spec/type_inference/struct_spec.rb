@@ -25,4 +25,14 @@ describe 'Type inference: struct' do
   it "types struct getter with keyword name" do
     assert_type("lib Foo; struct Bar; type : Int32; end; end; bar = Foo::Bar.new; bar.type") { int32 }
   end
+
+  it "errors on struct if no field" do
+    assert_error "lib Foo; struct Bar; x : Int32; end; end; Foo::Bar.new.y = 'a'",
+      "struct Foo::Bar has no field 'y'"
+  end
+
+  it "errors on struct setter if different type" do
+    assert_error "lib Foo; struct Bar; x : Int32; end; end; Foo::Bar.new.x = 'a'",
+      "field 'x' of struct Foo::Bar has type Int32, not Char"
+  end
 end

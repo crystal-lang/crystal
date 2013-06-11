@@ -209,6 +209,19 @@ module Crystal
     end
 
     def raise_matches_not_found(owner, def_name, matches = nil)
+      if owner.struct?
+        if def_name.end_with?('=')
+          def_name = def_name[0 .. -2]
+        end
+
+        var = owner.vars[def_name]
+        if var
+          args[0].raise "field '#{def_name}' of struct #{owner} has type #{var.type}, not #{args[0].type}"
+        else
+          raise "struct #{owner} has no field '#{def_name}'"
+        end
+      end
+
       defs = owner.lookup_defs(def_name)
       if defs.empty?
         if obj

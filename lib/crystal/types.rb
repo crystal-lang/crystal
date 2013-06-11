@@ -187,7 +187,7 @@ module Crystal
           end
           nil
         else
-        arg_type && arg_type.generic? && match_generic_type(arg_type, restriction, owner, type_lookup, free_vars) && arg_type
+          arg_type && arg_type.generic? && match_generic_type(arg_type, restriction, owner, type_lookup, free_vars) && arg_type
         end
       when Ident
         type = free_vars[restriction.names] || type_lookup.lookup_type(restriction.names)
@@ -1135,7 +1135,7 @@ module Crystal
       @name = name
       @vars = Hash[vars.map { |var| [var.name, var] }]
       @vars.values.each do |var|
-        add_def Def.new("#{var.name}=", [Arg.new_with_type('value', var.type)], StructSet.new(var.name))
+        add_def Def.new("#{var.name}=", [Arg.new_with_restriction('value', var.type)], StructSet.new(var.name))
         add_def Def.new(var.name, [], StructGet.new(var.name))
       end
     end
@@ -1190,12 +1190,16 @@ module Crystal
       @vars.keys.index(name)
     end
 
-    def to_s
+    def inspect
       return @to_s if @to_s
       @to_s = "..."
       vars_to_s = vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
       @to_s = nil
-      "#{name}<#{vars_to_s}>"
+      "#{container}::#{name}<#{vars_to_s}>"
+    end
+
+    def to_s
+      "#{container}::#{name}"
     end
   end
 
