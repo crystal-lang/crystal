@@ -110,8 +110,8 @@ describe Lexer do
   it_lexes_idents "ident", "something", "with_underscores", "with_1", "foo?", "bar!"
   it_lexes_idents "def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"
   it_lexes_idents "def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"
-  it_lexes_i32 "1", ["1hello", "1"], ["1_000", "1000"], ["100_000", "100000"], ["1__0", "1"], "+1", "-1", ["0xFFFF", "65535"], ["0xabcdef", "11259375"], ["0b1010", "10"]
-  it_lexes_i64 "1i64", ["1i64hello", "1"], ["1_000i64", "1000"], "+1_i64", "-1_i64", ["0x80000000", "2147483648"], ["2147483648", "2147483648"], ["-0x80000001", "-2147483649"]
+  it_lexes_i32 "1", ["1hello", "1"], ["1_000", "1000"], ["100_000", "100000"], ["1__0", "1"], "+1", "-1"
+  it_lexes_i64 "1i64", ["1i64hello", "1"], ["1_000i64", "1000"], "+1_i64", "-1_i64"
   it_lexes_f32 "1.0f32", ["1.0f32hello", "1.0"], ["1234.567_890f32", "1234.567890"], ["1_234.567_890_f32", "1234.567890"], "+1.0f32", "-1.0f32"
   it_lexes_f32 "1e10f32", "1.0e+12f32", "+1.0e-12f32", "-2.0e+34f32", ["-1_000.0e+34f32", "-1000.0e+34"]
   it_lexes_f64 "1.0", ["1.0hello", "1.0"], ["1234.567_890", "1234.567890"], ["1_234.567_890", "1234.567890"], "+1.0", "-1.0"
@@ -129,6 +129,16 @@ describe Lexer do
 
   it_lexes_numbers :f32, "1f32", "1_f32"
   it_lexes_numbers :f64, "1f64", "1_f64"
+
+  it_lexes_numbers :i32, ["0b1010", "10"]
+  it_lexes_numbers :i32, ["0xFFFF", "65535"], ["0xabcdef", "11259375"]
+  it_lexes_numbers :u32, ["0x80000000", "2147483648"], ["0xFFFFFFFF", "4294967295"]
+  it_lexes_numbers :i64, ["0x100000000", "4294967296"], ["0x7FFFFFFFFFFFFFFF", "9223372036854775807"]
+  it_lexes_numbers :u64, ["0x8000000000000000", "9223372036854775808"], ["0xFFFFFFFFFFFFFFFF", "18446744073709551615"]
+
+  it_lexes_numbers :u32, "2147483648", "4294967295"
+  it_lexes_numbers :i64, "4294967296", "9223372036854775807"
+  it_lexes_numbers :u64, "9223372036854775808", "18446744073709551615"
 
   it_lexes_char "'a'", ?a.ord
   it_lexes_char "'\\n'", ?\n.ord

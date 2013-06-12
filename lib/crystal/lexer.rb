@@ -2,8 +2,10 @@ require 'strscan'
 
 module Crystal
   class Lexer < StringScanner
-    MAX_INT = 2 ** 31 - 1
-    MIN_INT = -2 ** 31
+    MAX_INT_32 = 2147483647
+    MAX_UINT_32 = 4294967295
+    MAX_INT_64 = 9223372036854775807
+    MAX_UINT_64 = 18446744073709551615
 
     def initialize(str)
       super
@@ -42,22 +44,29 @@ module Crystal
       elsif match = scan(/(?:\+|-)?0x(?:\d|a|A|b|B|c|C|d|D|e|E|f|F)(?:(_(?:\d|a|A|b|B|c|C|d|D|e|E|f|F))|(?:\d|a|A|b|B|c|C|d|D|e|E|f|F))*/)
         has_underscore = self[1]
         @token.type = :NUMBER
-        lex_integer_suffix :i32
-        num = (has_underscore ? match.gsub('_', '') : match).to_i(16)
-        @token.number_kind = :i64 if num > MAX_INT || num < MIN_INT
+        str = (has_underscore ? match.gsub('_', '') : match)
+        num = str.to_i(16)
+        unless lex_integer_suffix :i32
+          set_number_kind_based_on_value num
+        end
         @token.value = num.to_s
       elsif match = scan(/(?:\+|-)?0b(?:0|1)(?:(_(?:0|1))|(?:0|1))*/)
         has_underscore = self[1]
         @token.type = :NUMBER
-        lex_integer_suffix :i32
-        @token.value = (has_underscore ? match.gsub('_', '') : match).to_i(2).to_s
+        str = (has_underscore ? match.gsub('_', '') : match)
+        num = str.to_i(2)
+        unless lex_integer_suffix :i32
+          set_number_kind_based_on_value num
+        end
+        @token.value = num.to_s
       elsif match = scan(/(?:\+|-)?\d(?:(_\d)|\d)*/)
         has_underscore = self[1]
         @token.type = :NUMBER
-        lex_suffix :i32
         str = has_underscore ? match.gsub('_', '') : match
-        num = str.to_i
-        @token.number_kind = :i64 if num > MAX_INT || num < MIN_INT
+        unless lex_suffix :i32
+          num = str.to_i
+          set_number_kind_based_on_value num
+        end
         @token.value = str
       elsif match = scan(/'\\n'/)
         @token.type = :CHAR
@@ -150,24 +159,55 @@ module Crystal
     def lex_suffix(default)
       if scan(/_?((?:i|u|f)(?:8|16|32|64))/)
         @token.number_kind = self[1].to_sym
+        true
       else
         @token.number_kind = default
+        false
       end
     end
 
     def lex_integer_suffix(default)
       if scan(/_?((?:i|u)(?:8|16|32|64))/)
         @token.number_kind = self[1].to_sym
+        true
       else
         @token.number_kind = default
+        false
       end
     end
 
     def lex_float_suffix(default)
       if scan(/_?(f(?:8|16|32|64))/)
         @token.number_kind = self[1].to_sym
+        true
       else
         @token.number_kind = default
+        false
+      end
+    end
+
+    def set_number_kind_based_on_value(num)
+      if num >= 0
+        if num <= MAX_INT_32
+          @token.number_kind = :i32
+        elsif num <= MAX_UINT_32
+          @token.number_kind = :u32
+        elsif num <= MAX_INT_64
+          @token.number_kind = :i64
+        elsif num <= MAX_UINT_64
+          @token.number_kind = :u64
+        else
+          raise "number absolute value too big"
+        end
+      else
+        num_abs = num.abs
+        if num_abs <= MAX_INT_32
+          @token.number_kind = :i32
+        elsif num_abs <= MAX_INT_64
+          @token.number_kind = :i64
+        else
+          raise "number absolute value too big"
+        end
       end
     end
 
