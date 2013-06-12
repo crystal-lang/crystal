@@ -1,15 +1,11 @@
-class Int64
+class UInt64
   def ==(other)
     false
   end
 
-  def -@
-    0_i64 - self
-  end
-
   def to_s
     String.new_with_capacity(22) do |buffer|
-      C.sprintf(buffer, "%ld", self)
+      C.sprintf(buffer, "%lu", self)
     end
   end
 end

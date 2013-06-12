@@ -1,15 +1,11 @@
-class Int8
+class UInt8
   def ==(other)
     false
   end
 
-  def -@
-    0_i8 - self
-  end
-
   def to_s
     String.new_with_capacity(5) do |buffer|
-      C.sprintf(buffer, "%hhd", self)
+      C.sprintf(buffer, "%hhu", self)
     end
   end
 end

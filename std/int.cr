@@ -2,6 +2,10 @@ require "int8"
 require "int16"
 require "int32"
 require "int64"
+require "uint8"
+require "uint16"
+require "uint32"
+require "uint64"
 
 class Int
   def +@

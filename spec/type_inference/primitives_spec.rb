@@ -21,6 +21,22 @@ describe 'Type inference: primitives' do
     assert_type('1_i64') { int64 }
   end
 
+  it "types an u8" do
+    assert_type('1_u8') { uint8 }
+  end
+
+  it "types an u16" do
+    assert_type('1_u16') { uint16 }
+  end
+
+  it "types an u32" do
+    assert_type('1_u32') { uint32 }
+  end
+
+  it "types an u64" do
+    assert_type('1_u64') { uint64 }
+  end
+
   it "types a float" do
     assert_type('2.3_f32') { float32 }
   end

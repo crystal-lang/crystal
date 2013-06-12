@@ -42,6 +42,16 @@ def puts(obj : Char)
   nil
 end
 
+def puts(obj : Int8)
+  C.printf "%hhd\n", obj
+  nil
+end
+
+def puts(obj : Int16)
+  C.printf "%hd\n", obj
+  nil
+end
+
 def puts(obj : Int32)
   C.printf "%d\n", obj
   nil

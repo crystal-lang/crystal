@@ -4,7 +4,7 @@ class Float
   end
 
   def -@
-    0.0f - self
+    0.0_f32 - self
   end
 
   def **(other)

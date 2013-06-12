@@ -91,6 +91,10 @@ module Crystal
     end
 
     CALC_OP_MAP = {
+      'UInt8' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
+      'UInt16' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
+      'UInt32' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
+      'UInt64' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
       'Int8' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
       'Int16' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
       'Int32' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
@@ -100,6 +104,10 @@ module Crystal
     }
 
     COMP_OP_FUN_MAP = {
+      'UInt8' => :icmp,
+      'UInt16' => :icmp,
+      'UInt32' => :icmp,
+      'UInt64' => :icmp,
       'Int8' => :icmp,
       'Int16' => :icmp,
       'Int32' => :icmp,
@@ -109,6 +117,10 @@ module Crystal
     }
 
     COMP_OP_ARG_MAP = {
+      'UInt8' => { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne },
+      'UInt16' => { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne },
+      'UInt32' => { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne },
+      'UInt64' => { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne },
       'Int8' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
       'Int16' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
       'Int32' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
@@ -162,7 +174,7 @@ module Crystal
     end
 
     def define_numeric_operations
-      [int8, int16, int32, int64, float32, float64].repeated_permutation(2) do |type1, type2|
+      [uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64].repeated_permutation(2) do |type1, type2|
         [:+, :-, :*, :/].each do |op|
           ret_type = greatest_type(type1, type2)
           if ret_type.equal?(float32) || ret_type.equal?(float64)

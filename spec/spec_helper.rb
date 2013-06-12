@@ -72,6 +72,10 @@ end
 
 def permutate_primitive_types
   [
+    ['UInt8', 'u8'],
+    ['UInt16', 'u16'],
+    ['UInt32', 'u32'],
+    ['UInt64', 'u64'],
     ['Int8', 'i8'],
     ['Int16', 'i16'],
     ['Int32', ''],

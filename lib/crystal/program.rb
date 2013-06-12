@@ -33,10 +33,14 @@ module Crystal
       @types["Int"] = int = ValueType.new self, "Int", numeric
       int.abstract = true
 
-      @types["Int8"] = IntegerType.new self, "Int8", int, LLVM::Int8, 1, 1
-      @types["Int16"] = IntegerType.new self, "Int16", int, LLVM::Int16, 2, 2
-      @types["Int32"] = IntegerType.new self, "Int32", int, LLVM::Int32, 4, 3
-      @types["Int64"] = IntegerType.new self, "Int64", int, LLVM::Int64, 8, 4
+      @types["UInt8"] = IntegerType.new self, "UInt8", int, LLVM::Int8, 1, 1
+      @types["Int8"] = IntegerType.new self, "Int8", int, LLVM::Int8, 1, 2
+      @types["UInt16"] = IntegerType.new self, "UInt16", int, LLVM::Int16, 2, 3
+      @types["Int16"] = IntegerType.new self, "Int16", int, LLVM::Int16, 2, 4
+      @types["UInt32"] = IntegerType.new self, "UInt32", int, LLVM::Int32, 4, 5
+      @types["Int32"] = IntegerType.new self, "Int32", int, LLVM::Int32, 4, 6
+      @types["UInt64"] = IntegerType.new self, "UInt64", int, LLVM::Int64, 8, 7
+      @types["Int64"] = IntegerType.new self, "Int64", int, LLVM::Int64, 8, 8
 
       @types["Float"] = float = ValueType.new self, "Float", numeric
       float.abstract = true
@@ -205,6 +209,22 @@ module Crystal
 
     def int64
       @types["Int64"]
+    end
+
+    def uint8
+      @types["UInt8"]
+    end
+
+    def uint16
+      @types["UInt16"]
+    end
+
+    def uint32
+      @types["UInt32"]
+    end
+
+    def uint64
+      @types["UInt64"]
     end
 
     def float32

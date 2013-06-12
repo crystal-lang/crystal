@@ -82,6 +82,14 @@ module Crystal
         node.type = mod.int32
       when :i64
         node.type = mod.int64
+      when :u8
+        node.type = mod.uint8
+      when :u16
+        node.type = mod.uint16
+      when :u32
+        node.type = mod.uint32
+      when :u64
+        node.type = mod.uint64
       when :f32
         node.type = mod.float32
       when :f64
