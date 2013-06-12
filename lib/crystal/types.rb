@@ -718,6 +718,10 @@ module Crystal
       super(container, name, superclass, llvm_type, llvm_size)
       @rank = rank
     end
+
+    def unsigned?
+      @rank % 2 == 0
+    end
   end
 
   class NilType < PrimitiveType

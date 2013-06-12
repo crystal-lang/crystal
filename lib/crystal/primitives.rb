@@ -155,12 +155,19 @@ module Crystal
       if ret_type == float64
         if type == float32
           return b.fp_ext(arg, float64.llvm_type)
+        elsif type.unsigned?
+          return b.ui2fp(arg, float64.llvm_type)
         else
           return b.si2fp(arg, float64.llvm_type)
         end
+      elsif ret_type == float32
+        if type.unsigned?
+          return b.ui2fp(arg, float32.llvm_type)
+        else
+          return b.si2fp(arg, float32.llvm_type)
+        end
       end
 
-      return b.si2fp(arg, float32.llvm_type) if ret_type == float32
       return b.zext(arg, int64.llvm_type) if ret_type == int64 || ret_type == uint64
       return b.zext(arg, int32.llvm_type) if ret_type == int32 || ret_type == uint32
       return b.zext(arg, int16.llvm_type) if ret_type == int16 || ret_type == uint16

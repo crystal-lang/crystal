@@ -305,4 +305,8 @@ describe 'Code gen: primitives' do
   it "codegens Float#to_f" do
     run("2.5_f32.to_f").to_f.should eq(2.5)
   end
+
+  it "codegens u8 + float32" do
+    run("255u8 + 1.0_f32").to_f.should eq(256)
+  end
 end
