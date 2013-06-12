@@ -140,9 +140,13 @@ module Crystal
     def greatest_type(type1, type2)
       return float64 if type1 == float64 || type2 == float64
       return float32 if type1 == float32 || type2 == float32
+      return uint64 if type1 == uint64 || type2 == uint64
       return int64 if type1 == int64 || type2 == int64
+      return uint32 if type1 == uint32 || type2 == uint32
       return int32 if type1 == int32 || type2 == int32
+      return uint16 if type1 == uint16 || type2 == uint16
       return int16 if type1 == int16 || type2 == int16
+      return uint8 if type1 == uint8 || type2 == uint8
       return int8
     end
 
@@ -157,9 +161,9 @@ module Crystal
       end
 
       return b.si2fp(arg, float32.llvm_type) if ret_type == float32
-      return b.zext(arg, int64.llvm_type) if ret_type == int64
-      return b.zext(arg, int32.llvm_type) if ret_type == int32
-      return b.zext(arg, int16.llvm_type) if ret_type == int16
+      return b.zext(arg, int64.llvm_type) if ret_type == int64 || ret_type == uint64
+      return b.zext(arg, int32.llvm_type) if ret_type == int32 || ret_type == uint32
+      return b.zext(arg, int16.llvm_type) if ret_type == int16 || ret_type == uint16
       return arg
     end
 
