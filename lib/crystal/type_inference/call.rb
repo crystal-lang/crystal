@@ -314,12 +314,15 @@ module Crystal
 
     def check_out_args(untyped_def)
       untyped_def.args.each_with_index do |arg, i|
-        if arg.out && self.args[i]
-          unless self.args[i].out
-            self.args[i].raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} must be passed as 'out'"
+        call_arg = self.args[i]
+        if arg.out && call_arg
+          unless call_arg.out
+            call_arg.raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} must be passed as 'out'"
           end
-          var = parent_visitor.lookup_var_or_instance_var(self.args[i])
+          var = parent_visitor.lookup_var_or_instance_var(call_arg)
           var.bind_to arg
+        elsif !arg.out && (call_arg.is_a?(Var) || call_arg.is_a?(InstanceVar)) && call_arg.out
+          call_arg.raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out'"
         end
       end
     end

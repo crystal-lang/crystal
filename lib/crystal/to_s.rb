@@ -373,6 +373,7 @@ module Crystal
     end
 
     def visit_instance_var(node)
+      @str << "out " if node.out
       @str << node.name
     end
 

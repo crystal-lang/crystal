@@ -897,6 +897,8 @@ module Crystal
               var.out = true
               var.location = @token.location
               args << var
+
+              @instance_vars.add @token.value if @instance_vars
             else
               raise "expecting variable or instance variable after out"
             end
@@ -952,6 +954,8 @@ module Crystal
                 var.out = true
                 var.location = @token.location
                 args << var
+
+                @instance_vars.add @token.value if @instance_vars
               else
                 raise "expecting variable or instance variable after out"
               end
