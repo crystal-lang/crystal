@@ -340,7 +340,7 @@ module Crystal
         instance.args[i].set_type(arg_type)
       end
       instance.body = PrimitiveBody.new(&block)
-      instance.type = return_type
+      instance.set_type(return_type)
       instance
     end
   end

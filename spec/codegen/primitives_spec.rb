@@ -180,52 +180,52 @@ describe 'Code gen: primitives' do
   end
 
   permutate_primitive_types do |type1, type2, suffix1, suffix2|
-    it 'codegens #{type1} == #{type2} gives false' do
+    it 'codegens #{type1} == #{type2} gives false', primitives: true do
       run("1#{suffix1} == 2#{suffix2}").to_b.should be_false
     end
 
-    it 'codegens #{type1} == #{type2} gives true' do
+    it 'codegens #{type1} == #{type2} gives true', primitives: true do
       run("1#{suffix1} == 1#{suffix2}").to_b.should be_true
     end
 
-    it 'codegens #{type1} != #{type2} gives false' do
+    it 'codegens #{type1} != #{type2} gives false', primitives: true do
       run("1#{suffix1} != 1#{suffix2}").to_b.should be_false
     end
 
-    it 'codegens #{type1} != #{type2} gives true' do
+    it 'codegens #{type1} != #{type2} gives true', primitives: true do
       run("1#{suffix1} != 2#{suffix2}").to_b.should be_true
     end
 
-    it 'codegens #{type1} < #{type2} gives false' do
+    it 'codegens #{type1} < #{type2} gives false', primitives: true do
       run("2#{suffix1} < 1#{suffix2}").to_b.should be_false
     end
 
-    it 'codegens #{type1} < #{type2} gives true' do
+    it 'codegens #{type1} < #{type2} gives true', primitives: true do
       run("1#{suffix1} < 2#{suffix2}").to_b.should be_true
     end
 
-    it 'codegens #{type1} <= #{type2} gives false' do
+    it 'codegens #{type1} <= #{type2} gives false', primitives: true do
       run("2#{suffix1} <= 1#{suffix2}").to_b.should be_false
     end
 
-    it 'codegens #{type1} <= #{type2} gives true' do
+    it 'codegens #{type1} <= #{type2} gives true', primitives: true do
       run("1#{suffix1} <= 1#{suffix2}").to_b.should be_true
       run("1#{suffix1} <= 2#{suffix2}").to_b.should be_true
     end
 
-    it 'codegens #{type1} > #{type2} gives false' do
+    it 'codegens #{type1} > #{type2} gives false', primitives: true do
       run("1#{suffix1} > 2#{suffix2}").to_b.should be_false
     end
 
-    it 'codegens #{type1} > #{type2} gives true' do
+    it 'codegens #{type1} > #{type2} gives true', primitives: true do
       run("2#{suffix1} > 1#{suffix2}").to_b.should be_true
     end
 
-    it 'codegens #{type1} >= #{type2} gives false' do
+    it 'codegens #{type1} >= #{type2} gives false', primitives: true do
       run("1#{suffix1} >= 2#{suffix2}").to_b.should be_false
     end
 
-    it 'codegens #{type1} >= #{type2} gives true' do
+    it 'codegens #{type1} >= #{type2} gives true', primitives: true do
       run("1#{suffix1} >= 1#{suffix2}").to_b.should be_true
       run("2#{suffix1} >= 1#{suffix2}").to_b.should be_true
     end

@@ -350,13 +350,13 @@ module Crystal
 
     def add_sorted_def(a_def, args_length)
       sorted_defs = self.sorted_defs[[a_def.name, args_length, !!a_def.yields]]
-      append = sorted_defs.each_with_index do |ex_def, i|
+      sorted_defs.each_with_index do |ex_def, i|
         if a_def.is_restriction_of?(ex_def, self)
           sorted_defs.insert(i, a_def)
-          break false
+          return
         end
       end
-      sorted_defs << a_def if append
+      sorted_defs << a_def
     end
 
     def add_macro(a_def)
@@ -389,14 +389,12 @@ module Crystal
     include DefContainer
 
     attr_reader :name
+    attr_reader :parents
 
     def initialize(container, name)
       super(container)
       @name = name
-    end
-
-    def parents
-      @parents ||= []
+      @parents = []
     end
 
     def include(mod)

@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe 'Type inference: primitives' do
   it "types a bool" do
-    assert_type('false') { bool }
-  end
+      assert_type('false') { bool }
+    end
 
   it "types an int" do
     assert_type('1') { int32 }
@@ -75,13 +75,13 @@ describe 'Type inference: primitives' do
 
   permutate_primitive_types do |type1, type2, suffix1, suffix2|
     ['+', '-', '*', '/'].each do |op|
-      it "types #{type1} #{op} #{type2}" do
+      it "types #{type1} #{op} #{type2}", primitives: true do
         assert_type("1#{suffix1} #{op} 2#{suffix2}") { primitive_operation_type(type1, type2) }
       end
     end
 
     ['==', '>', '>=', '<', '<=', '!='].each do |op|
-      it "types #{type1} #{op} #{type2}" do
+      it "types #{type1} #{op} #{type2}", primitives: true do
         assert_type("1#{suffix1} #{op} 2#{suffix2}") { bool }
       end
     end

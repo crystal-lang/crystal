@@ -66,6 +66,17 @@ module Crystal
     end
   end
 
+  module InheritableClass
+    def is_restriction_of?(type, owner)
+      if type && type.is_a?(InheritableClass)
+        if (depth < type.depth) || (depth == type.depth && !equal?(type))
+          return false
+        end
+      end
+      super
+    end
+  end
+
   class SelfType
     def is_restriction_of?(type, owner)
       owner.is_restriction_of?(type, owner)
