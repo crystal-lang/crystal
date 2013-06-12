@@ -137,8 +137,12 @@ module Crystal
 
     def visit_number_literal(node)
       case node.kind
+      when :i8
+        @last = LLVM::Int8.from_i(node.value.to_i)
+      when :i16
+        @last = LLVM::Int16.from_i(node.value.to_i)
       when :i32
-        @last = int(node.value.to_i)
+        @last = LLVM::Int32.from_i(node.value.to_i)
       when :i64
         @last = LLVM::Int64.from_i(node.value.to_i)
       when :f32

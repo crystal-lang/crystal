@@ -71,7 +71,14 @@ def run(code)
 end
 
 def permutate_primitive_types
-  [['Int32', ''], ['Int64', 'i64'], ['Float32', 'f32'], ['Float64', 'f64']].repeated_permutation(2) do |p1, p2|
+  [
+    ['Int8', 'i8'],
+    ['Int16', 'i16'],
+    ['Int32', ''],
+    ['Int64', 'i64'],
+    ['Float32', 'f32'],
+    ['Float64', 'f64']
+  ].repeated_permutation(2) do |p1, p2|
     type1, suffix1 = p1
     type2, suffix2 = p2
     yield type1, type2, suffix1, suffix2
@@ -81,8 +88,8 @@ end
 def primitive_operation_type(*types)
   return float64 if types.include?('Float64')
   return float32 if types.include?('Float32')
-  return int64 if types.include?('Int64')
-  return int32 if types.include?('Int32')
+
+  return self.types[types.first]
 end
 
 def rw(name, restriction = nil)

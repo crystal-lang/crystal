@@ -1,3 +1,5 @@
+require "int8"
+require "int16"
 require "int32"
 require "int64"
 
@@ -8,6 +10,10 @@ class Int
 
   def abs
     self >= 0 ? self : -self
+  end
+
+  def **(other : Int)
+    (to_d ** other).to_i
   end
 
   def **(other)

@@ -9,7 +9,15 @@ describe 'Type inference: primitives' do
     assert_type('1') { int32 }
   end
 
-  it "types a long" do
+  it "types an i8" do
+    assert_type('1_i8') { int8 }
+  end
+
+  it "types an i16" do
+    assert_type('1_i16') { int16 }
+  end
+
+  it "types an i64" do
     assert_type('1_i64') { int64 }
   end
 

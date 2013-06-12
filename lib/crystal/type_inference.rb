@@ -74,6 +74,10 @@ module Crystal
 
     def visit_number_literal(node)
       case node.kind
+      when :i8
+        node.type = mod.int8
+      when :i16
+        node.type = mod.int16
       when :i32
         node.type = mod.int32
       when :i64

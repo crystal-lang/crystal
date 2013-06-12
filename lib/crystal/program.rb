@@ -33,9 +33,10 @@ module Crystal
       @types["Int"] = int = ValueType.new self, "Int", numeric
       int.abstract = true
 
-      @types["Int16"] = PrimitiveType.new self, "Int16", int, LLVM::Int16, 2
-      @types["Int32"] = PrimitiveType.new self, "Int32", int, LLVM::Int32, 4
-      @types["Int64"] = PrimitiveType.new self, "Int64", int, LLVM::Int64, 8
+      @types["Int8"] = IntegerType.new self, "Int8", int, LLVM::Int8, 1, 1
+      @types["Int16"] = IntegerType.new self, "Int16", int, LLVM::Int16, 2, 2
+      @types["Int32"] = IntegerType.new self, "Int32", int, LLVM::Int32, 4, 3
+      @types["Int64"] = IntegerType.new self, "Int64", int, LLVM::Int64, 8, 4
 
       @types["Float"] = float = ValueType.new self, "Float", numeric
       float.abstract = true
@@ -188,6 +189,14 @@ module Crystal
 
     def char
       @types["Char"]
+    end
+
+    def int8
+      @types["Int8"]
+    end
+
+    def int16
+      @types["Int16"]
     end
 
     def int32

@@ -91,6 +91,8 @@ module Crystal
     end
 
     CALC_OP_MAP = {
+      'Int8' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
+      'Int16' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
       'Int32' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
       'Int64' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
       'Float32' => { :+ => :fadd, :- => :fsub, :* => :fmul, :/ => :fdiv },
@@ -98,10 +100,17 @@ module Crystal
     }
 
     COMP_OP_FUN_MAP = {
-      'Int32' => :icmp, 'Int64' => :icmp, 'Float32' => :fcmp, 'Float64' => :fcmp,
+      'Int8' => :icmp,
+      'Int16' => :icmp,
+      'Int32' => :icmp,
+      'Int64' => :icmp,
+      'Float32' => :fcmp,
+      'Float64' => :fcmp,
     }
 
     COMP_OP_ARG_MAP = {
+      'Int8' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
+      'Int16' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
       'Int32' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
       'Int64' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
       'Float32' => { :== => :oeq, :> => :ogt, :>= => :oge, :< => :olt, :<= => :ole, :'!=' => :one },
@@ -120,7 +129,9 @@ module Crystal
       return float64 if type1 == float64 || type2 == float64
       return float32 if type1 == float32 || type2 == float32
       return int64 if type1 == int64 || type2 == int64
-      return int32
+      return int32 if type1 == int32 || type2 == int32
+      return int16 if type1 == int16 || type2 == int16
+      return int8
     end
 
     def adjust_calc_type(b, ret_type, type, arg)
@@ -135,16 +146,38 @@ module Crystal
 
       return b.si2fp(arg, float32.llvm_type) if ret_type == float32
       return b.zext(arg, int64.llvm_type) if ret_type == int64
+      return b.zext(arg, int32.llvm_type) if ret_type == int32
+      return b.zext(arg, int16.llvm_type) if ret_type == int16
+      return arg
+    end
+
+    def cast_back(b, ret_type, type, arg)
+      if ret_type.rank > type.rank
+        b.zext(arg, ret_type.llvm_type)
+      elsif ret_type.rank < type.rank
+        b.trunc(arg, ret_type.llvm_type)
+      else
+        arg
+      end
     end
 
     def define_numeric_operations
-      [int32, int64, float32, float64].repeated_permutation(2) do |type1, type2|
+      [int8, int16, int32, int64, float32, float64].repeated_permutation(2) do |type1, type2|
         [:+, :-, :*, :/].each do |op|
           ret_type = greatest_type(type1, type2)
-          singleton(type1, op, {'other' => type2}, ret_type) do |b, f|
-            arg1 = adjust_calc_type(b, ret_type, type1, f.params[0])
-            arg2 = adjust_calc_type(b, ret_type, type2, f.params[1])
-            build_calc_op(b, ret_type, op, arg1, arg2)
+          if ret_type.equal?(float32) || ret_type.equal?(float64)
+            singleton(type1, op, {'other' => type2}, ret_type) do |b, f|
+              arg1 = adjust_calc_type(b, ret_type, type1, f.params[0])
+              arg2 = adjust_calc_type(b, ret_type, type2, f.params[1])
+              build_calc_op(b, ret_type, op, arg1, arg2)
+            end
+          else
+            singleton(type1, op, {'other' => type2}, type1) do |b, f|
+              arg1 = adjust_calc_type(b, ret_type, type1, f.params[0])
+              arg2 = adjust_calc_type(b, ret_type, type2, f.params[1])
+              ret = build_calc_op(b, ret_type, op, arg1, arg2)
+              cast_back(b, type1, ret_type, ret)
+            end
           end
         end
 
