@@ -21,7 +21,7 @@ module Crystal
       false
     end
 
-    def struct?
+    def c_struct?
       false
     end
 
@@ -873,7 +873,7 @@ module Crystal
     end
 
     def llvm_type
-      @llvm_type ||= var.type.struct? ? var.type.llvm_type : LLVM::Pointer(var.type.llvm_type)
+      @llvm_type ||= var.type.c_struct? ? var.type.llvm_type : LLVM::Pointer(var.type.llvm_type)
     end
 
     def llvm_size
@@ -1138,7 +1138,7 @@ module Crystal
     end
   end
 
-  class StructType < ContainedType
+  class CStructType < ContainedType
     include DefContainer
     include DefInstanceContainer
 
@@ -1161,7 +1161,7 @@ module Crystal
       super(name.to_s, arg_types, yields, owner, type_lookup)
     end
 
-    def struct?
+    def c_struct?
       true
     end
 

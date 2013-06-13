@@ -401,7 +401,7 @@ module Crystal
 
     def visit_instance_var(node)
       ivar = @type.lookup_instance_var(node.name)
-      if ivar.type.union? || ivar.type.struct?
+      if ivar.type.union? || ivar.type.c_struct?
         @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.name)
       else
         index = @type.index_of_instance_var(node.name)
@@ -459,7 +459,7 @@ module Crystal
       if node.var.is_a?(Var)
         var = @vars[node.var.name]
         @last = var[:ptr]
-        @last = @builder.load @last if node.type.var.type.struct?
+        @last = @builder.load @last if node.type.var.type.c_struct?
       else
         var = @type.lookup_instance_var(node.var.name)
         @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.var.name)
@@ -480,7 +480,7 @@ module Crystal
     end
 
     def visit_pointer_get_value(node)
-      if @type.var.type.union? || @type.var.type.is_a?(StructType)
+      if @type.var.type.union? || @type.var.type.c_struct?
         @last = llvm_self
       else
         @last = @builder.load llvm_self
@@ -1071,12 +1071,12 @@ module Crystal
       end
 
       # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call.
-      has_struct_out_arguments = target_def.is_a?(External) && node.args.any? { |arg| arg.out? && arg.is_a?(Var) && arg.type.struct? }
+      has_struct_out_arguments = target_def.is_a?(External) && node.args.any? { |arg| arg.out? && arg.is_a?(Var) && arg.type.c_struct? }
       if has_struct_out_arguments
         old_call_args = call_args.clone
         call_args = call_args.each_with_index.map do |call_arg, i|
           arg = node.args[i]
-          if arg.out? && arg.type.struct?
+          if arg.out? && arg.type.c_struct?
             alloca arg.type.llvm_struct_type
           else
             call_arg
@@ -1089,7 +1089,7 @@ module Crystal
       if has_struct_out_arguments
         call_args.each_with_index do |call_arg, i|
           arg = node.args[i]
-          if arg.out? && arg.type.struct?
+          if arg.out? && arg.type.c_struct?
             @builder.store call_arg, old_call_args[i]
           end
         end
@@ -1347,7 +1347,7 @@ module Crystal
 
     def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
       if target_type == value_type
-        value = @builder.load value if target_type.union? || (instance_var && target_type.struct?)
+        value = @builder.load value if target_type.union? || (instance_var && target_type.c_struct?)
         @builder.store value, pointer
       else
         assign_to_union(pointer, target_type, value_type, value)

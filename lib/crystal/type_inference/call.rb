@@ -211,7 +211,7 @@ module Crystal
     end
 
     def raise_matches_not_found(owner, def_name, matches = nil)
-      if owner.struct?
+      if owner.c_struct?
         if def_name.end_with?('=')
           def_name = def_name[0 .. -2]
         end

@@ -301,7 +301,7 @@ module Crystal
 
           Var.new(field.name, field.type.type.instance_type)
         end
-        current_type.types[node.name] = StructType.new(current_type, node.name, fields)
+        current_type.types[node.name] = CStructType.new(current_type, node.name, fields)
       end
     end
 
