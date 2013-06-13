@@ -109,6 +109,10 @@ module Crystal
       llvm_type
     end
 
+    def llvm_instance_var_type
+      llvm_type
+    end
+
     def self.merge(*types)
       types = types.compact
       return nil if types.empty?
@@ -564,7 +568,7 @@ module Crystal
     def llvm_struct_type
       unless @llvm_struct_type
         @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = all_instance_vars.values.map(&:llvm_type)
+        @llvm_struct_type.element_types = all_instance_vars.values.map(&:llvm_instance_var_type)
       end
       @llvm_struct_type
     end
@@ -1195,6 +1199,10 @@ module Crystal
         @llvm_struct_type.element_types = @vars.values.map(&:llvm_type)
       end
       @llvm_struct_type
+    end
+
+    def llvm_instance_var_type
+      llvm_struct_type
     end
 
     def index_of_var(name)

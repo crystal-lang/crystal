@@ -15,11 +15,6 @@ describe 'Type inference: lib' do
       "undefined method '+' for Char"
   end
 
-  it "reports must be called with out" do
-    assert_error "lib Foo; fun x(c : out Int32); end; a = 1; Foo.x(a)",
-      "argument #1 to Foo.x must be passed as 'out'"
-  end
-
   it "reports error when changing instance var type and something breaks" do
     assert_error %Q(
       lib Lib

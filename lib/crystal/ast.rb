@@ -552,7 +552,6 @@ module Crystal
     attr_accessor :name
     attr_accessor :default_value
     attr_accessor :type_restriction
-    attr_accessor :out
 
     def initialize(name, default_value = nil, type_restriction = nil)
       @name = name.to_s
@@ -566,14 +565,13 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(Arg) && other.name == name && other.default_value == default_value && other.type_restriction == type_restriction && other.out == out
+      other.is_a?(Arg) && other.name == name && other.default_value == default_value && other.type_restriction == type_restriction
     end
 
     def clone_from(other)
       @name = other.name
       @default_value = other.default_value.clone
       @type_restriction = other.type_restriction.clone
-      @out = other.out
     end
   end
 
@@ -1075,13 +1073,11 @@ module Crystal
     attr_accessor :name
     attr_accessor :type
     attr_accessor :ptr
-    attr_accessor :out
 
-    def initialize(name, type, ptr = 0, out = false)
+    def initialize(name, type, ptr = 0)
       @name = name
       @type = type
       @ptr = ptr
-      @out = out
     end
 
     def accept_children(visitor)
@@ -1089,7 +1085,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(FunDefArg) && other.name == name && other.type == type && other.ptr == ptr && other.out == out
+      other.is_a?(FunDefArg) && other.name == name && other.type == type && other.ptr == ptr
     end
   end
 

@@ -316,7 +316,6 @@ module Crystal
     end
 
     def visit_arg(node)
-      @str << 'out ' if node.out
       if node.name
         @str << node.name
       else
@@ -559,7 +558,6 @@ module Crystal
     def visit_fun_def_arg(node)
       @str << node.name.to_s
       @str << ' : '
-      @str << 'out ' if node.out
       node.type.accept self
       node.ptr.times do
         @str << '*'

@@ -8,6 +8,10 @@ module Crystal
       type.llvm_arg_type
     end
 
+    def llvm_instance_var_type
+      type.llvm_instance_var_type
+    end
+
     def returns?
       false
     end
@@ -112,14 +116,6 @@ module Crystal
       if block && block.yields?
         target_defs.any? { |t| t.body.yields? }
       end
-    end
-  end
-
-  class Arg
-    def llvm_type
-      llvm_type = type.llvm_type
-      llvm_type = LLVM::Pointer(llvm_type) if out
-      llvm_type
     end
   end
 

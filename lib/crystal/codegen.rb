@@ -323,7 +323,7 @@ module Crystal
         ptr = var[:ptr]
       end
 
-      codegen_assign(ptr, target.type, value.type, llvm_value)
+      codegen_assign(ptr, target.type, value.type, llvm_value, !!ivar)
     end
 
     def declare_var(var)
@@ -401,7 +401,7 @@ module Crystal
 
     def visit_instance_var(node)
       ivar = @type.lookup_instance_var(node.name)
-      if ivar.type.union?
+      if ivar.type.union? || ivar.type.struct?
         @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.name)
       else
         index = @type.index_of_instance_var(node.name)
@@ -459,12 +459,10 @@ module Crystal
       if node.var.is_a?(Var)
         var = @vars[node.var.name]
         @last = var[:ptr]
+        @last = @builder.load @last if node.type.var.type.struct?
       else
         var = @type.lookup_instance_var(node.var.name)
         @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.var.name)
-      end
-      if node.type.var.type.is_a?(StructType)
-        @last = @builder.load @last
       end
       false
     end
@@ -870,7 +868,7 @@ module Crystal
       end
 
       node.args.each_with_index do |arg, i|
-        if node.target_defs && node.target_def.args[i] && node.target_def.args[i].out && arg.is_a?(Var)
+        if arg.out? && arg.is_a?(Var)
           call_args << @vars[arg.name][:ptr]
         else
           accept(arg)
@@ -964,7 +962,7 @@ module Crystal
         old_break_table = @break_table
         @return_block = @return_block_table = @break_table = nil
 
-        codegen_call(node.target_def, owner, call_args)
+        codegen_call(node, owner, call_args)
 
         @return_block = old_return_block
         @return_block_table = old_return_block_table
@@ -990,9 +988,9 @@ module Crystal
       return unless call.target_def.is_a?(External)
 
       call.target_def.args.each_with_index do |arg, i|
-        if arg.out
-          var = call.args[i]
-          declare_var(var) if var.is_a?(Var)
+        var = call.args[i]
+        if var.out? && var.is_a?(Var)
+          declare_var(var)
         end
       end
     end
@@ -1058,7 +1056,8 @@ module Crystal
       false
     end
 
-    def codegen_call(target_def, self_type, call_args)
+    def codegen_call(node, self_type, call_args)
+      target_def = node.target_def
       mangled_name = target_def.mangled_name(self_type)
 
       unless fun = @llvm_mod.functions[mangled_name]
@@ -1071,13 +1070,13 @@ module Crystal
         @fun = old_fun
       end
 
-      # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call
-      has_struct_out_arguments = target_def.is_a?(External) && target_def.args.any? { |arg| arg.out && arg.type.struct? }
+      # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call.
+      has_struct_out_arguments = target_def.is_a?(External) && node.args.any? { |arg| arg.out? && arg.is_a?(Var) && arg.type.struct? }
       if has_struct_out_arguments
         old_call_args = call_args.clone
         call_args = call_args.each_with_index.map do |call_arg, i|
-          arg = target_def.args[i]
-          if arg.out && arg.type.struct?
+          arg = node.args[i]
+          if arg.out? && arg.type.struct?
             alloca arg.type.llvm_struct_type
           else
             call_arg
@@ -1089,8 +1088,8 @@ module Crystal
 
       if has_struct_out_arguments
         call_args.each_with_index do |call_arg, i|
-          arg = target_def.args[i]
-          if arg.out && arg.type.struct?
+          arg = node.args[i]
+          if arg.out? && arg.type.struct?
             @builder.store call_arg, old_call_args[i]
           end
         end
@@ -1346,9 +1345,9 @@ module Crystal
       @vars = old_vars
     end
 
-    def codegen_assign(pointer, target_type, value_type, value)
+    def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
       if target_type == value_type
-        value = @builder.load value if target_type.union?
+        value = @builder.load value if target_type.union? || (instance_var && target_type.struct?)
         @builder.store value, pointer
       else
         assign_to_union(pointer, target_type, value_type, value)

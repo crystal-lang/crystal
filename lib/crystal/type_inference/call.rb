@@ -32,6 +32,8 @@ module Crystal
       return if @types_signature == types_signature
       @types_signature = types_signature
 
+      check_not_lib_out_args
+
       unbind_from *@target_defs if @target_defs
       unbind_from block.break if block
       @subclass_notifier.remove_subclass_observer(self) if @subclass_notifier
@@ -301,7 +303,7 @@ module Crystal
       untyped_def = obj.type.lookup_first_def(name) or raise "undefined fun '#{name}' for #{obj.type}"
 
       check_args_length_match untyped_def
-      check_out_args untyped_def
+      check_lib_out_args untyped_def
       return unless obj_and_args_types_set?
 
       check_fun_args_types_match untyped_def
@@ -312,17 +314,23 @@ module Crystal
       self.bind_to *@target_defs
     end
 
-    def check_out_args(untyped_def)
+    def check_lib_out_args(untyped_def)
       untyped_def.args.each_with_index do |arg, i|
         call_arg = self.args[i]
-        if arg.out && call_arg
-          unless call_arg.out
-            call_arg.raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} must be passed as 'out'"
+        if call_arg.out?
+          unless arg.type.pointer?
+            call_arg.raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
           end
           var = parent_visitor.lookup_var_or_instance_var(call_arg)
-          var.bind_to arg
-        elsif !arg.out && (call_arg.is_a?(Var) || call_arg.is_a?(InstanceVar)) && call_arg.out
-          call_arg.raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out'"
+          var.bind_to Var.new("out", arg.type.var.type)
+        end
+      end
+    end
+
+    def check_not_lib_out_args
+      args.each do |arg|
+        if arg.out?
+          arg.raise "out can only be used with lib funs"
         end
       end
     end
@@ -332,15 +340,17 @@ module Crystal
       nil_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type_restriction
-        if self.args[i].type != expected_type
-          if self.args[i].type.nil_type? && expected_type.pointer?
+        actual_type = self.args[i].type
+        actual_type = mod.pointer_of(actual_type) if self.args[i].out?
+        if actual_type != expected_type
+          if actual_type.nil_type? && expected_type.pointer?
             nil_conversions ||= []
             nil_conversions << i
-          elsif (mod.string.equal?(self.args[i].type) || mod.string.hierarchy_type.equal?(self.args[i].type)) && expected_type.pointer? && mod.char.equal?(expected_type.var.type)
+          elsif (mod.string.equal?(actual_type) || mod.string.hierarchy_type.equal?(actual_type)) && expected_type.pointer? && mod.char.equal?(expected_type.var.type)
             string_conversions ||= []
             string_conversions << i
           else
-            self.args[i].raise "argument \##{i + 1} to #{typed_def.owner}.#{typed_def.name} must be #{expected_type}, not #{self.args[i].type}"
+            self.args[i].raise "argument \##{i + 1} to #{typed_def.owner}.#{typed_def.name} must be #{expected_type}, not #{actual_type}"
           end
         end
       end

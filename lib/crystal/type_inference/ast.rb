@@ -1,4 +1,22 @@
 module Crystal
+  class ASTNode
+    def out?
+      false
+    end
+  end
+
+  class Var
+    def out?
+      out
+    end
+  end
+
+  class InstanceVar
+    def out?
+      out
+    end
+  end
+
   class Ident
     attr_accessor :target_const
   end

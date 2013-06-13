@@ -1439,18 +1439,12 @@ module Crystal
           check :':'
           next_token_skip_space_or_newline
 
-          out = false
-          if @token.keyword?(:out)
-            out = true
-            next_token_skip_space_or_newline
-          end
-
           arg_type = parse_ident
           ptr = parse_trailing_pointers
 
           skip_space_or_newline
 
-          fun_def_arg = FunDefArg.new(arg_name, arg_type, ptr, out)
+          fun_def_arg = FunDefArg.new(arg_name, arg_type, ptr)
           fun_def_arg.location = arg_location
           args << fun_def_arg
 
