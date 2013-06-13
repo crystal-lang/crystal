@@ -26,7 +26,7 @@ lib LibLLVM("LLVM-3.1")
   fun double_type = LLVMDoubleType() : TypeRef
   fun const_int = LLVMConstInt(int_type : TypeRef, value : Int32, sign_extend : Int32) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
-  fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : out ExecutionEngineRef, m : ModuleRef, opt_level : Int32, error : out Char*) : Int32
+  fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : Char**) : Int32
   fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : Int32) : GenericValueRef
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
   fun initialize_x86_target = LLVMInitializeX86Target()
@@ -196,10 +196,9 @@ module LLVM
 
   class JITCompiler
     def initialize(mod)
-      if LibLLVM.create_jit_compiler_for_module(out jit, mod.llvm_module, 3, out error) != 0
+      if LibLLVM.create_jit_compiler_for_module(out @jit, mod.llvm_module, 3, out error) != 0
         raise String.from_cstr(error)
       end
-      @jit = jit
     end
 
     def run_function(fun)

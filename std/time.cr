@@ -6,15 +6,12 @@ lib C
 end
 
 class Time
-  BILLION = 1000000000.0
-
   def initialize
-    @time = C::TimeSpec.new
-    C.clock_gettime(0, @time.ptr)
+    C.clock_gettime(0, out @time)
   end
 
   def to_f
-    @time.tv_sec + @time.tv_nsec / BILLION
+    @time.tv_sec + @time.tv_nsec / 1e9
   end
 
   def to_i
