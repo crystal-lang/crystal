@@ -307,7 +307,7 @@ module Crystal
         fields = node.fields.map do |field|
           check_primitive_like field.type
 
-          Var.new(field.name, field.type.type.instance_type)
+          Var.new(field.name, maybe_ptr_type(field.type.type.instance_type, field.ptr))
         end
         current_type.types[node.name] = klass.new(current_type, node.name, fields)
       end

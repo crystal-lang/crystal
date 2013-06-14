@@ -35,4 +35,8 @@ describe 'Type inference: struct' do
     assert_error "lib Foo; struct Bar; x : Int32; end; end; Foo::Bar.new.x = 'a'",
       "field 'x' of struct Foo::Bar has type Int32, not Char"
   end
+
+  it "types struct getter on pointer type" do
+    assert_type("lib Foo; struct Bar; x : Int32*; end; end; b = Foo::Bar.new; b.x") { pointer_of(int32) }
+  end
 end
