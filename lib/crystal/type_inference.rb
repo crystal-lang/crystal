@@ -292,6 +292,14 @@ module Crystal
     end
 
     def end_visit_struct_def(node)
+      visit_struct_or_union_def node, CStructType
+    end
+
+    def end_visit_union_def(node)
+      visit_struct_or_union_def node, CUnionType
+    end
+
+    def visit_struct_or_union_def(node, klass)
       type = current_type.types[node.name]
       if type
         node.raise "#{node.name} is already defined"
@@ -301,7 +309,7 @@ module Crystal
 
           Var.new(field.name, field.type.type.instance_type)
         end
-        current_type.types[node.name] = CStructType.new(current_type, node.name, fields)
+        current_type.types[node.name] = klass.new(current_type, node.name, fields)
       end
     end
 
@@ -319,19 +327,22 @@ module Crystal
       end
     end
 
-    def visit_struct_alloc(node)
-      node.type = node.type
-    end
-
     def visit_struct_set(node)
-      struct_var = @scope.vars[node.name]
-
       node.bind_to @vars['value']
     end
 
     def visit_struct_get(node)
-      struct_var = @scope.vars[node.name]
+      struct_var = @scope.vars[node.name.to_s]
       node.bind_to struct_var
+    end
+
+    def visit_union_set(node)
+      node.bind_to @vars['value']
+    end
+
+    def visit_union_get(node)
+      union_var = @scope.vars[node.name.to_s]
+      node.bind_to union_var
     end
 
     def visit_var(node)

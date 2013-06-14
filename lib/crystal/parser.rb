@@ -1378,7 +1378,11 @@ module Crystal
             exp.location = location
             expressions << exp
           when :struct
-            exp = parse_struct_def
+            exp = parse_struct_or_union StructDef
+            exp.location = location
+            expressions << exp
+          when :union
+            exp = parse_struct_or_union UnionDef
             exp.location = location
             expressions << exp
           when :end
@@ -1489,23 +1493,23 @@ module Crystal
       TypeDef.new name, type, ptr, name_column_number
     end
 
-    def parse_struct_def
+    def parse_struct_or_union(klass)
       next_token_skip_space_or_newline
 
       check :CONST
       name = @token.value
       next_token_skip_statement_end
 
-      fields = parse_struct_def_fields
+      fields = parse_struct_or_union_fields
 
       check_ident :end
 
       next_token_skip_statement_end
 
-      StructDef.new name, fields
+      klass.new name, fields
     end
 
-    def parse_struct_def_fields
+    def parse_struct_or_union_fields
       fields = []
 
       while true

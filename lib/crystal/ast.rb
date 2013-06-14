@@ -1112,7 +1112,7 @@ module Crystal
     end
   end
 
-  class StructDef < ASTNode
+  class StructOrUnionDef < ASTNode
     attr_accessor :name
     attr_accessor :fields
 
@@ -1126,8 +1126,14 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(StructDef) && other.name == name && other.fields == fields
+      other.is_a?(self.class) && other.name == name && other.fields == fields
     end
+  end
+
+  class StructDef < StructOrUnionDef
+  end
+
+  class UnionDef < StructOrUnionDef
   end
 
   class Include < ASTNode

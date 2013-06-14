@@ -804,6 +804,26 @@ module Crystal
       @builder.store @last, ptr
     end
 
+    def visit_union_alloc(node)
+      @last = malloc node.type.llvm_struct_type
+      memset @last, int8(0), node.type.llvm_struct_type.size
+    end
+
+    def visit_union_get(node)
+      var = @type.vars[node.name.to_s]
+      ptr = gep llvm_self, 0, 0
+      casted_value = @builder.bit_cast(ptr, LLVM::Pointer(var.llvm_type))
+      @last = @builder.load casted_value
+    end
+
+    def visit_union_set(node)
+      var = @type.vars[node.name.to_s]
+      ptr = gep llvm_self, 0, 0
+      casted_value = @builder.bit_cast(ptr, LLVM::Pointer(var.llvm_type))
+      @last = @vars['value'][:ptr]
+      @builder.store @last, casted_value
+    end
+
     def visit_argc(node)
       @last = @argc
     end

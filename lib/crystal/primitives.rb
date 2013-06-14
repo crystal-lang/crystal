@@ -430,6 +430,42 @@ module Crystal
     end
   end
 
+  class UnionAlloc < Primitive
+    attr_reader :type
+
+    def initialize(type)
+      @type = type
+    end
+
+    def clone_from(other)
+      @type = other.type
+    end
+  end
+
+  class UnionSet < Primitive
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
+    end
+
+    def clone_from(other)
+      @name = other.name
+    end
+  end
+
+  class UnionGet < Primitive
+    attr_reader :name
+
+    def initialize(name)
+      @name = name
+    end
+
+    def clone_from(other)
+      @name = other.name
+    end
+  end
+
   class ARGC < Primitive
     def initialize(type)
       @type = type

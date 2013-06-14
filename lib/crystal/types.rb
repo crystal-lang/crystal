@@ -25,6 +25,10 @@ module Crystal
       false
     end
 
+    def c_union?
+      false
+    end
+
     def metaclass?
       false
     end
@@ -1157,7 +1161,6 @@ module Crystal
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
       # Convert name to String, because when using a keyword as a field it comes as s Symbol.
-      # TODO: this should actually be fixed in the parser: it should never generate symbols, always strings for names
       super(name.to_s, arg_types, yields, owner, type_lookup)
     end
 
@@ -1207,6 +1210,87 @@ module Crystal
 
     def index_of_var(name)
       @vars.keys.index(name)
+    end
+
+    def inspect
+      return @to_s if @to_s
+      @to_s = "..."
+      vars_to_s = vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
+      @to_s = nil
+      "#{container}::#{name}<#{vars_to_s}>"
+    end
+
+    def to_s
+      "#{container}::#{name}"
+    end
+  end
+
+  class CUnionType < ContainedType
+    include DefContainer
+    include DefInstanceContainer
+
+    attr_reader :name
+    attr_reader :vars
+
+    def initialize(container, name, vars)
+      super(container)
+      @name = name
+      @vars = Hash[vars.map { |var| [var.name, var] }]
+      @vars.values.each do |var|
+        add_def Def.new("#{var.name}=", [Arg.new_with_restriction('value', var.type)], UnionSet.new(var.name))
+        add_def Def.new(var.name, [], UnionGet.new(var.name))
+      end
+    end
+
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+      # Convert name to String, because when using a keyword as a field it comes as s Symbol.
+      super(name.to_s, arg_types, yields, owner, type_lookup)
+    end
+
+    def c_union?
+      true
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def parents
+      []
+    end
+
+    def metaclass
+      @metaclass ||= begin
+        metaclass = Metaclass.new(self)
+        metaclass.add_def Def.new('new', [], UnionAlloc.new(self))
+        metaclass
+      end
+    end
+
+    def llvm_name
+      name
+    end
+
+    def llvm_type
+      @llvm_type ||= LLVM::Pointer(llvm_struct_type)
+    end
+
+    def llvm_size
+      Crystal::Program::POINTER_SIZE
+    end
+
+    def llvm_struct_type
+      unless @llvm_struct_type
+        max_union_var = @vars.values.max_by { |var| var.type.llvm_size }
+
+        @llvm_struct_type = LLVM::Struct(llvm_name)
+        @llvm_struct_type.element_types = [max_union_var.llvm_type]
+      end
+      @llvm_struct_type
+    end
+
+    def llvm_instance_var_type
+      llvm_struct_type
     end
 
     def inspect
