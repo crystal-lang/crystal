@@ -57,4 +57,9 @@ describe 'Type inference: lib' do
     assert_error "lib Foo; type Foo : Reference; end",
       "only primitive types and structs are allowed in lib declarations"
   end
+
+  it "reports error out can only be used with lib funs" do
+    assert_error "foo(out x)",
+      "out can only be used with lib funs"
+  end
 end

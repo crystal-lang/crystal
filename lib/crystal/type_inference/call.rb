@@ -22,6 +22,8 @@ module Crystal
       if obj && obj.type.is_a?(LibType)
         recalculate_lib_call
         return
+      elsif !obj || (obj.type && !obj.type.is_a?(LibType))
+        check_not_lib_out_args
       end
 
       return unless obj_and_args_types_set?
@@ -31,8 +33,6 @@ module Crystal
       types_signature << obj.type.type_id if obj
       return if @types_signature == types_signature
       @types_signature = types_signature
-
-      check_not_lib_out_args
 
       unbind_from *@target_defs if @target_defs
       unbind_from block.break if block
