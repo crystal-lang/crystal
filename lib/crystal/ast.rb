@@ -1136,6 +1136,24 @@ module Crystal
   class UnionDef < StructOrUnionDef
   end
 
+  class EnumDef < ASTNode
+    attr_accessor :name
+    attr_accessor :constants
+
+    def initialize(name, constants)
+      @name = name
+      @constants = constants
+    end
+
+    def accept_children(visitor)
+      constants.each { |constant| constant.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(EnumDef) && other.name == name && other.constants == constants
+    end
+  end
+
   class Include < ASTNode
     attr_accessor :name
 

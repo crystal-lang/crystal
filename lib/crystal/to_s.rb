@@ -592,6 +592,38 @@ module Crystal
       false
     end
 
+    def visit_union_def(node)
+      @str << 'union '
+      @str << node.name.to_s
+      @str << "\n"
+      with_indent do
+        node.fields.each do |field|
+          append_indent
+          field.accept self
+          @str << "\n"
+        end
+      end
+      append_indent
+      @str << 'end'
+      false
+    end
+
+    def visit_enum_def(node)
+      @str << 'enum '
+      @str << node.name.to_s
+      @str << "\n"
+      with_indent do
+        node.constants.each do |constant|
+          append_indent
+          constant.accept self
+          @str << "\n"
+        end
+      end
+      append_indent
+      @str << 'end'
+      false
+    end
+
     def visit_pointer_of(node)
       node.var.accept(self)
       @str << '.ptr'

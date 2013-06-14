@@ -29,6 +29,10 @@ module Crystal
       false
     end
 
+    def c_enum?
+      false
+    end
+
     def metaclass?
       false
     end
@@ -1299,6 +1303,38 @@ module Crystal
       vars_to_s = vars.map {|name, var| "#{name}: #{var.type}"}.join ', '
       @to_s = nil
       "#{container}::#{name}<#{vars_to_s}>"
+    end
+
+    def to_s
+      "#{container}::#{name}"
+    end
+  end
+
+  class CEnumType < ContainedType
+    attr_reader :name
+    attr_reader :base_type
+
+    def initialize(container, name, base_type, constants)
+      super(container)
+
+      @name = name
+      @base_type
+
+      constants.each do |constant|
+        @types[constant.name] = Const.new(self, constant.name, constant.default_value)
+      end
+    end
+
+    def c_enum?
+      true
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def parents
+      []
     end
 
     def to_s

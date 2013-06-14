@@ -1385,6 +1385,10 @@ module Crystal
             exp = parse_struct_or_union UnionDef
             exp.location = location
             expressions << exp
+          when :enum
+            exp = parse_enum
+            exp.location = location
+            expressions << exp
           when :end
             break
           else
@@ -1503,7 +1507,6 @@ module Crystal
       fields = parse_struct_or_union_fields
 
       check_ident :end
-
       next_token_skip_statement_end
 
       klass.new name, fields
@@ -1566,6 +1569,46 @@ module Crystal
         end
       end
       ptr
+    end
+
+    def parse_enum
+      next_token_skip_space_or_newline
+
+      check :CONST
+      name = @token.value
+      next_token_skip_statement_end
+
+      constants = []
+      while !@token.keyword?(:end)
+        check :CONST
+
+        constant_name = @token.value
+        next_token_skip_space
+        if @token.type == :'='
+          next_token_skip_space_or_newline
+          check :NUMBER
+          kind = @token.number_kind
+          if kind == :f32 || kind == :f64
+            raise "expecting integer constant"
+          end
+          constant_value = NumberLiteral.new(@token.value, kind)
+          next_token_skip_statement_end
+        else
+          constant_value = nil
+          skip_statement_end
+        end
+
+        if @token.type == :','
+          next_token_skip_statement_end
+        end
+
+        constants << Arg.new(constant_name, constant_value)
+      end
+
+      check_ident :end
+      next_token_skip_statement_end
+
+      EnumDef.new name, constants
     end
 
     def parse_string

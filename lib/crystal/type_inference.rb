@@ -313,6 +313,24 @@ module Crystal
       end
     end
 
+    def visit_enum_def(node)
+      type = current_type.types[node.name]
+      if type
+        node.raise "#{node.name} is already defined"
+      else
+        counter = 0
+        node.constants.each do |constant|
+          if constant.default_value
+            counter = constant.default_value.value.to_i
+          else
+            constant.default_value = NumberLiteral.new(counter, :i32)
+          end
+          counter += 1
+        end
+        current_type.types[node.name] = CEnumType.new(current_type, node.name, node.constants)
+      end
+    end
+
     def maybe_ptr_type(type, ptr)
       ptr.times do
         ptr_type = mod.pointer_of(type)

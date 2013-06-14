@@ -127,7 +127,7 @@ describe Parser do
   it_parses "def foo; yield 1; yield; end", Def.new("foo", [], [Yield.new([1.int32]), Yield.new], nil, nil, 1)
   it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)], nil)
   it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block"))
-  it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident], "Double".ident)), focus: true
+  it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident], "Double".ident))
   it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident, "Float".ident], "Double".ident))
   it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", nil, "Double".ident))
   it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident]))
@@ -305,11 +305,12 @@ describe Parser do
   it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident), FunDefArg.new('y', 'Float'.ident)])])
   it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident, 1)])])
   it_parses "lib C; struct Foo; x : Int**; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident, 2)])])
-  it_parses "lib C; struct Foo; x, y, z : Int; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident), FunDefArg.new('y', 'Int'.ident), FunDefArg.new('z', 'Int'.ident)])]), focus: true
+  it_parses "lib C; struct Foo; x, y, z : Int; end end", LibDef.new('C', nil, [StructDef.new('Foo', [FunDefArg.new('x', 'Int'.ident), FunDefArg.new('y', 'Int'.ident), FunDefArg.new('z', 'Int'.ident)])])
   it_parses "lib C; union Foo; end end", LibDef.new('C', nil, [UnionDef.new('Foo')])
+  it_parses "lib C; enum Foo; A\nB, C\nD = 1; end end", LibDef.new('C', nil, [EnumDef.new('Foo', [Arg.new('A'), Arg.new('B'), Arg.new('C'), Arg.new('D', 1.int32)])])
+  it_parses "lib C; enum Foo; A = 1, B; end end", LibDef.new('C', nil, [EnumDef.new('Foo', [Arg.new('A', 1.int32), Arg.new('B')])])
   it_parses "lib C; Foo = 1; end", LibDef.new('C', nil, [Assign.new("Foo".ident, 1.int32)])
   it_parses "lib C\nfun getch = GetChar\nend", LibDef.new('C', nil, [FunDef.new('getch', [], nil, 0, false, 'GetChar')])
-
 
   it_parses "1 .. 2", RangeLiteral.new(1.int32, 2.int32, false)
   it_parses "1 ... 2", RangeLiteral.new(1.int32, 2.int32, true)
