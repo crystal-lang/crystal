@@ -401,7 +401,7 @@ module Crystal
 
     def visit_instance_var(node)
       ivar = @type.lookup_instance_var(node.name)
-      if ivar.type.union? || ivar.type.c_struct?
+      if ivar.type.union? || ivar.type.c_struct? || ivar.type.c_union?
         @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.name)
       else
         index = @type.index_of_instance_var(node.name)
@@ -459,7 +459,7 @@ module Crystal
       if node.var.is_a?(Var)
         var = @vars[node.var.name]
         @last = var[:ptr]
-        @last = @builder.load @last if node.type.var.type.c_struct?
+        @last = @builder.load @last if node.type.var.type.c_struct? || node.type.var.type.c_union?
       else
         var = @type.lookup_instance_var(node.var.name)
         @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.var.name)
@@ -480,7 +480,7 @@ module Crystal
     end
 
     def visit_pointer_get_value(node)
-      if @type.var.type.union? || @type.var.type.c_struct?
+      if @type.var.type.union? || @type.var.type.c_struct? || @type.var.type.c_union?
         @last = llvm_self
       else
         @last = @builder.load llvm_self
@@ -793,9 +793,15 @@ module Crystal
     end
 
     def visit_struct_get(node)
-      index = @type.index_of_var(node.name)
-      struct = @builder.load llvm_self
-      @last = @builder.extract_value struct, index, node.name
+      var = @type.vars[node.name.to_s]
+      if var.type.c_struct? || var.type.c_union?
+        ptr = gep llvm_self, 0, 0
+        @last = @builder.bit_cast(ptr, LLVM::Pointer(var.type.llvm_struct_type))
+      else
+        index = @type.index_of_var(node.name)
+        struct = @builder.load llvm_self
+        @last = @builder.extract_value struct, index, node.name
+      end
     end
 
     def visit_struct_set(node)
@@ -812,8 +818,12 @@ module Crystal
     def visit_union_get(node)
       var = @type.vars[node.name.to_s]
       ptr = gep llvm_self, 0, 0
-      casted_value = @builder.bit_cast(ptr, LLVM::Pointer(var.llvm_type))
-      @last = @builder.load casted_value
+      if var.type.c_struct? || var.type.c_union?
+        @last = @builder.bit_cast(ptr, LLVM::Pointer(var.type.llvm_struct_type))
+      else
+        casted_value = @builder.bit_cast(ptr, LLVM::Pointer(var.llvm_type))
+        @last = @builder.load casted_value
+      end
     end
 
     def visit_union_set(node)
@@ -1091,12 +1101,12 @@ module Crystal
       end
 
       # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call.
-      has_struct_out_arguments = target_def.is_a?(External) && node.args.any? { |arg| arg.out? && arg.is_a?(Var) && arg.type.c_struct? }
-      if has_struct_out_arguments
+      has_struct_or_union_out_args = target_def.is_a?(External) && node.args.any? { |arg| arg.out? && arg.is_a?(Var) && (arg.type.c_struct? || arg.type.c_union?) }
+      if has_struct_or_union_out_args
         old_call_args = call_args.clone
         call_args = call_args.each_with_index.map do |call_arg, i|
           arg = node.args[i]
-          if arg.out? && arg.type.c_struct?
+          if arg.out? && (arg.type.c_struct? || arg.type.c_union?)
             alloca arg.type.llvm_struct_type
           else
             call_arg
@@ -1106,10 +1116,10 @@ module Crystal
 
       @last = @builder.call fun, *call_args
 
-      if has_struct_out_arguments
+      if has_struct_or_union_out_args
         call_args.each_with_index do |call_arg, i|
           arg = node.args[i]
-          if arg.out? && arg.type.c_struct?
+          if arg.out? && (arg.type.c_struct? || arg.type.c_union?)
             @builder.store call_arg, old_call_args[i]
           end
         end
@@ -1367,7 +1377,7 @@ module Crystal
 
     def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
       if target_type == value_type
-        value = @builder.load value if target_type.union? || (instance_var && target_type.c_struct?)
+        value = @builder.load value if target_type.union? || (instance_var && (target_type.c_struct? || target_type.c_union?))
         @builder.store value, pointer
       else
         assign_to_union(pointer, target_type, value_type, value)

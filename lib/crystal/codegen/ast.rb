@@ -8,8 +8,8 @@ module Crystal
       type.llvm_arg_type
     end
 
-    def llvm_instance_var_type
-      type.llvm_instance_var_type
+    def llvm_embedded_type
+      type.llvm_embedded_type
     end
 
     def returns?

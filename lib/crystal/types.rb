@@ -117,7 +117,7 @@ module Crystal
       llvm_type
     end
 
-    def llvm_instance_var_type
+    def llvm_embedded_type
       llvm_type
     end
 
@@ -576,7 +576,7 @@ module Crystal
     def llvm_struct_type
       unless @llvm_struct_type
         @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = all_instance_vars.values.map(&:llvm_instance_var_type)
+        @llvm_struct_type.element_types = all_instance_vars.values.map(&:llvm_embedded_type)
       end
       @llvm_struct_type
     end
@@ -881,7 +881,7 @@ module Crystal
     end
 
     def llvm_type
-      @llvm_type ||= var.type.c_struct? ? var.type.llvm_type : LLVM::Pointer(var.type.llvm_type)
+      @llvm_type ||= LLVM::Pointer(var.type.llvm_embedded_type)
     end
 
     def llvm_size
@@ -1203,12 +1203,12 @@ module Crystal
     def llvm_struct_type
       unless @llvm_struct_type
         @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = @vars.values.map(&:llvm_type)
+        @llvm_struct_type.element_types = @vars.values.map(&:llvm_embedded_type)
       end
       @llvm_struct_type
     end
 
-    def llvm_instance_var_type
+    def llvm_embedded_type
       llvm_struct_type
     end
 
@@ -1288,12 +1288,12 @@ module Crystal
         max_union_var = @vars.values.max_by { |var| var.type.llvm_size }
 
         @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = [max_union_var.llvm_type]
+        @llvm_struct_type.element_types = [max_union_var.llvm_embedded_type]
       end
       @llvm_struct_type
     end
 
-    def llvm_instance_var_type
+    def llvm_embedded_type
       llvm_struct_type
     end
 
@@ -1314,11 +1314,10 @@ module Crystal
     attr_reader :name
     attr_reader :base_type
 
-    def initialize(container, name, base_type, constants)
+    def initialize(container, name, constants)
       super(container)
 
       @name = name
-      @base_type
 
       constants.each do |constant|
         @types[constant.name] = Const.new(self, constant.name, constant.default_value)

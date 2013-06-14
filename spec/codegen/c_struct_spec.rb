@@ -18,4 +18,23 @@ describe 'Code gen: struct' do
   it "codegens set struct value with constant" do
     run("#{struct}; CONST = 1; bar = Foo::Bar.new; bar.x = CONST; bar.x").to_i.should eq(1)
   end
+
+  it "codegens union inside struct" do
+    run(%q(
+      lib Foo
+        union Bar
+          x : Int32
+          y : Int64
+        end
+
+        struct Baz
+          lala : Bar
+        end
+      end
+
+      a = Foo::Baz.new
+      a.lala.x = 10
+      a.lala.x
+      )).to_i.should eq(10)
+  end
 end
