@@ -84,4 +84,25 @@ describe 'Code gen: pointer' do
       x.value
       )).to_i.should eq(1)
   end
+
+  it "sets value of pointer to struct" do
+    run(%q(
+      lib C
+        struct Color
+          r, g, b, a : UInt8
+        end
+      end
+
+      color = C::Color.new
+      color.r = 10_u8
+
+      color2 = C::Color.new
+      color2.r = 20_u8
+
+      p = color.ptr
+      p.value = color2
+
+      color.r
+      )).to_i.should eq(20)
+  end
 end

@@ -489,6 +489,14 @@ module Crystal
 
     def visit_pointer_set_value(node)
       value = @fun.params[1]
+
+      if node.type.c_struct? || node.type.c_union?
+        loaded_value = @builder.load value
+        @builder.store loaded_value, @fun.params[0]
+        @last = value
+        return
+      end
+
       if node.type.union?
         value = @builder.alloca node.llvm_type
         target = @fun.params[1]
@@ -1298,7 +1306,7 @@ module Crystal
       next_def_label = nil
       node.target_defs.each do |a_def|
         if owner.union?
-            result = match_any_type_id(a_def.owner, obj_type_id)
+          result = match_any_type_id(a_def.owner, obj_type_id)
         elsif owner.nilable?
           if a_def.owner.nil_type?
             result = null_pointer?(obj_type_id)
