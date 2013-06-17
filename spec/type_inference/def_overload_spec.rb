@@ -439,4 +439,46 @@ describe 'Type inference: def overload' do
       foo(x)
       )) { union_of(int32, char) }
   end
+
+  pending "restricts on generic type with free type arg" do
+    assert_type(%q(
+      require "reference"
+
+      class Object
+        def equal(expectation)
+          expectation == self
+        end
+      end
+
+      class Foo(T)
+        def ==(other : Foo(U))
+          1
+        end
+      end
+
+      a = Foo(Int).new
+      a.equal(a)
+      )) { union_of(bool, int32) }
+  end
+
+  pending "restricts on generic type without type arg" do
+    assert_type(%q(
+      require "reference"
+
+      class Object
+        def equal(expectation)
+          expectation == self
+        end
+      end
+
+      class Foo(T)
+        def ==(other : Foo)
+          1
+        end
+      end
+
+      a = Foo(Int).new
+      a.equal(a)
+      )) { union_of(bool, int32) }
+  end
 end
