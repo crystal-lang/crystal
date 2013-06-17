@@ -363,12 +363,12 @@ module Crystal
         end
       end
 
-      node.then = append_before_exits(node.then, new_then_vars) if node.then && new_then_vars.length > 0
+      node.then = append_before_exits(node.then, before_vars, new_then_vars) if node.then && new_then_vars.length > 0
       unless then_dead_code
         node.then = concat_preserving_return_value(node.then, new_then_vars)
       end
 
-      node.else = append_before_exits(node.else, new_else_vars) if node.else && new_else_vars.length > 0
+      node.else = append_before_exits(node.else, before_vars, new_else_vars) if node.else && new_else_vars.length > 0
       unless else_dead_code
         node.else = concat_preserving_return_value(node.else, new_else_vars)
       end
@@ -395,7 +395,7 @@ module Crystal
         end
       end
 
-      node.body = append_before_exits(node.body, after_cond_loop_vars) if node.body && after_cond_loop_vars.length > 0
+      node.body = append_before_exits(node.body, before_cond_vars, after_cond_loop_vars) if node.body && after_cond_loop_vars.length > 0
 
       unless @dead_code
         node.body = concat_preserving_return_value(node.body, before_cond_loop_vars)
@@ -419,7 +419,7 @@ module Crystal
 
       after_body_vars = get_loop_vars(before_vars)
 
-      node.body = append_before_exits(node.body, after_body_vars) if node.body && after_body_vars.length > 0
+      node.body = append_before_exits(node.body, before_vars, after_body_vars) if node.body && after_body_vars.length > 0
 
       unless @dead_code
         node.body = concat_preserving_return_value(node.body, after_body_vars)
@@ -514,14 +514,15 @@ module Crystal
       vars << assign_var_with_indices(name, to_index, from_index)
     end
 
-    def append_before_exits(node, vars)
-      transformer = AppendBeforeExits.new(vars)
+    def append_before_exits(node, before_vars, vars)
+      transformer = AppendBeforeExits.new(before_vars, vars)
       node.transform(transformer)
     end
   end
 
   class AppendBeforeExits < Transformer
-    def initialize(vars)
+    def initialize(before_vars, vars)
+      @before_vars = before_vars
       @vars = vars
       @vars_indices = {}
       @names = Set.new(vars.select { |var| !var.target.name.index(':') }.map { |var| var.target.name })
@@ -558,9 +559,14 @@ module Crystal
           if value_index
             Assign.new(assign.target, Var.new("#{name}:#{value_index}"))
           else
-            Assign.new(assign.target, Var.new(name))
+            if @before_vars.has_key?(name)
+              Assign.new(assign.target, Var.new(name))
+            else
+              Assign.new(assign.target, NilLiteral.new)
+            end
           end
         end
+        new_vars.compact!
         Expressions.from(new_vars + [node])
       else
         node

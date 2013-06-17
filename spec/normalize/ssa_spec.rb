@@ -134,6 +134,11 @@ describe 'Normalize: ssa' do
     end
   end
 
+  it "performs ssa on while with break with variable declared inside else" do
+    assert_normalize "while true; if true; break; else; b = 2; end; end",
+      "while true\n  if true\n    b:1 = nil\n    break\n  else\n    #temp_1 = b = 2\n    b:1 = b\n    #temp_1\n  end\nend"
+  end
+
   it "performs ssa on simple assignment inside def" do
     assert_normalize "def foo(a); a = 1; end", "def foo(a)\n  a:1 = 1\nend"
   end
