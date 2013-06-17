@@ -575,11 +575,11 @@ module Crystal
     end
 
     def end_visit_if(node)
-      node.bind_to node.then if node.then
-      node.bind_to node.else if node.else
-      unless node.then && node.else
-        node.bind_to mod.nil_var
-      end
+      nodes = []
+      nodes << node.then if node.then
+      nodes << node.else if node.else
+      nodes << mod.nil_var unless node.then && node.else
+      node.bind_to *nodes
     end
 
     def visit_ident(node)
