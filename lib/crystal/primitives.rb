@@ -90,7 +90,7 @@ module Crystal
       singleton(math, 'sqrt', {'other' => float64}, float64) { |b, f, llvm_mod| b.call(sqrt(llvm_mod), f.params[1]) }
     end
 
-    INT_CALC_OP_MAP = { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv }
+    INT_CALC_OP_MAP = { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv, :% => :srem, :<< => :shl, :| => :or, :& => :and, :"^" => :xor }
     FLOAT_CALC_OP_MAP = { :+ => :fadd, :- => :fsub, :* => :fmul, :/ => :fdiv }
 
     INT_CMP_OP_FUN = :icmp
@@ -183,6 +183,18 @@ module Crystal
             arg1 = adjust_calc_type(b, comp_type, type1, f.params[0])
             arg2 = adjust_calc_type(b, comp_type, type2, f.params[1])
             build_comp_op(b, comp_type, op, arg1, arg2)
+          end
+        end
+      end
+
+      [uint8, uint16, uint32, uint64, int8, int16, int32, int64].repeated_permutation(2) do |type1, type2|
+        [:%, :<<, :|, :&, :"^"].each do |op|
+          ret_type = greatest_type(type1, type2)
+          singleton(type1, op, {'other' => type2}, type1) do |b, f|
+            arg1 = adjust_calc_type(b, ret_type, type1, f.params[0])
+            arg2 = adjust_calc_type(b, ret_type, type2, f.params[1])
+            ret = build_calc_op(b, ret_type, op, arg1, arg2)
+            cast_back(b, type1, ret_type, ret)
           end
         end
       end
