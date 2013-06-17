@@ -736,6 +736,15 @@ module Crystal
     end
   end
 
+  class FloatType < PrimitiveType
+    attr_reader :rank
+
+    def initialize(container, name, superclass, llvm_type, llvm_size, rank)
+      super(container, name, superclass, llvm_type, llvm_size)
+      @rank = rank
+    end
+  end
+
   class NilType < PrimitiveType
     def nil_type?
       true

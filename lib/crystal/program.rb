@@ -45,8 +45,8 @@ module Crystal
       @types["Float"] = float = ValueType.new self, "Float", numeric
       float.abstract = true
 
-      @types["Float32"] = PrimitiveType.new self, "Float32", float, LLVM::Float, 4
-      @types["Float64"] = PrimitiveType.new self, "Float64", float, LLVM::Double, 8
+      @types["Float32"] = FloatType.new self, "Float32", float, LLVM::Float, 4, 9
+      @types["Float64"] = FloatType.new self, "Float64", float, LLVM::Double, 8, 10
       @types["Symbol"] = PrimitiveType.new self, "Symbol", value, LLVM::Int32, 4
       @types["Pointer"] = PointerType.new self, "Pointer", value, ["T"]
 

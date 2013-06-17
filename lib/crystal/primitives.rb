@@ -90,77 +90,50 @@ module Crystal
       singleton(math, 'sqrt', {'other' => float64}, float64) { |b, f, llvm_mod| b.call(sqrt(llvm_mod), f.params[1]) }
     end
 
-    CALC_OP_MAP = {
-      'UInt8' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
-      'UInt16' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
-      'UInt32' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
-      'UInt64' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
-      'Int8' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
-      'Int16' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
-      'Int32' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
-      'Int64' => { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv },
-      'Float32' => { :+ => :fadd, :- => :fsub, :* => :fmul, :/ => :fdiv },
-      'Float64' => { :+ => :fadd, :- => :fsub, :* => :fmul, :/ => :fdiv },
-    }
+    INT_CALC_OP_MAP = { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv }
+    FLOAT_CALC_OP_MAP = { :+ => :fadd, :- => :fsub, :* => :fmul, :/ => :fdiv }
 
-    COMP_OP_FUN_MAP = {
-      'UInt8' => :icmp,
-      'UInt16' => :icmp,
-      'UInt32' => :icmp,
-      'UInt64' => :icmp,
-      'Int8' => :icmp,
-      'Int16' => :icmp,
-      'Int32' => :icmp,
-      'Int64' => :icmp,
-      'Float32' => :fcmp,
-      'Float64' => :fcmp,
-    }
+    INT_CMP_OP_FUN = :icmp
+    FLOAT_CMP_OP_FUN = :fcmp
 
-    COMP_OP_ARG_MAP = {
-      'UInt8' => { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne },
-      'UInt16' => { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne },
-      'UInt32' => { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne },
-      'UInt64' => { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne },
-      'Int8' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
-      'Int16' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
-      'Int32' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
-      'Int64' => { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne },
-      'Float32' => { :== => :oeq, :> => :ogt, :>= => :oge, :< => :olt, :<= => :ole, :'!=' => :one },
-      'Float64' => { :== => :oeq, :> => :ogt, :>= => :oge, :< => :olt, :<= => :ole, :'!=' => :one },
-    }
+    INT_CMP_OP_MAP = { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne }
+    FLOAT_CMP_OP_MAP = { :== => :oeq, :> => :ogt, :>= => :oge, :< => :olt, :<= => :ole, :'!=' => :one }
 
     def build_calc_op(b, ret_type, op, arg1, arg2)
-      b.send CALC_OP_MAP[ret_type.name][op], arg1, arg2
+      if ret_type.equal?(float32) || ret_type.equal?(float64)
+        table = FLOAT_CALC_OP_MAP
+      else
+        table = INT_CALC_OP_MAP
+      end
+      b.send table[op], arg1, arg2
     end
 
     def build_comp_op(b, comp_type, op, arg1, arg2)
-      b.send COMP_OP_FUN_MAP[comp_type.name], COMP_OP_ARG_MAP[comp_type.name][op], arg1, arg2
+      if comp_type.equal?(float32) || comp_type.equal?(float64)
+        fun = :fcmp
+        table = FLOAT_CMP_OP_MAP
+      else
+        fun = :icmp
+        table = INT_CMP_OP_MAP
+      end
+      b.send fun, table[op], arg1, arg2
     end
 
     def greatest_type(type1, type2)
-      return float64 if type1 == float64 || type2 == float64
-      return float32 if type1 == float32 || type2 == float32
-      return uint64 if type1 == uint64 || type2 == uint64
-      return int64 if type1 == int64 || type2 == int64
-      return uint32 if type1 == uint32 || type2 == uint32
-      return int32 if type1 == int32 || type2 == int32
-      return uint16 if type1 == uint16 || type2 == uint16
-      return int16 if type1 == int16 || type2 == int16
-      return uint8 if type1 == uint8 || type2 == uint8
-      return int8
+      type1.rank >= type2.rank ? type1 : type2
     end
 
     def adjust_calc_type(b, ret_type, type, arg)
-      return arg if ret_type == type
-      if ret_type == float64
-        if type == float32
+      return arg if ret_type.equal?(type)
+      if ret_type.equal?(float64)
+        if type.equal?(float32)
           return b.fp_ext(arg, float64.llvm_type)
         elsif type.unsigned?
           return b.ui2fp(arg, float64.llvm_type)
         else
           return b.si2fp(arg, float64.llvm_type)
         end
-      elsif ret_type == float32
+      elsif ret_type.equal?(float32)
         if type.unsigned?
           return b.ui2fp(arg, float32.llvm_type)
         else
@@ -168,9 +141,9 @@ module Crystal
         end
       end
 
-      return b.zext(arg, int64.llvm_type) if ret_type == int64 || ret_type == uint64
-      return b.zext(arg, int32.llvm_type) if ret_type == int32 || ret_type == uint32
-      return b.zext(arg, int16.llvm_type) if ret_type == int16 || ret_type == uint16
+      return b.zext(arg, int64.llvm_type) if ret_type.equal?(int64) || ret_type.equal?(uint64)
+      return b.zext(arg, int32.llvm_type) if ret_type.equal?(int32) || ret_type.equal?(uint32)
+      return b.zext(arg, int16.llvm_type) if ret_type.equal?(int16) || ret_type.equal?(uint16)
       return arg
     end
 
