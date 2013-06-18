@@ -107,6 +107,10 @@ describe 'Code gen: primitives' do
     run('7 / 3').to_i.should eq(2)
   end
 
+  it 'codegens Int < Int' do
+    run('-1 < 0').to_b.should be_true
+  end
+
   it 'codegens Int << Int' do
     run('12 << 3').to_i.should eq(96)
   end
