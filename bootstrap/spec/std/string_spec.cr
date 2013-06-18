@@ -33,7 +33,7 @@ describe "String" do
   end
 
   it "does to_f" do
-    "1234.56".to_f.should eq(1234.56f)
+    "1234.56".to_f.should eq(1234.56_f32)
   end
 
   it "does to_d" do
