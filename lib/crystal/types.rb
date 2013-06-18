@@ -202,6 +202,8 @@ module Crystal
             end
           end
           nil
+        elsif arg_type.is_a?(HierarchyType)
+          raise "Matching #{arg_type} with #{restriction} is not supported yet"
         else
           arg_type && arg_type.generic? && match_generic_type(arg_type, restriction, owner, type_lookup, free_vars) && arg_type
         end
