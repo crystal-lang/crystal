@@ -54,8 +54,8 @@ class Object
   end
 end
 
-class EqualExpectation
-  def initialize(value)
+class EqualExpectation(T)
+  def initialize(value : T)
     @value = value
   end
 

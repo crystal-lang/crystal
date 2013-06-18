@@ -28,7 +28,7 @@ describe "Array" do
     end
 
     it "gets on empty range" do
-      [1, 2, 3][3 .. 1].should eq([] of Int)
+      [1, 2, 3][3 .. 1].should eq([] of Int32)
     end
 
     it "gets with start and count" do
@@ -52,19 +52,19 @@ describe "Array" do
 
   describe "empty" do
     it "is empty" do
-      ([] of Int).empty?.should be_true
+      ([] of Int32).empty?.should be_true
     end
 
     it "has length 0" do
-      ([] of Int).length.should eq(0)
+      ([] of Int32).length.should eq(0)
     end
   end
 
   describe "==" do
     it "compare empty" do
-      ([] of Int).should eq([] of Int)
-      [1].should_not eq([] of Int)
-      ([] of Int).should_not eq([1])
+      ([] of Int32).should eq([] of Int32)
+      [1].should_not eq([] of Int32)
+      ([] of Int32).should_not eq([1])
     end
 
     it "compare elements" do
@@ -167,7 +167,7 @@ describe "Array" do
     assert do
       a = [1, 2, 3]
       a.clear
-      a.should eq([] of Int)
+      a.should eq([] of Int32)
     end
   end
 
@@ -196,7 +196,7 @@ describe "Array" do
   # describe "flatten" do
   #   assert do
   #     a = [[1, 2], 3, [4, [5, 6]]]
-  #     a.flatten([] of Int).should eq([1, 2, 3, 4, 5, 6])
+  #     a.flatten([] of Int32).should eq([1, 2, 3, 4, 5, 6])
   #     a.should eq([[1, 2], 3, [4, [5, 6]]])
   #   end
   # end
@@ -225,9 +225,9 @@ describe "Array" do
     end
 
     it "shifts when empty" do
-      a = [] of Int
+      a = [] of Int32
       a.shift.should be_nil
-      a.should eq([] of Int)
+      a.should eq([] of Int32)
     end
   end
 

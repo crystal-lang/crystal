@@ -52,7 +52,7 @@ class Array(T)
     @buffer[index] = value
   end
 
-  def [](range : Range(Int, Int))
+  def [](range : Range)
     from = range.begin
     from += length if from < 0
     to = range.end
@@ -263,9 +263,9 @@ class Array(T)
     @buffer
   end
 
-  # def to_a
-  #   self
-  # end
+  def to_a
+    self
+  end
 
   def max
     max = self[0]
@@ -291,7 +291,7 @@ class Array(T)
     self
   end
 
-  def ==(other : Array(U))
+  def ==(other : Array)
     return false if @length != other.length
     each_with_index do |item, i|
       return false if item != other[i]
