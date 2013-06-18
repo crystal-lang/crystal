@@ -61,6 +61,10 @@ module Crystal
       false
     end
 
+    def float?
+      false
+    end
+
     def passed_as_self?
       true
     end
@@ -731,6 +735,10 @@ module Crystal
       @rank = rank
     end
 
+    def signed?
+      @rank % 2 == 1
+    end
+
     def unsigned?
       @rank % 2 == 0
     end
@@ -742,6 +750,10 @@ module Crystal
     def initialize(container, name, superclass, llvm_type, llvm_size, rank)
       super(container, name, superclass, llvm_type, llvm_size)
       @rank = rank
+    end
+
+    def float?
+      true
     end
   end
 

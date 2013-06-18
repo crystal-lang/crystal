@@ -91,30 +91,34 @@ module Crystal
     end
 
     INT_CALC_OP_MAP = { :+ => :add, :- => :sub, :* => :mul, :/ => :sdiv, :% => :srem, :<< => :shl, :| => :or, :& => :and, :"^" => :xor }
+    UINT_CALC_OP_MAP = { :+ => :add, :- => :sub, :* => :mul, :/ => :udiv, :% => :urem, :<< => :shl, :| => :or, :& => :and, :"^" => :xor }
     FLOAT_CALC_OP_MAP = { :+ => :fadd, :- => :fsub, :* => :fmul, :/ => :fdiv }
 
     INT_CMP_OP_FUN = :icmp
     FLOAT_CMP_OP_FUN = :fcmp
 
-    INT_CMP_OP_MAP = { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne }
+    INT_CMP_OP_MAP = { :== => :eq, :> => :sgt, :>= => :sge, :< => :slt, :<= => :sle, :'!=' => :ne }
+    UINT_CMP_OP_MAP = { :== => :eq, :> => :ugt, :>= => :uge, :< => :ult, :<= => :ule, :'!=' => :ne }
     FLOAT_CMP_OP_MAP = { :== => :oeq, :> => :ogt, :>= => :oge, :< => :olt, :<= => :ole, :'!=' => :one }
 
     def build_calc_op(b, ret_type, op, arg1, arg2)
-      if ret_type.equal?(float32) || ret_type.equal?(float64)
+      if ret_type.float?
         table = FLOAT_CALC_OP_MAP
-      else
+      elsif ret_type.signed?
         table = INT_CALC_OP_MAP
+      else
+        table = UINT_CALC_OP_MAP
       end
       b.send table[op], arg1, arg2
     end
 
     def build_comp_op(b, comp_type, op, arg1, arg2)
-      if comp_type.equal?(float32) || comp_type.equal?(float64)
+      if comp_type.float?
         fun = :fcmp
         table = FLOAT_CMP_OP_MAP
       else
         fun = :icmp
-        table = INT_CMP_OP_MAP
+        table = comp_type.signed? ? INT_CMP_OP_MAP : UINT_CMP_OP_MAP
       end
       b.send fun, table[op], arg1, arg2
     end
