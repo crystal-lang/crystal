@@ -1215,10 +1215,16 @@ module Crystal
       if @token.type == :":"
         next_token_skip_space_or_newline
 
-        if @token.type == :CONST
+        if @token.type == :CONST || @token.keyword?('self')
           inputs = []
           while true
-            inputs << parse_ident
+            if @token.keyword?('self')
+              inputs << SelfType.instance
+              next_token
+            else
+              inputs << parse_ident
+            end
+
             skip_space_or_newline
             if @token.type == :"->"
               break
@@ -1234,6 +1240,9 @@ module Crystal
         if @token.type == :CONST
           output = parse_ident
           skip_space_or_newline
+        elsif @token.keyword?('self')
+          output = SelfType.instance
+          next_token_skip_space_or_newline
         end
       end
 

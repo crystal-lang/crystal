@@ -40,7 +40,16 @@ class Int
     self + 1
   end
 
-  def upto(n)
+  def times(&block : self -> )
+    i = self ^ self
+    while i < self
+      yield i
+      i += 1
+    end
+    self
+  end
+
+  def upto(n, &block : self -> )
     if self <= n
       x = self
       while x <= n
@@ -51,7 +60,7 @@ class Int
     self
   end
 
-  def downto(n)
+  def downto(n, &block : self -> )
     if self >= n
       x = self
       while x >= n

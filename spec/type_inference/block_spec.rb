@@ -253,6 +253,51 @@ describe 'Block inference' do
       )) { float64 }
   end
 
+  it "infer type with self block arg" do
+    assert_type(%q(
+      class Foo
+        def foo(&block : self -> )
+          yield self
+        end
+      end
+
+      f = Foo.new
+      a = nil
+      f.foo do |x|
+        a = x
+      end
+      a
+      )) { union_of(types["Foo"], self.nil) }
+  end
+
+  it "error with self input type doesn't match" do
+    assert_error %q(
+      class Foo
+        def foo(&block : self -> )
+          yield 1
+        end
+      end
+
+      f = Foo.new
+      f.foo {}
+      ),
+      "argument #1 of yield expected to be Foo, not Int32"
+  end
+
+  it "error with self output type doesn't match" do
+    assert_error %q(
+      class Foo
+        def foo(&block : Int32 -> self )
+          yield 1
+        end
+      end
+
+      f = Foo.new
+      f.foo { 1 }
+      ),
+      "block expected to return Foo, not Int32"
+  end
+
   it "errors when block varaible shadows local variable" do
     assert_syntax_error "a = 1; foo { |a| }",
       "block argument 'a' shadows local variable 'a'"

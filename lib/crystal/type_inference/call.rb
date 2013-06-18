@@ -152,7 +152,11 @@ module Crystal
           block_type = block.body ? block.body.type : mod.nil
           matched = match.type_lookup.match_arg(block_type, block_arg.output, match.owner, match.owner, match.free_vars)
           unless matched
+            if block_arg.output.is_a?(SelfType)
+              raise "block expected to return #{match.owner}, not #{block_type}"
+            else
             raise "block expected to return #{block_arg.output}, not #{block_type}"
+          end
           end
           block.body.freeze_type = true if block.body
         end
@@ -206,6 +210,11 @@ module Crystal
         end
 
         @type = instance_type.instantiate(type_vars)
+        false
+      end
+
+      def visit_self_type(node)
+        @type = @match.owner
         false
       end
     end
