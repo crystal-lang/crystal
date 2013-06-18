@@ -3,8 +3,8 @@ require "spec"
 
 describe "Float" do
   describe "**" do
-    assert { (2.5f ** 2).should eq(6.25f) }
-    assert { (2.5f ** 2.5f).should eq(9.882117688026186f) }
-    assert { (2.5f ** 2.5).should eq(9.882117688026186f) }
+    assert { (2.5_f32 ** 2).should eq(6.25_f32) }
+    assert { (2.5_f32 ** 2.5_f32).should eq(9.882117688026186_f32) }
+    assert { (2.5_f32 ** 2.5).should eq(9.882117688026186_f32) }
   end
 end
