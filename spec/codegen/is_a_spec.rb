@@ -10,35 +10,35 @@ describe 'Codegen: is_a?' do
   end
 
   it "codegens is_a? with union gives true" do
-    run("(true ? 1 : 'a').is_a?(Int)").to_b.should be_true
+    run("(1 == 1 ? 1 : 'a').is_a?(Int)").to_b.should be_true
   end
 
   it "codegens is_a? with union gives false" do
-    run("(true ? 1 : 'a').is_a?(Char)").to_b.should be_false
+    run("(1 == 1 ? 1 : 'a').is_a?(Char)").to_b.should be_false
   end
 
   it "codegens is_a? with union gives false" do
-    run("(true ? 1 : 'a').is_a?(Float)").to_b.should be_false
+    run("(1 == 1 ? 1 : 'a').is_a?(Float)").to_b.should be_false
   end
 
   it "codegens is_a? with union gives true" do
-    run("(true ? 1 : 'a').is_a?(Object)").to_b.should be_true
+    run("(1 == 1 ? 1 : 'a').is_a?(Object)").to_b.should be_true
   end
 
   it "codegens is_a? with nilable gives true" do
-    run("(true ? nil : Reference.new).is_a?(Nil)").to_b.should be_true
+    run("(1 == 1 ? nil : Reference.new).is_a?(Nil)").to_b.should be_true
   end
 
   it "codegens is_a? with nilable gives false becuase other type 1" do
-    run("(true ? nil : Reference.new).is_a?(Object)").to_b.should be_false
+    run("(1 == 1 ? nil : Reference.new).is_a?(Object)").to_b.should be_false
   end
 
   it "codegens is_a? with nilable gives false becuase other type 2" do
-    run("(false ? nil : Reference.new).is_a?(Object)").to_b.should be_true
+    run("(1 == 2 ? nil : Reference.new).is_a?(Object)").to_b.should be_true
   end
 
   it "codegens is_a? with nilable gives false becuase no type" do
-    run("(false ? nil : Reference.new).is_a?(String)").to_b.should be_false
+    run("(1 == 2 ? nil : Reference.new).is_a?(String)").to_b.should be_false
   end
 
   it "codegens is_a? with nilable gives false becuase no type" do
@@ -180,7 +180,7 @@ describe 'Codegen: is_a?' do
       end
 
       foo = Foo.new || nil
-      if true && foo.is_a?(Foo) && foo.bar
+      if 1 == 1 && foo.is_a?(Foo) && foo.bar
         1
       else
         2

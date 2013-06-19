@@ -312,5 +312,81 @@ module Crystal
     def transform_many(exps)
       exps.map! { |exp| exp.transform(self) } if exps
     end
+
+    def transform_primitive_body(node)
+      node
+    end
+
+    def transform_pointer_malloc(node)
+      node
+    end
+
+    def transform_pointer_malloc_with_value(node)
+      node
+    end
+
+    def transform_pointer_get_value(node)
+      node
+    end
+
+    def transform_pointer_set_value(node)
+      node
+    end
+
+    def transform_pointer_add(node)
+      node
+    end
+
+    def transform_pointer_realloc(node)
+      node
+    end
+
+    def transform_pointer_cast(node)
+      node
+    end
+
+    def transform_allocate(node)
+      node
+    end
+
+    def transform_struct_alloc(node)
+      node
+    end
+
+    def transform_struct_set(node)
+      node
+    end
+
+    def transform_struct_get(node)
+      node
+    end
+
+    def transform_union_alloc(node)
+      node
+    end
+
+    def transform_union_set(node)
+      node
+    end
+
+    def transform_union_get(node)
+      node
+    end
+
+    def transform_argc(node)
+      node
+    end
+
+    def transform_argv(node)
+      node
+    end
+
+    def transform_nil_pointer(node)
+      node
+    end
+
+    def transform_class_method(node)
+      node
+    end
   end
 end

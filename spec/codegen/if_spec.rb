@@ -49,8 +49,16 @@ describe 'Code gen: if' do
     run('if false; nil; else; "foo"; end').to_string.should eq("foo")
   end
 
+  it 'codegens if of nilable type in then 2' do
+    run('if 1 == 2; nil; else; "foo"; end').to_string.should eq("foo")
+  end
+
   it 'codegens if of nilable type in else' do
     run('if true; "foo"; else; nil; end').to_string.should eq("foo")
+  end
+
+  it 'codegens if of nilable type in else 3' do
+    run('if 1 == 1; "foo"; else; nil; end').to_string.should eq("foo")
   end
 
   it "codegens if with return and no else" do

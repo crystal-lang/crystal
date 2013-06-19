@@ -10,7 +10,7 @@ module Crystal
     def run(code, options = {})
       node = parse code
       node = normalize node
-      infer_type node, options
+      node = infer_type node, options
       evaluate node
     end
 
@@ -189,7 +189,7 @@ module Crystal
     def visit_expressions(node)
       node.expressions.each do |exp|
         accept(exp)
-        break if exp.returns? || exp.breaks? || (exp.yields? && (block_returns? || block_breaks?))
+        break if exp.no_returns? || exp.returns? || exp.breaks? || (exp.yields? && (block_returns? || block_breaks?))
       end
       false
     end
@@ -267,7 +267,7 @@ module Crystal
     end
 
     def visit_assign(node)
-      codegen_assign_node(node.target, node.value)
+      codegen_assign_node(node.target, node.value) rescue binding.pry
     end
 
     def visit_multi_assign(node)
@@ -536,43 +536,7 @@ module Crystal
       is_nilable = node.type && node.type.nilable?
       union_ptr = alloca node.llvm_type if is_union
 
-      const_value = check_const(node.cond)
-      case const_value
-      when true
-        node.else = node.then # So if the then returns, also the whole if
-
-        if node.then
-          accept(node.then)
-        else
-          @last = llvm_nil
-        end
-
-        if is_union && (!node.then || node.then.type)
-          codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last)
-          @last = union_ptr
-        elsif is_nilable && @last.type.kind == :integer
-          @last = @builder.int2ptr @last, node.llvm_type
-        end
-
-        return false
-      when false
-        node.then = node.else # So if the else returns, also the whole if
-
-        if node.else
-          accept(node.else)
-        else
-          @last = llvm_nil
-        end
-
-        if is_union && (!node.else || node.else.type)
-          codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last)
-          @last = union_ptr
-        elsif is_nilable && @last.type.kind == :integer
-          @last = @builder.int2ptr @last, node.llvm_type
-        end
-
-        return false
-      end
+      accept(node.cond)
 
       then_block, else_block, exit_block = new_blocks "then", "else", "exit"
 
@@ -657,35 +621,6 @@ module Crystal
       @last = llvm_nil
 
       false
-    end
-
-    def check_const(node_cond)
-      accept(node_cond)
-
-      if @mod.nil == node_cond.type
-        return false
-      elsif @mod.bool == node_cond.type
-        # Nothing
-      elsif node_cond.type.nilable?
-        # Nothing
-      elsif node_cond.type.is_a?(UnionType)
-        nil_or_bool = node_cond.type.types.any? { |t| t.nil_type? || t.equal?(@mod.bool) }
-        return true unless nil_or_bool
-      elsif node_cond.type.is_a?(PointerType)
-        # Nothing
-      else
-        return true
-      end
-
-      if @last.constant?
-        if @last == int1(0)
-          return false
-        elsif @last == int1(1)
-          return true
-        end
-      end
-
-      nil
     end
 
     def codegen_cond_branch(node_cond, then_block, else_block)
@@ -1214,7 +1149,7 @@ module Crystal
               end
             end
 
-            if @return_type.nilable? && target_def.type.nil_type?
+            if @return_type.nilable? && target_def.body.type && target_def.body.type.nil_type?
               @builder.ret LLVM::Constant.null(@return_type.llvm_type)
             else
               @builder.ret(@last)

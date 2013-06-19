@@ -22,7 +22,11 @@ describe 'Code gen: return' do
   end
 
   it "return from function with nilable type" do
-    run('require "prelude"; def foo; return Reference.new if true; end; foo.nil?').to_b.should be_false
+    run('require "nil"; require "reference"; def foo; return Reference.new if true; end; foo.nil?').to_b.should be_false
+  end
+
+  it "return from function with nilable type 2" do
+    run('require "nil"; require "reference"; def foo; return Reference.new if 1 == 1; end; foo.nil?').to_b.should be_false
   end
 
   it "returns empty from function" do

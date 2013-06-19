@@ -38,6 +38,8 @@ module Crystal
       unbind_from block.break if block
       @subclass_notifier.remove_subclass_observer(self) if @subclass_notifier
 
+      @target_defs = nil
+
       if obj
         if obj.type.is_a?(UnionType)
           matches = []
@@ -54,6 +56,11 @@ module Crystal
           matches = lookup_matches_in(scope) || lookup_matches_in(mod)
         end
       end
+
+      # If @target_defs is set here it means there was a recalculation
+      # fired as a result of a recalculation. We keep the last one.
+
+      return if @target_defs
 
       @target_defs = matches
 
@@ -155,8 +162,8 @@ module Crystal
             if block_arg.output.is_a?(SelfType)
               raise "block expected to return #{match.owner}, not #{block_type}"
             else
-            raise "block expected to return #{block_arg.output}, not #{block_type}"
-          end
+              raise "block expected to return #{block_arg.output}, not #{block_type}"
+            end
           end
           block.body.freeze_type = true if block.body
         end

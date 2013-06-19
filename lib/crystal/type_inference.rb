@@ -16,6 +16,7 @@ module Crystal
         else
           node.accept TypeVisitor.new(self)
           fix_empty_types node
+          after_type_inference node
         end
       end
     end
@@ -23,11 +24,13 @@ module Crystal
     def infer_type_with_stats(node, options)
       options[:total_bm] += options[:bm].report('type inference:') { node.accept TypeVisitor.new(self) }
       options[:total_bm] += options[:bm].report('fix empty types') { fix_empty_types node }
+      options[:total_bm] += options[:bm].report('afert type inference') { after_type_inference node }
     end
 
     def infer_type_with_prof(node)
       Profiler.profile_to('type_inference.html') { node.accept TypeVisitor.new(self) }
       Profiler.profile_to('fix_empty_types.html') { fix_empty_types node }
+      Profiler.profile_to('after_type_inference.html') { after_type_inference node }
     end
   end
 

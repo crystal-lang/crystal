@@ -44,7 +44,7 @@ end
 def infer_type(node)
   program = Program.new
   node = program.normalize node
-  program.infer_type node
+  node = program.infer_type node
   [program, node]
 end
 
@@ -63,6 +63,12 @@ def assert_normalize(from, to)
   from_nodes = Parser.parse(from)
   to_nodes = normalizer.normalize(from_nodes)
   to_nodes.to_s.strip.should eq(to.strip)
+end
+
+def assert_after_type_inference(before, after)
+  node = parse before
+  mod, node = infer_type node
+  node.to_s.strip.should eq(after.strip)
 end
 
 def run(code)

@@ -84,7 +84,7 @@ describe 'Type inference: def' do
   end
 
   it "types mutual recursion" do
-    input = parse 'def foo(x); if true; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)'
+    input = parse 'def foo(x); if 1 == 1; bar(x); else; 1; end; end; def bar(x); foo(x); end; foo(5)'
     mod, input = infer_type input
     input.last.type.should eq(mod.int32)
     input.last.target_def.body.then.type.should eq(mod.int32)
@@ -119,7 +119,7 @@ describe 'Type inference: def' do
   end
 
   it "do not use body for the def type" do
-    input = parse 'def foo; if false; return 0; end; end; foo'
+    input = parse 'def foo; if 1 == 2; return 0; end; end; foo'
     mod, input = infer_type input
     input.last.type.should eq(mod.union_of(mod.int32, mod.nil))
     input.last.target_def.body.type.should eq(mod.nil)
