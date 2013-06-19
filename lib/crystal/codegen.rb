@@ -301,6 +301,10 @@ module Crystal
 
       accept(value)
 
+      if value.no_returns?
+        return
+      end
+
       codegen_assign_target(target, value, @last)
 
       false
