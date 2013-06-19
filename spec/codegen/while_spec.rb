@@ -24,4 +24,8 @@ describe 'Codegen: while' do
   it "conditional break without value" do
     run('a = 0; while a < 10; a += 1; break if a > 5; end; a').to_i.should eq(6)
   end
+
+  it "codegens endless while" do
+    build "while true; end"
+  end
 end

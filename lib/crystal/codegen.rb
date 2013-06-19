@@ -616,7 +616,7 @@ module Crystal
       @builder.br while_block
 
       @builder.position_at_end exit_block
-      @builder.unreachable if node.body && node.body.yields? && block_breaks?
+      @builder.unreachable if node.no_returns? || (node.body && node.body.yields? && block_breaks?)
 
       @last = llvm_nil
 

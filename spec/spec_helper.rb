@@ -76,6 +76,14 @@ def run(code)
   program.run(code)
 end
 
+def build(code)
+  program = Program.new
+  node = parse code
+  node = program.normalize node
+  node = program.infer_type node
+  program.build node
+end
+
 def permutate_primitive_types
   [
     ['UInt8', 'u8'],
