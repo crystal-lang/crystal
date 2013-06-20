@@ -60,7 +60,7 @@ module Crystal
       @yield_vars = yield_vars
       @types = [mod]
       @while_stack = []
-      @type_filter_stack = []
+      @type_filter_stack = [{}]
     end
 
     def visit_nil_literal(node)
@@ -583,6 +583,12 @@ module Crystal
         node.type_filters = and_type_filters(node.then.type_filters, node.else.type_filters)
       when :or
         node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
+      end
+
+      # If the else branch exits, we can safely assume that the type
+      # filters in the condition will still apply after the if
+      if node.else && node.else.no_returns? && node.cond.type_filters
+        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, node.cond.type_filters)
       end
 
       false

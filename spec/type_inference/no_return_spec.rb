@@ -21,6 +21,23 @@ describe 'Type inference: NoReturn' do
     assert_type(%q(require "prelude"; raise "foo"; 1)) { no_return }
   end
 
+  it "assumes if condition's type filters when else is no return" do
+    assert_type(%q(
+      require "prelude"
+
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      foo = Foo.new || nil
+      exit unless foo
+
+      foo.foo
+      )) { int32 }
+  end
+
   it "errors if calling method on no return" do
     assert_error %(require "prelude"; exit.foo),
       "can't invoke method on NoReturn"
