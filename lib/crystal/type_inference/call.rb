@@ -69,6 +69,10 @@ module Crystal
     end
 
     def lookup_matches_in(owner, self_type = owner, def_name = self.name)
+      if owner.no_return?
+        raise "can't invoke method on NoReturn"
+      end
+
       arg_types = args.map(&:type)
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 

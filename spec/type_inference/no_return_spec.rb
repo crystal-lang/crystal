@@ -20,4 +20,9 @@ describe 'Type inference: NoReturn' do
   it "types with no return even if code follows" do
     assert_type(%q(require "prelude"; raise "foo"; 1)) { no_return }
   end
+
+  it "errors if calling method on no return" do
+    assert_error %(require "prelude"; exit.foo),
+      "can't invoke method on NoReturn"
+  end
 end
