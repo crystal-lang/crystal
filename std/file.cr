@@ -29,7 +29,7 @@ abstract class IO
   def gets
     buffer = Pointer(Char).malloc(0)
     buffer_ptr = buffer.ptr
-    cap = 0L
+    cap = 0_i64
     length = C.getline(buffer_ptr, cap.ptr, input)
     length > 0 ? String.from_cstr(buffer) : nil
   end
@@ -56,11 +56,11 @@ class File < IO
 
   def self.read(filename)
     f = C.fopen(filename, "r")
-    C.fseek(f, 0L, C::SEEK_END)
+    C.fseek(f, 0_i64, C::SEEK_END)
     size = C.ftell(f)
-    C.fseek(f, 0L, C::SEEK_SET)
+    C.fseek(f, 0_i64, C::SEEK_SET)
     str = Pointer(Char).malloc(size)
-    C.fread(str, size, 1L, f)
+    C.fread(str, size, 1_i64, f)
     C.fclose(f)
     String.from_cstr(str)
   end
