@@ -16,4 +16,8 @@ describe 'Type inference: NoReturn' do
   it "types union of NoReturns" do
     assert_type(%q(require "prelude"; true ? raise "foo" : raise "foo")) { no_return }
   end
+
+  it "types with no return even if code follows" do
+    assert_type(%q(require "prelude"; raise "foo"; 1)) { no_return }
+  end
 end

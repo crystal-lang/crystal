@@ -507,6 +507,17 @@ module Crystal
       end
     end
 
+    def visit_expressions(node)
+      node.expressions.each_with_index do |exp, i|
+        exp.accept self
+        if exp.type && exp.type.is_a?(NoReturnType)
+          node.expressions = node.expressions[0 .. i]
+          break
+        end
+      end
+      false
+    end
+
     def end_visit_expressions(node)
       if node.last
         node.bind_to node.last
