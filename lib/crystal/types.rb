@@ -61,6 +61,10 @@ module Crystal
       false
     end
 
+    def integer?
+      false
+    end
+
     def float?
       false
     end
@@ -749,12 +753,24 @@ module Crystal
       @rank = rank
     end
 
+    def integer?
+      true
+    end
+
     def signed?
       @rank % 2 == 1
     end
 
     def unsigned?
       @rank % 2 == 0
+    end
+
+    def bits
+      8 * 2 ** ((@rank - 1) / 2)
+    end
+
+    def suffix
+      signed? ? "i#{bits}" : "u#{bits}"
     end
   end
 
@@ -768,6 +784,10 @@ module Crystal
 
     def float?
       true
+    end
+
+    def suffix
+      @rank == 9 ? "f32" : "f64"
     end
   end
 

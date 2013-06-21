@@ -9,8 +9,6 @@ module Crystal
       define_value_primitives
       define_bool_primitives
       define_char_primitives
-      define_int32_primitives
-      define_int64_primitives
       define_float32_primitives
       define_float64_primitives
       define_symbol_primitives
@@ -128,27 +126,41 @@ module Crystal
     end
 
     def adjust_calc_type(b, ret_type, type, arg)
-      return arg if ret_type.equal?(type)
-      if ret_type.equal?(float64)
-        if type.equal?(float32)
-          return b.fp_ext(arg, float64.llvm_type)
-        elsif type.unsigned?
-          return b.ui2fp(arg, float64.llvm_type)
-        else
-          return b.si2fp(arg, float64.llvm_type)
-        end
-      elsif ret_type.equal?(float32)
-        if type.unsigned?
-          return b.ui2fp(arg, float32.llvm_type)
-        else
-          return b.si2fp(arg, float32.llvm_type)
-        end
+      if ret_type.equal?(type) || (ret_type.integer? && type.integer? && ret_type.bits == type.bits)
+        return arg
       end
 
-      return b.zext(arg, int64.llvm_type) if ret_type.equal?(int64) || ret_type.equal?(uint64)
-      return b.zext(arg, int32.llvm_type) if ret_type.equal?(int32) || ret_type.equal?(uint32)
-      return b.zext(arg, int16.llvm_type) if ret_type.equal?(int16) || ret_type.equal?(uint16)
-      return arg
+      if ret_type.float?
+        if type.float?
+          if ret_type.rank > type.rank
+            return b.fp_ext(arg, ret_type.llvm_type)
+          else
+            return b.fp_trunc(arg, ret_type.llvm_type)
+          end
+        elsif type.signed?
+          return b.si2fp(arg, ret_type.llvm_type)
+        else
+          return b.ui2fp(arg, ret_type.llvm_type)
+        end
+      else
+        if type.float?
+          if ret_type.signed?
+            return b.fp2si(arg, ret_type.llvm_type)
+          else
+            return b.fp2ui(arg, ret_type.llvm_type)
+          end
+        else
+          if ret_type.rank > type.rank
+            if type.signed?
+              return b.sext(arg, ret_type.llvm_type)
+            else
+              return b.zext(arg, ret_type.llvm_type)
+            end
+          else
+            return b.trunc(arg, ret_type.llvm_type)
+          end
+        end
+      end
     end
 
     def cast_back(b, ret_type, type, arg)
@@ -189,6 +201,30 @@ module Crystal
             build_comp_op(b, comp_type, op, arg1, arg2)
           end
         end
+
+        no_args_primitive(type1, "to_#{type2.suffix}", type2) do |b, f|
+          adjust_calc_type(b, type2, type1, f.params[0])
+        end
+      end
+
+      [uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64].each do |type|
+        no_args_primitive(type, "to_i", int32) do |b, f|
+          adjust_calc_type(b, int32, type, f.params[0])
+        end
+
+        no_args_primitive(type, "to_f", float32) do |b, f|
+          adjust_calc_type(b, float32, type, f.params[0])
+        end
+
+        no_args_primitive(type, "to_d", float64) do |b, f|
+          adjust_calc_type(b, float64, type, f.params[0])
+        end
+      end
+
+      [uint8, uint16, uint32, uint64, int8, int16, int32, int64].each do |type|
+        no_args_primitive(type, "chr", char) do |b, f|
+          adjust_calc_type(b, int8, type, f.params[0])
+        end
       end
 
       [uint8, uint16, uint32, uint64, int8, int16, int32, int64].repeated_permutation(2) do |type1, type2|
@@ -204,33 +240,11 @@ module Crystal
       end
     end
 
-    def define_int32_primitives
-      self_primitive(int32, 'to_i')
-      no_args_primitive(int32, 'to_f', float32) { |b, f| b.si2fp(f.params[0], float32.llvm_type) }
-      no_args_primitive(int32, 'to_d', float64) { |b, f| b.si2fp(f.params[0], float64.llvm_type) }
-
-      no_args_primitive(int32, 'chr', char) { |b, f| b.trunc(f.params[0], char.llvm_type) }
-    end
-
-    def define_int64_primitives
-      no_args_primitive(int64, 'to_i', int32) { |b, f| b.trunc(f.params[0], int32.llvm_type) }
-      no_args_primitive(int64, 'to_f', float32) { |b, f| b.si2fp(f.params[0], float32.llvm_type) }
-      no_args_primitive(int64, 'to_d', float64) { |b, f| b.si2fp(f.params[0], float64.llvm_type) }
-
-      no_args_primitive(int32, 'chr', char) { |b, f| b.trunc(f.params[0], char.llvm_type) }
-    end
-
     def define_float32_primitives
-      no_args_primitive(float32, 'to_i', int32) { |b, f| b.fp2si(f.params[0], int32.llvm_type) }
-      self_primitive(float32, 'to_f')
-      no_args_primitive(float32, 'to_d', float64) { |b, f| b.fp_ext(f.params[0], float64.llvm_type) }
       singleton(float32, :**, {'other' => float32}, float32) { |b, f, llvm_mod| b.call(powf(llvm_mod), f.params[0], f.params[1]) }
     end
 
     def define_float64_primitives
-      no_args_primitive(float64, 'to_i', int32) { |b, f| b.fp2si(f.params[0], int32.llvm_type) }
-      no_args_primitive(float64, 'to_f', float32) { |b, f| b.fp_trunc(f.params[0], float32.llvm_type) }
-      self_primitive(float64, 'to_d')
       singleton(float64, :**, {'other' => float64}, float64) { |b, f, llvm_mod| b.call(pow(llvm_mod), f.params[0], f.params[1]) }
     end
 
