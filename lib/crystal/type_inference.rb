@@ -344,7 +344,10 @@ module Crystal
 
     def check_primitive_like(node)
       unless node.type.instance_type.primitive_like?
-        node.raise "only primitive types and structs are allowed in lib declarations"
+        msg = "only primitive types and structs are allowed in lib declarations"
+        msg << " (did you mean Int32?)" if node.type.instance_type.equal?(@mod.types["Int"])
+        msg << " (did you mean Float32?)" if node.type.instance_type.equal?(@mod.types["Float"])
+        node.raise msg
       end
     end
 
