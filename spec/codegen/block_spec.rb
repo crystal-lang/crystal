@@ -713,4 +713,17 @@ describe 'Code gen: block' do
       a
       )).to_i.should eq(1)
   end
+
+  it "codegens block with nilable type with return" do
+    run(%q(
+      def foo
+        if yield
+          return Reference.new
+        end
+        nil
+      end
+
+      foo { false }
+      ))
+  end
  end
