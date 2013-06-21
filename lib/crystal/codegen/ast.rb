@@ -156,9 +156,25 @@ module Crystal
   class External < Def
     attr_accessor :real_name
     attr_accessor :varargs
+    attr_accessor :fun_def
 
     def mangled_name(obj_type)
       real_name
+    end
+
+    def compatible_with?(other)
+      return false if args.length != other.args.length
+      return false if varargs != other.varargs
+
+      args.each_with_index do |arg, i|
+        return false if !arg.type.equal?(other.args[i].type)
+      end
+
+      type.equal?(other.type)
+    end
+
+    def to_s
+      fun_def.to_s
     end
   end
 

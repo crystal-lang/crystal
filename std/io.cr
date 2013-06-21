@@ -3,7 +3,6 @@ lib C
   fun putchar(c : Char) : Char
   fun puts(str : Char*) : Int32
   fun printf(str : Char*, ...) : Char
-  fun sprintf(str : Char*, template : Char*, ...) : Char
   fun system(str : Char*) : Int32
 end
 

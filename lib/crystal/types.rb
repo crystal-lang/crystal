@@ -1163,12 +1163,29 @@ module Crystal
       self
     end
 
-    def fun(name, real_name, args, return_type, varargs)
-      instance = add_def External.new(name, args)
-      instance.real_name = real_name
-      instance.varargs = varargs
-      instance.owner = self
-      instance.type = return_type
+    def add_def(a_def)
+      existing = defs[a_def.name]
+      if existing.length > 0
+        existing = existing.first[1]
+        if existing.compatible_with?(a_def)
+          return
+        else
+          raise "fun redefinition with different signature (was #{existing.to_s})"
+        end
+      end
+
+      super
+    end
+
+    def fun(name, real_name, args, return_type, varargs, fun_def)
+      external = External.new(name, args)
+      external.real_name = real_name
+      external.varargs = varargs
+      external.owner = self
+      external.type = return_type
+      external.fun_def = fun_def
+
+      add_def external
     end
 
     def passed_as_self?

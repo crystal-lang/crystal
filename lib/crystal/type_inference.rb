@@ -126,6 +126,7 @@ module Crystal
       end
 
       target_type.add_def node
+
       false
     end
 
@@ -278,7 +279,12 @@ module Crystal
       check_primitive_like node.return_type if node.return_type
 
       return_type = maybe_ptr_type(node.return_type ? node.return_type.type.instance_type : mod.nil, node.ptr)
-      current_type.fun node.name, node.real_name, args, return_type, node.varargs
+
+      begin
+        current_type.fun node.name, node.real_name, args, return_type, node.varargs, node
+      rescue => ex
+        node.raise ex.message
+      end
     end
 
     def end_visit_type_def(node)

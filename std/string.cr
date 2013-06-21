@@ -11,7 +11,7 @@ lib C
   fun strcat(dest : Char*, src : Char*) : Char*
   fun strcmp(s1 : Char*, s2 : Char*) : Int32
   fun strncpy(s1 : Char*, s2 : Char*, n : Int32) : Char*
-  fun sprintf(str : Char*, format : Char*, ...)
+  fun sprintf(str : Char*, format : Char*, ...) : Int32
 end
 
 class String

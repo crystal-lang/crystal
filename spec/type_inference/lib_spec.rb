@@ -62,4 +62,14 @@ describe 'Type inference: lib' do
     assert_error "foo(out x)",
       "out can only be used with lib funs"
   end
+
+  it "reports redefinition of fun with different signature" do
+    assert_error %(
+      lib C
+        fun foo : Int32
+        fun foo : Int64
+      end
+      ),
+      "fun redefinition with different signature"
+  end
 end
