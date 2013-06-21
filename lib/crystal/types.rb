@@ -143,6 +143,18 @@ module Crystal
       @program = program
     end
 
+    def lookup_matches(*)
+      Matches.new(nil, nil, nil, false)
+    end
+
+    def lookup_first_def(*)
+      nil
+    end
+
+    def lookup_defs(*)
+      []
+    end
+
     def llvm_type
       LLVM.Void
     end

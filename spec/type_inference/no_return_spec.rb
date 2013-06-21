@@ -40,6 +40,6 @@ describe 'Type inference: NoReturn' do
 
   it "errors if calling method on no return" do
     assert_error %(require "prelude"; exit.foo),
-      "can't invoke method on NoReturn"
+      "undefined method 'foo' for NoReturn"
   end
 end
