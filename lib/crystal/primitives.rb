@@ -209,12 +209,6 @@ module Crystal
       no_args_primitive(int32, 'to_f', float32) { |b, f| b.si2fp(f.params[0], float32.llvm_type) }
       no_args_primitive(int32, 'to_d', float64) { |b, f| b.si2fp(f.params[0], float64.llvm_type) }
 
-      singleton(int32, :%, {'other' => int32}, int32) { |b, f| b.srem(f.params[0], f.params[1]) }
-      singleton(int32, :<<, {'other' => int32}, int32) { |b, f| b.shl(f.params[0], f.params[1]) }
-      singleton(int32, :|, {'other' => int32}, int32) { |b, f| b.or(f.params[0], f.params[1]) }
-      singleton(int32, :&, {'other' => int32}, int32) { |b, f| b.and(f.params[0], f.params[1]) }
-      singleton(int32, :"^", {'other' => int32}, int32) { |b, f| b.xor(f.params[0], f.params[1]) }
-
       no_args_primitive(int32, 'chr', char) { |b, f| b.trunc(f.params[0], char.llvm_type) }
     end
 
@@ -223,8 +217,7 @@ module Crystal
       no_args_primitive(int64, 'to_f', float32) { |b, f| b.si2fp(f.params[0], float32.llvm_type) }
       no_args_primitive(int64, 'to_d', float64) { |b, f| b.si2fp(f.params[0], float64.llvm_type) }
 
-      no_args_primitive(int64, :-@, int64) { |b, f| b.sub(LLVM::Int64.from_i(0), f.params[0]) }
-      no_args_primitive(int64, :+@, int64) { |b, f| f.params[0] }
+      no_args_primitive(int32, 'chr', char) { |b, f| b.trunc(f.params[0], char.llvm_type) }
     end
 
     def define_float32_primitives
