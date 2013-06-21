@@ -62,6 +62,13 @@ module Enumerable(T)
     count { |e| e == item }
   end
 
+  def find
+    each do |elem|
+      return elem if yield elem
+    end
+    nil
+  end
+
   def any?
     each { |e| return true if yield e }
     false
