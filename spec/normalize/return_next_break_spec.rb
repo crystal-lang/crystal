@@ -5,6 +5,10 @@ describe 'Normalize: return next break' do
     assert_normalize "return 1; 2", "return 1"
   end
 
+  it "doesn't remove after return when there's an unless" do
+    assert_normalize "return 1 unless 2; 3", "if 2\nelse\n  return 1\nend\n3"
+  end
+
   it "removes nodes after next" do
     assert_normalize "next 1; 2", "next 1"
   end

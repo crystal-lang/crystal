@@ -132,9 +132,7 @@ module Crystal
     end
 
     def transform_unless(node)
-      super
-
-      If.new(node.cond, node.else, node.then)
+      If.new(node.cond, node.else, node.then).transform(self)
     end
 
     def transform_case(node)
