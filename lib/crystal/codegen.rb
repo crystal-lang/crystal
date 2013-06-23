@@ -900,7 +900,11 @@ module Crystal
         else
           if node.target_def.type && !node.target_def.type.nil_type? && !node.block.breaks?
             if @return_union
-              codegen_assign(@return_union, @return_type, node.target_def.type, @last)
+              if node.target_def.body && node.target_def.body.type
+                codegen_assign(@return_union, @return_type, node.target_def.body.type, @last)
+              else
+                @builder.unreachable
+              end
             elsif node.target_def.type.nilable? && node.target_def.body && node.target_def.body.type && node.target_def.body.type.nil_type?
               @return_block_table[@builder.insert_block] = LLVM::Constant.null(node.target_def.type.nilable_type.llvm_type)
             else

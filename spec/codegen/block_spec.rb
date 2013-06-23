@@ -726,4 +726,18 @@ describe 'Code gen: block' do
       foo { false }
       ))
   end
+
+  it "codegens block with union with return" do
+    run(%q(
+      def foo
+        yield
+
+        return 1 if 1 == 2
+
+        nil
+      end
+
+      foo { }
+      ))
+  end
  end
