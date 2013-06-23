@@ -257,14 +257,11 @@ module Crystal
     end
 
     def define_pointer_primitives
-      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', int32)], PointerMalloc.new)
-      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', int64)], PointerMalloc.new)
+      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', Ident.new(["Int"], true))], PointerMalloc.new)
       pointer.add_def Def.new('value', [], PointerGetValue.new)
       pointer.add_def Def.new('value=', [Arg.new_with_restriction('value', Ident.new(["T"]))], PointerSetValue.new)
-      pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', int32)], PointerRealloc.new)
-      pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', int64)], PointerRealloc.new)
-      pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', int32)], PointerAdd.new)
-      pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', int64)], PointerAdd.new)
+      pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', Ident.new(["Int"], true))], PointerRealloc.new)
+      pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', Ident.new(["Int"], true))], PointerAdd.new)
       pointer.add_def Def.new('as', [Arg.new('type')], PointerCast.new)
       shared_singleton(pointer, 'address', int64) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
