@@ -12,6 +12,17 @@ describe 'Type inference: def' do
     expanded.should eq([expanded1, expanded2, expanded3])
   end
 
+  it "expands a def with default arguments that yields" do
+    a_def = parse "def foo(x, y = 1, z = 2); yield x + y + z; end"
+    expanded = a_def.expand_default_arguments
+
+    expanded1 = parse "def foo(x, y, z); yield x + y + z; end"
+    expanded2 = parse "def foo(x, y); z = 2; yield x + y + z; end"
+    expanded3 = parse "def foo(x); y = 1; z = 2; yield x + y + z; end"
+
+    expanded.should eq([expanded1, expanded2, expanded3])
+  end
+
   it "types a call with an int" do
     assert_type('def foo; 1; end; foo') { int32 }
   end
