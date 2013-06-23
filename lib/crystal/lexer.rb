@@ -125,6 +125,9 @@ module Crystal
       elsif match = scan(/__FILE__\b/)
         @token.type = :STRING
         @token.value = @filename || '-'
+      elsif match = scan(/__DIR__\b/)
+        @token.type = :STRING
+        @token.value = @filename ? File.dirname(@filename) : '-'
       elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*((\?|!)|\b)/)
         @token.type = :IDENT
         @token.value = match

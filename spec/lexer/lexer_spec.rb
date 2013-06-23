@@ -194,4 +194,12 @@ describe Lexer do
     token.type.should eq(:STRING)
     token.value.should eq('foo')
   end
+
+  it "lexes __DIR__" do
+    lexer = Lexer.new "__DIR__"
+    lexer.filename = '/Users/foo/bar'
+    token = lexer.next_token
+    token.type.should eq(:STRING)
+    token.value.should eq('/Users/foo')
+  end
 end
