@@ -22,13 +22,13 @@ module Enumerable(T)
   end
 
   def map(&block : T -> U)
-    ary = Array(U).new
+    ary = [] of U
     each { |e| ary << yield e }
     ary
   end
 
   def select
-    ary = Array(T).new
+    ary = [] of T
     each { |e| ary << e if yield e }
     ary
   end
@@ -43,7 +43,7 @@ module Enumerable(T)
   end
 
   def to_a
-    ary = Array(T).new
+    ary = [] of T
     each { |e| ary << e }
     ary
   end
@@ -92,5 +92,9 @@ module Enumerable(T)
       return i if yield e
     end
     -1
+  end
+
+  def grep(pattern)
+    select { |elem| pattern === elem }
   end
 end

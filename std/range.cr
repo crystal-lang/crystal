@@ -49,6 +49,10 @@ class Range(B, E)
     end
   end
 
+  def ===(value)
+    includes?(value)
+  end
+
   def to_s
     if @exclusive
       "#{@begin}...#{@end}"

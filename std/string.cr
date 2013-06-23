@@ -176,8 +176,8 @@ class String
   end
 
   def =~(regex)
-    $~ = regex.match(self)
-    $~ ? $~.begin(0) : nil
+    $~ = match = regex.match(self)
+    match ? match.begin(0) : nil
   end
 
   def +(other)

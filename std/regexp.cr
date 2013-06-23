@@ -30,6 +30,10 @@ class Regexp
     MatchData.new(self, str, pos, ovector)
   end
 
+  def ===(other : String)
+    !match(other).nil?
+  end
+
   def source
     @source
   end
