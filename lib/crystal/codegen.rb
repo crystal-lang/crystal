@@ -555,7 +555,7 @@ module Crystal
         end
       end
       then_value = @last unless node.then && (node.then.no_returns? || node.then.returns? || node.then.breaks? || (node.then.yields? && block_returns?))
-      codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last) if is_union && (!node.then || node.then.type)
+      codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last) if is_union && (!node.then || (node.then.type && !node.then.type.no_return?))
       @builder.br exit_block
 
       @builder.position_at_end else_block
@@ -571,7 +571,7 @@ module Crystal
         end
       end
       else_value = @last unless node.else && (node.else.no_returns? || node.else.returns? || node.else.breaks? || (node.else.yields? && block_returns?))
-      codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union && (!node.else || node.else.type)
+      codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union && (!node.else || (node.else.type && !node.else.type.no_return?))
       @builder.br exit_block
 
       @builder.position_at_end exit_block
