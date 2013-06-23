@@ -10,10 +10,16 @@ lib C
   fun fseek(file : File, offset : Int64, whence : Int32) : Int32
   fun ftell(file : File) : Int64
   fun fread(buffer : Char*, size : Int64, nitems : Int64, file : File) : Int32
+  fun access(filename : Char*, how : Int32) : Int32
 
   SEEK_SET = 0
   SEEK_CUR = 1
   SEEK_END = 2
+
+  F_OK = 0
+  X_OK = 1 << 0
+  W_OK = 1 << 1
+  R_OK = 1 << 2
 end
 
 abstract class IO
@@ -46,6 +52,10 @@ end
 class File < IO
   def initialize(filename, mode)
     @file = C.fopen filename, mode
+  end
+
+  def self.exists?(filename)
+    C.access(filename, C::F_OK) == 0
   end
 
   def self.open(filename, mode)
