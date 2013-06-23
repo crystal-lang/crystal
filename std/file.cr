@@ -60,10 +60,9 @@ class File < IO
     size = C.ftell(f)
     C.fseek(f, 0_i64, C::SEEK_SET)
     str = Pointer(Char).malloc(size + 1)
-    str[size -1] = '\0'
     C.fread(str, size, 1_i64, f)
     C.fclose(f)
-    String.from_cstr(str)
+    String.from_cstr(str, size.to_i32)
   end
 
   def input
