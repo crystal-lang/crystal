@@ -62,11 +62,11 @@ module Enumerable(T)
     count { |e| e == item }
   end
 
-  def find
+  def find(if_none = nil)
     each do |elem|
       return elem if yield elem
     end
-    nil
+    if_none
   end
 
   def any?
