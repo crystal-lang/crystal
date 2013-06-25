@@ -62,7 +62,7 @@ def puts(obj : Int64)
 end
 
 def puts(obj : Float32)
-  C.printf "%f\n", obj
+  C.printf "%g\n", obj.to_f64
   nil
 end
 
