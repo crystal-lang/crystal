@@ -37,4 +37,24 @@ describe 'Code gen: struct' do
       a.lala.x
       )).to_i.should eq(10)
   end
+
+  it "codegens struct get inside struct" do
+    run(%q(
+      lib C
+        struct Bar
+          y : Int32
+        end
+
+        struct Foo
+          x : Int32
+          bar : Bar
+        end
+      end
+
+      foo = C::Foo.new
+      (foo.ptr.as(Int32) + 1).value = 2
+
+      foo.bar.y
+      )).to_i.should eq(2)
+  end
 end

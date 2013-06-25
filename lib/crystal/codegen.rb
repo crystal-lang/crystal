@@ -741,11 +741,10 @@ module Crystal
 
     def visit_struct_get(node)
       var = @type.vars[node.name.to_s]
+      index = @type.index_of_var(node.name)
       if var.type.c_struct? || var.type.c_union?
-        ptr = gep llvm_self, 0, 0
-        @last = @builder.bit_cast(ptr, LLVM::Pointer(var.type.llvm_struct_type))
+        @last = gep llvm_self, 0, index
       else
-        index = @type.index_of_var(node.name)
         struct = @builder.load llvm_self
         @last = @builder.extract_value struct, index, node.name
       end
