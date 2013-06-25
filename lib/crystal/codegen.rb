@@ -753,7 +753,9 @@ module Crystal
     def visit_struct_set(node)
       ptr = gep llvm_self, 0, @type.index_of_var(node.name)
       @last = @vars['value'][:ptr]
-      @builder.store @last, ptr
+      value = @last
+      value = @builder.load @last if node.type.c_struct? || node.type.c_union?
+      @builder.store value, ptr
     end
 
     def visit_union_alloc(node)
