@@ -550,6 +550,12 @@ module Crystal
       when :INSTANCE_VAR
         @instance_vars.add @token.value if @instance_vars
         node_and_next_token InstanceVar.new(@token.value)
+      when :-@
+        next_token
+        check :IDENT
+        ivar_name = "@#{@token.value}"
+        @instance_vars.add ivar_name if @instance_vars
+        node_and_next_token Call.new(InstanceVar.new(ivar_name), :-@)
       else
         raise "unexpected token: #{@token.to_s}"
       end
@@ -908,7 +914,7 @@ module Crystal
             args << parse_expression
           end
 
-          skip_space
+          skip_space_or_newline
           if @token.type == :","
             next_token_skip_space_or_newline
           end

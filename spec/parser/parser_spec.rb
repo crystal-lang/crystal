@@ -131,7 +131,7 @@ describe Parser do
   it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident, "Float".ident], "Double".ident))
   it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", nil, "Double".ident))
   it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident]))
-  it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", [SelfType.instance], SelfType.instance)), focus: true
+  it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", [SelfType.instance], SelfType.instance))
 
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call
@@ -268,6 +268,7 @@ describe Parser do
 
   it_parses "@foo", "@foo".instance_var
   it_parses "@foo = 1", Assign.new("@foo".instance_var, 1.int32)
+  it_parses "-@foo", Call.new("@foo".instance_var, :-@)
 
   it_parses "call @foo.bar", Call.new(nil, "call", [Call.new("@foo".instance_var, "bar")])
   it_parses 'call "foo"', Call.new(nil, "call", ["foo".string])
@@ -369,6 +370,8 @@ describe Parser do
   it_parses %q("foo#{bar}baz"), StringInterpolation.new([StringLiteral.new("foo"), "bar".call, StringLiteral.new("baz")])
 
   it_parses %Q(lib Foo\nend\nif true\nend), [LibDef.new("Foo"), If.new(true.bool)]
+
+  it_parses "foo(\n1\n)", Call.new(nil, "foo", [1.int32])
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
