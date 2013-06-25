@@ -61,6 +61,26 @@ def puts(obj : Int64)
   nil
 end
 
+def puts(obj : UInt8)
+  C.printf "%hhu\n", obj
+  nil
+end
+
+def puts(obj : UInt16)
+  C.printf "%hu\n", obj
+  nil
+end
+
+def puts(obj : UInt32)
+  C.printf "%u\n", obj
+  nil
+end
+
+def puts(obj : UInt64)
+  C.printf "%lu\n", obj
+  nil
+end
+
 def puts(obj : Float32)
   C.printf "%g\n", obj.to_f64
   nil
