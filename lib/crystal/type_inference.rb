@@ -684,7 +684,11 @@ module Crystal
         end
       end
 
-      node.bind_to block.body if block.body
+      if block.body
+        node.bind_to block.body
+      else
+        node.bind_to mod.nil_var
+      end
     end
 
     def visit_block(node)

@@ -1022,7 +1022,9 @@ module Crystal
 
         accept(block)
 
-        @last = llvm_nil unless node.type
+        if !node.type || node.type.nil_type?
+          @last = llvm_nil
+        end
 
         @while_exit_block = old_while_exit_block
         @break_table = old_break_table

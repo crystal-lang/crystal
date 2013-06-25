@@ -307,4 +307,17 @@ describe 'Block inference' do
     assert_error "def foo; yield; end; foo { |a| }; a",
       "undefined local variable or method 'a'"
   end
+
+  it "types empty block" do
+    nodes = parse %(
+      def foo
+        ret = yield
+        ret
+      end
+
+      foo { }
+      )
+    mod, nodes = infer_type nodes
+    nodes.last.target_def.body[0].value.type.should eq(mod.nil)
+  end
 end
