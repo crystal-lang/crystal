@@ -423,6 +423,12 @@ module Crystal
         node.body = concat_preserving_return_value(node.body, after_body_vars)
       end
 
+      # Delete vars declared inside the block
+      block_vars = @vars.keys - before_vars.keys
+      block_vars.each do |block_var|
+        @vars.delete block_var
+      end
+
       node
     end
 

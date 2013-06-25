@@ -740,4 +740,24 @@ describe 'Code gen: block' do
       foo { }
       ))
   end
+
+  it "codegens if with call with block (ssa issue)" do
+    run(%q(
+      def bar
+        yield
+      end
+
+      def foo
+        if 1 == 2
+          bar do
+            x = 1
+          end
+        else
+          3
+        end
+      end
+
+      foo
+      )).to_i.should eq(3)
+  end
  end
