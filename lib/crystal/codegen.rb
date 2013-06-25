@@ -228,7 +228,7 @@ module Crystal
     def visit_ident(node)
       const = node.target_const
       if const
-        global_name = const.to_s
+        global_name = const.llvm_name
         global = @llvm_mod.globals[global_name]
 
         unless global

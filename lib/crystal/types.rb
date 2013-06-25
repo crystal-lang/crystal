@@ -1261,7 +1261,7 @@ module Crystal
     end
 
     def llvm_name
-      name
+      "struct.#{to_s}"
     end
 
     def llvm_type
@@ -1344,7 +1344,7 @@ module Crystal
     end
 
     def llvm_name
-      name
+      "union.#{to_s}"
     end
 
     def llvm_type
@@ -1427,8 +1427,12 @@ module Crystal
       @scope = scope
     end
 
+    def full_name
+      container && !container.is_a?(Program) ? "#{container.to_s}::#{name}" : name
+    end
+
     def to_s
-      "#{super} = #{value}"
+      full_name
     end
   end
 
