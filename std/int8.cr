@@ -1,4 +1,7 @@
 class Int8
+  MIN = -128_i8
+  MAX =  127_i8
+
   def ==(other)
     false
   end

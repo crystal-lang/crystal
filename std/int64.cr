@@ -1,4 +1,7 @@
 class Int64
+  MIN = -9223372036854775808_i64
+  MAX =  9223372036854775807_i64
+
   def ==(other)
     false
   end

@@ -790,6 +790,10 @@ module Crystal
       @last = @argv
     end
 
+    def visit_float_infinity(node)
+      @last = node.llvm_type.from_f(Float::INFINITY)
+    end
+
     def visit_nil_pointer(node)
       @last = LLVM::Constant.null(node.llvm_type)
     end

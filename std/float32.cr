@@ -1,4 +1,7 @@
-class Float
+class Float32
+  MIN = -INFINITY
+  MAX =  INFINITY
+
   def ==(other)
     false
   end

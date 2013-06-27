@@ -1,4 +1,7 @@
 class UInt64
+  MIN = 0_u64
+  MAX = 18446744073709551615_u64
+
   def ==(other)
     false
   end

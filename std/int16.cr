@@ -1,4 +1,7 @@
 class Int16
+  MIN = -32768_i16
+  MAX =  32767_i16
+
   def ==(other)
     false
   end
