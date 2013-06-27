@@ -14,6 +14,14 @@ module Enumerable(T)
     obj
   end
 
+  def inject
+    memo :: T
+    each_with_index do |elem, i|
+      memo = i == 0 ? elem : yield memo, elem
+    end
+    memo
+  end
+
   def inject(memo)
     each do |elem|
       memo = yield memo, elem
@@ -96,5 +104,31 @@ module Enumerable(T)
 
   def grep(pattern)
     select { |elem| pattern === elem }
+  end
+
+  def min_by(&block : T -> U)
+    min = U::MAX
+    obj :: T
+    each do |elem|
+      value = yield elem
+      if value < min
+        min = value
+        obj = elem
+      end
+    end
+    obj
+  end
+
+  def max_by(&block : T -> U)
+    min = U::MIN
+    obj :: T
+    each do |elem|
+      value = yield elem
+      if value > min
+        min = value
+        obj = elem
+      end
+    end
+    obj
   end
 end
