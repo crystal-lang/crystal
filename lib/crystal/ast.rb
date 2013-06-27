@@ -1352,6 +1352,29 @@ module Crystal
     end
   end
 
+  class DeclareVar < ASTNode
+    attr_accessor :name
+    attr_accessor :declared_type
+
+    def initialize(name, declared_type)
+      @name = name
+      @declared_type = declared_type
+    end
+
+    def accept_children(visitor)
+      declared_type.accept visitor
+    end
+
+    def ==(other)
+      other.is_a?(DeclareVar) && other.name == name && other.declared_type == declared_type
+    end
+
+    def clone_from(other)
+      @name = other.name
+      @declared_type = other.declared_type
+    end
+  end
+
   # Ficticious node that means: merge the type of the arguments
   class TypeMerge < ASTNode
     attr_accessor :expressions

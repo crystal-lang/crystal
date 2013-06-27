@@ -287,6 +287,11 @@ module Crystal
       end
     end
 
+    def transform_declare_var(node)
+      @vars[node.name] = {read: 0, write: 1}
+      node
+    end
+
     def transform_if(node)
       node.cond = node.cond.transform(self)
 

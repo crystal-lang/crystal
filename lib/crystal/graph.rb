@@ -49,6 +49,14 @@ module Crystal
     end
 
     def visit_var(node)
+      output_name node
+    end
+
+    def visit_declare_var(node)
+      output_name node
+    end
+
+    def output_name(node)
       if !node.name.start_with?('#') && !@vars.include?(node.name)
         var = @g.add_nodes node.object_id.to_s, :label => node.name, :shape => :note
         add_edges var, node.type

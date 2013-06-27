@@ -330,6 +330,11 @@ module Crystal
       codegen_assign(ptr, target.type, value.type, llvm_value, !!ivar)
     end
 
+    def visit_declare_var(node)
+      declare_var node.var
+      false
+    end
+
     def declare_var(var)
       llvm_var = @vars[var.name.to_s]
       unless llvm_var

@@ -375,6 +375,8 @@ describe Parser do
   it_parses "a = 1\nfoo - a", [Assign.new("a".var, 1.int32), Call.new("foo".call, :-, ["a".var])]
   it_parses "a = 1\nfoo -a", [Assign.new("a".var, 1.int32), Call.new(nil, "foo", [Call.new("a".var, :-@)])]
 
+  it_parses "a :: Foo", DeclareVar.new("a", "Foo".ident), focus: true
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))

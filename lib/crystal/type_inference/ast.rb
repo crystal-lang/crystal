@@ -17,6 +17,10 @@ module Crystal
     end
   end
 
+  class DeclareVar
+    attr_accessor :var
+  end
+
   class Ident
     attr_accessor :target_const
   end

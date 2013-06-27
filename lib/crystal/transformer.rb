@@ -304,6 +304,11 @@ module Crystal
       node
     end
 
+    def transform_declare_var(node)
+      node.declared_type = node.declared_type.transform(self)
+      node
+    end
+
     def transform_type_merge(node)
       transform_many node.expressions
       node

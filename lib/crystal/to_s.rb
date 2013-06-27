@@ -691,6 +691,13 @@ module Crystal
       EVAL
     end
 
+    def visit_declare_var(node)
+      @str << node.name
+      @str << " :: "
+      node.declared_type.accept self
+      false
+    end
+
     def visit_type_merge(node)
       @str << "<type_merge>("
       node.expressions.each_with_index do |exp, i|

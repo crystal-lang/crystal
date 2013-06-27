@@ -382,6 +382,19 @@ module Crystal
       node.type_filters = and_type_filters({node.name => NotNilFilter}, var.type_filters)
     end
 
+    def visit_declare_var(node)
+      node.type = (lookup_ident_type node.declared_type).instance_type
+
+      var = Var.new(node.name)
+      var.bind_to node
+
+      node.var = var
+
+      @vars[node.name] = var
+
+      false
+    end
+
     def build_var_filter(var)
       filters = @type_filter_stack.map { |hash| hash[var.name] }.compact
       return if filters.empty?
