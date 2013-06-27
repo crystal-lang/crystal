@@ -115,11 +115,11 @@ module Enumerable(T)
   end
 
   def min_by(&block : T -> U)
-    min = U::MAX
+    min :: U
     obj :: T
-    each do |elem|
+    each_with_index do |elem, i|
       value = yield elem
-      if value < min
+      if i == 0 || value < min
         min = value
         obj = elem
       end
@@ -128,11 +128,11 @@ module Enumerable(T)
   end
 
   def max_by(&block : T -> U)
-    min = U::MIN
+    min :: U
     obj :: T
-    each do |elem|
+    each_with_index do |elem, i|
       value = yield elem
-      if value > min
+      if i == 0 || value > min
         min = value
         obj = elem
       end
