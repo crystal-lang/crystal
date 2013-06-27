@@ -106,6 +106,14 @@ module Enumerable(T)
     select { |elem| pattern === elem }
   end
 
+  def min
+    min_by { |x| x }
+  end
+
+  def max
+    max_by { |x| x }
+  end
+
   def min_by(&block : T -> U)
     min = U::MAX
     obj :: T

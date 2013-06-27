@@ -21,6 +21,14 @@ describe "Enumerable" do
     assert { [1, 2, 3].inject(10) { |memo, i| memo + i }.should eq(16) }
   end
 
+  describe "min" do
+    assert { [1, 2, 3].min.should eq(1) }
+  end
+
+  describe "max" do
+    assert { [1, 2, 3].max.should eq(3) }
+  end
+
   describe "min_by" do
     assert { [1, 2, 3].min_by { |x| -x }.should eq(3) }
   end
