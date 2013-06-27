@@ -100,4 +100,17 @@ describe 'Type inference: const' do
       "undefined local variable or method 'a'"
   end
 
+  it "finds const from restriction" do
+    assert_type(%q(
+      class Int32
+        FOO = 'a'
+      end
+
+      def foo(x : U)
+        U::FOO
+      end
+
+      foo 1
+      )) { char }
+  end
 end
