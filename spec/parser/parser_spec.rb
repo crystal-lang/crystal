@@ -372,6 +372,8 @@ describe Parser do
   it_parses %Q(lib Foo\nend\nif true\nend), [LibDef.new("Foo"), If.new(true.bool)]
 
   it_parses "foo(\n1\n)", Call.new(nil, "foo", [1.int32])
+  it_parses "a = 1\nfoo - a", [Assign.new("a".var, 1.int32), Call.new("foo".call, :-, ["a".var])]
+  it_parses "a = 1\nfoo -a", [Assign.new("a".var, 1.int32), Call.new(nil, "foo", [Call.new("a".var, :-@)])]
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
