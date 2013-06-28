@@ -320,4 +320,27 @@ describe 'Block inference' do
     mod, nodes = infer_type nodes
     nodes.last.target_def.body[0].value.type.should eq(mod.nil)
   end
+
+  it "preserves type filters in block" do
+    assert_type(%q(
+      class Foo
+        def bar
+          'a'
+        end
+      end
+
+      def foo
+        yield 1
+      end
+
+      a = Foo.new || nil
+      if a
+        foo do |x|
+          a.bar
+        end
+      else
+        'b'
+      end
+      )) { char }
+  end
 end

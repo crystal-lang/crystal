@@ -46,7 +46,7 @@ module Crystal
     @@regexps = {}
     @@counter = 0
 
-    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil, owner = nil, untyped_def = nil, typed_def = nil, arg_types = nil, free_vars = nil, yield_vars = nil)
+    def initialize(mod, vars = {}, scope = nil, parent = nil, call = nil, owner = nil, untyped_def = nil, typed_def = nil, arg_types = nil, free_vars = nil, yield_vars = nil, type_filter_stack = [{}])
       @mod = mod
       @vars = vars
       @scope = scope
@@ -60,7 +60,7 @@ module Crystal
       @yield_vars = yield_vars
       @types = [mod]
       @while_stack = []
-      @type_filter_stack = [{}]
+      @type_filter_stack = type_filter_stack
     end
 
     def visit_nil_literal(node)
@@ -709,7 +709,7 @@ module Crystal
           block_vars[arg.name] = arg
         end
 
-        block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types)
+        block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
         block_visitor.block = node
         node.body.accept block_visitor
       end
