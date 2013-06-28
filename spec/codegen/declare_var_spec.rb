@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Code gen: declare var' do
   it "codegens declare var and read it" do
-    run("a :: Int32; a").to_i.should eq(0)
+    run("a :: Int32; a") # TODO: initialize to zero?
   end
 
   it "codegens declare var and changes it" do
