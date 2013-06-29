@@ -8,6 +8,10 @@ FOV = 45.0
 MAX_DEPTH = 6
 
 class Vec3
+  attr_reader :x
+  attr_reader :y
+  attr_reader :z
+
   def initialize
     @x, @y, @z = 0.0, 0.0, 0.0
   end
@@ -21,49 +25,20 @@ class Vec3
     @x, @y, @z = x.to_f64, y.to_f64, z.to_f64
   end
 
-  def x
-    @x
-  end
+  macro self.define_op(op)"
+    def #{op}(other : Vec3)
+      Vec3.new(@x #{op} other.x, @y #{op} other.y, @z #{op} other.z)
+    end
 
-  def y
-    @y
-  end
+    def #{op}(other : Float)
+      Vec3.new(@x #{op} other, @y #{op} other, @z #{op} other)
+    end
+  "end
 
-  def z
-    @z
-  end
-
-  def +(other : Vec3)
-    Vec3.new(@x + other.x, @y + other.y, @z + other.z)
-  end
-
-  def +(other : Float)
-    Vec3.new(@x + other, @y + other, @z + other)
-  end
-
-  def -(other : Vec3)
-    Vec3.new(@x - other.x, @y - other.y, @z - other.z)
-  end
-
-  def -(other : Float)
-    Vec3.new(@x - other, @y - other, @z - other)
-  end
-
-  def *(other : Vec3)
-    Vec3.new(@x * other.x, @y * other.y, @z * other.z)
-  end
-
-  def *(other : Float)
-    Vec3.new(@x * other, @y * other, @z * other)
-  end
-
-  def /(other : Vec3)
-    Vec3.new(@x / other.x, @y / other.y, @z / other.z)
-  end
-
-  def /(other : Float)
-    Vec3.new(@x / other, @y / other, @z / other)
-  end
+  define_op "+"
+  define_op "-"
+  define_op "*"
+  define_op "/"
 
   def -@
     Vec3.new(-@x, -@y, -@z)
@@ -81,46 +56,29 @@ class Vec3
     m = magnitude
     Vec3.new(@x / m, @y / m, @z / m)
   end
-
-  def to_s
-    "(#{@x}, #{@y}, #{@z})"
-  end
 end
 
 class Ray
+  attr_reader :start
+  attr_reader :dir
+
   def initialize(start, dir)
     @start = start
     @dir = dir
   end
-
-  def start
-    @start
-  end
-
-  def dir
-    @dir
-  end
 end
 
 class Sphere
+  attr_reader :color
+  attr_reader :reflection
+  attr_reader :transparency
+
   def initialize(center, radius, color, reflection = 0.0, transparency = 0.0)
     @center = center
     @radius = radius.to_f64
     @color = color
     @reflection = reflection.to_f64
     @transparency = transparency.to_f64
-  end
-
-  def reflection
-    @reflection
-  end
-
-  def color
-    @color
-  end
-
-  def transparency
-    @transparency
   end
 
   def intersect?(ray)
@@ -156,41 +114,23 @@ class Sphere
 end
 
 class Light
+  attr_reader :position
+  attr_reader :color
+
   def initialize(position, color)
     @position = position
     @color = color
   end
-
-  def position
-    @position
-  end
-
-  def color
-    @color
-  end
 end
 
 class Scene
+  attr_reader :objects
+  attr_reader :lights
+
   def initialize(objects, lights)
     @objects = objects
     @lights = lights
   end
-
-  def objects
-    @objects
-  end
-
-  def lights
-    @lights
-  end
-end
-
-def min(x, y)
-  x <= y ? x : y
-end
-
-def max(x, y)
-  x >= y ? x : y
 end
 
 def trace(ray, scene, depth)
@@ -230,14 +170,14 @@ def trace(ray, scene, depth)
 
       unless blocked
         temp = lgt.color
-        temp *= max(0.0, normal.dot(light_direction))
+        temp *= Math.max(0.0, normal.dot(light_direction))
         temp *= obj.color
         temp *= (1.0 - reflection_ratio)
         result += temp
       end
     end
 
-    facing = max(0.0, -dot_normal_ray)
+    facing = Math.max(0.0, -dot_normal_ray)
     fresneleffect = reflection_ratio + (1.0 - reflection_ratio) * ((1.0 - facing) ** 5.0)
 
     # compute reflection
@@ -287,9 +227,9 @@ def render(scene, surface)
                            (hh/2.0 - yy) / hh * h,
                            -1.0).normalize
       pixel = trace(Ray.new(eye, dir), scene, 0.0)
-      r = min(255, (pixel.x * 255.0).round)
-      g = min(255, (pixel.y * 255.0).round)
-      b = min(255, (pixel.z * 255.0).round)
+      r = Math.min(255, (pixel.x * 255.0).round)
+      g = Math.min(255, (pixel.y * 255.0).round)
+      b = Math.min(255, (pixel.z * 255.0).round)
       surface[i] = (b << 24) + (g << 16) + (r << 8)
       i += 1
     end
