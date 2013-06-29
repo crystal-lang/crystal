@@ -19,7 +19,9 @@ module Crystal
 
     visitor.graphviz.output :png => "#{output}.png"
 
-    `open #{output}.png &`
+    if RUBY_PLATFORM =~ /darwin/
+      `open #{output}.png &`
+    end
   end
 
   class GraphVisitor < Visitor
