@@ -81,7 +81,7 @@ class Sphere
     @transparency = transparency.to_f64
   end
 
-  def intersect?(ray)
+  def intersects?(ray)
     vl = @center - ray.start
     a = vl.dot(ray.dir)
     return false if a < 0
@@ -166,7 +166,7 @@ def trace(ray, scene, depth)
       r = Ray.new(point_of_hit + normE5, light_direction)
 
       # go through the scene check whether we're blocked from the lights
-      blocked = scene.objects.any? { |it| it.intersect?(r) }
+      blocked = scene.objects.any? { |it| it.intersects?(r) }
 
       unless blocked
         temp = lgt.color
