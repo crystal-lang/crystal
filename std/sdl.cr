@@ -224,15 +224,5 @@ module SDL
     def offset(x, y)
       x.to_i32 + (y.to_i32 * @width)
     end
-
-    def paint
-      i = 0
-      height.times do |y|
-        width.times do |x|
-          self[i] = yield x, y
-          i += 1
-        end
-      end
-    end
   end
 end
