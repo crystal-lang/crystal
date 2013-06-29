@@ -143,9 +143,6 @@ lib LibSDL("SDL")
   fun flip = SDL_Flip(screen : Surface*) : Int32
 end
 
-lib LibSDLMain("SDLMain")
-end
-
 module SDL
   def self.init(flags = LibSDL::INIT_EVERYTHING)
     if LibSDL.init(flags) != 0
@@ -188,27 +185,16 @@ module SDL
   end
 
   class Surface
+    attr_reader :surface
+    attr_reader :width
+    attr_reader :height
+    attr_reader :bpp
+
     def initialize(surface, width, height, bpp)
       @surface = surface
       @width = width
       @height = height
       @bpp = bpp
-    end
-
-    def width
-      @width
-    end
-
-    def height
-      @height
-    end
-
-    def bpp
-      @bpp
-    end
-
-    def surface
-      @surface
     end
 
     def lock
