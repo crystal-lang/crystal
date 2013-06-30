@@ -64,11 +64,12 @@ class Hash(K, V)
   def fetch(key, default)
     index = bucket_index key
     bucket = @buckets[index]
-    return default unless bucket
 
-    bucket.each do |entry|
-      if entry.key == key
-        return entry.value
+    if bucket
+      bucket.each do |entry|
+        if entry.key == key
+          return entry.value
+        end
       end
     end
 
@@ -78,11 +79,12 @@ class Hash(K, V)
   def fetch(key)
     index = bucket_index key
     bucket = @buckets[index]
-    return yield key unless bucket
 
-    bucket.each do |entry|
-      if entry.key == key
-        return entry.value
+    if  bucket
+      bucket.each do |entry|
+        if entry.key == key
+          return entry.value
+        end
       end
     end
 
