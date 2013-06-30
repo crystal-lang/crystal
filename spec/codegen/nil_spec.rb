@@ -145,4 +145,21 @@ describe 'Code gen: nil' do
       f.bar
       ))
   end
+
+  it "codegens nil by default for uninitialized instance variables" do
+    run(%q(
+      require "nil"
+      require "reference"
+
+      class Foo
+        def bar
+          a = @x.nil?
+          @x = 1
+          a
+        end
+      end
+
+      f = Foo.new
+      f.bar ? 1 : 2)).to_i.should eq(1)
+  end
 end

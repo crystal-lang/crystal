@@ -1,6 +1,6 @@
 class NilClass
   def type_id
-    0
+    -1
   end
 
   def clone(*)

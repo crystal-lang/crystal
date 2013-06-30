@@ -795,6 +795,10 @@ module Crystal
     def nil_type?
       true
     end
+
+    def type_id
+      0
+    end
   end
 
   class ValueType < NonGenericClassType
@@ -1182,7 +1186,7 @@ module Crystal
       external.real_name = real_name
       external.varargs = varargs
       external.owner = self
-      external.type = return_type
+      external.set_type(return_type)
       external.fun_def = fun_def
 
       add_def external
