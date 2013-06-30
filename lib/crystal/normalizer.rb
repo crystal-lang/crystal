@@ -20,6 +20,7 @@ module Crystal
       @program = program
       @vars = {}
       @vars_stack = []
+      @in_initialize = false
     end
 
     def normalize(node)
@@ -109,7 +110,9 @@ module Crystal
 
       if node.body
         pushing_vars(Hash[node.args.map { |arg| [arg.name, {read: 0, write: 1}] }]) do
+          @in_initialize = node.name == 'initialize'
           node.body = node.body.transform(self)
+          @in_initialize = false
         end
       end
 
@@ -252,13 +255,17 @@ module Crystal
     end
 
     def transform_assign(node)
-      if node.target.is_a?(Var)
+      case node.target
+      when Var
         node.value = node.value.transform(self)
         transform_assign_var(node.target)
-      elsif node.target.is_a?(Ident)
+      when Ident
         pushing_vars do
           node.value = node.value.transform(self)
         end
+      when InstanceVar
+        node.value = node.value.transform(self)
+        transform_assign_ivar(node)
       else
         node.value = node.value.transform(self)
       end
@@ -285,6 +292,18 @@ module Crystal
       else
         @vars[node.name] = {read: 0, write: 1}
       end
+    end
+
+    def transform_assign_ivar(node)
+      indices = @vars[node.target.name]
+      if indices
+        indices = increment_var node.target.name, indices
+      else
+        indices = @vars[node.target.name] = {read: 1, write: 2}
+      end
+
+      ivar_name = var_name_with_index(node.target.name, indices[:read])
+      node.value = Assign.new(Var.new(ivar_name), node.value)
     end
 
     def transform_declare_var(node)
@@ -479,9 +498,17 @@ module Crystal
       end
 
       indices = @vars[node.name]
-      binding.pry unless indices
       node.name = var_name_with_index(node.name, indices[:read])
       node
+    end
+
+    def transform_instance_var(node)
+      indices = @vars[node.name]
+      if indices
+        Var.new(var_name_with_index(node.name, indices[:read]))
+      else
+        node
+      end
     end
 
     def pushing_vars(vars = {})
@@ -512,6 +539,8 @@ module Crystal
     def assign_var_with_indices(name, to_index, from_index)
       if from_index
         from_var = var_with_index(name, from_index)
+      elsif name[0] == '@'
+        from_var = InstanceVar.new(name)
       else
         from_var = NilLiteral.new
       end
@@ -520,6 +549,15 @@ module Crystal
 
     def push_assign_var_with_indices(vars, name, to_index, from_index)
       return if to_index == from_index
+
+      # If we need to assign the default value of a varaible inside an if
+      # in an initialize, we explicitly set the value to Nil so the type
+      # will be nilable even if the instance variable is assigned inside
+      # the initialize.
+      if @in_initialize && !from_index && name[0] == '@'
+        vars << Assign.new(InstanceVar.new(name), NilLiteral.new)
+      end
+
       vars << assign_var_with_indices(name, to_index, from_index)
     end
 

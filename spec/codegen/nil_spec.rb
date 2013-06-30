@@ -15,7 +15,7 @@ describe 'Code gen: nil' do
 
       class Foo
         def initialize
-          if false
+          if 1 == 2
             @x = Reference.new
           end
           1

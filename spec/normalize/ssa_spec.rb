@@ -155,4 +155,24 @@ describe 'Normalize: ssa' do
     assert_normalize "a = 1; b = 2; a, b, c = b, a, a + b; a + b + c",
       "a = 1\nb = 2\na:1, b:1, c = b, a, a + b\na:1 + b:1 + c"
   end
+
+  it "performs ssa on instance variable read 1" do
+    assert_normalize "@a", "@a"
+  end
+
+  it "performs ssa on instance variable write and read 1" do
+    assert_normalize "@a = 1; @a", "@a = @a:1 = 1\n@a:1"
+  end
+
+  it "performs ssa on instance variable write and read 2" do
+    assert_normalize "@a = 1; @a = @a + 1", "@a = @a:1 = 1\n@a = @a:2 = @a:1 + 1"
+  end
+
+  it "performs ssa on instance variable inside if" do
+    assert_normalize "if @a; else; @a = 1; end; @a", "if @a\n  @a:2 = @a\n  nil\nelse\n  #temp_1 = @a = @a:1 = 1\n  @a:2 = @a:1\n  #temp_1\nend\n@a:2"
+  end
+
+  it "performs ssa on instance variable inside if in initialize" do
+    assert_normalize "def initialize; if @a; else; @a = 1; end; @a; end", "def initialize\n  if @a\n    @a = nil\n    @a:2 = @a\n    nil\n  else\n    #temp_1 = @a = @a:1 = 1\n    @a:2 = @a:1\n    #temp_1\n  end\n  @a:2\nend"
+  end
 end
