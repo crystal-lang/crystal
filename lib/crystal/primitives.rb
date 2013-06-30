@@ -23,16 +23,6 @@ module Crystal
     end
 
     def define_reference_primitives
-      a_def = no_args_primitive(reference, 'nil?', bool) do |b, f|
-        b.icmp(:eq, b.ptr2int(f.params[0], LLVM::Int), LLVM::Int(0))
-      end
-      instance = a_def.overload [], bool do |b, f|
-        obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
-        b.icmp(:eq, b.ptr2int(obj, LLVM::Int), LLVM::Int(0))
-      end
-      instance.owner = reference.hierarchy_type
-      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
-
       a_def = no_args_primitive(reference, 'object_id', int64) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::Int64)
       end

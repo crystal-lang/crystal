@@ -503,6 +503,7 @@ describe 'Code gen: block' do
   it "can break without value from yielder that returns nilable" do
     run(%q(
       require "nil"
+      require "reference"
 
       def foo
         yield
@@ -520,6 +521,7 @@ describe 'Code gen: block' do
   it "break with value from yielder that returns a nilable" do
     run(%q(
       require "nil"
+      require "reference"
 
       def foo
         yield

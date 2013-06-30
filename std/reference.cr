@@ -32,8 +32,12 @@ class Reference
     object_id == other.object_id
   end
 
+  def nil?
+    false
+  end
+
   def !@
-    nil?
+    true
   end
 
   def to_s

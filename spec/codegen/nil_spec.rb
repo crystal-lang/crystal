@@ -5,13 +5,14 @@ describe 'Code gen: nil' do
     run('')
   end
 
-  it "codegens nil? for Object gives false" do
-    run('require "object"; Reference.new.nil?').to_b.should be_false
+  it "codegens nil? for Reference gives false" do
+    run('require "reference"; Reference.new.nil?').to_b.should be_false
   end
 
-  it "codegens nil? for Object gives true" do
+  it "codegens nil? for Reference gives true" do
     run(%Q(
       require "nil"
+      require "reference"
 
       class Foo
         def initialize

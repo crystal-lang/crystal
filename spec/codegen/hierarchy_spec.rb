@@ -295,6 +295,8 @@ describe 'Code gen: hierarchy type' do
 
   it "doesn't lookup in Value+ when hierarchy type is Object+" do
     run(%Q(
+      require "reference"
+
       class Object
         def foo
           !nil?
