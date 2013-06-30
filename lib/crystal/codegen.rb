@@ -267,7 +267,7 @@ module Crystal
     end
 
     def visit_assign(node)
-      codegen_assign_node(node.target, node.value) rescue binding.pry
+      codegen_assign_node(node.target, node.value)
     end
 
     def visit_multi_assign(node)
@@ -412,6 +412,15 @@ module Crystal
       ivar = @type.lookup_instance_var(node.name)
       if ivar.type.union? || ivar.type.c_struct? || ivar.type.c_union?
         @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.name)
+        unless node.type.equal?(ivar.type)
+          if node.type.union?
+            @last = @builder.bit_cast(@last, LLVM::Pointer(node.llvm_type))
+          else
+            value_ptr = union_value(@last)
+            @last = @builder.bit_cast value_ptr, LLVM::Pointer(node.llvm_type)
+            @last = @builder.load(@last)
+          end
+        end
       else
         index = @type.index_of_instance_var(node.name)
         struct = @builder.load llvm_self_ptr
