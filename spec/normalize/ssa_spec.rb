@@ -175,4 +175,12 @@ describe 'Normalize: ssa' do
   it "performs ssa on instance variable inside if in initialize" do
     assert_normalize "def initialize; if @a; else; @a = 1; end; @a; end", "def initialize\n  if @a\n    @a = nil\n    @a:2 = @a\n    nil\n  else\n    #temp_1 = @a = @a:1 = 1\n    @a:2 = @a:1\n    #temp_1\n  end\n  @a:2\nend"
   end
+
+  it "stops ssa if address is taken" do
+    assert_normalize "a = 1; x = a.ptr; a = 2", "a = 1\nx = a.ptr\na = 2"
+  end
+
+  it "stops ssa if address is taken 2" do
+    assert_normalize "a = 1; a = 2; x = a.ptr; a = 3", "a = 1\na:1 = 2\nx = a:1.ptr\na:1 = 3"
+  end
 end

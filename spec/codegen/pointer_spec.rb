@@ -105,4 +105,13 @@ describe 'Code gen: pointer' do
       color.r
       )).to_i.should eq(20)
   end
+
+  it "changes through var and reads from pointer" do
+    run(%q(
+      x = 1
+      px = x.ptr
+      x = 2
+      px.value
+      )).to_i.should eq(2)
+  end
 end

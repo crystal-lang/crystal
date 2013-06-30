@@ -287,8 +287,12 @@ module Crystal
     def transform_assign_var(node)
       indices = @vars[node.name]
       if indices
-        increment_var node.name, indices
-        node.name = var_name_with_index(node.name, indices[:write])
+        if indices[:frozen]
+          node.name = var_name_with_index(node.name, indices[:read])
+        else
+          increment_var node.name, indices
+          node.name = var_name_with_index(node.name, indices[:write])
+        end
       else
         @vars[node.name] = {read: 0, write: 1}
       end
@@ -509,6 +513,22 @@ module Crystal
       else
         node
       end
+    end
+
+    def transform_pointer_of(node)
+      return node if node.var.is_a?(InstanceVar)
+
+      name = node.var.name
+      indices = @vars[name]
+
+      node.var = node.var.transform(self)
+
+      if indices
+        @vars[name][:frozen] = true
+      else
+        @vars[name] = {frozen: true, read: 0, write: 1}
+      end
+      node
     end
 
     def pushing_vars(vars = {})
