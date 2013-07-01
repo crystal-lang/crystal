@@ -12,4 +12,14 @@ describe "Float" do
     assert { 2.5.round.should eq(3) }
     assert { 2.4.round.should eq(2) }
   end
+
+  describe "floor" do
+    assert { 2.1.floor.should eq(2) }
+    assert { 2.9.floor.should eq(2) }
+  end
+
+  describe "ceil" do
+    assert { 2.1.ceil.should eq(3) }
+    assert { 2.9.ceil.should eq(3) }
+  end
 end
