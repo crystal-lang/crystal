@@ -619,7 +619,7 @@ describe 'Code gen: block' do
     )).to_i.should eq(1)
   end
 
-  pending "it yields nil from another call" do
+  it "it yields nil from another call" do
     run(%q(
       def foo(key, default)
         foo(key) { default }
