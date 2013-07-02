@@ -19,14 +19,6 @@ module Crystal
       notify_observers
     end
 
-    def real_type
-      if dependencies && dependencies.length == 1 && !dependencies[0].eql?(self)
-        dependencies[0].real_type
-      else
-        @type
-      end
-    end
-
     def map_type(type)
       type
     end

@@ -14,10 +14,6 @@ module Crystal
       self.type = @filter.apply(from.type) if from.type
     end
 
-    def real_type
-      @node.real_type
-    end
-
     def to_s
       @filter.to_s
     end
