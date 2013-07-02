@@ -45,11 +45,20 @@ describe "Hash" do
     end
   end
 
+  describe "[]" do
+    it "gets" do
+      a = {1 => 2}
+      a[1].should eq(2)
+      # a[2].should raise_exception
+      a.should eq({1 => 2})
+    end
+  end
+
   describe "fetch" do
     it "fetches with one argument" do
       a = {1 => 2}
       a.fetch(1).should eq(2)
-      a.fetch(2).should be_nil
+      # a.fetch(2).should raise_exception
       a.should eq({1 => 2})
     end
 
@@ -62,8 +71,8 @@ describe "Hash" do
 
     it "fetches with block" do
       a = {1 => 2}
-      a.fetch(1) { |k| k * 2 }.should eq(2)
-      a.fetch(2) { |k| k * 2 }.should eq(4)
+      a.fetch(1) { |k| k * 3 }.should eq(2)
+      a.fetch(2) { |k| k * 3 }.should eq(6)
       a.should eq({1 => 2})
     end
   end
