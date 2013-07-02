@@ -4,7 +4,9 @@ require "spec"
 describe "Hash" do
   describe "empty" do
     it "length should be zero" do
-      ({} of Int => Int).length.should eq(0)
+      h = {} of Int => Int
+      h.length.should eq(0)
+      h.empty?.should be_true
     end
   end
 
@@ -24,12 +26,20 @@ describe "Hash" do
     a[1].should eq(2)
   end
 
-  it "get array of keys" do
-    a = {} of Symbol => Int
+  it "gets array of keys" do
+    a = {} of Symbol => Int32
     a.keys.should eq([] of Symbol)
     a[:foo] = 1
     a[:bar] = 2
     a.keys.should eq([:foo, :bar])
+  end
+
+  it "gets array of values" do
+    a = {} of Symbol => Int32
+    a.values.should eq([] of Int32)
+    a[:foo] = 1
+    a[:bar] = 2
+    a.values.should eq([1, 2])
   end
 
   describe "==" do
@@ -54,6 +64,14 @@ describe "Hash" do
     end
   end
 
+  describe "[]=" do
+    it "overrides value" do
+      a = {1 => 2}
+      a[1] = 3
+      a[1].should eq(3)
+    end
+  end
+
   describe "fetch" do
     it "fetches with one argument" do
       a = {1 => 2}
@@ -75,5 +93,21 @@ describe "Hash" do
       a.fetch(2) { |k| k * 3 }.should eq(6)
       a.should eq({1 => 2})
     end
+  end
+
+  describe "has_key?" do
+    it "doesn't have key" do
+      a = {1 => 2}
+      a.has_key?(2).should be_false
+    end
+
+    it "has key" do
+      a = {1 => 2}
+      a.has_key?(1).should be_true
+    end
+  end
+
+  describe "to_s" do
+    assert { {1 => 2, 3 => 4}.to_s.should eq("{1 => 2, 3 => 4}") }
   end
 end
