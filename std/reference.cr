@@ -37,7 +37,7 @@ class Reference
   end
 
   def !@
-    true
+    false
   end
 
   def to_s

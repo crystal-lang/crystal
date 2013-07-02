@@ -10,14 +10,18 @@ class Hash(K, V)
 
   def []=(key : K, value : V)
     index = bucket_index key
-    unless (bucket = @buckets[index])
+    bucket = @buckets[index]
+
+    if bucket
+      entry = find_entry_in_bucket(bucket, key)
+      if entry
+        entry.value = value
+        return value
+      end
+    else
       @buckets[index] = bucket = Array(Entry(K, V)).new
     end
-    bucket.each do |entry|
-      if key == entry.key
-        return entry.value = value
-      end
-    end
+
     @length += 1
     entry = Entry(K, V).new(key, value)
     bucket.push entry
@@ -32,18 +36,7 @@ class Hash(K, V)
   end
 
   def has_key?(key)
-    index = bucket_index key
-    bucket = @buckets[index]
-
-    if bucket
-      bucket.each do |entry|
-        if entry.key == key
-          return true
-        end
-      end
-    end
-
-    false
+    !!find_entry(key)
   end
 
   def fetch(key)
@@ -55,18 +48,8 @@ class Hash(K, V)
   end
 
   def fetch(key)
-    index = bucket_index key
-    bucket = @buckets[index]
-
-    if bucket
-      bucket.each do |entry|
-        if entry.key == key
-          return entry.value
-        end
-      end
-    end
-
-    yield key
+    entry = find_entry(key)
+    entry ? entry.value : yield key
   end
 
   def length
@@ -112,7 +95,7 @@ class Hash(K, V)
     each do |key, value|
       str << ", " if found_one
       str << key.inspect
-      str << "=>"
+      str << " => "
       str << value.inspect
       found_one = true
     end
@@ -121,6 +104,21 @@ class Hash(K, V)
   end
 
   # private
+
+  def find_entry(key)
+    index = bucket_index key
+    bucket = @buckets[index]
+    bucket ? find_entry_in_bucket(bucket, key) : nil
+  end
+
+  def find_entry_in_bucket(bucket, key)
+    bucket.each do |entry|
+      if entry.key == key
+        return entry
+      end
+    end
+    nil
+  end
 
   def bucket_index(key)
     key.hash % @buckets.length
