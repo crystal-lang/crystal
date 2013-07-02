@@ -508,7 +508,7 @@ module Crystal
 
     def transform_instance_var(node)
       indices = @vars[node.name]
-      if indices
+      if indices && indices[:read]
         Var.new(var_name_with_index(node.name, indices[:read]))
       else
         node

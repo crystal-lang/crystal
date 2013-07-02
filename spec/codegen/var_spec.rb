@@ -20,4 +20,25 @@ describe 'Code gen: var' do
       foo.foo
       )).to_i.should eq(2)
   end
+
+  it "codegens bug with instance vars and ssa" do
+    run(%q(
+      class Foo
+        def initialize
+          @angle = 0
+        end
+
+        def foo
+          if 1 == 2
+            @angle += 1
+          else
+            @angle -= 1
+          end
+        end
+      end
+
+      f = Foo.new
+      f.foo
+      )).to_i.should eq(-1)
+  end
 end
