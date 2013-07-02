@@ -914,7 +914,7 @@ module Crystal
         end
         accept(node.target_def.body)
 
-        if node.target_def.type && node.target_def.type.no_return?
+        if node.target_def.no_returns? || (node.target_def.body && node.target_def.body.no_returns?)
           @builder.unreachable
         else
           if node.target_def.type && !node.target_def.type.nil_type? && !node.block.breaks?

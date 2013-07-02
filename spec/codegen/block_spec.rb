@@ -762,4 +762,25 @@ describe 'Code gen: block' do
       foo
       )).to_i.should eq(3)
   end
+
+  it "codegens block with return and yield and no return" do
+    run(%q(
+      lib C
+        fun exit : NoReturn
+      end
+
+      def foo(key)
+        foo(key) { C.exit }
+      end
+
+      def foo(key)
+        if 1 == 1
+          return 2
+        end
+        yield
+      end
+
+      foo 1
+      )).to_i.should eq(2)
+  end
  end
