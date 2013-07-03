@@ -21,7 +21,7 @@ GEM
       debugger-linecache (~> 1.2.0)
       debugger-ruby_core_source (~> 1.2.1)
     debugger-linecache (1.2.0)
-    debugger-ruby_core_source (1.2.2)
+    debugger-ruby_core_source (1.2.3)
     diff-lcs (1.2.1)
     ffi (1.4.0)
     json (1.7.7)
@@ -62,8 +62,8 @@ PLATFORMS
 DEPENDENCIES
   coveralls
   json (~> 1.7.7)
-  pry (= 0.9.12.2)
-  pry-debugger (= 0.2.2)
+  pry
+  pry-debugger
   rake
   rspec
   ruby-graphviz
