@@ -774,38 +774,12 @@ module Crystal
       untyped_def = node.scope.lookup_macro(node.name, node.args.length) || mod.lookup_macro(node.name, node.args.length)
       return false unless untyped_def
 
-      macro_name = "#macro_#{untyped_def.object_id}"
-
       macros_cache_key = [untyped_def.object_id] + node.args.map { | arg| arg.class.object_id }
-      unless typed_def = mod.macros_cache[macros_cache_key]
-        typed_def = Def.new(macro_name, untyped_def.args.map(&:clone), untyped_def.body ? untyped_def.body.clone : nil)
-        mod.macros_cache[macros_cache_key] = typed_def
+      unless expander = mod.macros_cache[macros_cache_key]
+        expander = mod.macros_cache[macros_cache_key] = MacroExpander.new(mod, untyped_def)
       end
 
-      macro_call = Call.new(nil, macro_name, node.args.map(&:to_crystal_node))
-      macro_nodes = Expressions.new [typed_def, macro_call]
-      macro_nodes = mod.normalize(macro_nodes)
-
-      mod.infer_type macro_nodes
-
-      if macro_nodes.type != mod.string
-        node.raise "macro return value must be a String, not #{macro_nodes.type}"
-      end
-
-      macro_arg_types = macro_call.args.map(&:type)
-      fun = untyped_def.lookup_instance(macro_arg_types)
-      unless fun
-        mod.build macro_nodes, nil, false, mod.macro_llvm_mod
-        fun = mod.macro_llvm_mod.functions[macro_call.target_def.mangled_name(nil)]
-        untyped_def.add_instance fun, macro_arg_types
-      end
-
-      mod.load_libs
-
-      macro_args = node.args.map &:to_crystal_binary
-      macro_value = mod.macro_engine.run_function fun, *macro_args
-
-      generated_source = macro_value.to_string
+      generated_source = expander.expand node
 
       begin
         parser = Parser.new(generated_source, [Set.new(@vars.keys)])
