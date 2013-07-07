@@ -1,17 +1,5 @@
 module Crystal
   class ASTNode
-    def llvm_type
-      type.llvm_type
-    end
-
-    def llvm_arg_type
-      type.llvm_arg_type
-    end
-
-    def llvm_embedded_type
-      type.llvm_embedded_type
-    end
-
     def returns?
       false
     end

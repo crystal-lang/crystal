@@ -121,14 +121,6 @@ module Crystal
       to_s
     end
 
-    def llvm_arg_type
-      llvm_type
-    end
-
-    def llvm_embedded_type
-      llvm_type
-    end
-
     def self.merge(*types)
       types = types.compact
       return nil if types.empty?
@@ -157,10 +149,6 @@ module Crystal
 
     def lookup_defs(*)
       []
-    end
-
-    def llvm_type
-      LLVM.Void
     end
 
     def no_return?
@@ -587,20 +575,8 @@ module Crystal
       instance_vars_in_initialize && instance_vars_in_initialize.include?(name) || (superclass && superclass.has_instance_var_in_initialize?(name))
     end
 
-    def llvm_type
-      @llvm_type ||= LLVM::Pointer(llvm_struct_type)
-    end
-
     def llvm_size
       Crystal::Program::POINTER_SIZE
-    end
-
-    def llvm_struct_type
-      unless @llvm_struct_type
-        @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = all_instance_vars.values.map(&:llvm_embedded_type)
-      end
-      @llvm_struct_type
     end
   end
 
@@ -939,10 +915,6 @@ module Crystal
       true
     end
 
-    def llvm_type
-      @llvm_type ||= LLVM::Pointer(var.type.llvm_embedded_type)
-    end
-
     def llvm_size
       Crystal::Program::POINTER_SIZE
     end
@@ -1044,27 +1016,8 @@ module Crystal
       union?
     end
 
-    def llvm_type
-      unless @llvm_type
-        if nilable?
-          @llvm_type = nilable_type.llvm_type
-        else
-          @llvm_type = LLVM::Type.struct([LLVM::Int, llvm_value_type], true, llvm_name)
-        end
-      end
-      @llvm_type
-    end
-
-    def llvm_arg_type
-      @llvm_arg_type ||= union? ? LLVM::Pointer(llvm_type) : llvm_type
-    end
-
     def llvm_size
       @llvm_size ||= llvm_value_size + 4
-    end
-
-    def llvm_value_type
-      @llvm_value_type ||= LLVM::Type.array(LLVM::Int, llvm_value_size.fdiv(LLVM::Int.type.width / 8).ceil)
     end
 
     def llvm_value_size
@@ -1108,10 +1061,6 @@ module Crystal
       true
     end
 
-    def llvm_type
-      LLVM::Int
-    end
-
     def llvm_size
       4
     end
@@ -1140,10 +1089,6 @@ module Crystal
 
     def parents
       instance_type.parents.map(&:metaclass)
-    end
-
-    def llvm_type
-      LLVM::Int
     end
 
     def llvm_size
@@ -1205,7 +1150,7 @@ module Crystal
     attr_accessor :name
     attr_accessor :type
 
-    delegate [:llvm_type, :llvm_name, :llvm_size, :pointer?] => :type
+    delegate [:llvm_name, :llvm_size, :pointer?] => :type
 
     def initialize(container, name, type)
       super(container)
@@ -1268,24 +1213,8 @@ module Crystal
       "struct.#{to_s}"
     end
 
-    def llvm_type
-      @llvm_type ||= LLVM::Pointer(llvm_struct_type)
-    end
-
     def llvm_size
       Crystal::Program::POINTER_SIZE
-    end
-
-    def llvm_struct_type
-      unless @llvm_struct_type
-        @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = @vars.values.map(&:llvm_embedded_type)
-      end
-      @llvm_struct_type
-    end
-
-    def llvm_embedded_type
-      llvm_struct_type
     end
 
     def index_of_var(name)
@@ -1351,26 +1280,8 @@ module Crystal
       "union.#{to_s}"
     end
 
-    def llvm_type
-      @llvm_type ||= LLVM::Pointer(llvm_struct_type)
-    end
-
     def llvm_size
       Crystal::Program::POINTER_SIZE
-    end
-
-    def llvm_struct_type
-      unless @llvm_struct_type
-        max_union_var = @vars.values.max_by { |var| var.type.llvm_size }
-
-        @llvm_struct_type = LLVM::Struct(llvm_name)
-        @llvm_struct_type.element_types = [max_union_var.llvm_embedded_type]
-      end
-      @llvm_struct_type
-    end
-
-    def llvm_embedded_type
-      llvm_struct_type
     end
 
     def inspect
@@ -1442,9 +1353,6 @@ module Crystal
 
   class HierarchyType < Type
     include DefInstanceContainer
-
-    LLVM_TYPE = LLVM::Type.struct([LLVM::Int, LLVM::Pointer(LLVM::Int8)], true, "Object+")
-    LLVM_ARG_TYPE = LLVM::Pointer(LLVM_TYPE)
 
     attr_accessor :base_type
 
@@ -1560,14 +1468,6 @@ module Crystal
 
     def llvm_name
       to_s
-    end
-
-    def llvm_type
-      LLVM_TYPE
-    end
-
-    def llvm_arg_type
-      LLVM_ARG_TYPE
     end
 
     def llvm_size
