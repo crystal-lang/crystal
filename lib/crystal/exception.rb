@@ -20,8 +20,12 @@ module Crystal
         str = "Syntax error in line #{@line_number}: #{@message}"
       end
 
-      if @filename && File.file?(@filename)
-        source = File.read(@filename)
+      if @filename
+        if @filename.is_a?(VirtualFile)
+          source = @filename.source
+        elsif File.file?(@filename)
+          source = File.read(@filename)
+        end
       end
 
       if source

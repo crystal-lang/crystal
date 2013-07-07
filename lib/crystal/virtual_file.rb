@@ -6,4 +6,8 @@ class VirtualFile
     @macro = macro
     @source = source
   end
+
+  def to_s
+    "expanded macro"
+  end
 end
