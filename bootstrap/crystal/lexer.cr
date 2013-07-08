@@ -506,6 +506,7 @@ module Crystal
             end
           end
         end
+        scan_ident(start, start_column)
       when 's'
         if next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't'
           return check_ident_or_keyword(:struct, start, start_column)

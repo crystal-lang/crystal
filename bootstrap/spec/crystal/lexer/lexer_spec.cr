@@ -221,4 +221,15 @@ describe "Lexer" do
     token.type.should eq(:STRING)
     token.value.should eq("foo")
   end
+
+  it "lexes dot and ident" do
+    lexer = Crystal::Lexer.new ".read"
+    token = lexer.next_token
+    token.type.should eq(:".")
+    token = lexer.next_token
+    token.type.should eq(:IDENT)
+    token.value.should eq("read")
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
 end
