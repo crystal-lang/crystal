@@ -663,6 +663,8 @@ module Crystal
         cond = @builder.icmp :ne, @last, int1(0)
       elsif node_cond.type.nilable?
         cond = not_null_pointer?(@last)
+      elsif node_cond.type.hierarchy?
+        cond = int1(1)
       elsif node_cond.type.union?
         has_nil = node_cond.type.types.any?(&:nil_type?)
         has_bool = node_cond.type.types.any? { |t| t.equal?(@mod.bool) }

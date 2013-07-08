@@ -115,4 +115,21 @@ describe 'Code gen: if' do
       foo
     )).to_i.should eq(1)
   end
+
+  it "codegens if with hierarchy" do
+    run(%q(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      f = Foo.new || Bar.new
+      if f
+        1
+      else
+        2
+      end
+      )).to_i.should eq(1)
+  end
 end
