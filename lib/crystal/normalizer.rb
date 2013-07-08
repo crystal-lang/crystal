@@ -568,7 +568,7 @@ module Crystal
     end
 
     def push_assign_var_with_indices(vars, name, to_index, from_index)
-      return if to_index == from_index
+      return if to_index == from_index || name[0] == '#'
 
       # If we need to assign the default value of a varaible inside an if
       # in an initialize, we explicitly set the value to Nil so the type
