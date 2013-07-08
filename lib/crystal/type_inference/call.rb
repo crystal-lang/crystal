@@ -124,6 +124,22 @@ module Crystal
       end
     end
 
+    def find_nil_source(node)
+      visited = Set.new
+      visited.add node.object_id
+      while true
+        dependencies = node.dependencies.select { |dep| !dep.equal?(mod.nil_var) && dep.type && dep.type.includes_nil_type? && !visited.include?(dep.object_id) }
+        if dependencies.length > 0
+          node = dependencies[0]
+          visited.add node.object_id
+          break unless node.dependencies
+        else
+          break
+        end
+      end
+      binding.pry
+    end
+
     def on_new_subclass
       @types_signature = nil
       recalculate
@@ -242,6 +258,10 @@ module Crystal
 
       defs = owner.lookup_defs(def_name)
       if defs.empty?
+        if owner.nil_type?
+          find_nil_source(obj)
+        end
+
         if obj
           raise "undefined method '#{name}' for #{owner}"
         elsif args.length > 0 || has_parenthesis
