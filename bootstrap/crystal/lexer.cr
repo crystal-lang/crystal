@@ -369,6 +369,11 @@ module Crystal
         else
           raise "unknown token: #{@buffer.value}"
         end
+      when 'a'
+        if next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't'
+          return check_ident_or_keyword(:abstract, start, start_column)
+        end
+        scan_ident(start, start_column)
       when 'b'
         case next_char
         when 'e'
@@ -433,11 +438,6 @@ module Crystal
           end
         end
         scan_ident(start, start_column)
-      when 'g'
-        if next_char == 'e' && next_char == 'n' && next_char == 'e' && next_char == 'r' && next_char == 'i' && next_char == 'c'
-          return check_ident_or_keyword(:generic, start, start_column)
-        end
-        scan_ident(start, start_column)
       when 'i'
         case next_char
         when 'f' then return check_ident_or_keyword(:if, start, start_column)
@@ -483,8 +483,13 @@ module Crystal
         end
         scan_ident(start, start_column)
       when 'o'
-        if next_char == 'u' && next_char == 't'
-          return check_ident_or_keyword(:out, start, start_column)
+        case next_char
+        when 'f'
+            return check_ident_or_keyword(:of, start, start_column)
+        when 'u'
+          if next_char == 't'
+            return check_ident_or_keyword(:out, start, start_column)
+          end
         end
         scan_ident(start, start_column)
       when 'p'
