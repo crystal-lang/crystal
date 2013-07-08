@@ -590,7 +590,13 @@ module Crystal
       args = [] of Arg
 
       if @token.type == :"."
-        receiver = Var.new name unless receiver
+        unless receiver
+          if name
+            receiver = Var.new name
+          else
+            raise "shouldn't reach this line"
+          end
+        end
         next_token_skip_space
         check [:IDENT, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
         name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s

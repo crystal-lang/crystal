@@ -347,7 +347,7 @@ module Crystal
     attr_accessor :out
     attr_accessor :type
 
-    def initialize(name : String?, type = nil)
+    def initialize(name : String, type = nil)
       @name = name
       @type = type
       @out = false
