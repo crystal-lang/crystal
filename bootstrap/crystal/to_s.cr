@@ -85,8 +85,8 @@ module Crystal
     end
 
     def visit(node : Call)
-      if node.obj
-        node.obj.accept self
+      if node_obj = node.obj
+        node_obj.accept self
         @str << "."
       end
       @str << node.name
@@ -96,9 +96,9 @@ module Crystal
         arg.accept self
       end
       @str << ")"
-      if node.block
+      if node_block = node.block
         @str << " "
-        node.block.accept self
+        node_block.accept self
       end
       false
     end
@@ -133,8 +133,8 @@ module Crystal
 
     def visit(node : Def)
       @str << "def "
-      if node.receiver
-        node.receiver.accept self
+      if node_receiver = node.receiver
+        node_receiver.accept self
         @str << "."
       end
       @str << node.name.to_s
@@ -160,13 +160,13 @@ module Crystal
       else
         @str << "?"
       end
-      if node.default_value
+      if node_default_value = node.default_value
         @str << " = "
-        node.default_value.accept self
+        node_default_value.accept self
       end
-      if node.type_restriction
+      if node_type_restriction = node.type_restriction
         @str << " : "
-        node.type_restriction.accept self
+        node_type_restriction.accept self
       end
       false
     end
@@ -276,9 +276,9 @@ module Crystal
         end
         @str << ")"
       end
-      if node.return_type
+      if node_return_type = node.return_type
         @str << " : "
-        node.return_type.accept self
+        node_return_type.accept self
         node.pointer.times do
           @str << "*"
         end
@@ -348,17 +348,19 @@ module Crystal
     end
 
     def accept_with_indent(node : Expressions)
-      return unless node
-      with_indent do
-        node.accept self
+      if node
+        with_indent do
+          node.accept self
+        end
       end
     end
 
     def accept_with_indent(node)
-      return unless node
-      with_indent do
-        append_indent
-        node.accept self
+      if node
+        with_indent do
+          append_indent
+          node.accept self
+        end
       end
       @str << "\n"
     end

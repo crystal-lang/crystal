@@ -286,8 +286,8 @@ module Crystal
 
     def accept_children(visitor)
       self.cond.accept visitor
-      self.then.accept visitor if self.then
-      self.else.accept visitor if self.else
+      @then.accept visitor if @then
+      @else.accept visitor if @else
     end
 
     def ==(other : self)
@@ -457,9 +457,9 @@ module Crystal
     end
 
     def accept_children(visitor)
-      receiver.accept visitor if receiver
+      @receiver.accept visitor if @receiver
       args.each { |arg| arg.accept visitor }
-      body.accept visitor if body
+      @body.accept visitor if @body
     end
 
     def ==(other : self)
@@ -599,8 +599,8 @@ module Crystal
     end
 
     def accept_children(visitor)
-      default_value.accept visitor if default_value
-      type_restriction.accept visitor if type_restriction
+      @default_value.accept visitor if @default_value
+      @type_restriction.accept visitor if @type_restriction
     end
 
     def ==(other : self)
@@ -699,7 +699,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      body.accept visitor if body
+      @body.accept visitor if @body
     end
 
     def ==(other : self)
@@ -726,7 +726,7 @@ module Crystal
 
     def accept_children(visitor)
       args.each { |arg| arg.accept visitor }
-      return_type.accept visitor if return_type
+      @return_type.accept visitor if @return_type
     end
 
     def ==(other : self)
