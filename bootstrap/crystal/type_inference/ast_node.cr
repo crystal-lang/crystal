@@ -38,12 +38,13 @@ module Crystal
     end
 
     def notify_observers
-      return unless @observers
-      @observers.each do |observer|
-        observer.update self
-      end
-      @observers.each do |observer|
-        observer.propagate
+      if @observers
+        @observers.each do |observer|
+          observer.update self
+        end
+        @observers.each do |observer|
+          observer.propagate
+        end
       end
     end
 
