@@ -1458,6 +1458,12 @@ module Crystal
       end
     end
 
+    def subtypes
+      subtypes = []
+      each { |subtype| subtypes << subtype }
+      subtypes
+    end
+
     def to_s
       "#{base_type}+"
     end

@@ -448,28 +448,9 @@ module Crystal
       const_type = node.const.type.instance_type
 
       if obj_type.is_a?(HierarchyType)
-        # TODO: this is wrong: we must check if the *runtime* type implements const_type
-        is_a = obj_type.base_type.implements?(const_type)
-        @last = int1(is_a ? 1 : 0)
+        codegen_is_a_many_types(obj_type.subtypes, const_type)
       elsif obj_type.union?
-        matching_ids = obj_type.types.select { |t| t.implements?(const_type) }.map { |t| int(t.type_id) }
-
-        case matching_ids.length
-        when 0
-          @last = int1(0)
-        when obj_type.types.count
-          @last = int1(1)
-        else
-          type_id = @builder.load union_type_id(@last)
-
-          result = nil
-          matching_ids.each do |matching_id|
-            cmp = @builder.icmp :eq, type_id, matching_id
-            result = result ? @builder.or(result, cmp) : cmp
-          end
-
-          @last = result
-        end
+        codegen_is_a_many_types(obj_type.types, const_type)
       elsif obj_type.nilable?
         if const_type.nil_type?
           @last = null_pointer?(@last)
@@ -484,6 +465,27 @@ module Crystal
       end
 
       false
+    end
+
+    def codegen_is_a_many_types(types, const_type)
+      matching_ids = types.select { |t| t.implements?(const_type) }.map { |t| int(t.type_id) }
+
+      case matching_ids.length
+      when 0
+        @last = int1(0)
+      when types.count
+        @last = int1(1)
+      else
+        type_id = @builder.load union_type_id(@last)
+
+        result = nil
+        matching_ids.each do |matching_id|
+          cmp = @builder.icmp :eq, type_id, matching_id
+          result = result ? @builder.or(result, cmp) : cmp
+        end
+
+        @last = result
+      end
     end
 
     def visit_pointer_of(node)
