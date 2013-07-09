@@ -88,7 +88,7 @@ module Crystal
               match.arg_types = arg_types
               matches = Matches.new([match], true)
             else
-              matches = mod_matches unless mod_matches.empty?
+              matches = mod_matches unless obj || mod_matches.empty?
             end
           end
         end

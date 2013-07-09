@@ -184,4 +184,17 @@ describe 'Type inference: def' do
       ),
       "'foo' is not expected to be invoked with a block, but a block was given"
   end
+
+  it "errors when calling two functions with nil type" do
+    assert_error %(
+      def bar
+      end
+
+      def foo
+      end
+
+      foo.bar
+      ),
+      "undefined method"
+  end
 end
