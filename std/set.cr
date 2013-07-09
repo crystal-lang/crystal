@@ -17,7 +17,7 @@ class Set(T)
   end
 
   def includes?(object)
-    !!@hash[object]
+    @hash.has_key?(object)
   end
 
   def length
