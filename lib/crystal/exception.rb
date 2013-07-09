@@ -3,6 +3,19 @@ module Crystal
     def message(source = nil)
       to_s(source)
     end
+
+    def self.name_column_and_length(node)
+      if node.respond_to?(:name) && node.name.respond_to?(:length)
+        length = node.respond_to?(:name_length) ? node.name_length : node.name.length
+        if node.respond_to?(:name_column_number)
+          [node.name_column_number, length]
+        else
+          [node.column_number, length]
+        end
+      else
+        [node.column_number, nil]
+      end
+    end
   end
 
   class SyntaxException < Exception
@@ -49,16 +62,8 @@ module Crystal
     attr_accessor :inner
 
     def self.for_node(node, message, inner = nil)
-      if node.respond_to?(:name) && node.name.respond_to?(:length)
-        length = node.respond_to?(:name_length) ? node.name_length : node.name.length
-        if node.respond_to?(:name_column_number)
-          new message, node.line_number, node.name_column_number, node.filename, length, inner
-        else
-          new message, node.line_number, node.column_number, node.filename, length, inner
-        end
-      else
-        new message, node.line_number, node.column_number, node.filename, nil, inner
-      end
+      name_column, name_length = Exception.name_column_and_length(node)
+      new message, node.line_number, name_column, node.filename, name_length, inner
     end
 
     def initialize(message, line, column, filename, length = nil, inner = nil)
@@ -139,6 +144,55 @@ module Crystal
         inner.deepest_error_message
       else
         @message
+      end
+    end
+  end
+
+  class NilMethodException < Exception
+    def initialize(nil_trace)
+      @nil_trace = nil_trace
+    end
+
+    def has_location?
+      true
+    end
+
+    def append_to_s(str, source)
+      str << ("=" * 80)
+      str << "\n\nNil trace:"
+      @nil_trace.each do |node|
+        if node.filename.is_a?(VirtualFile)
+          filename = "macro #{node.filename.macro.name}"
+          line_number = node.filename.macro.line_number
+          column_number = node.filename.macro.column_number
+          lines = @filename.source.lines.to_a
+        elsif node.filename
+          filename = node.filename
+          line_number = node.line_number
+          column_number = node.column_number
+          lines = File.readlines filename
+        else
+          next
+        end
+
+        str << "\n\n"
+        str << "  "
+        str << filename
+        str << ":"
+        str << line_number.to_s
+        str << "\n\n"
+
+        line = lines[line_number - 1]
+
+        name_column, name_length = Exception.name_column_and_length(node)
+
+        str << "    "
+        str << line.chomp
+        str << "\n"
+        str << "    "
+        str << (' ' * (name_column - 1))
+        str << '^'
+        str << ('~' * (name_length - 1)) if name_length
       end
     end
   end

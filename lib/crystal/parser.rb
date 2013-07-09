@@ -1109,6 +1109,7 @@ module Crystal
 
       receiver = nil
       @yields = false
+      name_column_number = @token.column_number
 
       if @token.type == :CONST
         receiver = parse_ident
@@ -1136,6 +1137,7 @@ module Crystal
         next_token_skip_space
         check :IDENT, :"=", :<<, :<, :<=, :==, :===, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :'!@', :&, :|, :^, :**, :[], :[]=, :'<=>'
         name = @token.type == :IDENT ? @token.value : @token.type
+        name_column_number = @token.column_number
         next_token_skip_space
       end
 
@@ -1174,7 +1176,9 @@ module Crystal
 
       pop_def
 
-      klass.new name, args, body, receiver, block_arg, @yields
+      node = klass.new name, args, body, receiver, block_arg, @yields
+      node.name_column_number = name_column_number
+      node
     end
 
     def parse_arg(args, parenthesis = false)

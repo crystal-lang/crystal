@@ -125,19 +125,23 @@ module Crystal
     end
 
     def find_nil_source(node)
+      nil_trace = []
+
       visited = Set.new
       visited.add node.object_id
       while true
         dependencies = node.dependencies.select { |dep| !dep.equal?(mod.nil_var) && dep.type && dep.type.includes_nil_type? && !visited.include?(dep.object_id) }
         if dependencies.length > 0
           node = dependencies[0]
+          nil_trace << node if node && node.location
           visited.add node.object_id
           break unless node.dependencies
         else
           break
         end
       end
-      binding.pry
+
+      NilMethodException.new(nil_trace)
     end
 
     def on_new_subclass
@@ -259,15 +263,15 @@ module Crystal
       defs = owner.lookup_defs(def_name)
       if defs.empty?
         if owner.nil_type?
-          find_nil_source(obj)
+          nil_trace = find_nil_source(obj)
         end
 
         if obj
-          raise "undefined method '#{name}' for #{owner}"
+          raise "undefined method '#{name}' for #{owner}", nil_trace
         elsif args.length > 0 || has_parenthesis
-          raise "undefined method '#{name}'"
+          raise "undefined method '#{name}'", nil_trace
         else
-          raise "undefined local variable or method '#{name}'"
+          raise "undefined local variable or method '#{name}'", nil_trace
         end
       end
 
