@@ -20,5 +20,5 @@ Questions or suggestions? Ask in our [Google Group](https://groups.google.com/fo
 #### Latest entries from our blog:
 
 {% for post in site.posts %}
-* [{{ post.title }}]({{ site.baseurl }}{{ post.url }})
+* [{{ post.title }}]({{ post.url }})
 {% endfor %}
