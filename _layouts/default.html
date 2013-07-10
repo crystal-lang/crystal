@@ -1,37 +1,22 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>{{ page.title }}</title>
-
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Crystal : The Crystal Programming Language" />
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <title>Crystal</title>
   </head>
   <body>
-    <div class="wrapper">
-      {% include header.html %}
+    {% include header.html %}
 
-      <section>
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
         {{ content }}
       </section>
-
-      {% include footer.html %}
     </div>
-    <script src="javascripts/scale.fix.js"></script>
-    <script type="text/javascript">
-      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-      document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-    </script>
-    <script type="text/javascript">
-      try {
-        var pageTracker = _gat._getTracker("UA-42353458-1");
-        pageTracker._trackPageview();
-      } catch(err) {}
-    </script>
+
+    {% include footer.html %}
+    {% include google_analytics.html %}
   </body>
 </html>
