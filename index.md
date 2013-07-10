@@ -3,6 +3,8 @@ layout: default
 title: Welcome to Crystal
 ---
 
+### Welcome to Crystal
+
 Crystal is a programming language with the following goals:
 
 * Ruby-inspired syntax.
