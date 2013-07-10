@@ -1,9 +1,7 @@
 ---
 layout: default
-title: Crystal Programming Language
+title: Welcome to Crystal
 ---
-
-### Welcome to Crystal.
 
 Crystal is a programming language with the following goals:
 
