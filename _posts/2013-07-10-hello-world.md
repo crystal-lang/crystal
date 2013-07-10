@@ -22,10 +22,7 @@ class Greeter
   end
 end
 
-# Create a new object
 g = Greeter.new("world")
-
-# Output "Hello World!"
 g.salute
 {% endhighlight %}
 
@@ -37,3 +34,5 @@ Or maybe with blocks:
 end
 print '\n'
 {% endhighlight %}
+
+Each alternative might have a different performance, but luckily all of them are pretty expressive.
