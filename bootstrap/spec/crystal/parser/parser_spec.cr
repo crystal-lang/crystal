@@ -74,6 +74,18 @@ module Crystal
     def not
       Call.new(self, "!@")
     end
+
+    def self.[]
+      [] of ASTNode
+    end
+
+    def self.[](node)
+      [node] of ASTNode
+    end
+
+    def self.[](node1, node2)
+      [node1, node2] of ASTNode
+    end
   end
 end
 
@@ -126,51 +138,51 @@ describe "Parser" do
   it_parses "1 -2", Call.new(1.int, "-", ASTNode[2.int])
   it_parses "1 +2.0", Call.new(1.int, "+", ASTNode[2.double])
   it_parses "1 -2.0", Call.new(1.int, "-", ASTNode[2.double])
-  # it_parses "1 +2L", Call.new(1.int, "+", [2.long])
-  # it_parses "1 -2L", Call.new(1.int, "-", [2.long])
-  # it_parses "1\n+2", [1.int, 2.int]
-  # it_parses "1;+2", [1.int, 2.int]
-  # it_parses "1 - 2", Call.new(1.int, "-", [2.int])
-  # it_parses "1 -\n2", Call.new(1.int, "-", [2.int])
-  # it_parses "1\n-2", [1.int, -2.int]
-  # it_parses "1;-2", [1.int, -2.int]
-  # it_parses "1 * 2", Call.new(1.int, "*", [2.int])
-  # it_parses "1 * -2", Call.new(1.int, "*", [-2.int])
-  # it_parses "2 * 3 + 4 * 5", Call.new(Call.new(2.int, "*", [3.int]), "+", [Call.new(4.int, "*", [5.int])])
-  # it_parses "1 / 2", Call.new(1.int, "/", [2.int])
-  # it_parses "1 / -2", Call.new(1.int, "/", [-2.int])
-  # it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int, "/", [3.int]), "+", [Call.new(4.int, "/", [5.int])])
-  # it_parses "2 * (3 + 4)", Call.new(2.int, "*", [Call.new(3.int, "+", [4.int])])
+  it_parses "1 +2L", Call.new(1.int, "+", ASTNode[2.long])
+  it_parses "1 -2L", Call.new(1.int, "-", ASTNode[2.long])
+  it_parses "1\n+2", ASTNode[1.int, 2.int]
+  it_parses "1;+2", ASTNode[1.int, 2.int]
+  it_parses "1 - 2", Call.new(1.int, "-", ASTNode[2.int])
+  it_parses "1 -\n2", Call.new(1.int, "-", ASTNode[2.int])
+  it_parses "1\n-2", ASTNode[1.int, -2.int]
+  it_parses "1;-2", ASTNode[1.int, -2.int]
+  it_parses "1 * 2", Call.new(1.int, "*", ASTNode[2.int])
+  it_parses "1 * -2", Call.new(1.int, "*", ASTNode[-2.int])
+  it_parses "2 * 3 + 4 * 5", Call.new(Call.new(2.int, "*", ASTNode[3.int]), "+", ASTNode[Call.new(4.int, "*", ASTNode[5.int])])
+  it_parses "1 / 2", Call.new(1.int, "/", ASTNode[2.int])
+  it_parses "1 / -2", Call.new(1.int, "/", ASTNode[-2.int])
+  it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int, "/", ASTNode[3.int]), "+", ASTNode[Call.new(4.int, "/", ASTNode[5.int])])
+  it_parses "2 * (3 + 4)", Call.new(2.int, "*", ASTNode[Call.new(3.int, "+", ASTNode[4.int])])
 
-  # it_parses "!1", Call.new(1.int, "!@")
-  # it_parses "1 && 2", And.new(1.int, 2.int)
-  # it_parses "1 || 2", Or.new(1.int, 2.int)
+  it_parses "!1", Call.new(1.int, "!@")
+  it_parses "1 && 2", And.new(1.int, 2.int)
+  it_parses "1 || 2", Or.new(1.int, 2.int)
 
-  # it_parses "1 <=> 2", Call.new(1.int, "<=>", [2.int])
+  it_parses "1 <=> 2", Call.new(1.int, "<=>", ASTNode[2.int])
 
-  # it_parses "a = 1", Assign.new("a".var, 1.int)
-  # it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int))
+  it_parses "a = 1", Assign.new("a".var, 1.int)
+  it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int))
 
   # # it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var], [1.int, 2.int])
   # # it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var], [1.int])
   # # it_parses "a = 1, 2", MultiAssign.new(["a".var], [1.int, 2.int])
 
-  # it_parses "def foo\n1\nend", Def.new("foo", ASTNode[], [1.int])
-  # it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], [1.int])
-  # it_parses "def foo ; 1 ; end", Def.new("foo", ASTNode[], [1.int])
-  # it_parses "def foo; end", Def.new("foo", ASTNode[], nil)
-  # it_parses "def foo(var); end", Def.new("foo", ["var".arg], nil)
-  # it_parses "def foo(\nvar); end", Def.new("foo", ["var".arg], nil)
-  # it_parses "def foo(\nvar\n); end", Def.new("foo", ["var".arg], nil)
-  # it_parses "def foo(var1, var2); end", Def.new("foo", ["var1".arg, "var2".arg], nil)
-  # it_parses "def foo(\nvar1\n,\nvar2\n)\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
-  # it_parses "def foo var; end", Def.new("foo", ["var".arg], nil)
-  # it_parses "def foo var\n end", Def.new("foo", ["var".arg], nil)
-  # it_parses "def foo var1, var2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
-  # it_parses "def foo var1,\nvar2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
-  # it_parses "def foo; 1; 2; end", Def.new("foo", ASTNode[], [1.int, 2.int])
-  # it_parses "def foo=(value); end", Def.new("foo=", ["value".arg], ASTNode[])
-  # it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call([Call.new("n".var, "-", [1.int])]))
+  it_parses "def foo\n1\nend", Def.new("foo", [] of Arg, ASTNode[1.int])
+  it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], ASTNode[1.int])
+  it_parses "def foo ; 1 ; end", Def.new("foo", [] of Arg, ASTNode[1.int])
+  it_parses "def foo; end", Def.new("foo", [] of Arg, nil)
+  it_parses "def foo(var); end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo(\nvar); end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo(\nvar\n); end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo(var1, var2); end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo(\nvar1\n,\nvar2\n)\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo var; end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo var\n end", Def.new("foo", ["var".arg], nil)
+  it_parses "def foo var1, var2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo var1,\nvar2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
+  it_parses "def foo; 1; 2; end", Def.new("foo", [] of Arg, ASTNode[1.int, 2.int])
+  it_parses "def foo=(value); end", Def.new("foo=", ["value".arg], ASTNode[])
+  it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call(ASTNode[Call.new("n".var, "-", ASTNode[1.int])]))
   # it_parses "def type(type); end", Def.new("type", ["type".arg], nil)
 
   # it_parses "def self.foo\n1\nend", Def.new("foo", ASTNode[], [1.int], "self".var)

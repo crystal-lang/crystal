@@ -25,7 +25,7 @@ module Crystal
     end
 
     def parse_expressions
-      exps = ASTNode[]
+      exps = [] of ASTNode
       while @token.type != :EOF && !is_end_token
         exps << parse_expression
         skip_statement_end
@@ -260,16 +260,16 @@ module Crystal
       case @token.type
       when :"!"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "!@", ASTNode[], nil, column_number
+        Call.new parse_prefix, "!@", [] of ASTNode, nil, column_number
       when :"+"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "+@", ASTNode[], nil, column_number
+        Call.new parse_prefix, "+@", [] of ASTNode, nil, column_number
       when :"-"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "-@", ASTNode[], nil, column_number
+        Call.new parse_prefix, "-@", [] of ASTNode, nil, column_number
       when :"~"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "~@", ASTNode[], nil, column_number
+        Call.new parse_prefix, "~@", [] of ASTNode, nil, column_number
       else
         parse_pow
       end
@@ -304,14 +304,14 @@ module Crystal
               # Rewrite 'f.x = args' as f.x=(args)
               next_token_skip_space_or_newline
               args = parse_args_space_consumed(true)
-              atomic = Call.new(atomic, "#{name}=", (args || ASTNode[]), nil, name_column_number)
+              atomic = Call.new(atomic, "#{name}=", (args || [] of ASTNode), nil, name_column_number)
               keep_processing = false
             when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
               # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
               method = @token.type.to_s[0, @token.type.to_s.length - 1]
               next_token_skip_space
               value = parse_expression
-              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name, ASTNode[], nil, name_column_number), method, [value] of ASTNode, nil, name_column_number)] of ASTNode, nil, name_column_number)
+              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name, [] of ASTNode, nil, name_column_number), method, [value] of ASTNode, nil, name_column_number)] of ASTNode, nil, name_column_number)
               keep_processing = false
             else
               args = parse_args_space_consumed
@@ -325,22 +325,22 @@ module Crystal
 
             block = parse_block
             if block
-              atomic = Call.new atomic, name, (args || ASTNode[]), block, name_column_number
+              atomic = Call.new atomic, name, (args || [] of ASTNode), block, name_column_number
             else
-              atomic = args ? (Call.new atomic, name, args, nil, name_column_number) : (Call.new atomic, name, ASTNode[], nil, name_column_number)
+              atomic = args ? (Call.new atomic, name, args, nil, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, name_column_number)
             end
           end
           # atomic = check_special_call(atomic)
         when :"[]"
           column_number = @token.column_number
           next_token_skip_space
-          atomic = Call.new atomic, "[]", ASTNode[], nil, column_number
+          atomic = Call.new atomic, "[]", [] of ASTNode, nil, column_number
           atomic.name_length = 0 if atomic.is_a?(Call)
           atomic
         when :"["
           column_number = @token.column_number
           next_token_skip_space_or_newline
-          args = ASTNode[]
+          args = [] of ASTNode
           while true
             args << parse_expression
             case @token.type
@@ -373,7 +373,7 @@ module Crystal
         parse_parenthesized_expression
       when :"[]"
         next_token_skip_space
-        ArrayLiteral.new ASTNode[]
+        ArrayLiteral.new [] of ASTNode
       when :"["
         parse_array_literal
       when :"::"
@@ -537,7 +537,7 @@ module Crystal
 
     def parse_array_literal
       next_token_skip_space_or_newline
-      exps = ASTNode[]
+      exps = [] of ASTNode
       while @token.type != :"]"
         exps << parse_expression
         skip_space_or_newline
@@ -751,7 +751,7 @@ module Crystal
 
       if block
         check_maybe_recursive name
-        Call.new nil, name, (args || ASTNode[]), block, name_column_number, @last_call_has_parenthesis
+        Call.new nil, name, (args || [] of ASTNode), block, name_column_number, @last_call_has_parenthesis
       else
         if args
           if is_var?(name) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign)
@@ -766,7 +766,7 @@ module Crystal
           Var.new name
         else
           check_maybe_recursive name
-          Call.new nil, name, ASTNode[], nil, name_column_number, @last_call_has_parenthesis
+          Call.new nil, name, [] of ASTNode, nil, name_column_number, @last_call_has_parenthesis
         end
       end
     end
@@ -780,7 +780,7 @@ module Crystal
     end
 
     def parse_block2
-      block_args = ASTNode[]
+      block_args = [] of ASTNode
       block_body = nil
 
       next_token_skip_space
@@ -820,7 +820,7 @@ module Crystal
         @last_call_has_parenthesis = false
         nil
       when :"("
-        args = ASTNode[]
+        args = [] of ASTNode
         next_token_skip_space_or_newline
         while @token.type != :")"
           if @token.keyword?(:out)
@@ -876,7 +876,7 @@ module Crystal
         when :if, :unless, :while
           nil
         else
-          args = ASTNode[]
+          args = [] of ASTNode
           while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :")" && @token.type != :":" && !is_end_token
             if @token.keyword?(:out)
               next_token_skip_space_or_newline
@@ -955,7 +955,7 @@ module Crystal
       args = parse_args
 
       location = @token.location
-      node = Yield.new(args || ASTNode[])
+      node = Yield.new(args || [] of ASTNode)
       node.location = location
       node
     end
@@ -966,7 +966,7 @@ module Crystal
       args = parse_args
 
       location = @token.location
-      node = Break.new(args || ASTNode[])
+      node = Break.new(args || [] of ASTNode)
       node.location = location
       node
     end
@@ -977,7 +977,7 @@ module Crystal
       args = parse_args
 
       location = @token.location
-      node = Return.new(args || ASTNode[])
+      node = Return.new(args || [] of ASTNode)
       node.location = location
       node
     end
@@ -988,7 +988,7 @@ module Crystal
       args = parse_args
 
       location = @token.location
-      node = Next.new(args || ASTNode[])
+      node = Next.new(args || [] of ASTNode)
       node.location = location
       node
     end
@@ -1020,7 +1020,7 @@ module Crystal
     end
 
     def parse_lib_body
-      expressions = ASTNode[]
+      expressions = [] of ASTNode
       while true
         location = @token.location
 
@@ -1076,7 +1076,7 @@ module Crystal
         real_name = name
       end
 
-      args = ASTNode[]
+      args = [] of ASTNode
       varargs = false
 
       if @token.type == :"("
@@ -1170,7 +1170,7 @@ module Crystal
     end
 
     def parse_struct_def_fields
-      fields = ASTNode[]
+      fields = [] of ASTNode
 
       while true
         case @token.type
