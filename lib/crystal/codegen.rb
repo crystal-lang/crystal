@@ -974,7 +974,7 @@ module Crystal
             else
               phi_type = llvm_type(node.type)
               phi_type = LLVM::Pointer(phi_type) if node.type.union?
-              @last = @builder.phi phi_type, @return_block_table rescue binding.pry
+              @last = @builder.phi phi_type, @return_block_table
             end
           end
         end
@@ -1197,10 +1197,10 @@ module Crystal
           else
             if @return_type.union?
               if target_def.body.type != @return_type && !target_def.body.returns?
-                assign_to_union(@return_union, @return_type, target_def.body.type, @last) rescue binding.pry
+                assign_to_union(@return_union, @return_type, target_def.body.type, @last)
                 @last = @builder.load @return_union
               else
-                @last = @builder.load @last rescue binding.pry
+                @last = @builder.load @last
               end
             end
 
