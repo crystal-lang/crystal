@@ -783,4 +783,19 @@ describe 'Code gen: block' do
       foo 1
       )).to_i.should eq(2)
   end
+
+  it "codegens while/break inside block" do
+    run(%q(
+      def foo
+        yield
+      end
+
+      foo do
+        while true
+          break
+        end
+        1
+      end
+    )).to_i.should eq(1)
+  end
  end

@@ -628,6 +628,11 @@ module Crystal
     end
 
     def visit_while(node)
+      old_break_type = @break_type
+      old_break_table = @break_table
+      old_break_union = @break_union
+      @break_type = @break_table = @break_union = nil
+
       while_block, body_block, exit_block = new_blocks "while", "body", "exit"
 
       @builder.br node.run_once ? body_block : while_block
@@ -648,6 +653,9 @@ module Crystal
       @builder.unreachable if node.no_returns? || (node.body && node.body.yields? && block_breaks?)
 
       @last = llvm_nil
+      @break_type = old_break_type
+      @break_table = old_break_table
+      @break_union = old_break_union
 
       false
     end
