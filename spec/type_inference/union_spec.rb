@@ -29,4 +29,17 @@ describe "Type inference: union" do
       foo(1 || 2.5)
       ") { union_of(int32, float64, char) }
   end
+
+  it "looks up type in union type with free var" do
+    assert_type("
+      class Bar(T)
+      end
+
+      def foo(x : T)
+        Bar(T).new
+      end
+
+      foo(1 || 1.5)
+    ") { types["Bar"].instantiate([union_of(int32, float64)]) }
+  end
 end

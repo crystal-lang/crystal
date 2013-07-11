@@ -642,7 +642,11 @@ module Crystal
 
     def lookup_ident_type(node)
       if @free_vars && !node.global && type = @free_vars[[node.names.first]]
-        target_type = type.lookup_type(node.names[1 .. -1])
+        if node.names.length == 1
+          target_type = type
+        else
+          target_type = type.lookup_type(node.names[1 .. -1])
+        end
       elsif node.global
         target_type = mod.lookup_type node.names
       else
