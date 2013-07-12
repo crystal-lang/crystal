@@ -132,4 +132,18 @@ describe 'Code gen: if' do
       end
       )).to_i.should eq(1)
   end
+
+  it "codegens nested if with var (ssa bug)" do
+    run(%q(
+      foo = 1
+      if 1 == 2
+        if 1 == 2
+          foo = 2
+        else
+          foo = 3
+        end
+      end
+      foo
+      )).to_i.should eq(1)
+  end
 end

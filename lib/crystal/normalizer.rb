@@ -362,7 +362,7 @@ module Crystal
         if else_indices.nil?
           if before_indices
             if then_indices != before_indices
-              push_assign_var_with_indices new_else_vars, var_name, before_indices[:write], before_indices[:read]
+              push_assign_var_with_indices new_else_vars, var_name, then_indices[:read], before_indices[:read]
             end
           else
             push_assign_var_with_indices new_then_vars, var_name, then_indices[:write], then_indices[:read]
@@ -372,7 +372,7 @@ module Crystal
         elsif then_indices.nil?
           if before_indices
             if else_indices != before_indices
-              push_assign_var_with_indices new_then_vars, var_name, before_indices[:write], before_indices[:read]
+              push_assign_var_with_indices new_then_vars, var_name, else_indices[:read], before_indices[:read]
             end
           else
             push_assign_var_with_indices new_else_vars, var_name, else_indices[:write], else_indices[:read]

@@ -183,4 +183,12 @@ describe 'Normalize: ssa' do
   it "stops ssa if address is taken 2" do
     assert_normalize "a = 1; a = 2; x = a.ptr; a = 3", "a = 1\na:1 = 2\nx = a:1.ptr\na:1 = 3"
   end
+
+  it "performs ssa on var on nested if" do
+    assert_normalize "foo = 1; if 0; if 0; foo = 2; else; foo = 3; end; end; foo", "foo = 1\nif 0\n  if 0\n    #temp_1 = foo:1 = 2\n    foo:3 = foo:1\n    #temp_1\n  else\n    #temp_2 = foo:2 = 3\n    foo:3 = foo:2\n    #temp_2\n  end\nelse\n  foo:3 = foo\n  nil\nend\nfoo:3"
+  end
+
+  it "performs ssa on var on nested if 2" do
+    assert_normalize "foo = 1; if 0; else; if 0; foo = 2; else; foo = 3; end; end; foo", "foo = 1\nif 0\n  foo:3 = foo\n  nil\nelse\n  if 0\n    #temp_1 = foo:1 = 2\n    foo:3 = foo:1\n    #temp_1\n  else\n    #temp_2 = foo:2 = 3\n    foo:3 = foo:2\n    #temp_2\n  end\nend\nfoo:3"
+  end
 end
