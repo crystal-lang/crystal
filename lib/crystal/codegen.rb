@@ -1041,8 +1041,8 @@ module Crystal
             @last = llvm_nil
           end
 
-          copy = alloca llvm_type(exp_type), "block_#{arg.name}"
-          codegen_assign copy, exp_type, exp_type, @last
+          copy = alloca llvm_type(arg.type), "block_#{arg.name}"
+          codegen_assign copy, arg.type, exp_type, @last
           new_vars[arg.name] = { ptr: copy, type: arg.type }
         end
 

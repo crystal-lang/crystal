@@ -798,4 +798,61 @@ describe 'Code gen: block' do
       end
     )).to_i.should eq(1)
   end
+
+  it "codegens block with union arg" do
+    run(%q(
+      class Numeric
+        def abs
+          self
+        end
+      end
+
+      class Foo(T)
+        def initialize(x : T)
+          @x = x
+        end
+
+        def each
+          yield @x
+        end
+      end
+
+      a = Foo.new(1) || Foo.new(1.5)
+      a.each do |x|
+        x.abs
+      end.to_i
+      )).to_i.should eq(1)
+  end
+
+  it "codegens block with hierarchy type arg" do
+    run(%q(
+      class Var(T)
+        def initialize(x : T)
+          @x = x
+        end
+
+        def each
+          yield @x
+        end
+      end
+
+      class Foo
+        def bar
+          1
+        end
+      end
+
+      class Bar < Foo
+        def bar
+          2
+        end
+      end
+
+      a = Var.new(Foo.new) || Var.new(Bar.new)
+      a.each do |x|
+        x.bar
+      end
+      )).to_i.should eq(1)
+  end
+
  end
