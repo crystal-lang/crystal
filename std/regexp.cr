@@ -44,6 +44,8 @@ class Regexp
 end
 
 class MatchData
+  EMPTY = MatchData.new("", "", 0, Pointer(Int32).malloc(0))
+
   def initialize(regex, string, pos, ovector)
     @regex = regex
     @string = string

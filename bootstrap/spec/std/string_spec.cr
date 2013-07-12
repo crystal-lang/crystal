@@ -180,4 +180,12 @@ describe "String" do
     assert { "foobar".ends_with?("foobarbaz").should be_false }
     assert { "foobar".ends_with?("xbar").should be_false }
   end
+
+  describe "=~" do
+    it "matches with group" do
+      "foobar" =~ /(o+)ba(r?)/
+      $1.should eq("oo")
+      $2.should eq("r")
+    end
+  end
 end

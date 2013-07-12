@@ -176,8 +176,14 @@ class String
   end
 
   def =~(regex)
-    $~ = match = regex.match(self)
-    match ? match.begin(0) : nil
+    match = regex.match(self)
+    if match
+      $~ = match
+      match.begin(0)
+    else
+      $~ = MatchData::EMPTY
+      nil
+    end
   end
 
   def +(other)
