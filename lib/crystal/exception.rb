@@ -158,6 +158,8 @@ module Crystal
     end
 
     def append_to_s(str, source)
+      return unless @nil_trace.length > 0
+
       str << ("=" * 80)
       str << "\n\nNil trace:"
       @nil_trace.each do |node|

@@ -129,7 +129,7 @@ module Crystal
 
       visited = Set.new
       visited.add node.object_id
-      while true
+      while node.dependencies
         dependencies = node.dependencies.select { |dep| !dep.equal?(mod.nil_var) && dep.type && dep.type.includes_nil_type? && !visited.include?(dep.object_id) }
         if dependencies.length > 0
           node = dependencies[0]
