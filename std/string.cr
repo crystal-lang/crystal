@@ -276,6 +276,15 @@ class String
     @length
   end
 
+  def reverse
+    String.new_with_length(length) do |buffer|
+      last = length - 1
+      length.times do |i|
+        buffer[last - i] = @c.ptr[i]
+      end
+    end
+  end
+
   def each_char
     p = @c.ptr
     length.times do
