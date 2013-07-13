@@ -337,4 +337,29 @@ describe 'Code gen: hierarchy type' do
       y
     )).to_i.should eq(2)
   end
+
+  it "dispatch call with nilable hierarchy arg" do
+    run(%q(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x)
+        1
+      end
+
+      def foo(x : Bar)
+        2
+      end
+
+      def lala
+        1 == 2 ? nil : Foo.new || Bar.new
+      end
+
+      x = lala
+      foo(x)
+    )).to_i.should eq(1)
+  end
 end

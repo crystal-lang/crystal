@@ -1040,6 +1040,16 @@ module Crystal
       types.each(&block)
     end
 
+    def each_concrete_type(&block)
+      types.each do |type|
+        if type.hierarchy?
+          type.each(&block)
+        else
+          yield type
+        end
+      end
+    end
+
     def to_s
       if nilable?
         "#{nilable_type}?"
@@ -1438,6 +1448,10 @@ module Crystal
 
     def filter_by(type)
       restrict(type)
+    end
+
+    def each_concrete_type(&block)
+      each(&block)
     end
 
     def each(&block)

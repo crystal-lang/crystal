@@ -1235,7 +1235,7 @@ module Crystal
 
       if type.union?
         result = int1(0)
-        type.each do |sub_type|
+        type.each_concrete_type do |sub_type|
           result = @builder.or(result, @builder.icmp(:eq, int(sub_type.type_id), type_id))
         end
         result
