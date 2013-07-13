@@ -172,11 +172,13 @@ module Crystal
       end
       a_if.else = node.else if node.else
       final_if = final_if.transform(self)
-      if assign
-        Expressions.new([assign, final_if])
-      else
-        final_if
-      end
+      final_exp = if assign
+                    Expressions.new([assign, final_if])
+                  else
+                    final_if
+                  end
+      final_exp.location = node.location
+      final_exp
     end
 
     def transform_range_literal(node)

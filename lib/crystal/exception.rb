@@ -167,7 +167,7 @@ module Crystal
           filename = "macro #{node.filename.macro.name}"
           line_number = node.filename.macro.line_number
           column_number = node.filename.macro.column_number
-          lines = @filename.source.lines.to_a
+          lines = node.filename.source.lines.to_a
         elsif node.filename
           filename = node.filename
           line_number = node.line_number
