@@ -1,7 +1,8 @@
 module Crystal
   class CrystalLLVMBuilder
-    def initialize(builder)
+    def initialize(builder, codegen)
       @builder = builder
+      @codegen = codegen
     end
 
     def ret(*args)
@@ -17,6 +18,10 @@ module Crystal
     end
 
     def unreachable
+      if ENV["UNREACHABLE"] == "1"
+        backtrace = caller.join("\n")
+        @codegen.llvm_puts("Reached the unreachable!\n#{backtrace}")
+      end
       return if @end
       @builder.unreachable
       @end = true

@@ -64,7 +64,7 @@ module Crystal
 
       @builder = LLVM::Builder.new
       @builder = DebugLLVMBuilder.new @builder, self if debug
-      @builder = CrystalLLVMBuilder.new @builder
+      @builder = CrystalLLVMBuilder.new @builder, self
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
       @const_block_entry = @const_block
