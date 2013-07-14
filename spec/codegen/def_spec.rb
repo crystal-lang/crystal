@@ -45,10 +45,13 @@ describe 'Code gen: def' do
 
   it "unifies all calls to same def" do
     run(%Q(
-      require "pointer"
-      require "array"
+      require "prelude"
 
-      class Hash
+      def raise(msg)
+        nil
+      end
+
+      class Hash2
         def initialize
           @buckets = [[1]]
         end
@@ -66,7 +69,7 @@ describe 'Code gen: def' do
         end
       end
 
-      hash = Hash.new
+      hash = Hash2.new
       hash[1] = 2
       hash[1]
     )).to_i.should eq(1)
@@ -132,8 +135,7 @@ describe 'Code gen: def' do
 
   it "codegens and doesn't break if obj is int and there's a mutation" do
     run(%Q(
-      require "pointer"
-      require "array"
+      require "prelude"
 
       class Int
         def baz(x)

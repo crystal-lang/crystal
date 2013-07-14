@@ -82,7 +82,6 @@ describe Parser do
 
   it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var], [1.int32, 2.int32])
   it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var], [1.int32])
-  it_parses "a = 1, 2", MultiAssign.new(["a".var], [1.int32, 2.int32])
 
   it_parses "a = 1; A = a", [Assign.new("a".var, 1.int32), Assign.new("A".ident, "a".call)]
 
@@ -380,5 +379,10 @@ describe Parser do
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
+  end
+
+  it "is an error if multi assign count mismatch" do
+    assert_syntax_error "a = 1, 2", "Multiple assignment count mismatch"
+    assert_syntax_error "a, b, c = d, e", "Multiple assignment count mismatch"
   end
 end

@@ -147,7 +147,7 @@ describe 'Codegen: is_a?' do
 
   it "evaluates method on filtered union type 3" do
     run(%q(
-      require "array"
+      require "prelude"
       a = 1
       a = [1.1]
       a = [5]
