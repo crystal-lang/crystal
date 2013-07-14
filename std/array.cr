@@ -44,11 +44,13 @@ class Array(T)
 
   def [](index : Int)
     index += length if index < 0
+    raise "Array index out of bounds (#{index} of #{length})" if index >= length || index < 0
     @buffer[index]
   end
 
   def []=(index : Int, value : T)
     index += length if index < 0
+    raise "Array index out of bounds (#{index} of #{length})" if index >= length || index < 0
     @buffer[index] = value
   end
 
