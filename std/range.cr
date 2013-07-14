@@ -49,6 +49,10 @@ class Range(B, E)
     end
   end
 
+  def cover?(value)
+    includes?(value)
+  end
+
   def ===(value)
     includes?(value)
   end
