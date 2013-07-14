@@ -32,6 +32,10 @@ describe "String" do
     "1234".to_i.should eq(1234)
   end
 
+  it "does to_i32" do
+    "1234".to_i32.should eq(1234)
+  end
+
   it "does to_i64" do
     "1234123412341234".to_i64.should eq(1234123412341234_i64)
   end

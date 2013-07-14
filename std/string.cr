@@ -55,6 +55,10 @@ class String
     C.atoi @c.ptr
   end
 
+  def to_i32
+    to_i
+  end
+
   def to_i64
     C.atol @c.ptr
   end
