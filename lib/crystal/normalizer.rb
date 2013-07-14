@@ -523,22 +523,43 @@ module Crystal
     end
 
     def transform_multi_assign(node)
-      temp_vars = node.values.map { @program.new_temp_var }
+      if node.values.length == 1
+        value = node.values[0]
 
-      assign_to_temps = []
-      assign_from_temps = []
+        temp_var = @program.new_temp_var
 
-      temp_vars.each_with_index do |temp_var, i|
-        assign = Assign.new(temp_var, node.values[i])
-        assign.location = node.location
-        assign_to_temps << assign
+        assigns = []
 
-        assign = Assign.new(node.targets[i], temp_var)
-        assign.location = node.location
-        assign_from_temps << assign
+        assign = Assign.new(temp_var, value)
+        assign.location = value.location
+        assigns << assign
+
+        node.targets.each_with_index do |target, i|
+          call = Call.new(temp_var, :[], [NumberLiteral.new(i, :i32)])
+          call.location = value.location
+          assign = Assign.new(target, call)
+          assign.location = target.location
+          assigns << assign
+        end
+        exps = Expressions.new(assigns)
+      else
+        temp_vars = node.values.map { @program.new_temp_var }
+
+        assign_to_temps = []
+        assign_from_temps = []
+
+        temp_vars.each_with_index do |temp_var, i|
+          assign = Assign.new(temp_var, node.values[i])
+          assign.location = node.location
+          assign_to_temps << assign
+
+          assign = Assign.new(node.targets[i], temp_var)
+          assign.location = node.location
+          assign_from_temps << assign
+        end
+
+        exps = Expressions.new(assign_to_temps + assign_from_temps)
       end
-
-      exps = Expressions.new(assign_to_temps + assign_from_temps)
       exps.location = node.location
       exps.transform(self)
     end

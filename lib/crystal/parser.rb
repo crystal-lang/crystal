@@ -32,6 +32,8 @@ module Crystal
     end
 
     def parse_multi_expression
+      location = @token.location
+
       exps = []
       i = 0
       assign_index = nil
@@ -62,9 +64,17 @@ module Crystal
           targets.push to_lhs(exps[assign_index].target)
           values = [exps[assign_index].value]
           values.concat exps[assign_index + 1 .. -1]
-          MultiAssign.new(targets, values)
+          if values.length != 1 && targets.length != values.length
+            raise "Multiple assignment count mismatch", location[0], location[1]
+          end
+
+          multi = MultiAssign.new(targets, values)
+          multi.location = location
+          multi
         else
-          Expressions.from exps
+          exps = Expressions.from exps
+          exps.location = location
+          exps
         end
       end
     end
