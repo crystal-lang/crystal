@@ -178,6 +178,38 @@ describe 'Lexer string' do
     token.value.should eq("#")
 
     token = lexer.next_string_token
+    token.type.should eq(:STRING)
+    token.value.should eq("#")
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING_END)
+  end
+
+  it "lexes string with interpolation with double numeral" do
+    lexer = Lexer.new(%("hello \#\#{world}"))
+
+    token = lexer.next_token
+    token.type.should eq(:STRING_START)
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING)
+    token.value.should eq("hello ")
+
+    token = lexer.next_string_token
+    token.type.should eq(:STRING)
+    token.value.should eq("#")
+
+    token = lexer.next_string_token
+    token.type.should eq(:INTERPOLATION_START)
+
+    token = lexer.next_token
+    token.type.should eq(:IDENT)
+    token.value.should eq("world")
+
+    token = lexer.next_token
+    token.type.should eq(:'}')
+
+    token = lexer.next_string_token
     token.type.should eq(:STRING_END)
   end
 

@@ -106,5 +106,5 @@ def system(command)
 end
 
 macro pp(var)
-  "puts \"#{var} = ##{#{var}}\""
+  "puts \"#{var} = \#{#{var}}\""
 end

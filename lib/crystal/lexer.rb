@@ -252,9 +252,6 @@ module Crystal
         @token.value = match[1]
       elsif scan(/\#{/)
         @token.type = :INTERPOLATION_START
-      elsif scan(/\#\#/)
-        @token.type = :STRING
-        @token.value = '#'
       elsif scan(/\#/)
         @token.type = :STRING
         @token.value = '#'
