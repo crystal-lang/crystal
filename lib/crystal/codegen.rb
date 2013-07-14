@@ -283,30 +283,6 @@ module Crystal
       codegen_assign_node(node.target, node.value)
     end
 
-    def visit_multi_assign(node)
-      llvm_values = []
-
-      node.targets.each_with_index do |target, i|
-        if target.is_a?(Ident)
-          llvm_values << nil
-        else
-          accept(node.values[i])
-          llvm_values << @last
-        end
-      end
-
-      node.targets.each_with_index do |target, i|
-        llvm_value = llvm_values[i]
-        if llvm_value
-          codegen_assign_target(target, node.values[i], llvm_value)
-        end
-      end
-
-      @last = llvm_nil
-
-      false
-    end
-
     def codegen_assign_node(target, value)
       if target.is_a?(Ident)
         return false

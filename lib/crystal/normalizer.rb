@@ -275,17 +275,6 @@ module Crystal
       node
     end
 
-    def transform_multi_assign(node)
-      node.values.map! { |exp| exp.transform(self) }
-      node.targets.each do |target|
-        if target.is_a?(Var)
-          transform_assign_var(target)
-        end
-      end
-
-      node
-    end
-
     def transform_assign_var(node)
       indices = @vars[node.name]
       if indices
@@ -531,6 +520,27 @@ module Crystal
         @vars[name] = {frozen: true, read: 0, write: 1}
       end
       node
+    end
+
+    def transform_multi_assign(node)
+      temp_vars = node.values.map { @program.new_temp_var }
+
+      assign_to_temps = []
+      assign_from_temps = []
+
+      temp_vars.each_with_index do |temp_var, i|
+        assign = Assign.new(temp_var, node.values[i])
+        assign.location = node.location
+        assign_to_temps << assign
+
+        assign = Assign.new(node.targets[i], temp_var)
+        assign.location = node.location
+        assign_from_temps << assign
+      end
+
+      exps = Expressions.new(assign_to_temps + assign_from_temps)
+      exps.location = node.location
+      exps.transform(self)
     end
 
     def pushing_vars(vars = {})

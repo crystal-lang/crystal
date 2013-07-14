@@ -151,11 +151,6 @@ describe 'Normalize: ssa' do
     assert_normalize "foo(out a); a = 2", "foo(out a)\na:1 = 2"
   end
 
-  it "performs ssa on multi assign" do
-    assert_normalize "a = 1; b = 2; a, b, c = b, a, a + b; a + b + c",
-      "a = 1\nb = 2\na:1, b:1, c = b, a, a + b\na:1 + b:1 + c"
-  end
-
   it "performs ssa on instance variable read 1" do
     assert_normalize "@a", "@a"
   end

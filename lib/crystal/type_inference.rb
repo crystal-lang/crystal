@@ -468,14 +468,6 @@ module Crystal
       node.raise "assinging to #{node.target}", ex
     end
 
-    def visit_multi_assign(node)
-      node.targets.each_with_index do |target, i|
-        type_assign(target, node.values[i])
-      end
-      node.bind_to mod.nil_var
-      false
-    end
-
     def type_assign(target, value, node = nil)
       case target
       when Var
@@ -950,6 +942,10 @@ module Crystal
 
     def visit_string_interpolation(node)
       raise "Bug: StringInterpolation node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit_multi_assign(node)
+      raise "Bug: MultiAssign node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end
