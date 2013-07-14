@@ -3,6 +3,7 @@ require "comparable"
 
 lib C
   fun atoi(str : Char*) : Int32
+  fun atol(str : Char*) : Int64
   fun atof(str : Char*) : Float64
   fun strtof(str : Char*, endp : Char**) : Float32
   fun strncmp(s1 : Char*, s2 : Char*, n : Int32) : Int32
@@ -52,6 +53,10 @@ class String
 
   def to_i
     C.atoi @c.ptr
+  end
+
+  def to_i64
+    C.atol @c.ptr
   end
 
   def to_f
