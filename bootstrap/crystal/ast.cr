@@ -608,14 +608,14 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
 
-    def initialize(args = [] of ASTNode, body = nil)
+    def initialize(args = [] of ASTNode, body = Expressions.new)
       @args = args
       @body = Expressions.from body
     end
 
     def accept_children(visitor)
       args.each { |arg| arg.accept visitor }
-      body.accept visitor if body
+      @body.accept visitor if @body
     end
 
     def ==(other : self)

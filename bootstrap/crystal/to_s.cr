@@ -214,6 +214,27 @@ module Crystal
       false
     end
 
+    def visit(node : Block)
+      @str << "do"
+
+      unless node.args.empty?
+        @str << " |"
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+        end
+        @str << "|"
+      end
+
+      @str << "\n"
+      accept_with_indent(node.body)
+
+      append_indent
+      @str << "end"
+
+      false
+    end
+
     def visit(node : Include)
       @str << "include "
       node.name.accept self
