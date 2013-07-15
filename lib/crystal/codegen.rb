@@ -426,7 +426,7 @@ module Crystal
       if obj_type.is_a?(HierarchyType)
         codegen_is_a_many_types(obj_type.subtypes, const_type)
       elsif obj_type.union?
-        codegen_is_a_many_types(obj_type.types, const_type)
+        codegen_is_a_many_types(obj_type.concrete_types, const_type)
       elsif obj_type.nilable?
         if const_type.nil_type?
           @last = null_pointer?(@last)

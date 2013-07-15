@@ -200,4 +200,17 @@ describe 'Codegen: is_a?' do
       foo.is_a?(Bar) ? 1 : 2
       )).to_i.should eq(1)
   end
+
+  it "codegens is_a? with hierarchy and nil" do
+    run(%q(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      f = Foo.new || Bar.new || nil
+      f.is_a?(Foo) ? 1 : 2
+      )).to_i.should eq(1)
+  end
 end

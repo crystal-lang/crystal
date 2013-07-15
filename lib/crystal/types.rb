@@ -957,7 +957,19 @@ module Crystal
     end
   end
 
+  module MultiType
+    def concrete_types
+      types = []
+      each_concrete_type do |type|
+        types << type
+      end
+      types
+    end
+  end
+
   class UnionType < Type
+    include MultiType
+
     attr_reader :types
 
     def initialize(*types)
@@ -1370,6 +1382,7 @@ module Crystal
   end
 
   class HierarchyType < Type
+    include MultiType
     include DefInstanceContainer
 
     attr_accessor :base_type
