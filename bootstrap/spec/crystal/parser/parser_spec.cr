@@ -192,69 +192,69 @@ describe "Parser" do
   it_parses "def foo; a; end", Def.new("foo", [] of Arg, "a".call)
   it_parses "def foo(a); a; end", Def.new("foo", ["a".arg], "a".var)
   it_parses "def foo; a = 1; a; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), "a".var])
-  # it_parses "def foo; a = 1; a {}; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), Call.new(nil, "a", ASTNode[], Block.new)])
-  # it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), Call.new(nil, "x", ASTNode[], Block.new(ASTNode[], ["a".var]))])
-  # it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", ASTNode[], Block.new(["a".var], ["a".var]))])
+  it_parses "def foo; a = 1; a {}; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), Call.new(nil, "a", ASTNode[], Block.new)])
+  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), Call.new(nil, "x", ASTNode[], Block.new(ASTNode[], ["a".var]))])
+  it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", ASTNode[], Block.new(ASTNode["a".var], ["a".var]))])
 
-  # it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int)], nil)
-  # it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int)], nil)
-  # it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
-  # it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
-  # it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfRestriction.new)], nil)
-  # it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfRestriction.new)], nil)
-  # it_parses "def foo; yield; end", Def.new("foo", ASTNode[], [Yield.new], nil, true)
+  it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int)], nil)
+  it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int)], nil)
+  it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
+  it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
+  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfRestriction.new)], nil)
+  it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfRestriction.new)], nil)
+  it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new], nil, true)
 
-  # it_parses "foo", "foo".call
-  # it_parses "foo()", "foo".call
-  # it_parses "foo(1)", "foo".call([1.int])
-  # it_parses "foo 1", "foo".call([1.int])
-  # it_parses "foo 1\n", "foo".call([1.int])
-  # it_parses "foo 1;", "foo".call([1.int])
-  # it_parses "foo 1, 2", "foo".call([1.int, 2.int])
-  # it_parses "foo (1 + 2), 3", "foo".call([Call.new(1.int, "+", [2.int]), 3.int])
-  # it_parses "foo(1 + 2)", "foo".call([Call.new(1.int, "+", [2.int])])
-  # it_parses "foo -1.0, -2.0", "foo".call([-1.double, -2.double])
-  # it_parses "foo(\n1)", "foo".call([1.int])
+  it_parses "foo", "foo".call
+  it_parses "foo()", "foo".call
+  it_parses "foo(1)", "foo".call(ASTNode[1.int])
+  it_parses "foo 1", "foo".call(ASTNode[1.int])
+  it_parses "foo 1\n", "foo".call(ASTNode[1.int])
+  it_parses "foo 1;", "foo".call(ASTNode[1.int])
+  it_parses "foo 1, 2", "foo".call(ASTNode[1.int, 2.int])
+  it_parses "foo (1 + 2), 3", "foo".call(ASTNode[Call.new(1.int, "+", ASTNode[2.int]), 3.int])
+  it_parses "foo(1 + 2)", "foo".call(ASTNode[Call.new(1.int, "+", ASTNode[2.int])])
+  it_parses "foo -1.0, -2.0", "foo".call(ASTNode[-1.double, -2.double])
+  it_parses "foo(\n1)", "foo".call(ASTNode[1.int])
 
-  # it_parses "foo + 1", Call.new("foo".call, "+", [1.int])
-  # it_parses "foo +1", Call.new(nil, "foo", [1.int])
-  # it_parses "foo +1.0", Call.new(nil, "foo", [1.double])
-  # it_parses "foo +1L", Call.new(nil, "foo", [1.long])
-  # it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.int), Call.new("foo".var, "+", [1.int])]
-  # it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int), Call.new("foo".var, "-", [1.int])]
+  it_parses "foo + 1", Call.new("foo".call, "+", ASTNode[1.int])
+  it_parses "foo +1", Call.new(nil, "foo", ASTNode[1.int])
+  it_parses "foo +1.0", Call.new(nil, "foo", ASTNode[1.double])
+  it_parses "foo +1L", Call.new(nil, "foo", ASTNode[1.long])
+  it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.int), Call.new("foo".var, "+", ASTNode[1.int])]
+  it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int), Call.new("foo".var, "-", ASTNode[1.int])]
 
-  # it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, "!@")])
-  # it_parses "!a && b", And.new(Call.new("a".call, "!@"), "b".call)
+  it_parses "foo !false", Call.new(nil, "foo", ASTNode[Call.new(false.bool, "!@")])
+  it_parses "!a && b", And.new(Call.new("a".call, "!@"), "b".call)
 
-  # it_parses "foo.bar.baz", Call.new(Call.new("foo".call, "bar"), "baz")
-  # it_parses "f.x Foo.new", Call.new("f".call, "x", [Call.new("Foo".ident, "new")])
-  # it_parses "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".ident, "new")])
-  # it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int, "-@")])
+  it_parses "foo.bar.baz", Call.new(Call.new("foo".call, "bar"), "baz")
+  it_parses "f.x Foo.new", Call.new("f".call, "x", ASTNode[Call.new("Foo".ident, "new")])
+  it_parses "f.x = Foo.new", Call.new("f".call, "x=", ASTNode[Call.new("Foo".ident, "new")])
+  it_parses "f.x = - 1", Call.new("f".call, "x=", ASTNode[Call.new(1.int, "-@")])
 
-  # ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
-  #   it_parses "f.x #{op}= 2", Call.new("f".call, "x=", [Call.new(Call.new("f".call, "x"), op, [2.int])])
-  # end
+  ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
+    it_parses "f.x #{op}= 2", Call.new("f".call, "x=", ASTNode[Call.new(Call.new("f".call, "x"), op, ASTNode[2.int])])
+  end
 
-  # ["/", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "%", "&", "|", "^", "**", "+@", "-@", "~@", "!@", "==="].each do |op|
-  #   it_parses "def #{op}; end;", Def.new(op, ASTNode[], nil)
-  # end
+  ["/", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "%", "&", "|", "^", "**", "+@", "-@", "~@", "!@", "==="].each do |op|
+    it_parses "def #{op}; end;", Def.new(op, [] of Arg, nil)
+  end
 
-  # ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "==="].each do |op|
-  #   it_parses "1 #{op} 2", Call.new(1.int, op, [2.int])
-  #   it_parses "n #{op} 2", Call.new("n".call, op, [2.int])
-  # end
+  ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "==="].each do |op|
+    it_parses "1 #{op} 2", Call.new(1.int, op, ASTNode[2.int])
+    it_parses "n #{op} 2", Call.new("n".call, op, ASTNode[2.int])
+  end
 
-  # ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "==="].each do |name|
-  #   it_parses "foo.#{name}", Call.new("foo".call, name)
-  #   it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, [1.int, 2.int])
-  # end
+  ["bar", "+", "-", "*", "/", "<", "<=", "==", ">", ">=", "%", "|", "&", "^", "**", "==="].each do |name|
+    it_parses "foo.#{name}", Call.new("foo".call, name)
+    it_parses "foo.#{name} 1, 2", Call.new("foo".call, name, ASTNode[1.int, 2.int])
+  end
 
-  # ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
-  #   it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, Call.new("a".var, op, [1.int]))]
-  # end
+  ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
+    it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int), Assign.new("a".var, Call.new("a".var, op, ASTNode[1.int]))]
+  end
 
-  # it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int), And.new("a".var, Assign.new("a".var, 1.int))]
-  # it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int), Or.new("a".var, Assign.new("a".var, 1.int))]
+  it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int), And.new("a".var, Assign.new("a".var, 1.int))]
+  it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int), Or.new("a".var, Assign.new("a".var, 1.int))]
 
   # it_parses "if foo; 1; end", If.new("foo".call, 1.int)
   # it_parses "if foo\n1\nend", If.new("foo".call, 1.int)

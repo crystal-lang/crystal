@@ -21,7 +21,7 @@ module Crystal
 
       return unless node.type
 
-      if @dependencies.length == 1 || !@type
+      if (@dependencies && @dependencies.length == 1) || !@type
         new_type = node.type
       else
         new_type = Type.merge(@type, node.type)
@@ -51,7 +51,7 @@ module Crystal
     def update(from)
       return if @type.object_id == from.type.object_id
 
-      if @type.nil? || dependencies.length == 1
+      if @type.nil? || (@dependencies && @dependencies.length == 1)
         new_type = from.type
       else
         new_type = Type.merge @type, from.type
