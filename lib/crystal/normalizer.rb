@@ -138,6 +138,26 @@ module Crystal
       If.new(node.cond, node.else, node.then).transform(self)
     end
 
+    def transform_call(node)
+      super.tap do
+        reset_instance_variables_indices
+      end
+    end
+
+    def transform_yield(node)
+      super.tap do
+        reset_instance_variables_indices
+      end
+    end
+
+    def reset_instance_variables_indices
+      @vars.each do |key, value|
+        if key[0] == '@'
+          @vars[key] = {read: nil, write: value[:write]}
+        end
+      end
+    end
+
     def transform_case(node)
       node.cond = node.cond.transform(self)
 
@@ -352,7 +372,7 @@ module Crystal
         else_indices = else_vars && else_vars[var_name]
         if else_indices.nil?
           if before_indices
-            if then_indices != before_indices
+            if then_indices != before_indices && then_indices[:read]
               push_assign_var_with_indices new_else_vars, var_name, then_indices[:read], before_indices[:read]
             end
           else
@@ -362,7 +382,7 @@ module Crystal
           end
         elsif then_indices.nil?
           if before_indices
-            if else_indices != before_indices
+            if else_indices != before_indices && else_indices[:read]
               push_assign_var_with_indices new_then_vars, var_name, else_indices[:read], before_indices[:read]
             end
           else
@@ -473,7 +493,7 @@ module Crystal
 
       @vars.each do |var_name, indices|
         before_indices = before_vars[var_name]
-        if before_indices && before_indices[:read] && before_indices[:read] < indices[:read]
+        if before_indices && before_indices[:read] && indices[:read] && before_indices[:read] < indices[:read]
           loop_vars << assign_var_with_indices(var_name, before_indices[:read], indices[:read])
           if restore
             @vars[var_name] = {read: before_indices[:read], write: indices[:write]}
@@ -500,9 +520,25 @@ module Crystal
     def transform_instance_var(node)
       indices = @vars[node.name]
       if indices && indices[:read]
-        Var.new(var_name_with_index(node.name, indices[:read]))
+        new_var = var_with_index(node.name, indices[:read])
+        new_var.location = node.location
+        new_var
       else
-        node
+        if @in_initialize
+          node
+        else
+          if indices
+            read_index = indices[:write]
+          else
+            read_index = 1
+          end
+          @vars[node.name] = {read: read_index, write: read_index + 1}
+          new_var = var_with_index(node.name, read_index)
+          new_var.location = node.location
+          assign = Assign.new(new_var, node)
+          assign.location = node.location
+          assign
+        end
       end
     end
 
@@ -659,7 +695,7 @@ module Crystal
           if value_index
             Assign.new(assign.target, Var.new("#{name}:#{value_index}"))
           else
-            if @before_vars.has_key?(name)
+            if (before_var = @before_vars[name]) && before_var[:read]
               Assign.new(assign.target, Var.new(name))
             else
               Assign.new(assign.target, NilLiteral.new)

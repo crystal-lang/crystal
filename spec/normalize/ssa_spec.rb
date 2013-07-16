@@ -152,7 +152,7 @@ describe 'Normalize: ssa' do
   end
 
   it "performs ssa on instance variable read 1" do
-    assert_normalize "@a", "@a"
+    assert_normalize "@a", "@a:1 = @a"
   end
 
   it "performs ssa on instance variable write and read 1" do
@@ -164,11 +164,19 @@ describe 'Normalize: ssa' do
   end
 
   it "performs ssa on instance variable inside if" do
-    assert_normalize "if @a; else; @a = 1; end; @a", "if @a\n  @a:2 = @a\n  nil\nelse\n  #temp_1 = @a = @a:1 = 1\n  @a:2 = @a:1\n  #temp_1\nend\n@a:2"
+    assert_normalize "if @a; else; @a = 1; end; @a", "if @a:1 = @a\n  @a:2 = @a:1\n  nil\nelse\n  @a = @a:2 = 1\nend\n@a:2"
   end
 
   it "performs ssa on instance variable inside if in initialize" do
     assert_normalize "def initialize; if @a; else; @a = 1; end; @a; end", "def initialize\n  if @a\n    @a = nil\n    @a:2 = @a\n    nil\n  else\n    #temp_1 = @a = @a:1 = 1\n    @a:2 = @a:1\n    #temp_1\n  end\n  @a:2\nend"
+  end
+
+  it "performs ssa on instance variable and method call" do
+    assert_normalize "@a = 1; foo; @a", "@a = @a:1 = 1\nfoo()\n@a:2 = @a"
+  end
+
+  it "performs ssa on instance variable and method call" do
+    assert_normalize "@a = 1; yield; @a", "@a = @a:1 = 1\nyield\n@a:2 = @a"
   end
 
   it "stops ssa if address is taken" do

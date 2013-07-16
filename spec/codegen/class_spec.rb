@@ -139,4 +139,27 @@ describe 'Code gen: class' do
       Foo(Int32).new.foo.to_i
       )).to_i.should eq(1)
   end
+
+  it "changes instance variable in method (ssa bug)" do
+    run(%q(
+      class Foo
+        def initialize
+          @var = 0
+        end
+
+        def foo
+          @var = 1
+          bar
+          @var
+        end
+
+        def bar
+          @var = 2
+        end
+      end
+
+      foo = Foo.new
+      foo.foo
+      )).to_i.should eq(2)
+  end
 end
