@@ -36,7 +36,11 @@ module Crystal
       @mod = mod
       @node = node
       @llvm_mod = LLVM::Module.new("Crystal")
-      ret_type = node.type.llvm_type
+      if node_type = node.type
+        ret_type = node_type.llvm_type
+      else
+        ret_type = LLVM::Void
+      end
       @fun = @llvm_mod.functions.add("crystal_main", [] of LLVM::Type, ret_type)
       @builder = LLVM::Builder.new
       entry_block_chain = new_entry_block_chain ["alloca", "const", "entry"]
@@ -55,6 +59,10 @@ module Crystal
       @builder.position_at_end entry
       @builder.call @llvm_mod.functions["crystal_main"]
       @builder.ret LLVM::Int32.from_i(0)
+    end
+
+    def visit(node : ASTNode)
+      puts "TODO: codegen #{node}"
     end
 
     def visit(node : IntLiteral)

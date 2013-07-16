@@ -1,5 +1,5 @@
 module Crystal
-  class Type
+  abstract class Type
     def self.merge(type1, type2)
       type1
     end
