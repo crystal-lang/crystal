@@ -245,28 +245,30 @@ module Crystal
       true
     end
 
-    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self)
+    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
       if defs = self.sorted_defs[[name, arg_types.length, yields]]
-        matches = []
+        matches_array ||= []
         defs.each do |a_def|
           def_restrictions = a_def.args.map(&:type_restriction)
           match = match_def_args(arg_types, def_restrictions, owner, type_lookup)
           if match
             match.def = a_def
             match.owner = owner
-            matches.push match
+            matches_array.push match
             if match.arg_types == arg_types
-              return Matches.new(matches, true, owner)
+              return Matches.new(matches_array, true, owner)
             end
           end
         end
       end
 
-      Matches.new(matches, Cover.new(arg_types, matches), owner)
+      Matches.new(matches_array, Cover.new(arg_types, matches_array), owner)
     end
 
-    def lookup_matches_with_modules(name, arg_types, yields, owner = self, type_lookup = self)
-      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
+    def lookup_matches_with_modules(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+      matches_array ||= []
+
+      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
       return matches unless matches.empty?
 
       if parents && !(name == 'new' && owner.metaclass?)
@@ -281,7 +283,7 @@ module Crystal
             break
           end
 
-          parent_matches = parent.lookup_matches_without_parents(name, arg_types, yields, parent_owner, type_lookup)
+          parent_matches = parent.lookup_matches_without_parents(name, arg_types, yields, parent_owner, type_lookup, matches.matches)
           return parent_matches unless parent_matches.empty?
 
           matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
@@ -291,8 +293,10 @@ module Crystal
       Matches.new(matches.matches, matches.cover, owner, false)
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup)
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+      matches_array ||= []
+
+      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
       return matches if matches.cover_all?
 
       if parents && !(name == 'new' && owner.metaclass?)
@@ -310,7 +314,7 @@ module Crystal
           else
             parent_owner = parent
           end
-          parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, type_lookup)
+          parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, type_lookup, matches.matches)
           return parent_matches if parent_matches.cover_all?
 
           matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?

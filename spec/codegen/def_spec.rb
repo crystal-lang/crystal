@@ -245,4 +245,23 @@ describe 'Code gen: def' do
       false && fun
       ))
   end
+
+  it "looks up matches in super classes and merges them with subclasses" do
+    run(%q(
+      class Foo
+        def foo(other)
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo(other : Int)
+          2
+        end
+      end
+
+      bar1 = Bar.new
+      bar1.foo(1 || 1.5)
+      )).to_i.should eq(2)
+  end
 end
