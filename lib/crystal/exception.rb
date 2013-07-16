@@ -164,18 +164,17 @@ module Crystal
       str << "\n\nNil trace:"
       @nil_trace.each do |node|
         if node.filename.is_a?(VirtualFile)
-          filename = "macro #{node.filename.macro.name}"
-          line_number = node.filename.macro.line_number
-          column_number = node.filename.macro.column_number
+          filename = "macro #{node.filename.macro.name} (in #{node.filename.macro.filename}:#{node.filename.macro.line_number})"
           lines = node.filename.source.lines.to_a
         elsif node.filename
           filename = node.filename
-          line_number = node.line_number
-          column_number = node.column_number
           lines = File.readlines filename
         else
           next
         end
+
+        line_number = node.line_number
+        column_number = node.column_number
 
         str << "\n\n"
         str << "  "
