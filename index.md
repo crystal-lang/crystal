@@ -1,6 +1,5 @@
 ---
 layout: default
-title: Welcome to Crystal
 ---
 
 ### Welcome to Crystal
