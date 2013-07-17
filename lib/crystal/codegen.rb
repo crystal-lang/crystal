@@ -480,6 +480,10 @@ module Crystal
       @last = @builder.array_malloc(llvm_type(node.type.var.type), @vars['size'][:ptr])
     end
 
+    def visit_pointer_null(node)
+      @last = LLVM::Pointer(llvm_type(node.type.var.type)).null
+    end
+
     def visit_pointer_realloc(node)
       casted_ptr = @builder.bit_cast llvm_self, LLVM::Pointer(LLVM::Int8)
       size = @vars['size'][:ptr]

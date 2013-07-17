@@ -848,6 +848,14 @@ module Crystal
       node.type = @scope.instance_type
     end
 
+    def visit_pointer_null(node)
+      if @scope.instance_type.is_a?(GenericClassType)
+        node.raise "can't instantiate pointer without type, use Pointer(Type).null"
+      end
+
+      node.type = @scope.instance_type
+    end
+
     def visit_pointer_realloc(node)
       node.type = @scope
     end

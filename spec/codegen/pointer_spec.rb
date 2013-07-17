@@ -64,6 +64,10 @@ describe 'Code gen: pointer' do
     run('a = 1_i64; a.ptr.as(Int32).value').to_i.should eq(1)
   end
 
+  it "codegens pointer null" do
+    run("Pointer(Int32).null.address").to_i.should eq(0)
+  end
+
   it "gets pointer of instance variable in hierarchy type" do
     run(%q(
       class Foo

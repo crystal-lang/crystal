@@ -326,6 +326,10 @@ module Crystal
       node
     end
 
+    def transform_pointer_null(node)
+      node
+    end
+
     def transform_pointer_malloc_with_value(node)
       node
     end
