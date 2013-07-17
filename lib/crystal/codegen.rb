@@ -680,7 +680,7 @@ module Crystal
         else
           cond = int1(1)
         end
-      elsif node_cond.type.is_a?(PointerType)
+      elsif node_cond.type.is_a?(PointerInstanceType)
         cond = not_null_pointer?(@last)
       else
         cond = int1(1)
