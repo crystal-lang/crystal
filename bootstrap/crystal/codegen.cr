@@ -43,8 +43,7 @@ module Crystal
       end
       @fun = @llvm_mod.functions.add("crystal_main", [] of LLVM::Type, ret_type)
       @builder = LLVM::Builder.new
-      entry_block_chain = new_entry_block_chain ["alloca", "const", "entry"]
-      @alloca_block, @const_block, @entry_block = entry_block_chain[0], entry_block_chain[1], entry_block_chain[2]
+      @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @const_block_entry = @const_block
     end
 
