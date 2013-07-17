@@ -256,20 +256,20 @@ describe "Parser" do
   it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int), And.new("a".var, Assign.new("a".var, 1.int))]
   it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int), Or.new("a".var, Assign.new("a".var, 1.int))]
 
-  # it_parses "if foo; 1; end", If.new("foo".call, 1.int)
-  # it_parses "if foo\n1\nend", If.new("foo".call, 1.int)
-  # it_parses "if foo; 1; else; 2; end", If.new("foo".call, 1.int, 2.int)
-  # it_parses "if foo\n1\nelse\n2\nend", If.new("foo".call, 1.int, 2.int)
-  # it_parses "if foo; 1; elsif bar; 2; else 3; end", If.new("foo".call, 1.int, If.new("bar".call, 2.int, 3.int))
+  it_parses "if foo; 1; end", If.new("foo".call, 1.int)
+  it_parses "if foo\n1\nend", If.new("foo".call, 1.int)
+  it_parses "if foo; 1; else; 2; end", If.new("foo".call, 1.int, 2.int)
+  it_parses "if foo\n1\nelse\n2\nend", If.new("foo".call, 1.int, 2.int)
+  it_parses "if foo; 1; elsif bar; 2; else 3; end", If.new("foo".call, 1.int, If.new("bar".call, 2.int, 3.int))
 
-  # it_parses "include Foo", Include.new("Foo".ident)
-  # it_parses "include Foo\nif true; end", [Include.new("Foo".ident), If.new(true.bool)]
+  it_parses "include Foo", Include.new("Foo".ident)
+  it_parses "include Foo\nif true; end", [Include.new("Foo".ident), If.new(true.bool)]
 
-  # it_parses "unless foo; 1; end", If.new("foo".call.not, 1.int)
-  # it_parses "unless foo; 1; else; 2; end", If.new("foo".call.not, 1.int, 2.int)
+  it_parses "unless foo; 1; end", If.new("foo".call.not, 1.int)
+  it_parses "unless foo; 1; else; 2; end", If.new("foo".call.not, 1.int, 2.int)
 
-  # it_parses "class Foo; end", ClassDef.new("Foo")
-  # it_parses "class Foo\nend", ClassDef.new("Foo")
+  it_parses "class Foo; end", ClassDef.new("Foo")
+  it_parses "class Foo\nend", ClassDef.new("Foo")
   # it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", ASTNode[], nil)])
   # it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
   # it_parses "generic class Foo; end", ClassDef.new("Foo", nil, nil, true)

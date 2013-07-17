@@ -25,12 +25,21 @@ module Crystal
     end
 
     def parse_expressions
+      exps = parse_expressions_as_array
+      exps.length == 1 ? exps.first : Expressions.new(exps)
+    end
+
+    def parse_expressions_or_nil
+      Expressions.from(parse_expressions_as_array)
+    end
+
+    def parse_expressions_as_array
       exps = [] of ASTNode
       while @token.type != :EOF && !is_end_token
         exps << parse_expression
         skip_statement_end
       end
-      exps.length == 1 ? exps.first : Expressions.new(exps)
+      exps
     end
 
     def parse_expression
@@ -488,7 +497,7 @@ module Crystal
       end
       skip_statement_end
 
-      body = parse_expressions
+      body = parse_expressions_or_nil
 
       check_ident :end
       next_token_skip_space
@@ -692,7 +701,7 @@ module Crystal
       cond = parse_expression
       skip_statement_end
 
-      a_then = parse_expressions
+      a_then = parse_expressions_or_nil
       skip_statement_end
 
       a_else = nil
@@ -700,7 +709,7 @@ module Crystal
         case @token.value
         when :else
           next_token_skip_statement_end
-          a_else = parse_expressions
+          a_else = parse_expressions_or_nil
         when :elsif
           a_else = parse_if false
         end
@@ -805,7 +814,7 @@ module Crystal
 
       push_vars block_args
 
-      block_body = parse_expressions
+      block_body = parse_expressions_or_nil
 
       yield
 

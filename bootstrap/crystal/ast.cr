@@ -477,7 +477,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      body.accept visitor if body
+      @body.accept visitor if @body
     end
 
     def ==(other : self)
@@ -608,7 +608,7 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
 
-    def initialize(args = [] of ASTNode, body = Expressions.new)
+    def initialize(args = [] of ASTNode, body = nil)
       @args = args
       @body = Expressions.from body
     end
