@@ -90,11 +90,14 @@ module Crystal
         msg = @message.to_s
       end
 
+      is_macro = false
+
       if @filename && file_exists?(@filename)
         if @filename.is_a?(VirtualFile)
           lines = @filename.source.lines.to_a
           str << "in macro '#{@filename.macro.name}' #{@filename.macro.filename}:#{@filename.macro.line_number}, line #{@line}:\n\n"
           str << lines.to_s_with_line_numbers
+          is_macro = true
         else
           lines = File.readlines @filename
           str << "in #{@filename}:#{@line}: #{msg}"
@@ -121,6 +124,12 @@ module Crystal
         end
       end
       str << "\n"
+
+      if is_macro
+        str << "\n"
+        str << @message.to_s
+      end
+
       if inner && inner.has_location?
         str << "\n"
         inner.append_to_s(str, source)
