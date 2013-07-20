@@ -512,6 +512,14 @@ module Crystal
   end
 
   module InstanceVarContainer
+    def immutable
+      @immutable.nil? ? true : @immutable
+    end
+
+    def immutable=(immutable)
+      @immutable = immutable
+    end
+
     def instance_vars
       @instance_vars ||= {}
     end

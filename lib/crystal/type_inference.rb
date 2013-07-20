@@ -490,6 +490,10 @@ module Crystal
         var = lookup_instance_var target
         target.bind_to var
 
+        unless @typed_def.name == "initialize"
+          @scope.immutable = false
+        end
+
         if node
           node.bind_to value
           var.bind_to node

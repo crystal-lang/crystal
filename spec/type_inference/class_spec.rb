@@ -307,4 +307,44 @@ describe 'Type inference: class' do
       Foo(Int).new.foo
       )) { union_of(int32, char) }
   end
+
+  it "types immutable class" do
+    input = parse(%q(
+      class Foo
+      end
+
+      Foo.new
+    ))
+    mod, input = infer_type input
+    input.last.type.immutable.should be_true
+  end
+
+  it "types mutable class" do
+    input = parse(%q(
+      class Foo
+        def foo
+          @x = 1
+          self
+        end
+      end
+
+      Foo.new.foo
+    ))
+    mod, input = infer_type input
+    input.last.type.immutable.should be_false
+  end
+
+  it "types immutable class with instance vars" do
+    input = parse(%q(
+      class Foo
+        def initialize
+          @x = 1
+        end
+      end
+
+      Foo.new
+    ))
+    mod, input = infer_type input
+    input.last.type.immutable.should be_true
+  end
 end
