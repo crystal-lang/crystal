@@ -1407,6 +1407,12 @@ module Crystal
       @def_instances = {}
     end
 
+    def immutable=(immutable)
+      each do |type|
+        type.immutable = immutable
+      end
+    end
+
     def hierarchy?
       true
     end

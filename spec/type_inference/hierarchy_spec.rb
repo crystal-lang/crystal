@@ -521,4 +521,23 @@ describe 'Type inference: hierarchy' do
       b2 = coco(a2)
       )) { union_of(self.nil, int32, char) }
   end
+
+  it "marks all hierarchy as mutable" do
+    input = parse %q(
+      class Foo
+        def foo
+          @x = 1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      f = Foo.new || Bar.new
+      f.foo
+    )
+    mod, input = infer_type input
+    mod.types["Foo"].immutable.should be_false
+    mod.types["Bar"].immutable.should be_false
+  end
 end
