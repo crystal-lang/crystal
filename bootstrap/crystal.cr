@@ -8,6 +8,11 @@ if ARGV.length == 0
 end
 
 filename = ARGV[0]
+unless File.exists?(filename)
+  puts "File #{filename} does not exist"
+  exit 1
+end
+
 bitcode_filename = "foo.bc"
 output_filename = "foo"
 
@@ -17,7 +22,7 @@ parser = Parser.new(str)
 parser.filename = filename
 nodes = parser.parse
 mod = infer_type nodes
-# llvm_mod = build nodes, mod
-# llvm_mod.write_bitcode bitcode_filename
+llvm_mod = build nodes, mod
+llvm_mod.write_bitcode bitcode_filename
 
-# system "llc #{bitcode_filename} -o - | clang -x assembler -o #{output_filename} -"
+system "llc #{bitcode_filename} -o - | clang -x assembler -o #{output_filename} -"
