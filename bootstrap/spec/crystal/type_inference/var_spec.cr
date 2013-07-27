@@ -1,3 +1,4 @@
+#!/usr/bin/env bin/crystal -run
 require "spec"
 require "../../spec_helper"
 require "../../../../bootstrap/crystal/parser"
@@ -19,15 +20,15 @@ describe "Type inference: var" do
     end
   end
 
-  it "types a variable" do
-    input = parse "a = 1; a"
-    mod = infer_type input
+  # it "types a variable" do
+  #   input = parse "a = 1; a"
+  #   mod = infer_type input
 
-    if input.is_a?(Expressions)
-      input.last.type.should eq(mod.int)
-      input.type.should eq(mod.int)
-    else
-      fail "expected input to be an Expressions"
-    end
-  end
+  #   if input.is_a?(Expressions)
+  #     input.last.type.should eq(mod.int)
+  #     input.type.should eq(mod.int)
+  #   else
+  #     fail "expected input to be an Expressions"
+  #   end
+  # end
 end

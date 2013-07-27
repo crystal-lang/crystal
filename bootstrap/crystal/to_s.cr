@@ -84,6 +84,45 @@ module Crystal
       false
     end
 
+    def visit(node : ClassDef)
+      #@str << "abstract " if node.abstract
+      @str << "class "
+      @str << node.name
+      # if node.type_vars
+      #   @str << "("
+      #   node.type_vars.each_with_index do |type_var, i|
+      #     @str << ", " if i > 0
+      #     @str << type_var.to_s
+      #   end
+      #   @str << ")"
+      # end
+      if superclass = node.superclass
+        @str << " < "
+        superclass.accept self
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      @str << "end"
+      false
+    end
+
+    def visit(node : ModuleDef)
+      @str << "module "
+      @str << node.name
+      # if node.type_vars
+      #   @str << "("
+      #   node.type_vars.each_with_index do |type_var, i|
+      #     @str << ", " if i > 0
+      #     @str << type_var.to_s
+      #   end
+      #   @str << ")"
+      # end
+      @str << "\n"
+      accept_with_indent(node.body)
+      @str << "end"
+      false
+    end
+
     def visit(node : Call)
       if node_obj = node.obj
         node_obj.accept self

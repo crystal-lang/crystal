@@ -4,7 +4,7 @@ require "ast"
 require "type_inference/ast_node"
 
 module Crystal
-  def infer_type(node, options = {} of Symbol => Object)
+  def infer_type(node)
     mod = Crystal::Program.new
     if node
       node.accept TypeVisitor.new(mod)
@@ -51,40 +51,41 @@ module Crystal
       node.type = mod.symbol
     end
 
-    # def visit(node : Var)
-    #   var = lookup_var node.name
-    #   node.bind_to var
-    # end
+    def visit(node : Var)
+      var = lookup_var node.name
+      node.bind_to var
+    end
 
     def end_visit(node : Expressions)
       node.bind_to node.last unless node.empty?
     end
 
-    # def visit(node : Assign)
-    #   type_assign node.target, node.value, node
-    # end
+    def visit(node : Assign)
+      type_assign node.target, node.value, node
+    end
 
-    # def type_assign(target, value, node)
-    #   value.accept self
+    def type_assign(target, value, node)
+      value.accept self
 
-    #   if target.is_a?(Var)
-    #     var = lookup_var target.name
-    #     target.bind_to var
+      if target.is_a?(Var)
+        var = lookup_var target.name
+        target.bind_to var
 
-    #     node.bind_to value
-    #     var.bind_to node
-    #   end
+        node.bind_to value
+        var.bind_to node
+      end
 
-    #   false
-    # end
+      false
+    end
 
-    # def lookup_var(name)
-    #   var = @vars[name]
-    #   unless var
-    #     var = Var.new name
-    #     @vars[name] = var
-    #   end
-    #   var
-    # end
+    def lookup_var(name)
+      if @vars.has_key?(name)
+        var = @vars[name]
+      else
+        var = Var.new name
+        @vars[name] = var
+      end
+      var
+    end
   end
 end

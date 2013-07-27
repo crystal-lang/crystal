@@ -423,9 +423,6 @@ module Crystal
           parse_unless
         when :include
           parse_include
-        when :generic
-          next_token_skip_space_or_newline
-          parse_class_def(true)
         when :class
           parse_class_def
         when :module
@@ -468,7 +465,7 @@ module Crystal
       cond = parse_expression
       skip_statement_end
 
-      body = parse_expressions
+      body = parse_expressions_or_nil
       skip_statement_end
 
       check_ident :end
@@ -479,7 +476,7 @@ module Crystal
       node
     end
 
-    def parse_class_def(is_generic = false)
+    def parse_class_def
       location = @token.location
 
       next_token_skip_space_or_newline
@@ -502,7 +499,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      class_def = ClassDef.new name, body, superclass, is_generic, name_column_number
+      class_def = ClassDef.new name, body, superclass, name_column_number
       class_def.location = location
       class_def
     end
@@ -517,7 +514,7 @@ module Crystal
       name_column_number = @token.column_number
       next_token_skip_statement_end
 
-      body = parse_expressions
+      body = parse_expressions_or_nil
 
       check_ident :end
       next_token_skip_space

@@ -22,7 +22,7 @@ describe "Code gen: primitives" do
   end
 
   it "codegens float" do
-    run("1; 2.5f").to_f.should eq(2.5f)
+    run("1; 2.5f").to_f.should eq(2.5_f32)
   end
 
   it "codegens double" do

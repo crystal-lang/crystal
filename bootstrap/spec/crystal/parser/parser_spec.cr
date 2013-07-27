@@ -127,7 +127,7 @@ describe "Parser" do
 
   it_parses ":foo", SymbolLiteral.new("foo")
 
-  it_parses "[]", (ASTNode[]).array
+  it_parses "[]", ([] of ASTNode).array
   it_parses "[1, 2]", ASTNode[1.int, 2.int].array
   it_parses "[\n1, 2]", ASTNode[1.int, 2.int].array
   it_parses "[1,\n 2,]", ASTNode[1.int, 2.int].array
@@ -181,7 +181,7 @@ describe "Parser" do
   it_parses "def foo var1, var2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
   it_parses "def foo var1,\nvar2\n end", Def.new("foo", ["var1".arg, "var2".arg], nil)
   it_parses "def foo; 1; 2; end", Def.new("foo", [] of Arg, ASTNode[1.int, 2.int])
-  it_parses "def foo=(value); end", Def.new("foo=", ["value".arg], ASTNode[])
+  it_parses "def foo=(value); end", Def.new("foo=", ["value".arg], [] of ASTNode)
   it_parses "def foo(n); foo(n -1); end", Def.new("foo", ["n".arg], "foo".call(ASTNode[Call.new("n".var, "-", ASTNode[1.int])]))
   it_parses "def type(type); end", Def.new("type", ["type".arg], nil)
 
@@ -192,9 +192,9 @@ describe "Parser" do
   it_parses "def foo; a; end", Def.new("foo", [] of Arg, "a".call)
   it_parses "def foo(a); a; end", Def.new("foo", ["a".arg], "a".var)
   it_parses "def foo; a = 1; a; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), "a".var])
-  it_parses "def foo; a = 1; a {}; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), Call.new(nil, "a", ASTNode[], Block.new)])
-  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), Call.new(nil, "x", ASTNode[], Block.new(ASTNode[], ["a".var]))])
-  it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", ASTNode[], Block.new(ASTNode["a".var], ["a".var]))])
+  it_parses "def foo; a = 1; a {}; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), Call.new(nil, "a", [] of ASTNode, Block.new)])
+  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int), Call.new(nil, "x", [] of ASTNode, Block.new([] of ASTNode, ["a".var]))])
+  it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", [] of ASTNode, Block.new(ASTNode["a".var], ["a".var]))])
 
   it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int)], nil)
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int)], nil)
@@ -270,132 +270,132 @@ describe "Parser" do
 
   it_parses "class Foo; end", ClassDef.new("Foo")
   it_parses "class Foo\nend", ClassDef.new("Foo")
-  # it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", ASTNode[], nil)])
-  # it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
-  # it_parses "generic class Foo; end", ClassDef.new("Foo", nil, nil, true)
+  it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [] of Arg, nil)])
+  it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
 
-  # it_parses "module Foo; end", ModuleDef.new("Foo")
-  # it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", ASTNode[], nil)])
+  it_parses "module Foo; end", ModuleDef.new("Foo")
+  it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [] of Arg, nil)])
 
-  # it_parses "while true; 1; end;", While.new(true.bool, 1.int)
+  it_parses "while true; end;", While.new(true.bool)
+  it_parses "while true; 1; end;", While.new(true.bool, 1.int)
 
-  # it_parses "foo do; 1; end", Call.new(nil, "foo", ASTNode[], Block.new(ASTNode[], 1.int))
-  # it_parses "foo do |a|; 1; end", Call.new(nil, "foo", ASTNode[], Block.new(["a".var], 1.int))
+  it_parses "foo do; 1; end", Call.new(nil, "foo", [] of ASTNode, Block.new([] of ASTNode, 1.int))
+  it_parses "foo do |a|; 1; end", Call.new(nil, "foo", [] of ASTNode, Block.new(["a".var], 1.int))
 
-  # it_parses "foo { 1 }", Call.new(nil, "foo", ASTNode[], Block.new(ASTNode[], 1.int))
-  # it_parses "foo { |a| 1 }", Call.new(nil, "foo", ASTNode[], Block.new(["a".var], 1.int))
-  # it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", ASTNode[], Block.new(["a".var, "b".var], 1.int))
-  # it_parses "1.foo do; 1; end", Call.new(1.int, "foo", ASTNode[], Block.new(ASTNode[], 1.int))
+  it_parses "foo { 1 }", Call.new(nil, "foo", [] of ASTNode, Block.new([] of ASTNode, 1.int))
+  it_parses "foo { |a| 1 }", Call.new(nil, "foo", [] of ASTNode, Block.new(["a".var], 1.int))
+  it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", [] of ASTNode, Block.new(["a".var, "b".var], 1.int))
+  it_parses "1.foo do; 1; end", Call.new(1.int, "foo", [] of ASTNode, Block.new([] of ASTNode, 1.int))
 
-  # it_parses "1 ? 2 : 3", If.new(1.int, 2.int, 3.int)
-  # it_parses "1 ? a : b", If.new(1.int, "a".call, "b".call)
+  it_parses "1 ? 2 : 3", If.new(1.int, 2.int, 3.int)
+  it_parses "1 ? a : b", If.new(1.int, "a".call, "b".call)
 
-  # it_parses "1 if 3", If.new(3.int, 1.int)
-  # it_parses "1 unless 3", If.new(3.int.not, 1.int)
-  # it_parses "1 while 3", While.new(3.int, 1.int, true)
-  # it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int), If.new(Assign.new("a".var, Call.new("a".var, "+", [20.int])), Assign.new("a".var, Call.new("a".var, "+", [10.int])))]
-  # it_parses "puts a if true", If.new(true.bool, Call.new(nil, "puts", ["a".call]))
-  # it_parses "puts a unless true", If.new(true.bool.not, Call.new(nil, "puts", ["a".call]))
-  # it_parses "puts a while true", While.new(true.bool, Call.new(nil, "puts", ["a".call]), true)
+  it_parses "1 if 3", If.new(3.int, 1.int)
+  it_parses "1 unless 3", If.new(3.int.not, 1.int)
+  it_parses "1 while 3", While.new(3.int, 1.int, true)
+  it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int), If.new(Assign.new("a".var, Call.new("a".var, "+", [20.int] of ASTNode)), Assign.new("a".var, Call.new("a".var, "+", [10.int] of ASTNode)))]
+  it_parses "puts a if true", If.new(true.bool, Call.new(nil, "puts", ["a".call] of ASTNode))
+  it_parses "puts a unless true", If.new(true.bool.not, Call.new(nil, "puts", ["a".call] of ASTNode))
+  it_parses "puts a while true", While.new(true.bool, Call.new(nil, "puts", ["a".call] of ASTNode), true)
 
-  # it_parses "return", Return.new
-  # it_parses "return;", Return.new
-  # it_parses "return 1", Return.new([1.int])
-  # it_parses "return 1 if true", If.new(true.bool, Return.new([1.int]))
-  # it_parses "return if true", If.new(true.bool, Return.new)
+  it_parses "return", Return.new
+  it_parses "return;", Return.new
+  it_parses "return 1", Return.new([1.int])
+  it_parses "return 1 if true", If.new(true.bool, Return.new([1.int]))
+  it_parses "return if true", If.new(true.bool, Return.new)
 
-  # it_parses "break", Break.new
-  # it_parses "break;", Break.new
-  # it_parses "break 1", Break.new([1.int])
-  # it_parses "break 1 if true", If.new(true.bool, Break.new([1.int]))
-  # it_parses "break if true", If.new(true.bool, Break.new)
+  it_parses "break", Break.new
+  it_parses "break;", Break.new
+  it_parses "break 1", Break.new([1.int])
+  it_parses "break 1 if true", If.new(true.bool, Break.new([1.int]))
+  it_parses "break if true", If.new(true.bool, Break.new)
 
-  # it_parses "next", Next.new
-  # it_parses "next;", Next.new
-  # it_parses "next 1", Next.new([1.int])
-  # it_parses "next 1 if true", If.new(true.bool, Next.new([1.int]))
-  # it_parses "next if true", If.new(true.bool, Next.new)
+  it_parses "next", Next.new
+  it_parses "next;", Next.new
+  it_parses "next 1", Next.new([1.int])
+  it_parses "next 1 if true", If.new(true.bool, Next.new([1.int]))
+  it_parses "next if true", If.new(true.bool, Next.new)
 
-  # it_parses "yield", Yield.new
-  # it_parses "yield;", Yield.new
-  # it_parses "yield 1", Yield.new([1.int])
-  # it_parses "yield 1 if true", If.new(true.bool, Yield.new([1.int]))
-  # it_parses "yield if true", If.new(true.bool, Yield.new)
+  it_parses "yield", Yield.new
+  it_parses "yield;", Yield.new
+  it_parses "yield 1", Yield.new([1.int])
+  it_parses "yield 1 if true", If.new(true.bool, Yield.new([1.int]))
+  it_parses "yield if true", If.new(true.bool, Yield.new)
 
-  # it_parses "Int", "Int".ident
+  it_parses "Int", "Int".ident
 
-  # it_parses "Int[]", Call.new("Int".ident, "[]")
-  # it_parses "def []; end", Def.new("[]", ASTNode[], nil)
-  # it_parses "def []=(value); end", Def.new("[]=", ["value".arg], nil)
-  # it_parses "def self.[]; end", Def.new("[]", ASTNode[], nil, "self".var)
+  it_parses "Int[]", Call.new("Int".ident, "[]")
+  it_parses "def []; end", Def.new("[]", [] of Arg, nil)
+  it_parses "def []=(value); end", Def.new("[]=", ["value".arg], nil)
+  it_parses "def self.[]; end", Def.new("[]", [] of Arg, nil, "self".var)
 
-  # it_parses "Int[8]", Call.new("Int".ident, "[]", [8.int])
-  # it_parses "Int[8, 4]", Call.new("Int".ident, "[]", [8.int, 4.int])
-  # it_parses "Int[8, 4,]", Call.new("Int".ident, "[]", [8.int, 4.int])
+  it_parses "Int[8]", Call.new("Int".ident, "[]", [8.int] of ASTNode)
+  it_parses "Int[8, 4]", Call.new("Int".ident, "[]", [8.int, 4.int] of ASTNode)
+  it_parses "Int[8, 4,]", Call.new("Int".ident, "[]", [8.int, 4.int] of ASTNode)
 
-  # it_parses "def [](x); end", Def.new("[]", ["x".arg], nil)
+  it_parses "def [](x); end", Def.new("[]", ["x".arg], nil)
 
-  # it_parses "foo[0] = 1", Call.new("foo".call, "[]=", [0.int, 1.int])
+  it_parses "foo[0] = 1", Call.new("foo".call, "[]=", [0.int, 1.int] of ASTNode)
 
-  # it_parses "begin; 1; 2; 3; end;", Expressions.new([1.int, 2.int, 3.int])
+  it_parses "begin; 1; 2; 3; end;", Expressions.new([1.int, 2.int, 3.int])
 
-  # it_parses "self", "self".var
+  it_parses "self", "self".var
 
-  # it_parses "@foo", "@foo".instance_var
-  # it_parses "@foo = 1", Assign.new("@foo".instance_var, 1.int)
+  it_parses "@foo", "@foo".instance_var
+  it_parses "@foo = 1", Assign.new("@foo".instance_var, 1.int)
 
-  # it_parses "call @foo.bar", Call.new(nil, "call", [Call.new("@foo".instance_var, "bar")])
-  # it_parses "call \"foo\"", Call.new(nil, "call", ["foo".string])
+  it_parses "call @foo.bar", Call.new(nil, "call", [Call.new("@foo".instance_var, "bar")] of ASTNode)
+  it_parses "call \"foo\"", Call.new(nil, "call", ["foo".string] of ASTNode)
 
-  # it_parses "def foo; end; if false; 1; else; 2; end", [Def.new("foo", ASTNode[]), If.new(false.bool, 1.int, 2.int)]
+  it_parses "def foo; end; if false; 1; else; 2; end", [Def.new("foo", [] of Arg), If.new(false.bool, 1.int, 2.int)]
 
-  # it_parses "A.new(\"x\", B.new(\"y\"))", Call.new("A".ident, "new", ["x".string, Call.new("B".ident, "new", ["y".string])])
+  it_parses "A.new(\"x\", B.new(\"y\"))", Call.new("A".ident, "new", ["x".string, Call.new("B".ident, "new", ["y".string] of ASTNode)] of ASTNode)
 
-  # it_parses "foo []", Call.new(nil, "foo", [ASTNode[].array])
-  # it_parses "foo [1]", Call.new(nil, "foo", [[1.int].array])
-  # it_parses "foo.bar []", Call.new("foo".call, "bar", [ASTNode[].array])
-  # it_parses "foo.bar [1]", Call.new("foo".call, "bar", [[1.int].array])
+  it_parses "foo []", Call.new(nil, "foo", [([] of ASTNode).array] of ASTNode)
+  it_parses "foo [1]", Call.new(nil, "foo", [([1.int] of ASTNode).array] of ASTNode)
+  it_parses "foo.bar []", Call.new("foo".call, "bar", [([] of ASTNode).array] of ASTNode)
+  it_parses "foo.bar [1]", Call.new("foo".call, "bar", [([1.int] of ASTNode).array] of ASTNode)
 
-  # it_parses "class Foo; end\nwhile true; end", [ClassDef.new("Foo"), While.new(true.bool)]
-  # it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
-  # it_parses "(1)\nif true; end", [1.int, If.new(true.bool)]
-  # it_parses "begin\n1\nend\nif true; end", [1.int, If.new(true.bool)]
+  it_parses "class Foo; end\nwhile true; end", [ClassDef.new("Foo"), While.new(true.bool)]
+  it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
+  it_parses "(1)\nif true; end", [1.int, If.new(true.bool)]
+  it_parses "begin\n1\nend\nif true; end", [1.int, If.new(true.bool)]
 
-  # it_parses "Foo::Bar", ["Foo", "Bar"].ident
+  it_parses "Foo::Bar", ["Foo", "Bar"].ident
 
-  # it_parses "lib C\nend", LibDef.new("C")
-  # it_parses "lib C(\"libc\")\nend", LibDef.new("C", "libc")
-  # it_parses "lib C\nfun getchar\nend", LibDef.new("C", nil, [FunDef.new("getchar")])
-  # it_parses "lib C\nfun getchar(...)\nend", LibDef.new("C", nil, [FunDef.new("getchar", ASTNode[], nil, 0, true)])
-  # it_parses "lib C\nfun getchar : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", ASTNode[], "Int".ident)])
-  # it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident), FunDefArg.new("b", "Float".ident)])])
-  # it_parses "lib C\nfun getchar(a : out Int)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident, 0, true)])])
-  # it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident), FunDefArg.new("b", "Float".ident)], "Int".ident)])
-  # it_parses "lib C; fun getchar(a : Int, b : Float) : Int; end", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident), FunDefArg.new("b", "Float".ident)], "Int".ident)])
-  # it_parses "lib C; fun foo(a : Int*); end", LibDef.new("C", nil, [FunDef.new("foo", [FunDefArg.new("a", "Int".ident, 1)])])
-  # it_parses "lib C; fun foo(a : Int**); end", LibDef.new("C", nil, [FunDef.new("foo", [FunDefArg.new("a", "Int".ident, 2)])])
-  # it_parses "lib C; fun foo : Int*; end", LibDef.new("C", nil, [FunDef.new("foo", ASTNode[], "Int".ident, 1)])
-  # it_parses "lib C; fun foo : Int**; end", LibDef.new("C", nil, [FunDef.new("foo", ASTNode[], "Int".ident, 2)])
-  # it_parses "lib C; type A : B; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident)])
-  # it_parses "lib C; type A : B*; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident, 1)])
-  # it_parses "lib C; type A : B**; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident, 2)])
-  # it_parses "lib C; struct Foo; end end", LibDef.new("C", nil, [StructDef.new("Foo")])
-  # it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new("C", nil, [StructDef.new("Foo", [FunDefArg.new("x", "Int".ident), FunDefArg.new("y", "Float".ident)])])
-  # it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new("C", nil, [StructDef.new("Foo", [FunDefArg.new("x", "Int".ident, 1)])])
-  # it_parses "lib C; struct Foo; x : Int**; end end", LibDef.new("C", nil, [StructDef.new("Foo", [FunDefArg.new("x", "Int".ident, 2)])])
-  # it_parses "lib C; Foo = 1; end", LibDef.new("C", nil, [Assign.new("Foo".ident, 1.int)])
-  # it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", nil, [FunDef.new("getch", ASTNode[], nil, 0, false, "GetChar")])
+  it_parses "lib C\nend", LibDef.new("C")
+  it_parses "lib C(\"libc\")\nend", LibDef.new("C", "libc")
+  it_parses "lib C\nfun getchar\nend", LibDef.new("C", nil, [FunDef.new("getchar")])
+  it_parses "lib C\nfun getchar(...)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [] of ASTNode, nil, 0, true)])
+  it_parses "lib C\nfun getchar : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [] of ASTNode, "Int".ident)])
+  it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident), FunDefArg.new("b", "Float".ident)])])
+  it_parses "lib C\nfun getchar(a : out Int)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident, 0, true)])])
+  it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident), FunDefArg.new("b", "Float".ident)], "Int".ident)])
+  it_parses "lib C; fun getchar(a : Int, b : Float) : Int; end", LibDef.new("C", nil, [FunDef.new("getchar", [FunDefArg.new("a", "Int".ident), FunDefArg.new("b", "Float".ident)], "Int".ident)])
+  it_parses "lib C; fun foo(a : Int*); end", LibDef.new("C", nil, [FunDef.new("foo", [FunDefArg.new("a", "Int".ident, 1)])])
+  it_parses "lib C; fun foo(a : Int**); end", LibDef.new("C", nil, [FunDef.new("foo", [FunDefArg.new("a", "Int".ident, 2)])])
+  it_parses "lib C; fun foo : Int*; end", LibDef.new("C", nil, [FunDef.new("foo", [] of ASTNode, "Int".ident, 1)])
+  it_parses "lib C; fun foo : Int**; end", LibDef.new("C", nil, [FunDef.new("foo", [] of ASTNode, "Int".ident, 2)])
+  it_parses "lib C; type A : B; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident)])
+  it_parses "lib C; type A : B*; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident, 1)])
+  it_parses "lib C; type A : B**; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident, 2)])
+  it_parses "lib C; struct Foo; end end", LibDef.new("C", nil, [StructDef.new("Foo")])
+  it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new("C", nil, [StructDef.new("Foo", [FunDefArg.new("x", "Int".ident), FunDefArg.new("y", "Float".ident)])])
+  it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new("C", nil, [StructDef.new("Foo", [FunDefArg.new("x", "Int".ident, 1)])])
+  it_parses "lib C; struct Foo; x : Int**; end end", LibDef.new("C", nil, [StructDef.new("Foo", [FunDefArg.new("x", "Int".ident, 2)])])
+  it_parses "lib C; Foo = 1; end", LibDef.new("C", nil, [Assign.new("Foo".ident, 1.int)])
+  it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", nil, [FunDef.new("getch", [] of ASTNode, nil, 0, false, "GetChar")])
 
-  # it_parses "1 .. 2", RangeLiteral.new(1.int, 2.int, false)
-  # it_parses "1 ... 2", RangeLiteral.new(1.int, 2.int, true)
+  it_parses "1 .. 2", RangeLiteral.new(1.int, 2.int, false)
+  it_parses "1 ... 2", RangeLiteral.new(1.int, 2.int, true)
 
-  # it_parses "A = 1", Assign.new("A".ident, 1.int)
+  it_parses "A = 1", Assign.new("A".ident, 1.int)
 
   # # it_parses "puts %w(one)", Call.new(nil, "puts", [["one".string].array])
 
-  # it_parses "::A::B", Ident.new(["A", "B"], true)
+  it_parses "::A::B", Ident.new(["A", "B"], true)
 
-  # it_parses "$foo", Global.new("$foo")
+  it_parses "$foo", Global.new("$foo")
 
-  # # it_parses "macro foo;end", Macro.new("foo", ASTNode[])
+  # # it_parses "macro foo;end", Macro.new("foo", [] of ASTNode)
 end

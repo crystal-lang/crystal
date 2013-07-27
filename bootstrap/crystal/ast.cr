@@ -465,13 +465,11 @@ module Crystal
     attr_accessor :name
     attr_accessor :body
     attr_accessor :superclass
-    attr_accessor :generic
     attr_accessor :name_column_number
 
-    def initialize(name, body = nil, superclass = nil, is_generic = false, name_column_number = nil)
+    def initialize(name, body = nil, superclass = nil, name_column_number = nil)
       @name = name
       @body = Expressions.from body
-      @generic = is_generic
       @superclass = superclass
       @name_column_number = name_column_number
     end
@@ -481,7 +479,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.body == body && other.superclass == superclass && other.generic == self.generic
+      other.name == name && other.body == body && other.superclass == superclass
     end
   end
 
@@ -503,7 +501,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      body.accept visitor if body
+      @body.accept visitor if @body
     end
 
     def ==(other : self)
@@ -529,8 +527,8 @@ module Crystal
     end
 
     def accept_children(visitor)
-      cond.accept visitor
-      body.accept visitor if body
+      @cond.accept visitor
+      @body.accept visitor if @body
     end
 
     def ==(other : self)
