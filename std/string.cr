@@ -180,6 +180,23 @@ class String
     end
   end
 
+  def delete(char : Char)
+    new_length = length
+    str = Pointer(Char).malloc(length + 5)
+    i = 4
+    each_char do |my_char|
+      if my_char == char
+        new_length -= 1
+      else
+        str[i] = my_char
+        i += 1
+      end
+    end
+    str.as(Int32).value = new_length
+    str[i] = '\0'
+    str.as(String)
+  end
+
   def empty?
     length == 0
   end

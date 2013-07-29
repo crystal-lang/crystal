@@ -41,7 +41,10 @@ describe "String" do
   end
 
   it "does to_f" do
-    "1234.56".to_f.should eq(1234.56_f32)
+    "1234.56".to_f.should eq(1234.56_f64)
+  end
+
+  it "does to_f32" do
     "1234.56".to_f32.should eq(1234.56_f32)
   end
 
@@ -196,5 +199,15 @@ describe "String" do
       $1.should eq("oo")
       $2.should eq("r")
     end
+  end
+
+  it "deletes one char" do
+    deleted = "foobar".delete('o')
+    deleted.length.should eq(4)
+    deleted.should eq("fbar")
+
+    deleted = "foobar".delete('x')
+    deleted.length.should eq(6)
+    deleted.should eq("foobar")
   end
 end
