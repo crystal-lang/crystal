@@ -210,4 +210,10 @@ describe "String" do
     deleted.length.should eq(6)
     deleted.should eq("foobar")
   end
+
+  it "reverses string" do
+    reversed = "foobar".reverse
+    reversed.length.should eq(6)
+    reversed.should eq("raboof")
+  end
 end
