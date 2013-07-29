@@ -41,4 +41,21 @@ describe 'Code gen: var' do
       f.foo
       )).to_i.should eq(-1)
   end
+
+  it "codegens bug with var, while, if, break and ssa" do
+    run(%q(
+      a = 1
+      a = 2
+
+      while 1 == 1
+        if 1 == 2
+          a = 3
+        else
+          break
+        end
+      end
+
+      a
+      )).to_i.should eq(2)
+  end
 end

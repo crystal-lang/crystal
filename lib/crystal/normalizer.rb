@@ -692,14 +692,15 @@ module Crystal
           target = assign.target
           name, index = target.name.split(':')
           value_index = @vars_indices[name]
-          if value_index
-            Assign.new(assign.target, Var.new("#{name}:#{value_index}"))
-          else
-            if (before_var = @before_vars[name]) && before_var[:read]
-              Assign.new(assign.target, Var.new(name))
+          if value_index || ((before_var = @before_vars[name]) && (value_index = before_var[:read]))
+            new_name = value_index == 0 ? name : "#{name}:#{value_index}"
+            if assign.target.name == new_name
+              nil
             else
-              Assign.new(assign.target, NilLiteral.new)
+              Assign.new(assign.target, Var.new(new_name))
             end
+          else
+            Assign.new(assign.target, NilLiteral.new)
           end
         end
         new_vars.compact!

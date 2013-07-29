@@ -194,4 +194,8 @@ describe 'Normalize: ssa' do
   it "performs ssa on var on nested if 2" do
     assert_normalize "foo = 1; if 0; else; if 0; foo = 2; else; foo = 3; end; end; foo", "foo = 1\nif 0\n  foo:3 = foo\n  nil\nelse\n  if 0\n    #temp_1 = foo:1 = 2\n    foo:3 = foo:1\n    #temp_1\n  else\n    #temp_2 = foo:2 = 3\n    foo:3 = foo:2\n    #temp_2\n  end\nend\nfoo:3"
   end
+
+  it "performs ssa on while, if, var and break" do
+    assert_normalize "a = 1; a = 2; while 1 == 1; if 1 == 2; a = 3; else; break; end; end; puts a", "a = 1\na:1 = 2\nwhile 1 == 1\n  #temp_2 = if 1 == 2\n    #temp_1 = a:2 = 3\n    a:3 = a:2\n    #temp_1\n  else\n    a:3 = a:1\n    break\n  end\n  a:1 = a:3\n  #temp_2\nend\nputs(a:1)"
+  end
 end
