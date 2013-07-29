@@ -21,11 +21,11 @@ describe "Code gen: primitives" do
     run("'a'").to_i.should eq('a'.ord)
   end
 
-  it "codegens float" do
-    run("1; 2.5f").to_f.should eq(2.5_f32)
+  it "codegens f32" do
+    run("1; 2.5f").to_f32.should eq(2.5_f32)
   end
 
-  it "codegens double" do
-    run("1; 2.5").to_d.should eq(2.5)
+  it "codegens f64" do
+    run("1; 2.5").to_f64.should eq(2.5_f64)
   end
 end

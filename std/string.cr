@@ -64,10 +64,14 @@ class String
   end
 
   def to_f
+    to_f64
+  end
+
+  def to_f32
     C.strtof @c.ptr, nil
   end
 
-  def to_d
+  def to_f64
     C.atof @c.ptr
   end
 

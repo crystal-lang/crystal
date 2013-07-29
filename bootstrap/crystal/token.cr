@@ -4,6 +4,7 @@ module Crystal
   class Token
     attr_accessor :type
     attr_accessor :value
+    attr_accessor :number_kind
     attr_accessor :line_number
     attr_accessor :column_number
     attr_accessor :filename

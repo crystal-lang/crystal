@@ -17,11 +17,11 @@ class Int
   end
 
   def **(other : Int)
-    (to_d ** other).to_i
+    (to_f64 ** other).to_i
   end
 
   def **(other)
-    to_d ** other
+    to_f64 ** other
   end
 
   def [](bit)

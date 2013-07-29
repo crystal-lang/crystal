@@ -15,6 +15,6 @@ class Float32
   end
 
   def to_s
-    to_d.to_s
+    to_f64.to_s
   end
 end

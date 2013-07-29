@@ -42,10 +42,11 @@ describe "String" do
 
   it "does to_f" do
     "1234.56".to_f.should eq(1234.56_f32)
+    "1234.56".to_f32.should eq(1234.56_f32)
   end
 
-  it "does to_d" do
-    "1234.56".to_d.should eq(1234.56)
+  it "does to_f64" do
+    "1234.56".to_f64.should eq(1234.56_f64)
   end
 
   it "compares strings: different length" do

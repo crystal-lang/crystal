@@ -185,11 +185,11 @@ module LLVM
       to_i != 0
     end
 
-    def to_f
+    def to_f32
       LibLLVM.generic_value_to_float(LLVM::Float.type, @value)
     end
 
-    def to_d
+    def to_f64
       LibLLVM.generic_value_to_float(LLVM::Double.type, @value)
     end
   end

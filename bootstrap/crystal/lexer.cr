@@ -34,9 +34,9 @@ module Crystal
 
       # Skip comments
       if @buffer.value == '#'
-        char = next_char
+        char = next_char_no_column_increment
         while char != '\n' && char != '\0'
-          char = next_char
+          char = next_char_no_column_increment
         end
       end
 
@@ -633,9 +633,12 @@ module Crystal
     end
 
     def scan_number(start, count)
+      @token.type = :NUMBER
+
       while next_char.digit?
         count += 1
       end
+
       case @buffer.value
       when '.'
         if (@buffer + 1).value.digit?
@@ -646,29 +649,33 @@ module Crystal
           end
           if @buffer.value == 'f' || @buffer.value == 'F'
             next_char
-            @token.type = :FLOAT
+            @token.number_kind = :f32
           else
-            @token.type = :DOUBLE
+            @token.number_kind = :f64
           end
         else
-          @token.type = :INT
+          @token.number_kind = :i32
         end
       when 'f', 'F'
         next_char
-        @token.type = :FLOAT
+        @token.number_kind = :f32
       when 'L'
         next_char
-        @token.type = :LONG
+        @token.number_kind = :i64
       else
-        @token.type = :INT
+        @token.number_kind = :i32
       end
       @token.value = String.from_cstr(start, count)
     end
 
-    def next_char
+    def next_char_no_column_increment
       @buffer += 1
-      @column_number += 1
       @buffer.value
+    end
+
+    def next_char
+      @column_number += 1
+      next_char_no_column_increment
     end
 
     def next_char(token_type)
@@ -680,7 +687,6 @@ module Crystal
       @token.line_number = @line_number
       @token.column_number = @column_number
       @token.filename = @filename
-      @token.value = nil
     end
 
     def next_token_skip_space

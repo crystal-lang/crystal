@@ -11,7 +11,7 @@ class Float64
   end
 
   def **(other)
-    self ** other.to_d
+    self ** other.to_f64
   end
 
   def to_s

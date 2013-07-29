@@ -239,19 +239,13 @@ module Crystal
           next_token_skip_space_or_newline
           right = parse_mul_or_div
           left = Call.new left, method, [right] of ASTNode, nil, method_column_number
-        when :INT, :LONG, :FLOAT, :DOUBLE
-          type = case @token.type
-                 when :INT then IntLiteral
-                 when :LONG then LongLiteral
-                 when :FLOAT then FloatLiteral
-                 else DoubleLiteral
-                 end
+        when :NUMBER
           case @token.value.to_s[0]
           when '+'
-            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s)] of ASTNode, nil, @token.column_number
+            left = Call.new left, @token.value.to_s[0].to_s, [NumberLiteral.new(@token.value.to_s, @token.number_kind)] of ASTNode, nil, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value.to_s[0].to_s, [type.new(@token.value.to_s[1, @token.value.to_s.length - 1])] of ASTNode, nil, @token.column_number
+            left = Call.new left, @token.value.to_s[0].to_s, [NumberLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1], @token.number_kind)] of ASTNode, nil, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -387,14 +381,8 @@ module Crystal
         parse_array_literal
       when :"::"
         parse_ident
-      when :INT
-        node_and_next_token IntLiteral.new(@token.value.to_s)
-      when :LONG
-        node_and_next_token LongLiteral.new(@token.value.to_s)
-      when :FLOAT
-        node_and_next_token FloatLiteral.new(@token.value.to_s)
-      when :DOUBLE
-        node_and_next_token DoubleLiteral.new(@token.value.to_s)
+      when :NUMBER
+        node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value.to_s)
       when :STRING, :STRING_START
@@ -873,7 +861,7 @@ module Crystal
 
     def parse_args_space_consumed(allow_plus_and_minus = false)
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :INT, :LONG, :FLOAT, :DOUBLE, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-"
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-"
         if !allow_plus_and_minus && (@token.type == :"+" || @token.type == :"-")
           return nil
         end

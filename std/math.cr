@@ -28,63 +28,63 @@ module Math
   PI = 3.14159265358979323846
 
   def self.acos(value)
-    C.acos(value.to_d)
+    C.acos(value.to_f64)
   end
 
   def self.acosh(value)
-    C.acosh(value.to_d)
+    C.acosh(value.to_f64)
   end
 
   def self.asin(value)
-    C.asin(value.to_d)
+    C.asin(value.to_f64)
   end
 
   def self.asinh(value)
-    C.asinh(value.to_d)
+    C.asinh(value.to_f64)
   end
 
   def self.atan(value)
-    C.atan(value.to_d)
+    C.atan(value.to_f64)
   end
 
   def self.atan2(y, x)
-    C.atan2(y.to_d, x.to_d)
+    C.atan2(y.to_f64, x.to_f64)
   end
 
   def self.cbrt(value)
-    C.cbrt(value.to_d)
+    C.cbrt(value.to_f64)
   end
 
   def self.cos(value)
-    C.cos(value.to_d)
+    C.cos(value.to_f64)
   end
 
   def self.erf(value)
-    C.erf(value.to_d)
+    C.erf(value.to_f64)
   end
 
   def self.erfc(value)
-    C.erfc(value.to_d)
+    C.erfc(value.to_f64)
   end
 
   def self.exp(value)
-    C.exp(value.to_d)
+    C.exp(value.to_f64)
   end
 
   def self.gamma(value)
-    C.tgamma(value.to_d)
+    C.tgamma(value.to_f64)
   end
 
   def self.hypot(x, y)
-    C.hypot(x.to_d, y.to_d)
+    C.hypot(x.to_f64, y.to_f64)
   end
 
   def self.ldexp(flt, int : Int)
-    C.ldexp(flt.to_d, int)
+    C.ldexp(flt.to_f64, int)
   end
 
   def self.log(numeric)
-    C.log(numeric.to_d)
+    C.log(numeric.to_f64)
   end
 
   def self.log(numeric, base)
@@ -92,11 +92,11 @@ module Math
   end
 
   def self.log10(numeric)
-    C.log10(numeric.to_d)
+    C.log10(numeric.to_f64)
   end
 
   def self.log2(numeric)
-    C.log2(numeric.to_d)
+    C.log2(numeric.to_f64)
   end
 
   def self.min(value1, value2)
@@ -108,22 +108,22 @@ module Math
   end
 
   def self.sin(value)
-    C.sin(value.to_d)
+    C.sin(value.to_f64)
   end
 
   def self.sinh(value)
-    C.sinh(value.to_d)
+    C.sinh(value.to_f64)
   end
 
   def self.tan(value)
-    C.tan(value.to_d)
+    C.tan(value.to_f64)
   end
 
   def self.tanh(value)
-    C.tanh(value.to_d)
+    C.tanh(value.to_f64)
   end
 
   def self.sqrt(value : Int)
-    sqrt value.to_d
+    sqrt value.to_f64
   end
 end

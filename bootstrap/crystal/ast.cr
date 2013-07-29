@@ -82,53 +82,21 @@ module Crystal
     end
   end
 
-  abstract class NumberLiteral < ASTNode
+  # Any number literal.
+  # kind stores a symbol indicating which type is it: i32, u16, f32, f64, etc.
+  class NumberLiteral < ASTNode
     attr_accessor :value
+    attr_accessor :kind
     attr_accessor :has_sign
 
-    def initialize(value)
+    def initialize(value, kind)
       @has_sign = value[0] == '+' || value[0] == '-'
       @value = value
+      @kind = kind
     end
-  end
 
-  # An integer literal.
-  #
-  #     \d+
-  #
-  class IntLiteral < NumberLiteral
     def ==(other : self)
-      other.value.to_i == value.to_i
-    end
-  end
-
-  # A long literal.
-  #
-  #     \d+L
-  #
-  class LongLiteral < NumberLiteral
-    def ==(other : self)
-      other.value.to_i == value.to_i
-    end
-  end
-
-  # A float literal.
-  #
-  #     \d+.\d+f
-  #
-  class FloatLiteral < NumberLiteral
-    def ==(other : self)
-      other.value.to_f == value.to_f
-    end
-  end
-
-  # A double literal.
-  #
-  #     \d+.\d+f
-  #
-  class DoubleLiteral < NumberLiteral
-    def ==(other : self)
-      other.value.to_d == value.to_d
+      other.value.to_f64 == value.to_f64 && other.kind == kind
     end
   end
 

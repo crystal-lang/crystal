@@ -22,16 +22,12 @@ module Crystal
       @str << (node.value ? "true" : "false")
     end
 
-    def visit(node : IntLiteral)
+    def visit(node : NumberLiteral)
       @str << node.value
-    end
-
-    def visit(node : LongLiteral)
-      @str << node.value << "L"
-    end
-
-    def visit(node : FloatLiteral)
-      @str << node.value
+      if node.kind != :i32 && node.kind != :f64
+        @str << "_"
+        @str << node.kind.to_s
+      end
     end
 
     def visit(node : CharLiteral)

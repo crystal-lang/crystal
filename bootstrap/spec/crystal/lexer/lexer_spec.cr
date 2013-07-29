@@ -19,6 +19,16 @@ def it_lexes(string, type, value)
   end
 end
 
+def it_lexes(string, type, value, number_kind)
+  it "lexes #{string}" do
+    lexer = Crystal::Lexer.new string
+    token = lexer.next_token
+    token.type.should eq(type)
+    token.value.should eq(value)
+    token.number_kind.should eq(number_kind)
+  end
+end
+
 def it_lexes_many(values, type)
   values.each do |value|
     it_lexes value, type, value
@@ -37,52 +47,28 @@ def it_lexes_idents(idents)
   end
 end
 
-def it_lexes_ints(values)
-  values.each { |value| it_lexes_int value }
+def it_lexes_i32(values)
+  values.each { |value| it_lexes_number :i32, value }
 end
 
-def it_lexes_int(value : Array)
-  it_lexes value[0], :INT, value[1]
+def it_lexes_i64(values)
+  values.each { |value| it_lexes_number :i64, value }
 end
 
-def it_lexes_int(value : String)
-  it_lexes value, :INT, value
+def it_lexes_f32(values)
+  values.each { |value| it_lexes_number :f32, value }
 end
 
-def it_lexes_floats(values)
-  values.each { |value| it_lexes_float value }
+def it_lexes_f64(values)
+  values.each { |value| it_lexes_number :f64, value }
 end
 
-def it_lexes_float(value : Array)
-  it_lexes value[0], :FLOAT, value[1][0, value[1].length - 1]
+def it_lexes_number(number_kind, value : Array)
+  it_lexes value[0], :NUMBER, value[1], number_kind
 end
 
-def it_lexes_float(value : String)
-  it_lexes value, :FLOAT, value[0, value.length - 1]
-end
-
-def it_lexes_doubles(values)
-  values.each { |value| it_lexes_double value }
-end
-
-def it_lexes_double(value : Array)
-  it_lexes value[0], :DOUBLE, value[1]
-end
-
-def it_lexes_double(value : String)
-  it_lexes value, :DOUBLE, value
-end
-
-def it_lexes_longs(values)
-  values.each { |value| it_lexes_long value }
-end
-
-def it_lexes_long(value : Array)
-  it_lexes value[0], :LONG, value[1]
-end
-
-def it_lexes_long(value : String)
-  it_lexes value, :LONG, value[0, value.length - 1]
+def it_lexes_number(number_kind, value : String)
+  it_lexes value, :NUMBER, value, number_kind
 end
 
 def it_lexes_char(string, value)
@@ -141,10 +127,10 @@ describe "Lexer" do
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
-  it_lexes_ints ["1", ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234", ["1.foo", "1"]]
-  it_lexes_floats ["1f", "1.0f", ["1.0fhello", "1.0f"], "+1.0f", "-1.0f"]
-  it_lexes_doubles ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0"]
-  it_lexes_longs ["1L", ["1Lhello", "1"], "+1L", "-1L"]
+  it_lexes_i32 ["1", ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234", ["1.foo", "1"]]
+  it_lexes_i64 [["1L", "1"], ["1Lhello", "1"], ["+1L", "+1"], ["-1L", "-1"]]
+  it_lexes_f32 [["1f", "1"], ["1.0f", "1.0"], ["1.0fhello", "1.0"], ["+1.0f", "+1.0"], ["-1.0f", "-1.0"]]
+  it_lexes_f64 ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0"]
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'
