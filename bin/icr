@@ -133,10 +133,12 @@ loop do
       if is_evaluatable?(nodes)
         nodes = Expressions.new [Require.new(StringLiteral.new('prelude')), nodes]
         nodes = Call.new(nodes, 'inspect')
-        mod = infer_type nodes
+        program = Program.new
+        nodes = program.normalize nodes
+        nodes = program.infer_type nodes
         if nodes.type
-          mod.load_libs
-          llvm_mod = build nodes, mod
+          program.load_libs
+          llvm_mod = program.build nodes
           engine = LLVM::JITCompiler.new(llvm_mod)
           result = engine.run_function llvm_mod.functions["crystal_main"], 0, nil
           puts "=> #{result.to_string}"
