@@ -635,18 +635,39 @@ module Crystal
     def scan_number(start, count)
       @token.type = :NUMBER
 
-      while next_char.digit?
-        count += 1
+      has_underscore = false
+
+      while true
+        char = next_char
+        if char.digit?
+          count += 1
+        elsif char == '_'
+          count += 1
+          has_underscore = true
+        else
+          break
+        end
       end
 
       case @buffer.value
+      when '_'
+        next_char
       when '.'
         if (@buffer + 1).value.digit?
-          next_char
-          count += 2
-          while next_char.digit?
-            count += 1
+          count += 1
+
+          while true
+            char = next_char
+            if char.digit?
+              count += 1
+            elsif char == '_'
+              count += 1
+              has_underscore = true
+            else
+              break
+            end
           end
+
           if @buffer.value == 'f' || @buffer.value == 'F'
             next_char
             @token.number_kind = :f32
@@ -665,7 +686,10 @@ module Crystal
       else
         @token.number_kind = :i32
       end
-      @token.value = String.from_cstr(start, count)
+
+      string_value = String.from_cstr(start, count)
+      string_value = string_value.delete('_') if has_underscore
+      @token.value = string_value
     end
 
     def next_char_no_column_increment
