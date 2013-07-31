@@ -12,9 +12,9 @@ describe "Type inference: var" do
     input = parse "a = 1"
     if input.is_a?(Assign)
       mod = infer_type input
-      input.target.type.should eq(mod.int)
-      input.value.type.should eq(mod.int)
-      input.type.should eq(mod.int)
+      input.target.type.should eq(mod.int32)
+      input.value.type.should eq(mod.int32)
+      input.type.should eq(mod.int32)
     else
       fail "expected input to be an Assign"
     end
@@ -25,8 +25,8 @@ describe "Type inference: var" do
   #   mod = infer_type input
 
   #   if input.is_a?(Expressions)
-  #     input.last.type.should eq(mod.int)
-  #     input.type.should eq(mod.int)
+  #     input.last.type.should eq(mod.int32)
+  #     input.type.should eq(mod.int32)
   #   else
   #     fail "expected input to be an Expressions"
   #   end

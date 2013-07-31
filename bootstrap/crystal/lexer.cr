@@ -82,7 +82,7 @@ module Crystal
         when '='
           next_char :"!="
         when '@'
-          if (@buffer + 1).value.ident_start?
+          if @buffer[1].ident_start?
             @token.type = :"!"
           else
             next_char :"!@"
@@ -128,7 +128,7 @@ module Crystal
         when '='
           next_char :"+="
         when '@'
-          if (@buffer + 1).value.ident_start?
+          if @buffer[1].ident_start?
             @token.type = :"+"
           else
             next_char :"+@"
@@ -143,7 +143,7 @@ module Crystal
         when '='
           next_char :"-="
         when '@'
-          if (@buffer + 1).value.ident_start?
+          if @buffer[1].ident_start?
             @token.type = :"-"
           else
             next_char :"-@"
@@ -567,7 +567,7 @@ module Crystal
           case next_char
           when 'F'
             if next_char == 'I' && next_char == 'L' && next_char == 'E' && next_char == '_' && next_char == '_'
-              if (@buffer + 1).value.ident_part_or_end?
+              if @buffer[1].ident_part_or_end?
                 scan_ident(start, start_column)
               else
                 @token.type = :STRING
@@ -577,7 +577,7 @@ module Crystal
             end
           when 'L'
             if next_char == 'I' && next_char == 'N' && next_char == 'E' && next_char == '_' && next_char == '_'
-              if (@buffer + 1).value.ident_part_or_end?
+              if @buffer[1].ident_part_or_end?
                 scan_ident(start, start_column)
               else
                 @token.type = :INT
@@ -610,7 +610,7 @@ module Crystal
     end
 
     def check_ident_or_keyword(symbol, start, start_column)
-      if (@buffer + 1).value.ident_part_or_end?
+      if @buffer[1].ident_part_or_end?
         scan_ident(start, start_column)
       else
         next_char
@@ -653,7 +653,7 @@ module Crystal
       when '_'
         next_char
       when '.'
-        if (@buffer + 1).value.digit?
+        if @buffer[1].digit?
           count += 1
 
           while true
@@ -680,9 +680,52 @@ module Crystal
       when 'f', 'F'
         next_char
         @token.number_kind = :f32
-      when 'L'
-        next_char
-        @token.number_kind = :i64
+      when 'i'
+        if @buffer[1] == '8'
+          next_char
+          next_char
+          @token.number_kind = :i8
+        elsif @buffer[1] == '1' && @buffer[2] == '6'
+          next_char
+          next_char
+          next_char
+          @token.number_kind = :i16
+        elsif @buffer[1] == '3' && @buffer[2] == '2'
+          next_char
+          next_char
+          next_char
+          @token.number_kind = :i32
+        elsif @buffer[1] == '6' && @buffer[2] == '4'
+          next_char
+          next_char
+          next_char
+          @token.number_kind = :i64
+        else
+          @token.number_kind = :i32
+        end
+      when 'u'
+        if @buffer[1] == '8'
+          next_char
+          next_char
+          @token.number_kind = :u8
+        elsif @buffer[1] == '1' && @buffer[2] == '6'
+          next_char
+          next_char
+          next_char
+          @token.number_kind = :u16
+        elsif @buffer[1] == '3' && @buffer[2] == '2'
+          next_char
+          next_char
+          next_char
+          @token.number_kind = :u32
+        elsif @buffer[1] == '6' && @buffer[2] == '4'
+          next_char
+          next_char
+          next_char
+          @token.number_kind = :u64
+        else
+          @token.number_kind = :i32
+        end
       else
         @token.number_kind = :i32
       end

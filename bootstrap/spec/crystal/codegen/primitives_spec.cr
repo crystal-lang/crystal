@@ -14,7 +14,7 @@ describe "Code gen: primitives" do
   end
 
   it "codegens long" do
-    run("1L").to_i.should eq(1)
+    run("1_i64").to_i.should eq(1)
   end
 
   it "codegens char" do

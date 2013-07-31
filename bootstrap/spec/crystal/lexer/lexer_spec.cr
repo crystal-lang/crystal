@@ -128,9 +128,34 @@ describe "Lexer" do
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
   it_lexes_i32 ["1", ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234", ["1.foo", "1"], ["1_000", "1000"], ["100_000", "100000"]]
-  it_lexes_i64 [["1L", "1"], ["1Lhello", "1"], ["+1L", "+1"], ["-1L", "-1"]]
+  it_lexes_i64 [["1i64", "1"], ["1_i64", "1"], ["1i64hello", "1"], ["+1_i64", "+1"], ["-1_i64", "-1"]]
   it_lexes_f32 [["1f", "1"], ["1.0f", "1.0"], ["1.0fhello", "1.0"], ["+1.0f", "+1.0"], ["-1.0f", "-1.0"], ["1_234.567_890_f32", "1234.567890"]]
   it_lexes_f64 ["1.0", ["1.0hello", "1.0"], "+1.0", "-1.0", ["1_234.567_890", "1234.567890"]]
+
+  it_lexes_number :i8, ["1i8", "1"]
+  it_lexes_number :i8, ["1_i8", "1"]
+
+  it_lexes_number :i16, ["1i16", "1"]
+  it_lexes_number :i16, ["1_i16", "1"]
+
+  it_lexes_number :i32, ["1i32", "1"]
+  it_lexes_number :i32, ["1_i32", "1"]
+
+  it_lexes_number :i64, ["1i64", "1"]
+  it_lexes_number :i64, ["1_i64", "1"]
+  
+  it_lexes_number :u8, ["1u8", "1"]
+  it_lexes_number :u8, ["1_u8", "1"]
+
+  it_lexes_number :u16, ["1u16", "1"]
+  it_lexes_number :u16, ["1_u16", "1"]
+
+  it_lexes_number :u32, ["1u32", "1"]
+  it_lexes_number :u32, ["1_u32", "1"]
+
+  it_lexes_number :u64, ["1u64", "1"]
+  it_lexes_number :u64, ["1_u64", "1"]
+
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'

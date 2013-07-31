@@ -108,9 +108,9 @@ describe "Parser" do
   it_parses "+1", 1.i32
   it_parses "-1", -1.i32
 
-  it_parses "1L", 1.i64
-  it_parses "+1L", 1.i64
-  it_parses "-1L", -1.i64
+  it_parses "1_i64", 1.i64
+  it_parses "+1_i64", 1.i64
+  it_parses "-1_i64", -1.i64
 
   it_parses "1.0", 1.0.f64
   it_parses "+1.0", 1.0.f64
@@ -138,8 +138,8 @@ describe "Parser" do
   it_parses "1 -2", Call.new(1.i32, "-", ASTNode[2.i32])
   it_parses "1 +2.0", Call.new(1.i32, "+", ASTNode[2.f64])
   it_parses "1 -2.0", Call.new(1.i32, "-", ASTNode[2.f64])
-  it_parses "1 +2L", Call.new(1.i32, "+", ASTNode[2.i64])
-  it_parses "1 -2L", Call.new(1.i32, "-", ASTNode[2.i64])
+  it_parses "1 +2_i64", Call.new(1.i32, "+", ASTNode[2.i64])
+  it_parses "1 -2_i64", Call.new(1.i32, "-", ASTNode[2.i64])
   it_parses "1\n+2", ASTNode[1.i32, 2.i32]
   it_parses "1;+2", ASTNode[1.i32, 2.i32]
   it_parses "1 - 2", Call.new(1.i32, "-", ASTNode[2.i32])
@@ -219,7 +219,7 @@ describe "Parser" do
   it_parses "foo + 1", Call.new("foo".call, "+", ASTNode[1.i32])
   it_parses "foo +1", Call.new(nil, "foo", ASTNode[1.i32])
   it_parses "foo +1.0", Call.new(nil, "foo", ASTNode[1.f64])
-  it_parses "foo +1L", Call.new(nil, "foo", ASTNode[1.i64])
+  it_parses "foo +1_i64", Call.new(nil, "foo", ASTNode[1.i64])
   it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.i32), Call.new("foo".var, "+", ASTNode[1.i32])]
   it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.i32), Call.new("foo".var, "-", ASTNode[1.i32])]
 

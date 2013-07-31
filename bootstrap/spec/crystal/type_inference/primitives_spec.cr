@@ -11,20 +11,20 @@ describe "Type inference: primitives" do
     assert_type("false") { |mod| mod.bool }
   end
 
-  it "types an int" do
-    assert_type("1") { |mod| mod.int }
+  it "types an int32" do
+    assert_type("1") { |mod| mod.int32 }
   end
 
-  it "types a long" do
-    assert_type("1L") { |mod| mod.long }
+  it "types a int64" do
+    assert_type("1_i64") { |mod| mod.int64 }
   end
 
-  it "types a float" do
-    assert_type("2.3f") { |mod| mod.float }
+  it "types a float32" do
+    assert_type("2.3f") { |mod| mod.float32 }
   end
 
-  it "types a double" do
-    assert_type("2.3") { |mod| mod.double }
+  it "types a float64" do
+    assert_type("2.3") { |mod| mod.float64 }
   end
 
   it "types a char" do

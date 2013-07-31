@@ -27,20 +27,29 @@ module Crystal
       node.type = mod.bool
     end
 
-    def visit(node : IntLiteral)
-      node.type = mod.int
-    end
-
-    def visit(node : LongLiteral)
-      node.type = mod.long
-    end
-
-    def visit(node : FloatLiteral)
-      node.type = mod.float
-    end
-
-    def visit(node : DoubleLiteral)
-      node.type = mod.double
+    def visit(node : NumberLiteral)
+      node.type = case node.kind
+                  when :i8
+                    mod.int8
+                  when :i16
+                    mod.int16
+                  when :i32
+                    mod.int32
+                  when :i64
+                    mod.int64
+                  when :u8
+                    mod.int8
+                  when :u16
+                    mod.int16
+                  when :u32
+                    mod.int32
+                  when :u64
+                    mod.int64
+                  when :f32
+                    mod.float32
+                  when :f64
+                    mod.float64
+                  end
     end
 
     def visit(node : CharLiteral)
