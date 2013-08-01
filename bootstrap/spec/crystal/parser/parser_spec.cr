@@ -67,6 +67,14 @@ class String
   def string
     StringLiteral.new self
   end
+
+  def f32
+    NumberLiteral.new self, :f32
+  end
+
+  def f64
+    NumberLiteral.new self, :f64
+  end
 end
 
 module Crystal
@@ -116,9 +124,11 @@ describe "Parser" do
   it_parses "+1.0", 1.0.f64
   it_parses "-1.0", -1.0.f64
 
-  it_parses "1.0f", 1.0.f32
-  it_parses "+1.0f", 1.0.f32
-  it_parses "-1.0f", -1.0.f32
+  it_parses "1.0_f32", "1.0".f32
+  it_parses "+1.0_f32", "+1.0".f32
+  it_parses "-1.0_f32", "-1.0".f32
+
+  it_parses "2.3_f32", 2.3.f32
 
   it_parses "'a'", CharLiteral.new("a")
 

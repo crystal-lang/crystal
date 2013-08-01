@@ -669,8 +669,7 @@ module Crystal
           end
 
           if @buffer.value == 'f' || @buffer.value == 'F'
-            next_char
-            @token.number_kind = :f32
+            consume_float_suffix { :f64 }
           else
             @token.number_kind = :f64
           end
@@ -678,8 +677,7 @@ module Crystal
           @token.number_kind = :i32
         end
       when 'f', 'F'
-        next_char
-        @token.number_kind = :f32
+        consume_float_suffix { :i32 }
       when 'i'
         if @buffer[1] == '8'
           next_char
@@ -733,6 +731,22 @@ module Crystal
       string_value = String.from_cstr(start, count)
       string_value = string_value.delete('_') if has_underscore
       @token.value = string_value
+    end
+
+    def consume_float_suffix
+      if @buffer[1] == '3' && @buffer[2] == '2'
+        next_char
+        next_char
+        next_char
+        @token.number_kind = :f32
+      elsif @buffer[1] == '6' && @buffer[2] == '4'
+        next_char
+        next_char
+        next_char
+        @token.number_kind = :f64
+      else
+        @token.number_kind = yield
+      end
     end
 
     def next_char_no_column_increment

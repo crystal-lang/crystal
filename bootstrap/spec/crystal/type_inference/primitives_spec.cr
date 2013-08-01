@@ -20,11 +20,11 @@ describe "Type inference: primitives" do
   end
 
   it "types a float32" do
-    assert_type("2.3f") { |mod| mod.float32 }
+    assert_type("2.3_f32") { |mod| mod.float32 }
   end
 
   it "types a float64" do
-    assert_type("2.3") { |mod| mod.float64 }
+    assert_type("2.3_f64") { |mod| mod.float64 }
   end
 
   it "types a char" do

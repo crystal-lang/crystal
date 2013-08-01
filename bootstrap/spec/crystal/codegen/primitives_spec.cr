@@ -22,10 +22,10 @@ describe "Code gen: primitives" do
   end
 
   it "codegens f32" do
-    run("1; 2.5f").to_f32.should eq(2.5_f32)
+    run("1; 2.5_f32").to_f32.should eq(2.5_f32)
   end
 
   it "codegens f64" do
-    run("1; 2.5").to_f64.should eq(2.5_f64)
+    run("1; 2.5_f64").to_f64.should eq(2.5_f64)
   end
 end
