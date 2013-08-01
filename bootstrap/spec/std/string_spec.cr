@@ -216,4 +216,14 @@ describe "String" do
     reversed.length.should eq(6)
     reversed.should eq("raboof")
   end
+
+  it "replaces char with string" do
+    replaced = "foobar".replace('o', "ex")
+    replaced.length.should eq(8)
+    replaced.should eq("fexexbar")
+  end
+
+  it "inspects" do
+    %("hello").inspect.should eq("\"\\\"hello\\\"\"")
+  end
 end

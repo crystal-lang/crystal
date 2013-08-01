@@ -180,6 +180,34 @@ class String
     end
   end
 
+  def replace(char : Char, replacement : String)
+    chars = Array(Char).new(length + 5)
+
+    # This is to put the length
+    chars << '\0'
+    chars << '\0'
+    chars << '\0'
+    chars << '\0'
+
+    new_length = 0
+    each_char do |my_char|
+      if my_char == char
+        replacement.each_char do |other_char|
+          chars << other_char
+        end
+        new_length += replacement.length
+      else
+        chars << my_char
+        new_length += 1
+      end
+    end
+    chars << '\0'
+
+    buffer = chars.buffer
+    buffer.as(Int32).value = new_length
+    buffer.as(String)
+  end
+
   def delete(char : Char)
     new_length = length
     str = Pointer(Char).malloc(length + 5)
@@ -324,7 +352,7 @@ class String
   end
 
   def inspect
-    "\"#{to_s}\""
+    "\"#{to_s.replace('"', "\\\"")}\""
   end
 
   def starts_with?(str)
