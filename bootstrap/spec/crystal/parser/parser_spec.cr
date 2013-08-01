@@ -132,8 +132,8 @@ describe "Parser" do
 
   it_parses "'a'", CharLiteral.new("a")
 
-  it_parses "\"foo\"", StringLiteral.new("foo")
-  it_parses "\"\"", StringLiteral.new("")
+  it_parses %("foo"), StringLiteral.new("foo")
+  it_parses %(""), StringLiteral.new("")
 
   it_parses ":foo", SymbolLiteral.new("foo")
 
