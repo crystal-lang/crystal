@@ -98,6 +98,9 @@ module Crystal
       elsif match = scan(/"[^\\#\n]*?"/)
         @token.type = :STRING
         @token.value = match[1 .. -2]
+      elsif match = scan(/%\([^\\#\n]*?\)/)
+        @token.type = :STRING
+        @token.value = match[2 .. -2]
       elsif match = scan(/"/)
         @token.type = :STRING_START
       elsif match = scan(/:[a-zA-Z_][a-zA-Z_0-9]*((\?|!)|\b)/)
