@@ -480,13 +480,22 @@ module Crystal
     end
 
     def instantiate(type_vars)
-      generic_types[type_vars.map(&:type_id)] ||= instance_class.new(self, Hash[
+      key = type_vars.map(&:type_id)
+      if (instance = generic_types[key])
+        return instance
+      end
+
+      instance = instance_class.new(self, Hash[
         self.type_vars.zip(type_vars).map do |name, type|
           var = Var.new(name, type)
           var.bind_to var
           [name, var]
         end
       ])
+
+      generic_types[key] = instance
+      instance.after_initialize
+      instance
     end
 
     def generic?
@@ -845,7 +854,9 @@ module Crystal
       @generic_class = generic_class
       @subclasses = []
       @type_vars = type_vars
+    end
 
+    def after_initialize
       @generic_class.superclass.add_subclass(self)
     end
 
