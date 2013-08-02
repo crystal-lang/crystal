@@ -64,8 +64,21 @@ module Crystal
       puts "TODO: codegen #{node}"
     end
 
-    def visit(node : IntLiteral)
-      @last = LLVM::Int32.from_i(node.value.to_i)
+    def visit(node : NumberLiteral)
+      case node.kind
+      when :i8, :u8
+        @last = LLVM::Int8.from_i(node.value.to_i)
+      when :i16, :u16
+        @last = LLVM::Int16.from_i(node.value.to_i)
+      when :i32, :u32
+        @last = LLVM::Int32.from_i(node.value.to_i)
+      when :i64, :u64
+        @last = LLVM::Int32.from_i(node.value.to_i64)
+      when :f32
+        @last = LLVM::Float.from_s(node.value)
+      when :f64
+        @last = LLVM::Double.from_s(node.value)
+      end
     end
 
     def visit(node : BoolLiteral)
@@ -75,15 +88,7 @@ module Crystal
     def visit(node : LongLiteral)
       @last = LLVM::Int64.from_i(node.value.to_i)
     end
-
-    def visit(node : FloatLiteral)
-      @last = LLVM::Float.from_s(node.value)
-    end
-
-    def visit(node : DoubleLiteral)
-      @last = LLVM::Double.from_s(node.value)
-    end
-
+    
     def visit(node : CharLiteral)
       @last = LLVM::Int8.from_i(node.value[0].ord)
     end
