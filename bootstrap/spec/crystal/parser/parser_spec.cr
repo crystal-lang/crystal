@@ -1,7 +1,5 @@
 #!/usr/bin/env bin/crystal -run
-require "spec"
-require "../../../../bootstrap/crystal/parser"
-require "../../../../bootstrap/crystal/to_s"
+require "../../spec_helper"
 
 include Crystal
 

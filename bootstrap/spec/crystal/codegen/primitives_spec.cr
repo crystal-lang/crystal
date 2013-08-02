@@ -1,5 +1,4 @@
-require "spec"
-require "../../../../bootstrap/crystal/codegen"
+require "../../spec_helper"
 
 include Crystal
 

@@ -1,8 +1,5 @@
 #!/usr/bin/env bin/crystal -run
-require "spec"
 require "../../spec_helper"
-require "../../../../bootstrap/crystal/parser"
-require "../../../../bootstrap/crystal/type_inference"
 
 include Crystal
 
@@ -35,9 +32,9 @@ describe "Type inference: primitives" do
     assert_type(":foo") { |mod| mod.symbol }
   end
 
-  # it "types an expression" do
-  #   input = Parser.parse "1; 1.1"
-  #   mod = infer_type input
-  #   input.type.should eq(mod.double)
-  # end
+  it "types an expression" do
+    input = Parser.parse "1; 'a'"
+    mod = infer_type input
+    input.type.should eq(mod.char)
+  end
 end

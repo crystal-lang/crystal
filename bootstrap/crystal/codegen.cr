@@ -61,7 +61,7 @@ module Crystal
     end
 
     def visit(node : ASTNode)
-      puts "TODO: codegen #{node}"
+      true
     end
 
     def visit(node : NumberLiteral)

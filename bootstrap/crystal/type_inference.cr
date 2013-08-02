@@ -21,6 +21,7 @@ module Crystal
     end
 
     def visit(node : ASTNode)
+      true
     end
 
     def visit(node : BoolLiteral)

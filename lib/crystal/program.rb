@@ -276,7 +276,7 @@ module Crystal
     end
 
     def require(filename, relative_to = nil)
-      if File.exists?(filename) && File.absolute_path(filename) == filename
+      if File.exists?(filename) && Pathname.new(filename).absolute?
         return require_absolute filename
       end
 

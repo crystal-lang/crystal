@@ -1,3 +1,6 @@
+require "spec"
+require "../crystal/**"
+
 def assert_type(str)
   input = Parser.parse str
   mod = infer_type input
