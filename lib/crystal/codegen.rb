@@ -872,8 +872,12 @@ module Crystal
       end
 
       node.args.each_with_index do |arg, i|
-        if arg.out? && arg.is_a?(Var)
-          call_args << @vars[arg.name][:ptr]
+        if arg.out?
+          if arg.is_a?(Var)
+            call_args << @vars[arg.name][:ptr]
+          else # arg.is_a?(InstanceVar)
+            call_args << (gep llvm_self_ptr, 0, @type.index_of_instance_var(arg.name))
+          end
         else
           accept(arg)
           call_args << @last
