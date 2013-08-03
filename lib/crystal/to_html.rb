@@ -339,11 +339,13 @@ module Crystal
 
     def visit_var(node)
       @str << "out " if node.out
+      @str << "<span title='#{node.type}'>"
       if node.name
         @str << node.name
       else
         @str << '?'
       end
+      @str << "</span>"
     end
 
     def visit_global(node)
@@ -408,7 +410,9 @@ module Crystal
 
     def visit_instance_var(node)
       @str << "out " if node.out
+      @str << "<span title='#{node.type}'>"
       @str << node.name
+      @str << "</span>"
     end
 
     def visit_expressions(node)
