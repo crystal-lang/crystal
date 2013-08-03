@@ -38,6 +38,7 @@ module Crystal
       when If, Case, Unless, And, Or, Expressions, Block
       when While
         reset_instance_variables_indices
+        @dead_code = false
       else
         @dead_code = false
       end
