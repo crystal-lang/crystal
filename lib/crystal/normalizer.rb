@@ -36,6 +36,8 @@ module Crystal
       when Return, Break, Next
         @dead_code = true
       when If, Case, Unless, And, Or, Expressions, Block
+      when While
+        reset_instance_variables_indices
       else
         @dead_code = false
       end
@@ -416,6 +418,8 @@ module Crystal
     end
 
     def transform_while(node)
+      reset_instance_variables_indices
+
       before_cond_vars = @vars.clone
       node.cond = node.cond.transform(self)
       after_cond_vars = @vars.clone
