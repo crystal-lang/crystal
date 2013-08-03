@@ -676,7 +676,7 @@ module Crystal
         @yield_vars.each_with_index do |var, i|
           exp = node.exps[i]
           if exp
-            if !exp.type.equal?(var.type)
+            unless exp.type.is_restriction_of?(var.type, exp.type)
               exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp.type}"
             end
             exp.freeze_type = true

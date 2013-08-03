@@ -343,4 +343,23 @@ describe 'Block inference' do
       end
       )) { char }
   end
+
+  it "checks block type with hierarchy type" do
+    assert_type(%q(
+      require "prelude"
+
+      class A
+      end
+
+      class B < A
+      end
+
+      a = [] of A
+      a << B.new
+
+      a.map { |x| x.to_s }
+
+      1
+      )) { int32 }
+  end
 end
