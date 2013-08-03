@@ -148,17 +148,28 @@ module Crystal
     end
 
     def visit_call(node)
+      need_parens = node.obj.is_a?(Call) || node.obj.is_a?(Assign)
+
       if node.obj && node.name == :'[]'
+
+        @str << "(" if need_parens
         node.obj.accept self
         @str << decorate_call(node, "[")
+        @str << ")" if need_parens
+
+        @str << "["
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           arg.accept self
         end
         @str << decorate_call(node, "]")
       elsif node.obj && node.name == :'[]='
+        @str << "(" if need_parens
         node.obj.accept self
         @str << decorate_call(node, "[")
+        @str << ")" if need_parens
+
+        @str << "["
         node.args[0].accept self
         @str << decorate_call(node, "] = ")
         node.args[1].accept self
@@ -172,7 +183,10 @@ module Crystal
         node.obj.accept self
         @str << ")"
       elsif node.obj && !is_alpha(node.name) && node.args.length == 1
+        @str << "(" if need_parens
         node.obj.accept self
+        @str << ")" if need_parens
+
         @str << " "
         @str << decorate_call(node, node.name.to_s)
         @str << " "

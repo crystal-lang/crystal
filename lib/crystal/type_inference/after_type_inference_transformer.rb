@@ -45,6 +45,33 @@ module Crystal
       node
     end
 
+    def transform_expressions(node)
+      exps = []
+      node.expressions.each do |exp|
+        new_exp = exp.transform(self)
+        if new_exp
+          if new_exp.is_a?(Expressions)
+            exps.concat new_exp.expressions
+          else
+            exps << new_exp
+          end
+
+          if new_exp.type && new_exp.type.no_return?
+            break
+          end
+        end
+      end
+      case exps.length
+      when 0
+        nil
+      when 1
+        exps[0]
+      else
+        node.expressions = exps
+        node
+      end
+    end
+
     def transform_call(node)
       super
 
