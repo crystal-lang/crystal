@@ -197,7 +197,7 @@ describe Lexer do
 
   it "lexes __DIR__" do
     lexer = Lexer.new "__DIR__"
-    lexer.filename = '/Users/foo/bar'
+    lexer.filename = '/Users/foo/bar.cr'
     token = lexer.next_token
     token.type.should eq(:STRING)
     token.value.should eq('/Users/foo')

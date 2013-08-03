@@ -148,6 +148,8 @@ module Crystal
           else
             next_char :"-@"
           end
+        when '>'
+          next_char :"->"
         when '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number(@buffer - 1, 2)
         else
@@ -186,6 +188,13 @@ module Crystal
         case next_char
         when '='
           next_char :"%="
+        when 'w'
+          if @buffer[1] == '('
+            next_char
+            next_char :STRING_ARRAY_START
+          else
+            @token.type = :"%"
+          end
         else
           @token.type = :"%"
         end
@@ -565,6 +574,16 @@ module Crystal
         case next_char
         when '_'
           case next_char
+          when 'D'
+            if next_char == 'I' && next_char == 'R' next_char == '_' && next_char == '_'
+              if @buffer[1].ident_part_or_end?
+                scan_ident(start, start_column)
+              else
+                @token.type = :STRING
+                @token.value = @filename ? File.dirname(@filename) : "-"
+                return @token
+              end
+            end
           when 'F'
             if next_char == 'I' && next_char == 'L' && next_char == 'E' && next_char == '_' && next_char == '_'
               if @buffer[1].ident_part_or_end?
@@ -747,6 +766,38 @@ module Crystal
       else
         @token.number_kind = yield
       end
+    end
+
+    def next_string_array_token
+      while true
+        if @buffer.value == '\n'
+          next_char
+          @column_number = 1
+          @line_number += 1
+        elsif @buffer.value.whitespace?
+          next_char
+        else
+          break
+        end
+      end
+
+      if @buffer.value == ')'
+        next_char
+        @token.type = :STRING_ARRAY_END
+        return @token
+      end
+
+      start = @buffer
+      count = 0
+      while !@buffer.value.whitespace? && @buffer.value != '\0' && @buffer.value != ')'
+        next_char
+        count += 1
+      end
+
+      @token.type = :STRING
+      @token.value = String.from_cstr(start, count)
+
+      @token
     end
 
     def next_char_no_column_increment
