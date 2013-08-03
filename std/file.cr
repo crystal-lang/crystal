@@ -11,6 +11,7 @@ lib C
   fun ftell(file : File) : Int64
   fun fread(buffer : Char*, size : Int64, nitems : Int64, file : File) : Int32
   fun access(filename : Char*, how : Int32) : Int32
+  fun dirname(filenane : Char*) : Char*
 
   SEEK_SET = 0
   SEEK_CUR = 1
@@ -56,6 +57,10 @@ class File < IO
 
   def self.exists?(filename)
     C.access(filename, C::F_OK) == 0
+  end
+
+  def self.dirname(filename)
+    String.from_cstr(C.dirname(filename))
   end
 
   def self.open(filename, mode)

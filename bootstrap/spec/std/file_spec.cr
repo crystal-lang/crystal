@@ -14,4 +14,8 @@ describe "File" do
   it "tests exists? and gives false" do
     File.exists?("#{__DIR__}/data/non_existing_file.txt").should be_false
   end
+
+  it "gets dirname" do
+    File.dirname("/Users/foo/bar.cr").should eq("/Users/foo")
+  end
 end
