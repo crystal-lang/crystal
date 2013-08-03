@@ -302,14 +302,14 @@ class Array(T)
   end
 
   def to_s
-    str = StringBuilder.new
-    str << "["
-    each_with_index do |elem, i|
-      str << ", " if i > 0
-      str << elem.inspect
+    String.build do |str|
+      str << "["
+      each_with_index do |elem, i|
+        str << ", " if i > 0
+        str << elem.inspect
+      end
+      str << "]"
     end
-    str << "]"
-    str.to_s
   end
 
   def sort!

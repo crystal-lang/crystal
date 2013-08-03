@@ -21,13 +21,13 @@ module Xml
       if child_nodes.count == 0
         "<#{name}/>"
       else
-        builder = StringBuilder.new
-        builder << "<#{name}>"
-        child_nodes.each do |child|
-          builder << child.to_s
+        String.build do |str|
+          str << "<#{name}>"
+          child_nodes.each do |child|
+            str << child.to_s
+          end
+          str << "</#{name}>"
         end
-        builder << "</#{name}>"
-        builder.to_s
       end
     end
   end

@@ -42,12 +42,12 @@ module Enumerable(T)
   end
 
   def join(sep = "")
-    str = StringBuilder.new
-    each_with_index do |elem, i|
-      str << sep if i > 0
-      str << elem
+    String.build do |str|
+      each_with_index do |elem, i|
+        str << sep if i > 0
+        str << elem
+      end
     end
-    str.to_s
   end
 
   def to_a

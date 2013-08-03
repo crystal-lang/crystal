@@ -51,6 +51,12 @@ class String
     str.as(String)
   end
 
+  def self.build
+    builder = StringBuilder.new
+    yield builder
+    builder.to_s
+  end
+
   def to_i
     C.atoi @c.ptr
   end
@@ -253,9 +259,9 @@ class String
 
   def *(times : Int)
     return "" if times <= 0
-    str = StringBuilder.new
-    times.times { str << self }
-    str.inspect
+    String.build do |str|
+      times.times { str << self }
+    end
   end
 
   def index(c : Char, offset = 0)
