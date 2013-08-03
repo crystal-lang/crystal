@@ -1,5 +1,6 @@
 require 'llvm/transforms/ipo'
 require 'llvm/transforms/scalar'
+require 'fileutils'
 
 module Crystal
   class Compiler
@@ -23,6 +24,9 @@ module Crystal
         end
         opts.on('-types', 'Prints types of global variables') do
           @options[:types] = true
+        end
+        opts.on('--html DIR', 'Dump program to HTML in DIR directory') do |dir|
+          @options[:html] = dir
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
@@ -80,10 +84,11 @@ module Crystal
         filename = File.expand_path(ARGF.filename) unless ARGF.filename == '-'
 
         node = nil
+        src_node = nil
         with_stats_or_profile('parse') do
           parser = Parser.new(source)
           parser.filename = filename
-          node = parser.parse
+          src_node = node = parser.parse
         end
 
         require_node = Require.new(StringLiteral.new("prelude"))
@@ -93,6 +98,12 @@ module Crystal
           node = program.normalize node
         end
         program.infer_type node, @options
+
+        if html_dir = @options[:html]
+          FileUtils.mkpath html_dir
+          FileUtils.rm Dir[File.join(html_dir, "*.html")]
+          src_node.to_html(html_dir, 'main.html')
+        end
 
         graph node, program, @options[:output_filename] if @options[:graph]
         print_types node if @options[:types]

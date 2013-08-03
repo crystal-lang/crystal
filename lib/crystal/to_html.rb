@@ -1,0 +1,773 @@
+module Crystal
+  class ASTNode
+    def to_html(dir, filename)
+      path = File.join(dir, filename)
+      return if File.exists?(path)
+      File.write(path, "")
+      visitor = ToHTMLVisitor.new(dir)
+      self.accept visitor
+      title = case self
+      when Crystal::Def
+        "#{self.owner}##{self.name}(#{self.args.map(&:type).join ', '})"
+      else
+        "main"
+      end
+      File.write(path, %(<html><body><h1>#{title}</h1><pre>#{visitor.to_s}</pre></body></html>))
+    end
+  end
+
+  class ToHTMLVisitor < Visitor
+    def initialize(dir)
+      @dir = dir
+      @str = ""
+      @indent = 0
+    end
+
+    def generate_target_def_selector(call)
+      selector = "<html><body><ul>"
+      call.target_defs.each do |target_def|
+        selector << "<li><a href='#{target_def.object_id}.html'>#{target_def.owner}##{target_def.name}(#{target_def.args.map(&:type).join ', '})</a></li>"
+      end
+      selector << "</ul></body></html>"
+      File.write(File.join(@dir, "#{call.object_id}.html"), selector)
+    end
+
+    def visit_allocate(node)
+      @str << 'allocate()'
+    end
+
+    def visit_nil_literal(node)
+      @str << 'nil'
+    end
+
+    def visit_bool_literal(node)
+      @str << (node.value ? 'true' : 'false')
+    end
+
+    def visit_number_literal(node)
+      @str << node.value.to_s
+      if node.kind != :i32 && node.kind != :f64
+        @str << "_"
+        @str << node.kind.to_s
+      end
+    end
+
+    def visit_char_literal(node)
+      @str << "'"
+      case node.value.chr
+      when ?\t
+        @str << '\t'
+      when ?\n
+        @str << '\n'
+      when ?\r
+        @str << '\r'
+      when ?\0
+        @str << '\0'
+      else
+        @str << node.value.chr
+      end
+      @str << "'"
+    end
+
+    def visit_string_literal(node)
+      @str << '"'
+      @str << node.value.gsub('"', "\\\"")
+      @str << '"'
+    end
+
+    def visit_string_interpolation(node)
+      @str << '"'
+      node.expressions.each do |exp|
+        if exp.is_a?(StringLiteral)
+          @str << exp.value.gsub('"', "\\\"")
+        else
+          @str << '#{'
+          exp.accept(self)
+          @str << '}'
+        end
+      end
+      @str << '"'
+      false
+    end
+
+    def visit_symbol_literal(node)
+      @str << ':'
+      @str << node.value
+    end
+
+    def visit_range_literal(node)
+      node.from.accept self
+      if node.exclusive
+        @str << '..'
+      else
+        @str << '...'
+      end
+      node.to.accept self
+      false
+    end
+
+    def visit_regexp_literal(node)
+      @str << '/'
+      @str << node.value
+      @str << '/'
+    end
+
+    def visit_array_literal(node)
+      @str << '['
+      node.elements.each_with_index do |exp, i|
+        @str << ', ' if i > 0
+        exp.accept self
+      end
+      @str << ']'
+      if node.of
+        @str << ' of '
+        node.of.accept self
+      end
+      false
+    end
+
+    def visit_hash_literal(node)
+      @str << '{'
+      node.keys.each_with_index do |key, i|
+        @str << ', ' if i > 0
+        key.accept self
+        @str << ' => '
+        node.values[i].accept self
+      end
+      @str << '}'
+
+      if node.of_key
+        @str << " of "
+        node.of_key.accept self
+        @str << " => "
+        node.of_value.accept self
+      end
+      false
+    end
+
+    def visit_and(node)
+      to_s_binary node, '&&'
+    end
+
+    def visit_or(node)
+      to_s_binary node, '||'
+    end
+
+    def visit_simple_or(node)
+      to_s_binary node, 'or'
+    end
+
+    def to_s_binary(node, op)
+      node.left.accept self
+      @str << ' '
+      @str << op
+      @str << ' '
+      node.right.accept self
+      false
+    end
+
+    def visit_call(node)
+      if node.obj && node.name == :'[]'
+        node.obj.accept self
+        @str << "["
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+        end
+        @str << "]"
+      elsif node.obj && node.name == :'[]='
+        node.obj.accept self
+        @str << "["
+        node.args[0].accept self
+        @str << "] = "
+        node.args[1].accept self
+      elsif node.obj && !is_alpha(node.name) && node.args.length == 0
+        if node.name.to_s.end_with? '@'
+          @str << node.name[0 ... -1].to_s
+        else
+          @str << node.name.to_s
+        end
+        @str << "("
+        node.obj.accept self
+        @str << ")"
+      elsif node.obj && !is_alpha(node.name) && node.args.length == 1
+        node.obj.accept self
+        @str << " "
+        @str << node.name.to_s
+        @str << " "
+        node.args[0].accept self
+      else
+        if node.obj
+          need_parens = node.obj.is_a?(Call) || node.obj.is_a?(Assign)
+          @str << "(" if need_parens
+          node.obj.accept self
+          @str << ")" if need_parens
+          @str << "."
+        end
+        if node.name.to_s.end_with?('=')
+          @str << node.name.to_s[0 .. -2]
+          @str << " = "
+          node.args.each_with_index do |arg, i|
+            @str << ", " if i > 0
+            arg.accept self
+          end
+        else
+          if node.target_defs
+            node.target_defs.each do |target_def|
+              target_def.to_html(@dir, "#{target_def.object_id}.html")
+            end
+          end
+          link = if node.target_defs == nil
+            ""
+          elsif node.target_defs.length == 1
+            node.target_defs.first.object_id
+          else
+            generate_target_def_selector(node)
+            node.object_id
+          end
+          @str << "<a href='#{link}.html' title='#{node.type}'>"
+          @str << node.name.to_s
+          @str << "</a>"
+          @str << "(" unless node.obj && node.args.empty?
+          node.args.each_with_index do |arg, i|
+            @str << ", " if i > 0
+            arg.accept self
+          end
+          @str << ")" unless node.obj && node.args.empty?
+        end
+      end
+      if node.block
+        @str << " "
+        node.block.accept self
+      end
+      false
+    end
+
+    def visit_require(node)
+      @str << 'require '
+      node.string.accept self
+      false
+    end
+
+    def is_alpha(string)
+      c = string.to_s[0].downcase
+      'a' <= c && c <= 'z'
+    end
+
+    def visit_block(node)
+      @str << "do"
+
+      unless node.args.empty?
+        @str << " |"
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+        end
+        @str << "|"
+      end
+
+      @str << "\n"
+      accept_with_indent(node.body)
+
+      append_indent
+      @str << "end"
+
+      false
+    end
+
+    def visit_def(node)
+      @str << "def "
+      if node.receiver
+        node.receiver.accept self
+        @str << "."
+      end
+      @str << node.name.to_s
+      if node.args.length > 0 || node.block_arg
+        @str << "("
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+          i += 1
+        end
+        if node.block_arg
+          @str << ", " if node.args.length > 0
+          @str << "&"
+          node.block_arg.accept self
+        end
+        @str << ")"
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit_macro(node)
+      @str << "macro "
+      if node.receiver
+        node.receiver.accept self
+        @str << "."
+      end
+      @str << node.name.to_s
+      if node.args.length > 0
+        @str << "("
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+          i += 1
+
+        end
+        @str << ")"
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit_frozen_def(node)
+      visit_def(node)
+      false
+    end
+
+    def visit_external(node)
+      visit_def(node)
+      false
+    end
+
+    def visit_var(node)
+      @str << "out " if node.out
+      if node.name
+        @str << node.name
+      else
+        @str << '?'
+      end
+    end
+
+    def visit_global(node)
+      @str << node.name
+    end
+
+    def visit_arg(node)
+      if node.name
+        @str << node.name
+      else
+        @str << '?'
+      end
+      if node.default_value
+        @str << ' = '
+        node.default_value.accept self
+      end
+      if node.type_restriction
+        @str << ' : '
+        if node.type_restriction.is_a?(ASTNode)
+          node.type_restriction.accept self
+        else
+          @str << node.type_restriction.to_s
+        end
+      end
+      false
+    end
+
+    def visit_block_arg(node)
+      @str << node.name
+      if node.inputs || node.output
+        @str << " : "
+        if node.inputs
+          node.inputs.each_with_index do |input, i|
+            @str << ", " if i > 0
+            input.accept self
+          end
+        end
+        @str << " -> "
+        node.output.accept self if node.output
+      end
+      false
+    end
+
+    def visit_ident(node)
+      node.names.each_with_index do |name, i|
+        @str << '::' if i > 0 || node.global
+        @str << name
+      end
+    end
+
+    def visit_ident_union(node)
+      node.idents.each_with_index do |ident, i|
+        @str << " | " if  i > 0
+        ident.accept self
+      end
+      false
+    end
+
+    def visit_self_type(node)
+      @str << "self"
+    end
+
+    def visit_instance_var(node)
+      @str << "out " if node.out
+      @str << node.name
+    end
+
+    def visit_expressions(node)
+      node.expressions.each do |exp|
+        append_indent
+        exp.accept self
+        @str << "\n"
+      end
+      false
+    end
+
+    def visit_if(node)
+      @str << "if "
+      node.cond.accept self
+      @str << "\n"
+      accept_with_indent(node.then)
+      if node.else
+        append_indent
+        @str << "else\n"
+        accept_with_indent(node.else)
+      end
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit_unless(node)
+      @str << "if "
+      node.cond.accept self
+      @str << "\n"
+      accept_with_indent(node.then)
+      if node.else
+        append_indent
+        @str << "else\n"
+        accept_with_indent(node.else)
+      end
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit_class_def(node)
+      return false
+      @str << "abstract " if node.abstract
+      @str << "class "
+      @str << node.name
+      if node.type_vars
+        @str << "("
+        node.type_vars.each_with_index do |type_var, i|
+          @str << ", " if i > 0
+          @str << type_var.to_s
+        end
+        @str << ")"
+      end
+      if node.superclass
+        @str << " < "
+        node.superclass.accept self
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      @str << "end"
+      false
+    end
+
+    def visit_module_def(node)
+      return false
+      @str << "module "
+      @str << node.name
+      if node.type_vars
+        @str << "("
+        node.type_vars.each_with_index do |type_var, i|
+          @str << ", " if i > 0
+          @str << type_var.to_s
+        end
+        @str << ")"
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      @str << "end"
+      false
+    end
+
+    def visit_include(node)
+      @str << "include "
+      node.name.accept self
+      false
+    end
+
+    def visit_assign(node)
+      node.target.accept self
+      @str << " = "
+      if node.value.is_a?(Expressions)
+        @str << "begin\n"
+        accept_with_indent(node.value)
+        append_indent
+        @str << "end"
+      else
+        node.value.accept self
+      end
+      false
+    end
+
+    def visit_multi_assign(node)
+      node.targets.each_with_index do |target, i|
+        @str << ", " if i > 0
+        target.accept self
+      end
+      @str << " = "
+      node.values.each_with_index do |value, i|
+        @str << ", " if i > 0
+        value.accept self
+      end
+      false
+    end
+
+    def visit_while(node)
+      if node.run_once
+        if node.body.is_a?(Expressions)
+          @str << "begin\n"
+          accept_with_indent(node.body)
+          append_indent
+          @str << "end while "
+        else
+          node.body.accept self
+          @str << " while "
+        end
+        node.cond.accept self
+      else
+        @str << "while "
+        node.cond.accept self
+        @str << "\n"
+        accept_with_indent(node.body)
+        append_indent
+        @str << "end"
+      end
+      false
+    end
+
+    def visit_lib_def(node)
+      return false
+      @str << "lib "
+      @str << node.name
+      if node.libname
+        @str << "('"
+        @str << node.libname
+        @str << "')"
+      end
+      @str << "\n"
+      accept_with_indent(node.body)
+      append_indent
+      @str << 'end'
+      false
+    end
+
+    def visit_fun_def(node)
+      @str << 'fun '
+      if node.name == node.real_name
+        @str << node.name
+      else
+        @str << node.name
+        @str << ' = '
+        @str << node.real_name
+      end
+      if node.args.length > 0
+        @str << '('
+        node.args.each_with_index do |arg, i|
+          @str << ', ' if i > 0
+          arg.accept self
+        end
+        if node.varargs
+          @str << ', ...'
+        end
+        @str << ')'
+      end
+      if node.return_type
+        @str << ' : '
+        node.return_type.accept self
+        node.ptr.times do
+          @str << '*'
+        end
+      end
+      false
+    end
+
+    def visit_fun_def_arg(node)
+      @str << node.name.to_s
+      @str << ' : '
+      node.type.accept self
+      node.ptr.times do
+        @str << '*'
+      end
+      false
+    end
+
+    def visit_type_def(node)
+      @str << 'type '
+      @str << node.name.to_s
+      @str << ' : '
+      node.type.accept self
+      node.ptr.times do
+        @str << '*'
+      end
+      false
+    end
+
+    def visit_struct_def(node)
+      @str << 'struct '
+      @str << node.name.to_s
+      @str << "\n"
+      with_indent do
+        node.fields.each do |field|
+          append_indent
+          field.accept self
+          @str << "\n"
+        end
+      end
+      append_indent
+      @str << 'end'
+      false
+    end
+
+    def visit_union_def(node)
+      @str << 'union '
+      @str << node.name.to_s
+      @str << "\n"
+      with_indent do
+        node.fields.each do |field|
+          append_indent
+          field.accept self
+          @str << "\n"
+        end
+      end
+      append_indent
+      @str << 'end'
+      false
+    end
+
+    def visit_enum_def(node)
+      @str << 'enum '
+      @str << node.name.to_s
+      @str << "\n"
+      with_indent do
+        node.constants.each do |constant|
+          append_indent
+          constant.accept self
+          @str << "\n"
+        end
+      end
+      append_indent
+      @str << 'end'
+      false
+    end
+
+    def visit_pointer_of(node)
+      node.var.accept(self)
+      @str << '.ptr'
+      false
+    end
+
+    def visit_is_a(node)
+      node.obj.accept self
+      @str << ".is_a?("
+      node.const.accept self
+      @str << ")"
+      false
+    end
+
+    def visit_case(node)
+      @str << 'case '
+      node.cond.accept self
+      @str << "\n"
+      node.whens.each do |wh|
+        wh.accept self
+      end
+      if node.else
+        @str << "else\n"
+        accept_with_indent node.else
+      end
+      @str << 'end'
+      false
+    end
+
+    def visit_when(node)
+      @str << 'when '
+      node.conds.each_with_index do |cond, i|
+        @str << ', ' if i > 0
+        cond.accept self
+      end
+      @str << "\n"
+      accept_with_indent node.body
+      false
+    end
+
+    def visit_new_generic_class(node)
+      node.name.accept self
+      @str << "("
+      node.type_vars.each_with_index do |var, i|
+        @str << ', ' if i > 0
+        var.accept self
+      end
+      @str << ")"
+      false
+    end
+
+    ['return', 'next', 'break', 'yield'].each do |keyword|
+      class_eval <<-EVAL, __FILE__, __LINE__ + 1
+        def visit_#{keyword}(node)
+          @str << '#{keyword}'
+          if node.exps.length > 0
+            @str << ' '
+            node.exps.each_with_index do |exp, i|
+              @str << ", " if i > 0
+              exp.accept self
+            end
+          end
+          false
+        end
+      EVAL
+    end
+
+    def visit_declare_var(node)
+      @str << node.name
+      @str << " :: "
+      node.declared_type.accept self
+      false
+    end
+
+    def visit_type_merge(node)
+      @str << "<type_merge>("
+      node.expressions.each_with_index do |exp, i|
+        @str << ', ' if i > 0
+        exp.accept self
+      end
+      @str << ")"
+      false
+    end
+
+    def with_indent
+      @indent += 1
+      yield
+      @indent -= 1
+    end
+
+    def accept_with_indent(node)
+      return unless node
+      is_expressions = node.is_a?(Expressions)
+      with_indent do
+        append_indent unless is_expressions
+        node.accept self
+      end
+      @str << "\n" unless is_expressions
+    end
+
+    def append_indent
+      @str << ('  ' * @indent)
+    end
+
+    def to_s
+      @str.strip
+    end
+  end
+end
