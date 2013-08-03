@@ -67,7 +67,7 @@ describe 'Lexer string' do
     token.type.should eq(:STRING_END)
   end
 
-  it "lexes string with slash quote" do
+  it "lexes string with slash t" do
     lexer = Lexer.new(%("\\t"))
 
     token = lexer.next_token

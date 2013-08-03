@@ -188,6 +188,14 @@ module Crystal
         case next_char
         when '='
           next_char :"%="
+        when '('
+          string_start_pair '(', ')'
+        when '['
+          string_start_pair '[', ']'
+        when '{'
+          string_start_pair '{', '}'
+        when '<'
+          string_start_pair '<', '>'
         when 'w'
           if @buffer[1] == '('
             next_char
@@ -196,7 +204,11 @@ module Crystal
             @token.type = :"%"
           end
         else
-          @token.type = :"%"
+          if @buffer.value.alphanumeric?
+            @token.type = :"%"
+          else
+            string_start_pair @buffer.value, @buffer.value
+          end
         end
       when '(' then next_char :"("
       when ')' then next_char :")"
@@ -327,17 +339,11 @@ module Crystal
         end
         next_char
       when '"'
-        start = @buffer + 1
-        count = 0
-        while (char = next_char) != '"' && char != :EOF
-          count += 1
-        end
-        if char != '"'
-          raise "unterminated string literal"
-        end
         next_char
-        @token.type = :STRING
-        @token.value = String.from_cstr(start, count)
+        @token.type = :STRING_START
+        @token.string_nest = '"'
+        @token.string_end = '"'
+        @token.string_open_count = 0
       when '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
         scan_number @buffer, 1
       when '@'
@@ -766,6 +772,95 @@ module Crystal
       else
         @token.number_kind = yield
       end
+    end
+    
+    def next_string_token(string_nest, string_end, string_open_count)
+      case @buffer.value
+      when '\0'
+        raise "unterminated string literal"
+      when string_end
+        next_char
+        if string_open_count == 0
+          @token.type = :STRING_END
+        else
+          @token.type = :STRING
+          @token.value = string_end.to_s
+          @token.string_open_count = string_open_count - 1
+        end
+      when string_nest
+        next_char
+        @token.type = :STRING
+        @token.value = string_nest.to_s
+        @token.string_open_count = string_open_count + 1
+      when '\\'
+        case @buffer[1]
+        when 'n'
+          string_token_escape_value "\n"
+        when 'r'
+          string_token_escape_value "\r"
+        when 't'
+          string_token_escape_value "\t"
+        when 'v'
+          string_token_escape_value "\v"
+        when 'f'
+          string_token_escape_value "\f"
+        when '0'
+          string_token_escape_value "\0"
+        else
+          next_char
+          @token.type = :STRING
+          @token.value = @buffer.value.to_s
+          next_char
+        end
+      when '#'
+        if @buffer[1] == '{'
+          next_char
+          next_char
+          @token.type = :INTERPOLATION_START
+        else
+          next_char
+          @token.type = :STRING
+          @token.value = "#"
+        end
+      when '\n'
+        next_char
+        @column_number = 1
+        @line_number += 1
+        @token.type = :STRING
+        @token.value = "\n"
+      else
+        start = @buffer
+        count = 0
+        while @buffer.value != string_end && 
+              @buffer.value != string_nest &&
+              @buffer.value != '\0' && 
+              @buffer.value != '\\' && 
+              @buffer.value != '#' && 
+              @buffer.value != '\n'
+          next_char
+          count += 1
+        end
+
+        @token.type = :STRING
+        @token.value = String.from_cstr(start, count)
+      end
+
+      @token
+    end
+
+    def string_token_escape_value(value)
+      next_char
+      next_char
+      @token.type = :STRING
+      @token.value = value
+    end
+
+    def string_start_pair(string_nest, string_end)
+      next_char
+      @token.type = :STRING_START
+      @token.string_nest = string_nest
+      @token.string_end = string_end
+      @token.string_open_count = 0
     end
 
     def next_string_array_token

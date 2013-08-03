@@ -1,7 +1,5 @@
 require "../../spec_helper"
 
-include Crystal
-
 describe "Code gen: primitives" do
   it "codegens bool" do
     run("true").to_b.should be_true

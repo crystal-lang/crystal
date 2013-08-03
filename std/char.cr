@@ -16,6 +16,10 @@ class Char
       ('A' <= self && self <= 'Z')
   end
 
+  def alphanumeric?
+    alpha? || digit?
+  end
+
   def whitespace?
     self == ' ' || self == '\t' || self == '\n' || self == '\v' || self == '\f' || self == '\r'
   end

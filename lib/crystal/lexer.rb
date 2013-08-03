@@ -235,9 +235,6 @@ module Crystal
       elsif scan(/\\r/)
         @token.type = :STRING
         @token.value = "\r"
-      elsif scan(/\\"/)
-        @token.type = :STRING
-        @token.value = '"'
       elsif scan(/\\t/)
         @token.type = :STRING
         @token.value = "\t"

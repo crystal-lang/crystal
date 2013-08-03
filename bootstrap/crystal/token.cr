@@ -5,6 +5,9 @@ module Crystal
     attr_accessor :type
     attr_accessor :value
     attr_accessor :number_kind
+    attr_accessor :string_end
+    attr_accessor :string_nest
+    attr_accessor :string_open_count
     attr_accessor :line_number
     attr_accessor :column_number
     attr_accessor :filename

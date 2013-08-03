@@ -3,7 +3,7 @@ require "../../spec_helper"
 
 def it_lexes(string, type)
   it "lexes #{string}" do
-    lexer = Crystal::Lexer.new string
+    lexer = Lexer.new string
     token = lexer.next_token
     token.type.should eq(type)
   end
@@ -11,7 +11,7 @@ end
 
 def it_lexes(string, type, value)
   it "lexes #{string}" do
-    lexer = Crystal::Lexer.new string
+    lexer = Lexer.new string
     token = lexer.next_token
     token.type.should eq(type)
     token.value.should eq(value)
@@ -20,7 +20,7 @@ end
 
 def it_lexes(string, type, value, number_kind)
   it "lexes #{string}" do
-    lexer = Crystal::Lexer.new string
+    lexer = Lexer.new string
     token = lexer.next_token
     token.type.should eq(type)
     token.value.should eq(value)
@@ -72,7 +72,7 @@ end
 
 def it_lexes_char(string, value)
   it "lexes #{string}" do
-    lexer = Crystal::Lexer.new string
+    lexer = Lexer.new string
     token = lexer.next_token
     token.type.should eq(:CHAR)
     token.value.to_s.should eq(value.to_s)
@@ -121,7 +121,6 @@ describe "Lexer" do
   it_lexes "\t", :SPACE
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
-  it_lexes %("foo"), :STRING, "foo"
   it_lexes_keywords [:"def", :"if", :"else", :"elsif", :"end", :"true", :"false", :"class", :"module", :"include", :"while", :"nil", :"do", :"yield", :"return", :"unless", :"next", :"break", :"begin", :"lib", :"fun", :"type", :"struct", :"macro", :"ptr", :"out", :"require", :"case", :"when", :"then", :"of", :"abstract"]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
@@ -183,7 +182,7 @@ describe "Lexer" do
   it_lexes_global_match ["$1", "$10"]
 
   it "lexes not instance var" do
-    lexer = Crystal::Lexer.new "!@foo"
+    lexer = Lexer.new "!@foo"
     token = lexer.next_token
     token.type.should eq(:"!")
     token = lexer.next_token
@@ -192,7 +191,7 @@ describe "Lexer" do
   end
 
   it "lexes space after keyword" do
-    lexer = Crystal::Lexer.new "end 1"
+    lexer = Lexer.new "end 1"
     token = lexer.next_token
     token.type.should eq(:IDENT)
     token.value.should eq(:end)
@@ -201,7 +200,7 @@ describe "Lexer" do
   end
 
   it "lexes space after char" do
-    lexer = Crystal::Lexer.new "'a' "
+    lexer = Lexer.new "'a' "
     token = lexer.next_token
     token.type.should eq(:CHAR)
     token.value.should eq('a')
@@ -210,7 +209,7 @@ describe "Lexer" do
   end
 
   it "lexes comment and token" do
-    lexer = Crystal::Lexer.new "# comment\n="
+    lexer = Lexer.new "# comment\n="
     token = lexer.next_token
     token.type.should eq(:NEWLINE)
     token = lexer.next_token
@@ -218,20 +217,20 @@ describe "Lexer" do
   end
 
   it "lexes comment at the end" do
-    lexer = Crystal::Lexer.new "# comment"
+    lexer = Lexer.new "# comment"
     token = lexer.next_token
     token.type.should eq(:EOF)
   end
 
   it "lexes __LINE__" do
-    lexer = Crystal::Lexer.new "__LINE__"
+    lexer = Lexer.new "__LINE__"
     token = lexer.next_token
     token.type.should eq(:INT)
     token.value.should eq(1)
   end
 
   it "lexes __FILE__" do
-    lexer = Crystal::Lexer.new "__FILE__"
+    lexer = Lexer.new "__FILE__"
     lexer.filename = "foo"
     token = lexer.next_token
     token.type.should eq(:STRING)
@@ -239,7 +238,7 @@ describe "Lexer" do
   end
 
   it "lexes __DIR__" do
-    lexer = Crystal::Lexer.new "__DIR__"
+    lexer = Lexer.new "__DIR__"
     lexer.filename = "/Users/foo/bar.cr"
     token = lexer.next_token
     token.type.should eq(:STRING)
@@ -247,7 +246,7 @@ describe "Lexer" do
   end
 
   it "lexes dot and ident" do
-    lexer = Crystal::Lexer.new ".read"
+    lexer = Lexer.new ".read"
     token = lexer.next_token
     token.type.should eq(:".")
     token = lexer.next_token

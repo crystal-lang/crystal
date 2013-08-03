@@ -1,8 +1,6 @@
 #!/usr/bin/env bin/crystal -run
 require "../../spec_helper"
 
-include Crystal
-
 class Numeric
   def i32
     NumberLiteral.new to_s, :i32
