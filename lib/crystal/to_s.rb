@@ -179,9 +179,10 @@ module Crystal
         node.args[0].accept self
       else
         if node.obj
-          @str << "(" if node.obj.is_a?(Call)
+          need_parens = node.obj.is_a?(Call) || node.obj.is_a?(Assign)
+          @str << "(" if need_parens
           node.obj.accept self
-          @str << ")" if node.obj.is_a?(Call)
+          @str << ")" if need_parens
           @str << "."
         end
         if node.name.to_s.end_with?('=')
