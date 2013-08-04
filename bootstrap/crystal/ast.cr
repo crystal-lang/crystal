@@ -128,6 +128,22 @@ module Crystal
     end
   end
 
+  class StringInterpolation < ASTNode
+    attr_accessor :expressions
+
+    def initialize(expressions)
+      @expressions = expressions
+    end
+
+    def accept_children(visitor)
+      @expressions.each { |e| e.accept visitor }
+    end
+
+    def ==(other : self)
+      other.expressions == expressions
+    end
+  end
+
   class SymbolLiteral < ASTNode
     attr_accessor :value
 

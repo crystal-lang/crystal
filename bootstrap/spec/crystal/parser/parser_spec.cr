@@ -397,11 +397,13 @@ describe "Parser" do
 
   it_parses "A = 1", Assign.new("A".ident, 1.i32)
 
-  # # it_parses "puts %w(one)", Call.new(nil, "puts", [["one".string].array])
+  it_parses "puts %w(one two)", Call.new(nil, "puts", [["one".string, "two".string].array] of ASTNode)
+
+  it_parses "\"foo\#{bar}baz\"", StringInterpolation.new([StringLiteral.new("foo"), "bar".call, StringLiteral.new("baz")])
 
   it_parses "::A::B", Ident.new(["A", "B"], true)
 
   it_parses "$foo", Global.new("$foo")
 
-  # # it_parses "macro foo;end", Macro.new("foo", [] of ASTNode)
+  # it_parses "macro foo;end", Macro.new("foo", [] of ASTNode)
 end

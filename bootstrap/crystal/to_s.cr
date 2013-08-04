@@ -42,6 +42,21 @@ module Crystal
       @str << "\"" << node.value << "\""
     end
 
+    def visit(node : StringInterpolation)
+      @str << '"'
+      node.expressions.each do |exp|
+        if exp.is_a?(StringLiteral)
+          @str << exp.value.replace('"', "\\\"")
+        else
+          @str << "\#{"
+          exp.accept(self)
+          @str << "}"
+        end
+      end
+      @str << '"'
+      false
+    end
+
     def visit(node : ArrayLiteral)
       @str << "["
       node.elements.each_with_index do |exp, i|

@@ -204,11 +204,7 @@ module Crystal
             @token.type = :"%"
           end
         else
-          if @buffer.value.alphanumeric? || @buffer.value == '\0'
-            @token.type = :"%"
-          else
-            string_start_pair @buffer.value, @buffer.value
-          end
+          @token.type = :"%"
         end
       when '(' then next_char :"("
       when ')' then next_char :")"

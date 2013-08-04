@@ -294,23 +294,4 @@ describe "Lexer string" do
       token.type.should eq(:EOF)
     end
   end
-
-  it "lexes simple string with %~" do
-    lexer = Lexer.new("%~hello~")
-
-    token = lexer.next_token
-    token.type.should eq(:STRING_START)
-    token.string_end.should eq('~')
-    token.string_nest.should eq('~')
-
-    token = lexer.next_string_token('~', '~', 0)
-    token.type.should eq(:STRING)
-    token.value.should eq("hello")
-
-    token = lexer.next_string_token('~', '~', 0)
-    token.type.should eq(:STRING_END)
-
-    token = lexer.next_token
-    token.type.should eq(:EOF)
-  end
 end

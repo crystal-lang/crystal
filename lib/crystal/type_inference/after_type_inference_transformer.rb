@@ -140,9 +140,11 @@ module Crystal
     def transform_is_a(node)
       super
 
-      filtered_type = node.obj.type.filter_by(node.const.type.instance_type)
-      unless filtered_type
-        return false_literal
+      if node.obj.type
+        filtered_type = node.obj.type.filter_by(node.const.type.instance_type)
+        unless filtered_type
+          return false_literal
+        end
       end
 
       node

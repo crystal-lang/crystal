@@ -12,6 +12,12 @@ module Crystal
     attr_accessor :column_number
     attr_accessor :filename
 
+    def initialize
+      @string_end = '\0'
+      @string_nest = '\0'
+      @string_open_count = 0
+    end
+
     def location
       Location.new(line_number, column_number, filename)
     end

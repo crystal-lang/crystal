@@ -387,6 +387,8 @@ module Crystal
         node_and_next_token CharLiteral.new(@token.value.to_s)
       when :STRING, :STRING_START
         parse_string
+      when :STRING_ARRAY_START
+        parse_string_array
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :GLOBAL
@@ -524,9 +526,77 @@ module Crystal
     end
 
     def parse_string
-      # if @token.type == :STRING
-        node_and_next_token StringLiteral.new(@token.value.to_s)
-      # end
+      if @token.type == :STRING
+        return node_and_next_token StringLiteral.new(@token.value.to_s)
+      end
+
+      string_nest = @token.string_nest
+      string_end = @token.string_end
+      string_open_count = @token.string_open_count
+
+      check :STRING_START
+
+      next_string_token(string_nest, string_end, string_open_count)
+      string_open_count = @token.string_open_count
+
+      pieces = [] of ASTNode | String
+      has_interpolation = false
+
+      while true
+        case @token.type
+        when :STRING
+          pieces << @token.value.to_s
+
+          next_string_token(string_nest, string_end, string_open_count)
+          string_open_count = @token.string_open_count
+        when :STRING_END
+          next_token
+          break
+        when :EOF
+          raise "Unterminated string literal"
+        else
+          has_interpolation = true
+
+          next_token_skip_space_or_newline
+          pieces << parse_expression
+
+          if @token.type != :"}"
+            raise "Unterminated string interpolation"
+          end
+
+          next_string_token(string_nest, string_end, string_open_count)
+          string_open_count = @token.string_open_count
+        end
+      end
+
+      if has_interpolation
+        pieces = pieces.map do |piece|
+          piece.is_a?(String) ? StringLiteral.new(piece) : piece
+        end
+        StringInterpolation.new(pieces)
+      else
+        StringLiteral.new pieces.join
+      end
+    end
+
+    def parse_string_array
+      strings = [] of StringLiteral
+
+      next_string_array_token
+      while true
+        case @token.type
+        when :STRING
+          strings << StringLiteral.new(@token.value.to_s)
+          next_string_array_token
+        when :STRING_ARRAY_END
+          next_token
+          break
+        when :EOF
+          raise "Unterminated string array literal"
+        end
+      end
+
+      ArrayLiteral.new strings
     end
 
     def parse_array_literal
@@ -997,7 +1067,14 @@ module Crystal
 
       if @token.type == :"("
         next_token_skip_space_or_newline
-        libname = parse_string.value # TODO disallow string interpolation? Use another syntax?
+
+        string_literal = parse_string
+        if string_literal.is_a?(StringLiteral)
+          libname = string_literal.value
+        else
+          raise "Interpolation not allowed in lib name"
+        end
+
         skip_space_or_newline
         check :")"
         next_token_skip_statement_end

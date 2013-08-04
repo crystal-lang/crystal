@@ -89,13 +89,7 @@ module Crystal
     end
 
     def lookup_var(name)
-      if @vars.has_key?(name)
-        var = @vars[name]
-      else
-        var = Var.new name
-        @vars[name] = var
-      end
-      var
+      @vars.fetch_or_assign(name) { Var.new name }
     end
   end
 end

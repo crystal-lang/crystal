@@ -6,7 +6,7 @@ module Crystal
     attr_accessor :freeze_type
 
     def set_type(type)
-      if @freeze_type
+      if @freeze_type && !@type.is_restriction_of_all?(type)
         raise "type must be #{@type}, not #{type}", nil, Crystal::FrozenTypeException
       end
       @type = type
