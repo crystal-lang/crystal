@@ -204,7 +204,7 @@ module Crystal
             @token.type = :"%"
           end
         else
-          if @buffer.value.alphanumeric?
+          if @buffer.value.alphanumeric? || @buffer.value == '\0'
             @token.type = :"%"
           else
             string_start_pair @buffer.value, @buffer.value
@@ -693,16 +693,64 @@ module Crystal
             end
           end
 
+          if @buffer.value == 'e' || @buffer.value == 'E'
+            count += 1
+            next_char
+
+            if @buffer.value == '+' || @buffer.value == '-'
+              count += 1
+              next_char 
+            end
+
+            while true
+              if @buffer.value.digit?
+                count += 1
+              elsif @buffer.value == '_'
+                count += 1
+                has_underscore = true
+              else
+                break
+              end
+              next_char
+            end
+          end
+
           if @buffer.value == 'f' || @buffer.value == 'F'
-            consume_float_suffix { :f64 }
+            consume_float_suffix :f64
           else
             @token.number_kind = :f64
           end
         else
           @token.number_kind = :i32
         end
+      when 'e', 'E'
+        count += 1
+        next_char
+
+        if @buffer.value == '+' || @buffer.value == '-'
+          count += 1
+          next_char 
+        end
+
+        while true
+          if @buffer.value.digit?
+            count += 1
+          elsif @buffer.value == '_'
+            count += 1
+            has_underscore = true
+          else
+            break
+          end
+          next_char
+        end
+
+        if @buffer.value == 'f' || @buffer.value == 'F'
+          consume_float_suffix :f64
+        else
+          @token.number_kind = :f64
+        end
       when 'f', 'F'
-        consume_float_suffix { :i32 }
+        consume_float_suffix :i32
       when 'i'
         if @buffer[1] == '8'
           next_char
@@ -758,7 +806,7 @@ module Crystal
       @token.value = string_value
     end
 
-    def consume_float_suffix
+    def consume_float_suffix(default)
       if @buffer[1] == '3' && @buffer[2] == '2'
         next_char
         next_char
@@ -770,7 +818,7 @@ module Crystal
         next_char
         @token.number_kind = :f64
       else
-        @token.number_kind = yield
+        @token.number_kind = default
       end
     end
     

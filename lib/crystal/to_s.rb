@@ -154,10 +154,10 @@ module Crystal
 
         @str << "(" if need_parens
         node.obj.accept self
-        @str << decorate_call(node, "[")
         @str << ")" if need_parens
 
-        @str << "["
+        @str << decorate_call(node, "[")
+
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           arg.accept self
@@ -166,10 +166,10 @@ module Crystal
       elsif node.obj && node.name == :'[]='
         @str << "(" if need_parens
         node.obj.accept self
-        @str << decorate_call(node, "[")
         @str << ")" if need_parens
 
-        @str << "["
+        @str << decorate_call(node, "[")
+
         node.args[0].accept self
         @str << decorate_call(node, "] = ")
         node.args[1].accept self
