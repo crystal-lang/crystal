@@ -56,6 +56,14 @@ module Crystal
         parents && parents.any? { |parent| parent.is_restriction_of?(type, owner) }
     end
 
+    def is_restriction_of_all?(type)
+      if type.is_a?(UnionType)
+        type.types.all? { |subtype| is_restriction_of? subtype, subtype }
+      else
+        is_restriction_of? type, type
+      end
+    end
+
     def restrict(other)
       ((other.nil? || equal?(other)) && self) ||
       (other.is_a?(UnionType) && other.types.any? { |union_type| self.is_restriction_of?(union_type, nil) } && self) ||

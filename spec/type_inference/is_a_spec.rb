@@ -50,4 +50,15 @@ describe 'Type inference: is_a?' do
     mod, nodes = infer_type nodes
     nodes.last.then.type.should eq(nodes[1].type)
   end
+
+  it "restricts other types inside if else" do
+    assert_type(%q(
+      a = 1 || 'a'
+      if a.is_a?(Int32)
+        a.to_i32
+      else
+        a.ord
+      end
+      )) { int32 }
+  end
 end

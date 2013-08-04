@@ -434,6 +434,10 @@ module Crystal
       nil
     end
 
+    def negate_filters(filters_hash)
+      Hash[filters_hash.map { |key, value| [key, NotFilter.new(value)] }]
+    end
+
     def visit_global(node)
       var = mod.global_vars[node.name] or node.raise "uninitialized global #{node}"
       node.bind_to var
@@ -589,7 +593,11 @@ module Crystal
       end
 
       if node.else
+        @type_filter_stack.push negate_filters(node.cond.type_filters) if node.cond.type_filters
+
         node.else.accept self
+
+        @type_filter_stack.pop if node.cond.type_filters
       end
 
       case node.binary

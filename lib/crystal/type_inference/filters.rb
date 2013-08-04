@@ -62,4 +62,36 @@ module Crystal
       other
     end
   end
+
+  class NotFilter
+    def initialize(filter)
+      @filter = filter
+    end
+
+    def apply(other)
+      types = @filter.apply(other)
+      types = [types] unless types.is_a?(Array)
+
+      if other.is_a?(UnionType)
+        other_types = other.types
+      else
+        other_types = [other]
+      end
+
+      resulting_types = other_types - types
+      case resulting_types.length
+      when 0
+        # TODO: should be nil?
+        other
+      when 1
+        resulting_types.first
+      else
+        Type.merge(*resulting_types)
+      end
+    end
+
+    def to_s
+      "Not(#{@filter})"
+    end
+  end
 end
