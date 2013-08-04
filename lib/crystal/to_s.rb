@@ -150,23 +150,23 @@ module Crystal
     def visit_call(node)
       if node.obj && node.name == :'[]'
         node.obj.accept self
-        @str << "["
+        @str << decorate_call(node, "[")
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           arg.accept self
         end
-        @str << "]"
+        @str << decorate_call(node, "]")
       elsif node.obj && node.name == :'[]='
         node.obj.accept self
-        @str << "["
+        @str << decorate_call(node, "[")
         node.args[0].accept self
-        @str << "] = "
+        @str << decorate_call(node, "] = ")
         node.args[1].accept self
       elsif node.obj && !is_alpha(node.name) && node.args.length == 0
         if node.name.to_s.end_with? '@'
-          @str << node.name[0 ... -1].to_s
+          @str << decorate_call(node, node.name[0 ... -1].to_s)
         else
-          @str << node.name.to_s
+          @str << decorate_call(node, node.name.to_s)
         end
         @str << "("
         node.obj.accept self
@@ -174,7 +174,7 @@ module Crystal
       elsif node.obj && !is_alpha(node.name) && node.args.length == 1
         node.obj.accept self
         @str << " "
-        @str << node.name.to_s
+        @str << decorate_call(node, node.name.to_s)
         @str << " "
         node.args[0].accept self
       else
@@ -186,14 +186,14 @@ module Crystal
           @str << "."
         end
         if node.name.to_s.end_with?('=')
-          @str << node.name.to_s[0 .. -2]
+          @str << decorate_call(node, node.name.to_s[0 .. -2])
           @str << " = "
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0
             arg.accept self
           end
         else
-          @str << node.name.to_s
+          @str << decorate_call(node, node.name.to_s)
           @str << "(" unless node.obj && node.args.empty?
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0
@@ -207,6 +207,10 @@ module Crystal
         node.block.accept self
       end
       false
+    end
+
+    def decorate_call(node, str)
+      str
     end
 
     def visit_require(node)
@@ -306,9 +310,9 @@ module Crystal
     def visit_var(node)
       @str << "out " if node.out
       if node.name
-        @str << node.name
+        @str << decorate_var(node, node.name)
       else
-        @str << '?'
+        @str << decorate_var(node, '?')
       end
     end
 
@@ -374,7 +378,7 @@ module Crystal
 
     def visit_instance_var(node)
       @str << "out " if node.out
-      @str << node.name
+      @str << decorate_var(node, node.name)
     end
 
     def visit_expressions(node)
