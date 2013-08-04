@@ -213,6 +213,10 @@ module Crystal
       str
     end
 
+    def decorate_var(node, str)
+      str
+    end
+
     def visit_require(node)
       @str << 'require '
       node.string.accept self
