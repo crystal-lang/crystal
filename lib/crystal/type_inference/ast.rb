@@ -40,6 +40,9 @@ module Crystal
   end
 
   class Block
+    attr_accessor :visited
+    attr_accessor :scope
+    
     def break
       @break ||= Var.new("%break")
     end

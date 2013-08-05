@@ -690,12 +690,11 @@ module Crystal
         end
       end
 
-      block.args.each_with_index do |arg, i|
-        exp = node.exps[i]
-        if exp
-          arg.bind_to exp
-        else
-          arg.bind_to mod.nil_var
+      bind_block_args_to_yield_exps block, node
+
+      unless block.visited
+        @call.bubbling_exception do
+          block.accept @call.parent_visitor
         end
       end
 
@@ -706,14 +705,47 @@ module Crystal
       end
     end
 
+    def end_visit_yield_with_scope(node)
+      block = @call.block or node.raise "no block given"
+
+      bind_block_args_to_yield_exps block, node
+
+      unless block.visited
+        @call.bubbling_exception do
+          block.scope = node.scope.type
+          block.accept @call.parent_visitor
+        end
+      end
+
+      if block.body
+        node.bind_to block.body
+      else
+        node.bind_to mod.nil_var
+      end
+    end
+
+    def bind_block_args_to_yield_exps(block, node)
+      block.args.each_with_index do |arg, i|
+        exp = node.exps[i]
+        if exp
+          arg.bind_to exp
+        else
+          arg.bind_to mod.nil_var
+        end
+      end
+    end
+
     def visit_block(node)
+      return if node.visited
+      node.visited = true
+
       if node.body
         block_vars = @vars.clone
         node.args.each do |arg|
           block_vars[arg.name] = arg
         end
 
-        block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
+        block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
         block_visitor.block = node
         node.body.accept block_visitor
       end
@@ -744,10 +776,6 @@ module Crystal
 
       node.obj.accept self if node.obj
       node.args.each { |arg| arg.accept self }
-
-      node.bubbling_exception do
-        node.block.accept self if node.block
-      end
 
       false
     end

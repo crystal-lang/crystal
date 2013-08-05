@@ -131,7 +131,7 @@ describe Parser do
   it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", nil, "Double".ident))
   it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident]))
   it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", [SelfType.instance], SelfType.instance))
-  it_parses "def foo; a.yield; end", Def.new("foo", [], [YieldWithScope.new("a".call)], nil, nil, 0)
+  it_parses "def foo; a.yield; end", Def.new("foo", [], [YieldWithScope.new("a".call)], nil, nil, 1)
   it_parses "def foo; a.yield 1; end", Def.new("foo", [], [YieldWithScope.new("a".call, [1.int32])], nil, nil, 1)
 
   it_parses "foo", "foo".call

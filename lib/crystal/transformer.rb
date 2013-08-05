@@ -237,6 +237,12 @@ module Crystal
       node
     end
 
+    def transform_yield_with_scope(node)
+      node.scope = node.scope.transform(self)
+      transform_many node.exps
+      node
+    end
+
     def transform_lib_def(node)
       node
     end

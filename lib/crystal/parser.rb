@@ -467,7 +467,7 @@ module Crystal
           if atomic.block
             raise "'yield' can't receive a block"
           end
-          @yields ||= 0
+          @yields ||= 1
           if atomic.args && atomic.args.length > @yields
             @yields = atomic.args.length
           end
