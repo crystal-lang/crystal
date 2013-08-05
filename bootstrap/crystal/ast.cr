@@ -269,7 +269,29 @@ module Crystal
     end
 
     def accept_children(visitor)
-      self.cond.accept visitor
+      @cond.accept visitor
+      @then.accept visitor if @then
+      @else.accept visitor if @else
+    end
+
+    def ==(other : self)
+      other.cond == cond && other.then == self.then && other.else == self.else
+    end
+  end
+
+  class Unless < ASTNode
+    attr_accessor :cond
+    attr_accessor :then
+    attr_accessor :else
+
+    def initialize(cond, a_then = nil, a_else = nil)
+      @cond = cond
+      @then = Expressions.from a_then
+      @else = Expressions.from a_else
+    end
+
+    def accept_children(visitor)
+      @cond.accept visitor
       @then.accept visitor if @then
       @else.accept visitor if @else
     end
@@ -430,7 +452,6 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
     attr_accessor :yields
-    attr_accessor :maybe_recursive
 
     def initialize(name, args : Array(Arg), body = nil, receiver = nil, yields = false)
       @name = name
@@ -457,7 +478,6 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
     attr_accessor :yields
-    attr_accessor :maybe_recursive
 
     def initialize(name, args : Array(Arg), body = nil, receiver = nil, yields = false)
       @name = name
@@ -523,12 +543,16 @@ module Crystal
     attr_accessor :name
     attr_accessor :body
     attr_accessor :superclass
+    attr_accessor :type_vars
+    attr_accessor :abstract
     attr_accessor :name_column_number
 
-    def initialize(name, body = nil, superclass = nil, name_column_number = nil)
+    def initialize(name, body = nil, superclass = nil, type_vars = nil, is_abstract = false, name_column_number = nil)
       @name = name
       @body = Expressions.from body
       @superclass = superclass
+      @type_vars = type_vars
+      @abstract = is_abstract
       @name_column_number = name_column_number
     end
 
@@ -537,7 +561,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.body == body && other.superclass == superclass
+      other.name == name && other.body == body && other.superclass == superclass && other.type_vars == type_vars && @abstract == other.abstract
     end
   end
 

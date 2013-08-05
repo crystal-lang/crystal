@@ -125,7 +125,7 @@ module Crystal
           when :unless
             next_token_skip_statement_end
             exp = parse_op_assign
-            atomic = If.new(Call.new(exp, "!@"), atomic)
+            atomic = Unless.new(exp, atomic)
           when :while
             next_token_skip_statement_end
             exp = parse_op_assign
@@ -387,8 +387,6 @@ module Crystal
           end
 
           if keep_processing
-            check_maybe_recursive name
-
             block = parse_block
             if block
               atomic = Call.new atomic, name, (args || [] of ASTNode), block, name_column_number
@@ -566,7 +564,7 @@ module Crystal
       node
     end
 
-    def parse_class_def
+    def parse_class_def(is_abstract = false)
       location = @token.location
 
       next_token_skip_space_or_newline
@@ -575,6 +573,8 @@ module Crystal
       name = @token.value
       name_column_number = @token.column_number
       next_token_skip_space
+
+      type_vars = parse_type_vars
 
       superclass = nil
 
@@ -589,9 +589,34 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      class_def = ClassDef.new name, body, superclass, name_column_number
+      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, name_column_number
       class_def.location = location
       class_def
+    end
+
+    def parse_type_vars
+      type_vars = nil
+      if @token.type == :"("
+        type_vars = [] of String
+
+        next_token_skip_space_or_newline
+        while @token.type != :")"
+          check :CONST
+          type_vars.push @token.value.to_s
+
+          next_token_skip_space_or_newline
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+
+        if type_vars.empty?
+          raise "must specify at least one type var"
+        end
+
+        next_token_skip_space
+      end
+      type_vars
     end
 
     def parse_module_def
@@ -757,7 +782,6 @@ module Crystal
       end
 
       @def_name = name
-      @maybe_recursive = false
 
       args = [] of Arg
 
@@ -851,9 +875,7 @@ module Crystal
 
       next_token_skip_space
 
-      a_def = klass.new name, args, body, receiver, @yields
-      a_def.maybe_recursive = @maybe_recursive
-      a_def
+      klass.new name, args, body, receiver, @yields
     end
 
     def parse_if(check_end = true)
@@ -908,7 +930,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      node = If.new Call.new(cond, "!@"), a_then, a_else
+      node = Unless.new cond, a_then, a_else
       node.location = location
       node
     end
@@ -922,7 +944,6 @@ module Crystal
       block = parse_block
 
       if block
-        check_maybe_recursive name
         Call.new nil, name, (args || [] of ASTNode), block, name_column_number, @last_call_has_parenthesis
       else
         if args
@@ -931,13 +952,11 @@ module Crystal
             num.value = num.value[1, num.value.length - 1]
             Call.new(Var.new(name), sign, args)
           else
-            check_maybe_recursive name
             Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
           end
         elsif is_var? name
           Var.new name
         else
-          check_maybe_recursive name
           Call.new nil, name, [] of ASTNode, nil, name_column_number, @last_call_has_parenthesis
         end
       end
@@ -1461,10 +1480,6 @@ module Crystal
     def is_var?(name)
       name = name.to_s
       name == "self" || @def_vars.last.includes?(name)
-    end
-
-    def check_maybe_recursive(name)
-      @maybe_recursive ||= @def_name == name
     end
   end
 end

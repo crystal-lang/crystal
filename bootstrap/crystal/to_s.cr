@@ -96,17 +96,17 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      #@str << "abstract " if node.abstract
+      @str << "abstract " if node.abstract
       @str << "class "
       @str << node.name
-      # if node.type_vars
-      #   @str << "("
-      #   node.type_vars.each_with_index do |type_var, i|
-      #     @str << ", " if i > 0
-      #     @str << type_var.to_s
-      #   end
-      #   @str << ")"
-      # end
+      if type_vars = node.type_vars
+        @str << "("
+        type_vars.each_with_index do |type_var, i|
+          @str << ", " if i > 0
+          @str << type_var.to_s
+        end
+        @str << ")"
+      end
       if superclass = node.superclass
         @str << " < "
         superclass.accept self
@@ -346,6 +346,8 @@ module Crystal
           @str << ", ..."
         end
         @str << ")"
+      elsif node.varargs
+        @str << "(...)"
       end
       if node_return_type = node.return_type
         @str << " : "
