@@ -63,10 +63,10 @@ module Crystal
     def graph_label(type)
       str = "{ #{type} "
       if type.is_a?(InstanceVarContainer)
-        all_ivars = type.all_instance_vars
+        all_ivars = type.instance_vars
         unless all_ivars.empty?
           str << " |"
-          str << type.all_instance_vars.values.map { |var| "#{var.name} : #{var.type.to_s.gsub "|", "\\|"}" }.join(" | ")
+          str << type.instance_vars.values.map { |var| "#{var.name} : #{var.type.to_s.gsub "|", "\\|"}" }.join(" | ")
         end
       end
       str << "}"
