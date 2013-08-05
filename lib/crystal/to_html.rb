@@ -2,11 +2,11 @@ require_relative "to_s.rb"
 
 module Crystal
   class ASTNode
-    def to_html(dir, filename)
+    def to_html(dir, filename, in_main = true)
       path = File.join(dir, filename)
       return if File.exists?(path)
       File.write(path, "")
-      visitor = ToHTMLVisitor.new(dir)
+      visitor = ToHTMLVisitor.new(dir, in_main)
       self.accept visitor
       title = case self
       when Crystal::Def
@@ -19,15 +19,16 @@ module Crystal
   end
 
   class ToHTMLVisitor < ToSVisitor
-    def initialize(dir)
+    def initialize(dir, in_main)
       @dir = dir
+      @in_main = in_main
       super()
     end
 
     def visit_call(node)
       if node.target_defs
         node.target_defs.each do |target_def|
-          target_def.to_html(@dir, "#{target_def.object_id}.html")
+          target_def.to_html(@dir, "#{target_def.object_id}.html", false)
         end
 
         if node.target_defs.length > 1
@@ -55,6 +56,10 @@ module Crystal
 
     def decorate_var(node, str)
       "<span title='#{node.type}'>#{str}</span>"
+    end
+
+    def visit_def(node)
+      super unless @in_main
     end
 
     def visit_class_def(node)
