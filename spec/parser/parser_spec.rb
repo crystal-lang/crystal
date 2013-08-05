@@ -131,6 +131,8 @@ describe Parser do
   it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", nil, "Double".ident))
   it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident]))
   it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", [SelfType.instance], SelfType.instance))
+  it_parses "def foo; a.yield; end", Def.new("foo", [], [YieldWithScope.new("a".call)], nil, nil, 0)
+  it_parses "def foo; a.yield 1; end", Def.new("foo", [], [YieldWithScope.new("a".call, [1.int32])], nil, nil, 1)
 
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call
@@ -374,7 +376,7 @@ describe Parser do
   it_parses "a = 1\nfoo - a", [Assign.new("a".var, 1.int32), Call.new("foo".call, :-, ["a".var])]
   it_parses "a = 1\nfoo -a", [Assign.new("a".var, 1.int32), Call.new(nil, "foo", [Call.new("a".var, :-@)])]
 
-  it_parses "a :: Foo", DeclareVar.new("a", "Foo".ident), focus: true
+  it_parses "a :: Foo", DeclareVar.new("a", "Foo".ident)
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")

@@ -714,6 +714,19 @@ module Crystal
       EVAL
     end
 
+    def visit_yield_with_scope(node)
+      node.scope.accept self
+      @str << '.yield'
+      if node.exps.length > 0
+        @str << ' '
+        node.exps.each_with_index do |exp, i|
+          @str << ", " if i > 0
+          exp.accept self
+        end
+      end
+      false
+    end
+
     def visit_declare_var(node)
       @str << node.name
       @str << " :: "

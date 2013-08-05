@@ -1022,6 +1022,30 @@ module Crystal
     EVAL
   end
 
+  class YieldWithScope < ASTNode
+    attr_accessor :scope
+    attr_accessor :exps
+
+    def initialize(scope, exps = [])
+      @scope = scope
+      @exps = exps
+    end
+
+    def accept_children(visitor)
+      scope.accept visitor
+      exps.each { |e| e.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(YieldWithScope) && other.scope == scope && other.exps == exps
+    end
+
+    def clone_from(other)
+      @scope = other.scope.clone
+      @exps = other.exps.map(&:clone)
+    end
+  end
+
   class LibDef < ASTNode
     attr_accessor :name
     attr_accessor :libname
