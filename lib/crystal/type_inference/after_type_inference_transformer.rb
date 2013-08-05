@@ -47,6 +47,8 @@ module Crystal
 
     def transform_expressions(node)
       exps = []
+
+      found_no_return = false
       node.expressions.each do |exp|
         new_exp = exp.transform(self)
         if new_exp
@@ -57,10 +59,12 @@ module Crystal
           end
 
           if new_exp.type && new_exp.type.no_return?
+            found_no_return = true
             break
           end
         end
       end
+
       case exps.length
       when 0
         nil
@@ -68,8 +72,20 @@ module Crystal
         exps[0]
       else
         node.expressions = exps
+        rebind_node node, exps.last
         node
       end
+    end
+
+    def transform_assign(node)
+      super
+
+      if node.value.type && node.value.type.no_return?
+        rebind_node node, node.value
+        return node.value
+      end
+
+      node
     end
 
     def transform_call(node)

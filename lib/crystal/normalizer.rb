@@ -376,7 +376,9 @@ module Crystal
         if else_indices.nil?
           if before_indices
             if then_indices != before_indices && then_indices[:read]
-              push_assign_var_with_indices new_else_vars, var_name, then_indices[:read], before_indices[:read]
+              push_assign_var_with_indices new_then_vars, var_name, then_indices[:write], then_indices[:read]
+              push_assign_var_with_indices new_else_vars, var_name, then_indices[:write], before_indices[:read]
+              @vars[var_name] = {read: then_indices[:write], write: then_indices[:write] + 1}
             end
           else
             push_assign_var_with_indices new_then_vars, var_name, then_indices[:write], then_indices[:read]
@@ -386,7 +388,9 @@ module Crystal
         elsif then_indices.nil?
           if before_indices
             if else_indices != before_indices && else_indices[:read]
-              push_assign_var_with_indices new_then_vars, var_name, else_indices[:read], before_indices[:read]
+              push_assign_var_with_indices new_else_vars, var_name, else_indices[:write], else_indices[:read]
+              push_assign_var_with_indices new_then_vars, var_name, else_indices[:write], before_indices[:read]
+              @vars[var_name] = {read: else_indices[:write], write: else_indices[:write] + 1}
             end
           else
             push_assign_var_with_indices new_else_vars, var_name, else_indices[:write], else_indices[:read]
@@ -666,7 +670,7 @@ module Crystal
       @before_vars = before_vars
       @vars = vars
       @vars_indices = {}
-      @names = Set.new(vars.select { |var| !var.target.name.index(':') }.map { |var| var.target.name })
+      @names = Set.new(vars.map { |var| var_name_without_index(var.target.name) })
       @nest_count = 0
     end
 
@@ -727,6 +731,11 @@ module Crystal
       node = super
       @nest_count -= 1
       node
+    end
+
+    def var_name_without_index(name)
+      name, index = name.split(':')
+      name
     end
   end
 end
