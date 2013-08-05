@@ -13,9 +13,14 @@ module Crystal
     attr_accessor :filename
 
     def initialize
+      @type = :EOF
+      @value = ""
+      @number_kind = :i32
       @string_end = '\0'
       @string_nest = '\0'
       @string_open_count = 0
+      @line_number = 0
+      @column_number = 0
     end
 
     def location
