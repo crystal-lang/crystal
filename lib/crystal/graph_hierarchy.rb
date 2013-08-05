@@ -1,11 +1,11 @@
 require 'graphviz'
 
 module Crystal
-  def graph_hierarchy(mod, output = nil)
+  def graph_hierarchy(mod, filter, output = nil)
     output ||= 'crystal'
     output = "#{output}_hierarchy.png"
 
-    printer = GraphHierarchyPrinter.new mod
+    printer = GraphHierarchyPrinter.new mod, filter
     printer.graphviz.output :png => output
 
     if RUBY_PLATFORM =~ /darwin/
@@ -14,8 +14,9 @@ module Crystal
   end
 
   class GraphHierarchyPrinter
-    def initialize(mod)
+    def initialize(mod, filter)
       @mod = mod
+      @filter = filter.downcase
       @g = GraphViz.new(:G, :type => :graph, :rankdir => 'TB')
       @types = {}
     end
@@ -28,6 +29,8 @@ module Crystal
     end
 
     def graph_type(type)
+      return unless matches_filter?(type, @filter)
+
       unless type.is_a?(LibType) || type.is_a?(Const) || type.module?
         node = @types[type.type_id]
         return node if node
@@ -37,20 +40,20 @@ module Crystal
 
         if type.respond_to?(:superclass) && type.superclass
           superclass_node = graph_type type.superclass
-          @g.add_edges superclass_node, node, :style => 'solid'
+          @g.add_edges superclass_node, node, :style => 'solid' if superclass_node
         end
 
         if type.is_a?(GenericType)
           type.generic_types.values.each do |instance|
             instance_node = graph_type instance
-            @g.add_edges node, instance_node, :style => 'solid'
+            @g.add_edges node, instance_node, :style => 'solid' if instance_node
           end
         end
       end
 
-      if !type.is_a?(LibType) && type.is_a?(ContainedType) && type.types
-        type.types.each do |name, subtype|
-          graph_type subtype if subtype
+      if !type.is_a?(LibType) && !type.is_a?(Const) && type.is_a?(ContainedType) && type.types
+        type.types.values.each do |subtype|
+          graph_type subtype
         end
       end
 
@@ -68,6 +71,33 @@ module Crystal
       end
       str << "}"
       str
+    end
+
+    def matches_filter?(type, filter, tested = {}, look_down = true)
+      return false if tested[type.type_id]
+      tested[type.type_id] = true
+
+      if @filter.empty?
+        true
+      else
+        return true if type.to_s.downcase.include?(filter)
+
+        unless type.is_a?(LibType) || type.is_a?(Const) || type.module?
+          if type.respond_to?(:superclass) && type.superclass
+            return true if matches_filter?(type.superclass, filter, tested, false)
+          end
+
+          if look_down && type.respond_to?(:subclasses)
+            return true if type.subclasses.any? { |subclass| matches_filter?(subclass, filter, tested) }
+          end
+        end
+
+        if look_down && !type.is_a?(LibType) && !type.is_a?(Const) && type.is_a?(ContainedType) && type.types
+          return true if type.types.values.any? { |subtype| matches_filter?(subtype, filter, tested) }
+        end
+
+        false
+      end
     end
   end
 end

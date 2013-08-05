@@ -28,8 +28,8 @@ module Crystal
         opts.on('--html DIR', 'Dump program to HTML in DIR directory') do |dir|
           @options[:html] = dir
         end
-        opts.on('--hierarchy', 'Render hierarchy graph') do |dir|
-          @options[:hierarchy] = true
+        opts.on('--hierarchy [FILTER]', 'Render hierarchy graph') do |filter|
+          @options[:hierarchy] = filter || ""
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
@@ -109,7 +109,7 @@ module Crystal
         end
 
         graph node, program, @options[:output_filename] if @options[:graph]
-        graph_hierarchy program, @options[:output_filename] if @options[:hierarchy]
+        graph_hierarchy program, @options[:hierarchy], @options[:output_filename] if @options[:hierarchy]
         print_types node if @options[:types]
         exit 0 if @options[:no_build]
 
