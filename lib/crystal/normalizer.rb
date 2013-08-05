@@ -518,7 +518,7 @@ module Crystal
       end
 
       indices = @vars[node.name]
-      node.name = var_name_with_index(node.name, indices[:read])
+      node.name = var_name_with_index(node.name, indices ? indices[:read] : nil)
       node
     end
 
