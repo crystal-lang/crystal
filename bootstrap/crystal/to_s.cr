@@ -406,6 +406,20 @@ module Crystal
       false
     end
 
+    def visit(node : PointerOf)
+      node.var.accept(self)
+      @str << ".ptr"
+      false
+    end
+
+    def visit(node : IsA)
+      node.obj.accept self
+      @str << ".is_a?("
+      node.const.accept self
+      @str << ")"
+      false
+    end
+
     def append_indent
       @indent.times do
         @str << "  "

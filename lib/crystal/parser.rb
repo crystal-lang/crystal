@@ -37,7 +37,6 @@ module Crystal
       exps = []
       i = 0
       assign_index = nil
-      indexer_index = nil
       exps << (last = parse_expression)
       while true
         case @token.type

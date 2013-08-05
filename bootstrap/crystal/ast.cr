@@ -188,6 +188,18 @@ module Crystal
     end
   end
 
+  class RegexpLiteral < ASTNode
+    attr_accessor :value
+
+    def initialize(value)
+      @value = value
+    end
+
+    def ==(other : self)
+      other.value == value
+    end
+  end
+
   # A method call.
   #
   #     [ obj '.' ] name '(' ')' [ block ]
@@ -436,6 +448,68 @@ module Crystal
 
     def ==(other : self)
       other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields
+    end
+  end
+
+  class Macro < ASTNode
+    attr_accessor :receiver
+    attr_accessor :name
+    attr_accessor :args
+    attr_accessor :body
+    attr_accessor :yields
+    attr_accessor :maybe_recursive
+
+    def initialize(name, args : Array(Arg), body = nil, receiver = nil, yields = false)
+      @name = name
+      @args = args
+      @body = Expressions.from body
+      @receiver = receiver
+      @yields = yields
+    end
+
+    def accept_children(visitor)
+      @receiver.accept visitor if @receiver
+      args.each { |arg| arg.accept visitor }
+      @body.accept visitor if @body
+    end
+
+    def ==(other : self)
+      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields
+    end
+  end
+
+  class PointerOf < ASTNode
+    attr_accessor :var
+
+    def initialize(var)
+      @var = var
+    end
+
+    def accept_children(visitor)
+      @var.accept visitor
+    end
+
+    def ==(other : self)
+      other.var == var
+    end
+  end
+
+  class IsA < ASTNode
+    attr_accessor :obj
+    attr_accessor :const
+
+    def initialize(obj, const)
+      @obj = obj
+      @const = const
+    end
+
+    def accept_children(visitor)
+      @obj.accept visitor
+      @const.accept visitor
+    end
+
+    def ==(other : self)
+      other.obj == obj && other.const == const
     end
   end
 

@@ -36,10 +36,73 @@ module Crystal
     def parse_expressions_as_array
       exps = [] of ASTNode
       while @token.type != :EOF && !is_end_token
-        exps << parse_expression
+        exps << parse_multi_expression
         skip_statement_end
       end
       exps
+    end
+
+    def parse_multi_expression
+      location = @token.location
+
+      exps = [] of ASTNode
+      i = 0
+      assign_index = -1
+      exps << (last = parse_expression)
+      while true
+        case @token.type
+        when :SPACE
+          next_token
+        when :","
+          assign_index = i if assign_index == -1 && last.is_a?(Assign)
+          i += 1
+
+          next_token_skip_space_or_newline
+          exps << (last = parse_expression)
+        else
+          break
+        end
+      end
+
+      if exps.length == 1
+        exps[0]
+      else
+        assign_index = i if assign_index == -1 && last.is_a?(Assign)
+
+        if assign_index
+          targets = exps[0 ... assign_index].map { |exp| to_lhs(exp) }
+
+          if (assign = exps[assign_index]) && assign.is_a?(Assign)
+            targets.push to_lhs(assign.target)
+
+            values = [assign.value]
+            values.concat exps[assign_index + 1 .. -1]
+            if values.length != 1 && targets.length != values.length
+              raise "Multiple assignment count mismatch"#, location[0], location[1]
+            end
+
+            multi = MultiAssign.new(targets, values)
+            multi.location = location
+            multi
+          else
+            raise "Impossible"
+          end
+        else
+          exps = Expressions.new exps
+          exps.location = location
+          exps
+        end
+      end
+    end
+
+    def to_lhs(exp)
+      if exp.is_a?(Ident) && @def_vars.length > 1
+        raise "dynamic constant assignment"
+      end
+
+      exp = Var.new(exp.name) if exp.is_a?(Call)
+      push_var exp if exp.is_a?(Var)
+      exp
     end
 
     def parse_expression
@@ -333,7 +396,8 @@ module Crystal
               atomic = args ? (Call.new atomic, name, args, nil, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, name_column_number)
             end
           end
-          # atomic = check_special_call(atomic)
+
+          atomic = check_special_call(atomic)
         when :"[]"
           column_number = @token.column_number
           next_token_skip_space
@@ -369,6 +433,38 @@ module Crystal
       atomic
     end
 
+    def check_special_call(atomic)
+      if atomic.is_a?(Call)
+        if (atomic_obj = atomic.obj)
+          case atomic.name
+          when "ptr"
+            if !(atomic_obj.is_a?(Var) || atomic_obj.is_a?(InstanceVar))
+              raise "can only get 'ptr' of variable or instance variable"
+            end
+            if atomic.args.length != 0
+              raise "wrong number of arguments for 'ptr' (#{atomic.args.length} for 0)"
+            end
+            if atomic.block
+              raise "'ptr' can't receive a block"
+            end
+            atomic = PointerOf.new(atomic_obj)
+          when "is_a?"
+            if atomic.args.length != 1
+              raise "wrong number of arguments for 'is_a?' (#{atomic.args.length} for 0)"
+            end
+            if !atomic.args[0].is_a?(Ident)
+              raise "'is_a?' argument must be a Constant"
+            end
+            if atomic.block
+              raise "'is_a?' can't receive a block"
+            end
+            atomic = IsA.new(atomic_obj, atomic.args[0])
+          end
+        end
+      end
+      atomic
+    end
+
     def parse_atomic
       column_number = @token.column_number
       case @token.type
@@ -391,6 +487,8 @@ module Crystal
         parse_string_array
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
+      when :REGEXP
+        node_and_next_token RegexpLiteral.new(@token.value.to_s)
       when :GLOBAL
         node_and_next_token Global.new(@token.value.to_s)
       when :IDENT
@@ -407,6 +505,8 @@ module Crystal
           parse_yield
         when :def
           parse_def
+        when :macro
+          parse_macro
         when :if
           parse_if
         when :unless
@@ -626,6 +726,14 @@ module Crystal
     end
 
     def parse_def
+      parse_def_or_macro Def
+    end
+
+    def parse_macro
+      parse_def_or_macro Crystal::Macro
+    end
+
+    def parse_def_or_macro(klass)
       next_token_skip_space_or_newline
       check [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
 
@@ -743,7 +851,7 @@ module Crystal
 
       next_token_skip_space
 
-      a_def = Def.new name, args, body, receiver, @yields
+      a_def = klass.new name, args, body, receiver, @yields
       a_def.maybe_recursive = @maybe_recursive
       a_def
     end

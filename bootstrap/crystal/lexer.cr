@@ -173,7 +173,7 @@ module Crystal
         char = next_char
         if char == '='
           next_char :"/="
-        elsif char == ' ' || char == '\n' || char == '\t' || char == '\0' || char == ';'
+        elsif char.whitespace? || char == '\0' || char == ';'
           @token.type = :"/"
         else
           start = @buffer
@@ -181,6 +181,7 @@ module Crystal
           while next_char != '/'
             count += 1
           end
+          next_char
           @token.type = :REGEXP
           @token.value = String.from_cstr(start, count)
         end
