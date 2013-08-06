@@ -324,9 +324,9 @@ module Crystal
       Matches.new(matches.matches, matches.cover, owner, false)
     end
 
-    def lookup_first_def(name)
-      defs = self.defs[name]
-      defs.length == 1 ? defs.first[1] : nil
+    def lookup_first_def(name, yields)
+      defs = self.defs[name].values.select { |a_def| !!a_def.yields == yields }
+      defs.length == 1 ? defs.first : nil
     end
 
     def lookup_defs(name)

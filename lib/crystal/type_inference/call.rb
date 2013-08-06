@@ -81,7 +81,7 @@ module Crystal
           # but first we need to check if the program defines that method.
           unless owner.equal?(mod)
             mod_matches = mod.lookup_matches(def_name, arg_types, !!block)
-            if mod_matches.empty? && owner.lookup_first_def('method_missing')
+            if mod_matches.empty? && owner.lookup_first_def('method_missing', !!block)
               match = Match.new
               match.def = define_method_missing owner, def_name
               match.owner = self_type
@@ -340,7 +340,7 @@ module Crystal
     def recalculate_lib_call
       old_target_defs = @target_defs
 
-      untyped_def = obj.type.lookup_first_def(name) or raise "undefined fun '#{name}' for #{obj.type}"
+      untyped_def = obj.type.lookup_first_def(name, false) or raise "undefined fun '#{name}' for #{obj.type}"
 
       check_args_length_match untyped_def
       check_lib_out_args untyped_def
