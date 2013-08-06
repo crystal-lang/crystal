@@ -856,6 +856,8 @@ module Crystal
         end
 
         call_args << @last
+      elsif @vars.has_key?('%scope')
+        call_args << @vars['%scope'][:ptr]
       elsif owner
         different = !owner.equal?(@vars['self'][:type])
         if different && owner.hierarchy? && @vars['self'][:type].class?
@@ -1010,24 +1012,41 @@ module Crystal
     end
 
     def visit_yield(node)
+      codegen_yield(node, nil)
+      false
+    end
+
+    def visit_yield_with_scope(node)
+      codegen_yield(node, node.scope)
+      false
+    end
+
+    def codegen_yield(node, scope)
       if @block_context.any?
         context = @block_context.pop
         new_vars = context[:vars].clone
         block = context[:block]
 
-        block.args.each_with_index do |arg, i|
-          exp = node.exps[i]
-          if exp
-            exp_type = exp.type
-            exp.accept self
-          else
-            exp_type = @mod.nil
-            @last = llvm_nil
-          end
+        if scope
+          scope.accept self
+          new_vars['%scope'] = { ptr: @last, type: scope.type, treated_as_pointer: false }
+        end
 
-          copy = alloca llvm_type(arg.type), "block_#{arg.name}"
-          codegen_assign copy, arg.type, exp_type, @last
-          new_vars[arg.name] = { ptr: copy, type: arg.type }
+        if block.args
+          block.args.each_with_index do |arg, i|
+            exp = node.exps[i]
+            if exp
+              exp_type = exp.type
+              exp.accept self
+            else
+              exp_type = @mod.nil
+              @last = llvm_nil
+            end
+
+            copy = alloca llvm_type(arg.type), "block_#{arg.name}"
+            codegen_assign copy, arg.type, exp_type, @last
+            new_vars[arg.name] = { ptr: copy, type: arg.type }
+          end
         end
 
         old_vars = @vars
@@ -1069,7 +1088,6 @@ module Crystal
         @return_union = old_return_union
         @block_context << context
       end
-      false
     end
 
     def codegen_call(node, self_type, call_args)
