@@ -67,6 +67,26 @@ module Crystal
       false
     end
 
+    def visit(node : HashLiteral)
+      @str << "{"
+      node.keys.each_with_index do |key, i|
+        @str << ", " if i > 0
+        key.accept self
+        @str << " => "
+        node.values[i].accept self
+      end
+      @str << "}"
+      if of_key = node.of_key
+        @str << " of "
+        of_key.accept self
+        @str << " => "
+        if (of_value = node.of_value)
+          of_value.accept self
+        end
+      end
+      false
+    end
+
     def visit(node : NilLiteral)
       @str << "nil"
     end
@@ -462,6 +482,39 @@ module Crystal
       @str << ".is_a?("
       node.const.accept self
       @str << ")"
+      false
+    end
+
+    def visit(node : Require)
+      @str << "require \""
+      @str << node.string
+      @str << "\""
+      false
+    end
+
+    def visit(node : Case)
+      @str << "case "
+      node.cond.accept self
+      @str << "\n"
+      node.whens.each do |wh|
+        wh.accept self
+      end
+      if node_else = node.else
+        @str << "else\n"
+        accept_with_indent node_else
+      end
+      @str << "end"
+      false
+    end
+
+    def visit(node : When)
+      @str << "when "
+      node.conds.each_with_index do |cond, i|
+        @str << ", " if i > 0
+        cond.accept self
+      end
+      @str << "\n"
+      accept_with_indent node.body
       false
     end
 

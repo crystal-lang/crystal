@@ -672,7 +672,7 @@ module Crystal
     def parse_require
       next_token_skip_space
       check :STRING
-      string = StringLiteral.new(@token.value)
+      string = @token.value.to_s
       next_token_skip_space
       Crystal::Require.new string
     end
@@ -845,7 +845,6 @@ module Crystal
       next_token
 
       args = parse_args
-
       block = parse_block
 
       if block

@@ -1294,10 +1294,6 @@ module Crystal
       @string = string
     end
 
-    def accept_children(visitor)
-      string.accept visitor
-    end
-
     def ==(other)
       other.is_a?(Require) && other.string == string
     end

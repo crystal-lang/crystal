@@ -172,6 +172,31 @@ module Crystal
     end
   end
 
+  class HashLiteral < ASTNode
+    attr_accessor :keys
+    attr_accessor :values
+    attr_accessor :of_key
+    attr_accessor :of_value
+
+    def initialize(keys = [] of ASTNode, values = [] of ASTNode, of_key = nil, of_value = nil)
+      @keys = keys
+      @values = values
+      @of_key = of_key
+      @of_value = of_value
+    end
+
+    def accept_children(visitor)
+      @keys.each { |key| key.accept visitor }
+      @values.each { |value| value.accept visitor }
+      @of_key.accept visitor if @of_key
+      @of_value.accept visitor if @of_value
+    end
+
+    def ==(other : self)
+      other.keys == keys && other.values == values && other.of_key == of_key && other.of_value == of_value
+    end
+  end
+
   class RangeLiteral < ASTNode
     attr_accessor :from
     attr_accessor :to
@@ -530,6 +555,58 @@ module Crystal
 
     def ==(other : self)
       other.obj == obj && other.const == const
+    end
+  end
+
+  class Require < ASTNode
+    attr_accessor :string
+
+    def initialize(string)
+      @string = string
+    end
+
+    def ==(other : self)
+      other.string == string
+    end
+  end
+
+  class Case < ASTNode
+    attr_accessor :cond
+    attr_accessor :whens
+    attr_accessor :else
+
+    def initialize(cond, whens, a_else = nil)
+      @cond = cond
+      @whens = whens
+      @else = a_else
+    end
+
+    def accept_children(visitor)
+      @whens.each { |w| w.accept visitor }
+      @else.accept visitor if @else
+    end
+
+    def ==(other : self)
+      other.cond == cond && other.whens == whens && other.else == @else
+    end
+  end
+
+  class When < ASTNode
+    attr_accessor :conds
+    attr_accessor :body
+
+    def initialize(conds, body = nil)
+      @conds = conds
+      @body = Expressions.from body
+    end
+
+    def accept_children(visitor)
+      @conds.each { |cond| cond.accept visitor }
+      @body.accept visitor if @body
+    end
+
+    def ==(other : self)
+      other.conds == conds && other.body == body
     end
   end
 

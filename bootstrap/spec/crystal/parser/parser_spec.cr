@@ -71,6 +71,10 @@ class String
   def float64
     NumberLiteral.new self, :f64
   end
+  
+  def symbol
+    Crystal::SymbolLiteral.new self
+  end
 end
 
 def it_parses(string, expected_node)
@@ -416,7 +420,31 @@ describe "Parser" do
   it_parses "foo out x; x", [Call.new(nil, "foo", [(v = Var.new("x"); v.out = true; v)] of ASTNode), Var.new("x")]
   it_parses "foo(out x); x", [Call.new(nil, "foo", [(v = Var.new("x"); v.out = true; v)] of ASTNode), Var.new("x")]
 
+  it_parses "{1 => 2, 3 => 4}", HashLiteral.new([1.int32, 3.int32] of ASTNode, [2.int32, 4.int32] of ASTNode)
+  it_parses "{a: 1, b: 2}", HashLiteral.new(["a".symbol, "b".symbol] of ASTNode, [1.int32, 2.int32] of ASTNode)
+  it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(["a".symbol, 3.int32, "b".symbol] of ASTNode, [1.int32, 4.int32, 2.int32] of ASTNode)
+
+  it_parses "require \"foo\"", Require.new("foo")
+  it_parses "require \"foo\"; [1]", [Require.new("foo"), [1.int32].array]
+  it_parses "require \"foo\"\nif true; end", [Require.new("foo"), If.new(true.bool)]
+
+  it_parses "case 1; when 1; 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1; when 0, 1; 2; else; 3; end", Case.new(1.int32, [When.new([0.int32, 1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1\nwhen 1\n2\nelse\n3\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1\nwhen 1\n2\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)])
+
+  it_parses "case 1; when 1 then 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
+
+  it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
+
   it_parses "\"foo\#{bar}baz\"", StringInterpolation.new([StringLiteral.new("foo"), "bar".call, StringLiteral.new("baz")])
+
+  it_parses "lib Foo\nend\nif true\nend", [LibDef.new("Foo"), If.new(true.bool)]
+
+  it_parses "foo(\n1\n)", Call.new(nil, "foo", [1.int32] of ASTNode)
+
+  it_parses "a = 1\nfoo - a", [Assign.new("a".var, 1.int32), Call.new("foo".call, "-", ["a".var] of ASTNode)]
 
   it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32]
 end

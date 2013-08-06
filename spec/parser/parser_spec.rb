@@ -353,9 +353,9 @@ describe Parser do
 
   it_parses "{} of Int => Double", HashLiteral.new([], [], Ident.new(["Int"]), Ident.new(["Double"]))
 
-  it_parses %q(require "foo"), Require.new('foo'.string)
-  it_parses %q(require "foo"; [1]), [Require.new('foo'.string), [1.int32].array]
-  it_parses %Q(require "foo"\nif true; end), [Require.new('foo'.string), If.new(true.bool)]
+  it_parses %q(require "foo"), Require.new('foo')
+  it_parses %q(require "foo"; [1]), [Require.new('foo'), [1.int32].array]
+  it_parses %Q(require "foo"\nif true; end), [Require.new('foo'), If.new(true.bool)]
 
   it_parses %q(case 1; when 1; 2; else; 3; end), Case.new(1.int32, [When.new([1.int32], 2.int32)], 3.int32)
   it_parses %q(case 1; when 0, 1; 2; else; 3; end), Case.new(1.int32, [When.new([0.int32, 1.int32], 2.int32)], 3.int32)

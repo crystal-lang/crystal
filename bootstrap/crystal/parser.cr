@@ -473,6 +473,8 @@ module Crystal
         ArrayLiteral.new [] of ASTNode
       when :"["
         parse_array_literal
+      when :"{"
+        parse_hash_literal
       when :"::"
         parse_ident
       when :NUMBER
@@ -511,6 +513,10 @@ module Crystal
           parse_def
         when :macro
           parse_macro
+        when :require
+          parse_require
+        when :case
+          parse_case
         when :if
           parse_if
         when :unless
@@ -766,6 +772,128 @@ module Crystal
       end
       next_token_skip_space
       ArrayLiteral.new exps
+    end
+
+    def parse_hash_literal
+      column = @token.column_number
+      line = @line_number
+
+      next_token_skip_space_or_newline
+      keys = [] of ASTNode
+      values = [] of ASTNode
+      while @token.type != :"}"
+        if @token.type == :IDENT && @buffer.value == ':'
+          keys << SymbolLiteral.new(@token.value.to_s)
+          next_token
+        else
+          keys << parse_expression
+          skip_space_or_newline
+          check :"=>"
+        end
+        next_token_skip_space_or_newline
+        values << parse_expression
+        skip_space_or_newline
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        end
+      end
+      next_token_skip_space
+
+      of_key = nil
+      of_value = nil
+      if @token.keyword?("of")
+        next_token_skip_space_or_newline
+        of_key = parse_type_var
+        check :"=>"
+        next_token_skip_space_or_newline
+        of_value = parse_type_var
+      end
+
+      if keys.length == 0 && !of_key
+        raise "for empty hashes use '{} of KeyType => ValueType'"#, line, column
+      end
+
+      Crystal::HashLiteral.new keys, values, of_key, of_value
+    end
+
+    def parse_require
+      next_token_skip_space
+      check :STRING_START
+      string_literal = parse_string
+
+      if string_literal.is_a?(StringLiteral)
+        string = string_literal.value
+      else
+        raise "Interpolation not allowed in require"
+      end
+
+      skip_space
+
+      Crystal::Require.new string
+    end
+
+    def parse_case
+      next_token_skip_space_or_newline
+      cond = parse_expression
+      skip_statement_end
+
+      whens = [] of When
+      a_else = nil
+
+      while true
+        case @token.type
+        when :IDENT
+          case @token.value
+          when :when
+            next_token_skip_space_or_newline
+            when_conds = [] of ASTNode
+            while true
+              when_conds << parse_expression
+              skip_space
+              if @token.keyword?(:then)
+                next_token_skip_space_or_newline
+                break
+              else
+                case @token.type
+                when :","
+                  next_token_skip_space_or_newline
+                when :NEWLINE
+                  skip_space_or_newline
+                  break
+                when :";"
+                  skip_statement_end
+                  break
+                else
+                  raise "unexpected token: #{@token.to_s} (expecting ',', ';' or '\n')"
+                end
+              end
+            end
+
+            when_body = parse_expressions
+            skip_space_or_newline
+            whens << When.new(when_conds, when_body)
+          when :else
+            if whens.length == 0
+              raise "unexpected token: #{@token.to_s} (expecting when)"
+            end
+            next_token_skip_statement_end
+            a_else = parse_expressions
+            skip_statement_end
+            check_ident :end
+            next_token
+            break
+          when :end
+            next_token
+            break
+          else
+            raise "unexpected token: #{@token} (expecting when, else or end)"
+          end
+        else
+          raise "unexpected token: #{@token} (expecting when, else or end)"
+        end
+      end
+
+      Case.new(cond, whens, a_else)
     end
 
     def parse_include
@@ -1068,7 +1196,7 @@ module Crystal
             args << parse_expression
           end
 
-          skip_space
+          skip_space_or_newline
           if @token.type == :","
             next_token_skip_space_or_newline
           end
@@ -1297,7 +1425,7 @@ module Crystal
       body = parse_lib_body
 
       check_ident :end
-      next_token_skip_statement_end
+      next_token_skip_space
 
       LibDef.new name, libname, body, name_column_number
     end

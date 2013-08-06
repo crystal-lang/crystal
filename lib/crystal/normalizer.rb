@@ -91,7 +91,7 @@ module Crystal
     end
 
     def transform_require(node)
-      required = program.require(node.string.value, node.filename)
+      required = program.require(node.string, node.filename)
       required ? required.transform(self) : nil
     end
 

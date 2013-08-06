@@ -286,7 +286,7 @@ module Crystal
         if File.directory?(relative_dir)
           nodes = []
           Dir["#{relative_dir}/#{multi ? '**/' : ''}*.cr"].each do |file|
-            node = Require.new(StringLiteral.new(file))
+            node = Require.new(file)
             nodes.push node
             # node = require_absolute(file)
             # nodes.push node if node

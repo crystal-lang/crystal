@@ -232,8 +232,9 @@ module Crystal
     end
 
     def visit_require(node)
-      @str << 'require '
-      node.string.accept self
+      @str << "require \""
+      @str << node.string
+      @str << "\""
       false
     end
 

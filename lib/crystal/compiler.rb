@@ -94,7 +94,7 @@ module Crystal
           src_node = node = parser.parse
         end
 
-        require_node = Require.new(StringLiteral.new("prelude"))
+        require_node = Require.new("prelude")
         node = node ? Expressions.new([require_node, node]) : require_node
 
         with_stats_or_profile('normalize') do
