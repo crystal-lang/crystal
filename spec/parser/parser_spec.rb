@@ -69,7 +69,7 @@ describe Parser do
   it_parses "1 / 2", Call.new(1.int32, :"/", [2.int32])
   it_parses "1 / -2", Call.new(1.int32, :"/", [-2.int32])
   it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, :"/", [3.int32]), :"+", [Call.new(4.int32, :"/", [5.int32])])
-  it_parses "2 * (3 + 4)", Call.new(2.int32, :"*", [Call.new(3.int32, :"+", [4.int32])])
+  it_parses "2 * (3 + 4)", Call.new(2.int32, :"*", [Call.new(3.int32, :"+", [4.int32])]), focus: true
 
   it_parses "!1", Call.new(1.int32, :'!@')
   it_parses "1 && 2", And.new(1.int32, 2.int32)
@@ -206,7 +206,6 @@ describe Parser do
   it_parses "class Foo\nend", ClassDef.new("Foo")
   it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
   it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
-  it_parses "class Foo(T); end", ClassDef.new("Foo", nil, nil, ["T"])
   it_parses "class Foo(T); end", ClassDef.new("Foo", nil, nil, ["T"])
   it_parses "abstract class Foo; end", ClassDef.new("Foo", nil, nil, nil, true)
 
@@ -377,6 +376,9 @@ describe Parser do
   it_parses "a = 1\nfoo -a", [Assign.new("a".var, 1.int32), Call.new(nil, "foo", [Call.new("a".var, :-@)])]
 
   it_parses "a :: Foo", DeclareVar.new("a", "Foo".ident)
+
+  it_parses "()", NilLiteral.new
+  it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32]
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")

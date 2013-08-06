@@ -574,11 +574,13 @@ module Crystal
   class ModuleDef < ASTNode
     attr_accessor :name
     attr_accessor :body
+    attr_accessor :type_vars
     attr_accessor :name_column_number
 
-    def initialize(name, body = nil, name_column_number = nil)
+    def initialize(name, body = nil, type_vars = nil, name_column_number = nil)
       @name = name
       @body = Expressions.from body
+      @type_vars = type_vars
       @name_column_number = name_column_number
     end
 
@@ -587,7 +589,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.body == body
+      other.name == name && other.body == body && other.type_vars == type_vars
     end
   end
 
@@ -649,6 +651,41 @@ module Crystal
 
     def ==(other : self)
       other.names == names && other.global == global
+    end
+  end
+
+  class NewGenericClass < ASTNode
+    attr_accessor :name
+    attr_accessor :type_vars
+
+    def initialize(name, type_vars)
+      @name = name
+      @type_vars = type_vars
+    end
+
+    def accept_children(visitor)
+      @name.accept visitor
+      @type_vars.each { |v| v.accept visitor }
+    end
+
+    def ==(other : self)
+      other.name == name && other.type_vars == type_vars
+    end
+  end
+
+  class IdentUnion < ASTNode
+    attr_accessor :idents
+
+    def initialize(idents)
+      @idents = idents
+    end
+
+    def ==(other : self)
+      other.idents == idents
+    end
+
+    def accept_children(visitor)
+      @idents.each { |ident| ident.accept visitor }
     end
   end
 
@@ -806,13 +843,11 @@ module Crystal
     attr_accessor :name
     attr_accessor :type_spec
     attr_accessor :pointer
-    attr_accessor :out
 
-    def initialize(name, type_spec, pointer = 0, out = false)
+    def initialize(name, type_spec, pointer = 0)
       @name = name
       @type_spec = type_spec
       @pointer = pointer
-      @out = out
     end
 
     def accept_children(visitor)
@@ -820,7 +855,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.type_spec == type_spec && other.pointer == pointer && other.out == out
+      other.name == name && other.type_spec == type_spec && other.pointer == pointer
     end
   end
 
@@ -846,21 +881,45 @@ module Crystal
     end
   end
 
-  class StructDef < ASTNode
+  class StructOrUnionDef < ASTNode
     attr_accessor :name
     attr_accessor :fields
 
-    def initialize(name, fields = [] of ASTNode)
+    def initialize(name, fields = [] of FunDefArg)
       @name = name
       @fields = fields
     end
 
     def accept_children(visitor)
-      fields.each { |field| field.accept visitor }
+      @fields.each { |field| field.accept visitor }
     end
 
     def ==(other : self)
       other.name == name && other.fields == fields
+    end
+  end
+
+  class StructDef < StructOrUnionDef
+  end
+
+  class UnionDef < StructOrUnionDef
+  end
+
+  class EnumDef < ASTNode
+    attr_accessor :name
+    attr_accessor :constants
+
+    def initialize(name, constants)
+      @name = name
+      @constants = constants
+    end
+
+    def accept_children(visitor)
+      @constants.each { |constant| constant.accept visitor }
+    end
+
+    def ==(other : self)
+      other.name == name && other.constants == constants
     end
   end
 end

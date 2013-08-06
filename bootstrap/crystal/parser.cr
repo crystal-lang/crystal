@@ -489,6 +489,8 @@ module Crystal
         node_and_next_token RegexpLiteral.new(@token.value.to_s)
       when :GLOBAL
         node_and_next_token Global.new(@token.value.to_s)
+      when :GLOBAL_MATCH
+        node_and_next_token Call.new(Global.new("$~"), "[]", [NumberLiteral.new(@token.value.to_s, :i32)] of ASTNode)
       when :IDENT
         case @token.value
         when :begin
@@ -501,6 +503,10 @@ module Crystal
           node_and_next_token BoolLiteral.new(false)
         when :yield
           parse_yield
+        when :abstract
+          next_token_skip_space_or_newline
+          check_ident :class
+          parse_class_def true
         when :def
           parse_def
         when :macro
@@ -627,27 +633,51 @@ module Crystal
 
       name = @token.value
       name_column_number = @token.column_number
-      next_token_skip_statement_end
+      next_token_skip_space
+
+      type_vars = parse_type_vars
+      skip_statement_end
 
       body = parse_expressions_or_nil
 
       check_ident :end
       next_token_skip_space
 
-      module_def = ModuleDef.new name, body, name_column_number
+      module_def = ModuleDef.new name, body, type_vars, name_column_number
       module_def.location = location
       module_def
     end
 
     def parse_parenthesized_expression
       next_token_skip_space_or_newline
-      exp = parse_expression
 
-      check :")"
-      next_token_skip_space
+      if @token.type == :")"
+        return node_and_next_token NilLiteral.new
+      end
+
+      exps = [] of ASTNode
+
+      while true
+        exps << parse_expression
+        case @token.type
+        when :")"
+          next_token_skip_space
+          break
+        when :NEWLINE, :";"
+          next_token_skip_space
+        else
+          raise "unexpected token: #{@token}"
+        end
+      end
 
       raise "unexpected token: (" if @token.type == :"("
-      exp
+
+      case exps.length
+      when 1
+        exps[0]
+      else
+        Expressions.new exps
+      end
     end
 
     def parse_string
@@ -1135,7 +1165,62 @@ module Crystal
 
       const = Ident.new names, global
       const.location = location
+      
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+
+        type_vars = [] of ASTNode
+        while true
+          type_vars.push parse_type_var
+
+          case @token.type
+          when :","
+            next_token_skip_space_or_newline
+          when :")"
+            break
+          else
+            raise "expecting ',' or ')'"
+          end
+        end
+
+        if type_vars.empty?
+          raise "must specify at least one type var"
+        end
+
+        next_token_skip_space
+
+        const = NewGenericClass.new const, type_vars
+        const.location = location
+      end
+
       const
+    end
+
+    def parse_type_var
+      idents = [] of ASTNode
+      while true
+        ident = parse_ident
+        idents.push ident
+
+        skip_space
+
+        if @token.type == :"?"
+          idents.push Ident.new(["Nil"], true)
+          next_token_skip_space_or_newline
+        end
+
+        if @token.type == :"|"
+          next_token_skip_space_or_newline
+        else
+          break
+        end
+      end
+
+      if idents.length == 1
+        idents[0]
+      else
+        IdentUnion.new idents
+      end
     end
 
     def parse_yield
@@ -1234,7 +1319,15 @@ module Crystal
             exp.location = location
             expressions << exp
           when :struct
-            exp = parse_struct_def
+            exp = parse_struct_or_union StructDef
+            exp.location = location
+            expressions << exp
+          when :union
+            exp = parse_struct_or_union UnionDef
+            exp.location = location
+            expressions << exp
+          when :enum
+            exp = parse_enum
             exp.location = location
             expressions << exp
           when :end
@@ -1295,18 +1388,12 @@ module Crystal
           check :":"
           next_token_skip_space_or_newline
 
-          is_out = false
-          if @token.keyword?(:out)
-            is_out = true
-            next_token_skip_space_or_newline
-          end
-
           arg_type = parse_ident
           pointer = parse_trailing_pointers
 
           skip_space_or_newline
 
-          fun_def_arg = FunDefArg.new(arg_name, arg_type, pointer, is_out)
+          fun_def_arg = FunDefArg.new(arg_name, arg_type, pointer)
           fun_def_arg.location = arg_location
           args << fun_def_arg
 
@@ -1351,24 +1438,24 @@ module Crystal
       TypeDef.new name, type, pointer, name_column_number
     end
 
-    def parse_struct_def
+    def parse_struct_or_union(klass)
       next_token_skip_space_or_newline
 
       check :CONST
       name = @token.value.to_s
       next_token_skip_statement_end
 
-      fields = parse_struct_def_fields
+      fields = parse_struct_or_union_fields
 
       check_ident :end
 
       next_token_skip_statement_end
 
-      StructDef.new name, fields
+      klass.new name, fields
     end
 
-    def parse_struct_def_fields
-      fields = [] of ASTNode
+    def parse_struct_or_union_fields
+      fields = [] of FunDefArg
 
       while true
         case @token.type
@@ -1377,8 +1464,17 @@ module Crystal
           when :end
             break
           else
-            name = @token.value.to_s
+            names = [] of String
+            names << @token.value.to_s
+
             next_token_skip_space_or_newline
+
+            while @token.type == :","
+              next_token_skip_space_or_newline
+              check :IDENT
+              names << @token.value.to_s
+              next_token_skip_space_or_newline
+            end
 
             check :":"
             next_token_skip_space_or_newline
@@ -1388,7 +1484,9 @@ module Crystal
 
             skip_statement_end
 
-            fields << FunDefArg.new(name, type, pointer)
+            names.each do |name|
+              fields << FunDefArg.new(name, type, pointer)
+            end
           end
         else
           break
@@ -1413,6 +1511,46 @@ module Crystal
         end
       end
       pointer
+    end
+
+    def parse_enum
+      next_token_skip_space_or_newline
+
+      check :CONST
+      name = @token.value
+      next_token_skip_statement_end
+
+      constants = [] of Arg
+      while !@token.keyword?(:end)
+        check :CONST
+
+        constant_name = @token.value
+        next_token_skip_space
+        if @token.type == :"="
+          next_token_skip_space_or_newline
+          check :NUMBER
+          kind = @token.number_kind
+          if kind == :f32 || kind == :f64
+            raise "expecting integer constant"
+          end
+          constant_value = NumberLiteral.new(@token.value.to_s, kind)
+          next_token_skip_statement_end
+        else
+          constant_value = nil
+          skip_statement_end
+        end
+
+        if @token.type == :","
+          next_token_skip_statement_end
+        end
+
+        constants << Arg.new(constant_name, constant_value)
+      end
+
+      check_ident :end
+      next_token_skip_statement_end
+
+      EnumDef.new name, constants
     end
 
     def node_and_next_token(node)

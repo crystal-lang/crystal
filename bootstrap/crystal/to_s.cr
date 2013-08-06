@@ -120,14 +120,14 @@ module Crystal
     def visit(node : ModuleDef)
       @str << "module "
       @str << node.name
-      # if node.type_vars
-      #   @str << "("
-      #   node.type_vars.each_with_index do |type_var, i|
-      #     @str << ", " if i > 0
-      #     @str << type_var.to_s
-      #   end
-      #   @str << ")"
-      # end
+      if type_vars = node.type_vars
+        @str << "("
+        type_vars.each_with_index do |type_var, i|
+          @str << ", " if i > 0
+          @str << type_var
+        end
+        @str << ")"
+      end
       @str << "\n"
       accept_with_indent(node.body)
       @str << "end"
@@ -230,6 +230,25 @@ module Crystal
         @str << "::" if i > 0 || node.global
         @str << name
       end
+    end
+
+    def visit(node : NewGenericClass)
+      node.name.accept self
+      @str << "("
+      node.type_vars.each_with_index do |var, i|
+        @str << ", " if i > 0
+        var.accept self
+      end
+      @str << ")"
+      false
+    end
+
+    def visit(node : IdentUnion)
+      node.idents.each_with_index do |ident, i|
+        @str << " | " if  i > 0
+        ident.accept self
+      end
+      false
     end
 
     def visit(node : InstanceVar)
@@ -362,7 +381,6 @@ module Crystal
     def visit(node : FunDefArg)
       @str << node.name.to_s
       @str << " : "
-      @str << "out " if node.out
       node.type_spec.accept self
       node.pointer.times do
         @str << "*"
@@ -382,13 +400,38 @@ module Crystal
     end
 
     def visit(node : StructDef)
-      @str << "struct "
+      visit_struct_or_union "struct", node
+    end
+
+    def visit(node : UnionDef)
+      visit_struct_or_union "union", node
+    end
+
+    def visit_struct_or_union(name, node)
+      @str << name
+      @str << " "
       @str << node.name.to_s
       @str << "\n"
       with_indent do
         node.fields.each do |field|
           append_indent
           field.accept self
+          @str << "\n"
+        end
+      end
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit(node : EnumDef)
+      @str << "enum "
+      @str << node.name.to_s
+      @str << "\n"
+      with_indent do
+        node.constants.each do |constant|
+          append_indent
+          constant.accept self
           @str << "\n"
         end
       end

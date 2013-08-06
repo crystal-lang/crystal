@@ -433,8 +433,13 @@ module Crystal
             end
           end
         when 'n'
-          if next_char == 'd'
+          case next_char
+          when 'd'
             return check_ident_or_keyword(:end, start, start_column)
+          when 'u'
+            if next_char == 'm'
+              return check_ident_or_keyword(:enum, start, start_column)
+            end
           end
         end
         scan_ident(start, start_column)
@@ -549,8 +554,17 @@ module Crystal
         end
         scan_ident(start, start_column)
       when 'u'
-        if next_char == 'n' && next_char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's'
-          return check_ident_or_keyword(:unless, start, start_column)
+        if next_char == 'n'
+          case next_char
+          when 'i'
+            if next_char == 'o' && next_char == 'n'
+              return check_ident_or_keyword(:union, start, start_column)
+            end
+          when 'l'
+            if next_char == 'e' && next_char == 's' && next_char == 's'
+              return check_ident_or_keyword(:unless, start, start_column)
+            end
+          end
         end
         scan_ident(start, start_column)
       when 'w'

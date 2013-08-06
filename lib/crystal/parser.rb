@@ -581,13 +581,29 @@ module Crystal
 
     def parse_parenthesized_expression
       next_token_skip_space_or_newline
-      exp = parse_expression
 
-      check :')'
-      next_token_skip_space
+      if @token.type == :")"
+        return node_and_next_token NilLiteral.new
+      end
+
+      exps = []
+
+      while true
+        exps << parse_expression
+        case @token.type
+        when :')'
+          next_token_skip_space
+          break
+        when :NEWLINE, :";"
+          next_token_skip_space
+        else
+          raise "unexpected token: #{@token}"
+        end
+      end
 
       raise "unexpected token: (" if @token.type == :'('
-      exp
+
+      Expressions.from exps
     end
 
     def parse_array_literal
@@ -730,6 +746,8 @@ module Crystal
 
       names = []
       global = false
+      start_line = location[0]
+      start_column = location[1]
 
       if @token.type == :'::'
         global = true
@@ -751,7 +769,10 @@ module Crystal
 
       const = Ident.new names, global
       const.location = location
-      const
+
+      if @token.location[0] == start_line
+        const.name_length = @token.location[1] - start_column
+      end
 
       if @token.type == :'('
         next_token_skip_space_or_newline

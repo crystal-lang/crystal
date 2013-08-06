@@ -292,7 +292,7 @@ module Crystal
       arg_names = []
 
       msg = "no overload matches '#{full_name(owner)}'"
-      msg << " with types #{args.map(&:type).join ', '}" if args.length < 0
+      msg << " with types #{args.map(&:type).join ', '}" if args.length > 0
       msg << "\n"
       msg << "Overloads are:"
       defs.each do |a_def|

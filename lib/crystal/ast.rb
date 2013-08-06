@@ -266,7 +266,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      body.accept visitor if body
+      @body.accept visitor if @body
     end
 
     def ==(other)
@@ -611,6 +611,7 @@ module Crystal
   class Ident < ASTNode
     attr_accessor :names
     attr_accessor :global
+    attr_accessor :name_length
 
     def initialize(names, global = false)
       @names = names
@@ -624,6 +625,7 @@ module Crystal
     def clone_from(other)
       @names = other.names
       @global = other.global
+      @name_length = other.name_length
     end
   end
 

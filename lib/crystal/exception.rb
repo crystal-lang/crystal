@@ -12,6 +12,8 @@ module Crystal
         else
           [node.column_number, length]
         end
+      elsif node.respond_to?(:name_length)
+        [node.column_number, node.name_length]
       else
         [node.column_number, nil]
       end
