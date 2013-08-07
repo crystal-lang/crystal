@@ -9,7 +9,7 @@ task :console do
 
   if ARGV[1]
     @nodes = parse File.read(File.expand_path("../#{ARGV[1]}", __FILE__))
-    require_node = Require.new(StringLiteral.new("prelude"))
+    require_node = Require.new("prelude")
     @nodes = @nodes ? Expressions.new([require_node, @nodes]) : require_node
     @mod = Program.new
     @nodes = @mod.normalize @nodes

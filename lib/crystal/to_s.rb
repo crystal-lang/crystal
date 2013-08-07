@@ -736,18 +736,22 @@ module Crystal
     end
 
     def visit_exception_handler(node)
-      @str << "begin"
+      @str << "begin\n"
 
       if node.body
         accept_with_indent node.body
       end
 
-      node.rescues.each do |a_rescue|
-        a_rescue.accept self
+      if node.rescues && node.rescues.length > 0
+        node.rescues.each do |a_rescue|
+          append_indent
+          a_rescue.accept self
+        end
       end
 
       if node.ensure
-        @str << "ensure"
+        append_indent
+        @str << "ensure\n"
         accept_with_indent node.ensure
       end
 
@@ -758,7 +762,7 @@ module Crystal
 
     def visit_rescue(node)
       @str << "rescue"
-      if node.types.length > 0
+      if node.types && node.types.length > 0
         @str << " "
         node.types.each_with_index do |type, i|
           @str << ", " if i > 0

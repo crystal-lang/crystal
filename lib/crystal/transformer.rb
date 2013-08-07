@@ -315,6 +315,19 @@ module Crystal
       node
     end
 
+    def transform_exception_handler(node)
+      node.body = node.body.transform(self) if node.body
+      transform_many node.rescues
+      node.ensure = node.ensure.transform(self) if node.ensure
+      node
+    end
+
+    def transform_rescue(node)
+      node.body = node.body.transform(self) if node.body
+      transform_many node.types
+      node
+    end
+
     def transform_type_merge(node)
       transform_many node.expressions
       node

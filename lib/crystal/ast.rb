@@ -1406,9 +1406,9 @@ module Crystal
     attr_accessor :rescues
     attr_accessor :ensure
 
-    def initialize(body = nil, rescues = [], a_ensure = nil)
+    def initialize(body = nil, rescues = nil, a_ensure = nil)
       @body = Expressions.from body
-      @rescues = Expressions.from rescues
+      @rescues = rescues
       @ensure = a_ensure
     end
 
@@ -1434,9 +1434,9 @@ module Crystal
     attr_accessor :types
     attr_accessor :name
 
-    def initialize(body = nil, types = [], name = nil)
+    def initialize(body = nil, types = nil, name = nil)
       @body = Expressions.from body
-      @types = Expressions.from types
+      @types = types
       @name = name
     end
 
