@@ -1404,27 +1404,31 @@ module Crystal
   class ExceptionHandler < ASTNode
     attr_accessor :body
     attr_accessor :rescues
+    attr_accessor :else
     attr_accessor :ensure
 
-    def initialize(body = nil, rescues = nil, a_ensure = nil)
+    def initialize(body = nil, rescues = nil, a_else = nil, a_ensure = nil)
       @body = Expressions.from body
       @rescues = rescues
+      @else = a_else
       @ensure = a_ensure
     end
 
     def accept_children(visitor)
       @body.accept visitor if @body
       @rescues.each { |a_rescue| a_rescue.accept visitor }
+      @else.accep visitor if @else
       @ensure.accept visitor if @ensure
     end
 
     def ==(other)
-      other.is_a?(ExceptionHandler) && other.body == body && other.rescues == rescues && other.ensure == @ensure
+      other.is_a?(ExceptionHandler) && other.body == body && other.rescues == rescues && other.else == @else && other.ensure == @ensure
     end
 
     def clone_from(other)
       @body = other.body.clone
       @rescues = other.rescues.map(&:clone)
+      @else = other.else.clone
       @ensure = other.ensure.clone
     end
   end

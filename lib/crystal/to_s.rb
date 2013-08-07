@@ -749,6 +749,12 @@ module Crystal
         end
       end
 
+      if node.else
+        append_indent
+        @str << "else\n"
+        accept_with_indent node.else
+      end
+
       if node.ensure
         append_indent
         @str << "ensure\n"
@@ -773,8 +779,8 @@ module Crystal
         @str << " => "
         @str << node.name
       end
+      @str << "\n"
       if node.body
-        @str << "\n"
         accept_with_indent node.body 
       end
       false

@@ -843,6 +843,7 @@ module Crystal
 
     def parse_exception_handler(exp)
       rescues = nil
+      a_else = nil
       a_ensure = nil
 
       if @token.keyword?(:rescue)
@@ -851,6 +852,16 @@ module Crystal
           rescues << parse_rescue
           break unless @token.keyword?(:rescue)
         end
+      end
+
+      if @token.keyword?(:else)
+        unless rescues
+          raise "'else' is useless without 'rescue'"
+        end
+
+        next_token_skip_statement_end
+        a_else = parse_expression
+        skip_statement_end
       end
 
       if @token.keyword?(:ensure)
@@ -863,7 +874,7 @@ module Crystal
       next_token_skip_space
 
       if rescues || a_ensure
-        ExceptionHandler.new(exp, rescues, a_ensure)
+        ExceptionHandler.new(exp, rescues, a_else, a_ensure)
       else
         exp
       end
