@@ -113,6 +113,10 @@ module Crystal
             next_token_skip_statement_end
             exp = parse_op_assign
             atomic = While.new(exp, atomic, true)
+          when :rescue
+            next_token_skip_space
+            rescue_body = parse_expression
+            atomic = ExceptionHandler.new(atomic, [Rescue.new(rescue_body)])
           else
             break
           end
@@ -834,9 +838,72 @@ module Crystal
     def parse_begin
       next_token_skip_statement_end
       exps = parse_expressions
+      parse_exception_handler exps
+    end
+
+    def parse_exception_handler(exp)
+      rescues = nil
+      a_ensure = nil
+
+      if @token.keyword?(:rescue)
+        rescues = []
+        while true
+          rescues << parse_rescue
+          break unless @token.keyword?(:rescue)
+        end
+      end
+
+      if @token.keyword?(:ensure)
+        next_token_skip_statement_end
+        a_ensure = parse_expression
+        skip_statement_end
+      end
+
       check_ident :end
       next_token_skip_space
-      exps
+
+      if rescues || a_ensure
+        ExceptionHandler.new(exp, rescues, a_ensure)
+      else
+        exp
+      end
+    end
+
+    def parse_rescue
+      next_token_skip_space
+
+      if @token.type == :CONST
+        types = []
+        while true
+          types << parse_ident
+          if @token.type == :","
+            next_token_skip_space
+          else
+            skip_space
+            break
+          end
+        end
+      end
+
+      if @token.type == :"=>"
+        next_token_skip_space_or_newline
+        check :IDENT
+        name = @token.value.to_s
+        next_token_skip_space
+      end
+
+      check :";", :NEWLINE
+
+      next_token_skip_space_or_newline
+
+      if @token.keyword?(:end)
+        body = nil
+      else
+        body = parse_expression
+        skip_statement_end
+      end
+
+      Rescue.new(body, types, name)
     end
 
     def parse_var_or_call
@@ -1206,8 +1273,7 @@ module Crystal
         body = nil
       else
         body = parse_expressions
-        skip_statement_end
-        check_ident :end
+        body = parse_exception_handler body
       end
 
       next_token_skip_space
@@ -1779,7 +1845,7 @@ module Crystal
       return false unless @token.type == :IDENT
 
       case @token.value
-      when :do, :end, :else, :elsif, :when
+      when :do, :end, :else, :elsif, :when, :rescue, :ensure
         true
       else
         false

@@ -116,7 +116,7 @@ module Crystal
         @token.type = :STRING_ARRAY_START
       elsif match = scan(%r(!=|!@\B|!|===|==|=~|=>|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|->|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&=|&&|&|\|\|=|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
         @token.type = match.to_sym
-      elsif match = scan(/(abstract|def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct|union|enum|macro|out|require|case|when|then|of)((\?|!)|\b)/)
+      elsif match = scan(/(abstract|def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct|union|enum|macro|out|require|case|when|then|of|rescue|ensure)((\?|!)|\b)/)
         @token.type = :IDENT
         @token.value = match.end_with?('?') || match.end_with?('!') ? match : match.to_sym
       elsif match = scan(/[A-Z][a-zA-Z_0-9]*\b/)

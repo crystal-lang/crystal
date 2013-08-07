@@ -735,6 +735,47 @@ module Crystal
       false
     end
 
+    def visit_exception_handler(node)
+      @str << "begin"
+
+      if node.body
+        accept_with_indent node.body
+      end
+
+      node.rescues.each do |a_rescue|
+        a_rescue.accept self
+      end
+
+      if node.ensure
+        @str << "ensure"
+        accept_with_indent node.ensure
+      end
+
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit_rescue(node)
+      @str << "rescue"
+      if node.types.length > 0
+        @str << " "
+        node.types.each_with_index do |type, i|
+          @str << ", " if i > 0
+          type.accept self
+        end
+      end
+      if node.name
+        @str << " => "
+        @str << node.name
+      end
+      if node.body
+        @str << "\n"
+        accept_with_indent node.body 
+      end
+      false
+    end
+
     def visit_type_merge(node)
       @str << "<type_merge>("
       node.expressions.each_with_index do |exp, i|

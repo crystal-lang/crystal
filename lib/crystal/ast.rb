@@ -1401,6 +1401,61 @@ module Crystal
     end
   end
 
+  class ExceptionHandler < ASTNode
+    attr_accessor :body
+    attr_accessor :rescues
+    attr_accessor :ensure
+
+    def initialize(body = nil, rescues = [], a_ensure = nil)
+      @body = Expressions.from body
+      @rescues = Expressions.from rescues
+      @ensure = a_ensure
+    end
+
+    def accept_children(visitor)
+      @body.accept visitor if @body
+      @rescues.each { |a_rescue| a_rescue.accept visitor }
+      @ensure.accept visitor if @ensure
+    end
+
+    def ==(other)
+      other.is_a?(ExceptionHandler) && other.body == body && other.rescues == rescues && other.ensure == @ensure
+    end
+
+    def clone_from(other)
+      @body = other.body.clone
+      @rescues = other.rescues.map(&:clone)
+      @ensure = other.ensure.clone
+    end
+  end
+
+  class Rescue < ASTNode
+    attr_accessor :body
+    attr_accessor :types
+    attr_accessor :name
+
+    def initialize(body = nil, types = [], name = nil)
+      @body = Expressions.from body
+      @types = Expressions.from types
+      @name = name
+    end
+
+    def accept_children(visitor)
+      @body.accept visitor if @body
+      @types.each { |type| type.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(Rescue) && other.body == body && other.types == types && other.name == name
+    end
+
+    def clone_from(other)
+      @body = other.body.clone
+      @types = other.types.map(&:clone)
+      @name = other.name
+    end
+  end
+
   # Ficticious node that means: merge the type of the arguments
   class TypeMerge < ASTNode
     attr_accessor :expressions
