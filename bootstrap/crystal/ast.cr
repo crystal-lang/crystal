@@ -162,13 +162,20 @@ module Crystal
   #
   class ArrayLiteral < ASTNode
     attr_accessor :elements
+    attr_accessor :of
 
-    def initialize(elements = [] of ASTNode)
+    def initialize(elements = [] of ASTNode, of = nil)
       @elements = elements
+      @of = of
+    end
+
+    def accept_children(visitor)
+      elements.each { |exp| exp.accept visitor }
+      @of.accept visitor if @of
     end
 
     def ==(other : self)
-      other.elements == elements
+      other.elements == elements && other.of == of
     end
   end
 
@@ -477,12 +484,16 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
     attr_accessor :yields
+    attr_accessor :block_arg
+    attr_accessor :instance_vars
+    attr_accessor :name_column_number
 
-    def initialize(name, args : Array(Arg), body = nil, receiver = nil, yields = false)
+    def initialize(name, args : Array(Arg), body = nil, receiver = nil, block_arg = nil, yields = -1)
       @name = name
       @args = args
       @body = Expressions.from body
       @receiver = receiver
+      @block_arg = block_arg
       @yields = yields
     end
 
@@ -490,10 +501,11 @@ module Crystal
       @receiver.accept visitor if @receiver
       args.each { |arg| arg.accept visitor }
       @body.accept visitor if @body
+      @block_arg.accept visitor if @block_arg
     end
 
     def ==(other : self)
-      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields
+      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
     end
   end
 
@@ -503,12 +515,15 @@ module Crystal
     attr_accessor :args
     attr_accessor :body
     attr_accessor :yields
+    attr_accessor :block_arg
+    attr_accessor :name_column_number
 
-    def initialize(name, args : Array(Arg), body = nil, receiver = nil, yields = false)
+    def initialize(name, args : Array(Arg), body = nil, receiver = nil, block_arg = nil, yields = -1)
       @name = name
       @args = args
       @body = Expressions.from body
       @receiver = receiver
+      @block_arg = block_arg
       @yields = yields
     end
 
@@ -516,10 +531,11 @@ module Crystal
       @receiver.accept visitor if @receiver
       args.each { |arg| arg.accept visitor }
       @body.accept visitor if @body
+      @block_arg.accept visitor if @block_arg
     end
 
     def ==(other : self)
-      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields
+      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
     end
   end
 
@@ -790,6 +806,27 @@ module Crystal
     end
   end
 
+  class BlockArg < ASTNode
+    attr_accessor :name
+    attr_accessor :inputs
+    attr_accessor :output
+
+    def initialize(name, inputs = nil, output = nil)
+      @name = name
+      @inputs = inputs
+      @output = output
+    end
+
+    def accept_children(visitor)
+      @inputs.each { |input| input.accept visitor } if @inputs
+      @output.accept visitor if @output
+    end
+
+    def ==(other : self)
+      other.name == name && other.inputs == inputs && other.output == output
+    end
+  end
+
   # A code block.
   #
   #     'do' [ '|' arg [ ',' arg ]* '|' ]
@@ -817,7 +854,7 @@ module Crystal
     end
   end
 
-  class SelfRestriction < ASTNode
+  class SelfType < ASTNode
     def ==(other : self)
       true
     end

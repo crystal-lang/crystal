@@ -69,7 +69,7 @@ describe Parser do
   it_parses "1 / 2", Call.new(1.int32, :"/", [2.int32])
   it_parses "1 / -2", Call.new(1.int32, :"/", [-2.int32])
   it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, :"/", [3.int32]), :"+", [Call.new(4.int32, :"/", [5.int32])])
-  it_parses "2 * (3 + 4)", Call.new(2.int32, :"*", [Call.new(3.int32, :"+", [4.int32])]), focus: true
+  it_parses "2 * (3 + 4)", Call.new(2.int32, :"*", [Call.new(3.int32, :"+", [4.int32])])
 
   it_parses "!1", Call.new(1.int32, :'!@')
   it_parses "1 && 2", And.new(1.int32, 2.int32)
@@ -121,6 +121,7 @@ describe Parser do
   it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfType.instance)], nil)
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.instance)], nil)
   it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Double'.ident]))], nil)
+  it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Nil'.ident(true)]))], nil)
   it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, nil, 0)
   it_parses "def foo; yield 1; end", Def.new("foo", [], [Yield.new([1.int32])], nil, nil, 1)
   it_parses "def foo; yield 1; yield; end", Def.new("foo", [], [Yield.new([1.int32]), Yield.new], nil, nil, 1)

@@ -30,6 +30,10 @@ class Array
     ArrayLiteral.new self
   end
 
+  def array_of(type)
+    ArrayLiteral.new self, type
+  end
+
   def ident
     Ident.new self
   end
@@ -52,8 +56,8 @@ class String
     Call.new nil, self, args
   end
 
-  def ident
-    Ident.new [self]
+  def ident(global = false)
+    Ident.new [self], global
   end
 
   def instance_var
@@ -117,7 +121,6 @@ describe "Parser" do
 
   it_parses ":foo", SymbolLiteral.new("foo")
 
-  it_parses "[]", ([] of ASTNode).array
   it_parses "[1, 2]", ([1.int32, 2.int32] of ASTNode).array
   it_parses "[\n1, 2]", ([1.int32, 2.int32] of ASTNode).array
   it_parses "[1,\n 2,]", ([1.int32, 2.int32] of ASTNode).array
@@ -189,9 +192,22 @@ describe "Parser" do
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int32)], nil)
   it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
   it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
-  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfRestriction.new)], nil)
-  it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfRestriction.new)], nil)
-  it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new], nil, true)
+  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfType.new)], nil)
+  it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.new)], nil)
+  it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Double".ident]))], nil)
+  it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Nil".ident(true)]))], nil)
+  it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new], nil, nil, 0)
+  it_parses "def foo; yield 1; end", Def.new("foo", [] of Arg, [Yield.new([1.int32])], nil, nil, 1)
+  it_parses "def foo; yield 1; yield; end", Def.new("foo", [] of Arg, [Yield.new([1.int32]), Yield.new], nil, nil, 1)
+  it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)], nil)
+  it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block"))
+  it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident], "Double".ident))
+  it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident, "Float".ident], "Double".ident))
+  it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", nil, "Double".ident))
+  it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident]))
+  it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", [SelfType.new], SelfType.new))
+  # it_parses "def foo; a.yield; end", Def.new("foo", [], [YieldWithScope.new("a".call)], nil, nil, 1)
+  # it_parses "def foo; a.yield 1; end", Def.new("foo", [], [YieldWithScope.new("a".call, [1.int32])], nil, nil, 1)
 
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call
@@ -348,9 +364,7 @@ describe "Parser" do
 
   it_parses "A.new(\"x\", B.new(\"y\"))", Call.new("A".ident, "new", ["x".string, Call.new("B".ident, "new", ["y".string] of ASTNode)] of ASTNode)
 
-  it_parses "foo []", Call.new(nil, "foo", [([] of ASTNode).array] of ASTNode)
   it_parses "foo [1]", Call.new(nil, "foo", [([1.int32] of ASTNode).array] of ASTNode)
-  it_parses "foo.bar []", Call.new("foo".call, "bar", [([] of ASTNode).array] of ASTNode)
   it_parses "foo.bar [1]", Call.new("foo".call, "bar", [([1.int32] of ASTNode).array] of ASTNode)
 
   it_parses "class Foo; end\nwhile true; end", [ClassDef.new("Foo"), While.new(true.bool)]
@@ -394,6 +408,9 @@ describe "Parser" do
 
   it_parses "puts %w(one two)", Call.new(nil, "puts", [["one".string, "two".string].array] of ASTNode)
 
+  it_parses "[] of Int", ([] of ASTNode).array_of("Int".ident)
+  it_parses "[1, 2] of Int", ([1.int32, 2.int32] of ASTNode).array_of("Int".ident)
+
   it_parses "::A::B", Ident.new(["A", "B"], true)
 
   it_parses "$foo", Global.new("$foo")
@@ -424,6 +441,8 @@ describe "Parser" do
   it_parses "{a: 1, b: 2}", HashLiteral.new(["a".symbol, "b".symbol] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "{a: 1, 3 => 4, b: 2}", HashLiteral.new(["a".symbol, 3.int32, "b".symbol] of ASTNode, [1.int32, 4.int32, 2.int32] of ASTNode)
 
+  it_parses "{} of Int => Double", HashLiteral.new([] of ASTNode, [] of ASTNode, "Int".ident, "Double".ident)
+
   it_parses "require \"foo\"", Require.new("foo")
   it_parses "require \"foo\"; [1]", [Require.new("foo"), [1.int32].array]
   it_parses "require \"foo\"\nif true; end", [Require.new("foo"), If.new(true.bool)]
@@ -445,6 +464,18 @@ describe "Parser" do
   it_parses "foo(\n1\n)", Call.new(nil, "foo", [1.int32] of ASTNode)
 
   it_parses "a = 1\nfoo - a", [Assign.new("a".var, 1.int32), Call.new("foo".call, "-", ["a".var] of ASTNode)]
+  it_parses "a = 1\nfoo -a", [Assign.new("a".var, 1.int32), Call.new(nil, "foo", [Call.new("a".var, "-@")] of ASTNode)]
 
+  it_parses "()", NilLiteral.new
   it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32]
+
+  # TODO: Bus error: 10
+  # it "keeps instance variables declared in def" do
+  #   node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
+  #   if node.is_a?(Def)
+  #     node.instance_vars.should eq(Set(String).new(["@x", "@y", "@z"]))
+  #   else
+  #     raise "Expected node to be a Def"
+  #   end
+  # end
 end

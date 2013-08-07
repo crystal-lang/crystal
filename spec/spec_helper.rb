@@ -178,8 +178,8 @@ class String
     Crystal::Call.new nil, self, args
   end
 
-  def ident
-    Crystal::Ident.new [self]
+  def ident(global = false)
+    Crystal::Ident.new [self], global
   end
 
   def instance_var
