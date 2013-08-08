@@ -1301,6 +1301,9 @@ module Crystal
 
       next_def_label = nil
       node.target_defs.each do |a_def|
+        allocated = a_def.owner.allocated && a_def.args.all? { |arg| arg.type.allocated }
+        next unless allocated
+
         if owner.union?
           result = match_any_type_id(a_def.owner, obj_type_id)
         elsif owner.nilable?
@@ -1331,33 +1334,28 @@ module Crystal
 
         @builder.position_at_end current_def_label
 
-        allocated = a_def.owner.allocated && a_def.args.all? { |arg| arg.type.allocated }
-        if allocated
-          call.obj.set_type(a_def.owner) if call.obj
-          call.target_defs = [a_def]
-          call.args.each_with_index do |arg, i|
-            arg.set_type(a_def.args[i].type)
-          end
-          call.set_type a_def.type
-          call.accept self
+        call.obj.set_type(a_def.owner) if call.obj
+        call.target_defs = [a_def]
+        call.args.each_with_index do |arg, i|
+          arg.set_type(a_def.args[i].type)
+        end
+        call.set_type a_def.type
+        call.accept self
 
-          if a_def.type.no_return?
-            @builder.unreachable
-          else
-            unless call.returns?
-              if is_union
-                assign_to_union(union_ptr, node.type, a_def.type, @last)
-              elsif node.type.nilable? && @last.type.kind == :integer
-                phi_table[@builder.insert_block] = @builder.int2ptr @last, llvm_type(node.type)
-              else
-                phi_table[@builder.insert_block] = @last
-              end
-            end
-
-            @builder.br exit_block
-          end
-        else
+        if a_def.type.no_return?
           @builder.unreachable
+        else
+          unless call.returns?
+            if is_union
+              assign_to_union(union_ptr, node.type, a_def.type, @last)
+            elsif node.type.nilable? && @last.type.kind == :integer
+              phi_table[@builder.insert_block] = @builder.int2ptr @last, llvm_type(node.type)
+            else
+              phi_table[@builder.insert_block] = @last
+            end
+          end
+
+          @builder.br exit_block
         end
 
         @builder.position_at_end next_def_label
