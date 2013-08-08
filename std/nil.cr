@@ -3,6 +3,10 @@ class Nil
     0
   end
 
+  def crystal_type_id
+    0
+  end
+
   def ==(other : Nil)
     true
   end

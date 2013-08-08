@@ -34,6 +34,17 @@ module Crystal
       instance.owner = reference.hierarchy_type
       reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
 
+      a_def = no_args_primitive(reference, 'crystal_type_id', int32) do |b, f, llvm_mod, self_type|
+        LLVM::Int(self_type.type_id)
+      end
+
+      instance = a_def.overload [], int32 do |b, f, llvm_mod, self_type|
+        id = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(0)]))
+        LLVM::Int(id)
+      end
+      instance.owner = reference.hierarchy_type
+      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
+
       a_def = no_args_primitive(reference, 'to_cstr', char_pointer) do |b, f, llvm_mod, self_type|
         buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
@@ -54,6 +65,7 @@ module Crystal
     def define_value_primitives
       [value, bool, char, int32, int64, float32, float64, symbol].each do |klass|
         no_args_primitive(klass, 'nil?', bool) { |b, f| LLVM::Int1.from_i(0) }
+        no_args_primitive(klass, 'crystal_type_id', int32) { |b, f, llvm_mod, self_type| LLVM::Int(self_type.type_id) }
       end
     end
 
