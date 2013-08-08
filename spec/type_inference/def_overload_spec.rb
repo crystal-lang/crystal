@@ -440,6 +440,24 @@ describe 'Type inference: def overload' do
       )) { union_of(int32, char) }
   end
 
+  it "matches on partial union" do
+    assert_type(%q(
+      require "prelude"
+
+      def foo(x : Int32 | Float64)
+        x.abs
+        1
+      end
+
+      def foo(x : Char)
+        x.ord
+        'a'
+      end
+
+      foo 1 || 1.5 || 'a'
+      )) { union_of(int32, char) }
+  end
+
   pending "restricts on generic type with free type arg" do
     assert_type(%q(
       require "reference"

@@ -223,9 +223,10 @@ module Crystal
           free_vars[restriction.names] = arg_type
         end
       when IdentUnion
-        restriction.idents.any? do |ident|
+        matches = restriction.idents.map do |ident|
           match_arg(arg_type, ident, owner, type_lookup, free_vars)
-        end && arg_type
+        end
+        matches.length > 0 ? program.type_merge(*matches) : nil
       when Type
         arg_type.is_restriction_of?(restriction, owner) && restriction
       end
