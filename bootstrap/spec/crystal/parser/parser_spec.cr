@@ -469,7 +469,6 @@ describe "Parser" do
   it_parses "()", NilLiteral.new
   it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32]
 
-  # TODO: Bus error: 10
   # it "keeps instance variables declared in def" do
   #   node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
   #   if node.is_a?(Def)

@@ -162,4 +162,33 @@ describe 'Code gen: nil' do
       f = Foo.new
       f.bar ? 1 : 2)).to_i.should eq(1)
   end
+
+  it "codegens nilable dispatch with boxing" do
+    run(%q(
+      require "prelude"
+      
+      class Object
+        def should(expectation)
+          expectation.match self
+        end
+      end
+
+      class EqualExpectation(T)
+        def initialize(value : T)
+          @value = value
+        end
+
+        def match(value)
+          value == @value
+        end
+      end
+
+      def eq(value)
+        EqualExpectation.new value
+      end
+
+      a = Reference.new || nil
+      a.should eq(nil)
+      ))
+  end
 end

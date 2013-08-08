@@ -991,7 +991,15 @@ module Crystal
     def box_object_in_hierarchy(object, hierarchy, value, load = true)
       hierarchy_type = alloca llvm_type(hierarchy)
       type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
-      @builder.store int(object.type_id), type_id_ptr
+      if object.nilable?
+        null_pointer = null_pointer?(value)
+        value_id = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(object.nilable_type.type_id)
+      else
+        value_id = object.type_id
+      end
+
+      @builder.store int(value_id), type_id_ptr
+
       @builder.store @builder.bit_cast(value, LLVM::Pointer(LLVM::Int8)), value_ptr
       if load
         @builder.load(hierarchy_type)

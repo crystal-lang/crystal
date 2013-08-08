@@ -17,10 +17,13 @@ module Crystal
       @end = true
     end
 
-    def unreachable
+    def unreachable(data = nil)
       if ENV["UNREACHABLE"] == "1"
         backtrace = caller.join("\n")
-        @codegen.llvm_puts("Reached the unreachable!\n#{backtrace}")
+        msg = "Reached the unreachable!"
+        msg << " (#{data})" if data
+        msg << "\n#{backtrace}"
+        @codegen.llvm_puts(msg)
       end
       return if @end
       @builder.unreachable
