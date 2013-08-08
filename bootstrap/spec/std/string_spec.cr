@@ -223,7 +223,28 @@ describe "String" do
     replaced.should eq("fexexbar")
   end
 
+  it "replaces char with string depending on the char" do
+    replaced = "foobar".replace do |char|
+      case char
+      when 'f'
+        "some"
+      when 'o'
+        "thing"
+      when 'a'
+        "ex"
+      else
+        nil
+      end
+    end
+    replaced.length.should eq(18)
+    replaced.should eq("somethingthingbexr")
+  end
+
+  it "dumps" do
+    "\" \\ \f \n \r \t \v cool".dump.should eq("\\\" \\ \\f \\n \\r \\t \\v cool")
+  end
+
   it "inspects" do
-    %("hello").inspect.should eq("\"\\\"hello\\\"\"")
+    "\" \\ \f \n \r \t \v cool".inspect.should eq("\"\\\" \\ \\f \\n \\r \\t \\v cool\"")
   end
 end

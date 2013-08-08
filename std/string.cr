@@ -186,7 +186,7 @@ class String
     end
   end
 
-  def replace(char : Char, replacement : String)
+  def replace(&block : Char -> String)
     chars = Array(Char).new(length + 5)
 
     # This is to put the length
@@ -197,7 +197,8 @@ class String
 
     new_length = 0
     each_char do |my_char|
-      if my_char == char
+      replacement = yield my_char
+      if replacement
         replacement.each_char do |other_char|
           chars << other_char
         end
@@ -212,6 +213,10 @@ class String
     buffer = chars.buffer
     buffer.as(Int32).value = new_length
     buffer.as(String)
+  end
+
+  def replace(char : Char, replacement : String)
+    replace { |my_char| char == my_char ? replacement : nil }
   end
 
   def delete(char : Char)
@@ -358,7 +363,21 @@ class String
   end
 
   def inspect
-    "\"#{to_s.replace('"', "\\\"")}\""
+    "\"#{dump}\""
+  end
+
+  def dump
+    replace do |char|
+      case char
+      when '"'  then "\\\""
+      when '\f' then "\\f"
+      when '\n' then "\\n"
+      when '\r' then "\\r"
+      when '\t' then "\\t"
+      when '\v' then "\\v"
+      when '\0' then "\\0"
+      end
+    end
   end
 
   def starts_with?(str)

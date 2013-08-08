@@ -32,7 +32,7 @@ module Crystal
 
     def visit(node : CharLiteral)
       @str << "'"
-      @str << escape_string(node.value)
+      @str << node.value.dump
       @str << "'"
     end
 
@@ -42,7 +42,7 @@ module Crystal
 
     def visit(node : StringLiteral)
       @str << "\""
-      @str << escape_string(node.value)
+      @str << node.value.dump
       @str << "\""
     end
 
@@ -109,7 +109,16 @@ module Crystal
     end
 
     def visit(node : If)
-      @str << "if "
+      visit_if_or_unless "if", node
+    end
+
+    def visit(node : Unless)
+      visit_if_or_unless "unless", node
+    end
+
+    def visit_if_or_unless(prefix, node)
+      @str << prefix
+      @str << " "
       node.cond.accept self
       @str << "\n"
       accept_with_indent(node.then)
@@ -118,7 +127,6 @@ module Crystal
         @str << "else\n"
         accept_with_indent(node.else)
       end
-
       append_indent
       @str << "end"
       false
@@ -581,17 +589,6 @@ module Crystal
       @str << "\n"
       accept_with_indent node.body
       false
-    end
-
-    def escape_string(string)
-      string.
-        replace('\0', "\\0").
-        replace('\n', "\\n").
-        replace('\t', "\\t").
-        replace('\r', "\\r").
-        replace('\v', "\\v").
-        replace('\f', "\\f").
-        replace('\\', "\\\\")
     end
 
     def append_indent
