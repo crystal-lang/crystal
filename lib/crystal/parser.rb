@@ -491,7 +491,7 @@ module Crystal
         column = @token.column_number
 
         next_token_skip_space
-        if @token.keyword?(:"of")
+        if @token.keyword?(:of)
           next_token_skip_space_or_newline
           of = parse_type_var
           ArrayLiteral.new([], of)
@@ -623,7 +623,7 @@ module Crystal
       next_token_skip_space
 
       of = nil
-      if @token.keyword?(:"of")
+      if @token.keyword?(:of)
         next_token_skip_space_or_newline
         of = parse_type_var
       end
@@ -658,7 +658,7 @@ module Crystal
 
       of_key = nil
       of_value = nil
-      if @token.keyword?(:"of")
+      if @token.keyword?(:of)
         next_token_skip_space_or_newline
         of_key = parse_type_var
         check :"=>"
@@ -860,13 +860,13 @@ module Crystal
         end
 
         next_token_skip_statement_end
-        a_else = parse_expression
+        a_else = parse_expressions
         skip_statement_end
       end
 
       if @token.keyword?(:ensure)
         next_token_skip_statement_end
-        a_ensure = parse_expression
+        a_ensure = parse_expressions
         skip_statement_end
       end
 
@@ -910,7 +910,7 @@ module Crystal
       if @token.keyword?(:end)
         body = nil
       else
-        body = parse_expression
+        body = parse_expressions
         skip_statement_end
       end
 

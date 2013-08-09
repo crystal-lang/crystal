@@ -131,6 +131,11 @@ module Crystal
             next_token_skip_statement_end
             exp = parse_op_assign
             atomic = While.new(exp, atomic, true)
+          when :rescue
+            next_token_skip_space
+            rescue_body = parse_expression
+            # TODO: removing of Rescue blows the type inference
+            atomic = ExceptionHandler.new(atomic, [Rescue.new(rescue_body)] of Rescue)
           else
             break
           end
@@ -478,7 +483,7 @@ module Crystal
         column = @token.column_number
 
         next_token_skip_space
-        if @token.keyword?(:"of")
+        if @token.keyword?(:of)
           next_token_skip_space_or_newline
           of = parse_type_var
           ArrayLiteral.new([] of ASTNode, of)
@@ -573,9 +578,85 @@ module Crystal
     def parse_begin
       next_token_skip_statement_end
       exps = parse_expressions
+      parse_exception_handler exps
+    end
+
+    def parse_exception_handler(exp)
+      rescues = nil
+      a_else = nil
+      a_ensure = nil
+
+      if @token.keyword?(:rescue)
+        rescues = [] of Rescue
+        while true
+          rescues << parse_rescue
+          break unless @token.keyword?(:rescue)
+        end
+      end
+
+      if @token.keyword?(:else)
+        unless rescues
+          raise "'else' is useless without 'rescue'"
+        end
+
+        next_token_skip_statement_end
+        a_else = parse_expressions_or_nil
+        skip_statement_end
+      end
+
+      if @token.keyword?(:ensure)
+        next_token_skip_statement_end
+        a_ensure = parse_expressions_or_nil
+        skip_statement_end
+      end
+
       check_ident :end
       next_token_skip_space
-      exps
+
+      if rescues || a_ensure
+        ExceptionHandler.new(exp, rescues, a_else, a_ensure)
+      else
+        exp
+      end
+    end
+
+    def parse_rescue
+      next_token_skip_space
+
+      if @token.type == :CONST
+        types = [] of ASTNode
+        while true
+          types << parse_ident
+          if @token.type == :","
+            next_token_skip_space
+          else
+            skip_space
+            break
+          end
+        end
+      end
+
+      if @token.type == :"=>"
+        next_token_skip_space_or_newline
+        check :IDENT
+        name = @token.value.to_s
+        next_token_skip_space
+      end
+
+      if @token.type != :";" && @token.type != :NEWLINE
+        unexpected_token @token.to_s, "expected ';' or newline"
+      end
+
+      next_token_skip_space_or_newline
+
+      if @token.keyword?(:end)
+        body = nil
+      else
+        body = parse_expressions_or_nil
+        skip_statement_end
+      end
+
+      Rescue.new(body, types, name)
     end
 
     def parse_while
@@ -794,7 +875,7 @@ module Crystal
       next_token_skip_space
 
       of = nil
-      if @token.keyword?(:"of")
+      if @token.keyword?(:of)
         next_token_skip_space_or_newline
         of = parse_type_var
       end
@@ -829,7 +910,7 @@ module Crystal
 
       of_key = nil
       of_value = nil
-      if @token.keyword?(:"of")
+      if @token.keyword?(:of)
         next_token_skip_space_or_newline
         of_key = parse_type_var
         check :"=>"
@@ -1017,9 +1098,8 @@ module Crystal
       if @token.keyword?(:end)
         body = nil
       else
-        body = push_def(args) { parse_expressions }
-        skip_statement_end
-        check_ident :end
+        body = parse_expressions_or_nil
+        body = parse_exception_handler body
       end
 
       next_token_skip_space
@@ -1788,7 +1868,7 @@ module Crystal
       return false unless @token.type == :IDENT
 
       case @token.value
-      when :do, :end, :else, :elsif, :when
+      when :do, :end, :else, :elsif, :when, :rescue, :ensure
         true
       else
         false

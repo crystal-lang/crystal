@@ -1416,8 +1416,8 @@ module Crystal
 
     def accept_children(visitor)
       @body.accept visitor if @body
-      @rescues.each { |a_rescue| a_rescue.accept visitor }
-      @else.accep visitor if @else
+      @rescues.each { |a_rescue| a_rescue.accept visitor } if @rescues
+      @else.accept visitor if @else
       @ensure.accept visitor if @ensure
     end
 
@@ -1446,7 +1446,7 @@ module Crystal
 
     def accept_children(visitor)
       @body.accept visitor if @body
-      @types.each { |type| type.accept visitor }
+      @types.each { |type| type.accept visitor } if @types
     end
 
     def ==(other)

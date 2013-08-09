@@ -436,6 +436,10 @@ module Crystal
           case next_char
           when 'd'
             return check_ident_or_keyword(:end, start, start_column)
+          when 's'
+            if next_char == 'u' && next_char == 'r' && next_char == 'e'
+              return check_ident_or_keyword(:ensure, start, start_column)
+            end
           when 'u'
             if next_char == 'm'
               return check_ident_or_keyword(:enum, start, start_column)
@@ -518,6 +522,10 @@ module Crystal
         case next_char
         when 'e'
           case next_char
+          when 's'
+            if next_char == 'c' && next_char == 'u' && next_char == 'e'
+              return check_ident_or_keyword(:rescue, start, start_column)
+            end
           when 't'
             if next_char == 'u' && next_char == 'r' && next_char == 'n'
               return check_ident_or_keyword(:return, start, start_column)

@@ -591,6 +591,61 @@ module Crystal
       false
     end
 
+    def visit(node : ExceptionHandler)
+      @str << "begin\n"
+
+      if node.body
+        accept_with_indent node.body
+      end
+
+      if rescues = node.rescues
+        if rescues.length > 0
+          rescues.each do |a_rescue|
+            append_indent
+            a_rescue.accept self
+          end
+        end
+      end
+
+      if node_else = node.else
+        append_indent
+        @str << "else\n"
+        accept_with_indent node_else
+      end
+
+      if node_ensure = node.ensure
+        append_indent
+        @str << "ensure\n"
+        accept_with_indent node_ensure
+      end
+
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit(node : Rescue)
+      @str << "rescue"
+      if types = node.types
+        if types.length > 0
+          @str << " "
+          types.each_with_index do |type, i|
+            @str << ", " if i > 0
+            type.accept self
+          end
+        end
+      end
+      if name = node.name
+        @str << " => "
+        @str << name
+      end
+      @str << "\n"
+      if body = node.body
+        accept_with_indent body 
+      end
+      false
+    end
+
     def append_indent
       @indent.times do
         @str << "  "

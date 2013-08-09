@@ -766,6 +766,52 @@ module Crystal
     end
   end
 
+  class ExceptionHandler < ASTNode
+    attr_accessor :body
+    attr_accessor :rescues
+    attr_accessor :else
+    attr_accessor :ensure
+
+    def initialize(body = nil, rescues = nil, a_else = nil, a_ensure = nil)
+      @body = Expressions.from body
+      @rescues = rescues
+      @else = a_else
+      @ensure = a_ensure
+    end
+
+    def accept_children(visitor)
+      @body.accept visitor if @body
+      @rescues.each { |a_rescue| a_rescue.accept visitor } if @rescues
+      @else.accept visitor if @else
+      @ensure.accept visitor if @ensure
+    end
+
+    def ==(other : self)
+      other.body == body && other.rescues == rescues && other.else == @else && other.ensure == @ensure
+    end
+  end
+
+  class Rescue < ASTNode
+    attr_accessor :body
+    attr_accessor :types
+    attr_accessor :name
+
+    def initialize(body = nil, types = nil, name = nil)
+      @body = Expressions.from body
+      @types = types
+      @name = name
+    end
+
+    def accept_children(visitor)
+      @body.accept visitor if @body
+      @types.each { |type| type.accept visitor } if @types
+    end
+
+    def ==(other : self)
+      body == body && other.types == types && other.name == name
+    end
+  end
+
   class IdentUnion < ASTNode
     attr_accessor :idents
 
