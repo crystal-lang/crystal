@@ -21,4 +21,16 @@ describe "Set" do
       set.length.should eq(1)
     end
   end
+
+  describe "==" do
+    it "compares two sets" do
+      set1 = Set.new([1, 2, 3])
+      set2 = Set.new([1, 2, 3])
+      set3 = Set.new([1, 2, 3, 4])
+
+      set1.should eq(set1)
+      set1.should eq(set2)
+      set1.should_not eq(set3)
+    end
+  end
 end

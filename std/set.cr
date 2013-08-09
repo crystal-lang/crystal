@@ -34,7 +34,17 @@ class Set(T)
     end
   end
 
+  def ==(other : Set)
+    same?(other) || internal_hash == other.internal_hash
+  end
+
   def to_s
     "Set{#{join ", "}}"
+  end
+
+  # protected
+
+  def internal_hash
+    @hash
   end
 end
