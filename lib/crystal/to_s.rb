@@ -576,6 +576,13 @@ module Crystal
           @str << '*'
         end
       end
+      if node.body
+        @str << "\n"
+        accept_with_indent node.body
+        @str << "\n"
+        append_indent
+        @str << "end"
+      end
       false
     end
 

@@ -564,6 +564,8 @@ module Crystal
           parse_require
         when :case
           parse_case
+        when :fun
+          parse_fun_def(true)
         else
           parse_var_or_call
         end
@@ -1556,7 +1558,9 @@ module Crystal
       expressions
     end
 
-    def parse_fun_def
+    def parse_fun_def(require_body = false)
+      push_def if require_body
+
       next_token_skip_space_or_newline
 
       check :IDENT
@@ -1603,6 +1607,8 @@ module Crystal
           fun_def_arg.location = arg_location
           args << fun_def_arg
 
+          push_var_name arg_name if require_body
+
           if @token.type == :','
             next_token_skip_space_or_newline
           end
@@ -1622,7 +1628,21 @@ module Crystal
         skip_statement_end
       end
 
-      FunDef.new name, args, return_type, ptr, varargs, real_name
+      if require_body
+        if @token.keyword?(:end)
+          body = nil
+        else
+          body = parse_expressions
+        end
+
+        next_token_skip_space
+      else
+        body = nil
+      end
+
+      pop_def if require_body
+
+      FunDef.new name, args, return_type, ptr, varargs, body, real_name
     end
 
     def parse_type_def
@@ -1873,8 +1893,12 @@ module Crystal
 
     def push_var(*vars)
       vars.each do |var|
-        @def_vars.last.add var.name.to_s
+        push_var_name var.name.to_s
       end
+    end
+
+    def push_var_name(name)
+      @def_vars.last.add name
     end
 
     def is_var?(name)

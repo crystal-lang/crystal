@@ -348,7 +348,21 @@ module Crystal
     end
   end
 
+  class FunDef
+    attr_accessor :external
+  end
+
   class External < Def
+    def self.for_fun(name, real_name, args, return_type, varargs, body, fun_def)
+      external = External.new(name, args, body)
+      external.real_name = real_name
+      external.varargs = varargs
+      external.owner = self
+      external.set_type(return_type)
+      external.fun_def = fun_def
+      fun_def.external = external
+      external
+    end
   end
 
   class Primitive < ASTNode

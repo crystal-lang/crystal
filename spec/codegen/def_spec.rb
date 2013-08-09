@@ -234,15 +234,15 @@ describe 'Code gen: def' do
         end
       end
 
-      def fun
+      def foo
         exps = Box.new
-        sub = fun
+        sub = foo
         t = Foo.new(sub) || Bar.new(sub)
         exps.set t
         exps.get || 1
       end
 
-      false && fun
+      false && foo
       ))
   end
 

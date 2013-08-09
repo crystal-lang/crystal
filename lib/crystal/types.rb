@@ -1180,17 +1180,6 @@ module Crystal
       super
     end
 
-    def fun(name, real_name, args, return_type, varargs, fun_def)
-      external = External.new(name, args)
-      external.real_name = real_name
-      external.varargs = varargs
-      external.owner = self
-      external.set_type(return_type)
-      external.fun_def = fun_def
-
-      add_def external
-    end
-
     def passed_as_self?
       false
     end

@@ -266,7 +266,14 @@ module Crystal
       @types.pop
     end
 
-    def end_visit_fun_def(node)
+    def visit_fun_def(node)
+      if node.body && !current_type.is_a?(Program)
+        node.raise "can only declare fun at lib or global scope or lib"
+      end
+
+      node.args.each { |arg| arg.accept self }
+      node.return_type.accept self if node.return_type
+
       args = node.args.map do |arg|
         check_primitive_like arg.type
 
@@ -281,10 +288,27 @@ module Crystal
       return_type = maybe_ptr_type(node.return_type ? node.return_type.type.instance_type : mod.nil, node.ptr)
 
       begin
-        current_type.fun node.name, node.real_name, args, return_type, node.varargs, node
+        external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
+        if node.body
+          vars = Hash[args.map do |arg| 
+            var = Var.new(arg.name, arg.type)
+            var.bind_to(var)
+            [arg.name, var]
+          end]
+          visitor = TypeVisitor.new(@mod, vars, @mod, self, nil, nil, external, typed_def, args.map(&:type))
+          node.body.accept visitor
+
+          if node.return_type &&! node.body.type.equal?(return_type)
+            node.raise "expected fun to return #{return_type} but it returned #{node.body.type}"
+          end
+        end
+
+        current_type.add_def external
       rescue => ex
         node.raise ex.message
       end
+
+      false
     end
 
     def end_visit_type_def(node)

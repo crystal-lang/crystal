@@ -1076,24 +1076,27 @@ module Crystal
     attr_accessor :return_type
     attr_accessor :ptr
     attr_accessor :varargs
+    attr_accessor :body
     attr_accessor :real_name
 
-    def initialize(name, args = [], return_type = nil, ptr = 0, varargs = false, real_name = name)
+    def initialize(name, args = [], return_type = nil, ptr = 0, varargs = false, body = nil, real_name = name)
       @name = name
       @real_name = real_name
       @args = args
       @return_type = return_type
       @ptr = ptr
       @varargs = varargs
+      @body = body
     end
 
     def accept_children(visitor)
       args.each { |arg| arg.accept visitor }
       return_type.accept visitor if return_type
+      body.accept visitor if body
     end
 
     def ==(other)
-      other.is_a?(FunDef) && other.name == name && other.args == args && other.return_type == return_type && other.ptr == ptr && other.real_name == real_name && other.varargs == varargs
+      other.is_a?(FunDef) && other.name == name && other.args == args && other.return_type == return_type && other.ptr == ptr && other.real_name == real_name && other.varargs == varargs && other.body == body
     end
   end
 

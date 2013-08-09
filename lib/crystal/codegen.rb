@@ -238,6 +238,11 @@ module Crystal
       false
     end
 
+    def visit_fun_def(node)
+      codegen_fun node.real_name, node.external, nil
+      false
+    end
+
     def visit_ident(node)
       const = node.target_const
       if const
@@ -1185,8 +1190,10 @@ module Crystal
         @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
       end
 
-      unless target_def.is_a? External
-        @fun.linkage = :internal
+      if !target_def.is_a?(External) || (target_def.is_a?(External) && target_def.body)
+        unless target_def.is_a?(External)
+          @fun.linkage = :internal
+        end
         new_entry_block
 
         args.each_with_index do |arg, i|
