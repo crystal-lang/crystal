@@ -1430,7 +1430,7 @@ module Crystal
 
     def clone_from(other)
       @body = other.body.clone
-      @rescues = other.rescues.map(&:clone)
+      @rescues = other.rescues.map(&:clone) if @rescues
       @else = other.else.clone
       @ensure = other.ensure.clone
     end
@@ -1458,7 +1458,7 @@ module Crystal
 
     def clone_from(other)
       @body = other.body.clone
-      @types = other.types.map(&:clone)
+      @types = other.types.map(&:clone) if @types
       @name = other.name
     end
   end
