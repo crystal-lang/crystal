@@ -12,7 +12,7 @@ class Set(T)
     end
   end
 
-  def add(object)
+  def add(object : T)
     @hash[object] = true
   end
 

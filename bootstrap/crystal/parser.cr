@@ -11,6 +11,7 @@ module Crystal
     def initialize(str, def_vars = [Set(String).new])
       super(str)
       @def_vars = def_vars
+      @last_call_has_parenthesis = false
       @yields = -1
     end
 
@@ -556,7 +557,14 @@ module Crystal
       when :CONST
         parse_ident
       when :INSTANCE_VAR
+        @instance_vars.add @token.value.to_s if @instance_vars
         node_and_next_token InstanceVar.new(@token.value.to_s)
+      when :"-@"
+        next_token
+        check :IDENT
+        ivar_name = "@#{@token.value}"
+        @instance_vars.add ivar_name if @instance_vars
+        node_and_next_token Call.new(InstanceVar.new(ivar_name), "-@")
       else
         unexpected_token
       end
@@ -1267,6 +1275,8 @@ module Crystal
               ivar.out = true
               ivar.location = @token.location
               args << ivar
+
+              @instance_vars.add @token.value.to_s if @instance_vars
             else
               raise "expecting variable or instance variable after out"
             end
@@ -1322,6 +1332,8 @@ module Crystal
                 ivar.out = true
                 ivar.location = @token.location
                 args << ivar
+
+                @instance_vars.add @token.value.to_s if @instance_vars
               else
                 raise "expecting variable or instance variable after out"
               end
