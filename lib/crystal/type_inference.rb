@@ -295,11 +295,13 @@ module Crystal
             var.bind_to(var)
             [arg.name, var]
           end]
-          visitor = TypeVisitor.new(@mod, vars, @mod, self, nil, nil, external, typed_def, args.map(&:type))
+          external.set_type(nil)
+
+          visitor = TypeVisitor.new(@mod, vars, @mod, self, nil, nil, external, external, args.map(&:type))
           node.body.accept visitor
 
-          if node.return_type &&! node.body.type.equal?(return_type)
-            node.raise "expected fun to return #{return_type} but it returned #{node.body.type}"
+          if node.return_type &&! external.type.equal?(return_type)
+            node.raise "expected fun to return #{return_type} but it returned #{external.type}"
           end
         end
 
@@ -872,6 +874,8 @@ module Crystal
       if node.exps.empty?
         node.exps << NilLiteral.new
       end
+
+
       true
     end
 

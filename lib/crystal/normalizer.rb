@@ -122,6 +122,16 @@ module Crystal
       node
     end
 
+    def transform_fun_def(node)
+      if node.body
+        pushing_vars(Hash[node.args.map { |arg| [arg.name, {read: 0, write: 1}] }]) do
+          node.body = node.body.transform(self)
+        end
+      end
+
+      node
+    end
+
     def transform_macro(node)
       # if node.has_default_arguments?
       #   exps = node.expand_default_arguments.map! { |a_def| a_def.transform(self) }
