@@ -2,10 +2,10 @@ require "reader"
 
 module Xml
   class Node
-    attr_accessor :name
-    attr_accessor :parent_node
-    attr_accessor :child_nodes
-    attr_accessor :value
+    property :name
+    property :parent_node
+    property :child_nodes
+    property :value
 
     def initialize
       @child_nodes = [] of Node

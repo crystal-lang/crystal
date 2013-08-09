@@ -13,7 +13,7 @@ module Crystal
   end
 
   class TypeVisitor < Visitor
-    attr_reader :mod
+    getter :mod
 
     def initialize(mod, vars = {} of String => Var)
       @mod = mod

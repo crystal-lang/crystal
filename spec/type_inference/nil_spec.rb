@@ -18,12 +18,12 @@ describe 'Type inference: nil' do
       require "prelude"
 
       class Foo
+        getter :var
+        
         def initialize
           @var = [1]
           @var.last
         end
-
-        attr_reader :var
       end
 
       f = Foo.new

@@ -4,13 +4,13 @@ SOLAR_MASS = 4 * Math::PI**2
 DAYS_PER_YEAR = 365.24
 
 class Planet
-  attr_accessor :x
-  attr_accessor :y
-  attr_accessor :z
-  attr_accessor :vx
-  attr_accessor :vy
-  attr_accessor :vz
-  attr_accessor :mass
+  property :x
+  property :y
+  property :z
+  property :vx
+  property :vy
+  property :vz
+  property :mass
 
   def initialize(x, y, z, vx, vy, vz, mass)
     @x, @y, @z = x, y, z

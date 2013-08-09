@@ -1,7 +1,7 @@
 module Crystal
   class ASTNode
-    attr_accessor :type
-    attr_accessor :dependencies
+    property :type
+    property :dependencies
 
     def set_type(type)
       @type = type
