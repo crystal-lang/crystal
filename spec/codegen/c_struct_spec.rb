@@ -79,4 +79,18 @@ describe 'Code gen: struct' do
       foo.bar.y
       )).to_i.should eq(2)
   end
+
+  it "codegens pointer malloc of struct" do
+    run(%q(
+      lib C
+        struct Foo
+          x : Int32
+        end
+      end
+
+      p = Pointer(C::Foo).malloc(1)
+      p.value.x = 1
+      p.value.x
+      )).to_i.should eq(1)
+  end
 end

@@ -477,7 +477,12 @@ module Crystal
     end
 
     def visit_pointer_malloc(node)
-      @last = @builder.array_malloc(llvm_type(node.type.var.type), @vars['size'][:ptr])
+      llvm_type = if node.type.var.type.c_struct? || node.type.var.type.c_union?
+                    llvm_struct_type(node.type.var.type)
+                  else
+                    llvm_type(node.type.var.type)
+                  end
+      @last = @builder.array_malloc(llvm_type, @vars['size'][:ptr])
     end
 
     def visit_pointer_null(node)
