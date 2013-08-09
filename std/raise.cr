@@ -21,9 +21,8 @@ lib ABI
   URC_INSTALL_CONTEXT = 7
   URC_CONTINUE_UNWIND = 8
 
-  fun unwind_raise_exception = _Unwind_RaiseException(ex : UnwindException*) : Int32
+  fun unwind_raise_exception = _Unwind_RaiseException(ex : UnwindException*) : NoReturn
 end
-
 
 fun __crystal_personality(version : Int32, actions : Int32, exception_class : UInt64, exception_object : ABI::UnwindException*, context : Void*) : Int32
   puts "PERSONALITY: version: #{version}, actions: #{actions}, exception_class: #{exception_class}, exception_object: #{exception_object.address}"
@@ -37,17 +36,14 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
   end
 end
 
-
-# u = ABI::UnwindException.new
-# personality(1, 1, 0_u64, u.ptr, Pointer(Void).malloc(1))
-
-
-def raise(msg)
-  puts "Raising..."
+fun __crystal_raise : NoReturn
   ex = ABI::UnwindException.new
   ex.exception_class = 0_u64
   # ex.exception_cleanup = nil
   ABI.unwind_raise_exception(ex.ptr)
+end
 
-  exit 1
+def raise(msg)
+  puts "Raising..."
+  __crystal_raise
 end

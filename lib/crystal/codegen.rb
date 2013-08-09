@@ -1111,15 +1111,24 @@ module Crystal
 
     def visit_exception_handler(node)
 
-      catch_block = new_block "catch"
+      catch_block, end_catch = new_blocks "catch", "end_catch"
 
       @exception_handlers << { node: node, catch_block: catch_block }
       accept(node.body)
+      body_value = @last
+      body_block = @builder.insert_block
+      @builder.br end_catch
       @exception_handlers.pop
 
       @builder.position_at_end catch_block
       @builder.landingpad LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32), @llvm_mod.functions['__crystal_personality'], []
       accept(node.rescues.first)
+      new_catch_block = @builder.insert_block
+      @builder.br end_catch
+
+      @builder.position_at_end end_catch
+      binding.pry
+      @builder.phi llvm_type(node.type), { body_block => body_value, new_catch_block => @last }
 
       false
     end
@@ -1144,7 +1153,7 @@ module Crystal
         end
       end
 
-      if @exception_handlers.empty?
+      if @exception_handlers.empty? || !target_def.raises
         @last = @builder.call fun, *call_args
       else
         handler = @exception_handlers.last
