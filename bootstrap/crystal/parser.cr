@@ -134,7 +134,6 @@ module Crystal
           when :rescue
             next_token_skip_space
             rescue_body = parse_expression
-            # TODO: removing of Rescue blows the type inference
             atomic = ExceptionHandler.new(atomic, [Rescue.new(rescue_body)] of Rescue)
           else
             break

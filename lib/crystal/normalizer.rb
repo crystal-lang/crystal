@@ -231,7 +231,12 @@ module Crystal
 
       if node.of
         if node.elements.length == 0
-          return Call.new(NewGenericClass.new(Ident.new(['Array'], true), [node.of]), 'new')
+          generic = NewGenericClass.new(Ident.new(['Array'], true), [node.of])
+          generic.location = node.location
+
+          call = Call.new(generic, 'new')
+          call.location = node.location
+          return call
         end
 
         type_var = node.of
@@ -242,7 +247,12 @@ module Crystal
       length = node.elements.length
       capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
 
-      constructor = Call.new(NewGenericClass.new(Ident.new(['Array'], true), [type_var]), 'new', [NumberLiteral.new(capacity, :i32)])
+      generic = NewGenericClass.new(Ident.new(['Array'], true), [type_var])
+      generic.location = node.location
+
+      constructor = Call.new(generic, 'new', [NumberLiteral.new(capacity, :i32)])
+      constructor.location = node.location
+
       temp_var = new_temp_var
       assign = Assign.new(temp_var, constructor)
       set_length = Call.new(temp_var, 'length=', [NumberLiteral.new(length, :i32)])
