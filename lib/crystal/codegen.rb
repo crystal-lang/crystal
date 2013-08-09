@@ -1112,15 +1112,7 @@ module Crystal
       target_def = node.target_def
       mangled_name = target_def.mangled_name(self_type)
 
-      unless fun = @llvm_mod.functions[mangled_name]
-        old_current_node = @current_node
-        old_fun = @fun
-        @current_node = target_def
-        codegen_fun(mangled_name, target_def, self_type)
-        @current_node = old_current_node
-        fun = @fun
-        @fun = old_fun
-      end
+      fun = @llvm_mod.functions[mangled_name] || codegen_fun(mangled_name, target_def, self_type)
 
       # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call.
       has_struct_or_union_out_args = target_def.is_a?(External) && node.args.any? { |arg| arg.out? && arg.is_a?(Var) && (arg.type.c_struct? || arg.type.c_union?) }
@@ -1159,6 +1151,9 @@ module Crystal
     end
 
     def codegen_fun(mangled_name, target_def, self_type)
+      old_current_node = @current_node
+      old_fun = @fun
+      @current_node = target_def
       old_position = @builder.insert_block
       old_vars = @vars
       old_type = @type
@@ -1244,10 +1239,16 @@ module Crystal
         @builder.position_at_end old_position
       end
 
+      the_fun = @fun
+
       @vars = old_vars
       @type = old_type
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
+      @current_node = old_current_node
+      @fun = old_fun
+
+      the_fun
     end
 
     def match_any_type_id(type, type_id)
