@@ -1190,7 +1190,7 @@ module Crystal
         @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
       end
 
-      if !target_def.is_a?(External) || (target_def.is_a?(External) && target_def.body)
+      if !target_def.is_a?(External) || target_def.body
         unless target_def.is_a?(External)
           @fun.linkage = :internal
         end

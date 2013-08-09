@@ -300,9 +300,13 @@ module Crystal
           visitor = TypeVisitor.new(@mod, vars, @mod, self, nil, nil, external, external, args.map(&:type))
           node.body.accept visitor
 
-          if node.return_type &&! external.type.equal?(return_type)
-            node.raise "expected fun to return #{return_type} but it returned #{external.type}"
+          inferred_return_type = @mod.type_merge node.body.type, external.type
+
+          if node.return_type &&! inferred_return_type.equal?(return_type)
+            node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
           end
+
+          external.set_type(return_type)
         end
 
         current_type.add_def external
@@ -874,7 +878,6 @@ module Crystal
       if node.exps.empty?
         node.exps << NilLiteral.new
       end
-
 
       true
     end
