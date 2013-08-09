@@ -70,6 +70,7 @@ module Crystal
       @const_block_entry = @const_block
 
       @vars = {}
+      @exception_handlers = []
       @block_context = []
       @type = @mod
 
@@ -1108,6 +1109,21 @@ module Crystal
       end
     end
 
+    def visit_exception_handler(node)
+
+      catch_block = new_block "catch"
+
+      @exception_handlers << { node: node, catch_block: catch_block }
+      accept(node.body)
+      @exception_handlers.pop
+
+      @builder.position_at_end catch_block
+      @builder.landingpad LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32), @llvm_mod.functions['__crystal_personality'], []
+      accept(node.rescues.first)
+
+      false
+    end
+
     def codegen_call(node, self_type, call_args)
       target_def = node.target_def
       mangled_name = target_def.mangled_name(self_type)
@@ -1136,7 +1152,14 @@ module Crystal
         end
       end
 
-      @last = @builder.call fun, *call_args
+      if @exception_handlers.empty?
+        @last = @builder.call fun, *call_args
+      else
+        handler = @exception_handlers.last
+        invoke_out_block = new_block "invoke_out"
+        @last = @builder.invoke fun, call_args, invoke_out_block, handler[:catch_block]
+        @builder.position_at_end invoke_out_block
+      end
 
       if has_struct_or_union_out_args
         call_args.each_with_index do |call_arg, i|
@@ -1164,8 +1187,10 @@ module Crystal
       old_type = @type
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
+      old_exception_handlers = @exception_handlers
 
       @vars = {}
+      @exception_handlers = []
 
       args = []
       if self_type && self_type.passed_as_self?
@@ -1245,6 +1270,7 @@ module Crystal
       end
 
       @vars = old_vars
+      @exception_handlers = old_exception_handlers
       @type = old_type
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block

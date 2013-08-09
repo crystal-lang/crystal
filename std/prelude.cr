@@ -24,11 +24,4 @@ require "string_builder"
 require "symbol"
 require "argv"
 require "time"
-
-def raise(msg)
-  print "ERROR: "
-  print msg.to_s
-  puts
-
-  exit 1
-end
+require "raise"

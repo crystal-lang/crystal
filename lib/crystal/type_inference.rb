@@ -952,6 +952,15 @@ module Crystal
       end
     end
 
+    def visit_exception_handler(node)
+      node.bind_to node.body
+      if node.rescues
+        node.rescues.each do |a_rescue|
+          node.bind_to a_rescue.body
+        end
+      end
+    end
+
     def lookup_var(name)
       var = @vars[name]
       unless var
