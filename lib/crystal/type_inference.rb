@@ -290,7 +290,7 @@ module Crystal
       begin
         external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
         if node.body
-          vars = Hash[args.map do |arg| 
+          vars = Hash[args.map do |arg|
             var = Var.new(arg.name, arg.type)
             var.bind_to(var)
             [arg.name, var]
@@ -302,14 +302,22 @@ module Crystal
 
           inferred_return_type = @mod.type_merge node.body.type, external.type
 
-          if node.return_type &&! inferred_return_type.equal?(return_type)
+          if node.return_type && !inferred_return_type.equal?(return_type)
             node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
           end
 
           external.set_type(return_type)
         end
 
+        if node.name == "__crystal_raise"
+          external.raises = true
+        end
+
         current_type.add_def external
+
+        if node.body
+          current_type.add_def_instance external.object_id, external.args.map(&:type), nil, external
+        end
       rescue => ex
         node.raise ex.message
       end
@@ -825,7 +833,7 @@ module Crystal
       if instance_type.type_vars.length != node.type_vars.length
         node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
       end
-      generic_type = instance_type.instantiate(node.type_vars.map do |var| 
+      generic_type = instance_type.instantiate(node.type_vars.map do |var|
         node.raise "can't deduce generic type in recursive method" unless var.type
         var.type.instance_type
       end)
@@ -949,6 +957,15 @@ module Crystal
         node.type = type
       else
         node.type = mod.pointer_of(type)
+      end
+    end
+
+    def visit_exception_handler(node)
+      node.bind_to node.body
+      if node.rescues
+        node.rescues.each do |a_rescue|
+          node.bind_to a_rescue.body
+        end
       end
     end
 

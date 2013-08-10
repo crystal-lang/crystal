@@ -70,6 +70,7 @@ module Crystal
       @const_block_entry = @const_block
 
       @vars = {}
+      @exception_handlers = []
       @block_context = []
       @type = @mod
 
@@ -1108,6 +1109,29 @@ module Crystal
       end
     end
 
+    def visit_exception_handler(node)
+
+      catch_block, end_catch = new_blocks "catch", "end_catch"
+
+      @exception_handlers << { node: node, catch_block: catch_block }
+      accept(node.body)
+      body_value = @last
+      body_block = @builder.insert_block
+      @builder.br end_catch
+      @exception_handlers.pop
+
+      @builder.position_at_end catch_block
+      @builder.landingpad LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32), @llvm_mod.functions['__crystal_personality'], []
+      accept(node.rescues.first)
+      new_catch_block = @builder.insert_block
+      @builder.br end_catch
+
+      @builder.position_at_end end_catch
+      @last = @builder.phi llvm_type(node.type), { body_block => body_value, new_catch_block => @last }
+
+      false
+    end
+
     def codegen_call(node, self_type, call_args)
       target_def = node.target_def
       mangled_name = target_def.mangled_name(self_type)
@@ -1128,7 +1152,14 @@ module Crystal
         end
       end
 
-      @last = @builder.call fun, *call_args
+      if @exception_handlers.empty? || !target_def.raises
+        @last = @builder.call fun, *call_args
+      else
+        handler = @exception_handlers.last
+        invoke_out_block = new_block "invoke_out"
+        @last = @builder.invoke fun, call_args, invoke_out_block, handler[:catch_block]
+        @builder.position_at_end invoke_out_block
+      end
 
       if has_struct_or_union_out_args
         call_args.each_with_index do |call_arg, i|
@@ -1159,8 +1190,10 @@ module Crystal
       old_type = @type
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
+      old_exception_handlers = @exception_handlers
 
       @vars = {}
+      @exception_handlers = []
 
       args = []
       if self_type && self_type.passed_as_self?
@@ -1242,6 +1275,7 @@ module Crystal
       the_fun = @fun
 
       @vars = old_vars
+      @exception_handlers = old_exception_handlers
       @type = old_type
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
@@ -1267,13 +1301,48 @@ module Crystal
       end
     end
 
+    def new_branched_block(node)
+      branch = { node: node }
+      branch[:exit_block] = new_block "exit"
+      if branch[:is_union] = node.type.union?
+        branch[:union_ptr] = alloca llvm_type(node.type)
+      else
+        branch[:phi_table] = {}
+      end
+      branch
+    end
+
+    def add_branched_block_value(branch, type, value)
+      if type.no_return?
+        @builder.unreachable
+      else
+        if branch[:is_union]
+          assign_to_union(branch[:union_ptr], branch[:node].type, type, value)
+        elsif branch[:node].type.nilable? && value.type.kind == :integer
+          branch[:phi_table][@builder.insert_block] = @builder.int2ptr value, llvm_type(branch[:node].type)
+        else
+          branch[:phi_table][@builder.insert_block] = value
+        end
+
+        @builder.br branch[:exit_block]
+      end
+    end
+
+    def close_branched_block(branch)
+      @builder.position_at_end branch[:exit_block]
+      if branch[:node].returns?
+        @builder.unreachable
+      else
+        if branch[:is_union]
+          @last = branch[:union_ptr]
+        else
+          @last = @builder.phi llvm_type(branch[:node].type), branch[:phi_table]
+        end
+      end
+    end
+
     def codegen_dispatch(node)
-      old_block = @builder.insert_block
-
-      exit_block = new_block "exit"
-
-      is_union = node.type.union?
-      union_ptr = alloca llvm_type(node.type) if is_union
+      branch = new_branched_block(node)
 
       if node.obj
         owner = node.obj.type
@@ -1296,7 +1365,6 @@ module Crystal
         end
       end
 
-      phi_table = {} unless is_union
       call = Call.new(node.obj ? CastedVar.new("%self") : nil, node.name, node.args.length.times.map { |i| CastedVar.new("%arg#{i}") }, node.block)
       call.scope = node.scope
 
@@ -1363,38 +1431,12 @@ module Crystal
         call.set_type a_def.type
         call.accept self
 
-        if a_def.type.no_return?
-          @builder.unreachable
-        else
-          unless call.returns?
-            if is_union
-              assign_to_union(union_ptr, node.type, a_def.type, @last)
-            elsif node.type.nilable? && @last.type.kind == :integer
-              phi_table[@builder.insert_block] = @builder.int2ptr @last, llvm_type(node.type)
-            else
-              phi_table[@builder.insert_block] = @last
-            end
-          end
-
-          @builder.br exit_block
-        end
-
+        add_branched_block_value(branch, a_def.type, @last)
         @builder.position_at_end next_def_label
       end
 
       @builder.unreachable
-
-      @builder.position_at_end exit_block
-      if node.returns?
-        @builder.unreachable
-      else
-        if is_union
-          @last = union_ptr
-        else
-          @last = @builder.phi llvm_type(node.type), phi_table
-        end
-      end
-
+      close_branched_block(branch)
       @vars = old_vars
     end
 

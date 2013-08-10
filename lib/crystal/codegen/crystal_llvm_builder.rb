@@ -5,6 +5,14 @@ module Crystal
       @codegen = codegen
     end
 
+    def landingpad(type, personality, clauses, name = "")
+      lpad = LLVM::C.build_landing_pad @builder, type, personality, clauses.length, name
+      LLVM::C.set_cleanup lpad, 1
+      clauses.each do |clause|
+        LLVM::C.add_clause lpad, clause
+      end
+    end
+
     def ret(*args)
       return if @end
       @builder.ret *args

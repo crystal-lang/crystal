@@ -66,6 +66,10 @@ module Crystal
 
       bind_to *matches
       bind_to block.break if block
+
+      if parent_visitor && parent_visitor.typed_def && matches.any?(&:raises)
+        parent_visitor.typed_def.raises = true
+      end
     end
 
     def lookup_matches_in(owner, self_type = owner, def_name = self.name)

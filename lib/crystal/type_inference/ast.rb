@@ -42,7 +42,7 @@ module Crystal
   class Block
     attr_accessor :visited
     attr_accessor :scope
-    
+
     def break
       @break ||= Var.new("%break")
     end
@@ -51,6 +51,7 @@ module Crystal
   class Def
     attr_accessor :owner
     attr_accessor :instances
+    attr_accessor :raises
 
     def add_instance(a_def, arg_types = a_def.args.map(&:type))
       @instances ||= {}
