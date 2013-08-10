@@ -290,14 +290,52 @@ module Crystal
       EVAL
     end
 
+    def self.parse_cmp_operator(name, next_operator, *operators)
+      class_eval <<-EVAL, __FILE__, __LINE__ + 1
+        def parse_#{name}
+          location = @token.location
+
+          left = parse_#{next_operator}
+          last_left = nil
+          last_right = nil
+          while true
+            left.location = location
+
+            case @token.type
+            when :SPACE
+              next_token
+            when #{operators.map{|x| ':"' + x.to_s + '"'}.join ', '}
+              method = @token.type
+              method_column_number = @token.column_number
+
+              next_token_skip_space_or_newline
+              right = parse_#{next_operator}
+
+              if last_right
+                left = Call.new last_right, method, [right], nil, method_column_number
+                left = And.new(last_left, left)
+              else
+                left = Call.new left, method, [right], nil, method_column_number
+              end
+
+              last_right = right
+              last_left = left
+            else
+              return left
+            end
+          end
+        end
+      EVAL
+    end
+
     def self.parse_operator(name, next_operator, *operators)
       parse_custom_operator name, next_operator, "Call.new left, method, [right], nil, method_column_number", *operators
     end
 
     parse_custom_operator :or, :and, "Or.new left, right", :"||"
     parse_custom_operator :and, :equality, "And.new left, right", :"&&"
-    parse_operator :equality, :cmp, :<, :<=, :>, :>=, :'<=>'
-    parse_operator :cmp, :logical_or, :==, :"!=", :=~, :'==='
+    parse_cmp_operator :equality, :cmp, :<, :<=, :>, :>=, :'<=>'
+    parse_cmp_operator :cmp, :logical_or, :==, :"!=", :=~, :'==='
     parse_operator :logical_or, :logical_and, :|, :^
     parse_operator :logical_and, :shift, :&
     parse_operator :shift, :add_or_sub, :<<, :>>
