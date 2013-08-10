@@ -43,9 +43,9 @@ class Range(B, E)
 
   def includes?(value)
     if @exclusive
-      @begin <= value && value < @end
+      @begin <= value < @end
     else
-      @begin <= value && value <= @end
+      @begin <= value <= @end
     end
   end
 
