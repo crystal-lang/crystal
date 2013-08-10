@@ -29,7 +29,7 @@ lib ABI
 end
 
 class LEBReader
-  attr_reader :data
+  getter :data
 
   def initialize(data)
     @data = data
