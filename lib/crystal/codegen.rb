@@ -1127,7 +1127,10 @@ module Crystal
       @builder.br end_catch
 
       @builder.position_at_end end_catch
-      @last = @builder.phi llvm_type(node.type), { body_block => body_value, new_catch_block => @last }
+
+      unless node.body.no_returns?
+        @last = @builder.phi llvm_type(node.type), { body_block => body_value, new_catch_block => @last } rescue binding.pry
+      end
 
       false
     end

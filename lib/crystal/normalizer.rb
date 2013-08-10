@@ -21,6 +21,7 @@ module Crystal
       @vars = {}
       @vars_stack = []
       @in_initialize = false
+      @exception_handler_count = 0
     end
 
     def normalize(node)
@@ -327,7 +328,7 @@ module Crystal
     def transform_assign_var(node)
       indices = @vars[node.name]
       if indices
-        if indices[:frozen]
+        if indices[:frozen] || @exception_handler_count > 0
           node.name = var_name_with_index(node.name, indices[:read])
         else
           increment_var node.name, indices
@@ -356,6 +357,10 @@ module Crystal
     end
 
     def transform_if(node)
+      if @exception_handler_count > 0
+        return super
+      end
+
       node.cond = node.cond.transform(self)
 
       before_vars = @vars.clone
@@ -451,6 +456,10 @@ module Crystal
     def transform_while(node)
       reset_instance_variables_indices
 
+      if @exception_handler_count > 0
+        return super
+      end
+
       before_cond_vars = @vars.clone
       node.cond = node.cond.transform(self)
       after_cond_vars = @vars.clone
@@ -483,7 +492,11 @@ module Crystal
         @vars[arg.name] = {read: 0, write: 1}
       end
 
-      super
+      transformed = super
+
+      if @exception_handler_count > 0
+        return transformed
+      end
 
       node.args.each do |arg|
         @vars.delete arg.name
@@ -502,6 +515,16 @@ module Crystal
       block_vars.each do |block_var|
         @vars.delete block_var
       end
+
+      node
+    end
+
+    def transform_exception_handler(node)
+      @exception_handler_count += 1
+
+      node = super
+
+      @exception_handler_count -= 1
 
       node
     end
