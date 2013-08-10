@@ -8,9 +8,9 @@ FOV = 45.0
 MAX_DEPTH = 6
 
 class Vec3
-  attr_reader :x
-  attr_reader :y
-  attr_reader :z
+  getter :x
+  getter :y
+  getter :z
 
   def initialize
     @x, @y, @z = 0.0, 0.0, 0.0
@@ -59,8 +59,8 @@ class Vec3
 end
 
 class Ray
-  attr_reader :start
-  attr_reader :dir
+  getter :start
+  getter :dir
 
   def initialize(start, dir)
     @start = start
@@ -69,9 +69,9 @@ class Ray
 end
 
 class Sphere
-  attr_reader :color
-  attr_reader :reflection
-  attr_reader :transparency
+  getter :color
+  getter :reflection
+  getter :transparency
 
   def initialize(center, radius, color, reflection = 0.0, transparency = 0.0)
     @center = center
@@ -114,8 +114,8 @@ class Sphere
 end
 
 class Light
-  attr_reader :position
-  attr_reader :color
+  getter :position
+  getter :color
 
   def initialize(position, color)
     @position = position
@@ -124,8 +124,8 @@ class Light
 end
 
 class Scene
-  attr_reader :objects
-  attr_reader :lights
+  getter :objects
+  getter :lights
 
   def initialize(objects, lights)
     @objects = objects

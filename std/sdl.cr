@@ -185,10 +185,10 @@ module SDL
   end
 
   class Surface
-    attr_reader :surface
-    attr_reader :width
-    attr_reader :height
-    attr_reader :bpp
+    getter :surface
+    getter :width
+    getter :height
+    getter :bpp
 
     def initialize(surface, width, height, bpp)
       @surface = surface

@@ -1,8 +1,8 @@
 module Crystal
   class Location
-    attr_accessor :line_number
-    attr_accessor :column_number
-    attr_accessor :filename
+    property :line_number
+    property :column_number
+    property :filename
 
     def initialize(line_number, column_number, filename)
       @line_number = line_number

@@ -2,15 +2,15 @@ require "location"
 
 module Crystal
   class Token
-    attr_accessor :type
-    attr_accessor :value
-    attr_accessor :number_kind
-    attr_accessor :string_end
-    attr_accessor :string_nest
-    attr_accessor :string_open_count
-    attr_accessor :line_number
-    attr_accessor :column_number
-    attr_accessor :filename
+    property :type
+    property :value
+    property :number_kind
+    property :string_end
+    property :string_nest
+    property :string_open_count
+    property :line_number
+    property :column_number
+    property :filename
 
     def initialize
       @type = :EOF

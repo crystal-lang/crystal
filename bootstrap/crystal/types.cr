@@ -14,8 +14,8 @@ module Crystal
   end
 
   class ContainedType < Type
-    attr_accessor :name
-    attr_accessor :container
+    property :name
+    property :container
 
     def initialize(name, container)
       @name = name
@@ -24,8 +24,8 @@ module Crystal
   end
 
   class ModuleType < ContainedType
-    attr_accessor :types
-    attr_accessor :parents
+    property :types
+    property :parents
 
     def initialize(name, container = nil, parents = [] of Type?)
       super(name, container)
@@ -41,8 +41,8 @@ module Crystal
   end
 
   class PrimitiveType < ClassType
-    attr_reader :llvm_type
-    attr_reader :llvm_size
+    getter :llvm_type
+    getter :llvm_size
 
     def initialize(name, parent_type, llvm_type, llvm_size, container = nil)
       super(name, parent_type, container)

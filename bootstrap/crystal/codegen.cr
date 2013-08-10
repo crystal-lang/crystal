@@ -29,8 +29,8 @@ module Crystal
   end
 
   class CodeGenVisitor < Visitor
-    attr_reader :llvm_mod
-    attr_reader :fun
+    getter :llvm_mod
+    getter :fun
 
     def initialize(mod, node)
       @mod = mod

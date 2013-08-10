@@ -1,23 +1,19 @@
 class Reference
-  macro self.attr(name)"
-    attr_reader :#{name}
-  "end
-
-  macro self.attr_reader(name)"
+  macro self.getter(name)"
     def #{name}
       @#{name}
     end
   "end
 
-  macro self.attr_writer(name)"
+  macro self.setter(name)"
     def #{name}=(value)
       @#{name} = value
     end
   "end
 
-  macro self.attr_accessor(name)"
-    attr_reader :#{name}
-    attr_writer :#{name}
+  macro self.property(name)"
+    getter :#{name}
+    setter :#{name}
   "end
 
   def ==(other : Value)

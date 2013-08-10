@@ -75,8 +75,8 @@ module LLVM
       # args = arg_types.map { |t| t.type }
       args = [] of LibLLVM::TypeRef
       fun_type = LibLLVM.function_type(ret_type.type, args.buffer.as(LibLLVM::TypeRef), arg_types.length, 0)
-      fun = LibLLVM.add_function(@mod.llvm_module, name, fun_type)
-      Function.new(fun)
+      func = LibLLVM.add_function(@mod.llvm_module, name, fun_type)
+      Function.new(func)
     end
 
     def [](name)
@@ -85,8 +85,8 @@ module LLVM
   end
 
   class Function
-    def initialize(fun)
-      @fun = fun
+    def initialize(func)
+      @fun = func
     end
 
     def append_basic_block(name)
@@ -123,13 +123,13 @@ module LLVM
       LibLLVM.build_br(@builder, block)
     end
 
-    def call(fun)
-      LibLLVM.build_call(@builder, fun.llvm_function, nil, 0, "")
+    def call(func)
+      LibLLVM.build_call(@builder, func.llvm_function, nil, 0, "")
     end
   end
 
   abstract class Type
-    attr_reader :type
+    getter :type
 
     def initialize(type)
       @type = type
@@ -201,8 +201,8 @@ module LLVM
       end
     end
 
-    def run_function(fun)
-      ret = LibLLVM.run_function(@jit, fun.llvm_function, 0, 0)
+    def run_function(func)
+      ret = LibLLVM.run_function(@jit, func.llvm_function, 0, 0)
       GenericValue.new(ret)
     end
   end
