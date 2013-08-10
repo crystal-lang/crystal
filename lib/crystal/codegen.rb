@@ -1301,13 +1301,48 @@ module Crystal
       end
     end
 
+    def new_branched_block(node)
+      branch = { node: node }
+      branch[:exit_block] = new_block "exit"
+      if branch[:is_union] = node.type.union?
+        branch[:union_ptr] = alloca llvm_type(node.type)
+      else
+        branch[:phi_table] = {}
+      end
+      branch
+    end
+
+    def add_branched_block_value(branch, type, value)
+      if type.no_return?
+        @builder.unreachable
+      else
+        if branch[:is_union]
+          assign_to_union(branch[:union_ptr], branch[:node].type, type, value)
+        elsif branch[:node].type.nilable? && value.type.kind == :integer
+          branch[:phi_table][@builder.insert_block] = @builder.int2ptr value, llvm_type(branch[:node].type)
+        else
+          branch[:phi_table][@builder.insert_block] = value
+        end
+
+        @builder.br branch[:exit_block]
+      end
+    end
+
+    def close_branched_block(branch)
+      @builder.position_at_end branch[:exit_block]
+      if branch[:node].returns?
+        @builder.unreachable
+      else
+        if branch[:is_union]
+          @last = branch[:union_ptr]
+        else
+          @last = @builder.phi llvm_type(branch[:node].type), branch[:phi_table]
+        end
+      end
+    end
+
     def codegen_dispatch(node)
-      old_block = @builder.insert_block
-
-      exit_block = new_block "exit"
-
-      is_union = node.type.union?
-      union_ptr = alloca llvm_type(node.type) if is_union
+      branch = new_branched_block(node)
 
       if node.obj
         owner = node.obj.type
@@ -1330,7 +1365,6 @@ module Crystal
         end
       end
 
-      phi_table = {} unless is_union
       call = Call.new(node.obj ? CastedVar.new("%self") : nil, node.name, node.args.length.times.map { |i| CastedVar.new("%arg#{i}") }, node.block)
       call.scope = node.scope
 
@@ -1397,38 +1431,12 @@ module Crystal
         call.set_type a_def.type
         call.accept self
 
-        if a_def.type.no_return?
-          @builder.unreachable
-        else
-          unless call.returns?
-            if is_union
-              assign_to_union(union_ptr, node.type, a_def.type, @last)
-            elsif node.type.nilable? && @last.type.kind == :integer
-              phi_table[@builder.insert_block] = @builder.int2ptr @last, llvm_type(node.type)
-            else
-              phi_table[@builder.insert_block] = @last
-            end
-          end
-
-          @builder.br exit_block
-        end
-
+        add_branched_block_value(branch, a_def.type, @last)
         @builder.position_at_end next_def_label
       end
 
       @builder.unreachable
-
-      @builder.position_at_end exit_block
-      if node.returns?
-        @builder.unreachable
-      else
-        if is_union
-          @last = union_ptr
-        else
-          @last = @builder.phi llvm_type(node.type), phi_table
-        end
-      end
-
+      close_branched_block(branch)
       @vars = old_vars
     end
 
