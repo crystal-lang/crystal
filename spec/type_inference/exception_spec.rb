@@ -11,6 +11,24 @@ describe 'Type inference: exception' do
     )) { union_of(int32, char) }
   end
 
+  it "type union with empty main block" do
+    assert_type(%(
+      begin
+      rescue
+        1
+      end
+    )) { union_of(self.nil, int32) }
+  end
+
+  it "type union with empty rescue block" do
+    assert_type(%(
+      begin
+        1
+      rescue
+      end
+    )) { union_of(self.nil, int32) }
+  end
+
   it "marks __crystal_raise as raises" do
     mod, type = assert_type(%(require "prelude"; 1)) { int32 }
     a_def = mod.lookup_first_def('__crystal_raise', false)

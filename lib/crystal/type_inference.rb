@@ -961,10 +961,10 @@ module Crystal
     end
 
     def visit_exception_handler(node)
-      node.bind_to node.body
+      node.bind_to(node.body || mod.nil_var)
       if node.rescues
         node.rescues.each do |a_rescue|
-          node.bind_to a_rescue.body
+          node.bind_to(a_rescue.body || mod.nil_var)
         end
       end
     end
