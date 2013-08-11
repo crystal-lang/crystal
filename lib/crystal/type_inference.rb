@@ -946,7 +946,7 @@ module Crystal
       end
     end
 
-    def visit_exception_handler(node)
+    def end_visit_exception_handler(node)
       node.bind_to node.body
       if node.rescues
         node.rescues.each do |a_rescue|

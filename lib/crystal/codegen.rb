@@ -1134,6 +1134,13 @@ module Crystal
       @builder.br branch[:exit_block]
 
       close_branched_block(branch)
+
+      if node.ensure
+        old_last = @last
+        accept(node.ensure)
+        @last = old_last
+      end
+
       false
     end
 
