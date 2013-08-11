@@ -1128,10 +1128,26 @@ module Crystal
       @exception_handlers.pop
 
       @builder.position_at_end catch_block
-      @builder.landingpad LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32), @llvm_mod.functions[Program::PERSONALITY_NAME], []
-      accept(node.rescues.first)
-      add_branched_block_value(branch, node.rescues.first.body.type, @last)
+      lp = @builder.landingpad LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32), @llvm_mod.functions[Program::PERSONALITY_NAME], []
+      ex_obj = @builder.extract_value lp, 0
+      ex_type_id = @builder.extract_value lp, 1
+
+      node.rescues.each do |a_rescue|
+        this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
+        if a_rescue.types
+          type_matches = @builder.icmp(:eq, ex_type_id, int(a_rescue.types.first.type.instance_type.type_id))
+          @builder.cond type_matches, this_rescue_block, next_rescue_block
+        else
+          @builder.br this_rescue_block
+        end
+        @builder.position_at_end this_rescue_block
+        accept(a_rescue.body)
+        add_branched_block_value(branch, a_rescue.body.type, @last)
       @builder.br branch[:exit_block]
+
+        @builder.position_at_end next_rescue_block
+      end
+      @builder.unreachable #TODO resume
 
       close_branched_block(branch)
 

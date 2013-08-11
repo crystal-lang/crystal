@@ -1,9 +1,11 @@
 lib ABI
   struct UnwindException
     exception_class : UInt64
-    exception_cleanup : Void*
+    exception_cleanup : UInt64
     private1 : UInt64
     private2 : UInt64
+    exception_object : UInt64
+    exception_type_id : Int32
   end
 
   UA_SEARCH_PHASE = 1
@@ -25,6 +27,7 @@ lib ABI
   fun unwind_get_region_start = _Unwind_GetRegionStart(context : Void*) : UInt64
   fun unwind_get_ip = _Unwind_GetIP(context : Void*) : UInt64
   fun unwind_set_ip = _Unwind_SetIP(context : Void*, ip : UInt64) : UInt64
+  fun unwind_set_gr = _Unwind_SetGR(context : Void*, index : Int32, value : UInt64)
   fun unwind_get_language_specific_data = _Unwind_GetLanguageSpecificData(context : Void*) : UInt8*
 end
 
@@ -55,7 +58,6 @@ module LEBReader
 end
 
 fun __crystal_personality(version : Int32, actions : Int32, exception_class : UInt64, exception_object : ABI::UnwindException*, context : Void*) : Int32
-  # puts "PERSONALITY: version: #{version}, actions: #{actions}, exception_class: #{exception_class}, exception_object: #{exception_object.address}"
   if (actions & ABI::UA_SEARCH_PHASE) > 0
     return ABI::URC_HANDLER_FOUND
 
@@ -81,7 +83,10 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
 
       if cs_offset <= throw_offset && throw_offset <= cs_offset + cs_length
         if cs_addr != 0
+          ABI.unwind_set_gr(context, 0, exception_object.value.exception_object)
+          ABI.unwind_set_gr(context, 1, 0_u64 + exception_object.value.exception_type_id)
           ABI.unwind_set_ip(context, start + cs_addr)
+          break
         end
       end
     end
@@ -93,13 +98,15 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
   end
 end
 
-fun __crystal_raise : NoReturn
+fun __crystal_raise(ex_obj : UInt64, ex_type_id : Int32) : NoReturn
   ex = ABI::UnwindException.new
   ex.exception_class = 0_u64
-  # ex.exception_cleanup = nil
+  ex.exception_cleanup = 0_u64
+  ex.exception_object = ex_obj
+  ex.exception_type_id = ex_type_id
   ABI.unwind_raise_exception(ex.ptr)
 end
 
-def raise(msg)
-  __crystal_raise
+def raise(ex)
+  __crystal_raise(ex.object_id, ex.crystal_type_id)
 end

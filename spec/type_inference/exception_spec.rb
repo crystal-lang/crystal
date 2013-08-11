@@ -29,6 +29,17 @@ describe 'Type inference: exception' do
     )) { union_of(self.nil, int32) }
   end
 
+  it "type for exception handler for explicit types" do
+    assert_type(%(
+      require "prelude"
+      begin
+        raise "foo"
+      rescue String
+        1
+      end
+    )) { int32 }
+  end
+
   it "marks #{Program::RAISE_NAME} as raises" do
     mod, type = assert_type(%(require "prelude"; 1)) { int32 }
     a_def = mod.lookup_first_def(Program::RAISE_NAME, false)

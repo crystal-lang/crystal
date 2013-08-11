@@ -11,6 +11,7 @@ module Crystal
       clauses.each do |clause|
         LLVM::C.add_clause lpad, clause
       end
+      lpad
     end
 
     def ret(*args)

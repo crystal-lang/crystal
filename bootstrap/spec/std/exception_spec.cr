@@ -100,4 +100,36 @@ describe "Exception" do
     a.should eq(2)
     b.should eq(3)
   end
+
+  class Foo
+  end
+
+  class Bar
+  end
+
+  it "rescue with type" do
+    a = begin
+      raise Bar.new
+    rescue Foo
+      1
+    rescue Bar
+      2
+    end
+
+    a.should eq(2)
+  end
+
+  it "rescue with types defaults to generic rescue" do
+    a = begin
+      raise "Oh no!"
+    rescue Foo
+      1
+    rescue Bar
+      2
+    rescue
+      3
+    end
+
+    a.should eq(3)
+  end
 end
