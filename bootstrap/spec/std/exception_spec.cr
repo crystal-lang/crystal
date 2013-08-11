@@ -56,4 +56,21 @@ describe "Exception" do
 
     y.should eq(1.1)
   end
+
+  it "handle nested exceptions" do
+    a = 0
+    b = begin
+      begin
+        raise "Oh no!"
+      rescue
+        a = 1
+        raise "Boom!"
+      end
+    rescue
+      2
+    end
+
+    a.should eq(1)
+    b.should eq(2)
+  end
 end

@@ -1334,6 +1334,8 @@ module Crystal
       else
         if branch[:is_union]
           @last = branch[:union_ptr]
+        elsif branch[:phi_table].empty?
+          @builder.unreachable
         else
           @last = @builder.phi llvm_type(branch[:node].type), branch[:phi_table]
         end
