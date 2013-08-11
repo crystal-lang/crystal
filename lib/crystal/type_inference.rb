@@ -567,6 +567,10 @@ module Crystal
       end
     end
 
+    def visit_nop(node)
+      node.type = @mod.nil
+    end
+
     def visit_expressions(node)
       node.expressions.each_with_index do |exp, i|
         exp.accept self
@@ -588,7 +592,7 @@ module Crystal
       @while_stack.push node
       @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
 
-      node.body.accept self if node.body
+      node.body.accept self
 
       @type_filter_stack.pop
       @while_stack.pop
@@ -612,29 +616,25 @@ module Crystal
         container.has_breaks = true
       end
 
-      if node.exps.length > 0
-        container.bind_to node.exps[0]
-      else
-        container.bind_to mod.nil_var
-      end
+      container.bind_to(node.exps.length > 0 ? node.exps[0] : mod.nil_var)
     end
 
     def visit_if(node)
       node.cond.accept self
 
-      if node.then
-        @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
-
+      if node.then.nop?
         node.then.accept self
-
+      else
+        @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
+        node.then.accept self
         @type_filter_stack.pop if node.cond.type_filters
       end
 
-      if node.else
-        @type_filter_stack.push negate_filters(node.cond.type_filters) if node.cond.type_filters
-
+      if node.else.nop?
         node.else.accept self
-
+      else
+        @type_filter_stack.push negate_filters(node.cond.type_filters) if node.cond.type_filters
+        node.else.accept self
         @type_filter_stack.pop if node.cond.type_filters
       end
 
@@ -655,11 +655,7 @@ module Crystal
     end
 
     def end_visit_if(node)
-      nodes = []
-      nodes << node.then if node.then
-      nodes << node.else if node.else
-      nodes << mod.nil_var unless node.then && node.else
-      node.bind_to *nodes
+      node.bind_to node.then, node.else
     end
 
     def visit_ident(node)
@@ -736,11 +732,7 @@ module Crystal
         end
       end
 
-      if block.body
-        node.bind_to block.body
-      else
-        node.bind_to mod.nil_var
-      end
+      node.bind_to block.body
     end
 
     def end_visit_yield_with_scope(node)
@@ -755,21 +747,13 @@ module Crystal
         end
       end
 
-      if block.body
-        node.bind_to block.body
-      else
-        node.bind_to mod.nil_var
-      end
+      node.bind_to block.body
     end
 
     def bind_block_args_to_yield_exps(block, node)
       block.args.each_with_index do |arg, i|
         exp = node.exps[i]
-        if exp
-          arg.bind_to exp
-        else
-          arg.bind_to mod.nil_var
-        end
+        arg.bind_to(exp ? exp : mod.nil_var)
       end
     end
 
@@ -777,16 +761,15 @@ module Crystal
       return if node.visited
       node.visited = true
 
-      if node.body
-        block_vars = @vars.clone
-        node.args.each do |arg|
-          block_vars[arg.name] = arg
-        end
-
-        block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
-        block_visitor.block = node
-        node.body.accept block_visitor
+      block_vars = @vars.clone
+      node.args.each do |arg|
+        block_vars[arg.name] = arg
       end
+
+      block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
+      block_visitor.block = node
+      node.body.accept block_visitor
+
       false
     end
 
@@ -961,10 +944,10 @@ module Crystal
     end
 
     def visit_exception_handler(node)
-      node.bind_to(node.body || mod.nil_var)
+      node.bind_to node.body
       if node.rescues
         node.rescues.each do |a_rescue|
-          node.bind_to(a_rescue.body || mod.nil_var)
+          node.bind_to a_rescue.body
         end
       end
     end

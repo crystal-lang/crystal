@@ -367,13 +367,13 @@ module Crystal
       then_vars = nil
       else_vars = nil
 
-      if node.then
+      unless node.then.nop?
         node.then = node.then.transform(self)
         then_vars = @vars.clone
         then_dead_code = @dead_code
       end
 
-      if node.else
+      unless node.else.nop?
         if then_vars
           before_else_vars = {}
           then_vars.each do |var_name, indices|
@@ -438,12 +438,12 @@ module Crystal
         end
       end
 
-      node.then = append_before_exits(node.then, before_vars, new_then_vars) if node.then && new_then_vars.length > 0
+      node.then = append_before_exits(node.then, before_vars, new_then_vars) if !node.then.nop? && new_then_vars.length > 0
       unless then_dead_code
         node.then = concat_preserving_return_value(node.then, new_then_vars)
       end
 
-      node.else = append_before_exits(node.else, before_vars, new_else_vars) if node.else && new_else_vars.length > 0
+      node.else = append_before_exits(node.else, before_vars, new_else_vars) if !node.else.nop? && new_else_vars.length > 0
       unless else_dead_code
         node.else = concat_preserving_return_value(node.else, new_else_vars)
       end
@@ -464,7 +464,7 @@ module Crystal
       node.cond = node.cond.transform(self)
       after_cond_vars = @vars.clone
 
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
 
       after_cond_loop_vars = get_loop_vars(after_cond_vars, false)
       before_cond_loop_vars = get_loop_vars(before_cond_vars, false)
@@ -476,7 +476,7 @@ module Crystal
         end
       end
 
-      node.body = append_before_exits(node.body, before_cond_vars, after_cond_loop_vars) if node.body && after_cond_loop_vars.length > 0
+      node.body = append_before_exits(node.body, before_cond_vars, after_cond_loop_vars) if !node.body.nop? && after_cond_loop_vars.length > 0
 
       unless @dead_code
         node.body = concat_preserving_return_value(node.body, before_cond_loop_vars)
@@ -532,7 +532,7 @@ module Crystal
     def concat_preserving_return_value(node, vars)
       return node if vars.empty?
 
-      unless node
+      if node.nop?
         return Expressions.from(vars + [NilLiteral.new])
       end
 

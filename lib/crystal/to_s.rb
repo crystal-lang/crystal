@@ -400,8 +400,13 @@ module Crystal
       @str << decorate_var(node, node.name)
     end
 
+    def visit_nop(node)
+    end
+
     def visit_expressions(node)
       node.expressions.each do |exp|
+        next if exp.nop?
+
         append_indent
         exp.accept self
         @str << "\n"
@@ -414,7 +419,7 @@ module Crystal
       node.cond.accept self
       @str << "\n"
       accept_with_indent(node.then)
-      if node.else
+      unless node.else.nop?
         append_indent
         @str << "else\n"
         accept_with_indent(node.else)
@@ -429,7 +434,7 @@ module Crystal
       node.cond.accept self
       @str << "\n"
       accept_with_indent(node.then)
-      if node.else
+      unless node.else.nop?
         append_indent
         @str << "else\n"
         accept_with_indent(node.else)
@@ -811,12 +816,12 @@ module Crystal
 
     def accept_with_indent(node)
       return unless node
-      is_expressions = node.is_a?(Expressions)
+      doesnt_need_indent = node.is_a?(Expressions) || node.nop?
       with_indent do
-        append_indent unless is_expressions
+        append_indent unless doesnt_need_indent
         node.accept self
       end
-      @str << "\n" unless is_expressions
+      @str << "\n" unless doesnt_need_indent
     end
 
     def append_indent

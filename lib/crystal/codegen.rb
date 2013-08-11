@@ -51,7 +51,7 @@ module Crystal
       @ints = {}
       @ints_1 = {}
       @ints_8 = {}
-      @return_type = return_type && return_type.union? ? nil : return_type
+      @return_type = return_type.union? ? nil : return_type
       @llvm_mod = llvm_mod || LLVM::Module.new("Crystal")
       @typer = LLVMTyper.new
       @fun = @llvm_mod.functions.add("crystal_main", [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], @return_type ? llvm_type(@return_type) : LLVM.Void)
@@ -198,6 +198,10 @@ module Crystal
 
     def visit_class_method(node)
       @last = int(0)
+    end
+
+    def visit_nop(node)
+      @last = llvm_nil
     end
 
     def visit_expressions(node)
@@ -563,35 +567,33 @@ module Crystal
       codegen_cond_branch(node.cond, then_block,else_block)
 
       @builder.position_at_end then_block
-      if node.then
-        accept(node.then)
-        then_block = @builder.insert_block
-      end
-      if node.then.nil? || node.then.type.nil? || node.then.type.nil_type?
+      accept(node.then)
+      then_block = @builder.insert_block
+
+      if node.then.type.nil? || node.then.type.nil_type?
         if is_nilable
           @last = @builder.int2ptr llvm_nil, llvm_type(node.type)
         else
           @last = llvm_nil
         end
       end
-      then_value = @last unless node.then && (node.then.no_returns? || node.then.returns? || node.then.breaks? || (node.then.yields? && block_returns?))
-      codegen_assign(union_ptr, node.type, node.then ? node.then.type : @mod.nil, @last) if is_union && (!node.then || (node.then.type && !node.then.type.no_return?))
+      then_value = @last unless node.then.no_returns? || node.then.returns? || node.then.breaks? || (node.then.yields? && block_returns?)
+      codegen_assign(union_ptr, node.type, node.then.type, @last) if is_union && node.then.type && !node.then.type.no_return?
       @builder.br exit_block
 
       @builder.position_at_end else_block
-      if node.else
-        accept(node.else)
-        else_block = @builder.insert_block
-      end
-      if node.else.nil? || node.else.type.nil? || node.else.type.nil_type?
+      accept(node.else)
+      else_block = @builder.insert_block
+
+      if node.else.type.nil? || node.else.type.nil_type?
         if is_nilable
           @last = @builder.int2ptr llvm_nil, llvm_type(node.type)
         else
           @last = llvm_nil
         end
       end
-      else_value = @last unless node.else && (node.else.no_returns? || node.else.returns? || node.else.breaks? || (node.else.yields? && block_returns?))
-      codegen_assign(union_ptr, node.type, node.else ? node.else.type : @mod.nil, @last) if is_union && (!node.else || (node.else.type && !node.else.type.no_return?))
+      else_value = @last unless node.else.no_returns? || node.else.returns? || node.else.breaks? || (node.else.yields? && block_returns?)
+      codegen_assign(union_ptr, node.type, node.else.type, @last) if is_union && node.else.type && !node.else.type.no_return?
       @builder.br exit_block
 
       @builder.position_at_end exit_block
@@ -609,7 +611,7 @@ module Crystal
           @builder.unreachable
         end
       else
-        if node.then && !then_value && node.else && !else_value
+        if !then_value && !else_value
           @builder.unreachable
         end
         @last = nil
@@ -636,12 +638,12 @@ module Crystal
       @builder.position_at_end body_block
       old_while_exit_block = @while_exit_block
       @while_exit_block = exit_block
-      accept(node.body) if node.body
+      accept(node.body)
       @while_exit_block = old_while_exit_block
       @builder.br while_block
 
       @builder.position_at_end exit_block
-      @builder.unreachable if node.no_returns? || (node.body && node.body.yields? && block_breaks?)
+      @builder.unreachable if node.no_returns? || (node.body.yields? && block_breaks?)
 
       @last = llvm_nil
       @break_type = old_break_type

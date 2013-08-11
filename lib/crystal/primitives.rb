@@ -355,6 +355,7 @@ module Crystal
   class External < Def
     def self.for_fun(name, real_name, args, return_type, varargs, body, fun_def)
       external = External.new(name, args, body)
+      external.body = nil if body.nil?
       external.real_name = real_name
       external.varargs = varargs
       external.owner = self

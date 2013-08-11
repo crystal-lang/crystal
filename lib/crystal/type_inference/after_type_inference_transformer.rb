@@ -141,7 +141,7 @@ module Crystal
 
     def replace_if_with_branch(node, branch)
       exp_nodes = [node.cond]
-      exp_nodes << branch if branch
+      exp_nodes << branch unless branch.nop?
 
       exp = Expressions.new(exp_nodes)
       if branch

@@ -6,6 +6,10 @@ module Crystal
     def after_transform(node)
     end
 
+    def transform_nop(node)
+      node
+    end
+
     def transform_expressions(node)
       exps = []
       node.expressions.each do |exp|
@@ -44,13 +48,13 @@ module Crystal
     end
 
     def transform_class_def(node)
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
       node.superclass = node.superclass.transform(self) if node.superclass
       node
     end
 
     def transform_module_def(node)
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
       node
     end
 
@@ -111,7 +115,7 @@ module Crystal
 
     def transform_def(node)
       transform_many node.args
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
       node.receiver = node.receiver.transform(self) if node.receiver
       node.block_arg = node.block_arg.transform(self) if node.block_arg
       node
@@ -207,13 +211,13 @@ module Crystal
 
     def transform_while(node)
       node.cond = node.cond.transform(self)
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
       node
     end
 
     def transform_block(node)
       transform_many node.args
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
       node
     end
 
@@ -270,7 +274,7 @@ module Crystal
 
     def transform_macro(node)
       transform_many node.args
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
       node.receiver = node.receiver.transform(self) if node.receiver
       node.block_arg = node.block_arg.transform(self) if node.block_arg
       node
@@ -300,7 +304,7 @@ module Crystal
 
     def transform_when(node)
       transform_many node.conds
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
       node
     end
 
