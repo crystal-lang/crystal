@@ -185,15 +185,15 @@ module Crystal
 
     def transform_if(node)
       node.cond = node.cond.transform(self)
-      node.then = node.then.transform(self) if node.then
-      node.else = node.else.transform(self) if node.else
+      node.then = node.then.transform(self)
+      node.else = node.else.transform(self)
       node
     end
 
     def transform_unless(node)
       node.cond = node.cond.transform(self)
-      node.then = node.then.transform(self) if node.then
-      node.else = node.else.transform(self) if node.else
+      node.then = node.then.transform(self)
+      node.else = node.else.transform(self)
       node
     end
 
@@ -320,14 +320,14 @@ module Crystal
     end
 
     def transform_exception_handler(node)
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
       transform_many node.rescues
       node.ensure = node.ensure.transform(self) if node.ensure
       node
     end
 
     def transform_rescue(node)
-      node.body = node.body.transform(self) if node.body
+      node.body = node.body.transform(self)
       transform_many node.types
       node
     end
