@@ -145,6 +145,7 @@ module Crystal
     attr_accessor :real_name
     attr_accessor :varargs
     attr_accessor :fun_def
+    attr_accessor :dead
 
     def mangled_name(obj_type)
       real_name

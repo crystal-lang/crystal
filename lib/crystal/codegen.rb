@@ -7,6 +7,10 @@ LLVM.init_x86
 
 module Crystal
   class Program
+    MAIN_NAME = "__crystal_main"
+    PERSONALITY_NAME = "__crystal_personality"
+    RAISE_NAME = "__crystal_raise"
+
     def run(code, options = {})
       node = parse code
       node = normalize node
@@ -18,7 +22,7 @@ module Crystal
       llvm_mod = build node
       engine = LLVM::JITCompiler.new(llvm_mod)
       Compiler.optimize llvm_mod, engine, 1
-      engine.run_function llvm_mod.functions["crystal_main"], 0, nil
+      engine.run_function llvm_mod.functions[MAIN_NAME], 0, nil
     end
 
     def build(node, filename = nil, debug = false, llvm_mod = nil)
@@ -51,10 +55,10 @@ module Crystal
       @ints = {}
       @ints_1 = {}
       @ints_8 = {}
-      @return_type = return_type.union? ? nil : return_type
+      @return_type = return_type && return_type.union? ? nil : return_type
       @llvm_mod = llvm_mod || LLVM::Module.new("Crystal")
       @typer = LLVMTyper.new
-      @fun = @llvm_mod.functions.add("crystal_main", [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], @return_type ? llvm_type(@return_type) : LLVM.Void)
+      @fun = @llvm_mod.functions.add(Program::MAIN_NAME, [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], @return_type ? llvm_type(@return_type) : LLVM.Void)
 
       @argc = @fun.params[0]
       @argc.name = 'argc'
@@ -91,7 +95,7 @@ module Crystal
 
       if debug
         @empty_md_list = metadata(metadata(0))
-        @subprograms = [fun_metadata(@fun, "crystal_main", @filename, 1)]
+        @subprograms = [fun_metadata(@fun, Program::MAIN_NAME, @filename, 1)]
       end
     end
 
@@ -244,7 +248,9 @@ module Crystal
     end
 
     def visit_fun_def(node)
-      codegen_fun node.real_name, node.external, nil
+      unless node.external.dead
+        codegen_fun node.real_name, node.external, nil
+      end
       false
     end
 
@@ -260,7 +266,7 @@ module Crystal
 
           old_position = @builder.insert_block
           old_fun = @fun
-          @fun = @llvm_mod.functions["crystal_main"]
+          @fun = @llvm_mod.functions[Program::MAIN_NAME]
           const_block = new_block "const_#{global_name}"
           @builder.position_at_end const_block
 
@@ -1122,7 +1128,7 @@ module Crystal
       @exception_handlers.pop
 
       @builder.position_at_end catch_block
-      @builder.landingpad LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32), @llvm_mod.functions['__crystal_personality'], []
+      @builder.landingpad LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32), @llvm_mod.functions[Program::PERSONALITY_NAME], []
       accept(node.rescues.first)
       add_branched_block_value(branch, node.rescues.first.body.type, @last)
       @builder.br branch[:exit_block]
@@ -1329,7 +1335,7 @@ module Crystal
 
     def close_branched_block(branch)
       @builder.position_at_end branch[:exit_block]
-      if branch[:node].returns?
+      if branch[:node].returns? || branch[:node].no_returns?
         @builder.unreachable
       else
         if branch[:is_union]

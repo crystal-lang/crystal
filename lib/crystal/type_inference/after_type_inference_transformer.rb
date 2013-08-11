@@ -166,6 +166,13 @@ module Crystal
       node
     end
 
+    def transform_fun_def(node)
+      return node unless node.body
+
+      node.body = node.body.transform(self)
+      node
+    end
+
     def rebind_node(node, dependency)
       node.unbind_from *node.dependencies
       if dependency

@@ -29,17 +29,23 @@ describe 'Type inference: exception' do
     )) { union_of(self.nil, int32) }
   end
 
-  it "marks __crystal_raise as raises" do
+  it "marks #{Program::RAISE_NAME} as raises" do
     mod, type = assert_type(%(require "prelude"; 1)) { int32 }
-    a_def = mod.lookup_first_def('__crystal_raise', false)
+    a_def = mod.lookup_first_def(Program::RAISE_NAME, false)
+    a_def.raises.should be_true
+  end
+
+  it "marks #{Program::MAIN_NAME} as raises" do
+    mod, type = assert_type(%(lib Crystal; fun #{Program::MAIN_NAME}; end; 1)) { int32 }
+    a_def = mod.types["Crystal"].lookup_first_def(Program::MAIN_NAME, false)
     a_def.raises.should be_true
   end
 
   it "marks method calling method that raises as raises" do
-    mod, type = assert_type(%q(
+    mod, type = assert_type(%Q(
       require "prelude"
       def foo
-        __crystal_raise
+        #{Program::RAISE_NAME}
       end
       foo
     )) { no_return }

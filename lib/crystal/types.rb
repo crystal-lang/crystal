@@ -374,9 +374,10 @@ module Crystal
     def add_def(a_def)
       a_def.owner = self if a_def.respond_to?(:owner=)
       restrictions = a_def.args.map(&:type_restriction)
+      old_def = self.defs[a_def.name][[restrictions, !!a_def.yields]]
       self.defs[a_def.name][[restrictions, !!a_def.yields]] = a_def
       add_sorted_def(a_def, a_def.args.length)
-      a_def
+      old_def
     end
 
     def add_sorted_def(a_def, args_length)

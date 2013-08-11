@@ -117,10 +117,9 @@ module Crystal
         engine = nil
         with_stats_or_profile('codegen') do
           llvm_mod = program.build node, filename, @options[:debug]
-          write_main llvm_mod unless @options[:run] || @options[:command]
 
           # Don't optimize crystal_main away if the user wants to run the program
-          llvm_mod.functions["crystal_main"].linkage = :internal unless @options[:run] || @options[:command]
+          llvm_mod.functions[Program::MAIN_NAME].linkage = :internal unless @options[:run] || @options[:command]
 
           engine = LLVM::JITCompiler.new llvm_mod
           optimize llvm_mod, engine unless @options[:debug]
@@ -139,7 +138,7 @@ module Crystal
       if @options[:run] || @options[:command]
         program.load_libs
 
-        engine.run_function llvm_mod.functions["crystal_main"], 0, nil
+        engine.run_function llvm_mod.functions[Program::MAIN_NAME], 0, nil
       else
         reader, writer = IO.pipe
         Thread.new do
@@ -184,19 +183,6 @@ module Crystal
         end
       end
       flags
-    end
-
-    def write_main(mod)
-      mod.functions.add('main', [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], LLVM::Int) do |main, argc, argv|
-        main.params[0].name = 'argc'
-        main.params[1].name = 'argv'
-
-        entry = main.basic_blocks.append('entry')
-        entry.build do |b|
-          b.call mod.functions['crystal_main'], argc, argv
-          b.ret LLVM::Int(0)
-        end
-      end
     end
 
     def optimize(mod, engine)

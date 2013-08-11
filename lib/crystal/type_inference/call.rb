@@ -506,9 +506,12 @@ module Crystal
         alloc = Call.new(nil, 'allocate')
 
         match = Match.new
-        match.def = scope.add_def Def.new('new', [], [alloc])
+        match.def = Def.new('new', [], [alloc])
         match.owner = scope
         match.arg_types = arg_types
+
+        scope.add_def match.def
+
         Matches.new([match], true)
       else
         ms = matches.map do |match|
@@ -544,7 +547,7 @@ module Crystal
           init = Call.new(var, 'initialize', new_vars)
 
           new_match = Match.new
-          new_match.def = scope.add_def Def.new('new', new_args, [
+          new_match.def = Def.new('new', new_args, [
             Assign.new(var, alloc),
             init,
             var
@@ -552,6 +555,9 @@ module Crystal
           new_match.owner = scope
           new_match.arg_types = match.arg_types
           new_match.free_vars = match.free_vars
+
+          scope.add_def new_match.def
+
           new_match
         end
         Matches.new(ms, true)
@@ -567,7 +573,10 @@ module Crystal
         Call.new(nil, 'method_missing', [SymbolLiteral.new(name.to_s), args])
       ])
       missing_def = mod.normalize(missing_def)
+
       scope.add_def missing_def
+
+      missing_def
     end
 
     def full_name(owner)

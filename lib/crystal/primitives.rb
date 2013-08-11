@@ -272,8 +272,9 @@ module Crystal
     end
 
     def primitive(owner, name, arg_names)
-      a_def = owner.add_def Def.new(name, arg_names.map { |x| Arg.new(x) })
+      a_def = Def.new(name, arg_names.map { |x| Arg.new(x) })
       a_def.owner = owner
+      owner.add_def a_def
       yield a_def
       a_def
     end
@@ -290,8 +291,9 @@ module Crystal
     end
 
     def singleton(owner, name, args, return_type, &block)
-      a_def = owner.add_def Def.new(name, args.map { |name, type| Arg.new_with_restriction(name, type) })
+      a_def = Def.new(name, args.map { |name, type| Arg.new_with_restriction(name, type) })
       a_def.owner = owner
+      owner.add_def a_def
       instance = a_def.overload(args.values, return_type, &block)
       owner.add_def_instance(a_def.object_id, args.values, nil, instance)
     end

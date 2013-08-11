@@ -307,13 +307,16 @@ module Crystal
           end
 
           external.set_type(return_type)
-        end
-
-        if node.name == "__crystal_raise"
+        elsif node.name == Program::MAIN_NAME
           external.raises = true
         end
 
-        current_type.add_def external
+        if node.name == Program::RAISE_NAME
+          external.raises = true
+        end
+
+        old_external = current_type.add_def external
+        old_external.dead = true if old_external
 
         if node.body
           current_type.add_def_instance external.object_id, external.args.map(&:type), nil, external
