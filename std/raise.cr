@@ -28,30 +28,24 @@ lib ABI
   fun unwind_get_language_specific_data = _Unwind_GetLanguageSpecificData(context : Void*) : UInt8*
 end
 
-class LEBReader
-  getter :data
-
-  def initialize(data)
-    @data = data
-  end
-
-  def read_uint8
-    value = @data.as(UInt8).value
-    @data += 1
+module LEBReader
+  def self.read_uint8(data)
+    value = data.value.as(UInt8).value
+    data.value += 1
     value
   end
 
-  def read_uint32
-    value = @data.as(UInt32).value
-    @data += 4
+  def self.read_uint32(data)
+    value = data.as(UInt32).value
+    data.value += 4
     value
   end
 
-  def read_uleb128
-    result = 0_u64;
-    shift = 0;
+  def self.read_uleb128(data)
+    result = 0_u64
+    shift = 0
     while true
-      byte = read_uint8
+      byte = read_uint8(data)
       result |= ((0x7f_u64 & byte) << shift);
       break if (byte & 0x80_u8) == 0
       shift += 7
@@ -71,21 +65,19 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
     throw_offset = ip - 1 - start
     lsd = ABI.unwind_get_language_specific_data(context)
 
-    reader = LEBReader.new(lsd)
-
-    reader.read_uint8 # @LPStart encoding
-    if reader.read_uint8 != 0xff_u8 # @TType encoding
-      reader.read_uleb128 # @TType base offset
+    LEBReader.read_uint8(lsd.ptr) # @LPStart encoding
+    if LEBReader.read_uint8(lsd.ptr) != 0xff_u8 # @TType encoding
+      LEBReader.read_uleb128(lsd.ptr) # @TType base offset
     end
-    reader.read_uint8 # CS Encoding
-    cs_table_length = reader.read_uleb128 # CS table length
+    LEBReader.read_uint8(lsd.ptr) # CS Encoding
+    cs_table_length = LEBReader.read_uleb128(lsd.ptr) # CS table length
 
-    cs_table_end = reader.data + cs_table_length
-    while reader.data < cs_table_end
-      cs_offset = reader.read_uint32
-      cs_length = reader.read_uint32
-      cs_addr = reader.read_uint32
-      action = reader.read_uleb128
+    cs_table_end = lsd + cs_table_length
+    while lsd < cs_table_end
+      cs_offset = LEBReader.read_uint32(lsd.ptr)
+      cs_length = LEBReader.read_uint32(lsd.ptr)
+      cs_addr = LEBReader.read_uint32(lsd.ptr)
+      action = LEBReader.read_uleb128(lsd.ptr)
 
       if cs_offset <= throw_offset && throw_offset <= cs_offset + cs_length
         if cs_addr != 0
