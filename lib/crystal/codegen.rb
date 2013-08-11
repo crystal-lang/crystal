@@ -182,7 +182,7 @@ module Crystal
         global.global_constant = 1
         bytes = "#{[str.length].pack("l")}#{str}\0".chars.to_a.map { |c| int8(c.ord) }
         global.initializer = LLVM::ConstantArray.const(LLVM::Int8, bytes)
-        @strings[str] = string = @builder.bit_cast(global, llvm_type(@mod.string))
+        @strings[str] = string = cast_to global, @mod.string
       end
       string
     end
@@ -358,10 +358,10 @@ module Crystal
         end
       else
         if node.type.union?
-          @last = @builder.bit_cast(var[:ptr], LLVM::Pointer(llvm_type(node.type)))
+          @last = cast_to_pointer var[:ptr], node.type
         else
           value_ptr = union_value(var[:ptr])
-          @last = @builder.bit_cast value_ptr, LLVM::Pointer(llvm_type(node.type))
+          @last = cast_to_pointer value_ptr, node.type
           @last = @builder.load(@last) unless node.type.passed_by_val?
         end
       end
@@ -376,7 +376,7 @@ module Crystal
         if node.type.nil_type?
           @last = null_pointer?(var[:ptr])
         elsif node.type.equal?(@mod.object)
-          @last = @builder.bit_cast var[:ptr], llvm_type(@mod.object)
+          @last = cast_to var[:ptr], @mod.object
         elsif node.type.equal?(@mod.object.hierarchy_type)
           @last = box_object_in_hierarchy(var[:type], node.type, var[:ptr], !var[:treated_as_pointer])
         else
@@ -387,10 +387,10 @@ module Crystal
           end
         end
       elsif node.type.union?
-        @last = @builder.bit_cast var[:ptr], LLVM::Pointer(llvm_type(node.type))
+        @last = cast_to_pointer var[:ptr], node.type
       else
         value_ptr = union_value(var[:ptr])
-        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(llvm_type(node.type))
+        casted_value_ptr = cast_to_pointer value_ptr, node.type
         @last = @builder.load(casted_value_ptr)
       end
     end
@@ -409,10 +409,10 @@ module Crystal
         @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.name)
         unless node.type.equal?(ivar.type)
           if node.type.union?
-            @last = @builder.bit_cast(@last, LLVM::Pointer(llvm_type(node.type)))
+            @last = cast_to_pointer @last, node.type
           else
             value_ptr = union_value(@last)
-            @last = @builder.bit_cast value_ptr, LLVM::Pointer(llvm_type(node.type))
+            @last = cast_to_pointer value_ptr, node.type
             @last = @builder.load(@last)
           end
         end
@@ -496,11 +496,11 @@ module Crystal
     end
 
     def visit_pointer_realloc(node)
-      casted_ptr = @builder.bit_cast llvm_self, LLVM::Pointer(LLVM::Int8)
+      casted_ptr = cast_to_void_pointer(llvm_self)
       size = @vars['size'][:ptr]
       size = @builder.mul size, int(@type.var.type.llvm_size)
       reallocated_ptr = realloc casted_ptr, size
-      @last = @builder.bit_cast reallocated_ptr, LLVM::Pointer(llvm_type(@type.var.type))
+      @last = cast_to_pointer reallocated_ptr, @type.var.type
     end
 
     def visit_pointer_get_value(node)
@@ -537,7 +537,7 @@ module Crystal
     end
 
     def visit_pointer_cast(node)
-      @last = @builder.bit_cast(@fun.params[0], llvm_type(node.type))
+      @last = cast_to @fun.params[0], node.type
     end
 
     def visit_simple_or(node)
@@ -802,7 +802,7 @@ module Crystal
       if var.type.c_struct? || var.type.c_union?
         @last = @builder.bit_cast(ptr, LLVM::Pointer(llvm_struct_type(var.type)))
       else
-        casted_value = @builder.bit_cast(ptr, LLVM::Pointer(llvm_type(var.type)))
+        casted_value = cast_to_pointer ptr, var.type
         @last = @builder.load casted_value
       end
     end
@@ -810,7 +810,7 @@ module Crystal
     def visit_union_set(node)
       var = @type.vars[node.name.to_s]
       ptr = gep llvm_self, 0, 0
-      casted_value = @builder.bit_cast(ptr, LLVM::Pointer(llvm_type(var.type)))
+      casted_value = cast_to_pointer ptr, var.type
       @last = @vars['value'][:ptr]
       @builder.store @last, casted_value
     end
@@ -860,7 +860,7 @@ module Crystal
             @last = box_object_in_hierarchy(node.obj.type, node.target_def.owner, @last, false)
           else
             # Cast value
-            @last = @builder.bit_cast(@last, LLVM::Pointer(llvm_type(node.target_def.owner)))
+            @last = cast_to_pointer @last, node.target_def.owner
             # TODO: why is this load needed here but not if we don't enter this case?
             @last = @builder.load(@last)
           end
@@ -877,7 +877,7 @@ module Crystal
           if @vars['self'][:type].hierarchy?
             call_args << llvm_self_ptr
           else
-            call_args << @builder.bit_cast(llvm_self, llvm_type(owner))
+            call_args << cast_to(llvm_self, owner)
           end
         else
           call_args << llvm_self
@@ -1011,7 +1011,7 @@ module Crystal
 
       @builder.store int(value_id), type_id_ptr
 
-      @builder.store @builder.bit_cast(value, LLVM::Pointer(LLVM::Int8)), value_ptr
+      @builder.store cast_to_void_pointer(value), value_ptr
       if load
         @builder.load(hierarchy_type)
       else
@@ -1464,20 +1464,20 @@ module Crystal
       type_id_ptr, value_ptr = union_type_id_and_value(union_pointer)
 
       if type.union?
-        casted_value = @builder.bit_cast(value, LLVM::Pointer(llvm_type(union_type)))
+        casted_value = cast_to_pointer value, union_type
         @builder.store @builder.load(casted_value), union_pointer
       elsif type.nilable?
         index = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.nilable_type.type_id)
 
         @builder.store index, type_id_ptr
 
-        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(llvm_type(type.nilable_type))
+        casted_value_ptr = cast_to_pointer value_ptr, type.nilable_type
         @builder.store value, casted_value_ptr
       else
         index = type.type_id
         @builder.store int(index), type_id_ptr
 
-        casted_value_ptr = @builder.bit_cast value_ptr, LLVM::Pointer(llvm_type(type))
+        casted_value_ptr = cast_to_pointer value_ptr, type
         @builder.store value, casted_value_ptr
       end
     end
@@ -1494,6 +1494,18 @@ module Crystal
 
     def union_value(union_pointer)
       gep union_pointer, 0, 1
+    end
+
+    def cast_to(value, type)
+      @builder.bit_cast(value, llvm_type(type))
+    end
+
+    def cast_to_pointer(value, type)
+      @builder.bit_cast(value, LLVM::Pointer(llvm_type(type)))
+    end
+
+    def cast_to_void_pointer(pointer)
+      @builder.bit_cast pointer, LLVM::Pointer(LLVM::Int8)
     end
 
     def gep(ptr, *indices)
@@ -1513,7 +1525,7 @@ module Crystal
     end
 
     def memset(pointer, value, size)
-      pointer = @builder.bit_cast pointer, LLVM::Pointer(LLVM::Int8)
+      pointer = cast_to_void_pointer(pointer)
       @builder.call @mod.memset(@llvm_mod), pointer, value, @builder.trunc(size, LLVM::Int32), int(4), int1(0)
     end
 
@@ -1544,7 +1556,7 @@ module Crystal
     def llvm_self_ptr
       if @type.hierarchy?
         ptr = @builder.load(union_value(llvm_self))
-        self_ptr = @builder.bit_cast ptr, llvm_type(@type.base_type)
+        self_ptr = cast_to ptr, @type.base_type
       else
         self_ptr = llvm_self
       end
