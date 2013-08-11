@@ -1662,15 +1662,16 @@ module Crystal
         return_type = parse_ident
 
         ptr = parse_trailing_pointers
-
-        skip_statement_end
       end
+
+      skip_statement_end
 
       if require_body
         if @token.keyword?(:end)
           body = nil
         else
           body = parse_expressions
+          body = parse_exception_handler body
         end
 
         next_token_skip_space

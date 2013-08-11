@@ -395,6 +395,7 @@ describe Parser do
   it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
 
   it_parses "def foo; 1; rescue; 2; end", Def.new("foo", [], ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
+  it_parses "fun foo; 1; rescue; 2; end", FunDef.new("foo", [], nil, 0, false, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
 
   it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
 
