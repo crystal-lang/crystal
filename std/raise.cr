@@ -109,6 +109,5 @@ fun __crystal_raise : NoReturn
 end
 
 def raise(msg)
-  puts "Raising..."
   __crystal_raise
 end

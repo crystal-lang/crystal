@@ -38,4 +38,22 @@ describe "Exception" do
     x.should eq(3)
     y.should eq(3)
   end
+
+  it "can result into union" do
+    x = begin
+      1
+    rescue
+      1.1
+    end
+
+    x.should eq(1)
+
+    y = begin
+      1 > 0 ? raise "Oh no!" : 0
+    rescue
+      1.1
+    end
+
+    y.should eq(1.1)
+  end
 end

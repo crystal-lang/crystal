@@ -1110,28 +1110,22 @@ module Crystal
     end
 
     def visit_exception_handler(node)
-
-      catch_block, end_catch = new_blocks "catch", "end_catch"
+      catch_block = new_block "catch"
+      branch = new_branched_block(node)
 
       @exception_handlers << { node: node, catch_block: catch_block }
       accept(node.body)
-      body_value = @last
-      body_block = @builder.insert_block
-      @builder.br end_catch
+      add_branched_block_value(branch, node.body.type, @last)
+      @builder.br branch[:exit_block]
       @exception_handlers.pop
 
       @builder.position_at_end catch_block
       @builder.landingpad LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32), @llvm_mod.functions['__crystal_personality'], []
       accept(node.rescues.first)
-      new_catch_block = @builder.insert_block
-      @builder.br end_catch
+      add_branched_block_value(branch, node.rescues.first.body.type, @last)
+      @builder.br branch[:exit_block]
 
-      @builder.position_at_end end_catch
-
-      unless node.body.no_returns?
-        @last = @builder.phi llvm_type(node.type), { body_block => body_value, new_catch_block => @last } rescue binding.pry
-      end
-
+      close_branched_block(branch)
       false
     end
 
