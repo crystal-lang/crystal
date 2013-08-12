@@ -56,7 +56,7 @@ describe 'Type inference: exception' do
     mod, type = assert_type(%Q(
       require "prelude"
       def foo
-        #{Program::RAISE_NAME}
+        #{Program::RAISE_NAME}(0_u64, 1_i32)
       end
       foo
     )) { no_return }
