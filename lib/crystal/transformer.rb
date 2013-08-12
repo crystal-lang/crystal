@@ -237,12 +237,7 @@ module Crystal
     end
 
     def transform_yield(node)
-      transform_many node.exps
-      node
-    end
-
-    def transform_yield_with_scope(node)
-      node.scope = node.scope.transform(self)
+      node.scope = node.scope.transform(self) if node.scope
       transform_many node.exps
       node
     end

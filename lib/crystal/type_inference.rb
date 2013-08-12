@@ -713,7 +713,7 @@ module Crystal
     def end_visit_yield(node)
       block = @call.block or node.raise "no block given"
 
-      if @yield_vars
+      if !node.scope && @yield_vars
         @yield_vars.each_with_index do |var, i|
           exp = node.exps[i]
           if exp
@@ -731,21 +731,7 @@ module Crystal
 
       unless block.visited
         @call.bubbling_exception do
-          block.accept @call.parent_visitor
-        end
-      end
-
-      node.bind_to block.body
-    end
-
-    def end_visit_yield_with_scope(node)
-      block = @call.block or node.raise "no block given"
-
-      bind_block_args_to_yield_exps block, node
-
-      unless block.visited
-        @call.bubbling_exception do
-          block.scope = node.scope.type
+          block.scope = node.scope.type if node.scope
           block.accept @call.parent_visitor
         end
       end

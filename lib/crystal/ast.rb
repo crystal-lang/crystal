@@ -1006,7 +1006,7 @@ module Crystal
     end
   end
 
-  ['return', 'break', 'next', 'yield'].each do |keyword|
+  ['return', 'break', 'next'].each do |keyword|
     # A #{keyword} expression.
     #
     #     '#{keyword}' [ '(' ')' ]
@@ -1038,22 +1038,22 @@ module Crystal
     EVAL
   end
 
-  class YieldWithScope < ASTNode
-    attr_accessor :scope
+  class Yield < ASTNode
     attr_accessor :exps
+    attr_accessor :scope
 
-    def initialize(scope, exps = [])
-      @scope = scope
+    def initialize(exps = [], scope = nil)
       @exps = exps
+      @scope = scope
     end
 
     def accept_children(visitor)
-      scope.accept visitor
+      scope.accept visitor if scope
       exps.each { |e| e.accept visitor }
     end
 
     def ==(other)
-      other.is_a?(YieldWithScope) && other.scope == scope && other.exps == exps
+      other.is_a?(Yield) && other.scope == scope && other.exps == exps
     end
 
     def clone_from(other)

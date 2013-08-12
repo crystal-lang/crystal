@@ -711,7 +711,7 @@ module Crystal
       false
     end
 
-    ['return', 'next', 'break', 'yield'].each do |keyword|
+    ['return', 'next', 'break'].each do |keyword|
       class_eval <<-EVAL, __FILE__, __LINE__ + 1
         def visit_#{keyword}(node)
           @str << '#{keyword}'
@@ -727,9 +727,12 @@ module Crystal
       EVAL
     end
 
-    def visit_yield_with_scope(node)
-      node.scope.accept self
-      @str << '.yield'
+    def visit_yield(node)
+      if node.scope
+        node.scope.accept self
+        @str << '.'
+      end
+      @str << 'yield'
       if node.exps.length > 0
         @str << ' '
         node.exps.each_with_index do |exp, i|

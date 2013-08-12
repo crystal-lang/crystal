@@ -1039,24 +1039,14 @@ module Crystal
     end
 
     def visit_yield(node)
-      codegen_yield(node, nil)
-      false
-    end
-
-    def visit_yield_with_scope(node)
-      codegen_yield(node, node.scope)
-      false
-    end
-
-    def codegen_yield(node, scope)
       if @block_context.any?
         context = @block_context.pop
         new_vars = context[:vars].clone
         block = context[:block]
 
-        if scope
-          scope.accept self
-          new_vars['%scope'] = { ptr: @last, type: scope.type, treated_as_pointer: false }
+        if node.scope
+          node.scope.accept self
+          new_vars['%scope'] = { ptr: @last, type: node.scope.type, treated_as_pointer: false }
         end
 
         if block.args
@@ -1115,6 +1105,7 @@ module Crystal
         @return_union = old_return_union
         @block_context << context
       end
+      false
     end
 
     def visit_exception_handler(node)

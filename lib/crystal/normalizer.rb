@@ -164,12 +164,6 @@ module Crystal
       end
     end
 
-    def transform_yield_with_scope(node)
-      super.tap do
-        reset_instance_variables_indices
-      end
-    end
-
     def reset_instance_variables_indices
       @vars.each do |key, value|
         if key[0] == '@'

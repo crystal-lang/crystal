@@ -513,7 +513,7 @@ module Crystal
           if atomic.args && atomic.args.length > @yields
             @yields = atomic.args.length
           end
-          atomic = YieldWithScope.new(atomic.obj, atomic.args)
+          atomic = Yield.new(atomic.args, atomic.obj)
         end
       end
       atomic
