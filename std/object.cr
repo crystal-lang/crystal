@@ -15,4 +15,8 @@ class Object
     yield self
     self
   end
+
+  def instance_eval
+    self.yield
+  end
 end
