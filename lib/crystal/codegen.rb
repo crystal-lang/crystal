@@ -875,7 +875,7 @@ module Crystal
         end
 
         call_args << @last
-      elsif @vars.has_key?('%scope')
+      elsif owner && @vars.has_key?('%scope')
         call_args << @vars['%scope'][:ptr]
       elsif owner
         different = !owner.equal?(@vars['self'][:type])
