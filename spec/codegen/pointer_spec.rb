@@ -126,4 +126,11 @@ describe 'Code gen: pointer' do
       px.value
       )).to_i.should eq(2)
   end
+
+  it "creates pointer by address" do
+    run(%q(
+      x = Pointer(Int32).new(123)
+      x.address
+    )).to_i.should eq(123)
+  end
 end

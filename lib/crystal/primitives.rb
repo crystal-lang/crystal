@@ -261,6 +261,7 @@ module Crystal
     def define_pointer_primitives
       pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', Ident.new(["Int"], true))], PointerMalloc.new)
       pointer.metaclass.add_def Def.new('null', [], PointerNull.new)
+      pointer.metaclass.add_def Def.new('new', [Arg.new_with_restriction('address', Ident.new(["Int"], true))], PointerNew.new)
       pointer.add_def Def.new('value', [], PointerGetValue.new)
       pointer.add_def Def.new('value=', [Arg.new_with_restriction('value', Ident.new(["T"]))], PointerSetValue.new)
       pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', Ident.new(["Int"], true))], PointerRealloc.new)
@@ -386,6 +387,9 @@ module Crystal
   end
 
   class PointerMalloc < Primitive
+  end
+
+  class PointerNew < Primitive
   end
 
   class PointerNull < Primitive

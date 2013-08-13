@@ -507,6 +507,10 @@ module Crystal
       @last = @builder.array_malloc(llvm_type, @vars['size'][:ptr])
     end
 
+    def visit_pointer_new(node)
+      @last = @builder.int2ptr(@vars["address"][:ptr], llvm_type(node.type))
+    end
+
     def visit_pointer_null(node)
       @last = LLVM::Pointer(llvm_type(node.type.var.type)).null
     end

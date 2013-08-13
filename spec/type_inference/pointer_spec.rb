@@ -70,4 +70,8 @@ describe 'Type inference: pointer' do
       Pointer.malloc(1)
     ), "can't malloc pointer without type, use Pointer(Type).malloc(size)"
   end
+
+  it "create pointer by address" do
+    assert_type(%q(Pointer(Int32).new(123))) { pointer_of(int32) }
+  end
 end

@@ -344,6 +344,10 @@ module Crystal
       node
     end
 
+    def transform_pointer_new(node)
+      node
+    end
+
     def transform_pointer_null(node)
       node
     end
