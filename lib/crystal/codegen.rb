@@ -3,7 +3,7 @@ require 'llvm/execution_engine'
 require 'llvm/transforms/scalar'
 require_relative "program"
 
-LLVM.init_x86
+LLVM.init_jit
 
 module Crystal
   class Program
