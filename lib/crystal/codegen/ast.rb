@@ -15,6 +15,20 @@ module Crystal
     def no_returns?
       type && type.no_return?
     end
+
+    def needs_const_block?
+      true
+    end
+  end
+
+  [NilLiteral, BoolLiteral, NumberLiteral, CharLiteral, StringLiteral, SymbolLiteral].each do |klass|
+    class_eval %Q(
+      class #{klass}
+        def needs_const_block?
+          false
+        end
+      end
+    )
   end
 
   class Return

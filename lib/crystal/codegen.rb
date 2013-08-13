@@ -264,29 +264,35 @@ module Crystal
           global = @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
           global.linkage = :internal
 
-          old_position = @builder.insert_block
-          old_fun = @fun
-          @fun = @llvm_mod.functions[Program::MAIN_NAME]
-          const_block = new_block "const_#{global_name}"
-          @builder.position_at_end const_block
+          if const.value.needs_const_block?
+            old_position = @builder.insert_block
+            old_fun = @fun
+            @fun = @llvm_mod.functions[Program::MAIN_NAME]
+            const_block = new_block "const_#{global_name}"
+            @builder.position_at_end const_block
 
-          accept(const.value)
+            accept(const.value)
 
-          if @last.constant?
+            if @last.constant?
+              global.initializer = @last
+              global.global_constant = 1
+            else
+              global.initializer = LLVM::Constant.null(@last.type)
+              @builder.store @last, global
+            end
+
+            new_const_block = @builder.insert_block
+            @builder.position_at_end @const_block
+            @builder.br const_block
+            @const_block = new_const_block
+
+            @builder.position_at_end old_position
+            @fun = old_fun
+          else
+            accept(const.value)
             global.initializer = @last
             global.global_constant = 1
-          else
-            global.initializer = LLVM::Constant.null(@last.type)
-            @builder.store @last, global
           end
-
-          new_const_block = @builder.insert_block
-          @builder.position_at_end @const_block
-          @builder.br const_block
-          @const_block = new_const_block
-
-          @builder.position_at_end old_position
-          @fun = old_fun
         end
 
         @last = @builder.load global
