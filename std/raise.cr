@@ -58,44 +58,42 @@ module LEBReader
 end
 
 fun __crystal_personality(version : Int32, actions : Int32, exception_class : UInt64, exception_object : ABI::UnwindException*, context : Void*) : Int32
-  if (actions & ABI::UA_SEARCH_PHASE) > 0
-    return ABI::URC_HANDLER_FOUND
+  start = ABI.unwind_get_region_start(context)
+  ip = ABI.unwind_get_ip(context)
+  throw_offset = ip - 1 - start
+  lsd = ABI.unwind_get_language_specific_data(context)
 
-  elsif (actions & ABI::UA_HANDLER_FRAME) > 0
-    start = ABI.unwind_get_region_start(context)
-    ip = ABI.unwind_get_ip(context)
-    throw_offset = ip - 1 - start
-    lsd = ABI.unwind_get_language_specific_data(context)
+  LEBReader.read_uint8(lsd.ptr) # @LPStart encoding
+  if LEBReader.read_uint8(lsd.ptr) != 0xff_u8 # @TType encoding
+    LEBReader.read_uleb128(lsd.ptr) # @TType base offset
+  end
+  LEBReader.read_uint8(lsd.ptr) # CS Encoding
+  cs_table_length = LEBReader.read_uleb128(lsd.ptr) # CS table length
+  cs_table_end = lsd + cs_table_length
 
-    LEBReader.read_uint8(lsd.ptr) # @LPStart encoding
-    if LEBReader.read_uint8(lsd.ptr) != 0xff_u8 # @TType encoding
-      LEBReader.read_uleb128(lsd.ptr) # @TType base offset
-    end
-    LEBReader.read_uint8(lsd.ptr) # CS Encoding
-    cs_table_length = LEBReader.read_uleb128(lsd.ptr) # CS table length
+  while lsd < cs_table_end
+    cs_offset = LEBReader.read_uint32(lsd.ptr)
+    cs_length = LEBReader.read_uint32(lsd.ptr)
+    cs_addr = LEBReader.read_uint32(lsd.ptr)
+    action = LEBReader.read_uleb128(lsd.ptr)
 
-    cs_table_end = lsd + cs_table_length
-    while lsd < cs_table_end
-      cs_offset = LEBReader.read_uint32(lsd.ptr)
-      cs_length = LEBReader.read_uint32(lsd.ptr)
-      cs_addr = LEBReader.read_uint32(lsd.ptr)
-      action = LEBReader.read_uleb128(lsd.ptr)
-
+    if cs_addr != 0
       if cs_offset <= throw_offset && throw_offset <= cs_offset + cs_length
-        if cs_addr != 0
+        if (actions & ABI::UA_SEARCH_PHASE) > 0
+          return ABI::URC_HANDLER_FOUND
+        end
+
+        if (actions & ABI::UA_HANDLER_FRAME) > 0
           ABI.unwind_set_gr(context, 0, exception_object.value.exception_object)
           ABI.unwind_set_gr(context, 1, 0_u64 + exception_object.value.exception_type_id)
           ABI.unwind_set_ip(context, start + cs_addr)
-          break
+          return ABI::URC_INSTALL_CONTEXT
         end
       end
     end
-
-    return ABI::URC_INSTALL_CONTEXT
-
-  else
-    ABI::URC_NO_REASON
   end
+
+  return ABI::URC_CONTINUE_UNWIND
 end
 
 fun __crystal_raise(ex_obj : UInt64, ex_type_id : Int32) : NoReturn
