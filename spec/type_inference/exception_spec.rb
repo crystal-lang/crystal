@@ -32,9 +32,13 @@ describe 'Type inference: exception' do
   it "type for exception handler for explicit types" do
     assert_type(%(
       require "prelude"
+
+      class MyEx < Exception
+      end
+
       begin
-        raise "foo"
-      rescue String
+        raise MyEx.new
+      rescue MyEx
         1
       end
     )) { int32 }
@@ -87,7 +91,7 @@ describe 'Type inference: exception' do
         a = ex
       end
       a
-    )) { union_of(self.nil, types["Ex"]) }
+    )) { union_of(self.nil, types["Ex"].hierarchy_type) }
   end
 
   it "errors if exception var shadows local var" do
@@ -96,5 +100,9 @@ describe 'Type inference: exception' do
 
   it "errors if catched exception is not a subclass of Exception" do
     assert_error "begin; rescue Int32 => ex; end", "Int32 is not a subclass of Exception"
+  end
+
+  it "errors if catched exception is not a subclass of Exception without var" do
+    assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
   end
 end

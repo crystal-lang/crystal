@@ -101,18 +101,18 @@ describe "Exception" do
     b.should eq(3)
   end
 
-  class Foo
+  class Ex1 < Exception
   end
 
-  class Bar
+  class Ex2 < Exception
   end
 
   it "rescue with type" do
     a = begin
-      raise Bar.new
-    rescue Foo
+      raise Ex2.new
+    rescue Ex1
       1
-    rescue Bar
+    rescue Ex2
       2
     end
 
@@ -122,9 +122,9 @@ describe "Exception" do
   it "rescue with types defaults to generic rescue" do
     a = begin
       raise "Oh no!"
-    rescue Foo
+    rescue Ex1
       1
-    rescue Bar
+    rescue Ex2
       2
     rescue
       3
