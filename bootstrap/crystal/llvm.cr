@@ -1,4 +1,4 @@
-lib LibLLVM("LLVM-3.1")
+lib LibLLVM("LLVM-3.3")
   type ModuleRef : Void*
   type TypeRef : Void*
   type ValueRef : Void*

@@ -1,4 +1,12 @@
 GIT
+  remote: https://github.com/ruby-llvm/ruby-llvm.git
+  revision: 847292fdab07a42362bdac5e1c4144fcb5a06970
+  specs:
+    ruby-llvm (3.3.0.alpha)
+      ffi (~> 1.7)
+      rake (~> 0.9)
+
+GIT
   remote: https://github.com/ruby-prof/ruby-prof.git
   revision: ef0d3f5ab07590756f4367a3f54ec2680d489ca9
   specs:
@@ -23,7 +31,7 @@ GEM
     debugger-linecache (1.2.0)
     debugger-ruby_core_source (1.2.3)
     diff-lcs (1.2.1)
-    ffi (1.4.0)
+    ffi (1.9.0)
     json (1.7.7)
     method_source (0.8.1)
     mime-types (1.23)
@@ -35,7 +43,7 @@ GEM
     pry-debugger (0.2.2)
       debugger (~> 1.3)
       pry (~> 0.9.10)
-    rake (10.0.3)
+    rake (0.9.6)
     rest-client (1.6.7)
       mime-types (>= 1.16)
     rspec (2.13.0)
@@ -47,8 +55,6 @@ GEM
       diff-lcs (>= 1.1.3, < 2.0)
     rspec-mocks (2.13.0)
     ruby-graphviz (1.0.8)
-    ruby-llvm (3.1.0.beta.1)
-      ffi (>= 1.0.0)
     simplecov (0.7.1)
       multi_json (~> 1.0)
       simplecov-html (~> 0.7.1)
@@ -67,5 +73,5 @@ DEPENDENCIES
   rake
   rspec
   ruby-graphviz
-  ruby-llvm (~> 3.1.0.beta.1)
+  ruby-llvm!
   ruby-prof!
