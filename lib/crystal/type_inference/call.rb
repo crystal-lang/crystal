@@ -270,7 +270,7 @@ module Crystal
           nil_trace = find_nil_source(obj)
         end
 
-        if obj
+        if obj || !owner.is_a?(Program)
           raise "undefined method '#{name}' for #{owner}", nil_trace
         elsif args.length > 0 || has_parenthesis
           raise "undefined method '#{name}'", nil_trace
