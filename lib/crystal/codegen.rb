@@ -10,6 +10,8 @@ module Crystal
     MAIN_NAME = "__crystal_main"
     PERSONALITY_NAME = "__crystal_personality"
     RAISE_NAME = "__crystal_raise"
+    MALLOC_NAME = "__crystal_malloc"
+    REALLOC_NAME = "__crystal_realloc"
 
     def run(code, options = {})
       node = parse code
@@ -504,7 +506,7 @@ module Crystal
                   else
                     llvm_type(node.type.var.type)
                   end
-      @last = @builder.array_malloc(llvm_type, @vars['size'][:ptr])
+      @last = malloc(llvm_type, @vars['size'][:ptr])
     end
 
     def visit_pointer_new(node)
@@ -1548,8 +1550,19 @@ module Crystal
       @builder.icmp :ne, @builder.ptr2int(value, LLVM::Int), int(0)
     end
 
-    def malloc(type)
-      @builder.malloc(type)
+    def malloc(type, count = nil)
+      @malloc_fun ||= @llvm_mod.functions[Program::MALLOC_NAME]
+      if @malloc_fun
+        type = type.type unless type.is_a?(LLVM::Type)
+        size = @builder.trunc(type.size, LLVM::Int32)
+        size = @builder.mul(size, @builder.trunc(count, LLVM::Int32))  if count
+        pointer = @builder.call @malloc_fun, size
+        @builder.bit_cast pointer, LLVM::Pointer(type)
+      elsif count
+        @builder.array_malloc(type, count)
+      else
+        @builder.malloc(type)
+      end
     end
 
     def memset(pointer, value, size)
@@ -1558,7 +1571,12 @@ module Crystal
     end
 
     def realloc(buffer, size)
-      @builder.call @mod.realloc(@llvm_mod), buffer, size
+      @realloc_fun ||= @llvm_mod.functions[Program::REALLOC_NAME]
+      if @realloc_fun
+        @builder.call @realloc_fun, buffer, size
+      else
+        @builder.call @mod.realloc(@llvm_mod), buffer, size
+      end
     end
 
     def llvm_puts(string)
