@@ -940,7 +940,14 @@ module Crystal
         next_token_skip_space_or_newline
         check :IDENT
         name = @token.value.to_s
+
+        if @def_vars.last.include?(name)
+          raise "exception variable '#{name}' shadows local variable '#{name}'"
+        end
+
         next_token_skip_space
+
+        push_var_name name
       end
 
       check :";", :NEWLINE

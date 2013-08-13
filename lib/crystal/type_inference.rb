@@ -932,6 +932,32 @@ module Crystal
       end
     end
 
+    def visit_rescue(node)
+      node.types.each { |type| type.accept self } if node.types
+
+      if node.name
+        var = lookup_var node.name
+
+        if node.types
+          types = node.types.map do |type| 
+            instance_type = type.type.instance_type
+            unless instance_type.is_subclass_of?(@mod.exception)
+              type.raise "#{type} is not a subclass of Exception"
+            end
+            instance_type
+          end
+          unified_type = @mod.type_merge *types
+        else
+          unified_type = @mod.exception.hierarchy_type
+        end
+        var.set_type(unified_type)
+        var.freeze_type = true
+      end
+
+      node.body.accept self
+      false
+    end
+
     def end_visit_exception_handler(node)
       node.bind_to node.body
       if node.rescues

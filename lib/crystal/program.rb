@@ -63,6 +63,8 @@ module Crystal
 
       @types["Array"] = GenericClassType.new self, "Array", reference, ["T"]
 
+      @types["Exception"] = NonGenericClassType.new self, "Exception", reference
+
       @types["ARGC_UNSAFE"] = Const.new self, "ARGC_UNSAFE", Crystal::ARGC.new(int32)
       @types["ARGV_UNSAFE"] = Const.new self, "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char)))
 
@@ -241,6 +243,10 @@ module Crystal
 
     def array
       @types["Array"]
+    end
+
+    def exception
+      @types["Exception"]
     end
 
     def pointer

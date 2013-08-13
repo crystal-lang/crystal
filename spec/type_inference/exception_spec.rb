@@ -64,4 +64,37 @@ describe 'Type inference: exception' do
     def_instance = mod.lookup_def_instance(a_def.object_id, [], nil)
     def_instance.raises.should be_true
   end
+
+  it "types exception var with no types" do
+    assert_type(%Q(
+      a = nil
+      begin
+      rescue => ex
+        a = ex
+      end
+      a
+    )) { union_of(self.nil, exception.hierarchy_type) }
+  end
+
+  it "types exception with type" do
+    assert_type(%Q(
+      class Ex < Exception
+      end
+
+      a = nil
+      begin
+      rescue Ex => ex
+        a = ex
+      end
+      a
+    )) { union_of(self.nil, types["Ex"]) }
+  end
+
+  it "errors if exception var shadows local var" do
+    assert_syntax_error "ex = 1; begin; rescue => ex; end", "exception variable 'ex' shadows local variable 'ex'"
+  end
+
+  it "errors if catched exception is not a subclass of Exception" do
+    assert_error "begin; rescue Int32 => ex; end", "Int32 is not a subclass of Exception"
+  end
 end
