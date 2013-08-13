@@ -310,7 +310,7 @@ module Crystal
           if value?
             parent_owner = owner
           elsif parent.class?
-            parent_owner = parent.hierarchy_type
+            parent_owner = owner
           elsif parent.is_a?(IncludedGenericModule)
             type_lookup = parent
             parent_owner = owner

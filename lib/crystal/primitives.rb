@@ -282,6 +282,7 @@ module Crystal
     def no_args_primitive(owner, name, return_type, &block)
       primitive(owner, name, []) do |a_def|
         instance = a_def.overload([], return_type, &block)
+        a_def.body = instance.body
         owner.add_def_instance(a_def.object_id, [], nil, instance)
       end
     end
@@ -299,8 +300,8 @@ module Crystal
     end
 
     def shared_singleton(owner, name, return_type, &block)
-      body = PrimitiveBody.new(&block)
-      body.type = return_type
+      body = PrimitiveBody.new(return_type, &block)
+      body.set_type(return_type)
       owner.add_def Def.new(name, [], body)
     end
 
@@ -344,7 +345,7 @@ module Crystal
       arg_types.each_with_index do |arg_type, i|
         instance.args[i].set_type(arg_type)
       end
-      instance.body = PrimitiveBody.new(&block)
+      instance.body = PrimitiveBody.new(return_type, &block)
       instance.set_type(return_type)
       instance
     end
@@ -374,7 +375,8 @@ module Crystal
   class PrimitiveBody < Primitive
     attr_accessor :block
 
-    def initialize(&block)
+    def initialize(type, &block)
+      @type = type
       @block = block
     end
 

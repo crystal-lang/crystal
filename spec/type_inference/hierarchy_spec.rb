@@ -209,7 +209,7 @@ describe 'Type inference: hierarchy' do
       end
 
       Foo.new.inspect
-      )) { string.hierarchy_type }
+      )) { string }
   end
 
   it "reports no matches for hierarchy type" do

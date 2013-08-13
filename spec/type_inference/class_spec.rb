@@ -305,7 +305,7 @@ describe 'Type inference: class' do
       end
 
       Foo(Int).new.foo
-      )) { union_of(int32, char) }
+      )) { int32 }
   end
 
   it "types immutable class" do
