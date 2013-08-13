@@ -30,4 +30,12 @@ describe Crystal::AfterTypeInferenceTransformer do
     assert_after_type_inference "a = 1; if a.is_a?(Bool); 2; else 3; end",
       "a = 1\n3"
   end
+
+  it "errors comparison of unsigned integer with zero or negative literal" do
+    error = "comparison of unsigned integer with zero or negative literal will always be false"
+    assert_error "1_u32 < 0", error
+    assert_error "1_u32 <= -1", error
+    assert_error "0 > 1_u32", error
+    assert_error "-1 >= 1_u32", error
+  end
 end

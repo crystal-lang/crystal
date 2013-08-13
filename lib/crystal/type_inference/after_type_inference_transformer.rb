@@ -98,7 +98,9 @@ module Crystal
           @transformed[target_def.object_id] = true
 
           if target_def.body
-            target_def.body = target_def.body.transform(self)
+            node.bubbling_exception do
+              target_def.body = target_def.body.transform(self)
+            end
 
             # If the body was completely removed, rebind to nil
             unless target_def.body
@@ -108,7 +110,25 @@ module Crystal
         end
       end
 
+      check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
+
       node
+    end
+
+    def check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
+      if (node.name == :< || node.name == :<=) && node.obj.type.integer? && node.obj.type.unsigned?
+        arg = node.args[0]
+        if arg.is_a?(NumberLiteral) && arg.integer? && arg.value.to_i <= 0
+          node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"
+        end
+      end
+
+      if (node.name == :> || node.name == :>=) && node.obj.is_a?(NumberLiteral) && node.obj.integer? && node.obj.value.to_i <= 0
+        arg = node.args[0]
+        if arg.type.integer? && arg.type.unsigned?
+          node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"
+        end
+      end
     end
 
     def transform_if(node)

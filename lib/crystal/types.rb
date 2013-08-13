@@ -125,6 +125,10 @@ module Crystal
       to_s
     end
 
+    def type_desc
+      to_s
+    end
+
     def self.merge(*types)
       types = types.compact
       return nil if types.empty?
@@ -461,6 +465,10 @@ module Crystal
       container && !container.is_a?(Program) ? "#{container.to_s}::#{name}" : name
     end
 
+    def type_desc
+      "module"
+    end
+
     def to_s
       full_name
     end
@@ -699,6 +707,10 @@ module Crystal
         block.call subclass
         each_subclass subclass, &block
       end
+    end
+
+    def type_desc
+      "class"
     end
   end
 
@@ -1185,6 +1197,10 @@ module Crystal
       false
     end
 
+    def type_desc
+      "lib"
+    end
+
     def to_s
       name
     end
@@ -1204,6 +1220,10 @@ module Crystal
 
     def primitive_like?
       true
+    end
+
+    def type_desc
+      "type def"
     end
 
     def to_s
@@ -1273,6 +1293,10 @@ module Crystal
       "#{container}::#{name}<#{vars_to_s}>"
     end
 
+    def type_desc
+      "struct"
+    end
+
     def to_s
       "#{container}::#{name}"
     end
@@ -1336,6 +1360,10 @@ module Crystal
       "#{container}::#{name}<#{vars_to_s}>"
     end
 
+    def type_desc
+      "union"
+    end
+
     def to_s
       "#{container}::#{name}"
     end
@@ -1367,6 +1395,10 @@ module Crystal
       []
     end
 
+    def type_desc
+      "enum"
+    end
+
     def to_s
       "#{container}::#{name}"
     end
@@ -1388,6 +1420,10 @@ module Crystal
 
     def full_name
       container && !container.is_a?(Program) ? "#{container.to_s}::#{name}" : name
+    end
+
+    def type_desc
+      "constant"
     end
 
     def to_s

@@ -180,7 +180,9 @@ module Crystal
     def visit_module_def(node)
       type = current_type.types[node.name]
       if type
-        node.raise "#{node.name} is not a module" unless type.module?
+        unless type.module?
+          node.raise "#{node.name} is not a module, it's a #{type.type_desc}" 
+        end
       else
         if node.type_vars
           type = GenericModuleType.new current_type, node.name, node.type_vars
@@ -207,7 +209,7 @@ module Crystal
       end
 
       unless type.module?
-        node.name.raise "#{node.name} is not a module"
+        node.name.raise "#{node.name} is not a module, it's a #{type.type_desc}"
       end
 
       if node.name.is_a?(NewGenericClass)

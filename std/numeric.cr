@@ -20,6 +20,6 @@ class Numeric
   end
 
   def <=>(other)
-    self - other
+    self > other ? 1 : (self < other ? -1 : 0)
   end
 end

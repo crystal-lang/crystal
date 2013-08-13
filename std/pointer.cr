@@ -12,7 +12,7 @@ class Pointer(T)
   end
 
   def <=>(other : self)
-    address - other.address
+    address <=> other.address
   end
 
   def ==(other)

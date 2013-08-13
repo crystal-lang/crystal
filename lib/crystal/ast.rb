@@ -338,6 +338,10 @@ module Crystal
       @kind = kind
     end
 
+    def integer?
+      @kind != :f32 && @kind != :f64
+    end
+
     def ==(other)
       other.is_a?(NumberLiteral) && other.value.to_f == value.to_f && other.kind == kind
     end
