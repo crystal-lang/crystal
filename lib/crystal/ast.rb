@@ -675,7 +675,6 @@ module Crystal
     end
   end
 
-  # An instance variable.
   class InstanceVar < ASTNode
     attr_accessor :name
     attr_accessor :out
@@ -686,6 +685,24 @@ module Crystal
 
     def ==(other)
       other.is_a?(InstanceVar) && other.name == name && other.out == out
+    end
+
+    def clone_from(other)
+      @name = other.name
+      @out = other.out
+    end
+  end
+
+  class ClassVar < ASTNode
+    attr_accessor :name
+    attr_accessor :out
+
+    def initialize(name)
+      @name = name
+    end
+
+    def ==(other)
+      other.is_a?(ClassVar) && other.name == name && other.out == out
     end
 
     def clone_from(other)

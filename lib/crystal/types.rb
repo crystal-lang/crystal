@@ -627,6 +627,10 @@ module Crystal
     def lookup_class_var(name)
       class_vars[name] ||= Var.new name
     end
+
+    def class_var_owner
+      self
+    end
   end
 
   module InheritableClass
@@ -1130,7 +1134,7 @@ module Crystal
 
     attr_reader :instance_type
 
-    delegate [:program, :lookup_type, :lookup_class_var, :has_class_var?] => :instance_type
+    delegate [:program, :lookup_type, :lookup_class_var, :has_class_var?, :class_var_owner] => :instance_type
 
     def initialize(instance_type)
       @instance_type = instance_type

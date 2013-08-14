@@ -17,6 +17,11 @@ module Crystal
     end
   end
 
+  class ClassVar
+    attr_accessor :owner
+    attr_accessor :var
+  end
+
   class DeclareVar
     attr_accessor :var
   end

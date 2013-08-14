@@ -329,18 +329,29 @@ module Crystal
         ivar = @type.lookup_instance_var(target.name.to_s)
         ptr = gep llvm_self_ptr, 0, @type.index_of_instance_var(target.name.to_s)
       when Global
-        ptr = @llvm_mod.globals[target.name.to_s]
-        unless ptr
-          ptr = @llvm_mod.globals.add(llvm_type(target.type), target.name.to_s)
-          ptr.linkage = :internal
-          ptr.initializer = LLVM::Constant.null(llvm_type(target.type))
-        end
+        ptr = assign_to_global target.name.to_s, target.type
+      when ClassVar
+        ptr = assign_to_global class_var_global_name(target), target.type
       else
         var = declare_var(target)
         ptr = var[:ptr]
       end
 
       codegen_assign(ptr, target.type, value.type, llvm_value, !!ivar)
+    end
+
+    def assign_to_global(name, type)
+      ptr = @llvm_mod.globals[name]
+      unless ptr
+        ptr = @llvm_mod.globals.add(llvm_type(type), name)
+        ptr.linkage = :internal
+        ptr.initializer = LLVM::Constant.null(llvm_type(type))
+      end
+      ptr
+    end
+
+    def class_var_global_name(node)
+      "#{node.owner}#{node.var.name.gsub('@@', '::')}"
     end
 
     def visit_declare_var(node)
@@ -414,17 +425,23 @@ module Crystal
     end
 
     def visit_global(node)
-      ptr = @llvm_mod.globals[node.name]
+      read_global node.name.to_s, node.type
+    end
+
+    def visit_class_var(node)
+      read_global class_var_global_name(node), node.type
+    end
+
+    def read_global(name, type)
+      ptr = @llvm_mod.globals[name]
       unless ptr
-        ptr = @llvm_mod.globals.add(llvm_type(node.type), node.name.to_s)
+        ptr = @llvm_mod.globals.add(llvm_type(type), name)
         ptr.linkage = :internal
-        ptr.initializer = LLVM::Constant.null(llvm_type(node.type))
+        ptr.initializer = LLVM::Constant.null(llvm_type(type))
       end
 
       @last = ptr
-      unless @mod.global_vars[node.name].type.union?
-        @last = @builder.load @last
-      end
+      @last = @builder.load @last unless type.union?
     end
 
     def visit_instance_var(node)
@@ -768,6 +785,7 @@ module Crystal
     end
 
     def visit_class_def(node)
+      node.body.accept self
       false
     end
 

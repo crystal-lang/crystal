@@ -523,6 +523,10 @@ module Crystal
 
       var = scope.lookup_class_var node.name
       var.bind_to mod.nil_var if bind_to_nil
+
+      node.owner = scope.class_var_owner
+      node.var = var
+
       var
     end
 
