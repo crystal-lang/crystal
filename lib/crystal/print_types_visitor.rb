@@ -28,6 +28,10 @@ module Crystal
       false
     end
 
+    def visit_fun_def(node)
+      false
+    end
+
     def visit_macro(node)
       false
     end
