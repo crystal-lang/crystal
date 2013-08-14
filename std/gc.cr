@@ -22,6 +22,6 @@ fun __crystal_malloc(size : Int32) : Void*
 end
 
 fun __crystal_realloc(pointer : Void*, size : Int32) : Void*
-  pointer = C.realloc(pointer - 1, size)
+  pointer = C.realloc(pointer - 1, size + 1)
   pointer + 1
 end
