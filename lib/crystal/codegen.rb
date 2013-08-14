@@ -414,10 +414,16 @@ module Crystal
     end
 
     def visit_global(node)
-      if @mod.global_vars[node.name].type.union?
-        @last = @llvm_mod.globals[node.name]
-      else
-        @last = @builder.load @llvm_mod.globals[node.name]
+      ptr = @llvm_mod.globals[node.name]
+      unless ptr
+        ptr = @llvm_mod.globals.add(llvm_type(node.type), node.name.to_s)
+        ptr.linkage = :internal
+        ptr.initializer = LLVM::Constant.null(llvm_type(node.type))
+      end
+
+      @last = ptr
+      unless @mod.global_vars[node.name].type.union?
+        @last = @builder.load @last
       end
     end
 

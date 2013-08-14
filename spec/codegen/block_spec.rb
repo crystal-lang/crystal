@@ -539,6 +539,8 @@ describe 'Code gen: block' do
 
   it "can use self inside a block called from dispatch" do
     run(%q(
+      require "nil"
+      
       class Foo
         def do; yield; end
       end
@@ -555,7 +557,7 @@ describe 'Code gen: block' do
       end
 
       123.foo
-      $x
+      $x.to_i
     )).to_i.should eq(123)
   end
 

@@ -19,4 +19,12 @@ describe 'Global inference' do
   it "infers type of global reference" do
     assert_type("$foo = 1; def foo; $foo = 2.5; end; foo; $foo") { union_of(int32, float64) }
   end
+
+  it "infers type of read global variable when not previously assigned" do
+    assert_type("def foo; $foo; end; foo; $foo") { self.nil }
+  end
+
+  it "infers type of write global variable when not previously assigned" do
+    assert_type("def foo; $foo = 1; end; foo; $foo") { union_of(self.nil, int32) }
+  end
 end

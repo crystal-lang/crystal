@@ -482,7 +482,12 @@ module Crystal
     end
 
     def visit_global(node)
-      var = mod.global_vars[node.name] or node.raise "uninitialized global #{node}"
+      var = mod.global_vars[node.name]
+      unless var
+        var = Var.new(node.name)
+        var.bind_to mod.nil_var
+        mod.global_vars[node.name] = var
+      end
       node.bind_to var
     end
 
@@ -561,7 +566,14 @@ module Crystal
       when Global
         value.accept self
 
-        var = mod.global_vars[target.name] ||= Var.new(target.name)
+        var = mod.global_vars[target.name]
+        unless var
+          var = Var.new(target.name)
+          if @typed_def
+            var.bind_to mod.nil_var
+          end
+          mod.global_vars[target.name] = var
+        end
 
         target.bind_to var
 
