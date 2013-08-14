@@ -181,7 +181,7 @@ module Crystal
       type = current_type.types[node.name]
       if type
         unless type.module?
-          node.raise "#{node.name} is not a module, it's a #{type.type_desc}" 
+          node.raise "#{node.name} is not a module, it's a #{type.type_desc}"
         end
       else
         if node.type_vars
@@ -979,7 +979,7 @@ module Crystal
 
     def visit_rescue(node)
       if node.types
-        types = node.types.map do |type| 
+        types = node.types.map do |type|
           type.accept self
           instance_type = type.type.instance_type
           unless instance_type.is_subclass_of?(@mod.exception)

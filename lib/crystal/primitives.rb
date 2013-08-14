@@ -337,6 +337,10 @@ module Crystal
     def llvm_puts(llvm_mod)
       llvm_mod.functions['puts'] || llvm_mod.functions.add('puts', [LLVM::Pointer(LLVM::Int8)], LLVM::Int)
     end
+
+    def printf(llvm_mod)
+      llvm_mod.functions['printf'] || llvm_mod.functions.add('printf', [LLVM::Pointer(LLVM::Int8)], int32.llvm_type, varargs: true)
+    end
   end
 
   class Def

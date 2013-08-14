@@ -23,7 +23,7 @@ lib ABI
   URC_INSTALL_CONTEXT = 7
   URC_CONTINUE_UNWIND = 8
 
-  fun unwind_raise_exception = _Unwind_RaiseException(ex : UnwindException*) : NoReturn
+  fun unwind_raise_exception = _Unwind_RaiseException(ex : UnwindException*) : Int32
   fun unwind_get_region_start = _Unwind_GetRegionStart(context : Void*) : UInt64
   fun unwind_get_ip = _Unwind_GetIP(context : Void*) : UInt64
   fun unwind_set_ip = _Unwind_SetIP(context : Void*, ip : UInt64) : UInt64
@@ -62,6 +62,7 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
   ip = ABI.unwind_get_ip(context)
   throw_offset = ip - 1 - start
   lsd = ABI.unwind_get_language_specific_data(context)
+  # puts "Personality - actions : #{actions}, start: #{start}, ip: #{ip}, throw_offset: #{throw_offset}"
 
   LEBReader.read_uint8(lsd.ptr) # @LPStart encoding
   if LEBReader.read_uint8(lsd.ptr) != 0xff_u8 # @TType encoding
@@ -76,23 +77,27 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
     cs_length = LEBReader.read_uint32(lsd.ptr)
     cs_addr = LEBReader.read_uint32(lsd.ptr)
     action = LEBReader.read_uleb128(lsd.ptr)
+    # puts "cs_offset: #{cs_offset}, cs_length: #{cs_length}, cs_addr: #{cs_addr}, action: #{action}"
 
     if cs_addr != 0
       if cs_offset <= throw_offset && throw_offset <= cs_offset + cs_length
         if (actions & ABI::UA_SEARCH_PHASE) > 0
+          # puts "found"
           return ABI::URC_HANDLER_FOUND
         end
 
         if (actions & ABI::UA_HANDLER_FRAME) > 0
-          ABI.unwind_set_gr(context, 0, exception_object.value.exception_object)
+          ABI.unwind_set_gr(context, 0, 0_u64 + exception_object.address)
           ABI.unwind_set_gr(context, 1, 0_u64 + exception_object.value.exception_type_id)
           ABI.unwind_set_ip(context, start + cs_addr)
+          # puts "install"
           return ABI::URC_INSTALL_CONTEXT
         end
       end
     end
   end
 
+  # puts "continue"
   return ABI::URC_CONTINUE_UNWIND
 end
 
@@ -102,7 +107,9 @@ fun __crystal_raise(ex_obj : UInt64, ex_type_id : Int32) : NoReturn
   ex.exception_cleanup = 0_u64
   ex.exception_object = ex_obj
   ex.exception_type_id = ex_type_id
-  ABI.unwind_raise_exception(ex.ptr)
+  ret = ABI.unwind_raise_exception(ex.ptr)
+  puts "Could not raise"
+  C.exit(ret)
 end
 
 def raise(ex)

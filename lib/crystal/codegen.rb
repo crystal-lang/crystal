@@ -1155,8 +1155,9 @@ module Crystal
       @exception_handlers.pop
 
       @builder.position_at_end catch_block
-      lp = @builder.landingpad LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32), @llvm_mod.functions[Program::PERSONALITY_NAME], []
-      ex_obj = @builder.extract_value lp, 0
+      lp_ret_type = LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32)
+      lp = @builder.landingpad lp_ret_type, @llvm_mod.functions[Program::PERSONALITY_NAME], []
+      unwind_ex_obj = @builder.extract_value lp, 0
       ex_type_id = @builder.extract_value lp, 1
 
       node.rescues.each do |a_rescue|
@@ -1170,11 +1171,14 @@ module Crystal
         @builder.position_at_end this_rescue_block
         accept(a_rescue.body)
         add_branched_block_value(branch, a_rescue.body.type, @last)
-      @builder.br branch[:exit_block]
+        @builder.br branch[:exit_block]
 
         @builder.position_at_end next_rescue_block
       end
-      @builder.unreachable #TODO resume
+
+      @raise_fun ||= @llvm_mod.functions["_Unwind_RaiseException"]
+      raise_ret = @builder.call @raise_fun, @builder.bit_cast(unwind_ex_obj, @raise_fun.params[0].type)
+      @builder.unreachable
 
       close_branched_block(branch)
 
@@ -1605,6 +1609,10 @@ module Crystal
 
     def llvm_puts(string)
       @builder.call @mod.llvm_puts(@llvm_mod), @builder.global_string_pointer(string)
+    end
+
+    def printf(format, *args)
+      @builder.call @mod.printf(@llvm_mod), @builder.global_string_pointer(format), *args
     end
 
     def alloca(type, name = '')

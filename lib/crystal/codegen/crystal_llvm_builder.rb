@@ -14,6 +14,10 @@ module Crystal
       lpad
     end
 
+    def resume(ex)
+      LLVM::C.build_resume @builder, ex
+    end
+
     def ret(*args)
       return if @end
       @builder.ret *args
