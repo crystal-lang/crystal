@@ -2,6 +2,7 @@ require_relative "types"
 
 module Crystal
   class Program < NonGenericModuleType
+    include ClassVarContainer
     include Enumerable
 
     POINTER_SIZE = 8

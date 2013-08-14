@@ -158,6 +158,10 @@ module Crystal
       node
     end
 
+    def transform_class_var(node)
+      node
+    end
+
     def transform_and(node)
       node.left = node.left.transform(self)
       node.right = node.right.transform(self)

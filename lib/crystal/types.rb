@@ -615,6 +615,20 @@ module Crystal
     end
   end
 
+  module ClassVarContainer
+    def class_vars
+      @class_vars ||= {}
+    end
+
+    def has_class_var?(name)
+      class_vars.has_key?(name)
+    end
+
+    def lookup_class_var(name)
+      class_vars[name] ||= Var.new name
+    end
+  end
+
   module InheritableClass
     def add_subclass(subclass)
       subclasses << subclass
@@ -716,6 +730,7 @@ module Crystal
 
   class NonGenericClassType < ClassType
     include InstanceVarContainer
+    include ClassVarContainer
     include DefInstanceContainer
 
     def metaclass
@@ -854,6 +869,7 @@ module Crystal
   class GenericClassInstanceType < Type
     include InheritableClass
     include InstanceVarContainer
+    include ClassVarContainer
     include DefInstanceContainer
     include MatchesLookup
 
@@ -1114,7 +1130,7 @@ module Crystal
 
     attr_reader :instance_type
 
-    delegate [:program, :lookup_type] => :instance_type
+    delegate [:program, :lookup_type, :lookup_class_var, :has_class_var?] => :instance_type
 
     def initialize(instance_type)
       @instance_type = instance_type

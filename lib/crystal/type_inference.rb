@@ -498,6 +498,10 @@ module Crystal
       node.type_filters = {node.name => NotNilFilter}
     end
 
+    def visit_class_var(node)
+      node.bind_to lookup_class_var(node)
+    end
+
     def lookup_instance_var(node)
       if @scope.is_a?(Crystal::Program)
         node.raise "can't use instance variables at the top level"
@@ -510,6 +514,15 @@ module Crystal
         var.bind_to mod.nil_var
       end
 
+      var
+    end
+
+    def lookup_class_var(node, bind_to_nil_if_non_existent = true)
+      scope = @typed_def ? @scope : current_type
+      bind_to_nil = bind_to_nil_if_non_existent && !scope.has_class_var?(node.name)
+
+      var = scope.lookup_class_var node.name
+      var.bind_to mod.nil_var if bind_to_nil
       var
     end
 
@@ -545,6 +558,20 @@ module Crystal
         unless @typed_def.name == "initialize"
           @scope.immutable = false
         end
+
+        if node
+          node.bind_to value
+          var.bind_to node
+        else
+          var.bind_to value
+        end
+
+        node.type_filters = and_type_filters({target.name => NotNilFilter}, node.value.type_filters) if node
+      when ClassVar
+        value.accept self
+
+        var = lookup_class_var target, !!@typed_def
+        target.bind_to var
 
         if node
           node.bind_to value
