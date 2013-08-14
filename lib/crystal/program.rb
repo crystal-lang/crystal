@@ -166,6 +166,10 @@ module Crystal
       @nil_var
     end
 
+    def void
+      @types["Void"]
+    end
+
     def value
       @types["Value"]
     end

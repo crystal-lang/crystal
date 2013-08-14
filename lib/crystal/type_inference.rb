@@ -304,7 +304,7 @@ module Crystal
 
           inferred_return_type = @mod.type_merge node.body.type, external.type
 
-          if node.return_type && !inferred_return_type.equal?(return_type)
+          if node.return_type && !node.return_type.type.equal?(@mod.void.metaclass) && !inferred_return_type.equal?(return_type)
             node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
           end
 

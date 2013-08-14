@@ -1263,10 +1263,16 @@ module Crystal
 
       varargs = target_def.is_a?(External) && target_def.varargs
 
+      if target_def.type.equal?(@mod.void)
+        llvm_return_type = LLVM.Void
+      else
+        llvm_return_type = llvm_type(target_def.type)
+      end
+
       @fun = @llvm_mod.functions.add(
         mangled_name,
         args.map { |arg| llvm_arg_type(arg.type) },
-        llvm_type(target_def.type),
+        llvm_return_type,
         varargs: varargs
       )
       @fun.add_attribute :no_return_attribute if target_def.type.no_return?
@@ -1301,7 +1307,9 @@ module Crystal
 
           accept(target_def.body)
 
-          if target_def.body.no_returns?
+          if target_def.is_a?(External) && target_def.type.equal?(@mod.void)
+            @builder.ret nil
+          elsif target_def.body.no_returns?
             @builder.unreachable
           else
             if @return_type.union?
