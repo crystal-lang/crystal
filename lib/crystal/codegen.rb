@@ -12,6 +12,10 @@ module Crystal
     RAISE_NAME = "__crystal_raise"
     MALLOC_NAME = "__crystal_malloc"
     REALLOC_NAME = "__crystal_realloc"
+    ADD_ROOT_NAME = "__crystal_gc_add_root"
+    GET_ROOT_INDEX_NAME = "__crystal_gc_get_root_index"
+    SET_ROOT_INDEX_NAME = "__crystal_gc_set_root_index"
+    NO_GC_FUNC_NAMES = [PERSONALITY_NAME, MALLOC_NAME, REALLOC_NAME, ADD_ROOT_NAME, GET_ROOT_INDEX_NAME, SET_ROOT_INDEX_NAME]
 
     def run(code, options = {})
       node = parse code
@@ -132,7 +136,7 @@ module Crystal
     def finish
       br_block_chain @alloca_block, @const_block_entry
       br_block_chain @const_block, @entry_block
-      @builder.ret(@return_type ? @last : nil) unless @return_type && @return_type.no_return?
+      ret(@return_type ? @last : nil) unless @return_type && @return_type.no_return?
 
       add_compile_unit_metadata @filename if @debug
     end
@@ -229,15 +233,15 @@ module Crystal
       elsif @return_type.union?
         assign_to_union(@return_union, @return_type, node.exps[0].type, @last)
         union = @builder.load @return_union
-        @builder.ret union
+        ret union
       elsif @return_type.nilable?
         if @last.type.kind == :integer
-          @builder.ret @builder.int2ptr(@last, llvm_type(@return_type))
+          ret @builder.int2ptr(@last, llvm_type(@return_type))
         else
-          @builder.ret @last
+          ret @last
         end
       else
-        @builder.ret @last
+        ret @last
       end
     end
 
@@ -267,29 +271,17 @@ module Crystal
           global.linkage = :internal
 
           if const.value.needs_const_block?
-            old_position = @builder.insert_block
-            old_fun = @fun
-            @fun = @llvm_mod.functions[Program::MAIN_NAME]
-            const_block = new_block "const_#{global_name}"
-            @builder.position_at_end const_block
+            in_const_block("const_#{global_name}") do
+              accept(const.value)
 
-            accept(const.value)
-
-            if @last.constant?
-              global.initializer = @last
-              global.global_constant = 1
-            else
-              global.initializer = LLVM::Constant.null(@last.type)
-              @builder.store @last, global
+              if @last.constant?
+                global.initializer = @last
+                global.global_constant = 1
+              else
+                global.initializer = LLVM::Constant.null(@last.type)
+                @builder.store @last, global
+              end
             end
-
-            new_const_block = @builder.insert_block
-            @builder.position_at_end @const_block
-            @builder.br const_block
-            @const_block = new_const_block
-
-            @builder.position_at_end old_position
-            @fun = old_fun
           else
             accept(const.value)
             global.initializer = @last
@@ -310,6 +302,17 @@ module Crystal
     def codegen_assign_node(target, value)
       if target.is_a?(Ident)
         return false
+      end
+
+      if target.is_a?(ClassVar) && target.class_scope
+        global_name = class_var_global_name(target)
+        in_const_block(global_name) do
+          accept(value)
+          llvm_value = @last
+          ptr = assign_to_global global_name, target.type
+          codegen_assign(ptr, target.type, value.type, llvm_value)
+        end
+        return
       end
 
       accept(value)
@@ -1250,6 +1253,8 @@ module Crystal
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
       old_exception_handlers = @exception_handlers
+      old_gc_root_index = @gc_root_index
+      old_needs_gc = @needs_gc
 
       @vars = {}
       @exception_handlers = []
@@ -1289,6 +1294,11 @@ module Crystal
         end
         new_entry_block
 
+        @needs_gc = needs_gc?(target_def)
+        if @needs_gc
+          @gc_root_index = @builder.call(get_root_index_fun) 
+        end
+
         args.each_with_index do |arg, i|
           if (self_type && i == 0 && !self_type.union?) || target_def.body.is_a?(Primitive) || arg.type.passed_by_val?
             @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
@@ -1308,7 +1318,7 @@ module Crystal
           accept(target_def.body)
 
           if target_def.is_a?(External) && target_def.type.equal?(@mod.void)
-            @builder.ret nil
+            ret nil
           elsif target_def.body.no_returns?
             @builder.unreachable
           else
@@ -1322,16 +1332,16 @@ module Crystal
             end
 
             if @return_type.nilable? && target_def.body.type && target_def.body.type.nil_type?
-              @builder.ret LLVM::Constant.null(llvm_type(@return_type))
+              ret LLVM::Constant.null(llvm_type(@return_type))
             else
-              @builder.ret(@last)
+              ret(@last)
             end
           end
 
           @return_type = old_return_type
           @return_union = old_return_union
         else
-          @builder.ret llvm_nil
+          ret llvm_nil
         end
 
         br_from_alloca_to_entry
@@ -1348,8 +1358,29 @@ module Crystal
       @alloca_block = old_alloca_block
       @current_node = old_current_node
       @fun = old_fun
+      @gc_root_index = old_gc_root_index
+      @needs_gc = old_needs_gc
 
       the_fun
+    end
+
+    def needs_gc?(target_def)
+      return false if !get_root_index_fun
+      return false if target_def.is_a?(External) && Program::NO_GC_FUNC_NAMES.include?(target_def.name)
+
+      if target_def.owner.equal?(@mod.gc.metaclass)
+        return false 
+      end
+
+      true
+    end
+
+    def get_root_index_fun
+       @get_root_index_fun ||= @llvm_mod.functions[Program::GET_ROOT_INDEX_NAME]
+    end
+
+    def set_root_index_fun
+       @set_root_index_fun ||= @llvm_mod.functions[Program::SET_ROOT_INDEX_NAME]
     end
 
     def match_any_type_id(type, type_id)
@@ -1633,6 +1664,34 @@ module Crystal
       value = yield
       @builder.position_at_end old_block
       value
+    end
+
+    def in_const_block(const_block_name)
+      old_position = @builder.insert_block
+      old_fun = @fun
+      @fun = @llvm_mod.functions[Program::MAIN_NAME]
+      const_block = new_block const_block_name
+      @builder.position_at_end const_block
+
+      ret_value = yield
+
+      new_const_block = @builder.insert_block
+      @builder.position_at_end @const_block
+      @builder.br const_block
+      @const_block = new_const_block
+
+      @builder.position_at_end old_position
+      @fun = old_fun
+
+      ret_value
+    end
+
+    def ret(value)
+      if @needs_gc
+        @builder.call set_root_index_fun, @gc_root_index
+      end
+
+      @builder.ret value
     end
 
     def llvm_self

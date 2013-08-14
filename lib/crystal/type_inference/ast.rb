@@ -20,6 +20,7 @@ module Crystal
   class ClassVar
     attr_accessor :owner
     attr_accessor :var
+    attr_accessor :class_scope
   end
 
   class DeclareVar

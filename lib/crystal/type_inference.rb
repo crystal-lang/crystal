@@ -526,6 +526,7 @@ module Crystal
 
       node.owner = scope.class_var_owner
       node.var = var
+      node.class_scope = !@typed_def
 
       var
     end
