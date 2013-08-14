@@ -93,6 +93,10 @@ describe Lexer do
     it_lexes string, :INSTANCE_VAR, string
   end
 
+  def self.it_lexes_class_var(string)
+    it_lexes string, :CLASS_VAR, string
+  end
+
   def self.it_lexes_regex(string)
     it_lexes string, :REGEXP, string[1 .. -2]
   end
@@ -150,6 +154,7 @@ describe Lexer do
   it_lexes_operators "=", "<", "<=", ">", ">=", "+", "-", "*", "/", "(", ")", "==", "!=", '=~', "!", ",", '.', '..', '...', "!@", "+@", "-@", "&&", "||", "|", "{", "}", '?', ':', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '**=', '<<', '>>', '%', '&', '|', '^', '**', '<<=', '>>=', '~', '~@', '[]', '[', ']', '::', '<=>', '=>', '||=', '&&=', '===', '->'
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
+  it_lexes_class_var "@@foo"
   it_lexes_globals "$foo", "$FOO", "$_foo", "$foo123", "$~"
   it_lexes_symbols ":foo", ":foo!", ":foo?", %q(:"foo")
   it_lexes_regex "/foo/"

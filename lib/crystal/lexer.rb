@@ -134,6 +134,9 @@ module Crystal
       elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*((\?|!)|\b)/)
         @token.type = :IDENT
         @token.value = match
+      elsif match = scan(/@@[a-zA-Z_][a-zA-Z_0-9]*\b/)
+        @token.type = :CLASS_VAR
+        @token.value = match
       elsif match = scan(/@[a-zA-Z_][a-zA-Z_0-9]*\b/)
         @token.type = :INSTANCE_VAR
         @token.value = match

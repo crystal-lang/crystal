@@ -400,6 +400,11 @@ module Crystal
       @str << decorate_var(node, node.name)
     end
 
+    def visit_class_var(node)
+      @str << "out " if node.out
+      @str << decorate_var(node, node.name)
+    end
+
     def visit_nop(node)
     end
 

@@ -188,6 +188,10 @@ class String
     Crystal::InstanceVar.new self
   end
 
+  def class_var
+    Crystal::ClassVar.new self
+  end
+
   def string
     Crystal::StringLiteral.new self
   end

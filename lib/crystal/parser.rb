@@ -612,12 +612,20 @@ module Crystal
       when :INSTANCE_VAR
         @instance_vars.add @token.value if @instance_vars
         node_and_next_token InstanceVar.new(@token.value)
+      when :CLASS_VAR
+        node_and_next_token ClassVar.new(@token.value)
       when :-@
         next_token
-        check :IDENT
-        ivar_name = "@#{@token.value}"
-        @instance_vars.add ivar_name if @instance_vars
-        node_and_next_token Call.new(InstanceVar.new(ivar_name), :-@)
+        if @token.type == :IDENT
+          ivar_name = "@#{@token.value}"
+          @instance_vars.add ivar_name if @instance_vars
+          node_and_next_token Call.new(InstanceVar.new(ivar_name), :-@)
+        elsif @token.type == :INSTANCE_VAR
+          class_var_name = "@#{@token.value}"
+          node_and_next_token Call.new(ClassVar.new(class_var_name), :-@)
+        else
+        raise "unexpected token: -@"
+        end
       else
         raise "unexpected token: #{@token.to_s}"
       end
@@ -1955,6 +1963,7 @@ module Crystal
     def can_be_assigned?(node)
       node.is_a?(Var) ||
         node.is_a?(InstanceVar) ||
+        node.is_a?(ClassVar) ||
         node.is_a?(Ident) ||
         node.is_a?(Global) ||
           (node.is_a?(Call) &&
