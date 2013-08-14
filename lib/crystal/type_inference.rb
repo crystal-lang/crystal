@@ -569,8 +569,6 @@ module Crystal
         else
           var.bind_to value
         end
-
-        node.type_filters = and_type_filters({target.name => NotNilFilter}, node.value.type_filters) if node
       when ClassVar
         value.accept self
 
@@ -583,8 +581,6 @@ module Crystal
         else
           var.bind_to value
         end
-
-        node.type_filters = and_type_filters({target.name => NotNilFilter}, node.value.type_filters) if node
       when Ident
         type = current_type.types[target.names.first]
         if type

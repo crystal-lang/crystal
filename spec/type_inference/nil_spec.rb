@@ -134,7 +134,8 @@ describe 'Type inference: nil' do
     assert_type(%q(
       class Foo
         def foo
-          if @foo = (Foo.new || nil)
+          @foo = Foo.new || nil
+          if @foo
             @foo.bar
           else
             10
