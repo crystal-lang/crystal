@@ -3,13 +3,15 @@ require 'bundler/setup'
 require 'pry'
 require 'pry-debugger'
 
-require 'simplecov'
-require 'coveralls'
-SimpleCov.formatter = Coveralls::SimpleCov::Formatter
-SimpleCov.start do
-  add_filter 'lib/crystal/profiler.rb'
-  add_filter 'lib/crystal/graph.rb'
-  add_filter 'lib/crystal/print_types_visitor.rb'
+if ENV["CI"]
+  require 'simplecov'
+  require 'coveralls'
+  SimpleCov.formatter = Coveralls::SimpleCov::Formatter
+  SimpleCov.start do
+    add_filter 'lib/crystal/profiler.rb'
+    add_filter 'lib/crystal/graph.rb'
+    add_filter 'lib/crystal/print_types_visitor.rb'
+  end
 end
 
 require(File.expand_path("../../lib/crystal",  __FILE__))
