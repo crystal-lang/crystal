@@ -104,6 +104,7 @@ describe Parser do
   it_parses "def type(type); end", Def.new(:type, ["type".arg], nil)
 
   it_parses "def self.foo\n1\nend", Def.new("foo", [], [1.int32], "self".var)
+  it_parses "def self.foo=(value); end", Def.new("foo=", ["value".arg], [], "self".var)
   it_parses "def Foo.foo\n1\nend", Def.new("foo", [], [1.int32], "Foo".ident)
   it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", [], [1.int32], ['Foo', 'Bar'].ident)
 

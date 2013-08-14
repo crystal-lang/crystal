@@ -1309,7 +1309,17 @@ module Crystal
         check :IDENT, :"=", :<<, :<, :<=, :==, :===, :"!=", :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :'!@', :&, :|, :^, :**, :[], :[]=, :'<=>'
         name = @token.type == :IDENT ? @token.value : @token.type
         name_column_number = @token.column_number
-        next_token_skip_space
+        if @token.type == :IDENT
+          next_token
+          if @token.type == :'='
+            name = "#{name}="
+            next_token_skip_space
+          else
+            skip_space
+          end
+        else
+          next_token_skip_space
+        end
       end
 
       case @token.type
