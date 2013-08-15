@@ -1398,9 +1398,10 @@ module Crystal
       type = @mod.reference.hierarchy_type if type.equal?(@mod.object.hierarchy_type)
 
       if type.union?
-        result = int1(0)
+        result = nil
         type.each_concrete_type do |sub_type|
-          result = @builder.or(result, @builder.icmp(:eq, int(sub_type.type_id), type_id))
+          sub_type_cond = @builder.icmp(:eq, int(sub_type.type_id), type_id)
+          result = result ? @builder.or(result, sub_type_cond) : sub_type_cond
         end
         result
       else
