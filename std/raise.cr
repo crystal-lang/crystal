@@ -101,17 +101,17 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
   return ABI::URC_CONTINUE_UNWIND
 end
 
-fun __crystal_raise(ex_obj : UInt64, ex_type_id : Int32) : NoReturn
-  ex = ABI::UnwindException.new
-  ex.exception_class = 0_u64
-  ex.exception_cleanup = 0_u64
-  ex.exception_object = ex_obj
-  ex.exception_type_id = ex_type_id
-  ret = ABI.unwind_raise_exception(ex.ptr)
+fun __crystal_raise(unwind_ex : ABI::UnwindException) : NoReturn
+  ret = ABI.unwind_raise_exception(unwind_ex.ptr)
   puts "Could not raise"
   C.exit(ret)
 end
 
 def raise(ex)
-  __crystal_raise(ex.object_id, ex.crystal_type_id)
+  unwind_ex = ABI::UnwindException.new
+  unwind_ex.exception_class = 0_u64
+  unwind_ex.exception_cleanup = 0_u64
+  unwind_ex.exception_object = ex.object_id
+  unwind_ex.exception_type_id = ex.crystal_type_id
+  __crystal_raise(unwind_ex)
 end

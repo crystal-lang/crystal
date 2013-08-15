@@ -1179,8 +1179,8 @@ module Crystal
         @builder.position_at_end next_rescue_block
       end
 
-      @raise_fun ||= @llvm_mod.functions["_Unwind_RaiseException"]
-      raise_ret = @builder.call @raise_fun, @builder.bit_cast(unwind_ex_obj, @raise_fun.params[0].type)
+      @raise_fun ||= @llvm_mod.functions[Program::RAISE_NAME]
+      codegen_call_or_invoke(@raise_fun, [@builder.bit_cast(unwind_ex_obj, @raise_fun.params[0].type)], true)
       @builder.unreachable
 
       close_branched_block(branch)
@@ -1214,14 +1214,7 @@ module Crystal
         end
       end
 
-      if @exception_handlers.empty? || !target_def.raises
-        @last = @builder.call fun, *call_args
-      else
-        handler = @exception_handlers.last
-        invoke_out_block = new_block "invoke_out"
-        @last = @builder.invoke fun, call_args, invoke_out_block, handler[:catch_block]
-        @builder.position_at_end invoke_out_block
-      end
+      codegen_call_or_invoke(fun, call_args, target_def.raises)
 
       if has_struct_or_union_out_args
         call_args.each_with_index do |call_arg, i|
@@ -1240,6 +1233,17 @@ module Crystal
         union = alloca llvm_type(target_def.type)
         @builder.store @last, union
         @last = union
+      end
+    end
+
+    def codegen_call_or_invoke(fun, call_args, raises)
+      if @exception_handlers.empty? || !raises
+        @last = @builder.call fun, *call_args
+      else
+        handler = @exception_handlers.last
+        invoke_out_block = new_block "invoke_out"
+        @last = @builder.invoke fun, call_args, invoke_out_block, handler[:catch_block]
+        @builder.position_at_end invoke_out_block
       end
     end
 
@@ -1296,7 +1300,7 @@ module Crystal
 
         @needs_gc = needs_gc?(target_def)
         if @needs_gc
-          @gc_root_index = @builder.call(get_root_index_fun) 
+          @gc_root_index = @builder.call(get_root_index_fun)
         end
 
         args.each_with_index do |arg, i|
@@ -1369,7 +1373,7 @@ module Crystal
       return false if target_def.is_a?(External) && Program::NO_GC_FUNC_NAMES.include?(target_def.name)
 
       if target_def.owner.equal?(@mod.gc.metaclass)
-        return false 
+        return false
       end
 
       true

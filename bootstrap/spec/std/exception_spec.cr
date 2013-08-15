@@ -132,4 +132,21 @@ describe "Exception" do
 
     a.should eq(3)
   end
+
+  it "handle exception in outer block" do
+    p = 0
+    x = begin
+      begin
+        raise Ex1.new
+      rescue Ex2
+        p = 1
+        1
+      end
+    rescue
+      2
+    end
+
+    x.should eq(2)
+    p.should eq(0)
+  end
 end
