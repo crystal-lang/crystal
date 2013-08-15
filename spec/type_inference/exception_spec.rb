@@ -105,4 +105,8 @@ describe 'Type inference: exception' do
   it "errors if catched exception is not a subclass of Exception without var" do
     assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
   end
+
+  it "errors if exception varaible is used after rescue" do
+    assert_error "begin; rescue => ex; end; ex", "undefined local variable or method 'ex'"
+  end
 end

@@ -969,6 +969,8 @@ module Crystal
         skip_statement_end
       end
 
+      @def_vars.last.delete name if name
+
       Rescue.new(body, types, name)
     end
 
