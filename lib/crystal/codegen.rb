@@ -1166,7 +1166,8 @@ module Crystal
       node.rescues.each do |a_rescue|
         this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
         if a_rescue.types
-          type_matches = @builder.icmp(:eq, ex_type_id, int(a_rescue.types.first.type.instance_type.type_id))
+          rescue_type = a_rescue.types.first.type.instance_type.hierarchy_type
+          type_matches = match_any_type_id(rescue_type, ex_type_id)
           @builder.cond type_matches, this_rescue_block, next_rescue_block
         else
           @builder.br this_rescue_block

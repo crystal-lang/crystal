@@ -107,6 +107,9 @@ describe "Exception" do
   class Ex2 < Exception
   end
 
+  class Ex3 < Ex1
+  end
+
   it "rescue with type" do
     a = begin
       raise Ex2.new
@@ -148,5 +151,16 @@ describe "Exception" do
 
     x.should eq(2)
     p.should eq(0)
+  end
+
+  it "handle subclass" do
+    x = 0
+    begin
+      raise Ex3.new
+    rescue Ex1
+      x = 1
+    end
+
+    x.should eq(1)
   end
 end
