@@ -102,6 +102,9 @@ describe "Exception" do
   end
 
   class Ex1 < Exception
+    def to_s
+      "Ex1"
+    end
   end
 
   class Ex2 < Exception
@@ -182,5 +185,16 @@ describe "Exception" do
     end
 
     x.should eq(1)
+  end
+
+  it "receives exception object" do
+    x = ""
+    begin
+      raise Ex1.new
+    rescue => ex
+      x = ex.to_s
+    end
+
+    x.should eq("Ex1")
   end
 end

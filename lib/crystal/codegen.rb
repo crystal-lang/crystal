@@ -10,6 +10,7 @@ module Crystal
     MAIN_NAME = "__crystal_main"
     PERSONALITY_NAME = "__crystal_personality"
     RAISE_NAME = "__crystal_raise"
+    GET_EXCEPTION_NAME = "__crystal_get_exception"
     MALLOC_NAME = "__crystal_malloc"
     REALLOC_NAME = "__crystal_realloc"
     ADD_ROOT_NAME = "__crystal_gc_add_root"
@@ -1177,7 +1178,24 @@ module Crystal
           @builder.br this_rescue_block
         end
         @builder.position_at_end this_rescue_block
+        old_vars = @vars
+
+        if a_rescue.name
+          @vars = @vars.clone
+          @get_exception_fun ||= @llvm_mod.functions[Program::GET_EXCEPTION_NAME]
+          exception_ptr = @builder.call @get_exception_fun, @builder.bit_cast(unwind_ex_obj, @get_exception_fun.params[0].type)
+
+          exception = @builder.int2ptr exception_ptr, LLVM::Pointer(LLVM::Int8)
+          ex_union = alloca llvm_type(a_rescue.type)
+          ex_union_type_ptr, ex_union_value_ptr = union_type_id_and_value(ex_union)
+          @builder.store ex_type_id, ex_union_type_ptr
+          @builder.store exception, ex_union_value_ptr
+          @vars[a_rescue.name] = { ptr: ex_union, type: a_rescue.type }
+        end
+
         accept(a_rescue.body)
+
+        @vars = old_vars
         add_branched_block_value(branch, a_rescue.body.type, @last)
         @builder.br branch[:exit_block]
 

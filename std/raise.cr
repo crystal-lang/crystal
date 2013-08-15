@@ -107,6 +107,10 @@ fun __crystal_raise(unwind_ex : ABI::UnwindException) : NoReturn
   C.exit(ret)
 end
 
+fun __crystal_get_exception(unwind_ex : ABI::UnwindException) : UInt64
+  unwind_ex.exception_object
+end
+
 def raise(ex)
   unwind_ex = ABI::UnwindException.new
   unwind_ex.exception_class = 0_u64

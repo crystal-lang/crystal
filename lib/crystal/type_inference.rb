@@ -1001,6 +1001,8 @@ module Crystal
         end
         var.set_type(unified_type)
         var.freeze_type = true
+
+        node.set_type(var.type)
       end
 
       node.body.accept self
