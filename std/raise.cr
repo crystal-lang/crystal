@@ -111,11 +111,15 @@ fun __crystal_get_exception(unwind_ex : ABI::UnwindException) : UInt64
   unwind_ex.exception_object
 end
 
-def raise(ex)
+def raise(ex : Exception)
   unwind_ex = ABI::UnwindException.new
   unwind_ex.exception_class = 0_u64
   unwind_ex.exception_cleanup = 0_u64
   unwind_ex.exception_object = ex.object_id
   unwind_ex.exception_type_id = ex.crystal_type_id
   __crystal_raise(unwind_ex)
+end
+
+def raise(message : String)
+  raise Exception.new(message)
 end
