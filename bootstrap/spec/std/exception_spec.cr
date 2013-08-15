@@ -163,4 +163,24 @@ describe "Exception" do
 
     x.should eq(1)
   end
+
+  it "handle multiple exception types" do
+    x = 0
+    begin
+      raise Ex2.new
+    rescue Ex1, Ex2
+      x = 1
+    end
+
+    x.should eq(1)
+
+    x = 0
+    begin
+      raise Ex1.new
+    rescue Ex1, Ex2
+      x = 1
+    end
+
+    x.should eq(1)
+  end
 end

@@ -1166,9 +1166,13 @@ module Crystal
       node.rescues.each do |a_rescue|
         this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
         if a_rescue.types
-          rescue_type = a_rescue.types.first.type.instance_type.hierarchy_type
-          type_matches = match_any_type_id(rescue_type, ex_type_id)
-          @builder.cond type_matches, this_rescue_block, next_rescue_block
+          cond = nil
+          a_rescue.types.each do |type|
+            rescue_type = type.type.instance_type.hierarchy_type
+            rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
+            cond = cond ? @builder.or(cond, rescue_type_cond) : rescue_type_cond
+          end
+          @builder.cond cond, this_rescue_block, next_rescue_block
         else
           @builder.br this_rescue_block
         end
