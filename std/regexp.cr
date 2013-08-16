@@ -73,3 +73,6 @@ class MatchData
     @string[self.begin(index), self.end(index) - self.begin(index)]
   end
 end
+
+$~ = MatchData::EMPTY
+
