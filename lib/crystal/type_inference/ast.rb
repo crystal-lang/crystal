@@ -77,6 +77,8 @@ module Crystal
       self_def.instance_vars = instance_vars
       self_def.args.each { |arg| arg.default_value = nil }
 
+      retain_body = yields || args.any? { |arg| arg.default_value && arg.type_restriction }
+
       expansions = [self_def]
 
       i = args.length - 1
@@ -85,7 +87,7 @@ module Crystal
         expansion.instance_vars = instance_vars
         expansion.yields = yields
 
-        if yields
+        if retain_body
           new_body = args[i .. -1].map { |arg| Assign.new(Var.new(arg.name), arg.default_value) }
           new_body.push body.clone
           expansion.body = Expressions.new(new_body)

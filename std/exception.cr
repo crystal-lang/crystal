@@ -8,7 +8,7 @@ class Exception
   getter :inner_exception
   getter :backtrace
 
-  def initialize(message = nil, inner_exception = nil)
+  def initialize(message = nil : String, inner_exception = nil : Exception)
     @message = message
     @inner_exception = inner_exception
 

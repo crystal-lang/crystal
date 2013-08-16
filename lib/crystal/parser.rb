@@ -1391,11 +1391,14 @@ module Crystal
       else
         next_token_skip_space
       end
-      case @token.type
-      when :'='
+
+      if @token.type == :'='
         next_token_skip_space_or_newline
         default_value = parse_expression
-      when :':'
+        skip_space
+      end
+
+      if @token.type == :':'
         next_token_skip_space_or_newline
         if @token.keyword?('self')
           type_restriction = SelfType.instance

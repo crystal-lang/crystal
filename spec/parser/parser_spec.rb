@@ -123,6 +123,7 @@ describe Parser do
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.instance)], nil)
   it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Double'.ident]))], nil)
   it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Nil'.ident(true)]))], nil)
+  it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".ident)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, nil, 0)
   it_parses "def foo; yield 1; end", Def.new("foo", [], [Yield.new([1.int32])], nil, nil, 1)
   it_parses "def foo; yield 1; yield; end", Def.new("foo", [], [Yield.new([1.int32]), Yield.new], nil, nil, 1)
