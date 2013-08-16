@@ -73,7 +73,7 @@ describe 'Type inference: exception' do
     assert_type(%Q(
       a = nil
       begin
-      rescue => ex
+      rescue ex
         a = ex
       end
       a
@@ -87,7 +87,7 @@ describe 'Type inference: exception' do
 
       a = nil
       begin
-      rescue Ex => ex
+      rescue ex : Ex
         a = ex
       end
       a
@@ -95,11 +95,11 @@ describe 'Type inference: exception' do
   end
 
   it "errors if exception var shadows local var" do
-    assert_syntax_error "ex = 1; begin; rescue => ex; end", "exception variable 'ex' shadows local variable 'ex'"
+    assert_syntax_error "ex = 1; begin; rescue ex; end", "exception variable 'ex' shadows local variable 'ex'"
   end
 
   it "errors if catched exception is not a subclass of Exception" do
-    assert_error "begin; rescue Int32 => ex; end", "Int32 is not a subclass of Exception"
+    assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
   end
 
   it "errors if catched exception is not a subclass of Exception without var" do
@@ -107,6 +107,6 @@ describe 'Type inference: exception' do
   end
 
   it "errors if exception varaible is used after rescue" do
-    assert_error "begin; rescue => ex; end; ex", "undefined local variable or method 'ex'"
+    assert_error "begin; rescue ex; end; ex", "undefined local variable or method 'ex'"
   end
 end

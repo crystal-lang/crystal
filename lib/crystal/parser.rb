@@ -931,31 +931,26 @@ module Crystal
     def parse_rescue
       next_token_skip_space
 
-      if @token.type == :CONST
-        types = []
-        while true
-          types << parse_ident
-          if @token.type == :","
-            next_token_skip_space
-          else
-            skip_space
-            break
-          end
-        end
-      end
-
-      if @token.type == :"=>"
-        next_token_skip_space_or_newline
-        check :IDENT
+      case @token.type
+      when :IDENT
         name = @token.value.to_s
 
         if @def_vars.last.include?(name)
           raise "exception variable '#{name}' shadows local variable '#{name}'"
         end
 
+        push_var_name name
         next_token_skip_space
 
-        push_var_name name
+        if @token.type == :":"
+          next_token_skip_space_or_newline
+
+          check :CONST
+
+          types = parse_rescue_types
+        end
+      when :CONST
+        types = parse_rescue_types
       end
 
       check :";", :NEWLINE
@@ -972,6 +967,21 @@ module Crystal
       @def_vars.last.delete name if name
 
       Rescue.new(body, types, name)
+    end
+
+    def parse_rescue_types
+      types = []
+      while true
+        types << parse_ident
+        skip_space
+        if @token.type == :"|"
+          next_token_skip_space
+        else
+          skip_space
+          break
+        end
+      end
+      types
     end
 
     def parse_var_or_call

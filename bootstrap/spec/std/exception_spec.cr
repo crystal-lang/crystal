@@ -171,7 +171,7 @@ describe "Exception" do
     x = 0
     begin
       raise Ex2.new
-    rescue Ex1, Ex2
+    rescue Ex1 | Ex2
       x = 1
     end
 
@@ -180,7 +180,7 @@ describe "Exception" do
     x = 0
     begin
       raise Ex1.new
-    rescue Ex1, Ex2
+    rescue Ex1 | Ex2
       x = 1
     end
 
@@ -191,7 +191,7 @@ describe "Exception" do
     x = ""
     begin
       raise Ex1.new
-    rescue => ex
+    rescue ex
       x = ex.to_s
     end
 

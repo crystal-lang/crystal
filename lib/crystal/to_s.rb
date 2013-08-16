@@ -788,20 +788,22 @@ module Crystal
 
     def visit_rescue(node)
       @str << "rescue"
+      if node.name
+        @str << node.name
+      end
+      if node.name && node.types && node.types.length > 0
+        @str << " : "
+      end
       if node.types && node.types.length > 0
         @str << " "
         node.types.each_with_index do |type, i|
-          @str << ", " if i > 0
+          @str << " | " if i > 0
           type.accept self
         end
       end
-      if node.name
-        @str << " => "
-        @str << node.name
-      end
       @str << "\n"
       if node.body
-        accept_with_indent node.body 
+        accept_with_indent node.body
       end
       false
     end
