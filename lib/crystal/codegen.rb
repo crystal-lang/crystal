@@ -8,15 +8,7 @@ LLVM.init_jit
 module Crystal
   class Program
     MAIN_NAME = "__crystal_main"
-    PERSONALITY_NAME = "__crystal_personality"
     RAISE_NAME = "__crystal_raise"
-    GET_EXCEPTION_NAME = "__crystal_get_exception"
-    MALLOC_NAME = "__crystal_malloc"
-    REALLOC_NAME = "__crystal_realloc"
-    ADD_ROOT_NAME = "__crystal_gc_add_root"
-    GET_ROOT_INDEX_NAME = "__crystal_gc_get_root_index"
-    SET_ROOT_INDEX_NAME = "__crystal_gc_set_root_index"
-    NO_GC_FUNC_NAMES = [PERSONALITY_NAME, MALLOC_NAME, REALLOC_NAME, ADD_ROOT_NAME, GET_ROOT_INDEX_NAME, SET_ROOT_INDEX_NAME]
 
     def run(code, options = {})
       node = parse code
@@ -51,6 +43,16 @@ module Crystal
   end
 
   class CodeGenVisitor < Visitor
+    MAIN_NAME = Program::MAIN_NAME
+    RAISE_NAME = Program::RAISE_NAME
+    PERSONALITY_NAME = "__crystal_personality"
+    GET_EXCEPTION_NAME = "__crystal_get_exception"
+    MALLOC_NAME = "__crystal_malloc"
+    ADD_ROOT_NAME = "__crystal_gc_add_root"
+    GET_ROOT_INDEX_NAME = "__crystal_gc_get_root_index"
+    SET_ROOT_INDEX_NAME = "__crystal_gc_set_root_index"
+    NO_GC_FUNC_NAMES = [PERSONALITY_NAME, MALLOC_NAME, ADD_ROOT_NAME, GET_ROOT_INDEX_NAME, SET_ROOT_INDEX_NAME]
+
     attr_reader :llvm_mod
     attr_reader :current_node
 
@@ -65,7 +67,7 @@ module Crystal
       @return_type = return_type && return_type.union? ? nil : return_type
       @llvm_mod = llvm_mod || LLVM::Module.new("Crystal")
       @typer = LLVMTyper.new
-      @fun = @llvm_mod.functions.add(Program::MAIN_NAME, [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], @return_type ? llvm_type(@return_type) : LLVM.Void)
+      @fun = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], @return_type ? llvm_type(@return_type) : LLVM.Void)
 
       @argc = @fun.params[0]
       @argc.name = 'argc'
@@ -102,7 +104,7 @@ module Crystal
 
       if debug
         @empty_md_list = metadata(metadata(0))
-        @subprograms = [fun_metadata(@fun, Program::MAIN_NAME, @filename, 1)]
+        @subprograms = [fun_metadata(@fun, MAIN_NAME, @filename, 1)]
       end
     end
 
@@ -533,7 +535,7 @@ module Crystal
                   else
                     llvm_type(node.type.var.type)
                   end
-      @last = malloc(llvm_type, @vars['size'][:ptr])
+      @last = @builder.array_malloc(llvm_type, @vars['size'][:ptr])
     end
 
     def visit_pointer_new(node)
@@ -1160,7 +1162,7 @@ module Crystal
 
       @builder.position_at_end catch_block
       lp_ret_type = LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32)
-      lp = @builder.landingpad lp_ret_type, @llvm_mod.functions[Program::PERSONALITY_NAME], []
+      lp = @builder.landingpad lp_ret_type, @llvm_mod.functions[PERSONALITY_NAME], []
       unwind_ex_obj = @builder.extract_value lp, 0
       ex_type_id = @builder.extract_value lp, 1
 
@@ -1182,7 +1184,7 @@ module Crystal
 
         if a_rescue.name
           @vars = @vars.clone
-          @get_exception_fun ||= @llvm_mod.functions[Program::GET_EXCEPTION_NAME]
+          @get_exception_fun ||= @llvm_mod.functions[GET_EXCEPTION_NAME]
           exception_ptr = @builder.call @get_exception_fun, @builder.bit_cast(unwind_ex_obj, @get_exception_fun.params[0].type)
 
           exception = @builder.int2ptr exception_ptr, LLVM::Pointer(LLVM::Int8)
@@ -1202,7 +1204,7 @@ module Crystal
         @builder.position_at_end next_rescue_block
       end
 
-      @raise_fun ||= @llvm_mod.functions[Program::RAISE_NAME]
+      @raise_fun ||= @llvm_mod.functions[RAISE_NAME]
       codegen_call_or_invoke(@raise_fun, [@builder.bit_cast(unwind_ex_obj, @raise_fun.params[0].type)], true)
       @builder.unreachable
 
@@ -1393,7 +1395,7 @@ module Crystal
 
     def needs_gc?(target_def)
       return false if !get_root_index_fun
-      return false if target_def.is_a?(External) && Program::NO_GC_FUNC_NAMES.include?(target_def.name)
+      return false if target_def.is_a?(External) && NO_GC_FUNC_NAMES.include?(target_def.name)
 
       if target_def.owner.equal?(@mod.gc.metaclass)
         return false
@@ -1403,11 +1405,11 @@ module Crystal
     end
 
     def get_root_index_fun
-       @get_root_index_fun ||= @llvm_mod.functions[Program::GET_ROOT_INDEX_NAME]
+       @get_root_index_fun ||= @llvm_mod.functions[GET_ROOT_INDEX_NAME]
     end
 
     def set_root_index_fun
-       @set_root_index_fun ||= @llvm_mod.functions[Program::SET_ROOT_INDEX_NAME]
+       @set_root_index_fun ||= @llvm_mod.functions[SET_ROOT_INDEX_NAME]
     end
 
     def match_any_type_id(type, type_id)
@@ -1645,16 +1647,13 @@ module Crystal
       @builder.icmp :ne, @builder.ptr2int(value, LLVM::Int), int(0)
     end
 
-    def malloc(type, count = nil)
-      @malloc_fun ||= @llvm_mod.functions[Program::MALLOC_NAME]
+    def malloc(type)
+      @malloc_fun ||= @llvm_mod.functions[MALLOC_NAME]
       if @malloc_fun
         type = type.type unless type.is_a?(LLVM::Type)
         size = @builder.trunc(type.size, LLVM::Int32)
-        size = @builder.mul(size, @builder.trunc(count, LLVM::Int32))  if count
         pointer = @builder.call @malloc_fun, size
         @builder.bit_cast pointer, LLVM::Pointer(type)
-      elsif count
-        @builder.array_malloc(type, count)
       else
         @builder.malloc(type)
       end
@@ -1666,12 +1665,7 @@ module Crystal
     end
 
     def realloc(buffer, size)
-      @realloc_fun ||= @llvm_mod.functions[Program::REALLOC_NAME]
-      if @realloc_fun
-        @builder.call @realloc_fun, buffer, size
-      else
-        @builder.call @mod.realloc(@llvm_mod), buffer, size
-      end
+      @builder.call @mod.realloc(@llvm_mod), buffer, size
     end
 
     def llvm_puts(string)
@@ -1697,7 +1691,7 @@ module Crystal
     def in_const_block(const_block_name)
       old_position = @builder.insert_block
       old_fun = @fun
-      @fun = @llvm_mod.functions[Program::MAIN_NAME]
+      @fun = @llvm_mod.functions[MAIN_NAME]
       const_block = new_block const_block_name
       @builder.position_at_end const_block
 
