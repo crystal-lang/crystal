@@ -1,6 +1,14 @@
-lib C
-  fun backtrace(array : Void**, size : Int32) : Int32
-  fun backtrace_symbols(array : Void**, size : Int32) : Char**
+lib Unwind
+  CURSOR_SIZE = 140
+  CONTEXT_SIZE = 128
+
+  REG_IP = -1
+
+  fun get_context = unw_getcontext(context : Int64*) : Int32
+  fun init_local = unw_init_local(cursor : Int64*, context : Int64*) : Int32
+  fun step = unw_step(cursor : Int64*) : Int32
+  fun get_reg = unw_get_reg(cursor : Int64*, regnum : Int32, reg : UInt64*) : Int32
+  fun get_proc_name = unw_get_proc_name(cursor : Int64*, name : Char*, size : Int32, offset : UInt64*) : Int32
 end
 
 class Exception
@@ -12,13 +20,27 @@ class Exception
     @message = message
     @inner_exception = inner_exception
 
-    callstack = Pointer(Pointer(Void)).malloc(128)
-    frames = C.backtrace(callstack, 128)
-    strs = C.backtrace_symbols(callstack, frames)
-    @backtrace = strs.map(frames) { |c_str| String.from_cstr(c_str) }
+    cursor = Pointer(Int64).malloc(Unwind::CURSOR_SIZE)
+    context = Pointer(Int64).malloc(Unwind::CONTEXT_SIZE)
+
+    Unwind.get_context(context)
+    Unwind.init_local(cursor, context)
+    fname = Pointer(Char).malloc(64)
+
+    @backtrace = [] of String
+    while Unwind.step(cursor) > 0
+      Unwind.get_reg(cursor, Unwind::REG_IP, out pc)
+      Unwind.get_proc_name(cursor, fname, 64, out offset)
+      @backtrace << "#{String.from_cstr(fname)}+#{offset} [#{pc}]"
+    end
   end
 
   def to_s
-    @message
+    bt = @backtrace.join("\n")
+    if @message
+      "#{@message}:\n#{bt}"
+    else
+      bt
+    end
   end
 end
