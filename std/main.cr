@@ -6,7 +6,6 @@ fun main(argc : Int32, argv : Char**) : Int32
   CrystalMain.__crystal_main(argc, argv)
   0
 rescue ex
-  puts "Uncaught exception"
   puts ex
   1
 end
