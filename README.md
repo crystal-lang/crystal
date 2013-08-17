@@ -39,7 +39,7 @@ Installing
 You will need:
 
 * Ruby 1.9
-* LLVM 3.1 installed as a shared library.
+* LLVM 3.3 installed as a shared library.
 
 Then:
 
