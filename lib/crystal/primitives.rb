@@ -24,42 +24,33 @@ module Crystal
 
     def define_reference_primitives
       a_def = no_args_primitive(reference, 'object_id', uint64) do |b, f, llvm_mod, self_type|
-        b.ptr2int(f.params[0], LLVM::UInt64)
+        if self_type.hierarchy?
+          obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
+          b.ptr2int(obj, LLVM::UInt64)
+        else
+          b.ptr2int(f.params[0], LLVM::UInt64)
+        end
       end
-
-      instance = a_def.overload [], uint64 do |b, f, llvm_mod, self_type|
-        obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
-        b.ptr2int(obj, LLVM::UInt64)
-      end
-      instance.owner = reference.hierarchy_type
-      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
 
       a_def = no_args_primitive(reference, 'crystal_type_id', int32) do |b, f, llvm_mod, self_type|
-        LLVM::Int(self_type.type_id)
+        if self_type.hierarchy?
+          id = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(0)]))
+          LLVM::Int(id)
+        else
+          LLVM::Int(self_type.type_id)
+        end
       end
-
-      instance = a_def.overload [], int32 do |b, f, llvm_mod, self_type|
-        id = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(0)]))
-        LLVM::Int(id)
-      end
-      instance.owner = reference.hierarchy_type
-      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
 
       a_def = no_args_primitive(reference, 'to_cstr', char_pointer) do |b, f, llvm_mod, self_type|
-        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
-        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
-        buffer
-      end
-
-      instance = a_def.overload [], char_pointer do |b, f, llvm_mod, self_type|
-        obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
+        if self_type.hierarchy?
+          obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
+        else
+          obj = f.params[0]
+        end
         buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
         b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), obj
         buffer
       end
-
-      instance.owner = reference.hierarchy_type
-      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
     end
 
     def define_value_primitives
