@@ -79,7 +79,7 @@ module Crystal
             values = [assign.value]
             values.concat exps[assign_index + 1 .. -1]
             if values.length != 1 && targets.length != values.length
-              raise "Multiple assignment count mismatch"#, location[0], location[1]
+              raise "Multiple assignment count mismatch", location.line_number, location.column_number
             end
 
             multi = MultiAssign.new(targets, values)

@@ -1009,5 +1009,13 @@ module Crystal
     def skip_statement_end
       next_token while (@token.type == :SPACE || @token.type == :NEWLINE || @token.type == :";")
     end
+
+    def raise(message, line_number = @line_number, column_number = @token.column_number, filename = @filename)
+      original_raise Crystal::SyntaxException.new(message, line_number, column_number, filename)
+    end
   end
+end
+
+def original_raise(ex)
+  raise ex
 end

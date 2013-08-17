@@ -18,11 +18,15 @@ output_filename = "foo"
 
 str = File.read filename
 
-parser = Parser.new(str)
-parser.filename = filename
-nodes = parser.parse
-mod = infer_type nodes
-llvm_mod = build nodes, mod
-llvm_mod.write_bitcode bitcode_filename
+begin
+  parser = Parser.new(str)
+  parser.filename = filename
+  nodes = parser.parse
+  mod = infer_type nodes
+  llvm_mod = build nodes, mod
+  llvm_mod.write_bitcode bitcode_filename
 
-system "llc #{bitcode_filename} -o - | clang -x assembler -o #{output_filename} -"
+  system "llc #{bitcode_filename} -o - | clang -x assembler -o #{output_filename} -"
+rescue ex : Crystal::Exception
+  puts ex
+end

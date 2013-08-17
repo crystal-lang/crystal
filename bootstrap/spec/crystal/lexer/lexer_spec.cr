@@ -2,7 +2,7 @@
 require "../../spec_helper"
 
 def it_lexes(string, type)
-  it "lexes #{string}" do
+  it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
     token.type.should eq(type)
@@ -10,7 +10,7 @@ def it_lexes(string, type)
 end
 
 def it_lexes(string, type, value)
-  it "lexes #{string}" do
+  it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
     token.type.should eq(type)
@@ -19,7 +19,7 @@ def it_lexes(string, type, value)
 end
 
 def it_lexes(string, type, value, number_kind)
-  it "lexes #{string}" do
+  it "lexes #{string.inspect}" do
     lexer = Lexer.new string
     token = lexer.next_token
     token.type.should eq(type)

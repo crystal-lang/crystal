@@ -341,6 +341,10 @@ class String
     ary
   end
 
+  def lines
+    split "\n"
+  end
+
   def length
     @length
   end

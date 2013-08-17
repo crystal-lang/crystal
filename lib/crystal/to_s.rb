@@ -787,7 +787,7 @@ module Crystal
     end
 
     def visit_rescue(node)
-      @str << "rescue"
+      @str << "rescue "
       if node.name
         @str << node.name
       end
