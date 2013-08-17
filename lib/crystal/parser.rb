@@ -896,8 +896,21 @@ module Crystal
 
       if @token.keyword?(:rescue)
         rescues = []
+        found_catch_all = false
         while true
-          rescues << parse_rescue
+          location = @token.location
+          a_rescue = parse_rescue
+          if a_rescue.types
+            if found_catch_all
+              raise "specific rescue must come before catch-all rescue", location[0], location[1]
+            end
+          else
+            if found_catch_all
+              raise "catch-all rescue can only be specified once", location[0], location[1]
+            end
+            found_catch_all = true
+          end
+          rescues << a_rescue
           break unless @token.keyword?(:rescue)
         end
       end

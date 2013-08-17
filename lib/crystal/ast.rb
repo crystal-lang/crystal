@@ -1459,6 +1459,10 @@ module Crystal
       @ensure.accept visitor if @ensure
     end
 
+    def handles_all?
+      @rescues && !@rescues.last.types
+    end
+
     def ==(other)
       other.is_a?(ExceptionHandler) && other.body == body && other.rescues == rescues && other.else == @else && other.ensure == @ensure
     end

@@ -109,4 +109,12 @@ describe 'Type inference: exception' do
   it "errors if exception varaible is used after rescue" do
     assert_error "begin; rescue ex; end; ex", "undefined local variable or method 'ex'"
   end
+
+  it "errors if catch-all rescue before specific rescue" do
+    assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex", "specific rescue must come before catch-all rescue"
+  end
+
+  it "errors if catch-all rescue specified twice" do
+    assert_syntax_error "begin; rescue ex; rescue; end; ex", "catch-all rescue can only be specified once"
+  end
 end
