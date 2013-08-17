@@ -159,22 +159,23 @@ module Crystal
           node.raise "superclass mismatch for class #{type.name} (#{superclass.name} for #{type.superclass.name})"
         end
       else
+        neeeds_force_add_subclass = true
         if node.type_vars
-          type = GenericClassType.new current_type, node.name, superclass, node.type_vars
+          type = GenericClassType.new current_type, node.name, superclass, node.type_vars, false
         else
-          type = NonGenericClassType.new current_type, node.name, superclass
+          type = NonGenericClassType.new current_type, node.name, superclass, false
         end
         type.abstract = node.abstract
         current_type.types[node.name] = type
       end
 
       @types.push type
-
-      true
-    end
-
-    def end_visit_class_def(node)
+      node.body.accept self
       @types.pop
+
+      type.force_add_subclass if neeeds_force_add_subclass
+
+      false
     end
 
     def visit_module_def(node)

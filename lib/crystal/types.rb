@@ -679,7 +679,7 @@ module Crystal
     attr_accessor :owned_instance_vars
     attr_accessor :instance_vars_in_initialize
 
-    def initialize(container, name, superclass)
+    def initialize(container, name, superclass, add_subclass = true)
       super(container, name)
       if superclass
         @superclass = superclass
@@ -691,10 +691,14 @@ module Crystal
       @parents = [superclass] if superclass
       @owned_instance_vars = Set.new
 
+      force_add_subclass if add_subclass
+    end
+
+    def force_add_subclass
       @superclass.add_subclass(self) if @superclass
     end
 
-     def allocated=(allocated)
+    def allocated=(allocated)
       @allocated = allocated
       superclass.allocated = allocated if superclass
     end
@@ -854,8 +858,8 @@ module Crystal
   class GenericClassType < ClassType
     include GenericType
 
-    def initialize(container, name, superclass, type_vars)
-      super(container, name, superclass)
+    def initialize(container, name, superclass, type_vars, add_subclass = true)
+      super(container, name, superclass, add_subclass)
       @type_vars = type_vars
     end
 
