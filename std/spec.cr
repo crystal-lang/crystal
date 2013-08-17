@@ -127,7 +127,7 @@ def it(description)
   begin
     yield
     Spec::RootContext.report(:success, description)
-  rescue ex : AssertionFailed
+  rescue ex : Spec::AssertionFailed
     Spec::RootContext.report(:fail, description, ex)
   rescue ex
     Spec::RootContext.report(:error, description, ex)
@@ -138,7 +138,7 @@ def assert
   begin
     yield
     Spec::RootContext.report(:success, "assert")
-  rescue ex : AssertionFailed
+  rescue ex : Spec::AssertionFailed
     Spec::RootContext.report(:fail, "assert", ex)
   rescue ex
     Spec::RootContext.report(:error, "assert", ex)
@@ -183,7 +183,7 @@ fun main(argc : Int32, argv : Char**) : Int32
   CrystalMain.__crystal_main(argc, argv)
   Spec::RootContext.print_results
   0
-rescue
-  puts "Uncaught exception"
+rescue ex
+  puts ex
   1
 end
