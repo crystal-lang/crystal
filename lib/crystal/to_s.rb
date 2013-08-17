@@ -795,7 +795,6 @@ module Crystal
         @str << " : "
       end
       if node.types && node.types.length > 0
-        @str << " "
         node.types.each_with_index do |type, i|
           @str << " | " if i > 0
           type.accept self
