@@ -135,8 +135,18 @@ module Crystal
       types.first.program.type_merge(*types)
     end
 
-    def type_id
-      @type_id ||= (@@type_id += 1)
+    if ENV["PRINT_TYPES"] == "1"
+      def type_id
+        @type_id ||= begin
+          type = (@@type_id += 1)
+          puts "#{self}: #{type}"
+          type
+        end
+      end
+    else
+      def type_id
+        @type_id ||= (@@type_id += 1)
+      end
     end
   end
 
