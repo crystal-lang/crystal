@@ -1,95 +1,4 @@
-$spec_context = [] of String
-$spec_results = [] of String
-$spec_count = 0
-$spec_failures = 0
-$spec_manual_results = false
-
 module Spec
-  class RootContext
-    def self.instance
-      $spec_instance
-    end
-
-    def initialize
-      @results = [] of Result
-    end
-
-    def success(description)
-      print '.'
-      @results << Result.new(:success, description)
-    end
-
-    def fail(description, ex)
-      print 'F'
-      @results << Result.new(:fail, description, ex)
-    end
-
-    def error(description, ex)
-      print 'E'
-      @results << Result.new(:error, description, ex)
-    end
-
-    def print_results
-      counts = {fail: 0, success: 0, error: 0}
-      puts
-      @results.each do |result|
-        if result.kind != :success
-          if ex = result.exception
-            puts "In \"#{result.description}\": #{ex.message}"
-          end
-        end
-        counts[result.kind] += 1
-      end
-      puts "#{@results.length} examples, #{counts[:fail]} failures, #{counts[:error]} errors"
-    end
-  end
-
-  class Context
-    def initialize(description, parent)
-      @description = description
-      @parent = parent
-    end
-
-    def describe(description)
-      describe = Spec::Context.new(description, self)
-      describe.yield
-    end
-
-    def it(description)
-      begin
-        Assertions.yield
-        @parent.success(description)
-      rescue ex : AssertionFailed
-        @parent.fail(description, ex)
-      rescue ex
-        @parent.error(description, ex)
-      end
-    end
-
-    def assert
-      begin
-        Assertions.yield
-        @parent.success("assert")
-      rescue ex : AssertionFailed
-        @parent.fail("assert", ex)
-      rescue ex
-        @parent.error("assert", ex)
-      end
-    end
-
-    def success(description)
-      @parent.success("#{@description} - #{description}")
-    end
-
-    def fail(description, ex)
-      @parent.fail("#{@description} - #{description}", ex)
-    end
-
-    def error(description, ex)
-      @parent.error("#{@description} - #{description}", ex)
-    end
-  end
-
   class Result
     getter :kind
     getter :description
@@ -102,25 +11,86 @@ module Spec
     end
   end
 
-  class Assertions
-    def self.eq(value)
-      EqualExpectation.new value
+  abstract class Context
+  end
+
+  class RootContext < Context
+    def initialize
+      @results = [] of Result
+      @has_failures = false
     end
 
-    def self.be_true
-      eq true
+    def self.report(kind, description, ex = nil)
+      @@contexts_stack.last.report(kind, description, ex)
     end
 
-    def self.be_false
-      eq false
+    def report(kind, description, ex = nil)
+      case kind
+      when :success
+        print '.'
+      when :fail
+        print 'F'
+        @has_failures = true
+      when :error
+        print 'E'
+        @has_failures = true
+      end
+      @results << Result.new(kind, description, ex)
     end
 
-    def self.be_nil
-      eq nil
+    def self.print_results
+      @@instance.print_results
     end
 
-    def self.fail(msg)
-      raise Spec::AssertionFailed.new(msg)
+    def print_results
+      counts = {fail: 0, success: 0, error: 0}
+      puts
+
+      if @has_failures
+        puts
+        puts "Failures:"
+        failure_counter = 1
+        @results.each do |result|
+          if result.kind != :success
+            if ex = result.exception
+              puts
+              puts "  #{failure_counter}) #{result.description}"
+              puts
+              if msg = ex.message
+                msg.split("\n").each do |line|
+                  print "       "
+                  puts line
+                end
+              end
+            end
+            failure_counter += 1
+          end
+          counts[result.kind] += 1
+        end
+        puts
+      end
+      puts "#{@results.length} examples, #{counts[:fail]} failures, #{counts[:error]} errors"
+    end
+
+    @@instance = RootContext.new
+    @@contexts_stack = [@@instance] of Context
+
+    def self.describe(description)
+      describe = Spec::NestedContext.new(description, @@contexts_stack.last)
+      @@contexts_stack.push describe
+      yield describe
+      @@contexts_stack.pop
+    end
+  end
+
+  class NestedContext < Context
+    def initialize(description, parent)
+      @description = description
+      @parent = parent
+    end
+
+    def report(kind, description, ex = nil)
+      @parent.report(kind, "#{@description} #{description}", ex)
     end
   end
 
@@ -135,11 +105,11 @@ module Spec
     end
 
     def failure_message
-      "expected #{@value.inspect} but got #{@target.inspect}"
+      "expected: #{@value.inspect}\n     got: #{@target.inspect}"
     end
 
     def negative_failure_message
-      "didn't expect #{@value.inspect} but got #{@target.inspect}"
+      "expected: value != #{@value.inspect}\n     got: #{@target.inspect}"
     end
   end
 
@@ -147,30 +117,71 @@ module Spec
   end
 end
 
-$spec_instance = Spec::RootContext.new
-
 def describe(description)
-  describe = Spec::Context.new(description, Spec::RootContext.instance)
-  describe.yield
+  Spec::RootContext.describe(description) do |context|
+    yield
+  end
+end
+
+def it(description)
+  begin
+    yield
+    Spec::RootContext.report(:success, description)
+  rescue ex : AssertionFailed
+    Spec::RootContext.report(:fail, description, ex)
+  rescue ex
+    Spec::RootContext.report(:error, description, ex)
+  end
+end
+
+def assert
+  begin
+    yield
+    Spec::RootContext.report(:success, "assert")
+  rescue ex : AssertionFailed
+    Spec::RootContext.report(:fail, "assert", ex)
+  rescue ex
+    Spec::RootContext.report(:error, "assert", ex)
+  end
+end
+
+def eq(value)
+  Spec::EqualExpectation.new value
+end
+
+def be_true
+  eq true
+end
+
+def be_false
+  eq false
+end
+
+def be_nil
+  eq nil
+end
+
+def fail(msg)
+  raise Spec::AssertionFailed.new(msg)
 end
 
 class Object
   def should(expectation)
     unless expectation.match self
-      Spec::Assertions.fail(expectation.failure_message)
+      fail(expectation.failure_message)
     end
   end
 
   def should_not(expectation)
     if expectation.match self
-      Spec::Assertions.fail(expectation.negative_failure_message)
+      fail(expectation.negative_failure_message)
     end
   end
 end
 
 fun main(argc : Int32, argv : Char**) : Int32
   CrystalMain.__crystal_main(argc, argv)
-  $spec_instance.print_results
+  Spec::RootContext.print_results
   0
 rescue
   puts "Uncaught exception"
