@@ -1493,7 +1493,7 @@ module Crystal
 
     def clone_from(other)
       @body = other.body.clone
-      @types = other.types.map(&:clone) if @types
+      @types = other.types.map(&:clone) if other.types
       @name = other.name
     end
   end
