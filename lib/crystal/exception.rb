@@ -51,7 +51,7 @@ module Crystal
           str << line.chomp
           str << "\n"
           str << (' ' * (@column_number - 1))
-          str << '^'
+          str << "\033[1;32m^\033[0m"
           str << "\n"
         end
       end
@@ -119,10 +119,12 @@ module Crystal
           str << line.chomp
           str << "\n"
           str << (' ' * (@column - 1))
+          str << "\033[1;32m"
           str << '^'
           if @length && @length > 0
             str << ('~' * (@length - 1))
           end
+          str << "\033[0m"
         end
       end
       str << "\n"

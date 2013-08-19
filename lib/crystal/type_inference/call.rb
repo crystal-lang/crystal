@@ -271,7 +271,10 @@ module Crystal
         end
 
         if obj || !owner.is_a?(Program)
-          raise "undefined method '#{name}' for #{owner}", nil_trace
+          error_msg = "undefined method '#{name}' for #{owner}"
+          similar_name = owner.lookup_similar_defs(def_name, self.args.length, !!block)
+          error_msg << " \033[1;33m(did you mean '#{similar_name}'?)\033[0m" if similar_name
+          raise error_msg, nil_trace
         elsif args.length > 0 || has_parenthesis
           raise "undefined method '#{name}'", nil_trace
         else

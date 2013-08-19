@@ -33,6 +33,9 @@ GEM
     diff-lcs (1.2.1)
     ffi (1.9.0)
     json (1.7.7)
+    levenshtein-ffi (1.0.2)
+      ffi
+      ffi
     method_source (0.8.1)
     mime-types (1.23)
     multi_json (1.7.3)
@@ -68,6 +71,7 @@ PLATFORMS
 DEPENDENCIES
   coveralls
   json (~> 1.7.7)
+  levenshtein-ffi
   pry
   pry-debugger
   rake

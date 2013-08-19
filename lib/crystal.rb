@@ -6,6 +6,7 @@ module Crystal
   CACHE = ENV['CACHE'] != '0'
 end
 
+require "levenshtein"
 Dir["#{File.expand_path('../',  __FILE__)}/**/*.rb"].sort.each do |filename|
   require filename
 end

@@ -169,6 +169,10 @@ module Crystal
       []
     end
 
+    def lookup_similar_defs(*)
+      nil
+    end
+
     def no_return?
       true
     end
@@ -354,6 +358,25 @@ module Crystal
       end
 
       []
+    end
+
+    def lookup_similar_defs(name, args_length, yields)
+      self.defs.each do |def_name, defs|
+        defs.each do |filter, overload|
+          next if filter[0].length != args_length || filter[1] != yields
+
+          if Levenshtein.distance(def_name.to_s, name.to_s) <= 2
+            return def_name
+          end
+        end
+      end
+
+      parents.each do |parent|
+        similar_def = parent.lookup_similar_defs(name, args_length, yields)
+        return similar_def if similar_def
+      end
+
+      nil
     end
 
     def lookup_macro(name, args_length)
@@ -1004,7 +1027,7 @@ module Crystal
     attr_reader :including_class
     attr_reader :mapping
 
-    delegate [:container, :name, :implements?, :lookup_matches, :lookup_matches_without_parents, :lookup_defs, :match_arg, :lookup_macro, :parents] => :@module
+    delegate [:container, :name, :implements?, :lookup_matches, :lookup_matches_without_parents, :lookup_defs, :lookup_similar_defs, :match_arg, :lookup_macro, :parents] => :@module
 
     def initialize(a_module, a_class, mapping)
       @module = a_module
@@ -1475,7 +1498,7 @@ module Crystal
 
     attr_accessor :base_type
 
-    delegate [:lookup_first_def, :lookup_defs, :lookup_instance_var, :index_of_instance_var, :lookup_macro,
+    delegate [:lookup_first_def, :lookup_defs, :lookup_similar_defs, :lookup_instance_var, :index_of_instance_var, :lookup_macro,
               :lookup_type, :has_instance_var_in_initialize?, :allocated, :program, :metaclass] => :base_type
 
     def initialize(base_type)
