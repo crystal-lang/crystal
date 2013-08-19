@@ -20,6 +20,10 @@ class Set(T)
     @hash.has_key?(object)
   end
 
+  def delete(object)
+    @hash.delete(object)
+  end
+
   def length
     @hash.length
   end
