@@ -47,8 +47,8 @@ module Crystal
         else
           obj = f.params[0]
         end
-        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
-        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), obj
+        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.to_s.length + 23))
+        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.to_s}:0x%016lx>"), obj
         buffer
       end
     end
