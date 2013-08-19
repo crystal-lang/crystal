@@ -113,6 +113,39 @@ describe "Exception" do
   class Ex3 < Ex1
   end
 
+  it "executes ensure when exception is unhandled" do
+    a = 0
+    b = begin
+          begin
+            a = 1
+            raise "Oh no!"
+          rescue Ex1
+            a = 2
+          ensure
+            a = 3
+          end
+        rescue
+          4
+        end
+    a.should eq(3)
+    b.should eq(4)
+  end
+
+  it "ensure without rescue" do
+    a = 0
+    begin
+      begin
+        raise "Oh no!"
+      ensure
+        a = 1
+      end
+    rescue
+    end
+
+    a.should eq(1)
+  end
+
+
   it "rescue with type" do
     a = begin
       raise Ex2.new

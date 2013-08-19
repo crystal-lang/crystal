@@ -1166,50 +1166,53 @@ module Crystal
       unwind_ex_obj = @builder.extract_value lp, 0
       ex_type_id = @builder.extract_value lp, 1
 
-      node.rescues.each do |a_rescue|
-        this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
-        if a_rescue.types
-          cond = nil
-          a_rescue.types.each do |type|
-            rescue_type = type.type.instance_type.hierarchy_type
-            rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
-            cond = cond ? @builder.or(cond, rescue_type_cond) : rescue_type_cond
+
+      if node.rescues
+        node.rescues.each do |a_rescue|
+          this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
+          if a_rescue.types
+            cond = nil
+            a_rescue.types.each do |type|
+              rescue_type = type.type.instance_type.hierarchy_type
+              rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
+              cond = cond ? @builder.or(cond, rescue_type_cond) : rescue_type_cond
+            end
+            @builder.cond cond, this_rescue_block, next_rescue_block
+          else
+            @builder.br this_rescue_block
           end
-          @builder.cond cond, this_rescue_block, next_rescue_block
-        else
-          @builder.br this_rescue_block
+          @builder.position_at_end this_rescue_block
+          old_vars = @vars
+
+          if a_rescue.name
+            @vars = @vars.clone
+            @get_exception_fun ||= @llvm_mod.functions[GET_EXCEPTION_NAME]
+            exception_ptr = @builder.call @get_exception_fun, @builder.bit_cast(unwind_ex_obj, @get_exception_fun.params[0].type)
+
+            exception = @builder.int2ptr exception_ptr, LLVM::Pointer(LLVM::Int8)
+            ex_union = alloca llvm_type(a_rescue.type)
+            ex_union_type_ptr, ex_union_value_ptr = union_type_id_and_value(ex_union)
+            @builder.store ex_type_id, ex_union_type_ptr
+            @builder.store exception, ex_union_value_ptr
+            @vars[a_rescue.name] = { ptr: ex_union, type: a_rescue.type }
+          end
+
+          accept(a_rescue.body)
+
+          @vars = old_vars
+          add_branched_block_value(branch, a_rescue.body.type, @last)
+          @builder.br branch[:exit_block]
+
+          @builder.position_at_end next_rescue_block
         end
-        @builder.position_at_end this_rescue_block
-        old_vars = @vars
-
-        if a_rescue.name
-          @vars = @vars.clone
-          @get_exception_fun ||= @llvm_mod.functions[GET_EXCEPTION_NAME]
-          exception_ptr = @builder.call @get_exception_fun, @builder.bit_cast(unwind_ex_obj, @get_exception_fun.params[0].type)
-
-          exception = @builder.int2ptr exception_ptr, LLVM::Pointer(LLVM::Int8)
-          ex_union = alloca llvm_type(a_rescue.type)
-          ex_union_type_ptr, ex_union_value_ptr = union_type_id_and_value(ex_union)
-          @builder.store ex_type_id, ex_union_type_ptr
-          @builder.store exception, ex_union_value_ptr
-          @vars[a_rescue.name] = { ptr: ex_union, type: a_rescue.type }
-        end
-
-        accept(a_rescue.body)
-
-        @vars = old_vars
-        add_branched_block_value(branch, a_rescue.body.type, @last)
-        @builder.br branch[:exit_block]
-
-        @builder.position_at_end next_rescue_block
       end
 
+      accept(node.ensure) if node.ensure
       @raise_fun ||= @llvm_mod.functions[RAISE_NAME]
       codegen_call_or_invoke(@raise_fun, [@builder.bit_cast(unwind_ex_obj, @raise_fun.params[0].type)], true)
       @builder.unreachable
 
       close_branched_block(branch)
-
       if node.ensure
         old_last = @last
         accept(node.ensure)
