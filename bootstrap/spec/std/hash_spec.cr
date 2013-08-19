@@ -107,6 +107,36 @@ describe "Hash" do
     end
   end
 
+  describe "delete" do
+    it "deletes key in the beginning" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.delete(1)
+      a.length.should eq(2)
+      a.should eq({3 => 4, 5 => 6})
+    end
+
+    it "deletes key in the middle" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.delete(3)
+      a.length.should eq(2)
+      a.should eq({1 => 2, 5 => 6})
+    end
+
+    it "deletes key in the end" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.delete(5)
+      a.length.should eq(2)
+      a.should eq({1 => 2, 3 =>4})
+    end
+
+    it "deletes only remaining entry" do
+      a = {1 => 2}
+      a.delete(1)
+      a.length.should eq(0)
+      a.should eq({} of Int32 => Int32)
+    end
+  end
+
   describe "to_s" do
     assert { {1 => 2, 3 => 4}.to_s.should eq("{1 => 2, 3 => 4}") }
   end
