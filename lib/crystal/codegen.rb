@@ -1520,9 +1520,6 @@ module Crystal
 
       next_def_label = nil
       node.target_defs.each do |a_def|
-        allocated = a_def.owner.allocated && a_def.args.all? { |arg| arg.type.allocated }
-        next unless allocated
-
         if owner.union?
           result = match_any_type_id(a_def.owner, obj_type_id)
         elsif owner.nilable?

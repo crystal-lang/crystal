@@ -990,6 +990,10 @@ module Crystal
       true
     end
 
+    def allocated
+      true
+    end
+
     def llvm_size
       Crystal::Program::POINTER_SIZE
     end

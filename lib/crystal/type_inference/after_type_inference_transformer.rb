@@ -92,7 +92,18 @@ module Crystal
       super
 
       if node.target_defs
+        changed = false
+        allocated_defs = []
+
         node.target_defs.each do |target_def|
+          allocated = target_def.owner.allocated && target_def.args.all? { |arg| arg.type.allocated }
+          unless allocated
+            changed = true
+            next
+          end
+
+          allocated_defs << target_def
+
           next if @transformed[target_def.object_id]
 
           @transformed[target_def.object_id] = true
@@ -107,6 +118,12 @@ module Crystal
               rebind_node target_def, @program.nil_var
             end
           end
+        end
+
+        if changed
+          node.unbind_from *node.target_defs
+          node.target_defs = allocated_defs
+          node.bind_to *allocated_defs
         end
       end
 
