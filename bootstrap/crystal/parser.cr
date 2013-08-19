@@ -587,8 +587,21 @@ module Crystal
 
       if @token.keyword?(:rescue)
         rescues = [] of Rescue
+        found_catch_all = false
         while true
-          rescues << parse_rescue
+          location = @token.location
+          a_rescue = parse_rescue
+          if a_rescue.types
+            if found_catch_all
+              raise "specific rescue must come before catch-all rescue", location.line_number, location.column_number
+            end
+          else
+            if found_catch_all
+              raise "catch-all rescue can only be specified once", location.line_number, location.column_number
+            end
+            found_catch_all = true
+          end
+          rescues << a_rescue
           break unless @token.keyword?(:rescue)
         end
       end
@@ -622,40 +635,57 @@ module Crystal
     def parse_rescue
       next_token_skip_space
 
-      if @token.type == :CONST
-        types = [] of ASTNode
-        while true
-          types << parse_ident
-          if @token.type == :","
-            next_token_skip_space
-          else
-            skip_space
-            break
-          end
-        end
-      end
-
-      if @token.type == :"=>"
-        next_token_skip_space_or_newline
-        check :IDENT
+      case @token.type
+      when :IDENT
         name = @token.value.to_s
+
+        if @def_vars.last.includes?(name)
+          raise "exception variable '#{name}' shadows local variable '#{name}'"
+        end
+
+        push_var_name name
         next_token_skip_space
+
+        if @token.type == :":"
+          next_token_skip_space_or_newline
+
+          check :CONST
+
+          types = parse_rescue_types
+        end
+      when :CONST
+        types = parse_rescue_types
       end
 
-      if @token.type != :";" && @token.type != :NEWLINE
-        unexpected_token @token.to_s, "expected ';' or newline"
-      end
+      check [:";", :NEWLINE]
 
       next_token_skip_space_or_newline
 
       if @token.keyword?(:end)
         body = nil
       else
-        body = parse_expressions_or_nil
+        body = parse_expressions
         skip_statement_end
       end
 
+      @def_vars.last.delete name if name
+
       Rescue.new(body, types, name)
+    end
+
+    def parse_rescue_types
+      types = [] of ASTNode
+      while true
+        types << parse_ident
+        skip_space
+        if @token.type == :"|"
+          next_token_skip_space
+        else
+          skip_space
+          break
+        end
+      end
+      types
     end
 
     def parse_while
@@ -1109,7 +1139,7 @@ module Crystal
       node.name_column_number = name_column_number
       node
     end
-    
+
     def parse_arg(args, parenthesis = false)
       if @token.type == :"&"
         next_token_skip_space_or_newline
@@ -1464,7 +1494,7 @@ module Crystal
 
       const = Ident.new names, global
       const.location = location
-      
+
       if @token.type == :"("
         next_token_skip_space_or_newline
 
@@ -1904,11 +1934,15 @@ module Crystal
     end
 
     def push_var(var : Var)
-      @def_vars.last.add var.name.to_s
+      push_var_name var.name.to_s
     end
 
     def push_var(var : Arg)
-      @def_vars.last.add var.name.to_s
+      push_var_name var.name.to_s
+    end
+
+    def push_var_name(name)
+      @def_vars.last.add name
     end
 
     def push_var(node)

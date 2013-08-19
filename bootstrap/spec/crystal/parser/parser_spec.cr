@@ -75,7 +75,7 @@ class String
   def float64
     NumberLiteral.new self, :f64
   end
-  
+
   def symbol
     Crystal::SymbolLiteral.new self
   end
@@ -421,7 +421,7 @@ describe "Parser" do
   it_parses "@a.ptr", PointerOf.new("@a".instance_var)
 
   it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".ident)
-  
+
   it_parses "/foo/", RegexpLiteral.new("foo")
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", [2.int32] of ASTNode)
@@ -471,13 +471,12 @@ describe "Parser" do
 
   it_parses "begin; rescue; end", ExceptionHandler.new(Expressions.new, [Rescue.new])
   it_parses "begin; 1; rescue; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
-  it_parses "begin\n1\nrescue\n2\nrescue\n3\nend", ExceptionHandler.new(1.int32, [Rescue.new(2.int32), Rescue.new(3.int32)])
   it_parses "begin; 1; ensure; 2; end", ExceptionHandler.new(1.int32, nil, nil, 2.int32)
   it_parses "begin\n1\nensure\n2\nend", ExceptionHandler.new(1.int32, nil, nil, 2.int32)
   it_parses "begin; 1; rescue Foo; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident])])
-  it_parses "begin; 1; rescue Foo, Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident])])
-  it_parses "begin; 1; rescue Foo, Bar => ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident], "ex")])
-  it_parses "begin; 1; rescue => ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
+  it_parses "begin; 1; rescue Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident])])
+  it_parses "begin; 1; rescue ex : Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident], "ex")])
+  it_parses "begin; 1; rescue ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
   it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
 
   it_parses "def foo(); 1; rescue; 2; end", Def.new("foo", [] of Arg, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
