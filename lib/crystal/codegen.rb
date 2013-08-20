@@ -608,60 +608,22 @@ module Crystal
 
       accept(node.cond)
 
-      then_block, else_block, exit_block = new_blocks "then", "else", "exit"
+      then_block, else_block = new_blocks "then", "else"
+      codegen_cond_branch(node.cond, then_block, else_block)
 
-      codegen_cond_branch(node.cond, then_block,else_block)
+      branch = new_branched_block(node)
 
       @builder.position_at_end then_block
       accept(node.then)
-      then_block = @builder.insert_block
-
-      if node.then.type.nil? || node.then.type.nil_type?
-        if is_nilable
-          @last = @builder.int2ptr llvm_nil, llvm_type(node.type)
-        else
-          @last = llvm_nil
-        end
-      end
-      then_value = @last unless node.then.no_returns? || node.then.returns? || node.then.breaks? || (node.then.yields? && block_returns?)
-      codegen_assign(union_ptr, node.type, node.then.type, @last) if is_union && node.then.type && !node.then.type.no_return?
-      @builder.br exit_block
+      add_branched_block_value(branch, node.then.type, @last)
+      @builder.br branch[:exit_block]
 
       @builder.position_at_end else_block
       accept(node.else)
-      else_block = @builder.insert_block
+      add_branched_block_value(branch, node.else.type, @last)
+      @builder.br branch[:exit_block]
 
-      if node.else.type.nil? || node.else.type.nil_type?
-        if is_nilable
-          @last = @builder.int2ptr llvm_nil, llvm_type(node.type)
-        else
-          @last = llvm_nil
-        end
-      end
-      else_value = @last unless node.else.no_returns? || node.else.returns? || node.else.breaks? || (node.else.yields? && block_returns?)
-      codegen_assign(union_ptr, node.type, node.else.type, @last) if is_union && node.else.type && !node.else.type.no_return?
-      @builder.br exit_block
-
-      @builder.position_at_end exit_block
-
-      if is_union
-        @last = union_ptr
-      elsif node.type
-        if then_value && else_value
-          @last = @builder.phi llvm_type(node.type), {then_block => then_value, else_block => else_value}
-        elsif then_value
-          @last = then_value
-        elsif else_value
-          @last = else_value
-        else
-          @builder.unreachable
-        end
-      else
-        if !then_value && !else_value
-          @builder.unreachable
-        end
-        @last = nil
-      end
+      close_branched_block(branch)
 
       false
     end
@@ -1434,7 +1396,7 @@ module Crystal
     def new_branched_block(node)
       branch = { node: node }
       branch[:exit_block] = new_block "exit"
-      if branch[:is_union] = node.type.union?
+      if branch[:is_union] = node.type && node.type.union?
         branch[:union_ptr] = alloca llvm_type(node.type)
       else
         branch[:phi_table] = {}
@@ -1443,7 +1405,7 @@ module Crystal
     end
 
     def add_branched_block_value(branch, type, value)
-      if type.no_return?
+      if !type || type.no_return?
         @builder.unreachable
       else
         if branch[:is_union]
