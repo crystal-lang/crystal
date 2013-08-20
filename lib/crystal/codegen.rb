@@ -602,10 +602,6 @@ module Crystal
     end
 
     def visit_if(node)
-      is_union = node.type && node.type.union?
-      is_nilable = node.type && node.type.nilable?
-      union_ptr = alloca llvm_type(node.type) if is_union
-
       accept(node.cond)
 
       then_block, else_block = new_blocks "then", "else"
