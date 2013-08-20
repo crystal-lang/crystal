@@ -65,8 +65,11 @@ class File < IO
 
   def self.open(filename, mode)
     file = File.new filename, mode
-    yield file
-    file.close
+    begin
+      yield file
+    ensure
+      file.close
+    end
   end
 
   def self.read(filename)
