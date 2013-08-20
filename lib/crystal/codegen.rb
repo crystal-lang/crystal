@@ -20,7 +20,6 @@ module Crystal
     def evaluate(node)
       llvm_mod = build node
       engine = LLVM::JITCompiler.new(llvm_mod)
-      Compiler.optimize llvm_mod, engine, 1
       engine.run_function llvm_mod.functions[MAIN_NAME], 0, nil
     end
 

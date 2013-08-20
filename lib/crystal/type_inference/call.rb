@@ -109,7 +109,7 @@ module Crystal
 
       typed_defs = matches.map do |match|
         yield_vars = match_block_arg(match)
-        use_cache = !block || match.def.block_arg || match.def.yields == 0
+        use_cache = !block || match.def.block_arg
         block_type = block && block.body && match.def.block_arg ? block.body.type : nil
 
         typed_def = match.owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
