@@ -1,5 +1,3 @@
-require 'llvm/transforms/ipo'
-require 'llvm/transforms/scalar'
 require 'fileutils'
 
 module Crystal
@@ -11,10 +9,10 @@ module Crystal
     def initialize
       require 'optparse'
 
-      @options = {optimization_passes: 0}
       OptionParser.new do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
 
+        @options = {}
         opts.on("-e 'command'", "one line script. Several -e's allowed. Omit [programfile]") do |command|
           @options[:command] ||= []
           @options[:command] << command
@@ -47,8 +45,8 @@ module Crystal
         opts.on('-o ', 'Output filename') do |output|
           @options[:output_filename] = output
         end
-        opts.on('-O ', "Number of optimization passes (default: #{@options[:optimization_passes]})") do |opt|
-          @options[:optimization_passes] = opt.to_i
+        opts.on('-O ', 'Optimization level') do |opt|
+          @options[:opt_level] = opt
         end
         opts.on('-prof', 'Enable profiling output') do
           @options[:prof] = true
@@ -122,7 +120,6 @@ module Crystal
           llvm_mod.functions[Program::MAIN_NAME].linkage = :internal unless @options[:run] || @options[:command]
 
           engine = LLVM::JITCompiler.new llvm_mod
-          optimize llvm_mod, engine unless @options[:debug]
         end
       rescue Crystal::Exception => ex
         puts ex.to_s(source)
@@ -156,7 +153,8 @@ module Crystal
 
           `clang #{o_flag} #{obj_file} #{lib_flags(program)}`
         else
-          pid = spawn "llc | clang -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
+          opt_cmd = @options[:opt_level] ? "opt -O#{@options[:opt_level]} |" : ""
+          pid = spawn "#{opt_cmd} llc | clang -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
           Process.waitpid pid
         end
       end
@@ -183,29 +181,6 @@ module Crystal
         end
       end
       flags
-    end
-
-    def optimize(mod, engine)
-      self.class.optimize mod, engine, @options[:optimization_passes]
-    end
-
-    def self.optimize(mod, engine, optimization_passes)
-      pm = LLVM::PassManager.new engine
-      pm.inline!
-      pm.gdce!
-      pm.instcombine!
-      pm.reassociate!
-      pm.gvn!
-      pm.mem2reg!
-      pm.simplifycfg!
-      pm.tailcallelim!
-      pm.loop_unroll!
-      pm.loop_deletion!
-      pm.loop_rotate!
-      pm.scalarrepl!
-      pm.memcpyopt!
-
-      optimization_passes.times { pm.run mod }
     end
   end
 end
