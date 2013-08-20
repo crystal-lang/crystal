@@ -798,9 +798,13 @@ module Crystal
         block_vars[arg.name] = arg
       end
 
+      @type_filter_stack.push({})
+
       block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
       block_visitor.block = node
       node.body.accept block_visitor
+
+      @type_filter_stack.pop
 
       false
     end

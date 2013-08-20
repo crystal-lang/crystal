@@ -61,4 +61,32 @@ describe 'Type inference: is_a?' do
       end
       )) { int32 }
   end
+
+  it "applies filter inside block" do
+    assert_type(%q(
+      lib C
+        fun exit : NoReturn
+      end
+
+      def foo
+        yield
+      end
+
+      foo do
+        a = 1
+        unless a.is_a?(Int32)
+          C.exit
+        end
+      end
+
+      x = 1
+
+      foo do
+        a = 'a' || 1
+        x = a
+      end
+
+      x
+      )) { union_of(char, int32) }
+  end
 end
