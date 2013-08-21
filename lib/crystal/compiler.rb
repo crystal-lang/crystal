@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'tempfile'
 
 module Crystal
   class Compiler
@@ -16,6 +17,7 @@ module Crystal
         opts.on("-e 'command'", "one line script. Several -e's allowed. Omit [programfile]") do |command|
           @options[:command] ||= []
           @options[:command] << command
+          @options[:execute] = true
         end
         opts.on('-graph ', 'Render type graph') do
           @options[:graph] = true
@@ -53,14 +55,26 @@ module Crystal
         end
         opts.on('-run ', 'Execute program') do
           @options[:run] = true
+          @options[:execute] = true
         end
         opts.on('-stats', 'Enable statistics output') do
           @options[:stats] = true
         end
       end.parse!
 
-      if !@options[:output_filename] && ::ARGV.length > 0
-        @options[:output_filename] = File.basename(::ARGV[0], File.extname(::ARGV[0]))
+      if !@options[:output_filename]
+        if @options[:run] || @options[:command] || ::ARGV.length == 0
+          @tempfile = Tempfile.new('crystal')
+          @options[:output_filename] = @tempfile.path
+          @options[:execute] = true
+          @options[:args] = []
+          if ::ARGV.length > 1
+            @options[:args] = ::ARGV[1 .. -1]
+            ::ARGV.replace([::ARGV[0]])
+          end
+        elsif ::ARGV.length > 0
+          @options[:output_filename] = File.basename(::ARGV[0], File.extname(::ARGV[0]))
+        end
       end
     end
 
@@ -112,14 +126,8 @@ module Crystal
         exit 0 if @options[:no_build]
 
         llvm_mod = nil
-        engine = nil
         with_stats_or_profile('codegen') do
           llvm_mod = program.build node, filename, @options[:debug]
-
-          # Don't optimize crystal_main away if the user wants to run the program
-          llvm_mod.functions[Program::MAIN_NAME].linkage = :internal unless @options[:run] || @options[:command]
-
-          engine = LLVM::JITCompiler.new llvm_mod
         end
       rescue Crystal::Exception => ex
         puts ex.to_s(source)
@@ -132,31 +140,30 @@ module Crystal
 
       llvm_mod.dump if @options[:dump_ll]
 
-      if @options[:run] || @options[:command]
-        program.load_libs
+      reader, writer = IO.pipe
+      Thread.new do
+        llvm_mod.write_bitcode(writer)
+        writer.close
+      end
 
-        engine.run_function llvm_mod.functions[Program::MAIN_NAME], 0, nil
+      o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
+
+      if @options[:debug]
+        obj_file = "#{@options[:output_filename]}.o"
+
+        pid = spawn "llc | clang -x assembler -c -o #{obj_file} -", in: reader
+        Process.waitpid pid
+
+        `clang #{o_flag} #{obj_file} #{lib_flags(program)}`
       else
-        reader, writer = IO.pipe
-        Thread.new do
-          llvm_mod.write_bitcode(writer)
-          writer.close
-        end
+        opt_cmd = @options[:opt_level] ? "opt -O#{@options[:opt_level]} |" : ""
+        pid = spawn "#{opt_cmd} llc | clang -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
+        Process.waitpid pid
+      end
 
-        o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
-
-        if @options[:debug]
-          obj_file = "#{@options[:output_filename]}.o"
-
-          pid = spawn "llc | clang -x assembler -c -o #{obj_file} -", in: reader
-          Process.waitpid pid
-
-          `clang #{o_flag} #{obj_file} #{lib_flags(program)}`
-        else
-          opt_cmd = @options[:opt_level] ? "opt -O#{@options[:opt_level]} |" : ""
-          pid = spawn "#{opt_cmd} llc | clang -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
-          Process.waitpid pid
-        end
+      if @options[:execute]
+        puts `#{@options[:output_filename]} #{@options[:args].join ' '}`
+        @tempfile.delete
       end
     end
 
