@@ -347,4 +347,26 @@ describe 'Type inference: class' do
     mod, input = infer_type input
     input.last.type.immutable.should be_true
   end
+
+  it "infers types of instance variables to nilable" do
+    input = parse(%q(
+      def bar
+      end
+
+      class Foo
+        def initialize
+          if true
+            @superclass = 1
+            bar
+          else
+            @depth = 0
+          end
+        end
+      end
+
+      f = Foo.new
+      ))
+    mod, input = infer_type input
+    mod.types["Foo"].instance_vars["@superclass"].type.should eq(mod.union_of(mod.nil, mod.int32))
+  end
 end

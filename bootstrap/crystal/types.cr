@@ -63,7 +63,6 @@ module Crystal
         @superclass = superclass
         @depth = superclass.depth + 1
       else
-        @superclass = nil # TODO: fix SSA, removing this line makes it blow
         @depth = 0
       end
       @subclasses = [] of Type

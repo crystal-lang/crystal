@@ -165,6 +165,8 @@ module Crystal
     end
 
     def reset_instance_variables_indices
+      return if @in_initialize
+
       @vars.each do |key, value|
         if key[0] == '@'
           @vars[key] = {read: nil, write: value[:write]}
@@ -341,6 +343,8 @@ module Crystal
         indices = @vars[node.target.name] = {read: 1, write: 2}
       end
 
+      return if @in_initialize
+
       ivar_name = var_name_with_index(node.target.name, indices[:read])
       node.value = Assign.new(Var.new(ivar_name), node.value)
     end
@@ -398,6 +402,7 @@ module Crystal
         before_indices = before_vars[var_name]
         then_indices = then_vars && then_vars[var_name]
         else_indices = else_vars && else_vars[var_name]
+        # binding.pry
         if else_indices.nil?
           if before_indices
             if then_indices != before_indices && then_indices[:read]
@@ -570,6 +575,8 @@ module Crystal
     end
 
     def transform_instance_var(node)
+      return node if @in_initialize
+
       indices = @vars[node.name]
       if indices && indices[:read]
         new_var = var_with_index(node.name, indices[:read])
@@ -698,6 +705,8 @@ module Crystal
       if @in_initialize && !from_index && name[0] == '@'
         vars << Assign.new(InstanceVar.new(name), NilLiteral.new)
       end
+
+      return if @in_initialize && name[0] == '@'
 
       vars << assign_var_with_indices(name, to_index, from_index)
     end
