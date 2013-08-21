@@ -1142,7 +1142,7 @@ module Crystal
 
     def parse_args_space_consumed(check_plus_and_minus = true)
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-'
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-'
         if @token.type == :+ || @token.type == :- && check_plus_and_minus
           ord = string[pos].ord
           return nil if ord == 9 || ord == 10 || ord == 13 || ord == 32 # return nil if ord is whitespace

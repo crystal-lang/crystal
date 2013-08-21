@@ -277,6 +277,8 @@ describe Parser do
   it_parses "@@foo = 1", Assign.new("@@foo".class_var, 1.int32)
   it_parses "-@@foo", Call.new("@@foo".class_var, :-@)
 
+  it_parses "puts @@x", Call.new(nil, "puts", ['@@x'.class_var])
+
   it_parses "call @foo.bar", Call.new(nil, "call", [Call.new("@foo".instance_var, "bar")])
   it_parses 'call "foo"', Call.new(nil, "call", ["foo".string])
 
