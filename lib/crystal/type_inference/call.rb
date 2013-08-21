@@ -332,7 +332,6 @@ module Crystal
     end
 
     def lookup_matches_in_super
-      parent = parent_visitor.owner.parents.first
       if args.empty? && !has_parenthesis
         self.args = parent_visitor.typed_def.args.map do |arg|
           var = Var.new(arg.name)
@@ -341,7 +340,13 @@ module Crystal
         end
       end
 
-      lookup_matches_in(parent, scope, parent_visitor.untyped_def.name)
+      # TODO: do this better
+      parents_length = parent_visitor.owner.parents.length
+      parent_visitor.owner.parents.each_with_index do |parent, i|
+        if i == parents_length - 1 || parent.lookup_first_def(parent_visitor.untyped_def.name, !!block)
+          return lookup_matches_in(parent, scope, parent_visitor.untyped_def.name)
+        end
+      end
     end
 
     def recalculate_lib_call

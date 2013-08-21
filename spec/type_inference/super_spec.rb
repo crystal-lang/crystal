@@ -36,4 +36,25 @@ describe 'Type inference: super' do
     nodes.last.type.should eq(mod.types["Baz"])
     nodes.last.type.superclass.superclass.instance_vars["@x"].type.should eq(mod.int32)
   end
+
+  it "types super when container method is defined in parent class two levels up" do
+    assert_type(%(
+      class Base
+        def foo
+          1
+        end
+      end
+
+      class Foo < Base
+      end
+
+      class Bar < Foo
+        def foo
+          super
+        end
+      end
+
+      Bar.new.foo
+      )) { int32 }
+  end
 end
