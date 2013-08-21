@@ -2,6 +2,7 @@ require "parser"
 require "type_inference"
 require "visitor"
 require "llvm"
+require "codegen/*"
 
 LLVM.init_x86
 
@@ -36,8 +37,9 @@ module Crystal
       @mod = mod
       @node = node
       @llvm_mod = LLVM::Module.new("Crystal")
+      @llvm_typer = LLVMTyper.new
       if node_type = node.type
-        ret_type = node_type.llvm_type
+        ret_type = @llvm_typer.llvm_type(node_type)
       else
         ret_type = LLVM::Void
       end
@@ -88,7 +90,7 @@ module Crystal
     def visit(node : LongLiteral)
       @last = LLVM::Int64.from_i(node.value.to_i)
     end
-    
+
     def visit(node : CharLiteral)
       @last = LLVM::Int8.from_i(node.value[0].ord)
     end

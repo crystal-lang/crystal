@@ -1,7 +1,7 @@
 require "program"
 require "visitor"
 require "ast"
-require "type_inference/ast_node"
+require "type_inference/*"
 
 module Crystal
   def infer_type(node)
@@ -59,6 +59,10 @@ module Crystal
 
     def visit(node : SymbolLiteral)
       node.type = mod.symbol
+    end
+
+    def visit(node : StringLiteral)
+      node.type = mod.string
     end
 
     def visit(node : Var)

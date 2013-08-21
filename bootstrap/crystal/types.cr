@@ -3,49 +3,88 @@ module Crystal
     def self.merge(type1, type2)
       type1
     end
-
-    def llvm_type
-      LLVM::Void
-    end
-
-    def to_s
-      name
-    end
   end
 
   class ContainedType < Type
-    property :name
-    property :container
+    getter :container
+    getter :types
 
-    def initialize(name, container)
-      @name = name
+    def initialize(container)
       @container = container
+      @types = {} of String => Type
+    end
+
+    def program
+      container.program
     end
   end
 
-  class ModuleType < ContainedType
-    property :types
-    property :parents
+  abstract class ModuleType < ContainedType
+    getter :name
+    getter :parents
 
-    def initialize(name, container = nil, parents = [] of Type?)
-      super(name, container)
-      @parents = parents
-      @types = {} of String => Type?
+    def initialize(container, name)
+      super(container)
+      @name = name
+      @parents = [] of Type
     end
   end
 
-  class ClassType < ModuleType
-    def initialize(name, parent_type, container = nil)
-      super(name, container, parent_type ? [parent_type] of Type? : [] of Type?)
+  class NonGenericModuleType < ModuleType
+  end
+
+  module InheritableClass
+    def add_subclass(subclass)
+      subclasses << subclass
+      notify_subclass_added
+      @superclass.notify_subclass_added if @superclass
     end
+
+    def notify_subclass_added
+      # if @subclass_observers
+      #   @subclass_observers.each do |observer|
+      #     observer.on_new_subclass
+      #   end
+      # end
+    end
+  end
+
+  abstract class ClassType < ModuleType
+    include InheritableClass
+
+    getter :superclass
+    getter :subclasses
+    getter :depth
+    property :abstract
+
+    def initialize(container, name, superclass, add_subclass = true)
+      super(container, name)
+      if superclass
+        @superclass = superclass
+        @depth = superclass.depth + 1
+      else
+        @superclass = nil # TODO: fix SSA, removing this line makes it blow
+        @depth = 0
+      end
+      @subclasses = [] of Type
+      @parents.push superclass if superclass
+      force_add_subclass if add_subclass
+    end
+
+    def force_add_subclass
+      @superclass.add_subclass(self) if @superclass
+    end
+  end
+
+  class NonGenericClassType < ClassType
   end
 
   class PrimitiveType < ClassType
     getter :llvm_type
     getter :llvm_size
 
-    def initialize(name, parent_type, llvm_type, llvm_size, container = nil)
-      super(name, parent_type, container)
+    def initialize(container, name, superclass, llvm_type, llvm_size)
+      super(container, name, superclass)
       @llvm_type = llvm_type
       @llvm_size = llvm_size
     end
@@ -55,13 +94,30 @@ module Crystal
     end
   end
 
-  class ObjectType < ClassType
-    def initialize(name, parent_type = nil, container = nil)
-      super
-    end
+  class IntegerType < PrimitiveType
+    getter :rank
 
-    def llvm_type
-      LLVM::Void
+    def initialize(container, name, superclass, llvm_type, llvm_size, rank)
+      super(container, name, superclass, llvm_type, llvm_size)
+      @rank = rank
+    end
+  end
+
+  class FloatType < PrimitiveType
+    getter :rank
+
+    def initialize(container, name, superclass, llvm_type, llvm_size, rank)
+      super(container, name, superclass, llvm_type, llvm_size)
+      @rank = rank
+    end
+  end
+
+  class NilType < PrimitiveType
+  end
+
+  class ValueType < NonGenericClassType
+    def value?
+      true
     end
   end
 end

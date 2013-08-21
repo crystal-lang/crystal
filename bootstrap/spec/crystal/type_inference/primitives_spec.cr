@@ -32,6 +32,10 @@ describe "Type inference: primitives" do
     assert_type(":foo") { |mod| mod.symbol }
   end
 
+  it "types a string" do
+    assert_type("\"foo\"") { |mod| mod.string }
+  end
+
   it "types an expression" do
     input = Parser.parse "1; 'a'"
     mod = infer_type input
