@@ -1283,6 +1283,14 @@ module Crystal
       true
     end
 
+    def lookup_matches(*args)
+      @type.lookup_matches(*args)
+    end
+
+    def lookup_first_def(*args)
+      @type.lookup_first_def(*args)
+    end
+
     def type_desc
       "type def"
     end
