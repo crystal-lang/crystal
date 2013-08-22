@@ -1504,9 +1504,64 @@ module Crystal
     end
   end
 
+  module HierarchyTypeLookup
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+      base_type_lookup = hierarchy_lookup(base_type)
+      concrete_classes = Array(cover())
+
+      base_type_matches = base_type_lookup.lookup_matches(name, arg_types, yields, self)
+      if !base_type.abstract && !base_type_matches.cover_all?
+        return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
+      end
+
+      all_matches = {}
+      matches = base_type_matches.matches || []
+
+      instance_type.each_subtype(base_type) do |subtype|
+        next if subtype.value?
+
+        subtype_lookup = hierarchy_lookup(subtype)
+        subtype_hierarchy_lookup = hierarchy_lookup(subtype.hierarchy_type)
+
+        subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, yields, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+        concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
+        if concrete && !subtype_matches.cover_all? && !base_type_matches.cover_all?
+          covered_by_superclass = false
+          superclass = subtype.superclass
+          while !superclass.equal?(base_type)
+            superclass_lookup = hierarchy_lookup(superclass)
+            superclass_hierarchy_lookup = hierarchy_lookup(superclass.hierarchy_type)
+            superclass_matches = all_matches[superclass.type_id] ||= superclass_lookup.lookup_matches_with_modules(name, arg_types, yields, superclass_hierarchy_lookup, superclass_hierarchy_lookup)
+            if superclass_matches.cover_all?
+              covered_by_superclass = true
+              break
+            end
+            superclass = superclass.superclass
+          end
+
+          unless covered_by_superclass
+            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
+          end
+        end
+
+        if !subtype_matches.empty? && subtype_matches.matches
+          subtype_matches.matches.concat matches
+          matches = subtype_matches.matches
+        end
+      end
+
+      Matches.new(matches, matches.length > 0)
+    end
+
+    def hierarchy_lookup(type)
+      type
+    end
+  end
+
   class HierarchyType < Type
     include MultiType
     include DefInstanceContainer
+    include HierarchyTypeLookup
 
     attr_accessor :base_type
 
@@ -1549,48 +1604,6 @@ module Crystal
       else
         1
       end
-    end
-
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      concrete_classes = Array(cover())
-
-      base_type_matches = base_type.lookup_matches(name, arg_types, yields, self)
-      if !base_type.abstract && !base_type_matches.cover_all?
-        return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type, false)
-      end
-
-      all_matches = {}
-      matches = base_type_matches.matches || []
-
-      each_subtype(base_type) do |subtype|
-        next if subtype.value?
-
-        subtype_matches = subtype.lookup_matches_with_modules(name, arg_types, yields, subtype.hierarchy_type, subtype.hierarchy_type)
-        concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
-        if concrete && !subtype_matches.cover_all? && !base_type_matches.cover_all?
-          covered_by_superclass = false
-          superclass = subtype.superclass
-          while !superclass.equal?(base_type)
-            superclass_matches = all_matches[superclass.type_id] ||= superclass.lookup_matches_with_modules(name, arg_types, yields, superclass.hierarchy_type, superclass.hierarchy_type)
-            if superclass_matches.cover_all?
-              covered_by_superclass = true
-              break
-            end
-            superclass = superclass.superclass
-          end
-
-          unless covered_by_superclass
-            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype, false)
-          end
-        end
-
-        if !subtype_matches.empty? && subtype_matches.matches
-          subtype_matches.matches.concat matches
-          matches = subtype_matches.matches
-        end
-      end
-
-      Matches.new(matches, matches.length > 0)
     end
 
     def filter_by(type)
@@ -1652,57 +1665,19 @@ module Crystal
 
   class HierarchyTypeMetaclass < Type
     include DefInstanceContainer
+    include HierarchyTypeLookup
 
     attr_reader :instance_type
 
+    delegate [:base_type, :cover] => :instance_type
     delegate [:lookup_first_def] => :'instance_type.base_type.metaclass'
 
     def initialize(instance_type)
       @instance_type = instance_type
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      base_type = instance_type.base_type
-      base_type_metaclass = base_type.metaclass
-      concrete_classes = Array(instance_type.cover())
-
-      base_type_matches = base_type_metaclass.lookup_matches(name, arg_types, yields, self)
-      if !base_type.abstract && !base_type_matches.cover_all?
-        return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_metaclass, false)
-      end
-
-      all_matches = {}
-      matches = base_type_matches.matches || []
-
-      instance_type.each_subtype(base_type) do |subtype|
-        next if subtype.value?
-
-        subtype_matches = subtype.metaclass.lookup_matches_with_modules(name, arg_types, yields, subtype.hierarchy_type.metaclass, subtype.hierarchy_type.metaclass)
-        concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
-        if concrete && !subtype_matches.cover_all? && !base_type_matches.cover_all?
-          covered_by_superclass = false
-          superclass = subtype.superclass
-          while !superclass.equal?(base_type)
-            superclass_matches = all_matches[superclass.type_id] ||= superclass.metaclass.lookup_matches_with_modules(name, arg_types, yields, superclass.hierarchy_type.metaclass, superclass.hierarchy_type.metaclass)
-            if superclass_matches.cover_all?
-              covered_by_superclass = true
-              break
-            end
-            superclass = superclass.superclass
-          end
-
-          unless covered_by_superclass
-            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype.metaclass, false)
-          end
-        end
-
-        if !subtype_matches.empty? && subtype_matches.matches
-          subtype_matches.matches.concat matches
-          matches = subtype_matches.matches
-        end
-      end
-
-      Matches.new(matches, matches.length > 0)
+    def hierarchy_lookup(type)
+      type.metaclass
     end
 
     def hierarchy_metaclass?
