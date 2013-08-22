@@ -209,7 +209,12 @@ module Crystal
     end
 
     def visit_class_method(node)
-      @last = int(0)
+      if node.type.hierarchy_metaclass?
+        type_ptr = union_type_id @fun.params[0]
+        @last = @builder.load type_ptr
+      else
+        @last = int(node.type.instance_type.type_id)
+      end
     end
 
     def visit_nop(node)
@@ -293,7 +298,7 @@ module Crystal
 
         @last = @builder.load global
       else
-        @last = int(0)
+        @last = int(node.type.instance_type.type_id)
       end
     end
 
@@ -420,6 +425,8 @@ module Crystal
             @last = box_object_in_hierarchy(var[:type].nilable_type, node.type, @last, !var[:treated_as_pointer])
           end
         end
+      elsif var[:type].metaclass?
+        @last = var[:ptr]
       elsif node.type.union?
         @last = cast_to_pointer var[:ptr], node.type
       else
@@ -765,17 +772,22 @@ module Crystal
     end
 
     def visit_allocate(node)
-      struct_type = llvm_struct_type(node.type)
+      hierarchy = node.type.hierarchy?
+      type = hierarchy ? node.type.base_type : node.type
+
+      struct_type = llvm_struct_type(type)
       @last = malloc struct_type
       memset @last, int8(0), struct_type.size
-      @last
+
+      if hierarchy
+        @last = box_object_in_hierarchy(node.type.base_type, node.type, @last, false)
+      end
     end
 
     def visit_struct_alloc(node)
       struct_type = llvm_struct_type(node.type)
       @last = malloc struct_type
       memset @last, int8(0), struct_type.size
-      @last
     end
 
     def visit_struct_get(node)
@@ -1376,6 +1388,7 @@ module Crystal
       # Special case: if the type is Object+ we want to match against Reference+,
       # because Object+ can only mean a Reference type (so we exclude Nil, for example).
       type = @mod.reference.hierarchy_type if type.equal?(@mod.object.hierarchy_type)
+      type = type.instance_type if type.hierarchy_metaclass?
 
       if type.union?
         result = nil
@@ -1440,7 +1453,7 @@ module Crystal
 
         if owner.union?
           obj_type_id = @builder.load union_type_id(@last)
-        elsif owner.nilable?
+        elsif owner.nilable? || owner.hierarchy_metaclass?
           obj_type_id = @last
         end
       else
@@ -1488,6 +1501,8 @@ module Crystal
           else
             result = not_null_pointer?(obj_type_id)
           end
+        elsif owner.hierarchy_metaclass?
+          result = match_any_type_id(a_def.owner, obj_type_id)
         else
           result = int1(1)
         end

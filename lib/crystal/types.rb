@@ -37,6 +37,10 @@ module Crystal
       false
     end
 
+    def hierarchy_metaclass?
+      false
+    end
+
     def union?
       false
     end
@@ -1175,7 +1179,7 @@ module Crystal
 
     attr_reader :instance_type
 
-    delegate [:program, :lookup_type, :lookup_class_var, :has_class_var?, :class_var_owner] => :instance_type
+    delegate [:program, :lookup_type, :lookup_class_var, :has_class_var?, :class_var_owner, :abstract] => :instance_type
 
     def initialize(instance_type)
       @instance_type = instance_type
@@ -1205,7 +1209,7 @@ module Crystal
     attr_reader :instance_type
 
     delegate [:add_def, :defs, :sorted_defs, :macros] => :'instance_type.generic_class.metaclass'
-    delegate [:program, :type_vars, :lookup_type] => :'instance_type'
+    delegate [:program, :type_vars, :lookup_type, :abstract] => :'instance_type'
 
     def initialize(instance_type)
       @instance_type = instance_type
@@ -1507,11 +1511,16 @@ module Crystal
     attr_accessor :base_type
 
     delegate [:lookup_first_def, :lookup_defs, :lookup_similar_defs, :lookup_instance_var, :index_of_instance_var, :lookup_macro,
-              :lookup_type, :has_instance_var_in_initialize?, :allocated, :program, :metaclass] => :base_type
+              :lookup_type, :has_instance_var_in_initialize?, :allocated, :program, :metaclass,
+              :abstract, :allocated=] => :base_type
 
     def initialize(base_type)
       @base_type = base_type
       @def_instances = {}
+    end
+
+    def metaclass
+      @metaclass ||= HierarchyTypeMetaclass.new(self)
     end
 
     def immutable=(immutable)
@@ -1640,4 +1649,83 @@ module Crystal
       4 + Crystal::Program::POINTER_SIZE
     end
   end
+
+  class HierarchyTypeMetaclass < Type
+    include DefInstanceContainer
+
+    attr_reader :instance_type
+
+    def initialize(instance_type)
+      @instance_type = instance_type
+    end
+
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+      base_type = instance_type.base_type
+      base_type_metaclass = base_type.metaclass
+      concrete_classes = Array(instance_type.cover())
+
+      base_type_matches = base_type_metaclass.lookup_matches(name, arg_types, yields, self)
+      if !base_type.abstract && !base_type_matches.cover_all?
+        return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_metaclass, false)
+      end
+
+      all_matches = {}
+      matches = base_type_matches.matches || []
+
+      instance_type.each_subtype(base_type) do |subtype|
+        next if subtype.value?
+
+        subtype_matches = subtype.metaclass.lookup_matches_with_modules(name, arg_types, yields, subtype.hierarchy_type.metaclass, subtype.hierarchy_type.metaclass)
+        concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
+        if concrete && !subtype_matches.cover_all? && !base_type_matches.cover_all?
+          covered_by_superclass = false
+          superclass = subtype.superclass
+          while !superclass.equal?(base_type)
+            superclass_matches = all_matches[superclass.type_id] ||= superclass.metaclass.lookup_matches_with_modules(name, arg_types, yields, superclass.hierarchy_type.metaclass, superclass.hierarchy_type.metaclass)
+            if superclass_matches.cover_all?
+              covered_by_superclass = true
+              break
+            end
+            superclass = superclass.superclass
+          end
+
+          unless covered_by_superclass
+            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype.metaclass, false)
+          end
+        end
+
+        if !subtype_matches.empty? && subtype_matches.matches
+          subtype_matches.matches.concat matches
+          matches = subtype_matches.matches
+        end
+      end
+
+      Matches.new(matches, matches.length > 0)
+    end
+
+    def lookup_first_def(*args)
+      instance_type.base_type.metaclass.lookup_first_def(*args)
+    end
+
+    def hierarchy_metaclass?
+      true
+    end
+
+    def lookup_macro(name, args_length)
+      nil
+    end
+
+    def metaclass?
+      true
+    end
+
+    def llvm_size
+      4
+    end
+
+    def to_s
+      "#{instance_type}:Class"
+    end
+  end
+
 end
