@@ -62,17 +62,17 @@ describe 'Code gen: hierarchy type metaclass' do
     run(%q(
       class Foo
         def foo
-          2
+          1
         end
       end
 
       class Bar < Foo
         def foo
-          1
+          2
         end
       end
 
-      f = Foo.new || Bar.new
+      f = Bar.new || Foo.new
       f.class.new.foo
     )).to_i.should eq(2)
   end

@@ -1655,6 +1655,8 @@ module Crystal
 
     attr_reader :instance_type
 
+    delegate [:lookup_first_def] => :'instance_type.base_type.metaclass'
+
     def initialize(instance_type)
       @instance_type = instance_type
     end
@@ -1701,10 +1703,6 @@ module Crystal
       end
 
       Matches.new(matches, matches.length > 0)
-    end
-
-    def lookup_first_def(*args)
-      instance_type.base_type.metaclass.lookup_first_def(*args)
     end
 
     def hierarchy_metaclass?
