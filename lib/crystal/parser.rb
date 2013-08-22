@@ -793,7 +793,7 @@ module Crystal
       Case.new(cond, whens, a_else)
     end
 
-    def parse_ident
+    def parse_ident(allow_type_vars = true)
       location = @token.location
 
       names = []
@@ -826,7 +826,7 @@ module Crystal
         const.name_length = @token.location[1] - start_column
       end
 
-      if @token.type == :'('
+      if allow_type_vars && @token.type == :'('
         next_token_skip_space_or_newline
 
         type_vars = []
@@ -1199,11 +1199,9 @@ module Crystal
       location = @token.location
 
       next_token_skip_space_or_newline
-      check :CONST
-
-      name = @token.value
       name_column_number = @token.column_number
-      next_token_skip_space
+      name = parse_ident(false)
+      skip_space
 
       type_vars = parse_type_vars
 
@@ -1254,11 +1252,10 @@ module Crystal
       location = @token.location
 
       next_token_skip_space_or_newline
-      check :CONST
 
-      name = @token.value
       name_column_number = @token.column_number
-      next_token_skip_space
+      name = parse_ident(false)
+      skip_space
 
       type_vars = parse_type_vars
       skip_statement_end

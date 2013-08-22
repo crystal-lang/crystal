@@ -152,21 +152,29 @@ module Crystal
                  mod.reference
                end
 
-      type = current_type.types[node.name]
+      if node.name.names.length == 1 && !node.name.global
+        scope = current_type
+        name = node.name.names.first
+      else
+        name = node.name.names.pop
+        scope = lookup_ident_type node.name
+      end
+
+      type = scope.types[name]
       if type
-        node.raise "#{node.name} is not a class" unless type.is_a?(ClassType)
+        node.raise "#{name} is not a class" unless type.is_a?(ClassType)
         if node.superclass && type.superclass != superclass
           node.raise "superclass mismatch for class #{type.name} (#{superclass.name} for #{type.superclass.name})"
         end
       else
         neeeds_force_add_subclass = true
         if node.type_vars
-          type = GenericClassType.new current_type, node.name, superclass, node.type_vars, false
+          type = GenericClassType.new scope, name, superclass, node.type_vars, false
         else
-          type = NonGenericClassType.new current_type, node.name, superclass, false
+          type = NonGenericClassType.new scope, name, superclass, false
         end
         type.abstract = node.abstract
-        current_type.types[node.name] = type
+        scope.types[name] = type
       end
 
       @types.push type
@@ -179,18 +187,26 @@ module Crystal
     end
 
     def visit_module_def(node)
-      type = current_type.types[node.name]
+      if node.name.names.length == 1 && !node.name.global
+        scope = current_type
+        name = node.name.names.first
+      else
+        name = node.name.names.pop
+        scope = lookup_ident_type node.name
+      end
+
+      type = scope.types[name]
       if type
         unless type.module?
-          node.raise "#{node.name} is not a module, it's a #{type.type_desc}"
+          node.raise "#{name} is not a module, it's a #{type.type_desc}"
         end
       else
         if node.type_vars
-          type = GenericModuleType.new current_type, node.name, node.type_vars
+          type = GenericModuleType.new scope, name, node.type_vars
         else
-          type = NonGenericModuleType.new current_type, node.name
+          type = NonGenericModuleType.new scope, name
         end
-        current_type.types[node.name] = type
+        scope.types[name] = type
       end
 
       @types.push type

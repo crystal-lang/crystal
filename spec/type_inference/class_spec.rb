@@ -369,4 +369,16 @@ describe 'Type inference: class' do
     mod, input = infer_type input
     mod.types["Foo"].instance_vars["@superclass"].type.should eq(mod.union_of(mod.nil, mod.int32))
   end
+
+  it "allows defining classes inside modules or classes with ::" do
+    input = parse(%q(
+      class Foo
+      end
+
+      class Foo::Bar
+      end
+      ))
+    mod, input = infer_type input
+    mod.types["Foo"].types["Bar"].should be_a(NonGenericClassType)
+  end
 end

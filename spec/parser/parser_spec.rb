@@ -205,21 +205,22 @@ describe Parser do
   it_parses "unless foo; 1; end", Unless.new("foo".call, 1.int32)
   it_parses "unless foo; 1; else; 2; end", Unless.new("foo".call, 1.int32, 2.int32)
 
-  it_parses "class Foo; end", ClassDef.new("Foo")
-  it_parses "class Foo\nend", ClassDef.new("Foo")
-  it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
-  it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
-  it_parses "class Foo(T); end", ClassDef.new("Foo", nil, nil, ["T"])
-  it_parses "abstract class Foo; end", ClassDef.new("Foo", nil, nil, nil, true)
+  it_parses "class Foo; end", ClassDef.new("Foo".ident)
+  it_parses "class Foo\nend", ClassDef.new("Foo".ident)
+  it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo".ident, [Def.new("foo", [], nil)])
+  it_parses "class Foo < Bar; end", ClassDef.new("Foo".ident, nil, "Bar".ident)
+  it_parses "class Foo(T); end", ClassDef.new("Foo".ident, nil, nil, ["T"])
+  it_parses "abstract class Foo; end", ClassDef.new("Foo".ident, nil, nil, nil, true)
+  it_parses "class Foo::Bar; end", ClassDef.new(Ident.new(["Foo", "Bar"]))
 
   it_parses "Foo(T)", NewGenericClass.new("Foo".ident, ["T".ident])
   it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident])])
   it_parses "Foo(Bar(T | U))", NewGenericClass.new("Foo".ident, [NewGenericClass.new("Bar".ident, [IdentUnion.new(["T".ident, "U".ident])])])
   it_parses "Foo(T?)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, Ident.new(["Nil"], true)])])
 
-  it_parses "module Foo; end", ModuleDef.new("Foo")
-  it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [], nil)])
-  it_parses "module Foo(T); end", ModuleDef.new("Foo", nil, ["T"])
+  it_parses "module Foo; end", ModuleDef.new("Foo".ident)
+  it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".ident, [Def.new("foo", [], nil)])
+  it_parses "module Foo(T); end", ModuleDef.new("Foo".ident, nil, ["T"])
 
   it_parses "while true; 1; end;", While.new(true.bool, 1.int32)
 
@@ -289,7 +290,7 @@ describe Parser do
   it_parses "foo [1]", Call.new(nil, "foo", [[1.int32].array])
   it_parses "foo.bar [1]", Call.new("foo".call, "bar", [[1.int32].array])
 
-  it_parses "class Foo; end\nwhile true; end", [ClassDef.new('Foo'), While.new(true.bool)]
+  it_parses "class Foo; end\nwhile true; end", [ClassDef.new("Foo".ident), While.new(true.bool)]
   it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
   it_parses "(1)\nif true; end", [1.int32, If.new(true.bool)]
   it_parses "begin\n1\nend\nif true; end", [1.int32, If.new(true.bool)]

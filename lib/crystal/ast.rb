@@ -243,6 +243,7 @@ module Crystal
     end
 
     def accept_children(visitor)
+      name.accept visitor
       body.accept visitor
     end
 
@@ -251,7 +252,7 @@ module Crystal
     end
 
     def clone_from(other)
-      @name = other.name
+      @name = other.name.clone
       @body = other.body.clone
       @superclass = other.superclass
       @type_vars = other.type_vars.clone
@@ -280,6 +281,7 @@ module Crystal
     end
 
     def accept_children(visitor)
+      @name.accept visitor
       @body.accept visitor
     end
 
@@ -288,7 +290,7 @@ module Crystal
     end
 
     def clone_from(other)
-      @name = other.name
+      @name = other.name.clone
       @body = other.body.clone
       @type_vars = other.type_vars.map(&:clone) if other.type_vars
       @name_column_number = other.name_column_number

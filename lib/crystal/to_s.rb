@@ -452,7 +452,7 @@ module Crystal
     def visit_class_def(node)
       @str << "abstract " if node.abstract
       @str << "class "
-      @str << node.name
+      node.name.accept self
       if node.type_vars
         @str << "("
         node.type_vars.each_with_index do |type_var, i|
@@ -473,7 +473,7 @@ module Crystal
 
     def visit_module_def(node)
       @str << "module "
-      @str << node.name
+      node.name.accept self
       if node.type_vars
         @str << "("
         node.type_vars.each_with_index do |type_var, i|
