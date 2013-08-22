@@ -162,7 +162,7 @@ module Crystal
       end
 
       if @options[:execute]
-        puts `#{@options[:output_filename]} #{@options[:args].join ' '}`
+        print `#{@options[:output_filename]} #{@options[:args].join ' '}`
         @tempfile.delete
       end
     end
