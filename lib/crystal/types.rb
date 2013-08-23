@@ -1509,13 +1509,15 @@ module Crystal
       base_type_lookup = hierarchy_lookup(base_type)
       concrete_classes = Array(cover())
 
-      base_type_matches = base_type_lookup.lookup_matches(name, arg_types, yields, self)
-      if !base_type.abstract && !base_type_matches.cover_all?
-        return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
+      unless base_type_lookup.abstract && name == "allocate"
+        base_type_matches = base_type_lookup.lookup_matches(name, arg_types, yields, self)
+        if !base_type.abstract && !base_type_matches.cover_all?
+          return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
+        end
       end
 
       all_matches = {}
-      matches = base_type_matches.matches || []
+      matches = (base_type_matches && base_type_matches.matches) || []
 
       instance_type.each_subtype(base_type) do |subtype|
         next if subtype.value?

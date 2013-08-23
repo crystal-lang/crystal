@@ -32,4 +32,20 @@ describe 'Type inference: hierarchy metaclass' do
       f.class.foo
     )) { union_of(int32, float64) }
   end
+
+  it "allows allocating hierarchy type when base class is abstract" do
+    assert_type(%q(
+      abstract class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      bar = Bar.new || Baz.new
+      baz = bar.class.allocate
+      )) { types["Foo"].hierarchy_type }
+  end
 end
