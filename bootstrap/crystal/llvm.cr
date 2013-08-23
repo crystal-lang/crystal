@@ -21,6 +21,9 @@ lib LibLLVM("LLVM-3.3")
   fun build_ret = LLVMBuildRet(builder : BuilderRef, value : ValueRef) : ValueRef
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
   fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : Char*) : ValueRef
+  fun build_alloca = LLVMBuildAlloca(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
+  fun build_store = LLVMBuildStore(builder : BuilderRef, value : ValueRef, ptr : ValueRef)
+  fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -125,6 +128,18 @@ module LLVM
 
     def call(func)
       LibLLVM.build_call(@builder, func.llvm_function, nil, 0, "")
+    end
+
+    def alloca(type, name = "")
+      LibLLVM.build_alloca(@builder, type.type, name)
+    end
+
+    def store(value, ptr)
+      LibLLVM.build_store(@builder, value, ptr)
+    end
+
+    def load(ptr, name = "")
+      LibLLVM.build_load(@builder, ptr, name)
     end
   end
 

@@ -29,6 +29,16 @@ module Crystal
     visitor.llvm_mod
   end
 
+  class LLVMVar
+    property :pointer
+    property :type
+
+    def initialize(pointer, type)
+      @pointer = pointer
+      @type = type
+    end
+  end
+
   class CodeGenVisitor < Visitor
     getter :llvm_mod
     getter :fun
@@ -47,6 +57,7 @@ module Crystal
       @builder = LLVM::Builder.new
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @const_block_entry = @const_block
+      @vars = {} of String => LLVMVar
     end
 
     def finish
@@ -95,6 +106,102 @@ module Crystal
       @last = LLVM::Int8.from_i(node.value[0].ord)
     end
 
+    def visit(node : Assign)
+      codegen_assign_node(node.target, node.value)
+    end
+
+    def visit(node : Var)
+      var = @vars[node.name]
+      @last = @builder.load(var.pointer)
+      # if var[:type] == node.type
+      #   @last = var[:ptr]
+      #   @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+      # elsif var[:type].nilable?
+      #   if node.type.nil_type?
+      #     @last = null_pointer?(var[:ptr])
+      #   else
+      #     @last = var[:ptr]
+      #     @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+      #   end
+      # else
+      #   if node.type.union?
+      #     @last = cast_to_pointer var[:ptr], node.type
+      #   else
+      #     value_ptr = union_value(var[:ptr])
+      #     @last = cast_to_pointer value_ptr, node.type
+      #     @last = @builder.load(@last) unless node.type.passed_by_val?
+      #   end
+      # end
+    end
+
+    def codegen_assign_node(target, value)
+      if target.is_a?(Ident)
+        return false
+      end
+
+      # if target.is_a?(ClassVar) && target.class_scope
+      #   global_name = class_var_global_name(target)
+      #   in_const_block(global_name) do
+      #     accept(value)
+      #     llvm_value = @last
+      #     ptr = assign_to_global global_name, target.type
+      #     codegen_assign(ptr, target.type, value.type, llvm_value)
+      #   end
+      #   return
+      # end
+
+      accept(value)
+
+      # if value.no_returns?
+      #   return
+      # end
+
+      codegen_assign_target(target, value, @last) if @last
+
+      false
+    end
+
+    def codegen_assign_target(target, value, llvm_value)
+      case target
+      # when InstanceVar
+      #   ivar = @type.lookup_instance_var(target.name.to_s)
+      #   ptr = gep llvm_self_ptr, 0, @type.index_of_instance_var(target.name.to_s)
+      # when Global
+      #   ptr = assign_to_global target.name.to_s, target.type
+      # when ClassVar
+      #   ptr = assign_to_global class_var_global_name(target), target.type
+      # else
+      when Var
+        var = declare_var(target)
+        ptr = var.pointer
+        codegen_assign(ptr, target.type, value.type, llvm_value)
+      else
+        raise "Unknown assign target type: #{target}"
+      end
+
+      # codegen_assign(ptr, target.type, value.type, llvm_value)
+    end
+
+    def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
+      if target_type == value_type
+        # value = @builder.load value if target_type.union? || (instance_var && (target_type.c_struct? || target_type.c_union?))
+        @builder.store value, pointer
+      else
+        raise "Not implemented: assign_to_union"
+        # assign_to_union(pointer, target_type, value_type, value)
+      end
+    end
+
+    def declare_var(var)
+      @vars.fetch_or_assign(var.name.to_s) do
+        llvm_var = LLVMVar.new(alloca(llvm_type(var.type), var.name.to_s), var.type)
+        # if var.type.is_a?(UnionType) && union_type_id = var.type.types.any?(&:nil_type?)
+        #   in_alloca_block { assign_to_union(llvm_var[:ptr], var.type, @mod.nil, llvm_nil) }
+        # end
+        llvm_var
+      end
+    end
+
     # def new_entry_block
     #   @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
     # end
@@ -126,6 +233,28 @@ module Crystal
 
     def new_blocks(names)
       names.map { |name| new_block name }
+    end
+
+    def alloca(type, name = "")
+      in_alloca_block { @builder.alloca type, name }
+    end
+
+    def in_alloca_block
+      old_block = @builder.insert_block
+      @builder.position_at_end @alloca_block
+      value = yield
+      @builder.position_at_end old_block
+      value
+    end
+
+    def llvm_type(type)
+      @llvm_typer.llvm_type(type)
+    end
+
+    def accept(node)
+      # old_current_node = @current_node
+      node.accept self
+      # @current_node = old_current_node
     end
   end
 end
