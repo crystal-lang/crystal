@@ -48,4 +48,35 @@ describe 'Type inference: hierarchy metaclass' do
       baz = bar.class.allocate
       )) { types["Foo"].hierarchy_type }
   end
+
+  it "yields hierarchy type in block arg if class is abstract" do
+    assert_type(%q(
+      require "prelude"
+
+      abstract class Foo
+        def clone
+          self.class.allocate
+        end
+
+        def to_s
+          "Foo"
+        end
+      end
+
+      class Bar < Foo
+        def to_s
+          "Bar"
+        end
+      end
+
+      class Baz < Foo
+        def to_s
+          "Baz"
+        end
+      end
+
+      a = [Bar.new, Baz.new] of Foo
+      b = a.map { |e| e.clone }
+      )) { array_of(types["Foo"].hierarchy_type) }
+  end
 end

@@ -161,7 +161,9 @@ module Crystal
 
         if block_arg && block_arg.inputs
           yield_vars = block_arg.inputs.each_with_index.map do |input, i|
-            Var.new("var#{i}", lookup_node_type(ident_lookup, input))
+            type = lookup_node_type(ident_lookup, input)
+            type = type.hierarchy_type if type.class? && type.abstract
+            Var.new("var#{i}", type)
           end
           block.args.each_with_index do |arg, i|
             var = yield_vars[i]
