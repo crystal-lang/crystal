@@ -33,7 +33,7 @@ module Crystal
             (@column_number - 1).times do
               str << " "
             end
-            str << "^"
+            str << "\033[1;32m^\033[0m"
             str << "\n"
           end
         end
