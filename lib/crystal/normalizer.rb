@@ -191,7 +191,11 @@ module Crystal
         wh.conds.each do |cond|
           right_side = temp_var
 
-          comp = Call.new(cond, :'===', [right_side])
+          if cond.is_a?(Ident)
+            comp = IsA.new(right_side, cond)
+          else
+            comp = Call.new(cond, :'===', [right_side])
+          end
           if final_comp
             final_comp = SimpleOr.new(final_comp, comp)
           else

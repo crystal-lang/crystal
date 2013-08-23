@@ -50,4 +50,22 @@ describe 'Code gen: case' do
       end
     )).to_i.should eq(2)
   end
+
+  it "codegens case with class" do
+    run(%q(
+      class Int32
+        def foo
+          self
+        end
+      end
+
+      a = -1 || 'a'
+      case a
+      when Int32
+        a.foo
+      when Char
+        a.ord
+      end
+      )).to_i.should eq(-1)
+  end
 end
