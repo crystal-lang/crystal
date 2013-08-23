@@ -776,16 +776,18 @@ module Crystal
     attr_accessor :name
     attr_accessor :args
     attr_accessor :block
+    attr_accessor :global
 
     attr_accessor :name_column_number
     attr_accessor :has_parenthesis
     attr_accessor :name_length
 
-    def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
+    def initialize(obj, name, args = [], block = nil, global = false, name_column_number = nil, has_parenthesis = false)
       @obj = obj
       @name = name
       @args = args || []
       @block = block
+      @global = global
       @name_column_number = name_column_number
       @has_parenthesis = has_parenthesis
     end
@@ -797,7 +799,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block
+      other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block && other.global == global
     end
 
     def clone_from(other)
@@ -805,6 +807,7 @@ module Crystal
       @name = other.name
       @args = other.args.map(&:clone)
       @block = other.block.clone
+      @global = other.global
       @name_column_number = other.name_column_number
       @name_length = other.name_length
       @has_parenthesis = other.has_parenthesis

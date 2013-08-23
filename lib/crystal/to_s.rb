@@ -150,6 +150,8 @@ module Crystal
     def visit_call(node)
       need_parens = node.obj.is_a?(Call) || node.obj.is_a?(Assign)
 
+      @str << "::" if node.global
+
       if node.obj && node.name == :'[]'
 
         @str << "(" if need_parens

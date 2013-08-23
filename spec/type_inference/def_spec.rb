@@ -208,4 +208,24 @@ describe 'Type inference: def' do
       ),
       "undefined method"
   end
+
+  it "types call with global scope" do
+    assert_type(%q(
+      def bar
+        1
+      end
+
+      class Foo
+        def foo
+          ::bar
+        end
+
+        def bar
+          'a'
+        end
+      end
+
+      Foo.new.foo
+      )) { int32 }
+  end
 end

@@ -834,7 +834,12 @@ module Crystal
 
     def visit_call(node)
       node.mod = mod
-      node.scope = @scope || (@types.last ? @types.last.metaclass : nil)
+
+      if node.global
+        node.scope = @mod
+      else
+        node.scope = @scope || (@types.last ? @types.last.metaclass : nil)
+      end
       node.parent_visitor = self
 
       if expand_macro(node)
