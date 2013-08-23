@@ -163,6 +163,9 @@ module Crystal
 
       if @options[:execute]
         print `#{@options[:output_filename]} #{@options[:args].join ' '}`
+        unless $?.success?
+          puts "\033[1;31m#{$?.to_s}\033[0m"
+        end
         @tempfile.delete
       end
     end
