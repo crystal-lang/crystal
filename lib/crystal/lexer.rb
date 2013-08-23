@@ -247,6 +247,9 @@ module Crystal
       elsif scan(/\\f/)
         @token.type = :STRING
         @token.value = "\f"
+      elsif match = scan(/\\(\d\d\d)/)
+        @token.type = :STRING
+        @token.value = match[2 .. -1].to_i(8).chr
       elsif scan(/\\0/)
         @token.type = :STRING
         @token.value = "\0"
