@@ -1,4 +1,3 @@
-require "strscan"
 require "token"
 
 class Char
