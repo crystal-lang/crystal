@@ -28,6 +28,10 @@ module Crystal
       @name = name
       @parents = [] of Type
     end
+
+    def to_s
+      @name
+    end
   end
 
   class NonGenericModuleType < ModuleType

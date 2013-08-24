@@ -5,35 +5,35 @@ include Crystal
 
 describe "Type inference: primitives" do
   it "types a bool" do
-    assert_type("false") { |mod| mod.bool }
+    assert_type("false") { bool }
   end
 
   it "types an int32" do
-    assert_type("1") { |mod| mod.int32 }
+    assert_type("1") { int32 }
   end
 
   it "types a int64" do
-    assert_type("1_i64") { |mod| mod.int64 }
+    assert_type("1_i64") { int64 }
   end
 
   it "types a float32" do
-    assert_type("2.3_f32") { |mod| mod.float32 }
+    assert_type("2.3_f32") { float32 }
   end
 
   it "types a float64" do
-    assert_type("2.3_f64") { |mod| mod.float64 }
+    assert_type("2.3_f64") { float64 }
   end
 
   it "types a char" do
-    assert_type("'a'") { |mod| mod.char }
+    assert_type("'a'") { char }
   end
 
   it "types a symbol" do
-    assert_type(":foo") { |mod| mod.symbol }
+    assert_type(":foo") { symbol }
   end
 
   it "types a string" do
-    assert_type("\"foo\"") { |mod| mod.string }
+    assert_type("\"foo\"") { string }
   end
 
   it "types an expression" do
