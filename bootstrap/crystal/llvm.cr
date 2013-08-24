@@ -64,7 +64,7 @@ lib LibLLVM("LLVM-3.3")
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
   fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int32
-  fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Int32)
+  fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
 end

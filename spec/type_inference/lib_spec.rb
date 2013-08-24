@@ -40,22 +40,22 @@ describe 'Type inference: lib' do
 
   it "reports error on fun argument type not primitive like" do
     assert_error "lib Foo; fun foo(x : Reference); end",
-      "only primitive types and structs are allowed in lib declarations"
+      "only primitive types"
   end
 
   it "reports error on fun return type not primitive like" do
     assert_error "lib Foo; fun foo : Reference; end",
-      "only primitive types and structs are allowed in lib declarations"
+      "only primitive types"
   end
 
   it "reports error on struct field type not primitive like" do
     assert_error "lib Foo; struct Foo; x : Reference; end; end",
-      "only primitive types and structs are allowed in lib declarations"
+      "only primitive types"
   end
 
   it "reports error on typedef type not primitive like" do
     assert_error "lib Foo; type Foo : Reference; end",
-      "only primitive types and structs are allowed in lib declarations"
+      "only primitive types"
   end
 
   it "reports error out can only be used with lib funs" do

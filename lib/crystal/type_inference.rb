@@ -294,17 +294,17 @@ module Crystal
       node.return_type.accept self if node.return_type
 
       args = node.args.map do |arg|
-        check_primitive_like arg.type
+        arg_type = check_primitive_like arg.type
 
         fun_arg = Arg.new(arg.name)
         fun_arg.location = arg.location
-        fun_arg.type_restriction = fun_arg.type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
+        fun_arg.type_restriction = fun_arg.type = maybe_ptr_type(arg_type, arg.ptr)
         fun_arg
       end
 
-      check_primitive_like node.return_type if node.return_type
-
-      return_type = maybe_ptr_type(node.return_type ? node.return_type.type.instance_type : mod.nil, node.ptr)
+      return_type = node.return_type
+      return_type = check_primitive_like return_type if return_type
+      return_type = maybe_ptr_type(return_type ? return_type : mod.nil, node.ptr)
 
       begin
         external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
@@ -321,7 +321,7 @@ module Crystal
 
           inferred_return_type = @mod.type_merge node.body.type, external.type
 
-          if node.return_type && !node.return_type.type.equal?(@mod.void.metaclass) && !inferred_return_type.equal?(return_type)
+          if return_type && !return_type.equal?(@mod.void) && !inferred_return_type.equal?(return_type)
             node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
           end
 
@@ -352,9 +352,9 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
-        check_primitive_like node.type
+        node_type = check_primitive_like node.type
 
-        typed_def_type = maybe_ptr_type(node.type.type.instance_type, node.ptr)
+        typed_def_type = maybe_ptr_type(node_type, node.ptr)
 
         current_type.types[node.name] = TypeDefType.new current_type, node.name, typed_def_type
       end
@@ -374,9 +374,9 @@ module Crystal
         node.raise "#{node.name} is already defined"
       else
         fields = node.fields.map do |field|
-          check_primitive_like field.type
+          field_type = check_primitive_like field.type
 
-          Var.new(field.name, maybe_ptr_type(field.type.type.instance_type, field.ptr))
+          Var.new(field.name, maybe_ptr_type(field_type, field.ptr))
         end
         current_type.types[node.name] = klass.new(current_type, node.name, fields)
       end
@@ -409,12 +409,15 @@ module Crystal
     end
 
     def check_primitive_like(node)
-      unless node.type.instance_type.primitive_like?
-        msg = "only primitive types and structs are allowed in lib declarations"
-        msg << " (did you mean Int32?)" if node.type.instance_type.equal?(@mod.types["Int"])
-        msg << " (did you mean Float32?)" if node.type.instance_type.equal?(@mod.types["Float"])
+      type = node.type.instance_type
+      unless type.primitive_like?
+        msg = "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
+        msg << " (did you mean Int32?)" if type.equal?(@mod.types["Int"])
+        msg << " (did you mean Float32?)" if type.equal?(@mod.types["Float"])
         node.raise msg
       end
+      type = @mod.int32 if type.c_enum?
+      type
     end
 
     def visit_struct_set(node)
