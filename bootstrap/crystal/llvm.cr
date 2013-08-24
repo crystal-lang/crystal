@@ -269,13 +269,13 @@ module LLVM
   end
 
   class ArrayType < Type
-    def initialize(element_type : LLVM::Type, count)
+    def initialize(element_type : Type, count)
       super LibLLVM.array_type(element_type.type, count.to_u32)
     end
   end
 
   class PointerType < Type
-    def initialize(element_type : LLVM::Type)
+    def initialize(element_type : Type)
       super LibLLVM.pointer_type(element_type.type, 0_u32)
     end
   end

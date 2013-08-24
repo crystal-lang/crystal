@@ -381,4 +381,36 @@ describe 'Type inference: class' do
     mod, input = infer_type input
     mod.types["Foo"].types["Bar"].should be_a(NonGenericClassType)
   end
+
+  it "doesn't lookup type in parents' containers, and lookups and in program" do
+    code = %q(
+      class Bar
+      end
+
+      module Mod
+        class Bar
+        end
+
+        class Foo
+          def self.foo(x : Bar)
+            1
+          end
+
+          def self.foo(x : ::Bar)
+            'a'
+          end
+        end
+      end
+      )
+
+    assert_type(%Q(
+      #{code}
+      Mod::Foo.foo(Mod::Bar.new)
+      )) { int32 }
+
+    assert_type(%Q(
+      #{code}
+      Mod::Foo.foo(Bar.new)
+      )) { char }
+  end
 end

@@ -238,7 +238,14 @@ module Crystal
           arg_type && arg_type.generic? && match_generic_type(arg_type, restriction, owner, type_lookup, free_vars) && arg_type
         end
       when Ident
-        type = free_vars[restriction.names] || type_lookup.lookup_type(restriction.names)
+        type = free_vars[restriction.names]
+        unless type
+          if restriction.global
+            type = program.lookup_type(restriction.names)
+          else
+            type = type_lookup.lookup_type(restriction.names)
+          end
+        end
         if type
           arg_type && arg_type.restrict(type)
         else
@@ -478,7 +485,7 @@ module Crystal
       super || parents.any? { |parent| parent.implements?(other_type) }
     end
 
-    def lookup_type(names, already_looked_up = {})
+    def lookup_type(names, already_looked_up = {}, lookup_in_container = true)
       return nil if already_looked_up[type_id]
       already_looked_up[type_id] = true
 
@@ -491,11 +498,11 @@ module Crystal
       return type if type
 
       parents.each do |parent|
-        match = parent.lookup_type(names, already_looked_up)
+        match = parent.lookup_type(names, already_looked_up, false)
         return match if match
       end
 
-      container ? container.lookup_type(names, already_looked_up) : nil
+      lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
     end
 
     def full_name
@@ -959,7 +966,7 @@ module Crystal
       super || generic_class.parents.any? { |parent| parent.implements?(other_type) }
     end
 
-    def lookup_type(names, already_looked_up = {})
+    def lookup_type(names, already_looked_up = {}, lookup_in_container = true)
       return nil if already_looked_up[type_id]
       already_looked_up[type_id] = true
 
@@ -976,11 +983,11 @@ module Crystal
       return type if type
 
       parents.each do |parent|
-        match = parent.lookup_type(names, already_looked_up)
+        match = parent.lookup_type(names, already_looked_up, false)
         return match if match
       end
 
-      generic_class.container ? generic_class.container.lookup_type(names, already_looked_up) : nil
+      lookup_in_container && generic_class.container ? generic_class.container.lookup_type(names, already_looked_up) : nil
     end
 
     def parents
@@ -1039,7 +1046,7 @@ module Crystal
       @mapping = mapping
     end
 
-    def lookup_type(names, already_looked_up = {})
+    def lookup_type(names, already_looked_up = {}, lookup_in_container = true)
       if names.length == 1 && m = @mapping[names[0]]
         if m.is_a?(Type)
           return m
@@ -1051,7 +1058,7 @@ module Crystal
         end
       end
 
-      @module.lookup_type(names, already_looked_up)
+      @module.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
     def to_s
