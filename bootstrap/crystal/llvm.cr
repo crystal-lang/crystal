@@ -7,11 +7,32 @@ lib LibLLVM("LLVM-3.3")
   type ExecutionEngineRef : Void*
   type GenericValueRef : Void*
 
+  enum Linkage
+    External,
+    AvailableExternally,
+    LinkOnceAny,
+    LinkOnceODR,
+    LinkOnceODRAutoHide,
+    WeakAny,
+    WeakODR,
+    Appending,
+    Internal,
+    Private,
+    DLLImport,
+    DLLExport,
+    ExternalWeak,
+    Ghost,
+    Common,
+    LinkerPrivate,
+    LinkerPrivateWeak
+  end
+
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun void_type = LLVMVoidType() : TypeRef
   fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : Int32, is_var_arg : Int32) : TypeRef
   fun add_function = LLVMAddFunction(module : ModuleRef, name : Char*, type : TypeRef) : ValueRef
+  fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : Char*) : ValueRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : Char*) : ValueRef
   fun append_basic_block = LLVMAppendBasicBlock(fn : ValueRef, name : Char*) : BasicBlockRef
   fun create_builder = LLVMCreateBuilder() : BuilderRef
@@ -24,11 +45,16 @@ lib LibLLVM("LLVM-3.3")
   fun build_alloca = LLVMBuildAlloca(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
   fun build_store = LLVMBuildStore(builder : BuilderRef, value : ValueRef, ptr : ValueRef)
   fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : Char*) : ValueRef
+  fun build_bit_cast = LLVMBuildBitCast(builder : BuilderRef, value : ValueRef, type : TypeRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
+  fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
+  fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
   fun const_int = LLVMConstInt(int_type : TypeRef, value : UInt64, sign_extend : Int32) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
+  fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
+  fun const_array = LLVMConstArray(element_type : TypeRef, constant_vals : ValueRef*, length : UInt32) : ValueRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : Char**) : Int32
   fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : Int32) : GenericValueRef
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
@@ -36,7 +62,11 @@ lib LibLLVM("LLVM-3.3")
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : Int32
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
+  fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
   fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int32
+  fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Int32)
+  fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
+  fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
 end
 
 module LLVM
@@ -50,6 +80,7 @@ module LLVM
     def initialize(name)
       @module = LibLLVM.module_create_with_name name
       @functions = FunctionCollection.new(self)
+      @globals = GlobalCollection.new(self)
     end
 
     def dump
@@ -58,6 +89,10 @@ module LLVM
 
     def functions
       @functions
+    end
+
+    def globals
+      @globals
     end
 
     def llvm_module
@@ -101,6 +136,48 @@ module LLVM
     end
   end
 
+  class GlobalCollection
+    def initialize(mod)
+      @mod = mod
+    end
+
+    def add(type, name)
+      GlobalVariable.new(LibLLVM.add_global(@mod.llvm_module, type.type, name))
+    end
+  end
+
+  class Value
+    getter :value
+
+    def initialize(value)
+      @value = value
+    end
+
+    def self.const_string(value)
+      new(LibLLVM.const_string(value.cstr, value.length.to_u32, 0_u32))
+    end
+
+    def self.const_array(type, values)
+      new(LibLLVM.const_array(type.type, values.buffer, values.length.to_u32))
+    end
+  end
+
+  class GlobalValue < Value
+    def linkage=(linkage)
+      LibLLVM.set_linkage(@value, linkage)
+    end
+
+    def global_constant=(flag : Bool)
+      LibLLVM.set_global_constant(@value, flag ? 1 : 0)
+    end
+  end
+
+  class GlobalVariable < GlobalValue
+    def initializer=(value)
+      LibLLVM.set_initializer(@value, value.value)
+    end
+  end
+
   class Builder
     def initialize
       @builder = LibLLVM.create_builder
@@ -140,6 +217,10 @@ module LLVM
 
     def load(ptr, name = "")
       LibLLVM.build_load(@builder, ptr, name)
+    end
+
+    def bit_cast(value, type, name = "")
+      LibLLVM.build_bit_cast(@builder, value, type.type, name)
     end
   end
 
@@ -187,6 +268,18 @@ module LLVM
     end
   end
 
+  class ArrayType < Type
+    def initialize(element_type : LLVM::Type, count)
+      super LibLLVM.array_type(element_type.type, count.to_u32)
+    end
+  end
+
+  class PointerType < Type
+    def initialize(element_type : LLVM::Type)
+      super LibLLVM.pointer_type(element_type.type, 0_u32)
+    end
+  end
+
   class GenericValue
     def initialize(value)
       @value = value
@@ -206,6 +299,10 @@ module LLVM
 
     def to_f64
       LibLLVM.generic_value_to_float(LLVM::Double.type, @value)
+    end
+
+    def to_string
+      LibLLVM.generic_value_to_pointer(@value).as(String)
     end
   end
 

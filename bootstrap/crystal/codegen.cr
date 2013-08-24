@@ -58,6 +58,7 @@ module Crystal
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @const_block_entry = @const_block
       @vars = {} of String => LLVMVar
+      @strings = {} of String => LibLLVM::ValueRef
     end
 
     def finish
@@ -104,6 +105,34 @@ module Crystal
 
     def visit(node : CharLiteral)
       @last = LLVM::Int8.from_i(node.value[0].ord)
+    end
+
+    def visit(node : StringLiteral)
+      @last = build_string_constant(node.value)
+    end
+
+    def build_string_constant(str, name = "str")
+      # name = name.gsub('@', '.')
+      @strings.fetch_or_assign(str) do
+        global = @llvm_mod.globals.add(LLVM::ArrayType.new(LLVM::Int8, str.length + 5), name)
+        global.linkage = LibLLVM::Linkage::Private
+        global.global_constant = true
+
+        # Pack the string bytes
+        bytes = [] of LibLLVM::ValueRef
+        length = str.length
+        length_ptr = length.ptr.as(UInt8)
+        (0..3).each { |i| bytes << LLVM::Int8.from_i(length_ptr[i]) }
+        str.each_char { |c| bytes << LLVM::Int8.from_i(c.ord) }
+        bytes << LLVM::Int8.from_i(0)
+
+        global.initializer = LLVM::Value.const_array(LLVM::Int8, bytes)
+        cast_to global.value, @mod.string
+      end
+    end
+
+    def cast_to(value, type)
+      @builder.bit_cast(value, llvm_type(type))
     end
 
     def visit(node : Assign)

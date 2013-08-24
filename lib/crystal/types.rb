@@ -1295,6 +1295,10 @@ module Crystal
       @type.lookup_first_def(*args)
     end
 
+    def parents(*args)
+      @type.parents(*args)
+    end
+
     def type_desc
       "type def"
     end

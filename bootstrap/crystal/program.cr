@@ -41,7 +41,9 @@ module Crystal
 
       @types["Symbol"] = PrimitiveType.new self, "Symbol", value, LLVM::Int32, 4
 
-      string = @types["String"] = NonGenericClassType.new self, "String", reference
+      # string = @types["String"] = NonGenericClassType.new self, "String", reference
+      # HACK: until we have class types in bootstrap
+      @types["String"] = PrimitiveType.new self, "String", value, LLVM::PointerType.new(LLVM::Int8), 8
     end
 
     macro self.type_getter(def_name, type_name)"
