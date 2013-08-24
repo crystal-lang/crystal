@@ -14,6 +14,14 @@ def assert_type(str)
   end
 end
 
+def assert_normalize(from, to)
+  program = Program.new
+  normalizer = Normalizer.new(program)
+  from_nodes = Parser.parse(from)
+  to_nodes = normalizer.normalize(from_nodes)
+  to_nodes.to_s.strip.should eq(to.strip)
+end
+
 def parse(string)
   Parser.parse string
 end

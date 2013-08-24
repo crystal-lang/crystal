@@ -43,7 +43,9 @@ module Crystal
 
       # string = @types["String"] = NonGenericClassType.new self, "String", reference
       # HACK: until we have class types in bootstrap
-      @types["String"] = PrimitiveType.new self, "String", value, LLVM::PointerType.new(LLVM::Int8), 8
+      string = @types["String"] = PrimitiveType.new self, "String", value, LLVM::PointerType.new(LLVM::Int8), 8
+
+      @temp_var_counter = 0
     end
 
     macro self.type_getter(def_name, type_name)"
@@ -73,5 +75,9 @@ module Crystal
     type_getter :float64
     type_getter :string
     type_getter :symbol
+
+    def new_temp_var
+      Var.new("#temp_#{@temp_var_counter += 1}")
+    end
   end
 end

@@ -295,7 +295,7 @@ class Array(T)
     ary
   end
 
-  def concat(other : Array(T))
+  def concat(other)
     other.each do |elem|
       push elem
     end

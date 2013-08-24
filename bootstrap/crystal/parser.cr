@@ -713,7 +713,7 @@ module Crystal
       next_token_skip_space_or_newline
       check :CONST
 
-      name = @token.value
+      name = @token.value.to_s
       name_column_number = @token.column_number
       next_token_skip_space
 
@@ -768,7 +768,7 @@ module Crystal
       next_token_skip_space_or_newline
       check :CONST
 
-      name = @token.value
+      name = @token.value.to_s
       name_column_number = @token.column_number
       next_token_skip_space
 

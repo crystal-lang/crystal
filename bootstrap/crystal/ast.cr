@@ -10,6 +10,20 @@ module Crystal
     def location=(location)
       @location = location.clone
     end
+
+    def clone
+      self
+    end
+
+    # def clone
+    #   new_node = self.class.allocate
+    #   new_node.location = location
+    #   new_node.clone_from self
+    #   new_node
+    # end
+
+    # def clone_from(other)
+    # end
   end
 
   # A container for one or many expressions.
@@ -54,6 +68,10 @@ module Crystal
     def accept_children(visitor)
       @expressions.each { |exp| exp.accept visitor }
     end
+
+    # def clone_from(other : self)
+    #   @expressions = other.expressions.map { |e| e.clone }
+    # end
   end
 
   # The nil literal.
@@ -177,6 +195,11 @@ module Crystal
     def ==(other : self)
       other.elements == elements && other.of == of
     end
+
+    # def clone_from(other : self)
+    #   @elements = other.elements.map { |e| e.clone }
+    #   @of = other.of.clone
+    # end
   end
 
   class HashLiteral < ASTNode
@@ -202,6 +225,13 @@ module Crystal
     def ==(other : self)
       other.keys == keys && other.values == values && other.of_key == of_key && other.of_value == of_value
     end
+
+    # def clone_from(other : self)
+    #   @keys = other.keys.map { |e| e.clone }
+    #   @values = other.values.map { |e| e.clone }
+    #   @of_key = other.of_key.clone
+    #   @of_value = other.of_value.clone
+    # end
   end
 
   class RangeLiteral < ASTNode
@@ -293,6 +323,7 @@ module Crystal
     property :cond
     property :then
     property :else
+    property :binary
 
     def initialize(cond, a_then = nil, a_else = nil)
       @cond = cond
@@ -656,6 +687,15 @@ module Crystal
     def ==(other : self)
       other.name == name && other.body == body && other.superclass == superclass && other.type_vars == type_vars && @abstract == other.abstract
     end
+
+    # def clone_from(other : self)
+    #   @name = other.name.clone
+    #   @body = other.body.clone
+    #   @superclass = other.superclass
+    #   @type_vars = other.type_vars.clone
+    #   @abstract = other.abstract
+    #   @name_column_number = other.name_column_number
+    # end
   end
 
   # Module definition:
@@ -684,6 +724,15 @@ module Crystal
     def ==(other : self)
       other.name == name && other.body == body && other.type_vars == type_vars
     end
+
+    # def clone_from(other : self)
+    #   @name = other.name.clone
+    #   @body = other.body.clone
+    #   if other_type_vars = other.type_vars
+    #     @type_vars = other_type_vars.map { |e| e.clone }
+    #   end
+    #   @name_column_number = other.name_column_number
+    # end
   end
 
   # While expression.

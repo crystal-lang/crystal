@@ -36,6 +36,10 @@ class Reference
     false
   end
 
+  def clone
+    self
+  end
+
   def to_s
     String.from_cstr(to_cstr)
   end
