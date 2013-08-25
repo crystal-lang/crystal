@@ -79,12 +79,15 @@ module Crystal
       @builder = CrystalLLVMBuilder.new @builder, self
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
+
+      @main_alloca_block = @alloca_block
       @const_block_entry = @const_block
 
       @vars = {}
       @exception_handlers = []
       @block_context = []
       @type = @mod
+      @in_const_block = false
 
       @strings = {}
       @symbols = {}
@@ -97,9 +100,6 @@ module Crystal
       symbol_table = @llvm_mod.globals.add(LLVM::Array(llvm_type(mod.string), symbol_table_values.count), "symbol_table")
       symbol_table.linkage = :internal
       symbol_table.initializer = LLVM::ConstantArray.const(llvm_type(mod.string), symbol_table_values)
-
-      @union_maps = {}
-      @is_a_maps = {}
 
       if debug
         @empty_md_list = metadata(metadata(0))
@@ -1256,9 +1256,11 @@ module Crystal
       old_exception_handlers = @exception_handlers
       old_gc_root_index = @gc_root_index
       old_needs_gc = @needs_gc
+      old_in_const_block = @in_const_block
 
       @vars = {}
       @exception_handlers = []
+      @in_const_block = false
 
       args = []
       if self_type && self_type.passed_as_self?
@@ -1361,6 +1363,7 @@ module Crystal
       @fun = old_fun
       @gc_root_index = old_gc_root_index
       @needs_gc = old_needs_gc
+      @in_const_block = old_in_const_block
 
       the_fun
     end
@@ -1654,7 +1657,12 @@ module Crystal
 
     def in_alloca_block
       old_block = @builder.insert_block
-      @builder.position_at_end @alloca_block
+
+      if @in_const_block
+        @builder.position_at_end @main_alloca_block
+      else
+        @builder.position_at_end @alloca_block
+      end
       value = yield
       @builder.position_at_end old_block
       value
@@ -1663,6 +1671,9 @@ module Crystal
     def in_const_block(const_block_name)
       old_position = @builder.insert_block
       old_fun = @fun
+      old_in_const_block = @in_const_block
+      @in_const_block = true
+
       @fun = @llvm_mod.functions[MAIN_NAME]
       const_block = new_block const_block_name
       @builder.position_at_end const_block
@@ -1676,6 +1687,7 @@ module Crystal
 
       @builder.position_at_end old_position
       @fun = old_fun
+      @in_const_block = old_in_const_block
 
       ret_value
     end
