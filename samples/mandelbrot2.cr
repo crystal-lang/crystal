@@ -1,3 +1,4 @@
+#!/usr/bin/env bin/crystal -run
 require "complex"
 
 def mandelbrot(a)

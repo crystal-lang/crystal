@@ -1,3 +1,4 @@
+#!/usr/bin/env bin/crystal -run
 # Ported from Nimrod: https://gist.github.com/AdrianV/5774141
 
 require "sdl"
@@ -17,12 +18,10 @@ class Vec3
   end
 
   def initialize(value)
-    value = value.to_f64
     @x, @y, @z = value, value, value
   end
 
-  def initialize(x, y, z)
-    @x, @y, @z = x.to_f64, y.to_f64, z.to_f64
+  def initialize(@x, @y, @z)
   end
 
   macro self.define_op(op)"
@@ -62,9 +61,7 @@ class Ray
   getter :start
   getter :dir
 
-  def initialize(start, dir)
-    @start = start
-    @dir = dir
+  def initialize(@start, @dir)
   end
 end
 
@@ -73,12 +70,7 @@ class Sphere
   getter :reflection
   getter :transparency
 
-  def initialize(center, radius, color, reflection = 0.0, transparency = 0.0)
-    @center = center
-    @radius = radius.to_f64
-    @color = color
-    @reflection = reflection.to_f64
-    @transparency = transparency.to_f64
+  def initialize(@center, @radius, @color, @reflection = 0.0, @transparency = 0.0)
   end
 
   def intersects?(ray)
@@ -117,9 +109,7 @@ class Light
   getter :position
   getter :color
 
-  def initialize(position, color)
-    @position = position
-    @color = color
+  def initialize(@position, @color)
   end
 end
 
@@ -127,9 +117,7 @@ class Scene
   getter :objects
   getter :lights
 
-  def initialize(objects, lights)
-    @objects = objects
-    @lights = lights
+  def initialize(@objects, @lights)
   end
 end
 
@@ -241,7 +229,6 @@ end
 
 SDL.init
 SDL.hide_cursor
-
 surface = SDL.set_video_mode WIDTH, HEIGHT, 32, LibSDL::DOUBLEBUF | LibSDL::HWSURFACE | LibSDL::ASYNCBLIT
 scene = Scene.new(
           [
