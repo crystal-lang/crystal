@@ -131,7 +131,7 @@ loop do
       parser.filename = "."
       nodes = parser.parse
       if is_evaluatable?(nodes)
-        nodes = Expressions.new [Require.new(StringLiteral.new('prelude')), nodes]
+        nodes = Expressions.new [Require.new("prelude"), nodes]
         nodes = Call.new(nodes, 'inspect')
         program = Program.new
         nodes = program.normalize nodes
@@ -140,7 +140,7 @@ loop do
           program.load_libs
           llvm_mod = program.build nodes
           engine = LLVM::JITCompiler.new(llvm_mod)
-          result = engine.run_function llvm_mod.functions["crystal_main"], 0, nil
+          result = engine.run_function llvm_mod.functions[Program::MAIN_NAME], 0, nil
           puts "=> #{result.to_string}"
         else
           puts "=> nil"
@@ -154,7 +154,7 @@ loop do
         incomplete_expression = true
       else
         puts ex
-        # puts ex.backtrace
+        puts ex.backtrace
         total_buffer = total_buffer[0 .. -(buffer.length + 1)]
         line_number = last_line - 1
       end
