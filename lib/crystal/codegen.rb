@@ -1318,7 +1318,7 @@ module Crystal
 
           accept(target_def.body)
 
-          if target_def.is_a?(External) && target_def.type.equal?(@mod.void)
+          if target_def.type.equal?(@mod.void)
             ret nil
           elsif target_def.body.no_returns?
             @builder.unreachable
