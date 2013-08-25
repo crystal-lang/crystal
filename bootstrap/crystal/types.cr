@@ -9,8 +9,7 @@ module Crystal
     getter :container
     getter :types
 
-    def initialize(container)
-      @container = container
+    def initialize(@container)
       @types = {} of String => Type
     end
 
@@ -23,9 +22,8 @@ module Crystal
     getter :name
     getter :parents
 
-    def initialize(container, name)
+    def initialize(container, @name)
       super(container)
-      @name = name
       @parents = [] of Type
     end
 
@@ -61,10 +59,9 @@ module Crystal
     getter :depth
     property :abstract
 
-    def initialize(container, name, superclass, add_subclass = true)
+    def initialize(container, name, @superclass, add_subclass = true)
       super(container, name)
       if superclass
-        @superclass = superclass
         @depth = superclass.depth + 1
       else
         @depth = 0
@@ -86,10 +83,8 @@ module Crystal
     getter :llvm_type
     getter :llvm_size
 
-    def initialize(container, name, superclass, llvm_type, llvm_size)
+    def initialize(container, name, superclass, @llvm_type, @llvm_size)
       super(container, name, superclass)
-      @llvm_type = llvm_type
-      @llvm_size = llvm_size
     end
 
     def llvm_name
@@ -100,18 +95,16 @@ module Crystal
   class IntegerType < PrimitiveType
     getter :rank
 
-    def initialize(container, name, superclass, llvm_type, llvm_size, rank)
+    def initialize(container, name, superclass, llvm_type, llvm_size, @rank)
       super(container, name, superclass, llvm_type, llvm_size)
-      @rank = rank
     end
   end
 
   class FloatType < PrimitiveType
     getter :rank
 
-    def initialize(container, name, superclass, llvm_type, llvm_size, rank)
+    def initialize(container, name, superclass, llvm_type, llvm_size, @rank)
       super(container, name, superclass, llvm_type, llvm_size)
-      @rank = rank
     end
   end
 

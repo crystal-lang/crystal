@@ -15,8 +15,7 @@ module Crystal
   class Normalizer < Transformer
     getter :program
 
-    def initialize(program)
-      @program = program
+    def initialize(@program)
     end
 
     def normalize(node)

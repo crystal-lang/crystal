@@ -15,9 +15,7 @@ module Crystal
   class TypeVisitor < Visitor
     getter :mod
 
-    def initialize(mod, vars = {} of String => Var)
-      @mod = mod
-      @vars = vars
+    def initialize(@mod, @vars = {} of String => Var)
     end
 
     def visit(node : ASTNode)

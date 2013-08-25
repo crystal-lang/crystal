@@ -33,9 +33,7 @@ module Crystal
     property :pointer
     property :type
 
-    def initialize(pointer, type)
-      @pointer = pointer
-      @type = type
+    def initialize(@pointer, @type)
     end
   end
 
@@ -43,9 +41,7 @@ module Crystal
     getter :llvm_mod
     getter :fun
 
-    def initialize(mod, node)
-      @mod = mod
-      @node = node
+    def initialize(@mod, @node)
       @llvm_mod = LLVM::Module.new("Crystal")
       @llvm_typer = LLVMTyper.new
       if node_type = node.type

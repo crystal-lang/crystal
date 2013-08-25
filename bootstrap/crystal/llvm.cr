@@ -105,8 +105,7 @@ module LLVM
   end
 
   class FunctionCollection
-    def initialize(mod)
-      @mod = mod
+    def initialize(@mod)
     end
 
     def add(name, arg_types, ret_type)
@@ -123,8 +122,7 @@ module LLVM
   end
 
   class Function
-    def initialize(func)
-      @fun = func
+    def initialize(@fun)
     end
 
     def append_basic_block(name)
@@ -137,8 +135,7 @@ module LLVM
   end
 
   class GlobalCollection
-    def initialize(mod)
-      @mod = mod
+    def initialize(@mod)
     end
 
     def add(type, name)
@@ -149,8 +146,7 @@ module LLVM
   class Value
     getter :value
 
-    def initialize(value)
-      @value = value
+    def initialize(@value)
     end
 
     def self.const_string(value)
@@ -227,8 +223,7 @@ module LLVM
   abstract class Type
     getter :type
 
-    def initialize(type)
-      @type = type
+    def initialize(@type)
     end
   end
 

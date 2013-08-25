@@ -8,9 +8,8 @@ module Crystal
       new(str, def_vars).parse
     end
 
-    def initialize(str, def_vars = [Set(String).new])
+    def initialize(str, @def_vars = [Set(String).new])
       super(str)
-      @def_vars = def_vars
       @last_call_has_parenthesis = false
       @yields = -1
     end
@@ -1147,7 +1146,7 @@ module Crystal
       end
 
       check :IDENT
-      arg_name = @token.value
+      arg_name = @token.value.to_s
       arg_location = @token.location
 
       default_value = nil
@@ -1858,7 +1857,7 @@ module Crystal
       while !@token.keyword?(:end)
         check :CONST
 
-        constant_name = @token.value
+        constant_name = @token.value.to_s
         next_token_skip_space
         if @token.type == :"="
           next_token_skip_space_or_newline

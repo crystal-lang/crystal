@@ -3,10 +3,7 @@ require "enumerable"
 class Range(B, E)
   include Enumerable(B)
 
-  def initialize(the_start : B, the_end : E, exclusive)
-    @begin = the_start
-    @end = the_end
-    @exclusive = exclusive
+  def initialize(@begin : B, @end : E, @exclusive)
   end
 
   def each

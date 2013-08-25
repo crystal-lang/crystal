@@ -4,10 +4,7 @@ module Spec
     getter :description
     getter :exception
 
-    def initialize(kind, description, exception = nil)
-      @kind = kind
-      @description = description
-      @exception = exception
+    def initialize(@kind, @description, @exception = nil)
     end
   end
 
@@ -84,9 +81,7 @@ module Spec
   end
 
   class NestedContext < Context
-    def initialize(description, parent)
-      @description = description
-      @parent = parent
+    def initialize(@description, @parent)
     end
 
     def report(kind, description, ex = nil)
@@ -95,8 +90,7 @@ module Spec
   end
 
   class EqualExpectation(T)
-    def initialize(value : T)
-      @value = value
+    def initialize(@value : T)
     end
 
     def match(value)

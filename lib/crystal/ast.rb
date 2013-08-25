@@ -104,14 +104,13 @@ module Crystal
     end
 
     def self.concat(exp, expressions)
-      if expressions.is_a?(Expressions)
-        return exp if expressions.empty?
+      expressions = expressions.expressions if expressions.is_a?(Expressions)
+      expressions = [expressions] unless expressions.is_a?(Array)
 
-        while expressions.length == 1 && expressions[0].is_a?(Expressions)
-          expressions = expressions[0].expressions
-        end
-      else
-        expressions = [expressions] unless expressions.is_a?(Array)
+      return exp if expressions.empty?
+
+      while expressions.length == 1 && expressions[0].is_a?(Expressions)
+        expressions = expressions[0].expressions
       end
 
       if exp

@@ -3,11 +3,8 @@ module Crystal
   end
 
   class SyntaxException < Exception
-    def initialize(message, line_number, column_number, filename)
+    def initialize(message, @line_number, @column_number, @filename)
       super(message)
-      @line_number = line_number
-      @column_number = column_number
-      @filename = filename
     end
 
     def to_s
