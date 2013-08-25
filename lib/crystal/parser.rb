@@ -420,7 +420,7 @@ module Crystal
             when :'='
               # Rewrite 'f.x = args' as f.x=(args)
               next_token_skip_space_or_newline
-              args = parse_args_space_consumed(false)
+              args = parse_call_args_space_consumed(false)
               atomic = Call.new(atomic, "#{name}=", args, nil, false, name_column_number)
               next
             when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
@@ -431,10 +431,10 @@ module Crystal
               atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name, [], nil, false, name_column_number), method, [value], nil, false, name_column_number)], nil, false, name_column_number)
               next
             else
-              args = parse_args_space_consumed
+              args = parse_call_args_space_consumed
             end
           else
-            args = parse_args
+            args = parse_call_args
           end
 
           block = parse_block
@@ -624,7 +624,7 @@ module Crystal
           class_var_name = "@#{@token.value}"
           node_and_next_token Call.new(ClassVar.new(class_var_name), :-@)
         else
-        raise "unexpected token: -@"
+          raise "unexpected token: -@"
         end
       else
         raise "unexpected token: #{@token.to_s}"
@@ -1019,7 +1019,7 @@ module Crystal
       name_column_number = @token.column_number
       next_token
 
-      args = parse_args
+      args = parse_call_args
       block = parse_block
 
       if block || global
@@ -1104,7 +1104,7 @@ module Crystal
       Block.new(block_args, block_body)
     end
 
-    def parse_args
+    def parse_call_args
       case @token.type
       when :'{'
         @last_call_has_parenthesis = false
@@ -1150,14 +1150,14 @@ module Crystal
       when :SPACE
         next_token
         @last_call_has_parenthesis = false
-        parse_args_space_consumed
+        parse_call_args_space_consumed
       else
         @last_call_has_parenthesis = false
         nil
       end
     end
 
-    def parse_args_space_consumed(check_plus_and_minus = true)
+    def parse_call_args_space_consumed(check_plus_and_minus = true)
       case @token.type
       when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-'
         if @token.type == :+ || @token.type == :- && check_plus_and_minus
@@ -1340,6 +1340,7 @@ module Crystal
       @def_name = name
 
       args = []
+      ivar_assigns = []
       block_arg = nil
 
       if @token.type == :'.'
@@ -1365,7 +1366,7 @@ module Crystal
       when :'('
         next_token_skip_space_or_newline
         while @token.type != :')'
-          block_arg = parse_arg(args, true)
+          block_arg = parse_arg(args, ivar_assigns, true)
           if block_arg
             check :')'
             break
@@ -1374,7 +1375,7 @@ module Crystal
         next_token_skip_statement_end
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg = parse_arg(args, false)
+          block_arg = parse_arg(args, ivar_assigns, false)
           if block_arg
             break
           end
@@ -1385,9 +1386,12 @@ module Crystal
       end
 
       if @token.keyword?(:end)
-        body = nil
+        body = Expressions.from(ivar_assigns)
       else
         body = parse_expressions
+        if ivar_assigns.length > 0
+          body = Expressions.concat(Expressions.new(ivar_assigns), body)
+        end
         body = parse_exception_handler body
       end
 
@@ -1400,15 +1404,30 @@ module Crystal
       node
     end
 
-    def parse_arg(args, parenthesis = false)
+    def parse_arg(args, ivar_assigns, parenthesis = false)
       if @token.type == :"&"
         next_token_skip_space_or_newline
         return parse_block_arg
       end
 
-      check :IDENT
-      arg_name = @token.value
-      arg_location = @token.location
+      case @token.type
+      when :IDENT
+        arg_name = @token.value
+        arg_location = @token.location
+      when :INSTANCE_VAR
+        arg_name = @token.value.to_s[1 .. -1]
+        arg_location = @token.location
+        ivar = InstanceVar.new(@token.value)
+        ivar.location = arg_location
+        var = Var.new(arg_name)
+        var.location = arg_location
+        assign = Assign.new(ivar, var)
+        assign.location = arg_location
+        ivar_assigns.push assign
+        @instance_vars.add ivar.name if @instance_vars
+      else
+        raise "unexpected token: #{@token}"
+      end
 
       default_value = nil
       type_restriction = nil
@@ -1577,7 +1596,7 @@ module Crystal
         def parse_#{keyword}
           next_token
 
-          args = parse_args
+          args = parse_call_args
 
           #{keyword == 'yield' ? '@yields ||= 0; if args && args.length > @yields; @yields = args.length; end' : ''}
 
