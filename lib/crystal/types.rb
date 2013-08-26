@@ -372,7 +372,11 @@ module Crystal
     end
 
     def lookup_similar_defs(name, args_length, yields)
+      return nil unless name =~ /\A[a-z_]/
+
       self.defs.each do |def_name, defs|
+        next unless def_name =~ /\A[a-z_]/
+
         defs.each do |filter, overload|
           next if filter[0].length != args_length || filter[1] != yields
 
