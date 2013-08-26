@@ -191,4 +191,32 @@ describe 'Code gen: nil' do
       a.should eq(nil)
       ))
   end
+
+  it "correctly dispatches when obj is nilable" do
+    run(%q(
+      class Nil
+        def foo
+          self
+        end
+
+        def nil?
+          true
+        end
+      end
+
+      class Foo
+        def foo
+          self
+        end
+
+        def nil?
+          false
+        end
+      end
+
+      a = 1 == 1 ? nil : Foo.new
+      b = a.foo
+      b.nil?
+      )).to_b.should be_true
+  end
 end

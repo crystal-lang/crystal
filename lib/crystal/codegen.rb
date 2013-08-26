@@ -413,7 +413,7 @@ module Crystal
         @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
       elsif var[:type].nilable?
         if node.type.nil_type?
-          @last = null_pointer?(var[:ptr])
+          @last = llvm_nil
         elsif node.type.equal?(@mod.object)
           @last = cast_to var[:ptr], @mod.object
         elsif node.type.equal?(@mod.object.hierarchy_type)
