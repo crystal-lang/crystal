@@ -384,14 +384,22 @@ class String
     end
   end
 
-  def starts_with?(str)
+  def starts_with?(str : String)
     return false if str.length > length
     C.strncmp(cstr, str, str.length) == 0
   end
 
-  def ends_with?(str)
+  def starts_with?(char : Char)
+    @length > 0 && cstr[0] == char
+  end
+
+  def ends_with?(str : String)
     return false if str.length > length
     C.strncmp(cstr + length - str.length, str, str.length) == 0
+  end
+
+  def ends_with?(char : Char)
+    @length > 0 && cstr[@length - 1] == char
   end
 
   def hash

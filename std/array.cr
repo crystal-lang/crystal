@@ -221,6 +221,15 @@ class Array(T)
     nil
   end
 
+  def clone
+    ary = Array(T).new(length)
+    ary.length = length
+    each_with_index do |e, i|
+      ary.buffer[i] = e.clone
+    end
+    ary
+  end
+
   def replace(other : Array)
     @length = other.length
     resize_to_capacity(@length) if @length > @capacity

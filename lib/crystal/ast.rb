@@ -247,6 +247,7 @@ module Crystal
 
     def accept_children(visitor)
       name.accept visitor
+      superclass.accept visitor if superclass
       body.accept visitor
     end
 

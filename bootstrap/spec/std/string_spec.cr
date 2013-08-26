@@ -184,6 +184,8 @@ describe "String" do
     assert { "foobar".starts_with?("").should be_true }
     assert { "foobar".starts_with?("foobarbaz").should be_false }
     assert { "foobar".starts_with?("foox").should be_false }
+    assert { "foobar".starts_with?('f').should be_true }
+    assert { "foobar".starts_with?('g').should be_false }
   end
 
   describe "ends_with?" do
@@ -191,6 +193,8 @@ describe "String" do
     assert { "foobar".ends_with?("").should be_true }
     assert { "foobar".ends_with?("foobarbaz").should be_false }
     assert { "foobar".ends_with?("xbar").should be_false }
+    assert { "foobar".ends_with?('r').should be_true }
+    assert { "foobar".ends_with?('x').should be_false }
   end
 
   describe "=~" do

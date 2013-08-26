@@ -59,6 +59,7 @@ module Crystal
         @column_number = 1
         while @buffer.value == '\n'
           @buffer += 1
+          @line_number += 1
         end
       when '='
         case next_char
