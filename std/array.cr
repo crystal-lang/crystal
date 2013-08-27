@@ -1,6 +1,7 @@
 require "enumerable"
 require "pointer"
 require "range"
+require "set"
 
 class Array(T)
   include Enumerable
@@ -259,6 +260,23 @@ class Array(T)
       j -= 1
     end
     self
+  end
+
+  def uniq!
+    uniq_elements = Set(T).new
+    delete_if do |elem|
+      key = yield elem
+      if uniq_elements.includes?(key)
+        true
+      else
+        uniq_elements.add(key)
+        false
+      end
+    end
+  end
+
+  def uniq!
+    uniq! { |x| x }
   end
 
   def clear

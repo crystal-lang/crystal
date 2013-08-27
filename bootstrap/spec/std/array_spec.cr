@@ -271,4 +271,18 @@ describe "Array" do
       a.should eq([5, 4, 3, 2, 1])
     end
   end
+
+  describe "uniq!" do
+    assert do
+      a = [1, 2, 2, 3, 1, 4, 5, 3]
+      a.uniq!
+      a.should eq([1, 2, 3, 4, 5])
+    end
+
+    assert do
+      a = [-1, 1, 0, 2, -2]
+      a.uniq! { |x| x.abs }
+      a.should eq([-1, 0, 2])
+    end
+  end
 end
