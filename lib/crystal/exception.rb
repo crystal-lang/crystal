@@ -161,9 +161,10 @@ module Crystal
     end
   end
 
-  class NilMethodException < Exception
-    def initialize(nil_trace)
-      @nil_trace = nil_trace
+  class MethodTraceException < Exception
+    def initialize(owner, trace)
+      @owner = owner
+      @trace = trace
     end
 
     def has_location?
@@ -171,11 +172,11 @@ module Crystal
     end
 
     def append_to_s(str, source)
-      return unless @nil_trace.length > 0
+      return unless @trace.length > 0
 
       str << ("=" * 80)
-      str << "\n\nNil trace:"
-      @nil_trace.each do |node|
+      str << "\n\n#{@owner} trace:"
+      @trace.each do |node|
         if node.filename.is_a?(VirtualFile)
           filename = "macro #{node.filename.macro.name} (in #{node.filename.macro.filename}:#{node.filename.macro.line_number})"
           lines = node.filename.source.lines.to_a

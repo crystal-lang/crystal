@@ -128,16 +128,16 @@ module Crystal
       end
     end
 
-    def find_nil_source(node)
-      nil_trace = []
+    def find_owner_trace(node, owner)
+      owner_trace = []
 
       visited = Set.new
       visited.add node.object_id
       while node.dependencies
-        dependencies = node.dependencies.select { |dep| !dep.equal?(mod.nil_var) && dep.type && dep.type.includes_nil_type? && !visited.include?(dep.object_id) }
+        dependencies = node.dependencies.select { |dep| !dep.equal?(mod.nil_var) && dep.type && dep.type.includes_type?(owner) && !visited.include?(dep.object_id) }
         if dependencies.length > 0
           node = dependencies[0]
-          nil_trace << node if node && node.location
+          owner_trace << node if node && node.location
           visited.add node.object_id
           break unless node.dependencies
         else
@@ -145,7 +145,7 @@ module Crystal
         end
       end
 
-      NilMethodException.new(nil_trace)
+      MethodTraceException.new(owner, owner_trace)
     end
 
     def on_new_subclass
@@ -268,19 +268,17 @@ module Crystal
 
       defs = owner.lookup_defs(def_name)
       if defs.empty?
-        if owner.nil_type?
-          nil_trace = find_nil_source(obj)
-        end
+        owner_trace = find_owner_trace(obj, owner) if obj
 
         if obj || !owner.is_a?(Program)
           error_msg = "undefined method '#{name}' for #{owner}"
           similar_name = owner.lookup_similar_defs(def_name, self.args.length, !!block)
           error_msg << " \033[1;33m(did you mean '#{similar_name}'?)\033[0m" if similar_name
-          raise error_msg, nil_trace
+          raise error_msg, owner_trace
         elsif args.length > 0 || has_parenthesis
-          raise "undefined method '#{name}'", nil_trace
+          raise "undefined method '#{name}'", owner_trace
         else
-          raise "undefined local variable or method '#{name}'", nil_trace
+          raise "undefined local variable or method '#{name}'", owner_trace
         end
       end
 

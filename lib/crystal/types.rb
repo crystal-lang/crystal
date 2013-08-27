@@ -53,8 +53,8 @@ module Crystal
       false
     end
 
-    def includes_nil_type?
-      nil_type?
+    def includes_type?(type)
+      equal?(type)
     end
 
     def pointer?
@@ -1089,8 +1089,8 @@ module Crystal
       @types = types
     end
 
-    def includes_nil_type?
-      types.any? { |type| type.includes_nil_type? }
+    def includes_type?(other_type)
+      types.any? { |type| type.includes_type?(other_type) }
     end
 
     def program
