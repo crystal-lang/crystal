@@ -1039,7 +1039,12 @@ module Crystal
     end
 
     def end_visit_exception_handler(node)
-      node.bind_to node.body
+      if node.else
+        node.bind_to node.else
+      else
+        node.bind_to node.body
+      end
+
       if node.rescues
         node.rescues.each do |a_rescue|
           node.bind_to a_rescue.body

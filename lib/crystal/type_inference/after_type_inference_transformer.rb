@@ -214,6 +214,10 @@ module Crystal
     def transform_exception_handler(node)
       super
 
+      if node.body.no_returns?
+        node.else = nil
+      end
+
       if node.rescues
         new_rescues = []
 

@@ -1125,16 +1125,22 @@ module Crystal
 
       @exception_handlers << { node: node, catch_block: catch_block }
       accept(node.body)
-      add_branched_block_value(branch, node.body.type, @last)
-      @builder.br branch[:exit_block]
       @exception_handlers.pop
+
+      if node.else
+        accept(node.else)
+        add_branched_block_value(branch, node.else.type, @last)
+      else
+        add_branched_block_value(branch, node.body.type, @last)
+      end
+
+      @builder.br branch[:exit_block]
 
       @builder.position_at_end catch_block
       lp_ret_type = LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32)
       lp = @builder.landingpad lp_ret_type, @llvm_mod.functions[PERSONALITY_NAME], []
       unwind_ex_obj = @builder.extract_value lp, 0
       ex_type_id = @builder.extract_value lp, 1
-
 
       if node.rescues
         node.rescues.each do |a_rescue|

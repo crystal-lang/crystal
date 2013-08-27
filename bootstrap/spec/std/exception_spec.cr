@@ -230,4 +230,42 @@ describe "Exception" do
 
     x.should eq("Ex1")
   end
+
+  it "executes else if no exception is raised" do
+    x = 1
+    y = begin
+        rescue ex
+          x = 2
+        else
+          x = 3
+        end
+    x.should eq(3)
+    y.should eq(3)
+  end
+
+  it "doesn't execute else if exception is raised" do
+    x = 1
+    y = begin
+          raise Ex1.new
+        rescue ex
+          x = 2
+        else
+          x = 3
+        end
+    x.should eq(2)
+    y.should eq(2)
+  end
+
+  it "doesn't execute else if exception is raised conditionally" do
+    x = 1
+    y = begin
+          raise Ex1.new if 1 == 1
+        rescue ex
+          x = 2
+        else
+          x = 3
+        end
+    x.should eq(2)
+    y.should eq(2)
+  end
 end
