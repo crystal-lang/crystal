@@ -555,7 +555,7 @@ module Crystal
     def visit_pointer_realloc(node)
       casted_ptr = cast_to_void_pointer(llvm_self)
       size = @vars['size'][:ptr]
-      size = @builder.mul size, int(@type.var.type.llvm_size)
+      size = @builder.mul size, LLVM::Int64.from_i(@type.var.type.llvm_size)
       reallocated_ptr = realloc casted_ptr, size
       @last = cast_to_pointer reallocated_ptr, @type.var.type
     end

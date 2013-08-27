@@ -30,7 +30,7 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens string concatenation' do
-    run('require "range"; require "string"; "foo" + "bar"').to_string.should eq("foobar")
+    run('require "prelude"; "foo" + "bar"').to_string.should eq("foobar")
   end
 
   it 'codegens string indexer' do

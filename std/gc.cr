@@ -1,9 +1,9 @@
 class GC
-  @@objects_size = 1024
+  @@objects_size = 1024_u64
   @@objects_index = 0
   @@objects = Pointer(Pointer(Void)).malloc(@@objects_size)
 
-  @@roots_size = 1024
+  @@roots_size = 1024_u64
   @@roots_index = 0
   @@roots = Pointer(Pointer(Void)).malloc(@@roots_size)
 

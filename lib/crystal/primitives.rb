@@ -250,16 +250,16 @@ module Crystal
     end
 
     def define_pointer_primitives
-      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', Ident.new(["Int"], true))], PointerMalloc.new)
+      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', Ident.new(["UInt64"], true))], PointerMalloc.new)
       pointer.metaclass.add_def Def.new('null', [], PointerNull.new)
-      pointer.metaclass.add_def Def.new('new', [Arg.new_with_restriction('address', Ident.new(["Int"], true))], PointerNew.new)
+      pointer.metaclass.add_def Def.new('new', [Arg.new_with_restriction('address', Ident.new(["UInt64"], true))], PointerNew.new)
       pointer.add_def Def.new('value', [], PointerGetValue.new)
       pointer.add_def Def.new('value=', [Arg.new_with_restriction('value', Ident.new(["T"]))], PointerSetValue.new)
-      pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', Ident.new(["Int"], true))], PointerRealloc.new)
-      pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', Ident.new(["Int"], true))], PointerAdd.new)
+      pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', Ident.new(["UInt64"], true))], PointerRealloc.new)
+      pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', Ident.new(["Int64"], true))], PointerAdd.new)
       pointer.add_def Def.new('as', [Arg.new('type')], PointerCast.new)
-      shared_singleton(pointer, 'address', int64) do |b, f, llvm_mod, self_type|
-        b.ptr2int(f.params[0], LLVM::Int64)
+      shared_singleton(pointer, 'address', uint64) do |b, f, llvm_mod, self_type|
+        b.ptr2int(f.params[0], LLVM::UInt64)
       end
     end
 
@@ -302,7 +302,7 @@ module Crystal
     end
 
     def realloc(llvm_mod)
-      llvm_mod.functions['realloc'] || llvm_mod.functions.add('realloc', [LLVM::Pointer(LLVM::Int8), LLVM::Int], LLVM::Pointer(LLVM::Int8))
+      llvm_mod.functions['realloc'] || llvm_mod.functions.add('realloc', [LLVM::Pointer(LLVM::Int8), LLVM::Int64], LLVM::Pointer(LLVM::Int8))
     end
 
     def memset(llvm_mod)

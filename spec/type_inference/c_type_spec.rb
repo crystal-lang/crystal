@@ -10,7 +10,7 @@ describe 'Type inference: type' do
       end
 
       Lib.foo.address
-    )) { int64 }
+    )) { uint64 }
   end
 
   it "can call methods of parent type" do

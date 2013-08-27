@@ -7,6 +7,10 @@ class Pointer(T)
     address == 0
   end
 
+  def +(other : Int)
+    self + other.to_i64
+  end
+
   def -(other : Int)
     self + (-other)
   end
@@ -56,13 +60,21 @@ class Pointer(T)
     Array(U).new(times) { |i| yield self[i] }
   end
 
-  def self.malloc(size : Int32, value : T)
+  def realloc(size : Int)
+    realloc(size.to_u64)
+  end
+
+  def self.malloc(size : Int)
+    malloc(size.to_u64)
+  end
+
+  def self.malloc(size : Int, value : T)
     ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = value }
     ptr
   end
 
-  def self.malloc(size : Int32, &block : Int32 -> T)
+  def self.malloc(size : Int, &block : Int32 -> T)
     ptr = Pointer(T).malloc(size)
     size.times { |i| ptr[i] = yield i }
     ptr
