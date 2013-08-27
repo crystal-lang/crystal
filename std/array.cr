@@ -262,8 +262,8 @@ class Array(T)
     self
   end
 
-  def uniq!
-    uniq_elements = Set(T).new
+  def uniq!(&block : T -> U)
+    uniq_elements = Set(U).new
     delete_if do |elem|
       key = yield elem
       if uniq_elements.includes?(key)
