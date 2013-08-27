@@ -11,6 +11,10 @@ class Bool
     self ? other : false
   end
 
+  def hash
+    self ? 1 : 0
+  end
+
   def to_s
     self ? "true" : "false"
   end

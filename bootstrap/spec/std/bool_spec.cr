@@ -15,4 +15,9 @@ describe "Bool" do
     assert { (true & false).should be_false }
     assert { (true & true).should be_true }
   end
+
+  describe "hash" do
+    true.hash.should eq(1)
+    false.hash.should eq(0)
+  end
 end
