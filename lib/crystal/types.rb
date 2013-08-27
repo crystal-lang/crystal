@@ -1284,30 +1284,18 @@ module Crystal
 
   class TypeDefType < ContainedType
     attr_accessor :name
-    attr_accessor :type
+    attr_accessor :typedef
 
-    delegate [:llvm_name, :llvm_size, :pointer?] => :type
+    delegate [:llvm_name, :llvm_size, :pointer?, :lookup_matches, :lookup_first_def, :parents] => :typedef
 
-    def initialize(container, name, type)
+    def initialize(container, name, typedef)
       super(container)
       @name = name
-      @type = type
+      @typedef = typedef
     end
 
     def primitive_like?
       true
-    end
-
-    def lookup_matches(*args)
-      @type.lookup_matches(*args)
-    end
-
-    def lookup_first_def(*args)
-      @type.lookup_first_def(*args)
-    end
-
-    def parents(*args)
-      @type.parents(*args)
     end
 
     def type_desc

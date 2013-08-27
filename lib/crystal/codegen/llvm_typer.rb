@@ -35,7 +35,7 @@ module Crystal
                     when CUnionType
                       LLVM::Pointer(llvm_struct_type(type))
                     when TypeDefType
-                      llvm_type(type.type)
+                      llvm_type(type.typedef)
                     when HierarchyType
                       HIERARCHY_LLVM_TYPE
                     else

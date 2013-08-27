@@ -25,21 +25,12 @@ module Crystal
     end
 
     def parse_expressions
-      exps = parse_expressions_as_array
-      exps.length == 1 ? exps.first : Expressions.new(exps)
-    end
-
-    def parse_expressions_or_nil
-      Expressions.from(parse_expressions_as_array)
-    end
-
-    def parse_expressions_as_array
       exps = [] of ASTNode
       while @token.type != :EOF && !is_end_token
         exps << parse_multi_expression
         skip_statement_end
       end
-      exps
+      Expressions.from(exps)
     end
 
     def parse_multi_expression
@@ -611,13 +602,13 @@ module Crystal
         end
 
         next_token_skip_statement_end
-        a_else = parse_expressions_or_nil
+        a_else = parse_expressions
         skip_statement_end
       end
 
       if @token.keyword?(:ensure)
         next_token_skip_statement_end
-        a_ensure = parse_expressions_or_nil
+        a_ensure = parse_expressions
         skip_statement_end
       end
 
@@ -695,7 +686,7 @@ module Crystal
       cond = parse_expression
       skip_statement_end
 
-      body = parse_expressions_or_nil
+      body = parse_expressions
       skip_statement_end
 
       check_ident :end
@@ -726,7 +717,7 @@ module Crystal
       end
       skip_statement_end
 
-      body = parse_expressions_or_nil
+      body = parse_expressions
 
       check_ident :end
       next_token_skip_space
@@ -774,7 +765,7 @@ module Crystal
       type_vars = parse_type_vars
       skip_statement_end
 
-      body = parse_expressions_or_nil
+      body = parse_expressions
 
       check_ident :end
       next_token_skip_space
@@ -1126,7 +1117,7 @@ module Crystal
       if @token.keyword?(:end)
         body = nil
       else
-        body = parse_expressions_or_nil
+        body = parse_expressions
         body = parse_exception_handler body
       end
 
@@ -1240,7 +1231,7 @@ module Crystal
       cond = parse_expression
       skip_statement_end
 
-      a_then = parse_expressions_or_nil
+      a_then = parse_expressions
       skip_statement_end
 
       a_else = nil
@@ -1248,7 +1239,7 @@ module Crystal
         case @token.value
         when :else
           next_token_skip_statement_end
-          a_else = parse_expressions_or_nil
+          a_else = parse_expressions
         when :elsif
           a_else = parse_if false
         end
@@ -1350,7 +1341,7 @@ module Crystal
 
       push_vars block_args
 
-      block_body = parse_expressions_or_nil
+      block_body = parse_expressions
 
       yield
 
@@ -1904,11 +1895,14 @@ module Crystal
     end
 
     def can_be_assigned?(node)
-      node.is_a?(Var) ||
-        node.is_a?(InstanceVar) ||
-        node.is_a?(Ident) ||
-        node.is_a?(Global) ||
-        (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
+      case node
+      when Var, InstanceVar, Ident, Global
+        true
+      when Call
+        (node.obj.nil? && node.args.length == 0 && node.block.nil?) || node.name == "[]"
+      else
+        false
+      end
     end
 
     def push_def
