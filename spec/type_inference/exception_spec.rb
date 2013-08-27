@@ -117,4 +117,8 @@ describe 'Type inference: exception' do
   it "errors if catch-all rescue specified twice" do
     assert_syntax_error "begin; rescue ex; rescue; end; ex", "catch-all rescue can only be specified once"
   end
+
+  it "errors if else without rescue" do
+    assert_syntax_error "begin; else; 1; end", "'else' is useless without 'rescue'"
+  end
 end
