@@ -268,7 +268,7 @@ module Crystal
 
       defs = owner.lookup_defs(def_name)
       if defs.empty?
-        owner_trace = find_owner_trace(obj, owner) if obj
+        owner_trace = find_owner_trace(obj, owner) if obj && obj.type.is_a?(UnionType)
 
         if obj || !owner.is_a?(Program)
           error_msg = "undefined method '#{name}' for #{owner}"
