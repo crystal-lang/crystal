@@ -25,7 +25,7 @@ module Crystal
         opts.on('-types', 'Prints types of global variables') do
           @options[:types] = true
         end
-        opts.on('--html DIR', 'Dump program to HTML in DIR directory') do |dir|
+        opts.on('--html [DIR]', 'Dump program to HTML in DIR directory') do |dir|
           @options[:html] = dir
         end
         opts.on('--hierarchy [FILTER]', 'Render hierarchy graph') do |filter|
@@ -33,7 +33,7 @@ module Crystal
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
-          exit
+          exit 1
         end
         opts.on('-ll', 'Dump ll to standard output') do
           @options[:dump_ll] = true
