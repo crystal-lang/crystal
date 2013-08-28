@@ -26,8 +26,12 @@ class Regexp
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size * 4)
     ret = PCRE.exec(@re, 0_i64, str, str.length, pos, options, ovector, ovector_size)
-    return nil unless ret > 0
-    MatchData.new(self, str, pos, ovector)
+    if ret > 0
+      $~ = MatchData.new(self, str, pos, ovector, @captures)
+    else
+      $~ = MatchData::EMPTY
+      nil
+    end
   end
 
   def ===(other : String)
@@ -44,13 +48,13 @@ class Regexp
 end
 
 class MatchData
-  EMPTY = MatchData.new("", "", 0, Pointer(Int32).malloc(0))
+  EMPTY = MatchData.new("", "", 0, Pointer(Int32).malloc(0), 0)
 
-  def initialize(regex, string, pos, ovector)
-    @regex = regex
-    @string = string
-    @pos = pos
-    @ovector = ovector
+  def initialize(@regex, @string, @pos, @ovector, @length)
+  end
+
+  def length
+    @length
   end
 
   def regex
@@ -58,10 +62,14 @@ class MatchData
   end
 
   def begin(n)
+    check_index_out_of_bounds n
+
     @ovector[n * 2]
   end
 
   def end(n)
+    check_index_out_of_bounds n
+
     @ovector[n * 2 + 1]
   end
 
@@ -69,10 +77,19 @@ class MatchData
     @string
   end
 
-  def [](index)
-    @string[self.begin(index), self.end(index) - self.begin(index)]
+  def [](n)
+    check_index_out_of_bounds n
+
+    start = @ovector[n * 2]
+    finish = @ovector[n * 2 + 1]
+    @string[start, finish - start]
+  end
+
+  # private
+
+  def check_index_out_of_bounds(index)
+    raise Array::IndexOutOfBounds.new if index > @length
   end
 end
 
 $~ = MatchData::EMPTY
-

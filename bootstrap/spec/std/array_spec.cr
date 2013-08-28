@@ -291,4 +291,12 @@ describe "Array" do
       a.should eq([1])
     end
   end
+
+  it "raises if out of bounds" do
+    begin
+      [1, 2, 3][4]
+      fail "Expected [] to raise"
+    rescue Array::IndexOutOfBounds
+    end
+  end
 end

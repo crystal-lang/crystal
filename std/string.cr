@@ -246,13 +246,7 @@ class String
 
   def =~(regex)
     match = regex.match(self)
-    if match
-      $~ = match
-      match.begin(0)
-    else
-      $~ = MatchData::EMPTY
-      nil
-    end
+    match ? match.begin(0) : nil
   end
 
   def +(other)

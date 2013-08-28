@@ -6,6 +6,9 @@ require "set"
 class Array(T)
   include Enumerable
 
+  class IndexOutOfBounds < Exception
+  end
+
   def initialize(initial_capacity = 16)
     @length = 0
     @capacity = initial_capacity
@@ -45,13 +48,13 @@ class Array(T)
 
   def [](index : Int)
     index += length if index < 0
-    raise "Array index out of bounds (#{index} of #{length})" if index >= length || index < 0
+    raise IndexOutOfBounds.new if index >= length || index < 0
     @buffer[index]
   end
 
   def []=(index : Int, value : T)
     index += length if index < 0
-    raise "Array index out of bounds (#{index} of #{length})" if index >= length || index < 0
+    raise IndexOutOfBounds.new if index >= length || index < 0
     @buffer[index] = value
   end
 
