@@ -9,9 +9,9 @@ describe "OptionParser" do
         opts.on(option, "some flag") do |value|
         end
       end
-      fail "Expected to raise OptionParser::MissingArgument"
-    rescue ex : OptionParser::MissingArgument
-      ex.message.should eq("Missing argument: #{flag}")
+      fail "Expected to raise OptionParser::MissingOption"
+    rescue ex : OptionParser::MissingOption
+      ex.message.should eq("Missing option: #{flag}")
     end
   end
 
@@ -119,5 +119,16 @@ describe "OptionParser" do
       "    -f, --flag                       some flag"
       "    -g[FLAG]                         some other flag"
     ].join "\n")
+  end
+
+  it "raises on invalid option" do
+    begin
+      OptionParser.parse(["-f", "-j"]) do |opts|
+        opts.on("-f", "some flag") { }
+      end
+      fail "Expected to raise OptionParser::InvalidOption"
+    rescue ex : OptionParser::InvalidOption
+      ex.message.should eq("Invalid option: -j")
+    end
   end
 end

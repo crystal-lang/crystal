@@ -1,20 +1,25 @@
 class OptionParser
-  class MissingArgument < Exception
-    def initialize(argument)
-      super("Missing argument: #{argument}")
+  class MissingOption < Exception
+    def initialize(option)
+      super("Missing option: #{option}")
+    end
+  end
+
+  class InvalidOption < Exception
+    def initialize(option)
+      super("Invalid option: #{option}")
     end
   end
 
   def self.parse(args)
     parser = OptionParser.new(args)
     yield parser
+    parser.check_invalid_options
     parser
   end
 
   def self.parse!
-    parser = OptionParser.new(ARGV)
-    yield parser
-    parser
+    parse(ARGV) { |parser| yield parser }
   end
 
   def initialize(@args)
@@ -99,10 +104,10 @@ class OptionParser
         @args.delete_at(index)
         @args.delete_at(index)
       rescue Array::IndexOutOfBounds
-        raise MissingArgument.new(flag)
+        raise MissingOption.new(flag)
       end
     else
-      raise MissingArgument.new(flag) if raise_if_not_found
+      raise MissingOption.new(flag) if raise_if_not_found
     end
   end
 
@@ -111,7 +116,15 @@ class OptionParser
     if index != -1
       @args.delete_at(index)[2 .. -1]
     else
-      raise MissingArgument.new(flag) if raise_if_not_found
+      raise MissingOption.new(flag) if raise_if_not_found
+    end
+  end
+
+  def check_invalid_options
+    @args.each do |arg|
+      if arg.starts_with?('-')
+        raise InvalidOption.new(arg)
+      end
     end
   end
 end
