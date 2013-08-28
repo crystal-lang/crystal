@@ -106,6 +106,10 @@ describe "OptionParser" do
     expect_doesnt_raise_for_optional_argument "--flag [FLAG]"
   end
 
+  it "doesn't raise if optional option is not specified with separated short flag" do
+    expect_doesnt_raise_for_optional_argument "-f [FLAG]"
+  end
+
   it "does to_s with banner" do
     parser = OptionParser.parse([] of String) do |opts|
       opts.banner = "Usage: foo"

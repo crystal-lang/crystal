@@ -74,6 +74,8 @@ class OptionParser
       yield flag_value("--#{$1}")
     when /--\S+/
       flag_present?(flag) && yield true
+    when /-(.)\s+\[\S+\]/
+      yield flag_value(flag[0 .. 1], false)
     when /-(.)\s+\S+/
       yield flag_value(flag[0 .. 1])
     when /-(.)\s+/
