@@ -120,7 +120,7 @@ class Array(T)
 
   def delete_at(index : Int)
     index += length if index < 0
-    return nil if index < 0 || index >= length
+    raise Array::IndexOutOfBounds.new if index < 0 || index >= length
 
     elem = @buffer[index]
     (@buffer + index).memmove(@buffer + index + 1, length - index - 1)
