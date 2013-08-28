@@ -231,6 +231,7 @@ module Crystal
           if node.ensure
             node.rescues = nil
           else
+            rebind_node node, node.body
             return node.body
           end
         else
