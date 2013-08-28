@@ -413,4 +413,21 @@ describe 'Type inference: class' do
       Mod::Foo.foo(Bar.new)
       )) { char }
   end
+
+  it "finds in global scope if includes module" do
+    assert_type(%q(
+      class Baz
+      end
+
+      module Foo
+        class Bar
+          include Foo
+
+          Baz
+        end
+      end
+
+      1
+    )) { int32 }
+  end
 end

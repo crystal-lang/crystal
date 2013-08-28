@@ -491,7 +491,10 @@ module Crystal
 
     def lookup_type(names, already_looked_up = {}, lookup_in_container = true)
       return nil if already_looked_up[type_id]
-      already_looked_up[type_id] = true
+
+      if lookup_in_container
+        already_looked_up[type_id] = true
+      end
 
       type = self
       names.each do |name|
