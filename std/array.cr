@@ -7,6 +7,9 @@ class Array(T)
   include Enumerable
 
   class IndexOutOfBounds < Exception
+    def initialize
+      super("Array index out of bounds")
+    end
   end
 
   def initialize(initial_capacity = 16)

@@ -129,14 +129,7 @@ def it(description)
 end
 
 def assert
-  begin
-    yield
-    Spec::RootContext.report(:success, "assert")
-  rescue ex : Spec::AssertionFailed
-    Spec::RootContext.report(:fail, "assert", ex)
-  rescue ex
-    Spec::RootContext.report(:error, "assert", ex)
-  end
+  it("assert") { yield }
 end
 
 def eq(value)

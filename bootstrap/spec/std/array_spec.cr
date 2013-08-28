@@ -123,9 +123,12 @@ describe "Array" do
     end
 
     it "deletes out of bounds" do
-      a = [1, 2, 3, 4]
-      a.delete_at(4).should be_nil
-      a.should eq([1, 2, 3, 4])
+      begin
+        a = [1, 2, 3, 4]
+        a.delete_at(4)
+        fail "Expected to raise Array::IndexOutOfBounds"
+      rescue Array::IndexOutOfBounds
+      end
     end
   end
 
