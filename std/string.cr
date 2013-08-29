@@ -265,6 +265,8 @@ class String
 
   def index(c : Char, offset = 0)
     offset += length if offset < 0
+    return -1 if offset < 0
+
     while offset < length
       return offset if cstr[offset] == c
       offset += 1
@@ -274,9 +276,35 @@ class String
 
   def index(c : String, offset = 0)
     offset += length if offset < 0
-    while offset < length
+    return -1 if offset < 0
+
+    end_length = length - c.length
+    while offset < end_length
       return offset if (cstr + offset).memcmp(c.cstr, c.length)
       offset += 1
+    end
+    -1
+  end
+
+  def rindex(c : Char, offset = length - 1)
+    offset += length if offset < 0
+    return -1 if offset < 0
+
+    while offset >= 0
+      return offset if cstr[offset] == c
+      offset -= 1
+    end
+    -1
+  end
+
+  def rindex(c : String, offset = length - c.length)
+    offset += length if offset < 0
+    return -1 if offset < 0
+
+    offset = length - c.length if offset > length - c.length
+    while offset >= 0
+      return offset if (cstr + offset).memcmp(c.cstr, c.length)
+      offset -= 1
     end
     -1
   end
