@@ -2,9 +2,12 @@ require "types"
 require "llvm"
 
 module Crystal
-  class Program < NonGenericModuleType
+  class Program < Type
+    include DefContainer
+
     def initialize
-      super("main")
+      # super(nil, "main")
+      @types = {} of String => Type
 
       object = @types["Object"] = NonGenericClassType.new self, "Object", nil
       object.abstract = true
@@ -46,6 +49,29 @@ module Crystal
       string = @types["String"] = PrimitiveType.new self, "String", value, LLVM::PointerType.new(LLVM::Int8), 8
 
       @temp_var_counter = 0
+    end
+
+    def program
+      self
+    end
+
+    def type_merge(types)
+      all_types = types #.map! { |type| type.is_a?(UnionType) ? type.types : type }
+      # all_types.flatten!
+      all_types.compact!
+      all_types.uniq! { |t| t.object_id }
+      # all_types.delete_if { |type| type.no_return? } if all_types.length > 1
+      combined_union_of types
+    end
+
+    def combined_union_of(types)
+      if types.length == 1
+        return types[0]
+      end
+
+      raise "Union types are not yet implemented!"
+      # combined_types = type_combine *types
+      # union_of *combined_types
     end
 
     macro self.type_getter(def_name, type_name)"

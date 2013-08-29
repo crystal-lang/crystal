@@ -1089,6 +1089,13 @@ module Crystal
         name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
         name_column_number = @token.column_number
         next_token_skip_space
+      else
+        if receiver
+          unexpected_token
+        else
+          raise "shouldn't reach this line" unless name
+        end
+        name ||= "" # TODO: this is to satisfy the compiler, fix
       end
 
       case @token.type

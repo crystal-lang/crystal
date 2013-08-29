@@ -76,6 +76,14 @@ module Crystal
       type_assign node.target, node.value, node
     end
 
+    def visit(node : Def)
+      @mod.add_def node
+    end
+
+    def visit(node : Call)
+      # node.recalculate
+    end
+
     def type_assign(target, value, node)
       value.accept self
 

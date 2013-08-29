@@ -1,7 +1,11 @@
 module Crystal
   abstract class Type
-    def self.merge(type1, type2)
-      type1
+    def self.merge(types)
+      types = types.compact
+      return nil if types.empty?
+      first = types.first
+      raise "Bug found!" unless first
+      first.program.type_merge(types)
     end
   end
 
@@ -18,7 +22,19 @@ module Crystal
     end
   end
 
+  module DefContainer
+    def defs
+      @defs ||= {} of String => Def
+    end
+
+    def add_def(a_def)
+      defs[a_def.name] = a_def
+    end
+  end
+
   abstract class ModuleType < ContainedType
+    include DefContainer
+
     getter :name
     getter :parents
 

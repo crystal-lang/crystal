@@ -207,7 +207,8 @@ module Crystal
         str << "    "
         str << (' ' * (name_column - 1))
         str << '^'
-        str << ('~' * (name_length - 1)) if name_length
+        # binding.pry
+        # str << ('~' * (name_length - 1)) if name_length
       end
     end
   end

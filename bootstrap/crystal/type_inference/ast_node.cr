@@ -24,7 +24,7 @@ module Crystal
       if (@dependencies && @dependencies.length == 1) || !@type
         new_type = node.type
       else
-        new_type = Type.merge(@type, node.type)
+        new_type = Type.merge [@type, node.type]
       end
       return if @type.object_id == new_type.object_id
       set_type(new_type)
@@ -54,7 +54,7 @@ module Crystal
       if @type.nil? || (@dependencies && @dependencies.length == 1)
         new_type = from.type
       else
-        new_type = Type.merge @type, from.type
+        new_type = Type.merge [@type, from.type]
       end
 
       return if @type.object_id == new_type.object_id
