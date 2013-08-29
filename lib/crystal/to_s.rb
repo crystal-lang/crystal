@@ -147,6 +147,13 @@ module Crystal
       false
     end
 
+    def visit_not(node)
+      @str << "!("
+      node.exp.accept self
+      @str << ")"
+      false
+    end
+
     def visit_call(node)
       need_parens = node.obj.is_a?(Call) || node.obj.is_a?(Assign)
 
@@ -237,6 +244,10 @@ module Crystal
       @str << "require \""
       @str << node.string
       @str << "\""
+      if node.cond
+        @str << " if "
+        node.cond.accept self
+      end
       false
     end
 

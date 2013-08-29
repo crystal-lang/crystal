@@ -92,8 +92,50 @@ module Crystal
     end
 
     def transform_require(node)
+      if node.cond
+        must_require = eval_require_cond(node.cond)
+        return unless must_require
+      end
+
       required = program.require(node.string, node.filename)
       required ? required.transform(self) : nil
+    end
+
+    class RequireEvaluator < Visitor
+      attr_reader :value
+
+      def initialize(program)
+        @program = program
+      end
+
+      def visit_var(node)
+        @value = @program.has_require_flag?(node.name)
+      end
+
+      def visit_not(node)
+        node.exp.accept self
+        @value = !@value
+      end
+
+      def visit_and(node)
+        node.left.accept self
+        left_value = @value
+        node.right.accept self
+        @value = left_value && @value
+      end
+
+      def visit_or(node)
+        node.left.accept self
+        left_value = @value
+        node.right.accept self
+        @value = left_value || @value
+      end
+    end
+
+    def eval_require_cond(node)
+      evaluator = RequireEvaluator.new(@program)
+      node.accept evaluator
+      evaluator.value
     end
 
     def transform_string_interpolation(node)

@@ -174,6 +174,10 @@ module Crystal
       node
     end
 
+    def transform_not(node)
+      node
+    end
+
     def transform_simple_or(node)
       node.left = node.left.transform(self)
       node.right = node.right.transform(self)

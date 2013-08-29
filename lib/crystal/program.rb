@@ -80,11 +80,27 @@ module Crystal
       @nil_var = Var.new('<nil_var>', self.nil)
       @temp_var_counter = 0
 
+
       define_primitives
     end
 
     def program
       self
+    end
+
+    def has_require_flag?(name)
+      initialize_require_flags
+      @require_flags.include?(name)
+    end
+
+    def initialize_require_flags
+      @require_flags ||= begin
+        flags = Set.new
+        `uname -m -s`.split.each do |uname|
+          flags.add uname.downcase
+        end
+        flags
+      end
     end
 
     def new_temp_var

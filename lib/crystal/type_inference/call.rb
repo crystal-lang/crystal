@@ -254,8 +254,8 @@ module Crystal
 
     def raise_matches_not_found(owner, def_name, matches = nil)
       if owner.c_struct?
-        if def_name.end_with?('=')
-          def_name = def_name[0 .. -2]
+        if def_name.to_s.end_with?('=')
+          def_name = def_name.to_s[0 .. -2]
         end
 
         var = owner.vars[def_name]

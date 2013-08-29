@@ -762,6 +762,27 @@ module Crystal
   class SimpleOr < BinaryOp
   end
 
+  # Used only for require "foo" if ...
+  class Not < ASTNode
+    attr_accessor :exp
+
+    def initialize(exp)
+      @exp = exp
+    end
+
+    def accept_children(visitor)
+      @exp.accept self
+    end
+
+    def ==(other)
+      other.is_a?(Not) && @exp == other.exp
+    end
+
+    def clone_from(other)
+      @exp = other.exp.clone
+    end
+  end
+
   # A method call.
   #
   #     [ obj '.' ] name '(' ')' [ block ]
@@ -1336,17 +1357,24 @@ module Crystal
 
   class Require < ASTNode
     attr_accessor :string
+    attr_accessor :cond
 
-    def initialize(string)
+    def initialize(string, cond = nil)
       @string = string
+      @cond = cond
+    end
+
+    def accept_children(visitor)
+      @cond.accept visitor if @cond
     end
 
     def ==(other)
-      other.is_a?(Require) && other.string == string
+      other.is_a?(Require) && other.string == string && other.cond == cond
     end
 
     def clone_from(other)
       @string = other.string.clone
+      @cond = other.cond.clone
     end
   end
 
