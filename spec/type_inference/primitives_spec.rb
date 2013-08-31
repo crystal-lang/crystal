@@ -112,7 +112,7 @@ describe 'Type inference: primitives' do
   end
 
   it "types Int#to_f" do
-    assert_type("1.to_f") { float32 }
+    assert_type("1.to_f") { float64 }
   end
 
   it "types Int#<<" do
@@ -124,7 +124,7 @@ describe 'Type inference: primitives' do
   end
 
   it "types Float#to_f" do
-    assert_type("1.5f32.to_f") { float32 }
+    assert_type("1.5f32.to_f") { float64 }
   end
 
   it "types ARGV" do

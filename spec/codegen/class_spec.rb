@@ -60,7 +60,7 @@ describe 'Code gen: class' do
 
       l = List.new
       l.foo
-      )).to_f.should eq(1.0)
+      )).to_f64.should eq(1.0)
   end
 
   it "codegens new which calls initialize" do

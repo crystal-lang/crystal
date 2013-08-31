@@ -6,7 +6,7 @@ describe 'Code gen: global' do
   end
 
   it "codegens global with union" do
-    run("$foo = 1; def foo; $foo = 2.5_f32; end; foo; $foo.to_f").to_f.should eq(2.5)
+    run("$foo = 1; def foo; $foo = 2.5_f32; end; foo; $foo.to_f").to_f64.should eq(2.5)
   end
 
   it "codegens global when not initialized" do

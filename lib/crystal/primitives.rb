@@ -14,7 +14,7 @@ module Crystal
       define_symbol_primitives
       define_pointer_primitives
 
-      define_numeric_operations
+      define_number_operations
       define_math_primitives
     end
 
@@ -166,7 +166,7 @@ module Crystal
       end
     end
 
-    def define_numeric_operations
+    def define_number_operations
       [uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64].repeated_permutation(2) do |type1, type2|
         [:+, :-, :*, :/].each do |op|
           ret_type = greatest_type(type1, type2)
@@ -205,12 +205,16 @@ module Crystal
           adjust_calc_type(b, int32, type, f.params[0])
         end
 
-        no_args_primitive(type, "to_f", float32) do |b, f|
-          adjust_calc_type(b, float32, type, f.params[0])
+        no_args_primitive(type, "to_f", float64) do |b, f|
+          adjust_calc_type(b, float64, type, f.params[0])
         end
 
-        no_args_primitive(type, "to_d", float64) do |b, f|
+        no_args_primitive(type, "to_f64", float64) do |b, f|
           adjust_calc_type(b, float64, type, f.params[0])
+        end
+
+        no_args_primitive(type, "to_f32", float32) do |b, f|
+          adjust_calc_type(b, float32, type, f.params[0])
         end
       end
 

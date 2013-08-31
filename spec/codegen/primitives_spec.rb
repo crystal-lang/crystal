@@ -299,7 +299,7 @@ describe 'Code gen: primitives' do
   end
 
   it "codegens Int#to_f" do
-    run("1.to_f").to_f.should eq(1.0)
+    run("1.to_f").to_f64.should eq(1.0)
   end
 
   it "codegens Float#to_i" do
@@ -307,7 +307,7 @@ describe 'Code gen: primitives' do
   end
 
   it "codegens Float#to_f" do
-    run("2.5_f32.to_f").to_f.should eq(2.5)
+    run("2.5_f32.to_f").to_f64.should eq(2.5)
   end
 
   it "codegens u8 + float32" do

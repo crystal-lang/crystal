@@ -14,14 +14,14 @@ module Crystal
 
       reference = @types["Reference"] = NonGenericClassType.new self, "Reference", object
       value = @types["Value"] = ValueType.new self, "Value", object
-      numeric = @types["Numeric"] = ValueType.new self, "Numeric", value
+      number = @types["Number"] = ValueType.new self, "Number", value
 
       @types["Void"] = PrimitiveType.new self, "Void", value, LLVM::Int8, 1
       @types["Nil"] = NilType.new self, "Nil", value, LLVM::Int1, 1
       @types["Bool"] = PrimitiveType.new self, "Bool", value, LLVM::Int1, 1
       @types["Char"] = PrimitiveType.new self, "Char", value, LLVM::Int8, 1
 
-      @types["Int"] = int = ValueType.new self, "Int", numeric
+      @types["Int"] = int = ValueType.new self, "Int", number
       int.abstract = true
 
       @types["Int8"] = IntegerType.new self, "Int8", int, LLVM::Int8, 1, 1
@@ -33,7 +33,7 @@ module Crystal
       @types["Int64"] = IntegerType.new self, "Int64", int, LLVM::Int64, 8, 7
       @types["UInt64"] = IntegerType.new self, "UInt64", int, LLVM::Int64, 8, 8
 
-      @types["Float"] = float = ValueType.new self, "Float", numeric
+      @types["Float"] = float = ValueType.new self, "Float", number
       float.abstract = true
 
       @types["Float32"] = float32 = FloatType.new self, "Float32", float, LLVM::Float, 4, 9

@@ -803,7 +803,7 @@ describe 'Code gen: block' do
 
   it "codegens block with union arg" do
     run(%q(
-      class Numeric
+      class Number
         def abs
           self
         end
