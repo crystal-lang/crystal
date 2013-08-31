@@ -13,6 +13,7 @@ lib C
   fun strcmp(s1 : Char*, s2 : Char*) : Int32
   fun strncpy(s1 : Char*, s2 : Char*, n : Int32) : Char*
   fun sprintf(str : Char*, format : Char*, ...) : Int32
+  fun memcpy(dest : Void*, src : Void*, num : Int32) : Void*
 end
 
 class String
@@ -250,16 +251,26 @@ class String
   end
 
   def +(other)
-    new_string_buffer = Pointer(Char).malloc(length + other.length + 1).as(Char)
-    C.strcpy(new_string_buffer, @c.ptr)
-    C.strcat(new_string_buffer, other)
-    String.from_cstr(new_string_buffer)
+    String.new_with_length(length + other.length) do |buffer|
+      buffer.memcpy(@c.ptr, length)
+      (buffer + length).memcpy(other.cstr, other.length)
+    end
   end
 
   def *(times : Int)
-    return "" if times <= 0
-    String.build do |str|
-      times.times { str << self }
+    return "" if times <= 0 || length == 0
+
+    total_length = length * times
+    String.new_with_length(total_length) do |buffer|
+      buffer.memcpy(@c.ptr, length)
+      n = length
+
+      while n <= total_length / 2
+        (buffer + n).memcpy(buffer, n)
+        n *= 2
+      end
+
+      (buffer + n).memcpy(buffer, total_length - n)
     end
   end
 

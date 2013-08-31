@@ -270,4 +270,16 @@ describe "String" do
   it "inspects" do
     "\" \\ \f \n \r \t \v cool".inspect.should eq("\"\\\" \\ \\f \\n \\r \\t \\v cool\"")
   end
+
+  it "does *" do
+    str = "foo" * 10
+    str.length.should eq(30)
+    str.should eq("foofoofoofoofoofoofoofoofoofoo")
+  end
+
+  it "does +" do
+    str = "foo" + "bar"
+    str.length.should eq(6)
+    str.should eq("foobar")
+  end
 end
