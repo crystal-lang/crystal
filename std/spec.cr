@@ -107,6 +107,24 @@ module Spec
     end
   end
 
+  class CloseExpectation
+    def initialize(@expected, @delta)
+    end
+
+    def match(value)
+      @target = value
+      (@target - @expected).abs <= @delta
+    end
+
+    def failure_message
+      "expected #{@target} to be within #{@delta} of #{@expected}"
+    end
+
+    def negative_failure_message
+      "expected #{@target} not to be within #{@delta} of #{@expected}"
+    end
+  end
+
   class AssertionFailed < Exception
   end
 end
@@ -146,6 +164,10 @@ end
 
 def be_nil
   eq nil
+end
+
+def be_close(expected, delta)
+  Spec::CloseExpectation.new(expected, delta)
 end
 
 def fail(msg)
