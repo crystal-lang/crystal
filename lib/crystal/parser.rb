@@ -1350,8 +1350,16 @@ module Crystal
     def parse_def_or_macro(klass)
       push_def
 
-      next_token_skip_space_or_newline
-      check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :===, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :%, :+@, :-@, :'~@', :'!@', :&, :|, :^, :**, :[], :[]=, :'<=>'
+      next_token
+
+      if string[pos] == '%'
+        self.pos += 1
+        @token.type = :%
+        @token.column_number += 1
+      else
+        skip_space_or_newline
+        check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :===, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :+@, :-@, :'~@', :'!@', :&, :|, :^, :**, :[], :[]=, :'<=>'
+      end
 
       receiver = nil
       @yields = false

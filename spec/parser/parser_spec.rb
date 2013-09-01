@@ -176,6 +176,8 @@ describe Parser do
     it_parses "def #{op}; end;", Def.new(op.to_sym, [], nil)
   end
 
+  it_parses "def %(); end;", Def.new(:'%', [], nil)
+
   ['<<', '<', '<=', '==', '>>', '>', '>=', '+', '-', '*', '/', '%', '|', '&', '^', '**', '==='].each do |op|
     it_parses "1 #{op} 2", Call.new(1.int32, op.to_sym, [2.int32])
     it_parses "n #{op} 2", Call.new("n".call, op.to_sym, [2.int32])
