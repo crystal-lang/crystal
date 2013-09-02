@@ -1,5 +1,7 @@
 require "range"
 require "comparable"
+require "string/buffer"
+require "string/formatter"
 
 lib C
   fun atoi(str : Char*) : Int32
@@ -50,6 +52,12 @@ class String
     buffer[length] = '\0'
     str.as(Int32).value = length
     str.as(String)
+  end
+
+  def self.new_from_buffer(capacity = 16)
+    buffer = Buffer.new(capacity)
+    yield buffer
+    String.from_cstr(buffer.buffer, buffer.length)
   end
 
   def self.build
@@ -188,32 +196,16 @@ class String
   end
 
   def replace(&block : Char -> String)
-    chars = Array(Char).new(length + 5)
-
-    # This is to put the length
-    chars << '\0'
-    chars << '\0'
-    chars << '\0'
-    chars << '\0'
-
-    new_length = 0
-    each_char do |my_char|
-      replacement = yield my_char
-      if replacement
-        replacement.each_char do |other_char|
-          chars << other_char
+    String.new_from_buffer(length) do |buffer|
+      each_char do |my_char|
+        replacement = yield my_char
+        if replacement
+          buffer << replacement
+        else
+          buffer << my_char
         end
-        new_length += replacement.length
-      else
-        chars << my_char
-        new_length += 1
       end
     end
-    chars << '\0'
-
-    buffer = chars.buffer
-    buffer.as(Int32).value = new_length
-    buffer.as(String)
   end
 
   def replace(char : Char, replacement : String)
@@ -433,6 +425,16 @@ class String
 
   def ends_with?(char : Char)
     @length > 0 && cstr[@length - 1] == char
+  end
+
+  def %(args : Array)
+    String.new_from_buffer(length) do |buffer|
+      String::Formatter.new(self, args, buffer).format
+    end
+  end
+
+  def %(other)
+    self % [other]
   end
 
   def hash

@@ -282,4 +282,33 @@ describe "String" do
     str.length.should eq(6)
     str.should eq("foobar")
   end
+
+  it "does %" do
+    ("foo" % 1).should        eq("foo")
+    ("foo %d" % 1).should     eq("foo 1")
+    ("%d" % 123).should       eq("123")
+    ("%+d" % 123).should      eq("+123")
+    ("%+d" % -123).should     eq("-123")
+    ("% d" % 123).should      eq(" 123")
+    ("%20d" % 123).should     eq("                 123")
+    ("%+20d" % 123).should    eq("                +123")
+    ("%+20d" % -123).should   eq("                -123")
+    ("% 20d" % 123).should    eq("                 123")
+    ("%020d" % 123).should    eq("00000000000000000123")
+    ("%+020d" % 123).should   eq("+0000000000000000123")
+    ("% 020d" % 123).should   eq(" 0000000000000000123")
+    ("%-d" % 123).should      eq("123")
+    ("%-20d" % 123).should    eq("123                 ")
+    ("%-+20d" % 123).should   eq("+123                ")
+    ("%-+20d" % -123).should  eq("-123                ")
+    ("%- 20d" % 123).should   eq(" 123                ")
+    ("%s" % 'a').should       eq("a")
+    ("%-s" % 'a').should      eq("a")
+    ("%20s" % 'a').should     eq("                   a")
+    ("%20s" % 'a').should     eq("                   a")
+    ("%-20s" % 'a').should    eq("a                   ")
+
+    ("%%%d" % 1).should eq("%1")
+    ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
+  end
 end
