@@ -446,6 +446,14 @@ module Crystal
     def add_macro(a_def)
       self.macros[a_def.name][a_def.args.length] = a_def
     end
+
+    def filter_by_responds_to(name)
+      has_def?(name) ? self : nil
+    end
+
+    def has_def?(name)
+      self.defs.has_key?(name) || self.defs.has_key?(name.to_sym)
+    end
   end
 
   module DefInstanceContainer
@@ -1132,6 +1140,22 @@ module Crystal
       else
         program.type_merge(*filtered_types)
       end
+    end
+
+    def filter_by_responds_to(name)
+      filtered_types = @types.map { |type| type.filter_by_responds_to(name) }.compact
+      case filtered_types.length
+      when 0
+        nil
+      when 1
+        filtered_types[0]
+      else
+        program.type_merge(*filtered_types)
+      end
+    end
+
+    def has_def?(name)
+      @types.any? { |type| type.has_def?(name) }
     end
 
     def nilable?

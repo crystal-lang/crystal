@@ -692,6 +692,14 @@ module Crystal
       false
     end
 
+    def visit_responds_to(node)
+      node.obj.accept self
+      @str << ".responds_to?("
+      node.name.accept self
+      @str << ")"
+      false
+    end
+
     def visit_case(node)
       @str << 'case '
       node.cond.accept self

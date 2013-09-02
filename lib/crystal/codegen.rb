@@ -477,34 +477,42 @@ module Crystal
     end
 
     def visit_is_a(node)
+      const_type = node.const.type.instance_type
+      codegen_type_filter(node) { |type| type.implements?(const_type) }
+    end
+
+    def visit_responds_to(node)
+      name = node.name.value
+      codegen_type_filter(node) { |type| type.has_def?(name) }
+    end
+
+    def codegen_type_filter(node, &block)
       accept(node.obj)
 
       obj_type = node.obj.type
-      const_type = node.const.type.instance_type
 
       if obj_type.is_a?(HierarchyType)
-        codegen_is_a_many_types(obj_type.subtypes, const_type)
+        codegen_type_filter_many_types(obj_type.subtypes, &block)
       elsif obj_type.union?
-        codegen_is_a_many_types(obj_type.concrete_types, const_type)
+        codegen_type_filter_many_types(obj_type.concrete_types, &block)
       elsif obj_type.nilable?
-        if const_type.nil_type?
-          @last = null_pointer?(@last)
-        elsif obj_type.types.any? { |t| t.implements?(const_type) }
-          @last = not_null_pointer?(@last)
-        else
-          @last = int1(0)
-        end
+        np = null_pointer?(@last)
+        nil_matches = block.call(@mod.nil)
+        other_matches = block.call(obj_type.nilable_type)
+        @last = @builder.or(
+          @builder.and(np, int1(nil_matches ? 1 : 0)),
+          @builder.and(@builder.not(np), int1(other_matches ? 1 : 0))
+        )
       else
-        is_a = obj_type.implements?(const_type)
-        @last = int1(is_a ? 1 : 0)
+        matches = block.call(obj_type)
+        @last = int1(matches ? 1 : 0)
       end
 
       false
     end
 
-    def codegen_is_a_many_types(types, const_type)
-      matching_ids = types.select { |t| t.implements?(const_type) }.map { |t| int(t.type_id) }
-
+    def codegen_type_filter_many_types(types, &block)
+      matching_ids = types.select(&block).map { |t| int(t.type_id) }
       case matching_ids.length
       when 0
         @last = int1(0)

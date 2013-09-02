@@ -349,6 +349,7 @@ describe Parser do
   it_parses "@a.ptr", PointerOf.new('@a'.instance_var)
 
   it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".ident)
+  it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo".symbol)
 
   it_parses "/foo/", RegexpLiteral.new("foo")
 

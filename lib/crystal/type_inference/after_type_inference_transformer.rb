@@ -195,6 +195,29 @@ module Crystal
 
       if node.obj.type
         filtered_type = node.obj.type.filter_by(node.const.type.instance_type)
+
+        if node.obj.type.equal?(filtered_type)
+          return true_literal
+        end
+
+        unless filtered_type
+          return false_literal
+        end
+      end
+
+      node
+    end
+
+    def transform_responds_to(node)
+      super
+
+      if node.obj.type
+        filtered_type = node.obj.type.filter_by_responds_to(node.name.value)
+
+        if node.obj.type.equal?(filtered_type)
+          return true_literal
+        end
+
         unless filtered_type
           return false_literal
         end
@@ -256,6 +279,14 @@ module Crystal
         false_literal = BoolLiteral.new(false)
         false_literal.set_type(@program.bool)
         false_literal
+      end
+    end
+
+    def true_literal
+      @true_literal ||= begin
+        true_literal = BoolLiteral.new(true)
+        true_literal.set_type(@program.bool)
+        true_literal
       end
     end
   end

@@ -946,6 +946,13 @@ module Crystal
       end
     end
 
+    def end_visit_responds_to(node)
+      node.type = mod.bool
+      if node.obj.is_a?(Var)
+        node.type_filters = {node.obj.name => RespondsToTypeFilter.new(node.name.value)}
+      end
+    end
+
     def end_visit_type_merge(node)
       node.bind_to *node.expressions
     end

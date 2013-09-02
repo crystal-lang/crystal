@@ -94,4 +94,18 @@ module Crystal
       "Not(#{@filter})"
     end
   end
+
+  class RespondsToTypeFilter
+    def initialize(name)
+      @name = name
+    end
+
+    def apply(other)
+      other.filter_by_responds_to(@name)
+    end
+
+    def to_s
+      "responds_to?(#{@name})"
+    end
+  end
 end

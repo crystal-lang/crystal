@@ -294,6 +294,12 @@ module Crystal
       node
     end
 
+    def transform_responds_to(node)
+      node.obj = node.obj.transform(self)
+      node.name = node.name.transform(self)
+      node
+    end
+
     def transform_require(node)
       node
     end

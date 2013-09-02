@@ -505,6 +505,17 @@ module Crystal
             raise "'is_a?' can't receive a block"
           end
           atomic = IsA.new(atomic.obj, atomic.args[0])
+        when "responds_to?"
+          if atomic.args.length != 1
+            raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 0)"
+          end
+          if !atomic.args[0].is_a?(SymbolLiteral)
+            raise "'responds_to?' argument must be a Symbol literal"
+          end
+          if atomic.block
+            raise "'responds_to?' can't receive a block"
+          end
+          atomic = RespondsTo.new(atomic.obj, atomic.args[0])
         when :yield
           if atomic.block
             raise "'yield' can't receive a block"
