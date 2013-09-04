@@ -15,11 +15,14 @@ module Crystal
     end
 
     def target_def
-      if target_defs && target_defs.length == 1
-        target_defs[0]
-      else
-        raise "Zero or more than one target def"
+      # TODO: fix
+      if (defs = @target_defs)
+        if defs.length == 1
+          return defs[0]
+        end
       end
+
+      raise "Zero or more than one target def"
     end
 
     def update_input

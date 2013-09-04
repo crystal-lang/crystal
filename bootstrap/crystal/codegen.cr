@@ -55,6 +55,7 @@ module Crystal
       @const_block_entry = @const_block
       @vars = {} of String => LLVMVar
       @strings = {} of String => LibLLVM::ValueRef
+      @last = LLVM::Int1.from_i(0)
     end
 
     def finish
@@ -227,9 +228,63 @@ module Crystal
       end
     end
 
-    # def new_entry_block
-    #   @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
-    # end
+    def visit(node : Def)
+      false
+    end
+
+    def visit(node : Call)
+      owner = node.target_def.owner
+
+      call_args = [] of LibLLVM::ValueRef
+      codegen_call(node, owner, call_args)
+    end
+
+    def codegen_call(node, self_type, call_args)
+      target_def = node.target_def
+      mangled_name = target_def.mangled_name(self_type)
+
+      func = @llvm_mod.functions.named(mangled_name) || codegen_fun(mangled_name, target_def, self_type)
+    end
+
+    def codegen_fun(mangled_name, target_def, self_type)
+      # if target_def.type.same?(@mod.void)
+      #   llvm_return_type = LLVM.Void
+      # else
+        llvm_return_type = llvm_type(target_def.type)
+      # end
+
+      old_position = @builder.insert_block
+      old_fun = @fun
+      old_entry_block = @entry_block
+      old_alloca_block = @alloca_block
+
+      @fun = @llvm_mod.functions.add(
+        mangled_name,
+        [] of Int32,
+        # args.map { |arg| llvm_arg_type(arg.type) },
+        llvm_return_type#,
+        # varargs: varargs
+      )
+
+      if body = target_def.body
+        new_entry_block
+        accept(body)
+
+        ret(@last)
+
+        br_from_alloca_to_entry
+
+        @builder.position_at_end old_position
+      end
+
+      @fun = old_fun
+      @entry_block = old_entry_block
+      @alloca_block = old_alloca_block
+    end
+
+    def new_entry_block
+      @alloca_block, @entry_block = new_entry_block_chain ["alloca", "entry"]
+    end
 
     def new_entry_block_chain names
       blocks = new_blocks names
@@ -237,9 +292,9 @@ module Crystal
       blocks
     end
 
-    # def br_from_alloca_to_entry
-    #   br_block_chain @alloca_block, @entry_block
-    # end
+    def br_from_alloca_to_entry
+      br_block_chain [@alloca_block, @entry_block]
+    end
 
     def br_block_chain blocks
       old_block = @builder.insert_block
@@ -280,6 +335,14 @@ module Crystal
       # old_current_node = @current_node
       node.accept self
       # @current_node = old_current_node
+    end
+
+    def ret(value)
+      # if @needs_gc
+      #   @builder.call set_root_index_fun, @gc_root_index
+      # end
+
+      @builder.ret value
     end
   end
 end
