@@ -83,7 +83,11 @@ module Crystal
     def visit(node : Call)
       node.mod = @mod
       node.parent_visitor = self
+      node.args.each do |arg|
+        arg.accept self
+      end
       node.recalculate
+      false
     end
 
     def type_assign(target, value, node)

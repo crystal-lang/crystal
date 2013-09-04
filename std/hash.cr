@@ -45,7 +45,7 @@ class Hash(K, V)
   end
 
   def fetch(key)
-    fetch(key) { raise "Missing value: #{key}" }
+    fetch(key) { raise "Missing hash value: #{key}" }
   end
 
   def fetch(key, default)

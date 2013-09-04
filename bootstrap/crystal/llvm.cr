@@ -32,6 +32,7 @@ lib LibLLVM("LLVM-3.3")
   fun void_type = LLVMVoidType() : TypeRef
   fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : Int32, is_var_arg : Int32) : TypeRef
   fun add_function = LLVMAddFunction(module : ModuleRef, name : Char*, type : TypeRef) : ValueRef
+  fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : Char*) : ValueRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : Char*) : ValueRef
   fun append_basic_block = LLVMAppendBasicBlock(fn : ValueRef, name : Char*) : BasicBlockRef
@@ -109,8 +110,7 @@ module LLVM
     end
 
     def add(name, arg_types, ret_type)
-      # args = arg_types.map { |t| t.type }
-      args = [] of LibLLVM::TypeRef
+      args = arg_types.map { |t| t.type }
       fun_type = LibLLVM.function_type(ret_type.type, args.buffer.as(LibLLVM::TypeRef), arg_types.length, 0)
       func = LibLLVM.add_function(@mod.llvm_module, name, fun_type)
       Function.new(func)
@@ -141,6 +141,10 @@ module LLVM
 
     def llvm_function
       @fun
+    end
+
+    def get_param(index)
+      LibLLVM.get_param(@fun, index)
     end
   end
 
@@ -209,8 +213,8 @@ module LLVM
       LibLLVM.build_br(@builder, block)
     end
 
-    def call(func)
-      LibLLVM.build_call(@builder, func.llvm_function, nil, 0, "")
+    def call(func, args = [] of LibLLVM::ValueRef)
+      LibLLVM.build_call(@builder, func.llvm_function, args.buffer, args.length, "")
     end
 
     def alloca(type, name = "")

@@ -11,4 +11,14 @@ describe "Code gen: def" do
       foo
       ").to_i.should eq(1)
   end
+
+  it "codegens def with argument" do
+    run("
+      def foo(x)
+        x
+      end
+
+      foo(1)
+      ").to_i.should eq(1)
+  end
 end

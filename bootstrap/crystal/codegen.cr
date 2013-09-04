@@ -23,7 +23,12 @@ module Crystal
 
   def build(node, mod)
     visitor = CodeGenVisitor.new(mod, node)
-    node.accept visitor
+    begin
+      node.accept visitor
+    rescue ex
+      visitor.llvm_mod.dump
+      raise ex
+    end
     visitor.finish
     visitor.llvm_mod.dump if Crystal::DUMP_LLVM
     visitor.llvm_mod
@@ -236,6 +241,12 @@ module Crystal
       owner = node.target_def.owner
 
       call_args = [] of LibLLVM::ValueRef
+
+      node.args.each_with_index do |arg, i|
+        accept(arg)
+        call_args << @last
+      end
+
       codegen_call(node, owner, call_args)
     end
 
@@ -244,6 +255,8 @@ module Crystal
       mangled_name = target_def.mangled_name(self_type)
 
       func = @llvm_mod.functions.named(mangled_name) || codegen_fun(mangled_name, target_def, self_type)
+
+      @last = @builder.call func, call_args
     end
 
     def codegen_fun(mangled_name, target_def, self_type)
@@ -255,31 +268,65 @@ module Crystal
 
       old_position = @builder.insert_block
       old_fun = @fun
+      old_vars = @vars
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
 
+      @vars = {} of String => LLVMVar
+
+      args = [] of Arg
+      # if self_type && self_type.passed_as_self?
+      #   @type = self_type
+      #   args << Var.new("self", self_type)
+      # end
+      args.concat target_def.args
+
       @fun = @llvm_mod.functions.add(
         mangled_name,
-        [] of Int32,
-        # args.map { |arg| llvm_arg_type(arg.type) },
+        args.map { |arg| llvm_arg_type(arg.type) },
         llvm_return_type#,
         # varargs: varargs
       )
 
+      # args.each_with_index do |arg, i|
+      #   @fun.params[i].name = arg.name
+      #   # @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
+      # end
+
+
       if body = target_def.body
         new_entry_block
-        accept(body)
 
-        ret(@last)
+        args.each_with_index do |arg, i|
+          # if (self_type && i == 0 && !self_type.union?) || target_def.body.is_a?(Primitive) || arg.type.passed_by_val?
+          #   @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
+          # else
+            pointer = alloca(llvm_type(arg.type), arg.name)
+            @vars[arg.name] = LLVMVar.new(pointer, arg.type)
+            @builder.store @fun.get_param(i), pointer
+          # end
+        end
+
+        if body
+          accept(body)
+
+          ret(@last)
+        end
 
         br_from_alloca_to_entry
 
         @builder.position_at_end old_position
       end
+      @last = LLVM::Int1.from_i(0)
 
+      the_fun = @fun
+
+      @vars = old_vars
       @fun = old_fun
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
+
+      the_fun
     end
 
     def new_entry_block
@@ -329,6 +376,10 @@ module Crystal
 
     def llvm_type(type)
       @llvm_typer.llvm_type(type)
+    end
+
+    def llvm_arg_type(type)
+      @llvm_typer.llvm_arg_type(type)
     end
 
     def accept(node)
