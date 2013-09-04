@@ -32,6 +32,56 @@ module Crystal
     end
   end
 
+  module MatchesLookup
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+      a_def = defs[name]
+      if a_def
+        Matches.new([Match.new(self, a_def, arg_types)], nil)
+      else
+        nil
+      end
+    end
+  end
+
+  module DefInstanceContainer
+    class DefInstanceKey
+      getter :def_object_id
+      getter :arg_types
+      getter :block_type
+
+      def initialize(@def_object_id, @arg_types, @block_type)
+      end
+
+      def ==(other : DefInstanceKey)
+        other.def_object_id == @def_object_id && other.arg_types == @arg_types && other.block_type == @block_type
+      end
+
+      def hash
+        hash = 0
+        hash = 31 * hash + @def_object_id
+        hash = 31 * hash + @arg_types.hash
+        hash = 31 * hash + @block_type.hash
+        hash
+      end
+    end
+
+    def def_instances
+      @def_instances ||= {} of DefInstanceKey => Def
+    end
+
+    def add_def_instance(def_object_id, arg_types, block_type, typed_def)
+      def_instances[def_instance_key(def_object_id, arg_types, block_type)] = typed_def
+    end
+
+    def lookup_def_instance(def_object_id, arg_types, block_type)
+      def_instances.fetch(def_instance_key(def_object_id, arg_types, block_type), nil)
+    end
+
+    def def_instance_key(def_object_id, arg_types, block_type)
+      DefInstanceKey.new(def_object_id, arg_types, block_type)
+    end
+  end
+
   abstract class ModuleType < ContainedType
     include DefContainer
 

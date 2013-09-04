@@ -308,13 +308,20 @@ module Crystal
 
       temp_var = new_temp_var
       assign = Assign.new(temp_var, constructor)
+      assign.location = node.location
+
       set_length = Call.new(temp_var, 'length=', [NumberLiteral.new(length, :i32)])
+      set_length.location = node.location
 
       exps = [assign, set_length]
 
       node.elements.each_with_index do |elem, i|
         get_buffer = Call.new(temp_var, 'buffer')
+        get_buffer.location = node.location
+
         assign_index = Call.new(get_buffer, :[]=, [NumberLiteral.new(i, :i32), elem])
+        assign_index.location = node.location
+
         exps << assign_index
       end
 

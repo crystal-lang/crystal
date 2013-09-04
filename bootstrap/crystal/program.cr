@@ -4,6 +4,8 @@ require "llvm"
 module Crystal
   class Program < Type
     include DefContainer
+    include DefInstanceContainer
+    include MatchesLookup
 
     def initialize
       # super(nil, "main")

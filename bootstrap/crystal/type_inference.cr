@@ -15,7 +15,7 @@ module Crystal
   class TypeVisitor < Visitor
     getter :mod
 
-    def initialize(@mod, @vars = {} of String => Var)
+    def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil)
     end
 
     def visit(node : ASTNode)
@@ -81,7 +81,9 @@ module Crystal
     end
 
     def visit(node : Call)
-      # node.recalculate
+      node.mod = @mod
+      node.parent_visitor = self
+      node.recalculate
     end
 
     def type_assign(target, value, node)

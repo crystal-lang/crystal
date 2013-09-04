@@ -36,7 +36,7 @@ class Reference
   end
 
   def hash
-    object_id.to_i64
+    object_id
   end
 
   def clone

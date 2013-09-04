@@ -164,7 +164,7 @@ class Hash(K, V)
   end
 
   def bucket_index(key)
-    key.hash % @buckets.length
+    (key.hash % @buckets.length).to_i
   end
 
   class Entry(K, V)

@@ -482,7 +482,7 @@ module Crystal
       args = {}
       args['self'] = Var.new('self', self_type) if self_type.is_a?(Type)
 
-      0.upto(self.args.length - 1).each do |index|
+      0.upto(self.args.length - 1) do |index|
         arg = typed_def.args[index]
         type = arg_types[args_start_index + index]
         var = Var.new(arg.name, type)

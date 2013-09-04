@@ -32,6 +32,12 @@ module Crystal
       propagate
     end
 
+    def bind_to(nodes : Array)
+      nodes.each do |node|
+        bind_to node
+      end
+    end
+
     def add_observer(observer)
       @observers ||= [] of ASTNode
       @observers << observer
@@ -54,7 +60,7 @@ module Crystal
       if @type.nil? || (@dependencies && @dependencies.length == 1)
         new_type = from.type
       else
-        new_type = Type.merge [@type, from.type]
+        new_type = Type.merge([@type, from.type] of Type?)
       end
 
       return if @type.object_id == new_type.object_id
