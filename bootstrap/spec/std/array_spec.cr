@@ -302,4 +302,10 @@ describe "Array" do
     rescue Array::IndexOutOfBounds
     end
   end
+
+  it "has hash" do
+    a = [1, 2, [3]]
+    b = [1, 2, [3]]
+    a.hash.should eq(b.hash)
+  end
 end
