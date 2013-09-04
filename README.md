@@ -50,3 +50,5 @@ Then:
 Finally run crystal:
 
 > `bin/crystal --help`
+
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/25b65355cae65602787d6952d0bdb8cf "githalytics.com")](http://githalytics.com/manastech/crystal)
