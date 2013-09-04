@@ -35,6 +35,10 @@ class Reference
     false
   end
 
+  def hash
+    object_id.to_i64
+  end
+
   def clone
     self
   end
