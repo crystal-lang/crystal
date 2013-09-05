@@ -78,6 +78,7 @@ module Crystal
 
     def visit(node : Def)
       @mod.add_def node
+      false
     end
 
     def visit(node : Call)

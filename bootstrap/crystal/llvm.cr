@@ -125,7 +125,7 @@ module LLVM
       end
     end
 
-    def named(name)
+    def []?(name)
       func = LibLLVM.get_named_function(@mod.llvm_module, name)
       func.nil? ? nil : Function.new(func)
     end

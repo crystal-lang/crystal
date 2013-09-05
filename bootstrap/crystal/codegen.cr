@@ -254,7 +254,7 @@ module Crystal
       target_def = node.target_def
       mangled_name = target_def.mangled_name(self_type)
 
-      func = @llvm_mod.functions.named(mangled_name) || codegen_fun(mangled_name, target_def, self_type)
+      func = @llvm_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
 
       @last = @builder.call func, call_args
     end

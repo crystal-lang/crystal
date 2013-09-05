@@ -55,6 +55,12 @@ class Array(T)
     @buffer[index]
   end
 
+  def []?(index : Int)
+    index += length if index < 0
+    return nil if index >= length || index < 0
+    @buffer[index]
+  end
+
   def []=(index : Int, value : T)
     index += length if index < 0
     raise IndexOutOfBounds.new if index >= length || index < 0

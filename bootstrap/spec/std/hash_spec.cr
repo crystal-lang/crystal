@@ -26,6 +26,12 @@ describe "Hash" do
     a[1].should eq(2)
   end
 
+  it "gets nilable" do
+    a = {1 => 2}
+    a[1]?.should eq(2)
+    a[2]?.should be_nil
+  end
+
   it "gets array of keys" do
     a = {} of Symbol => Int32
     a.keys.should eq([] of Symbol)

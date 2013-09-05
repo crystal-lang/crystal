@@ -40,6 +40,10 @@ class Hash(K, V)
     fetch(key)
   end
 
+  def []?(key)
+    fetch(key, nil)
+  end
+
   def has_key?(key)
     !!find_entry(key)
   end

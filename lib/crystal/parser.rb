@@ -461,15 +461,24 @@ module Crystal
             when :','
               next_token_skip_space_or_newline
               if @token.type == :']'
-                next_token_skip_space
+                next_token
                 break
               end
             when :']'
-              next_token_skip_space
+              next_token
               break
             end
           end
-          atomic = Call.new atomic, :[], args, nil, false, column_number
+
+          if @token.type == :'?'
+            method_name = :'[]?'
+            next_token_skip_space
+          else
+            method_name = :'[]'
+            skip_space
+          end
+
+          atomic = Call.new atomic, method_name, args, nil, false, column_number
           atomic.name_length = 0
           atomic
         else
@@ -1369,7 +1378,7 @@ module Crystal
         @token.column_number += 1
       else
         skip_space_or_newline
-        check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :===, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :+@, :-@, :'~@', :'!@', :&, :|, :^, :**, :[], :[]=, :'<=>'
+        check :IDENT, :CONST, :"=", :<<, :<, :<=, :==, :===, :"!=", :=~, :>>, :>, :>=, :+, :-, :*, :/, :+@, :-@, :'~@', :'!@', :&, :|, :^, :**, :[], :[]=, :'<=>', :"[]?"
       end
 
       receiver = nil
