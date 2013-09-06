@@ -49,7 +49,7 @@ is just a temporary implementation.
 
 Did you know that [String](https://github.com/manastech/crystal/blob/master/std/string.cr)
 is implemented in Crystal itself? There's just very small magic to make it have the
-length and pointer to the chars buffers, but everything else it built on top of that.
+length and pointer to the chars buffers, but everything else is built on top of that.
 
 **Symbols**
 
