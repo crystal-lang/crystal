@@ -320,8 +320,6 @@ module Crystal
           Dir["#{relative_dir}/#{multi ? '**/' : ''}*.cr"].each do |file|
             node = Require.new(file)
             nodes.push node
-            # node = require_absolute(file)
-            # nodes.push node if node
           end
           return Expressions.new(nodes)
         end

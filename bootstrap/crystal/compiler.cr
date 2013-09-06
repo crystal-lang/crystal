@@ -35,11 +35,12 @@ module Crystal
       source = File.read filename
 
       begin
+        program = Program.new
         parser = Parser.new(source)
         parser.filename = filename
         nodes = parser.parse
-        mod = infer_type nodes
-        llvm_mod = build nodes, mod
+        nodes = program.infer_type nodes
+        llvm_mod = program.build nodes
 
         llvm_mod.dump if @dump_ll
 

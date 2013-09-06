@@ -146,6 +146,7 @@ module Crystal
 
       reader, writer = IO.pipe
       Thread.new do
+        sleep 0.1
         llvm_mod.write_bitcode(writer)
         writer.close
       end

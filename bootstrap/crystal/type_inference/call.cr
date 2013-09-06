@@ -1,3 +1,5 @@
+require "../ast"
+
 module Crystal
   class Call
     setter :mod
