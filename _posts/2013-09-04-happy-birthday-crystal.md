@@ -47,6 +47,10 @@ b = "Hello #{a}" #=> "Hello World"
 We still need to decide what's the best way to deal with different encodings, so this
 is just a temporary implementation.
 
+Did you know that [String](https://github.com/manastech/crystal/blob/master/std/string.cr)
+is implemented in Crystal itself? There's just very small magic to make it have the
+length and pointer to the chars buffers, but everything else it built on top of that.
+
 **Symbols**
 
 {% highlight ruby %}
@@ -191,6 +195,10 @@ d = {1 => 2, 3 => 4}     # d is a Hash(Int32, Int32)
 e = {} of String => Bool # e is a Hash(String, Bool), same as doing Hash(String, Bool).new
 {% endhighlight ruby %}
 
+And yes, [Array](https://github.com/manastech/crystal/blob/master/std/array.cr) and
+[Hash](https://github.com/manastech/crystal/blob/master/std/hash.cr) are completely
+implemented in Crystal. This makes it very easy for anyone to collaborate on those classes.
+
 We really wanted to avoid having to specify type variables. In fact, we wanted to
 avoid having to differentiate between generic and non-generic classes. We spent
 a long time (maybe three months?) trying to make it work **efficiently** but we couln't.
@@ -244,13 +252,18 @@ values = Pointer(Int32).malloc(10) # Ask for 10 ints
 
 **Regular expressions**
 
-Regular expressions are implemented with C bindings to the PCRE library. This might change in the future.
+Regular expressions are implemented, for now, with C bindings to the PCRE library. Again,
+[Regexp](https://github.com/manastech/crystal/blob/master/std/regexp.cr) is entirely written in Crystal.
 
 {% highlight ruby %}
 "foobarbaz" =~ /(.+)bar(.+)/ #=> 0
 $1                           #=> "foo"
 $2                           #=> "baz
 {% endhighlight ruby %}
+
+**Ranges**
+
+Once again, [implemented in Crystal](https://github.com/manastech/crystal/blob/master/std/range.cr).
 
 **Exceptions**
 
