@@ -19,7 +19,7 @@ Crystal is **not** interpreted. It doesn't have a virtual machine. The code is c
 native machine code by using LLVM.
 
 You don't specify the types of variables, instance variables or method arguments,
-like is usually done in statically compiled languages. Instedd, Crystal tries to be as
+like is usually done in statically compiled languages. Instead, Crystal tries to be as
 smart as possible and infers the types for you.
 
 **Primitive types**
