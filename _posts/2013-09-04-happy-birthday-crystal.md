@@ -291,6 +291,57 @@ The macros getter, setter and property are implemented in a similar way, but we'
 been thinking of a more powerful and simpler way to achieve the same thing so this
 feature might dissappear.
 
+**Yield with scope**
+
+Similar to yield, but changes the implicit scope of the block.
+
+{% highlight ruby %}
+def foo
+  # -1 becomes the default scope where methods
+  # are looked up in the given block
+  -1.yield(2)
+end
+
+foo do |x|
+  # Invokes "abs" on -1
+  puts abs + x #=> 3
+end
+{% endhighlight ruby %}
+
+This allows writing powerful DSLs with zero overhead: no allocations or closures
+are involved.
+
+Something similar can be achieved in Ruby with instance_eval(&block), but for now
+we find it easier to implement it this way, and maybe easier to use.
+
+**Specs**
+
+We'be built a [very small clone of RSpec](https://github.com/manastech/crystal/blob/master/std/spec.cr) and we are using it to test the standard
+library as well as the new compiler. Here's a sample spec for the Array class:
+
+{% highlight ruby %}
+require "spec"
+
+describe "Array" do
+  describe "index" do
+    it "performs without a block" do
+      a = [1, 2, 3]
+      a.index(3).should eq(2)
+      a.index(4).should eq(-1)
+    end
+
+    it "performs with a block" do
+      a = [1, 2, 3]
+      a.index { |i| i > 1 }.should eq(1)
+      a.index { |i| i > 3 }.should eq(-1)
+    end
+  end
+end
+{% endhighlight ruby %}
+
+So Crystal makes it extremly easy to write tests, and at the same time gives you type safety.
+The best of both worlds.
+
 ##### Roadmap
 
 There are a lot more things to implement and we have many ideas to try out.
