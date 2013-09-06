@@ -247,7 +247,9 @@ values = Pointer(Int32).malloc(10) # Ask for 10 ints
 Regular expressions are implemented with C bindings to the PCRE library. This might change in the future.
 
 {% highlight ruby %}
-"foo bar baz" =~ /(.+) bar (.+)/
+"foobarbaz" =~ /(.+)bar(.+)/ #=> 0
+$1                           #=> "foo"
+$2                           #=> "baz
 {% endhighlight ruby %}
 
 **Exceptions**
