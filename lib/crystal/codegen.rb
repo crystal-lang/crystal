@@ -1,11 +1,15 @@
+require_relative "program"
+require_relative "codegen/llvm_config"
+
 require 'llvm/core'
 require 'llvm/execution_engine'
 require 'llvm/transforms/scalar'
-require_relative "program"
-
-LLVM.init_jit
 
 module Crystal
+  LLVMConfig.dlopen
+
+  LLVM.init_jit
+
   class Program
     MAIN_NAME = "__crystal_main"
     RAISE_NAME = "__crystal_raise"

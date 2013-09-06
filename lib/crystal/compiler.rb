@@ -76,6 +76,10 @@ module Crystal
           @options[:output_filename] = File.basename(::ARGV[0], File.extname(::ARGV[0]))
         end
       end
+
+      @llc = LLVMConfig.bin("llc")
+      @opt = LLVMConfig.bin("opt")
+      @clang = LLVMConfig.bin("clang")
     end
 
     def compile
@@ -151,13 +155,13 @@ module Crystal
       if @options[:debug]
         obj_file = "#{@options[:output_filename]}.o"
 
-        pid = spawn "llc | clang -x assembler -c -o #{obj_file} -", in: reader
+        pid = spawn "#{@llc} | #{@clang} -x assembler -c -o #{obj_file} -", in: reader
         Process.waitpid pid
 
-        `clang #{o_flag} #{obj_file} #{lib_flags(program)}`
+        `#{@clang} #{o_flag} #{obj_file} #{lib_flags(program)}`
       else
-        opt_cmd = @options[:opt_level] ? "opt -O#{@options[:opt_level]} |" : ""
-        pid = spawn "#{opt_cmd} llc | clang -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
+        opt_cmd = @options[:opt_level] ? "#{@opt} -O#{@options[:opt_level]} |" : ""
+        pid = spawn "#{opt_cmd} #{@llc} | #{@clang} -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
         Process.waitpid pid
       end
 
