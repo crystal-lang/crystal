@@ -303,7 +303,7 @@ There are a lot more things to implement and we have many ideas to try out.
 
 But the thing we want most right now is to have the compiler written in Crystal. Once
 we do this, we won't need Ruby anymore. We won't need to maintain two implementations
-of the compiler. Compilations time will be reduced drmatically (we hope!).
+of the compiler. Compilation times will be reduced drmatically (we hope!).
 
 And also, it's very likely that the language will grow a lot because
 of this, and we will have learned a lot of what it feels like to program in Crystal and what
