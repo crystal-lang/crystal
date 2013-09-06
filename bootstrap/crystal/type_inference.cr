@@ -4,12 +4,11 @@ require "ast"
 require "type_inference/*"
 
 module Crystal
-  def infer_type(node)
-    mod = Crystal::Program.new
-    if node
-      node.accept TypeVisitor.new(mod)
+  class Program
+    def infer_type(node)
+      node.accept TypeVisitor.new(self)
+      node
     end
-    mod
   end
 
   class TypeVisitor < Visitor

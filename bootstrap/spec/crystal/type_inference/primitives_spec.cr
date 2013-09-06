@@ -37,8 +37,6 @@ describe "Type inference: primitives" do
   end
 
   it "types an expression" do
-    input = Parser.parse "1; 'a'"
-    mod = infer_type input
-    input.type.should eq(mod.char)
+    assert_type("1; 'a'") { char }
   end
 end

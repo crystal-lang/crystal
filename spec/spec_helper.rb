@@ -45,7 +45,7 @@ end
 
 def infer_type(node)
   program = Program.new
-  node = program.normalize node
+  # node = program.normalize node
   node = program.infer_type node
   [program, node]
 end

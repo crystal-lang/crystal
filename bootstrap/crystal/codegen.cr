@@ -9,29 +9,31 @@ LLVM.init_x86
 module Crystal
   DUMP_LLVM = ENV["DUMP"] == "1"
 
-  def run(code)
-    node = Parser.parse(code)
-    mod = infer_type node
-    evaluate node, mod
-  end
-
-  def evaluate(node, mod)
-    llvm_mod = build node, mod
-    engine = LLVM::JITCompiler.new(llvm_mod)
-    engine.run_function llvm_mod.functions["crystal_main"] #, 0, nil
-  end
-
-  def build(node, mod)
-    visitor = CodeGenVisitor.new(mod, node)
-    begin
-      node.accept visitor
-    rescue ex
-      visitor.llvm_mod.dump
-      raise ex
+  class Program
+    def run(code)
+      node = Parser.parse(code)
+      node = infer_type node
+      evaluate node
     end
-    visitor.finish
-    visitor.llvm_mod.dump if Crystal::DUMP_LLVM
-    visitor.llvm_mod
+
+    def evaluate(node)
+      llvm_mod = build node
+      engine = LLVM::JITCompiler.new(llvm_mod)
+      engine.run_function llvm_mod.functions["crystal_main"] #, 0, nil
+    end
+
+    def build(node)
+      visitor = CodeGenVisitor.new(self, node)
+      begin
+        node.accept visitor
+      rescue ex
+        visitor.llvm_mod.dump
+        raise ex
+      end
+      visitor.finish
+      visitor.llvm_mod.dump if Crystal::DUMP_LLVM
+      visitor.llvm_mod
+    end
   end
 
   class LLVMVar

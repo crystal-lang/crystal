@@ -3,15 +3,31 @@ require "../crystal/**"
 
 include Crystal
 
+class InferTypeResult
+  getter :program
+  getter :node
+
+  def initialize(@program, @node)
+  end
+end
+
 def assert_type(str)
-  input = Parser.parse str
-  mod = infer_type input
-  expected_type = mod.yield
+  program = Program.new
+  input = parse str
+  input = program.infer_type input
+  expected_type = program.yield
   if input.is_a?(Expressions)
     input.last.type.should eq(expected_type)
   else
     input.type.should eq(expected_type)
   end
+end
+
+def infer_type(node)
+  program = Program.new
+  node = program.normalize node
+  node = program.infer_type node
+  InferTypeResult.new(program, node)
 end
 
 def assert_normalize(from, to)
@@ -24,4 +40,8 @@ end
 
 def parse(string)
   Parser.parse string
+end
+
+def run(code)
+  Program.new.run(code)
 end
