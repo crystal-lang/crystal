@@ -1,4 +1,3 @@
-GC.disable
 require 'bundler/setup'
 require 'pry'
 require 'pry-debugger'

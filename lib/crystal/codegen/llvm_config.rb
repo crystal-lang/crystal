@@ -13,25 +13,6 @@ module Crystal
       end
     end
 
-    def self.lib_dir
-      @lib_dir ||= begin
-        lib_dir = `llvm-config --libdir` rescue nil
-        lib_dir ||= `llvm-config-3.3 --libdir` rescue nil
-        unless lib_dir
-          raise "Couldn't determine llvm lib dir"
-        end
-        lib_dir.strip
-      end
-    end
-
-    def self.dlopen
-      if RUBY_PLATFORM =~ /darwin/
-        DL.dlopen "#{LLVMConfig.lib_dir}/libLLVM-3.3.dylib"
-      else
-        DL.dlopen "#{LLVMConfig.lib_dir}/libLLVM-3.3.so"
-      end
-    end
-
     def self.bin(name)
       "#{bin_dir}/#{name}"
     end

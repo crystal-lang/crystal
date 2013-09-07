@@ -2,7 +2,7 @@ source 'https://rubygems.org'
 
 gem 'rake'
 gem 'rspec'
-gem 'ruby-llvm', git: "https://github.com/ruby-llvm/ruby-llvm.git"
+gem 'ruby-llvm', git: "https://github.com/manastech/ruby-llvm.git"
 gem 'levenshtein-ffi'
 gem 'pry'
 gem 'pry-debugger'

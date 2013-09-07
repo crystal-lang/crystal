@@ -80,6 +80,13 @@ module Crystal
       @llc = LLVMConfig.bin("llc")
       @opt = LLVMConfig.bin("opt")
       @clang = LLVMConfig.bin("clang")
+      unless File.exists?(@clang)
+        @clang = `which gcc`.strip
+        if @clang.empty?
+          puts "Could not find a C compiler. Install clang (3.3) or gcc."
+          exit 1
+        end
+      end
     end
 
     def compile

@@ -6,8 +6,6 @@ require 'llvm/execution_engine'
 require 'llvm/transforms/scalar'
 
 module Crystal
-  LLVMConfig.dlopen
-
   LLVM.init_jit
 
   class Program
