@@ -176,7 +176,7 @@ foo = Foo.new(1)    # T is inferred to be an Int32, and foo is a Foo(Int32)
 foo.value.abs       # Ok
 
 foo2 = Foo.new('a') # T is inferred to be a Char, and foo2 is a Foo(Char)
-foo2.ord            # Ok
+foo2.value.ord            # Ok
 
 # You can also explicitly specify the generic type variable
 foo3 = Foo(String).new("hello")
