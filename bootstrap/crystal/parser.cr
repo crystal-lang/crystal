@@ -701,11 +701,9 @@ module Crystal
       location = @token.location
 
       next_token_skip_space_or_newline
-      check :CONST
-
-      name = @token.value.to_s
       name_column_number = @token.column_number
-      next_token_skip_space
+      name = parse_ident(false)
+      skip_space
 
       type_vars = parse_type_vars
 
@@ -721,6 +719,8 @@ module Crystal
 
       check_ident :end
       next_token_skip_space
+
+      raise "BUG: ClassDef name can only be an Ident" unless name.is_a?(Ident)
 
       class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, name_column_number
       class_def.location = location
@@ -756,11 +756,10 @@ module Crystal
       location = @token.location
 
       next_token_skip_space_or_newline
-      check :CONST
 
-      name = @token.value.to_s
       name_column_number = @token.column_number
-      next_token_skip_space
+      name = parse_ident(false)
+      skip_space
 
       type_vars = parse_type_vars
       skip_statement_end
@@ -769,6 +768,8 @@ module Crystal
 
       check_ident :end
       next_token_skip_space
+
+      raise "BUG: ModuleDef name can only be an Ident" unless name.is_a?(Ident)
 
       module_def = ModuleDef.new name, body, type_vars, name_column_number
       module_def.location = location
@@ -1465,10 +1466,9 @@ module Crystal
       end
     end
 
-    def parse_ident
+    def parse_ident(allow_type_vars = true)
       location = @token.location
 
-      names = [] of String
       global = false
 
       if @token.type == :"::"
@@ -1477,6 +1477,14 @@ module Crystal
       end
 
       check :CONST
+      parse_ident_after_colons(location, global, allow_type_vars)
+    end
+
+    def parse_ident_after_colons(location, global, allow_type_vars)
+      start_line = location.line_number
+      start_column = location.column_number
+
+      names = [] of String
       names << @token.value.to_s
 
       next_token
@@ -1492,7 +1500,7 @@ module Crystal
       const = Ident.new names, global
       const.location = location
 
-      if @token.type == :"("
+      if allow_type_vars && @token.type == :"("
         next_token_skip_space_or_newline
 
         type_vars = [] of ASTNode
