@@ -66,6 +66,12 @@ describe 'Code gen: union type' do
     run(%Q(
       require "prelude"
 
+      class Char
+        def to_i
+          ord
+        end
+      end
+
       class Foo
         def foo(x)
           @x = x
