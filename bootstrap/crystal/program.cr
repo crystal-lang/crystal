@@ -7,6 +7,8 @@ module Crystal
     include DefInstanceContainer
     include MatchesLookup
 
+    getter :types
+
     def initialize
       # super(nil, "main")
       @types = {} of String => Type
@@ -57,6 +59,25 @@ module Crystal
       self
     end
 
+    def lookup_type(names, already_looked_up = Set(UInt64).new, lookup_in_container = true)
+      return nil if already_looked_up.includes?(type_id)
+
+      if lookup_in_container
+        already_looked_up.add(type_id)
+      end
+
+      type = self
+      names.each do |name|
+        # TODO: Crystal, be smarter here
+        if type
+          type = type.types[name]?
+          break unless type
+        end
+      end
+
+      type
+    end
+
     def type_merge(types)
       all_types = types #.map! { |type| type.is_a?(UnionType) ? type.types : type }
       # all_types.flatten!
@@ -86,9 +107,10 @@ module Crystal
       type_getter :#{name}, :#{name.to_s.capitalize}
     "end
 
-    type_getter :value
-    type_getter :nil
     type_getter :object
+    type_getter :value
+    type_getter :reference
+    type_getter :nil
     type_getter :bool
     type_getter :char
     type_getter :int8
@@ -106,6 +128,10 @@ module Crystal
 
     def new_temp_var
       Var.new("#temp_#{@temp_var_counter += 1}")
+    end
+
+    def to_s
+      "<Program>"
     end
   end
 end

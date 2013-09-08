@@ -39,4 +39,22 @@ module Crystal
       str.to_s
     end
   end
+
+  class TypeException < Exception
+    getter :node
+    getter :inner
+
+    def self.for_node(node, message, inner = nil)
+      location = node.location
+      if location
+        new message, location.line_number, location.column_number, location.filename, 0, inner
+      else
+        new message, 0, 0, "", 0, inner
+      end
+    end
+
+    def initialize(message, @line, @column, @filename, @length = nil, @inner = nil)
+      super(message)
+    end
+  end
 end

@@ -7,9 +7,13 @@ module Crystal
       raise "Bug found!" unless first
       first.program.type_merge(types)
     end
+
+    def type_id
+      object_id
+    end
   end
 
-  class ContainedType < Type
+  abstract class ContainedType < Type
     getter :container
     getter :types
 
@@ -34,7 +38,7 @@ module Crystal
 
   module MatchesLookup
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      a_def = defs[name]
+      a_def = defs[name]?
       if a_def
         Matches.new([Match.new(self, a_def, arg_types)], nil)
       else
@@ -93,8 +97,35 @@ module Crystal
       @parents = [] of Type
     end
 
+    def lookup_type(names, already_looked_up = Set(UInt64).new, lookup_in_container = true)
+      return nil if already_looked_up.includes?(type_id)
+
+      if lookup_in_container
+        already_looked_up.add(type_id)
+      end
+
+      type = self
+      names.each do |name|
+        type = type.types[name]
+        break unless type
+      end
+
+      return type if type
+
+      parents.each do |parent|
+        match = parent.lookup_type(names, already_looked_up, false)
+        return match if match
+      end
+
+      lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
+    end
+
+    def full_name
+      @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
+    end
+
     def to_s
-      @name
+      full_name
     end
   end
 

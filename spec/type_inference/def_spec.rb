@@ -78,8 +78,7 @@ describe 'Type inference: def' do
   end
 
   it "allows recursion" do
-    input = parse "def foo; foo; end; foo"
-    infer_type input
+    assert_type("def foo; foo; end; foo") { self.nil }
   end
 
   it "allows recursion with arg" do

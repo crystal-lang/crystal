@@ -521,7 +521,7 @@ module Crystal
     end
 
     def full_name
-      container && !container.is_a?(Program) ? "#{container.to_s}::#{name}" : name
+      container && !container.is_a?(Program) ? "#{container}::#{name}" : name
     end
 
     def type_desc

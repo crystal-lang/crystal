@@ -15,6 +15,7 @@ module Crystal
     getter :mod
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil)
+      @types = [@mod] of Type
     end
 
     def visit(node : ASTNode)
@@ -75,6 +76,20 @@ module Crystal
       type_assign node.target, node.value, node
     end
 
+    def type_assign(target, value, node)
+      value.accept self
+
+      if target.is_a?(Var)
+        var = lookup_var target.name
+        target.bind_to var
+
+        node.bind_to value
+        var.bind_to node
+      end
+
+      false
+    end
+
     def visit(node : Def)
       @mod.add_def node
       false
@@ -90,22 +105,49 @@ module Crystal
       false
     end
 
-    def type_assign(target, value, node)
-      value.accept self
+    def visit(node : ClassDef)
+      superclass = if node_superclass = node.superclass
+                     lookup_ident_type node_superclass
+                   else
+                     mod.reference
+                   end
 
-      if target.is_a?(Var)
-        var = lookup_var target.name
-        target.bind_to var
-
-        node.bind_to value
-        var.bind_to node
+      if node.name.names.length == 1 && !node.name.global
+        # scope = current_type
+        # name = node.name.names.first
+      else
+        # name = node.name.names.pop
+        # scope = lookup_ident_type node.name
       end
-
-      false
     end
 
     def lookup_var(name)
       @vars.fetch_or_assign(name) { Var.new name }
+    end
+
+    def lookup_ident_type(node : Ident)
+      # if @free_vars && !node.global && type = @free_vars[[node.names.first]]
+      #   if node.names.length == 1
+      #     target_type = type
+      #   else
+      #     target_type = type.lookup_type(node.names[1 .. -1])
+      #   end
+      # elsif node.global
+      if node.global
+        target_type = mod.lookup_type node.names
+      else
+        target_type = (@scope || @types.last).lookup_type node.names
+      end
+
+      unless target_type
+        node.raise "uninitialized constant #{node}"
+      end
+
+      target_type
+    end
+
+    def lookup_ident_type(node)
+      raise "lookup_ident_type not implemented for #{node}"
     end
   end
 end

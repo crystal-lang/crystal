@@ -76,5 +76,9 @@ module Crystal
         notify_observers
       end
     end
+
+    def raise(message, inner = nil, exception_type = Crystal::TypeException)
+      ::raise exception_type.for_node(self, message, inner)
+    end
   end
 end

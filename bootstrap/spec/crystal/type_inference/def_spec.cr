@@ -27,4 +27,8 @@ describe "Type inference: def" do
 
     a_def.target_def.owner.should eq(program.int32)
   end
+
+  it "allows recursion" do
+    assert_type("def foo; foo; end; foo") { |mod| mod.nil }
+  end
 end
