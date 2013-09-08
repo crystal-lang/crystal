@@ -705,7 +705,7 @@ module Crystal
 
       case node.binary
       when :and
-        node.type_filters = and_type_filters(node.then.type_filters, node.else.type_filters)
+        node.type_filters = and_type_filters(and_type_filters(node.cond.type_filters, node.then.type_filters), node.else.type_filters)
       when :or
         node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
       end

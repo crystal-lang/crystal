@@ -25,7 +25,7 @@ module Crystal
     end
 
     def apply(other)
-      other.filter_by(@type)
+      other ? other.filter_by(@type) : nil
     end
 
     def to_s
