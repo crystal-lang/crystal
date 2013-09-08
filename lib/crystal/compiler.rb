@@ -174,6 +174,7 @@ module Crystal
       end
 
       if @options[:execute]
+        @tempfile.close
         print `#{@options[:output_filename]} #{@options[:args].join ' '}`
         unless $?.success?
           puts "\033[1;31m#{$?.to_s}\033[0m"
