@@ -76,9 +76,9 @@ module Crystal
       @argv = @fun.params[1]
       @argv.name = 'argv'
 
-      @builder = LLVM::Builder.new
+      @builder = llvm_builder = LLVM::Builder.new
       @builder = DebugLLVMBuilder.new @builder, self if debug
-      @builder = CrystalLLVMBuilder.new @builder, self
+      @builder = CrystalLLVMBuilder.new @builder, llvm_builder, self
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
 
@@ -104,7 +104,7 @@ module Crystal
       symbol_table.initializer = LLVM::ConstantArray.const(llvm_type(mod.string), symbol_table_values)
 
       if debug
-        @empty_md_list = metadata(metadata(0))
+        @empty_md_list = metadata(0)
         @subprograms = [fun_metadata(@fun, MAIN_NAME, @filename, 1)]
       end
     end

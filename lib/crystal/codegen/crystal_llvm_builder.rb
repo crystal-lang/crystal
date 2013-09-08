@@ -1,12 +1,13 @@
 module Crystal
   class CrystalLLVMBuilder
-    def initialize(builder, codegen)
+    def initialize(builder, llvm_builder, codegen)
       @builder = builder
+      @llvm_builder = llvm_builder
       @codegen = codegen
     end
 
     def landingpad(type, personality, clauses, name = "")
-      lpad = LLVM::C.build_landing_pad @builder, type, personality, clauses.length, name
+      lpad = LLVM::C.build_landing_pad @llvm_builder, type, personality, clauses.length, name
       LLVM::C.set_cleanup lpad, 1
       clauses.each do |clause|
         LLVM::C.add_clause lpad, clause
@@ -15,7 +16,7 @@ module Crystal
     end
 
     def resume(ex)
-      LLVM::C.build_resume @builder, ex
+      LLVM::C.build_resume @llvm_builder, ex
     end
 
     def ret(*args)

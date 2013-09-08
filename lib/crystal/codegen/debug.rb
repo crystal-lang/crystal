@@ -4,44 +4,47 @@ module Crystal
   class CodeGenVisitor < Visitor
     def add_compile_unit_metadata(file)
       LLVM::C.add_named_metadata_operand @llvm_mod, "llvm.dbg.cu", metadata(
-        LLVMDebugVersion + 17,                   # Tag = 17 + LLVMDebugVersion (DW_TAG_compile_unit)
-        0,                                       # Unused field
-        100,                                     # DWARF language identifier
-        File.basename(file),                     # Source file name
-        File.dirname(file),                      # Source file directory
+        LLVMDebugVersion + 17,                   # Tag = 17 (DW_TAG_compile_unit)
+        file_metadata(file),                     # Source directory (including trailing slash) & file pair
+        100,                                     # DWARF language identifier (ex. DW_LANG_C89)
         "Crystal",                               # Producer
-        true,                                    # True if this is a main compile unit
         false,                                   # True if this is optimized
         "",                                      # Flags
         0,                                       # Runtime version
         @empty_md_list,                          # List of enums types
         @empty_md_list,                          # List of retained types
-        metadata(metadata(*@subprograms)),       # List of subprograms
+        metadata(*@subprograms),                 # List of subprograms
         @empty_md_list,                          # List of global variables
+        @empty_md_list,                          # List of imported entities
+        @empty_md_list                           # Split debug filename
       )
     end
 
     def fun_metadata(fun, name, file, line)
+      return nil unless file && line
       @fun_metadatas ||= {}
       unless md = @fun_metadatas[fun]
         md = metadata(
           46 + LLVMDebugVersion,        # Tag
-          0,                            # Unused
-          file_metadata(file),          # Context
+          file_metadata(file),          # Source directory (including trailing slash) & file pair
+          file_descriptor(file),        # Reference to context descriptor
           name,                         # Name
           name,                         # Display name
-          fun.name,                     # Linkage name
-          file_metadata(file),          # File
+          fun.name,                     # MIPS linkage name (for C++)
           line,                         # Line number
-          fun_type,                            # Type
-          false,                        # Is local
-          true,                         # Is definition
-          0,                            # Virtuality attribute, e.g. pure virtual function
-          0,                            # Index into virtual table for C++ methods
+          fun_type,                     # Reference to type descriptor
+          false,                        # True if the global is local to compile unit (static)
+          true,                         # True if the global is defined in the compile unit (not extern)
+          0,                            # Virtuality, e.g. dwarf::DW_VIRTUALITY__virtual
+          0,                            # Index into a virtual function
           nil,                          # Type that holds virtual table.
           0,                            # Flags
           false,                        # True if this function is optimized
-          fun                           # Pointer to llvm::Function
+          fun,                          # Pointer to llvm::Function
+          nil,                          # Lists function template parameters
+          nil,                          # Function declaration descriptor
+          @empty_md_list,               # List of function variables
+          line                          # Line number where the scope of the subprogram begins
         )
       end
       @fun_metadatas[fun] = md
@@ -61,11 +64,19 @@ module Crystal
       fun_metadata(fun, crystal_def.name, crystal_def.filename, crystal_def.line_number)
     end
 
+    def file_descriptor(file)
+      file ||= ""
+      @file_descriptor ||= {}
+      @file_descriptor[file] ||= metadata(
+        41 + LLVMDebugVersion,                # Tag
+        file_metadata(file)
+      )
+    end
+
     def file_metadata(file)
       file ||= ""
       @file_metadata ||= {}
       @file_metadata[file] ||= metadata(
-        41 + LLVMDebugVersion,                # Tag
         File.basename(file),                  # File
         File.dirname(file)                    # Directory
       )
@@ -77,7 +88,7 @@ module Crystal
         @fun_metadatas[fun],
         node.line_number,
         node.column_number,
-        file_metadata(node.filename),
+        file_descriptor(node.filename),
         0
       )
     end
@@ -85,9 +96,10 @@ module Crystal
     def dbg_metadata
       return unless @current_node && @current_node.line_number && @current_node.filename
       metadata(
-        @current_node.line_number,
+        @current_node.line_number || 1,
         @current_node.column_number,
-        lexical_block_metadata(@fun, @current_node),
+        # lexical_block_metadata(@fun, @current_node),
+        @fun_metadatas[@fun],
         nil
       )
     end
