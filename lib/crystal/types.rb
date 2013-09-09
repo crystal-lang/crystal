@@ -1279,9 +1279,6 @@ module Crystal
   end
 
   class LibType < ModuleType
-    include DefContainer
-    include DefInstanceContainer
-
     attr_accessor :libname
 
     def initialize(container, name, libname = nil)
