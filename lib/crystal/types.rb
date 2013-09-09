@@ -777,6 +777,14 @@ module Crystal
           else
             @instance_vars_in_initialize = a_def.instance_vars
           end
+
+          unless a_def.calls_super
+            sup = superclass
+            while sup
+              sup.instance_vars_in_initialize &= a_def.instance_vars
+              sup = sup.superclass
+            end
+          end
         end
       end
 

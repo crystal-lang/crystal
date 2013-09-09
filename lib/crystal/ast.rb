@@ -495,6 +495,7 @@ module Crystal
     attr_accessor :yields
     attr_accessor :block_arg
     attr_accessor :instance_vars
+    attr_accessor :calls_super
     attr_accessor :name_column_number
 
     def initialize(name, args, body = nil, receiver = nil, block_arg = nil, yields = false)
@@ -524,6 +525,8 @@ module Crystal
       @receiver = other.receiver.clone
       @yields = other.yields
       @block_arg = other.block_arg
+      @instance_vars = other.instance_vars
+      @calls_super = other.calls_super
       @name_column_number = other.name_column_number
     end
   end

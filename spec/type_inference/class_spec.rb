@@ -430,4 +430,91 @@ describe 'Type inference: class' do
       1
     )) { int32 }
   end
+
+  it "types instance vars as nilable if doesn't invoke super in initialize" do
+    node = parse(%q(
+      class Foo
+        def initialize
+          @baz = Baz.new
+          @another = 1
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          @another = 2
+        end
+      end
+
+      class Baz
+      end
+
+      foo = Foo.new
+      bar = Bar.new
+    ))
+    mod, node = infer_type node
+
+    mod.types["Foo"].instance_vars["@baz"].type.should eq(mod.union_of(mod.nil, mod.types["Baz"]))
+    mod.types["Foo"].instance_vars["@another"].type.should eq(mod.int32)
+  end
+
+  it "types instance vars as nilable if doesn't invoke super in initialize with deep subclass" do
+    node = parse(%q(
+      class Foo
+        def initialize
+          @baz = Baz.new
+          @another = 1
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          super
+        end
+      end
+
+      class BarBar < Bar
+        def initialize
+          @another = 2
+        end
+      end
+
+      class Baz
+      end
+
+      foo = Foo.new
+      bar = Bar.new
+    ))
+    mod, node = infer_type node
+
+    mod.types["Foo"].instance_vars["@baz"].type.should eq(mod.union_of(mod.nil, mod.types["Baz"]))
+    mod.types["Foo"].instance_vars["@another"].type.should eq(mod.int32)
+  end
+
+  it "types instance vars as nilable if doesn't invoke super with default arguments" do
+    node = parse(%q(
+      class Foo
+        def initialize
+          @baz = Baz.new
+          @another = 1
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x = 1)
+          super()
+        end
+      end
+
+      class Baz
+      end
+
+      foo = Foo.new
+      bar = Bar.new(1)
+    ))
+    mod, node = infer_type node
+
+    mod.types["Foo"].instance_vars["@baz"].type.should eq(mod.types["Baz"])
+    mod.types["Foo"].instance_vars["@another"].type.should eq(mod.int32)
+  end
 end

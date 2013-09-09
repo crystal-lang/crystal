@@ -1075,6 +1075,8 @@ module Crystal
       name_column_number = @token.column_number
       next_token
 
+      @calls_super = true if name == "super"
+
       args = parse_call_args
       block = parse_block
 
@@ -1357,9 +1359,12 @@ module Crystal
 
     def parse_def
       @instance_vars = Set.new
+      @calls_super = false
       a_def = parse_def_or_macro Def
       a_def.instance_vars = @instance_vars
+      a_def.calls_super = @calls_super
       @instance_vars = nil
+      @calls_super = false
       a_def
     end
 
