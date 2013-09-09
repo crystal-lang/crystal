@@ -2,6 +2,7 @@ require_relative "types"
 
 module Crystal
   class Program < NonGenericModuleType
+    include ClassVarContainer
     include Enumerable
 
     POINTER_SIZE = 8
@@ -22,7 +23,7 @@ module Crystal
 
       reference = @types["Reference"] = NonGenericClassType.new self, "Reference", object
       value = @types["Value"] = ValueType.new self, "Value", object
-      numeric = @types["Numeric"] = ValueType.new self, "Numeric", value
+      number = @types["Number"] = ValueType.new self, "Number", value
 
       @types["NoReturn"] = NoReturnType.new self
       @types["Void"] = PrimitiveType.new self, "Void", value, LLVM::Int8, 1
@@ -30,7 +31,7 @@ module Crystal
       @types["Bool"] = PrimitiveType.new self, "Bool", value, LLVM::Int1, 1
       @types["Char"] = PrimitiveType.new self, "Char", value, LLVM::Int8, 1
 
-      @types["Int"] = int = ValueType.new self, "Int", numeric
+      @types["Int"] = int = ValueType.new self, "Int", number
       int.abstract = true
 
       @types["Int8"] = IntegerType.new self, "Int8", int, LLVM::Int8, 1, 1
@@ -42,7 +43,7 @@ module Crystal
       @types["Int64"] = IntegerType.new self, "Int64", int, LLVM::Int64, 8, 7
       @types["UInt64"] = IntegerType.new self, "UInt64", int, LLVM::Int64, 8, 8
 
-      @types["Float"] = float = ValueType.new self, "Float", numeric
+      @types["Float"] = float = ValueType.new self, "Float", number
       float.abstract = true
 
       @types["Float32"] = float32 = FloatType.new self, "Float32", float, LLVM::Float, 4, 9
@@ -63,6 +64,9 @@ module Crystal
 
       @types["Array"] = GenericClassType.new self, "Array", reference, ["T"]
 
+      @types["Exception"] = NonGenericClassType.new self, "Exception", reference
+      @types["GC"] = NonGenericClassType.new self, "GC", reference
+
       @types["ARGC_UNSAFE"] = Const.new self, "ARGC_UNSAFE", Crystal::ARGC.new(int32)
       @types["ARGV_UNSAFE"] = Const.new self, "ARGV_UNSAFE", Crystal::ARGV.new(pointer_of(pointer_of(char)))
 
@@ -76,11 +80,27 @@ module Crystal
       @nil_var = Var.new('<nil_var>', self.nil)
       @temp_var_counter = 0
 
+
       define_primitives
     end
 
     def program
       self
+    end
+
+    def has_require_flag?(name)
+      initialize_require_flags
+      @require_flags.include?(name)
+    end
+
+    def initialize_require_flags
+      @require_flags ||= begin
+        flags = Set.new
+        `uname -m -s`.split.each do |uname|
+          flags.add uname.downcase
+        end
+        flags
+      end
     end
 
     def new_temp_var
@@ -163,6 +183,14 @@ module Crystal
       @nil_var
     end
 
+    def void
+      @types["Void"]
+    end
+
+    def gc
+      @types["GC"]
+    end
+
     def value
       @types["Value"]
     end
@@ -241,6 +269,10 @@ module Crystal
 
     def array
       @types["Array"]
+    end
+
+    def exception
+      @types["Exception"]
     end
 
     def pointer

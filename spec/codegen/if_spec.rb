@@ -30,7 +30,7 @@ describe 'Code gen: if' do
   end
 
   it 'codegens if with union' do
-    run('a = if true; 2.5_f32; else; 1; end; a.to_f').to_f.should eq(2.5)
+    run('a = if true; 2.5_f32; else; 1; end; a.to_f').to_f64.should eq(2.5)
   end
 
   it 'codes if with two whiles' do

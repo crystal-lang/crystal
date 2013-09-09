@@ -1,3 +1,4 @@
+#!/usr/bin/env bin/crystal -run
 # Copied with little modifications from: http://benchmarksgame.alioth.debian.org/u32/program.php?test=nbody&lang=yarv&id=2
 
 SOLAR_MASS = 4 * Math::PI**2
@@ -12,8 +13,7 @@ class Planet
   property :vz
   property :mass
 
-  def initialize(x, y, z, vx, vy, vz, mass)
-    @x, @y, @z = x, y, z
+  def initialize(@x, @y, @z, vx, vy, vz, mass)
     @vx, @vy, @vz = vx * DAYS_PER_YEAR, vy * DAYS_PER_YEAR, vz * DAYS_PER_YEAR
     @mass = mass * SOLAR_MASS
   end

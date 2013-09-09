@@ -28,14 +28,14 @@ module Crystal
                         llvm_value_type = LLVM::Type.array(LLVM::Int, type.llvm_value_size.fdiv(LLVM::Int.type.width / 8).ceil)
                         LLVM::Type.struct([LLVM::Int, llvm_value_type], true, type.llvm_name)
                       end
-                    when Metaclass, GenericClassInstanceMetaclass
+                    when Metaclass, GenericClassInstanceMetaclass, HierarchyTypeMetaclass
                       LLVM::Int
                     when CStructType
                       LLVM::Pointer(llvm_struct_type(type))
                     when CUnionType
                       LLVM::Pointer(llvm_struct_type(type))
                     when TypeDefType
-                      llvm_type(type.type)
+                      llvm_type(type.typedef)
                     when HierarchyType
                       HIERARCHY_LLVM_TYPE
                     else

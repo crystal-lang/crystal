@@ -104,6 +104,7 @@ describe Parser do
   it_parses "def type(type); end", Def.new(:type, ["type".arg], nil)
 
   it_parses "def self.foo\n1\nend", Def.new("foo", [], [1.int32], "self".var)
+  it_parses "def self.foo=(value); end", Def.new("foo=", ["value".arg], [], "self".var)
   it_parses "def Foo.foo\n1\nend", Def.new("foo", [], [1.int32], "Foo".ident)
   it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", [], [1.int32], ['Foo', 'Bar'].ident)
 
@@ -122,6 +123,7 @@ describe Parser do
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.instance)], nil)
   it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Double'.ident]))], nil)
   it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Nil'.ident(true)]))], nil)
+  it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".ident)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, nil, 0)
   it_parses "def foo; yield 1; end", Def.new("foo", [], [Yield.new([1.int32])], nil, nil, 1)
   it_parses "def foo; yield 1; yield; end", Def.new("foo", [], [Yield.new([1.int32]), Yield.new], nil, nil, 1)
@@ -132,8 +134,11 @@ describe Parser do
   it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", nil, "Double".ident))
   it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", ["Int".ident]))
   it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", [SelfType.instance], SelfType.instance))
-  it_parses "def foo; a.yield; end", Def.new("foo", [], [YieldWithScope.new("a".call)], nil, nil, 1)
-  it_parses "def foo; a.yield 1; end", Def.new("foo", [], [YieldWithScope.new("a".call, [1.int32])], nil, nil, 1)
+  it_parses "def foo; a.yield; end", Def.new("foo", [], [Yield.new([], "a".call)], nil, nil, 1)
+  it_parses "def foo; a.yield 1; end", Def.new("foo", [], [Yield.new([1.int32], "a".call)], nil, nil, 1)
+  it_parses "def foo(@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var)])
+  it_parses "def foo(@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var), 1.int32])
+  it_parses "def foo(@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@var".instance_var, "var".var), 1.int32])
 
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call
@@ -146,6 +151,7 @@ describe Parser do
   it_parses "foo(1 + 2)", "foo".call(Call.new(1.int32, :"+", [2.int32]))
   it_parses "foo -1.0, -2.0", "foo".call(-1.float64, -2.float64)
   it_parses "foo(\n1)", "foo".call(1.int32)
+  it_parses "::foo", Call.new(nil, "foo", [], nil, true)
 
   it_parses "foo + 1", Call.new("foo".call, :"+", [1.int32])
   it_parses "foo +1", Call.new(nil, "foo", [1.int32])
@@ -169,6 +175,8 @@ describe Parser do
   ["=", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "%", "&", "|", "^", "**", "+@", "-@", "~@", "!@", '==='].each do |op|
     it_parses "def #{op}; end;", Def.new(op.to_sym, [], nil)
   end
+
+  it_parses "def %(); end;", Def.new(:'%', [], nil)
 
   ['<<', '<', '<=', '==', '>>', '>', '>=', '+', '-', '*', '/', '%', '|', '&', '^', '**', '==='].each do |op|
     it_parses "1 #{op} 2", Call.new(1.int32, op.to_sym, [2.int32])
@@ -203,21 +211,22 @@ describe Parser do
   it_parses "unless foo; 1; end", Unless.new("foo".call, 1.int32)
   it_parses "unless foo; 1; else; 2; end", Unless.new("foo".call, 1.int32, 2.int32)
 
-  it_parses "class Foo; end", ClassDef.new("Foo")
-  it_parses "class Foo\nend", ClassDef.new("Foo")
-  it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo", [Def.new("foo", [], nil)])
-  it_parses "class Foo < Bar; end", ClassDef.new("Foo", nil, "Bar".ident)
-  it_parses "class Foo(T); end", ClassDef.new("Foo", nil, nil, ["T"])
-  it_parses "abstract class Foo; end", ClassDef.new("Foo", nil, nil, nil, true)
+  it_parses "class Foo; end", ClassDef.new("Foo".ident)
+  it_parses "class Foo\nend", ClassDef.new("Foo".ident)
+  it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo".ident, [Def.new("foo", [], nil)])
+  it_parses "class Foo < Bar; end", ClassDef.new("Foo".ident, nil, "Bar".ident)
+  it_parses "class Foo(T); end", ClassDef.new("Foo".ident, nil, nil, ["T"])
+  it_parses "abstract class Foo; end", ClassDef.new("Foo".ident, nil, nil, nil, true)
+  it_parses "class Foo::Bar; end", ClassDef.new(Ident.new(["Foo", "Bar"]))
 
   it_parses "Foo(T)", NewGenericClass.new("Foo".ident, ["T".ident])
   it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident])])
   it_parses "Foo(Bar(T | U))", NewGenericClass.new("Foo".ident, [NewGenericClass.new("Bar".ident, [IdentUnion.new(["T".ident, "U".ident])])])
   it_parses "Foo(T?)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, Ident.new(["Nil"], true)])])
 
-  it_parses "module Foo; end", ModuleDef.new("Foo")
-  it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo", [Def.new("foo", [], nil)])
-  it_parses "module Foo(T); end", ModuleDef.new("Foo", nil, ["T"])
+  it_parses "module Foo; end", ModuleDef.new("Foo".ident)
+  it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".ident, [Def.new("foo", [], nil)])
+  it_parses "module Foo(T); end", ModuleDef.new("Foo".ident, nil, ["T"])
 
   it_parses "while true; 1; end;", While.new(true.bool, 1.int32)
 
@@ -252,12 +261,14 @@ describe Parser do
 
   it_parses "Int[]", Call.new("Int".ident, :[])
   it_parses "def []; end", Def.new(:[], [], nil)
+  it_parses "def []?; end", Def.new(:"[]?", [], nil)
   it_parses "def []=(value); end", Def.new(:[]=, ["value".arg], nil)
   it_parses "def self.[]; end", Def.new(:[], [], nil, "self".var)
 
   it_parses "Int[8]", Call.new("Int".ident, :[], [8.int32])
   it_parses "Int[8, 4]", Call.new("Int".ident, :[], [8.int32, 4.int32])
   it_parses "Int[8, 4,]", Call.new("Int".ident, :[], [8.int32, 4.int32])
+  it_parses "Int[8]?", Call.new("Int".ident, :"[]?", [8.int32])
 
   it_parses "def [](x); end", Def.new(:[], ["x".arg], nil)
 
@@ -271,6 +282,12 @@ describe Parser do
   it_parses "@foo = 1", Assign.new("@foo".instance_var, 1.int32)
   it_parses "-@foo", Call.new("@foo".instance_var, :-@)
 
+  it_parses "@@foo", "@@foo".class_var
+  it_parses "@@foo = 1", Assign.new("@@foo".class_var, 1.int32)
+  it_parses "-@@foo", Call.new("@@foo".class_var, :-@)
+
+  it_parses "puts @@x", Call.new(nil, "puts", ['@@x'.class_var])
+
   it_parses "call @foo.bar", Call.new(nil, "call", [Call.new("@foo".instance_var, "bar")])
   it_parses 'call "foo"', Call.new(nil, "call", ["foo".string])
 
@@ -281,7 +298,7 @@ describe Parser do
   it_parses "foo [1]", Call.new(nil, "foo", [[1.int32].array])
   it_parses "foo.bar [1]", Call.new("foo".call, "bar", [[1.int32].array])
 
-  it_parses "class Foo; end\nwhile true; end", [ClassDef.new('Foo'), While.new(true.bool)]
+  it_parses "class Foo; end\nwhile true; end", [ClassDef.new("Foo".ident), While.new(true.bool)]
   it_parses "while true; end\nif true; end", [While.new(true.bool), If.new(true.bool)]
   it_parses "(1)\nif true; end", [1.int32, If.new(true.bool)]
   it_parses "begin\n1\nend\nif true; end", [1.int32, If.new(true.bool)]
@@ -334,6 +351,7 @@ describe Parser do
   it_parses "@a.ptr", PointerOf.new('@a'.instance_var)
 
   it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".ident)
+  it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo".symbol)
 
   it_parses "/foo/", RegexpLiteral.new("foo")
 
@@ -360,6 +378,9 @@ describe Parser do
   it_parses %q(require "foo"; [1]), [Require.new('foo'), [1.int32].array]
   it_parses %Q(require "foo"\nif true; end), [Require.new('foo'), If.new(true.bool)]
 
+  it_parses %q(require "foo" if (!a || b) && c), [Require.new("foo", And.new(Or.new(Not.new("a".var), "b".var), "c".var))]
+  it_parses %q(require "foo" if !(a || b) && c), [Require.new("foo", And.new(Not.new(Or.new("a".var, "b".var)), "c".var))]
+
   it_parses %q(case 1; when 1; 2; else; 3; end), Case.new(1.int32, [When.new([1.int32], 2.int32)], 3.int32)
   it_parses %q(case 1; when 0, 1; 2; else; 3; end), Case.new(1.int32, [When.new([0.int32, 1.int32], 2.int32)], 3.int32)
   it_parses %Q(case 1\nwhen 1\n2\nelse\n3\nend), Case.new(1.int32, [When.new([1.int32], 2.int32)], 3.int32)
@@ -385,13 +406,12 @@ describe Parser do
 
   it_parses "begin; rescue; end", ExceptionHandler.new(nil, [Rescue.new])
   it_parses "begin; 1; rescue; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
-  it_parses "begin\n1\nrescue\n2\nrescue\n3\nend", ExceptionHandler.new(1.int32, [Rescue.new(2.int32), Rescue.new(3.int32)])
   it_parses "begin; 1; ensure; 2; end", ExceptionHandler.new(1.int32, nil, nil, 2.int32)
   it_parses "begin\n1\nensure\n2\nend", ExceptionHandler.new(1.int32, nil, nil, 2.int32)
   it_parses "begin; 1; rescue Foo; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident])])
-  it_parses "begin; 1; rescue Foo, Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident])])
-  it_parses "begin; 1; rescue Foo, Bar => ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident], "ex")])
-  it_parses "begin; 1; rescue => ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
+  it_parses "begin; 1; rescue Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident])])
+  it_parses "begin; 1; rescue ex : Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident], "ex")])
+  it_parses "begin; 1; rescue ex; ex; end", ExceptionHandler.new(1.int32, [Rescue.new("ex".var, nil, "ex")])
   it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
 
   it_parses "def foo; 1; rescue; 2; end", Def.new("foo", [], ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))

@@ -104,6 +104,9 @@ module Crystal
     end
 
     def self.concat(exp, expressions)
+      expressions = expressions.expressions if expressions.is_a?(Expressions)
+      expressions = [expressions] unless expressions.is_a?(Array)
+
       return exp if expressions.empty?
 
       while expressions.length == 1 && expressions[0].is_a?(Expressions)
@@ -243,6 +246,8 @@ module Crystal
     end
 
     def accept_children(visitor)
+      name.accept visitor
+      superclass.accept visitor if superclass
       body.accept visitor
     end
 
@@ -251,7 +256,7 @@ module Crystal
     end
 
     def clone_from(other)
-      @name = other.name
+      @name = other.name.clone
       @body = other.body.clone
       @superclass = other.superclass
       @type_vars = other.type_vars.clone
@@ -280,6 +285,7 @@ module Crystal
     end
 
     def accept_children(visitor)
+      @name.accept visitor
       @body.accept visitor
     end
 
@@ -288,7 +294,7 @@ module Crystal
     end
 
     def clone_from(other)
-      @name = other.name
+      @name = other.name.clone
       @body = other.body.clone
       @type_vars = other.type_vars.map(&:clone) if other.type_vars
       @name_column_number = other.name_column_number
@@ -336,6 +342,10 @@ module Crystal
       @has_sign = value.is_a?(String) && (value[0] == '+' || value[0] == '-')
       @value = value
       @kind = kind
+    end
+
+    def integer?
+      @kind != :f32 && @kind != :f64
     end
 
     def ==(other)
@@ -671,7 +681,6 @@ module Crystal
     end
   end
 
-  # An instance variable.
   class InstanceVar < ASTNode
     attr_accessor :name
     attr_accessor :out
@@ -682,6 +691,24 @@ module Crystal
 
     def ==(other)
       other.is_a?(InstanceVar) && other.name == name && other.out == out
+    end
+
+    def clone_from(other)
+      @name = other.name
+      @out = other.out
+    end
+  end
+
+  class ClassVar < ASTNode
+    attr_accessor :name
+    attr_accessor :out
+
+    def initialize(name)
+      @name = name
+    end
+
+    def ==(other)
+      other.is_a?(ClassVar) && other.name == name && other.out == out
     end
 
     def clone_from(other)
@@ -735,6 +762,27 @@ module Crystal
   class SimpleOr < BinaryOp
   end
 
+  # Used only for require "foo" if ...
+  class Not < ASTNode
+    attr_accessor :exp
+
+    def initialize(exp)
+      @exp = exp
+    end
+
+    def accept_children(visitor)
+      @exp.accept self
+    end
+
+    def ==(other)
+      other.is_a?(Not) && @exp == other.exp
+    end
+
+    def clone_from(other)
+      @exp = other.exp.clone
+    end
+  end
+
   # A method call.
   #
   #     [ obj '.' ] name '(' ')' [ block ]
@@ -753,16 +801,18 @@ module Crystal
     attr_accessor :name
     attr_accessor :args
     attr_accessor :block
+    attr_accessor :global
 
     attr_accessor :name_column_number
     attr_accessor :has_parenthesis
     attr_accessor :name_length
 
-    def initialize(obj, name, args = [], block = nil, name_column_number = nil, has_parenthesis = false)
+    def initialize(obj, name, args = [], block = nil, global = false, name_column_number = nil, has_parenthesis = false)
       @obj = obj
       @name = name
       @args = args || []
       @block = block
+      @global = global
       @name_column_number = name_column_number
       @has_parenthesis = has_parenthesis
     end
@@ -774,7 +824,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block
+      other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block && other.global == global
     end
 
     def clone_from(other)
@@ -782,6 +832,7 @@ module Crystal
       @name = other.name
       @args = other.args.map(&:clone)
       @block = other.block.clone
+      @global = other.global
       @name_column_number = other.name_column_number
       @name_length = other.name_length
       @has_parenthesis = other.has_parenthesis
@@ -1006,7 +1057,7 @@ module Crystal
     end
   end
 
-  ['return', 'break', 'next', 'yield'].each do |keyword|
+  ['return', 'break', 'next'].each do |keyword|
     # A #{keyword} expression.
     #
     #     '#{keyword}' [ '(' ')' ]
@@ -1038,22 +1089,22 @@ module Crystal
     EVAL
   end
 
-  class YieldWithScope < ASTNode
-    attr_accessor :scope
+  class Yield < ASTNode
     attr_accessor :exps
+    attr_accessor :scope
 
-    def initialize(scope, exps = [])
-      @scope = scope
+    def initialize(exps = [], scope = nil)
       @exps = exps
+      @scope = scope
     end
 
     def accept_children(visitor)
-      scope.accept visitor
+      scope.accept visitor if scope
       exps.each { |e| e.accept visitor }
     end
 
     def ==(other)
-      other.is_a?(YieldWithScope) && other.scope == scope && other.exps == exps
+      other.is_a?(Yield) && other.scope == scope && other.exps == exps
     end
 
     def clone_from(other)
@@ -1304,19 +1355,50 @@ module Crystal
     end
   end
 
-  class Require < ASTNode
-    attr_accessor :string
+  class RespondsTo < ASTNode
+    attr_accessor :obj
+    attr_accessor :name
 
-    def initialize(string)
-      @string = string
+    def initialize(obj, name)
+      @obj = obj
+      @name = name
+    end
+
+    def accept_children(visitor)
+      obj.accept visitor
+      name.accept visitor
     end
 
     def ==(other)
-      other.is_a?(Require) && other.string == string
+      other.is_a?(RespondsTo) && other.obj == obj && other.name == name
+    end
+
+    def clone_from(other)
+      @obj = other.obj.clone
+      @name = other.name.clone
+    end
+  end
+
+  class Require < ASTNode
+    attr_accessor :string
+    attr_accessor :cond
+
+    def initialize(string, cond = nil)
+      @string = string
+      @cond = cond
+    end
+
+    def accept_children(visitor)
+      @cond.accept visitor if @cond
+    end
+
+    def ==(other)
+      other.is_a?(Require) && other.string == string && other.cond == cond
     end
 
     def clone_from(other)
       @string = other.string.clone
+      @cond = other.cond.clone
     end
   end
 
@@ -1438,13 +1520,17 @@ module Crystal
       @ensure.accept visitor if @ensure
     end
 
+    def handles_all?
+      @rescues && !@rescues.last.types
+    end
+
     def ==(other)
       other.is_a?(ExceptionHandler) && other.body == body && other.rescues == rescues && other.else == @else && other.ensure == @ensure
     end
 
     def clone_from(other)
       @body = other.body.clone
-      @rescues = other.rescues.map(&:clone) if @rescues
+      @rescues = other.rescues.map(&:clone) if other.rescues
       @else = other.else.clone
       @ensure = other.ensure.clone
     end
@@ -1472,7 +1558,7 @@ module Crystal
 
     def clone_from(other)
       @body = other.body.clone
-      @types = other.types.map(&:clone) if @types
+      @types = other.types.map(&:clone) if other.types
       @name = other.name
     end
   end

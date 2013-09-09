@@ -8,9 +8,8 @@ module Crystal
       new(str, def_vars).parse
     end
 
-    def initialize(str, def_vars = [Set(String).new])
+    def initialize(str, @def_vars = [Set(String).new])
       super(str)
-      @def_vars = def_vars
       @last_call_has_parenthesis = false
       @yields = -1
     end
@@ -26,21 +25,12 @@ module Crystal
     end
 
     def parse_expressions
-      exps = parse_expressions_as_array
-      exps.length == 1 ? exps.first : Expressions.new(exps)
-    end
-
-    def parse_expressions_or_nil
-      Expressions.from(parse_expressions_as_array)
-    end
-
-    def parse_expressions_as_array
       exps = [] of ASTNode
       while @token.type != :EOF && !is_end_token
         exps << parse_multi_expression
         skip_statement_end
       end
-      exps
+      Expressions.from(exps)
     end
 
     def parse_multi_expression
@@ -79,7 +69,7 @@ module Crystal
             values = [assign.value]
             values.concat exps[assign_index + 1 .. -1]
             if values.length != 1 && targets.length != values.length
-              raise "Multiple assignment count mismatch"#, location[0], location[1]
+              raise "Multiple assignment count mismatch", location.line_number, location.column_number
             end
 
             multi = MultiAssign.new(targets, values)
@@ -587,8 +577,21 @@ module Crystal
 
       if @token.keyword?(:rescue)
         rescues = [] of Rescue
+        found_catch_all = false
         while true
-          rescues << parse_rescue
+          location = @token.location
+          a_rescue = parse_rescue
+          if a_rescue.types
+            if found_catch_all
+              raise "specific rescue must come before catch-all rescue", location.line_number, location.column_number
+            end
+          else
+            if found_catch_all
+              raise "catch-all rescue can only be specified once", location.line_number, location.column_number
+            end
+            found_catch_all = true
+          end
+          rescues << a_rescue
           break unless @token.keyword?(:rescue)
         end
       end
@@ -599,13 +602,13 @@ module Crystal
         end
 
         next_token_skip_statement_end
-        a_else = parse_expressions_or_nil
+        a_else = parse_expressions
         skip_statement_end
       end
 
       if @token.keyword?(:ensure)
         next_token_skip_statement_end
-        a_ensure = parse_expressions_or_nil
+        a_ensure = parse_expressions
         skip_statement_end
       end
 
@@ -622,40 +625,57 @@ module Crystal
     def parse_rescue
       next_token_skip_space
 
-      if @token.type == :CONST
-        types = [] of ASTNode
-        while true
-          types << parse_ident
-          if @token.type == :","
-            next_token_skip_space
-          else
-            skip_space
-            break
-          end
-        end
-      end
-
-      if @token.type == :"=>"
-        next_token_skip_space_or_newline
-        check :IDENT
+      case @token.type
+      when :IDENT
         name = @token.value.to_s
+
+        if @def_vars.last.includes?(name)
+          raise "exception variable '#{name}' shadows local variable '#{name}'"
+        end
+
+        push_var_name name
         next_token_skip_space
+
+        if @token.type == :":"
+          next_token_skip_space_or_newline
+
+          check :CONST
+
+          types = parse_rescue_types
+        end
+      when :CONST
+        types = parse_rescue_types
       end
 
-      if @token.type != :";" && @token.type != :NEWLINE
-        unexpected_token @token.to_s, "expected ';' or newline"
-      end
+      check [:";", :NEWLINE]
 
       next_token_skip_space_or_newline
 
       if @token.keyword?(:end)
         body = nil
       else
-        body = parse_expressions_or_nil
+        body = parse_expressions
         skip_statement_end
       end
 
+      @def_vars.last.delete name if name
+
       Rescue.new(body, types, name)
+    end
+
+    def parse_rescue_types
+      types = [] of ASTNode
+      while true
+        types << parse_ident
+        skip_space
+        if @token.type == :"|"
+          next_token_skip_space
+        else
+          skip_space
+          break
+        end
+      end
+      types
     end
 
     def parse_while
@@ -666,7 +686,7 @@ module Crystal
       cond = parse_expression
       skip_statement_end
 
-      body = parse_expressions_or_nil
+      body = parse_expressions
       skip_statement_end
 
       check_ident :end
@@ -683,7 +703,7 @@ module Crystal
       next_token_skip_space_or_newline
       check :CONST
 
-      name = @token.value
+      name = @token.value.to_s
       name_column_number = @token.column_number
       next_token_skip_space
 
@@ -697,7 +717,7 @@ module Crystal
       end
       skip_statement_end
 
-      body = parse_expressions_or_nil
+      body = parse_expressions
 
       check_ident :end
       next_token_skip_space
@@ -738,14 +758,14 @@ module Crystal
       next_token_skip_space_or_newline
       check :CONST
 
-      name = @token.value
+      name = @token.value.to_s
       name_column_number = @token.column_number
       next_token_skip_space
 
       type_vars = parse_type_vars
       skip_statement_end
 
-      body = parse_expressions_or_nil
+      body = parse_expressions
 
       check_ident :end
       next_token_skip_space
@@ -1069,6 +1089,13 @@ module Crystal
         name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
         name_column_number = @token.column_number
         next_token_skip_space
+      else
+        if receiver
+          unexpected_token
+        else
+          raise "shouldn't reach this line" unless name
+        end
+        name ||= "" # TODO: this is to satisfy the compiler, fix
       end
 
       case @token.type
@@ -1097,7 +1124,7 @@ module Crystal
       if @token.keyword?(:end)
         body = nil
       else
-        body = parse_expressions_or_nil
+        body = parse_expressions
         body = parse_exception_handler body
       end
 
@@ -1109,7 +1136,7 @@ module Crystal
       node.name_column_number = name_column_number
       node
     end
-    
+
     def parse_arg(args, parenthesis = false)
       if @token.type == :"&"
         next_token_skip_space_or_newline
@@ -1117,7 +1144,7 @@ module Crystal
       end
 
       check :IDENT
-      arg_name = @token.value
+      arg_name = @token.value.to_s
       arg_location = @token.location
 
       default_value = nil
@@ -1211,7 +1238,7 @@ module Crystal
       cond = parse_expression
       skip_statement_end
 
-      a_then = parse_expressions_or_nil
+      a_then = parse_expressions
       skip_statement_end
 
       a_else = nil
@@ -1219,7 +1246,7 @@ module Crystal
         case @token.value
         when :else
           next_token_skip_statement_end
-          a_else = parse_expressions_or_nil
+          a_else = parse_expressions
         when :elsif
           a_else = parse_if false
         end
@@ -1321,7 +1348,7 @@ module Crystal
 
       push_vars block_args
 
-      block_body = parse_expressions_or_nil
+      block_body = parse_expressions
 
       yield
 
@@ -1464,7 +1491,7 @@ module Crystal
 
       const = Ident.new names, global
       const.location = location
-      
+
       if @token.type == :"("
         next_token_skip_space_or_newline
 
@@ -1828,7 +1855,7 @@ module Crystal
       while !@token.keyword?(:end)
         check :CONST
 
-        constant_name = @token.value
+        constant_name = @token.value.to_s
         next_token_skip_space
         if @token.type == :"="
           next_token_skip_space_or_newline
@@ -1875,11 +1902,14 @@ module Crystal
     end
 
     def can_be_assigned?(node)
-      node.is_a?(Var) ||
-        node.is_a?(InstanceVar) ||
-        node.is_a?(Ident) ||
-        node.is_a?(Global) ||
-        (node.is_a?(Call) && node.obj.nil? && node.args.length == 0 && node.block.nil?)
+      case node
+      when Var, InstanceVar, Ident, Global
+        true
+      when Call
+        (node.obj.nil? && node.args.length == 0 && node.block.nil?) || node.name == "[]"
+      else
+        false
+      end
     end
 
     def push_def
@@ -1904,11 +1934,15 @@ module Crystal
     end
 
     def push_var(var : Var)
-      @def_vars.last.add var.name.to_s
+      push_var_name var.name.to_s
     end
 
     def push_var(var : Arg)
-      @def_vars.last.add var.name.to_s
+      push_var_name var.name.to_s
+    end
+
+    def push_var_name(name)
+      @def_vars.last.add name
     end
 
     def push_var(node)

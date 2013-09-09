@@ -39,7 +39,7 @@ Installing
 You will need:
 
 * Ruby 1.9
-* LLVM 3.1 installed as a shared library.
+* LLVM 3.3 installed as a shared library.
 
 Then:
 
@@ -50,3 +50,5 @@ Then:
 Finally run crystal:
 
 > `bin/crystal --help`
+
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/25b65355cae65602787d6952d0bdb8cf "githalytics.com")](http://githalytics.com/manastech/crystal)

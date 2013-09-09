@@ -135,6 +135,7 @@ describe "String" do
         assert { "foobarbaz".index('a', 5).should eq(7) }
         assert { "foobarbaz".index('a', -4).should eq(7) }
         assert { "foo".index('g', 1).should eq(-1) }
+        assert { "foo".index('g', -20).should eq(-1) }
       end
     end
 
@@ -147,7 +148,25 @@ describe "String" do
         assert { "foobarbaz".index("ba", 4).should eq(6) }
         assert { "foobarbaz".index("ba", -5).should eq(6) }
         assert { "foo".index("ba", 1).should eq(-1) }
+        assert { "foo".index("ba", -20).should eq(-1) }
       end
+    end
+  end
+
+  describe "rindex" do
+    describe "by char" do
+      assert { "foobar".rindex('a').should eq(4) }
+      assert { "foobar".rindex('g').should eq(-1) }
+
+      describe "with offset" do
+        assert { "faobar".rindex('a', 3).should eq(1) }
+        assert { "faobarbaz".rindex('a', -3).should eq(4) }
+      end
+    end
+
+    describe "by string" do
+      assert { "foo baro baz".rindex("o b").should eq(7) }
+      assert { "foo baro baz".rindex("fg").should eq(-1) }
     end
   end
 
@@ -184,6 +203,8 @@ describe "String" do
     assert { "foobar".starts_with?("").should be_true }
     assert { "foobar".starts_with?("foobarbaz").should be_false }
     assert { "foobar".starts_with?("foox").should be_false }
+    assert { "foobar".starts_with?('f').should be_true }
+    assert { "foobar".starts_with?('g').should be_false }
   end
 
   describe "ends_with?" do
@@ -191,6 +212,8 @@ describe "String" do
     assert { "foobar".ends_with?("").should be_true }
     assert { "foobar".ends_with?("foobarbaz").should be_false }
     assert { "foobar".ends_with?("xbar").should be_false }
+    assert { "foobar".ends_with?('r').should be_true }
+    assert { "foobar".ends_with?('x').should be_false }
   end
 
   describe "=~" do
@@ -246,5 +269,46 @@ describe "String" do
 
   it "inspects" do
     "\" \\ \f \n \r \t \v cool".inspect.should eq("\"\\\" \\ \\f \\n \\r \\t \\v cool\"")
+  end
+
+  it "does *" do
+    str = "foo" * 10
+    str.length.should eq(30)
+    str.should eq("foofoofoofoofoofoofoofoofoofoo")
+  end
+
+  it "does +" do
+    str = "foo" + "bar"
+    str.length.should eq(6)
+    str.should eq("foobar")
+  end
+
+  it "does %" do
+    ("foo" % 1).should        eq("foo")
+    ("foo %d" % 1).should     eq("foo 1")
+    ("%d" % 123).should       eq("123")
+    ("%+d" % 123).should      eq("+123")
+    ("%+d" % -123).should     eq("-123")
+    ("% d" % 123).should      eq(" 123")
+    ("%20d" % 123).should     eq("                 123")
+    ("%+20d" % 123).should    eq("                +123")
+    ("%+20d" % -123).should   eq("                -123")
+    ("% 20d" % 123).should    eq("                 123")
+    ("%020d" % 123).should    eq("00000000000000000123")
+    ("%+020d" % 123).should   eq("+0000000000000000123")
+    ("% 020d" % 123).should   eq(" 0000000000000000123")
+    ("%-d" % 123).should      eq("123")
+    ("%-20d" % 123).should    eq("123                 ")
+    ("%-+20d" % 123).should   eq("+123                ")
+    ("%-+20d" % -123).should  eq("-123                ")
+    ("%- 20d" % 123).should   eq(" 123                ")
+    ("%s" % 'a').should       eq("a")
+    ("%-s" % 'a').should      eq("a")
+    ("%20s" % 'a').should     eq("                   a")
+    ("%20s" % 'a').should     eq("                   a")
+    ("%-20s" % 'a').should    eq("a                   ")
+
+    ("%%%d" % 1).should eq("%1")
+    ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
   end
 end

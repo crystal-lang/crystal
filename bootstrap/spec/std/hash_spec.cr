@@ -26,6 +26,12 @@ describe "Hash" do
     a[1].should eq(2)
   end
 
+  it "gets nilable" do
+    a = {1 => 2}
+    a[1]?.should eq(2)
+    a[2]?.should be_nil
+  end
+
   it "gets array of keys" do
     a = {} of Symbol => Int32
     a.keys.should eq([] of Symbol)
@@ -104,6 +110,36 @@ describe "Hash" do
     it "has key" do
       a = {1 => 2}
       a.has_key?(1).should be_true
+    end
+  end
+
+  describe "delete" do
+    it "deletes key in the beginning" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.delete(1)
+      a.length.should eq(2)
+      a.should eq({3 => 4, 5 => 6})
+    end
+
+    it "deletes key in the middle" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.delete(3)
+      a.length.should eq(2)
+      a.should eq({1 => 2, 5 => 6})
+    end
+
+    it "deletes key in the end" do
+      a = {1 => 2, 3 => 4, 5 => 6}
+      a.delete(5)
+      a.length.should eq(2)
+      a.should eq({1 => 2, 3 =>4})
+    end
+
+    it "deletes only remaining entry" do
+      a = {1 => 2}
+      a.delete(1)
+      a.length.should eq(0)
+      a.should eq({} of Int32 => Int32)
     end
   end
 

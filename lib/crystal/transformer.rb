@@ -158,6 +158,10 @@ module Crystal
       node
     end
 
+    def transform_class_var(node)
+      node
+    end
+
     def transform_and(node)
       node.left = node.left.transform(self)
       node.right = node.right.transform(self)
@@ -167,6 +171,10 @@ module Crystal
     def transform_or(node)
       node.left = node.left.transform(self)
       node.right = node.right.transform(self)
+      node
+    end
+
+    def transform_not(node)
       node
     end
 
@@ -237,12 +245,7 @@ module Crystal
     end
 
     def transform_yield(node)
-      transform_many node.exps
-      node
-    end
-
-    def transform_yield_with_scope(node)
-      node.scope = node.scope.transform(self)
+      node.scope = node.scope.transform(self) if node.scope
       transform_many node.exps
       node
     end
@@ -288,6 +291,12 @@ module Crystal
     def transform_is_a(node)
       node.obj = node.obj.transform(self)
       node.const = node.const.transform(self)
+      node
+    end
+
+    def transform_responds_to(node)
+      node.obj = node.obj.transform(self)
+      node.name = node.name.transform(self)
       node
     end
 
@@ -346,6 +355,10 @@ module Crystal
     end
 
     def transform_pointer_malloc(node)
+      node
+    end
+
+    def transform_pointer_new(node)
       node
     end
 

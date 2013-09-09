@@ -14,7 +14,7 @@ module Crystal
       define_symbol_primitives
       define_pointer_primitives
 
-      define_numeric_operations
+      define_number_operations
       define_math_primitives
     end
 
@@ -24,42 +24,33 @@ module Crystal
 
     def define_reference_primitives
       a_def = no_args_primitive(reference, 'object_id', uint64) do |b, f, llvm_mod, self_type|
-        b.ptr2int(f.params[0], LLVM::UInt64)
+        if self_type.hierarchy?
+          obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
+          b.ptr2int(obj, LLVM::UInt64)
+        else
+          b.ptr2int(f.params[0], LLVM::UInt64)
+        end
       end
-
-      instance = a_def.overload [], uint64 do |b, f, llvm_mod, self_type|
-        obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
-        b.ptr2int(obj, LLVM::UInt64)
-      end
-      instance.owner = reference.hierarchy_type
-      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
 
       a_def = no_args_primitive(reference, 'crystal_type_id', int32) do |b, f, llvm_mod, self_type|
-        LLVM::Int(self_type.type_id)
+        if self_type.hierarchy?
+          id = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(0)]))
+          LLVM::Int(id)
+        else
+          LLVM::Int(self_type.type_id)
+        end
       end
-
-      instance = a_def.overload [], int32 do |b, f, llvm_mod, self_type|
-        id = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(0)]))
-        LLVM::Int(id)
-      end
-      instance.owner = reference.hierarchy_type
-      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
 
       a_def = no_args_primitive(reference, 'to_cstr', char_pointer) do |b, f, llvm_mod, self_type|
-        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
-        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), f.params[0]
+        if self_type.hierarchy?
+          obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
+        else
+          obj = f.params[0]
+        end
+        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.to_s.length + 23))
+        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.to_s}:0x%016lx>"), obj
         buffer
       end
-
-      instance = a_def.overload [], char_pointer do |b, f, llvm_mod, self_type|
-        obj = b.load(b.gep(f.params[0], [LLVM::Int(0), LLVM::Int(1)]))
-        buffer = b.array_malloc(LLVM::Int8, LLVM::Int(self_type.name.length + 23))
-        b.call sprintf(llvm_mod), buffer, b.global_string_pointer("#<#{self_type.name}:0x%016lx>"), obj
-        buffer
-      end
-
-      instance.owner = reference.hierarchy_type
-      reference.hierarchy_type.add_def_instance(a_def.object_id, [], nil, instance)
     end
 
     def define_value_primitives
@@ -175,7 +166,7 @@ module Crystal
       end
     end
 
-    def define_numeric_operations
+    def define_number_operations
       [uint8, uint16, uint32, uint64, int8, int16, int32, int64, float32, float64].repeated_permutation(2) do |type1, type2|
         [:+, :-, :*, :/].each do |op|
           ret_type = greatest_type(type1, type2)
@@ -214,12 +205,16 @@ module Crystal
           adjust_calc_type(b, int32, type, f.params[0])
         end
 
-        no_args_primitive(type, "to_f", float32) do |b, f|
-          adjust_calc_type(b, float32, type, f.params[0])
+        no_args_primitive(type, "to_f", float64) do |b, f|
+          adjust_calc_type(b, float64, type, f.params[0])
         end
 
-        no_args_primitive(type, "to_d", float64) do |b, f|
+        no_args_primitive(type, "to_f64", float64) do |b, f|
           adjust_calc_type(b, float64, type, f.params[0])
+        end
+
+        no_args_primitive(type, "to_f32", float32) do |b, f|
+          adjust_calc_type(b, float32, type, f.params[0])
         end
       end
 
@@ -259,15 +254,16 @@ module Crystal
     end
 
     def define_pointer_primitives
-      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', Ident.new(["Int"], true))], PointerMalloc.new)
+      pointer.metaclass.add_def Def.new('malloc', [Arg.new_with_restriction('size', Ident.new(["UInt64"], true))], PointerMalloc.new)
       pointer.metaclass.add_def Def.new('null', [], PointerNull.new)
+      pointer.metaclass.add_def Def.new('new', [Arg.new_with_restriction('address', Ident.new(["UInt64"], true))], PointerNew.new)
       pointer.add_def Def.new('value', [], PointerGetValue.new)
       pointer.add_def Def.new('value=', [Arg.new_with_restriction('value', Ident.new(["T"]))], PointerSetValue.new)
-      pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', Ident.new(["Int"], true))], PointerRealloc.new)
-      pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', Ident.new(["Int"], true))], PointerAdd.new)
+      pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', Ident.new(["UInt64"], true))], PointerRealloc.new)
+      pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', Ident.new(["Int64"], true))], PointerAdd.new)
       pointer.add_def Def.new('as', [Arg.new('type')], PointerCast.new)
-      shared_singleton(pointer, 'address', int64) do |b, f, llvm_mod, self_type|
-        b.ptr2int(f.params[0], LLVM::Int64)
+      shared_singleton(pointer, 'address', uint64) do |b, f, llvm_mod, self_type|
+        b.ptr2int(f.params[0], LLVM::UInt64)
       end
     end
 
@@ -282,6 +278,7 @@ module Crystal
     def no_args_primitive(owner, name, return_type, &block)
       primitive(owner, name, []) do |a_def|
         instance = a_def.overload([], return_type, &block)
+        a_def.body = instance.body
         owner.add_def_instance(a_def.object_id, [], nil, instance)
       end
     end
@@ -299,8 +296,8 @@ module Crystal
     end
 
     def shared_singleton(owner, name, return_type, &block)
-      body = PrimitiveBody.new(&block)
-      body.type = return_type
+      body = PrimitiveBody.new(return_type, &block)
+      body.set_type(return_type)
       owner.add_def Def.new(name, [], body)
     end
 
@@ -309,7 +306,7 @@ module Crystal
     end
 
     def realloc(llvm_mod)
-      llvm_mod.functions['realloc'] || llvm_mod.functions.add('realloc', [LLVM::Pointer(LLVM::Int8), LLVM::Int], LLVM::Pointer(LLVM::Int8))
+      llvm_mod.functions['realloc'] || llvm_mod.functions.add('realloc', [LLVM::Pointer(LLVM::Int8), LLVM::Int64], LLVM::Pointer(LLVM::Int8))
     end
 
     def memset(llvm_mod)
@@ -335,6 +332,10 @@ module Crystal
     def llvm_puts(llvm_mod)
       llvm_mod.functions['puts'] || llvm_mod.functions.add('puts', [LLVM::Pointer(LLVM::Int8)], LLVM::Int)
     end
+
+    def printf(llvm_mod)
+      llvm_mod.functions['printf'] || llvm_mod.functions.add('printf', [LLVM::Pointer(LLVM::Int8)], int32.llvm_type, varargs: true)
+    end
   end
 
   class Def
@@ -344,7 +345,7 @@ module Crystal
       arg_types.each_with_index do |arg_type, i|
         instance.args[i].set_type(arg_type)
       end
-      instance.body = PrimitiveBody.new(&block)
+      instance.body = PrimitiveBody.new(return_type, &block)
       instance.set_type(return_type)
       instance
     end
@@ -374,7 +375,8 @@ module Crystal
   class PrimitiveBody < Primitive
     attr_accessor :block
 
-    def initialize(&block)
+    def initialize(type, &block)
+      @type = type
       @block = block
     end
 
@@ -384,6 +386,9 @@ module Crystal
   end
 
   class PointerMalloc < Primitive
+  end
+
+  class PointerNew < Primitive
   end
 
   class PointerNull < Primitive

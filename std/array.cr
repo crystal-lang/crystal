@@ -1,9 +1,16 @@
 require "enumerable"
 require "pointer"
 require "range"
+require "set"
 
 class Array(T)
   include Enumerable
+
+  class IndexOutOfBounds < Exception
+    def initialize
+      super("Array index out of bounds")
+    end
+  end
 
   def initialize(initial_capacity = 16)
     @length = 0
@@ -44,13 +51,19 @@ class Array(T)
 
   def [](index : Int)
     index += length if index < 0
-    raise "Array index out of bounds (#{index} of #{length})" if index >= length || index < 0
+    raise IndexOutOfBounds.new if index >= length || index < 0
+    @buffer[index]
+  end
+
+  def []?(index : Int)
+    index += length if index < 0
+    return nil if index >= length || index < 0
     @buffer[index]
   end
 
   def []=(index : Int, value : T)
     index += length if index < 0
-    raise "Array index out of bounds (#{index} of #{length})" if index >= length || index < 0
+    raise IndexOutOfBounds.new if index >= length || index < 0
     @buffer[index] = value
   end
 
@@ -116,7 +129,7 @@ class Array(T)
 
   def delete_at(index : Int)
     index += length if index < 0
-    return nil if index < 0 || index >= length
+    raise Array::IndexOutOfBounds.new if index < 0 || index >= length
 
     elem = @buffer[index]
     (@buffer + index).memmove(@buffer + index + 1, length - index - 1)
@@ -205,11 +218,29 @@ class Array(T)
   #   target
   # end
 
+  def map(&block : T -> U)
+    ary = Array(U).new(length)
+    ary.length = length
+    each_with_index do |e, i|
+      ary.buffer[i] = yield e
+    end
+    ary
+  end
+
   def map!
     length.times do |i|
       @buffer[i] = yield @buffer[i]
     end
     nil
+  end
+
+  def clone
+    ary = Array(T).new(length)
+    ary.length = length
+    each_with_index do |e, i|
+      ary.buffer[i] = e.clone
+    end
+    ary
   end
 
   def replace(other : Array)
@@ -241,6 +272,23 @@ class Array(T)
       j -= 1
     end
     self
+  end
+
+  def uniq!(&block : T -> U)
+    uniq_elements = Set(U).new
+    delete_if do |elem|
+      key = yield elem
+      if uniq_elements.includes?(key)
+        true
+      else
+        uniq_elements.add(key)
+        false
+      end
+    end
+  end
+
+  def uniq!
+    uniq! { |x| x }
   end
 
   def clear
@@ -286,7 +334,7 @@ class Array(T)
     ary
   end
 
-  def concat(other : Array(T))
+  def concat(other)
     other.each do |elem|
       push elem
     end
@@ -299,6 +347,14 @@ class Array(T)
       return false if item != other[i]
     end
     true
+  end
+
+  def hash
+    hash = 31 * @length
+    each do |elem|
+      hash = 31 * hash + elem.hash
+    end
+    hash
   end
 
   def to_s

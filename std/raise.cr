@@ -23,7 +23,7 @@ lib ABI
   URC_INSTALL_CONTEXT = 7
   URC_CONTINUE_UNWIND = 8
 
-  fun unwind_raise_exception = _Unwind_RaiseException(ex : UnwindException*) : NoReturn
+  fun unwind_raise_exception = _Unwind_RaiseException(ex : UnwindException*) : Int32
   fun unwind_get_region_start = _Unwind_GetRegionStart(context : Void*) : UInt64
   fun unwind_get_ip = _Unwind_GetIP(context : Void*) : UInt64
   fun unwind_set_ip = _Unwind_SetIP(context : Void*, ip : UInt64) : UInt64
@@ -58,55 +58,68 @@ module LEBReader
 end
 
 fun __crystal_personality(version : Int32, actions : Int32, exception_class : UInt64, exception_object : ABI::UnwindException*, context : Void*) : Int32
-  if (actions & ABI::UA_SEARCH_PHASE) > 0
-    return ABI::URC_HANDLER_FOUND
+  start = ABI.unwind_get_region_start(context)
+  ip = ABI.unwind_get_ip(context)
+  throw_offset = ip - 1 - start
+  lsd = ABI.unwind_get_language_specific_data(context)
+  # puts "Personality - actions : #{actions}, start: #{start}, ip: #{ip}, throw_offset: #{throw_offset}"
 
-  elsif (actions & ABI::UA_HANDLER_FRAME) > 0
-    start = ABI.unwind_get_region_start(context)
-    ip = ABI.unwind_get_ip(context)
-    throw_offset = ip - 1 - start
-    lsd = ABI.unwind_get_language_specific_data(context)
+  LEBReader.read_uint8(lsd.ptr) # @LPStart encoding
+  if LEBReader.read_uint8(lsd.ptr) != 0xff_u8 # @TType encoding
+    LEBReader.read_uleb128(lsd.ptr) # @TType base offset
+  end
+  LEBReader.read_uint8(lsd.ptr) # CS Encoding
+  cs_table_length = LEBReader.read_uleb128(lsd.ptr) # CS table length
+  cs_table_end = lsd + cs_table_length
 
-    LEBReader.read_uint8(lsd.ptr) # @LPStart encoding
-    if LEBReader.read_uint8(lsd.ptr) != 0xff_u8 # @TType encoding
-      LEBReader.read_uleb128(lsd.ptr) # @TType base offset
-    end
-    LEBReader.read_uint8(lsd.ptr) # CS Encoding
-    cs_table_length = LEBReader.read_uleb128(lsd.ptr) # CS table length
+  while lsd < cs_table_end
+    cs_offset = LEBReader.read_uint32(lsd.ptr)
+    cs_length = LEBReader.read_uint32(lsd.ptr)
+    cs_addr = LEBReader.read_uint32(lsd.ptr)
+    action = LEBReader.read_uleb128(lsd.ptr)
+    # puts "cs_offset: #{cs_offset}, cs_length: #{cs_length}, cs_addr: #{cs_addr}, action: #{action}"
 
-    cs_table_end = lsd + cs_table_length
-    while lsd < cs_table_end
-      cs_offset = LEBReader.read_uint32(lsd.ptr)
-      cs_length = LEBReader.read_uint32(lsd.ptr)
-      cs_addr = LEBReader.read_uint32(lsd.ptr)
-      action = LEBReader.read_uleb128(lsd.ptr)
-
+    if cs_addr != 0
       if cs_offset <= throw_offset && throw_offset <= cs_offset + cs_length
-        if cs_addr != 0
-          ABI.unwind_set_gr(context, 0, exception_object.value.exception_object)
+        if (actions & ABI::UA_SEARCH_PHASE) > 0
+          # puts "found"
+          return ABI::URC_HANDLER_FOUND
+        end
+
+        if (actions & ABI::UA_HANDLER_FRAME) > 0
+          ABI.unwind_set_gr(context, 0, 0_u64 + exception_object.address)
           ABI.unwind_set_gr(context, 1, 0_u64 + exception_object.value.exception_type_id)
           ABI.unwind_set_ip(context, start + cs_addr)
-          break
+          # puts "install"
+          return ABI::URC_INSTALL_CONTEXT
         end
       end
     end
-
-    return ABI::URC_INSTALL_CONTEXT
-
-  else
-    ABI::URC_NO_REASON
   end
+
+  # puts "continue"
+  return ABI::URC_CONTINUE_UNWIND
 end
 
-fun __crystal_raise(ex_obj : UInt64, ex_type_id : Int32) : NoReturn
-  ex = ABI::UnwindException.new
-  ex.exception_class = 0_u64
-  ex.exception_cleanup = 0_u64
-  ex.exception_object = ex_obj
-  ex.exception_type_id = ex_type_id
-  ABI.unwind_raise_exception(ex.ptr)
+fun __crystal_raise(unwind_ex : ABI::UnwindException) : NoReturn
+  ret = ABI.unwind_raise_exception(unwind_ex.ptr)
+  puts "Could not raise"
+  C.exit(ret)
 end
 
-def raise(ex)
-  __crystal_raise(ex.object_id, ex.crystal_type_id)
+fun __crystal_get_exception(unwind_ex : ABI::UnwindException) : UInt64
+  unwind_ex.exception_object
+end
+
+def raise(ex : Exception)
+  unwind_ex = ABI::UnwindException.new
+  unwind_ex.exception_class = 0_u64
+  unwind_ex.exception_cleanup = 0_u64
+  unwind_ex.exception_object = ex.object_id
+  unwind_ex.exception_type_id = ex.crystal_type_id
+  __crystal_raise(unwind_ex)
+end
+
+def raise(message : String)
+  raise Exception.new(message)
 end

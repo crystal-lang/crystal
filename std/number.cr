@@ -1,4 +1,4 @@
-class Numeric
+class Number
   def step(limit, step = 1)
     x = self
     if step > 0 && self < limit
@@ -20,6 +20,6 @@ class Numeric
   end
 
   def <=>(other)
-    self - other
+    self > other ? 1 : (self < other ? -1 : 0)
   end
 end

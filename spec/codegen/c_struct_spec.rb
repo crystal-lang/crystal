@@ -52,7 +52,7 @@ describe 'Code gen: struct' do
       end
 
       foo = C::Foo.new
-      (foo.ptr.as(Int32) + 1).value = 2
+      (foo.ptr.as(Int32) + 1_i64).value = 2
 
       foo.bar.y
       )).to_i.should eq(2)
@@ -88,7 +88,7 @@ describe 'Code gen: struct' do
         end
       end
 
-      p = Pointer(C::Foo).malloc(1)
+      p = Pointer(C::Foo).malloc(1_u64)
       p.value.x = 1
       p.value.x
       )).to_i.should eq(1)

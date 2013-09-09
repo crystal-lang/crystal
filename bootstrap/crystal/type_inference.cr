@@ -1,23 +1,20 @@
 require "program"
 require "visitor"
 require "ast"
-require "type_inference/ast_node"
+require "type_inference/*"
 
 module Crystal
-  def infer_type(node)
-    mod = Crystal::Program.new
-    if node
-      node.accept TypeVisitor.new(mod)
+  class Program
+    def infer_type(node)
+      node.accept TypeVisitor.new(self)
+      node
     end
-    mod
   end
 
   class TypeVisitor < Visitor
     getter :mod
 
-    def initialize(mod, vars = {} of String => Var)
-      @mod = mod
-      @vars = vars
+    def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil)
     end
 
     def visit(node : ASTNode)
@@ -61,6 +58,10 @@ module Crystal
       node.type = mod.symbol
     end
 
+    def visit(node : StringLiteral)
+      node.type = mod.string
+    end
+
     def visit(node : Var)
       var = lookup_var node.name
       node.bind_to var
@@ -72,6 +73,21 @@ module Crystal
 
     def visit(node : Assign)
       type_assign node.target, node.value, node
+    end
+
+    def visit(node : Def)
+      @mod.add_def node
+      false
+    end
+
+    def visit(node : Call)
+      node.mod = @mod
+      node.parent_visitor = self
+      node.args.each do |arg|
+        arg.accept self
+      end
+      node.recalculate
+      false
     end
 
     def type_assign(target, value, node)

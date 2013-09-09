@@ -37,6 +37,10 @@ module Crystal
       false
     end
 
+    def hierarchy_metaclass?
+      false
+    end
+
     def union?
       false
     end
@@ -49,8 +53,8 @@ module Crystal
       false
     end
 
-    def includes_nil_type?
-      nil_type?
+    def includes_type?(type)
+      equal?(type)
     end
 
     def pointer?
@@ -125,14 +129,28 @@ module Crystal
       to_s
     end
 
+    def type_desc
+      to_s
+    end
+
     def self.merge(*types)
       types = types.compact
       return nil if types.empty?
       types.first.program.type_merge(*types)
     end
 
-    def type_id
-      @type_id ||= (@@type_id += 1)
+    if ENV["PRINT_TYPES"] == "1"
+      def type_id
+        @type_id ||= begin
+          type = (@@type_id += 1)
+          puts "#{self}: #{type}"
+          type
+        end
+      end
+    else
+      def type_id
+        @type_id ||= (@@type_id += 1)
+      end
     end
   end
 
@@ -153,6 +171,10 @@ module Crystal
 
     def lookup_defs(*)
       []
+    end
+
+    def lookup_similar_defs(*)
+      nil
     end
 
     def no_return?
@@ -216,7 +238,14 @@ module Crystal
           arg_type && arg_type.generic? && match_generic_type(arg_type, restriction, owner, type_lookup, free_vars) && arg_type
         end
       when Ident
-        type = free_vars[restriction.names] || type_lookup.lookup_type(restriction.names)
+        type = free_vars[restriction.names]
+        unless type
+          if restriction.global
+            type = program.lookup_type(restriction.names)
+          else
+            type = type_lookup.lookup_type(restriction.names)
+          end
+        end
         if type
           arg_type && arg_type.restrict(type)
         else
@@ -306,7 +335,7 @@ module Crystal
           if value?
             parent_owner = owner
           elsif parent.class?
-            parent_owner = parent.hierarchy_type
+            parent_owner = owner
           elsif parent.is_a?(IncludedGenericModule)
             type_lookup = parent
             parent_owner = owner
@@ -340,6 +369,29 @@ module Crystal
       end
 
       []
+    end
+
+    def lookup_similar_defs(name, args_length, yields)
+      return nil unless name =~ /\A[a-z_]/
+
+      self.defs.each do |def_name, defs|
+        next unless def_name =~ /\A[a-z_]/
+
+        defs.each do |filter, overload|
+          next if filter[0].length != args_length || filter[1] != yields
+
+          if Levenshtein.distance(def_name.to_s, name.to_s) <= 2
+            return def_name
+          end
+        end
+      end
+
+      parents.each do |parent|
+        similar_def = parent.lookup_similar_defs(name, args_length, yields)
+        return similar_def if similar_def
+      end
+
+      nil
     end
 
     def lookup_macro(name, args_length)
@@ -394,6 +446,14 @@ module Crystal
     def add_macro(a_def)
       self.macros[a_def.name][a_def.args.length] = a_def
     end
+
+    def filter_by_responds_to(name)
+      has_def?(name) ? self : nil
+    end
+
+    def has_def?(name)
+      self.defs.has_key?(name) || self.defs.has_key?(name.to_sym)
+    end
   end
 
   module DefInstanceContainer
@@ -437,9 +497,12 @@ module Crystal
       super || parents.any? { |parent| parent.implements?(other_type) }
     end
 
-    def lookup_type(names, already_looked_up = {})
+    def lookup_type(names, already_looked_up = {}, lookup_in_container = true)
       return nil if already_looked_up[type_id]
-      already_looked_up[type_id] = true
+
+      if lookup_in_container
+        already_looked_up[type_id] = true
+      end
 
       type = self
       names.each do |name|
@@ -450,15 +513,19 @@ module Crystal
       return type if type
 
       parents.each do |parent|
-        match = parent.lookup_type(names, already_looked_up)
+        match = parent.lookup_type(names, already_looked_up, false)
         return match if match
       end
 
-      container ? container.lookup_type(names, already_looked_up) : nil
+      lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
     end
 
     def full_name
       container && !container.is_a?(Program) ? "#{container.to_s}::#{name}" : name
+    end
+
+    def type_desc
+      "module"
     end
 
     def to_s
@@ -607,6 +674,24 @@ module Crystal
     end
   end
 
+  module ClassVarContainer
+    def class_vars
+      @class_vars ||= {}
+    end
+
+    def has_class_var?(name)
+      class_vars.has_key?(name)
+    end
+
+    def lookup_class_var(name)
+      class_vars[name] ||= Var.new name
+    end
+
+    def class_var_owner
+      self
+    end
+  end
+
   module InheritableClass
     def add_subclass(subclass)
       subclasses << subclass
@@ -643,7 +728,7 @@ module Crystal
     attr_accessor :owned_instance_vars
     attr_accessor :instance_vars_in_initialize
 
-    def initialize(container, name, superclass)
+    def initialize(container, name, superclass, add_subclass = true)
       super(container, name)
       if superclass
         @superclass = superclass
@@ -655,10 +740,14 @@ module Crystal
       @parents = [superclass] if superclass
       @owned_instance_vars = Set.new
 
+      force_add_subclass if add_subclass
+    end
+
+    def force_add_subclass
       @superclass.add_subclass(self) if @superclass
     end
 
-     def allocated=(allocated)
+    def allocated=(allocated)
       @allocated = allocated
       superclass.allocated = allocated if superclass
     end
@@ -700,10 +789,15 @@ module Crystal
         each_subclass subclass, &block
       end
     end
+
+    def type_desc
+      "class"
+    end
   end
 
   class NonGenericClassType < ClassType
     include InstanceVarContainer
+    include ClassVarContainer
     include DefInstanceContainer
 
     def metaclass
@@ -813,8 +907,8 @@ module Crystal
   class GenericClassType < ClassType
     include GenericType
 
-    def initialize(container, name, superclass, type_vars)
-      super(container, name, superclass)
+    def initialize(container, name, superclass, type_vars, add_subclass = true)
+      super(container, name, superclass, add_subclass)
       @type_vars = type_vars
     end
 
@@ -842,6 +936,7 @@ module Crystal
   class GenericClassInstanceType < Type
     include InheritableClass
     include InstanceVarContainer
+    include ClassVarContainer
     include DefInstanceContainer
     include MatchesLookup
 
@@ -886,7 +981,7 @@ module Crystal
       super || generic_class.parents.any? { |parent| parent.implements?(other_type) }
     end
 
-    def lookup_type(names, already_looked_up = {})
+    def lookup_type(names, already_looked_up = {}, lookup_in_container = true)
       return nil if already_looked_up[type_id]
       already_looked_up[type_id] = true
 
@@ -903,11 +998,11 @@ module Crystal
       return type if type
 
       parents.each do |parent|
-        match = parent.lookup_type(names, already_looked_up)
+        match = parent.lookup_type(names, already_looked_up, false)
         return match if match
       end
 
-      generic_class.container ? generic_class.container.lookup_type(names, already_looked_up) : nil
+      lookup_in_container && generic_class.container ? generic_class.container.lookup_type(names, already_looked_up) : nil
     end
 
     def parents
@@ -944,6 +1039,10 @@ module Crystal
       true
     end
 
+    def allocated
+      true
+    end
+
     def llvm_size
       Crystal::Program::POINTER_SIZE
     end
@@ -954,7 +1053,7 @@ module Crystal
     attr_reader :including_class
     attr_reader :mapping
 
-    delegate [:container, :name, :implements?, :lookup_matches, :lookup_matches_without_parents, :lookup_defs, :match_arg, :lookup_macro, :parents] => :@module
+    delegate [:container, :name, :implements?, :lookup_matches, :lookup_matches_without_parents, :lookup_defs, :lookup_similar_defs, :match_arg, :lookup_macro, :parents] => :@module
 
     def initialize(a_module, a_class, mapping)
       @module = a_module
@@ -962,7 +1061,7 @@ module Crystal
       @mapping = mapping
     end
 
-    def lookup_type(names, already_looked_up = {})
+    def lookup_type(names, already_looked_up = {}, lookup_in_container = true)
       if names.length == 1 && m = @mapping[names[0]]
         if m.is_a?(Type)
           return m
@@ -974,7 +1073,7 @@ module Crystal
         end
       end
 
-      @module.lookup_type(names, already_looked_up)
+      @module.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
     def to_s
@@ -1001,8 +1100,8 @@ module Crystal
       @types = types
     end
 
-    def includes_nil_type?
-      types.any? { |type| type.includes_nil_type? }
+    def includes_type?(other_type)
+      types.any? { |type| type.includes_type?(other_type) }
     end
 
     def program
@@ -1041,6 +1140,22 @@ module Crystal
       else
         program.type_merge(*filtered_types)
       end
+    end
+
+    def filter_by_responds_to(name)
+      filtered_types = @types.map { |type| type.filter_by_responds_to(name) }.compact
+      case filtered_types.length
+      when 0
+        nil
+      when 1
+        filtered_types[0]
+      else
+        program.type_merge(*filtered_types)
+      end
+    end
+
+    def has_def?(name)
+      @types.any? { |type| type.has_def?(name) }
     end
 
     def nilable?
@@ -1102,7 +1217,7 @@ module Crystal
 
     attr_reader :instance_type
 
-    delegate [:program, :lookup_type] => :instance_type
+    delegate [:program, :lookup_type, :lookup_class_var, :has_class_var?, :class_var_owner, :abstract] => :instance_type
 
     def initialize(instance_type)
       @instance_type = instance_type
@@ -1132,7 +1247,7 @@ module Crystal
     attr_reader :instance_type
 
     delegate [:add_def, :defs, :sorted_defs, :macros] => :'instance_type.generic_class.metaclass'
-    delegate [:program, :type_vars, :lookup_type] => :'instance_type'
+    delegate [:program, :type_vars, :lookup_type, :abstract] => :'instance_type'
 
     def initialize(instance_type)
       @instance_type = instance_type
@@ -1185,6 +1300,10 @@ module Crystal
       false
     end
 
+    def type_desc
+      "lib"
+    end
+
     def to_s
       name
     end
@@ -1192,18 +1311,22 @@ module Crystal
 
   class TypeDefType < ContainedType
     attr_accessor :name
-    attr_accessor :type
+    attr_accessor :typedef
 
-    delegate [:llvm_name, :llvm_size, :pointer?] => :type
+    delegate [:llvm_name, :llvm_size, :pointer?, :lookup_matches, :lookup_first_def, :parents] => :typedef
 
-    def initialize(container, name, type)
+    def initialize(container, name, typedef)
       super(container)
       @name = name
-      @type = type
+      @typedef = typedef
     end
 
     def primitive_like?
       true
+    end
+
+    def type_desc
+      "type def"
     end
 
     def to_s
@@ -1273,6 +1396,10 @@ module Crystal
       "#{container}::#{name}<#{vars_to_s}>"
     end
 
+    def type_desc
+      "struct"
+    end
+
     def to_s
       "#{container}::#{name}"
     end
@@ -1336,6 +1463,10 @@ module Crystal
       "#{container}::#{name}<#{vars_to_s}>"
     end
 
+    def type_desc
+      "union"
+    end
+
     def to_s
       "#{container}::#{name}"
     end
@@ -1367,6 +1498,10 @@ module Crystal
       []
     end
 
+    def type_desc
+      "enum"
+    end
+
     def to_s
       "#{container}::#{name}"
     end
@@ -1390,23 +1525,89 @@ module Crystal
       container && !container.is_a?(Program) ? "#{container.to_s}::#{name}" : name
     end
 
+    def type_desc
+      "constant"
+    end
+
     def to_s
       full_name
+    end
+  end
+
+  module HierarchyTypeLookup
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+      base_type_lookup = hierarchy_lookup(base_type)
+      concrete_classes = Array(cover())
+
+      unless base_type_lookup.abstract && name == "allocate"
+        base_type_matches = base_type_lookup.lookup_matches(name, arg_types, yields, self)
+        if !base_type.abstract && !base_type_matches.cover_all?
+          return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
+        end
+      end
+
+      all_matches = {}
+      matches = (base_type_matches && base_type_matches.matches) || []
+
+      instance_type.each_subtype(base_type) do |subtype|
+        next if subtype.value?
+
+        subtype_lookup = hierarchy_lookup(subtype)
+        subtype_hierarchy_lookup = hierarchy_lookup(subtype.hierarchy_type)
+
+        subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, yields, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+        concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
+        if concrete && !subtype_matches.cover_all? && !base_type_matches.cover_all?
+          covered_by_superclass = false
+          superclass = subtype.superclass
+          while !superclass.equal?(base_type)
+            superclass_lookup = hierarchy_lookup(superclass)
+            superclass_hierarchy_lookup = hierarchy_lookup(superclass.hierarchy_type)
+            superclass_matches = all_matches[superclass.type_id] ||= superclass_lookup.lookup_matches_with_modules(name, arg_types, yields, superclass_hierarchy_lookup, superclass_hierarchy_lookup)
+            if superclass_matches.cover_all?
+              covered_by_superclass = true
+              break
+            end
+            superclass = superclass.superclass
+          end
+
+          unless covered_by_superclass
+            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
+          end
+        end
+
+        if !subtype_matches.empty? && subtype_matches.matches
+          subtype_matches.matches.concat matches
+          matches = subtype_matches.matches
+        end
+      end
+
+      Matches.new(matches, matches.length > 0)
+    end
+
+    def hierarchy_lookup(type)
+      type
     end
   end
 
   class HierarchyType < Type
     include MultiType
     include DefInstanceContainer
+    include HierarchyTypeLookup
 
     attr_accessor :base_type
 
-    delegate [:lookup_first_def, :lookup_defs, :lookup_instance_var, :index_of_instance_var, :lookup_macro,
-              :lookup_type, :has_instance_var_in_initialize?, :allocated, :program, :metaclass] => :base_type
+    delegate [:lookup_first_def, :lookup_defs, :lookup_similar_defs, :lookup_instance_var, :index_of_instance_var, :lookup_macro,
+              :lookup_type, :has_instance_var_in_initialize?, :allocated, :program, :metaclass,
+              :abstract, :allocated=] => :base_type
 
     def initialize(base_type)
       @base_type = base_type
       @def_instances = {}
+    end
+
+    def metaclass
+      @metaclass ||= HierarchyTypeMetaclass.new(self)
     end
 
     def immutable=(immutable)
@@ -1435,48 +1636,6 @@ module Crystal
       else
         1
       end
-    end
-
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      concrete_classes = Array(cover())
-
-      base_type_matches = base_type.lookup_matches(name, arg_types, yields, self)
-      if !base_type.abstract && !base_type_matches.cover_all?
-        return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type, false)
-      end
-
-      all_matches = {}
-      matches = base_type_matches.matches || []
-
-      each_subtype(base_type) do |subtype|
-        next if subtype.value?
-
-        subtype_matches = subtype.lookup_matches_with_modules(name, arg_types, yields, subtype.hierarchy_type, subtype.hierarchy_type)
-        concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
-        if concrete && !subtype_matches.cover_all? && !base_type_matches.cover_all?
-          covered_by_superclass = false
-          superclass = subtype.superclass
-          while !superclass.equal?(base_type)
-            superclass_matches = all_matches[superclass.type_id] ||= superclass.lookup_matches_with_modules(name, arg_types, yields, superclass.hierarchy_type, superclass.hierarchy_type)
-            if superclass_matches.cover_all?
-              covered_by_superclass = true
-              break
-            end
-            superclass = superclass.superclass
-          end
-
-          unless covered_by_superclass
-            return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype, false)
-          end
-        end
-
-        if !subtype_matches.empty? && subtype_matches.matches
-          subtype_matches.matches.concat matches
-          matches = subtype_matches.matches
-        end
-      end
-
-      Matches.new(matches, matches.length > 0)
     end
 
     def filter_by(type)
@@ -1535,4 +1694,43 @@ module Crystal
       4 + Crystal::Program::POINTER_SIZE
     end
   end
+
+  class HierarchyTypeMetaclass < Type
+    include DefInstanceContainer
+    include HierarchyTypeLookup
+
+    attr_reader :instance_type
+
+    delegate [:base_type, :cover] => :instance_type
+    delegate [:lookup_first_def] => :'instance_type.base_type.metaclass'
+
+    def initialize(instance_type)
+      @instance_type = instance_type
+    end
+
+    def hierarchy_lookup(type)
+      type.metaclass
+    end
+
+    def hierarchy_metaclass?
+      true
+    end
+
+    def lookup_macro(name, args_length)
+      nil
+    end
+
+    def metaclass?
+      true
+    end
+
+    def llvm_size
+      4
+    end
+
+    def to_s
+      "#{instance_type}:Class"
+    end
+  end
+
 end

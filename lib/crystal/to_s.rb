@@ -147,8 +147,17 @@ module Crystal
       false
     end
 
+    def visit_not(node)
+      @str << "!("
+      node.exp.accept self
+      @str << ")"
+      false
+    end
+
     def visit_call(node)
       need_parens = node.obj.is_a?(Call) || node.obj.is_a?(Assign)
+
+      @str << "::" if node.global
 
       if node.obj && node.name == :'[]'
 
@@ -235,6 +244,10 @@ module Crystal
       @str << "require \""
       @str << node.string
       @str << "\""
+      if node.cond
+        @str << " if "
+        node.cond.accept self
+      end
       false
     end
 
@@ -400,6 +413,11 @@ module Crystal
       @str << decorate_var(node, node.name)
     end
 
+    def visit_class_var(node)
+      @str << "out " if node.out
+      @str << decorate_var(node, node.name)
+    end
+
     def visit_nop(node)
     end
 
@@ -447,7 +465,7 @@ module Crystal
     def visit_class_def(node)
       @str << "abstract " if node.abstract
       @str << "class "
-      @str << node.name
+      node.name.accept self
       if node.type_vars
         @str << "("
         node.type_vars.each_with_index do |type_var, i|
@@ -468,7 +486,7 @@ module Crystal
 
     def visit_module_def(node)
       @str << "module "
-      @str << node.name
+      node.name.accept self
       if node.type_vars
         @str << "("
         node.type_vars.each_with_index do |type_var, i|
@@ -674,6 +692,14 @@ module Crystal
       false
     end
 
+    def visit_responds_to(node)
+      node.obj.accept self
+      @str << ".responds_to?("
+      node.name.accept self
+      @str << ")"
+      false
+    end
+
     def visit_case(node)
       @str << 'case '
       node.cond.accept self
@@ -711,7 +737,7 @@ module Crystal
       false
     end
 
-    ['return', 'next', 'break', 'yield'].each do |keyword|
+    ['return', 'next', 'break'].each do |keyword|
       class_eval <<-EVAL, __FILE__, __LINE__ + 1
         def visit_#{keyword}(node)
           @str << '#{keyword}'
@@ -727,9 +753,12 @@ module Crystal
       EVAL
     end
 
-    def visit_yield_with_scope(node)
-      node.scope.accept self
-      @str << '.yield'
+    def visit_yield(node)
+      if node.scope
+        node.scope.accept self
+        @str << '.'
+      end
+      @str << 'yield'
       if node.exps.length > 0
         @str << ' '
         node.exps.each_with_index do |exp, i|
@@ -779,21 +808,22 @@ module Crystal
     end
 
     def visit_rescue(node)
-      @str << "rescue"
+      @str << "rescue "
+      if node.name
+        @str << node.name
+      end
+      if node.name && node.types && node.types.length > 0
+        @str << " : "
+      end
       if node.types && node.types.length > 0
-        @str << " "
         node.types.each_with_index do |type, i|
-          @str << ", " if i > 0
+          @str << " | " if i > 0
           type.accept self
         end
       end
-      if node.name
-        @str << " => "
-        @str << node.name
-      end
       @str << "\n"
       if node.body
-        accept_with_indent node.body 
+        accept_with_indent node.body
       end
       false
     end

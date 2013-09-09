@@ -25,4 +25,8 @@ describe "Code gen: primitives" do
   it "codegens f64" do
     run("2.5_f64").to_f64.should eq(2.5_f64)
   end
+
+  it "codegens string" do
+    run(%("foo")).to_string.should eq("foo")
+  end
 end

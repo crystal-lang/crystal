@@ -1,6 +1,5 @@
 class StringScanner
-  def initialize(str)
-    @str = str
+  def initialize(@str)
     @offset = 0
   end
 

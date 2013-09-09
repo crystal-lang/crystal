@@ -32,7 +32,7 @@ describe 'Code gen: pointer' do
   end
 
   it "sets value of pointer to union" do
-    run('p = Pointer(Int32|Float64).malloc(1); a = 1; a = 2.5; p.value = a; p.value.to_i').to_i.should eq(2)
+    run('p = Pointer(Int32|Float64).malloc(1_u64); a = 1; a = 2.5; p.value = a; p.value.to_i').to_i.should eq(2)
   end
 
   it "increment pointer" do
@@ -44,7 +44,7 @@ describe 'Code gen: pointer' do
         end
         def value
           p = @a.ptr
-          p += 1
+          p += 1_i64
           p.value
         end
       end
@@ -53,11 +53,11 @@ describe 'Code gen: pointer' do
   end
 
   it "codegens malloc" do
-    run(%q(p = Pointer(Int32).malloc(10); p.value = 1; p.value + 1)).to_i.should eq(2)
+    run(%q(p = Pointer(Int32).malloc(10_u64); p.value = 1; p.value + 1_i64)).to_i.should eq(2)
   end
 
   it "codegens realloc" do
-    run(%q(p = Pointer(Int32).malloc(10); p.value = 1; x = p.realloc(20); x.value + 1)).to_i.should eq(2)
+    run(%q(p = Pointer(Int32).malloc(10_u64); p.value = 1; x = p.realloc(20_u64); x.value + 1_i64)).to_i.should eq(2)
   end
 
   it "codegens pointer cast" do
@@ -125,5 +125,12 @@ describe 'Code gen: pointer' do
       x = 2
       px.value
       )).to_i.should eq(2)
+  end
+
+  it "creates pointer by address" do
+    run(%q(
+      x = Pointer(Int32).new(123_u64)
+      x.address
+    )).to_i.should eq(123)
   end
 end

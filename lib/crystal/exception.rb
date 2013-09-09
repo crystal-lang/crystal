@@ -51,7 +51,7 @@ module Crystal
           str << line.chomp
           str << "\n"
           str << (' ' * (@column_number - 1))
-          str << '^'
+          str << "\033[1;32m^\033[0m"
           str << "\n"
         end
       end
@@ -119,10 +119,12 @@ module Crystal
           str << line.chomp
           str << "\n"
           str << (' ' * (@column - 1))
+          str << "\033[1;32m"
           str << '^'
           if @length && @length > 0
             str << ('~' * (@length - 1))
           end
+          str << "\033[0m"
         end
       end
       str << "\n"
@@ -159,9 +161,10 @@ module Crystal
     end
   end
 
-  class NilMethodException < Exception
-    def initialize(nil_trace)
-      @nil_trace = nil_trace
+  class MethodTraceException < Exception
+    def initialize(owner, trace)
+      @owner = owner
+      @trace = trace
     end
 
     def has_location?
@@ -169,11 +172,11 @@ module Crystal
     end
 
     def append_to_s(str, source)
-      return unless @nil_trace.length > 0
+      return unless @trace.length > 0
 
       str << ("=" * 80)
-      str << "\n\nNil trace:"
-      @nil_trace.each do |node|
+      str << "\n\n#{@owner} trace:"
+      @trace.each do |node|
         if node.filename.is_a?(VirtualFile)
           filename = "macro #{node.filename.macro.name} (in #{node.filename.macro.filename}:#{node.filename.macro.line_number})"
           lines = node.filename.source.lines.to_a
@@ -204,7 +207,8 @@ module Crystal
         str << "    "
         str << (' ' * (name_column - 1))
         str << '^'
-        str << ('~' * (name_length - 1)) if name_length
+        # binding.pry
+        # str << ('~' * (name_length - 1)) if name_length
       end
     end
   end

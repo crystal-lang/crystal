@@ -10,11 +10,11 @@ describe 'Type inference: pointer' do
   end
 
   it "types pointer add" do
-    assert_type('a = 1; a.ptr + 1') { pointer_of(int32) }
+    assert_type('a = 1; a.ptr + 1_i64') { pointer_of(int32) }
   end
 
   it "types Pointer.malloc" do
-    assert_type('p = Pointer(Int32).malloc(10); p.value = 1; p') { pointer_of(int32) }
+    assert_type('p = Pointer(Int32).malloc(10_u64); p.value = 1; p') { pointer_of(int32) }
   end
 
   it "types Pointer.null" do
@@ -22,7 +22,7 @@ describe 'Type inference: pointer' do
   end
 
   it "types realloc" do
-    assert_type('p = Pointer(Int32).malloc(10); p.value = 1; x = p.realloc(20); x') { pointer_of(int32) }
+    assert_type('p = Pointer(Int32).malloc(10_u64); p.value = 1; x = p.realloc(20_u64); x') { pointer_of(int32) }
   end
 
   it "type pointer casting" do
@@ -34,12 +34,12 @@ describe 'Type inference: pointer' do
   end
 
   it "pointer malloc creates new type" do
-    assert_type('p = Pointer(Int32).malloc(1); p.value = 1; p2 = Pointer(Float64).malloc(1); p2.value = 1.5; p2.value') { float64 }
+    assert_type('p = Pointer(Int32).malloc(1_u64); p.value = 1; p2 = Pointer(Float64).malloc(1_u64); p2.value = 1.5; p2.value') { float64 }
   end
 
   it "allows using pointer with subclass" do
     assert_type(%q(
-      a = Pointer(Object).malloc(1)
+      a = Pointer(Object).malloc(1_u64)
       a.value = 1
       a.value
     )) { union_of(object, int32) }
@@ -60,14 +60,13 @@ describe 'Type inference: pointer' do
       "'ptr' can't receive a block"
   end
 
-  it "reports undefined method new" do
-    assert_error "Pointer.new",
-      "undefined method 'new' for Pointer(T):Class"
-  end
-
   it "can't do Pointer.malloc without type var" do
     assert_error %(
-      Pointer.malloc(1)
+      Pointer.malloc(1_u64)
     ), "can't malloc pointer without type, use Pointer(Type).malloc(size)"
+  end
+
+  it "create pointer by address" do
+    assert_type(%q(Pointer(Int32).new(123_u64))) { pointer_of(int32) }
   end
 end

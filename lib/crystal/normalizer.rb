@@ -92,8 +92,50 @@ module Crystal
     end
 
     def transform_require(node)
+      if node.cond
+        must_require = eval_require_cond(node.cond)
+        return unless must_require
+      end
+
       required = program.require(node.string, node.filename)
       required ? required.transform(self) : nil
+    end
+
+    class RequireEvaluator < Visitor
+      attr_reader :value
+
+      def initialize(program)
+        @program = program
+      end
+
+      def visit_var(node)
+        @value = @program.has_require_flag?(node.name)
+      end
+
+      def visit_not(node)
+        node.exp.accept self
+        @value = !@value
+      end
+
+      def visit_and(node)
+        node.left.accept self
+        left_value = @value
+        node.right.accept self
+        @value = left_value && @value
+      end
+
+      def visit_or(node)
+        node.left.accept self
+        left_value = @value
+        node.right.accept self
+        @value = left_value || @value
+      end
+    end
+
+    def eval_require_cond(node)
+      evaluator = RequireEvaluator.new(@program)
+      node.accept evaluator
+      evaluator.value
     end
 
     def transform_string_interpolation(node)
@@ -164,13 +206,9 @@ module Crystal
       end
     end
 
-    def transform_yield_with_scope(node)
-      super.tap do
-        reset_instance_variables_indices
-      end
-    end
-
     def reset_instance_variables_indices
+      return if @in_initialize
+
       @vars.each do |key, value|
         if key[0] == '@'
           @vars[key] = {read: nil, write: value[:write]}
@@ -195,7 +233,11 @@ module Crystal
         wh.conds.each do |cond|
           right_side = temp_var
 
-          comp = Call.new(cond, :'===', [right_side])
+          if cond.is_a?(Ident)
+            comp = IsA.new(right_side, cond)
+          else
+            comp = Call.new(cond, :'===', [right_side])
+          end
           if final_comp
             final_comp = SimpleOr.new(final_comp, comp)
           else
@@ -266,13 +308,20 @@ module Crystal
 
       temp_var = new_temp_var
       assign = Assign.new(temp_var, constructor)
+      assign.location = node.location
+
       set_length = Call.new(temp_var, 'length=', [NumberLiteral.new(length, :i32)])
+      set_length.location = node.location
 
       exps = [assign, set_length]
 
       node.elements.each_with_index do |elem, i|
         get_buffer = Call.new(temp_var, 'buffer')
+        get_buffer.location = node.location
+
         assign_index = Call.new(get_buffer, :[]=, [NumberLiteral.new(i, :i32), elem])
+        assign_index.location = node.location
+
         exps << assign_index
       end
 
@@ -347,6 +396,8 @@ module Crystal
         indices = @vars[node.target.name] = {read: 1, write: 2}
       end
 
+      return if @in_initialize
+
       ivar_name = var_name_with_index(node.target.name, indices[:read])
       node.value = Assign.new(Var.new(ivar_name), node.value)
     end
@@ -404,6 +455,7 @@ module Crystal
         before_indices = before_vars[var_name]
         then_indices = then_vars && then_vars[var_name]
         else_indices = else_vars && else_vars[var_name]
+        # binding.pry
         if else_indices.nil?
           if before_indices
             if then_indices != before_indices && then_indices[:read]
@@ -576,6 +628,8 @@ module Crystal
     end
 
     def transform_instance_var(node)
+      return node if @in_initialize
+
       indices = @vars[node.name]
       if indices && indices[:read]
         new_var = var_with_index(node.name, indices[:read])
@@ -704,6 +758,8 @@ module Crystal
       if @in_initialize && !from_index && name[0] == '@'
         vars << Assign.new(InstanceVar.new(name), NilLiteral.new)
       end
+
+      return if @in_initialize && name[0] == '@'
 
       vars << assign_var_with_indices(name, to_index, from_index)
     end

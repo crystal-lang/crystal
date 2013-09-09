@@ -1,4 +1,3 @@
-require "strscan"
 require "token"
 
 class Char
@@ -60,6 +59,7 @@ module Crystal
         @column_number = 1
         while @buffer.value == '\n'
           @buffer += 1
+          @line_number += 1
         end
       when '='
         case next_char
@@ -718,7 +718,7 @@ module Crystal
 
             if @buffer.value == '+' || @buffer.value == '-'
               count += 1
-              next_char 
+              next_char
             end
 
             while true
@@ -748,7 +748,7 @@ module Crystal
 
         if @buffer.value == '+' || @buffer.value == '-'
           count += 1
-          next_char 
+          next_char
         end
 
         while true
@@ -840,7 +840,7 @@ module Crystal
         @token.number_kind = default
       end
     end
-    
+
     def next_string_token(string_nest, string_end, string_open_count)
       case @buffer.value
       when '\0'
@@ -898,11 +898,11 @@ module Crystal
       else
         start = @buffer
         count = 0
-        while @buffer.value != string_end && 
+        while @buffer.value != string_end &&
               @buffer.value != string_nest &&
-              @buffer.value != '\0' && 
-              @buffer.value != '\\' && 
-              @buffer.value != '#' && 
+              @buffer.value != '\0' &&
+              @buffer.value != '\\' &&
+              @buffer.value != '#' &&
               @buffer.value != '\n'
           next_char
           count += 1
@@ -1008,6 +1008,10 @@ module Crystal
 
     def skip_statement_end
       next_token while (@token.type == :SPACE || @token.type == :NEWLINE || @token.type == :";")
+    end
+
+    def raise(message, line_number = @line_number, column_number = @token.column_number, filename = @filename)
+      ::raise Crystal::SyntaxException.new(message, line_number, column_number, filename)
     end
   end
 end

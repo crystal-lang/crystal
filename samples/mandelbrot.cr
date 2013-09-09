@@ -1,3 +1,4 @@
+#!/usr/bin/env bin/crystal -run
 def print_density(d)
   if d > 8
     print ' '

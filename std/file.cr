@@ -11,7 +11,7 @@ lib C
   fun ftell(file : File) : Int64
   fun fread(buffer : Char*, size : Int64, nitems : Int64, file : File) : Int32
   fun access(filename : Char*, how : Int32) : Int32
-  fun dirname(filenane : Char*) : Char*
+  fun realpath(path : Char*, resolved_path : Char*) : Char*
 
   SEEK_SET = 0
   SEEK_CUR = 1
@@ -51,6 +51,8 @@ abstract class IO
 end
 
 class File < IO
+  SEPARATOR = '/'
+
   def initialize(filename, mode)
     @file = C.fopen filename, mode
   end
@@ -60,13 +62,55 @@ class File < IO
   end
 
   def self.dirname(filename)
-    String.from_cstr(C.dirname(filename))
+    index = filename.rindex SEPARATOR
+    return "." if index == -1
+    return "/" if index == 0
+    filename[0, index]
+  end
+
+  def self.basename(filename)
+    return "" if filename.length == 0
+
+    last = filename.length - 1
+    last -= 1 if filename[last] == SEPARATOR
+
+    index = filename.rindex SEPARATOR, last
+    return filename if index == -1
+
+    filename[index + 1, last - index]
+  end
+
+  def self.basename(filename, suffix)
+    basename = basename(filename)
+    basename = basename[0, basename.length - suffix.length] if basename.ends_with?(suffix)
+    basename
+  end
+
+  def self.extname(filename)
+    dot_index = filename.rindex('.')
+
+    if dot_index == -1 ||
+       dot_index == filename.length - 1 ||
+       (dot_index > 0 && filename[dot_index - 1] == SEPARATOR)
+      return ""
+    end
+
+    return filename[dot_index, filename.length - dot_index]
+  end
+
+  def self.expand_path(filename)
+    str = C.realpath(filename, nil)
+    length = C.strlen(str)
+    String.from_cstr(str, length)
   end
 
   def self.open(filename, mode)
     file = File.new filename, mode
-    yield file
-    file.close
+    begin
+      yield file
+    ensure
+      file.close
+    end
   end
 
   def self.read(filename)

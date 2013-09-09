@@ -101,18 +101,57 @@ describe "Exception" do
     b.should eq(3)
   end
 
-  class Foo
+  class Ex1 < Exception
+    def to_s
+      "Ex1"
+    end
   end
 
-  class Bar
+  class Ex2 < Exception
   end
+
+  class Ex3 < Ex1
+  end
+
+  it "executes ensure when exception is unhandled" do
+    a = 0
+    b = begin
+          begin
+            a = 1
+            raise "Oh no!"
+          rescue Ex1
+            a = 2
+          ensure
+            a = 3
+          end
+        rescue
+          4
+        end
+    a.should eq(3)
+    b.should eq(4)
+  end
+
+  it "ensure without rescue" do
+    a = 0
+    begin
+      begin
+        raise "Oh no!"
+      ensure
+        a = 1
+      end
+    rescue
+    end
+
+    a.should eq(1)
+  end
+
 
   it "rescue with type" do
     a = begin
-      raise Bar.new
-    rescue Foo
+      raise Ex2.new
+    rescue Ex1
       1
-    rescue Bar
+    rescue Ex2
       2
     end
 
@@ -122,14 +161,111 @@ describe "Exception" do
   it "rescue with types defaults to generic rescue" do
     a = begin
       raise "Oh no!"
-    rescue Foo
+    rescue Ex1
       1
-    rescue Bar
+    rescue Ex2
       2
     rescue
       3
     end
 
     a.should eq(3)
+  end
+
+  it "handle exception in outer block" do
+    p = 0
+    x = begin
+      begin
+        raise Ex1.new
+      rescue Ex2
+        p = 1
+        1
+      end
+    rescue
+      2
+    end
+
+    x.should eq(2)
+    p.should eq(0)
+  end
+
+  it "handle subclass" do
+    x = 0
+    begin
+      raise Ex3.new
+    rescue Ex1
+      x = 1
+    end
+
+    x.should eq(1)
+  end
+
+  it "handle multiple exception types" do
+    x = 0
+    begin
+      raise Ex2.new
+    rescue Ex1 | Ex2
+      x = 1
+    end
+
+    x.should eq(1)
+
+    x = 0
+    begin
+      raise Ex1.new
+    rescue Ex1 | Ex2
+      x = 1
+    end
+
+    x.should eq(1)
+  end
+
+  it "receives exception object" do
+    x = ""
+    begin
+      raise Ex1.new
+    rescue ex
+      x = ex.to_s
+    end
+
+    x.should eq("Ex1")
+  end
+
+  it "executes else if no exception is raised" do
+    x = 1
+    y = begin
+        rescue ex
+          x = 2
+        else
+          x = 3
+        end
+    x.should eq(3)
+    y.should eq(3)
+  end
+
+  it "doesn't execute else if exception is raised" do
+    x = 1
+    y = begin
+          raise Ex1.new
+        rescue ex
+          x = 2
+        else
+          x = 3
+        end
+    x.should eq(2)
+    y.should eq(2)
+  end
+
+  it "doesn't execute else if exception is raised conditionally" do
+    x = 1
+    y = begin
+          raise Ex1.new if 1 == 1
+        rescue ex
+          x = 2
+        else
+          x = 3
+        end
+    x.should eq(2)
+    y.should eq(2)
   end
 end

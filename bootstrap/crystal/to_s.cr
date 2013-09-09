@@ -18,6 +18,9 @@ module Crystal
     def visit(node : ASTNode)
     end
 
+    def visit(node : Nop)
+    end
+
     def visit(node : BoolLiteral)
       @str << (node.value ? "true" : "false")
     end
@@ -101,9 +104,11 @@ module Crystal
 
     def visit(node : Expressions)
       node.expressions.each do |exp|
-        append_indent
-        exp.accept self
-        @str << "\n"
+        unless exp.nop?
+          append_indent
+          exp.accept self
+          @str << "\n"
+        end
       end
       false
     end
@@ -122,7 +127,7 @@ module Crystal
       node.cond.accept self
       @str << "\n"
       accept_with_indent(node.then)
-      if node.else
+      unless node.else.nop?
         append_indent
         @str << "else\n"
         accept_with_indent(node.else)
@@ -216,16 +221,14 @@ module Crystal
 
     def visit(node : While)
       if node.run_once
-        if body = node.body
-          if body.is_a?(Expressions)
-            @str << "begin\n"
-            accept_with_indent(node.body)
-            append_indent
-            @str << "end while "
-          else
-            body.accept self
-            @str << " while "
-          end
+        if node.body.is_a?(Expressions)
+          @str << "begin\n"
+          accept_with_indent(node.body)
+          append_indent
+          @str << "end while "
+        else
+          node.body.accept self
+          @str << " while "
         end
         node.cond.accept self
       else
@@ -305,7 +308,7 @@ module Crystal
         @str << " -> "
 
         if output = node.output
-          output.accept self 
+          output.accept self
         end
       end
       false
@@ -594,9 +597,7 @@ module Crystal
     def visit(node : ExceptionHandler)
       @str << "begin\n"
 
-      if node.body
-        accept_with_indent node.body
-      end
+      accept_with_indent node.body
 
       if rescues = node.rescues
         if rescues.length > 0
@@ -640,9 +641,7 @@ module Crystal
         @str << name
       end
       @str << "\n"
-      if body = node.body
-        accept_with_indent body 
-      end
+      accept_with_indent node.body
       false
     end
 
@@ -659,19 +658,18 @@ module Crystal
     end
 
     def accept_with_indent(node : Expressions)
-      if node
-        with_indent do
-          node.accept self
-        end
+      with_indent do
+        node.accept self
       end
     end
 
+    def accept_with_indent(node : Nop)
+    end
+
     def accept_with_indent(node)
-      if node
-        with_indent do
-          append_indent
-          node.accept self
-        end
+      with_indent do
+        append_indent
+        node.accept self
       end
       @str << "\n"
     end

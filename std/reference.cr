@@ -6,8 +6,7 @@ class Reference
   "end
 
   macro self.setter(name)"
-    def #{name}=(value)
-      @#{name} = value
+    def #{name}=(@#{name})
     end
   "end
 
@@ -34,6 +33,14 @@ class Reference
 
   def !@
     false
+  end
+
+  def hash
+    object_id
+  end
+
+  def clone
+    self
   end
 
   def to_s

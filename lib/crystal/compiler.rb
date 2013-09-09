@@ -1,6 +1,5 @@
-require 'llvm/transforms/ipo'
-require 'llvm/transforms/scalar'
 require 'fileutils'
+require 'tempfile'
 
 module Crystal
   class Compiler
@@ -11,13 +10,14 @@ module Crystal
     def initialize
       require 'optparse'
 
-      @options = {optimization_passes: 0}
       OptionParser.new do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
 
+        @options = {}
         opts.on("-e 'command'", "one line script. Several -e's allowed. Omit [programfile]") do |command|
           @options[:command] ||= []
           @options[:command] << command
+          @options[:execute] = true
         end
         opts.on('-graph ', 'Render type graph') do
           @options[:graph] = true
@@ -25,7 +25,7 @@ module Crystal
         opts.on('-types', 'Prints types of global variables') do
           @options[:types] = true
         end
-        opts.on('--html DIR', 'Dump program to HTML in DIR directory') do |dir|
+        opts.on('--html [DIR]', 'Dump program to HTML in DIR directory') do |dir|
           @options[:html] = dir
         end
         opts.on('--hierarchy [FILTER]', 'Render hierarchy graph') do |filter|
@@ -33,7 +33,7 @@ module Crystal
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
-          exit
+          exit 1
         end
         opts.on('-ll', 'Dump ll to standard output') do
           @options[:dump_ll] = true
@@ -47,22 +47,34 @@ module Crystal
         opts.on('-o ', 'Output filename') do |output|
           @options[:output_filename] = output
         end
-        opts.on('-O ', "Number of optimization passes (default: #{@options[:optimization_passes]})") do |opt|
-          @options[:optimization_passes] = opt.to_i
+        opts.on('-O ', 'Optimization level') do |opt|
+          @options[:opt_level] = opt
         end
         opts.on('-prof', 'Enable profiling output') do
           @options[:prof] = true
         end
         opts.on('-run ', 'Execute program') do
           @options[:run] = true
+          @options[:execute] = true
         end
         opts.on('-stats', 'Enable statistics output') do
           @options[:stats] = true
         end
       end.parse!
 
-      if !@options[:output_filename] && ::ARGV.length > 0
-        @options[:output_filename] = File.basename(::ARGV[0], File.extname(::ARGV[0]))
+      if !@options[:output_filename]
+        if @options[:run] || @options[:command] || ::ARGV.length == 0
+          @tempfile = Tempfile.new('crystal')
+          @options[:output_filename] = @tempfile.path
+          @options[:execute] = true
+          @options[:args] = []
+          if ::ARGV.length > 1
+            @options[:args] = ::ARGV[1 .. -1]
+            ::ARGV.replace([::ARGV[0]])
+          end
+        elsif ::ARGV.length > 0
+          @options[:output_filename] = File.basename(::ARGV[0], File.extname(::ARGV[0]))
+        end
       end
     end
 
@@ -114,15 +126,8 @@ module Crystal
         exit 0 if @options[:no_build]
 
         llvm_mod = nil
-        engine = nil
         with_stats_or_profile('codegen') do
           llvm_mod = program.build node, filename, @options[:debug]
-
-          # Don't optimize crystal_main away if the user wants to run the program
-          llvm_mod.functions[Program::MAIN_NAME].linkage = :internal unless @options[:run] || @options[:command]
-
-          engine = LLVM::JITCompiler.new llvm_mod
-          optimize llvm_mod, engine unless @options[:debug]
         end
       rescue Crystal::Exception => ex
         puts ex.to_s(source)
@@ -135,30 +140,33 @@ module Crystal
 
       llvm_mod.dump if @options[:dump_ll]
 
-      if @options[:run] || @options[:command]
-        program.load_libs
+      reader, writer = IO.pipe
+      Thread.new do
+        llvm_mod.write_bitcode(writer)
+        writer.close
+      end
 
-        engine.run_function llvm_mod.functions[Program::MAIN_NAME], 0, nil
+      o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
+
+      if @options[:debug]
+        obj_file = "#{@options[:output_filename]}.o"
+
+        pid = spawn "llc | clang -x assembler -c -o #{obj_file} -", in: reader
+        Process.waitpid pid
+
+        `clang #{o_flag} #{obj_file} #{lib_flags(program)}`
       else
-        reader, writer = IO.pipe
-        Thread.new do
-          llvm_mod.write_bitcode(writer)
-          writer.close
+        opt_cmd = @options[:opt_level] ? "opt -O#{@options[:opt_level]} |" : ""
+        pid = spawn "#{opt_cmd} llc | clang -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
+        Process.waitpid pid
+      end
+
+      if @options[:execute]
+        print `#{@options[:output_filename]} #{@options[:args].join ' '}`
+        unless $?.success?
+          puts "\033[1;31m#{$?.to_s}\033[0m"
         end
-
-        o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
-
-        if @options[:debug]
-          obj_file = "#{@options[:output_filename]}.o"
-
-          pid = spawn "llc | clang -x assembler -c -o #{obj_file} -", in: reader
-          Process.waitpid pid
-
-          `clang #{o_flag} #{obj_file} #{lib_flags(program)}`
-        else
-          pid = spawn "llc | clang -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
-          Process.waitpid pid
-        end
+        @tempfile.delete
       end
     end
 
@@ -183,29 +191,6 @@ module Crystal
         end
       end
       flags
-    end
-
-    def optimize(mod, engine)
-      self.class.optimize mod, engine, @options[:optimization_passes]
-    end
-
-    def self.optimize(mod, engine, optimization_passes)
-      pm = LLVM::PassManager.new engine
-      pm.inline!
-      pm.gdce!
-      pm.instcombine!
-      pm.reassociate!
-      pm.gvn!
-      pm.mem2reg!
-      pm.simplifycfg!
-      pm.tailcallelim!
-      pm.loop_unroll!
-      pm.loop_deletion!
-      pm.loop_rotate!
-      pm.scalarrepl!
-      pm.memcpyopt!
-
-      optimization_passes.times { pm.run mod }
     end
   end
 end

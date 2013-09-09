@@ -81,7 +81,7 @@ describe 'Codegen: const' do
     run("lib Foo; A = 1; end; Foo::A").to_i.should eq(1)
   end
 
-  pending "invokes block in const" do
+  it "invokes block in const" do
     run(%q(require "prelude"; A = ["1"].map { |x| x.to_i }; A[0])).to_i.should eq(1)
   end
 
@@ -93,4 +93,27 @@ describe 'Codegen: const' do
     run("module A; class B; def foo; 1; end; end; C = B.new; end; def foo; A::C.foo; end; foo").to_i.should eq(1)
   end
 
+  it "codegens variable assignment in const" do
+    run(%q(
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      A = begin
+            f = Foo.new(1)
+            f
+          end
+
+      def foo
+        A.x
+      end
+
+      foo
+      )).to_i.should eq(1)
+  end
 end

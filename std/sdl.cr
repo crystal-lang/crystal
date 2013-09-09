@@ -190,11 +190,7 @@ module SDL
     getter :height
     getter :bpp
 
-    def initialize(surface, width, height, bpp)
-      @surface = surface
-      @width = width
-      @height = height
-      @bpp = bpp
+    def initialize(@surface, @width, @height, @bpp)
     end
 
     def lock

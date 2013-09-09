@@ -25,7 +25,12 @@ class Hash(K, V)
     @length += 1
     entry = Entry(K, V).new(key, value)
     bucket.push entry
-    @last.next = entry if @last
+
+    if @last
+      @last.next = entry
+      entry.previous = @last
+    end
+
     @last = entry
     @first = entry unless @first
     value
@@ -35,12 +40,16 @@ class Hash(K, V)
     fetch(key)
   end
 
+  def []?(key)
+    fetch(key, nil)
+  end
+
   def has_key?(key)
     !!find_entry(key)
   end
 
   def fetch(key)
-    fetch(key) { raise "Missing value: #{key}" }
+    fetch(key) { raise "Missing hash value: #{key}" }
   end
 
   def fetch(key, default)
@@ -54,6 +63,40 @@ class Hash(K, V)
 
   def fetch_or_assign(key)
     fetch(key) { self[key] = yield }
+  end
+
+  def delete(key)
+    index = bucket_index(key)
+    bucket = @buckets[index]
+    if bucket
+      bucket.delete_if do |entry|
+        if entry.key == key
+          previous_entry = entry.previous
+          next_entry = entry.next
+          if next_entry
+            if previous_entry
+              previous_entry.next = next_entry
+              next_entry.previous = previous_entry
+            else
+              @first = next_entry
+              next_entry.previous = nil
+            end
+          else
+            if previous_entry
+              previous_entry.next = nil
+              @last = previous_entry
+            else
+              @first = nil
+              @last = nil
+            end
+          end
+          @length -= 1
+          true
+        else
+          false
+        end
+      end
+    end
   end
 
   def length
@@ -125,7 +168,7 @@ class Hash(K, V)
   end
 
   def bucket_index(key)
-    key.hash % @buckets.length
+    (key.hash % @buckets.length).to_i
   end
 
   class Entry(K, V)
@@ -152,6 +195,14 @@ class Hash(K, V)
 
     def next=(n)
       @next = n
+    end
+
+    def previous
+      @previous
+    end
+
+    def previous=(p)
+      @previous = p
     end
   end
 end

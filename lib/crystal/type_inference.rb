@@ -152,42 +152,61 @@ module Crystal
                  mod.reference
                end
 
-      type = current_type.types[node.name]
+      if node.name.names.length == 1 && !node.name.global
+        scope = current_type
+        name = node.name.names.first
+      else
+        name = node.name.names.pop
+        scope = lookup_ident_type node.name
+      end
+
+      type = scope.types[name]
       if type
-        node.raise "#{node.name} is not a class" unless type.is_a?(ClassType)
+        node.raise "#{name} is not a class" unless type.is_a?(ClassType)
         if node.superclass && type.superclass != superclass
           node.raise "superclass mismatch for class #{type.name} (#{superclass.name} for #{type.superclass.name})"
         end
       else
+        neeeds_force_add_subclass = true
         if node.type_vars
-          type = GenericClassType.new current_type, node.name, superclass, node.type_vars
+          type = GenericClassType.new scope, name, superclass, node.type_vars, false
         else
-          type = NonGenericClassType.new current_type, node.name, superclass
+          type = NonGenericClassType.new scope, name, superclass, false
         end
         type.abstract = node.abstract
-        current_type.types[node.name] = type
+        scope.types[name] = type
       end
 
       @types.push type
-
-      true
-    end
-
-    def end_visit_class_def(node)
+      node.body.accept self
       @types.pop
+
+      type.force_add_subclass if neeeds_force_add_subclass
+
+      false
     end
 
     def visit_module_def(node)
-      type = current_type.types[node.name]
+      if node.name.names.length == 1 && !node.name.global
+        scope = current_type
+        name = node.name.names.first
+      else
+        name = node.name.names.pop
+        scope = lookup_ident_type node.name
+      end
+
+      type = scope.types[name]
       if type
-        node.raise "#{node.name} is not a module" unless type.module?
+        unless type.module?
+          node.raise "#{name} is not a module, it's a #{type.type_desc}"
+        end
       else
         if node.type_vars
-          type = GenericModuleType.new current_type, node.name, node.type_vars
+          type = GenericModuleType.new scope, name, node.type_vars
         else
-          type = NonGenericModuleType.new current_type, node.name
+          type = NonGenericModuleType.new scope, name
         end
-        current_type.types[node.name] = type
+        scope.types[name] = type
       end
 
       @types.push type
@@ -207,7 +226,7 @@ module Crystal
       end
 
       unless type.module?
-        node.name.raise "#{node.name} is not a module"
+        node.name.raise "#{node.name} is not a module, it's a #{type.type_desc}"
       end
 
       if node.name.is_a?(NewGenericClass)
@@ -275,17 +294,17 @@ module Crystal
       node.return_type.accept self if node.return_type
 
       args = node.args.map do |arg|
-        check_primitive_like arg.type
+        arg_type = check_primitive_like arg.type
 
         fun_arg = Arg.new(arg.name)
         fun_arg.location = arg.location
-        fun_arg.type_restriction = fun_arg.type = maybe_ptr_type(arg.type.type.instance_type, arg.ptr)
+        fun_arg.type_restriction = fun_arg.type = maybe_ptr_type(arg_type, arg.ptr)
         fun_arg
       end
 
-      check_primitive_like node.return_type if node.return_type
-
-      return_type = maybe_ptr_type(node.return_type ? node.return_type.type.instance_type : mod.nil, node.ptr)
+      return_type = node.return_type
+      return_type = check_primitive_like return_type if return_type
+      return_type = maybe_ptr_type(return_type ? return_type : mod.nil, node.ptr)
 
       begin
         external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
@@ -302,7 +321,7 @@ module Crystal
 
           inferred_return_type = @mod.type_merge node.body.type, external.type
 
-          if node.return_type && !inferred_return_type.equal?(return_type)
+          if return_type && !return_type.equal?(@mod.void) && !inferred_return_type.equal?(return_type)
             node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
           end
 
@@ -333,9 +352,9 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
-        check_primitive_like node.type
+        node_type = check_primitive_like node.type
 
-        typed_def_type = maybe_ptr_type(node.type.type.instance_type, node.ptr)
+        typed_def_type = maybe_ptr_type(node_type, node.ptr)
 
         current_type.types[node.name] = TypeDefType.new current_type, node.name, typed_def_type
       end
@@ -355,9 +374,9 @@ module Crystal
         node.raise "#{node.name} is already defined"
       else
         fields = node.fields.map do |field|
-          check_primitive_like field.type
+          field_type = check_primitive_like field.type
 
-          Var.new(field.name, maybe_ptr_type(field.type.type.instance_type, field.ptr))
+          Var.new(field.name, maybe_ptr_type(field_type, field.ptr))
         end
         current_type.types[node.name] = klass.new(current_type, node.name, fields)
       end
@@ -390,12 +409,15 @@ module Crystal
     end
 
     def check_primitive_like(node)
-      unless node.type.instance_type.primitive_like?
-        msg = "only primitive types and structs are allowed in lib declarations"
-        msg << " (did you mean Int32?)" if node.type.instance_type.equal?(@mod.types["Int"])
-        msg << " (did you mean Float32?)" if node.type.instance_type.equal?(@mod.types["Float"])
+      type = node.type.instance_type
+      unless type.primitive_like?
+        msg = "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
+        msg << " (did you mean Int32?)" if type.equal?(@mod.types["Int"])
+        msg << " (did you mean Float32?)" if type.equal?(@mod.types["Float"])
         node.raise msg
       end
+      type = @mod.int32 if type.c_enum?
+      type
     end
 
     def visit_struct_set(node)
@@ -480,7 +502,12 @@ module Crystal
     end
 
     def visit_global(node)
-      var = mod.global_vars[node.name] or node.raise "uninitialized global #{node}"
+      var = mod.global_vars[node.name]
+      unless var
+        var = Var.new(node.name)
+        var.bind_to mod.nil_var
+        mod.global_vars[node.name] = var
+      end
       node.bind_to var
     end
 
@@ -491,17 +518,35 @@ module Crystal
       node.type_filters = {node.name => NotNilFilter}
     end
 
+    def visit_class_var(node)
+      node.bind_to lookup_class_var(node)
+    end
+
     def lookup_instance_var(node)
       if @scope.is_a?(Crystal::Program)
         node.raise "can't use instance variables at the top level"
-      elsif @scope.is_a?(PrimitiveType)
-        node.raise "can't use instance variables inside #{@scope.name}"
+      elsif @scope.is_a?(PrimitiveType) || @scope.metaclass?
+        node.raise "can't use instance variables inside #{@scope}"
       end
 
       var = @scope.lookup_instance_var node.name
       if !@scope.has_instance_var_in_initialize?(node.name)
         var.bind_to mod.nil_var
       end
+
+      var
+    end
+
+    def lookup_class_var(node, bind_to_nil_if_non_existent = true)
+      scope = @typed_def ? @scope : current_type
+      bind_to_nil = bind_to_nil_if_non_existent && !scope.has_class_var?(node.name)
+
+      var = scope.lookup_class_var node.name
+      var.bind_to mod.nil_var if bind_to_nil
+
+      node.owner = scope.class_var_owner
+      node.var = var
+      node.class_scope = !@typed_def
 
       var
     end
@@ -545,8 +590,18 @@ module Crystal
         else
           var.bind_to value
         end
+      when ClassVar
+        value.accept self
 
-        node.type_filters = and_type_filters({target.name => NotNilFilter}, node.value.type_filters) if node
+        var = lookup_class_var target, !!@typed_def
+        target.bind_to var
+
+        if node
+          node.bind_to value
+          var.bind_to node
+        else
+          var.bind_to value
+        end
       when Ident
         type = current_type.types[target.names.first]
         if type
@@ -559,7 +614,14 @@ module Crystal
       when Global
         value.accept self
 
-        var = mod.global_vars[target.name] ||= Var.new(target.name)
+        var = mod.global_vars[target.name]
+        unless var
+          var = Var.new(target.name)
+          if @typed_def
+            var.bind_to mod.nil_var
+          end
+          mod.global_vars[target.name] = var
+        end
 
         target.bind_to var
 
@@ -713,7 +775,7 @@ module Crystal
     def end_visit_yield(node)
       block = @call.block or node.raise "no block given"
 
-      if @yield_vars
+      if !node.scope && @yield_vars
         @yield_vars.each_with_index do |var, i|
           exp = node.exps[i]
           if exp
@@ -731,21 +793,7 @@ module Crystal
 
       unless block.visited
         @call.bubbling_exception do
-          block.accept @call.parent_visitor
-        end
-      end
-
-      node.bind_to block.body
-    end
-
-    def end_visit_yield_with_scope(node)
-      block = @call.block or node.raise "no block given"
-
-      bind_block_args_to_yield_exps block, node
-
-      unless block.visited
-        @call.bubbling_exception do
-          block.scope = node.scope.type
+          block.scope = node.scope.type if node.scope
           block.accept @call.parent_visitor
         end
       end
@@ -769,9 +817,13 @@ module Crystal
         block_vars[arg.name] = arg
       end
 
+      @type_filter_stack.push({})
+
       block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
       block_visitor.block = node
       node.body.accept block_visitor
+
+      @type_filter_stack.pop
 
       false
     end
@@ -785,7 +837,12 @@ module Crystal
 
     def visit_call(node)
       node.mod = mod
-      node.scope = @scope || (@types.last ? @types.last.metaclass : nil)
+
+      if node.global
+        node.scope = @mod
+      else
+        node.scope = @scope || (@types.last ? @types.last.metaclass : nil)
+      end
       node.parent_visitor = self
 
       if expand_macro(node)
@@ -889,6 +946,13 @@ module Crystal
       end
     end
 
+    def end_visit_responds_to(node)
+      node.type = mod.bool
+      if node.obj.is_a?(Var)
+        node.type_filters = {node.obj.name => RespondsToTypeFilter.new(node.name.value)}
+      end
+    end
+
     def end_visit_type_merge(node)
       node.bind_to *node.expressions
     end
@@ -909,6 +973,10 @@ module Crystal
         node.raise "can't malloc pointer without type, use Pointer(Type).malloc(size)"
       end
 
+      node.type = @scope.instance_type
+    end
+
+    def visit_pointer_new(node)
       node.type = @scope.instance_type
     end
 
@@ -946,8 +1014,44 @@ module Crystal
       end
     end
 
+    def visit_rescue(node)
+      if node.types
+        types = node.types.map do |type|
+          type.accept self
+          instance_type = type.type.instance_type
+          unless instance_type.is_subclass_of?(@mod.exception)
+            type.raise "#{type} is not a subclass of Exception"
+          end
+          instance_type
+        end
+      end
+
+      if node.name
+        var = lookup_var node.name
+
+        if types
+          unified_type = @mod.type_merge *types
+          unified_type = unified_type.hierarchy_type unless unified_type.is_a?(HierarchyType)
+        else
+          unified_type = @mod.exception.hierarchy_type
+        end
+        var.set_type(unified_type)
+        var.freeze_type = true
+
+        node.set_type(var.type)
+      end
+
+      node.body.accept self
+      false
+    end
+
     def end_visit_exception_handler(node)
-      node.bind_to node.body
+      if node.else
+        node.bind_to node.else
+      else
+        node.bind_to node.body
+      end
+
       if node.rescues
         node.rescues.each do |a_rescue|
           node.bind_to a_rescue.body

@@ -25,13 +25,13 @@ describe 'Type inference: is_a?' do
         include Bar
       end
 
-      a = Foo(Int).new
+      a = Foo(Int32).new || 1
       if a.is_a?(Bar)
         a
       end
       )
     mod, nodes = infer_type nodes
-    nodes.last.then.type.should eq(nodes[2].type)
+    nodes.last.then.type.should eq(mod.types["Foo"].instantiate([mod.int32]))
   end
 
   it "restricts type inside if scope 3" do
@@ -42,13 +42,13 @@ describe 'Type inference: is_a?' do
         end
       end
 
-      a = Foo.new(1)
+      a = Foo.new(1) || 1
       if a.is_a?(Foo)
         a
       end
       )
     mod, nodes = infer_type nodes
-    nodes.last.then.type.should eq(nodes[1].type)
+    nodes.last.then.type.should eq(mod.types["Foo"])
   end
 
   it "restricts other types inside if else" do
@@ -60,5 +60,33 @@ describe 'Type inference: is_a?' do
         a.ord
       end
       )) { int32 }
+  end
+
+  it "applies filter inside block" do
+    assert_type(%q(
+      lib C
+        fun exit : NoReturn
+      end
+
+      def foo
+        yield
+      end
+
+      foo do
+        a = 1
+        unless a.is_a?(Int32)
+          C.exit
+        end
+      end
+
+      x = 1
+
+      foo do
+        a = 'a' || 1
+        x = a
+      end
+
+      x
+      )) { union_of(char, int32) }
   end
 end

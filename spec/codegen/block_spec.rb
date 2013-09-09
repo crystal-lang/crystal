@@ -539,6 +539,8 @@ describe 'Code gen: block' do
 
   it "can use self inside a block called from dispatch" do
     run(%q(
+      require "nil"
+
       class Foo
         def do; yield; end
       end
@@ -555,7 +557,7 @@ describe 'Code gen: block' do
       end
 
       123.foo
-      $x
+      $x.to_i
     )).to_i.should eq(123)
   end
 
@@ -801,7 +803,7 @@ describe 'Code gen: block' do
 
   it "codegens block with union arg" do
     run(%q(
-      class Numeric
+      class Number
         def abs
           self
         end
@@ -853,6 +855,17 @@ describe 'Code gen: block' do
         x.bar
       end
       )).to_i.should eq(1)
+  end
+
+  it "codegens call with blocks of different type without args" do
+    run(%q(
+      def foo
+        yield
+      end
+
+      foo { 1.1 }
+      foo { 1 }
+    )).to_i.should eq(1)
   end
 
  end

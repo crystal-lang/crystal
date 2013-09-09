@@ -305,7 +305,7 @@ describe 'Type inference: class' do
       end
 
       Foo(Int).new.foo
-      )) { union_of(int32, char) }
+      )) { int32 }
   end
 
   it "types immutable class" do
@@ -346,5 +346,88 @@ describe 'Type inference: class' do
     ))
     mod, input = infer_type input
     input.last.type.immutable.should be_true
+  end
+
+  it "infers types of instance variables to nilable" do
+    input = parse(%q(
+      def bar
+      end
+
+      class Foo
+        def initialize
+          if true
+            @superclass = 1
+            bar
+          else
+            @depth = 0
+          end
+        end
+      end
+
+      f = Foo.new
+      ))
+    mod, input = infer_type input
+    mod.types["Foo"].instance_vars["@superclass"].type.should eq(mod.union_of(mod.nil, mod.int32))
+  end
+
+  it "allows defining classes inside modules or classes with ::" do
+    input = parse(%q(
+      class Foo
+      end
+
+      class Foo::Bar
+      end
+      ))
+    mod, input = infer_type input
+    mod.types["Foo"].types["Bar"].should be_a(NonGenericClassType)
+  end
+
+  it "doesn't lookup type in parents' containers, and lookups and in program" do
+    code = %q(
+      class Bar
+      end
+
+      module Mod
+        class Bar
+        end
+
+        class Foo
+          def self.foo(x : Bar)
+            1
+          end
+
+          def self.foo(x : ::Bar)
+            'a'
+          end
+        end
+      end
+      )
+
+    assert_type(%Q(
+      #{code}
+      Mod::Foo.foo(Mod::Bar.new)
+      )) { int32 }
+
+    assert_type(%Q(
+      #{code}
+      Mod::Foo.foo(Bar.new)
+      )) { char }
+  end
+
+  it "finds in global scope if includes module" do
+    assert_type(%q(
+      class Baz
+      end
+
+      module Foo
+        class Bar
+          include Foo
+
+          Baz
+        end
+      end
+
+      1
+    )) { int32 }
   end
 end

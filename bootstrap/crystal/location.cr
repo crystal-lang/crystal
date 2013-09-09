@@ -4,10 +4,7 @@ module Crystal
     property :column_number
     property :filename
 
-    def initialize(line_number, column_number, filename)
-      @line_number = line_number
-      @column_number = column_number
-      @filename = filename
+    def initialize(@line_number, @column_number, @filename)
     end
 
     def clone

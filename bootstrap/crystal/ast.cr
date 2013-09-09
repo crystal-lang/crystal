@@ -10,6 +10,30 @@ module Crystal
     def location=(location)
       @location = location.clone
     end
+
+    def clone
+      clone = clone_without_location
+      clone.location = location
+      clone
+    end
+
+    def nop?
+      false
+    end
+  end
+
+  class Nop < ASTNode
+    def nop?
+      true
+    end
+
+    def ==(other : Nop)
+      true
+    end
+
+    def clone_without_location
+      Nop.new
+    end
   end
 
   # A container for one or many expressions.
@@ -17,13 +41,13 @@ module Crystal
     property :expressions
 
     def self.from(obj : Nil)
-      nil
+      Nop.new
     end
 
     def self.from(obj : Array)
       case obj.length
       when 0
-        nil
+        Nop.new
       when 1
         obj.first
       else
@@ -35,8 +59,7 @@ module Crystal
       obj
     end
 
-    def initialize(expressions = [] of ASTNode)
-      @expressions = expressions
+    def initialize(@expressions = [] of ASTNode)
     end
 
     def ==(other : self)
@@ -54,6 +77,10 @@ module Crystal
     def accept_children(visitor)
       @expressions.each { |exp| exp.accept visitor }
     end
+
+    def clone_without_location
+      Expressions.new(@expressions.clone)
+    end
   end
 
   # The nil literal.
@@ -64,6 +91,10 @@ module Crystal
     def ==(other : self)
       true
     end
+
+    def clone_without_location
+      self
+    end
   end
 
   # A bool literal.
@@ -73,12 +104,15 @@ module Crystal
   class BoolLiteral < ASTNode
     property :value
 
-    def initialize(value)
-      @value = value
+    def initialize(@value)
     end
 
     def ==(other : self)
       other.value == value
+    end
+
+    def clone_without_location
+      BoolLiteral.new(@value)
     end
   end
 
@@ -89,14 +123,16 @@ module Crystal
     property :kind
     property :has_sign
 
-    def initialize(value, kind)
+    def initialize(@value, @kind)
       @has_sign = value[0] == '+' || value[0] == '-'
-      @value = value
-      @kind = kind
     end
 
     def ==(other : self)
       other.value.to_f64 == value.to_f64 && other.kind == kind
+    end
+
+    def clone_without_location
+      NumberLiteral.new(@value, @kind)
     end
   end
 
@@ -107,32 +143,37 @@ module Crystal
   class CharLiteral < ASTNode
     property :value
 
-    def initialize(value)
-      @value = value
+    def initialize(@value)
     end
 
     def ==(other : self)
       other.value == value
+    end
+
+    def clone_without_location
+      CharLiteral.new(@value)
     end
   end
 
   class StringLiteral < ASTNode
     property :value
 
-    def initialize(value)
-      @value = value
+    def initialize(@value)
     end
 
     def ==(other : self)
       other.value == value
+    end
+
+    def clone_without_location
+      StringLiteral.new(@value)
     end
   end
 
   class StringInterpolation < ASTNode
     property :expressions
 
-    def initialize(expressions)
-      @expressions = expressions
+    def initialize(@expressions)
     end
 
     def accept_children(visitor)
@@ -142,17 +183,24 @@ module Crystal
     def ==(other : self)
       other.expressions == expressions
     end
+
+    def clone_without_location
+      StringInterpolation.new(@expressions.clone)
+    end
   end
 
   class SymbolLiteral < ASTNode
     property :value
 
-    def initialize(value)
-      @value = value
+    def initialize(@value)
     end
 
     def ==(other : self)
       other.value == value
+    end
+
+    def clone_without_location
+      SymbolLiteral.new(@value)
     end
   end
 
@@ -164,9 +212,7 @@ module Crystal
     property :elements
     property :of
 
-    def initialize(elements = [] of ASTNode, of = nil)
-      @elements = elements
-      @of = of
+    def initialize(@elements = [] of ASTNode, @of = nil)
     end
 
     def accept_children(visitor)
@@ -177,6 +223,10 @@ module Crystal
     def ==(other : self)
       other.elements == elements && other.of == of
     end
+
+    def clone_without_location
+      ArrayLiteral.new(@elements.clone, @of.clone)
+    end
   end
 
   class HashLiteral < ASTNode
@@ -185,11 +235,7 @@ module Crystal
     property :of_key
     property :of_value
 
-    def initialize(keys = [] of ASTNode, values = [] of ASTNode, of_key = nil, of_value = nil)
-      @keys = keys
-      @values = values
-      @of_key = of_key
-      @of_value = of_value
+    def initialize(@keys = [] of ASTNode, @values = [] of ASTNode, @of_key = nil, @of_value = nil)
     end
 
     def accept_children(visitor)
@@ -202,6 +248,10 @@ module Crystal
     def ==(other : self)
       other.keys == keys && other.values == values && other.of_key == of_key && other.of_value == of_value
     end
+
+    def clone_without_location
+      HashLiteral.new(@keys.clone, @values.clone, @of_key.clone, @of_value.clone)
+    end
   end
 
   class RangeLiteral < ASTNode
@@ -209,14 +259,20 @@ module Crystal
     property :to
     property :exclusive
 
-    def initialize(from, to, exclusive)
-      @from = from
-      @to = to
-      @exclusive = exclusive
+    def initialize(@from, @to, @exclusive)
+    end
+
+    def accept_children(visitor)
+      @from.accept visitor
+      @to.accept visitor
     end
 
     def ==(other : self)
       other.from == from && other.to == to && other.exclusive == exclusive
+    end
+
+    def clone_without_location
+      RangeLiteral.new(@from.clone, @to.clone, @exclusive.clone)
     end
   end
 
@@ -229,6 +285,10 @@ module Crystal
 
     def ==(other : self)
       other.value == value
+    end
+
+    def clone_without_location
+      RegexpLiteral.new(@value)
     end
   end
 
@@ -255,26 +315,32 @@ module Crystal
     property :has_parenthesis
     property :name_length
 
-    def initialize(obj, name, args = [] of ASTNode, block = nil, name_column_number = nil, has_parenthesis = false)
-      @obj = obj
-      @name = name
-      @args = args
-      @block = block
-      @name_column_number = name_column_number
-      @has_parenthesis = has_parenthesis
+    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @name_column_number = nil, @has_parenthesis = false)
+    end
+
+    def accept_children(visitor)
+      @obj.accept visitor if @obj
+      @args.each { |arg| arg.accept visitor }
+      @block.accept visitor if @block
     end
 
     def ==(other : self)
       other.obj == obj && other.name == name && other.args == args && other.block == block
     end
 
-    # def name_column_number
-    #   @name_column_number || column_number
-    # end
+    def name_column_number
+      @name_column_number || column_number
+    end
 
-    # def name_length
-    #   @name_length ||= name.to_s.ends_with?('=') || name.to_s.ends_with?('@') ? name.length - 1 : name.length
-    # end
+    def name_length
+      @name_length ||= name.to_s.ends_with?('=') || name.to_s.ends_with?('@') ? name.length - 1 : name.length
+    end
+
+    def clone_without_location
+      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @name_column_number, @has_parenthesis)
+      clone.name_length = name_length
+      clone
+    end
   end
 
   # An if expression.
@@ -293,21 +359,25 @@ module Crystal
     property :cond
     property :then
     property :else
+    property :binary
 
-    def initialize(cond, a_then = nil, a_else = nil)
-      @cond = cond
+    def initialize(@cond, a_then = nil, a_else = nil)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
     end
 
     def accept_children(visitor)
       @cond.accept visitor
-      @then.accept visitor if @then
-      @else.accept visitor if @else
+      @then.accept visitor
+      @else.accept visitor
     end
 
     def ==(other : self)
       other.cond == cond && other.then == self.then && other.else == self.else
+    end
+
+    def clone_without_location
+      If.new(@cond.clone, @then.clone, @else.clone)
     end
   end
 
@@ -316,7 +386,7 @@ module Crystal
     property :then
     property :else
 
-    def initialize(cond, a_then = nil, a_else = nil)
+    def initialize(@cond, a_then = nil, a_else = nil)
       @cond = cond
       @then = Expressions.from a_then
       @else = Expressions.from a_else
@@ -324,12 +394,16 @@ module Crystal
 
     def accept_children(visitor)
       @cond.accept visitor
-      @then.accept visitor if @then
-      @else.accept visitor if @else
+      @then.accept visitor
+      @else.accept visitor
     end
 
     def ==(other : self)
       other.cond == cond && other.then == self.then && other.else == self.else
+    end
+
+    def clone_without_location
+      Unless.new(@cond.clone, @then.clone, @else.clone)
     end
   end
 
@@ -341,9 +415,7 @@ module Crystal
     property :target
     property :value
 
-    def initialize(target, value)
-      @target = target
-      @value = value
+    def initialize(@target, @value)
     end
 
     def accept_children(visitor)
@@ -353,6 +425,10 @@ module Crystal
 
     def ==(other : self)
       other.target == target && other.value == value
+    end
+
+    def clone_without_location
+      Assign.new(@target.clone, @value.clone)
     end
   end
 
@@ -364,9 +440,7 @@ module Crystal
     property :targets
     property :values
 
-    def initialize(targets, values)
-      @targets = targets
-      @values = values
+    def initialize(@targets, @values)
     end
 
     def accept_children(visitor)
@@ -377,6 +451,10 @@ module Crystal
     def ==(other : self)
       other.targets == targets && other.values == values
     end
+
+    def clone_without_location
+      MultiAssign.new(@targets.clone, @values.clone)
+    end
   end
 
   # A local variable or block argument.
@@ -385,14 +463,16 @@ module Crystal
     property :out
     property :type
 
-    def initialize(name : String, type = nil)
-      @name = name
-      @type = type
+    def initialize(@name, @type = nil)
       @out = false
     end
 
     def ==(other : self)
       other.name == name && other.type == type && other.out == out
+    end
+
+    def clone_without_location
+      Var.new(@name)
     end
   end
 
@@ -401,13 +481,16 @@ module Crystal
     property :name
     property :out
 
-    def initialize(name)
-      @name = name
+    def initialize(@name)
       @out = false
     end
 
     def ==(other : self)
       other.name == name && other.out == out
+    end
+
+    def clone_without_location
+      InstanceVar.new(@name)
     end
   end
 
@@ -415,31 +498,36 @@ module Crystal
   class Global < ASTNode
     property :name
 
-    def initialize(name)
-      @name = name
+    def initialize(@name)
     end
 
     def ==(other)
       other.is_a?(Global) && other.name == name
     end
+
+    def clone_without_location
+      Global.new(@name)
+    end
   end
 
-  class BinaryOp < ASTNode
+  abstract class BinaryOp < ASTNode
     property :left
     property :right
 
-    def initialize(left, right)
-      @left = left
-      @right = right
+    def initialize(@left, @right)
     end
 
     def accept_children(visitor)
-      left.accept visitor
-      right.accept visitor
+      @left.accept visitor
+      @right.accept visitor
     end
 
     def ==(other : self)
       other.left == left && other.right == right
+    end
+
+    def clone_without_location
+      self.class.new(@left.clone, @right.clone)
     end
   end
 
@@ -488,24 +576,23 @@ module Crystal
     property :instance_vars
     property :name_column_number
 
-    def initialize(name, args : Array(Arg), body = nil, receiver = nil, block_arg = nil, yields = -1)
-      @name = name
-      @args = args
+    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = -1)
       @body = Expressions.from body
-      @receiver = receiver
-      @block_arg = block_arg
-      @yields = yields
     end
 
     def accept_children(visitor)
       @receiver.accept visitor if @receiver
-      args.each { |arg| arg.accept visitor }
-      @body.accept visitor if @body
+      @args.each { |arg| arg.accept visitor }
+      @body.accept visitor
       @block_arg.accept visitor if @block_arg
     end
 
     def ==(other : self)
       other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
+    end
+
+    def clone_without_location
+      Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @yields)
     end
   end
 
@@ -518,32 +605,30 @@ module Crystal
     property :block_arg
     property :name_column_number
 
-    def initialize(name, args : Array(Arg), body = nil, receiver = nil, block_arg = nil, yields = -1)
-      @name = name
-      @args = args
+    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = -1)
       @body = Expressions.from body
-      @receiver = receiver
-      @block_arg = block_arg
-      @yields = yields
     end
 
     def accept_children(visitor)
       @receiver.accept visitor if @receiver
-      args.each { |arg| arg.accept visitor }
-      @body.accept visitor if @body
+      @args.each { |arg| arg.accept visitor }
+      @body.accept visitor
       @block_arg.accept visitor if @block_arg
     end
 
     def ==(other : self)
       other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
     end
+
+    def clone_without_location
+      Macro.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @yields)
+    end
   end
 
   class PointerOf < ASTNode
     property :var
 
-    def initialize(var)
-      @var = var
+    def initialize(@var)
     end
 
     def accept_children(visitor)
@@ -553,15 +638,17 @@ module Crystal
     def ==(other : self)
       other.var == var
     end
+
+    def clone_without_location
+      PointerOf.new(@var.clone)
+    end
   end
 
   class IsA < ASTNode
     property :obj
     property :const
 
-    def initialize(obj, const)
-      @obj = obj
-      @const = const
+    def initialize(@obj, @const)
     end
 
     def accept_children(visitor)
@@ -572,17 +659,24 @@ module Crystal
     def ==(other : self)
       other.obj == obj && other.const == const
     end
+
+    def clone_without_location
+      IsA.new(@obj.clone, @const.clone)
+    end
   end
 
   class Require < ASTNode
     property :string
 
-    def initialize(string)
-      @string = string
+    def initialize(@string)
     end
 
     def ==(other : self)
       other.string == string
+    end
+
+    def clone_without_location
+      Require.new(@string)
     end
   end
 
@@ -591,10 +685,7 @@ module Crystal
     property :whens
     property :else
 
-    def initialize(cond, whens, a_else = nil)
-      @cond = cond
-      @whens = whens
-      @else = a_else
+    def initialize(@cond, @whens, @else = nil)
     end
 
     def accept_children(visitor)
@@ -605,24 +696,31 @@ module Crystal
     def ==(other : self)
       other.cond == cond && other.whens == whens && other.else == @else
     end
+
+    def clone_without_location
+      Case.new(@cond.clone, @whens.clone, @else.clone)
+    end
   end
 
   class When < ASTNode
     property :conds
     property :body
 
-    def initialize(conds, body = nil)
-      @conds = conds
+    def initialize(@conds, body = nil)
       @body = Expressions.from body
     end
 
     def accept_children(visitor)
       @conds.each { |cond| cond.accept visitor }
-      @body.accept visitor if @body
+      @body.accept visitor
     end
 
     def ==(other : self)
       other.conds == conds && other.body == body
+    end
+
+    def clone_without_location
+      When.new(@conds.clone, @body.clone)
     end
   end
 
@@ -640,21 +738,21 @@ module Crystal
     property :abstract
     property :name_column_number
 
-    def initialize(name, body = nil, superclass = nil, type_vars = nil, is_abstract = false, name_column_number = nil)
-      @name = name
+    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @name_column_number = nil)
       @body = Expressions.from body
-      @superclass = superclass
-      @type_vars = type_vars
-      @abstract = is_abstract
-      @name_column_number = name_column_number
     end
 
     def accept_children(visitor)
-      @body.accept visitor if @body
+      @superclass.accept visitor if @superclass
+      @body.accept visitor
     end
 
     def ==(other : self)
       other.name == name && other.body == body && other.superclass == superclass && other.type_vars == type_vars && @abstract == other.abstract
+    end
+
+    def clone_without_location
+      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @name_column_number)
     end
   end
 
@@ -670,19 +768,20 @@ module Crystal
     property :type_vars
     property :name_column_number
 
-    def initialize(name, body = nil, type_vars = nil, name_column_number = nil)
-      @name = name
+    def initialize(@name, body = nil, @type_vars = nil, @name_column_number = nil)
       @body = Expressions.from body
-      @type_vars = type_vars
-      @name_column_number = name_column_number
     end
 
     def accept_children(visitor)
-      @body.accept visitor if @body
+      @body.accept visitor
     end
 
     def ==(other : self)
       other.name == name && other.body == body && other.type_vars == type_vars
+    end
+
+    def clone_without_location
+      ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_column_number)
     end
   end
 
@@ -697,35 +796,21 @@ module Crystal
     property :body
     property :run_once
 
-    def initialize(cond, body = nil, run_once = false)
-      @cond = cond
+    def initialize(@cond, body = nil, @run_once = false)
       @body = Expressions.from body
-      @run_once = run_once
     end
 
     def accept_children(visitor)
       @cond.accept visitor
-      @body.accept visitor if @body
+      @body.accept visitor
     end
 
     def ==(other : self)
       other.cond == cond && other.body == body && other.run_once == run_once
     end
-  end
 
-  class RangeLiteral < ASTNode
-    property :from
-    property :to
-    property :exclusive
-
-    def initialize(from, to, exclusive)
-      @from = from
-      @to = to
-      @exclusive = exclusive
-    end
-
-    def ==(other : self)
-      other.from == from && other.to == to && other.exclusive == exclusive
+    def clone_without_location
+      While.new(@cond.clone, @body.clone, @run_once)
     end
   end
 
@@ -737,13 +822,15 @@ module Crystal
     property :names
     property :global
 
-    def initialize(names, global = false)
-      @names = names
-      @global = global
+    def initialize(@names, @global = false)
     end
 
     def ==(other : self)
       other.names == names && other.global == global
+    end
+
+    def clone_without_location
+      Ident.new(@names.clone, @global)
     end
   end
 
@@ -751,9 +838,7 @@ module Crystal
     property :name
     property :type_vars
 
-    def initialize(name, type_vars)
-      @name = name
-      @type_vars = type_vars
+    def initialize(@name, @type_vars)
     end
 
     def accept_children(visitor)
@@ -764,6 +849,10 @@ module Crystal
     def ==(other : self)
       other.name == name && other.type_vars == type_vars
     end
+
+    def clone_without_location
+      NewGenericClass.new(@name.clone, @type_vars.clone)
+    end
   end
 
   class ExceptionHandler < ASTNode
@@ -772,15 +861,12 @@ module Crystal
     property :else
     property :ensure
 
-    def initialize(body = nil, rescues = nil, a_else = nil, a_ensure = nil)
+    def initialize(body = nil, @rescues = nil, @else = nil, @ensure = nil)
       @body = Expressions.from body
-      @rescues = rescues
-      @else = a_else
-      @ensure = a_ensure
     end
 
     def accept_children(visitor)
-      @body.accept visitor if @body
+      @body.accept visitor
       @rescues.each { |a_rescue| a_rescue.accept visitor } if @rescues
       @else.accept visitor if @else
       @ensure.accept visitor if @ensure
@@ -789,6 +875,10 @@ module Crystal
     def ==(other : self)
       other.body == body && other.rescues == rescues && other.else == @else && other.ensure == @ensure
     end
+
+    def clone_without_location
+      ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
+    end
   end
 
   class Rescue < ASTNode
@@ -796,27 +886,28 @@ module Crystal
     property :types
     property :name
 
-    def initialize(body = nil, types = nil, name = nil)
+    def initialize(body = nil, @types = nil, @name = nil)
       @body = Expressions.from body
-      @types = types
-      @name = name
     end
 
     def accept_children(visitor)
-      @body.accept visitor if @body
+      @body.accept visitor
       @types.each { |type| type.accept visitor } if @types
     end
 
     def ==(other : self)
       body == body && other.types == types && other.name == name
     end
+
+    def clone_without_location
+      Rescue.new(@body.clone, @types.clone, @name)
+    end
   end
 
   class IdentUnion < ASTNode
     property :idents
 
-    def initialize(idents)
-      @idents = idents
+    def initialize(@idents)
     end
 
     def ==(other : self)
@@ -825,6 +916,10 @@ module Crystal
 
     def accept_children(visitor)
       @idents.each { |ident| ident.accept visitor }
+    end
+
+    def clone_without_location
+      IdentUnion.new(@idents.clone)
     end
   end
 
@@ -835,10 +930,7 @@ module Crystal
     property :type_restriction
     property :out
 
-    def initialize(name, default_value = nil, type_restriction = nil)
-      @name = name.to_s
-      @default_value = default_value
-      @type_restriction = type_restriction
+    def initialize(@name, @default_value = nil, @type_restriction = nil)
       @out = false
     end
 
@@ -850,6 +942,10 @@ module Crystal
     def ==(other : self)
       other.name == name && other.default_value == default_value && other.type_restriction == type_restriction && other.out == out
     end
+
+    def clone_without_location
+      Arg.new(@name, @default_value.clone, @type_restriction.clone)
+    end
   end
 
   class BlockArg < ASTNode
@@ -857,10 +953,7 @@ module Crystal
     property :inputs
     property :output
 
-    def initialize(name, inputs = nil, output = nil)
-      @name = name
-      @inputs = inputs
-      @output = output
+    def initialize(@name, @inputs = nil, @output = nil)
     end
 
     def accept_children(visitor)
@@ -870,6 +963,10 @@ module Crystal
 
     def ==(other : self)
       other.name == name && other.inputs == inputs && other.output == output
+    end
+
+    def clone_without_location
+      BlockArg.new(@name, @inputs.clone, @output.clone)
     end
   end
 
@@ -885,18 +982,21 @@ module Crystal
     property :args
     property :body
 
-    def initialize(args = [] of ASTNode, body = nil)
-      @args = args
+    def initialize(@args = [] of ASTNode, body = nil)
       @body = Expressions.from body
     end
 
     def accept_children(visitor)
-      args.each { |arg| arg.accept visitor }
-      @body.accept visitor if @body
+      @args.each { |arg| arg.accept visitor }
+      @body.accept visitor
     end
 
     def ==(other : self)
       other.args == args && other.body == body
+    end
+
+    def clone_without_location
+      Block.new(@args.clone, @body.clone)
     end
   end
 
@@ -904,21 +1004,28 @@ module Crystal
     def ==(other : self)
       true
     end
+
+    def clone_without_location
+      SelfType.new
+    end
   end
 
-  class ControlExpression < ASTNode
+  abstract class ControlExpression < ASTNode
     property :exps
 
-    def initialize(exps = [] of ASTNode)
-      @exps = exps
+    def initialize(@exps = [] of ASTNode)
     end
 
     def accept_children(visitor)
-      exps.each { |e| e.accept visitor }
+      @exps.each { |e| e.accept visitor }
     end
 
     def ==(other : self)
       other.exps == exps
+    end
+
+    def clone_without_location
+      self.class.new(@exps.clone)
     end
   end
 
@@ -937,16 +1044,19 @@ module Crystal
   class Include < ASTNode
     property :name
 
-    def initialize(name)
-      @name = name
+    def initialize(@name)
     end
 
     def accept_children(visitor)
-      name.accept visitor
+      @name.accept visitor
     end
 
     def ==(other : self)
       other.name == name
+    end
+
+    def clone_without_location
+      Include.new(@name)
     end
   end
 
@@ -956,19 +1066,20 @@ module Crystal
     property :body
     property :name_column_number
 
-    def initialize(name, libname = nil, body = nil, name_column_number = nil)
-      @name = name
-      @libname = libname
+    def initialize(@name, @libname = nil, body = nil, @name_column_number = nil)
       @body = Expressions.from body
-      @name_column_number = name_column_number
     end
 
     def accept_children(visitor)
-      @body.accept visitor if @body
+      @body.accept visitor
     end
 
     def ==(other : self)
       other.name == name && other.libname == libname && other.body == body
+    end
+
+    def clone_without_location
+      LibDef.new(@name, @libname, @body.clone, @name_column_number)
     end
   end
 
@@ -980,22 +1091,20 @@ module Crystal
     property :varargs
     property :real_name
 
-    def initialize(name, args = [] of ASTNode, return_type = nil, pointer = 0, varargs = false, real_name = name)
-      @name = name
-      @real_name = real_name
-      @args = args
-      @return_type = return_type
-      @pointer = pointer
-      @varargs = varargs
+    def initialize(@name, @args = [] of ASTNode, @return_type = nil, @pointer = 0, @varargs = false, @real_name = name)
     end
 
     def accept_children(visitor)
-      args.each { |arg| arg.accept visitor }
+      @args.each { |arg| arg.accept visitor }
       @return_type.accept visitor if @return_type
     end
 
     def ==(other : self)
       other.name == name && other.args == args && other.return_type == return_type && other.pointer == pointer && other.real_name == real_name && other.varargs == varargs
+    end
+
+    def clone_without_location
+      FunDef.new(@name, @args.clone, @return_type.clone, @pointer, @varargs, @real_name)
     end
   end
 
@@ -1004,18 +1113,19 @@ module Crystal
     property :type_spec
     property :pointer
 
-    def initialize(name, type_spec, pointer = 0)
-      @name = name
-      @type_spec = type_spec
-      @pointer = pointer
+    def initialize(@name, @type_spec, @pointer = 0)
     end
 
     def accept_children(visitor)
-      type_spec.accept visitor
+      @type_spec.accept visitor
     end
 
     def ==(other : self)
       other.name == name && other.type_spec == type_spec && other.pointer == pointer
+    end
+
+    def clone_without_location
+      FunDefArg.new(@name, @type_spec.clone, @pointer)
     end
   end
 
@@ -1025,29 +1135,27 @@ module Crystal
     property :pointer
     property :name_column_number
 
-    def initialize(name, type_spec, pointer = 0, name_column_number = nil)
-      @name = name
-      @type_spec = type_spec
-      @pointer = pointer
-      @name_column_number = name_column_number
+    def initialize(@name, @type_spec, @pointer = 0, @name_column_number = nil)
     end
 
     def accept_children(visitor)
-      type_spec.accept visitor
+      @type_spec.accept visitor
     end
 
     def ==(other : self)
       other.name == name && other.type_spec == type_spec && other.pointer == pointer
     end
+
+    def clone_without_location
+      TypeDef.new(@name, @type_spec.clone, @pointer, @name_column_number)
+    end
   end
 
-  class StructOrUnionDef < ASTNode
+  abstract class StructOrUnionDef < ASTNode
     property :name
     property :fields
 
-    def initialize(name, fields = [] of FunDefArg)
-      @name = name
-      @fields = fields
+    def initialize(@name, @fields = [] of FunDefArg)
     end
 
     def accept_children(visitor)
@@ -1056,6 +1164,10 @@ module Crystal
 
     def ==(other : self)
       other.name == name && other.fields == fields
+    end
+
+    def clone_without_location
+      self.class.new(@name, @fields.clone)
     end
   end
 
@@ -1069,9 +1181,7 @@ module Crystal
     property :name
     property :constants
 
-    def initialize(name, constants)
-      @name = name
-      @constants = constants
+    def initialize(@name, @constants)
     end
 
     def accept_children(visitor)
@@ -1080,6 +1190,10 @@ module Crystal
 
     def ==(other : self)
       other.name == name && other.constants == constants
+    end
+
+    def clone_without_location
+      EnumDef.new(@name, @constants.clone)
     end
   end
 end

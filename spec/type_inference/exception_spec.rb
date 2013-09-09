@@ -32,9 +32,13 @@ describe 'Type inference: exception' do
   it "type for exception handler for explicit types" do
     assert_type(%(
       require "prelude"
+
+      class MyEx < Exception
+      end
+
       begin
-        raise "foo"
-      rescue String
+        raise MyEx.new
+      rescue MyEx
         1
       end
     )) { int32 }
@@ -56,12 +60,65 @@ describe 'Type inference: exception' do
     mod, type = assert_type(%Q(
       require "prelude"
       def foo
-        #{Program::RAISE_NAME}
+        #{Program::RAISE_NAME}(ABI::UnwindException.new)
       end
       foo
     )) { no_return }
     a_def = mod.lookup_first_def("foo", false)
     def_instance = mod.lookup_def_instance(a_def.object_id, [], nil)
     def_instance.raises.should be_true
+  end
+
+  it "types exception var with no types" do
+    assert_type(%Q(
+      a = nil
+      begin
+      rescue ex
+        a = ex
+      end
+      a
+    )) { union_of(self.nil, exception.hierarchy_type) }
+  end
+
+  it "types exception with type" do
+    assert_type(%Q(
+      class Ex < Exception
+      end
+
+      a = nil
+      begin
+      rescue ex : Ex
+        a = ex
+      end
+      a
+    )) { union_of(self.nil, types["Ex"].hierarchy_type) }
+  end
+
+  it "errors if exception var shadows local var" do
+    assert_syntax_error "ex = 1; begin; rescue ex; end", "exception variable 'ex' shadows local variable 'ex'"
+  end
+
+  it "errors if catched exception is not a subclass of Exception" do
+    assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
+  end
+
+  it "errors if catched exception is not a subclass of Exception without var" do
+    assert_error "begin; rescue Int32; end", "Int32 is not a subclass of Exception"
+  end
+
+  it "errors if exception varaible is used after rescue" do
+    assert_error "begin; rescue ex; end; ex", "undefined local variable or method 'ex'"
+  end
+
+  it "errors if catch-all rescue before specific rescue" do
+    assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex", "specific rescue must come before catch-all rescue"
+  end
+
+  it "errors if catch-all rescue specified twice" do
+    assert_syntax_error "begin; rescue ex; rescue; end; ex", "catch-all rescue can only be specified once"
+  end
+
+  it "errors if else without rescue" do
+    assert_syntax_error "begin; else; 1; end", "'else' is useless without 'rescue'"
   end
 end

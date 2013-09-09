@@ -1,5 +1,7 @@
 require "range"
 require "comparable"
+require "string/buffer"
+require "string/formatter"
 
 lib C
   fun atoi(str : Char*) : Int32
@@ -13,6 +15,7 @@ lib C
   fun strcmp(s1 : Char*, s2 : Char*) : Int32
   fun strncpy(s1 : Char*, s2 : Char*, n : Int32) : Char*
   fun sprintf(str : Char*, format : Char*, ...) : Int32
+  fun memcpy(dest : Void*, src : Void*, num : Int32) : Void*
 end
 
 class String
@@ -49,6 +52,12 @@ class String
     buffer[length] = '\0'
     str.as(Int32).value = length
     str.as(String)
+  end
+
+  def self.new_from_buffer(capacity = 16)
+    buffer = Buffer.new(capacity)
+    yield buffer
+    String.from_cstr(buffer.buffer, buffer.length)
   end
 
   def self.build
@@ -187,32 +196,16 @@ class String
   end
 
   def replace(&block : Char -> String)
-    chars = Array(Char).new(length + 5)
-
-    # This is to put the length
-    chars << '\0'
-    chars << '\0'
-    chars << '\0'
-    chars << '\0'
-
-    new_length = 0
-    each_char do |my_char|
-      replacement = yield my_char
-      if replacement
-        replacement.each_char do |other_char|
-          chars << other_char
+    String.new_from_buffer(length) do |buffer|
+      each_char do |my_char|
+        replacement = yield my_char
+        if replacement
+          buffer << replacement
+        else
+          buffer << my_char
         end
-        new_length += replacement.length
-      else
-        chars << my_char
-        new_length += 1
       end
     end
-    chars << '\0'
-
-    buffer = chars.buffer
-    buffer.as(Int32).value = new_length
-    buffer.as(String)
   end
 
   def replace(char : Char, replacement : String)
@@ -246,31 +239,37 @@ class String
 
   def =~(regex)
     match = regex.match(self)
-    if match
-      $~ = match
-      match.begin(0)
-    else
-      $~ = MatchData::EMPTY
-      nil
-    end
+    match ? match.begin(0) : nil
   end
 
   def +(other)
-    new_string_buffer = Pointer(Char).malloc(length + other.length + 1).as(Char)
-    C.strcpy(new_string_buffer, @c.ptr)
-    C.strcat(new_string_buffer, other)
-    String.from_cstr(new_string_buffer)
+    String.new_with_length(length + other.length) do |buffer|
+      buffer.memcpy(@c.ptr, length)
+      (buffer + length).memcpy(other.cstr, other.length)
+    end
   end
 
   def *(times : Int)
-    return "" if times <= 0
-    String.build do |str|
-      times.times { str << self }
+    return "" if times <= 0 || length == 0
+
+    total_length = length * times
+    String.new_with_length(total_length) do |buffer|
+      buffer.memcpy(@c.ptr, length)
+      n = length
+
+      while n <= total_length / 2
+        (buffer + n).memcpy(buffer, n)
+        n *= 2
+      end
+
+      (buffer + n).memcpy(buffer, total_length - n)
     end
   end
 
   def index(c : Char, offset = 0)
     offset += length if offset < 0
+    return -1 if offset < 0
+
     while offset < length
       return offset if cstr[offset] == c
       offset += 1
@@ -280,9 +279,35 @@ class String
 
   def index(c : String, offset = 0)
     offset += length if offset < 0
-    while offset < length
+    return -1 if offset < 0
+
+    end_length = length - c.length
+    while offset < end_length
       return offset if (cstr + offset).memcmp(c.cstr, c.length)
       offset += 1
+    end
+    -1
+  end
+
+  def rindex(c : Char, offset = length - 1)
+    offset += length if offset < 0
+    return -1 if offset < 0
+
+    while offset >= 0
+      return offset if cstr[offset] == c
+      offset -= 1
+    end
+    -1
+  end
+
+  def rindex(c : String, offset = length - c.length)
+    offset += length if offset < 0
+    return -1 if offset < 0
+
+    offset = length - c.length if offset > length - c.length
+    while offset >= 0
+      return offset if (cstr + offset).memcmp(c.cstr, c.length)
+      offset -= 1
     end
     -1
   end
@@ -341,6 +366,10 @@ class String
     ary
   end
 
+  def lines
+    split "\n"
+  end
+
   def length
     @length
   end
@@ -380,14 +409,32 @@ class String
     end
   end
 
-  def starts_with?(str)
+  def starts_with?(str : String)
     return false if str.length > length
     C.strncmp(cstr, str, str.length) == 0
   end
 
-  def ends_with?(str)
+  def starts_with?(char : Char)
+    @length > 0 && cstr[0] == char
+  end
+
+  def ends_with?(str : String)
     return false if str.length > length
     C.strncmp(cstr + length - str.length, str, str.length) == 0
+  end
+
+  def ends_with?(char : Char)
+    @length > 0 && cstr[@length - 1] == char
+  end
+
+  def %(args : Array)
+    String.new_from_buffer(length) do |buffer|
+      String::Formatter.new(self, args, buffer).format
+    end
+  end
+
+  def %(other)
+    self % [other]
   end
 
   def hash

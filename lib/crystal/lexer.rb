@@ -114,7 +114,7 @@ module Crystal
         @token.value = match[1 .. -2]
       elsif match = scan(/\%w\(/)
         @token.type = :STRING_ARRAY_START
-      elsif match = scan(%r(!=|!@\B|!|===|==|=~|=>|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|->|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&=|&&|&|\|\|=|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]|\[|\]))
+      elsif match = scan(%r(!=|!@\B|!|===|==|=~|=>|=|<<=|<<|<=>|<=|<|>>=|>>|>=|>|\+@|\+=|\+|-@|-=|->|-|\*=|\*\*=|\*\*|\*|/=|%=|&=|\|=|\^=|/|\(|\)|,|\.\.\.|\.\.|\.|&&=|&&|&|\|\|=|\|\||\||\{|\}|\?|::|:|%|\^|~@|~|\[\]\=|\[\]\?|\[\]|\[|\]))
         @token.type = match.to_sym
       elsif match = scan(/(abstract|def|do|elsif|else|end|if|true|false|class|module|include|while|nil|yield|return|unless|next|break|begin|lib|fun|type|struct|union|enum|macro|out|require|case|when|then|of|rescue|ensure)((\?|!)|\b)/)
         @token.type = :IDENT
@@ -133,6 +133,9 @@ module Crystal
         @token.value = @filename ? File.dirname(@filename) : '-'
       elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*((\?|!)|\b)/)
         @token.type = :IDENT
+        @token.value = match
+      elsif match = scan(/@@[a-zA-Z_][a-zA-Z_0-9]*\b/)
+        @token.type = :CLASS_VAR
         @token.value = match
       elsif match = scan(/@[a-zA-Z_][a-zA-Z_0-9]*\b/)
         @token.type = :INSTANCE_VAR
@@ -244,6 +247,9 @@ module Crystal
       elsif scan(/\\f/)
         @token.type = :STRING
         @token.value = "\f"
+      elsif match = scan(/\\(\d\d\d)/)
+        @token.type = :STRING
+        @token.value = match[2 .. -1].to_i(8).chr
       elsif scan(/\\0/)
         @token.type = :STRING
         @token.value = "\0"

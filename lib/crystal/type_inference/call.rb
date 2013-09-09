@@ -77,7 +77,7 @@ module Crystal
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 
       if matches.empty?
-        if def_name == 'new' && owner.metaclass? && owner.instance_type.class? && !owner.instance_type.pointer?
+        if def_name == 'new' && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.hierarchy?) && !owner.instance_type.pointer?
           new_matches = define_new owner, arg_types
           matches = new_matches unless new_matches.empty?
         else
@@ -109,7 +109,7 @@ module Crystal
 
       typed_defs = matches.map do |match|
         yield_vars = match_block_arg(match)
-        use_cache = !block || match.def.block_arg || match.def.yields == 0
+        use_cache = !block || match.def.block_arg
         block_type = block && block.body && match.def.block_arg ? block.body.type : nil
 
         typed_def = match.owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
@@ -128,16 +128,16 @@ module Crystal
       end
     end
 
-    def find_nil_source(node)
-      nil_trace = []
+    def find_owner_trace(node, owner)
+      owner_trace = []
 
       visited = Set.new
       visited.add node.object_id
       while node.dependencies
-        dependencies = node.dependencies.select { |dep| !dep.equal?(mod.nil_var) && dep.type && dep.type.includes_nil_type? && !visited.include?(dep.object_id) }
+        dependencies = node.dependencies.select { |dep| !dep.equal?(mod.nil_var) && dep.type && dep.type.includes_type?(owner) && !visited.include?(dep.object_id) }
         if dependencies.length > 0
           node = dependencies[0]
-          nil_trace << node if node && node.location
+          owner_trace << node if node && node.location
           visited.add node.object_id
           break unless node.dependencies
         else
@@ -145,7 +145,7 @@ module Crystal
         end
       end
 
-      NilMethodException.new(nil_trace)
+      MethodTraceException.new(owner, owner_trace)
     end
 
     def on_new_subclass
@@ -161,7 +161,9 @@ module Crystal
 
         if block_arg && block_arg.inputs
           yield_vars = block_arg.inputs.each_with_index.map do |input, i|
-            Var.new("var#{i}", lookup_node_type(ident_lookup, input))
+            type = lookup_node_type(ident_lookup, input)
+            type = type.hierarchy_type if type.class? && type.abstract
+            Var.new("var#{i}", type)
           end
           block.args.each_with_index do |arg, i|
             var = yield_vars[i]
@@ -252,8 +254,8 @@ module Crystal
 
     def raise_matches_not_found(owner, def_name, matches = nil)
       if owner.c_struct?
-        if def_name.end_with?('=')
-          def_name = def_name[0 .. -2]
+        if def_name.to_s.end_with?('=')
+          def_name = def_name.to_s[0 .. -2]
         end
 
         var = owner.vars[def_name]
@@ -266,16 +268,17 @@ module Crystal
 
       defs = owner.lookup_defs(def_name)
       if defs.empty?
-        if owner.nil_type?
-          nil_trace = find_nil_source(obj)
-        end
+        owner_trace = find_owner_trace(obj, owner) if obj && obj.type.is_a?(UnionType)
 
-        if obj
-          raise "undefined method '#{name}' for #{owner}", nil_trace
+        if obj || !owner.is_a?(Program)
+          error_msg = "undefined method '#{name}' for #{owner}"
+          similar_name = owner.lookup_similar_defs(def_name, self.args.length, !!block)
+          error_msg << " \033[1;33m(did you mean '#{similar_name}'?)\033[0m" if similar_name
+          raise error_msg, owner_trace
         elsif args.length > 0 || has_parenthesis
-          raise "undefined method '#{name}'", nil_trace
+          raise "undefined method '#{name}'", owner_trace
         else
-          raise "undefined local variable or method '#{name}'", nil_trace
+          raise "undefined local variable or method '#{name}'", owner_trace
         end
       end
 
@@ -329,7 +332,6 @@ module Crystal
     end
 
     def lookup_matches_in_super
-      parent = parent_visitor.owner.parents.first
       if args.empty? && !has_parenthesis
         self.args = parent_visitor.typed_def.args.map do |arg|
           var = Var.new(arg.name)
@@ -338,7 +340,13 @@ module Crystal
         end
       end
 
-      lookup_matches_in(parent, scope, parent_visitor.untyped_def.name)
+      # TODO: do this better
+      parents_length = parent_visitor.owner.parents.length
+      parent_visitor.owner.parents.each_with_index do |parent, i|
+        if i == parents_length - 1 || parent.lookup_first_def(parent_visitor.untyped_def.name, !!block)
+          return lookup_matches_in(parent, scope, parent_visitor.untyped_def.name)
+        end
+      end
     end
 
     def recalculate_lib_call
@@ -474,7 +482,7 @@ module Crystal
       args = {}
       args['self'] = Var.new('self', self_type) if self_type.is_a?(Type)
 
-      0.upto(self.args.length - 1).each do |index|
+      0.upto(self.args.length - 1) do |index|
         arg = typed_def.args[index]
         type = arg_types[args_start_index + index]
         var = Var.new(arg.name, type)
@@ -492,6 +500,11 @@ module Crystal
     end
 
     def define_new(scope, arg_types)
+      if scope.instance_type.hierarchy?
+        matches = define_new_recursive(scope.instance_type.base_type, arg_types)
+        return Matches.new(matches, scope)
+      end
+
       matches = scope.instance_type.lookup_matches('initialize', arg_types, !!block)
       if matches.empty?
         defs = scope.instance_type.lookup_defs('initialize')
@@ -562,6 +575,20 @@ module Crystal
         end
         Matches.new(ms, true)
       end
+    end
+
+    def define_new_recursive(owner, arg_types, matches = [])
+      unless owner.abstract
+        owner_matches = define_new(owner.metaclass, arg_types)
+        matches.concat owner_matches.matches
+      end
+
+      owner.subclasses.each do |subclass|
+        subclass_matches = define_new_recursive(subclass, arg_types)
+        matches.concat subclass_matches
+      end
+
+      matches
     end
 
     def define_method_missing(scope, name)

@@ -92,13 +92,26 @@ module Crystal
       super
 
       if node.target_defs
+        changed = false
+        allocated_defs = []
+
         node.target_defs.each do |target_def|
+          allocated = target_def.owner.allocated && target_def.args.all? { |arg| arg.type.allocated }
+          unless allocated
+            changed = true
+            next
+          end
+
+          allocated_defs << target_def
+
           next if @transformed[target_def.object_id]
 
           @transformed[target_def.object_id] = true
 
           if target_def.body
-            target_def.body = target_def.body.transform(self)
+            node.bubbling_exception do
+              target_def.body = target_def.body.transform(self)
+            end
 
             # If the body was completely removed, rebind to nil
             unless target_def.body
@@ -106,9 +119,33 @@ module Crystal
             end
           end
         end
+
+        if changed
+          node.unbind_from *node.target_defs
+          node.target_defs = allocated_defs
+          node.bind_to *allocated_defs
+        end
       end
 
+      check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
+
       node
+    end
+
+    def check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
+      if (node.name == :< || node.name == :<=) && node.obj.type.integer? && node.obj.type.unsigned?
+        arg = node.args[0]
+        if arg.is_a?(NumberLiteral) && arg.integer? && arg.value.to_i <= 0
+          node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"
+        end
+      end
+
+      if (node.name == :> || node.name == :>=) && node.obj.is_a?(NumberLiteral) && node.obj.integer? && node.obj.value.to_i <= 0
+        arg = node.args[0]
+        if arg.type.integer? && arg.type.unsigned?
+          node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"
+        end
+      end
     end
 
     def transform_if(node)
@@ -158,6 +195,29 @@ module Crystal
 
       if node.obj.type
         filtered_type = node.obj.type.filter_by(node.const.type.instance_type)
+
+        if node.obj.type.equal?(filtered_type)
+          return true_literal
+        end
+
+        unless filtered_type
+          return false_literal
+        end
+      end
+
+      node
+    end
+
+    def transform_responds_to(node)
+      super
+
+      if node.obj.type
+        filtered_type = node.obj.type.filter_by_responds_to(node.name.value)
+
+        if node.obj.type.equal?(filtered_type)
+          return true_literal
+        end
+
         unless filtered_type
           return false_literal
         end
@@ -170,6 +230,38 @@ module Crystal
       return node unless node.body
 
       node.body = node.body.transform(self)
+      node.external.body = node.external.body.transform(self) if node.external
+      node
+    end
+
+    def transform_exception_handler(node)
+      super
+
+      if node.body.no_returns?
+        node.else = nil
+      end
+
+      if node.rescues
+        new_rescues = []
+
+        node.rescues.each do |a_rescue|
+          if !a_rescue.type || a_rescue.type.allocated
+            new_rescues << a_rescue
+          end
+        end
+
+        if new_rescues.empty?
+          if node.ensure
+            node.rescues = nil
+          else
+            rebind_node node, node.body
+            return node.body
+          end
+        else
+          node.rescues = new_rescues
+        end
+      end
+
       node
     end
 
@@ -187,6 +279,14 @@ module Crystal
         false_literal = BoolLiteral.new(false)
         false_literal.set_type(@program.bool)
         false_literal
+      end
+    end
+
+    def true_literal
+      @true_literal ||= begin
+        true_literal = BoolLiteral.new(true)
+        true_literal.set_type(@program.bool)
+        true_literal
       end
     end
   end

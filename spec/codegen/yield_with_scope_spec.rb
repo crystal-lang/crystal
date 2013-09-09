@@ -53,4 +53,22 @@ describe 'Type inference: yield with scope' do
       Foo.new.test
     )).to_i.should eq(10)
   end
+
+  it "it invokes global method inside block of yield scope" do
+    run(%(
+      require "int"
+
+      def foo
+        -1.yield
+      end
+
+      def plus_two(x)
+        x + 2
+      end
+
+      foo do
+        plus_two abs
+      end
+    )).to_i.should eq(3)
+  end
 end

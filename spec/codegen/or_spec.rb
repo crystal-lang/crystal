@@ -30,7 +30,7 @@ describe 'Code gen: or' do
   end
 
   it "codegens or with primitive type other than bool with union" do
-    run("(1 || 1.5).to_f").to_f.should eq(1)
+    run("(1 || 1.5).to_f").to_f64.should eq(1)
   end
 
   it "codegens or with primitive type other than bool" do

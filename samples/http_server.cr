@@ -1,3 +1,4 @@
+#!/usr/bin/env bin/crystal -run
 require "socket"
 
 server = TCPServer.new(8080)

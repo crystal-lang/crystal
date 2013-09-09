@@ -40,10 +40,6 @@ class Char
     end
   end
 
-  def to_i
-    ord
-  end
-
   def hash
     to_i
   end

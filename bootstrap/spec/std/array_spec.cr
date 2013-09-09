@@ -34,6 +34,11 @@ describe "Array" do
     it "gets with start and count" do
       [1, 2, 3, 4, 5, 6][1, 3].should eq([2, 3, 4])
     end
+
+    it "gets nilable" do
+      [1, 2, 3][2]?.should eq(3)
+      [1, 2, 3][3]?.should be_nil
+    end
   end
 
   describe "[]=" do
@@ -123,9 +128,12 @@ describe "Array" do
     end
 
     it "deletes out of bounds" do
-      a = [1, 2, 3, 4]
-      a.delete_at(4).should be_nil
-      a.should eq([1, 2, 3, 4])
+      begin
+        a = [1, 2, 3, 4]
+        a.delete_at(4)
+        fail "Expected to raise Array::IndexOutOfBounds"
+      rescue Array::IndexOutOfBounds
+      end
     end
   end
 
@@ -270,5 +278,39 @@ describe "Array" do
       a.reverse!
       a.should eq([5, 4, 3, 2, 1])
     end
+  end
+
+  describe "uniq!" do
+    assert do
+      a = [1, 2, 2, 3, 1, 4, 5, 3]
+      a.uniq!
+      a.should eq([1, 2, 3, 4, 5])
+    end
+
+    assert do
+      a = [-1, 1, 0, 2, -2]
+      a.uniq! { |x| x.abs }
+      a.should eq([-1, 0, 2])
+    end
+
+    assert do
+      a = [1, 2, 3]
+      a.uniq! { true }
+      a.should eq([1])
+    end
+  end
+
+  it "raises if out of bounds" do
+    begin
+      [1, 2, 3][4]
+      fail "Expected [] to raise"
+    rescue Array::IndexOutOfBounds
+    end
+  end
+
+  it "has hash" do
+    a = [1, 2, [3]]
+    b = [1, 2, [3]]
+    a.hash.should eq(b.hash)
   end
 end
