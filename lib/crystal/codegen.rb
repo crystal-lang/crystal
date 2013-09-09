@@ -838,6 +838,7 @@ module Crystal
       unless var = @lib_vars[node.name]
         var = @llvm_mod.globals.add(llvm_type(node.type), node.name)
         var.linkage = :external
+        var.thread_local = true if RUBY_PLATFORM =~ /linux/
         @lib_vars[node.name] = var
       end
       var
