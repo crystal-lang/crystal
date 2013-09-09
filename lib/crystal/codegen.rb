@@ -378,6 +378,9 @@ module Crystal
           ptr: alloca(llvm_type(var.type), var.name.to_s),
           type: var.type
         }
+        if @debug
+          @builder.call dbg_declare, metadata(llvm_var[:ptr]), local_var_metadata(var)
+        end
         if var.type.is_a?(UnionType) && union_type_id = var.type.types.any?(&:nil_type?)
           in_alloca_block { assign_to_union(llvm_var[:ptr], var.type, @mod.nil, llvm_nil) }
         end

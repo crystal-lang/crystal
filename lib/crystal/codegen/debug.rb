@@ -104,6 +104,46 @@ module Crystal
       )
     end
 
+    def type_metadata(type)
+      @type_metadata ||= {}
+      @type_metadata[type] ||= begin
+        if type.integer?
+          base_type(type.name, type.bits, type.signed? ? 5 : 7)
+        elsif type == @mod.bool
+          base_type(type.name, 8, 2)
+        end
+      end
+    end
+
+    def base_type(name, bits, encoding)
+      metadata(
+            36 + LLVMDebugVersion,      # Tag = 36 (DW_TAG_base_type)
+            nil,                        # Source directory (including trailing slash) & file pair (may be null)
+            nil,                        # Reference to context
+            name,                       # Name (may be "" for anonymous types)
+            0,                          # Line number where defined (may be 0)
+            bits,                       # Size in bits
+            bits,                       # Alignment in bits
+            0,                          # Offset in bits
+            0,                          # Flags
+            encoding                    # DWARF type encoding
+          )
+    end
+
+    def local_var_metadata(var)
+      metadata(
+        256 + LLVMDebugVersion,      # Tag (see below)
+        @fun_metadatas[@fun],        # Context
+        var.name,                    # Name
+        nil,                         # Reference to file where defined
+        0,                           # 24 bit - Line number where defined
+                                     # 8 bit - Argument number. 1 indicates 1st argument.
+        type_metadata(var.type),     # Type descriptor
+        0,                           # flags
+        0                            # (optional) Reference to inline location
+      )
+    end
+
     def metadata *values
       values = values.map do |value|
         case value
@@ -117,6 +157,13 @@ module Crystal
       end
       pointers = LLVM::Support.allocate_pointers values
       LLVM::Value.from_ptr LLVM::C.md_node(pointers, values.length)
+    end
+
+    def dbg_declare
+      @dbg_declare ||= begin
+        metadata_type = metadata.type # HACK get metadata type from LLVM
+        llvm_mod.functions.add("llvm.dbg.declare", [metadata_type, metadata_type], LLVM.Void)
+      end
     end
   end
 end
