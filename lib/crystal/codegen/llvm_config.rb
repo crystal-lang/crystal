@@ -4,8 +4,8 @@ module Crystal
   class LLVMConfig
     def self.bin_dir
       @bin_dir ||= begin
-        bin_dir = `llvm-config --bindir` rescue nil
-        bin_dir ||= `llvm-config-3.3 --bindir` rescue nil
+        bin_dir = `llvm-config-3.3 --bindir` rescue nil
+        bin_dir ||= `llvm-config --bindir` rescue nil
         unless bin_dir
           raise "Couldn't determine llvm bin dir"
         end
