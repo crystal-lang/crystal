@@ -12,5 +12,21 @@ label = Tk::Label.new(win, "1")
 label.text = "Hello, World"
 label.pack
 
-win.main_loop
-C.getchar
+v = Tcl::StringObj.new
+puts v.value
+v.value = "FooBar"
+puts v.value
+
+var = Tcl::StringVar.new(win.interpreter)
+# puts var.value
+var.value = "FooBar2"
+puts var.value
+
+var2 = Tcl::StringVar.new(win.interpreter)
+# puts var2.value
+var2.value = "FooBar2!"
+puts var2.value
+puts var.value
+
+# win.main_loop
+# C.getchar
