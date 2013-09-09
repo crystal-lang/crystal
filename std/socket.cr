@@ -41,11 +41,11 @@ class TCPServer
     addr.addr = 0
     addr.port = C.htons(port)
     if C.bind(@sock, addr.ptr, 16) != 0
-      raise "Error binding socket"
+      raise Errno.new
     end
 
     if C.listen(@sock, 5) != 0
-      raise "Error listening socket"
+      raise Errno.new
     end
   end
 
