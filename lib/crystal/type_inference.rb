@@ -290,7 +290,7 @@ module Crystal
         node.raise "can only declare fun at lib or global scope or lib"
       end
 
-      node.args.each { |arg| arg.accept self }
+      node.args.each { |arg| arg.type.accept self }
       node.return_type.accept self if node.return_type
 
       args = node.args.map do |arg|
@@ -398,6 +398,17 @@ module Crystal
         end
         current_type.types[node.name] = CEnumType.new(current_type, node.name, node.constants)
       end
+    end
+
+    def visit_fun_def_arg(node)
+      node.type.accept self
+
+      var_type = check_primitive_like node.type
+      var_type = maybe_ptr_type(var_type, node.ptr)
+
+      current_type.add_var(node.name, var_type)
+
+      false
     end
 
     def maybe_ptr_type(type, ptr)

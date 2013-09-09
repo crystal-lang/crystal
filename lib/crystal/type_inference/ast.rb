@@ -32,12 +32,6 @@ module Crystal
   end
 
   class Arg
-    def self.new_with_type(name, type)
-      arg = Arg.new(name)
-      arg.type = type
-      arg
-    end
-
     def self.new_with_restriction(name, restriction)
       arg = Arg.new(name)
       arg.type_restriction = restriction

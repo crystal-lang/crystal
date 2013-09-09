@@ -331,6 +331,7 @@ describe Parser do
   it_parses "lib C; enum Foo; A = 1, B; end end", LibDef.new('C', nil, [EnumDef.new('Foo', [Arg.new('A', 1.int32), Arg.new('B')])])
   it_parses "lib C; Foo = 1; end", LibDef.new('C', nil, [Assign.new("Foo".ident, 1.int32)])
   it_parses "lib C\nfun getch = GetChar\nend", LibDef.new('C', nil, [FunDef.new('getch', [], nil, 0, false, nil, 'GetChar')])
+  it_parses "lib C\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("C", nil, [FunDefArg.new("errno", "Int32".ident), FunDefArg.new("errno2", "Int32".ident)])
 
   it_parses "fun foo(x : Int32) : Int64\nx\nend", FunDef.new("foo", [FunDefArg.new("x", "Int32".ident)], "Int64".ident, 0, false, "x".var)
 

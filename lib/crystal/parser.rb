@@ -1744,6 +1744,14 @@ module Crystal
           value = parse_expression
           skip_statement_end
           expressions << Assign.new(ident, value)
+        when :GLOBAL
+          name = @token.value.to_s[1 .. -1]
+          next_token_skip_space_or_newline
+          check :":"
+          next_token_skip_space_or_newline
+          ident = parse_ident(false)
+          skip_statement_end
+          expressions << FunDefArg.new(name, ident)
         else
           break
         end

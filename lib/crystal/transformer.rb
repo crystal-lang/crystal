@@ -406,6 +406,14 @@ module Crystal
       node
     end
 
+    def transform_lib_set(node)
+      node
+    end
+
+    def transform_lib_get(node)
+      node
+    end
+
     def transform_union_alloc(node)
       node
     end

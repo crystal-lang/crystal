@@ -451,6 +451,36 @@ module Crystal
     end
   end
 
+  class LibGet < Primitive
+    attr_reader :name
+    attr_reader :type
+
+    def initialize(name, type)
+      @name = name
+      @type = type
+    end
+
+    def clone_from(other)
+      @name = other.name
+      @type = other.type
+    end
+  end
+
+  class LibSet < Primitive
+    attr_reader :name
+    attr_reader :type
+
+    def initialize(name, type)
+      @name = name
+      @type = type
+    end
+
+    def clone_from(other)
+      @name = other.name
+      @type = other.type
+    end
+  end
+
   class UnionAlloc < Primitive
     attr_reader :type
 

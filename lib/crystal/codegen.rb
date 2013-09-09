@@ -93,6 +93,7 @@ module Crystal
 
       @strings = {}
       @symbols = {}
+      @lib_vars = {}
       symbol_table_values = []
       mod.symbols.to_a.sort.each_with_index do |sym, index|
         @symbols[sym] = index
@@ -820,6 +821,26 @@ module Crystal
       value = @last
       value = @builder.load @last if node.type.c_struct? || node.type.c_union?
       @builder.store value, ptr
+    end
+
+    def visit_lib_get(node)
+      var = declare_lib_var node
+      @last = @builder.load var
+    end
+
+    def visit_lib_set(node)
+      var = declare_lib_var node
+      @builder.store @fun.params[0], var
+      @last = @fun.params[0]
+    end
+
+    def declare_lib_var(node)
+      unless var = @lib_vars[node.name]
+        var = @llvm_mod.globals.add(llvm_type(node.type), node.name)
+        var.linkage = :external
+        @lib_vars[node.name] = var
+      end
+      var
     end
 
     def visit_union_alloc(node)

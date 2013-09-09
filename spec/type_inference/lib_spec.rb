@@ -72,4 +72,24 @@ describe 'Type inference: lib' do
       ),
       "fun redefinition with different signature"
   end
+
+  it "types lib var get" do
+    assert_type(%q(
+      lib C
+        $errno : Int32
+      end
+
+      C.errno
+      )) { int32 }
+  end
+
+  it "types lib var set" do
+    assert_type(%q(
+      lib C
+        $errno : Int32
+      end
+
+      C.errno = 1
+      )) { int32 }
+  end
 end
