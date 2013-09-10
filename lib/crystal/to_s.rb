@@ -277,6 +277,11 @@ module Crystal
       false
     end
 
+    def visit_fun_literal(node)
+      @str << "-> "
+      true
+    end
+
     def visit_def(node)
       @str << "def "
       if node.receiver

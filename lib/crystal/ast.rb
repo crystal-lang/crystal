@@ -1566,6 +1566,22 @@ module Crystal
     end
   end
 
+  class FunLiteral < ASTNode
+    attr_accessor :block
+
+    def initialize(block = Block.new)
+      @block = block
+    end
+
+    def accept_children(visitor)
+      @block.accept visitor
+    end
+
+    def ==(other)
+      other.is_a?(FunLiteral) && other.block == block
+    end
+end
+
   # Ficticious node that means: merge the type of the arguments
   class TypeMerge < ASTNode
     attr_accessor :expressions

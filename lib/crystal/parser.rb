@@ -562,6 +562,8 @@ module Crystal
         parse_hash_literal
       when :'::'
         parse_ident_or_global_call
+      when :'->'
+        parse_fun_literal
       when :NUMBER
         node_and_next_token NumberLiteral.new(@token.value, @token.number_kind)
       when :CHAR
@@ -676,6 +678,12 @@ module Crystal
       raise "unexpected token: (" if @token.type == :'('
 
       Expressions.from exps
+    end
+
+    def parse_fun_literal
+      next_token_skip_space_or_newline
+      block = parse_block
+      FunLiteral.new(block)
     end
 
     def parse_array_literal

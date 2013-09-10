@@ -423,6 +423,9 @@ describe Parser do
   it_parses "1 <= 2 <= 3", And.new(Call.new(1.int32, :"<=", [2.int32]), Call.new(2.int32, :"<=", [3.int32]))
   it_parses "1 == 2 == 3 == 4", And.new(And.new(Call.new(1.int32, :"==", [2.int32]), Call.new(2.int32, :"==", [3.int32])), Call.new(3.int32, :"==", [4.int32]))
 
+  it_parses "-> do end", FunLiteral.new
+  it_parses "-> { }", FunLiteral.new
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
