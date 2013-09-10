@@ -81,6 +81,11 @@ module Crystal
       @opt = LLVMConfig.bin("opt")
       @clang = LLVMConfig.bin("clang")
       unless File.exists?(@clang)
+        if RUBY_PLATFORM =~ /darwin/
+          puts "Could not find clang. Install clang 3.3: brew tap homebrew/versions; brew install llvm33 --with-clang"
+          exit 1
+        end
+
         @clang = `which gcc`.strip
         if @clang.empty?
           puts "Could not find a C compiler. Install clang (3.3) or gcc."
