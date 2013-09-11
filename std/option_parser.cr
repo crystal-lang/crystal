@@ -91,7 +91,7 @@ class OptionParser
 
   def flag_present?(flag)
     index = @args.index(flag)
-    if index != -1
+    if index
       @args.delete_at(index)
       true
     else
@@ -101,7 +101,7 @@ class OptionParser
 
   def flag_value(flag, raise_if_not_found = true)
     index = @args.index(flag)
-    if index != -1
+    if index
       begin
         @args.delete_at(index)
         @args.delete_at(index)
@@ -115,7 +115,7 @@ class OptionParser
 
   def inline_flag_value(flag, raise_if_not_found = true)
     index = @args.index { |arg| arg.starts_with?(flag) }
-    if index != -1
+    if index
       @args.delete_at(index)[2 .. -1]
     else
       raise MissingOption.new(flag) if raise_if_not_found

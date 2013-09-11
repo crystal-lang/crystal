@@ -104,13 +104,13 @@ describe "Array" do
     it "performs without a block" do
       a = [1, 2, 3]
       a.index(3).should eq(2)
-      a.index(4).should eq(-1)
+      a.index(4).should be_nil
     end
 
     it "performs with a block" do
       a = [1, 2, 3]
       a.index { |i| i > 1 }.should eq(1)
-      a.index { |i| i > 3 }.should eq(-1)
+      a.index { |i| i > 3 }.should be_nil
     end
   end
 

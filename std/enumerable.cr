@@ -99,7 +99,7 @@ module Enumerable(T)
     each_with_index do |e, i|
       return i if yield e
     end
-    -1
+    nil
   end
 
   def grep(pattern)
