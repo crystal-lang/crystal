@@ -38,6 +38,8 @@ module Crystal
                       llvm_type(type.typedef)
                     when HierarchyType
                       HIERARCHY_LLVM_TYPE
+                    when FunType
+                      LLVM::Function([], llvm_type(type.return_type)).pointer
                     else
                       raise "Unexepcted type #{type} in llvm_type"
                     end
