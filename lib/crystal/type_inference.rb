@@ -839,6 +839,13 @@ module Crystal
       false
     end
 
+    def visit_fun_literal(node)
+      node.block.accept self
+      node.type = mod.fun_of(node.block.body.type)
+
+      false
+    end
+
     def end_visit_simple_or(node)
       node.bind_to node.left
       node.bind_to node.right

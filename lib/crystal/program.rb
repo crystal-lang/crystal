@@ -16,6 +16,7 @@ module Crystal
       super(nil, 'main')
 
       @unions = {}
+      @funs = {}
       @macros_cache = {}
 
       object = @types["Object"] = NonGenericClassType.new self, "Object", nil
@@ -133,6 +134,11 @@ module Crystal
 
       types_ids = types.map(&:type_id)
       @unions[types_ids] ||= UnionType.new(*types)
+    end
+
+    def fun_of(*types)
+      type_ids = types.map(&:type_id)
+      @funs[type_ids] ||= FunType.new(*types)
     end
 
     def type_combine(*types)
