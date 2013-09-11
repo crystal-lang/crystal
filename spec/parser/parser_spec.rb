@@ -429,6 +429,11 @@ describe Parser do
   it_parses "->(x) { }", FunLiteral.new(Def.new("->", ["x".arg]))
   it_parses "->(x : Int32) { }", FunLiteral.new(Def.new("->", [Arg.new("x", nil, "Int32".ident)]))
 
+  it_parses "->foo", FunPointer.new(nil, "foo")
+  it_parses "->Foo.foo", FunPointer.new("Foo".ident, "foo")
+  it_parses "->Foo::Bar::Baz.foo", FunPointer.new(["Foo", "Bar", "Baz"].ident, "foo")
+  it_parses "->foo(Int32, Float64)", FunPointer.new(nil, "foo", ["Int32".ident, "Float64".ident])
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))

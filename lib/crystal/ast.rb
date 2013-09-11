@@ -1586,6 +1586,33 @@ module Crystal
     end
   end
 
+  class FunPointer < ASTNode
+    attr_accessor :obj
+    attr_accessor :name
+    attr_accessor :args
+
+    def initialize(obj, name, args = [])
+      @obj = obj
+      @name = name
+      @args = args
+    end
+
+    def accept_children(visitor)
+      @obj.accept visitor
+      @args.each { |arg| arg.accept visitor }
+    end
+
+    def ==(other)
+      other.is_a?(FunPointer) && other.obj == obj && other.name == name && other.args == args
+    end
+
+    def clone_from(other)
+      @obj = other.obj.clone
+      @name = other.name
+      @args = other.args.map(&:clone)
+    end
+  end
+
   # Ficticious node that means: merge the type of the arguments
   class TypeMerge < ASTNode
     attr_accessor :expressions

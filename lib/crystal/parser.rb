@@ -683,6 +683,19 @@ module Crystal
     def parse_fun_literal
       next_token_skip_space_or_newline
 
+      case @token.type
+      when :IDENT
+        unless @token.value == :do
+          return parse_fun_pointer
+        end
+      when :CONST
+        receiver = parse_ident
+        check :"."
+        next_token_skip_space
+        check :IDENT
+        return parse_fun_pointer receiver
+      end
+
       args = []
       if @token.type == :"("
         next_token_skip_space_or_newline
@@ -707,6 +720,19 @@ module Crystal
       next_token_skip_space
 
       FunLiteral.new(Def.new("->", args, body))
+    end
+
+    def parse_fun_pointer(receiver = nil)
+      obj = @token.value
+      next_token_skip_space
+
+      if @token.type == :"("
+        types = parse_types
+      else
+        types = []
+      end
+
+      return FunPointer.new(receiver, obj, types)
     end
 
     def parse_array_literal
@@ -931,33 +957,38 @@ module Crystal
       end
 
       if allow_type_vars && @token.type == :'('
-        next_token_skip_space_or_newline
-
-        type_vars = []
-        while true
-          type_vars.push parse_type_var
-
-          case @token.type
-          when :","
-            next_token_skip_space_or_newline
-          when :")"
-            break
-          else
-            raise "expecting ',' or ')'"
-          end
-        end
-
-        if type_vars.empty?
+        types = parse_types
+        if types.empty?
           raise "must specify at least one type var"
         end
 
-        next_token_skip_space
-
-        const = NewGenericClass.new const, type_vars
+        const = NewGenericClass.new const, types
         const.location = location
       end
 
       const
+    end
+
+    def parse_types
+      next_token_skip_space_or_newline
+
+      type_vars = []
+      while true
+        type_vars.push parse_type_var
+
+        case @token.type
+        when :","
+          next_token_skip_space_or_newline
+        when :")"
+          break
+        else
+          raise "expecting ',' or ')'"
+        end
+      end
+
+      next_token_skip_space
+
+      type_vars
     end
 
     def parse_type_var

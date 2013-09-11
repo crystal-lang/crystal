@@ -294,6 +294,25 @@ module Crystal
       false
     end
 
+    def visit_fun_pointer(node)
+      @str << "->"
+      if node.obj
+        node.obj.accept self
+        @str << "."
+      end
+      @str << node.name
+
+      if node.args.length > 0
+        @str << "("
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+        end
+        @str << ")"
+      end
+      false
+    end
+
     def visit_def(node)
       @str << "def "
       if node.receiver
