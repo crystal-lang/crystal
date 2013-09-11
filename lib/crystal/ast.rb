@@ -1580,7 +1580,11 @@ module Crystal
     def ==(other)
       other.is_a?(FunLiteral) && other.block == block
     end
-end
+
+    def clone_from(other)
+      @block = other.block.clone
+    end
+  end
 
   # Ficticious node that means: merge the type of the arguments
   class TypeMerge < ASTNode

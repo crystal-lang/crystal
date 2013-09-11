@@ -1778,6 +1778,10 @@ module Crystal
       types.last
     end
 
+    def program
+      return_type.program
+    end
+
     def to_s
       "-> #{types.last}"
     end
