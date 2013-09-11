@@ -833,7 +833,6 @@ module Crystal
       block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
       block_visitor.block = node
       node.body.accept block_visitor
-      node.bind_to node.body
 
       @type_filter_stack.pop
 
@@ -841,8 +840,9 @@ module Crystal
     end
 
     def visit_fun_literal(node)
-      node.block.accept self
-      node.type = mod.fun_of(node.block.body.type)
+      node.def.body.accept self
+      node.def.bind_to node.def.body
+      node.type = mod.fun_of(node.def.body.type)
 
       false
     end

@@ -230,7 +230,7 @@ module Crystal
     end
 
     def transform_fun_literal(node)
-      node.block.transform(self)
+      node.def.body = node.def.body.transform(self)
       node
     end
 

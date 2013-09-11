@@ -278,8 +278,20 @@ module Crystal
     end
 
     def visit_fun_literal(node)
-      @str << "-> "
-      true
+      @str << "->"
+      if node.def.args.length > 0
+        @str << "("
+        node.def.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+        end
+        @str << ")"
+      end
+      @str << " do\n"
+      accept_with_indent(node.def.body)
+      append_indent
+      @str << "end"
+      false
     end
 
     def visit_def(node)

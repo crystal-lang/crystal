@@ -212,7 +212,7 @@ module Crystal
     end
 
     def visit_fun_literal(node)
-      @last = codegen_fun("fun#{node.object_id}", node.block, nil)
+      @last = codegen_fun("fun#{node.object_id}", node.def, nil)
       false
     end
 

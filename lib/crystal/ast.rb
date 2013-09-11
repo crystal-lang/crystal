@@ -1567,22 +1567,22 @@ module Crystal
   end
 
   class FunLiteral < ASTNode
-    attr_accessor :block
+    attr_accessor :def
 
-    def initialize(block = Block.new)
-      @block = block
+    def initialize(a_def = Def.new("->", []))
+      @def = a_def
     end
 
     def accept_children(visitor)
-      @block.accept visitor
+      @def.accept visitor
     end
 
     def ==(other)
-      other.is_a?(FunLiteral) && other.block == block
+      other.is_a?(FunLiteral) && other.def == @def
     end
 
     def clone_from(other)
-      @block = other.block.clone
+      @def = other.def.clone
     end
   end
 

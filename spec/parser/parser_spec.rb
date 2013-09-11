@@ -425,6 +425,9 @@ describe Parser do
 
   it_parses "-> do end", FunLiteral.new
   it_parses "-> { }", FunLiteral.new
+  it_parses "->() { }", FunLiteral.new
+  it_parses "->(x) { }", FunLiteral.new(Def.new("->", ["x".arg]))
+  it_parses "->(x : Int32) { }", FunLiteral.new(Def.new("->", [Arg.new("x", nil, "Int32".ident)]))
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")

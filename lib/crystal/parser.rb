@@ -682,8 +682,31 @@ module Crystal
 
     def parse_fun_literal
       next_token_skip_space_or_newline
-      block = parse_block
-      FunLiteral.new(block)
+
+      args = []
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        while @token.type != :")"
+          parse_arg args, nil, true
+        end
+        next_token_skip_space_or_newline
+      end
+
+      if @token.keyword?(:do)
+        next_token_skip_statement_end
+        body = parse_expressions
+        check_ident :"end"
+      elsif @token.type == :"{"
+        next_token_skip_statement_end
+        body = parse_expressions
+        check :"}"
+      else
+        raise "unexpected token: #{@token}"
+      end
+
+      next_token_skip_space
+
+      FunLiteral.new(Def.new("->", args, body))
     end
 
     def parse_array_literal
@@ -1500,7 +1523,11 @@ module Crystal
         var.location = arg_location
         assign = Assign.new(ivar, var)
         assign.location = arg_location
-        ivar_assigns.push assign
+        if ivar_assigns
+          ivar_assigns.push assign
+        else
+          raise "can't use @instance_variable here"
+        end
         @instance_vars.add ivar.name if @instance_vars
       else
         raise "unexpected token: #{@token}"
