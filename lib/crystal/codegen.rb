@@ -217,7 +217,7 @@ module Crystal
     end
 
     def visit_fun_call(node)
-      @last = @builder.call @fun.params[0]
+      @last = @builder.call @fun.params[0], *@fun.params.to_a[1 .. -1]
     end
 
     def visit_class_method(node)

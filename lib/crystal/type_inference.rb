@@ -840,9 +840,26 @@ module Crystal
     end
 
     def visit_fun_literal(node)
-      node.def.body.accept self
+      fun_vars = {}
+      types = node.def.args.map do |arg|
+        unless arg.type_restriction
+          arg.raise "fun argument type required"
+        end
+
+        arg.type_restriction.accept self
+        arg.type = arg.type_restriction.type.instance_type
+        fun_vars[arg.name] = Var.new(arg.name, arg.type)
+        arg.type
+      end
+
+      block_visitor = TypeVisitor.new(mod, fun_vars)
+      node.def.body.accept block_visitor
+
       node.def.bind_to node.def.body
-      node.type = mod.fun_of(node.def.body.type)
+
+      types.push node.def.body.type
+
+      node.type = mod.fun_of(*types)
 
       false
     end

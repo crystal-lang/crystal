@@ -1767,7 +1767,12 @@ module Crystal
 
     def initialize(*types)
       @types = types
-      add_def Def.new("call", [], FunCall.new(return_type))
+      args = arg_types.each_with_index.map { |type, i| Arg.new_with_restriction("arg#{i}", type) }
+      add_def Def.new("call", args, FunCall.new(return_type))
+    end
+
+    def arg_types
+      types[0 .. -2]
     end
 
     def return_type
@@ -1783,7 +1788,7 @@ module Crystal
     end
 
     def to_s
-      "-> #{types.last}"
+      "#{arg_types.join ", "} -> #{types.last}"
     end
   end
 

@@ -39,7 +39,8 @@ module Crystal
                     when HierarchyType
                       HIERARCHY_LLVM_TYPE
                     when FunType
-                      LLVM::Function([], llvm_type(type.return_type)).pointer
+                      arg_types = type.arg_types.map { |arg_type| llvm_type(arg_type) }
+                      LLVM::Function(arg_types, llvm_type(type.return_type)).pointer
                     else
                       raise "Unexepcted type #{type} in llvm_type"
                     end
