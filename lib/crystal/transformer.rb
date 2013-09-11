@@ -446,5 +446,9 @@ module Crystal
     def transform_class_method(node)
       node
     end
+
+    def transform_fun_call(node)
+      node
+    end
   end
 end

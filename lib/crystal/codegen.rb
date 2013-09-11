@@ -216,6 +216,10 @@ module Crystal
       false
     end
 
+    def visit_fun_call(node)
+      @last = @builder.call @fun.params[0]
+    end
+
     def visit_class_method(node)
       if node.type.hierarchy_metaclass?
         type_ptr = union_type_id @fun.params[0]
@@ -958,9 +962,7 @@ module Crystal
 
       return if node.args.any?(&:yields?) && block_breaks?
 
-      if node.target_def.is_a?(FunCallDef)
-        @last = @builder.call call_args.first
-      elsif node.block
+      if node.block
         @block_context << { block: node.block, vars: @vars, type: @type,
           return_block: @return_block, return_block_table: @return_block_table,
           return_type: @return_type, return_union: @return_union }

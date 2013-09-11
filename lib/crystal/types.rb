@@ -1759,19 +1759,15 @@ module Crystal
     end
   end
 
-  class FunCallDef < Def
-    def initialize(owner)
-      super("call", [])
-      self.owner = owner
-      self.type = owner.return_type
-    end
-  end
-
   class FunType < Type
+    include DefContainer
+    include DefInstanceContainer
+
     attr_reader :types
 
     def initialize(*types)
       @types = types
+      add_def Def.new("call", [], FunCall.new(return_type))
     end
 
     def return_type
@@ -1782,26 +1778,12 @@ module Crystal
       return_type.program
     end
 
+    def parents
+      []
+    end
+
     def to_s
       "-> #{types.last}"
-    end
-
-    def call_def
-      @call_def ||= FunCallDef.new(self)
-    end
-
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      return Matches.new([], false) if name != "call"
-
-      match = Match.new
-      match.def = call_def
-      match.owner = owner
-
-      Matches.new([match], true, owner)
-    end
-
-    def lookup_def_instance(*)
-      call_def
     end
   end
 

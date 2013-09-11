@@ -517,6 +517,16 @@ module Crystal
     end
   end
 
+  class FunCall < Primitive
+    def initialize(type)
+      @type = type
+    end
+
+    def clone_from(other)
+      @type = other.type
+    end
+  end
+
   class ARGC < Primitive
     def initialize(type)
       @type = type
