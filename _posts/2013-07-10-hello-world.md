@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Hello World
+author: asterite, waj
 ---
 
 This is the simplest way to write the Hello World program in Crystal:

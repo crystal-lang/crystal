@@ -433,3 +433,7 @@ Small Device Styles
 #disqus_thread {
   margin-top: 20px;
 }
+
+.post p img {
+  width: auto;
+}

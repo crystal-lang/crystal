@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Happy birthday, Crystal!
+author: asterite
 ---
 
 Yesterday Crystal became one year old. Yay! :-)

@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Null Pointer Exception
+author: asterite
 ---
 
 Null pointer exceptions, also known as NPEs, are pretty common errors.
