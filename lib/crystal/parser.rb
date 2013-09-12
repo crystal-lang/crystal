@@ -683,17 +683,8 @@ module Crystal
     def parse_fun_literal
       next_token_skip_space_or_newline
 
-      case @token.type
-      when :IDENT
-        unless @token.value == :do
-          return parse_fun_pointer
-        end
-      when :CONST
-        receiver = parse_ident
-        check :"."
-        next_token_skip_space
-        check :IDENT
-        return parse_fun_pointer receiver
+      unless @token.type == :"{" || @token.type == :"(" || @token.keyword?(:do)
+        return parse_fun_pointer
       end
 
       args = []
@@ -722,17 +713,33 @@ module Crystal
       FunLiteral.new(Def.new("->", args, body))
     end
 
-    def parse_fun_pointer(receiver = nil)
-      obj = @token.value
-      next_token_skip_space
+    def parse_fun_pointer
+      location = @token.location
 
-      if @token.type == :"("
-        types = parse_types
-      else
+      atomic = parse_atomic_with_method
+
+      if atomic.is_a?(Var)
+        obj = nil
+        name = atomic.name
         types = []
+      elsif atomic.is_a?(Call)
+        obj = atomic.obj
+        name = atomic.name
+        if atomic.args.length == 0
+          types = []
+        else
+          types = atomic.args
+          types.each do |type|
+            unless is_type_like?(type)
+              type.raise "argument to function pointer must be a type, not #{type}", nil, Crystal::SyntaxException
+            end
+          end
+        end
+      else
+        raise "missing function pointer method", location[0], location[1]
       end
 
-      return FunPointer.new(receiver, obj, types)
+      return FunPointer.new(obj, name, types)
     end
 
     def parse_array_literal
@@ -2201,6 +2208,15 @@ module Crystal
             (node.obj.nil? && node.args.length == 0 && node.block.nil?) ||
               node.name == :"[]"
           )
+    end
+
+    def is_type_like?(node)
+      case node
+      when Ident, NewGenericClass, IdentUnion, FunTypeSpec
+        true
+      else
+        false
+      end
     end
   end
 

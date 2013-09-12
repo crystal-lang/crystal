@@ -441,6 +441,7 @@ describe Parser do
   it_parses "->Foo.foo", FunPointer.new("Foo".ident, "foo")
   it_parses "->Foo::Bar::Baz.foo", FunPointer.new(["Foo", "Bar", "Baz"].ident, "foo")
   it_parses "->foo(Int32, Float64)", FunPointer.new(nil, "foo", ["Int32".ident, "Float64".ident])
+  it_parses "->foo(1).bar", FunPointer.new(Call.new(nil, "foo", [1.int32]), "bar")
   it_parses "call ->foo", Call.new(nil, "call", [FunPointer.new(nil, "foo")])
 
   it "keeps instance variables declared in def" do

@@ -28,6 +28,10 @@ module Crystal
       @filename = filename
     end
 
+    def self.for_node(node, message, inner = nil)
+      new message, node.line_number, node.column_number, node.filename
+    end
+
     def to_s(source = nil)
       if @filename
         str = "Syntax error in #{@filename}:#{@line_number}: #{@message}"

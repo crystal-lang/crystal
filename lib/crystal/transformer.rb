@@ -245,6 +245,7 @@ module Crystal
     end
 
     def transform_fun_pointer(node)
+      node.obj = node.obj.transform(self) if node.obj
       node
     end
 

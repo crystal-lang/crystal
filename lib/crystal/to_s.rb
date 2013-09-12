@@ -300,7 +300,7 @@ module Crystal
         node.obj.accept self
         @str << "."
       end
-      @str << node.name
+      @str << node.name.to_s
 
       if node.args.length > 0
         @str << "("
