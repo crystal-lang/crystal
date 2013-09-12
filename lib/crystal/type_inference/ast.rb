@@ -117,4 +117,8 @@ module Crystal
   class While
     attr_accessor :has_breaks
   end
+
+  class FunPointer
+    attr_accessor :call
+  end
 end

@@ -216,6 +216,11 @@ module Crystal
       false
     end
 
+    def visit_fun_pointer(node)
+      @last = target_def_fun(node.call.target_def, nil)
+      false
+    end
+
     def visit_fun_call(node)
       @last = @builder.call @fun.params[0], *@fun.params.to_a[1 .. -1]
     end
@@ -1241,11 +1246,14 @@ module Crystal
       false
     end
 
+    def target_def_fun(target_def, self_type)
+      mangled_name = target_def.mangled_name(self_type)
+      @llvm_mod.functions[mangled_name] || codegen_fun(mangled_name, target_def, self_type)
+    end
+
     def codegen_call(node, self_type, call_args)
       target_def = node.target_def
-      mangled_name = target_def.mangled_name(self_type)
-
-      fun = @llvm_mod.functions[mangled_name] || codegen_fun(mangled_name, target_def, self_type)
+      fun = target_def_fun(target_def, self_type)
 
       # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call.
       has_struct_or_union_out_args = target_def.is_a?(External) && node.args.any? { |arg| arg.out? && arg.is_a?(Var) && (arg.type.c_struct? || arg.type.c_union?) }

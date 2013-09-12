@@ -874,6 +874,7 @@ module Crystal
       call.recalculate
 
       node.type = mod.fun_of(*arg_types, call.type)
+      node.call = call
     end
 
     def end_visit_simple_or(node)
