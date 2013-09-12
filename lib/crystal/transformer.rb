@@ -234,6 +234,10 @@ module Crystal
       node
     end
 
+    def transform_fun_pointer(node)
+      node
+    end
+
     def transform_return(node)
       transform_many node.exps
       node

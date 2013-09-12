@@ -20,4 +20,24 @@ describe 'Type inference: fun' do
   it "types int -> int fun call" do
     assert_type("f = ->(x : Int32) { x }; f.call(1)") { int32 }
   end
+
+  it "types fun pointer" do
+    assert_type("def foo; 1; end; ->foo") { fun_of(int32) }
+  end
+
+  it "types fun pointer with types" do
+    assert_type("def foo(x); x; end; ->foo(Int32)") { fun_of(int32, int32) }
+  end
+
+  pending "types fun pointer to instance method" do
+    assert_type(%(
+      class Foo
+        def coco
+          1
+        end
+      end
+
+      ->Foo.new.coco
+    )) { fun_of(int32) }
+  end
 end

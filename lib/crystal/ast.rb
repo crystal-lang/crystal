@@ -1598,7 +1598,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @obj.accept visitor
+      @obj.accept visitor if @obj
       @args.each { |arg| arg.accept visitor }
     end
 

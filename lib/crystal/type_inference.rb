@@ -864,6 +864,18 @@ module Crystal
       false
     end
 
+    def visit_fun_pointer(node)
+      node.obj.accept self if node.obj
+      call = Call.new(node.obj, node.name)
+      prepare_call(call)
+
+      arg_types = node.args.map { |arg| lookup_ident_type(arg) }
+      call.args = arg_types.map { |arg_type| Var.new(nil, arg_type) }
+      call.recalculate
+
+      node.type = mod.fun_of(*arg_types, call.type)
+    end
+
     def end_visit_simple_or(node)
       node.bind_to node.left
       node.bind_to node.right
@@ -871,7 +883,7 @@ module Crystal
       false
     end
 
-    def visit_call(node)
+    def prepare_call(node)
       node.mod = mod
 
       if node.global
@@ -880,6 +892,10 @@ module Crystal
         node.scope = @scope || (@types.last ? @types.last.metaclass : nil)
       end
       node.parent_visitor = self
+    end
+
+    def visit_call(node)
+      prepare_call(node)
 
       if expand_macro(node)
         return false
