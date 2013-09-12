@@ -159,8 +159,8 @@ module Crystal
       if (block_arg = match.def.block_arg) || match.def.yields == 0
         ident_lookup = IdentLookupVisitor.new(mod, match)
 
-        if block_arg && block_arg.inputs
-          yield_vars = block_arg.inputs.each_with_index.map do |input, i|
+        if block_arg && block_arg.type_spec.inputs
+          yield_vars = block_arg.type_spec.inputs.each_with_index.map do |input, i|
             type = lookup_node_type(ident_lookup, input)
             type = type.hierarchy_type if type.class? && type.abstract
             Var.new("var#{i}", type)
@@ -181,14 +181,14 @@ module Crystal
 
         block.accept parent_visitor
 
-        if block_arg && block_arg.output
+        if block_arg && block_arg.type_spec.output
           block_type = block.body ? block.body.type : mod.nil
-          matched = match.type_lookup.match_arg(block_type, block_arg.output, match.owner, match.owner, match.free_vars)
+          matched = match.type_lookup.match_arg(block_type, block_arg.type_spec.output, match.owner, match.owner, match.free_vars)
           unless matched
-            if block_arg.output.is_a?(SelfType)
+            if block_arg.type_spec.output.is_a?(SelfType)
               raise "block expected to return #{match.owner}, not #{block_type}"
             else
-              raise "block expected to return #{block_arg.output}, not #{block_type}"
+              raise "block expected to return #{block_arg.type_spec.output}, not #{block_type}"
             end
           end
           block.body.freeze_type = true if block.body

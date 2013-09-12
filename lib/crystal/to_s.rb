@@ -413,16 +413,20 @@ module Crystal
       @str << node.name
       if node.inputs || node.output
         @str << " : "
-        if node.inputs
-          node.inputs.each_with_index do |input, i|
-            @str << ", " if i > 0
-            input.accept self
-          end
-        end
-        @str << " -> "
-        node.output.accept self if node.output
+        node.type_spec.accept self
       end
       false
+    end
+
+    def visit_fun_type_spec(node)
+      if node.inputs
+        node.inputs.each_with_index do |input, i|
+          @str << ", " if i > 0
+          input.accept self
+        end
+      end
+      @str << " -> "
+      node.output.accept self if node.output
     end
 
     def visit_ident(node)

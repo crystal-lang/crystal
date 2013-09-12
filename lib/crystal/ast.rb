@@ -606,11 +606,32 @@ module Crystal
 
   class BlockArg < ASTNode
     attr_accessor :name
+    attr_accessor :type_spec
+
+    def initialize(name, type_spec = nil)
+      @name = name
+      @type_spec = type_spec
+    end
+
+    def accept_children(visitor)
+      @type_spec.accept visitor if @type_spec
+    end
+
+    def ==(other)
+      other.is_a?(BlockArg) && other.name == name && other.type_spec == type_spec
+    end
+
+    def clone_from(other)
+      @name = other.name
+      @type_spec = other.type_spec.clone
+    end
+  end
+
+  class FunTypeSpec < ASTNode
     attr_accessor :inputs
     attr_accessor :output
 
-    def initialize(name, inputs = nil, output = nil)
-      @name = name
+    def initialize(inputs = nil, output = nil)
       @inputs = inputs
       @output = output
     end
@@ -621,11 +642,10 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(BlockArg) && other.name == name && other.inputs == inputs && other.output == output
+      other.is_a?(FunTypeSpec) && other.inputs == inputs && other.output == output
     end
 
     def clone_from(other)
-      @name = other.name
       @inputs = other.inputs.map(&:clone) if other.inputs
       @output = other.output.clone
     end

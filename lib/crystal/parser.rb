@@ -1641,7 +1641,7 @@ module Crystal
               inputs << SelfType.instance
               next_token
             else
-              inputs << parse_ident
+              inputs << parse_type
             end
 
             skip_space_or_newline
@@ -1657,7 +1657,7 @@ module Crystal
         next_token_skip_space_or_newline
 
         if @token.type == :CONST
-          output = parse_ident
+          output = parse_type
           skip_space_or_newline
         elsif @token.keyword?('self')
           output = SelfType.instance
@@ -1665,7 +1665,11 @@ module Crystal
         end
       end
 
-      block_arg = BlockArg.new(name, inputs, output)
+      if inputs || output
+        fun_type_spec = FunTypeSpec.new(inputs, output)
+      end
+
+      block_arg = BlockArg.new(name, fun_type_spec)
       block_arg.location = name_location
       block_arg
     end

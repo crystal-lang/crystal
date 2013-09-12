@@ -141,6 +141,11 @@ module Crystal
     end
 
     def transform_block_arg(node)
+      node.type_spec = node.type_spec.transform(self) if node.type_spec
+      node
+    end
+
+    def transform_fun_type_spec(node)
       transform_many node.inputs
       node.output = node.output.transform(self) if node.output
       node
