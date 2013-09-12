@@ -551,7 +551,7 @@ module Crystal
         next_token_skip_space
         if @token.keyword?(:of)
           next_token_skip_space_or_newline
-          of = parse_type_var
+          of = parse_type
           ArrayLiteral.new([], of)
         else
           raise "for empty arrays use '[] of ElementType'", line, column
@@ -750,7 +750,7 @@ module Crystal
       of = nil
       if @token.keyword?(:of)
         next_token_skip_space_or_newline
-        of = parse_type_var
+        of = parse_type
       end
 
       Crystal::ArrayLiteral.new exps, of
@@ -785,10 +785,10 @@ module Crystal
       of_value = nil
       if @token.keyword?(:of)
         next_token_skip_space_or_newline
-        of_key = parse_type_var
+        of_key = parse_type
         check :"=>"
         next_token_skip_space_or_newline
-        of_value = parse_type_var
+        of_value = parse_type
       end
 
       if keys.length == 0 && !of_key
@@ -974,7 +974,7 @@ module Crystal
 
       type_vars = []
       while true
-        type_vars.push parse_type_var
+        type_vars.push parse_type
 
         case @token.type
         when :","
@@ -991,7 +991,7 @@ module Crystal
       type_vars
     end
 
-    def parse_type_var
+    def parse_type
       idents = []
       while true
         ident = parse_ident
@@ -999,9 +999,19 @@ module Crystal
 
         skip_space
 
-        if @token.type == :"?"
-          idents.push Ident.new(["Nil"], true)
-          next_token_skip_space_or_newline
+        while true
+          case @token.type
+          when :"?"
+            idents.push Ident.new(["Nil"], true)
+            next_token_skip_space_or_newline
+          when :"*"
+            last_ident = idents.pop
+            pointer = NewGenericClass.new(Ident.new(["Pointer"], true), [last_ident])
+            idents.push pointer
+            next_token_skip_space_or_newline
+          else
+            break
+          end
         end
 
         if @token.type == :"|"
@@ -1016,6 +1026,31 @@ module Crystal
       else
         IdentUnion.new idents
       end
+    end
+
+    def parse_type_vars
+      type_vars = nil
+      if @token.type == :'('
+        type_vars = []
+
+        next_token_skip_space_or_newline
+        while @token.type != :")"
+          check :CONST
+          type_vars.push @token.value
+
+          next_token_skip_space_or_newline
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+
+        if type_vars.empty?
+          raise "must specify at least one type var"
+        end
+
+        next_token_skip_space
+      end
+      type_vars
     end
 
     def parse_begin
@@ -1360,31 +1395,6 @@ module Crystal
       class_def
     end
 
-    def parse_type_vars
-      type_vars = nil
-      if @token.type == :'('
-        type_vars = []
-
-        next_token_skip_space_or_newline
-        while @token.type != :")"
-          check :CONST
-          type_vars.push @token.value
-
-          next_token_skip_space_or_newline
-          if @token.type == :","
-            next_token_skip_space_or_newline
-          end
-        end
-
-        if type_vars.empty?
-          raise "must specify at least one type var"
-        end
-
-        next_token_skip_space
-      end
-      type_vars
-    end
-
     def parse_module_def
       location = @token.location
 
@@ -1585,7 +1595,7 @@ module Crystal
           type_restriction = SelfType.instance
           next_token_skip_space
         else
-          type_restriction = parse_type_var
+          type_restriction = parse_type
         end
       end
 
