@@ -871,7 +871,12 @@ module Crystal
 
       arg_types = node.args.map { |arg| lookup_ident_type(arg) }
       call.args = arg_types.map { |arg_type| Var.new(nil, arg_type) }
-      call.recalculate
+
+      begin
+        call.recalculate
+      rescue Crystal::Exception => ex
+        node.raise "error instantiating #{node}", ex
+      end
 
       node.type = mod.fun_of(*arg_types, call.type)
       node.call = call
