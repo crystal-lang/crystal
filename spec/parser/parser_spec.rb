@@ -125,6 +125,8 @@ describe Parser do
   it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(['Int'.ident, 'Nil'.ident(true)]))], nil)
   it_parses "def foo(var : Int*); end", Def.new("foo", [Arg.new("var", nil, "Int".ident.pointer_of)], nil)
   it_parses "def foo(var : Int**); end", Def.new("foo", [Arg.new("var", nil, "Int".ident.pointer_of.pointer_of)], nil)
+  it_parses "def foo(var : Int -> Double); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident], "Double".ident))], nil)
+  it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident], "Double".ident))], nil), focus: true
   it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".ident)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, nil, 0)
   it_parses "def foo; yield 1; end", Def.new("foo", [], [Yield.new([1.int32])], nil, nil, 1)
@@ -320,13 +322,16 @@ describe Parser do
   it_parses "lib C; fun foo(a : Int**); end", LibDef.new('C', nil, [FunDef.new('foo', [Arg.new('a', nil, 'Int'.ident.pointer_of.pointer_of)])])
   it_parses "lib C; fun foo : Int*; end", LibDef.new('C', nil, [FunDef.new('foo', [], 'Int'.ident.pointer_of)])
   it_parses "lib C; fun foo : Int**; end", LibDef.new('C', nil, [FunDef.new('foo', [], 'Int'.ident.pointer_of.pointer_of)])
+  it_parses "lib C; fun foo : B, C -> D; end", LibDef.new('C', nil, [FunDef.new('foo', [], FunTypeSpec.new(["B".ident, "C".ident], "D".ident))])
   it_parses "lib C; type A : B; end", LibDef.new('C', nil, [TypeDef.new('A', 'B'.ident)])
   it_parses "lib C; type A : B*; end", LibDef.new('C', nil, [TypeDef.new('A', 'B'.ident.pointer_of)])
   it_parses "lib C; type A : B**; end", LibDef.new('C', nil, [TypeDef.new('A', 'B'.ident.pointer_of.pointer_of)])
+  it_parses "lib C; type A : B, C -> D; end", LibDef.new('C', nil, [TypeDef.new('A', FunTypeSpec.new(["B".ident, "C".ident], "D".ident))])
   it_parses "lib C; struct Foo; end end", LibDef.new('C', nil, [StructDef.new('Foo')])
   it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new('C', nil, [StructDef.new('Foo', [Arg.new('x', nil, 'Int'.ident), Arg.new('y', nil, 'Float'.ident)])])
   it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new('C', nil, [StructDef.new('Foo', [Arg.new('x', nil, 'Int'.ident.pointer_of)])])
   it_parses "lib C; struct Foo; x : Int**; end end", LibDef.new('C', nil, [StructDef.new('Foo', [Arg.new('x', nil, 'Int'.ident.pointer_of.pointer_of)])])
+  it_parses "lib C; struct Foo; x : B, C -> D; end; end", LibDef.new('C', nil, [StructDef.new('Foo', [Arg.new('x', nil, FunTypeSpec.new(["B".ident, "C".ident], "D".ident))])])
   it_parses "lib C; struct Foo; x, y, z : Int; end end", LibDef.new('C', nil, [StructDef.new('Foo', [Arg.new('x', nil, 'Int'.ident), Arg.new('y', nil, 'Int'.ident), Arg.new('z', nil, 'Int'.ident)])])
   it_parses "lib C; union Foo; end end", LibDef.new('C', nil, [UnionDef.new('Foo')])
   it_parses "lib C; enum Foo; A\nB, C\nD = 1; end end", LibDef.new('C', nil, [EnumDef.new('Foo', [Arg.new('A'), Arg.new('B'), Arg.new('C'), Arg.new('D', 1.int32)])])
@@ -334,6 +339,7 @@ describe Parser do
   it_parses "lib C; Foo = 1; end", LibDef.new('C', nil, [Assign.new("Foo".ident, 1.int32)])
   it_parses "lib C\nfun getch = GetChar\nend", LibDef.new('C', nil, [FunDef.new('getch', [], nil, false, nil, 'GetChar')])
   it_parses "lib C\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("C", nil, [ExternalVar.new("errno", "Int32".ident), ExternalVar.new("errno2", "Int32".ident)])
+  it_parses "lib C\n$errno : B, C -> D\nend", LibDef.new("C", nil, [ExternalVar.new("errno", FunTypeSpec.new(["B".ident, "C".ident], "D".ident))])
 
   it_parses "fun foo(x : Int32) : Int64\nx\nend", FunDef.new("foo", [Arg.new("x", nil, "Int32".ident)], "Int64".ident, false, "x".var)
 
@@ -435,6 +441,7 @@ describe Parser do
   it_parses "->Foo.foo", FunPointer.new("Foo".ident, "foo")
   it_parses "->Foo::Bar::Baz.foo", FunPointer.new(["Foo", "Bar", "Baz"].ident, "foo")
   it_parses "->foo(Int32, Float64)", FunPointer.new(nil, "foo", ["Int32".ident, "Float64".ident])
+  it_parses "call ->foo", Call.new(nil, "call", [FunPointer.new(nil, "foo")])
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")

@@ -991,34 +991,40 @@ module Crystal
       type_vars
     end
 
-    def parse_type
-      idents = []
+    def parse_type(allow_commas = false)
+      types = []
+
       while true
-        ident = parse_ident
-        idents.push ident
+        location = @token.location
 
-        skip_space
+        if @token.type == :"->"
+          type = nil
+        else
+          type = parse_type_with_suffix
 
-        while true
-          case @token.type
-          when :"?"
-            idents.push Ident.new(["Nil"], true)
-            next_token_skip_space_or_newline
-          when :"*"
-            last_ident = idents.pop
-            pointer = make_pointer_type(last_ident)
-            idents.push pointer
-            next_token_skip_space_or_newline
-          when :"**"
-            last_ident = idents.pop
-            pointer = make_pointer_type(last_ident)
-            pointer = make_pointer_type(pointer)
-            idents.push pointer
-            next_token_skip_space_or_newline
+          if allow_commas && @token.type == :","
+            input_types = [type]
+            while @token.type == :","
+              next_token_skip_space_or_newline
+              input_types << parse_type_with_suffix
+            end
           else
-            break
+            input_types = nil
           end
         end
+
+        if @token.type == :"->"
+          next_token_skip_space_or_newline
+          if @token.type == :"," || @token.type == :")"
+            return_type = nil
+          else
+            return_type = parse_type_with_suffix
+          end
+          type = FunTypeSpec.new((input_types || (type ? [type] : nil)), return_type)
+          type.location = location
+        end
+
+        types.push type
 
         if @token.type == :"|"
           next_token_skip_space_or_newline
@@ -1027,11 +1033,49 @@ module Crystal
         end
       end
 
-      if idents.length == 1
-        idents[0]
+      if types.length == 1
+        types[0]
       else
-        IdentUnion.new idents
+        IdentUnion.new types
       end
+    end
+
+    def parse_type_with_suffix
+      if @token.keyword?("self")
+        type = SelfType.instance
+        next_token_skip_space
+        return type
+      end
+
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        type = parse_type(true)
+        check :")"
+        next_token_skip_space
+        return type
+      end
+
+      type = parse_ident
+
+      skip_space
+
+      while true
+        case @token.type
+        when :"?"
+          type = IdentUnion.new [type, Ident.new(["Nil"], true)]
+          next_token_skip_space_or_newline
+        when :"*"
+          type = make_pointer_type(type)
+          next_token_skip_space_or_newline
+        when :"**"
+          type = make_pointer_type(make_pointer_type(type))
+          next_token_skip_space_or_newline
+        else
+          break
+        end
+      end
+
+      type
     end
 
     def make_pointer_type(node)
@@ -1324,7 +1368,7 @@ module Crystal
 
     def parse_call_args_space_consumed(check_plus_and_minus = true)
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-'
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-', :"->"
         if @token.type == :+ || @token.type == :- && check_plus_and_minus
           ord = string[pos].ord
           return nil if ord == 9 || ord == 10 || ord == 13 || ord == 32 # return nil if ord is whitespace
@@ -1634,42 +1678,15 @@ module Crystal
       if @token.type == :":"
         next_token_skip_space_or_newline
 
-        if @token.type == :CONST || @token.keyword?('self')
-          inputs = []
-          while true
-            if @token.keyword?('self')
-              inputs << SelfType.instance
-              next_token
-            else
-              inputs << parse_type
-            end
+        location = @token.location
 
-            skip_space_or_newline
-            if @token.type == :"->"
-              break
-            end
-            check :","
-            next_token_skip_space
-          end
-        end
-
-        check :"->"
-        next_token_skip_space_or_newline
-
-        if @token.type == :CONST
-          output = parse_type
-          skip_space_or_newline
-        elsif @token.keyword?('self')
-          output = SelfType.instance
-          next_token_skip_space_or_newline
+        type_spec = parse_type(true)
+        unless type_spec.is_a?(FunTypeSpec)
+          raise "expected block argument type to be a function", location[0], location[1]
         end
       end
 
-      if inputs || output
-        fun_type_spec = FunTypeSpec.new(inputs, output)
-      end
-
-      block_arg = BlockArg.new(name, fun_type_spec)
+      block_arg = BlockArg.new(name, type_spec)
       block_arg.location = name_location
       block_arg
     end
@@ -1839,9 +1856,9 @@ module Crystal
           next_token_skip_space_or_newline
           check :":"
           next_token_skip_space_or_newline
-          ident = parse_ident(false)
+          type = parse_type(true)
           skip_statement_end
-          expressions << ExternalVar.new(name, ident)
+          expressions << ExternalVar.new(name, type)
         else
           break
         end
@@ -1909,7 +1926,7 @@ module Crystal
       if @token.type == :':'
         next_token_skip_space_or_newline
 
-        return_type = parse_type
+        return_type = parse_type(true)
       end
 
       skip_statement_end
@@ -1943,7 +1960,7 @@ module Crystal
       check :':'
       next_token_skip_space_or_newline
 
-      type = parse_type
+      type = parse_type(true)
 
       skip_statement_end
 
@@ -1990,7 +2007,7 @@ module Crystal
             check :':'
             next_token_skip_space_or_newline
 
-            type = parse_type
+            type = parse_type(true)
 
             skip_statement_end
 

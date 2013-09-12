@@ -77,6 +77,14 @@ module Crystal
       false
     end
 
+    def fun_type?
+      false
+    end
+
+    def type_def_type?
+      false
+    end
+
     def passed_as_self?
       true
     end
@@ -1355,6 +1363,10 @@ module Crystal
       true
     end
 
+    def type_def_type?
+      true
+    end
+
     def type_desc
       "type def"
     end
@@ -1789,6 +1801,18 @@ module Crystal
 
     def parents
       []
+    end
+
+    def primitive_like?
+      types.all?(&:primitive_like?)
+    end
+
+    def fun_type?
+      true
+    end
+
+    def llvm_size
+      Crystal::Program::POINTER_SIZE
     end
 
     def to_s

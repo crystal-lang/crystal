@@ -415,7 +415,13 @@ module Crystal
         msg << " (did you mean Float32?)" if type.equal?(@mod.types["Float"])
         node.raise msg
       end
-      type = @mod.int32 if type.c_enum?
+
+      if type.c_enum?
+        type = @mod.int32
+      elsif type.type_def_type? && type.typedef.fun_type?
+        type = type.typedef
+      end
+
       type
     end
 
@@ -868,6 +874,22 @@ module Crystal
 
       node.type = mod.fun_of(*arg_types, call.type)
       node.call = call
+    end
+
+    def end_visit_fun_type_spec(node)
+      if node.inputs
+        types = node.inputs.map { |input| input.type.instance_type }
+      else
+        types = []
+      end
+
+      if node.output
+        types << node.output.type.instance_type
+      else
+        types << mod.void
+      end
+
+      node.type = mod.fun_of(*types)
     end
 
     def end_visit_simple_or(node)

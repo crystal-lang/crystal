@@ -411,7 +411,7 @@ module Crystal
 
     def visit_block_arg(node)
       @str << node.name
-      if node.inputs || node.output
+      if node.type_spec
         @str << " : "
         node.type_spec.accept self
       end

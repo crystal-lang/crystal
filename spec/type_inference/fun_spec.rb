@@ -40,4 +40,20 @@ describe 'Type inference: fun' do
       ->Foo.new.coco
     )) { fun_of(int32) }
   end
+
+  it "types fun type spec" do
+    assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(fun_of(int32, int64)) }
+  end
+
+  it "allows passing fun type if it is typedefed" do
+    assert_type(%q(
+      lib C
+        type Callback : Int32 -> Int32
+        fun foo(x : Callback) : Float64
+      end
+
+      f = ->(x : Int32) { x + 1 }
+      C.foo f
+      )) { float64 }
+  end
 end
