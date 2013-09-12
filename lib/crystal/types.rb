@@ -1785,6 +1785,7 @@ module Crystal
       @types = types
       args = arg_types.each_with_index.map { |type, i| Arg.new_with_restriction("arg#{i}", type) }
       add_def Def.new("call", args, FunCall.new(return_type))
+      add_def Def.new("arity", [], NumberLiteral.new(types.length - 1, :i32))
     end
 
     def arg_types
