@@ -218,4 +218,8 @@ class Crystal::ASTNode
   def not
     Call.new(self, :"!@")
   end
+
+  def pointer_of
+    NewGenericClass.new(Ident.new(["Pointer"], true), [self])
+  end
 end

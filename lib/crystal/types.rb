@@ -1051,6 +1051,10 @@ module Crystal
       true
     end
 
+    def primitive_like?
+      var.type.primitive_like?
+    end
+
     def llvm_size
       Crystal::Program::POINTER_SIZE
     end

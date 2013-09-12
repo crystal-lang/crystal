@@ -225,6 +225,10 @@ module Crystal
       @last = @builder.call @fun.params[0], *@fun.params.to_a[1 .. -1]
     end
 
+    def visit_external_var(node)
+      false
+    end
+
     def visit_class_method(node)
       if node.type.hierarchy_metaclass?
         type_ptr = union_type_id @fun.params[0]

@@ -290,21 +290,20 @@ module Crystal
         node.raise "can only declare fun at lib or global scope or lib"
       end
 
-      node.args.each { |arg| arg.type.accept self }
+      node.args.each { |arg| arg.type_restriction.accept self }
       node.return_type.accept self if node.return_type
 
       args = node.args.map do |arg|
-        arg_type = check_primitive_like arg.type
+        arg_type = check_primitive_like arg.type_restriction
 
         fun_arg = Arg.new(arg.name)
         fun_arg.location = arg.location
-        fun_arg.type_restriction = fun_arg.type = maybe_ptr_type(arg_type, arg.ptr)
+        fun_arg.type_restriction = fun_arg.type = arg_type
         fun_arg
       end
 
       return_type = node.return_type
-      return_type = check_primitive_like return_type if return_type
-      return_type = maybe_ptr_type(return_type ? return_type : mod.nil, node.ptr)
+      return_type = check_primitive_like return_type
 
       begin
         external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
@@ -353,9 +352,7 @@ module Crystal
         node.raise "#{node.name} is already defined"
       else
         node_type = check_primitive_like node.type
-
-        typed_def_type = maybe_ptr_type(node_type, node.ptr)
-
+        typed_def_type = node_type
         current_type.types[node.name] = TypeDefType.new current_type, node.name, typed_def_type
       end
     end
@@ -374,9 +371,8 @@ module Crystal
         node.raise "#{node.name} is already defined"
       else
         fields = node.fields.map do |field|
-          field_type = check_primitive_like field.type
-
-          Var.new(field.name, maybe_ptr_type(field_type, field.ptr))
+          field_type = check_primitive_like field.type_restriction
+          Var.new(field.name, field_type)
         end
         current_type.types[node.name] = klass.new(current_type, node.name, fields)
       end
@@ -400,26 +396,18 @@ module Crystal
       end
     end
 
-    def visit_fun_def_arg(node)
-      node.type.accept self
+    def visit_external_var(node)
+      node.type_spec.accept self
 
-      var_type = check_primitive_like node.type
-      var_type = maybe_ptr_type(var_type, node.ptr)
-
+      var_type = check_primitive_like node.type_spec
       current_type.add_var(node.name, var_type)
 
       false
     end
 
-    def maybe_ptr_type(type, ptr)
-      ptr.times do
-        ptr_type = mod.pointer_of(type)
-        type = ptr_type
-      end
-      type
-    end
-
     def check_primitive_like(node)
+      return nil unless node
+
       type = node.type.instance_type
       unless type.primitive_like?
         msg = "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"

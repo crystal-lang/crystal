@@ -1006,7 +1006,13 @@ module Crystal
             next_token_skip_space_or_newline
           when :"*"
             last_ident = idents.pop
-            pointer = NewGenericClass.new(Ident.new(["Pointer"], true), [last_ident])
+            pointer = make_pointer_type(last_ident)
+            idents.push pointer
+            next_token_skip_space_or_newline
+          when :"**"
+            last_ident = idents.pop
+            pointer = make_pointer_type(last_ident)
+            pointer = make_pointer_type(pointer)
             idents.push pointer
             next_token_skip_space_or_newline
           else
@@ -1026,6 +1032,10 @@ module Crystal
       else
         IdentUnion.new idents
       end
+    end
+
+    def make_pointer_type(node)
+      NewGenericClass.new(Ident.new(["Pointer"], true), [node])
     end
 
     def parse_type_vars
@@ -1827,7 +1837,7 @@ module Crystal
           next_token_skip_space_or_newline
           ident = parse_ident(false)
           skip_statement_end
-          expressions << FunDefArg.new(name, ident)
+          expressions << ExternalVar.new(name, ident)
         else
           break
         end
@@ -1875,14 +1885,13 @@ module Crystal
           check :':'
           next_token_skip_space_or_newline
 
-          arg_type = parse_ident
-          ptr = parse_trailing_pointers
+          arg_type = parse_type
 
           skip_space_or_newline
 
-          fun_def_arg = FunDefArg.new(arg_name, arg_type, ptr)
-          fun_def_arg.location = arg_location
-          args << fun_def_arg
+          arg = Arg.new(arg_name, nil, arg_type)
+          arg.location = arg_location
+          args << arg
 
           push_var_name arg_name if require_body
 
@@ -1893,14 +1902,10 @@ module Crystal
         next_token_skip_statement_end
       end
 
-      ptr = 0
-
       if @token.type == :':'
         next_token_skip_space_or_newline
 
-        return_type = parse_ident
-
-        ptr = parse_trailing_pointers
+        return_type = parse_type
       end
 
       skip_statement_end
@@ -1920,7 +1925,7 @@ module Crystal
 
       pop_def if require_body
 
-      FunDef.new name, args, return_type, ptr, varargs, body, real_name
+      FunDef.new name, args, return_type, varargs, body, real_name
     end
 
     def parse_type_def
@@ -1934,12 +1939,11 @@ module Crystal
       check :':'
       next_token_skip_space_or_newline
 
-      type = parse_ident
-      ptr = parse_trailing_pointers
+      type = parse_type
 
       skip_statement_end
 
-      TypeDef.new name, type, ptr, name_column_number
+      TypeDef.new name, type, name_column_number
     end
 
     def parse_struct_or_union(klass)
@@ -1982,13 +1986,12 @@ module Crystal
             check :':'
             next_token_skip_space_or_newline
 
-            type = parse_ident
-            ptr = parse_trailing_pointers
+            type = parse_type
 
             skip_statement_end
 
             names.each do |name|
-              fields << FunDefArg.new(name, type, ptr)
+              fields << Arg.new(name, nil, type)
             end
           end
         else
@@ -1997,23 +2000,6 @@ module Crystal
       end
 
       fields
-    end
-
-    def parse_trailing_pointers
-      ptr = 0
-      while true
-        case @token.type
-        when :*
-          ptr += 1
-          next_token_skip_space_or_newline
-        when :**
-          ptr += 2
-          next_token_skip_space_or_newline
-        else
-          break
-        end
-      end
-      ptr
     end
 
     def parse_enum

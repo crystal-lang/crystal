@@ -135,6 +135,11 @@ module Crystal
       node
     end
 
+    def transform_external_var(node)
+      node.type_spec = node.type_spec.transform(self)
+      node
+    end
+
     def transform_block_arg(node)
       transform_many node.inputs
       node.output = node.output.transform(self) if node.output
@@ -264,10 +269,6 @@ module Crystal
     end
 
     def transform_fun_def(node)
-      node
-    end
-
-    def transform_fun_def_arg(node)
       node
     end
 

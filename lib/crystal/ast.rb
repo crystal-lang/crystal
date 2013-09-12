@@ -1142,17 +1142,15 @@ module Crystal
     attr_accessor :name
     attr_accessor :args
     attr_accessor :return_type
-    attr_accessor :ptr
     attr_accessor :varargs
     attr_accessor :body
     attr_accessor :real_name
 
-    def initialize(name, args = [], return_type = nil, ptr = 0, varargs = false, body = nil, real_name = name)
+    def initialize(name, args = [], return_type = nil, varargs = false, body = nil, real_name = name)
       @name = name
       @real_name = real_name
       @args = args
       @return_type = return_type
-      @ptr = ptr
       @varargs = varargs
       @body = body
     end
@@ -1164,40 +1162,18 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(FunDef) && other.name == name && other.args == args && other.return_type == return_type && other.ptr == ptr && other.real_name == real_name && other.varargs == varargs && other.body == body
-    end
-  end
-
-  class FunDefArg < ASTNode
-    attr_accessor :name
-    attr_accessor :type
-    attr_accessor :ptr
-
-    def initialize(name, type, ptr = 0)
-      @name = name
-      @type = type
-      @ptr = ptr
-    end
-
-    def accept_children(visitor)
-      type.accept visitor
-    end
-
-    def ==(other)
-      other.is_a?(FunDefArg) && other.name == name && other.type == type && other.ptr == ptr
+      other.is_a?(FunDef) && other.name == name && other.args == args && other.return_type == return_type && other.real_name == real_name && other.varargs == varargs && other.body == body
     end
   end
 
   class TypeDef < ASTNode
     attr_accessor :name
     attr_accessor :type
-    attr_accessor :ptr
     attr_accessor :name_column_number
 
-    def initialize(name, type, ptr = 0, name_column_number = nil)
+    def initialize(name, type, name_column_number = nil)
       @name = name
       @type = type
-      @ptr = ptr
 
       @name_column_number = name_column_number
     end
@@ -1207,7 +1183,7 @@ module Crystal
     end
 
     def ==(other)
-      other.is_a?(TypeDef) && other.name == name && other.type == type && other.ptr == ptr
+      other.is_a?(TypeDef) && other.name == name && other.type == type
     end
   end
 
@@ -1250,6 +1226,24 @@ module Crystal
 
     def ==(other)
       other.is_a?(EnumDef) && other.name == name && other.constants == constants
+    end
+  end
+
+  class ExternalVar < ASTNode
+    attr_accessor :name
+    attr_accessor :type_spec
+
+    def initialize(name, type_spec)
+      @name = name
+      @type_spec = type_spec
+    end
+
+    def accept_children(visitor)
+      @type_spec.accept visitor
+    end
+
+    def ==(other)
+      other.is_a?(ExternalVar) && other.name == name && other.type_spec == type_spec
     end
   end
 

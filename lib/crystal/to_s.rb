@@ -631,9 +631,6 @@ module Crystal
       if node.return_type
         @str << ' : '
         node.return_type.accept self
-        node.ptr.times do
-          @str << '*'
-        end
       end
       if node.body
         @str << "\n"
@@ -645,24 +642,11 @@ module Crystal
       false
     end
 
-    def visit_fun_def_arg(node)
-      @str << node.name.to_s
-      @str << ' : '
-      node.type.accept self
-      node.ptr.times do
-        @str << '*'
-      end
-      false
-    end
-
     def visit_type_def(node)
       @str << 'type '
       @str << node.name.to_s
       @str << ' : '
       node.type.accept self
-      node.ptr.times do
-        @str << '*'
-      end
       false
     end
 
@@ -711,6 +695,14 @@ module Crystal
       end
       append_indent
       @str << 'end'
+      false
+    end
+
+    def visit_external_var(node)
+      @str << "$"
+      @str << node.name.to_s
+      @str << " : "
+      node.type_spec.accept self
       false
     end
 
