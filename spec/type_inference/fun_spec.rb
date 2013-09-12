@@ -29,7 +29,7 @@ describe 'Type inference: fun' do
     assert_type("def foo(x); x; end; ->foo(Int32)") { fun_of(int32, int32) }
   end
 
-  pending "types fun pointer to instance method" do
+  it "types fun pointer to instance method" do
     assert_type(%(
       class Foo
         def coco
