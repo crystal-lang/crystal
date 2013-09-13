@@ -691,10 +691,14 @@ module Crystal
       if @token.type == :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          parse_arg args, nil, true
+          args << parse_fun_literal_arg
         end
         next_token_skip_space_or_newline
       end
+
+      current_vars = @def_vars.last.clone
+      push_def current_vars
+      push_var *args
 
       if @token.keyword?(:do)
         next_token_skip_statement_end
@@ -708,9 +712,33 @@ module Crystal
         raise "unexpected token: #{@token}"
       end
 
+      pop_def
+
       next_token_skip_space
 
       FunLiteral.new(Def.new("->", args, body))
+    end
+
+    def parse_fun_literal_arg
+      check :IDENT
+      name = @token.value
+
+      if @def_vars.last.include?(name)
+        raise "function argument '#{name}' shadows local variable '#{name}'"
+      end
+
+      next_token_skip_space_or_newline
+
+      check :":"
+      next_token_skip_space_or_newline
+
+      type = parse_type
+
+      if @token.type == :","
+        next_token_skip_space_or_newline
+      end
+
+      Arg.new(name, nil, type)
     end
 
     def parse_fun_pointer
@@ -1652,12 +1680,7 @@ module Crystal
 
       if @token.type == :':'
         next_token_skip_space_or_newline
-        if @token.keyword?('self')
-          type_restriction = SelfType.instance
-          next_token_skip_space
-        else
-          type_restriction = parse_type
-        end
+        type_restriction = parse_type
       end
 
       arg = Arg.new(arg_name, default_value, type_restriction)

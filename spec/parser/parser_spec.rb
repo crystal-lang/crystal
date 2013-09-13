@@ -434,7 +434,6 @@ describe Parser do
   it_parses "-> do end", FunLiteral.new
   it_parses "-> { }", FunLiteral.new
   it_parses "->() { }", FunLiteral.new
-  it_parses "->(x) { }", FunLiteral.new(Def.new("->", ["x".arg]))
   it_parses "->(x : Int32) { }", FunLiteral.new(Def.new("->", [Arg.new("x", nil, "Int32".ident)]))
 
   it_parses "->foo", FunPointer.new(nil, "foo")

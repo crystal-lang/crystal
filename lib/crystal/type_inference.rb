@@ -836,10 +836,6 @@ module Crystal
     def visit_fun_literal(node)
       fun_vars = {}
       types = node.def.args.map do |arg|
-        unless arg.type_restriction
-          arg.raise "fun argument type required"
-        end
-
         arg.type_restriction.accept self
         arg.type = arg.type_restriction.type.instance_type
         fun_vars[arg.name] = Var.new(arg.name, arg.type)
