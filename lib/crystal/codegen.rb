@@ -90,6 +90,7 @@ module Crystal
       @block_context = []
       @type = @mod
       @in_const_block = false
+      @trampoline_wrappers = {}
 
       @strings = {}
       @symbols = {}
@@ -217,8 +218,40 @@ module Crystal
     end
 
     def visit_fun_pointer(node)
-      @last = target_def_fun(node.call.target_def, nil)
+      owner = node.call.target_def.owner
+      owner = nil unless owner.passed_as_self?
+      if owner
+        accept(node.obj)
+        call_self = @last
+      end
+      @last = target_def_fun(node.call.target_def, owner)
+
+      if owner
+        wrapper = trampoline_wrapper(@last)
+        tramp_ptr = @builder.array_malloc(LLVM::Int8, LLVM::Int(32))
+        @builder.call @mod.trampoline_init(@llvm_mod),
+          tramp_ptr,
+          @builder.bit_cast(wrapper, LLVM::Pointer(LLVM::Int8)),
+          @builder.bit_cast(call_self, LLVM::Pointer(LLVM::Int8))
+        @last = @builder.call @mod.trampoline_adjust(@llvm_mod), tramp_ptr
+        @last = cast_to(@last, node.type)
+      end
       false
+    end
+
+    def trampoline_wrapper(target_def)
+      @trampoline_wrappers[target_def] ||= begin
+        arg_types = target_def.function_type.argument_types
+        ret_type = target_def.function_type.return_type
+        @llvm_mod.functions.add("trampoline_wrapper_#{target_def.object_id}", arg_types, ret_type) do |fun, *args|
+          fun.linkage = :internal
+          args.first.add_attribute :nest_attribute
+          fun.basic_blocks.append.build do |builder|
+            c = builder.call target_def, *args
+            builder.ret c
+          end
+        end
+      end
     end
 
     def visit_fun_call(node)

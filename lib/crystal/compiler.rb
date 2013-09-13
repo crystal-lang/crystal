@@ -215,6 +215,7 @@ module Crystal
           flags << lib
         end
       end
+      flags << " -Wl,-allow_stack_execute" if RUBY_PLATFORM =~ /darwin/
       flags
     end
   end

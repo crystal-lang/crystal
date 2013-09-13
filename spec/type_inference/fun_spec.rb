@@ -32,8 +32,12 @@ describe 'Type inference: fun' do
   it "types fun pointer to instance method" do
     assert_type(%(
       class Foo
+        def initialize
+          @x = 1
+        end
+
         def coco
-          1
+          @x
         end
       end
 

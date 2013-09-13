@@ -23,4 +23,25 @@ describe 'Code gen: fun' do
       f.call(1, 2)
     )).to_i.should eq(3)
   end
+
+  pending "call fun pointer of instance method" do
+    run(%(
+      require "prelude"
+      class Foo
+        def initialize
+          @x = 1
+        end
+
+        def coco
+          puts "Hola"
+          @x
+        end
+      end
+
+      puts 1
+      f = ->Foo.new.coco
+      puts 2
+      f.call
+    )).to_i.should eq(1)
+  end
 end

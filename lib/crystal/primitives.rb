@@ -336,6 +336,16 @@ module Crystal
     def printf(llvm_mod)
       llvm_mod.functions['printf'] || llvm_mod.functions.add('printf', [LLVM::Pointer(LLVM::Int8)], int32.llvm_type, varargs: true)
     end
+
+    def trampoline_init(llvm_mod)
+      llvm_mod.functions['llvm.init.trampoline'] || llvm_mod.functions.add('llvm.init.trampoline', [
+        LLVM::Pointer(LLVM::Int8), LLVM::Pointer(LLVM::Int8), LLVM::Pointer(LLVM::Int8)
+      ], LLVM.Void)
+    end
+
+    def trampoline_adjust(llvm_mod)
+      llvm_mod.functions['llvm.adjust.trampoline'] || llvm_mod.functions.add('llvm.adjust.trampoline', [LLVM::Pointer(LLVM::Int8)], LLVM::Pointer(LLVM::Int8))
+    end
   end
 
   class Def
