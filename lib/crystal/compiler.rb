@@ -74,6 +74,9 @@ module Crystal
           end
         elsif ::ARGV.length > 0
           @options[:output_filename] = File.basename(::ARGV[0], File.extname(::ARGV[0]))
+          if @options[:dump_ll]
+            @options[:output_filename] = "#{@options[:output_filename]}.ll"
+          end
         end
       end
 
@@ -154,8 +157,6 @@ module Crystal
         exit 1
       end
 
-      llvm_mod.dump if @options[:dump_ll]
-
       reader, writer = IO.pipe
       Thread.new do
         sleep 0.1
@@ -174,7 +175,13 @@ module Crystal
         `#{@clang} #{o_flag} #{obj_file} #{lib_flags(program)}`
       else
         opt_cmd = @options[:opt_level] ? "#{@opt} -O#{@options[:opt_level]} |" : ""
-        pid = spawn "#{opt_cmd} #{@llc} | #{@clang} -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
+
+        if @options[:dump_ll]
+          llvm_dis = LLVMConfig.bin("llvm-dis")
+          pid = spawn "#{opt_cmd} #{llvm_dis} #{o_flag}", in: reader
+        else
+          pid = spawn "#{opt_cmd} #{@llc} | #{@clang} -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
+        end
         Process.waitpid pid
       end
 
