@@ -1289,6 +1289,9 @@ module Crystal
             push_var declare_var
             declare_var
           elsif is_var? name
+            if @block_arg_name && !@uses_block_arg && name == @block_arg_name
+              @uses_block_arg = true
+            end
             Var.new name
           else
             Call.new nil, name, [], nil, global, name_column_number, @last_call_has_parenthesis
@@ -1521,11 +1524,15 @@ module Crystal
     def parse_def
       @instance_vars = Set.new
       @calls_super = false
+      @uses_block_arg = false
+      @block_arg_name = nil
       a_def = parse_def_or_macro Def
       a_def.instance_vars = @instance_vars
       a_def.calls_super = @calls_super
+      a_def.uses_block_arg = @uses_block_arg
       @instance_vars = nil
       @calls_super = false
+      @uses_block_arg = false
       a_def
     end
 
@@ -1598,6 +1605,7 @@ module Crystal
         while @token.type != :')'
           block_arg = parse_arg(args, ivar_assigns, true)
           if block_arg
+            @yields = block_arg.type_spec.inputs ? block_arg.type_spec.inputs.length : 0
             check :')'
             break
           end
@@ -1607,6 +1615,7 @@ module Crystal
         while @token.type != :NEWLINE && @token.type != :";"
           block_arg = parse_arg(args, ivar_assigns, false)
           if block_arg
+            @yields = block_arg.type_spec.inputs ? block_arg.type_spec.inputs.length : 0
             break
           end
         end
@@ -1714,10 +1723,17 @@ module Crystal
         unless type_spec.is_a?(FunTypeSpec)
           raise "expected block argument type to be a function", location[0], location[1]
         end
+      else
+        type_spec = FunTypeSpec.new
       end
 
       block_arg = BlockArg.new(name, type_spec)
       block_arg.location = name_location
+
+      push_var block_arg
+
+      @block_arg_name = block_arg.name
+
       block_arg
     end
 

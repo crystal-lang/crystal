@@ -155,6 +155,24 @@ module Crystal
       end
 
       if node.body
+        if node.uses_block_arg
+          if node.block_arg.type_spec.inputs
+            args = node.block_arg.type_spec.inputs.each_with_index.map { |input, i| Arg.new("#arg#{i}", nil, input) }
+            body = Yield.new(args.map { |arg| Var.new(arg.name) })
+          else
+            args = []
+            body = Yield.new
+          end
+          block_def = FunLiteral.new(Def.new("->", args, body))
+          assign = Assign.new(Var.new(node.block_arg.name), block_def)
+
+          if node.body.is_a?(Expressions)
+            node.body.expressions.unshift(assign)
+          else
+            node.body = Expressions.new([assign, node.body])
+          end
+        end
+
         pushing_vars(Hash[node.args.map { |arg| [arg.name, {read: 0, write: 1}] }]) do
           @in_initialize = node.name == 'initialize'
           node.body = node.body.transform(self)

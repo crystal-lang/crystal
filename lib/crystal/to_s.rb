@@ -424,8 +424,9 @@ module Crystal
           @str << ", " if i > 0
           input.accept self
         end
+        @str << " "
       end
-      @str << " -> "
+      @str << "-> "
       node.output.accept self if node.output
     end
 

@@ -70,4 +70,8 @@ describe 'Type inference: fun' do
     assert_error "->(a : Int32) { }; a",
       "undefined local variable or method 'a'"
   end
+
+  it "types int -> int fun literal as a block" do
+    assert_type("def foo(&block : Int32 ->); block; end; foo { |x| x + 2 }") { fun_of(int32, int32) }
+  end
 end

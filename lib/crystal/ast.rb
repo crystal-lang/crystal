@@ -496,6 +496,7 @@ module Crystal
     attr_accessor :block_arg
     attr_accessor :instance_vars
     attr_accessor :calls_super
+    attr_accessor :uses_block_arg
     attr_accessor :name_column_number
 
     def initialize(name, args, body = nil, receiver = nil, block_arg = nil, yields = false)
@@ -527,6 +528,7 @@ module Crystal
       @block_arg = other.block_arg
       @instance_vars = other.instance_vars
       @calls_super = other.calls_super
+      @uses_block_arg = other.uses_block_arg
       @name_column_number = other.name_column_number
     end
   end
@@ -608,7 +610,7 @@ module Crystal
     attr_accessor :name
     attr_accessor :type_spec
 
-    def initialize(name, type_spec = nil)
+    def initialize(name, type_spec = FunTypeSpec.new)
       @name = name
       @type_spec = type_spec
     end
