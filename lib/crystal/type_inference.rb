@@ -842,7 +842,7 @@ module Crystal
         arg.type
       end
 
-      block_visitor = TypeVisitor.new(mod, fun_vars)
+      block_visitor = TypeVisitor.new(mod, fun_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
       node.def.body.accept block_visitor
 
       node.def.bind_to node.def.body
