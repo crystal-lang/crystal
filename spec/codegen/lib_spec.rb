@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Code gen: lib' do
-  it "codegens lib var set and get" do
+  pending "codegens lib var set and get" do
     run(%q(
       lib C
         $errno : Int32
