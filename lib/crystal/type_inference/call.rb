@@ -73,6 +73,13 @@ module Crystal
     end
 
     def lookup_matches_in(owner, self_type = owner, def_name = self.name)
+      is_no_return = false
+
+      arg_types = args.map do |arg|
+        is_no_return ||= arg.no_returns?
+        arg.type
+      end
+
       arg_types = args.map(&:type)
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 
@@ -124,6 +131,11 @@ module Crystal
             end
           end
         end
+
+        if is_no_return
+          typed_def.type = @mod.no_return
+        end
+
         typed_def
       end
     end

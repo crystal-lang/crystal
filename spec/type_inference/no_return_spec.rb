@@ -42,4 +42,18 @@ describe 'Type inference: NoReturn' do
     assert_error %(require "prelude"; exit.foo),
       "undefined method 'foo' for NoReturn"
   end
+
+  it "types call as no return if one argument is no return" do
+    assert_type(%q(
+      lib C
+        fun exit : NoReturn
+      end
+
+      def foo(x)
+        1
+      end
+
+      foo(C.exit)
+      )) { no_return }
+  end
 end

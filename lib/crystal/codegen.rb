@@ -119,6 +119,10 @@ module Crystal
       @typer.llvm_struct_type(type)
     end
 
+    def llvm_embedded_type(type)
+      @typer.llvm_embedded_type(type)
+    end
+
     def llvm_arg_type(type)
       @typer.llvm_arg_type(type)
     end
@@ -606,11 +610,7 @@ module Crystal
     end
 
     def visit_pointer_malloc(node)
-      llvm_type = if node.type.var.type.c_struct? || node.type.var.type.c_union?
-                    llvm_struct_type(node.type.var.type)
-                  else
-                    llvm_type(node.type.var.type)
-                  end
+      llvm_type = llvm_embedded_type(node.type.var.type)
       @last = @builder.array_malloc(llvm_type, @vars['size'][:ptr])
     end
 
@@ -1003,6 +1003,8 @@ module Crystal
           end
         else
           accept(arg)
+          return false if arg.no_returns?
+
           call_args << @last
         end
       end

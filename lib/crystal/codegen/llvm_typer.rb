@@ -83,6 +83,8 @@ module Crystal
                       llvm_struct_type(type)
                     when CUnionType
                       llvm_struct_type(type)
+                    when NoReturnType
+                      LLVM::Int8
                     else
                       llvm_type(type)
                     end
