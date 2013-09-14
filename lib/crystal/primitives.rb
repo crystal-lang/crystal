@@ -20,6 +20,7 @@ module Crystal
 
     def define_object_primitives
       object.add_def Def.new(:class, [], ClassMethod.new)
+      object.metaclass.add_def Def.new('size', [], ClassSizeMethod.new)
     end
 
     def define_reference_primitives
@@ -261,6 +262,7 @@ module Crystal
       pointer.add_def Def.new('value=', [Arg.new_with_restriction('value', Ident.new(["T"]))], PointerSetValue.new)
       pointer.add_def Def.new('realloc', [Arg.new_with_restriction('size', Ident.new(["UInt64"], true))], PointerRealloc.new)
       pointer.add_def Def.new(:+, [Arg.new_with_restriction('offset', Ident.new(["Int64"], true))], PointerAdd.new)
+      pointer.add_def Def.new(:-, [Arg.new_with_restriction('other', SelfType.instance)], PointerDiff.new)
       pointer.add_def Def.new('as', [Arg.new('type')], PointerCast.new)
       shared_singleton(pointer, 'address', uint64) do |b, f, llvm_mod, self_type|
         b.ptr2int(f.params[0], LLVM::UInt64)
@@ -414,6 +416,9 @@ module Crystal
   end
 
   class PointerAdd < Primitive
+  end
+
+  class PointerDiff < Primitive
   end
 
   class PointerRealloc < Primitive
@@ -595,6 +600,9 @@ module Crystal
   end
 
   class ClassMethod < Primitive
+  end
+
+  class ClassSizeMethod < Primitive
   end
 end
 

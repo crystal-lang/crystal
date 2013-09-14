@@ -1071,6 +1071,10 @@ module Crystal
       node.type = @scope
     end
 
+    def visit_pointer_diff(node)
+      node.type = mod.int64
+    end
+
     def visit_pointer_cast(node)
       type = @vars['type'].type.instance_type
       if type.class?

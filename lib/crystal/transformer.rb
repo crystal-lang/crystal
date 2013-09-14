@@ -398,6 +398,10 @@ module Crystal
       node
     end
 
+    def transform_pointer_diff(node)
+      node
+    end
+
     def transform_pointer_realloc(node)
       node
     end

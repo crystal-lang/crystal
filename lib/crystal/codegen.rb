@@ -665,6 +665,13 @@ module Crystal
       @last = gep(llvm_self, @fun.params[1])
     end
 
+    def visit_pointer_diff(node)
+      p0 = @builder.ptr2int(@fun.params[0], LLVM::UInt64)
+      p1 = @builder.ptr2int(@fun.params[1], LLVM::UInt64)
+      sub = @builder.sub p0, p1
+      @last = @builder.exact_sdiv sub, @builder.ptr2int(gep(llvm_self.type.null, LLVM::Int(1)), LLVM::UInt64)
+    end
+
     def visit_pointer_cast(node)
       @last = cast_to @fun.params[0], node.type
     end
