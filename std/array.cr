@@ -369,7 +369,12 @@ class Array(T)
   end
 
   def sort!
-    quicksort 0, length - 1
+    Array(T).quicksort!(@buffer, @length)
+    self
+  end
+
+  def sort!(&block: T, T -> Int32)
+    Array(T).quicksort!(@buffer, @length, block)
     self
   end
 
@@ -402,32 +407,47 @@ class Array(T)
   #   false
   # end
 
-  def swap(i, j)
-    temp = self[i]
-    self[i] = self[j]
-    self[j] = temp
-  end
-
-  def partition(left, right, pivot_index)
-    pivot_value = self[pivot_index]
-    swap pivot_index, right
-    store_index = left
-    left.upto(right) do |i|
-      if self[i] < pivot_value
-        swap i, store_index
-        store_index += 1
+  def self.quicksort!(a, n, comp)
+    return if (n < 2)
+    p = a[n / 2]
+    l = a
+    r = a + n - 1
+    while l <= r
+      if comp.call(l.value, p) < 0
+        l += 1
+      elsif comp.call(r.value, p) > 0
+        r -= 1
+      else
+        t = l.value
+        l.value = r.value
+        l += 1
+        r.value = t
+        r -= 1
       end
     end
-    swap store_index, right
-    store_index
+    quicksort!(a, (r - a) + 1, comp)
+    quicksort!(l, (a + n) - l, comp)
   end
 
-  def quicksort(left, right)
-    if left < right
-      pivot_index = (left + right) / 2
-      pivot_new_index = partition left, right, pivot_index
-      quicksort left, pivot_new_index - 1
-      quicksort pivot_new_index + 1, right
+  def self.quicksort!(a, n)
+    return if (n < 2)
+    p = a[n / 2]
+    l = a
+    r = a + n - 1
+    while l <= r
+      if l.value < p
+        l += 1
+      elsif r.value > p
+        r -= 1
+      else
+        t = l.value
+        l.value = r.value
+        l += 1
+        r.value = t
+        r -= 1
+      end
     end
+    quicksort!(a, (r - a) + 1)
+    quicksort!(l, (a + n) - l)
   end
 end
