@@ -126,7 +126,7 @@ describe Parser do
   it_parses "def foo(var : Int*); end", Def.new("foo", [Arg.new("var", nil, "Int".ident.pointer_of)], nil)
   it_parses "def foo(var : Int**); end", Def.new("foo", [Arg.new("var", nil, "Int".ident.pointer_of.pointer_of)], nil)
   it_parses "def foo(var : Int -> Double); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident], "Double".ident))], nil)
-  it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident], "Double".ident))], nil), focus: true
+  it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident], "Double".ident))], nil)
   it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".ident)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [], [Yield.new], nil, nil, 0)
   it_parses "def foo; yield 1; end", Def.new("foo", [], [Yield.new([1.int32])], nil, nil, 1)
@@ -441,7 +441,8 @@ describe Parser do
   it_parses "->Foo.foo", FunPointer.new("Foo".ident, "foo")
   it_parses "->Foo::Bar::Baz.foo", FunPointer.new(["Foo", "Bar", "Baz"].ident, "foo")
   it_parses "->foo(Int32, Float64)", FunPointer.new(nil, "foo", ["Int32".ident, "Float64".ident])
-  it_parses "->foo(1).bar", FunPointer.new(Call.new(nil, "foo", [1.int32]), "bar")
+  it_parses "foo = 1; ->foo.bar(Int32)", [Assign.new("foo".var, 1.int32), FunPointer.new("foo".var, "bar", ["Int32".ident])]
+  it_parses "->foo(Void*)", FunPointer.new(nil, "foo", ["Void".ident.pointer_of])
   it_parses "call ->foo", Call.new(nil, "call", [FunPointer.new(nil, "foo")])
   it_parses "[] of ->\n", ArrayLiteral.new([], FunTypeSpec.new)
 

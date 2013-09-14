@@ -744,30 +744,46 @@ module Crystal
     def parse_fun_pointer
       location = @token.location
 
-      atomic = parse_atomic_with_method
-
-      if atomic.is_a?(Var)
-        obj = nil
-        name = atomic.name
-        types = []
-      elsif atomic.is_a?(Call)
-        obj = atomic.obj
-        name = atomic.name
-        if atomic.args.length == 0
-          types = []
-        else
-          types = atomic.args
-          types.each do |type|
-            unless is_type_like?(type)
-              type.raise "argument to function pointer must be a type, not #{type}", nil, Crystal::SyntaxException
-            end
+      case @token.type
+      when :IDENT
+        name = @token.value
+        next_token_skip_space
+        if @token.type == :"."
+          next_token_skip_space
+          check :IDENT
+          if name != "self" && !@def_vars.last.include?(name)
+            raise "undefined variable '#{name}'", location[0], location[1]
           end
+          obj = Var.new(name)
+          name = @token.value
+          next_token_skip_space
         end
-      else
-        raise "missing function pointer method", location[0], location[1]
+      when :CONST
+        obj = parse_ident
+        check :"."
+        next_token_skip_space
+        check :IDENT
+        name = @token.value
+        next_token_skip_space
       end
 
-      return FunPointer.new(obj, name, types)
+      if @token.type == :"."
+        raise "unexpected token #{@token}"
+      end
+
+      types = []
+      if @token.type == :"("
+        next_token_skip_space
+        while @token.type != :")"
+          types << parse_type
+          if @token.type == :","
+            next_token_skip_space
+          end
+        end
+        next_token_skip_space
+      end
+
+      FunPointer.new(obj, name, types)
     end
 
     def parse_array_literal

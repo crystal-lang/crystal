@@ -45,7 +45,8 @@ describe 'Type inference: fun' do
         end
       end
 
-      ->Foo.new.coco
+      foo = Foo.new
+      ->foo.coco
     )) { fun_of(int32) }
   end
 

@@ -224,9 +224,11 @@ module Crystal
     def visit_fun_pointer(node)
       owner = node.call.target_def.owner
       owner = nil unless owner.passed_as_self?
-      if owner
+      if node.obj
         accept(node.obj)
         call_self = @last
+      elsif owner
+        call_self = llvm_self
       end
       @last = target_def_fun(node.call.target_def, owner)
 

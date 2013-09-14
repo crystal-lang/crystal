@@ -17,7 +17,7 @@ class Thread(T, R)
   def initialize(arg : T, func)
     @func = func
     @arg = arg
-    PThread.create(out @th, nil, ->self.start(Pointer(Void)), nil)
+    PThread.create(out @th, nil, ->start(Void*), nil)
   end
 
   def start(x)

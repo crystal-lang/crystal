@@ -38,9 +38,8 @@ describe 'Code gen: fun' do
         end
       end
 
-      puts 1
-      f = ->Foo.new.coco
-      puts 2
+      foo = Foo.new
+      f = ->foo.coco
       f.call
     )).to_i.should eq(1)
   end
