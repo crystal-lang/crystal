@@ -29,6 +29,10 @@ describe 'Type inference: fun' do
     assert_type("def foo(x); x; end; ->foo(Int32)") { fun_of(int32, int32) }
   end
 
+  it "types a fun pointer with generic types" do
+    assert_type("def foo(x); end; ->foo(Pointer(Int32))") { fun_of(pointer_of(int32), self.nil) }
+  end
+
   it "types fun pointer to instance method" do
     assert_type(%(
       class Foo

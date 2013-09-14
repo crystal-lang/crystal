@@ -859,7 +859,7 @@ module Crystal
       call = Call.new(node.obj, node.name)
       prepare_call(call)
 
-      arg_types = node.args.map { |arg| lookup_ident_type(arg) }
+      arg_types = node.args.map { |arg| arg.accept(self); arg.type.instance_type }
       call.args = arg_types.map { |arg_type| Var.new(nil, arg_type) }
 
       begin
