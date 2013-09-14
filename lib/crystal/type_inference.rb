@@ -917,10 +917,12 @@ module Crystal
         arg.add_observer node, :update_input
       end
       node.obj.add_observer node, :update_input if node.obj
+      node.block_arg.add_observer node, :update_input if node.block_arg
       node.recalculate
 
       node.obj.accept self if node.obj
       node.args.each { |arg| arg.accept self }
+      node.block_arg.accept self if node.block_arg
 
       false
     end

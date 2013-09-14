@@ -31,6 +31,7 @@ module Crystal
       # Ignore extra recalculations when more than one argument changes at the same time
       types_signature = args.map { |arg| arg.type.type_id }
       types_signature << obj.type.type_id if obj
+      types_signature << block_arg.type.type_id if block_arg
       return if @types_signature == types_signature
       @types_signature = types_signature
 
@@ -39,6 +40,9 @@ module Crystal
       @subclass_notifier.remove_subclass_observer(self) if @subclass_notifier
 
       @target_defs = nil
+
+      # Replace block_arg with a block
+      replace_block_arg_with_block if block_arg
 
       if obj
         if obj.type.is_a?(UnionType)
@@ -138,6 +142,15 @@ module Crystal
 
         typed_def
       end
+    end
+
+    def replace_block_arg_with_block
+      unless block_arg.type.fun_type?
+        block_arg.raise "expected a function type, not #{block_arg.type}"
+      end
+
+      args = block_arg.type.arg_types.each_with_index.map { |type, i| Var.new("#arg#{i}") }
+      self.block = Block.new(args, Call.new(block_arg, "call", args))
     end
 
     def find_owner_trace(node, owner)
@@ -518,7 +531,7 @@ module Crystal
     end
 
     def obj_and_args_types_set?
-      args.all?(&:type) && (obj.nil? || obj.type)
+      args.all?(&:type) && (obj.nil? || obj.type) && (block_arg.nil? || block_arg.type)
     end
 
     def define_new(scope, arg_types)

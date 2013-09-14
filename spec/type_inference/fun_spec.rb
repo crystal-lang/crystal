@@ -89,4 +89,26 @@ describe 'Type inference: fun' do
       C.atexit ->{ 1 }
       )) { int32 }
   end
+
+  it "passes fun pointer as block" do
+    assert_type(%q(
+      def foo
+        yield
+      end
+
+      f = -> { 1 }
+      foo &f
+      )) { int32 }
+  end
+
+  it "passes fun pointer as block with arguments" do
+    assert_type(%q(
+      def foo
+        yield 1
+      end
+
+      f = ->(x : Int32) { x.to_f }
+      foo &f
+      )) { float64 }
+  end
 end
