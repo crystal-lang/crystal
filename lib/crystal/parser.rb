@@ -1049,8 +1049,12 @@ module Crystal
         end
 
         if @token.type == :"->"
-          next_token_skip_space_or_newline
-          if @token.type == :"," || @token.type == :")"
+          next_token_skip_space
+          case @token.type
+          when :",", :")"
+            return_type = nil
+          when :NEWLINE
+            skip_space_or_newline
             return_type = nil
           else
             return_type = parse_type_with_suffix
