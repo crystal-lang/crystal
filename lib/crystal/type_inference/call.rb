@@ -390,6 +390,7 @@ module Crystal
     def check_fun_args_types_match(typed_def)
       string_conversions = nil
       nil_conversions = nil
+      fun_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type_restriction
         actual_type = self.args[i].type
@@ -401,6 +402,9 @@ module Crystal
           elsif (mod.string.equal?(actual_type) || mod.string.hierarchy_type.equal?(actual_type)) && expected_type.pointer? && mod.char.equal?(expected_type.var.type)
             string_conversions ||= []
             string_conversions << i
+          elsif expected_type.fun_type? && actual_type.fun_type? && expected_type.return_type.equal?(@mod.void) && expected_type.arg_types == actual_type.arg_types
+            fun_conversions ||= []
+            fun_conversions << i
           else
             self.args[i].raise "argument \##{i + 1} to #{typed_def.owner}.#{typed_def.name} must be #{expected_type}, not #{actual_type}"
           end
@@ -430,6 +434,12 @@ module Crystal
       if nil_conversions
         nil_conversions.each do |i|
           self.args[i] = NilPointer.new(typed_def.args[i].type)
+        end
+      end
+
+      if fun_conversions
+        fun_conversions.each do |i|
+          self.args[i] = CastFunToReturnVoid.new(self.args[i])
         end
       end
     end

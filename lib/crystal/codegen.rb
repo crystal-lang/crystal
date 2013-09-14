@@ -271,6 +271,11 @@ module Crystal
       end
     end
 
+    def visit_cast_fun_to_return_void(node)
+      accept node.node
+      @last = cast_to @last, node.type
+    end
+
     def visit_nop(node)
       @last = llvm_nil
     end

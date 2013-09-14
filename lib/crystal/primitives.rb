@@ -577,6 +577,23 @@ module Crystal
     end
   end
 
+  class CastFunToReturnVoid < Primitive
+    attr_reader :node
+
+    def initialize(node)
+      @node = node
+      mod = node.type.program
+      types = node.type.arg_types.dup
+      types << mod.void
+      @type = mod.fun_of *types
+    end
+
+    def clone_from(other)
+      @node = other.node
+      @type = other.type
+    end
+  end
+
   class ClassMethod < Primitive
   end
 end

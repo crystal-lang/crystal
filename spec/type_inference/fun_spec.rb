@@ -74,4 +74,14 @@ describe 'Type inference: fun' do
   it "types int -> int fun literal as a block" do
     assert_type("def foo(&block : Int32 ->); block; end; foo { |x| x + 2 }") { fun_of(int32, int32) }
   end
+
+  it "allows fun to return something else than void if it's not void" do
+    assert_type(%q(
+      lib C
+        fun atexit(fun : -> ) : Int32
+      end
+
+      C.atexit ->{ 1 }
+      )) { int32 }
+  end
 end

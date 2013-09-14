@@ -461,5 +461,9 @@ module Crystal
     def transform_fun_call(node)
       node
     end
+
+    def transform_cast_fun_to_return_void(node)
+      node
+    end
   end
 end
