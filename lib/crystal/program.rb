@@ -27,7 +27,7 @@ module Crystal
       number = @types["Number"] = ValueType.new self, "Number", value
 
       @types["NoReturn"] = NoReturnType.new self
-      @types["Void"] = PrimitiveType.new self, "Void", value, LLVM::Int8, 1
+      @types["Void"] = PrimitiveType.new self, "Void", value, LLVM.Void, 0
       @types["Nil"] = NilType.new self, "Nil", value, LLVM::Int1, 1
       @types["Bool"] = PrimitiveType.new self, "Bool", value, LLVM::Int1, 1
       @types["Char"] = PrimitiveType.new self, "Char", value, LLVM::Int8, 1

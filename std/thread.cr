@@ -24,7 +24,6 @@ class Thread(T, R)
     ret = Pointer(R).malloc(1)
     ret.value = @func.call(@arg)
     PThread.exit(ret.as(Void))
-    nil
   end
 
   def join

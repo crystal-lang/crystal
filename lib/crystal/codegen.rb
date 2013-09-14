@@ -146,7 +146,7 @@ module Crystal
     def finish
       br_block_chain @alloca_block, @const_block_entry
       br_block_chain @const_block, @entry_block
-      ret(@return_type ? @last : nil) unless @return_type && @return_type.no_return?
+      ret(@return_type && @return_type != @mod.void ? @last : nil) unless @return_type && @return_type.no_return?
 
       add_compile_unit_metadata @filename if @debug
     end
@@ -253,8 +253,8 @@ module Crystal
           fun.linkage = :internal
           args.first.add_attribute :nest_attribute
           fun.basic_blocks.append.build do |builder|
-            c = builder.call target_def, *args
-            builder.ret c
+            call_ret = builder.call target_def, *args
+            builder.ret ret_type == LLVM.Void ? nil : call_ret
           end
         end
       end
