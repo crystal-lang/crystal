@@ -826,17 +826,19 @@ module Crystal
     attr_accessor :name
     attr_accessor :args
     attr_accessor :block
+    attr_accessor :block_arg
     attr_accessor :global
 
     attr_accessor :name_column_number
     attr_accessor :has_parenthesis
     attr_accessor :name_length
 
-    def initialize(obj, name, args = [], block = nil, global = false, name_column_number = nil, has_parenthesis = false)
+    def initialize(obj, name, args = [], block = nil, block_arg = nil, global = false, name_column_number = nil, has_parenthesis = false)
       @obj = obj
       @name = name
       @args = args || []
       @block = block
+      @block_arg = block_arg
       @global = global
       @name_column_number = name_column_number
       @has_parenthesis = has_parenthesis
@@ -845,17 +847,19 @@ module Crystal
     def accept_children(visitor)
       obj.accept visitor if obj
       args.each { |arg| arg.accept visitor }
+      block_arg.accept visitor if block_arg
       block.accept visitor if block
     end
 
     def ==(other)
-      other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block && other.global == global
+      other.is_a?(Call) && other.obj == obj && other.name == name && other.args == args && other.block == block && other.block_arg == block_arg && other.global == global
     end
 
     def clone_from(other)
       @obj = other.obj.clone
       @name = other.name
       @args = other.args.map(&:clone)
+      @block_arg = other.block_arg.clone
       @block = other.block.clone
       @global = other.global
       @name_column_number = other.name_column_number

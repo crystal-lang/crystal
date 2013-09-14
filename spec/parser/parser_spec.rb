@@ -156,7 +156,7 @@ describe Parser do
   it_parses "foo(1 + 2)", "foo".call(Call.new(1.int32, :"+", [2.int32]))
   it_parses "foo -1.0, -2.0", "foo".call(-1.float64, -2.float64)
   it_parses "foo(\n1)", "foo".call(1.int32)
-  it_parses "::foo", Call.new(nil, "foo", [], nil, true)
+  it_parses "::foo", Call.new(nil, "foo", [], nil, nil, true)
 
   it_parses "foo + 1", Call.new("foo".call, :"+", [1.int32])
   it_parses "foo +1", Call.new(nil, "foo", [1.int32])
@@ -164,6 +164,14 @@ describe Parser do
   it_parses "foo +1_i64", Call.new(nil, "foo", [1.int64])
   it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, :+, [1.int32])]
   it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, :-, [1.int32])]
+
+  it_parses "foo(&block)", Call.new(nil, "foo", [], nil, "block".call)
+  it_parses "foo &block", Call.new(nil, "foo", [], nil, "block".call)
+
+  it_parses "foo(&.block)", Call.new(nil, "foo", [], Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block")))
+  it_parses "foo &.block", Call.new(nil, "foo", [], Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block")))
+  it_parses "foo &.block(1)", Call.new(nil, "foo", [], Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block", [1.int32])))
+  it_parses "foo &.+(2)", Call.new(nil, "foo", [], Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), :"+", [2.int32])))
 
   it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, :'!@')])
   it_parses "!a && b", And.new(Call.new("a".call, :'!@'), "b".call)
