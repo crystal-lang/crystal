@@ -303,7 +303,7 @@ module Crystal
       end
 
       return_type = node.return_type
-      return_type = check_primitive_like return_type
+      return_type = check_primitive_like(return_type) || @mod.void
 
       begin
         external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)

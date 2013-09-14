@@ -1,7 +1,7 @@
 lib PThread
   type Thread : Void*
   fun create = pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*)
-  fun exit = pthread_exit(value : Void*) : Void
+  fun exit = pthread_exit(value : Void*)
   fun join = pthread_join(thread : Thread, value : Void**) : Int32
 end
 
