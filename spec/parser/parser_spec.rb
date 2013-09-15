@@ -172,6 +172,8 @@ describe Parser do
   it_parses "foo &.block", Call.new(nil, "foo", [], Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block")))
   it_parses "foo &.block(1)", Call.new(nil, "foo", [], Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block", [1.int32])))
   it_parses "foo &.+(2)", Call.new(nil, "foo", [], Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), :"+", [2.int32])))
+  it_parses "foo &.bar.baz", Call.new(nil, "foo", [], Block.new([Var.new("#arg0")], Call.new(Call.new(Var.new("#arg0"), "bar"), "baz")))
+  it_parses "foo(&.bar.baz)", Call.new(nil, "foo", [], Block.new([Var.new("#arg0")], Call.new(Call.new(Var.new("#arg0"), "bar"), "baz")))
 
   it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, :'!@')])
   it_parses "!a && b", And.new(Call.new("a".call, :'!@'), "b".call)

@@ -1502,9 +1502,14 @@ module Crystal
       next_token_skip_space
 
       if @token.type == :"."
-        next_token_skip_space
-        call = parse_var_or_call(false, true)
-        call.obj = Var.new("#arg0")
+        obj = Var.new("#arg0")
+        while @token.type == :"."
+          next_token_skip_space
+          call = parse_var_or_call(false, true)
+          call.obj = obj
+          obj = call
+        end
+
         block = Block.new([Var.new("#arg0")], call)
       else
         block_arg = parse_expression
