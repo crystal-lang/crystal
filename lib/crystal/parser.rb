@@ -2045,7 +2045,7 @@ module Crystal
 
       if require_body
         if @token.keyword?(:end)
-          body = nil
+          body = Nop.new
         else
           body = parse_expressions
           body = parse_exception_handler body
