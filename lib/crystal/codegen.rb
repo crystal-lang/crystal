@@ -408,6 +408,11 @@ module Crystal
       when ClassVar
         ptr = assign_to_global class_var_global_name(target), target.type
       else
+        if target.type.equal?(@mod.void)
+          @vars[target.name.to_s] = {type: @mod.void}
+          return
+        end
+
         var = declare_var(target)
         ptr = var[:ptr]
       end
@@ -453,7 +458,9 @@ module Crystal
 
     def visit_var(node)
       var = @vars[node.name]
-      if var[:type] == node.type
+      if var[:type].equal?(@mod.void)
+        # Nothing to do
+      elsif var[:type] == node.type
         @last = var[:ptr]
         @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
       elsif var[:type].nilable?
@@ -476,7 +483,9 @@ module Crystal
 
     def visit_casted_var(node)
       var = @vars[node.name]
-      if var[:type] == node.type
+      if var[:type].equal?(@mod.void)
+        # Nothing to do
+      elsif var[:type] == node.type
         @last = var[:ptr]
         @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
       elsif var[:type].nilable?
@@ -1530,6 +1539,8 @@ module Crystal
     def add_branched_block_value(branch, type, value)
       if !type || type.no_return?
         @builder.unreachable
+      elsif type.equal?(@mod.void)
+        # Nothing to do
       else
         if branch[:is_union]
           assign_to_union(branch[:union_ptr], branch[:node].type, type, value)
