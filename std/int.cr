@@ -61,6 +61,10 @@ class Int
     end
     self
   end
+
+  def modulo(other)
+    self % other
+  end
 end
 
 class Int8
