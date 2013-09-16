@@ -398,9 +398,11 @@ module Crystal
 
     def parse_atomic_with_method
       location = @token.location
-
       atomic = parse_atomic
+      parse_atomic_method_suffix atomic, location
+    end
 
+    def parse_atomic_method_suffix(atomic, location)
       while true
         atomic.location = location
 
@@ -1503,11 +1505,16 @@ module Crystal
 
       if @token.type == :"."
         obj = Var.new("#arg0")
-        while @token.type == :"."
-          next_token_skip_space
+        next_token_skip_space
+
+        location = @token.location
+
+        if @token.type == :"["
+          call = parse_atomic_method_suffix obj, location
+        else
           call = parse_var_or_call(false, true)
           call.obj = obj
-          obj = call
+          call = parse_atomic_method_suffix call, location
         end
 
         block = Block.new([Var.new("#arg0")], call)

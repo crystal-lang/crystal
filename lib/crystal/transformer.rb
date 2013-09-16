@@ -198,6 +198,7 @@ module Crystal
       node.obj = node.obj.transform(self) if node.obj
       transform_many node.args
       node.block = node.block.transform(self) if node.block
+      node.block_arg = node.block_arg.transform(self) if node.block_arg
       node
     end
 

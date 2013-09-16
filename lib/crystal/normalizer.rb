@@ -345,7 +345,9 @@ module Crystal
 
       exps << temp_var
 
-      Expressions.new(exps)
+      exps = Expressions.new(exps)
+      exps.location = node.location
+      exps
     end
 
     def transform_hash_literal(node)
