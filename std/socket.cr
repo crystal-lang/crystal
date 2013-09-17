@@ -11,10 +11,11 @@ lib C
   fun bind(fd : Int32, addr : SockAddrIn*, addr_len : Int32) : Int32
   fun listen(fd : Int32, backlog : Int32) : Int32
   fun accept(fd : Int32, addr : SockAddrIn*, addr_len : Int32*) : Int32
-  fun fdopen(fd : Int32, mode : Char*) : File
 end
 
-class Socket < IO
+class Socket
+  include IO
+
   def initialize(fd)
     @input = C.fdopen(fd, "r")
     @output = C.fdopen(fd, "w")

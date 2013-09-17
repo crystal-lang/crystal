@@ -1,9 +1,85 @@
 lib C
+  type File : Void*
+
   fun getchar : Char
   fun putchar(c : Char) : Char
   fun puts(str : Char*) : Int32
   fun printf(str : Char*, ...) : Char
   fun system(str : Char*) : Int32
+
+  fun fopen(filename : Char*, mode : Char*) : File
+  fun fputs(str : Char*, file : File) : Int32
+  fun fclose(file : File) : Int32
+  fun feof(file : File) : Int32
+  fun getline(linep : Char**, linecap : Int64*, file : File) : Int64
+  fun fflush(file : File) : Int32
+  fun fseek(file : File, offset : Int64, whence : Int32) : Int32
+  fun ftell(file : File) : Int64
+  fun fread(buffer : Char*, size : Int64, nitems : Int64, file : File) : Int32
+  fun access(filename : Char*, how : Int32) : Int32
+  fun realpath(path : Char*, resolved_path : Char*) : Char*
+  fun fdopen(fd : Int32, mode : Char*) : File
+  fun fgets(buffer : Char*, maxlength : Int32, file : File*) : Char*
+
+  SEEK_SET = 0
+  SEEK_CUR = 1
+  SEEK_END = 2
+
+  F_OK = 0
+  X_OK = 1 << 0
+  W_OK = 1 << 1
+  R_OK = 1 << 2
+end
+
+module IO
+  def print(string)
+    C.fputs string, output
+  end
+
+  def puts(string)
+    print string
+    C.fputs "\n", output
+  end
+
+  def gets
+    buffer = Pointer(Char).malloc(0)
+    buffer_ptr = buffer.ptr
+    cap = 0_i64
+    length = C.getline(buffer_ptr, cap.ptr, input)
+    length > 0 ? String.from_cstr(buffer) : nil
+  end
+
+  def eof?
+    C.feof(input) != 0
+  end
+
+  def flush
+    C.fflush output
+  end
+end
+
+class FileDescriptorStream
+  include IO
+
+  def initialize(fd, mode)
+    @fd = C.fdopen(fd, mode)
+  end
+
+  def input
+    @fd
+  end
+
+  def output
+    @fd
+  end
+end
+
+STDIN = FileDescriptorStream.new(0, "r")
+STDOUT = FileDescriptorStream.new(1, "w")
+STDERR = FileDescriptorStream.new(2, "w")
+
+def gets
+  STDIN.gets
 end
 
 def print(obj : Char)
