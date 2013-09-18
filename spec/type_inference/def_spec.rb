@@ -227,4 +227,41 @@ describe 'Type inference: def' do
       Foo.new.foo
       )) { int32 }
   end
+
+  it "lookups methods in super modules" do
+    assert_type(%q(
+      require "prelude"
+
+      module MatchesLookup
+        def lookup_matches(x = 1)
+          1
+        end
+      end
+
+      module DefContainer
+        include MatchesLookup
+      end
+
+      abstract class Type
+      end
+
+      abstract class ContainedType < Type
+      end
+
+      abstract class ModuleType < ContainedType
+        include DefContainer
+      end
+
+      class NonGenericModuleType < ModuleType
+      end
+
+      class GenericModuleType < ModuleType
+      end
+
+      b = [] of Type
+      b.push NonGenericModuleType.new
+      b.push GenericModuleType.new
+      b[0].lookup_matches
+      )) { int32 }
+  end
 end

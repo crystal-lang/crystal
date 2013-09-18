@@ -321,7 +321,7 @@ module Crystal
             break
           end
 
-          parent_matches = parent.lookup_matches_without_parents(name, arg_types, yields, parent_owner, type_lookup, matches.matches)
+          parent_matches = parent.lookup_matches_with_modules(name, arg_types, yields, parent_owner, type_lookup, matches.matches)
           return parent_matches unless parent_matches.empty?
 
           matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
