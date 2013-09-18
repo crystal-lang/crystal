@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'Code gen: faster array' do
+describe 'Code gen: array' do
   it "codegens array length" do
     run('require "array"; a = [1, 2]; a.length').to_i.should eq(2)
   end
