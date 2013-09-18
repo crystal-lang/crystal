@@ -13,6 +13,11 @@ if ENV["CI"]
   end
 end
 
+if ENV["COVERAGE"]
+  require 'simplecov'
+  SimpleCov.start
+end
+
 require(File.expand_path("../../lib/crystal",  __FILE__))
 
 RSpec.configure do |c|
