@@ -1526,7 +1526,7 @@ module Crystal
     end
 
     def new_branched_block(node)
-      branch = { node: node }
+      branch = { node: node, count: 0 }
       branch[:exit_block] = new_block "exit"
       if branch[:is_union] = node.type && node.type.union?
         branch[:union_ptr] = alloca llvm_type(node.type)
@@ -1541,6 +1541,7 @@ module Crystal
         @builder.unreachable
       elsif type.equal?(@mod.void)
         # Nothing to do
+        branch[:count] += 1
       else
         if branch[:is_union]
           assign_to_union(branch[:union_ptr], branch[:node].type, type, value)
@@ -1550,6 +1551,7 @@ module Crystal
           branch[:phi_table][@builder.insert_block] = value
         end
 
+        branch[:count] += 1
         @builder.br branch[:exit_block]
       end
     end
@@ -1561,8 +1563,11 @@ module Crystal
       else
         if branch[:is_union]
           @last = branch[:union_ptr]
-        elsif branch[:phi_table].empty?
+        elsif branch[:count] == 0
           @builder.unreachable
+        elsif branch[:phi_table].empty?
+          # All branches are void or no return
+          @last = llvm_nil
         else
           @last = @builder.phi llvm_type(branch[:node].type), branch[:phi_table]
         end
