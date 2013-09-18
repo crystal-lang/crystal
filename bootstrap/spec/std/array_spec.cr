@@ -225,20 +225,6 @@ describe "Array" do
     end
   end
 
-  describe "shift" do
-    it "shifts when non empty" do
-      a = [1, 2, 3]
-      a.shift.should eq(1)
-      a.should eq([2, 3])
-    end
-
-    it "shifts when empty" do
-      a = [] of Int32
-      a.shift.should be_nil
-      a.should eq([] of Int32)
-    end
-  end
-
   describe "unshift" do
     assert do
       a = [2, 3]
@@ -312,5 +298,37 @@ describe "Array" do
     a = [1, 2, [3]]
     b = [1, 2, [3]]
     a.hash.should eq(b.hash)
+  end
+
+  describe "pop" do
+    it "pops when non empty" do
+      a = [1, 2, 3]
+      a.pop.should eq(3)
+      a.should eq([1, 2])
+    end
+
+    it "raises when empty" do
+      begin
+        ([] of Int32).pop
+        fail "expected to raise Array::IndexOutOfBounds"
+      rescue Array::IndexOutOfBounds
+      end
+    end
+  end
+
+  describe "shift" do
+    it "shifts when non empty" do
+      a = [1, 2, 3]
+      a.shift.should eq(1)
+      a.should eq([2, 3])
+    end
+
+    it "raises when empty" do
+      begin
+        ([] of Int32).shift
+        fail "expected to raise Array::IndexOutOfBounds"
+      rescue Array::IndexOutOfBounds
+      end
+    end
   end
 end

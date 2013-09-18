@@ -89,13 +89,13 @@ class Array(T)
   end
 
   def pop
-    return nil if @length == 0
+    raise IndexOutOfBounds.new if @length == 0
     @length -= 1
     @buffer[@length]
   end
 
   def shift
-    return nil if @length == 0
+    raise IndexOutOfBounds.new if @length == 0
     value = @buffer[0]
     @length -=1
     @buffer.memmove(@buffer + 1, @length)
