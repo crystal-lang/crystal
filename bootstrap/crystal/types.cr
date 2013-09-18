@@ -11,6 +11,10 @@ module Crystal
     def type_id
       object_id
     end
+
+    def llvm_name
+      to_s
+    end
   end
 
   abstract class ContainedType < Type
@@ -26,16 +30,6 @@ module Crystal
     end
   end
 
-  module DefContainer
-    def defs
-      @defs ||= {} of String => Def
-    end
-
-    def add_def(a_def)
-      defs[a_def.name] = a_def
-    end
-  end
-
   module MatchesLookup
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
       a_def = defs[name]?
@@ -44,6 +38,18 @@ module Crystal
       else
         nil
       end
+    end
+  end
+
+  module DefContainer
+    include MatchesLookup
+
+    def defs
+      @defs ||= {} of String => Def
+    end
+
+    def add_def(a_def)
+      defs[a_def.name] = a_def
     end
   end
 
@@ -130,6 +136,7 @@ module Crystal
   end
 
   class NonGenericModuleType < ModuleType
+    include DefInstanceContainer
   end
 
   module InheritableClass
@@ -174,9 +181,12 @@ module Crystal
   end
 
   class NonGenericClassType < ClassType
+    include DefInstanceContainer
   end
 
   class PrimitiveType < ClassType
+    include DefInstanceContainer
+
     getter :llvm_type
     getter :llvm_size
 

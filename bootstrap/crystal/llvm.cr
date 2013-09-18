@@ -110,7 +110,7 @@ module LLVM
     end
 
     def add(name, arg_types, ret_type)
-      args = arg_types.map { |t| t.type }
+      args = arg_types.map &.type
       fun_type = LibLLVM.function_type(ret_type.type, args.buffer.as(LibLLVM::TypeRef), arg_types.length, 0)
       func = LibLLVM.add_function(@mod.llvm_module, name, fun_type)
       Function.new(func)

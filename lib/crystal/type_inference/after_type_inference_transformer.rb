@@ -193,7 +193,7 @@ module Crystal
     def transform_is_a(node)
       super
 
-      if node.obj.type
+      if node.obj.is_a?(Var) && node.obj.type
         filtered_type = node.obj.type.filter_by(node.const.type.instance_type)
 
         if node.obj.type.equal?(filtered_type)

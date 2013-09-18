@@ -167,7 +167,7 @@ module Crystal
           node.raise "superclass mismatch for class #{type.name} (#{superclass.name} for #{type.superclass.name})"
         end
       else
-        neeeds_force_add_subclass = true
+        needs_force_add_subclass = true
         if node.type_vars
           type = GenericClassType.new scope, name, superclass, node.type_vars, false
         else
@@ -181,7 +181,7 @@ module Crystal
       node.body.accept self
       @types.pop
 
-      type.force_add_subclass if neeeds_force_add_subclass
+      type.force_add_subclass if needs_force_add_subclass
 
       false
     end
@@ -901,7 +901,7 @@ module Crystal
       if node.global
         node.scope = @mod
       else
-        node.scope = @scope || (@types.last ? @types.last.metaclass : nil)
+        node.scope = @scope || @types.last.metaclass
       end
       node.parent_visitor = self
     end

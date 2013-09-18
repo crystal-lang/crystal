@@ -216,6 +216,7 @@ module Crystal
         end
       end
       flags << " -Wl,-allow_stack_execute" if RUBY_PLATFORM =~ /darwin/
+      flags << " -L#{`llvm-config-3.3 --libdir`.strip}"
       flags
     end
   end

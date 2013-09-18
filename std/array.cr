@@ -111,11 +111,13 @@ class Array(T)
   end
 
   def first
-    self[0]
+    raise IndexOutOfBounds.new if @length == 0
+    @buffer[0]
   end
 
   def last
-    self[@length - 1]
+    raise IndexOutOfBounds.new if @length == 0
+    @buffer[@length - 1]
   end
 
   def insert(index : Int, obj : T)

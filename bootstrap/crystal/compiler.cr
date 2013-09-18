@@ -46,7 +46,7 @@ module Crystal
 
         llvm_mod.write_bitcode bitcode_filename
 
-        system "llc #{bitcode_filename} -o - | clang -x assembler -o #{output_filename} -"
+        system "llc-3.3 #{bitcode_filename} -o - | clang -x assembler -o #{output_filename} -"
       rescue ex : Crystal::Exception
         puts ex
       end

@@ -70,7 +70,13 @@ module Crystal
       #   end
       # end
 
-      matches = lookup_matches_in(mod)
+      if obj = @obj
+        matches = lookup_matches_in(obj.type)
+      else
+        matches = lookup_matches_in(mod)
+      end
+
+
       # puts matches
 
       # If @target_defs is set here it means there was a recalculation
@@ -90,8 +96,8 @@ module Crystal
       # end
     end
 
-    def lookup_matches_in(owner, self_type = owner, def_name = self.name)
-      arg_types = args.map { |arg| arg.type }
+    def lookup_matches_in(owner : Type, self_type = owner, def_name = self.name)
+      arg_types = args.map &.type
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 
       if matches
@@ -114,6 +120,10 @@ module Crystal
           typed_def
         end
       end
+    end
+
+    def lookup_matches_in(owner : Nil)
+      raise "Bug: trying to lookup matches in nil"
     end
 
     # def lookup_matches_in(owner, self_type = owner, def_name = self.name)

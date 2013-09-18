@@ -17,7 +17,7 @@ describe "Type inference: def" do
   end
 
   it "assigns def owner" do
-    input = parse "class Int; def foo; 2.5; end; end; 1.foo"
+    input = parse "class Int32; def foo; 2.5; end; end; 1.foo"
     result = infer_type input
     program, input = result.program, result.node
     fail "Expected #{input} to be an Expressions" unless input.is_a?(Expressions)

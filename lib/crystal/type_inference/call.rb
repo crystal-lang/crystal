@@ -110,6 +110,8 @@ module Crystal
       end
 
       if matches.empty?
+        # binding.pry
+        owner.lookup_matches(def_name, arg_types, !!block)
         raise_matches_not_found(matches.owner || owner, def_name, matches)
       end
 

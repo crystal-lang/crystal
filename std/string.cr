@@ -212,6 +212,10 @@ class String
     replace { |my_char| char == my_char ? replacement : nil }
   end
 
+  def replace(char : Char, replacement : Char)
+    replace(char, replacement.to_s)
+  end
+
   def delete(char : Char)
     new_length = length
     str = Pointer(Char).malloc(length + 5)

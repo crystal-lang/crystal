@@ -91,18 +91,46 @@ module Crystal
     end
 
     def visit(node : Def)
-      @mod.add_def node
+      # if receiver = node.receiver
+        # # TODO: hack
+        # if node.receiver.is_a?(Var) && node.receiver.name == 'self'
+        #   target_type = current_type.metaclass
+        # else
+        #   target_type = lookup_ident_type(node.receiver).metaclass
+        # end
+      # else
+        target_type = current_type
+      # end
+
+      target_type.add_def node
+
       false
     end
 
     def visit(node : Call)
-      node.mod = @mod
-      node.parent_visitor = self
+      prepare_call(node)
+
+      if obj = node.obj
+        obj.accept self
+      end
+
       node.args.each do |arg|
         arg.accept self
       end
       node.recalculate
+
       false
+    end
+
+    def prepare_call(node)
+      node.mod = mod
+
+      # if node.global
+      #   node.scope = @mod
+      # else
+        node.scope = @scope #|| (@types.last ? @types.last.metaclass : nil)
+      # end
+      node.parent_visitor = self
     end
 
     def visit(node : ClassDef)
@@ -113,12 +141,38 @@ module Crystal
                    end
 
       if node.name.names.length == 1 && !node.name.global
-        # scope = current_type
-        # name = node.name.names.first
+        scope = current_type
+        name = node.name.names.first
       else
-        # name = node.name.names.pop
-        # scope = lookup_ident_type node.name
+        name = node.name.names.pop
+        scope = lookup_ident_type node.name
       end
+
+      type = scope.types[name]?
+      if type
+        # node.raise "#{name} is not a class" unless type.is_a?(ClassType)
+        # if node.superclass && type.superclass != superclass
+        #   node.raise "superclass mismatch for class #{type.name} (#{superclass.name} for #{type.superclass.name})"
+        # end
+      else
+        needs_force_add_subclass = true
+        # if node.type_vars
+        #   type = GenericClassType.new scope, name, superclass, node.type_vars, false
+        # else
+          raise "#{superclass} is not a class" unless superclass.is_a?(InheritableClass)
+          type = NonGenericClassType.new scope, name, superclass, false
+        # end
+        # type.abstract = node.abstract
+        scope.types[name] = type
+      end
+
+      @types.push type
+      node.body.accept self
+      @types.pop
+
+      type.force_add_subclass if needs_force_add_subclass
+
+      false
     end
 
     def lookup_var(name)
@@ -148,6 +202,10 @@ module Crystal
 
     def lookup_ident_type(node)
       raise "lookup_ident_type not implemented for #{node}"
+    end
+
+    def current_type
+      @types.last
     end
   end
 end

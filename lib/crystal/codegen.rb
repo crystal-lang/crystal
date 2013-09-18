@@ -1331,7 +1331,7 @@ module Crystal
         end
       end
 
-      codegen_call_or_invoke(fun, call_args, target_def.raises)
+      codegen_call_or_invoke(fun, call_args, target_def.raises) rescue binding.pry
 
       if has_struct_or_union_out_args
         call_args.each_with_index do |call_arg, i|

@@ -331,4 +331,34 @@ describe "Array" do
       end
     end
   end
+
+  describe "first" do
+    it "gets first when non empty" do
+      a = [1, 2, 3]
+      a.first.should eq(1)
+    end
+
+    it "raises when empty" do
+      begin
+        ([] of Int32).first
+        fail "expected to raise Array::IndexOutOfBounds"
+      rescue Array::IndexOutOfBounds
+      end
+    end
+  end
+
+  describe "last" do
+    it "gets last when non empty" do
+      a = [1, 2, 3]
+      a.last.should eq(3)
+    end
+
+    it "raises when empty" do
+      begin
+        ([] of Int32).last
+        fail "expected to raise Array::IndexOutOfBounds"
+      rescue Array::IndexOutOfBounds
+      end
+    end
+  end
 end
