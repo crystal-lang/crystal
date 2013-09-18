@@ -79,3 +79,4 @@ DEPENDENCIES
   ruby-graphviz
   ruby-llvm!
   ruby-prof!
+  simplecov
