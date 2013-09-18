@@ -11,6 +11,10 @@ if ENV["CI"]
     add_filter 'lib/crystal/graph.rb'
     add_filter 'lib/crystal/print_types_visitor.rb'
   end
+else
+  require 'simplecov'
+  require 'coveralls'
+  SimpleCov.start
 end
 
 require(File.expand_path("../../lib/crystal",  __FILE__))
@@ -114,112 +118,112 @@ end
 def rw(name, restriction = nil)
   %Q(
   def #{name}=(value#{restriction ? " : #{restriction}" : ""})
-    @#{name} = value
-  end
+      @#{name} = value
+    end
 
-  def #{name}
-    @#{name}
-  end
+    def #{name}
+      @#{name}
+    end
   )
-end
-
-# Extend some Ruby core classes to make it easier
-# to create Crystal AST nodes.
-
-class FalseClass
-  def bool
-    Crystal::BoolLiteral.new self
-  end
-end
-
-class TrueClass
-  def bool
-    Crystal::BoolLiteral.new self
-  end
-end
-
-class Fixnum
-  def int32
-    Crystal::NumberLiteral.new self, :i32
   end
 
-  def int64
-    Crystal::NumberLiteral.new self, :i64
+  # Extend some Ruby core classes to make it easier
+  # to create Crystal AST nodes.
+
+  class FalseClass
+    def bool
+      Crystal::BoolLiteral.new self
+    end
   end
 
-  def float32
-    Crystal::NumberLiteral.new self.to_f, :f32
+  class TrueClass
+    def bool
+      Crystal::BoolLiteral.new self
+    end
   end
 
-  def float64
-    Crystal::NumberLiteral.new self.to_f, :f64
-  end
-end
+  class Fixnum
+    def int32
+      Crystal::NumberLiteral.new self, :i32
+    end
 
-class Float
-  def float32
-    Crystal::NumberLiteral.new self, :f32
-  end
+    def int64
+      Crystal::NumberLiteral.new self, :i64
+    end
 
-  def float64
-    Crystal::NumberLiteral.new self, :f64
-  end
-end
+    def float32
+      Crystal::NumberLiteral.new self.to_f, :f32
+    end
 
-class String
-  def var
-    Crystal::Var.new self
+    def float64
+      Crystal::NumberLiteral.new self.to_f, :f64
+    end
   end
 
-  def arg
-    Crystal::Arg.new self
+  class Float
+    def float32
+      Crystal::NumberLiteral.new self, :f32
+    end
+
+    def float64
+      Crystal::NumberLiteral.new self, :f64
+    end
   end
 
-  def call(*args)
-    Crystal::Call.new nil, self, args
+  class String
+    def var
+      Crystal::Var.new self
+    end
+
+    def arg
+      Crystal::Arg.new self
+    end
+
+    def call(*args)
+      Crystal::Call.new nil, self, args
+    end
+
+    def ident(global = false)
+      Crystal::Ident.new [self], global
+    end
+
+    def instance_var
+      Crystal::InstanceVar.new self
+    end
+
+    def class_var
+      Crystal::ClassVar.new self
+    end
+
+    def string
+      Crystal::StringLiteral.new self
+    end
+
+    def symbol
+      Crystal::SymbolLiteral.new self
+    end
   end
 
-  def ident(global = false)
-    Crystal::Ident.new [self], global
+  class Array
+    def ident
+      Ident.new self
+    end
+
+    def array
+      Crystal::ArrayLiteral.new self
+    end
+
+    def array_of(type)
+      Crystal::ArrayLiteral.new self, type
+    end
   end
 
-  def instance_var
-    Crystal::InstanceVar.new self
-  end
+  class Crystal::ASTNode
+    def not
+        Call.new(self, :"!@")
+    end
 
-  def class_var
-    Crystal::ClassVar.new self
+    def pointer_of
+      NewGenericClass.new(Ident.new(["Pointer"], true), [self])
+    end
   end
-
-  def string
-    Crystal::StringLiteral.new self
-  end
-
-  def symbol
-    Crystal::SymbolLiteral.new self
-  end
-end
-
-class Array
-  def ident
-    Ident.new self
-  end
-
-  def array
-    Crystal::ArrayLiteral.new self
-  end
-
-  def array_of(type)
-    Crystal::ArrayLiteral.new self, type
-  end
-end
-
-class Crystal::ASTNode
-  def not
-    Call.new(self, :"!@")
-  end
-
-  def pointer_of
-    NewGenericClass.new(Ident.new(["Pointer"], true), [self])
-  end
-end
