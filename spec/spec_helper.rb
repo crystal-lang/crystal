@@ -11,6 +11,10 @@ if ENV["CI"]
     add_filter 'lib/crystal/graph.rb'
     add_filter 'lib/crystal/print_types_visitor.rb'
   end
+else
+  require 'simplecov'
+  require 'coveralls'
+  SimpleCov.start
 end
 
 require(File.expand_path("../../lib/crystal",  __FILE__))
