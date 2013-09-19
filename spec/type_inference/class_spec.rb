@@ -517,4 +517,32 @@ describe 'Type inference: class' do
     mod.types["Foo"].instance_vars["@baz"].type.should eq(mod.types["Baz"])
     mod.types["Foo"].instance_vars["@another"].type.should eq(mod.int32)
   end
+
+  it "checks instance vars of included modules" do
+    mod, input = assert_type(%q(
+      module Lala
+        def lala
+          @x = 'a'
+        end
+      end
+
+      class Foo
+        include Lala
+      end
+
+      class Bar < Foo
+        include Lala
+
+        def initialize
+          @x = 1
+        end
+      end
+
+      b = Bar.new
+      f = Foo.new
+      f.lala
+      )) { char }
+    mod.types["Foo"].instance_vars['@x'].type.should eq(mod.union_of(mod.nil, mod.int32, mod.char))
+    mod.types["Bar"].instance_vars.should be_empty
+  end
 end

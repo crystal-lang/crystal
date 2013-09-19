@@ -767,6 +767,12 @@ module Crystal
     def add_def(a_def)
       super
 
+      transfer_instance_vars a_def
+
+      a_def
+    end
+
+    def transfer_instance_vars(a_def)
       if a_def.instance_vars
         a_def.instance_vars.each do |ivar|
           unless superclass.owns_instance_var?(ivar)
@@ -795,8 +801,23 @@ module Crystal
           end
         end
       end
+    end
 
-      a_def
+    def transfer_instance_vars_of_mod(mod)
+      mod.defs.each do |def_name, hash|
+        hash.each do |restrictions, a_def|
+          transfer_instance_vars a_def
+        end
+      end
+
+      mod.parents.each do |parent|
+        transfer_instance_vars_of_mod parent
+      end
+    end
+
+    def include(mod)
+      super mod
+      transfer_instance_vars_of_mod mod
     end
 
     def each_subclass(type, &block)
@@ -1073,7 +1094,7 @@ module Crystal
     attr_reader :including_class
     attr_reader :mapping
 
-    delegate [:container, :name, :implements?, :lookup_matches, :lookup_matches_without_parents, :lookup_defs, :lookup_similar_defs, :match_arg, :lookup_macro, :parents] => :@module
+    delegate [:container, :name, :implements?, :lookup_matches, :lookup_matches_without_parents, :lookup_defs, :lookup_similar_defs, :match_arg, :lookup_macro, :parents, :defs] => :@module
 
     def initialize(a_module, a_class, mapping)
       @module = a_module
