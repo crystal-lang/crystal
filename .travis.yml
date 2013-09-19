@@ -4,4 +4,7 @@ before_install:
   - sudo sh -c 'wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -'
   - sudo apt-get update -qq
   - sudo apt-get install -qq llvm-3.3 libpcre3-dev libunwind7-dev
-script: bundle exec rspec spec
+script:
+  - bundle exec rspec spec
+  - bin/crystal bootstrap/spec/crystal_spec.cr
+  - ./crystal_spec
