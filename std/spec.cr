@@ -12,6 +12,8 @@ module Spec
   end
 
   class RootContext < Context
+    getter :has_failures
+
     def initialize
       @results = [] of Result
       @has_failures = false
@@ -37,6 +39,10 @@ module Spec
 
     def self.print_results
       @@instance.print_results
+    end
+
+    def self.has_failures
+      @@instance.has_failures
     end
 
     def print_results
@@ -191,7 +197,7 @@ end
 fun main(argc : Int32, argv : Char**) : Int32
   CrystalMain.__crystal_main(argc, argv)
   Spec::RootContext.print_results
-  0
+  Spec::RootContext.has_failures ? 1 : 0
 rescue ex
   puts ex
   1
