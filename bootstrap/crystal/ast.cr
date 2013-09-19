@@ -27,7 +27,7 @@ module Crystal
       true
     end
 
-    def ==(other : Nop)
+    def ==(other : self)
       true
     end
 
@@ -1194,6 +1194,22 @@ module Crystal
 
     def clone_without_location
       EnumDef.new(@name, @constants.clone)
+    end
+  end
+
+  abstract class Primitive < ASTNode
+  end
+
+  class PrimitiveBody < Primitive
+    property :block
+
+    def initialize(type, block)
+      @type = type
+      @block = block
+    end
+
+    def clone_without_location
+      self
     end
   end
 end

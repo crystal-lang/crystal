@@ -39,4 +39,8 @@ describe "Type inference: primitives" do
   it "types an expression" do
     assert_type("1; 'a'") { char }
   end
+
+  it "types 1 + 2" do
+    assert_type("1 + 2") { int32 }
+  end
 end

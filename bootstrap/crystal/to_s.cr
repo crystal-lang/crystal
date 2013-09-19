@@ -645,6 +645,10 @@ module Crystal
       false
     end
 
+    def visit(node : PrimitiveBody)
+      @str << "<primitive>"
+    end
+
     def append_indent
       @indent.times do
         @str << "  "

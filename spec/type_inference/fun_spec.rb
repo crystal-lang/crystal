@@ -111,4 +111,13 @@ describe 'Type inference: fun' do
       foo &f
       )) { float64 }
   end
+
+  it "binds fun literal to arguments and body" do
+    assert_type(%q(
+      $x = 1
+      f = -> { $x }
+      $x = 'a'
+      f
+    )) { fun_of(union_of(int32, char)) }
+  end
 end

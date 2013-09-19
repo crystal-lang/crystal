@@ -47,6 +47,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_store = LLVMBuildStore(builder : BuilderRef, value : ValueRef, ptr : ValueRef)
   fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : Char*) : ValueRef
   fun build_bit_cast = LLVMBuildBitCast(builder : BuilderRef, value : ValueRef, type : TypeRef, name : Char*) : ValueRef
+  fun build_add = LLVMBuildAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -68,6 +69,7 @@ lib LibLLVM("LLVM-3.3")
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
+  fun dump_value = LLVMDumpValue(val : ValueRef)
 end
 
 module LLVM
@@ -75,6 +77,10 @@ module LLVM
     LibLLVM.initialize_x86_target_info
     LibLLVM.initialize_x86_target
     LibLLVM.initialize_x86_target_mc
+  end
+
+  def self.dump(value)
+    LibLLVM.dump_value value
   end
 
   class Module
@@ -231,6 +237,10 @@ module LLVM
 
     def bit_cast(value, type, name = "")
       LibLLVM.build_bit_cast(@builder, value, type.type, name)
+    end
+
+    def add(lhs, rhs, name = "")
+      LibLLVM.build_add(@builder, lhs, rhs, name)
     end
   end
 

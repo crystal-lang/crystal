@@ -3,6 +3,7 @@ require "type_inference"
 require "visitor"
 require "llvm"
 require "codegen/*"
+require "program"
 
 LLVM.init_x86
 
@@ -62,6 +63,7 @@ module Crystal
       @const_block_entry = @const_block
       @vars = {} of String => LLVMVar
       @strings = {} of String => LibLLVM::ValueRef
+      @type = @mod
       @last = LLVM::Int1.from_i(0)
     end
 
@@ -76,6 +78,10 @@ module Crystal
       @builder.position_at_end entry
       @builder.call @llvm_mod.functions["crystal_main"]
       @builder.ret LLVM::Int32.from_i(0)
+    end
+
+    def visit(node : PrimitiveBody)
+      @last = node.block.call(@builder, @fun, @llvm_mod, @type)
     end
 
     def visit(node : ASTNode)
@@ -244,12 +250,19 @@ module Crystal
 
       call_args = [] of LibLLVM::ValueRef
 
+      if obj = node.obj
+        accept(obj)
+        call_args << @last
+      end
+
       node.args.each_with_index do |arg, i|
         accept(arg)
         call_args << @last
       end
 
       codegen_call(node, owner, call_args)
+
+      false
     end
 
     def codegen_call(node, self_type, call_args)
@@ -273,14 +286,15 @@ module Crystal
       old_vars = @vars
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
+      old_type = @type
 
       @vars = {} of String => LLVMVar
 
       args = [] of Arg
-      # if self_type && self_type.passed_as_self?
-      #   @type = self_type
-      #   args << Var.new("self", self_type)
-      # end
+      if self_type && self_type.passed_as_self?
+        @type = self_type
+        args << Arg.new_with_type("self", self_type)
+      end
       args.concat target_def.args
 
       @fun = @llvm_mod.functions.add(
@@ -327,6 +341,7 @@ module Crystal
       @fun = old_fun
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
+      @type = old_type
 
       the_fun
     end

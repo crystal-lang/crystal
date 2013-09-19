@@ -109,4 +109,17 @@ module Crystal
       type.metaclass
     end
   end
+
+  class FunLiteral
+    attr_accessor :mod
+
+    def update(from)
+      types = self.def.args.map(&:type)
+      types.push self.def.body.type
+
+      unless types.any?(&:nil?)
+        self.type = mod.fun_of(*types)
+      end
+    end
+  end
 end

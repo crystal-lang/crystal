@@ -53,10 +53,16 @@ module Crystal
       string = @types["String"] = PrimitiveType.new self, "String", value, LLVM::PointerType.new(LLVM::Int8), 8
 
       @temp_var_counter = 0
+
+      define_primitives
     end
 
     def program
       self
+    end
+
+    def passed_as_self?
+      false
     end
 
     def lookup_type(names, already_looked_up = Set(UInt64).new, lookup_in_container = true)

@@ -12,6 +12,10 @@ module Crystal
       object_id
     end
 
+    def passed_as_self?
+      true
+    end
+
     def llvm_name
       to_s
     end

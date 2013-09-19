@@ -1,3 +1,4 @@
+#!/usr/bin/env bin/crystal -run
 require "../../spec_helper"
 
 describe "Code gen: primitives" do
@@ -28,5 +29,9 @@ describe "Code gen: primitives" do
 
   it "codegens string" do
     run(%("foo")).to_string.should eq("foo")
+  end
+
+  it "codegens 1 + 2" do
+    run(%(1 + 2)).to_i.should eq(3)
   end
 end

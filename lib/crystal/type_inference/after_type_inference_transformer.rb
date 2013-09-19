@@ -125,6 +125,13 @@ module Crystal
           node.target_defs = allocated_defs
           node.bind_to *allocated_defs
         end
+
+        if node.target_defs.empty?
+          exps = []
+          exps.push node.obj if node.obj
+          node.args.each { |arg| exps.push arg }
+          return Expressions.from exps
+        end
       end
 
       check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)

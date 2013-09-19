@@ -81,7 +81,6 @@ module Crystal
       @nil_var = Var.new('<nil_var>', self.nil)
       @temp_var_counter = 0
 
-
       define_primitives
     end
 
