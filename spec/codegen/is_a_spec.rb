@@ -1,6 +1,14 @@
 require 'spec_helper'
 
 describe 'Codegen: is_a?' do
+  before :all do
+    @program = Program.new
+  end
+
+  def run(code)
+    @program.run(code)
+  end
+
   it "codegens is_a? true for simple type" do
     run("1.is_a?(Int)").to_b.should be_true
   end
@@ -148,6 +156,7 @@ describe 'Codegen: is_a?' do
   it "evaluates method on filtered union type 3" do
     run(%q(
       require "prelude"
+
       a = 1
       a = [1.1]
       a = [5]
@@ -188,29 +197,36 @@ describe 'Codegen: is_a?' do
       )).to_i.should eq(1)
   end
 
-  it "codegens is_a? with hierarchy" do
-    run(%q(
-      class Foo
-      end
+  context "with hierarchy" do
+    def run(code)
+      @program = Program.new
+      @program.run(code)
+    end
 
-      class Bar < Foo
-      end
+    it "codegens is_a? with hierarchy" do
+      run(%q(
+        class Foo
+        end
 
-      foo = Bar.new || Foo.new
-      foo.is_a?(Bar) ? 1 : 2
-      )).to_i.should eq(1)
-  end
+        class Bar < Foo
+        end
 
-  it "codegens is_a? with hierarchy and nil" do
-    run(%q(
-      class Foo
-      end
+        foo = Bar.new || Foo.new
+        foo.is_a?(Bar) ? 1 : 2
+        )).to_i.should eq(1)
+    end
 
-      class Bar < Foo
-      end
+    it "codegens is_a? with hierarchy and nil" do
+      run(%q(
+        class Foo
+        end
 
-      f = Foo.new || Bar.new || nil
-      f.is_a?(Foo) ? 1 : 2
-      )).to_i.should eq(1)
+        class Bar < Foo
+        end
+
+        f = Foo.new || Bar.new || nil
+        f.is_a?(Foo) ? 1 : 2
+        )).to_i.should eq(1)
+    end
   end
 end
