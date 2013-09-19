@@ -16,6 +16,11 @@ module Crystal
 
       define_number_operations
       define_math_primitives
+
+      singleton(self, 'debugger', {}, void) do |b, f, llvm_mod|
+        int3_type = LLVM::Type.function([], LLVM.Void)
+        b.call LLVM::C.const_inline_asm int3_type, "int3", "", 1, 0
+      end
     end
 
     def define_object_primitives
