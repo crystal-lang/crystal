@@ -73,7 +73,7 @@ module Crystal
       last = @last
       last.is_a?(LibLLVM::ValueRef) ? @builder.ret(last) : @builder.ret
 
-      @fun = @llvm_mod.functions.add "main", [] of LLVM::Type, LLVM::Int32
+      @fun = @llvm_mod.functions.add "main", ([] of LLVM::Type), LLVM::Int32
       entry = new_block "entry"
       @builder.position_at_end entry
       @builder.call @llvm_mod.functions["crystal_main"]

@@ -184,9 +184,9 @@ describe "Parser" do
   it_parses "def foo; a; end", Def.new("foo", [] of Arg, "a".call)
   it_parses "def foo(a); a; end", Def.new("foo", ["a".arg], "a".var)
   it_parses "def foo; a = 1; a; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), "a".var])
-  it_parses "def foo; a = 1; a {}; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "a", [] of ASTNode, Block.new)])
-  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "x", [] of ASTNode, Block.new([] of ASTNode, ["a".var]))])
-  it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", [] of ASTNode, Block.new(["a".var] of ASTNode, ["a".var] of ASTNode))])
+  it_parses "def foo; a = 1; a {}; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "a", ([] of ASTNode), Block.new)])
+  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "x", ([] of ASTNode), Block.new([] of ASTNode, ["a".var]))])
+  it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", ([] of ASTNode), Block.new(["a".var] of ASTNode, ["a".var] of ASTNode))])
 
   it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int32)], nil)
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int32)], nil)
@@ -292,13 +292,13 @@ describe "Parser" do
   it_parses "while true; end;", While.new(true.bool)
   it_parses "while true; 1; end;", While.new(true.bool, 1.int32)
 
-  it_parses "foo do; 1; end", Call.new(nil, "foo", [] of ASTNode, Block.new([] of ASTNode, 1.int32))
-  it_parses "foo do |a|; 1; end", Call.new(nil, "foo", [] of ASTNode, Block.new(["a".var], 1.int32))
+  it_parses "foo do; 1; end", Call.new(nil, "foo", ([] of ASTNode), Block.new([] of ASTNode, 1.int32))
+  it_parses "foo do |a|; 1; end", Call.new(nil, "foo", ([] of ASTNode), Block.new(["a".var], 1.int32))
 
-  it_parses "foo { 1 }", Call.new(nil, "foo", [] of ASTNode, Block.new([] of ASTNode, 1.int32))
-  it_parses "foo { |a| 1 }", Call.new(nil, "foo", [] of ASTNode, Block.new(["a".var], 1.int32))
-  it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", [] of ASTNode, Block.new(["a".var, "b".var], 1.int32))
-  it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", [] of ASTNode, Block.new([] of ASTNode, 1.int32))
+  it_parses "foo { 1 }", Call.new(nil, "foo", ([] of ASTNode), Block.new([] of ASTNode, 1.int32))
+  it_parses "foo { |a| 1 }", Call.new(nil, "foo", ([] of ASTNode), Block.new(["a".var], 1.int32))
+  it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", ([] of ASTNode), Block.new(["a".var, "b".var], 1.int32))
+  it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", ([] of ASTNode), Block.new([] of ASTNode, 1.int32))
 
   it_parses "1 ? 2 : 3", If.new(1.int32, 2.int32, 3.int32)
   it_parses "1 ? a : b", If.new(1.int32, "a".call, "b".call)
@@ -479,7 +479,7 @@ describe "Parser" do
   it_parses "begin; 1; rescue ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
   it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
 
-  it_parses "def foo(); 1; rescue; 2; end", Def.new("foo", [] of Arg, ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
+  it_parses "def foo(); 1; rescue; 2; end", Def.new("foo", ([] of Arg), ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
 
   it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
 
