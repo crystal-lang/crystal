@@ -1003,10 +1003,15 @@ module Crystal
       end
 
       if allow_type_vars && @token.type == :'('
+        next_token_skip_space
+
         types = parse_types
         if types.empty?
           raise "must specify at least one type var"
         end
+
+        check :")"
+        next_token_skip_space
 
         const = NewGenericClass.new const, types
         const.location = location
