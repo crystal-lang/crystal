@@ -549,7 +549,7 @@ module Crystal
         next_token_skip_space
         if @token.keyword?(:of)
           next_token_skip_space_or_newline
-          of = parse_type
+          of = parse_single_type
           ArrayLiteral.new([], of)
         else
           raise "for empty arrays use '[] of ElementType'", line, column
@@ -730,7 +730,7 @@ module Crystal
       check :":"
       next_token_skip_space_or_newline
 
-      type = parse_type
+      type = parse_single_type
 
       if @token.type == :","
         next_token_skip_space_or_newline
@@ -769,16 +769,13 @@ module Crystal
         raise "unexpected token #{@token}"
       end
 
-      types = []
       if @token.type == :"("
         next_token_skip_space
-        while @token.type != :")"
-          types << parse_type
-          if @token.type == :","
-            next_token_skip_space
-          end
-        end
+        types = parse_types
+        check :")"
         next_token_skip_space
+      else
+        types = []
       end
 
       FunPointer.new(obj, name, types)
@@ -799,7 +796,7 @@ module Crystal
       of = nil
       if @token.keyword?(:of)
         next_token_skip_space_or_newline
-        of = parse_type
+        of = parse_single_type
       end
 
       Crystal::ArrayLiteral.new exps, of
@@ -834,10 +831,10 @@ module Crystal
       of_value = nil
       if @token.keyword?(:of)
         next_token_skip_space_or_newline
-        of_key = parse_type
+        of_key = parse_single_type
         check :"=>"
         next_token_skip_space_or_newline
-        of_value = parse_type
+        of_value = parse_single_type
       end
 
       if keys.length == 0 && !of_key
@@ -1019,71 +1016,62 @@ module Crystal
     end
 
     def parse_types
-      next_token_skip_space_or_newline
+      Array(parse_type)
+    end
 
-      type_vars = []
-      while true
-        type_vars.push parse_type
+    def parse_single_type
+      location = @token.location
+      type = parse_type
+      if type.is_a?(Array)
+        raise "unexpected ',' in type", location[0], location[1]
+      end
+      type
+    end
 
-        case @token.type
-        when :","
-          next_token_skip_space_or_newline
-        when :")"
-          break
-        else
-          raise "expecting ',' or ')'"
+    def parse_type
+      location = @token.location
+
+      if @token.type == :"->"
+        input_types = nil
+      else
+        input_types = Array(parse_type_union)
+        if @token.type == :"," && next_comes_uppercase
+          while @token.type == :"," && next_comes_uppercase
+            next_token_skip_space_or_newline
+            input_types << parse_type_union
+          end
         end
       end
 
-      next_token_skip_space
-
-      type_vars
+      if @token.type == :"->"
+        next_token_skip_space
+        case @token.type
+        when :",", :")"
+          return_type = nil
+        when :NEWLINE
+          skip_space_or_newline
+          return_type = nil
+        else
+          return_type = parse_type_union
+        end
+        type = FunTypeSpec.new(input_types, return_type)
+        type.location = location
+        type
+      else
+        if input_types.length == 1
+          input_types[0]
+        else
+          input_types
+        end
+      end
     end
 
-    def parse_type(allow_commas = false)
+    def parse_type_union
       types = []
-
-      while true
-        location = @token.location
-
-        if @token.type == :"->"
-          type = nil
-        else
-          type = parse_type_with_suffix
-
-          if allow_commas && @token.type == :","
-            input_types = [type]
-            while @token.type == :","
-              next_token_skip_space_or_newline
-              input_types << parse_type_with_suffix
-            end
-          else
-            input_types = nil
-          end
-        end
-
-        if @token.type == :"->"
-          next_token_skip_space
-          case @token.type
-          when :",", :")"
-            return_type = nil
-          when :NEWLINE
-            skip_space_or_newline
-            return_type = nil
-          else
-            return_type = parse_type_with_suffix
-          end
-          type = FunTypeSpec.new((input_types || (type ? [type] : nil)), return_type)
-          type.location = location
-        end
-
-        types.push type
-
-        if @token.type == :"|"
-          next_token_skip_space_or_newline
-        else
-          break
-        end
+      types << parse_type_with_suffix
+      while @token.type == :"|"
+        next_token_skip_space_or_newline
+        types << parse_type_with_suffix
       end
 
       if types.length == 1
@@ -1102,7 +1090,7 @@ module Crystal
 
       if @token.type == :"("
         next_token_skip_space_or_newline
-        type = parse_type(true)
+        type = parse_type
         check :")"
         next_token_skip_space
         return type
@@ -1762,7 +1750,8 @@ module Crystal
 
       if @token.type == :':'
         next_token_skip_space_or_newline
-        type_restriction = parse_type
+        location = @token.location
+        type_restriction = parse_single_type
       end
 
       arg = Arg.new(arg_name, default_value, type_restriction)
@@ -1792,7 +1781,7 @@ module Crystal
 
         location = @token.location
 
-        type_spec = parse_type(true)
+        type_spec = parse_single_type
         unless type_spec.is_a?(FunTypeSpec)
           raise "expected block argument type to be a function", location[0], location[1]
         end
@@ -1975,7 +1964,7 @@ module Crystal
           next_token_skip_space_or_newline
           check :":"
           next_token_skip_space_or_newline
-          type = parse_type(true)
+          type = parse_single_type
           skip_statement_end
           expressions << ExternalVar.new(name, type)
         else
@@ -2025,7 +2014,7 @@ module Crystal
           check :':'
           next_token_skip_space_or_newline
 
-          arg_type = parse_type
+          arg_type = parse_single_type
 
           skip_space_or_newline
 
@@ -2045,7 +2034,7 @@ module Crystal
       if @token.type == :':'
         next_token_skip_space_or_newline
 
-        return_type = parse_type(true)
+        return_type = parse_single_type
       end
 
       skip_statement_end
@@ -2079,7 +2068,7 @@ module Crystal
       check :':'
       next_token_skip_space_or_newline
 
-      type = parse_type(true)
+      type = parse_single_type
 
       skip_statement_end
 
@@ -2126,7 +2115,7 @@ module Crystal
             check :':'
             next_token_skip_space_or_newline
 
-            type = parse_type(true)
+            type = parse_single_type
 
             skip_statement_end
 

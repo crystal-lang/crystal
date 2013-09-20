@@ -310,6 +310,10 @@ module Crystal
       @token.filename = @filename
     end
 
+    def next_comes_uppercase
+      match?(/\s*[A-Z]/)
+    end
+
     def next_token_skip_space
       next_token
       skip_space
