@@ -10,7 +10,15 @@ module Crystal
     end
 
     def expand(node)
-      macro_call = Call.new(nil, @macro_name, node.args.map(&:to_crystal_node))
+      args = node.args.map do |arg|
+        if arg.is_a?(Call) && !arg.obj && !arg.block && !arg.block_arg && arg.args.length == 0
+          Var.new(arg.name)
+        else
+          arg
+        end
+      end
+
+      macro_call = Call.new(nil, @macro_name, args.map(&:to_crystal_node))
       macro_nodes = Expressions.new [@typed_def, macro_call]
       macro_nodes = @mod.normalize(macro_nodes)
 
@@ -30,7 +38,7 @@ module Crystal
 
       @mod.load_libs
 
-      macro_args = node.args.map &:to_crystal_binary
+      macro_args = args.map &:to_crystal_binary
       macro_value = @engine.run_function fun, *macro_args
 
       macro_value.to_string

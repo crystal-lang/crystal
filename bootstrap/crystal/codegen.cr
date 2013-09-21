@@ -314,13 +314,14 @@ module Crystal
         new_entry_block
 
         args.each_with_index do |arg, i|
+          if target_def.body.is_a?(Primitive)
           # if (self_type && i == 0 && !self_type.union?) || target_def.body.is_a?(Primitive) || arg.type.passed_by_val?
-          #   @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
-          # else
+            @vars[arg.name] = LLVMVar.new(@fun.get_param(i), arg.type) #{ ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
+          else
             pointer = alloca(llvm_type(arg.type), arg.name)
             @vars[arg.name] = LLVMVar.new(pointer, arg.type)
             @builder.store @fun.get_param(i), pointer
-          # end
+          end
         end
 
         if body

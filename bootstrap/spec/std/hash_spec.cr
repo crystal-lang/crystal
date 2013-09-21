@@ -143,6 +143,12 @@ describe "Hash" do
     end
   end
 
+  it "maps" do
+    hash = {1 => 2, 3 => 4}
+    array = hash.map { |k, v| k + v }
+    array.should eq([3, 7])
+  end
+
   describe "to_s" do
     assert { {1 => 2, 3 => 4}.to_s.should eq("{1 => 2, 3 => 4}") }
   end

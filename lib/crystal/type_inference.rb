@@ -981,7 +981,7 @@ module Crystal
       end
 
       node.target_macro = generated_nodes
-      node.type = generated_nodes.type
+      node.bind_to generated_nodes
 
       true
     end

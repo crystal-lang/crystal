@@ -127,6 +127,14 @@ class Hash(K, V)
     values
   end
 
+  def map(&block : K, V -> U)
+    array = Array(U).new(@length)
+    each do |k, v|
+      array.push yield k, v
+    end
+    array
+  end
+
   def ==(other : self)
     return false unless length == other.length
     each do |key, value|

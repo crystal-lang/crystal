@@ -48,6 +48,9 @@ lib LibLLVM("LLVM-3.3")
   fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : Char*) : ValueRef
   fun build_bit_cast = LLVMBuildBitCast(builder : BuilderRef, value : ValueRef, type : TypeRef, name : Char*) : ValueRef
   fun build_add = LLVMBuildAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_sub = LLVMBuildSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_mul = LLVMBuildMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_sdiv = LLVMBuildSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -241,6 +244,18 @@ module LLVM
 
     def add(lhs, rhs, name = "")
       LibLLVM.build_add(@builder, lhs, rhs, name)
+    end
+
+    def sub(lhs, rhs, name = "")
+      LibLLVM.build_sub(@builder, lhs, rhs, name)
+    end
+
+    def mul(lhs, rhs, name = "")
+      LibLLVM.build_mul(@builder, lhs, rhs, name)
+    end
+
+    def sdiv(lhs, rhs, name = "")
+      LibLLVM.build_sdiv(@builder, lhs, rhs, name)
     end
   end
 
