@@ -51,6 +51,10 @@ lib LibLLVM("LLVM-3.3")
   fun build_sub = LLVMBuildSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_mul = LLVMBuildMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_sdiv = LLVMBuildSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_fadd = LLVMBuildFAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_fsub = LLVMBuildFSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_fmul = LLVMBuildFMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_fdiv = LLVMBuildFDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -242,21 +246,20 @@ module LLVM
       LibLLVM.build_bit_cast(@builder, value, type.type, name)
     end
 
-    def add(lhs, rhs, name = "")
-      LibLLVM.build_add(@builder, lhs, rhs, name)
-    end
+    macro self.define_binary(name)"
+      def #{name}(lhs, rhs, name = \"\")
+        LibLLVM.build_#{name}(@builder, lhs, rhs, name)
+      end
+    "end
 
-    def sub(lhs, rhs, name = "")
-      LibLLVM.build_sub(@builder, lhs, rhs, name)
-    end
-
-    def mul(lhs, rhs, name = "")
-      LibLLVM.build_mul(@builder, lhs, rhs, name)
-    end
-
-    def sdiv(lhs, rhs, name = "")
-      LibLLVM.build_sdiv(@builder, lhs, rhs, name)
-    end
+    define_binary add
+    define_binary sub
+    define_binary mul
+    define_binary sdiv
+    define_binary fadd
+    define_binary fsub
+    define_binary fmul
+    define_binary fdiv
   end
 
   abstract class Type

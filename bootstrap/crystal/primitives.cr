@@ -5,16 +5,32 @@ require "program"
 module Crystal
   class Program
     macro define_binary(op, owner, name, arg_type, return_type)"
-      singleton(int32, \"#{name}\", {\"other\" => #{arg_type}}, #{return_type}, ->(b : LLVM::Builder, f : LLVM::Function, llvm_mod : LLVM::Module, self_type : Type | Program) {
+      singleton(#{owner}, \"#{name}\", {\"other\" => #{arg_type}}, #{return_type}, ->(b : LLVM::Builder, f : LLVM::Function, llvm_mod : LLVM::Module, self_type : Type | Program) {
         b.#{op} f.get_param(0), f.get_param(1)
       })
     "end
 
+    macro define_int_binaries(owner)"
+      define_binary add, #{owner}, \"+\", #{owner}, #{owner}
+      define_binary sub, #{owner}, \"-\", #{owner}, #{owner}
+      define_binary mul, #{owner}, \"*\", #{owner}, #{owner}
+      define_binary sdiv, #{owner}, \"/\", #{owner}, #{owner}
+    "end
+
+    macro define_float_binaries(owner)"
+      define_binary fadd, #{owner}, \"+\", #{owner}, #{owner}
+      define_binary fsub, #{owner}, \"-\", #{owner}, #{owner}
+      define_binary fmul, #{owner}, \"*\", #{owner}, #{owner}
+      define_binary fdiv, #{owner}, \"/\", #{owner}, #{owner}
+    "end
+
     def define_primitives
-      define_binary add, int32, "+", int32, int32
-      define_binary sub, int32, "-", int32, int32
-      define_binary mul, int32, "*", int32, int32
-      define_binary sdiv, int32, "/", int32, int32
+      define_int_binaries int8
+      define_int_binaries int16
+      define_int_binaries int32
+      define_int_binaries int64
+      define_float_binaries float32
+      define_float_binaries float64
     end
 
     def singleton(owner, name, args, return_type, block)
