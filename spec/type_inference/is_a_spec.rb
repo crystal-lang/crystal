@@ -89,4 +89,28 @@ describe 'Type inference: is_a?' do
       x
       )) { union_of(char, int32) }
   end
+
+  it "applies negative condition filter if then is no return" do
+    assert_type(%q(
+      require "prelude"
+
+      def foo
+        if 1 == 1
+          'a'
+        else
+          1
+        end
+      end
+
+      def bar
+        elems = foo
+        if elems.is_a?(Char)
+          raise "No!"
+        end
+        elems
+      end
+
+      bar
+      )) { int32 }
+  end
 end

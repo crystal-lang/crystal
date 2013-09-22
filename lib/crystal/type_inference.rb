@@ -715,6 +715,12 @@ module Crystal
         node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
       end
 
+      # If the then branch exists, we can safely assume that tyhe type
+      # filters after the if will be those of the condition, negated
+      if node.then && node.then.no_returns? && node.cond.type_filters && !@type_filter_stack.empty?
+        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, negate_filters(node.cond.type_filters))
+      end
+
       # If the else branch exits, we can safely assume that the type
       # filters in the condition will still apply after the if
       if node.else && node.else.no_returns? && node.cond.type_filters && !@type_filter_stack.empty?
