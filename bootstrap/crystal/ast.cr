@@ -950,10 +950,29 @@ module Crystal
 
   class BlockArg < ASTNode
     property :name
+    property :type_spec
+
+    def initialize(@name, @type_spec = FunTypeSpec.new)
+    end
+
+    def accept_children(visitor)
+      @type_spec.accept visitor if @type_spec
+    end
+
+    def ==(other : self)
+      other.name == name && other.type_spec = type_spec
+    end
+
+    def clone_without_location
+      BlockArg.new(@name, @type_spec.clone)
+    end
+  end
+
+  class FunTypeSpec < ASTNode
     property :inputs
     property :output
 
-    def initialize(@name, @inputs = nil, @output = nil)
+    def initialize(@inputs = nil, @output = nil)
     end
 
     def accept_children(visitor)
@@ -962,11 +981,11 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.inputs == inputs && other.output == output
+      other.inputs == inputs && other.output == output
     end
 
     def clone_without_location
-      BlockArg.new(@name, @inputs.clone, @output.clone)
+      FunTypeSpec.new(@inputs.clone, @output.clone)
     end
   end
 
@@ -1087,11 +1106,10 @@ module Crystal
     property :name
     property :args
     property :return_type
-    property :pointer
     property :varargs
     property :real_name
 
-    def initialize(@name, @args = [] of ASTNode, @return_type = nil, @pointer = 0, @varargs = false, @real_name = name)
+    def initialize(@name, @args = [] of ASTNode, @return_type = nil, @varargs = false, @real_name = name)
     end
 
     def accept_children(visitor)
@@ -1100,42 +1118,20 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.args == args && other.return_type == return_type && other.pointer == pointer && other.real_name == real_name && other.varargs == varargs
+      other.name == name && other.args == args && other.return_type == return_type && other.real_name == real_name && other.varargs == varargs
     end
 
     def clone_without_location
-      FunDef.new(@name, @args.clone, @return_type.clone, @pointer, @varargs, @real_name)
-    end
-  end
-
-  class FunDefArg < ASTNode
-    property :name
-    property :type_spec
-    property :pointer
-
-    def initialize(@name, @type_spec, @pointer = 0)
-    end
-
-    def accept_children(visitor)
-      @type_spec.accept visitor
-    end
-
-    def ==(other : self)
-      other.name == name && other.type_spec == type_spec && other.pointer == pointer
-    end
-
-    def clone_without_location
-      FunDefArg.new(@name, @type_spec.clone, @pointer)
+      FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @real_name)
     end
   end
 
   class TypeDef < ASTNode
     property :name
     property :type_spec
-    property :pointer
     property :name_column_number
 
-    def initialize(@name, @type_spec, @pointer = 0, @name_column_number = nil)
+    def initialize(@name, @type_spec, @name_column_number = nil)
     end
 
     def accept_children(visitor)
@@ -1143,11 +1139,11 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.type_spec == type_spec && other.pointer == pointer
+      other.name == name && other.type_spec == type_spec
     end
 
     def clone_without_location
-      TypeDef.new(@name, @type_spec.clone, @pointer, @name_column_number)
+      TypeDef.new(@name, @type_spec.clone, @name_column_number)
     end
   end
 
@@ -1155,7 +1151,7 @@ module Crystal
     property :name
     property :fields
 
-    def initialize(@name, @fields = [] of FunDefArg)
+    def initialize(@name, @fields = [] of Arg)
     end
 
     def accept_children(visitor)

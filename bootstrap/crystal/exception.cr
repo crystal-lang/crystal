@@ -8,6 +8,8 @@ module Crystal
     end
 
     def to_s
+      filename = @filename
+
       str = StringBuilder.new
       if @filename
         str << "Syntax error in #{@filename}:#{@line_number}: #{@message}"
@@ -15,8 +17,8 @@ module Crystal
         str << "Syntax error in line #{@line_number}: #{@message}"
       end
 
-      if @filename && File.exists?(@filename)
-        source = File.read(@filename)
+      if filename && File.exists?(filename)
+        source = File.read(filename)
       end
 
       if source

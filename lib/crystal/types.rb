@@ -1015,7 +1015,7 @@ module Crystal
     end
 
     def implements?(other_type)
-      super || generic_class.parents.any? { |parent| parent.implements?(other_type) }
+      super || generic_class.implements?(other_type)
     end
 
     def lookup_type(names, already_looked_up = {}, lookup_in_container = true)

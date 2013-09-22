@@ -297,21 +297,25 @@ module Crystal
 
     def visit(node : BlockArg)
       @str << node.name
-      if node.inputs || node.output
+      if type_spec = node.type_spec
         @str << " : "
-        if inputs = node.inputs
-          inputs.each_with_index do |input, i|
-            @str << ", " if i > 0
-            input.accept self
-          end
-        end
-        @str << " -> "
-
-        if output = node.output
-          output.accept self
-        end
+        type_spec.accept self
       end
       false
+    end
+
+    def visit(node : FunTypeSpec)
+      if inputs = node.inputs
+        inputs.each_with_index do |input, i|
+          @str << ", " if i > 0
+          input.accept self
+        end
+        @str << " "
+      end
+      @str << "-> "
+      if output = node.output
+        output.accept self
+      end
     end
 
     def visit(node : SelfType)
@@ -464,19 +468,6 @@ module Crystal
       if node_return_type = node.return_type
         @str << " : "
         node_return_type.accept self
-        node.pointer.times do
-          @str << "*"
-        end
-      end
-      false
-    end
-
-    def visit(node : FunDefArg)
-      @str << node.name.to_s
-      @str << " : "
-      node.type_spec.accept self
-      node.pointer.times do
-        @str << "*"
       end
       false
     end
@@ -486,9 +477,6 @@ module Crystal
       @str << node.name.to_s
       @str << " : "
       node.type_spec.accept self
-      node.pointer.times do
-        @str << "*"
-      end
       false
     end
 

@@ -361,4 +361,14 @@ describe "Array" do
       end
     end
   end
+
+  describe "class to_a" do
+    it "returns same array if passed an array" do
+      Array.to_a([1, 2, 3]).should eq([1, 2, 3])
+    end
+
+    it "puts in array if not an array" do
+      Array.to_a(1).should eq([1])
+    end
+  end
 end

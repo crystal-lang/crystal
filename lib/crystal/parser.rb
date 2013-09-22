@@ -2038,7 +2038,6 @@ module Crystal
 
       if @token.type == :':'
         next_token_skip_space_or_newline
-
         return_type = parse_single_type
       end
 

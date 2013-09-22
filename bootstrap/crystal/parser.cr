@@ -69,7 +69,7 @@ module Crystal
             values = [assign.value]
             values.concat exps[assign_index + 1 .. -1]
             if values.length != 1 && targets.length != values.length
-              raise "Multiple assignment count mismatch", location.line_number, location.column_number
+              raise "Multiple assignment count mismatch", location
             end
 
             multi = MultiAssign.new(targets, values)
@@ -474,7 +474,7 @@ module Crystal
         next_token_skip_space
         if @token.keyword?(:of)
           next_token_skip_space_or_newline
-          of = parse_type_var
+          of = parse_single_type
           ArrayLiteral.new([] of ASTNode, of)
         else
           raise "for empty arrays use '[] of ElementType'"#, line, column
@@ -583,11 +583,11 @@ module Crystal
           a_rescue = parse_rescue
           if a_rescue.types
             if found_catch_all
-              raise "specific rescue must come before catch-all rescue", location.line_number, location.column_number
+              raise "specific rescue must come before catch-all rescue", location
             end
           else
             if found_catch_all
-              raise "catch-all rescue can only be specified once", location.line_number, location.column_number
+              raise "catch-all rescue can only be specified once", location
             end
             found_catch_all = true
           end
@@ -897,7 +897,7 @@ module Crystal
       of = nil
       if @token.keyword?(:of)
         next_token_skip_space_or_newline
-        of = parse_type_var
+        of = parse_single_type
       end
 
       ArrayLiteral.new exps, of
@@ -932,10 +932,10 @@ module Crystal
       of_value = nil
       if @token.keyword?(:of)
         next_token_skip_space_or_newline
-        of_key = parse_type_var
+        of_key = parse_single_type
         check :"=>"
         next_token_skip_space_or_newline
-        of_value = parse_type_var
+        of_value = parse_single_type
       end
 
       if keys.length == 0 && !of_key
@@ -1166,7 +1166,7 @@ module Crystal
           type_restriction = SelfType.new
           next_token_skip_space
         else
-          type_restriction = parse_type_var
+          type_restriction = parse_single_type
         end
       end
 
@@ -1195,39 +1195,23 @@ module Crystal
       if @token.type == :":"
         next_token_skip_space_or_newline
 
-        if @token.type == :CONST || @token.keyword?("self")
-          inputs = [] of ASTNode
-          while true
-            if @token.keyword?("self")
-              inputs << SelfType.new
-              next_token
-            else
-              inputs << parse_ident
-            end
+        location = @token.location
 
-            skip_space_or_newline
-            if @token.type == :"->"
-              break
-            end
-            check :","
-            next_token_skip_space
-          end
+        type_spec = parse_single_type
+        unless type_spec.is_a?(FunTypeSpec)
+          raise "expected block argument type to be a function", location
         end
-
-        check :"->"
-        next_token_skip_space_or_newline
-
-        if @token.type == :CONST
-          output = parse_ident
-          skip_space_or_newline
-        elsif @token.keyword?("self")
-          output = SelfType.new
-          next_token_skip_space_or_newline
-        end
+      else
+        type_spec = FunTypeSpec.new
       end
 
-      block_arg = BlockArg.new(name, inputs, output)
+      block_arg = BlockArg.new(name, type_spec)
       block_arg.location = name_location
+
+      push_var block_arg
+
+      @block_arg_name = block_arg.name
+
       block_arg
     end
 
@@ -1501,60 +1485,134 @@ module Crystal
       const.location = location
 
       if allow_type_vars && @token.type == :"("
-        next_token_skip_space_or_newline
+        next_token_skip_space
 
-        type_vars = [] of ASTNode
-        while true
-          type_vars.push parse_type_var
-
-          case @token.type
-          when :","
-            next_token_skip_space_or_newline
-          when :")"
-            break
-          else
-            raise "expecting ',' or ')'"
-          end
-        end
-
-        if type_vars.empty?
+        types = parse_types
+        if types.empty?
           raise "must specify at least one type var"
         end
 
+        check :")"
         next_token_skip_space
 
-        const = NewGenericClass.new const, type_vars
+        const = NewGenericClass.new const, types
         const.location = location
       end
 
       const
     end
 
-    def parse_type_var
-      idents = [] of ASTNode
+    def parse_types
+      Array.to_a(parse_type)
+    end
+
+    def parse_single_type
+      location = @token.location
+      type = parse_type
+      if type.is_a?(Array)
+        raise "unexpected ',' in type", location
+      end
+      type
+    end
+
+    def parse_type
+      location = @token.location
+
+      if @token.type == :"->"
+        next_token_skip_space
+        return parse_fun_type_spec_output(nil, location)
+      end
+
+      input_types = [] of ASTNode
+      input_types << parse_type_union
+      while @token.type == :"," && next_comes_uppercase
+        next_token_skip_space_or_newline
+        input_types << parse_type_union
+      end
+
+      if @token.type == :"->"
+        next_token_skip_space
+        return parse_fun_type_spec_output(input_types, location)
+      end
+
+      if input_types.length == 1
+        input_types.first
+      else
+        input_types
+      end
+    end
+
+    def parse_fun_type_spec_output(input_types, location)
+      case @token.type
+      when :",", :")"
+        return_type = nil
+      when :NEWLINE
+        skip_space_or_newline
+        return_type = nil
+      else
+        return_type = parse_type_union
+      end
+      type = FunTypeSpec.new(input_types, return_type)
+      type.location = location
+      type
+    end
+
+    def parse_type_union
+      types = [] of ASTNode
+      types << parse_type_with_suffix
+      while @token.type == :"|"
+        next_token_skip_space_or_newline
+        types << parse_type_with_suffix
+      end
+
+      if types.length == 1
+        types.first
+      else
+        IdentUnion.new types
+      end
+    end
+
+    def parse_type_with_suffix
+      if @token.keyword?("self")
+        type = SelfType.new
+        next_token_skip_space
+        return type
+      end
+
+      # TODO
+      # if @token.type == :"("
+      #   next_token_skip_space_or_newline
+      #   type = parse_type
+      #   check :")"
+      #   next_token_skip_space
+      #   return type
+      # end
+
+      type = parse_ident
+
+      skip_space
+
       while true
-        ident = parse_ident
-        idents.push ident
-
-        skip_space
-
-        if @token.type == :"?"
-          idents.push Ident.new(["Nil"], true)
+        case @token.type
+        when :"?"
+          type = IdentUnion.new([type, Ident.new(["Nil"], true)] of ASTNode)
           next_token_skip_space_or_newline
-        end
-
-        if @token.type == :"|"
+        when :"*"
+          type = make_pointer_type(type)
+          next_token_skip_space_or_newline
+        when :"**"
+          type = make_pointer_type(make_pointer_type(type))
           next_token_skip_space_or_newline
         else
           break
         end
       end
 
-      if idents.length == 1
-        idents[0]
-      else
-        IdentUnion.new idents
-      end
+      type
+    end
+
+    def make_pointer_type(node)
+      NewGenericClass.new(Ident.new(["Pointer"], true), [node])
     end
 
     def parse_yield
@@ -1706,7 +1764,7 @@ module Crystal
         real_name = name
       end
 
-      args = [] of ASTNode
+      args = [] of Arg
       varargs = false
 
       if @token.type == :"("
@@ -1727,14 +1785,13 @@ module Crystal
           check :":"
           next_token_skip_space_or_newline
 
-          arg_type = parse_ident
-          pointer = parse_trailing_pointers
+          arg_type = parse_single_type
 
           skip_space_or_newline
 
-          fun_def_arg = FunDefArg.new(arg_name, arg_type, pointer)
-          fun_def_arg.location = arg_location
-          args << fun_def_arg
+          arg = Arg.new(arg_name, nil, arg_type)
+          arg.location = arg_location
+          args << arg
 
           if @token.type == :","
             next_token_skip_space_or_newline
@@ -1747,15 +1804,12 @@ module Crystal
 
       if @token.type == :":"
         next_token_skip_space_or_newline
-
-        return_type = parse_ident
-
-        pointer = parse_trailing_pointers
-
-        skip_statement_end
+        return_type = parse_single_type
       end
 
-      FunDef.new name, args, return_type, pointer, varargs, real_name
+      skip_statement_end
+
+      FunDef.new name, args, return_type, varargs, real_name
     end
 
     def parse_type_def
@@ -1769,12 +1823,11 @@ module Crystal
       check :":"
       next_token_skip_space_or_newline
 
-      type = parse_ident
-      pointer = parse_trailing_pointers
+      type = parse_single_type
 
       skip_statement_end
 
-      TypeDef.new name, type, pointer, name_column_number
+      TypeDef.new name, type, name_column_number
     end
 
     def parse_struct_or_union(klass)
@@ -1794,7 +1847,7 @@ module Crystal
     end
 
     def parse_struct_or_union_fields
-      fields = [] of FunDefArg
+      fields = [] of Arg
 
       while true
         case @token.type
@@ -1818,13 +1871,12 @@ module Crystal
             check :":"
             next_token_skip_space_or_newline
 
-            type = parse_ident
-            pointer = parse_trailing_pointers
+            type = parse_single_type
 
             skip_statement_end
 
             names.each do |name|
-              fields << FunDefArg.new(name, type, pointer)
+              fields << Arg.new(name, nil, type)
             end
           end
         else
@@ -1833,23 +1885,6 @@ module Crystal
       end
 
       fields
-    end
-
-    def parse_trailing_pointers
-      pointer = 0
-      while true
-        case @token.type
-        when :"*"
-          pointer += 1
-          next_token_skip_space_or_newline
-        when :"**"
-          pointer += 2
-          next_token_skip_space_or_newline
-        else
-          break
-        end
-      end
-      pointer
     end
 
     def parse_enum

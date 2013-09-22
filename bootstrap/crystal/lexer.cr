@@ -983,6 +983,14 @@ module Crystal
       @token.filename = @filename
     end
 
+    def next_comes_uppercase
+      i = 0
+      while @buffer[i].whitespace?
+        i += 1
+      end
+      return 'A' <= @buffer[i] <= 'Z'
+    end
+
     def next_token_skip_space
       next_token
       skip_space
@@ -1012,6 +1020,10 @@ module Crystal
 
     def raise(message, line_number = @line_number, column_number = @token.column_number, filename = @filename)
       ::raise Crystal::SyntaxException.new(message, line_number, column_number, filename)
+    end
+
+    def raise(message, location : Location)
+      raise message, location.line_number, location.column_number, location.filename
     end
   end
 end
