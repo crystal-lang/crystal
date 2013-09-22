@@ -8,3 +8,5 @@ script:
   - bundle exec rspec spec
   - bin/crystal bootstrap/spec/crystal_spec.cr
   - ./crystal_spec
+notifications:
+  irc: "irc.freenode.net#crystal-lang"
