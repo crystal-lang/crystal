@@ -268,4 +268,18 @@ describe "Exception" do
     x.should eq(2)
     y.should eq(2)
   end
+
+  module ModuleWithLooooooooooooooooooooooooooooooooooooooooooooooongName
+    def self.foo
+      raise "Foo"
+    end
+  end
+
+  it "allocates enough space for backtrace frames" do
+    begin
+      ModuleWithLooooooooooooooooooooooooooooooooooooooooooooooongName.foo
+    rescue ex
+      ex.backtrace.any? {|x| x.includes? "ModuleWithLooooooooooooooooooooooooooooooooooooooooooooooongName" }.should be_true
+    end
+  end
 end

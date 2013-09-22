@@ -15,13 +15,21 @@ class Exception
 
     Unwind.get_context(context)
     Unwind.init_local(cursor, context)
-    fname = Pointer(Char).malloc(64)
+    fname_size = 64
+    fname_buffer = Pointer(Char).malloc(fname_size)
 
     @backtrace = [] of String
     while Unwind.step(cursor) > 0
       Unwind.get_reg(cursor, Unwind::REG_IP, out pc)
-      Unwind.get_proc_name(cursor, fname, 64, out offset)
-      @backtrace << "#{String.from_cstr(fname)}+#{offset} [#{pc}]"
+      while true
+        Unwind.get_proc_name(cursor, fname_buffer, fname_size, out offset)
+        fname = String.from_cstr(fname_buffer)
+        break if fname.length < fname_size - 1
+
+        fname_size += 64
+        fname_buffer = fname_buffer.realloc(fname_size)
+      end
+      @backtrace << "#{fname} +#{offset} [#{pc}]"
     end
   end
 
