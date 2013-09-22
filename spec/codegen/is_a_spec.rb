@@ -213,4 +213,27 @@ describe 'Codegen: is_a?' do
       f.is_a?(Foo) ? 1 : 2
       )).to_i.should eq(1)
   end
+
+  it "codegens is_a? with hierarchy and module" do
+    run(%q(
+      module Bar
+      end
+
+      abstract class FooBase2
+      end
+
+      abstract class FooBase < FooBase2
+        include Bar
+      end
+
+      class Foo < FooBase
+      end
+
+      class Foo2 < FooBase2
+      end
+
+      f = Foo.new || Foo2.new
+      f.is_a?(Bar)
+      )).to_b.should be_true
+  end
 end

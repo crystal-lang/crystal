@@ -56,5 +56,94 @@ module Crystal
     def initialize(message, @line, @column, @filename, @length = nil, @inner = nil)
       super(message)
     end
+
+    def to_s(source = nil)
+      String.build do |str|
+        str << "Error "
+        append_to_s(str, source)
+      end
+    end
+
+    def append_to_s(str, source)
+      inner = @inner
+      filename = @filename
+
+      # If the inner exception has no location it means that they came from virtual nodes.
+      # In that case, get the deepest error message and only show that.
+      if inner && !inner.has_location?
+        msg = deepest_error_message.to_s
+      else
+        msg = @message.to_s
+      end
+
+      is_macro = false
+
+      if filename && file_exists?(filename)
+        # if @filename.is_a?(VirtualFile)
+        #   lines = @filename.source.lines.to_a
+        #   str << "in macro '#{@filename.macro.name}' #{@filename.macro.filename}:#{@filename.macro.line_number}, line #{@line}:\n\n"
+        #   str << lines.to_s_with_line_numbers
+        #   is_macro = true
+        # else
+          lines = File.read_lines filename
+          str << "in #{filename}:#{@line}: #{msg}"
+        # end
+      else
+        lines = source ? source.lines.to_a : nil
+        if @line
+          str << "in line #{@line}: "
+        end
+        str << msg
+      end
+
+      if lines && @line
+        line = lines[@line - 1]
+        if line
+          str << "\n\n"
+          str << line.chomp
+          str << "\n"
+          str << (" " * (@column - 1))
+          str << "\033[1;32m"
+          str << "^"
+          if @length && @length > 0
+            str << ("~" * (@length - 1))
+          end
+          str << "\033[0m"
+        end
+      end
+      str << "\n"
+
+      if is_macro
+        str << "\n"
+        str << @message.to_s
+      end
+
+      if inner && inner.has_location?
+        str << "\n"
+        inner.append_to_s(str, source)
+      end
+    end
+
+    def file_exists?(filename)
+      # filename.is_a?(VirtualFile) ||
+        # File.file?(filename)
+      File.exists?(filename)
+    end
+
+    def has_location?
+      if @inner && @inner.has_location?
+        true
+      else
+        @filename || @line
+      end
+    end
+
+    def deepest_error_message
+      if @inner
+        @inner.deepest_error_message
+      else
+        @message
+      end
+    end
   end
 end

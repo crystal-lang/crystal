@@ -7,6 +7,12 @@ describe "File" do
     str.should eq("Hello World\n" * 20)
   end
 
+  it "reads lines from file" do
+    lines = File.read_lines "#{__DIR__}/data/test_file.txt"
+    lines.length.should eq(20)
+    # TODO: lines.first.should eq("Hello World\n")
+  end
+
   it "tests exists? and gives true" do
     File.exists?("#{__DIR__}/data/test_file.txt").should be_true
   end

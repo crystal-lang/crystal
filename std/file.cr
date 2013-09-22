@@ -74,6 +74,11 @@ class File
     String.from_cstr(str, size.to_i32)
   end
 
+  def self.read_lines(filename)
+    contents = read(filename)
+    contents.split("\n")
+  end
+
   def input
     @file
   end

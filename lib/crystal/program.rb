@@ -108,12 +108,8 @@ module Crystal
     end
 
     def type_merge(*types)
-      all_types = types.map! { |type| type.is_a?(UnionType) ? type.types : type }
-      all_types.flatten!
-      all_types.compact!
-      all_types.uniq!(&:type_id)
-      all_types.delete_if { |type| type.no_return? } if all_types.length > 1
-      combined_union_of *types
+      all_types = compact_types *types
+      combined_union_of *all_types
     end
 
     def combined_union_of(*types)
@@ -123,6 +119,21 @@ module Crystal
 
       combined_types = type_combine *types
       union_of *combined_types
+    end
+
+    def type_merge_union_of(*types)
+      all_types = compact_types *types
+      return nil if all_types.empty?
+      union_of *all_types
+    end
+
+    def compact_types(*types)
+      all_types = types.map! { |type| type.is_a?(UnionType) ? type.types : type }
+      all_types.flatten!
+      all_types.compact!
+      all_types.uniq!(&:type_id)
+      all_types.delete_if { |type| type.no_return? } if all_types.length > 1
+      all_types
     end
 
     def union_of(*types)

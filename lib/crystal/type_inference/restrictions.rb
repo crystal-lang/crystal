@@ -120,7 +120,11 @@ module Crystal
       elsif self.base_type.is_subclass_of?(other)
         self
       else
-        nil
+        types = []
+        each_subtype(base_type) do |subtype|
+          types << subtype.restrict(other) unless subtype.abstract
+        end
+        program.type_merge_union_of *types
       end
     end
 

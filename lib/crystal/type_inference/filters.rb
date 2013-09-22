@@ -53,7 +53,7 @@ module Crystal
 
   class NotNilFilter
     def self.apply(other)
-      return nil if other.nil_type?
+      return nil if !other || other.nil_type?
 
       if other.is_a?(UnionType)
         return Type.merge(*other.types.select { |type| !type.nil_type? })

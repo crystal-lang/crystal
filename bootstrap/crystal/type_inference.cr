@@ -159,7 +159,10 @@ module Crystal
         # if node.type_vars
         #   type = GenericClassType.new scope, name, superclass, node.type_vars, false
         # else
-          raise "#{superclass} is not a class" unless superclass.is_a?(InheritableClass)
+          unless superclass.is_a?(InheritableClass)
+            raise "Bug: node_superclass can't be nil here" unless node_superclass
+            node_superclass.raise "#{superclass} is not a class"
+          end
           type = NonGenericClassType.new scope, name, superclass, false
         # end
         # type.abstract = node.abstract
