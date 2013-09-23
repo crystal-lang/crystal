@@ -333,7 +333,7 @@ module Crystal
         relative_dir = File.join(dir, $1)
         if File.directory?(relative_dir)
           nodes = []
-          Dir["#{relative_dir}/#{multi ? '**/' : ''}*.cr"].each do |file|
+          Dir["#{relative_dir}/#{multi ? '**/' : ''}*.cr"].sort.each do |file|
             node = Require.new(file)
             nodes.push node
           end
