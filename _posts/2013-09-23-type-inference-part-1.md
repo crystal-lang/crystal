@@ -46,7 +46,7 @@ The next picture shows the AST nodes, the context where the variables and their 
 Crystal supports [union types](http://en.wikipedia.org/wiki/Union_type). When a variable is assigned multiple times in the same context (but in different branches) its expected type is the one that can handle all the assignments. So if the following code is given:
 
 {% highlight ruby %}
-if true
+if false
   v = false
 else
   v = 2
