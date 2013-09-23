@@ -330,6 +330,7 @@ describe Parser do
   it_parses "lib C\nfun getchar\nend", LibDef.new('C', nil, [FunDef.new('getchar')])
   it_parses "lib C\nfun getchar(...)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [], nil, true)])
   it_parses "lib C\nfun getchar : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [], 'Int'.ident)])
+  it_parses "lib C\nfun getchar(Int, Float)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [Arg.new("?", nil, 'Int'.ident), Arg.new("?", nil, 'Float'.ident)])])
   it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [Arg.new('a', nil, 'Int'.ident), Arg.new('b', nil, 'Float'.ident)])])
   it_parses "lib C\nfun getchar(a : Int)\nend", LibDef.new('C', nil, [FunDef.new('getchar', [Arg.new('a', nil, 'Int'.ident)])])
   it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new('C', nil, [FunDef.new('getchar', [Arg.new('a', nil, 'Int'.ident), Arg.new('b', nil, 'Float'.ident)], 'Int'.ident)])

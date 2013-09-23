@@ -2011,23 +2011,32 @@ module Crystal
             break
           end
 
-          check :IDENT
-          arg_name = @token.value
-          arg_location = @token.location
+          if @token.type == :IDENT
+            arg_name = @token.value
+            arg_location = @token.location
 
-          next_token_skip_space_or_newline
-          check :':'
-          next_token_skip_space_or_newline
+            next_token_skip_space_or_newline
 
-          arg_type = parse_single_type
+            check :':'
+            next_token_skip_space_or_newline
 
-          skip_space_or_newline
+            arg_type = parse_single_type
 
-          arg = Arg.new(arg_name, nil, arg_type)
-          arg.location = arg_location
-          args << arg
+            skip_space_or_newline
 
-          push_var_name arg_name if require_body
+            arg = Arg.new(arg_name, nil, arg_type)
+            arg.location = arg_location
+            args << arg
+
+            push_var_name arg_name if require_body
+          else
+            arg_types = parse_types
+            arg_types.each do |arg_type|
+              arg = Arg.new("?", nil, arg_type)
+              arg.location = arg_type.location
+              args << arg
+            end
+          end
 
           if @token.type == :','
             next_token_skip_space_or_newline
