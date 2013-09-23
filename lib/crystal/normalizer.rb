@@ -475,7 +475,6 @@ module Crystal
         before_indices = before_vars[var_name]
         then_indices = then_vars && then_vars[var_name]
         else_indices = else_vars && else_vars[var_name]
-        # binding.pry
         if else_indices.nil?
           if before_indices
             if then_indices != before_indices && then_indices[:read]
