@@ -1,0 +1,19 @@
+!!!
+%html
+  %head
+    %meta{charset: "utf-8"}/
+    %meta{content: "chrome=1", "http-equiv" => "X-UA-Compatible"}/
+    %meta{content: "Crystal : The Crystal Programming Language", name: "description"}/
+    %link{href: "/stylesheets/stylesheet.css", media: "screen", rel: "stylesheet", type: "text/css"}/
+    {% if page.title %}
+    %title Crystal - {{ page.title }}
+    {% else %}
+    %title Crystal Programming Language
+    {% endif %}
+  %body
+    {% include header.html %}
+    #main_content_wrap.outer
+      %section#main_content.inner
+        {{ content }}
+    {% include footer.html %}
+    {% include google_analytics.html %}
