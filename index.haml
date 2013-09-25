@@ -1,0 +1,42 @@
+\---
+layout: default
+\---
+%section
+  %h1 Language Goals
+  %ul.goals
+    %li Ruby-inspired syntax.
+    %li Never have to specify the type of a variable or method argument.
+    %li Be able to call C code by writing bindings to it in Crystal.
+    %li Have compile-time evaluation and generation of code, to avoid boilerplate code.
+    %li Compile to efficient native code.
+
+%section
+  %h1 How it looks like
+  .code_section
+    {% include sample_code.md %}
+  %p
+    Interested? Read the
+    %i.ip.info
+    %a{href: "https://github.com/manastech/crystal/wiki/Introduction", target: "_blank"} Introduction
+    or the
+    %i.ip.document
+    %a{href: "https://github.com/manastech/crystal/wiki/Developers", target: "_blank"} Docs for developers
+
+  %p
+    Questions or suggestions? Ask in our
+    %i.ip.group
+    %a{href: "https://groups.google.com/forum/?fromgroups#!forum/crystal-lang", target: "_blank"} Google Group
+    or join our IRC
+    %br channel #crystal-lang at irc.freenode.net
+
+%section
+  %h1 Latest entries from our blog
+  .blog_roll
+    {% for post in site.posts %}
+    %article
+      .thumbnail
+        %p {{ post.thumbnail }}
+      %h3
+        %a{href: "{{post.url}}"} {{ post.title }}
+      %p {{ post.summary }}
+    {% endfor %}

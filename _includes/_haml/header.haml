@@ -1,9 +1,23 @@
-#header_wrap.outer
-  %header.inner
-    %a#forkme_banner{href: "https://github.com/manastech/crystal"} View on GitHub
-    %h1#project_title
-      %a{href: "/"} Crystal
-    %h2#project_tagline The Crystal Programming Language
-    %section#downloads
-      %a.zip_download_link{href: "https://github.com/manastech/crystal/zipball/master"} Download this project as a .zip file
-      %a.tar_download_link{href: "https://github.com/manastech/crystal/tarball/master"} Download this project as a tar.gz file
+%header
+  %nav
+    %ul.menu
+      %li
+        %a{:href => "https://github.com/manastech/crystal", :title => "Git"}
+          %i.ic.git
+      %li.menu
+        %a{:href => "https://github.com/manastech/crystal/zipball/master", :title => "Download"}
+          %i.ic.download
+        .arrow
+          .download-options
+            %div
+              %span Download
+              %a{:href => "https://github.com/manastech/crystal/tarball/master"} tar.gz
+            %div
+              %span Download
+              %a{:href => "https://github.com/manastech/crystal/zipball/master"} .zip
+      / %li
+      /   %a{:href => "#", :title => "Bookmark"}
+      /     %i.ic.bookmark
+  / %a.ico{:href => "#"}
+  /   %i.ip.downg
+  /   icosahedron.cr

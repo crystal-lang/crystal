@@ -1,6 +1,8 @@
 ---
 layout: post
 title: Type inference (part 1)
+thumbnail: x=
+summary: How type inference works
 author: bcardiff
 ---
 
@@ -18,7 +20,7 @@ These are easy. Booleans, numbers, chars and values that are explicitly written 
 
 {% highlight ruby %}
 true # :: Boolean
-1 # :: Int32
+1    # :: Int32
 {% endhighlight ruby %}
 
 **Variables**

@@ -1,6 +1,8 @@
 ---
 layout: post
 title: Null Pointer Exception
+thumbnail: NP
+summary: Crystal doesn't let you have a Null Pointer Exception
 author: asterite
 ---
 
@@ -38,7 +40,7 @@ Let's try with a slightly more complex, but made up, example:
 
 {% highlight ruby %}
 class Box
-  attr_reader :value
+  getter :value
 
   def initialize(value)
     @value = value

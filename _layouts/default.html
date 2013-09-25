@@ -1,24 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang='en'>
   <head>
     <meta charset='utf-8'>
-    <meta content='chrome=1' http-equiv='X-UA-Compatible'>
-    <meta content='Crystal : The Crystal Programming Language' name='description'>
-    <link href='/stylesheets/stylesheet.css' media='screen' rel='stylesheet' type='text/css'>
-    {% if page.title %}
-    <title>Crystal - {{ page.title }}</title>
-    {% else %}
-    <title>Crystal Programming Language</title>
-    {% endif %}
+    <title>Crystal</title>
+    <link href='/stylesheets/stylesheet.css' rel='stylesheet'>
   </head>
   <body>
-    {% include header.html %}
-    <div class='outer' id='main_content_wrap'>
-      <section class='inner' id='main_content'>
-        {{ content }}
-      </section>
+    <div class='wrapper'>
+      {% include header.html %}
+      {{ content }}
+      {% include footer.html %}
     </div>
-    {% include footer.html %}
     {% include google_analytics.html %}
   </body>
 </html>
