@@ -1,4 +1,5 @@
 require "../ast"
+require "../types"
 
 module Crystal
   class Call
@@ -104,15 +105,18 @@ module Crystal
         typed_defs = matches.map do |match|
           block_type = nil
           use_cache = true
-          typed_def = match.owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
+          match_owner = match.owner
+          raise "BUG" unless match_owner.is_a?(DefInstanceContainer)
+
+          typed_def = match_owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
           unless typed_def
-            prepared_typed_def = prepare_typed_def_with_args(match.def, owner, match.owner, match.arg_types)
+            prepared_typed_def = prepare_typed_def_with_args(match.def, owner, match_owner, match.arg_types)
             typed_def = prepared_typed_def.typed_def
             typed_def_args = prepared_typed_def.args
-            match.owner.add_def_instance(match.def.object_id, match.arg_types, block_type, typed_def) if use_cache
+            match_owner.add_def_instance(match.def.object_id, match.arg_types, block_type, typed_def) if use_cache
             if typed_def.body
     #         bubbling_exception do
-              visitor = TypeVisitor.new(mod, typed_def_args, match.owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars) # , yield_vars)
+              visitor = TypeVisitor.new(mod, typed_def_args, match_owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars) # , yield_vars)
               typed_def.body.accept visitor
     #         end
             end
@@ -123,7 +127,7 @@ module Crystal
     end
 
     def lookup_matches_in(owner : Nil)
-      raise "Bug: trying to lookup matches in nil"
+      raise "Bug: trying to lookup matches in nil in #{self}"
     end
 
     # def lookup_matches_in(owner, self_type = owner, def_name = self.name)

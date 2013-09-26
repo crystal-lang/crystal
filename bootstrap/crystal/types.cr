@@ -227,4 +227,60 @@ module Crystal
       true
     end
   end
+
+  class LibType < ModuleType
+    property :libname
+
+    def initialize(container, name, @libname = nil)
+      super(container, name)
+    end
+
+    def metaclass
+      self
+    end
+
+    # def add_def(a_def)
+    #   existing = defs[a_def.name]
+    #   if existing.length > 0
+    #     existing = existing.first[1]
+    #     if existing.compatible_with?(a_def)
+    #       return
+    #     else
+    #       raise "fun redefinition with different signature (was #{existing.to_s})"
+    #     end
+    #   end
+
+    #   super
+    # end
+
+    # def add_var(name, type)
+    #   arg = Arg.new_with_restriction('value', type)
+    #   arg.set_type(type)
+
+    #   setter = External.new("#{name}=", [arg], LibSet.new(name, type))
+    #   setter.real_name = "*#{to_s}.#{name}="
+    #   setter.owner = self
+    #   setter.set_type(type)
+
+    #   getter = External.new(name, [], LibGet.new(name, type))
+    #   getter.real_name = "*#{to_s}.#{name}"
+    #   getter.owner = self
+    #   getter.set_type(type)
+
+    #   add_def setter
+    #   add_def getter
+    # end
+
+    def passed_as_self?
+      false
+    end
+
+    def type_desc
+      "lib"
+    end
+
+    # def to_s
+    #   name
+    # end
+  end
 end

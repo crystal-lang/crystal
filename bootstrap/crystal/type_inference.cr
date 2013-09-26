@@ -178,6 +178,21 @@ module Crystal
       false
     end
 
+    def visit(node : LibDef)
+      type = current_type.types[node.name]?
+      if type
+        node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
+      else
+        type = LibType.new current_type, node.name, node.libname
+        # current_type.types[node.name] = type
+      end
+      @types.push type
+    end
+
+    def end_visit_lib_def(node)
+      @types.pop
+    end
+
     def lookup_var(name)
       @vars.fetch_or_assign(name) { Var.new name }
     end

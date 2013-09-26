@@ -119,12 +119,17 @@ module Crystal
         other.hierarchy_type
       elsif self.base_type.is_subclass_of?(other)
         self
-      else
-        types = []
-        each_subtype(base_type) do |subtype|
-          types << subtype.restrict(other) unless subtype.abstract
+      elsif other.module?
+        if base_type.implements?(other)
+          self
+        else
+          types = base_type.subclasses.map do |subclass|
+            subclass.hierarchy_type.restrict(other)
+          end
+          program.type_merge_union_of *types
         end
-        program.type_merge_union_of *types
+      else
+        nil
       end
     end
 

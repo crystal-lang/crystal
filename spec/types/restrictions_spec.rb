@@ -3,6 +3,14 @@ require 'spec_helper'
 describe "Restrictions" do
   let(:mod) { Crystal::Program.new }
 
+  def t(type)
+    if type.end_with?("+")
+      mod.types[type[0 .. -2]].hierarchy_type
+    else
+      mod.types[type]
+    end
+  end
+
   describe "restrict" do
     it "restricts type with same type" do
       mod.int32.restrict(mod.int32).should eq(mod.int32)
@@ -29,27 +37,26 @@ describe "Restrictions" do
       mod.types["Foo"].restrict(mod.types["Mod"]).should eq(mod.types["Foo"])
     end
 
-    it "restricts hierarchy type with included module" do
+    it "restricts hierarchy type with included module 1" do
       mod.infer_type parse(%(
-        module Mod
-        end
-
-        class Foo
-        end
-
-        class Bar < Foo
-          include Mod
-        end
-
-        class Bar2 < Foo
-          include Mod
-        end
-
-        class Bar3 < Foo
-        end
+        module M; end
+        class A; include M; end
       ))
 
-      mod.types["Foo"].hierarchy_type.restrict(mod.types["Mod"]).should eq(mod.union_of(mod.types["Bar"], mod.types["Bar2"]))
+      t("A+").restrict(t("M")).should eq(t("A+"))
+    end
+
+    it "restricts hierarchy type with included module 2" do
+      mod.infer_type parse(%(
+        module M; end
+        class A; end
+        class B < A; include M; end
+        class C < A; include M; end
+        class D < C; end
+        class E < A; end
+      ))
+
+      t("A+").restrict(t("M")).should eq(mod.union_of(t("B+"), t("C+")))
     end
   end
 end
