@@ -14,6 +14,7 @@ module Crystal
 
       @type = type
       notify_observers
+      @type
     end
 
     def bind_to(node)

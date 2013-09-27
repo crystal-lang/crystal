@@ -19,4 +19,12 @@ class Object
   def instance_eval
     self.yield
   end
+
+  def try!
+    yield self
+  end
+
+  def not_nil!
+    self
+  end
 end

@@ -74,11 +74,8 @@ module Crystal
 
       type = self
       names.each do |name|
-        # TODO: Crystal, be smarter here
-        if type
-          type = type.types[name]?
-          break unless type
-        end
+        type = type.try! &.types[name]?
+        break unless type
       end
 
       type
@@ -116,6 +113,7 @@ module Crystal
     type_getter :object
     type_getter :value
     type_getter :reference
+    type_getter :void
     type_getter :nil
     type_getter :bool
     type_getter :char

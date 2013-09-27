@@ -8,6 +8,10 @@ module Crystal
       first.program.type_merge(types)
     end
 
+    def metaclass
+      @metaclass ||= Metaclass.new(self)
+    end
+
     def type_id
       object_id
     end
@@ -16,12 +20,16 @@ module Crystal
       true
     end
 
+    def instance_type
+      self
+    end
+
     def lookup_def_instance(def_object_id, arg_types, block_type)
-      raise "BUG"
+      raise "BUG in #{self}"
     end
 
     def add_def_instance(def_object_id, arg_types, block_type, typed_def)
-      raise "BUG"
+      raise "BUG in #{self}"
     end
 
     def llvm_name
@@ -50,6 +58,12 @@ module Crystal
       else
         nil
       end
+    end
+
+    def lookup_first_def(name, yields)
+      defs[name]?
+      # defs = self.defs[name].values.select { |a_def| !!a_def.yields == yields }
+      # defs.length == 1 ? defs.first : nil
     end
   end
 
@@ -124,7 +138,7 @@ module Crystal
 
       type = self
       names.each do |name|
-        type = type.types[name]
+        type = type.try! &.types[name]?
         break unless type
       end
 
@@ -290,5 +304,31 @@ module Crystal
     # def to_s
     #   name
     # end
+  end
+
+  class Metaclass < Type
+    include DefContainer
+    include DefInstanceContainer
+
+    getter :instance_type
+
+    def initialize(@instance_type)
+    end
+
+    def program
+      @instance_type.program
+    end
+
+    def types
+      raise "Metaclass doesn't have types"
+    end
+
+    def lookup_type(names, already_looked_up = Set(UInt64).new, lookup_in_container = true)
+      raise "Metaclass doesn't have types"
+    end
+
+    def to_s
+      "#{instance_type}:Class"
+    end
   end
 end

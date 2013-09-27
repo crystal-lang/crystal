@@ -185,7 +185,7 @@ module Crystal
     def match_block_arg(match)
       yield_vars = nil
 
-      if (block_arg = match.def.block_arg) || match.def.yields == 0
+      if (block_arg = match.def.block_arg) && match.def.yields && match.def.yields > 0
         ident_lookup = IdentLookupVisitor.new(mod, match)
 
         if block_arg && block_arg.type_spec.inputs

@@ -196,6 +196,71 @@ module Crystal
       @types.pop
     end
 
+    def visit(node : FunDef)
+      # if node.body && !current_type.is_a?(Program)
+      #   node.raise "can only declare fun at lib or global scope or lib"
+      # end
+
+      args = node.args.map do |arg|
+        restriction = arg.type_restriction.not_nil!
+        restriction.accept self
+
+        arg_type = check_primitive_like(restriction.not_nil!)
+
+        fun_arg = Arg.new_with_type(arg.name, arg.type)
+        fun_arg.location = arg.location
+        fun_arg
+      end
+
+      node.return_type.try! &.accept(self)
+
+      return_type = node.return_type
+      return_type = return_type ? check_primitive_like(return_type) : @mod.void # || @mod.void
+
+      external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs,
+        #node.body,
+        nil
+        node)
+
+      current_type.add_def external
+
+      false
+    end
+
+    def check_primitive_like(node)
+      type = node.type.try! &.instance_type
+      # unless type.primitive_like?
+      #   msg = "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
+      #   msg << " (did you mean Int32?)" if type.equal?(@mod.types["Int"])
+      #   msg << " (did you mean Float32?)" if type.equal?(@mod.types["Float"])
+      #   node.raise msg
+      # end
+
+      # if type.c_enum?
+      #   type = @mod.int32
+      # elsif type.type_def_type? && type.typedef.fun_type?
+      #   type = type.typedef
+      # end
+
+      # type
+    end
+
+    def visit(node : Ident)
+      type = lookup_ident_type(node)
+      # if type.is_a?(Const)
+      #   unless type.value.type
+      #     old_types, old_scope, old_vars = @types, @scope, @vars
+      #     @types, @scope, @vars = type.types, type.scope, {}
+      #     type.value.accept self
+      #     @types, @scope, @vars = old_types, old_scope, old_vars
+      #   end
+      #   node.target_const = type
+      #   node.bind_to(type.value)
+      # else
+        node.type = type.metaclass
+      # end
+    end
+
     def lookup_var(name)
       @vars.fetch_or_assign(name) { Var.new name }
     end

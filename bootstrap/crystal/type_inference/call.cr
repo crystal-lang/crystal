@@ -33,9 +33,13 @@ module Crystal
     end
 
     def recalculate
-      # if obj && obj.type.is_a?(LibType)
-      #   recalculate_lib_call
-      #   return
+      obj = @obj
+
+      if obj && (obj_type = obj.type) && obj_type.is_a?(LibType)
+        recalculate_lib_call(obj_type)
+        return
+      end
+
       # elsif !obj || (obj.type && !obj.type.is_a?(LibType))
       #   check_not_lib_out_args
       # end
@@ -71,7 +75,7 @@ module Crystal
       #   end
       # end
 
-      if obj = @obj
+      if obj
         matches = lookup_matches_in(obj.type)
       else
         matches = lookup_matches_in(mod)
@@ -126,6 +130,25 @@ module Crystal
 
     def lookup_matches_in(owner : Nil)
       raise "Bug: trying to lookup matches in nil in #{self}"
+    end
+
+    def recalculate_lib_call(obj_type)
+      old_target_defs = @target_defs
+
+      untyped_def = obj_type.lookup_first_def(name, false) #or
+      raise "undefined fun '#{name}' for #{obj_type}" unless untyped_def
+
+      # check_args_length_match untyped_def
+      # check_lib_out_args untyped_def
+      # return unless obj_and_args_types_set?
+
+      # check_fun_args_types_match untyped_def
+
+      untyped_defs = [untyped_def]
+      @target_defs = untyped_defs
+
+      # self.unbind_from *old_target_defs if old_target_defs
+      self.bind_to untyped_defs
     end
 
     # def lookup_matches_in(owner, self_type = owner, def_name = self.name)
