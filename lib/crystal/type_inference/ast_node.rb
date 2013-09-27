@@ -108,6 +108,11 @@ module Crystal
     def map_type(type)
       type.metaclass
     end
+
+    def update(*)
+      super
+      propagate
+    end
   end
 
   class FunLiteral
@@ -120,6 +125,18 @@ module Crystal
       unless types.any?(&:nil?)
         self.type = mod.fun_of(*types)
       end
+    end
+  end
+
+  class NewGenericClass
+    attr_accessor :instance_type
+
+    def update(*)
+      generic_type = instance_type.instantiate(type_vars.map do |var|
+        self.raise "can't deduce generic type in recursive method" unless var.type
+        var.type.instance_type
+      end)
+      self.type = generic_type.metaclass
     end
   end
 end

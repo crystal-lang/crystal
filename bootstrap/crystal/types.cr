@@ -16,6 +16,14 @@ module Crystal
       true
     end
 
+    def lookup_def_instance(def_object_id, arg_types, block_type)
+      raise "BUG"
+    end
+
+    def add_def_instance(def_object_id, arg_types, block_type, typed_def)
+      raise "BUG"
+    end
+
     def llvm_name
       to_s
     end

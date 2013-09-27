@@ -949,11 +949,9 @@ module Crystal
       if instance_type.type_vars.length != node.type_vars.length
         node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
       end
-      generic_type = instance_type.instantiate(node.type_vars.map do |var|
-        node.raise "can't deduce generic type in recursive method" unless var.type
-        var.type.instance_type
-      end)
-      node.type = generic_type.metaclass
+      node.instance_type = instance_type
+      node.type_vars.each { |var| var.add_observer node }
+      node.update
       false
     end
 

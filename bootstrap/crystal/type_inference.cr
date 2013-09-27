@@ -173,7 +173,10 @@ module Crystal
       node.body.accept self
       @types.pop
 
-      type.force_add_subclass if needs_force_add_subclass
+      if needs_force_add_subclass
+        raise "Bug" unless type.is_a?(InheritableClass)
+        type.force_add_subclass
+      end
 
       false
     end
@@ -184,7 +187,7 @@ module Crystal
         node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
       else
         type = LibType.new current_type, node.name, node.libname
-        # current_type.types[node.name] = type
+        current_type.types[node.name] = type
       end
       @types.push type
     end

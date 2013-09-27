@@ -20,4 +20,8 @@ describe 'Type inference: array' do
   it "types array literal length correctly" do
     assert_type(%q(require "prelude"; [1].length)) { int32 }
   end
+
+  it "recalculates array literal type after element type changes" do
+    assert_type(%q(require "array"; $a = 1; x = [$a]; $a = 1.1; x)) { array_of(union_of int32, float64) }
+  end
 end

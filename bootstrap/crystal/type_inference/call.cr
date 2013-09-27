@@ -106,8 +106,6 @@ module Crystal
           block_type = nil
           use_cache = true
           match_owner = match.owner
-          raise "BUG" unless match_owner.is_a?(DefInstanceContainer)
-
           typed_def = match_owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
           unless typed_def
             prepared_typed_def = prepare_typed_def_with_args(match.def, owner, match_owner, match.arg_types)
