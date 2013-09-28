@@ -299,8 +299,8 @@ module Crystal
 
       @fun = @llvm_mod.functions.add(
         mangled_name,
-        args.map { |arg| llvm_arg_type(arg.type.not_nil!) },
-        llvm_return_type.not_nil!#,
+        args.map { |arg| llvm_arg_type(arg.type) },
+        llvm_return_type#,
         # varargs: varargs
       )
 
