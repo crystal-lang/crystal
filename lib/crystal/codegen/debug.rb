@@ -75,11 +75,22 @@ module Crystal
 
     def file_metadata(file)
       file ||= ""
+
       @file_metadata ||= {}
-      @file_metadata[file] ||= metadata(
-        File.basename(file),                  # File
-        File.dirname(file)                    # Directory
-      )
+      @file_metadata[file] ||= begin
+        realfile = case file
+          when String then file
+          when VirtualFile
+            File.write(".macro#{file.object_id}.cr", file.source)
+            "./.macro#{file.object_id}.cr"
+          else
+            raise "Unknown file type: #{file}"
+          end
+        metadata(
+          File.basename(realfile),                  # File
+          File.dirname(realfile)                    # Directory
+        )
+      end
     end
 
     def lexical_block_metadata(fun, node)

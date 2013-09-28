@@ -12,11 +12,8 @@ module Crystal
     def method_missing(name, *args)
       ret = @builder.send name, *args
       if ret.is_a?(LLVM::Value) && !ret.constant? && !ret.is_a?(LLVM::BasicBlock)
-        # puts "#{@codegen.current_node.filename}:#{@codegen.current_node.line_number}"
-        # ret.dump
-
         md = @codegen.dbg_metadata
-        LLVM::C.set_metadata ret, @dbg_kind, md if md
+        LLVM::C.set_metadata ret, @dbg_kind, md if md rescue nil
       end
       ret
     end
