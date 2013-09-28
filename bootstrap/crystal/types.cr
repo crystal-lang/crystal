@@ -20,6 +20,10 @@ module Crystal
       true
     end
 
+    def metaclass?
+      false
+    end
+
     def instance_type
       self
     end
@@ -324,6 +328,10 @@ module Crystal
 
     def program
       @instance_type.program
+    end
+
+    def metaclass?
+      true
     end
 
     def types

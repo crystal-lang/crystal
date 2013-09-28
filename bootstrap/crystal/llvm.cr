@@ -159,6 +159,10 @@ module LLVM
     def get_param(index)
       LibLLVM.get_param(@fun, index)
     end
+
+    def linkage=(linkage)
+      LibLLVM.set_linkage(@fun, linkage)
+    end
   end
 
   class GlobalCollection

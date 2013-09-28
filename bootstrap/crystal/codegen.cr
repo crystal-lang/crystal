@@ -250,7 +250,7 @@ module Crystal
 
       call_args = [] of LibLLVM::ValueRef
 
-      if obj = node.obj
+      if (obj = node.obj) && obj.type.try!(&.passed_as_self?)
         accept(obj)
         call_args << @last
       end
@@ -299,18 +299,23 @@ module Crystal
 
       @fun = @llvm_mod.functions.add(
         mangled_name,
-        args.map { |arg| llvm_arg_type(arg.type) },
-        llvm_return_type#,
+        args.map { |arg| llvm_arg_type(arg.type.not_nil!) },
+        llvm_return_type.not_nil!#,
         # varargs: varargs
       )
+
+      is_external = target_def.is_a?(External)
+
+      unless is_external
+        @fun.linkage = LibLLVM::Linkage::Internal
+      end
 
       # args.each_with_index do |arg, i|
       #   @fun.params[i].name = arg.name
       #   # @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
       # end
 
-
-      if body = target_def.body
+      if !is_external && (body = target_def.body)
         new_entry_block
 
         args.each_with_index do |arg, i|
@@ -334,6 +339,7 @@ module Crystal
 
         @builder.position_at_end old_position
       end
+
       @last = LLVM::Int1.from_i(0)
 
       the_fun = @fun

@@ -192,7 +192,7 @@ module Crystal
       @types.push type
     end
 
-    def end_visit_lib_def(node)
+    def end_visit(node : LibDef)
       @types.pop
     end
 
@@ -207,7 +207,7 @@ module Crystal
 
         arg_type = check_primitive_like(restriction.not_nil!)
 
-        fun_arg = Arg.new_with_type(arg.name, arg.type)
+        fun_arg = Arg.new_with_type(arg.name, arg_type)
         fun_arg.location = arg.location
         fun_arg
       end
