@@ -1,5 +1,6 @@
 require "../ast"
 require "../types"
+require "../primitives"
 
 module Crystal
   class Call
@@ -139,17 +140,95 @@ module Crystal
       untyped_def = obj_type.lookup_first_def(name, false) #or
       raise "undefined fun '#{name}' for #{obj_type}" unless untyped_def
 
-      # check_args_length_match untyped_def
+      check_args_length_match obj_type, untyped_def
       # check_lib_out_args untyped_def
       # return unless obj_and_args_types_set?
 
-      # check_fun_args_types_match untyped_def
+      check_fun_args_types_match obj_type, untyped_def
 
       untyped_defs = [untyped_def]
       @target_defs = untyped_defs
 
       # self.unbind_from *old_target_defs if old_target_defs
       self.bind_to untyped_defs
+    end
+
+    def check_args_length_match(obj_type, untyped_def : External)
+      call_args_count = args.length
+      all_args_count = untyped_def.args.length
+
+      if untyped_def.varargs && call_args_count >= all_args_count
+        return
+      end
+
+      required_args_count = untyped_def.args.count { |arg| !arg.default_value }
+
+      return if required_args_count <= call_args_count && call_args_count <= all_args_count
+
+      raise "wrong number of arguments for '#{full_name(obj_type)}' (#{args.length} for #{untyped_def.args.length})"
+    end
+
+    def check_args_length_match(obj_type, untyped_def : Def)
+      raise "BUG: shouldn't check args length for Def here"
+    end
+
+    def check_fun_args_types_match(obj_type, typed_def)
+      # string_conversions = nil
+      # nil_conversions = nil
+      # fun_conversions = nil
+      typed_def.args.each_with_index do |typed_def_arg, i|
+        expected_type = typed_def_arg.type
+        self_arg = self.args[i]
+        actual_type = self_arg.type
+        # actual_type = mod.pointer_of(actual_type) if self.args[i].out?
+        if actual_type != expected_type
+          # if actual_type.nil_type? && expected_type.pointer?
+          #   nil_conversions ||= []
+          #   nil_conversions << i
+          # elsif (mod.string.equal?(actual_type) || mod.string.hierarchy_type.equal?(actual_type)) && expected_type.pointer? && mod.char.equal?(expected_type.var.type)
+          #   string_conversions ||= []
+          #   string_conversions << i
+          # elsif expected_type.fun_type? && actual_type.fun_type? && expected_type.return_type.equal?(@mod.void) && expected_type.arg_types == actual_type.arg_types
+          #   fun_conversions ||= []
+          #   fun_conversions << i
+          # else
+            arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
+            self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
+          # end
+        end
+      end
+
+      # if typed_def.varargs
+      #   typed_def.args.length.upto(args.length - 1) do |i|
+      #     if mod.string.equal?(self.args[i].type)
+      #       string_conversions ||= []
+      #       string_conversions << i
+      #     end
+      #   end
+      # end
+
+      # if string_conversions
+      #   string_conversions.each do |i|
+      #     call = Call.new(self.args[i], 'cstr')
+      #     call.mod = mod
+      #     call.scope = scope
+      #     call.parent_visitor = parent_visitor
+      #     call.recalculate
+      #     self.args[i] = call
+      #   end
+      # end
+
+      # if nil_conversions
+      #   nil_conversions.each do |i|
+      #     self.args[i] = NilPointer.new(typed_def.args[i].type)
+      #   end
+      # end
+
+      # if fun_conversions
+      #   fun_conversions.each do |i|
+      #     self.args[i] = CastFunToReturnVoid.new(self.args[i])
+      #   end
+      # end
     end
 
     def raise_matches_not_found(owner, def_name, matches = nil)
