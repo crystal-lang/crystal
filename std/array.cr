@@ -291,6 +291,7 @@ class Array(T)
         false
       end
     end
+    self
   end
 
   def uniq!

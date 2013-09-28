@@ -21,6 +21,10 @@ class Matches
   def initialize(@matches, @cover, @owner = nil, @success = true)
   end
 
+  def empty?
+    !@success || @matches.empty?
+  end
+
   def each
     if @success && @matches
       @matches.each do |match|

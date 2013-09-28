@@ -1,8 +1,6 @@
 #!/usr/bin/env bin/crystal -run
 require "../../spec_helper"
 
-include Crystal
-
 describe "Type inference: def" do
   it "types a call with an int" do
     assert_type("def foo; 1; end; foo") { int32 }
@@ -31,4 +29,8 @@ describe "Type inference: def" do
   # it "allows recursion" do
   #   assert_type("def foo; foo; end; foo") { |mod| mod.nil }
   # end
+
+  it "raises on undefined local variable or method" do
+    assert_error("foo", "undefined local variable or method 'foo'")
+  end
 end

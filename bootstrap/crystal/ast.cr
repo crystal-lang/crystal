@@ -1109,7 +1109,7 @@ module Crystal
     property :varargs
     property :real_name
 
-    def initialize(@name, @args = [] of ASTNode, @return_type = nil, @varargs = false, @real_name = name)
+    def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @real_name = name)
     end
 
     def accept_children(visitor)

@@ -54,9 +54,9 @@ module Crystal
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
       a_def = defs[name]?
       if a_def
-        Matches.new([Match.new(self, a_def, arg_types)], nil)
+        Matches.new([Match.new(self, a_def, arg_types)], nil, owner)
       else
-        nil
+        Matches.new([] of Match, nil, owner, false)
       end
     end
 
@@ -64,6 +64,13 @@ module Crystal
       defs[name]?
       # defs = self.defs[name].values.select { |a_def| !!a_def.yields == yields }
       # defs.length == 1 ? defs.first : nil
+    end
+
+    def lookup_defs(name)
+      a_def = defs[name]?
+      return [a_def] if a_def
+
+      [] of Def
     end
   end
 

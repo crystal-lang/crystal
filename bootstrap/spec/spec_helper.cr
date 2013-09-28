@@ -38,6 +38,16 @@ def assert_normalize(from, to)
   to_nodes.to_s.strip.should eq(to.strip)
 end
 
+def assert_error(str, message)
+  nodes = parse str
+  begin
+    infer_type nodes
+    fail "TypeException wasn't raised"
+  rescue ex : Crystal::TypeException
+    fail "Expected '#{ex}'' to contain '#{message}'" unless ex.to_s.includes? message
+  end
+end
+
 def parse(string)
   Parser.parse string
 end
