@@ -33,6 +33,8 @@ module Spec
       when :error
         print 'E'
         @has_failures = true
+      when :pending
+        print '*'
       end
       @results << Result.new(kind, description, ex)
     end
@@ -46,33 +48,36 @@ module Spec
     end
 
     def print_results
-      counts = {fail: 0, success: 0, error: 0}
+      counts = {fail: 0, success: 0, error: 0, pending: 0}
       puts
 
-      if @has_failures
-        puts
-        puts "Failures:"
-        failure_counter = 1
-        @results.each do |result|
-          if result.kind != :success
-            if ex = result.exception
+      printed_failures = false
+      failure_counter = 1
+      @results.each do |result|
+        if result.kind != :success
+          if ex = result.exception
+            unless printed_failures
               puts
-              puts "  #{failure_counter}) #{result.description}"
-              puts
-              if msg = ex.message
-                msg.split("\n").each do |line|
-                  print "       "
-                  puts line
-                end
+              puts "Failures:"
+              printed_failures = true
+            end
+            puts
+            puts "  #{failure_counter}) #{result.description}"
+            puts
+            if msg = ex.message
+              msg.split("\n").each do |line|
+                print "       "
+                puts line
               end
             end
-            failure_counter += 1
           end
-          counts[result.kind] += 1
+          failure_counter += 1
         end
-        puts
+        counts[result.kind] += 1
       end
-      puts "#{@results.length} examples, #{counts[:fail]} failures, #{counts[:error]} errors"
+      puts if printed_failures
+
+      puts "#{@results.length} examples, #{counts[:fail]} failures, #{counts[:error]} errors, #{counts[:pending]} pending"
     end
 
     @@instance = RootContext.new
@@ -150,6 +155,10 @@ def it(description)
   rescue ex
     Spec::RootContext.report(:error, description, ex)
   end
+end
+
+def pending(description, &block)
+    Spec::RootContext.report(:pending, description)
 end
 
 def assert
