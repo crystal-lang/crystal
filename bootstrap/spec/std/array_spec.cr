@@ -371,4 +371,24 @@ describe "Array" do
       Array.to_a(1).should eq([1])
     end
   end
+
+  describe "sort" do
+    it "sorts without block" do
+      a = [3, 4, 1, 2, 5, 6]
+      a.sort!
+      a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "sorts with a block" do
+      a = ["foo", "a", "hello"]
+      a.sort! { |x, y| x.length <=> y.length }
+      a.should eq(["a", "foo", "hello"])
+    end
+
+    it "sorts by" do
+      a = ["foo", "a", "hello"]
+      a.sort_by! &.length
+      a.should eq(["a", "foo", "hello"])
+    end
+  end
 end

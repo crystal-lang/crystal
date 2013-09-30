@@ -385,6 +385,10 @@ class Array(T)
     self
   end
 
+  def sort_by!(&block: T -> )
+    sort! { |x, y| (yield x) <=> (yield y) }
+  end
+
   # protected
 
   def length=(length)
