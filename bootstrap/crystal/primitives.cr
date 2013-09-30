@@ -31,6 +31,10 @@ module Crystal
       define_int_binaries int64
       define_float_binaries float32
       define_float_binaries float64
+
+      singleton(int32, "==", {"other" => int32}, bool, ->(b : LLVM::Builder, f : LLVM::Function, llvm_mod : LLVM::Module, self_type : Type | Program) {
+        b.icmp LibLLVM::IntPredicate::EQ, f.get_param(0), f.get_param(1)
+      })
     end
 
     def singleton(owner, name, args, return_type, block)

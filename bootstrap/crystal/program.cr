@@ -12,6 +12,7 @@ module Crystal
     def initialize
       # super(nil, "main")
       @types = {} of String => Type
+      @unions = {} of Array(UInt64) => UnionType
 
       object = @types["Object"] = NonGenericClassType.new self, self, "Object", nil
       object.abstract = true
@@ -98,6 +99,20 @@ module Crystal
       raise "Union types are not yet implemented!"
       # combined_types = type_combine *types
       # union_of *combined_types
+    end
+
+    def union_of(type1, type2)
+      union_of [type1, type2]
+    end
+
+    def union_of(types : Array)
+      if types.length == 1
+        return types[0]
+      end
+
+      types.sort_by! &.type_id
+      types_ids = types.map &.type_id
+      @unions[types_ids] ||= UnionType.new self, types
     end
 
     macro self.type_getter(def_name, type_name)"

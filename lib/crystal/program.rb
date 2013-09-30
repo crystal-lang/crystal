@@ -137,11 +137,11 @@ module Crystal
     end
 
     def union_of(*types)
-      types.sort_by!(&:type_id)
       if types.length == 1
         return types[0]
       end
 
+      types.sort_by!(&:type_id)
       types_ids = types.map(&:type_id)
       @unions[types_ids] ||= UnionType.new(*types)
     end

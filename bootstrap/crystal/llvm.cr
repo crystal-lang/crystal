@@ -27,6 +27,19 @@ lib LibLLVM("LLVM-3.3")
     LinkerPrivateWeak
   end
 
+  enum IntPredicate
+    EQ = 32
+    NE
+    UGT
+    UGE
+    ULT
+    ULE
+    SGT
+    SGE
+    SLT
+    SLE
+  end
+
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun void_type = LLVMVoidType() : TypeRef
@@ -55,6 +68,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_fsub = LLVMBuildFSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_fmul = LLVMBuildFMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_fdiv = LLVMBuildFDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : IntPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -264,6 +278,10 @@ module LLVM
     define_binary fsub
     define_binary fmul
     define_binary fdiv
+
+    def icmp(op, lhs, rhs, name = "")
+      LibLLVM.build_icmp @builder, op, lhs, rhs, name
+    end
   end
 
   abstract class Type

@@ -29,11 +29,31 @@ module Crystal
     end
 
     def lookup_def_instance(def_object_id, arg_types, block_type)
-      raise "BUG in #{self}"
+      raise "BUG: #{self} doesn't implement lookup_def_instance"
     end
 
     def add_def_instance(def_object_id, arg_types, block_type, typed_def)
-      raise "BUG in #{self}"
+      raise "BUG: #{self} doesn't implement add_def_instance"
+    end
+
+    def lookup_type(names, already_looked_up = Set(UInt64).new, lookup_in_container = true)
+      raise "BUG: #{self} doesn't implement lookup_type"
+    end
+
+    def types
+      raise "BUG: #{self} doesn't implement types"
+    end
+
+    def add_def(a_def)
+      raise "BUG: #{self} doesn't implement add_def"
+    end
+
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+      raise "BUG: #{self} doesn't implement lookup_matches"
+    end
+
+    def lookup_defs(name)
+      raise "BUG: #{self} doesn't implement lookup_defs"
     end
 
     def llvm_name
@@ -332,12 +352,16 @@ module Crystal
       raise "Metaclass doesn't have types"
     end
 
-    def lookup_type(names, already_looked_up = Set(UInt64).new, lookup_in_container = true)
-      raise "Metaclass doesn't have types"
-    end
-
     def to_s
       "#{instance_type}:Class"
+    end
+  end
+
+  class UnionType < Type
+    getter :program
+    getter :union_types
+
+    def initialize(@program, @union_types)
     end
   end
 end
