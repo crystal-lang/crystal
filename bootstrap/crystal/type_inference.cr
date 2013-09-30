@@ -91,16 +91,16 @@ module Crystal
     end
 
     def visit(node : Def)
-      # if receiver = node.receiver
-        # # TODO: hack
-        # if node.receiver.is_a?(Var) && node.receiver.name == 'self'
-        #   target_type = current_type.metaclass
-        # else
-        #   target_type = lookup_ident_type(node.receiver).metaclass
-        # end
-      # else
+      if receiver = node.receiver
+        # TODO: hack
+        if receiver.is_a?(Var) && receiver.name == "self"
+          target_type = current_type.metaclass
+        else
+          target_type = lookup_ident_type(receiver).metaclass
+        end
+      else
         target_type = current_type
-      # end
+      end
 
       target_type.add_def node
 
@@ -163,7 +163,7 @@ module Crystal
             raise "Bug: node_superclass can't be nil here" unless node_superclass
             node_superclass.raise "#{superclass} is not a class"
           end
-          type = NonGenericClassType.new scope, name, superclass, false
+          type = NonGenericClassType.new @mod, scope, name, superclass, false
         # end
         # type.abstract = node.abstract
         scope.types[name] = type
@@ -186,7 +186,7 @@ module Crystal
       if type
         node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
       else
-        type = LibType.new current_type, node.name, node.libname
+        type = LibType.new @mod, current_type, node.name, node.libname
         current_type.types[node.name] = type
       end
       @types.push type

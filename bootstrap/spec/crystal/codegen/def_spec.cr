@@ -21,4 +21,16 @@ describe "Code gen: def" do
       foo(1)
       ").to_i.should eq(1)
   end
+
+  it "codegens class def" do
+    run("
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      Foo.foo
+      ").to_i.should eq(1)
+  end
 end

@@ -30,6 +30,14 @@ describe "Type inference: def" do
   #   assert_type("def foo; foo; end; foo") { |mod| mod.nil }
   # end
 
+  it "types a call to a class method 1" do
+    assert_type("class Foo; def self.foo; 1; end; end; Foo.foo") { int32 }
+  end
+
+  it "types a call to a class method 2" do
+    assert_type("class Foo; end; def Foo.foo; 1; end; Foo.foo") { int32 }
+  end
+
   it "raises on undefined local variable or method" do
     assert_error("foo", "undefined local variable or method 'foo'")
   end

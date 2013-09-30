@@ -13,44 +13,44 @@ module Crystal
       # super(nil, "main")
       @types = {} of String => Type
 
-      object = @types["Object"] = NonGenericClassType.new self, "Object", nil
+      object = @types["Object"] = NonGenericClassType.new self, self, "Object", nil
       object.abstract = true
 
-      reference = @types["Reference"] = NonGenericClassType.new self, "Reference", object
-      value = @types["Value"] = ValueType.new self, "Value", object
-      number = @types["Number"] = ValueType.new self, "Number", value
+      reference = @types["Reference"] = NonGenericClassType.new self, self, "Reference", object
+      value = @types["Value"] = ValueType.new self, self, "Value", object
+      number = @types["Number"] = ValueType.new self, self, "Number", value
 
-      @types["Void"] = PrimitiveType.new self, "Void", value, LLVM::Int8, 1
-      @types["Nil"] = NilType.new self, "Nil", value, LLVM::Int1, 1
-      @types["Bool"] = PrimitiveType.new self, "Bool", value, LLVM::Int1, 1
-      @types["Char"] = PrimitiveType.new self, "Char", value, LLVM::Int8, 1
+      @types["Void"] = PrimitiveType.new self, self, "Void", value, LLVM::Int8, 1
+      @types["Nil"] = NilType.new self, self, "Nil", value, LLVM::Int1, 1
+      @types["Bool"] = PrimitiveType.new self, self, "Bool", value, LLVM::Int1, 1
+      @types["Char"] = PrimitiveType.new self, self, "Char", value, LLVM::Int8, 1
 
-      @types["Int"] = int = ValueType.new self, "Int", number
+      @types["Int"] = int = ValueType.new self, self, "Int", number
       int.abstract = true
 
-      @types["Int8"] = IntegerType.new self, "Int8", int, LLVM::Int8, 1, 1
-      @types["UInt8"] = IntegerType.new self, "UInt8", int, LLVM::Int8, 1, 2
-      @types["Int16"] = IntegerType.new self, "Int16", int, LLVM::Int16, 2, 3
-      @types["UInt16"] = IntegerType.new self, "UInt16", int, LLVM::Int16, 2, 4
-      @types["Int32"] = IntegerType.new self, "Int32", int, LLVM::Int32, 4, 5
-      @types["UInt32"] = IntegerType.new self, "UInt32", int, LLVM::Int32, 4, 6
-      @types["Int64"] = IntegerType.new self, "Int64", int, LLVM::Int64, 8, 7
-      @types["UInt64"] = IntegerType.new self, "UInt64", int, LLVM::Int64, 8, 8
+      @types["Int8"] = IntegerType.new self, self, "Int8", int, LLVM::Int8, 1, 1
+      @types["UInt8"] = IntegerType.new self, self, "UInt8", int, LLVM::Int8, 1, 2
+      @types["Int16"] = IntegerType.new self, self, "Int16", int, LLVM::Int16, 2, 3
+      @types["UInt16"] = IntegerType.new self, self, "UInt16", int, LLVM::Int16, 2, 4
+      @types["Int32"] = IntegerType.new self, self, "Int32", int, LLVM::Int32, 4, 5
+      @types["UInt32"] = IntegerType.new self, self, "UInt32", int, LLVM::Int32, 4, 6
+      @types["Int64"] = IntegerType.new self, self, "Int64", int, LLVM::Int64, 8, 7
+      @types["UInt64"] = IntegerType.new self, self, "UInt64", int, LLVM::Int64, 8, 8
 
-      @types["Float"] = float = ValueType.new self, "Float", number
+      @types["Float"] = float = ValueType.new self, self, "Float", number
       float.abstract = true
 
-      @types["Float32"] = float32 = FloatType.new self, "Float32", float, LLVM::Float, 4, 9
+      @types["Float32"] = float32 = FloatType.new self, self, "Float32", float, LLVM::Float, 4, 9
       # float32.types["INFINITY"] = Const.new float32, "FLOAT_INFINITY", Crystal::FloatInfinity.new(float32)
 
-      @types["Float64"] = float64 = FloatType.new self, "Float64", float, LLVM::Double, 8, 10
+      @types["Float64"] = float64 = FloatType.new self, self, "Float64", float, LLVM::Double, 8, 10
       # float64.types["INFINITY"] = Const.new float64, "FLOAT_INFINITY", Crystal::FloatInfinity.new(float64)
 
-      @types["Symbol"] = PrimitiveType.new self, "Symbol", value, LLVM::Int32, 4
+      @types["Symbol"] = PrimitiveType.new self, self, "Symbol", value, LLVM::Int32, 4
 
       # string = @types["String"] = NonGenericClassType.new self, "String", reference
       # HACK: until we have class types in bootstrap
-      string = @types["String"] = PrimitiveType.new self, "String", value, LLVM::PointerType.new(LLVM::Int8), 8
+      string = @types["String"] = PrimitiveType.new self, self, "String", value, LLVM::PointerType.new(LLVM::Int8), 8
 
       @temp_var_counter = 0
 

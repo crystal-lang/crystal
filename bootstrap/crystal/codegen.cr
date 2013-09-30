@@ -245,6 +245,10 @@ module Crystal
       false
     end
 
+    def visit(node : Ident)
+      @last = LLVM::Int64.from_i(node.type.not_nil!.instance_type.type_id)
+    end
+
     def visit(node : Call)
       owner = node.target_def.owner
 

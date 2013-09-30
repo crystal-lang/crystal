@@ -9,7 +9,7 @@ module Crystal
     end
 
     def metaclass
-      @metaclass ||= Metaclass.new(self)
+      @metaclass ||= Metaclass.new(program, self)
     end
 
     def type_id
@@ -42,15 +42,12 @@ module Crystal
   end
 
   abstract class ContainedType < Type
+    getter :program
     getter :container
     getter :types
 
-    def initialize(@container)
+    def initialize(@program, @container)
       @types = {} of String => Type
-    end
-
-    def program
-      container.program
     end
   end
 
@@ -135,8 +132,8 @@ module Crystal
     getter :name
     getter :parents
 
-    def initialize(container, @name)
-      super(container)
+    def initialize(program, container, @name)
+      super(program, container)
       @parents = [] of Type
     end
 
@@ -200,8 +197,8 @@ module Crystal
     getter :depth
     property :abstract
 
-    def initialize(container, name, @superclass, add_subclass = true)
-      super(container, name)
+    def initialize(program, container, name, @superclass, add_subclass = true)
+      super(program, container, name)
       if superclass
         @depth = superclass.depth + 1
       else
@@ -227,8 +224,8 @@ module Crystal
     getter :llvm_type
     getter :llvm_size
 
-    def initialize(container, name, superclass, @llvm_type, @llvm_size)
-      super(container, name, superclass)
+    def initialize(program, container, name, superclass, @llvm_type, @llvm_size)
+      super(program, container, name, superclass)
     end
 
     def llvm_name
@@ -239,16 +236,16 @@ module Crystal
   class IntegerType < PrimitiveType
     getter :rank
 
-    def initialize(container, name, superclass, llvm_type, llvm_size, @rank)
-      super(container, name, superclass, llvm_type, llvm_size)
+    def initialize(program, container, name, superclass, llvm_type, llvm_size, @rank)
+      super(program, container, name, superclass, llvm_type, llvm_size)
     end
   end
 
   class FloatType < PrimitiveType
     getter :rank
 
-    def initialize(container, name, superclass, llvm_type, llvm_size, @rank)
-      super(container, name, superclass, llvm_type, llvm_size)
+    def initialize(program, container, name, superclass, llvm_type, llvm_size, @rank)
+      super(program, container, name, superclass, llvm_type, llvm_size)
     end
   end
 
@@ -264,8 +261,8 @@ module Crystal
   class LibType < ModuleType
     property :libname
 
-    def initialize(container, name, @libname = nil)
-      super(container, name)
+    def initialize(program, container, name, @libname = nil)
+      super(program, container, name)
     end
 
     def metaclass
@@ -321,13 +318,10 @@ module Crystal
     include DefContainer
     include DefInstanceContainer
 
+    getter :program
     getter :instance_type
 
-    def initialize(@instance_type)
-    end
-
-    def program
-      @instance_type.program
+    def initialize(@program, @instance_type)
     end
 
     def metaclass?
