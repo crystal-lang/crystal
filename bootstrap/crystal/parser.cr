@@ -203,15 +203,15 @@ module Crystal
           when :"&&="
             assign = Assign.new(atomic, value)
             assign.location = location
-            atomic = And.new(atomic, assign)
+            atomic = And.new(atomic.clone, assign)
           when :"||="
             assign = Assign.new(atomic, value)
             assign.location = location
-            atomic = Or.new(atomic, assign)
+            atomic = Or.new(atomic.clone, assign)
           else
             call = Call.new(atomic, method, [value] of ASTNode, nil, method_column_number)
             call.location = location
-            atomic = Assign.new(atomic, call)
+            atomic = Assign.new(atomic.clone, call)
           end
         else
           break

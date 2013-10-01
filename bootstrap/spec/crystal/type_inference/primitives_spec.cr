@@ -36,6 +36,14 @@ describe "Type inference: primitives" do
     assert_type("\"foo\"") { string }
   end
 
+  it "types nil" do
+    assert_type("nil") { |mod| mod.nil }
+  end
+
+  it "types nop" do
+    assert_type("") { |mod| mod.nil }
+  end
+
   it "types an expression" do
     assert_type("1; 'a'") { char }
   end

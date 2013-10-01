@@ -22,6 +22,14 @@ module Crystal
       true
     end
 
+    def visit(node : Nop)
+      node.type = @mod.nil
+    end
+
+    def visit(node : NilLiteral)
+      node.type = @mod.nil
+    end
+
     def visit(node : BoolLiteral)
       node.type = mod.bool
     end

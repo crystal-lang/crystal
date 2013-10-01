@@ -2,7 +2,7 @@
 require "../../spec_helper"
 
 describe "Type inference: if" do
-  pending "types an if without else" do
+  it "types an if without else" do
     assert_type("if 1 == 1; 1; end") { |mod| union_of(int32, mod.nil) }
   end
 
