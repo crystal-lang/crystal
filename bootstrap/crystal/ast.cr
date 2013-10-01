@@ -1001,7 +1001,7 @@ module Crystal
     property :args
     property :body
 
-    def initialize(@args = [] of ASTNode, body = nil)
+    def initialize(@args = [] of Var, body = nil)
       @body = Expressions.from body
     end
 

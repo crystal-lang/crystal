@@ -70,22 +70,6 @@ module Crystal
       node
     end
 
-    def transform_int_literal(node)
-      node
-    end
-
-    def transform_long_literal(node)
-      node
-    end
-
-    def transform_float_literal(node)
-      node
-    end
-
-    def transform_double_literal(node)
-      node
-    end
-
     def transform_char_literal(node)
       node
     end

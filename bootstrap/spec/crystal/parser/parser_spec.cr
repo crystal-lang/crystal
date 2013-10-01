@@ -83,7 +83,7 @@ end
 
 class Crystal::ASTNode
   def pointer_of
-    NewGenericClass.new(Ident.new(["Pointer"], true), [self])
+    NewGenericClass.new(Ident.new(["Pointer"], true), [self] of ASTNode)
   end
 end
 
@@ -162,8 +162,8 @@ describe "Parser" do
   it_parses "a = 1", Assign.new("a".var, 1.int32)
   it_parses "a = b = 2", Assign.new("a".var, Assign.new("b".var, 2.int32))
 
-  it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var], [1.int32, 2.int32])
-  it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var], [1.int32])
+  it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
+  it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
 
   it_parses "def foo\n1\nend", Def.new("foo", [] of Arg, [1.int32] of ASTNode)
   it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], [1.int32] of ASTNode)
@@ -191,8 +191,8 @@ describe "Parser" do
   it_parses "def foo(a); a; end", Def.new("foo", ["a".arg], "a".var)
   it_parses "def foo; a = 1; a; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), "a".var])
   it_parses "def foo; a = 1; a {}; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "a", ([] of ASTNode), Block.new)])
-  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "x", ([] of ASTNode), Block.new([] of ASTNode, ["a".var]))])
-  it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", ([] of ASTNode), Block.new(["a".var] of ASTNode, ["a".var] of ASTNode))])
+  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "x", ([] of ASTNode), Block.new([] of Var, ["a".var]))])
+  it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", ([] of ASTNode), Block.new(["a".var], ["a".var] of ASTNode))])
 
   it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int32)], nil)
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int32)], nil)
@@ -200,11 +200,11 @@ describe "Parser" do
   it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
   it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfType.new)], nil)
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.new)], nil)
-  it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Double".ident]))], nil)
-  it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Nil".ident(true)]))], nil)
+  it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Double".ident] of ASTNode))], nil)
+  it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Nil".ident(true)] of ASTNode))], nil)
   it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new], nil, nil, 0)
-  it_parses "def foo; yield 1; end", Def.new("foo", [] of Arg, [Yield.new([1.int32])], nil, nil, 1)
-  it_parses "def foo; yield 1; yield; end", Def.new("foo", [] of Arg, [Yield.new([1.int32]), Yield.new], nil, nil, 1)
+  it_parses "def foo; yield 1; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode)], nil, nil, 1)
+  it_parses "def foo; yield 1; yield; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode), Yield.new], nil, nil, 1)
   it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)], nil)
   it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block"))
   it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", FunTypeSpec.new(["Int".ident] of ASTNode, "Double".ident)))
@@ -286,10 +286,10 @@ describe "Parser" do
   it_parses "class Foo(T); end", ClassDef.new("Foo".ident, nil, nil, ["T"])
   it_parses "abstract class Foo; end", ClassDef.new("Foo".ident, nil, nil, nil, true)
 
-  it_parses "Foo(T)", NewGenericClass.new("Foo".ident, ["T".ident])
-  it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident])])
-  it_parses "Foo(Bar(T | U))", NewGenericClass.new("Foo".ident, [NewGenericClass.new("Bar".ident, [IdentUnion.new(["T".ident, "U".ident])])])
-  it_parses "Foo(T?)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, Ident.new(["Nil"], true)])])
+  it_parses "Foo(T)", NewGenericClass.new("Foo".ident, ["T".ident] of ASTNode)
+  it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident] of ASTNode)] of ASTNode)
+  it_parses "Foo(Bar(T | U))", NewGenericClass.new("Foo".ident, [NewGenericClass.new("Bar".ident, [IdentUnion.new(["T".ident, "U".ident] of ASTNode)] of ASTNode)] of ASTNode)
+  it_parses "Foo(T?)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, Ident.new(["Nil"], true)] of ASTNode)] of ASTNode)
 
   it_parses "module Foo; end", ModuleDef.new("Foo".ident)
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".ident, [Def.new("foo", [] of Arg, nil)])
@@ -298,13 +298,13 @@ describe "Parser" do
   it_parses "while true; end;", While.new(true.bool)
   it_parses "while true; 1; end;", While.new(true.bool, 1.int32)
 
-  it_parses "foo do; 1; end", Call.new(nil, "foo", ([] of ASTNode), Block.new([] of ASTNode, 1.int32))
+  it_parses "foo do; 1; end", Call.new(nil, "foo", ([] of ASTNode), Block.new([] of Var, 1.int32))
   it_parses "foo do |a|; 1; end", Call.new(nil, "foo", ([] of ASTNode), Block.new(["a".var], 1.int32))
 
-  it_parses "foo { 1 }", Call.new(nil, "foo", ([] of ASTNode), Block.new([] of ASTNode, 1.int32))
+  it_parses "foo { 1 }", Call.new(nil, "foo", ([] of ASTNode), Block.new([] of Var, 1.int32))
   it_parses "foo { |a| 1 }", Call.new(nil, "foo", ([] of ASTNode), Block.new(["a".var], 1.int32))
   it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", ([] of ASTNode), Block.new(["a".var, "b".var], 1.int32))
-  it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", ([] of ASTNode), Block.new([] of ASTNode, 1.int32))
+  it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", ([] of ASTNode), Block.new([] of Var, 1.int32))
 
   it_parses "1 ? 2 : 3", If.new(1.int32, 2.int32, 3.int32)
   it_parses "1 ? a : b", If.new(1.int32, "a".call, "b".call)
@@ -319,26 +319,26 @@ describe "Parser" do
 
   it_parses "return", Return.new
   it_parses "return;", Return.new
-  it_parses "return 1", Return.new([1.int32])
-  it_parses "return 1 if true", If.new(true.bool, Return.new([1.int32]))
+  it_parses "return 1", Return.new([1.int32] of ASTNode)
+  it_parses "return 1 if true", If.new(true.bool, Return.new([1.int32] of ASTNode))
   it_parses "return if true", If.new(true.bool, Return.new)
 
   it_parses "break", Break.new
   it_parses "break;", Break.new
-  it_parses "break 1", Break.new([1.int32])
-  it_parses "break 1 if true", If.new(true.bool, Break.new([1.int32]))
+  it_parses "break 1", Break.new([1.int32] of ASTNode)
+  it_parses "break 1 if true", If.new(true.bool, Break.new([1.int32] of ASTNode))
   it_parses "break if true", If.new(true.bool, Break.new)
 
   it_parses "next", Next.new
   it_parses "next;", Next.new
-  it_parses "next 1", Next.new([1.int32])
-  it_parses "next 1 if true", If.new(true.bool, Next.new([1.int32]))
+  it_parses "next 1", Next.new([1.int32] of ASTNode)
+  it_parses "next 1 if true", If.new(true.bool, Next.new([1.int32] of ASTNode))
   it_parses "next if true", If.new(true.bool, Next.new)
 
   it_parses "yield", Yield.new
   it_parses "yield;", Yield.new
-  it_parses "yield 1", Yield.new([1.int32])
-  it_parses "yield 1 if true", If.new(true.bool, Yield.new([1.int32]))
+  it_parses "yield 1", Yield.new([1.int32] of ASTNode)
+  it_parses "yield 1 if true", If.new(true.bool, Yield.new([1.int32] of ASTNode))
   it_parses "yield if true", If.new(true.bool, Yield.new)
 
   it_parses "Int", "Int".ident
@@ -412,7 +412,7 @@ describe "Parser" do
 
   it_parses "A = 1", Assign.new("A".ident, 1.int32)
 
-  it_parses "puts %w(one two)", Call.new(nil, "puts", [["one".string, "two".string].array] of ASTNode)
+  it_parses "puts %w(one two)", Call.new(nil, "puts", [(["one".string, "two".string] of ASTNode).array] of ASTNode)
 
   it_parses "[] of Int", ([] of ASTNode).array_of("Int".ident)
   it_parses "[1, 2] of Int", ([1.int32, 2.int32] of ASTNode).array_of("Int".ident)
@@ -450,7 +450,7 @@ describe "Parser" do
   it_parses "{} of Int => Double", HashLiteral.new([] of ASTNode, [] of ASTNode, "Int".ident, "Double".ident)
 
   it_parses "require \"foo\"", Require.new("foo")
-  it_parses "require \"foo\"; [1]", [Require.new("foo"), [1.int32].array]
+  it_parses "require \"foo\"; [1]", [Require.new("foo"), ([1.int32] of ASTNode).array]
   it_parses "require \"foo\"\nif true; end", [Require.new("foo"), If.new(true.bool)]
 
   it_parses "case 1; when 1; 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
@@ -479,9 +479,9 @@ describe "Parser" do
   it_parses "begin; 1; rescue; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
   it_parses "begin; 1; ensure; 2; end", ExceptionHandler.new(1.int32, nil, nil, 2.int32)
   it_parses "begin\n1\nensure\n2\nend", ExceptionHandler.new(1.int32, nil, nil, 2.int32)
-  it_parses "begin; 1; rescue Foo; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident])])
-  it_parses "begin; 1; rescue Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident])])
-  it_parses "begin; 1; rescue ex : Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident], "ex")])
+  it_parses "begin; 1; rescue Foo; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident] of ASTNode)])
+  it_parses "begin; 1; rescue Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident] of ASTNode)])
+  it_parses "begin; 1; rescue ex : Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".ident, "Bar".ident] of ASTNode, "ex")])
   it_parses "begin; 1; rescue ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
   it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
 

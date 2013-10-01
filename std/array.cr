@@ -33,10 +33,6 @@ class Array(T)
     ary
   end
 
-  def self.to_a(obj)
-    obj.is_a?(Array) ? obj : [obj]
-  end
-
   def length
     @length
   end

@@ -15,10 +15,6 @@ module Crystal
     def after_transform(node)
     end
 
-    def transform(node)
-      node
-    end
-
     def transform(node : Expressions)
       exps = [] of ASTNode
       node.expressions.each do |exp|
@@ -50,6 +46,336 @@ module Crystal
         node.block = node_block.transform(self)
       end
       # node.block_arg = node.block_arg.transform(self) if node.block_arg
+      node
+    end
+
+    def transform(node : And)
+      node.left = node.left.transform(self)
+      node.right = node.right.transform(self)
+      node
+    end
+
+    def transform(node : Or)
+      node.left = node.left.transform(self)
+      node.right = node.right.transform(self)
+      node
+    end
+
+    def transform(node : StringInterpolation)
+      transform_many node.expressions
+      node
+    end
+
+    def transform(node : ArrayLiteral)
+      transform_many node.elements
+
+      if node_of = node.of
+        node.of = node_of.transform(self)
+      end
+
+      node
+    end
+
+    def transform(node : HashLiteral)
+      transform_many node.keys
+      transform_many node.values
+
+      if of_key = node.of_key
+        node.of_key = of_key.transform(self)
+      end
+
+      if of_value = node.of_value
+        node.of_value = of_value.transform(self)
+      end
+
+      node
+    end
+
+    def transform(node : If)
+      node.cond = node.cond.transform(self)
+      node.then = node.then.transform(self)
+      node.else = node.else.transform(self)
+      node
+    end
+
+    def transform(node : Unless)
+      node.cond = node.cond.transform(self)
+      node.then = node.then.transform(self)
+      node.else = node.else.transform(self)
+      node
+    end
+
+    def transform(node : MultiAssign)
+      transform_many node.targets
+      transform_many node.values
+      node
+    end
+
+    def transform(node : SimpleOr)
+      node.left = node.left.transform(self)
+      node.right = node.right.transform(self)
+      node
+    end
+
+    def transform(node : Def)
+      transform_many node.args
+      node.body = node.body.transform(self)
+
+      if receiver = node.receiver
+        node.receiver = receiver.transform(self)
+      end
+
+      if block_arg = node.block_arg
+        node.block_arg = block_arg.transform(self)
+      end
+
+      node
+    end
+
+    def transform(node : Macro)
+      transform_many node.args
+      node.body = node.body.transform(self)
+
+      if receiver = node.receiver
+        node.receiver = receiver.transform(self)
+      end
+
+      if block_arg = node.block_arg
+        node.block_arg = block_arg.transform(self)
+      end
+
+      node
+    end
+
+    def transform(node : PointerOf)
+      node.var = node.var.transform(self)
+      node
+    end
+
+    def transform(node : IsA)
+      node.obj = node.obj.transform(self)
+      node.const = node.const.transform(self)
+      node
+    end
+
+    def transform(node : Case)
+      node.cond = node.cond.transform(self)
+      transform_many node.whens
+
+      if node_else = node.else
+        node.else = node_else.transform(self)
+      end
+
+      node
+    end
+
+    def transform(node : When)
+      transform_many node.conds
+      node.body = node.body.transform(self)
+      node
+    end
+
+    def transform(node : ClassDef)
+      node.body = node.body.transform(self)
+
+      if superclass = node.superclass
+        node.superclass = superclass.transform(self)
+      end
+
+      node
+    end
+
+    def transform(node : ModuleDef)
+      node.body = node.body.transform(self)
+      node
+    end
+
+    def transform(node : While)
+      node.cond = node.cond.transform(self)
+      node.body = node.body.transform(self)
+      node
+    end
+
+    def transform(node : NewGenericClass)
+      node.name = node.name.transform(self)
+      transform_many node.type_vars
+      node
+    end
+
+    def transform(node : ExceptionHandler)
+      node.body = node.body.transform(self)
+      transform_many node.rescues
+
+      if node_ensure = node.ensure
+        node.ensure = node_ensure.transform(self)
+      end
+
+      node
+    end
+
+    def transform(node : Rescue)
+      node.body = node.body.transform(self)
+      transform_many node.types
+      node
+    end
+
+    def transform(node : IdentUnion)
+      transform_many node.idents
+      node
+    end
+
+    def transform(node : Arg)
+      if default_value = node.default_value
+        node.default_value = default_value.transform(self)
+      end
+
+      if type_restriction = node.type_restriction
+        node.type_restriction = type_restriction.transform(self)
+      end
+
+      node
+    end
+
+    def transform(node : BlockArg)
+      node.type_spec = node.type_spec.transform(self)
+      node
+    end
+
+    def transform(node : FunTypeSpec)
+      transform_many node.inputs
+
+      if output = node.output
+        node.output = output.transform(self)
+      end
+
+      node
+    end
+
+    def transform(node : Block)
+      transform_many node.args
+      node.body = node.body.transform(self)
+      node
+    end
+
+    def transform(node : Return)
+      transform_many node.exps
+      node
+    end
+
+    def transform(node : Break)
+      transform_many node.exps
+      node
+    end
+
+    def transform(node : Next)
+      transform_many node.exps
+      node
+    end
+
+    def transform(node : Yield)
+      # node.scope = node.scope.transform(self) if node.scope
+      transform_many node.exps
+      node
+    end
+
+    def transform(node : Include)
+      node.name = node.name.transform(self)
+      node
+    end
+
+    def transform(node : RangeLiteral)
+      node.from = node.from.transform(self)
+      node.to = node.to.transform(self)
+      node
+    end
+
+    def transform(node : Assign)
+      node.target = node.target.transform(self)
+      node.value = node.value.transform(self)
+      node
+    end
+
+    def transform(node : Nop)
+      node
+    end
+
+    def transform(node : NilLiteral)
+      node
+    end
+
+    def transform(node : BoolLiteral)
+      node
+    end
+
+    def transform(node : NumberLiteral)
+      node
+    end
+
+    def transform(node : CharLiteral)
+      node
+    end
+
+    def transform(node : StringLiteral)
+      node
+    end
+
+    def transform(node : SymbolLiteral)
+      node
+    end
+
+    def transform(node : RegexpLiteral)
+      node
+    end
+
+    def transform(node : Var)
+      node
+    end
+
+    def transform(node : InstanceVar)
+      node
+    end
+
+    def transform(node : Global)
+      node
+    end
+
+    def transform(node : Require)
+      node
+    end
+
+    def transform(node : Ident)
+      node
+    end
+
+    def transform(node : SelfType)
+      node
+    end
+
+    def transform(node : LibDef)
+      node
+    end
+
+    def transform(node : FunDef)
+      node
+    end
+
+    def transform(node : TypeDef)
+      node
+    end
+
+    def transform(node : StructDef)
+      node
+    end
+
+    def transform(node : UnionDef)
+      node
+    end
+
+    def transform(node : EnumDef)
+      node
+    end
+
+    def transform(node : PrimitiveBody)
       node
     end
 

@@ -863,7 +863,7 @@ module Crystal
     end
 
     def parse_string_array
-      strings = [] of StringLiteral
+      strings = [] of ASTNode
 
       next_string_array_token
       while true
@@ -1308,7 +1308,7 @@ module Crystal
     end
 
     def parse_block2
-      block_args = [] of ASTNode
+      block_args = [] of Var
       block_body = nil
 
       next_token_skip_space
@@ -1503,7 +1503,12 @@ module Crystal
     end
 
     def parse_types
-      Array.to_a(parse_type)
+      type = parse_type
+      if type.is_a?(Array)
+        type
+      else
+        [type] of ASTNode
+      end
     end
 
     def parse_single_type
@@ -1612,7 +1617,7 @@ module Crystal
     end
 
     def make_pointer_type(node)
-      NewGenericClass.new(Ident.new(["Pointer"], true), [node])
+      NewGenericClass.new(Ident.new(["Pointer"], true), [node] of ASTNode)
     end
 
     def parse_yield
