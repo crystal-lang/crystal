@@ -703,7 +703,7 @@ module Crystal
       if node.else.nop?
         node.else.accept self
       else
-        @type_filter_stack.push negate_filters(node.cond.type_filters) if node.cond.type_filters
+        @type_filter_stack.push negate_filters(node.cond.type_filters) if node.cond.type_filters && !node.cond.is_a?(If)
         node.else.accept self
         @type_filter_stack.pop if node.cond.type_filters
       end

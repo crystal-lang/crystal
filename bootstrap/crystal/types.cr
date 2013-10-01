@@ -363,5 +363,13 @@ module Crystal
 
     def initialize(@program, @union_types)
     end
+
+    def to_s
+      # if nilable?
+      #   "#{nilable_type}?"
+      # else
+        @union_types.join " | "
+      # end
+    end
   end
 end

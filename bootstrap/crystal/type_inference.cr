@@ -261,6 +261,10 @@ module Crystal
       # end
     end
 
+    def end_visit(node : If)
+      node.bind_to [node.then, node.else]
+    end
+
     def lookup_var(name)
       @vars.fetch_or_assign(name) { Var.new name }
     end

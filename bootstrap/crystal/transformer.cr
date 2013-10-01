@@ -39,5 +39,22 @@ module Crystal
         node
       end
     end
+
+    def transform(node : Call)
+      if node_obj = node.obj
+        node.obj = node_obj.transform(self)
+      end
+      transform_many node.args
+
+      if node_block = node.block
+        node.block = node_block.transform(self)
+      end
+      # node.block_arg = node.block_arg.transform(self) if node.block_arg
+      node
+    end
+
+    def transform_many(exps)
+      exps.map! { |exp| exp.transform(self) } if exps
+    end
   end
 end

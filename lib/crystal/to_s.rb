@@ -160,7 +160,6 @@ module Crystal
       @str << "::" if node.global
 
       if node.obj && node.name == :'[]'
-
         @str << "(" if need_parens
         node.obj.accept self
         @str << ")" if need_parens
@@ -202,7 +201,6 @@ module Crystal
         node.args[0].accept self
       else
         if node.obj
-          need_parens = node.obj.is_a?(Call) || node.obj.is_a?(Assign)
           @str << "(" if need_parens
           node.obj.accept self
           @str << ")" if need_parens

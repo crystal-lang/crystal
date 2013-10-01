@@ -613,7 +613,7 @@ module Crystal
       Expressions.concat(assign, vars + [temp_var])
     end
 
-    def increment_var(name, indices = @vars[name])
+    def increment_var(name, indices)
       @vars[name] = {read: indices[:write], write: indices[:write] + 1}
     end
 

@@ -181,22 +181,97 @@ module Crystal
     end
 
     def visit(node : Call)
-      if node_obj = node.obj
+      need_parens = node.obj.is_a?(Call) || node.obj.is_a?(Assign)
+      node_obj = node.obj
+
+      # @str << "::" if node.global
+
+      if node_obj && node.name == "[]"
+        @str << "(" if need_parens
         node_obj.accept self
-        @str << "."
-      end
-      @str << node.name
-      @str << "("
-      node.args.each_with_index do |arg, i|
-        @str << ", " if i > 0
-        arg.accept self
-      end
-      @str << ")"
-      if node_block = node.block
+        @str << ")" if need_parens
+
+        @str << decorate_call(node, "[")
+
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+        end
+        @str << decorate_call(node, "]")
+      elsif node_obj && node.name == "[]="
+        @str << "(" if need_parens
+        node_obj.accept self
+        @str << ")" if need_parens
+
+        @str << decorate_call(node, "[")
+
+        node.args[0].accept self
+        @str << decorate_call(node, "] = ")
+        node.args[1].accept self
+      elsif node_obj && !is_alpha(node.name) && node.args.length == 0
+        if node.name.ends_with? '@'
+          @str << decorate_call(node, node.name[0 ... -1])
+        else
+          @str << decorate_call(node, node.name)
+        end
+        @str << "("
+        node_obj.accept self
+        @str << ")"
+      elsif node_obj && !is_alpha(node.name) && node.args.length == 1
+        @str << "(" if need_parens
+        node_obj.accept self
+        @str << ")" if need_parens
+
         @str << " "
-        node_block.accept self
+        @str << decorate_call(node, node.name)
+        @str << " "
+        node.args[0].accept self
+      else
+        if node_obj
+          @str << "(" if need_parens
+          node_obj.accept self
+          @str << ")" if need_parens
+          @str << "."
+        end
+        if node.name.ends_with?('=')
+          @str << decorate_call(node, node.name[0 .. -2])
+          @str << " = "
+          node.args.each_with_index do |arg, i|
+            @str << ", " if i > 0
+            arg.accept self
+          end
+        else
+          @str << decorate_call(node, node.name)
+          @str << "(" unless node_obj && node.args.empty?
+          node.args.each_with_index do |arg, i|
+            @str << ", " if i > 0
+            arg.accept self
+          end
+          # if block_arg = node.block_arg
+          #   @str << ", " if node.args.length > 0
+          #   @str << "&"
+          #   block_arg.accept self
+          # end
+          @str << ")" unless node_obj && node.args.empty?
+        end
+      end
+      if block = node.block
+        @str << " "
+        block.accept self
       end
       false
+    end
+
+    def decorate_call(node, str)
+      str
+    end
+
+    def decorate_var(node, str)
+      str
+    end
+
+    def is_alpha(string)
+      'a' <= string[0].downcase <= 'z'
     end
 
     def visit(node : Assign)
@@ -243,11 +318,7 @@ module Crystal
     end
 
     def visit(node : Var)
-      if node.name
-        @str << node.name
-      else
-        @str << '?'
-      end
+      @str << node.name
     end
 
     def visit(node : Def)

@@ -13,9 +13,24 @@ module Crystal
   end
 
   class Normalizer < Transformer
+    class Index
+      getter :read
+      getter :write
+      getter :frozen
+
+      def initialize(@read = 0, @write = 1, @frozen = false)
+      end
+
+      def increment
+        Index.new(@write, @write + 1, @frozen)
+      end
+    end
+
     getter :program
 
     def initialize(@program)
+      @vars = {} of String => Index
+      @exception_handler_count = 0
     end
 
     def normalize(node)
@@ -50,6 +65,65 @@ module Crystal
       super
 
       Call.new(Ident.new(["Range"], true), "new", [node.from, node.to, BoolLiteral.new(node.exclusive)])
+    end
+
+    def transform(node : Assign)
+      target = node.target
+      case target
+      when Var
+        node.value = node.value.transform(self)
+        transform_assign_var(target)
+      # when Ident
+      #   pushing_vars do
+      #     node.value = node.value.transform(self)
+      #   end
+      # when InstanceVar
+      #   node.value = node.value.transform(self)
+      #   transform_assign_ivar(node)
+      # else
+      #   node.value = node.value.transform(self)
+      end
+
+      node
+    end
+
+    def transform_assign_var(node)
+      indices = @vars[node.name]?
+      if indices
+        if indices.frozen || @exception_handler_count > 0
+          node.name = var_name_with_index(node.name, indices.read)
+        else
+          increment_var node.name, indices
+          node.name = var_name_with_index(node.name, indices.write)
+        end
+      else
+        @vars[node.name] = Index.new
+      end
+    end
+
+    def transform(node : Var)
+      return node if node.name == "self" || node.name.starts_with?('#')
+
+      if node.out
+        @vars[node.name] = Index.new
+        return node
+      end
+
+      indices = @vars[node.name]?
+      node.name = var_name_with_index(node.name, indices ? indices.read : nil)
+      node
+    end
+
+    def increment_var(name, indices)
+      @vars[name] = indices.increment
+    end
+
+    def var_name_with_index(name, index)
+      if index && index > 0
+        "#{name}:#{index}"
+      else
+        name
+      end
     end
 
     def new_temp_var

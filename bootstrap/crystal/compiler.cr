@@ -39,6 +39,7 @@ module Crystal
         parser = Parser.new(source)
         parser.filename = filename
         nodes = parser.parse
+        nodes = program.normalize nodes
         nodes = program.infer_type nodes
         llvm_mod = program.build nodes
 

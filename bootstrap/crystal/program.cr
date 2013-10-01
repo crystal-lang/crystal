@@ -85,10 +85,12 @@ module Crystal
     def type_merge(types)
       all_types = types #.map! { |type| type.is_a?(UnionType) ? type.types : type }
       # all_types.flatten!
-      all_types.compact!
-      all_types.uniq! { |t| t.object_id }
+      not_nil_types = [] of Type
+      all_types.compact not_nil_types
+
+      not_nil_types.uniq! &.type_id
       # all_types.delete_if { |type| type.no_return? } if all_types.length > 1
-      combined_union_of types
+      combined_union_of not_nil_types
     end
 
     def combined_union_of(types)
@@ -96,9 +98,12 @@ module Crystal
         return types[0]
       end
 
-      raise "Union types are not yet implemented!"
-      # combined_types = type_combine *types
-      # union_of *combined_types
+      combined_types = type_combine types
+      union_of combined_types
+    end
+
+    def type_combine(types)
+      types
     end
 
     def union_of(type1, type2)
@@ -110,9 +115,9 @@ module Crystal
         return types[0]
       end
 
-      types.sort_by! &.type_id
+      # types.sort_by! &.type_id
       types_ids = types.map &.type_id
-      @unions[types_ids] ||= UnionType.new self, types
+      @unions.fetch_or_assign(types_ids) { UnionType.new self, types }
     end
 
     macro self.type_getter(def_name, type_name)"

@@ -219,6 +219,12 @@ class Array(T)
     delete nil
   end
 
+  def compact(array)
+    each do |elem|
+      array.push elem if elem
+    end
+  end
+
   # def flatten(target : Array(U))
   #   flatten_append target, self, false
   #   target
