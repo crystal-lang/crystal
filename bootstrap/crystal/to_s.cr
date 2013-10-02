@@ -277,7 +277,16 @@ module Crystal
     def visit(node : Assign)
       node.target.accept self
       @str << " = "
-      node.value.accept self
+
+      if node.value.is_a?(Expressions)
+        @str << "begin\n"
+        accept_with_indent(node.value)
+        append_indent
+        @str << "end"
+      else
+        node.value.accept self
+      end
+
       false
     end
 

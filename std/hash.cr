@@ -143,6 +143,14 @@ class Hash(K, V)
     true
   end
 
+  def clone
+    hash = Hash(K, V).new
+    each do |key, value|
+      hash[key] = value.clone
+    end
+    hash
+  end
+
   def to_s
     String.build do |str|
       str << "{"

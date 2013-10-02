@@ -193,6 +193,10 @@ module Crystal
       true
     end
 
+    def parents
+      []
+    end
+
     def to_s
       "NoReturn"
     end

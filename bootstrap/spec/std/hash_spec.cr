@@ -152,4 +152,11 @@ describe "Hash" do
   describe "to_s" do
     assert { {1 => 2, 3 => 4}.to_s.should eq("{1 => 2, 3 => 4}") }
   end
+
+  it "clones" do
+    h1 = {1 => 2, 3 => 4}
+    h2 = h1.clone
+    h1.object_id.should_not eq(h2.object_id)
+    h1.should eq(h2)
+  end
 end
