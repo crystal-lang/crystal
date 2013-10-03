@@ -974,9 +974,12 @@ module Crystal
 
       if !node.target_defs || node.target_def.owner.is_subclass_of?(@mod.value)
         owner = ((node.obj && node.obj.type) || node.scope)
+      elsif node.name == 'super'
+        owner = node.scope
       else
         owner = node.target_def.owner
       end
+
       owner = nil unless owner.passed_as_self?
 
       call_args = []

@@ -76,7 +76,7 @@ module Crystal
       end
     end
 
-    def lookup_matches_in(owner, self_type = owner, def_name = self.name)
+    def lookup_matches_in(owner, self_type = nil, def_name = self.name)
       is_no_return = false
 
       arg_types = args.map do |arg|
@@ -99,7 +99,7 @@ module Crystal
             if mod_matches.empty? && owner.lookup_first_def('method_missing', !!block)
               match = Match.new
               match.def = define_method_missing owner, def_name
-              match.owner = self_type
+              match.owner = owner
               match.arg_types = arg_types
               matches = Matches.new([match], true)
             else
@@ -126,15 +126,20 @@ module Crystal
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
         block_type = block && block.body && match.def.block_arg ? block.body.type : nil
+        lookup_self_type = self_type || match.owner
+        lookup_arg_types = match.arg_types
+        if self_type
+          lookup_arg_types = [self_type] + match.arg_types
+        end
 
-        typed_def = match.owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
+        typed_def = match.owner.lookup_def_instance(match.def.object_id, lookup_arg_types, block_type) if use_cache
         unless typed_def
           # puts "#{owner}##{name}(#{arg_types.join ', '})#{block_type ? "{ #{block_type} }" : ""}"
-          typed_def, typed_def_args = prepare_typed_def_with_args(match.def, owner, match.owner, match.arg_types)
-          match.owner.add_def_instance(match.def.object_id, match.arg_types, block_type, typed_def) if use_cache
+          typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match.owner, lookup_self_type, match.arg_types)
+          match.owner.add_def_instance(match.def.object_id, lookup_arg_types, block_type, typed_def) if use_cache
           if typed_def.body
             bubbling_exception do
-              visitor = TypeVisitor.new(@mod, typed_def_args, match.owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars, yield_vars)
+              visitor = TypeVisitor.new(@mod, typed_def_args, lookup_self_type, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars, yield_vars)
               typed_def.body.accept visitor
             end
           end
@@ -373,7 +378,7 @@ module Crystal
       parents_length = parent_visitor.owner.parents.length
       parent_visitor.owner.parents.each_with_index do |parent, i|
         if i == parents_length - 1 || parent.lookup_first_def(parent_visitor.untyped_def.name, !!block)
-          return lookup_matches_in(parent, scope, parent_visitor.untyped_def.name)
+          return lookup_matches_in(parent, parent_visitor.owner, parent_visitor.untyped_def.name)
         end
       end
     end
@@ -515,7 +520,7 @@ module Crystal
       args_start_index = 0
 
       typed_def = untyped_def.clone
-      typed_def.owner = self_type
+      typed_def.owner = owner
       typed_def.bind_to typed_def.body if typed_def.body
 
       args = {}
