@@ -823,7 +823,8 @@ module Crystal
       if @nest_count == 0
         new_vars = @vars.map do |assign|
           target = assign.target
-          name, index = target.name.split(':')
+
+          name = var_name_without_index target.name
           value_index = @vars_indices[name]
           if value_index || ((before_var = @before_vars[name]) && (value_index = before_var[:read]))
             new_name = value_index == 0 ? name : "#{name}:#{value_index}"

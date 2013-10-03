@@ -48,6 +48,33 @@ module Crystal
       node.transform(self)
     end
 
+    def before_transform(node)
+      @dead_code = false
+    end
+
+    def after_transform(node)
+      case node
+      when Return, Break, Next
+        @dead_code = true
+      when If, Case, Unless, And, Or, Expressions, Block
+      when While
+        reset_instance_variables_indices
+        @dead_code = false
+      else
+        @dead_code = false
+      end
+    end
+
+    def reset_instance_variables_indices
+      return if @in_initialize
+
+      @vars.each do |key, value|
+        if key[0] == '@'
+          @vars[key] = Index.new(nil, value.write)
+        end
+      end
+    end
+
     def transform(node : And)
       left = node.left
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
@@ -225,6 +252,60 @@ module Crystal
       node
     end
 
+    def transform(node : Block)
+      before_vars = @vars.clone
+
+      node.args.each do |arg|
+        @vars[arg.name] = Index.new
+      end
+
+      transformed = super
+
+      if @exception_handler_count > 0
+        return transformed
+      end
+
+      node.args.each do |arg|
+        @vars.delete arg.name
+      end
+
+      after_body_vars = get_loop_vars(before_vars)
+
+      node.body = append_before_exits(node.body, before_vars, after_body_vars) if node.body && after_body_vars.length > 0
+
+      unless @dead_code
+        node.body = concat_preserving_return_value(node.body, after_body_vars)
+      end
+
+      # Delete vars declared inside the block
+      block_vars = @vars.keys - before_vars.keys
+      block_vars.each do |block_var|
+        @vars.delete block_var
+      end
+
+      node
+    end
+
+    def get_loop_vars(before_vars, restore = true)
+      loop_vars = [] of Assign
+
+      @vars.each do |var_name, indices|
+        before_indices = before_vars[var_name]?
+        if before_indices
+          before_indices_read = before_indices.read
+          indices_read = indices.read
+          if before_indices_read && indices_read && before_indices_read < indices_read
+            loop_vars << assign_var_with_indices(var_name, before_indices_read, indices_read)
+            if restore
+              @vars[var_name] = Index.new(before_indices_read, indices.write)
+            end
+          end
+        end
+      end
+
+      loop_vars
+    end
+
     def pushing_vars(vars = {} of String => Index)
       @vars, old_vars = vars, @vars
       @vars = vars
@@ -354,7 +435,8 @@ module Crystal
             target = assign.target
             raise "BUG: target is not a Var" unless target.is_a?(Var)
 
-            name, index = target.name.split(':')
+            name = var_name_without_index target.name
+
             value_index = @vars_indices[name]?
             if value_index || ((before_var = @before_vars[name]?) && (value_index = before_var.read))
               new_name = value_index == 0 ? name : "#{name}:#{value_index}"
@@ -396,8 +478,8 @@ module Crystal
       end
 
       def var_name_without_index(name)
-        name, index = name.split(':')
-        name
+        name_and_index = name.split(':')
+        name_and_index.first
       end
     end
   end

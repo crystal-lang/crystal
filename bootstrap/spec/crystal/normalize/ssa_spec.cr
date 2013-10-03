@@ -73,4 +73,13 @@ describe "Normalize: ssa" do
     assert_normalize "a = 1; if true; b = 1; else; b = 2; end\na",
       "a = 1\nif true\n  #temp_1 = b = 1\n  b:2 = b\n  #temp_1\nelse\n  #temp_2 = b:1 = 2\n  b:2 = b:1\n  #temp_2\nend\na"
   end
+
+  it "performs ssa on if with break" do
+    assert_normalize "a = 1; if true; a = 2; else; break; end; a", "a = 1\nif true\n  #temp_1 = a:1 = 2\n  a:2 = a:1\n  #temp_1\nelse\n  a:2 = a\n  break\nend\na:2"
+  end
+
+  it "performs ssa on block" do
+    assert_normalize "a = 1; foo { a = 2; a = a + 1 }; a = a + 1; a",
+      "a = 1\nfoo() do\n  #temp_1 = begin\n    a:1 = 2\n    a:2 = a:1 + 1\n  end\n  a = a:2\n  #temp_1\nend\na:3 = a + 1\na:3"
+  end
 end
