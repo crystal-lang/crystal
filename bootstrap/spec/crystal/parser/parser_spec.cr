@@ -202,6 +202,7 @@ describe "Parser" do
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.new)], nil)
   it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Double".ident] of ASTNode))], nil)
   it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Nil".ident(true)] of ASTNode))], nil)
+  it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".ident)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new], nil, nil, 0)
   it_parses "def foo; yield 1; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode)], nil, nil, 1)
   it_parses "def foo; yield 1; yield; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode), Yield.new], nil, nil, 1)
