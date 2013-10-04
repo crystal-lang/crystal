@@ -12,11 +12,17 @@ module Spec
   end
 
   class RootContext < Context
-    getter :has_failures
-
     def initialize
-      @results = [] of Result
-      @has_failures = false
+      @results = {
+        success: [] of Result,
+        fail: [] of Result,
+        error: [] of Result,
+        pending: [] of Result,
+      }
+    end
+
+    def has_failures
+      !@results[:fail].empty?
     end
 
     def self.report(kind, description, ex = nil)
@@ -29,14 +35,12 @@ module Spec
         print '.'
       when :fail
         print 'F'
-        @has_failures = true
       when :error
         print 'E'
-        @has_failures = true
       when :pending
         print '*'
       end
-      @results << Result.new(kind, description, ex)
+      @results[kind] << Result.new(kind, description, ex)
     end
 
     def self.print_results
@@ -48,36 +52,47 @@ module Spec
     end
 
     def print_results
-      counts = {fail: 0, success: 0, error: 0, pending: 0}
       puts
 
-      printed_failures = false
-      failure_counter = 1
-      @results.each do |result|
-        if result.kind != :success
-          if ex = result.exception
-            unless printed_failures
-              puts
-              puts "Failures:"
-              printed_failures = true
-            end
+      pendings = @results[:pending]
+      unless pendings.empty?
+        puts
+        puts "Pending:"
+        pendings.each do |pending|
+          puts "  #{pending.description}"
+        end
+      end
+
+      failures = @results[:fail]
+      errors = @results[:error]
+
+      unless failures.empty? && errors.empty?
+        puts
+        puts "Failures:"
+        (failures + errors).each_with_index do |fail, i|
+          if ex = fail.exception
             puts
-            puts "  #{failure_counter}) #{result.description}"
+            puts "  #{i + 1}) #{fail.description}"
             puts
             if msg = ex.message
               msg.split("\n").each do |line|
                 print "       "
+                unless ex.is_a?(AssertionFailed)
+                  print "Exception: "
+                end
                 puts line
               end
             end
           end
-          failure_counter += 1
         end
-        counts[result.kind] += 1
       end
-      puts if printed_failures
 
-      puts "#{@results.length} examples, #{counts[:fail]} failures, #{counts[:error]} errors, #{counts[:pending]} pending"
+      puts unless pendings.empty? && failures.empty? && errors.empty?
+
+      success = @results[:success]
+      total = pendings.length + failures.length + errors.length + success.length
+
+      puts "#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending"
     end
 
     @@instance = RootContext.new
