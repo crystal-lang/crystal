@@ -239,7 +239,7 @@ class Array(T)
     length.times do |i|
       @buffer[i] = yield @buffer[i]
     end
-    nil
+    self
   end
 
   def clone

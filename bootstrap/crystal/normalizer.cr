@@ -152,6 +152,47 @@ module Crystal
       node
     end
 
+    def transform(node : Def)
+      if node.has_default_arguments?
+        exps = [] of ASTNode
+        node.expand_default_arguments.each do |exp|
+          exps << exp.transform(self)
+        end
+        return Expressions.new(exps)
+      end
+
+      if node.body
+        # if node.uses_block_arg
+        #   if node.block_arg.type_spec.inputs
+        #     args = node.block_arg.type_spec.inputs.each_with_index.map { |input, i| Arg.new("#arg#{i}", nil, input) }
+        #     body = Yield.new(args.map { |arg| Var.new(arg.name) })
+        #   else
+        #     args = [] of Arg
+        #     body = Yield.new
+        #   end
+        #   block_def = FunLiteral.new(Def.new("->", args, body))
+        #   assign = Assign.new(Var.new(node.block_arg.name), block_def)
+
+        #   node_body = node.body
+        #   if node_body.is_a?(Expressions)
+        #     node_body.expressions.unshift(assign)
+        #   else
+        #     node.body = Expressions.new([assign, node_body])
+        #   end
+        # end
+
+        new_vars = {} of String => Index
+        node.args.each { |arg| new_vars[arg.name] = Index.new }
+        pushing_vars(new_vars) do
+          @in_initialize = node.name == "initialize"
+          node.body = node.body.transform(self)
+          @in_initialize = false
+        end
+      end
+
+      node
+    end
+
     def transform(node : If)
       if @exception_handler_count > 0
         return super
@@ -248,6 +289,38 @@ module Crystal
       end
 
       @dead_code = then_dead_code && else_dead_code
+
+      node
+    end
+
+    def transform(node : While)
+      reset_instance_variables_indices
+
+      if @exception_handler_count > 0
+        return super
+      end
+
+      before_cond_vars = @vars.clone
+      node.cond = node.cond.transform(self)
+      after_cond_vars = @vars.clone
+
+      node.body = node.body.transform(self)
+
+      after_cond_loop_vars = get_loop_vars(after_cond_vars, false)
+      before_cond_loop_vars = get_loop_vars(before_cond_vars, false)
+
+      @vars.each do |var_name, indices|
+        after_indices = after_cond_vars[var_name]?
+        if after_indices && after_indices != indices
+          @vars[var_name] = Index.new(after_indices.read, indices.write)
+        end
+      end
+
+      node.body = append_before_exits(node.body, before_cond_vars, after_cond_loop_vars) if !node.body.nop? && after_cond_loop_vars.length > 0
+
+      unless @dead_code
+        node.body = concat_preserving_return_value(node.body, before_cond_loop_vars)
+      end
 
       node
     end

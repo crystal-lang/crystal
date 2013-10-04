@@ -82,4 +82,65 @@ describe "Normalize: ssa" do
     assert_normalize "a = 1; foo { a = 2; a = a + 1 }; a = a + 1; a",
       "a = 1\nfoo() do\n  #temp_1 = begin\n    a:1 = 2\n    a:2 = a:1 + 1\n  end\n  a = a:2\n  #temp_1\nend\na:3 = a + 1\na:3"
   end
+
+  it "performs ssa on block with break" do
+    assert_normalize "a = 1; foo { a = a + 1; break }; a",
+      "a = 1\nfoo() do\n  a:1 = a + 1\n  a = a:1\n  break\nend\na"
+  end
+
+  it "performs ssa on block args" do
+    assert_normalize "foo { |a| a = a + 1 }",
+      "foo() do |a|\n  a:1 = a + 1\nend"
+  end
+
+  it "performs ssa on while" do
+    assert_normalize "a = 1; a = 2; while a = a.parent; a = a.parent; end; a = a + 1; a",
+      "a = 1\na:1 = 2\nwhile a:2 = a:1.parent\n  #temp_1 = a:3 = a:2.parent\n  a:1 = a:3\n  #temp_1\nend\na:4 = a:2 + 1\na:4"
+  end
+
+  it "performs ssa on while with +=" do
+    assert_normalize "a = 1; while a < 10; a += 1; end; a = a + 1; a",
+      "a = 1\nwhile a < 10\n  #temp_1 = a:1 = a + 1\n  a = a:1\n  #temp_1\nend\na:2 = a + 1\na:2"
+  end
+
+  it "performs ssa on while inside else" do
+    assert_normalize "if true; a = 1; else; while true; end; end",
+      "if true\n  #temp_1 = a = 1\n  a:1 = a\n  #temp_1\nelse\n  #temp_2 = while true\n  end\n  a:1 = nil\n  #temp_2\nend"
+  end
+
+  ["break", "next"].each do |keyword|
+    it "performs ssa on while with #{keyword}" do
+      assert_normalize "a = 1; while a < 10; a = a + 1; #{keyword}; end; a",
+        "a = 1\nwhile a < 10\n  a:1 = a + 1\n  a = a:1\n  #{keyword}\nend\na"
+    end
+
+    it "performs ssa on while with #{keyword} inside if" do
+      assert_normalize "a = 1; while a < 10; a = a + 1; if false; #{keyword}; end; end; a",
+        "a = 1\nwhile a < 10\n  #temp_1 = begin\n    a:1 = a + 1\n    if false\n      a = a:1\n      #{keyword}\n    end\n  end\n  a = a:1\n  #temp_1\nend\na"
+    end
+
+    it "performs ssa on while with #{keyword} inside while" do
+      assert_normalize "a = 1; while a < 10; a = a + 1; while true; #{keyword}; end; end; a",
+        "a = 1\nwhile a < 10\n  #temp_1 = begin\n    a:1 = a + 1\n    while true\n      #{keyword}\n    end\n  end\n  a = a:1\n  #temp_1\nend\na"
+    end
+
+    it "performs ssa on while with #{keyword} inside call with block" do
+      assert_normalize "a = 1; while a < 10; a = a + 1; foo { #{keyword} }; end; a",
+        "a = 1\nwhile a < 10\n  #temp_1 = begin\n    a:1 = a + 1\n    foo() do\n      #{keyword}\n    end\n  end\n  a = a:1\n  #temp_1\nend\na"
+    end
+
+    it "performs ssa on while with #{keyword} inside if altering var afterwards" do
+      assert_normalize "a = 1; while a < 10; a = a + 1; if false; #{keyword}; end; a = a + 1; end; a",
+        "a = 1\nwhile a < 10\n  #temp_1 = begin\n    a:1 = a + 1\n    if false\n      a = a:1\n      #{keyword}\n    end\n    a:2 = a:1 + 1\n  end\n  a = a:2\n  #temp_1\nend\na"
+    end
+  end
+
+  it "performs ssa on while with break with variable declared inside else" do
+    assert_normalize "while true; if true; break; else; b = 2; end; end",
+      "while true\n  if true\n    b:1 = nil\n    break\n  else\n    #temp_1 = b = 2\n    b:1 = b\n    #temp_1\n  end\nend"
+  end
+
+  it "performs ssa on simple assignment inside def" do
+    assert_normalize "def foo(a); a = 1; end", "def foo(a)\n  a:1 = 1\nend"
+  end
 end
