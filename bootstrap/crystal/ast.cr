@@ -123,8 +123,12 @@ module Crystal
     property :kind
     property :has_sign
 
-    def initialize(@value, @kind)
+    def initialize(@value : String, @kind)
       @has_sign = value[0] == '+' || value[0] == '-'
+    end
+
+    def initialize(value : Number, @kind)
+      @value = value.to_s
     end
 
     def ==(other : self)
@@ -1206,6 +1210,26 @@ module Crystal
 
     def clone_without_location
       self
+    end
+  end
+
+  # Ficticious node that means: merge the type of the arguments
+  class TypeMerge < ASTNode
+    property :expressions
+
+    def initialize(@expressions)
+    end
+
+    def accept_children(visitor)
+      @expressions.each { |e| e.accept visitor }
+    end
+
+    def ==(other : self)
+      other.expressions == expressions
+    end
+
+    def clone_without_location
+      TypeMerge.new(@expressions.clone)
     end
   end
 end

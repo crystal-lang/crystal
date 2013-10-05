@@ -25,6 +25,10 @@ module Crystal
         Index.new(@write, @write + 1, @frozen)
       end
 
+      def freeze
+        @frozen = true
+      end
+
       def ==(other : self)
         @read == other.read && @write == other.write && @frozen == other.frozen
       end
@@ -75,6 +79,30 @@ module Crystal
       end
     end
 
+    # def transform(node : Expressions)
+    #   exps = [] of ASTNode
+    #   node.expressions.each do |exp|
+    #     new_exp = exp.transform(self)
+    #     if new_exp
+    #       if new_exp.is_a?(Expressions)
+    #         exps.concat new_exp.expressions
+    #       else
+    #         exps << new_exp
+    #       end
+    #     end
+    #     break if @dead_code
+    #   end
+    #   case exps.length
+    #   when 0
+    #     Nop.new
+    #   when 1
+    #     exps[0]
+    #   else
+    #     node.expressions = exps
+    #     node
+    #   end
+    # end
+
     def transform(node : And)
       left = node.left
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
@@ -99,10 +127,121 @@ module Crystal
       new_node.transform(self)
     end
 
+    # def transform(node : RegexpLiteral)
+    #   const_name = "#Regexp_#{node.value}"
+    #   unless program.types[const_name]
+    #     constructor = Call.new(Ident.new(['Regexp'], true), 'new', [StringLiteral.new(node.value)])
+    #     program.types[const_name] = Const.new program, const_name, constructor, [program], program
+    #   end
+
+    #   Ident.new([const_name], true)
+    # end
+
+    # def transform(node : Require)
+    #   if node.cond
+    #     must_require = eval_require_cond(node.cond)
+    #     return unless must_require
+    #   end
+
+    #   required = program.require(node.string, node.filename)
+    #   required ? required.transform(self) : nil
+    # end
+
+    def transform(node : StringInterpolation)
+      super
+
+      call = Call.new(Ident.new(["StringBuilder"], true), "new")
+      node.expressions.each do |piece|
+        call = Call.new(call, "<<", [piece])
+      end
+      Call.new(call, "to_s")
+    end
+
     def transform(node : RangeLiteral)
       super
 
       Call.new(Ident.new(["Range"], true), "new", [node.from, node.to, BoolLiteral.new(node.exclusive)])
+    end
+
+    def transform(node : ArrayLiteral)
+      super
+
+      if node_of = node.of
+        if node.elements.length == 0
+          generic = NewGenericClass.new(Ident.new(["Array"], true), [node_of] of ASTNode)
+          generic.location = node.location
+
+          call = Call.new(generic, "new")
+          call.location = node.location
+          return call
+        end
+
+        type_var = node_of
+      else
+        type_var = TypeMerge.new(node.elements)
+      end
+
+      length = node.elements.length
+      capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
+
+      generic = NewGenericClass.new(Ident.new(["Array"], true), [type_var] of ASTNode)
+      generic.location = node.location
+
+      constructor = Call.new(generic, "new", [NumberLiteral.new(capacity, :i32)] of ASTNode)
+      constructor.location = node.location
+
+      temp_var = new_temp_var
+      assign = Assign.new(temp_var, constructor)
+      assign.location = node.location
+
+      set_length = Call.new(temp_var, "length=", [NumberLiteral.new(length, :i32)] of ASTNode)
+      set_length.location = node.location
+
+      exps = [assign, set_length] of ASTNode
+
+      node.elements.each_with_index do |elem, i|
+        get_buffer = Call.new(temp_var, "buffer")
+        get_buffer.location = node.location
+
+        assign_index = Call.new(get_buffer, "[]=", [NumberLiteral.new(i, :i32), elem] of ASTNode)
+        assign_index.location = node.location
+
+        exps << assign_index
+      end
+
+      exps << temp_var
+
+      exps = Expressions.new(exps)
+      exps.location = node.location
+      exps
+    end
+
+    def transform(node : HashLiteral)
+      super
+
+      if (node_of_key = node.of_key)
+        node_of_value = node.of_value
+        raise "BUG: node.of_value shouldn't be nil if node.of_key is not nil" unless node_of_value
+
+        type_vars = [node_of_key, node_of_value] of ASTNode
+      else
+        type_vars = [TypeMerge.new(node.keys), TypeMerge.new(node.values)] of ASTNode
+      end
+
+      constructor = Call.new(NewGenericClass.new(Ident.new(["Hash"], true), type_vars), "new")
+      if node.keys.length == 0
+        constructor
+      else
+        temp_var = new_temp_var
+        assign = Assign.new(temp_var, constructor)
+
+        exps = [assign] of ASTNode
+        node.keys.each_with_index do |key, i|
+          exps << Call.new(temp_var, "[]=", [key, node.values[i]])
+        end
+        exps << temp_var
+        Expressions.new exps
+      end
     end
 
     def transform(node : Assign)
@@ -111,15 +250,15 @@ module Crystal
       when Var
         node.value = node.value.transform(self)
         transform_assign_var(target)
-      # when Ident
-      #   pushing_vars do
-      #     node.value = node.value.transform(self)
-      #   end
-      # when InstanceVar
-      #   node.value = node.value.transform(self)
-      #   transform_assign_ivar(node)
-      # else
-      #   node.value = node.value.transform(self)
+      when Ident
+        pushing_vars do
+          node.value = node.value.transform(self)
+        end
+      when InstanceVar
+        node.value = node.value.transform(self)
+        transform_assign_ivar(node, target)
+      else
+        node.value = node.value.transform(self)
       end
 
       node
@@ -139,6 +278,77 @@ module Crystal
       end
     end
 
+    def transform_assign_ivar(node, target)
+      indices = @vars[target.name]?
+      if indices
+        indices = increment_var target.name, indices
+      else
+        indices = @vars[target.name] = Index.new(1, 2)
+      end
+
+      return if @in_initialize
+
+      ivar_name = var_name_with_index(target.name, indices.read)
+      node.value = Assign.new(Var.new(ivar_name), node.value)
+    end
+
+    def transform(node : ExceptionHandler)
+      @exception_handler_count += 1
+
+      node = super
+
+      @exception_handler_count -= 1
+
+      node
+    end
+
+    # def transform(node : DeclareVar)
+    #   @vars[node.name] = Index.new
+    #   node
+    # end
+
+    # def transform(node : MultiAssign)
+    #   if node.values.length == 1
+    #     value = node.values[0]
+
+    #     temp_var = new_temp_var
+
+    #     assigns = [] of ASTNode
+
+    #     assign = Assign.new(temp_var, value)
+    #     assign.location = value.location
+    #     assigns << assign
+
+    #     node.targets.each_with_index do |target, i|
+    #       call = Call.new(temp_var, "[]", [NumberLiteral.new(i, :i32)] of ASTNode)
+    #       call.location = value.location
+    #       assign = Assign.new(target, call)
+    #       assign.location = target.location
+    #       assigns << assign
+    #     end
+    #     exps = Expressions.new(assigns)
+    #   else
+    #     temp_vars = node.values.map { new_temp_var }
+
+    #     assign_to_temps = [] of ASTNode
+    #     assign_from_temps = [] of ASTNode
+
+    #     temp_vars.each_with_index do |temp_var_2, i|
+    #       assign = Assign.new(temp_var_2, node.values[i])
+    #       assign.location = node.location
+    #       assign_to_temps << assign
+
+    #       assign = Assign.new(node.targets[i], temp_var_2)
+    #       assign.location = node.location
+    #       assign_from_temps << assign
+    #     end
+
+    #     exps = Expressions.new(assign_to_temps + assign_from_temps)
+    #   end
+    #   exps.location = node.location
+    #   exps.transform(self)
+    # end
+
     def transform(node : Var)
       return node if node.name == "self" || node.name.starts_with?('#')
 
@@ -150,6 +360,64 @@ module Crystal
       indices = @vars[node.name]?
       node.name = var_name_with_index(node.name, indices ? indices.read : nil)
       node
+    end
+
+    def transform(node : InstanceVar)
+      return node if @in_initialize
+
+      indices = @vars[node.name]?
+      if indices && indices.read
+        new_var = var_with_index(node.name, indices.read)
+        new_var.location = node.location
+        new_var
+      else
+        if @in_initialize
+          node
+        else
+          if indices
+            read_index = indices.write
+          else
+            read_index = 1
+          end
+          @vars[node.name] = Index.new(read_index, read_index + 1)
+          new_var = var_with_index(node.name, read_index)
+          new_var.location = node.location
+          assign = Assign.new(new_var, node)
+          assign.location = node.location
+          assign
+        end
+      end
+    end
+
+    def transform(node : PointerOf)
+      var = node.var
+
+      if var.is_a?(Var)
+        name = var.name
+        indices = @vars[name]?
+
+        node.var = var.transform(self)
+
+        if indices
+          indices.freeze
+        else
+          @vars[name] = Index.new(0, 1, true)
+        end
+      end
+
+      node
+    end
+
+    def transform(node : Yield)
+      super.tap do
+        reset_instance_variables_indices
+      end
+    end
+
+    def transform(node : Call)
+      super.tap do
+        reset_instance_variables_indices
+      end
     end
 
     def transform(node : Def)
@@ -192,6 +460,78 @@ module Crystal
 
       node
     end
+
+    # def transform(node : FunDef)
+    #   if node.body
+    #     pushing_vars(Hash[node.args.map { |arg| [arg.name, {read: 0, write: 1}] }]) do
+    #       node.body = node.body.transform(self)
+    #     end
+    #   end
+
+    #   node
+    # end
+
+    # def transform(node : Macro)
+    #   # if node.has_default_arguments?
+    #   #   exps = node.expand_default_arguments.map! { |a_def| a_def.transform(self) }
+    #   #   return Expressions.new(exps)
+    #   # end
+
+    #   if node.body
+    #     pushing_vars(Hash[node.args.map { |arg| [arg.name, {read: 0, write: 1}] }]) do
+    #       node.body = node.body.transform(self)
+    #     end
+    #   end
+
+    #   node
+    # end
+
+    # def transform(node : Case)
+    #   node.cond = node.cond.transform(self)
+
+    #   if node.cond.is_a?(Var) || node.cond.is_a?(InstanceVar)
+    #     temp_var = node.cond
+    #   else
+    #     temp_var = new_temp_var
+    #     assign = Assign.new(temp_var, node.cond)
+    #   end
+
+    #   a_if = nil
+    #   final_if = nil
+    #   node.whens.each do |wh|
+    #     final_comp = nil
+    #     wh.conds.each do |cond|
+    #       right_side = temp_var
+
+    #       if cond.is_a?(Ident)
+    #         comp = IsA.new(right_side, cond)
+    #       else
+    #         comp = Call.new(cond, :'===', [right_side])
+    #       end
+    #       if final_comp
+    #         final_comp = SimpleOr.new(final_comp, comp)
+    #       else
+    #         final_comp = comp
+    #       end
+    #     end
+    #     wh_if = If.new(final_comp, wh.body)
+    #     if a_if
+    #       a_if.else = wh_if
+    #     else
+    #       final_if = wh_if
+    #     end
+    #     a_if = wh_if
+    #   end
+    #   a_if.else = node.else if node.else
+    #   final_if = final_if.transform(self)
+    #   final_exp = if assign
+    #                 Expressions.new([assign, final_if])
+    #               else
+    #                 final_if
+    #               end
+    #   final_exp.location = node.location
+    #   final_exp
+    # end
 
     def transform(node : If)
       if @exception_handler_count > 0
@@ -291,6 +631,10 @@ module Crystal
       @dead_code = then_dead_code && else_dead_code
 
       node
+    end
+
+    def transform(node : Unless)
+      If.new(node.cond, node.else, node.then).transform(self)
     end
 
     def transform(node : While)

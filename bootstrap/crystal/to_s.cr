@@ -327,6 +327,7 @@ module Crystal
     end
 
     def visit(node : Var)
+      @str << "out " if node.out
       @str << node.name
     end
 
@@ -715,6 +716,16 @@ module Crystal
 
     def visit(node : PrimitiveBody)
       @str << "<primitive>"
+    end
+
+    def visit(node : TypeMerge)
+      @str << "<type_merge>("
+      node.expressions.each_with_index do |exp, i|
+        @str << ", " if i > 0
+        exp.accept self
+      end
+      @str << ")"
+      false
     end
 
     def append_indent

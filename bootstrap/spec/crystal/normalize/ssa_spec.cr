@@ -143,4 +143,68 @@ describe "Normalize: ssa" do
   it "performs ssa on simple assignment inside def" do
     assert_normalize "def foo(a); a = 1; end", "def foo(a)\n  a:1 = 1\nend"
   end
+
+  it "performs ssa on constant assignment doesn't affect outside" do
+    assert_normalize "A = (a = 1); a = 2", "A = a = 1\na = 2"
+  end
+
+  it "performs ssa on out variable" do
+    assert_normalize "foo(out a); a = 2", "foo(out a)\na:1 = 2"
+  end
+
+  it "performs ssa on instance variable read 1" do
+    assert_normalize "@a", "@a:1 = @a"
+  end
+
+  it "performs ssa on instance variable write and read 1" do
+    assert_normalize "@a = 1; @a", "@a = @a:1 = 1\n@a:1"
+  end
+
+  it "performs ssa on instance variable write and read 2" do
+    assert_normalize "@a = 1; @a = @a + 1", "@a = @a:1 = 1\n@a = @a:2 = @a:1 + 1"
+  end
+
+  it "performs ssa on instance variable inside if" do
+    assert_normalize "if @a; else; @a = 1; end; @a", "if @a:1 = @a\n  @a:3 = @a:1\n  nil\nelse\n  #temp_1 = @a = @a:2 = 1\n  @a:3 = @a:2\n  #temp_1\nend\n@a:3"
+  end
+
+  it "performs ssa on instance variable inside if in initialize" do
+    assert_normalize "def initialize; if @a; else; @a = 1; end; @a; end", "def initialize\n  if @a\n    @a = nil\n    nil\n  else\n    @a = 1\n  end\n  @a\nend"
+  end
+
+  it "performs ssa on instance variable and method call" do
+    assert_normalize "@a = 1; foo; @a", "@a = @a:1 = 1\nfoo()\n@a:2 = @a"
+  end
+
+  it "performs ssa on instance variable and method call" do
+    assert_normalize "@a = 1; yield; @a", "@a = @a:1 = 1\nyield\n@a:2 = @a"
+  end
+
+  it "stops ssa if address is taken" do
+    assert_normalize "a = 1; x = a.ptr; a = 2", "a = 1\nx = a.ptr\na = 2"
+  end
+
+  it "stops ssa if address is taken 2" do
+    assert_normalize "a = 1; a = 2; x = a.ptr; a = 3", "a = 1\na:1 = 2\nx = a:1.ptr\na:1 = 3"
+  end
+
+  it "performs ssa on var on nested if" do
+    assert_normalize "foo = 1; if 0; if 0; foo = 2; else; foo = 3; end; end; foo", "foo = 1\nif 0\n  #temp_3 = if 0\n    #temp_1 = foo:1 = 2\n    foo:3 = foo:1\n    #temp_1\n  else\n    #temp_2 = foo:2 = 3\n    foo:3 = foo:2\n    #temp_2\n  end\n  foo:4 = foo:3\n  #temp_3\nelse\n  foo:4 = foo\n  nil\nend\nfoo:4"
+  end
+
+  it "performs ssa on var on nested if 2" do
+    assert_normalize "foo = 1; if 0; else; if 0; foo = 2; else; foo = 3; end; end; foo", "foo = 1\nif 0\n  foo:4 = foo\n  nil\nelse\n  #temp_3 = if 0\n    #temp_1 = foo:1 = 2\n    foo:3 = foo:1\n    #temp_1\n  else\n    #temp_2 = foo:2 = 3\n    foo:3 = foo:2\n    #temp_2\n  end\n  foo:4 = foo:3\n  #temp_3\nend\nfoo:4"
+  end
+
+  it "performs ssa on while, if, var and break" do
+    assert_normalize "a = 1; a = 2; while 1 == 1; if 1 == 2; a = 3; else; break; end; end; puts a", "a = 1\na:1 = 2\nwhile 1 == 1\n  #temp_2 = if 1 == 2\n    #temp_1 = a:2 = 3\n    a:3 = a:2\n    #temp_1\n  else\n    a:3 = a:1\n    a:1 = a:3\n    break\n  end\n  a:1 = a:3\n  #temp_2\nend\nputs(a:1)"
+  end
+
+  it "performs ssa on instance var and while" do
+    assert_normalize "@foo = 1; while @foo.bar; end;", "@foo = @foo:1 = 1\nwhile (@foo:2 = @foo).bar\nend"
+  end
+
+  it "performs on complex while, if, break interaction" do
+    assert_normalize "x = false; if 1 == 2; while 1 == 2; if 1 == 2; x = true; break; end; end; end; x", "x = false\nif 1 == 2\n  #temp_2 = while 1 == 2\n    #temp_1 = if 1 == 2\n      x:1 = true\n      x:2 = x:1\n      x = x:2\n      break\n    else\n      x:2 = x\n      nil\n    end\n    x = x:2\n    #temp_1\n  end\n  x:3 = x\n  #temp_2\nelse\n  x:3 = x\n  nil\nend\nx:3"
+  end
 end
