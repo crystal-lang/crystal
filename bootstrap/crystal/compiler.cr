@@ -5,10 +5,16 @@ module Crystal
     include Crystal
 
     def initialize
+      @dump_ll = false
+      @no_build = false
+
       @options = OptionParser.parse! do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
         opts.on("-ll", "Dump ll to standard output") do
           @dump_ll = true
+        end
+        opts.on("-no-build", "Disable build output") do
+          @no_build = true
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
@@ -41,6 +47,9 @@ module Crystal
         nodes = parser.parse
         nodes = program.normalize nodes
         nodes = program.infer_type nodes
+
+        exit if @no_build
+
         llvm_mod = program.build nodes
 
         llvm_mod.dump if @dump_ll

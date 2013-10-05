@@ -670,6 +670,8 @@ module Crystal
     end
 
     def transform(node : Block)
+      return super if @in_initialize
+
       before_vars = @vars.clone
 
       node.args.each do |arg|
