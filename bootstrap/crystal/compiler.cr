@@ -7,6 +7,7 @@ module Crystal
     def initialize
       @dump_ll = false
       @no_build = false
+      @print_types = false
 
       @options = OptionParser.parse! do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
@@ -15,6 +16,9 @@ module Crystal
         end
         opts.on("-no-build", "Disable build output") do
           @no_build = true
+        end
+        opts.on("-types", "Prints types of global variables") do
+          @print_types = true
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
@@ -48,6 +52,7 @@ module Crystal
         nodes = program.normalize nodes
         nodes = program.infer_type nodes
 
+        print_types nodes if @print_types
         exit if @no_build
 
         llvm_mod = program.build nodes
