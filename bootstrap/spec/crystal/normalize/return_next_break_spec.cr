@@ -3,7 +3,7 @@ require "../../spec_helper"
 
 describe "Normalize: return next break" do
   ["return", "next", "break"].each do |keyword|
-    pending "removes nodes after #{keyword}" do
+    it "removes nodes after #{keyword}" do
       assert_normalize "#{keyword} 1; 2", "#{keyword} 1"
     end
   end
@@ -12,7 +12,7 @@ describe "Normalize: return next break" do
     assert_normalize "return 1 unless 2; 3", "if 2\nelse\n  return 1\nend\n3"
   end
 
-  pending "removes nodes after if that returns in both branches" do
+  it "removes nodes after if that returns in both branches" do
     assert_normalize "if true; break; else; return; end; 1", "if true\n  break\nelse\n  return\nend"
   end
 

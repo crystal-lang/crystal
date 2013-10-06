@@ -79,29 +79,29 @@ module Crystal
       end
     end
 
-    # def transform(node : Expressions)
-    #   exps = [] of ASTNode
-    #   node.expressions.each do |exp|
-    #     new_exp = exp.transform(self)
-    #     if new_exp
-    #       if new_exp.is_a?(Expressions)
-    #         exps.concat new_exp.expressions
-    #       else
-    #         exps << new_exp
-    #       end
-    #     end
-    #     break if @dead_code
-    #   end
-    #   case exps.length
-    #   when 0
-    #     Nop.new
-    #   when 1
-    #     exps[0]
-    #   else
-    #     node.expressions = exps
-    #     node
-    #   end
-    # end
+    def transform(node : Expressions)
+      exps = [] of ASTNode
+      node.expressions.each do |exp|
+        new_exp = exp.transform(self)
+        if new_exp
+          if new_exp.is_a?(Expressions)
+            exps.concat new_exp.expressions
+          else
+            exps << new_exp
+          end
+        end
+        break if @dead_code
+      end
+      case exps.length
+      when 0
+        Nop.new
+      when 1
+        exps[0]
+      else
+        node.expressions = exps
+        node
+      end
+    end
 
     def transform(node : And)
       left = node.left
@@ -307,47 +307,47 @@ module Crystal
     #   node
     # end
 
-    # def transform(node : MultiAssign)
-    #   if node.values.length == 1
-    #     value = node.values[0]
+    def transform(node : MultiAssign)
+      if node.values.length == 1
+        value = node.values[0]
 
-    #     temp_var = new_temp_var
+        temp_var = new_temp_var
 
-    #     assigns = [] of ASTNode
+        assigns = [] of ASTNode
 
-    #     assign = Assign.new(temp_var, value)
-    #     assign.location = value.location
-    #     assigns << assign
+        assign = Assign.new(temp_var, value)
+        assign.location = value.location
+        assigns << assign
 
-    #     node.targets.each_with_index do |target, i|
-    #       call = Call.new(temp_var, "[]", [NumberLiteral.new(i, :i32)] of ASTNode)
-    #       call.location = value.location
-    #       assign = Assign.new(target, call)
-    #       assign.location = target.location
-    #       assigns << assign
-    #     end
-    #     exps = Expressions.new(assigns)
-    #   else
-    #     temp_vars = node.values.map { new_temp_var }
+        node.targets.each_with_index do |target, i|
+          call = Call.new(temp_var, "[]", [NumberLiteral.new(i, :i32)] of ASTNode)
+          call.location = value.location
+          assign = Assign.new(target, call)
+          assign.location = target.location
+          assigns << assign
+        end
+        exps = Expressions.new(assigns)
+      else
+        temp_vars = node.values.map { new_temp_var }
 
-    #     assign_to_temps = [] of ASTNode
-    #     assign_from_temps = [] of ASTNode
+        assign_to_temps = [] of ASTNode
+        assign_from_temps = [] of ASTNode
 
-    #     temp_vars.each_with_index do |temp_var_2, i|
-    #       assign = Assign.new(temp_var_2, node.values[i])
-    #       assign.location = node.location
-    #       assign_to_temps << assign
+        temp_vars.each_with_index do |temp_var_2, i|
+          assign2 = Assign.new(temp_var_2, node.values[i])
+          assign2.location = node.location
+          assign_to_temps << assign2
 
-    #       assign = Assign.new(node.targets[i], temp_var_2)
-    #       assign.location = node.location
-    #       assign_from_temps << assign
-    #     end
+          assign2 = Assign.new(node.targets[i], temp_var_2)
+          assign2.location = node.location
+          assign_from_temps << assign2
+        end
 
-    #     exps = Expressions.new(assign_to_temps + assign_from_temps)
-    #   end
-    #   exps.location = node.location
-    #   exps.transform(self)
-    # end
+        exps = Expressions.new(assign_to_temps + assign_from_temps)
+      end
+      exps.location = node.location
+      exps.transform(self)
+    end
 
     def transform(node : Var)
       return node if node.name == "self" || node.name.starts_with?('#')
@@ -449,9 +449,7 @@ module Crystal
         #   end
         # end
 
-        new_vars = {} of String => Index
-        node.args.each { |arg| new_vars[arg.name] = Index.new }
-        pushing_vars(new_vars) do
+        pushing_vars_from_args(node.args) do
           @in_initialize = node.name == "initialize"
           node.body = node.body.transform(self)
           @in_initialize = false
@@ -461,30 +459,30 @@ module Crystal
       node
     end
 
-    # def transform(node : FunDef)
-    #   if node.body
-    #     pushing_vars(Hash[node.args.map { |arg| [arg.name, {read: 0, write: 1}] }]) do
-    #       node.body = node.body.transform(self)
-    #     end
-    #   end
+    def transform(node : FunDef)
+      # if node.body
+      #   pushing_vars_from_args(node.args) do
+      #     node.body = node.body.transform(self)
+      #   end
+      # end
 
-    #   node
-    # end
+      node
+    end
 
-    # def transform(node : Macro)
-    #   # if node.has_default_arguments?
-    #   #   exps = node.expand_default_arguments.map! { |a_def| a_def.transform(self) }
-    #   #   return Expressions.new(exps)
-    #   # end
+    def transform(node : Macro)
+      # if node.has_default_arguments?
+      #   exps = node.expand_default_arguments.map! { |a_def| a_def.transform(self) }
+      #   return Expressions.new(exps)
+      # end
 
-    #   if node.body
-    #     pushing_vars(Hash[node.args.map { |arg| [arg.name, {read: 0, write: 1}] }]) do
-    #       node.body = node.body.transform(self)
-    #     end
-    #   end
+      if node.body
+        pushing_vars_from_args(node.args) do
+          node.body = node.body.transform(self)
+        end
+      end
 
-    #   node
-    # end
+      node
+    end
 
     def transform(node : Case)
       node.cond = node.cond.transform(self)
@@ -733,6 +731,14 @@ module Crystal
       end
 
       loop_vars
+    end
+
+    def pushing_vars_from_args(args)
+      vars = {} of String => Index
+      args.each { |arg| vars[arg.name] = Index.new }
+      pushing_vars(vars) do
+        yield
+      end
     end
 
     def pushing_vars(vars = {} of String => Index)
