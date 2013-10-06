@@ -461,6 +461,13 @@ module Crystal
       false
     end
 
+    def visit(node : DeclareVar)
+      @str << node.name
+      @str << " :: "
+      node.declared_type.accept self
+      false
+    end
+
     def visit(node : Block)
       @str << "do"
 

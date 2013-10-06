@@ -379,6 +379,15 @@ module Crystal
       node
     end
 
+    def transform(node : TypeMerge)
+      node
+    end
+
+    def transform(node : DeclareVar)
+      node.declared_type = node.declared_type.transform(self)
+      node
+    end
+
     def transform_many(exps)
       exps.map! { |exp| exp.transform(self) } if exps
     end

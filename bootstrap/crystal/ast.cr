@@ -859,6 +859,26 @@ module Crystal
     end
   end
 
+  class DeclareVar < ASTNode
+    property :name
+    property :declared_type
+
+    def initialize(@name, @declared_type)
+    end
+
+    def accept_children(visitor)
+      declared_type.accept visitor
+    end
+
+    def ==(other : self)
+      other.name == name && other.declared_type == declared_type
+    end
+
+    def clone_without_location
+      DeclareVar.new(@name, @declared_type.clone)
+    end
+  end
+
   class ExceptionHandler < ASTNode
     property :body
     property :rescues

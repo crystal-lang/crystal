@@ -292,6 +292,11 @@ module Crystal
       node.value = Assign.new(Var.new(ivar_name), node.value)
     end
 
+    def transform(node : DeclareVar)
+      @vars[node.name] = Index.new
+      node
+    end
+
     def transform(node : ExceptionHandler)
       @exception_handler_count += 1
 

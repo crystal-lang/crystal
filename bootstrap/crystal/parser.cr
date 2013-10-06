@@ -1290,10 +1290,22 @@ module Crystal
           else
             Call.new(nil, name, args, nil, name_column_number, @last_call_has_parenthesis)
           end
-        elsif is_var? name
-          Var.new name
         else
-          Call.new nil, name, [] of ASTNode, nil, name_column_number, @last_call_has_parenthesis
+          if @token.type == :"::"
+            if is_var? name
+              raise "variable '#{name}' is already declared"
+            end
+
+            next_token_skip_space_or_newline
+            declared_type = parse_ident
+            declare_var = DeclareVar.new(name, declared_type)
+            push_var declare_var
+            declare_var
+          elsif is_var? name
+            Var.new name
+          else
+            Call.new nil, name, [] of ASTNode, nil, name_column_number, @last_call_has_parenthesis
+          end
         end
       end
     end
