@@ -496,6 +496,10 @@ module Crystal
       to_s_binary node, "||"
     end
 
+    def visit(node : SimpleOr)
+      to_s_binary node, "or"
+    end
+
     def to_s_binary(node, op)
       node.left.accept self
       @str << " "

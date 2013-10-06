@@ -486,52 +486,62 @@ module Crystal
     #   node
     # end
 
-    # def transform(node : Case)
-    #   node.cond = node.cond.transform(self)
+    def transform(node : Case)
+      node.cond = node.cond.transform(self)
 
-    #   if node.cond.is_a?(Var) || node.cond.is_a?(InstanceVar)
-    #     temp_var = node.cond
-    #   else
-    #     temp_var = new_temp_var
-    #     assign = Assign.new(temp_var, node.cond)
-    #   end
+      if node.cond.is_a?(Var) || node.cond.is_a?(InstanceVar)
+        temp_var = node.cond
+      else
+        temp_var = new_temp_var
+        assign = Assign.new(temp_var, node.cond)
+      end
 
-    #   a_if = nil
-    #   final_if = nil
-    #   node.whens.each do |wh|
-    #     final_comp = nil
-    #     wh.conds.each do |cond|
-    #       right_side = temp_var
+      a_if = nil
+      final_if = nil
+      node.whens.each do |wh|
+        final_comp = nil
+        wh.conds.each do |cond|
+          right_side = temp_var
 
-    #       if cond.is_a?(Ident)
-    #         comp = IsA.new(right_side, cond)
-    #       else
-    #         comp = Call.new(cond, :'===', [right_side])
-    #       end
-    #       if final_comp
-    #         final_comp = SimpleOr.new(final_comp, comp)
-    #       else
-    #         final_comp = comp
-    #       end
-    #     end
-    #     wh_if = If.new(final_comp, wh.body)
-    #     if a_if
-    #       a_if.else = wh_if
-    #     else
-    #       final_if = wh_if
-    #     end
-    #     a_if = wh_if
-    #   end
-    #   a_if.else = node.else if node.else
-    #   final_if = final_if.transform(self)
-    #   final_exp = if assign
-    #                 Expressions.new([assign, final_if])
-    #               else
-    #                 final_if
-    #               end
-    #   final_exp.location = node.location
-    #   final_exp
-    # end
+          if cond.is_a?(Ident)
+            comp = IsA.new(right_side, cond)
+          else
+            comp = Call.new(cond, "===", [right_side] of ASTNode)
+          end
+          if final_comp
+            final_comp = SimpleOr.new(final_comp, comp)
+          else
+            final_comp = comp
+          end
+        end
+
+        raise "Bug: final_comp shouldn't be nil" unless final_comp
+        wh_if = If.new(final_comp, wh.body)
+        if a_if
+          a_if.else = wh_if
+        else
+          final_if = wh_if
+        end
+        a_if = wh_if
+      end
+
+      raise "Bug: a_if shouldn't be nil" unless a_if
+
+      if node_else = node.else
+        a_if.else = node_else
+      end
+
+      raise "Bug: final_if shouldn't be nil" unless final_if
+
+      final_if = final_if.transform(self)
+      final_exp = if assign
+                    Expressions.new([assign, final_if] of ASTNode)
+                  else
+                    final_if
+                  end
+      final_exp.location = node.location
+      final_exp
+    end
 
     def transform(node : If)
       if @exception_handler_count > 0
