@@ -868,4 +868,18 @@ describe 'Code gen: block' do
     )).to_i.should eq(1)
   end
 
+  it "codegens dispatch with block and break" do
+    run(%q(
+      require "prelude"
+
+      a = [1, 2, 3] || [1.5]
+      n = 0
+      a.each do |x|
+        break if x > 2
+        n += x
+      end
+      n.to_i
+      )).to_i.should eq(3)
+  end
+
  end

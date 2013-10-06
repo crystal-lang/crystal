@@ -1663,7 +1663,11 @@ module Crystal
         call.args.each_with_index do |arg, i|
           arg.set_type(a_def.args[i].type)
         end
-        call.set_type a_def.type
+        if node.block && node.block.break
+          call.set_type @mod.type_merge a_def.type, node.block.break.type
+        else
+          call.set_type a_def.type
+        end
         call.accept self
 
         add_branched_block_value(branch, a_def.type, @last)
