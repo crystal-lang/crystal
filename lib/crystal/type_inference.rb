@@ -695,17 +695,21 @@ module Crystal
       if node.then.nop?
         node.then.accept self
       else
-        @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
+        @type_filter_stack.push(node.cond.type_filters || {})
         node.then.accept self
-        @type_filter_stack.pop if node.cond.type_filters
+        @type_filter_stack.pop
       end
 
       if node.else.nop?
         node.else.accept self
       else
-        @type_filter_stack.push negate_filters(node.cond.type_filters) if node.cond.type_filters && !node.cond.is_a?(If)
+        if node.cond.type_filters && !node.cond.is_a?(If)
+          @type_filter_stack.push negate_filters(node.cond.type_filters)
+        else
+          @type_filter_stack.push({})
+        end
         node.else.accept self
-        @type_filter_stack.pop if node.cond.type_filters
+        @type_filter_stack.pop
       end
 
       case node.binary

@@ -146,4 +146,18 @@ describe 'Code gen: if' do
       foo
       )).to_i.should eq(1)
   end
+
+  it "codegens if with nested if that raises" do
+    run(%q(
+      require "prelude"
+      block = 1 || nil
+      if 1 == 2
+        if block
+          raise "Oh no"
+        end
+      else
+        block
+      end.to_i
+      )).to_i.should eq(1)
+  end
 end
