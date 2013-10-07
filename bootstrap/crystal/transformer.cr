@@ -381,6 +381,10 @@ module Crystal
       node
     end
 
+    def transform(node : ExternalVar)
+      node
+    end
+
     def transform(node : PrimitiveBody)
       node
     end

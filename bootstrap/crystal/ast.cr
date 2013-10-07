@@ -1249,6 +1249,26 @@ module Crystal
     end
   end
 
+  class ExternalVar < ASTNode
+    property :name
+    property :type_spec
+
+    def initialize(@name, @type_spec)
+    end
+
+    def accept_children(visitor)
+      @type_spec.accept visitor
+    end
+
+    def ==(other : self)
+      other.name == name && other.type_spec == type_spec
+    end
+
+    def clone_without_location
+      ExternalVar.new(@name, @type_spec.clone)
+    end
+  end
+
   abstract class Primitive < ASTNode
   end
 

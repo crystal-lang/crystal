@@ -426,6 +426,8 @@ describe "Parser" do
   it_parses "lib C; enum Foo; A = 1, B; end end", LibDef.new("C", nil, [EnumDef.new("Foo", [Arg.new("A", 1.int32), Arg.new("B")])])
   it_parses "lib C; Foo = 1; end", LibDef.new("C", nil, [Assign.new("Foo".ident, 1.int32)])
   it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", nil, [FunDef.new("getch", [] of Arg, nil, false, "GetChar")])
+  it_parses "lib C\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("C", nil, [ExternalVar.new("errno", "Int32".ident), ExternalVar.new("errno2", "Int32".ident)] of ASTNode)
+  it_parses "lib C\n$errno : B, C -> D\nend", LibDef.new("C", nil, [ExternalVar.new("errno", FunTypeSpec.new(["B".ident, "C".ident] of ASTNode, "D".ident))] of ASTNode)
 
   it_parses "1 .. 2", RangeLiteral.new(1.int32, 2.int32, false)
   it_parses "1 ... 2", RangeLiteral.new(1.int32, 2.int32, true)
