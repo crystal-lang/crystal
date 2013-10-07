@@ -419,7 +419,16 @@ module Crystal
               break
             end
           end
-          atomic = Call.new atomic, "[]", args, nil, column_number
+
+          if @token.type == :"?"
+            method_name = "[]?"
+            next_token_skip_space
+          else
+            method_name = "[]"
+            skip_space
+          end
+
+          atomic = Call.new atomic, method_name, args, nil, column_number
           atomic.name_length = 0 if atomic.is_a?(Call)
           atomic
         else
@@ -1053,7 +1062,7 @@ module Crystal
       push_def
 
       next_token_skip_space_or_newline
-      check [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
+      check [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
 
       receiver = nil
       @yields = -1

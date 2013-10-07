@@ -346,12 +346,14 @@ describe "Parser" do
 
   it_parses "Int[]", Call.new("Int".ident, "[]")
   it_parses "def []; end", Def.new("[]", [] of Arg, nil)
+  it_parses "def []?; end", Def.new("[]?", [] of Arg, nil)
   it_parses "def []=(value); end", Def.new("[]=", ["value".arg], nil)
   it_parses "def self.[]; end", Def.new("[]", [] of Arg, nil, "self".var)
 
   it_parses "Int[8]", Call.new("Int".ident, "[]", [8.int32] of ASTNode)
   it_parses "Int[8, 4]", Call.new("Int".ident, "[]", [8.int32, 4.int32] of ASTNode)
   it_parses "Int[8, 4,]", Call.new("Int".ident, "[]", [8.int32, 4.int32] of ASTNode)
+  it_parses "Int[8]?", Call.new("Int".ident, "[]?", [8.int32] of ASTNode)
 
   it_parses "def [](x); end", Def.new("[]", ["x".arg], nil)
 
