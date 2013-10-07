@@ -314,22 +314,25 @@ module Crystal
     property :name
     property :args
     property :block
+    property :block_arg
+    property :global
 
     property :name_column_number
     property :has_parenthesis
     property :name_length
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @name_column_number = nil, @has_parenthesis = false)
+    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @global = false, @name_column_number = nil, @has_parenthesis = false)
     end
 
     def accept_children(visitor)
       @obj.accept visitor if @obj
       @args.each { |arg| arg.accept visitor }
+      @block_arg.accept visitor if @block_arg
       @block.accept visitor if @block
     end
 
     def ==(other : self)
-      other.obj == obj && other.name == name && other.args == args && other.block == block
+      other.obj == obj && other.name == name && other.args == args && other.block_arg == block_arg && other.block == block && other.global == global
     end
 
     def name_column_number
@@ -341,7 +344,7 @@ module Crystal
     end
 
     def clone_without_location
-      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @name_column_number, @has_parenthesis)
+      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @global, @name_column_number, @has_parenthesis)
       clone.name_length = name_length
       clone
     end

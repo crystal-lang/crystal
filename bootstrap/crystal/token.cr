@@ -14,7 +14,6 @@ module Crystal
 
     def initialize
       @type = :EOF
-      @value = ""
       @number_kind = :i32
       @string_end = '\0'
       @string_nest = '\0'

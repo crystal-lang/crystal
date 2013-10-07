@@ -45,7 +45,11 @@ module Crystal
       if node_block = node.block
         node.block = node_block.transform(self)
       end
-      # node.block_arg = node.block_arg.transform(self) if node.block_arg
+
+      if node_block_arg = node.block_arg
+        node.block_arg = node_block_arg.transform(self)
+      end
+
       node
     end
 

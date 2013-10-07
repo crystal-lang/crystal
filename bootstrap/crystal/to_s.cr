@@ -247,11 +247,11 @@ module Crystal
             @str << ", " if i > 0
             arg.accept self
           end
-          # if block_arg = node.block_arg
-          #   @str << ", " if node.args.length > 0
-          #   @str << "&"
-          #   block_arg.accept self
-          # end
+          if block_arg = node.block_arg
+            @str << ", " if node.args.length > 0
+            @str << "&"
+            block_arg.accept self
+          end
           @str << ")" unless node_obj && node.args.empty?
         end
       end

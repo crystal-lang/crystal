@@ -238,6 +238,18 @@ describe "Parser" do
   it_parses "foo = 1; foo +1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, "+", [1.int32] of ASTNode)]
   it_parses "foo = 1; foo -1", [Assign.new("foo".var, 1.int32), Call.new("foo".var, "-", [1.int32] of ASTNode)]
 
+  it_parses "foo(&block)", Call.new(nil, "foo", [] of ASTNode, nil, "block".call)
+  it_parses "foo &block", Call.new(nil, "foo", [] of ASTNode, nil, "block".call)
+
+  it_parses "foo(&.block)", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block")))
+  it_parses "foo &.block", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block")))
+  it_parses "foo &.block(1)", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block", [1.int32] of ASTNode)))
+  it_parses "foo &.+(2)", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "+", [2.int32] of ASTNode)))
+  it_parses "foo &.bar.baz", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Call.new(Var.new("#arg0"), "bar"), "baz")))
+  it_parses "foo(&.bar.baz)", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Call.new(Var.new("#arg0"), "bar"), "baz")))
+  it_parses "foo &.block[0]", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Call.new(Var.new("#arg0"), "block"), "[]", [0.int32] of ASTNode)))
+  it_parses "foo &.[0]", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "[]", [0.int32] of ASTNode)))
+
   it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, "!@")] of ASTNode)
   it_parses "!a && b", And.new(Call.new("a".call, "!@"), "b".call)
 
