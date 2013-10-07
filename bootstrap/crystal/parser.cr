@@ -965,6 +965,8 @@ module Crystal
         raise "Interpolation not allowed in require"
       end
 
+      raise "Bug: string is nil" unless string
+
       skip_space
 
       Crystal::Require.new string
@@ -1085,6 +1087,7 @@ module Crystal
       end
 
       args = [] of Arg
+      ivar_assigns = [] of ASTNode
 
       if @token.type == :"."
         unless receiver
@@ -1112,7 +1115,7 @@ module Crystal
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          block_arg = parse_arg(args, true)
+          block_arg = parse_arg(args, ivar_assigns, true)
           if block_arg
             check :")"
             break
@@ -1121,7 +1124,7 @@ module Crystal
         next_token_skip_statement_end
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg = parse_arg(args, false)
+          block_arg = parse_arg(args, ivar_assigns, false)
           if block_arg
             break
           end
@@ -1132,9 +1135,19 @@ module Crystal
       end
 
       if @token.keyword?(:end)
-        body = nil
+        body = Expressions.from(ivar_assigns)
       else
         body = parse_expressions
+        if ivar_assigns.length > 0
+          exps = [] of ASTNode
+          exps.concat ivar_assigns
+          if body.is_a?(Expressions)
+            exps.concat body.expressions
+          else
+            exps.push body
+          end
+          body = Expressions.from exps
+        end
         body = parse_exception_handler body
       end
 
@@ -1147,15 +1160,34 @@ module Crystal
       node
     end
 
-    def parse_arg(args, parenthesis = false)
+    def parse_arg(args, ivar_assigns, parenthesis = false)
       if @token.type == :"&"
         next_token_skip_space_or_newline
         return parse_block_arg
       end
 
-      check :IDENT
-      arg_name = @token.value.to_s
-      arg_location = @token.location
+      case @token.type
+      when :IDENT
+        arg_name = @token.value.to_s
+        arg_location = @token.location
+      when :INSTANCE_VAR
+        arg_name = @token.value.to_s[1 .. -1]
+        arg_location = @token.location
+        ivar = InstanceVar.new(@token.value.to_s)
+        ivar.location = arg_location
+        var = Var.new(arg_name)
+        var.location = arg_location
+        assign = Assign.new(ivar, var)
+        assign.location = arg_location
+        if ivar_assigns
+          ivar_assigns.push assign
+        else
+          raise "can't use @instance_variable here"
+        end
+        @instance_vars.add ivar.name if @instance_vars
+      else
+        raise "unexpected token: #{@token}"
+      end
 
       default_value = nil
       type_restriction = nil
@@ -1177,6 +1209,8 @@ module Crystal
         location = @token.location
         type_restriction = parse_single_type
       end
+
+      raise "Bug: arg_name is nil" unless arg_name
 
       arg = Arg.new(arg_name, default_value, type_restriction)
       arg.location = arg_location
