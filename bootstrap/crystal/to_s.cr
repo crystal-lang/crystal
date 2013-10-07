@@ -434,7 +434,19 @@ module Crystal
     end
 
     def visit(node : Yield)
-      visit_control node, "yield"
+      if scope = node.scope
+        scope.accept self
+        @str << "."
+      end
+      @str << "yield"
+      if node.exps.length > 0
+        @str << " "
+        node.exps.each_with_index do |exp, i|
+          @str << ", " if i > 0
+          exp.accept self
+        end
+      end
+      false
     end
 
     def visit(node : Return)

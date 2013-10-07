@@ -1079,6 +1079,23 @@ module Crystal
   end
 
   class Yield < ControlExpression
+    property :scope
+
+    def initialize(@exps = [] of ASTNode, @scope = nil)
+    end
+
+    def accept_children(visitor)
+      @scope.accept visitor if @scope
+      @exps.each { |e| e.accept visitor }
+    end
+
+    def ==(other : self)
+      other.scope == scope && other.exps == exps
+    end
+
+    def clone_without_location
+      Yield.new(@exps.clone, @scope.clone)
+    end
   end
 
   class Next < ControlExpression

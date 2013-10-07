@@ -273,7 +273,9 @@ module Crystal
     end
 
     def transform(node : Yield)
-      # node.scope = node.scope.transform(self) if node.scope
+      if scope = node.scope
+        node.scope = scope.transform(self)
+      end
       transform_many node.exps
       node
     end

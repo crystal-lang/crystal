@@ -465,6 +465,15 @@ module Crystal
               raise "'is_a?' can't receive a block"
             end
             atomic = IsA.new(atomic_obj, atomic.args[0])
+          when "yield"
+            if atomic.block
+              raise "'yield' can't receive a block"
+            end
+            @yields = 1 if !@yields || @yields <= 0
+            if atomic.args && atomic.args.length > @yields
+              @yields = atomic.args.length
+            end
+            atomic = Yield.new(atomic.args, atomic.obj)
           end
         end
       end
