@@ -53,6 +53,7 @@ module Crystal
       # HACK: until we have class types in bootstrap
       string = @types["String"] = PrimitiveType.new self, self, "String", value, LLVM::PointerType.new(LLVM::Int8), 8
 
+      @requires = Set(String).new
       @temp_var_counter = 0
 
       define_primitives
@@ -118,6 +119,58 @@ module Crystal
       # types.sort_by! &.type_id
       types_ids = types.map &.type_id
       @unions.fetch_or_assign(types_ids) { UnionType.new self, types }
+    end
+
+    def require(filename, relative_to = nil)
+      # if File.exists?(filename) && Pathname.new(filename).absolute?
+      #   return require_absolute filename
+      # end
+
+      # if relative_to && (single = filename =~ /(.+)\/\*\Z/ || multi = filename =~ /(.+)\/\*\*\Z/)
+      #   dir = File.dirname relative_to
+      #   relative_dir = File.join(dir, $1)
+      #   if File.directory?(relative_dir)
+      #     nodes = []
+      #     Dir["#{relative_dir}/#{multi ? '**/' : ''}*.cr"].sort.each do |file|
+      #       node = Require.new(file)
+      #       nodes.push node
+      #     end
+      #     return Expressions.new(nodes)
+      #   end
+      # end
+
+      filename = "#{filename}.cr" unless filename.ends_with? ".cr"
+      if relative_to
+        dir = File.dirname relative_to
+        # relative_filename = File.join(dir, filename)
+        relative_filename = "#{dir}/#{filename}"
+        if File.exists?(relative_filename)
+          require_absolute relative_filename
+        else
+          require_from_load_path filename
+        end
+      else
+        require_from_load_path filename
+      end
+    end
+
+    def require_absolute(file)
+      file = "#{Dir.working_directory}/#{file}" unless file.starts_with?('/')
+      puts file
+      # file = File.absolute_path(file)
+      return nil if @requires.includes? file
+
+      @requires.add file
+
+      parser = Parser.new File.read(file)
+      parser.filename = file
+      parser.parse
+    end
+
+    def require_from_load_path(file)
+      file = File.expand_path("std/#{file}")
+      # file = File.expand_path("../../../std/#{file}", __FILE__)
+      require_absolute file
     end
 
     macro self.type_getter(def_name, type_name)"

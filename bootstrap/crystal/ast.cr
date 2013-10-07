@@ -529,10 +529,6 @@ module Crystal
     def ==(other : self)
       other.left == left && other.right == right
     end
-
-    def clone_without_location
-      self.class.new(@left.clone, @right.clone)
-    end
   end
 
   # Expressions and.
@@ -540,6 +536,9 @@ module Crystal
   #     expression '&&' expression
   #
   class And < BinaryOp
+    def clone_without_location
+      And.new(@left.clone, @right.clone)
+    end
   end
 
   # Expressions or.
@@ -547,6 +546,9 @@ module Crystal
   #     expression '||' expression
   #
   class Or < BinaryOp
+    def clone_without_location
+      Or.new(@left.clone, @right.clone)
+    end
   end
 
   # Expressions simple or (no short-circuit).
@@ -554,6 +556,9 @@ module Crystal
   #     expression '||' expression
   #
   class SimpleOr < BinaryOp
+    def clone_without_location
+      SimpleOr.new(@left.clone, @right.clone)
+    end
   end
 
   # A method definition.
@@ -1066,16 +1071,18 @@ module Crystal
     def ==(other : self)
       other.exps == exps
     end
-
-    def clone_without_location
-      self.class.new(@exps.clone)
-    end
   end
 
   class Return < ControlExpression
+    def clone_without_location
+      Return.new(@exps.clone)
+    end
   end
 
   class Break < ControlExpression
+    def clone_without_location
+      Break.new(@exps.clone)
+    end
   end
 
   class Yield < ControlExpression
@@ -1099,6 +1106,9 @@ module Crystal
   end
 
   class Next < ControlExpression
+    def clone_without_location
+      Next.new(@exps.clone)
+    end
   end
 
   class Include < ASTNode
@@ -1202,16 +1212,18 @@ module Crystal
     def ==(other : self)
       other.name == name && other.fields == fields
     end
-
-    def clone_without_location
-      self.class.new(@name, @fields.clone)
-    end
   end
 
   class StructDef < StructOrUnionDef
+    def clone_without_location
+      StructDef.new(@name, @fields.clone)
+    end
   end
 
   class UnionDef < StructOrUnionDef
+    def clone_without_location
+      UnionDef.new(@name, @fields.clone)
+    end
   end
 
   class EnumDef < ASTNode

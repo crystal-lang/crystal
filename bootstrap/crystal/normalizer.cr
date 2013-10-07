@@ -307,10 +307,10 @@ module Crystal
       node
     end
 
-    # def transform(node : DeclareVar)
-    #   @vars[node.name] = Index.new
-    #   node
-    # end
+    def transform(node : DeclareVar)
+      @vars[node.name] = Index.new
+      node
+    end
 
     def transform(node : MultiAssign)
       if node.values.length == 1
@@ -716,6 +716,14 @@ module Crystal
       end
 
       node
+    end
+
+    def transform(node : Require)
+      location = node.location
+      raise "Bug: location is nil" unless location
+
+      required = @program.require(node.string, location.filename)
+      required ? required.transform(self) : Nop.new
     end
 
     def get_loop_vars(before_vars, restore = true)

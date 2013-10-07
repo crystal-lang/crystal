@@ -342,6 +342,7 @@ module Crystal
 
     parse_operator :pow, :atomic_with_method, "Call.new left, method, [right] of ASTNode, nil, method_column_number", ":\"**\""
 
+    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"==="]
     def parse_atomic_with_method
       location = @token.location
 
@@ -355,7 +356,7 @@ module Crystal
           next_token
         when :"."
           next_token_skip_space_or_newline
-          check [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"==="]
+          check AtomicWithMethodCheck
           name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
           name_column_number = @token.column_number
           next_token
@@ -640,6 +641,8 @@ module Crystal
       end
     end
 
+    SemicolonOrNewLine = [:";", :NEWLINE]
+
     def parse_rescue
       next_token_skip_space
 
@@ -665,7 +668,7 @@ module Crystal
         types = parse_rescue_types
       end
 
-      check [:";", :NEWLINE]
+      check SemicolonOrNewLine
 
       next_token_skip_space_or_newline
 
@@ -1069,11 +1072,22 @@ module Crystal
       parse_def_or_macro Crystal::Macro
     end
 
+    DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
+    DefOrMacroCheck2 = [:IDENT, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
+
     def parse_def_or_macro(klass)
       push_def
 
-      next_token_skip_space_or_newline
-      check [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
+      next_token
+
+      if @buffer.value == '%'
+        @buffer += 1
+        @token.type = :"%"
+        @token.column_number += 1
+      else
+        skip_space_or_newline
+        check DefOrMacroCheck1
+      end
 
       receiver = nil
       @yields = -1
@@ -1107,7 +1121,7 @@ module Crystal
           end
         end
         next_token_skip_space
-        check [:IDENT, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
+        check DefOrMacroCheck2
         name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
         name_column_number = @token.column_number
         next_token_skip_space
@@ -1815,6 +1829,8 @@ module Crystal
       expressions
     end
 
+    IdentOrConst = [:IDENT, :CONST]
+
     def parse_fun_def
       next_token_skip_space_or_newline
 
@@ -1825,7 +1841,7 @@ module Crystal
 
       if @token.type == :"="
         next_token_skip_space_or_newline
-        check [:IDENT, :CONST]
+        check IdentOrConst
         real_name = @token.value.to_s
         next_token_skip_space_or_newline
       else
