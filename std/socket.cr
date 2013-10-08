@@ -28,6 +28,11 @@ class Socket
   def output
     @output
   end
+
+  def close
+    C.fclose @input
+    C.fclose @output
+  end
 end
 
 class TCPServer
