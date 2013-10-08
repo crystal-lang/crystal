@@ -727,7 +727,7 @@ module Crystal
 
       # If the else branch exits, we can safely assume that the type
       # filters in the condition will still apply after the if
-      if node.else && node.else.no_returns? && node.cond.type_filters && !@type_filter_stack.empty?
+      if node.else && (node.else.no_returns? || node.else.returns?) && node.cond.type_filters && !@type_filter_stack.empty?
         @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, node.cond.type_filters)
       end
 

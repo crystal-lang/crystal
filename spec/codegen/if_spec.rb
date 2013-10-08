@@ -160,4 +160,22 @@ describe 'Code gen: if' do
       end.to_i
       )).to_i.should eq(1)
   end
+
+  it "codegens if with return in else preserves type filter" do
+    run(%q(
+      require "prelude"
+
+      def foo
+        x = 1 || nil
+        if x
+        else
+          return 0
+        end
+
+        x + 1
+      end
+
+      foo
+      )).to_i.should eq(2)
+  end
 end
