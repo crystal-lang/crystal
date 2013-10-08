@@ -133,7 +133,16 @@ module Crystal
           else
             next_char :"+@"
           end
-        when '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+        when '0'
+          case @buffer[1]
+          when 'x'
+            scan_hex_number
+          when 'b'
+            scan_bin_number
+          else
+            scan_number(@buffer - 1, 2)
+          end
+        when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number(@buffer - 1, 2)
         else
           @token.type = :"+"
@@ -150,7 +159,16 @@ module Crystal
           end
         when '>'
           next_char :"->"
-        when '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+        when '0'
+          case @buffer[1]
+          when 'x'
+            scan_hex_number(-1)
+          when 'b'
+            scan_bin_number(-1)
+          else
+            scan_number(@buffer - 1, 2)
+          end
+        when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number(@buffer - 1, 2)
         else
           @token.type = :"-"
@@ -344,7 +362,16 @@ module Crystal
         @token.string_nest = '"'
         @token.string_end = '"'
         @token.string_open_count = 0
-      when '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+      when '0'
+        case @buffer[1]
+        when 'x'
+          scan_hex_number
+        when 'b'
+          scan_bin_number
+        else
+          scan_number @buffer, 1
+        end
+      when '1', '2', '3', '4', '5', '6', '7', '8', '9'
         scan_number @buffer, 1
       when '@'
         start = @buffer
@@ -697,8 +724,6 @@ module Crystal
       end
 
       case @buffer.value
-      when '_'
-        next_char
       when '.'
         if @buffer[1].digit?
           count += 1
@@ -774,51 +799,9 @@ module Crystal
       when 'f', 'F'
         consume_float_suffix :i32
       when 'i'
-        if @buffer[1] == '8'
-          next_char
-          next_char
-          @token.number_kind = :i8
-        elsif @buffer[1] == '1' && @buffer[2] == '6'
-          next_char
-          next_char
-          next_char
-          @token.number_kind = :i16
-        elsif @buffer[1] == '3' && @buffer[2] == '2'
-          next_char
-          next_char
-          next_char
-          @token.number_kind = :i32
-        elsif @buffer[1] == '6' && @buffer[2] == '4'
-          next_char
-          next_char
-          next_char
-          @token.number_kind = :i64
-        else
-          @token.number_kind = :i32
-        end
+        consume_int_suffix :i32
       when 'u'
-        if @buffer[1] == '8'
-          next_char
-          next_char
-          @token.number_kind = :u8
-        elsif @buffer[1] == '1' && @buffer[2] == '6'
-          next_char
-          next_char
-          next_char
-          @token.number_kind = :u16
-        elsif @buffer[1] == '3' && @buffer[2] == '2'
-          next_char
-          next_char
-          next_char
-          @token.number_kind = :u32
-        elsif @buffer[1] == '6' && @buffer[2] == '4'
-          next_char
-          next_char
-          next_char
-          @token.number_kind = :u64
-        else
-          @token.number_kind = :i32
-        end
+        consume_uint_suffix :u32
       else
         @token.number_kind = :i32
       end
@@ -826,6 +809,113 @@ module Crystal
       string_value = String.from_cstr(start, count)
       string_value = string_value.delete('_') if has_underscore
       @token.value = string_value
+    end
+
+    def scan_hex_number(multiplier = 1)
+      @token.type = :NUMBER
+      num = 0
+      next_char
+
+      while true
+        char = next_char
+        if char.digit?
+          num = num * 16 + (char - '0')
+        elsif ('a' <= char <= 'f')
+          num = num * 16 + 10 + (char - 'a')
+        elsif ('A' <= char <= 'F')
+          num = num * 16 + 10 + (char - 'A')
+        elsif char == '_'
+        else
+          break
+        end
+      end
+
+      num *= multiplier
+
+      case @buffer.value
+      when 'i'
+        consume_int_suffix :i32
+      when 'u'
+        consume_uint_suffix :u32
+      else
+        @token.number_kind = :i32
+      end
+
+      @token.value = num.to_s
+    end
+
+    def scan_bin_number(multiplier = 1)
+      @token.type = :NUMBER
+      num = 0
+      next_char
+
+      while true
+        case next_char
+        when '0'
+          num *= 2
+        when '1'
+          num = num * 2 + 1
+        when '_'
+          # Nothing
+        else
+          break
+        end
+      end
+
+      num *= multiplier
+
+      @token.value = num.to_s
+      @token.number_kind = :i32
+    end
+
+    def consume_int_suffix(default)
+      if @buffer[1] == '8'
+        next_char
+        next_char
+        @token.number_kind = :i8
+      elsif @buffer[1] == '1' && @buffer[2] == '6'
+        next_char
+        next_char
+        next_char
+        @token.number_kind = :i16
+      elsif @buffer[1] == '3' && @buffer[2] == '2'
+        next_char
+        next_char
+        next_char
+        @token.number_kind = :i32
+      elsif @buffer[1] == '6' && @buffer[2] == '4'
+        next_char
+        next_char
+        next_char
+        @token.number_kind = :i64
+      else
+        @token.number_kind = default
+      end
+    end
+
+    def consume_uint_suffix(default)
+      if @buffer[1] == '8'
+        next_char
+        next_char
+        @token.number_kind = :u8
+      elsif @buffer[1] == '1' && @buffer[2] == '6'
+        next_char
+        next_char
+        next_char
+        @token.number_kind = :u16
+      elsif @buffer[1] == '3' && @buffer[2] == '2'
+        next_char
+        next_char
+        next_char
+        @token.number_kind = :u32
+      elsif @buffer[1] == '6' && @buffer[2] == '4'
+        next_char
+        next_char
+        next_char
+        @token.number_kind = :u64
+      else
+        @token.number_kind = default
+      end
     end
 
     def consume_float_suffix(default)

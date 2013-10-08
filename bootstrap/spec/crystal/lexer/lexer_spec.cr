@@ -162,6 +162,17 @@ describe "Lexer" do
   it_lexes_number :f64, ["1f64", "1"]
   it_lexes_number :f64, ["1.0f64", "1.0"]
 
+  it_lexes_number :i32, ["0b1010", "10"]
+  it_lexes_number :i32, ["+0b1010", "10"]
+  it_lexes_number :i32, ["-0b1010", "-10"]
+
+  it_lexes_number :i32, ["0xFFFF", "65535"]
+  it_lexes_number :i32, ["0xabcdef", "11259375"]
+  it_lexes_number :i32, ["+0xFFFF", "65535"]
+  it_lexes_number :i32, ["-0xFFFF", "-65535"]
+
+  it_lexes_number :u64, ["0xFFFF_u64", "65535"]
+
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'
