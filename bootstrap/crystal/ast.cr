@@ -1161,22 +1161,24 @@ module Crystal
     property :args
     property :return_type
     property :varargs
+    property :body
     property :real_name
 
-    def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @real_name = name)
+    def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, @real_name = name)
     end
 
     def accept_children(visitor)
       @args.each { |arg| arg.accept visitor }
       @return_type.accept visitor if @return_type
+      @body.accept visitor if @body
     end
 
     def ==(other : self)
-      other.name == name && other.args == args && other.return_type == return_type && other.real_name == real_name && other.varargs == varargs
+      other.name == name && other.args == args && other.return_type == return_type && other.real_name == real_name && other.varargs == varargs && other.body == body
     end
 
     def clone_without_location
-      FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @real_name)
+      FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
     end
   end
 

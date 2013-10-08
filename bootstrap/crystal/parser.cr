@@ -579,6 +579,8 @@ module Crystal
           parse_break
         when :lib
           parse_lib
+        when :fun
+          parse_fun_def(true)
         else
           parse_var_or_call
         end
@@ -1928,7 +1930,9 @@ module Crystal
 
     IdentOrConst = [:IDENT, :CONST]
 
-    def parse_fun_def
+    def parse_fun_def(require_body = false)
+      push_def if require_body
+
       next_token_skip_space_or_newline
 
       check :IDENT
@@ -1958,21 +1962,31 @@ module Crystal
             break
           end
 
-          check :IDENT
-          arg_name = @token.value.to_s
-          arg_location = @token.location
+          if @token.type == :IDENT
+            arg_name = @token.value.to_s
+            arg_location = @token.location
 
-          next_token_skip_space_or_newline
-          check :":"
-          next_token_skip_space_or_newline
+            next_token_skip_space_or_newline
+            check :":"
+            next_token_skip_space_or_newline
 
-          arg_type = parse_single_type
+            arg_type = parse_single_type
 
-          skip_space_or_newline
+            skip_space_or_newline
 
-          arg = Arg.new(arg_name, nil, arg_type)
-          arg.location = arg_location
-          args << arg
+            arg = Arg.new(arg_name, nil, arg_type)
+            arg.location = arg_location
+            args << arg
+
+            push_var_name arg_name if require_body
+          else
+            arg_types = parse_types
+            arg_types.each do |arg_type_2|
+              arg2 = Arg.new("?", nil, arg_type_2)
+              arg2.location = arg_type_2.location
+              args << arg2
+            end
+          end
 
           if @token.type == :","
             next_token_skip_space_or_newline
@@ -1981,8 +1995,6 @@ module Crystal
         next_token_skip_statement_end
       end
 
-      pointer = 0
-
       if @token.type == :":"
         next_token_skip_space_or_newline
         return_type = parse_single_type
@@ -1990,7 +2002,22 @@ module Crystal
 
       skip_statement_end
 
-      FunDef.new name, args, return_type, varargs, real_name
+      if require_body
+        if @token.keyword?(:end)
+          body = Nop.new
+        else
+          body = parse_expressions
+          body = parse_exception_handler body
+        end
+
+        next_token_skip_space
+      else
+        body = nil
+      end
+
+      pop_def if require_body
+
+      FunDef.new name, args, return_type, varargs, body, real_name
     end
 
     def parse_type_def

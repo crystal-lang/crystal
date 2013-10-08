@@ -573,6 +573,13 @@ module Crystal
         @str << " : "
         node_return_type.accept self
       end
+      if body = node.body
+        @str << "\n"
+        accept_with_indent body
+        @str << "\n"
+        append_indent
+        @str << "end"
+      end
       false
     end
 
