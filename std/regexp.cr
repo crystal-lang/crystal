@@ -14,7 +14,7 @@ class Regexp
     @source = str
     errptr = Pointer(Char).malloc(0)
     erroffset = 1
-    @re = PCRE.compile(str, 8, errptr.ptr, erroffset.ptr, 0_i64)
+    @re = PCRE.compile(str, 0, errptr.ptr, erroffset.ptr, 0_i64)
     if @re == 0
       raise "#{String.from_cstr(errptr)} at #{erroffset}"
     end
