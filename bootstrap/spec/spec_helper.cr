@@ -3,13 +3,7 @@ require "../crystal/**"
 
 include Crystal
 
-class InferTypeResult
-  getter :program
-  getter :node
-
-  def initialize(@program, @node)
-  end
-end
+make_tuple InferTypeResult, program, node
 
 def assert_type(str)
   program = Program.new

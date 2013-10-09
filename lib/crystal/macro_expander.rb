@@ -13,6 +13,8 @@ module Crystal
       args = node.args.map do |arg|
         if arg.is_a?(Call) && !arg.obj && !arg.block && !arg.block_arg && arg.args.length == 0
           Var.new(arg.name)
+        elsif arg.is_a?(Ident) && arg.names.length == 1
+          Var.new(arg.names.first)
         else
           arg
         end

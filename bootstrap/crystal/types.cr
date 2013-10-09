@@ -108,26 +108,7 @@ module Crystal
   end
 
   module DefInstanceContainer
-    class DefInstanceKey
-      getter :def_object_id
-      getter :arg_types
-      getter :block_type
-
-      def initialize(@def_object_id, @arg_types, @block_type)
-      end
-
-      def ==(other : DefInstanceKey)
-        other.def_object_id == @def_object_id && other.arg_types == @arg_types && other.block_type == @block_type
-      end
-
-      def hash
-        hash = 0
-        hash = 31 * hash + @def_object_id
-        hash = 31 * hash + @arg_types.hash
-        hash = 31 * hash + @block_type.hash
-        hash
-      end
-    end
+    make_tuple DefInstanceKey, def_object_id, arg_types, block_type
 
     def def_instances
       @def_instances ||= {} of DefInstanceKey => Def
