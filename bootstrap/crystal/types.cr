@@ -13,7 +13,7 @@ module Crystal
     end
 
     def type_id
-      object_id
+      @type_id ||= program.next_type_id
     end
 
     def passed_as_self?
@@ -36,7 +36,7 @@ module Crystal
       raise "BUG: #{self} doesn't implement add_def_instance"
     end
 
-    def lookup_type(names, already_looked_up = Set(UInt64).new, lookup_in_container = true)
+    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
       raise "BUG: #{self} doesn't implement lookup_type"
     end
 
@@ -157,7 +157,7 @@ module Crystal
       @parents = [] of Type
     end
 
-    def lookup_type(names, already_looked_up = Set(UInt64).new, lookup_in_container = true)
+    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
       return nil if already_looked_up.includes?(type_id)
 
       if lookup_in_container
@@ -270,6 +270,9 @@ module Crystal
   end
 
   class NilType < PrimitiveType
+    def type_id
+      0
+    end
   end
 
   class ValueType < NonGenericClassType

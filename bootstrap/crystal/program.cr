@@ -12,7 +12,7 @@ module Crystal
     def initialize
       # super(nil, "main")
       @types = {} of String => Type
-      @unions = {} of Array(UInt64) => UnionType
+      @unions = {} of Array(Int32) => UnionType
 
       object = @types["Object"] = NonGenericClassType.new self, self, "Object", nil
       object.abstract = true
@@ -55,6 +55,7 @@ module Crystal
 
       @requires = Set(String).new
       @temp_var_counter = 0
+      @type_id_counter = 0
 
       define_primitives
     end
@@ -67,7 +68,11 @@ module Crystal
       false
     end
 
-    def lookup_type(names, already_looked_up = Set(UInt64).new, lookup_in_container = true)
+    def next_type_id
+      @type_id_counter += 1
+    end
+
+    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
       return nil if already_looked_up.includes?(type_id)
 
       if lookup_in_container
