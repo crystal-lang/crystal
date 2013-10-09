@@ -114,7 +114,10 @@ module Crystal
       end
 
       if matches.empty?
-        raise_matches_not_found(matches.owner || owner, def_name, matches)
+        # For now, if the owner is a NoReturn just ignore the error (this call should be recomputed later)
+        unless owner.no_return?
+          raise_matches_not_found(matches.owner || owner, def_name, matches)
+        end
       end
 
       if owner.hierarchy?

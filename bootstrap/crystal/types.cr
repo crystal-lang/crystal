@@ -73,12 +73,35 @@ module Crystal
 
   module MatchesLookup
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      a_def = defs[name][LengthAndYields.new(arg_types.length, !!yields)]?
-      if a_def
-        Matches.new([Match.new(self, a_def, arg_types)], nil, owner)
-      else
-        Matches.new([] of Match, nil, owner, false)
+      yields = !!yields
+
+      name_defs = defs[name]
+      name_defs.each do |def_key, a_def|
+        if def_key.yields == yields
+          matched = true
+          def_key.restrictions.each_with_index do |restriction, i|
+            arg_type = arg_types[i]
+            case restriction
+            when nil
+              # Nothing
+            when Type
+              matched = false unless restriction == arg_type
+            when Ident
+              type = lookup_type restriction.names
+              if type
+                matched = false unless type == arg_type
+              end
+              # TODO
+            end
+          end
+
+          if matched
+            return Matches.new([Match.new(self, a_def, arg_types)], nil, owner)
+          end
+        end
       end
+
+      Matches.new([] of Match, nil, owner, false)
     end
 
     def lookup_first_def(name, yields)
@@ -102,14 +125,15 @@ module Crystal
   module DefContainer
     include MatchesLookup
 
-    make_tuple LengthAndYields, length, yields
+    make_tuple DefKey, restrictions, yields
 
     def defs
-      @defs ||= Hash(String, Hash(LengthAndYields, Def)).new { |h, k| h[k] = {} of LengthAndYields => Def }
+      @defs ||= Hash(String, Hash(DefKey, Def)).new { |h, k| h[k] = {} of DefKey => Def }
     end
 
     def add_def(a_def)
-      defs[a_def.name][LengthAndYields.new(a_def.args.length, !!a_def.yields)] = a_def
+      restrictions = a_def.args.map { |arg| arg.type || arg.type_restriction }
+      defs[a_def.name][DefKey.new(restrictions, !!a_def.yields)] = a_def
     end
   end
 
