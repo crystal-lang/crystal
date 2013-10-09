@@ -26,6 +26,11 @@ module Crystal
         check_not_lib_out_args
       end
 
+      if args.any? { |arg| arg.type && arg.type.no_return? }
+        self.set_type @mod.no_return
+        return
+      end
+
       return unless obj_and_args_types_set?
 
       # Ignore extra recalculations when more than one argument changes at the same time
@@ -77,13 +82,6 @@ module Crystal
     end
 
     def lookup_matches_in(owner, self_type = nil, def_name = self.name)
-      is_no_return = false
-
-      arg_types = args.map do |arg|
-        is_no_return ||= arg.no_returns?
-        arg.type
-      end
-
       arg_types = args.map(&:type)
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 
@@ -146,10 +144,6 @@ module Crystal
               typed_def.body.accept visitor
             end
           end
-        end
-
-        if is_no_return
-          typed_def.type = @mod.no_return
         end
 
         typed_def

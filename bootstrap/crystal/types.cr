@@ -1,3 +1,5 @@
+require "type_inference/restrictions"
+
 module Crystal
   abstract class Type
     def self.merge(types)
@@ -80,19 +82,8 @@ module Crystal
         if def_key.yields == yields
           matched = true
           def_key.restrictions.each_with_index do |restriction, i|
-            arg_type = arg_types[i]
-            case restriction
-            when nil
-              # Nothing
-            when Type
-              matched = false unless restriction == arg_type
-            when Ident
-              type = lookup_type restriction.names
-              if type
-                matched = false unless type == arg_type
-              end
-              # TODO
-            end
+            restricted_type = arg_types[i].not_nil!.restrict restriction, self
+            matched = false unless restricted_type
           end
 
           if matched
