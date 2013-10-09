@@ -230,6 +230,7 @@ describe "Parser" do
   it_parses "foo(1 + 2)", "foo".call([Call.new(1.int32, "+", [2.int32] of ASTNode)] of ASTNode)
   it_parses "foo -1.0, -2.0", "foo".call([-1.float64, -2.float64] of ASTNode)
   it_parses "foo(\n1)", "foo".call([1.int32] of ASTNode)
+  it_parses "::foo", Call.new(nil, "foo", [] of ASTNode, nil, nil, true)
 
   it_parses "foo + 1", Call.new("foo".call, "+", [1.int32] of ASTNode)
   it_parses "foo +1", Call.new(nil, "foo", [1.int32] of ASTNode)

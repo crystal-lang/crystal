@@ -518,7 +518,7 @@ module Crystal
       when :"{"
         parse_hash_literal
       when :"::"
-        parse_ident
+        parse_ident_or_global_call
       when :NUMBER
         node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
       when :CHAR
@@ -748,9 +748,13 @@ module Crystal
           call = parse_atomic_method_suffix obj, location
         else
           call = parse_var_or_call(false, true)
-          raise "Bug: #{call} should be a call" unless call.is_a?(Call)
 
-          call.obj = obj
+          if call.is_a?(Call)
+            call.obj = obj
+          else
+            raise "Bug: #{call} should be a call"
+          end
+
           call = parse_atomic_method_suffix call, location
         end
 
@@ -1611,6 +1615,20 @@ module Crystal
         end
       else
         nil
+      end
+    end
+
+    def parse_ident_or_global_call
+      location = @token.location
+      next_token_skip_space_or_newline
+
+      case @token.type
+      when :IDENT
+        parse_var_or_call(true)
+      when :CONST
+        parse_ident_after_colons(location, true, true)
+      else
+        unexpected_token
       end
     end
 
