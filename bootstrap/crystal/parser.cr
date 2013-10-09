@@ -11,7 +11,7 @@ module Crystal
     def initialize(str, @def_vars = [Set(String).new])
       super(str)
       @last_call_has_parenthesis = false
-      @yields = -1
+      @yields = nil
     end
 
     def parse
@@ -485,8 +485,8 @@ module Crystal
             if atomic.block
               raise "'yield' can't receive a block"
             end
-            @yields = 1 if !@yields || @yields <= 0
-            if atomic.args && atomic.args.length > @yields
+            yields = (@yields ||= 1)
+            if atomic.args && atomic.args.length > yields
               @yields = atomic.args.length
             end
             atomic = Yield.new(atomic.args, atomic.obj)
@@ -1145,7 +1145,7 @@ module Crystal
       end
 
       receiver = nil
-      @yields = -1
+      @yields = nil
       name_column_number = @token.column_number
 
       if @token.type == :CONST
@@ -1813,9 +1813,9 @@ module Crystal
       call_args = parse_call_args
       args = call_args.args if call_args
 
-      @yields = 0 if @yields < 0
+      yields = (@yields ||= 0)
       if args
-        if args.length > @yields
+        if args.length > yields
           @yields = args.length
         end
       end

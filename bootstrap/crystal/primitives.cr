@@ -78,7 +78,7 @@ module Crystal
     end
 
     def self.for_fun(name, real_name, args, return_type, varargs, body, fun_def)
-      external = External.new(name, args, body, nil, nil, -1, real_name)
+      external = External.new(name, args, body, nil, nil, nil, real_name)
       external.varargs = varargs
       # external.owner = self
       external.set_type(return_type)

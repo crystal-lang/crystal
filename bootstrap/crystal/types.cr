@@ -73,7 +73,7 @@ module Crystal
 
   module MatchesLookup
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      a_def = defs[name]?
+      a_def = defs[name][LengthAndYields.new(arg_types.length, !!yields)]?
       if a_def
         Matches.new([Match.new(self, a_def, arg_types)], nil, owner)
       else
@@ -82,14 +82,18 @@ module Crystal
     end
 
     def lookup_first_def(name, yields)
-      defs[name]?
-      # defs = self.defs[name].values.select { |a_def| !!a_def.yields == yields }
-      # defs.length == 1 ? defs.first : nil
+      yields = !!yields
+      self.defs[name].values.find { |a_def| !!a_def.yields == yields }
     end
 
     def lookup_defs(name)
-      a_def = defs[name]?
-      return [a_def] if a_def
+      defs = self.defs[name]
+      return defs.values unless defs.empty?
+
+      # parents.each do |parent|
+      #   defs = parent.lookup_defs(name)
+      #   return defs unless defs.empty?
+      # end
 
       [] of Def
     end
@@ -98,12 +102,14 @@ module Crystal
   module DefContainer
     include MatchesLookup
 
+    make_tuple LengthAndYields, length, yields
+
     def defs
-      @defs ||= {} of String => Def
+      @defs ||= Hash(String, Hash(LengthAndYields, Def)).new { |h, k| h[k] = {} of LengthAndYields => Def }
     end
 
     def add_def(a_def)
-      defs[a_def.name] = a_def
+      defs[a_def.name][LengthAndYields.new(a_def.args.length, !!a_def.yields)] = a_def
     end
   end
 

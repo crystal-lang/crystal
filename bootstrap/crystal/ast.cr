@@ -608,7 +608,7 @@ module Crystal
     property :instance_vars
     property :name_column_number
 
-    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = -1)
+    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
       @body = Expressions.from body
     end
 
@@ -641,7 +641,7 @@ module Crystal
     property :block_arg
     property :name_column_number
 
-    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = -1)
+    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
       @body = Expressions.from body
     end
 

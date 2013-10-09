@@ -14,7 +14,7 @@ module Crystal
       self_def.instance_vars = instance_vars
       self_def.args.each { |arg| arg.default_value = nil }
 
-      retain_body = (yields >= 0) || args.any? { |arg| arg.default_value && arg.type_restriction }
+      retain_body = yields || args.any? { |arg| arg.default_value && arg.type_restriction }
 
       expansions = [self_def]
 
