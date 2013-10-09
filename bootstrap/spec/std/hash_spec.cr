@@ -159,4 +159,11 @@ describe "Hash" do
     h1.object_id.should_not eq(h2.object_id)
     h1.should eq(h2)
   end
+
+  it "initializes with block" do
+    h1 = Hash(String, Array(Int32)).new { |h, k| h[k] = [] of Int32 }
+    h1["foo"].should eq([] of Int32)
+    h1["bar"].push 2
+    h1["bar"].should eq([2])
+  end
 end

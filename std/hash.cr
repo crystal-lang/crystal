@@ -3,9 +3,16 @@ require "int"
 require "nil"
 
 class Hash(K, V)
-  def initialize
+  def initialize(block = nil)
     @buckets = Array(Array(Entry(K, V))?).new(17, nil)
     @length = 0
+    @block = block
+  end
+
+  def self.new(&block : Hash(K, V), K -> V)
+    hash = allocate
+    hash.initialize(block)
+    hash
   end
 
   def []=(key : K, value : V)
@@ -49,7 +56,13 @@ class Hash(K, V)
   end
 
   def fetch(key)
-    fetch(key) { raise "Missing hash value: #{key}" }
+    fetch(key) do
+      if @block
+        @block.call(self, key)
+      else
+        raise "Missing hash value: #{key}"
+      end
+    end
   end
 
   def fetch(key, default)
