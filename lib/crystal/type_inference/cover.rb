@@ -40,18 +40,20 @@ class Cover
     match_arg_type = match.arg_types[index]
 
     match_arg_type.each do |match_arg_type2|
-      if arg_type.is_a?(Array)
-        offset = arg_type.index(match_arg_type2)
-        next unless offset
-        new_multiplier = multiplier * arg_type.length
-      elsif arg_type.equal?(match_arg_type2)
-        offset = 0
-        new_multiplier = multiplier
-      else
-        next
-      end
+      Array(match_arg_type2.cover).each do |sub_match_arg_type|
+        if arg_type.is_a?(Array)
+          offset = arg_type.index(sub_match_arg_type)
+          next unless offset
+          new_multiplier = multiplier * arg_type.length
+        elsif arg_type.equal?(sub_match_arg_type)
+          offset = 0
+          new_multiplier = multiplier
+        else
+          next
+        end
 
-      mark_cover match, index + 1, position + offset * multiplier, new_multiplier
+        mark_cover match, index + 1, position + offset * multiplier, new_multiplier
+      end
     end
   end
 

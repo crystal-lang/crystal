@@ -540,4 +540,49 @@ describe 'Type inference: hierarchy' do
     mod.types["Foo"].immutable.should be_false
     mod.types["Bar"].immutable.should be_false
   end
+
+  it "finds overloads of union of hierarchy, class and nil" do
+    assert_type(%q(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x : Reference)
+        1
+      end
+
+      def foo(x : Value)
+        1.5
+      end
+
+      f = Foo.new || Bar.new || Reference.new || nil
+      foo(f)
+      )) { union_of(int32, float64) }
+  end
+
+  it "finds overloads of union of hierarchy, class and nil with abstract class" do
+    assert_type(%q(
+      abstract class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      def foo(x : Reference)
+        1
+      end
+
+      def foo(x : Value)
+        1.5
+      end
+
+      f = Bar.new || Baz.new || Reference.new || nil
+      foo(f)
+      )) { union_of(int32, float64) }
+  end
 end
