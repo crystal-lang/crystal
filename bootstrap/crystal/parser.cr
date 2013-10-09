@@ -1666,6 +1666,11 @@ module Crystal
       const = Ident.new names, global
       const.location = location
 
+      token_location = @token.location
+      if token_location && token_location.line_number == start_line
+        const.name_length = token_location.column_number - start_column
+      end
+
       if allow_type_vars && @token.type == :"("
         next_token_skip_space
 

@@ -49,13 +49,13 @@ module Crystal
     def self.for_node(node, message, inner = nil)
       location = node.location
       if location
-        new message, location.line_number, location.column_number, location.filename, 0, inner
+        new message, location.line_number, (node.name_column_number || location.column_number), location.filename, (node.name_length || 0), inner
       else
         new message, 0, 0, "", 0, inner
       end
     end
 
-    def initialize(message, @line, @column, @filename, @length = nil, @inner = nil)
+    def initialize(message, @line, @column : Int32, @filename, @length = nil, @inner = nil)
       super(message)
     end
 

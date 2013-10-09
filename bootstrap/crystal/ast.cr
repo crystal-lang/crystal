@@ -17,6 +17,14 @@ module Crystal
       clone
     end
 
+    def name_column_number
+      @location ? @location.column_number : nil
+    end
+
+    def name_length
+      nil
+    end
+
     def nop?
       false
     end
@@ -336,7 +344,7 @@ module Crystal
     end
 
     def name_column_number
-      @name_column_number || column_number
+      @name_column_number
     end
 
     def name_length
@@ -474,6 +482,10 @@ module Crystal
       @out = false
     end
 
+    def name_length
+      name.length
+    end
+
     def ==(other : self)
       other.name == name && other.type == type && other.out == out
     end
@@ -492,6 +504,10 @@ module Crystal
       @out = false
     end
 
+    def name_length
+      name.length
+    end
+
     def ==(other : self)
       other.name == name && other.out == out
     end
@@ -506,6 +522,10 @@ module Crystal
     property :name
 
     def initialize(@name)
+    end
+
+    def name_length
+      name.length
     end
 
     def ==(other)
@@ -603,6 +623,10 @@ module Crystal
       other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
     end
 
+    def name_length
+      name.length
+    end
+
     def clone_without_location
       Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @yields)
     end
@@ -630,6 +654,10 @@ module Crystal
 
     def ==(other : self)
       other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
+    end
+
+    def name_length
+      name.length
     end
 
     def clone_without_location
@@ -833,6 +861,7 @@ module Crystal
   class Ident < ASTNode
     property :names
     property :global
+    property :name_length
 
     def initialize(@names, @global = false)
     end
@@ -842,7 +871,9 @@ module Crystal
     end
 
     def clone_without_location
-      Ident.new(@names.clone, @global)
+      ident = Ident.new(@names.clone, @global)
+      ident.name_length = name_length
+      ident
     end
   end
 
@@ -880,6 +911,10 @@ module Crystal
 
     def ==(other : self)
       other.name == name && other.declared_type == declared_type
+    end
+
+    def name_length
+      name.length
     end
 
     def clone_without_location
@@ -975,6 +1010,10 @@ module Crystal
       other.name == name && other.default_value == default_value && other.type_restriction == type_restriction && other.out == out
     end
 
+    def name_length
+      name.length
+    end
+
     def clone_without_location
       Arg.new(@name, @default_value.clone, @type_restriction.clone)
     end
@@ -993,6 +1032,10 @@ module Crystal
 
     def ==(other : self)
       other.name == name && other.type_spec = type_spec
+    end
+
+    def name_length
+      name.length
     end
 
     def clone_without_location
