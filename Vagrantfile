@@ -9,10 +9,9 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision :shell, :inline => %(
-    echo "deb http://llvm.org/apt/precise/ llvm-toolchain-precise main" > /etc/apt/sources.list.d/llvm.list
-    wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -
+    wget --progress=bar:force -O - https://s3.amazonaws.com/crystal-lang/llvm-3.3.tar.gz | tar xz --strip-components=1 -C /usr
     apt-get update
-    apt-get install -y ruby1.9.3 build-essential git llvm-3.3 libpcre3-dev libunwind7-dev
+    apt-get install -y ruby1.9.3 build-essential git libpcre3-dev libunwind7-dev
     gem install bundler --no-ri --no-rdoc
 
     if [ ! -a crystal ]; then
