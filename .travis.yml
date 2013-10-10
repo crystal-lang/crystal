@@ -1,9 +1,8 @@
 language: ruby
 before_install:
-  - sudo sh -c 'echo "deb http://llvm.org/apt/precise/ llvm-toolchain-precise main" > /etc/apt/sources.list.d/llvm.list'
-  - sudo sh -c 'wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -'
+  - sudo sh -c 'wget --progress=bar:force -O - https://s3.amazonaws.com/crystal-lang/llvm-3.3.tar.gz | tar xz --strip-components=1 -C /usr'
   - sudo apt-get update -qq
-  - sudo apt-get install -qq llvm-3.3 libpcre3-dev libunwind7-dev
+  - sudo apt-get install -qq libpcre3-dev libunwind7-dev
 script:
   - bundle exec rspec spec
   - bin/crystal bootstrap/spec/crystal_spec.cr
