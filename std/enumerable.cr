@@ -1,4 +1,22 @@
 module Enumerable(T)
+  def first
+    each { |e| return e }
+    nil
+  end
+
+  def first(count : Int)
+    take(count)
+  end
+
+  def take(count : Int)
+    ary = [] of T
+    each_with_index do |e, i|
+      break if i == count
+      ary << e
+    end
+    ary
+  end
+
   def each_with_index
     i = 0
     each do |elem|
@@ -114,6 +132,10 @@ module Enumerable(T)
     max_by { |x| x }
   end
 
+  def minmax
+    minmax_by { |x| x }
+  end
+
   def min_by(&block : T -> U)
     min :: U
     obj :: T
@@ -139,4 +161,60 @@ module Enumerable(T)
     end
     obj
   end
+
+  def minmax_by(&block : T -> U)
+    min :: U
+    max :: U
+    objmin :: T
+    objmax :: T
+    each_with_index do |elem, i|
+      value = yield elem
+      if i == 0 || value < min
+        min = value
+        objmin = elem
+      end
+      if i == 0 || value > max
+        max = value
+        objmax = elem
+      end
+    end
+    [objmin, objmax]
+  end
+
+  def partition(&block : T -> U)
+    a, b = [] of T, [] of T
+    each do |e|
+      value = yield(e)
+      value ? a.push(e) : b.push(e)
+    end
+    [a, b]
+  end
+
+  def group_by(&block : T -> U)
+    h = Hash(U, Array(T)).new
+    each do |e|
+      v = yield e
+      if h.has_key?(v)
+        h[v].push(e)
+      else
+        h[v] = [e]
+      end
+    end
+    h
+  end
+
+  def one?(&block : T -> U)
+    c = 0
+    each do |e|
+      c += 1 if yield(e)
+      return false if c > 1
+    end
+    c == 1
+  end
+
+  def none?(&block : T -> U)
+    each { |e| return false if yield(e) }
+    true
+  end
+
 end
