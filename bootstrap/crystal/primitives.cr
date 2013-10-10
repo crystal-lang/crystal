@@ -4,44 +4,123 @@ require "program"
 
 module Crystal
   class Program
-    macro define_binary(op, owner, name, arg_type, return_type)"
-      singleton(#{owner}, \"#{name}\", {\"other\" => #{arg_type}}, #{return_type}, ->(b : LLVM::Builder, f : LLVM::Function, llvm_mod : LLVM::Module, self_type : Type | Program) {
-        b.#{op} f.get_param(0), f.get_param(1)
-      })
+    macro primitive_body(body)"
+      ->(b : LLVM::Builder, f : LLVM::Function, llvm_mod : LLVM::Module, self_type : Type | Program) {
+        #{body}
+      }
     "end
 
-    macro define_int_binaries(owner)"
-      define_binary add, #{owner}, \"+\", #{owner}, #{owner}
-      define_binary sub, #{owner}, \"-\", #{owner}, #{owner}
-      define_binary mul, #{owner}, \"*\", #{owner}, #{owner}
-      define_binary sdiv, #{owner}, \"/\", #{owner}, #{owner}
-    "end
-
-    macro define_float_binaries(owner)"
-      define_binary fadd, #{owner}, \"+\", #{owner}, #{owner}
-      define_binary fsub, #{owner}, \"-\", #{owner}, #{owner}
-      define_binary fmul, #{owner}, \"*\", #{owner}, #{owner}
-      define_binary fdiv, #{owner}, \"/\", #{owner}, #{owner}
+    macro binary_body(body)"
+      ->(b : LLVM::Builder, f : LLVM::Function, llvm_mod : LLVM::Module, self_type : Type | Program) {
+        p0 = f.get_param(0)
+        p1 = f.get_param(1)
+        #{body}
+      }
     "end
 
     def define_primitives
-      define_int_binaries int8
-      define_int_binaries int16
-      define_int_binaries int32
-      define_int_binaries int64
-      define_float_binaries float32
-      define_float_binaries float64
+      define_number_primitives
+    end
 
-      singleton(int32, "+", {"other" => float32}, float32, ->(b : LLVM::Builder, f : LLVM::Function, llvm_mod : LLVM::Module, self_type : Type | Program) {
-        b.fadd b.si2fp(f.get_param(0), LLVM::Float), f.get_param(1)
-      })
-      singleton(int32, "+", {"other" => float64}, float64, ->(b : LLVM::Builder, f : LLVM::Function, llvm_mod : LLVM::Module, self_type : Type | Program) {
-        b.fadd b.si2fp(f.get_param(0), LLVM::Double), f.get_param(1)
-      })
+    def define_number_primitives
+      add_ints = binary_body "b.add p0, p1"
+      sub_ints = binary_body "b.sub p0, p1"
+      mul_ints = binary_body "b.mul p0, p1"
+      div_ints = binary_body "b.sdiv p0, p1"
+      div_uints = binary_body "b.udiv p0, p1"
 
-      singleton(int32, "==", {"other" => int32}, bool, ->(b : LLVM::Builder, f : LLVM::Function, llvm_mod : LLVM::Module, self_type : Type | Program) {
-        b.icmp LibLLVM::IntPredicate::EQ, f.get_param(0), f.get_param(1)
-      })
+      add_floats = binary_body "b.fadd p0, p1"
+      sub_floats = binary_body "b.fsub p0, p1"
+      mul_floats = binary_body "b.fmul p0, p1"
+      div_floats = binary_body "b.fdiv p0, p1"
+
+      add_ints_less = binary_body "b.trunc(b.add(b.sext(p0, LLVM.type_of(p1)), p1), LLVM.type_of(p0))"
+      add_ints_greater = binary_body "b.add(p0, b.sext(p1, LLVM.type_of(p0)))"
+      sub_ints_less = binary_body "b.trunc(b.sub(b.sext(p0, LLVM.type_of(p1)), p1), LLVM.type_of(p0))"
+      sub_ints_greater = binary_body "b.sub(p0, b.sext(p1, LLVM.type_of(p0)))"
+      mul_ints_less = binary_body "b.trunc(b.mul(b.sext(p0, LLVM.type_of(p1)), p1), LLVM.type_of(p0))"
+      mul_ints_greater = binary_body "b.mul(p0, b.sext(p1, LLVM.type_of(p0)))"
+      div_ints_less = binary_body "b.trunc(b.sdiv(b.sext(p0, LLVM.type_of(p1)), p1), LLVM.type_of(p0))"
+      div_ints_greater = binary_body "b.sdiv(p0, b.sext(p1, LLVM.type_of(p0)))"
+
+      add_int_and_float = binary_body "b.fadd b.si2fp(p0, LLVM.type_of(p1)), p1"
+      add_float_and_int = binary_body "b.fadd p0, b.si2fp(p1, LLVM.type_of(p0))"
+      add_uint_and_float = binary_body "b.fadd b.ui2fp(p0, LLVM.type_of(p1)), p1"
+      add_float_and_uint = binary_body "b.fadd p0, b.ui2fp(p1, LLVM.type_of(p0))"
+      sub_int_and_float = binary_body "b.fsub b.si2fp(p0, LLVM.type_of(p1)), p1"
+      sub_float_and_int = binary_body "b.fsub p0, b.si2fp(p1, LLVM.type_of(p0))"
+      sub_uint_and_float = binary_body "b.fsub b.ui2fp(p0, LLVM.type_of(p1)), p1"
+      sub_float_and_uint = binary_body "b.fsub p0, b.ui2fp(p1, LLVM.type_of(p0))"
+      mul_int_and_float = binary_body "b.fmul b.si2fp(p0, LLVM.type_of(p1)), p1"
+      mul_float_and_int = binary_body "b.fmul p0, b.si2fp(p1, LLVM.type_of(p0))"
+      mul_uint_and_float = binary_body "b.fmul b.ui2fp(p0, LLVM.type_of(p1)), p1"
+      mul_float_and_uint = binary_body "b.fmul p0, b.ui2fp(p1, LLVM.type_of(p0))"
+      div_int_and_float = binary_body "b.fdiv b.si2fp(p0, LLVM.type_of(p1)), p1"
+      div_float_and_int = binary_body "b.fdiv p0, b.si2fp(p1, LLVM.type_of(p0))"
+      div_uint_and_float = binary_body "b.fdiv b.ui2fp(p0, LLVM.type_of(p1)), p1"
+      div_float_and_uint = binary_body "b.fdiv p0, b.ui2fp(p1, LLVM.type_of(p0))"
+
+      eq_ints = binary_body "b.icmp LibLLVM::IntPredicate::EQ, p0, p1"
+      eq_floats = binary_body "b.fcmp LibLLVM::RealPredicate::OEQ, p0, p1"
+
+      ints = [int8, int16, int32, int64, uint8, uint16, uint32, uint64]
+      floats = [float32, float64]
+
+      ints.each do |int|
+        if int.signed?
+          floats.each do |float|
+            singleton(int, "+", {"other" => float}, float, add_int_and_float)
+            singleton(float, "+", {"other" => int}, float, add_float_and_int)
+            singleton(int, "-", {"other" => float}, float, sub_int_and_float)
+            singleton(float, "-", {"other" => int}, float, sub_float_and_int)
+            singleton(int, "*", {"other" => float}, float, mul_int_and_float)
+            singleton(float, "*", {"other" => int}, float, mul_float_and_int)
+            singleton(int, "/", {"other" => float}, float, div_int_and_float)
+            singleton(float, "/", {"other" => int}, float, div_float_and_int)
+          end
+        else
+          floats.each do |float|
+            singleton(int, "+", {"other" => float}, float, add_uint_and_float)
+            singleton(float, "+", {"other" => int}, float, add_float_and_uint)
+            singleton(int, "-", {"other" => float}, float, sub_uint_and_float)
+            singleton(float, "-", {"other" => int}, float, sub_float_and_uint)
+            singleton(int, "*", {"other" => float}, float, mul_uint_and_float)
+            singleton(float, "*", {"other" => int}, float, mul_float_and_uint)
+            singleton(int, "/", {"other" => float}, float, div_uint_and_float)
+            singleton(float, "/", {"other" => int}, float, div_float_and_uint)
+          end
+        end
+
+        ints.each do |int2|
+          if int == int2
+            singleton(int, "+", {"other" => int}, int, add_ints)
+            singleton(int, "-", {"other" => int}, int, sub_ints)
+            singleton(int, "*", {"other" => int}, int, mul_ints)
+            singleton(int, "/", {"other" => int}, int, (int.signed? ? div_ints : div_uints))
+            singleton(int, "==", {"other" => int}, bool, eq_ints)
+          elsif int.signed? && int2.signed?
+            if int.rank < int2.rank
+              singleton(int, "+", {"other" => int2}, int, add_ints_less)
+              singleton(int, "-", {"other" => int2}, int, sub_ints_less)
+              singleton(int, "*", {"other" => int2}, int, mul_ints_less)
+              singleton(int, "/", {"other" => int2}, int, div_ints_less)
+            else
+              singleton(int, "+", {"other" => int2}, int, add_ints_greater)
+              singleton(int, "-", {"other" => int2}, int, sub_ints_greater)
+              singleton(int, "*", {"other" => int2}, int, mul_ints_greater)
+              singleton(int, "/", {"other" => int2}, int, div_ints_greater)
+            end
+          end
+        end
+      end
+
+      floats.each do |float|
+        singleton(float, "+", {"other" => float}, float, add_floats)
+        singleton(float, "-", {"other" => float}, float, sub_floats)
+        singleton(float, "*", {"other" => float}, float, mul_floats)
+        singleton(float, "/", {"other" => float}, float, div_floats)
+        singleton(float, "==", {"other" => float}, bool, eq_floats)
+      end
     end
 
     def singleton(owner, name, args, return_type, block)

@@ -45,13 +45,13 @@ module Crystal
                   when :i64
                     mod.int64
                   when :u8
-                    mod.int8
+                    mod.uint8
                   when :u16
-                    mod.int16
+                    mod.uint16
                   when :u32
-                    mod.int32
+                    mod.uint32
                   when :u64
-                    mod.int64
+                    mod.uint64
                   when :f32
                     mod.float32
                   when :f64

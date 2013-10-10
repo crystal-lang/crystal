@@ -252,8 +252,12 @@ module Crystal
         raise "wrong number of arguments for '#{full_name(owner)}' (#{args.length} for #{all_arguments_lengths.join ", "})"
       end
 
-      msg = "no overload matches '#{full_name(owner)}'"
-      raise msg
+      message = String.build do |msg|
+        msg << "no overload matches '#{full_name(owner)}'"
+        msg << " with types #{args.map(&.type).join ", "}" if args.length > 0
+        msg << "\n"
+      end
+      raise message
     end
 
     def full_name(owner)

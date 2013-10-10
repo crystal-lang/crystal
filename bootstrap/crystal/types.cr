@@ -22,6 +22,10 @@ module Crystal
       true
     end
 
+    def integer?
+      false
+    end
+
     def metaclass?
       false
     end
@@ -260,6 +264,22 @@ module Crystal
 
     def initialize(program, container, name, superclass, llvm_type, llvm_size, @rank)
       super(program, container, name, superclass, llvm_type, llvm_size)
+    end
+
+    def integer?
+      true
+    end
+
+    def signed?
+      @rank % 2 == 1
+    end
+
+    def unsigned?
+      @rank % 2 == 0
+    end
+
+    def bits
+      8 * 2 ** ((@rank - 1) / 2)
     end
   end
 

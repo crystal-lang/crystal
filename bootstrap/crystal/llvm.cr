@@ -40,6 +40,25 @@ lib LibLLVM("LLVM-3.3")
     SLE
   end
 
+  enum RealPredicate
+    PredicateFalse
+    OEQ
+    OGT
+    OGE
+    OLT
+    OLE
+    ONE
+    ORD
+    UNO
+    UEQ
+    UGT
+    UGE
+    ULT
+    ULE
+    UNE
+    PredicateTrue
+  end
+
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun void_type = LLVMVoidType() : TypeRef
@@ -64,12 +83,18 @@ lib LibLLVM("LLVM-3.3")
   fun build_sub = LLVMBuildSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_mul = LLVMBuildMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_sdiv = LLVMBuildSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_udiv = LLVMBuildUDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_fadd = LLVMBuildFAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_fsub = LLVMBuildFSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_fmul = LLVMBuildFMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_fdiv = LLVMBuildFDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : IntPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_fcmp = LLVMBuildFCmp(builder : BuilderRef, op : RealPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_ui2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_zext = LLVMBuildZExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_sext = LLVMBuildSExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_trunc = LLVMBuildTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -92,6 +117,7 @@ lib LibLLVM("LLVM-3.3")
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
+  fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
 end
 
 module LLVM
@@ -103,6 +129,10 @@ module LLVM
 
   def self.dump(value)
     LibLLVM.dump_value value
+  end
+
+  def self.type_of(value)
+    LibLLVM.type_of(value)
   end
 
   class Module
@@ -261,13 +291,22 @@ module LLVM
       LibLLVM.build_load(@builder, ptr, name)
     end
 
-    def bit_cast(value, type, name = "")
-      LibLLVM.build_bit_cast(@builder, value, type.type, name)
-    end
+    macro self.define_cast(name)"
+      def #{name}(value, type : Type, name = \"\")
+        #{name}(value, type.type, name)
+      end
 
-    def si2fp(value, type, name = "")
-      LibLLVM.build_si2fp(@builder, value, type.type, name)
-    end
+      def #{name}(value, type : LibvLLVM::TypeRef, name = \"\")
+        LibLLVM.build_#{name}(@builder, value, type, name)
+      end
+    "end
+
+    define_cast bit_cast
+    define_cast si2fp
+    define_cast ui2fp
+    define_cast zext
+    define_cast sext
+    define_cast trunc
 
     macro self.define_binary(name)"
       def #{name}(lhs, rhs, name = \"\")
@@ -279,14 +318,20 @@ module LLVM
     define_binary sub
     define_binary mul
     define_binary sdiv
+    define_binary udiv
     define_binary fadd
     define_binary fsub
     define_binary fmul
     define_binary fdiv
 
-    def icmp(op, lhs, rhs, name = "")
-      LibLLVM.build_icmp @builder, op, lhs, rhs, name
-    end
+    macro self.define_cmp(name)"
+      def #{name}(op, lhs, rhs, name = \"\")
+        LibLLVM.build_#{name}(@builder, op, lhs, rhs, name)
+      end
+    "end
+
+    define_cmp icmp
+    define_cmp fcmp
   end
 
   abstract class Type

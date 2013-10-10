@@ -97,7 +97,7 @@ module Crystal
       when :i32, :u32
         @last = LLVM::Int32.from_i(node.value.to_i)
       when :i64, :u64
-        @last = LLVM::Int32.from_i(node.value.to_i64)
+        @last = LLVM::Int64.from_i(node.value.to_i64)
       when :f32
         @last = LLVM::Float.from_s(node.value)
       when :f64
