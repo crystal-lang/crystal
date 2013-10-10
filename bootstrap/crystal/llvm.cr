@@ -69,6 +69,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_fmul = LLVMBuildFMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_fdiv = LLVMBuildFDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : IntPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -262,6 +263,10 @@ module LLVM
 
     def bit_cast(value, type, name = "")
       LibLLVM.build_bit_cast(@builder, value, type.type, name)
+    end
+
+    def si2fp(value, type, name = "")
+      LibLLVM.build_si2fp(@builder, value, type.type, name)
     end
 
     macro self.define_binary(name)"
