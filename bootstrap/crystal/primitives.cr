@@ -63,6 +63,8 @@ module Crystal
       eq_ints = binary_body "b.icmp LibLLVM::IntPredicate::EQ, p0, p1"
       eq_floats = binary_body "b.fcmp LibLLVM::RealPredicate::OEQ, p0, p1"
 
+      less_ints = binary_body "b.icmp LibLLVM::IntPredicate::SLT, p0, p1"
+
       ints = [int8, int16, int32, int64, uint8, uint16, uint32, uint64]
       floats = [float32, float64]
 
@@ -98,6 +100,7 @@ module Crystal
             singleton(int, "*", {"other" => int}, int, mul_ints)
             singleton(int, "/", {"other" => int}, int, (int.signed? ? div_ints : div_uints))
             singleton(int, "==", {"other" => int}, bool, eq_ints)
+            singleton(int, "<", {"other" => int}, bool, less_ints)
           elsif int.signed? && int2.signed?
             if int.rank < int2.rank
               singleton(int, "+", {"other" => int2}, int, add_ints_less)

@@ -273,6 +273,22 @@ module Crystal
       node.bind_to [node.then, node.else]
     end
 
+    def visit(node : While)
+      node.cond.accept self
+
+      # @while_stack.push node
+      # @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
+
+      node.body.accept self
+
+      # @type_filter_stack.pop
+      # @while_stack.pop
+
+      node.type = @mod.nil
+
+      false
+    end
+
     def lookup_var(name)
       @vars.fetch_or_assign(name) { Var.new name }
     end

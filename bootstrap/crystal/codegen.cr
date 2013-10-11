@@ -64,7 +64,7 @@ module Crystal
       @vars = {} of String => LLVMVar
       @strings = {} of String => LibLLVM::ValueRef
       @type = @mod
-      @last = LLVM::Int1.from_i(0)
+      @last = int1(0)
     end
 
     def finish
@@ -106,7 +106,7 @@ module Crystal
     end
 
     def visit(node : BoolLiteral)
-      @last = LLVM::Int1.from_i(node.value ? 1 : 0)
+      @last = int1(node.value ? 1 : 0)
     end
 
     def visit(node : LongLiteral)
@@ -162,6 +162,39 @@ module Crystal
       add_branched_block_value(branch, node.else.type, @last)
 
       close_branched_block(branch)
+
+      false
+    end
+
+    def visit(node : While)
+      # old_break_type = @break_type
+      # old_break_table = @break_table
+      # old_break_union = @break_union
+      # @break_type = @break_table = @break_union = nil
+
+      while_block, body_block, exit_block = new_blocks ["while", "body", "exit"]
+
+      @builder.br node.run_once ? body_block : while_block
+
+      @builder.position_at_end while_block
+
+      accept(node.cond)
+      codegen_cond_branch(node.cond, body_block, exit_block)
+
+      @builder.position_at_end body_block
+      old_while_exit_block = @while_exit_block
+      @while_exit_block = exit_block
+      accept(node.body)
+      @while_exit_block = old_while_exit_block
+      @builder.br while_block
+
+      @builder.position_at_end exit_block
+      # @builder.unreachable if node.no_returns? || (node.body.yields? && block_breaks?)
+
+      @last = llvm_nil
+      # @break_type = old_break_type
+      # @break_table = old_break_table
+      # @break_union = old_break_union
 
       false
     end
@@ -474,7 +507,7 @@ module Crystal
         @builder.position_at_end old_position
       end
 
-      @last = LLVM::Int1.from_i(0)
+      @last = int1(0)
 
       the_fun = @fun
 
@@ -538,6 +571,14 @@ module Crystal
 
     def llvm_arg_type(type)
       @llvm_typer.llvm_arg_type(type)
+    end
+
+    def llvm_nil
+      int1(0)
+    end
+
+    def int1(n)
+      LLVM::Int1.from_i n
     end
 
     def accept(node)
