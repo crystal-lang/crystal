@@ -145,6 +145,136 @@ module Crystal
       @builder.bit_cast(value, llvm_type(type))
     end
 
+    def visit(node : If)
+      accept(node.cond)
+
+      then_block, else_block = new_blocks ["then", "else"]
+      codegen_cond_branch(node.cond, then_block, else_block)
+
+      branch = new_branched_block(node)
+
+      @builder.position_at_end then_block
+      accept(node.then)
+      add_branched_block_value(branch, node.then.type, @last)
+
+      @builder.position_at_end else_block
+      accept(node.else)
+      add_branched_block_value(branch, node.else.type, @last)
+
+      close_branched_block(branch)
+
+      false
+    end
+
+    def codegen_cond_branch(node_cond, then_block, else_block)
+      @builder.cond(codegen_cond(node_cond), then_block, else_block)
+
+      nil
+    end
+
+    def codegen_cond(node_cond)
+      # if @mod.nil.equal?(node_cond.type)
+      #   cond = int1(0)
+      # elsif @mod.bool.equal?(node_cond.type)
+        @last
+      # elsif node_cond.type.nilable?
+      #   cond = not_null_pointer?(@last)
+      # elsif node_cond.type.hierarchy?
+      #   cond = int1(1)
+      # elsif node_cond.type.union?
+      #   has_nil = node_cond.type.types.any?(&:nil_type?)
+      #   has_bool = node_cond.type.types.any? { |t| t.equal?(@mod.bool) }
+
+      #   if has_nil || has_bool
+      #     type_id = @builder.load union_type_id(@last)
+      #     value = @builder.load(@builder.bit_cast union_value(@last), LLVM::Pointer(LLVM::Int1))
+
+      #     is_nil = @builder.icmp :eq, type_id, int(@mod.nil.type_id)
+      #     is_bool = @builder.icmp :eq, type_id, int(@mod.bool.type_id)
+      #     is_false = @builder.icmp(:eq, value, int1(0))
+      #     cond = @builder.not(@builder.or(is_nil, @builder.and(is_bool, is_false)))
+      #   elsif has_nil
+      #     type_id = @builder.load union_type_id(@last)
+      #     cond = @builder.icmp :ne, type_id, int(@mod.nil.type_id)
+      #   elsif has_bool
+      #     type_id = @builder.load union_type_id(@last)
+      #     value = @builder.load(@builder.bit_cast union_value(@last), LLVM::Pointer(LLVM::Int1))
+
+      #     is_bool = @builder.icmp :eq, type_id, int(@mod.bool.type_id)
+      #     is_false = @builder.icmp(:eq, value, int1(0))
+      #     cond = @builder.not(@builder.and(is_bool, is_false))
+      #   else
+      #     cond = int1(1)
+      #   end
+      # elsif node_cond.type.is_a?(PointerInstanceType)
+      #   cond = not_null_pointer?(@last)
+      # else
+      #   cond = int1(1)
+      # end
+    end
+
+    class BranchedBlock
+      property node
+      property count
+      property exit_block
+      property is_union
+      property union_ptr
+      property phi_table
+
+      def initialize(@node, @exit_block)
+        @count = 0
+        @is_union = false
+      end
+    end
+
+    def new_branched_block(node)
+      branch = BranchedBlock.new node, new_block("exit")
+      # if branch[:is_union] = node.type && node.type.union?
+      #   branch[:union_ptr] = alloca llvm_type(node.type)
+      # else
+      #   branch[:phi_table] = {}
+      # end
+      branch
+    end
+
+    def add_branched_block_value(branch, type, value)
+    #   if !type || type.no_return?
+    #     @builder.unreachable
+    #   elsif type.equal?(@mod.void)
+    #     # Nothing to do
+    #     branch[:count] += 1
+    #   else
+    #     if branch[:is_union]
+    #       assign_to_union(branch[:union_ptr], branch[:node].type, type, value)
+    #     elsif branch[:node].type.nilable? && value.type.kind == :integer
+    #       branch[:phi_table][@builder.insert_block] = @builder.int2ptr value, llvm_type(branch[:node].type)
+    #     else
+    #       branch[:phi_table][@builder.insert_block] = value
+    #     end
+
+    #     branch[:count] += 1
+        @builder.br branch.exit_block
+    #   end
+    end
+
+    def close_branched_block(branch)
+      @builder.position_at_end branch.exit_block
+      # if branch[:node].returns? || branch[:node].no_returns?
+      #   @builder.unreachable
+      # else
+      #   if branch[:is_union]
+      #     @last = branch[:union_ptr]
+      #   elsif branch[:count] == 0
+      #     @builder.unreachable
+      #   elsif branch[:phi_table].empty?
+      #     # All branches are void or no return
+      #     @last = llvm_nil
+      #   else
+      #     @last = @builder.phi llvm_type(branch[:node].type), branch[:phi_table]
+      #   end
+      # end
+    end
+
     def visit(node : Assign)
       codegen_assign_node(node.target, node.value)
     end

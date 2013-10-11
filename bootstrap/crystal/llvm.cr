@@ -95,6 +95,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_zext = LLVMBuildZExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_sext = LLVMBuildSExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_trunc = LLVMBuildTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_cond = LLVMBuildCondBr(builder : BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef)
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -273,6 +274,10 @@ module LLVM
 
     def br(block)
       LibLLVM.build_br(@builder, block)
+    end
+
+    def cond(cond, then_block, else_block)
+      LibLLVM.build_cond(@builder, cond, then_block, else_block)
     end
 
     def call(func, args = [] of LibLLVM::ValueRef)
