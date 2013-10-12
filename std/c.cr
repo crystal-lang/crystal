@@ -1,6 +1,4 @@
 lib C
-  fun rand : Int32
-  fun srand(seed : UInt32)
   fun time(t : Int64) : Int64
   fun sleep(seconds : UInt32) : UInt32
 end

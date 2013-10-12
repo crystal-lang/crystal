@@ -55,6 +55,10 @@ class Array(T)
     @buffer[index]
   end
 
+  def at(index : Int)
+    self[index]
+  end
+
   def []?(index : Int)
     index += length if index < 0
     return nil if index >= length || index < 0
@@ -242,6 +246,13 @@ class Array(T)
     self
   end
 
+  def dup
+    ary = Array(T).new(length)
+    ary.length = length
+    ary.buffer.memcpy(buffer, length)
+    ary
+  end
+
   def clone
     ary = Array(T).new(length)
     ary.length = length
@@ -389,6 +400,39 @@ class Array(T)
 
   def sort_by!(&block: T -> )
     sort! { |x, y| (yield x) <=> (yield y) }
+  end
+
+  def sort
+    dup.sort!
+  end
+
+  def sort(&block: T, T -> Int32)
+    x = dup
+    Array(T).quicksort!(x.buffer, x.length, block)
+    x
+  end
+
+  def sort_by(&block: T -> )
+    sort { |x, y| (yield x) <=> (yield y) }
+  end
+
+  def sample
+    raise IndexOutOfBounds.new if @length == 0
+    @buffer[rand(@length)]
+  end
+
+  def shuffle!
+    (length - 1).downto(1) do |i|
+      j = rand(i + 1)
+      tmp = @buffer[i]
+      @buffer[i] = @buffer[j]
+      @buffer[j] = tmp
+    end
+    self
+  end
+
+  def shuffle
+    dup.shuffle!
   end
 
   # protected
