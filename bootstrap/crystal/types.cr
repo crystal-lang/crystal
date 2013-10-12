@@ -265,6 +265,12 @@ module Crystal
     end
   end
 
+  class BoolType < PrimitiveType
+  end
+
+  class CharType < PrimitiveType
+  end
+
   class IntegerType < PrimitiveType
     getter :rank
 

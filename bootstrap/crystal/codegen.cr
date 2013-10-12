@@ -86,6 +86,14 @@ module Crystal
       @last = codegen_binary_op target_def.name, t1, t2, p1, p2
     end
 
+    def codegen_binary_op(op, t1 : BoolType, t2 : BoolType, p1, p2)
+      case op
+      when "==" then @builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
+      when "!=" then @builder.icmp LibLLVM::IntPredicate::NE, p1, p2
+      else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+      end
+    end
+
     def codegen_binary_op(op, t1 : IntegerType, t2 : IntegerType, p1, p2)
       if t1.normal_rank == t2.normal_rank
         # Nothing to do
@@ -100,6 +108,12 @@ module Crystal
               when "-" then @builder.sub p1, p2
               when "*" then @builder.mul p1, p2
               when "/" then t1.signed? ? @builder.sdiv(p1, p2) : @builder.udiv(p1, p2)
+              when "%" then t1.signed? ? @builder.srem(p1, p2) : @builder.urem(p1, p2)
+              when "<<" then @builder.shl(p1, p2)
+              when ">>" then t1.signed? ? @builder.ashr(p1, p2) : @builder.lshr(p1, p2)
+              when "|" then @builder.or(p1, p2)
+              when "&" then @builder.and(p1, p2)
+              when "^" then @builder.xor(p1, p2)
               when "==" then return @builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
               when "!=" then return @builder.icmp LibLLVM::IntPredicate::NE, p1, p2
               when "<" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLT : LibLLVM::IntPredicate::ULT), p1, p2
@@ -202,8 +216,16 @@ module Crystal
       @last
     end
 
+    def codegen_cast(from_type : IntegerType, to_type : CharType, arg)
+      codegen_cast(from_type, @mod.int8, arg)
+    end
+
+    def codegen_cast(from_type : CharType, to_type : IntegerType, arg)
+      @builder.zext(arg, to_type.llvm_type)
+    end
+
     def codegen_cast(from_type, to_type, arg)
-      raise "Bug: codegen_cast called with #{from_type} #{to_type}"
+      raise "Bug: codegen_cast called from #{from_type} to #{to_type}"
     end
 
     def visit(node : ASTNode)

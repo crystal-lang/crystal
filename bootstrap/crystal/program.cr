@@ -23,8 +23,8 @@ module Crystal
 
       @void = @types["Void"] = PrimitiveType.new self, self, "Void", @value, LLVM::Int8, 1
       @nil = @types["Nil"] = NilType.new self, self, "Nil", @value, LLVM::Int1, 1
-      @bool = @types["Bool"] = PrimitiveType.new self, self, "Bool", @value, LLVM::Int1, 1
-      @char = @types["Char"] = PrimitiveType.new self, self, "Char", @value, LLVM::Int8, 1
+      @bool = @types["Bool"] = BoolType.new self, self, "Bool", @value, LLVM::Int1, 1
+      @char = @types["Char"] = CharType.new self, self, "Char", @value, LLVM::Int8, 1
 
       @int = @types["Int"] = ValueType.new self, self, "Int", @number
       @int.abstract = true
