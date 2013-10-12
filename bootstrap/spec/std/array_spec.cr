@@ -39,6 +39,10 @@ describe "Array" do
       [1, 2, 3][2]?.should eq(3)
       [1, 2, 3][3]?.should be_nil
     end
+
+    it "same access by at" do
+      [1, 2, 3][1].should eq([1,2,3].at(1))
+    end
   end
 
   describe "[]=" do
@@ -363,22 +367,80 @@ describe "Array" do
   end
 
   describe "sort" do
-    it "sorts without block" do
+    it "sort! without block" do
       a = [3, 4, 1, 2, 5, 6]
       a.sort!
       a.should eq([1, 2, 3, 4, 5, 6])
     end
 
-    it "sorts with a block" do
+    it "sort without block" do
+      a = [3, 4, 1, 2, 5, 6]
+      b = a.sort
+      b.should eq([1, 2, 3, 4, 5, 6])
+      a.should_not eq(b)
+    end
+
+    it "sort! with a block" do
       a = ["foo", "a", "hello"]
       a.sort! { |x, y| x.length <=> y.length }
       a.should eq(["a", "foo", "hello"])
     end
 
-    it "sorts by" do
+    it "sort with a block" do
+      a = ["foo", "a", "hello"]
+      b = a.sort { |x, y| x.length <=> y.length }
+      b.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
+    end
+
+    it "sorts by!" do
       a = ["foo", "a", "hello"]
       a.sort_by! &.length
       a.should eq(["a", "foo", "hello"])
+    end
+
+    it "sorts by" do
+      a = ["foo", "a", "hello"]
+      b = a.sort_by &.length
+      b.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
+    end
+  end
+
+  describe "dup" do
+    it "duplicate array" do
+      x = {1 => 2}
+      a = [x]
+      b = a.dup
+      b.should eq([x])
+      a.object_id.should_not eq(b.object_id)
+      b << {3 => 4}
+      a.should eq([x])
+    end
+  end
+
+  describe "shuffle" do
+    it "shuffle!" do
+      a = [1, 2, 3]
+      a.shuffle!
+      b = [1, 2, 3]
+      3.times { a.includes?(b.shift).should eq(true) }
+    end
+
+    it "shuffle" do
+      a = [1, 2, 3]
+      b = a.shuffle
+      a.should_not eq(b)
+      a.should eq([1, 2, 3])
+
+      3.times { b.includes?(a.shift).should eq(true) }
+    end
+
+    it "sample" do
+      [1].sample.should eq(1)
+
+      x = [1, 2, 3].sample
+      [1, 2, 3].includes?(x).should eq(true)
     end
   end
 end
