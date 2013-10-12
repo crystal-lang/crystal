@@ -112,6 +112,7 @@ module Crystal
                If.new(Assign.new(temp_var, left), node.right, temp_var)
              end
       new_node.binary = :and
+      new_node.location = node.location
       new_node.transform(self)
     end
 
@@ -124,6 +125,7 @@ module Crystal
                    If.new(Assign.new(temp_var, left), temp_var, node.right)
                  end
       new_node.binary = :or
+      new_node.location = node.location
       new_node.transform(self)
     end
 
@@ -720,7 +722,7 @@ module Crystal
 
     def transform(node : Require)
       location = node.location
-      raise "Bug: location is nil" unless location
+      raise "Bug: location is nil for '#{node}'" unless location
 
       required = @program.require(node.string, location.filename)
       required ? required.transform(self) : Nop.new

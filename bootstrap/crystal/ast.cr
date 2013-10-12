@@ -1317,19 +1317,6 @@ module Crystal
   abstract class Primitive < ASTNode
   end
 
-  class PrimitiveBody < Primitive
-    property :block
-
-    def initialize(type, block)
-      @type = type
-      @block = block
-    end
-
-    def clone_without_location
-      self
-    end
-  end
-
   # Ficticious node that means: merge the type of the arguments
   class TypeMerge < ASTNode
     property :expressions
@@ -1347,6 +1334,28 @@ module Crystal
 
     def clone_without_location
       TypeMerge.new(@expressions.clone)
+    end
+  end
+
+  # Ficticious node for primitive binary operations (+, -, *, /, ==, etc.)
+  class PrimitiveBinary < Primitive
+    def ==(other : self)
+      true
+    end
+
+    def clone_without_location
+      PrimitiveBinary.new
+    end
+  end
+
+  # Ficticious node for primitive cast operations (to_i, to_f, etc.)
+  class PrimitiveCast < Primitive
+    def ==(other : self)
+      true
+    end
+
+    def clone_without_location
+      PrimitiveCast.new
     end
   end
 end

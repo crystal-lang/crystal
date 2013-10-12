@@ -80,8 +80,130 @@ module Crystal
       @builder.ret LLVM::Int32.from_i(0)
     end
 
-    def visit(node : PrimitiveBody)
-      @last = node.block.call(@builder, @fun, @llvm_mod, @type)
+    def codegen_primitive(node : PrimitiveBinary, target_def, call_args)
+      p1, p2 = call_args
+      t1, t2 = target_def.owner, target_def.args[0].type
+      @last = codegen_binary_op target_def.name, t1, t2, p1, p2
+    end
+
+    def codegen_binary_op(op, t1 : IntegerType, t2 : IntegerType, p1, p2)
+      if t1.normal_rank == t2.normal_rank
+        # Nothing to do
+      elsif t1.rank < t2.rank
+        p1 = t1.signed? ? @builder.sext(p1, t2.llvm_type) : @builder.zext(p1, t2.llvm_type)
+      else
+        p2 = t2.signed? ? @builder.sext(p2, t1.llvm_type) : @builder.zext(p2, t1.llvm_type)
+      end
+
+      @last = case op
+              when "+" then @builder.add p1, p2
+              when "-" then @builder.sub p1, p2
+              when "*" then @builder.mul p1, p2
+              when "/" then t1.signed? ? @builder.sdiv(p1, p2) : @builder.udiv(p1, p2)
+              when "==" then return @builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
+              when "!=" then return @builder.icmp LibLLVM::IntPredicate::NE, p1, p2
+              when "<" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLT : LibLLVM::IntPredicate::ULT), p1, p2
+              when "<=" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLE : LibLLVM::IntPredicate::ULE), p1, p2
+              when ">" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGT : LibLLVM::IntPredicate::UGT), p1, p2
+              when ">=" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGT : LibLLVM::IntPredicate::UGT), p1, p2
+              else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+              end
+
+      if t1.normal_rank != t2.normal_rank  && t1.rank < t2.rank
+        @last = @builder.trunc @last, t1.llvm_type
+      end
+
+      @last
+    end
+
+    def codegen_binary_op(op, t1 : IntegerType, t2 : FloatType, p1, p2)
+      p1 = if t1.signed?
+            @builder.si2fp(p1, t2.llvm_type)
+           else
+             @builder.ui2fp(p1, t2.llvm_type)
+           end
+      codegen_binary_op(op, t2, t2, p1, p2)
+    end
+
+    def codegen_binary_op(op, t1 : FloatType, t2 : IntegerType, p1, p2)
+      codegen_binary_op op, t2, t1, p2, p1
+    end
+
+    def codegen_binary_op(op, t1 : FloatType, t2 : FloatType, p1, p2)
+      if t1.rank < t2.rank
+        p1 = @builder.fpext(p1, t2.llvm_type)
+      elsif t1.rank > t2.rank
+        p2 = @builder.fpext(p2, t1.llvm_type)
+      end
+
+      @last = case op
+              when "+" then @builder.fadd p1, p2
+              when "-" then @builder.fsub p1, p2
+              when "*" then @builder.fmul p1, p2
+              when "/" then @builder.fdiv p1, p2
+              when "==" then return @builder.fcmp LibLLVM::RealPredicate::OEQ, p1, p2
+              when "!=" then return @builder.fcmp LibLLVM::RealPredicate::ONE, p1, p2
+              when "<" then return @builder.fcmp LibLLVM::RealPredicate::OLT, p1, p2
+              when "<=" then return @builder.fcmp LibLLVM::RealPredicate::OLE, p1, p2
+              when ">" then return @builder.fcmp LibLLVM::RealPredicate::OGT, p1, p2
+              when ">=" then return @builder.fcmp LibLLVM::RealPredicate::OGE, p1, p2
+              else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+              end
+
+      if t1.rank < t2.rank
+        @last = @builder.fptrunc(@last, t1.llvm_type)
+      end
+
+      @last
+    end
+
+    def codegen_binary_op(op, t1, t2, p1, p2)
+      raise "Bug: codegen_binary_op called with #{t1} #{op} #{t2}"
+    end
+
+    def codegen_primitive(node : PrimitiveCast, target_def, call_args)
+      p1 = call_args[0]
+      from_type, to_type = target_def.owner, target_def.type
+      @last = codegen_cast from_type, to_type, p1
+    end
+
+    def codegen_cast(from_type : IntegerType, to_type : IntegerType, arg)
+      if from_type.normal_rank == to_type.normal_rank
+        @last
+      elsif from_type.rank < to_type.rank
+        from_type.signed? ? @builder.sext(arg, to_type.llvm_type) : @builder.zext(arg, to_type.llvm_type)
+      else
+        @builder.trunc(arg, to_type.llvm_type)
+      end
+    end
+
+    def codegen_cast(from_type : IntegerType, to_type : FloatType, arg)
+      if from_type.signed?
+        @builder.si2fp(arg, to_type.llvm_type)
+      else
+        @builder.ui2fp(arg, to_type.llvm_type)
+      end
+    end
+
+    def codegen_cast(from_type : FloatType, to_type : IntegerType, arg)
+      if to_type.signed?
+        @builder.fp2si(arg, to_type.llvm_type)
+      else
+        @builder.fp2ui(arg, to_type.llvm_type)
+      end
+    end
+
+    def codegen_cast(from_type : FloatType, to_type : FloatType, arg)
+      if from_type.rank < to_type.rank
+        @last = @builder.fpext(arg, to_type.llvm_type)
+      elsif from_type.rank > to_type.rank
+        @last = @builder.fptrunc(arg, to_type.llvm_type)
+      end
+      @last
+    end
+
+    def codegen_cast(from_type, to_type, arg)
+      raise "Bug: codegen_cast called with #{from_type} #{to_type}"
     end
 
     def visit(node : ASTNode)
@@ -91,13 +213,13 @@ module Crystal
     def visit(node : NumberLiteral)
       case node.kind
       when :i8, :u8
-        @last = LLVM::Int8.from_i(node.value.to_i)
+        @last = int8(node.value.to_i)
       when :i16, :u16
         @last = LLVM::Int16.from_i(node.value.to_i)
       when :i32, :u32
         @last = LLVM::Int32.from_i(node.value.to_i)
       when :i64, :u64
-        @last = LLVM::Int64.from_i(node.value.to_i64)
+        @last = int64(node.value.to_i64)
       when :f32
         @last = LLVM::Float.from_s(node.value)
       when :f64
@@ -110,15 +232,23 @@ module Crystal
     end
 
     def visit(node : LongLiteral)
-      @last = LLVM::Int64.from_i(node.value.to_i)
+      @last = int64(node.value.to_i)
     end
 
     def visit(node : CharLiteral)
-      @last = LLVM::Int8.from_i(node.value[0].ord)
+      @last = int8(node.value[0].ord)
     end
 
     def visit(node : StringLiteral)
       @last = build_string_constant(node.value)
+    end
+
+    def visit(node : Nop)
+      @last = llvm_nil
+    end
+
+    def visit(node : NilLiteral)
+      @last = llvm_nil
     end
 
     def build_string_constant(str, name = "str")
@@ -132,9 +262,9 @@ module Crystal
         bytes = [] of LibLLVM::ValueRef
         length = str.length
         length_ptr = length.ptr.as(UInt8)
-        (0..3).each { |i| bytes << LLVM::Int8.from_i(length_ptr[i]) }
-        str.each_char { |c| bytes << LLVM::Int8.from_i(c.ord) }
-        bytes << LLVM::Int8.from_i(0)
+        (0..3).each { |i| bytes << int8(length_ptr[i]) }
+        str.each_char { |c| bytes << int8(c.ord) }
+        bytes << int8(0)
 
         global.initializer = LLVM::Value.const_array(LLVM::Int8, bytes)
         cast_to global.value, @mod.string
@@ -409,7 +539,7 @@ module Crystal
     end
 
     def visit(node : Ident)
-      @last = LLVM::Int64.from_i(node.type.not_nil!.instance_type.type_id)
+      @last = int64(node.type.not_nil!.instance_type.type_id)
     end
 
     def visit(node : Call)
@@ -434,6 +564,12 @@ module Crystal
 
     def codegen_call(node, self_type, call_args)
       target_def = node.target_def
+      body = target_def.body
+      if body.is_a?(Primitive)
+        codegen_primitive(body, target_def, call_args)
+        return
+      end
+
       mangled_name = target_def.mangled_name(self_type)
 
       func = @llvm_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
@@ -454,6 +590,7 @@ module Crystal
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
       old_type = @type
+      old_target_def = @target_def
 
       @vars = {} of String => LLVMVar
 
@@ -579,6 +716,14 @@ module Crystal
 
     def int1(n)
       LLVM::Int1.from_i n
+    end
+
+    def int8(n)
+      LLVM::Int8.from_i n
+    end
+
+    def int64(n)
+      LLVM::Int64.from_i n
     end
 
     def accept(node)

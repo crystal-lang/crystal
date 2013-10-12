@@ -48,14 +48,20 @@ module Crystal
         program = Program.new
         parser = Parser.new(source)
         parser.filename = filename
-        nodes = parser.parse
-        nodes = program.normalize nodes
-        nodes = program.infer_type nodes
+        node = parser.parse
 
-        print_types nodes if @print_types
+        require_node = Require.new("bootstrap")
+        require_node.location = Location.new(1, 1, filename)
+
+        node = Expressions.new([require_node, node] of ASTNode)
+
+        node = program.normalize node
+        node = program.infer_type node
+
+        print_types node if @print_types
         exit if @no_build
 
-        llvm_mod = program.build nodes
+        llvm_mod = program.build node
 
         llvm_mod.dump if @dump_ll
 

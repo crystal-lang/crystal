@@ -96,6 +96,12 @@ lib LibLLVM("LLVM-3.3")
   fun build_sext = LLVMBuildSExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_trunc = LLVMBuildTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_cond = LLVMBuildCondBr(builder : BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef)
+  fun build_fpext = LLVMBuildFPExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_fptrunc = LLVMBuildFPTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_fp2si = LLVMBuildFPToSI(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_fp2ui = LLVMBuildFPToUI(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_ui2fp = LLVMBuildUIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -297,7 +303,7 @@ module LLVM
     end
 
     macro self.define_cast(name)"
-      def #{name}(value, type : Type, name = \"\")
+      def #{name}(value, type : Type, name = \"\" : String)
         #{name}(value, type.type, name)
       end
 
@@ -312,6 +318,12 @@ module LLVM
     define_cast zext
     define_cast sext
     define_cast trunc
+    define_cast fpext
+    define_cast fptrunc
+    define_cast fp2si
+    define_cast fp2ui
+    define_cast si2fp
+    define_cast ui2fp
 
     macro self.define_binary(name)"
       def #{name}(lhs, rhs, name = \"\")

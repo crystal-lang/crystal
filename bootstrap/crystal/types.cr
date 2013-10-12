@@ -26,6 +26,10 @@ module Crystal
       false
     end
 
+    def float?
+      false
+    end
+
     def metaclass?
       false
     end
@@ -127,7 +131,9 @@ module Crystal
     end
 
     def add_def(a_def)
-      restrictions = a_def.args.map { |arg| arg.type || arg.type_restriction }
+      restrictions = Array(Type | ASTNode | Nil).new(a_def.args.length)
+      a_def.args.each { |arg| restrictions.push(arg.type || arg.type_restriction) }
+      # restrictions = a_def.args.map { |arg| arg.type || arg.type_restriction }
       defs[a_def.name][DefKey.new(restrictions, !!a_def.yields)] = a_def
     end
   end
@@ -279,7 +285,11 @@ module Crystal
     end
 
     def bits
-      8 * 2 ** ((@rank - 1) / 2)
+      8 * (2 ** normal_rank)
+    end
+
+    def normal_rank
+      (@rank - 1) / 2
     end
   end
 
@@ -288,6 +298,10 @@ module Crystal
 
     def initialize(program, container, name, superclass, llvm_type, llvm_size, @rank)
       super(program, container, name, superclass, llvm_type, llvm_size)
+    end
+
+    def float?
+      true
     end
   end
 

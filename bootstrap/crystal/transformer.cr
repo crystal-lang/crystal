@@ -385,11 +385,11 @@ module Crystal
       node
     end
 
-    def transform(node : PrimitiveBody)
+    def transform(node : TypeMerge)
       node
     end
 
-    def transform(node : TypeMerge)
+    def transform(node : Primitive)
       node
     end
 
