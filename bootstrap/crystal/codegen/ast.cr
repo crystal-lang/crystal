@@ -9,10 +9,10 @@ class Crystal::Def
 
       if owner = @owner
         if owner.metaclass?
-          str << owner.instance_type.llvm_name
+          str << owner.instance_type.not_nil!.llvm_name
           str << "::"
         elsif !owner.is_a?(Crystal::Program)
-          str << owner.llvm_name
+          str << owner.not_nil!.llvm_name
           str << '#'
         end
       end
@@ -22,17 +22,17 @@ class Crystal::Def
       if arg_types.length > 0 || has_self_type
         str << '<'
         if has_self_type
-          str << self_type.llvm_name
+          str << self_type.not_nil!.llvm_name
         end
         if arg_types.length > 0
           str << ", " if has_self_type
-          str << arg_types.map(&.llvm_name).join(", ")
+          str << arg_types.map(&.not_nil!.llvm_name).join(", ")
         end
         str << '>'
       end
       if return_type = @return_type
         str << ':'
-        str << return_type.llvm_name
+        str << return_type.not_nil!.llvm_name
       end
     end
   end

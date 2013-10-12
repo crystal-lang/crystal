@@ -64,6 +64,10 @@ module Crystal
       self
     end
 
+    def metaclass
+      self
+    end
+
     def passed_as_self?
       false
     end

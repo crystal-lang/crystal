@@ -62,7 +62,7 @@ module Crystal
         if name == 'super'
           matches = lookup_matches_in_super
         else
-          matches = lookup_matches_in(scope) || lookup_matches_in(mod)
+          matches = lookup_matches_in scope
         end
       end
 
@@ -123,7 +123,7 @@ module Crystal
         @subclass_notifier = owner.base_type
       end
 
-      typed_defs = matches.map do |match|
+      matches.map do |match|
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
         block_type = block && block.body && match.def.block_arg ? block.body.type : nil

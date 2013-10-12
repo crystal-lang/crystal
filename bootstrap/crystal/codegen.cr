@@ -38,8 +38,8 @@ module Crystal
   end
 
   class LLVMVar
-    property :pointer
-    property :type
+    getter pointer
+    getter type
 
     def initialize(@pointer, @type)
     end
@@ -572,6 +572,8 @@ module Crystal
       if (obj = node.obj) && obj.type.try!(&.passed_as_self?)
         accept(obj)
         call_args << @last
+      elsif owner && owner.passed_as_self?
+        call_args << llvm_self
       end
 
       node.args.each_with_index do |arg, i|
@@ -730,6 +732,11 @@ module Crystal
 
     def llvm_arg_type(type)
       @llvm_typer.llvm_arg_type(type)
+    end
+
+    def llvm_self
+      @fun.get_param(0)
+      # @vars["self"].pointer
     end
 
     def llvm_nil

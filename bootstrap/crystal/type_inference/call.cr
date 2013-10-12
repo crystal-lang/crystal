@@ -79,7 +79,7 @@ module Crystal
       if obj
         matches = lookup_matches_in(obj.type)
       else
-        matches = lookup_matches_in(mod)
+        matches = lookup_matches_in scope
       end
 
       # puts matches
@@ -106,10 +106,17 @@ module Crystal
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 
       if matches.empty?
+        unless owner == mod
+          mod_matches = mod.lookup_matches(def_name, arg_types, !!block)
+          matches = mod_matches unless obj || mod_matches.empty?
+        end
+      end
+
+      if matches.empty?
         raise_matches_not_found(matches.owner || owner, def_name, matches)
       end
 
-      typed_defs = matches.map do |match|
+      matches.map do |match|
         block_type = nil
         use_cache = true
         match_owner = match.owner

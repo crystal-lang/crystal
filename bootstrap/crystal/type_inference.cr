@@ -136,7 +136,7 @@ module Crystal
       # if node.global
       #   node.scope = @mod
       # else
-        node.scope = @scope #|| (@types.last ? @types.last.metaclass : nil)
+        node.scope = @scope || @types.last.metaclass
       # end
       node.parent_visitor = self
     end
