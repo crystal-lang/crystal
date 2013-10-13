@@ -1315,6 +1315,9 @@ module Crystal
   end
 
   abstract class Primitive < ASTNode
+    def ==(other : self)
+      true
+    end
   end
 
   # Ficticious node that means: merge the type of the arguments
@@ -1339,23 +1342,21 @@ module Crystal
 
   # Ficticious node for primitive binary operations (+, -, *, /, ==, etc.)
   class PrimitiveBinary < Primitive
-    def ==(other : self)
-      true
-    end
-
     def clone_without_location
-      PrimitiveBinary.new
+      self
     end
   end
 
   # Ficticious node for primitive cast operations (to_i, to_f, etc.)
   class PrimitiveCast < Primitive
-    def ==(other : self)
-      true
-    end
-
     def clone_without_location
-      PrimitiveCast.new
+      self
+    end
+  end
+
+  class Allocate < Primitive
+    def clone_without_location
+      Allocate.new
     end
   end
 end

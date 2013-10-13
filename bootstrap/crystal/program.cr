@@ -72,6 +72,10 @@ module Crystal
       false
     end
 
+    def parents
+      [] of Type
+    end
+
     def next_type_id
       @type_id_counter += 1
     end

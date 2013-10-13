@@ -289,6 +289,10 @@ module Crystal
       false
     end
 
+    def visit(node : Allocate)
+      node.type = @scope.not_nil!.instance_type
+    end
+
     def lookup_var(name)
       @vars.fetch_or_assign(name) { Var.new name }
     end

@@ -228,6 +228,10 @@ module Crystal
       raise "Bug: codegen_cast called from #{from_type} to #{to_type}"
     end
 
+    def codegen_primitive(node : Allocate, target_def, call_args)
+      @last = @builder.malloc llvm_struct_type(node.type)
+    end
+
     def visit(node : ASTNode)
       true
     end
@@ -728,6 +732,10 @@ module Crystal
 
     def llvm_type(type)
       @llvm_typer.llvm_type(type)
+    end
+
+    def llvm_struct_type(type)
+      @llvm_typer.llvm_struct_type(type)
     end
 
     def llvm_arg_type(type)

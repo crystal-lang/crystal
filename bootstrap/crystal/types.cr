@@ -100,6 +100,13 @@ module Crystal
         end
       end
 
+      parents.each do |parent|
+        matches = parent.lookup_matches(name, arg_types, yields, owner, type_lookup, matches_array)
+        unless matches.empty?
+          return matches
+        end
+      end
+
       Matches.new([] of Match, nil, owner, false)
     end
 
@@ -248,6 +255,14 @@ module Crystal
 
   class NonGenericClassType < ClassType
     include DefInstanceContainer
+
+    def metaclass
+      @metaclass ||= begin
+        metaclass = Metaclass.new(program, self)
+        metaclass.add_def Def.new("allocate", ([] of Arg), Allocate.new)
+        metaclass
+      end
+    end
   end
 
   class PrimitiveType < ClassType
@@ -389,6 +404,10 @@ module Crystal
     def initialize(@program, @instance_type)
     end
 
+    def parents
+      instance_type.parents.map &.metaclass
+    end
+
     def metaclass?
       true
     end
@@ -407,6 +426,10 @@ module Crystal
     getter :union_types
 
     def initialize(@program, @union_types)
+    end
+
+    def parents
+      [] of Type
     end
 
     def to_s

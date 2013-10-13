@@ -1,4 +1,5 @@
 lib LibLLVM("LLVM-3.3")
+  type ContextRef : Void*
   type ModuleRef : Void*
   type TypeRef : Void*
   type ValueRef : Void*
@@ -59,6 +60,7 @@ lib LibLLVM("LLVM-3.3")
     PredicateTrue
   end
 
+  fun get_global_context = LLVMGetGlobalContext : ContextRef
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun void_type = LLVMVoidType() : TypeRef
@@ -110,11 +112,15 @@ lib LibLLVM("LLVM-3.3")
   fun build_fp2ui = LLVMBuildFPToUI(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_ui2fp = LLVMBuildUIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
+  fun struct_type = LLVMStructType(element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
   fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
   fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
+  fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : Char*) : TypeRef
+  fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
   fun const_int = LLVMConstInt(int_type : TypeRef, value : UInt64, sign_extend : Int32) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
   fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
@@ -148,6 +154,12 @@ module LLVM
 
   def self.type_of(value)
     LibLLVM.type_of(value)
+  end
+
+  class Context
+    def self.global
+      LibLLVM.get_global_context
+    end
   end
 
   class Module
@@ -310,6 +322,10 @@ module LLVM
       LibLLVM.build_load(@builder, ptr, name)
     end
 
+    def malloc(type, name = "")
+      LibLLVM.build_malloc(@builder, type.type, name)
+    end
+
     macro self.define_cast(name)"
       def #{name}(value, type : Type, name = \"\" : String)
         #{name}(value, type.type, name)
@@ -413,6 +429,16 @@ module LLVM
   class ArrayType < Type
     def initialize(element_type : Type, count)
       super LibLLVM.array_type(element_type.type, count.to_u32)
+    end
+  end
+
+  class StructType < Type
+    def initialize(name)
+      super LibLLVM.struct_create_named(Context.global, name)
+    end
+
+    def element_types=(element_types)
+      LibLLVM.struct_set_body(@type, element_types.map(&.type).buffer, element_types.length.to_u32, 0)
     end
   end
 
