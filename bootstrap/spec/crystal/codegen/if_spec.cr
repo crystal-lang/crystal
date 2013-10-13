@@ -25,4 +25,8 @@ describe "Code gen: if" do
   it "codegen if inside if" do
     run("a = 1; if false; a = 1; elsif false; a = 2; else; a = 3; end; a").to_i.should eq(3)
   end
+
+  it "codegens if value from then" do
+    run("if true; 1; else 2; end").to_i.should eq(1)
+  end
 end

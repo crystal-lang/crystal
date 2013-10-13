@@ -113,6 +113,8 @@ lib LibLLVM("LLVM-3.3")
   fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_ui2fp = LLVMBuildUIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
+  fun build_phi = LLVMBuildPhi(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
+  fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef *, count : Int32)
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
   fun double_type = LLVMDoubleType() : TypeRef
@@ -304,6 +306,12 @@ module LLVM
 
     def cond(cond, then_block, else_block)
       LibLLVM.build_cond(@builder, cond, then_block, else_block)
+    end
+
+    def phi(type, incoming_blocks, incoming_values, name = "")
+      phi_node = LibLLVM.build_phi @builder, type.type, name
+      LibLLVM.add_incoming phi_node, incoming_values.buffer, incoming_blocks.buffer, incoming_blocks.length
+      phi_node
     end
 
     def call(func, args = [] of LibLLVM::ValueRef)

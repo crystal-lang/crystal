@@ -38,6 +38,10 @@ module Crystal
       false
     end
 
+    def union?
+      false
+    end
+
     def instance_type
       self
     end
@@ -438,6 +442,10 @@ module Crystal
 
     def parents
       [] of Type
+    end
+
+    def union?
+      true
     end
 
     def to_s

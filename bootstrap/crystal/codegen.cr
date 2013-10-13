@@ -402,66 +402,91 @@ module Crystal
       # end
     end
 
-    class BranchedBlock
+    abstract class BranchedBlock
       property node
       property count
       property exit_block
-      property is_union
-      property union_ptr
-      property phi_table
 
       def initialize(@node, @exit_block)
         @count = 0
-        @is_union = false
+      end
+    end
+
+    class UnionBranchedBlock < BranchedBlock
+      def initialize(node, exit_block)
+        super
+        # @union_ptr = alloca llvm_type(node.type)
+      end
+
+      def add_value(block, type, value)
+        # assign_to_union(branch[:union_ptr], branch[:node].type, type, value)
+        @count += 1
+      end
+
+      def close(builder, typer)
+        # branch[:union_ptr]
+        LLVM::Int1.from_i 0
+      end
+    end
+
+    class PhiBranchedBlock < BranchedBlock
+      def initialize(node, exit_block)
+        super
+        @incoming_blocks = [] of LibLLVM::BasicBlockRef
+        @incoming_values = [] of LibLLVM::ValueRef
+      end
+
+      def add_value(block, type, value)
+        # if branch[:node].type.nilable? && value.type.kind == :integer
+        #   branch[:phi_table][@builder.insert_block] = @builder.int2ptr value, llvm_type(branch[:node].type)
+        # else
+        #   branch[:phi_table][@builder.insert_block] = value
+        # end
+        @incoming_blocks << block
+        @incoming_values << value
+        @count += 1
+      end
+
+      def close(builder, typer)
+        # if branch[:count] == 0
+        #   @builder.unreachable
+        # elsif branch[:phi_table].empty?
+        #   # All branches are void or no return
+        #   @last = llvm_nil
+        # else
+        builder.phi typer.llvm_type(@node.type), @incoming_blocks, @incoming_values
       end
     end
 
     def new_branched_block(node)
-      branch = BranchedBlock.new node, new_block("exit")
-      # if branch[:is_union] = node.type && node.type.union?
-      #   branch[:union_ptr] = alloca llvm_type(node.type)
-      # else
-      #   branch[:phi_table] = {}
-      # end
-      branch
+      exit_block = new_block("exit")
+      node_type = node.type
+      if node_type && node_type.union?
+        UnionBranchedBlock.new node, exit_block
+      else
+        PhiBranchedBlock.new node, exit_block
+      end
     end
 
-    def add_branched_block_value(branch, type, value)
-    #   if !type || type.no_return?
-    #     @builder.unreachable
-    #   elsif type.equal?(@mod.void)
-    #     # Nothing to do
-    #     branch[:count] += 1
-    #   else
-    #     if branch[:is_union]
-    #       assign_to_union(branch[:union_ptr], branch[:node].type, type, value)
-    #     elsif branch[:node].type.nilable? && value.type.kind == :integer
-    #       branch[:phi_table][@builder.insert_block] = @builder.int2ptr value, llvm_type(branch[:node].type)
-    #     else
-    #       branch[:phi_table][@builder.insert_block] = value
-    #     end
-
-    #     branch[:count] += 1
+    def add_branched_block_value(branch, type, value : LibLLVM::ValueRef)
+      if false # !type || type.no_return?
+        # @builder.unreachable
+      elsif false # type.equal?(@mod.void)
+        # Nothing to do
+        branch.count += 1
+      else
+        branch.add_value @builder.insert_block, type, value
         @builder.br branch.exit_block
-    #   end
+      end
     end
 
     def close_branched_block(branch)
       @builder.position_at_end branch.exit_block
-      # if branch[:node].returns? || branch[:node].no_returns?
-      #   @builder.unreachable
-      # else
-      #   if branch[:is_union]
-      #     @last = branch[:union_ptr]
-      #   elsif branch[:count] == 0
-      #     @builder.unreachable
-      #   elsif branch[:phi_table].empty?
-      #     # All branches are void or no return
-      #     @last = llvm_nil
-      #   else
-      #     @last = @builder.phi llvm_type(branch[:node].type), branch[:phi_table]
-      #   end
-      # end
+      if false # branch.node.returns? || branch.node.no_returns?
+        # @builder.unreachable
+      else
+        @last = branch.close(@builder, @llvm_typer)
+      end
     end
 
     def visit(node : Assign)
