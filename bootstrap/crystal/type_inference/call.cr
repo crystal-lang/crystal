@@ -106,9 +106,15 @@ module Crystal
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 
       if matches.empty?
-        unless owner == mod
-          mod_matches = mod.lookup_matches(def_name, arg_types, !!block)
-          matches = mod_matches unless obj || mod_matches.empty?
+        if def_name == "new" && owner.metaclass? && owner.instance_type.class?
+            #|| owner.instance_type.hierarchy?) # && !owner.instance_type.pointer?
+          new_matches = define_new owner, arg_types
+          matches = new_matches unless new_matches.empty?
+        else
+          unless owner == mod
+            mod_matches = mod.lookup_matches(def_name, arg_types, !!block)
+            matches = mod_matches unless obj || mod_matches.empty?
+          end
         end
       end
 
@@ -269,6 +275,86 @@ module Crystal
 
     def full_name(owner)
       owner.is_a?(Program) ? name : "#{owner}##{name}"
+    end
+
+    def define_new(scope, arg_types)
+      # if scope.instance_type.hierarchy?
+      #   matches = define_new_recursive(scope.instance_type.base_type, arg_types)
+      #   return Matches.new(matches, scope)
+      # end
+
+      # matches = scope.instance_type.lookup_matches("initialize", arg_types, !!block)
+      # if matches.empty?
+        # defs = scope.instance_type.lookup_defs("initialize")
+        # if defs.length > 0
+        #   raise_matches_not_found scope.instance_type, "initialize"
+        # end
+
+        # if defs.length == 0 && arg_types.length > 0
+        #   raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.length} for 0)"
+        # end
+
+        alloc = Call.new(nil, "allocate")
+
+        match_def = Def.new("new", [] of Arg, [alloc] of ASTNode)
+        match = Match.new(scope, match_def, arg_types)
+
+        scope.add_def match_def
+
+        Matches.new([match], true)
+      # else
+      #   ms = matches.map do |a_match|
+      #     # if match.free_vars.empty?
+      #       alloc = Call.new(nil, "allocate")
+      #     # else
+      #     #   type_vars = Array.new(scope.instance_type.type_vars.length)
+      #     #   match.free_vars.each do |names, type|
+      #     #     if names.length == 1
+      #     #       idx = scope.instance_type.type_vars.index(names[0])
+      #     #       if idx
+      #     #         type_vars[idx] = Ident.new(names)
+      #     #       end
+      #     #     end
+      #     #   end
+
+      #     #   if type_vars.all?
+      #     #     new_generic = NewGenericClass.new(Ident.new([scope.instance_type.name]), type_vars)
+      #     #     alloc = Call.new(new_generic, 'allocate')
+      #     #   else
+      #     #     alloc = Call.new(nil, 'allocate')
+      #     #   end
+      #     # end
+
+      #     var = Var.new("x")
+      #     new_vars = Array(ASTNode).new(args.length)
+      #     args.each_with_index do |i|
+      #       new_vars.push Var.new("arg#{i}")
+      #     end
+
+      #     new_args = Array(Arg).new(args.length)
+      #     args.each_with_index do |i|
+      #       arg = Arg.new("arg#{i}")
+      #       # arg.type_restriction = a_match.def.args[i].type_restriction if a_match.def.args[i]
+      #       new_args.push arg
+      #     end
+
+      #     init = Call.new(var, "initialize", new_vars)
+
+      #     match_def = Def.new("new", new_args, [
+      #       Assign.new(var, alloc),
+      #       init,
+      #       var
+      #     ])
+
+      #     new_match = Match.new(scope, match_def, a_match.arg_types)
+      #     # new_match.free_vars = a_match.free_vars
+
+      #     scope.add_def match_def
+
+      #     new_match
+      #   end
+      #   Matches.new(ms, true)
+      # end
     end
 
     class PreparedTypedDef

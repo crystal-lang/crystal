@@ -40,6 +40,10 @@ module Crystal
       type.llvm_type
     end
 
+    def llvm_arg_type(type : InheritableClass)
+      llvm_type type
+    end
+
     def llvm_arg_type(type : Metaclass)
       llvm_type type
     end

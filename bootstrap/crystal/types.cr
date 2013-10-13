@@ -30,6 +30,10 @@ module Crystal
       false
     end
 
+    def class?
+      false
+    end
+
     def metaclass?
       false
     end
@@ -262,6 +266,10 @@ module Crystal
         metaclass.add_def Def.new("allocate", ([] of Arg), Allocate.new)
         metaclass
       end
+    end
+
+    def class?
+      true
     end
   end
 
