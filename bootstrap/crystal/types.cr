@@ -91,7 +91,7 @@ module Crystal
 
       name_defs = defs[name]
       name_defs.each do |def_key, a_def|
-        if def_key.yields == yields
+        if def_key.restrictions.length == arg_types.length && def_key.yields == yields
           matched = true
           def_key.restrictions.each_with_index do |restriction, i|
             restricted_type = arg_types[i].not_nil!.restrict restriction, self
