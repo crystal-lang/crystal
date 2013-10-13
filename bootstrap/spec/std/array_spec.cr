@@ -430,7 +430,7 @@ describe "Array" do
     it "shuffle" do
       a = [1, 2, 3]
       b = a.shuffle
-      a.should_not eq(b)
+      a.same?(b).should be_false
       a.should eq([1, 2, 3])
 
       3.times { b.includes?(a.shift).should eq(true) }
