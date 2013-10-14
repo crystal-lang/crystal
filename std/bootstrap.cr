@@ -10,3 +10,7 @@ end
 def print(c)
   C.putchar c
 end
+
+def puts
+  C.putchar '\n'
+end

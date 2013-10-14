@@ -140,7 +140,12 @@ module Crystal
     end
 
     def codegen_binary_op(op, t1 : FloatType, t2 : IntegerType, p1, p2)
-      codegen_binary_op op, t2, t1, p2, p1
+      p2 = if t2.signed?
+            @builder.si2fp(p2, t1.llvm_type)
+           else
+             @builder.ui2fp(p2, t1.llvm_type)
+           end
+      codegen_binary_op op, t1, t1, p1, p2
     end
 
     def codegen_binary_op(op, t1 : FloatType, t2 : FloatType, p1, p2)

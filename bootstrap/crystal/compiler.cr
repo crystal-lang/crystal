@@ -39,8 +39,8 @@ module Crystal
         exit 1
       end
 
-      bitcode_filename = "foo.bc"
-      output_filename = "foo"
+      output_filename = File.basename(filename, File.extname(filename))
+      bitcode_filename = "#{output_filename}.bc"
 
       source = File.read filename
 
