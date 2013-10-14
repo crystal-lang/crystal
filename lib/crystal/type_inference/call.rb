@@ -372,10 +372,17 @@ module Crystal
       end
 
       # TODO: do this better
-      parents_length = parent_visitor.owner.parents.length
-      parent_visitor.owner.parents.each_with_index do |parent, i|
+      lookup = parent_visitor.untyped_def.owner
+      if lookup.hierarchy?
+        parents = lookup.base_type.parents
+      else
+        parents = lookup.parents
+      end
+
+      parents_length = parents.length
+      parents.each_with_index do |parent, i|
         if i == parents_length - 1 || parent.lookup_first_def(parent_visitor.untyped_def.name, !!block)
-          return lookup_matches_in(parent, parent_visitor.owner, parent_visitor.untyped_def.name)
+          return lookup_matches_in(parent, scope, parent_visitor.untyped_def.name)
         end
       end
     end
