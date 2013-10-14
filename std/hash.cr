@@ -148,6 +148,17 @@ class Hash(K, V)
     array
   end
 
+  def merge(other : Hash(K2, V2))
+    hash = Hash(K | K2, V | V2).new
+    each do |k, v|
+      hash[k] = v
+    end
+    other.each do |k, v|
+      hash[k] = v
+    end
+    hash
+  end
+
   def ==(other : self)
     return false unless length == other.length
     each do |key, value|

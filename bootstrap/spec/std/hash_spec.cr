@@ -166,4 +166,11 @@ describe "Hash" do
     h1["bar"].push 2
     h1["bar"].should eq([2])
   end
+
+  it "merges" do
+    h1 = {1 => 2, 3 => 4}
+    h2 = {1 => 5, 2 => 3}
+    h3 = h1.merge(h2)
+    h3.should eq({1 => 5, 3 => 4, 2 => 3})
+  end
 end
