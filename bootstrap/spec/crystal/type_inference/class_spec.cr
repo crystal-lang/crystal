@@ -17,4 +17,50 @@ describe "Type inference: class" do
   it "types class inside class" do
     assert_type("class Foo; class Bar; end; end; Foo::Bar.allocate") { types["Foo"].types["Bar"] }
   end
+
+  it "types instance variable" do
+    result = assert_type("
+      class Foo
+        def initialize(coco)
+          @coco = coco
+        end
+      end
+
+      f = Foo.new(2)
+      f
+    ") { types["Foo"] }
+    type = result.node.type
+    fail "Expected #{type} to be an InstanceVarContainer" unless type.is_a?(InstanceVarContainer)
+    type.instance_vars["@coco"].type.should eq(result.program.int32)
+  end
+
+  it "types nilable instance variable" do
+    assert_type("
+      class Foo
+        def coco
+          @coco
+        end
+      end
+
+      f = Foo.new
+      f.coco
+    ") { |mod| mod.nil }
+  end
+
+  pending "types nilable instance variable 2" do
+    assert_type("
+      class Foo
+        def coco=(coco)
+          @coco = coco
+        end
+        def coco
+          @coco
+        end
+      end
+
+      f = Foo.new
+      f.coco = 1
+      f.coco
+    ") { |mod| union_of(mod.nil, int32) }
+  end
 end

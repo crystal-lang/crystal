@@ -76,6 +76,42 @@ module Crystal
       node.bind_to var
     end
 
+    def visit(node : InstanceVar)
+      var = lookup_instance_var node
+
+      # filter = build_var_filter var
+      # node.bind_to(filter || var)
+      # node.type_filters = {node.name => NotNilFilter}
+      node.bind_to var
+    end
+
+    def lookup_instance_var(node)
+      scope = @scope
+
+      if scope
+        if scope.is_a?(Crystal::Program)
+          node.raise "can't use instance variables at the top level"
+        elsif scope.is_a?(PrimitiveType) || scope.metaclass?
+          node.raise "can't use instance variables inside #{@scope}"
+        end
+
+        if scope.is_a?(InstanceVarContainer)
+          var = scope.lookup_instance_var node.name
+          unless scope.has_instance_var_in_initialize?(node.name)
+            var.bind_to mod.nil_var
+          end
+        else
+          node.raise "Bug: #{scope} is not an InstanceVarContainer"
+        end
+
+        raise "Bug: var is nil" unless var
+
+        var
+      else
+        node.raise "can't use instance variables at the top level"
+      end
+    end
+
     def end_visit(node : Expressions)
       node.bind_to node.last unless node.empty?
     end
@@ -87,12 +123,27 @@ module Crystal
     def type_assign(target, value, node)
       value.accept self
 
-      if target.is_a?(Var)
+      case target
+      when Var
         var = lookup_var target.name
         target.bind_to var
 
         node.bind_to value
         var.bind_to node
+      when InstanceVar
+        value.accept self
+
+        var = lookup_instance_var target
+        target.bind_to var
+
+        # unless @typed_def.name == "initialize"
+        #   @scope.immutable = false
+        # end
+
+        node.bind_to value
+        var.bind_to node
+      else
+        raise "Bug: unknown assign target: #{target}"
       end
 
       false

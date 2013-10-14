@@ -56,6 +56,7 @@ module Crystal
       @requires = Set(String).new
       @temp_var_counter = 0
       @type_id_counter = 0
+      @nil_var = Var.new("<nil_var>", self.nil)
 
       define_primitives
     end
@@ -204,6 +205,8 @@ module Crystal
     getter :float64
     getter :string
     getter :symbol
+
+    getter :nil_var
 
     def new_temp_var
       Var.new("#temp_#{@temp_var_counter += 1}")

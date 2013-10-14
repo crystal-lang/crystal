@@ -223,7 +223,7 @@ module Crystal
 
       if (node_of_key = node.of_key)
         node_of_value = node.of_value
-        raise "BUG: node.of_value shouldn't be nil if node.of_key is not nil" unless node_of_value
+        raise "Bug: node.of_value shouldn't be nil if node.of_key is not nil" unless node_of_value
 
         type_vars = [node_of_key, node_of_value] of ASTNode
       else
@@ -848,7 +848,7 @@ module Crystal
         @vars_indices = {} of String => String
         @names = Set.new(vars.map do |var|
           target = var.target
-          raise "BUG: target is not a Var" unless target.is_a?(Var)
+          raise "Bug: target is not a Var" unless target.is_a?(Var)
           var_name_without_index(target.name)
         end)
         @nest_count = 0
@@ -883,7 +883,7 @@ module Crystal
         if @nest_count == 0
           new_vars = @vars.map do |assign|
             target = assign.target
-            raise "BUG: target is not a Var" unless target.is_a?(Var)
+            raise "Bug: target is not a Var" unless target.is_a?(Var)
 
             name = var_name_without_index target.name
 

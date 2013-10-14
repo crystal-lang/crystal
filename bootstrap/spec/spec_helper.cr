@@ -15,6 +15,7 @@ def assert_type(str)
   else
     input.type.should eq(expected_type)
   end
+  InferTypeResult.new(program, input)
 end
 
 def infer_type(node)

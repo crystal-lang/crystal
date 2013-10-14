@@ -498,30 +498,6 @@ module Crystal
       codegen_assign_node(node.target, node.value)
     end
 
-    def visit(node : Var)
-      var = @vars[node.name]
-      @last = @builder.load(var.pointer)
-      # if var[:type] == node.type
-      #   @last = var[:ptr]
-      #   @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
-      # elsif var[:type].nilable?
-      #   if node.type.nil_type?
-      #     @last = null_pointer?(var[:ptr])
-      #   else
-      #     @last = var[:ptr]
-      #     @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
-      #   end
-      # else
-      #   if node.type.union?
-      #     @last = cast_to_pointer var[:ptr], node.type
-      #   else
-      #     value_ptr = union_value(var[:ptr])
-      #     @last = cast_to_pointer value_ptr, node.type
-      #     @last = @builder.load(@last) unless node.type.passed_by_val?
-      #   end
-      # end
-    end
-
     def codegen_assign_node(target, value)
       if target.is_a?(Ident)
         return false
@@ -551,9 +527,16 @@ module Crystal
 
     def codegen_assign_target(target, value, llvm_value)
       case target
-      # when InstanceVar
-      #   ivar = @type.lookup_instance_var(target.name.to_s)
-      #   ptr = gep llvm_self_ptr, 0, @type.index_of_instance_var(target.name.to_s)
+      when InstanceVar
+        type = @type
+        raise "Bug: expected #{type} to be an InstanceVarContainer" unless type.is_a?(InstanceVarContainer)
+
+        ivar = type.lookup_instance_var(target.name)
+        index = type.index_of_instance_var(target.name)
+        raise "Bug: index of instance var is nil" unless index
+
+        ptr = gep llvm_self_ptr, 0, index
+        codegen_assign(ptr, target.type, value.type, llvm_value)
       # when Global
       #   ptr = assign_to_global target.name.to_s, target.type
       # when ClassVar
@@ -579,6 +562,56 @@ module Crystal
         # assign_to_union(pointer, target_type, value_type, value)
       end
     end
+
+    def visit(node : Var)
+      var = @vars[node.name]
+      @last = @builder.load(var.pointer)
+      # if var[:type] == node.type
+      #   @last = var[:ptr]
+      #   @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+      # elsif var[:type].nilable?
+      #   if node.type.nil_type?
+      #     @last = null_pointer?(var[:ptr])
+      #   else
+      #     @last = var[:ptr]
+      #     @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+      #   end
+      # else
+      #   if node.type.union?
+      #     @last = cast_to_pointer var[:ptr], node.type
+      #   else
+      #     value_ptr = union_value(var[:ptr])
+      #     @last = cast_to_pointer value_ptr, node.type
+      #     @last = @builder.load(@last) unless node.type.passed_by_val?
+      #   end
+      # end
+    end
+
+    def visit(node : InstanceVar)
+      type = @type
+      raise "Bug: expected #{type} to be an InstanceVarContainer" unless type.is_a?(InstanceVarContainer)
+
+      ivar = type.lookup_instance_var(node.name)
+      # if ivar.type.union? || ivar.type.c_struct? || ivar.type.c_union?
+      #   @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.name)
+      #   unless node.type.equal?(ivar.type)
+      #     if node.type.union?
+      #       @last = cast_to_pointer @last, node.type
+      #     else
+      #       value_ptr = union_value(@last)
+      #       @last = cast_to_pointer value_ptr, node.type
+      #       @last = @builder.load(@last)
+      #     end
+      #   end
+      # else
+        index = type.index_of_instance_var(node.name)
+        raise "Bug: index of instance var is nil" unless index
+
+        struct = @builder.load llvm_self_ptr
+        @last = @builder.extract_value struct, index, node.name
+      # end
+    end
+
 
     def declare_var(var)
       @vars.fetch_or_assign(var.name.to_s) do
@@ -760,6 +793,10 @@ module Crystal
       value
     end
 
+    def gep(ptr, index0, index1)
+      @builder.gep ptr, [int(index0), int(index1)]
+    end
+
     def llvm_type(type)
       @llvm_typer.llvm_type(type)
     end
@@ -777,6 +814,10 @@ module Crystal
       # @vars["self"].pointer
     end
 
+    def llvm_self_ptr
+      llvm_self
+    end
+
     def llvm_nil
       int1(0)
     end
@@ -791,6 +832,10 @@ module Crystal
 
     def int64(n)
       LLVM::Int64.from_i n
+    end
+
+    def int(n)
+      LLVM::Int32.from_i n
     end
 
     def accept(node)

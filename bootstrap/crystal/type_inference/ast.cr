@@ -30,7 +30,7 @@ module Crystal
           new_body = [] of ASTNode
           args[i .. -1].each do |arg2|
             arg2_default_value = arg2.default_value
-            raise "BUG: arg2_default_value should not have been nil" unless arg2_default_value
+            raise "Bug: arg2_default_value should not have been nil" unless arg2_default_value
 
             new_body << Assign.new(Var.new(arg2.name), arg2_default_value)
           end
@@ -41,7 +41,7 @@ module Crystal
           self_def.args[0 ... i].each do |arg2|
             new_args.push Var.new(arg2.name)
           end
-          raise "BUG: #{arg_default_value} should not have been nil" unless arg_default_value
+          raise "Bug: #{arg_default_value} should not have been nil" unless arg_default_value
 
           new_args.push arg_default_value
 

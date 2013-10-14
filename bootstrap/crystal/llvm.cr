@@ -114,6 +114,8 @@ lib LibLLVM("LLVM-3.3")
   fun build_ui2fp = LLVMBuildUIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
   fun build_phi = LLVMBuildPhi(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
+  fun build_gep = LLVMBuildGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : Char*) : ValueRef
+  fun build_extract_value = LLVMBuildExtractValue(builder : BuilderRef, agg_val : ValueRef, index : UInt32, name : Char*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef *, count : Int32)
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun float_type = LLVMFloatType() : TypeRef
@@ -332,6 +334,14 @@ module LLVM
 
     def malloc(type, name = "")
       LibLLVM.build_malloc(@builder, type.type, name)
+    end
+
+    def gep(value, indices, name = "")
+      LibLLVM.build_gep(@builder, value, indices.buffer, indices.length.to_u32, name)
+    end
+
+    def extract_value(value, index, name = "")
+      LibLLVM.build_extract_value(@builder, value, index.to_u32, name)
     end
 
     macro self.define_cast(name)"

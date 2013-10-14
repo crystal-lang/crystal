@@ -14,7 +14,7 @@ module Crystal
       if @mod
         @mod
       else
-        raise "BUG: @mod is nil"
+        raise "Bug: @mod is nil"
       end
     end
 
@@ -182,7 +182,7 @@ module Crystal
     end
 
     def check_args_length_match(obj_type, untyped_def : Def)
-      raise "BUG: shouldn't check args length for Def here"
+      raise "Bug: shouldn't check args length for Def here"
     end
 
     def check_fun_args_types_match(obj_type, typed_def)

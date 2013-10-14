@@ -796,7 +796,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      raise "BUG: ClassDef name can only be an Ident" unless name.is_a?(Ident)
+      raise "Bug: ClassDef name can only be an Ident" unless name.is_a?(Ident)
 
       class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, name_column_number
       class_def.location = location
@@ -845,7 +845,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      raise "BUG: ModuleDef name can only be an Ident" unless name.is_a?(Ident)
+      raise "Bug: ModuleDef name can only be an Ident" unless name.is_a?(Ident)
 
       module_def = ModuleDef.new name, body, type_vars, name_column_number
       module_def.location = location

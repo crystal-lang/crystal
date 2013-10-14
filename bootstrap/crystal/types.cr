@@ -47,31 +47,31 @@ module Crystal
     end
 
     def lookup_def_instance(def_object_id, arg_types, block_type)
-      raise "BUG: #{self} doesn't implement lookup_def_instance"
+      raise "Bug: #{self} doesn't implement lookup_def_instance"
     end
 
     def add_def_instance(def_object_id, arg_types, block_type, typed_def)
-      raise "BUG: #{self} doesn't implement add_def_instance"
+      raise "Bug: #{self} doesn't implement add_def_instance"
     end
 
     def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
-      raise "BUG: #{self} doesn't implement lookup_type"
+      raise "Bug: #{self} doesn't implement lookup_type"
     end
 
     def types
-      raise "BUG: #{self} doesn't implement types"
+      raise "Bug: #{self} doesn't implement types"
     end
 
     def add_def(a_def)
-      raise "BUG: #{self} doesn't implement add_def"
+      raise "Bug: #{self} doesn't implement add_def"
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      raise "BUG: #{self} doesn't implement lookup_matches"
+      raise "Bug: #{self} doesn't implement lookup_matches"
     end
 
     def lookup_defs(name)
-      raise "BUG: #{self} doesn't implement lookup_defs"
+      raise "Bug: #{self} doesn't implement lookup_defs"
     end
 
     def llvm_name
@@ -243,6 +243,8 @@ module Crystal
     getter :subclasses
     getter :depth
     property :abstract
+    getter :owned_instance_vars
+    property :instance_vars_in_initialize
 
     def initialize(program, container, name, @superclass, add_subclass = true)
       super(program, container, name)
@@ -253,15 +255,151 @@ module Crystal
       end
       @subclasses = [] of Type
       @parents.push superclass if superclass
+      @owned_instance_vars = Set(String).new
       force_add_subclass if add_subclass
     end
 
     def force_add_subclass
       @superclass.add_subclass(self) if @superclass
     end
+
+    def add_def(a_def)
+      super
+
+      transfer_instance_vars a_def
+
+      a_def
+    end
+
+    def transfer_instance_vars(a_def)
+      if a_def_instance_vars = a_def.instance_vars
+        a_def_instance_vars.each do |ivar|
+          if my_superclass = superclass
+            unless my_superclass.owns_instance_var?(ivar)
+              unless owned_instance_vars.includes?(ivar)
+                owned_instance_vars.add(ivar)
+                # each_subclass(self) do |subclass|
+                #   subclass.remove_instance_var(ivar)
+                # end
+              end
+            end
+          end
+        end
+
+        if a_def.name == "initialize"
+          if @instance_vars_in_initialize
+            @instance_vars_in_initialize = @instance_vars_in_initialize & a_def_instance_vars
+          else
+            @instance_vars_in_initialize = a_def_instance_vars
+          end
+
+          # unless a_def.calls_super
+          #   sup = superclass
+          #   while sup
+          #     sup.instance_vars_in_initialize &= a_def_instance_vars
+          #     sup = sup.superclass
+          #   end
+          # end
+        end
+      end
+    end
+  end
+
+  module InstanceVarContainer
+    # def immutable
+    #   @immutable.nil? ? true : @immutable
+    # end
+
+    # def immutable=(immutable)
+    #   @immutable = immutable
+    # end
+
+    def instance_vars
+      @instance_vars ||= {} of String => Var
+    end
+
+    def owns_instance_var?(name)
+      owned_instance_vars.includes?(name) || ((my_superclass = superclass) && my_superclass.owns_instance_var?(name))
+    end
+
+    def remove_instance_var(name)
+      owned_instance_vars.delete(name)
+      instance_vars.delete(name)
+    end
+
+    def lookup_instance_var(name, create = true)
+      var = lookup_instance_var_internal name, create
+      raise "Bug: var is nil" unless var
+      var
+    end
+
+    def lookup_instance_var_internal(name, create)
+      if my_superclass = superclass
+        if var = my_superclass.lookup_instance_var_internal(name, false)
+          return var
+        end
+      end
+
+      if create || owned_instance_vars.includes?(name)
+        instance_vars.fetch_or_assign(name) { Var.new name }
+      else
+        instance_vars[name]?
+      end
+    end
+
+    def index_of_instance_var(name)
+      if sup = superclass
+        index = sup.index_of_instance_var(name)
+        if index
+          index
+        else
+          index = instance_vars.keys.index(name)
+          if index
+            sup.all_instance_vars_count + index
+          else
+            nil
+          end
+        end
+      else
+        instance_vars.keys.index(name)
+      end
+    end
+
+    def each_instance_var(&block)
+      if superclass
+        superclass.each_instance_var(&block)
+      end
+
+      instance_vars.each(&block)
+    end
+
+    def all_instance_vars
+      if sup = superclass
+        sup.all_instance_vars.merge(instance_vars)
+      else
+        instance_vars
+      end
+    end
+
+    def all_instance_vars_count
+      if sup = superclass
+        sup.all_instance_vars_count + instance_vars.length
+      else
+        instance_vars.length
+      end
+    end
+
+    def has_instance_var_in_initialize?(name)
+      (ivars = instance_vars_in_initialize) && ivars.includes?(name) || ((sup = superclass) && sup.has_instance_var_in_initialize?(name))
+    end
+
+    def llvm_size
+      Crystal::Program::POINTER_SIZE
+    end
   end
 
   class NonGenericClassType < ClassType
+    include InstanceVarContainer
     include DefInstanceContainer
 
     def metaclass
@@ -289,6 +427,34 @@ module Crystal
 
     def llvm_name
       name
+    end
+
+    def owns_instance_var?(ivar)
+      raise "Bug: primitive types don't have instance vars"
+    end
+
+    def lookup_instance_var(name, create = true)
+      raise "Bug: primitive types don't have instance vars"
+    end
+
+    def lookup_instance_var_internal(name, create)
+      raise "Bug: primitive types don't have instance vars"
+    end
+
+    def has_instance_var_in_initialize?(name)
+      raise "Bug: primitive types don't have instance vars"
+    end
+
+    def index_of_instance_var(name)
+      raise "Bug: primitive types don't have instance vars"
+    end
+
+    def all_instance_vars
+      raise "Bug: primitive types don't have instance vars"
+    end
+
+    def all_instance_vars_count
+      raise "Bug: primitive types don't have instance vars"
     end
   end
 
