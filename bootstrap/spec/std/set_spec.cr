@@ -43,4 +43,18 @@ describe "Set" do
       set1.should_not eq(set3)
     end
   end
+
+  it "does &" do
+    set1 = Set.new([1, 2, 3])
+    set2 = Set.new([4, 2, 5, 3])
+    set3 = set1 & set2
+    set3.should eq(Set.new([2, 3]))
+  end
+
+  it "does |" do
+    set1 = Set.new([1, 2, 3])
+    set2 = Set.new([4, 2, 5, 3])
+    set3 = set1 | set2
+    set3.should eq(Set.new([1, 2, 3, 4, 5]))
+  end
 end

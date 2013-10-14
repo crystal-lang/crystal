@@ -38,6 +38,21 @@ class Set(T)
     end
   end
 
+  def &(other : Set)
+    set = Set(T).new
+    each do |value|
+      set.add value if other.includes?(value)
+    end
+    set
+  end
+
+  def |(other : Set)
+    set = Set(T).new
+    each { |value| set.add value }
+    other.each { |value| set.add value }
+    set
+  end
+
   def ==(other : Set)
     same?(other) || internal_hash == other.internal_hash
   end
