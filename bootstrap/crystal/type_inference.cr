@@ -169,14 +169,15 @@ module Crystal
     def visit(node : Call)
       prepare_call(node)
 
-      if obj = node.obj
-        obj.accept self
-      end
+      obj = node.obj
 
-      node.args.each do |arg|
-        arg.accept self
-      end
+      obj.accept self if obj
+      node.args.each &.accept(self)
       node.recalculate
+
+      obj.add_observer node if obj
+      node.args.each &.add_observer(node)
+      # node.block_arg.add_observer node, :update_input if node.block_arg
 
       false
     end

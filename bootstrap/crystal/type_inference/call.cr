@@ -25,7 +25,7 @@ module Crystal
       raise "Zero or more than one target def for #{self}"
     end
 
-    def update_input
+    def update(from)
       recalculate
     end
 
@@ -36,6 +36,8 @@ module Crystal
         recalculate_lib_call(obj_type)
         return
       end
+
+      return unless obj_and_args_types_set?
 
       # elsif !obj || (obj.type && !obj.type.is_a?(LibType))
       #   check_not_lib_out_args
@@ -77,8 +79,6 @@ module Crystal
       else
         matches = lookup_matches_in scope
       end
-
-      # puts matches
 
       # If @target_defs is set here it means there was a recalculation
       # fired as a result of a recalculation. We keep the last one.
@@ -238,6 +238,12 @@ module Crystal
       #     self.args[i] = CastFunToReturnVoid.new(self.args[i])
       #   end
       # end
+    end
+
+    def obj_and_args_types_set?
+      obj = @obj
+      block_arg = @block_arg
+      args.all?(&.type) && (obj ? obj.type : true) && (block_arg ? block_arg.type : true)
     end
 
     def raise_matches_not_found(owner, def_name, matches = nil)

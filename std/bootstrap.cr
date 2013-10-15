@@ -10,6 +10,10 @@ class String
     @c.ptr
   end
 
+  def length
+    @length
+  end
+
   def to_s
     self
   end
