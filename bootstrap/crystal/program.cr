@@ -49,9 +49,12 @@ module Crystal
 
       @symbol = @types["Symbol"] = PrimitiveType.new self, self, "Symbol", @value, LLVM::Int32, 4
 
-      # string = @types["String"] = NonGenericClassType.new self, "String", reference
-      # HACK: until we have class types in bootstrap
-      @string = @types["String"] = PrimitiveType.new self, self, "String", @value, LLVM::PointerType.new(LLVM::Int8), 8
+      @string = @types["String"] = NonGenericClassType.new self, self, "String", @reference
+      @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
+      # @string.allocated = true
+
+      @string.lookup_instance_var("@length").type = @int32
+      @string.lookup_instance_var("@c").type = @char
 
       @requires = Set(String).new
       @temp_var_counter = 0
@@ -130,8 +133,7 @@ module Crystal
         return types[0]
       end
 
-      # types.sort_by! &.type_id
-      types_ids = types.map &.type_id
+      types_ids = types.map(&.type_id).sort!
       @unions.fetch_or_assign(types_ids) { UnionType.new self, types }
     end
 

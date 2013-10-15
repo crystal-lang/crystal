@@ -192,6 +192,23 @@ module Crystal
       node.parent_visitor = self
     end
 
+    def end_visit(node : NewGenericClass)
+      return if node.type
+
+      instance_type = node.name.type.not_nil!.instance_type
+      unless instance_type.is_a?(GenericType)
+        node.raise "#{instance_type} is not a generic class"
+      end
+
+      if instance_type.type_vars.length != node.type_vars.length
+        node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
+      end
+      node.instance_type = instance_type
+      node.type_vars.each &.add_observer(node)
+      node.update
+      false
+    end
+
     def visit(node : ClassDef)
       superclass = if node_superclass = node.superclass
                      lookup_ident_type node_superclass
@@ -214,17 +231,17 @@ module Crystal
         #   node.raise "superclass mismatch for class #{type.name} (#{superclass.name} for #{type.superclass.name})"
         # end
       else
+        unless superclass.is_a?(NonGenericClassType)
+          node_superclass.not_nil!.raise "#{superclass} is not a class"
+        end
+
         needs_force_add_subclass = true
-        # if node.type_vars
-        #   type = GenericClassType.new scope, name, superclass, node.type_vars, false
-        # else
-          unless superclass.is_a?(InheritableClass)
-            raise "Bug: node_superclass can't be nil here" unless node_superclass
-            node_superclass.raise "#{superclass} is not a class"
-          end
+        if type_vars = node.type_vars
+          type = GenericClassType.new @mod, scope, name, superclass, type_vars, false
+        else
           type = NonGenericClassType.new @mod, scope, name, superclass, false
-        # end
-        # type.abstract = node.abstract
+        end
+        type.abstract = node.abstract
         scope.types[name] = type
       end
 
@@ -341,7 +358,19 @@ module Crystal
     end
 
     def visit(node : Allocate)
-      node.type = @scope.not_nil!.instance_type
+      scope = @scope.not_nil!
+      instance_type = scope.instance_type
+
+      if instance_type.is_a?(GenericClassType)
+        node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
+      end
+
+      if instance_type.is_a?(ClassType) && instance_type.abstract
+        node.raise "can't instantiate abstract class #{instance_type}"
+      end
+
+      # instance_type.allocated = true
+      node.type = instance_type
     end
 
     def lookup_var(name)

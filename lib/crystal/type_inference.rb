@@ -943,10 +943,8 @@ module Crystal
     end
 
     def end_visit_new_generic_class(node)
-      return if node.type
-
       instance_type = node.name.type.instance_type
-      unless instance_type.type_vars
+      unless instance_type.is_a?(GenericType)
         node.raise "#{instance_type} is not a generic class"
       end
 

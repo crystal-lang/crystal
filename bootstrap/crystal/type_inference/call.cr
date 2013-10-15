@@ -11,11 +11,7 @@ module Crystal
     property :target_macro
 
     def mod
-      if @mod
-        @mod
-      else
-        raise "Bug: @mod is nil"
-      end
+      @mod.not_nil!
     end
 
     def target_def

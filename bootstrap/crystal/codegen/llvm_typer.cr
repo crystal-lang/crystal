@@ -1,7 +1,6 @@
 require "../types"
 require "../llvm"
 
-
 module Crystal
   class LLVMTyper
     def initialize
@@ -12,11 +11,15 @@ module Crystal
       type.llvm_type
     end
 
-    def llvm_type(type : InheritableClass)
+    def llvm_type(type : InstanceVarContainer)
       LLVM::PointerType.new(llvm_struct_type(type))
     end
 
     def llvm_type(type : Metaclass)
+      LLVM::Int64
+    end
+
+    def llvm_type(type : GenericClassInstanceMetaclass)
       LLVM::Int64
     end
 
@@ -45,6 +48,10 @@ module Crystal
     end
 
     def llvm_arg_type(type : Metaclass)
+      llvm_type type
+    end
+
+    def llvm_arg_type(type : GenericClassInstanceMetaclass)
       llvm_type type
     end
 

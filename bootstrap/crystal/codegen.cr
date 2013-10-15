@@ -55,7 +55,7 @@ module Crystal
       if node_type = node.type
         ret_type = @llvm_typer.llvm_type(node_type)
       else
-        ret_type = LLVM::Void
+        ret_type = LLVM::Int1
       end
       @fun = @llvm_mod.functions.add("crystal_main", [] of LLVM::Type, ret_type)
       @builder = LLVM::Builder.new
@@ -64,7 +64,7 @@ module Crystal
       @vars = {} of String => LLVMVar
       @strings = {} of String => LibLLVM::ValueRef
       @type = @mod
-      @last = int1(0)
+      @last = llvm_nil
     end
 
     def finish
@@ -532,8 +532,7 @@ module Crystal
         raise "Bug: expected #{type} to be an InstanceVarContainer" unless type.is_a?(InstanceVarContainer)
 
         ivar = type.lookup_instance_var(target.name)
-        index = type.index_of_instance_var(target.name)
-        raise "Bug: index of instance var is nil" unless index
+        index = type.index_of_instance_var(target.name).not_nil!
 
         ptr = gep llvm_self_ptr, 0, index
         codegen_assign(ptr, target.type, value.type, llvm_value)
@@ -604,8 +603,7 @@ module Crystal
       #     end
       #   end
       # else
-        index = type.index_of_instance_var(node.name)
-        raise "Bug: index of instance var is nil" unless index
+        index = type.index_of_instance_var(node.name).not_nil!
 
         struct = @builder.load llvm_self_ptr
         @last = @builder.extract_value struct, index, node.name

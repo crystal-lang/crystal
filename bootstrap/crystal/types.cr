@@ -62,6 +62,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement types"
     end
 
+    def defs
+      raise "Bug: #{self} doesn't implement defs"
+    end
+
     def add_def(a_def)
       raise "Bug: #{self} doesn't implement add_def"
     end
@@ -328,9 +332,7 @@ module Crystal
     end
 
     def lookup_instance_var(name, create = true)
-      var = lookup_instance_var_internal name, create
-      raise "Bug: var is nil" unless var
-      var
+      lookup_instance_var_internal(name, create).not_nil!
     end
 
     def lookup_instance_var_internal(name, create)
@@ -428,34 +430,6 @@ module Crystal
     def llvm_name
       name
     end
-
-    def owns_instance_var?(ivar)
-      raise "Bug: primitive types don't have instance vars"
-    end
-
-    def lookup_instance_var(name, create = true)
-      raise "Bug: primitive types don't have instance vars"
-    end
-
-    def lookup_instance_var_internal(name, create)
-      raise "Bug: primitive types don't have instance vars"
-    end
-
-    def has_instance_var_in_initialize?(name)
-      raise "Bug: primitive types don't have instance vars"
-    end
-
-    def index_of_instance_var(name)
-      raise "Bug: primitive types don't have instance vars"
-    end
-
-    def all_instance_vars
-      raise "Bug: primitive types don't have instance vars"
-    end
-
-    def all_instance_vars_count
-      raise "Bug: primitive types don't have instance vars"
-    end
   end
 
   class BoolType < PrimitiveType
@@ -513,6 +487,131 @@ module Crystal
   class ValueType < NonGenericClassType
     def value?
       true
+    end
+  end
+
+  module GenericType
+    def type_vars
+      @type_vars
+    end
+
+    def generic_types
+      @generic_types ||= {} of Array(Int32) => Type
+    end
+
+    def instantiate(type_vars)
+      key = type_vars.map(&.type_id)
+      if (instance = generic_types[key]?)
+        return instance
+      end
+
+      instance_type_vars = {} of String => Var
+      self.type_vars.zip(type_vars) do |name, type|
+        var = Var.new(name, type)
+        var.bind_to var
+        instance_type_vars[name] = var
+      end
+
+      instance = instance_class.new program, self, instance_type_vars
+      generic_types[key] = instance
+
+      instance.after_initialize
+      instance
+    end
+
+    def generic?
+      true
+    end
+  end
+
+  class GenericClassType < ClassType
+    include GenericType
+
+    def initialize(program, container, name, superclass, @type_vars, add_subclass = true)
+      super(program, container, name, superclass, add_subclass)
+    end
+
+    def instance_class
+      GenericClassInstanceType
+    end
+
+    def class?
+      true
+    end
+
+    def metaclass
+      @metaclass ||= begin
+        metaclass = Metaclass.new(program, self)
+        metaclass.add_def Def.new("allocate", ([] of Arg), Allocate.new)
+        metaclass
+      end
+    end
+
+    def to_s
+      "#{super}(#{type_vars.join ", "})"
+    end
+  end
+
+  class GenericClassInstanceType < Type
+    include InheritableClass
+    include InstanceVarContainer
+    # include ClassVarContainer
+    include DefInstanceContainer
+    include MatchesLookup
+
+    getter program
+    getter generic_class
+    getter type_vars
+    getter subclasses
+
+    def initialize(@program, @generic_class, @type_vars)
+      @subclasses = [] of Type
+    end
+
+    def after_initialize
+      @generic_class.superclass.not_nil!.add_subclass(self)
+    end
+
+    def defs
+      @generic_class.defs
+    end
+
+    def superclass
+      @generic_class.superclass
+    end
+
+    def owned_instance_vars
+      @generic_class.owned_instance_vars
+    end
+
+    def instance_vars_in_initialize
+      @generic_class.instance_vars_in_initialize
+    end
+
+    def class?
+      true
+    end
+
+    def generic?
+      true
+    end
+
+    def metaclass
+      @metaclass ||= GenericClassInstanceMetaclass.new(program, self)
+    end
+
+    def parents
+      generic_class.parents.map do |t|
+        # if t.is_a?(IncludedGenericModule)
+        #   IncludedGenericModule.new(t.module, self, t.mapping)
+        # else
+          t
+        # end
+      end
+    end
+
+    def to_s
+      "#{generic_class.full_name}(#{type_vars.values.map(&.type).join ", "})"
     end
   end
 
@@ -576,8 +675,8 @@ module Crystal
     include DefContainer
     include DefInstanceContainer
 
-    getter :program
-    getter :instance_type
+    getter program
+    getter instance_type
 
     def initialize(@program, @instance_type)
     end
@@ -592,6 +691,53 @@ module Crystal
 
     def types
       raise "Metaclass doesn't have types"
+    end
+
+    def to_s
+      "#{instance_type}:Class"
+    end
+  end
+
+  class GenericClassInstanceMetaclass < Type
+    include MatchesLookup
+    include DefInstanceContainer
+
+    getter program
+    getter instance_type
+
+    def initialize(@program, @instance_type)
+    end
+
+    def add_def(a_def)
+      instance_type.generic_class.metaclass.add_def a_def
+    end
+
+    def defs
+      instance_type.generic_class.metaclass.defs
+    end
+
+    def type_vars
+      instance_type.type_vars
+    end
+
+    def abstract
+      instance_type.abstract
+    end
+
+    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      instance_type.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    def metaclass?
+      true
+    end
+
+    def parents
+      instance_type.parents.map &.metaclass
+    end
+
+    def llvm_size
+      4
     end
 
     def to_s

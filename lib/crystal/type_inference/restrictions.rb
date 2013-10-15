@@ -97,7 +97,7 @@ module Crystal
     end
 
     def restrict(type)
-      program.type_merge(*types.map { |sub| sub.restrict(type) })
+      program.type_merge_union_of(*types.map { |sub| sub.restrict(type) })
     end
   end
 

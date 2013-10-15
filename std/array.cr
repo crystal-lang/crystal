@@ -361,6 +361,12 @@ class Array(T)
     self
   end
 
+  def zip(other : Array)
+    each_with_index do |elem, i|
+      yield elem, other[i]
+    end
+  end
+
   def ==(other : Array)
     return false if @length != other.length
     each_with_index do |item, i|

@@ -2,8 +2,8 @@ require "../ast"
 
 module Crystal
   class ASTNode
-    property :type
-    property :dependencies
+    property type
+    property dependencies
 
     def set_type(type)
       @type = type
@@ -80,6 +80,19 @@ module Crystal
 
     def raise(message, inner = nil, exception_type = Crystal::TypeException)
       ::raise exception_type.for_node(self, message, inner)
+    end
+  end
+
+  class NewGenericClass
+    property instance_type
+
+    def update(from = nil)
+      generic_type = instance_type.not_nil!.instantiate(type_vars.map do |var|
+        var_type = var.type
+        self.raise "can't deduce generic type in recursive method" unless var_type
+        var_type.instance_type
+      end)
+      self.type = generic_type.metaclass
     end
   end
 end

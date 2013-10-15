@@ -1182,7 +1182,7 @@ module Crystal
       when 1
         filtered_types[0]
       else
-        program.type_merge(*filtered_types)
+        program.type_merge_union_of(*filtered_types)
       end
     end
 
@@ -1194,7 +1194,7 @@ module Crystal
       when 1
         filtered_types[0]
       else
-        program.type_merge(*filtered_types)
+        program.type_merge_union_of(*filtered_types)
       end
     end
 
