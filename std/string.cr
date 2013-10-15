@@ -286,7 +286,7 @@ class String
     return -1 if offset < 0
 
     end_length = length - c.length
-    while offset < end_length
+    while offset <= end_length
       return offset if (cstr + offset).memcmp(c.cstr, c.length)
       offset += 1
     end

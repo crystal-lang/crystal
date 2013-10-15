@@ -130,6 +130,7 @@ describe "String" do
     describe "by char" do
       assert { "foo".index('o').should eq(1) }
       assert { "foo".index('g').should eq(-1) }
+      assert { "bar".index('r').should eq(2) }
 
       describe "with offset" do
         assert { "foobarbaz".index('a', 5).should eq(7) }
@@ -143,6 +144,7 @@ describe "String" do
       assert { "foo bar".index("o b").should eq(2) }
       assert { "foo".index("fg").should eq(-1) }
       assert { "foo".index("").should eq(0) }
+      assert { "foo".index("foo").should eq(0) }
 
       describe "with offset" do
         assert { "foobarbaz".index("ba", 4).should eq(6) }
