@@ -8,27 +8,22 @@ describe "Type inference: var" do
     input = parse "a = 1"
     result = infer_type input
     mod = result.program
-    input = result.node
-    if input.is_a?(Assign)
-      input.target.type.should eq(mod.int32)
-      input.value.type.should eq(mod.int32)
-      input.type.should eq(mod.int32)
-    else
-      fail "expected input to be an Assign"
-    end
+    node = result.node
+    assert_type node, Assign
+
+    node.target.type.should eq(mod.int32)
+    node.value.type.should eq(mod.int32)
+    node.type.should eq(mod.int32)
   end
 
   it "types a variable" do
     input = parse "a = 1; a"
     result = infer_type input
     mod = result.program
-    input = result.node
+    node = result.node
+    assert_type node, Expressions
 
-    if input.is_a?(Expressions)
-      input.last.type.should eq(mod.int32)
-      input.type.should eq(mod.int32)
-    else
-      fail "expected input to be an Expressions"
-    end
+    node.last.type.should eq(mod.int32)
+    node.type.should eq(mod.int32)
   end
 end

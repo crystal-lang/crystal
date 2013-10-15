@@ -604,6 +604,39 @@ module Crystal
       @metaclass ||= GenericClassInstanceMetaclass.new(program, self)
     end
 
+    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      return nil if already_looked_up.includes?(type_id)
+      already_looked_up.add(type_id)
+
+      if names.length == 1
+        if type_var = type_vars[names[0]]?
+          return type_var.type
+        end
+      end
+
+      type = generic_class
+      names.each do |name|
+        type = type.not_nil!.types[name]?
+        break unless type
+      end
+
+      return type if type
+
+      parents.each do |parent|
+        match = parent.lookup_type(names, already_looked_up, false)
+        return match if match
+      end
+
+      if lookup_in_container
+        if sup_container = generic_class.container
+          return sup_container.lookup_type(names, already_looked_up)
+        end
+      end
+
+      nil
+    end
+
+
     def parents
       generic_class.parents.map do |t|
         # if t.is_a?(IncludedGenericModule)

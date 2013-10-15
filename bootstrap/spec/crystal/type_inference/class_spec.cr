@@ -30,7 +30,7 @@ describe "Type inference: class" do
       f
     ") { types["Foo"] }
     type = result.node.type
-    fail "Expected #{type} to be an InstanceVarContainer" unless type.is_a?(InstanceVarContainer)
+    assert_type type, InstanceVarContainer
     type.instance_vars["@coco"].type.should eq(result.program.int32)
   end
 

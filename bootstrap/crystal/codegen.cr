@@ -90,6 +90,16 @@ module Crystal
                 codegen_primitive_allocate node, target_def, call_args
               when :pointer_malloc
                 codegen_primitive_pointer_malloc node, target_def, call_args
+              when :pointer_set
+                codegen_primitive_pointer_set node, target_def, call_args
+              when :pointer_get
+                codegen_primitive_pointer_get node, target_def, call_args
+              when :pointer_address
+                codegen_primitive_pointer_address node, target_def, call_args
+              when :pointer_new
+                codegen_primitive_pointer_new node, target_def, call_args
+              when :byte_size
+                codegen_primitive_byte_size node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -254,10 +264,55 @@ module Crystal
 
     def codegen_primitive_pointer_malloc(node, target_def, call_args)
       type = node.type.not_nil!
-      raise "Bug: expected #{type} to be a PointerInstanceType" unless type.is_a?(PointerInstanceType)
+      assert_type type, PointerInstanceType
 
       llvm_type = llvm_embedded_type(type.var.type)
       @builder.array_malloc(llvm_type, call_args[1])
+    end
+
+    def codegen_primitive_pointer_set(node, target_def, call_args)
+      value = call_args[1]
+
+      type = @type
+      assert_type type, PointerInstanceType
+
+      # if node.type.c_struct? || node.type.c_union?
+      #   loaded_value = @builder.load value
+      #   @builder.store loaded_value, @fun.params[0]
+      #   @last = value
+      #   return
+      # end
+
+      # if node.type.union?
+      #   value = @builder.alloca llvm_type(node.type)
+      #   target = @fun.params[1]
+      #   target = @builder.load(target) if node.type.passed_by_val?
+      #   @builder.store target, value
+      # end
+
+      codegen_assign call_args[0], type.var.type, node.type, value
+
+      value
+    end
+
+    def codegen_primitive_pointer_get(node, target_def, call_args)
+      # if @type.var.type.union? || @type.var.type.c_struct? || @type.var.type.c_union?
+      #   @last = llvm_self
+      # else
+        @builder.load call_args[0]
+      # end
+    end
+
+    def codegen_primitive_pointer_address(node, target_def, call_args)
+      @builder.ptr2int call_args[0], LLVM::Int64
+    end
+
+    def codegen_primitive_pointer_new(node, target_def, call_args)
+      @builder.int2ptr(call_args[1], llvm_type(node.type))
+    end
+
+    def codegen_primitive_byte_size(node, target_def, call_args)
+      llvm_type(@type.not_nil!.instance_type).size
     end
 
     def visit(node : PointerOf)
@@ -269,7 +324,7 @@ module Crystal
         # @last = @builder.load @last if node.type.var.type.c_struct? || node.type.var.type.c_union?
       when InstanceVar
         type = @type
-        raise "Bug: expected #{type} to be an InstanceVarContainer" unless type.is_a?(InstanceVarContainer)
+        assert_type type, InstanceVarContainer
 
         @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_var.name).not_nil!
       else
@@ -570,7 +625,7 @@ module Crystal
       case target
       when InstanceVar
         type = @type
-        raise "Bug: expected #{type} to be an InstanceVarContainer" unless type.is_a?(InstanceVarContainer)
+        assert_type type, InstanceVarContainer
 
         ivar = type.lookup_instance_var(target.name)
         index = type.index_of_instance_var(target.name).not_nil!
@@ -629,7 +684,7 @@ module Crystal
 
     def visit(node : InstanceVar)
       type = @type
-      raise "Bug: expected #{type} to be an InstanceVarContainer" unless type.is_a?(InstanceVarContainer)
+      assert_type type, InstanceVarContainer
 
       ivar = type.lookup_instance_var(node.name)
       # if ivar.type.union? || ivar.type.c_struct? || ivar.type.c_union?
@@ -696,7 +751,10 @@ module Crystal
       target_def = node.target_def
       body = target_def.body
       if body.is_a?(Primitive)
+        old_type = @type
+        @type = self_type
         codegen_primitive(body, target_def, call_args)
+        @type = old_type
         return
       end
 
@@ -731,14 +789,17 @@ module Crystal
       end
       args.concat target_def.args
 
+      if target_def.is_a?(External)
+        is_external = true
+        varargs = target_def.varargs
+      end
+
       @fun = @llvm_mod.functions.add(
         mangled_name,
         args.map { |arg| llvm_arg_type(arg.type) },
-        llvm_return_type#,
-        # varargs: varargs
+        llvm_return_type,
+        varargs
       )
-
-      is_external = target_def.is_a?(External)
 
       unless is_external
         @fun.linkage = LibLLVM::Linkage::Internal

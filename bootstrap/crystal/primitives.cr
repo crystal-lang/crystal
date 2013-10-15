@@ -8,6 +8,7 @@ module Crystal
     def define_primitives
       define_primitive_types_primitives
       define_pointer_primitives
+      define_type_sizes
     end
 
     def define_primitive_types_primitives
@@ -67,6 +68,17 @@ module Crystal
 
     def define_pointer_primitives
       pointer.metaclass.add_def Def.new("malloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_malloc))
+      pointer.metaclass.add_def Def.new("new", [Arg.new_with_restriction("address", Ident.new(["UInt64"], true))], Primitive.new(:pointer_new))
+      pointer.add_def Def.new("value", ([] of Arg), Primitive.new(:pointer_get))
+      pointer.add_def Def.new("value=", [Arg.new_with_restriction("value", Ident.new(["T"]))], Primitive.new(:pointer_set))
+      pointer.add_def Def.new("address", ([] of Arg), Primitive.new(:pointer_address))
+    end
+
+    def define_type_sizes
+      byte_size = Primitive.new(:byte_size)
+      [void, self.nil, bool, char, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, symbol, reference, pointer].each do |t|
+        t.metaclass.add_def Def.new("byte_size", ([] of Arg), byte_size)
+      end
     end
 
     def singleton(owner, name, args, return_type, body)

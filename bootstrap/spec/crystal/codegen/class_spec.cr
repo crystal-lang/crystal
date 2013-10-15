@@ -33,4 +33,8 @@ describe "Code gen: class" do
       f.coco + g.coco
       ").to_i.should eq(42)
   end
+
+  it "codegens byte size of Int32" do
+    run("Int32.byte_size").to_i.should eq(4)
+  end
 end

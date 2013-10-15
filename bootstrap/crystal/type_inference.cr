@@ -365,6 +365,16 @@ module Crystal
         visit_allocate node
       when :pointer_malloc
         visit_pointer_malloc node
+      when :pointer_set
+        visit_pointer_set node
+      when :pointer_get
+        visit_pointer_get node
+      when :pointer_address
+        visit_pointer_address node
+      when :pointer_new
+        visit_pointer_new node
+      when :byte_size
+        visit_byte_size node
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
@@ -394,6 +404,35 @@ module Crystal
       end
 
       node.type = scope.instance_type
+    end
+
+    def visit_pointer_set(node)
+      scope = @scope
+      assert_type scope, PointerInstanceType
+
+      value = @vars["value"]
+
+      scope.var.bind_to value
+      node.bind_to value
+    end
+
+    def visit_pointer_get(node)
+      scope = @scope
+      assert_type scope, PointerInstanceType
+
+      node.bind_to scope.var
+    end
+
+    def visit_pointer_address(node)
+      node.type = @mod.uint64
+    end
+
+    def visit_pointer_new(node)
+      node.type = @scope.not_nil!.instance_type
+    end
+
+    def visit_byte_size(node)
+      node.type = @mod.uint64
     end
 
     def visit(node : PointerOf)

@@ -519,10 +519,7 @@ describe "Parser" do
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
-    if node.is_a?(Def)
-      node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
-    else
-      raise "Expected node to be a Def"
-    end
+    assert_type node, Def
+    node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
   end
 end

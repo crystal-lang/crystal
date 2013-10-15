@@ -17,11 +17,11 @@ describe "Type inference: def" do
   it "assigns def owner" do
     input = parse "class Int32; def foo; 2.5; end; end; 1.foo"
     result = infer_type input
-    program, input = result.program, result.node
-    fail "Expected #{input} to be an Expressions" unless input.is_a?(Expressions)
+    program, node = result.program, result.node
+    assert_type node, Expressions
 
-    a_def = input.last
-    fail "Expected #{a_def} to be a Call" unless a_def.is_a?(Call)
+    a_def = node.last
+    assert_type a_def, Call
 
     a_def.target_def.owner.should eq(program.int32)
   end

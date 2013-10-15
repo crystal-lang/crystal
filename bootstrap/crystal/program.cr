@@ -94,7 +94,7 @@ module Crystal
 
       type = self
       names.each do |name|
-        type = type.try! &.types[name]?
+        type = type.not_nil!.types[name]?
         break unless type
       end
 

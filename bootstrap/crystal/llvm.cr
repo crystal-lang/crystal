@@ -112,6 +112,8 @@ lib LibLLVM("LLVM-3.3")
   fun build_fp2ui = LLVMBuildFPToUI(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_ui2fp = LLVMBuildUIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_int2ptr = LLVMBuildIntToPtr(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_ptr2int = LLVMBuildPtrToInt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
   fun build_array_malloc = LLVMBuildArrayMalloc(builder : BuilderRef, type : TypeRef, val : ValueRef, name : Char*) : ValueRef
   fun build_phi = LLVMBuildPhi(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
@@ -144,6 +146,7 @@ lib LibLLVM("LLVM-3.3")
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
+  fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
 end
 
 module LLVM
@@ -159,6 +162,10 @@ module LLVM
 
   def self.type_of(value)
     LibLLVM.type_of(value)
+  end
+
+  def self.size_of(type)
+    LibLLVM.size_of(type)
   end
 
   class Context
@@ -199,9 +206,9 @@ module LLVM
     def initialize(@mod)
     end
 
-    def add(name, arg_types, ret_type)
+    def add(name, arg_types, ret_type, varargs = false)
       args = arg_types.map &.type
-      fun_type = LibLLVM.function_type(ret_type.type, args.buffer.as(LibLLVM::TypeRef), arg_types.length, 0)
+      fun_type = LibLLVM.function_type(ret_type.type, args.buffer.as(LibLLVM::TypeRef), arg_types.length, varargs ? 1 : 0)
       func = LibLLVM.add_function(@mod.llvm_module, name, fun_type)
       Function.new(func)
     end
@@ -371,6 +378,8 @@ module LLVM
     define_cast fp2ui
     define_cast si2fp
     define_cast ui2fp
+    define_cast int2ptr
+    define_cast ptr2int
 
     macro self.define_binary(name)"
       def #{name}(lhs, rhs, name = \"\")
@@ -410,6 +419,10 @@ module LLVM
     getter :type
 
     def initialize(@type)
+    end
+
+    def size
+      LLVM.size_of @type
     end
   end
 

@@ -4,7 +4,7 @@ require "../../spec_helper"
 describe "Normalize: def" do
   it "expands a def with default arguments" do
     a_def = parse "def foo(x, y = 1, z = 2); x + y + z; end"
-    raise "expected #{a_def} to be a Def" unless a_def.is_a?(Def)
+    assert_type a_def, Def
 
     expanded = a_def.expand_default_arguments
 
@@ -17,7 +17,7 @@ describe "Normalize: def" do
 
   it "expands a def with default arguments that yields" do
     a_def = parse "def foo(x, y = 1, z = 2); yield x + y + z; end"
-    raise "expected #{a_def} to be a Def" unless a_def.is_a?(Def)
+    assert_type a_def, Def
 
     expanded = a_def.expand_default_arguments
 
@@ -30,7 +30,7 @@ describe "Normalize: def" do
 
   it "expands a def with default arguments and type restrictions" do
     a_def = parse "def foo(x, y = 1 : Int32, z = 2 : Int64); x + y + z; end"
-    raise "expected #{a_def} to be a Def" unless a_def.is_a?(Def)
+    assert_type a_def, Def
 
     expanded = a_def.expand_default_arguments
 
