@@ -1314,9 +1314,19 @@ module Crystal
     end
   end
 
-  abstract class Primitive < ASTNode
+  # Ficticious node to represent primitives
+  class Primitive < ASTNode
+    getter name
+
+    def initialize(@name)
+    end
+
     def ==(other : self)
       true
+    end
+
+    def clone_without_location
+      Primitive.new(@name)
     end
   end
 
@@ -1337,26 +1347,6 @@ module Crystal
 
     def clone_without_location
       TypeMerge.new(@expressions.clone)
-    end
-  end
-
-  # Ficticious node for primitive binary operations (+, -, *, /, ==, etc.)
-  class PrimitiveBinary < Primitive
-    def clone_without_location
-      self
-    end
-  end
-
-  # Ficticious node for primitive cast operations (to_i, to_f, etc.)
-  class PrimitiveCast < Primitive
-    def clone_without_location
-      self
-    end
-  end
-
-  class Allocate < Primitive
-    def clone_without_location
-      Allocate.new
     end
   end
 end

@@ -113,6 +113,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_ui2fp = LLVMBuildUIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
+  fun build_array_malloc = LLVMBuildArrayMalloc(builder : BuilderRef, type : TypeRef, val : ValueRef, name : Char*) : ValueRef
   fun build_phi = LLVMBuildPhi(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
   fun build_gep = LLVMBuildGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : Char*) : ValueRef
   fun build_extract_value = LLVMBuildExtractValue(builder : BuilderRef, agg_val : ValueRef, index : UInt32, name : Char*) : ValueRef
@@ -334,6 +335,10 @@ module LLVM
 
     def malloc(type, name = "")
       LibLLVM.build_malloc(@builder, type.type, name)
+    end
+
+    def array_malloc(type, value, name = "")
+      LibLLVM.build_array_malloc(@builder, type.type, value, name)
     end
 
     def gep(value, indices, name = "")

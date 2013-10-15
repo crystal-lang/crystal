@@ -23,6 +23,12 @@ module Crystal
       LLVM::Int64
     end
 
+    def llvm_type(type : PointerInstanceType)
+      pointed_type = llvm_embedded_type type.var.type.not_nil!
+      pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
+      LLVM::PointerType.new(LLVM::Int32)
+    end
+
     def llvm_type(type)
       raise "Bug: called llvm_type for #{type}"
     end

@@ -407,7 +407,7 @@ module Crystal
     def metaclass
       @metaclass ||= begin
         metaclass = Metaclass.new(program, self)
-        metaclass.add_def Def.new("allocate", ([] of Arg), Allocate.new)
+        metaclass.add_def Def.new("allocate", ([] of Arg), Primitive.new(:allocate))
         metaclass
       end
     end
@@ -542,7 +542,7 @@ module Crystal
     def metaclass
       @metaclass ||= begin
         metaclass = Metaclass.new(program, self)
-        metaclass.add_def Def.new("allocate", ([] of Arg), Allocate.new)
+        metaclass.add_def Def.new("allocate", ([] of Arg), Primitive.new(:allocate))
         metaclass
       end
     end
@@ -612,6 +612,38 @@ module Crystal
 
     def to_s
       "#{generic_class.full_name}(#{type_vars.values.map(&.type).join ", "})"
+    end
+  end
+
+  class PointerType < GenericClassType
+    def instance_class
+      PointerInstanceType
+    end
+
+    def pointer?
+      true
+    end
+  end
+
+  class PointerInstanceType < GenericClassInstanceType
+    def var
+      type_vars["T"]
+    end
+
+    def pointer?
+      true
+    end
+
+    def allocated
+      true
+    end
+
+    def primitive_like?
+      var.type.primitive_like?
+    end
+
+    def llvm_size
+      Crystal::Program::POINTER_SIZE
     end
   end
 

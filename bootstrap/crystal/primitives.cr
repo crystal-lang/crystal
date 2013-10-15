@@ -6,7 +6,12 @@ require "program"
 module Crystal
   class Program
     def define_primitives
-      binary = PrimitiveBinary.new
+      define_primitive_types_primitives
+      define_pointer_primitives
+    end
+
+    def define_primitive_types_primitives
+      binary = Primitive.new(:binary)
 
       ints = [int8, int16, int32, int64, uint8, uint16, uint32, uint64]
       nums = ints + [float32, float64]
@@ -37,7 +42,7 @@ module Crystal
       singleton(bool, "==", args, bool, binary)
       singleton(bool, "!=", args, bool, binary)
 
-      cast = PrimitiveCast.new
+      cast = Primitive.new(:cast)
       args.delete "other"
 
       nums.each do |t|
@@ -58,6 +63,10 @@ module Crystal
       end
 
       singleton(char, "ord", args, int32, cast)
+    end
+
+    def define_pointer_primitives
+      pointer.metaclass.add_def Def.new("malloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_malloc))
     end
 
     def singleton(owner, name, args, return_type, body)

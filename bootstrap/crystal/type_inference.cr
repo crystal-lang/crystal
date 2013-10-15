@@ -357,7 +357,20 @@ module Crystal
       false
     end
 
-    def visit(node : Allocate)
+    def visit(node : Primitive)
+      case node.name
+      when :binary, :cast
+        # Nothing to do
+      when :allocate
+        visit_allocate node
+      when :pointer_malloc
+        visit_pointer_malloc node
+      else
+        node.raise "Bug: unhandled primitive in type inference: #{node.name}"
+      end
+    end
+
+    def visit_allocate(node)
       scope = @scope.not_nil!
       instance_type = scope.instance_type
 
@@ -371,6 +384,16 @@ module Crystal
 
       # instance_type.allocated = true
       node.type = instance_type
+    end
+
+    def visit_pointer_malloc(node)
+      scope = @scope.not_nil!
+
+      if scope.instance_type.is_a?(GenericClassType)
+        node.raise "can't malloc pointer without type, use Pointer(Type).malloc(size)"
+      end
+
+      node.type = scope.instance_type
     end
 
     def lookup_var(name)

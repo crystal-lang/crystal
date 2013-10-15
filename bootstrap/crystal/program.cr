@@ -48,6 +48,7 @@ module Crystal
       # float64.types["INFINITY"] = Const.new float64, "FLOAT_INFINITY", Crystal::FloatInfinity.new(float64)
 
       @symbol = @types["Symbol"] = PrimitiveType.new self, self, "Symbol", @value, LLVM::Int32, 4
+      @pointer = @types["Pointer"] = PointerType.new self, self, "Pointer", value, ["T"]
 
       @string = @types["String"] = NonGenericClassType.new self, self, "String", @reference
       @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
@@ -101,14 +102,28 @@ module Crystal
     end
 
     def type_merge(types)
-      all_types = types #.map! { |type| type.is_a?(UnionType) ? type.types : type }
-      # all_types.flatten!
-      not_nil_types = [] of Type
-      all_types.compact not_nil_types
+      all_types = Set(Type).new
+      types.each do |type|
+        add_type all_types, type
+      end
 
-      not_nil_types.uniq! &.type_id
       # all_types.delete_if { |type| type.no_return? } if all_types.length > 1
-      combined_union_of not_nil_types
+
+      combined_union_of all_types.to_a
+    end
+
+    def add_type(set, type : UnionType)
+      type.union_types.each do |subtype|
+        add_type set, subtype
+      end
+    end
+
+    def add_type(set, type : Nil)
+      # Nothing to do
+    end
+
+    def add_type(set, type : Type)
+      set.add type
     end
 
     def combined_union_of(types)
@@ -207,8 +222,17 @@ module Crystal
     getter :float64
     getter :string
     getter :symbol
+    getter :pointer
 
     getter :nil_var
+
+    def char_pointer
+      pointer_of char
+    end
+
+    def pointer_of(type)
+      @pointer.instantiate([type] of Type)
+    end
 
     def new_temp_var
       Var.new("#temp_#{@temp_var_counter += 1}")

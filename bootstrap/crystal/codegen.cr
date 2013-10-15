@@ -80,10 +80,25 @@ module Crystal
       @builder.ret LLVM::Int32.from_i(0)
     end
 
-    def codegen_primitive(node : PrimitiveBinary, target_def, call_args)
+    def codegen_primitive(node, target_def, call_args)
+      @last = case node.name
+              when :binary
+                codegen_primitive_binary node, target_def, call_args
+              when :cast
+                codegen_primitive_cast node, target_def, call_args
+              when :allocate
+                codegen_primitive_allocate node, target_def, call_args
+              when :pointer_malloc
+                codegen_primitive_pointer_malloc node, target_def, call_args
+              else
+                raise "Bug: unhandled primitive in codegen: #{node.name}"
+              end
+    end
+
+    def codegen_primitive_binary(node, target_def, call_args)
       p1, p2 = call_args
       t1, t2 = target_def.owner, target_def.args[0].type
-      @last = codegen_binary_op target_def.name, t1, t2, p1, p2
+      codegen_binary_op target_def.name, t1, t2, p1, p2
     end
 
     def codegen_binary_op(op, t1 : BoolType, t2 : BoolType, p1, p2)
@@ -180,10 +195,10 @@ module Crystal
       raise "Bug: codegen_binary_op called with #{t1} #{op} #{t2}"
     end
 
-    def codegen_primitive(node : PrimitiveCast, target_def, call_args)
+    def codegen_primitive_cast(node, target_def, call_args)
       p1 = call_args[0]
       from_type, to_type = target_def.owner, target_def.type
-      @last = codegen_cast from_type, to_type, p1
+      codegen_cast from_type, to_type, p1
     end
 
     def codegen_cast(from_type : IntegerType, to_type : IntegerType, arg)
@@ -233,8 +248,16 @@ module Crystal
       raise "Bug: codegen_cast called from #{from_type} to #{to_type}"
     end
 
-    def codegen_primitive(node : Allocate, target_def, call_args)
-      @last = @builder.malloc llvm_struct_type(node.type)
+    def codegen_primitive_allocate(node, target_def, call_args)
+      @builder.malloc llvm_struct_type(node.type)
+    end
+
+    def codegen_primitive_pointer_malloc(node, target_def, call_args)
+      type = node.type.not_nil!
+      raise "Bug: expected #{type} to be a PointerInstanceType" unless type.is_a?(PointerInstanceType)
+
+      llvm_type = llvm_embedded_type(type.var.type)
+      @builder.array_malloc(llvm_type, call_args[1])
     end
 
     def visit(node : ASTNode)
@@ -805,6 +828,10 @@ module Crystal
 
     def llvm_arg_type(type)
       @llvm_typer.llvm_arg_type(type)
+    end
+
+    def llvm_embedded_type(type)
+      @llvm_typer.llvm_embedded_type(type)
     end
 
     def llvm_self

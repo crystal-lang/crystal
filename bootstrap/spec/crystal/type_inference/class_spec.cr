@@ -47,7 +47,7 @@ describe "Type inference: class" do
     ") { |mod| mod.nil }
   end
 
-  pending "types nilable instance variable 2" do
+  it "types nilable instance variable 2" do
     assert_type("
       class Foo
         def coco=(coco)

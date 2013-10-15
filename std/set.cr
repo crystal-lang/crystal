@@ -57,6 +57,10 @@ class Set(T)
     same?(other) || internal_hash == other.internal_hash
   end
 
+  def to_a
+    @hash.keys
+  end
+
   def to_s
     "Set{#{join ", "}}"
   end

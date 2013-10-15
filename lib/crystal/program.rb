@@ -296,7 +296,7 @@ module Crystal
     end
 
     def char_pointer
-      pointer_of @types['Char']
+      pointer_of char
     end
 
     def pointer_of(type)

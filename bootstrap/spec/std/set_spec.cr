@@ -57,4 +57,8 @@ describe "Set" do
     set3 = set1 | set2
     set3.should eq(Set.new([1, 2, 3, 4, 5]))
   end
+
+  it "does to_a" do
+    Set.new([1, 2, 3]).to_a.should eq([1, 2, 3])
+  end
 end
