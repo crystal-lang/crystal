@@ -42,6 +42,10 @@ module Crystal
       false
     end
 
+    def hierarchy_type
+      self
+    end
+
     def instance_type
       self
     end

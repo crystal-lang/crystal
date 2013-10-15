@@ -396,6 +396,20 @@ module Crystal
       node.type = scope.instance_type
     end
 
+    def visit(node : PointerOf)
+      node.mod = @mod
+      node_var = node.var
+      var = case node_var
+            when Var
+              lookup_var node_var.name
+            when InstanceVar
+              lookup_instance_var node_var
+            else
+              raise "Bug: #{node}.ptr"
+            end
+      node.bind_to var
+    end
+
     def lookup_var(name)
       @vars.fetch_or_assign(name) { Var.new name }
     end

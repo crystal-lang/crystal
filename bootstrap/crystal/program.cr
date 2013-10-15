@@ -118,12 +118,12 @@ module Crystal
       end
     end
 
-    def add_type(set, type : Nil)
-      # Nothing to do
-    end
-
     def add_type(set, type : Type)
       set.add type
+    end
+
+    def add_type(set, type : Nil)
+      # Nothing to do
     end
 
     def combined_union_of(types)

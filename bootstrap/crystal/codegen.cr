@@ -260,6 +260,24 @@ module Crystal
       @builder.array_malloc(llvm_type, call_args[1])
     end
 
+    def visit(node : PointerOf)
+      node_var = node.var
+      case node_var
+      when Var
+        var = @vars[node_var.name]
+        @last = var.pointer
+        # @last = @builder.load @last if node.type.var.type.c_struct? || node.type.var.type.c_union?
+      when InstanceVar
+        type = @type
+        raise "Bug: expected #{type} to be an InstanceVarContainer" unless type.is_a?(InstanceVarContainer)
+
+        @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_var.name).not_nil!
+      else
+        raise "Bug: #{node}.ptr"
+      end
+      false
+    end
+
     def visit(node : ASTNode)
       true
     end
@@ -635,8 +653,8 @@ module Crystal
 
 
     def declare_var(var)
-      @vars.fetch_or_assign(var.name.to_s) do
-        llvm_var = LLVMVar.new(alloca(llvm_type(var.type), var.name.to_s), var.type)
+      @vars.fetch_or_assign(var.name) do
+        llvm_var = LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
         # if var.type.is_a?(UnionType) && union_type_id = var.type.types.any?(&:nil_type?)
         #   in_alloca_block { assign_to_union(llvm_var[:ptr], var.type, @mod.nil, llvm_nil) }
         # end

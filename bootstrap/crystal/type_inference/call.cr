@@ -182,7 +182,7 @@ module Crystal
     end
 
     def check_fun_args_types_match(obj_type, typed_def)
-      # string_conversions = nil
+      string_conversions = nil
       # nil_conversions = nil
       # fun_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
@@ -194,16 +194,16 @@ module Crystal
           # if actual_type.nil_type? && expected_type.pointer?
           #   nil_conversions ||= []
           #   nil_conversions << i
-          # elsif (mod.string.equal?(actual_type) || mod.string.hierarchy_type.equal?(actual_type)) && expected_type.pointer? && mod.char.equal?(expected_type.var.type)
-          #   string_conversions ||= []
-          #   string_conversions << i
+          if (actual_type == mod.string || actual_type == mod.string.hierarchy_type) && (expected_type.is_a?(PointerInstanceType) && expected_type.var.type == mod.char)
+            string_conversions ||= [] of Int32
+            string_conversions << i
           # elsif expected_type.fun_type? && actual_type.fun_type? && expected_type.return_type.equal?(@mod.void) && expected_type.arg_types == actual_type.arg_types
           #   fun_conversions ||= []
           #   fun_conversions << i
-          # else
+          else
             arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
             self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
-          # end
+          end
         end
       end
 
@@ -216,16 +216,16 @@ module Crystal
       #   end
       # end
 
-      # if string_conversions
-      #   string_conversions.each do |i|
-      #     call = Call.new(self.args[i], 'cstr')
-      #     call.mod = mod
-      #     call.scope = scope
-      #     call.parent_visitor = parent_visitor
-      #     call.recalculate
-      #     self.args[i] = call
-      #   end
-      # end
+      if string_conversions
+        string_conversions.each do |i|
+          call = Call.new(self.args[i], "cstr")
+          call.mod = mod
+          call.scope = scope
+          call.parent_visitor = parent_visitor
+          call.recalculate
+          self.args[i] = call
+        end
+      end
 
       # if nil_conversions
       #   nil_conversions.each do |i|
@@ -290,8 +290,7 @@ module Crystal
     def define_new_without_initialize(scope, arg_types)
       defs = scope.instance_type.lookup_defs("initialize")
       if defs.length > 0
-        raise "wrong number of arguments"
-        # raise_matches_not_found scope.instance_type, "initialize"
+        raise_matches_not_found scope.instance_type, "initialize"
       end
 
       if defs.length == 0 && arg_types.length > 0

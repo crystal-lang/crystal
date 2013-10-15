@@ -614,7 +614,6 @@ module Crystal
         @last = var[:ptr]
         @last = @builder.load @last if node.type.var.type.c_struct? || node.type.var.type.c_union?
       else
-        var = @type.lookup_instance_var(node.var.name)
         @last = gep llvm_self_ptr, 0, @type.index_of_instance_var(node.var.name)
       end
       false
@@ -1186,6 +1185,7 @@ module Crystal
             end
 
             copy = alloca llvm_type(arg.type), "block_#{arg.name}"
+
             codegen_assign copy, arg.type, exp_type, @last
             new_vars[arg.name] = { ptr: copy, type: arg.type }
           end
@@ -1683,6 +1683,12 @@ module Crystal
       if target_type == value_type
         value = @builder.load value if target_type.union? || (instance_var && (target_type.c_struct? || target_type.c_union?))
         @builder.store value, pointer
+      # Hack until we fix it in the type inference
+      elsif value_type.hierarchy? && value_type.base_type == target_type
+        union_ptr = union_value value
+        union_ptr = cast_to_pointer union_ptr, target_type
+        union = @builder.load(union_ptr)
+        @builder.store union, pointer
       else
         assign_to_union(pointer, target_type, value_type, value)
       end
