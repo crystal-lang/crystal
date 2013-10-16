@@ -54,6 +54,7 @@ module Crystal
     def initialize(@mod, @node)
       @llvm_mod = LLVM::Module.new("Crystal")
       @llvm_typer = LLVMTyper.new
+      @main_ret_type = node.type
       if node_type = node.type
         ret_type = @llvm_typer.llvm_type(node_type)
       else
@@ -73,7 +74,8 @@ module Crystal
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
       last = @last
-      last.is_a?(LibLLVM::ValueRef) ? @builder.ret(last) : @builder.ret
+
+      return_from_fun nil, @main_ret_type.not_nil!
 
       @fun = @llvm_mod.functions.add "main", ([] of LLVM::Type), LLVM::Int32
       entry = new_block "entry"
@@ -463,16 +465,18 @@ module Crystal
     end
 
     def codegen_cond_branch(node_cond, then_block, else_block)
-      @builder.cond(codegen_cond(node_cond), then_block, else_block)
+      @builder.cond(codegen_cond(node_cond.type.not_nil!), then_block, else_block)
 
       nil
     end
 
-    def codegen_cond(node_cond)
-      # if @mod.nil.equal?(node_cond.type)
-      #   cond = int1(0)
-      # elsif @mod.bool.equal?(node_cond.type)
-        @last
+
+    def codegen_cond(type : NilType)
+      int1(0)
+    end
+
+    def codegen_cond(type : BoolType)
+      @last
       # elsif node_cond.type.nilable?
       #   cond = not_null_pointer?(@last)
       # elsif node_cond.type.hierarchy?
@@ -504,9 +508,11 @@ module Crystal
       #   end
       # elsif node_cond.type.is_a?(PointerInstanceType)
       #   cond = not_null_pointer?(@last)
-      # else
-      #   cond = int1(1)
       # end
+    end
+
+    def codegen_cond(node_cond)
+      int1(1)
     end
 
     abstract class BranchedBlock
@@ -874,9 +880,18 @@ module Crystal
         end
 
         if body
-          accept(body)
+          old_return_type = @return_type
+          # old_return_union = @return_union
+          @return_type = target_def.type.not_nil!
+          return_type = @return_type
+          # @return_union = alloca(llvm_type(target_def.type), 'return') if @return_type.union?
 
-          ret(@last)
+          accept body
+
+          return_from_fun target_def, return_type
+
+          @return_type = old_return_type
+          # @return_union = old_return_union
         end
 
         br_from_alloca_to_entry
@@ -895,6 +910,29 @@ module Crystal
       @type = old_type
 
       the_fun
+    end
+
+    def return_from_fun(target_def, return_type)
+      # if target_def.type == @mod.void
+      #   ret nil
+      # elsif target_def.body.no_returns?
+      #   @builder.unreachable
+      # else
+        if return_type.union?
+          # if target_def.body.type != @return_type && !target_def.body.returns?
+          #   assign_to_union(@return_union, @return_type, target_def.body.type, @last)
+          #   @last = @builder.load @return_union
+          # else
+            @last = @builder.load @last
+          # end
+        end
+
+        # if @return_type.nilable? && target_def.body.type && target_def.body.type.nil_type?
+        #   ret LLVM::Constant.null(llvm_type(@return_type))
+        # else
+          ret(@last)
+        # end
+      # end
     end
 
     def new_entry_block
