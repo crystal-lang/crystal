@@ -29,4 +29,11 @@ describe "Code gen: if" do
   it "codegens if value from then" do
     run("if true; 1; else 2; end").to_i.should eq(1)
   end
+
+  it "codegens if with union" do
+    program = Program.new
+    union = program.run("a = if true; 2.5_f32; else; 1; end; a.ptr").to_pointer
+    union.as(Int32).value.should eq(program.float32.type_id)
+    (union + 4).as(Float32).value.should eq(2.5)
+  end
 end

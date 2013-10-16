@@ -473,6 +473,12 @@ module LLVM
       super LibLLVM.struct_create_named(Context.global, name)
     end
 
+    def self.new(name, element_types)
+      type = new(name)
+      type.element_types = element_types
+      type
+    end
+
     def element_types=(element_types)
       LibLLVM.struct_set_body(@type, element_types.map(&.type).buffer, element_types.length.to_u32, 0)
     end
@@ -506,7 +512,11 @@ module LLVM
     end
 
     def to_string
-      LibLLVM.generic_value_to_pointer(@value).as(String)
+      to_pointer.as(String)
+    end
+
+    def to_pointer
+      LibLLVM.generic_value_to_pointer(@value)
     end
   end
 

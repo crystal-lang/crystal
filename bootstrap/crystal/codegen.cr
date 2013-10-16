@@ -48,6 +48,8 @@ module Crystal
   class CodeGenVisitor < Visitor
     getter :llvm_mod
     getter :fun
+    getter :builder
+    getter :typer
 
     def initialize(@mod, @node)
       @llvm_mod = LLVM::Module.new("Crystal")
@@ -402,6 +404,10 @@ module Crystal
       @builder.bit_cast(value, llvm_type(type))
     end
 
+    def cast_to_pointer(value, type)
+      @builder.bit_cast(value, LLVM::PointerType.new(llvm_type(type)))
+    end
+
     def visit(node : If)
       accept(node.cond)
 
@@ -508,30 +514,29 @@ module Crystal
       property count
       property exit_block
 
-      def initialize(@node, @exit_block)
+      def initialize(@node, @exit_block, @codegen)
         @count = 0
       end
     end
 
     class UnionBranchedBlock < BranchedBlock
-      def initialize(node, exit_block)
+      def initialize(node, exit_block, codegen)
         super
-        # @union_ptr = alloca llvm_type(node.type)
+        @union_ptr = @codegen.alloca(@codegen.llvm_type(node.type))
       end
 
       def add_value(block, type, value)
-        # assign_to_union(branch[:union_ptr], branch[:node].type, type, value)
+        @codegen.assign_to_union(@union_ptr, @node.type, type.not_nil!, value)
         @count += 1
       end
 
-      def close(builder, typer)
-        # branch[:union_ptr]
-        LLVM::Int1.from_i 0
+      def close
+        @union_ptr
       end
     end
 
     class PhiBranchedBlock < BranchedBlock
-      def initialize(node, exit_block)
+      def initialize(node, exit_block, codegen)
         super
         @incoming_blocks = [] of LibLLVM::BasicBlockRef
         @incoming_values = [] of LibLLVM::ValueRef
@@ -548,14 +553,14 @@ module Crystal
         @count += 1
       end
 
-      def close(builder, typer)
+      def close
         # if branch[:count] == 0
         #   @builder.unreachable
         # elsif branch[:phi_table].empty?
         #   # All branches are void or no return
         #   @last = llvm_nil
         # else
-        builder.phi typer.llvm_type(@node.type), @incoming_blocks, @incoming_values
+        @codegen.builder.phi @codegen.llvm_type(@node.type), @incoming_blocks, @incoming_values
       end
     end
 
@@ -563,9 +568,9 @@ module Crystal
       exit_block = new_block("exit")
       node_type = node.type
       if node_type && node_type.union?
-        UnionBranchedBlock.new node, exit_block
+        UnionBranchedBlock.new node, exit_block, self
       else
-        PhiBranchedBlock.new node, exit_block
+        PhiBranchedBlock.new node, exit_block, self
       end
     end
 
@@ -586,7 +591,7 @@ module Crystal
       if false # branch.node.returns? || branch.node.no_returns?
         # @builder.unreachable
       else
-        @last = branch.close(@builder, @llvm_typer)
+        @last = branch.close
       end
     end
 
@@ -650,12 +655,56 @@ module Crystal
 
     def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
       if target_type == value_type
-        # value = @builder.load value if target_type.union? || (instance_var && (target_type.c_struct? || target_type.c_union?))
+        value = @builder.load value if target_type.not_nil!.union? #|| (instance_var && (target_type.c_struct? || target_type.c_union?))
         @builder.store value, pointer
       else
         raise "Not implemented: assign_to_union"
         # assign_to_union(pointer, target_type, value_type, value)
       end
+    end
+
+    def assign_to_union(union_pointer, union_type, type, value)
+      # if union_type.nilable?
+      #   if value.type.kind == :integer
+      #     value = @builder.int2ptr value, llvm_type(union_type.nilable_type)
+      #   end
+      #   @builder.store value, union_pointer
+      #   return
+      # end
+
+      type_id_ptr, value_ptr = union_type_id_and_value(union_pointer)
+
+      # if type.union?
+      #   casted_value = cast_to_pointer value, union_type
+      #   @builder.store @builder.load(casted_value), union_pointer
+      # elsif type.nilable?
+      #   index = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.nilable_type.type_id)
+
+      #   @builder.store index, type_id_ptr
+
+      #   casted_value_ptr = cast_to_pointer value_ptr, type.nilable_type
+      #   @builder.store value, casted_value_ptr
+      # else
+        index = type.type_id
+        @builder.store int(index), type_id_ptr
+
+        casted_value_ptr = cast_to_pointer value_ptr, type
+        @builder.store value, casted_value_ptr
+      # end
+    end
+
+    def union_type_id_and_value(union_pointer)
+      type_id_ptr = union_type_id(union_pointer)
+      value_ptr = union_value(union_pointer)
+      [type_id_ptr, value_ptr]
+    end
+
+    def union_type_id(union_pointer)
+      gep union_pointer, 0, 0
+    end
+
+    def union_value(union_pointer)
+      gep union_pointer, 0, 1
     end
 
     def visit(node : Var)

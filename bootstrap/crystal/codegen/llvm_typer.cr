@@ -5,32 +5,42 @@ module Crystal
   class LLVMTyper
     def initialize
       @struct_types = {} of Type => LLVM::Type
+      @cache = {} of Type => LLVM::Type
     end
 
-    def llvm_type(type : PrimitiveType)
+    def llvm_type(type)
+      @cache.fetch_or_assign(type.not_nil!) { create_llvm_type(type) }
+    end
+
+    def create_llvm_type(type : PrimitiveType)
       type.llvm_type
     end
 
-    def llvm_type(type : InstanceVarContainer)
+    def create_llvm_type(type : InstanceVarContainer)
       LLVM::PointerType.new(llvm_struct_type(type))
     end
 
-    def llvm_type(type : Metaclass)
+    def create_llvm_type(type : Metaclass)
       LLVM::Int64
     end
 
-    def llvm_type(type : GenericClassInstanceMetaclass)
+    def create_llvm_type(type : GenericClassInstanceMetaclass)
       LLVM::Int64
     end
 
-    def llvm_type(type : PointerInstanceType)
+    def create_llvm_type(type : PointerInstanceType)
       pointed_type = llvm_embedded_type type.var.type.not_nil!
       pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
       LLVM::PointerType.new(pointed_type)
     end
 
-    def llvm_type(type)
-      raise "Bug: called llvm_type for #{type}"
+    def create_llvm_type(type : UnionType)
+      llvm_value_type = LLVM::ArrayType.new(LLVM::Int32, 4) #type.llvm_value_size.fdiv(LLVM::Int.type.width / 8).ceil)
+      LLVM::StructType.new(type.llvm_name, [LLVM::Int32, llvm_value_type])
+    end
+
+    def create_llvm_type(type)
+      raise "Bug: called create_llvm_type for #{type}"
     end
 
     def llvm_struct_type(type : InstanceVarContainer)
