@@ -25,6 +25,10 @@ class Matches
     !@success || @matches.empty?
   end
 
+  def cover_all?
+    !empty?
+  end
+
   def each
     if @success && @matches
       @matches.each do |match|

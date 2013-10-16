@@ -34,6 +34,14 @@ module Crystal
       false
     end
 
+    def value?
+      false
+    end
+
+    def module?
+      false
+    end
+
     def metaclass?
       false
     end
@@ -70,6 +78,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement defs"
     end
 
+    def sorted_defs
+      raise "Bug: #{self} doesn't implement sorted_defs"
+    end
+
     def add_def(a_def)
       raise "Bug: #{self} doesn't implement add_def"
     end
@@ -98,32 +110,77 @@ module Crystal
   end
 
   module MatchesLookup
+    def match_def_args(args, a_def, owner, type_lookup)
+      match = Match.new(owner, a_def, [] of Type)
+      args.each_with_index do |arg, i|
+        def_arg = a_def.args[i]
+        match_arg_type = match_arg(arg, def_arg, owner, type_lookup, match.free_vars)
+        if match_arg_type
+          match.arg_types.push match_arg_type
+        else
+          return nil
+        end
+      end
+
+      match
+    end
+
+    def match_arg(arg_type, arg, owner, type_lookup, free_vars)
+      restriction = arg.type || arg.type_restriction
+      arg_type.not_nil!.restrict restriction, type_lookup
+    end
+
+    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+      if defs = self.sorted_defs[DefContainer::SortedDefKey.new(name, arg_types.length, yields)]
+        matches_array ||= [] of Match
+        defs.each do |a_def|
+          match = match_def_args(arg_types, a_def, owner, type_lookup)
+          if match
+            matches_array.push match
+            if match.arg_types == arg_types
+              return Matches.new(matches_array, true, owner)
+            end
+          end
+        end
+      end
+
+      Matches.new(matches_array,
+        nil, #Cover.new(arg_types, matches_array),
+        owner)
+    end
+
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      yields = !!yields
+      the_type_lookup = type_lookup
 
-      name_defs = defs[name]
-      name_defs.each do |def_key, a_def|
-        if def_key.restrictions.length == arg_types.length && def_key.yields == yields
-          matched = true
-          def_key.restrictions.each_with_index do |restriction, i|
-            restricted_type = arg_types[i].not_nil!.restrict restriction, self
-            matched = false unless restricted_type
-          end
+      matches_array ||= [] of Match
 
-          if matched
-            return Matches.new([Match.new(self, a_def, arg_types)], nil, owner)
+      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
+      return matches if matches.cover_all?
+
+      if parents && !(name == "new" && owner.metaclass?)
+        parents.each do |parent|
+          the_type_lookup = parent
+          if value?
+            parent_owner = owner
+          elsif parent.class?
+            parent_owner = owner
+          # elsif parent.is_a?(IncludedGenericModule)
+          #   type_lookup = parent
+          #   parent_owner = owner
+          elsif parent.module?
+            parent_owner = owner
+          else
+            parent_owner = parent
           end
+          parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, the_type_lookup, matches.matches)
+          return parent_matches if parent_matches.cover_all?
+
+          matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
         end
       end
 
-      parents.each do |parent|
-        matches = parent.lookup_matches(name, arg_types, yields, owner, type_lookup, matches_array)
-        unless matches.empty?
-          return matches
-        end
-      end
+      Matches.new(matches.matches, matches.cover, owner, false)
 
-      Matches.new([] of Match, nil, owner, false)
     end
 
     def lookup_first_def(name, yields)
@@ -135,10 +192,10 @@ module Crystal
       defs = self.defs[name]
       return defs.values unless defs.empty?
 
-      # parents.each do |parent|
-      #   defs = parent.lookup_defs(name)
-      #   return defs unless defs.empty?
-      # end
+      parents.each do |parent|
+        parent_defs = parent.lookup_defs(name)
+        return parent_defs unless parent_defs.empty?
+      end
 
       [] of Def
     end
@@ -148,9 +205,14 @@ module Crystal
     include MatchesLookup
 
     make_tuple DefKey, restrictions, yields
+    make_tuple SortedDefKey, name, length, yields
 
     def defs
       @defs ||= Hash(String, Hash(DefKey, Def)).new { |h, k| h[k] = {} of DefKey => Def }
+    end
+
+    def sorted_defs
+      @sorted_defs ||= Hash(SortedDefKey, Array(Def)).new { |h, k| h[k] = [] of Def }
     end
 
     def add_def(a_def)
@@ -158,6 +220,19 @@ module Crystal
       a_def.args.each { |arg| restrictions.push(arg.type || arg.type_restriction) }
       # restrictions = a_def.args.map { |arg| arg.type || arg.type_restriction }
       defs[a_def.name][DefKey.new(restrictions, !!a_def.yields)] = a_def
+      add_sorted_def(a_def)
+      a_def
+    end
+
+    def add_sorted_def(a_def)
+      sorted_defs = self.sorted_defs[SortedDefKey.new(a_def.name, a_def.args.length, !!a_def.yields)]
+      # sorted_defs.each_with_index do |ex_def, i|
+      #   if a_def.is_restriction_of?(ex_def, self)
+      #     sorted_defs.insert(i, a_def)
+      #     return
+      #   end
+      # end
+      sorted_defs << a_def
     end
   end
 
@@ -226,6 +301,10 @@ module Crystal
 
   class NonGenericModuleType < ModuleType
     include DefInstanceContainer
+
+    def module?
+      true
+    end
   end
 
   module InheritableClass
@@ -314,13 +393,13 @@ module Crystal
   end
 
   module InstanceVarContainer
-    # def immutable
-    #   @immutable.nil? ? true : @immutable
-    # end
+    def immutable
+      @immutable.nil? ? true : @immutable
+    end
 
-    # def immutable=(immutable)
-    #   @immutable = immutable
-    # end
+    def immutable=(immutable)
+      @immutable = immutable
+    end
 
     def instance_vars
       @instance_vars ||= {} of String => Var
@@ -434,6 +513,10 @@ module Crystal
     def llvm_name
       name
     end
+
+    def value?
+      true
+    end
   end
 
   class BoolType < PrimitiveType
@@ -495,9 +578,7 @@ module Crystal
   end
 
   module GenericType
-    def type_vars
-      @type_vars
-    end
+    getter type_vars
 
     def generic_types
       @generic_types ||= {} of Array(Int32) => Type
@@ -576,21 +657,11 @@ module Crystal
       @generic_class.superclass.not_nil!.add_subclass(self)
     end
 
-    def defs
-      @generic_class.defs
-    end
-
-    def superclass
-      @generic_class.superclass
-    end
-
-    def owned_instance_vars
-      @generic_class.owned_instance_vars
-    end
-
-    def instance_vars_in_initialize
-      @generic_class.instance_vars_in_initialize
-    end
+    delegate defs, @generic_class
+    delegate sorted_defs, @generic_class
+    delegate superclass, @generic_class
+    delegate owned_instance_vars, @generic_class
+    delegate instance_vars_in_initialize, @generic_class
 
     def class?
       true
@@ -781,17 +852,10 @@ module Crystal
       instance_type.generic_class.metaclass.add_def a_def
     end
 
-    def defs
-      instance_type.generic_class.metaclass.defs
-    end
-
-    def type_vars
-      instance_type.type_vars
-    end
-
-    def abstract
-      instance_type.abstract
-    end
+    delegate defs, "instance_type.generic_class.metaclass"
+    delegate sorted_defs, "instance_type.generic_class.metaclass"
+    delegate type_vars, instance_type
+    delegate :abstract, instance_type
 
     def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
       instance_type.lookup_type(names, already_looked_up, lookup_in_container)

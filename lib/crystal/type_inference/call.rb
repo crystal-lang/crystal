@@ -337,7 +337,7 @@ module Crystal
         arg_names.push a_def.args.map(&:name)
 
         msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '}"
-          msg << ", &block" if a_def.yields
+        msg << ", &block" if a_def.yields
         msg << ")"
       end
 

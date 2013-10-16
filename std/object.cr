@@ -27,4 +27,26 @@ class Object
   def not_nil!
     self
   end
+
+  macro self.getter(name)"
+    def #{name}
+      @#{name}
+    end
+  "end
+
+  macro self.setter(name)"
+    def #{name}=(@#{name})
+    end
+  "end
+
+  macro self.property(name)"
+    getter :#{name}
+    setter :#{name}
+  "end
+
+  macro self.delegate(method, to)"
+    def #{method}
+      #{to}.#{method}
+    end
+  "end
 end

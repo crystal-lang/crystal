@@ -26,6 +26,10 @@ module Crystal
       new_node 'Var', StringLiteral.new(node.name)
     end
 
+    def visit_instance_var(node)
+      new_node 'InstanceVar', StringLiteral.new(node.name)
+    end
+
     def visit_array_literal(node)
       args = []
       node.elements.each do |elem|
@@ -69,6 +73,10 @@ module Crystal
     end
 
     def visit_var(node)
+      @last = pointer(string(node.name))
+    end
+
+    def visit_instance_var(node)
       @last = pointer(string(node.name))
     end
 

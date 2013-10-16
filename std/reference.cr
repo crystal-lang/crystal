@@ -1,20 +1,4 @@
 class Reference
-  macro self.getter(name)"
-    def #{name}
-      @#{name}
-    end
-  "end
-
-  macro self.setter(name)"
-    def #{name}=(@#{name})
-    end
-  "end
-
-  macro self.property(name)"
-    getter :#{name}
-    setter :#{name}
-  "end
-
   def ==(other : Value)
     false
   end
