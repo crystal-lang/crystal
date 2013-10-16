@@ -227,13 +227,13 @@ module Crystal
 
       type = scope.types[name]?
       if type
-        # node.raise "#{name} is not a class" unless type.is_a?(ClassType)
-        # if node.superclass && type.superclass != superclass
-        #   node.raise "superclass mismatch for class #{type.name} (#{superclass.name} for #{type.superclass.name})"
-        # end
+        node.raise "#{name} is not a class, it's a #{type.type_desc}" unless type.is_a?(ClassType)
+        if node.superclass && type.superclass != superclass
+          node.raise "superclass mismatch for class #{type} (#{superclass} for #{type.superclass})"
+        end
       else
         unless superclass.is_a?(NonGenericClassType)
-          node_superclass.not_nil!.raise "#{superclass} is not a class"
+          node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
         end
 
         needs_force_add_subclass = true
@@ -256,6 +256,36 @@ module Crystal
       end
 
       false
+    end
+
+    def visit(node : ModuleDef)
+      if node.name.names.length == 1 && !node.name.global
+        scope = current_type
+        name = node.name.names.first
+      else
+        name = node.name.names.pop
+        scope = lookup_ident_type node.name
+      end
+
+      type = scope.types[name]?
+      if type
+        unless type.module?
+          node.raise "#{name} is not a module, it's a #{type.type_desc}"
+        end
+      else
+        # if node.type_vars
+        #   type = GenericModuleType.new scope, name, node.type_vars
+        # else
+          type = NonGenericModuleType.new @mod, scope, name
+        # end
+        scope.types[name] = type
+      end
+
+      @types.push type
+      node.body.accept self
+      @types.pop
+
+      true
     end
 
     def visit(node : LibDef)

@@ -97,6 +97,10 @@ module Crystal
     def llvm_name
       to_s
     end
+
+    def type_desc
+      to_s
+    end
   end
 
   abstract class ContainedType < Type
@@ -297,6 +301,10 @@ module Crystal
     def to_s
       full_name
     end
+
+    def type_desc
+      "module"
+    end
   end
 
   class NonGenericModuleType < ModuleType
@@ -389,6 +397,10 @@ module Crystal
           # end
         end
       end
+    end
+
+    def type_desc
+      "class"
     end
   end
 
@@ -899,6 +911,10 @@ module Crystal
       # else
         @union_types.join " | "
       # end
+    end
+
+    def type_desc
+      "union"
     end
   end
 end
