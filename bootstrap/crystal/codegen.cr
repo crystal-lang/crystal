@@ -65,7 +65,7 @@ module Crystal
       @strings = {} of String => LibLLVM::ValueRef
       @type = @mod
       @last = llvm_nil
-      @return_union = llvm_nil
+      # @return_union = llvm_nil
     end
 
     def finish
@@ -816,6 +816,12 @@ module Crystal
       func = @llvm_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
 
       @last = @builder.call func, call_args
+
+      if target_def.type.union?
+        union = alloca llvm_type(target_def.type)
+        @builder.store @last, union
+        @last = union
+      end
     end
 
     def codegen_fun(mangled_name, target_def, self_type)
@@ -879,17 +885,17 @@ module Crystal
 
         if body
           old_return_type = @return_type
-          old_return_union = @return_union
+          # old_return_union = @return_union
           @return_type = target_def.type
           return_type = @return_type
-          @return_union = alloca(llvm_type(return_type), "return") if return_type.union?
+          # @return_union = alloca(llvm_type(return_type), "return") if return_type.union?
 
           accept body
 
           return_from_fun target_def, return_type
 
           @return_type = old_return_type
-          @return_union = old_return_union
+          # @return_union = old_return_union
         end
 
         br_from_alloca_to_entry
