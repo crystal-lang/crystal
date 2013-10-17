@@ -16,7 +16,7 @@ class Regexp
     erroffset = 1
     @re = PCRE.compile(str, 0, errptr.ptr, erroffset.ptr, 0_i64)
     if @re == 0
-      raise "#{String.from_cstr(errptr)} at #{erroffset}"
+      raise "#{String.new(errptr)} at #{erroffset}"
     end
     @captures = 0
     PCRE.full_info(@re, 0_i64, PCRE::INFO_CAPTURECOUNT, @captures.ptr.as(Void))

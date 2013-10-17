@@ -5,6 +5,6 @@ end
 
 class Errno < Exception
   def initialize
-    super String.from_cstr(C.strerror(C.errno))
+    super String.new(C.strerror(C.errno))
   end
 end

@@ -23,7 +23,7 @@ class Exception
       Unwind.get_reg(cursor, Unwind::REG_IP, out pc)
       while true
         Unwind.get_proc_name(cursor, fname_buffer, fname_size, out offset)
-        fname = String.from_cstr(fname_buffer)
+        fname = String.new(fname_buffer)
         break if fname.length < fname_size - 1
 
         fname_size += 64

@@ -51,7 +51,7 @@ class File
   def self.expand_path(filename)
     str = C.realpath(filename, nil)
     length = C.strlen(str)
-    String.from_cstr(str, length)
+    String.new(str, length)
   end
 
   def self.open(filename, mode)
@@ -71,7 +71,7 @@ class File
     str = Pointer(Char).malloc(size + 1)
     C.fread(str, size, 1_i64, f)
     C.fclose(f)
-    String.from_cstr(str, size.to_i32)
+    String.new(str, size.to_i32)
   end
 
   def self.read_lines(filename)

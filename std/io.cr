@@ -46,7 +46,7 @@ module IO
     buffer_ptr = buffer.ptr
     cap = 0_i64
     length = C.getline(buffer_ptr, cap.ptr, input)
-    length > 0 ? String.from_cstr(buffer) : nil
+    length > 0 ? String.new(buffer) : nil
   end
 
   def eof?

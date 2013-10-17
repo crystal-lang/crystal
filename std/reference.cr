@@ -28,6 +28,6 @@ class Reference
   end
 
   def to_s
-    String.from_cstr(to_cstr)
+    String.new(to_cstr)
   end
 end

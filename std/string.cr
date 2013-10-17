@@ -21,7 +21,7 @@ end
 class String
   include Comparable
 
-  def self.from_cstr(chars)
+  def self.new(chars : Char*)
     length = C.strlen(chars)
     str = Pointer(Char).malloc(length + 5)
     str.as(Int32).value = length
@@ -29,7 +29,7 @@ class String
     str.as(String)
   end
 
-  def self.from_cstr(chars, length)
+  def self.new(chars : Char*, length)
     str = Pointer(Char).malloc(length + 5)
     str.as(Int32).value = length
     C.strncpy(str.as(Char) + 4, chars, length)
@@ -57,7 +57,7 @@ class String
   def self.new_from_buffer(capacity = 16)
     buffer = Buffer.new(capacity)
     yield buffer
-    String.from_cstr(buffer.buffer, buffer.length)
+    new buffer.buffer, buffer.length
   end
 
   def self.build
@@ -330,12 +330,12 @@ class String
     buffer = @c.ptr
     length.times do |i|
       if buffer[i] == separator
-        ary.push String.from_cstr(buffer + index, i - index)
+        ary.push String.new(buffer + index, i - index)
         index = i + 1
       end
     end
     if index != length
-      ary.push String.from_cstr(buffer + index, length - index)
+      ary.push String.new(buffer + index, length - index)
     end
     ary
   end
@@ -358,14 +358,14 @@ class String
     stop = length - separator.length + 1
     while i < stop
       if (buffer + i).memcmp(separator.cstr, separator_length)
-        ary.push String.from_cstr(buffer + index, i - index)
+        ary.push String.new(buffer + index, i - index)
         index = i + separator_length
         i += separator_length - 1
       end
       i += 1
     end
     if index != length
-        ary.push String.from_cstr(buffer + index, length - index)
+        ary.push String.new(buffer + index, length - index)
     end
     ary
   end

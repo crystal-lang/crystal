@@ -125,5 +125,5 @@ def raise(message : String)
 end
 
 fun __crystal_raise_string(message : Char*)
-  raise String.from_cstr(message)
+  raise String.new(message)
 end

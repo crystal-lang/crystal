@@ -6,7 +6,7 @@ end
 module ENV
   def self.[](name)
     str = C.getenv name
-    str ? String.from_cstr(str) : nil
+    str ? String.new(str) : nil
   end
 
   def self.[]=(name, value)

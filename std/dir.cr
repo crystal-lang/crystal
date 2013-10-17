@@ -5,6 +5,6 @@ end
 class Dir
   def self.working_directory
     dir = C.getcwd(nil, 0)
-    String.from_cstr(dir)
+    String.new(dir)
   end
 end

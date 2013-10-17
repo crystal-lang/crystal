@@ -35,7 +35,7 @@ module Xml
     end
 
     def name
-      String.from_cstr(LibXML.xmlTextReaderConstName(@reader))
+      String.new(LibXML.xmlTextReaderConstName(@reader))
     end
 
     def is_empty_element
@@ -43,7 +43,7 @@ module Xml
     end
 
     def value
-      String.from_cstr(LibXML.xmlTextReaderConstValue(@reader))
+      String.new(LibXML.xmlTextReaderConstValue(@reader))
     end
   end
 end

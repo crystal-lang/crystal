@@ -167,7 +167,7 @@ module SDL
   end
 
   def self.error
-    String.from_cstr LibSDL.get_error
+    String.new LibSDL.get_error
   end
 
   def self.ticks

@@ -201,7 +201,7 @@ module Crystal
           end
           next_char
           @token.type = :REGEXP
-          @token.value = String.from_cstr(start, count)
+          @token.value = String.new(start, count)
         end
       when '%'
         case next_char
@@ -262,7 +262,7 @@ module Crystal
             count += 1
           end
           @token.type = :SYMBOL
-          @token.value = String.from_cstr(start, count)
+          @token.value = String.new(start, count)
         elsif char == '"'
           start = @buffer + 1
           count = 0
@@ -271,7 +271,7 @@ module Crystal
           end
           next_char
           @token.type = :SYMBOL
-          @token.value = String.from_cstr(start, count)
+          @token.value = String.new(start, count)
         else
           @token.type = :":"
         end
@@ -382,7 +382,7 @@ module Crystal
             count += 1
           end
           @token.type = :INSTANCE_VAR
-          @token.value = String.from_cstr(start, count)
+          @token.value = String.new(start, count)
         else
           raise "unknown token: #{@buffer.value}"
         end
@@ -407,7 +407,7 @@ module Crystal
             count += 1
           end
           @token.type = :GLOBAL
-          @token.value = String.from_cstr(start, count)
+          @token.value = String.new(start, count)
         else
           raise "unknown token: #{@buffer.value}"
         end
@@ -671,7 +671,7 @@ module Crystal
             count += 1
           end
           @token.type = :CONST
-          @token.value = String.from_cstr(start, count)
+          @token.value = String.new(start, count)
         elsif ('a' <= @buffer.value && @buffer.value <= 'z') || @buffer.value == '_'
           next_char
           scan_ident(start, start_column)
@@ -702,7 +702,7 @@ module Crystal
         next_char
       end
       @token.type = :IDENT
-      @token.value = String.from_cstr(start, @column_number - start_column)
+      @token.value = String.new(start, @column_number - start_column)
       @token
     end
 
@@ -806,7 +806,7 @@ module Crystal
         @token.number_kind = :i32
       end
 
-      string_value = String.from_cstr(start, count)
+      string_value = String.new(start, count)
       string_value = string_value.delete('_') if has_underscore
       @token.value = string_value
     end
@@ -1002,7 +1002,7 @@ module Crystal
         end
 
         @token.type = :STRING
-        @token.value = String.from_cstr(start, count)
+        @token.value = String.new(start, count)
       end
 
       @token
@@ -1050,7 +1050,7 @@ module Crystal
       end
 
       @token.type = :STRING
-      @token.value = String.from_cstr(start, count)
+      @token.value = String.new(start, count)
 
       @token
     end
