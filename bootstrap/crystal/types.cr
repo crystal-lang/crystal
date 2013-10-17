@@ -419,12 +419,12 @@ module Crystal
     end
 
     def lookup_instance_var(name, create = true)
-      lookup_instance_var_internal(name, create).not_nil!
+      lookup_instance_var?(name, create).not_nil!
     end
 
-    def lookup_instance_var_internal(name, create)
+    def lookup_instance_var?(name, create)
       if superclass = @superclass
-        if var = superclass.lookup_instance_var_internal(name, false)
+        if var = superclass.lookup_instance_var?(name, false)
           return var
         end
       end
@@ -437,12 +437,12 @@ module Crystal
     end
 
     def index_of_instance_var(name)
-      index_of_instance_var_internal(name).not_nil!
+      index_of_instance_var?(name).not_nil!
     end
 
-    def index_of_instance_var_internal(name)
+    def index_of_instance_var?(name)
       if sup = superclass
-        index = sup.index_of_instance_var_internal(name)
+        index = sup.index_of_instance_var?(name)
         if index
           index
         else
