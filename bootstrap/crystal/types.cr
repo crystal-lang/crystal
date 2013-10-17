@@ -2,14 +2,6 @@ require "type_inference/restrictions"
 
 module Crystal
   abstract class Type
-    def self.merge(types)
-      types = types.compact
-      return nil if types.empty?
-      first = types.first
-      raise "Bug found!" unless first
-      first.program.type_merge(types)
-    end
-
     def metaclass
       @metaclass ||= Metaclass.new(program, self)
     end
@@ -130,7 +122,7 @@ module Crystal
     end
 
     def match_arg(arg_type, arg, owner, type_lookup, free_vars)
-      restriction = arg.type || arg.type_restriction
+      restriction = arg.type? || arg.type_restriction
       arg_type.not_nil!.restrict restriction, type_lookup
     end
 
@@ -221,7 +213,7 @@ module Crystal
 
     def add_def(a_def)
       restrictions = Array(Type | ASTNode | Nil).new(a_def.args.length)
-      a_def.args.each { |arg| restrictions.push(arg.type || arg.type_restriction) }
+      a_def.args.each { |arg| restrictions.push(arg.type? || arg.type_restriction) }
       # restrictions = a_def.args.map { |arg| arg.type || arg.type_restriction }
       defs[a_def.name][DefKey.new(restrictions, !!a_def.yields)] = a_def
       add_sorted_def(a_def)
@@ -280,7 +272,7 @@ module Crystal
 
       type = self
       names.each do |name|
-        type = type.try! &.types[name]?
+        type = type.not_nil!.types[name]?
         break unless type
       end
 
@@ -369,8 +361,8 @@ module Crystal
     def transfer_instance_vars(a_def)
       if a_def_instance_vars = a_def.instance_vars
         a_def_instance_vars.each do |ivar|
-          if my_superclass = superclass
-            unless my_superclass.owns_instance_var?(ivar)
+          if superclass = @superclass
+            unless superclass.owns_instance_var?(ivar)
               unless owned_instance_vars.includes?(ivar)
                 owned_instance_vars.add(ivar)
                 # each_subclass(self) do |subclass|
@@ -418,7 +410,7 @@ module Crystal
     end
 
     def owns_instance_var?(name)
-      owned_instance_vars.includes?(name) || ((my_superclass = superclass) && my_superclass.owns_instance_var?(name))
+      owned_instance_vars.includes?(name) || ((superclass = @superclass) && superclass.owns_instance_var?(name))
     end
 
     def remove_instance_var(name)
@@ -431,8 +423,8 @@ module Crystal
     end
 
     def lookup_instance_var_internal(name, create)
-      if my_superclass = superclass
-        if var = my_superclass.lookup_instance_var_internal(name, false)
+      if superclass = @superclass
+        if var = superclass.lookup_instance_var_internal(name, false)
           return var
         end
       end
@@ -445,8 +437,12 @@ module Crystal
     end
 
     def index_of_instance_var(name)
+      index_of_instance_var_internal(name).not_nil!
+    end
+
+    def index_of_instance_var_internal(name)
       if sup = superclass
-        index = sup.index_of_instance_var(name)
+        index = sup.index_of_instance_var_internal(name)
         if index
           index
         else

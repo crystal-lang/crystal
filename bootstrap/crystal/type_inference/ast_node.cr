@@ -2,7 +2,6 @@ require "../ast"
 
 module Crystal
   class ASTNode
-    property type
     property dependencies
 
     def set_type(type)
@@ -26,12 +25,12 @@ module Crystal
       @dependencies << node
       node.add_observer self
 
-      return unless node.type
+      return unless node.type?
 
       if (@dependencies && @dependencies.length == 1) || !@type
         new_type = node.type
       else
-        new_type = Type.merge [@type, node.type]
+        new_type = node.type.program.type_merge [@type, node.type]
       end
       return if @type.object_id == new_type.object_id
       set_type(map_type(new_type))
@@ -67,7 +66,7 @@ module Crystal
       if @type.nil? || (@dependencies && @dependencies.length == 1)
         new_type = from.type
       else
-        new_type = Type.merge([@type, from.type] of Type?)
+        new_type = from.type.program.type_merge [@type, from.type]
       end
 
       return if @type.object_id == new_type.object_id
@@ -88,18 +87,18 @@ module Crystal
   end
 
   class PointerOf
-    property mod
+    property! mod
 
     def map_type(type)
-      mod.not_nil!.pointer_of(type.not_nil!)
+      mod.pointer_of(type)
     end
   end
 
   class NewGenericClass
-    property instance_type
+    property! instance_type
 
     def update(from = nil)
-      generic_type = instance_type.not_nil!.instantiate(type_vars.map do |var|
+      generic_type = instance_type.instantiate(type_vars.map do |var|
         var_type = var.type
         self.raise "can't deduce generic type in recursive method" unless var_type
         var_type.instance_type

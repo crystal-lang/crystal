@@ -3,13 +3,8 @@ require "location"
 module Crystal
   # Base class for nodes in the grammar.
   abstract class ASTNode
-    def location
-      @location
-    end
-
-    def location=(location)
-      @location = location.clone
-    end
+    property! type
+    property location
 
     def clone
       clone = clone_without_location
@@ -476,7 +471,6 @@ module Crystal
   class Var < ASTNode
     property :name
     property :out
-    property :type
 
     def initialize(@name, @type = nil)
       @out = false
@@ -487,7 +481,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.type == type && other.out == out
+      other.name == name && other.type? == type? && other.out == out
     end
 
     def clone_without_location

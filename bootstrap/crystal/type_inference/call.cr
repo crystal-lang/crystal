@@ -4,15 +4,11 @@ require "../primitives"
 
 module Crystal
   class Call
-    setter :mod
-    property :scope
-    property :parent_visitor
-    property :target_defs
-    property :target_macro
-
-    def mod
-      @mod.not_nil!
-    end
+    property! mod
+    property! scope
+    property! parent_visitor
+    property target_defs
+    property target_macro
 
     def target_def
       # TODO: fix
@@ -243,7 +239,7 @@ module Crystal
     def obj_and_args_types_set?
       obj = @obj
       block_arg = @block_arg
-      args.all?(&.type) && (obj ? obj.type : true) && (block_arg ? block_arg.type : true)
+      args.all?(&.type?) && (obj ? obj.type? : true) && (block_arg ? block_arg.type? : true)
     end
 
     def raise_matches_not_found(owner, def_name, matches = nil)

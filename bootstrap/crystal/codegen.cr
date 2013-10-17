@@ -27,11 +27,11 @@ module Crystal
       visitor = CodeGenVisitor.new(self, node)
       begin
         node.accept visitor
+        visitor.finish
       rescue ex
         visitor.llvm_mod.dump
         raise ex
       end
-      visitor.finish
       visitor.llvm_mod.dump if Crystal::DUMP_LLVM
       visitor.llvm_mod
     end
@@ -50,16 +50,13 @@ module Crystal
     getter :fun
     getter :builder
     getter :typer
+    getter! :type
 
     def initialize(@mod, @node)
       @llvm_mod = LLVM::Module.new("Crystal")
       @llvm_typer = LLVMTyper.new
       @main_ret_type = node.type
-      if node_type = node.type
-        ret_type = @llvm_typer.llvm_type(node_type)
-      else
-        ret_type = LLVM::Int1
-      end
+      ret_type = @llvm_typer.llvm_type(node.type)
       @fun = @llvm_mod.functions.add("crystal_main", [] of LLVM::Type, ret_type)
       @builder = LLVM::Builder.new
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
@@ -68,6 +65,7 @@ module Crystal
       @strings = {} of String => LibLLVM::ValueRef
       @type = @mod
       @last = llvm_nil
+      @return_union = llvm_nil
     end
 
     def finish
@@ -75,7 +73,7 @@ module Crystal
       br_block_chain [@const_block, @entry_block]
       last = @last
 
-      return_from_fun nil, @main_ret_type.not_nil!
+      return_from_fun nil, @main_ret_type
 
       @fun = @llvm_mod.functions.add "main", ([] of LLVM::Type), LLVM::Int32
       entry = new_block "entry"
@@ -267,7 +265,7 @@ module Crystal
     end
 
     def codegen_primitive_pointer_malloc(node, target_def, call_args)
-      type = node.type.not_nil!
+      type = node.type
       assert_type type, PointerInstanceType
 
       llvm_type = llvm_embedded_type(type.var.type)
@@ -316,7 +314,7 @@ module Crystal
     end
 
     def codegen_primitive_byte_size(node, target_def, call_args)
-      llvm_type(@type.not_nil!.instance_type).size
+      llvm_type(type.instance_type).size
     end
 
     def visit(node : PointerOf)
@@ -330,7 +328,7 @@ module Crystal
         type = @type
         assert_type type, InstanceVarContainer
 
-        @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_var.name).not_nil!
+        @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_var.name)
       else
         raise "Bug: #{node}.ptr"
       end
@@ -384,7 +382,7 @@ module Crystal
 
     def build_string_constant(str, name = "str")
       # name = name.gsub('@', '.')
-      @strings.fetch_or_assign(str) do
+      @strings[str] ||= begin
         global = @llvm_mod.globals.add(LLVM::ArrayType.new(LLVM::Int8, str.length + 5), name)
         global.linkage = LibLLVM::Linkage::Private
         global.global_constant = true
@@ -465,7 +463,7 @@ module Crystal
     end
 
     def codegen_cond_branch(node_cond, then_block, else_block)
-      @builder.cond(codegen_cond(node_cond.type.not_nil!), then_block, else_block)
+      @builder.cond(codegen_cond(node_cond.type), then_block, else_block)
 
       nil
     end
@@ -532,7 +530,7 @@ module Crystal
       end
 
       def add_value(block, type, value)
-        @codegen.assign_to_union(@union_ptr, @node.type, type.not_nil!, value)
+        @codegen.assign_to_union(@union_ptr, @node.type, type, value)
         @count += 1
       end
 
@@ -639,7 +637,7 @@ module Crystal
         assert_type type, InstanceVarContainer
 
         ivar = type.lookup_instance_var(target.name)
-        index = type.index_of_instance_var(target.name).not_nil!
+        index = type.index_of_instance_var(target.name)
 
         ptr = gep llvm_self_ptr, 0, index
         codegen_assign(ptr, target.type, value.type, llvm_value)
@@ -661,7 +659,7 @@ module Crystal
 
     def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
       if target_type == value_type
-        value = @builder.load value if target_type.not_nil!.union? #|| (instance_var && (target_type.c_struct? || target_type.c_union?))
+        value = @builder.load value if target_type.union? #|| (instance_var && (target_type.c_struct? || target_type.c_union?))
         @builder.store value, pointer
       else
         raise "Not implemented: assign_to_union"
@@ -754,7 +752,7 @@ module Crystal
       #     end
       #   end
       # else
-        index = type.index_of_instance_var(node.name).not_nil!
+        index = type.index_of_instance_var(node.name)
 
         struct = @builder.load llvm_self_ptr
         @last = @builder.extract_value struct, index, node.name
@@ -763,7 +761,7 @@ module Crystal
 
 
     def declare_var(var)
-      @vars.fetch_or_assign(var.name) do
+      @vars[var.name] ||= begin
         llvm_var = LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
         # if var.type.is_a?(UnionType) && union_type_id = var.type.types.any?(&:nil_type?)
         #   in_alloca_block { assign_to_union(llvm_var[:ptr], var.type, @mod.nil, llvm_nil) }
@@ -777,7 +775,7 @@ module Crystal
     end
 
     def visit(node : Ident)
-      @last = int64(node.type.not_nil!.instance_type.type_id)
+      @last = int64(node.type.instance_type.type_id)
     end
 
     def visit(node : Call)
@@ -785,7 +783,7 @@ module Crystal
 
       call_args = [] of LibLLVM::ValueRef
 
-      if (obj = node.obj) && obj.type.try!(&.passed_as_self?)
+      if (obj = node.obj) && obj.type.passed_as_self?
         accept(obj)
         call_args << @last
       elsif owner && owner.passed_as_self?
@@ -881,17 +879,17 @@ module Crystal
 
         if body
           old_return_type = @return_type
-          # old_return_union = @return_union
-          @return_type = target_def.type.not_nil!
+          old_return_union = @return_union
+          @return_type = target_def.type
           return_type = @return_type
-          # @return_union = alloca(llvm_type(target_def.type), 'return') if @return_type.union?
+          @return_union = alloca(llvm_type(return_type), "return") if return_type.union?
 
           accept body
 
           return_from_fun target_def, return_type
 
           @return_type = old_return_type
-          # @return_union = old_return_union
+          @return_union = old_return_union
         end
 
         br_from_alloca_to_entry

@@ -9,7 +9,7 @@ module Crystal
     end
 
     def llvm_type(type)
-      @cache[type.not_nil!] ||= create_llvm_type(type)
+      @cache[type] ||= create_llvm_type(type)
     end
 
     def create_llvm_type(type : PrimitiveType)
@@ -29,7 +29,7 @@ module Crystal
     end
 
     def create_llvm_type(type : PointerInstanceType)
-      pointed_type = llvm_embedded_type type.var.type.not_nil!
+      pointed_type = llvm_embedded_type type.var.type
       pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
       LLVM::PointerType.new(pointed_type)
     end
@@ -46,7 +46,12 @@ module Crystal
     def llvm_struct_type(type : InstanceVarContainer)
       @struct_types[type] ||= begin
         struct = LLVM::StructType.new type.llvm_name
-        struct.element_types = type.all_instance_vars.values.map { |var| llvm_embedded_type(var.type) }
+
+        ivars = type.all_instance_vars.values
+        element_types = Array(LLVM::Type).new(ivars.length)
+        ivars.each { |ivar| element_types.push llvm_embedded_type(ivar.type) }
+
+        struct.element_types = element_types
         struct
       end
     end

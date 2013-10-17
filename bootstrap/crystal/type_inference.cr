@@ -12,7 +12,8 @@ module Crystal
   end
 
   class TypeVisitor < Visitor
-    getter :mod
+    getter mod
+    getter! scope
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil)
       @types = [@mod] of Type
@@ -194,9 +195,9 @@ module Crystal
     end
 
     def end_visit(node : NewGenericClass)
-      return if node.type
+      return if node.type?
 
-      instance_type = node.name.type.not_nil!.instance_type
+      instance_type = node.name.type.instance_type
       unless instance_type.is_a?(GenericType)
         node.raise "#{instance_type} is not a generic class"
       end
@@ -319,10 +320,13 @@ module Crystal
         fun_arg
       end
 
-      node.return_type.try! &.accept(self)
-
-      return_type = node.return_type
-      return_type = return_type ? check_primitive_like(return_type) : @mod.void # || @mod.void
+      node_return_type = node.return_type
+      if node_return_type
+        node_return_type.accept self
+        return_type = check_primitive_like(node_return_type)
+      else
+        return_type = @mod.void
+      end
 
       external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs,
         #node.body,
@@ -335,7 +339,7 @@ module Crystal
     end
 
     def check_primitive_like(node)
-      type = node.type.try! &.instance_type
+      type = node.type.instance_type
       # unless type.primitive_like?
       #   msg = "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
       #   msg << " (did you mean Int32?)" if type.equal?(@mod.types["Int"])
@@ -412,7 +416,6 @@ module Crystal
     end
 
     def visit_allocate(node)
-      scope = @scope.not_nil!
       instance_type = scope.instance_type
 
       if instance_type.is_a?(GenericClassType)
@@ -428,8 +431,6 @@ module Crystal
     end
 
     def visit_pointer_malloc(node)
-      scope = @scope.not_nil!
-
       if scope.instance_type.is_a?(GenericClassType)
         node.raise "can't malloc pointer without type, use Pointer(Type).malloc(size)"
       end
@@ -459,7 +460,7 @@ module Crystal
     end
 
     def visit_pointer_new(node)
-      node.type = @scope.not_nil!.instance_type
+      node.type = scope.instance_type
     end
 
     def visit_byte_size(node)
