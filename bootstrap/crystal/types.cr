@@ -86,6 +86,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_defs"
     end
 
+    def include(mod)
+      raise "Bug: #{self} doesn't implement include"
+    end
+
     def llvm_name
       to_s
     end
@@ -261,6 +265,10 @@ module Crystal
     def initialize(program, container, @name)
       super(program, container)
       @parents = [] of Type
+    end
+
+    def include(mod)
+      @parents.insert 0, mod unless parents.any? &.==(mod)
     end
 
     def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)

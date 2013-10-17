@@ -256,6 +256,8 @@ module Crystal
         type.force_add_subclass
       end
 
+      node.type = @mod.nil
+
       false
     end
 
@@ -286,7 +288,64 @@ module Crystal
       node.body.accept self
       @types.pop
 
+      node.type = @mod.nil
+
       true
+    end
+
+    def visit(node : Include)
+      # if node.name.is_a?(NewGenericClass)
+      #   type = lookup_ident_type(node.name.name)
+      # else
+        type = lookup_ident_type(node.name)
+      # end
+
+      unless type.module?
+        node.name.raise "#{node.name} is not a module, it's a #{type.type_desc}"
+      end
+
+      # if node.name.is_a?(NewGenericClass)
+      #   unless type.generic?
+      #     node.name.raise "#{type} is not a generic module"
+      #   end
+
+      #   if type.type_vars.length != node.name.type_vars.length
+      #     node.name.raise "wrong number of type vars for #{type} (#{node.name.type_vars.length} for #{type.type_vars.length})"
+      #   end
+
+      #   type_vars_types = node.name.type_vars.map do |type_var|
+      #     type_var_name = type_var.names[0]
+      #     if current_type.generic? && current_type.type_vars.include?(type_var_name)
+      #       type_var_name
+      #     else
+      #       lookup_ident_type(type_var)
+      #     end
+      #   end
+
+      #   mapping = Hash[type.type_vars.zip(type_vars_types)]
+      #   current_type.include IncludedGenericModule.new(type, current_type, mapping)
+      # else
+        # if type.generic?
+        #   if current_type.generic?
+        #     current_type_type_vars_length = current_type.type_vars.length
+        #   else
+        #     current_type_type_vars_length = 0
+        #   end
+
+        #   if current_type_type_vars_length != type.type_vars.length
+        #     node.name.raise "#{type} is a generic module"
+        #   end
+
+        #   mapping = Hash[type.type_vars.zip(current_type.type_vars)]
+        #   current_type.include IncludedGenericModule.new(type, current_type, mapping)
+        # else
+          current_type.include type
+        # end
+      # end
+
+      node.type = @mod.nil
+
+      false
     end
 
     def visit(node : LibDef)
@@ -298,6 +357,8 @@ module Crystal
         current_type.types[node.name] = type
       end
       @types.push type
+
+      node.type = @mod.nil
     end
 
     def end_visit(node : LibDef)

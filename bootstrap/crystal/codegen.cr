@@ -380,6 +380,29 @@ module Crystal
       @last = llvm_nil
     end
 
+    def visit(node : ClassDef)
+      node.body.accept self
+      @Last = llvm_nil
+      false
+    end
+
+    def visit(node : ModuleDef)
+      node.body.accept self
+      @Last = llvm_nil
+      false
+    end
+
+    def visit(node : LibDef)
+      node.body.accept self
+      @Last = llvm_nil
+      false
+    end
+
+    def visit(node : Include)
+      @last = llvm_nil
+      false
+    end
+
     def build_string_constant(str, name = "str")
       # name = name.gsub('@', '.')
       @strings[str] ||= begin
@@ -776,6 +799,7 @@ module Crystal
 
     def visit(node : Ident)
       @last = int64(node.type.instance_type.type_id)
+      false
     end
 
     def visit(node : Call)
