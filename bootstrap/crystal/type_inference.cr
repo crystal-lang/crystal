@@ -481,7 +481,7 @@ module Crystal
     end
 
     def lookup_var(name)
-      @vars.fetch_or_assign(name) { Var.new name }
+      @vars[name] ||= Var.new(name)
     end
 
     def lookup_ident_type(node : Ident)

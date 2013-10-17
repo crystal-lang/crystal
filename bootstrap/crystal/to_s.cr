@@ -186,7 +186,7 @@ module Crystal
 
       # @str << "::" if node.global
 
-      if node_obj && node.name == "[]"
+      if node_obj && (node.name == "[]" || node.name == "[]?")
         @str << "(" if need_parens
         node_obj.accept self
         @str << ")" if need_parens
@@ -197,7 +197,12 @@ module Crystal
           @str << ", " if i > 0
           arg.accept self
         end
-        @str << decorate_call(node, "]")
+
+        if node.name == "[]"
+          @str << decorate_call(node, "]")
+        else
+          @str << decorate_call(node, "]?")
+        end
       elsif node_obj && node.name == "[]="
         @str << "(" if need_parens
         node_obj.accept self

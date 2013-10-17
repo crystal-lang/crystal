@@ -9,7 +9,7 @@ module Crystal
     end
 
     def llvm_type(type)
-      @cache.fetch_or_assign(type.not_nil!) { create_llvm_type(type) }
+      @cache[type.not_nil!] ||= create_llvm_type(type)
     end
 
     def create_llvm_type(type : PrimitiveType)
@@ -44,7 +44,7 @@ module Crystal
     end
 
     def llvm_struct_type(type : InstanceVarContainer)
-      @struct_types.fetch_or_assign(type) do
+      @struct_types[type] ||= begin
         struct = LLVM::StructType.new type.llvm_name
         struct.element_types = type.all_instance_vars.values.map { |var| llvm_embedded_type(var.type) }
         struct

@@ -438,7 +438,7 @@ module Crystal
       end
 
       if create || owned_instance_vars.includes?(name)
-        instance_vars.fetch_or_assign(name) { Var.new name }
+        instance_vars[name] ||= Var.new(name)
       else
         instance_vars[name]?
       end

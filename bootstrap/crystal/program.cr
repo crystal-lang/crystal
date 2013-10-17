@@ -149,7 +149,7 @@ module Crystal
       end
 
       types_ids = types.map(&.type_id).sort!
-      @unions.fetch_or_assign(types_ids) { UnionType.new self, types }
+      @unions[types_ids] ||= UnionType.new(self, types)
     end
 
     def require(filename, relative_to = nil)

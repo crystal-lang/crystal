@@ -192,20 +192,25 @@ module Crystal
           value = parse_op_assign
           if atomic.is_a?(Call) && atomic.name == :"[]"
             obj = atomic.obj
+            atomic_clone = atomic.clone
 
             case token_type
             when :'&&='
-              assign = Call.new(obj, :"[]=", atomic.args + [value], nil, nil, false, method_column_number)
+              atomic.args.push value
+              assign = Call.new(obj, :"[]=", atomic.args, nil, nil, false, method_column_number)
               assign.location = location
-              atomic = And.new(atomic.clone, assign)
+              atomic = And.new(atomic_clone, assign)
             when :'||='
-              assign = Call.new(obj, :"[]=", atomic.args + [value], nil, nil, false, method_column_number)
+              atomic.args.push value
+              assign = Call.new(obj, :"[]=", atomic.args, nil, nil, false, method_column_number)
               assign.location = location
-              atomic = Or.new(atomic.clone, assign)
+              atomic_clone.name = :"[]?"
+              atomic = Or.new(atomic_clone, assign)
             else
-              call = Call.new(atomic.clone, method, [value], nil, nil, false, method_column_number)
+              call = Call.new(atomic_clone, method, [value], nil, nil, false, method_column_number)
               call.location = location
-              atomic = Call.new(obj, :"[]=", atomic.args + [call], nil, nil, false, method_column_number)
+              atomic.args.push call
+              atomic = Call.new(obj, :"[]=", atomic.args, nil, nil, false, method_column_number)
             end
           else
             case token_type

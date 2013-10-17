@@ -183,7 +183,7 @@ module Crystal
 
           # Rewrite 'a += b' as 'a = a + b'
 
-          if atomic.is_a?(Call) && !@def_vars.last.includes?(atomic.name)
+          if atomic.is_a?(Call) && atomic.name != "[]" !@def_vars.last.includes?(atomic.name)
             raise "'#{@token.type}' before definition of '#{atomic.name}'"
 
             atomic = Var.new(atomic.name)
@@ -199,19 +199,45 @@ module Crystal
           next_token_skip_space_or_newline
 
           value = parse_op_assign
-          case token_type
-          when :"&&="
-            assign = Assign.new(atomic, value)
-            assign.location = location
-            atomic = And.new(atomic.clone, assign)
-          when :"||="
-            assign = Assign.new(atomic, value)
-            assign.location = location
-            atomic = Or.new(atomic.clone, assign)
+
+          if atomic.is_a?(Call) && atomic.name == "[]"
+            obj = atomic.obj
+            atomic_clone = atomic.clone
+
+            case token_type
+            when :"&&="
+              atomic.args.push value
+              assign = Call.new(obj, "[]=", atomic.args, nil, nil, false, method_column_number)
+              assign.location = location
+              atomic = And.new(atomic_clone, assign)
+            when :"||="
+              atomic.args.push value
+              assign = Call.new(obj, "[]=", atomic.args, nil, nil, false, method_column_number)
+              assign.location = location
+              fetch = atomic_clone
+              fetch.name = "[]?"
+              atomic = Or.new(fetch, assign)
+            else
+              call = Call.new(atomic_clone, method, [value] of ASTNode, nil, nil, false, method_column_number)
+              call.location = location
+              atomic.args.push call
+              atomic = Call.new(obj, "[]=", atomic.args, nil, nil, false, method_column_number)
+            end
           else
-            call = Call.new(atomic, method, [value] of ASTNode, nil, nil, false, method_column_number)
-            call.location = location
-            atomic = Assign.new(atomic.clone, call)
+            case token_type
+            when :"&&="
+              assign = Assign.new(atomic, value)
+              assign.location = location
+              atomic = And.new(atomic.clone, assign)
+            when :"||="
+              assign = Assign.new(atomic, value)
+              assign.location = location
+              atomic = Or.new(atomic.clone, assign)
+            else
+              call = Call.new(atomic, method, [value] of ASTNode, nil, nil, false, method_column_number)
+              call.location = location
+              atomic = Assign.new(atomic.clone, call)
+            end
           end
         else
           break

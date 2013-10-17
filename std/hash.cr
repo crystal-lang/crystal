@@ -74,10 +74,6 @@ class Hash(K, V)
     entry ? entry.value : yield key
   end
 
-  def fetch_or_assign(key)
-    fetch(key) { self[key] = yield }
-  end
-
   def delete(key)
     index = bucket_index(key)
     bucket = @buckets[index]

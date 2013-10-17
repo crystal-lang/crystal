@@ -217,7 +217,7 @@ describe Parser do
   it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int32), Or.new("a".var, Assign.new("a".var, 1.int32))]
 
   it_parses "a = 1; a[2] &&= 3", [Assign.new("a".var, 1.int32), And.new(Call.new("a".var, :"[]", [2.int32]), Call.new("a".var, :"[]=", [2.int32, 3.int32]))]
-  it_parses "a = 1; a[2] ||= 3", [Assign.new("a".var, 1.int32), Or.new(Call.new("a".var, :"[]", [2.int32]), Call.new("a".var, :"[]=", [2.int32, 3.int32]))]
+  it_parses "a = 1; a[2] ||= 3", [Assign.new("a".var, 1.int32), Or.new(Call.new("a".var, :"[]?", [2.int32]), Call.new("a".var, :"[]=", [2.int32, 3.int32]))]
 
   it_parses "if foo; 1; end", If.new("foo".call, 1.int32)
   it_parses "if foo\n1\nend", If.new("foo".call, 1.int32)
