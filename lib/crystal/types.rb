@@ -1301,6 +1301,10 @@ module Crystal
       true
     end
 
+    def generic?
+      true
+    end
+
     def parents
       instance_type.parents.map(&:metaclass)
     end

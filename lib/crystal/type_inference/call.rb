@@ -353,7 +353,15 @@ module Crystal
           end
         end
 
-        msg << ", &block" if a_def.yields
+        if a_def.yields
+          if a_def.block_arg
+            msg << ", "
+            msg << a_def.block_arg.to_s
+          else
+            msg << ", &block"
+          end
+        end
+
         msg << ")"
       end
 
