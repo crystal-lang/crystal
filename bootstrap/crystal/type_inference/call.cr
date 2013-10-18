@@ -263,7 +263,7 @@ module Crystal
         raise "wrong number of arguments for '#{full_name(owner)}' (#{args.length} for #{all_arguments_lengths.join ", "})"
       end
 
-      arg_names = [] of Array(String)
+      # arg_names = [] of Array(String)
 
       message = String.build do |msg|
         msg << "no overload matches '#{full_name(owner)}'"
@@ -271,9 +271,29 @@ module Crystal
         msg << "\n"
         msg << "Overloads are:"
         defs.each do |a_def|
-          arg_names.push a_def.args.map(&.name)
+          # arg_names.push a_def.args.map(&.name)
 
-          msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : "") }.join ", "}"
+          msg << "\n - #{full_name(owner)}("
+          a_def.args.each_with_index do |arg, i|
+            msg << ", " if i > 0
+            msg << arg.name
+            if arg_type = arg.type?
+              msg << " : "
+              msg << arg_type
+            elsif res = arg.type_restriction
+              msg << " : "
+              if owner.is_a?(GenericClassInstanceType) && res.is_a?(Ident) && res.names.length == 1
+                if type_var = owner.type_vars[res.names[0]]?
+                  msg << type_var.type
+                else
+                  msg << arg.type_restriction
+                end
+              else
+                msg << arg.type_restriction
+              end
+            end
+          end
+
           msg << ", &block" if a_def.yields
           msg << ")"
         end

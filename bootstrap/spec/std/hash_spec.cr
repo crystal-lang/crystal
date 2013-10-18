@@ -173,4 +173,11 @@ describe "Hash" do
     h3 = h1.merge(h2)
     h3.should eq({1 => 5, 3 => 4, 2 => 3})
   end
+
+  it "zips" do
+    ary1 = [1, 2, 3]
+    ary2 = ['a', 'b', 'c']
+    hash = Hash.zip(ary1, ary2)
+    hash.should eq({1 => 'a', 2 => 'b', 3 => 'c'})
+  end
 end

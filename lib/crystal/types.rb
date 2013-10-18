@@ -1112,7 +1112,7 @@ module Crystal
         end
 
         if @including_class.is_a?(GenericClassInstanceType)
-          type_var = @including_class.type_vars[m[0]]
+          type_var = @including_class.type_vars[m]
           return type_var ? type_var.type : nil
         end
       end

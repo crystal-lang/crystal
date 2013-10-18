@@ -42,6 +42,10 @@ module Crystal
       false
     end
 
+    def generic?
+      false
+    end
+
     def hierarchy_type
       self
     end
@@ -154,7 +158,7 @@ module Crystal
 
       matches_array ||= [] of Match
 
-      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
+      matches = lookup_matches_without_parents(name, arg_types, yields, owner, the_type_lookup, matches_array)
       return matches if matches.cover_all?
 
       if parents && !(name == "new" && owner.metaclass?)
@@ -164,9 +168,9 @@ module Crystal
             parent_owner = owner
           elsif parent.class?
             parent_owner = owner
-          # elsif parent.is_a?(IncludedGenericModule)
-          #   type_lookup = parent
-          #   parent_owner = owner
+          elsif parent.is_a?(IncludedGenericModule)
+            the_type_lookup = parent
+            parent_owner = owner
           elsif parent.module?
             parent_owner = owner
           else
@@ -625,6 +629,26 @@ module Crystal
     end
   end
 
+  class GenericModuleType < ModuleType
+    include GenericType
+
+    def initialize(program, container, name, @type_vars)
+      super(program, container, name)
+    end
+
+    def module?
+      true
+    end
+
+    def type_desc
+      "generic module"
+    end
+
+    def to_s
+      "#{super}(#{type_vars.join ", "})"
+    end
+  end
+
   class GenericClassType < ClassType
     include GenericType
 
@@ -646,6 +670,10 @@ module Crystal
         metaclass.add_def Def.new("allocate", ([] of Arg), Primitive.new(:allocate))
         metaclass
       end
+    end
+
+    def type_desc
+      "generic class"
     end
 
     def to_s
@@ -723,14 +751,13 @@ module Crystal
       nil
     end
 
-
     def parents
       generic_class.parents.map do |t|
-        # if t.is_a?(IncludedGenericModule)
-        #   IncludedGenericModule.new(t.module, self, t.mapping)
-        # else
+        if t.is_a?(IncludedGenericModule)
+          IncludedGenericModule.new(program, t.module, self, t.mapping)
+        else
           t
-        # end
+        end
       end
     end
 
@@ -768,6 +795,59 @@ module Crystal
 
     def llvm_size
       Crystal::Program::POINTER_SIZE
+    end
+  end
+
+  class IncludedGenericModule < Type
+    getter program
+    getter :module
+    getter including_class
+    getter mapping
+
+    # delegate [:implements?, :lookup_matches_without_parents, :lookup_similar_defs, :lookup_macro, :defs] => :@module
+
+    def initialize(@program, @module, @including_class, @mapping)
+    end
+
+    delegate container, @module
+    delegate name, @module
+    delegate parents, @module
+    delegate defs, @module
+
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+      @module.lookup_matches(name, arg_types, yields, owner, type_lookup, matches_array)
+    end
+
+    def lookup_defs(name)
+      @module.lookup_defs(name)
+    end
+
+    def match_arg(arg_type, arg, owner, type_lookup, free_vars)
+      @module.match_arg(arg_type, arg, owner, type_lookup, free_vars)
+    end
+
+    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      if names.length == 1
+        if m = @mapping[names[0]]?
+          case m
+          when Type
+            return m
+          when String
+            including_class = @including_class
+
+            if including_class.is_a?(GenericClassInstanceType)
+              type_var = including_class.type_vars[m]?
+              return type_var ? type_var.type : nil
+            end
+          end
+        end
+      end
+
+      @module.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    def to_s
+      "#{@module}(#{@including_class})"
     end
   end
 

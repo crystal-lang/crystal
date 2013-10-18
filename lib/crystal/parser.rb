@@ -2323,10 +2323,7 @@ module Crystal
         node.is_a?(ClassVar) ||
         node.is_a?(Ident) ||
         node.is_a?(Global) ||
-          (node.is_a?(Call) &&
-            (node.obj.nil? && node.args.length == 0 && node.block.nil?) ||
-              node.name == :"[]"
-          )
+          (node.is_a?(Call) && ((node.obj.nil? && node.args.length == 0 && node.block.nil?) || node.name == :"[]"))
     end
 
     def is_type_like?(node)

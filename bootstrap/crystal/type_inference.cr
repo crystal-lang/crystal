@@ -198,8 +198,8 @@ module Crystal
       return if node.type?
 
       instance_type = node.name.type.instance_type
-      unless instance_type.is_a?(GenericType)
-        node.raise "#{instance_type} is not a generic class"
+      unless instance_type.is_a?(GenericClassType)
+        node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
       end
 
       if instance_type.type_vars.length != node.type_vars.length
@@ -276,11 +276,11 @@ module Crystal
           node.raise "#{name} is not a module, it's a #{type.type_desc}"
         end
       else
-        # if node.type_vars
-        #   type = GenericModuleType.new scope, name, node.type_vars
-        # else
+        if type_vars = node.type_vars
+          type = GenericModuleType.new @mod, scope, name, type_vars
+        else
           type = NonGenericModuleType.new @mod, scope, name
-        # end
+        end
         scope.types[name] = type
       end
 
@@ -294,54 +294,61 @@ module Crystal
     end
 
     def visit(node : Include)
-      # if node.name.is_a?(NewGenericClass)
-      #   type = lookup_ident_type(node.name.name)
-      # else
-        type = lookup_ident_type(node.name)
-      # end
+      node_name = node.name
+
+      if node_name.is_a?(NewGenericClass)
+        type = lookup_ident_type(node_name.name)
+      else
+        type = lookup_ident_type(node_name)
+      end
 
       unless type.module?
         node.name.raise "#{node.name} is not a module, it's a #{type.type_desc}"
       end
 
-      # if node.name.is_a?(NewGenericClass)
-      #   unless type.generic?
-      #     node.name.raise "#{type} is not a generic module"
-      #   end
+      current_type = current_type()
 
-      #   if type.type_vars.length != node.name.type_vars.length
-      #     node.name.raise "wrong number of type vars for #{type} (#{node.name.type_vars.length} for #{type.type_vars.length})"
-      #   end
+      if node_name.is_a?(NewGenericClass)
+        unless type.is_a?(GenericModuleType)
+          node_name.raise "#{type} is not a generic module"
+        end
 
-      #   type_vars_types = node.name.type_vars.map do |type_var|
-      #     type_var_name = type_var.names[0]
-      #     if current_type.generic? && current_type.type_vars.include?(type_var_name)
-      #       type_var_name
-      #     else
-      #       lookup_ident_type(type_var)
-      #     end
-      #   end
+        if type.type_vars.length != node_name.type_vars.length
+          node_name.raise "wrong number of type vars for #{type} (#{node_name.type_vars.length} for #{type.type_vars.length})"
+        end
 
-      #   mapping = Hash[type.type_vars.zip(type_vars_types)]
-      #   current_type.include IncludedGenericModule.new(type, current_type, mapping)
-      # else
-        # if type.generic?
-        #   if current_type.generic?
-        #     current_type_type_vars_length = current_type.type_vars.length
-        #   else
-        #     current_type_type_vars_length = 0
-        #   end
+        type_vars_types = node_name.type_vars.map do |type_var|
+          unless type_var.is_a?(Ident)
+            type_var.raise "only simple names are supported for now"
+          end
 
-        #   if current_type_type_vars_length != type.type_vars.length
-        #     node.name.raise "#{type} is a generic module"
-        #   end
+          type_var_name = type_var.names[0]
+          if current_type.is_a?(GenericType) && current_type.type_vars.includes?(type_var_name)
+            type_var_name
+          else
+            lookup_ident_type(type_var)
+          end
+        end
 
-        #   mapping = Hash[type.type_vars.zip(current_type.type_vars)]
-        #   current_type.include IncludedGenericModule.new(type, current_type, mapping)
-        # else
+        mapping = Hash.zip(type.type_vars, type_vars_types)
+        current_type.include IncludedGenericModule.new(@mod, type, current_type, mapping)
+      else
+        if type.is_a?(GenericModuleType)
+          if current_type.is_a?(GenericType)
+            current_type_type_vars_length = current_type.type_vars.length
+            if current_type_type_vars_length != type.type_vars.length
+              node_name.raise "#{type} wrong number of type vars for #{type} (#{current_type_type_vars_length} for #{current_type.type_vars.length})"
+            end
+
+            mapping = Hash.zip(type.type_vars, current_type.type_vars)
+            current_type.include IncludedGenericModule.new(@mod, type, current_type, mapping)
+          else
+            node_name.raise "#{type} is a generic module"
+          end
+        else
           current_type.include type
-        # end
-      # end
+        end
+      end
 
       node.type = @mod.nil
 

@@ -336,7 +336,23 @@ module Crystal
       defs.each do |a_def|
         arg_names.push a_def.args.map(&:name)
 
-        msg << "\n - #{full_name(owner)}(#{a_def.args.map { |arg| arg.name + ((arg_type = arg.type || arg.type_restriction) ? (" : #{arg_type}") : '') }.join ', '}"
+        msg << "\n - #{full_name(owner)}("
+        a_def.args.each_with_index do |arg, i|
+          msg << ", " if i > 0
+          msg << arg.name.to_s
+          if arg.type
+            msg << " : "
+            msg << arg.type.to_s
+          elsif arg.type_restriction
+            msg << " : "
+            if owner.generic? && arg.type_restriction.is_a?(Ident) && arg.type_restriction.names.length == 1 && (type_var = owner.type_vars[arg.type_restriction.names[0]])
+              msg << type_var.type.to_s
+            else
+              msg << arg.type_restriction.to_s
+            end
+          end
+        end
+
         msg << ", &block" if a_def.yields
         msg << ")"
       end

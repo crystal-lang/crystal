@@ -155,6 +155,14 @@ class Hash(K, V)
     hash
   end
 
+  def self.zip(ary1 : Array(K), ary2 : Array(V))
+    hash = {} of K => V
+    ary1.each_with_index do |key, i|
+      hash[key] = ary2[i]
+    end
+    hash
+  end
+
   def ==(other : self)
     return false unless length == other.length
     each do |key, value|
