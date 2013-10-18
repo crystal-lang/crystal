@@ -214,12 +214,7 @@ module LLVM
     end
 
     def [](name)
-      func = LibLLVM.get_named_function(@mod.llvm_module, name)
-      if func
-        Function.new(func)
-      else
-        raise "Undefined function: #{name}"
-      end
+      self[name]?.not_nil!
     end
 
     def []?(name)

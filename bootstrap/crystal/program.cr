@@ -54,6 +54,9 @@ module Crystal
       @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
       # @string.allocated = true
 
+      @types["Array"] = GenericClassType.new self, self, "Array", reference, ["T"]
+      @types["Exception"] = NonGenericClassType.new self, self, "Exception", reference
+
       @string.lookup_instance_var("@length").type = @int32
       @string.lookup_instance_var("@c").type = @char
 

@@ -72,6 +72,7 @@ module Crystal
       pointer.add_def Def.new("value", ([] of Arg), Primitive.new(:pointer_get))
       pointer.add_def Def.new("value=", [Arg.new_with_restriction("value", Ident.new(["T"]))], Primitive.new(:pointer_set))
       pointer.add_def Def.new("address", ([] of Arg), Primitive.new(:pointer_address))
+      pointer.add_def Def.new("realloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_realloc))
     end
 
     def define_type_sizes
@@ -87,6 +88,10 @@ module Crystal
       owner.add_def a_def
       instance = a_def.overload(args.values, return_type, body)
       owner.add_def_instance(a_def.object_id, args.values, nil, instance)
+    end
+
+    def realloc(llvm_mod)
+      llvm_mod.functions["realloc"]? || llvm_mod.functions.add("realloc", ([LLVM::PointerType.new(LLVM::Int8), LLVM::Int64] of LLVM::Type), LLVM::PointerType.new(LLVM::Int8))
     end
   end
 

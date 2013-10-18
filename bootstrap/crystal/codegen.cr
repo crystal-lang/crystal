@@ -100,6 +100,8 @@ module Crystal
                 codegen_primitive_pointer_address node, target_def, call_args
               when :pointer_new
                 codegen_primitive_pointer_new node, target_def, call_args
+              when :pointer_realloc
+                codegen_primitive_pointer_realloc node, target_def, call_args
               when :byte_size
                 codegen_primitive_byte_size node, target_def, call_args
               else
@@ -313,8 +315,19 @@ module Crystal
       @builder.int2ptr(call_args[1], llvm_type(node.type))
     end
 
+    def codegen_primitive_pointer_realloc(node, target_def, call_args)
+      type = @type
+      assert_type type, PointerInstanceType
+
+      casted_ptr = cast_to_void_pointer(call_args[0])
+      size = call_args[1]
+      size = @builder.mul size, llvm_size(type.var.type)
+      reallocated_ptr = realloc casted_ptr, size
+      @last = cast_to_pointer reallocated_ptr, type.var.type
+    end
+
     def codegen_primitive_byte_size(node, target_def, call_args)
-      llvm_type(type.instance_type).size
+      llvm_size(type.instance_type)
     end
 
     def visit(node : PointerOf)
@@ -429,6 +442,10 @@ module Crystal
 
     def cast_to_pointer(value, type)
       @builder.bit_cast(value, LLVM::PointerType.new(llvm_type(type)))
+    end
+
+    def cast_to_void_pointer(pointer)
+      @builder.bit_cast pointer, LLVM::PointerType.new(LLVM::Int8)
     end
 
     def visit(node : If)
@@ -1012,6 +1029,10 @@ module Crystal
       @builder.gep ptr, [int(index0), int(index1)]
     end
 
+    def realloc(buffer, size)
+      @builder.call @mod.realloc(@llvm_mod), [buffer, size]
+    end
+
     def llvm_type(type)
       @llvm_typer.llvm_type(type)
     end
@@ -1026,6 +1047,10 @@ module Crystal
 
     def llvm_embedded_type(type)
       @llvm_typer.llvm_embedded_type(type)
+    end
+
+    def llvm_size(type)
+      llvm_type(type).size
     end
 
     def llvm_self

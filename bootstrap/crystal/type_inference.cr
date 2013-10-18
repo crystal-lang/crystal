@@ -476,6 +476,8 @@ module Crystal
         visit_pointer_address node
       when :pointer_new
         visit_pointer_new node
+      when :pointer_realloc
+        visit_pointer_realloc node
       when :byte_size
         visit_byte_size node
       else
@@ -529,6 +531,10 @@ module Crystal
 
     def visit_pointer_new(node)
       node.type = scope.instance_type
+    end
+
+    def visit_pointer_realloc(node)
+      node.type = scope
     end
 
     def visit_byte_size(node)
