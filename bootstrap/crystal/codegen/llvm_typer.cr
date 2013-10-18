@@ -4,8 +4,8 @@ require "../llvm"
 module Crystal
   class LLVMTyper
     def initialize
-      @cache = {} of Type => LLVM::Type
-      @struct_cache = {} of Type => LLVM::Type
+      @cache = {} of Type => LibLLVM::TypeRef
+      @struct_cache = {} of Type => LibLLVM::TypeRef
     end
 
     def llvm_type(type)
@@ -17,7 +17,7 @@ module Crystal
     end
 
     def create_llvm_type(type : InstanceVarContainer)
-      LLVM::PointerType.new(llvm_struct_type(type))
+      LLVM.pointer_type(llvm_struct_type(type))
     end
 
     def create_llvm_type(type : Metaclass)
@@ -31,12 +31,12 @@ module Crystal
     def create_llvm_type(type : PointerInstanceType)
       pointed_type = llvm_embedded_type type.var.type
       pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
-      LLVM::PointerType.new(pointed_type)
+      LLVM.pointer_type(pointed_type)
     end
 
     def create_llvm_type(type : UnionType)
-      llvm_value_type = LLVM::ArrayType.new(LLVM::Int32, 4) #type.llvm_value_size.fdiv(LLVM::Int.type.width / 8).ceil)
-      LLVM::StructType.new(type.llvm_name, [LLVM::Int32, llvm_value_type])
+      llvm_value_type = LLVM.array_type(LLVM::Int32, 4) #type.llvm_value_size.fdiv(LLVM::Int.type.width / 8).ceil)
+      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type])
     end
 
     def create_llvm_type(type)
@@ -49,14 +49,12 @@ module Crystal
 
     def create_llvm_struct_type(type : InstanceVarContainer)
       @struct_cache[type] ||= begin
-        struct = LLVM::StructType.new type.llvm_name
-
-        ivars = type.all_instance_vars.values
-        element_types = Array(LLVM::Type).new(ivars.length)
-        ivars.each { |ivar| element_types.push llvm_embedded_type(ivar.type) }
-
-        struct.element_types = element_types
-        struct
+        LLVM.struct_type(type.llvm_name) do
+          ivars = type.all_instance_vars.values
+          element_types = Array(LibLLVM::TypeRef).new(ivars.length)
+          ivars.each { |ivar| element_types.push llvm_embedded_type(ivar.type) }
+          element_types
+        end
       end
     end
 

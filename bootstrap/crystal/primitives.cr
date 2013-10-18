@@ -92,7 +92,7 @@ module Crystal
     end
 
     def realloc(llvm_mod)
-      llvm_mod.functions["realloc"]? || llvm_mod.functions.add("realloc", ([LLVM::PointerType.new(LLVM::Int8), LLVM::Int64] of LLVM::Type), LLVM::PointerType.new(LLVM::Int8))
+      llvm_mod.functions["realloc"]? || llvm_mod.functions.add("realloc", ([LLVM.pointer_type(LLVM::Int8), LLVM::Int64]), LLVM.pointer_type(LLVM::Int8))
     end
   end
 

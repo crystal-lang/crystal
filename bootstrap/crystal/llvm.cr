@@ -9,22 +9,22 @@ lib LibLLVM("LLVM-3.3")
   type GenericValueRef : Void*
 
   enum Linkage
-    External,
-    AvailableExternally,
-    LinkOnceAny,
-    LinkOnceODR,
-    LinkOnceODRAutoHide,
-    WeakAny,
-    WeakODR,
-    Appending,
-    Internal,
-    Private,
-    DLLImport,
-    DLLExport,
-    ExternalWeak,
-    Ghost,
-    Common,
-    LinkerPrivate,
+    External
+    AvailableExternally
+    LinkOnceAny
+    LinkOnceODR
+    LinkOnceODRAutoHide
+    WeakAny
+    WeakODR
+    Appending
+    Internal
+    Private
+    DLLImport
+    DLLExport
+    ExternalWeak
+    Ghost
+    Common
+    LinkerPrivate
     LinkerPrivateWeak
   end
 
@@ -60,93 +60,93 @@ lib LibLLVM("LLVM-3.3")
     PredicateTrue
   end
 
-  fun get_global_context = LLVMGetGlobalContext : ContextRef
-  fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
-  fun dump_module = LLVMDumpModule(module : ModuleRef)
-  fun void_type = LLVMVoidType() : TypeRef
-  fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : Int32, is_var_arg : Int32) : TypeRef
   fun add_function = LLVMAddFunction(module : ModuleRef, name : Char*, type : TypeRef) : ValueRef
-  fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : Char*) : ValueRef
-  fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : Char*) : ValueRef
+  fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef *, count : Int32)
   fun append_basic_block = LLVMAppendBasicBlock(fn : ValueRef, name : Char*) : BasicBlockRef
-  fun create_builder = LLVMCreateBuilder() : BuilderRef
-  fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
-  fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
-  fun build_ret_void = LLVMBuildRetVoid(builder : BuilderRef) : ValueRef
-  fun build_ret = LLVMBuildRet(builder : BuilderRef, value : ValueRef) : ValueRef
+  fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
+  fun build_add = LLVMBuildAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_alloca = LLVMBuildAlloca(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
+  fun build_and = LLVMBuildAnd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_array_malloc = LLVMBuildArrayMalloc(builder : BuilderRef, type : TypeRef, val : ValueRef, name : Char*) : ValueRef
+  fun build_ashr = LLVMBuildAShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_bit_cast = LLVMBuildBitCast(builder : BuilderRef, value : ValueRef, type : TypeRef, name : Char*) : ValueRef
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
   fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : Char*) : ValueRef
-  fun build_alloca = LLVMBuildAlloca(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
-  fun build_store = LLVMBuildStore(builder : BuilderRef, value : ValueRef, ptr : ValueRef)
-  fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : Char*) : ValueRef
-  fun build_bit_cast = LLVMBuildBitCast(builder : BuilderRef, value : ValueRef, type : TypeRef, name : Char*) : ValueRef
-  fun build_add = LLVMBuildAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_sub = LLVMBuildSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_mul = LLVMBuildMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_sdiv = LLVMBuildSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_udiv = LLVMBuildUDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_srem = LLVMBuildSRem(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_urem = LLVMBuildURem(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_shl = LLVMBuildShl(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_ashr = LLVMBuildAShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_lshr = LLVMBuildLShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_or = LLVMBuildOr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_and = LLVMBuildAnd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_xor = LLVMBuildXor(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_fadd = LLVMBuildFAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_fsub = LLVMBuildFSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_fmul = LLVMBuildFMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_fdiv = LLVMBuildFDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : IntPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_fcmp = LLVMBuildFCmp(builder : BuilderRef, op : RealPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
-  fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_ui2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_zext = LLVMBuildZExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_sext = LLVMBuildSExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_trunc = LLVMBuildTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_cond = LLVMBuildCondBr(builder : BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef)
-  fun build_fpext = LLVMBuildFPExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_fptrunc = LLVMBuildFPTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_extract_value = LLVMBuildExtractValue(builder : BuilderRef, agg_val : ValueRef, index : UInt32, name : Char*) : ValueRef
+  fun build_fadd = LLVMBuildFAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_fcmp = LLVMBuildFCmp(builder : BuilderRef, op : RealPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_fdiv = LLVMBuildFDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_fmul = LLVMBuildFMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_fp2si = LLVMBuildFPToSI(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_fp2ui = LLVMBuildFPToUI(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_ui2fp = LLVMBuildUIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_int2ptr = LLVMBuildIntToPtr(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_ptr2int = LLVMBuildPtrToInt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
-  fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
-  fun build_array_malloc = LLVMBuildArrayMalloc(builder : BuilderRef, type : TypeRef, val : ValueRef, name : Char*) : ValueRef
-  fun build_phi = LLVMBuildPhi(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
+  fun build_fpext = LLVMBuildFPExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_fptrunc = LLVMBuildFPTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_fsub = LLVMBuildFSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_gep = LLVMBuildGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : Char*) : ValueRef
-  fun build_extract_value = LLVMBuildExtractValue(builder : BuilderRef, agg_val : ValueRef, index : UInt32, name : Char*) : ValueRef
-  fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef *, count : Int32)
-  fun int_type = LLVMIntType(bits : Int32) : TypeRef
-  fun float_type = LLVMFloatType() : TypeRef
-  fun double_type = LLVMDoubleType() : TypeRef
-  fun struct_type = LLVMStructType(element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
-  fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
-  fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
-  fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : Char*) : TypeRef
-  fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
+  fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : IntPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_int2ptr = LLVMBuildIntToPtr(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : Char*) : ValueRef
+  fun build_lshr = LLVMBuildLShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
+  fun build_mul = LLVMBuildMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_or = LLVMBuildOr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_phi = LLVMBuildPhi(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
+  fun build_ptr2int = LLVMBuildPtrToInt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_ret = LLVMBuildRet(builder : BuilderRef, value : ValueRef) : ValueRef
+  fun build_ret_void = LLVMBuildRetVoid(builder : BuilderRef) : ValueRef
+  fun build_sdiv = LLVMBuildSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_sext = LLVMBuildSExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_shl = LLVMBuildShl(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_srem = LLVMBuildSRem(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_store = LLVMBuildStore(builder : BuilderRef, value : ValueRef, ptr : ValueRef)
+  fun build_sub = LLVMBuildSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_trunc = LLVMBuildTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_udiv = LLVMBuildUDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_ui2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_ui2fp = LLVMBuildUIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_urem = LLVMBuildURem(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_xor = LLVMBuildXor(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_zext = LLVMBuildZExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun const_array = LLVMConstArray(element_type : TypeRef, constant_vals : ValueRef*, length : UInt32) : ValueRef
   fun const_int = LLVMConstInt(int_type : TypeRef, value : UInt64, sign_extend : Int32) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
   fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
-  fun const_array = LLVMConstArray(element_type : TypeRef, constant_vals : ValueRef*, length : UInt32) : ValueRef
+  fun create_builder = LLVMCreateBuilder() : BuilderRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : Char**) : Int32
-  fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : Int32) : GenericValueRef
-  fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
-  fun initialize_x86_target = LLVMInitializeX86Target()
-  fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
-  fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : Int32
+  fun double_type = LLVMDoubleType() : TypeRef
+  fun dump_module = LLVMDumpModule(module : ModuleRef)
+  fun dump_value = LLVMDumpValue(val : ValueRef)
+  fun float_type = LLVMFloatType() : TypeRef
+  fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : Int32, is_var_arg : Int32) : TypeRef
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
+  fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : Int32
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
-  fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int32
-  fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
+  fun get_global_context = LLVMGetGlobalContext : ContextRef
+  fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
+  fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : Char*) : ValueRef
+  fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
+  fun initialize_x86_target = LLVMInitializeX86Target()
+  fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
+  fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
+  fun int_type = LLVMIntType(bits : Int32) : TypeRef
+  fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
+  fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
+  fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
+  fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : Int32) : GenericValueRef
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
-  fun dump_value = LLVMDumpValue(val : ValueRef)
-  fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
+  fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
+  fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : Char*) : TypeRef
+  fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
+  fun struct_type = LLVMStructType(element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
+  fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
+  fun void_type = LLVMVoidType() : TypeRef
+  fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int32
 end
 
 module LLVM
@@ -207,8 +207,7 @@ module LLVM
     end
 
     def add(name, arg_types, ret_type, varargs = false)
-      args = arg_types.map &.type
-      fun_type = LibLLVM.function_type(ret_type.type, args.buffer.as(LibLLVM::TypeRef), arg_types.length, varargs ? 1 : 0)
+      fun_type = LibLLVM.function_type(ret_type, arg_types.buffer, arg_types.length, varargs ? 1 : 0)
       func = LibLLVM.add_function(@mod.llvm_module, name, fun_type)
       Function.new(func)
     end
@@ -249,38 +248,7 @@ module LLVM
     end
 
     def add(type, name)
-      GlobalVariable.new(LibLLVM.add_global(@mod.llvm_module, type.type, name))
-    end
-  end
-
-  class Value
-    getter :value
-
-    def initialize(@value)
-    end
-
-    def self.const_string(value)
-      new(LibLLVM.const_string(value.cstr, value.length.to_u32, 0_u32))
-    end
-
-    def self.const_array(type, values)
-      new(LibLLVM.const_array(type.type, values.buffer, values.length.to_u32))
-    end
-  end
-
-  class GlobalValue < Value
-    def linkage=(linkage)
-      LibLLVM.set_linkage(@value, linkage)
-    end
-
-    def global_constant=(flag : Bool)
-      LibLLVM.set_global_constant(@value, flag ? 1 : 0)
-    end
-  end
-
-  class GlobalVariable < GlobalValue
-    def initializer=(value)
-      LibLLVM.set_initializer(@value, value.value)
+      LibLLVM.add_global(@mod.llvm_module, type, name)
     end
   end
 
@@ -314,7 +282,7 @@ module LLVM
     end
 
     def phi(type, incoming_blocks, incoming_values, name = "")
-      phi_node = LibLLVM.build_phi @builder, type.type, name
+      phi_node = LibLLVM.build_phi @builder, type, name
       LibLLVM.add_incoming phi_node, incoming_values.buffer, incoming_blocks.buffer, incoming_blocks.length
       phi_node
     end
@@ -324,7 +292,7 @@ module LLVM
     end
 
     def alloca(type, name = "")
-      LibLLVM.build_alloca(@builder, type.type, name)
+      LibLLVM.build_alloca(@builder, type, name)
     end
 
     def store(value, ptr)
@@ -336,11 +304,11 @@ module LLVM
     end
 
     def malloc(type, name = "")
-      LibLLVM.build_malloc(@builder, type.type, name)
+      LibLLVM.build_malloc(@builder, type, name)
     end
 
     def array_malloc(type, value, name = "")
-      LibLLVM.build_array_malloc(@builder, type.type, value, name)
+      LibLLVM.build_array_malloc(@builder, type, value, name)
     end
 
     def gep(value, indices, name = "")
@@ -352,11 +320,7 @@ module LLVM
     end
 
     macro self.define_cast(name)"
-      def #{name}(value, type : Type, name = \"\" : String)
-        #{name}(value, type.type, name)
-      end
-
-      def #{name}(value, type : LibvLLVM::TypeRef, name = \"\")
+      def #{name}(value, type, name = \"\")
         LibLLVM.build_#{name}(@builder, value, type, name)
       end
     "end
@@ -410,79 +374,51 @@ module LLVM
     define_cmp fcmp
   end
 
-  abstract class Type
-    getter :type
-
-    def initialize(@type)
-    end
-
-    def size
-      LLVM.size_of @type
-    end
+  def self.pointer_type(element_type)
+    LibLLVM.pointer_type(element_type, 0_u32)
   end
 
-  class IntType < Type
-    def initialize(bits)
-      super LibLLVM.int_type(bits)
-    end
-
-    def from_i(value)
-      LibLLVM.const_int(@type, value.to_u64, 0)
-    end
+  def self.struct_type(name, packed = false)
+    struct = LibLLVM.struct_create_named(Context.global, name)
+    element_types = yield
+    LibLLVM.struct_set_body(struct, element_types.buffer, element_types.length.to_u32, packed ? 1 : 0)
+    struct
   end
 
-  class FloatType < Type
-    def initialize
-      super LibLLVM.float_type
-    end
-
-    def from_s(value)
-      LibLLVM.const_real_of_string(@type, value)
-    end
+  def self.struct_type(name, element_types, packed = false)
+    struct_type(name, packed) { element_types }
   end
 
-  class DoubleType < Type
-    def initialize
-      super LibLLVM.double_type
-    end
-
-    def from_s(value)
-      LibLLVM.const_real_of_string(@type, value)
-    end
+  def self.array_type(element_type, count)
+    LibLLVM.array_type(element_type, count.to_u32)
   end
 
-  class VoidType < Type
-    def initialize
-      super LibLLVM.void_type
-    end
+  def self.int(type, value)
+    LibLLVM.const_int(type, value.to_u64, 0)
   end
 
-  class ArrayType < Type
-    def initialize(element_type : Type, count)
-      super LibLLVM.array_type(element_type.type, count.to_u32)
-    end
+  def self.float(string : String)
+    LibLLVM.const_real_of_string(LLVM::Float, string)
   end
 
-  class StructType < Type
-    def initialize(name)
-      super LibLLVM.struct_create_named(Context.global, name)
-    end
-
-    def self.new(name, element_types)
-      type = new(name)
-      type.element_types = element_types
-      type
-    end
-
-    def element_types=(element_types)
-      LibLLVM.struct_set_body(@type, element_types.map(&.type).buffer, element_types.length.to_u32, 0)
-    end
+  def self.double(string : String)
+    LibLLVM.const_real_of_string(LLVM::Double, string)
   end
 
-  class PointerType < Type
-    def initialize(element_type : Type)
-      super LibLLVM.pointer_type(element_type.type, 0_u32)
-    end
+  def self.set_linkage(value, linkage)
+    LibLLVM.set_linkage(value, linkage)
+  end
+
+  def self.set_global_constant(value, flag)
+    LibLLVM.set_global_constant(value, flag ? 1 : 0)
+  end
+
+  def self.array(type, values)
+    LibLLVM.const_array(type, values.buffer, values.length.to_u32)
+  end
+
+  def self.set_initializer(value, initializer)
+    LibLLVM.set_initializer(value, initializer)
   end
 
   class GenericValue
@@ -499,11 +435,11 @@ module LLVM
     end
 
     def to_f32
-      LibLLVM.generic_value_to_float(LLVM::Float.type, @value)
+      LibLLVM.generic_value_to_float(LLVM::Float, @value)
     end
 
     def to_f64
-      LibLLVM.generic_value_to_float(LLVM::Double.type, @value)
+      LibLLVM.generic_value_to_float(LLVM::Double, @value)
     end
 
     def to_string
@@ -528,12 +464,12 @@ module LLVM
     end
   end
 
-  Void = VoidType.new
-  Int1 = IntType.new(1)
-  Int8 = IntType.new(8)
-  Int16 = IntType.new(16)
-  Int32 = IntType.new(32)
-  Int64 = IntType.new(64)
-  Float = FloatType.new
-  Double = DoubleType.new
+  Void = LibLLVM.void_type
+  Int1 = LibLLVM.int_type(1)
+  Int8 = LibLLVM.int_type(8)
+  Int16 = LibLLVM.int_type(16)
+  Int32 = LibLLVM.int_type(32)
+  Int64 = LibLLVM.int_type(64)
+  Float = LibLLVM.float_type
+  Double = LibLLVM.double_type
 end

@@ -57,7 +57,7 @@ module Crystal
       @llvm_typer = LLVMTyper.new
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_type(node.type)
-      @fun = @llvm_mod.functions.add("crystal_main", [] of LLVM::Type, ret_type)
+      @fun = @llvm_mod.functions.add("crystal_main", [] of LibLLVM::TypeRef, ret_type)
       @builder = LLVM::Builder.new
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @const_block_entry = @const_block
@@ -75,11 +75,11 @@ module Crystal
 
       return_from_fun nil, @main_ret_type
 
-      @fun = @llvm_mod.functions.add "main", ([] of LLVM::Type), LLVM::Int32
+      @fun = @llvm_mod.functions.add "main", ([] of LibLLVM::TypeRef), LLVM::Int32
       entry = new_block "entry"
       @builder.position_at_end entry
       @builder.call @llvm_mod.functions["crystal_main"]
-      @builder.ret LLVM::Int32.from_i(0)
+      @builder.ret int32(0)
     end
 
     def codegen_primitive(node, target_def, call_args)
@@ -363,15 +363,15 @@ module Crystal
       when :i8, :u8
         @last = int8(node.value.to_i)
       when :i16, :u16
-        @last = LLVM::Int16.from_i(node.value.to_i)
+        @last = int16(node.value.to_i)
       when :i32, :u32
-        @last = LLVM::Int32.from_i(node.value.to_i)
+        @last = int32(node.value.to_i)
       when :i64, :u64
         @last = int64(node.value.to_i64)
       when :f32
-        @last = LLVM::Float.from_s(node.value)
+        @last = LLVM.float(node.value)
       when :f64
-        @last = LLVM::Double.from_s(node.value)
+        @last = LLVM.double(node.value)
       end
     end
 
@@ -425,9 +425,9 @@ module Crystal
     def build_string_constant(str, name = "str")
       # name = name.gsub('@', '.')
       @strings[str] ||= begin
-        global = @llvm_mod.globals.add(LLVM::ArrayType.new(LLVM::Int8, str.length + 5), name)
-        global.linkage = LibLLVM::Linkage::Private
-        global.global_constant = true
+        global = @llvm_mod.globals.add(LLVM.array_type(LLVM::Int8, str.length + 5), name)
+        LLVM.set_linkage global, LibLLVM::Linkage::Private
+        LLVM.set_global_constant global, true
 
         # Pack the string bytes
         bytes = [] of LibLLVM::ValueRef
@@ -437,8 +437,8 @@ module Crystal
         str.each_char { |c| bytes << int8(c.ord) }
         bytes << int8(0)
 
-        global.initializer = LLVM::Value.const_array(LLVM::Int8, bytes)
-        cast_to global.value, @mod.string
+        LLVM.set_initializer global, LLVM.array(LLVM::Int8, bytes)
+        cast_to global, @mod.string
       end
     end
 
@@ -447,11 +447,11 @@ module Crystal
     end
 
     def cast_to_pointer(value, type)
-      @builder.bit_cast(value, LLVM::PointerType.new(llvm_type(type)))
+      @builder.bit_cast(value, LLVM.pointer_type(llvm_type(type)))
     end
 
     def cast_to_void_pointer(pointer)
-      @builder.bit_cast pointer, LLVM::PointerType.new(LLVM::Int8)
+      @builder.bit_cast pointer, LLVM.pointer_type(LLVM::Int8)
     end
 
     def visit(node : If)
@@ -736,7 +736,7 @@ module Crystal
       #   @builder.store value, casted_value_ptr
       # else
         index = type.type_id
-        @builder.store int(index), type_id_ptr
+        @builder.store int32(index), type_id_ptr
 
         casted_value_ptr = cast_to_pointer value_ptr, type
         @builder.store value, casted_value_ptr
@@ -1032,7 +1032,7 @@ module Crystal
     end
 
     def gep(ptr, index0, index1)
-      @builder.gep ptr, [int(index0), int(index1)]
+      @builder.gep ptr, [int32(index0), int32(index1)]
     end
 
     def realloc(buffer, size)
@@ -1056,7 +1056,7 @@ module Crystal
     end
 
     def llvm_size(type)
-      llvm_type(type).size
+      LLVM.size_of llvm_type(type)
     end
 
     def llvm_self
@@ -1073,19 +1073,23 @@ module Crystal
     end
 
     def int1(n)
-      LLVM::Int1.from_i n
+      LLVM.int LLVM::Int1, n
     end
 
     def int8(n)
-      LLVM::Int8.from_i n
+      LLVM.int LLVM::Int8, n
+    end
+
+    def int16(n)
+      LLVM.int LLVM::Int16, n
+    end
+
+    def int32(n)
+      LLVM.int LLVM::Int32, n
     end
 
     def int64(n)
-      LLVM::Int64.from_i n
-    end
-
-    def int(n)
-      LLVM::Int32.from_i n
+      LLVM.int LLVM::Int64, n
     end
 
     def accept(node)
