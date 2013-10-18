@@ -917,6 +917,14 @@ module Crystal
     def initialize(@program, @instance_type)
     end
 
+    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      instance_type.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    delegate :abstract, instance_type
+
+    #delegate [:lookup_class_var, :has_class_var?, :class_var_owner] => :instance_type
+
     def parents
       instance_type.parents.map &.metaclass
     end
@@ -948,8 +956,8 @@ module Crystal
       instance_type.generic_class.metaclass.add_def a_def
     end
 
-    delegate defs, "instance_type.generic_class.metaclass"
-    delegate sorted_defs, "instance_type.generic_class.metaclass"
+    delegate defs, :"instance_type.generic_class.metaclass"
+    delegate sorted_defs, :"instance_type.generic_class.metaclass"
     delegate type_vars, instance_type
     delegate :abstract, instance_type
 

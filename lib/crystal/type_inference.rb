@@ -1056,6 +1056,10 @@ module Crystal
     end
 
     def visit_pointer_new(node)
+      if @scope.instance_type.is_a?(GenericClassType)
+        node.raise "can't create pointer without type, use Pointer(Type).new(address)"
+      end
+
       node.type = @scope.instance_type
     end
 

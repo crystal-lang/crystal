@@ -102,6 +102,8 @@ module Crystal
                 codegen_primitive_pointer_new node, target_def, call_args
               when :pointer_realloc
                 codegen_primitive_pointer_realloc node, target_def, call_args
+              when :pointer_cast
+                codegen_primitive_pointer_cast node, target_def, call_args
               when :byte_size
                 codegen_primitive_byte_size node, target_def, call_args
               else
@@ -324,6 +326,10 @@ module Crystal
       size = @builder.mul size, llvm_size(type.var.type)
       reallocated_ptr = realloc casted_ptr, size
       @last = cast_to_pointer reallocated_ptr, type.var.type
+    end
+
+    def codegen_primitive_pointer_cast(node, target_def, call_args)
+      @last = cast_to call_args[0], node.type
     end
 
     def codegen_primitive_byte_size(node, target_def, call_args)

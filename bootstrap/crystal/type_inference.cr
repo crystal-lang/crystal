@@ -478,6 +478,8 @@ module Crystal
         visit_pointer_new node
       when :pointer_realloc
         visit_pointer_realloc node
+      when :pointer_cast
+        visit_pointer_cast node
       when :byte_size
         visit_byte_size node
       else
@@ -530,11 +532,24 @@ module Crystal
     end
 
     def visit_pointer_new(node)
+      if scope.instance_type.is_a?(GenericClassType)
+        node.raise "can't create pointer without type, use Pointer(Type).new(address)"
+      end
+
       node.type = scope.instance_type
     end
 
     def visit_pointer_realloc(node)
       node.type = scope
+    end
+
+    def visit_pointer_cast(node)
+      type = @vars["type"].type.instance_type
+      if type.class?
+        node.type = type
+      else
+        node.type = mod.pointer_of(type)
+      end
     end
 
     def visit_byte_size(node)
