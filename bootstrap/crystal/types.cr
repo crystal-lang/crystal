@@ -1020,7 +1020,7 @@ module Crystal
     getter scope_types
     getter scope
 
-    def initialize(program, container, @name, @value, @scope_types = nil, @scope = nil)
+    def initialize(program, container, @name, @value, @scope_types = [] of Type, @scope = nil)
       super(program, container)
     end
 

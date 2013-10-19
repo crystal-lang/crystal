@@ -438,7 +438,7 @@ module Crystal
     def visit(node : Ident)
       type = lookup_ident_type(node)
       if type.is_a?(Const)
-        unless type.value.type
+        unless type.value.type?
           old_types, old_scope, old_vars = @types, @scope, @vars
           @types, @scope, @vars = type.scope_types, type.scope, ({} of String => Var)
           type.value.accept self
@@ -493,6 +493,10 @@ module Crystal
         visit_pointer_cast node
       when :byte_size
         visit_byte_size node
+      when :argc
+        node.type = @mod.int32
+      when :argv
+        node.type = @mod.pointer_of(@mod.pointer_of(@mod.char))
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end

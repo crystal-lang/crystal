@@ -18,6 +18,12 @@ module Crystal
     def visit(node : ASTNode)
     end
 
+    def visit(node : Primitive)
+      @str << "<"
+      @str << node.name
+      @str << ">"
+    end
+
     def visit(node : Nop)
     end
 

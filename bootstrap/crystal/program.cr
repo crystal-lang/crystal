@@ -54,11 +54,14 @@ module Crystal
       @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
       # @string.allocated = true
 
+      @string.lookup_instance_var("@length").type = @int32
+      @string.lookup_instance_var("@c").type = @char
+
       @types["Array"] = GenericClassType.new self, self, "Array", reference, ["T"]
       @types["Exception"] = NonGenericClassType.new self, self, "Exception", reference
 
-      @string.lookup_instance_var("@length").type = @int32
-      @string.lookup_instance_var("@c").type = @char
+      @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
+      @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
 
       @requires = Set(String).new
       @temp_var_counter = 0

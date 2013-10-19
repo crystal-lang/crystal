@@ -117,6 +117,8 @@ lib LibLLVM("LLVM-3.3")
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
   fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
   fun create_builder = LLVMCreateBuilder() : BuilderRef
+  fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
+  fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : Char**) : Int32
   fun double_type = LLVMDoubleType() : TypeRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
@@ -139,7 +141,7 @@ lib LibLLVM("LLVM-3.3")
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
   fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
-  fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : Int32) : GenericValueRef
+  fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : GenericValueRef*) : GenericValueRef
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
@@ -474,8 +476,8 @@ module LLVM
       end
     end
 
-    def run_function(func)
-      ret = LibLLVM.run_function(@jit, func.llvm_function, 0, 0)
+    def run_function(func, args = [] of LibLLVM::GenericValueRef)
+      ret = LibLLVM.run_function(@jit, func.llvm_function, args.length, args.buffer)
       GenericValue.new(ret)
     end
   end

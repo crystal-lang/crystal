@@ -19,9 +19,14 @@ module Crystal
     end
 
     def evaluate(node)
-      llvm_mod = build node
+      visitor = build node
+      llvm_mod = visitor.llvm_mod
       engine = LLVM::JITCompiler.new(llvm_mod)
-      engine.run_function llvm_mod.functions["crystal_main"] #, 0, nil
+
+      argc = LibLLVM.create_generic_value_of_int(LLVM::Int32, 0_u64, 1)
+      argv = LibLLVM.create_generic_value_of_pointer(nil)
+
+      engine.run_function visitor.main, [argc, argv]
     end
 
     def build(node)
@@ -34,7 +39,7 @@ module Crystal
         raise ex
       end
       visitor.llvm_mod.dump if Crystal::DUMP_LLVM
-      visitor.llvm_mod
+      visitor
     end
   end
 
@@ -51,6 +56,7 @@ module Crystal
     getter :fun
     getter :builder
     getter :typer
+    getter :main
     getter! :type
 
     def initialize(@mod, @node)
@@ -58,8 +64,15 @@ module Crystal
       @llvm_typer = LLVMTyper.new
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_type(node.type)
-      @fun = @llvm_mod.functions.add(MAIN_NAME, [] of LibLLVM::TypeRef, ret_type)
+      @fun = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM.pointer_type(LLVM.pointer_type(LLVM::Int8))], ret_type)
       @main = @fun
+
+      @argc = @fun.get_param(0)
+      # @argc.name = 'argc'
+
+      @argv = @fun.get_param(1)
+      # @argv.name = 'argv'
+
       @builder = LLVM::Builder.new
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @const_block_entry = @const_block
@@ -78,11 +91,23 @@ module Crystal
 
       return_from_fun nil, @main_ret_type
 
-      @fun = @llvm_mod.functions.add "main", ([] of LibLLVM::TypeRef), LLVM::Int32
+      @fun = @llvm_mod.functions.add "main", ([LLVM::Int32, LLVM.pointer_type(LLVM.pointer_type(LLVM::Int8))] of LibLLVM::TypeRef), LLVM::Int32
       entry = new_block "entry"
       @builder.position_at_end entry
-      @builder.call @main
+      @builder.call @main, [@fun.get_param(0), @fun.get_param(1)]
       @builder.ret int32(0)
+    end
+
+    # Can only happen in a Const
+    def visit(node : Primitive)
+      @last = case node.name
+              when :argc
+                @argc
+              when :argv
+                @argv
+              else
+                raise "Bug: unhandled primitive in codegen: #{node.name}"
+              end
     end
 
     def codegen_primitive(node, target_def, call_args)
