@@ -411,9 +411,6 @@ module Crystal
   class PointerNull < Primitive
   end
 
-  class PointerMallocWithValue < Primitive
-  end
-
   class PointerGetValue < Primitive
   end
 

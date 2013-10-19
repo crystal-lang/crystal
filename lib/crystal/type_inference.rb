@@ -287,7 +287,7 @@ module Crystal
 
     def visit_fun_def(node)
       if node.body && !current_type.is_a?(Program)
-        node.raise "can only declare fun at lib or global scope or lib"
+        node.raise "can only declare fun at lib or global scope"
       end
 
       node.args.each { |arg| arg.type_restriction.accept self }

@@ -110,30 +110,6 @@ module Crystal
   end
 
   class FunDef
-    property :external
-  end
-
-  class External < Def
-    property :real_name
-    property :varargs
-    property :fun_def
-    property :dead
-
-    def initialize(name, args : Array(Arg), body = nil, receiver = nil, block_arg = nil, yields = -1, @real_name)
-      super(name, args, body, receiver, block_arg, yields)
-    end
-
-    def mangled_name(obj_type)
-      real_name
-    end
-
-    def self.for_fun(name, real_name, args, return_type, varargs, body, fun_def)
-      external = External.new(name, args, body, nil, nil, nil, real_name)
-      external.varargs = varargs
-      external.set_type(return_type)
-      external.fun_def = fun_def
-      fun_def.external = external
-      external
-    end
+    property! :external
   end
 end

@@ -180,4 +180,14 @@ describe "Hash" do
     hash = Hash.zip(ary1, ary2)
     hash.should eq({1 => 'a', 2 => 'b', 3 => 'c'})
   end
+
+  it "gets first key" do
+    h = {1 => 2, 3 => 4}
+    h.first_key.should eq(1)
+  end
+
+  it "gets first value" do
+    h = {1 => 2, 3 => 4}
+    h.first_value.should eq(2)
+  end
 end

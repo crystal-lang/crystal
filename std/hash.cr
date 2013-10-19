@@ -163,6 +163,22 @@ class Hash(K, V)
     hash
   end
 
+  def first_key
+    @first.not_nil!.key
+  end
+
+  def first_key?
+    @first ? @first.key : nil
+  end
+
+  def first_value
+    @first.not_nil!.value
+  end
+
+  def first_value?
+    @first ? @first.value : nil
+  end
+
   def ==(other : self)
     return false unless length == other.length
     each do |key, value|

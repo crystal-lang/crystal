@@ -384,9 +384,9 @@ module Crystal
     end
 
     def visit(node : FunDef)
-      # if node.body && !current_type.is_a?(Program)
-      #   node.raise "can only declare fun at lib or global scope or lib"
-      # end
+      if node.body && !current_type.is_a?(Program)
+        node.raise "can only declare fun at lib or global scope"
+      end
 
       args = node.args.map do |arg|
         restriction = arg.type_restriction.not_nil!
@@ -407,12 +407,47 @@ module Crystal
         return_type = @mod.void
       end
 
-      external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs,
-        #node.body,
-        nil
-        node)
+      external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
+      if node_body = node.body
+        vars = {} of String => Var
+        args.each do |arg|
+          var = Var.new(arg.name, arg.type)
+          var.bind_to var
+          vars[arg.name] = var
+        end
+        external.set_type(nil)
 
-      current_type.add_def external
+        visitor = TypeVisitor.new(@mod, vars, @mod, self, nil, nil, external, external, args.map(&.type))
+        begin
+          node_body.accept visitor
+        rescue ex
+          node.raise ex.message
+        end
+
+        inferred_return_type = @mod.type_merge([node_body.type, external.type?])
+
+        if return_type && return_type != @mod.void && inferred_return_type != return_type
+          node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
+        end
+
+        external.set_type(return_type)
+      end
+
+      begin
+        old_external = current_type.add_def external
+      rescue ex
+        node.raise ex.message
+      end
+
+      if old_external.is_a?(External)
+        old_external.dead = true
+      end
+
+      if node.body
+        current_type.add_def_instance external.object_id, external.args.map(&.type), nil, external
+      end
+
+      node.type = @mod.nil
 
       false
     end

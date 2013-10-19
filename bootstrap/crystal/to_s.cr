@@ -369,6 +369,11 @@ module Crystal
       false
     end
 
+    def visit(node : External)
+      node.fun_def.accept self
+      false
+    end
+
     def visit(node : Arg)
       @str << "out " if node.out
       if node.name

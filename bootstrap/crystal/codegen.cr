@@ -19,14 +19,13 @@ module Crystal
     end
 
     def evaluate(node)
-      visitor = build node
-      llvm_mod = visitor.llvm_mod
+      llvm_mod = build node
       engine = LLVM::JITCompiler.new(llvm_mod)
 
       argc = LibLLVM.create_generic_value_of_int(LLVM::Int32, 0_u64, 1)
       argv = LibLLVM.create_generic_value_of_pointer(nil)
 
-      engine.run_function visitor.main, [argc, argv]
+      engine.run_function llvm_mod.functions[MAIN_NAME], [argc, argv]
     end
 
     def build(node)
@@ -39,7 +38,8 @@ module Crystal
         raise ex
       end
       visitor.llvm_mod.dump if Crystal::DUMP_LLVM
-      visitor
+      visitor.llvm_mod
+
     end
   end
 
@@ -90,12 +90,14 @@ module Crystal
       last = @last
 
       return_from_fun nil, @main_ret_type
+    end
 
-      @fun = @llvm_mod.functions.add "main", ([LLVM::Int32, LLVM.pointer_type(LLVM.pointer_type(LLVM::Int8))] of LibLLVM::TypeRef), LLVM::Int32
-      entry = new_block "entry"
-      @builder.position_at_end entry
-      @builder.call @main, [@fun.get_param(0), @fun.get_param(1)]
-      @builder.ret int32(0)
+    def visit(node : FunDef)
+      unless node.external.dead
+        codegen_fun node.real_name, node.external, nil, true
+      end
+
+      false
     end
 
     # Can only happen in a Const
@@ -440,7 +442,6 @@ module Crystal
     end
 
     def visit(node : LibDef)
-      node.body.accept self
       @Last = llvm_nil
       false
     end
@@ -931,7 +932,7 @@ module Crystal
       end
     end
 
-    def codegen_fun(mangled_name, target_def, self_type)
+    def codegen_fun(mangled_name, target_def, self_type, is_exported_fun_def = false)
       # if target_def.type.same?(@mod.void)
       #   llvm_return_type = LLVM.Void
       # else
@@ -976,7 +977,8 @@ module Crystal
       #   # @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
       # end
 
-      if !is_external && (body = target_def.body)
+      if (!is_external && target_def.body) || is_exported_fun_def
+        body = target_def.body
         new_entry_block
 
         args.each_with_index do |arg, i|
@@ -1010,7 +1012,7 @@ module Crystal
         @builder.position_at_end old_position
       end
 
-      @last = int1(0)
+      @last = llvm_nil
 
       the_fun = @fun
 

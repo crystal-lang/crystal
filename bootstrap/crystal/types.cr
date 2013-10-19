@@ -227,9 +227,11 @@ module Crystal
       restrictions = Array(Type | ASTNode | Nil).new(a_def.args.length)
       a_def.args.each { |arg| restrictions.push(arg.type? || arg.type_restriction) }
       # restrictions = a_def.args.map { |arg| arg.type || arg.type_restriction }
-      defs[a_def.name][DefKey.new(restrictions, !!a_def.yields)] = a_def
+      key = DefKey.new(restrictions, !!a_def.yields)
+      old_def = defs[a_def.name][key]?
+      defs[a_def.name][key] = a_def
       add_sorted_def(a_def)
-      a_def
+      old_def
     end
 
     def add_sorted_def(a_def)
@@ -866,19 +868,24 @@ module Crystal
       self
     end
 
-    # def add_def(a_def)
-    #   existing = defs[a_def.name]
-    #   if existing.length > 0
-    #     existing = existing.first[1]
-    #     if existing.compatible_with?(a_def)
-    #       return
-    #     else
-    #       raise "fun redefinition with different signature (was #{existing.to_s})"
-    #     end
-    #   end
+    def add_def(a_def : External)
+      existing_defs = defs[a_def.name]
+      existing = existing_defs.first_value?
+      if existing
+        assert_type existing, External
+        if existing.compatible_with?(a_def)
+          return
+        else
+          raise "fun redefinition with different signature (was #{existing.to_s})"
+        end
+      end
 
-    #   super
-    # end
+      super
+    end
+
+    def add_def(a_def : Def)
+      raise "Bug: shouldn't be adding a Def in a LibType"
+    end
 
     # def add_var(name, type)
     #   arg = Arg.new_with_restriction('value', type)

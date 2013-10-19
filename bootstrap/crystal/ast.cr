@@ -1308,6 +1308,41 @@ module Crystal
     end
   end
 
+  class External < Def
+    property :real_name
+    property :varargs
+    property! :fun_def
+    property :dead
+
+    def initialize(name, args : Array(Arg), body = nil, receiver = nil, block_arg = nil, yields = -1, @real_name)
+      super(name, args, body, receiver, block_arg, yields)
+    end
+
+    def mangled_name(obj_type)
+      real_name
+    end
+
+    def compatible_with?(other)
+      return false if args.length != other.args.length
+      return false if varargs != other.varargs
+
+      args.each_with_index do |arg, i|
+        return false if arg.type != other.args[i].type
+      end
+
+      type == other.type
+    end
+
+    def self.for_fun(name, real_name, args, return_type, varargs, body, fun_def)
+      external = External.new(name, args, body, nil, nil, nil, real_name)
+      external.varargs = varargs
+      external.set_type(return_type)
+      external.fun_def = fun_def
+      fun_def.external = external
+      external
+    end
+  end
+
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     getter name
