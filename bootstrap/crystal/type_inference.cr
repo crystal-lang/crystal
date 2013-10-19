@@ -143,6 +143,17 @@ module Crystal
 
         node.bind_to value
         var.bind_to node
+      when Ident
+        type = current_type.types[target.names.first]?
+        if type
+          target.raise "already initialized constant #{target}"
+        end
+
+        target.bind_to value
+
+        current_type.types[target.names.first] = Const.new(@mod, current_type, target.names.first, value, @types.clone, @scope)
+
+        node.type = @mod.nil
       else
         raise "Bug: unknown assign target: #{target}"
       end
@@ -426,18 +437,18 @@ module Crystal
 
     def visit(node : Ident)
       type = lookup_ident_type(node)
-      # if type.is_a?(Const)
-      #   unless type.value.type
-      #     old_types, old_scope, old_vars = @types, @scope, @vars
-      #     @types, @scope, @vars = type.types, type.scope, {}
-      #     type.value.accept self
-      #     @types, @scope, @vars = old_types, old_scope, old_vars
-      #   end
-      #   node.target_const = type
-      #   node.bind_to(type.value)
-      # else
+      if type.is_a?(Const)
+        unless type.value.type
+          old_types, old_scope, old_vars = @types, @scope, @vars
+          @types, @scope, @vars = type.scope_types, type.scope, ({} of String => Var)
+          type.value.accept self
+          @types, @scope, @vars = old_types, old_scope, old_vars
+        end
+        node.target_const = type
+        node.bind_to type.value
+      else
         node.type = type.metaclass
-      # end
+      end
     end
 
     def end_visit(node : If)

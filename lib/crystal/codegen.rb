@@ -758,17 +758,23 @@ module Crystal
     end
 
     def codegen_cond(node_cond)
-      if @mod.nil.equal?(node_cond.type)
+      target_type = node_cond.type
+
+      while target_type.is_a?(TypeDefType)
+        target_type = target_type.typedef
+      end
+
+      if @mod.nil.equal?(target_type)
         cond = int1(0)
-      elsif @mod.bool.equal?(node_cond.type)
+      elsif @mod.bool.equal?(target_type)
         cond = @builder.icmp :ne, @last, int1(0)
-      elsif node_cond.type.nilable?
+      elsif target_type.nilable?
         cond = not_null_pointer?(@last)
-      elsif node_cond.type.hierarchy?
+      elsif target_type.hierarchy?
         cond = int1(1)
-      elsif node_cond.type.union?
-        has_nil = node_cond.type.types.any?(&:nil_type?)
-        has_bool = node_cond.type.types.any? { |t| t.equal?(@mod.bool) }
+      elsif target_type.union?
+        has_nil = target_type.types.any?(&:nil_type?)
+        has_bool = target_type.types.any? { |t| t.equal?(@mod.bool) }
 
         if has_nil || has_bool
           type_id = @builder.load union_type_id(@last)
@@ -791,7 +797,7 @@ module Crystal
         else
           cond = int1(1)
         end
-      elsif node_cond.type.is_a?(PointerInstanceType)
+      elsif target_type.is_a?(PointerInstanceType)
         cond = not_null_pointer?(@last)
       else
         cond = int1(1)

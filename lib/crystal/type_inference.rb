@@ -960,13 +960,11 @@ module Crystal
     def expand_macro(node)
       return false if node.obj || node.name == 'super'
 
-      # If we are inside a module, lookup the macro in Object
-      if node.scope.metaclass? && node.scope.instance_type.module?
-        lookup_scope = @mod.object.metaclass
-      else
-        lookup_scope = node.scope
+      untyped_def = node.scope.lookup_macro(node.name, node.args.length)
+      if !untyped_def && node.scope.metaclass? && node.scope.instance_type.module?
+        untyped_def = @mod.object.metaclass.lookup_macro(node.name, node.args.length)
       end
-      untyped_def ||= lookup_scope.lookup_macro(node.name, node.args.length) || mod.lookup_macro(node.name, node.args.length)
+      untyped_def ||= mod.lookup_macro(node.name, node.args.length)
       return false unless untyped_def
 
       macros_cache_key = [untyped_def.object_id] + node.args.map { | arg| arg.class.object_id }

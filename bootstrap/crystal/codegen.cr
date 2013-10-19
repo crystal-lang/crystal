@@ -9,6 +9,7 @@ LLVM.init_x86
 
 module Crystal
   DUMP_LLVM = ENV["DUMP"] == "1"
+  MAIN_NAME = "__crystal_main"
 
   class Program
     def run(code)
@@ -57,7 +58,8 @@ module Crystal
       @llvm_typer = LLVMTyper.new
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_type(node.type)
-      @fun = @llvm_mod.functions.add("crystal_main", [] of LibLLVM::TypeRef, ret_type)
+      @fun = @llvm_mod.functions.add(MAIN_NAME, [] of LibLLVM::TypeRef, ret_type)
+      @main = @fun
       @builder = LLVM::Builder.new
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @const_block_entry = @const_block
@@ -65,6 +67,7 @@ module Crystal
       @strings = {} of String => LibLLVM::ValueRef
       @type = @mod
       @last = llvm_nil
+      @in_const_block = false
       # @return_union = llvm_nil
     end
 
@@ -78,7 +81,7 @@ module Crystal
       @fun = @llvm_mod.functions.add "main", ([] of LibLLVM::TypeRef), LLVM::Int32
       entry = new_block "entry"
       @builder.position_at_end entry
-      @builder.call @llvm_mod.functions["crystal_main"]
+      @builder.call @main
       @builder.ret int32(0)
     end
 
@@ -651,6 +654,7 @@ module Crystal
 
     def codegen_assign_node(target, value)
       if target.is_a?(Ident)
+        @last = llvm_nil
         return false
       end
 
@@ -821,7 +825,38 @@ module Crystal
     end
 
     def visit(node : Ident)
-      @last = int64(node.type.instance_type.type_id)
+      const = node.target_const
+      if const
+        global_name = const.llvm_name
+        global = @llvm_mod.globals[global_name]?
+
+        unless global
+          global = @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
+          LLVM.set_linkage global, LibLLVM::Linkage::Internal
+
+          if const.value.needs_const_block?
+            in_const_block("const_#{global_name}") do
+              accept(const.value)
+
+              if LLVM.constant? @last
+                LLVM.set_initializer global, @last
+                LLVM.set_global_constant global, true
+              else
+                LLVM.set_initializer global, LLVM.null(LLVM.type_of @last)
+                @builder.store @last, global
+              end
+            end
+          else
+            accept(const.value)
+            LLVM.set_initializer global, @last
+            LLVM.set_global_constant global, true
+          end
+        end
+
+        @last = @builder.load global
+      else
+        @last = int64(node.type.instance_type.type_id)
+      end
       false
     end
 
@@ -1029,6 +1064,28 @@ module Crystal
       value = yield
       @builder.position_at_end old_block
       value
+    end
+
+    def in_const_block(const_block_name)
+      old_position = @builder.insert_block
+      old_fun = @fun
+      old_in_const_block = @in_const_block
+      @in_const_block = true
+
+      @fun = @main
+      const_block = new_block const_block_name
+      @builder.position_at_end const_block
+
+      yield
+
+      new_const_block = @builder.insert_block
+      @builder.position_at_end @const_block
+      @builder.br const_block
+      @const_block = new_const_block
+
+      @builder.position_at_end old_position
+      @fun = old_fun
+      @in_const_block = old_in_const_block
     end
 
     def gep(ptr, index0, index1)

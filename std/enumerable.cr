@@ -17,7 +17,7 @@ module Enumerable(T)
     ary
   end
 
-  def each_with_index
+  def each_with_index(&block : T, Int32 ->)
     i = 0
     each do |elem|
       yield elem, i
@@ -25,7 +25,7 @@ module Enumerable(T)
     end
   end
 
-  def each_with_object(obj)
+  def each_with_object(obj : U, &block : T, U ->)
     each do |elem|
       yield elem, obj
     end
@@ -53,7 +53,7 @@ module Enumerable(T)
     ary
   end
 
-  def select
+  def select(&block : T ->)
     ary = [] of T
     each { |e| ary << e if yield e }
     ary

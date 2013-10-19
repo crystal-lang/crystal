@@ -1,6 +1,12 @@
 require "../ast"
 
 module Crystal
+  class ASTNode
+    def needs_const_block?
+      true
+    end
+  end
+
   class Def
     property :owner
     property :instances
@@ -56,6 +62,10 @@ module Crystal
     end
   end
 
+  class Ident
+    property target_const
+  end
+
   class Arg
     def self.new_with_type(name, type)
       arg = new(name)
@@ -69,4 +79,19 @@ module Crystal
       arg
     end
   end
+
+  macro self.doesnt_need_const_block(klass)"
+    class #{klass}
+      def needs_const_block?
+        false
+      end
+    end
+  "end
+
+  doesnt_need_const_block NilLiteral
+  doesnt_need_const_block BoolLiteral
+  doesnt_need_const_block NumberLiteral
+  doesnt_need_const_block CharLiteral
+  doesnt_need_const_block StringLiteral
+  doesnt_need_const_block SymbolLiteral
 end

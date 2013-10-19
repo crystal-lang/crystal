@@ -113,6 +113,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_zext = LLVMBuildZExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun const_array = LLVMConstArray(element_type : TypeRef, constant_vals : ValueRef*, length : UInt32) : ValueRef
   fun const_int = LLVMConstInt(int_type : TypeRef, value : UInt64, sign_extend : Int32) : ValueRef
+  fun const_null = LLVMConstNull(ty : TypeRef) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
   fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
   fun create_builder = LLVMCreateBuilder() : BuilderRef
@@ -128,11 +129,13 @@ lib LibLLVM("LLVM-3.3")
   fun get_global_context = LLVMGetGlobalContext : ContextRef
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : Char*) : ValueRef
+  fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : Char*) : ValueRef
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun initialize_x86_target = LLVMInitializeX86Target()
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
+  fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
   fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
@@ -166,6 +169,14 @@ module LLVM
 
   def self.size_of(type)
     LibLLVM.size_of(type)
+  end
+
+  def self.constant?(value)
+    LibLLVM.is_constant(value) != 0
+  end
+
+  def self.null(type)
+    LibLLVM.const_null(type)
   end
 
   class Context
@@ -218,7 +229,7 @@ module LLVM
 
     def []?(name)
       func = LibLLVM.get_named_function(@mod.llvm_module, name)
-      func.nil? ? nil : Function.new(func)
+      func ? Function.new(func) : nil
     end
   end
 
@@ -249,6 +260,11 @@ module LLVM
 
     def add(type, name)
       LibLLVM.add_global(@mod.llvm_module, type, name)
+    end
+
+    def []?(name)
+      global = LibLLVM.get_named_global(@mod.llvm_module, name)
+      global ? global : nil
     end
   end
 

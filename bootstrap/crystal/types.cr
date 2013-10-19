@@ -70,6 +70,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement types"
     end
 
+    def parents
+      raise "Bug: #{self} doesn't implement parents"
+    end
+
     def defs
       raise "Bug: #{self} doesn't implement defs"
     end
@@ -1007,6 +1011,29 @@ module Crystal
 
     def type_desc
       "union"
+    end
+  end
+
+  class Const < ContainedType
+    getter name
+    getter value
+    getter scope_types
+    getter scope
+
+    def initialize(program, container, @name, @value, @scope_types = nil, @scope = nil)
+      super(program, container)
+    end
+
+    def full_name
+      container && !container.is_a?(Program) ? "#{container}::#{name}" : name
+    end
+
+    def type_desc
+      "constant"
+    end
+
+    def to_s
+      full_name
     end
   end
 end
