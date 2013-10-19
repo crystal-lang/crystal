@@ -351,8 +351,7 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
-        node_type = check_primitive_like node.type
-        typed_def_type = node_type
+        typed_def_type = check_primitive_like node.type
         current_type.types[node.name] = TypeDefType.new current_type, node.name, typed_def_type
       end
     end

@@ -107,6 +107,10 @@ module Crystal
                 @argc
               when :argv
                 @argv
+              when :float32_infinity
+                LLVM.float(Float32::INFINITY)
+              when :float64_infinity
+                LLVM.double(Float64::INFINITY)
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -738,8 +742,7 @@ module Crystal
         value = @builder.load value if target_type.union? #|| (instance_var && (target_type.c_struct? || target_type.c_union?))
         @builder.store value, pointer
       else
-        raise "Not implemented: assign_to_union"
-        # assign_to_union(pointer, target_type, value_type, value)
+        assign_to_union(pointer, target_type, value_type, value)
       end
     end
 
@@ -847,6 +850,10 @@ module Crystal
     end
 
     def visit(node : Def)
+      false
+    end
+
+    def visit(node : Macro)
       false
     end
 

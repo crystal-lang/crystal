@@ -94,4 +94,15 @@ module Crystal
   doesnt_need_const_block CharLiteral
   doesnt_need_const_block StringLiteral
   doesnt_need_const_block SymbolLiteral
+
+  class Primitive
+    def needs_const_block?
+      case name
+      when :float32_infinity, :flaot64_infinity
+        false
+      else
+        true
+      end
+    end
+  end
 end

@@ -918,6 +918,41 @@ module Crystal
     # end
   end
 
+  class TypeDefType < ContainedType
+    getter :name
+    getter :typedef
+
+    # delegate [:lookup_first_def] => :typedef
+
+    def initialize(program, container, @name, @typedef)
+      super(program, container)
+    end
+
+    delegate llvm_name, typedef
+    delegate pointer?, typedef
+    delegate parents, typedef
+
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+      typedef.lookup_matches(name, arg_types, yields, owner, type_lookup, matches_array)
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def type_def_type?
+      true
+    end
+
+    def type_desc
+      "type def"
+    end
+
+    def to_s
+      name
+    end
+  end
+
   class Metaclass < Type
     include DefContainer
     include DefInstanceContainer

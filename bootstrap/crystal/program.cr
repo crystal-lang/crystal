@@ -42,10 +42,10 @@ module Crystal
       @float.abstract = true
 
       @float32 = @types["Float32"] = FloatType.new self, self, "Float32", @float, LLVM::Float, 4, 9
-      # float32.types["INFINITY"] = Const.new float32, "FLOAT_INFINITY", Crystal::FloatInfinity.new(float32)
+      @float32.types["INFINITY"] = Const.new self, @float32, "FLOAT_INFINITY", Primitive.new(:float32_infinity)
 
       @float64 = @types["Float64"] = FloatType.new self, self, "Float64", @float, LLVM::Double, 8, 10
-      # float64.types["INFINITY"] = Const.new float64, "FLOAT_INFINITY", Crystal::FloatInfinity.new(float64)
+      @float64.types["INFINITY"] = Const.new self, @float64, "FLOAT_INFINITY", Primitive.new(:float64_infinity)
 
       @symbol = @types["Symbol"] = PrimitiveType.new self, self, "Symbol", @value, LLVM::Int32, 4
       @pointer = @types["Pointer"] = PointerType.new self, self, "Pointer", value, ["T"]
@@ -57,8 +57,8 @@ module Crystal
       @string.lookup_instance_var("@length").type = @int32
       @string.lookup_instance_var("@c").type = @char
 
-      @types["Array"] = GenericClassType.new self, self, "Array", reference, ["T"]
-      @types["Exception"] = NonGenericClassType.new self, self, "Exception", reference
+      @types["Array"] = GenericClassType.new self, self, "Array", @reference, ["T"]
+      @types["Exception"] = NonGenericClassType.new self, self, "Exception", @reference
 
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)

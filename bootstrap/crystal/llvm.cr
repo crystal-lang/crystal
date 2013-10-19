@@ -114,6 +114,7 @@ lib LibLLVM("LLVM-3.3")
   fun const_array = LLVMConstArray(element_type : TypeRef, constant_vals : ValueRef*, length : UInt32) : ValueRef
   fun const_int = LLVMConstInt(int_type : TypeRef, value : UInt64, sign_extend : Int32) : ValueRef
   fun const_null = LLVMConstNull(ty : TypeRef) : ValueRef
+  fun const_real = LLVMConstReal(real_ty : TypeRef, n : Float64) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
   fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
   fun create_builder = LLVMCreateBuilder() : BuilderRef
@@ -415,8 +416,16 @@ module LLVM
     LibLLVM.const_int(type, value.to_u64, 0)
   end
 
+  def self.float(value : Float32)
+    LibLLVM.const_real(LLVM::Float, value.to_f64)
+  end
+
   def self.float(string : String)
     LibLLVM.const_real_of_string(LLVM::Float, string)
+  end
+
+  def self.double(value : Float64)
+    LibLLVM.const_real(LLVM::Double, value)
   end
 
   def self.double(string : String)

@@ -119,13 +119,14 @@ module Crystal
 
     def visit(node : Assign)
       type_assign node.target, node.value, node
+      false
     end
 
     def type_assign(target, value, node)
-      value.accept self
-
       case target
       when Var
+        value.accept self
+
         var = lookup_var target.name
         target.bind_to var
 
@@ -175,6 +176,21 @@ module Crystal
 
       target_type.add_def node
 
+      false
+    end
+
+    def visit(node : Macro)
+      # if node.receiver
+      #   # TODO: hack
+      #   if node.receiver.is_a?(Var) && node.receiver.name == 'self'
+      #     target_type = current_type.metaclass
+      #   else
+      #     target_type = lookup_ident_type(node.receiver).metaclass
+      #   end
+      # else
+      #   target_type = current_type
+      # end
+      # target_type.add_macro node
       false
     end
 
@@ -301,7 +317,7 @@ module Crystal
 
       node.type = @mod.nil
 
-      true
+      false
     end
 
     def visit(node : Include)
@@ -452,6 +468,16 @@ module Crystal
       false
     end
 
+    def end_visit(node : TypeDef)
+      type = current_type.types[node.name]?
+      if type
+        node.raise "#{node.name} is already defined"
+      else
+        typed_def_type = check_primitive_like node.type_spec
+        current_type.types[node.name] = TypeDefType.new @mod, current_type, node.name, typed_def_type
+      end
+    end
+
     def check_primitive_like(node)
       type = node.type.instance_type
       # unless type.primitive_like?
@@ -532,6 +558,10 @@ module Crystal
         node.type = @mod.int32
       when :argv
         node.type = @mod.pointer_of(@mod.pointer_of(@mod.char))
+      when :float32_infinity
+        node.type = @mod.float32
+      when :float64_infinity
+        node.type = @mod.float64
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
