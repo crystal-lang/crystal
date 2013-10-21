@@ -70,6 +70,7 @@ module Crystal
         system "llc-3.3 #{bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} -"
       rescue ex : Crystal::Exception
         puts ex
+        exit 1
       end
     end
   end

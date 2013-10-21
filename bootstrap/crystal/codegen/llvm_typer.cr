@@ -6,6 +6,8 @@ module Crystal
     def initialize
       @cache = {} of Type => LibLLVM::TypeRef
       @struct_cache = {} of Type => LibLLVM::TypeRef
+      @arg_cache = {} of Type => LibLLVM::TypeRef
+      @embedded_cache = {} of Type => LibLLVM::TypeRef
     end
 
     def llvm_type(type)
@@ -39,6 +41,10 @@ module Crystal
       LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type])
     end
 
+    def create_llvm_type(type : CStructType)
+      LLVM.pointer_type(llvm_struct_type(type))
+    end
+
     def create_llvm_type(type)
       raise "Bug: called create_llvm_type for #{type}"
     end
@@ -48,13 +54,20 @@ module Crystal
     end
 
     def create_llvm_struct_type(type : InstanceVarContainer)
-      @struct_cache[type] ||= begin
-        LLVM.struct_type(type.llvm_name) do
-          ivars = type.all_instance_vars.values
-          element_types = Array(LibLLVM::TypeRef).new(ivars.length)
-          ivars.each { |ivar| element_types.push llvm_embedded_type(ivar.type) }
-          element_types
-        end
+      LLVM.struct_type(type.llvm_name) do
+        ivars = type.all_instance_vars
+        element_types = Array(LibLLVM::TypeRef).new(ivars.length)
+        ivars.each { |name, ivar| element_types.push llvm_embedded_type(ivar.type) }
+        element_types
+      end
+    end
+
+    def create_llvm_struct_type(type : CStructType)
+      LLVM.struct_type(type.llvm_name) do
+        vars = type.vars
+        element_types = Array(LibLLVM::TypeRef).new(vars.length)
+        vars.each { |name, var| element_types.push llvm_embedded_type(var.type) }
+        element_types
       end
     end
 
@@ -63,10 +76,30 @@ module Crystal
     end
 
     def llvm_arg_type(type)
+      @arg_cache[type] ||= create_llvm_arg_type(type)
+    end
+
+    def create_llvm_arg_type(type)
       llvm_type type
     end
 
     def llvm_embedded_type(type)
+      @embedded_cache[type] ||= create_llvm_embedded_type type
+    end
+
+    def create_llvm_embedded_type(type : CStructType)
+      llvm_struct_type type
+    end
+
+    # def create_llvm_embedded_type(type : CUnionType)
+    #   llvm_struct_type type
+    # end
+
+    # def create_llvm_embedded_type(type : NoReturnType)
+    #   LLVM::Int8
+    # end
+
+    def create_llvm_embedded_type(type)
       llvm_type type
     end
   end

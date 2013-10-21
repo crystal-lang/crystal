@@ -140,6 +140,12 @@ module Crystal
                 codegen_primitive_pointer_cast node, target_def, call_args
               when :byte_size
                 codegen_primitive_byte_size node, target_def, call_args
+              when :struct_new
+                codegen_primitive_struct_new node, target_def, call_args
+              when :struct_set
+                codegen_primitive_struct_set node, target_def, call_args
+              when :struct_get
+                codegen_primitive_struct_get node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -299,7 +305,7 @@ module Crystal
     end
 
     def codegen_primitive_allocate(node, target_def, call_args)
-      @builder.malloc llvm_struct_type(node.type)
+      malloc llvm_struct_type(node.type)
     end
 
     def codegen_primitive_pointer_malloc(node, target_def, call_args)
@@ -368,6 +374,43 @@ module Crystal
 
     def codegen_primitive_byte_size(node, target_def, call_args)
       llvm_size(type.instance_type)
+    end
+
+    def codegen_primitive_struct_new(node, target_def, call_args)
+      struct_type = llvm_struct_type(node.type)
+      @last = malloc struct_type
+      memset @last, int8(0), LLVM.size_of(struct_type)
+      @last
+    end
+
+    def codegen_primitive_struct_set(node, target_def, call_args)
+      type = @type
+      assert_type type, CStructType
+
+      name = target_def.name[0 .. -2]
+
+      ptr = gep call_args[0], 0, type.index_of_var(name)
+      @last = call_args[1]
+      value = @last
+      value = @builder.load @last if node.type.c_struct? || node.type.c_union?
+      @builder.store value, ptr
+      call_args[1]
+    end
+
+    def codegen_primitive_struct_get(node, target_def, call_args)
+      type = @type
+      assert_type type, CStructType
+
+      name = target_def.name
+
+      var = type.vars[name]
+      index = type.index_of_var(name)
+      if var.type.c_struct? || var.type.c_union?
+        gep call_args[0], 0, index
+      else
+        struct = @builder.load call_args[0]
+        @builder.extract_value struct, index, name
+      end
     end
 
     def visit(node : PointerOf)
@@ -1124,6 +1167,15 @@ module Crystal
 
     def gep(ptr, index0, index1)
       @builder.gep ptr, [int32(index0), int32(index1)]
+    end
+
+    def malloc(type)
+      @builder.malloc type
+    end
+
+    def memset(pointer, value, size)
+      pointer = cast_to_void_pointer pointer
+      @builder.call @mod.memset(@llvm_mod), [pointer, value, @builder.trunc(size, LLVM::Int32), int32(4), int1(0)]
     end
 
     def realloc(buffer, size)

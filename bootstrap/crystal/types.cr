@@ -46,6 +46,14 @@ module Crystal
       false
     end
 
+    def c_struct?
+      false
+    end
+
+    def c_union?
+      false
+    end
+
     def hierarchy_type
       self
     end
@@ -122,7 +130,7 @@ module Crystal
     end
 
     def parents
-      [] of Type
+      nil
     end
 
     def to_s
@@ -188,8 +196,8 @@ module Crystal
       matches = lookup_matches_without_parents(name, arg_types, yields, owner, the_type_lookup, matches_array)
       return matches if matches.cover_all?
 
-      if parents && !(name == "new" && owner.metaclass?)
-        parents.each do |parent|
+      if (my_parents = parents) && !(name == "new" && owner.metaclass?)
+        my_parents.each do |parent|
           the_type_lookup = parent
           if value?
             parent_owner = owner
@@ -223,7 +231,7 @@ module Crystal
       defs = self.defs[name]
       return defs.values unless defs.empty?
 
-      parents.each do |parent|
+      parents.try &.each do |parent|
         parent_defs = parent.lookup_defs(name)
         return parent_defs unless parent_defs.empty?
       end
@@ -976,6 +984,112 @@ module Crystal
     end
   end
 
+  class CStructType < ContainedType
+    include DefContainer
+    include DefInstanceContainer
+
+    getter name
+    getter vars
+
+    def initialize(program, container, @name, vars)
+      super(program, container)
+      @name = name
+      @vars = {} of String => Var
+      vars.each do |var|
+        @vars[var.name] = var
+        add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:struct_set))
+        add_def Def.new(var.name, ([] of Arg), Primitive.new(:struct_get))
+      end
+    end
+
+    def c_struct?
+      true
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def parents
+      nil
+    end
+
+    def metaclass
+      @metaclass ||= begin
+        metaclass = Metaclass.new(program, self)
+        metaclass.add_def Def.new("new", ([] of Arg), Primitive.new(:struct_new))
+        metaclass
+      end
+    end
+
+    def llvm_name
+      "struct.#{to_s}"
+    end
+
+    def index_of_var(name)
+      @vars.keys.index(name).not_nil!
+    end
+
+    def type_desc
+      "struct"
+    end
+
+    def to_s
+      "#{container}::#{name}"
+    end
+  end
+
+  class CUnionType < ContainedType
+    include DefContainer
+    include DefInstanceContainer
+
+    getter name
+    getter vars
+
+    def initialize(program, container, @name, vars)
+      super(program, container)
+      @name = name
+      @vars = {} of String => Var
+      vars.each do |var|
+        @vars[var.name] = var
+        add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:union_set))
+        add_def Def.new(var.name, ([] of Arg), Primitive.new(:union_get))
+      end
+    end
+
+    def c_union?
+      true
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def parents
+      nil
+    end
+
+    def metaclass
+      @metaclass ||= begin
+        metaclass = Metaclass.new(program, self)
+        metaclass.add_def Def.new("new", ([] of Arg), Primitive.new(:union_new))
+        metaclass
+      end
+    end
+
+    def llvm_name
+      "union.#{to_s}"
+    end
+
+    def type_desc
+      "union"
+    end
+
+    def to_s
+      "#{container}::#{name}"
+    end
+  end
+
   class Metaclass < Type
     include DefContainer
     include DefInstanceContainer
@@ -995,7 +1109,7 @@ module Crystal
     #delegate [:lookup_class_var, :has_class_var?, :class_var_owner] => :instance_type
 
     def parents
-      instance_type.parents.map &.metaclass
+      instance_type.parents.try &.map &.metaclass
     end
 
     def metaclass?
@@ -1059,7 +1173,7 @@ module Crystal
     end
 
     def parents
-      [] of Type
+      nil
     end
 
     def union?

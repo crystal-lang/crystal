@@ -478,6 +478,27 @@ module Crystal
       end
     end
 
+    def end_visit(node : StructDef)
+      visit_struct_or_union_def node, CStructType
+    end
+
+    def end_visit(node : UnionDef)
+      visit_struct_or_union_def node, CUnionType
+    end
+
+    def visit_struct_or_union_def(node, klass)
+      type = current_type.types[node.name]?
+      if type
+        node.raise "#{node.name} is already defined"
+      else
+        fields = node.fields.map do |field|
+          field_type = check_primitive_like field.type_restriction.not_nil!
+          Var.new(field.name, field_type)
+        end
+        current_type.types[node.name] = klass.new @mod, current_type, node.name, fields
+      end
+    end
+
     def check_primitive_like(node)
       type = node.type.instance_type
       # unless type.primitive_like?
@@ -545,15 +566,15 @@ module Crystal
       when :pointer_get
         visit_pointer_get node
       when :pointer_address
-        visit_pointer_address node
+        node.type = @mod.uint64
       when :pointer_new
         visit_pointer_new node
       when :pointer_realloc
-        visit_pointer_realloc node
+        node.type = scope
       when :pointer_cast
         visit_pointer_cast node
       when :byte_size
-        visit_byte_size node
+        node.type = @mod.uint64
       when :argc
         node.type = @mod.int32
       when :argv
@@ -562,6 +583,12 @@ module Crystal
         node.type = @mod.float32
       when :float64_infinity
         node.type = @mod.float64
+      when :struct_new
+        node.type = scope.instance_type
+      when :struct_set
+        node.bind_to @vars["value"]
+      when :struct_get
+        visit_struct_get node
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
@@ -607,20 +634,12 @@ module Crystal
       node.bind_to scope.var
     end
 
-    def visit_pointer_address(node)
-      node.type = @mod.uint64
-    end
-
     def visit_pointer_new(node)
       if scope.instance_type.is_a?(GenericClassType)
         node.raise "can't create pointer without type, use Pointer(Type).new(address)"
       end
 
       node.type = scope.instance_type
-    end
-
-    def visit_pointer_realloc(node)
-      node.type = scope
     end
 
     def visit_pointer_cast(node)
@@ -632,8 +651,12 @@ module Crystal
       end
     end
 
-    def visit_byte_size(node)
-      node.type = @mod.uint64
+    def visit_struct_get(node)
+      untyped_def = @untyped_def.not_nil!
+      scope = @scope
+      assert_type scope, CStructType
+      struct_var = scope.vars[untyped_def.name]
+      node.bind_to struct_var
     end
 
     def visit(node : PointerOf)

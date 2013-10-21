@@ -242,6 +242,27 @@ module Crystal
       args.all?(&.type?) && (obj ? obj.type? : true) && (block_arg ? block_arg.type? : true)
     end
 
+    def raise_matches_not_found(owner : CStructType, def_name, matches = nil)
+      raise_struct_or_union_field_not_found owner, def_name
+    end
+
+    def raise_matches_not_found(owner : CUnionType, def_name, matches = nil)
+      raise_struct_or_union_field_not_found owner, def_name
+    end
+
+    def raise_struct_or_union_field_not_found(owner, def_name)
+      if def_name.ends_with?('=')
+        def_name = def_name[0 .. -2]
+      end
+
+      var = owner.vars[def_name]?
+      if var
+        args[0].raise "field '#{def_name}' of struct #{owner} has type #{var.type}, not #{args[0].type}"
+      else
+        raise "struct #{owner} has no field '#{def_name}'"
+      end
+    end
+
     def raise_matches_not_found(owner, def_name, matches = nil)
       defs = owner.lookup_defs(def_name)
       if defs.empty?
@@ -301,6 +322,7 @@ module Crystal
 
       raise message
     end
+
 
     def full_name(owner)
       owner.is_a?(Program) ? name : "#{owner}##{name}"
