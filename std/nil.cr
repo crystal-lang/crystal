@@ -39,6 +39,10 @@ class Nil
     "nil"
   end
 
+  def try(&block)
+    self
+  end
+
   def not_nil!
     raise "Nil assertion failed"
   end

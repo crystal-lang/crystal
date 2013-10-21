@@ -20,7 +20,7 @@ class Object
     self.yield
   end
 
-  def try!
+  def try
     yield self
   end
 
