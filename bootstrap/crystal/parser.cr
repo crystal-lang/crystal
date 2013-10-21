@@ -1062,7 +1062,42 @@ module Crystal
 
       skip_space
 
-      Crystal::Require.new string
+      if @token.keyword?(:if)
+        next_token_skip_space
+        cond = parse_require_or
+      end
+
+      Crystal::Require.new string, cond
+    end
+
+    parse_operator :require_or, :require_and, "Or.new left, right", ":\"||\""
+    parse_operator :require_and, :require_atomic, "And.new left, right", ":\"&&\""
+
+    def parse_require_atomic
+      case @token.type
+      when :"("
+        next_token_skip_space
+        if @token.type == :")"
+          raise "unexpected token: #{@token}"
+        end
+
+        atomic = parse_require_or
+        skip_space
+
+        check :")"
+        next_token_skip_space
+
+        return atomic
+      when :"!"
+        next_token_skip_space
+        return Not.new(parse_require_atomic)
+      when :IDENT
+        str = @token.to_s
+        next_token_skip_space
+        return Var.new(str)
+      else
+        raise "unexpected token: #{@token}"
+      end
     end
 
     def parse_case

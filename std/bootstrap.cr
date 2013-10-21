@@ -17,7 +17,9 @@ require "math"
 require "nil"
 require "number"
 require "object"
-# require "process"
+require "process"
+require "range"
+# require "random"
 
 lib CrystalMain
   fun __crystal_main(argc : Int32, argv : Char**)

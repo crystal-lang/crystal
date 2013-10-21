@@ -796,7 +796,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @exp.accept self
+      @exp.accept visitor
     end
 
     def ==(other)

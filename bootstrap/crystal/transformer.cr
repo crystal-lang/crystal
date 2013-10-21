@@ -393,6 +393,10 @@ module Crystal
       node
     end
 
+    def transform(node : Not)
+      node
+    end
+
     def transform(node : DeclareVar)
       node.declared_type = node.declared_type.transform(self)
       node

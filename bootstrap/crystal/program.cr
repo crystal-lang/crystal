@@ -21,6 +21,7 @@ module Crystal
       @value = @types["Value"] = ValueType.new self, self, "Value", @object
       @number = @types["Number"] = ValueType.new self, self, "Number", @value
 
+      @no_return = @types["NoReturn"] = NoReturnType.new self
       @void = @types["Void"] = PrimitiveType.new self, self, "Void", @value, LLVM::Int8, 1
       @nil = @types["Nil"] = NilType.new self, self, "Nil", @value, LLVM::Int1, 1
       @bool = @types["Bool"] = BoolType.new self, self, "Bool", @value, LLVM::Int1, 1
@@ -210,6 +211,7 @@ module Crystal
     end
 
     getter :object
+    getter :no_return
     getter :value
     getter :reference
     getter :void

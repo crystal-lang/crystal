@@ -107,6 +107,29 @@ module Crystal
     end
   end
 
+  class NoReturnType < Type
+    getter :program
+
+    def initialize(@program)
+    end
+
+    def no_return?
+      true
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def parents
+      [] of Type
+    end
+
+    def to_s
+      "NoReturn"
+    end
+  end
+
   abstract class ContainedType < Type
     getter :program
     getter :container

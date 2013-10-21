@@ -578,6 +578,26 @@ module Crystal
     end
   end
 
+  # Used only for require "foo" if ...
+  class Not < ASTNode
+    property exp
+
+    def initialize(@exp)
+    end
+
+    def accept_children(visitor)
+      @exp.accept visitor
+    end
+
+    def ==(other : self)
+      @exp == other.exp
+    end
+
+    def clone_without_location
+      Not.new(@exp.clone)
+    end
+  end
+
   # A method definition.
   #
   #     [ receiver '.' ] 'def' name
@@ -701,16 +721,21 @@ module Crystal
 
   class Require < ASTNode
     property :string
+    property :cond
 
-    def initialize(@string)
+    def initialize(@string, @cond = nil)
+    end
+
+    def accept_children(visitor)
+      @cond.accept visitor if @cond
     end
 
     def ==(other : self)
-      other.string == string
+      other.string == string && other.cond == cond
     end
 
     def clone_without_location
-      Require.new(@string)
+      Require.new(@string, @cond.clone)
     end
   end
 
