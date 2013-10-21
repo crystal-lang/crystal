@@ -33,7 +33,7 @@ module Crystal
       macro_arg_types = macro_call.args.map(&:type)
       fun = @untyped_def.lookup_instance(macro_arg_types)
       unless fun
-        @mod.build macro_nodes, nil, false, @llvm_mod
+        @mod.build macro_nodes, llvm_mod: @llvm_mod, single_module: true
         fun = @llvm_mod.functions[macro_call.target_def.mangled_name(nil)]
         @untyped_def.add_instance fun, macro_arg_types
       end

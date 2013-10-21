@@ -144,9 +144,9 @@ module Crystal
         print_types node if @options[:types]
         exit 0 if @options[:no_build]
 
-        llvm_mod = nil
+        llvm_modules = nil
         with_stats_or_profile('codegen') do
-          llvm_mod = program.build node, filename, @options[:debug]
+          llvm_modules = program.build node, filename: filename, debug: @options[:debug]
         end
       rescue Crystal::Exception => ex
         puts ex.to_s(source)
@@ -157,42 +157,69 @@ module Crystal
         exit 1
       end
 
-      reader, writer = IO.pipe
-      Thread.new do
-        sleep 0.1
-        llvm_mod.write_bitcode(writer)
-        writer.close
+      FileUtils.mkdir_p ".crystal"
+
+      assembly_names = []
+
+      llvm_modules.each do |type, llvm_mod|
+        name = type ? type.to_s.gsub(/[\:\(\)]/, '_') : "main"
+        bc_name = ".crystal/#{name}.bc"
+        llvm_mod.write_bitcode "#{bc_name}.new"
+
+        if File.exists?(bc_name)
+          `diff -q #{bc_name} #{bc_name}.new`
+          if $?.success?
+            FileUtils.rm "#{bc_name}.new"
+          else
+            FileUtils.mv "#{bc_name}.new", bc_name
+            `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
+          end
+        else
+          FileUtils.mv "#{bc_name}.new", bc_name
+          `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
+        end
+
+        assembly_names << ".crystal/#{name}.s"
       end
+
+      # reader, writer = IO.pipe
+      # Thread.new do
+      #   sleep 0.1
+      #   llvm_mod.write_bitcode(writer)
+      #   writer.close
+      # end
 
       o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
 
-      if @options[:debug]
-        obj_file = "#{@options[:output_filename]}.o"
+      `#{@clang} #{o_flag} #{lib_flags(program)} #{assembly_names.join " "}`
 
-        pid = spawn "#{@llc} | #{@clang} -x assembler -c -o #{obj_file} -", in: reader
-        Process.waitpid pid
+      # if @options[:debug]
+      #   obj_file = "#{@options[:output_filename]}.o"
 
-        `#{@clang} #{o_flag} #{obj_file} #{lib_flags(program)}`
-      else
-        opt_cmd = @options[:opt_level] ? "#{@opt} -O#{@options[:opt_level]} |" : ""
+      #   pid = spawn "#{@llc} | #{@clang} -x assembler -c -o #{obj_file} -", in: reader
+      #   Process.waitpid pid
 
-        if @options[:dump_ll]
-          llvm_dis = LLVMConfig.bin("llvm-dis")
-          pid = spawn "#{opt_cmd} #{llvm_dis} #{o_flag}", in: reader
-        else
-          pid = spawn "#{opt_cmd} #{@llc} | #{@clang} -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
-        end
-        Process.waitpid pid
-      end
+      #   `#{@clang} #{o_flag} #{obj_file} #{lib_flags(program)}`
+      # else
+      #   opt_cmd = @options[:opt_level] ? "#{@opt} -O#{@options[:opt_level]} |" : ""
 
-      if @options[:execute]
-        @tempfile.close
-        print `#{@options[:output_filename]} #{@options[:args].join ' '}`
-        unless $?.success?
-          puts "\033[1;31m#{$?.to_s}\033[0m"
-        end
-        @tempfile.delete
-      end
+      #   if @options[:dump_ll]
+      #     llvm_dis = LLVMConfig.bin("llvm-dis")
+      #     pid = spawn "#{opt_cmd} #{llvm_dis} #{o_flag}", in: reader
+      #   else
+      #     pid = spawn "#{opt_cmd} #{@llc} | #{@clang} -x assembler #{o_flag}- #{lib_flags(program)}", in: reader
+      #   end
+      #   Process.waitpid pid
+      # end
+
+      # if @options[:execute]
+      #   @tempfile.close
+      #   print `#{@options[:output_filename]} #{@options[:args].join ' '}`
+      #   unless $?.success?
+      #     puts "\033[1;31m#{$?.to_s}\033[0m"
+      #   end
+      #   @tempfile.delete
+      # end
     end
 
     def with_stats_or_profile(description, &block)

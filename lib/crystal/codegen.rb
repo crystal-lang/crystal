@@ -20,13 +20,17 @@ module Crystal
     end
 
     def evaluate(node)
-      llvm_mod = build node
+      llvm_mod = build(node)[nil]
       engine = LLVM::JITCompiler.new(llvm_mod)
       engine.run_function llvm_mod.functions[MAIN_NAME], 0, nil
     end
 
-    def build(node, filename = nil, debug = false, llvm_mod = nil)
-      visitor = CodeGenVisitor.new(self, node, node ? node.type : nil, filename, debug, llvm_mod)
+    def build(node, options = {})
+      filename = options[:filename]
+      debug = options[:debug]
+      llvm_mod = options[:llvm_mod]
+      single_module = options[:single_module]
+      visitor = CodeGenVisitor.new(self, node, node ? node.type : nil, filename, debug, llvm_mod, single_module)
       if node
         begin
           node.accept visitor
@@ -37,9 +41,13 @@ module Crystal
       end
 
       visitor.finish
-      visitor.llvm_mod.dump if Crystal::DUMP_LLVM
-      visitor.llvm_mod.verify!
-      visitor.llvm_mod
+
+      visitor.modules.each do |type, llvm_mod|
+        llvm_mod.dump if Crystal::DUMP_LLVM
+        llvm_mod.verify!
+      end
+
+      visitor.modules
     end
   end
 
@@ -56,17 +64,20 @@ module Crystal
 
     attr_reader :llvm_mod
     attr_reader :current_node
+    attr_reader :modules
 
-    def initialize(mod, node, return_type, filename = nil, debug = false, llvm_mod = nil)
+    def initialize(mod, node, return_type, filename = nil, debug = false, llvm_mod = nil, single_module = false)
       @filename = filename
       @debug = debug
+      @single_module = single_module
       @mod = mod
       @node = node
       @ints = {}
       @ints_1 = {}
       @ints_8 = {}
       @return_type = return_type && return_type.union? ? nil : return_type
-      @llvm_mod = llvm_mod || LLVM::Module.new("Crystal")
+      @llvm_mod = llvm_mod || LLVM::Module.new("main")
+      @main_mod = @llvm_mod
       @typer = LLVMTyper.new
       @fun = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))], @return_type ? llvm_type(@return_type) : LLVM.Void)
 
@@ -79,6 +90,8 @@ module Crystal
       @builder = llvm_builder = LLVM::Builder.new
       @builder = DebugLLVMBuilder.new @builder, self if debug
       @builder = CrystalLLVMBuilder.new @builder, llvm_builder, self
+
+      @modules = {nil => @llvm_mod}
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
 
@@ -95,15 +108,14 @@ module Crystal
       @strings = {}
       @symbols = {}
       @lib_vars = {}
-      symbol_table_values = []
+      @symbol_table_values = []
       mod.symbols.to_a.sort.each_with_index do |sym, index|
         @symbols[sym] = index
-        symbol_table_values << build_string_constant(sym, sym)
+        @symbol_table_values << build_string_constant(sym, sym)
       end
 
-      symbol_table = @llvm_mod.globals.add(LLVM::Array(llvm_type(mod.string), symbol_table_values.count), "symbol_table")
-      symbol_table.linkage = :internal
-      symbol_table.initializer = LLVM::ConstantArray.const(llvm_type(mod.string), symbol_table_values)
+      symbol_table = @llvm_mod.globals.add(LLVM::Array(llvm_type(mod.string), @symbol_table_values.count), "symbol_table")
+      symbol_table.initializer = LLVM::ConstantArray.const(llvm_type(mod.string), @symbol_table_values)
 
       if debug
         @empty_md_list = metadata(0)
@@ -196,13 +208,13 @@ module Crystal
 
     def build_string_constant(str, name = "str")
       name = name.gsub('@', '.')
-      unless string = @strings[str]
+      unless string = @strings[[@llvm_mod, str]]
         global = @llvm_mod.globals.add(LLVM.Array(LLVM::Int8, str.length + 5), name)
         global.linkage = :private
         global.global_constant = 1
         bytes = "#{[str.length].pack("l")}#{str}\0".chars.to_a.map { |c| int8(c.ord) }
         global.initializer = LLVM::ConstantArray.const(LLVM::Int8, bytes)
-        @strings[str] = string = cast_to global, @mod.string
+        @strings[[@llvm_mod, str]] = string = cast_to global, @mod.string
       end
       string
     end
@@ -336,11 +348,10 @@ module Crystal
       const = node.target_const
       if const
         global_name = const.llvm_name
-        global = @llvm_mod.globals[global_name]
+        global = @main_mod.globals[global_name]
 
         unless global
-          global = @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
-          global.linkage = :internal
+          global = @main_mod.globals.add(llvm_type(const.value.type), global_name)
 
           if const.value.needs_const_block?
             in_const_block("const_#{global_name}") do
@@ -359,6 +370,11 @@ module Crystal
             global.initializer = @last
             global.global_constant = 1
           end
+        end
+
+        if @llvm_mod != @main_mod
+          global = @llvm_mod.globals[global_name]
+          global ||= @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
         end
 
         @last = @builder.load global
@@ -1258,7 +1274,7 @@ module Crystal
 
       @builder.position_at_end catch_block
       lp_ret_type = LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32)
-      lp = @builder.landingpad lp_ret_type, @llvm_mod.functions[PERSONALITY_NAME], []
+      lp = @builder.landingpad lp_ret_type, @main_mod.functions[PERSONALITY_NAME], []
       unwind_ex_obj = @builder.extract_value lp, 0
       ex_type_id = @builder.extract_value lp, 1
 
@@ -1281,7 +1297,7 @@ module Crystal
 
           if a_rescue.name
             @vars = @vars.clone
-            @get_exception_fun ||= @llvm_mod.functions[GET_EXCEPTION_NAME]
+            @get_exception_fun ||= @main_mod.functions[GET_EXCEPTION_NAME]
             exception_ptr = @builder.call @get_exception_fun, @builder.bit_cast(unwind_ex_obj, @get_exception_fun.params[0].type)
 
             exception = @builder.int2ptr exception_ptr, LLVM::Pointer(LLVM::Int8)
@@ -1303,7 +1319,7 @@ module Crystal
       end
 
       accept(node.ensure) if node.ensure
-      @raise_fun ||= @llvm_mod.functions[RAISE_NAME]
+      @raise_fun ||= @main_mod.functions[RAISE_NAME]
       codegen_call_or_invoke(@raise_fun, [@builder.bit_cast(unwind_ex_obj, @raise_fun.params[0].type)], true)
       @builder.unreachable
 
@@ -1319,7 +1335,24 @@ module Crystal
 
     def target_def_fun(target_def, self_type)
       mangled_name = target_def.mangled_name(self_type)
-      @llvm_mod.functions[mangled_name] || codegen_fun(mangled_name, target_def, self_type)
+      self_type_mod = type_module(self_type)
+
+      fun = self_type_mod.functions[mangled_name] || codegen_fun(mangled_name, target_def, self_type)
+      if @llvm_mod == self_type_mod
+        return fun
+      else
+        @llvm_mod.functions[mangled_name] || declare_fun(mangled_name, fun)
+      end
+    end
+
+    def declare_fun(mangled_name, fun)
+      fun_type = fun.function_type
+      @llvm_mod.functions.add(
+        mangled_name,
+        fun_type.argument_types,
+        fun_type.return_type,
+        varargs: fun_type.vararg?
+      )
     end
 
     def codegen_call(node, self_type, call_args)
@@ -1386,6 +1419,11 @@ module Crystal
       old_gc_root_index = @gc_root_index
       old_needs_gc = @needs_gc
       old_in_const_block = @in_const_block
+      old_llvm_mod = @llvm_mod
+
+      unless @single_module
+        @llvm_mod = type_module(self_type)
+      end
 
       @vars = {}
       @exception_handlers = []
@@ -1421,9 +1459,9 @@ module Crystal
       end
 
       if !target_def.is_a?(External) || target_def.body
-        unless target_def.is_a?(External)
-          @fun.linkage = :internal
-        end
+        # unless target_def.is_a?(External)
+        #   @fun.linkage = :internal
+        # end
         new_entry_block
 
         @needs_gc = needs_gc?(target_def)
@@ -1483,6 +1521,7 @@ module Crystal
 
       the_fun = @fun
 
+      @llvm_mod = old_llvm_mod
       @vars = old_vars
       @exception_handlers = old_exception_handlers
       @type = old_type
@@ -1497,6 +1536,14 @@ module Crystal
       the_fun
     end
 
+    def type_module(type)
+      @modules[type ? type.instance_type : nil] ||= begin
+        mod = LLVM::Module.new(type.instance_type.to_s)
+        mod.globals.add(LLVM::Array(llvm_type(@mod.string), @symbol_table_values.count), "symbol_table")
+        mod
+      end
+    end
+
     def needs_gc?(target_def)
       return false if !get_root_index_fun
       return false if target_def.is_a?(External) && NO_GC_FUNC_NAMES.include?(target_def.name)
@@ -1509,11 +1556,11 @@ module Crystal
     end
 
     def get_root_index_fun
-       @get_root_index_fun ||= @llvm_mod.functions[GET_ROOT_INDEX_NAME]
+       @get_root_index_fun ||= @main_mod.functions[GET_ROOT_INDEX_NAME]
     end
 
     def set_root_index_fun
-       @set_root_index_fun ||= @llvm_mod.functions[SET_ROOT_INDEX_NAME]
+       @set_root_index_fun ||= @main_mod.functions[SET_ROOT_INDEX_NAME]
     end
 
     def match_any_type_id(type, type_id)
@@ -1769,7 +1816,7 @@ module Crystal
     end
 
     def malloc(type)
-      @malloc_fun ||= @llvm_mod.functions[MALLOC_NAME]
+      @malloc_fun ||= @main_mod.functions[MALLOC_NAME]
       if @malloc_fun
         type = type.type unless type.is_a?(LLVM::Type)
         size = @builder.trunc(type.size, LLVM::Int32)
@@ -1820,7 +1867,7 @@ module Crystal
       old_in_const_block = @in_const_block
       @in_const_block = true
 
-      @fun = @llvm_mod.functions[MAIN_NAME]
+      @fun = @main_mod.functions[MAIN_NAME]
       const_block = new_block const_block_name
       @builder.position_at_end const_block
 
