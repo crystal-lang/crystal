@@ -1090,6 +1090,39 @@ module Crystal
     end
   end
 
+  class CEnumType < ContainedType
+    property name
+    property base_type
+
+    def initialize(program, container, @name, constants)
+      super(program, container)
+
+      constants.each do |constant|
+        @types[constant.name] = Const.new(program, self, constant.name, constant.default_value.not_nil!)
+      end
+    end
+
+    def c_enum?
+      true
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def parents
+      nil
+    end
+
+    def type_desc
+      "enum"
+    end
+
+    def to_s
+      "#{container}::#{name}"
+    end
+  end
+
   class Metaclass < Type
     include DefContainer
     include DefInstanceContainer

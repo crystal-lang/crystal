@@ -2183,7 +2183,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       check :CONST
-      name = @token.value
+      name = @token.value.to_s
       next_token_skip_statement_end
 
       constants = [] of Arg

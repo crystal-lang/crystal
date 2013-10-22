@@ -499,6 +499,25 @@ module Crystal
       end
     end
 
+    def visit(node : EnumDef)
+      type = current_type.types[node.name]?
+      if type
+        node.raise "#{node.name} is already defined"
+      else
+        counter = 0
+        node.constants.each do |constant|
+          if default_value = constant.default_value
+            assert_type default_value, NumberLiteral
+            counter = default_value.value.to_i
+          else
+            constant.default_value = NumberLiteral.new(counter, :i32)
+          end
+          counter += 1
+        end
+        current_type.types[node.name] = CEnumType.new(@mod, current_type, node.name, node.constants)
+      end
+    end
+
     def check_primitive_like(node)
       type = node.type.instance_type
       # unless type.primitive_like?
