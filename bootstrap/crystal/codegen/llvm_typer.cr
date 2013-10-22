@@ -43,7 +43,7 @@ module Crystal
     def create_llvm_type(type : UnionType)
       max_size = 0
       type.union_types.each do |subtype|
-        size = @layout.size_in_bytes(llvm_type(subtype))
+        size = size_of(llvm_type(subtype))
         max_size = size if size > max_size
       end
       max_size /= 4
@@ -54,6 +54,10 @@ module Crystal
     end
 
     def create_llvm_type(type : CStructType)
+      LLVM.pointer_type(llvm_struct_type(type))
+    end
+
+    def create_llvm_type(type : CUnionType)
       LLVM.pointer_type(llvm_struct_type(type))
     end
 
@@ -83,6 +87,21 @@ module Crystal
       end
     end
 
+    def create_llvm_struct_type(type : CUnionType)
+      max_size = 0
+      max_type :: LibLLVM::TypeRef
+      type.vars.each do |name, var|
+        llvm_type = llvm_embedded_type(var.type)
+        size = size_of(llvm_type)
+        if size > max_size
+          max_size = size
+          max_type = llvm_type
+        end
+      end
+
+      LLVM.struct_type(type.llvm_name, [max_type] of LibLLVM::TypeRef)
+    end
+
     def create_llvm_struct_type(type)
       raise "Bug: called llvm_struct_type for #{type}"
     end
@@ -103,16 +122,20 @@ module Crystal
       llvm_struct_type type
     end
 
-    # def create_llvm_embedded_type(type : CUnionType)
-    #   llvm_struct_type type
-    # end
+    def create_llvm_embedded_type(type : CUnionType)
+      llvm_struct_type type
+    end
 
-    # def create_llvm_embedded_type(type : NoReturnType)
-    #   LLVM::Int8
-    # end
+    def create_llvm_embedded_type(type : NoReturnType)
+      LLVM::Int8
+    end
 
     def create_llvm_embedded_type(type)
       llvm_type type
+    end
+
+    def size_of(type)
+      @layout.size_in_bytes type
     end
   end
 end

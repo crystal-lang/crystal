@@ -257,9 +257,9 @@ module Crystal
 
       var = owner.vars[def_name]?
       if var
-        args[0].raise "field '#{def_name}' of struct #{owner} has type #{var.type}, not #{args[0].type}"
+        args[0].raise "field '#{def_name}' of #{owner.type_desc} #{owner} has type #{var.type}, not #{args[0].type}"
       else
-        raise "struct #{owner} has no field '#{def_name}'"
+        raise "#{owner.type_desc} #{owner} has no field '#{def_name}'"
       end
     end
 

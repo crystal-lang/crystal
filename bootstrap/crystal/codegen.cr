@@ -146,6 +146,12 @@ module Crystal
                 codegen_primitive_struct_set node, target_def, call_args
               when :struct_get
                 codegen_primitive_struct_get node, target_def, call_args
+              when :union_new
+                codegen_primitive_union_new node, target_def, call_args
+              when :union_set
+                codegen_primitive_union_set node, target_def, call_args
+              when :union_get
+                codegen_primitive_union_get node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -410,6 +416,43 @@ module Crystal
       else
         struct = @builder.load call_args[0]
         @builder.extract_value struct, index, name
+      end
+    end
+
+    def codegen_primitive_union_new(node, target_def, call_args)
+      struct_type = llvm_struct_type(node.type)
+      @last = malloc struct_type
+      memset @last, int8(0), LLVM.size_of(struct_type)
+      @last
+    end
+
+    def codegen_primitive_union_set(node, target_def, call_args)
+      type = @type
+      assert_type type, CUnionType
+
+      name = target_def.name[0 .. -2]
+
+      var = type.vars[name]
+      ptr = gep call_args[0], 0, 0
+      casted_value = cast_to_pointer ptr, var.type
+      @last = call_args[1]
+      @builder.store @last, casted_value
+      @last
+    end
+
+    def codegen_primitive_union_get(node, target_def, call_args)
+      type = @type
+      assert_type type, CUnionType
+
+      name = target_def.name
+
+      var = type.vars[name]
+      ptr = gep call_args[0], 0, 0
+      if var.type.c_struct? || var.type.c_union?
+        @last = @builder.bit_cast(ptr, LLVM.pointer_type(llvm_struct_type(var.type)))
+      else
+        casted_value = cast_to_pointer ptr, var.type
+        @last = @builder.load casted_value
       end
     end
 

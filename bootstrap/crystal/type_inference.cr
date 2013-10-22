@@ -589,6 +589,12 @@ module Crystal
         node.bind_to @vars["value"]
       when :struct_get
         visit_struct_get node
+      when :union_new
+        node.type = scope.instance_type
+      when :union_set
+        node.bind_to @vars["value"]
+      when :union_get
+        visit_union_get node
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
@@ -655,8 +661,14 @@ module Crystal
       untyped_def = @untyped_def.not_nil!
       scope = @scope
       assert_type scope, CStructType
-      struct_var = scope.vars[untyped_def.name]
-      node.bind_to struct_var
+      node.bind_to scope.vars[untyped_def.name]
+    end
+
+    def visit_union_get(node)
+      untyped_def = @untyped_def.not_nil!
+      scope = @scope
+      assert_type scope, CUnionType
+      node.bind_to scope.vars[untyped_def.name]
     end
 
     def visit(node : PointerOf)
