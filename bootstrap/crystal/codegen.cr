@@ -87,7 +87,6 @@ module Crystal
     def finish
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
-      last = @last
 
       return_from_fun nil, @main_ret_type
     end
@@ -521,18 +520,18 @@ module Crystal
 
     def visit(node : ClassDef)
       node.body.accept self
-      @Last = llvm_nil
+      @last = llvm_nil
       false
     end
 
     def visit(node : ModuleDef)
       node.body.accept self
-      @Last = llvm_nil
+      @last = llvm_nil
       false
     end
 
     def visit(node : LibDef)
-      @Last = llvm_nil
+      @last = llvm_nil
       false
     end
 
@@ -812,6 +811,11 @@ module Crystal
       codegen_assign(ptr, target.type, value.type, llvm_value)
     end
 
+    def codegen_assign_target(target : ClassVar, value, llvm_value)
+      ptr = get_global class_var_global_name(target), target.type
+      codegen_assign(ptr, target.type, value.type, llvm_value)
+    end
+
     def codegen_assign_target(target : Var, value, llvm_value)
       var = declare_var(target)
       ptr = var.pointer
@@ -831,6 +835,10 @@ module Crystal
         LLVM.set_initializer ptr, LLVM.null(llvm_type)
       end
       ptr
+    end
+
+    def class_var_global_name(node)
+      "#{node.owner}#{node.var.name.replace('@', ':')}"
     end
 
     def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
@@ -913,6 +921,10 @@ module Crystal
 
     def visit(node : Global)
       read_global node.name.to_s, node.type
+    end
+
+    def visit(node : ClassVar)
+      read_global class_var_global_name(node), node.type
     end
 
     def read_global(name, type)

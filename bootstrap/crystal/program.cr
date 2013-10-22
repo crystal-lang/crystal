@@ -6,6 +6,7 @@ module Crystal
     include DefContainer
     include DefInstanceContainer
     include MatchesLookup
+    include ClassVarContainer
 
     getter types
     getter global_vars

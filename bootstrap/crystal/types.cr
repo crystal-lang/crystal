@@ -364,6 +364,24 @@ module Crystal
     end
   end
 
+  module ClassVarContainer
+    def class_vars
+      @class_vars ||= {} of String => Var
+    end
+
+    def has_class_var?(name)
+      class_vars.has_key?(name)
+    end
+
+    def lookup_class_var(name)
+      class_vars[name] ||= Var.new name
+    end
+
+    def class_var_owner
+      self
+    end
+  end
+
   module InheritableClass
     def add_subclass(subclass)
       subclasses << subclass
@@ -550,6 +568,7 @@ module Crystal
 
   class NonGenericClassType < ClassType
     include InstanceVarContainer
+    include ClassVarContainer
     include DefInstanceContainer
 
     def metaclass
@@ -733,7 +752,7 @@ module Crystal
   class GenericClassInstanceType < Type
     include InheritableClass
     include InstanceVarContainer
-    # include ClassVarContainer
+    include ClassVarContainer
     include DefInstanceContainer
     include MatchesLookup
 
@@ -1138,6 +1157,7 @@ module Crystal
   class Metaclass < Type
     include DefContainer
     include DefInstanceContainer
+    include ClassVarContainer
 
     getter program
     getter instance_type
@@ -1151,7 +1171,9 @@ module Crystal
 
     delegate :abstract, instance_type
 
-    #delegate [:lookup_class_var, :has_class_var?, :class_var_owner] => :instance_type
+    def class_var_owner
+      instance_type
+    end
 
     def parents
       instance_type.parents.try &.map &.metaclass

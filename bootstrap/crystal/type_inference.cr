@@ -96,6 +96,10 @@ module Crystal
       node.bind_to var
     end
 
+    def visit(node : ClassVar)
+      node.bind_to lookup_class_var(node)
+    end
+
     def lookup_instance_var(node)
       scope = @scope
 
@@ -121,6 +125,28 @@ module Crystal
       else
         node.raise "can't use instance variables at the top level"
       end
+    end
+
+    def lookup_class_var(node, bind_to_nil_if_non_existent = true)
+      scope = (@typed_def ? @scope : current_type).not_nil!
+      if scope.is_a?(Metaclass)
+        owner = scope.class_var_owner
+      else
+        owner = scope
+      end
+      class_var_owner = owner
+
+      assert_type class_var_owner, ClassVarContainer
+      bind_to_nil = bind_to_nil_if_non_existent && !class_var_owner.has_class_var?(node.name)
+
+      var = class_var_owner.lookup_class_var node.name
+      var.bind_to mod.nil_var if bind_to_nil
+
+      node.owner = class_var_owner
+      node.var = var
+      node.class_scope = !@typed_def
+
+      var
     end
 
     def end_visit(node : Expressions)
@@ -181,6 +207,16 @@ module Crystal
         mod.global_vars[target.name] = var
       end
 
+      target.bind_to var
+
+      node.bind_to value
+      var.bind_to node
+    end
+
+    def type_assign(target : ClassVar, value, node)
+      value.accept self
+
+      var = lookup_class_var target, !!@typed_def
       target.bind_to var
 
       node.bind_to value
