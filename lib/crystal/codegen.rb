@@ -229,7 +229,7 @@ module Crystal
     end
 
     def visit_fun_literal(node)
-      @last = codegen_fun("fun#{node.object_id}", node.def, nil)
+      @last = codegen_fun("fun#{node.object_id}", node.def, nil, @llvm_mod)
       false
     end
 
@@ -366,9 +366,12 @@ module Crystal
               end
             end
           else
+            old_llvm_mod = @llvm_mod
+            @llvm_mod = @main_mod
             accept(const.value)
             global.initializer = @last
             global.global_constant = 1
+            @llvm_mod = old_llvm_mod
           end
         end
 
@@ -1274,7 +1277,7 @@ module Crystal
 
       @builder.position_at_end catch_block
       lp_ret_type = LLVM::Struct(LLVM::Pointer(LLVM::Int8), LLVM::Int32)
-      lp = @builder.landingpad lp_ret_type, @main_mod.functions[PERSONALITY_NAME], []
+      lp = @builder.landingpad lp_ret_type, main_fun(PERSONALITY_NAME), []
       unwind_ex_obj = @builder.extract_value lp, 0
       ex_type_id = @builder.extract_value lp, 1
 
@@ -1297,8 +1300,8 @@ module Crystal
 
           if a_rescue.name
             @vars = @vars.clone
-            @get_exception_fun ||= @main_mod.functions[GET_EXCEPTION_NAME]
-            exception_ptr = @builder.call @get_exception_fun, @builder.bit_cast(unwind_ex_obj, @get_exception_fun.params[0].type)
+            get_exception_fun = main_fun(GET_EXCEPTION_NAME)
+            exception_ptr = @builder.call get_exception_fun, @builder.bit_cast(unwind_ex_obj, get_exception_fun.params[0].type)
 
             exception = @builder.int2ptr exception_ptr, LLVM::Pointer(LLVM::Int8)
             ex_union = alloca llvm_type(a_rescue.type)
@@ -1319,8 +1322,8 @@ module Crystal
       end
 
       accept(node.ensure) if node.ensure
-      @raise_fun ||= @main_mod.functions[RAISE_NAME]
-      codegen_call_or_invoke(@raise_fun, [@builder.bit_cast(unwind_ex_obj, @raise_fun.params[0].type)], true)
+      raise_fun = main_fun(RAISE_NAME)
+      codegen_call_or_invoke(raise_fun, [@builder.bit_cast(unwind_ex_obj, raise_fun.params[0].type)], true)
       @builder.unreachable
 
       close_branched_block(branch)
@@ -1342,6 +1345,15 @@ module Crystal
         return fun
       else
         @llvm_mod.functions[mangled_name] || declare_fun(mangled_name, fun)
+      end
+    end
+
+    def main_fun(name)
+      fun = @main_mod.functions[name]
+      if @llvm_mod == @main_mod
+        fun
+      else
+        @llvm_mod.functions[name] || declare_fun(name, fun)
       end
     end
 
@@ -1406,7 +1418,7 @@ module Crystal
       end
     end
 
-    def codegen_fun(mangled_name, target_def, self_type)
+    def codegen_fun(mangled_name, target_def, self_type, fun_module = type_module(self_type))
       old_current_node = @current_node
       old_fun = @fun
       @current_node = target_def
@@ -1422,7 +1434,7 @@ module Crystal
       old_llvm_mod = @llvm_mod
 
       unless @single_module
-        @llvm_mod = type_module(self_type)
+        @llvm_mod = fun_module
       end
 
       @vars = {}
@@ -1865,7 +1877,9 @@ module Crystal
       old_position = @builder.insert_block
       old_fun = @fun
       old_in_const_block = @in_const_block
+      old_llvm_mod = @llvm_mod
       @in_const_block = true
+      @llvm_mod = @main_mod
 
       @fun = @main_mod.functions[MAIN_NAME]
       const_block = new_block const_block_name
@@ -1880,6 +1894,7 @@ module Crystal
 
       @builder.position_at_end old_position
       @fun = old_fun
+      @llvm_mod = old_llvm_mod
       @in_const_block = old_in_const_block
 
       ret_value

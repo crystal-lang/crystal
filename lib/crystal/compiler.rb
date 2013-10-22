@@ -1,5 +1,6 @@
 require 'fileutils'
 require 'tempfile'
+require 'digest/md5'
 
 module Crystal
   class Compiler
@@ -162,7 +163,8 @@ module Crystal
       assembly_names = []
 
       llvm_modules.each do |type, llvm_mod|
-        name = type ? type.to_s.gsub(/[\:\(\)]/, '_') : "main"
+        # name = type ? type.to_s.gsub(/[\:\(\)\-\>\s\+]/, '_') : "main"
+        name = type ? "#{Digest::MD5.hexdigest(type.to_s)}#{type.object_id}" : "main"
         bc_name = ".crystal/#{name}.bc"
         llvm_mod.write_bitcode "#{bc_name}.new"
 
@@ -179,6 +181,11 @@ module Crystal
           `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
         end
 
+        if @options[:dump_ll]
+          llvm_dis = LLVMConfig.bin("llvm-dis")
+          `#{llvm_dis} #{bc_name}`
+        end
+
         assembly_names << ".crystal/#{name}.s"
       end
 
@@ -191,7 +198,7 @@ module Crystal
 
       o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
 
-      `#{@clang} #{o_flag} #{lib_flags(program)} #{assembly_names.join " "}`
+      `#{@clang} #{o_flag} #{lib_flags(program)} #{assembly_names.join " "}` unless @options[:dump_ll]
 
       # if @options[:debug]
       #   obj_file = "#{@options[:output_filename]}.o"
