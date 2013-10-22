@@ -218,6 +218,7 @@ module Crystal
     getter :nil
     getter :bool
     getter :char
+    getter :int
     getter :int8
     getter :int16
     getter :int32
@@ -226,6 +227,7 @@ module Crystal
     getter :uint16
     getter :uint32
     getter :uint64
+    getter :float
     getter :float32
     getter :float64
     getter :string

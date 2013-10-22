@@ -54,6 +54,14 @@ module Crystal
       false
     end
 
+    def c_enum?
+      false
+    end
+
+    def primitive_like?
+      false
+    end
+
     def hierarchy_type
       self
     end
@@ -572,6 +580,10 @@ module Crystal
     end
 
     def value?
+      true
+    end
+
+    def primitive_like?
       true
     end
   end

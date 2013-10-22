@@ -520,20 +520,22 @@ module Crystal
 
     def check_primitive_like(node)
       type = node.type.instance_type
-      # unless type.primitive_like?
-      #   msg = "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
-      #   msg << " (did you mean Int32?)" if type.equal?(@mod.types["Int"])
-      #   msg << " (did you mean Float32?)" if type.equal?(@mod.types["Float"])
-      #   node.raise msg
-      # end
+      unless type.primitive_like?
+        msg = String.build do |msg|
+          msg << "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
+          msg << " (did you mean Int32?)" if type == @mod.int
+          msg << " (did you mean Float32?)" if type == @mod.float
+        end
+        node.raise msg
+      end
 
-      # if type.c_enum?
-      #   type = @mod.int32
+      if type.c_enum?
+        type = @mod.int32
       # elsif type.type_def_type? && type.typedef.fun_type?
       #   type = type.typedef
-      # end
+      end
 
-      # type
+      type
     end
 
     def visit(node : Ident)
