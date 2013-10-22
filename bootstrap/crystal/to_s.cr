@@ -446,6 +446,12 @@ module Crystal
     end
 
     def visit(node : InstanceVar)
+      @str << "out " if node.out
+      @str << node.name
+    end
+
+    def visit(node : ClassVar)
+      @str << "out " if node.out
       @str << node.name
     end
 

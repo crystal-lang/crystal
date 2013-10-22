@@ -494,8 +494,7 @@ module Crystal
     property :name
     property :out
 
-    def initialize(@name)
-      @out = false
+    def initialize(@name, @out = false)
     end
 
     def name_length
@@ -507,7 +506,23 @@ module Crystal
     end
 
     def clone_without_location
-      InstanceVar.new(@name)
+      InstanceVar.new(@name, @out)
+    end
+  end
+
+  class ClassVar < ASTNode
+    property :name
+    property :out
+
+    def initialize(@name, @out = false)
+    end
+
+    def ==(other : self)
+      other.name == @name && other.out == @out
+    end
+
+    def clone_without_location
+      ClassVar.new(@name, @out)
     end
   end
 

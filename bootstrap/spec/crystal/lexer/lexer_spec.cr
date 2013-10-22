@@ -93,6 +93,10 @@ def it_lexes_instance_var(value)
   it_lexes value, :INSTANCE_VAR, value
 end
 
+def it_lexes_class_var(value)
+  it_lexes value, :CLASS_VAR, value
+end
+
 def it_lexes_globals(globals)
   it_lexes_many globals, :GLOBAL
 end
@@ -189,6 +193,7 @@ describe "Lexer" do
   it_lexes "-@foo", :"-"
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
+  it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123", "$~"]
   it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\""]
   it_lexes_regex "/foo/"
