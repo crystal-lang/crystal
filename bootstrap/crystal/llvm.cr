@@ -7,6 +7,9 @@ lib LibLLVM("LLVM-3.3")
   type BuilderRef : Void*
   type ExecutionEngineRef : Void*
   type GenericValueRef : Void*
+  type TargetRef : Void*
+  type TargetDataRef : Void*
+  type TargetMachineRef : Void*
 
   enum Linkage
     External
@@ -58,6 +61,29 @@ lib LibLLVM("LLVM-3.3")
     ULE
     UNE
     PredicateTrue
+  end
+
+  enum CodeGenOptLevel
+    None
+    Less
+    Default
+    Aggressive
+  end
+
+  enum RelocMode
+    Default
+    Static
+    PIC
+    DynamicNoPIC
+  end
+
+  enum CodeModel
+    Default
+    JITDefault
+    Small
+    Kernel
+    Medium
+    Large
   end
 
   fun add_function = LLVMAddFunction(module : ModuleRef, name : Char*, type : TypeRef) : ValueRef
@@ -121,6 +147,7 @@ lib LibLLVM("LLVM-3.3")
   fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
   fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : Char**) : Int32
+  fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : Char*, cpu : Char*, features : Char*, level : CodeGenOptLevel, reloc : RelocMode, code_model : CodeModel) : TargetMachineRef
   fun double_type = LLVMDoubleType() : TypeRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
@@ -129,11 +156,15 @@ lib LibLLVM("LLVM-3.3")
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : Int32
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
+  fun get_first_target = LLVMGetFirstTarget : TargetRef
   fun get_global_context = LLVMGetGlobalContext : ContextRef
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : Char*) : ValueRef
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : Char*) : ValueRef
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
+  fun get_target_name = LLVMGetTargetName(target : TargetRef) : Char*
+  fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : Char*
+  fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
   fun initialize_x86_target = LLVMInitializeX86Target()
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
@@ -147,6 +178,7 @@ lib LibLLVM("LLVM-3.3")
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
+  fun size_of_type_in_bits = LLVMSizeOfTypeInBits(ref : TargetDataRef, ty : TypeRef) : UInt64
   fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : Char*) : TypeRef
   fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
   fun struct_type = LLVMStructType(element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
@@ -475,6 +507,58 @@ module LLVM
 
     def to_pointer
       LibLLVM.generic_value_to_pointer(@value)
+    end
+  end
+
+  class Target
+    def self.first
+      Target.new LibLLVM.get_first_target
+    end
+
+    def initialize(@target)
+    end
+
+    def name
+      String.new LibLLVM.get_target_name(@target)
+    end
+
+    def description
+      String.new LibLLVM.get_target_description(@target)
+    end
+
+    def create_target_machine(triple, cpu = "", features = "",
+      opt_level = LibLLVM::CodeGenOptLevel::Default,
+      reloc = LibLLVM::RelocMode::Default,
+      code_model = LibLLVM::CodeModel::Default)
+      target_machine = LibLLVM.create_target_machine(@target, triple, cpu, features, opt_level, reloc, code_model)
+      target_machine ? TargetMachine.new(target_machine) : nil
+    end
+
+    def to_s
+      "#{name} - #{description}"
+    end
+  end
+
+  class TargetMachine
+    def initialize(@target_machine)
+    end
+
+    def data_layout
+      layout = LibLLVM.get_target_machine_data(@target_machine)
+      layout ? TargetDataLayout.new(layout) : nil
+    end
+  end
+
+  class TargetDataLayout
+    def initialize(@target_data)
+    end
+
+    def size_in_bits(type)
+      LibLLVM.size_of_type_in_bits(@target_data, type)
+    end
+
+    def size_in_bytes(type)
+      size_in_bits(type) / 8
     end
   end
 
