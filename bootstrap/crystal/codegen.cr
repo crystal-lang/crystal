@@ -77,6 +77,7 @@ module Crystal
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @const_block_entry = @const_block
       @vars = {} of String => LLVMVar
+      @lib_vars = {} of String => LibLLVM::ValueRef
       @strings = {} of String => LibLLVM::ValueRef
       @type = @mod
       @last = llvm_nil
@@ -151,6 +152,10 @@ module Crystal
                 codegen_primitive_union_set node, target_def, call_args
               when :union_get
                 codegen_primitive_union_get node, target_def, call_args
+              when :external_var_set
+                codegen_primitive_external_var_set node, target_def, call_args
+              when :external_var_get
+                codegen_primitive_external_var_get node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -453,6 +458,20 @@ module Crystal
         casted_value = cast_to_pointer ptr, var.type
         @last = @builder.load casted_value
       end
+    end
+
+    def codegen_primitive_external_var_set(node, target_def, call_args)
+      name = target_def.name[0 .. -2]
+      var = declare_lib_var name, node.type
+      @last = call_args[0]
+      @builder.store @last, var
+      @last
+    end
+
+    def codegen_primitive_external_var_get(node, target_def, call_args)
+      name = target_def.name
+      var = declare_lib_var name, node.type
+      @builder.load var
     end
 
     def visit(node : PointerOf)
@@ -966,6 +985,16 @@ module Crystal
         # end
         llvm_var
       end
+    end
+
+    def declare_lib_var(name, type)
+      unless var = @lib_vars[name]?
+        var = @llvm_mod.globals.add(llvm_type(type), name)
+        LLVM.set_linkage var, LibLLVM::Linkage::External
+        # var.thread_local = true if RUBY_PLATFORM =~ /linux/
+        @lib_vars[name] = var
+      end
+      var
     end
 
     def visit(node : Def)

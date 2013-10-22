@@ -583,6 +583,19 @@ module Crystal
       end
     end
 
+    def visit(node : ExternalVar)
+      node.type_spec.accept self
+
+      var_type = check_primitive_like node.type_spec
+
+      type = current_type
+      assert_type type, LibType
+
+      type.add_var node.name, var_type
+
+      false
+    end
+
     def check_primitive_like(node)
       type = node.type.instance_type
       unless type.primitive_like?
@@ -681,6 +694,10 @@ module Crystal
         node.bind_to @vars["value"]
       when :union_get
         visit_union_get node
+      when :external_var_set
+        # Nothing to do
+      when :external_var_get
+        # Nothing to do
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
@@ -802,6 +819,54 @@ module Crystal
 
     def current_type
       @types.last
+    end
+
+    def visit(node : And)
+      raise "Bug: And node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : Or)
+      raise "Bug: Or node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : Require)
+      raise "Bug: Require node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : RangeLiteral)
+      raise "Bug: RangeLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : Case)
+      raise "Bug: Case node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : When)
+      raise "Bug: When node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : RegexpLiteral)
+      raise "Bug: RegexpLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : ArrayLiteral)
+      raise "Bug: ArrayLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : HashLiteral)
+      raise "Bug: HashLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : Unless)
+      raise "Bug: Unless node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : StringInterpolation)
+      raise "Bug: StringInterpolation node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : MultiAssign)
+      raise "Bug: MultiAssign node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end

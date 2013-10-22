@@ -211,11 +211,6 @@ module Crystal
       @last = int(@symbols[node.value])
     end
 
-    def visit_hash_literal(node)
-      accept(node.expanded)
-      false
-    end
-
     def visit_fun_literal(node)
       @last = codegen_fun("fun#{node.object_id}", node.def, nil)
       false

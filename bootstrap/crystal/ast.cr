@@ -1387,7 +1387,7 @@ module Crystal
   class Primitive < ASTNode
     getter name
 
-    def initialize(@name)
+    def initialize(@name, @type = nil)
     end
 
     def ==(other : self)
@@ -1395,7 +1395,7 @@ module Crystal
     end
 
     def clone_without_location
-      Primitive.new(@name)
+      Primitive.new(@name, @type)
     end
   end
 

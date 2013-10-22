@@ -61,6 +61,10 @@ module Crystal
       LLVM.pointer_type(llvm_struct_type(type))
     end
 
+    def create_llvm_type(type : TypeDefType)
+      llvm_type type.typedef
+    end
+
     def create_llvm_type(type)
       raise "Bug: called create_llvm_type for #{type}"
     end

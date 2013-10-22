@@ -949,23 +949,16 @@ module Crystal
       raise "Bug: shouldn't be adding a Def in a LibType"
     end
 
-    # def add_var(name, type)
-    #   arg = Arg.new_with_restriction('value', type)
-    #   arg.set_type(type)
+    def add_var(name, type)
+      setter = External.new("#{name}=", [Arg.new_with_type("value", type)], Primitive.new(:external_var_set, type))
+      setter.set_type(type)
 
-    #   setter = External.new("#{name}=", [arg], LibSet.new(name, type))
-    #   setter.real_name = "*#{to_s}.#{name}="
-    #   setter.owner = self
-    #   setter.set_type(type)
+      getter = External.new("#{name}", ([] of Arg), Primitive.new(:external_var_get, type))
+      getter.set_type(type)
 
-    #   getter = External.new(name, [], LibGet.new(name, type))
-    #   getter.real_name = "*#{to_s}.#{name}"
-    #   getter.owner = self
-    #   getter.set_type(type)
-
-    #   add_def setter
-    #   add_def getter
-    # end
+      add_def setter
+      add_def getter
+    end
 
     def passed_as_self?
       false
