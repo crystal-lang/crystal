@@ -77,6 +77,16 @@ module Crystal
       node.bind_to var
     end
 
+    def visit(node : Global)
+      var = mod.global_vars[node.name]?
+      unless var
+        var = Var.new(node.name)
+        var.bind_to mod.nil_var
+        mod.global_vars[node.name] = var
+      end
+      node.bind_to var
+    end
+
     def visit(node : InstanceVar)
       var = lookup_instance_var node
 
@@ -122,44 +132,63 @@ module Crystal
       false
     end
 
-    def type_assign(target, value, node)
-      case target
-      when Var
-        value.accept self
+    def type_assign(target : Var, value, node)
+      value.accept self
 
-        var = lookup_var target.name
-        target.bind_to var
+      var = lookup_var target.name
+      target.bind_to var
 
-        node.bind_to value
-        var.bind_to node
-      when InstanceVar
-        value.accept self
+      node.bind_to value
+      var.bind_to node
+    end
 
-        var = lookup_instance_var target
-        target.bind_to var
+    def type_assign(target : InstanceVar, value, node)
+      value.accept self
 
-        # unless @typed_def.name == "initialize"
-        #   @scope.immutable = false
-        # end
+      var = lookup_instance_var target
+      target.bind_to var
 
-        node.bind_to value
-        var.bind_to node
-      when Ident
-        type = current_type.types[target.names.first]?
-        if type
-          target.raise "already initialized constant #{target}"
-        end
+      # unless @typed_def.name == "initialize"
+      #   @scope.immutable = false
+      # end
 
-        target.bind_to value
+      node.bind_to value
+      var.bind_to node
+    end
 
-        current_type.types[target.names.first] = Const.new(@mod, current_type, target.names.first, value, @types.clone, @scope)
-
-        node.type = @mod.nil
-      else
-        raise "Bug: unknown assign target: #{target}"
+    def type_assign(target : Ident, value, node)
+      type = current_type.types[target.names.first]?
+      if type
+        target.raise "already initialized constant #{target}"
       end
 
-      false
+      target.bind_to value
+
+      current_type.types[target.names.first] = Const.new(@mod, current_type, target.names.first, value, @types.clone, @scope)
+
+      node.type = @mod.nil
+    end
+
+    def type_assign(target : Global, value, node)
+      value.accept self
+
+      var = mod.global_vars[target.name]?
+      unless var
+        var = Var.new(target.name)
+        if @typed_def
+          var.bind_to mod.nil_var
+        end
+        mod.global_vars[target.name] = var
+      end
+
+      target.bind_to var
+
+      node.bind_to value
+      var.bind_to node
+    end
+
+    def type_assign(target, value, node)
+      raise "Bug: unknown assign target in type inference: #{target}"
     end
 
     def visit(node : Def)

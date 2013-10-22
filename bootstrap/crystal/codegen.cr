@@ -796,31 +796,41 @@ module Crystal
       false
     end
 
+    def codegen_assign_target(target : InstanceVar, value, llvm_value)
+      type = @type
+      assert_type type, InstanceVarContainer
+
+      ivar = type.lookup_instance_var(target.name)
+      index = type.index_of_instance_var(target.name)
+
+      ptr = gep llvm_self_ptr, 0, index
+      codegen_assign(ptr, target.type, value.type, llvm_value)
+    end
+
+    def codegen_assign_target(target : Global, value, llvm_value)
+      ptr = get_global target.name, target.type
+      codegen_assign(ptr, target.type, value.type, llvm_value)
+    end
+
+    def codegen_assign_target(target : Var, value, llvm_value)
+      var = declare_var(target)
+      ptr = var.pointer
+      codegen_assign(ptr, target.type, value.type, llvm_value)
+    end
+
     def codegen_assign_target(target, value, llvm_value)
-      case target
-      when InstanceVar
-        type = @type
-        assert_type type, InstanceVarContainer
+      raise "Unknown assign target in codegen: #{target}"
+    end
 
-        ivar = type.lookup_instance_var(target.name)
-        index = type.index_of_instance_var(target.name)
-
-        ptr = gep llvm_self_ptr, 0, index
-        codegen_assign(ptr, target.type, value.type, llvm_value)
-      # when Global
-      #   ptr = assign_to_global target.name.to_s, target.type
-      # when ClassVar
-      #   ptr = assign_to_global class_var_global_name(target), target.type
-      # else
-      when Var
-        var = declare_var(target)
-        ptr = var.pointer
-        codegen_assign(ptr, target.type, value.type, llvm_value)
-      else
-        raise "Unknown assign target type: #{target}"
+    def get_global(name, type)
+      ptr = @llvm_mod.globals[name]?
+      unless ptr
+        llvm_type = llvm_type(type)
+        ptr = @llvm_mod.globals.add(llvm_type, name)
+        LLVM.set_linkage ptr, LibLLVM::Linkage::Internal
+        LLVM.set_initializer ptr, LLVM.null(llvm_type)
       end
-
-      # codegen_assign(ptr, target.type, value.type, llvm_value)
+      ptr
     end
 
     def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
@@ -830,6 +840,7 @@ module Crystal
       else
         assign_to_union(pointer, target_type, value_type, value)
       end
+      nil
     end
 
     def assign_to_union(union_pointer, union_type, type, value)
@@ -898,6 +909,16 @@ module Crystal
       #     @last = @builder.load(@last) unless node.type.passed_by_val?
       #   end
       # end
+    end
+
+    def visit(node : Global)
+      read_global node.name.to_s, node.type
+    end
+
+    def read_global(name, type)
+      @last = get_global name, type
+      @last = @builder.load @last unless type.union?
+      @last
     end
 
     def visit(node : InstanceVar)

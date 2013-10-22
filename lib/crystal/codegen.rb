@@ -381,7 +381,7 @@ module Crystal
         in_const_block(global_name) do
           accept(value)
           llvm_value = @last
-          ptr = assign_to_global global_name, target.type
+          ptr = get_global global_name, target.type
           codegen_assign(ptr, target.type, value.type, llvm_value)
         end
         return
@@ -404,9 +404,9 @@ module Crystal
         ivar = @type.lookup_instance_var(target.name.to_s)
         ptr = gep llvm_self_ptr, 0, @type.index_of_instance_var(target.name.to_s)
       when Global
-        ptr = assign_to_global target.name.to_s, target.type
+        ptr = get_global target.name.to_s, target.type
       when ClassVar
-        ptr = assign_to_global class_var_global_name(target), target.type
+        ptr = get_global class_var_global_name(target), target.type
       else
         if target.type.equal?(@mod.void)
           @vars[target.name.to_s] = {type: @mod.void}
@@ -420,7 +420,7 @@ module Crystal
       codegen_assign(ptr, target.type, value.type, llvm_value, !!ivar)
     end
 
-    def assign_to_global(name, type)
+    def get_global(name, type)
       ptr = @llvm_mod.globals[name]
       unless ptr
         ptr = @llvm_mod.globals.add(llvm_type(type), name)
@@ -522,14 +522,7 @@ module Crystal
     end
 
     def read_global(name, type)
-      ptr = @llvm_mod.globals[name]
-      unless ptr
-        ptr = @llvm_mod.globals.add(llvm_type(type), name)
-        ptr.linkage = :internal
-        ptr.initializer = LLVM::Constant.null(llvm_type(type))
-      end
-
-      @last = ptr
+      @last = get_global name, type
       @last = @builder.load @last unless type.union?
     end
 

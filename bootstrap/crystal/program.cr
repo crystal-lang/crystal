@@ -7,7 +7,8 @@ module Crystal
     include DefInstanceContainer
     include MatchesLookup
 
-    getter :types
+    getter types
+    getter global_vars
 
     def initialize
       # super(nil, "main")
@@ -64,6 +65,7 @@ module Crystal
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
 
+      @global_vars = {} of String => Var
       @requires = Set(String).new
       @temp_var_counter = 0
       @type_id_counter = 0
