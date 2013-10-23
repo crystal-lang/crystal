@@ -28,7 +28,7 @@ module Crystal
     def recalculate
       obj = @obj
 
-      if obj && (obj_type = obj.type) && obj_type.is_a?(LibType)
+      if obj && (obj_type = obj.type?) && obj_type.is_a?(LibType)
         recalculate_lib_call(obj_type)
         return
       end
@@ -147,7 +147,7 @@ module Crystal
 
       check_args_length_match obj_type, untyped_def
       # check_lib_out_args untyped_def
-      # return unless obj_and_args_types_set?
+      return unless obj_and_args_types_set?
 
       check_fun_args_types_match obj_type, untyped_def
 

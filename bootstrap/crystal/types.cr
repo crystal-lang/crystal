@@ -1,5 +1,3 @@
-require "type_inference/restrictions"
-
 module Crystal
   abstract class Type
     def metaclass
@@ -174,7 +172,7 @@ module Crystal
 
     def match_arg(arg_type, arg, owner, type_lookup, free_vars)
       restriction = arg.type? || arg.type_restriction
-      arg_type.not_nil!.restrict restriction, type_lookup
+      arg_type.not_nil!.restrict restriction, type_lookup, free_vars
     end
 
     def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
@@ -275,12 +273,12 @@ module Crystal
 
     def add_sorted_def(a_def)
       sorted_defs = self.sorted_defs[SortedDefKey.new(a_def.name, a_def.args.length, !!a_def.yields)]
-      # sorted_defs.each_with_index do |ex_def, i|
-      #   if a_def.is_restriction_of?(ex_def, self)
-      #     sorted_defs.insert(i, a_def)
-      #     return
-      #   end
-      # end
+      sorted_defs.each_with_index do |ex_def, i|
+        if a_def.is_restriction_of?(ex_def, self)
+          sorted_defs.insert(i, a_def)
+          return
+        end
+      end
       sorted_defs << a_def
     end
   end
