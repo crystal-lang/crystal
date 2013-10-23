@@ -704,8 +704,14 @@ module Crystal
       while @buffer.value.ident_part?
         next_char
       end
-      if @buffer.value == '!' || @buffer.value == '?'
+      case @buffer.value
+      when '!', '?'
         next_char
+      when '$'
+        next_char
+        while @buffer.value.digit?
+          next_char
+        end
       end
       @token.type = :IDENT
       @token.value = String.new(start, @column_number - start_column)

@@ -746,7 +746,7 @@ module Crystal
 
     def var_name_with_index(name, index)
       if index && index > 0
-        "#{name}:#{index}"
+        "#{name}$#{index}"
       else
         name
       end
@@ -806,7 +806,7 @@ module Crystal
       node = super
 
       if node.target.is_a?(Var)
-        name, index = node.target.name.split(':')
+        name, index = node.target.name.split('$')
         if index && @names.include?(name)
           @vars_indices[name] = index
         end
@@ -831,7 +831,7 @@ module Crystal
           name = var_name_without_index target.name
           value_index = @vars_indices[name]
           if value_index || ((before_var = @before_vars[name]) && (value_index = before_var[:read]))
-            new_name = value_index == 0 ? name : "#{name}:#{value_index}"
+            new_name = value_index == 0 ? name : "#{name}$#{value_index}"
             if assign.target.name == new_name
               nil
             else
@@ -863,7 +863,7 @@ module Crystal
     end
 
     def var_name_without_index(name)
-      name, index = name.split(':')
+      name, index = name.split('$')
       name
     end
   end

@@ -131,7 +131,7 @@ module Crystal
       elsif match = scan(/__DIR__\b/)
         @token.type = :STRING
         @token.value = @filename ? File.dirname(@filename) : '-'
-      elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*((\?|!)|\b)/)
+      elsif match = scan(/[a-zA-Z_][a-zA-Z_0-9]*((\?|!|\$\d+)|\b)/)
         @token.type = :IDENT
         @token.value = match
       elsif match = scan(/@@[a-zA-Z_][a-zA-Z_0-9]*\b/)
