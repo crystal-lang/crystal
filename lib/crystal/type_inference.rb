@@ -443,7 +443,10 @@ module Crystal
     end
 
     def visit_var(node)
-      var = lookup_var node.name
+      var = @vars[node.name]
+      var.used = true
+
+      # var = lookup_var node.name
       filter = build_var_filter var
       node.bind_to(filter || var)
       node.type_filters = and_type_filters({node.name => NotNilFilter}, var.type_filters)

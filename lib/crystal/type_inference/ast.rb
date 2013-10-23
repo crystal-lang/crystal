@@ -6,6 +6,8 @@ module Crystal
   end
 
   class Var
+    attr_accessor :used
+
     def out?
       out
     end
