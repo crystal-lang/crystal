@@ -987,8 +987,8 @@ module Crystal
     delegate pointer?, typedef
     delegate parents, typedef
 
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      typedef.lookup_matches(name, arg_types, yields, owner, type_lookup, matches_array)
+    def lookup_matches(name, arg_types, yields)
+      typedef.lookup_matches(name, arg_types, yields)
     end
 
     def primitive_like?

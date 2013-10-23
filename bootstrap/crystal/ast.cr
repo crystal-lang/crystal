@@ -73,6 +73,10 @@ module Crystal
       @expressions.empty?
     end
 
+    def [](i)
+      @expressions[i]
+    end
+
     def last
       @expressions.last
     end
