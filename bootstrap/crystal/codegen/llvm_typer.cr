@@ -50,7 +50,7 @@ module Crystal
       max_size = 1 if max_size == 0
 
       llvm_value_type = LLVM.array_type(LLVM::Int32, max_size)
-      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type])
+      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type], true)
     end
 
     def create_llvm_type(type : CStructType)
