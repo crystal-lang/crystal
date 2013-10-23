@@ -14,6 +14,7 @@ module Crystal
   class TypeVisitor < Visitor
     getter mod
     getter! scope
+    property block
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil)
       @types = [@mod] of Type
@@ -256,6 +257,45 @@ module Crystal
       #   target_type = current_type
       # end
       # target_type.add_macro node
+      false
+    end
+
+    def end_visit(node : Yield)
+      call = @call.not_nil!
+      block = call.block || node.raise("no block given")
+
+      # if !node.scope && @yield_vars
+      #   @yield_vars.each_with_index do |var, i|
+      #     exp = node.exps[i]
+      #     if exp
+      #       unless exp.type.is_restriction_of?(var.type, exp.type)
+      #         exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp.type}"
+      #       end
+      #       exp.freeze_type = true
+      #     elsif !var.type.nil_type?
+      #       node.raise "missing argument ##{i + 1} of yield with type #{var.type}"
+      #     end
+      #   end
+      # end
+
+      # bind_block_args_to_yield_exps block, node
+
+      # unless block.visited
+        # @call.bubbling_exception do
+          # block.scope = node.scope.type if node.scope
+          block.accept call.parent_visitor.not_nil!
+        # end
+      # end
+
+      node.bind_to block.body
+    end
+
+    def visit(node : Block)
+      block_vars = @vars.clone
+
+      block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars) #, @type_filter_stack)
+      block_visitor.block = node
+      node.body.accept block_visitor
       false
     end
 
