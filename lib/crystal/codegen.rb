@@ -1312,13 +1312,35 @@ module Crystal
 
     def codegen_call(node, self_type, call_args)
       target_def = node.target_def
+      body = target_def.body
 
-      if target_def.body.is_a?(Primitive)
+      if is_inlineable?(body)
+        old_vars = {}
+        old_type = @type
+        @type = self_type
+        old_vars['self'] = @vars['self']
+        @vars['self'] = { ptr: call_args[0], type: self_type, treated_as_pointer: true }
+
+        target_def.args.each_with_index do |arg, i|
+          old_vars[arg.name] = @vars[arg.name]
+          @vars[arg.name] = { ptr: call_args[i + 1], type: arg.type, treated_as_pointer: true }
+        end
+
+        body.accept self
+        old_vars.each do |name, value|
+          @vars[name] = value
+        end
+        @type = old_type
+        return
+      end
+
+      case body
+      when Primitive
         old_type = @type
         @type = self_type
         @call_args = call_args
 
-        target_def.body.accept self
+        body.accept self
 
         @type = old_type
 
@@ -1361,6 +1383,32 @@ module Crystal
         @builder.store @last, union
         @last = union
       end
+    end
+
+    def is_inlineable?(node)
+      case node
+      when Nop, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral, SymbolLiteral
+        return true
+      when Var
+        if node.name == "self"
+          return true
+        end
+      when InstanceVar
+        return true
+      when Assign
+        if node.target.is_a?(InstanceVar)
+          case node.value
+          when Nop, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral, SymbolLiteral, Var
+            return true
+          end
+        end
+      when Expressions
+        if node.expressions.all? { |exp| exp.is_a?(Assign) && exp.target.is_a?(InstanceVar) && (exp.value.is_a?(Var) || exp.value.is_a?(BoolLiteral) || exp.value.is_a?(NilLiteral) || exp.value.is_a?(NumberLiteral)) }
+          return true
+        end
+      end
+
+      false
     end
 
     def codegen_call_or_invoke(fun, call_args, raises)
@@ -1436,9 +1484,13 @@ module Crystal
           if (self_type && i == 0 && !self_type.union?) || target_def.body.is_a?(Primitive) || arg.type.passed_by_val?
             @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
           else
-            ptr = alloca(llvm_type(arg.type), arg.name)
-            @vars[arg.name] = { ptr: ptr, type: arg.type }
-            @builder.store @fun.params[i], ptr
+            if arg.write || arg.type.c_struct? || arg.type.c_union?
+              ptr = alloca(llvm_type(arg.type), arg.name)
+              @vars[arg.name] = { ptr: ptr, type: arg.type }
+              @builder.store @fun.params[i], ptr
+            else
+              @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
+            end
           end
         end
 
@@ -1875,7 +1927,11 @@ module Crystal
     end
 
     def br_from_alloca_to_entry
-      br_block_chain @alloca_block, @entry_block
+      if @alloca_block.instructions.count == 0
+        @alloca_block.delete
+      else
+        br_block_chain @alloca_block, @entry_block
+      end
     end
 
     def br_block_chain *blocks

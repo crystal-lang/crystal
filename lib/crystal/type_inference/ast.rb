@@ -5,8 +5,13 @@ module Crystal
     end
   end
 
+  class Arg
+    attr_accessor :write
+  end
+
   class Var
-    attr_accessor :used
+    attr_accessor :read
+    attr_accessor :write
 
     def out?
       out

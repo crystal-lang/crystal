@@ -43,6 +43,7 @@ module Crystal
     attr_accessor :typed_def
     attr_accessor :arg_types
     attr_accessor :block
+    attr_accessor :vars
     @@regexps = {}
     @@counter = 0
 
@@ -444,7 +445,7 @@ module Crystal
 
     def visit_var(node)
       var = @vars[node.name]
-      var.used = true
+      var.read = true
 
       # var = lookup_var node.name
       filter = build_var_filter var
@@ -571,6 +572,8 @@ module Crystal
         value.accept self
 
         var = lookup_var target.name
+        var.write = true
+
         target.bind_to var
 
         if node

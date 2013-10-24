@@ -28,16 +28,6 @@ module Crystal
   end
 
   class AfterTypeInferenceTransformer < Transformer
-    @@removed_assigns = 0
-    @@removed_no_effect = 0
-    @@removed_temps = 0
-
-    at_exit do
-      puts "Removed assigns: #{@@removed_assigns}"
-      puts "Removed no effect: #{@@removed_no_effect}"
-      puts "Removed temps: #{@@removed_temps}"
-    end
-
     def initialize(program)
       @program = program
       @transformed = {}
@@ -63,8 +53,7 @@ module Crystal
       node.expressions.each_with_index do |exp, i|
         new_exp = exp.transform(self)
         if new_exp
-          if i < length - 1 && (new_exp.is_a?(Var) || new_exp.is_a?(NilLiteral) || new_exp.is_a?(NumberLiteral))
-            @@removed_no_effect += 1
+          if i < length - 1 && (new_exp.is_a?(Var) || new_exp.is_a?(InstanceVar) || new_exp.is_a?(NilLiteral) || new_exp.is_a?(BoolLiteral) || new_exp.is_a?(CharLiteral) || new_exp.is_a?(NumberLiteral) || new_exp.is_a?(StringLiteral) || new_exp.is_a?(SymbolLiteral))
             next
           end
 
@@ -89,7 +78,6 @@ module Crystal
       when 2
         first, second = exps
         if first.is_a?(Assign) && first.target.is_a?(Var) && second.is_a?(Var) && first.target.name == second.name
-          @@removed_temps += 1
           return first.value
         end
       end
@@ -108,8 +96,7 @@ module Crystal
       end
 
       if node.target.is_a?(Var) && node.target.type
-        unless node.target.dependencies[0].used
-          @@removed_assigns += 1
+        unless node.target.dependencies[0].read
           return node.value
         end
       end
