@@ -111,10 +111,18 @@ module Crystal
       type
     end
 
-    def type_merge(types)
+    def type_merge(types : Array(Type))
+      type_merge(types) { |type| type }
+    end
+
+    def type_merge(nodes : Array(ASTNode))
+      type_merge(nodes) { |node| node.type }
+    end
+
+    def type_merge(objects)
       all_types = Set(Type).new
-      types.each do |type|
-        add_type all_types, type
+      objects.each do |obj|
+        add_type all_types, yield(obj)
       end
 
       # all_types.delete_if { |type| type.no_return? } if all_types.length > 1

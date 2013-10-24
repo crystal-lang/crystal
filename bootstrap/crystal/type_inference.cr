@@ -260,6 +260,10 @@ module Crystal
       false
     end
 
+    def end_visit(node : TypeMerge)
+      node.bind_to node.expressions
+    end
+
     def end_visit(node : Yield)
       call = @call.not_nil!
       block = call.block || node.raise("no block given")
