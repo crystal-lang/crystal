@@ -213,6 +213,18 @@ module Crystal
       require_absolute file
     end
 
+    def library_names
+      libs = [] of String
+      @types.each do |name, type|
+        if type.is_a?(LibType)
+          if libname = type.libname
+            libs << libname
+          end
+        end
+      end
+      libs
+    end
+
     getter :object
     getter :no_return
     getter :value

@@ -67,11 +67,27 @@ module Crystal
 
         llvm_mod.write_bitcode bitcode_filename
 
-        system "llc-3.3 #{bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} -"
+        system "llc-3.3 #{bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
       rescue ex : Crystal::Exception
         puts ex
         exit 1
       end
+    end
+
+    def lib_flags(mod)
+      libs = mod.library_names
+      String.build do |flags|
+        if libs.length > 0
+          flags << " -Wl"
+          libs.each do |libname|
+            flags << ",-l"
+            flags << libname
+          end
+        end
+      end
+      # flags << " -Wl,-allow_stack_execute" if RUBY_PLATFORM =~ /darwin/
+      # flags << " -L#{`llvm-config-3.3 --libdir`.strip}"
+      # flags
     end
   end
 end
