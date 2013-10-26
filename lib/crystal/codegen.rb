@@ -91,7 +91,7 @@ module Crystal
       @builder = DebugLLVMBuilder.new @builder, self if debug
       @builder = CrystalLLVMBuilder.new @builder, llvm_builder, self
 
-      @modules = {nil => @llvm_mod}
+      @modules = {nil.to_s => @llvm_mod}
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
 
@@ -229,7 +229,15 @@ module Crystal
     end
 
     def visit_fun_literal(node)
-      @last = codegen_fun("fun#{node.object_id}", node.def, nil, @llvm_mod)
+      @fun_literal_count ||= 0
+      @fun_literal_count += 1
+
+      fun_literal_name = "~fun_literal_#{@fun_literal_count}"
+      @last = codegen_fun(fun_literal_name, node.def, nil, @main_mod)
+      if @llvm_mod != @main_mod
+        @last = declare_fun(fun_literal_name, @last)
+      end
+
       false
     end
 
@@ -1549,7 +1557,7 @@ module Crystal
     end
 
     def type_module(type)
-      @modules[type ? type.instance_type : nil] ||= begin
+      @modules[(type ? type.instance_type : nil).to_s] ||= begin
         mod = LLVM::Module.new(type.instance_type.to_s)
         mod.globals.add(LLVM::Array(llvm_type(@mod.string), @symbol_table_values.count), "symbol_table")
         mod

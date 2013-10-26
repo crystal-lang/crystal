@@ -146,7 +146,7 @@ module Crystal
         exit 0 if @options[:no_build]
 
         llvm_modules = nil
-        with_stats_or_profile('codegen') do
+        with_stats_or_profile('codegen-llvm') do
           llvm_modules = program.build node, filename: filename, debug: @options[:debug]
         end
       rescue Crystal::Exception => ex
@@ -162,43 +162,41 @@ module Crystal
 
       assembly_names = []
 
-      llvm_modules.each do |type, llvm_mod|
-        # name = type ? type.to_s.gsub(/[\:\(\)\-\>\s\+]/, '_') : "main"
-        name = type ? "#{Digest::MD5.hexdigest(type.to_s)}#{type.object_id}" : "main"
-        bc_name = ".crystal/#{name}.bc"
-        llvm_mod.write_bitcode "#{bc_name}.new"
+      with_stats_or_profile('codegen-llc') do
+        llvm_modules.each do |type, llvm_mod|
+          name = type.gsub(/[^a-zA-Z0-9]/, '_')
+          bc_name = ".crystal/#{name}.bc"
 
-        if File.exists?(bc_name)
-          `diff -q #{bc_name} #{bc_name}.new`
-          if $?.success?
-            FileUtils.rm "#{bc_name}.new"
+          llvm_mod.write_bitcode "#{bc_name}.new"
+
+          if File.exists?(bc_name)
+            `diff -q #{bc_name} #{bc_name}.new`
+
+            if $?.success?
+              FileUtils.rm "#{bc_name}.new"
+            else
+              FileUtils.mv "#{bc_name}.new", bc_name
+              `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
+            end
           else
             FileUtils.mv "#{bc_name}.new", bc_name
             `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
           end
-        else
-          FileUtils.mv "#{bc_name}.new", bc_name
-          `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
-        end
 
-        if @options[:dump_ll]
-          llvm_dis = LLVMConfig.bin("llvm-dis")
-          `#{llvm_dis} #{bc_name}`
-        end
+          if @options[:dump_ll]
+            llvm_dis = LLVMConfig.bin("llvm-dis")
+            `#{llvm_dis} #{bc_name}`
+          end
 
-        assembly_names << ".crystal/#{name}.s"
+          assembly_names << ".crystal/#{name}.s"
+        end
       end
-
-      # reader, writer = IO.pipe
-      # Thread.new do
-      #   sleep 0.1
-      #   llvm_mod.write_bitcode(writer)
-      #   writer.close
-      # end
 
       o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
 
-      `#{@clang} #{o_flag} #{lib_flags(program)} #{assembly_names.join " "}` unless @options[:dump_ll]
+      with_stats_or_profile('codegen-clang') do
+        `#{@clang} #{o_flag} #{lib_flags(program)} #{assembly_names.join " "}` unless @options[:dump_ll]
+      end
 
       # if @options[:debug]
       #   obj_file = "#{@options[:output_filename]}.o"

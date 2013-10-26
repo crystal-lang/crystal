@@ -1,6 +1,7 @@
 GIT
   remote: https://github.com/manastech/ruby-llvm.git
-  revision: 57be26347e5ff3c82bcf2121f59034659132067d
+  revision: aaadfe83a3f99b550f5f1b0756b1784db73e0c37
+  branch: master
   specs:
     ruby-llvm (3.3.0.alpha)
       ffi (~> 1.7)

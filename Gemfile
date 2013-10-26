@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'rake'
-gem 'ruby-llvm', git: "https://github.com/manastech/ruby-llvm.git"
+gem 'ruby-llvm', git: "https://github.com/manastech/ruby-llvm.git", branch: 'master'
 gem 'levenshtein-ffi'
 gem 'pry'
 gem 'pry-debugger'
