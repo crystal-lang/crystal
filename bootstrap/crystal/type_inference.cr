@@ -14,6 +14,7 @@ module Crystal
   class TypeVisitor < Visitor
     getter mod
     getter! scope
+    property block
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil)
       @types = [@mod] of Type
@@ -77,6 +78,16 @@ module Crystal
       node.bind_to var
     end
 
+    def visit(node : Global)
+      var = mod.global_vars[node.name]?
+      unless var
+        var = Var.new(node.name)
+        var.bind_to mod.nil_var
+        mod.global_vars[node.name] = var
+      end
+      node.bind_to var
+    end
+
     def visit(node : InstanceVar)
       var = lookup_instance_var node
 
@@ -84,6 +95,10 @@ module Crystal
       # node.bind_to(filter || var)
       # node.type_filters = {node.name => NotNilFilter}
       node.bind_to var
+    end
+
+    def visit(node : ClassVar)
+      node.bind_to lookup_class_var(node)
     end
 
     def lookup_instance_var(node)
@@ -113,6 +128,28 @@ module Crystal
       end
     end
 
+    def lookup_class_var(node, bind_to_nil_if_non_existent = true)
+      scope = (@typed_def ? @scope : current_type).not_nil!
+      if scope.is_a?(Metaclass)
+        owner = scope.class_var_owner
+      else
+        owner = scope
+      end
+      class_var_owner = owner
+
+      assert_type class_var_owner, ClassVarContainer
+      bind_to_nil = bind_to_nil_if_non_existent && !class_var_owner.has_class_var?(node.name)
+
+      var = class_var_owner.lookup_class_var node.name
+      var.bind_to mod.nil_var if bind_to_nil
+
+      node.owner = class_var_owner
+      node.var = var
+      node.class_scope = !@typed_def
+
+      var
+    end
+
     def end_visit(node : Expressions)
       node.bind_to node.last unless node.empty?
     end
@@ -122,44 +159,73 @@ module Crystal
       false
     end
 
-    def type_assign(target, value, node)
-      case target
-      when Var
-        value.accept self
+    def type_assign(target : Var, value, node)
+      value.accept self
 
-        var = lookup_var target.name
-        target.bind_to var
+      var = lookup_var target.name
+      target.bind_to var
 
-        node.bind_to value
-        var.bind_to node
-      when InstanceVar
-        value.accept self
+      node.bind_to value
+      var.bind_to node
+    end
 
-        var = lookup_instance_var target
-        target.bind_to var
+    def type_assign(target : InstanceVar, value, node)
+      value.accept self
 
-        # unless @typed_def.name == "initialize"
-        #   @scope.immutable = false
-        # end
+      var = lookup_instance_var target
+      target.bind_to var
 
-        node.bind_to value
-        var.bind_to node
-      when Ident
-        type = current_type.types[target.names.first]?
-        if type
-          target.raise "already initialized constant #{target}"
-        end
+      # unless @typed_def.name == "initialize"
+      #   @scope.immutable = false
+      # end
 
-        target.bind_to value
+      node.bind_to value
+      var.bind_to node
+    end
 
-        current_type.types[target.names.first] = Const.new(@mod, current_type, target.names.first, value, @types.clone, @scope)
-
-        node.type = @mod.nil
-      else
-        raise "Bug: unknown assign target: #{target}"
+    def type_assign(target : Ident, value, node)
+      type = current_type.types[target.names.first]?
+      if type
+        target.raise "already initialized constant #{target}"
       end
 
-      false
+      target.bind_to value
+
+      current_type.types[target.names.first] = Const.new(@mod, current_type, target.names.first, value, @types.clone, @scope)
+
+      node.type = @mod.nil
+    end
+
+    def type_assign(target : Global, value, node)
+      value.accept self
+
+      var = mod.global_vars[target.name]?
+      unless var
+        var = Var.new(target.name)
+        if @typed_def
+          var.bind_to mod.nil_var
+        end
+        mod.global_vars[target.name] = var
+      end
+
+      target.bind_to var
+
+      node.bind_to value
+      var.bind_to node
+    end
+
+    def type_assign(target : ClassVar, value, node)
+      value.accept self
+
+      var = lookup_class_var target, !!@typed_def
+      target.bind_to var
+
+      node.bind_to value
+      var.bind_to node
+    end
+
+    def type_assign(target, value, node)
+      raise "Bug: unknown assign target in type inference: #{target}"
     end
 
     def visit(node : Def)
@@ -191,6 +257,49 @@ module Crystal
       #   target_type = current_type
       # end
       # target_type.add_macro node
+      false
+    end
+
+    def end_visit(node : TypeMerge)
+      node.bind_to node.expressions
+    end
+
+    def end_visit(node : Yield)
+      call = @call.not_nil!
+      block = call.block || node.raise("no block given")
+
+      # if !node.scope && @yield_vars
+      #   @yield_vars.each_with_index do |var, i|
+      #     exp = node.exps[i]
+      #     if exp
+      #       unless exp.type.is_restriction_of?(var.type, exp.type)
+      #         exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp.type}"
+      #       end
+      #       exp.freeze_type = true
+      #     elsif !var.type.nil_type?
+      #       node.raise "missing argument ##{i + 1} of yield with type #{var.type}"
+      #     end
+      #   end
+      # end
+
+      # bind_block_args_to_yield_exps block, node
+
+      # unless block.visited
+        # @call.bubbling_exception do
+          # block.scope = node.scope.type if node.scope
+          block.accept call.parent_visitor.not_nil!
+        # end
+      # end
+
+      node.bind_to block.body
+    end
+
+    def visit(node : Block)
+      block_vars = @vars.clone
+
+      block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars) #, @type_filter_stack)
+      block_visitor.block = node
+      node.body.accept block_visitor
       false
     end
 
@@ -499,22 +608,56 @@ module Crystal
       end
     end
 
+    def visit(node : EnumDef)
+      type = current_type.types[node.name]?
+      if type
+        node.raise "#{node.name} is already defined"
+      else
+        counter = 0
+        node.constants.each do |constant|
+          if default_value = constant.default_value
+            assert_type default_value, NumberLiteral
+            counter = default_value.value.to_i
+          else
+            constant.default_value = NumberLiteral.new(counter, :i32)
+          end
+          counter += 1
+        end
+        current_type.types[node.name] = CEnumType.new(@mod, current_type, node.name, node.constants)
+      end
+    end
+
+    def visit(node : ExternalVar)
+      node.type_spec.accept self
+
+      var_type = check_primitive_like node.type_spec
+
+      type = current_type
+      assert_type type, LibType
+
+      type.add_var node.name, var_type
+
+      false
+    end
+
     def check_primitive_like(node)
       type = node.type.instance_type
-      # unless type.primitive_like?
-      #   msg = "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
-      #   msg << " (did you mean Int32?)" if type.equal?(@mod.types["Int"])
-      #   msg << " (did you mean Float32?)" if type.equal?(@mod.types["Float"])
-      #   node.raise msg
-      # end
+      unless type.primitive_like?
+        msg = String.build do |msg|
+          msg << "only primitive types, pointers, structs, unions and enums are allowed in lib declarations"
+          msg << " (did you mean Int32?)" if type == @mod.int
+          msg << " (did you mean Float32?)" if type == @mod.float
+        end
+        node.raise msg
+      end
 
-      # if type.c_enum?
-      #   type = @mod.int32
+      if type.c_enum?
+        type = @mod.int32
       # elsif type.type_def_type? && type.typedef.fun_type?
       #   type = type.typedef
-      # end
+      end
 
-      # type
+      type
     end
 
     def visit(node : Ident)
@@ -589,6 +732,16 @@ module Crystal
         node.bind_to @vars["value"]
       when :struct_get
         visit_struct_get node
+      when :union_new
+        node.type = scope.instance_type
+      when :union_set
+        node.bind_to @vars["value"]
+      when :union_get
+        visit_union_get node
+      when :external_var_set
+        # Nothing to do
+      when :external_var_get
+        # Nothing to do
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
@@ -655,8 +808,14 @@ module Crystal
       untyped_def = @untyped_def.not_nil!
       scope = @scope
       assert_type scope, CStructType
-      struct_var = scope.vars[untyped_def.name]
-      node.bind_to struct_var
+      node.bind_to scope.vars[untyped_def.name]
+    end
+
+    def visit_union_get(node)
+      untyped_def = @untyped_def.not_nil!
+      scope = @scope
+      assert_type scope, CUnionType
+      node.bind_to scope.vars[untyped_def.name]
     end
 
     def visit(node : PointerOf)
@@ -704,6 +863,54 @@ module Crystal
 
     def current_type
       @types.last
+    end
+
+    def visit(node : And)
+      raise "Bug: And node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : Or)
+      raise "Bug: Or node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : Require)
+      raise "Bug: Require node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : RangeLiteral)
+      raise "Bug: RangeLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : Case)
+      raise "Bug: Case node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : When)
+      raise "Bug: When node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : RegexpLiteral)
+      raise "Bug: RegexpLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : ArrayLiteral)
+      raise "Bug: ArrayLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : HashLiteral)
+      raise "Bug: HashLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : Unless)
+      raise "Bug: Unless node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : StringInterpolation)
+      raise "Bug: StringInterpolation node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
+
+    def visit(node : MultiAssign)
+      raise "Bug: MultiAssign node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end
 end

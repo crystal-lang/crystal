@@ -49,9 +49,14 @@ module Crystal
       exps = []
 
       found_no_return = false
-      node.expressions.each do |exp|
+      length = node.expressions.length
+      node.expressions.each_with_index do |exp, i|
         new_exp = exp.transform(self)
         if new_exp
+          if i < length - 1 && (new_exp.is_a?(Var) || new_exp.is_a?(InstanceVar) || new_exp.is_a?(NilLiteral) || new_exp.is_a?(BoolLiteral) || new_exp.is_a?(CharLiteral) || new_exp.is_a?(NumberLiteral) || new_exp.is_a?(StringLiteral) || new_exp.is_a?(SymbolLiteral))
+            next
+          end
+
           if new_exp.is_a?(Expressions)
             exps.concat new_exp.expressions
           else
@@ -67,14 +72,19 @@ module Crystal
 
       case exps.length
       when 0
-        nil
+        return nil
       when 1
-        exps[0]
-      else
-        node.expressions = exps
-        rebind_node node, exps.last
-        node
+        return exps[0]
+      when 2
+        first, second = exps
+        if first.is_a?(Assign) && first.target.is_a?(Var) && second.is_a?(Var) && first.target.name == second.name
+          return first.value
+        end
       end
+
+      node.expressions = exps
+      rebind_node node, exps.last
+      node
     end
 
     def transform_assign(node)
@@ -83,6 +93,12 @@ module Crystal
       if node.value.type && node.value.type.no_return?
         rebind_node node, node.value
         return node.value
+      end
+
+      if node.target.is_a?(Var) && node.target.type
+        unless node.target.dependencies[0].read
+          return node.value
+        end
       end
 
       node
@@ -140,14 +156,14 @@ module Crystal
     end
 
     def check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
-      if (node.name == :< || node.name == :<=) && node.obj.type.integer? && node.obj.type.unsigned?
+      if (node.name == :< || node.name == :<=) && node.obj && node.obj.type && node.obj.type.integer? && node.obj.type.unsigned?
         arg = node.args[0]
         if arg.is_a?(NumberLiteral) && arg.integer? && arg.value.to_i <= 0
           node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"
         end
       end
 
-      if (node.name == :> || node.name == :>=) && node.obj.is_a?(NumberLiteral) && node.obj.integer? && node.obj.value.to_i <= 0
+      if (node.name == :> || node.name == :>=) && node.obj && node.obj.type && node.obj.is_a?(NumberLiteral) && node.obj.integer? && node.obj.value.to_i <= 0
         arg = node.args[0]
         if arg.type.integer? && arg.type.unsigned?
           node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"

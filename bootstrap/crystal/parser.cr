@@ -615,12 +615,21 @@ module Crystal
       when :INSTANCE_VAR
         @instance_vars.add @token.value.to_s if @instance_vars
         node_and_next_token InstanceVar.new(@token.value.to_s)
+      when :CLASS_VAR
+        node_and_next_token ClassVar.new(@token.value.to_s)
       when :"-@"
         next_token
-        check :IDENT
-        ivar_name = "@#{@token.value}"
-        @instance_vars.add ivar_name if @instance_vars
-        node_and_next_token Call.new(InstanceVar.new(ivar_name), "-@")
+        case @token.type
+        when :IDENT
+          ivar_name = "@#{@token.value}"
+          @instance_vars.add ivar_name if @instance_vars
+          node_and_next_token Call.new(InstanceVar.new(ivar_name), "-@")
+        when :INSTANCE_VAR
+          class_var_name = "@#{@token.value}"
+          node_and_next_token Call.new(ClassVar.new(class_var_name), "-@")
+        else
+          unexpected_token "-@"
+        end
       else
         unexpected_token
       end
@@ -1620,7 +1629,7 @@ module Crystal
 
     def parse_call_args_space_consumed(check_plus_and_minus = true)
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-", :"&"
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-", :"&"
         if (@token.type == :"&") || (check_plus_and_minus && (@token.type == :"+" || @token.type == :"-"))
           return nil if @buffer.value.whitespace?
         end
@@ -2183,7 +2192,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       check :CONST
-      name = @token.value
+      name = @token.value.to_s
       next_token_skip_statement_end
 
       constants = [] of Arg
@@ -2238,7 +2247,7 @@ module Crystal
 
     def can_be_assigned?(node)
       case node
-      when Var, InstanceVar, Ident, Global
+      when Var, InstanceVar, ClassVar, Ident, Global
         true
       when Call
         (node.obj.nil? && node.args.length == 0 && node.block.nil?) || node.name == "[]"

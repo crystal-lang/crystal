@@ -111,7 +111,7 @@ describe Lexer do
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
   it_lexes_keywords "def", "if", "else", "elsif", "end", "true", "false", "class", "module", "include", "while", "nil", "do", "yield", "return", "unless", "next", "break", "begin", "lib", "fun", "type", "struct", "union", "enum", "macro", "out", "require", "case", "when", "then", "of", "abstract", "rescue", "ensure"
-  it_lexes_idents "ident", "something", "with_underscores", "with_1", "foo?", "bar!"
+  it_lexes_idents "ident", "something", "with_underscores", "with_1", "foo?", "bar!", "a$1"
   it_lexes_idents "def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"
   it_lexes_idents "def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"
   it_lexes_i32 "1", ["1hello", "1"], ["1_000", "1000"], ["100_000", "100000"], ["1__0", "1"], "+1", "-1"

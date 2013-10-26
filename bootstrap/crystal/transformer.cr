@@ -341,6 +341,10 @@ module Crystal
       node
     end
 
+    def transform(node : ClassVar)
+      node
+    end
+
     def transform(node : Global)
       node
     end

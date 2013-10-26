@@ -8,6 +8,10 @@ module Crystal
       @struct_cache = {} of Type => LibLLVM::TypeRef
       @arg_cache = {} of Type => LibLLVM::TypeRef
       @embedded_cache = {} of Type => LibLLVM::TypeRef
+
+      target = LLVM::Target.first
+      machine = target.create_target_machine("i686-unknown-linux").not_nil!
+      @layout = machine.data_layout.not_nil!
     end
 
     def llvm_type(type)
@@ -37,12 +41,28 @@ module Crystal
     end
 
     def create_llvm_type(type : UnionType)
-      llvm_value_type = LLVM.array_type(LLVM::Int32, 4) #type.llvm_value_size.fdiv(LLVM::Int.type.width / 8).ceil)
-      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type])
+      max_size = 0
+      type.union_types.each do |subtype|
+        size = size_of(llvm_type(subtype))
+        max_size = size if size > max_size
+      end
+      max_size /= 4
+      max_size = 1 if max_size == 0
+
+      llvm_value_type = LLVM.array_type(LLVM::Int32, max_size)
+      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type], true)
     end
 
     def create_llvm_type(type : CStructType)
       LLVM.pointer_type(llvm_struct_type(type))
+    end
+
+    def create_llvm_type(type : CUnionType)
+      LLVM.pointer_type(llvm_struct_type(type))
+    end
+
+    def create_llvm_type(type : TypeDefType)
+      llvm_type type.typedef
     end
 
     def create_llvm_type(type)
@@ -71,6 +91,21 @@ module Crystal
       end
     end
 
+    def create_llvm_struct_type(type : CUnionType)
+      max_size = 0
+      max_type :: LibLLVM::TypeRef
+      type.vars.each do |name, var|
+        llvm_type = llvm_embedded_type(var.type)
+        size = size_of(llvm_type)
+        if size > max_size
+          max_size = size
+          max_type = llvm_type
+        end
+      end
+
+      LLVM.struct_type(type.llvm_name, [max_type] of LibLLVM::TypeRef)
+    end
+
     def create_llvm_struct_type(type)
       raise "Bug: called llvm_struct_type for #{type}"
     end
@@ -91,16 +126,20 @@ module Crystal
       llvm_struct_type type
     end
 
-    # def create_llvm_embedded_type(type : CUnionType)
-    #   llvm_struct_type type
-    # end
+    def create_llvm_embedded_type(type : CUnionType)
+      llvm_struct_type type
+    end
 
-    # def create_llvm_embedded_type(type : NoReturnType)
-    #   LLVM::Int8
-    # end
+    def create_llvm_embedded_type(type : NoReturnType)
+      LLVM::Int8
+    end
 
     def create_llvm_embedded_type(type)
       llvm_type type
+    end
+
+    def size_of(type)
+      @layout.size_in_bytes type
     end
   end
 end

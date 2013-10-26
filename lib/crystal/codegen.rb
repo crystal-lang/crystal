@@ -223,11 +223,6 @@ module Crystal
       @last = int(@symbols[node.value])
     end
 
-    def visit_hash_literal(node)
-      accept(node.expanded)
-      false
-    end
-
     def visit_fun_literal(node)
       @fun_literal_count ||= 0
       @fun_literal_count += 1
@@ -281,7 +276,7 @@ module Crystal
     end
 
     def visit_fun_call(node)
-      @last = @builder.call @fun.params[0], *@fun.params.to_a[1 .. -1]
+      @last = @builder.call @call_args[0], *@call_args[1 .. -1]
     end
 
     def visit_external_var(node)
@@ -408,7 +403,7 @@ module Crystal
         in_const_block(global_name) do
           accept(value)
           llvm_value = @last
-          ptr = assign_to_global global_name, target.type
+          ptr = get_global global_name, target.type
           codegen_assign(ptr, target.type, value.type, llvm_value)
         end
         return
@@ -431,9 +426,9 @@ module Crystal
         ivar = @type.lookup_instance_var(target.name.to_s)
         ptr = gep llvm_self_ptr, 0, @type.index_of_instance_var(target.name.to_s)
       when Global
-        ptr = assign_to_global target.name.to_s, target.type
+        ptr = get_global target.name.to_s, target.type
       when ClassVar
-        ptr = assign_to_global class_var_global_name(target), target.type
+        ptr = get_global class_var_global_name(target), target.type
       else
         if target.type.equal?(@mod.void)
           @vars[target.name.to_s] = {type: @mod.void}
@@ -447,7 +442,7 @@ module Crystal
       codegen_assign(ptr, target.type, value.type, llvm_value, !!ivar)
     end
 
-    def assign_to_global(name, type)
+    def get_global(name, type)
       ptr = @llvm_mod.globals[name]
       unless ptr
         ptr = @llvm_mod.globals.add(llvm_type(type), name)
@@ -549,14 +544,7 @@ module Crystal
     end
 
     def read_global(name, type)
-      ptr = @llvm_mod.globals[name]
-      unless ptr
-        ptr = @llvm_mod.globals.add(llvm_type(type), name)
-        ptr.linkage = :internal
-        ptr.initializer = LLVM::Constant.null(llvm_type(type))
-      end
-
-      @last = ptr
+      @last = get_global name, type
       @last = @builder.load @last unless type.union?
     end
 
@@ -648,11 +636,11 @@ module Crystal
 
     def visit_pointer_malloc(node)
       llvm_type = llvm_embedded_type(node.type.var.type)
-      @last = @builder.array_malloc(llvm_type, @vars['size'][:ptr])
+      @last = @builder.array_malloc(llvm_type, @call_args[1])
     end
 
     def visit_pointer_new(node)
-      @last = @builder.int2ptr(@vars["address"][:ptr], llvm_type(node.type))
+      @last = @builder.int2ptr(@call_args[1], llvm_type(node.type))
     end
 
     def visit_pointer_null(node)
@@ -660,8 +648,8 @@ module Crystal
     end
 
     def visit_pointer_realloc(node)
-      casted_ptr = cast_to_void_pointer(llvm_self)
-      size = @vars['size'][:ptr]
+      casted_ptr = cast_to_void_pointer(@call_args[0])
+      size = @call_args[1]
       size = @builder.mul size, LLVM::Int64.from_i(@type.var.type.llvm_size)
       reallocated_ptr = realloc casted_ptr, size
       @last = cast_to_pointer reallocated_ptr, @type.var.type
@@ -669,46 +657,46 @@ module Crystal
 
     def visit_pointer_get_value(node)
       if @type.var.type.union? || @type.var.type.c_struct? || @type.var.type.c_union?
-        @last = llvm_self
+        @last = @call_args[0]
       else
-        @last = @builder.load llvm_self
+        @last = @builder.load @call_args[0]
       end
     end
 
     def visit_pointer_set_value(node)
-      value = @fun.params[1]
+      value = @call_args[1]
 
       if node.type.c_struct? || node.type.c_union?
         loaded_value = @builder.load value
-        @builder.store loaded_value, @fun.params[0]
+        @builder.store loaded_value, @call_args[0]
         @last = value
         return
       end
 
       if node.type.union?
         value = @builder.alloca llvm_type(node.type)
-        target = @fun.params[1]
+        target = @call_args[1]
         target = @builder.load(target) if node.type.passed_by_val?
         @builder.store target, value
       end
 
-      codegen_assign llvm_self, @type.var.type, node.type, value
+      codegen_assign @call_args[0], @type.var.type, node.type, value
       @last = value
     end
 
     def visit_pointer_add(node)
-      @last = gep(llvm_self, @fun.params[1])
+      @last = gep(@call_args[0], @call_args[1])
     end
 
     def visit_pointer_diff(node)
-      p0 = @builder.ptr2int(@fun.params[0], LLVM::UInt64)
-      p1 = @builder.ptr2int(@fun.params[1], LLVM::UInt64)
+      p0 = @builder.ptr2int(@call_args[0], LLVM::UInt64)
+      p1 = @builder.ptr2int(@call_args[1], LLVM::UInt64)
       sub = @builder.sub p0, p1
-      @last = @builder.exact_sdiv sub, @builder.ptr2int(gep(llvm_self.type.null, LLVM::Int(1)), LLVM::UInt64)
+      @last = @builder.exact_sdiv sub, @builder.ptr2int(gep(@call_args[0].type.null, LLVM::Int(1)), LLVM::UInt64)
     end
 
     def visit_pointer_cast(node)
-      @last = cast_to @fun.params[0], node.type
+      @last = cast_to @call_args[0], node.type
     end
 
     def visit_simple_or(node)
@@ -888,7 +876,7 @@ module Crystal
     end
 
     def visit_primitive_body(node)
-      @last = node.block.call(@builder, @fun, @llvm_mod, @type)
+      @last = node.block.call(@builder, @call_args, @llvm_mod, @type)
     end
 
     def visit_allocate(node)
@@ -914,16 +902,16 @@ module Crystal
       var = @type.vars[node.name.to_s]
       index = @type.index_of_var(node.name)
       if var.type.c_struct? || var.type.c_union?
-        @last = gep llvm_self, 0, index
+        @last = gep @call_args[0], 0, index
       else
-        struct = @builder.load llvm_self
+        struct = @builder.load @call_args[0]
         @last = @builder.extract_value struct, index, node.name
       end
     end
 
     def visit_struct_set(node)
-      ptr = gep llvm_self, 0, @type.index_of_var(node.name)
-      @last = @vars['value'][:ptr]
+      ptr = gep @call_args[0], 0, @type.index_of_var(node.name)
+      @last = @call_args[1]
       value = @last
       value = @builder.load @last if node.type.c_struct? || node.type.c_union?
       @builder.store value, ptr
@@ -936,8 +924,8 @@ module Crystal
 
     def visit_lib_set(node)
       var = declare_lib_var node
-      @builder.store @fun.params[0], var
-      @last = @fun.params[0]
+      @builder.store @call_args[0], var
+      @last = @call_args[0]
     end
 
     def declare_lib_var(node)
@@ -958,7 +946,7 @@ module Crystal
 
     def visit_union_get(node)
       var = @type.vars[node.name.to_s]
-      ptr = gep llvm_self, 0, 0
+      ptr = gep @call_args[0], 0, 0
       if var.type.c_struct? || var.type.c_union?
         @last = @builder.bit_cast(ptr, LLVM::Pointer(llvm_struct_type(var.type)))
       else
@@ -969,9 +957,9 @@ module Crystal
 
     def visit_union_set(node)
       var = @type.vars[node.name.to_s]
-      ptr = gep llvm_self, 0, 0
+      ptr = gep @call_args[0], 0, 0
       casted_value = cast_to_pointer ptr, var.type
-      @last = @vars['value'][:ptr]
+      @last = @call_args[1]
       @builder.store @last, casted_value
     end
 
@@ -1377,6 +1365,41 @@ module Crystal
 
     def codegen_call(node, self_type, call_args)
       target_def = node.target_def
+      body = target_def.body
+
+      if is_inlineable?(body)
+        old_vars = {}
+        old_type = @type
+        @type = self_type
+        old_vars['self'] = @vars['self']
+        @vars['self'] = { ptr: call_args[0], type: self_type, treated_as_pointer: true }
+
+        target_def.args.each_with_index do |arg, i|
+          old_vars[arg.name] = @vars[arg.name]
+          @vars[arg.name] = { ptr: call_args[i + 1], type: arg.type, treated_as_pointer: true }
+        end
+
+        body.accept self
+        old_vars.each do |name, value|
+          @vars[name] = value
+        end
+        @type = old_type
+        return
+      end
+
+      case body
+      when Primitive
+        old_type = @type
+        @type = self_type
+        @call_args = call_args
+
+        body.accept self
+
+        @type = old_type
+
+        return
+      end
+
       fun = target_def_fun(target_def, self_type)
 
       # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call.
@@ -1413,6 +1436,32 @@ module Crystal
         @builder.store @last, union
         @last = union
       end
+    end
+
+    def is_inlineable?(node)
+      case node
+      when Nop, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral, SymbolLiteral
+        return true
+      when Var
+        if node.name == "self"
+          return true
+        end
+      when InstanceVar
+        return true
+      when Assign
+        if node.target.is_a?(InstanceVar)
+          case node.value
+          when Nop, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral, SymbolLiteral, Var
+            return true
+          end
+        end
+      when Expressions
+        if node.expressions.all? { |exp| exp.is_a?(Assign) && exp.target.is_a?(InstanceVar) && (exp.value.is_a?(Var) || exp.value.is_a?(BoolLiteral) || exp.value.is_a?(NilLiteral) || exp.value.is_a?(NumberLiteral)) }
+          return true
+        end
+      end
+
+      false
     end
 
     def codegen_call_or_invoke(fun, call_args, raises)
@@ -1493,9 +1542,13 @@ module Crystal
           if (self_type && i == 0 && !self_type.union?) || target_def.body.is_a?(Primitive) || arg.type.passed_by_val?
             @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
           else
-            ptr = alloca(llvm_type(arg.type), arg.name)
-            @vars[arg.name] = { ptr: ptr, type: arg.type }
-            @builder.store @fun.params[i], ptr
+            if arg.write || arg.type.c_struct? || arg.type.c_union?
+              ptr = alloca(llvm_type(arg.type), arg.name)
+              @vars[arg.name] = { ptr: ptr, type: arg.type }
+              @builder.store @fun.params[i], ptr
+            else
+              @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
+            end
           end
         end
 
@@ -1590,14 +1643,29 @@ module Crystal
       type = type.instance_type if type.hierarchy_metaclass?
 
       if type.union?
-        result = nil
-        type.each_concrete_type do |sub_type|
-          sub_type_cond = @builder.icmp(:eq, int(sub_type.type_id), type_id)
-          result = result ? @builder.or(result, sub_type_cond) : sub_type_cond
+        if type.hierarchy? && type.base_type.subclasses.empty?
+          return @builder.icmp :eq, int(type.base_type.type_id), type_id
         end
-        result
-      else
-        result = @builder.icmp :eq, int(type.type_id), type_id
+
+        match_fun_name = "~match_#{type.llvm_name}"
+        fun = @llvm_mod.functions[match_fun_name] || create_match_fun(match_fun_name, type)
+        return @builder.call fun, type_id
+      end
+
+      @builder.icmp :eq, int(type.type_id), type_id
+    end
+
+    def create_match_fun(name, type)
+      @llvm_mod.functions.add(name, [LLVM::Int32], LLVM::Int1) do |fun, type_id|
+        fun.linkage = :internal
+        fun.basic_blocks.append.build do |builder|
+          result = nil
+          type.each_concrete_type do |sub_type|
+            sub_type_cond = builder.icmp(:eq, int(sub_type.type_id), type_id)
+            result = result ? builder.or(result, sub_type_cond) : sub_type_cond
+          end
+          builder.ret result
+        end
       end
     end
 
@@ -1944,7 +2012,11 @@ module Crystal
     end
 
     def br_from_alloca_to_entry
-      br_block_chain @alloca_block, @entry_block
+      if @alloca_block.instructions.count == 0
+        @alloca_block.delete
+      else
+        br_block_chain @alloca_block, @entry_block
+      end
     end
 
     def br_block_chain *blocks

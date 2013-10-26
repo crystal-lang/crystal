@@ -77,6 +77,7 @@ module Crystal
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @const_block_entry = @const_block
       @vars = {} of String => LLVMVar
+      @lib_vars = {} of String => LibLLVM::ValueRef
       @strings = {} of String => LibLLVM::ValueRef
       @type = @mod
       @last = llvm_nil
@@ -87,7 +88,6 @@ module Crystal
     def finish
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
-      last = @last
 
       return_from_fun nil, @main_ret_type
     end
@@ -146,6 +146,16 @@ module Crystal
                 codegen_primitive_struct_set node, target_def, call_args
               when :struct_get
                 codegen_primitive_struct_get node, target_def, call_args
+              when :union_new
+                codegen_primitive_union_new node, target_def, call_args
+              when :union_set
+                codegen_primitive_union_set node, target_def, call_args
+              when :union_get
+                codegen_primitive_union_get node, target_def, call_args
+              when :external_var_set
+                codegen_primitive_external_var_set node, target_def, call_args
+              when :external_var_get
+                codegen_primitive_external_var_get node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -413,6 +423,57 @@ module Crystal
       end
     end
 
+    def codegen_primitive_union_new(node, target_def, call_args)
+      struct_type = llvm_struct_type(node.type)
+      @last = malloc struct_type
+      memset @last, int8(0), LLVM.size_of(struct_type)
+      @last
+    end
+
+    def codegen_primitive_union_set(node, target_def, call_args)
+      type = @type
+      assert_type type, CUnionType
+
+      name = target_def.name[0 .. -2]
+
+      var = type.vars[name]
+      ptr = gep call_args[0], 0, 0
+      casted_value = cast_to_pointer ptr, var.type
+      @last = call_args[1]
+      @builder.store @last, casted_value
+      @last
+    end
+
+    def codegen_primitive_union_get(node, target_def, call_args)
+      type = @type
+      assert_type type, CUnionType
+
+      name = target_def.name
+
+      var = type.vars[name]
+      ptr = gep call_args[0], 0, 0
+      if var.type.c_struct? || var.type.c_union?
+        @last = @builder.bit_cast(ptr, LLVM.pointer_type(llvm_struct_type(var.type)))
+      else
+        casted_value = cast_to_pointer ptr, var.type
+        @last = @builder.load casted_value
+      end
+    end
+
+    def codegen_primitive_external_var_set(node, target_def, call_args)
+      name = target_def.name[0 .. -2]
+      var = declare_lib_var name, node.type
+      @last = call_args[0]
+      @builder.store @last, var
+      @last
+    end
+
+    def codegen_primitive_external_var_get(node, target_def, call_args)
+      name = target_def.name
+      var = declare_lib_var name, node.type
+      @builder.load var
+    end
+
     def visit(node : PointerOf)
       node_var = node.var
       case node_var
@@ -478,18 +539,22 @@ module Crystal
 
     def visit(node : ClassDef)
       node.body.accept self
-      @Last = llvm_nil
+      @last = llvm_nil
       false
     end
 
     def visit(node : ModuleDef)
       node.body.accept self
-      @Last = llvm_nil
+      @last = llvm_nil
       false
     end
 
     def visit(node : LibDef)
-      @Last = llvm_nil
+      @last = llvm_nil
+      false
+    end
+
+    def visit(node : TypeMerge)
       false
     end
 
@@ -753,31 +818,50 @@ module Crystal
       false
     end
 
+    def codegen_assign_target(target : InstanceVar, value, llvm_value)
+      type = @type
+      assert_type type, InstanceVarContainer
+
+      ivar = type.lookup_instance_var(target.name)
+      index = type.index_of_instance_var(target.name)
+
+      ptr = gep llvm_self_ptr, 0, index
+      codegen_assign(ptr, target.type, value.type, llvm_value)
+    end
+
+    def codegen_assign_target(target : Global, value, llvm_value)
+      ptr = get_global target.name, target.type
+      codegen_assign(ptr, target.type, value.type, llvm_value)
+    end
+
+    def codegen_assign_target(target : ClassVar, value, llvm_value)
+      ptr = get_global class_var_global_name(target), target.type
+      codegen_assign(ptr, target.type, value.type, llvm_value)
+    end
+
+    def codegen_assign_target(target : Var, value, llvm_value)
+      var = declare_var(target)
+      ptr = var.pointer
+      codegen_assign(ptr, target.type, value.type, llvm_value)
+    end
+
     def codegen_assign_target(target, value, llvm_value)
-      case target
-      when InstanceVar
-        type = @type
-        assert_type type, InstanceVarContainer
+      raise "Unknown assign target in codegen: #{target}"
+    end
 
-        ivar = type.lookup_instance_var(target.name)
-        index = type.index_of_instance_var(target.name)
-
-        ptr = gep llvm_self_ptr, 0, index
-        codegen_assign(ptr, target.type, value.type, llvm_value)
-      # when Global
-      #   ptr = assign_to_global target.name.to_s, target.type
-      # when ClassVar
-      #   ptr = assign_to_global class_var_global_name(target), target.type
-      # else
-      when Var
-        var = declare_var(target)
-        ptr = var.pointer
-        codegen_assign(ptr, target.type, value.type, llvm_value)
-      else
-        raise "Unknown assign target type: #{target}"
+    def get_global(name, type)
+      ptr = @llvm_mod.globals[name]?
+      unless ptr
+        llvm_type = llvm_type(type)
+        ptr = @llvm_mod.globals.add(llvm_type, name)
+        LLVM.set_linkage ptr, LibLLVM::Linkage::Internal
+        LLVM.set_initializer ptr, LLVM.null(llvm_type)
       end
+      ptr
+    end
 
-      # codegen_assign(ptr, target.type, value.type, llvm_value)
+    def class_var_global_name(node)
+      "#{node.owner}#{node.var.name.replace('@', ':')}"
     end
 
     def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
@@ -787,6 +871,7 @@ module Crystal
       else
         assign_to_union(pointer, target_type, value_type, value)
       end
+      nil
     end
 
     def assign_to_union(union_pointer, union_type, type, value)
@@ -857,6 +942,20 @@ module Crystal
       # end
     end
 
+    def visit(node : Global)
+      read_global node.name.to_s, node.type
+    end
+
+    def visit(node : ClassVar)
+      read_global class_var_global_name(node), node.type
+    end
+
+    def read_global(name, type)
+      @last = get_global name, type
+      @last = @builder.load @last unless type.union?
+      @last
+    end
+
     def visit(node : InstanceVar)
       type = @type
       assert_type type, InstanceVarContainer
@@ -890,6 +989,16 @@ module Crystal
         # end
         llvm_var
       end
+    end
+
+    def declare_lib_var(name, type)
+      unless var = @lib_vars[name]?
+        var = @llvm_mod.globals.add(llvm_type(type), name)
+        LLVM.set_linkage var, LibLLVM::Linkage::External
+        # var.thread_local = true if RUBY_PLATFORM =~ /linux/
+        @lib_vars[name] = var
+      end
+      var
     end
 
     def visit(node : Def)

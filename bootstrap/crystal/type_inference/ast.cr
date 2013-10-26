@@ -62,6 +62,12 @@ module Crystal
     end
   end
 
+  class ClassVar
+    property! owner
+    property! var
+    property! class_scope
+  end
+
   class Ident
     property target_const
   end

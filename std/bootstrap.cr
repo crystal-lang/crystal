@@ -1,5 +1,12 @@
 require "int"
 require "pointer"
+
+class Pointer(T)
+  def +(offset : Int)
+    Pointer(T).new(address + T.byte_size * offset)
+  end
+end
+
 require "array"
 require "io"
 require "string"

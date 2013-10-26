@@ -376,12 +376,18 @@ module Crystal
       when '@'
         start = @buffer
         next_char
+        class_var = false
+        count = 2
+        if @buffer.value == '@'
+          class_var = true
+          count += 1
+          next_char
+        end
         if @buffer.value.ident_start?
-          count = 2
           while next_char.ident_part?
             count += 1
           end
-          @token.type = :INSTANCE_VAR
+          @token.type = class_var ? :CLASS_VAR : :INSTANCE_VAR
           @token.value = String.new(start, count)
         else
           raise "unknown token: #{@buffer.value}"
@@ -698,8 +704,14 @@ module Crystal
       while @buffer.value.ident_part?
         next_char
       end
-      if @buffer.value == '!' || @buffer.value == '?'
+      case @buffer.value
+      when '!', '?'
         next_char
+      when '$'
+        next_char
+        while @buffer.value.digit?
+          next_char
+        end
       end
       @token.type = :IDENT
       @token.value = String.new(start, @column_number - start_column)

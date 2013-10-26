@@ -14,9 +14,9 @@ module Crystal
 
   class Normalizer < Transformer
     class Index
-      getter :read
-      getter :write
-      getter :frozen
+      getter read
+      getter write
+      getter frozen
 
       def initialize(@read = 0, @write = 1, @frozen = false)
       end
@@ -38,7 +38,7 @@ module Crystal
       end
     end
 
-    getter :program
+    getter program
 
     def initialize(@program)
       @vars = {} of String => Index
@@ -137,16 +137,6 @@ module Crystal
     #   end
 
     #   Ident.new([const_name], true)
-    # end
-
-    # def transform(node : Require)
-    #   if node.cond
-    #     must_require = eval_require_cond(node.cond)
-    #     return unless must_require
-    #   end
-
-    #   required = program.require(node.string, node.filename)
-    #   required ? required.transform(self) : nil
     # end
 
     def transform(node : StringInterpolation)
@@ -802,7 +792,7 @@ module Crystal
 
     def var_name_with_index(name, index)
       if index && index > 0
-        "#{name}:#{index}"
+        "#{name}$#{index}"
       else
         name
       end
@@ -859,7 +849,7 @@ module Crystal
 
         target = node.target
         if target.is_a?(Var)
-          name_and_index = target.name.split(':')
+          name_and_index = target.name.split('$')
           if name_and_index.length == 2
             name, index = name_and_index
             if index && @names.includes?(name)
@@ -889,7 +879,7 @@ module Crystal
 
             value_index = @vars_indices[name]?
             if value_index || ((before_var = @before_vars[name]?) && (value_index = before_var.read))
-              new_name = value_index == 0 ? name : "#{name}:#{value_index}"
+              new_name = value_index == 0 ? name : "#{name}$#{value_index}"
               if target.name == new_name
                 nil
               else
@@ -928,7 +918,7 @@ module Crystal
       end
 
       def var_name_without_index(name)
-        name_and_index = name.split(':')
+        name_and_index = name.split('$')
         name_and_index.first
       end
     end

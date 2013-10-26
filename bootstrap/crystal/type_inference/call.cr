@@ -28,7 +28,7 @@ module Crystal
     def recalculate
       obj = @obj
 
-      if obj && (obj_type = obj.type) && obj_type.is_a?(LibType)
+      if obj && (obj_type = obj.type?) && obj_type.is_a?(LibType)
         recalculate_lib_call(obj_type)
         return
       end
@@ -147,7 +147,7 @@ module Crystal
 
       check_args_length_match obj_type, untyped_def
       # check_lib_out_args untyped_def
-      # return unless obj_and_args_types_set?
+      return unless obj_and_args_types_set?
 
       check_fun_args_types_match obj_type, untyped_def
 
@@ -257,9 +257,9 @@ module Crystal
 
       var = owner.vars[def_name]?
       if var
-        args[0].raise "field '#{def_name}' of struct #{owner} has type #{var.type}, not #{args[0].type}"
+        args[0].raise "field '#{def_name}' of #{owner.type_desc} #{owner} has type #{var.type}, not #{args[0].type}"
       else
-        raise "struct #{owner} has no field '#{def_name}'"
+        raise "#{owner.type_desc} #{owner} has no field '#{def_name}'"
       end
     end
 

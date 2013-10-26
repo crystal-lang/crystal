@@ -2,7 +2,7 @@ require "../ast"
 
 module Crystal
   class ASTNode
-    property dependencies
+    property! dependencies
 
     def set_type(type)
       @type = type
@@ -21,16 +21,16 @@ module Crystal
     end
 
     def bind_to(node)
-      @dependencies ||= [] of ASTNode
+      @dependencies = (@dependencies ||= [] of ASTNode)
       @dependencies << node
       node.add_observer self
 
       return unless node.type?
 
-      if (@dependencies && @dependencies.length == 1) || !@type
+      if dependencies.length == 1 || !@type
         new_type = node.type
       else
-        new_type = node.type.program.type_merge [@type, node.type]
+        new_type = node.type.program.type_merge dependencies
       end
       return if @type.object_id == new_type.object_id
       set_type(map_type(new_type))
@@ -63,10 +63,10 @@ module Crystal
     def update(from)
       return if @type.object_id == from.type.object_id
 
-      if @type.nil? || (@dependencies && @dependencies.length == 1)
+      if @type.nil? || dependencies.length == 1
         new_type = from.type
       else
-        new_type = from.type.program.type_merge [@type, from.type]
+        new_type = from.type.program.type_merge dependencies
       end
 
       return if @type.object_id == new_type.object_id
@@ -91,6 +91,17 @@ module Crystal
 
     def map_type(type)
       mod.pointer_of(type)
+    end
+  end
+
+  class TypeMerge
+    def map_type(type)
+      type.metaclass
+    end
+
+    def update(from = nil)
+      super
+      propagate
     end
   end
 

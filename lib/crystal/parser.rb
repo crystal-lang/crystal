@@ -641,11 +641,12 @@ module Crystal
         node_and_next_token ClassVar.new(@token.value)
       when :-@
         next_token
-        if @token.type == :IDENT
+        case @token.type
+        when :IDENT
           ivar_name = "@#{@token.value}"
           @instance_vars.add ivar_name if @instance_vars
           node_and_next_token Call.new(InstanceVar.new(ivar_name), :-@)
-        elsif @token.type == :INSTANCE_VAR
+        when :INSTANCE_VAR
           class_var_name = "@#{@token.value}"
           node_and_next_token Call.new(ClassVar.new(class_var_name), :-@)
         else

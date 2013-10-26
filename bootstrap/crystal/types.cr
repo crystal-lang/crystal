@@ -1,5 +1,3 @@
-require "type_inference/restrictions"
-
 module Crystal
   abstract class Type
     def metaclass
@@ -51,6 +49,14 @@ module Crystal
     end
 
     def c_union?
+      false
+    end
+
+    def c_enum?
+      false
+    end
+
+    def primitive_like?
       false
     end
 
@@ -166,7 +172,7 @@ module Crystal
 
     def match_arg(arg_type, arg, owner, type_lookup, free_vars)
       restriction = arg.type? || arg.type_restriction
-      arg_type.not_nil!.restrict restriction, type_lookup
+      arg_type.not_nil!.restrict restriction, type_lookup, free_vars
     end
 
     def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
@@ -267,12 +273,12 @@ module Crystal
 
     def add_sorted_def(a_def)
       sorted_defs = self.sorted_defs[SortedDefKey.new(a_def.name, a_def.args.length, !!a_def.yields)]
-      # sorted_defs.each_with_index do |ex_def, i|
-      #   if a_def.is_restriction_of?(ex_def, self)
-      #     sorted_defs.insert(i, a_def)
-      #     return
-      #   end
-      # end
+      sorted_defs.each_with_index do |ex_def, i|
+        if a_def.is_restriction_of?(ex_def, self)
+          sorted_defs.insert(i, a_def)
+          return
+        end
+      end
       sorted_defs << a_def
     end
   end
@@ -353,6 +359,24 @@ module Crystal
 
     def module?
       true
+    end
+  end
+
+  module ClassVarContainer
+    def class_vars
+      @class_vars ||= {} of String => Var
+    end
+
+    def has_class_var?(name)
+      class_vars.has_key?(name)
+    end
+
+    def lookup_class_var(name)
+      class_vars[name] ||= Var.new name
+    end
+
+    def class_var_owner
+      self
     end
   end
 
@@ -542,6 +566,7 @@ module Crystal
 
   class NonGenericClassType < ClassType
     include InstanceVarContainer
+    include ClassVarContainer
     include DefInstanceContainer
 
     def metaclass
@@ -572,6 +597,10 @@ module Crystal
     end
 
     def value?
+      true
+    end
+
+    def primitive_like?
       true
     end
   end
@@ -721,7 +750,7 @@ module Crystal
   class GenericClassInstanceType < Type
     include InheritableClass
     include InstanceVarContainer
-    # include ClassVarContainer
+    include ClassVarContainer
     include DefInstanceContainer
     include MatchesLookup
 
@@ -918,23 +947,16 @@ module Crystal
       raise "Bug: shouldn't be adding a Def in a LibType"
     end
 
-    # def add_var(name, type)
-    #   arg = Arg.new_with_restriction('value', type)
-    #   arg.set_type(type)
+    def add_var(name, type)
+      setter = External.new("#{name}=", [Arg.new_with_type("value", type)], Primitive.new(:external_var_set, type))
+      setter.set_type(type)
 
-    #   setter = External.new("#{name}=", [arg], LibSet.new(name, type))
-    #   setter.real_name = "*#{to_s}.#{name}="
-    #   setter.owner = self
-    #   setter.set_type(type)
+      getter = External.new("#{name}", ([] of Arg), Primitive.new(:external_var_get, type))
+      getter.set_type(type)
 
-    #   getter = External.new(name, [], LibGet.new(name, type))
-    #   getter.real_name = "*#{to_s}.#{name}"
-    #   getter.owner = self
-    #   getter.set_type(type)
-
-    #   add_def setter
-    #   add_def getter
-    # end
+      add_def setter
+      add_def getter
+    end
 
     def passed_as_self?
       false
@@ -963,8 +985,8 @@ module Crystal
     delegate pointer?, typedef
     delegate parents, typedef
 
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      typedef.lookup_matches(name, arg_types, yields, owner, type_lookup, matches_array)
+    def lookup_matches(name, arg_types, yields)
+      typedef.lookup_matches(name, arg_types, yields)
     end
 
     def primitive_like?
@@ -1090,9 +1112,43 @@ module Crystal
     end
   end
 
+  class CEnumType < ContainedType
+    property name
+    property base_type
+
+    def initialize(program, container, @name, constants)
+      super(program, container)
+
+      constants.each do |constant|
+        @types[constant.name] = Const.new(program, self, constant.name, constant.default_value.not_nil!)
+      end
+    end
+
+    def c_enum?
+      true
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def parents
+      nil
+    end
+
+    def type_desc
+      "enum"
+    end
+
+    def to_s
+      "#{container}::#{name}"
+    end
+  end
+
   class Metaclass < Type
     include DefContainer
     include DefInstanceContainer
+    include ClassVarContainer
 
     getter program
     getter instance_type
@@ -1106,7 +1162,9 @@ module Crystal
 
     delegate :abstract, instance_type
 
-    #delegate [:lookup_class_var, :has_class_var?, :class_var_owner] => :instance_type
+    def class_var_owner
+      instance_type
+    end
 
     def parents
       instance_type.parents.try &.map &.metaclass

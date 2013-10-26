@@ -93,6 +93,10 @@ def it_lexes_instance_var(value)
   it_lexes value, :INSTANCE_VAR, value
 end
 
+def it_lexes_class_var(value)
+  it_lexes value, :CLASS_VAR, value
+end
+
 def it_lexes_globals(globals)
   it_lexes_many globals, :GLOBAL
 end
@@ -122,7 +126,7 @@ describe "Lexer" do
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
   it_lexes_keywords [:def, :if, :else, :elsif, :end, :true, :false, :class, :module, :include, :while, :nil, :do, :yield, :return, :unless, :next, :break, :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :ptr, :out, :require, :case, :when, :then, :of, :abstract, :rescue, :ensure]
-  it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!"]
+  it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "foo$123"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!", "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
   it_lexes_i32 ["1", ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234", ["1.foo", "1"], ["1_000", "1000"], ["100_000", "100000"]]
@@ -189,6 +193,7 @@ describe "Lexer" do
   it_lexes "-@foo", :"-"
   it_lexes_const "Foo"
   it_lexes_instance_var "@foo"
+  it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123", "$~"]
   it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\""]
   it_lexes_regex "/foo/"

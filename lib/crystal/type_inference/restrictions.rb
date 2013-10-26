@@ -1,7 +1,7 @@
 module Crystal
   class Def
     def is_restriction_of?(other, owner)
-      args.zip(other.args).each do |self_arg, other_arg|
+      args.zip(other.args) do |self_arg, other_arg|
         self_type = self_arg.type || self_arg.type_restriction
         other_type = other_arg.type || other_arg.type_restriction
         return false if self_type == nil && other_type != nil

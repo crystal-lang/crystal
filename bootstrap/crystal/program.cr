@@ -6,8 +6,10 @@ module Crystal
     include DefContainer
     include DefInstanceContainer
     include MatchesLookup
+    include ClassVarContainer
 
-    getter :types
+    getter types
+    getter global_vars
 
     def initialize
       # super(nil, "main")
@@ -64,6 +66,7 @@ module Crystal
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
 
+      @global_vars = {} of String => Var
       @requires = Set(String).new
       @temp_var_counter = 0
       @type_id_counter = 0
@@ -108,10 +111,18 @@ module Crystal
       type
     end
 
-    def type_merge(types)
+    def type_merge(types : Array(Type))
+      type_merge(types) { |type| type }
+    end
+
+    def type_merge(nodes : Array(ASTNode))
+      type_merge(nodes) { |node| node.type }
+    end
+
+    def type_merge(objects)
       all_types = Set(Type).new
-      types.each do |type|
-        add_type all_types, type
+      objects.each do |obj|
+        add_type all_types, yield(obj)
       end
 
       # all_types.delete_if { |type| type.no_return? } if all_types.length > 1
@@ -218,6 +229,7 @@ module Crystal
     getter :nil
     getter :bool
     getter :char
+    getter :int
     getter :int8
     getter :int16
     getter :int32
@@ -226,6 +238,7 @@ module Crystal
     getter :uint16
     getter :uint32
     getter :uint64
+    getter :float
     getter :float32
     getter :float64
     getter :string

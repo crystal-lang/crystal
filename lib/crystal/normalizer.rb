@@ -333,13 +333,19 @@ module Crystal
       set_length = Call.new(temp_var, 'length=', [NumberLiteral.new(length, :i32)])
       set_length.location = node.location
 
-      exps = [assign, set_length]
+      get_buffer = Call.new(temp_var, 'buffer')
+      get_buffer.location = node.location
+
+      buffer = new_temp_var
+      buffer.location = node.location
+
+      assign_buffer = Assign.new(buffer, get_buffer)
+      assign_buffer.location = node.location
+
+      exps = [assign, set_length, assign_buffer]
 
       node.elements.each_with_index do |elem, i|
-        get_buffer = Call.new(temp_var, 'buffer')
-        get_buffer.location = node.location
-
-        assign_index = Call.new(get_buffer, :[]=, [NumberLiteral.new(i, :i32), elem])
+        assign_index = Call.new(buffer, :[]=, [NumberLiteral.new(i, :i32), elem])
         assign_index.location = node.location
 
         exps << assign_index
@@ -746,7 +752,7 @@ module Crystal
 
     def var_name_with_index(name, index)
       if index && index > 0
-        "#{name}:#{index}"
+        "#{name}$#{index}"
       else
         name
       end
@@ -806,7 +812,7 @@ module Crystal
       node = super
 
       if node.target.is_a?(Var)
-        name, index = node.target.name.split(':')
+        name, index = node.target.name.split('$')
         if index && @names.include?(name)
           @vars_indices[name] = index
         end
@@ -831,7 +837,7 @@ module Crystal
           name = var_name_without_index target.name
           value_index = @vars_indices[name]
           if value_index || ((before_var = @before_vars[name]) && (value_index = before_var[:read]))
-            new_name = value_index == 0 ? name : "#{name}:#{value_index}"
+            new_name = value_index == 0 ? name : "#{name}$#{value_index}"
             if assign.target.name == new_name
               nil
             else
@@ -863,7 +869,7 @@ module Crystal
     end
 
     def var_name_without_index(name)
-      name, index = name.split(':')
+      name, index = name.split('$')
       name
     end
   end
