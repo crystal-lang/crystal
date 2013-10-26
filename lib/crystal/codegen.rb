@@ -1576,14 +1576,29 @@ module Crystal
       type = type.instance_type if type.hierarchy_metaclass?
 
       if type.union?
-        result = nil
-        type.each_concrete_type do |sub_type|
-          sub_type_cond = @builder.icmp(:eq, int(sub_type.type_id), type_id)
-          result = result ? @builder.or(result, sub_type_cond) : sub_type_cond
+        if type.hierarchy? && type.base_type.subclasses.empty?
+          return @builder.icmp :eq, int(type.base_type.type_id), type_id
         end
-        result
-      else
-        result = @builder.icmp :eq, int(type.type_id), type_id
+
+        match_fun_name = "~match_#{type.llvm_name}"
+        fun = @llvm_mod.functions[match_fun_name] || create_match_fun(match_fun_name, type)
+        return @builder.call fun, type_id
+      end
+
+      @builder.icmp :eq, int(type.type_id), type_id
+    end
+
+    def create_match_fun(name, type)
+      @llvm_mod.functions.add(name, [LLVM::Int32], LLVM::Int1) do |fun, type_id|
+        fun.linkage = :internal
+        fun.basic_blocks.append.build do |builder|
+          result = nil
+          type.each_concrete_type do |sub_type|
+            sub_type_cond = builder.icmp(:eq, int(sub_type.type_id), type_id)
+            result = result ? builder.or(result, sub_type_cond) : sub_type_cond
+          end
+          builder.ret result
+        end
       end
     end
 
