@@ -229,9 +229,7 @@ module Crystal
 
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
       @last = codegen_fun(fun_literal_name, node.def, nil, @main_mod)
-      if @llvm_mod != @main_mod
-        @last = declare_fun(fun_literal_name, @last)
-      end
+      @last = check_main_fun fun_literal_name, @last
 
       false
     end
@@ -1337,20 +1335,21 @@ module Crystal
       self_type_mod = type_module(self_type)
 
       fun = self_type_mod.functions[mangled_name] || codegen_fun(mangled_name, target_def, self_type)
-      if @llvm_mod == self_type_mod
-        return fun
-      else
-        @llvm_mod.functions[mangled_name] || declare_fun(mangled_name, fun)
-      end
+      check_mod_fun self_type_mod, mangled_name, fun
     end
 
     def main_fun(name)
       fun = @main_mod.functions[name]
-      if @llvm_mod == @main_mod
-        fun
-      else
-        @llvm_mod.functions[name] || declare_fun(name, fun)
-      end
+      check_main_fun name, fun
+    end
+
+    def check_main_fun(name, fun)
+      check_mod_fun @main_mod, name, fun
+    end
+
+    def check_mod_fun(mod, name, fun)
+      return fun if @llvm_mod == mod
+      @llvm_mod.functions[name] || declare_fun(name, fun)
     end
 
     def declare_fun(mangled_name, fun)
@@ -1647,8 +1646,9 @@ module Crystal
           return @builder.icmp :eq, int(type.base_type.type_id), type_id
         end
 
-        match_fun_name = "~match_#{type.llvm_name}"
-        fun = @llvm_mod.functions[match_fun_name] || create_match_fun(match_fun_name, type)
+        match_fun_name = "~match<#{type.to_s}>"
+        fun = @main_mod.functions[match_fun_name] || create_match_fun(match_fun_name, type)
+        fun = check_main_fun match_fun_name, fun
         return @builder.call fun, type_id
       end
 
@@ -1656,8 +1656,7 @@ module Crystal
     end
 
     def create_match_fun(name, type)
-      @llvm_mod.functions.add(name, [LLVM::Int32], LLVM::Int1) do |fun, type_id|
-        fun.linkage = :internal
+      @main_mod.functions.add(name, [LLVM::Int32], LLVM::Int1) do |fun, type_id|
         fun.basic_blocks.append.build do |builder|
           result = nil
           type.each_concrete_type do |sub_type|
