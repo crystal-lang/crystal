@@ -208,29 +208,16 @@ module Crystal
 
     def build_string_constant(str, name = "str")
       name = name.gsub('@', '.')
-      unless string_and_name = @strings[[@main_mod, str]]
-        global = @main_mod.globals.add(LLVM.Array(LLVM::Int8, str.length + 5), name)
-        # global.linkage = :private
+      unless string = @strings[[@llvm_mod, str]]
+        global = @llvm_mod.globals.add(LLVM.Array(LLVM::Int8, str.length + 5), name)
+        global.linkage = :private
         global.global_constant = 1
         bytes = "#{[str.length].pack("l")}#{str}\0".chars.to_a.map { |c| int8(c.ord) }
         global.initializer = LLVM::ConstantArray.const(LLVM::Int8, bytes)
         string = cast_to global, @mod.string
-        string_and_name = [string, name]
-        @strings[[@main_mod, str]] = string_and_name
+        @strings[[@llvm_mod, str]] = string
       end
-
-      if @llvm_mod != @main_mod
-        new_name = string_and_name[1]
-        unless string_and_name = @strings[[@llvm_mod, new_name]]
-          global = @llvm_mod.globals.add(LLVM.Array(LLVM::Int8, str.length + 5), new_name)
-          global.global_constant = 1
-          global = cast_to global, @mod.string
-          string_and_name = [global, new_name]
-          @strings[[@llvm_mod, new_name]] = string_and_name
-        end
-      end
-
-      string_and_name[0]
+      string
     end
 
     def visit_symbol_literal(node)

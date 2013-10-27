@@ -161,9 +161,11 @@ module Crystal
       FileUtils.mkdir_p ".crystal"
 
       assembly_names = []
+      object_names = []
 
       with_stats_or_profile('codegen-llc') do
         llvm_modules.each do |type, llvm_mod|
+          type = "main" if type == ""
           name = type.gsub(/[^a-zA-Z0-9]/, '_')
           bc_name = ".crystal/#{name}.bc"
 
@@ -177,25 +179,28 @@ module Crystal
             else
               FileUtils.mv "#{bc_name}.new", bc_name
               `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
+              `#{@clang} -c .crystal/#{name}.s -o .crystal/#{name}.o`
             end
           else
             FileUtils.mv "#{bc_name}.new", bc_name
             `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
+            `#{@clang} -c .crystal/#{name}.s -o .crystal/#{name}.o`
           end
 
           if @options[:dump_ll]
             llvm_dis = LLVMConfig.bin("llvm-dis")
-            `#{llvm_dis} #{bc_name}`
+             `#{llvm_dis} #{bc_name}`
           end
 
           assembly_names << ".crystal/#{name}.s"
+          object_names << ".crystal/#{name}.o"
         end
       end
 
       o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
 
       with_stats_or_profile('codegen-clang') do
-        `#{@clang} #{o_flag} #{lib_flags(program)} #{assembly_names.join " "}` unless @options[:dump_ll]
+        `#{@clang} #{o_flag} #{lib_flags(program)} #{object_names.join " "}` unless @options[:dump_ll]
       end
 
       # if @options[:debug]
