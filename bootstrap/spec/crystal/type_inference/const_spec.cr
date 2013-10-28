@@ -105,7 +105,7 @@ describe "Type inference: const" do
       "undefined local variable or method 'a'"
   end
 
-  pending "finds const from restriction" do
+  it "finds const from restriction" do
     assert_type("
       class Int32
         FOO = 'a'

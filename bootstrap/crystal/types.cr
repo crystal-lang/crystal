@@ -172,7 +172,7 @@ module Crystal
 
     def match_arg(arg_type, arg, owner, type_lookup, free_vars)
       restriction = arg.type? || arg.type_restriction
-      arg_type.not_nil!.restrict restriction, type_lookup, free_vars
+      arg_type.not_nil!.restrict restriction, owner, type_lookup, free_vars
     end
 
     def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)

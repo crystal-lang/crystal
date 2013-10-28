@@ -115,10 +115,6 @@ describe 'Type inference: def' do
     assert_type('def foo; end; foo') { self.nil }
   end
 
-  it "types infinite recursion" do
-    assert_type('def foo; foo; end; foo') { self.nil }
-  end
-
   it "types mutual infinite recursion" do
     assert_type('def foo; bar; end; def bar; foo; end; foo') { self.nil }
   end

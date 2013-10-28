@@ -30,15 +30,46 @@ describe "Type inference: def" do
     assert_type("def foo; foo; end; foo") { |mod| mod.nil }
   end
 
-  it "types a call to a class method 1" do
-    assert_type("class Foo; def self.foo; 1; end; end; Foo.foo") { int32 }
+  it "allows recursion with arg" do
+    assert_type("def foo(x); foo(x); end; foo 1") { |mod| mod.nil }
   end
 
-  it "types a call to a class method 2" do
-    assert_type("class Foo; end; def Foo.foo; 1; end; Foo.foo") { int32 }
+  it "types simple recursion" do
+    assert_type("def foo(x); if x > 0; foo(x - 1) + 1; else; 1; end; end; foo(5)") { int32 }
+  end
+
+  it "types empty body def" do
+    assert_type("def foo; end; foo") { |mod| mod.nil }
+  end
+
+  it "types call with union argument" do
+    assert_type("def foo(x); x; end; a = 1 || 1.1; foo(a)") { union_of(int32, float64) }
+  end
+
+  it "defines class method" do
+    assert_type("def Int.foo; 2.5; end; Int.foo") { float64 }
+  end
+
+  it "defines class method with self" do
+    assert_type("class Int; def self.foo; 2.5; end; end; Int.foo") { float64 }
+  end
+
+  it "calls with default argument" do
+    assert_type("def foo(x = 1); x; end; foo") { int32 }
+  end
+
+  # it "do not use body for the def type" do
+  #   input = parse 'def foo; if 1 == 2; return 0; end; end; foo'
+  #   mod, input = infer_type input
+  #   input.last.type.should eq(mod.union_of(mod.int32, mod.nil))
+  #   input.last.target_def.body.type.should eq(mod.nil)
+  # end
+
+  it "reports undefined method" do
+    assert_error "foo()", "undefined method 'foo'"
   end
 
   it "raises on undefined local variable or method" do
-    assert_error("foo", "undefined local variable or method 'foo'")
+    assert_error "foo", "undefined local variable or method 'foo'"
   end
 end

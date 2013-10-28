@@ -64,11 +64,11 @@ module Crystal
   end
 
   class Type
-    def restrict(other : Nil, type_lookup, free_vars)
+    def restrict(other : Nil, owner, type_lookup, free_vars)
       self
     end
 
-    def restrict(other : Type, type_lookup, free_vars)
+    def restrict(other : Type, owner, type_lookup, free_vars)
       if self == other
         return self
       end
@@ -82,7 +82,7 @@ module Crystal
       nil
     end
 
-    def restrict(other : Ident, type_lookup, free_vars)
+    def restrict(other : Ident, owner, type_lookup, free_vars)
       single_name = other.names.length == 1
       if single_name
         ident_type = free_vars[other.names.first]?
@@ -90,7 +90,7 @@ module Crystal
 
       ident_type ||= type_lookup.lookup_type other.names
       if ident_type
-        restrict ident_type, type_lookup, free_vars
+        restrict ident_type, owner, type_lookup, free_vars
       elsif single_name
         free_vars[other.names.first] = self
       else
@@ -98,11 +98,15 @@ module Crystal
       end
     end
 
-    def restrict(other : NewGenericClass, type_lookup, free_vars)
+    def restrict(other : NewGenericClass, owner, type_lookup, free_vars)
       nil
     end
 
-    def restrict(other : ASTNode, type_lookup, free_vars)
+    def restrict(other : SelfType, owner, type_lookup, free_vars)
+      restrict(owner, owner, type_lookup, free_vars)
+    end
+
+    def restrict(other : ASTNode, owner, type_lookup, free_vars)
       raise "Bug: unsupported restriction: #{other}"
     end
 
@@ -129,7 +133,7 @@ module Crystal
       generic_class == ident_type ? self : nil
     end
 
-    def restrict(other : NewGenericClass, type_lookup, free_vars)
+    def restrict(other : NewGenericClass, owner, type_lookup, free_vars)
       generic_class = type_lookup.lookup_type other.name.names
       return nil unless generic_class == self.generic_class
 
@@ -139,7 +143,7 @@ module Crystal
       i = 0
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[i]
-        restricted = type_var.type.restrict other_type_var, type_lookup, free_vars
+        restricted = type_var.type.restrict other_type_var, owner, type_lookup, free_vars
         return nil unless restricted
         i += 1
       end

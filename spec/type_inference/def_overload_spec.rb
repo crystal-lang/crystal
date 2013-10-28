@@ -31,20 +31,22 @@ describe 'Type inference: def overload' do
   end
 
   it "types a call with overload Object type first overload" do
-    assert_type('class Foo; end; class Bar; end; def foo(x : Foo); 2.5; end; def foo(x : Bar); 1; end; foo(Foo.new)') { float64 }
-  end
-
-  it "types a call with overload Object type first overload" do
     assert_type(%q(
       class Foo
-        def initialize
-          @x = 1
-        end
       end
+
       class Bar
       end
 
-      def foo(x : Foo); 2.5; end; def foo(x : Bar); 1; end; foo(Foo.new)
+      def foo(x : Foo)
+        2.5
+      end
+
+      def foo(x : Bar)
+        1
+      end
+
+      foo(Foo.new)
       )) { float64 }
   end
 
