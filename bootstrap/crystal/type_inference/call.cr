@@ -125,10 +125,10 @@ module Crystal
           typed_def_args = prepared_typed_def.args
           match_owner.add_def_instance(match.def.object_id, match.arg_types, block_type, typed_def) if use_cache
           if typed_def.body
-  #         bubbling_exception do
-            visitor = TypeVisitor.new(mod, typed_def_args, match_owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars) # , yield_vars)
-            typed_def.body.accept visitor
-  #         end
+            bubbling_exception do
+              visitor = TypeVisitor.new(mod, typed_def_args, match_owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars) # , yield_vars)
+              typed_def.body.accept visitor
+            end
           end
         end
         typed_def
@@ -156,6 +156,18 @@ module Crystal
 
       # self.unbind_from *old_target_defs if old_target_defs
       self.bind_to untyped_defs
+    end
+
+    def bubbling_exception
+      begin
+        yield
+      rescue ex : Crystal::Exception
+        if obj = @obj
+          raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
+        else
+          raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+        end
+      end
     end
 
     def check_args_length_match(obj_type, untyped_def : External)

@@ -83,8 +83,19 @@ module Crystal
     end
 
     def restrict(other : Ident, type_lookup, free_vars)
-      ident_type = type_lookup.lookup_type other.names
-      restrict ident_type, type_lookup, free_vars
+      single_name = other.names.length == 1
+      if single_name
+        ident_type = free_vars[other.names.first]?
+      end
+
+      ident_type ||= type_lookup.lookup_type other.names
+      if ident_type
+        restrict ident_type, type_lookup, free_vars
+      elsif single_name
+        free_vars[other.names.first] = self
+      else
+        self
+      end
     end
 
     def restrict(other : NewGenericClass, type_lookup, free_vars)

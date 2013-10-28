@@ -833,14 +833,14 @@ module Crystal
     end
 
     def lookup_ident_type(node : Ident)
-      # if @free_vars && !node.global && type = @free_vars[[node.names.first]]
-      #   if node.names.length == 1
-      #     target_type = type
-      #   else
-      #     target_type = type.lookup_type(node.names[1 .. -1])
-      #   end
-      # elsif node.global
-      if node.global
+      free_vars = @free_vars
+      if free_vars && !node.global && (type = free_vars[node.names.first]?)
+        if node.names.length == 1
+          target_type = type.not_nil!
+        else
+          target_type = type.not_nil!.lookup_type(node.names[1 .. -1])
+        end
+      elsif node.global
         target_type = mod.lookup_type node.names
       else
         target_type = (@scope || @types.last).lookup_type node.names

@@ -1,5 +1,5 @@
 module Crystal
-  class Exception < ::Exception
+  abstract class Exception < ::Exception
   end
 
   class SyntaxException < Exception
@@ -7,18 +7,15 @@ module Crystal
       super(message)
     end
 
-    def to_s
-      filename = @filename
+    def has_location?
+      @filename || @line
+    end
 
-      str = StringBuilder.new
+    def append_to_s(str, source)
       if @filename
         str << "Syntax error in #{@filename}:#{@line_number}: #{@message}"
       else
         str << "Syntax error in line #{@line_number}: #{@message}"
-      end
-
-      if filename && File.exists?(filename)
-        source = File.read(filename)
       end
 
       if source
@@ -37,8 +34,21 @@ module Crystal
           end
         end
       end
+    end
 
-      str.to_s
+    def to_s
+      filename = @filename
+
+      String.build do |str|
+        if filename && File.exists?(filename)
+          source = File.read(filename)
+        end
+        append_to_s str, source
+      end
+    end
+
+    def deepest_error_message
+      @message
     end
   end
 
