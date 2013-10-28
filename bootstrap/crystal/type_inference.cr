@@ -7,6 +7,7 @@ module Crystal
   class Program
     def infer_type(node)
       node.accept TypeVisitor.new(self)
+      fix_empty_types node
       node
     end
   end

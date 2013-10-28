@@ -29,17 +29,11 @@ module Crystal
         next if @fixed[target_def]
         @fixed[target_def] = true
 
-        if target_def
-          if !target_def.type && target_def.owner.allocated
-            target_def.type = @mod.nil
-          end
-          target_def.accept_children self
+        if !target_def.type && target_def.owner.allocated
+          target_def.type = @mod.nil
         end
+        target_def.accept_children self
       end
-    end
-
-    def end_visit_ident(node)
-      node.target_const.value.accept self if node.target_const
     end
   end
 end
