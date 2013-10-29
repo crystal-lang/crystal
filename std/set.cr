@@ -57,6 +57,12 @@ class Set(T)
     same?(other) || internal_hash == other.internal_hash
   end
 
+  def dup
+    set = Set(T).new
+    each { |value| set.add value }
+    set
+  end
+
   def to_a
     @hash.keys
   end

@@ -187,6 +187,14 @@ class Hash(K, V)
     true
   end
 
+  def dup
+    hash = Hash(K, V).new
+    each do |key, value|
+      hash[key] = value
+    end
+    hash
+  end
+
   def clone
     hash = Hash(K, V).new
     each do |key, value|

@@ -75,7 +75,7 @@ module Crystal
     end
 
     def visit(node : Var)
-      var = lookup_var node.name
+      var = @vars[node.name]
       node.bind_to var
     end
 
@@ -279,7 +279,7 @@ module Crystal
       #   end
       # end
 
-      # bind_block_args_to_yield_exps block, node
+      bind_block_args_to_yield_exps block, node
 
       # unless block.visited
         # @call.bubbling_exception do
@@ -291,8 +291,18 @@ module Crystal
       node.bind_to block.body
     end
 
+    def bind_block_args_to_yield_exps(block, node)
+      block.args.each_with_index do |arg, i|
+        exp = node.exps[i]?
+        arg.bind_to(exp ? exp : mod.nil_var)
+      end
+    end
+
     def visit(node : Block)
-      block_vars = @vars.clone
+      block_vars = @vars.dup
+      node.args.each do |arg|
+        block_vars[arg.name] = arg
+      end
 
       block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars) #, @type_filter_stack)
       block_visitor.block = node

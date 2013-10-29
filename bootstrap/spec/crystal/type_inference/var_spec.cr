@@ -26,4 +26,28 @@ describe "Type inference: var" do
     node.last.type.should eq(mod.int32)
     node.type.should eq(mod.int32)
   end
+
+  it "reports undefined local variable or method" do
+    assert_error "
+      def foo
+        a = something
+      end
+
+      def bar
+        foo
+      end
+
+      bar
+    ", "undefined local variable or method 'something'"
+  end
+
+  it "reports read before assignment" do
+    assert_syntax_error "a += 1",
+      "'+=' before definition of 'a'"
+  end
+
+  it "reports read before assignment" do
+    assert_error "a = a + 1",
+      "undefined local variable or method 'a'"
+  end
 end
