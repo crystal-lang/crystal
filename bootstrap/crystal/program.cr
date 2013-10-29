@@ -2,18 +2,17 @@ require "types"
 require "llvm"
 
 module Crystal
-  class Program < Type
+  class Program < NonGenericModuleType
     include DefContainer
     include DefInstanceContainer
     include MatchesLookup
     include ClassVarContainer
 
-    getter types
     getter global_vars
 
     def initialize
-      # super(nil, "main")
-      @types = {} of String => Type
+      super(self, self, "main")
+
       @unions = {} of Array(Int32) => UnionType
 
       @object = @types["Object"] = NonGenericClassType.new self, self, "Object", nil
@@ -87,28 +86,8 @@ module Crystal
       false
     end
 
-    def parents
-      [] of Type
-    end
-
     def next_type_id
       @type_id_counter += 1
-    end
-
-    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
-      return nil if already_looked_up.includes?(type_id)
-
-      if lookup_in_container
-        already_looked_up.add(type_id)
-      end
-
-      type = self
-      names.each do |name|
-        type = type.not_nil!.types[name]?
-        break unless type
-      end
-
-      type
     end
 
     def type_merge(types)

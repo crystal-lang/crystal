@@ -30,7 +30,7 @@ describe "Code gen: if" do
     run("if true; 1; else 2; end").to_i.should eq(1)
   end
 
-  it "codegens if with union" do
+  pending "codegens if with union" do
     program = Program.new
     union = program.run("a = if true; 2.5_f32; else; 1; end; a.ptr").to_pointer
     union.as(Int32).value.should eq(program.float32.type_id)
