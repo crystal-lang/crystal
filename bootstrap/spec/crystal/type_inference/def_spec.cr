@@ -72,4 +72,61 @@ describe "Type inference: def" do
   it "raises on undefined local variable or method" do
     assert_error "foo", "undefined local variable or method 'foo'"
   end
+
+  it "reports no overload matches" do
+    assert_error "
+      def foo(x : Int)
+      end
+
+      foo 1 || 1.5
+      ",
+      "no overload matches"
+  end
+
+  it "reports no overload matches 2" do
+    assert_error "
+      def foo(x : Int, y : Int)
+      end
+
+      def foo(x : Int, y : Double)
+      end
+
+      foo(1 || 'a', 1 || 1.5)
+      ",
+      "no overload matches"
+  end
+
+  it "reports no block given" do
+    assert_error "
+      def foo
+        yield
+      end
+
+      foo
+      ",
+      "'foo' is expected to be invoked with a block, but no block was given"
+  end
+
+  it "reports block given" do
+    assert_error "
+      def foo
+      end
+
+      foo {}
+      ",
+      "'foo' is not expected to be invoked with a block, but a block was given"
+  end
+
+  it "errors when calling two functions with nil type" do
+    assert_error "
+      def bar
+      end
+
+      def foo
+      end
+
+      foo.bar
+      ",
+      "undefined method"
+  end
 end
