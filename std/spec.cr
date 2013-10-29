@@ -83,6 +83,11 @@ module Spec
                 puts line
               end
             end
+            unless ex.is_a?(AssertionFailed)
+              ex.backtrace.each do |trace|
+                puts "       #{trace}"
+              end
+            end
           end
         end
       end
