@@ -8,11 +8,16 @@ class Cover
   end
 
   def all?
-    compute_cover
+    if @matches.length == 1
+      return @matches[0].arg_types == @arg_types
+    end
+
+    compute_fast_cover
     @cover.all?
   end
 
   def missing
+    @cover = nil
     compute_cover
 
     missing = []
@@ -30,9 +35,46 @@ class Cover
     end
   end
 
+  def compute_fast_cover
+    unless @cover
+      # Check which arg indices of the matches have types or type restrictions
+      @indices = Array.new(@arg_types.length) { false }
+      @matches.each do |match|
+        match.def.args.each_with_index do |arg, i|
+          @indices[i] ||= arg.type || arg.type_restriction
+        end
+      end
+
+      i = 0
+      @cover = Array.new(@arg_types.inject(1) do |num, type|
+        if @indices[i]
+          val = num * type.cover_length
+        else
+          val = num
+        end
+        i += 1
+        val
+      end)
+
+      @cover_arg_types = @arg_types.each_with_index.map do |arg_type, i|
+        if @indices[i]
+          arg_type.cover
+        else
+          nil
+        end
+      end
+      @matches.each { |match| mark_cover(match) } if @matches
+    end
+  end
+
   def mark_cover(match, index = 0, position = 0, multiplier = 1)
     if index == @cover_arg_types.length
       @cover[position] = true
+      return
+    end
+
+    if @indices && !@indices[index]
+      mark_cover match, index + 1, position, multiplier
       return
     end
 
