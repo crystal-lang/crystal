@@ -125,10 +125,10 @@ module Crystal
           typed_def_args = prepared_typed_def.args
           match_owner.add_def_instance(match.def.object_id, match.arg_types, block_type, typed_def) if use_cache
           if typed_def.body
-  #         bubbling_exception do
-            visitor = TypeVisitor.new(mod, typed_def_args, match_owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars) # , yield_vars)
-            typed_def.body.accept visitor
-  #         end
+            bubbling_exception do
+              visitor = TypeVisitor.new(mod, typed_def_args, match_owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars) # , yield_vars)
+              typed_def.body.accept visitor
+            end
           end
         end
         typed_def
@@ -156,6 +156,18 @@ module Crystal
 
       # self.unbind_from *old_target_defs if old_target_defs
       self.bind_to untyped_defs
+    end
+
+    def bubbling_exception
+      begin
+        yield
+      rescue ex : Crystal::Exception
+        if obj = @obj
+          raise "instantiating '#{obj.type}##{name}(#{args.map(&.type).join ", "})'", ex
+        else
+          raise "instantiating '#{name}(#{args.map(&.type).join ", "})'", ex
+        end
+      end
     end
 
     def check_args_length_match(obj_type, untyped_def : External)
@@ -284,6 +296,14 @@ module Crystal
         raise "wrong number of arguments for '#{full_name(owner)}' (#{args.length} for #{all_arguments_lengths.join ", "})"
       end
 
+      if defs_matching_args_length.length > 0
+        if block && defs_matching_args_length.all? { |a_def| !a_def.yields }
+          raise "'#{full_name(owner)}' is not expected to be invoked with a block, but a block was given"
+        elsif !block && defs_matching_args_length.all?(&.yields)
+          raise "'#{full_name(owner)}' is expected to be invoked with a block, but no block was given"
+        end
+      end
+
       # arg_names = [] of Array(String)
 
       message = String.build do |msg|
@@ -363,38 +383,44 @@ module Crystal
     end
 
     def define_new_with_initialize(scope, arg_types, matches)
-      ms = matches.map do |a_match|
-        # if match.free_vars.empty?
+      ms = matches.map do |match|
+        if match.free_vars.empty?
           alloc = Call.new(nil, "allocate")
-        # else
-        #   type_vars = Array.new(scope.instance_type.type_vars.length)
-        #   match.free_vars.each do |names, type|
-        #     if names.length == 1
-        #       idx = scope.instance_type.type_vars.index(names[0])
-        #       if idx
-        #         type_vars[idx] = Ident.new(names)
-        #       end
-        #     end
-        #   end
+        else
+          generic_class = scope.instance_type
+          assert_type generic_class, GenericClassType
 
-        #   if type_vars.all?
-        #     new_generic = NewGenericClass.new(Ident.new([scope.instance_type.name]), type_vars)
-        #     alloc = Call.new(new_generic, 'allocate')
-        #   else
-        #     alloc = Call.new(nil, 'allocate')
-        #   end
-        # end
+          type_vars = Array(ASTNode?).new(generic_class.type_vars.length, nil)
+          match.free_vars.each do |name, type|
+            idx = generic_class.type_vars.index(name)
+            if idx
+              type_vars[idx] = Ident.new([name])
+            end
+          end
+
+          if type_vars.all?
+            not_nil_type_vars = Array(ASTNode).new(generic_class.type_vars.length)
+            type_vars.each do |type_var|
+              not_nil_type_vars.push type_var.not_nil!
+            end
+
+            new_generic = NewGenericClass.new(Ident.new([generic_class.name]), not_nil_type_vars)
+            alloc = Call.new(new_generic, "allocate")
+          else
+            alloc = Call.new(nil, "allocate")
+          end
+        end
 
         var = Var.new("x")
         new_vars = Array(ASTNode).new(args.length)
-        args.each_with_index do |i|
+        args.each_with_index do |arg, i|
           new_vars.push Var.new("arg#{i}")
         end
 
         new_args = Array(Arg).new(args.length)
-        args.each_with_index do |i|
+        args.each_with_index do |arg, i|
           arg = Arg.new("arg#{i}")
-          # arg.type_restriction = a_match.def.args[i].type_restriction if a_match.def.args[i]
+          arg.type_restriction = match.def.args[i]?.try &.type_restriction
           new_args.push arg
         end
 
@@ -406,8 +432,7 @@ module Crystal
           var
         ])
 
-        new_match = Match.new(scope, match_def, a_match.arg_types)
-        # new_match.free_vars = a_match.free_vars
+        new_match = Match.new(scope, match_def, match.arg_types, match.free_vars)
 
         scope.add_def match_def
 

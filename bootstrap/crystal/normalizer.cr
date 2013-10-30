@@ -129,15 +129,15 @@ module Crystal
       new_node.transform(self)
     end
 
-    # def transform(node : RegexpLiteral)
-    #   const_name = "#Regexp_#{node.value}"
-    #   unless program.types[const_name]
-    #     constructor = Call.new(Ident.new(['Regexp'], true), 'new', [StringLiteral.new(node.value)])
-    #     program.types[const_name] = Const.new program, const_name, constructor, [program], program
-    #   end
+    def transform(node : RegexpLiteral)
+      const_name = "#Regexp_#{node.value}"
+      unless program.types[const_name]?
+        constructor = Call.new(Ident.new(["Regexp"], true), "new", [StringLiteral.new(node.value)] of ASTNode)
+        program.types[const_name] = Const.new program, program, const_name, constructor, [program] of Type, program
+      end
 
-    #   Ident.new([const_name], true)
-    # end
+      Ident.new([const_name], true)
+    end
 
     def transform(node : StringInterpolation)
       super

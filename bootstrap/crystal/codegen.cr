@@ -46,8 +46,9 @@ module Crystal
   class LLVMVar
     getter pointer
     getter type
+    getter treated_as_pointer
 
-    def initialize(@pointer, @type)
+    def initialize(@pointer, @type, @treated_as_pointer = false)
     end
   end
 
@@ -68,12 +69,13 @@ module Crystal
       @main = @fun
 
       @argc = @fun.get_param(0)
-      # @argc.name = 'argc'
+      LLVM.set_name @argc, "argc"
 
       @argv = @fun.get_param(1)
-      # @argv.name = 'argv'
+      LLVM.set_name @argv, "argv"
 
-      @builder = LLVM::Builder.new
+      builder = LLVM::Builder.new
+      @builder = CrystalLLVMBuilder.new builder, self
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @const_block_entry = @const_block
       @vars = {} of String => LLVMVar
@@ -82,6 +84,7 @@ module Crystal
       @type = @mod
       @last = llvm_nil
       @in_const_block = false
+      @block_context = [] of BlockContext
       # @return_union = llvm_nil
     end
 
@@ -920,7 +923,8 @@ module Crystal
 
     def visit(node : Var)
       var = @vars[node.name]
-      @last = @builder.load(var.pointer)
+      @last = var.pointer
+      @last = @builder.load(@last) unless var.treated_as_pointer
       # if var[:type] == node.type
       #   @last = var[:ptr]
       #   @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
@@ -1045,6 +1049,86 @@ module Crystal
       false
     end
 
+    class BlockContext
+      getter block
+      getter vars
+      getter type
+
+      def initialize(@block, @vars, @type)
+      end
+    end
+
+    def visit(node : Yield)
+      if @block_context.length > 0
+        context = @block_context.pop
+        new_vars = context.vars.dup
+        block = context.block
+
+        # if node.scope
+        #   node.scope.accept self
+        #   new_vars['%scope'] = { ptr: @last, type: node.scope.type, treated_as_pointer: false }
+        # end
+
+        if block.args
+          block.args.each_with_index do |arg, i|
+            exp = node.exps[i]?
+            if exp
+              exp_type = exp.type
+              exp.accept self
+            else
+              exp_type = @mod.nil
+              @last = llvm_nil
+            end
+
+            copy = alloca llvm_type(arg.type), "block_#{arg.name}"
+
+            codegen_assign copy, arg.type, exp_type, @last
+            new_vars[arg.name] = LLVMVar.new(copy, arg.type)
+          end
+        end
+
+        old_vars = @vars
+        old_type = @type
+        old_return_block = @return_block
+        # old_return_block_table = @return_block_table
+        old_return_type = @return_type
+        # old_return_union = @return_union
+        # old_while_exit_block = @while_exit_block
+        # old_break_table = @break_table
+        # old_break_type = @break_type
+        # old_break_union = @break_union
+        # @while_exit_block = @return_block
+        # @break_table = @return_block_table
+        # @break_type = @return_type
+        # @break_union = @return_union
+        @vars = new_vars
+        @type = context.type
+        # @return_block = context[:return_block]
+        # @return_block_table = context[:return_block_table]
+        # @return_type = context[:return_type]
+        # @return_union = context[:return_union]
+
+        accept(block)
+
+        if !node.type? || node.type.nil_type?
+          @last = llvm_nil
+        end
+
+        # @while_exit_block = old_while_exit_block
+        # @break_table = old_break_table
+        # @break_type = old_break_type
+        # @break_union = old_break_union
+        @vars = old_vars
+        @type = old_type
+        @return_block = old_return_block
+        # @return_block_table = old_return_block_table
+        @return_type = old_return_type
+        # @return_union = old_return_union
+        @block_context << context
+      end
+      false
+    end
+
     def visit(node : Call)
       owner = node.target_def.owner
 
@@ -1062,7 +1146,95 @@ module Crystal
         call_args << @last
       end
 
-      codegen_call(node, owner, call_args)
+      if block = node.block
+        # @block_context << { block: node.block, vars: @vars, type: @type,
+        #   return_block: @return_block, return_block_table: @return_block_table,
+        #   return_type: @return_type, return_union: @return_union }
+        @block_context << BlockContext.new(block, @vars, @type)
+        @vars = {} of String => LLVMVar
+
+        if owner && owner.passed_as_self?
+          @type = owner
+          args_base_index = 1
+          # if owner.union?
+          #   ptr = alloca(llvm_type(owner))
+          #   value = call_args[0]
+          #   value = @builder.load(value) if owner.passed_by_val?
+          #   @builder.store value, ptr
+          #   @vars['self'] = { ptr: ptr, type: owner, treated_as_pointer: false }
+          # else
+            @vars["self"] = LLVMVar.new(call_args[0], owner, true)
+          # end
+        else
+          args_base_index = 0
+        end
+
+        node.target_def.args.each_with_index do |arg, i|
+          ptr = alloca(llvm_type(arg.type), arg.name)
+          @vars[arg.name] = LLVMVar.new(ptr, arg.type)
+          value = call_args[args_base_index + i]
+          # value = @builder.load(value) if arg.type.passed_by_val?
+          @builder.store value, ptr
+        end
+
+        @return_block = return_block = new_block "return"
+        # @return_block_table = {}
+        @return_type = node.type
+        # if @return_type.union?
+        #   @return_union = alloca(llvm_type(node.type), 'return')
+        # else
+        #   @return_union = nil
+        # end
+
+        accept(node.target_def.body)
+
+        # if node.target_def.no_returns? || (node.target_def.body && node.target_def.body.no_returns?)
+        #   @builder.unreachable
+        # else
+          # if node.target_def.type && !node.target_def.type.nil_type? && !node.block.breaks?
+          #   if @return_union
+          #     if node.target_def.body && node.target_def.body.type
+          #       codegen_assign(@return_union, @return_type, node.target_def.body.type, @last)
+          #     else
+          #       @builder.unreachable
+          #     end
+          #   elsif node.target_def.type.nilable? && node.target_def.body && node.target_def.body.type && node.target_def.body.type.nil_type?
+          #     @return_block_table[@builder.insert_block] = LLVM::Constant.null(llvm_type(node.target_def.type.nilable_type))
+          #   else
+          #     @return_block_table[@builder.insert_block] = @last
+          #   end
+          # elsif (node.target_def.type.nil? || node.target_def.type.nil_type?) && node.type.nilable?
+            # @return_block_table[@builder.insert_block] = @builder.int2ptr llvm_nil, llvm_type(node.type)
+          # end
+          @builder.br return_block
+        # end
+
+        @builder.position_at_end return_block
+
+        # if node.no_returns? || node.returns? || block_returns? || (node.block.yields? && block_breaks?)
+        #   @builder.unreachable
+        # else
+          # if node.type && !node.type.nil_type?
+          #   if @return_union
+          #     @last = @return_union
+            # else
+            #   phi_type = llvm_type(node.type)
+            #   phi_type = LLVM::Pointer(phi_type) if node.type.union?
+            #   @last = @builder.phi phi_type, @return_block_table
+            # end
+          # end
+        # end
+
+        old_context = @block_context.pop
+        @vars = old_context.vars
+        @type = old_context.type
+        # @return_block = old_context[:return_block]
+        # @return_block_table = old_context[:return_block_table]
+        # @return_type = old_context[:return_type]
+        # @return_union = old_context[:return_union]
+      else
+        codegen_call(node, owner, call_args)
+      end
 
       false
     end
@@ -1131,19 +1303,18 @@ module Crystal
         @fun.linkage = LibLLVM::Linkage::Internal
       end
 
-      # args.each_with_index do |arg, i|
-      #   @fun.params[i].name = arg.name
-      #   # @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
-      # end
+      args.each_with_index do |arg, i|
+        LLVM.set_name @fun.get_param(i), arg.name
+        # @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
+      end
 
       if (!is_external && target_def.body) || is_exported_fun_def
         body = target_def.body
         new_entry_block
 
         args.each_with_index do |arg, i|
-          if target_def.body.is_a?(Primitive)
-          # if (self_type && i == 0 && !self_type.union?) || target_def.body.is_a?(Primitive) || arg.type.passed_by_val?
-            @vars[arg.name] = LLVMVar.new(@fun.get_param(i), arg.type) #{ ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
+          if (self_type && i == 0) #&& !self_type.union?) || arg.type.passed_by_val?
+            @vars[arg.name] = LLVMVar.new(@fun.get_param(i), arg.type, true)
           else
             pointer = alloca(llvm_type(arg.type), arg.name)
             @vars[arg.name] = LLVMVar.new(pointer, arg.type)
@@ -1312,8 +1483,7 @@ module Crystal
     end
 
     def llvm_self
-      @fun.get_param(0)
-      # @vars["self"].pointer
+      @vars["self"].pointer
     end
 
     def llvm_self_ptr

@@ -100,9 +100,17 @@ module Enumerable(T)
     false
   end
 
+  def any?
+    any? { |e| e }
+  end
+
   def all?
     each { |e| return false unless yield e }
     true
+  end
+
+  def all?
+    all? { |o| o }
   end
 
   def includes?(obj)

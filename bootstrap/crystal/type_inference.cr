@@ -7,6 +7,7 @@ module Crystal
   class Program
     def infer_type(node)
       node.accept TypeVisitor.new(self)
+      fix_empty_types node
       node
     end
   end
@@ -74,7 +75,7 @@ module Crystal
     end
 
     def visit(node : Var)
-      var = lookup_var node.name
+      var = @vars[node.name]
       node.bind_to var
     end
 
@@ -282,7 +283,7 @@ module Crystal
       #   end
       # end
 
-      # bind_block_args_to_yield_exps block, node
+      bind_block_args_to_yield_exps block, node
 
       # unless block.visited
         # @call.bubbling_exception do
@@ -294,8 +295,18 @@ module Crystal
       node.bind_to block.body
     end
 
+    def bind_block_args_to_yield_exps(block, node)
+      block.args.each_with_index do |arg, i|
+        exp = node.exps[i]?
+        arg.bind_to(exp ? exp : mod.nil_var)
+      end
+    end
+
     def visit(node : Block)
-      block_vars = @vars.clone
+      block_vars = @vars.dup
+      node.args.each do |arg|
+        block_vars[arg.name] = arg
+      end
 
       block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars) #, @type_filter_stack)
       block_visitor.block = node
@@ -832,19 +843,23 @@ module Crystal
       node.bind_to var
     end
 
+    def end_visit(node : TypeMerge)
+      node.bind_to node.expressions
+    end
+
     def lookup_var(name)
       @vars[name] ||= Var.new(name)
     end
 
     def lookup_ident_type(node : Ident)
-      # if @free_vars && !node.global && type = @free_vars[[node.names.first]]
-      #   if node.names.length == 1
-      #     target_type = type
-      #   else
-      #     target_type = type.lookup_type(node.names[1 .. -1])
-      #   end
-      # elsif node.global
-      if node.global
+      free_vars = @free_vars
+      if free_vars && !node.global && (type = free_vars[node.names.first]?)
+        if node.names.length == 1
+          target_type = type.not_nil!
+        else
+          target_type = type.not_nil!.lookup_type(node.names[1 .. -1])
+        end
+      elsif node.global
         target_type = mod.lookup_type node.names
       else
         target_type = (@scope || @types.last).lookup_type node.names

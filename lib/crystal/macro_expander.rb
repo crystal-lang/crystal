@@ -40,8 +40,12 @@ module Crystal
 
       @mod.load_libs
 
-      macro_args = args.map &:to_crystal_binary
-      macro_value = @engine.run_function fun, *macro_args
+      if fun
+        macro_args = args.map &:to_crystal_binary
+        macro_value = @engine.run_function fun, *macro_args
+      else
+        macro_value = @engine.run_function @llvm_mod.functions[Program::MAIN_NAME], 0, nil
+      end
 
       macro_value.to_string
     end

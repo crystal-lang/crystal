@@ -170,7 +170,7 @@ module Crystal
               type, llvm_mod = llvm_modules.shift
 
               type = "main" if type == ""
-              name = type.gsub(/[^a-zA-Z0-9]/, '_')
+              name = type.gsub(/[^a-zA-Z0-9]/) { |c| "##{c.ord.to_s(16)}" }
               bc_name = ".crystal/#{name}.bc"
 
               llvm_mod.write_bitcode "#{bc_name}.new"
@@ -232,14 +232,14 @@ module Crystal
       #   Process.waitpid pid
       # end
 
-      # if @options[:execute]
-      #   @tempfile.close
-      #   print `#{@options[:output_filename]} #{@options[:args].join ' '}`
-      #   unless $?.success?
-      #     puts "\033[1;31m#{$?.to_s}\033[0m"
-      #   end
-      #   @tempfile.delete
-      # end
+      if @options[:execute]
+        @tempfile.close
+        print `#{@options[:output_filename]} #{@options[:args].join ' '}`
+        unless $?.success?
+          puts "\033[1;31m#{$?.to_s}\033[0m"
+        end
+        @tempfile.delete
+      end
     end
 
     def with_stats_or_profile(description, &block)

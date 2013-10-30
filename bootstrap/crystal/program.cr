@@ -2,18 +2,17 @@ require "types"
 require "llvm"
 
 module Crystal
-  class Program < Type
+  class Program < NonGenericModuleType
     include DefContainer
     include DefInstanceContainer
     include MatchesLookup
     include ClassVarContainer
 
-    getter types
     getter global_vars
 
     def initialize
-      # super(nil, "main")
-      @types = {} of String => Type
+      super(self, self, "main")
+
       @unions = {} of Array(Int32) => UnionType
 
       @object = @types["Object"] = NonGenericClassType.new self, self, "Object", nil
@@ -60,7 +59,7 @@ module Crystal
       @string.lookup_instance_var("@length").type = @int32
       @string.lookup_instance_var("@c").type = @char
 
-      @types["Array"] = GenericClassType.new self, self, "Array", @reference, ["T"]
+      @array = @types["Array"] = GenericClassType.new self, self, "Array", @reference, ["T"]
       @types["Exception"] = NonGenericClassType.new self, self, "Exception", @reference
 
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
@@ -87,28 +86,8 @@ module Crystal
       false
     end
 
-    def parents
-      [] of Type
-    end
-
     def next_type_id
       @type_id_counter += 1
-    end
-
-    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
-      return nil if already_looked_up.includes?(type_id)
-
-      if lookup_in_container
-        already_looked_up.add(type_id)
-      end
-
-      type = self
-      names.each do |name|
-        type = type.not_nil!.types[name]?
-        break unless type
-      end
-
-      type
     end
 
     def type_merge(types : Array(Type))
@@ -116,7 +95,7 @@ module Crystal
     end
 
     def type_merge(nodes : Array(ASTNode))
-      type_merge(nodes) { |node| node.type }
+      type_merge nodes, &.type?
     end
 
     def type_merge(objects)
@@ -129,7 +108,6 @@ module Crystal
 
       combined_union_of all_types.to_a
     end
-
     def add_type(set, type : UnionType)
       type.union_types.each do |subtype|
         add_type set, subtype
@@ -157,8 +135,12 @@ module Crystal
       types
     end
 
+    def array_of(type)
+      @array.instantiate [type] of Type
+    end
+
     def union_of(type1, type2)
-      union_of [type1, type2]
+      union_of [type1, type2] of Type
     end
 
     def union_of(types : Array)
@@ -219,6 +201,18 @@ module Crystal
       file = File.expand_path("std/#{file}")
       # file = File.expand_path("../../../std/#{file}", __FILE__)
       require_absolute file
+    end
+
+    def library_names
+      libs = [] of String
+      @types.each do |name, type|
+        if type.is_a?(LibType)
+          if libname = type.libname
+            libs << libname
+          end
+        end
+      end
+      libs
     end
 
     getter :object

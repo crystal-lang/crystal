@@ -21,27 +21,25 @@ module Crystal
     end
 
     def bind_to(node)
-      @dependencies = (@dependencies ||= [] of ASTNode)
-      @dependencies << node
-      node.add_observer self
-
-      return unless node.type?
-
-      if dependencies.length == 1 || !@type
-        new_type = node.type
-      else
-        new_type = node.type.program.type_merge dependencies
-      end
-      return if @type.object_id == new_type.object_id
-      set_type(map_type(new_type))
-      @dirty = true
-      propagate
+      bind_to [node] of ASTNode
     end
 
     def bind_to(nodes : Array)
-      nodes.each do |node|
-        bind_to node
+      dependencies = @dependencies ||= [] of ASTNode
+      dependencies.concat nodes
+      nodes.each &.add_observer self
+
+      if dependencies.length == 1
+        new_type = nodes[0].type?
+      else
+        new_type = Type.merge dependencies
       end
+      return if @type.object_id == new_type.object_id
+      return unless new_type
+
+      set_type(map_type(new_type))
+      @dirty = true
+      propagate
     end
 
     def add_observer(observer)
@@ -63,13 +61,15 @@ module Crystal
     def update(from)
       return if @type.object_id == from.type.object_id
 
-      if @type.nil? || dependencies.length == 1
-        new_type = from.type
+      if dependencies.length == 1 || !@type
+        new_type = from.type?
       else
-        new_type = from.type.program.type_merge dependencies
+        new_type = Type.merge dependencies
       end
 
       return if @type.object_id == new_type.object_id
+      return unless new_type
+
       set_type(map_type(new_type))
       @dirty = true
     end

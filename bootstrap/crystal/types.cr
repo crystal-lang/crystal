@@ -1,5 +1,9 @@
 module Crystal
   abstract class Type
+    def self.merge(nodes : Array(ASTNode))
+      nodes.find(&.type?).try &.type.program.type_merge(nodes)
+    end
+
     def metaclass
       @metaclass ||= Metaclass.new(program, self)
     end
@@ -57,6 +61,10 @@ module Crystal
     end
 
     def primitive_like?
+      false
+    end
+
+    def nil_type?
       false
     end
 
@@ -172,7 +180,7 @@ module Crystal
 
     def match_arg(arg_type, arg, owner, type_lookup, free_vars)
       restriction = arg.type? || arg.type_restriction
-      arg_type.not_nil!.restrict restriction, type_lookup, free_vars
+      arg_type.not_nil!.restrict restriction, owner, type_lookup, free_vars
     end
 
     def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
@@ -654,6 +662,10 @@ module Crystal
   class NilType < PrimitiveType
     def type_id
       0
+    end
+
+    def nil_type?
+      true
     end
   end
 
@@ -1228,6 +1240,10 @@ module Crystal
     getter :union_types
 
     def initialize(@program, @union_types)
+    end
+
+    def metaclass
+      self
     end
 
     def parents

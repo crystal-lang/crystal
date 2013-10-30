@@ -177,6 +177,7 @@ lib LibLLVM("LLVM-3.3")
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
+  fun set_value_name = LLVMSetValueName(val : ValueRef, name : Char*)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
   fun size_of_type_in_bits = LLVMSizeOfTypeInBits(ref : TargetDataRef, ty : TypeRef) : UInt64
   fun struct_create_named = LLVMStructCreateNamed(c : ContextRef, name : Char*) : TypeRef
@@ -212,6 +213,10 @@ module LLVM
 
   def self.null(type)
     LibLLVM.const_null(type)
+  end
+
+  def self.set_name(value, name)
+    LibLLVM.set_value_name(value, name)
   end
 
   class Context
@@ -270,6 +275,10 @@ module LLVM
 
   class Function
     def initialize(@fun)
+    end
+
+    def dump
+      LLVM.dump @fun
     end
 
     def append_basic_block(name)

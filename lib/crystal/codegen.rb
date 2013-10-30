@@ -20,7 +20,7 @@ module Crystal
     end
 
     def evaluate(node)
-      llvm_mod = build(node)[nil]
+      llvm_mod = build(node, single_module: true)[""]
       engine = LLVM::JITCompiler.new(llvm_mod)
       engine.run_function llvm_mod.functions[MAIN_NAME], 0, nil
     end
@@ -91,7 +91,7 @@ module Crystal
       @builder = DebugLLVMBuilder.new @builder, self if debug
       @builder = CrystalLLVMBuilder.new @builder, llvm_builder, self
 
-      @modules = {nil.to_s => @llvm_mod}
+      @modules = {nil.to_s => @main_mod}
 
       @alloca_block, @const_block, @entry_block = new_entry_block_chain "alloca", "const", "entry"
 
@@ -1499,10 +1499,6 @@ module Crystal
       old_in_const_block = @in_const_block
       old_llvm_mod = @llvm_mod
 
-      unless @single_module
-        @llvm_mod = fun_module
-      end
-
       @vars = {}
       @exception_handlers = []
       @in_const_block = false
@@ -1619,6 +1615,8 @@ module Crystal
     end
 
     def type_module(type)
+      return @main_mod if @single_module
+
       @modules[(type ? type.instance_type : nil).to_s] ||= begin
         mod = LLVM::Module.new(type.instance_type.to_s)
         mod.globals.add(LLVM::Array(llvm_type(@mod.string), @symbol_table_values.count), "symbol_table")

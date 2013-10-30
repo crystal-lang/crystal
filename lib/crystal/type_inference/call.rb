@@ -306,7 +306,7 @@ module Crystal
       if defs.empty?
         owner_trace = find_owner_trace(obj, owner) if obj && obj.type.is_a?(UnionType)
 
-        if obj || !owner.is_a?(Program)
+        if obj
           error_msg = "undefined method '#{name}' for #{owner}"
           similar_name = owner.lookup_similar_defs(def_name, self.args.length, !!block)
           error_msg << " \033[1;33m(did you mean '#{similar_name}'?)\033[0m" if similar_name

@@ -8,6 +8,7 @@ make_tuple InferTypeResult, program, node
 def assert_type(str)
   program = Program.new
   input = parse str
+  input = program.normalize input
   input = program.infer_type input
   expected_type = program.yield(program)
   if input.is_a?(Expressions)
