@@ -79,58 +79,58 @@ describe "Code gen: block" do
     ").to_i.should eq(2)
   end
 
-  # it "can access instance vars from yielder function" do
-  #   run("
-  #     class Foo
-  #       def initialize
-  #         @x = 1
-  #       end
-  #       def foo
-  #         yield @x
-  #       end
-  #     end
+  it "can access instance vars from yielder function" do
+    run("
+      class Foo
+        def initialize
+          @x = 1
+        end
+        def foo
+          yield @x
+        end
+      end
 
-  #     Foo.new.foo do |x|
-  #       x + 1
-  #     end
-  #   ").to_i.should eq(2)
-  # end
+      Foo.new.foo do |x|
+        x + 1
+      end
+    ").to_i.should eq(2)
+  end
 
-  # it "can set instance vars from yielder function" do
-  #   run(%q(
-  #     class Foo
-  #       def initialize
-  #         @x = 1
-  #       end
+  it "can set instance vars from yielder function" do
+    run("
+      class Foo
+        def initialize
+          @x = 1
+        end
 
-  #       def foo
-  #         @x = yield
-  #       end
-  #       def value
-  #         @x
-  #       end
-  #     end
+        def foo
+          @x = yield
+        end
+        def value
+          @x
+        end
+      end
 
-  #     a = Foo.new
-  #     a.foo { 2 }
-  #     a.value
-  #   )).to_i.should eq(2)
-  # end
+      a = Foo.new
+      a.foo { 2 }
+      a.value
+    ").to_i.should eq(2)
+  end
 
-  # it "can use instance methods from yielder function" do
-  #   run("
-  #     class Foo
-  #       def foo
-  #         yield value
-  #       end
-  #       def value
-  #         1
-  #       end
-  #     end
+  it "can use instance methods from yielder function" do
+    run("
+      class Foo
+        def foo
+          yield value
+        end
+        def value
+          1
+        end
+      end
 
-  #     Foo.new.foo { |x| x + 1 }
-  #   ").to_i.should eq(2)
-  # end
+      Foo.new.foo { |x| x + 1 }
+    ").to_i.should eq(2)
+  end
 
   it "can call methods from block when yielder is an instance method" do
     run("
