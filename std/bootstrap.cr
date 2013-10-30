@@ -27,6 +27,11 @@ require "object"
 require "process"
 require "range"
 # require "random"
+require "regexp"
+require "value"
+require "reference"
+require "string_builder"
+require "symbol"
 
 lib CrystalMain
   fun __crystal_main(argc : Int32, argv : Char**)

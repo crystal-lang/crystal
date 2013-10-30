@@ -6,8 +6,7 @@ module Crystal
     getter :arg_types
     getter :free_vars
 
-    def initialize(@owner, @def, @arg_types)
-      @free_vars = {} of String => Type
+    def initialize(@owner, @def, @arg_types, @free_vars = {} of String => Type)
     end
   end
 
