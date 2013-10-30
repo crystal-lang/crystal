@@ -839,6 +839,10 @@ module Crystal
       node.bind_to var
     end
 
+    def end_visit(node : TypeMerge)
+      node.bind_to node.expressions
+    end
+
     def lookup_var(name)
       @vars[name] ||= Var.new(name)
     end

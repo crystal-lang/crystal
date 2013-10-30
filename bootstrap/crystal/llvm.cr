@@ -277,6 +277,10 @@ module LLVM
     def initialize(@fun)
     end
 
+    def dump
+      LLVM.dump @fun
+    end
+
     def append_basic_block(name)
       LibLLVM.append_basic_block(@fun, name)
     end

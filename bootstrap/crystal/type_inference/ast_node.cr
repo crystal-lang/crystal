@@ -2,7 +2,7 @@ require "../ast"
 
 module Crystal
   class ASTNode
-    property dependencies
+    property! dependencies
 
     def set_type(type)
       @type = type
@@ -21,28 +21,34 @@ module Crystal
     end
 
     def bind_to(node)
-      @dependencies ||= [] of ASTNode
-      @dependencies << node
-      node.add_observer self
+      bind_to [node] of ASTNode
+    end
 
-      return unless node.type?
+    def bind_to(nodes : Array)
+      dependencies = @dependencies ||= [] of ASTNode
+      dependencies.concat nodes
+      # dependencies << node
+      nodes.each &.add_observer self
+      # node.add_observer self
 
-      if (@dependencies && @dependencies.length == 1) || !@type
-        new_type = node.type
+      if dependencies.length == 1
+        new_type = nodes[0].type?
       else
-        new_type = node.type.program.type_merge [@type, node.type]
+        new_type = Type.merge dependencies
       end
       return if @type.object_id == new_type.object_id
+      return unless new_type
+
       set_type(map_type(new_type))
       @dirty = true
       propagate
     end
 
-    def bind_to(nodes : Array)
-      nodes.each do |node|
-        bind_to node
-      end
-    end
+    # def bind_to(nodes : Array)
+    #   nodes.each do |node|
+    #     bind_to node
+    #   end
+    # end
 
     def add_observer(observer)
       @observers ||= [] of ASTNode
@@ -63,13 +69,15 @@ module Crystal
     def update(from)
       return if @type.object_id == from.type.object_id
 
-      if @type.nil? || (@dependencies && @dependencies.length == 1)
-        new_type = from.type
+      if dependencies.length == 1 || !@type
+        new_type = from.type?
       else
-        new_type = from.type.program.type_merge [@type, from.type]
+        new_type = Type.merge dependencies
       end
 
       return if @type.object_id == new_type.object_id
+      return unless new_type
+
       set_type(map_type(new_type))
       @dirty = true
     end
@@ -91,6 +99,17 @@ module Crystal
 
     def map_type(type)
       mod.pointer_of(type)
+    end
+  end
+
+  class TypeMerge
+    def map_type(type)
+      type.metaclass
+    end
+
+    def update(from = nil)
+      super
+      propagate
     end
   end
 

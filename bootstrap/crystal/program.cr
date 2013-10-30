@@ -59,7 +59,7 @@ module Crystal
       @string.lookup_instance_var("@length").type = @int32
       @string.lookup_instance_var("@c").type = @char
 
-      @types["Array"] = GenericClassType.new self, self, "Array", @reference, ["T"]
+      @array = @types["Array"] = GenericClassType.new self, self, "Array", @reference, ["T"]
       @types["Exception"] = NonGenericClassType.new self, self, "Exception", @reference
 
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
@@ -90,17 +90,24 @@ module Crystal
       @type_id_counter += 1
     end
 
-    def type_merge(types)
+    def type_merge(types : Array(Type))
+      type_merge(types) { |type| type }
+    end
+
+    def type_merge(nodes : Array(ASTNode))
+      type_merge nodes, &.type?
+    end
+
+    def type_merge(objects)
       all_types = Set(Type).new
-      types.each do |type|
-        add_type all_types, type
+      objects.each do |obj|
+        add_type all_types, yield(obj)
       end
 
       # all_types.delete_if { |type| type.no_return? } if all_types.length > 1
 
       combined_union_of all_types.to_a
     end
-
     def add_type(set, type : UnionType)
       type.union_types.each do |subtype|
         add_type set, subtype
@@ -128,8 +135,12 @@ module Crystal
       types
     end
 
+    def array_of(type)
+      @array.instantiate [type] of Type
+    end
+
     def union_of(type1, type2)
-      union_of [type1, type2]
+      union_of [type1, type2] of Type
     end
 
     def union_of(types : Array)

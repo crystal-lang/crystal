@@ -557,6 +557,10 @@ module Crystal
       false
     end
 
+    def visit(node : TypeMerge)
+      false
+    end
+
     def visit(node : Include)
       @last = llvm_nil
       false

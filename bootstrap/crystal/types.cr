@@ -1,5 +1,9 @@
 module Crystal
   abstract class Type
+    def self.merge(nodes : Array(ASTNode))
+      nodes.find(&.type?).try &.type.program.type_merge(nodes)
+    end
+
     def metaclass
       @metaclass ||= Metaclass.new(program, self)
     end
@@ -1236,6 +1240,10 @@ module Crystal
     getter :union_types
 
     def initialize(@program, @union_types)
+    end
+
+    def metaclass
+      self
     end
 
     def parents
