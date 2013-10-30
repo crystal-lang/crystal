@@ -46,8 +46,9 @@ module Crystal
   class LLVMVar
     getter pointer
     getter type
+    getter treated_as_pointer
 
-    def initialize(@pointer, @type)
+    def initialize(@pointer, @type, @treated_as_pointer = false)
     end
   end
 
@@ -918,7 +919,8 @@ module Crystal
 
     def visit(node : Var)
       var = @vars[node.name]
-      @last = @builder.load(var.pointer)
+      @last = var.pointer
+      @last = @builder.load(@last) unless var.treated_as_pointer
       # if var[:type] == node.type
       #   @last = var[:ptr]
       #   @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
@@ -1052,6 +1054,77 @@ module Crystal
       end
     end
 
+    def visit(node : Yield)
+      if @block_context.length > 0
+        context = @block_context.pop
+        new_vars = context.vars.dup
+        block = context.block
+
+        # if node.scope
+        #   node.scope.accept self
+        #   new_vars['%scope'] = { ptr: @last, type: node.scope.type, treated_as_pointer: false }
+        # end
+
+        if block.args
+          block.args.each_with_index do |arg, i|
+            exp = node.exps[i]?
+            if exp
+              exp_type = exp.type
+              exp.accept self
+            else
+              exp_type = @mod.nil
+              @last = llvm_nil
+            end
+
+            copy = alloca llvm_type(arg.type), "block_#{arg.name}"
+
+            codegen_assign copy, arg.type, exp_type, @last
+            new_vars[arg.name] = LLVMVar.new(copy, arg.type)
+          end
+        end
+
+        old_vars = @vars
+        old_type = @type
+        old_return_block = @return_block
+        # old_return_block_table = @return_block_table
+        old_return_type = @return_type
+        # old_return_union = @return_union
+        # old_while_exit_block = @while_exit_block
+        # old_break_table = @break_table
+        # old_break_type = @break_type
+        # old_break_union = @break_union
+        # @while_exit_block = @return_block
+        # @break_table = @return_block_table
+        # @break_type = @return_type
+        # @break_union = @return_union
+        @vars = new_vars
+        @type = context.type
+        # @return_block = context[:return_block]
+        # @return_block_table = context[:return_block_table]
+        # @return_type = context[:return_type]
+        # @return_union = context[:return_union]
+
+        accept(block)
+
+        if !node.type? || node.type.nil_type?
+          @last = llvm_nil
+        end
+
+        # @while_exit_block = old_while_exit_block
+        # @break_table = old_break_table
+        # @break_type = old_break_type
+        # @break_union = old_break_union
+        @vars = old_vars
+        @type = old_type
+        @return_block = old_return_block
+        # @return_block_table = old_return_block_table
+        @return_type = old_return_type
+        # @return_union = old_return_union
+        @block_context << context
+      end
+      false
+    end
+
     def visit(node : Call)
       owner = node.target_def.owner
 
@@ -1086,7 +1159,7 @@ module Crystal
           #   @builder.store value, ptr
           #   @vars['self'] = { ptr: ptr, type: owner, treated_as_pointer: false }
           # else
-            @vars["self"] = LLVMVar.new(call_args[0], owner) #treated_as_pointer: true
+            @vars["self"] = LLVMVar.new(call_args[0], owner, true)
           # end
         else
           args_base_index = 0

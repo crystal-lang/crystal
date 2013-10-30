@@ -60,6 +60,10 @@ module Crystal
       false
     end
 
+    def nil_type?
+      false
+    end
+
     def hierarchy_type
       self
     end
@@ -654,6 +658,10 @@ module Crystal
   class NilType < PrimitiveType
     def type_id
       0
+    end
+
+    def nil_type?
+      true
     end
   end
 
