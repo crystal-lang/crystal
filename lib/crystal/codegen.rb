@@ -264,7 +264,7 @@ module Crystal
         arg_types = target_def.function_type.argument_types
         ret_type = target_def.function_type.return_type
         @llvm_mod.functions.add("trampoline_wrapper_#{target_def.object_id}", arg_types, ret_type) do |fun, *args|
-          fun.linkage = :internal
+          # fun.linkage = :internal
           args.first.add_attribute :nest_attribute
           fun.basic_blocks.append.build do |builder|
             call_ret = builder.call target_def, *args
@@ -442,13 +442,17 @@ module Crystal
     end
 
     def get_global(name, type)
-      ptr = @llvm_mod.globals[name]
-      unless ptr
-        ptr = @llvm_mod.globals.add(llvm_type(type), name)
-        ptr.linkage = :internal
-        ptr.initializer = LLVM::Constant.null(llvm_type(type))
+      global = @llvm_mod.globals[name]
+      unless global
+        if @llvm_mod == @main_mod
+          global = @llvm_mod.globals.add(llvm_type(type), name)
+          global.initializer = LLVM::Constant.null(llvm_type(type))
+        else
+          global = @llvm_mod.globals.add(llvm_type(type), name)
+          global.linkage = :external
+        end
       end
-      ptr
+      global
     end
 
     def class_var_global_name(node)
@@ -1355,12 +1359,17 @@ module Crystal
 
     def declare_fun(mangled_name, fun)
       fun_type = fun.function_type
-      @llvm_mod.functions.add(
+      new_fun = @llvm_mod.functions.add(
         mangled_name,
         fun_type.argument_types,
         fun_type.return_type,
         varargs: fun_type.vararg?
       )
+      fun.params.zip(new_fun.params) do |p1, p2|
+        val = LLVM::C.get_attribute(p1)
+        LLVM::C.add_attribute(p2, val) if val != 0
+      end
+      new_fun
     end
 
     def codegen_call(node, self_type, call_args)

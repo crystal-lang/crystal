@@ -164,37 +164,47 @@ module Crystal
       object_names = []
 
       with_stats_or_profile('codegen-llc') do
-        llvm_modules.each do |type, llvm_mod|
-          type = "main" if type == ""
-          name = type.gsub(/[^a-zA-Z0-9]/, '_')
-          bc_name = ".crystal/#{name}.bc"
+        threads = 8.times.map do
+          Thread.new do
+            while !llvm_modules.empty?
+              type, llvm_mod = llvm_modules.shift
 
-          llvm_mod.write_bitcode "#{bc_name}.new"
+              type = "main" if type == ""
+              name = type.gsub(/[^a-zA-Z0-9]/, '_')
+              bc_name = ".crystal/#{name}.bc"
 
-          if File.exists?(bc_name)
-            `diff -q #{bc_name} #{bc_name}.new`
+              llvm_mod.write_bitcode "#{bc_name}.new"
 
-            if $?.success?
-              FileUtils.rm "#{bc_name}.new"
-            else
-              FileUtils.mv "#{bc_name}.new", bc_name
-              `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
-              `#{@clang} -c .crystal/#{name}.s -o .crystal/#{name}.o`
+              if File.exists?(bc_name)
+                `diff -q #{bc_name} #{bc_name}.new`
+
+                if $?.success?
+                  FileUtils.rm "#{bc_name}.new"
+                else
+                  # puts "Compile: #{type}"
+                  FileUtils.mv "#{bc_name}.new", bc_name
+                  `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
+                  `#{@clang} -c .crystal/#{name}.s -o .crystal/#{name}.o`
+                end
+              else
+                # puts "Compile: #{type}"
+                FileUtils.mv "#{bc_name}.new", bc_name
+                `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
+                `#{@clang} -c .crystal/#{name}.s -o .crystal/#{name}.o`
+              end
+
+              if @options[:dump_ll]
+                llvm_dis = LLVMConfig.bin("llvm-dis")
+                 `#{llvm_dis} #{bc_name}`
+              end
+
+              assembly_names << ".crystal/#{name}.s"
+              object_names << ".crystal/#{name}.o"
             end
-          else
-            FileUtils.mv "#{bc_name}.new", bc_name
-            `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
-            `#{@clang} -c .crystal/#{name}.s -o .crystal/#{name}.o`
           end
-
-          if @options[:dump_ll]
-            llvm_dis = LLVMConfig.bin("llvm-dis")
-             `#{llvm_dis} #{bc_name}`
-          end
-
-          assembly_names << ".crystal/#{name}.s"
-          object_names << ".crystal/#{name}.o"
         end
+
+        threads.map &:join
       end
 
       o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
