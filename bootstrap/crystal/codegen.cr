@@ -69,10 +69,10 @@ module Crystal
       @main = @fun
 
       @argc = @fun.get_param(0)
-      # @argc.name = 'argc'
+      LLVM.set_name @argc, "argc"
 
       @argv = @fun.get_param(1)
-      # @argv.name = 'argv'
+      LLVM.set_name @argv, "argv"
 
       builder = LLVM::Builder.new
       @builder = CrystalLLVMBuilder.new builder, self
@@ -1299,10 +1299,10 @@ module Crystal
         @fun.linkage = LibLLVM::Linkage::Internal
       end
 
-      # args.each_with_index do |arg, i|
-      #   @fun.params[i].name = arg.name
-      #   # @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
-      # end
+      args.each_with_index do |arg, i|
+        LLVM.set_name @fun.get_param(i), arg.name
+        # @fun.params[i].add_attribute :by_val_attribute if arg.type.passed_by_val?
+      end
 
       if (!is_external && target_def.body) || is_exported_fun_def
         body = target_def.body
