@@ -445,7 +445,6 @@ module Crystal
 
     def visit_var(node)
       var = @vars[node.name]
-      var.read = true
 
       # var = lookup_var node.name
       filter = build_var_filter var
@@ -572,7 +571,6 @@ module Crystal
         value.accept self
 
         var = lookup_var target.name
-        var.write = true
 
         target.bind_to var
 

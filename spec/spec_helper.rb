@@ -1,3 +1,4 @@
+ENV["TEST"] = "1"
 require 'bundler/setup'
 require 'pry'
 require 'pry-debugger'

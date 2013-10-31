@@ -284,7 +284,7 @@ module Crystal
 
     def visit_class_method(node)
       if node.type.hierarchy_metaclass?
-        type_ptr = union_type_id @fun.params[0]
+        type_ptr = union_type_id @call_args[0]
         @last = @builder.load type_ptr
       else
         @last = int(node.type.instance_type.type_id)
@@ -1376,26 +1376,6 @@ module Crystal
       target_def = node.target_def
       body = target_def.body
 
-      if is_inlineable?(body)
-        old_vars = {}
-        old_type = @type
-        @type = self_type
-        old_vars['self'] = @vars['self']
-        @vars['self'] = { ptr: call_args[0], type: self_type, treated_as_pointer: true }
-
-        target_def.args.each_with_index do |arg, i|
-          old_vars[arg.name] = @vars[arg.name]
-          @vars[arg.name] = { ptr: call_args[i + 1], type: arg.type, treated_as_pointer: true }
-        end
-
-        body.accept self
-        old_vars.each do |name, value|
-          @vars[name] = value
-        end
-        @type = old_type
-        return
-      end
-
       case body
       when Primitive
         old_type = @type
@@ -1405,7 +1385,6 @@ module Crystal
         body.accept self
 
         @type = old_type
-
         return
       end
 
@@ -1447,32 +1426,6 @@ module Crystal
       end
     end
 
-    def is_inlineable?(node)
-      case node
-      when Nop, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral, SymbolLiteral
-        return true
-      when Var
-        if node.name == "self"
-          return true
-        end
-      when InstanceVar
-        return true
-      when Assign
-        if node.target.is_a?(InstanceVar)
-          case node.value
-          when Nop, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral, SymbolLiteral, Var
-            return true
-          end
-        end
-      when Expressions
-        if node.expressions.all? { |exp| exp.is_a?(Assign) && exp.target.is_a?(InstanceVar) && (exp.value.is_a?(Var) || exp.value.is_a?(BoolLiteral) || exp.value.is_a?(NilLiteral) || exp.value.is_a?(NumberLiteral)) }
-          return true
-        end
-      end
-
-      false
-    end
-
     def codegen_call_or_invoke(fun, call_args, raises)
       if @exception_handlers.empty? || !raises
         @last = @builder.call fun, *call_args
@@ -1498,6 +1451,8 @@ module Crystal
       old_needs_gc = @needs_gc
       old_in_const_block = @in_const_block
       old_llvm_mod = @llvm_mod
+
+      @llvm_mod = fun_module
 
       @vars = {}
       @exception_handlers = []
@@ -1547,13 +1502,9 @@ module Crystal
           if (self_type && i == 0 && !self_type.union?) || target_def.body.is_a?(Primitive) || arg.type.passed_by_val?
             @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
           else
-            if arg.write || arg.type.c_struct? || arg.type.c_union?
-              ptr = alloca(llvm_type(arg.type), arg.name)
-              @vars[arg.name] = { ptr: ptr, type: arg.type }
-              @builder.store @fun.params[i], ptr
-            else
-              @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
-            end
+            ptr = alloca(llvm_type(arg.type), arg.name)
+            @vars[arg.name] = { ptr: ptr, type: arg.type }
+            @builder.store @fun.params[i], ptr
           end
         end
 

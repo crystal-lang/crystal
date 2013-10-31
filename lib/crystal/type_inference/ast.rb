@@ -10,9 +10,6 @@ module Crystal
   end
 
   class Var
-    attr_accessor :read
-    attr_accessor :write
-
     def out?
       out
     end

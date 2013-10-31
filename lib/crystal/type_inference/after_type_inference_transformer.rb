@@ -53,10 +53,6 @@ module Crystal
       node.expressions.each_with_index do |exp, i|
         new_exp = exp.transform(self)
         if new_exp
-          if i < length - 1 && (new_exp.is_a?(Var) || new_exp.is_a?(InstanceVar) || new_exp.is_a?(NilLiteral) || new_exp.is_a?(BoolLiteral) || new_exp.is_a?(CharLiteral) || new_exp.is_a?(NumberLiteral) || new_exp.is_a?(StringLiteral) || new_exp.is_a?(SymbolLiteral))
-            next
-          end
-
           if new_exp.is_a?(Expressions)
             exps.concat new_exp.expressions
           else
@@ -75,11 +71,6 @@ module Crystal
         return nil
       when 1
         return exps[0]
-      when 2
-        first, second = exps
-        if first.is_a?(Assign) && first.target.is_a?(Var) && second.is_a?(Var) && first.target.name == second.name
-          return first.value
-        end
       end
 
       node.expressions = exps
@@ -93,12 +84,6 @@ module Crystal
       if node.value.type && node.value.type.no_return?
         rebind_node node, node.value
         return node.value
-      end
-
-      if node.target.is_a?(Var) && node.target.type
-        unless node.target.dependencies[0].read
-          return node.value
-        end
       end
 
       node

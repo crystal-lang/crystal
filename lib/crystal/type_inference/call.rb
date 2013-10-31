@@ -142,11 +142,6 @@ module Crystal
             bubbling_exception do
               visitor = TypeVisitor.new(@mod, typed_def_args, lookup_self_type, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars, yield_vars)
               typed_def.body.accept visitor
-
-              # Copy "write" status from vars to args
-              typed_def.args.each do |arg|
-                arg.write = visitor.vars[arg.name].write
-              end
             end
           end
         end
