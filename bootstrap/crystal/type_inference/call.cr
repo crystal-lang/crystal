@@ -116,7 +116,7 @@ module Crystal
 
       matches.map do |match|
         block_type = nil
-        use_cache = true
+        use_cache = !block #|| match.def.block_arg
         match_owner = match.owner
         typed_def = match_owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
         unless typed_def

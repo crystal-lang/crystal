@@ -1053,8 +1053,12 @@ module Crystal
       getter block
       getter vars
       getter type
+      getter return_block
+      getter return_block_table_blocks
+      getter return_block_table_values
+      getter return_type
 
-      def initialize(@block, @vars, @type)
+      def initialize(@block, @vars, @type, @return_block, @return_block_table_blocks, @return_block_table_values, @return_type)
       end
     end
 
@@ -1090,7 +1094,8 @@ module Crystal
         old_vars = @vars
         old_type = @type
         old_return_block = @return_block
-        # old_return_block_table = @return_block_table
+        old_return_block_table_blocks = @return_block_table_blocks
+        old_return_block_table_values = @return_block_table_values
         old_return_type = @return_type
         # old_return_union = @return_union
         # old_while_exit_block = @while_exit_block
@@ -1103,9 +1108,10 @@ module Crystal
         # @break_union = @return_union
         @vars = new_vars
         @type = context.type
-        # @return_block = context[:return_block]
-        # @return_block_table = context[:return_block_table]
-        # @return_type = context[:return_type]
+        @return_block = context.return_block
+        @return_block_table_blocks = context.return_block_table_blocks
+        @return_block_table_values = context.return_block_table_values
+        @return_type = context.return_type
         # @return_union = context[:return_union]
 
         accept(block)
@@ -1121,7 +1127,8 @@ module Crystal
         @vars = old_vars
         @type = old_type
         @return_block = old_return_block
-        # @return_block_table = old_return_block_table
+        @return_block_table_blocks = old_return_block_table_blocks
+        @return_block_table_values = old_return_block_table_values
         @return_type = old_return_type
         # @return_union = old_return_union
         @block_context << context
@@ -1150,7 +1157,7 @@ module Crystal
         # @block_context << { block: node.block, vars: @vars, type: @type,
         #   return_block: @return_block, return_block_table: @return_block_table,
         #   return_type: @return_type, return_union: @return_union }
-        @block_context << BlockContext.new(block, @vars, @type)
+        @block_context << BlockContext.new(block, @vars, @type, @return_block, @return_block_table_blocks, @return_block_table_values, @return_type)
         @vars = {} of String => LLVMVar
 
         if owner && owner.passed_as_self?
@@ -1177,8 +1184,9 @@ module Crystal
           @builder.store value, ptr
         end
 
-        @return_block = return_block = new_block "return"
-        # @return_block_table = {}
+        return_block = @return_block = new_block "return"
+        return_block_table_blocks = @return_block_table_blocks = [] of LibLLVM::BasicBlockRef
+        return_block_table_values = @return_block_table_values = [] of LibLLVM::ValueRef
         @return_type = node.type
         # if @return_type.union?
         #   @return_union = alloca(llvm_type(node.type), 'return')
@@ -1201,7 +1209,8 @@ module Crystal
           #   elsif node.target_def.type.nilable? && node.target_def.body && node.target_def.body.type && node.target_def.body.type.nil_type?
           #     @return_block_table[@builder.insert_block] = LLVM::Constant.null(llvm_type(node.target_def.type.nilable_type))
           #   else
-          #     @return_block_table[@builder.insert_block] = @last
+              return_block_table_blocks << @builder.insert_block
+              return_block_table_values << @last
           #   end
           # elsif (node.target_def.type.nil? || node.target_def.type.nil_type?) && node.type.nilable?
             # @return_block_table[@builder.insert_block] = @builder.int2ptr llvm_nil, llvm_type(node.type)
@@ -1218,9 +1227,9 @@ module Crystal
           #   if @return_union
           #     @last = @return_union
             # else
-            #   phi_type = llvm_type(node.type)
-            #   phi_type = LLVM::Pointer(phi_type) if node.type.union?
-            #   @last = @builder.phi phi_type, @return_block_table
+              phi_type = llvm_type(node.type)
+              # phi_type = LLVM::Pointer(phi_type) if node.type.union?
+              @last = @builder.phi phi_type, return_block_table_blocks, return_block_table_values
             # end
           # end
         # end
@@ -1228,9 +1237,10 @@ module Crystal
         old_context = @block_context.pop
         @vars = old_context.vars
         @type = old_context.type
-        # @return_block = old_context[:return_block]
-        # @return_block_table = old_context[:return_block_table]
-        # @return_type = old_context[:return_type]
+        @return_block = old_context.return_block
+        @return_block_table_blocks = old_context.return_block_table_blocks
+        @return_block_table_values = old_context.return_block_table_values
+        @return_type = old_context.return_type
         # @return_union = old_context[:return_union]
       else
         codegen_call(node, owner, call_args)
