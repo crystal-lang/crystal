@@ -36,6 +36,13 @@ class File
     basename
   end
 
+  def self.delete(filename)
+    err = C.unlink(filename)
+    if err == -1
+      raise Errno.new
+    end
+  end
+
   def self.extname(filename)
     dot_index = filename.rindex('.')
 

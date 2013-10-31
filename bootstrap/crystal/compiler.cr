@@ -1,5 +1,9 @@
 require "option_parser"
 
+lib C
+  fun tmpnam(result : Char*) : Char*
+end
+
 module Crystal
   class Compiler
     include Crystal
@@ -8,6 +12,7 @@ module Crystal
       @dump_ll = false
       @no_build = false
       @print_types = false
+      @run = false
 
       @options = OptionParser.parse! do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
@@ -16,6 +21,9 @@ module Crystal
         end
         opts.on("-no-build", "Disable build output") do
           @no_build = true
+        end
+        opts.on("-run", "Execute program") do
+          @run = true
         end
         opts.on("-types", "Prints types of global variables") do
           @print_types = true
@@ -39,7 +47,12 @@ module Crystal
         exit 1
       end
 
-      output_filename = File.basename(filename, File.extname(filename))
+      if @run
+        output_filename = String.new(C.tmpnam(nil))
+      else
+        output_filename = File.basename(filename, File.extname(filename))
+      end
+
       bitcode_filename = "#{output_filename}.bc"
 
       source = File.read filename
@@ -68,6 +81,11 @@ module Crystal
         llvm_mod.write_bitcode bitcode_filename
 
         system "llc-3.3 #{bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
+
+        if @run
+          system "#{output_filename}"
+          File.delete output_filename
+        end
       rescue ex : Crystal::Exception
         puts ex
         exit 1

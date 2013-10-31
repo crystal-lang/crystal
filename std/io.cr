@@ -20,6 +20,7 @@ lib C
   fun realpath(path : Char*, resolved_path : Char*) : Char*
   fun fdopen(fd : Int32, mode : Char*) : File
   fun fgets(buffer : Char*, maxlength : Int32, file : File*) : Char*
+  fun unlink(filename : Char*) : Char*
 
   SEEK_SET = 0
   SEEK_CUR = 1
