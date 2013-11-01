@@ -4,6 +4,14 @@ module Crystal
       nodes.find(&.type?).try &.type.program.type_merge(nodes)
     end
 
+    def self.merge(types : Array(Type))
+      if types.length == 0
+        nil
+      else
+        types.first.program.type_merge(types)
+      end
+    end
+
     def metaclass
       @metaclass ||= Metaclass.new(program, self)
     end
@@ -74,6 +82,14 @@ module Crystal
 
     def instance_type
       self
+    end
+
+    def implements?(other_type)
+      self == other_type
+    end
+
+    def filter_by(other_type)
+      implements?(other_type) ? self : nil
     end
 
     def lookup_def_instance(def_object_id, arg_types, block_type)
@@ -324,6 +340,10 @@ module Crystal
 
     def include(mod)
       @parents.insert 0, mod unless parents.any? &.==(mod)
+    end
+
+    def implements?(other_type)
+      super || parents.any? &.implements?(other_type)
     end
 
     def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
@@ -797,6 +817,10 @@ module Crystal
       @metaclass ||= GenericClassInstanceMetaclass.new(program, self)
     end
 
+    def implements?(other_type)
+      super || generic_class.implements?(other_type)
+    end
+
     def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
       return nil if already_looked_up.includes?(type_id)
       already_looked_up.add(type_id)
@@ -1252,6 +1276,26 @@ module Crystal
 
     def union?
       true
+    end
+
+    def filter_by(other_type)
+      filtered_types = [] of Type
+
+      @union_types.each do |union_type|
+        filtered_type = union_type.filter_by(other_type)
+        if filtered_type
+          filtered_types.push filtered_type
+        end
+      end
+
+      case filtered_types.length
+      when 0
+        nil
+      when 1
+        filtered_types.first
+      else
+        program.type_merge_union_of(filtered_types)
+      end
     end
 
     def to_s

@@ -17,7 +17,7 @@ module Crystal
     getter! scope
     property block
 
-    def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil)
+    def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [new_type_filter])
       @types = [@mod] of Type
     end
 
@@ -76,7 +76,9 @@ module Crystal
 
     def visit(node : Var)
       var = @vars[node.name]
-      node.bind_to var
+      filter = build_var_filter var
+      node.bind_to(filter || var)
+      # node.type_filters = and_type_filters({node.name => NotNilFilter}, var.type_filters)
     end
 
     def visit(node : Global)
@@ -360,10 +362,10 @@ module Crystal
 
     def end_visit(node : IsA)
       node.type = mod.bool
-      # obj = node.obj
-      # if obj.is_a?(Var)
-      #   node.type_filters = {obj.name => SimpleTypeFilter.new(node.const.type.instance_type)}
-      # end
+      obj = node.obj
+      if obj.is_a?(Var)
+        node.type_filters = {obj.name => SimpleTypeFilter.new(node.const.type.instance_type)} of String => TypeFilter
+      end
     end
 
     def visit(node : ClassDef)
@@ -695,6 +697,55 @@ module Crystal
       end
     end
 
+    def visit(node : If)
+      node.cond.accept self
+
+      if node.then.nop?
+        node.then.accept self
+      else
+        then_filters = node.cond.type_filters || new_type_filter
+
+        pushing_type_filters(then_filters) do
+          node.then.accept self
+        end
+      end
+
+      if node.else.nop?
+        node.else.accept self
+      else
+        if (filters = node.cond.type_filters) && !node.cond.is_a?(If)
+          else_filters = negate_filters(filters)
+        else
+          else_filters = new_type_filter
+        end
+
+        pushing_type_filters(else_filters) do
+          node.else.accept self
+        end
+      end
+
+      # case node.binary
+      # when :and
+      #   node.type_filters = and_type_filters(and_type_filters(node.cond.type_filters, node.then.type_filters), node.else.type_filters)
+      # when :or
+      #   node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
+      # end
+
+      # If the then branch exists, we can safely assume that tyhe type
+      # filters after the if will be those of the condition, negated
+      # if node.then && node.then.no_returns? && node.cond.type_filters && !@type_filter_stack.empty?
+      #   @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, negate_filters(node.cond.type_filters))
+      # end
+
+      # If the else branch exits, we can safely assume that the type
+      # filters in the condition will still apply after the if
+      # if node.else && (node.else.no_returns? || node.else.returns?) && node.cond.type_filters && !@type_filter_stack.empty?
+      #   @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, node.cond.type_filters)
+      # end
+
+      false
+    end
+
     def end_visit(node : If)
       node.bind_to [node.then, node.else]
     end
@@ -882,6 +933,39 @@ module Crystal
 
     def lookup_ident_type(node)
       raise "lookup_ident_type not implemented for #{node}"
+    end
+
+    def build_var_filter(var)
+      filters = [] of TypeFilter
+      @type_filter_stack.each do |hash|
+        filter = hash[var.name]?
+        filters.push filter if filter
+      end
+      return if filters.empty?
+
+      final_filter = filters.length == 1 ? filters.first : AndTypeFilter.new(filters)
+
+      filtered_node = TypeFilteredNode.new(final_filter)
+      filtered_node.bind_to var
+      filtered_node
+    end
+
+    def negate_filters(filters_hash)
+      negated_filters = new_type_filter
+      filters_hash.each do |name, filter|
+        negated_filters[name] = NotFilter.new(filter)
+      end
+      negated_filters
+    end
+
+    def pushing_type_filters(filters)
+      @type_filter_stack.push(filters)
+      yield
+      @type_filter_stack.pop
+    end
+
+    def new_type_filter
+      {} of String => TypeFilter
     end
 
     def current_type

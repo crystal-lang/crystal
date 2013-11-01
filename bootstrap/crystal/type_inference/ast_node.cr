@@ -3,6 +3,7 @@ require "../ast"
 module Crystal
   class ASTNode
     property! dependencies
+    property type_filters
 
     def set_type(type)
       @type = type
