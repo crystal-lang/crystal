@@ -7,6 +7,18 @@ class Int
     self >= 0 ? self : -self
   end
 
+  def floor
+    self
+  end
+
+  def ceil
+    self
+  end
+
+  def round
+    self
+  end
+
   def **(other : Int)
     (to_f64 ** other).to_i
   end
