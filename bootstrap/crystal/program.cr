@@ -91,23 +91,28 @@ module Crystal
     end
 
     def type_merge(types : Array(Type))
-      type_merge(types) { |type| type }
+      combined_union_of compact_types(types)
     end
 
     def type_merge(nodes : Array(ASTNode))
-      type_merge nodes, &.type?
+      combined_union_of compact_types(nodes, &.type?)
     end
 
-    def type_merge(objects)
+    def type_merge_union_of(types : Array(Type))
+      union_of compact_types(types)
+    end
+
+    def compact_types(types)
+      compact_types(types) { |type| type }
+    end
+
+    def compact_types(objects)
       all_types = Set(Type).new
-      objects.each do |obj|
-        add_type all_types, yield(obj)
-      end
-
+      objects.each { |obj| add_type all_types, yield(obj) }
       # all_types.delete_if { |type| type.no_return? } if all_types.length > 1
-
-      combined_union_of all_types.to_a
+      all_types.to_a
     end
+
     def add_type(set, type : UnionType)
       type.union_types.each do |subtype|
         add_type set, subtype
@@ -122,13 +127,16 @@ module Crystal
       # Nothing to do
     end
 
-    def combined_union_of(types)
-      if types.length == 1
-        return types[0]
+    def combined_union_of(types : Array)
+      case types.length
+      when 0
+        nil
+      when 1
+        types.first
+      else
+        combined_types = type_combine types
+        union_of combined_types
       end
-
-      combined_types = type_combine types
-      union_of combined_types
     end
 
     def type_combine(types)
@@ -139,17 +147,16 @@ module Crystal
       @array.instantiate [type] of Type
     end
 
-    def union_of(type1, type2)
-      union_of [type1, type2] of Type
-    end
-
     def union_of(types : Array)
-      if types.length == 1
-        return types[0]
+      case types.length
+      when 0
+        nil
+      when 1
+        types.first
+      else
+        types_ids = types.map(&.type_id).sort!
+        @unions[types_ids] ||= UnionType.new(self, types)
       end
-
-      types_ids = types.map(&.type_id).sort!
-      @unions[types_ids] ||= UnionType.new(self, types)
     end
 
     def require(filename, relative_to = nil)

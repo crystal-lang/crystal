@@ -127,6 +127,12 @@ module Crystal
     end
   end
 
+  class UnionType
+    def restrict(other : Type, owner, type_lookup, free_vars)
+      program.type_merge_union_of(union_types.map &.restrict(other, owner, type_lookup, free_vars))
+    end
+  end
+
   class GenericClassInstanceType
     def restrict(other : Ident, type_lookup, free_vars)
       ident_type = type_lookup.lookup_type other.names

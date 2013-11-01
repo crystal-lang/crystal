@@ -93,6 +93,10 @@ module Crystal
       # end
     end
 
+    def lookup_matches_in(owner : UnionType)
+      owner.union_types.flat_map { |type| lookup_matches_in(type) }
+    end
+
     def lookup_matches_in(owner : Type, self_type = owner, def_name = self.name)
       arg_types = args.map &.type
       matches = owner.lookup_matches(def_name, arg_types, !!block)

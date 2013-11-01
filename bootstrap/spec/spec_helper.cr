@@ -3,6 +3,16 @@ require "../crystal/**"
 
 include Crystal
 
+class Crystal::Program
+  def union_of(type1, type2)
+    union_of([type1, type2] of Type).not_nil!
+  end
+
+  def union_of(type1, type2, type3)
+    union_of([type1, type2, type3] of Type).not_nil!
+  end
+end
+
 make_tuple InferTypeResult, program, node
 
 def assert_type(str)

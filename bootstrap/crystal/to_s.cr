@@ -389,6 +389,10 @@ module Crystal
         @str << " : "
         node_type_restriction.accept self
       end
+      if node_type = node.type?
+        @str << " : "
+        @str << node_type
+      end
       false
     end
 

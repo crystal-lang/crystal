@@ -358,6 +358,14 @@ module Crystal
       false
     end
 
+    def end_visit(node : IsA)
+      node.type = mod.bool
+      # obj = node.obj
+      # if obj.is_a?(Var)
+      #   node.type_filters = {obj.name => SimpleTypeFilter.new(node.const.type.instance_type)}
+      # end
+    end
+
     def visit(node : ClassDef)
       superclass = if node_superclass = node.superclass
                      lookup_ident_type node_superclass
