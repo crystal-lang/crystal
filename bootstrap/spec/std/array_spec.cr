@@ -443,4 +443,14 @@ describe "Array" do
       [1, 2, 3].includes?(x).should eq(true)
     end
   end
+
+  describe "flat_map" do
+    it "does example 1" do
+      [1, 2, 3, 4].flat_map { |e| [e, -e] }.should eq([1, -1, 2, -2, 3, -3, 4, -4])
+    end
+
+    it "does example 2" do
+      [[1, 2], [3, 4]].flat_map { |e| e + [100] }.should eq([1, 2, 100, 3, 4, 100])
+    end
+  end
 end

@@ -53,6 +53,12 @@ module Enumerable(T)
     ary
   end
 
+  def flat_map(&block : T -> Array(U))
+    ary = [] of U
+    each { |e| ary.concat(yield e) }
+    ary
+  end
+
   def select(&block : T ->)
     ary = [] of T
     each { |e| ary << e if yield e }
