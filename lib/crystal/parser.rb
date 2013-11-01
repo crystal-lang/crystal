@@ -427,7 +427,7 @@ module Crystal
             when :'='
               # Rewrite 'f.x = args' as f.x=(args)
               next_token_skip_space_or_newline
-              args, block_arg, block = parse_call_args_space_consumed(false)
+              args, block_arg, block = parse_call_args_space_consumed(false, true)
               atomic = Call.new(atomic, "#{name}=", args, block, block_arg, false, name_column_number)
               next
             when :'+=', :'-=', :'*=', :'/=', :'%=', :'|=', :'&=', :'^=', :'**=', :'<<=', :'>>='
@@ -1437,66 +1437,80 @@ module Crystal
       end
     end
 
-    def parse_call_args_space_consumed(check_plus_and_minus = true)
+    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false)
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :'+', :'-', :"->", :"&"
-        if @token.type == :"&" || (@token.type == :+ || @token.type == :- && check_plus_and_minus)
+      when :"&"
+        ord = string[pos].ord
+        return nil if ord == 9 || ord == 10 || ord == 13 || ord == 32 # return nil if ord is whitespace
+      when :+, :-
+        if check_plus_and_minus
           ord = string[pos].ord
           return nil if ord == 9 || ord == 10 || ord == 13 || ord == 32 # return nil if ord is whitespace
         end
-
-        case @token.value
-        when :if, :unless, :while
-          nil
-        else
-          args = []
-          while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :')' && @token.type != :':' && !is_end_token
-            if @token.type == :"&"
-              ord = string[pos].ord
-              unless ord == 9 || ord == 10 || ord == 13 || ord == 32
-                return parse_call_block_arg(args, false)
-              end
-            end
-
-            if @token.keyword?(:out)
-              next_token_skip_space_or_newline
-
-              case @token.type
-              when :IDENT
-                var = Var.new(@token.value)
-                var.out = true
-                var.location = @token.location
-                push_var var
-                args << var
-              when :INSTANCE_VAR
-                var = InstanceVar.new(@token.value)
-                var.out = true
-                var.location = @token.location
-                args << var
-
-                @instance_vars.add @token.value if @instance_vars
-              else
-                raise "expecting variable or instance variable after out"
-              end
-
-              next_token
-            else
-              args << parse_op_assign
-            end
-
-            skip_space
-
-            if @token.type == :","
-              next_token_skip_space_or_newline
-            else
-              break
-            end
-          end
-          [args, nil, nil]
-        end
+      when :"{"
+        return nil unless allow_curly
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :'(', :'!', :'[', :'[]', :"->"
+        # Nothing
       else
-        nil
+        return nil
       end
+
+      return nil if !allow_curly && @token.type == :"{"
+
+      if @token.type == :"&" || (@token.type == :+ || @token.type == :- && check_plus_and_minus)
+        ord = string[pos].ord
+        return nil if ord == 9 || ord == 10 || ord == 13 || ord == 32 # return nil if ord is whitespace
+      end
+
+      case @token.value
+      when :if, :unless, :while
+        return nil
+      end
+
+      args = []
+      while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :')' && @token.type != :':' && !is_end_token
+        if @token.type == :"&"
+          ord = string[pos].ord
+          unless ord == 9 || ord == 10 || ord == 13 || ord == 32
+            return parse_call_block_arg(args, false)
+          end
+        end
+
+        if @token.keyword?(:out)
+          next_token_skip_space_or_newline
+
+          case @token.type
+          when :IDENT
+            var = Var.new(@token.value)
+            var.out = true
+            var.location = @token.location
+            push_var var
+            args << var
+          when :INSTANCE_VAR
+            var = InstanceVar.new(@token.value)
+            var.out = true
+            var.location = @token.location
+            args << var
+
+            @instance_vars.add @token.value if @instance_vars
+          else
+            raise "expecting variable or instance variable after out"
+          end
+
+          next_token
+        else
+          args << parse_op_assign
+        end
+
+        skip_space
+
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        else
+          break
+        end
+      end
+      [args, nil, nil]
     end
 
     def parse_call_block_arg(args, check_paren)

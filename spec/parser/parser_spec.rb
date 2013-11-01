@@ -140,7 +140,7 @@ describe Parser do
   it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", FunTypeSpec.new(nil, "Double".ident)), 0)
   it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", FunTypeSpec.new(["Int".ident])), 1)
   it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", FunTypeSpec.new([SelfType.instance], SelfType.instance)), 1)
-  it_parses "def foo(a, &block : Foo(Int) -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", FunTypeSpec.new([NewGenericClass.new("Foo".ident, ["Int".ident])])), 1), focus: true
+  it_parses "def foo(a, &block : Foo(Int) -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", FunTypeSpec.new([NewGenericClass.new("Foo".ident, ["Int".ident])])), 1)
   it_parses "def foo(&block); block; end", Def.new("foo", [], "block".var, nil, BlockArg.new("block"), 0)
   it_parses "def foo; a.yield; end", Def.new("foo", [], [Yield.new([], "a".call)], nil, nil, 1)
   it_parses "def foo; a.yield 1; end", Def.new("foo", [], [Yield.new([1.int32], "a".call)], nil, nil, 1)
@@ -462,6 +462,8 @@ describe Parser do
   it_parses "->foo(Void*)", FunPointer.new(nil, "foo", ["Void".ident.pointer_of])
   it_parses "call ->foo", Call.new(nil, "call", [FunPointer.new(nil, "foo")])
   it_parses "[] of ->\n", ArrayLiteral.new([], FunTypeSpec.new)
+
+  it_parses "foo.bar = {} of Int32 => Int32", Call.new("foo".call, "bar=", [HashLiteral.new([], [], "Int32".ident, "Int32".ident)])
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")

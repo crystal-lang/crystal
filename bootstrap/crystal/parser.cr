@@ -400,7 +400,7 @@ module Crystal
             when :"="
               # Rewrite 'f.x = args' as f.x=(args)
               next_token_skip_space_or_newline
-              call_args = parse_call_args_space_consumed(false)
+              call_args = parse_call_args_space_consumed(false, true)
               args = call_args.args if call_args
 
               atomic = Call.new(atomic, "#{name}=", (args || [] of ASTNode), nil, nil, false, name_column_number)
@@ -1635,65 +1635,71 @@ module Crystal
       end
     end
 
-    def parse_call_args_space_consumed(check_plus_and_minus = true)
+    def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false)
       case @token.type
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-", :"&"
-        if (@token.type == :"&") || (check_plus_and_minus && (@token.type == :"+" || @token.type == :"-"))
+      when :"&"
+        return nil if @buffer.value.whitespace?
+      when :"+", :"-"
+        if check_plus_and_minus
           return nil if @buffer.value.whitespace?
         end
-
-        case @token.value
-        when :if, :unless, :while
-          nil
-        else
-          args = [] of ASTNode
-          while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :")" && @token.type != :":" && !is_end_token
-            if @token.type == :"&"
-              unless @buffer.value.whitespace?
-                return parse_call_block_arg(args, false)
-              end
-            end
-
-            if @token.keyword?(:out)
-              next_token_skip_space_or_newline
-
-              case @token.type
-              when :IDENT
-                var = Var.new(@token.value.to_s)
-                var.out = true
-                var.location = @token.location
-                push_var var
-                args << var
-              when :INSTANCE_VAR
-                ivar = InstanceVar.new(@token.value.to_s)
-                ivar.out = true
-                ivar.location = @token.location
-                args << ivar
-
-                @instance_vars.add @token.value.to_s if @instance_vars
-              else
-                raise "expecting variable or instance variable after out"
-              end
-
-              next_token
-            else
-              arg = parse_op_assign
-              args << arg if arg.is_a?(ASTNode)
-            end
-
-            skip_space
-
-            if @token.type == :","
-              next_token_skip_space_or_newline
-            else
-              break
-            end
-          end
-          CallArgs.new args
-        end
+      when :"{"
+        return nil unless allow_curly
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-", :"&"
+        # Nothing
       else
-        nil
+        return nil
       end
+
+      case @token.value
+      when :if, :unless, :while
+        return nil
+      end
+
+      args = [] of ASTNode
+      while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :")" && @token.type != :":" && !is_end_token
+        if @token.type == :"&"
+          unless @buffer.value.whitespace?
+            return parse_call_block_arg(args, false)
+          end
+        end
+
+        if @token.keyword?(:out)
+          next_token_skip_space_or_newline
+
+          case @token.type
+          when :IDENT
+            var = Var.new(@token.value.to_s)
+            var.out = true
+            var.location = @token.location
+            push_var var
+            args << var
+          when :INSTANCE_VAR
+            ivar = InstanceVar.new(@token.value.to_s)
+            ivar.out = true
+            ivar.location = @token.location
+            args << ivar
+
+            @instance_vars.add @token.value.to_s if @instance_vars
+          else
+            raise "expecting variable or instance variable after out"
+          end
+
+          next_token
+        else
+          arg = parse_op_assign
+          args << arg if arg.is_a?(ASTNode)
+        end
+
+        skip_space
+
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        else
+          break
+        end
+      end
+      CallArgs.new args
     end
 
     def parse_ident_or_global_call
