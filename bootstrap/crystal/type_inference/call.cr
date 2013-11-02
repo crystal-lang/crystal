@@ -18,7 +18,7 @@ module Crystal
         end
       end
 
-      raise "Zero or more than one target def for #{self}"
+      ::raise "Zero or more than one target def for #{self}"
     end
 
     def update(from)

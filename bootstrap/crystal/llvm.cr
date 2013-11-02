@@ -11,6 +11,37 @@ lib LibLLVM("LLVM-3.3")
   type TargetDataRef : Void*
   type TargetMachineRef : Void*
 
+  enum Attribute
+    ZExt       = 1
+    SExt       = 2
+    NoReturn   = 4
+    InReg      = 8
+    StructRet  = 16
+    NoUnwind   = 32
+    NoAlias    = 64
+    ByVal      = 128
+    Nest       = 256
+    # ReadNone   = 1 << 9
+    # ReadOnly   = 1 << 10
+    # NoInline   = 1 << 11
+    # AlwaysInline    = 1 << 12
+    # OptimizeForSize = 1 << 13
+    # StackProtect    = 1 << 14
+    # StackProtectReq = 1 << 15
+    # Alignment = 31 << 16
+    # NoCapture  = 1 << 21
+    # NoRedZone  = 1 << 22
+    # NoImplicitFloat = 1 << 23
+    # Naked      = 1 << 24
+    # InlineHint = 1 << 25
+    # StackAlignment = 7 << 26
+    # ReturnsTwice = 1 << 29
+    # UWTable = 1 << 30
+    # NonLazyBind = 1 << 3
+    # AddressSafety = 1_u64 << 32,
+    # StackProtectStrong = 1_u64 << 33
+  end
+
   enum Linkage
     External
     AvailableExternally
@@ -86,6 +117,7 @@ lib LibLLVM("LLVM-3.3")
     Large
   end
 
+  fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : Int32)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : Char*, type : TypeRef) : ValueRef
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : Char*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef *, count : Int32)
@@ -117,6 +149,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_lshr = LLVMBuildLShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
   fun build_mul = LLVMBuildMul(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_not = LLVMBuildNot(builder : BuilderRef, value : ValueRef, name : Char*) : ValueRef
   fun build_or = LLVMBuildOr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_phi = LLVMBuildPhi(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
   fun build_ptr2int = LLVMBuildPtrToInt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
@@ -134,6 +167,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_udiv = LLVMBuildUDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_ui2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_ui2fp = LLVMBuildUIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_unreachable = LLVMBuildUnreachable(builder : BuilderRef) : ValueRef
   fun build_urem = LLVMBuildURem(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_xor = LLVMBuildXor(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_zext = LLVMBuildZExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
@@ -219,6 +253,10 @@ module LLVM
     LibLLVM.set_value_name(value, name)
   end
 
+  def self.add_attribute(value, attribute)
+    LibLLVM.add_attribute value, attribute
+  end
+
   class Context
     def self.global
       LibLLVM.get_global_context
@@ -263,6 +301,12 @@ module LLVM
       Function.new(func)
     end
 
+    def add(name, arg_types, ret_type, varargs = false)
+      func = add(name, arg_types, ret_type, varargs)
+      yield func
+      func
+    end
+
     def [](name)
       self[name]?.not_nil!
     end
@@ -283,6 +327,14 @@ module LLVM
 
     def append_basic_block(name)
       LibLLVM.append_basic_block(@fun, name)
+    end
+
+    def append_basic_block(name)
+      block = append_basic_block(name)
+      builder = Builder.new
+      builder.position_at_end block
+      yield builder
+      block
     end
 
     def dump
@@ -436,6 +488,14 @@ module LLVM
 
     define_cmp icmp
     define_cmp fcmp
+
+    def not(value, name = "")
+      LibLLVM.build_not(@builder, value, name)
+    end
+
+    def unreachable
+      LibLLVM.build_unreachable(@builder)
+    end
   end
 
   def self.pointer_type(element_type)

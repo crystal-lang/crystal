@@ -24,6 +24,10 @@ module Crystal
       true
     end
 
+    def passed_by_val?
+      false
+    end
+
     def integer?
       false
     end
@@ -73,6 +77,10 @@ module Crystal
     end
 
     def nil_type?
+      false
+    end
+
+    def bool_type?
       false
     end
 
@@ -634,6 +642,9 @@ module Crystal
   end
 
   class BoolType < PrimitiveType
+    def bool_type?
+      true
+    end
   end
 
   class CharType < PrimitiveType
@@ -1259,7 +1270,17 @@ module Crystal
     end
   end
 
+  module MultiType
+    def concrete_types
+      types = [] of Type
+      each_concrete_type { |type| types << type }
+      types
+    end
+  end
+
   class UnionType < Type
+    include MultiType
+
     getter :program
     getter :union_types
 
@@ -1275,6 +1296,10 @@ module Crystal
     end
 
     def union?
+      true
+    end
+
+    def passed_by_val?
       true
     end
 
@@ -1295,6 +1320,16 @@ module Crystal
         filtered_types.first
       else
         program.type_merge_union_of(filtered_types)
+      end
+    end
+
+    def each_concrete_type
+      union_types.each do |type|
+        # if type.hierarchy?
+        #   type.each(&block)
+        # else
+          yield type
+        # end
       end
     end
 

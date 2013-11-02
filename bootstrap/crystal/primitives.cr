@@ -73,6 +73,7 @@ module Crystal
       pointer.add_def Def.new("value=", [Arg.new_with_restriction("value", Ident.new(["T"]))], Primitive.new(:pointer_set))
       pointer.add_def Def.new("address", ([] of Arg), Primitive.new(:pointer_address))
       pointer.add_def Def.new("realloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_realloc))
+      pointer.add_def Def.new("+", [Arg.new_with_type("offset", int64)], Primitive.new(:pointer_add))
       pointer.add_def Def.new("as", [Arg.new("type")], Primitive.new(:pointer_cast))
     end
 

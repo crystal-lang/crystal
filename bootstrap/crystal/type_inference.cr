@@ -784,6 +784,8 @@ module Crystal
         visit_pointer_new node
       when :pointer_realloc
         node.type = scope
+      when :pointer_add
+        node.type = scope
       when :pointer_cast
         visit_pointer_cast node
       when :byte_size

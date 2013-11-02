@@ -1034,7 +1034,7 @@ module Crystal
       location = @token.location
       type = parse_type
       if type.is_a?(Array)
-        raise "unexpected ',' in type", location[0], location[1]
+        raise "unexpected ',' in type (use parenthesis to disambiguate)", location[0], location[1]
       end
       type
     end

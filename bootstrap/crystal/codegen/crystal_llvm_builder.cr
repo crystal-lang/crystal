@@ -22,18 +22,18 @@ module Crystal
       @end = true
     end
 
-    # def unreachable(data = nil)
-    #   if ENV["UNREACHABLE"] == "1"
-    #     backtrace = caller.join("\n")
-    #     msg = "Reached the unreachable!"
-    #     msg << " (#{data})" if data
-    #     msg << "\n#{backtrace}"
-    #     @codegen.llvm_puts(msg)
-    #   end
-    #   return if @end
-    #   @builder.unreachable
-    #   @end = true
-    # end
+    def unreachable
+      # if ENV["UNREACHABLE"] == "1"
+      #   backtrace = caller.join("\n")
+      #   msg = "Reached the unreachable!"
+      #   msg << " (#{data})" if data
+      #   msg << "\n#{backtrace}"
+      #   @codegen.llvm_puts(msg)
+      # end
+      return if @end
+      @builder.unreachable
+      @end = true
+    end
 
     def position_at_end(block)
       @builder.position_at_end block
@@ -116,5 +116,6 @@ module Crystal
     forward_named fdiv, "lhs, rhs"
     forward_named icmp, "op, lhs, rhs"
     forward_named fcmp, "op, lhs, rhs"
+    forward_named not, "value"
   end
 end

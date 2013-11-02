@@ -189,13 +189,19 @@ module Crystal
       set_length = Call.new(temp_var, "length=", [NumberLiteral.new(length, :i32)] of ASTNode)
       set_length.location = node.location
 
-      exps = [assign, set_length] of ASTNode
+      get_buffer = Call.new(temp_var, "buffer")
+      get_buffer.location = node.location
+
+      buffer = new_temp_var
+      buffer.location = node.location
+
+      assign_buffer = Assign.new(buffer, get_buffer)
+      assign_buffer.location = node.location
+
+      exps = [assign, set_length, assign_buffer] of ASTNode
 
       node.elements.each_with_index do |elem, i|
-        get_buffer = Call.new(temp_var, "buffer")
-        get_buffer.location = node.location
-
-        assign_index = Call.new(get_buffer, "[]=", [NumberLiteral.new(i, :i32), elem] of ASTNode)
+        assign_index = Call.new(buffer, "[]=", [NumberLiteral.new(i, :i32), elem] of ASTNode)
         assign_index.location = node.location
 
         exps << assign_index

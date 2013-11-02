@@ -160,7 +160,6 @@ module Crystal
 
       FileUtils.mkdir_p ".crystal"
 
-      assembly_names = []
       object_names = []
 
       with_stats_or_profile('codegen-llc') do
@@ -172,10 +171,12 @@ module Crystal
               type = "main" if type == ""
               name = type.gsub(/[^a-zA-Z0-9]/) { |c| "##{c.ord.to_s(16)}" }
               bc_name = ".crystal/#{name}.bc"
+              s_name = ".crystal/#{name}.s"
+              o_name = ".crystal/#{name}.o"
 
               llvm_mod.write_bitcode "#{bc_name}.new"
 
-              if File.exists?(bc_name)
+              if File.exists?(bc_name) && File.exists?(o_name)
                 `diff -q #{bc_name} #{bc_name}.new`
 
                 if $?.success?
@@ -183,14 +184,14 @@ module Crystal
                 else
                   # puts "Compile: #{type}"
                   FileUtils.mv "#{bc_name}.new", bc_name
-                  `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
-                  `#{@clang} -c .crystal/#{name}.s -o .crystal/#{name}.o`
+                  `#{@llc} #{bc_name} -o #{s_name}`
+                  `#{@clang} -c #{s_name} -o #{o_name}`
                 end
               else
                 # puts "Compile: #{type}"
                 FileUtils.mv "#{bc_name}.new", bc_name
-                `#{@llc} .crystal/#{name}.bc -o .crystal/#{name}.s`
-                `#{@clang} -c .crystal/#{name}.s -o .crystal/#{name}.o`
+                `#{@llc} #{bc_name} -o #{s_name}`
+                `#{@clang} -c #{s_name} -o #{o_name}`
               end
 
               if @options[:dump_ll]
@@ -198,8 +199,7 @@ module Crystal
                  `#{llvm_dis} #{bc_name}`
               end
 
-              assembly_names << ".crystal/#{name}.s"
-              object_names << ".crystal/#{name}.o"
+              object_names << o_name
             end
           end
         end

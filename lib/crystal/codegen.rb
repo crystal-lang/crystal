@@ -474,7 +474,7 @@ module Crystal
         if @debug
           @builder.call dbg_declare, metadata(llvm_var[:ptr]), local_var_metadata(var)
         end
-        if var.type.is_a?(UnionType) && union_type_id = var.type.types.any?(&:nil_type?)
+        if var.type.is_a?(UnionType) && var.type.types.any?(&:nil_type?)
           in_alloca_block { assign_to_union(llvm_var[:ptr], var.type, @mod.nil, llvm_nil) }
         end
       end
@@ -495,14 +495,12 @@ module Crystal
           @last = var[:ptr]
           @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
         end
+      elsif node.type.union?
+        @last = cast_to_pointer var[:ptr], node.type
       else
-        if node.type.union?
-          @last = cast_to_pointer var[:ptr], node.type
-        else
-          value_ptr = union_value(var[:ptr])
-          @last = cast_to_pointer value_ptr, node.type
-          @last = @builder.load(@last) unless node.type.passed_by_val?
-        end
+        value_ptr = union_value(var[:ptr])
+        @last = cast_to_pointer value_ptr, node.type
+        @last = @builder.load(@last) unless node.type.passed_by_val?
       end
     end
 
@@ -1605,7 +1603,7 @@ module Crystal
           return @builder.icmp :eq, int(type.base_type.type_id), type_id
         end
 
-        match_fun_name = "~match<#{type.to_s}>"
+        match_fun_name = "~match<#{type}>"
         fun = @main_mod.functions[match_fun_name] || create_match_fun(match_fun_name, type)
         fun = check_main_fun match_fun_name, fun
         return @builder.call fun, type_id

@@ -114,6 +114,10 @@ module Crystal
       @arg_cache[type] ||= create_llvm_arg_type(type)
     end
 
+    def create_llvm_arg_type(type : UnionType)
+      LLVM.pointer_type llvm_type(type)
+    end
+
     def create_llvm_arg_type(type)
       llvm_type type
     end

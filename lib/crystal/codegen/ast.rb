@@ -187,9 +187,5 @@ module Crystal
     def initialize(name)
       @name = name
     end
-
-    def to_s
-      "#{name} as #{casted_type}"
-    end
   end
 end

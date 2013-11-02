@@ -106,8 +106,26 @@ module Crystal
       restrict(owner, owner, type_lookup, free_vars)
     end
 
+    def restrict(other : UnionType, owner, type_lookup, free_vars)
+      restricted = other.union_types.any? { |union_type| is_restriction_of?(union_type, nil) }
+      restricted ? self : nil
+    end
+
+    def restrict(other : IdentUnion, owner, type_lookup, free_vars)
+      matches = [] of Type
+      other.idents.each do |ident|
+        match = restrict ident, owner, type_lookup, free_vars
+        matches << match if match
+      end
+      matches.length > 0 ? program.type_merge(matches) : nil
+    end
+
     def restrict(other : ASTNode, owner, type_lookup, free_vars)
       raise "Bug: unsupported restriction: #{other}"
+    end
+
+    def is_restriction_of?(other : UnionType, owner)
+      other.union_types.all? { |subtype| is_restriction_of?(subtype, subtype) }
     end
 
     def is_restriction_of?(other : Type, owner)
@@ -128,6 +146,10 @@ module Crystal
   end
 
   class UnionType
+    def is_restriction_of?(type, owner)
+      union_types.any? &.is_restriction_of?(type, owner)
+    end
+
     def restrict(other : Type, owner, type_lookup, free_vars)
       program.type_merge_union_of(union_types.map &.restrict(other, owner, type_lookup, free_vars))
     end

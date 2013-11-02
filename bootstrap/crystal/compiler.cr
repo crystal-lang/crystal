@@ -86,7 +86,7 @@ module Crystal
           system "#{output_filename}"
           File.delete output_filename
         end
-      rescue ex : Crystal::Exception
+      rescue ex
         puts ex
         exit 1
       end
