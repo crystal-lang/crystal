@@ -4,15 +4,25 @@ module Crystal
   class ASTNode
     property! dependencies
     property type_filters
+    property freeze_type
 
-    def set_type(type)
+    def set_type(type : Type)
+      if @freeze_type
+        if (my_type = @type) && !my_type.is_restriction_of_all?(type)
+          raise "type must be #{my_type}, not #{type}", nil, Crystal::FrozenTypeException
+        end
+      end
+      @type = type
+    end
+
+    def set_type(type : Nil)
       @type = type
     end
 
     def type=(type)
       return if type.nil? || @type.object_id == type.object_id
 
-      @type = type
+      set_type(type)
       notify_observers
       @type
     end
@@ -43,19 +53,44 @@ module Crystal
       propagate
     end
 
+    def unbind_from(nodes)
+      @dependencies.try do |dependencies|
+        nodes.each do |node|
+          dependencies.delete_if &.same?(node)
+          node.remove_observer self
+        end
+      end
+    end
+
     def add_observer(observer)
       @observers ||= [] of ASTNode
       @observers << observer
     end
 
+    def add_update_input_observer(observer)
+      @update_input_observers ||= [] of Call
+      @update_input_observers << observer
+    end
+
+    def remove_observer(observer)
+      @observers.try &.delete_if &.same?(observer)
+    end
+
     def notify_observers
-      if @observers
-        @observers.each do |observer|
-          observer.update self
-        end
-        @observers.each do |observer|
-          observer.propagate
-        end
+      @observers.try &.each do |observer|
+        observer.update self
+      end
+
+      @input_observers.try &.each do |observer|
+        observer.update_input self
+      end
+
+      @observers.try &.each do |observer|
+        observer.propagate
+      end
+
+      @input_observers.try &.each do |observer|
+        observer.propagate
       end
     end
 

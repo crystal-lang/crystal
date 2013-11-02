@@ -2,11 +2,11 @@ module Crystal
   class Match
     getter :def
     getter :owner
-    property :type_lookup
+    getter :type_lookup
     getter :arg_types
     getter :free_vars
 
-    def initialize(@owner, @def, @arg_types, @free_vars = {} of String => Type)
+    def initialize(@owner, @def, @type_lookup, @arg_types, @free_vars = {} of String => Type)
     end
   end
 

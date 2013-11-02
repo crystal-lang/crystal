@@ -21,7 +21,7 @@ module Crystal
       ::raise "Zero or more than one target def for #{self}"
     end
 
-    def update(from)
+    def update_input(from)
       recalculate
     end
 
@@ -39,15 +39,13 @@ module Crystal
       #   check_not_lib_out_args
       # end
 
-      # return unless obj_and_args_types_set?
-
       # Ignore extra recalculations when more than one argument changes at the same time
       # types_signature = args.map { |arg| arg.type.type_id }
       # types_signature << obj.type.type_id if obj
       # return if @types_signature == types_signature
       # @types_signature = types_signature
 
-      # unbind_from *@target_defs if @target_defs
+      unbind_from @target_defs if @target_defs
       # unbind_from block.break if block
       # @subclass_notifier.remove_subclass_observer(self) if @subclass_notifier
 
@@ -118,9 +116,12 @@ module Crystal
         raise_matches_not_found(matches.owner || owner, def_name, matches)
       end
 
+      block = @block
+
       matches.map do |match|
-        block_type = nil
-        use_cache = !block #|| match.def.block_arg
+        yield_vars = match_block_arg(match)
+        use_cache = !block || match.def.block_arg
+        block_type = block && block.body && match.def.block_arg ? block.body.type : nil
         match_owner = match.owner
         typed_def = match_owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
         unless typed_def
@@ -130,7 +131,7 @@ module Crystal
           match_owner.add_def_instance(match.def.object_id, match.arg_types, block_type, typed_def) if use_cache
           if typed_def.body
             bubbling_exception do
-              visitor = TypeVisitor.new(mod, typed_def_args, match_owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars) # , yield_vars)
+              visitor = TypeVisitor.new(mod, typed_def_args, match_owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars, yield_vars)
               typed_def.body.accept visitor
             end
           end
@@ -160,6 +161,110 @@ module Crystal
 
       # self.unbind_from *old_target_defs if old_target_defs
       self.bind_to untyped_defs
+    end
+
+    def match_block_arg(match)
+      yield_vars = nil
+
+      if (block_arg = match.def.block_arg)
+        if (yields = match.def.yields) && yields > 0
+          block = @block.not_nil!
+          ident_lookup = IdentLookupVisitor.new(mod, match)
+
+          if inputs = block_arg.type_spec.inputs
+            yield_vars = [] of Var
+            inputs.each_with_index do |input, i|
+              type = lookup_node_type(ident_lookup, input)
+              # type = type.hierarchy_type if type.class? && type.abstract
+              yield_vars << Var.new("var#{i}", type)
+            end
+            block.args.each_with_index do |arg, i|
+              var = yield_vars[i]?
+              arg.bind_to(var || mod.nil_var)
+            end
+          else
+            block.args.each &.bind_to(mod.nil_var)
+          end
+
+          block.accept parent_visitor
+
+          if output = block_arg.type_spec.output
+            block_type = block.body.type
+            type_lookup = match.type_lookup
+            assert_type type_lookup, MatchesLookup
+
+            matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
+            unless matched
+              if output.is_a?(SelfType)
+                raise "block expected to return #{match.owner}, not #{block_type}"
+              else
+                raise "block expected to return #{output}, not #{block_type}"
+              end
+            end
+            block.body.freeze_type = true
+          end
+        end
+      end
+
+      yield_vars
+    end
+
+    def lookup_node_type(visitor, node)
+      node.accept visitor
+      visitor.type
+    end
+
+    class IdentLookupVisitor < Visitor
+      getter! type
+
+      def initialize(@mod, @match)
+      end
+
+      def visit(node : ASTNode)
+        true
+      end
+
+      def visit(node : Ident)
+        if node.names.length == 1 && @match.free_vars
+          if type = @match.free_vars[node.names.first]?
+            @type = type
+            return
+          end
+        end
+
+        @type = (node.global ? @mod : @match.type_lookup).lookup_type(node.names)
+
+        unless @type
+          node.raise("uninitialized constant #{node}")
+        end
+      end
+
+      def visit(node : NewGenericClass)
+        node.name.accept self
+
+        instance_type = @type.not_nil!
+        unless instance_type.is_a?(GenericClassType)
+          node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
+        end
+
+        if instance_type.type_vars.length != node.type_vars.length
+          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
+        end
+
+        type_vars = [] of Type
+        node.type_vars.each do |type_var|
+          type_var.accept self
+          type_vars.push @type.not_nil!
+        end
+
+        @type = instance_type.instantiate(type_vars)
+        false
+      end
+
+      def visit(node : SelfType)
+        @type = @match.owner
+        false
+      end
     end
 
     def bubbling_exception
@@ -379,7 +484,7 @@ module Crystal
       alloc = Call.new(nil, "allocate")
 
       match_def = Def.new("new", [] of Arg, [alloc] of ASTNode)
-      match = Match.new(scope, match_def, arg_types)
+      match = Match.new(scope, match_def, scope, arg_types)
 
       scope.add_def match_def
 
@@ -436,7 +541,7 @@ module Crystal
           var
         ])
 
-        new_match = Match.new(scope, match_def, match.arg_types, match.free_vars)
+        new_match = Match.new(scope, match_def, match.type_lookup, match.arg_types, match.free_vars)
 
         scope.add_def match_def
 

@@ -86,6 +86,10 @@ module Crystal
     end
   end
 
+  class Block
+    property :visited
+  end
+
   macro self.doesnt_need_const_block(klass)"
     class #{klass}
       def needs_const_block?

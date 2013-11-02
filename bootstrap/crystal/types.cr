@@ -188,7 +188,7 @@ module Crystal
 
   module MatchesLookup
     def match_def_args(args, a_def, owner, type_lookup)
-      match = Match.new(owner, a_def, [] of Type)
+      match = Match.new(owner, a_def, type_lookup, [] of Type)
       args.each_with_index do |arg, i|
         def_arg = a_def.args[i]
         match_arg_type = match_arg(arg, def_arg, owner, type_lookup, match.free_vars)
@@ -202,8 +202,12 @@ module Crystal
       match
     end
 
-    def match_arg(arg_type, arg, owner, type_lookup, free_vars)
+    def match_arg(arg_type, arg : Arg, owner, type_lookup, free_vars)
       restriction = arg.type? || arg.type_restriction
+      arg_type.not_nil!.restrict restriction, owner, type_lookup, free_vars
+    end
+
+    def match_arg(arg_type, restriction : ASTNode, owner, type_lookup, free_vars)
       arg_type.not_nil!.restrict restriction, owner, type_lookup, free_vars
     end
 

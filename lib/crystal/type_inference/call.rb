@@ -190,7 +190,7 @@ module Crystal
       if (block_arg = match.def.block_arg) && match.def.yields && match.def.yields > 0
         ident_lookup = IdentLookupVisitor.new(mod, match)
 
-        if block_arg && block_arg.type_spec.inputs
+        if block_arg.type_spec.inputs
           yield_vars = block_arg.type_spec.inputs.each_with_index.map do |input, i|
             type = lookup_node_type(ident_lookup, input)
             type = type.hierarchy_type if type.class? && type.abstract
@@ -198,11 +198,7 @@ module Crystal
           end
           block.args.each_with_index do |arg, i|
             var = yield_vars[i]
-            if var
-              arg.bind_to var
-            else
-              arg.bind_to mod.nil_var
-            end
+            arg.bind_to(var || mod.nil_var)
           end
         else
           block.args.each do |arg|
@@ -212,7 +208,7 @@ module Crystal
 
         block.accept parent_visitor
 
-        if block_arg && block_arg.type_spec.output
+        if block_arg.type_spec.output
           block_type = block.body ? block.body.type : mod.nil
           matched = match.type_lookup.match_arg(block_type, block_arg.type_spec.output, match.owner, match.owner, match.free_vars)
           unless matched

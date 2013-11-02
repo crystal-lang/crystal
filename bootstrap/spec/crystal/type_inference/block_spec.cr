@@ -102,197 +102,206 @@ describe "Block inference" do
   #   )) { union_of(self.nil, int32) }
   # end
 
-  # it "infers type of block before call" do
-  #   mod, type = assert_type(%q(
-  #     class Int32
-  #       def foo
-  #         10.5
-  #       end
-  #     end
+  it "infers type of block before call" do
+    result = assert_type("
+      class Int32
+        def foo
+          10.5
+        end
+      end
 
-  #     class Foo(T)
-  #       def initialize(x : T)
-  #         @x = x
-  #       end
-  #     end
+      class Foo(T)
+        def initialize(x : T)
+          @x = x
+        end
+      end
 
-  #     def bar(&block : Int32 -> U)
-  #       Foo(U).new(yield 1)
-  #     end
+      def bar(&block : Int32 -> U)
+        Foo(U).new(yield 1)
+      end
 
-  #     bar { |x| x.foo }
-  #     )) { types["Foo"].instantiate([float64]) }
-  #   type.should be_class
-  #   type.should be_generic
-  #   type.type_vars["T"].type.should eq(mod.float64)
-  #   type.instance_vars["@x"].type.should eq(mod.float64)
-  # end
+      bar { |x| x.foo }
+      ") do
+      foo = types["Foo"]
+      assert_type foo, GenericClassType
+      foo.instantiate([float64])
+    end
+    mod = result.program
+    type = result.node.type
+    assert_type type, GenericClassInstanceType
+    type.type_vars["T"].type.should eq(mod.float64)
+    type.instance_vars["@x"].type.should eq(mod.float64)
+  end
 
-  # it "infers type of block before call taking other args free vars into account" do
-  #   mod, type = assert_type(%q(
-  #     class Foo(X)
-  #       def initialize(x : X)
-  #         @x = x
-  #       end
-  #     end
+  it "infers type of block before call taking other args free vars into account" do
+    assert_type("
+      class Foo(X)
+        def initialize(x : X)
+          @x = x
+        end
+      end
 
-  #     def foo(x : U, &block: U -> T)
-  #       Foo(T).new(yield x)
-  #     end
+      def foo(x : U, &block: U -> T)
+        Foo(T).new(yield x)
+      end
 
-  #     a = foo(1) do |x|
-  #       10.5
-  #     end
-  #     )) { types["Foo"].instantiate([float64]) }
-  #   type.should be_class
-  #   type.should be_generic
-  #   type.type_vars["X"].type.should eq(mod.float64)
-  #   type.instance_vars["@x"].type.should eq(mod.float64)
-  # end
+      a = foo(1) do |x|
+        10.5
+      end
+      ") do
+      foo = types["Foo"]
+      assert_type foo, GenericClassType
+      foo.instantiate([float64])
+    end
+  end
 
-  # it "reports error if yields a type that's not that one in the block specification" do
-  #   assert_error %q(
-  #     def foo(&block: Int32 -> )
-  #       yield 10.5
-  #     end
+  it "reports error if yields a type that's not that one in the block specification" do
+    assert_error "
+      def foo(&block: Int32 -> )
+        yield 10.5
+      end
 
-  #     foo {}
-  #     ),
-  #     "argument #1 of yield expected to be Int32, not Float64"
-  # end
+      foo {}
+      ",
+      "argument #1 of yield expected to be Int32, not Float64"
+  end
 
-  # it "reports error if yields a type that's not that one in the block specification and type changes" do
-  #   assert_error %q(
-  #     $global = 1
+  it "reports error if yields a type that's not that one in the block specification and type changes" do
+    assert_error "
+      $global = 1
 
-  #     def foo(&block: Int32 -> )
-  #       yield $global
-  #       $global = 10.5
-  #     end
+      def foo(&block: Int32 -> )
+        yield $global
+        $global = 10.5
+      end
 
-  #     foo {}
-  #     ),
-  #     "type must be Int32, not"
-  # end
+      foo {}
+      ",
+      "type must be Int32, not"
+  end
 
-  # it "doesn't report error if yields nil but nothing is yielded" do
-  #   assert_type(%q(
-  #     def foo(&block: Int32, Nil -> )
-  #       yield 1
-  #     end
+  it "doesn't report error if yields nil but nothing is yielded" do
+    assert_type("
+      def foo(&block: Int32, Nil -> )
+        yield 1
+      end
 
-  #     foo { |x| x }
-  #     )) { int32 }
-  # end
+      foo { |x| x }
+      ") { int32 }
+  end
 
-  # it "reports error if missing arguments to yield" do
-  #   assert_error %q(
-  #     def foo(&block: Int32, Int32 -> )
-  #       yield 1
-  #     end
+  it "reports error if missing arguments to yield" do
+    assert_error "
+      def foo(&block: Int32, Int32 -> )
+        yield 1
+      end
 
-  #     foo { |x| x }
-  #     ),
-  #     "missing argument #2 of yield with type Int32"
-  # end
+      foo { |x| x }
+      ",
+      "missing argument #2 of yield with type Int32"
+  end
 
-  # it "reports error if block didn't return expected type" do
-  #   assert_error %q(
-  #     def foo(&block: Int32 -> Float64)
-  #       yield 1
-  #     end
+  it "reports error if block didn't return expected type" do
+    assert_error "
+      def foo(&block: Int32 -> Float64)
+        yield 1
+      end
 
-  #     foo { 'a' }
-  #     ),
-  #     "block expected to return Float64, not Char"
-  # end
+      foo { 'a' }
+      ",
+      "block expected to return Float64, not Char"
+  end
 
-  # it "reports error if block changes type" do
-  #   assert_error %q(
-  #     def foo(&block: Int32 -> Float64)
-  #       yield 1
-  #     end
+  it "reports error if block changes type" do
+    assert_error "
+      def foo(&block: Int32 -> Float64)
+        yield 1
+      end
 
-  #     $global = 10.5
-  #     foo { $global }
-  #     $global = 1
-  #     ),
-  #     "type must be Float64"
-  # end
+      $global = 10.5
+      foo { $global }
+      $global = 1
+      ",
+      "type must be Float64"
+  end
 
-  # it "matches block arg return type" do
-  #   assert_type(%q(
-  #     class Foo(T)
-  #     end
+  it "matches block arg return type" do
+    assert_type("
+      class Foo(T)
+      end
 
-  #     def foo(&block: Int32 -> Foo(T))
-  #       yield 1
-  #       Foo(T).new
-  #     end
+      def foo(&block: Int32 -> Foo(T))
+        yield 1
+        Foo(T).new
+      end
 
-  #     foo { Foo(Float64).new }
-  #     )) { types["Foo"].instantiate([float64]) }
-  # end
+      foo { Foo(Float64).new }
+      ") do
+      foo = types["Foo"]
+      assert_type foo, GenericClassType
+      foo.instantiate([float64])
+    end
+  end
 
-  # it "infers type of block with generic type" do
-  #   assert_type(%q(
-  #     class Foo(T)
-  #     end
+  it "infers type of block with generic type" do
+    assert_type("
+      class Foo(T)
+      end
 
-  #     def foo(&block: Foo(Int32) -> )
-  #       yield Foo(Int32).new
-  #     end
+      def foo(&block: Foo(Int32) -> )
+        yield Foo(Int32).new
+      end
 
-  #     foo do |x|
-  #       10.5
-  #     end
-  #     )) { float64 }
-  # end
+      foo do |x|
+        10.5
+      end
+      ") { float64 }
+  end
 
-  # it "infer type with self block arg" do
-  #   assert_type(%q(
-  #     class Foo
-  #       def foo(&block : self -> )
-  #         yield self
-  #       end
-  #     end
+  it "infer type with self block arg" do
+    assert_type("
+      class Foo
+        def foo(&block : self -> )
+          yield self
+        end
+      end
 
-  #     f = Foo.new
-  #     a = nil
-  #     f.foo do |x|
-  #       a = x
-  #     end
-  #     a
-  #     )) { union_of(types["Foo"], self.nil) }
-  # end
+      f = Foo.new
+      a = nil
+      f.foo do |x|
+        a = x
+      end
+      a
+      ") { |mod| union_of(types["Foo"], mod.nil) }
+  end
 
-  # it "error with self input type doesn't match" do
-  #   assert_error %q(
-  #     class Foo
-  #       def foo(&block : self -> )
-  #         yield 1
-  #       end
-  #     end
+  it "error with self input type doesn't match" do
+    assert_error "
+      class Foo
+        def foo(&block : self -> )
+          yield 1
+        end
+      end
 
-  #     f = Foo.new
-  #     f.foo {}
-  #     ),
-  #     "argument #1 of yield expected to be Foo, not Int32"
-  # end
+      f = Foo.new
+      f.foo {}
+      ",
+      "argument #1 of yield expected to be Foo, not Int32"
+  end
 
-  # it "error with self output type doesn't match" do
-  #   assert_error %q(
-  #     class Foo
-  #       def foo(&block : Int32 -> self )
-  #         yield 1
-  #       end
-  #     end
+  it "error with self output type doesn't match" do
+    assert_error "
+      class Foo
+        def foo(&block : Int32 -> self )
+          yield 1
+        end
+      end
 
-  #     f = Foo.new
-  #     f.foo { 1 }
-  #     ),
-  #     "block expected to return Foo, not Int32"
-  # end
+      f = Foo.new
+      f.foo { 1 }
+      ",
+      "block expected to return Foo, not Int32"
+  end
 
   it "errors when block varaible shadows local variable" do
     assert_syntax_error "a = 1; foo { |a| }",

@@ -271,19 +271,19 @@ module Crystal
       call = @call.not_nil!
       block = call.block || node.raise("no block given")
 
-      # if !node.scope && @yield_vars
-      #   @yield_vars.each_with_index do |var, i|
-      #     exp = node.exps[i]
-      #     if exp
-      #       unless exp.type.is_restriction_of?(var.type, exp.type)
-      #         exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp.type}"
-      #       end
-      #       exp.freeze_type = true
-      #     elsif !var.type.nil_type?
-      #       node.raise "missing argument ##{i + 1} of yield with type #{var.type}"
-      #     end
-      #   end
-      # end
+      if (yield_vars = @yield_vars) && !node.scope
+        yield_vars.each_with_index do |var, i|
+          exp = node.exps[i]?
+          if exp
+            unless exp.type.is_restriction_of?(var.type, exp.type)
+              exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp.type}"
+            end
+            exp.freeze_type = true
+          elsif !var.type.nil_type?
+            node.raise "missing argument ##{i + 1} of yield with type #{var.type}"
+          end
+        end
+      end
 
       bind_block_args_to_yield_exps block, node
 
@@ -305,6 +305,9 @@ module Crystal
     end
 
     def visit(node : Block)
+      return if node.visited
+      node.visited = true
+
       block_vars = @vars.dup
       node.args.each do |arg|
         block_vars[arg.name] = arg
@@ -321,13 +324,14 @@ module Crystal
 
       obj = node.obj
 
+      obj.add_update_input_observer node if obj
+      node.args.each &.add_update_input_observer(node)
+      # node.block_arg.add_observer node, :update_input if node.block_arg
+
+
       obj.accept self if obj
       node.args.each &.accept(self)
       node.recalculate
-
-      obj.add_observer node if obj
-      node.args.each &.add_observer(node)
-      # node.block_arg.add_observer node, :update_input if node.block_arg
 
       false
     end
