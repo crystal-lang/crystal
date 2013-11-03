@@ -53,6 +53,12 @@ module Enumerable(T)
     ary
   end
 
+  def map_with_index(&block : T, Int32 -> U)
+    ary = [] of U
+    each_with_index { |e, i| ary << yield e, i }
+    ary
+  end
+
   def flat_map(&block : T -> Array(U))
     ary = [] of U
     each { |e| ary.concat(yield e) }

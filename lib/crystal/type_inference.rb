@@ -240,11 +240,15 @@ module Crystal
         end
 
         type_vars_types = node.name.type_vars.map do |type_var|
-          type_var_name = type_var.names[0]
-          if current_type.generic? && current_type.type_vars.include?(type_var_name)
-            type_var_name
+          if type_var.is_a?(SelfType)
+            current_type
           else
-            lookup_ident_type(type_var)
+            type_var_name = type_var.names[0]
+            if current_type.generic? && current_type.type_vars.include?(type_var_name)
+              type_var_name
+            else
+              lookup_ident_type(type_var)
+            end
           end
         end
 

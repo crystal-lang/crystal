@@ -73,7 +73,7 @@ describe "Type inference: def" do
     assert_error "foo", "undefined local variable or method 'foo'"
   end
 
-  pending "reports no overload matches" do
+  it "reports no overload matches" do
     assert_error "
       def foo(x : Int)
       end
@@ -83,7 +83,7 @@ describe "Type inference: def" do
       "no overload matches"
   end
 
-  pending "reports no overload matches 2" do
+  it "reports no overload matches 2" do
     assert_error "
       def foo(x : Int, y : Int)
       end

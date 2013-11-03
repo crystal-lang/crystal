@@ -1,5 +1,7 @@
 module Crystal
   abstract class Type
+    include Enumerable(self)
+
     def self.merge(nodes : Array(ASTNode))
       nodes.find(&.type?).try &.type.program.type_merge(nodes)
     end
@@ -10,6 +12,10 @@ module Crystal
       else
         types.first.program.type_merge(types)
       end
+    end
+
+    def each
+      yield self
     end
 
     def metaclass
@@ -98,6 +104,14 @@ module Crystal
 
     def filter_by(other_type)
       implements?(other_type) ? self : nil
+    end
+
+    def cover
+      self
+    end
+
+    def cover_length
+      1
     end
 
     def lookup_def_instance(def_object_id, arg_types, block_type)
@@ -225,9 +239,7 @@ module Crystal
         end
       end
 
-      Matches.new(matches_array,
-        nil, #Cover.new(arg_types, matches_array),
-        owner)
+      Matches.new(matches_array, Cover.new(arg_types, matches_array), owner)
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
@@ -916,12 +928,14 @@ module Crystal
   end
 
   class IncludedGenericModule < Type
+    include MatchesLookup
+
     getter program
     getter :module
     getter including_class
     getter mapping
 
-    # delegate [:implements?, :lookup_matches_without_parents, :lookup_similar_defs, :lookup_macro, :defs] => :@module
+    # delegate [:lookup_similar_defs, :lookup_macro] => :@module
 
     def initialize(@program, @module, @including_class, @mapping)
     end
@@ -931,8 +945,16 @@ module Crystal
     delegate parents, @module
     delegate defs, @module
 
+    def implements?(other_type)
+      @module.implements?(other_type)
+    end
+
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
       @module.lookup_matches(name, arg_types, yields, owner, type_lookup, matches_array)
+    end
+
+    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+      @module.lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
     end
 
     def lookup_defs(name)
@@ -1291,6 +1313,12 @@ module Crystal
     def initialize(@program, @union_types)
     end
 
+    def each
+      @union_types.each do |union_type|
+        yield union_type
+      end
+    end
+
     def metaclass
       self
     end
@@ -1305,6 +1333,27 @@ module Crystal
 
     def passed_by_val?
       true
+    end
+
+    def cover
+      cover = [] of Type
+      union_types.each do |union_type|
+        union_type_cover = union_type.cover
+        if union_type_cover.is_a?(Array)
+          union_type_cover.each do |cover_type|
+            cover << cover_type
+          end
+        else
+          cover << union_type_cover
+        end
+      end
+      cover
+    end
+
+    def cover_length
+      sum = 0
+      union_types.each { |t| sum += t.cover_length }
+      sum
     end
 
     def filter_by(other_type)

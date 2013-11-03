@@ -239,6 +239,15 @@ class Array(T)
     ary
   end
 
+  def map_with_index(&block : T, Int32 -> U)
+    ary = Array(U).new(length)
+    ary.length = length
+    each_with_index do |e, i|
+      ary.buffer[i] = yield e, i
+    end
+    ary
+  end
+
   def map!
     length.times do |i|
       @buffer[i] = yield @buffer[i]

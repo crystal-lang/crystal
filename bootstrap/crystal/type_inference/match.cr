@@ -20,12 +20,13 @@ module Crystal
     def initialize(@matches, @cover, @owner = nil, @success = true)
     end
 
-    def empty?
-      !@success || @matches.empty?
+    def cover_all?
+      cover = @cover
+      @success && @matches && @matches.length > 0 && (cover == true || (cover.is_a?(Cover) && cover.all?))
     end
 
-    def cover_all?
-      !empty?
+    def empty?
+      !@success || !@matches || @matches.empty?
     end
 
     def each
