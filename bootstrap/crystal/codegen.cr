@@ -165,6 +165,10 @@ module Crystal
                 codegen_primitive_external_var_get node, target_def, call_args
               when :object_id
                 codegen_primitive_object_id node, target_def, call_args
+              when :math_sqrt_float32
+                codegen_primitive_math_sqrt_float32 node, target_def, call_args
+              when :math_sqrt_float64
+                codegen_primitive_math_sqrt_float64 node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -500,6 +504,14 @@ module Crystal
 
     def codegen_primitive_object_id(node, target_def, call_args)
       @builder.ptr2int call_args[0], LLVM::Int64
+    end
+
+    def codegen_primitive_math_sqrt_float32(node, target_def, call_args)
+      @builder.call @mod.sqrt_float32(@llvm_mod), [call_args[1]]
+    end
+
+    def codegen_primitive_math_sqrt_float64(node, target_def, call_args)
+      @builder.call @mod.sqrt_float64(@llvm_mod), [call_args[1]]
     end
 
     def visit(node : PointerOf)

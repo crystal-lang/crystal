@@ -824,6 +824,10 @@ module Crystal
         # Nothing to do
       when :object_id
         node.type = mod.uint64
+      when :math_sqrt_float32
+        node.type = mod.float32
+      when :math_sqrt_float64
+        node.type = mod.float64
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end

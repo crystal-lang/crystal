@@ -65,6 +65,8 @@ module Crystal
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
 
+      @types["Math"] = NonGenericModuleType.new self, self, "Math"
+
       @global_vars = {} of String => Var
       @requires = Set(String).new
       @temp_var_counter = 0
