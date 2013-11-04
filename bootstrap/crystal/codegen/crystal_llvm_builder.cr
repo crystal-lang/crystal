@@ -117,5 +117,6 @@ module Crystal
     forward_named icmp, "op, lhs, rhs"
     forward_named fcmp, "op, lhs, rhs"
     forward_named not, "value"
+    forward_named select, "a_cond, a_then, a_else"
   end
 end

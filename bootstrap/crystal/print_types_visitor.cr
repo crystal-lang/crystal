@@ -57,7 +57,7 @@ module Crystal
 
     def output_name(node)
       if !node.name.starts_with?('#') && !@vars.includes?(node.name)
-        puts "#{node.name} : #{node.type}"
+        puts "#{node.name} : #{node.type?}"
         @vars.add node.name
       end
     end

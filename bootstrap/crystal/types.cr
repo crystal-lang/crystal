@@ -62,6 +62,10 @@ module Crystal
       false
     end
 
+    def nilable?
+      false
+    end
+
     def generic?
       false
     end
@@ -1387,15 +1391,31 @@ module Crystal
     end
 
     def to_s
-      # if nilable?
-      #   "#{nilable_type}?"
-      # else
-        @union_types.join " | "
-      # end
+      @union_types.join " | "
     end
 
     def type_desc
       "union"
+    end
+  end
+
+  class NilableType < UnionType
+    getter :not_nil_type
+
+    def initialize(@program, @not_nil_type)
+      super(@program, [@program.nil, @not_nil_type] of Type)
+    end
+
+    def union?
+      false
+    end
+
+    def nilable?
+      true
+    end
+
+    def to_s
+      "#{@not_nil_type}?"
     end
   end
 

@@ -4,6 +4,7 @@ module Crystal
     attr_accessor :dependencies
     attr_accessor :type_filters
     attr_accessor :freeze_type
+    attr_accessor :observers
 
     def set_type(type)
       if @freeze_type && !@type.is_restriction_of_all?(type)

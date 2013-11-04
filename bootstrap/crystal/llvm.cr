@@ -94,6 +94,25 @@ lib LibLLVM("LLVM-3.3")
     PredicateTrue
   end
 
+  enum TypeKind
+    Void
+    Half
+    Float
+    Double
+    X86_FP80
+    FP128
+    PPC_FP128
+    Label
+    Integer
+    Function
+    Struct
+    Array
+    Pointer
+    Vector
+    Metadata
+    X86_MMX
+  end
+
   enum CodeGenOptLevel
     None
     Less
@@ -156,6 +175,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_ret = LLVMBuildRet(builder : BuilderRef, value : ValueRef) : ValueRef
   fun build_ret_void = LLVMBuildRetVoid(builder : BuilderRef) : ValueRef
   fun build_sdiv = LLVMBuildSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
+  fun build_select = LLVMBuildSelect(builder : BuilderRef, if_value : ValueRef, then_value : ValueRef, else_value : ValueRef, name : Char*) : ValueRef
   fun build_sext = LLVMBuildSExt(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_shl = LLVMBuildShl(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_si2fp = LLVMBuildSIToFP(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
@@ -199,6 +219,7 @@ lib LibLLVM("LLVM-3.3")
   fun get_target_name = LLVMGetTargetName(target : TargetRef) : Char*
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : Char*
   fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
+  fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : TypeKind
   fun initialize_x86_target = LLVMInitializeX86Target()
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
@@ -235,6 +256,10 @@ module LLVM
 
   def self.type_of(value)
     LibLLVM.type_of(value)
+  end
+
+  def self.type_kind_of(value)
+    LibLLVM.get_type_kind(value)
   end
 
   def self.size_of(type)
@@ -495,6 +520,10 @@ module LLVM
 
     def unreachable
       LibLLVM.build_unreachable(@builder)
+    end
+
+    def select(cond, a_then, a_else, name = "")
+      LibLLVM.build_select @builder, cond, a_then, a_else, name
     end
   end
 

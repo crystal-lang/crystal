@@ -15,10 +15,12 @@ module Crystal
       if (defs = @target_defs)
         if defs.length == 1
           return defs[0]
+        else
+          ::raise "#{defs.length} target defs for #{self}"
         end
       end
 
-      ::raise "Zero or more than one target def for #{self}"
+      ::raise "Zero target defs for #{self}"
     end
 
     def update_input(from)

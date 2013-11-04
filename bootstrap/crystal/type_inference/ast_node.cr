@@ -5,6 +5,8 @@ module Crystal
     property! dependencies
     property type_filters
     property freeze_type
+    property observers
+    property input_observers
 
     def set_type(type : Type)
       if @freeze_type
@@ -53,6 +55,10 @@ module Crystal
       propagate
     end
 
+    def unbind_from(nodes : Nil)
+      # Nothing to do
+    end
+
     def unbind_from(nodes)
       @dependencies.try do |dependencies|
         nodes.each do |node|
@@ -67,9 +73,9 @@ module Crystal
       @observers << observer
     end
 
-    def add_update_input_observer(observer)
-      @update_input_observers ||= [] of Call
-      @update_input_observers << observer
+    def add_input_observer(observer)
+      @input_observers ||= [] of Call
+      @input_observers << observer
     end
 
     def remove_observer(observer)

@@ -671,13 +671,10 @@ module Crystal
 
     def codegen_cond(type : BoolType)
       @last
-      # elsif node_cond.type.nilable?
-      #   cond = not_null_pointer?(@last)
-      # elsif node_cond.type.hierarchy?
-      #   cond = int1(1)
-      # elsif node_cond.type.is_a?(PointerInstanceType)
-      #   cond = not_null_pointer?(@last)
-      # end
+    end
+
+    def codegen_cond(type : NilableType)
+      not_null_pointer?(@last)
     end
 
     def codegen_cond(type : UnionType)
@@ -705,6 +702,14 @@ module Crystal
       else
         cond = int1(1)
       end
+    end
+
+    def codegen_cond(type : PointerInstanceType)
+      not_null_pointer?(@last)
+    end
+
+    def codegen_cond(type : TypeDefType)
+      codegen_cond type.typedef
     end
 
     def codegen_cond(node_cond)
@@ -745,13 +750,13 @@ module Crystal
       end
 
       def add_value(block, type, value)
-        # if branch[:node].type.nilable? && value.type.kind == :integer
-        #   branch[:phi_table][@builder.insert_block] = @builder.int2ptr value, llvm_type(branch[:node].type)
-        # else
-        #   branch[:phi_table][@builder.insert_block] = value
-        # end
         @incoming_blocks << block
-        @incoming_values << value
+
+        if @node.type.nilable? && LLVM.type_kind_of(LLVM.type_of value) == LibLLVM::TypeKind::Integer
+          @incoming_values << @codegen.builder.int2ptr(value, @codegen.llvm_type(node.type))
+        else
+          @incoming_values << value
+        end
         @count += 1
       end
 
@@ -885,27 +890,27 @@ module Crystal
       nil
     end
 
-    def assign_to_union(union_pointer, union_type, type, value)
-      # if union_type.nilable?
-      #   if value.type.kind == :integer
-      #     value = @builder.int2ptr value, llvm_type(union_type.nilable_type)
-      #   end
-      #   @builder.store value, union_pointer
-      #   return
-      # end
+    def assign_to_union(union_pointer, union_type : NilableType, type, value)
+      if LLVM.type_kind_of(LLVM.type_of value) == LibLLVM::TypeKind::Integer
+        value = @builder.int2ptr value, llvm_type(union_type)
+      end
+      @builder.store value, union_pointer
+      nil
+    end
 
+    def assign_to_union(union_pointer, union_type, type, value)
       type_id_ptr, value_ptr = union_type_id_and_value(union_pointer)
 
       if type.union?
         casted_value = cast_to_pointer value, union_type
         @builder.store @builder.load(casted_value), union_pointer
-      # elsif type.nilable?
-      #   index = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.nilable_type.type_id)
+      elsif type.is_a?(NilableType)
+        index = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.not_nil_type.type_id)
 
-      #   @builder.store index, type_id_ptr
+        @builder.store index, type_id_ptr
 
-      #   casted_value_ptr = cast_to_pointer value_ptr, type.nilable_type
-      #   @builder.store value, casted_value_ptr
+        casted_value_ptr = cast_to_pointer value_ptr, type.not_nil_type
+        @builder.store value, casted_value_ptr
       else
         index = type.type_id
         @builder.store int32(index), type_id_ptr
@@ -913,6 +918,7 @@ module Crystal
         casted_value_ptr = cast_to_pointer value_ptr, type
         @builder.store value, casted_value_ptr
       end
+      nil
     end
 
     def union_type_id_and_value(union_pointer)
@@ -931,15 +937,16 @@ module Crystal
 
     def visit(node : Var)
       var = @vars[node.name]
+      var_type = var.type
       @last = var.pointer
-      if var.type == node.type
-        @last = @builder.load(@last) unless var.treated_as_pointer || var.type.union?
-      # elsif var.type.nilable?
-      #   if node.type.nil_type?
-      #     @last = null_pointer?(@last)
-      #   else
-      #     @last = @builder.load(@last, node.name) unless (var.treated_as_pointer || var.type.union?)
-      #   end
+      if var_type == node.type
+        @last = @builder.load(@last) unless var.treated_as_pointer || var_type.union?
+      elsif var_type.is_a?(NilableType)
+        if node.type.nil_type?
+          @last = null_pointer?(@last)
+        else
+          @last = @builder.load(@last) unless var.treated_as_pointer
+        end
       elsif node.type.union?
         @last = cast_to_pointer @last, node.type
       else
@@ -951,25 +958,25 @@ module Crystal
 
     def visit(node : CastedVar)
       var = @vars[node.name]
+      var_type = var.type
       @last = var.pointer
-      if var.type == @mod.void
+      if var_type == @mod.void
         # Nothing to do
-      elsif var.type == node.type
-        @last = @builder.load(@last) unless (var.treated_as_pointer || var.type.union?)
-      # elsif var.type.nilable?
-      #   if node.type.nil_type?
-      #     @last = llvm_nil
-      #   elsif node.type.equal?(@mod.object)
-      #     @last = cast_to var[:ptr], @mod.object
+      elsif var_type == node.type
+        @last = @builder.load(@last) unless (var.treated_as_pointer || var_type.union?)
+      elsif var_type.is_a?(NilableType)
+        if node.type.nil_type?
+          @last = llvm_nil
+        elsif node.type == @mod.object
+          @last = cast_to @last, @mod.object
       #   elsif node.type.equal?(@mod.object.hierarchy_type)
       #     @last = box_object_in_hierarchy(var.type, node.type, var[:ptr], !var.treated_as_pointer)
-      #   else
-      #     @last = var[:ptr]
-      #     @last = @builder.load(@last, node.name) unless (var.treated_as_pointer || var.type.union?)
-      #     if node.type.hierarchy?
-      #       @last = box_object_in_hierarchy(var.type.nilable_type, node.type, @last, !var.treated_as_pointer)
-      #     end
-      #   end
+        else
+          @last = @builder.load(@last, node.name) unless var.treated_as_pointer
+          # if node.type.hierarchy?
+          #   @last = box_object_in_hierarchy(var.type.nilable_type, node.type, @last, !var.treated_as_pointer)
+          # end
+        end
       elsif var.type.metaclass?
         # Nothing to do
       elsif node.type.union?
@@ -1707,6 +1714,14 @@ module Crystal
 
     def gep(ptr, index0, index1)
       @builder.gep ptr, [int32(index0), int32(index1)]
+    end
+
+    def null_pointer?(value)
+      @builder.icmp LibLLVM::IntPredicate::EQ, @builder.ptr2int(value, LLVM::Int32), int(0)
+    end
+
+    def not_null_pointer?(value)
+      @builder.icmp LibLLVM::IntPredicate::NE, @builder.ptr2int(value, LLVM::Int32), int(0)
     end
 
     def malloc(type)

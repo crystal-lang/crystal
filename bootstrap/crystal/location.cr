@@ -10,5 +10,9 @@ module Crystal
     def clone
       Location.new(@line_number, @column_number, @filename)
     end
+
+    def to_s
+      "#{filename}:#{line_number}:#{column_number}"
+    end
   end
 end

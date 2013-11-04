@@ -40,6 +40,7 @@ module Spec
       when :pending
         print '*'
       end
+      C.fflush nil
       @results[kind] << Result.new(kind, description, ex)
     end
 

@@ -493,7 +493,7 @@ module Crystal
           @last = null_pointer?(var[:ptr])
         else
           @last = var[:ptr]
-          @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+          @last = @builder.load(@last, node.name) unless var[:treated_as_pointer]
         end
       elsif node.type.union?
         @last = cast_to_pointer var[:ptr], node.type
@@ -520,7 +520,7 @@ module Crystal
           @last = box_object_in_hierarchy(var[:type], node.type, var[:ptr], !var[:treated_as_pointer])
         else
           @last = var[:ptr]
-          @last = @builder.load(@last, node.name) unless (var[:treated_as_pointer] || var[:type].union?)
+          @last = @builder.load(@last, node.name) unless var[:treated_as_pointer]
           if node.type.hierarchy?
             @last = box_object_in_hierarchy(var[:type].nilable_type, node.type, @last, !var[:treated_as_pointer])
           end

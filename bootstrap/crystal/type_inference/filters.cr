@@ -30,11 +30,17 @@ module Crystal
   end
 
   class SimpleTypeFilter < TypeFilter
+    getter type
+
     def initialize(@type)
     end
 
     def apply(other)
       other.try &.filter_by(@type)
+    end
+
+    def ==(other : self)
+      @type == other.type
     end
 
     def to_s
@@ -43,8 +49,10 @@ module Crystal
   end
 
   class AndTypeFilter < TypeFilter
+    getter filters
+
     def initialize(filters)
-      @filters = filters#.uniq
+      @filters = Set(TypeFilter).new(filters)
     end
 
     def apply(other)
@@ -55,12 +63,47 @@ module Crystal
       type
     end
 
+    def ==(other : self)
+      @filters == other.filters
+    end
+
     def to_s
       "(#{@filters.join " && "})"
     end
   end
 
+  class NotNilFilter < TypeFilter
+    def self.instance
+      @@instance
+    end
+
+    def apply(other)
+      return nil unless other
+
+      case other
+      when NilType
+        return nil
+      when UnionType
+        return Type.merge(other.union_types.select { |type| !type.nil_type? })
+      else
+        other
+      end
+    end
+
+    def ==(other : self)
+      true
+    end
+
+    def to_s
+      "!F(Nil)"
+    end
+
+    @@instance = NotNilFilter.new
+  end
+
   class NotFilter < TypeFilter
+    getter filter
+
     def initialize(filter)
       @filter = filter
     end
@@ -90,6 +133,14 @@ module Crystal
       else
         Type.merge(resulting_types)
       end
+    end
+
+    def ==(other : self)
+      @filter == other.filter
+    end
+
+    def to_s
+      "!#{@filter}"
     end
   end
 end

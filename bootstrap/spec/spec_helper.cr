@@ -44,6 +44,12 @@ def assert_normalize(from, to)
   to_nodes.to_s.strip.should eq(to.strip)
 end
 
+def assert_after_type_inference(before, after)
+  node = Parser.parse(before)
+  result = infer_type node
+  result.node.to_s.strip.should eq(after.strip)
+end
+
 def assert_syntax_error(str, message)
   begin
     parse str

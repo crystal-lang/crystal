@@ -13,7 +13,7 @@ module Crystal
     def initialize
       super(self, self, "main")
 
-      @unions = {} of Array(Int32) => UnionType
+      @unions = {} of Array(Int32) => Type
 
       @object = @types["Object"] = NonGenericClassType.new self, self, "Object", nil
       @object.abstract = true
@@ -155,6 +155,16 @@ module Crystal
         types.first
       else
         types_ids = types.map(&.type_id).sort!
+
+        if types_ids.length == 2 && types_ids[0] == 0 # NilType has type_id == 0
+          nil_index = types.index(&.nil_type?).not_nil!
+          other_index = 1 - nil_index
+          other_type = types[other_index]
+          if other_type.class?
+            return @unions[types_ids] ||= NilableType.new(self, other_type)
+          end
+        end
+
         @unions[types_ids] ||= UnionType.new(self, types)
       end
     end

@@ -8,7 +8,7 @@ module Crystal
     def infer_type(node)
       node.accept TypeVisitor.new(self)
       fix_empty_types node
-      node
+      after_type_inference node
     end
   end
 
@@ -78,7 +78,7 @@ module Crystal
       var = @vars[node.name]
       filter = build_var_filter var
       node.bind_to(filter || var)
-      # node.type_filters = and_type_filters({node.name => NotNilFilter}, var.type_filters)
+      node.type_filters = and_type_filters(not_nil_filter(node), var.type_filters)
     end
 
     def visit(node : Global)
@@ -94,9 +94,9 @@ module Crystal
     def visit(node : InstanceVar)
       var = lookup_instance_var node
 
-      # filter = build_var_filter var
-      # node.bind_to(filter || var)
-      # node.type_filters = {node.name => NotNilFilter}
+      filter = build_var_filter var
+      node.bind_to(filter || var)
+      node.type_filters = not_nil_filter(node)
       node.bind_to var
     end
 
@@ -170,6 +170,8 @@ module Crystal
 
       node.bind_to value
       var.bind_to node
+
+      var.type_filters = node.type_filters = and_type_filters(not_nil_filter(target), value.type_filters) if node
     end
 
     def type_assign(target : InstanceVar, value, node)
@@ -324,10 +326,9 @@ module Crystal
 
       obj = node.obj
 
-      obj.add_update_input_observer node if obj
-      node.args.each &.add_update_input_observer(node)
+      obj.add_input_observer node if obj
+      node.args.each &.add_input_observer(node)
       # node.block_arg.add_observer node, :update_input if node.block_arg
-
 
       obj.accept self if obj
       node.args.each &.accept(self)
@@ -368,7 +369,7 @@ module Crystal
       node.type = mod.bool
       obj = node.obj
       if obj.is_a?(Var)
-        node.type_filters = {obj.name => SimpleTypeFilter.new(node.const.type.instance_type)} of String => TypeFilter
+        node.type_filters = new_type_filter(obj, SimpleTypeFilter.new(node.const.type.instance_type))
       end
     end
 
@@ -728,12 +729,12 @@ module Crystal
         end
       end
 
-      # case node.binary
-      # when :and
-      #   node.type_filters = and_type_filters(and_type_filters(node.cond.type_filters, node.then.type_filters), node.else.type_filters)
-      # when :or
-      #   node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
-      # end
+      case node.binary
+      when :and
+        node.type_filters = and_type_filters(and_type_filters(node.cond.type_filters, node.then.type_filters), node.else.type_filters)
+      when :or
+        node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
+      end
 
       # If the then branch exists, we can safely assume that tyhe type
       # filters after the if will be those of the condition, negated
@@ -758,11 +759,14 @@ module Crystal
       node.cond.accept self
 
       # @while_stack.push node
-      # @type_filter_stack.push node.cond.type_filters if node.cond.type_filters
+      if type_filters = node.cond.type_filters
+        pushing_type_filters(type_filters) do
+          node.body.accept self
+        end
+      else
+        node.body.accept self
+      end
 
-      node.body.accept self
-
-      # @type_filter_stack.pop
       # @while_stack.pop
 
       node.type = @mod.nil
@@ -956,6 +960,34 @@ module Crystal
       filtered_node
     end
 
+    def and_type_filters(filters1, filters2)
+      if filters1 && filters2
+        new_filters = new_type_filter
+        all_keys = (filters1.keys + filters2.keys).uniq!
+        all_keys.each do |name|
+          filter1 = filters1[name]?
+          filter2 = filters2[name]?
+          if filter1 && filter2
+            new_filters[name] = AndTypeFilter.new([filter1, filter2] of TypeFilter)
+          elsif filter1
+            new_filters[name] = filter1
+          elsif filter2
+            new_filters[name] = filter2
+          end
+        end
+        new_filters
+      elsif filters1
+        filters1
+      else
+        filters2
+      end
+    end
+
+    def or_type_filters(filters1, filters2)
+      # TODO: or type filters
+      nil
+    end
+
     def negate_filters(filters_hash)
       negated_filters = new_type_filter
       filters_hash.each do |name, filter|
@@ -972,6 +1004,16 @@ module Crystal
 
     def new_type_filter
       {} of String => TypeFilter
+    end
+
+    def new_type_filter(node, filter)
+      new_filter = new_type_filter
+      new_filter[node.name] = filter
+      new_filter
+    end
+
+    def not_nil_filter(node)
+      new_type_filter(node, NotNilFilter.instance)
     end
 
     def current_type
