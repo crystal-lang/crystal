@@ -822,6 +822,8 @@ module Crystal
         # Nothing to do
       when :external_var_get
         # Nothing to do
+      when :object_id
+        node.type = mod.uint64
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end

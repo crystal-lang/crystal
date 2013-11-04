@@ -7,6 +7,7 @@ module Crystal
   class Program
     def define_primitives
       define_primitive_types_primitives
+      define_reference_primitives
       define_pointer_primitives
       define_type_sizes
     end
@@ -67,6 +68,10 @@ module Crystal
       end
 
       singleton(char, "ord", args, int32, cast)
+    end
+
+    def define_reference_primitives
+      reference.add_def Def.new("object_id", ([] of Arg), Primitive.new(:object_id))
     end
 
     def define_pointer_primitives

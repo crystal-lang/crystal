@@ -163,6 +163,8 @@ module Crystal
                 codegen_primitive_external_var_set node, target_def, call_args
               when :external_var_get
                 codegen_primitive_external_var_get node, target_def, call_args
+              when :object_id
+                codegen_primitive_object_id node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -496,13 +498,21 @@ module Crystal
       @builder.load var
     end
 
+    def codegen_primitive_object_id(node, target_def, call_args)
+      @builder.ptr2int call_args[0], LLVM::Int64
+    end
+
     def visit(node : PointerOf)
       node_var = node.var
       case node_var
       when Var
         var = @vars[node_var.name]
         @last = var.pointer
-        # @last = @builder.load @last if node.type.var.type.c_struct? || node.type.var.type.c_union?
+
+        node_type = node.type
+        assert_type node_type, PointerInstanceType
+
+        @last = @builder.load @last if node_type.var.type.c_struct? || node_type.var.type.c_union?
       when InstanceVar
         type = @type
         assert_type type, InstanceVarContainer

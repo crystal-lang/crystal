@@ -117,6 +117,10 @@ describe "Type inference: class" do
     end
   end
 
+  it "types object_id" do
+    assert_type("Reference.new.object_id") { uint64 }
+  end
+
   it "reports uninitialized constant" do
     assert_error "Foo.new",
       "uninitialized constant Foo"
