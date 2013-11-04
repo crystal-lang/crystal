@@ -77,8 +77,11 @@ module Crystal
       @struct_cache[type] ||= create_llvm_struct_type(type)
     end
 
+
     def create_llvm_struct_type(type : InstanceVarContainer)
-      LLVM.struct_type(type.llvm_name) do
+      LLVM.struct_type(type.llvm_name) do |struct|
+        @struct_cache[type] = struct
+
         ivars = type.all_instance_vars
         element_types = Array(LibLLVM::TypeRef).new(ivars.length)
         ivars.each { |name, ivar| element_types.push llvm_embedded_type(ivar.type) }
@@ -87,7 +90,9 @@ module Crystal
     end
 
     def create_llvm_struct_type(type : CStructType)
-      LLVM.struct_type(type.llvm_name) do
+      LLVM.struct_type(type.llvm_name) do |struct|
+        @struct_cache[type] = struct
+
         vars = type.vars
         element_types = Array(LibLLVM::TypeRef).new(vars.length)
         vars.each { |name, var| element_types.push llvm_embedded_type(var.type) }

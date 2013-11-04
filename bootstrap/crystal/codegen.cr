@@ -182,6 +182,18 @@ module Crystal
       end
     end
 
+    def codegen_binary_op(op, t1 : CharType, t2 : CharType, p1, p2)
+      case op
+      when "==" then return @builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
+      when "!=" then return @builder.icmp LibLLVM::IntPredicate::NE, p1, p2
+      when "<" then return @builder.icmp LibLLVM::IntPredicate::ULT, p1, p2
+      when "<=" then return @builder.icmp LibLLVM::IntPredicate::ULE, p1, p2
+      when ">" then return @builder.icmp LibLLVM::IntPredicate::UGT, p1, p2
+      when ">=" then return @builder.icmp LibLLVM::IntPredicate::UGT, p1, p2
+      else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+      end
+    end
+
     def codegen_binary_op(op, t1 : IntegerType, t2 : IntegerType, p1, p2)
       if t1.normal_rank == t2.normal_rank
         # Nothing to do

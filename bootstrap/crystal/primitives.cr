@@ -39,6 +39,9 @@ module Crystal
         end
       end
 
+      args["other"] = char
+      cmps.each { |cmp| singleton(char, cmp, args, bool, binary) }
+
       args["other"] = bool
       singleton(bool, "==", args, bool, binary)
       singleton(bool, "!=", args, bool, binary)

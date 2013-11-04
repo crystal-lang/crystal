@@ -533,7 +533,7 @@ module LLVM
 
   def self.struct_type(name, packed = false)
     struct = LibLLVM.struct_create_named(Context.global, name)
-    element_types = yield
+    element_types = yield struct
     LibLLVM.struct_set_body(struct, element_types.buffer, element_types.length.to_u32, packed ? 1 : 0)
     struct
   end
