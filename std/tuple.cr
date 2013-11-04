@@ -1,3 +1,28 @@
+macro make_tuple(name, field0)
+  "
+  class #{name}
+    getter #{field0}
+
+    def initialize(@#{field0})
+    end
+
+    def ==(other : self)
+      other.#{field0} == #{field0}
+    end
+
+    def hash
+      hash = 0
+      hash = 31 * hash + #{field0}.hash
+      hash
+    end
+
+    def to_s
+      \"#{name}(#{field0} = \#{#{field0}})\"
+    end
+  end
+  "
+end
+
 macro make_tuple(name, field0, field1)
   "
   class #{name}

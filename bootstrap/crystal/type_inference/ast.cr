@@ -62,6 +62,19 @@ module Crystal
     end
   end
 
+  class Macro
+    make_tuple InstanceKey, types
+
+    def add_instance(a_fun, arg_types)
+      @instances ||= {} of InstanceKey => LLVM::Function
+      @instances[InstanceKey.new(arg_types)] = a_fun
+    end
+
+    def lookup_instance(arg_types)
+      @instances ? @instances[InstanceKey.new(arg_types)]? : nil
+    end
+  end
+
   class ClassVar
     property! owner
     property! var

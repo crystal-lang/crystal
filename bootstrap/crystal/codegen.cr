@@ -29,8 +29,8 @@ module Crystal
       engine.run_function llvm_mod.functions[MAIN_NAME], [argc, argv]
     end
 
-    def build(node)
-      visitor = CodeGenVisitor.new(self, node)
+    def build(node, llvm_mod = LLVM::Module.new("main"))
+      visitor = CodeGenVisitor.new(self, node, llvm_mod)
       begin
         node.accept visitor
         visitor.finish
@@ -61,8 +61,7 @@ module Crystal
     getter :main
     getter! :type
 
-    def initialize(@mod, @node)
-      @llvm_mod = LLVM::Module.new("Crystal")
+    def initialize(@mod, @node, @llvm_mod)
       @main_mod = @llvm_mod
       @llvm_typer = LLVMTyper.new
       @main_ret_type = node.type
@@ -1155,7 +1154,7 @@ module Crystal
 
           if const.value.needs_const_block?
             in_const_block("const_#{global_name}") do
-              accept(const.value)
+              accept(const.not_nil!.value)
 
               if LLVM.constant? @last
                 LLVM.set_initializer global, @last
@@ -1267,6 +1266,11 @@ module Crystal
     end
 
     def visit(node : Call)
+      if target_macro = node.target_macro
+        accept(target_macro)
+        return false
+      end
+
       target_defs = node.target_defs
 
       if target_defs && target_defs.length > 1

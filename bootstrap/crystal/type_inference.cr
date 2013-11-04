@@ -251,17 +251,19 @@ module Crystal
     end
 
     def visit(node : Macro)
-      # if node.receiver
-      #   # TODO: hack
-      #   if node.receiver.is_a?(Var) && node.receiver.name == 'self'
-      #     target_type = current_type.metaclass
-      #   else
-      #     target_type = lookup_ident_type(node.receiver).metaclass
-      #   end
-      # else
-      #   target_type = current_type
-      # end
-      # target_type.add_macro node
+      if receiver = node.receiver
+        # TODO: hack
+        if receiver.is_a?(Var) && receiver.name == "self"
+          target_type = current_type.metaclass
+        else
+          target_type = lookup_ident_type(receiver).metaclass
+        end
+      else
+        target_type = current_type
+      end
+
+      target_type.add_macro node
+
       false
     end
 
@@ -324,6 +326,10 @@ module Crystal
     def visit(node : Call)
       prepare_call(node)
 
+      if expand_macro(node)
+        return false
+      end
+
       obj = node.obj
 
       obj.add_input_observer node if obj
@@ -346,6 +352,47 @@ module Crystal
         node.scope = @scope || @types.last.metaclass
       # end
       node.parent_visitor = self
+    end
+
+    def expand_macro(node)
+      return false if node.obj || node.name == "super"
+
+      untyped_def = node.scope.lookup_macro(node.name, node.args.length)
+      if !untyped_def && node.scope.metaclass? && node.scope.instance_type.module?
+        untyped_def = @mod.object.metaclass.lookup_macro(node.name, node.args.length)
+      end
+      untyped_def ||= mod.lookup_macro(node.name, node.args.length)
+      return false unless untyped_def
+
+      macros_cache_key = MacroCacheKey.new(untyped_def.object_id, node.args.map(&.crystal_type_id))
+      expander = mod.macros_cache[macros_cache_key] ||= MacroExpander.new(mod, untyped_def)
+
+      generated_source = expander.expand node
+
+      begin
+        parser = Parser.new(generated_source, [Set.new(@vars.keys)])
+        # parser.filename = VirtualFile.new(untyped_def, generated_source)
+        generated_nodes = parser.parse
+      rescue ex : Crystal::SyntaxException
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}#{"=" * 80}"
+      end
+
+      generated_nodes = mod.normalize(generated_nodes)
+
+      begin
+        generated_nodes.accept self
+      rescue ex : Crystal::Exception
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}#{"=" * 80}"
+      end
+
+      node.target_macro = generated_nodes
+      node.bind_to generated_nodes
+
+      true
+    end
+
+    def number_lines(source)
+      source.lines.to_s_with_line_numbers
     end
 
     def end_visit(node : NewGenericClass)

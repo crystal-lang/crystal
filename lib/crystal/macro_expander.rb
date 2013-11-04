@@ -49,10 +49,5 @@ module Crystal
 
       macro_value.to_string
     end
-
-    def number_lines(source)
-      source.lines.to_s_with_line_numbers
-    end
-
   end
 end

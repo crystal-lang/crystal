@@ -36,14 +36,16 @@ module Crystal
       end
     end
 
-    def to_s
+    def to_s(source = nil)
       filename = @filename
 
       String.build do |str|
         if filename && File.exists?(filename)
-          source = File.read(filename)
+          the_source = File.read(filename)
+        else
+          the_source = source
         end
-        append_to_s str, source
+        append_to_s str, the_source
       end
     end
 

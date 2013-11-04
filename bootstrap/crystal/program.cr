@@ -2,6 +2,8 @@ require "types"
 require "llvm"
 
 module Crystal
+  make_tuple MacroCacheKey, def_object_id, node_ids
+
   class Program < NonGenericModuleType
     include DefContainer
     include DefInstanceContainer
@@ -9,63 +11,65 @@ module Crystal
     include ClassVarContainer
 
     getter global_vars
+    getter macros_cache
 
     def initialize
       super(self, self, "main")
 
       @unions = {} of Array(Int32) => Type
+      @macros_cache = {} of MacroCacheKey => MacroExpander
 
-      @object = @types["Object"] = NonGenericClassType.new self, self, "Object", nil
+      @types["Object"] = @object = NonGenericClassType.new self, self, "Object", nil
       @object.abstract = true
 
-      @reference = @types["Reference"] = NonGenericClassType.new self, self, "Reference", @object
-      @value = @types["Value"] = ValueType.new self, self, "Value", @object
-      @number = @types["Number"] = ValueType.new self, self, "Number", @value
+      @types["Reference"] = @reference = NonGenericClassType.new self, self, "Reference", @object
+      @types["Value"] = @value = ValueType.new self, self, "Value", @object
+      @types["Number"] = @number = ValueType.new self, self, "Number", @value
 
-      @no_return = @types["NoReturn"] = NoReturnType.new self
-      @void = @types["Void"] = PrimitiveType.new self, self, "Void", @value, LLVM::Int8, 1
-      @nil = @types["Nil"] = NilType.new self, self, "Nil", @value, LLVM::Int1, 1
-      @bool = @types["Bool"] = BoolType.new self, self, "Bool", @value, LLVM::Int1, 1
-      @char = @types["Char"] = CharType.new self, self, "Char", @value, LLVM::Int8, 1
+      @types["NoReturn"] = @no_return = NoReturnType.new self
+      @types["Void"] = @void = PrimitiveType.new self, self, "Void", @value, LLVM::Int8, 1
+      @types["Nil"] = @nil = NilType.new self, self, "Nil", @value, LLVM::Int1, 1
+      @types["Bool"] = @bool = BoolType.new self, self, "Bool", @value, LLVM::Int1, 1
+      @types["Char"] = @char = CharType.new self, self, "Char", @value, LLVM::Int8, 1
 
-      @int = @types["Int"] = ValueType.new self, self, "Int", @number
+      @types["Int"] = @int = ValueType.new self, self, "Int", @number
       @int.abstract = true
 
-      @int8 = @types["Int8"] = IntegerType.new self, self, "Int8", @int, LLVM::Int8, 1, 1
-      @uint8 = @types["UInt8"] = IntegerType.new self, self, "UInt8", @int, LLVM::Int8, 1, 2
-      @int16 = @types["Int16"] = IntegerType.new self, self, "Int16", @int, LLVM::Int16, 2, 3
-      @uint16 = @types["UInt16"] = IntegerType.new self, self, "UInt16", @int, LLVM::Int16, 2, 4
-      @int32 = @types["Int32"] = IntegerType.new self, self, "Int32", @int, LLVM::Int32, 4, 5
-      @uint32 = @types["UInt32"] = IntegerType.new self, self, "UInt32", @int, LLVM::Int32, 4, 6
-      @int64 = @types["Int64"] = IntegerType.new self, self, "Int64", @int, LLVM::Int64, 8, 7
-      @uint64 = @types["UInt64"] = IntegerType.new self, self, "UInt64", @int, LLVM::Int64, 8, 8
+      @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", @int, LLVM::Int8, 1, 1
+      @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", @int, LLVM::Int8, 1, 2
+      @types["Int16"] = @int16 = IntegerType.new self, self, "Int16", @int, LLVM::Int16, 2, 3
+      @types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", @int, LLVM::Int16, 2, 4
+      @types["Int32"] = @int32 = IntegerType.new self, self, "Int32", @int, LLVM::Int32, 4, 5
+      @types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", @int, LLVM::Int32, 4, 6
+      @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", @int, LLVM::Int64, 8, 7
+      @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", @int, LLVM::Int64, 8, 8
 
-      @float = @types["Float"] = ValueType.new self, self, "Float", @number
+      @types["Float"] = @float = ValueType.new self, self, "Float", @number
       @float.abstract = true
 
-      @float32 = @types["Float32"] = FloatType.new self, self, "Float32", @float, LLVM::Float, 4, 9
+      @types["Float32"] = @float32 = FloatType.new self, self, "Float32", @float, LLVM::Float, 4, 9
       @float32.types["INFINITY"] = Const.new self, @float32, "FLOAT_INFINITY", Primitive.new(:float32_infinity)
 
-      @float64 = @types["Float64"] = FloatType.new self, self, "Float64", @float, LLVM::Double, 8, 10
+      @types["Float64"] = @float64 = FloatType.new self, self, "Float64", @float, LLVM::Double, 8, 10
       @float64.types["INFINITY"] = Const.new self, @float64, "FLOAT_INFINITY", Primitive.new(:float64_infinity)
 
-      @symbol = @types["Symbol"] = PrimitiveType.new self, self, "Symbol", @value, LLVM::Int32, 4
+      @types["Symbol"] = @symbol = PrimitiveType.new self, self, "Symbol", @value, LLVM::Int32, 4
       @pointer = @types["Pointer"] = PointerType.new self, self, "Pointer", value, ["T"]
 
-      @string = @types["String"] = NonGenericClassType.new self, self, "String", @reference
+      @types["String"] = @string = NonGenericClassType.new self, self, "String", @reference
       @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
       # @string.allocated = true
 
       @string.lookup_instance_var("@length").type = @int32
       @string.lookup_instance_var("@c").type = @char
 
-      @array = @types["Array"] = GenericClassType.new self, self, "Array", @reference, ["T"]
+      @types["Array"] = @array = GenericClassType.new self, self, "Array", @reference, ["T"]
       @types["Exception"] = NonGenericClassType.new self, self, "Exception", @reference
 
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
 
-      @types["Math"] = NonGenericModuleType.new self, self, "Math"
+      @types["Math"] = @math = NonGenericModuleType.new self, self, "Math"
 
       @global_vars = {} of String => Var
       @requires = Set(String).new
@@ -257,6 +261,7 @@ module Crystal
     getter :string
     getter :symbol
     getter :pointer
+    getter :math
 
     getter :nil_var
 

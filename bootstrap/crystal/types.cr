@@ -158,6 +158,18 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_defs"
     end
 
+    def macros
+      raise "Bug: #{self} doesn't implement macros"
+    end
+
+    def add_macro(a_def)
+      raise "Bug: #{self} doesn't implement add_macro"
+    end
+
+    def lookup_macro(name, args_length)
+      raise "Bug: #{self} doesn't implement lookup_macro"
+    end
+
     def include(mod)
       raise "Bug: #{self} doesn't implement include"
     end
@@ -296,6 +308,19 @@ module Crystal
 
       [] of Def
     end
+
+    def lookup_macro(name, args_length)
+      if a_macro = self.macros[name][args_length]?
+        return a_macro
+      end
+
+      # parents.try &.each do |parent|
+      #   parent_macro = parent.lookup_macro(name, args_length)
+      #   return parent_macro if parent_macro
+      # end
+
+      nil
+    end
   end
 
   module DefContainer
@@ -332,6 +357,14 @@ module Crystal
         end
       end
       sorted_defs << a_def
+    end
+
+    def macros
+      @macros ||= Hash(String, Hash(Int32, Macro)).new { |h, k| h[k] = {} of Int32 => Macro }
+    end
+
+    def add_macro(a_def)
+      self.macros[a_def.name][a_def.args.length] = a_def
     end
   end
 
@@ -835,6 +868,7 @@ module Crystal
     delegate superclass, @generic_class
     delegate owned_instance_vars, @generic_class
     delegate instance_vars_in_initialize, @generic_class
+    delegate macros, @generic_class
 
     def class?
       true
@@ -948,6 +982,7 @@ module Crystal
     delegate name, @module
     delegate parents, @module
     delegate defs, @module
+    delegate macros, @module
 
     def implements?(other_type)
       @module.implements?(other_type)
@@ -1276,6 +1311,7 @@ module Crystal
 
     delegate defs, :"instance_type.generic_class.metaclass"
     delegate sorted_defs, :"instance_type.generic_class.metaclass"
+    delegate macros, :"instance_type.generic_class.metaclass"
     delegate type_vars, instance_type
     delegate :abstract, instance_type
 
