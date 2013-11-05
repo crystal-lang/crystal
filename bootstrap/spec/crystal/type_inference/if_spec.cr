@@ -11,6 +11,6 @@ describe "Type inference: if" do
   end
 
   it "types an if with else of different type" do
-    assert_type("if 1 == 1; 1; else; 1.1; end") { union_of(int32, float64) }
+    assert_type("if 1 == 1; 1; else; 'a'; end") { union_of(int32, char) }
   end
 end

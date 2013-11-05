@@ -148,6 +148,10 @@ module Crystal
     end
 
     def type_combine(types)
+      if types.all? &.number?
+        return [types.max_by &.rank] of Type
+      end
+
       types
     end
 
@@ -243,6 +247,7 @@ module Crystal
     getter :object
     getter :no_return
     getter :value
+    getter :number
     getter :reference
     getter :void
     getter :nil

@@ -14,22 +14,22 @@ describe "Global inference" do
   end
 
   it "infers type of global assign with union" do
-    nodes = parse "$foo = 1; $foo = 2.5"
+    nodes = parse "$foo = 1; $foo = 'a'"
     result = infer_type nodes
     mod, node = result.program, result.node
     assert_type node, Expressions
 
     first = node[0]
     assert_type first, Assign
-    first.target.type.should eq(mod.union_of(mod.int32, mod.float64))
+    first.target.type.should eq(mod.union_of(mod.int32, mod.char))
 
     second = node[1]
     assert_type second, Assign
-    second.target.type.should eq(mod.union_of(mod.int32, mod.float64))
+    second.target.type.should eq(mod.union_of(mod.int32, mod.char))
   end
 
   it "infers type of global reference" do
-    assert_type("$foo = 1; def foo; $foo = 2.5; end; foo; $foo") { union_of(int32, float64) }
+    assert_type("$foo = 1; def foo; $foo = 'a'; end; foo; $foo") { union_of(int32, char) }
   end
 
   it "infers type of read global variable when not previously assigned" do

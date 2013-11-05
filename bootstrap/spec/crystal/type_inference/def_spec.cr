@@ -43,7 +43,7 @@ describe "Type inference: def" do
   end
 
   it "types call with union argument" do
-    assert_type("def foo(x); x; end; a = 1 || 1.1; foo(a)") { union_of(int32, float64) }
+    assert_type("def foo(x); x; end; a = 1 || 'a'; foo(a)") { union_of(int32, char) }
   end
 
   it "defines class method" do

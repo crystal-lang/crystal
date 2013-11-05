@@ -15,6 +15,7 @@ module Crystal
   class TypeVisitor < Visitor
     getter mod
     getter! scope
+    getter! typed_def
     property block
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [new_type_filter])
@@ -824,8 +825,10 @@ module Crystal
 
     def visit(node : Primitive)
       case node.name
-      when :binary, :cast
-        # Nothing to do
+      when :binary
+        visit_binary node
+      when :cast
+        visit_cast node
       when :allocate
         visit_allocate node
       when :pointer_malloc
@@ -891,6 +894,42 @@ module Crystal
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
+    end
+
+    def visit_binary(node)
+      case typed_def.name
+      when "+", "-", "*", "/"
+        t1 = scope
+        t2 = typed_def.args[0].type
+        node.type = t1.integer? && t2.float? ? t2 : t1
+      when "==", "<", "<=", ">", ">=", "!="
+        node.type = @mod.bool
+      when "%", "<<", ">>", "|", "&", "^"
+        node.type = scope
+      else
+        raise "Bug: unknown binary operator #{typed_def.name}"
+      end
+    end
+
+    def visit_cast(node)
+      node.type =
+        case typed_def.name
+        when "to_i", "to_i32", "ord" then mod.int32
+        when "to_i8" then mod.int8
+        when "to_i16" then mod.int16
+        when "to_i32" then mod.int32
+        when "to_i64" then mod.int64
+        when "to_u", "to_u32" then mod.uint32
+        when "to_u8" then mod.uint8
+        when "to_u16" then mod.uint16
+        when "to_u32" then mod.uint32
+        when "to_u64" then mod.uint64
+        when "to_f", "to_f64" then mod.float64
+        when "to_f32" then mod.float32
+        when "chr" then mod.char
+        else
+          raise "Bug: unkown cast operator #{typed_def.name}"
+        end
     end
 
     def visit_allocate(node)

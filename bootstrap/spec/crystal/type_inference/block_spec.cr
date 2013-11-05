@@ -220,7 +220,7 @@ describe "Block inference" do
 
       $global = 10.5
       foo { $global }
-      $global = 1
+      $global = 'a'
       ",
       "type must be Float64"
   end

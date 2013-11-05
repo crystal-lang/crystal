@@ -2,15 +2,15 @@
 require "../../spec_helper"
 
 describe "Type inference: union" do
-  it "types union when obj is union" do
+  pending "types union when obj is union" do
     assert_type("a = 1 || 2.3; a + 1") { union_of(int32, float64) }
   end
 
-  it "types union when arg is union" do
+  pending "types union when arg is union" do
     assert_type("a = 1 || 2.3; 1 + a") { union_of(int32, float64) }
   end
 
-  it "types union when both obj and arg are union" do
+  pending "types union when both obj and arg are union" do
     assert_type("a = 1 || 2.3; a + a") { union_of(int32, float64) }
   end
 
@@ -27,8 +27,8 @@ describe "Type inference: union" do
         x
       end
 
-      foo(1 || 2.5)
-      ") { union_of(int32, float64, char) }
+      foo(1 || false)
+      ") { union_of(int32, bool, char) }
   end
 
   it "looks up type in union type with free var" do
@@ -40,12 +40,12 @@ describe "Type inference: union" do
         Bar(T).new
       end
 
-      foo(1 || 1.5)
+      foo(1 || 'a')
     ") do
       bar = types["Bar"]
       assert_type bar, GenericClassType
 
-      bar.instantiate([union_of(int32, float64)])
+      bar.instantiate([union_of(int32, char)])
     end
   end
 end

@@ -850,7 +850,9 @@ module Crystal
       def add_value(block, type, value)
         @incoming_blocks << block
 
-        if @node.type.nilable? && LLVM.type_kind_of(LLVM.type_of value) == LibLLVM::TypeKind::Integer
+        if @node.type != type && @node.type.number?
+          @incoming_values << @codegen.cast_number(@node.type, type, value)
+        elsif @node.type.nilable? && LLVM.type_kind_of(LLVM.type_of value) == LibLLVM::TypeKind::Integer
           @incoming_values << @codegen.builder.int2ptr(value, @codegen.llvm_type(node.type))
         else
           @incoming_values << value
@@ -982,10 +984,36 @@ module Crystal
       if target_type == value_type
         value = @builder.load value if target_type.union? || (instance_var && (target_type.c_struct? || target_type.c_union?))
         @builder.store value, pointer
+      elsif target_type.number?
+        value = cast_number(target_type, value_type, value)
+        @builder.store value, pointer
       else
         assign_to_union(pointer, target_type, value_type, value)
       end
       nil
+    end
+
+    def cast_number(target_type : IntegerType, value_type : IntegerType, value)
+      if target_type.normal_rank != value_type.normal_rank
+        if target_type.unsigned? && value_type.unsigned?
+          value = @builder.zext(value, target_type.llvm_type)
+        else
+          value = @builder.sext(value, target_type.llvm_type)
+        end
+      end
+      value
+    end
+
+    def cast_number(target_type : FloatType, value_type : IntegerType, value)
+      if value_type.unsigned?
+        @builder.ui2fp(value, target_type.llvm_type)
+      else
+        @builder.si2fp(value, target_type.llvm_type)
+      end
+    end
+
+    def cast_number(target_type, value_type, value)
+      raise "Bug: called cast_number with types #{target_type} <- #{value_type}"
     end
 
     def assign_to_union(union_pointer, union_type : NilableType, type, value)

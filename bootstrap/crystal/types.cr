@@ -34,12 +34,20 @@ module Crystal
       false
     end
 
+    def rank
+      raise "Bug: no rank for #{self}"
+    end
+
     def integer?
       false
     end
 
     def float?
       false
+    end
+
+    def number?
+      integer? || float?
     end
 
     def class?
