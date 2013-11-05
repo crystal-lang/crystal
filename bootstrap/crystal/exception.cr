@@ -44,7 +44,7 @@ module Crystal
       String.build do |str|
         case filename
         when String
-          the_source = File.read(filename)
+          the_source = File.exists?(filename) ? File.read(filename) : source
         when VirtualFile
           the_source = filename.source
         else
@@ -99,8 +99,14 @@ module Crystal
 
       case filename
       when String
-        lines = File.read_lines filename
-        str << "in #{filename}:#{@line}: #{msg}"
+        if File.exists?(filename)
+          lines = File.read_lines(filename)
+          str << "in #{filename}:#{@line}: #{msg}"
+        else
+          lines = source ? source.lines.to_a : nil
+          str << "in line #{@line}: " if @line
+          str << msg
+        end
       when VirtualFile
         lines = filename.source.lines.to_a
         str << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
@@ -108,9 +114,7 @@ module Crystal
         is_macro = true
       else
         lines = source ? source.lines.to_a : nil
-        if @line
-          str << "in line #{@line}: "
-        end
+        str << "in line #{@line}: " if @line
         str << msg
       end
 
