@@ -880,6 +880,10 @@ module Crystal
         node.type = mod.float32
       when :math_sqrt_float64
         node.type = mod.float64
+      when :float32_pow
+        node.type = mod.float32
+      when :float64_pow
+        node.type = mod.float64
       when :symbol_hash
         node.type = mod.int32
       when :symbol_to_s

@@ -74,6 +74,9 @@ module Crystal
       end
 
       singleton(char, "ord", args, int32, cast)
+
+      float32.add_def Def.new("**", [Arg.new_with_type("other", float32)], Primitive.new(:float32_pow))
+      float64.add_def Def.new("**", [Arg.new_with_type("other", float64)], Primitive.new(:float64_pow))
     end
 
     def define_reference_primitives
@@ -140,6 +143,14 @@ module Crystal
 
     def sqrt_float32(llvm_mod)
       llvm_mod.functions["llvm.sqrt.f32"]? || llvm_mod.functions.add("llvm.sqrt.f32", [LLVM::Float], LLVM::Float)
+    end
+
+    def pow_float64(llvm_mod)
+      llvm_mod.functions["llvm.pow.f64"]? || llvm_mod.functions.add("llvm.pow.f64", [LLVM::Double, LLVM::Double], LLVM::Double)
+    end
+
+    def pow_float32(llvm_mod)
+      llvm_mod.functions["llvm.pow.f32"]? || llvm_mod.functions.add("llvm.pow.f32", [LLVM::Float, LLVM::Float], LLVM::Float)
     end
   end
 
