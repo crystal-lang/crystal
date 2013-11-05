@@ -640,8 +640,9 @@ module Crystal
               if @buffer[1].ident_part_or_end?
                 scan_ident(start, start_column)
               else
+                filename = @filename
                 @token.type = :STRING
-                @token.value = @filename ? File.dirname(@filename) : "-"
+                @token.value = filename.is_a?(String) ? File.dirname(filename) : "-"
                 return @token
               end
             end

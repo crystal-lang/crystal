@@ -1,3 +1,5 @@
+require "virtual_file"
+
 module Crystal
   abstract class Exception < ::Exception
   end
@@ -40,8 +42,11 @@ module Crystal
       filename = @filename
 
       String.build do |str|
-        if filename && File.exists?(filename)
+        case filename
+        when String
           the_source = File.read(filename)
+        when VirtualFile
+          the_source = filename.source
         else
           the_source = source
         end
@@ -92,16 +97,15 @@ module Crystal
 
       is_macro = false
 
-      if filename && file_exists?(filename)
-        # if @filename.is_a?(VirtualFile)
-        #   lines = @filename.source.lines.to_a
-        #   str << "in macro '#{@filename.macro.name}' #{@filename.macro.filename}:#{@filename.macro.line_number}, line #{@line}:\n\n"
-        #   str << lines.to_s_with_line_numbers
-        #   is_macro = true
-        # else
-          lines = File.read_lines filename
-          str << "in #{filename}:#{@line}: #{msg}"
-        # end
+      case filename
+      when String
+        lines = File.read_lines filename
+        str << "in #{filename}:#{@line}: #{msg}"
+      when VirtualFile
+        lines = filename.source.lines.to_a
+        str << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
+        str << lines.to_s_with_line_numbers
+        is_macro = true
       else
         lines = source ? source.lines.to_a : nil
         if @line
@@ -136,12 +140,6 @@ module Crystal
         str << "\n"
         inner.append_to_s(str, source)
       end
-    end
-
-    def file_exists?(filename)
-      # filename.is_a?(VirtualFile) ||
-        # File.file?(filename)
-      File.exists?(filename)
     end
 
     def has_location?

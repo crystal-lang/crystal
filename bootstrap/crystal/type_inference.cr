@@ -371,7 +371,7 @@ module Crystal
 
       begin
         parser = Parser.new(generated_source, [Set.new(@vars.keys)])
-        # parser.filename = VirtualFile.new(untyped_def, generated_source)
+        parser.filename = VirtualFile.new(untyped_def, generated_source)
         generated_nodes = parser.parse
       rescue ex : Crystal::SyntaxException
         node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}#{"=" * 80}"

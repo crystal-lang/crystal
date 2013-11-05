@@ -194,7 +194,7 @@ module Crystal
       # end
 
       filename = "#{filename}.cr" unless filename.ends_with? ".cr"
-      if relative_to
+      if relative_to.is_a?(String)
         dir = File.dirname relative_to
         # relative_filename = File.join(dir, filename)
         relative_filename = "#{dir}/#{filename}"
