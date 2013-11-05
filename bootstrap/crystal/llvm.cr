@@ -162,6 +162,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_fptrunc = LLVMBuildFPTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_fsub = LLVMBuildFSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_gep = LLVMBuildGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : Char*) : ValueRef
+  fun build_global_string_ptr = LLVMBuildGlobalStringPtr(builder : BuilderRef, str : Char*, name : Char*) : ValueRef
   fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : IntPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_int2ptr = LLVMBuildIntToPtr(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
   fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : Char*) : ValueRef
@@ -533,6 +534,10 @@ module LLVM
 
     def select(cond, a_then, a_else, name = "")
       LibLLVM.build_select @builder, cond, a_then, a_else, name
+    end
+
+    def global_string_pointer(string, name = "")
+      LibLLVM.build_global_string_ptr @builder, string, name
     end
   end
 

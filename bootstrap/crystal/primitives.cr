@@ -78,6 +78,7 @@ module Crystal
 
     def define_reference_primitives
       reference.add_def Def.new("object_id", ([] of Arg), Primitive.new(:object_id))
+      reference.add_def Def.new("to_cstr", ([] of Arg), Primitive.new(:object_to_cstr))
     end
 
     def define_pointer_primitives
@@ -115,6 +116,10 @@ module Crystal
       owner.add_def a_def
       instance = a_def.overload(args.values, return_type, body)
       owner.add_def_instance(a_def.object_id, args.values, nil, instance)
+    end
+
+    def sprintf(llvm_mod)
+      llvm_mod.functions["sprintf"]? || llvm_mod.functions.add("sprintf", [LLVM.pointer_type(LLVM::Int8)], LLVM::Int32, true)
     end
 
     def realloc(llvm_mod)

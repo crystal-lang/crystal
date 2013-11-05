@@ -872,6 +872,8 @@ module Crystal
         # Nothing to do
       when :object_id
         node.type = mod.uint64
+      when :object_to_cstr
+        node.type = mod.char_pointer
       when :math_sqrt_float32
         node.type = mod.float32
       when :math_sqrt_float64
