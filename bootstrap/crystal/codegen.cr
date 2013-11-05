@@ -176,6 +176,8 @@ module Crystal
                 codegen_primitive_object_id node, target_def, call_args
               when :object_to_cstr
                 codegen_primitive_object_to_cstr node, target_def, call_args
+              when :object_crystal_type_id
+                codegen_primitive_object_crystal_type_id node, target_def, call_args
               when :math_sqrt_float32
                 codegen_primitive_math_sqrt_float32 node, target_def, call_args
               when :math_sqrt_float64
@@ -538,6 +540,10 @@ module Crystal
       buffer = @builder.array_malloc(LLVM::Int8, int(@type.to_s.length + 23))
       @builder.call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("#<#{@type}:0x%016lx>"), obj] of LibLLVM::ValueRef
       buffer
+    end
+
+    def codegen_primitive_object_crystal_type_id(node, target_def, call_args)
+      int(type.type_id)
     end
 
     def codegen_primitive_math_sqrt_float32(node, target_def, call_args)

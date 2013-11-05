@@ -1,4 +1,8 @@
 class Bool
+  def !@
+    self ? false : true
+  end
+
   def ==(other)
     false
   end

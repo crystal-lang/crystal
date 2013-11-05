@@ -79,6 +79,10 @@ module Crystal
     def define_reference_primitives
       reference.add_def Def.new("object_id", ([] of Arg), Primitive.new(:object_id))
       reference.add_def Def.new("to_cstr", ([] of Arg), Primitive.new(:object_to_cstr))
+
+      [object, value, bool, char, int32, int64, float32, float64, symbol, reference].each do |type|
+        type.add_def Def.new("crystal_type_id", ([] of Arg), Primitive.new(:object_crystal_type_id))
+      end
     end
 
     def define_pointer_primitives

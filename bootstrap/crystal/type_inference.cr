@@ -874,6 +874,8 @@ module Crystal
         node.type = mod.uint64
       when :object_to_cstr
         node.type = mod.char_pointer
+      when :object_crystal_type_id
+        node.type = mod.int32
       when :math_sqrt_float32
         node.type = mod.float32
       when :math_sqrt_float64
