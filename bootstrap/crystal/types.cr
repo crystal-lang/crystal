@@ -743,6 +743,9 @@ module Crystal
     end
   end
 
+  class SymbolType < PrimitiveType
+  end
+
   class NilType < PrimitiveType
     def type_id
       0

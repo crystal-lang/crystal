@@ -10,6 +10,7 @@ module Crystal
     include MatchesLookup
     include ClassVarContainer
 
+    getter symbols
     getter global_vars
     getter macros_cache
 
@@ -53,7 +54,7 @@ module Crystal
       @types["Float64"] = @float64 = FloatType.new self, self, "Float64", @float, LLVM::Double, 8, 10
       @float64.types["INFINITY"] = Const.new self, @float64, "FLOAT_INFINITY", Primitive.new(:float64_infinity)
 
-      @types["Symbol"] = @symbol = PrimitiveType.new self, self, "Symbol", @value, LLVM::Int32, 4
+      @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", @value, LLVM::Int32, 4
       @pointer = @types["Pointer"] = PointerType.new self, self, "Pointer", value, ["T"]
 
       @types["String"] = @string = NonGenericClassType.new self, self, "String", @reference
@@ -71,6 +72,7 @@ module Crystal
 
       @types["Math"] = @math = NonGenericModuleType.new self, self, "Math"
 
+      @symbols = Set(String).new
       @global_vars = {} of String => Var
       @requires = Set(String).new
       @temp_var_counter = 0

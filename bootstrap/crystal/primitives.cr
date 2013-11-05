@@ -9,6 +9,7 @@ module Crystal
       define_primitive_types_primitives
       define_reference_primitives
       define_pointer_primitives
+      define_symbol_primitives
       define_type_sizes
       define_math_primitives
     end
@@ -43,6 +44,10 @@ module Crystal
 
       args["other"] = char
       cmps.each { |cmp| singleton(char, cmp, args, bool, binary) }
+
+      args["other"] = symbol
+      singleton(symbol, "==" args, bool, binary)
+      singleton(symbol, "!=" args, bool, binary)
 
       args["other"] = bool
       singleton(bool, "==", args, bool, binary)
@@ -84,6 +89,11 @@ module Crystal
       pointer.add_def Def.new("realloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_realloc))
       pointer.add_def Def.new("+", [Arg.new_with_type("offset", int64)], Primitive.new(:pointer_add))
       pointer.add_def Def.new("as", [Arg.new("type")], Primitive.new(:pointer_cast))
+    end
+
+    def define_symbol_primitives
+      symbol.add_def Def.new("hash", ([] of Arg), Primitive.new(:symbol_hash))
+      symbol.add_def Def.new("to_s", ([] of Arg), Primitive.new(:symbol_to_s))
     end
 
     def define_type_sizes

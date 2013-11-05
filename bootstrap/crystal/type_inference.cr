@@ -68,6 +68,7 @@ module Crystal
 
     def visit(node : SymbolLiteral)
       node.type = mod.symbol
+      mod.symbols.add node.value
     end
 
     def visit(node : StringLiteral)
@@ -875,6 +876,10 @@ module Crystal
         node.type = mod.float32
       when :math_sqrt_float64
         node.type = mod.float64
+      when :symbol_hash
+        node.type = mod.int32
+      when :symbol_to_s
+        node.type = mod.string
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end

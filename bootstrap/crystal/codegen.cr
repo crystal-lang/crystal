@@ -82,6 +82,16 @@ module Crystal
       @vars = {} of String => LLVMVar
       @lib_vars = {} of String => LibLLVM::ValueRef
       @strings = {} of String => LibLLVM::ValueRef
+      @symbols = {} of String => Int32
+      @symbol_table_values = [] of LibLLVM::ValueRef
+      mod.symbols.to_a.sort.each_with_index do |sym, index|
+        @symbols[sym] = index
+        @symbol_table_values << build_string_constant(sym, sym)
+      end
+
+      symbol_table = @llvm_mod.globals.add(LLVM.array_type(llvm_type(mod.string), @symbol_table_values.count), "symbol_table")
+      LLVM.set_initializer symbol_table, LLVM.array(llvm_type(mod.string), @symbol_table_values)
+
       @type = @mod
       @last = llvm_nil
       @in_const_block = false
@@ -168,6 +178,10 @@ module Crystal
                 codegen_primitive_math_sqrt_float32 node, target_def, call_args
               when :math_sqrt_float64
                 codegen_primitive_math_sqrt_float64 node, target_def, call_args
+              when :symbol_hash
+                codegen_primitive_symbol_hash node, target_def, call_args
+              when :symbol_to_s
+                codegen_primitive_symbol_to_s node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -195,6 +209,14 @@ module Crystal
       when "<=" then return @builder.icmp LibLLVM::IntPredicate::ULE, p1, p2
       when ">" then return @builder.icmp LibLLVM::IntPredicate::UGT, p1, p2
       when ">=" then return @builder.icmp LibLLVM::IntPredicate::UGT, p1, p2
+      else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+      end
+    end
+
+    def codegen_binary_op(op, t1 : SymbolType, t2 : SymbolType, p1, p2)
+      case op
+      when "==" then return @builder.icmp LibLLVM::IntPredicate::EQ, p1, p2
+      when "!=" then return @builder.icmp LibLLVM::IntPredicate::NE, p1, p2
       else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
       end
     end
@@ -513,6 +535,14 @@ module Crystal
       @builder.call @mod.sqrt_float64(@llvm_mod), [call_args[1]]
     end
 
+    def codegen_primitive_symbol_to_s(node, target_def, call_args)
+      @builder.load(@builder.gep @llvm_mod.globals["symbol_table"], [int(0), call_args[0]] of LibLLVM::ValueRef)
+    end
+
+    def codegen_primitive_symbol_hash(node, target_def, call_args)
+      call_args[0]
+    end
+
     def visit(node : PointerOf)
       node_var = node.var
       case node_var
@@ -572,6 +602,10 @@ module Crystal
       @last = build_string_constant(node.value)
     end
 
+    def visit(node : SymbolLiteral)
+      @last = int(@symbols[node.value])
+    end
+
     def visit(node : Nop)
       @last = llvm_nil
     end
@@ -607,7 +641,7 @@ module Crystal
     end
 
     def build_string_constant(str, name = "str")
-      # name = name.gsub('@', '.')
+      name = name.replace '@', '.'
       @strings[str] ||= begin
         global = @llvm_mod.globals.add(LLVM.array_type(LLVM::Int8, str.length + 5), name)
         LLVM.set_linkage global, LibLLVM::Linkage::Private
