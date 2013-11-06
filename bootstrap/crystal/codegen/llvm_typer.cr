@@ -53,6 +53,11 @@ module Crystal
       LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type], true)
     end
 
+    def create_llvm_type(type : PaddingType)
+      llvm_value_type = LLVM.array_type(LLVM::Int32, type.padding)
+      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type], true)
+    end
+
     def create_llvm_type(type : NilableType)
       llvm_type type.not_nil_type
     end

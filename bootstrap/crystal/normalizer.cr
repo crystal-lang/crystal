@@ -718,9 +718,7 @@ module Crystal
 
     def transform(node : Require)
       location = node.location
-      raise "Bug: location is nil for '#{node}'" unless location
-
-      required = @program.require(node.string, location.filename)
+      required = @program.require(node.string, location.try &.filename)
       required ? required.transform(self) : Nop.new
     end
 

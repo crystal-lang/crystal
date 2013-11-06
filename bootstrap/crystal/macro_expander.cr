@@ -8,8 +8,26 @@ module Crystal
     end
 
     def expand(node)
-      # macro_call = Call.new(nil, @macro_name, args.map(&:to_crystal_node))
-      macro_call = Call.new(nil, @macro_name)
+      mapped_args = node.args.map do |arg|
+        if arg.is_a?(Call) && !arg.obj && !arg.block && !arg.block_arg && arg.args.length == 0
+          Var.new(arg.name)
+        elsif arg.is_a?(Ident) && arg.names.length == 1
+          Var.new(arg.names.first)
+        elsif arg.is_a?(SymbolLiteral)
+          Var.new(arg.value)
+        elsif arg.is_a?(StringLiteral)
+          Var.new(arg.value)
+        else
+          arg
+        end
+      end
+
+      args = Array(ASTNode).new(mapped_args.length)
+      mapped_args.each do |arg|
+        args.push arg.to_crystal_node.not_nil!
+      end
+
+      macro_call = Call.new(nil, @macro_name, args)
       macro_nodes = Expressions.new([@typed_def, macro_call] of ASTNode)
       macro_nodes = @mod.normalize(macro_nodes)
 
@@ -32,10 +50,15 @@ module Crystal
       # @mod.load_libs
 
       if func
-        # macro_args = args.map &:to_crystal_binary
-        macro_value = @engine.run_function func#, *macro_args
+        macro_args = mapped_args.map do |arg|
+          pointer = Pointer(Void).new(arg.object_id)
+          LibLLVM.create_generic_value_of_pointer(pointer)
+        end
+        macro_value = @engine.run_function func, macro_args
       else
-        macro_value = @engine.run_function @llvm_mod.functions[MAIN_NAME]#, 0, nil
+        argc = LibLLVM.create_generic_value_of_int(LLVM::Int32, 0_u64, 1)
+        argv = LibLLVM.create_generic_value_of_pointer(nil)
+        macro_value = @engine.run_function @llvm_mod.functions[MAIN_NAME], [argc, argv]
       end
 
       macro_value.to_string

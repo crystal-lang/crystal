@@ -320,10 +320,10 @@ module Crystal
         return a_macro
       end
 
-      # parents.try &.each do |parent|
-      #   parent_macro = parent.lookup_macro(name, args_length)
-      #   return parent_macro if parent_macro
-      # end
+      parents.try &.each do |parent|
+        parent_macro = parent.lookup_macro(name, args_length)
+        return parent_macro if parent_macro
+      end
 
       nil
     end
@@ -1484,6 +1484,18 @@ module Crystal
 
     def to_s
       full_name
+    end
+  end
+
+  class PaddingType < Type
+    getter padding
+    getter program
+
+    def initialize(@program, @padding)
+    end
+
+    def to_s
+      "Padding#{@padding}"
     end
   end
 end

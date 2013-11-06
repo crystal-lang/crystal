@@ -67,7 +67,7 @@ module Crystal
       if location
         new message, location.line_number, (node.name_column_number || location.column_number), location.filename, (node.name_length || 0), inner
       else
-        new message, 0, 0, "", 0, inner
+        new message, 0, 0, nil, 0, inner
       end
     end
 
