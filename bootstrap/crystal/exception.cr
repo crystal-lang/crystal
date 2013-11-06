@@ -44,13 +44,12 @@ module Crystal
       String.build do |str|
         case filename
         when String
-          the_source = File.exists?(filename) ? File.read(filename) : source
+          source = File.read(filename) if File.exists?(filename)
         when VirtualFile
-          the_source = filename.source
-        else
-          the_source = source
+          source = filename.source
         end
-        append_to_s str, the_source
+        append_to_s str, source
+        nil # TODO: remove this line
       end
     end
 

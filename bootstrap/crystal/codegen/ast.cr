@@ -18,14 +18,13 @@ class Crystal::Def
       end
       str << name.to_s.replace('@', '.')
 
-      has_self_type = self_type && self_type.passed_as_self?
-      if arg_types.length > 0 || has_self_type
+      if arg_types.length > 0 || self_type
         str << '<'
-        if has_self_type
+        if self_type
           str << self_type.llvm_name
         end
         if arg_types.length > 0
-          str << ", " if has_self_type
+          str << ", " if self_type
           str << arg_types.map(&.llvm_name).join(", ")
         end
         str << '>'

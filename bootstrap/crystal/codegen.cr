@@ -1373,12 +1373,16 @@ module Crystal
 
       owner = node.target_def.owner
 
+      if owner && !owner.passed_as_self?
+        owner = nil
+      end
+
       call_args = [] of LibLLVM::ValueRef
 
       if (obj = node.obj) && obj.type.passed_as_self?
         accept(obj)
         call_args << @last
-      elsif owner && owner.passed_as_self?
+      elsif owner
         call_args << llvm_self
       end
 
@@ -1394,7 +1398,7 @@ module Crystal
         @block_context << BlockContext.new(block, @vars, @type, @return_block, @return_block_table_blocks, @return_block_table_values, @return_type)
         @vars = {} of String => LLVMVar
 
-        if owner && owner.passed_as_self?
+        if owner
           @type = owner
           args_base_index = 1
           if owner.union?
@@ -1632,7 +1636,7 @@ module Crystal
       @vars = {} of String => LLVMVar
 
       args = [] of Arg
-      if self_type && self_type.passed_as_self?
+      if self_type
         @type = self_type
         args << Arg.new_with_type("self", self_type)
       end
@@ -1664,13 +1668,16 @@ module Crystal
         body = target_def.body
         new_entry_block
 
+        target_def_vars = target_def.vars
+
         args.each_with_index do |arg, i|
           if (self_type && i == 0 && !self_type.union?) || arg.type.passed_by_val?
             @vars[arg.name] = LLVMVar.new(@fun.get_param(i), arg.type, true)
           else
-            pointer = alloca(llvm_type(arg.type), arg.name)
-            @vars[arg.name] = LLVMVar.new(pointer, arg.type)
-            @builder.store @fun.get_param(i), pointer
+            var_type = target_def_vars ? target_def_vars[arg.name].type : arg.type
+            pointer = alloca(llvm_type(var_type), arg.name)
+            @vars[arg.name] = LLVMVar.new(pointer, var_type)
+            codegen_assign(pointer, var_type, arg.type, @fun.get_param(i))
           end
         end
 

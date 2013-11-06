@@ -33,4 +33,17 @@ describe "Code gen: def" do
       Foo.foo
       ").to_i.should eq(1)
   end
+
+  it "codegens def which changes type of arg" do
+    run("
+      def foo(x)
+        while x >= 0
+          x = -0.5
+        end
+        x
+      end
+
+      foo(2).to_i
+    ").to_i.should eq(0)
+  end
 end

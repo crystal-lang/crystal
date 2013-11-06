@@ -1,7 +1,6 @@
 require_relative "program"
 require_relative 'ast'
 require_relative 'type_inference/ast'
-require_relative 'type_inference/ast_node'
 require_relative 'type_inference/call'
 require_relative 'type_inference/match'
 
@@ -62,6 +61,9 @@ module Crystal
       @types = [mod]
       @while_stack = []
       @type_filter_stack = type_filter_stack
+      if @typed_def
+        @typed_def.vars = @vars
+      end
     end
 
     def visit_nil_literal(node)

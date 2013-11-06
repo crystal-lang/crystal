@@ -1500,9 +1500,10 @@ module Crystal
           if (self_type && i == 0 && !self_type.union?) || target_def.body.is_a?(Primitive) || arg.type.passed_by_val?
             @vars[arg.name] = { ptr: @fun.params[i], type: arg.type, treated_as_pointer: true }
           else
-            ptr = alloca(llvm_type(arg.type), arg.name)
-            @vars[arg.name] = { ptr: ptr, type: arg.type }
-            @builder.store @fun.params[i], ptr
+            var_type = target_def.vars ? target_def.vars[arg.name].type : arg.type
+            ptr = alloca(llvm_type(var_type), arg.name)
+            @vars[arg.name] = { ptr: ptr, type: var_type }
+            codegen_assign(ptr, var_type, arg.type, @fun.params[i])
           end
         end
 

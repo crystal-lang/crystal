@@ -267,29 +267,27 @@ module Crystal
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      the_type_lookup = type_lookup
-
       matches_array ||= [] of Match
 
-      matches = lookup_matches_without_parents(name, arg_types, yields, owner, the_type_lookup, matches_array)
+      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
       return matches if matches.cover_all?
 
       if (my_parents = parents) && !(name == "new" && owner.metaclass?)
         my_parents.each do |parent|
-          the_type_lookup = parent
+          type_lookup = parent
           if value?
             parent_owner = owner
           elsif parent.class?
             parent_owner = owner
           elsif parent.is_a?(IncludedGenericModule)
-            the_type_lookup = parent
+            type_lookup = parent
             parent_owner = owner
           elsif parent.module?
             parent_owner = owner
           else
             parent_owner = parent
           end
-          parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, the_type_lookup, matches.matches)
+          parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, type_lookup, matches.matches)
           return parent_matches if parent_matches.cover_all?
 
           matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?

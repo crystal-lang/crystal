@@ -20,6 +20,8 @@ module Crystal
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [new_type_filter])
       @types = [@mod] of Type
+      typed_def = @typed_def
+      typed_def.vars = @vars if typed_def
     end
 
     def visit(node : ASTNode)
