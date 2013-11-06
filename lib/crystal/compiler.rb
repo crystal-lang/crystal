@@ -48,13 +48,13 @@ module Crystal
         opts.on('-o ', 'Output filename') do |output|
           @options[:output_filename] = output
         end
-        opts.on('-O ', 'Optimization level') do |opt|
-          @options[:opt_level] = opt
+        opts.on('--release', 'Compile in release mode') do
+          @options[:release] = true
         end
         opts.on('-prof', 'Enable profiling output') do
           @options[:prof] = true
         end
-        opts.on('-run ', 'Execute program') do
+        opts.on('--run ', 'Execute program') do
           @options[:run] = true
           @options[:execute] = true
         end
@@ -147,7 +147,7 @@ module Crystal
 
         llvm_modules = nil
         with_stats_or_profile('codegen-llvm') do
-          llvm_modules = program.build node, filename: filename, debug: @options[:debug]
+          llvm_modules = program.build node, filename: filename, debug: @options[:debug], single_module: @options[:release]
         end
       rescue Crystal::Exception => ex
         puts ex.to_s(source)
@@ -176,21 +176,25 @@ module Crystal
 
               llvm_mod.write_bitcode "#{bc_name}.new"
 
+              must_compile = true
+
               if File.exists?(bc_name) && File.exists?(o_name)
                 `diff -q #{bc_name} #{bc_name}.new`
-
                 if $?.success?
                   FileUtils.rm "#{bc_name}.new"
-                else
-                  # puts "Compile: #{type}"
-                  FileUtils.mv "#{bc_name}.new", bc_name
-                  `#{@llc} #{bc_name} -o #{s_name}`
-                  `#{@clang} -c #{s_name} -o #{o_name}`
+                  must_compile = false
                 end
-              else
+              end
+
+              if must_compile
                 # puts "Compile: #{type}"
                 FileUtils.mv "#{bc_name}.new", bc_name
-                `#{@llc} #{bc_name} -o #{s_name}`
+                if @options[:release]
+                  `#{@llc} #{bc_name} -o #{s_name}`
+                  `#{@opt} #{bc_name} -O3 | #{@llc} - -o #{s_name}`
+                else
+                  `#{@llc} #{bc_name} -o #{s_name}`
+                end
                 `#{@clang} -c #{s_name} -o #{o_name}`
               end
 
