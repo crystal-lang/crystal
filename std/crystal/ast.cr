@@ -6,6 +6,10 @@ module Crystal
     def ==(other : self)
       true
     end
+
+    def to_s
+      "nil"
+    end
   end
 
   class BoolLiteral < ASTNode
@@ -21,6 +25,10 @@ module Crystal
 
     def ==(other : self)
       other.value == value
+    end
+
+    def to_s
+      @value
     end
   end
 
@@ -58,6 +66,10 @@ module Crystal
     def ==(other : self)
       other.value.to_f64 == value.to_f64 && other.kind == kind
     end
+
+    def to_s
+      @value
+    end
   end
 
   class CharLiteral < ASTNode
@@ -74,6 +86,10 @@ module Crystal
     def ==(other : self)
       other.value == value
     end
+
+    def to_s
+      @value
+    end
   end
 
   class StringLiteral < ASTNode
@@ -89,6 +105,10 @@ module Crystal
 
     def ==(other : self)
       other.value == value
+    end
+
+    def to_s
+      @value
     end
   end
 
@@ -107,8 +127,8 @@ module Crystal
       other.value == value
     end
 
-    def clone_without_location
-      SymbolLiteral.new(@value)
+    def to_s
+      @value
     end
   end
 
@@ -140,8 +160,8 @@ module Crystal
       other.name == name && other.type? == type? && other.out == out
     end
 
-    def clone_without_location
-      Var.new(@name)
+    def to_s
+      @name
     end
   end
 end

@@ -253,7 +253,7 @@ module Crystal
           end
         else
           @str << decorate_call(node, node.name)
-          @str << "(" unless node.args.empty?
+          @str << "(" unless node_obj && node.args.empty?
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0
             arg.accept self
@@ -263,7 +263,7 @@ module Crystal
             @str << "&"
             block_arg.accept self
           end
-          @str << ")" unless node.args.empty?
+          @str << ")" unless node_obj && node.args.empty?
         end
       end
       if block = node.block

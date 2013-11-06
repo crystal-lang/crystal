@@ -54,7 +54,7 @@ module Crystal
         opts.on('-prof', 'Enable profiling output') do
           @options[:prof] = true
         end
-        opts.on('--run ', 'Execute program') do
+        opts.on('--run', 'Execute program') do
           @options[:run] = true
           @options[:execute] = true
         end

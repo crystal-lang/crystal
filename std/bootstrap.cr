@@ -29,8 +29,6 @@ require "string_builder"
 require "symbol"
 require "argv"
 require "crystal/ast"
-require "crystal/to_s"
-require "crystal/visitor"
 
 lib CrystalMain
   fun __crystal_main(argc : Int32, argv : Char**)
