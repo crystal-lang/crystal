@@ -57,6 +57,8 @@ class File
 
   def self.expand_path(filename)
     str = C.realpath(filename, nil)
+    raise Errno.new unless str
+
     length = C.strlen(str)
     String.new(str, length)
   end
@@ -72,6 +74,8 @@ class File
 
   def self.read(filename)
     f = C.fopen(filename, "r")
+    raise Errno.new unless f
+
     C.fseek(f, 0_i64, C::SEEK_END)
     size = C.ftell(f)
     C.fseek(f, 0_i64, C::SEEK_SET)

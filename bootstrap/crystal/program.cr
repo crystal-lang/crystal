@@ -86,6 +86,41 @@ module Crystal
       define_primitives
     end
 
+    def has_require_flag?(name)
+      require_flags.includes?(name)
+    end
+
+    def require_flags
+      @require_flags ||= begin
+        flags = Set(String).new
+        exec("uname -m -s").split(' ').each do |uname|
+          flags.add uname.downcase
+        end
+        flags
+      end
+    end
+
+    class PopenCommand
+      include IO
+
+      getter input
+
+      def initialize(command)
+        @input = C.popen(command, "r")
+      end
+
+      def close
+        C.pclose @input
+      end
+    end
+
+    def exec(command)
+      cmd = PopenCommand.new(command)
+      value = cmd.gets.not_nil!.strip
+      cmd.close
+      value
+    end
+
     def program
       self
     end

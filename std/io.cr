@@ -21,6 +21,8 @@ lib C
   fun fdopen(fd : Int32, mode : Char*) : File
   fun fgets(buffer : Char*, maxlength : Int32, file : File*) : Char*
   fun unlink(filename : Char*) : Char*
+  fun popen(command : Char*, mode : Char*) : File
+  fun pclose(stream : File) : Int32
 
   SEEK_SET = 0
   SEEK_CUR = 1

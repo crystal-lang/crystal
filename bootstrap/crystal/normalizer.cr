@@ -717,9 +717,54 @@ module Crystal
     end
 
     def transform(node : Require)
+      if cond = node.cond
+        must_require = eval_require_cond(cond)
+        return Nop.new unless must_require
+      end
+
       location = node.location
       required = @program.require(node.string, location.try &.filename)
       required ? required.transform(self) : Nop.new
+    end
+
+    def eval_require_cond(node)
+      evaluator = RequireEvaluator.new(@program)
+      node.accept evaluator
+      evaluator.value
+    end
+
+    class RequireEvaluator < Visitor
+      getter value
+
+      def initialize(@program)
+      end
+
+      def visit(node : ASTNode)
+        raise "Bug: shouldn't visit #{node} in RequireEvaluator"
+      end
+
+      def visit(node : Var)
+        @value = @program.has_require_flag?(node.name)
+      end
+
+      def visit(node : Not)
+        node.exp.accept self
+        @value = !@value
+      end
+
+      def visit(node : And)
+        node.left.accept self
+        left_value = @value
+        node.right.accept self
+        @value = left_value && @value
+      end
+
+      def visit(node : Or)
+        node.left.accept self
+        left_value = @value
+        node.right.accept self
+        @value = left_value || @value
+      end
     end
 
     def get_loop_vars(before_vars, restore = true)

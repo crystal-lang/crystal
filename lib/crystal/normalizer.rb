@@ -101,6 +101,8 @@ module Crystal
 
       required = program.require(node.string, node.filename)
       required ? required.transform(self) : nil
+    rescue => ex
+      node.raise ex.message
     end
 
     class RequireEvaluator < Visitor
