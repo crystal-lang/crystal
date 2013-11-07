@@ -3,7 +3,7 @@ module Crystal
     def initialize(@filter)
     end
 
-    def bind_to(node)
+    def bind_to(node : ASTNode)
       @node = node
       node.add_observer self
       update(node)

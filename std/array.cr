@@ -124,6 +124,11 @@ class Array(T)
     @buffer[@length - 1]
   end
 
+  def last?
+    return nil if @length == 0
+    @buffer[@length - 1]
+  end
+
   def insert(index : Int, obj : T)
     check_needs_resize
     index += length if index < 0

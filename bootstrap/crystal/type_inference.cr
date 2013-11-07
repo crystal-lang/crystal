@@ -20,6 +20,7 @@ module Crystal
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [new_type_filter])
       @types = [@mod] of Type
+      @while_stack = [] of While
       typed_def = @typed_def
       typed_def.vars = @vars if typed_def
     end
@@ -823,7 +824,7 @@ module Crystal
     def visit(node : While)
       node.cond.accept self
 
-      # @while_stack.push node
+      @while_stack.push node
       if type_filters = node.cond.type_filters
         pushing_type_filters(type_filters) do
           node.body.accept self
@@ -832,11 +833,32 @@ module Crystal
         node.body.accept self
       end
 
-      # @while_stack.pop
-
-      node.type = @mod.nil
+      @while_stack.pop
 
       false
+    end
+
+    def end_visit(node : While)
+      unless node.has_breaks
+        node_cond = node.cond
+        if node_cond.is_a?(BoolLiteral) && node_cond.value == true
+          node.type = mod.no_return
+          return
+        end
+      end
+
+      node.bind_to mod.nil_var
+    end
+
+    def end_visit(node : Break)
+      container = @while_stack.last? || (block.try &.break)
+      node.raise "Invalid break" unless container
+
+      if container.is_a?(While)
+        container.has_breaks = true
+      else
+        container.bind_to(node.exps.length > 0 ? node.exps[0] : mod.nil_var)
+      end
     end
 
     def visit(node : Primitive)

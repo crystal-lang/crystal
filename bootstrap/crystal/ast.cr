@@ -1437,4 +1437,8 @@ module Crystal
       CastedVar.new(@name)
     end
   end
+
+  class While
+    property :has_breaks
+  end
 end

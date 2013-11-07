@@ -106,6 +106,10 @@ module Crystal
       false
     end
 
+    def no_return?
+      false
+    end
+
     def hierarchy_type
       self
     end
@@ -764,6 +768,9 @@ module Crystal
     def nil_type?
       true
     end
+  end
+
+  class VoidType < PrimitiveType
   end
 
   class ValueType < NonGenericClassType

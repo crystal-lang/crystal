@@ -50,8 +50,10 @@ module Crystal
       # return if @types_signature == types_signature
       # @types_signature = types_signature
 
+      block = @block
+
       unbind_from @target_defs if @target_defs
-      # unbind_from block.break if block
+      unbind_from block.break if block
       # @subclass_notifier.remove_subclass_observer(self) if @subclass_notifier
 
       @target_defs = nil
@@ -87,9 +89,7 @@ module Crystal
       @target_defs = matches
 
       bind_to matches if matches
-
-      # bind_to *matches
-      # bind_to block.break if block
+      bind_to block.break if block
 
       # if parent_visitor && parent_visitor.typed_def && matches.any?(&:raises)
       #   parent_visitor.typed_def.raises = true

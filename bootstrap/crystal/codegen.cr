@@ -645,6 +645,14 @@ module Crystal
       @last = llvm_nil
     end
 
+    def visit(node : Expressions)
+      node.expressions.each do |exp|
+        accept(exp)
+        break if exp.no_returns? || exp.returns? || exp.breaks? || (exp.yields? && (block_returns? || block_breaks?))
+      end
+      false
+    end
+
     def visit(node : ClassDef)
       node.body.accept self
       @last = llvm_nil
@@ -713,11 +721,11 @@ module Crystal
 
       @builder.position_at_end then_block
       accept(node.then)
-      add_branched_block_value(branch, node.then.type, @last)
+      add_branched_block_value(branch, node.then.type?, @last)
 
       @builder.position_at_end else_block
       accept(node.else)
-      add_branched_block_value(branch, node.else.type, @last)
+      add_branched_block_value(branch, node.else.type?, @last)
 
       close_branched_block(branch)
 
@@ -725,10 +733,11 @@ module Crystal
     end
 
     def visit(node : While)
-      # old_break_type = @break_type
-      # old_break_table = @break_table
-      # old_break_union = @break_union
-      # @break_type = @break_table = @break_union = nil
+      old_break_type = @break_type
+      old_break_table_blocks = @break_table_blocks
+      old_break_table_values = @break_table_values
+      old_break_union = @break_union
+      @break_type = @break_table_blocks = @break_table_values = @break_union = nil
 
       while_block, body_block, exit_block = new_blocks ["while", "body", "exit"]
 
@@ -747,12 +756,13 @@ module Crystal
       @builder.br while_block
 
       @builder.position_at_end exit_block
-      # @builder.unreachable if node.no_returns? || (node.body.yields? && block_breaks?)
+      @builder.unreachable if node.no_returns? || (node.body.yields? && block_breaks?)
 
       @last = llvm_nil
-      # @break_type = old_break_type
-      # @break_table = old_break_table
-      # @break_union = old_break_union
+      @break_type = old_break_type
+      @break_table_blocks = old_break_table_blocks
+      @break_table_values = old_break_table_values
+      @break_union = old_break_union
 
       false
     end
@@ -812,6 +822,53 @@ module Crystal
 
     def codegen_cond(node_cond)
       int1(1)
+    end
+
+    def end_visit(node : Break)
+      break_type = @break_type
+      break_table_blocks = @break_table_blocks
+      break_table_values = @break_table_values
+
+      if break_type && break_type.union?
+        break_union = @break_union.not_nil!
+        if node.exps.length > 0
+          assign_to_union(break_union, break_type, node.exps[0].type, @last)
+        else
+          assign_to_union(break_union, break_type, @mod.nil, llvm_nil)
+        end
+      elsif break_table_blocks && break_table_values
+        break_table_blocks << @builder.insert_block
+        if break_type && break_type.nilable? && node.exps.empty?
+          break_table_values << @builder.int2ptr(llvm_nil, llvm_type(break_type))
+        else
+          break_table_values << @last
+        end
+      end
+
+      while_exit_block = @while_exit_block
+      if while_exit_block
+        @builder.br while_exit_block
+      else
+        raise "Bug: while_exit_block is nil"
+      end
+    end
+
+    def block_returns?
+      return false if @block_context.empty?
+
+      context = @block_context.pop
+      breaks = context && (context.block.returns? || (context.block.yields? && block_returns?))
+      @block_context.push context
+      breaks
+    end
+
+    def block_breaks?
+      return false if @block_context.empty?
+
+      context = @block_context.pop
+      breaks = context && (context.block.breaks? || (context.block.yields? && block_breaks?))
+      @block_context.push context
+      breaks
     end
 
     abstract class BranchedBlock
@@ -881,16 +938,22 @@ module Crystal
       end
     end
 
-    def add_branched_block_value(branch, type, value : LibLLVM::ValueRef)
-      if false # !type || type.no_return?
-        # @builder.unreachable
-      elsif false # type.equal?(@mod.void)
-        # Nothing to do
-        branch.count += 1
-      else
-        branch.add_value @builder.insert_block, type, value
-        @builder.br branch.exit_block
-      end
+    def add_branched_block_value(branch, type : Nil, value)
+      @builder.unreachable
+    end
+
+    def add_branched_block_value(branch, type : NoReturnType, value)
+      @builder.unreachable
+    end
+
+    def add_branched_block_value(branch, type : VoidType, value)
+      # Nothing to do
+      branch.count += 1
+    end
+
+    def add_branched_block_value(branch, type : Type, value)
+      branch.add_value @builder.insert_block, type, value
+      @builder.br branch.exit_block
     end
 
     def close_branched_block(branch)
@@ -1282,8 +1345,9 @@ module Crystal
       getter return_block_table_blocks
       getter return_block_table_values
       getter return_type
+      getter return_union
 
-      def initialize(@block, @vars, @type, @return_block, @return_block_table_blocks, @return_block_table_values, @return_type)
+      def initialize(@block, @vars, @type, @return_block, @return_block_table_blocks, @return_block_table_values, @return_type, @return_union)
       end
     end
 
@@ -1322,22 +1386,24 @@ module Crystal
         old_return_block_table_blocks = @return_block_table_blocks
         old_return_block_table_values = @return_block_table_values
         old_return_type = @return_type
-        # old_return_union = @return_union
-        # old_while_exit_block = @while_exit_block
-        # old_break_table = @break_table
-        # old_break_type = @break_type
-        # old_break_union = @break_union
-        # @while_exit_block = @return_block
-        # @break_table = @return_block_table
-        # @break_type = @return_type
-        # @break_union = @return_union
+        old_return_union = @return_union
+        old_while_exit_block = @while_exit_block
+        old_break_table_blocks = @break_table_blocks
+        old_break_table_values = @break_table_values
+        old_break_type = @break_type
+        old_break_union = @break_union
+        @while_exit_block = @return_block
+        @break_table_blocks = @return_block_table_blocks
+        @break_table_values = @return_block_table_values
+        @break_type = @return_type
+        @break_union = @return_union
         @vars = new_vars
         @type = context.type
         @return_block = context.return_block
         @return_block_table_blocks = context.return_block_table_blocks
         @return_block_table_values = context.return_block_table_values
         @return_type = context.return_type
-        # @return_union = context[:return_union]
+        @return_union = context.return_union
 
         accept(block)
 
@@ -1345,17 +1411,18 @@ module Crystal
           @last = llvm_nil
         end
 
-        # @while_exit_block = old_while_exit_block
-        # @break_table = old_break_table
-        # @break_type = old_break_type
-        # @break_union = old_break_union
+        @while_exit_block = old_while_exit_block
+        @break_table_blocks = old_break_table_blocks
+        @break_table_values = old_break_table_values
+        @break_type = old_break_type
+        @break_union = old_break_union
         @vars = old_vars
         @type = old_type
         @return_block = old_return_block
         @return_block_table_blocks = old_return_block_table_blocks
         @return_block_table_values = old_return_block_table_values
         @return_type = old_return_type
-        # @return_union = old_return_union
+        @return_union = old_return_union
         @block_context << context
       end
       false
@@ -1414,10 +1481,7 @@ module Crystal
       end
 
       if block = node.block
-        # @block_context << { block: node.block, vars: @vars, type: @type,
-        #   return_block: @return_block, return_block_table: @return_block_table,
-        #   return_type: @return_type, return_union: @return_union }
-        @block_context << BlockContext.new(block, @vars, @type, @return_block, @return_block_table_blocks, @return_block_table_values, @return_type)
+        @block_context << BlockContext.new(block, @vars, @type, @return_block, @return_block_table_blocks, @return_block_table_values, @return_type, @return_union)
         @vars = {} of String => LLVMVar
 
         if owner

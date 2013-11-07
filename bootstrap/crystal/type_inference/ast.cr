@@ -12,10 +12,6 @@ module Crystal
       false
     end
 
-    def needs_const_block?
-      true
-    end
-
     def set_type(type : Type)
       if @freeze_type
         if (my_type = @type) && !my_type.is_restriction_of_all?(type)
@@ -41,7 +37,7 @@ module Crystal
       type
     end
 
-    def bind_to(node)
+    def bind_to(node : ASTNode)
       bind_to [node] of ASTNode
     end
 
@@ -67,12 +63,14 @@ module Crystal
       # Nothing to do
     end
 
-    def unbind_from(nodes)
-      @dependencies.try do |dependencies|
-        nodes.each do |node|
-          dependencies.delete_if &.same?(node)
-          node.remove_observer self
-        end
+    def unbind_from(node : ASTNode)
+      @dependencies.try &.delete_if &.same?(node)
+      node.remove_observer self
+    end
+
+    def unbind_from(nodes : Array)
+      nodes.each do |node|
+        unbind_from node
       end
     end
 
@@ -278,31 +276,10 @@ module Crystal
 
   class Block
     property :visited
-  end
+    property :scope
 
-  macro self.doesnt_need_const_block(klass)"
-    class #{klass}
-      def needs_const_block?
-        false
-      end
-    end
-  "end
-
-  doesnt_need_const_block NilLiteral
-  doesnt_need_const_block BoolLiteral
-  doesnt_need_const_block NumberLiteral
-  doesnt_need_const_block CharLiteral
-  doesnt_need_const_block StringLiteral
-  doesnt_need_const_block SymbolLiteral
-
-  class Primitive
-    def needs_const_block?
-      case name
-      when :float32_infinity, :flaot64_infinity
-        false
-      else
-        true
-      end
+    def break
+      @break ||= Var.new("%break")
     end
   end
 end
