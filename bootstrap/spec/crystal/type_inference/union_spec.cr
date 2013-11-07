@@ -2,16 +2,16 @@
 require "../../spec_helper"
 
 describe "Type inference: union" do
-  pending "types union when obj is union" do
-    assert_type("a = 1 || 2.3; a + 1") { union_of(int32, float64) }
+  it "types union when obj is union" do
+    assert_type("class Char; def +(other); self; end; end; a = 1 || 'a'; a + 1") { union_of(int32, char) }
   end
 
-  pending "types union when arg is union" do
-    assert_type("a = 1 || 2.3; 1 + a") { union_of(int32, float64) }
+  it "types union when arg is union" do
+    assert_type("class Int; def +(x : Char); x; end; end; a = 1 || 'a'; 1 + a") { union_of(int32, char) }
   end
 
-  pending "types union when both obj and arg are union" do
-    assert_type("a = 1 || 2.3; a + a") { union_of(int32, float64) }
+  it "types union when both obj and arg are union" do
+    assert_type("class Char; def +(other); self; end; end; class Int; def +(x : Char); x; end; end; a = 1 || 'a'; a + a") { union_of(int32, char) }
   end
 
   it "types union of classes" do

@@ -32,8 +32,8 @@ describe "Code gen: if" do
 
   pending "codegens if with union" do
     program = Program.new
-    union = program.run("a = if true; 2.5_f32; else; 1; end; a.ptr").to_pointer
-    union.as(Int32).value.should eq(program.float32.type_id)
-    (union + 4).as(Float32).value.should eq(2.5)
+    union = program.run("a = if 1 == 2; 'a'; else; 1; end; a.ptr").to_pointer
+    union.as(Int32).value.should eq(program.char.type_id)
+    (union + 4).as(Char).value.should eq('a')
   end
 end
