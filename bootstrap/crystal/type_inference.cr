@@ -339,10 +339,11 @@ module Crystal
       obj.add_input_observer node if obj
       node.args.each &.add_input_observer(node)
       # node.block_arg.add_observer node, :update_input if node.block_arg
+      node.recalculate
 
       obj.accept self if obj
       node.args.each &.accept(self)
-      node.recalculate
+      # node.block_arg.accept self if node.block_arg
 
       false
     end
@@ -1025,6 +1026,21 @@ module Crystal
 
     def lookup_var(name)
       @vars[name] ||= Var.new(name)
+    end
+
+    def lookup_var_or_instance_var(var : Var)
+      lookup_var(var.name)
+    end
+
+    def lookup_var_or_instance_var(var : InstanceVar)
+      scope = @scope
+      assert_type scope, InstanceVarContainer
+
+      scope.lookup_instance_var(var.name)
+    end
+
+    def lookup_var_or_instance_var(var)
+      raise "Bug: trying to lookup var or instance var but got #{var}"
     end
 
     def lookup_ident_type(node : Ident)

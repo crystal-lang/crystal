@@ -70,6 +70,10 @@ module Crystal
       false
     end
 
+    def pointer?
+      false
+    end
+
     def nilable?
       false
     end

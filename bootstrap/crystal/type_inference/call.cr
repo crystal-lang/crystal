@@ -29,10 +29,13 @@ module Crystal
 
     def recalculate
       obj = @obj
+      obj_type = obj.type? if obj
 
-      if obj && (obj_type = obj.type?) && obj_type.is_a?(LibType)
+      if obj_type.is_a?(LibType)
         recalculate_lib_call(obj_type)
         return
+      elsif !obj || (obj_type && !obj_type.is_a?(LibType))
+        check_not_lib_out_args
       end
 
       return unless obj_and_args_types_set?
@@ -146,6 +149,14 @@ module Crystal
       raise "Bug: trying to lookup matches in nil in #{self}"
     end
 
+    def check_not_lib_out_args
+      args.each do |arg|
+        if arg.out?
+          arg.raise "out can only be used with lib funs"
+        end
+      end
+    end
+
     def recalculate_lib_call(obj_type)
       old_target_defs = @target_defs
 
@@ -153,7 +164,7 @@ module Crystal
       raise "undefined fun '#{name}' for #{obj_type}" unless untyped_def
 
       check_args_length_match obj_type, untyped_def
-      # check_lib_out_args untyped_def
+      check_lib_out_args untyped_def
       return unless obj_and_args_types_set?
 
       check_fun_args_types_match obj_type, untyped_def
@@ -163,6 +174,21 @@ module Crystal
 
       # self.unbind_from *old_target_defs if old_target_defs
       self.bind_to untyped_defs
+    end
+
+    def check_lib_out_args(untyped_def)
+      untyped_def.args.each_with_index do |arg, i|
+        call_arg = self.args[i]
+        if call_arg.out?
+          arg_type = arg.type
+          if arg_type.is_a?(PointerInstanceType)
+            var = parent_visitor.lookup_var_or_instance_var(call_arg)
+            var.bind_to Var.new("out", arg_type.var.type)
+          else
+            call_arg.raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
+          end
+        end
+      end
     end
 
     def match_block_arg(match)
@@ -308,7 +334,7 @@ module Crystal
         expected_type = typed_def_arg.type
         self_arg = self.args[i]
         actual_type = self_arg.type
-        # actual_type = mod.pointer_of(actual_type) if self.args[i].out?
+        actual_type = mod.pointer_of(actual_type) if self.args[i].out?
         if actual_type != expected_type
           # if actual_type.nil_type? && expected_type.pointer?
           #   nil_conversions ||= []

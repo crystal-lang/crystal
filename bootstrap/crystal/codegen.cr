@@ -1227,6 +1227,15 @@ module Crystal
       var
     end
 
+    def declare_out_arguments(call)
+      call.target_def.args.each_with_index do |arg, i|
+        var = call.args[i]
+        if var.out? && var.is_a?(Var)
+          declare_var(var)
+        end
+      end
+    end
+
     def visit(node : Def)
       false
     end
@@ -1366,9 +1375,15 @@ module Crystal
 
       target_defs = node.target_defs
 
-      if target_defs && target_defs.length > 1
-        codegen_dispatch(node, target_defs)
-        return false
+      if target_defs
+        if target_defs.length > 1
+          codegen_dispatch(node, target_defs)
+          return false
+        end
+
+        if node.target_def.is_a?(External)
+          declare_out_arguments(node)
+        end
       end
 
       owner = node.target_def.owner
@@ -1387,8 +1402,21 @@ module Crystal
       end
 
       node.args.each_with_index do |arg, i|
-        accept(arg)
-        call_args << @last
+        if arg.out?
+          case arg
+          when Var
+            call_args << @vars[arg.name].pointer
+          when InstanceVar
+            type = @type
+            assert_type type, InstanceVarContainer
+            call_args << (gep llvm_self_ptr, 0, type.index_of_instance_var(arg.name))
+          else
+            raise "Bug: out argument was #{arg}"
+          end
+        else
+          accept(arg)
+          call_args << @last
+        end
       end
 
       if block = node.block
@@ -1607,9 +1635,33 @@ module Crystal
 
       mangled_name = target_def.mangled_name(self_type)
 
+      # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call.
+      has_struct_or_union_out_args = target_def.is_a?(External) && node.args.any? { |arg| arg.out? && arg.is_a?(Var) && (arg.type.c_struct? || arg.type.c_union?) }
+      if has_struct_or_union_out_args
+        old_call_args = call_args.dup
+        call_args = call_args.map_with_index do |call_arg, i|
+          arg = node.args[i]
+          if arg.out? && (arg.type.c_struct? || arg.type.c_union?)
+            alloca llvm_struct_type(arg.type)
+          else
+            call_arg
+          end
+        end
+      end
+
       func = @llvm_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
 
       @last = @builder.call func, call_args
+
+      if has_struct_or_union_out_args
+        old_call_args = old_call_args.not_nil!
+        call_args.each_with_index do |call_arg, i|
+          arg = node.args[i]
+          if arg.out? && (arg.type.c_struct? || arg.type.c_union?)
+            @builder.store call_arg, old_call_args[i]
+          end
+        end
+      end
 
       if target_def.type.union?
         union = alloca llvm_type(target_def.type)

@@ -489,7 +489,9 @@ module Crystal
     end
 
     def clone_without_location
-      Var.new(@name)
+      var = Var.new(@name)
+      var.out = @out
+      var
     end
   end
 

@@ -8,6 +8,10 @@ module Crystal
     property observers
     property input_observers
 
+    def out?
+      false
+    end
+
     def needs_const_block?
       true
     end
@@ -229,6 +233,18 @@ module Crystal
 
     def lookup_instance(arg_types)
       @instances ? @instances[InstanceKey.new(arg_types)]? : nil
+    end
+  end
+
+  class Var
+    def out?
+      out
+    end
+  end
+
+  class InstanceVar
+    def out?
+      out
     end
   end
 
