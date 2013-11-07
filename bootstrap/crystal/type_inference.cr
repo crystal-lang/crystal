@@ -310,12 +310,14 @@ module Crystal
 
       bind_block_args_to_yield_exps block, node
 
-      # unless block.visited
-        # @call.bubbling_exception do
-          # block.scope = node.scope.type if node.scope
+      unless block.visited
+        call.bubbling_exception do
+          if node_scope = node.scope
+            block.scope = node_scope.type
+          end
           block.accept call.parent_visitor.not_nil!
-        # end
-      # end
+        end
+      end
 
       node.bind_to block.body
     end
@@ -336,7 +338,7 @@ module Crystal
         block_vars[arg.name] = arg
       end
 
-      block_visitor = TypeVisitor.new(mod, block_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars) #, @type_filter_stack)
+      block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars) #, @type_filter_stack)
       block_visitor.block = node
       node.body.accept block_visitor
       false

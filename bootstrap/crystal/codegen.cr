@@ -1356,10 +1356,10 @@ module Crystal
         new_vars = context.vars.dup
         block = context.block
 
-        # if node.scope
-        #   node.scope.accept self
-        #   new_vars['%scope'] = { ptr: @last, type: node.scope.type, treated_as_pointer: false }
-        # end
+        if node_scope = node.scope
+          node_scope.accept self
+          new_vars["%scope"] = LLVMVar.new(@last, node_scope.type)
+        end
 
         if block.args
           block.args.each_with_index do |arg, i|
@@ -1462,7 +1462,11 @@ module Crystal
         accept(obj)
         call_args << @last
       elsif owner
-        call_args << llvm_self
+        if yield_scope = @vars["%scope"]?
+          call_args << yield_scope.pointer
+        else
+          call_args << llvm_self
+        end
       end
 
       node.args.each_with_index do |arg, i|
