@@ -51,9 +51,9 @@ module Crystal
       output_name node
     end
 
-    # def visit(node : DeclareVar)
-    #   output_name node
-    # end
+    def visit(node : DeclareVar)
+      output_name node
+    end
 
     def output_name(node)
       if !node.name.starts_with?('#') && !@vars.includes?(node.name)

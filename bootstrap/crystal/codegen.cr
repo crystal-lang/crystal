@@ -912,17 +912,6 @@ module Crystal
         return false
       end
 
-      # if target.is_a?(ClassVar) && target.class_scope
-      #   global_name = class_var_global_name(target)
-      #   in_const_block(global_name) do
-      #     accept(value)
-      #     llvm_value = @last
-      #     ptr = assign_to_global global_name, target.type
-      #     codegen_assign(ptr, target.type, value.type, llvm_value)
-      #   end
-      #   return
-      # end
-
       accept(value)
 
       # if value.no_returns?
@@ -978,6 +967,11 @@ module Crystal
 
     def class_var_global_name(node)
       "#{node.owner}#{node.var.name.replace('@', ':')}"
+    end
+
+    def visit(node : DeclareVar)
+      declare_var node.var
+      false
     end
 
     def codegen_assign(pointer, target_type, value_type, value, instance_var = false)
@@ -1625,6 +1619,7 @@ module Crystal
     def codegen_call(node, self_type, call_args)
       target_def = node.target_def
       body = target_def.body
+
       if body.is_a?(Primitive)
         old_type = @type
         @type = self_type

@@ -2303,6 +2303,10 @@ module Crystal
       push_var_name var.name.to_s
     end
 
+    def push_var(var : DeclareVar)
+      push_var_name var.name.to_s
+    end
+
     def push_var_name(name)
       @def_vars.last.add name
     end

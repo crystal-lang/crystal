@@ -85,6 +85,19 @@ module Crystal
       node.type_filters = and_type_filters(not_nil_filter(node), var.type_filters)
     end
 
+    def visit(node : DeclareVar)
+      node.type = lookup_ident_type(node.declared_type).instance_type
+
+      var = Var.new(node.name)
+      var.bind_to node
+
+      node.var = var
+
+      @vars[node.name] = var
+
+      false
+    end
+
     def visit(node : Global)
       var = mod.global_vars[node.name]?
       unless var

@@ -457,7 +457,7 @@ module Crystal
     end
 
     def visit_declare_var(node)
-      node.type = (lookup_ident_type node.declared_type).instance_type
+      node.type = lookup_ident_type(node.declared_type).instance_type
 
       var = Var.new(node.name)
       var.bind_to node
