@@ -74,6 +74,10 @@ module Crystal
       llvm_type type.typedef
     end
 
+    def create_llvm_type(type : NoReturnType)
+      LLVM::Void
+    end
+
     def create_llvm_type(type)
       raise "Bug: called create_llvm_type for #{type}"
     end

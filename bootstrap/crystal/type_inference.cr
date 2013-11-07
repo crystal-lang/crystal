@@ -771,11 +771,12 @@ module Crystal
 
     def visit(node : If)
       node.cond.accept self
+      node_cond_type_filters = node.cond.type_filters
 
       if node.then.nop?
         node.then.accept self
       else
-        then_filters = node.cond.type_filters || new_type_filter
+        then_filters = node_cond_type_filters || new_type_filter
 
         pushing_type_filters(then_filters) do
           node.then.accept self
@@ -785,7 +786,7 @@ module Crystal
       if node.else.nop?
         node.else.accept self
       else
-        if (filters = node.cond.type_filters) && !node.cond.is_a?(If)
+        if (filters = node_cond_type_filters) && !node.cond.is_a?(If)
           else_filters = negate_filters(filters)
         else
           else_filters = new_type_filter
@@ -798,22 +799,22 @@ module Crystal
 
       case node.binary
       when :and
-        node.type_filters = and_type_filters(and_type_filters(node.cond.type_filters, node.then.type_filters), node.else.type_filters)
+        node.type_filters = and_type_filters(and_type_filters(node_cond_type_filters, node.then.type_filters), node.else.type_filters)
       when :or
         node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
       end
 
       # If the then branch exists, we can safely assume that tyhe type
       # filters after the if will be those of the condition, negated
-      # if node.then && node.then.no_returns? && node.cond.type_filters && !@type_filter_stack.empty?
-      #   @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, negate_filters(node.cond.type_filters))
-      # end
+      if node.then.no_returns? && node_cond_type_filters && !@type_filter_stack.empty?
+        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, negate_filters(node_cond_type_filters))
+      end
 
       # If the else branch exits, we can safely assume that the type
       # filters in the condition will still apply after the if
-      # if node.else && (node.else.no_returns? || node.else.returns?) && node.cond.type_filters && !@type_filter_stack.empty?
-      #   @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, node.cond.type_filters)
-      # end
+      if (node.else.no_returns? || node.else.returns?) && node_cond_type_filters && !@type_filter_stack.empty?
+        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, node_cond_type_filters)
+      end
 
       false
     end

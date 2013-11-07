@@ -138,6 +138,7 @@ lib LibLLVM("LLVM-3.3")
 
   fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : Int32)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : Char*, type : TypeRef) : ValueRef
+  fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : Int32);
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : Char*) : ValueRef
   fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef *, count : Int32)
   fun append_basic_block = LLVMAppendBasicBlock(fn : ValueRef, name : Char*) : BasicBlockRef
@@ -377,6 +378,10 @@ module LLVM
 
     def linkage=(linkage)
       LibLLVM.set_linkage(@fun, linkage)
+    end
+
+    def add_attribute(attribute)
+      LibLLVM.add_function_attr @fun, attribute
     end
   end
 

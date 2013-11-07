@@ -102,8 +102,7 @@ module Crystal
     def finish
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
-
-      return_from_fun nil, @main_ret_type
+      return_from_fun nil, @main_ret_type unless @main_ret_type && @main_ret_type.no_return?
     end
 
     def visit(node : FunDef)
@@ -958,8 +957,8 @@ module Crystal
 
     def close_branched_block(branch)
       @builder.position_at_end branch.exit_block
-      if false # branch.node.returns? || branch.node.no_returns?
-        # @builder.unreachable
+      if branch.node.returns? || branch.node.no_returns?
+        @builder.unreachable
       else
         @last = branch.close
       end
@@ -977,9 +976,9 @@ module Crystal
 
       accept(value)
 
-      # if value.no_returns?
-      #   return
-      # end
+      if value.no_returns?
+        return
+      end
 
       codegen_assign_target(target, value, @last) if @last
 
@@ -1524,9 +1523,9 @@ module Crystal
 
         accept(node.target_def.body)
 
-        # if node.target_def.no_returns? || (node.target_def.body && node.target_def.body.no_returns?)
-        #   @builder.unreachable
-        # else
+        if node.target_def.no_returns? || node.target_def.body.no_returns?
+          @builder.unreachable
+        else
           # if node.target_def.type && !node.target_def.type.nil_type? && !node.block.breaks?
           #   if @return_union
           #     if node.target_def.body && node.target_def.body.type
@@ -1544,13 +1543,13 @@ module Crystal
             # @return_block_table[@builder.insert_block] = @builder.int2ptr llvm_nil, llvm_type(node.type)
           # end
           @builder.br return_block
-        # end
+        end
 
         @builder.position_at_end return_block
 
-        # if node.no_returns? || node.returns? || block_returns? || (node.block.yields? && block_breaks?)
-        #   @builder.unreachable
-        # else
+        if node.no_returns? || node.returns? || block_returns? || ((node_block = node.block) && node_block.yields? && block_breaks?)
+          @builder.unreachable
+        else
           # if node.type && !node.type.nil_type?
           #   if @return_union
           #     @last = @return_union
@@ -1560,7 +1559,7 @@ module Crystal
               @last = @builder.phi phi_type, return_block_table_blocks, return_block_table_values
             # end
           # end
-        # end
+        end
 
         old_context = @block_context.pop
         @vars = old_context.vars
@@ -1726,6 +1725,10 @@ module Crystal
         end
       end
 
+      if target_def.type.no_return?
+        @builder.unreachable
+      end
+
       if target_def.type.union?
         union = alloca llvm_type(target_def.type)
         @builder.store @last, union
@@ -1734,11 +1737,11 @@ module Crystal
     end
 
     def codegen_fun(mangled_name, target_def, self_type, is_exported_fun_def = false)
-      # if target_def.type.same?(@mod.void)
-      #   llvm_return_type = LLVM.Void
-      # else
+      if target_def.type == @mod.void
+        llvm_return_type = LLVM::Void
+      else
         llvm_return_type = llvm_type(target_def.type)
-      # end
+      end
 
       old_position = @builder.insert_block
       old_fun = @fun
@@ -1768,6 +1771,7 @@ module Crystal
         llvm_return_type,
         varargs
       )
+      @fun.add_attribute LibLLVM::Attribute::NoReturn if target_def.no_returns?
 
       unless is_external
         @fun.linkage = LibLLVM::Linkage::Internal
@@ -1830,11 +1834,11 @@ module Crystal
     end
 
     def return_from_fun(target_def, return_type)
-      # if target_def.type == @mod.void
-      #   ret nil
-      # elsif target_def.body.no_returns?
-      #   @builder.unreachable
-      # else
+      if target_def && target_def.type == @mod.void
+        ret nil
+      elsif target_def && target_def.body.no_returns?
+        @builder.unreachable
+      else
         if return_type.union?
           # if target_def.body.type != @return_type && !target_def.body.returns?
           #   assign_to_union(@return_union, @return_type, target_def.body.type, @last)
@@ -1849,7 +1853,7 @@ module Crystal
         # else
           ret(@last)
         # end
-      # end
+      end
     end
 
     def match_any_type_id(type, type_id : LibLLVM::ValueRef)
@@ -2050,6 +2054,10 @@ module Crystal
       # old_current_node = @current_node
       node.accept self
       # @current_node = old_current_node
+    end
+
+    def ret
+      @builder.ret
     end
 
     def ret(value)

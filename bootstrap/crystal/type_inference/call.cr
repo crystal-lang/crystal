@@ -38,6 +38,11 @@ module Crystal
         check_not_lib_out_args
       end
 
+      if args.any? &.type?.try &.no_return?
+        set_type mod.no_return
+        return
+      end
+
       return unless obj_and_args_types_set?
 
       # elsif !obj || (obj.type && !obj.type.is_a?(LibType))

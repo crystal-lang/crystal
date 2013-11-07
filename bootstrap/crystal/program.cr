@@ -156,8 +156,9 @@ module Crystal
     def compact_types(objects)
       all_types = Set(Type).new
       objects.each { |obj| add_type all_types, yield(obj) }
-      # all_types.delete_if { |type| type.no_return? } if all_types.length > 1
-      all_types.to_a
+      all_types = all_types.to_a
+      all_types.delete_if &.no_return? if all_types.length > 1
+      all_types
     end
 
     def add_type(set, type : UnionType)

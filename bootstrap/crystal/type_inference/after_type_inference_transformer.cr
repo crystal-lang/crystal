@@ -48,49 +48,49 @@ module Crystal
       node
     end
 
-    # def transform_expressions(node)
-    #   exps = []
+    def transform(node : Expressions)
+      exps = [] of ASTNode
 
-    #   found_no_return = false
-    #   length = node.expressions.length
-    #   node.expressions.each_with_index do |exp, i|
-    #     new_exp = exp.transform(self)
-    #     if new_exp
-    #       if new_exp.is_a?(Expressions)
-    #         exps.concat new_exp.expressions
-    #       else
-    #         exps << new_exp
-    #       end
+      found_no_return = false
+      length = node.expressions.length
+      node.expressions.each_with_index do |exp, i|
+        new_exp = exp.transform(self)
+        if new_exp
+          if new_exp.is_a?(Expressions)
+            exps.concat new_exp.expressions
+          else
+            exps << new_exp
+          end
 
-    #       if new_exp.type && new_exp.type.no_return?
-    #         found_no_return = true
-    #         break
-    #       end
-    #     end
-    #   end
+          if new_exp.no_returns?
+            found_no_return = true
+            break
+          end
+        end
+      end
 
-    #   case exps.length
-    #   when 0
-    #     return nil
-    #   when 1
-    #     return exps[0]
-    #   end
+      case exps.length
+      when 0
+        Nop.new
+      when 1
+        exps[0]
+      else
+        node.expressions = exps
+        rebind_node node, exps.last
+        node
+      end
+    end
 
-    #   node.expressions = exps
-    #   rebind_node node, exps.last
-    #   node
-    # end
+    def transform(node : Assign)
+      super
 
-    # def transform_assign(node)
-    #   super
+      if node.value.type?.try &.no_return?
+        rebind_node node, node.value
+        return node.value
+      end
 
-    #   if node.value.type && node.value.type.no_return?
-    #     rebind_node node, node.value
-    #     return node.value
-    #   end
-
-    #   node
-    # end
+      node
+    end
 
     # def transform_call(node)
     #   super
@@ -243,13 +243,17 @@ module Crystal
     #   node
     # end
 
-    # def transform_fun_def(node)
-    #   return node unless node.body
+    def transform(node : FunDef)
+      node_body = node.body
+      return node unless node_body
 
-    #   node.body = node.body.transform(self)
-    #   node.external.body = node.external.body.transform(self) if node.external
-    #   node
-    # end
+      node.body = node_body.transform(self)
+
+      if node_external = node.external
+        node_external.body = node_external.body.transform(self)
+      end
+      node
+    end
 
     # def transform_exception_handler(node)
     #   super
