@@ -1447,7 +1447,11 @@ module Crystal
         end
       end
 
-      owner = node.target_def.owner
+      if node.name == "super"
+        owner = node.scope
+      else
+        owner = node.target_def.owner
+      end
 
       if owner && !owner.passed_as_self?
         owner = nil

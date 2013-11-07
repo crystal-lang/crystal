@@ -1,6 +1,7 @@
-require 'spec_helper'
+#!/usr/bin/env bin/crystal -run
+require "../../spec_helper"
 
-describe 'Codegen: super' do
+describe "Codegen: super" do
   it "codegens super without arguments" do
     run("class Foo; def foo; 1; end; end; class Bar < Foo; def foo; super; end; end; Bar.new.foo").to_i.should eq(1)
   end

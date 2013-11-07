@@ -174,6 +174,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_defs"
     end
 
+    def lookup_first_def(name, yields)
+      raise "Bug: #{self} doesn't implement lookup_first_def"
+    end
+
     def macros
       raise "Bug: #{self} doesn't implement macros"
     end
@@ -352,6 +356,7 @@ module Crystal
     end
 
     def add_def(a_def)
+      a_def.owner = self
       restrictions = Array(Type | ASTNode | Nil).new(a_def.args.length)
       a_def.args.each { |arg| restrictions.push(arg.type? || arg.type_restriction) }
       # restrictions = a_def.args.map { |arg| arg.type || arg.type_restriction }

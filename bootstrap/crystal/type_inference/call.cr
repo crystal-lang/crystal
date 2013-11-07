@@ -78,7 +78,11 @@ module Crystal
       if obj
         matches = lookup_matches_in(obj.type)
       else
-        matches = lookup_matches_in scope
+        if name == "super"
+          matches = lookup_matches_in_super
+        else
+          matches = lookup_matches_in scope
+        end
       end
 
       # If @target_defs is set here it means there was a recalculation
@@ -127,16 +131,24 @@ module Crystal
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
         block_type = block && block.body && match.def.block_arg ? block.body.type : nil
+        lookup_self_type = self_type || match.owner
+        if self_type
+          lookup_arg_types = [] of Type
+          lookup_arg_types.push self_type
+          lookup_arg_types.concat match.arg_types
+        else
+          lookup_arg_types = match.arg_types
+        end
         match_owner = match.owner
-        typed_def = match_owner.lookup_def_instance(match.def.object_id, match.arg_types, block_type) if use_cache
+        typed_def = match_owner.lookup_def_instance(match.def.object_id, lookup_arg_types, block_type) if use_cache
         unless typed_def
-          prepared_typed_def = prepare_typed_def_with_args(match.def, owner, match_owner, match.arg_types)
+          prepared_typed_def = prepare_typed_def_with_args(match.def, owner, lookup_self_type, match.arg_types)
           typed_def = prepared_typed_def.typed_def
           typed_def_args = prepared_typed_def.args
-          match_owner.add_def_instance(match.def.object_id, match.arg_types, block_type, typed_def) if use_cache
+          match_owner.add_def_instance(match.def.object_id, lookup_arg_types, block_type, typed_def) if use_cache
           if typed_def.body
             bubbling_exception do
-              visitor = TypeVisitor.new(mod, typed_def_args, match_owner, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars, yield_vars)
+              visitor = TypeVisitor.new(mod, typed_def_args, lookup_self_type, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars, yield_vars)
               typed_def.body.accept visitor
             end
           end
@@ -155,6 +167,38 @@ module Crystal
           arg.raise "out can only be used with lib funs"
         end
       end
+    end
+
+    def lookup_matches_in_super
+      if args.empty? && !has_parenthesis
+        parent_args = parent_visitor.typed_def.args
+        self.args = Array(ASTNode).new(parent_args.length)
+        parent_args.each do |arg|
+          var = Var.new(arg.name)
+          var.bind_to arg
+          self.args.push var
+        end
+      end
+
+      # TODO: do this better
+      untyped_def = parent_visitor.untyped_def
+      lookup = untyped_def.owner.not_nil!
+      # if lookup.hierarchy?
+      #   parents = lookup.base_type.parents
+      # else
+        parents = lookup.parents
+      # end
+
+      if parents
+        parents_length = parents.length
+        parents.each_with_index do |parent, i|
+          if i == parents_length - 1 || parent.lookup_first_def(untyped_def.name, !!block)
+            return lookup_matches_in(parent, scope, untyped_def.name)
+          end
+        end
+      end
+
+      nil
     end
 
     def recalculate_lib_call(obj_type)
@@ -416,42 +460,42 @@ module Crystal
       defs = owner.lookup_defs(def_name)
       if defs.empty?
         if obj || !owner.is_a?(Program)
-          error_msg = "undefined method '#{name}' for #{owner}"
+          error_msg = "undefined method '#{def_name}' for #{owner}"
           # similar_name = owner.lookup_similar_defs(def_name, self.args.length, !!block)
           # error_msg << " \033[1;33m(did you mean '#{similar_name}'?)\033[0m" if similar_name
           raise error_msg#, owner_trace
         elsif args.length > 0 || has_parenthesis
-          raise "undefined method '#{name}'"#, owner_trace
+          raise "undefined method '#{def_name}'"#, owner_trace
         else
-          raise "undefined local variable or method '#{name}'"#, owner_trace
+          raise "undefined local variable or method '#{def_name}'"#, owner_trace
         end
       end
 
       defs_matching_args_length = defs.select { |a_def| a_def.args.length == self.args.length }
       if defs_matching_args_length.empty?
         all_arguments_lengths = defs.map { |a_def| a_def.args.length }.uniq!
-        raise "wrong number of arguments for '#{full_name(owner)}' (#{args.length} for #{all_arguments_lengths.join ", "})"
+        raise "wrong number of arguments for '#{full_name(owner, def_name)}' (#{args.length} for #{all_arguments_lengths.join ", "})"
       end
 
       if defs_matching_args_length.length > 0
         if block && defs_matching_args_length.all? { |a_def| !a_def.yields }
-          raise "'#{full_name(owner)}' is not expected to be invoked with a block, but a block was given"
+          raise "'#{full_name(owner, def_name)}' is not expected to be invoked with a block, but a block was given"
         elsif !block && defs_matching_args_length.all?(&.yields)
-          raise "'#{full_name(owner)}' is expected to be invoked with a block, but no block was given"
+          raise "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
         end
       end
 
       arg_names = [] of Array(String)
 
       message = String.build do |msg|
-        msg << "no overload matches '#{full_name(owner)}'"
+        msg << "no overload matches '#{full_name(owner, def_name)}'"
         msg << " with types #{args.map(&.type).join ", "}" if args.length > 0
         msg << "\n"
         msg << "Overloads are:"
         defs.each do |a_def|
           arg_names.push a_def.args.map(&.name)
 
-          msg << "\n - #{full_name(owner)}("
+          msg << "\n - #{full_name(owner, def_name)}("
           a_def.args.each_with_index do |arg, i|
             msg << ", " if i > 0
             msg << arg.name
@@ -486,9 +530,9 @@ module Crystal
               msg << "\nCouldn't find overloads for these types:"
               missing.each_with_index do |missing_types|
                 if uniq_arg_names
-                  msg << "\n - #{full_name(owner)}(#{missing_types.map_with_index { |missing_type, i| "#{uniq_arg_names[i]} : #{missing_type}" }.join ", "}"
+                  msg << "\n - #{full_name(owner, def_name)}(#{missing_types.map_with_index { |missing_type, i| "#{uniq_arg_names[i]} : #{missing_type}" }.join ", "}"
                 else
-                  msg << "\n - #{full_name(owner)}(#{missing_types.join ", "}"
+                  msg << "\n - #{full_name(owner, def_name)}(#{missing_types.join ", "}"
                 end
                 msg << ", &block" if block
                 msg << ")"
@@ -502,8 +546,8 @@ module Crystal
     end
 
 
-    def full_name(owner)
-      owner.is_a?(Program) ? name : "#{owner}##{name}"
+    def full_name(owner, def_name = name)
+      owner.is_a?(Program) ? name : "#{owner}##{def_name}"
     end
 
     def define_new(scope, arg_types)
@@ -611,7 +655,7 @@ module Crystal
       args_start_index = 0
 
       typed_def = untyped_def.clone
-      typed_def.owner = self_type
+      typed_def.owner = owner
 
       if body = typed_def.body
         typed_def.bind_to body

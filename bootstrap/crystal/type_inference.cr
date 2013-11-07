@@ -16,6 +16,7 @@ module Crystal
     getter mod
     getter! scope
     getter! typed_def
+    getter! untyped_def
     property block
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [new_type_filter])
