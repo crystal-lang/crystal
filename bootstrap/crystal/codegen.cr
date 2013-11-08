@@ -96,7 +96,6 @@ module Crystal
       @last = llvm_nil
       @in_const_block = false
       @block_context = [] of BlockContext
-      # @return_union = llvm_nil
     end
 
     def finish
@@ -652,6 +651,35 @@ module Crystal
       false
     end
 
+    def end_visit(node : Return)
+      return_type = @return_type
+      raise "Bug: return_type is nil" unless return_type
+
+      if return_block = @return_block
+        if return_type.union?
+          return_union = return_union()
+          assign_to_union(return_union, return_type, node.exps[0].type, @last)
+          @last = @builder.load return_union
+        end
+        @return_block_table_blocks.not_nil! << @builder.insert_block
+        @return_block_table_values.not_nil! << @last
+        @builder.br return_block
+      elsif return_type.union?
+        return_union = return_union()
+        assign_to_union(return_union, return_type, node.exps[0].type, @last)
+        union = @builder.load return_union
+        ret union
+      elsif return_type.nilable?
+        if LLVM.type_kind_of(LLVM.type_of @last) == LibLLVM::TypeKind::Integer
+          ret @builder.int2ptr(@last, llvm_type(return_type))
+        else
+          ret @last
+        end
+      else
+        ret @last
+      end
+    end
+
     def visit(node : ClassDef)
       node.body.accept self
       @last = llvm_nil
@@ -829,7 +857,9 @@ module Crystal
       break_table_values = @break_table_values
 
       if break_type && break_type.union?
-        break_union = @break_union.not_nil!
+        break_union = @break_union
+        raise "Bug: break_union is nil" unless break_union
+
         if node.exps.length > 0
           assign_to_union(break_union, break_type, node.exps[0].type, @last)
         else
@@ -917,19 +947,20 @@ module Crystal
       end
 
       def close
-        # if branch[:count] == 0
-        #   @builder.unreachable
-        # elsif branch[:phi_table].empty?
-        #   # All branches are void or no return
-        #   @last = llvm_nil
-        # else
-        @codegen.builder.phi @codegen.llvm_type(@node.type), @incoming_blocks, @incoming_values
+        if @count == 0
+          @codegen.builder.unreachable
+        elsif @incoming_blocks.empty?
+          # All branches are void or no return
+          @codegen.llvm_nil
+        else
+          @codegen.builder.phi @codegen.llvm_type(@node.type), @incoming_blocks, @incoming_values
+        end
       end
     end
 
     def new_branched_block(node)
       exit_block = new_block("exit")
-      node_type = node.type
+      node_type = node.type?
       if node_type && node_type.union?
         UnionBranchedBlock.new node, exit_block, self
       else
@@ -946,7 +977,6 @@ module Crystal
     end
 
     def add_branched_block_value(branch, type : VoidType, value)
-      # Nothing to do
       branch.count += 1
     end
 
@@ -960,7 +990,10 @@ module Crystal
       if branch.node.returns? || branch.node.no_returns?
         @builder.unreachable
       else
-        @last = branch.close
+        branch_value = branch.close
+        if branch_value
+          @last = branch_value
+        end
       end
     end
 
@@ -1046,7 +1079,6 @@ module Crystal
       else
         assign_to_union(pointer, target_type, value_type, value)
       end
-      nil
     end
 
     def cast_number(target_type : IntegerType, value_type : IntegerType, value)
@@ -1077,7 +1109,6 @@ module Crystal
         value = @builder.int2ptr value, llvm_type(union_type)
       end
       @builder.store value, union_pointer
-      nil
     end
 
     def assign_to_union(union_pointer, union_type, type, value)
@@ -1097,10 +1128,11 @@ module Crystal
         index = type.type_id
         @builder.store int32(index), type_id_ptr
 
-        casted_value_ptr = cast_to_pointer value_ptr, type
-        @builder.store value, casted_value_ptr
+        unless type == @mod.void
+          casted_value_ptr = cast_to_pointer value_ptr, type
+          @builder.store value, casted_value_ptr
+        end
       end
-      nil
     end
 
     def union_type_id_and_value(union_pointer)
@@ -1218,21 +1250,21 @@ module Crystal
 
       obj_type = node.obj.type
 
-      # if obj_type.is_a?(HierarchyType)
+      case obj_type
+      # when HierarchyType
       #   codegen_type_filter_many_types(obj_type.subtypes, &block)
-      if obj_type.is_a?(UnionType)
+      when UnionType
         codegen_type_filter_many_types(obj_type.concrete_types) { |type| yield type }
-      # elsif obj_type.nilable?
-      #   np = null_pointer?(@last)
-      #   nil_matches = block.call(@mod.nil)
-      #   other_matches = block.call(obj_type.nilable_type)
-      #   @last = @builder.or(
-      #     @builder.and(np, int1(nil_matches ? 1 : 0)),
-      #     @builder.and(@builder.not(np), int1(other_matches ? 1 : 0))
-      #   )
+      when NilableType
+        np = null_pointer?(@last)
+        nil_matches = yield @mod.nil
+        other_matches = yield obj_type.not_nil_type
+        @last = @builder.or(
+          @builder.and(np, int1(nil_matches ? 1 : 0)),
+          @builder.and(@builder.not(np), int1(other_matches ? 1 : 0))
+        )
       else
         matches = yield obj_type
-        # matches = block.call(obj_type)
         @last = int1(matches ? 1 : 0)
       end
 
@@ -1266,9 +1298,10 @@ module Crystal
     def declare_var(var)
       @vars[var.name] ||= begin
         llvm_var = LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
-        # if var.type.is_a?(UnionType) && var.type.types.any?(&:nil_type?)
-        #   in_alloca_block { assign_to_union(llvm_var[:ptr], var.type, @mod.nil, llvm_nil) }
-        # end
+        var_type = var.type
+        if var_type.is_a?(UnionType) && var_type.union_types.any?(&.nil_type?)
+          in_alloca_block { assign_to_union(llvm_var.pointer, var.type, @mod.nil, llvm_nil) }
+        end
         llvm_var
       end
     end
@@ -1293,10 +1326,12 @@ module Crystal
     end
 
     def visit(node : Def)
+      @last = llvm_nil
       false
     end
 
     def visit(node : Macro)
+      @last = llvm_nil
       false
     end
 
@@ -1518,34 +1553,38 @@ module Crystal
         return_block = @return_block = new_block "return"
         return_block_table_blocks = @return_block_table_blocks = [] of LibLLVM::BasicBlockRef
         return_block_table_values = @return_block_table_values = [] of LibLLVM::ValueRef
-        @return_type = node.type
-        # if @return_type.union?
-        #   @return_union = alloca(llvm_type(node.type), 'return')
-        # else
-        #   @return_union = nil
-        # end
+        return_type = @return_type = node.type
+        if return_type.union?
+          @return_union = alloca(llvm_type(node.type), "return")
+        else
+          @return_union = nil
+        end
 
         accept(node.target_def.body)
 
         if node.target_def.no_returns? || node.target_def.body.no_returns?
           @builder.unreachable
         else
-          # if node.target_def.type && !node.target_def.type.nil_type? && !node.block.breaks?
-          #   if @return_union
-          #     if node.target_def.body && node.target_def.body.type
-          #       codegen_assign(@return_union, @return_type, node.target_def.body.type, @last)
-          #     else
-          #       @builder.unreachable
-          #     end
-          #   elsif node.target_def.type.nilable? && node.target_def.body && node.target_def.body.type && node.target_def.body.type.nil_type?
-          #     @return_block_table[@builder.insert_block] = LLVM::Constant.null(llvm_type(node.target_def.type.nilable_type))
-          #   else
+          node_target_def_type = node.target_def.type?
+          node_target_def_body = node.target_def.body
+          if node_target_def_type && !node_target_def_type.nil_type? && !block.breaks?
+            if return_union = @return_union
+              if node_target_def_body && node_target_def_body.type?
+                codegen_assign(return_union, return_type, node_target_def_body.type, @last)
+              else
+                @builder.unreachable
+              end
+            elsif node_target_def_type.is_a?(NilableType) && node_target_def_body && node_target_def_body.type? && node_target_def_body.type.nil_type?
+              return_block_table_blocks << @builder.insert_block
+              return_block_table_values << LLVM.null(llvm_type(node_target_def_type.not_nil_type))
+            else
               return_block_table_blocks << @builder.insert_block
               return_block_table_values << @last
-          #   end
-          # elsif (node.target_def.type.nil? || node.target_def.type.nil_type?) && node.type.nilable?
-            # @return_block_table[@builder.insert_block] = @builder.int2ptr llvm_nil, llvm_type(node.type)
-          # end
+            end
+          elsif (!node_target_def_type || (node_target_def_type && node_target_def_type.nil_type?)) && node.type.nilable?
+            return_block_table_blocks << @builder.insert_block
+            return_block_table_values << @builder.int2ptr llvm_nil, llvm_type(node.type)
+          end
           @builder.br return_block
         end
 
@@ -1554,15 +1593,16 @@ module Crystal
         if node.no_returns? || node.returns? || block_returns? || ((node_block = node.block) && node_block.yields? && block_breaks?)
           @builder.unreachable
         else
-          # if node.type && !node.type.nil_type?
-          #   if @return_union
-          #     @last = @return_union
-            # else
-              phi_type = llvm_type(node.type)
-              # phi_type = LLVM::Pointer(phi_type) if node.type.union?
+          node_type = node.type?
+          if node_type && !node_type.nil_type?
+            if @return_union
+              @last = @return_union
+            else
+              phi_type = llvm_type(node_type)
+              phi_type = LLVM.pointer_type(phi_type) if node_type.union?
               @last = @builder.phi phi_type, return_block_table_blocks, return_block_table_values
-            # end
-          # end
+            end
+          end
         end
 
         old_context = @block_context.pop
@@ -1572,7 +1612,7 @@ module Crystal
         @return_block_table_blocks = old_context.return_block_table_blocks
         @return_block_table_values = old_context.return_block_table_values
         @return_type = old_context.return_type
-        # @return_union = old_context[:return_union]
+        @return_union = old_context.return_union
       else
         codegen_call(node, owner, call_args)
       end
@@ -1589,8 +1629,8 @@ module Crystal
 
         if owner.union?
           obj_type_id = @builder.load union_type_id(@last)
-        # elsif owner.nilable? || owner.hierarchy_metaclass?
-        #   obj_type_id = @last
+        elsif owner.nilable? #|| owner.hierarchy_metaclass?
+          obj_type_id = @last
         end
       else
         owner = node.scope
@@ -1618,8 +1658,8 @@ module Crystal
         arg.accept self
         if arg.type.union?
           arg_type_ids.push @builder.load(union_type_id(@last))
-        # elsif arg.type.nilable?
-        #   arg_type_ids.push @last
+        elsif arg.type.nilable?
+          arg_type_ids.push @last
         else
           arg_type_ids.push nil
         end
@@ -1633,12 +1673,12 @@ module Crystal
       target_defs.each do |a_def|
         if owner.union?
           result = match_any_type_id(a_def.owner.not_nil!, obj_type_id)
-        # elsif owner.nilable?
-        #   if a_def.owner.nil_type?
-        #     result = null_pointer?(obj_type_id)
-        #   else
-        #     result = not_null_pointer?(obj_type_id)
-        #   end
+        elsif owner.nilable?
+          if a_def.owner.not_nil!.nil_type?
+            result = null_pointer?(obj_type_id)
+          else
+            result = not_null_pointer?(obj_type_id)
+          end
         # elsif owner.hierarchy_metaclass?
         #   result = match_any_type_id(a_def.owner, obj_type_id)
         else
@@ -1649,12 +1689,12 @@ module Crystal
           if node.args[i].type.union?
             comp = match_any_type_id(arg.type, arg_type_ids[i])
             result = @builder.and(result, comp)
-          # elsif node.args[i].type.nilable?
-          #   if arg.type.nil_type?
-          #     result = @builder.and(result, null_pointer?(arg_type_ids[i]))
-          #   else
-          #     result = @builder.and(result, not_null_pointer?(arg_type_ids[i]))
-          #   end
+          elsif node.args[i].type.nilable?
+            if arg.type.nil_type?
+              result = @builder.and(result, null_pointer?(arg_type_ids[i]))
+            else
+              result = @builder.and(result, not_null_pointer?(arg_type_ids[i]))
+            end
           end
         end
 
@@ -1671,11 +1711,11 @@ module Crystal
         call.args.zip(a_def.args) do |call_arg, a_def_arg|
           call_arg.set_type(a_def_arg.type)
         end
-        # if node.block && node.block.break
-        #   call.set_type @mod.type_merge a_def.type, node.block.break.type
-        # else
-          call.set_type a_def.type
-        # end
+        if (node_block = node.block) && node_block.break
+          call.set_type(@mod.type_merge [a_def.type, node_block.break.not_nil!.type] of Type)
+        else
+          call.set_type(a_def.type)
+        end
         call.accept self
 
         add_branched_block_value(branch, a_def.type, @last)
@@ -1806,17 +1846,16 @@ module Crystal
 
         if body
           old_return_type = @return_type
-          # old_return_union = @return_union
-          @return_type = target_def.type
-          return_type = @return_type
-          # @return_union = alloca(llvm_type(return_type), "return") if return_type.union?
+          old_return_union = @return_union
+          return_type = @return_type = target_def.type
+          @return_union = alloca(llvm_type(return_type), "return") if return_type.union?
 
           accept body
 
           return_from_fun target_def, return_type
 
           @return_type = old_return_type
-          # @return_union = old_return_union
+          @return_union = old_return_union
         end
 
         br_from_alloca_to_entry
@@ -1844,19 +1883,24 @@ module Crystal
         @builder.unreachable
       else
         if return_type.union?
-          # if target_def.body.type != @return_type && !target_def.body.returns?
-          #   assign_to_union(@return_union, @return_type, target_def.body.type, @last)
-          #   @last = @builder.load @return_union
-          # else
+          if target_def && target_def.body.type? != return_type && !target_def.body.returns?
+            return_union = return_union()
+            assign_to_union(return_union, return_type, target_def.body.type, @last)
+            @last = @builder.load return_union
+          else
             @last = @builder.load @last
-          # end
+          end
         end
 
-        # if @return_type.nilable? && target_def.body.type && target_def.body.type.nil_type?
-        #   ret LLVM::Constant.null(llvm_type(@return_type))
-        # else
-          ret(@last)
-        # end
+        if return_type.is_a?(NilableType)
+          if target_def
+            if (target_def_body_type = target_def.body.type?) && target_def_body_type.nil_type?
+              return ret LLVM.null(llvm_type(return_type))
+            end
+          end
+        end
+
+        ret(@last)
       end
     end
 
@@ -1977,12 +2021,20 @@ module Crystal
       @builder.gep ptr, [int32(index0), int32(index1)]
     end
 
-    def null_pointer?(value)
+    def null_pointer?(value : LibLLVM::ValueRef)
       @builder.icmp LibLLVM::IntPredicate::EQ, @builder.ptr2int(value, LLVM::Int32), int(0)
     end
 
-    def not_null_pointer?(value)
+    def null_pointer?(value : Nil)
+      raise "Bug: called null_pointer? on nil"
+    end
+
+    def not_null_pointer?(value : LibLLVM::ValueRef)
       @builder.icmp LibLLVM::IntPredicate::NE, @builder.ptr2int(value, LLVM::Int32), int(0)
+    end
+
+    def not_null_pointer?(value : Nil)
+      raise "Bug: called null_pointer? on nil"
     end
 
     def malloc(type)
@@ -2070,6 +2122,12 @@ module Crystal
       # end
 
       @builder.ret value
+    end
+
+    def return_union
+      return_union = @return_union
+      raise "Bug: return_union is nil" unless return_union
+      return_union
     end
   end
 end

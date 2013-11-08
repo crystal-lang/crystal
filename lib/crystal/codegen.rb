@@ -1004,6 +1004,7 @@ module Crystal
       owner = nil unless owner.passed_as_self?
 
       call_args = []
+
       if node.obj && node.obj.type.passed_as_self?
         accept(node.obj)
 
@@ -1817,8 +1818,10 @@ module Crystal
         index = type.type_id
         @builder.store int(index), type_id_ptr
 
-        casted_value_ptr = cast_to_pointer value_ptr, type
-        @builder.store value, casted_value_ptr
+        unless type == @mod.void
+          casted_value_ptr = cast_to_pointer value_ptr, type
+          @builder.store value, casted_value_ptr
+        end
       end
     end
 

@@ -45,10 +45,6 @@ module Crystal
 
       return unless obj_and_args_types_set?
 
-      # elsif !obj || (obj.type && !obj.type.is_a?(LibType))
-      #   check_not_lib_out_args
-      # end
-
       # Ignore extra recalculations when more than one argument changes at the same time
       # types_signature = args.map { |arg| arg.type.type_id }
       # types_signature << obj.type.type_id if obj
@@ -62,23 +58,6 @@ module Crystal
       # @subclass_notifier.remove_subclass_observer(self) if @subclass_notifier
 
       @target_defs = nil
-
-      # if obj
-      #   if obj.type.is_a?(UnionType)
-      #     matches = []
-      #     obj.type.each do |type|
-      #       matches.concat lookup_matches_in(type)
-      #     end
-      #   else
-      #     matches = lookup_matches_in(obj.type)
-      #   end
-      # else
-      #   if name == 'super'
-      #     matches = lookup_matches_in_super
-      #   else
-          # matches = lookup_matches_in(scope) || lookup_matches_in(mod)
-      #   end
-      # end
 
       if obj
         matches = lookup_matches_in(obj.type)

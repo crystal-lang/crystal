@@ -4,22 +4,29 @@ module Crystal
       @end = false
     end
 
+    def llvm_nil
+      @codegen.llvm_nil
+    end
+
     def ret
-      return if @end
-      @builder.ret
+      return llvm_nil if @end
+      value = @builder.ret
       @end = true
+      value
     end
 
     def ret(value)
-      return if @end
-      @builder.ret(value)
+      return llvm_nil if @end
+      value = @builder.ret(value)
       @end = true
+      value
     end
 
     def br(block)
-      return if @end
-      @builder.br(block)
+      return llvm_nil if @end
+      value = @builder.br(block)
       @end = true
+      value
     end
 
     def unreachable
@@ -31,8 +38,9 @@ module Crystal
       #   @codegen.llvm_puts(msg)
       # end
       return if @end
-      @builder.unreachable
+      value = @builder.unreachable
       @end = true
+      value
     end
 
     def position_at_end(block)
@@ -43,6 +51,7 @@ module Crystal
     macro self.forward(name)
       "
       def #{name}
+        return llvm_nil if @end
         @builder.#{name}
       end
       "
@@ -51,6 +60,7 @@ module Crystal
     macro self.forward(name, args)
       "
       def #{name}(#{args})
+        return llvm_nil if @end
         @builder.#{name}(#{args})
       end
       "
@@ -59,6 +69,7 @@ module Crystal
     macro self.forward(name, def_args, call_args)
       "
       def #{name}(#{def_args})
+        return llvm_nil if @end
         @builder.#{name}(#{call_args})
       end
       "
@@ -67,12 +78,16 @@ module Crystal
     macro self.forward_named(name, args)
       "
       def #{name}(#{args}, name = \"\")
+        return llvm_nil if @end
         @builder.#{name}(#{args}, name)
       end
       "
     end
 
-    forward insert_block
+    def insert_block
+      @builder.insert_block
+    end
+
     forward cond, "cond, then_block, else_block"
     forward phi, "type, incoming_blocks, incoming_values, name = \"\"", "type, incoming_blocks, incoming_values, name"
     forward call, "func, args = [] of LibLLVM::ValueRef", "func, args"

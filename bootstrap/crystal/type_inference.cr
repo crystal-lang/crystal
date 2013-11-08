@@ -266,6 +266,8 @@ module Crystal
 
       target_type.add_def node
 
+      node.set_type(@mod.nil)
+
       false
     end
 
@@ -282,6 +284,8 @@ module Crystal
       end
 
       target_type.add_macro node
+
+      node.set_type(@mod.nil)
 
       false
     end
@@ -415,6 +419,23 @@ module Crystal
 
     def number_lines(source)
       source.lines.to_s_with_line_numbers
+    end
+
+    def visit(node : Return)
+      node.raise "can't return from top level" unless @typed_def
+
+      if node.exps.empty?
+        node.exps << NilLiteral.new
+      end
+
+      true
+    end
+
+    def end_visit(node : Return)
+      typed_def = @typed_def.not_nil!
+      node.exps.each do |exp|
+        typed_def.bind_to exp
+      end
     end
 
     def end_visit(node : NewGenericClass)
