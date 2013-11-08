@@ -570,15 +570,19 @@ module Crystal
         end
 
         type_vars_types = node_name.type_vars.map do |type_var|
-          unless type_var.is_a?(Ident)
-            type_var.raise "only simple names are supported for now"
-          end
-
-          type_var_name = type_var.names[0]
-          if current_type.is_a?(GenericType) && current_type.type_vars.includes?(type_var_name)
-            type_var_name
+          if type_var.is_a?(SelfType)
+            current_type
           else
-            lookup_ident_type(type_var)
+            unless type_var.is_a?(Ident)
+              type_var.raise "only simple names are supported for now, not #{type_var}"
+            end
+
+            type_var_name = type_var.names[0]
+            if current_type.is_a?(GenericType) && current_type.type_vars.includes?(type_var_name)
+              type_var_name
+            else
+              lookup_ident_type(type_var)
+            end
           end
         end
 

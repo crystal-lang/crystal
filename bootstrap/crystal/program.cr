@@ -222,22 +222,21 @@ module Crystal
     end
 
     def require(filename, relative_to = nil)
-      # if File.exists?(filename) && Pathname.new(filename).absolute?
-      #   return require_absolute filename
-      # end
+      if File.exists?(filename) && filename[0] == '/'
+        return require_absolute filename
+      end
 
-      # if relative_to && (single = filename =~ /(.+)\/\*\Z/ || multi = filename =~ /(.+)\/\*\*\Z/)
-      #   dir = File.dirname relative_to
+      if relative_to.is_a?(String) && ((single = filename.ends_with?("/*")) || (multi = filename.ends_with?("/**")))
+        dir = File.dirname relative_to
+        filename_dir_index = filename.rindex('/').not_nil!
+        filename_dir = filename[0 .. filename_dir_index]
       #   relative_dir = File.join(dir, $1)
+        relative_dir = "#{dir}/#{filename_dir}"
       #   if File.directory?(relative_dir)
-      #     nodes = []
-      #     Dir["#{relative_dir}/#{multi ? '**/' : ''}*.cr"].sort.each do |file|
-      #       node = Require.new(file)
-      #       nodes.push node
-      #     end
-      #     return Expressions.new(nodes)
-      #   end
-      # end
+        nodes = [] of ASTNode
+        require_dir(relative_dir, nodes, multi)
+        return Expressions.new(nodes)
+      end
 
       filename = "#{filename}.cr" unless filename.ends_with? ".cr"
       if relative_to.is_a?(String)
@@ -252,6 +251,35 @@ module Crystal
       else
         require_from_load_path filename
       end
+    end
+
+    def require_dir(dir, nodes, recursive)
+      files = [] of String
+      dirs = [] of String
+
+      Dir.list(dir) do |filename, type|
+        if type == C::DirType::DIR
+          if filename != "." && filename != ".." && recursive
+            dirs << filename
+          end
+        else
+          if filename.ends_with?(".cr")
+            files << "#{dir}/#{filename}"
+          end
+        end
+      end
+
+      files.sort!
+      dirs.sort!
+
+      files.each do |file|
+        nodes << Require.new(File.expand_path(file))
+      end
+
+      dirs.each do |subdir|
+        require_dir("#{dir}/#{subdir}", nodes, recursive)
+      end
+
     end
 
     def require_absolute(file)

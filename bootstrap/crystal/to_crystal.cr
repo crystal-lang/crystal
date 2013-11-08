@@ -11,7 +11,7 @@ module Crystal
 
   class ToCrystalNodeVisitor < Visitor
     def visit(node : ASTNode)
-      raise "#{node} unsupported in macros"
+      true
     end
 
     def visit(node : NumberLiteral)
