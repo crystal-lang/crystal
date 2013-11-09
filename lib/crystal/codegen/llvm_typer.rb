@@ -87,6 +87,8 @@ module Crystal
                       llvm_struct_type(type)
                     when NoReturnType
                       LLVM::Int8
+                    when PrimitiveType
+                      type.llvm_type == LLVM.Void ? LLVM::Int8 : type.llvm_type
                     else
                       llvm_type(type)
                     end
