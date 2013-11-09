@@ -82,6 +82,28 @@ module Crystal
       nil
     end
 
+    def restrict(other : SelfType, owner, type_lookup, free_vars)
+      restrict(owner, owner, type_lookup, free_vars)
+    end
+
+    def restrict(other : UnionType, owner, type_lookup, free_vars)
+      restricted = other.union_types.any? { |union_type| is_restriction_of?(union_type, nil) }
+      restricted ? self : nil
+    end
+
+    def restrict(other : HierarchyType, owner, type_lookup, free_vars)
+      is_subclass_of?(other.base_type) ? self : nil
+    end
+
+    def restrict(other : IdentUnion, owner, type_lookup, free_vars)
+      matches = [] of Type
+      other.idents.each do |ident|
+        match = restrict ident, owner, type_lookup, free_vars
+        matches << match if match
+      end
+      matches.length > 0 ? program.type_merge(matches) : nil
+    end
+
     def restrict(other : Ident, owner, type_lookup, free_vars)
       single_name = other.names.length == 1
       if single_name
@@ -102,30 +124,16 @@ module Crystal
       nil
     end
 
-    def restrict(other : SelfType, owner, type_lookup, free_vars)
-      restrict(owner, owner, type_lookup, free_vars)
-    end
-
-    def restrict(other : UnionType, owner, type_lookup, free_vars)
-      restricted = other.union_types.any? { |union_type| is_restriction_of?(union_type, nil) }
-      restricted ? self : nil
-    end
-
-    def restrict(other : IdentUnion, owner, type_lookup, free_vars)
-      matches = [] of Type
-      other.idents.each do |ident|
-        match = restrict ident, owner, type_lookup, free_vars
-        matches << match if match
-      end
-      matches.length > 0 ? program.type_merge(matches) : nil
-    end
-
     def restrict(other : ASTNode, owner, type_lookup, free_vars)
       raise "Bug: unsupported restriction: #{other}"
     end
 
     def is_restriction_of?(other : UnionType, owner)
       other.union_types.all? { |subtype| is_restriction_of?(subtype, subtype) }
+    end
+
+    def is_restriction_of?(other : HierarchyType, owner)
+      is_subclass_of? other.base_type
     end
 
     def is_restriction_of?(other : Type, owner)
@@ -185,6 +193,47 @@ module Crystal
       end
 
       self
+    end
+  end
+
+  class HierarchyType
+    def is_restriction_of?(other : Type, owner)
+      other = other.base_type if other.is_a?(HierarchyType)
+      base_type.is_subclass_of?(other)
+    end
+
+    def restrict(other : Type, owner, type_lookup, free_vars)
+      if self == other
+        self
+      elsif other.is_a?(UnionType)
+        types = [] of Type
+        other.union_types.each do |t|
+          restricted = self.restrict(t, owner, type_lookup, free_vars)
+          types << restricted if restricted
+        end
+        program.type_merge types
+      elsif other.is_a?(HierarchyType)
+        result = base_type.restrict(other.base_type, owner, type_lookup, free_vars) || other.base_type.restrict(base_type, owner, type_lookup, free_vars)
+        result ? result.hierarchy_type : nil
+      elsif other.is_subclass_of?(self.base_type)
+        other.hierarchy_type
+      elsif self.base_type.is_subclass_of?(other)
+        self
+      elsif other.module?
+        if base_type.implements?(other)
+          self
+        else
+          types = [] of Type
+          base_type.subclasses.each do |subclass|
+            restricted = subclass.hierarchy_type.restrict(other, owner, type_lookup, free_vars)
+            types << restricted if restricted
+          end
+          nil
+          program.type_merge_union_of types
+        end
+      else
+        nil
+      end
     end
   end
 end

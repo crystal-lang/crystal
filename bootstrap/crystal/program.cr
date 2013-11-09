@@ -188,11 +188,27 @@ module Crystal
     end
 
     def type_combine(types)
-      if types.all? &.number?
-        return [types.max_by &.rank] of Type
+      # if types.all? &.number?
+      #   return [types.max_by &.rank] of Type
+      # end
+
+      all_types = [types.shift] of Type
+
+      types.each do |t2|
+        not_found = all_types.each do |t1|
+          ancestor = t1.common_ancestor(t2)
+          if ancestor
+            all_types.delete t1
+            all_types << ancestor.hierarchy_type
+            break
+          end
+        end
+        if not_found
+          all_types << t2
+        end
       end
 
-      types
+      all_types
     end
 
     def array_of(type)

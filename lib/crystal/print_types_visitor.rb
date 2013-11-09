@@ -40,6 +40,10 @@ module Crystal
       !node.target.is_a?(Ident)
     end
 
+    def visit_global(node)
+      output_name node
+    end
+
     def visit_var(node)
       output_name node
     end

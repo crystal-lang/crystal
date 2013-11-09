@@ -1668,7 +1668,7 @@ module Crystal
     attr_accessor :base_type
 
     delegate [:lookup_first_def, :lookup_defs, :lookup_similar_defs, :lookup_instance_var, :index_of_instance_var, :lookup_macro,
-              :lookup_type, :has_instance_var_in_initialize?, :allocated, :program, :metaclass,
+              :lookup_type, :has_instance_var_in_initialize?, :allocated, :program,
               :abstract, :allocated=] => :base_type
 
     def initialize(base_type)
@@ -1701,7 +1701,7 @@ module Crystal
     def cover_length
       if base_type.abstract
         sum = 0
-        base_type.subclasses.each { |s| sum += s.cover_length }
+        base_type.subclasses.each { |s| sum += s.hierarchy_type.cover_length }
         sum
       else
         1

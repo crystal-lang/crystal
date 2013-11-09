@@ -55,7 +55,7 @@ module Crystal
 
       unbind_from @target_defs if @target_defs
       unbind_from block.break if block
-      # @subclass_notifier.remove_subclass_observer(self) if @subclass_notifier
+      @subclass_notifier.try &.remove_subclass_observer(self)
 
       @target_defs = nil
 
@@ -88,13 +88,12 @@ module Crystal
       owner.union_types.flat_map { |type| lookup_matches_in(type) }
     end
 
-    def lookup_matches_in(owner : Type, self_type = owner, def_name = self.name)
+    def lookup_matches_in(owner : Type, self_type = nil, def_name = self.name)
       arg_types = args.map &.type
       matches = owner.lookup_matches(def_name, arg_types, !!block)
 
       if matches.empty?
-        if def_name == "new" && owner.metaclass? && owner.instance_type.class?
-            #|| owner.instance_type.hierarchy?) # && !owner.instance_type.pointer?
+        if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.hierarchy?) && !owner.instance_type.pointer?
           new_matches = define_new owner, arg_types
           matches = new_matches unless new_matches.empty?
         else
@@ -106,7 +105,15 @@ module Crystal
       end
 
       if matches.empty?
-        raise_matches_not_found(matches.owner || owner, def_name, matches)
+        # For now, if the owner is a NoReturn just ignore the error (this call should be recomputed later)
+        unless owner.no_return?
+          raise_matches_not_found(matches.owner || owner, def_name, matches)
+        end
+      end
+
+      if owner.is_a?(HierarchyType)
+        owner.base_type.add_subclass_observer(self)
+        @subclass_notifier = owner.base_type
       end
 
       block = @block
@@ -114,7 +121,7 @@ module Crystal
       matches.map do |match|
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
-        block_type = block && block.body && match.def.block_arg ? block.body.type : nil
+        block_type = block && block.body && match.def.block_arg ? block.body.type? : nil
         lookup_self_type = self_type || match.owner
         if self_type
           lookup_arg_types = [] of Type
@@ -167,11 +174,11 @@ module Crystal
       # TODO: do this better
       untyped_def = parent_visitor.untyped_def
       lookup = untyped_def.owner.not_nil!
-      # if lookup.hierarchy?
-      #   parents = lookup.base_type.parents
-      # else
+      if lookup.is_a?(HierarchyType)
+        parents = lookup.base_type.parents
+      else
         parents = lookup.parents
-      # end
+      end
 
       if parents
         parents_length = parents.length
@@ -217,6 +224,11 @@ module Crystal
           end
         end
       end
+    end
+
+    def on_new_subclass
+      # @types_signature = nil
+      recalculate
     end
 
     def match_block_arg(match)
