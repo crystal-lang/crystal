@@ -284,6 +284,7 @@ module Crystal
 
     def require_absolute(file)
       file = "#{Dir.working_directory}/#{file}" unless file.starts_with?('/')
+      file = File.expand_path(file)
       # file = File.absolute_path(file)
       return nil if @requires.includes? file
 
