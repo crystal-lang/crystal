@@ -463,11 +463,11 @@ module Crystal
     end
 
     def transform(node : FunDef)
-      # if node.body
-      #   pushing_vars_from_args(node.args) do
-      #     node.body = node.body.transform(self)
-      #   end
-      # end
+      if body = node.body
+        pushing_vars_from_args(node.args) do
+          node.body = body.transform(self)
+        end
+      end
 
       node
     end

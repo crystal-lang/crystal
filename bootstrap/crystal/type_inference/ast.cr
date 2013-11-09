@@ -158,7 +158,7 @@ module Crystal
 
     def update(from = nil)
       generic_type = instance_type.instantiate(type_vars.map do |var|
-        var_type = var.type
+        var_type = var.type?
         self.raise "can't deduce generic type in recursive method" unless var_type
         var_type.instance_type
       end)

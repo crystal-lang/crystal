@@ -1265,6 +1265,11 @@ module Crystal
         while @token.type != :")"
           block_arg = parse_arg(args, ivar_assigns, true)
           if block_arg
+            if inputs = block_arg.type_spec.inputs
+              @yields = inputs.length
+            else
+              @yields = 0
+            end
             check :")"
             break
           end
@@ -1274,6 +1279,11 @@ module Crystal
         while @token.type != :NEWLINE && @token.type != :";"
           block_arg = parse_arg(args, ivar_assigns, false)
           if block_arg
+            if inputs = block_arg.type_spec.inputs
+              @yields = inputs.length
+            else
+              @yields = 0
+            end
             break
           end
         end

@@ -372,11 +372,11 @@ module Crystal
     def prepare_call(node)
       node.mod = mod
 
-      # if node.global
-      #   node.scope = @mod
-      # else
+      if node.global
+        node.scope = @mod
+      else
         node.scope = @scope || @types.last.metaclass
-      # end
+      end
       node.parent_visitor = self
     end
 
@@ -669,7 +669,7 @@ module Crystal
           node.raise ex.message
         end
 
-        inferred_return_type = @mod.type_merge([node_body.type, external.type?])
+        inferred_return_type = @mod.type_merge([node_body.type?, external.type?])
 
         if return_type && return_type != @mod.void && inferred_return_type != return_type
           node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
@@ -794,6 +794,10 @@ module Crystal
       else
         node.type = type.metaclass
       end
+    end
+
+    def end_visit(node : IdentUnion)
+      node.type = @mod.type_merge(node.idents.map &.type.instance_type)
     end
 
     def visit(node : If)

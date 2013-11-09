@@ -200,7 +200,7 @@ module Crystal
       untyped_defs = [untyped_def]
       @target_defs = untyped_defs
 
-      # self.unbind_from *old_target_defs if old_target_defs
+      self.unbind_from old_target_defs if old_target_defs
       self.bind_to untyped_defs
     end
 
@@ -356,7 +356,7 @@ module Crystal
 
     def check_fun_args_types_match(obj_type, typed_def)
       string_conversions = nil
-      # nil_conversions = nil
+      nil_conversions = nil
       # fun_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type
@@ -364,10 +364,10 @@ module Crystal
         actual_type = self_arg.type
         actual_type = mod.pointer_of(actual_type) if self.args[i].out?
         if actual_type != expected_type
-          # if actual_type.nil_type? && expected_type.pointer?
-          #   nil_conversions ||= []
-          #   nil_conversions << i
-          if (actual_type == mod.string || actual_type == mod.string.hierarchy_type) && (expected_type.is_a?(PointerInstanceType) && expected_type.var.type == mod.char)
+          if actual_type.nil_type? && expected_type.pointer?
+            nil_conversions ||= [] of Int32
+            nil_conversions << i
+          elsif (actual_type == mod.string || actual_type == mod.string.hierarchy_type) && (expected_type.is_a?(PointerInstanceType) && expected_type.var.type == mod.char)
             string_conversions ||= [] of Int32
             string_conversions << i
           # elsif expected_type.fun_type? && actual_type.fun_type? && expected_type.return_type.equal?(@mod.void) && expected_type.arg_types == actual_type.arg_types
@@ -380,14 +380,14 @@ module Crystal
         end
       end
 
-      # if typed_def.varargs
-      #   typed_def.args.length.upto(args.length - 1) do |i|
-      #     if mod.string.equal?(self.args[i].type)
-      #       string_conversions ||= []
-      #       string_conversions << i
-      #     end
-      #   end
-      # end
+      if typed_def.is_a?(External) && typed_def.varargs
+        typed_def.args.length.upto(args.length - 1) do |i|
+          if self.args[i].type == mod.string
+            string_conversions ||= [] of Int32
+            string_conversions << i
+          end
+        end
+      end
 
       if string_conversions
         string_conversions.each do |i|
@@ -400,11 +400,11 @@ module Crystal
         end
       end
 
-      # if nil_conversions
-      #   nil_conversions.each do |i|
-      #     self.args[i] = NilPointer.new(typed_def.args[i].type)
-      #   end
-      # end
+      if nil_conversions
+        nil_conversions.each do |i|
+          self.args[i] = Primitive.new(:nil_pointer, typed_def.args[i].type)
+        end
+      end
 
       # if fun_conversions
       #   fun_conversions.each do |i|

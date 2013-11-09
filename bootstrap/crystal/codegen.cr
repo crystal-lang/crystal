@@ -188,6 +188,8 @@ module Crystal
                 codegen_primitive_symbol_hash node, target_def, call_args
               when :symbol_to_s
                 codegen_primitive_symbol_to_s node, target_def, call_args
+              when :nil_pointer
+                codegen_primitive_nil_pointer node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -570,6 +572,10 @@ module Crystal
 
     def codegen_primitive_symbol_hash(node, target_def, call_args)
       call_args[0]
+    end
+
+    def codegen_primitive_nil_pointer(node, target_def, call_args)
+      LLVM.null(llvm_type(node.type))
     end
 
     def visit(node : PointerOf)
