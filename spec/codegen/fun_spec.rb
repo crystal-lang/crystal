@@ -43,4 +43,17 @@ describe 'Code gen: fun' do
       f.call
     )).to_i.should eq(1)
   end
+
+  it "codegens fun with another var" do
+    run(%q(
+      def foo(x)
+        bar(x, -> {})
+      end
+
+      def bar(x, proc)
+      end
+
+      foo(1)
+      ))
+  end
 end

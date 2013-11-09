@@ -864,7 +864,7 @@ module Crystal
 
       node.def.bind_to node.def.body
 
-      block_visitor = TypeVisitor.new(mod, fun_vars, @scope, @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
+      block_visitor = TypeVisitor.new(mod, fun_vars, @scope, @parent, @call, @owner, node.def, nil, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
       node.def.body.accept block_visitor
 
       types.push node.def.body.type
