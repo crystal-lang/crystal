@@ -116,6 +116,7 @@ module Crystal
     forward_named sub, "lhs, rhs"
     forward_named mul, "lhs, rhs"
     forward_named sdiv, "lhs, rhs"
+    forward_named exact_sdiv, "lhs, rhs"
     forward_named udiv, "lhs, rhs"
     forward_named srem, "lhs, rhs"
     forward_named urem, "lhs, rhs"

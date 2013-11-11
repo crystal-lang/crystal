@@ -47,4 +47,11 @@ describe "Code gen: pointer" do
       x.address
     ").to_i.should eq(123)
   end
+
+  it "calculates pointer diff" do
+    run("
+      x = 1
+      (x.ptr + 1_i64) - x.ptr
+    ").to_i.should eq(1)
+  end
 end

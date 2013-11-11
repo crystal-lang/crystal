@@ -152,6 +152,7 @@ lib LibLLVM("LLVM-3.3")
   fun build_br = LLVMBuildBr(builder : BuilderRef, block : BasicBlockRef) : ValueRef
   fun build_call = LLVMBuildCall(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : Int32, name : Char*) : ValueRef
   fun build_cond = LLVMBuildCondBr(builder : BuilderRef, if : ValueRef, then : BasicBlockRef, else : BasicBlockRef)
+  fun build_exact_sdiv = LLVMBuildExactSDiv(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_extract_value = LLVMBuildExtractValue(builder : BuilderRef, agg_val : ValueRef, index : UInt32, name : Char*) : ValueRef
   fun build_fadd = LLVMBuildFAdd(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_fcmp = LLVMBuildFCmp(builder : BuilderRef, op : RealPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
@@ -196,6 +197,7 @@ lib LibLLVM("LLVM-3.3")
   fun const_array = LLVMConstArray(element_type : TypeRef, constant_vals : ValueRef*, length : UInt32) : ValueRef
   fun const_int = LLVMConstInt(int_type : TypeRef, value : UInt64, sign_extend : Int32) : ValueRef
   fun const_null = LLVMConstNull(ty : TypeRef) : ValueRef
+  fun const_pointer_null = LLVMConstPointerNull(ty : TypeRef) : ValueRef
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Float64) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
   fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
@@ -277,6 +279,10 @@ module LLVM
 
   def self.null(type)
     LibLLVM.const_null(type)
+  end
+
+  def self.pointer_null(type)
+    LibLLVM.const_pointer_null(type)
   end
 
   def self.set_name(value, name)
@@ -515,6 +521,7 @@ module LLVM
     define_binary sub
     define_binary mul
     define_binary sdiv
+    define_binary exact_sdiv
     define_binary udiv
     define_binary srem
     define_binary urem

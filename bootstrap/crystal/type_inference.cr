@@ -1038,6 +1038,8 @@ module Crystal
         node.type = scope.metaclass
       when :fun_call
         # Nothing to do
+      when :pointer_diff
+        node.type = mod.int64
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end

@@ -197,6 +197,8 @@ module Crystal
                 codegen_primitive_class node, target_def, call_args
               when :fun_call
                 codegen_primitive_fun_call node, target_def, call_args
+              when :pointer_diff
+                codegen_primitive_pointer_diff node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -612,6 +614,13 @@ module Crystal
 
     def codegen_primitive_fun_call(node, target_def, call_args)
       @builder.call call_args[0], call_args[1 .. -1]
+    end
+
+    def codegen_primitive_pointer_diff(node, target_def, call_args)
+      p0 = @builder.ptr2int(call_args[0], LLVM::Int64)
+      p1 = @builder.ptr2int(call_args[1], LLVM::Int64)
+      sub = @builder.sub p0, p1
+      @builder.exact_sdiv sub, @builder.ptr2int(gep(LLVM.pointer_null(LLVM.type_of(call_args[0])), 1), LLVM::Int64)
     end
 
     def visit(node : PointerOf)
@@ -2188,6 +2197,10 @@ module Crystal
       @builder.position_at_end old_position
       @fun = old_fun
       @in_const_block = old_in_const_block
+    end
+
+    def gep(ptr, index0)
+      @builder.gep ptr, [int32(index0)]
     end
 
     def gep(ptr, index0, index1)

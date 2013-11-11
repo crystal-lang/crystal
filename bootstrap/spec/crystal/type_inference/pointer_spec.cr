@@ -14,6 +14,10 @@ describe "Type inference: pointer" do
     assert_type("a = 1; a.ptr + 1_i64") { pointer_of(int32) }
   end
 
+  it "types pointer diff" do
+    assert_type("a = 1; b = 2; a.ptr - b.ptr") { int64 }
+  end
+
   it "types pointer address" do
     assert_type("a = 1; b = a.ptr; b.address") { uint64 }
   end
