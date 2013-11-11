@@ -78,6 +78,8 @@ module Crystal
       builder = LLVM::Builder.new
       @builder = CrystalLLVMBuilder.new builder, self
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
+      @main_alloca_block = @alloca_block
+
       @const_block_entry = @const_block
       @vars = {} of String => LLVMVar
       @lib_vars = {} of String => LibLLVM::ValueRef
@@ -96,6 +98,7 @@ module Crystal
       @last = llvm_nil
       @in_const_block = false
       @block_context = [] of BlockContext
+      @fun_literal_count = 0
     end
 
     def finish
@@ -112,7 +115,7 @@ module Crystal
       false
     end
 
-    # Can only happen in a Const
+    # Can only happen in a Const or as an argument cast
     def visit(node : Primitive)
       @last = case node.name
               when :argc
@@ -123,8 +126,10 @@ module Crystal
                 LLVM.float(Float32::INFINITY)
               when :float64_infinity
                 LLVM.double(Float64::INFINITY)
+              when :nil_pointer
+                LLVM.null(llvm_type(node.type))
               else
-                raise "Bug: unhandled primitive in codegen: #{node.name}"
+                raise "Bug: unhandled primitive in codegen visit: #{node.name}"
               end
     end
 
@@ -188,10 +193,10 @@ module Crystal
                 codegen_primitive_symbol_hash node, target_def, call_args
               when :symbol_to_s
                 codegen_primitive_symbol_to_s node, target_def, call_args
-              when :nil_pointer
-                codegen_primitive_nil_pointer node, target_def, call_args
               when :class
                 codegen_primitive_class node, target_def, call_args
+              when :fun_call
+                codegen_primitive_fun_call node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -596,10 +601,6 @@ module Crystal
       call_args[0]
     end
 
-    def codegen_primitive_nil_pointer(node, target_def, call_args)
-      LLVM.null(llvm_type(node.type))
-    end
-
     def codegen_primitive_class(node, target_def, call_args)
       if node.type.hierarchy_metaclass?
         type_ptr = union_type_id call_args[0]
@@ -607,6 +608,10 @@ module Crystal
       else
         int(node.type.instance_type.type_id)
       end
+    end
+
+    def codegen_primitive_fun_call(node, target_def, call_args)
+      @builder.call call_args[0], call_args[1 .. -1]
     end
 
     def visit(node : PointerOf)
@@ -670,6 +675,70 @@ module Crystal
 
     def visit(node : SymbolLiteral)
       @last = int(@symbols[node.value])
+    end
+
+    def visit(node : FunLiteral)
+      @fun_literal_count += 1
+
+      fun_literal_name = "~fun_literal_#{@fun_literal_count}"
+      @last = codegen_fun(fun_literal_name, node.def, nil, false).fun
+      # @last = check_main_fun fun_literal_name, @last
+
+      false
+    end
+
+    def visit(node : FunPointer)
+      owner = node.call.target_def.owner.not_nil!
+      owner = nil unless owner.passed_as_self?
+      if obj = node.obj
+        accept(obj)
+        call_self = @last
+      elsif owner
+        call_self = llvm_self
+      end
+      last_fun = target_def_fun(node.call.target_def, owner)
+      @last = last_fun.fun
+
+      # if owner
+      #   wrapper = trampoline_wrapper(last_fun)
+      #   tramp_ptr = @builder.array_malloc(LLVM::Int8, int(32))
+      #   @builder.call @mod.trampoline_init(@llvm_mod),
+      #     tramp_ptr,
+      #     @builder.bit_cast(wrapper, LLVM.pointer_type(LLVM::Int8)),
+      #     @builder.bit_cast(call_self, LLVM.pointer_type(LLVM::Int8))
+      #   @last = @builder.call @mod.trampoline_adjust(@llvm_mod), tramp_ptr
+      #   @last = cast_to(@last, node.type)
+      # end
+
+      false
+    end
+
+    # def trampoline_wrapper(target_fun)
+    #   @trampoline_wrappers[target_fun.object_id] ||= begin
+    #     arg_types = target_fun.function_type.argument_types
+    #     ret_type = target_fun.function_type.return_type
+    #     @llvm_mod.functions.add("trampoline_wrapper_#{target_fun.object_id}", arg_types, ret_type) do |fun, *args|
+    #       # fun.linkage = :internal
+    #       args.first.add_attribute :nest_attribute
+    #       fun.basic_blocks.append.build do |builder|
+    #         call_ret = builder.call target_fun, *args
+    #         builder.ret ret_type == LLVM.Void ? nil : call_ret
+    #       end
+    #     end
+    #   end
+    # end
+
+    def visit(node : CastFunToReturnVoid)
+      accept node.node
+
+      node_type = node.node.type
+      assert_type node_type, FunType
+
+      types = node_type.arg_types.dup
+      types << @mod.void
+      type = @mod.fun_of types
+
+      @last = cast_to @last, type
     end
 
     def visit(node : Nop)
@@ -1671,7 +1740,24 @@ module Crystal
         @return_type = old_context.return_type
         @return_union = old_context.return_union
       else
+        old_return_block = @return_block
+        old_return_block_table_blocks = @return_block_table_blocks
+        old_return_block_table_values = @return_block_table_values
+        old_break_table_blocks = @break_table_blocks
+        old_break_table_values = @break_table_values
+        @return_block = nil
+        @return_block_table_blocks = nil
+        @return_block_table_values = nil
+        @break_table_blocks = nil
+        @break_table_values = nil
+
         codegen_call(node, owner, call_args)
+
+        @return_block = old_return_block
+        @return_block_table_blocks = old_return_block_table_blocks
+        @return_block_table_values = old_return_block_table_values
+        @break_table_blocks = old_break_table_blocks
+        @break_table_values = old_break_table_values
       end
 
       false
@@ -1796,7 +1882,8 @@ module Crystal
         return
       end
 
-      mangled_name = target_def.mangled_name(self_type)
+
+      func = target_def_fun(target_def, self_type)
 
       # Check for struct out arguments: alloca before the call, then copy to the pointer value after the call.
       has_struct_or_union_out_args = target_def.is_a?(External) && node.args.any? { |arg| arg.out? && arg.is_a?(Var) && (arg.type.c_struct? || arg.type.c_union?) }
@@ -1811,8 +1898,6 @@ module Crystal
           end
         end
       end
-
-      func = @llvm_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
 
       @last = @builder.call func, call_args
 
@@ -1837,6 +1922,16 @@ module Crystal
       end
     end
 
+    def target_def_fun(target_def, self_type)
+      mangled_name = target_def.mangled_name(self_type)
+      @llvm_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
+
+      # self_type_mod = type_module(self_type)
+
+      # fun = self_type_mod.functions[mangled_name] || codegen_fun(mangled_name, target_def, self_type)
+      # check_mod_fun self_type_mod, mangled_name, fun
+    end
+
     def codegen_fun(mangled_name, target_def, self_type, is_exported_fun_def = false)
       if target_def.type == @mod.void
         llvm_return_type = LLVM::Void
@@ -1851,6 +1946,10 @@ module Crystal
       old_alloca_block = @alloca_block
       old_type = @type
       old_target_def = @target_def
+      old_in_const_block = @in_const_block
+
+      @in_const_block = false
+      @trampoline_wrappers = {} of UInt64 => LLVM::Function
 
       @vars = {} of String => LLVMVar
 
@@ -1929,13 +2028,14 @@ module Crystal
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block
       @type = old_type
+      @in_const_block = old_in_const_block
 
       the_fun
     end
 
     def return_from_fun(target_def, return_type)
       if target_def && target_def.type == @mod.void
-        ret nil
+        ret
       elsif target_def && target_def.body.no_returns?
         @builder.unreachable
       else
@@ -1957,7 +2057,11 @@ module Crystal
           end
         end
 
-        ret(@last)
+        if return_type == @mod.void
+          ret
+        else
+          ret(@last)
+        end
       end
     end
 
@@ -2054,7 +2158,11 @@ module Crystal
 
     def in_alloca_block
       old_block = @builder.insert_block
-      @builder.position_at_end @alloca_block
+      if @in_const_block
+        @builder.position_at_end @main_alloca_block
+      else
+        @builder.position_at_end @alloca_block
+      end
       value = yield
       @builder.position_at_end old_block
       value

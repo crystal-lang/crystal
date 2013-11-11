@@ -304,10 +304,46 @@ module Crystal
       end
     "end
 
+    macro self.parse_cmp_operator(name, next_operator, operators)"
+      def parse_#{name}
+        location = @token.location
+
+        left = parse_#{next_operator}
+        last_left = nil
+        last_right = nil
+        while true
+          left.location = location
+
+          case @token.type
+          when :SPACE
+            next_token
+          when #{operators}
+            method = @token.type.to_s
+            method_column_number = @token.column_number
+
+            next_token_skip_space_or_newline
+            right = parse_#{next_operator}
+
+            if last_right && last_left
+              left = Call.new last_right, method, [right] of ASTNode, nil, nil, false, method_column_number
+              left = And.new(last_left, left)
+            else
+              left = Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number
+            end
+
+            last_right = right
+            last_left = left
+          else
+            return left
+          end
+        end
+      end
+    "end
+
     parse_operator :or, :and, "Or.new left, right", ":\"||\""
     parse_operator :and, :equality, "And.new left, right", ":\"&&\""
-    parse_operator :equality, :cmp, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
-    parse_operator :cmp, :logical_or, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"==\", :\"!=\", :\"=~\", :\"===\""
+    parse_cmp_operator :equality, :cmp, ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
+    parse_cmp_operator :cmp, :logical_or, ":\"==\", :\"!=\", :\"=~\", :\"===\""
     parse_operator :logical_or, :logical_and, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"|\", :\"^\""
     parse_operator :logical_and, :shift, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"&\""
     parse_operator :shift, :add_or_sub, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"<<\", :\">>\""

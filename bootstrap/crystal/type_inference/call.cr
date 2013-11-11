@@ -440,7 +440,7 @@ module Crystal
 
       if fun_conversions
         fun_conversions.each do |i|
-          self.args[i] = Primitive.new(:cast_fun_to_return_void)
+          self.args[i] = CastFunToReturnVoid.new(self.args[i])
         end
       end
     end

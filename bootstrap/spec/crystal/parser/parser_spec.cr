@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 class Number
@@ -532,6 +532,9 @@ describe "Parser" do
   it_parses "def foo(); 1; rescue; 2; end", Def.new("foo", ([] of Arg), ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
 
   it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
+
+  it_parses "1 <= 2 <= 3", And.new(Call.new(1.int32, "<=", [2.int32] of ASTNode), Call.new(2.int32, "<=", [3.int32] of ASTNode))
+  it_parses "1 == 2 == 3 == 4", And.new(And.new(Call.new(1.int32, "==", [2.int32] of ASTNode), Call.new(2.int32, "==", [3.int32] of ASTNode)), Call.new(3.int32, "==", [4.int32] of ASTNode))
 
   it_parses "-> do end", FunLiteral.new
   it_parses "-> { }", FunLiteral.new

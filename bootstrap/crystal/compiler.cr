@@ -13,6 +13,7 @@ module Crystal
       @no_build = false
       @print_types = false
       @run = false
+      @stats = false
 
       @options = OptionParser.parse! do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
@@ -22,8 +23,14 @@ module Crystal
         opts.on("-no-build", "Disable build output") do
           @no_build = true
         end
-        opts.on("-run", "Execute program") do
+        opts.on("--release", "Compile in release mode") do
+          @release = true
+        end
+        opts.on("--run", "Execute program") do
           @run = true
+        end
+        opts.on("-stats", "Enable statistis output") do
+          @stats = true
         end
         opts.on("-types", "Prints types of global variables") do
           @print_types = true
@@ -68,19 +75,34 @@ module Crystal
 
         node = Expressions.new([require_node, node] of ASTNode)
 
+        time = Time.now
         node = program.normalize node
+        puts "Normalize: #{Time.now - time} seconds" if @stats
+
+        time = Time.now
         node = program.infer_type node
+        puts "Type inference: #{Time.now - time} seconds" if @stats
 
         print_types node if @print_types
         exit if @no_build
 
+        time = Time.now
         llvm_mod = program.build node
+        puts "Codegen: #{Time.now - time} seconds" if @stats
 
         llvm_mod.dump if @dump_ll
 
+        time = Time.now
+
         llvm_mod.write_bitcode bitcode_filename
 
-        system "llc-3.3 #{bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
+        if @release
+          system "opt-3.3 #{bitcode_filename} -O3 | llc-3.3 -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
+        else
+          system "llc-3.3 #{bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
+        end
+
+        puts "Llvm: #{Time.now - time} seconds" if @stats
 
         if @run
           system "#{output_filename}"
@@ -102,10 +124,9 @@ module Crystal
             flags << libname
           end
         end
+        # flags << " -Wl,-allow_stack_execute" if RUBY_PLATFORM =~ /darwin/
+        flags << " -L#{mod.exec("llvm-config-3.3 --libdir").strip}"
       end
-      # flags << " -Wl,-allow_stack_execute" if RUBY_PLATFORM =~ /darwin/
-      # flags << " -L#{`llvm-config-3.3 --libdir`.strip}"
-      # flags
     end
   end
 end

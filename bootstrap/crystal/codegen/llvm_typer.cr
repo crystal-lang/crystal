@@ -89,6 +89,11 @@ module Crystal
       HIERARCHY_LLVM_TYPE
     end
 
+    def create_llvm_type(type : FunType)
+      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
+      LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
+    end
+
     def create_llvm_type(type)
       raise "Bug: called create_llvm_type for #{type}"
     end
@@ -96,7 +101,6 @@ module Crystal
     def llvm_struct_type(type)
       @struct_cache[type] ||= create_llvm_struct_type(type)
     end
-
 
     def create_llvm_struct_type(type : InstanceVarContainer)
       LLVM.struct_type(type.llvm_name) do |struct|
@@ -168,6 +172,10 @@ module Crystal
     end
 
     def create_llvm_embedded_type(type : NoReturnType)
+      LLVM::Int8
+    end
+
+    def create_llvm_embedded_type(type : VoidType)
       LLVM::Int8
     end
 

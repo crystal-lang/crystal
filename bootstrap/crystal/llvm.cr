@@ -199,6 +199,7 @@ lib LibLLVM("LLVM-3.3")
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Float64) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
   fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
+  fun count_param_types = LLVMCountParamTypes(function_type : TypeRef) : UInt32
   fun create_builder = LLVMCreateBuilder() : BuilderRef
   fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
   fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
@@ -218,6 +219,8 @@ lib LibLLVM("LLVM-3.3")
   fun get_named_function = LLVMGetNamedFunction(mod : ModuleRef, name : Char*) : ValueRef
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : Char*) : ValueRef
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
+  fun get_param_types = LLVMGetParamTypes(function_type : TypeRef, dest : TypeRef*)
+  fun get_return_type = LLVMGetReturnType(function_type : TypeRef) : TypeRef
   fun get_target_name = LLVMGetTargetName(target : TargetRef) : Char*
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : Char*
   fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
@@ -323,7 +326,7 @@ module LLVM
     end
 
     def add(name, arg_types, ret_type, varargs = false)
-      fun_type = LibLLVM.function_type(ret_type, arg_types.buffer, arg_types.length, varargs ? 1 : 0)
+      fun_type = LLVM.function_type(arg_types, ret_type, varargs)
       func = LibLLVM.add_function(@mod.llvm_module, name, fun_type)
       Function.new(func)
     end
@@ -345,6 +348,8 @@ module LLVM
   end
 
   class Function
+    getter :fun
+
     def initialize(@fun)
     end
 
@@ -443,8 +448,12 @@ module LLVM
       phi_node
     end
 
-    def call(func, args = [] of LibLLVM::ValueRef)
-      LibLLVM.build_call(@builder, func.llvm_function, args.buffer, args.length, "")
+    def call(func : Function, args = [] of LibLLVM::ValueRef)
+      call(func.llvm_function, args)
+    end
+
+    def call(func : LibLLVM::ValueRef, args = [] of LibLLVM::ValueRef)
+      LibLLVM.build_call(@builder, func, args.buffer, args.length, "")
     end
 
     def alloca(type, name = "")
@@ -548,6 +557,10 @@ module LLVM
 
   def self.pointer_type(element_type)
     LibLLVM.pointer_type(element_type, 0_u32)
+  end
+
+  def self.function_type(arg_types, return_type, varargs = false)
+    LibLLVM.function_type(return_type, arg_types.buffer, arg_types.length, varargs ? 1 : 0)
   end
 
   def self.struct_type(name, packed = false)
