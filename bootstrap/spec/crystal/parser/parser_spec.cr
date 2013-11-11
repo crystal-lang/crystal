@@ -193,10 +193,10 @@ describe "Parser" do
 
   it_parses "def foo; a; end", Def.new("foo", [] of Arg, "a".call)
   it_parses "def foo(a); a; end", Def.new("foo", ["a".arg], "a".var)
-  it_parses "def foo; a = 1; a; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), "a".var])
-  it_parses "def foo; a = 1; a {}; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "a", ([] of ASTNode), Block.new)])
-  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "x", ([] of ASTNode), Block.new([] of Var, ["a".var]))])
-  it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", ([] of ASTNode), Block.new(["a".var], ["a".var] of ASTNode))])
+  it_parses "def foo; a = 1; a; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), "a".var] of ASTNode)
+  it_parses "def foo; a = 1; a {}; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "a", ([] of ASTNode), Block.new)] of ASTNode)
+  it_parses "def foo; a = 1; x { a }; end", Def.new("foo", [] of Arg, [Assign.new("a".var, 1.int32), Call.new(nil, "x", ([] of ASTNode), Block.new([] of Var, ["a".var] of ASTNode))] of ASTNode)
+  it_parses "def foo; x { |a| a }; end", Def.new("foo", [] of Arg, [Call.new(nil, "x", ([] of ASTNode), Block.new(["a".var], ["a".var] of ASTNode))] of ASTNode)
 
   it_parses "def foo(var = 1); end", Def.new("foo", [Arg.new("var", 1.int32)], nil)
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int32)], nil)
@@ -207,10 +207,11 @@ describe "Parser" do
   it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Double".ident] of ASTNode))], nil)
   it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Nil".ident(true)] of ASTNode))], nil)
   it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".ident)], nil)
-  it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new], nil, nil, 0)
-  it_parses "def foo; yield 1; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode)], nil, nil, 1)
-  it_parses "def foo; yield 1; yield; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode), Yield.new], nil, nil, 1)
+  it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new] of ASTNode, nil, nil, 0)
+  it_parses "def foo; yield 1; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode)] of ASTNode, nil, nil, 1)
+  it_parses "def foo; yield 1; yield; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode), Yield.new] of ASTNode, nil, nil, 1)
   it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)], nil)
+  it_parses "def foo(&block); end", Def.new("foo", [] of Arg, nil, nil, BlockArg.new("block"), 0)
   it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block"), 0)
   it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", FunTypeSpec.new(["Int".ident] of ASTNode, "Double".ident)), 1)
   it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", FunTypeSpec.new(["Int".ident, "Float".ident] of ASTNode, "Double".ident)), 2)
@@ -307,7 +308,7 @@ describe "Parser" do
 
   it_parses "class Foo; end", ClassDef.new("Foo".ident)
   it_parses "class Foo\nend", ClassDef.new("Foo".ident)
-  it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo".ident, [Def.new("foo", [] of Arg, nil)])
+  it_parses "class Foo\ndef foo; end; end", ClassDef.new("Foo".ident, [Def.new("foo", [] of Arg, nil)] of ASTNode)
   it_parses "class Foo < Bar; end", ClassDef.new("Foo".ident, nil, "Bar".ident)
   it_parses "class Foo(T); end", ClassDef.new("Foo".ident, nil, nil, ["T"])
   it_parses "abstract class Foo; end", ClassDef.new("Foo".ident, nil, nil, nil, true)
@@ -318,7 +319,7 @@ describe "Parser" do
   it_parses "Foo(T?)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, Ident.new(["Nil"], true)] of ASTNode)] of ASTNode)
 
   it_parses "module Foo; end", ModuleDef.new("Foo".ident)
-  it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".ident, [Def.new("foo", [] of Arg, nil)])
+  it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".ident, [Def.new("foo", [] of Arg, nil)] of ASTNode)
   it_parses "module Foo(T); end", ModuleDef.new("Foo".ident, nil, ["T"])
 
   it_parses "while true; end;", While.new(true.bool)
@@ -384,7 +385,7 @@ describe "Parser" do
 
   it_parses "foo[0] = 1", Call.new("foo".call, "[]=", [0.int32, 1.int32] of ASTNode)
 
-  it_parses "begin; 1; 2; 3; end;", Expressions.new([1.int32, 2.int32, 3.int32])
+  it_parses "begin; 1; 2; 3; end;", Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode)
 
   it_parses "self", "self".var
 
@@ -415,31 +416,31 @@ describe "Parser" do
 
   it_parses "lib C\nend", LibDef.new("C")
   it_parses "lib C(\"libc\")\nend", LibDef.new("C", "libc")
-  it_parses "lib C\nfun getchar\nend", LibDef.new("C", nil, [FunDef.new("getchar")])
-  it_parses "lib C\nfun getchar(...)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [] of Arg, nil, true)])
-  it_parses "lib C\nfun getchar : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [] of Arg, "Int".ident)])
+  it_parses "lib C\nfun getchar\nend", LibDef.new("C", nil, [FunDef.new("getchar")] of ASTNode)
+  it_parses "lib C\nfun getchar(...)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [] of Arg, nil, true)] of ASTNode)
+  it_parses "lib C\nfun getchar : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [] of Arg, "Int".ident)] of ASTNode)
   it_parses "lib C\nfun getchar(Int, Float)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("?", nil, "Int".ident), Arg.new("?", nil, "Float".ident)])] of ASTNode)
-  it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".ident), Arg.new("b", nil, "Float".ident)])])
-  it_parses "lib C\nfun getchar(a : Int)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".ident)])])
-  it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".ident), Arg.new("b", nil, "Float".ident)], "Int".ident)])
-  it_parses "lib C; fun getchar(a : Int, b : Float) : Int; end", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".ident), Arg.new("b", nil, "Float".ident)], "Int".ident)])
-  it_parses "lib C; fun foo(a : Int*); end", LibDef.new("C", nil, [FunDef.new("foo", [Arg.new("a", nil, "Int".ident.pointer_of)])])
-  it_parses "lib C; fun foo(a : Int**); end", LibDef.new("C", nil, [FunDef.new("foo", [Arg.new("a", nil, "Int".ident.pointer_of.pointer_of)])])
-  it_parses "lib C; fun foo : Int*; end", LibDef.new("C", nil, [FunDef.new("foo", ([] of Arg), "Int".ident.pointer_of)])
-  it_parses "lib C; fun foo : Int**; end", LibDef.new("C", nil, [FunDef.new("foo", ([] of Arg), "Int".ident.pointer_of.pointer_of)])
-  it_parses "lib C; type A : B; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident)])
-  it_parses "lib C; type A : B*; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident.pointer_of)])
-  it_parses "lib C; type A : B**; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident.pointer_of.pointer_of)])
-  it_parses "lib C; struct Foo; end end", LibDef.new("C", nil, [StructDef.new("Foo")])
-  it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident), Arg.new("y", nil, "Float".ident)])])
-  it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident.pointer_of)])])
-  it_parses "lib C; struct Foo; x : Int**; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident.pointer_of.pointer_of)])])
-  it_parses "lib C; struct Foo; x, y, z : Int; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident), Arg.new("y", nil, "Int".ident), Arg.new("z", nil, "Int".ident)])])
-  it_parses "lib C; union Foo; end end", LibDef.new("C", nil, [UnionDef.new("Foo")])
-  it_parses "lib C; enum Foo; A\nB, C\nD = 1; end end", LibDef.new("C", nil, [EnumDef.new("Foo", [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)])])
-  it_parses "lib C; enum Foo; A = 1, B; end end", LibDef.new("C", nil, [EnumDef.new("Foo", [Arg.new("A", 1.int32), Arg.new("B")])])
-  it_parses "lib C; Foo = 1; end", LibDef.new("C", nil, [Assign.new("Foo".ident, 1.int32)])
-  it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", nil, [FunDef.new("getch", [] of Arg, nil, false, nil, "GetChar")])
+  it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".ident), Arg.new("b", nil, "Float".ident)])] of ASTNode)
+  it_parses "lib C\nfun getchar(a : Int)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".ident)])] of ASTNode)
+  it_parses "lib C\nfun getchar(a : Int, b : Float) : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".ident), Arg.new("b", nil, "Float".ident)], "Int".ident)] of ASTNode)
+  it_parses "lib C; fun getchar(a : Int, b : Float) : Int; end", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".ident), Arg.new("b", nil, "Float".ident)], "Int".ident)] of ASTNode)
+  it_parses "lib C; fun foo(a : Int*); end", LibDef.new("C", nil, [FunDef.new("foo", [Arg.new("a", nil, "Int".ident.pointer_of)])] of ASTNode)
+  it_parses "lib C; fun foo(a : Int**); end", LibDef.new("C", nil, [FunDef.new("foo", [Arg.new("a", nil, "Int".ident.pointer_of.pointer_of)])] of ASTNode)
+  it_parses "lib C; fun foo : Int*; end", LibDef.new("C", nil, [FunDef.new("foo", ([] of Arg), "Int".ident.pointer_of)] of ASTNode)
+  it_parses "lib C; fun foo : Int**; end", LibDef.new("C", nil, [FunDef.new("foo", ([] of Arg), "Int".ident.pointer_of.pointer_of)] of ASTNode)
+  it_parses "lib C; type A : B; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident)] of ASTNode)
+  it_parses "lib C; type A : B*; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident.pointer_of)] of ASTNode)
+  it_parses "lib C; type A : B**; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident.pointer_of.pointer_of)] of ASTNode)
+  it_parses "lib C; struct Foo; end end", LibDef.new("C", nil, [StructDef.new("Foo")] of ASTNode)
+  it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident), Arg.new("y", nil, "Float".ident)])] of ASTNode)
+  it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident.pointer_of)])] of ASTNode)
+  it_parses "lib C; struct Foo; x : Int**; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident.pointer_of.pointer_of)])] of ASTNode)
+  it_parses "lib C; struct Foo; x, y, z : Int; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident), Arg.new("y", nil, "Int".ident), Arg.new("z", nil, "Int".ident)])] of ASTNode)
+  it_parses "lib C; union Foo; end end", LibDef.new("C", nil, [UnionDef.new("Foo")] of ASTNode)
+  it_parses "lib C; enum Foo; A\nB, C\nD = 1; end end", LibDef.new("C", nil, [EnumDef.new("Foo", [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)])] of ASTNode)
+  it_parses "lib C; enum Foo; A = 1, B; end end", LibDef.new("C", nil, [EnumDef.new("Foo", [Arg.new("A", 1.int32), Arg.new("B")])] of ASTNode)
+  it_parses "lib C; Foo = 1; end", LibDef.new("C", nil, [Assign.new("Foo".ident, 1.int32)] of ASTNode)
+  it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", nil, [FunDef.new("getch", [] of Arg, nil, false, nil, "GetChar")] of ASTNode)
   it_parses "lib C\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("C", nil, [ExternalVar.new("errno", "Int32".ident), ExternalVar.new("errno2", "Int32".ident)] of ASTNode)
   it_parses "lib C\n$errno : B, C -> D\nend", LibDef.new("C", nil, [ExternalVar.new("errno", FunTypeSpec.new(["B".ident, "C".ident] of ASTNode, "D".ident))] of ASTNode)
 
@@ -491,8 +492,8 @@ describe "Parser" do
   it_parses "require \"foo\"; [1]", [Require.new("foo"), ([1.int32] of ASTNode).array]
   it_parses "require \"foo\"\nif true; end", [Require.new("foo"), If.new(true.bool)]
 
-  it_parses "require \"foo\" if (!a || b) && c", [Require.new("foo", And.new(Or.new(Not.new("a".var), "b".var), "c".var))]
-  it_parses "require \"foo\" if !(a || b) && c", [Require.new("foo", And.new(Not.new(Or.new("a".var, "b".var)), "c".var))]
+  it_parses "require \"foo\" if (!a || b) && c", [Require.new("foo", And.new(Or.new(Not.new("a".var), "b".var), "c".var))] of ASTNode
+  it_parses "require \"foo\" if !(a || b) && c", [Require.new("foo", And.new(Not.new(Or.new("a".var, "b".var)), "c".var))] of ASTNode
 
   it_parses "case 1; when 1; 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
   it_parses "case 1; when 0, 1; 2; else; 3; end", Case.new(1.int32, [When.new([0.int32, 1.int32] of ASTNode, 2.int32)], 3.int32)
@@ -516,7 +517,7 @@ describe "Parser" do
   it_parses "a :: Foo", DeclareVar.new("a", "Foo".ident)
 
   it_parses "()", NilLiteral.new
-  it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32]
+  it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32] of ASTNode
 
   it_parses "begin; rescue; end", ExceptionHandler.new(Nop.new, [Rescue.new])
   it_parses "begin; 1; rescue; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
@@ -531,6 +532,20 @@ describe "Parser" do
   it_parses "def foo(); 1; rescue; 2; end", Def.new("foo", ([] of Arg), ExceptionHandler.new(1.int32, [Rescue.new(2.int32)]))
 
   it_parses "1 rescue 2", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)])
+
+  it_parses "-> do end", FunLiteral.new
+  it_parses "-> { }", FunLiteral.new
+  it_parses "->() { }", FunLiteral.new
+  it_parses "->(x : Int32) { }", FunLiteral.new(Def.new("->", [Arg.new("x", nil, "Int32".ident)]))
+
+  it_parses "->foo", FunPointer.new(nil, "foo")
+  it_parses "->Foo.foo", FunPointer.new("Foo".ident, "foo")
+  it_parses "->Foo::Bar::Baz.foo", FunPointer.new(["Foo", "Bar", "Baz"].ident, "foo")
+  it_parses "->foo(Int32, Float64)", FunPointer.new(nil, "foo", ["Int32".ident, "Float64".ident])
+  it_parses "foo = 1; ->foo.bar(Int32)", [Assign.new("foo".var, 1.int32), FunPointer.new("foo".var, "bar", ["Int32".ident] of ASTNode)]
+  it_parses "->foo(Void*)", FunPointer.new(nil, "foo", ["Void".ident.pointer_of] of ASTNode)
+  it_parses "call ->foo", Call.new(nil, "call", [FunPointer.new(nil, "foo")] of ASTNode)
+  it_parses "[] of ->\n", ArrayLiteral.new(([] of ASTNode), FunTypeSpec.new)
 
   it_parses "foo.bar = {} of Int32 => Int32", Call.new("foo".call, "bar=", [HashLiteral.new([] of ASTNode, [] of ASTNode, "Int32".ident, "Int32".ident)] of ASTNode)
 

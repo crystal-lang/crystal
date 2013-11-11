@@ -11,6 +11,14 @@ class Crystal::Program
   def union_of(type1, type2, type3)
     union_of([type1, type2, type3] of Type).not_nil!
   end
+
+  def fun_of(type1 : Type)
+    fun_of([type1] of Type)
+  end
+
+  def fun_of(type1 : Type, type2 : Type)
+    fun_of([type1, type2] of Type)
+  end
 end
 
 make_tuple InferTypeResult, program, node

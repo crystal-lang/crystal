@@ -545,6 +545,8 @@ module Crystal
         parse_hash_literal
       when :"::"
         parse_ident_or_global_call
+      when :"->"
+        parse_fun_literal
       when :NUMBER
         node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
       when :CHAR
@@ -919,6 +921,111 @@ module Crystal
       end
     end
 
+    def parse_fun_literal
+      next_token_skip_space_or_newline
+
+      unless @token.type == :"{" || @token.type == :"(" || @token.keyword?(:do)
+        return parse_fun_pointer
+      end
+
+      args = [] of Arg
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        while @token.type != :")"
+          args << parse_fun_literal_arg
+        end
+        next_token_skip_space_or_newline
+      end
+
+      current_vars = @def_vars.last.dup
+      push_def current_vars
+      push_vars args
+
+      if @token.keyword?(:do)
+        next_token_skip_statement_end
+        body = parse_expressions
+        check_ident :"end"
+      elsif @token.type == :"{"
+        next_token_skip_statement_end
+        body = parse_expressions
+        check :"}"
+      else
+        unexpected_token
+      end
+
+      pop_def
+
+      next_token_skip_space
+
+      FunLiteral.new(Def.new("->", args, body))
+    end
+
+    def parse_fun_literal_arg
+      check :IDENT
+      name = @token.value.to_s
+
+      if @def_vars.last.includes?(name)
+        raise "function argument '#{name}' shadows local variable '#{name}'"
+      end
+
+      next_token_skip_space_or_newline
+
+      check :":"
+      next_token_skip_space_or_newline
+
+      type = parse_single_type
+
+      if @token.type == :","
+        next_token_skip_space_or_newline
+      end
+
+      Arg.new(name, nil, type)
+    end
+
+    def parse_fun_pointer
+      location = @token.location
+
+      case @token.type
+      when :IDENT
+        name = @token.value.to_s
+        next_token_skip_space
+        if @token.type == :"."
+          next_token_skip_space
+          check :IDENT
+          if name != "self" && !@def_vars.last.includes?(name)
+            raise "undefined variable '#{name}'", location.line_number, location.column_number
+          end
+          obj = Var.new(name)
+          name = @token.value.to_s
+          next_token_skip_space
+        end
+      when :CONST
+        obj = parse_ident
+        check :"."
+        next_token_skip_space
+        check :IDENT
+        name = @token.value.to_s
+        next_token_skip_space
+      else
+        unexpected_token
+      end
+
+      if @token.type == :"."
+        unexpected_token
+      end
+
+      if @token.type == :"("
+        next_token_skip_space
+        types = parse_types
+        check :")"
+        next_token_skip_space
+      else
+        types = [] of ASTNode
+      end
+
+      FunPointer.new(obj, name.not_nil!, types)
+    end
+
     def parse_string
       if @token.type == :STRING
         return node_and_next_token StringLiteral.new(@token.value.to_s)
@@ -1187,9 +1294,17 @@ module Crystal
 
     def parse_def
       @instance_vars = Set(String).new
+      @calls_super = false
+      @uses_block_arg = false
+      @block_arg_name = nil
       a_def = parse_def_or_macro Def
       a_def.instance_vars = @instance_vars
+      a_def.calls_super = @calls_super
+      a_def.uses_block_arg = @uses_block_arg
       @instance_vars = nil
+      @calls_super = false
+      @uses_block_arg = false
+      @block_arg_name = nil
       a_def
     end
 
@@ -1482,6 +1597,8 @@ module Crystal
 
       next_token
 
+      @calls_super = true if name == "super"
+
       call_args = parse_call_args
       if call_args
         args = call_args.args
@@ -1514,6 +1631,9 @@ module Crystal
             push_var declare_var
             declare_var
           elsif (!force_call && is_var?(name))
+            if @block_arg_name && !@uses_block_arg && name == @block_arg_name
+              @uses_block_arg = true
+            end
             Var.new name
           else
             Call.new nil, name, [] of ASTNode, nil, block_arg, global, name_column_number, @last_call_has_parenthesis
@@ -1655,7 +1775,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-", :"&"
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-", :"&", :"->"
         # Nothing
       else
         return nil
@@ -2314,6 +2434,10 @@ module Crystal
     end
 
     def push_var(var : DeclareVar)
+      push_var_name var.name.to_s
+    end
+
+    def push_var(var : BlockArg)
       push_var_name var.name.to_s
     end
 

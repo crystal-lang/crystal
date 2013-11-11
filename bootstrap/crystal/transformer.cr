@@ -261,6 +261,18 @@ module Crystal
       node
     end
 
+    def transform(node : FunLiteral)
+      node.def.body = node.def.body.transform(self)
+      node
+    end
+
+    def transform(node : FunPointer)
+      if obj = node.obj
+        node.obj = obj.transform(self)
+      end
+      node
+    end
+
     def transform(node : Return)
       transform_many node.exps
       node

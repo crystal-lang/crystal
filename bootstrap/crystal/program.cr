@@ -19,6 +19,7 @@ module Crystal
 
       @unions = {} of Array(Int32) => Type
       @macros_cache = {} of MacroCacheKey => MacroExpander
+      @funs = {} of Array(Int32) => Type
 
       @types["Object"] = @object = NonGenericClassType.new self, self, "Object", nil
       @object.abstract = true
@@ -235,6 +236,11 @@ module Crystal
 
         @unions[types_ids] ||= UnionType.new(self, types)
       end
+    end
+
+    def fun_of(types : Array)
+      type_ids = types.map &.type_id
+      @funs[type_ids] ||= FunType.new(self, types)
     end
 
     def require(filename, relative_to = nil)

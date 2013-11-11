@@ -59,6 +59,10 @@ module Crystal
 
       @target_defs = nil
 
+      if block_arg = @block_arg
+        replace_block_arg_with_block(block_arg)
+      end
+
       if obj
         matches = lookup_matches_in(obj.type)
       else
@@ -150,6 +154,22 @@ module Crystal
 
     def lookup_matches_in(owner : Nil)
       raise "Bug: trying to lookup matches in nil in #{self}"
+    end
+
+    def replace_block_arg_with_block(block_arg)
+      block_arg_type = block_arg.type
+      if block_arg_type.is_a?(FunType)
+        vars = [] of Var
+        args = [] of ASTNode
+        block_arg_type.arg_types.map_with_index do |type, i|
+          arg = Var.new("#arg#{i}")
+          vars << arg
+          args << arg
+        end
+        self.block = Block.new(vars, Call.new(block_arg, "call", args))
+      else
+        block_arg.raise "expected a function type, not #{block_arg.type}"
+      end
     end
 
     def check_not_lib_out_args
@@ -369,7 +389,7 @@ module Crystal
     def check_fun_args_types_match(obj_type, typed_def)
       string_conversions = nil
       nil_conversions = nil
-      # fun_conversions = nil
+      fun_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type
         self_arg = self.args[i]
@@ -382,9 +402,9 @@ module Crystal
           elsif (actual_type == mod.string || actual_type == mod.string.hierarchy_type) && (expected_type.is_a?(PointerInstanceType) && expected_type.var.type == mod.char)
             string_conversions ||= [] of Int32
             string_conversions << i
-          # elsif expected_type.fun_type? && actual_type.fun_type? && expected_type.return_type.equal?(@mod.void) && expected_type.arg_types == actual_type.arg_types
-          #   fun_conversions ||= []
-          #   fun_conversions << i
+          elsif expected_type.is_a?(FunType) && actual_type.is_a?(FunType) && expected_type.return_type == mod.void && expected_type.arg_types == actual_type.arg_types
+            fun_conversions ||= [] of Int32
+            fun_conversions << i
           else
             arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
             self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
@@ -418,11 +438,11 @@ module Crystal
         end
       end
 
-      # if fun_conversions
-      #   fun_conversions.each do |i|
-      #     self.args[i] = CastFunToReturnVoid.new(self.args[i])
-      #   end
-      # end
+      if fun_conversions
+        fun_conversions.each do |i|
+          self.args[i] = Primitive.new(:cast_fun_to_return_void)
+        end
+      end
     end
 
     def obj_and_args_types_set?

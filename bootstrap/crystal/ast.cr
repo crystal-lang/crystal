@@ -641,6 +641,8 @@ module Crystal
     property :yields
     property :block_arg
     property :instance_vars
+    property :calls_super
+    property :uses_block_arg
     property :name_column_number
 
     def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
@@ -663,7 +665,12 @@ module Crystal
     end
 
     def clone_without_location
-      Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @yields)
+      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @yields)
+      a_def.instance_vars = instance_vars
+      a_def.calls_super = calls_super
+      a_def.uses_block_arg = uses_block_arg
+      a_def.name_column_number = name_column_number
+      a_def
     end
   end
 
@@ -1008,6 +1015,47 @@ module Crystal
 
     def clone_without_location
       Rescue.new(@body.clone, @types.clone, @name)
+    end
+  end
+
+  class FunLiteral < ASTNode
+    property :def
+
+    def initialize(@def = Def.new("->", [] of Arg))
+    end
+
+    def accept_children(visitor)
+      @def.accept visitor
+    end
+
+    def ==(other : self)
+      other.def == @def
+    end
+
+    def clone_without_location
+      FunLiteral.new(@def.clone)
+    end
+  end
+
+  class FunPointer < ASTNode
+    property obj
+    property name
+    property args
+
+    def initialize(@obj, @name, @args = [] of ASTNode)
+    end
+
+    def accept_children(visitor)
+      @obj.accept visitor if @obj
+      @args.each &.accept visitor
+    end
+
+    def ==(other : self)
+      other.obj == obj && other.name == name && other.args == args
+    end
+
+    def clone_without_location
+      FunPointer.new(@obj.clone, @name, @args.clone)
     end
   end
 
@@ -1440,5 +1488,9 @@ module Crystal
 
   class While
     property :has_breaks
+  end
+
+  class FunPointer
+    property :call
   end
 end

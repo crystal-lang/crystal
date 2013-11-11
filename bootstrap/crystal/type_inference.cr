@@ -348,6 +348,73 @@ module Crystal
       false
     end
 
+    def visit(node : FunLiteral)
+      fun_vars = {} of String => Var
+      types = node.def.args.map do |arg|
+        restriction = arg.type_restriction.not_nil!
+        restriction.accept self
+        arg.type = restriction.type.instance_type
+        fun_vars[arg.name] = Var.new(arg.name, arg.type)
+        arg.type
+      end
+
+      node.mod = @mod
+      node.bind_to node.def.body
+
+      node.def.bind_to node.def.body
+
+      block_visitor = TypeVisitor.new(mod, fun_vars, @scope, @parent, @call, @owner, node.def, nil, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
+      node.def.body.accept block_visitor
+
+      types.push node.def.body.type
+
+      false
+    end
+
+    def visit(node : FunPointer)
+      if obj = node.obj
+        obj.accept self
+      end
+
+      call = Call.new(obj, node.name)
+      prepare_call(call)
+
+      arg_types = node.args.map { |arg| arg.accept(self); arg.type.instance_type }
+
+      call.args = [] of ASTNode
+      arg_types.each_with_index do |arg_type, i|
+        call.args << Var.new("arg#{i}", arg_type)
+      end
+
+      begin
+        call.recalculate
+      rescue ex : Crystal::Exception
+        node.raise "error instantiating #{node}", ex
+      end
+
+      arg_types.push call.type
+
+      node.type = mod.fun_of(arg_types)
+      node.call = call
+      false
+    end
+
+    def end_visit(node : FunTypeSpec)
+      if inputs = node.inputs
+        types = inputs.map &.type.instance_type
+      else
+        types = [] of Type
+      end
+
+      if output = node.output
+        types << output.type.instance_type
+      else
+        types << mod.void
+      end
+
+      node.type = mod.fun_of(types)
+    end
+
     def visit(node : Call)
       prepare_call(node)
 
@@ -359,12 +426,17 @@ module Crystal
 
       obj.add_input_observer node if obj
       node.args.each &.add_input_observer(node)
-      # node.block_arg.add_observer node, :update_input if node.block_arg
+      if block_arg = node.block_arg
+        block_arg.add_input_observer node
+      end
       node.recalculate
 
       obj.accept self if obj
       node.args.each &.accept(self)
-      # node.block_arg.accept self if node.block_arg
+
+      if block_arg
+        block_arg.accept self
+      end
 
       false
     end
@@ -773,8 +845,8 @@ module Crystal
 
       if type.c_enum?
         type = @mod.int32
-      # elsif type.type_def_type? && type.typedef.fun_type?
-      #   type = type.typedef
+      elsif type.is_a?(TypeDefType) && type.typedef.fun_type?
+        type = type.typedef
       end
 
       type
@@ -964,6 +1036,8 @@ module Crystal
         node.type = mod.string
       when :class
         node.type = scope.metaclass
+      when :fun_call
+        # Nothing to do
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end

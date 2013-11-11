@@ -153,6 +153,20 @@ module Crystal
     end
   end
 
+  class FunLiteral
+    property! mod
+
+    def update(from = nil)
+      return unless self.def.args.all? &.type?
+      return unless self.def.body.type?
+
+      types = self.def.args.map(&.type)
+      types.push self.def.body.type
+
+      self.type = mod.fun_of(types)
+    end
+  end
+
   class NewGenericClass
     property! instance_type
 

@@ -126,6 +126,10 @@ module Crystal
       false
     end
 
+    def fun_type?
+      false
+    end
+
     def hierarchy_type
       self
     end
@@ -1946,6 +1950,48 @@ module Crystal
 
     def to_s
       "#{instance_type}:Class"
+    end
+  end
+
+  class FunType < Type
+    include DefContainer
+    include DefInstanceContainer
+
+    getter program
+    getter fun_types
+
+    def initialize(@program, @fun_types)
+      args = arg_types.map_with_index { |type, i| Arg.new_with_type("arg#{i}", type) }
+      add_def Def.new("call", args, Primitive.new(:fun_call, return_type))
+      add_def Def.new("arity", ([] of Arg), NumberLiteral.new(fun_types.length - 1, :i32))
+    end
+
+    def arg_types
+      fun_types[0 .. -2]
+    end
+
+    def return_type
+      fun_types.last
+    end
+
+    def parents
+      nil
+    end
+
+    def primitive_like?
+      fun_types.all? &.primitive_like?
+    end
+
+    def fun_type?
+      true
+    end
+
+    def llvm_size
+      Crystal::Program::POINTER_SIZE
+    end
+
+    def to_s
+      "#{arg_types.join ", "} -> #{return_type}"
     end
   end
 

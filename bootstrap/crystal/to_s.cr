@@ -342,6 +342,42 @@ module Crystal
       @str << node.name
     end
 
+    def visit(node : FunLiteral)
+      @str << "->"
+      if node.def.args.length > 0
+        @str << "("
+        node.def.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+        end
+        @str << ")"
+      end
+      @str << " do\n"
+      accept_with_indent(node.def.body)
+      append_indent
+      @str << "end"
+      false
+    end
+
+    def visit(node : FunPointer)
+      @str << "->"
+      if obj = node.obj
+        obj.accept self
+        @str << "."
+      end
+      @str << node.name
+
+      if node.args.length > 0
+        @str << "("
+        node.args.each_with_index do |arg, i|
+          @str << ", " if i > 0
+          arg.accept self
+        end
+        @str << ")"
+      end
+      false
+    end
+
     def visit(node : Def)
       @str << "def "
       if node_receiver = node.receiver
@@ -349,7 +385,7 @@ module Crystal
         @str << "."
       end
       @str << node.name.to_s
-      if node.args.length > 0
+      if node.args.length > 0 || node.block_arg
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0

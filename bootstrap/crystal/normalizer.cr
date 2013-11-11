@@ -433,24 +433,28 @@ module Crystal
       end
 
       if node.body
-        # if node.uses_block_arg
-        #   if node.block_arg.type_spec.inputs
-        #     args = node.block_arg.type_spec.inputs.each_with_index.map { |input, i| Arg.new("#arg#{i}", nil, input) }
-        #     body = Yield.new(args.map { |arg| Var.new(arg.name) })
-        #   else
-        #     args = [] of Arg
-        #     body = Yield.new
-        #   end
-        #   block_def = FunLiteral.new(Def.new("->", args, body))
-        #   assign = Assign.new(Var.new(node.block_arg.name), block_def)
+        if node.uses_block_arg
+          block_arg = node.block_arg.not_nil!
+          if inputs = block_arg.type_spec.inputs
+            args = inputs.map_with_index { |input, i| Arg.new("#arg#{i}", nil, input) }
+            yield_args = [] of ASTNode
+            args.each { |arg| yield_args << Var.new(arg.name) }
 
-        #   node_body = node.body
-        #   if node_body.is_a?(Expressions)
-        #     node_body.expressions.unshift(assign)
-        #   else
-        #     node.body = Expressions.new([assign, node_body])
-        #   end
-        # end
+            body = Yield.new(yield_args)
+          else
+            args = [] of Arg
+            body = Yield.new
+          end
+          block_def = FunLiteral.new(Def.new("->", args, body))
+          assign = Assign.new(Var.new(block_arg.name), block_def)
+
+          node_body = node.body
+          if node_body.is_a?(Expressions)
+            node_body.expressions.unshift(assign)
+          else
+            node.body = Expressions.new([assign, node_body] of ASTNode)
+          end
+        end
 
         pushing_vars_from_args(node.args) do
           @in_initialize = node.name == "initialize"

@@ -892,6 +892,7 @@ module Crystal
 
       node.type = mod.fun_of(*arg_types, call.type)
       node.call = call
+      false
     end
 
     def end_visit_fun_type_spec(node)
