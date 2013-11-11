@@ -44,15 +44,15 @@ module Spec
       @results[kind] << Result.new(kind, description, ex)
     end
 
-    def self.print_results
-      @@instance.print_results
+    def self.print_results(elapsed_time)
+      @@instance.print_results(elapsed_time)
     end
 
     def self.has_failures
       @@instance.has_failures
     end
 
-    def print_results
+    def print_results(elapsed_time)
       puts
 
       pendings = @results[:pending]
@@ -98,6 +98,7 @@ module Spec
       success = @results[:success]
       total = pendings.length + failures.length + errors.length + success.length
 
+      puts "Finished in #{elapsed_time} seconds"
       puts "#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending"
     end
 
@@ -225,8 +226,10 @@ class Object
 end
 
 fun main(argc : Int32, argv : Char**) : Int32
+  time = Time.now
   CrystalMain.__crystal_main(argc, argv)
-  Spec::RootContext.print_results
+  elapsed_time = Time.now - time
+  Spec::RootContext.print_results(elapsed_time)
   Spec::RootContext.has_failures ? 1 : 0
 rescue ex
   puts ex
