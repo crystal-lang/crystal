@@ -685,6 +685,10 @@ module Crystal
       end
     end
 
+    def visit_next(node)
+      node.raise "'next' is not yet supported"
+    end
+
     def end_visit_break(node)
       container = @while_stack.last || (block && block.break)
       node.raise "Invalid break" unless container
