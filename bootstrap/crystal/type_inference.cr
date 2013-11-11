@@ -962,6 +962,8 @@ module Crystal
         node.type = mod.int32
       when :symbol_to_s
         node.type = mod.string
+      when :class
+        node.type = scope.metaclass
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
@@ -1014,7 +1016,7 @@ module Crystal
         node.raise "can't instantiate abstract class #{instance_type}"
       end
 
-      # instance_type.allocated = true
+      instance_type.allocated = true
       node.type = instance_type
     end
 

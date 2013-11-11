@@ -3,6 +3,9 @@ require "../llvm"
 
 module Crystal
   class LLVMTyper
+    HIERARCHY_LLVM_TYPE = LLVM.struct_type("Object+", [LLVM::Int32, LLVM.pointer_type(LLVM::Int8)], true)
+    HIERARCHY_LLVM_ARG_TYPE = LLVM.pointer_type(HIERARCHY_LLVM_TYPE)
+
     def initialize
       @cache = {} of Type => LibLLVM::TypeRef
       @struct_cache = {} of Type => LibLLVM::TypeRef
@@ -27,11 +30,15 @@ module Crystal
     end
 
     def create_llvm_type(type : Metaclass)
-      LLVM::Int64
+      LLVM::Int32
     end
 
     def create_llvm_type(type : GenericClassInstanceMetaclass)
-      LLVM::Int64
+      LLVM::Int32
+    end
+
+    def create_llvm_type(type : HierarchyTypeMetaclass)
+      LLVM::Int32
     end
 
     def create_llvm_type(type : PointerInstanceType)
@@ -76,6 +83,10 @@ module Crystal
 
     def create_llvm_type(type : NoReturnType)
       LLVM::Void
+    end
+
+    def create_llvm_type(type : HierarchyType)
+      HIERARCHY_LLVM_TYPE
     end
 
     def create_llvm_type(type)
@@ -134,6 +145,10 @@ module Crystal
 
     def create_llvm_arg_type(type : UnionType)
       LLVM.pointer_type llvm_type(type)
+    end
+
+    def create_llvm_arg_type(type : HierarchyType)
+      HIERARCHY_LLVM_ARG_TYPE
     end
 
     def create_llvm_arg_type(type)

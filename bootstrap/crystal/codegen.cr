@@ -190,6 +190,8 @@ module Crystal
                 codegen_primitive_symbol_to_s node, target_def, call_args
               when :nil_pointer
                 codegen_primitive_nil_pointer node, target_def, call_args
+              when :class
+                codegen_primitive_class node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -369,7 +371,22 @@ module Crystal
     end
 
     def codegen_primitive_allocate(node, target_def, call_args)
-      malloc llvm_struct_type(node.type)
+      node_type = node.type
+      if node_type.is_a?(HierarchyType)
+        type = node_type.base_type
+      else
+        type = node_type
+      end
+
+      struct_type = llvm_struct_type(type)
+      @last = malloc struct_type
+      memset @last, int8(0), LLVM.size_of(struct_type)
+
+      if node_type.is_a?(HierarchyType)
+        @last = box_object_in_hierarchy(node_type.base_type, node.type, @last, false)
+      end
+
+      @last
     end
 
     def codegen_primitive_pointer_malloc(node, target_def, call_args)
@@ -532,15 +549,20 @@ module Crystal
     end
 
     def codegen_primitive_object_id(node, target_def, call_args)
-      @builder.ptr2int call_args[0], LLVM::Int64
+      obj = call_args[0]
+      if type.hierarchy?
+        obj = @builder.load(gep obj, 0, 1)
+      end
+
+      @builder.ptr2int obj, LLVM::Int64
     end
 
     def codegen_primitive_object_to_cstr(node, target_def, call_args)
-      # if self_type.hierarchy?
-      #   obj = b.load(b.gep(args[0], [LLVM::Int(0), LLVM::Int(1)]))
-      # else
+      if type.hierarchy?
+        obj = @builder.load(gep call_args[0], 0, 1)
+      else
         obj = call_args[0]
-      # end
+      end
       buffer = @builder.array_malloc(LLVM::Int8, int(@type.to_s.length + 23))
       @builder.call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("#<#{@type}:0x%016lx>"), obj] of LibLLVM::ValueRef
       buffer
@@ -576,6 +598,15 @@ module Crystal
 
     def codegen_primitive_nil_pointer(node, target_def, call_args)
       LLVM.null(llvm_type(node.type))
+    end
+
+    def codegen_primitive_class(node, target_def, call_args)
+      if node.type.hierarchy_metaclass?
+        type_ptr = union_type_id call_args[0]
+        @builder.load type_ptr
+      else
+        int(node.type.instance_type.type_id)
+      end
     end
 
     def visit(node : PointerOf)
@@ -1189,13 +1220,13 @@ module Crystal
           @last = llvm_nil
         elsif node.type == @mod.object
           @last = cast_to @last, @mod.object
-      #   elsif node.type.equal?(@mod.object.hierarchy_type)
-      #     @last = box_object_in_hierarchy(var.type, node.type, var[:ptr], !var.treated_as_pointer)
+        elsif node.type == @mod.object.hierarchy_type
+          @last = box_object_in_hierarchy(var.type, node.type, var.pointer, !var.treated_as_pointer)
         else
           @last = @builder.load(@last, node.name) unless var.treated_as_pointer
-          # if node.type.hierarchy?
-          #   @last = box_object_in_hierarchy(var.type.nilable_type, node.type, @last, !var.treated_as_pointer)
-          # end
+          if node.type.hierarchy?
+            @last = box_object_in_hierarchy(var_type.not_nil_type, node.type, @last, !var.treated_as_pointer)
+          end
         end
       elsif var.type.metaclass?
         # Nothing to do
@@ -1205,6 +1236,26 @@ module Crystal
         value_ptr = union_value(@last)
         casted_value_ptr = cast_to_pointer value_ptr, node.type
         @last = @builder.load(casted_value_ptr)
+      end
+    end
+
+    def box_object_in_hierarchy(object, hierarchy, value, load = true)
+      hierarchy_type = alloca llvm_type(hierarchy)
+      type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
+      if object.is_a?(NilableType)
+        null_pointer = null_pointer?(value)
+        value_id = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(object.not_nil_type.type_id)
+      else
+        value_id = int(object.type_id)
+      end
+
+      @builder.store value_id, type_id_ptr
+
+      @builder.store cast_to_void_pointer(value), value_ptr
+      if load
+        @builder.load(hierarchy_type)
+      else
+        hierarchy_type
       end
     end
 
@@ -1257,8 +1308,8 @@ module Crystal
       obj_type = node.obj.type
 
       case obj_type
-      # when HierarchyType
-      #   codegen_type_filter_many_types(obj_type.subtypes, &block)
+      when HierarchyType
+        codegen_type_filter_many_types(obj_type.concrete_types) { |type| yield type }
       when UnionType
         codegen_type_filter_many_types(obj_type.concrete_types) { |type| yield type }
       when NilableType
@@ -1372,7 +1423,7 @@ module Crystal
 
         @last = @builder.load global
       else
-        @last = int64(node.type.instance_type.type_id)
+        @last = int(node.type.instance_type.type_id)
       end
       false
     end
@@ -1635,7 +1686,7 @@ module Crystal
 
         if owner.union?
           obj_type_id = @builder.load union_type_id(@last)
-        elsif owner.nilable? #|| owner.hierarchy_metaclass?
+        elsif owner.nilable? || owner.hierarchy_metaclass?
           obj_type_id = @last
         end
       else
@@ -1685,8 +1736,8 @@ module Crystal
           else
             result = not_null_pointer?(obj_type_id)
           end
-        # elsif owner.hierarchy_metaclass?
-        #   result = match_any_type_id(a_def.owner, obj_type_id)
+        elsif owner.hierarchy_metaclass?
+          result = match_any_type_id(a_def.owner.not_nil!, obj_type_id)
         else
           result = int1(1)
         end
@@ -1913,13 +1964,13 @@ module Crystal
     def match_any_type_id(type, type_id : LibLLVM::ValueRef)
       # Special case: if the type is Object+ we want to match against Reference+,
       # because Object+ can only mean a Reference type (so we exclude Nil, for example).
-      # type = @mod.reference.hierarchy_type if type.equal?(@mod.object.hierarchy_type)
-      # type = type.instance_type if type.hierarchy_metaclass?
+      type = @mod.reference.hierarchy_type if type == @mod.object.hierarchy_type
+      type = type.instance_type if type.hierarchy_metaclass?
 
       if type.union?
-        # if type.hierarchy? && type.base_type.subclasses.empty?
-        #   return @builder.icmp :eq, int(type.base_type.type_id), type_id
-        # end
+        if type.is_a?(HierarchyType) && type.base_type.subclasses.empty?
+          return @builder.icmp LibLLVM::IntPredicate::EQ, int(type.base_type.type_id), type_id
+        end
 
         match_fun_name = "~match<#{type}>"
         func = @main_mod.functions[match_fun_name]? || create_match_fun(match_fun_name, type)
@@ -1935,6 +1986,14 @@ module Crystal
     end
 
     def create_match_fun(name, type : UnionType)
+      create_match_fun0(name, type)
+    end
+
+    def create_match_fun(name, type : HierarchyType)
+      create_match_fun0(name, type)
+    end
+
+    def create_match_fun0(name, type)
       @main_mod.functions.add(name, ([LLVM::Int32] of LibLLVM::TypeRef), LLVM::Int1) do |func|
         type_id = func.get_param(0)
         func.append_basic_block("entry") do |builder|
@@ -2081,7 +2140,13 @@ module Crystal
     end
 
     def llvm_self_ptr
-      llvm_self
+      type = @type
+      if type.is_a?(HierarchyType)
+        ptr = @builder.load(union_value(llvm_self))
+        cast_to ptr, type.base_type
+      else
+        llvm_self
+      end
     end
 
     def llvm_nil

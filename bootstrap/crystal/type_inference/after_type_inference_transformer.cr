@@ -33,7 +33,7 @@ module Crystal
 
   class AfterTypeInferenceTransformer < Transformer
     def initialize(@program)
-      # @transformed = Set(ASTNode).new
+      @transformed = Set(UInt64).new
     end
 
     def transform(node : Def)
@@ -92,56 +92,57 @@ module Crystal
       node
     end
 
-    # def transform_call(node)
-    #   super
+    def transform(node : Call)
+      super
 
-    #   if node.target_defs
-    #     changed = false
-    #     allocated_defs = []
+      if target_defs = node.target_defs
+        changed = false
+        allocated_defs = [] of Def
 
-    #     node.target_defs.each do |target_def|
-    #       allocated = target_def.owner.allocated && target_def.args.all? { |arg| arg.type.allocated }
-    #       unless allocated
-    #         changed = true
-    #         next
-    #       end
+        target_defs.each do |target_def|
+          allocated = target_def.owner.try(&.allocated) && target_def.args.all? &.type.allocated
+          if allocated
+            allocated_defs << target_def
 
-    #       allocated_defs << target_def
+            unless @transformed.includes?(target_def.object_id)
+              @transformed.add(target_def.object_id)
 
-    #       next if @transformed[target_def.object_id]
+              if body = target_def.body
+                node.bubbling_exception do
+                  target_def.body = body.transform(self)
+                end
 
-    #       @transformed[target_def.object_id] = true
+                # If the body was completely removed, rebind to nil
+                unless target_def.body
+                  rebind_node target_def, @program.nil_var
+                end
+              end
+            end
+          else
+            changed = true
+          end
+        end
 
-    #       if target_def.body
-    #         node.bubbling_exception do
-    #           target_def.body = target_def.body.transform(self)
-    #         end
+        if changed
+          node.unbind_from node.target_defs
+          node.target_defs = allocated_defs
+          node.bind_to allocated_defs
+        end
 
-    #         # If the body was completely removed, rebind to nil
-    #         unless target_def.body
-    #           rebind_node target_def, @program.nil_var
-    #         end
-    #       end
-    #     end
+        if node.target_defs.not_nil!.empty?
+          exps = [] of ASTNode
+          if obj = node.obj
+            exps.push obj
+          end
+          node.args.each { |arg| exps.push arg }
+          return Expressions.from exps
+        end
+      end
 
-    #     if changed
-    #       node.unbind_from *node.target_defs
-    #       node.target_defs = allocated_defs
-    #       node.bind_to *allocated_defs
-    #     end
+      # check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
 
-    #     if node.target_defs.empty?
-    #       exps = []
-    #       exps.push node.obj if node.obj
-    #       node.args.each { |arg| exps.push arg }
-    #       return Expressions.from exps
-    #     end
-    #   end
-
-    #   check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
-
-    #   node
-    # end
+      node
+    end
 
     # def check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
     #   if (node.name == :< || node.name == :<=) && node.obj && node.obj.type && node.obj.type.integer? && node.obj.type.unsigned?

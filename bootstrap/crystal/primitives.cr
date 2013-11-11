@@ -6,12 +6,17 @@ require "program"
 module Crystal
   class Program
     def define_primitives
+      define_object_primitives
       define_primitive_types_primitives
       define_reference_primitives
       define_pointer_primitives
       define_symbol_primitives
       define_type_sizes
       define_math_primitives
+    end
+
+    def define_object_primitives
+      object.add_def Def.new("class", ([] of Arg), Primitive.new(:class))
     end
 
     def define_primitive_types_primitives

@@ -122,12 +122,24 @@ module Crystal
       false
     end
 
+    def hierarchy_metaclass?
+      false
+    end
+
     def hierarchy_type
       self
     end
 
     def instance_type
       self
+    end
+
+    def allocated
+      true
+    end
+
+    def allocated=(value)
+      raise "Bug: #{self} doesn't implement allocated="
     end
 
     def implements?(other_type)
@@ -439,7 +451,6 @@ module Crystal
       a_def.owner = self
       restrictions = Array(Type | ASTNode | Nil).new(a_def.args.length)
       a_def.args.each { |arg| restrictions.push(arg.type? || arg.type_restriction) }
-      # restrictions = a_def.args.map { |arg| arg.type || arg.type_restriction }
       key = DefKey.new(restrictions, !!a_def.yields)
       old_def = defs[a_def.name][key]?
       defs[a_def.name][key] = a_def
@@ -601,6 +612,7 @@ module Crystal
     property :abstract
     getter :owned_instance_vars
     property :instance_vars_in_initialize
+    getter :allocated
 
     def initialize(program, container, name, @superclass, add_subclass = true)
       super(program, container, name)
@@ -661,6 +673,13 @@ module Crystal
           #   end
           # end
         end
+      end
+    end
+
+    def allocated=(allocated)
+      @allocated = allocated
+      if superclass = @superclass
+        superclass.allocated = allocated
       end
     end
 
@@ -851,6 +870,10 @@ module Crystal
     def common_ancestor(other)
       nil
     end
+
+    def allocated
+      true
+    end
   end
 
   class BoolType < PrimitiveType
@@ -1020,6 +1043,7 @@ module Crystal
     getter generic_class
     getter type_vars
     getter subclasses
+    property allocated
 
     def initialize(@program, @generic_class, @type_vars)
       @subclasses = [] of Type
@@ -1772,6 +1796,14 @@ module Crystal
       base_type.abstract
     end
 
+    def allocated
+      base_type.allocated
+    end
+
+    def allocated=(allocated)
+      base_type.allocated = allocated
+    end
+
     def common_ancestor(other)
       base_type.common_ancestor(other)
     end
@@ -1821,9 +1853,9 @@ module Crystal
       end
     end
 
-    # def filter_by(type)
-    #   restrict(type)
-    # end
+    def filter_by(type)
+      restrict(type, self, nil, nil)
+    end
 
     def each
       subtypes.each do |subtype|

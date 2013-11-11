@@ -59,7 +59,7 @@ module Crystal
 
       @types["String"] = @string = NonGenericClassType.new self, self, "String", @reference
       @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
-      # @string.allocated = true
+      @string.allocated = true
 
       @string.lookup_instance_var("@length").type = @int32
       @string.lookup_instance_var("@c").type = @char
