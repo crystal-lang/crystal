@@ -22,24 +22,24 @@ module Crystal
         end
       end
 
-      args = Array(ASTNode).new(mapped_args.length)
-      mapped_args.each do |arg|
-        args.push arg.to_crystal_node.not_nil!
-      end
-
-      macro_call = Call.new(nil, @macro_name, args)
-      macro_nodes = Expressions.new([@typed_def, macro_call] of ASTNode)
-      macro_nodes = @mod.normalize(macro_nodes)
-
-      @mod.infer_type macro_nodes
-
-      if macro_nodes.type != @mod.string
-        node.raise "macro return value must be a String, not #{macro_nodes.type}"
-      end
-
-      macro_arg_types = macro_call.args.map(&.type)
+      macro_arg_types = mapped_args.map &.crystal_type_id
       func = @untyped_def.lookup_instance(macro_arg_types)
       unless func
+        args = Array(ASTNode).new(mapped_args.length)
+        mapped_args.each do |arg|
+          args.push arg.to_crystal_node.not_nil!
+        end
+
+        macro_call = Call.new(nil, @macro_name, args)
+        macro_nodes = Expressions.new([@typed_def, macro_call] of ASTNode)
+        macro_nodes = @mod.normalize(macro_nodes)
+
+        @mod.infer_type macro_nodes
+
+        if macro_nodes.type != @mod.string
+          node.raise "macro return value must be a String, not #{macro_nodes.type}"
+        end
+
         @mod.build macro_nodes, @llvm_mod#, single_module: true
         func = @llvm_mod.functions[macro_call.target_def.mangled_name(nil)]?
         if func
