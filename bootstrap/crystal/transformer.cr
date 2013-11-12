@@ -256,7 +256,11 @@ module Crystal
     end
 
     def transform(node : Block)
-      transform_many node.args
+      node.args.map! do |exp|
+        transformed = exp.transform(self)
+        assert_type transformed, Var
+        transformed
+      end
       node.body = node.body.transform(self)
       node
     end

@@ -190,7 +190,7 @@ module Crystal
       node.bind_to value
       var.bind_to node
 
-      var.type_filters = node.type_filters = and_type_filters(not_nil_filter(target), value.type_filters) if node
+      var.type_filters = node.type_filters = and_type_filters(not_nil_filter(target), value.type_filters)
     end
 
     def type_assign(target : InstanceVar, value, node)

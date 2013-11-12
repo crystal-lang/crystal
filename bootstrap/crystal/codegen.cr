@@ -436,7 +436,7 @@ module Crystal
       type = @type
       assert_type type, PointerInstanceType
 
-      if type.var.type.union? || type.var.type.c_struct? || type.var.type.c_union?
+      if type.var.type.union? || type.var.type.c_struct? || type.var.type.c_union? || type.var.type.fun_type?
         @last = call_args[0]
       else
         @builder.load call_args[0]

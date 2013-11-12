@@ -67,7 +67,7 @@ module Crystal
       if location
         new message, location.line_number, (node.name_column_number || location.column_number), location.filename, (node.name_length || 0), inner
       else
-        new message, 0, 0, nil, 0, inner
+        new message, nil, 0, nil, 0, inner
       end
     end
 
@@ -117,19 +117,21 @@ module Crystal
         str << msg
       end
 
-      if lines && @line
-        line = lines[@line - 1]
-        if line
-          str << "\n\n"
-          str << line.chomp
-          str << "\n"
-          str << (" " * (@column - 1))
-          str << "\033[1;32m"
-          str << "^"
-          if @length && @length > 0
-            str << ("~" * (@length - 1))
+      if lines
+        if @line
+          line = lines[@line - 1]
+          if line
+            str << "\n\n"
+            str << line.chomp
+            str << "\n"
+            str << (" " * (@column - 1))
+            str << "\033[1;32m"
+            str << "^"
+            if @length && @length > 0
+              str << ("~" * (@length - 1))
+            end
+            str << "\033[0m"
           end
-          str << "\033[0m"
         end
       end
       str << "\n"
@@ -159,6 +161,84 @@ module Crystal
       else
         @message
       end
+    end
+  end
+
+  class MethodTraceException < Exception
+    def initialize(@owner, @trace)
+      super(nil)
+    end
+
+    def has_location?
+      true
+    end
+
+    def to_s(source = nil)
+      String.build do |str|
+        append_to_s(str, source)
+      end
+    end
+
+    def append_to_s(str, source)
+      return unless @trace.length > 0
+
+      str << ("=" * 80)
+      str << "\n\n#{@owner} trace:"
+      @trace.each do |node|
+        location = node.location
+        if location
+          filename = location.filename
+          next_trace = false
+          case filename
+          when VirtualFile
+            lines = filename.source.lines.to_a
+            filename = "macro #{filename.macro.name} (in #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number})"
+          when String
+            if File.exists?(filename)
+              lines = File.read_lines filename
+            else
+              lines = source ? source.lines.to_a : nil
+            end
+          else
+            next_trace = true
+          end
+
+          unless next_trace
+            line_number = location.line_number
+            column_number = location.column_number
+
+            str << "\n\n"
+            str << "  "
+            str << filename
+            str << ":"
+            str << line_number
+            str << "\n\n"
+
+            if lines
+              line = lines[line_number - 1]
+
+              name_column = node.name_column_number
+              name_length = node.name_length
+
+              str << "    "
+              str << line.chomp
+              str << "\n"
+              if name_column
+                str << "    "
+                str << (" " * (name_column - 1))
+                str << "^"
+                if name_length
+                  str << ("~" * (name_length - 1)) if name_length
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+
+    def deepest_error_message
+      nil
     end
   end
 

@@ -138,6 +138,10 @@ module Crystal
       self
     end
 
+    def includes_type?(type)
+      self == type
+    end
+
     def allocated
       true
     end
@@ -1582,6 +1586,10 @@ module Crystal
 
     def passed_by_val?
       true
+    end
+
+    def includes_type?(other_type)
+      union_types.any? &.includes_type?(other_type)
     end
 
     def cover

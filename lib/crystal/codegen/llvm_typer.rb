@@ -19,8 +19,12 @@ module Crystal
                       LLVM.Void
                     when PointerInstanceType
                       pointed_type = llvm_embedded_type(type.var.type)
-                      pointed_type = LLVM::Int8 if pointed_type == LLVM.Void
-                      LLVM::Pointer(pointed_type)
+                      if type.var.type.fun_type?
+                        pointed_type
+                      else
+                        pointed_type = LLVM::Int8 if pointed_type == LLVM.Void
+                        LLVM::Pointer(pointed_type)
+                      end
                     when InstanceVarContainer
                       LLVM::Pointer(llvm_struct_type(type))
                     when UnionType

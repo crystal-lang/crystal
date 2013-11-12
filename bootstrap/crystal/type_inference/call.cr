@@ -172,6 +172,26 @@ module Crystal
       end
     end
 
+    def find_owner_trace(node, owner)
+      owner_trace = [] of ASTNode
+
+      visited = Set(UInt64).new
+      visited.add node.object_id
+      while deps = node.dependencies?
+        dependencies = deps.select { |dep| !dep.same?(mod.nil_var) && dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
+        if dependencies.length > 0
+          node = dependencies.first
+          owner_trace << node if node && node.location
+          visited.add node.object_id
+          break unless node.dependencies?
+        else
+          break
+        end
+      end
+
+      MethodTraceException.new(owner, owner_trace)
+    end
+
     def check_not_lib_out_args
       args.each do |arg|
         if arg.out?
@@ -474,16 +494,19 @@ module Crystal
 
     def raise_matches_not_found(owner, def_name, matches = nil)
       defs = owner.lookup_defs(def_name)
+      obj = @obj
       if defs.empty?
+        owner_trace = find_owner_trace(obj, owner) if obj && obj.type.is_a?(UnionType)
+
         if obj || !owner.is_a?(Program)
           error_msg = "undefined method '#{def_name}' for #{owner}"
           # similar_name = owner.lookup_similar_defs(def_name, self.args.length, !!block)
           # error_msg << " \033[1;33m(did you mean '#{similar_name}'?)\033[0m" if similar_name
-          raise error_msg#, owner_trace
+          raise error_msg, owner_trace
         elsif args.length > 0 || has_parenthesis
-          raise "undefined method '#{def_name}'"#, owner_trace
+          raise "undefined method '#{def_name}'", owner_trace
         else
-          raise "undefined local variable or method '#{def_name}'"#, owner_trace
+          raise "undefined local variable or method '#{def_name}'", owner_trace
         end
       end
 

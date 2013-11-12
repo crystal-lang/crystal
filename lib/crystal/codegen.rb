@@ -657,7 +657,7 @@ module Crystal
     end
 
     def visit_pointer_get_value(node)
-      if @type.var.type.union? || @type.var.type.c_struct? || @type.var.type.c_union?
+      if @type.var.type.union? || @type.var.type.c_struct? || @type.var.type.c_union? || @type.var.type.fun_type?
         @last = @call_args[0]
       else
         @last = @builder.load @call_args[0]
