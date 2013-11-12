@@ -154,6 +154,10 @@ module Crystal
       LLVM.pointer_type llvm_type(type)
     end
 
+    def create_llvm_arg_type(type : NilableType)
+      llvm_type(type)
+    end
+
     def create_llvm_arg_type(type : HierarchyType)
       HIERARCHY_LLVM_ARG_TYPE
     end

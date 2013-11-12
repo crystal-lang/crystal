@@ -20,10 +20,6 @@ class Float32
   MIN = -INFINITY
   MAX =  INFINITY
 
-  def ==(other)
-    false
-  end
-
   def -@
     0.0_f32 - self
   end
@@ -40,10 +36,6 @@ end
 class Float64
   MIN = -INFINITY
   MAX =  INFINITY
-
-  def ==(other)
-    false
-  end
 
   def -@
     0.0 - self

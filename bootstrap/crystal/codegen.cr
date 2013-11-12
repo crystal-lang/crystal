@@ -232,7 +232,7 @@ module Crystal
       when "<" then return @builder.icmp LibLLVM::IntPredicate::ULT, p1, p2
       when "<=" then return @builder.icmp LibLLVM::IntPredicate::ULE, p1, p2
       when ">" then return @builder.icmp LibLLVM::IntPredicate::UGT, p1, p2
-      when ">=" then return @builder.icmp LibLLVM::IntPredicate::UGT, p1, p2
+      when ">=" then return @builder.icmp LibLLVM::IntPredicate::UGE, p1, p2
       else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
       end
     end
@@ -270,7 +270,7 @@ module Crystal
               when "<" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLT : LibLLVM::IntPredicate::ULT), p1, p2
               when "<=" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SLE : LibLLVM::IntPredicate::ULE), p1, p2
               when ">" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGT : LibLLVM::IntPredicate::UGT), p1, p2
-              when ">=" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGT : LibLLVM::IntPredicate::UGT), p1, p2
+              when ">=" then return @builder.icmp (t1.signed? ? LibLLVM::IntPredicate::SGE : LibLLVM::IntPredicate::UGE), p1, p2
               else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
               end
 
@@ -1058,9 +1058,10 @@ module Crystal
       def add_value(block, type, value)
         @incoming_blocks << block
 
-        if @node.type != type && @node.type.number?
-          @incoming_values << @codegen.cast_number(@node.type, type, value)
-        elsif @node.type.nilable? && LLVM.type_kind_of(LLVM.type_of value) == LibLLVM::TypeKind::Integer
+        # if @node.type != type && @node.type.number?
+        #   @incoming_values << @codegen.cast_number(@node.type, type, value)
+        #els
+        if @node.type.nilable? && LLVM.type_kind_of(LLVM.type_of value) == LibLLVM::TypeKind::Integer
           @incoming_values << @codegen.builder.int2ptr(value, @codegen.llvm_type(node.type))
         else
           @incoming_values << value
@@ -1195,9 +1196,9 @@ module Crystal
       if target_type == value_type
         value = @builder.load value if target_type.union? || (instance_var && (target_type.c_struct? || target_type.c_union?))
         @builder.store value, pointer
-      elsif target_type.number?
-        value = cast_number(target_type, value_type, value)
-        @builder.store value, pointer
+      # elsif target_type.number?
+      #   value = cast_number(target_type, value_type, value)
+      #   @builder.store value, pointer
       else
         assign_to_union(pointer, target_type, value_type, value)
       end
@@ -2062,6 +2063,7 @@ module Crystal
       old_vars = @vars
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
+      old_exception_handlers = @exception_handlers
       old_type = @type
       old_target_def = @target_def
       old_in_const_block = @in_const_block
@@ -2070,6 +2072,7 @@ module Crystal
       @trampoline_wrappers = {} of UInt64 => LLVM::Function
 
       @vars = {} of String => LLVMVar
+      @exception_handlers = [] of Handler
 
       args = [] of Arg
       if self_type
@@ -2142,6 +2145,7 @@ module Crystal
       the_fun = @fun
 
       @vars = old_vars
+      @exception_handlers = old_exception_handlers
       @fun = old_fun
       @entry_block = old_entry_block
       @alloca_block = old_alloca_block

@@ -1661,6 +1661,10 @@ module Crystal
       true
     end
 
+    def passed_by_val?
+      false
+    end
+
     def to_s
       "#{@not_nil_type}?"
     end
