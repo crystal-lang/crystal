@@ -87,7 +87,7 @@ module Crystal
     end
 
     def restrict(other : UnionType, owner, type_lookup, free_vars)
-      restricted = other.union_types.any? { |union_type| is_restriction_of?(union_type, nil) }
+      restricted = other.union_types.any? { |union_type| is_restriction_of?(union_type, owner) }
       restricted ? self : nil
     end
 
@@ -129,7 +129,7 @@ module Crystal
     end
 
     def is_restriction_of?(other : UnionType, owner)
-      other.union_types.all? { |subtype| is_restriction_of?(subtype, subtype) }
+      other.union_types.any? { |subtype| is_restriction_of?(subtype, owner) }
     end
 
     def is_restriction_of?(other : HierarchyType, owner)
@@ -172,9 +172,13 @@ module Crystal
   end
 
   class GenericClassInstanceType
-    def restrict(other : Ident, type_lookup, free_vars)
+    def restrict(other : Ident, owner, type_lookup, free_vars)
       ident_type = type_lookup.lookup_type other.names
-      generic_class == ident_type ? self : nil
+      generic_class == ident_type ? self : super
+    end
+
+    def restrict(other : GenericClassType, type_lookup, free_vars)
+      generic_class == other ? self : nil
     end
 
     def restrict(other : NewGenericClass, owner, type_lookup, free_vars)
