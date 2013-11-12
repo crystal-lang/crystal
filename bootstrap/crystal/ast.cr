@@ -391,7 +391,9 @@ module Crystal
     end
 
     def clone_without_location
-      If.new(@cond.clone, @then.clone, @else.clone)
+      a_if = If.new(@cond.clone, @then.clone, @else.clone)
+      a_if.binary = binary
+      a_if
     end
   end
 

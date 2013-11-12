@@ -1072,6 +1072,7 @@ module Crystal
     delegate owned_instance_vars, @generic_class
     delegate instance_vars_in_initialize, @generic_class
     delegate macros, @generic_class
+    delegate :abstract, @generic_class
 
     def class?
       true

@@ -652,6 +652,17 @@ module Crystal
       false
     end
 
+    def visit(node : SimpleOr)
+      node.left.accept self
+      left = codegen_cond(node.left.type)
+
+      node.right.accept self
+      right = codegen_cond(node.right.type)
+
+      @last = @builder.or left, right
+      false
+    end
+
     def visit(node : ASTNode)
       true
     end
@@ -917,6 +928,11 @@ module Crystal
     end
 
     def codegen_cond_branch(node_cond, then_block, else_block)
+      unless node_cond.type?
+        puts node_cond
+        puts node_cond.location
+      end
+
       @builder.cond(codegen_cond(node_cond.type), then_block, else_block)
 
       nil

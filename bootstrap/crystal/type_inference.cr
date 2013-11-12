@@ -342,7 +342,7 @@ module Crystal
         block_vars[arg.name] = arg
       end
 
-      block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars) #, @type_filter_stack)
+      block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
       block_visitor.block = node
       node.body.accept block_visitor
       false
@@ -413,6 +413,13 @@ module Crystal
       end
 
       node.type = mod.fun_of(types)
+    end
+
+    def end_visit(node : SimpleOr)
+      node.bind_to node.left
+      node.bind_to node.right
+
+      false
     end
 
     def visit(node : Call)

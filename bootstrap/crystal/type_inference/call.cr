@@ -108,6 +108,10 @@ module Crystal
         end
       end
 
+      if matches.empty? && owner.class? && owner.abstract
+        matches = owner.hierarchy_type.lookup_matches(def_name, arg_types, !!block)
+      end
+
       if matches.empty?
         # For now, if the owner is a NoReturn just ignore the error (this call should be recomputed later)
         unless owner.no_return?
