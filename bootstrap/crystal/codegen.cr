@@ -10,6 +10,7 @@ LLVM.init_x86
 module Crystal
   DUMP_LLVM = ENV["DUMP"] == "1"
   MAIN_NAME = "__crystal_main"
+  RAISE_NAME = "__crystal_raise"
 
   class Program
     def run(code)

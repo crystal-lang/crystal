@@ -494,7 +494,7 @@ module Crystal
     end
 
     def lookup_def_instance(def_object_id, arg_types, block_type)
-      def_instances.fetch(def_instance_key(def_object_id, arg_types, block_type), nil)
+      def_instances[def_instance_key(def_object_id, arg_types, block_type)]?
     end
 
     def def_instance_key(def_object_id, arg_types, block_type)

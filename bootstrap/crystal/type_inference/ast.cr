@@ -183,6 +183,7 @@ module Crystal
   class Def
     property :owner
     property :vars
+    property :raises
 
     def has_default_arguments?
       args.length > 0 && args.last.default_value

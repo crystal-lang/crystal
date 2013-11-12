@@ -748,6 +748,12 @@ module Crystal
         end
 
         external.set_type(return_type)
+
+        if node.name == Crystal::RAISE_NAME
+          external.raises = true
+        end
+      elsif node.name == Crystal::MAIN_NAME
+        external.raises = true
       end
 
       begin
@@ -1168,6 +1174,52 @@ module Crystal
 
     def end_visit(node : TypeMerge)
       node.bind_to node.expressions
+    end
+
+    def visit(node : Rescue)
+      if node_types = node.types
+        types = node_types.map do |type|
+          type.accept self
+          instance_type = type.type.instance_type
+          unless instance_type.is_subclass_of?(@mod.exception)
+            type.raise "#{type} is not a subclass of Exception"
+          end
+          instance_type
+        end
+      end
+
+      if node_name = node.name
+        var = lookup_var node_name
+
+        if types
+          unified_type = @mod.type_merge(types).not_nil!
+          unified_type = unified_type.hierarchy_type unless unified_type.is_a?(HierarchyType)
+        else
+          unified_type = @mod.exception.hierarchy_type
+        end
+        var.set_type(unified_type)
+        var.freeze_type = true
+
+        node.set_type(var.type)
+      end
+
+      node.body.accept self
+
+      false
+    end
+
+    def end_visit(node : ExceptionHandler)
+      if node_else = node.else
+        node.bind_to node_else
+      else
+        node.bind_to node.body
+      end
+
+      if node_rescues = node.rescues
+        node_rescues.each do |a_rescue|
+          node.bind_to a_rescue.body
+        end
+      end
     end
 
     def lookup_var(name)

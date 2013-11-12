@@ -83,9 +83,9 @@ module Crystal
       bind_to matches if matches
       bind_to block.break if block
 
-      # if parent_visitor && parent_visitor.typed_def && matches.any?(&:raises)
-      #   parent_visitor.typed_def.raises = true
-      # end
+      if (parent_visitor = @parent_visitor) && parent_visitor.typed_def? && matches && matches.any?(&.raises)
+        parent_visitor.typed_def.raises = true
+      end
     end
 
     def lookup_matches_in(owner : UnionType)

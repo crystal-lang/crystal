@@ -66,7 +66,7 @@ module Crystal
       @string.lookup_instance_var("@c").type = @char
 
       @types["Array"] = @array = GenericClassType.new self, self, "Array", @reference, ["T"]
-      @types["Exception"] = NonGenericClassType.new self, self, "Exception", @reference
+      @types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", @reference
 
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
@@ -360,6 +360,7 @@ module Crystal
     getter :symbol
     getter :pointer
     getter :math
+    getter :exception
 
     getter :nil_var
 

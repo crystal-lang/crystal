@@ -256,36 +256,36 @@ module Crystal
       node
     end
 
-    # def transform_exception_handler(node)
-    #   super
+    def transform(node : ExceptionHandler)
+      super
 
-    #   if node.body.no_returns?
-    #     node.else = nil
-    #   end
+      if node.body.no_returns?
+        node.else = nil
+      end
 
-    #   if node.rescues
-    #     new_rescues = []
+      if node_rescues = node.rescues
+        new_rescues = [] of Rescue
 
-    #     node.rescues.each do |a_rescue|
-    #       if !a_rescue.type || a_rescue.type.allocated
-    #         new_rescues << a_rescue
-    #       end
-    #     end
+        node_rescues.each do |a_rescue|
+          if !a_rescue.type? || a_rescue.type.allocated
+            new_rescues << a_rescue
+          end
+        end
 
-    #     if new_rescues.empty?
-    #       if node.ensure
-    #         node.rescues = nil
-    #       else
-    #         rebind_node node, node.body
-    #         return node.body
-    #       end
-    #     else
-    #       node.rescues = new_rescues
-    #     end
-    #   end
+        if new_rescues.empty?
+          if node.ensure
+            node.rescues = nil
+          else
+            rebind_node node, node.body
+            return node.body
+          end
+        else
+          node.rescues = new_rescues
+        end
+      end
 
-    #   node
-    # end
+      node
+    end
 
     def rebind_node(node, dependency)
       node.unbind_from node.dependencies
