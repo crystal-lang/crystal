@@ -135,5 +135,7 @@ module Crystal
     forward_named not, "value"
     forward_named select, "a_cond, a_then, a_else"
     forward_named global_string_pointer, "string"
+    forward_named landing_pad, "type, personality, clauses"
+    forward_named invoke, "fn, args, a_then, a_catch"
   end
 end

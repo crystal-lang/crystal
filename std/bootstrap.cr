@@ -34,14 +34,4 @@ require "errno"
 require "raise"
 require "tuple"
 require "assert"
-# require "main"
-
-lib CrystalMain
-  fun __crystal_main(argc : Int32, argv : Char**)
-end
-
-fun main(argc : Int32, argv : Char**) : Int32
-  CrystalMain.__crystal_main(argc, argv)
-  0
-end
-
+require "main"

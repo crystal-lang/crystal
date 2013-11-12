@@ -45,22 +45,27 @@ module Crystal
     end
   end
 
-  class LLVMVar
-    getter pointer
-    getter type
-    getter treated_as_pointer
-
-    def initialize(@pointer, @type, @treated_as_pointer = false)
-    end
-  end
-
   class CodeGenVisitor < Visitor
+    PERSONALITY_NAME = "__crystal_personality"
+    GET_EXCEPTION_NAME = "__crystal_get_exception"
+
     getter :llvm_mod
     getter :fun
     getter :builder
     getter :typer
     getter :main
     getter! :type
+
+    class LLVMVar
+      getter pointer
+      getter type
+      getter treated_as_pointer
+
+      def initialize(@pointer, @type, @treated_as_pointer = false)
+      end
+    end
+
+    make_tuple Handler, node, catch_block
 
     def initialize(@mod, @node, @llvm_mod)
       @main_mod = @llvm_mod
@@ -83,6 +88,7 @@ module Crystal
 
       @const_block_entry = @const_block
       @vars = {} of String => LLVMVar
+      @exception_handlers = [] of Handler
       @lib_vars = {} of String => LibLLVM::ValueRef
       @strings = {} of String => LibLLVM::ValueRef
       @symbols = {} of String => Int32
@@ -1598,6 +1604,91 @@ module Crystal
       false
     end
 
+    def visit(node : ExceptionHandler)
+      catch_block = new_block "catch"
+      branch = new_branched_block(node)
+
+      @exception_handlers << Handler.new(node, catch_block)
+      accept(node.body)
+      @exception_handlers.pop
+
+      if node_else = node.else
+        accept(node_else)
+        add_branched_block_value(branch, node_else.type, @last)
+      else
+        add_branched_block_value(branch, node.body.type, @last)
+      end
+
+      @builder.br branch.exit_block
+
+      @builder.position_at_end catch_block
+      lp_ret_type = @llvm_typer.landing_pad_type
+      lp = @builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME).fun, [] of LibLLVM::ValueRef
+      unwind_ex_obj = @builder.extract_value lp, 0
+      ex_type_id = @builder.extract_value lp, 1
+
+      if node_rescues = node.rescues
+        node_rescues.each do |a_rescue|
+          this_rescue_block, next_rescue_block = new_blocks ["this_rescue", "next_rescue"]
+          if a_rescue_types = a_rescue.types
+            cond = nil
+            a_rescue_types.each do |type|
+              rescue_type = type.type.instance_type.hierarchy_type
+              rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
+              cond = cond ? @builder.or(cond, rescue_type_cond) : rescue_type_cond
+            end
+            if cond
+              @builder.cond cond, this_rescue_block, next_rescue_block
+            else
+              raise "Bug: cond is nil"
+            end
+          else
+            @builder.br this_rescue_block
+          end
+          @builder.position_at_end this_rescue_block
+          old_vars = @vars
+
+          if a_rescue_name = a_rescue.name
+            @vars = @vars.dup
+            get_exception_fun = main_fun(GET_EXCEPTION_NAME)
+            exception_ptr = @builder.call get_exception_fun, [@builder.bit_cast(unwind_ex_obj, LLVM.type_of(get_exception_fun.get_param(0)))]
+
+            exception = @builder.int2ptr exception_ptr, LLVM.pointer_type(LLVM::Int8)
+            ex_union = alloca llvm_type(a_rescue.type)
+            ex_union_type_ptr, ex_union_value_ptr = union_type_id_and_value(ex_union)
+            @builder.store ex_type_id, ex_union_type_ptr
+            @builder.store exception, ex_union_value_ptr
+            @vars[a_rescue_name] = LLVMVar.new(ex_union, a_rescue.type)
+          end
+
+          accept(a_rescue.body)
+
+          @vars = old_vars
+          add_branched_block_value(branch, a_rescue.body.type, @last)
+          @builder.br branch.exit_block
+
+          @builder.position_at_end next_rescue_block
+        end
+      end
+
+      if node_ensure = node.ensure
+        accept(node_ensure)
+      end
+
+      raise_fun = main_fun(RAISE_NAME)
+      codegen_call_or_invoke(raise_fun, [@builder.bit_cast(unwind_ex_obj, LLVM.type_of(raise_fun.get_param(0)))], true)
+      @builder.unreachable
+
+      close_branched_block(branch)
+      if node_ensure
+        old_last = @last
+        accept(node_ensure)
+        @last = old_last
+      end
+
+      false
+    end
+
     def visit(node : Call)
       if target_macro = node.target_macro
         accept(target_macro)
@@ -1909,7 +2000,7 @@ module Crystal
         end
       end
 
-      @last = @builder.call func, call_args
+      codegen_call_or_invoke(func, call_args, target_def.raises)
 
       if has_struct_or_union_out_args
         old_call_args = old_call_args.not_nil!
@@ -1932,6 +2023,17 @@ module Crystal
       end
     end
 
+    def codegen_call_or_invoke(func, call_args, raises)
+      if @exception_handlers.empty? || !raises
+        @last = @builder.call func, call_args
+      else
+        handler = @exception_handlers.last
+        invoke_out_block = new_block "invoke_out"
+        @last = @builder.invoke func, call_args, invoke_out_block, handler.catch_block
+        @builder.position_at_end invoke_out_block
+      end
+    end
+
     def target_def_fun(target_def, self_type)
       mangled_name = target_def.mangled_name(self_type)
       @llvm_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
@@ -1940,6 +2042,12 @@ module Crystal
 
       # fun = self_type_mod.functions[mangled_name] || codegen_fun(mangled_name, target_def, self_type)
       # check_mod_fun self_type_mod, mangled_name, fun
+    end
+
+    def main_fun(name)
+      @llvm_mod.functions[name]
+      # fun = @main_mod.functions[name]
+      # check_main_fun name, fun
     end
 
     def codegen_fun(mangled_name, target_def, self_type, is_exported_fun_def = false)

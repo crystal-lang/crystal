@@ -6,6 +6,8 @@ module Crystal
     HIERARCHY_LLVM_TYPE = LLVM.struct_type("Object+", [LLVM::Int32, LLVM.pointer_type(LLVM::Int8)], true)
     HIERARCHY_LLVM_ARG_TYPE = LLVM.pointer_type(HIERARCHY_LLVM_TYPE)
 
+    getter landing_pad_type
+
     def initialize
       @cache = {} of Type => LibLLVM::TypeRef
       @struct_cache = {} of Type => LibLLVM::TypeRef
@@ -15,6 +17,7 @@ module Crystal
       target = LLVM::Target.first
       machine = target.create_target_machine("i686-unknown-linux").not_nil!
       @layout = machine.data_layout.not_nil!
+      @landing_pad_type = LLVM.struct_type("landing_pad", [LLVM.pointer_type(LLVM::Int8), LLVM::Int32])
     end
 
     def llvm_type(type)

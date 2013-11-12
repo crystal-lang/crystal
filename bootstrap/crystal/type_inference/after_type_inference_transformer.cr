@@ -288,7 +288,7 @@ module Crystal
     end
 
     def rebind_node(node, dependency)
-      node.unbind_from node.dependencies
+      node.unbind_from node.dependencies?
       if dependency
         node.bind_to dependency
       else

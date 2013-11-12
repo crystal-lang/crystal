@@ -137,6 +137,7 @@ lib LibLLVM("LLVM-3.3")
   end
 
   fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : Int32)
+  fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : Char*, type : TypeRef) : ValueRef
   fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : Int32);
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : Char*) : ValueRef
@@ -167,6 +168,8 @@ lib LibLLVM("LLVM-3.3")
   fun build_global_string_ptr = LLVMBuildGlobalStringPtr(builder : BuilderRef, str : Char*, name : Char*) : ValueRef
   fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : IntPredicate, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_int2ptr = LLVMBuildIntToPtr(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : Char*) : ValueRef
+  fun build_invoke = LLVMBuildInvoke(builder : BuilderRef, fn : ValueRef, args : ValueRef*, num_args : UInt32, then : BasicBlockRef, catch : BasicBlockRef, name : Char*) : ValueRef
+  fun build_landing_pad = LLVMBuildLandingPad(builder : BuilderRef, ty : TypeRef, pers_fn : ValueRef, num_clauses : UInt32, name : Char*) : ValueRef
   fun build_load = LLVMBuildLoad(builder : BuilderRef, ptr : ValueRef, name : Char*) : ValueRef
   fun build_lshr = LLVMBuildLShr(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : Char*) : ValueRef
   fun build_malloc = LLVMBuildMalloc(builder : BuilderRef, type : TypeRef, name : Char*) : ValueRef
@@ -236,6 +239,7 @@ lib LibLLVM("LLVM-3.3")
   fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
   fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : GenericValueRef*) : GenericValueRef
+  fun set_cleanup = LLVMSetCleanup(lpad : ValueRef, val : Int32)
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
@@ -559,6 +563,19 @@ module LLVM
 
     def global_string_pointer(string, name = "")
       LibLLVM.build_global_string_ptr @builder, string, name
+    end
+
+    def landing_pad(type, personality, clauses, name = "")
+      lpad = LibLLVM.build_landing_pad @builder, type, personality, clauses.length.to_u32, name
+      LibLLVM.set_cleanup lpad, 1
+      clauses.each do |clause|
+        LibLLVM.add_clause lpad, clause
+      end
+      lpad
+    end
+
+    def invoke(fn, args, a_then, a_catch, name = "")
+      LibLLVM.build_invoke @builder, fn.fun, args.buffer, args.length.to_u32, a_then, a_catch, name
     end
   end
 
