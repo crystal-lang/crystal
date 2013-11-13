@@ -73,34 +73,34 @@ describe "Block inference" do
     ") { int32 }
   end
 
-  # it "infer type with union" do
-  #   assert_type(%q(
-  #     require "int"
-  #     require "pointer"
-  #     require "array"
-  #     a = [1] || [1.1]
-  #     a.each { |x| x }
-  #   )) { union_of(array_of(int32), array_of(float64)) }
-  # end
+  it "infer type with union" do
+    assert_type("
+      require \"int\"
+      require \"pointer\"
+      require \"array\"
+      a = [1] || [1.1]
+      a.each { |x| x }
+    ") { union_of(array_of(int32), array_of(float64)) }
+  end
 
-  # it "break from block without value" do
-  #   assert_type(%q(
-  #     def foo; yield; end
+  it "break from block without value" do
+    assert_type("
+      def foo; yield; end
 
-  #     foo do
-  #       break
-  #     end
-  #   )) { self.nil }
-  # end
+      foo do
+        break
+      end
+    ") { |mod| mod.nil }
+  end
 
-  # it "break without value has nil type" do
-  #   assert_type(%q(
-  #     def foo; yield; 1; end
-  #     foo do
-  #       break if false
-  #     end
-  #   )) { union_of(self.nil, int32) }
-  # end
+  it "break without value has nil type" do
+    assert_type("
+      def foo; yield; 1; end
+      foo do
+        break if false
+      end
+    ") { |mod| union_of(mod.nil, int32) }
+  end
 
   it "infers type of block before call" do
     result = assert_type("
@@ -324,45 +324,45 @@ describe "Block inference" do
     ") { |mod| mod.nil }
   end
 
-  # it "preserves type filters in block" do
-  #   assert_type(%q(
-  #     class Foo
-  #       def bar
-  #         'a'
-  #       end
-  #     end
+  it "preserves type filters in block" do
+    assert_type("
+      class Foo
+        def bar
+          'a'
+        end
+      end
 
-  #     def foo
-  #       yield 1
-  #     end
+      def foo
+        yield 1
+      end
 
-  #     a = Foo.new || nil
-  #     if a
-  #       foo do |x|
-  #         a.bar
-  #       end
-  #     else
-  #       'b'
-  #     end
-  #     )) { char }
-  # end
+      a = Foo.new || nil
+      if a
+        foo do |x|
+          a.bar
+        end
+      else
+        'b'
+      end
+      ") { char }
+  end
 
-  # it "checks block type with hierarchy type" do
-  #   assert_type(%q(
-  #     require "prelude"
+  it "checks block type with hierarchy type" do
+    assert_type("
+      require \"bootstrap\"
 
-  #     class A
-  #     end
+      class A
+      end
 
-  #     class B < A
-  #     end
+      class B < A
+      end
 
-  #     a = [] of A
-  #     a << B.new
+      a = [] of A
+      a << B.new
 
-  #     a.map { |x| x.to_s }
+      a.map { |x| x.to_s }
 
-  #     1
-  #     )) { int32 }
-  # end
+      1
+      ") { int32 }
+  end
 end

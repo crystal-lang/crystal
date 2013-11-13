@@ -349,7 +349,7 @@ describe 'Code gen: block' do
       end
 
       x = foo do
-        break if true
+        break if 1 == 1
       end
 
       x.nil?

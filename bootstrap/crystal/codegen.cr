@@ -1737,7 +1737,12 @@ module Crystal
         end
       end
 
-      if node.name == "super"
+      if !node.target_defs || node.target_def.owner.try &.is_subclass_of?(@mod.value)
+        if node_obj = node.obj
+          owner = node_obj.type?
+        end
+        owner ||= node.scope
+      elsif node.name == "super"
         owner = node.scope
       else
         owner = node.target_def.owner
@@ -1777,6 +1782,8 @@ module Crystal
           call_args << @last
         end
       end
+
+      return if node.args.any?(&.yields?) && block_breaks?
 
       if block = node.block
         @block_context << BlockContext.new(block, @vars, @type, @return_block, @return_block_table_blocks, @return_block_table_values, @return_type, @return_union)
