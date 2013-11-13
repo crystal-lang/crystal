@@ -34,7 +34,7 @@ module Crystal
         unless @fixed.includes?(target_def)
           @fixed.add(target_def)
 
-          unless target_def.type? && target_def.owner.try &.allocated
+          if !target_def.type? && target_def.owner.try &.allocated
             target_def.type = @mod.nil
           end
 

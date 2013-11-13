@@ -75,6 +75,7 @@ module Crystal
 
       @types["Crystal"] = crystal = NonGenericModuleType.new self, self, "Crystal"
       ast_node = crystal.types["ASTNode"] = NonGenericClassType.new self, crystal, "ASTNode", @reference
+      ast_node.abstract = true
       ast_node.lookup_instance_var("@padding").type = PaddingType.new(self, 17)
 
       @symbols = Set(String).new

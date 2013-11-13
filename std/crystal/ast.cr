@@ -28,7 +28,7 @@ module Crystal
     end
 
     def to_s
-      @value
+      @value.to_s
     end
   end
 
@@ -68,7 +68,7 @@ module Crystal
     end
 
     def to_s
-      @value
+      @value.to_s
     end
   end
 
@@ -88,7 +88,7 @@ module Crystal
     end
 
     def to_s
-      @value
+      @value.to_s
     end
   end
 
@@ -108,7 +108,7 @@ module Crystal
     end
 
     def to_s
-      @value
+      @value.to_s
     end
   end
 
@@ -128,7 +128,7 @@ module Crystal
     end
 
     def to_s
-      @value
+      @value.to_s
     end
   end
 
@@ -161,7 +161,7 @@ module Crystal
     end
 
     def to_s
-      @name
+      @name.to_s
     end
   end
 end

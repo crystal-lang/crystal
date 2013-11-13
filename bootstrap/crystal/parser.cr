@@ -534,7 +534,7 @@ module Crystal
             atomic = PointerOf.new(atomic_obj)
           when "is_a?"
             if atomic.args.length != 1
-              raise "wrong number of arguments for 'is_a?' (#{atomic.args.length} for 0)"
+              raise "wrong number of arguments for 'is_a?' (#{atomic.args.length} for 1)"
             end
             if !atomic.args[0].is_a?(Ident)
               raise "'is_a?' argument must be a Constant"
@@ -545,7 +545,7 @@ module Crystal
             atomic = IsA.new(atomic_obj, atomic.args[0])
           when "responds_to?"
             if atomic.args.length != 1
-              raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 0)"
+              raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 1)"
             end
             arg = atomic.args[0]
             unless arg.is_a?(SymbolLiteral)
