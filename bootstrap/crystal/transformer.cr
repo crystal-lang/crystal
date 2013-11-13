@@ -162,6 +162,11 @@ module Crystal
       node
     end
 
+    def transform(node : RespondsTo)
+      node.obj = node.obj.transform(self)
+      node
+    end
+
     def transform(node : Case)
       node.cond = node.cond.transform(self)
       transform_many node.whens

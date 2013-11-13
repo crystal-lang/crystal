@@ -542,6 +542,14 @@ module Crystal
       end
     end
 
+    def end_visit(node : RespondsTo)
+      node.type = mod.bool
+      obj = node.obj
+      if obj.is_a?(Var)
+        node.type_filters = new_type_filter(obj, RespondsToTypeFilter.new(node.name.value))
+      end
+    end
+
     def visit(node : ClassDef)
       superclass = if node_superclass = node.superclass
                      lookup_ident_type node_superclass

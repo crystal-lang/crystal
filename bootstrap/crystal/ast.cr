@@ -749,6 +749,27 @@ module Crystal
     end
   end
 
+  class RespondsTo < ASTNode
+    property :obj
+    property :name
+
+    def initialize(@obj, @name)
+    end
+
+    def accept_children(visitor)
+      obj.accept visitor
+      name.accept visitor
+    end
+
+    def ==(other : self)
+      other.obj == obj && other.name == name
+    end
+
+    def clone_without_location
+      RespondsTo.new(@obj.clone, @name)
+    end
+  end
+
   class Require < ASTNode
     property :string
     property :cond

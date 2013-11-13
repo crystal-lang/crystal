@@ -719,6 +719,14 @@ module Crystal
       false
     end
 
+    def visit(node : RespondsTo)
+      node.obj.accept self
+      @str << ".responds_to?("
+      node.name.accept self
+      @str << ")"
+      false
+    end
+
     def visit(node : Require)
       @str << "require \""
       @str << node.string

@@ -1401,7 +1401,12 @@ module Crystal
 
     def visit(node : IsA)
       const_type = node.const.type.instance_type
-      codegen_type_filter(node) { |type| type.implements?(const_type) }
+      codegen_type_filter node, &.implements?(const_type)
+    end
+
+    def visit(node : RespondsTo)
+      name = node.name.value
+      codegen_type_filter node, &.has_def?(name)
     end
 
     def codegen_type_filter(node)
@@ -1412,8 +1417,6 @@ module Crystal
       case obj_type
       when HierarchyType
         codegen_type_filter_many_types(obj_type.concrete_types) { |type| yield type }
-      when UnionType
-        codegen_type_filter_many_types(obj_type.concrete_types) { |type| yield type }
       when NilableType
         np = null_pointer?(@last)
         nil_matches = yield @mod.nil
@@ -1422,6 +1425,8 @@ module Crystal
           @builder.and(np, int1(nil_matches ? 1 : 0)),
           @builder.and(@builder.not(np), int1(other_matches ? 1 : 0))
         )
+      when UnionType
+        codegen_type_filter_many_types(obj_type.concrete_types) { |type| yield type }
       else
         matches = yield obj_type
         @last = int1(matches ? 1 : 0)

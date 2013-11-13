@@ -143,4 +143,17 @@ module Crystal
       "!#{@filter}"
     end
   end
+
+  class RespondsToTypeFilter < TypeFilter
+    def initialize(@name)
+    end
+
+    def apply(other)
+      other.try &.filter_by_responds_to(@name)
+    end
+
+    def to_s
+      "responds_to?(#{@name})"
+    end
+  end
 end

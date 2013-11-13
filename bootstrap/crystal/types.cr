@@ -162,6 +162,10 @@ module Crystal
       implements?(other_type) ? self : nil
     end
 
+    def filter_by_responds_to(name)
+      nil
+    end
+
     def cover
       self
     end
@@ -260,6 +264,10 @@ module Crystal
 
     def has_instance_var_in_initialize?(name)
       raise "Bug: #{self} doesn't implement has_instance_var_in_initialize?"
+    end
+
+    def has_def?(name)
+      raise "Bug: #{self} doesn't implement has_def?"
     end
 
     def llvm_name
@@ -483,6 +491,20 @@ module Crystal
 
     def add_macro(a_def)
       self.macros[a_def.name][a_def.args.length] = a_def
+    end
+
+    def filter_by_responds_to(name)
+      has_def?(name) ? self : nil
+    end
+
+    def has_def?(name)
+      return true if defs.has_key?(name)
+
+      parents.try &.each do |parent|
+        return true if parent.has_def?(name)
+      end
+
+      false
     end
   end
 
@@ -1615,10 +1637,18 @@ module Crystal
     end
 
     def filter_by(other_type)
+      apply_filter &.filter_by(other_type)
+    end
+
+    def filter_by_responds_to(name)
+      apply_filter &.filter_by_responds_to(name)
+    end
+
+    def apply_filter
       filtered_types = [] of Type
 
       @union_types.each do |union_type|
-        filtered_type = union_type.filter_by(other_type)
+        filtered_type = yield union_type
         if filtered_type
           filtered_types.push filtered_type
         end
@@ -1632,6 +1662,10 @@ module Crystal
       else
         program.type_merge_union_of(filtered_types)
       end
+    end
+
+    def has_def?(name)
+      union_types.any? &.has_def?(name)
     end
 
     def each_concrete_type
