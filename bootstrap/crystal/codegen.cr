@@ -104,6 +104,7 @@ module Crystal
       @type = @mod
       @last = llvm_nil
       @in_const_block = false
+      @trampoline_wrappers = {} of UInt64 => LLVM::Function
       @block_context = [] of BlockContext
       @fun_literal_count = 0
     end
@@ -726,34 +727,40 @@ module Crystal
       last_fun = target_def_fun(node.call.target_def, owner)
       @last = last_fun.fun
 
-      # if owner
-      #   wrapper = trampoline_wrapper(last_fun)
-      #   tramp_ptr = @builder.array_malloc(LLVM::Int8, int(32))
-      #   @builder.call @mod.trampoline_init(@llvm_mod),
-      #     tramp_ptr,
-      #     @builder.bit_cast(wrapper, LLVM.pointer_type(LLVM::Int8)),
-      #     @builder.bit_cast(call_self, LLVM.pointer_type(LLVM::Int8))
-      #   @last = @builder.call @mod.trampoline_adjust(@llvm_mod), tramp_ptr
-      #   @last = cast_to(@last, node.type)
-      # end
+      if owner && call_self
+        wrapper = trampoline_wrapper(node.call.target_def, last_fun)
+        tramp_ptr = @builder.array_malloc(LLVM::Int8, int(32))
+        @builder.call @mod.trampoline_init(@llvm_mod), [
+          tramp_ptr,
+          @builder.bit_cast(wrapper.fun, LLVM.pointer_type(LLVM::Int8)),
+          @builder.bit_cast(call_self, LLVM.pointer_type(LLVM::Int8))
+        ]
+        @last = @builder.call @mod.trampoline_adjust(@llvm_mod), [tramp_ptr]
+        @last = cast_to(@last, node.type)
+      end
 
       false
     end
 
-    # def trampoline_wrapper(target_fun)
-    #   @trampoline_wrappers[target_fun.object_id] ||= begin
-    #     arg_types = target_fun.function_type.argument_types
-    #     ret_type = target_fun.function_type.return_type
-    #     @llvm_mod.functions.add("trampoline_wrapper_#{target_fun.object_id}", arg_types, ret_type) do |fun, *args|
-    #       # fun.linkage = :internal
-    #       args.first.add_attribute :nest_attribute
-    #       fun.basic_blocks.append.build do |builder|
-    #         call_ret = builder.call target_fun, *args
-    #         builder.ret ret_type == LLVM.Void ? nil : call_ret
-    #       end
-    #     end
-    #   end
-    # end
+    def trampoline_wrapper(target_def, target_fun)
+      key = target_def.object_id
+      @trampoline_wrappers[key] ||= begin
+        param_types = target_fun.param_types
+        ret_type = target_fun.return_type
+        @llvm_mod.functions.add("trampoline_wrapper_#{key}", param_types, ret_type) do |func|
+          # fun.linkage = :internal
+          LLVM.add_attribute func.get_param(0), LibLLVM::Attribute::Nest
+          func.append_basic_block("entry") do |builder|
+            call_ret = builder.call target_fun, func.params
+            if ret_type == LLVM::Void
+              builder.ret
+            else
+              builder.ret call_ret
+            end
+          end
+        end
+      end
+    end
 
     def visit(node : CastFunToReturnVoid)
       accept node.node

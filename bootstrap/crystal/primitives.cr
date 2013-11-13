@@ -119,6 +119,18 @@ module Crystal
     def pow_float32(llvm_mod)
       llvm_mod.functions["llvm.pow.f32"]? || llvm_mod.functions.add("llvm.pow.f32", [LLVM::Float, LLVM::Float], LLVM::Float)
     end
+
+    def trampoline_init(llvm_mod)
+      llvm_mod.functions["llvm.init.trampoline"]? || llvm_mod.functions.add("llvm.init.trampoline", [
+        LLVM.pointer_type(LLVM::Int8), LLVM.pointer_type(LLVM::Int8), LLVM.pointer_type(LLVM::Int8)
+      ], LLVM::Void)
+    end
+
+    def trampoline_adjust(llvm_mod)
+      llvm_mod.functions["llvm.adjust.trampoline"]? || llvm_mod.functions.add("llvm.adjust.trampoline", [
+        LLVM.pointer_type(LLVM::Int8)
+      ], LLVM.pointer_type(LLVM::Int8))
+    end
   end
 
   class FunDef

@@ -124,7 +124,7 @@ module Crystal
             flags << libname
           end
         end
-        # flags << " -Wl,-allow_stack_execute" if RUBY_PLATFORM =~ /darwin/
+        flags << " -Wl,-allow_stack_execute" if mod.has_require_flag?("darwin")
         flags << " -L#{mod.exec("llvm-config-3.3 --libdir").strip}"
       end
     end

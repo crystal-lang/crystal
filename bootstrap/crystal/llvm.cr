@@ -214,10 +214,11 @@ lib LibLLVM("LLVM-3.3")
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
   fun float_type = LLVMFloatType() : TypeRef
-  fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : Int32, is_var_arg : Int32) : TypeRef
+  fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : UInt32, is_var_arg : Int32) : TypeRef
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : Int32
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
+  fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
   fun get_global_context = LLVMGetGlobalContext : ContextRef
   fun get_insert_block = LLVMGetInsertBlock(builder : BuilderRef) : BasicBlockRef
@@ -397,6 +398,30 @@ module LLVM
 
     def add_attribute(attribute)
       LibLLVM.add_function_attr @fun, attribute
+    end
+
+    def function_type
+      LibLLVM.get_element_type(LLVM.type_of(@fun))
+    end
+
+    def return_type
+      LibLLVM.get_return_type(function_type)
+    end
+
+    def param_count
+      LibLLVM.count_param_types(function_type).to_i
+    end
+
+    def params
+      Array(LibLLVM::ValueRef).new(param_count) { |i| get_param(i) }
+    end
+
+    def param_types
+      type = function_type
+      param_count = LibLLVM.count_param_types(type)
+      param_types = Pointer(LibLLVM::TypeRef).malloc(param_count)
+      LibLLVM.get_param_types(type, param_types)
+      param_types.to_a(param_count.to_i)
     end
   end
 
@@ -584,7 +609,7 @@ module LLVM
   end
 
   def self.function_type(arg_types, return_type, varargs = false)
-    LibLLVM.function_type(return_type, arg_types.buffer, arg_types.length, varargs ? 1 : 0)
+    LibLLVM.function_type(return_type, arg_types.buffer, arg_types.length.to_u32, varargs ? 1 : 0)
   end
 
   def self.struct_type(name, packed = false)

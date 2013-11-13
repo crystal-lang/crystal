@@ -60,6 +60,10 @@ class Pointer(T)
     Array(U).new(times) { |i| yield self[i] }
   end
 
+  def to_a(length)
+    map(length) { |elem| elem }
+  end
+
   def realloc(size : Int)
     realloc(size.to_u64)
   end
