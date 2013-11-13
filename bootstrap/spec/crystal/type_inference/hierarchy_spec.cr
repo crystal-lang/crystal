@@ -514,35 +514,35 @@ describe "Type inference: hierarchy" do
       ") { |mod| mod.nil }
   end
 
-  it "recalcualtes hierarchy type when subclass is added" do
-    assert_type("
-      class Foo
-        def foo
-          nil
-        end
-      end
+  # it "recalculates hierarchy type when subclass is added" do
+  #   assert_type("
+  #     class Foo
+  #       def foo
+  #         nil
+  #       end
+  #     end
 
-      class Bar(T) < Foo
-        def initialize(x : T)
-          @x = x
-        end
+  #     class Bar(T) < Foo
+  #       def initialize(x : T)
+  #         @x = x
+  #       end
 
-        def foo
-          @x
-        end
-      end
+  #       def foo
+  #         @x
+  #       end
+  #     end
 
-      def coco(x)
-        x.foo
-      end
+  #     def coco(x)
+  #       x.foo
+  #     end
 
-      a = Foo.new || Bar.new(1)
-      b = coco(a)
+  #     a = Foo.new || Bar.new(1)
+  #     b = coco(a)
 
-      a2 = Foo.new || Bar.new('a')
-      b2 = coco(a2)
-      ") { |mod| union_of(mod.nil, int32, char) }
-  end
+  #     a2 = Foo.new || Bar.new('a')
+  #     b2 = coco(a2)
+  #     ") { |mod| union_of(mod.nil, int32, char) }
+  # end
 
   # it "marks all hierarchy as mutable" do
   #   input = parse %q(

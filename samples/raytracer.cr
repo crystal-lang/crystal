@@ -212,7 +212,7 @@ def render(scene, surface)
     WIDTH.times do |x|
       xx = x.to_f64
       dir = Vec3.new((xx - ww / 2.0) / ww  * w,
-                           (hh/2.0 - yy) / hh * h,
+                           (hh / 2.0 - yy) / hh * h,
                            -1.0).normalize
       pixel = trace(Ray.new(eye, dir), scene, 0.0)
       r = Math.min(255, (pixel.x * 255.0).round)

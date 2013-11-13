@@ -744,10 +744,6 @@ module Crystal
       nil
     end
 
-    def common_ancestor(other : GenericClassInstanceType)
-      common_ancestor other.generic_class
-    end
-
     def common_ancestor(other : HierarchyType)
       common_ancestor(other.base_type)
     end
@@ -1156,10 +1152,6 @@ module Crystal
           t
         end
       end
-    end
-
-    def common_ancestor(other : Type)
-      generic_class.common_ancestor(other)
     end
 
     def to_s
