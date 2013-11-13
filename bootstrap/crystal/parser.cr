@@ -1368,9 +1368,14 @@ module Crystal
 
       next_token
 
-      if @buffer.value == '%'
+      case @buffer.value
+      when '%'
         @buffer += 1
         @token.type = :"%"
+        @token.column_number += 1
+      when '/'
+        @buffer += 1
+        @token.type = :"/"
         @token.column_number += 1
       else
         skip_space_or_newline

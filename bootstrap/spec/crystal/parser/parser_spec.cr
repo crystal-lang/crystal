@@ -279,6 +279,7 @@ describe "Parser" do
   end
 
   it_parses "def %(); end;", Def.new("%", [] of Arg, nil)
+  it_parses "def /(); end;", Def.new("/", [] of Arg, nil)
 
   ["<<", "<", "<=", "==", ">>", ">", ">=", "+", "-", "*", "/", "%", "|", "&", "^", "**", "==="].each do |op|
     it_parses "1 #{op} 2", Call.new(1.int32, op, [2.int32] of ASTNode)
