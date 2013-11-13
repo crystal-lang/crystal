@@ -1953,94 +1953,123 @@ module Crystal
 
     def parse_types
       type = parse_type
-      if type.is_a?(Array)
+      case type
+      when Array
         type
-      else
+      when ASTNode
         [type] of ASTNode
+      else
+        raise "Bug"
       end
     end
 
     def parse_single_type
       location = @token.location
       type = parse_type
-      if type.is_a?(Array)
+      case type
+      when Array
         raise "unexpected ',' in type (use parenthesis to disambiguate)", location
+      when ASTNode
+        type
+      else
+        raise "Bug"
       end
-      type
     end
 
     def parse_type
       location = @token.location
 
       if @token.type == :"->"
-        next_token_skip_space
-        return parse_fun_type_spec_output(nil, location)
-      end
-
-      input_types = [] of ASTNode
-      input_types << parse_type_union
-      while @token.type == :"," && next_comes_uppercase
-        next_token_skip_space_or_newline
-        input_types << parse_type_union
+        input_types = nil
+      else
+        input_types = parse_type_union
+        input_types = [input_types] unless input_types.is_a?(Array)
+        if @token.type == :"," && next_comes_uppercase
+          while @token.type == :"," && next_comes_uppercase
+            next_token_skip_space_or_newline
+            type_union = parse_type_union
+            if type_union.is_a?(Array)
+              input_types.concat type_union
+            else
+              input_types << type_union
+            end
+          end
+        end
       end
 
       if @token.type == :"->"
         next_token_skip_space
-        return parse_fun_type_spec_output(input_types, location)
-      end
-
-      if input_types.length == 1
-        input_types.first
+        case @token.type
+        when :",", :")"
+          return_type = nil
+        when :NEWLINE
+          skip_space_or_newline
+          return_type = nil
+        else
+          type_union = parse_type_union
+          if type_union.is_a?(Array)
+            raise "can't return more than more type", location.line_number, location.column_number
+          else
+            return_type = type_union
+          end
+        end
+        type = FunTypeSpec.new(input_types, return_type)
+        type.location = location
+        type
       else
-        input_types
+        input_types = input_types.not_nil!
+        if input_types.length == 1
+          input_types.first
+        else
+          input_types
+        end
       end
-    end
-
-    def parse_fun_type_spec_output(input_types, location)
-      case @token.type
-      when :",", :")"
-        return_type = nil
-      when :NEWLINE
-        skip_space_or_newline
-        return_type = nil
-      else
-        return_type = parse_type_union
-      end
-      type = FunTypeSpec.new(input_types, return_type)
-      type.location = location
-      type
     end
 
     def parse_type_union
       types = [] of ASTNode
-      types << parse_type_with_suffix
-      while @token.type == :"|"
-        next_token_skip_space_or_newline
-        types << parse_type_with_suffix
-      end
+      parse_type_with_suffix(types)
+      if @token.type == :"|"
+        while @token.type == :"|"
+          next_token_skip_space_or_newline
+          parse_type_with_suffix(types)
+        end
 
-      if types.length == 1
+        if types.length == 1
+          types.first
+        else
+          IdentUnion.new types
+        end
+      elsif types.length == 1
         types.first
       else
-        IdentUnion.new types
+        types
       end
     end
 
-    def parse_type_with_suffix
+    def parse_type_with_suffix(types)
       if @token.keyword?("self")
         type = SelfType.new
         next_token_skip_space
-        return type
+        types << type
+        return
       end
 
-      # TODO
-      # if @token.type == :"("
-      #   next_token_skip_space_or_newline
-      #   type = parse_type
-      #   check :")"
-      #   next_token_skip_space
-      #   return type
-      # end
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        type = parse_type
+        check :")"
+        next_token_skip_space
+        case type
+        when Array
+          types.concat type
+        when ASTNode
+          types << type
+        else
+          raise "Bug"
+        end
+        return
+      end
 
       type = parse_ident
 
@@ -2062,7 +2091,7 @@ module Crystal
         end
       end
 
-      type
+      types << type
     end
 
     def make_pointer_type(node)
