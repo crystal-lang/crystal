@@ -1142,7 +1142,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.type_spec = type_spec
+      other.name == name && other.type_spec == type_spec
     end
 
     def name_length

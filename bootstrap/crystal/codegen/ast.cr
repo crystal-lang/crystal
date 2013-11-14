@@ -153,7 +153,7 @@ module Crystal
           end
           str << '>'
         end
-        if return_type = @return_type
+        if return_type = @type
           str << ':'
           str << return_type.llvm_name
         end

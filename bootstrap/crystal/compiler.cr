@@ -70,7 +70,7 @@ module Crystal
         parser.filename = filename
         node = parser.parse
 
-        require_node = Require.new("bootstrap")
+        require_node = Require.new("prelude")
         require_node.location = Location.new(1, 1, filename)
 
         node = Expressions.new([require_node, node] of ASTNode)

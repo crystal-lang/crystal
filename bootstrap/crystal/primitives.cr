@@ -23,17 +23,27 @@ module Crystal
       binary = Primitive.new(:binary)
       cast = Primitive.new(:cast)
 
+      ints = [int8, int16, int32, int64, uint8, uint16, uint32, uint64] of Type
+      floats = [float32, float64] of Type
+      nums = ints + floats
+
       %w(+ - * /).each do |op|
-        number.add_def Def.new(op, [Arg.new_with_type("other", number)], binary)
+        nums.each do |another_number|
+          number.add_def Def.new(op, [Arg.new_with_type("other", another_number)], binary)
+        end
       end
 
       %w(== < <= > >= !=).each do |op|
-        number.add_def Def.new(op, [Arg.new_with_type("other", number)], binary)
+        nums.each do |another_number|
+          number.add_def Def.new(op, [Arg.new_with_type("other", another_number)], binary)
+        end
         char.add_def Def.new(op, [Arg.new_with_type("other", char)], binary)
       end
 
       %w(% << >> | & ^).each do |op|
-        int.add_def Def.new(op, [Arg.new_with_type("other", int)], binary)
+        ints.each do |another_int|
+          int.add_def Def.new(op, [Arg.new_with_type("other", int)], binary)
+        end
       end
 
       [bool, symbol].each do |type|

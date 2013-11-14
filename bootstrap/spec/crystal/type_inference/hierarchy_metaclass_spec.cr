@@ -52,7 +52,7 @@ describe "Type inference: hierarchy metaclass" do
 
   pending "yields hierarchy type in block arg if class is abstract" do
     assert_type("
-      require \"bootstrap\"
+      require \"prelude\"
 
       abstract class Foo
         def clone

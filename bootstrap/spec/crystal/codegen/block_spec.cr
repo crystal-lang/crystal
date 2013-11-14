@@ -877,9 +877,9 @@ describe "Code gen: block" do
     ").to_i.should eq(1)
   end
 
-  pending "codegens dispatch with block and break" do
+  it "codegens dispatch with block and break" do
     run("
-      require \"bootstrap\"
+      require \"prelude\"
 
       a = [1, 2, 3] || [1.5]
       n = 0

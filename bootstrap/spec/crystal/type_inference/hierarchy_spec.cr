@@ -225,7 +225,7 @@ describe "Type inference: hierarchy" do
 
   it "types inspect" do
     assert_type("
-      require \"bootstrap\"
+      require \"prelude\"
 
       class Foo
       end

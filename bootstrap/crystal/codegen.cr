@@ -366,11 +366,12 @@ module Crystal
 
     def codegen_cast(from_type : FloatType, to_type : FloatType, arg)
       if from_type.rank < to_type.rank
-        @last = @builder.fpext(arg, to_type.llvm_type)
+        @builder.fpext(arg, to_type.llvm_type)
       elsif from_type.rank > to_type.rank
-        @last = @builder.fptrunc(arg, to_type.llvm_type)
+        @builder.fptrunc(arg, to_type.llvm_type)
+      else
+        arg
       end
-      @last
     end
 
     def codegen_cast(from_type : IntegerType, to_type : CharType, arg)

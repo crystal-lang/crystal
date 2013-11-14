@@ -177,7 +177,7 @@ module Crystal
       generic_class == ident_type ? self : super
     end
 
-    def restrict(other : GenericClassType, type_lookup, free_vars)
+    def restrict(other : GenericClassType, owner, type_lookup, free_vars)
       generic_class == other ? self : nil
     end
 

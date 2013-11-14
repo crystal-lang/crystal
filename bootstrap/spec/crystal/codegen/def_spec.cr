@@ -46,7 +46,7 @@ describe "Code gen: def" do
 
   it "unifies all calls to same def" do
     run("
-      require \"bootstrap\"
+      require \"prelude\"
 
       def raise(msg)
         nil
@@ -136,7 +136,7 @@ describe "Code gen: def" do
 
   it "codegens and doesn't break if obj is int and there's a mutation" do
     run("
-      require \"bootstrap\"
+      require \"prelude\"
 
       class Int
         def baz(x)

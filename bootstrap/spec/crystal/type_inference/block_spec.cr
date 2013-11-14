@@ -349,7 +349,7 @@ describe "Block inference" do
 
   it "checks block type with hierarchy type" do
     assert_type("
-      require \"bootstrap\"
+      require \"prelude\"
 
       class A
       end

@@ -32,7 +32,7 @@ describe "Type inference: exception" do
 
   it "type for exception handler for explicit types" do
     assert_type("
-      require \"bootstrap\"
+      require \"prelude\"
 
       class MyEx < Exception
       end

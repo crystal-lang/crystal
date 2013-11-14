@@ -1051,6 +1051,7 @@ module Crystal
     def clone_from(other)
       @cond = other.cond.clone
       @body = other.body.clone
+      @run_once = other.run_once
     end
   end
 

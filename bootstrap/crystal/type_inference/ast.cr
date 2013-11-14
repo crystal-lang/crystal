@@ -202,8 +202,8 @@ module Crystal
       while i >= 0 && (arg_default_value = (arg = args[i]).default_value)
         expansion = Def.new(name, self_def.args[0 ... i].map(&.clone), nil, receiver.clone, self_def.block_arg.clone, self_def.yields)
         expansion.instance_vars = instance_vars
-        # TODO expansion.calls_super = calls_super
-        # TODO expansion.uses_block_arg = uses_block_arg
+        expansion.calls_super = calls_super
+        expansion.uses_block_arg = uses_block_arg
         expansion.yields = yields
 
         if retain_body

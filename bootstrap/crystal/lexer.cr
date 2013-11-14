@@ -1114,15 +1114,21 @@ module Crystal
     end
 
     def skip_space
-      next_token while @token.type == :SPACE
+      while @token.type == :SPACE
+        next_token
+      end
     end
 
     def skip_space_or_newline
-      next_token while (@token.type == :SPACE || @token.type == :NEWLINE)
+      while (@token.type == :SPACE || @token.type == :NEWLINE)
+        next_token
+      end
     end
 
     def skip_statement_end
-      next_token while (@token.type == :SPACE || @token.type == :NEWLINE || @token.type == :";")
+      while (@token.type == :SPACE || @token.type == :NEWLINE || @token.type == :";")
+        next_token
+      end
     end
 
     def raise(message, line_number = @line_number, column_number = @token.column_number, filename = @filename)

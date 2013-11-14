@@ -83,7 +83,7 @@ describe "Codegen: const" do
   end
 
   it "invokes block in const" do
-    run("require \"bootstrap\"; A = [\"1\"].map { |x| x.to_i }; A[0]").to_i.should eq(1)
+    run("require \"prelude\"; A = [\"1\"].map { |x| x.to_i }; A[0]").to_i.should eq(1)
   end
 
   it "declare constants in right order" do

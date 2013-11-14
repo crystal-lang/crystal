@@ -190,7 +190,7 @@ module Crystal
       need_parens = node.obj.is_a?(Call) || node.obj.is_a?(Assign)
       node_obj = node.obj
 
-      # @str << "::" if node.global
+      @str << "::" if node.global
 
       if node_obj && (node.name == "[]" || node.name == "[]?")
         @str << "(" if need_parens

@@ -73,10 +73,12 @@ module Crystal
 
       @types["Math"] = @math = NonGenericModuleType.new self, self, "Math"
 
-      @types["Crystal"] = crystal = NonGenericModuleType.new self, self, "Crystal"
-      ast_node = crystal.types["ASTNode"] = NonGenericClassType.new self, crystal, "ASTNode", @reference
-      ast_node.abstract = true
-      ast_node.lookup_instance_var("@padding").type = PaddingType.new(self, 17)
+      @types["Macro"] = macro_mod = NonGenericModuleType.new self, self, "Macro"
+      macro_var = macro_mod.types["Var"] = NonGenericClassType.new self, macro_mod, "Var", @reference
+      macro_var.lookup_instance_var("@padding").type = PaddingType.new(self, 17)
+
+      macro_ivar = macro_mod.types["InstanceVar"] = NonGenericClassType.new self, macro_mod, "InstanceVar", @reference
+      macro_ivar.lookup_instance_var("@padding").type = PaddingType.new(self, 17)
 
       @symbols = Set(String).new
       @global_vars = {} of String => Var

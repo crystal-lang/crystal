@@ -183,7 +183,7 @@ describe "Code gen: hierarchy type" do
 
   it "codegens call to Object#to_s from hierarchy type" do
     run("
-      require \"bootstrap\"
+      require \"prelude\"
 
       class Foo
       end
@@ -198,7 +198,7 @@ describe "Code gen: hierarchy type" do
 
   it "codegens call to Object#to_s from nilable type" do
     run("
-      require \"bootstrap\"
+      require \"prelude\"
 
       class Foo
       end
@@ -256,7 +256,7 @@ describe "Code gen: hierarchy type" do
 
   it "initializes ivars to nil even if object never instantiated" do
     run("
-      require \"bootstrap\"
+      require \"prelude\"
 
       class Foo
         def foo

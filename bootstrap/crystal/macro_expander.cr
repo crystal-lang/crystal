@@ -17,6 +17,8 @@ module Crystal
           Var.new(arg.value)
         elsif arg.is_a?(StringLiteral)
           Var.new(arg.value)
+        elsif arg.is_a?(Assign)
+          arg.value
         else
           arg
         end

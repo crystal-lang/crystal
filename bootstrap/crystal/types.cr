@@ -254,6 +254,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement all_instance_vars"
     end
 
+    def owned_instance_vars
+      raise "Bug: #{self} doesn't implement owned_instance_vars"
+    end
+
     def index_of_instance_var(name)
       raise "Bug: #{self} doesn't implement index_of_instance_var"
     end
@@ -268,6 +272,10 @@ module Crystal
 
     def has_def?(name)
       raise "Bug: #{self} doesn't implement has_def?"
+    end
+
+    def remove_instance_var(name)
+      raise "Bug: #{self} doesn't implement remove_instance_var"
     end
 
     def llvm_name
@@ -661,6 +669,19 @@ module Crystal
       @superclass.add_subclass(self) if @superclass
     end
 
+    def all_subclasses
+      subclasses = [] of Type
+      append_subclasses(self, subclasses)
+      subclasses
+    end
+
+    def append_subclasses(type, subclasses)
+      type.subclasses.each do |subclass|
+        subclasses << subclass
+        append_subclasses subclass, subclasses
+      end
+    end
+
     def is_subclass_of?(type)
       super || ((superclass = @superclass) && superclass.is_subclass_of?(type))
     end
@@ -680,9 +701,9 @@ module Crystal
             unless superclass.owns_instance_var?(ivar)
               unless owned_instance_vars.includes?(ivar)
                 owned_instance_vars.add(ivar)
-                # each_subclass(self) do |subclass|
-                #   subclass.remove_instance_var(ivar)
-                # end
+                all_subclasses.each do |subclass|
+                  subclass.remove_instance_var(ivar)
+                end
               end
             end
           end
@@ -695,15 +716,35 @@ module Crystal
             @instance_vars_in_initialize = a_def_instance_vars
           end
 
-          # unless a_def.calls_super
-          #   sup = superclass
-          #   while sup
-          #     sup.instance_vars_in_initialize &= a_def_instance_vars
-          #     sup = sup.superclass
-          #   end
-          # end
+          unless a_def.calls_super
+            sup = superclass
+            while sup
+              sup_ivars = sup.instance_vars_in_initialize
+              if sup_ivars
+                sup.instance_vars_in_initialize = sup_ivars & a_def_instance_vars
+              end
+              sup = sup.superclass
+            end
+          end
         end
       end
+    end
+
+    def transfer_instance_vars_of_mod(mod)
+      mod.defs.each do |def_name, hash|
+        hash.each do |restrictions, a_def|
+          transfer_instance_vars a_def
+        end
+      end
+
+      mod.parents.try &.each do |parent|
+        transfer_instance_vars_of_mod parent
+      end
+    end
+
+    def include(mod)
+      super mod
+      transfer_instance_vars_of_mod mod
     end
 
     def allocated=(allocated)
