@@ -640,6 +640,7 @@ module Crystal
               if @buffer[1].ident_part_or_end?
                 scan_ident(start, start_column)
               else
+                next_char
                 filename = @filename
                 @token.type = :STRING
                 @token.value = filename.is_a?(String) ? File.dirname(filename) : "-"
@@ -651,6 +652,7 @@ module Crystal
               if @buffer[1].ident_part_or_end?
                 scan_ident(start, start_column)
               else
+                next_char
                 @token.type = :STRING
                 @token.value = @filename
                 return @token
@@ -661,6 +663,7 @@ module Crystal
               if @buffer[1].ident_part_or_end?
                 scan_ident(start, start_column)
               else
+                next_char
                 @token.type = :INT
                 @token.value = @line_number
                 return @token

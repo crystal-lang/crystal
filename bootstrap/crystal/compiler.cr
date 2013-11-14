@@ -54,6 +54,8 @@ module Crystal
         exit 1
       end
 
+      filename = File.expand_path(filename) #unless filename == '-'
+
       if @run
         output_filename = String.new(C.tmpnam(nil))
       else

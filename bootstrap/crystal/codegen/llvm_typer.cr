@@ -53,8 +53,10 @@ module Crystal
     def create_llvm_type(type : UnionType)
       max_size = 0
       type.union_types.each do |subtype|
-        size = size_of(llvm_type(subtype))
-        max_size = size if size > max_size
+        unless subtype.void?
+          size = size_of(llvm_type(subtype))
+          max_size = size if size > max_size
+        end
       end
       max_size /= 4
       max_size = 1 if max_size == 0
@@ -131,11 +133,14 @@ module Crystal
       max_size = 0
       max_type :: LibLLVM::TypeRef
       type.vars.each do |name, var|
-        llvm_type = llvm_embedded_type(var.type)
-        size = size_of(llvm_type)
-        if size > max_size
-          max_size = size
-          max_type = llvm_type
+        var_type = var.type
+        unless var_type.void?
+          llvm_type = llvm_embedded_type(var_type)
+          size = size_of(llvm_type)
+          if size > max_size
+            max_size = size
+            max_type = llvm_type
+          end
         end
       end
 

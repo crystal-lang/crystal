@@ -130,6 +130,10 @@ module Crystal
       false
     end
 
+    def void?
+      false
+    end
+
     def hierarchy_type
       self
     end
@@ -1006,6 +1010,9 @@ module Crystal
   end
 
   class VoidType < PrimitiveType
+    def void?
+      true
+    end
   end
 
   class ValueType < NonGenericClassType

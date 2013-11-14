@@ -890,10 +890,12 @@ module Crystal
       @builder.position_at_end then_block
       accept(node.then)
       add_branched_block_value(branch, node.then.type?, @last)
+      @builder.br branch.exit_block
 
       @builder.position_at_end else_block
       accept(node.else)
       add_branched_block_value(branch, node.else.type?, @last)
+      @builder.br branch.exit_block
 
       close_branched_block(branch)
 
@@ -1187,6 +1189,11 @@ module Crystal
     end
 
     def codegen_assign_target(target : Var, value, llvm_value)
+      if target.type == @mod.void
+        @vars[target.name] = LLVMVar.new(llvm_nil, @mod.void)
+        return
+      end
+
       var = declare_var(target)
       ptr = var.pointer
       codegen_assign(ptr, target.type, value.type, llvm_value)
@@ -1220,6 +1227,12 @@ module Crystal
       if target_type == value_type
         value = @builder.load value if target_type.union? || (instance_var && (target_type.c_struct? || target_type.c_union?))
         @builder.store value, pointer
+      # Hack until we fix it in the type inference
+      elsif value_type.is_a?(HierarchyType) && value_type.base_type == target_type
+        union_ptr = union_value value
+        union_ptr = cast_to_pointer union_ptr, target_type
+        union = @builder.load(union_ptr)
+        @builder.store union, pointer
       # elsif target_type.number?
       #   value = cast_number(target_type, value_type, value)
       #   @builder.store value, pointer
@@ -1300,7 +1313,9 @@ module Crystal
       var = @vars[node.name]
       var_type = var.type
       @last = var.pointer
-      if var_type == node.type
+      if var_type == @mod.void
+        # Nothing to do
+      elsif var_type == node.type
         @last = @builder.load(@last) unless var.treated_as_pointer || var_type.union?
       elsif var_type.is_a?(NilableType)
         if node.type.nil_type?
@@ -1580,7 +1595,6 @@ module Crystal
             end
 
             copy = alloca llvm_type(arg.type), "block_#{arg.name}"
-
             codegen_assign copy, arg.type, exp_type, @last
             new_vars[arg.name] = LLVMVar.new(copy, arg.type)
           end
