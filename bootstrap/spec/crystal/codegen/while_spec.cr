@@ -26,7 +26,10 @@ describe "Codegen: while" do
     run("a = 0; while a < 10; a += 1; break if a > 5; end; a").to_i.should eq(6)
   end
 
-  # it "codegens endless while" do
-  #   build "while true; end"
-  # end
+  it "codegens endless while" do
+    program = Program.new
+    node = parse "while true; end"
+    node = program.infer_type node
+    program.build node
+  end
 end

@@ -12,7 +12,7 @@ module Crystal
   class FixEmptyTypesVisitor < Visitor
     def initialize(mod)
       @mod = mod
-      @fixed = Set(Def).new
+      @fixed = Set(UInt64).new
     end
 
     def visit(node : ASTNode)
@@ -31,8 +31,8 @@ module Crystal
       return unless node.target_defs
 
       node.target_defs.not_nil!.each do |target_def|
-        unless @fixed.includes?(target_def)
-          @fixed.add(target_def)
+        unless @fixed.includes?(target_def.object_id)
+          @fixed.add(target_def.object_id)
 
           if !target_def.type? && target_def.owner.try &.allocated
             target_def.type = @mod.nil

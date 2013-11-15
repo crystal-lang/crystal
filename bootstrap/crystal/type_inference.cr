@@ -1066,6 +1066,8 @@ module Crystal
         node.type = mod.int64
       when :nil_pointer
         # Nothing to do
+      when :pointer_null
+        visit_pointer_null node
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
@@ -1165,17 +1167,24 @@ module Crystal
     end
 
     def visit_struct_get(node)
-      untyped_def = @untyped_def.not_nil!
       scope = @scope
       assert_type scope, CStructType
       node.bind_to scope.vars[untyped_def.name]
     end
 
     def visit_union_get(node)
-      untyped_def = @untyped_def.not_nil!
       scope = @scope
       assert_type scope, CUnionType
       node.bind_to scope.vars[untyped_def.name]
+    end
+
+    def visit_pointer_null(node)
+      instance_type = scope.instance_type
+      if instance_type.is_a?(GenericClassType)
+        node.raise "can't instantiate pointer without type, use Pointer(Type).null"
+      end
+
+      node.type = instance_type
     end
 
     def visit(node : PointerOf)

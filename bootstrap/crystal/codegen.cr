@@ -207,6 +207,8 @@ module Crystal
                 codegen_primitive_fun_call node, target_def, call_args
               when :pointer_diff
                 codegen_primitive_pointer_diff node, target_def, call_args
+              when :pointer_null
+                codegen_primitive_pointer_null node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -422,7 +424,10 @@ module Crystal
       if node.type.c_struct? || node.type.c_union?
         loaded_value = @builder.load value
         @builder.store loaded_value, call_args[0]
-      elsif node.type.union?
+        return value
+      end
+
+      if node.type.union?
         value = @builder.alloca llvm_type(node.type)
         target = call_args[1]
         target = @builder.load(target) if node.type.passed_by_val?
@@ -630,6 +635,10 @@ module Crystal
       p1 = @builder.ptr2int(call_args[1], LLVM::Int64)
       sub = @builder.sub p0, p1
       @builder.exact_sdiv sub, @builder.ptr2int(gep(LLVM.pointer_null(LLVM.type_of(call_args[0])), 1), LLVM::Int64)
+    end
+
+    def codegen_primitive_pointer_null(node, target_def, call_args)
+      LLVM.null(llvm_type(node.type))
     end
 
     def visit(node : PointerOf)

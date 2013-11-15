@@ -74,6 +74,7 @@ module Crystal
 
     def define_pointer_primitives
       pointer.metaclass.add_def Def.new("malloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_malloc))
+      pointer.metaclass.add_def Def.new("null", ([] of Arg), Primitive.new(:pointer_null))
       pointer.metaclass.add_def Def.new("new", [Arg.new_with_restriction("address", Ident.new(["UInt64"], true))], Primitive.new(:pointer_new))
       pointer.add_def Def.new("value", ([] of Arg), Primitive.new(:pointer_get))
       pointer.add_def Def.new("value=", [Arg.new_with_restriction("value", Ident.new(["T"]))], Primitive.new(:pointer_set))
