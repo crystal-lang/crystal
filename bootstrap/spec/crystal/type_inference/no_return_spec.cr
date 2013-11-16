@@ -6,9 +6,9 @@ describe "Type inference: NoReturn" do
     assert_type("lib C; fun exit : NoReturn; end; C.exit") { no_return }
   end
 
-  # it "types raise as NoReturn" do
-  #   assert_type(%q(require "prelude"; raise "foo")) { no_return }
-  # end
+  it "types raise as NoReturn" do
+    assert_type("require \"prelude\"; raise \"foo\"") { no_return }
+  end
 
   it "types union of NoReturn and something else" do
     assert_type("lib C; fun exit : NoReturn; end; 1 == 1 ? C.exit : 1") { int32 }

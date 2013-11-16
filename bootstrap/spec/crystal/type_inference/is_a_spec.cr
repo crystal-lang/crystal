@@ -87,55 +87,55 @@ describe "Type inference: is_a?" do
       ") { int32 }
   end
 
-  # it "applies filter inside block" do
-  #   assert_type(%q(
-  #     lib C
-  #       fun exit : NoReturn
-  #     end
+  it "applies filter inside block" do
+    assert_type("
+      lib C
+        fun exit : NoReturn
+      end
 
-  #     def foo
-  #       yield
-  #     end
+      def foo
+        yield
+      end
 
-  #     foo do
-  #       a = 1
-  #       unless a.is_a?(Int32)
-  #         C.exit
-  #       end
-  #     end
+      foo do
+        a = 1
+        unless a.is_a?(Int32)
+          C.exit
+        end
+      end
 
-  #     x = 1
+      x = 1
 
-  #     foo do
-  #       a = 'a' || 1
-  #       x = a
-  #     end
+      foo do
+        a = 'a' || 1
+        x = a
+      end
 
-  #     x
-  #     )) { union_of(char, int32) }
-  # end
+      x
+      ") { union_of(char, int32) }
+  end
 
-  # it "applies negative condition filter if then is no return" do
-  #   assert_type(%q(
-  #     require "prelude"
+  it "applies negative condition filter if then is no return" do
+    assert_type("
+      require \"prelude\"
 
-  #     def foo
-  #       if 1 == 1
-  #         'a'
-  #       else
-  #         1
-  #       end
-  #     end
+      def foo
+        if 1 == 1
+          'a'
+        else
+          1
+        end
+      end
 
-  #     def bar
-  #       elems = foo
-  #       if elems.is_a?(Char)
-  #         raise "No!"
-  #       end
-  #       elems
-  #     end
+      def bar
+        elems = foo
+        if elems.is_a?(Char)
+          raise \"No!\"
+        end
+        elems
+      end
 
-  #     bar
-  #     )) { int32 }
-  # end
+      bar
+      ") { int32 }
+  end
 end

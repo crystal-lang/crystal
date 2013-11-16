@@ -50,7 +50,7 @@ describe "Type inference: hierarchy metaclass" do
       ") { types["Foo"].hierarchy_type }
   end
 
-  pending "yields hierarchy type in block arg if class is abstract" do
+  it "yields hierarchy type in block arg if class is abstract" do
     assert_type("
       require \"prelude\"
 

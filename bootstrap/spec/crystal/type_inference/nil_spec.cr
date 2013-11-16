@@ -10,31 +10,31 @@ describe "Type inference: nil" do
     assert_type("nil") { |mod| mod.nil }
   end
 
-  # it "can call a fun with nil for pointer" do
-  #   assert_type(%q(lib A; fun a(c : Char*) : Int32; end; A.a(nil))) { int32 }
-  # end
+  it "can call a fun with nil for pointer" do
+    assert_type("lib A; fun a(c : Char*) : Int32; end; A.a(nil)") { int32 }
+  end
 
-  # it "can call a fun with nil for typedef pointer" do
-  #   assert_type(%q(lib A; type Foo : Char*; fun a(c : Foo) : Int32; end; A.a(nil))) { int32 }
-  # end
+  it "can call a fun with nil for typedef pointer" do
+    assert_type("lib A; type Foo : Char*; fun a(c : Foo) : Int32; end; A.a(nil)") { int32 }
+  end
 
-  # it "marks instance variables as nil but doesn't explode on macros" do
-  #   assert_type(%q(
-  #     require "prelude"
+  it "marks instance variables as nil but doesn't explode on macros" do
+    assert_type("
+      require \"prelude\"
 
-  #     class Foo
-  #       getter :var
+      class Foo
+        getter :var
 
-  #       def initialize
-  #         @var = [1]
-  #         @var.last
-  #       end
-  #     end
+        def initialize
+          @var = [1]
+          @var.last
+        end
+      end
 
-  #     f = Foo.new
-  #     f.var.last
-  #   )) { int32 }
-  # end
+      f = Foo.new
+      f.var.last
+    ") { int32 }
+  end
 
   it "marks instance variables as nil when not in initialize" do
     assert_type("

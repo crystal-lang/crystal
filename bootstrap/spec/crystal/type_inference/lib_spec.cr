@@ -18,6 +18,38 @@ describe "Type inference: lib" do
     assert_error("lib C; fun foo(x : Int32) : Int32; end; C.foo 1.5", "argument 'x' of 'C#foo' must be Int32, not Float64")
   end
 
+  it "reports error when changing var type and something breaks" do
+    assert_error "class Foo; def initialize; @value = 1; end; def value; @value; end; def value=(@value); end; end; f = Foo.new; f.value + 1; f.value = 'a'",
+      "undefined method '+' for Char"
+  end
+
+  it "reports error when changing instance var type and something breaks" do
+    assert_error "
+      lib Lib
+        fun bar(c : Char)
+      end
+
+      class Foo
+        def value=(@value)
+        end
+        def value
+          @value
+        end
+      end
+
+      def foo(x)
+        x.value = 'a'
+        Lib.bar x.value
+      end
+
+      f = Foo.new
+      foo(f)
+
+      f.value = 1
+      ",
+      "argument 'c' of 'Lib#bar' must be Char"
+  end
+
   it "reports error on fun argument type not primitive like" do
     assert_error "lib Foo; fun foo(x : Reference); end",
       "only primitive types"

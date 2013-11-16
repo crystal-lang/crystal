@@ -201,27 +201,27 @@ describe "Type inference: module" do
       "can't use instance variables at the top level"
   end
 
-  # it "works with int including enumerable" do
-  #   assert_type(%q(
-  #     require "prelude"
+  it "works with int including enumerable" do
+    assert_type("
+      require \"prelude\"
 
-  #     class Int32
-  #       include Enumerable(Int32)
+      class Int32
+        include Enumerable(Int32)
 
-  #       def each
-  #         yield self
-  #         yield self + 2
-  #       end
-  #     end
+        def each
+          yield self
+          yield self + 2
+        end
+      end
 
-  #     1.map { |x| x * 0.5 }
-  #     )) { array_of(float64) }
-  # end
+      1.map { |x| x * 0.5 }
+      ") { array_of(float64) }
+  end
 
-  # it "works with range and map" do
-  #   assert_type(%q(
-  #     require "prelude"
-  #     (1..3).map { |x| x * 0.5 }
-  #     )) { array_of(float64) }
-  # end
+  it "works with range and map" do
+    assert_type("
+      require \"prelude\"
+      (1..3).map { |x| x * 0.5 }
+      ") { array_of(float64) }
+  end
 end
