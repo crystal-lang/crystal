@@ -214,7 +214,7 @@ module Crystal
       o_flag = @options[:output_filename] ? "-o #{@options[:output_filename]} " : ''
 
       with_stats_or_profile('codegen-clang') do
-        `#{@clang} #{o_flag} #{lib_flags(program)} #{object_names.join " "}` unless @options[:dump_ll]
+        `#{@clang} #{o_flag} #{object_names.join " "} #{lib_flags(program)}` unless @options[:dump_ll]
       end
 
       # if @options[:debug]
