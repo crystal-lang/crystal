@@ -6,22 +6,22 @@ describe "Type inference: def overload" do
     assert_type("def foo; 1; end; def foo(x); 2.5; end; foo") { int32 }
   end
 
-  # it "types a call with overload with yield" do
-  #   assert_type("def foo; yield; 1; end; def foo; 2.5; end; foo") { float64 }
-  # end
+  it "types a call with overload with yield" do
+    assert_type("def foo; yield; 1; end; def foo; 2.5; end; foo") { float64 }
+  end
 
-  # it "types a call with overload with yield after typing another call without yield" do
-  #   assert_type("
-  #     def foo; yield; 1; end
-  #     def foo; 2.5; end
-  #     foo
-  #     foo {}
-  #   ") { int32 }
-  # end
+  it "types a call with overload with yield after typing another call without yield" do
+    assert_type("
+      def foo; yield; 1; end
+      def foo; 2.5; end
+      foo
+      foo {}
+    ") { int32 }
+  end
 
-  # it "types a call with overload with yield the other way" do
-  #   assert_type("def foo; yield; 1; end; def foo; 2.5; end; foo { 1 }") { int32 }
-  # end
+  it "types a call with overload with yield the other way" do
+    assert_type("def foo; yield; 1; end; def foo; 2.5; end; foo { 1 }") { int32 }
+  end
 
   it "types a call with overload type first overload" do
     assert_type("def foo(x : Int); 2.5; end; def foo(x : Float); 1; end; foo(1)") { float64 }
@@ -73,57 +73,57 @@ describe "Type inference: def overload" do
     ") { char }
   end
 
-  # it "types a call with overload matches hierarchy" do
-  #   assert_type("
-  #     class A; end
+  it "types a call with overload matches hierarchy" do
+    assert_type("
+      class A; end
 
-  #     def foo(x : Object)
-  #       1
-  #     end
+      def foo(x : Object)
+        1
+      end
 
-  #     foo(A.new)
-  #   ") { int32 }
-  # end
+      foo(A.new)
+    ") { int32 }
+  end
 
-  # it "types a call with overload matches hierarchy 2" do
-  #   assert_type("
-  #     class A
-  #     end
+  it "types a call with overload matches hierarchy 2" do
+    assert_type("
+      class A
+      end
 
-  #     class B < A
-  #     end
+      class B < A
+      end
 
-  #     def foo(x : A)
-  #       1
-  #     end
+      def foo(x : A)
+        1
+      end
 
-  #     def foo(x : B)
-  #       1.5
-  #     end
+      def foo(x : B)
+        1.5
+      end
 
-  #     foo(B.new)
-  #   ") { float64 }
-  # end
+      foo(B.new)
+    ") { float64 }
+  end
 
-  # it "types a call with overload matches hierarchy 3" do
-  #   assert_type("
-  #     class A
-  #     end
+  it "types a call with overload matches hierarchy 3" do
+    assert_type("
+      class A
+      end
 
-  #     class B < A
-  #     end
+      class B < A
+      end
 
-  #     def foo(x : A)
-  #       1
-  #     end
+      def foo(x : A)
+        1
+      end
 
-  #     def foo(x : B)
-  #       1.5
-  #     end
+      def foo(x : B)
+        1.5
+      end
 
-  #     foo(A.new)
-  #   ") { int32 }
-  # end
+      foo(A.new)
+    ") { int32 }
+  end
 
   it "types a call with overload self" do
     assert_type("
@@ -223,10 +223,8 @@ describe "Type inference: def overload" do
 
   it "matches types with free variables" do
     assert_type("
-      class Foo(T)
-      end
-
-      def foo(x : Foo(T), y : T)
+      require \"array\"
+      def foo(x : Array(T), y : T)
         1
       end
 
@@ -234,51 +232,49 @@ describe "Type inference: def overload" do
         1.5
       end
 
-      foo(Foo(Int32).new, 1)
+      foo([1], 1)
     ") { int32 }
   end
 
-  # it "prefer more specifc overload than one with free variables" do
-  #   assert_type("
-  #     class Foo(T)
-  #     end
+  it "prefers more specifc overload than one with free variables" do
+    assert_type("
+      require \"array\"
+      def foo(x : Array(T), y : T)
+        1
+      end
 
-  #     def foo(x : Foo(T), y : T)
-  #       1
-  #     end
+      def foo(x : Array(Int), y : Int)
+        1.5
+      end
 
-  #     def foo(x : Foo(Int), y : Int)
-  #       1.5
-  #     end
+      foo([1], 1)
+    ") { float64 }
+  end
 
-  #     foo(Foo(Int32), 1)
-  #   ") { float64 }
-  # end
+  it "accepts overload with nilable type restriction" do
+    assert_type("
+      def foo(x : Int?)
+        1
+      end
 
-  # it "accepts overload with nilable type restriction" do
-  #   assert_type("
-  #     def foo(x : Int?)
-  #       1
-  #     end
+      foo(1)
+    ") { int32 }
+  end
 
-  #     foo(1)
-  #   ") { int32 }
-  # end
+  it "dispatch call to def with restrictions" do
+    assert_type("
+      def foo(x : Value)
+        1.1
+      end
 
-  # it "dispatch call to def with restrictions" do
-  #   assert_type("
-  #     def foo(x : Value)
-  #       1.1
-  #     end
+      def foo(x : Int32)
+        1
+      end
 
-  #     def foo(x : Int32)
-  #       1
-  #     end
-
-  #     a = 1 || 1.1
-  #     foo(a)
-  #   ") { union_of(int32, float64) }
-  # end
+      a = 1 || 1.1
+      foo(a)
+    ") { union_of(int32, float64) }
+  end
 
   it "dispatch call to def with restrictions" do
     assert_type("
@@ -297,18 +293,18 @@ describe "Type inference: def overload" do
     }
   end
 
-  # it "can call overload with generic restriction" do
-  #   assert_type("
-  #     class Foo(T)
-  #     end
+  it "can call overload with generic restriction" do
+    assert_type("
+      class Foo(T)
+      end
 
-  #     def foo(x : Foo)
-  #       1
-  #     end
+      def foo(x : Foo)
+        1
+      end
 
-  #     foo(Foo(Int).new)
-  #   ") { int32 }
-  # end
+      foo(Foo(Int).new)
+    ") { int32 }
+  end
 
   it "restrict matches to minimum necessary 1" do
     assert_type("
@@ -320,22 +316,22 @@ describe "Type inference: def overload" do
     ") { int32 }
   end
 
-  # it "single type restriction wins over union" do
-  #   assert_type("
-  #     class Foo; end
-  #     class Bar < Foo ;end
+  it "single type restriction wins over union" do
+    assert_type("
+      class Foo; end
+      class Bar < Foo ;end
 
-  #     def foo(x : Foo | Bar)
-  #       1.1
-  #     end
+      def foo(x : Foo | Bar)
+        1.1
+      end
 
-  #     def foo(x : Foo)
-  #       1
-  #     end
+      def foo(x : Foo)
+        1
+      end
 
-  #     foo(Foo.new || Bar.new)
-  #   ") { int32 }
-  # end
+      foo(Foo.new || Bar.new)
+    ") { int32 }
+  end
 
   it "compare self type with others" do
     assert_type("
@@ -371,143 +367,143 @@ describe "Type inference: def overload" do
     ") { int32 }
   end
 
-  # it "lookup matches in hierarchy type inside union" do
-  #   assert_type("
-  #     class Foo
-  #       def foo
-  #         1
-  #       end
-  #     end
+  it "lookup matches in hierarchy type inside union" do
+    assert_type("
+      class Foo
+        def foo
+          1
+        end
+      end
 
-  #     class Bar < Foo
-  #     end
+      class Bar < Foo
+      end
 
-  #     class Baz
-  #       def foo
-  #         'a'
-  #       end
-  #     end
+      class Baz
+        def foo
+          'a'
+        end
+      end
 
-  #     a = Foo.new || Bar.new || Baz.new
-  #     a.foo
-  #   ") { union_of(int32, char) }
-  # end
+      a = Foo.new || Bar.new || Baz.new
+      a.foo
+    ") { union_of(int32, char) }
+  end
 
-  # it "filter union type with hierarchy" do
-  #   assert_type("
-  #     class Foo
-  #     end
+  it "filter union type with hierarchy" do
+    assert_type("
+      class Foo
+      end
 
-  #     class Bar < Foo
-  #       def bar
-  #         1
-  #       end
-  #     end
+      class Bar < Foo
+        def bar
+          1
+        end
+      end
 
-  #     def foo(x : Bar)
-  #       x.bar
-  #     end
+      def foo(x : Bar)
+        x.bar
+      end
 
-  #     def foo(x)
-  #       1.1
-  #     end
+      def foo(x)
+        1.1
+      end
 
-  #     foo(nil || Foo.new || Bar.new)
-  #   ") { union_of(int32, float64) }
-  # end
+      foo(nil || Foo.new || Bar.new)
+    ") { union_of(int32, float64) }
+  end
 
-  # it "restrict hierarchy type with hierarchy type" do
-  #   assert_type("
-  #     def foo(x : T, y : T)
-  #       1
-  #     end
+  it "restrict hierarchy type with hierarchy type" do
+    assert_type("
+      def foo(x : T, y : T)
+        1
+      end
 
-  #     class Foo
-  #     end
+      class Foo
+      end
 
-  #     class Bar < Foo
-  #     end
+      class Bar < Foo
+      end
 
-  #     x = Foo.new || Bar.new
-  #     foo(x, x)
-  #   ") { int32 }
-  # end
+      x = Foo.new || Bar.new
+      foo(x, x)
+    ") { int32 }
+  end
 
-  # it "restricts union to generic class" do
-  #   assert_type("
-  #     class Foo(T)
-  #     end
+  it "restricts union to generic class" do
+    assert_type("
+      class Foo(T)
+      end
 
-  #     def foo(x : Foo(T))
-  #       1
-  #     end
+      def foo(x : Foo(T))
+        1
+      end
 
-  #     def foo(x : Int)
-  #       'a'
-  #     end
+      def foo(x : Int)
+        'a'
+      end
 
-  #     x = 1 || Foo(Int).new
-  #     foo(x)
-  #   ") { union_of(int32, char) }
-  # end
+      x = 1 || Foo(Int).new
+      foo(x)
+    ") { union_of(int32, char) }
+  end
 
-  # it "matches on partial union" do
-  #   assert_type("
-  #     require \"prelude\"
+  it "matches on partial union" do
+    assert_type("
+      require \"prelude\"
 
-  #     def foo(x : Int32 | Float64)
-  #       x.abs
-  #       1
-  #     end
+      def foo(x : Int32 | Float64)
+        x.abs
+        1
+      end
 
-  #     def foo(x : Char)
-  #       x.ord
-  #       'a'
-  #     end
+      def foo(x : Char)
+        x.ord
+        'a'
+      end
 
-  #     foo 1 || 1.5 || 'a'
-  #   ") { union_of(int32, char) }
-  # end
+      foo 1 || 1.5 || 'a'
+    ") { union_of(int32, char) }
+  end
 
-  # pending "restricts on generic type with free type arg" do
-  #   assert_type("
-  #     require \"reference\"
+  pending "restricts on generic type with free type arg" do
+    assert_type("
+      require \"reference\"
 
-  #     class Object
-  #       def equal(expectation)
-  #         expectation == self
-  #       end
-  #     end
+      class Object
+        def equal(expectation)
+          expectation == self
+        end
+      end
 
-  #     class Foo(T)
-  #       def ==(other : Foo(U))
-  #         1
-  #       end
-  #     end
+      class Foo(T)
+        def ==(other : Foo(U))
+          1
+        end
+      end
 
-  #     a = Foo(Int).new
-  #     a.equal(a)
-  #     ") { union_of(bool, int32) }
-  # end
+      a = Foo(Int).new
+      a.equal(a)
+      ") { union_of(bool, int32) }
+  end
 
-  # pending "restricts on generic type without type arg" do
-  #   assert_type("
-  #     require \"reference\"
+  pending "restricts on generic type without type arg" do
+    assert_type("
+      require \"reference\"
 
-  #     class Object
-  #       def equal(expectation)
-  #         expectation == self
-  #       end
-  #     end
+      class Object
+        def equal(expectation)
+          expectation == self
+        end
+      end
 
-  #     class Foo(T)
-  #       def ==(other : Foo)
-  #         1
-  #       end
-  #     end
+      class Foo(T)
+        def ==(other : Foo)
+          1
+        end
+      end
 
-  #     a = Foo(Int).new
-  #     a.equal(a)
-  #   ") { union_of(bool, int32) }
-  # end
+      a = Foo(Int).new
+      a.equal(a)
+    ") { union_of(bool, int32) }
+  end
 end

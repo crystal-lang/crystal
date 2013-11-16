@@ -889,11 +889,7 @@ module Crystal
         @before_vars = before_vars
         @vars = vars
         @vars_indices = {} of String => String
-        @names = Set.new(vars.map do |var|
-          target = var.target
-          raise "Bug: target is not a Var" unless target.is_a?(Var)
-          var_name_without_index(target.name)
-        end)
+        @names = Set.new(vars.map { |var| var_name_without_index(var.target) })
         @nest_count = 0
       end
 
@@ -926,14 +922,14 @@ module Crystal
         if @nest_count == 0
           new_vars = @vars.map do |assign|
             target = assign.target
-            raise "Bug: target is not a Var" unless target.is_a?(Var)
+            target_name = var_name(target)
 
-            name = var_name_without_index target.name
+            name = var_name_without_index target_name
 
             value_index = @vars_indices[name]?
             if value_index || ((before_var = @before_vars[name]?) && (value_index = before_var.read))
               new_name = value_index == 0 ? name : "#{name}$#{value_index}"
-              if target.name == new_name
+              if target_name == new_name
                 nil
               else
                 Assign.new(target, Var.new(new_name))
@@ -970,9 +966,25 @@ module Crystal
         node
       end
 
-      def var_name_without_index(name)
+      def var_name(node : Var)
+        node.name
+      end
+
+      def var_name(node : InstanceVar)
+        node.name
+      end
+
+      def var_name(node)
+        raise "Bug: expected node to be a Var or InstanceVar, not #{node}"
+      end
+
+      def var_name_without_index(name : String)
         name_and_index = name.split('$')
         name_and_index.first
+      end
+
+      def var_name_without_index(node)
+        var_name_without_index(var_name(node))
       end
     end
   end

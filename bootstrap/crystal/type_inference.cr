@@ -1281,7 +1281,7 @@ module Crystal
       elsif node.global
         target_type = mod.lookup_type node.names
       else
-        target_type = (@scope || @types.last).lookup_type node.names
+        target_type = (@scope || @types.last).lookup_type node
       end
 
       unless target_type

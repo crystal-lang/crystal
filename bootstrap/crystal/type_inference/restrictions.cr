@@ -45,9 +45,9 @@ module Crystal
     def is_restriction_of?(other : Ident, owner)
       return true if self == other
 
-      self_type = owner.lookup_type(names)
+      self_type = owner.lookup_type(self)
       if self_type
-        other_type = owner.lookup_type(other.names)
+        other_type = owner.lookup_type(other)
         if other_type
           return self_type.is_restriction_of?(other_type, owner)
         else
@@ -58,8 +58,25 @@ module Crystal
       false
     end
 
+    def is_restriction_of?(other : IdentUnion, owner)
+      return other.idents.any? { |o| self.is_restriction_of?(o, owner) }
+    end
+
     def is_restriction_of?(other, owner)
       false
+    end
+  end
+
+  class NewGenericClass
+    def is_restriction_of?(other : NewGenericClass, owner)
+      return true if self == other
+      return false unless name == other.name && type_vars.length == other.type_vars.length
+
+      type_vars.zip(other.type_vars) do |type_var, other_type_var|
+        return false unless type_var.is_restriction_of?(other_type_var, owner)
+      end
+
+      true
     end
   end
 
@@ -110,7 +127,7 @@ module Crystal
         ident_type = free_vars[other.names.first]?
       end
 
-      ident_type ||= type_lookup.lookup_type other.names
+      ident_type ||= type_lookup.lookup_type other
       if ident_type
         restrict ident_type, owner, type_lookup, free_vars
       elsif single_name
@@ -167,13 +184,26 @@ module Crystal
     end
 
     def restrict(other : Type, owner, type_lookup, free_vars)
-      program.type_merge_union_of(union_types.map &.restrict(other, owner, type_lookup, free_vars))
+      restrict0(other, owner, type_lookup, free_vars)
+    end
+
+    def restrict(other : NewGenericClass, owner, type_lookup, free_vars)
+      restrict0(other, owner, type_lookup, free_vars)
+    end
+
+    def restrict0(other, owner, type_lookup, free_vars)
+      types = [] of Type
+      union_types.each do |type|
+        restricted = type.restrict(other, owner, type_lookup, free_vars)
+        types << restricted if restricted
+      end
+      program.type_merge_union_of(types)
     end
   end
 
   class GenericClassInstanceType
     def restrict(other : Ident, owner, type_lookup, free_vars)
-      ident_type = type_lookup.lookup_type other.names
+      ident_type = type_lookup.lookup_type other
       generic_class == ident_type ? self : super
     end
 
@@ -182,7 +212,7 @@ module Crystal
     end
 
     def restrict(other : NewGenericClass, owner, type_lookup, free_vars)
-      generic_class = type_lookup.lookup_type other.name.names
+      generic_class = type_lookup.lookup_type other.name
       return nil unless generic_class == self.generic_class
 
       assert_type generic_class, GenericClassType

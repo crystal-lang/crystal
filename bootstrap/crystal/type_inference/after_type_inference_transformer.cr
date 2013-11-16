@@ -208,13 +208,21 @@ module Crystal
 
     def transform(node : IsA)
       super
+      transform_is_a_or_responds_to node, &.filter_by(node.const.type.instance_type)
+    end
 
+    def transform(node : RespondsTo)
+      super
+      transform_is_a_or_responds_to node, &.filter_by_responds_to(node.name.value)
+    end
+
+    def transform_is_a_or_responds_to(node)
       obj = node.obj
 
-      if obj.is_a?(Var) && obj.type?
-        filtered_type = obj.type.filter_by(node.const.type.instance_type)
+      if obj_type = obj.type?
+        filtered_type = yield obj_type
 
-        if obj.type == filtered_type
+        if obj_type == filtered_type
           return true_literal
         end
 
@@ -225,24 +233,6 @@ module Crystal
 
       node
     end
-
-    # def transform(node : RespondsTo)
-    #   super
-
-    #   if node.obj.type
-    #     filtered_type = node.obj.type.filter_by_responds_to(node.name.value)
-
-    #     if node.obj.type.equal?(filtered_type)
-    #       return true_literal
-    #     end
-
-    #     unless filtered_type
-    #       return false_literal
-    #     end
-    #   end
-
-    #   node
-    # end
 
     def transform(node : FunDef)
       node_body = node.body

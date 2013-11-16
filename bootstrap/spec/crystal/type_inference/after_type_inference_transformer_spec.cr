@@ -32,10 +32,10 @@ describe "after type inference transformer" do
       "a = 1\n3"
   end
 
-  # it "keeps else of if with responds_to? that can never hold" do
-  #   assert_after_type_inference "a = 1; if a.responds_to?(:foo); 2; else 3; end",
-  #     "a = 1\n3"
-  # end
+  it "keeps else of if with responds_to? that can never hold" do
+    assert_after_type_inference "a = 1; if a.responds_to?(:foo); 2; else 3; end",
+      "a = 1\n3"
+  end
 
   it "keeps then of if with is_a? that is always true" do
     assert_after_type_inference "a = 1; if a.is_a?(Int32); 2; end",
@@ -47,10 +47,10 @@ describe "after type inference transformer" do
       "a = if #temp_1 = 1\n  #temp_1\nelse\n  1.5\nend\n2"
   end
 
-  # it "keeps then of if with responds_to? that is always true" do
-  #   assert_after_type_inference %(a = 1; if a.responds_to?(:"+"); 2; end),
-  #     "a = 1\n2"
-  # end
+  it "keeps then of if with responds_to? that is always true" do
+    assert_after_type_inference "a = 1; if a.responds_to?(:\"+\"); 2; end",
+      "a = 1\n2"
+  end
 
   # it "errors comparison of unsigned integer with zero or negative literal" do
   #   error = "comparison of unsigned integer with zero or negative literal will always be false"

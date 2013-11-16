@@ -344,7 +344,7 @@ module Crystal
           end
         end
 
-        @type = (node.global ? @mod : @match.type_lookup).lookup_type(node.names)
+        @type = @match.type_lookup.lookup_type(node)
 
         unless @type
           node.raise("uninitialized constant #{node}")

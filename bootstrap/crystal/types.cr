@@ -190,7 +190,11 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_def_instance"
     end
 
-    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(node : Ident)
+      (node.global ? program : self).lookup_type(node.names)
+    end
+
+    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       raise "Bug: #{self} doesn't implement lookup_type"
     end
 
@@ -559,7 +563,7 @@ module Crystal
       super || parents.any? &.implements?(other_type)
     end
 
-    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       return nil if already_looked_up.includes?(type_id)
 
       if lookup_in_container
@@ -1160,7 +1164,7 @@ module Crystal
       super || generic_class.implements?(other_type)
     end
 
-    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       return nil if already_looked_up.includes?(type_id)
       already_looked_up.add(type_id)
 
@@ -1278,7 +1282,7 @@ module Crystal
       @module.match_arg(arg_type, arg, owner, type_lookup, free_vars)
     end
 
-    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       if names.length == 1
         if m = @mapping[names[0]]?
           case m
@@ -1544,7 +1548,7 @@ module Crystal
     def initialize(@program, @instance_type)
     end
 
-    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       instance_type.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
@@ -1591,7 +1595,7 @@ module Crystal
     delegate type_vars, instance_type
     delegate :abstract, instance_type
 
-    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       instance_type.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
@@ -1871,7 +1875,7 @@ module Crystal
       base_type.lookup_macro(name, args_length)
     end
 
-    def lookup_type(names, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       base_type.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
