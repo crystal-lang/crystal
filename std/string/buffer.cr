@@ -13,12 +13,16 @@ class String::Buffer
     end
   end
 
-  def buffer
-    @array.buffer
+  def clear
+    @array.clear
   end
 
   def length
     @array.length
+  end
+
+  def to_s
+    String.new @array.buffer, length
   end
 end
 

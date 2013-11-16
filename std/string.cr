@@ -57,7 +57,7 @@ class String
   def self.new_from_buffer(capacity = 16)
     buffer = Buffer.new(capacity)
     yield buffer
-    new buffer.buffer, buffer.length
+    buffer.to_s
   end
 
   def self.build
