@@ -762,7 +762,7 @@ module Crystal
           LLVM.add_attribute func.get_param(0), LibLLVM::Attribute::Nest
           func.append_basic_block("entry") do |builder|
             call_ret = builder.call target_fun, func.params
-            if ret_type == LLVM::Void
+            if target_def.type.void?
               builder.ret
             else
               builder.ret call_ret
