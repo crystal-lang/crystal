@@ -16,6 +16,7 @@ module Crystal
       node = parse code
       node = normalize node
       node = infer_type node, options
+      load_libs
       evaluate node
     end
 
