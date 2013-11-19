@@ -267,7 +267,7 @@ module Crystal
         matches = restriction.idents.map do |ident|
           match_arg(arg_type, ident, owner, type_lookup, free_vars)
         end
-        matches.length > 0 ? program.type_merge(*matches) : nil
+        matches.length > 0 ? program.type_merge_union_of(*matches) : nil
       when Type
         arg_type.is_restriction_of?(restriction, owner) && restriction
       end

@@ -2270,15 +2270,7 @@ module Crystal
       raise "Bug: match_any_type_id recieved nil type_id"
     end
 
-    def create_match_fun(name, type : UnionType)
-      create_match_fun0(name, type)
-    end
-
-    def create_match_fun(name, type : HierarchyType)
-      create_match_fun0(name, type)
-    end
-
-    def create_match_fun0(name, type)
+    def create_match_fun(name, type : UnionType | HierarchyType)
       @main_mod.functions.add(name, ([LLVM::Int32] of LibLLVM::TypeRef), LLVM::Int1) do |func|
         type_id = func.get_param(0)
         func.append_basic_block("entry") do |builder|

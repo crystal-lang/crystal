@@ -2507,19 +2507,7 @@ module Crystal
       end
     end
 
-    def push_var(var : Var)
-      push_var_name var.name.to_s
-    end
-
-    def push_var(var : Arg)
-      push_var_name var.name.to_s
-    end
-
-    def push_var(var : DeclareVar)
-      push_var_name var.name.to_s
-    end
-
-    def push_var(var : BlockArg)
+    def push_var(var : Var | Arg | DeclareVar | BlockArg)
       push_var_name var.name.to_s
     end
 

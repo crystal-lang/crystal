@@ -118,7 +118,7 @@ module Crystal
         match = restrict ident, owner, type_lookup, free_vars
         matches << match if match
       end
-      matches.length > 0 ? program.type_merge(matches) : nil
+      matches.length > 0 ? program.type_merge_union_of(matches) : nil
     end
 
     def restrict(other : Ident, owner, type_lookup, free_vars)
@@ -183,15 +183,7 @@ module Crystal
       union_types.any? &.is_restriction_of?(type, owner)
     end
 
-    def restrict(other : Type, owner, type_lookup, free_vars)
-      restrict0(other, owner, type_lookup, free_vars)
-    end
-
-    def restrict(other : NewGenericClass, owner, type_lookup, free_vars)
-      restrict0(other, owner, type_lookup, free_vars)
-    end
-
-    def restrict0(other, owner, type_lookup, free_vars)
+    def restrict(other : Type | NewGenericClass, owner, type_lookup, free_vars)
       types = [] of Type
       union_types.each do |type|
         restricted = type.restrict(other, owner, type_lookup, free_vars)

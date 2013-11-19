@@ -585,4 +585,37 @@ describe 'Type inference: hierarchy' do
       foo(f)
       )) { union_of(int32, float64) }
   end
+
+  it "restricts with union and doesn't merge to super type" do
+    assert_type("
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        def foo
+          1
+        end
+      end
+
+      class Baz < Foo
+        def foo
+          'a'
+        end
+      end
+
+      class Bag < Foo
+      end
+
+      def foo(x : Bar | Baz)
+        x.foo
+      end
+
+      def foo(x)
+        \"hello\"
+      end
+
+      f = Bar.new || Baz.new || Bag.new
+      foo(f)
+      ") { union_of(int32, char, string) }
+  end
 end
