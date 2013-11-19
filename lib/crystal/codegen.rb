@@ -1568,6 +1568,8 @@ module Crystal
     def type_module(type)
       return @main_mod if @single_module
 
+      type = type.typedef if type.is_a?(TypeDefType)
+
       @modules[(type ? type.instance_type : nil).to_s] ||= begin
         mod = LLVM::Module.new(type.instance_type.to_s)
         mod.globals.add(LLVM::Array(llvm_type(@mod.string), @symbol_table_values.count), "symbol_table")

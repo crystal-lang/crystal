@@ -1362,6 +1362,8 @@ module Crystal
   end
 
   class TypeDefType < ContainedType
+    include DefInstanceContainer
+
     getter :name
     getter :typedef
 
@@ -1373,8 +1375,12 @@ module Crystal
     delegate pointer?, typedef
     delegate parents, typedef
 
-    def lookup_matches(name, arg_types, yields)
-      typedef.lookup_matches(name, arg_types, yields)
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+      typedef.lookup_matches(name, arg_types, yields, owner, type_lookup)
+    end
+
+    def lookup_defs(name)
+      typedef.lookup_defs(name)
     end
 
     def lookup_first_def(name, yields)

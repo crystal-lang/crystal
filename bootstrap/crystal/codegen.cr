@@ -55,6 +55,7 @@ module Crystal
     getter :typer
     getter :main
     getter! :type
+    getter! :return_union
 
     class LLVMVar
       getter pointer
@@ -802,8 +803,7 @@ module Crystal
     end
 
     def end_visit(node : Return)
-      return_type = @return_type
-      raise "Bug: return_type is nil" unless return_type
+      return_type = @return_type.not_nil!
 
       if return_block = @return_block
         if return_type.union?
@@ -1014,8 +1014,7 @@ module Crystal
       break_table_values = @break_table_values
 
       if break_type && break_type.union?
-        break_union = @break_union
-        raise "Bug: break_union is nil" unless break_union
+        break_union = @break_union.not_nil!
 
         if node.exps.length > 0
           assign_to_union(break_union, break_type, node.exps[0].type, @last)
@@ -1031,12 +1030,7 @@ module Crystal
         end
       end
 
-      while_exit_block = @while_exit_block
-      if while_exit_block
-        @builder.br while_exit_block
-      else
-        raise "Bug: while_exit_block is nil"
-      end
+      @builder.br @while_exit_block.not_nil!
     end
 
     def block_returns?
@@ -1482,12 +1476,7 @@ module Crystal
           cmp = @builder.icmp LibLLVM::IntPredicate::EQ, type_id, matching_id
           result = result ? @builder.or(result, cmp) : cmp
         end
-
-        if result
-          @last = result
-        else
-          raise "BUg: matching_ids was empty"
-        end
+        @last = result.not_nil!
       end
     end
 
@@ -1687,14 +1676,10 @@ module Crystal
             cond = nil
             a_rescue_types.each do |type|
               rescue_type = type.type.instance_type.hierarchy_type
-              rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
+              rescue_type_cond = match_any_type_id(rescue_type, ex_type_id.not_nil!)
               cond = cond ? @builder.or(cond, rescue_type_cond) : rescue_type_cond
             end
-            if cond
-              @builder.cond cond, this_rescue_block, next_rescue_block
-            else
-              raise "Bug: cond is nil"
-            end
+            @builder.cond cond.not_nil!, this_rescue_block, next_rescue_block
           else
             @builder.br this_rescue_block
           end
@@ -1976,28 +1961,28 @@ module Crystal
       next_def_label = nil
       target_defs.each do |a_def|
         if owner.union?
-          result = match_any_type_id(a_def.owner.not_nil!, obj_type_id)
+          result = match_any_type_id(a_def.owner.not_nil!, obj_type_id.not_nil!)
         elsif owner.nilable?
           if a_def.owner.not_nil!.nil_type?
-            result = null_pointer?(obj_type_id)
+            result = null_pointer?(obj_type_id.not_nil!)
           else
-            result = not_null_pointer?(obj_type_id)
+            result = not_null_pointer?(obj_type_id.not_nil!)
           end
         elsif owner.hierarchy_metaclass?
-          result = match_any_type_id(a_def.owner.not_nil!, obj_type_id)
+          result = match_any_type_id(a_def.owner.not_nil!, obj_type_id.not_nil!)
         else
           result = int1(1)
         end
 
         a_def.args.each_with_index do |arg, i|
           if node.args[i].type.union?
-            comp = match_any_type_id(arg.type, arg_type_ids[i])
+            comp = match_any_type_id(arg.type, arg_type_ids[i].not_nil!)
             result = @builder.and(result, comp)
           elsif node.args[i].type.nilable?
             if arg.type.nil_type?
-              result = @builder.and(result, null_pointer?(arg_type_ids[i]))
+              result = @builder.and(result, null_pointer?(arg_type_ids[i].not_nil!))
             else
-              result = @builder.and(result, not_null_pointer?(arg_type_ids[i]))
+              result = @builder.and(result, not_null_pointer?(arg_type_ids[i].not_nil!))
             end
           end
         end
@@ -2246,7 +2231,7 @@ module Crystal
       end
     end
 
-    def match_any_type_id(type, type_id : LibLLVM::ValueRef)
+    def match_any_type_id(type, type_id)
       # Special case: if the type is Object+ we want to match against Reference+,
       # because Object+ can only mean a Reference type (so we exclude Nil, for example).
       type = @mod.reference.hierarchy_type if type == @mod.object.hierarchy_type
@@ -2266,10 +2251,6 @@ module Crystal
       @builder.icmp LibLLVM::IntPredicate::EQ, int(type.type_id), type_id
     end
 
-    def match_any_type_id(type, type_id : Nil)
-      raise "Bug: match_any_type_id recieved nil type_id"
-    end
-
     def create_match_fun(name, type : UnionType | HierarchyType)
       @main_mod.functions.add(name, ([LLVM::Int32] of LibLLVM::TypeRef), LLVM::Int1) do |func|
         type_id = func.get_param(0)
@@ -2279,11 +2260,7 @@ module Crystal
             sub_type_cond = builder.icmp(LibLLVM::IntPredicate::EQ, int(sub_type.type_id), type_id)
             result = result ? builder.or(result, sub_type_cond) : sub_type_cond
           end
-          if result
-            builder.ret result
-          else
-            raise "Bug: result is nil"
-          end
+          builder.ret result.not_nil!
         end
       end
     end
@@ -2371,20 +2348,12 @@ module Crystal
       @builder.gep ptr, [int32(index0), int32(index1)]
     end
 
-    def null_pointer?(value : LibLLVM::ValueRef)
+    def null_pointer?(value)
       @builder.icmp LibLLVM::IntPredicate::EQ, @builder.ptr2int(value, LLVM::Int32), int(0)
     end
 
-    def null_pointer?(value : Nil)
-      raise "Bug: called null_pointer? on nil"
-    end
-
-    def not_null_pointer?(value : LibLLVM::ValueRef)
+    def not_null_pointer?(value)
       @builder.icmp LibLLVM::IntPredicate::NE, @builder.ptr2int(value, LLVM::Int32), int(0)
-    end
-
-    def not_null_pointer?(value : Nil)
-      raise "Bug: called null_pointer? on nil"
     end
 
     def malloc(type)
@@ -2478,12 +2447,6 @@ module Crystal
       # end
 
       @builder.ret value
-    end
-
-    def return_union
-      return_union = @return_union
-      raise "Bug: return_union is nil" unless return_union
-      return_union
     end
   end
 end
