@@ -2,6 +2,7 @@ require "enumerable"
 require "pointer"
 require "range"
 require "set"
+require "math"
 
 class Array(T)
   include Enumerable
@@ -13,14 +14,19 @@ class Array(T)
   end
 
   def initialize(initial_capacity = 16)
+    initial_capacity = Math.max(initial_capacity, 16)
     @length = 0
     @capacity = initial_capacity
     @buffer = Pointer(T).malloc(initial_capacity)
   end
 
   def initialize(size, value : T)
+    if size < 0
+      raise ArgumentError.new("negative array size: #{size}")
+    end
+
     @length = size
-    @capacity = size
+    @capacity = Math.max(size, 16)
     @buffer = Pointer(T).malloc(size, value)
   end
 

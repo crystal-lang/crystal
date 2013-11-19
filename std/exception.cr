@@ -46,3 +46,6 @@ class Exception
     end
   end
 end
+
+class ArgumentError < Exception
+end
