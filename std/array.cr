@@ -2,16 +2,9 @@ require "enumerable"
 require "pointer"
 require "range"
 require "set"
-require "math"
 
 class Array(T)
   include Enumerable
-
-  class IndexOutOfBounds < Exception
-    def initialize
-      super("Array index out of bounds")
-    end
-  end
 
   def initialize(initial_capacity = 16)
     initial_capacity = Math.max(initial_capacity, 16)
@@ -146,7 +139,7 @@ class Array(T)
 
   def delete_at(index : Int)
     index += length if index < 0
-    raise Array::IndexOutOfBounds.new if index < 0 || index >= length
+    raise IndexOutOfBounds.new if index < 0 || index >= length
 
     elem = @buffer[index]
     (@buffer + index).memmove(@buffer + index + 1, length - index - 1)

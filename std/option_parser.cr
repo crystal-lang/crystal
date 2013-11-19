@@ -105,7 +105,7 @@ class OptionParser
       begin
         @args.delete_at(index)
         @args.delete_at(index)
-      rescue Array::IndexOutOfBounds
+      rescue IndexOutOfBounds
         raise MissingOption.new(flag)
       end
     else

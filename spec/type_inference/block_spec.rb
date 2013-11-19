@@ -79,9 +79,7 @@ describe 'Block inference' do
 
   it "infer type with union" do
     assert_type(%q(
-      require "int"
-      require "pointer"
-      require "array"
+      require "prelude"
       a = [1] || [1.1]
       a.each { |x| x }
     )) { union_of(array_of(int32), array_of(float64)) }

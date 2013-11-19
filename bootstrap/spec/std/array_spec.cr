@@ -135,8 +135,8 @@ describe "Array" do
       begin
         a = [1, 2, 3, 4]
         a.delete_at(4)
-        fail "Expected to raise Array::IndexOutOfBounds"
-      rescue Array::IndexOutOfBounds
+        fail "Expected to raise IndexOutOfBounds"
+      rescue IndexOutOfBounds
       end
     end
   end
@@ -294,7 +294,7 @@ describe "Array" do
     begin
       [1, 2, 3][4]
       fail "Expected [] to raise"
-    rescue Array::IndexOutOfBounds
+    rescue IndexOutOfBounds
     end
   end
 
@@ -314,8 +314,8 @@ describe "Array" do
     it "raises when empty" do
       begin
         ([] of Int32).pop
-        fail "expected to raise Array::IndexOutOfBounds"
-      rescue Array::IndexOutOfBounds
+        fail "expected to raise IndexOutOfBounds"
+      rescue IndexOutOfBounds
       end
     end
   end
@@ -330,8 +330,8 @@ describe "Array" do
     it "raises when empty" do
       begin
         ([] of Int32).shift
-        fail "expected to raise Array::IndexOutOfBounds"
-      rescue Array::IndexOutOfBounds
+        fail "expected to raise IndexOutOfBounds"
+      rescue IndexOutOfBounds
       end
     end
   end
@@ -345,8 +345,8 @@ describe "Array" do
     it "raises when empty" do
       begin
         ([] of Int32).first
-        fail "expected to raise Array::IndexOutOfBounds"
-      rescue Array::IndexOutOfBounds
+        fail "expected to raise IndexOutOfBounds"
+      rescue IndexOutOfBounds
       end
     end
   end
@@ -360,8 +360,8 @@ describe "Array" do
     it "raises when empty" do
       begin
         ([] of Int32).last
-        fail "expected to raise Array::IndexOutOfBounds"
-      rescue Array::IndexOutOfBounds
+        fail "expected to raise IndexOutOfBounds"
+      rescue IndexOutOfBounds
       end
     end
   end

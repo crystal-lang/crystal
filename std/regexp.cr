@@ -88,7 +88,7 @@ class MatchData
   # private
 
   def check_index_out_of_bounds(index)
-    raise Array::IndexOutOfBounds.new if index > @length
+    raise IndexOutOfBounds.new if index > @length
   end
 end
 

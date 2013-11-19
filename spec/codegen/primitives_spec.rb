@@ -34,7 +34,7 @@ describe 'Code gen: primitives' do
   end
 
   it 'codegens string indexer' do
-    run('require "range"; require "string"; require "pointer"; "foo"[1]').to_i.should eq(?o.ord)
+    run('require "prelude"; "foo"[1]').to_i.should eq(?o.ord)
   end
 
   it 'codegens symbol' do

@@ -3,8 +3,7 @@ require 'spec_helper'
 describe 'Codegen: method missing' do
   it "codegens method missing" do
     run(%q(
-      require "pointer"
-      require "array"
+      require "prelude"
       class Foo
         def method_missing(name, args)
           args.length

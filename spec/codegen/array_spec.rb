@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Code gen: array' do
   it "codegens array length" do
-    run('require "array"; a = [1, 2]; a.length').to_i.should eq(2)
+    run('require "prelude"; a = [1, 2]; a.length').to_i.should eq(2)
   end
 
   it "codegens array get" do
@@ -18,19 +18,19 @@ describe 'Code gen: array' do
   end
 
   it "realloc array buffer when pushing" do
-    run('require "int"; require "array"; a = Array(Int32).new; j = 0; while j < 10000; a << 1; j += 1; end')
+    run('require "prelude"; a = Array(Int32).new; j = 0; while j < 10000; a << 1; j += 1; end')
   end
 
   it "codegens an empty array" do
-    run('require "int"; require "array"; a = Array(Int32).new; a.length').to_i.should eq(0)
+    run('require "prelude"; a = Array(Int32).new; a.length').to_i.should eq(0)
   end
 
   it "codegens method with array mutation" do
-    run('require "int"; require "array"; def foo(x); end; a = Array(Int32).new; foo a; a.push(1)')
+    run('require "prelude"; def foo(x); end; a = Array(Int32).new; foo a; a.push(1)')
   end
 
   it "codegens method with array mutation and while" do
-    run('require "int"; require "array"; def foo(x); while false; end; end; a = Array(Int32).new; foo a; a.push(1)')
+    run('require "prelude"; def foo(x); while false; end; end; a = Array(Int32).new; foo a; a.push(1)')
   end
 
   it "codegens empty array loop" do

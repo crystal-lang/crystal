@@ -128,7 +128,7 @@ describe 'Type inference: primitives' do
   end
 
   it "types ARGV" do
-    assert_type(%q(require "argv"; ARGV)) { array_of(string) }
+    assert_type(%q(require "prelude"; ARGV)) { array_of(string) }
   end
 
   it "reports can't call primitive with args" do

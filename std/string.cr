@@ -92,7 +92,7 @@ class String
 
   def [](index : Int)
     index += length if index < 0
-    raise Array::IndexOutOfBounds.new if index >= length || index < 0
+    raise IndexOutOfBounds.new if index >= length || index < 0
     @c.ptr[index]
   end
 

@@ -22,7 +22,7 @@ describe "Regexp" do
     begin
       $1
       fail "Expected $1 to raise"
-    rescue ex : Array::IndexOutOfBounds
+    rescue ex : IndexOutOfBounds
     end
   end
 
@@ -31,7 +31,7 @@ describe "Regexp" do
     begin
       $1
       fail "Expected $1 to raise"
-    rescue ex : Array::IndexOutOfBounds
+    rescue ex : IndexOutOfBounds
     end
   end
 end

@@ -147,7 +147,7 @@ describe "Type inference: hierarchy" do
 
   it "works with restriction alpha" do
     nodes = parse("
-      require \"array\"
+      require \"prelude\"
 
       class Foo
       end

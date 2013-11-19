@@ -223,7 +223,7 @@ describe "Type inference: def overload" do
 
   it "matches types with free variables" do
     assert_type("
-      require \"array\"
+      require \"prelude\"
       def foo(x : Array(T), y : T)
         1
       end
@@ -238,7 +238,7 @@ describe "Type inference: def overload" do
 
   it "prefers more specifc overload than one with free variables" do
     assert_type("
-      require \"array\"
+      require \"prelude\"
       def foo(x : Array(T), y : T)
         1
       end
