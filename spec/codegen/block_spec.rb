@@ -882,4 +882,18 @@ describe 'Code gen: block' do
       )).to_i.should eq(3)
   end
 
+  it "codegens block call when argument type changes" do
+    run(%q(
+      def foo(x)
+        while 1 == 2
+          x = 1.5
+          yield
+        end
+      end
+
+      foo(1) do
+      end
+      ))
+  end
+
  end

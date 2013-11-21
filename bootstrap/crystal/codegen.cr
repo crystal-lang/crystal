@@ -1814,12 +1814,14 @@ module Crystal
           args_base_index = 0
         end
 
+        target_def_vars = node.target_def.vars
+
         node.target_def.args.each_with_index do |arg, i|
-          ptr = alloca(llvm_type(arg.type), arg.name)
-          @vars[arg.name] = LLVMVar.new(ptr, arg.type)
+          var_type = target_def_vars ? target_def_vars[arg.name].type : arg.type
+          ptr = alloca(llvm_type(var_type), arg.name)
+          @vars[arg.name] = LLVMVar.new(ptr, var_type)
           value = call_args[args_base_index + i]
-          value = @builder.load(value) if arg.type.passed_by_val?
-          @builder.store value, ptr
+          codegen_assign(ptr, var_type, arg.type, value)
         end
 
         return_block = @return_block = new_block "return"
