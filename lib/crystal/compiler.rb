@@ -171,8 +171,10 @@ module Crystal
               type = "main" if type == ""
               name = type.gsub(/[^a-zA-Z0-9]/) { |c| "##{c.ord.to_s(16)}" }
               bc_name = ".crystal/#{name}.bc"
+              bc_name_opt = ".crystal/#{name}.opt.bc"
               s_name = ".crystal/#{name}.s"
               o_name = ".crystal/#{name}.o"
+              ll_name = ".crystal/#{name}.ll"
 
               llvm_mod.write_bitcode "#{bc_name}.new"
 
@@ -190,8 +192,8 @@ module Crystal
                 # puts "Compile: #{type}"
                 FileUtils.mv "#{bc_name}.new", bc_name
                 if @options[:release]
-                  `#{@llc} #{bc_name} -o #{s_name}`
-                  `#{@opt} #{bc_name} -O3 | #{@llc} - -o #{s_name}`
+                  `#{@opt} #{bc_name} -O3 -o #{bc_name_opt}`
+                  `#{@llc} #{bc_name_opt} -o #{s_name}`
                 else
                   `#{@llc} #{bc_name} -o #{s_name}`
                 end
@@ -200,7 +202,11 @@ module Crystal
 
               if @options[:dump_ll]
                 llvm_dis = LLVMConfig.bin("llvm-dis")
-                 `#{llvm_dis} #{bc_name}`
+                if @options[:release]
+                  `#{llvm_dis} #{bc_name_opt} -o #{ll_name}`
+                else
+                  `#{llvm_dis} #{bc_name} -o #{ll_name}`
+                 end
               end
 
               object_names << o_name

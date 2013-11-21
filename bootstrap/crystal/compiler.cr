@@ -63,6 +63,8 @@ module Crystal
       end
 
       bitcode_filename = "#{output_filename}.bc"
+      optimized_bitcode_filename = "#{output_filename}.opt.bc"
+      ll_filename = "#{output_filename}.ll"
 
       source = File.read filename
 
@@ -92,16 +94,21 @@ module Crystal
         llvm_mod = program.build node
         puts "Codegen: #{Time.now - time} seconds" if @stats
 
-        llvm_mod.dump if @dump_ll
-
         time = Time.now
 
         llvm_mod.write_bitcode bitcode_filename
 
         if @release
-          system "opt-3.3 #{bitcode_filename} -O3 | llc-3.3 -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
+          system "opt-3.3 #{bitcode_filename} -O3 -o #{optimized_bitcode_filename}"
+          system "llc-3.3 #{optimized_bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
+          if @dump_ll
+            system "llvm-dis-3.3 #{optimized_bitcode_filename} -o #{ll_filename}"
+          end
         else
           system "llc-3.3 #{bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
+          if @dump_ll
+            system "llvm-dis-3.3 #{bitcode_filename} -o #{ll_filename}"
+          end
         end
 
         puts "Llvm: #{Time.now - time} seconds" if @stats
