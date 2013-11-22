@@ -70,15 +70,17 @@ module Crystal
     end
 
     def transform_and(node)
-      new_node = if node.left.is_a?(Var) || (node.left.is_a?(IsA) && node.left.obj.is_a?(Var))
-               If.new(node.left, node.right, node.left.clone)
+      left = node.left.transform(self)
+      right = node.right.transform(self)
+      new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
+               If.new(left, right, left.clone)
              else
                temp_var = new_temp_var
-               If.new(Assign.new(temp_var, node.left), node.right, temp_var)
+               If.new(Assign.new(temp_var, left), right, temp_var)
              end
       new_node.binary = :and
       new_node.location = node.location
-      new_node.transform(self)
+      new_node
     end
 
     def transform_or(node)

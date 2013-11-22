@@ -104,7 +104,8 @@ module Crystal
     end
 
     def transform(node : And)
-      left = node.left
+      left = node.left.transform(self)
+      right = node.right.transform(self)
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
                If.new(left, node.right, left.clone)
              else
@@ -113,7 +114,7 @@ module Crystal
              end
       new_node.binary = :and
       new_node.location = node.location
-      new_node.transform(self)
+      new_node
     end
 
     def transform(node : Or)

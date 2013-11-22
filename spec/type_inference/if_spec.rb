@@ -33,4 +33,12 @@ describe 'Type inference: if' do
       Foo.new.coco
       ") { union_of(int32, self.nil) }
   end
+
+  it "can invoke method on var that is declared on the right hand side of an and" do
+    assert_type("
+      if 1 == 2 && (b = 1)
+        b + 1
+      end
+      ") { union_of(int32, self.nil) }
+  end
 end
