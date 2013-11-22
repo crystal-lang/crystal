@@ -278,43 +278,41 @@ module Crystal
     def match_block_arg(match)
       yield_vars = nil
 
-      if (block_arg = match.def.block_arg)
-        if (yields = match.def.yields) && yields > 0
-          block = @block.not_nil!
-          ident_lookup = IdentLookupVisitor.new(mod, match)
+      if (block_arg = match.def.block_arg) && (yields = match.def.yields) && yields > 0
+        block = @block.not_nil!
+        ident_lookup = IdentLookupVisitor.new(mod, match)
 
-          if inputs = block_arg.type_spec.inputs
-            yield_vars = [] of Var
-            inputs.each_with_index do |input, i|
-              type = lookup_node_type(ident_lookup, input)
-              type = type.hierarchy_type if type.class? && type.abstract
-              yield_vars << Var.new("var#{i}", type)
-            end
-            block.args.each_with_index do |arg, i|
-              var = yield_vars[i]?
-              arg.bind_to(var || mod.nil_var)
-            end
-          else
-            block.args.each &.bind_to(mod.nil_var)
+        if inputs = block_arg.type_spec.inputs
+          yield_vars = [] of Var
+          inputs.each_with_index do |input, i|
+            type = lookup_node_type(ident_lookup, input)
+            type = type.hierarchy_type if type.class? && type.abstract
+            yield_vars << Var.new("var#{i}", type)
           end
-
-          block.accept parent_visitor
-
-          if output = block_arg.type_spec.output
-            block_type = block.body.type
-            type_lookup = match.type_lookup
-            assert_type type_lookup, MatchesLookup
-
-            matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
-            unless matched
-              if output.is_a?(SelfType)
-                raise "block expected to return #{match.owner}, not #{block_type}"
-              else
-                raise "block expected to return #{output}, not #{block_type}"
-              end
-            end
-            block.body.freeze_type = true
+          block.args.each_with_index do |arg, i|
+            var = yield_vars[i]?
+            arg.bind_to(var || mod.nil_var)
           end
+        else
+          block.args.each &.bind_to(mod.nil_var)
+        end
+
+        block.accept parent_visitor
+
+        if output = block_arg.type_spec.output
+          block_type = block.body.type
+          type_lookup = match.type_lookup
+          assert_type type_lookup, MatchesLookup
+
+          matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
+          unless matched
+            if output.is_a?(SelfType)
+              raise "block expected to return #{match.owner}, not #{block_type}"
+            else
+              raise "block expected to return #{output}, not #{block_type}"
+            end
+          end
+          block.body.freeze_type = true
         end
       end
 

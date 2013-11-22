@@ -13,10 +13,8 @@ module Crystal
     end
 
     def set_type(type : Type)
-      if @freeze_type
-        if (my_type = @type) && !my_type.is_restriction_of_all?(type)
-          raise "type must be #{my_type}, not #{type}", nil, Crystal::FrozenTypeException
-        end
+      if @freeze_type && (my_type = @type) && !my_type.is_restriction_of_all?(type)
+        raise "type must be #{my_type}, not #{type}", nil, Crystal::FrozenTypeException
       end
       @type = type
     end

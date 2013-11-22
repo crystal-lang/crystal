@@ -90,10 +90,8 @@ module Crystal
         return self
       end
 
-      if parents = self.parents
-        if parents.any? &.is_restriction_of?(other, nil)
-          return self
-        end
+      if parents.try &.any? &.is_restriction_of?(other, nil)
+        return self
       end
 
       nil

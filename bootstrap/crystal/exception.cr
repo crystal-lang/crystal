@@ -117,22 +117,17 @@ module Crystal
         str << msg
       end
 
-      if lines
-        if @line
-          line = lines[@line - 1]
-          if line
-            str << "\n\n"
-            str << line.chomp
-            str << "\n"
-            str << (" " * (@column - 1))
-            str << "\033[1;32m"
-            str << "^"
-            if @length && @length > 0
-              str << ("~" * (@length - 1))
-            end
-            str << "\033[0m"
-          end
+      if lines && @line && (line = lines[@line - 1])
+        str << "\n\n"
+        str << line.chomp
+        str << "\n"
+        str << (" " * (@column - 1))
+        str << "\033[1;32m"
+        str << "^"
+        if @length && @length > 0
+          str << ("~" * (@length - 1))
         end
+        str << "\033[0m"
       end
       str << "\n"
 

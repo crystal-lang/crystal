@@ -768,13 +768,9 @@ module Crystal
 
       accept_with_indent node.body
 
-      if rescues = node.rescues
-        if rescues.length > 0
-          rescues.each do |a_rescue|
-            append_indent
-            a_rescue.accept self
-          end
-        end
+      node.rescues.try &.each do |a_rescue|
+        append_indent
+        a_rescue.accept self
       end
 
       if node_else = node.else
@@ -796,13 +792,11 @@ module Crystal
 
     def visit(node : Rescue)
       @str << "rescue"
-      if types = node.types
-        if types.length > 0
-          @str << " "
-          types.each_with_index do |type, i|
-            @str << ", " if i > 0
-            type.accept self
-          end
+      if (types = node.types) && types.length > 0
+        @str << " "
+        types.each_with_index do |type, i|
+          @str << ", " if i > 0
+          type.accept self
         end
       end
       if name = node.name

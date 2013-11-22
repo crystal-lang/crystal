@@ -518,53 +518,51 @@ module Crystal
     end
 
     def check_special_call(atomic)
-      if atomic.is_a?(Call)
-        if (atomic_obj = atomic.obj)
-          case atomic.name
-          when "ptr"
-            if !(atomic_obj.is_a?(Var) || atomic_obj.is_a?(InstanceVar))
-              raise "can only get 'ptr' of variable or instance variable"
-            end
-            if atomic.args.length != 0
-              raise "wrong number of arguments for 'ptr' (#{atomic.args.length} for 0)"
-            end
-            if atomic.block
-              raise "'ptr' can't receive a block"
-            end
-            atomic = PointerOf.new(atomic_obj)
-          when "is_a?"
-            if atomic.args.length != 1
-              raise "wrong number of arguments for 'is_a?' (#{atomic.args.length} for 1)"
-            end
-            if !atomic.args[0].is_a?(Ident)
-              raise "'is_a?' argument must be a Constant"
-            end
-            if atomic.block
-              raise "'is_a?' can't receive a block"
-            end
-            atomic = IsA.new(atomic_obj, atomic.args[0])
-          when "responds_to?"
-            if atomic.args.length != 1
-              raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 1)"
-            end
-            arg = atomic.args[0]
-            unless arg.is_a?(SymbolLiteral)
-              raise "'responds_to?' argument must be a Symbol literal"
-            end
-            if atomic.block
-              raise "'responds_to?' can't receive a block"
-            end
-            atomic = RespondsTo.new(atomic_obj, arg)
-          when "yield"
-            if atomic.block
-              raise "'yield' can't receive a block"
-            end
-            yields = (@yields ||= 1)
-            if atomic.args && atomic.args.length > yields
-              @yields = atomic.args.length
-            end
-            atomic = Yield.new(atomic.args, atomic.obj)
+      if atomic.is_a?(Call) && (atomic_obj = atomic.obj)
+        case atomic.name
+        when "ptr"
+          if !(atomic_obj.is_a?(Var) || atomic_obj.is_a?(InstanceVar))
+            raise "can only get 'ptr' of variable or instance variable"
           end
+          if atomic.args.length != 0
+            raise "wrong number of arguments for 'ptr' (#{atomic.args.length} for 0)"
+          end
+          if atomic.block
+            raise "'ptr' can't receive a block"
+          end
+          atomic = PointerOf.new(atomic_obj)
+        when "is_a?"
+          if atomic.args.length != 1
+            raise "wrong number of arguments for 'is_a?' (#{atomic.args.length} for 1)"
+          end
+          if !atomic.args[0].is_a?(Ident)
+            raise "'is_a?' argument must be a Constant"
+          end
+          if atomic.block
+            raise "'is_a?' can't receive a block"
+          end
+          atomic = IsA.new(atomic_obj, atomic.args[0])
+        when "responds_to?"
+          if atomic.args.length != 1
+            raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 1)"
+          end
+          arg = atomic.args[0]
+          unless arg.is_a?(SymbolLiteral)
+            raise "'responds_to?' argument must be a Symbol literal"
+          end
+          if atomic.block
+            raise "'responds_to?' can't receive a block"
+          end
+          atomic = RespondsTo.new(atomic_obj, arg)
+        when "yield"
+          if atomic.block
+            raise "'yield' can't receive a block"
+          end
+          yields = (@yields ||= 1)
+          if atomic.args && atomic.args.length > yields
+            @yields = atomic.args.length
+          end
+          atomic = Yield.new(atomic.args, atomic.obj)
         end
       end
       atomic
@@ -2110,10 +2108,8 @@ module Crystal
       args = call_args.args if call_args
 
       yields = (@yields ||= 0)
-      if args
-        if args.length > yields
-          @yields = args.length
-        end
+      if args && args.length > yields
+        @yields = args.length
       end
 
       location = @token.location

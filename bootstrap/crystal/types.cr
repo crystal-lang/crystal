@@ -829,10 +829,8 @@ module Crystal
     end
 
     def lookup_instance_var?(name, create)
-      if superclass = @superclass
-        if var = superclass.lookup_instance_var?(name, false)
-          return var
-        end
+      if (superclass = @superclass) && (var = superclass.lookup_instance_var?(name, false))
+        return var
       end
 
       if create || owned_instance_vars.includes?(name)
@@ -1168,10 +1166,8 @@ module Crystal
       return nil if already_looked_up.includes?(type_id)
       already_looked_up.add(type_id)
 
-      if names.length == 1
-        if type_var = type_vars[names[0]]?
-          return type_var.type
-        end
+      if (names.length == 1) && (type_var = type_vars[names[0]]?)
+        return type_var.type
       end
 
       type = generic_class
@@ -1187,10 +1183,8 @@ module Crystal
         return match if match
       end
 
-      if lookup_in_container
-        if sup_container = generic_class.container
-          return sup_container.lookup_type(names, already_looked_up)
-        end
+      if lookup_in_container && (sup_container = generic_class.container)
+        return sup_container.lookup_type(names, already_looked_up)
       end
 
       nil
@@ -1283,18 +1277,16 @@ module Crystal
     end
 
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
-      if names.length == 1
-        if m = @mapping[names[0]]?
-          case m
-          when Type
-            return m
-          when String
-            including_class = @including_class
+      if (names.length == 1) && (m = @mapping[names[0]]?)
+        case m
+        when Type
+          return m
+        when String
+          including_class = @including_class
 
-            if including_class.is_a?(GenericClassInstanceType)
-              type_var = including_class.type_vars[m]?
-              return type_var ? type_var.type : nil
-            end
+          if including_class.is_a?(GenericClassInstanceType)
+            type_var = including_class.type_vars[m]?
+            return type_var ? type_var.type : nil
           end
         end
       end
@@ -1830,11 +1822,9 @@ module Crystal
             end
           end
 
-          if !subtype_matches.empty?
-            if (subtype_matches_matches = subtype_matches.matches)
-              subtype_matches_matches.concat matches
-              matches = subtype_matches_matches
-            end
+          if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
+            subtype_matches_matches.concat matches
+            matches = subtype_matches_matches
           end
         end
       end
