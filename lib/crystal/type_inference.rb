@@ -451,6 +451,9 @@ module Crystal
 
     def visit_var(node)
       var = @vars[node.name]
+      if !var && node.name == "self"
+        node.raise "there's no self in this scope"
+      end
       filter = build_var_filter var
       node.bind_to(filter || var)
       node.type_filters = and_type_filters({node.name => NotNilFilter}, var.type_filters)

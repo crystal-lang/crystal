@@ -161,6 +161,10 @@ module Crystal
               raise "dynamic constant assignment"
             end
 
+            if atomic.is_a?(Var) && atomic.name == "self"
+              raise "can't change the value of self", location
+            end
+
             atomic = Var.new(atomic.name) if atomic.is_a?(Call)
 
             next_token_skip_space_or_newline

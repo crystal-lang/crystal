@@ -81,10 +81,16 @@ module Crystal
     end
 
     def visit(node : Var)
-      var = @vars[node.name]
-      filter = build_var_filter var
-      node.bind_to(filter || var)
-      node.type_filters = and_type_filters(not_nil_filter(node), var.type_filters)
+      var = @vars[node.name]?
+      if var
+        filter = build_var_filter var
+        node.bind_to(filter || var)
+        node.type_filters = and_type_filters(not_nil_filter(node), var.type_filters)
+      elsif node.name == "self"
+        node.raise "there's no self in this scope"
+      else
+        node.raise "Bug: missing variable declaration for: #{node.name}"
+      end
     end
 
     def visit(node : DeclareVar)

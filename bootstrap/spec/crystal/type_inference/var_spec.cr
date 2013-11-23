@@ -50,4 +50,12 @@ describe "Type inference: var" do
     assert_error "a = a + 1",
       "undefined local variable or method 'a'"
   end
+
+  it "reports there's no self" do
+    assert_error "self", "there's no self in this scope"
+  end
+
+  it "reports can't change the value of self" do
+    assert_syntax_error "self = 1", "can't change the value of self"
+  end
 end
