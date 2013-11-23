@@ -107,10 +107,10 @@ module Crystal
       left = node.left.transform(self)
       right = node.right.transform(self)
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
-               If.new(left, node.right, left.clone)
+               If.new(left, right, left.clone)
              else
                temp_var = new_temp_var
-               If.new(Assign.new(temp_var, left), node.right, temp_var)
+               If.new(Assign.new(temp_var, left), right, temp_var)
              end
       new_node.binary = :and
       new_node.location = node.location
