@@ -31,6 +31,20 @@ module Crystal
     )
   end
 
+  class Assign
+    def returns?
+      value.returns?
+    end
+
+    def yields?
+      value.yields?
+    end
+
+    def breaks?
+      value.breaks?
+    end
+  end
+
   class Return
     def returns?
       true

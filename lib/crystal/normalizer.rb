@@ -552,17 +552,43 @@ module Crystal
       after_cond_loop_vars = get_loop_vars(after_cond_vars, false)
       before_cond_loop_vars = get_loop_vars(before_cond_vars, false)
 
+      vars_declared_in_body = []
+
       @vars.each do |var_name, indices|
+        unless var_name[0] == '#'
+          before_indices = before_cond_vars[var_name]
+          unless before_indices
+            vars_declared_in_body << var_name
+          end
+        end
+
         after_indices = after_cond_vars[var_name]
         if after_indices && after_indices != indices
           @vars[var_name] = {read: after_indices[:read], write: indices[:write]}
         end
       end
 
+      vars_declared_in_body.each do |var_name|
+        indices = @vars[var_name]
+        before_cond_loop_vars << assign_var_with_indices(var_name, indices[:write], indices[:read])
+        after_cond_loop_vars << assign_var_with_indices(var_name, indices[:write], indices[:read])
+      end
+
       node.body = append_before_exits(node.body, before_cond_vars, after_cond_loop_vars) if !node.body.nop? && after_cond_loop_vars.length > 0
 
       unless @dead_code
         node.body = concat_preserving_return_value(node.body, before_cond_loop_vars)
+
+        if vars_declared_in_body.length > 0
+          exps = []
+          vars_declared_in_body.each do |var_name|
+            indices = @vars[var_name]
+            exps << assign_var_with_indices(var_name, indices[:write], nil)
+            increment_var(var_name, indices)
+          end
+          exps << node
+          node = Expressions.new(exps)
+        end
       end
 
       node
@@ -817,8 +843,8 @@ module Crystal
 
       if node.target.is_a?(Var)
         name, index = node.target.name.split('$')
-        if index && @names.include?(name)
-          @vars_indices[name] = index
+        if @names.include?(name)
+          @vars_indices[name] = index || 0
         end
       end
 

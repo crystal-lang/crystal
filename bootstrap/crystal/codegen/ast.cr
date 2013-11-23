@@ -38,6 +38,20 @@ module Crystal
   doesnt_need_const_block StringLiteral
   doesnt_need_const_block SymbolLiteral
 
+  class Assign
+    def returns?
+      value.returns?
+    end
+
+    def yields?
+      value.yields?
+    end
+
+    def breaks?
+      value.breaks?
+    end
+  end
+
   class Primitive
     def needs_const_block?
       case name

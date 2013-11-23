@@ -669,17 +669,43 @@ module Crystal
       after_cond_loop_vars = get_loop_vars(after_cond_vars, false)
       before_cond_loop_vars = get_loop_vars(before_cond_vars, false)
 
+      vars_declared_in_body = [] of String
+
       @vars.each do |var_name, indices|
+        unless var_name[0] == '#'
+          before_indices = before_cond_vars[var_name]?
+          unless before_indices
+            vars_declared_in_body << var_name
+          end
+        end
+
         after_indices = after_cond_vars[var_name]?
         if after_indices && after_indices != indices
           @vars[var_name] = Index.new(after_indices.read, indices.write)
         end
       end
 
+      vars_declared_in_body.each do |var_name|
+        indices = @vars[var_name]
+        before_cond_loop_vars << assign_var_with_indices(var_name, indices.write, indices.read)
+        after_cond_loop_vars << assign_var_with_indices(var_name, indices.write, indices.read)
+      end
+
       node.body = append_before_exits(node.body, before_cond_vars, after_cond_loop_vars) if !node.body.nop? && after_cond_loop_vars.length > 0
 
       unless @dead_code
         node.body = concat_preserving_return_value(node.body, before_cond_loop_vars)
+
+        if vars_declared_in_body.length > 0
+          exps = [] of ASTNode
+          vars_declared_in_body.each do |var_name|
+            indices = @vars[var_name]
+            exps << assign_var_with_indices(var_name, indices.write, nil)
+            increment_var(var_name, indices)
+          end
+          exps << node
+          node = Expressions.new(exps)
+        end
       end
 
       node
@@ -902,9 +928,11 @@ module Crystal
           name_and_index = target.name.split('$')
           if name_and_index.length == 2
             name, index = name_and_index
-            if index && @names.includes?(name)
+            if @names.includes?(name)
               @vars_indices[name] = index
             end
+          elsif @names.includes?(target.name)
+            @vars_indices[target.name] = "0"
           end
         end
 
@@ -929,7 +957,7 @@ module Crystal
 
             value_index = @vars_indices[name]?
             if value_index || ((before_var = @before_vars[name]?) && (value_index = before_var.read))
-              new_name = value_index == 0 ? name : "#{name}$#{value_index}"
+              new_name = value_index == 0 || value_index == "0" ? name : "#{name}$#{value_index}"
               if target_name == new_name
                 nil
               else

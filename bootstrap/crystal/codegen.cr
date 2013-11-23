@@ -1161,7 +1161,7 @@ module Crystal
 
       accept(value)
 
-      if value.no_returns?
+      if value.no_returns? || value.returns? || value.breaks? || (value.yields? && (block_returns? || block_breaks?))
         return
       end
 

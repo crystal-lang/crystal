@@ -137,7 +137,7 @@ describe "Normalize: ssa" do
 
   it "performs ssa on while with break with variable declared inside else" do
     assert_normalize "while true; if true; break; else; b = 2; end; end",
-      "while true\n  if true\n    b$1 = nil\n    break\n  else\n    #temp_1 = b = 2\n    b$1 = b\n    #temp_1\n  end\nend"
+      "b$2 = nil\nwhile true\n  #temp_2 = if true\n    b$1 = nil\n    b$2 = b$1\n    break\n  else\n    #temp_1 = b = 2\n    b$1 = b\n    #temp_1\n  end\n  b$2 = b$1\n  #temp_2\nend"
   end
 
   it "performs ssa on simple assignment inside def" do
@@ -206,5 +206,9 @@ describe "Normalize: ssa" do
 
   it "performs on complex while, if, break interaction" do
     assert_normalize "x = false; if 1 == 2; while 1 == 2; if 1 == 2; x = true; break; end; end; end; x", "x = false\nif 1 == 2\n  #temp_2 = while 1 == 2\n    #temp_1 = if 1 == 2\n      x$1 = true\n      x$2 = x$1\n      x = x$2\n      break\n    else\n      x$2 = x\n      nil\n    end\n    x = x$2\n    #temp_1\n  end\n  x$3 = x\n  #temp_2\nelse\n  x$3 = x\n  nil\nend\nx$3"
+  end
+
+  it "performs on while which declares a var and uses it outside" do
+    assert_normalize "while 1 == 2; a = 2; end; a", "a$1 = nil\nwhile 1 == 2\n  #temp_1 = a = 2\n  a$1 = a\n  #temp_1\nend\na$1"
   end
 end

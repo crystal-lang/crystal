@@ -32,4 +32,43 @@ describe "Codegen: while" do
     node = program.infer_type node
     program.build node
   end
+
+  it "codegens while with declared var 1" do
+    run("
+      require \"nil\"
+      while 1 == 2
+        a = 2
+      end
+      a.to_i
+      ").to_i.should eq(0)
+  end
+
+  it "codegens while with declared var 2" do
+    run("
+      require \"nil\"
+      while 1 == 1
+        a = 2
+        if 1 == 1
+          a = 3
+          break
+        end
+      end
+      a.to_i
+      ").to_i.should eq(3)
+  end
+
+  it "codegens while with declared var 3" do
+    run("
+      require \"nil\"
+      while 1 == 1
+        a = 1
+        if a
+          break
+        else
+          2
+        end
+      end
+      a.to_i
+      ").to_i.should eq(1)
+  end
 end
