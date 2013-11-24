@@ -265,7 +265,7 @@ module Crystal
         arg_types = target_def.function_type.argument_types
         ret_type = target_def.function_type.return_type
         @llvm_mod.functions.add("trampoline_wrapper_#{target_def.object_id}", arg_types, ret_type) do |fun, *args|
-          # fun.linkage = :internal
+          fun.linkage = :internal if @single_module
           args.first.add_attribute :nest_attribute
           fun.basic_blocks.append.build do |builder|
             call_ret = builder.call target_def, *args
@@ -1488,9 +1488,9 @@ module Crystal
       end
 
       if !target_def.is_a?(External) || target_def.body
-        # unless target_def.is_a?(External)
-        #   @fun.linkage = :internal
-        # end
+        if @single_module && !target_def.is_a?(External)
+          @fun.linkage = :internal
+        end
         new_entry_block
 
         @needs_gc = needs_gc?(target_def)

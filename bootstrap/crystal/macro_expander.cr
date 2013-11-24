@@ -42,13 +42,14 @@ module Crystal
           node.raise "macro return value must be a String, not #{macro_nodes.type}"
         end
 
-        @mod.build macro_nodes, @llvm_mod#, single_module: true
+        @mod.build macro_nodes, true, @llvm_mod
         func = @llvm_mod.functions[macro_call.target_def.mangled_name(nil)]?
         if func
           @untyped_def.add_instance func, macro_arg_types
         end
       end
 
+      # TODO
       # @mod.load_libs
 
       if func

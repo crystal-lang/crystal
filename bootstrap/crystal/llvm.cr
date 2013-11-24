@@ -218,6 +218,7 @@ lib LibLLVM("LLVM-3.3")
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : Int32
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
+  fun get_attribute = LLVMGetAttribute(arg : ValueRef) : Attribute
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
   fun get_global_context = LLVMGetGlobalContext : ContextRef
@@ -236,6 +237,7 @@ lib LibLLVM("LLVM-3.3")
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
+  fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : Char*) : ModuleRef
   fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
@@ -296,6 +298,10 @@ module LLVM
 
   def self.add_attribute(value, attribute)
     LibLLVM.add_attribute value, attribute
+  end
+
+  def self.get_attribute(value)
+    LibLLVM.get_attribute value
   end
 
   class Context
@@ -422,6 +428,10 @@ module LLVM
       param_types = Pointer(LibLLVM::TypeRef).malloc(param_count)
       LibLLVM.get_param_types(type, param_types)
       param_types.to_a(param_count.to_i)
+    end
+
+    def varargs?
+      LibLLVM.is_function_var_arg(function_type) != 0
     end
   end
 

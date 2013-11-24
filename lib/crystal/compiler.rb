@@ -181,7 +181,7 @@ module Crystal
               must_compile = true
 
               if File.exists?(bc_name) && File.exists?(o_name)
-                `diff -q #{bc_name} #{bc_name}.new`
+                `cmp -s #{bc_name} #{bc_name}.new`
                 if $?.success?
                   FileUtils.rm "#{bc_name}.new"
                   must_compile = false
@@ -206,7 +206,7 @@ module Crystal
                   `#{llvm_dis} #{bc_name_opt} -o #{ll_name}`
                 else
                   `#{llvm_dis} #{bc_name} -o #{ll_name}`
-                 end
+                end
               end
 
               object_names << o_name

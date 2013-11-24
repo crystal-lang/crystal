@@ -21,7 +21,7 @@ module Crystal
     end
 
     def evaluate(node)
-      llvm_mod = build node
+      llvm_mod = build(node, true)[""]
       engine = LLVM::JITCompiler.new(llvm_mod)
 
       argc = LibLLVM.create_generic_value_of_int(LLVM::Int32, 0_u64, 1)
@@ -30,8 +30,8 @@ module Crystal
       engine.run_function llvm_mod.functions[MAIN_NAME], [argc, argv]
     end
 
-    def build(node, llvm_mod = LLVM::Module.new("main"))
-      visitor = CodeGenVisitor.new(self, node, llvm_mod)
+    def build(node, single_module = false, llvm_mod = LLVM::Module.new("main"))
+      visitor = CodeGenVisitor.new(self, node, llvm_mod, single_module)
       begin
         node.accept visitor
         visitor.finish
@@ -39,9 +39,8 @@ module Crystal
         visitor.llvm_mod.dump
         raise ex
       end
-      visitor.llvm_mod.dump if Crystal::DUMP_LLVM
-      visitor.llvm_mod
 
+      visitor.modules
     end
   end
 
@@ -54,6 +53,7 @@ module Crystal
     getter :builder
     getter :typer
     getter :main
+    getter :modules
     getter! :type
     getter! :return_union
 
@@ -67,8 +67,9 @@ module Crystal
     end
 
     make_tuple Handler, node, catch_block
+    make_tuple StringKey, mod, string
 
-    def initialize(@mod, @node, @llvm_mod)
+    def initialize(@mod, @node, @llvm_mod, @single_module = false)
       @main_mod = @llvm_mod
       @llvm_typer = LLVMTyper.new
       @main_ret_type = node.type
@@ -84,6 +85,9 @@ module Crystal
 
       builder = LLVM::Builder.new
       @builder = CrystalLLVMBuilder.new builder, self
+
+      @modules = {"" => @main_mod} of String => LLVM::Module
+
       @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
       @main_alloca_block = @alloca_block
 
@@ -91,7 +95,7 @@ module Crystal
       @vars = {} of String => LLVMVar
       @exception_handlers = [] of Handler
       @lib_vars = {} of String => LibLLVM::ValueRef
-      @strings = {} of String => LibLLVM::ValueRef
+      @strings = {} of StringKey => LibLLVM::ValueRef
       @symbols = {} of String => Int32
       @symbol_table_values = [] of LibLLVM::ValueRef
       mod.symbols.to_a.sort.each_with_index do |sym, index|
@@ -720,8 +724,9 @@ module Crystal
       @fun_literal_count += 1
 
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
-      @last = codegen_fun(fun_literal_name, node.def, nil, false).fun
-      # @last = check_main_fun fun_literal_name, @last
+      the_fun = codegen_fun(fun_literal_name, node.def, nil, false, @main_mod)
+      @last = the_fun.fun
+      @last = (check_main_fun fun_literal_name, the_fun).fun
 
       false
     end
@@ -759,7 +764,7 @@ module Crystal
         param_types = target_fun.param_types
         ret_type = target_fun.return_type
         @llvm_mod.functions.add("trampoline_wrapper_#{key}", param_types, ret_type) do |func|
-          # fun.linkage = :internal
+          func.linkage = LibLLVM::Linkage::Internal if @single_module
           LLVM.add_attribute func.get_param(0), LibLLVM::Attribute::Nest
           func.append_basic_block("entry") do |builder|
             call_ret = builder.call target_fun, func.params
@@ -858,7 +863,8 @@ module Crystal
 
     def build_string_constant(str, name = "str")
       name = name.replace '@', '.'
-      @strings[str] ||= begin
+      key = StringKey.new(@llvm_mod, str)
+      @strings[key] ||= begin
         global = @llvm_mod.globals.add(LLVM.array_type(LLVM::Int8, str.length + 5), name)
         LLVM.set_linkage global, LibLLVM::Linkage::Private
         LLVM.set_global_constant global, true
@@ -1210,9 +1216,13 @@ module Crystal
       ptr = @llvm_mod.globals[name]?
       unless ptr
         llvm_type = llvm_type(type)
-        ptr = @llvm_mod.globals.add(llvm_type, name)
-        LLVM.set_linkage ptr, LibLLVM::Linkage::Internal
-        LLVM.set_initializer ptr, LLVM.null(llvm_type)
+        if @llvm_mod == @main_mod
+          ptr = @llvm_mod.globals.add(llvm_type, name)
+          LLVM.set_initializer ptr, LLVM.null(llvm_type)
+        else
+          ptr = @llvm_mod.globals.add(llvm_type, name)
+          LLVM.set_linkage ptr, LibLLVM::Linkage::External
+        end
       end
       ptr
     end
@@ -1524,11 +1534,10 @@ module Crystal
       const = node.target_const
       if const
         global_name = const.llvm_name
-        global = @llvm_mod.globals[global_name]?
+        global = @main_mod.globals[global_name]?
 
         unless global
-          global = @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
-          LLVM.set_linkage global, LibLLVM::Linkage::Internal
+          global = @main_mod.globals.add(llvm_type(const.value.type), global_name)
 
           if const.value.needs_const_block?
             in_const_block("const_#{global_name}") do
@@ -1543,10 +1552,18 @@ module Crystal
               end
             end
           else
+            old_llvm_mod = @llvm_mod
+            @llvm_mod = @main_mod
             accept(const.value)
             LLVM.set_initializer global, @last
             LLVM.set_global_constant global, true
+            @llvm_mod = old_llvm_mod
           end
+        end
+
+        if @llvm_mod != @main_mod
+          global = @llvm_mod.globals[global_name]?
+          global ||= @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
         end
 
         @last = @builder.load global
@@ -2083,21 +2100,41 @@ module Crystal
 
     def target_def_fun(target_def, self_type)
       mangled_name = target_def.mangled_name(self_type)
-      @llvm_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
+      self_type_mod = type_module(self_type)
 
-      # self_type_mod = type_module(self_type)
-
-      # fun = self_type_mod.functions[mangled_name] || codegen_fun(mangled_name, target_def, self_type)
-      # check_mod_fun self_type_mod, mangled_name, fun
+      func = self_type_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
+      check_mod_fun self_type_mod, mangled_name, func
     end
 
     def main_fun(name)
-      @llvm_mod.functions[name]
-      # fun = @main_mod.functions[name]
-      # check_main_fun name, fun
+      func = @main_mod.functions[name]
+      check_main_fun name, func
     end
 
-    def codegen_fun(mangled_name, target_def, self_type, is_exported_fun_def = false)
+    def check_main_fun(name, func)
+      check_mod_fun @main_mod, name, func
+    end
+
+    def check_mod_fun(mod, name, func)
+      return func if @llvm_mod == mod
+      @llvm_mod.functions[name]? || declare_fun(name, func)
+    end
+
+    def declare_fun(mangled_name, func)
+      new_fun = @llvm_mod.functions.add(
+        mangled_name,
+        func.param_types,
+        func.return_type,
+        func.varargs?
+      )
+      func.params.zip(new_fun.params) do |p1, p2|
+        val = LLVM.get_attribute(p1)
+        LLVM.add_attribute(p2, val) if val != 0
+      end
+      new_fun
+    end
+
+    def codegen_fun(mangled_name, target_def, self_type, is_exported_fun_def = false, fun_module = type_module(self_type))
       if target_def.type == @mod.void
         llvm_return_type = LLVM::Void
       else
@@ -2113,6 +2150,9 @@ module Crystal
       old_type = @type
       old_target_def = @target_def
       old_in_const_block = @in_const_block
+      old_llvm_mod = @llvm_mod
+
+      @llvm_mod = fun_module
 
       @in_const_block = false
       @trampoline_wrappers = {} of UInt64 => LLVM::Function
@@ -2140,7 +2180,7 @@ module Crystal
       )
       @fun.add_attribute LibLLVM::Attribute::NoReturn if target_def.no_returns?
 
-      unless is_external
+      if @single_module && !is_external
         @fun.linkage = LibLLVM::Linkage::Internal
       end
 
@@ -2190,6 +2230,7 @@ module Crystal
 
       the_fun = @fun
 
+      @llvm_mod = old_llvm_mod
       @vars = old_vars
       @exception_handlers = old_exception_handlers
       @fun = old_fun
@@ -2246,7 +2287,7 @@ module Crystal
 
         match_fun_name = "~match<#{type}>"
         func = @main_mod.functions[match_fun_name]? || create_match_fun(match_fun_name, type)
-        # func = check_main_fun match_fun_name, func
+        func = check_main_fun match_fun_name, func
         return @builder.call func, [type_id] of LibLLVM::ValueRef
       end
 
@@ -2269,6 +2310,21 @@ module Crystal
 
     def create_match_fun(name, type)
       raise "Bug: shouldn't create match fun for #{type}"
+    end
+
+    def type_module(type)
+      return @main_mod if @single_module
+
+      type = type.typedef if type.is_a?(TypeDefType)
+      type_name = (type ? type.instance_type : nil).to_s
+
+      llvm_mod = @modules[type_name]?
+      unless llvm_mod
+        llvm_mod = LLVM::Module.new(type_name)
+        llvm_mod.globals.add(LLVM.array_type(llvm_type(@mod.string), @symbol_table_values.count), "symbol_table")
+        @modules[type_name] = llvm_mod
+      end
+      llvm_mod
     end
 
     def new_entry_block
@@ -2324,7 +2380,9 @@ module Crystal
       old_position = @builder.insert_block
       old_fun = @fun
       old_in_const_block = @in_const_block
+      old_llvm_mod = @llvm_mod
       @in_const_block = true
+      @llvm_mod = @main_mod
 
       @fun = @main
       const_block = new_block const_block_name
@@ -2339,6 +2397,7 @@ module Crystal
 
       @builder.position_at_end old_position
       @fun = old_fun
+      @llvm_mod = old_llvm_mod
       @in_const_block = old_in_const_block
     end
 

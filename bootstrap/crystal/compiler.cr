@@ -14,6 +14,12 @@ module Crystal
       @print_types = false
       @run = false
       @stats = false
+      @release = false
+
+      @llc = "llc-3.3"
+      @opt = "opt-3.3"
+      @clang = "clang-3.3"
+      @llvm_dis = "llvm-dis-3.3"
 
       @options = OptionParser.parse! do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
@@ -91,27 +97,76 @@ module Crystal
         exit if @no_build
 
         time = Time.now
-        llvm_mod = program.build node
-        puts "Codegen: #{Time.now - time} seconds" if @stats
+        llvm_modules = program.build node, @release
+        puts "Codegen (crystal): #{Time.now - time} seconds" if @stats
+
+        system "mkdir -p .crystal"
 
         time = Time.now
 
-        llvm_mod.write_bitcode bitcode_filename
+        object_names = [] of String
 
-        if @release
-          system "opt-3.3 #{bitcode_filename} -O3 -o #{optimized_bitcode_filename}"
-          system "llc-3.3 #{optimized_bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
-          if @dump_ll
-            system "llvm-dis-3.3 #{optimized_bitcode_filename} -o #{ll_filename}"
+        llvm_modules.each do |type_name, llvm_mod|
+          type_name = "main" if type_name == ""
+          name = type_name.replace do |char|
+            if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
+              nil
+            else
+              char.ord.to_s
+            end
           end
-        else
-          system "llc-3.3 #{bitcode_filename} -o - | clang-3.3 -x assembler -o #{output_filename} #{lib_flags(program)} -"
-          if @dump_ll
-            system "llvm-dis-3.3 #{bitcode_filename} -o #{ll_filename}"
+
+          bc_name = ".crystal/#{name}.bc"
+          bc_name_new = "#{bc_name}.new"
+          bc_name_opt = ".crystal/#{name}.opt.bc"
+          s_name = ".crystal/#{name}.s"
+          o_name = ".crystal/#{name}.o"
+          ll_name = ".crystal/#{name}.ll"
+
+          # puts "Process: #{type_name}"
+
+          llvm_mod.dump if Crystal::DUMP_LLVM
+
+          llvm_mod.write_bitcode bc_name_new
+
+          must_compile = true
+
+          if File.exists?(bc_name) && File.exists?(o_name)
+            cmd_output = system "cmp -s #{bc_name} #{bc_name}.new"
+            if cmd_output == 0
+              system "rm #{bc_name_new}"
+              must_compile = false
+            end
           end
+
+          if must_compile
+            # puts "Compile: #{type_name}"
+            system "mv #{bc_name_new} #{bc_name}"
+            if @release
+              system "#{@opt} #{bc_name} -O3 -o #{bc_name_opt}"
+              system "#{@llc} #{bc_name_opt} -o #{s_name}"
+            else
+              system "#{@llc} #{bc_name} -o #{s_name}"
+            end
+            system "#{@clang} -c #{s_name} -o #{o_name}"
+          end
+
+          if @dump_ll
+            if @release
+              system "#{@llvm_dis} #{bc_name_opt} -o #{ll_name}"
+            else
+              system "#{@llvm_dis} #{bc_name} -o #{ll_name}"
+            end
+          end
+
+          object_names << o_name
         end
 
-        puts "Llvm: #{Time.now - time} seconds" if @stats
+        puts "Codegen (llc+clang): #{Time.now - time} seconds" if @stats
+
+        time = Time.now
+        system "#{@clang} -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
+        puts "Codegen (clang): #{Time.now - time} seconds" if @stats
 
         if @run
           system "#{output_filename}"
