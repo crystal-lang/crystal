@@ -3,18 +3,6 @@ require "spec"
 require "option_parser"
 
 describe "OptionParser" do
-  def expect_missing_argument(args, option, flag)
-    begin
-      OptionParser.parse(args) do |opts|
-        opts.on(option, "some flag") do |value|
-        end
-      end
-      fail "Expected to raise OptionParser::MissingOption"
-    rescue ex : OptionParser::MissingOption
-      ex.message.should eq("Missing option: #{flag}")
-    end
-  end
-
   def expect_capture_option(args, option, value)
     flag = nil
     OptionParser.parse(args) do |opts|
@@ -36,9 +24,19 @@ describe "OptionParser" do
     flag.should be_false
   end
 
-  def expect_doesnt_raise_for_optional_argument(option)
+  def expect_missing_option(option)
     flag = nil
     OptionParser.parse([] of String) do |opts|
+      opts.on(option, "some flag") do |flag_value|
+        flag = flag_value
+      end
+    end
+    flag.should be_nil
+  end
+
+  def expect_missing_option(args, option, flag)
+    flag = nil
+    OptionParser.parse(args) do |opts|
       opts.on(option, "some flag") do |flag_value|
         flag = flag_value
       end
@@ -71,7 +69,7 @@ describe "OptionParser" do
   end
 
   it "raises if missing required option" do
-    expect_missing_argument ([] of String), "-fFLAG", "-f"
+    expect_missing_option ([] of String), "-fFLAG", "-f"
   end
 
   it "has required option separated from flag" do
@@ -79,7 +77,7 @@ describe "OptionParser" do
   end
 
   it "raises if missing required argument" do
-    expect_missing_argument ["-f"], "-f FLAG", "-f"
+    expect_missing_option ["-f"], "-f FLAG", "-f"
   end
 
   it "has required option separated from long flag" do
@@ -87,7 +85,7 @@ describe "OptionParser" do
   end
 
   it "raises if missing required argument separated from long flag" do
-    expect_missing_argument ["--flag"], "--flag FLAG", "--flag"
+    expect_missing_option ["--flag"], "--flag FLAG", "--flag"
   end
 
   it "has optional option with space" do
@@ -95,19 +93,19 @@ describe "OptionParser" do
   end
 
   it "doesn't raise if optional option is not specified" do
-    expect_doesnt_raise_for_optional_argument "-f "
+    expect_missing_option "-f "
   end
 
   it "doesn't raise if optional option is not specified with short flag" do
-    expect_doesnt_raise_for_optional_argument "-f[FLAG]"
+    expect_missing_option "-f[FLAG]"
   end
 
   it "doesn't raise if optional option is not specified with long flag" do
-    expect_doesnt_raise_for_optional_argument "--flag [FLAG]"
+    expect_missing_option "--flag [FLAG]"
   end
 
   it "doesn't raise if optional option is not specified with separated short flag" do
-    expect_doesnt_raise_for_optional_argument "-f [FLAG]"
+    expect_missing_option "-f [FLAG]"
   end
 
   it "does to_s with banner" do

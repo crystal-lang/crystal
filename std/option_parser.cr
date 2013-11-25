@@ -1,10 +1,4 @@
 class OptionParser
-  class MissingOption < Exception
-    def initialize(option)
-      super("Missing option: #{option}")
-    end
-  end
-
   class InvalidOption < Exception
     def initialize(option)
       super("Invalid option: #{option}")
@@ -69,19 +63,19 @@ class OptionParser
   def parse_flag(flag)
     case flag
     when /--(\S+)\s+\[\S+\]/
-      yield flag_value("--#{$1}", false)
+      yield flag_value("--#{$1}")
     when /--(\S+)\s+\S+/
       yield flag_value("--#{$1}")
     when /--\S+/
       flag_present?(flag) && yield ""
     when /-(.)\s+\[\S+\]/
-      yield flag_value(flag[0 .. 1], false)
+      yield flag_value(flag[0 .. 1])
     when /-(.)\s+\S+/
       yield flag_value(flag[0 .. 1])
     when /-(.)\s+/
-      yield flag_value(flag[0 .. 1], false)
+      yield flag_value(flag[0 .. 1])
     when /-(.)\[\S+\]/
-      yield inline_flag_value(flag[0 ..1], false)
+      yield inline_flag_value(flag[0 ..1])
     when /-(.)[A-Z]+/
       yield inline_flag_value(flag[0 .. 1])
     else
@@ -99,26 +93,26 @@ class OptionParser
     end
   end
 
-  def flag_value(flag, raise_if_not_found = true)
+  def flag_value(flag)
     index = @args.index(flag)
     if index
       begin
         @args.delete_at(index)
         @args.delete_at(index)
       rescue IndexOutOfBounds
-        raise MissingOption.new(flag)
+        nil
       end
     else
-      raise MissingOption.new(flag) if raise_if_not_found
+      nil
     end
   end
 
-  def inline_flag_value(flag, raise_if_not_found = true)
+  def inline_flag_value(flag)
     index = @args.index { |arg| arg.starts_with?(flag) }
     if index
       @args.delete_at(index)[2 .. -1]
     else
-      raise MissingOption.new(flag) if raise_if_not_found
+      nil
     end
   end
 
