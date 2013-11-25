@@ -35,3 +35,9 @@ require "raise"
 require "tuple"
 require "assert"
 require "main"
+
+def loop
+  while true
+    yield
+  end
+end

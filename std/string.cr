@@ -235,7 +235,7 @@ class String
   end
 
   def empty?
-    length == 0
+    @length == 0
   end
 
   def <=>(other : self)

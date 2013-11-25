@@ -2537,9 +2537,9 @@ module Crystal
 
     def unexpected_token(token = @token.to_s, msg = nil)
       if msg
-        raise "unexpected token #{token} (#{msg})"
+        raise "unexpected token: #{token} (#{msg})"
       else
-        raise "unexpected token #{token}"
+        raise "unexpected token: #{token}"
       end
     end
 

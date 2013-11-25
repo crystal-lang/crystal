@@ -4,11 +4,25 @@ class StringBuilder
     @parts = Array(String).new
   end
 
+  def initialize(string : String)
+    @length = string.length
+    @parts = [string]
+  end
+
+  def clear
+    @length = 0
+    @parts.clear
+  end
+
   def <<(part)
     str = part.to_s
     @parts << str
     @length += str.length
     self
+  end
+
+  def length
+    @length
   end
 
   def to_s
