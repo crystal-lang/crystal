@@ -17,6 +17,7 @@ module Crystal
       node = Parser.parse(code)
       node = normalize node
       node = infer_type node
+      load_libs
       evaluate node
     end
 

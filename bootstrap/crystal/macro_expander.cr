@@ -49,8 +49,7 @@ module Crystal
         end
       end
 
-      # TODO
-      # @mod.load_libs
+      @mod.load_libs
 
       if func
         macro_args = mapped_args.map do |arg|

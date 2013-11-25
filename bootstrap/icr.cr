@@ -82,7 +82,7 @@ loop do
             nodes = program.normalize nodes
             nodes = program.infer_type nodes
             if nodes.type?
-              # program.load_libs
+              program.load_libs
               llvm_mod = program.build(nodes, true)[""]
               engine = LLVM::JITCompiler.new(llvm_mod)
               argc = LibLLVM.create_generic_value_of_int(LLVM::Int32, 0_u64, 1)

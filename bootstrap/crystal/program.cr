@@ -1,5 +1,6 @@
 require "types"
 require "llvm"
+require "dl"
 
 module Crystal
   make_tuple MacroCacheKey, def_object_id, node_ids
@@ -334,6 +335,20 @@ module Crystal
         end
       end
       libs
+    end
+
+    def load_libs
+      libs = library_names
+      if libs.length > 0
+        if has_require_flag?("darwin")
+          ext = "dylib"
+        else
+          ext = "so"
+        end
+        libs.each do |a_lib|
+          DL.dlopen "lib#{a_lib}.#{ext}"
+        end
+      end
     end
 
     getter :object
