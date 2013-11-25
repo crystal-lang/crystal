@@ -98,7 +98,7 @@ module Crystal
     def require_flags
       @require_flags ||= begin
         flags = Set(String).new
-        exec("uname -m -s").split(' ').each do |uname|
+        exec("uname -m -s").not_nil!.split(' ').each do |uname|
           flags.add uname.downcase
         end
         flags
@@ -119,11 +119,15 @@ module Crystal
       end
     end
 
-    def exec(command)
+    def self.exec(command)
       cmd = PopenCommand.new(command)
-      value = cmd.gets.not_nil!.strip
+      value = cmd.gets.try &.strip
       cmd.close
       value
+    end
+
+    def exec(command)
+      Program.exec(command)
     end
 
     def program

@@ -16,10 +16,11 @@ module Crystal
       @stats = false
       @release = false
 
-      @llc = "llc-3.3"
-      @opt = "opt-3.3"
-      @clang = "clang-3.3"
-      @llvm_dis = "llvm-dis-3.3"
+      @config = LLVMConfig.new
+      @llc = @config.bin "llc"
+      @opt = @config.bin "opt"
+      @clang = @config.bin "clang"
+      @llvm_dis = @config.bin "llvm-dis"
 
       @options = OptionParser.parse! do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
@@ -87,6 +88,22 @@ module Crystal
 
       begin
         program = Program.new
+
+        unless File.exists?(@clang)
+          if program.has_require_flag?("darwin")
+            puts "Could not find clang. Install clang 3.3: brew tap homebrew/versions; brew install llvm33 --with-clang"
+            exit 1
+          end
+
+          clang = program.exec "which gcc"
+          if clang
+            @clang = clang
+          else
+            puts "Could not find a C compiler. Install clang (3.3) or gcc."
+            exit 1
+          end
+        end
+
         parser = Parser.new(source)
         parser.filename = filename
         node = parser.parse
@@ -209,7 +226,7 @@ module Crystal
           end
         end
         flags << " -Wl,-allow_stack_execute" if mod.has_require_flag?("darwin")
-        flags << " -L#{mod.exec("llvm-config-3.3 --libdir").strip}"
+        flags << " -L#{@config.lib_dir}"
       end
     end
   end
