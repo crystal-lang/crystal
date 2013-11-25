@@ -179,10 +179,11 @@ class Hash(K, V)
     @first ? @first.value : nil
   end
 
-  def ==(other : self)
+  def ==(other : Hash)
     return false unless length == other.length
     each do |key, value|
-      return false unless other[key] == value
+      entry = other.find_entry(key)
+      return false unless entry && entry.value == value
     end
     true
   end

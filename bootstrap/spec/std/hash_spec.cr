@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "spec"
 
 describe "Hash" do
@@ -53,11 +53,19 @@ describe "Hash" do
       a = {1 => 2, 3 => 4}
       b = {3 => 4, 1 => 2}
       c = {2 => 3}
+      d = {5 => 6, 7 => 8}
       a.should eq(a)
       a.should eq(b)
       b.should eq(a)
       a.should_not eq(c)
       c.should_not eq(a)
+      d.should_not eq(a)
+    end
+
+    assert do
+      a = {1 => nil}
+      b = {3 => 4}
+      a.should_not eq(b)
     end
   end
 
