@@ -73,7 +73,7 @@ class OptionParser
     when /--(\S+)\s+\S+/
       yield flag_value("--#{$1}")
     when /--\S+/
-      flag_present?(flag) && yield true
+      flag_present?(flag) && yield ""
     when /-(.)\s+\[\S+\]/
       yield flag_value(flag[0 .. 1], false)
     when /-(.)\s+\S+/
@@ -85,7 +85,7 @@ class OptionParser
     when /-(.)[A-Z]+/
       yield inline_flag_value(flag[0 .. 1])
     else
-      flag_present?(flag) && yield true
+      flag_present?(flag) && yield ""
     end
   end
 

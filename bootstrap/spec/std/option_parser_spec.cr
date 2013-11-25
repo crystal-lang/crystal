@@ -47,11 +47,11 @@ describe "OptionParser" do
   end
 
   it "has flag" do
-    expect_capture_option ["-f"], "-f", true
+    expect_capture_option ["-f"], "-f", ""
   end
 
   it "has flag with many letters" do
-    expect_capture_option ["-ll"], "-ll", true
+    expect_capture_option ["-ll"], "-ll", ""
   end
 
   it "doesn't have flag" do
@@ -59,7 +59,7 @@ describe "OptionParser" do
   end
 
   it "has flag with double dash" do
-    expect_capture_option ["--flag"], "--flag", true
+    expect_capture_option ["--flag"], "--flag", ""
   end
 
   it "doesn't have flag with double dash" do
