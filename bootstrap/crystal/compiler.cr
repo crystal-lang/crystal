@@ -29,6 +29,9 @@ module Crystal
         opts.on("-no-build", "Disable build output") do
           @no_build = true
         end
+        opts.on("-o ", "Output filename") do |output_filename|
+          @output_filename = output_filename
+        end
         opts.on("--release", "Compile in release mode") do
           @release = true
         end
@@ -62,15 +65,15 @@ module Crystal
 
       filename = File.expand_path(filename) #unless filename == '-'
 
-      if @run
-        output_filename = String.new(C.tmpnam(nil))
+      if @output_filename
+        output_filename = @output_filename
       else
-        output_filename = File.basename(filename, File.extname(filename))
+        if @run
+          output_filename = String.new(C.tmpnam(nil))
+        else
+          output_filename = File.basename(filename, File.extname(filename))
+        end
       end
-
-      bitcode_filename = "#{output_filename}.bc"
-      optimized_bitcode_filename = "#{output_filename}.opt.bc"
-      ll_filename = "#{output_filename}.ll"
 
       source = File.read filename
 
