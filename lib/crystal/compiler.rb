@@ -158,7 +158,9 @@ module Crystal
         exit 1
       end
 
-      FileUtils.mkdir_p ".crystal"
+      output_dir = ".crystal/#{filename}"
+
+      FileUtils.mkdir_p output_dir
 
       object_names = []
 
@@ -170,11 +172,11 @@ module Crystal
 
               type = "main" if type == ""
               name = type.gsub(/[^a-zA-Z0-9]/) { |c| "##{c.ord.to_s(16)}" }
-              bc_name = ".crystal/#{name}.bc"
-              bc_name_opt = ".crystal/#{name}.opt.bc"
-              s_name = ".crystal/#{name}.s"
-              o_name = ".crystal/#{name}.o"
-              ll_name = ".crystal/#{name}.ll"
+              bc_name = "#{output_dir}/#{name}.bc"
+              bc_name_opt = "#{output_dir}/#{name}.opt.bc"
+              s_name = "#{output_dir}/#{name}.s"
+              o_name = "#{output_dir}/#{name}.o"
+              ll_name = "#{output_dir}/#{name}.ll"
 
               llvm_mod.write_bitcode "#{bc_name}.new"
 

@@ -85,88 +85,86 @@ module Crystal
 
         node = Expressions.new([require_node, node] of ASTNode)
 
-        time = Time.now
-        node = program.normalize node
-        puts "Normalize: #{Time.now - time} seconds" if @stats
+        node = timing("Normalize") do
+          program.normalize(node)
+        end
 
-        time = Time.now
-        node = program.infer_type node
-        puts "Type inference: #{Time.now - time} seconds" if @stats
+        node = timing("Type inference") do
+          program.infer_type node
+        end
 
         print_types node if @print_types
         exit if @no_build
 
-        time = Time.now
-        llvm_modules = program.build node, @release
-        puts "Codegen (crystal): #{Time.now - time} seconds" if @stats
+        llvm_modules = timing("Codegen (crystal)") do
+          program.build node, @release
+        end
 
-        system "mkdir -p .crystal"
+        output_dir = ".crystal/#{filename}"
 
-        time = Time.now
+        system "mkdir -p #{output_dir}"
 
         object_names = [] of String
 
-        llvm_modules.each do |type_name, llvm_mod|
-          type_name = "main" if type_name == ""
-          name = type_name.replace do |char|
-            if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
-              nil
-            else
-              char.ord.to_s
+        timing("Codegen (llc+clang)") do
+          llvm_modules.each do |type_name, llvm_mod|
+            type_name = "main" if type_name == ""
+            name = type_name.replace do |char|
+              if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
+                nil
+              else
+                char.ord.to_s
+              end
             end
-          end
 
-          bc_name = ".crystal/#{name}.bc"
-          bc_name_new = "#{bc_name}.new"
-          bc_name_opt = ".crystal/#{name}.opt.bc"
-          s_name = ".crystal/#{name}.s"
-          o_name = ".crystal/#{name}.o"
-          ll_name = ".crystal/#{name}.ll"
+            bc_name = "#{output_dir}/#{name}.bc"
+            bc_name_new = "#{bc_name}.new"
+            bc_name_opt = "#{output_dir}/#{name}.opt.bc"
+            s_name = "#{output_dir}/#{name}.s"
+            o_name = "#{output_dir}/#{name}.o"
+            ll_name = "#{output_dir}/#{name}.ll"
 
-          # puts "Process: #{type_name}"
+            llvm_mod.dump if Crystal::DUMP_LLVM
 
-          llvm_mod.dump if Crystal::DUMP_LLVM
+            llvm_mod.write_bitcode bc_name_new
 
-          llvm_mod.write_bitcode bc_name_new
+            must_compile = true
 
-          must_compile = true
-
-          if File.exists?(bc_name) && File.exists?(o_name)
-            cmd_output = system "cmp -s #{bc_name} #{bc_name}.new"
-            if cmd_output == 0
-              system "rm #{bc_name_new}"
-              must_compile = false
+            if File.exists?(bc_name) && File.exists?(o_name)
+              cmd_output = system "cmp -s #{bc_name} #{bc_name}.new"
+              if cmd_output == 0
+                system "rm #{bc_name_new}"
+                must_compile = false
+              end
             end
-          end
 
-          if must_compile
-            # puts "Compile: #{type_name}"
-            system "mv #{bc_name_new} #{bc_name}"
-            if @release
-              system "#{@opt} #{bc_name} -O3 -o #{bc_name_opt}"
-              system "#{@llc} #{bc_name_opt} -o #{s_name}"
-            else
-              system "#{@llc} #{bc_name} -o #{s_name}"
+            if must_compile
+              # puts "Compile: #{type_name}"
+              system "mv #{bc_name_new} #{bc_name}"
+              if @release
+                system "#{@opt} #{bc_name} -O3 -o #{bc_name_opt}"
+                system "#{@llc} #{bc_name_opt} -o #{s_name}"
+              else
+                system "#{@llc} #{bc_name} -o #{s_name}"
+              end
+              system "#{@clang} -c #{s_name} -o #{o_name}"
             end
-            system "#{@clang} -c #{s_name} -o #{o_name}"
-          end
 
-          if @dump_ll
-            if @release
-              system "#{@llvm_dis} #{bc_name_opt} -o #{ll_name}"
-            else
-              system "#{@llvm_dis} #{bc_name} -o #{ll_name}"
+            if @dump_ll
+              if @release
+                system "#{@llvm_dis} #{bc_name_opt} -o #{ll_name}"
+              else
+                system "#{@llvm_dis} #{bc_name} -o #{ll_name}"
+              end
             end
-          end
 
-          object_names << o_name
+            object_names << o_name
+          end
         end
 
-        puts "Codegen (llc+clang): #{Time.now - time} seconds" if @stats
-
-        time = Time.now
-        system "#{@clang} -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
-        puts "Codegen (clang): #{Time.now - time} seconds" if @stats
+        timing("Codegen (clang)") do
+          system "#{@clang} -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
+        end
 
         if @run
           system "#{output_filename}"
@@ -175,6 +173,17 @@ module Crystal
       rescue ex
         puts ex
         exit 1
+      end
+    end
+
+    def timing(label)
+      if @stats
+        time = Time.now
+        value = yield
+        puts "#{label}: #{Time.now - time} seconds"
+        value
+      else
+        yield
       end
     end
 
