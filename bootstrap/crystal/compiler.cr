@@ -23,6 +23,9 @@ module Crystal
 
       @options = OptionParser.parse! do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
+        opts.on("-e 'command'", "one line script. Omit [programfile]") do |command|
+          @command = command
+        end
         opts.on("-ll", "Dump ll to standard output") do
           @dump_ll = true
         end
@@ -52,18 +55,25 @@ module Crystal
     end
 
     def compile
-      if ARGV.length == 0
-        puts @options
-        exit 1
-      end
+      if @command
+        source = @command
+        filename = "-"
+        @run = true
+      else
+        if ARGV.length == 0
+          puts @options
+          exit 1
+        end
 
-      filename = ARGV[0]
-      unless File.exists?(filename)
-        puts "File #{filename} does not exist"
-        exit 1
-      end
+        filename = ARGV[0]
+        unless File.exists?(filename)
+          puts "File #{filename} does not exist"
+          exit 1
+        end
 
-      filename = File.expand_path(filename) #unless filename == '-'
+        filename = File.expand_path(filename) #unless filename == '-'
+        source = File.read filename
+      end
 
       if @output_filename
         output_filename = @output_filename
@@ -74,8 +84,6 @@ module Crystal
           output_filename = File.basename(filename, File.extname(filename))
         end
       end
-
-      source = File.read filename
 
       begin
         program = Program.new
