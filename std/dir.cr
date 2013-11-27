@@ -1,3 +1,6 @@
+require "dir.linux" if linux
+require "dir.darwin" if darwin
+
 lib C
   struct Dir
   end
@@ -12,14 +15,6 @@ lib C
     LNK = 10_u8
     SOCK = 12_u8
     WHT = 14_u8
-  end
-
-  struct DirEntry
-    d_ino : Int32
-    reclen : UInt16
-    type : UInt8
-    namelen : UInt8
-    name : Char
   end
 
   fun getcwd(buffer : Char*, size : Int32) : Char*
@@ -40,7 +35,7 @@ class Dir
 
     begin
       while ent = C.readdir(dir)
-        yield String.new(ent.as(Pointer(Char)) + 8), ent.value.type
+        yield String.new(ent.as(Pointer(Char)) + dir_entry_offset), ent.value.type
       end
     ensure
       C.closedir(dir)
