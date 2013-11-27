@@ -1,9 +1,9 @@
 lib C
  struct DirEntry
     d_ino : UInt64
-    reclen : Int64
-    type : UInt16
-    namelen : UInt8
+    d_off : Int64
+    reclen : UInt16
+    type : UInt8
     name : Char
   end
 end
