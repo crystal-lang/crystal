@@ -246,6 +246,7 @@ lib LibLLVM("LLVM-3.3")
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
+  fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Int32)
   fun set_value_name = LLVMSetValueName(val : ValueRef, name : Char*)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef
   fun size_of_type_in_bits = LLVMSizeOfTypeInBits(ref : TargetDataRef, ty : TypeRef) : UInt64
@@ -302,6 +303,10 @@ module LLVM
 
   def self.get_attribute(value)
     LibLLVM.get_attribute value
+  end
+
+  def self.set_thread_local(value, thread_local = true)
+    LibLLVM.set_thread_local(value, thread_local ? 1 : 0)
   end
 
   class Context

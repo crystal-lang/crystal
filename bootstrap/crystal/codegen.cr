@@ -1506,7 +1506,7 @@ module Crystal
       unless var = @lib_vars[name]?
         var = @llvm_mod.globals.add(llvm_type(type), name)
         LLVM.set_linkage var, LibLLVM::Linkage::External
-        # var.thread_local = true if RUBY_PLATFORM =~ /linux/
+        LLVM.set_thread_local var if @mod.has_require_flag?("linux")
         @lib_vars[name] = var
       end
       var
