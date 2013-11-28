@@ -1,4 +1,5 @@
 require "option_parser"
+require "thread"
 
 lib C
   fun tmpnam(result : Char*) : Char*
@@ -7,6 +8,18 @@ end
 module Crystal
   class Compiler
     include Crystal
+
+    getter! config
+    getter! llc
+    getter! opt
+    getter! clang
+    getter! llvm_dis
+    getter! dump_ll
+    getter! release
+    getter! output_dir
+    getter! mutex
+    getter! llvm_modules
+    getter! object_names
 
     def initialize
       @dump_ll = false
@@ -124,70 +137,79 @@ module Crystal
         print_types node if @print_types
         exit if @no_build
 
-        llvm_modules = timing("Codegen (crystal)") do
+        @llvm_modules = timing("Codegen (crystal)") do
           program.build node, @release
         end
 
-        output_dir = ".crystal/#{filename}"
+        @output_dir = ".crystal/#{filename}"
 
         system "mkdir -p #{output_dir}"
 
-        object_names = [] of String
+        @mutex = Mutex.new
+        @object_names = [] of String
 
         timing("Codegen (llc+clang)") do
-          llvm_modules.each do |type_name, llvm_mod|
-            type_name = "main" if type_name == ""
-            name = type_name.replace do |char|
-              if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
-                nil
-              else
-                char.ord.to_s
+          threads = Array.new(8) do
+            Thread.new(self) do |compiler|
+              while entry = compiler.mutex.synchronize { compiler.llvm_modules.shift? }
+                type_name = entry.key
+                llvm_mod = entry.value
+
+                type_name = "main" if type_name == ""
+                name = type_name.replace do |char|
+                  if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
+                    nil
+                  else
+                    char.ord.to_s
+                  end
+                end
+
+                bc_name = "#{compiler.output_dir}/#{name}.bc"
+                bc_name_new = "#{bc_name}.new"
+                bc_name_opt = "#{compiler.output_dir}/#{name}.opt.bc"
+                s_name = "#{compiler.output_dir}/#{name}.s"
+                o_name = "#{compiler.output_dir}/#{name}.o"
+                ll_name = "#{compiler.output_dir}/#{name}.ll"
+
+                llvm_mod.dump if Crystal::DUMP_LLVM
+
+                llvm_mod.write_bitcode bc_name_new
+
+                must_compile = true
+
+                if File.exists?(bc_name) && File.exists?(o_name)
+                  cmd_output = system "cmp -s #{bc_name} #{bc_name}.new"
+                  if cmd_output == 0
+                    system "rm #{bc_name_new}"
+                    must_compile = false
+                  end
+                end
+
+                if must_compile
+                  # puts "Compile: #{type_name}"
+                  system "mv #{bc_name_new} #{bc_name}"
+                  if compiler.release
+                    system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
+                    system "#{compiler.llc} #{bc_name_opt} -o #{s_name}"
+                  else
+                    system "#{compiler.llc} #{bc_name} -o #{s_name}"
+                  end
+                  system "#{compiler.clang} -c #{s_name} -o #{o_name}"
+                end
+
+                if compiler.dump_ll
+                  if compiler.release
+                    system "#{compiler.llvm_dis} #{bc_name_opt} -o #{ll_name}"
+                  else
+                    system "#{compiler.llvm_dis} #{bc_name} -o #{ll_name}"
+                  end
+                end
+
+                compiler.mutex.synchronize { compiler.object_names << o_name }
               end
             end
-
-            bc_name = "#{output_dir}/#{name}.bc"
-            bc_name_new = "#{bc_name}.new"
-            bc_name_opt = "#{output_dir}/#{name}.opt.bc"
-            s_name = "#{output_dir}/#{name}.s"
-            o_name = "#{output_dir}/#{name}.o"
-            ll_name = "#{output_dir}/#{name}.ll"
-
-            llvm_mod.dump if Crystal::DUMP_LLVM
-
-            llvm_mod.write_bitcode bc_name_new
-
-            must_compile = true
-
-            if File.exists?(bc_name) && File.exists?(o_name)
-              cmd_output = system "cmp -s #{bc_name} #{bc_name}.new"
-              if cmd_output == 0
-                system "rm #{bc_name_new}"
-                must_compile = false
-              end
-            end
-
-            if must_compile
-              # puts "Compile: #{type_name}"
-              system "mv #{bc_name_new} #{bc_name}"
-              if @release
-                system "#{@opt} #{bc_name} -O3 -o #{bc_name_opt}"
-                system "#{@llc} #{bc_name_opt} -o #{s_name}"
-              else
-                system "#{@llc} #{bc_name} -o #{s_name}"
-              end
-              system "#{@clang} -c #{s_name} -o #{o_name}"
-            end
-
-            if @dump_ll
-              if @release
-                system "#{@llvm_dis} #{bc_name_opt} -o #{ll_name}"
-              else
-                system "#{@llvm_dis} #{bc_name} -o #{ll_name}"
-              end
-            end
-
-            object_names << o_name
           end
+          threads.each &.join
         end
 
         timing("Codegen (clang)") do

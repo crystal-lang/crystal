@@ -198,4 +198,25 @@ describe "Hash" do
     h = {1 => 2, 3 => 4}
     h.first_value.should eq(2)
   end
+
+  it "shifts" do
+    h = {1 => 2, 3 => 4}
+    e = h.shift
+    e.key.should eq(1)
+    e.value.should eq(2)
+    h.should eq({3 => 4})
+    e = h.shift
+    e.key.should eq(3)
+    e.value.should eq(4)
+    h.empty?.should be_true
+  end
+
+  it "shifts?" do
+    h = {1 => 2}
+    e = h.shift?.not_nil!
+    e.key.should eq(1)
+    e.value.should eq(2)
+    h.empty?.should be_true
+    h.shift?.should be_nil
+  end
 end

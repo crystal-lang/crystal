@@ -179,6 +179,24 @@ class Hash(K, V)
     @first ? @first.value : nil
   end
 
+  def shift
+    shift { raise IndexOutOfBounds.new }
+  end
+
+  def shift?
+    shift { nil }
+  end
+
+  def shift
+    first = @first
+    if first
+      delete first.key
+      first
+    else
+      yield
+    end
+  end
+
   def ==(other : Hash)
     return false unless length == other.length
     each do |key, value|

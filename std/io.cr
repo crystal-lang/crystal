@@ -181,7 +181,7 @@ def p(obj)
 end
 
 def system(command)
-  C.system command
+  C.pclose(C.popen(command, "r"))
 end
 
 macro pp(var)

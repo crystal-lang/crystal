@@ -48,20 +48,25 @@ class Array(T)
     @length == 0
   end
 
-  def [](index : Int)
-    index += length if index < 0
-    raise IndexOutOfBounds.new if index >= length || index < 0
-    @buffer[index]
+  def at(index : Int)
+    at(index) { raise IndexOutOfBounds.new }
   end
 
   def at(index : Int)
-    self[index]
+    index += length if index < 0
+    if index >= length || index < 0
+      yield
+    else
+      @buffer[index]
+    end
+  end
+
+  def [](index : Int)
+    at(index)
   end
 
   def []?(index : Int)
-    index += length if index < 0
-    return nil if index >= length || index < 0
-    @buffer[index]
+    at(index) { nil }
   end
 
   def []=(index : Int, value : T)
@@ -92,17 +97,39 @@ class Array(T)
   end
 
   def pop
-    raise IndexOutOfBounds.new if @length == 0
-    @length -= 1
-    @buffer[@length]
+    pop { raise IndexOutOfBounds.new }
+  end
+
+  def pop?
+    pop { nil }
+  end
+
+  def pop
+    if @length == 0
+      yield
+    else
+      @length -= 1
+      @buffer[@length]
+    end
   end
 
   def shift
-    raise IndexOutOfBounds.new if @length == 0
-    value = @buffer[0]
-    @length -=1
-    @buffer.memmove(@buffer + 1, @length)
-    value
+    shift { raise IndexOutOfBounds.new }
+  end
+
+  def shift?
+    shift { nil }
+  end
+
+  def shift
+    if @length == 0
+      yield
+    else
+      value = @buffer[0]
+      @length -=1
+      @buffer.memmove(@buffer + 1, @length)
+      value
+    end
   end
 
   def unshift(obj : T)
