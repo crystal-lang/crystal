@@ -9,16 +9,16 @@ module Crystal
   class Compiler
     include Crystal
 
-    getter! config
-    getter! llc
-    getter! opt
-    getter! clang
-    getter! llvm_dis
-    getter! dump_ll
-    getter! release
+    getter config
+    getter llc
+    getter opt
+    getter clang
+    getter llvm_dis
+    getter dump_ll
+    getter release
     getter! output_dir
     getter! mutex
-    getter! llvm_modules
+    getter! units
     getter! object_names
 
     def initialize
@@ -137,7 +137,7 @@ module Crystal
         print_types node if @print_types
         exit if @no_build
 
-        @llvm_modules = timing("Codegen (crystal)") do
+        llvm_modules = timing("Codegen (crystal)") do
           program.build node, @release
         end
 
@@ -145,66 +145,23 @@ module Crystal
 
         system "mkdir -p #{output_dir}"
 
+        @units = llvm_modules.map do |type_name, llvm_mod|
+          CompilationUnit.new(type_name, llvm_mod)
+        end
+
+        # First write bitcodes: it breaks if we paralellize it
+        timing("Codegen (bitcode)") do
+          @units.each &.write_bitcode(output_dir)
+        end
+
         @mutex = Mutex.new
         @object_names = [] of String
 
         timing("Codegen (llc+clang)") do
           threads = Array.new(8) do
             Thread.new(self) do |compiler|
-              while entry = compiler.mutex.synchronize { compiler.llvm_modules.shift? }
-                type_name = entry.key
-                llvm_mod = entry.value
-
-                type_name = "main" if type_name == ""
-                name = type_name.replace do |char|
-                  if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
-                    nil
-                  else
-                    char.ord.to_s
-                  end
-                end
-
-                bc_name = "#{compiler.output_dir}/#{name}.bc"
-                bc_name_new = "#{bc_name}.new"
-                bc_name_opt = "#{compiler.output_dir}/#{name}.opt.bc"
-                s_name = "#{compiler.output_dir}/#{name}.s"
-                o_name = "#{compiler.output_dir}/#{name}.o"
-                ll_name = "#{compiler.output_dir}/#{name}.ll"
-
-                llvm_mod.dump if Crystal::DUMP_LLVM
-
-                llvm_mod.write_bitcode bc_name_new
-
-                must_compile = true
-
-                if File.exists?(bc_name) && File.exists?(o_name)
-                  cmd_output = system "cmp -s #{bc_name} #{bc_name}.new"
-                  if cmd_output == 0
-                    system "rm #{bc_name_new}"
-                    must_compile = false
-                  end
-                end
-
-                if must_compile
-                  # puts "Compile: #{type_name}"
-                  system "mv #{bc_name_new} #{bc_name}"
-                  if compiler.release
-                    system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
-                    system "#{compiler.llc} #{bc_name_opt} -o #{s_name}"
-                  else
-                    system "#{compiler.llc} #{bc_name} -o #{s_name}"
-                  end
-                  system "#{compiler.clang} -c #{s_name} -o #{o_name}"
-                end
-
-                if compiler.dump_ll
-                  if compiler.release
-                    system "#{compiler.llvm_dis} #{bc_name_opt} -o #{ll_name}"
-                  else
-                    system "#{compiler.llvm_dis} #{bc_name} -o #{ll_name}"
-                  end
-                end
-
+              while unit = compiler.mutex.synchronize { compiler.units.shift? }
+                o_name = unit.compile(compiler)
                 compiler.mutex.synchronize { compiler.object_names << o_name }
               end
             end
@@ -249,6 +206,70 @@ module Crystal
         end
         flags << " -Wl,-allow_stack_execute" if mod.has_require_flag?("darwin")
         flags << " -L#{@config.lib_dir}"
+      end
+    end
+
+    class CompilationUnit
+      def initialize(type_name, @llvm_mod)
+        type_name = "main" if type_name == ""
+        @name = type_name.replace do |char|
+          if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
+            nil
+          else
+            char.ord.to_s
+          end
+        end
+      end
+
+      def write_bitcode(output_dir)
+        @llvm_mod.dump if Crystal::DUMP_LLVM
+        @llvm_mod.write_bitcode bc_name_new(output_dir)
+      end
+
+      def compile(compiler)
+        output_dir = compiler.output_dir
+        bc_name = "#{output_dir}/#{@name}.bc"
+        bc_name_new = bc_name_new(compiler.output_dir)
+        bc_name_opt = "#{output_dir}/#{@name}.opt.bc"
+        s_name = "#{output_dir}/#{@name}.s"
+        o_name = "#{output_dir}/#{@name}.o"
+        ll_name = "#{output_dir}/#{@name}.ll"
+
+        must_compile = true
+
+        if File.exists?(bc_name) && File.exists?(o_name)
+          cmd_output = system "cmp -s #{bc_name} #{bc_name_new}"
+          if cmd_output == 0
+            system "rm #{bc_name_new}"
+            must_compile = false
+          end
+        end
+
+        if must_compile
+          # puts "Compile: #{type_name}"
+          system "mv #{bc_name_new} #{bc_name}"
+          if compiler.release
+            system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
+            system "#{compiler.llc} #{bc_name_opt} -o #{s_name}"
+          else
+            system "#{compiler.llc} #{bc_name} -o #{s_name}"
+          end
+          system "#{compiler.clang} -c #{s_name} -o #{o_name}"
+        end
+
+        if compiler.dump_ll
+          if compiler.release
+            system "#{compiler.llvm_dis} #{bc_name_opt} -o #{ll_name}"
+          else
+            system "#{compiler.llvm_dis} #{bc_name} -o #{ll_name}"
+          end
+        end
+
+        o_name
+      end
+
+      def bc_name_new(output_dir)
+        "#{output_dir}/#{@name}.new.bc"
       end
     end
   end
