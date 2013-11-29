@@ -1,8 +1,6 @@
-language: crystal
+language: objective-c
 before_install:
-  - sudo sh -c 'wget --progress=bar:force -O - https://s3.amazonaws.com/crystal-lang/llvm-3.3.tar.gz | tar xz --strip-components=1 -C /usr'
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libpcre3-dev libunwind7-dev
+  - brew install --with-clang https://gist.github.com/waj/3967832/raw/llvm33.rb
 script:
   - wget https://dl.dropboxusercontent.com/u/579084/crystal/0.1.0/osx/crystal
   - chmod +x crystal
