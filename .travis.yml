@@ -1,11 +1,10 @@
 language: objective-c
-before_install:
-  - brew tap homebrew/versions
-  - brew install --with-clang https://gist.github.com/waj/3967832/raw/llvm33.rb
 script:
+  - wget http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz
+  - tar xfz clang+llvm-3.3-x86_64-apple-darwin12.tar.gz
   - wget https://dl.dropboxusercontent.com/u/579084/crystal/0.1.0/osx/crystal
   - chmod +x crystal
-  - ./crystal spec/all_spec.cr
+  - PATH=$PATH:./clang+llvm-3.3-x86_64-apple-darwin12/bin ./crystal spec/all_spec.cr
   - ./all_spec
 notifications:
   irc: "irc.freenode.net#crystal-lang"
