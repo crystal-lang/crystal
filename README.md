@@ -31,24 +31,8 @@ Oh, and we don't want to write C code to make the code run faster.
 Status
 ------
 
-The project is in pre-alpha stage: we are still designing the language and prototying a compiler in Ruby, while at the same time writing a compiler in Crystal.
+The project is in pre-alpha stage: we are still designing the language.
 
-Installing
-----------
-
-You will need:
-
-* Ruby 1.9
-* LLVM 3.3 installed as a shared library.
-
-Then:
-
-1. Clone the repository
-1. Install `bundler` if you don't have it already: `gem install bundler`
-1. Execute `bundle`
-
-Finally run crystal:
-
-> `bin/crystal --help`
+We managed to write a compiler for Crystal in Crystal itself. Now it's time to pollish things and add missing features (for example: GC).
 
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/25b65355cae65602787d6952d0bdb8cf "githalytics.com")](http://githalytics.com/manastech/crystal)

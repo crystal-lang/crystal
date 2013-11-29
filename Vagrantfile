@@ -11,7 +11,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, :inline => %(
     wget --progress=bar:force -O - https://s3.amazonaws.com/crystal-lang/llvm-3.3.tar.gz | tar xz --strip-components=1 -C /usr
     apt-get update
-    apt-get install -y ruby1.9.3 build-essential git libpcre3-dev libunwind7-dev
+    apt-get install -y build-essential git libpcre3-dev libunwind7-dev
     gem install bundler --no-ri --no-rdoc
 
     if [ ! -a crystal ]; then
