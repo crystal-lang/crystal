@@ -326,7 +326,7 @@ module Crystal
     end
 
     def require_from_load_path(file)
-      file = File.expand_path("std/#{file}")
+      file = File.expand_path("src/#{file}")
       # file = File.expand_path("../../../std/#{file}", __FILE__)
       require_absolute file
     end

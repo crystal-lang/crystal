@@ -1,5 +1,5 @@
 require "spec"
-require "../crystal/**"
+require "../src/compiler/crystal/**"
 
 include Crystal
 
