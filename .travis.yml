@@ -1,5 +1,6 @@
 language: objective-c
 before_install:
+  - brew tap homebrew/versions
   - brew install --with-clang https://gist.github.com/waj/3967832/raw/llvm33.rb
 script:
   - wget https://dl.dropboxusercontent.com/u/579084/crystal/0.1.0/osx/crystal
