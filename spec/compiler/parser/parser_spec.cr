@@ -212,6 +212,7 @@ describe "Parser" do
   it_parses "def foo(var : Int, Float -> Double); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident] of ASTNode, "Double".ident))], nil)
   it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident] of ASTNode, "Double".ident))], nil)
   it_parses "def foo(var : (Int, Float) -> Double); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident] of ASTNode, "Double".ident))], nil)
+  it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", nil, StaticArray.new("Char".ident, 256))], nil)
   it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".ident)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new] of ASTNode, nil, nil, 0)
   it_parses "def foo; yield 1; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode)] of ASTNode, nil, nil, 1)

@@ -485,6 +485,14 @@ module Crystal
       false
     end
 
+    def visit(node : StaticArray)
+      node.name.accept self
+      @str << "["
+      @str << node.size
+      @str << "]"
+      false
+    end
+
     def visit(node : InstanceVar)
       @str << "out " if node.out
       @str << node.name

@@ -2103,6 +2103,14 @@ module Crystal
         when :"**"
           type = make_pointer_type(make_pointer_type(type))
           next_token_skip_space_or_newline
+        when :"["
+          next_token_skip_space
+          check :NUMBER
+          size = @token.value.to_s.to_i
+          next_token_skip_space
+          check :"]"
+          next_token_skip_space
+          type = StaticArray.new(type, size)
         else
           break
         end
