@@ -1,7 +1,6 @@
 language: objective-c
 script:
   - bin/crystal --setup
-  - bin/crystal spec/all_spec.cr
-  - ./all_spec
+  - make spec
 notifications:
   irc: "irc.freenode.net#crystal-lang"
