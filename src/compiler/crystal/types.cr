@@ -154,8 +154,15 @@ module Crystal
       raise "Bug: #{self} doesn't implement allocated="
     end
 
-    def implements?(other_type)
-      self == other_type
+    def implements?(other_type : Type)
+      case other_type
+      when UnionType
+        other_type.union_types.any? do |union_type|
+          implements?(union_type)
+        end
+      else
+        self == other_type
+      end
     end
 
     def is_subclass_of?(type)

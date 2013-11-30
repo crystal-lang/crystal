@@ -249,7 +249,7 @@ describe "Codegen: is_a?" do
       ").to_i.should eq(2)
   end
 
-  pending "restricts union with union" do
+  it "restricts union with union" do
     run("
       class Char
         def +(other : Int32)
