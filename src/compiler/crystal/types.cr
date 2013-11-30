@@ -2,18 +2,6 @@ module Crystal
   abstract class Type
     include Enumerable(self)
 
-    def self.merge(nodes : Array(ASTNode))
-      nodes.find(&.type?).try &.type.program.type_merge(nodes)
-    end
-
-    def self.merge(types : Array(Type))
-      if types.length == 0
-        nil
-      else
-        types.first.program.type_merge(types)
-      end
-    end
-
     def each
       yield self
     end
@@ -183,10 +171,6 @@ module Crystal
 
     def cover_length
       1
-    end
-
-    def common_ancestor(other)
-      nil
     end
 
     def lookup_def_instance(def_object_id, arg_types, block_type)
@@ -769,41 +753,6 @@ module Crystal
       end
     end
 
-    def common_ancestor(other : ClassType)
-      if depth <= 1
-        return nil
-      end
-
-      if self == other
-        return self
-      end
-
-      if depth == other.depth
-        my_superclass = @superclass
-        other_superclass = other.superclass
-
-        if my_superclass && other_superclass
-          return my_superclass.common_ancestor(other_superclass)
-        end
-      elsif depth > other.depth
-        my_superclass = @superclass
-        if my_superclass
-          return my_superclass.common_ancestor(other)
-        end
-      elsif depth < other.depth
-        other_superclass = other.superclass
-        if other_superclass
-          return common_ancestor(other_superclass)
-        end
-      end
-
-      nil
-    end
-
-    def common_ancestor(other : HierarchyType)
-      common_ancestor(other.base_type)
-    end
-
     def type_desc
       "class"
     end
@@ -945,10 +894,6 @@ module Crystal
 
     def primitive_like?
       true
-    end
-
-    def common_ancestor(other)
-      nil
     end
 
     def allocated
@@ -1896,10 +1841,6 @@ module Crystal
 
     def allocated=(allocated)
       base_type.allocated = allocated
-    end
-
-    def common_ancestor(other)
-      base_type.common_ancestor(other)
     end
 
     def metaclass
