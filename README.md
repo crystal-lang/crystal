@@ -35,4 +35,20 @@ The project is in pre-alpha stage: we are still designing the language.
 
 We managed to write a compiler for Crystal in Crystal itself. Now it's time to pollish things and add missing features (for example: GC).
 
+Installing
+----------
+
+Currently it only works on Mac OSX 64 bit (but this will change soon, we promise!)
+
+1. Clone the repository
+1. Execute `bin/crystal --setup`
+
+That's all. Try to run:
+
+> `bin/crystal --help`
+
+Or compile some example:
+
+> `bin/crystal samples/mandelbrot.cr && ./mandelbrot`
+
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/25b65355cae65602787d6952d0bdb8cf "githalytics.com")](http://githalytics.com/manastech/crystal)
