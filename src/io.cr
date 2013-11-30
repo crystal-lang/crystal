@@ -77,6 +77,17 @@ class FileDescriptorStream
   end
 end
 
+class FileStream
+  include IO
+
+  def initialize(@file)
+  end
+
+  def input
+    @file
+  end
+end
+
 STDIN = FileDescriptorStream.new(0, "r")
 STDOUT = FileDescriptorStream.new(1, "w")
 STDERR = FileDescriptorStream.new(2, "w")
@@ -182,6 +193,17 @@ end
 
 def system(command)
   C.pclose(C.popen(command, "r"))
+end
+
+def system2(command)
+  pipe = C.popen(command, "r")
+  stream = FileStream.new(pipe)
+  output = [] of String
+  while line = stream.gets
+    output << line.chomp
+  end
+  $exit = C.pclose(pipe)
+  output
 end
 
 macro pp(var)

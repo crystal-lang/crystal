@@ -196,11 +196,26 @@ module Crystal
     def lib_flags(mod)
       libs = mod.library_names
       String.build do |flags|
+        commands = [] of String
         if libs.length > 0
           flags << " -Wl"
           libs.each do |libname|
-            flags << ",-l"
-            flags << libname
+            if libname =~ /^`(.*)`$/
+              commands << $1
+            else
+              flags << ",-l"
+              flags << libname
+            end
+          end
+        end
+        commands.each do |cmd|
+          cmdout = system2(cmd)
+          if $exit == 0
+            cmdout.each do |cmdoutline|
+              flags << " #{cmdoutline}"
+            end
+          else
+            raise "Error executing command: #{cmd}"
           end
         end
         flags << " -Wl,-allow_stack_execute" if mod.has_require_flag?("darwin")

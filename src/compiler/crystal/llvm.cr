@@ -1,4 +1,7 @@
-lib LibLLVM("LLVM-3.3")
+lib StdCpp("stdc++")
+end
+
+lib LibLLVM("`llvm-config --libs --ldflags`")
   type ContextRef : Void*
   type ModuleRef : Void*
   type TypeRef : Void*
@@ -256,6 +259,7 @@ lib LibLLVM("LLVM-3.3")
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
   fun void_type = LLVMVoidType() : TypeRef
   fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int32
+  fun link_in_jit = LLVMLinkInJIT()
 end
 
 module LLVM
@@ -263,6 +267,7 @@ module LLVM
     LibLLVM.initialize_x86_target_info
     LibLLVM.initialize_x86_target
     LibLLVM.initialize_x86_target_mc
+    LibLLVM.link_in_jit
   end
 
   def self.dump(value)

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+SCRIPT_PATH=`dirname $(readlink $0 || echo $0)`
+DEPS_DIR="$SCRIPT_PATH/../deps"
+
+if [ "$1" = "--setup" ]; then
+  rm -rf "$DEPS_DIR"
+  mkdir -p "$DEPS_DIR"
+
+  echo "Downloading precompiled LLVM 3.3 + Clang"
+  curl "http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz" | tar xz -s/clang+llvm-3.3-x86_64-apple-darwin12/llvm/ -C "$DEPS_DIR"
+
+  echo "Downloading Crystal compiler"
+  curl "https://s3.amazonaws.com/crystal-lang/crystal-darwin-latest.gz" | gzip -d > "$DEPS_DIR/crystal"
+  chmod +x "$DEPS_DIR/crystal"
+
+  echo "Ready!!"
+  exit 0
+fi
+
+
+# Make sure deps dir exists
+if [ ! -d  "$DEPS_DIR" ]; then
+  echo "Compiler environment is not set. Please run again with '--setup'"
+  exit 1
+fi
+
+export PATH="$DEPS_DIR/llvm/bin":$PATH
+"$DEPS_DIR/crystal" "$@"

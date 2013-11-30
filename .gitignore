@@ -3,3 +3,4 @@
 .vagrant
 .crystal
 coverage/
+deps/
