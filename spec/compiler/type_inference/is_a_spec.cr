@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env crystal --run
 require "../../spec_helper"
 
 describe "Type inference: is_a?" do
@@ -137,5 +137,39 @@ describe "Type inference: is_a?" do
 
       bar
       ") { int32 }
+  end
+
+  it "checks simple type with union" do
+    assert_type("
+      a = 1
+      if a.is_a?(Int32 | Char)
+        a + 1
+      else
+        2
+      end
+      ") { int32 }
+  end
+
+  it "checks union with union" do
+    assert_type("
+      class Char
+        def +(other : Int32)
+          self
+        end
+      end
+
+      class Bool
+        def foo
+          2
+        end
+      end
+
+      a = 1 || 'a' || false
+      if a.is_a?(Int32 | Char)
+        a + 2
+      else
+        a.foo
+      end
+      ") { union_of(int32, char) }
   end
 end

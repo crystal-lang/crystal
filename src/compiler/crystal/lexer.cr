@@ -502,6 +502,10 @@ module Crystal
           if next_char == 'c' && next_char == 'l' && next_char == 'u' && next_char == 'd' && next_char == 'e'
             return check_ident_or_keyword(:include, start, start_column)
           end
+        when 's'
+          if next_char == '_' && next_char == 'a' && next_char == '?'
+            return check_ident_or_keyword(:is_a?, start, start_column)
+          end
         end
         scan_ident(start, start_column)
       when 'l'

@@ -237,4 +237,38 @@ describe "Codegen: is_a?" do
       f.is_a?(Bar)
       ").to_b.should be_true
   end
+
+  it "restricts simple type with union" do
+    run("
+      a = 1
+      if a.is_a?(Int32 | Char)
+        a + 1
+      else
+        0
+      end
+      ").to_i.should eq(2)
+  end
+
+  pending "restricts union with union" do
+    run("
+      class Char
+        def +(other : Int32)
+          other
+        end
+      end
+
+      class Bool
+        def foo
+          2
+        end
+      end
+
+      a = 1 || 'a' || false
+      if a.is_a?(Int32 | Char)
+        a + 2
+      else
+        a.foo
+      end
+      ").to_i.should eq(3)
+  end
 end

@@ -220,6 +220,12 @@ module Crystal
     end
   end
 
+  class IncludedGenericModule
+    def is_restriction_of?(other : Type, owner)
+      @module.is_restriction_of?(other, owner)
+    end
+  end
+
   class HierarchyType
     def is_restriction_of?(other : Type, owner)
       other = other.base_type if other.is_a?(HierarchyType)

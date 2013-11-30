@@ -112,7 +112,14 @@ module Crystal
       types = @filter.apply(other)
 
       if types
-        types = [types] of Type unless types.is_a?(Array)
+        case types
+        when UnionType
+          types = types.union_types
+        when Array
+          types
+        else
+          types = [types] of Type
+        end
       else
         types = [] of Type
       end

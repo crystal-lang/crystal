@@ -163,7 +163,7 @@ module Crystal
     end
 
     def filter_by(other_type)
-      implements?(other_type) ? self : nil
+      restrict(other_type, self, nil, nil)
     end
 
     def filter_by_responds_to(name)
@@ -1678,10 +1678,6 @@ module Crystal
       sum
     end
 
-    def filter_by(other_type)
-      apply_filter &.filter_by(other_type)
-    end
-
     def filter_by_responds_to(name)
       apply_filter &.filter_by_responds_to(name)
     end
@@ -1942,10 +1938,6 @@ module Crystal
       else
         1
       end
-    end
-
-    def filter_by(type)
-      restrict(type, self, nil, nil)
     end
 
     def each
