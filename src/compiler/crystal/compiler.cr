@@ -173,7 +173,7 @@ module Crystal
         end
 
         if @run
-          system "#{output_filename}"
+          C.system "#{output_filename}"
           File.delete output_filename
         end
       rescue ex
