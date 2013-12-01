@@ -6,11 +6,28 @@ if [ "$1" = "--setup" ]; then
   rm -rf "$DEPS_DIR"
   mkdir -p "$DEPS_DIR"
 
+  OS_NAME=`uname -s`
+  case $OS_NAME in
+    Darwin)
+      LLVM_URL="http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz"
+      CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-darwin-latest.gz"
+      ;;
+
+    Linux)
+      LLVM_URL="http://llvm.org/releases/3.3/clang+llvm-3.3-amd64-Ubuntu-12.04.2.tar.gz"
+      CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-linux-latest.gz"
+      ;;
+
+    *)
+      echo "Unsuported system ($OS_NAME)"
+      exit 1
+  esac
+
   echo "Downloading precompiled LLVM 3.3 + Clang"
-  curl "http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz" | tar xz -s/clang+llvm-3.3-x86_64-apple-darwin12/llvm/ -C "$DEPS_DIR"
+  curl "$LLVM_URL" | tar xz -s/clang+llvm-3.3-x86_64-apple-darwin12/llvm/ -C "$DEPS_DIR"
 
   echo "Downloading Crystal compiler"
-  curl "https://s3.amazonaws.com/crystal-lang/crystal-darwin-latest.gz" | gzip -d > "$DEPS_DIR/crystal"
+  curl "$CRYSTAL_URL" | gzip -d > "$DEPS_DIR/crystal"
   chmod +x "$DEPS_DIR/crystal"
 
   echo "Ready!!"
