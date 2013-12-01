@@ -10,7 +10,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision :shell, :inline => %(
     apt-get update
-    apt-get install -y build-essential git libpcre3-dev libunwind7-dev
+    apt-get install -y build-essential git libpcre3-dev libunwind7-dev curl
 
     if [ ! -a crystal ]; then
       git clone /vagrant crystal
