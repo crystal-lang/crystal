@@ -344,8 +344,15 @@ module Crystal
             @token.value = '\t'
           when 'v'
             @token.value = '\v'
-          when '0'
-            @token.value = '\0'
+          when '0', '1', '2', '3', '4', '5', '6', '7', '8'
+            char_value = char2 - '0'
+            count = 1
+            while count <= 3 && '0' <= @buffer[1] && @buffer[1] <= '8'
+              next_char
+              char_value = char_value * 8 + (@buffer.value - '0')
+              count += 1
+            end
+            @token.value = char_value.chr
           else
             @token.value = char2
           end
@@ -973,7 +980,7 @@ module Crystal
         @token.value = string_nest.to_s
         @token.string_open_count = string_open_count + 1
       when '\\'
-        case @buffer[1]
+        case char = @buffer[1]
         when 'n'
           string_token_escape_value "\n"
         when 'r'
@@ -984,8 +991,18 @@ module Crystal
           string_token_escape_value "\v"
         when 'f'
           string_token_escape_value "\f"
-        when '0'
-          string_token_escape_value "\0"
+        when '0', '1', '2', '3', '4', '5', '6', '7', '8'
+          char_value = char - '0'
+          count = 1
+          next_char
+          while count <= 3 && '0' <= @buffer[1] && @buffer[1] <= '8'
+            next_char
+            char_value = char_value * 8 + (@buffer.value - '0')
+            count += 1
+          end
+          next_char
+          @token.type = :STRING
+          @token.value = char_value.chr.to_s
         else
           next_char
           @token.type = :STRING

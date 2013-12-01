@@ -313,4 +313,12 @@ describe "String" do
     ("%%%d" % 1).should eq("%1")
     ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
   end
+
+  it "escapes with octal" do
+    "\3"[0].ord.should eq(3)
+    "\23"[0].ord.should eq((2 * 8) + 3)
+    "\123"[0].ord.should eq((1 * 8 * 8) + (2 * 8) + 3)
+    "\033"[0].ord.should eq((3 * 8) + 3)
+    "\033a"[1].should eq('a')
+  end
 end
