@@ -24,7 +24,8 @@ if [ "$1" = "--setup" ]; then
   esac
 
   echo "Downloading precompiled LLVM 3.3 + Clang"
-  curl "$LLVM_URL" | tar xz -s/clang+llvm-3.3-x86_64-apple-darwin12/llvm/ -C "$DEPS_DIR"
+  mkdir "$DEPS_DIR/llvm"
+  curl "$LLVM_URL" | tar xz --strip-components=1 -C "$DEPS_DIR/llvm"
 
   echo "Downloading Crystal compiler"
   curl "$CRYSTAL_URL" | gzip -d > "$DEPS_DIR/crystal"
