@@ -28,6 +28,7 @@ describe "Char" do
     '\v'.ord.should eq(11)
     '\f'.ord.should eq(12)
     '\r'.ord.should eq(13)
+    '\e'.ord.should eq(27)
     '\''.ord.should eq(39)
     '\\'.ord.should eq(92)
     '\0'.ord.should eq(0)

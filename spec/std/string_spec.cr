@@ -314,6 +314,17 @@ describe "String" do
     ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
   end
 
+  it "escapes chars" do
+    "\t"[0].should eq('\t')
+    "\n"[0].should eq('\n')
+    "\v"[0].should eq('\v')
+    "\f"[0].should eq('\f')
+    "\r"[0].should eq('\r')
+    "\e"[0].should eq('\e')
+    "\""[0].should eq('"')
+    "\\"[0].should eq('\\')
+  end
+
   it "escapes with octal" do
     "\3"[0].ord.should eq(3)
     "\23"[0].ord.should eq((2 * 8) + 3)

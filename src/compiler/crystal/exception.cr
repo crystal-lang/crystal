@@ -31,9 +31,9 @@ module Crystal
             (@column_number - 1).times do
               str << " "
             end
-            str << "\033[1;32m"
+            str << "\e[1;32m"
             str << "^"
-            str << "\033[0m"
+            str << "\e[0m"
             str << "\n"
           end
         end
@@ -124,12 +124,12 @@ module Crystal
         str << line.chomp
         str << "\n"
         str << (" " * (@column - 1))
-        str << "\033[1;32m"
+        str << "\e[1;32m"
         str << "^"
         if @length && @length > 0
           str << ("~" * (@length - 1))
         end
-        str << "\033[0m"
+        str << "\e[0m"
       end
       str << "\n"
 

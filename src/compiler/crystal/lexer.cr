@@ -334,6 +334,8 @@ module Crystal
         case char1 = next_char
         when '\\'
           case char2 = next_char
+          when 'e'
+            @token.value = '\e'
           when 'f'
             @token.value = '\f'
           when 'n'
@@ -991,6 +993,8 @@ module Crystal
           string_token_escape_value "\v"
         when 'f'
           string_token_escape_value "\f"
+        when 'e'
+          string_token_escape_value "\e"
         when '0', '1', '2', '3', '4', '5', '6', '7', '8'
           char_value = char - '0'
           count = 1
