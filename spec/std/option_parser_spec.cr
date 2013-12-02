@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "spec"
 require "option_parser"
 
@@ -74,6 +74,10 @@ describe "OptionParser" do
 
   it "has required option separated from flag" do
     expect_capture_option ["-f", "123"], "-f FLAG", "123"
+  end
+
+  it "gets short option with value that looks like flag" do
+    expect_capture_option ["-f", "-g -h"], "-f FLAG", "-g -h"
   end
 
   it "raises if missing required argument" do
