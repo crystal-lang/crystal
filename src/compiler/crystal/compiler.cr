@@ -16,6 +16,7 @@ module Crystal
     getter llvm_dis
     getter dump_ll
     getter release
+    getter llc_flags
     getter! output_dir
     getter! mutex
     getter! units
@@ -27,6 +28,9 @@ module Crystal
       @run = false
       @stats = false
       @release = false
+      @output_filename = nil
+      @llc_flags = nil
+      @command = nil
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -41,6 +45,9 @@ module Crystal
         end
         opts.on("-ll", "Dump ll to standard output") do
           @dump_ll = true
+        end
+        opts.on("--llc ", "Additional flags to pass to llc") do |llc_flags|
+          @llc_flags = llc_flags
         end
         opts.on("-no-build", "Disable build output") do
           @no_build = true
@@ -251,7 +258,7 @@ module Crystal
 
         must_compile = true
 
-        if File.exists?(bc_name) && File.exists?(o_name)
+        if compiler.llc_flags && File.exists?(bc_name) && File.exists?(o_name)
           cmd_output = system "cmp -s #{bc_name} #{bc_name_new}"
           if cmd_output == 0
             system "rm #{bc_name_new}"
@@ -264,10 +271,11 @@ module Crystal
           system "mv #{bc_name_new} #{bc_name}"
           if compiler.release
             system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
-            system "#{compiler.llc} #{bc_name_opt} -o #{s_name}"
+            final_bc_name = bc_name_opt
           else
-            system "#{compiler.llc} #{bc_name} -o #{s_name}"
+            final_bc_name = bc_name
           end
+          system "#{compiler.llc} #{final_bc_name} -o #{s_name} #{compiler.llc_flags}"
           system "#{compiler.clang} -c #{s_name} -o #{o_name}"
         end
 
