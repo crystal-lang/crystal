@@ -5,6 +5,12 @@ class OptionParser
     end
   end
 
+  class MissingOption < Exception
+    def initialize(option)
+      super("Missing option: #{option}")
+    end
+  end
+
   def self.parse(args)
     parser = OptionParser.new(args)
     yield parser
@@ -63,21 +69,25 @@ class OptionParser
   def parse_flag(flag)
     case flag
     when /--(\S+)\s+\[\S+\]/
-      yield flag_value("--#{$1}")
-    when /--(\S+)\s+\S+/
-      yield flag_value("--#{$1}")
+      value = flag_value("--#{$1}")
+      yield value if value
+    when /--(\S+)\s+\S+/, /--(\S+)\s+/
+      value = flag_value("--#{$1}", true)
+      yield value if value
     when /--\S+/
       flag_present?(flag) && yield ""
     when /-(.)\s+\[\S+\]/
-      yield flag_value(flag[0 .. 1])
-    when /-(.)\s+\S+/
-      yield flag_value(flag[0 .. 1])
-    when /-(.)\s+/
-      yield flag_value(flag[0 .. 1])
+      value = flag_value(flag[0 .. 1])
+      yield value if value
+    when /-(.)\s+\S+/, /-(.)\s+/
+      value = flag_value(flag[0 .. 1], true)
+      yield value if value
     when /-(.)\[\S+\]/
-      yield inline_flag_value(flag[0 ..1])
-    when /-(.)[A-Z]+/
-      yield inline_flag_value(flag[0 .. 1])
+      value = inline_flag_value(flag[0 ..1])
+      yield value if value
+    when /-(.)\S+/
+      value = inline_flag_value(flag[0 .. 1], true)
+      yield value if value
     else
       flag_present?(flag) && yield ""
     end
@@ -93,24 +103,27 @@ class OptionParser
     end
   end
 
-  def flag_value(flag)
+  def flag_value(flag, raise_if_missing = false)
     index = @args.index(flag)
     if index
       begin
         @args.delete_at(index)
         @args.delete_at(index)
       rescue IndexOutOfBounds
-        nil
+        raise MissingOption.new(flag) if raise_if_missing
+        ""
       end
     else
       nil
     end
   end
 
-  def inline_flag_value(flag)
+  def inline_flag_value(flag, raise_if_missing = false)
     index = @args.index { |arg| arg.starts_with?(flag) }
     if index
-      @args.delete_at(index)[2 .. -1]
+      value = @args.delete_at(index)[2 .. -1]
+      raise MissingOption.new(flag) if raise_if_missing && value.empty?
+      value
     else
       nil
     end

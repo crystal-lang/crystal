@@ -25,23 +25,22 @@ describe "OptionParser" do
   end
 
   def expect_missing_option(option)
-    flag = nil
     OptionParser.parse([] of String) do |opts|
       opts.on(option, "some flag") do |flag_value|
-        flag = flag_value
       end
     end
-    flag.should be_nil
+    fail "expected OptionParser::MissingOption to be raised"
+  rescue ex : OptionParser::MissingOption
   end
 
   def expect_missing_option(args, option, flag)
-    flag = nil
     OptionParser.parse(args) do |opts|
       opts.on(option, "some flag") do |flag_value|
-        flag = flag_value
       end
     end
-    flag.should be_nil
+    fail "expected OptionParser::MissingOption to be raised"
+  rescue ex : OptionParser::MissingOption
+    ex.message.should eq("Missing option: #{flag}")
   end
 
   it "has flag" do
@@ -49,7 +48,7 @@ describe "OptionParser" do
   end
 
   it "has flag with many letters" do
-    expect_capture_option ["-ll"], "-ll", ""
+    expect_capture_option ["-ll"], "-ll", "l"
   end
 
   it "doesn't have flag" do
@@ -68,8 +67,8 @@ describe "OptionParser" do
     expect_capture_option ["-f123"], "-fFLAG", "123"
   end
 
-  it "raises if missing required option" do
-    expect_missing_option ([] of String), "-fFLAG", "-f"
+  it "raises if missing option next to flag" do
+    expect_missing_option ["-f"], "-fFLAG", "-f"
   end
 
   it "has required option separated from flag" do
@@ -80,7 +79,7 @@ describe "OptionParser" do
     expect_capture_option ["-f", "-g -h"], "-f FLAG", "-g -h"
   end
 
-  it "raises if missing required argument" do
+  it "raises if missing required option with space" do
     expect_missing_option ["-f"], "-f FLAG", "-f"
   end
 
@@ -92,24 +91,32 @@ describe "OptionParser" do
     expect_missing_option ["--flag"], "--flag FLAG", "--flag"
   end
 
-  it "has optional option with space" do
+  it "has required option with space" do
     expect_capture_option ["-f", "123"], "-f ", "123"
   end
 
-  it "doesn't raise if optional option is not specified" do
-    expect_missing_option "-f "
+  it "has required option with long flag space" do
+    expect_capture_option ["--flag", "123"], "--flag ", "123"
+  end
+
+  it "doesn't raise if required option is not specified" do
+    expect_doesnt_capture_option ([] of String), "-f "
   end
 
   it "doesn't raise if optional option is not specified with short flag" do
-    expect_missing_option "-f[FLAG]"
+    expect_doesnt_capture_option ([] of String), "-f[FLAG]"
   end
 
   it "doesn't raise if optional option is not specified with long flag" do
-    expect_missing_option "--flag [FLAG]"
+    expect_doesnt_capture_option ([] of String), "--flag [FLAG]"
   end
 
   it "doesn't raise if optional option is not specified with separated short flag" do
-    expect_missing_option "-f [FLAG]"
+    expect_doesnt_capture_option ([] of String), "-f [FLAG]"
+  end
+
+  it "doesn't raise if required option is not specified with separated short flag 2" do
+    expect_doesnt_capture_option ([] of String), "-f FLAG"
   end
 
   it "does to_s with banner" do
