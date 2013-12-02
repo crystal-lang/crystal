@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Type inference: class" do
@@ -628,5 +628,24 @@ describe "Type inference: class" do
 
     foo.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32, mod.char))
     bar.instance_vars.length.should eq(0)
+  end
+
+  pending "types instance var as nilable if it appears inside a block" do
+    assert_type("
+      class Foo
+        def initialize
+          foo { @var = 1 }
+        end
+
+        def foo
+          yield
+        end
+
+        def var
+          @var
+        end
+      end
+      Foo.new.var
+      ") { |mod| union_of(mod.nil, int32) }
   end
 end
