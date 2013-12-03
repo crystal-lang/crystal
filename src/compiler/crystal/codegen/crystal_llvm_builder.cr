@@ -30,13 +30,9 @@ module Crystal
     end
 
     def unreachable
-      # if ENV["UNREACHABLE"] == "1"
-      #   backtrace = caller.join("\n")
-      #   msg = "Reached the unreachable!"
-      #   msg << " (#{data})" if data
-      #   msg << "\n#{backtrace}"
-      #   @codegen.llvm_puts(msg)
-      # end
+      if ENV["UNREACHABLE"] == "1"
+        @codegen.printf("Reached the unreachable!")
+      end
       return if @end
       value = @builder.unreachable
       @end = true

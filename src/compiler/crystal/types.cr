@@ -373,17 +373,9 @@ module Crystal
 
       if (my_parents = parents) && !(name == "new" && owner.metaclass?)
         my_parents.each do |parent|
-          type_lookup = parent
-          parent_owner = owner
-          if parent.is_a?(IncludedGenericModule)
-            type_lookup = parent
-          elsif parent.module?
-            # Nothing
-          else
-            break
-          end
+          break unless parent.is_a?(IncludedGenericModule) || parent.module?
 
-          parent_matches = parent.lookup_matches_with_modules(name, arg_types, yields, parent_owner, type_lookup, matches.matches)
+          parent_matches = parent.lookup_matches_with_modules(name, arg_types, yields, owner, parent, matches.matches)
           return parent_matches unless parent_matches.empty?
 
           matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
@@ -401,20 +393,7 @@ module Crystal
 
       if (my_parents = parents) && !(name == "new" && owner.metaclass?)
         my_parents.each do |parent|
-          type_lookup = parent
-          if value?
-            parent_owner = owner
-          elsif parent.class?
-            parent_owner = owner
-          elsif parent.is_a?(IncludedGenericModule)
-            type_lookup = parent
-            parent_owner = owner
-          elsif parent.module?
-            parent_owner = owner
-          else
-            parent_owner = parent
-          end
-          parent_matches = parent.lookup_matches(name, arg_types, yields, parent_owner, type_lookup, matches.matches)
+          parent_matches = parent.lookup_matches(name, arg_types, yields, owner, parent, matches.matches)
           return parent_matches if parent_matches.cover_all?
 
           matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
@@ -1487,7 +1466,7 @@ module Crystal
     end
   end
 
-  class Metaclass < Type
+  class Metaclass < ClassType
     include DefContainer
     include DefInstanceContainer
     include ClassVarContainer
@@ -1496,6 +1475,11 @@ module Crystal
     getter instance_type
 
     def initialize(@program, @instance_type)
+      super(@program, @program, "#{@instance_type}:Class", @program.class_type)
+    end
+
+    def allocated
+      true
     end
 
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
@@ -1509,7 +1493,9 @@ module Crystal
     end
 
     def parents
-      instance_type.parents.try &.map &.metaclass
+      parents = (instance_type.parents.try &.map &.metaclass || [] of Type)
+      parents.concat super
+      parents
     end
 
     def metaclass?

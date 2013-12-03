@@ -132,6 +132,12 @@ module Crystal
     end
   end
 
+  class Metaclass
+    def common_ancestor(other : Metaclass)
+      nil
+    end
+  end
+
   class PrimitiveType
     def common_ancestor(other)
       nil

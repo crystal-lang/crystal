@@ -66,6 +66,11 @@ module Crystal
       @string.lookup_instance_var("@length").type = @int32
       @string.lookup_instance_var("@c").type = @char
 
+      @types["Class"] = @class = NonGenericClassType.new self, self, "Class", @reference
+      @class.instance_vars_in_initialize = Set.new(["@name"])
+      @class.lookup_instance_var("@name").type = @string
+      @class.allocated = true
+
       @types["Array"] = @array = GenericClassType.new self, self, "Array", @reference, ["T"]
       @types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", @reference
 
@@ -307,6 +312,10 @@ module Crystal
     getter :pointer
     getter :math
     getter :exception
+
+    def class_type
+      @class
+    end
 
     getter :nil_var
 

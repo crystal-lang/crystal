@@ -156,7 +156,7 @@ module Crystal
         return true
       end
 
-      if parents = self.parents
+      if (parents = self.parents) && parents.length > 0
         return parents.any? &.is_restriction_of?(other, owner)
       end
 

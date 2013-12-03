@@ -224,7 +224,7 @@ module Crystal
         parents = lookup.parents
       end
 
-      if parents
+      if parents && parents.length > 0
         parents_length = parents.length
         parents.each_with_index do |parent, i|
           if i == parents_length - 1 || parent.lookup_first_def(untyped_def.name, !!block)

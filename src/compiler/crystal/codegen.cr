@@ -2404,6 +2404,10 @@ module Crystal
       @in_const_block = old_in_const_block
     end
 
+    def printf(format, args = [] of LibLLVM::ValueRef)
+      @builder.call @mod.printf(@llvm_mod), [@builder.global_string_pointer(format)] + args
+    end
+
     def gep(ptr, index0)
       @builder.gep ptr, [int32(index0)]
     end

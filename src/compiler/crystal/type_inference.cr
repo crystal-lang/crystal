@@ -1074,6 +1074,8 @@ module Crystal
         # Nothing to do
       when :pointer_null
         visit_pointer_null node
+      when :class_name
+        node.type = mod.string
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end

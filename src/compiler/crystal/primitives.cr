@@ -17,6 +17,7 @@ module Crystal
 
     def define_object_primitives
       object.add_def Def.new("class", ([] of Arg), Primitive.new(:class))
+      object.metaclass.add_def Def.new("name", ([] of Arg), Primitive.new(:class_name))
     end
 
     def define_primitive_types_primitives
@@ -105,6 +106,10 @@ module Crystal
 
     def sprintf(llvm_mod)
       llvm_mod.functions["sprintf"]? || llvm_mod.functions.add("sprintf", [LLVM.pointer_type(LLVM::Int8)], LLVM::Int32, true)
+    end
+
+    def printf(llvm_mod)
+      llvm_mod.functions["printf"]? || llvm_mod.functions.add("printf", [LLVM.pointer_type(LLVM::Int8)], LLVM::Int32, true)
     end
 
     def realloc(llvm_mod)
