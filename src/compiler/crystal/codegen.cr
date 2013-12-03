@@ -11,6 +11,8 @@ module Crystal
   DUMP_LLVM = ENV["DUMP"] == "1"
   MAIN_NAME = "__crystal_main"
   RAISE_NAME = "__crystal_raise"
+  MALLOC_NAME = "__crystal_malloc"
+  REALLOC_NAME = "__crystal_realloc"
 
   class Program
     def run(code)
@@ -418,7 +420,7 @@ module Crystal
       assert_type type, PointerInstanceType
 
       llvm_type = llvm_embedded_type(type.var.type)
-      @builder.array_malloc(llvm_type, call_args[1])
+      array_malloc(llvm_type, call_args[1])
     end
 
     def codegen_primitive_pointer_set(node, target_def, call_args)
@@ -2419,7 +2421,29 @@ module Crystal
     end
 
     def malloc(type)
-      @builder.malloc type
+      @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
+      if malloc_fun = @malloc_fun
+        malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
+        size = @builder.trunc(LLVM.size_of(type), LLVM::Int32)
+        pointer = @builder.call malloc_fun, [size]
+        @builder.bit_cast pointer, LLVM.pointer_type(type)
+      else
+        @builder.malloc type
+      end
+    end
+
+    def array_malloc(type, count)
+      @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
+      if malloc_fun = @malloc_fun
+        malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
+        size = @builder.trunc(LLVM.size_of(type), LLVM::Int32)
+        count = @builder.trunc(count, LLVM::Int32)
+        size = @builder.mul size, count
+        pointer = @builder.call malloc_fun, [size]
+        @builder.bit_cast pointer, LLVM.pointer_type(type)
+      else
+        @builder.array_malloc(type, count)
+      end
     end
 
     def memset(pointer, value, size)
@@ -2428,7 +2452,14 @@ module Crystal
     end
 
     def realloc(buffer, size)
-      @builder.call @mod.realloc(@llvm_mod), [buffer, size]
+      @realloc_fun ||= @main_mod.functions[REALLOC_NAME]?
+      if realloc_fun = @realloc_fun
+        realloc_fun = check_main_fun REALLOC_NAME, realloc_fun
+        size = @builder.trunc(size, LLVM::Int32)
+        @builder.call realloc_fun, [buffer, size]
+      else
+        @builder.call @mod.realloc(@llvm_mod), [buffer, size]
+      end
     end
 
     def llvm_type(type)
