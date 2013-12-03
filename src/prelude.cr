@@ -1,3 +1,4 @@
+require "gc"
 require "gc/null"
 # require "gc/bohem"
 require "int"

@@ -226,6 +226,7 @@ class Object
 end
 
 fun main(argc : Int32, argv : Char**) : Int32
+  GC.init
   time = Time.now
   CrystalMain.__crystal_main(argc, argv)
   elapsed_time = Time.now - time
