@@ -1953,7 +1953,7 @@ module Crystal
       if allow_type_vars && @token.type == :"("
         next_token_skip_space
 
-        types = parse_types
+        types = parse_types(true)
         if types.empty?
           raise "must specify at least one type var"
         end
@@ -1968,8 +1968,8 @@ module Crystal
       const
     end
 
-    def parse_types
-      type = parse_type
+    def parse_types(allow_primitives = false)
+      type = parse_type(allow_primitives)
       case type
       when Array
         type
@@ -1982,7 +1982,7 @@ module Crystal
 
     def parse_single_type
       location = @token.location
-      type = parse_type
+      type = parse_type(false)
       case type
       when Array
         raise "unexpected ',' in type (use parenthesis to disambiguate)", location
@@ -1993,18 +1993,18 @@ module Crystal
       end
     end
 
-    def parse_type
+    def parse_type(allow_primitives)
       location = @token.location
 
       if @token.type == :"->"
         input_types = nil
       else
-        input_types = parse_type_union
+        input_types = parse_type_union(allow_primitives)
         input_types = [input_types] unless input_types.is_a?(Array)
-        if @token.type == :"," && next_comes_uppercase
-          while @token.type == :"," && next_comes_uppercase
+        if @token.type == :"," && (allow_primitives || next_comes_uppercase)
+          while @token.type == :"," && (allow_primitives || next_comes_uppercase)
             next_token_skip_space_or_newline
-            type_union = parse_type_union
+            type_union = parse_type_union(allow_primitives)
             if type_union.is_a?(Array)
               input_types.concat type_union
             else
@@ -2023,7 +2023,7 @@ module Crystal
           skip_space_or_newline
           return_type = nil
         else
-          type_union = parse_type_union
+          type_union = parse_type_union(allow_primitives)
           if type_union.is_a?(Array)
             raise "can't return more than more type", location.line_number, location.column_number
           else
@@ -2043,13 +2043,13 @@ module Crystal
       end
     end
 
-    def parse_type_union
+    def parse_type_union(allow_primitives)
       types = [] of ASTNode
-      parse_type_with_suffix(types)
+      parse_type_with_suffix(types, allow_primitives)
       if @token.type == :"|"
         while @token.type == :"|"
           next_token_skip_space_or_newline
-          parse_type_with_suffix(types)
+          parse_type_with_suffix(types, allow_primitives)
         end
 
         if types.length == 1
@@ -2064,7 +2064,7 @@ module Crystal
       end
     end
 
-    def parse_type_with_suffix(types)
+    def parse_type_with_suffix(types, allow_primitives)
       if @token.keyword?("self")
         type = SelfType.new
         next_token_skip_space
@@ -2074,7 +2074,7 @@ module Crystal
 
       if @token.type == :"("
         next_token_skip_space_or_newline
-        type = parse_type
+        type = parse_type(allow_primitives)
         check :")"
         next_token_skip_space
         case type
@@ -2086,6 +2086,15 @@ module Crystal
           raise "Bug"
         end
         return
+      end
+
+      if allow_primitives
+        case @token.type
+        when :NUMBER
+          types << node_and_next_token(NumberLiteral.new(@token.value.to_s, @token.number_kind))
+          skip_space
+          return types
+        end
       end
 
       type = parse_ident

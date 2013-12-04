@@ -325,6 +325,10 @@ describe "Parser" do
   it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident] of ASTNode)] of ASTNode)
   it_parses "Foo(Bar(T | U))", NewGenericClass.new("Foo".ident, [NewGenericClass.new("Bar".ident, [IdentUnion.new(["T".ident, "U".ident] of ASTNode)] of ASTNode)] of ASTNode)
   it_parses "Foo(T?)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, Ident.new(["Nil"], true)] of ASTNode)] of ASTNode)
+  it_parses "Foo(1)", NewGenericClass.new("Foo".ident, [NumberLiteral.new("1", :i32)] of ASTNode)
+  it_parses "Foo(T, 1)", NewGenericClass.new("Foo".ident, ["T".ident, NumberLiteral.new("1", :i32)] of ASTNode)
+  it_parses "Foo(T, U, 1)", NewGenericClass.new("Foo".ident, ["T".ident, "U".ident, NumberLiteral.new("1", :i32)] of ASTNode)
+  it_parses "Foo(T, 1, U)", NewGenericClass.new("Foo".ident, ["T".ident, NumberLiteral.new("1", :i32), "U".ident] of ASTNode)
 
   it_parses "module Foo; end", ModuleDef.new("Foo".ident)
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".ident, [Def.new("foo", [] of Arg, nil)] of ASTNode)
