@@ -3,7 +3,7 @@ require "../llvm"
 
 module Crystal
   class LLVMTyper
-    HIERARCHY_LLVM_TYPE = LLVM.struct_type("Object+", [LLVM::Int32, LLVM.pointer_type(LLVM::Int8)], true)
+    HIERARCHY_LLVM_TYPE = LLVM.struct_type("Object+", [LLVM::Int32, LLVM.pointer_type(LLVM::Int8)])
     HIERARCHY_LLVM_ARG_TYPE = LLVM.pointer_type(HIERARCHY_LLVM_TYPE)
 
     getter landing_pad_type
@@ -58,16 +58,15 @@ module Crystal
           max_size = size if size > max_size
         end
       end
-      max_size /= 4
+      max_size /= 8
       max_size = 1 if max_size == 0
 
-      llvm_value_type = LLVM.array_type(LLVM::Int32, max_size)
-      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type], true)
+      llvm_value_type = LLVM.array_type(LLVM::Int64, max_size)
+      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type])
     end
 
     def create_llvm_type(type : PaddingType)
-      llvm_value_type = LLVM.array_type(LLVM::Int32, type.padding)
-      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type], true)
+      LLVM.array_type(LLVM::Int32, type.padding)
     end
 
     def create_llvm_type(type : NilableType)
