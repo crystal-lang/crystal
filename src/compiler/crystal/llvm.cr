@@ -215,16 +215,16 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
   fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
   fun count_param_types = LLVMCountParamTypes(function_type : TypeRef) : UInt32
-  fun create_builder = LLVMCreateBuilder() : BuilderRef
+  fun create_builder = LLVMCreateBuilder : BuilderRef
   fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
   fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : Char**) : Int32
   fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : Char**) : Int32
   fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : Char*, cpu : Char*, features : Char*, level : CodeGenOptLevel, reloc : RelocMode, code_model : CodeModel) : TargetMachineRef
-  fun double_type = LLVMDoubleType() : TypeRef
+  fun double_type = LLVMDoubleType : TypeRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
-  fun float_type = LLVMFloatType() : TypeRef
+  fun float_type = LLVMFloatType : TypeRef
   fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : UInt32, is_var_arg : Int32) : TypeRef
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : Int32
@@ -244,10 +244,11 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : Char*
   fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : TypeKind
-  fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter()
-  fun initialize_x86_target = LLVMInitializeX86Target()
-  fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
-  fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
+  fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter
+  fun initialize_x86_target = LLVMInitializeX86Target
+  fun initialize_x86_target_info = LLVMInitializeX86TargetInfo
+  fun initialize_x86_target_mc = LLVMInitializeX86TargetMC
+  fun initialize_native_target = LLVMInitializeNativeTarget
   fun int_type = LLVMIntType(bits : Int32) : TypeRef
   fun is_constant = LLVMIsConstant(val : ValueRef) : Int32
   fun is_function_var_arg = LLVMIsFunctionVarArg(ty : TypeRef) : Int32
@@ -267,9 +268,10 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun struct_set_body = LLVMStructSetBody(struct_type : TypeRef, element_types : TypeRef*, element_count : UInt32, packed : Int32)
   fun struct_type = LLVMStructType(element_types : TypeRef*, element_count : UInt32, packed : Int32) : TypeRef
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
-  fun void_type = LLVMVoidType() : TypeRef
+  fun void_type = LLVMVoidType : TypeRef
   fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int32
-  fun link_in_jit = LLVMLinkInJIT()
+  fun link_in_jit = LLVMLinkInJIT
+  fun link_in_mc_jit = LLVMLinkInMCJIT
 end
 
 module LLVM
@@ -279,6 +281,7 @@ module LLVM
     LibLLVM.initialize_x86_target_mc
     LibLLVM.initialize_x86_asm_printer
     LibLLVM.link_in_jit
+    # LibLLVM.link_in_mc_jit
   end
 
   def self.dump(value)
@@ -778,7 +781,8 @@ module LLVM
 
   class JITCompiler
     def initialize(mod)
-      if LibLLVM.create_mc_jit_compiler_for_module(out @jit, mod.llvm_module, nil, 0_u32, out error) != 0
+      if LibLLVM.create_jit_compiler_for_module(out @jit, mod.llvm_module, 3, out error) != 0
+      # if LibLLVM.create_mc_jit_compiler_for_module(out @jit, mod.llvm_module, nil, 0_u32, out error) != 0
         raise String.new(error)
       end
     end
