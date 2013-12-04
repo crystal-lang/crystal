@@ -19,7 +19,7 @@ lib C
   fun access(filename : Char*, how : Int32) : Int32
   fun realpath(path : Char*, resolved_path : Char*) : Char*
   fun fdopen(fd : Int32, mode : Char*) : File
-  fun fgets(buffer : Char*, maxlength : Int32, file : File*) : Char*
+  fun fgets(buffer : Char*, maxlength : Int32, file : File) : Char*
   fun unlink(filename : Char*) : Char*
   fun popen(command : Char*, mode : Char*) : File
   fun pclose(stream : File) : Int32
@@ -45,11 +45,16 @@ module IO
   end
 
   def gets
-    buffer = Pointer(Char).malloc(0)
-    buffer_ptr = buffer.ptr
-    cap = 0_i64
-    length = C.getline(buffer_ptr, cap.ptr, input)
-    length > 0 ? String.new(buffer) : nil
+    String.build do |str|
+      continue = true
+      while continue
+        buffer = Pointer(Char).malloc(256)
+        return nil unless C.fgets(buffer, 256, input)
+        read = String.new(buffer)
+        str << read
+        continue = !read.ends_with?('\n')
+      end
+    end
   end
 
   def eof?
