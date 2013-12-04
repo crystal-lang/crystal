@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Block inference" do
@@ -362,5 +362,26 @@ describe "Block inference" do
 
       1
       ") { int32 }
+  end
+
+  it "maps block of union types to union types" do
+    assert_type("
+      require \"prelude\"
+
+      class Foo1
+      end
+
+      class Bar1 < Foo1
+      end
+
+      class Foo2
+      end
+
+      class Bar2 < Foo2
+      end
+
+      a = [Foo1.new, Foo2.new, Bar1.new, Bar2.new]
+      a.map { |x| x }
+      ") { array_of(union_of(types["Foo1"].hierarchy_type, types["Foo2"].hierarchy_type)) }
   end
 end

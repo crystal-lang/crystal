@@ -178,7 +178,7 @@ module Crystal
 
   class UnionType
     def is_restriction_of?(type, owner)
-      union_types.any? &.is_restriction_of?(type, owner)
+      self == type || union_types.any? &.is_restriction_of?(type, owner)
     end
 
     def restrict(other : Type | NewGenericClass, owner, type_lookup, free_vars)
