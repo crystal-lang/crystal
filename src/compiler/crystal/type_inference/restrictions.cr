@@ -194,7 +194,11 @@ module Crystal
   class GenericClassInstanceType
     def restrict(other : Ident, owner, type_lookup, free_vars)
       ident_type = type_lookup.lookup_type other
-      generic_class == ident_type ? self : super
+      if ident_type
+        restrict(ident_type, owner, type_lookup, free_vars)
+      else
+        super
+      end
     end
 
     def restrict(other : GenericClassType, owner, type_lookup, free_vars)
@@ -214,6 +218,18 @@ module Crystal
         restricted = type_var.type.restrict other_type_var, owner, type_lookup, free_vars
         return nil unless restricted
         i += 1
+      end
+
+      self
+    end
+
+    def restrict(other : GenericClassInstanceType, owner, type_lookup, free_vars)
+      return nil unless generic_class == other.generic_class
+
+      type_vars.each do |name, type_var|
+        other_type_var = other.type_vars[name]
+        restricted = type_var.type.restrict(other_type_var.type, owner, type_lookup, free_vars)
+        return nil unless restricted
       end
 
       self

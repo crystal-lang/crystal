@@ -506,4 +506,19 @@ describe "Type inference: def overload" do
       a.equal(a)
     ") { union_of(bool, int32) }
   end
+
+  it "matches generic class instance type with another one" do
+    assert_type("
+      require \"prelude\"
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      a = [] of Array(Foo)
+      a.push [Foo.new, Bar.new]
+      1
+      ") { int32 }
+  end
 end
