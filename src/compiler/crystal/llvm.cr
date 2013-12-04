@@ -139,6 +139,13 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
     Large
   end
 
+  struct JITCompilerOptions
+    opt_level : UInt32
+    code_model : CodeModel
+    no_frame_pointer_elim : Int32
+    enable_fast_isel : Int32
+  end
+
   fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : Int32)
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : Char*, type : TypeRef) : ValueRef
@@ -212,6 +219,7 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
   fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
   fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : Char**) : Int32
+  fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : Char**) : Int32
   fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : Char*, cpu : Char*, features : Char*, level : CodeGenOptLevel, reloc : RelocMode, code_model : CodeModel) : TargetMachineRef
   fun double_type = LLVMDoubleType() : TypeRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
@@ -230,11 +238,13 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun get_named_global = LLVMGetNamedGlobal(mod : ModuleRef, name : Char*) : ValueRef
   fun get_param = LLVMGetParam(fn : ValueRef, index : Int32) : ValueRef
   fun get_param_types = LLVMGetParamTypes(function_type : TypeRef, dest : TypeRef*)
+  fun get_pointer_to_global = LLVMGetPointerToGlobal(ee : ExecutionEngineRef, global : ValueRef) : Void*
   fun get_return_type = LLVMGetReturnType(function_type : TypeRef) : TypeRef
   fun get_target_name = LLVMGetTargetName(target : TargetRef) : Char*
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : Char*
   fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : TypeKind
+  fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter()
   fun initialize_x86_target = LLVMInitializeX86Target()
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo()
   fun initialize_x86_target_mc = LLVMInitializeX86TargetMC()
@@ -267,6 +277,7 @@ module LLVM
     LibLLVM.initialize_x86_target_info
     LibLLVM.initialize_x86_target
     LibLLVM.initialize_x86_target_mc
+    LibLLVM.initialize_x86_asm_printer
     LibLLVM.link_in_jit
   end
 
@@ -767,7 +778,7 @@ module LLVM
 
   class JITCompiler
     def initialize(mod)
-      if LibLLVM.create_jit_compiler_for_module(out @jit, mod.llvm_module, 3, out error) != 0
+      if LibLLVM.create_mc_jit_compiler_for_module(out @jit, mod.llvm_module, nil, 0_u32, out error) != 0
         raise String.new(error)
       end
     end
@@ -776,7 +787,12 @@ module LLVM
       ret = LibLLVM.run_function(@jit, func.llvm_function, args.length, args.buffer)
       GenericValue.new(ret)
     end
+
+    def get_pointer_to_global(value)
+      LibLLVM.get_pointer_to_global(@jit, value)
+    end
   end
+
 
   Void = LibLLVM.void_type
   Int1 = LibLLVM.int_type(1)
