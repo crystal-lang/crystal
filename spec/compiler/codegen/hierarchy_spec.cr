@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Code gen: hierarchy type" do
@@ -358,5 +358,62 @@ describe "Code gen: hierarchy type" do
       x = lala
       foo(x)
     ").to_i.should eq(1)
+  end
+
+  it "calls class method 1" do
+    run("
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.foo
+          2
+        end
+      end
+
+      (Foo.new || Bar.new).class.foo
+      ").to_i.should eq(1)
+  end
+
+  it "calls class method 2" do
+    run("
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.foo
+          2
+        end
+      end
+
+      (Bar.new || Foo.new).class.foo
+      ").to_i.should eq(2)
+  end
+
+  it "calls class method 3" do
+    run("
+      class Base
+        def self.foo
+          1
+        end
+      end
+
+      class Foo < Base
+      end
+
+      class Bar < Foo
+        def self.foo
+          2
+        end
+      end
+
+      (Foo.new || Base.new).class.foo
+      ").to_i.should eq(1)
   end
 end

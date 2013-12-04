@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Code gen: class" do
@@ -166,5 +166,25 @@ describe "Code gen: class" do
       foo = Foo.new
       foo.foo
       ").to_i.should eq(2)
+  end
+
+  it "gets object_id of class" do
+    program = Program.new
+    program.run("Reference.object_id").to_i.should eq(program.reference.type_id)
+  end
+
+  it "calls method on Class class" do
+    run("
+      class Class
+        def foo
+          1
+        end
+      end
+
+      class Foo
+      end
+
+      Foo.foo
+    ").to_i.should eq(1)
   end
 end
