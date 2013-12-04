@@ -883,8 +883,9 @@ module Crystal
     end
 
     def visit(node : Ident)
-      type = lookup_ident_type(node)
-      if type.is_a?(Const)
+      type = resolve_ident(node)
+      case type
+      when Const
         unless type.value.type?
           old_types, old_scope, old_vars = @types, @scope, @vars
           @types, @scope, @vars = type.scope_types, type.scope, ({} of String => Var)
@@ -893,8 +894,11 @@ module Crystal
         end
         node.target_const = type
         node.bind_to type.value
-      else
+      when Type
         node.type = type.metaclass
+      when ASTNode
+        node.syntax_replacement = type
+        node.bind_to type
       end
     end
 
@@ -1279,6 +1283,15 @@ module Crystal
     end
 
     def lookup_ident_type(node : Ident)
+      target_type = resolve_ident(node)
+      if target_type.is_a?(Type)
+        target_type
+      else
+        node.raise "#{node} must be a type here, not #{target_type}"
+      end
+    end
+
+    def resolve_ident(node : Ident)
       free_vars = @free_vars
       if free_vars && !node.global && (type = free_vars[node.names.first]?)
         if node.names.length == 1

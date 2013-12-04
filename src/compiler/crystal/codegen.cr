@@ -1534,8 +1534,7 @@ module Crystal
     end
 
     def visit(node : Ident)
-      const = node.target_const
-      if const
+      if const = node.target_const
         global_name = const.llvm_name
         global = @main_mod.globals[global_name]?
 
@@ -1570,6 +1569,8 @@ module Crystal
         end
 
         @last = @builder.load global
+      elsif replacement = node.syntax_replacement
+        replacement.accept self
       else
         @last = int(node.type.instance_type.type_id)
       end

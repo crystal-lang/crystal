@@ -342,7 +342,10 @@ module Crystal
           end
         end
 
-        @type = @match.type_lookup.lookup_type(node)
+        the_type = @match.type_lookup.lookup_type(node)
+        assert_type the_type, Type
+
+        @type = the_type
 
         unless @type
           node.raise("uninitialized constant #{node}")

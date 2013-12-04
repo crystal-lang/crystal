@@ -648,4 +648,29 @@ describe "Type inference: class" do
       Foo.new.var
       ") { |mod| union_of(mod.nil, int32) }
   end
+
+  it "allows instantiating generic class with number" do
+    assert_type("
+      class Foo(T)
+      end
+
+      Foo(1).new
+      ") do
+        foo = types["Foo"]
+        assert_type foo, GenericClassType
+        foo.instantiate([NumberLiteral.new("1", :i32)])
+      end
+  end
+
+  it "uses number type var in class method" do
+    assert_type("
+      class Foo(T)
+        def self.foo
+          T
+        end
+      end
+
+      Foo(1).foo
+      ") { int32 }
+  end
 end

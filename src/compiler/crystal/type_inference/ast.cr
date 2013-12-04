@@ -169,10 +169,15 @@ module Crystal
     property! instance_type
 
     def update(from = nil)
-      generic_type = instance_type.instantiate(type_vars.map do |var|
-        var_type = var.type?
-        self.raise "can't deduce generic type in recursive method" unless var_type
-        var_type.instance_type
+      generic_type = instance_type.instantiate(type_vars.map do |node|
+        case node
+        when NumberLiteral
+          node
+        else
+          node_type = node.type?
+          self.raise "can't deduce generic type in recursive method" unless node_type
+          node_type.instance_type
+        end
       end)
       self.type = generic_type.metaclass
     end
@@ -271,6 +276,7 @@ module Crystal
 
   class Ident
     property target_const
+    property syntax_replacement
   end
 
   class Arg

@@ -187,4 +187,16 @@ describe "Code gen: class" do
       Foo.foo
     ").to_i.should eq(1)
   end
+
+  it "uses number type var" do
+    run("
+      class Foo(T)
+        def self.foo
+          T
+        end
+      end
+
+      Foo(1).foo
+      ").to_i.should eq(1)
+  end
 end

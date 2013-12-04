@@ -142,6 +142,10 @@ module Crystal
       other.value.to_f64 == value.to_f64 && other.kind == kind
     end
 
+    def hash
+      31 * value.hash + kind.hash
+    end
+
     def clone_without_location
       NumberLiteral.new(@value, @kind)
     end

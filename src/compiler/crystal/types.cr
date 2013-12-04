@@ -958,24 +958,28 @@ module Crystal
     getter type_vars
 
     def generic_types
-      @generic_types ||= {} of Array(Int32) => Type
+      @generic_types ||= {} of Array(Type | ASTNode) => Type
     end
 
     def instantiate(type_vars)
-      key = type_vars.map(&.type_id)
-      if (instance = generic_types[key]?)
+      if (instance = generic_types[type_vars]?)
         return instance
       end
 
-      instance_type_vars = {} of String => Var
-      self.type_vars.zip(type_vars) do |name, type|
-        var = Var.new(name, type)
-        var.bind_to var
-        instance_type_vars[name] = var
+      instance_type_vars = {} of String => ASTNode
+      self.type_vars.zip(type_vars) do |name, type_var|
+        case type_var
+        when Type
+          var = Var.new(name, type_var)
+          var.bind_to var
+          instance_type_vars[name] = var
+        when ASTNode
+          instance_type_vars[name] = type_var
+        end
       end
 
       instance = instance_class.new program, self, instance_type_vars
-      generic_types[key] = instance
+      generic_types[type_vars] = instance
 
       instance.after_initialize
       instance
@@ -1098,7 +1102,12 @@ module Crystal
       already_looked_up.add(type_id)
 
       if (names.length == 1) && (type_var = type_vars[names[0]]?)
-        return type_var.type
+        case type_var
+        when Var
+          return type_var.type
+        else
+          return type_var
+        end
       end
 
       type = generic_class
@@ -1132,7 +1141,7 @@ module Crystal
     end
 
     def to_s
-      "#{generic_class.full_name}(#{type_vars.values.map(&.type).join ", "})"
+      "#{generic_class.full_name}(#{type_vars.values.map { |t| (t.is_a?(Var) ? t.type : t).to_s }.join ", "})"
     end
   end
 
