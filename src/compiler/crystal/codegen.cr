@@ -592,7 +592,7 @@ module Crystal
       else
         obj = call_args[0]
       end
-      buffer = @builder.array_malloc(LLVM::Int8, int(@type.to_s.length + 23))
+      buffer = array_malloc(LLVM::Int8, int(@type.to_s.length + 23))
       @builder.call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("#<#{@type}:0x%016lx>"), obj] of LibLLVM::ValueRef
       buffer
     end
@@ -748,7 +748,7 @@ module Crystal
 
       if owner && call_self
         wrapper = trampoline_wrapper(node.call.target_def, last_fun)
-        tramp_ptr = @builder.array_malloc(LLVM::Int8, int(32))
+        tramp_ptr = array_malloc(LLVM::Int8, int(32))
         @builder.call @mod.trampoline_init(@llvm_mod), [
           tramp_ptr,
           @builder.bit_cast(wrapper.fun, LLVM.pointer_type(LLVM::Int8)),
