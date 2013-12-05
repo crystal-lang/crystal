@@ -1,6 +1,6 @@
 require "gc"
 require "gc/null"
-# require "gc/bohem"
+# require "gc/boehm"
 require "int"
 require "pointer"
 require "array"
