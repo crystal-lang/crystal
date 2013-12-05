@@ -1,6 +1,10 @@
 language: objective-c
-script:
+before_install:
+  - brew update
+install:
+  - brew install bdw-gc
   - bin/crystal --setup
+script:
   - make spec
 notifications:
   irc: "irc.freenode.net#crystal-lang"
