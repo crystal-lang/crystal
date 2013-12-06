@@ -26,7 +26,7 @@ nil.foo
 
 Compiling the above program gives this error:
 
-<pre>
+<pre class="code">
 Error in foo.cr:1: undefined method 'foo' for Nil
 
 nil.foo
@@ -65,7 +65,7 @@ Can you spot the bug?
 
 Compiling the above program, Crystal says:
 
-<pre>
+<pre class="code">
 Error in foo.cr:20: undefined method 'value' for Nil
 
 puts box.value
@@ -121,7 +121,7 @@ So `capitalize` might be called on `nil`.
 
 And Crystal prevents you from writing such a program:
 
-<pre>
+<pre class="code">
 Error in foo.cr:10: undefined method 'capitalize' for Nil
 
 puts socket.gets.capitalize

@@ -34,7 +34,7 @@ m = dup(n)
 
 *Did you know?* `/bin/crystal sample.cr -types` will show the types of the top variables?
 
-<pre>
+<pre class="code">
 $ ./bin/crystal sample.cr -types
 a : String
 b : String
@@ -44,7 +44,7 @@ m : Int32
 
 *Did you know?* `/bin/crystal sample.cr --html ./types` will create html files that allow you to digg into the output of the compiler?
 
-<pre>
+<pre class="code">
 $ ./bin/crystal sample.cr --html types
 $ open ./types/main.html
 </pre>
