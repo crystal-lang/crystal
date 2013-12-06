@@ -317,6 +317,9 @@ section .meta {
   margin: 0;
   border: 0;
 }
+code {
+  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+}
 pre {
   padding: 20px;
 }
