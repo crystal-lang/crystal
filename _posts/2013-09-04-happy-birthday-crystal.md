@@ -50,7 +50,7 @@ b = "Hello #{a}" #=> "Hello World"
 We still need to decide what's the best way to deal with different encodings, so this
 is just a temporary implementation.
 
-Did you know that [String](https://github.com/manastech/crystal/blob/master/std/string.cr)
+Did you know that [String](https://github.com/manastech/crystal/blob/master/src/string.cr)
 is implemented in Crystal itself? There's just very small magic to make it have the
 length and pointer to the chars buffers, but everything else is built on top of that.
 
@@ -198,7 +198,7 @@ d = {1 => 2, 3 => 4}     # d is a Hash(Int32, Int32)
 e = {} of String => Bool # e is a Hash(String, Bool), same as doing Hash(String, Bool).new
 {% endhighlight ruby %}
 
-And yes, [Array](https://github.com/manastech/crystal/blob/master/std/array.cr) and
+And yes, [Array](https://github.com/manastech/crystal/blob/master/src/array.cr) and
 [Hash](https://github.com/manastech/crystal/blob/master/std/hash.cr) are completely
 implemented in Crystal. This makes it very easy for anyone to collaborate on those classes.
 
@@ -256,7 +256,7 @@ values = Pointer(Int32).malloc(10) # Ask for 10 ints
 ### Regular expressions
 
 Regular expressions are implemented, for now, with C bindings to the PCRE library. Again,
-[Regexp](https://github.com/manastech/crystal/blob/master/std/regexp.cr) is entirely written in Crystal.
+[Regexp](https://github.com/manastech/crystal/blob/master/src/regexp.cr) is entirely written in Crystal.
 
 {% highlight ruby %}
 "foobarbaz" =~ /(.+)bar(.+)/ #=> 0
@@ -266,7 +266,7 @@ $2                           #=> "baz
 
 ### Ranges
 
-Once again, [implemented in Crystal](https://github.com/manastech/crystal/blob/master/std/range.cr).
+Once again, [implemented in Crystal](https://github.com/manastech/crystal/blob/master/src/range.cr).
 
 ### Exceptions
 
@@ -332,7 +332,7 @@ we find it easier to implement it this way, and maybe easier to use.
 
 ### Specs
 
-We'be built a [very small clone of RSpec](https://github.com/manastech/crystal/blob/master/std/spec.cr) and we are using it to test the standard
+We'be built a [very small clone of RSpec](https://github.com/manastech/crystal/blob/master/src/spec.cr) and we are using it to test the standard
 library as well as the new compiler. Here's a sample spec for the Array class:
 
 {% highlight ruby %}
