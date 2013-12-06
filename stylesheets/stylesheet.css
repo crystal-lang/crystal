@@ -142,7 +142,7 @@ html {
 }
 body {
   background: #000000;
-  color: #231f20;
+  color: #333333;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   height: 100%;
   margin: 0px;
@@ -191,7 +191,7 @@ a {
   text-decoration: none;
 }
 a:hover {
-  color: #4d4d4d !important;
+  color: #333333 !important;
   text-decoration: none;
 }
 .wrapper {
