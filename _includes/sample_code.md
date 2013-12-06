@@ -4,6 +4,7 @@ max = 100
 
 sieve = Array.new(max, true)
 sieve[0] = false
+sieve[1] = false
 
 (2...max).each do |i|
   if sieve[i]
