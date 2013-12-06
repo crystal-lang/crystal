@@ -205,6 +205,11 @@ header:after {
 header:after {
   clear: both;
 }
+header img {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
 header a.ico {
   color: #b5b5b5;
   float: right;
@@ -213,6 +218,7 @@ header a.ico {
 }
 nav {
   float: right;
+  margin-top: -136px;
 }
 nav ul.menu li {
   margin-bottom: 12px;
