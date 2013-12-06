@@ -245,7 +245,7 @@ module Crystal
   class HierarchyType
     def is_restriction_of?(other : Type, owner)
       other = other.base_type if other.is_a?(HierarchyType)
-      base_type.is_subclass_of?(other)
+      base_type.is_subclass_of?(other) || other.is_subclass_of?(base_type)
     end
 
     def restrict(other : Type, owner, type_lookup, free_vars)
