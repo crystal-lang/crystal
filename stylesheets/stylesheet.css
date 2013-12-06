@@ -408,11 +408,6 @@ footer img {
   display: block;
 }
 i.ic {
-  -webkit-transition: background ease 0.3s;
-  -moz-transition: background ease 0.3s;
-  -ms-transition: background ease 0.3s;
-  -o-transition: background ease 0.3s;
-  transition: background ease 0.3s;
   background: url("/images/icons_40x40.png") no-repeat 40px 40px;
   display: inline-block;
   vertical-align: middle;
