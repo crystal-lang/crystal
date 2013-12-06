@@ -69,6 +69,13 @@ img {
   border: 0;
   -ms-interpolation-mode: bicubic;
 }
+img.center {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  display: block;
+}
 #map_canvas img {
   max-width: none;
 }
