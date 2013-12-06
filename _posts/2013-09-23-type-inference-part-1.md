@@ -41,7 +41,7 @@ Instead of computing it in a backtracking fashion (in order to support more comp
 
 The next picture shows the AST nodes, the context where the variables and their types are hold, and blue arrows that highlight the type dependency between parts.
 
-<img src="/images/type-inference/assign-variable.png" class="center"/>
+<img src="/images/type-inference/assign-variable.png" width="374" height="203" class="center"/>
 
 **Conditionals (a.k.a. Ifs)**
 
@@ -59,13 +59,13 @@ At the end of it `v` should be of type `Int32 | Boolean`.
 
 Once more, we show the AST nodes, the context where the variables and their types are hold, and blue arrows that highlight the type dependency between parts.
 
-<img src="/images/type-inference/conditional-1.png" class="center"/>
+<img src="/images/type-inference/conditional-1.png" width="562" height="324" class="center"/>
 
 When a new type arrives to the variable in the context, this is added to the "ongoing" known types. So the union appears.
 
 There is one thing that is not shown still. *Every* ocurrence of the variables have a dependency to the context. This is shown in the following picture:
 
-<img src="/images/type-inference/conditional-2.png" class="center"/>
+<img src="/images/type-inference/conditional-2.png" width="563" height="325" class="center"/>
 
 This way, each assignment knows that it is aimed to assign a `Boolean` to a `Int32 | Boolean` or `Int32` to `Int32 | Boolean`. This information is used in the codegen.
 
