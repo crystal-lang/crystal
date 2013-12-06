@@ -31,9 +31,9 @@ Oh, and we don't want to write C code to make the code run faster.
 Status
 ------
 
-The project is in pre-alpha stage: we are still designing the language.
-
-We managed to write a compiler for Crystal in Crystal itself. Now it's time to pollish things and add missing features (for example: GC).
+* The project is in pre-alpha stage: we are still designing the language.
+* The compiler is written in Crystal.
+* Includes the Boehm-Demers-Weiser conservative garbage collector, but this will change in the future.
 
 Installing
 ----------
