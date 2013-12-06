@@ -325,7 +325,8 @@ li {
 @green:         #12433e;
 @yellow:        #faef49;
 @version:       #b5b5b5;
-@link:          #a8367a;
+@text:          #231f20;
+@link:          black;
 
 
 // Fonts
@@ -350,6 +351,7 @@ html {
 
 body {
   background: @black;
+  color: @text;
   font-family: @sans;
   height: 100%;
   margin: 0px;
@@ -384,10 +386,11 @@ p {
 
 a {
   color: @link;
+  font-weight: bold;
   text-decoration: none;
 
   &:hover {
-    color: lighten(@link, 20%)!important;
+    color: lighten(@link, 30%)!important;
     text-decoration: none;
   }
 }
@@ -529,6 +532,10 @@ section {
 
 pre {
   padding: 20px;
+}
+
+pre.code {
+  background-color: @grayLight;
 }
 
 ul.goals li {

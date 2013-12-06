@@ -46,7 +46,7 @@ Ok, but what's the purpose of learning a language if we cannot run the damn thin
 First create a file `hello.cr` containing your preferred choice of the previous examples.
 Then type in the console:
 
-<pre>
+<pre class="code">
 $ bin/crystal hello.cr
 $ ./hello
 Hello World

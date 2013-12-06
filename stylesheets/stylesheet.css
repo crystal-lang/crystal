@@ -135,6 +135,7 @@ html {
 }
 body {
   background: #000000;
+  color: #231f20;
   font-family: 'Open Sans', Arial, Helvetica, sans-serif;
   height: 100%;
   margin: 0px;
@@ -178,11 +179,12 @@ p {
   margin-bottom: 5px;
 }
 a {
-  color: #a8367a;
+  color: #000000;
+  font-weight: bold;
   text-decoration: none;
 }
 a:hover {
-  color: #d272ab !important;
+  color: #4d4d4d !important;
   text-decoration: none;
 }
 .wrapper {
@@ -310,6 +312,9 @@ section .meta {
 }
 pre {
   padding: 20px;
+}
+pre.code {
+  background-color: #e5e5e5;
 }
 ul.goals li {
   padding-left: 22px;
