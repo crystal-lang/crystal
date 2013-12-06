@@ -192,7 +192,6 @@ a:hover {
 }
 header {
   *zoom: 1;
-  background: url('/images/crystal_logo.png') no-repeat center 50px;
   padding: 50px 20px 20px;
   border-bottom: 1px solid #e5e5e5;
   height: 250px;
