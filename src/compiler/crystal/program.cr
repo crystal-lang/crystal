@@ -117,6 +117,7 @@ module Crystal
 
       def initialize(command)
         @input = C.popen(command, "r")
+        raise Errno.new unless @input
       end
 
       def close
@@ -126,9 +127,11 @@ module Crystal
 
     def self.exec(command)
       cmd = PopenCommand.new(command)
-      value = cmd.gets.try &.strip
-      cmd.close
-      value
+      begin
+        value = cmd.gets.try &.strip
+      ensure
+        cmd.close
+      end
     end
 
     def exec(command)

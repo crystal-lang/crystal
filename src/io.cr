@@ -197,18 +197,24 @@ def p(obj)
 end
 
 def system(command)
-  C.pclose(C.popen(command, "r"))
+  pipe = C.popen(command, "r")
+  raise Errno.new unless pipe
+  C.pclose(pipe)
 end
 
 def system2(command)
   pipe = C.popen(command, "r")
-  stream = FileStream.new(pipe)
-  output = [] of String
-  while line = stream.gets
-    output << line.chomp
+  raise Errno.new unless pipe
+  begin
+    stream = FileStream.new(pipe)
+    output = [] of String
+    while line = stream.gets
+      output << line.chomp
+    end
+    output
+  ensure
+    $exit = C.pclose(pipe)
   end
-  $exit = C.pclose(pipe)
-  output
 end
 
 macro pp(var)
