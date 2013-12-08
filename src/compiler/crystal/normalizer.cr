@@ -419,8 +419,37 @@ module Crystal
     end
 
     def transform(node : Call)
-      super.tap do
-        reset_instance_variables_indices
+      # Convert 'a <= b <= c' to 'a <= b && b <= c'
+      if comparison?(node.name) && (obj = node.obj) && obj.is_a?(Call) && comparison?(obj.name)
+        middle = obj.args.first
+        case middle
+        when NumberLiteral, Var, InstanceVar
+          transform_many node.args
+          left = obj
+          right = Call.new(middle, node.name, node.args)
+        else
+          temp_var = new_temp_var
+          temp_assign = Assign.new(temp_var, middle)
+          left = Call.new(obj.obj, obj.name, [temp_assign] of ASTNode)
+          right = Call.new(temp_var, node.name, node.args)
+        end
+        node = And.new(left, right)
+        node = node.transform self
+      else
+        node = super
+      end
+
+      reset_instance_variables_indices
+
+      node
+    end
+
+    def comparison?(name)
+      case name
+      when "<=", "<", "!=", "==", "===", ">", ">="
+        true
+      else
+        false
       end
     end
 
