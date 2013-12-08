@@ -687,7 +687,7 @@ module Crystal
         end
         scan_ident(start, start_column)
       else
-        if 'A' <= @buffer.value && @buffer.value <= 'Z'
+        if 'A' <= @buffer.value <= 'Z'
           start = @buffer
           count = 1
           while next_char.ident_part?
@@ -695,7 +695,7 @@ module Crystal
           end
           @token.type = :CONST
           @token.value = String.new(start, count)
-        elsif ('a' <= @buffer.value && @buffer.value <= 'z') || @buffer.value == '_'
+        elsif ('a' <= @buffer.value <= 'z') || @buffer.value == '_'
           next_char
           scan_ident(start, start_column)
         else
