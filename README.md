@@ -38,7 +38,7 @@ Status
 Installing
 ----------
 
-Currently it only works on Mac OSX 64 bit (but this will change soon, we promise!)
+Currently it only works on Mac OSX and Linux 64 bit (but this will change soon, we promise!)
 
 1. Clone the repository
 1. Execute `bin/crystal --setup`
