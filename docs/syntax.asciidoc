@@ -1,0 +1,84 @@
+== Syntax ==
+
+=== Comments ===
+
+Only one line comments are supported for now.
+
+[source,ruby]
+-------------
+# This is a comment
+-------------
+
+=== Literals ===
+
+[source,ruby]
+-------------
+# The only instance of the Nil class
+nil
+
+# The only instances of Bool
+true
+false
+
+# Integers. Without a suffix they are instances of Int32
+1234
+1_000_000
+
+# Hexadecimal
+0xABCD_1234
+
+# Binary
+0b1010_0110
+
+# With a suffix they can be Int64, UInt16, etc.
+12_i64
+45_u16
+
+# Floats. Without a suffix they are instances of Float64
+1234.56
+123e-09
+
+# With a suffix they can be Float32 or Float64
+12.34_f32
+68.91_f64
+
+# Characters
+'a'
+'\n'
+
+# With octal notation
+'\033'
+
+# Strings
+"hello world"
+"escapes: \n \t \\ \" etc.'
+"octals: \123 \12 \8"
+"interpolation also allowed: 1 + 2 = #{1 + 2}"
+%(this is also a string (supports nested parenthesis) as well as "quotes")
+
+# Symbols
+:foo
+:"another symbol"
+
+# Array
+[1, 2, 3]
+
+# Empty Array (must indicate element type)
+[] of String
+
+# Hash
+{1 => 2, 3 => 4}
+{"foo" => "bar"}
+{:foo => 1}
+{foo: 1} # same as above
+
+# Empty Hash (must indicate key and value types)
+{} of Symbol => Int32
+
+# Ranges
+1..5  # inclusive end
+1...5 # exclusive end
+
+# Regular expressions
+/foo\s+bar/
+-------------

@@ -1,0 +1,10 @@
+= The Crystal Programming Language =
+:doctype: book
+
+This is the documentation for the Crystal programming language.
+
+CAUTION: This is a work in progress. Anything written here is subject to change.
+
+include::about.asciidoc[]
+include::installing.asciidoc[]
+include::syntax.asciidoc[]
