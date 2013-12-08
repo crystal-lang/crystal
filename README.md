@@ -42,6 +42,7 @@ Currently it only works on Mac OSX 64 bit (but this will change soon, we promise
 
 1. Clone the repository
 1. Execute `bin/crystal --setup`
+1. You will need libgc. In mac: `brew install bdw-gc`. In Ubuntu: `sudo apt-get install libgc`.
 
 That's all. Try to run:
 
