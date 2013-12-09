@@ -3,6 +3,8 @@
 @import url(pygment_white.css);
 
 @import url('http://fonts.googleapis.com/css?family=Open+Sans:400,700,300');
+
+@import url('http://fonts.googleapis.com/css?family=Cousine:400,700');
 .clearfix {
   *zoom: 1;
 }
@@ -318,7 +320,9 @@ section .meta {
   border: 0;
 }
 code {
-  font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+  font-family: 'Cousine', sans-serif;
+  font-weight: bold;
+  font-size: 14px;
 }
 pre {
   padding: 20px;

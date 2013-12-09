@@ -165,7 +165,7 @@ end
 # here age is 10
 -------------
 
-The condition is first evaluated, and if its _truthy_ the body is executed while the condition
+The condition is first evaluated, and if it is _truthy_ the body is executed while the condition
 remains _truthy_.
 
 If a `while` appears in a suffix fashion, the body is executed at least once:
