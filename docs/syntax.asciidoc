@@ -82,3 +82,109 @@ false
 # Regular expressions
 /foo\s+bar/
 -------------
+
+=== Assignments and variables ===
+
+Variables must begin with lowercase. They are declared when you assign a value to them.
+
+[source,ruby]
+-------------
+name = "Crystal"
+age = 1
+-------------
+
+Their type is inferred from their usage, not only from their initializer.
+
+However, the source code is first transformed to a kind of http://en.wikipedia.org/wiki/Static_single_assignment_form[Single Static Assignment form (SSA)]. What this means is that
+reassigning a variable outside an `if`, `unless`, `while` or a block introduces a new
+variable with a new type. More on this later.
+
+=== Conditionals ===
+
+You can use `if` and `unless`:
+
+[source,ruby]
+-------------
+name = "Crystal"
+age = 1
+
+if name == "Crystal"
+  # name is "Crystal"
+end
+
+if age == 1
+  # age is 1
+elsif age == 2
+  # age is 2
+else
+  # age is neither 1 nor 2
+end
+
+unless age == 3
+  # age is not 3
+end
+-------------
+
+The `then` part of an `if` is executed if the condition is _truthy_. The `else` part of an `if`,
+and the `then` part of an `unless` are executed if the condition is _falsy_. The only _falsy_ values
+are `nil`, `false`, and a nil pointer. Anything else is _truthy_.
+
+WARNING: If you come from C/C++, be warned that zero (0) is _truthy_.
+
+Conditionals can also be used in a suffix fashion:
+
+[source,ruby]
+-------------
+name = "Crystal"
+age = 1
+
+name = "Crystal!!" if name == "Crystal"
+age = 2 unless age == 3
+-------------
+
+There is also a short form for the `if`, known as the ternary operator:
+
+[source,ruby]
+-------------
+age = 1
+old = age > 100 ? "yes" : "no"
+-------------
+
+=== Loops ===
+
+`while` is the only syntax supported for loops. More complex loops can be built with blocks.
+
+[source,ruby]
+-------------
+age = 1
+
+while age < 10
+  age += 1
+end
+
+# here age is 10
+-------------
+
+The condition is first evaluated, and if its _truthy_ the body is executed while the condition
+remains _truthy_.
+
+If a `while` appears in a suffix fashion, the body is executed at least once:
+
+[source,ruby]
+-------------
+age = 1
+age += 1 while age < 0
+# here age is 2
+-------------
+
+To achieve this last behaviour with more than one expression, use `begin` and `end`:
+
+[source,ruby]
+-------------
+age = 1
+
+begin
+  age += 10
+  age /= 2
+end while age < 10
+-------------
