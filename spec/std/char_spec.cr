@@ -46,4 +46,23 @@ describe "Char" do
     '\xA'.ord.should eq(10)
     '\xAB'.ord.should eq(10 * 16 + 11)
   end
+
+  it "does to_i without a base" do
+    ('0'..'9').each_with_index do |c, i|
+      c.to_i.should eq(i)
+    end
+    'a'.to_i.should eq(0)
+  end
+
+  it "does to_i with 16 base" do
+    ('0'..'9').each_with_index do |c, i|
+      c.to_i(16).should eq(i)
+    end
+    ('a'..'f').each_with_index do |c, i|
+      c.to_i(16).should eq(10 + i)
+    end
+    ('A'..'F').each_with_index do |c, i|
+      c.to_i(16).should eq(10 + i)
+    end
+  end
 end
