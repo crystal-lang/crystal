@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "spec"
 
 describe "String" do
@@ -263,6 +263,13 @@ describe "String" do
     end
     replaced.length.should eq(18)
     replaced.should eq("somethingthingbexr")
+  end
+
+  it "replaces with regexp" do
+    actual = "foo booor booooz".replace(/o+/) do |match|
+      "#{match}#{match.length.to_s}"
+    end
+    actual.should eq("foo2 booo3r boooo4z")
   end
 
   it "dumps" do

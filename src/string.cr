@@ -217,6 +217,37 @@ class String
     replace(char, replacement.to_s)
   end
 
+  def replace(pattern : Regexp)
+    len = length
+    offset = 0
+    buffer = String::Buffer.new(len)
+    while true
+      match = pattern.match(self, offset)
+      if match
+        index = match.begin(0)
+        if index > offset
+          offset.upto(index - 1) do |i|
+            buffer << cstr[i]
+          end
+        end
+        str = match[0]
+        replacement = yield str
+        buffer << replacement
+        offset = index + str.length
+      else
+        break
+      end
+    end
+
+    if offset < len
+      offset.upto(len - 1) do |i|
+        buffer << cstr[i]
+      end
+    end
+
+    buffer.to_s
+  end
+
   def delete(char : Char)
     new_length = length
     str = Pointer(Char).malloc(length + 5)
