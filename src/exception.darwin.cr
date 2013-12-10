@@ -12,11 +12,7 @@ lib Unwind
 end
 
 class Exception
-  def self.needs_to_unescape_backtraces?
-    false
-  end
-
-  def self.unescape_backtrace(frame)
+  def self.unescape_backtrace_frame(frame)
     frame
   end
 end

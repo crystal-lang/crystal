@@ -21,6 +21,7 @@ def caller
       fname_size += 64
       fname_buffer = fname_buffer.realloc(fname_size)
     end
+    fname = Exception.unescape_backtrace_frame(fname)
     backtrace << "#{fname} +#{offset} [#{pc}]"
   end
   backtrace
@@ -46,11 +47,7 @@ class Exception
   end
 
   def to_s
-    bt = @backtrace
-    if Exception.needs_to_unescape_backtraces?
-      bt = bt.map! { |frame| Exception.unescape_backtrace(frame) }
-    end
-    bt = bt.join("\n")
+    bt = @backtrace.join("\n")
     if @message
       "#{@message}:\n#{bt}"
     else
