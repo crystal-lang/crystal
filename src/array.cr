@@ -394,10 +394,39 @@ class Array(T)
     ary
   end
 
-  def concat(other)
-    other.each do |elem|
-      push elem
+  def concat(other : Array)
+    other_length = other.length
+    new_length = length + other_length
+    if new_length > @capacity
+      cap2 = Math.log2(new_length).ceil
+      new_capacity = 2 ** cap2
+      resize_to_capacity(new_capacity)
     end
+
+    (@buffer + @length).memcpy(other.buffer, other_length)
+    @length += other_length
+
+    self
+  end
+
+  def concat(other : Enumerable)
+    left_before_resize = @capacity - @length
+    len = @length
+    buf = @buffer + len
+    other.each do |elem|
+      if left_before_resize == 0
+        left_before_resize = @capacity
+        resize_to_capacity(@capacity * 2)
+        buf = @buffer + len
+      end
+      buf.value = elem
+      buf += 1
+      len += 1
+      left_before_resize -= 1
+    end
+
+    @length = len
+
     self
   end
 

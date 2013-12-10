@@ -97,10 +97,22 @@ describe "Array" do
   end
 
   describe "concat" do
-    assert do
+    it "concats small arrays" do
       a = [1, 2, 3]
       a.concat([4, 5, 6])
       a.should eq([1, 2, 3, 4, 5, 6])
+    end
+
+    it "concats large arrays" do
+      a = [1, 2, 3]
+      a.concat((4..1000).to_a)
+      a.should eq((1..1000).to_a)
+    end
+
+    it "concats enumerable" do
+      a = [1, 2, 3]
+      a.concat((4..1000))
+      a.should eq((1..1000).to_a)
     end
   end
 
