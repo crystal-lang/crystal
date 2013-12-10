@@ -10,3 +10,13 @@ lib Unwind("unwind")
   fun get_reg = _ULx86_64_get_reg(cursor : Int64*, regnum : Int32, reg : UInt64*) : Int32
   fun get_proc_name = _ULx86_64_get_proc_name(cursor : Int64*, name : Char*, size : Int32, offset : UInt64*) : Int32
 end
+
+class Exception
+  def self.needs_to_unescape_backtraces?
+    true
+  end
+
+  def self.unescape_backtrace(frame)
+    unescape_linux_backtrace_frame(frame)
+  end
+end

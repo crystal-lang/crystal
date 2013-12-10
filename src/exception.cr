@@ -1,5 +1,5 @@
-require "unwind.linux" if linux
-require "unwind.darwin" if darwin
+require "exception.linux" if linux
+require "exception.darwin" if darwin
 
 def caller
   cursor = Pointer(Int64).malloc(Unwind::CURSOR_SIZE)
@@ -46,11 +46,24 @@ class Exception
   end
 
   def to_s
-    bt = @backtrace.join("\n")
+    bt = @backtrace
+    if Exception.needs_to_unescape_backtraces?
+      bt = bt.map! { |frame| Exception.unescape_backtrace(frame) }
+    end
+    bt = bt.join("\n")
     if @message
       "#{@message}:\n#{bt}"
     else
       bt
+    end
+  end
+
+  def self.unescape_linux_backtrace_frame(frame)
+    frame.replace(/_(\d|A|B|C|D|E|F)(\d|A|B|C|D|E|F)_/) do |match|
+      first = match[1].to_i(16) * 16
+      second = match[2].to_i(16)
+      value = first + second
+      value.chr
     end
   end
 end

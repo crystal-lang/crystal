@@ -10,3 +10,14 @@ lib Unwind
   fun get_reg = unw_get_reg(cursor : Int64*, regnum : Int32, reg : UInt64*) : Int32
   fun get_proc_name = unw_get_proc_name(cursor : Int64*, name : Char*, size : Int32, offset : UInt64*) : Int32
 end
+
+class Exception
+  def self.needs_to_unescape_backtraces?
+    false
+  end
+
+  def self.unescape_backtrace(frame)
+    frame
+  end
+end
+
