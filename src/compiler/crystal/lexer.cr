@@ -346,14 +346,11 @@ module Crystal
             @token.value = '\t'
           when 'v'
             @token.value = '\v'
+          when 'x'
+            value = consume_hex_escape
+            @token.value = value.chr
           when '0', '1', '2', '3', '4', '5', '6', '7', '8'
-            char_value = char2 - '0'
-            count = 1
-            while count <= 3 && '0' <= @buffer[1] && @buffer[1] <= '8'
-              next_char
-              char_value = char_value * 8 + (@buffer.value - '0')
-              count += 1
-            end
+            char_value = consume_octal_escape(char2)
             @token.value = char_value.chr
           else
             @token.value = char2
@@ -362,7 +359,7 @@ module Crystal
           @token.value = char1
         end
         if next_char != '\''
-          raise "unterminated char literal"
+          raise "unterminated char literal", @line_number, @column_number
         end
         next_char
       when '"'
@@ -399,7 +396,7 @@ module Crystal
           @token.type = class_var ? :CLASS_VAR : :INSTANCE_VAR
           @token.value = String.new(start, count)
         else
-          raise "unknown token: #{@buffer.value}"
+          raise "unknown token: #{@buffer.value}", @line_number, @column_number
         end
       when '$'
         start = @buffer
@@ -424,7 +421,7 @@ module Crystal
           @token.type = :GLOBAL
           @token.value = String.new(start, count)
         else
-          raise "unknown token: #{@buffer.value}"
+          raise "unknown token: #{@buffer.value}", @line_number, @column_number
         end
       when 'a'
         if next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't'
@@ -699,7 +696,7 @@ module Crystal
           next_char
           scan_ident(start, start_column)
         else
-          raise "unknown token: #{@buffer.value}"
+          raise "unknown token: #{@buffer.value}", @line_number, @column_number
         end
       end
 
@@ -966,7 +963,7 @@ module Crystal
     def next_string_token(string_nest, string_end, string_open_count)
       case @buffer.value
       when '\0'
-        raise "unterminated string literal"
+        raise "unterminated string literal", @line_number, @column_number
       when string_end
         next_char
         if string_open_count == 0
@@ -982,7 +979,7 @@ module Crystal
         @token.value = string_nest.to_s
         @token.string_open_count = string_open_count + 1
       when '\\'
-        case char = @buffer[1]
+        case char = next_char
         when 'n'
           string_token_escape_value "\n"
         when 'r'
@@ -995,20 +992,17 @@ module Crystal
           string_token_escape_value "\f"
         when 'e'
           string_token_escape_value "\e"
-        when '0', '1', '2', '3', '4', '5', '6', '7', '8'
-          char_value = char - '0'
-          count = 1
+        when 'x'
+          value = consume_hex_escape
           next_char
-          while count <= 3 && '0' <= @buffer[1] && @buffer[1] <= '8'
-            next_char
-            char_value = char_value * 8 + (@buffer.value - '0')
-            count += 1
-          end
+          @token.type = :STRING
+          @token.value = value.chr.to_s
+        when '0', '1', '2', '3', '4', '5', '6', '7', '8'
+          char_value = consume_octal_escape(char)
           next_char
           @token.type = :STRING
           @token.value = char_value.chr.to_s
         else
-          next_char
           @token.type = :STRING
           @token.value = @buffer.value.to_s
           next_char
@@ -1049,8 +1043,47 @@ module Crystal
       @token
     end
 
+    def consume_octal_escape(char)
+      char_value = char - '0'
+      count = 1
+      while count <= 3 && '0' <= @buffer[1] && @buffer[1] <= '8'
+        next_char
+        char_value = char_value * 8 + (@buffer.value - '0')
+        count += 1
+      end
+      char_value
+    end
+
+    def consume_hex_escape
+      after_x = next_char
+      if '0' <= after_x <= '9'
+        value = after_x - '0'
+      elsif 'a' <= after_x <= 'f'
+        value = 10 + (after_x - 'a')
+      elsif 'A' <= after_x <= 'F'
+        value = 10 + (after_x - 'A')
+      else
+        raise "invalid hex escape", @line_number, @column_number
+      end
+
+      value = value.not_nil!
+
+      after_x2 = @buffer[1]
+      if '0' <= after_x2 <= '9'
+        value = 16 * value + (after_x2 - '0')
+        next_char
+      elsif 'a' <= after_x2 <= 'f'
+        value = 16 * value + (10 + (after_x2 - 'a'))
+        next_char
+      elsif 'A' <= after_x2 <= 'F'
+        value = 16 * value + (10 + (after_x2 - 'A'))
+        next_char
+      end
+
+      value
+    end
+
     def string_token_escape_value(value)
-      next_char
       next_char
       @token.type = :STRING
       @token.value = value
