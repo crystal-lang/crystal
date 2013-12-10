@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "spec"
 
 describe "Char" do
@@ -22,7 +22,7 @@ describe "Char" do
     'a'.inspect.should eq("'a'")
   end
 
-  it "escapes chars" do
+  it "escapes" do
     '\t'.ord.should eq(9)
     '\n'.ord.should eq(10)
     '\v'.ord.should eq(11)
@@ -31,10 +31,19 @@ describe "Char" do
     '\e'.ord.should eq(27)
     '\''.ord.should eq(39)
     '\\'.ord.should eq(92)
+  end
+
+  it "escapes with octal" do
     '\0'.ord.should eq(0)
     '\3'.ord.should eq(3)
     '\23'.ord.should eq((2 * 8) + 3)
     '\123'.ord.should eq((1 * 8 * 8) + (2 * 8) + 3)
     '\033'.ord.should eq((3 * 8) + 3)
+  end
+
+  it "escapes with hex" do
+    '\x12'.ord.should eq(1 * 16 + 2)
+    '\xA'.ord.should eq(10)
+    '\xAB'.ord.should eq(10 * 16 + 11)
   end
 end

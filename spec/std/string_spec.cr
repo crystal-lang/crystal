@@ -332,4 +332,11 @@ describe "String" do
     "\033"[0].ord.should eq((3 * 8) + 3)
     "\033a"[1].should eq('a')
   end
+
+  it "escapes with hex" do
+    "\x12"[0].ord.should eq(1 * 16 + 2)
+    "\xA"[0].ord.should eq(10)
+    "\xAB"[0].ord.should eq(10 * 16 + 11)
+    "\xAB1"[1].should eq('1')
+  end
 end
