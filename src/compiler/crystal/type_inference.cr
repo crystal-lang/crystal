@@ -1001,6 +1001,11 @@ module Crystal
       end
     end
 
+    def end_visit(node : Next)
+      container = @while_stack.last? #|| (block.try &.break)
+      node.raise "Invalid next" unless container
+    end
+
     def visit(node : Primitive)
       case node.name
       when :binary

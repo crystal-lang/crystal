@@ -71,4 +71,18 @@ describe "Codegen: while" do
       a.to_i
       ").to_i.should eq(1)
   end
+
+  it "skip block with next" do
+    run("
+      i = 0
+      x = 0
+
+      while i < 10
+        i += 1
+        next if i % 2 == 0
+        x += i
+      end
+      x
+    ").to_i.should eq(25)
+  end
 end

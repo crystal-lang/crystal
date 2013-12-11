@@ -925,9 +925,11 @@ module Crystal
       old_break_table_blocks = @break_table_blocks
       old_break_table_values = @break_table_values
       old_break_union = @break_union
+      old_while_block = @while_block
       @break_type = @break_table_blocks = @break_table_values = @break_union = nil
 
       while_block, body_block, exit_block = new_blocks ["while", "body", "exit"]
+      @while_block = while_block
 
       @builder.br node.run_once ? body_block : while_block
 
@@ -951,6 +953,7 @@ module Crystal
       @break_table_blocks = old_break_table_blocks
       @break_table_values = old_break_table_values
       @break_union = old_break_union
+      @while_block = old_while_block
 
       false
     end
@@ -1040,6 +1043,10 @@ module Crystal
       end
 
       @builder.br @while_exit_block.not_nil!
+    end
+
+    def end_visit(node : Next)
+      @builder.br @while_block.not_nil!
     end
 
     def block_returns?

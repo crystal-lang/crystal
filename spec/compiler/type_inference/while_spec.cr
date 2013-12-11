@@ -24,4 +24,9 @@ describe "Type inference: while" do
   it "types while true as NoReturn" do
     assert_type("while true; end") { no_return }
   end
+
+  it "reports next cannot be used outside a while" do
+    assert_error "next",
+      "Invalid next"
+  end
 end
