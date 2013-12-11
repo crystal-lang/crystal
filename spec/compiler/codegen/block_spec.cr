@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Code gen: block" do
@@ -903,5 +903,17 @@ describe "Code gen: block" do
       foo(1) do
       end
       ")
+  end
+
+  it "codegens next" do
+    run("
+      def foo
+        yield
+      end
+
+      foo do
+        next 1
+      end
+      ").to_i.should eq(1)
   end
  end

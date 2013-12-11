@@ -1046,7 +1046,9 @@ module Crystal
     end
 
     def end_visit(node : Next)
-      @builder.br @while_block.not_nil!
+      if @while_block
+        @builder.br @while_block.not_nil!
+      end
     end
 
     def block_returns?

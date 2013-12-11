@@ -384,4 +384,37 @@ describe "Block inference" do
       a.map { |x| x }
       ") { array_of(union_of(types["Foo1"].hierarchy_type, types["Foo2"].hierarchy_type)) }
   end
+
+  it "does next from block without value" do
+    assert_type("
+      def foo; yield; end
+
+      foo do
+        next
+      end
+    ") { |mod| mod.nil }
+  end
+
+  it "does next from block with value" do
+    assert_type("
+      def foo; yield; end
+
+      foo do
+        next 1
+      end
+    ") { int32 }
+  end
+
+  it "does next from block with value 2" do
+    assert_type("
+      def foo; yield; end
+
+      foo do
+        if 1 == 1
+          next 1
+        end
+        false
+      end
+    ") { union_of(int32, bool) }
+  end
 end

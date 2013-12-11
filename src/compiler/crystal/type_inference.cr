@@ -330,7 +330,7 @@ module Crystal
         end
       end
 
-      node.bind_to block.body
+      node.bind_to block
     end
 
     def bind_block_args_to_yield_exps(block, node)
@@ -354,6 +354,8 @@ module Crystal
         block_visitor.block = node
         node.body.accept block_visitor
       end
+
+      node.bind_to node.body
 
       false
     end
@@ -1002,8 +1004,13 @@ module Crystal
     end
 
     def end_visit(node : Next)
-      container = @while_stack.last? #|| (block.try &.break)
-      node.raise "Invalid next" unless container
+      if block = @block
+        unless node.exps.empty?
+          block.bind_to node.exps.first
+        end
+      elsif @while_stack.empty?
+        node.raise "Invalid next"
+      end
     end
 
     def visit(node : Primitive)
