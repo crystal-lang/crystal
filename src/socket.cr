@@ -1,16 +1,32 @@
 lib C
   struct SockAddrIn
     len : Char
-    family : Char
+    family : UInt8
     port : Int16
-    addr : Int32
+    addr : UInt32
     zero : Int64
   end
-  fun socket(domain : Int32, t : Int32, protocol : Int32) : Int32
+
+  struct HostEnt
+    name : Char*
+    aliases : Char**
+    addrtype : Int32
+    length : Int32
+    addrlist : UInt8**
+  end
+
+
+  fun socket(domain : UInt8, t : Int32, protocol : Int32) : Int32
   fun htons(n : Int32) : Int16
   fun bind(fd : Int32, addr : SockAddrIn*, addr_len : Int32) : Int32
   fun listen(fd : Int32, backlog : Int32) : Int32
   fun accept(fd : Int32, addr : SockAddrIn*, addr_len : Int32*) : Int32
+  fun connect(fd : Int32, addr : SockAddrIn*, addr_len : Int32) : Int32
+  fun gethostbyname(name : Char*) : HostEnt*
+  fun close(fd : Int32) : Int32
+
+  AF_INET = 2_u8
+  SOCK_STREAM = 1
 end
 
 class Socket
@@ -35,16 +51,42 @@ class Socket
   end
 end
 
-class TCPServer
-  AF_INET = 2
-  SOCK_STREAM = 1
+class TCPSocket < Socket
+  def initialize(host, port)
+    server = C.gethostbyname(host)
+    unless server
+      raise Errno.new
+    end
 
-  def initialize(port)
-    @sock = C.socket(AF_INET, SOCK_STREAM, 0);
+    server = server.value
+    @sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
 
     addr = C::SockAddrIn.new
-    addr.family = AF_INET.chr
-    addr.addr = 0
+    addr.family = C::AF_INET
+    addr.addr = server.addrlist[0].as(UInt32).value
+    addr.port = C.htons(port)
+
+    if C.connect(@sock, addr.ptr, 16) != 0
+      raise Errno.new
+    end
+
+    super @sock
+  end
+
+  def close
+    if C.close(@sock) != 0
+      raise Errno.new
+    end
+  end
+end
+
+class TCPServer
+  def initialize(port)
+    @sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
+
+    addr = C::SockAddrIn.new
+    addr.family = C::AF_INET
+    addr.addr = 0_u32
     addr.port = C.htons(port)
     if C.bind(@sock, addr.ptr, 16) != 0
       raise Errno.new
