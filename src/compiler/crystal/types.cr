@@ -1384,6 +1384,14 @@ module Crystal
       aliased_type.remove_alias
     end
 
+    def cover
+      aliased_type.cover
+    end
+
+    def cover_length
+      aliased_type.cover_length
+    end
+
     def type_desc
       "alias"
     end

@@ -43,16 +43,25 @@ describe "type inference: alias" do
 
   it "allows defining recursive aliases" do
     result = assert_type("
-      alias Alias = Int32 | Alias
+      class Foo(T)
+      end
+
+      alias Alias = Int32 | Foo(Alias)
       1
       ") { int32 }
     mod = result.program
+
+    foo = mod.types["Foo"]
+    assert_type foo, GenericClassType
+
     a = mod.types["Alias"]
     assert_type a, AliasType
+
+    foo_alias = foo.instantiate([a])
 
     aliased_type = a.aliased_type
     assert_type aliased_type, UnionType
     aliased_type.union_types[0].should eq(mod.int32)
-    aliased_type.union_types[1].should eq(a)
+    aliased_type.union_types[1].should eq(foo_alias)
   end
 end

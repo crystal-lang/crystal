@@ -300,13 +300,13 @@ module Crystal
   end
 
   class AliasType
-    def is_restriction_of?(other : Type, owner)
+    def is_restriction_of?(other, owner)
       return true if self == other
 
       remove_alias.is_restriction_of?(other, owner)
     end
 
-    def restrict(other : Type, owner, type_lookup, free_vars)
+    def restrict(other, owner, type_lookup, free_vars)
       if self == other
         self
       else

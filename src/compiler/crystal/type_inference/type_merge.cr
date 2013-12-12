@@ -32,6 +32,10 @@ module Crystal
       end
     end
 
+    def add_type(set, type : AliasType)
+      add_type set, type.remove_alias
+    end
+
     def add_type(set, type : Type)
       set.add type
     end
