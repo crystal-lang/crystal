@@ -64,7 +64,7 @@ describe "Code gen: union type" do
     ").to_i.should eq(1)
   end
 
-  it "assigns union to union" do
+  pending "assigns union to union" do
     run("
       require \"prelude\"
 
