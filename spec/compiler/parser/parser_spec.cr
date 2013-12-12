@@ -567,6 +567,8 @@ describe "Parser" do
 
   it_parses "foo.bar = {} of Int32 => Int32", Call.new("foo".call, "bar=", [HashLiteral.new([] of ASTNode, [] of ASTNode, "Int32".ident, "Int32".ident)] of ASTNode)
 
+  it_parses "alias Foo = Bar", Alias.new("Foo", "Bar".ident)
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
     assert_type node, Def

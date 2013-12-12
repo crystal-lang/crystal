@@ -284,6 +284,10 @@ module Crystal
     def type_desc
       to_s
     end
+
+    def remove_alias
+      self
+    end
   end
 
   class NoReturnType < Type
@@ -1331,8 +1335,69 @@ module Crystal
       "type def"
     end
 
+    def full_name
+      @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
+    end
+
     def to_s
-      name
+      full_name
+    end
+  end
+
+  class AliasType < ContainedType
+    getter :name
+    property! :aliased_type
+
+    def initialize(program, container, @name)
+      super(program, container)
+    end
+
+    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+      aliased_type.lookup_matches(name, arg_types, yields, owner, type_lookup)
+    end
+
+    def lookup_defs(name)
+      aliased_type.lookup_defs(name)
+    end
+
+    def lookup_first_def(name, yields)
+      aliased_type.lookup_first_def(name, yields)
+    end
+
+    def def_instances
+      aliased_type.def_instances
+    end
+
+    def add_def_instance(def_object_id, arg_types, block_type, typed_def)
+      aliased_type.add_def_instance(def_object_id, arg_types, block_type, typed_def)
+    end
+
+    def lookup_def_instance(def_object_id, arg_types, block_type)
+      aliased_type.lookup_def_instance(def_object_id, arg_types, block_type)
+    end
+
+    def lookup_macro(name, args_length)
+      aliased_type.lookup_macro(name, args_length)
+    end
+
+    def remove_alias
+      aliased_type.remove_alias
+    end
+
+    def type_desc
+      "alias"
+    end
+
+    def full_name
+      @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
+    end
+
+    def llvm_name
+      "alias.#{to_s}"
+    end
+
+    def to_s
+      full_name
     end
   end
 

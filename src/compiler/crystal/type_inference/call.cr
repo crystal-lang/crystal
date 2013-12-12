@@ -88,6 +88,10 @@ module Crystal
       end
     end
 
+    def lookup_matches_in(owner : AliasType)
+      lookup_matches_in(owner.remove_alias)
+    end
+
     def lookup_matches_in(owner : UnionType)
       owner.union_types.flat_map { |type| lookup_matches_in(type) }
     end

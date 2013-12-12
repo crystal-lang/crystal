@@ -816,6 +816,14 @@ module Crystal
       false
     end
 
+    def visit(node : Alias)
+      @str << "alias "
+      @str << node.name
+      @str << " = "
+      node.value.accept self
+      false
+    end
+
     def visit(node : PrimitiveBody)
       @str << "<primitive>"
     end

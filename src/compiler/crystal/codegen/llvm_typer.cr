@@ -51,18 +51,22 @@ module Crystal
     end
 
     def create_llvm_type(type : UnionType)
-      max_size = 0
-      type.union_types.each do |subtype|
-        unless subtype.void?
-          size = size_of(llvm_type(subtype))
-          max_size = size if size > max_size
-        end
-      end
-      max_size /= 8
-      max_size = 1 if max_size == 0
+      LLVM.struct_type(type.llvm_name) do |struct|
+        @cache[type] = struct
 
-      llvm_value_type = LLVM.array_type(LLVM::Int64, max_size)
-      LLVM.struct_type(type.llvm_name, [LLVM::Int32, llvm_value_type])
+        max_size = 0
+        type.union_types.each do |subtype|
+          unless subtype.void?
+            size = size_of(llvm_type(subtype))
+            max_size = size if size > max_size
+          end
+        end
+        max_size /= 8
+        max_size = 1 if max_size == 0
+
+        llvm_value_type = LLVM.array_type(LLVM::Int64, max_size)
+        [LLVM::Int32, llvm_value_type] of LibLLVM::TypeRef
+      end
     end
 
     def create_llvm_type(type : PaddingType)
@@ -96,6 +100,10 @@ module Crystal
     def create_llvm_type(type : FunType)
       arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
       LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
+    end
+
+    def create_llvm_type(type : AliasType)
+      llvm_type(type.remove_alias)
     end
 
     def create_llvm_type(type)
@@ -164,6 +172,10 @@ module Crystal
 
     def create_llvm_arg_type(type : HierarchyType)
       HIERARCHY_LLVM_ARG_TYPE
+    end
+
+    def create_llvm_arg_type(type : AliasType)
+      llvm_arg_type(type)
     end
 
     def create_llvm_arg_type(type)

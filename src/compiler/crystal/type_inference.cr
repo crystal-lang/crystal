@@ -654,6 +654,17 @@ module Crystal
       false
     end
 
+    def visit(node : Alias)
+      alias_type = AliasType.new(@mod, current_type, node.name)
+      current_type.types[node.name] = alias_type
+      node.value.accept self
+      alias_type.aliased_type = node.value.type.instance_type
+
+      node.type = @mod.nil
+
+      false
+    end
+
     def visit(node : Include)
       node_name = node.name
 
@@ -1314,6 +1325,10 @@ module Crystal
       end
     end
 
+    def lookup_ident_type(node)
+      raise "lookup_ident_type not implemented for #{node}"
+    end
+
     def resolve_ident(node : Ident)
       free_vars = @free_vars
       if free_vars && !node.global && (type = free_vars[node.names.first]?)
@@ -1335,9 +1350,6 @@ module Crystal
       target_type
     end
 
-    def lookup_ident_type(node)
-      raise "lookup_ident_type not implemented for #{node}"
-    end
 
     def build_var_filter(var)
       filters = [] of TypeFilter

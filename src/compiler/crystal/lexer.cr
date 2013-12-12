@@ -424,8 +424,15 @@ module Crystal
           raise "unknown token: #{@buffer.value}", @line_number, @column_number
         end
       when 'a'
-        if next_char == 'b' && next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't'
-          return check_ident_or_keyword(:abstract, start, start_column)
+        case next_char
+        when 'b'
+          if next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't'
+            return check_ident_or_keyword(:abstract, start, start_column)
+          end
+        when 'l'
+          if next_char == 'i' && next_char == 'a' && next_char == 's'
+            return check_ident_or_keyword(:alias, start, start_column)
+          end
         end
         scan_ident(start, start_column)
       when 'b'

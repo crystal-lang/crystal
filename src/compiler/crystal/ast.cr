@@ -1484,6 +1484,26 @@ module Crystal
     end
   end
 
+  class Alias < ASTNode
+    property name
+    property value
+
+    def initialize(@name, @value)
+    end
+
+    def accept_children(visitor)
+      @value.accept visitor
+    end
+
+    def ==(other : self)
+      @name == other.name && @value == other.value
+    end
+
+    def clone_without_location
+      Alias.new(@name, @value.clone)
+    end
+  end
+
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     getter name

@@ -855,6 +855,11 @@ module Crystal
       false
     end
 
+    def visit(node : Alias)
+      @last = llvm_nil
+      false
+    end
+
     def visit(node : TypeMerge)
       false
     end

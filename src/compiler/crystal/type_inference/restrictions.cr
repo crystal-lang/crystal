@@ -97,6 +97,14 @@ module Crystal
       nil
     end
 
+    def restrict(other : AliasType, owner, type_lookup, free_vars)
+      if self == other
+        self
+      else
+        restrict(other.remove_alias, owner, type_lookup, free_vars)
+      end
+    end
+
     def restrict(other : SelfType, owner, type_lookup, free_vars)
       restrict(owner, owner, type_lookup, free_vars)
     end
@@ -161,6 +169,14 @@ module Crystal
       end
 
       false
+    end
+
+    def is_restriction_of?(other : AliasType, owner)
+      if self == other
+        true
+      else
+        is_restriction_of?(other.remove_alias, owner)
+      end
     end
 
     def is_restriction_of?(other : ASTNode, owner)
@@ -279,6 +295,22 @@ module Crystal
         end
       else
         nil
+      end
+    end
+  end
+
+  class AliasType
+    def is_restriction_of?(other : Type, owner)
+      return true if self == other
+
+      remove_alias.is_restriction_of?(other, owner)
+    end
+
+    def restrict(other : Type, owner, type_lookup, free_vars)
+      if self == other
+        self
+      else
+        remove_alias.restrict(other, owner, type_lookup, free_vars)
       end
     end
   end

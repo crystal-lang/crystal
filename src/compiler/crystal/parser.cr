@@ -633,6 +633,8 @@ module Crystal
           parse_lib
         when :fun
           parse_fun_def(true)
+        when :alias
+          parse_alias
         else
           parse_var_or_call
         end
@@ -2328,6 +2330,25 @@ module Crystal
       pop_def if require_body
 
       FunDef.new name, args, return_type, varargs, body, real_name
+    end
+
+    def parse_alias
+      location = @token.location
+
+      next_token_skip_space_or_newline
+      check :CONST
+
+      name = @token.value.to_s
+      next_token_skip_space_or_newline
+
+      check :"="
+      next_token_skip_space_or_newline
+
+      value = parse_single_type
+
+      node = Alias.new(name, value)
+      node.location = location
+      node
     end
 
     def parse_type_def
