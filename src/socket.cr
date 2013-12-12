@@ -73,7 +73,17 @@ class TCPSocket < Socket
     super @sock
   end
 
+  def self.open(host, port)
+    sock = new(host, port)
+    begin
+      yield sock
+    ensure
+      sock.close
+    end
+  end
+
   def close
+    flush
     if C.close(@sock) != 0
       raise Errno.new
     end
