@@ -1657,7 +1657,7 @@ module Crystal
             end
 
             next_token_skip_space_or_newline
-            declared_type = parse_ident
+            declared_type = parse_single_type
             declare_var = DeclareVar.new(name, declared_type)
             push_var declare_var
             declare_var
