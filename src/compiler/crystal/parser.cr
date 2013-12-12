@@ -153,7 +153,7 @@ module Crystal
 
             atomic.name = "[]="
             atomic.name_length = 0
-            atomic.args << parse_expression
+            atomic.args << parse_op_assign
           else
             break unless can_be_assigned?(atomic)
 

@@ -396,6 +396,7 @@ describe "Parser" do
   it_parses "def [](x); end", Def.new("[]", ["x".arg], nil)
 
   it_parses "foo[0] = 1", Call.new("foo".call, "[]=", [0.int32, 1.int32] of ASTNode)
+  it_parses "foo[0] = 1 if 2", If.new(2.int32, Call.new("foo".call, "[]=", [0.int32, 1.int32] of ASTNode))
 
   it_parses "begin; 1; 2; 3; end;", Expressions.new([1.int32, 2.int32, 3.int32] of ASTNode)
 
