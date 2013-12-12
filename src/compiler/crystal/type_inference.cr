@@ -549,7 +549,17 @@ module Crystal
     def end_visit(node : IsA)
       node.type = mod.bool
       obj = node.obj
-      if obj.is_a?(Var)
+      const = node.const
+
+      # When doing x.is_a?(A) and A turns out to be a constant (not a type),
+      # replace it with a === comparison. Most usually this happens in a case expression.
+      if const.is_a?(Ident) && const.target_const
+        comp = Call.new(const, "===", [obj])
+        comp.location = node.location
+        comp.accept self
+        node.syntax_replacement = comp
+        node.bind_to comp
+      elsif obj.is_a?(Var)
         node.type_filters = new_type_filter(obj, SimpleTypeFilter.new(node.const.type.instance_type))
       end
     end

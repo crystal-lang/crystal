@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Codegen: is_a?" do
@@ -270,5 +270,21 @@ describe "Codegen: is_a?" do
         a.foo
       end
       ").to_i.should eq(3)
+  end
+
+  it "codegens is_a? with a Const does comparison and gives true" do
+    run("
+      require \"prelude\"
+      A = 1
+      1.is_a?(A)
+      ").to_b.should be_true
+  end
+
+  it "codegens is_a? with a Const does comparison and gives false" do
+    run("
+      require \"prelude\"
+      A = 1
+      2.is_a?(A)
+      ").to_b.should be_false
   end
 end

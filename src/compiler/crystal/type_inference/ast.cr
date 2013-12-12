@@ -302,4 +302,16 @@ module Crystal
       @break ||= Var.new("%break")
     end
   end
+
+  class While
+    property :has_breaks
+  end
+
+  class FunPointer
+    property! :call
+  end
+
+  class IsA
+    property :syntax_replacement
+  end
 end

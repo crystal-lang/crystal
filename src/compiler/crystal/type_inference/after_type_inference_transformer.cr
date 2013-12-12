@@ -208,7 +208,12 @@ module Crystal
 
     def transform(node : IsA)
       super
-      transform_is_a_or_responds_to node, &.filter_by(node.const.type.instance_type)
+
+      if replacement = node.syntax_replacement
+        replacement
+      else
+        transform_is_a_or_responds_to node, &.filter_by(node.const.type.instance_type)
+      end
     end
 
     def transform(node : RespondsTo)
