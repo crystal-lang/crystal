@@ -10,27 +10,27 @@ def count_openings(string)
   last_token = nil
   last_is_dot = false
   while (token = lexer.next_token).type != :EOF
-    if token.type != :SPACE
-      case token.type
-      when :"."
-        last_is_dot = true
-      when :IDENT
-        unless last_is_dot
-          case token.value
-          when :begin, :class, :def, :if, :unless, :while, :macro, :case, :lib, :struct, :union, :enum
-            openings += 1
-          when :do
-            openings += 1
-          when :end
-            openings -= 1
-          end
+    case token.type
+    when :SPACE
+      next
+    when :"."
+      last_is_dot = true
+    when :IDENT
+      unless last_is_dot
+        case token.value
+        when :begin, :class, :def, :if, :unless, :while, :macro, :case, :lib, :struct, :union, :enum
+          openings += 1
+        when :do
+          openings += 1
+        when :end
+          openings -= 1
         end
-        last_is_dot = false
-      else
-        last_is_dot = false
       end
-      last_token = token.type
+      last_is_dot = false
+    else
+      last_is_dot = false
     end
+    last_token = token.type
   end
   openings
 end

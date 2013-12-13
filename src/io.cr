@@ -46,13 +46,12 @@ module IO
 
   def gets
     String.build do |str|
-      continue = true
-      while continue
+      while true
         buffer = Pointer(Char).malloc(256)
         return nil unless C.fgets(buffer, 256, input)
         read = String.new(buffer)
         str << read
-        continue = !read.ends_with?('\n')
+        break if read.ends_with?('\n')
       end
     end
   end

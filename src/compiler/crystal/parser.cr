@@ -400,8 +400,6 @@ module Crystal
             name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
             next_token
 
-            keep_processing = true
-
             if @token.type == :SPACE
               next_token
               case @token.type
@@ -412,14 +410,14 @@ module Crystal
                 args = call_args.args if call_args
 
                 atomic = Call.new(atomic, "#{name}=", (args || [] of ASTNode), nil, nil, false, name_column_number)
-                keep_processing = false
+                next
               when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
                 # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
                 method = @token.type.to_s[0, @token.type.to_s.length - 1]
                 next_token_skip_space
                 value = parse_expression
                 atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name, [] of ASTNode, nil, nil, false, name_column_number), method, [value] of ASTNode, nil, nil, false, name_column_number)] of ASTNode, nil, nil, false, name_column_number)
-                keep_processing = false
+                next
               else
                 call_args = parse_call_args_space_consumed
                 if call_args
@@ -435,13 +433,11 @@ module Crystal
               end
             end
 
-            if keep_processing
-              block = parse_block(block)
-              if block
-                atomic = Call.new atomic, name, (args || [] of ASTNode), block, nil, false, name_column_number
-              else
-                atomic = args ? (Call.new atomic, name, args, nil, nil, false, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, nil, false, name_column_number)
-              end
+            block = parse_block(block)
+            if block
+              atomic = Call.new atomic, name, (args || [] of ASTNode), block, nil, false, name_column_number
+            else
+              atomic = args ? (Call.new atomic, name, args, nil, nil, false, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, nil, false, name_column_number)
             end
 
             atomic = check_special_call(atomic)
