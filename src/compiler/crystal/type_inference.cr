@@ -97,12 +97,23 @@ module Crystal
       node.declared_type.accept self
       node.type = node.declared_type.type.instance_type
 
-      var = Var.new(node.name)
-      var.bind_to node
+      var = node.var
+      case var
+      when Var
+        var.bind_to node
 
-      node.var = var
-
-      @vars[node.name] = var
+        @vars[var.name] = var
+      when InstanceVar
+        type = scope? || current_type
+        if type.is_a?(NonGenericClassType)
+          if @untyped_def
+            node.raise "initializing an instance variable is not yet supported"
+          end
+          type.declare_instance_var(var.name, node.type)
+        else
+          node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
+        end
+      end
 
       false
     end
@@ -929,6 +940,10 @@ module Crystal
 
     def end_visit(node : IdentUnion)
       node.type = @mod.type_merge(node.idents.map &.type.instance_type)
+    end
+
+    def end_visit(node : Hierarchy)
+      node.type = node.name.type.instance_type.hierarchy_type.metaclass
     end
 
     def visit(node : If)

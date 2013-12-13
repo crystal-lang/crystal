@@ -1249,7 +1249,10 @@ module Crystal
     end
 
     def visit(node : DeclareVar)
-      declare_var node.var
+      var = node.var
+      if var.is_a?(Var)
+        declare_var var
+      end
       false
     end
 

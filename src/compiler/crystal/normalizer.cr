@@ -292,8 +292,13 @@ module Crystal
     end
 
     def transform(node : DeclareVar)
-      @vars[node.name] = Index.new
-      node
+      var = node.var
+      if var.is_a?(Var)
+        @vars[var.name] = Index.new
+        node
+      else
+        node
+      end
     end
 
     def transform(node : ExceptionHandler)
@@ -303,11 +308,6 @@ module Crystal
 
       @exception_handler_count -= 1
 
-      node
-    end
-
-    def transform(node : DeclareVar)
-      @vars[node.name] = Index.new
       node
     end
 

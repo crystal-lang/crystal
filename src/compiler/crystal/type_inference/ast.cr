@@ -272,10 +272,6 @@ module Crystal
     property! class_scope
   end
 
-  class DeclareVar
-    property! var
-  end
-
   class Ident
     property target_const
     property syntax_replacement

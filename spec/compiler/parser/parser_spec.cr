@@ -213,6 +213,7 @@ describe "Parser" do
   it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident] of ASTNode, "Double".ident))], nil)
   it_parses "def foo(var : (Int, Float) -> Double); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident] of ASTNode, "Double".ident))], nil)
   it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", nil, StaticArray.new("Char".ident, 256))], nil)
+  it_parses "def foo(var : Foo+); end", Def.new("foo", [Arg.new("var", nil, Hierarchy.new("Foo".ident))], nil)
   it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".ident)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new] of ASTNode, nil, nil, 0)
   it_parses "def foo; yield 1; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode)] of ASTNode, nil, nil, 1)
@@ -529,8 +530,9 @@ describe "Parser" do
   it_parses "a = 1\nfoo - a", [Assign.new("a".var, 1.int32), Call.new("foo".call, "-", ["a".var] of ASTNode)]
   it_parses "a = 1\nfoo -a", [Assign.new("a".var, 1.int32), Call.new(nil, "foo", [Call.new("a".var, "-@")] of ASTNode)]
 
-  it_parses "a :: Foo", DeclareVar.new("a", "Foo".ident)
-  it_parses "a :: Foo | Int32", DeclareVar.new("a", IdentUnion.new(["Foo".ident, "Int32".ident] of ASTNode))
+  it_parses "a :: Foo", DeclareVar.new("a".var, "Foo".ident)
+  it_parses "a :: Foo | Int32", DeclareVar.new("a".var, IdentUnion.new(["Foo".ident, "Int32".ident] of ASTNode))
+  it_parses "@a :: Foo | Int32", DeclareVar.new("@a".instance_var, IdentUnion.new(["Foo".ident, "Int32".ident] of ASTNode))
 
   it_parses "()", NilLiteral.new
   it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32] of ASTNode

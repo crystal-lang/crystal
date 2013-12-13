@@ -233,6 +233,11 @@ module Crystal
       node
     end
 
+    def transform(node : Hierarchy)
+      node.name = node.name.transform(self)
+      node
+    end
+
     def transform(node : StaticArray)
       node.name = node.name.transform self
       node
@@ -436,6 +441,7 @@ module Crystal
     end
 
     def transform(node : DeclareVar)
+      node.var = node.var.transform(self)
       node.declared_type = node.declared_type.transform(self)
       node
     end

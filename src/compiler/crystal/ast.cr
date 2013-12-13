@@ -973,26 +973,35 @@ module Crystal
   end
 
   class DeclareVar < ASTNode
-    property :name
+    property :var
     property :declared_type
 
-    def initialize(@name, @declared_type)
+    def initialize(@var, @declared_type)
     end
 
     def accept_children(visitor)
+      var.accept visitor
       declared_type.accept visitor
     end
 
     def ==(other : self)
-      other.name == name && other.declared_type == declared_type
+      other.var == var && other.declared_type == declared_type
     end
 
     def name_length
-      name.length
+      var = @var
+      case var
+      when Var
+        var.name.length
+      when InstanceVar
+        var.name.length
+      else
+        raise "can't happen"
+      end
     end
 
     def clone_without_location
-      DeclareVar.new(@name, @declared_type.clone)
+      DeclareVar.new(@var.clone, @declared_type.clone)
     end
   end
 
@@ -1102,6 +1111,25 @@ module Crystal
 
     def clone_without_location
       IdentUnion.new(@idents.clone)
+    end
+  end
+
+  class Hierarchy < ASTNode
+    property name
+
+    def initialize(@name)
+    end
+
+    def ==(other : self)
+      other.name == name
+    end
+
+    def accept_children(visitor)
+      @name.accept visitor
+    end
+
+    def clone_without_location
+      Hierarchy.new(@name.clone)
     end
   end
 

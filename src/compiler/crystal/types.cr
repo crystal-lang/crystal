@@ -742,14 +742,6 @@ module Crystal
   end
 
   module InstanceVarContainer
-    def immutable
-      @immutable.nil? ? true : @immutable
-    end
-
-    def immutable=(immutable)
-      @immutable = immutable
-    end
-
     def instance_vars
       @instance_vars ||= {} of String => Var
     end
@@ -854,6 +846,13 @@ module Crystal
 
     def class?
       true
+    end
+
+    def declare_instance_var(name, type)
+      ivar = Var.new(name, type)
+      ivar.bind_to ivar
+      ivar.freeze_type = true
+      instance_vars[name] = ivar
     end
   end
 
@@ -1914,12 +1913,6 @@ module Crystal
     def metaclass
       @metaclass ||= HierarchyTypeMetaclass.new(program, self)
     end
-
-    # def immutable=(immutable)
-    #   each do |type|
-    #     type.immutable = immutable
-    #   end
-    # end
 
     def is_subclass_of?(other)
       base_type.is_subclass_of?(other)

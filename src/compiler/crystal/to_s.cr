@@ -485,6 +485,12 @@ module Crystal
       false
     end
 
+    def visit(node : Hierarchy)
+      node.name.accept self
+      @str << "+"
+      false
+    end
+
     def visit(node : StaticArray)
       node.name.accept self
       @str << "["
@@ -544,7 +550,7 @@ module Crystal
     end
 
     def visit(node : DeclareVar)
-      @str << node.name
+      node.var.accept self
       @str << " :: "
       node.declared_type.accept self
       false

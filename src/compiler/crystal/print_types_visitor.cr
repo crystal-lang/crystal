@@ -52,7 +52,10 @@ module Crystal
     end
 
     def visit(node : DeclareVar)
-      output_name node
+      var = node.var
+      if var.is_a?(Var)
+        output_name var
+      end
     end
 
     def output_name(node)

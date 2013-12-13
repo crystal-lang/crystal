@@ -334,6 +334,10 @@ module Crystal
       Var.new("#temp_#{@temp_var_counter += 1}")
     end
 
+    def type_desc
+      "main"
+    end
+
     def to_s
       "<Program>"
     end

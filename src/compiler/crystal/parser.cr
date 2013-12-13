@@ -637,8 +637,17 @@ module Crystal
       when :CONST
         parse_ident
       when :INSTANCE_VAR
-        @instance_vars.add @token.value.to_s if @instance_vars
-        node_and_next_token InstanceVar.new(@token.value.to_s)
+        name = @token.value.to_s
+        ivar = InstanceVar.new(name)
+        next_token_skip_space
+        if @token.type == :"::"
+          next_token_skip_space
+          ivar_type = parse_single_type
+          DeclareVar.new(ivar, ivar_type)
+        else
+          @instance_vars.add name if @instance_vars
+          ivar
+        end
       when :CLASS_VAR
         node_and_next_token ClassVar.new(@token.value.to_s)
       when :"-@"
@@ -1654,7 +1663,7 @@ module Crystal
 
             next_token_skip_space_or_newline
             declared_type = parse_single_type
-            declare_var = DeclareVar.new(name, declared_type)
+            declare_var = DeclareVar.new(Var.new(name), declared_type)
             push_var declare_var
             declare_var
           elsif (!force_call && is_var?(name))
@@ -2082,6 +2091,9 @@ module Crystal
           check :"]"
           next_token_skip_space
           type = StaticArray.new(type, size)
+        when :"+"
+          type = Hierarchy.new(type)
+          next_token_skip_space_or_newline
         else
           break
         end
@@ -2515,8 +2527,20 @@ module Crystal
       end
     end
 
-    def push_var(var : Var | Arg | DeclareVar | BlockArg)
+    def push_var(var : Var | Arg | BlockArg)
       push_var_name var.name.to_s
+    end
+
+    def push_var(var : DeclareVar)
+      var_var = var.var
+      case var_var
+      when Var
+        push_var_name var_var.name
+      when InstanceVar
+        push_var_name var_var.name
+      else
+        raise "can't happen"
+      end
     end
 
     def push_var_name(name)
