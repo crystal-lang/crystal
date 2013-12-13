@@ -640,4 +640,21 @@ describe "Type inference: hierarchy" do
       foo(f)
       ") { union_of(int32, char, string) }
   end
+
+  it "uses hierarchy type as generic type if class is abstract" do
+    result = assert_type("
+      abstract class Foo
+      end
+
+      class Bar(T)
+      end
+
+      Bar(Foo).new
+      ") {
+        foo = types["Foo"]
+        bar = types["Bar"]
+        assert_type bar, GenericClassType
+        bar.instantiate([foo.hierarchy_type] of Type)
+      }
+  end
 end

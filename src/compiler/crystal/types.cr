@@ -27,7 +27,7 @@ module Crystal
     end
 
     def abstract
-      raise "Bug: #{self} doesn't implement abstract"
+      false
     end
 
     def subclasses

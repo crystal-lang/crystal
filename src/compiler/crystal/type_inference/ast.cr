@@ -178,7 +178,9 @@ module Crystal
         else
           node_type = node.type?
           self.raise "can't deduce generic type in recursive method" unless node_type
-          node_type.instance_type
+          node_type = node_type.instance_type
+          node_type = node_type.hierarchy_type if node_type.abstract
+          node_type
         end
       end)
       self.type = generic_type.metaclass
