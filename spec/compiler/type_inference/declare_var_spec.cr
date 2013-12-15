@@ -43,4 +43,24 @@ describe "Type inference: declare var" do
         foo_i32
     end
   end
+
+  it "declares instance var of generic class after reopen" do
+    result = assert_type("
+      class Foo(T)
+      end
+
+      f = Foo(Int32).new
+
+      class Foo(T)
+        @x :: T
+      end
+
+      f") do
+        foo = types["Foo"]
+        assert_type foo, GenericClassType
+        foo_i32 = foo.instantiate([int32])
+        foo_i32.lookup_instance_var("@x").type.should eq(int32)
+        foo_i32
+    end
+  end
 end

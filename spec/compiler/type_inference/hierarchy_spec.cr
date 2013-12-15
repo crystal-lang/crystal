@@ -657,4 +657,21 @@ describe "Type inference: hierarchy" do
         bar.instantiate([foo.hierarchy_type] of Type)
       }
   end
+
+  it "uses hierarchy type as generic type if class is abstract even in union" do
+    result = assert_type("
+      abstract class Foo
+      end
+
+      class Bar(T)
+      end
+
+      Bar(Foo | Int32).new
+      ") {
+        foo = types["Foo"]
+        bar = types["Bar"]
+        assert_type bar, GenericClassType
+        bar.instantiate([union_of(foo.hierarchy_type, int32)] of Type)
+      }
+  end
 end

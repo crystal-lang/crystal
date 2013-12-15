@@ -126,6 +126,10 @@ module Crystal
       self
     end
 
+    def hierarchify
+      self
+    end
+
     def instance_type
       self
     end
@@ -736,6 +740,14 @@ module Crystal
       end
     end
 
+    def hierarchify
+      if self.abstract
+        hierarchy_type
+      else
+        self
+      end
+    end
+
     def type_desc
       "class"
     end
@@ -1036,6 +1048,16 @@ module Crystal
     def declare_instance_var(name, node)
       @declared_instance_vars ||= {} of String => ASTNode
       @declared_instance_vars[name] = node
+
+      generic_types.each do |key, instance|
+        visitor = TypeLookup.new(instance)
+        node.accept visitor
+
+        ivar = Var.new(name, visitor.type)
+        ivar.bind_to ivar
+        ivar.freeze_type = true
+        instance.instance_vars[name] = ivar
+      end
     end
 
     def initialize_instance(instance)
@@ -1758,6 +1780,14 @@ module Crystal
         else
           yield type
         end
+      end
+    end
+
+    def hierarchify
+      if union_types.any? &.abstract
+        program.type_merge(union_types.map(&.hierarchify)).not_nil!
+      else
+        self
       end
     end
 

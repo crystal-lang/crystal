@@ -94,22 +94,25 @@ module Crystal
     end
 
     def visit(node : DeclareVar)
-      node.declared_type.accept self
-      node.type = node.declared_type.type.instance_type
-
       var = node.var
       case var
       when Var
+        node.declared_type.accept self
+        node.type = node.declared_type.type.instance_type
         var.bind_to node
 
         @vars[var.name] = var
       when InstanceVar
         type = scope? || current_type
+        if @untyped_def
+          node.raise "initializing an instance variable is not yet supported"
+        end
         if type.is_a?(NonGenericClassType)
-          if @untyped_def
-            node.raise "initializing an instance variable is not yet supported"
-          end
+          node.declared_type.accept self
+          node.type = node.declared_type.type.instance_type
           type.declare_instance_var(var.name, node.type)
+        elsif type.is_a?(GenericClassType)
+          type.declare_instance_var(var.name, node.declared_type)
         else
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end

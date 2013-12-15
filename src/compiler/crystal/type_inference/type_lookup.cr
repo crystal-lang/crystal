@@ -11,11 +11,9 @@ module Crystal
 
     def visit(node : Ident)
       the_type = @root.lookup_type(node)
-      assert_type the_type, Type
-
-      @type = the_type
-
-      unless @type
+      if the_type && the_type.is_a?(Type)
+        @type = the_type
+      else
         node.raise("uninitialized constant #{node.to_s_node}")
       end
     end
