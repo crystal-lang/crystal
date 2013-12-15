@@ -157,7 +157,11 @@ module Crystal
         if scope.is_a?(InstanceVarContainer)
           var = scope.lookup_instance_var node.name
           unless scope.has_instance_var_in_initialize?(node.name)
-            var.bind_to mod.nil_var
+            begin
+              var.bind_to mod.nil_var
+            rescue ex : Crystal::Exception
+              node.raise "#{node} not in initialize so it's nilable", ex
+            end
           end
         else
           node.raise "Bug: #{scope} is not an InstanceVarContainer"

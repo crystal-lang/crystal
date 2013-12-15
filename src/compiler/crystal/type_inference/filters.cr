@@ -4,6 +4,7 @@ module Crystal
     end
 
     def bind_to(node : ASTNode)
+      @dependencies = [node] of ASTNode
       @node = node
       node.add_observer self
       update(node)

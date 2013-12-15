@@ -17,7 +17,7 @@ module Enumerable(T)
     ary
   end
 
-  def each_with_index(&block : T, Int32 ->)
+  def each_with_index
     i = 0
     each do |elem|
       yield elem, i
@@ -25,7 +25,7 @@ module Enumerable(T)
     end
   end
 
-  def each_with_object(obj : U, &block : T, U ->)
+  def each_with_object(obj)
     each do |elem|
       yield elem, obj
     end

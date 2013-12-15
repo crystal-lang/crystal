@@ -187,12 +187,11 @@ module Crystal
       visited = Set(UInt64).new
       visited.add node.object_id
       while deps = node.dependencies?
-        dependencies = deps.select { |dep| !dep.same?(mod.nil_var) && dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
+        dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
         if dependencies.length > 0
           node = dependencies.first
-          owner_trace << node if node && node.location
+          owner_trace << node if node
           visited.add node.object_id
-          break unless node.dependencies?
         else
           break
         end
@@ -472,7 +471,7 @@ module Crystal
       defs = owner.lookup_defs(def_name)
       obj = @obj
       if defs.empty?
-        owner_trace = find_owner_trace(obj, owner) if obj && obj.type.is_a?(UnionType)
+        owner_trace = find_owner_trace(obj, owner) if obj
 
         if obj || !owner.is_a?(Program)
           error_msg = "undefined method '#{def_name}' for #{owner}"
@@ -498,6 +497,10 @@ module Crystal
         elsif !block && defs_matching_args_length.all?(&.yields)
           raise "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
         end
+      end
+
+      if args.length == 1 && args.first.type.includes_type?(mod.nil)
+        owner_trace = find_owner_trace(args.first, mod.nil)
       end
 
       arg_names = [] of Array(String)
@@ -557,7 +560,7 @@ module Crystal
         end
       end
 
-      raise message
+      raise message, owner_trace
     end
 
 

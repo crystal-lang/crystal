@@ -63,12 +63,12 @@ module Crystal
       @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
       @string.allocated = true
 
-      @string.lookup_instance_var("@length").type = @int32
-      @string.lookup_instance_var("@c").type = @char
+      @string.lookup_instance_var("@length").set_type(@int32)
+      @string.lookup_instance_var("@c").set_type(@char)
 
       @types["Class"] = @class = NonGenericClassType.new self, self, "Class", @reference
       @class.instance_vars_in_initialize = Set.new(["@name"])
-      @class.lookup_instance_var("@name").type = @string
+      @class.lookup_instance_var("@name").set_type(@string)
       @class.allocated = true
 
       @types["Array"] = @array = GenericClassType.new self, self, "Array", @reference, ["T"]
@@ -81,10 +81,10 @@ module Crystal
 
       @types["Macro"] = macro_mod = NonGenericModuleType.new self, self, "Macro"
       macro_var = macro_mod.types["Var"] = NonGenericClassType.new self, macro_mod, "Var", @reference
-      macro_var.lookup_instance_var("@padding").type = PaddingType.new(self, 24)
+      macro_var.lookup_instance_var("@padding").set_type(PaddingType.new(self, 24))
 
       macro_ivar = macro_mod.types["InstanceVar"] = NonGenericClassType.new self, macro_mod, "InstanceVar", @reference
-      macro_ivar.lookup_instance_var("@padding").type = PaddingType.new(self, 24)
+      macro_ivar.lookup_instance_var("@padding").set_type(PaddingType.new(self, 24))
 
       @symbols = Set(String).new
       @global_vars = {} of String => Var

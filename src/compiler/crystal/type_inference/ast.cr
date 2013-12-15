@@ -280,7 +280,7 @@ module Crystal
   class Arg
     def self.new_with_type(name, type)
       arg = new(name)
-      arg.type = type
+      arg.set_type(type)
       arg
     end
 
