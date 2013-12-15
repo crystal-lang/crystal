@@ -28,4 +28,19 @@ describe "Type inference: declare var" do
 
     foo.instance_vars["@x"].type.should eq(mod.int32)
   end
+
+  it "declares instance var of generic class" do
+    result = assert_type("
+      class Foo(T)
+        @x :: T
+      end
+
+      Foo(Int32).new") do
+        foo = types["Foo"]
+        assert_type foo, GenericClassType
+        foo_i32 = foo.instantiate([int32])
+        foo_i32.lookup_instance_var("@x").type.should eq(int32)
+        foo_i32
+    end
+  end
 end

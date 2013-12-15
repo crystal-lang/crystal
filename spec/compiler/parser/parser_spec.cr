@@ -294,7 +294,7 @@ describe "Parser" do
   end
 
   ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
-    it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), Assign.new("a".var, Call.new("a".var, op, [1.int32] of ASTNode))]
+    it_parses "a = 1; a #{op}= 1", [Assign.new("a".var, 1.int32), Assign.new("a".var, Call.new("a".var, op, [1.int32] of ASTNode))] of ASTNode
   end
 
   it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int32), And.new("a".var, Assign.new("a".var, 1.int32))]
@@ -562,7 +562,7 @@ describe "Parser" do
   it_parses "->foo", FunPointer.new(nil, "foo")
   it_parses "->Foo.foo", FunPointer.new("Foo".ident, "foo")
   it_parses "->Foo::Bar::Baz.foo", FunPointer.new(["Foo", "Bar", "Baz"].ident, "foo")
-  it_parses "->foo(Int32, Float64)", FunPointer.new(nil, "foo", ["Int32".ident, "Float64".ident])
+  it_parses "->foo(Int32, Float64)", FunPointer.new(nil, "foo", ["Int32".ident, "Float64".ident] of ASTNode)
   it_parses "foo = 1; ->foo.bar(Int32)", [Assign.new("foo".var, 1.int32), FunPointer.new("foo".var, "bar", ["Int32".ident] of ASTNode)]
   it_parses "->foo(Void*)", FunPointer.new(nil, "foo", ["Void".ident.pointer_of] of ASTNode)
   it_parses "call ->foo", Call.new(nil, "call", [FunPointer.new(nil, "foo")] of ASTNode)

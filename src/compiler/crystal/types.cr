@@ -982,10 +982,15 @@ module Crystal
       end
 
       instance = instance_class.new program, self, instance_type_vars
+      initialize_instance instance
       generic_types[type_vars] = instance
 
       instance.after_initialize
       instance
+    end
+
+    def initialize_instance(instance)
+      # Nothing
     end
 
     def generic?
@@ -1026,6 +1031,25 @@ module Crystal
 
     def class?
       true
+    end
+
+    def declare_instance_var(name, node)
+      @declared_instance_vars ||= {} of String => ASTNode
+      @declared_instance_vars[name] = node
+    end
+
+    def initialize_instance(instance)
+      if decl_ivars = @declared_instance_vars
+        visitor = TypeLookup.new(instance)
+        decl_ivars.each do |name, node|
+          node.accept visitor
+
+          ivar = Var.new(name, visitor.type)
+          ivar.bind_to ivar
+          ivar.freeze_type = true
+          instance.instance_vars[name] = ivar
+        end
+      end
     end
 
     def metaclass

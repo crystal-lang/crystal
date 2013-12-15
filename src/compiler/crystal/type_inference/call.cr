@@ -1,6 +1,7 @@
 require "../ast"
 require "../types"
 require "../primitives"
+require "type_lookup"
 
 module Crystal
   class Call
@@ -284,7 +285,7 @@ module Crystal
 
       if (block_arg = match.def.block_arg) && (yields = match.def.yields) && yields > 0
         block = @block.not_nil!
-        ident_lookup = IdentLookupVisitor.new(mod, match)
+        ident_lookup = MatchTypeLookup.new(match)
 
         if inputs = block_arg.type_spec.inputs
           yield_vars = [] of Var
@@ -328,14 +329,9 @@ module Crystal
       visitor.type
     end
 
-    class IdentLookupVisitor < Visitor
-      getter! type
-
-      def initialize(@mod, @match)
-      end
-
-      def visit(node : ASTNode)
-        true
+    class MatchTypeLookup < TypeLookup
+      def initialize(@match)
+        super(match.type_lookup)
       end
 
       def visit(node : Ident)
@@ -346,36 +342,7 @@ module Crystal
           end
         end
 
-        the_type = @match.type_lookup.lookup_type(node)
-        assert_type the_type, Type
-
-        @type = the_type
-
-        unless @type
-          node.raise("uninitialized constant #{node}")
-        end
-      end
-
-      def visit(node : NewGenericClass)
-        node.name.accept self
-
-        instance_type = @type.not_nil!
-        unless instance_type.is_a?(GenericClassType)
-          node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
-        end
-
-        if instance_type.type_vars.length != node.type_vars.length
-          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
-        end
-
-        type_vars = [] of Type
-        node.type_vars.each do |type_var|
-          type_var.accept self
-          type_vars.push @type.not_nil!
-        end
-
-        @type = instance_type.instantiate(type_vars)
-        false
+        super
       end
 
       def visit(node : SelfType)
