@@ -11,6 +11,10 @@ module Macro
     def to_s
       @value.to_s
     end
+
+    def to_s_node
+      to_s
+    end
   end
 
   class IntLiteral
@@ -25,6 +29,10 @@ module Macro
     def to_s
       @value.to_s
     end
+
+    def to_s_node
+      to_s
+    end
   end
 
   class StringLiteral
@@ -38,6 +46,10 @@ module Macro
 
     def to_s
       @value
+    end
+
+    def to_s_node
+      to_s
     end
   end
 
@@ -57,6 +69,10 @@ module Macro
         yield elem
       end
     end
+
+    def to_s_node
+      to_s
+    end
   end
 
   class Var
@@ -71,6 +87,10 @@ module Macro
     def to_s
       @name
     end
+
+    def to_s_node
+      to_s
+    end
   end
 
   class InstanceVar
@@ -84,6 +104,10 @@ module Macro
 
     def to_s
       @name
+    end
+
+    def to_s_node
+      to_s
     end
   end
 end

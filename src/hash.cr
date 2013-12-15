@@ -291,5 +291,11 @@ class Hash(K, V)
     def previous=(p)
       @previous = p
     end
+
+    @key :: K
+    @value :: V
   end
+
+  @buckets :: Array(Array(Entry(K, V))?)
+  @length :: Int32
 end

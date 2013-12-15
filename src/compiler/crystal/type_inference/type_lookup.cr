@@ -43,7 +43,7 @@ module Crystal
         node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
       end
 
-      type_vars = [] of Type
+      type_vars = [] of Type | ASTNode
       node.type_vars.each do |type_var|
         type_var.accept self
         type_vars.push @type.not_nil!

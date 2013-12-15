@@ -2,7 +2,7 @@ require "visitor"
 
 module Crystal
   class ASTNode
-    def to_s
+    def to_s_node
       visitor = ToSVisitor.new
       self.accept visitor
       visitor.to_s
@@ -411,7 +411,7 @@ module Crystal
     end
 
     def visit(node : Arg)
-      @str << "out " if node.out
+      # @str << "out " if node.out
       if node.name
         @str << node.name
       else
@@ -865,7 +865,7 @@ module Crystal
     def accept_with_indent(node : Nop)
     end
 
-    def accept_with_indent(node)
+    def accept_with_indent(node : ASTNode)
       with_indent do
         append_indent
         node.accept self

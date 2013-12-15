@@ -38,7 +38,7 @@ describe "Type inference: declare var" do
       Foo(Int32).new") do
         foo = types["Foo"]
         assert_type foo, GenericClassType
-        foo_i32 = foo.instantiate([int32])
+        foo_i32 = foo.instantiate([int32] of Type | ASTNode)
         foo_i32.lookup_instance_var("@x").type.should eq(int32)
         foo_i32
     end
@@ -58,7 +58,7 @@ describe "Type inference: declare var" do
       f") do
         foo = types["Foo"]
         assert_type foo, GenericClassType
-        foo_i32 = foo.instantiate([int32])
+        foo_i32 = foo.instantiate([int32] of Type | ASTNode)
         foo_i32.lookup_instance_var("@x").type.should eq(int32)
         foo_i32
     end

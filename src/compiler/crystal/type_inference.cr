@@ -694,7 +694,7 @@ module Crystal
       end
 
       unless type.module?
-        node.name.raise "#{node.name} is not a module, it's a #{type.type_desc}"
+        node.name.raise "#{node.name.to_s_node} is not a module, it's a #{type.type_desc}"
       end
 
       current_type = current_type()
@@ -1280,7 +1280,7 @@ module Crystal
           type.accept self
           instance_type = type.type.instance_type
           unless instance_type.is_subclass_of?(@mod.exception)
-            type.raise "#{type} is not a subclass of Exception"
+            type.raise "#{type.to_s_node} is not a subclass of Exception"
           end
           instance_type
         end
@@ -1367,7 +1367,7 @@ module Crystal
       end
 
       unless target_type
-        node.raise "uninitialized constant #{node}"
+        node.raise "uninitialized constant #{node.to_s_node}"
       end
 
       target_type

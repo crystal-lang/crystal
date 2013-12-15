@@ -155,7 +155,7 @@ module Crystal
     end
 
     def array_of(type)
-      @array.instantiate [type] of Type
+      @array.instantiate [type] of Type | ASTNode
     end
 
     def union_of(types : Array)
@@ -327,7 +327,7 @@ module Crystal
     end
 
     def pointer_of(type)
-      @pointer.instantiate([type] of Type)
+      @pointer.instantiate([type] of Type | ASTNode)
     end
 
     def new_temp_var

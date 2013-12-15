@@ -313,7 +313,7 @@ module Crystal
             if output.is_a?(SelfType)
               raise "block expected to return #{match.owner}, not #{block_type}"
             else
-              raise "block expected to return #{output}, not #{block_type}"
+              raise "block expected to return #{output.to_s_node}, not #{block_type}"
             end
           end
           block.body.freeze_type = true
@@ -624,7 +624,7 @@ module Crystal
               not_nil_type_vars.push type_var.not_nil!
             end
 
-            new_generic = NewGenericClass.new(Ident.new([generic_class.name]), not_nil_type_vars)
+            new_generic = NewGenericClass.new(Ident.new([generic_class.name] of String), not_nil_type_vars)
             alloc = Call.new(new_generic, "allocate")
           else
             alloc = Call.new(nil, "allocate")

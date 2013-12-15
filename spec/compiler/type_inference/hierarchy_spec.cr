@@ -654,7 +654,7 @@ describe "Type inference: hierarchy" do
         foo = types["Foo"]
         bar = types["Bar"]
         assert_type bar, GenericClassType
-        bar.instantiate([foo.hierarchy_type] of Type)
+        bar.instantiate([foo.hierarchy_type] of Type | ASTNode)
       }
   end
 
@@ -671,7 +671,7 @@ describe "Type inference: hierarchy" do
         foo = types["Foo"]
         bar = types["Bar"]
         assert_type bar, GenericClassType
-        bar.instantiate([union_of(foo.hierarchy_type, int32)] of Type)
+        bar.instantiate([union_of(foo.hierarchy_type, int32)] of Type | ASTNode)
       }
   end
 end

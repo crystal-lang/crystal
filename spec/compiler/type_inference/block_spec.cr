@@ -122,7 +122,7 @@ describe "Block inference" do
       ") do
       foo = types["Foo"]
       assert_type foo, GenericClassType
-      foo.instantiate([float64])
+      foo.instantiate([float64] of Type | ASTNode)
     end
     mod = result.program
     type = result.node.type
@@ -149,7 +149,7 @@ describe "Block inference" do
       ") do
       foo = types["Foo"]
       assert_type foo, GenericClassType
-      foo.instantiate([float64])
+      foo.instantiate([float64] of Type | ASTNode)
     end
   end
 
@@ -237,7 +237,7 @@ describe "Block inference" do
       ") do
       foo = types["Foo"]
       assert_type foo, GenericClassType
-      foo.instantiate([float64])
+      foo.instantiate([float64] of Type | ASTNode)
     end
   end
 

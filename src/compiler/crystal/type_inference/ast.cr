@@ -2,6 +2,8 @@ require "../ast"
 
 module Crystal
   class ASTNode
+    property! type
+    property location
     property! dependencies
     property type_filters
     property freeze_type
@@ -171,16 +173,19 @@ module Crystal
     property! instance_type
 
     def update(from = nil)
-      generic_type = instance_type.instantiate(type_vars.map do |node|
+      type_vars_types = [] of Type | ASTNode
+      type_vars.each do |node|
         case node
         when NumberLiteral
-          node
+          type_vars_types << node
         else
           node_type = node.type?
           self.raise "can't deduce generic type in recursive method" unless node_type
-          node_type.instance_type.hierarchify
+          type_vars_types << node_type.instance_type.hierarchify
         end
-      end)
+      end
+
+      generic_type = instance_type.instantiate(type_vars_types)
       self.type = generic_type.metaclass
     end
   end

@@ -289,7 +289,7 @@ describe "Type inference: def overload" do
     ") {
       foo = types["Foo"]
       assert_type foo, GenericClassType
-      foo.instantiate([int32])
+      foo.instantiate([int32] of Type | ASTNode)
     }
   end
 

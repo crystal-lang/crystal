@@ -76,4 +76,6 @@ class Set(T)
   def internal_hash
     @hash
   end
+
+  @hash :: Hash(T, Bool)
 end

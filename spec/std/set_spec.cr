@@ -15,7 +15,7 @@ describe "Set" do
 
   describe "add" do
     it "adds and includes" do
-      set = Set(Int).new
+      set = Set(Int32).new
       set.add 1
       set.includes?(1).should be_true
       set.length.should eq(1)

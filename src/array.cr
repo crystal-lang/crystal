@@ -582,4 +582,8 @@ class Array(T)
     quicksort!(a, (r - a) + 1)
     quicksort!(l, (a + n) - l)
   end
+
+  @length :: Int32
+  @capacity :: Int32
+  @buffer :: Pointer(T)
 end

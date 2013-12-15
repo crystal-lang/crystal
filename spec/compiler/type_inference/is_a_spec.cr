@@ -49,7 +49,7 @@ describe "Type inference: is_a?" do
     if_node = nodes.last
     assert_type if_node, If
 
-    if_node.then.type.should eq(foo.instantiate([mod.int32]))
+    if_node.then.type.should eq(foo.instantiate([mod.int32] of Type | ASTNode))
   end
 
   it "restricts type inside if scope 3" do

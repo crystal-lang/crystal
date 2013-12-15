@@ -36,7 +36,7 @@ describe "Type inference: class" do
     ") do
       foo = types["Foo"]
       assert_type foo, GenericClassType
-      foo.instantiate([int32] of Type)
+      foo.instantiate([int32] of Type | ASTNode)
     end
     mod = result.program
     type = result.node.type
@@ -66,12 +66,12 @@ describe "Type inference: class" do
     assert_type foo, GenericClassType
     assert_type node, Expressions
 
-    node[1].type.should eq(foo.instantiate([mod.int32] of Type))
+    node[1].type.should eq(foo.instantiate([mod.int32] of Type | ASTNode))
     node1type = node[1].type
     assert_type node1type, InstanceVarContainer
 
     node1type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
-    node[3].type.should eq(foo.instantiate([mod.float64] of Type))
+    node[3].type.should eq(foo.instantiate([mod.float64] of Type | ASTNode))
 
     node3type = node[3].type
     assert_type node3type, InstanceVarContainer
@@ -158,7 +158,7 @@ describe "Type inference: class" do
       ") do
         foo = types["Foo"]
         assert_type foo, GenericClassType
-        foo.instantiate([union_of(int32, float64)] of Type)
+        foo.instantiate([union_of(int32, float64)] of Type | ASTNode)
       end
   end
 
@@ -216,7 +216,7 @@ describe "Type inference: class" do
       ") do
         box = types["Box"]
         assert_type box, GenericClassType
-        box.instantiate([int32] of Type)
+        box.instantiate([int32] of Type | ASTNode)
       end
     mod = result.program
     type = result.node.type
@@ -239,7 +239,7 @@ describe "Type inference: class" do
       ") do
         box = types["Box"]
         assert_type box, GenericClassType
-        box.instantiate([bool])
+        box.instantiate([bool] of Type | ASTNode)
     end
     mod = result.program
     type = result.node.type
@@ -335,7 +335,7 @@ describe "Type inference: class" do
       ") do
         foo = types["Foo"]
         assert_type foo, GenericClassType
-        foo.instantiate([int32] of Type)
+        foo.instantiate([int32] of Type | ASTNode)
       end
   end
 
@@ -658,7 +658,7 @@ describe "Type inference: class" do
       ") do
         foo = types["Foo"]
         assert_type foo, GenericClassType
-        foo.instantiate([NumberLiteral.new("1", :i32)])
+        foo.instantiate([NumberLiteral.new("1", :i32)] of Type | ASTNode)
       end
   end
 

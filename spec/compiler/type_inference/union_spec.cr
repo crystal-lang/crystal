@@ -45,7 +45,7 @@ describe "Type inference: union" do
       bar = types["Bar"]
       assert_type bar, GenericClassType
 
-      bar.instantiate([union_of(int32, char)])
+      bar.instantiate([union_of(int32, char)] of Type | ASTNode)
     end
   end
 end

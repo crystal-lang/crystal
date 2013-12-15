@@ -1,6 +1,9 @@
 module Crystal
   class VirtualFile
+    @macro :: Macro
     getter :macro
+
+    @source :: String
     getter :source
 
     def initialize(@macro, @source)

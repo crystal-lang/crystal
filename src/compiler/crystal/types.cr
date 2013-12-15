@@ -893,6 +893,14 @@ module Crystal
     def allocated
       true
     end
+
+    def abstract
+      false
+    end
+
+    def hierarcy_type
+      self
+    end
   end
 
   class BoolType < PrimitiveType
@@ -1050,6 +1058,8 @@ module Crystal
       @declared_instance_vars[name] = node
 
       generic_types.each do |key, instance|
+        assert_type instance, GenericClassInstanceType
+
         visitor = TypeLookup.new(instance)
         node.accept visitor
 
@@ -1864,9 +1874,9 @@ module Crystal
       matches = (base_type_matches && base_type_matches.matches) || [] of Match
 
       instance_type.subtypes(base_type).each do |subtype|
-        assert_type subtype, NonGenericOrGenericClassInstanceType
-
         unless subtype.value?
+          assert_type subtype, NonGenericOrGenericClassInstanceType
+
           subtype_lookup = hierarchy_lookup(subtype)
           subtype_hierarchy_lookup = hierarchy_lookup(subtype.hierarchy_type)
 

@@ -4,14 +4,14 @@ require "spec"
 describe "Hash" do
   describe "empty" do
     it "length should be zero" do
-      h = {} of Int => Int
+      h = {} of Int32 => Int32
       h.length.should eq(0)
       h.empty?.should be_true
     end
   end
 
   it "sets and gets" do
-    a = {} of Int => Int
+    a = {} of Int32 => Int32
     a[1] = 2
     a[1].should eq(2)
   end

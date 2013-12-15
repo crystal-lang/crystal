@@ -57,7 +57,7 @@ describe "type inference: alias" do
     a = mod.types["Alias"]
     assert_type a, AliasType
 
-    foo_alias = foo.instantiate([a])
+    foo_alias = foo.instantiate([a] of Type | ASTNode)
 
     aliased_type = a.aliased_type
     assert_type aliased_type, UnionType
