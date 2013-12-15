@@ -152,20 +152,24 @@ describe "Normalize: ssa" do
     assert_normalize "foo(out a); a = 2", "foo(out a)\na$1 = 2"
   end
 
+  it "doesn't performs ssa on instance variable if not inside def" do
+    assert_normalize "@a = 1; @a", "@a = 1\n@a"
+  end
+
   it "performs ssa on instance variable read 1" do
-    assert_normalize "@a", "@a$1 = @a"
+    assert_normalize "def x; @a; end", "def x\n  @a$1 = @a\nend"
   end
 
   it "performs ssa on instance variable write and read 1" do
-    assert_normalize "@a = 1; @a", "@a = @a$1 = 1\n@a$1"
+    assert_normalize "def x; @a = 1; @a; end", "def x\n  @a = @a$1 = 1\n  @a$1\nend"
   end
 
   it "performs ssa on instance variable write and read 2" do
-    assert_normalize "@a = 1; @a = @a + 1", "@a = @a$1 = 1\n@a = @a$2 = @a$1 + 1"
+    assert_normalize "def x; @a = 1; @a = @a + 1; end", "def x\n  @a = @a$1 = 1\n  @a = @a$2 = @a$1 + 1\nend"
   end
 
   it "performs ssa on instance variable inside if" do
-    assert_normalize "if @a; else; @a = 1; end; @a", "if @a$1 = @a\n  @a$3 = @a$1\n  nil\nelse\n  #temp_1 = @a = @a$2 = 1\n  @a$3 = @a$2\n  #temp_1\nend\n@a$3"
+    assert_normalize "def x; if @a; else; @a = 1; end; @a; end", "def x\n  if @a$1 = @a\n    @a$3 = @a$1\n    nil\n  else\n    #temp_1 = @a = @a$2 = 1\n    @a$3 = @a$2\n    #temp_1\n  end\n  @a$3\nend"
   end
 
   it "performs ssa on instance variable inside if in initialize" do
@@ -173,11 +177,11 @@ describe "Normalize: ssa" do
   end
 
   it "performs ssa on instance variable and method call" do
-    assert_normalize "@a = 1; foo; @a", "@a = @a$1 = 1\nfoo()\n@a$2 = @a"
+    assert_normalize "def x; @a = 1; foo; @a; end", "def x\n  @a = @a$1 = 1\n  foo()\n  @a$2 = @a\nend"
   end
 
   it "performs ssa on instance variable and method call" do
-    assert_normalize "@a = 1; yield; @a", "@a = @a$1 = 1\nyield\n@a$2 = @a"
+    assert_normalize "def x; @a = 1; yield; @a; end", "def x\n  @a = @a$1 = 1\n  yield\n  @a$2 = @a\nend"
   end
 
   it "stops ssa if address is taken" do
@@ -201,7 +205,7 @@ describe "Normalize: ssa" do
   end
 
   it "performs ssa on instance var and while" do
-    assert_normalize "@foo = 1; while @foo.bar; end;", "@foo = @foo$1 = 1\nwhile (@foo$2 = @foo).bar\nend"
+    assert_normalize "def x; @foo = 1; while @foo.bar; end; end", "def x\n  @foo = @foo$1 = 1\n  while (@foo$2 = @foo).bar\n  end\nend"
   end
 
   it "performs on complex while, if, break interaction" do

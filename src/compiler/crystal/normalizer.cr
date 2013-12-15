@@ -44,6 +44,7 @@ module Crystal
       @vars = {} of String => Index
       @vars_stack = [] of Hash(String, Index)
       @in_initialize = false
+      @in_def = false
       @dead_code = false
       @exception_handler_count = 0
     end
@@ -255,7 +256,9 @@ module Crystal
         end
       when InstanceVar
         node.value = node.value.transform(self)
-        transform_assign_ivar(node, target)
+        if @in_def
+          transform_assign_ivar(node, target)
+        end
       else
         node.value = node.value.transform(self)
       end
@@ -367,7 +370,7 @@ module Crystal
     end
 
     def transform(node : InstanceVar)
-      return node if @in_initialize
+      return node if !@in_def || @in_initialize
 
       indices = @vars[node.name]?
       if indices && indices.read
@@ -488,7 +491,9 @@ module Crystal
 
         pushing_vars_from_args(node.args) do
           @in_initialize = node.name == "initialize"
+          @in_def = true
           node.body = node.body.transform(self)
+          @in_def = false
           @in_initialize = false
         end
       end
@@ -499,7 +504,9 @@ module Crystal
     def transform(node : FunDef)
       if body = node.body
         pushing_vars_from_args(node.args) do
+          @in_def = true
           node.body = body.transform(self)
+          @in_def = false
         end
       end
 
