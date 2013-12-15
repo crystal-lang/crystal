@@ -593,7 +593,7 @@ module Crystal
         obj = call_args[0]
       end
       buffer = array_malloc(LLVM::Int8, int(@type.to_s.length + 23))
-      @builder.call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("#<#{@type}:0x%016lx>"), obj] of LibLLVM::ValueRef
+      @builder.call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("<#{@type}:0x%016lx>"), obj] of LibLLVM::ValueRef
       buffer
     end
 
