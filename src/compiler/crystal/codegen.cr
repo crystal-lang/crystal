@@ -635,7 +635,19 @@ module Crystal
     end
 
     def codegen_primitive_fun_call(node, target_def, call_args)
-      @builder.call call_args[0], call_args[1 .. -1]
+      @last = @builder.call call_args[0], call_args[1 .. -1]
+
+      if target_def.type.no_return?
+        @builder.unreachable
+      end
+
+      if target_def.type.union?
+        union = alloca llvm_type(target_def.type)
+        @builder.store @last, union
+        @last = union
+      end
+
+      @last
     end
 
     def codegen_primitive_pointer_diff(node, target_def, call_args)

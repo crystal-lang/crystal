@@ -57,4 +57,19 @@ describe "Code gen: fun" do
       foo(1)
       ")
   end
+
+  it "codegens fun that returns a hierarchy type" do
+    run("
+      class Foo
+        def coco; 1; end
+      end
+
+      class Bar < Foo
+        def coco; 2; end
+      end
+
+      x = -> { Foo.new || Bar.new }
+      x.call.coco
+      ").to_i.should eq(1)
+  end
 end
