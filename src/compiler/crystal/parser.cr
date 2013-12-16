@@ -2200,6 +2200,10 @@ module Crystal
         case @token.type
         when :IDENT
           case @token.value
+          when :alias
+            exp = parse_alias
+            exp.location = location
+            expressions << exp
           when :fun
             exp = parse_fun_def
             exp.location = location
@@ -2353,6 +2357,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       value = parse_single_type
+      skip_statement_end
 
       node = Alias.new(name, value)
       node.location = location
