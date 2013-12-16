@@ -6,7 +6,7 @@ describe "type inference: alias" do
     assert_type("
       alias Alias = Int32
       Alias
-      ") { types["Alias"].metaclass }
+      ") { types["Int32"].metaclass }
   end
 
   it "works with alias type as restriction" do

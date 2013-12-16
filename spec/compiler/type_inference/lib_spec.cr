@@ -104,4 +104,16 @@ describe "Type inference: lib" do
       C.errno = 1
       ") { int32 }
   end
+
+  it "defined fun with aliased type" do
+    assert_type("
+      lib C
+        alias SizeT = Int32
+        fun foo(x : SizeT) : SizeT
+      end
+
+      C.foo(1)
+      ") { int32 }
+  end
+
 end

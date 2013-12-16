@@ -1,3 +1,6 @@
+require "c.32bits" if !x86_64
+require "c.64bits" if x86_64
+
 lib C
   fun time(t : Int64) : Int64
   fun sleep(seconds : UInt32) : UInt32

@@ -1436,7 +1436,11 @@ module Crystal
     end
 
     def remove_alias
-      aliased_type.remove_alias
+      if aliased_type = @aliased_type
+        aliased_type.remove_alias
+      else
+        self
+      end
     end
 
     def cover
