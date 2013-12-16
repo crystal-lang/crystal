@@ -175,7 +175,7 @@ module Crystal
     end
 
     def create_llvm_arg_type(type : AliasType)
-      llvm_arg_type(type)
+      llvm_arg_type(type.remove_alias)
     end
 
     def create_llvm_arg_type(type)
