@@ -526,10 +526,10 @@ module Crystal
                 if type_var = owner.type_vars[res.names[0]]?
                   msg << type_var.type
                 else
-                  msg << arg.type_restriction
+                  msg << res.to_s_node
                 end
               else
-                msg << arg.type_restriction
+                msg << res.to_s_node
               end
             end
           end
@@ -697,6 +697,5 @@ module Crystal
 
       PreparedTypedDef.new(typed_def, args)
     end
-
   end
 end

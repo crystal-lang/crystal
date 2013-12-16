@@ -1006,8 +1006,8 @@ module Crystal
       end
 
       instance = instance_class.new program, self, instance_type_vars
-      initialize_instance instance
       generic_types[type_vars] = instance
+      initialize_instance instance
 
       instance.after_initialize
       instance

@@ -53,6 +53,26 @@ module Crystal
       false
     end
 
+    def visit(node : FunTypeSpec)
+      types = [] of Type
+      if inputs = node.inputs
+        inputs.each do |input|
+          input.accept self
+          types << type
+        end
+      end
+
+      if output = node.output
+        output.accept self
+        types << type
+      else
+        types << @root.program.void
+      end
+
+      @type = @root.program.fun_of(types)
+      false
+    end
+
     def visit(node : SelfType)
       @type = @root
       false
