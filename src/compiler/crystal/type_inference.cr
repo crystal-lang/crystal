@@ -938,7 +938,7 @@ module Crystal
         node.target_const = type
         node.bind_to type.value
       when Type
-        node.type = type.remove_alias.metaclass
+        node.type = type.remove_alias_if_simple.metaclass
       when ASTNode
         node.syntax_replacement = type
         node.bind_to type
@@ -1342,7 +1342,7 @@ module Crystal
     def lookup_ident_type(node : Ident)
       target_type = resolve_ident(node)
       if target_type.is_a?(Type)
-        target_type.remove_alias
+        target_type.remove_alias_if_simple
       else
         node.raise "#{node} must be a type here, not #{target_type}"
       end

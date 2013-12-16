@@ -12,7 +12,7 @@ module Crystal
     def visit(node : Ident)
       the_type = @root.lookup_type(node)
       if the_type && the_type.is_a?(Type)
-        @type = the_type.remove_alias
+        @type = the_type.remove_alias_if_simple
       else
         node.raise("uninitialized constant #{node.to_s_node}")
       end

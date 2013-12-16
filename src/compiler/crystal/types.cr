@@ -292,6 +292,10 @@ module Crystal
     def remove_alias
       self
     end
+
+    def remove_alias_if_simple
+      self
+    end
   end
 
   class NoReturnType < Type
@@ -1405,6 +1409,7 @@ module Crystal
 
     def initialize(program, container, @name)
       super(program, container)
+      @simple = true
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
@@ -1438,6 +1443,15 @@ module Crystal
     def remove_alias
       if aliased_type = @aliased_type
         aliased_type.remove_alias
+      else
+        @simple = false
+        self
+      end
+    end
+
+    def remove_alias_if_simple
+      if @simple
+        remove_alias
       else
         self
       end
