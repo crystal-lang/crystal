@@ -72,4 +72,11 @@ describe "Code gen: fun" do
       x.call.coco
       ").to_i.should eq(1)
   end
+
+  pending "codegens fun that accepts a union and is called with a single type" do
+    run("
+      f = ->(x : Int32 | Float64) { x + 1 }
+      f.call(1).to_i
+      ").to_i.should eq(2)
+  end
 end

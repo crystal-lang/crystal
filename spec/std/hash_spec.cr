@@ -21,10 +21,11 @@ describe "Hash" do
     a[1].should eq(2)
   end
 
-  it "gets from union" do
-    a = {1 => 2, :foo => 1.1}
-    a[1].should eq(2)
-  end
+  # pending
+  # it "gets from union" do
+  #   a = {1 => 2, :foo => 1.1}
+  #   a[1].should eq(2)
+  # end
 
   it "gets nilable" do
     a = {1 => 2}
