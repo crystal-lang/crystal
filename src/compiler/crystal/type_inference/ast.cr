@@ -248,10 +248,11 @@ module Crystal
 
   class Macro
     make_tuple InstanceKey, types
+    make_tuple Info, llvm_mod, engine, func
 
-    def add_instance(a_fun, arg_types)
-      @instances ||= {} of InstanceKey => LLVM::Function
-      @instances[InstanceKey.new(arg_types)] = a_fun
+    def add_instance(info, arg_types)
+      @instances ||= {} of InstanceKey => Info
+      @instances[InstanceKey.new(arg_types)] = info
     end
 
     def lookup_instance(arg_types)
