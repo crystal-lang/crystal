@@ -59,6 +59,7 @@ module Crystal
 
       int.add_def Def.new("chr", ([] of Arg), cast)
       char.add_def Def.new("ord", ([] of Arg), cast)
+      symbol.add_def Def.new("to_i", ([] of Arg), cast)
 
       float32.add_def Def.new("**", [Arg.new_with_type("other", float32)], Primitive.new(:float32_pow))
       float64.add_def Def.new("**", [Arg.new_with_type("other", float64)], Primitive.new(:float64_pow))

@@ -101,7 +101,7 @@ module Crystal
       @strings = {} of StringKey => LibLLVM::ValueRef
       @symbols = {} of String => Int32
       @symbol_table_values = [] of LibLLVM::ValueRef
-      mod.symbols.to_a.sort.each_with_index do |sym, index|
+      mod.symbols.to_a.each_with_index do |sym, index|
         @symbols[sym] = index
         @symbol_table_values << build_string_constant(sym, sym)
       end
@@ -390,6 +390,10 @@ module Crystal
 
     def codegen_cast(from_type : CharType, to_type : IntegerType, arg)
       @builder.zext(arg, to_type.llvm_type)
+    end
+
+    def codegen_cast(from_type : SymbolType, to_type : IntegerType, arg)
+      arg
     end
 
     def codegen_cast(from_type, to_type, arg)
