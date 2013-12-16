@@ -79,13 +79,6 @@ module Crystal
 
       @types["Math"] = @math = NonGenericModuleType.new self, self, "Math"
 
-      @types["Macro"] = macro_mod = NonGenericModuleType.new self, self, "Macro"
-      macro_var = macro_mod.types["Var"] = NonGenericClassType.new self, macro_mod, "Var", @reference
-      macro_var.lookup_instance_var("@padding").set_type(PaddingType.new(self, 24))
-
-      macro_ivar = macro_mod.types["InstanceVar"] = NonGenericClassType.new self, macro_mod, "InstanceVar", @reference
-      macro_ivar.lookup_instance_var("@padding").set_type(PaddingType.new(self, 24))
-
       @symbols = Set(String).new
       @global_vars = {} of String => Var
       @requires = Set(String).new

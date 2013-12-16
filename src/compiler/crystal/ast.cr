@@ -23,6 +23,10 @@ module Crystal
     @input_observers :: Array(Call)?
     @dirty :: Bool?
 
+    def type?
+      @type
+    end
+
     def clone
       clone = clone_without_location
       clone.location = location
@@ -261,7 +265,11 @@ module Crystal
     end
 
     def class_name
-      "StingLiteral"
+      "StringLiteral"
+    end
+
+    def to_s
+      @value
     end
   end
 
@@ -1075,10 +1083,8 @@ module Crystal
     @name :: String
     @default_value :: ASTNode+?
     @type_restriction :: ASTNode+?
-    # @out :: Bool
 
     def initialize(@name, @default_value = nil, @type_restriction = nil)
-      # @out = false
     end
 
     def name=(@name)
@@ -1101,13 +1107,6 @@ module Crystal
     def type_restriction
       @type_restriction
     end
-
-    # def out=(@out)
-    # end
-
-    # def out
-    #   @out
-    # end
 
     def accept_children(visitor)
       @default_value.accept visitor if @default_value
@@ -1661,6 +1660,10 @@ module Crystal
 
     def class_name
       "Ident"
+    end
+
+    def to_s
+      @names.join "::"
     end
   end
 

@@ -2164,16 +2164,4 @@ module Crystal
       "#{arg_types.join ", "} -> #{return_type}"
     end
   end
-
-  class PaddingType < Type
-    getter padding
-    getter program
-
-    def initialize(@program, @padding)
-    end
-
-    def to_s
-      "Padding#{@padding}"
-    end
-  end
 end

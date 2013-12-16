@@ -5,16 +5,17 @@ module Crystal
     end
 
     def expand(node)
-      mapped_args = node.args
+      mapped_args = node.args.map do |arg|
+        if arg.is_a?(Call) && !arg.obj && !arg.block && !arg.block_arg && arg.args.length == 0
+          Var.new(arg.name)
+        else
+          arg
+        end
+      end
 
       macro_arg_types = mapped_args.map &.crystal_type_id
       info = @untyped_def.lookup_instance(macro_arg_types)
       unless info
-        args = Array(ASTNode).new(mapped_args.length)
-        mapped_args.each do |arg|
-          args.push arg.to_crystal_node.not_nil!
-        end
-
         typed_def = Def.new(@macro_name, @untyped_def.args.map(&.clone), @untyped_def.body.clone)
         typed_def = @mod.normalize(typed_def)
         assert_type typed_def, Def

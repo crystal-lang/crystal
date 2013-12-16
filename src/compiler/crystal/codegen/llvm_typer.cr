@@ -69,10 +69,6 @@ module Crystal
       end
     end
 
-    def create_llvm_type(type : PaddingType)
-      LLVM.array_type(LLVM::Int32, type.padding)
-    end
-
     def create_llvm_type(type : NilableType)
       llvm_type type.not_nil_type
     end
