@@ -40,6 +40,10 @@ module Crystal
     def nop?
       false
     end
+
+    def class_name
+      raise "class_name not yet implemented for #{self.to_s_node}"
+    end
   end
 
   class Nop < ASTNode
@@ -199,6 +203,14 @@ module Crystal
     def clone_without_location
       NumberLiteral.new(@value, @kind)
     end
+
+    def to_s
+      @value.to_s
+    end
+
+    def class_name
+      "NumberLiteral"
+    end
   end
 
   # A char literal.
@@ -247,6 +259,10 @@ module Crystal
     def clone_without_location
       StringLiteral.new(@value)
     end
+
+    def class_name
+      "StingLiteral"
+    end
   end
 
   class StringInterpolation < ASTNode
@@ -294,6 +310,14 @@ module Crystal
 
     def clone_without_location
       SymbolLiteral.new(@value)
+    end
+
+    def to_s
+      @value
+    end
+
+    def class_name
+      "SymbolLiteral"
     end
   end
 
@@ -495,6 +519,10 @@ module Crystal
     def to_s
       name
     end
+
+    def class_name
+      "Var"
+    end
   end
 
   # A code block.
@@ -646,6 +674,18 @@ module Crystal
       clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @global, @name_column_number, @has_parenthesis)
       clone.name_length = name_length
       clone
+    end
+
+    def to_s
+      if !obj && !block && args.empty?
+        @name
+      else
+        to_s_node
+      end
+    end
+
+    def class_name
+      "Call"
     end
   end
 
@@ -878,6 +918,10 @@ module Crystal
 
     def to_s
       @name
+    end
+
+    def class_name
+      "InstanceVar"
     end
   end
 
@@ -1613,6 +1657,10 @@ module Crystal
       ident = Ident.new(@names.clone, @global)
       ident.name_length = name_length
       ident
+    end
+
+    def class_name
+      "Ident"
     end
   end
 
