@@ -4,9 +4,13 @@
     %meta{:charset => "utf-8"}
     %title Crystal
     %link{:href => "/stylesheets/stylesheet.css", :rel => "stylesheet"}
+    %script{:src => '/javascripts/viewer.js', :type => 'text/javascript'}
   %body
+    %canvas#logo{width: 150, height:150}
     .wrapper
       {% include header.html %}
       {{ content }}
       {% include footer.html %}
     {% include google_analytics.html %}
+
+    %script{:src => '/javascripts/main.js', :type => 'text/javascript'}

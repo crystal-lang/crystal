@@ -228,7 +228,6 @@ header a.ico {
 }
 nav {
   float: right;
-  margin-top: -161px;
 }
 nav ul.menu li {
   margin-bottom: 12px;
@@ -469,6 +468,27 @@ i.ip.down {
 }
 i.ip.downg {
   background-position: -90px 0px;
+}
+#logo {
+  position: absolute;
+  left: 50%;
+  margin-left: 30px;
+  margin-top: 25px;
+  cursor: move;
+}
+#logo-img {
+  margin-top: 81px;
+  right: 50%;
+  margin-right: -71px;
+  position: absolute;
+}
+#logo-text {
+  font-size: 12px;
+  color: #b5b5b5;
+  position: absolute;
+  right: 50%;
+  margin-right: -71px;
+  margin-top: 144px;
 }
 #disqus_thread {
   margin-top: 40px;

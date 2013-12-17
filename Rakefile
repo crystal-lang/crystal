@@ -50,8 +50,14 @@ task :less do
   puts 'Parsed main.sass'
 end
 
+desc 'Build docs'
+task :docs do
+  Dir.chdir "./docs"
+  system "asciidoc -b html5 -a icons -a toc2 -a iconsdir=`brew --prefix asciidoc`/etc/asciidoc/images/icons -a data-uri -a theme=flask -a source-highlighter=pygments -o ../docs.html index.asciidoc"
+end
+
 desc 'Parse all haml items'
 task haml: ['haml:layouts', 'haml:includes', 'haml:indexes']
 
 desc 'Build all haml and sass files for deployment'
-task build: [:haml, :less]
+task build: [:haml, :less, :docs]
