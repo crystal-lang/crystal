@@ -1,7 +1,7 @@
 lib ABI
   struct UnwindException
-    exception_class : UInt64
-    exception_cleanup : UInt64
+    exception_class : C::SizeT
+    exception_cleanup : C::SizeT
     private1 : UInt64
     private2 : UInt64
     exception_object : UInt64
@@ -24,10 +24,10 @@ lib ABI
   URC_CONTINUE_UNWIND = 8
 
   fun unwind_raise_exception = _Unwind_RaiseException(ex : UnwindException*) : Int32
-  fun unwind_get_region_start = _Unwind_GetRegionStart(context : Void*) : UInt64
-  fun unwind_get_ip = _Unwind_GetIP(context : Void*) : UInt64
-  fun unwind_set_ip = _Unwind_SetIP(context : Void*, ip : UInt64) : UInt64
-  fun unwind_set_gr = _Unwind_SetGR(context : Void*, index : Int32, value : UInt64)
+  fun unwind_get_region_start = _Unwind_GetRegionStart(context : Void*) : C::SizeT
+  fun unwind_get_ip = _Unwind_GetIP(context : Void*) : C::SizeT
+  fun unwind_set_ip = _Unwind_SetIP(context : Void*, ip : C::SizeT) : C::SizeT
+  fun unwind_set_gr = _Unwind_SetGR(context : Void*, index : Int32, value : C::SizeT)
   fun unwind_get_language_specific_data = _Unwind_GetLanguageSpecificData(context : Void*) : UInt8*
 end
 
@@ -57,7 +57,7 @@ module LEBReader
   end
 end
 
-fun __crystal_personality(version : Int32, actions : Int32, exception_class : UInt64, exception_object : ABI::UnwindException*, context : Void*) : Int32
+fun __crystal_personality(version : Int32, actions : Int32, exception_class : C::SizeT, exception_object : ABI::UnwindException*, context : Void*) : Int32
   start = ABI.unwind_get_region_start(context)
   ip = ABI.unwind_get_ip(context)
   throw_offset = ip - 1 - start
@@ -87,8 +87,8 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
         end
 
         if (actions & ABI::UA_HANDLER_FRAME) > 0
-          ABI.unwind_set_gr(context, 0, 0_u64 + exception_object.address)
-          ABI.unwind_set_gr(context, 1, 0_u64 + exception_object.value.exception_type_id)
+          ABI.unwind_set_gr(context, 0, exception_object.address.to_sizet)
+          ABI.unwind_set_gr(context, 1, exception_object.value.exception_type_id.to_sizet)
           ABI.unwind_set_ip(context, start + cs_addr)
           # puts "install"
           return ABI::URC_INSTALL_CONTEXT

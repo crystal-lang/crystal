@@ -2,8 +2,8 @@ require "exception.linux" if linux
 require "exception.darwin" if darwin
 
 def caller
-  cursor = Pointer(Int64).malloc(Unwind::CURSOR_SIZE)
-  context = Pointer(Int64).malloc(Unwind::CONTEXT_SIZE)
+  cursor = Pointer(C::SizeT).malloc(Unwind::CURSOR_SIZE)
+  context = Pointer(C::SizeT).malloc(Unwind::CONTEXT_SIZE)
 
   Unwind.get_context(context)
   Unwind.init_local(cursor, context)
