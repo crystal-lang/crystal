@@ -77,6 +77,14 @@ def assert_error(str, message)
   end
 end
 
+def assert_interpret(code)
+  program = Program.new
+  interpreter = Interpreter.new(program)
+  interpreter.interpret(code)
+  value = interpreter.value
+  program.yield value, program
+end
+
 def parse(string)
   Parser.parse string
 end

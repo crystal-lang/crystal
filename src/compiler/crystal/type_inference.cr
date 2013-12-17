@@ -64,6 +64,8 @@ module Crystal
                     mod.float32
                   when :f64
                     mod.float64
+                  else
+                   raise "Invalid node kind: #{node.kind}"
                   end
     end
 

@@ -70,12 +70,36 @@ class String
     C.atoi @c.ptr
   end
 
+  def to_i8
+    to_i.to_i8
+  end
+
+  def to_i16
+    to_i.to_i16
+  end
+
   def to_i32
     to_i
   end
 
   def to_i64
     C.atol @c.ptr
+  end
+
+  def to_u8
+    to_i.to_u8
+  end
+
+  def to_u16
+    to_i.to_u16
+  end
+
+  def to_u32
+    to_i64.to_u32
+  end
+
+  def to_u64
+    to_i64.to_u64
   end
 
   def to_f
