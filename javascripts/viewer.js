@@ -15,7 +15,6 @@ function Viewer3D(name) {
             [0, 1, 0],
             [0, 0, 1]];
   var _loaded = false;
-  var _hasDashedLine;
   var _start;
 
   self.insertModel = function(url) {
@@ -184,17 +183,17 @@ function Viewer3D(name) {
       _yaw = 0;
       _pitch = 0;
     } else {
-      _yaw = inertia(_yaw);
-      _pitch = inertia(_pitch);
+      _yaw = decelerate(_yaw);
+      _pitch = decelerate(_pitch);
     }
     if(_renderInterval == undefined) {
      _renderInterval = window.setInterval(animate, 20);
     }
   }
 
-  function inertia(value) {
+  function decelerate(value) {
     if (!value) {
-      return value;
+      return 0.0001 * (Math.round(Math.random())? 1 : -1);
     } else if(Math.abs(value) < _min) {
       value *= 1.01;
     } else {
@@ -229,7 +228,7 @@ function Viewer3D(name) {
       for (var key in edges) {
         var ids = key.split(" ");
         var isFrontface = edges[key];
-        _canvas.lineWidth = isFrontface ? 0.5 : 0.1;
+        _canvas.lineWidth = isFrontface? 0.5 : 0.1;
         _canvas.beginPath();
         _canvas.moveTo(_vertices[ids[0]].screenX, _vertices[ids[0]].screenY);
         _canvas.lineTo(_vertices[ids[1]].screenX, _vertices[ids[1]].screenY);
@@ -351,7 +350,6 @@ function Viewer3D(name) {
     _container = document.getElementById(self.name);
     _container.addEventListener("mousedown", mouseDownHandler, false);
     _canvas = _container.getContext("2d");
-    _hasDashedLine = _canvas.setLineDash != undefined;
     fetchXML(url);
   }
 
