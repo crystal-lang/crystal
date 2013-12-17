@@ -229,18 +229,7 @@ function Viewer3D(name) {
       for (var key in edges) {
         var ids = key.split(" ");
         var isFrontface = edges[key];
-        _canvas.lineWidth = 0.5;
-        if(isFrontface) {
-          if(_hasDashedLine) {
-            _canvas.setLineDash([]);
-          }
-        } else {
-          if (_hasDashedLine) {
-            _canvas.setLineDash([1, 3]);
-          } else {
-            _canvas.lineWidth = 0.2;
-          }
-        }
+        _canvas.lineWidth = isFrontface ? 0.5 : 0.1;
         _canvas.beginPath();
         _canvas.moveTo(_vertices[ids[0]].screenX, _vertices[ids[0]].screenY);
         _canvas.lineTo(_vertices[ids[1]].screenX, _vertices[ids[1]].screenY);
