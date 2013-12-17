@@ -17,6 +17,7 @@ module Crystal
     getter dump_ll
     getter release
     getter llc_flags
+    getter cross_compile
     getter! output_dir
     getter! mutex
     getter! units
@@ -31,6 +32,7 @@ module Crystal
       @output_filename = nil
       @llc_flags = nil
       @command = nil
+      @cross_compile = nil
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -40,6 +42,9 @@ module Crystal
 
       @options = OptionParser.parse! do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
+        opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
+          @cross_compile = cross_compile
+        end
         opts.on("-e 'command'", "one line script. Omit [programfile]") do |command|
           @command = command
         end
@@ -107,6 +112,7 @@ module Crystal
 
       begin
         program = Program.new
+        program.require_flags = @cross_compile if @cross_compile
 
         unless File.exists?(@clang)
           if program.has_require_flag?("darwin")
@@ -144,44 +150,57 @@ module Crystal
         exit if @no_build
 
         llvm_modules = timing("Codegen (crystal)") do
-          program.build node, @release
+          program.build node, (@release || @cross_compile)
         end
 
-        @output_dir = ".crystal/#{filename}"
+        if @cross_compile
+          @output_dir = "."
+        else
+          @output_dir = ".crystal/#{filename}"
+        end
 
         system "mkdir -p #{output_dir}"
 
         units = llvm_modules.map do |type_name, llvm_mod|
-          CompilationUnit.new(type_name, llvm_mod)
+          CompilationUnit.new(self, type_name, llvm_mod)
         end
-        object_names = units.map &.object_name(output_dir)
+        object_names = units.map &.object_name
 
-        # First write bitcodes: it breaks if we paralellize it
-        timing("Codegen (bitcode)") do
-          units.each &.write_bitcode(output_dir)
-        end
+        if @cross_compile
+          compilation_unit = units.first
+          compilation_unit_bc_name = "#{output_filename}.bc"
+          compilation_unit_s_name = "#{output_filename}.s"
+          compilation_unit.write_bitcode compilation_unit_bc_name
+          system "#{opt} #{compilation_unit_bc_name} -O3 -o #{compilation_unit_bc_name}" if @release
+          puts "llc #{compilation_unit_bc_name} #{llc_flags} -o #{compilation_unit_s_name} && clang #{compilation_unit_s_name} -o #{output_filename} #{lib_flags(program)}"
+        else
+          # First write bitcodes: it breaks if we paralellize it
+          timing("Codegen (bitcode)") do
+            units.each &.write_bitcode
+          end
 
-        @mutex = Mutex.new
-        @units = units
+          @mutex = Mutex.new
+          @units = units
 
-        timing("Codegen (llc+clang)") do
-          threads = Array.new(8) do
-            Thread.new(self) do |compiler|
-              while unit = compiler.mutex.synchronize { compiler.units.shift? }
-                unit.compile(compiler)
+          timing("Codegen (llc+clang)") do
+            threads = Array.new(8) do
+              Thread.new(self) do |compiler|
+                while unit = compiler.mutex.synchronize { compiler.units.shift? }
+                  unit.compile
+                end
               end
             end
+            threads.each &.join
           end
-          threads.each &.join
-        end
 
-        timing("Codegen (clang)") do
-          system "#{@clang} -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
-        end
+          timing("Codegen (clang)") do
+            system "#{@clang} -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
+          end
 
-        if @run
-          C.system "#{output_filename}"
-          File.delete output_filename
+          if @run
+            C.system "#{output_filename}"
+            File.delete output_filename
+          end
         end
       rescue ex
         puts ex
@@ -216,22 +235,27 @@ module Crystal
           end
         end
         commands.each do |cmd|
-          cmdout = system2(cmd)
-          if $exit == 0
-            cmdout.each do |cmdoutline|
-              flags << " #{cmdoutline}"
-            end
+          if @cross_compile
+            flags << " `#{cmd} | tr '\\n' ' '`"
           else
-            raise "Error executing command: #{cmd}"
+            cmdout = system2(cmd)
+            if $exit == 0
+              cmdout.each do |cmdoutline|
+                flags << " #{cmdoutline}"
+              end
+            else
+              raise "Error executing command: #{cmd}"
+            end
           end
         end
         flags << " -Wl,-allow_stack_execute" if mod.has_require_flag?("darwin")
-        flags << " -L#{@config.lib_dir}"
       end
     end
 
     class CompilationUnit
-      def initialize(type_name, @llvm_mod)
+      getter compiler
+
+      def initialize(@compiler, type_name, @llvm_mod)
         type_name = "main" if type_name == ""
         @name = type_name.replace do |char|
           if 'a' <= char <= 'z' || 'A' <= char <= 'Z' || '0' <= char <= '9' || char == '_'
@@ -242,18 +266,22 @@ module Crystal
         end
       end
 
-      def write_bitcode(output_dir)
-        @llvm_mod.dump if Crystal::DUMP_LLVM
-        @llvm_mod.write_bitcode bc_name_new(output_dir)
+      def write_bitcode
+        write_bitcode(bc_name_new)
       end
 
-      def compile(compiler)
+      def write_bitcode(output_name)
+        @llvm_mod.dump if Crystal::DUMP_LLVM
+        @llvm_mod.write_bitcode output_name
+      end
+
+      def compile
         output_dir = compiler.output_dir
-        bc_name = "#{output_dir}/#{@name}.bc"
-        bc_name_new = bc_name_new(compiler.output_dir)
+        bc_name = bc_name()
+        bc_name_new = bc_name_new()
         bc_name_opt = "#{output_dir}/#{@name}.opt.bc"
         s_name = "#{output_dir}/#{@name}.s"
-        o_name = object_name(output_dir)
+        o_name = object_name()
         ll_name = "#{output_dir}/#{@name}.ll"
 
         must_compile = true
@@ -267,7 +295,6 @@ module Crystal
         end
 
         if must_compile
-          # puts "Compile: #{type_name}"
           system "mv #{bc_name_new} #{bc_name}"
           if compiler.release
             system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
@@ -288,12 +315,16 @@ module Crystal
         end
       end
 
-      def object_name(output_dir)
-        "#{output_dir}/#{@name}.o"
+      def object_name
+        "#{compiler.output_dir}/#{@name}.o"
       end
 
-      def bc_name_new(output_dir)
-        "#{output_dir}/#{@name}.new.bc"
+      def bc_name
+        "#{compiler.output_dir}/#{@name}.bc"
+      end
+
+      def bc_name_new
+        "#{compiler.output_dir}/#{@name}.new.bc"
       end
     end
   end

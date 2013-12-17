@@ -19,9 +19,5 @@ module Crystal
     def bin_dir
       @bin_dir ||= Program.exec "#{llvm_config} --bindir"
     end
-
-    def lib_dir
-      @lib_dir ||= Program.exec "#{llvm_config} --libdir"
-    end
   end
 end

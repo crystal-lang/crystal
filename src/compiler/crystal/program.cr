@@ -94,13 +94,15 @@ module Crystal
     end
 
     def require_flags
-      @require_flags ||= begin
-        flags = Set(String).new
-        exec("uname -m -s").not_nil!.split(' ').each do |uname|
-          flags.add uname.downcase
-        end
-        flags
+      @require_flags ||= (self.require_flags = exec("uname -m -s").not_nil!)
+    end
+
+    def require_flags=(require_flags)
+      flags = Set(String).new
+      require_flags.split(' ').each do |uname|
+        flags.add uname.downcase
       end
+      @require_flags = flags
     end
 
     class PopenCommand
