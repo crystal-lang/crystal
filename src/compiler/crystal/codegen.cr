@@ -350,7 +350,7 @@ module Crystal
 
     def codegen_cast(from_type : IntegerType, to_type : IntegerType, arg)
       if from_type.normal_rank == to_type.normal_rank
-        @last
+        arg
       elsif from_type.rank < to_type.rank
         from_type.signed? ? @builder.sext(arg, to_type.llvm_type) : @builder.zext(arg, to_type.llvm_type)
       else

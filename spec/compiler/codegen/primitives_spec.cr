@@ -46,4 +46,17 @@ describe "Code gen: primitives" do
   it "codegens 8 / 3" do
     run(%(8 / 3)).to_i.should eq(2)
   end
+
+  it "defined method that calls primitive (bug)" do
+    run("
+      class Int64
+        def foo
+          to_u64
+        end
+      end
+
+      a = 1_i64
+      a.foo.to_i
+      ").to_i.should eq(1)
+  end
 end
