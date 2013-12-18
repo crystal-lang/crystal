@@ -316,6 +316,8 @@ module Crystal
       case node.name
       when :binary
         visit_binary node
+      when :cast
+        visit_cast node
       when :allocate
         visit_allocate node
       when :object_id
@@ -407,6 +409,63 @@ module Crystal
       assert_type v2, PrimitiveValue
 
       @value = PrimitiveValue.new(@mod.bool, yield(v1.value, v2.value))
+    end
+
+    def visit_cast(node)
+      val = @vars["self"]
+      assert_type val, PrimitiveValue
+
+      value = val.value
+
+      case current_def.name
+      when "to_i"
+        assert_responds_to value, :to_i
+        @value = PrimitiveValue.new(@mod.int32, value.to_i)
+      when "to_i8"
+        assert_responds_to value, :to_i8
+        @value = PrimitiveValue.new(@mod.int8, value.to_i8)
+      when "to_i16"
+        assert_responds_to value, :to_i16
+        @value = PrimitiveValue.new(@mod.int16, value.to_i16)
+      when "to_i32"
+        assert_responds_to value, :to_i32
+        @value = PrimitiveValue.new(@mod.int32, value.to_i32)
+      when "to_i64"
+        assert_responds_to value, :to_i64
+        @value = PrimitiveValue.new(@mod.int64, value.to_i64)
+      when "to_u"
+        assert_responds_to value, :to_u
+        @value = PrimitiveValue.new(@mod.uint32, value.to_u)
+      when "to_u8"
+        assert_responds_to value, :to_u8
+        @value = PrimitiveValue.new(@mod.uint8, value.to_u8)
+      when "to_u16"
+        assert_responds_to value, :to_u16
+        @value = PrimitiveValue.new(@mod.uint16, value.to_u16)
+      when "to_u32"
+        assert_responds_to value, :to_u32
+        @value = PrimitiveValue.new(@mod.uint32, value.to_u32)
+      when "to_u64"
+        assert_responds_to value, :to_u64
+        @value = PrimitiveValue.new(@mod.uint64, value.to_u64)
+      when "to_f"
+        assert_responds_to value, :to_f
+        @value = PrimitiveValue.new(@mod.float64, value.to_f)
+      when "to_f32"
+        assert_responds_to value, :to_f32
+        @value = PrimitiveValue.new(@mod.float64, value.to_f32)
+      when "to_f64"
+        assert_responds_to value, :to_f64
+        @value = PrimitiveValue.new(@mod.float64, value.to_f64)
+      when "chr"
+        assert_responds_to value, :chr
+        @value = PrimitiveValue.new(@mod.char, value.chr)
+      when "ord"
+        assert_responds_to value, :ord
+        @value = PrimitiveValue.new(@mod.int32, value.ord)
+      else
+        raise "Bug: unkown cast operator #{current_def.name}"
+      end
     end
 
     def visit_allocate(node)

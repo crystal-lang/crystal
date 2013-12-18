@@ -171,6 +171,14 @@ describe "Interpreter" do
     end
   end
 
+  it "interprets primitive cast" do
+    assert_interpret("1.to_i8") do |value|
+      value.type.should eq(int8)
+      assert_type value, Interpreter::PrimitiveValue
+      value.value.should eq(1_i8)
+    end
+  end
+
   it "interprets a while" do
     assert_interpret("a = 0; while a < 10; a += 1; end; a") do |value|
       value.type.should eq(int32)
