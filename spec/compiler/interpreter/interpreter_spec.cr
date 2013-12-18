@@ -170,4 +170,107 @@ describe "Interpreter" do
       value.value.should eq(4)
     end
   end
+
+  it "interprets a while" do
+    assert_interpret("a = 0; while a < 10; a += 1; end; a") do |value|
+      value.type.should eq(int32)
+      assert_type value, Interpreter::PrimitiveValue
+      value.value.should eq(10)
+    end
+  end
+
+  it "interprets class allocate" do
+    assert_interpret("Reference.allocate") do |value|
+      value.type.should eq(reference)
+      assert_type value, Interpreter::ClassValue
+      value.vars.empty?.should be_true
+    end
+  end
+
+  it "interprets class new" do
+    assert_interpret("
+      class Foo
+      end
+      Foo.new
+      ") do |value|
+      value.type.should eq(types["Foo"])
+      assert_type value, Interpreter::ClassValue
+      value.vars.empty?.should be_true
+    end
+  end
+
+  it "interprets class new with instance var" do
+    assert_interpret("
+      class Foo
+        def initialize(@x)
+        end
+      end
+      Foo.new(1)
+      ") do |value|
+      value.type.should eq(types["Foo"])
+      assert_type value, Interpreter::ClassValue
+      x = value.vars["@x"]
+      assert_type x, Interpreter::PrimitiveValue
+      x.type.should eq(int32)
+      x.value.should eq(1)
+    end
+  end
+
+  it "interprets class new with instance var and generic type" do
+    assert_interpret("
+      class Foo(T)
+        def initialize(@x : T)
+        end
+      end
+      Foo.new(1)
+      ") do |value|
+      foo = types["Foo"]
+      assert_type foo, GenericClassType
+      foo_int32 = foo.instantiate([int32] of Type | ASTNode)
+
+      value.type.should eq(foo_int32)
+      assert_type value, Interpreter::ClassValue
+      x = value.vars["@x"]
+      assert_type x, Interpreter::PrimitiveValue
+      x.type.should eq(int32)
+      x.value.should eq(1)
+    end
+  end
+
+  it "interprets class read instance variable" do
+    assert_interpret("
+      class Foo
+        def initialize(@x)
+        end
+        def x
+          @x
+        end
+      end
+      Foo.new(1).x
+      ") do |value|
+      value.type.should eq(int32)
+      assert_type value, Interpreter::PrimitiveValue
+      value.value.should eq(1)
+    end
+  end
+
+  it "interprets class read instance variable calling another method" do
+    assert_interpret("
+      class Foo
+        def initialize(@x)
+        end
+        def z
+          x
+        end
+        def x
+          @x
+        end
+      end
+      Foo.new(1).z
+      ") do |value|
+      value.type.should eq(int32)
+      assert_type value, Interpreter::PrimitiveValue
+      value.value.should eq(1)
+    end
+  end
 end

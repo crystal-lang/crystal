@@ -1,22 +1,28 @@
 require "ast"
 require "visitor"
+require "type_inference/type_visitor_helper"
 
 module Crystal
   class Interpreter < Visitor
+    include TypeVisitorHelper
+
     getter value
     getter mod
+    getter! scope
     getter! current_def
 
-    def initialize(@mod, @scope = mod, @vars = {} of String => Value, @current_def = nil)
-      @value = PrimitiveValue.new(@mod.nil, nil)
+    def initialize(@mod, @scope = nil, @vars = {} of String => Value, @current_def = nil, @free_vars = nil)
+      @value = nil_value
       @types = [@mod] of Type
     end
 
     def interpret(code)
-      parser = Parser.new(code)
+      parser = Parser.new(code, [Set.new(@vars.keys)])
       nodes = parser.parse
       nodes = @mod.normalize nodes
       nodes.accept self
+
+      @value
     end
 
     def visit(node : ASTNode)
@@ -96,6 +102,9 @@ module Crystal
       when Var
         node.value.accept self
         @vars[target.name] = @value
+      when InstanceVar
+        node.value.accept self
+        self_value[target.name] = @value
       else
         raise "Assign not implemented yet: #{node.to_s_node}"
       end
@@ -107,52 +116,28 @@ module Crystal
       @value = @vars[node.name]
     end
 
+    def visit(node : InstanceVar)
+      scope = @vars["self"]
+      assert_type scope, ClassValue
+      @value = scope[node.name]
+    end
+
     def visit(node : ClassDef)
-      superclass = if node_superclass = node.superclass
-                     lookup_ident_type node_superclass
-                   else
-                     mod.reference
-                   end
-
-      if node.name.names.length == 1 && !node.name.global
-        scope = current_type
-        name = node.name.names.first
-      else
-        name = node.name.names.pop
-        scope = lookup_ident_type node.name
+      process_class_def(node) do
+        node.body.accept self
       end
 
-      type = scope.types[name]?
-      if type
-        node.raise "#{name} is not a class, it's a #{type.type_desc}" unless type.is_a?(ClassType)
-        if node.superclass && type.superclass != superclass
-          node.raise "superclass mismatch for class #{type} (#{superclass} for #{type.superclass})"
-        end
-      else
-        unless superclass.is_a?(NonGenericClassType)
-          node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
-        end
+      @value = nil_value
 
-        needs_force_add_subclass = true
-        if type_vars = node.type_vars
-          type = GenericClassType.new @mod, scope, name, superclass, type_vars, false
-        else
-          type = NonGenericClassType.new @mod, scope, name, superclass, false
-        end
-        type.abstract = node.abstract
-        scope.types[name] = type
+      false
+    end
+
+    def visit(node : ModuleDef)
+      process_module_def(node) do
+        node.body.accept self
       end
 
-      @types.push type
-      node.body.accept self
-      @types.pop
-
-      if needs_force_add_subclass
-        raise "Bug" unless type.is_a?(InheritableClass)
-        type.force_add_subclass
-      end
-
-      node.type = @mod.nil
+      @value = nil_value
 
       false
     end
@@ -169,23 +154,95 @@ module Crystal
       false
     end
 
-    def visit(node : Def)
-      if receiver = node.receiver
-        # TODO: hack
-        if receiver.is_a?(Var) && receiver.name == "self"
-          target_type = current_type.metaclass
-        else
-          target_type = lookup_ident_type(receiver).metaclass
-        end
-      else
-        target_type = current_type
+    def visit(node : While)
+      while true
+        node.cond.accept self
+        break unless @value.truthy?
+
+        node.body.accept self
       end
 
-      target_type.add_def node
+      @value = nil_value
+      false
+    end
 
-      node.set_type(@mod.nil)
+    def visit(node : Def)
+      process_def node
+
+      @value = nil_value
 
       false
+    end
+
+    def visit(node : Macro)
+      process_macro node
+
+      @value = nil_value
+
+      false
+    end
+
+    def visit(node : Alias)
+      process_alias(node)
+
+      @value = nil_value
+
+      false
+    end
+
+    def visit(node : Include)
+      process_include(node)
+
+      @value = nil_value
+
+      false
+    end
+
+    def visit(node : LibDef)
+      process_lib_def(node) do
+        node.body.accept self
+      end
+
+      @value = nil_value
+
+      false
+    end
+
+    def end_visit(node : TypeDef)
+      process_type_def(node)
+    end
+
+    def end_visit(node : StructDef)
+      process_struct_def node
+    end
+
+    def end_visit(node : UnionDef)
+      process_union_def node
+    end
+
+    def visit(node : EnumDef)
+      process_enum_def(node)
+      false
+    end
+
+    def visit(node : ExternalVar)
+      process_external_var(node)
+      false
+    end
+
+    def end_visit(node : IdentUnion)
+      process_ident_union(node)
+      @value = MetaclassValue.new(node.type)
+    end
+
+    def end_visit(node : Hierarchy)
+      process_hierarchy(node)
+      @value = MetaclassValue.new(node.type)
+    end
+
+    def end_visit(node : NewGenericClass)
+      process_new_generic_class(node)
+      @value = MetaclassValue.new(node.type)
     end
 
     def visit(node : Call)
@@ -197,7 +254,12 @@ module Crystal
         call_scope = obj_value.type
         call_vars["self"] = obj_value
       else
-        call_scope = @scope
+        if @scope
+          call_scope = @scope
+          call_vars["self"] = @vars["self"]
+        else
+          call_scope = @mod
+        end
       end
 
       values = node.args.map do |arg|
@@ -205,22 +267,33 @@ module Crystal
         @value
       end
 
-      types = values.map &.type
+      types = [] of Type
+      values.each do |value|
+        types << value.type
+      end
 
       matches = call_scope.lookup_matches(node.name, types, !!node.block)
       case matches.length
       when 0
-        node.raise "undefined method #{node.name} for #{call_scope}"
-      when 1
-        target_def = matches.first.def
-
-        target_def.args.zip(values) do |arg, value|
-          call_vars[arg.name] = value
+        if call_scope.metaclass? && node.name == "new"
+          instance_type = call_scope.instance_type
+          initialize_matches = instance_type.lookup_matches("initialize", types, !!node.block)
+          if initialize_matches.length == 0 && values.length == 0
+            if instance_type.is_a?(GenericClassType)
+              node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
+            end
+            @value = ClassValue.new(@mod, instance_type)
+            return false
+          elsif initialize_matches.length == 1
+            matches = Call.define_new_with_initialize(call_scope, types, initialize_matches)
+            @value = execute_call(matches.first, call_scope, call_vars, values)
+            return false
+          end
         end
 
-        interpreter = Interpreter.new(@mod, call_scope, call_vars, target_def)
-        target_def.body.accept interpreter
-        @value = interpreter.value
+        node.raise "undefined method #{node.name} for #{call_scope}"
+      when 1
+        @value = execute_call(matches.first, call_scope, call_vars, values)
       else
         node.raise "Bug: more than one match found for #{call_scope}##{node.name}"
       end
@@ -228,10 +301,25 @@ module Crystal
       false
     end
 
+    def execute_call(match, call_scope, call_vars, values)
+      target_def = match.def
+      target_def.args.zip(values) do |arg, value|
+        call_vars[arg.name] = value
+      end
+
+      interpreter = Interpreter.new(@mod, call_scope, call_vars, target_def, match.free_vars)
+      target_def.body.accept interpreter
+      interpreter.value
+    end
+
     def visit(node : Primitive)
       case node.name
       when :binary
         visit_binary node
+      when :allocate
+        visit_allocate node
+      when :object_id
+        visit_object_id node
       else
         node.raise "Bug: unhandled primitive in interpret: #{node.name}"
       end
@@ -321,42 +409,45 @@ module Crystal
       @value = PrimitiveValue.new(@mod.bool, yield(v1.value, v2.value))
     end
 
-    def lookup_ident_type(node : Ident)
-      target_type = resolve_ident(node)
-      if target_type.is_a?(Type)
-        target_type.remove_alias_if_simple
-      else
-        node.raise "#{node} must be a type here, not #{target_type}"
+    def visit_allocate(node)
+      instance_type = process_allocate(node)
+      @value = ClassValue.new(@mod, instance_type)
+    end
+
+    def visit_object_id(node)
+      @value = PrimitiveValue.new(@mod.uint64, self_value.object_id)
+    end
+
+    def visit(node : Ident)
+      type = resolve_ident(node)
+      case type
+      # when Const
+      #   unless type.value.type?
+      #     old_types, old_scope, old_vars = @types, @scope, @vars
+      #     @types, @scope, @vars = type.scope_types, type.scope, ({} of String => Var)
+      #     type.value.accept self
+      #     @types, @scope, @vars = old_types, old_scope, old_vars
+      #   end
+      #   node.target_const = type
+      #   node.bind_to type.value
+      when Type
+        ident_type = type.remove_alias_if_simple.metaclass
+        node.type = ident_type
+        @value = MetaclassValue.new(ident_type)
+      # when ASTNode
+      #   node.syntax_replacement = type
+      #   node.bind_to type
       end
     end
 
-    def lookup_ident_type(node)
-      raise "lookup_ident_type not implemented for #{node}"
+    def nil_value
+      @nil_value ||= PrimitiveValue.new(@mod.nil, nil)
     end
 
-    def resolve_ident(node : Ident)
-      free_vars = @free_vars
-      if free_vars && !node.global && (type = free_vars[node.names.first]?)
-        if node.names.length == 1
-          target_type = type.not_nil!
-        else
-          target_type = type.not_nil!.lookup_type(node.names[1 .. -1])
-        end
-      elsif node.global
-        target_type = mod.lookup_type node.names
-      else
-        target_type = (@scope || @types.last).lookup_type node
-      end
-
-      unless target_type
-        node.raise "uninitialized constant #{node.to_s_node}"
-      end
-
-      target_type
-    end
-
-    def current_type
-      @types.last
+    def self_value
+      value = @vars["self"]
+      assert_type value, ClassValue
+      value
     end
 
     abstract class Value
@@ -388,11 +479,13 @@ module Crystal
       end
 
       def to_s
-        "PrimitiveValue(#{@type}, #{@value.inspect})"
+        "#{@value.inspect} :: #{@type}"
       end
     end
 
     class ClassValue < Value
+      getter vars
+
       def initialize(@mod, type, @vars = {} of String => Value)
         super(type)
       end
@@ -410,7 +503,17 @@ module Crystal
       end
 
       def to_s
-        "ClassValue(#{@type}, #{@vars})"
+        "#{@vars} :: #{@type} @ #{object_id}"
+      end
+    end
+
+    class MetaclassValue < Value
+      def truthy?
+        true
+      end
+
+      def to_s
+        @type.to_s
       end
     end
   end

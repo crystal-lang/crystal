@@ -578,7 +578,7 @@ module Crystal
       if matches.empty?
         define_new_without_initialize(scope, arg_types)
       else
-        define_new_with_initialize(scope, arg_types, matches)
+        Call.define_new_with_initialize(scope, arg_types, matches)
       end
     end
 
@@ -602,7 +602,7 @@ module Crystal
       Matches.new([match], true)
     end
 
-    def define_new_with_initialize(scope, arg_types, matches)
+    def self.define_new_with_initialize(scope, arg_types, matches)
       ms = matches.map do |match|
         if match.free_vars.empty?
           alloc = Call.new(nil, "allocate")
@@ -632,13 +632,13 @@ module Crystal
         end
 
         var = Var.new("x")
-        new_vars = Array(ASTNode).new(args.length)
-        args.each_with_index do |arg, i|
+        new_vars = Array(ASTNode).new(arg_types.length)
+        arg_types.each_with_index do |dummy, i|
           new_vars.push Var.new("arg#{i}")
         end
 
-        new_args = Array(Arg).new(args.length)
-        args.each_with_index do |arg, i|
+        new_args = Array(Arg).new(arg_types.length)
+        arg_types.each_with_index do |dummy, i|
           arg = Arg.new("arg#{i}")
           arg.type_restriction = match.def.args[i]?.try &.type_restriction
           new_args.push arg
