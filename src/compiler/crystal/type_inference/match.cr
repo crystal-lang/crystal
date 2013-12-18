@@ -36,5 +36,13 @@ module Crystal
         end
       end
     end
+
+    def first
+      @matches.first
+    end
+
+    def length
+      @matches.length
+    end
   end
 end
