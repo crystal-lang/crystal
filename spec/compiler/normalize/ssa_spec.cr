@@ -185,11 +185,11 @@ describe "Normalize: ssa" do
   end
 
   it "stops ssa if address is taken" do
-    assert_normalize "a = 1; x = a.ptr; a = 2", "a = 1\nx = a.ptr\na = 2"
+    assert_normalize "a = 1; x = addressof(a); a = 2", "a = 1\nx = addressof(a)\na = 2"
   end
 
   it "stops ssa if address is taken 2" do
-    assert_normalize "a = 1; a = 2; x = a.ptr; a = 3", "a = 1\na$1 = 2\nx = a$1.ptr\na$1 = 3"
+    assert_normalize "a = 1; a = 2; x = addressof(a); a = 3", "a = 1\na$1 = 2\nx = addressof(a$1)\na$1 = 3"
   end
 
   it "performs ssa on var on nested if" do

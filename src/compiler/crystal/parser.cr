@@ -515,7 +515,7 @@ module Crystal
           if atomic.block
             raise "'ptr' can't receive a block"
           end
-          atomic = PointerOf.new(atomic_obj)
+          atomic = AddressOf.new(atomic_obj)
         when "responds_to?"
           if atomic.args.length != 1
             raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 1)"
@@ -631,6 +631,8 @@ module Crystal
           parse_fun_def(true)
         when :alias
           parse_alias
+        when :addressof
+          parse_addressof
         else
           parse_var_or_call
         end
@@ -2362,6 +2364,21 @@ module Crystal
       node = Alias.new(name, value)
       node.location = location
       node
+    end
+
+    def parse_addressof
+      next_token_skip_space
+
+      check :"("
+      next_token_skip_space_or_newline
+
+      exp = parse_expression
+      skip_space
+
+      check :")"
+      next_token_skip_space
+
+      AddressOf.new(exp)
     end
 
     def parse_type_def

@@ -1021,16 +1021,16 @@ module Crystal
       node.type = instance_type
     end
 
-    def visit(node : PointerOf)
+    def visit(node : AddressOf)
       node.mod = @mod
-      node_var = node.var
-      var = case node_var
+      node_exp = node.exp
+      var = case node_exp
             when Var
-              lookup_var node_var.name
+              lookup_var node_exp.name
             when InstanceVar
-              lookup_instance_var node_var
+              lookup_instance_var node_exp
             else
-              raise "Bug: #{node}.ptr"
+              node.raise "can't take address of #{node.to_s_node}"
             end
       node.bind_to var
     end

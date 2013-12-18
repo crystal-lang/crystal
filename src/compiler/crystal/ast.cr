@@ -1406,29 +1406,29 @@ module Crystal
     end
   end
 
-  class PointerOf < ASTNode
-    @var :: ASTNode+
+  class AddressOf < ASTNode
+    @exp :: ASTNode+
 
-    def initialize(@var)
+    def initialize(@exp)
     end
 
-    def var=(@var)
+    def exp=(@exp)
     end
 
-    def var
-      @var
+    def exp
+      @exp
     end
 
     def accept_children(visitor)
-      @var.accept visitor
+      @exp.accept visitor
     end
 
     def ==(other : self)
-      other.var == var
+      other.exp == exp
     end
 
     def clone_without_location
-      PointerOf.new(@var.clone)
+      AddressOf.new(@exp.clone)
     end
   end
 

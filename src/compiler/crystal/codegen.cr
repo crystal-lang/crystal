@@ -665,11 +665,11 @@ module Crystal
       LLVM.null(llvm_type(node.type))
     end
 
-    def visit(node : PointerOf)
-      node_var = node.var
-      case node_var
+    def visit(node : AddressOf)
+      node_exp = node.exp
+      case node_exp
       when Var
-        var = @vars[node_var.name]
+        var = @vars[node_exp.name]
         @last = var.pointer
 
         node_type = node.type
@@ -680,7 +680,7 @@ module Crystal
         type = @type
         assert_type type, InstanceVarContainer
 
-        @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_var.name)
+        @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_exp.name)
       else
         raise "Bug: #{node}.ptr"
       end

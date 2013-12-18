@@ -396,14 +396,14 @@ module Crystal
       end
     end
 
-    def transform(node : PointerOf)
-      var = node.var
+    def transform(node : AddressOf)
+      exp = node.exp
 
-      if var.is_a?(Var)
-        name = var.name
+      if exp.is_a?(Var)
+        name = exp.name
         indices = @vars[name]?
 
-        node.var = var.transform(self)
+        node.exp = exp.transform(self)
 
         if indices
           indices.freeze
