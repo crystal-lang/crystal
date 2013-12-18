@@ -639,8 +639,8 @@ module Crystal
         visitor = TypeVisitor.new(@mod, vars, @mod, self, nil, nil, external, external, args.map(&.type))
         begin
           node_body.accept visitor
-        rescue ex
-          node.raise ex.message
+        rescue ex : Crystal::Exception
+          node.raise ex.message, ex
         end
 
         inferred_return_type = @mod.type_merge([node_body.type?, external.type?])
