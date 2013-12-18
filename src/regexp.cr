@@ -14,12 +14,12 @@ class Regexp
     @source = str
     errptr = Pointer(Char).malloc(0)
     erroffset = 1
-    @re = PCRE.compile(str, 0, errptr.ptr, erroffset.ptr, 0_i64)
+    @re = PCRE.compile(str, 0, addressof(errptr), addressof(erroffset), 0_i64)
     if @re == 0
       raise "#{String.new(errptr)} at #{erroffset}"
     end
     @captures = 0
-    PCRE.full_info(@re, 0_i64, PCRE::INFO_CAPTURECOUNT, @captures.ptr.as(Void))
+    PCRE.full_info(@re, 0_i64, PCRE::INFO_CAPTURECOUNT, addressof(@captures).as(Void))
   end
 
   def match(str, pos = 0, options = 0)

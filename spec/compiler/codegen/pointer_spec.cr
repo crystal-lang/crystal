@@ -3,7 +3,7 @@ require "../../spec_helper"
 
 describe "Code gen: pointer" do
   it "get pointer and value of it" do
-    run("a = 1; b = a.ptr; b.value").to_i.should eq(1)
+    run("a = 1; b = addressof(a); b.value").to_i.should eq(1)
   end
 
   it "get pointer of instance var" do
@@ -14,7 +14,7 @@ describe "Code gen: pointer" do
         end
 
         def value_ptr
-          @value.ptr
+          addressof(@value)
         end
       end
 
@@ -25,11 +25,11 @@ describe "Code gen: pointer" do
   end
 
   it "set pointer value" do
-    run("a = 1; b = a.ptr; b.value = 2; a").to_i.should eq(2)
+    run("a = 1; b = addressof(a); b.value = 2; a").to_i.should eq(2)
   end
 
   it "get value of pointer to union" do
-    run("a = 1.1; a = 1; b = a.ptr; b.value.to_i").to_i.should eq(1)
+    run("a = 1.1; a = 1; b = addressof(a); b.value.to_i").to_i.should eq(1)
   end
 
   it "sets value of pointer to union" do
@@ -44,7 +44,7 @@ describe "Code gen: pointer" do
           @b = 2
         end
         def value
-          p = @a.ptr
+          p = addressof(@a)
           p += 1_i64
           p.value
         end
@@ -62,7 +62,7 @@ describe "Code gen: pointer" do
   end
 
   it "codegens pointer cast" do
-    run("a = 1_i64; a.ptr.as(Int32).value").to_i.should eq(1)
+    run("a = 1_i64; addressof(a).as(Int32).value").to_i.should eq(1)
   end
 
   it "codegens pointer null" do
@@ -70,7 +70,7 @@ describe "Code gen: pointer" do
   end
 
   it "codegens pointer as if condition" do
-    run("a = 0; a.ptr ? 1 : 2").to_i.should eq(1)
+    run("a = 0; addressof(a) ? 1 : 2").to_i.should eq(1)
   end
 
   it "codegens null pointer as if condition" do
@@ -85,7 +85,7 @@ describe "Code gen: pointer" do
         end
 
         def foo
-          @a.ptr
+          addressof(@a)
         end
       end
 
@@ -112,7 +112,7 @@ describe "Code gen: pointer" do
       color2 = C::Color.new
       color2.r = 20_u8
 
-      p = color.ptr
+      p = addressof(color)
       p.value = color2
 
       color.r
@@ -122,7 +122,7 @@ describe "Code gen: pointer" do
   it "changes through var and reads from pointer" do
     run("
       x = 1
-      px = x.ptr
+      px = addressof(x)
       x = 2
       px.value
       ").to_i.should eq(2)
@@ -138,7 +138,7 @@ describe "Code gen: pointer" do
   it "calculates pointer diff" do
     run("
       x = 1
-      (x.ptr + 1_i64) - x.ptr
+      (addressof(x) + 1_i64) - addressof(x)
     ").to_i.should eq(1)
   end
 end

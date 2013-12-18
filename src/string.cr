@@ -67,7 +67,7 @@ class String
   end
 
   def to_i
-    C.atoi @c.ptr
+    C.atoi cstr
   end
 
   def to_i8
@@ -83,7 +83,7 @@ class String
   end
 
   def to_i64
-    C.atol @c.ptr
+    C.atol cstr
   end
 
   def to_u8
@@ -107,17 +107,17 @@ class String
   end
 
   def to_f32
-    C.strtof @c.ptr, nil
+    C.strtof cstr, nil
   end
 
   def to_f64
-    C.atof @c.ptr
+    C.atof cstr
   end
 
   def [](index : Int)
     index += length if index < 0
     raise IndexOutOfBounds.new if index >= length || index < 0
-    @c.ptr[index]
+    cstr[index]
   end
 
   def [](range : Range(Int, Int))
@@ -132,14 +132,14 @@ class String
 
   def [](start : Int, count : Int)
     String.new_with_length(count) do |buffer|
-      C.strncpy(buffer, @c.ptr + start, count)
+      C.strncpy(buffer, cstr + start, count)
     end
   end
 
   def downcase
     String.new_with_length(length) do |buffer|
       length.times do |i|
-        buffer[i] = @c.ptr[i].downcase
+        buffer[i] = cstr[i].downcase
       end
     end
   end
@@ -147,7 +147,7 @@ class String
   def upcase
     String.new_with_length(length) do |buffer|
       length.times do |i|
-        buffer[i] = @c.ptr[i].upcase
+        buffer[i] = cstr[i].upcase
       end
     end
   end
@@ -156,16 +156,16 @@ class String
     return self if length == 0
 
     String.new_with_length(length) do |buffer|
-      buffer[0] = @c.ptr[0].upcase
+      buffer[0] = cstr[0].upcase
       (length - 1).times do |i|
-        buffer[i + 1] = @c.ptr[i + 1].downcase
+        buffer[i + 1] = cstr[i + 1].downcase
       end
     end
   end
 
   def chomp
     excess = 0
-    while (c = @c.ptr[length - 1 - excess]) == '\r' || c == '\n'
+    while (c = cstr[length - 1 - excess]) == '\r' || c == '\n'
       excess += 1
     end
 
@@ -178,12 +178,12 @@ class String
 
   def strip
     excess_right = 0
-    while @c.ptr[length - 1 - excess_right].whitespace?
+    while cstr[length - 1 - excess_right].whitespace?
       excess_right += 1
     end
 
     excess_left = 0
-    while @c.ptr[excess_left].whitespace?
+    while cstr[excess_left].whitespace?
       excess_left += 1
     end
 
@@ -196,7 +196,7 @@ class String
 
   def rstrip
     excess_right = 0
-    while @c.ptr[length - 1 - excess_right].whitespace?
+    while cstr[length - 1 - excess_right].whitespace?
       excess_right += 1
     end
 
@@ -209,7 +209,7 @@ class String
 
   def lstrip
     excess_left = 0
-    while @c.ptr[excess_left].whitespace?
+    while cstr[excess_left].whitespace?
       excess_left += 1
     end
 
@@ -294,7 +294,7 @@ class String
   end
 
   def <=>(other : self)
-    same?(other) ? 0 : C.strcmp(@c.ptr, other)
+    same?(other) ? 0 : C.strcmp(cstr, other)
   end
 
   def =~(regex)
@@ -304,7 +304,7 @@ class String
 
   def +(other)
     String.new_with_length(length + other.length) do |buffer|
-      buffer.memcpy(@c.ptr, length)
+      buffer.memcpy(cstr, length)
       (buffer + length).memcpy(other.cstr, other.length)
     end
   end
@@ -314,7 +314,7 @@ class String
 
     total_length = length * times
     String.new_with_length(total_length) do |buffer|
-      buffer.memcpy(@c.ptr, length)
+      buffer.memcpy(cstr, length)
       n = length
 
       while n <= total_length / 2
@@ -383,7 +383,7 @@ class String
   def split(separator : Char)
     ary = Array(String).new
     index = 0
-    buffer = @c.ptr
+    buffer = cstr
     length.times do |i|
       if buffer[i] == separator
         ary.push String.new(buffer + index, i - index)
@@ -399,7 +399,7 @@ class String
   def split(separator : String)
     ary = Array(String).new
     index = 0
-    buffer = @c.ptr
+    buffer = cstr
     separator_length = separator.length
 
     # Special case: return all chars as strings
@@ -438,13 +438,13 @@ class String
     String.new_with_length(length) do |buffer|
       last = length - 1
       length.times do |i|
-        buffer[last - i] = @c.ptr[i]
+        buffer[last - i] = cstr[i]
       end
     end
   end
 
   def each_char
-    p = @c.ptr
+    p = cstr
     length.times do
       yield p.value
       p += 1
@@ -510,6 +510,6 @@ class String
   end
 
   def cstr
-    @c.ptr
+    addressof(@c)
   end
 end

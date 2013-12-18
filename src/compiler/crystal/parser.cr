@@ -440,7 +440,7 @@ module Crystal
               atomic = args ? (Call.new atomic, name, args, nil, nil, false, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, nil, false, name_column_number)
             end
 
-            atomic = check_special_call(atomic)
+            atomic = check_special_call(atomic, location)
           end
         when :"[]"
           column_number = @token.column_number
@@ -502,20 +502,21 @@ module Crystal
       IsA.new(atomic, type)
     end
 
-    def check_special_call(atomic)
+    def check_special_call(atomic, location)
       if atomic.is_a?(Call) && (atomic_obj = atomic.obj)
         case atomic.name
-        when "ptr"
-          if !(atomic_obj.is_a?(Var) || atomic_obj.is_a?(InstanceVar))
-            raise "can only get 'ptr' of variable or instance variable"
-          end
-          if atomic.args.length != 0
-            raise "wrong number of arguments for 'ptr' (#{atomic.args.length} for 0)"
-          end
-          if atomic.block
-            raise "'ptr' can't receive a block"
-          end
-          atomic = AddressOf.new(atomic_obj)
+        # when "ptr"
+        #   if !(atomic_obj.is_a?(Var) || atomic_obj.is_a?(InstanceVar))
+        #     raise "can only get 'ptr' of variable or instance variable"
+        #   end
+        #   if atomic.args.length != 0
+        #     raise "wrong number of arguments for 'ptr' (#{atomic.args.length} for 0)"
+        #   end
+        #   if atomic.block
+        #     raise "'ptr' can't receive a block"
+        #   end
+        #   atomic = AddressOf.new(atomic_obj)
+        #   atomic.location = location
         when "responds_to?"
           if atomic.args.length != 1
             raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 1)"
@@ -528,6 +529,7 @@ module Crystal
             raise "'responds_to?' can't receive a block"
           end
           atomic = RespondsTo.new(atomic_obj, arg)
+          atomic.location = location
         when "yield"
           if atomic.block
             raise "'yield' can't receive a block"
@@ -537,6 +539,7 @@ module Crystal
             @yields = atomic.args.length
           end
           atomic = Yield.new(atomic.args, atomic.obj)
+          atomic.location = location
         end
       end
       atomic

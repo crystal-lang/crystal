@@ -128,8 +128,8 @@ class YamlParser
   end
 
   def next_event
-    LibYaml.yaml_event_delete(@event.ptr)
-    LibYaml.yaml_parser_parse(@parser, @event.ptr)
+    LibYaml.yaml_event_delete(addressof(@event))
+    LibYaml.yaml_parser_parse(@parser, addressof(@event))
   end
 end
 

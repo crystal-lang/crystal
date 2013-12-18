@@ -3,19 +3,19 @@ require "../../spec_helper"
 
 describe "Type inference: pointer" do
   it "types int pointer" do
-    assert_type("a = 1; a.ptr") { pointer_of(int32) }
+    assert_type("a = 1; addressof(a)") { pointer_of(int32) }
   end
 
   it "types pointer value" do
-    assert_type("a = 1; b = a.ptr; b.value") { int32 }
+    assert_type("a = 1; b = addressof(a); b.value") { int32 }
   end
 
   it "types pointer add" do
-    assert_type("a = 1; a.ptr + 1_i64") { pointer_of(int32) }
+    assert_type("a = 1; addressof(a) + 1_i64") { pointer_of(int32) }
   end
 
   it "types pointer diff" do
-    assert_type("a = 1; b = 2; a.ptr - b.ptr") { int64 }
+    assert_type("a = 1; b = 2; addressof(a) - addressof(b)") { int64 }
   end
 
   it "types Pointer.malloc" do
@@ -31,11 +31,11 @@ describe "Type inference: pointer" do
   end
 
   it "type pointer casting" do
-    assert_type("a = 1; a.ptr.as(Char)") { pointer_of(char) }
+    assert_type("a = 1; addressof(a).as(Char)") { pointer_of(char) }
   end
 
   it "type pointer casting of object type" do
-    assert_type("a = 1; a.ptr.as(String)") { string }
+    assert_type("a = 1; addressof(a).as(String)") { string }
   end
 
   it "pointer malloc creates new type" do
@@ -48,21 +48,6 @@ describe "Type inference: pointer" do
       a.value = 1
       a.value
     ") { union_of(object.hierarchy_type, int32) }
-  end
-
-  it "reports can only get pointer of variable" do
-    assert_syntax_error "a.ptr",
-      "can only get 'ptr' of variable or instance variable"
-  end
-
-  it "reports wrong number of arguments for ptr" do
-    assert_syntax_error "a = 1; a.ptr 1",
-      "wrong number of arguments for 'ptr' (1 for 0)"
-  end
-
-  it "reports ptr can't receive a block" do
-    assert_syntax_error "a = 1; a.ptr {}",
-      "'ptr' can't receive a block"
   end
 
   it "can't do Pointer.malloc without type var" do

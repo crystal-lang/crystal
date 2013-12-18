@@ -64,19 +64,19 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
   lsd = ABI.unwind_get_language_specific_data(context)
   # puts "Personality - actions : #{actions}, start: #{start}, ip: #{ip}, throw_offset: #{throw_offset}"
 
-  LEBReader.read_uint8(lsd.ptr) # @LPStart encoding
-  if LEBReader.read_uint8(lsd.ptr) != 0xff_u8 # @TType encoding
-    LEBReader.read_uleb128(lsd.ptr) # @TType base offset
+  LEBReader.read_uint8(addressof(lsd)) # @LPStart encoding
+  if LEBReader.read_uint8(addressof(lsd)) != 0xff_u8 # @TType encoding
+    LEBReader.read_uleb128(addressof(lsd)) # @TType base offset
   end
-  LEBReader.read_uint8(lsd.ptr) # CS Encoding
-  cs_table_length = LEBReader.read_uleb128(lsd.ptr) # CS table length
+  LEBReader.read_uint8(addressof(lsd)) # CS Encoding
+  cs_table_length = LEBReader.read_uleb128(addressof(lsd)) # CS table length
   cs_table_end = lsd + cs_table_length
 
   while lsd < cs_table_end
-    cs_offset = LEBReader.read_uint32(lsd.ptr)
-    cs_length = LEBReader.read_uint32(lsd.ptr)
-    cs_addr = LEBReader.read_uint32(lsd.ptr)
-    action = LEBReader.read_uleb128(lsd.ptr)
+    cs_offset = LEBReader.read_uint32(addressof(lsd))
+    cs_length = LEBReader.read_uint32(addressof(lsd))
+    cs_addr = LEBReader.read_uint32(addressof(lsd))
+    action = LEBReader.read_uleb128(addressof(lsd))
     # puts "cs_offset: #{cs_offset}, cs_length: #{cs_length}, cs_addr: #{cs_addr}, action: #{action}"
 
     if cs_addr != 0
@@ -102,7 +102,7 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
 end
 
 fun __crystal_raise(unwind_ex : ABI::UnwindException) : NoReturn
-  ret = ABI.unwind_raise_exception(unwind_ex.ptr)
+  ret = ABI.unwind_raise_exception(addressof(unwind_ex))
   puts "Could not raise"
   caller.each do |point|
     puts point

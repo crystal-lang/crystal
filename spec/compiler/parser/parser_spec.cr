@@ -477,9 +477,6 @@ describe "Parser" do
 
   it_parses "macro foo;end", Crystal::Macro.new("foo", [] of Arg)
 
-  it_parses "a = 1; a.ptr", [Assign.new("a".var, 1.int32), AddressOf.new("a".var)]
-  it_parses "@a.ptr", AddressOf.new("@a".instance_var)
-
   it_parses "a = 1; addressof(a)", [Assign.new("a".var, 1.int32), AddressOf.new("a".var)]
   it_parses "addressof(@a)", AddressOf.new("@a".instance_var)
 

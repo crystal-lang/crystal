@@ -54,7 +54,7 @@ class Time
   #   tm.sec = seconds
   #   tm.isdst = 0
   #   tm.gmtoff = -3
-  #   seconds = C.mktime(tm.ptr)
+  #   seconds = C.mktime(addressof(tm))
   #   Time.new(seconds)
   # end
 end

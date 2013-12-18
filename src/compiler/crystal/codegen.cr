@@ -682,7 +682,7 @@ module Crystal
 
         @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_exp.name)
       else
-        raise "Bug: #{node}.ptr"
+        raise "Bug: addressof(#{node.to_s_node})"
       end
       false
     end
@@ -896,7 +896,7 @@ module Crystal
         # Pack the string bytes
         bytes = [] of LibLLVM::ValueRef
         length = str.length
-        length_ptr = length.ptr.as(UInt8)
+        length_ptr = addressof(length).as(UInt8)
         (0..3).each { |i| bytes << int8(length_ptr[i]) }
         str.each_char { |c| bytes << int8(c.ord) }
         bytes << int8(0)

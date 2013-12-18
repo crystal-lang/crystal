@@ -13,7 +13,7 @@ describe "Code gen: struct" do
   end
 
   it "codegens struct property setter" do
-    run("#{CodeGenStructString}; bar = Foo::Bar.new; p = bar.ptr; p.value.y = 2.5_f32; bar.y").to_f32.should eq(2.5)
+    run("#{CodeGenStructString}; bar = Foo::Bar.new; p = addressof(bar); p.value.y = 2.5_f32; bar.y").to_f32.should eq(2.5)
   end
 
   it "codegens set struct value with constant" do
@@ -53,7 +53,7 @@ describe "Code gen: struct" do
       end
 
       foo = C::Foo.new
-      (foo.ptr.as(Int32) + 1_i64).value = 2
+      (addressof(foo).as(Int32) + 1_i64).value = 2
 
       foo.bar.y
       ").to_i.should eq(2)
