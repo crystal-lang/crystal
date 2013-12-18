@@ -43,7 +43,7 @@ module Crystal
 
       %w(% << >> | & ^).each do |op|
         ints.each do |another_int|
-          int.add_def Def.new(op, [Arg.new_with_type("other", int)], binary)
+          int.add_def Def.new(op, [Arg.new_with_type("other", another_int)], binary)
         end
       end
 
