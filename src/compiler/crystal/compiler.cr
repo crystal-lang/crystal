@@ -17,6 +17,7 @@ module Crystal
     getter dump_ll
     getter release
     getter llc_flags
+    getter llc_flags_changed
     getter cross_compile
     getter! output_dir
     getter! mutex
@@ -33,6 +34,7 @@ module Crystal
       @llc_flags = nil
       @command = nil
       @cross_compile = nil
+      @llc_flags_changed = true
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -182,6 +184,20 @@ module Crystal
           @mutex = Mutex.new
           @units = units
 
+          llc_flags_filename = "#{output_dir}/llc_flags"
+          if File.exists?(llc_flags_filename)
+            previous_llc_flags = File.read(llc_flags_filename).strip
+            if previous_llc_flags.empty?
+              llc_flags_changed = !!@llc_flags
+            else
+              llc_flags_changed = @llc_flags != previous_llc_flags
+            end
+          else
+            llc_flags_changed = !!@llc_flags
+          end
+
+          @llc_flags_changed = llc_flags_changed
+
           timing("Codegen (llc+clang)") do
             threads = Array.new(8) do
               Thread.new(self) do |compiler|
@@ -195,6 +211,14 @@ module Crystal
 
           timing("Codegen (clang)") do
             system "#{@clang} -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
+          end
+
+          if @llc_flags
+            File.open(llc_flags_filename, "w") do |file|
+              file.puts @llc_flags
+            end
+          else
+            system "rm -rf #{llc_flags_filename}"
           end
 
           if @run
@@ -286,7 +310,7 @@ module Crystal
 
         must_compile = true
 
-        if compiler.llc_flags && File.exists?(bc_name) && File.exists?(o_name)
+        if !compiler.llc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
           cmd_output = system "cmp -s #{bc_name} #{bc_name_new}"
           if cmd_output == 0
             system "rm #{bc_name_new}"
