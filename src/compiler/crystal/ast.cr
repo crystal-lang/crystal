@@ -48,6 +48,10 @@ module Crystal
     def class_name
       raise "class_name not yet implemented for #{self.to_s_node}"
     end
+
+    def to_s
+      to_s_node
+    end
   end
 
   class Nop < ASTNode
