@@ -10,8 +10,9 @@ module Crystal
     getter mod
     getter! scope
     getter! current_def
+    getter vars
 
-    def initialize(@mod, @scope = nil, @vars = {} of String => Value, @current_def = nil, @free_vars = nil)
+    def initialize(@mod, @scope = nil, @vars = {} of String => Value, @current_def = nil, @call = nil, @parent_interpreter = nil, @free_vars = nil)
       @value = nil_value
       @types = [@mod] of Type
     end
@@ -286,14 +287,14 @@ module Crystal
             return false
           elsif initialize_matches.length == 1
             matches = Call.define_new_with_initialize(call_scope, types, initialize_matches)
-            @value = execute_call(matches.first, call_scope, call_vars, values)
+            @value = execute_call(matches.first, call_scope, call_vars, values, node)
             return false
           end
         end
 
         node.raise "undefined method #{node.name} for #{call_scope}"
       when 1
-        @value = execute_call(matches.first, call_scope, call_vars, values)
+        @value = execute_call(matches.first, call_scope, call_vars, values, node)
       else
         node.raise "Bug: more than one match found for #{call_scope}##{node.name}"
       end
@@ -301,15 +302,48 @@ module Crystal
       false
     end
 
-    def execute_call(match, call_scope, call_vars, values)
+    def execute_call(match, call_scope, call_vars, values, call)
       target_def = match.def
       target_def.args.zip(values) do |arg, value|
         call_vars[arg.name] = value
       end
 
-      interpreter = Interpreter.new(@mod, call_scope, call_vars, target_def, match.free_vars)
+      interpreter = Interpreter.new(@mod, call_scope, call_vars, target_def, call, self, match.free_vars)
       target_def.body.accept interpreter
       interpreter.value
+    end
+
+    def visit(node : Yield)
+      block = @call.not_nil!.block.not_nil!
+      parent_interpreter = @parent_interpreter.not_nil!
+
+      overwritten_vars = {} of String => Value?
+
+      block.args.each_with_index do |arg, i|
+        overwritten_vars[arg.name] = parent_interpreter.vars[arg.name]?
+
+        exp = node.exps[i]?
+        if exp
+          exp.accept self
+          parent_interpreter.vars[arg.name] = @value
+        else
+          parent_interpreter.vars[arg.name] = nil_value
+        end
+      end
+
+      block.accept parent_interpreter
+
+      overwritten_vars.each do |name, value|
+        if value
+          parent_interpreter.vars[name] = value
+        else
+          parent_interpreter.vars.delete name
+        end
+      end
+
+      @value = parent_interpreter.value
+
+      false
     end
 
     def visit(node : Primitive)

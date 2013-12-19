@@ -85,6 +85,14 @@ def assert_interpret(code)
   program.yield value, program
 end
 
+def assert_interpret_primitive(code, expected_value)
+  assert_interpret(code) do |value, program|
+    value.type.should eq(program.yield program)
+    assert_type value, Interpreter::PrimitiveValue
+    value.value.should eq(expected_value)
+  end
+end
+
 def parse(string)
   Parser.parse string
 end
