@@ -429,10 +429,6 @@ module Crystal
           if next_char == 's' && next_char == 't' && next_char == 'r' && next_char == 'a' && next_char == 'c' && next_char == 't'
             return check_ident_or_keyword(:abstract, start, start_column)
           end
-        when 'd'
-          if next_char == 'd' && next_char == 'r' && next_char == 'e' && next_char == 's' && next_char == 's' && next_char == 'o' && next_char == 'f'
-            return check_ident_or_keyword(:addressof, start, start_column)
-          end
         when 'l'
           if next_char == 'i' && next_char == 'a' && next_char == 's'
             return check_ident_or_keyword(:alias, start, start_column)
@@ -571,8 +567,15 @@ module Crystal
         end
         scan_ident(start, start_column)
       when 'p'
-        if next_char == 't' && next_char == 'r'
-          return check_ident_or_keyword(:ptr, start, start_column)
+        case next_char
+        when 't'
+          if next_char == 'r'
+            return check_ident_or_keyword(:ptr, start, start_column)
+          end
+        when 'o'
+          if next_char == 'i' && next_char == 'n' && next_char == 't' && next_char == 'e' && next_char == 'r' && next_char == 'o' && next_char == 'f'
+            return check_ident_or_keyword(:pointerof, start, start_column)
+          end
         end
         scan_ident(start, start_column)
       when 'r'

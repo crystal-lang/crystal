@@ -3,19 +3,19 @@ require "../../spec_helper"
 
 describe "Type inference: pointer" do
   it "types int pointer" do
-    assert_type("a = 1; addressof(a)") { pointer_of(int32) }
+    assert_type("a = 1; pointerof(a)") { pointer_of(int32) }
   end
 
   it "types pointer value" do
-    assert_type("a = 1; b = addressof(a); b.value") { int32 }
+    assert_type("a = 1; b = pointerof(a); b.value") { int32 }
   end
 
   it "types pointer add" do
-    assert_type("a = 1; addressof(a) + 1_i64") { pointer_of(int32) }
+    assert_type("a = 1; pointerof(a) + 1_i64") { pointer_of(int32) }
   end
 
   it "types pointer diff" do
-    assert_type("a = 1; b = 2; addressof(a) - addressof(b)") { int64 }
+    assert_type("a = 1; b = 2; pointerof(a) - pointerof(b)") { int64 }
   end
 
   it "types Pointer.malloc" do
@@ -31,11 +31,11 @@ describe "Type inference: pointer" do
   end
 
   it "type pointer casting" do
-    assert_type("a = 1; addressof(a).as(Char)") { pointer_of(char) }
+    assert_type("a = 1; pointerof(a).as(Char)") { pointer_of(char) }
   end
 
   it "type pointer casting of object type" do
-    assert_type("a = 1; addressof(a).as(String)") { string }
+    assert_type("a = 1; pointerof(a).as(String)") { string }
   end
 
   it "pointer malloc creates new type" do

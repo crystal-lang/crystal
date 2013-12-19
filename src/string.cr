@@ -510,6 +510,6 @@ class String
   end
 
   def cstr
-    addressof(@c)
+    pointerof(@c)
   end
 end

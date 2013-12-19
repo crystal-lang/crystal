@@ -151,7 +151,7 @@ module Crystal
       node
     end
 
-    def transform(node : AddressOf)
+    def transform(node : PointerOf)
       node.exp = node.exp.transform(self)
       node
     end

@@ -1410,7 +1410,7 @@ module Crystal
     end
   end
 
-  class AddressOf < ASTNode
+  class PointerOf < ASTNode
     @exp :: ASTNode+
 
     def initialize(@exp)
@@ -1432,7 +1432,7 @@ module Crystal
     end
 
     def clone_without_location
-      AddressOf.new(@exp.clone)
+      PointerOf.new(@exp.clone)
     end
   end
 

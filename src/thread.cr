@@ -51,15 +51,15 @@ class Mutex
   end
 
   def lock
-    PThread.mutex_lock(addressof(@mutex))
+    PThread.mutex_lock(pointerof(@mutex))
   end
 
   def try_lock
-    PThread.mutex_trylock(addressof(@mutex))
+    PThread.mutex_trylock(pointerof(@mutex))
   end
 
   def unlock
-    PThread.mutex_unlock(addressof(@mutex))
+    PThread.mutex_unlock(pointerof(@mutex))
   end
 
   def synchronize
@@ -70,6 +70,6 @@ class Mutex
   end
 
   def destroy
-    PThread.mutex_destroy(addressof(@mutex))
+    PThread.mutex_destroy(pointerof(@mutex))
   end
 end

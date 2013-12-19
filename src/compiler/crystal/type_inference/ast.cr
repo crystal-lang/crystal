@@ -136,7 +136,7 @@ module Crystal
     end
   end
 
-  class AddressOf
+  class PointerOf
     property! mod
 
     def map_type(type)

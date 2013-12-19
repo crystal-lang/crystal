@@ -35,7 +35,7 @@ class YamlParser
 
   def close
     LibYaml.yaml_parser_delete(@parser)
-    LibYaml.yaml_event_delete(addressof(@event))
+    LibYaml.yaml_event_delete(pointerof(@event))
   end
 
   def parse_all
@@ -143,8 +143,8 @@ class YamlParser
   end
 
   def next_event
-    LibYaml.yaml_event_delete(addressof(@event))
-    LibYaml.yaml_parser_parse(@parser, addressof(@event))
+    LibYaml.yaml_event_delete(pointerof(@event))
+    LibYaml.yaml_parser_parse(@parser, pointerof(@event))
   end
 end
 

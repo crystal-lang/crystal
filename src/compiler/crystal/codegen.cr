@@ -665,7 +665,7 @@ module Crystal
       LLVM.null(llvm_type(node.type))
     end
 
-    def visit(node : AddressOf)
+    def visit(node : PointerOf)
       node_exp = node.exp
       case node_exp
       when Var
@@ -682,7 +682,7 @@ module Crystal
 
         @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_exp.name)
       else
-        raise "Bug: addressof(#{node.to_s_node})"
+        raise "Bug: pointerof(#{node.to_s_node})"
       end
       false
     end
@@ -896,7 +896,7 @@ module Crystal
         # Pack the string bytes
         bytes = [] of LibLLVM::ValueRef
         length = str.length
-        length_ptr = addressof(length).as(UInt8)
+        length_ptr = pointerof(length).as(UInt8)
         (0..3).each { |i| bytes << int8(length_ptr[i]) }
         str.each_char { |c| bytes << int8(c.ord) }
         bytes << int8(0)

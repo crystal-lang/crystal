@@ -1021,7 +1021,7 @@ module Crystal
       node.type = instance_type
     end
 
-    def visit(node : AddressOf)
+    def visit(node : PointerOf)
       node.mod = @mod
       node_exp = node.exp
       var = case node_exp

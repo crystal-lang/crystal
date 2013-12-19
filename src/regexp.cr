@@ -15,12 +15,12 @@ class Regexp
     @source = str
     errptr = Pointer(Char).malloc(0)
     erroffset = 1
-    @re = PCRE.compile(str, 0, addressof(errptr), addressof(erroffset), nil)
+    @re = PCRE.compile(str, 0, pointerof(errptr), pointerof(erroffset), nil)
     if @re == 0
       raise "#{String.new(errptr)} at #{erroffset}"
     end
     @captures = 0
-    PCRE.full_info(@re, nil, PCRE::INFO_CAPTURECOUNT, addressof(@captures).as(Void))
+    PCRE.full_info(@re, nil, PCRE::INFO_CAPTURECOUNT, pointerof(@captures).as(Void))
   end
 
   def match(str, pos = 0, options = 0)

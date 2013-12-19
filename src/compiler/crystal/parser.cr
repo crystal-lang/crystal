@@ -515,7 +515,7 @@ module Crystal
         #   if atomic.block
         #     raise "'ptr' can't receive a block"
         #   end
-        #   atomic = AddressOf.new(atomic_obj)
+        #   atomic = PointerOf.new(atomic_obj)
         #   atomic.location = location
         when "responds_to?"
           if atomic.args.length != 1
@@ -634,8 +634,8 @@ module Crystal
           parse_fun_def(true)
         when :alias
           parse_alias
-        when :addressof
-          parse_addressof
+        when :pointerof
+          parse_pointerof
         else
           parse_var_or_call
         end
@@ -2369,7 +2369,7 @@ module Crystal
       node
     end
 
-    def parse_addressof
+    def parse_pointerof
       next_token_skip_space
 
       check :"("
@@ -2381,7 +2381,7 @@ module Crystal
       check :")"
       next_token_skip_space
 
-      AddressOf.new(exp)
+      PointerOf.new(exp)
     end
 
     def parse_type_def

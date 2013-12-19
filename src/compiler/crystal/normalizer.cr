@@ -396,7 +396,7 @@ module Crystal
       end
     end
 
-    def transform(node : AddressOf)
+    def transform(node : PointerOf)
       exp = node.exp
 
       if exp.is_a?(Var)

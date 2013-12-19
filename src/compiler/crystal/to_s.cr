@@ -719,8 +719,8 @@ module Crystal
       false
     end
 
-    def visit(node : AddressOf)
-      @str << "addressof("
+    def visit(node : PointerOf)
+      @str << "pointerof("
       node.exp.accept(self)
       @str << ")"
       false
