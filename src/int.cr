@@ -134,7 +134,7 @@ class Int64
 
   def to_s
     String.new_with_capacity(22) do |buffer|
-      C.sprintf(buffer, "%ld", self)
+      C.sprintf(buffer, "%lld", self)
     end
   end
 end

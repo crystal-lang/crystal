@@ -13,9 +13,9 @@ lib C
   fun feof(file : File) : Int32
   fun getline(linep : Char**, linecap : Int64*, file : File) : Int64
   fun fflush(file : File) : Int32
-  fun fseek(file : File, offset : Int64, whence : Int32) : Int32
-  fun ftell(file : File) : Int64
-  fun fread(buffer : Char*, size : Int64, nitems : Int64, file : File) : Int32
+  fun fseeko(file : File, offset : Int64, whence : Int32) : Int32
+  fun ftello(file : File) : Int64
+  fun fread(buffer : Char*, size : C::SizeT, nitems : C::SizeT, file : File) : Int32
   fun access(filename : Char*, how : Int32) : Int32
   fun realpath(path : Char*, resolved_path : Char*) : Char*
   fun fdopen(fd : Int32, mode : Char*) : File
@@ -151,7 +151,7 @@ def puts(obj : Int32)
 end
 
 def puts(obj : Int64)
-  C.printf "%ld\n", obj
+  C.printf "%lld\n", obj
   nil
 end
 
@@ -171,7 +171,7 @@ def puts(obj : UInt32)
 end
 
 def puts(obj : UInt64)
-  C.printf "%lu\n", obj
+  C.printf "%llu\n", obj
   nil
 end
 

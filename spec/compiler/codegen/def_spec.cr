@@ -19,7 +19,7 @@ describe "Code gen: def" do
   end
 
   it "call external function 'putchar'" do
-    run("require \"io\"; C.putchar '\\0'").to_i.should eq(0)
+    run("require \"c\"; require \"io\"; C.putchar '\\0'").to_i.should eq(0)
   end
 
   it "uses self" do
@@ -27,7 +27,7 @@ describe "Code gen: def" do
   end
 
   it "uses var after external" do
-    run("require \"io\"; a = 1; C.putchar '\\0'; a").to_i.should eq(1)
+    run("require \"c\"; require \"io\"; a = 1; C.putchar '\\0'; a").to_i.should eq(1)
   end
 
   it "allows to change argument values" do

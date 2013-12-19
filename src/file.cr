@@ -76,11 +76,11 @@ class File
     f = C.fopen(filename, "r")
     raise Errno.new unless f
 
-    C.fseek(f, 0_i64, C::SEEK_END)
-    size = C.ftell(f)
-    C.fseek(f, 0_i64, C::SEEK_SET)
+    C.fseeko(f, 0_i64, C::SEEK_END)
+    size = C.ftello(f)
+    C.fseeko(f, 0_i64, C::SEEK_SET)
     str = Pointer(Char).malloc(size + 1)
-    C.fread(str, size, 1_i64, f)
+    C.fread(str, size.to_sizet, 1.to_sizet, f)
     C.fclose(f)
     String.new(str, size.to_i32)
   end
