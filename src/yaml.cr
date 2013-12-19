@@ -1,10 +1,20 @@
 class Yaml
   def self.load(data)
-    YamlParser.new(data).parse
+    parser = YamlParser.new(data)
+    begin
+      parser.parse
+    ensure
+      parser.close
+    end
   end
 
   def self.load_all(data)
-    YamlParser.new(data).parse_all
+    parser = YamlParser.new(data)
+    begin
+      parser.parse_all
+    ensure
+      parser.close
+    end
   end
 end
 
@@ -21,6 +31,11 @@ class YamlParser
 
     next_event
     raise "Expected STREAM_START" unless @event.type == LibYaml::EventType::STREAM_START
+  end
+
+  def close
+    LibYaml.yaml_parser_delete(@parser)
+    LibYaml.yaml_event_delete(addressof(@event))
   end
 
   def parse_all
@@ -251,5 +266,6 @@ lib LibYaml("yaml")
   fun yaml_parser_initialize(parser : Parser*) : Int32
   fun yaml_parser_set_input_string(parser : Parser*, input : Char*, length : Int32)
   fun yaml_parser_parse(parser : Parser*, event : Event*) : Int32
+  fun yaml_parser_delete(parser : Parser*)
   fun yaml_event_delete(event : Event*)
 end
