@@ -817,6 +817,7 @@ module Crystal
       def visit(node : Not)
         node.exp.accept self
         @value = !@value
+        false
       end
 
       def visit(node : And)
@@ -824,6 +825,7 @@ module Crystal
         left_value = @value
         node.right.accept self
         @value = left_value && @value
+        false
       end
 
       def visit(node : Or)
@@ -831,6 +833,7 @@ module Crystal
         left_value = @value
         node.right.accept self
         @value = left_value || @value
+        false
       end
     end
 
