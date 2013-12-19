@@ -13,8 +13,6 @@ lib C
   fun feof(file : File) : Int32
   fun getline(linep : Char**, linecap : Int64*, file : File) : Int64
   fun fflush(file : File) : Int32
-  fun fseeko(file : File, offset : Int64, whence : Int32) : Int32
-  fun ftello(file : File) : Int64
   fun fread(buffer : Char*, size : C::SizeT, nitems : C::SizeT, file : File) : Int32
   fun access(filename : Char*, how : Int32) : Int32
   fun realpath(path : Char*, resolved_path : Char*) : Char*
@@ -33,6 +31,9 @@ lib C
   W_OK = 1 << 1
   R_OK = 1 << 2
 end
+
+require "io.32" if !x86_64
+require "io.64" if x86_64
 
 module IO
   def print(string)

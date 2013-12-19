@@ -41,7 +41,7 @@ module Crystal
         llvm_mod = LLVM::Module.new @macro_name
         engine = LLVM::JITCompiler.new llvm_mod
 
-        visitor = CodeGenVisitor.new(@mod, typed_def, llvm_mod, true)
+        visitor = CodeGenVisitor.new(@mod, typed_def, llvm_mod, true, true)
         visitor.codegen_fun(@macro_name, typed_def, nil)
 
         # llvm_mod.dump

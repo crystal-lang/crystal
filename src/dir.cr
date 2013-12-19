@@ -19,9 +19,11 @@ lib C
 
   fun getcwd(buffer : Char*, size : Int32) : Char*
   fun opendir(name : Char*) : Dir*
-  fun readdir(dir : Dir*) : DirEntry*
   fun closedir(dir : Dir*) : Int32
 end
+
+require "readdir.linux" if linux
+require "readdir.darwin" if darwin
 
 class Dir
   def self.working_directory

@@ -1,4 +1,5 @@
-require "exception.linux" if linux
+require "exception.linux32" if linux && !x86_64
+require "exception.linux64" if linux && x86_64
 require "exception.darwin" if darwin
 
 def caller

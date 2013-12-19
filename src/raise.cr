@@ -116,8 +116,8 @@ end
 
 def raise(ex : Exception)
   unwind_ex = ABI::UnwindException.new
-  unwind_ex.exception_class = 0_u64
-  unwind_ex.exception_cleanup = 0_u64
+  unwind_ex.exception_class = 0.to_sizet
+  unwind_ex.exception_cleanup = 0.to_sizet
   unwind_ex.exception_object = ex.object_id
   unwind_ex.exception_type_id = ex.crystal_type_id
   __crystal_raise(unwind_ex)

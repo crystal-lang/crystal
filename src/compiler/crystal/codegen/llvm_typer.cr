@@ -8,11 +8,12 @@ module Crystal
 
     getter landing_pad_type
 
-    def initialize
+    def initialize(flags)
       @cache = {} of Type => LibLLVM::TypeRef
       @struct_cache = {} of Type => LibLLVM::TypeRef
       @arg_cache = {} of Type => LibLLVM::TypeRef
       @embedded_cache = {} of Type => LibLLVM::TypeRef
+      @is_64bit = flags.includes?("x86_64")
 
       target = LLVM::Target.first
       machine = target.create_target_machine("i686-unknown-linux").not_nil!
@@ -61,10 +62,10 @@ module Crystal
             max_size = size if size > max_size
           end
         end
-        max_size /= 8
+        max_size /= (@is_64bit ? 8 : 4)
         max_size = 1 if max_size == 0
 
-        llvm_value_type = LLVM.array_type(LLVM::Int64, max_size)
+        llvm_value_type = LLVM.array_type(@is_64bit ? LLVM::Int64 : LLVM::Int32, max_size)
         [LLVM::Int32, llvm_value_type] of LibLLVM::TypeRef
       end
     end

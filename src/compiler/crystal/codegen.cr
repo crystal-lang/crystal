@@ -72,9 +72,9 @@ module Crystal
     make_tuple Handler, node, catch_block
     make_tuple StringKey, mod, string
 
-    def initialize(@mod, @node, @llvm_mod, @single_module = false)
+    def initialize(@mod, @node, @llvm_mod, @single_module = false, @use_host_flags = false)
       @main_mod = @llvm_mod
-      @llvm_typer = LLVMTyper.new
+      @llvm_typer = LLVMTyper.new(@use_host_flags ? @mod.host_flags : @mod.require_flags)
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_type(node.type)
       @fun = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM.pointer_type(LLVM.pointer_type(LLVM::Int8))], ret_type)
