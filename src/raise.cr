@@ -31,6 +31,9 @@ lib ABI
   fun unwind_get_language_specific_data = _Unwind_GetLanguageSpecificData(context : Void*) : UInt8*
 end
 
+require "raise.32" if !x86_64
+require "raise.64" if x86_64
+
 module LEBReader
   def self.read_uint8(data)
     value = data.value.as(UInt8).value
@@ -57,7 +60,7 @@ module LEBReader
   end
 end
 
-fun __crystal_personality(version : Int32, actions : Int32, exception_class : C::SizeT, exception_object : ABI::UnwindException*, context : Void*) : Int32
+fun __crystal_personality(version : Int32, actions : Int32, exception_class : UInt64, exception_object : ABI::UnwindException*, context : Void*) : Int32
   start = ABI.unwind_get_region_start(context)
   ip = ABI.unwind_get_ip(context)
   throw_offset = ip - 1 - start
@@ -87,8 +90,8 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : C:
         end
 
         if (actions & ABI::UA_HANDLER_FRAME) > 0
-          ABI.unwind_set_gr(context, 0, exception_object.address.to_sizet)
-          ABI.unwind_set_gr(context, 1, exception_object.value.exception_type_id.to_sizet)
+          ABI.unwind_set_gr(context, EH_REGISTER_0, exception_object.address.to_sizet)
+          ABI.unwind_set_gr(context, EH_REGISTER_1, exception_object.value.exception_type_id.to_sizet)
           ABI.unwind_set_ip(context, start + cs_addr)
           # puts "install"
           return ABI::URC_INSTALL_CONTEXT
