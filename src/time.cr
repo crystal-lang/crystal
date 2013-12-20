@@ -1,6 +1,3 @@
-require "time.linux" if linux
-require "time.darwin" if darwin
-
 # lib C
 #   struct Tm
 #     sec : Int32
@@ -19,7 +16,40 @@ require "time.darwin" if darwin
 #   fun mktime(broken_time : Tm*) : Int64
 # end
 
+ifdef darwin
+  lib C
+    struct TimeVal
+      tv_sec : Int64
+      tv_usec : Int32
+    end
+
+    struct TimeZone
+      tz_minuteswest : Int32
+      tz_dsttime : Int32
+    end
+
+    fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int32
+  end
+elsif linux
+  lib Librt("rt")
+    struct TimeSpec
+      tv_sec, tv_nsec : Int64
+    end
+    fun clock_gettime(clk_id : Int32, tp : TimeSpec*)
+  end
+end
+
 class Time
+  def initialize
+    ifdef darwin
+      C.gettimeofday(out tp, out tzp)
+      @seconds = tp.tv_sec + tp.tv_usec / 1e6
+    elsif linux
+      Librt.clock_gettime(0, out time)
+      @seconds = time.tv_sec + time.tv_nsec / 1e9
+    end
+  end
+
   def initialize(seconds)
     @seconds = seconds.to_f64
   end

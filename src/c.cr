@@ -1,7 +1,10 @@
-require "c.32bits" if !x86_64
-require "c.64bits" if x86_64
-
 lib C
+  ifdef x86_64
+    alias SizeT = UInt64
+  else
+    alias SizeT = UInt32
+  end
+
   fun time(t : Int64) : Int64
   fun sleep(seconds : UInt32) : UInt32
 end

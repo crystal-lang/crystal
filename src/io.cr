@@ -22,6 +22,14 @@ lib C
   fun popen(command : Char*, mode : Char*) : File
   fun pclose(stream : File) : Int32
 
+  ifdef x86_64
+    fun fseeko(file : File, offset : Int64, whence : Int32) : Int32
+    fun ftello(file : File) : Int64
+  else
+    fun fseeko = fseeko64(file : File, offset : Int64, whence : Int32) : Int32
+    fun ftello = ftello64(file : File) : Int64
+  end
+
   SEEK_SET = 0
   SEEK_CUR = 1
   SEEK_END = 2
@@ -31,9 +39,6 @@ lib C
   W_OK = 1 << 1
   R_OK = 1 << 2
 end
-
-require "io.32" if !x86_64
-require "io.64" if x86_64
 
 module IO
   def print(string)

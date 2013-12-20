@@ -77,6 +77,14 @@ class Int
   def modulo(other)
     self % other
   end
+
+  def to_sizet
+    ifdef x86_64
+      to_u64
+    else
+      to_u32
+    end
+  end
 end
 
 class Int8

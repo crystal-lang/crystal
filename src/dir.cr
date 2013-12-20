@@ -1,8 +1,22 @@
-require "dir.linux" if linux
-require "dir.darwin" if darwin
-
 lib C
-  struct Dir
+  type Dir : Void*
+
+  ifdef darwin
+    struct DirEntry
+      d_ino : Int32
+      reclen : UInt16
+      type : UInt8
+      namelen : UInt8
+      name : Char
+    end
+  elsif linux
+   struct DirEntry
+      d_ino : UInt64
+      d_off : Int64
+      reclen : UInt16
+      type : UInt8
+      name : Char
+    end
   end
 
   enum DirType
@@ -20,10 +34,13 @@ lib C
   fun getcwd(buffer : Char*, size : Int32) : Char*
   fun opendir(name : Char*) : Dir*
   fun closedir(dir : Dir*) : Int32
-end
 
-require "readdir.linux" if linux
-require "readdir.darwin" if darwin
+  ifdef darwin
+    fun readdir(dir : Dir*) : DirEntry*
+  elsif linux
+    fun readdir = readdir64(dir : Dir*) : DirEntry*
+  end
+end
 
 class Dir
   def self.working_directory
@@ -41,6 +58,14 @@ class Dir
       end
     ensure
       C.closedir(dir)
+    end
+  end
+
+  def self.dir_entry_offset
+    ifdef linux
+      19
+    elsif darwin
+      8
     end
   end
 end

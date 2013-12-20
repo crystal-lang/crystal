@@ -23,6 +23,14 @@ lib ABI
   URC_INSTALL_CONTEXT = 7
   URC_CONTINUE_UNWIND = 8
 
+  ifdef x86_64
+    EH_REGISTER_0 = 0
+    EH_REGISTER_1 = 1
+  else
+    EH_REGISTER_0 = 0
+    EH_REGISTER_1 = 2
+  end
+
   fun unwind_raise_exception = _Unwind_RaiseException(ex : UnwindException*) : Int32
   fun unwind_get_region_start = _Unwind_GetRegionStart(context : Void*) : C::SizeT
   fun unwind_get_ip = _Unwind_GetIP(context : Void*) : C::SizeT
@@ -30,9 +38,6 @@ lib ABI
   fun unwind_set_gr = _Unwind_SetGR(context : Void*, index : Int32, value : C::SizeT)
   fun unwind_get_language_specific_data = _Unwind_GetLanguageSpecificData(context : Void*) : UInt8*
 end
-
-require "raise.32" if !x86_64
-require "raise.64" if x86_64
 
 module LEBReader
   def self.read_uint8(data)
@@ -90,8 +95,8 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
         end
 
         if (actions & ABI::UA_HANDLER_FRAME) > 0
-          ABI.unwind_set_gr(context, EH_REGISTER_0, exception_object.address.to_sizet)
-          ABI.unwind_set_gr(context, EH_REGISTER_1, exception_object.value.exception_type_id.to_sizet)
+          ABI.unwind_set_gr(context, ABI::EH_REGISTER_0, exception_object.address.to_sizet)
+          ABI.unwind_set_gr(context, ABI::EH_REGISTER_1, exception_object.value.exception_type_id.to_sizet)
           ABI.unwind_set_ip(context, start + cs_addr)
           # puts "install"
           return ABI::URC_INSTALL_CONTEXT
