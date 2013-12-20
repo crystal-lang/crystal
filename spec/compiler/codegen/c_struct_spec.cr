@@ -189,4 +189,19 @@ describe "Code gen: struct" do
       end
       ").to_i.should eq(0)
   end
+
+  it "codegens pointerof to indirect read" do
+    run("
+      lib Foo
+        struct Bar
+          x : Float64
+          y : Int32
+        end
+      end
+
+      f = Foo::Bar.new
+      pointerof(f->y).value = 1
+      f->y
+      ").to_i.should eq(1)
+  end
 end

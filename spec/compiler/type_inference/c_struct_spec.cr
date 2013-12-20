@@ -87,4 +87,18 @@ describe "Type inference: struct" do
   it "types struct getter on pointer type" do
     assert_type("lib Foo; struct Bar; x : Int32*; end; end; b :: Foo::Bar; b.x") { pointer_of(int32) }
   end
+
+  it "types pointerof to indirect read" do
+    assert_type("
+      lib Foo
+        struct Bar
+          x : Int32
+          y : Float64
+        end
+      end
+
+      f = Foo::Bar.new
+      pointerof(f->y)
+      ") { pointer_of(float64) }
+  end
 end

@@ -699,6 +699,8 @@ module Crystal
         assert_type type, InstanceVarContainer
 
         @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_exp.name)
+      when IndirectRead
+        @last = visit_indirect(node_exp)
       else
         raise "Bug: pointerof(#{node.to_s_node})"
       end

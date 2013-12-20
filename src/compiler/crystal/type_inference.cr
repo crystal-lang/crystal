@@ -1029,6 +1029,9 @@ module Crystal
               lookup_var node_exp.name
             when InstanceVar
               lookup_instance_var node_exp
+            when IndirectRead
+              node_exp.accept self
+              visit_indirect(node_exp)
             else
               node.raise "can't take address of #{node.to_s_node}"
             end
