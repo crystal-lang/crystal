@@ -75,11 +75,11 @@ module Crystal
     end
 
     def create_llvm_type(type : CStructType)
-      LLVM.pointer_type(llvm_struct_type(type))
+      llvm_struct_type(type)
     end
 
     def create_llvm_type(type : CUnionType)
-      LLVM.pointer_type(llvm_struct_type(type))
+      llvm_struct_type(type)
     end
 
     def create_llvm_type(type : TypeDefType)

@@ -866,13 +866,13 @@ module Crystal
       when :float64_infinity
         node.type = @mod.float64
       when :struct_new
-        node.type = scope.instance_type
+        node.type = @mod.pointer_of(scope.instance_type)
       when :struct_set
         node.bind_to @vars["value"]
       when :struct_get
         visit_struct_get node
       when :union_new
-        node.type = scope.instance_type
+        node.type = @mod.pointer_of(scope.instance_type)
       when :union_set
         node.bind_to @vars["value"]
       when :union_get
@@ -1083,6 +1083,58 @@ module Crystal
           node.bind_to a_rescue.body
         end
       end
+    end
+
+    def end_visit(node : IndirectRead)
+      var = visit_indirect(node)
+      node.bind_to var
+    end
+
+    def end_visit(node : IndirectWrite)
+      var = visit_indirect(node)
+      if var.type != node.value.type
+        type = node.obj.type
+        assert_type type, PointerInstanceType
+
+        node.raise "field '#{node.names.join "->"}' of struct #{type.var.type} has type #{var.type}, not #{node.value.type}"
+      end
+
+      node.bind_to node.value
+    end
+
+    def visit_indirect(node)
+      type = node.obj.type
+      if type.is_a?(PointerInstanceType)
+        element_type = type.var.type
+        var = nil
+        node.names.each do |name|
+          # TOOD remove duplicate code
+          case element_type
+          when CStructType
+            var = element_type.vars[name]?
+            if var
+              var_type = var.type
+              element_type = var_type
+            else
+              node.raise "#{element_type.type_desc} #{element_type} has no field '#{name}'"
+            end
+          when CUnionType
+            var = element_type.vars[name]?
+            if var
+              var_type = var.type
+              element_type = var_type
+            else
+              node.raise "#{element_type.type_desc} #{element_type} has no field '#{name}'"
+            end
+          else
+            node.raise "#{element_type.type_desc} is not a struct or union, it's a #{element_type}"
+          end
+        end
+
+        return var.not_nil!
+      end
+
+      node.raise "#{type} is not a pointer to a struct or union, it's a #{type.type_desc} #{type}"
     end
 
     def lookup_var(name)

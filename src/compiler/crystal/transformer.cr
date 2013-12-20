@@ -428,6 +428,17 @@ module Crystal
       node
     end
 
+    def transform(node : IndirectRead)
+      node.obj = node.obj.transform(self)
+      node
+    end
+
+    def transform(node : IndirectWrite)
+      node.obj = node.obj.transform(self)
+      node.value = node.value.transform(self)
+      node
+    end
+
     def transform(node : TypeMerge)
       node
     end

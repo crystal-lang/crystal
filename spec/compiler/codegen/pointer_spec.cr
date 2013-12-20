@@ -107,15 +107,14 @@ describe "Code gen: pointer" do
       end
 
       color = C::Color.new
-      color.r = 10_u8
+      color->r = 10_u8
 
       color2 = C::Color.new
-      color2.r = 20_u8
+      color2->r = 20_u8
 
-      p = pointerof(color)
-      p.value = color2
+      color.value = color2.value
 
-      color.r
+      color->r
       ").to_i.should eq(20)
   end
 

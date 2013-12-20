@@ -2708,6 +2708,68 @@ module Crystal
     end
   end
 
+  class IndirectRead < ASTNode
+    @obj :: ASTNode+
+    @names :: Array(String)
+
+    def initialize(@obj, @names)
+    end
+
+    def obj=(@obj)
+    end
+
+    def obj
+      @obj
+    end
+
+    def names=(@names)
+    end
+
+    def names
+      @names
+    end
+
+    def accept_children(visitor)
+      @obj.accept visitor
+    end
+
+    def ==(other : self)
+      @obj == other.obj && @names == other.names
+    end
+
+    def clone_without_location
+      IndirectRead.new(@obj.clone, @names)
+    end
+  end
+
+  class IndirectWrite < IndirectRead
+    @value :: ASTNode+
+
+    def initialize(obj, names, @value)
+      super(obj, names)
+    end
+
+    def value=(@value)
+    end
+
+    def value
+      @value
+    end
+
+    def accept_children(visitor)
+      @obj.accept visitor
+      @value.accept visitor
+    end
+
+    def ==(other : self)
+      @obj == other.obj && @names == other.names && @value == other.value
+    end
+
+    def clone_without_location
+      IndirectWrite.new(@obj.clone, @names, @value.clone)
+    end
+  end
+
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     @name :: Symbol

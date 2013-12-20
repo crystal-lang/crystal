@@ -646,14 +646,19 @@ module Crystal
       when :INSTANCE_VAR
         name = @token.value.to_s
         ivar = InstanceVar.new(name)
-        next_token_skip_space
-        if @token.type == :"::"
-          next_token_skip_space
-          ivar_type = parse_single_type
-          DeclareVar.new(ivar, ivar_type)
+        next_token
+        if @token.type == :"->"
+          parse_indirect(ivar)
         else
-          @instance_vars.add name if @instance_vars
-          ivar
+          skip_space
+          if @token.type == :"::"
+            next_token_skip_space
+            ivar_type = parse_single_type
+            DeclareVar.new(ivar, ivar_type)
+          else
+            @instance_vars.add name if @instance_vars
+            ivar
+          end
         end
       when :CLASS_VAR
         node_and_next_token ClassVar.new(@token.value.to_s)
@@ -1658,6 +1663,8 @@ module Crystal
     end
 
     def parse_var_or_call(global = false, force_call = false)
+      location = @token.location
+
       name = @token.value.to_s
       name_column_number = @token.column_number
 
@@ -1666,6 +1673,12 @@ module Crystal
       end
 
       next_token
+
+      if @token.type == :"->" &&  is_var?(name)
+        var = Var.new(name)
+        var.location = location
+        return parse_indirect(var)
+      end
 
       @calls_super = true if name == "super"
 
@@ -1709,6 +1722,34 @@ module Crystal
             Call.new nil, name, [] of ASTNode, nil, block_arg, global, name_column_number, @last_call_has_parenthesis
           end
         end
+      end
+    end
+
+    def parse_indirect(obj)
+      next_token
+
+      names = [] of String
+
+      while true
+        check :IDENT
+        names << @token.value.to_s
+        next_token
+
+        if @token.type == :"->"
+          next_token
+        else
+          break
+        end
+      end
+
+      skip_space
+
+      if @token.type == :"="
+        next_token_skip_space_or_newline
+        value = parse_op_assign
+        IndirectWrite.new(obj, names, value)
+      else
+        IndirectRead.new(obj, names)
       end
     end
 
