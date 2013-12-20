@@ -309,6 +309,10 @@ describe "Parser" do
   it_parses "if foo\n1\nelse\n2\nend", If.new("foo".call, 1.int32, 2.int32)
   it_parses "if foo; 1; elsif bar; 2; else 3; end", If.new("foo".call, 1.int32, If.new("bar".call, 2.int32, 3.int32))
 
+  it_parses "ifdef foo; 1; end", IfDef.new("foo".var, 1.int32)
+  it_parses "ifdef foo; 1; else; 2; end", IfDef.new("foo".var, 1.int32, 2.int32)
+  it_parses "ifdef foo; 1; elsif bar; 2; else 3; end", IfDef.new("foo".var, 1.int32, IfDef.new("bar".var, 2.int32, 3.int32))
+
   it_parses "include Foo", Include.new("Foo".ident)
   it_parses "include Foo\nif true; end", [Include.new("Foo".ident), If.new(true.bool)]
 
@@ -458,6 +462,8 @@ describe "Parser" do
   it_parses "lib C\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("C", nil, [ExternalVar.new("errno", "Int32".ident), ExternalVar.new("errno2", "Int32".ident)] of ASTNode)
   it_parses "lib C\n$errno : B, C -> D\nend", LibDef.new("C", nil, [ExternalVar.new("errno", FunTypeSpec.new(["B".ident, "C".ident] of ASTNode, "D".ident))] of ASTNode)
   it_parses "lib C\nalias Foo = Bar\nend", LibDef.new("C", nil, [Alias.new("Foo", "Bar".ident)] of ASTNode)
+
+  it_parses "lib C\nifdef foo\ntype A : B\nend\nend", LibDef.new("C", nil, [IfDef.new("foo".var, TypeDef.new("A", "B".ident))] of ASTNode)
 
   it_parses "fun foo(x : Int32) : Int64\nx\nend", FunDef.new("foo", [Arg.new("x", nil, "Int32".ident)], "Int64".ident, false, "x".var)
 

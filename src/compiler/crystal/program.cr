@@ -89,16 +89,16 @@ module Crystal
       define_primitives
     end
 
-    def has_require_flag?(name)
-      require_flags.includes?(name)
+    def has_flag?(name)
+      flags.includes?(name)
     end
 
-    def require_flags
-      @require_flags ||= host_flags
+    def flags
+      @flags ||= host_flags
     end
 
-    def require_flags=(require_flags)
-      @require_flags = parse_flags(require_flags)
+    def flags=(flags)
+      @flags = parse_flags(flags)
     end
 
     def host_flags
@@ -281,7 +281,7 @@ module Crystal
     def load_libs
       libs = library_names
       if libs.length > 0
-        if has_require_flag?("darwin")
+        if has_flag?("darwin")
           ext = "dylib"
         else
           ext = "so"

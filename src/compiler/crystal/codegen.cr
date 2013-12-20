@@ -74,7 +74,7 @@ module Crystal
 
     def initialize(@mod, @node, @llvm_mod, @single_module = false, @use_host_flags = false)
       @main_mod = @llvm_mod
-      @llvm_typer = LLVMTyper.new(@use_host_flags ? @mod.host_flags : @mod.require_flags)
+      @llvm_typer = LLVMTyper.new(@use_host_flags ? @mod.host_flags : @mod.flags)
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_type(node.type)
       @fun = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM.pointer_type(LLVM.pointer_type(LLVM::Int8))], ret_type)
@@ -1541,7 +1541,7 @@ module Crystal
       unless var = @lib_vars[name]?
         var = @llvm_mod.globals.add(llvm_type(type), name)
         LLVM.set_linkage var, LibLLVM::Linkage::External
-        LLVM.set_thread_local var if @mod.has_require_flag?("linux")
+        LLVM.set_thread_local var if @mod.has_flag?("linux")
         @lib_vars[name] = var
       end
       var

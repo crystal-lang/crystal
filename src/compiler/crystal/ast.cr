@@ -816,6 +816,64 @@ module Crystal
     end
   end
 
+  # An ifdef expression.
+  #
+  #     'ifdef' cond
+  #       then
+  #     [
+  #     'else'
+  #       else
+  #     ]
+  #     'end'
+  #
+  # An if elsif end is parsed as an If whose
+  # else is another If.
+  class IfDef < ASTNode
+    @cond :: ASTNode+
+    @then :: ASTNode+
+    @else :: ASTNode+
+
+    def initialize(@cond, a_then = nil, a_else = nil)
+      @then = Expressions.from a_then
+      @else = Expressions.from a_else
+    end
+
+    def cond=(@cond)
+    end
+
+    def cond
+      @cond
+    end
+
+    def then=(@then)
+    end
+
+    def then
+      @then
+    end
+
+    def else=(@else)
+    end
+
+    def else
+      @else
+    end
+
+    def accept_children(visitor)
+      @cond.accept visitor
+      @then.accept visitor
+      @else.accept visitor
+    end
+
+    def ==(other : self)
+      other.cond == cond && other.then == self.then && other.else == self.else
+    end
+
+    def clone_without_location
+      IfDef.new(@cond.clone, @then.clone, @else.clone)
+    end
+  end
+
   # Assign expression.
   #
   #     target '=' value
@@ -1055,7 +1113,7 @@ module Crystal
     end
   end
 
-  # Used only for require "foo" if ...
+  # Used only for flags
   class Not < ASTNode
     @exp :: ASTNode+
 

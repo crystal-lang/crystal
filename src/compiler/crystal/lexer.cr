@@ -510,7 +510,15 @@ module Crystal
         scan_ident(start, start_column)
       when 'i'
         case next_char
-        when 'f' then return check_ident_or_keyword(:if, start, start_column)
+        when 'f'
+          if @buffer[1] == 'd'
+            next_char
+            if next_char == 'e' && next_char == 'f'
+              return check_ident_or_keyword(:ifdef, start, start_column)
+            end
+          else
+            return check_ident_or_keyword(:if, start, start_column)
+          end
         when 'n'
           if next_char == 'c' && next_char == 'l' && next_char == 'u' && next_char == 'd' && next_char == 'e'
             return check_ident_or_keyword(:include, start, start_column)

@@ -612,6 +612,8 @@ module Crystal
           parse_case
         when :if
           parse_if
+        when :ifdef
+          parse_ifdef
         when :unless
           parse_unless
         when :include
@@ -1216,16 +1218,16 @@ module Crystal
 
       if @token.keyword?(:if)
         next_token_skip_space
-        cond = parse_require_or
+        cond = parse_flags_or
       end
 
       Crystal::Require.new string, cond
     end
 
-    parse_operator :require_or, :require_and, "Or.new left, right", ":\"||\""
-    parse_operator :require_and, :require_atomic, "And.new left, right", ":\"&&\""
+    parse_operator :flags_or, :flags_and, "Or.new left, right", ":\"||\""
+    parse_operator :flags_and, :flags_atomic, "And.new left, right", ":\"&&\""
 
-    def parse_require_atomic
+    def parse_flags_atomic
       case @token.type
       when :"("
         next_token_skip_space
@@ -1233,7 +1235,7 @@ module Crystal
           raise "unexpected token: #{@token}"
         end
 
-        atomic = parse_require_or
+        atomic = parse_flags_or
         skip_space
 
         check :")"
@@ -1242,7 +1244,7 @@ module Crystal
         return atomic
       when :"!"
         next_token_skip_space
-        return Not.new(parse_require_atomic)
+        return Not.new(parse_flags_atomic)
       when :IDENT
         str = @token.to_s
         next_token_skip_space
@@ -1624,6 +1626,38 @@ module Crystal
       next_token_skip_space
 
       node = Unless.new cond, a_then, a_else
+      node.location = location
+      node
+    end
+
+    def parse_ifdef(check_end = true, inside_lib = false)
+      location = @token.location
+
+      next_token_skip_space_or_newline
+
+      cond = parse_flags_or
+      skip_statement_end
+
+      a_then = inside_lib ? parse_lib_body : parse_expressions
+      skip_statement_end
+
+      a_else = nil
+      if @token.type == :IDENT
+        case @token.value
+        when :else
+          next_token_skip_statement_end
+          a_else = inside_lib ? parse_lib_body : parse_expressions
+        when :elsif
+          a_else = parse_ifdef false, inside_lib
+        end
+      end
+
+      if check_end
+        check_ident :end
+        next_token_skip_space
+      end
+
+      node = IfDef.new cond, a_then, a_else
       node.location = location
       node
     end
@@ -2203,6 +2237,8 @@ module Crystal
         location = @token.location
 
         case @token.type
+        when :SPACE, :NEWLINE, :";"
+          next_token
         when :IDENT
           case @token.value
           when :alias
@@ -2227,6 +2263,10 @@ module Crystal
             expressions << exp
           when :enum
             exp = parse_enum
+            exp.location = location
+            expressions << exp
+          when :ifdef
+            exp = parse_ifdef true, true
             exp.location = location
             expressions << exp
           when :end
@@ -2362,7 +2402,7 @@ module Crystal
       next_token_skip_space_or_newline
 
       value = parse_single_type
-      skip_statement_end
+      skip_space
 
       node = Alias.new(name, value)
       node.location = location
@@ -2397,7 +2437,7 @@ module Crystal
 
       type = parse_single_type
 
-      skip_statement_end
+      skip_space
 
       TypeDef.new name, type, name_column_number
     end
@@ -2412,8 +2452,7 @@ module Crystal
       fields = parse_struct_or_union_fields
 
       check_ident :end
-
-      next_token_skip_statement_end
+      next_token_skip_space
 
       klass.new name, fields
     end
@@ -2494,7 +2533,7 @@ module Crystal
       end
 
       check_ident :end
-      next_token_skip_statement_end
+      next_token_skip_space
 
       EnumDef.new name, constants
     end

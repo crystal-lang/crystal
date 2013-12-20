@@ -114,10 +114,10 @@ module Crystal
 
       begin
         program = Program.new
-        program.require_flags = @cross_compile if @cross_compile
+        program.flags = @cross_compile if @cross_compile
 
         unless File.exists?(@clang)
-          if program.has_require_flag?("darwin")
+          if program.has_flag?("darwin")
             puts "Could not find clang. Install clang 3.3: brew tap homebrew/versions; brew install llvm33 --with-clang"
             exit 1
           end
@@ -272,7 +272,7 @@ module Crystal
             end
           end
         end
-        flags << " -Wl,-allow_stack_execute" if mod.has_require_flag?("darwin")
+        flags << " -Wl,-allow_stack_execute" if mod.has_flag?("darwin")
       end
     end
 

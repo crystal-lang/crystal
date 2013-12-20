@@ -689,6 +689,15 @@ module Crystal
       If.new(node.cond, node.else, node.then).transform(self)
     end
 
+    def transform(node : IfDef)
+      cond_value = eval_flags(node.cond)
+      if cond_value
+        node.then.transform(self)
+      else
+        node.else.transform(self)
+      end
+    end
+
     def transform(node : While)
       reset_instance_variables_indices
 
@@ -785,7 +794,7 @@ module Crystal
 
     def transform(node : Require)
       if cond = node.cond
-        must_require = eval_require_cond(cond)
+        must_require = eval_flags(cond)
         return Nop.new unless must_require
       end
 
@@ -794,24 +803,24 @@ module Crystal
       required ? required.transform(self) : Nop.new
     end
 
-    def eval_require_cond(node)
-      evaluator = RequireEvaluator.new(@program)
+    def eval_flags(node)
+      evaluator = FlagsEvaluator.new(@program)
       node.accept evaluator
       evaluator.value
     end
 
-    class RequireEvaluator < Visitor
+    class FlagsEvaluator < Visitor
       getter value
 
       def initialize(@program)
       end
 
       def visit(node : ASTNode)
-        raise "Bug: shouldn't visit #{node} in RequireEvaluator"
+        raise "Bug: shouldn't visit #{node} in FlagsEvaluator"
       end
 
       def visit(node : Var)
-        @value = @program.has_require_flag?(node.name)
+        @value = @program.has_flag?(node.name)
       end
 
       def visit(node : Not)

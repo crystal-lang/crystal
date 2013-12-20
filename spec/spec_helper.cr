@@ -44,8 +44,9 @@ def infer_type(node)
   InferTypeResult.new(program, node)
 end
 
-def assert_normalize(from, to)
+def assert_normalize(from, to, flags = nil)
   program = Program.new
+  program.flags = flags if flags
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = normalizer.normalize(from_nodes)
