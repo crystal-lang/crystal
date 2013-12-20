@@ -54,18 +54,10 @@ class Dir
 
     begin
       while ent = C.readdir(dir)
-        yield String.new(ent.as(Pointer(Char)) + dir_entry_offset), ent.value.type
+        yield String.new(pointerof(ent->name)), ent.value.type
       end
     ensure
       C.closedir(dir)
-    end
-  end
-
-  def self.dir_entry_offset
-    ifdef linux
-      19
-    elsif darwin
-      8
     end
   end
 end
