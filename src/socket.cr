@@ -1,10 +1,19 @@
 lib C
-  struct SockAddrIn
-    len : Char
-    family : UInt8
-    port : Int16
-    addr : UInt32
-    zero : Int64
+  ifdef darwin
+    struct SockAddrIn
+      len : Char
+      family : UInt8
+      port : Int16
+      addr : UInt32
+      zero : Int64
+    end
+  else
+    struct SockAddrIn
+      family : UInt8
+      port : Int16
+      addr : UInt32
+      zero : Int64
+    end
   end
 
   struct HostEnt
