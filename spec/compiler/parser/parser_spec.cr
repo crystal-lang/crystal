@@ -312,6 +312,8 @@ describe "Parser" do
   it_parses "ifdef foo; 1; end", IfDef.new("foo".var, 1.int32)
   it_parses "ifdef foo; 1; else; 2; end", IfDef.new("foo".var, 1.int32, 2.int32)
   it_parses "ifdef foo; 1; elsif bar; 2; else 3; end", IfDef.new("foo".var, 1.int32, IfDef.new("bar".var, 2.int32, 3.int32))
+  it_parses "ifdef (!a || b) && c; 1; end", IfDef.new(And.new(Or.new(Not.new("a".var), "b".var), "c".var), 1.int32)
+  it_parses "ifdef !(a || b) && c; 1; end", IfDef.new(And.new(Not.new(Or.new("a".var, "b".var)), "c".var), 1.int32)
 
   it_parses "include Foo", Include.new("Foo".ident)
   it_parses "include Foo\nif true; end", [Include.new("Foo".ident), If.new(true.bool)]
@@ -515,10 +517,6 @@ describe "Parser" do
 
   it_parses "require \"foo\"", Require.new("foo")
   it_parses "require \"foo\"; [1]", [Require.new("foo"), ([1.int32] of ASTNode).array]
-  it_parses "require \"foo\"\nif true; end", [Require.new("foo"), If.new(true.bool)]
-
-  it_parses "require \"foo\" if (!a || b) && c", [Require.new("foo", And.new(Or.new(Not.new("a".var), "b".var), "c".var))] of ASTNode
-  it_parses "require \"foo\" if !(a || b) && c", [Require.new("foo", And.new(Not.new(Or.new("a".var, "b".var)), "c".var))] of ASTNode
 
   it_parses "case 1; when 1; 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
   it_parses "case 1; when 0, 1; 2; else; 3; end", Case.new(1.int32, [When.new([0.int32, 1.int32] of ASTNode, 2.int32)], 3.int32)

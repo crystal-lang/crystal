@@ -793,11 +793,6 @@ module Crystal
     end
 
     def transform(node : Require)
-      if cond = node.cond
-        must_require = eval_flags(cond)
-        return Nop.new unless must_require
-      end
-
       location = node.location
       required = @program.require(node.string, location.try &.filename)
       required ? required.transform(self) : Nop.new

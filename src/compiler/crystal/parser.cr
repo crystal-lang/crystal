@@ -1216,42 +1216,7 @@ module Crystal
 
       skip_space
 
-      if @token.keyword?(:if)
-        next_token_skip_space
-        cond = parse_flags_or
-      end
-
-      Crystal::Require.new string, cond
-    end
-
-    parse_operator :flags_or, :flags_and, "Or.new left, right", ":\"||\""
-    parse_operator :flags_and, :flags_atomic, "And.new left, right", ":\"&&\""
-
-    def parse_flags_atomic
-      case @token.type
-      when :"("
-        next_token_skip_space
-        if @token.type == :")"
-          raise "unexpected token: #{@token}"
-        end
-
-        atomic = parse_flags_or
-        skip_space
-
-        check :")"
-        next_token_skip_space
-
-        return atomic
-      when :"!"
-        next_token_skip_space
-        return Not.new(parse_flags_atomic)
-      when :IDENT
-        str = @token.to_s
-        next_token_skip_space
-        return Var.new(str)
-      else
-        raise "unexpected token: #{@token}"
-      end
+      Crystal::Require.new string
     end
 
     def parse_case
@@ -1660,6 +1625,36 @@ module Crystal
       node = IfDef.new cond, a_then, a_else
       node.location = location
       node
+    end
+
+    parse_operator :flags_or, :flags_and, "Or.new left, right", ":\"||\""
+    parse_operator :flags_and, :flags_atomic, "And.new left, right", ":\"&&\""
+
+    def parse_flags_atomic
+      case @token.type
+      when :"("
+        next_token_skip_space
+        if @token.type == :")"
+          raise "unexpected token: #{@token}"
+        end
+
+        atomic = parse_flags_or
+        skip_space
+
+        check :")"
+        next_token_skip_space
+
+        return atomic
+      when :"!"
+        next_token_skip_space
+        return Not.new(parse_flags_atomic)
+      when :IDENT
+        str = @token.to_s
+        next_token_skip_space
+        return Var.new(str)
+      else
+        raise "unexpected token: #{@token}"
+      end
     end
 
     def parse_var_or_call(global = false, force_call = false)

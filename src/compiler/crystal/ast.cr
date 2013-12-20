@@ -1566,9 +1566,8 @@ module Crystal
 
   class Require < ASTNode
     @string :: String
-    @cond :: ASTNode+?
 
-    def initialize(@string, @cond = nil)
+    def initialize(@string)
     end
 
     def string=(@string)
@@ -1578,23 +1577,12 @@ module Crystal
       @string
     end
 
-    def cond=(@cond)
-    end
-
-    def cond
-      @cond
-    end
-
-    def accept_children(visitor)
-      @cond.accept visitor if @cond
-    end
-
     def ==(other : self)
-      other.string == string && other.cond == cond
+      other.string == string
     end
 
     def clone_without_location
-      Require.new(@string, @cond.clone)
+      Require.new(@string)
     end
   end
 
