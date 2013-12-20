@@ -12,7 +12,7 @@ ifdef darwin
     fun get_proc_name = unw_get_proc_name(cursor : C::SizeT*, name : Char*, size : Int32, offset : C::SizeT*) : Int32
   end
 elsif linux
-  if x86_64
+  ifdef x86_64
     lib Unwind("unwind")
       CURSOR_SIZE = 140
       CONTEXT_SIZE = 128
@@ -88,7 +88,7 @@ class Exception
   def to_s
     bt = @backtrace
     ifdef linux
-      bt = bt.map! { |frame| Exception.unescape_backtrace(frame) }
+      bt = bt.map! { |frame| Exception.unescape_linux_backtrace_frame(frame) }
     end
     bt = bt.join("\n")
     if @message
