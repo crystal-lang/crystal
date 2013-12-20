@@ -33,7 +33,8 @@ ifdef darwin
 elsif linux
   lib Librt("rt")
     struct TimeSpec
-      tv_sec, tv_nsec : Int64
+      tv_sec : C::SizeT
+      tv_nsec : C::SizeT
     end
     fun clock_gettime(clk_id : Int32, tp : TimeSpec*)
   end
