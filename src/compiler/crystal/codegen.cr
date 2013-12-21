@@ -546,9 +546,15 @@ module Crystal
     end
 
     def codegen_primitive_union_new(node, target_def, call_args)
-      struct_type = llvm_struct_type(node.type)
-      @last = malloc struct_type
-      memset @last, int8(0), LLVM.size_of(struct_type)
+      type = node.type
+      assert_type type, PointerInstanceType
+
+      union_type = type.var.type
+      assert_type union_type, CUnionType
+
+      llvm_union_type = llvm_struct_type(union_type)
+      @last = malloc llvm_union_type
+      memset @last, int8(0), LLVM.size_of(llvm_union_type)
       @last
     end
 
