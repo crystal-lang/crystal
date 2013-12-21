@@ -25,6 +25,7 @@ module Crystal
 
     def evaluate(node)
       llvm_mod = build(node, true)[""]
+      llvm_mod.verify
       engine = LLVM::JITCompiler.new(llvm_mod)
 
       argc = LibLLVM.create_generic_value_of_int(LLVM::Int32, 0_u64, 1)

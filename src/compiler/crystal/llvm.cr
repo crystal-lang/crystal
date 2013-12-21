@@ -139,6 +139,12 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
     Large
   end
 
+  enum VerifierFailureAction
+    AbortProcessAction   # verifier will print to stderr and abort()
+    PrintMessageAction   # verifier will print to stderr and return 1
+    ReturnStatusAction   # verifier will just return 1
+  end
+
   struct JITCompilerOptions
     opt_level : UInt32
     code_model : CodeModel
@@ -270,6 +276,7 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun type_of = LLVMTypeOf(val : ValueRef) : TypeRef
   fun void_type = LLVMVoidType : TypeRef
   fun write_bitcode_to_file = LLVMWriteBitcodeToFile(module : ModuleRef, path : Char*) : Int32
+  fun verify_module = LLVMVerifyModule(module : ModuleRef, action : VerifierFailureAction, outmessage : Char**) : Int32
   fun link_in_jit = LLVMLinkInJIT
   fun link_in_mc_jit = LLVMLinkInMCJIT
 end
@@ -359,6 +366,12 @@ module LLVM
 
     def write_bitcode(filename : String)
       LibLLVM.write_bitcode_to_file @module, filename
+    end
+
+    def verify
+      if LibLLVM.verify_module(@module, LibLLVM::VerifierFailureAction::ReturnStatusAction, out message) == 1
+        raise "Module validation failed: #{String.new(message)}"
+      end
     end
   end
 
