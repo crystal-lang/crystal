@@ -23,6 +23,10 @@ lib C
   fun tgamma(x : Float64) : Float64
 end
 
+ifdef linux
+  lib Libm("m"); end
+end
+
 module Math
   E  = C.exp(1.0)
   PI = 3.14159265358979323846
