@@ -21,8 +21,8 @@ module Spec
       }
     end
 
-    def has_failures
-      !@results[:fail].empty?
+    def succeeded
+      @results[:fail].empty? && @results[:error].empty?
     end
 
     def self.report(kind, description, ex = nil)
@@ -48,8 +48,8 @@ module Spec
       @@instance.print_results(elapsed_time)
     end
 
-    def self.has_failures
-      @@instance.has_failures
+    def self.succeeded
+      @@instance.succeeded
     end
 
     def print_results(elapsed_time)
@@ -231,7 +231,7 @@ fun main(argc : Int32, argv : Char**) : Int32
   CrystalMain.__crystal_main(argc, argv)
   elapsed_time = Time.now - time
   Spec::RootContext.print_results(elapsed_time)
-  Spec::RootContext.has_failures ? 1 : 0
+  Spec::RootContext.succeeded ? 0 : 1
 rescue ex
   puts ex
   1
