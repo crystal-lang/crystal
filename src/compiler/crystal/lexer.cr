@@ -196,10 +196,20 @@ module Crystal
         else
           start = @buffer
           count = 1
-          while next_char != '/'
-            count += 1
+
+          while true
+            char = next_char
+            case char
+            when '/'
+              next_char
+              break
+            when '\0'
+              raise "unterminated regular expression"
+            else
+              count += 1
+            end
           end
-          next_char
+
           @token.type = :REGEXP
           @token.value = String.new(start, count)
         end
@@ -266,10 +276,20 @@ module Crystal
         elsif char == '"'
           start = @buffer + 1
           count = 0
-          while next_char != '"'
-            count += 1
+
+          while true
+            char = next_char
+            case char
+            when '"'
+              next_char
+              break
+            when '\0'
+              raise "unterminated quoted symbol"
+            else
+              count += 1
+            end
           end
-          next_char
+
           @token.type = :SYMBOL
           @token.value = String.new(start, count)
         else

@@ -274,4 +274,24 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:EOF)
   end
+
+  it "raises unterminated regular expression" do
+    lexer = Lexer.new("/foo")
+    begin
+      lexer.next_token
+      fail "expected to raise"
+    rescue ex : Crystal::SyntaxException
+      ex.message.should eq("unterminated regular expression")
+    end
+  end
+
+  it "raises unterminated quoted symbol" do
+    lexer = Lexer.new(":\"foo")
+    begin
+      lexer.next_token
+      fail "expected to raise"
+    rescue ex : Crystal::SyntaxException
+      ex.message.should eq("unterminated quoted symbol")
+    end
+  end
 end
