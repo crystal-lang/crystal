@@ -168,6 +168,8 @@ describe "Parser" do
 
   it_parses "a, b = 1, 2", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32, 2.int32] of ASTNode)
   it_parses "a, b = 1", MultiAssign.new(["a".var, "b".var] of ASTNode, [1.int32] of ASTNode)
+  it_parses "a[0], a[1] = 1, 2", MultiAssign.new([Call.new("a".call, "[]", [0.int32] of ASTNode), Call.new("a".call, "[]", [1.int32] of ASTNode)] of ASTNode, [1.int32, 2.int32] of ASTNode)
+  it_parses "a.foo, a.bar = 1, 2", MultiAssign.new([Call.new("a".call, "foo"), Call.new("a".call, "bar")] of ASTNode, [1.int32, 2.int32] of ASTNode)
 
   it_parses "def foo\n1\nend", Def.new("foo", [] of Arg, [1.int32] of ASTNode)
   it_parses "def downto(n)\n1\nend", Def.new("downto", ["n".arg], [1.int32] of ASTNode)

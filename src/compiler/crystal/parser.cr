@@ -27,13 +27,13 @@ module Crystal
     def parse_expressions
       exps = [] of ASTNode
       while @token.type != :EOF && !is_end_token
-        exps << parse_multi_expression
+        exps << parse_multi_assign
         skip_statement_end
       end
       Expressions.from(exps)
     end
 
-    def parse_multi_expression
+    def parse_multi_assign
       location = @token.location
 
       exps = [] of ASTNode
@@ -45,7 +45,10 @@ module Crystal
         when :SPACE
           next_token
         when :","
-          assign_index = i if assign_index == -1 && last.is_a?(Assign)
+          if assign_index == -1 && is_multi_assign_middle?(last)
+            assign_index = i
+          end
+
           i += 1
 
           next_token_skip_space_or_newline
@@ -58,17 +61,30 @@ module Crystal
       if exps.length == 1
         exps[0]
       else
-        assign_index = i if assign_index == -1 && last.is_a?(Assign)
+        if assign_index == -1 && is_multi_assign_middle?(last)
+          assign_index = i
+        end
 
         if assign_index
           targets = exps[0 ... assign_index].map { |exp| to_lhs(exp) }
 
-          if (assign = exps[assign_index]) && assign.is_a?(Assign)
-            targets.push to_lhs(assign.target)
+          if (assign = exps[assign_index])
+            values = [] of ASTNode
 
-            values = [assign.value]
+            case assign
+            when Assign
+              targets << to_lhs(assign.target)
+              values << assign.value
+            when Call
+              assign.name = assign.name[0, assign.name.length - 1]
+              targets << assign
+              values << assign.args.pop
+            else
+              raise "Impossible"
+            end
+
             values.concat exps[assign_index + 1 .. -1]
-            if values.length != 1 && targets.length != values.length
+            if values.length != 1 && targets.length != 1 && targets.length != values.length
               raise "Multiple assignment count mismatch", location
             end
 
@@ -86,12 +102,23 @@ module Crystal
       end
     end
 
+    def is_multi_assign_middle?(exp)
+      case exp
+      when Assign
+        true
+      when Call
+        exp.name.ends_with? '='
+      else
+        false
+      end
+    end
+
     def to_lhs(exp)
       if exp.is_a?(Ident) && @def_vars.length > 1
         raise "dynamic constant assignment"
       end
 
-      exp = Var.new(exp.name) if exp.is_a?(Call)
+      exp = Var.new(exp.name) if exp.is_a?(Call) && !exp.obj && exp.args.empty?
       push_var exp if exp.is_a?(Var)
       exp
     end
@@ -404,12 +431,11 @@ module Crystal
               next_token
               case @token.type
               when :"="
-                # Rewrite 'f.x = args' as f.x=(args)
+                # Rewrite 'f.x = arg' as f.x=(arg)
                 next_token_skip_space_or_newline
-                call_args = parse_call_args_space_consumed(false, true)
-                args = call_args.args if call_args
+                args = [parse_op_assign] of ASTNode
 
-                atomic = Call.new(atomic, "#{name}=", (args || [] of ASTNode), nil, nil, false, name_column_number)
+                atomic = Call.new(atomic, "#{name}=", args, nil, nil, false, name_column_number)
                 next
               when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
                 # Rewrite 'f.x += value' as 'f.x=(f.x + value)'

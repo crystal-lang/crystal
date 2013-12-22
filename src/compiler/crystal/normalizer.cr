@@ -329,11 +329,13 @@ module Crystal
         node.targets.each_with_index do |target, i|
           call = Call.new(temp_var, "[]", [NumberLiteral.new(i, :i32)] of ASTNode)
           call.location = value.location
-          assign = Assign.new(target, call)
-          assign.location = target.location
-          assigns << assign
+          assigns << transform_multi_assign_target(target, call)
         end
         exps = Expressions.new(assigns)
+      elsif node.targets.length == 1
+        target = node.targets.first
+        array = ArrayLiteral.new(node.values)
+        exps = transform_multi_assign_target(target, array)
       else
         temp_vars = node.values.map { new_temp_var }
 
@@ -344,16 +346,25 @@ module Crystal
           assign2 = Assign.new(temp_var_2, node.values[i])
           assign2.location = node.location
           assign_to_temps << assign2
-
-          assign2 = Assign.new(node.targets[i], temp_var_2)
-          assign2.location = node.location
-          assign_from_temps << assign2
+          assign_from_temps << transform_multi_assign_target(node.targets[i], temp_var_2)
         end
 
         exps = Expressions.new(assign_to_temps + assign_from_temps)
       end
       exps.location = node.location
       exps.transform(self)
+    end
+
+    def transform_multi_assign_target(target, value)
+      if target.is_a?(Call)
+        target.name = "#{target.name}="
+        target.args << value
+        target
+      else
+        assign = Assign.new(target, value)
+        assign.location = target.location
+        assign
+      end
     end
 
     def transform(node : Var)
