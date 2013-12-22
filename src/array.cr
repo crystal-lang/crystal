@@ -436,6 +436,17 @@ class Array(T)
     end
   end
 
+  def swap(index0, index1)
+    index0 += length if index0 < 0
+    index1 += length if index1 < 0
+
+    raise IndexOutOfBounds.new if index0 >= length || index0 < 0 || index1 >= length || index1 < 0
+
+    @buffer[index0], @buffer[index1] = @buffer[index1], @buffer[index0]
+
+    self
+  end
+
   def ==(other : Array)
     return false if @length != other.length
     each_with_index do |item, i|

@@ -465,4 +465,36 @@ describe "Array" do
       [[1, 2], [3, 4]].flat_map { |e| e + [100] }.should eq([1, 2, 100, 3, 4, 100])
     end
   end
+
+  describe "swap" do
+    it "swaps" do
+      a = [1, 2, 3]
+      a.swap(0, 2)
+      a.should eq([3, 2, 1])
+    end
+
+    it "swaps with negative indices" do
+      a = [1, 2, 3]
+      a.swap(-3, -1)
+      a.should eq([3, 2, 1])
+    end
+
+    it "swaps but raises out of bounds on left" do
+      a = [1, 2, 3]
+      begin
+        a.swap(3, 0)
+        fail "expected swap to fail"
+      rescue IndexOutOfBounds
+      end
+    end
+
+    it "swaps but raises out of bounds on right" do
+      a = [1, 2, 3]
+      begin
+        a.swap(0, 3)
+        fail "expected swap to fail"
+      rescue IndexOutOfBounds
+      end
+    end
+  end
 end
