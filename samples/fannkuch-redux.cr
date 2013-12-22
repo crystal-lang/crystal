@@ -72,6 +72,6 @@ def fannkuch(n)
   end
 end
 
-n = (ARGV[0] || 1).to_i
+n = (ARGV[0]? || 10).to_i
 sum, flips = fannkuch(n)
 puts "#{sum}\nPfannkuchen(#{n}) = #{flips}"

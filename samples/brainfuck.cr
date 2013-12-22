@@ -69,8 +69,8 @@ class Program
 
   def self.parse(text)
     parsed = ""
-    bracket_map = Hash(Int32, Int32).new
-    leftstack = Array(Int32).new
+    bracket_map = {} of Int32 => Int32
+    leftstack = [] of Int32
     pc = 0
     text.each_char do |char|
       if ['[', ']', '<', '>', '+', '-', ',', '.'].includes?(char)
