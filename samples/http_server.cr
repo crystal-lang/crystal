@@ -14,6 +14,7 @@ while true
       sock.print "\r\n"
       sock.print "Hello world!"
       sock.flush
+      sock.close
     end
   end
 end
