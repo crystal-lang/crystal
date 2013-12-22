@@ -36,33 +36,21 @@ class Program
     @pc = 0
   end
 
-  def text
-    @text
-  end
-
-  def bracket_map
-    @bracket_map
-  end
-
-  def tape
-    @tape
-  end
-
   def step(code)
     case code
-      when '>'; tape.advance
-      when '<'; tape.devance
-      when '+'; tape.inc
-      when '-'; tape.dec
-      when '.'; print(tape.get.chr)
-      when '['; @pc = bracket_map[@pc] if tape.get == 0
-      when ']'; @pc = bracket_map[@pc] if tape.get != 0
+      when '>'; @tape.advance
+      when '<'; @tape.devance
+      when '+'; @tape.inc
+      when '-'; @tape.dec
+      when '.'; print(@tape.get.chr)
+      when '['; @pc = @bracket_map[@pc] if @tape.get == 0
+      when ']'; @pc = @bracket_map[@pc] if @tape.get != 0
     end
   end
 
   def run
-    while @pc < text.length
-      step(text[@pc])
+    while @pc < @text.length
+      step(@text[@pc])
       @pc += 1
     end
   end
