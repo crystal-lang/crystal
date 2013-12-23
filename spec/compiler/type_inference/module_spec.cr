@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Type inference: module" do
@@ -223,5 +223,29 @@ describe "Type inference: module" do
       require \"prelude\"
       (1..3).map { |x| x * 0.5 }
       ") { array_of(float64) }
+  end
+
+  it "declares module automatically if not previously declared when declaring a class" do
+    assert_type("
+      class Foo::Bar
+      end
+      Foo
+      ") {
+      foo = types["Foo"]
+      foo.module?.should be_true
+      foo.metaclass
+    }
+  end
+
+  it "declares module automatically if not previously declared when declaring a module" do
+    assert_type("
+      module Foo::Bar
+      end
+      Foo
+      ") {
+      foo = types["Foo"]
+      foo.module?.should be_true
+      foo.metaclass
+    }
   end
 end

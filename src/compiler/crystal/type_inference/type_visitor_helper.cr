@@ -14,7 +14,7 @@ module Crystal
         name = node.name.names.first
       else
         name = node.name.names.pop
-        scope = lookup_ident_type node.name
+        scope = lookup_ident_type node.name, true
       end
 
       type = scope.types[name]?
@@ -56,7 +56,7 @@ module Crystal
         name = node.name.names.first
       else
         name = node.name.names.pop
-        scope = lookup_ident_type node.name
+        scope = lookup_ident_type node.name, true
       end
 
       type = scope.types[name]?
@@ -293,8 +293,8 @@ module Crystal
       instance_type
     end
 
-    def lookup_ident_type(node : Ident)
-      target_type = resolve_ident(node)
+    def lookup_ident_type(node : Ident, create_modules_if_missing = false)
+      target_type = resolve_ident(node, create_modules_if_missing)
       if target_type.is_a?(Type)
         target_type.remove_alias_if_simple
       else
@@ -306,7 +306,7 @@ module Crystal
       raise "lookup_ident_type not implemented for #{node}"
     end
 
-    def resolve_ident(node : Ident)
+    def resolve_ident(node : Ident, create_modules_if_missing = false)
       free_vars = @free_vars
       if free_vars && !node.global && (type = free_vars[node.names.first]?)
         if node.names.length == 1
@@ -314,10 +314,26 @@ module Crystal
         else
           target_type = type.not_nil!.lookup_type(node.names[1 .. -1])
         end
-      elsif node.global
-        target_type = mod.lookup_type node.names
       else
-        target_type = (@scope || @types.last).lookup_type node
+        base_lookup = node.global ? mod : (@scope || @types.last)
+        target_type = base_lookup.lookup_type node
+
+        if !target_type && create_modules_if_missing
+          next_type = base_lookup
+          node.names.each do |name|
+            next_type = base_lookup.lookup_type([name])
+            if next_type
+              if next_type.is_a?(ASTNode)
+                node.raise "execpted #{name} to be a type"
+              end
+            else
+              next_type = NonGenericModuleType.new(@mod, base_lookup, name)
+              base_lookup.types[name] = next_type
+            end
+            base_lookup = next_type
+          end
+          target_type = next_type
+        end
       end
 
       unless target_type
