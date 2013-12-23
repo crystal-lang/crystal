@@ -1982,7 +1982,7 @@ module Crystal
 
         accept(node.target_def.body)
 
-        if node.target_def.no_returns? || node.target_def.body.no_returns?
+        if node.target_def.no_returns? || node.target_def.body.no_returns? || node.target_def.body.returns?
           @builder.unreachable
         else
           node_target_def_type = node.target_def.type?
