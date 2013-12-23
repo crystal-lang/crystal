@@ -71,4 +71,5 @@ if [ ! -d  "$DEPS_DIR" ]; then
 fi
 
 export PATH="$DEPS_DIR/llvm/bin":$PATH
+export CRYSTAL_PATH="$SCRIPT_PATH/../src"
 "$DEPS_DIR/crystal" "$@"

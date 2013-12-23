@@ -841,8 +841,10 @@ module Crystal
 
     def transform(node : Require)
       location = node.location
-      required = @program.require(node.string, location.try &.filename)
-      required ? required.transform(self) : Nop.new
+      required = @program.require(node.string, location.try &.filename).not_nil!
+      required.transform(self)
+    rescue ex
+      node.raise ex.message
     end
 
     def eval_flags(node)

@@ -85,6 +85,7 @@ module Crystal
       @temp_var_counter = 0
       @type_id_counter = 0
       @nil_var = Var.new("<nil_var>", self.nil)
+      @crystal_path = (ENV["CRYSTAL_PATH"] || "").split(':')
 
       define_primitives
     end
@@ -188,18 +189,20 @@ module Crystal
       @funs[type_ids] ||= FunType.new(self, types)
     end
 
-    def require(filename, relative_to = nil)
+    def require(filename, relative_to_filename = nil)
       if File.exists?(filename) && filename[0] == '/'
         return require_absolute filename
       end
 
+      relative_to_filename = File.dirname(relative_to_filename) if relative_to_filename.is_a?(String)
+      require_relative_to_dir(filename, relative_to_filename, true)
+    end
+
+    def require_relative_to_dir(filename, relative_to, check_crystal_path)
       if relative_to.is_a?(String) && ((single = filename.ends_with?("/*")) || (multi = filename.ends_with?("/**")))
-        dir = File.dirname relative_to
         filename_dir_index = filename.rindex('/').not_nil!
         filename_dir = filename[0 .. filename_dir_index]
-      #   relative_dir = File.join(dir, $1)
-        relative_dir = "#{dir}/#{filename_dir}"
-      #   if File.directory?(relative_dir)
+        relative_dir = "#{relative_to}/#{filename_dir}"
         nodes = [] of ASTNode
         require_dir(relative_dir, nodes, multi)
         return Expressions.new(nodes)
@@ -207,16 +210,16 @@ module Crystal
 
       filename = "#{filename}.cr" unless filename.ends_with? ".cr"
       if relative_to.is_a?(String)
-        dir = File.dirname relative_to
-        # relative_filename = File.join(dir, filename)
-        relative_filename = "#{dir}/#{filename}"
+        relative_filename = "#{relative_to}/#{filename}"
         if File.exists?(relative_filename)
-          require_absolute relative_filename
-        else
-          require_from_load_path filename
+          return require_absolute relative_filename
         end
+      end
+
+      if check_crystal_path
+        require_from_crystal_path filename, relative_to
       else
-        require_from_load_path filename
+        nil
       end
     end
 
@@ -246,26 +249,31 @@ module Crystal
       dirs.each do |subdir|
         require_dir("#{dir}/#{subdir}", nodes, recursive)
       end
-
     end
 
-    def require_absolute(file)
-      file = "#{Dir.working_directory}/#{file}" unless file.starts_with?('/')
-      file = File.expand_path(file)
-      # file = File.absolute_path(file)
-      return nil if @requires.includes? file
+    def require_absolute(filename)
+      filename = "#{Dir.working_directory}/#{filename}" unless filename.starts_with?('/')
+      filename = File.expand_path(filename)
+      return Nop.new if @requires.includes? filename
 
-      @requires.add file
+      @requires.add filename
 
-      parser = Parser.new File.read(file)
-      parser.filename = file
+      parser = Parser.new File.read(filename)
+      parser.filename = filename
       parser.parse
     end
 
-    def require_from_load_path(file)
-      file = File.expand_path("src/#{file}")
-      # file = File.expand_path("../../../std/#{file}", __FILE__)
-      require_absolute file
+    def require_from_crystal_path(filename, relative_to)
+      @crystal_path.each do |path|
+        required = self.require_relative_to_dir(filename, path, false)
+        return required if required
+      end
+
+      if relative_to
+        raise "can't find require file '#{filename}' relative to '#{relative_to}'"
+      else
+        raise "can't find require file '#{filename}'"
+      end
     end
 
     def library_names
