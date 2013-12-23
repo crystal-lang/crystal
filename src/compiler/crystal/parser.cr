@@ -1448,6 +1448,7 @@ module Crystal
 
       if @token.keyword?(:end)
         body = Expressions.from(ivar_assigns)
+        next_token_skip_space
       else
         body = parse_expressions
         if ivar_assigns.length > 0
@@ -1462,8 +1463,6 @@ module Crystal
         end
         body = parse_exception_handler body
       end
-
-      next_token_skip_space
 
       pop_def
 

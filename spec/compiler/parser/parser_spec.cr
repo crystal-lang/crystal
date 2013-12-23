@@ -587,6 +587,8 @@ describe "Parser" do
   it_parses "@foo->bar->baz->coco", IndirectRead.new("@foo".instance_var, ["bar", "baz", "coco"])
   it_parses "@foo->bar->baz->coco = 1", IndirectWrite.new("@foo".instance_var, ["bar", "baz", "coco"], 1.int32)
 
+  it_parses "def foo\n1\nend\nif 1\nend", [Def.new("foo", ([] of Arg), 1.int32), If.new(1.int32)] of ASTNode
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
     assert_type node, Def
