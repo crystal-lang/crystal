@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Normalize: ssa" do
@@ -214,5 +214,9 @@ describe "Normalize: ssa" do
 
   it "performs on while which declares a var and uses it outside" do
     assert_normalize "while 1 == 2; a = 2; end; a", "a$1 = nil\nwhile 1 == 2\n  #temp_1 = a = 2\n  a$1 = a\n  #temp_1\nend\na$1"
+  end
+
+  it "performs on assignment to variable inside block" do
+    assert_normalize "if 1\n  a = 1\nelse\n  foo do\n    a = 2\n  end\n end", "if 1\n  #temp_2 = a = 1\n  a$3 = a\n  #temp_2\nelse\n  #temp_3 = begin\n    a$2 = nil\n    foo() do\n      #temp_1 = a$1 = 2\n      a$2 = a$1\n      #temp_1\n    end\n  end\n  a$3 = a$2\n  #temp_3\nend"
   end
 end

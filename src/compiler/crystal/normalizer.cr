@@ -450,13 +450,85 @@ module Crystal
         node = And.new(left, right)
         node = node.transform self
       else
-        node = super
+        node = transform_call_and_block(node)
       end
 
       reset_instance_variables_indices
 
       node
     end
+
+    def transform_call_and_block(call)
+      if call_obj = call.obj
+        call.obj = call_obj.transform(self)
+      end
+
+      transform_many call.args
+
+      if call_block_arg = call.block_arg
+        call.block_arg = call_block_arg.transform(self)
+      end
+
+      if block = call.block
+        if @in_initialize || @exception_handler_count > 0
+          call.block = block.transform(self)
+        else
+          before_vars = @vars.clone
+
+          block.args.each do |arg|
+            @vars[arg.name] = Index.new
+          end
+
+          vars_declared_in_body = [] of String
+
+          call.block = block = block.transform(self)
+
+          @vars.each do |name, indices|
+            before_indices = before_vars[name]?
+            if before_indices && !before_indices.read
+              vars_declared_in_body << name
+            end
+          end
+
+          block.args.each do |arg|
+            @vars.delete arg.name
+          end
+
+          after_body_vars = get_loop_vars(before_vars)
+
+          vars_declared_in_body.each do |var_name|
+            indices = @vars[var_name]
+            after_body_vars << assign_var_with_indices(var_name, indices.write, indices.read)
+          end
+
+          block.body = append_before_exits(block.body, before_vars, after_body_vars) if block.body && after_body_vars.length > 0
+
+          unless @dead_code
+            block.body = concat_preserving_return_value(block.body, after_body_vars)
+
+            if vars_declared_in_body.length > 0
+              exps = [] of ASTNode
+              vars_declared_in_body.each do |var_name|
+                indices = @vars[var_name]
+                exps << assign_var_with_indices(var_name, indices.write, nil)
+                increment_var(var_name, indices)
+              end
+              exps << call
+              call = Expressions.new(exps)
+            end
+          end
+
+          # Delete vars declared inside the block
+          block_vars = @vars.keys - before_vars.keys
+          block_vars.each do |block_var|
+            @vars.delete block_var
+          end
+        end
+      end
+
+      call
+    end
+
 
     def comparison?(name)
       case name
@@ -762,42 +834,6 @@ module Crystal
           exps << node
           node = Expressions.new(exps)
         end
-      end
-
-      node
-    end
-
-    def transform(node : Block)
-      return super if @in_initialize
-
-      before_vars = @vars.clone
-
-      node.args.each do |arg|
-        @vars[arg.name] = Index.new
-      end
-
-      transformed = super
-
-      if @exception_handler_count > 0
-        return transformed
-      end
-
-      node.args.each do |arg|
-        @vars.delete arg.name
-      end
-
-      after_body_vars = get_loop_vars(before_vars)
-
-      node.body = append_before_exits(node.body, before_vars, after_body_vars) if node.body && after_body_vars.length > 0
-
-      unless @dead_code
-        node.body = concat_preserving_return_value(node.body, after_body_vars)
-      end
-
-      # Delete vars declared inside the block
-      block_vars = @vars.keys - before_vars.keys
-      block_vars.each do |block_var|
-        @vars.delete block_var
       end
 
       node
