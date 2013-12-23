@@ -343,9 +343,9 @@ module Crystal
         assign_from_temps = [] of ASTNode
 
         temp_vars.each_with_index do |temp_var_2, i|
-          assign2 = Assign.new(temp_var_2, node.values[i])
-          assign2.location = node.location
-          assign_to_temps << assign2
+          assign = Assign.new(temp_var_2, node.values[i])
+          assign.location = node.location
+          assign_to_temps << assign
           assign_from_temps << transform_multi_assign_target(node.targets[i], temp_var_2)
         end
 
