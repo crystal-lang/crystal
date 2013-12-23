@@ -86,8 +86,13 @@ class File
   end
 
   def self.read_lines(filename)
-    contents = read(filename)
-    contents.split("\n")
+    lines = [] of String
+    File.open(filename, "r") do |file|
+      while line = file.gets
+        lines << line
+      end
+    end
+    lines
   end
 
   def input
