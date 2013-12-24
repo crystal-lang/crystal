@@ -2104,6 +2104,14 @@ module Crystal
       instance_type.base_type.metaclass.lookup_first_def(name, yields)
     end
 
+    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      instance_type.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    def parents
+      instance_type.base_type.parents.try &.map &.metaclass
+    end
+
     def hierarchy_lookup(type)
       type.metaclass
     end
