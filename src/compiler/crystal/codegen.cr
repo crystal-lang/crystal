@@ -2172,7 +2172,7 @@ module Crystal
 
       if body.is_a?(Primitive)
         old_type = @type
-        @type = self_type
+        @type = self_type.not_nil!
         codegen_primitive(body, target_def, call_args)
         @type = old_type
         return
@@ -2592,7 +2592,12 @@ module Crystal
     end
 
     def llvm_self
-      @vars["self"].pointer
+      self_var = @vars["self"]?
+      if self_var
+        self_var.pointer
+      else
+        int32(@type.type_id)
+      end
     end
 
     def llvm_self_ptr

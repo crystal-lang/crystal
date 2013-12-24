@@ -199,4 +199,40 @@ describe "Code gen: class" do
       Foo(1).foo
       ").to_i.should eq(1)
   end
+
+  it "calls class method without self" do
+    run("
+      class Foo
+        def self.coco
+          1
+        end
+
+        a = coco
+      end
+      a
+      ").to_i.should eq(1)
+  end
+
+  it "calls class method without self (2)" do
+    run("
+      class Foo
+        def self.coco
+          lala
+        end
+
+        def self.lala
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.lala
+          2
+        end
+
+        a = coco
+      end
+      a
+      ").to_i.should eq(2)
+  end
 end
