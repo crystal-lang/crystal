@@ -190,6 +190,13 @@ describe "String" do
       assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz"]) }
       assert { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(',').should eq(["foo"]) }
+      assert { "foo".split(' ').should eq(["foo"]) }
+      assert { "   foo".split(' ').should eq(["foo"]) }
+      assert { "foo   ".split(' ').should eq(["foo"]) }
+      assert { "   foo  bar".split(' ').should eq(["foo", "bar"]) }
+      assert { "   foo   bar\n\t  baz   ".split(' ').should eq(["foo", "bar", "baz"]) }
+      assert { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
+      assert { "   foo   bar\n\t  baz   ".split(" ").should eq(["foo", "bar", "baz"]) }
     end
 
     describe "by string" do
