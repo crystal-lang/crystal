@@ -453,6 +453,7 @@ describe "Parser" do
   it_parses "lib C; type A : B; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident)] of ASTNode)
   it_parses "lib C; type A : B*; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident.pointer_of)] of ASTNode)
   it_parses "lib C; type A : B**; end", LibDef.new("C", nil, [TypeDef.new("A", "B".ident.pointer_of.pointer_of)] of ASTNode)
+  it_parses "lib C; type A : B.class; end", LibDef.new("C", nil, [TypeDef.new("A", MetaclassNode.new("B".ident))] of ASTNode)
   it_parses "lib C; struct Foo; end end", LibDef.new("C", nil, [StructDef.new("Foo")] of ASTNode)
   it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident), Arg.new("y", nil, "Float".ident)])] of ASTNode)
   it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".ident.pointer_of)])] of ASTNode)

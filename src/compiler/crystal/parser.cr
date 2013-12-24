@@ -2176,13 +2176,13 @@ module Crystal
         case @token.type
         when :"?"
           type = IdentUnion.new([type, Ident.new(["Nil"], true)] of ASTNode)
-          next_token_skip_space_or_newline
+          next_token_skip_space
         when :"*"
           type = make_pointer_type(type)
-          next_token_skip_space_or_newline
+          next_token_skip_space
         when :"**"
           type = make_pointer_type(make_pointer_type(type))
-          next_token_skip_space_or_newline
+          next_token_skip_space
         when :"["
           next_token_skip_space
           check :NUMBER
@@ -2193,7 +2193,12 @@ module Crystal
           type = StaticArray.new(type, size)
         when :"+"
           type = Hierarchy.new(type)
-          next_token_skip_space_or_newline
+          next_token_skip_space
+        when :"."
+          next_token
+          check_ident :class
+          type = MetaclassNode.new(type)
+          next_token_skip_space
         else
           break
         end

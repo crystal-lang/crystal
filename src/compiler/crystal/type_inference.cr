@@ -727,6 +727,10 @@ module Crystal
       process_hierarchy(node)
     end
 
+    def end_visit(node : MetaclassNode)
+      process_metaclass_node(node)
+    end
+
     def visit(node : If)
       node.cond.accept self
       node_cond_type_filters = node.cond.type_filters

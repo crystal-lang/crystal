@@ -245,6 +245,11 @@ module Crystal
       node
     end
 
+    def transform(node : MetaclassNode)
+      node.name = node.name.transform(self)
+      node
+    end
+
     def transform(node : StaticArray)
       node.name = node.name.transform self
       node

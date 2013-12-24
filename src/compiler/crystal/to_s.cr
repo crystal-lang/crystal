@@ -495,6 +495,12 @@ module Crystal
       false
     end
 
+    def visit(node : MetaclassNode)
+      node.name.accept self
+      @str << ".class"
+      false
+    end
+
     def visit(node : StaticArray)
       node.name.accept self
       @str << "["

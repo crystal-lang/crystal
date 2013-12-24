@@ -263,6 +263,10 @@ module Crystal
       node.type = node.name.type.instance_type.hierarchy_type.metaclass
     end
 
+    def process_metaclass_node(node : MetaclassNode)
+      node.type = node.name.type.hierarchy_type.metaclass
+    end
+
     def process_new_generic_class(node : NewGenericClass)
       return if node.type?
 

@@ -147,6 +147,10 @@ module Crystal
       nil
     end
 
+    def restrict(other : MetaclassNode, owner, type_lookup, free_vars)
+      nil
+    end
+
     def restrict(other : ASTNode, owner, type_lookup, free_vars)
       raise "Bug: unsupported restriction: #{other}"
     end
@@ -315,6 +319,26 @@ module Crystal
         self
       else
         remove_alias.restrict(other, owner, type_lookup, free_vars)
+      end
+    end
+  end
+
+  class Metaclass
+    def restrict(other : MetaclassNode, owner, type_lookup, free_vars)
+      restricted = instance_type.restrict(other.name, owner, type_lookup, free_vars)
+      if restricted
+        self
+      else
+        nil
+      end
+    end
+
+    def restrict(other : HierarchyTypeMetaclass, owner, type_lookup, free_vars)
+      restricted = instance_type.restrict(other.instance_type.base_type, owner, type_lookup, free_vars)
+      if restricted
+        self
+      else
+        nil
       end
     end
   end

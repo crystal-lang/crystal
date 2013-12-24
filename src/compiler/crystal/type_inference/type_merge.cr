@@ -138,7 +138,8 @@ module Crystal
 
   class Metaclass
     def common_ancestor(other : Metaclass)
-      nil
+      common = instance_type.common_ancestor(other.instance_type)
+      common.try &.metaclass
     end
   end
 
@@ -151,6 +152,13 @@ module Crystal
   class HierarchyType
     def common_ancestor(other)
       base_type.common_ancestor(other)
+    end
+  end
+
+  class HierarchyTypeMetaclass
+    def common_ancestor(other)
+      common = instance_type.base_type.metaclass.common_ancestor(other)
+      common.try &.hierarchy_type
     end
   end
 end

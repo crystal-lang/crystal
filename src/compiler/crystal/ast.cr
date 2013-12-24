@@ -2770,6 +2770,32 @@ module Crystal
     end
   end
 
+  class MetaclassNode < ASTNode
+    @name :: ASTNode+
+
+    def initialize(@name)
+    end
+
+    def name=(@name)
+    end
+
+    def name
+      @name
+    end
+
+    def accept_children(visitor)
+      @name.accept visitor
+    end
+
+    def ==(other : self)
+      @name == other.name
+    end
+
+    def clone_without_location
+      MetaclassNode.new(@name.clone)
+    end
+  end
+
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     @name :: Symbol

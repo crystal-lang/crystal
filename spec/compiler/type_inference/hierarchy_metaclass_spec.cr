@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Type inference: hierarchy metaclass" do
@@ -79,5 +79,71 @@ describe "Type inference: hierarchy metaclass" do
       a = [Bar.new, Baz.new] of Foo
       b = a.map { |e| e.clone }
       ") { array_of(types["Foo"].hierarchy_type) }
+  end
+
+  it "merges metaclass types" do
+    assert_type("
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      Foo || Bar
+      ") { types["Foo"].hierarchy_type.metaclass }
+  end
+
+  it "merges metaclass types with 3 types" do
+    assert_type("
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      Foo || Bar || Baz
+      ") { types["Foo"].hierarchy_type.metaclass }
+  end
+
+  it "types metaclass node" do
+    assert_type("
+      class Foo
+      end
+
+      a :: Foo.class
+      a
+      ") { types["Foo"].hierarchy_type.metaclass }
+  end
+
+  it "allows passing metaclass to hierarchy metaclass restriction" do
+    assert_type("
+      class Foo
+      end
+
+      def foo(x : Foo.class)
+        x
+      end
+
+      foo(Foo)
+      ") { types["Foo"].metaclass }
+  end
+
+  it "allows passing metaclass to hierarchy metaclass restriction" do
+    assert_type("
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x : Foo.class)
+        x
+      end
+
+      foo(Bar)
+      ") { types["Bar"].metaclass }
   end
 end

@@ -659,7 +659,7 @@ module Crystal
         type_ptr = union_type_id call_args[0]
         @builder.load type_ptr
       else
-        int(node.type.instance_type.type_id)
+        int(node.type.type_id)
       end
     end
 
@@ -1298,6 +1298,8 @@ module Crystal
       if target_type == value_type
         value = @builder.load value if target_type.union? || (load_struct_and_union && (target_type.c_struct? || target_type.c_union?))
         @builder.store value, pointer
+      elsif target_type.is_a?(HierarchyTypeMetaclass) && value_type.is_a?(Metaclass)
+        @builder.store value, pointer
       # Hack until we fix it in the type inference
       elsif value_type.is_a?(HierarchyType) && value_type.base_type == target_type
         union_ptr = union_value value
@@ -1627,7 +1629,7 @@ module Crystal
       elsif replacement = node.syntax_replacement
         replacement.accept self
       else
-        @last = int(node.type.instance_type.type_id)
+        @last = int(node.type.type_id)
       end
       false
     end
@@ -2384,9 +2386,9 @@ module Crystal
       # Special case: if the type is Object+ we want to match against Reference+,
       # because Object+ can only mean a Reference type (so we exclude Nil, for example).
       type = @mod.reference.hierarchy_type if type == @mod.object.hierarchy_type
-      type = type.instance_type if type.hierarchy_metaclass?
+      # type = type.instance_type if type.hierarchy_metaclass?
 
-      if type.union?
+      if type.union? || type.hierarchy_metaclass?
         if type.is_a?(HierarchyType) && type.base_type.subclasses.empty?
           return @builder.icmp LibLLVM::IntPredicate::EQ, int(type.base_type.type_id), type_id
         end
@@ -2400,7 +2402,7 @@ module Crystal
       @builder.icmp LibLLVM::IntPredicate::EQ, int(type.type_id), type_id
     end
 
-    def create_match_fun(name, type : UnionType | HierarchyType)
+    def create_match_fun(name, type : UnionType | HierarchyType | HierarchyTypeMetaclass)
       @main_mod.functions.add(name, ([LLVM::Int32] of LibLLVM::TypeRef), LLVM::Int1) do |func|
         type_id = func.get_param(0)
         func.append_basic_block("entry") do |builder|

@@ -1657,6 +1657,10 @@ module Crystal
       true
     end
 
+    def hierarchy_type
+      instance_type.hierarchy_type.metaclass
+    end
+
     def types
       raise "Metaclass doesn't have types"
     end
@@ -1881,15 +1885,13 @@ module Crystal
       concrete_classes = cover()
       concrete_classes = [concrete_classes] of Type if concrete_classes.is_a?(Type)
 
-      unless base_type_lookup.abstract && name == "allocate"
-        base_type_matches = base_type_lookup.lookup_matches(name, arg_types, yields, self)
-        if !base_type.abstract && !base_type_matches.cover_all?
-          return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
-        end
+      base_type_matches = base_type_lookup.lookup_matches(name, arg_types, yields, self)
+      if !base_type.abstract && !base_type_matches.cover_all?
+        return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
       end
 
       all_matches = {} of Int32 => Matches
-      matches = (base_type_matches && base_type_matches.matches) || [] of Match
+      matches = base_type_matches.matches
 
       instance_type.subtypes(base_type).each do |subtype|
         unless subtype.value?
@@ -2116,6 +2118,12 @@ module Crystal
 
     def metaclass?
       true
+    end
+
+    def each_concrete_type
+      instance_type.each_concrete_type do |type|
+        yield type.metaclass
+      end
     end
 
     def to_s

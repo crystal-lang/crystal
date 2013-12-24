@@ -360,7 +360,7 @@ describe "Code gen: hierarchy type" do
     ").to_i.should eq(1)
   end
 
-  it "calls class method 1" do
+  pending "calls class method 1" do
     run("
       class Foo
         def self.foo
@@ -378,7 +378,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(1)
   end
 
-  it "calls class method 2" do
+  pending "calls class method 2" do
     run("
       class Foo
         def self.foo
@@ -396,7 +396,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(2)
   end
 
-  it "calls class method 3" do
+  pending "calls class method 3" do
     run("
       class Base
         def self.foo
@@ -415,5 +415,65 @@ describe "Code gen: hierarchy type" do
 
       (Foo.new || Base.new).class.foo
       ").to_i.should eq(1)
+  end
+
+  it "dispatches on hierarchy metaclass (1)" do
+    run("
+      class Foo
+        def self.coco
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.coco
+          2
+        end
+      end
+
+      some_long_var = Foo || Bar
+      some_long_var.coco
+      ").to_i.should eq(1)
+  end
+
+  it "dispatches on hierarchy metaclass (2)" do
+    run("
+      class Foo
+        def self.coco
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.coco
+          2
+        end
+      end
+
+      some_long_var = Bar || Foo
+      some_long_var.coco
+      ").to_i.should eq(2)
+  end
+
+  it "dispatches on hierarchy metaclass (3)" do
+    run("
+      class Foo
+        def self.coco
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.coco
+          2
+        end
+      end
+
+      class Baz < Bar
+      end
+
+      some_long_var = Baz || Foo
+      some_long_var.coco
+      ").to_i.should eq(2)
   end
 end

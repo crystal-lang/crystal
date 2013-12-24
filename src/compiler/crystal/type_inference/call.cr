@@ -569,10 +569,12 @@ module Crystal
     end
 
     def define_new(scope, arg_types)
-      # if scope.instance_type.hierarchy?
-      #   matches = define_new_recursive(scope.instance_type.base_type, arg_types)
-      #   return Matches.new(matches, scope)
-      # end
+      instance_type = scope.instance_type
+
+      if instance_type.is_a?(HierarchyType)
+        matches = define_new_recursive(instance_type.base_type, arg_types)
+        return Matches.new(matches, scope)
+      end
 
       matches = scope.instance_type.lookup_matches("initialize", arg_types, !!block)
       if matches.empty?
@@ -659,6 +661,20 @@ module Crystal
         new_match
       end
       Matches.new(ms, true)
+    end
+
+    def define_new_recursive(owner, arg_types, matches = [] of Match)
+      unless owner.abstract
+        owner_matches = define_new(owner.metaclass, arg_types)
+        matches.concat owner_matches.matches
+      end
+
+      owner.subclasses.each do |subclass|
+        subclass_matches = define_new_recursive(subclass, arg_types)
+        matches.concat subclass_matches
+      end
+
+      matches
     end
 
     class PreparedTypedDef
