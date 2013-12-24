@@ -50,7 +50,9 @@ class Dir
 
   def self.list(dirname)
     dir = C.opendir(dirname)
-    raise Errno.new unless dir
+    unless dir
+      raise Errno.new("Error listing directory '#{dirname}'")
+    end
 
     begin
       while ent = C.readdir(dir)

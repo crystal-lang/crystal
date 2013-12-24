@@ -4,7 +4,7 @@ lib C
 end
 
 class Errno < Exception
-  def initialize
-    super String.new(C.strerror(C.errno))
+  def initialize(message)
+    super "#{message}: #{String.new(C.strerror(C.errno))}"
   end
 end

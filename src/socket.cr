@@ -64,7 +64,7 @@ class TCPSocket < Socket
   def initialize(host, port)
     server = C.gethostbyname(host)
     unless server
-      raise Errno.new
+      raise Errno.new("Error resolving hostname '#{host}'")
     end
 
     @sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
@@ -75,7 +75,7 @@ class TCPSocket < Socket
     addr->port = C.htons(port)
 
     if C.connect(@sock, addr, 16) != 0
-      raise Errno.new
+      raise Errno.new("Error connecting to '#{host}:#{port}'")
     end
 
     super @sock
@@ -93,7 +93,7 @@ class TCPSocket < Socket
   def close
     flush
     if C.close(@sock) != 0
-      raise Errno.new
+      raise Errno.new("Error closing TCP socket")
     end
   end
 end
@@ -107,11 +107,11 @@ class TCPServer
     addr->addr = 0_u32
     addr->port = C.htons(port)
     if C.bind(@sock, addr, 16) != 0
-      raise Errno.new
+      raise Errno.new("Error binding TCP server at #{port}")
     end
 
     if C.listen(@sock, 5) != 0
-      raise Errno.new
+      raise Errno.new("Error listening TCP server at #{port}")
     end
   end
 

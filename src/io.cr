@@ -203,13 +203,17 @@ end
 
 def system(command)
   pipe = C.popen(command, "r")
-  raise Errno.new unless pipe
+  unless pipe
+    raise Errno.new("Error executing system command '#{command}'")
+  end
   C.pclose(pipe)
 end
 
 def system2(command)
   pipe = C.popen(command, "r")
-  raise Errno.new unless pipe
+  unless pipe
+    raise Errno.new("Error executing system command '#{command}'")
+  end
   begin
     stream = FileStream.new(pipe)
     output = [] of String

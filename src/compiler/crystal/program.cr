@@ -121,7 +121,9 @@ module Crystal
 
       def initialize(command)
         @input = C.popen(command, "r")
-        raise Errno.new unless @input
+        unless @input
+          raise Errno.new("Error opening pipe for executing '#{command}'")
+        end
       end
 
       def close

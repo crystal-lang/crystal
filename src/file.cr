@@ -5,6 +5,9 @@ class File
 
   def initialize(filename, mode)
     @file = C.fopen filename, mode
+    unless @file
+      raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
+    end
   end
 
   def self.exists?(filename)
@@ -39,7 +42,7 @@ class File
   def self.delete(filename)
     err = C.unlink(filename)
     if err == -1
-      raise Errno.new
+      raise Errno.new("Error deleting file '#{filename}'")
     end
   end
 
@@ -57,7 +60,9 @@ class File
 
   def self.expand_path(filename)
     str = C.realpath(filename, nil)
-    raise Errno.new unless str
+    unless str
+      raise Errno.new("Error expanding path '#{filename}'")
+    end
 
     length = C.strlen(str)
     String.new(str, length)
@@ -74,7 +79,9 @@ class File
 
   def self.read(filename)
     f = C.fopen(filename, "r")
-    raise Errno.new unless f
+    unless f
+      raise Errno.new("Error reading file '#{filename}'")
+    end
 
     C.fseeko(f, 0_i64, C::SEEK_END)
     size = C.ftello(f)
