@@ -381,55 +381,61 @@ class String
   end
 
   def split
-    split(' ')
+    ary = Array(String).new
+    index = 0
+    buffer = cstr
+    len = length
+    i = 0
+    looking_for_space = false
+    while i < len
+      if looking_for_space
+        while i < len
+          c = buffer[i]
+          i += 1
+          if c.whitespace?
+            ary.push String.new(buffer + index, i - 1 - index)
+            looking_for_space = false
+            break
+          end
+        end
+      else
+        while i < len
+          c = buffer[i]
+          i += 1
+          unless c.whitespace?
+            index = i - 1
+            looking_for_space = true
+            break
+          end
+        end
+      end
+    end
+    if looking_for_space
+      ary.push String.new(buffer + index, len - index)
+    end
+    ary
   end
 
   def split(separator : Char)
+    if separator == ' '
+      return split
+    end
+
     ary = Array(String).new
     index = 0
     buffer = cstr
     len = length
 
-    if separator == ' '
-      i = 0
-      looking_for_space = false
-      while i < len
-        if looking_for_space
-          while i < len
-            c = buffer[i]
-            i += 1
-            if c.whitespace?
-              ary.push String.new(buffer + index, i - 1 - index)
-              looking_for_space = false
-              break
-            end
-          end
-        else
-          while i < len
-            c = buffer[i]
-            i += 1
-            unless c.whitespace?
-              index = i - 1
-              looking_for_space = true
-              break
-            end
-          end
-        end
-      end
-      if looking_for_space
-        ary.push String.new(buffer + index, len - index)
-      end
-    else
-      len.times do |j|
-        if buffer[j] == separator
-          ary.push String.new(buffer + index, j - index)
-          index = j + 1
-        end
-      end
-      if index != len
-        ary.push String.new(buffer + index, len - index)
+    len.times do |j|
+      if buffer[j] == separator
+        ary.push String.new(buffer + index, j - index)
+        index = j + 1
       end
     end
+    if index != len
+      ary.push String.new(buffer + index, len - index)
+    end
+
     ary
   end
 
@@ -439,16 +445,17 @@ class String
     buffer = cstr
     separator_length = separator.length
 
-    # Special case: return all chars as strings
     case separator_length
     when 0
+      # Special case: return all chars as strings
       each_char do |c|
         ary.push c.to_s
       end
       return ary
     when 1
+      # Another special case: split ignoring empty results
       if separator[0] == ' '
-        return split(' ')
+        return split
       end
     end
 
