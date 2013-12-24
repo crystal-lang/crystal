@@ -1911,7 +1911,9 @@ module Crystal
         if yield_scope = @vars["%scope"]?
           call_args << yield_scope.pointer
         else
+          old_type, @type = @type, owner
           call_args << llvm_self
+          @type = old_type
         end
       end
 
