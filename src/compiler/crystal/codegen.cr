@@ -2172,7 +2172,7 @@ module Crystal
 
       if body.is_a?(Primitive)
         old_type = @type
-        @type = self_type.not_nil!
+        @type = self_type
         codegen_primitive(body, target_def, call_args)
         @type = old_type
         return
@@ -2596,7 +2596,7 @@ module Crystal
       if self_var
         self_var.pointer
       else
-        int32(@type.type_id)
+        int32(@type.not_nil!.type_id)
       end
     end
 
