@@ -431,6 +431,7 @@ class Array(T)
   end
 
   def *(mul : Int)
+    raise ArgumentError.new("mul #{mul} should be > 0") if mul <= 0
     ary = Array(T).new(length * mul)
     ary.length = length * mul
     mul.times do |i|
@@ -444,6 +445,7 @@ class Array(T)
   end
 
   def *(ary : Array(T))
+    raise ArgumentError.new("ary should not be empty") if ary.empty?
     res = [] of Array(T)
     Array.product([self, ary]) { |a| res << a.not_nil! }
     res
