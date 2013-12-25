@@ -430,6 +430,27 @@ class Array(T)
     self
   end
 
+  def *(mul : Int)
+    raise ArgumentError.new("mul #{mul} should be > 0") if mul <= 0
+    ary = Array(T).new(length * mul)
+    ary.length = length * mul
+    mul.times do |i|
+      (ary.buffer + i * length).memcpy(buffer, length)
+    end
+    ary
+  end
+
+  def *(str : String)
+    join(str)
+  end
+
+  def *(ary : Array(T))
+    raise ArgumentError.new("ary should not be empty") if ary.empty?
+    res = [] of Array(T)
+    Array.product([self, ary]) { |a| res << a.not_nil! }
+    res
+  end
+
   def zip(other : Array)
     each_with_index do |elem, i|
       yield elem, other[i]
@@ -592,6 +613,27 @@ class Array(T)
     end
     quicksort!(a, (r - a) + 1)
     quicksort!(l, (a + n) - l)
+  end
+
+  def self.product(arrs, &block)
+    pool = arrs.map &.first
+    lens = arrs.map &.size
+    n = arrs.size
+    indices = [0] * n
+    yield pool.dup
+    while true
+      i = n - 1
+      indices[i] += 1
+      while indices[i] >= lens[i]
+        indices[i] = 0
+        pool[i] = arrs[i][indices[i]]
+        i -= 1
+        return if i < 0
+        indices[i] += 1
+      end
+      pool[i] = arrs[i][indices[i]]
+      yield pool.dup
+    end
   end
 
   @length :: Int32

@@ -116,6 +116,30 @@ describe "Array" do
     end
   end
 
+  describe "*" do
+    it "mul int" do
+      a = [1, 2] * 3
+      a.should eq([1, 2, 1, 2, 1, 2])
+    end
+
+    it "mul string" do
+      a = [1, 2] * ","
+      a.should eq("1,2")
+    end
+
+    it "mul array" do
+      a = [1, 2] * [3, 4, 5]
+      a.should eq([[1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5]])
+    end
+
+    it "product" do
+      res = [] of Array(Int32)
+      Array.product([[1, 2], [3], [5, 6], [7, 8, 9]]) { |a| res << a if a }
+      expect = [[1, 3, 5, 7], [1, 3, 5, 8], [1, 3, 5, 9], [1, 3, 6, 7], [1, 3, 6, 8], [1, 3, 6, 9], [2, 3, 5, 7], [2, 3, 5, 8], [2, 3, 5, 9], [2, 3, 6, 7], [2, 3, 6, 8], [2, 3, 6, 9]]
+      res.should eq(expect)
+    end
+  end
+
   describe "index" do
     it "performs without a block" do
       a = [1, 2, 3]
