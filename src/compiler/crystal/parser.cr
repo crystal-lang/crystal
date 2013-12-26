@@ -416,6 +416,14 @@ module Crystal
         case @token.type
         when :SPACE
           next_token
+        when :IDENT
+          if @token.keyword?(:as)
+            next_token_skip_space
+            to = parse_single_type
+            atomic = Cast.new(atomic, to)
+          else
+            break
+          end
         when :"."
           next_token_skip_space_or_newline
           check AtomicWithMethodCheck
@@ -1902,6 +1910,10 @@ module Crystal
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false)
+      if @token.keyword?(:as)
+        return nil
+      end
+
       case @token.type
       when :"&"
         return nil if @buffer.value.whitespace?

@@ -590,6 +590,10 @@ describe "Parser" do
 
   it_parses "def foo\n1\nend\nif 1\nend", [Def.new("foo", ([] of Arg), 1.int32), If.new(1.int32)] of ASTNode
 
+  it_parses "1 as Bar", Cast.new(1.int32, "Bar".ident)
+  it_parses "foo as Bar", Cast.new("foo".call, "Bar".ident)
+  it_parses "foo.bar as Bar", Cast.new(Call.new("foo".call, "bar"), "Bar".ident)
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
     assert_type node, Def

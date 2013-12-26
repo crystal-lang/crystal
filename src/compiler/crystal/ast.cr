@@ -2796,6 +2796,41 @@ module Crystal
     end
   end
 
+  class Cast < ASTNode
+    @obj :: ASTNode+
+    @to :: ASTNode+
+
+    def initialize(@obj, @to)
+    end
+
+    def obj=(@obj)
+    end
+
+    def obj
+      @obj
+    end
+
+    def to=(@to)
+    end
+
+    def to
+      @to
+    end
+
+    def accept_children(visitor)
+      @obj.accept visitor
+      @to.accept visitor
+    end
+
+    def ==(other : self)
+      @obj == other.obj && @to == other.to
+    end
+
+    def clone_without_location
+      Cast.new(@obj.clone, @to.clone)
+    end
+  end
+
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     @name :: Symbol

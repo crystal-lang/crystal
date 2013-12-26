@@ -464,6 +464,12 @@ module Crystal
       node
     end
 
+    def transform(node : Cast)
+      node.obj = node.obj.transform(self)
+      node.to = node.to.transform(self)
+      node
+    end
+
     def transform(node : DeclareVar)
       node.var = node.var.transform(self)
       node.declared_type = node.declared_type.transform(self)

@@ -453,6 +453,8 @@ module Crystal
           if next_char == 'i' && next_char == 'a' && next_char == 's'
             return check_ident_or_keyword(:alias, start, start_column)
           end
+        when 's'
+          return check_ident_or_keyword(:as, start, start_column)
         end
         scan_ident(start, start_column)
       when 'b'
