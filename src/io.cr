@@ -21,6 +21,10 @@ lib C
   fun unlink(filename : Char*) : Char*
   fun popen(command : Char*, mode : Char*) : File
   fun pclose(stream : File) : Int32
+  fun execl(path : Char*, arg0 : Char*, ...) : Int32
+  fun waitpid(pid : Int32, stat_loc : Int32*, options : Int32) : Int32
+  fun open(path : Char*, oflag : Int32) : Int32
+  fun dup2(fd : Int32, fd2 : Int32) : Int32
 
   ifdef x86_64
     fun fseeko(file : File, offset : Int64, whence : Int32) : Int32
@@ -202,11 +206,20 @@ def p(obj)
 end
 
 def system(command)
-  pipe = C.popen(command, "r")
-  unless pipe
+  pid = fork do
+    # Redirect STDOUT to /dev/null
+    null = C.open("/dev/null", 1)
+    C.dup2(null, 1)
+
+    C.execl("/bin/sh", command, "-c", command, nil)
+  end
+
+  if pid == -1
     raise Errno.new("Error executing system command '#{command}'")
   end
-  C.pclose(pipe)
+
+  C.waitpid(pid, out stat, 0)
+  stat
 end
 
 def system2(command)
