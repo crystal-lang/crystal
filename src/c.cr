@@ -17,8 +17,8 @@ def sleep(seconds)
   C.sleep seconds.to_u32
 end
 
-def fork(&block)
-  Process.fork(&block)
+def fork
+  Process.fork { yield }
 end
 
 def fork()
