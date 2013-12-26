@@ -204,4 +204,18 @@ describe "Code gen: struct" do
       f->y
       ").to_i.should eq(1)
   end
+
+  it "codegens assign struct to union" do
+    run("
+      lib Foo
+        struct Coco
+          x : Int32
+        end
+      end
+
+      x :: Foo::Coco
+      c = x || 0
+      c.is_a?(Foo::Coco)
+    ").to_b.should be_true
+  end
 end
