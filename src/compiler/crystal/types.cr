@@ -1504,6 +1504,10 @@ module Crystal
       true
     end
 
+    def passed_by_val?
+      true
+    end
+
     def primitive_like?
       true
     end
@@ -1556,6 +1560,10 @@ module Crystal
     end
 
     def c_union?
+      true
+    end
+
+    def passed_by_val?
       true
     end
 

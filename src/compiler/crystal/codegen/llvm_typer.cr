@@ -163,6 +163,14 @@ module Crystal
       LLVM.pointer_type llvm_type(type)
     end
 
+    def create_llvm_arg_type(type : CStructType)
+      LLVM.pointer_type llvm_type(type)
+    end
+
+    def create_llvm_arg_type(type : CUnionType)
+      LLVM.pointer_type llvm_type(type)
+    end
+
     def create_llvm_arg_type(type : NilableType)
       llvm_type(type)
     end

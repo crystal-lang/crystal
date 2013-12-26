@@ -1931,13 +1931,6 @@ module Crystal
           end
         else
           accept(arg)
-
-          if arg.type?
-            if !node.target_def.body.is_a?(Primitive) && (arg.type.c_struct? || arg.type.c_union?)
-              @last = @builder.load @last
-            end
-          end
-
           call_args << @last
         end
       end
