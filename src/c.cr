@@ -13,6 +13,11 @@ def exit(status = 0)
   Process.exit(status)
 end
 
+def abort(message, status = 1)
+  puts message
+  exit status
+end
+
 def sleep(seconds)
   C.sleep seconds.to_u32
 end
