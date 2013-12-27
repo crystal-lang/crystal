@@ -1,4 +1,5 @@
 require "socket"
+require "uri"
 
 class HTTPRequest
   def initialize(@host, @port, method, @path, @headers = nil)
@@ -53,5 +54,10 @@ class HTTPClient
       socket.flush
       HTTPResponse.from_io(socket)
     end
+  end
+
+  def self.get(url : String)
+    uri = URI.parse(url)
+    get(uri.host, uri.port, uri.full_path)
   end
 end
