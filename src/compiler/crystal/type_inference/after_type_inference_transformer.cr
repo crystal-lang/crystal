@@ -239,6 +239,24 @@ module Crystal
       node
     end
 
+    def transform(node : Cast)
+      node = super
+
+      obj_type = node.obj.type?
+      return node unless obj_type
+
+      to_type = node.to.type.instance_type
+
+      unless obj_type.pointer?
+        resulting_type = obj_type.filter_by(to_type)
+        unless resulting_type
+          node.raise "can't cast #{node.obj.type} to #{node.to.type.instance_type}"
+        end
+      end
+
+      node
+    end
+
     def transform(node : FunDef)
       node_body = node.body
       return node unless node_body

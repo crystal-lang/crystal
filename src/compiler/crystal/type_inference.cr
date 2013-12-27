@@ -549,20 +549,8 @@ module Crystal
     end
 
     def end_visit(node : Cast)
-      obj_type = node.obj.type
-      to_type = node.to.type.instance_type
-
-      if obj_type.pointer?
-        resulting_type = to_type
-      else
-        resulting_type = obj_type.filter_by(to_type)
-      end
-
-      if resulting_type
-        node.type = resulting_type
-      else
-        node.raise "can't cast #{obj_type} to #{to_type}"
-      end
+      node.obj.add_observer node
+      node.update
     end
 
     def end_visit(node : RespondsTo)

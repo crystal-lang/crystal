@@ -1408,32 +1408,35 @@ module Crystal
 
     def visit(node : CastedVar)
       var = @vars[node.name]
-      var_type = var.type
-      @last = var.pointer
-      if var_type == @mod.void
+      cast_value var.pointer, node.type, var.type, var.treated_as_pointer
+    end
+
+    def cast_value(value, to_type, from_type, treated_as_pointer = false)
+      @last = value
+      if from_type == @mod.void
         # Nothing to do
-      elsif var_type == node.type
-        @last = @builder.load(@last) unless (var.treated_as_pointer || var_type.union?)
-      elsif var_type.is_a?(NilableType)
-        if node.type.nil_type?
+      elsif from_type == to_type
+        @last = @builder.load(@last) unless (treated_as_pointer || from_type.union?)
+      elsif from_type.is_a?(NilableType)
+        if to_type.nil_type?
           @last = llvm_nil
-        elsif node.type == @mod.object
+        elsif to_type == @mod.object
           @last = cast_to @last, @mod.object
-        elsif node.type == @mod.object.hierarchy_type
-          @last = box_object_in_hierarchy(var.type, node.type, var.pointer, !var.treated_as_pointer)
+        elsif to_type == @mod.object.hierarchy_type
+          @last = box_object_in_hierarchy(from_type, to_type, @last, !treated_as_pointer)
         else
-          @last = @builder.load(@last, node.name) unless var.treated_as_pointer
-          if node.type.hierarchy?
-            @last = box_object_in_hierarchy(var_type.not_nil_type, node.type, @last, !var.treated_as_pointer)
+          @last = @builder.load(@last) unless treated_as_pointer
+          if to_type.hierarchy?
+            @last = box_object_in_hierarchy(from_type.not_nil_type, to_type, @last, !treated_as_pointer)
           end
         end
-      elsif var.type.metaclass?
+      elsif from_type.metaclass?
         # Nothing to do
-      elsif node.type.union?
-        @last = cast_to_pointer @last, node.type
+      elsif to_type.union?
+        @last = cast_to_pointer @last, to_type
       else
         value_ptr = union_value(@last)
-        casted_value_ptr = cast_to_pointer value_ptr, node.type
+        casted_value_ptr = cast_to_pointer value_ptr, to_type
         @last = @builder.load(casted_value_ptr)
       end
     end
@@ -1499,6 +1502,49 @@ module Crystal
     def visit(node : IsA)
       const_type = node.const.type.instance_type
       codegen_type_filter node, &.implements?(const_type)
+    end
+
+    def visit(node : Cast)
+      node.obj.accept self
+      last_value = @last
+
+      obj_type = node.obj.type
+      to_type = node.to.type.instance_type
+
+      if obj_type.pointer?
+        resulting_type = to_type
+      else
+        resulting_type = obj_type.filter_by(to_type).not_nil!
+      end
+
+      if obj_type.pointer?
+        @last = cast_to last_value, resulting_type
+      elsif obj_type.union?
+        type_id_ptr, value_ptr = union_type_id_and_value last_value
+        type_id = @builder.load type_id_ptr
+
+        cmp = match_any_type_id resulting_type, type_id
+
+        matches_block, doesnt_match_block = new_blocks ["matches", "doesnt_match"]
+        @builder.cond cmp, matches_block, doesnt_match_block
+
+        @builder.position_at_end doesnt_match_block
+        type_cast_exception_call.accept self
+
+        @builder.position_at_end matches_block
+        cast_value last_value, resulting_type, obj_type
+      else
+        # Nothing to do
+      end
+      false
+    end
+
+    def type_cast_exception_call
+      @type_cast_exception_call ||= begin
+        call = Call.new(nil, "raise", [StringLiteral.new("type cast exception")] of ASTNode, nil, nil, true)
+        @mod.infer_type call
+        call
+      end
     end
 
     def visit(node : RespondsTo)

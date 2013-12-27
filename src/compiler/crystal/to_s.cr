@@ -744,6 +744,13 @@ module Crystal
       false
     end
 
+    def visit(node : Cast)
+      node.obj.accept self
+      @str << "as"
+      node.to.accept self
+      false
+    end
+
     def visit(node : RespondsTo)
       node.obj.accept self
       @str << ".responds_to?("

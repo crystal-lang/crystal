@@ -155,6 +155,21 @@ module Crystal
     end
   end
 
+  class Cast
+    def update(from = nil)
+      obj_type = obj.type?
+      return unless obj_type
+
+      to_type = to.type.instance_type
+
+      if obj_type.pointer?
+        self.type = to_type
+      else
+        self.type = obj_type.filter_by(to_type)
+      end
+    end
+  end
+
   class FunLiteral
     property! mod
 
