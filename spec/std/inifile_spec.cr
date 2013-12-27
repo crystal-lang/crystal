@@ -16,6 +16,10 @@ describe "IniFile" do
       IniFile.load("[section]\na = 1").should eq({"section" => {"a" => "1"}})
     end
 
+    it "empty section" do
+      IniFile.load("[section]").should eq({"section" => {} of String => String})
+    end
+
     it "parse file" do
       IniFile.load(File.read "#{__DIR__}/data/test_file.ini").should eq({
         "general" => {

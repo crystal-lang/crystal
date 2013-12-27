@@ -1,15 +1,15 @@
 class IniFile
   def self.load(str)
-    ini = Hash(String, Hash(String, String)).new do |h, k|
-      h[k] = {} of String => String
-    end
+    ini = {} of String => Hash(String, String)
 
     section = ""
     str.lines.each do |line|
       if line =~ /\s*(.*[^\s])\s*=\s*(.*[^\s])/
+        ini[section] ||= {} of String => String if section == ""
         ini[section][$1] = $2
       elsif line =~ /\[(.*)\]/
         section = $1
+        ini[section] = {} of String => String
       end
     end
     ini
