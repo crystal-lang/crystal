@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "spec"
 
 describe "Regexp" do
@@ -33,5 +33,11 @@ describe "Regexp" do
       fail "Expected $1 to raise"
     rescue ex : IndexOutOfBounds
     end
+  end
+
+  it "capture named group" do
+    ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
+    $~["g1"].should eq("oo")
+    $~["g2"].should eq("ba")
   end
 end

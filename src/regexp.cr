@@ -4,6 +4,7 @@ lib PCRE("pcre")
   fun exec = pcre_exec(code : Pcre, extra : Void*, subject : Char*, length : Int32, offset : Int32, options : Int32,
                 ovector : Int32*, ovecsize : Int32) : Int32
   fun full_info = pcre_fullinfo(code : Pcre, extra : Void*, what : Int32, where : Void*) : Int32
+  fun get_named_substring = pcre_get_named_substring(code : Pcre, subject : Char*, ovector : Int32*, string_count : Int32, string_name : Char*, string_ptr : Char**) : Int32
 
   INFO_CAPTURECOUNT = 2
 end
@@ -28,7 +29,7 @@ class Regexp
     ovector = Pointer(Int32).malloc(ovector_size * 4)
     ret = PCRE.exec(@re, nil, str, str.length, pos, options, ovector, ovector_size)
     if ret > 0
-      $~ = MatchData.new(self, str, pos, ovector, @captures)
+      $~ = MatchData.new(self, @re, str, pos, ovector, @captures)
     else
       $~ = MatchData::EMPTY
       nil
@@ -49,9 +50,9 @@ class Regexp
 end
 
 class MatchData
-  EMPTY = MatchData.new("", "", 0, Pointer(Int32).malloc(0), 0)
+  EMPTY = MatchData.new("", nil, "", 0, Pointer(Int32).malloc(0), 0)
 
-  def initialize(@regex, @string, @pos, @ovector, @length)
+  def initialize(@regex, @code, @string, @pos, @ovector, @length)
   end
 
   def length
@@ -84,6 +85,11 @@ class MatchData
     start = @ovector[n * 2]
     finish = @ovector[n * 2 + 1]
     @string[start, finish - start]
+  end
+
+  def [](group_name : String)
+    PCRE.get_named_substring(@code.not_nil!, @string, @ovector, @length + 1, group_name, out value)
+    String.new(value)
   end
 
   def to_s
