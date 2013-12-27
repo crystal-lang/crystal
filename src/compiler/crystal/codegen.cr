@@ -176,8 +176,6 @@ module Crystal
                 codegen_primitive_pointer_realloc node, target_def, call_args
               when :pointer_add
                 codegen_primitive_pointer_add node, target_def, call_args
-              when :pointer_cast
-                codegen_primitive_pointer_cast node, target_def, call_args
               when :byte_size
                 codegen_primitive_byte_size node, target_def, call_args
               when :struct_new
@@ -484,10 +482,6 @@ module Crystal
 
     def codegen_primitive_pointer_add(node, target_def, call_args)
       @last = @builder.gep call_args[0], [call_args[1]]
-    end
-
-    def codegen_primitive_pointer_cast(node, target_def, call_args)
-      @last = cast_to call_args[0], node.type
     end
 
     def codegen_primitive_byte_size(node, target_def, call_args)

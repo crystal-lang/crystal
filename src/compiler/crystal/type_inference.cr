@@ -861,8 +861,6 @@ module Crystal
         node.type = scope
       when :pointer_add
         node.type = scope
-      when :pointer_cast
-        visit_pointer_cast node
       when :byte_size
         node.type = @mod.uint64
       when :argc
@@ -995,15 +993,6 @@ module Crystal
       end
 
       node.type = scope.instance_type
-    end
-
-    def visit_pointer_cast(node)
-      type = @vars["type"].type.instance_type
-      if type.class?
-        node.type = type
-      else
-        node.type = mod.pointer_of(type)
-      end
     end
 
     def visit_struct_get(node)
