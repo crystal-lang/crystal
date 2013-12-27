@@ -118,8 +118,7 @@ module Crystal
     end
 
     def visit(node : InstanceVar)
-      scope = @vars["self"]
-      assert_type scope, ClassValue
+      scope = @vars["self"] as ClassValue
       @value = scope[node.name]
     end
 
@@ -404,50 +403,34 @@ module Crystal
     end
 
     def expand_binary_number(node)
-      v1 = @vars["self"]
-      v2 = @vars["other"]
+      v1 = @vars["self"] as PrimitiveValue
+      v2 = @vars["other"] as PrimitiveValue
 
-      assert_type v1, PrimitiveValue
-      assert_type v2, PrimitiveValue
-
-      v1_value = v1.value
-      v2_value = v2.value
-
-      assert_type v1_value, Number
-      assert_type v2_value, Number
+      v1_value = v1.value as Number
+      v2_value = v2.value as Number
 
       yield v1, v1_value, v2, v2_value
     end
 
     def expand_binary_int(node)
-      v1 = @vars["self"]
-      v2 = @vars["other"]
+      v1 = @vars["self"] as PrimitiveValue
+      v2 = @vars["other"] as PrimitiveValue
 
-      assert_type v1, PrimitiveValue
-      assert_type v2, PrimitiveValue
-
-      v1_value = v1.value
-      v2_value = v2.value
-
-      assert_type v1_value, Int
-      assert_type v2_value, Int
+      v1_value = v1.value as Int
+      v2_value = v2.value as Int
 
       yield v1, v1_value, v2, v2_value
     end
 
     def visit_cmp(node)
-      v1 = @vars["self"]
-      v2 = @vars["other"]
-
-      assert_type v1, PrimitiveValue
-      assert_type v2, PrimitiveValue
+      v1 = @vars["self"] as PrimitiveValue
+      v2 = @vars["other"] as PrimitiveValue
 
       @value = PrimitiveValue.new(@mod.bool, yield(v1.value, v2.value))
     end
 
     def visit_cast(node)
-      val = @vars["self"]
-      assert_type val, PrimitiveValue
+      val = @vars["self"] as PrimitiveValue
 
       value = val.value
 
@@ -538,9 +521,7 @@ module Crystal
     end
 
     def self_value
-      value = @vars["self"]
-      assert_type value, ClassValue
-      value
+      @vars["self"] as ClassValue
     end
 
     abstract class Value

@@ -1062,7 +1062,7 @@ module Crystal
       @declared_instance_vars[name] = node
 
       generic_types.each do |key, instance|
-        assert_type instance, GenericClassInstanceType
+        instance = instance as GenericClassInstanceType
 
         visitor = TypeLookup.new(instance)
         node.accept visitor
@@ -1317,7 +1317,7 @@ module Crystal
       existing_defs = defs[a_def.name]
       existing = existing_defs.first_value?
       if existing
-        assert_type existing, External
+        existing = existing as External
         if existing.compatible_with?(a_def)
           return
         else
@@ -1903,7 +1903,7 @@ module Crystal
 
       instance_type.subtypes(base_type).each do |subtype|
         unless subtype.value?
-          assert_type subtype, NonGenericOrGenericClassInstanceType
+          subtype = subtype as NonGenericOrGenericClassInstanceType
 
           subtype_lookup = hierarchy_lookup(subtype)
           subtype_hierarchy_lookup = hierarchy_lookup(subtype.hierarchy_type)

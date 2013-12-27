@@ -66,7 +66,7 @@ class Thread(T, R)
 
   def join
     LibGC.pthread_join(@th, out ret)
-    ret.as(R).value
+    (ret as R*).value
   end
 end
 

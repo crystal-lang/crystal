@@ -229,22 +229,18 @@ module Crystal
       generic_class = type_lookup.lookup_type other.name
       return nil unless generic_class == self.generic_class
 
-      # assert_type generic_class, GenericClassType
-      if generic_class.is_a?(GenericClassType)
-        return nil unless generic_class.type_vars.length == self.generic_class.type_vars.length
+      generic_class = generic_class as GenericClassType
+      return nil unless generic_class.type_vars.length == self.generic_class.type_vars.length
 
-        i = 0
-        type_vars.each do |name, type_var|
-          other_type_var = other.type_vars[i]
-          restricted = type_var.type.restrict other_type_var, owner, type_lookup, free_vars
-          return nil unless restricted
-          i += 1
-        end
-
-        self
-      else
-        raise "Bug: expected 'generic_class' to be a GenericClassType"
+      i = 0
+      type_vars.each do |name, type_var|
+        other_type_var = other.type_vars[i]
+        restricted = type_var.type.restrict other_type_var, owner, type_lookup, free_vars
+        return nil unless restricted
+        i += 1
       end
+
+      self
     end
 
     def restrict(other : GenericClassInstanceType, owner, type_lookup, free_vars)

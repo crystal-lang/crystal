@@ -57,7 +57,7 @@ describe "Code gen: struct" do
       end
 
       foo = C::Foo.new
-      (foo.as(Int32) + 1_i64).value = 2
+      ((foo as Int32*) + 1_i64).value = 2
 
       foo->bar->y
       ").to_i.should eq(2)

@@ -186,9 +186,8 @@ module Crystal
       else
         owner = scope
       end
-      class_var_owner = owner
+      class_var_owner = owner as ClassVarContainer
 
-      assert_type class_var_owner, ClassVarContainer
       bind_to_nil = bind_to_nil_if_non_existent && !class_var_owner.has_class_var?(node.name)
 
       var = class_var_owner.lookup_class_var node.name
@@ -976,8 +975,7 @@ module Crystal
     end
 
     def visit_pointer_set(node)
-      scope = @scope
-      assert_type scope, PointerInstanceType
+      scope = @scope as PointerInstanceType
 
       value = @vars["value"]
 
@@ -986,8 +984,7 @@ module Crystal
     end
 
     def visit_pointer_get(node)
-      scope = @scope
-      assert_type scope, PointerInstanceType
+      scope = @scope as PointerInstanceType
 
       node.bind_to scope.var
     end
@@ -1010,14 +1007,12 @@ module Crystal
     end
 
     def visit_struct_get(node)
-      scope = @scope
-      assert_type scope, CStructType
+      scope = @scope as CStructType
       node.bind_to scope.vars[untyped_def.name]
     end
 
     def visit_union_get(node)
-      scope = @scope
-      assert_type scope, CUnionType
+      scope = @scope as CUnionType
       node.bind_to scope.vars[untyped_def.name]
     end
 
@@ -1105,9 +1100,7 @@ module Crystal
     def end_visit(node : IndirectWrite)
       var = visit_indirect(node)
       if var.type != node.value.type
-        type = node.obj.type
-        assert_type type, PointerInstanceType
-
+        type = node.obj.type as PointerInstanceType
         node.raise "field '#{node.names.join "->"}' of struct #{type.var.type} has type #{var.type}, not #{node.value.type}"
       end
 
@@ -1158,9 +1151,7 @@ module Crystal
     end
 
     def lookup_var_or_instance_var(var : InstanceVar)
-      scope = @scope
-      assert_type scope, InstanceVarContainer
-
+      scope = @scope as InstanceVarContainer
       scope.lookup_instance_var(var.name)
     end
 

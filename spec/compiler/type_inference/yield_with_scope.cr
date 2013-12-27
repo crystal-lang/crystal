@@ -20,15 +20,9 @@ describe "Type inference: yield with scope" do
       end
     "
     result = infer_type input
-    mod, input = result.program, result.node
-    assert_type input, Expressions
-
-    call = input.last
-    assert_type call, Call
-
-    assign = call.block.not_nil!.body
-    assert_type assign, Assign
-
+    mod, input = result.program, result.node as Expressions
+    call = input.last as Call
+    assign = call.block.not_nil!.body as Assign
     assign.target.type.should eq(mod.int32)
   end
 
@@ -41,13 +35,8 @@ describe "Type inference: yield with scope" do
       end
     "
     result = infer_type input
-    mod, input = result.program, result.node
-    assert_type input, Expressions
-
-    call = input.last
-    assert_type call, Call
-
-    call.block.not_nil!.body.type.should eq(mod.int64)
+    mod, input = result.program, result.node as Expressions
+    (input.last as Call).block.not_nil!.body.type.should eq(mod.int64)
   end
 
   it "infer type of block body with yield scope and arguments" do
@@ -59,12 +48,7 @@ describe "Type inference: yield with scope" do
       end
     "
     result = infer_type input
-    mod, input = result.program, result.node
-    assert_type input, Expressions
-
-    call = input.last
-    assert_type call, Call
-
-    call.block.not_nil!.body.type.should eq(mod.float64)
+    mod, input = result.program, result.node as Expressions
+    (input.last as Call).block.not_nil!.body.type.should eq(mod.float64)
   end
 end

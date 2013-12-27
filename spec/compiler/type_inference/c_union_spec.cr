@@ -5,9 +5,7 @@ describe "Type inference: c union" do
   it "types c union" do
     result = assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; Foo::Bar") { types["Foo"].types["Bar"].metaclass }
     mod = result.program
-    bar = mod.types["Foo"].types["Bar"]
-    assert_type bar, CUnionType
-
+    bar = mod.types["Foo"].types["Bar"] as CUnionType
     bar.vars["x"].type.should eq(mod.int32)
     bar.vars["y"].type.should eq(mod.float64)
   end

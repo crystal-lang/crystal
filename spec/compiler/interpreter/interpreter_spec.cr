@@ -36,16 +36,13 @@ describe "Interpreter" do
 
   it "interprets a string" do
     assert_interpret("\"hello\"") do |value|
+      value = value as Interpreter::ClassValue
       value.type.should eq(string)
-      assert_type value, Interpreter::ClassValue
 
-      c = value["@c"]
-      assert_type c, Interpreter::PrimitiveValue
+      c = value["@c"] as Interpreter::PrimitiveValue
       c.type.should eq(char)
 
-      length = value["@length"]
-      assert_type length, Interpreter::PrimitiveValue
-
+      length = value["@length"] as Interpreter::PrimitiveValue
       length.type.should eq(int32)
       length.value.should eq(5)
     end
@@ -101,8 +98,8 @@ describe "Interpreter" do
 
   it "interprets class allocate" do
     assert_interpret("Reference.allocate") do |value|
+      value = value as Interpreter::ClassValue
       value.type.should eq(reference)
-      assert_type value, Interpreter::ClassValue
       value.vars.empty?.should be_true
     end
   end
@@ -113,8 +110,8 @@ describe "Interpreter" do
       end
       Foo.new
       ") do |value|
+      value = value as Interpreter::ClassValue
       value.type.should eq(types["Foo"])
-      assert_type value, Interpreter::ClassValue
       value.vars.empty?.should be_true
     end
   end
@@ -127,10 +124,9 @@ describe "Interpreter" do
       end
       Foo.new(1)
       ") do |value|
+      value = value as Interpreter::ClassValue
       value.type.should eq(types["Foo"])
-      assert_type value, Interpreter::ClassValue
-      x = value.vars["@x"]
-      assert_type x, Interpreter::PrimitiveValue
+      x = value.vars["@x"] as Interpreter::PrimitiveValue
       x.type.should eq(int32)
       x.value.should eq(1)
     end
@@ -144,14 +140,13 @@ describe "Interpreter" do
       end
       Foo.new(1)
       ") do |value|
-      foo = types["Foo"]
-      assert_type foo, GenericClassType
+      foo = types["Foo"] as GenericClassType
       foo_int32 = foo.instantiate([int32] of Type | ASTNode)
 
+      value = value as Interpreter::ClassValue
       value.type.should eq(foo_int32)
-      assert_type value, Interpreter::ClassValue
-      x = value.vars["@x"]
-      assert_type x, Interpreter::PrimitiveValue
+
+      x = value.vars["@x"] as Interpreter::PrimitiveValue
       x.type.should eq(int32)
       x.value.should eq(1)
     end

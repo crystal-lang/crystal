@@ -41,13 +41,13 @@ end
 
 module LEBReader
   def self.read_uint8(data)
-    value = data.value.as(UInt8).value
+    value = (data.value as UInt8*).value
     data.value += 1
     value
   end
 
   def self.read_uint32(data)
-    value = data.value.as(UInt32).value
+    value = (data.value as UInt32*).value
     data.value += 4
     value
   end

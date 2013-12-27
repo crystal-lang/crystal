@@ -12,14 +12,12 @@ describe "Yaml" do
     assert { Yaml.load("---\n...").should eq("") }
 
     it "parses recursive sequence" do
-      doc = Yaml.load("--- &foo\n- *foo\n")
-      assert_type doc, Array
+      doc = Yaml.load("--- &foo\n- *foo\n") as Array
       doc[0].object_id.should eq(doc.object_id)
     end
 
     it "parses alias to scalar" do
-      doc = Yaml.load("---\n- &x foo\n- *x\n")
-      assert_type doc, Array
+      doc = Yaml.load("---\n- &x foo\n- *x\n") as Array
       doc.should eq(["foo", "foo"])
       doc[0].object_id.should eq(doc[1].object_id)
     end

@@ -210,7 +210,7 @@ module SDL
     end
 
     def []=(offset, color)
-      @surface.value.pixels.as(UInt32)[offset] = color.to_u32
+      (@surface.value.pixels as UInt32*)[offset] = color.to_u32
     end
 
     def []=(x, y, color)

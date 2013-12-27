@@ -8,9 +8,7 @@ describe "Type inference: var" do
     input = parse "a = 1"
     result = infer_type input
     mod = result.program
-    node = result.node
-    assert_type node, Assign
-
+    node = result.node as Assign
     node.target.type.should eq(mod.int32)
     node.value.type.should eq(mod.int32)
     node.type.should eq(mod.int32)
@@ -20,9 +18,7 @@ describe "Type inference: var" do
     input = parse "a = 1; a"
     result = infer_type input
     mod = result.program
-    node = result.node
-    assert_type node, Expressions
-
+    node = result.node as Expressions
     node.last.type.should eq(mod.int32)
     node.type.should eq(mod.int32)
   end

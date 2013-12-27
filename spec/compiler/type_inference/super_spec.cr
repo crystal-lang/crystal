@@ -10,12 +10,9 @@ describe "Type inference: super" do
     result = assert_type("class Foo; def foo; @x = 1; end; end; class Bar < Foo; def foo; super; end; end; bar = Bar.new; bar.foo; bar") do
       types["Bar"]
     end
-    mod, type = result.program, result.node.type
-    assert_type type, NonGenericClassType
+    mod, type = result.program, result.node.type as NonGenericClassType
 
-    superclass = type.superclass
-    assert_type superclass, NonGenericClassType
-
+    superclass = type.superclass as NonGenericClassType
     superclass.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32))
   end
 
@@ -40,17 +37,12 @@ describe "Type inference: super" do
       Baz.new
       "
     result = infer_type nodes
-    mod, type = result.program, result.node.type
+    mod, type = result.program, result.node.type as NonGenericClassType
 
     type.should eq(mod.types["Baz"])
 
-    assert_type type, NonGenericClassType
-    superclass = type.superclass
-
-    assert_type superclass, NonGenericClassType
-    superclass2 = superclass.superclass
-    assert_type superclass2, NonGenericClassType
-
+    superclass = type.superclass as NonGenericClassType
+    superclass2 = superclass.superclass as NonGenericClassType
     superclass2.instance_vars["@x"].type.should eq(mod.int32)
   end
 

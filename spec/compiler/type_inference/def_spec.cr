@@ -3,8 +3,7 @@ require "../../spec_helper"
 
 describe "Type inference: def" do
   it "expands a def with default arguments" do
-    a_def = parse "def foo(x, y = 1, z = 2); x + y + z; end"
-    assert_type a_def, Def
+    a_def = parse("def foo(x, y = 1, z = 2); x + y + z; end") as Def
     expanded = a_def.expand_default_arguments
 
     expanded1 = parse "def foo(x, y, z); x + y + z; end"
@@ -15,8 +14,7 @@ describe "Type inference: def" do
   end
 
   it "expands a def with default arguments that yields" do
-    a_def = parse "def foo(x, y = 1, z = 2); yield x + y + z; end"
-    assert_type a_def, Def
+    a_def = parse("def foo(x, y = 1, z = 2); yield x + y + z; end") as Def
     expanded = a_def.expand_default_arguments
 
     expanded1 = parse "def foo(x, y, z); yield x + y + z; end"
@@ -27,8 +25,7 @@ describe "Type inference: def" do
   end
 
   it "expands a def with default arguments and type restrictions" do
-    a_def = parse "def foo(x, y = 1 : Int32, z = 2 : Int64); x + y + z; end"
-    assert_type a_def, Def
+    a_def = parse("def foo(x, y = 1 : Int32, z = 2 : Int64); x + y + z; end") as Def
     expanded = a_def.expand_default_arguments
 
     expanded1 = parse "def foo(x, y : Int32, z : Int64); x + y + z; end"
@@ -57,8 +54,7 @@ describe "Type inference: def" do
   it "types a call with an argument" do
     input = parse "def foo(x); x; end; foo 1; foo 2.3"
     result = infer_type input
-    mod, input = result.program, result.node
-    assert_type input, Expressions
+    mod, input = result.program, result.node as Expressions
 
     input[1].type.should eq(mod.int32)
     input[2].type.should eq(mod.float64)
@@ -71,12 +67,8 @@ describe "Type inference: def" do
   it "assigns def owner" do
     input = parse "class Int; def foo; 2.5; end; end; 1.foo"
     result = infer_type input
-    mod, input = result.program, result.node
-    assert_type input, Expressions
-
-    call = input.last
-    assert_type call, Call
-    call.target_def.owner.should eq(mod.int32)
+    mod, input = result.program, result.node as Expressions
+    (input.last as Call).target_def.owner.should eq(mod.int32)
   end
 
   it "types putchar with Char" do
@@ -134,12 +126,9 @@ describe "Type inference: def" do
   it "do not use body for the def type" do
     input = parse "def foo; if 1 == 2; return 0; end; end; foo"
     result = infer_type input
-    mod, input = result.program, result.node
-    assert_type input, Expressions
+    mod, input = result.program, result.node as Expressions
 
-    call = input.last
-    assert_type call, Call
-
+    call = input.last as Call
     call.type.should eq(mod.union_of(mod.int32, mod.nil))
     call.target_def.body.type.should eq(mod.nil)
   end

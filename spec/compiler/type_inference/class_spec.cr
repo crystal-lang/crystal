@@ -3,15 +3,11 @@ require "../../spec_helper"
 
 describe "Type inference: class" do
   it "types Const#allocate" do
-    result = assert_type("class Foo; end; Foo.allocate") { types["Foo"] }
-    node_type = result.node.type
-    assert_type node_type, NonGenericClassType
+    assert_type("class Foo; end; Foo.allocate") { types["Foo"] as NonGenericClassType }
   end
 
   it "types Const#new" do
-    result = assert_type("class Foo; end; Foo.new") { types["Foo"] }
-    node_type = result.node.type
-    assert_type node_type, NonGenericClassType
+    assert_type("class Foo; end; Foo.new") { types["Foo"] as NonGenericClassType }
   end
 
   it "types Const#new#method" do
@@ -34,14 +30,10 @@ describe "Type inference: class" do
       f.set
       f
     ") do
-      foo = types["Foo"]
-      assert_type foo, GenericClassType
-      foo.instantiate([int32] of Type | ASTNode)
+      (types["Foo"] as GenericClassType).instantiate([int32] of Type | ASTNode)
     end
     mod = result.program
-    type = result.node.type
-    assert_type type, GenericClassInstanceType
-
+    type = result.node.type as GenericClassInstanceType
     type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
   end
 
@@ -61,25 +53,18 @@ describe "Type inference: class" do
       g
     "
     result = infer_type input
-    mod, node = result.program, result.node
-    foo = mod.types["Foo"]
-    assert_type foo, GenericClassType
-    assert_type node, Expressions
+    mod, node = result.program, result.node as Expressions
+    foo = mod.types["Foo"] as GenericClassType
 
     node[1].type.should eq(foo.instantiate([mod.int32] of Type | ASTNode))
-    node1type = node[1].type
-    assert_type node1type, InstanceVarContainer
+    (node[1].type as InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
 
-    node1type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
     node[3].type.should eq(foo.instantiate([mod.float64] of Type | ASTNode))
-
-    node3type = node[3].type
-    assert_type node3type, InstanceVarContainer
-    node3type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.float64))
+    (node[3].type as InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.float64))
   end
 
   it "types instance variable on getter" do
-    input = parse "
+    input = parse("
       class Foo(T)
         def set(value : T)
           @coco = value
@@ -97,18 +82,16 @@ describe "Type inference: class" do
       g = Foo(Float64).new
       g.set 2.5
       g.get
-    "
+    ") as Expressions
     result = infer_type input
-    mod, node = result.program, result.node
-    assert_type node, Expressions
-    assert_type input, Expressions
+    mod, node = result.program, result.node as Expressions
 
     node[3].type.should eq(mod.union_of(mod.nil, mod.int32))
     input.last.type.should eq(mod.union_of(mod.nil, mod.float64))
   end
 
   it "types recursive type" do
-    input = parse "
+    input = parse("
       class Node
         def add
           if @next
@@ -122,12 +105,10 @@ describe "Type inference: class" do
       n = Node.new
       n.add
       n
-    "
+    ") as Expressions
     result = infer_type input
-    mod, input = result.program, result.node
-    node = mod.types["Node"]
-    assert_type node, NonGenericClassType
-    assert_type input, Expressions
+    mod, input = result.program, result.node as Expressions
+    node = mod.types["Node"] as NonGenericClassType
 
     node.lookup_instance_var("@next").type.should eq(mod.union_of(mod.nil, node))
     input.last.type.should eq(node)
@@ -156,9 +137,7 @@ describe "Type inference: class" do
 
       Foo(Int32 | Float64).new
       ") do
-        foo = types["Foo"]
-        assert_type foo, GenericClassType
-        foo.instantiate([union_of(int32, float64)] of Type | ASTNode)
+        (types["Foo"] as GenericClassType).instantiate([union_of(int32, float64)] of Type | ASTNode)
       end
   end
 
@@ -214,14 +193,10 @@ describe "Type inference: class" do
 
       b = Box.new(10)
       ") do
-        box = types["Box"]
-        assert_type box, GenericClassType
-        box.instantiate([int32] of Type | ASTNode)
+        (types["Box"] as GenericClassType).instantiate([int32] of Type | ASTNode)
       end
     mod = result.program
-    type = result.node.type
-    assert_type type, GenericClassInstanceType
-
+    type = result.node.type as GenericClassInstanceType
     type.type_vars["T"].type.should eq(mod.int32)
     type.instance_vars["@value"].type.should eq(mod.int32)
   end
@@ -237,20 +212,16 @@ describe "Type inference: class" do
       b1 = Box.new(1, 10)
       b2 = Box.new(1, false)
       ") do
-        box = types["Box"]
-        assert_type box, GenericClassType
-        box.instantiate([bool] of Type | ASTNode)
+        (types["Box"] as GenericClassType).instantiate([bool] of Type | ASTNode)
     end
     mod = result.program
-    type = result.node.type
-    assert_type type, GenericClassInstanceType
-
+    type = result.node.type as GenericClassInstanceType
     type.type_vars["T"].type.should eq(mod.bool)
     type.instance_vars["@value"].type.should eq(mod.bool)
   end
 
   it "does automatic type inference of new for nested generic type" do
-    nodes = parse "
+    nodes = parse("
       class Foo
         class Bar(T)
           def initialize(x : T)
@@ -260,14 +231,10 @@ describe "Type inference: class" do
       end
 
       Foo::Bar.new(1)
-      "
+      ") as Expressions
     result = infer_type nodes
     mod = result.program
-    assert_type nodes, Expressions
-
-    type = nodes.last.type
-    assert_type type, GenericClassInstanceType
-
+    type = nodes.last.type as GenericClassInstanceType
     type.type_vars["T"].type.should eq(mod.int32)
     type.instance_vars["@x"].type.should eq(mod.int32)
   end
@@ -333,9 +300,7 @@ describe "Type inference: class" do
       Reference.new
       Foo(Int32).new
       ") do
-        foo = types["Foo"]
-        assert_type foo, GenericClassType
-        foo.instantiate([int32] of Type | ASTNode)
+        (types["Foo"] as GenericClassType).instantiate([int32] of Type | ASTNode)
       end
   end
 
@@ -428,9 +393,7 @@ describe "Type inference: class" do
       ")
     result = infer_type input
     mod = result.program
-    foo = mod.types["Foo"]
-    assert_type foo, NonGenericClassType
-
+    foo = mod.types["Foo"] as NonGenericClassType
     foo.instance_vars["@superclass"].type.should eq(mod.union_of(mod.nil, mod.int32))
   end
 
@@ -444,8 +407,7 @@ describe "Type inference: class" do
       ")
     result = infer_type input
     mod = result.program
-    bar = mod.types["Foo"].types["Bar"]
-    assert_type bar, NonGenericClassType
+    mod.types["Foo"].types["Bar"] as NonGenericClassType
   end
 
   it "doesn't lookup type in parents' containers, and lookups and in program" do
@@ -520,9 +482,7 @@ describe "Type inference: class" do
     ")
     result = infer_type node
     mod = result.program
-    foo = mod.types["Foo"]
-    assert_type foo, NonGenericClassType
-
+    foo = mod.types["Foo"] as NonGenericClassType
     foo.instance_vars["@baz"].type.should eq(mod.union_of(mod.nil, mod.types["Baz"]))
     foo.instance_vars["@another"].type.should eq(mod.int32)
   end
@@ -556,9 +516,7 @@ describe "Type inference: class" do
     ")
     result = infer_type node
     mod = result.program
-    foo = mod.types["Foo"]
-    assert_type foo, NonGenericClassType
-
+    foo = mod.types["Foo"] as NonGenericClassType
     foo.instance_vars["@baz"].type.should eq(mod.union_of(mod.nil, mod.types["Baz"]))
     foo.instance_vars["@another"].type.should eq(mod.int32)
   end
@@ -586,9 +544,7 @@ describe "Type inference: class" do
     ")
     result = infer_type node
     mod = result.program
-    foo = mod.types["Foo"]
-    assert_type foo, NonGenericClassType
-
+    foo = mod.types["Foo"] as NonGenericClassType
     foo.instance_vars["@baz"].type.should eq(mod.types["Baz"])
     foo.instance_vars["@another"].type.should eq(mod.int32)
   end
@@ -620,13 +576,10 @@ describe "Type inference: class" do
 
     mod = result.program
 
-    foo = mod.types["Foo"]
-    assert_type foo, NonGenericClassType
-
-    bar = mod.types["Bar"]
-    assert_type bar, NonGenericClassType
-
+    foo = mod.types["Foo"] as NonGenericClassType
     foo.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32, mod.char))
+
+    bar = mod.types["Bar"] as NonGenericClassType
     bar.instance_vars.length.should eq(0)
   end
 
@@ -656,9 +609,7 @@ describe "Type inference: class" do
 
       Foo(1).new
       ") do
-        foo = types["Foo"]
-        assert_type foo, GenericClassType
-        foo.instantiate([NumberLiteral.new("1", :i32)] of Type | ASTNode)
+        (types["Foo"] as GenericClassType).instantiate([NumberLiteral.new("1", :i32)] of Type | ASTNode)
       end
   end
 

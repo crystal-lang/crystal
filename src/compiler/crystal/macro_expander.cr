@@ -17,8 +17,7 @@ module Crystal
       info = @untyped_def.lookup_instance(macro_arg_types)
       unless info
         typed_def = Def.new(@macro_name, @untyped_def.args.map(&.clone), @untyped_def.body.clone)
-        typed_def = @mod.normalize(typed_def)
-        assert_type typed_def, Def
+        typed_def = @mod.normalize(typed_def) as Def
 
         vars = {} of String => Var
         typed_def.args.zip(mapped_args) do |def_arg, macro_arg|

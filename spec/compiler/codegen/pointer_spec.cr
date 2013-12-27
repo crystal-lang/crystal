@@ -62,7 +62,7 @@ describe "Code gen: pointer" do
   end
 
   it "codegens pointer cast" do
-    run("a = 1_i64; pointerof(a).as(Int32).value").to_i.should eq(1)
+    run("a = 1_i64; (pointerof(a) as Int32*).value").to_i.should eq(1)
   end
 
   it "codegens pointer null" do

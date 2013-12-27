@@ -108,13 +108,8 @@ describe "Type inference: hierarchy" do
       x.foo
       ")
     result = infer_type nodes
-    mod, nodes = result.program, result.node
-    assert_type nodes, Expressions
-
-    call = nodes.last
-    assert_type call, Call
-
-    call.target_defs.not_nil!.length.should eq(1)
+    mod, nodes = result.program, result.node as Expressions
+    (nodes.last as Call).target_defs.not_nil!.length.should eq(1)
   end
 
   it "dispatches virtual method with overload" do
@@ -136,13 +131,8 @@ describe "Type inference: hierarchy" do
       x.foo
       ")
     result = infer_type nodes
-    mod, nodes = result.program, result.node
-    assert_type nodes, Expressions
-
-    call = nodes.last
-    assert_type call, Call
-
-    call.target_defs.not_nil!.length.should eq(2)
+    mod, nodes = result.program, result.node as Expressions
+    (nodes.last as Call).target_defs.not_nil!.length.should eq(2)
   end
 
   it "works with restriction alpha" do
@@ -212,14 +202,10 @@ describe "Type inference: hierarchy" do
     result = infer_type nodes
     mod = result.program
 
-    var = mod.types["Var"]
-    assert_type var, InstanceVarContainer
-
+    var = mod.types["Var"] as InstanceVarContainer
     var.instance_vars.length.should eq(0)
 
-    base = mod.types["Base"]
-    assert_type base, InstanceVarContainer
-
+    base = mod.types["Base"] as InstanceVarContainer
     base.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32))
   end
 
@@ -652,8 +638,7 @@ describe "Type inference: hierarchy" do
       Bar(Foo).new
       ") {
         foo = types["Foo"]
-        bar = types["Bar"]
-        assert_type bar, GenericClassType
+        bar = types["Bar"] as GenericClassType
         bar.instantiate([foo.hierarchy_type] of Type | ASTNode)
       }
   end
@@ -669,8 +654,7 @@ describe "Type inference: hierarchy" do
       Bar(Foo | Int32).new
       ") {
         foo = types["Foo"]
-        bar = types["Bar"]
-        assert_type bar, GenericClassType
+        bar = types["Bar"] as GenericClassType
         bar.instantiate([union_of(foo.hierarchy_type, int32)] of Type | ASTNode)
       }
   end

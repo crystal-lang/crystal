@@ -12,23 +12,19 @@ describe "Block inference" do
   end
 
   it "infer type of block body" do
-    input = parse "
+    input = parse("
       def foo; yield; end
 
       foo do
         x = 1
       end
-    "
+    ") as Expressions
     result = infer_type input
-    assert_type input, Expressions
-
-    call = input.last
-    assert_type call, Call
-    call.block.not_nil!.body.type.should eq(result.program.int32)
+    (input.last as Call).block.not_nil!.body.type.should eq(result.program.int32)
   end
 
   it "infer type of block argument" do
-    input = parse "
+    input = parse("
       def foo
         yield 1
       end
@@ -36,15 +32,10 @@ describe "Block inference" do
       foo do |x|
         1
       end
-    "
+    ") as Expressions
     result = infer_type input
-    mod, input = result.program, result.node
-    assert_type input, Expressions
-
-    call = input.last
-    assert_type call, Call
-
-    call.block.not_nil!.args[0].type.should eq(mod.int32)
+    mod = result.program
+    (input.last as Call).block.not_nil!.args[0].type.should eq(mod.int32)
   end
 
   it "infer type of local variable" do
@@ -120,13 +111,10 @@ describe "Block inference" do
 
       bar { |x| x.foo }
       ") do
-      foo = types["Foo"]
-      assert_type foo, GenericClassType
-      foo.instantiate([float64] of Type | ASTNode)
+      (types["Foo"] as GenericClassType).instantiate([float64] of Type | ASTNode)
     end
     mod = result.program
-    type = result.node.type
-    assert_type type, GenericClassInstanceType
+    type = result.node.type as GenericClassInstanceType
     type.type_vars["T"].type.should eq(mod.float64)
     type.instance_vars["@x"].type.should eq(mod.float64)
   end
@@ -147,9 +135,7 @@ describe "Block inference" do
         10.5
       end
       ") do
-      foo = types["Foo"]
-      assert_type foo, GenericClassType
-      foo.instantiate([float64] of Type | ASTNode)
+      (types["Foo"] as GenericClassType).instantiate([float64] of Type | ASTNode)
     end
   end
 
@@ -235,9 +221,7 @@ describe "Block inference" do
 
       foo { Foo(Float64).new }
       ") do
-      foo = types["Foo"]
-      assert_type foo, GenericClassType
-      foo.instantiate([float64] of Type | ASTNode)
+      (types["Foo"] as GenericClassType).instantiate([float64] of Type | ASTNode)
     end
   end
 

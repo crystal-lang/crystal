@@ -24,34 +24,34 @@ class String
   def self.new(chars : Char*)
     length = C.strlen(chars)
     str = Pointer(Char).malloc(length + 5)
-    str.as(Int32).value = length
-    C.strcpy(str.as(Char) + 4, chars)
-    str.as(String)
+    (str as Int32*).value = length
+    C.strcpy((str as Char*) + 4, chars)
+    str as String
   end
 
   def self.new(chars : Char*, length)
     str = Pointer(Char).malloc(length + 5)
-    str.as(Int32).value = length
-    C.strncpy(str.as(Char) + 4, chars, length)
-    (str + length + 4).as(Char).value = '\0'
-    str.as(String)
+    (str as Int32*).value = length
+    C.strncpy((str as Char*) + 4, chars, length)
+    ((str + length + 4) as Char*).value = '\0'
+    str as String
   end
 
   def self.new_with_capacity(capacity)
     str = Pointer(Char).malloc(capacity + 5)
-    buffer = str.as(String).cstr
+    buffer = (str as String).cstr
     yield buffer
-    str.as(Int32).value = C.strlen(buffer)
-    str.as(String)
+    (str as Int32*).value = C.strlen(buffer)
+    str as String
   end
 
   def self.new_with_length(length)
     str = Pointer(Char).malloc(length + 5)
-    buffer = str.as(String).cstr
+    buffer = (str as String).cstr
     yield buffer
     buffer[length] = '\0'
-    str.as(Int32).value = length
-    str.as(String)
+    (str as Int32*).value = length
+    str as String
   end
 
   def self.new_from_buffer(capacity = 16)
@@ -284,9 +284,9 @@ class String
         i += 1
       end
     end
-    str.as(Int32).value = new_length
+    (str as Int32*).value = new_length
     str[i] = '\0'
-    str.as(String)
+    str as String
   end
 
   def empty?

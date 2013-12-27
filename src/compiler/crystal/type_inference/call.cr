@@ -305,8 +305,7 @@ module Crystal
 
         if output = block_arg.type_spec.output
           block_type = block.body.type
-          type_lookup = match.type_lookup
-          assert_type type_lookup, MatchesLookup
+          type_lookup = match.type_lookup as MatchesLookup
 
           matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
           unless matched
@@ -609,8 +608,7 @@ module Crystal
         if match.free_vars.empty?
           alloc = Call.new(nil, "allocate")
         else
-          generic_class = scope.instance_type
-          assert_type generic_class, GenericClassType
+          generic_class = scope.instance_type as GenericClassType
 
           type_vars = Array(ASTNode?).new(generic_class.type_vars.length, nil)
           match.free_vars.each do |name, type|

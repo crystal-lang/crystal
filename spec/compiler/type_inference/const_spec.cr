@@ -3,12 +3,9 @@ require "../../spec_helper"
 
 describe "Type inference: const" do
   it "types a constant" do
-    input = parse "A = 1"
-    assert_type input, Assign
-
+    input = parse("A = 1") as Assign
     result = infer_type input
     mod = result.program
-
     input.target.type?.should be_nil # Don't type value until needed
   end
 

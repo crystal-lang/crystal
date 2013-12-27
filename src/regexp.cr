@@ -20,7 +20,7 @@ class Regexp
       raise "#{String.new(errptr)} at #{erroffset}"
     end
     @captures = 0
-    PCRE.full_info(@re, nil, PCRE::INFO_CAPTURECOUNT, pointerof(@captures).as(Void))
+    PCRE.full_info(@re, nil, PCRE::INFO_CAPTURECOUNT, pointerof(@captures) as Void*)
   end
 
   def match(str, pos = 0, options = 0)

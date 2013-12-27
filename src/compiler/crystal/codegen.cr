@@ -425,8 +425,7 @@ module Crystal
     end
 
     def codegen_primitive_pointer_malloc(node, target_def, call_args)
-      type = node.type
-      assert_type type, PointerInstanceType
+      type = node.type as PointerInstanceType
 
       llvm_type = llvm_embedded_type(type.var.type)
       array_malloc(llvm_type, call_args[1])
@@ -435,8 +434,7 @@ module Crystal
     def codegen_primitive_pointer_set(node, target_def, call_args)
       value = call_args[1]
 
-      type = @type
-      assert_type type, PointerInstanceType
+      type = @type as PointerInstanceType
 
       if node.type.c_struct? || node.type.c_union?
         loaded_value = @builder.load value
@@ -457,8 +455,7 @@ module Crystal
     end
 
     def codegen_primitive_pointer_get(node, target_def, call_args)
-      type = @type
-      assert_type type, PointerInstanceType
+      type = @type as PointerInstanceType
 
       if type.var.type.union? || type.var.type.c_struct? || type.var.type.c_union? || type.var.type.fun_type?
         @last = call_args[0]
@@ -476,8 +473,7 @@ module Crystal
     end
 
     def codegen_primitive_pointer_realloc(node, target_def, call_args)
-      type = @type
-      assert_type type, PointerInstanceType
+      type = @type as PointerInstanceType
 
       casted_ptr = cast_to_void_pointer(call_args[0])
       size = call_args[1]
@@ -499,11 +495,9 @@ module Crystal
     end
 
     def codegen_primitive_struct_new(node, target_def, call_args)
-      type = node.type
-      assert_type type, PointerInstanceType
+      type = node.type as PointerInstanceType
 
-      struct_type = type.var.type
-      assert_type struct_type, CStructType
+      struct_type = type.var.type as CStructType
 
       llvm_struct_type = llvm_struct_type(struct_type)
       @last = malloc llvm_struct_type
@@ -512,8 +506,7 @@ module Crystal
     end
 
     def codegen_primitive_struct_set(node, target_def, call_args)
-      type = @type
-      assert_type type, CStructType
+      type = @type as CStructType
 
       name = target_def.name[0 .. -2]
 
@@ -529,8 +522,7 @@ module Crystal
     end
 
     def codegen_primitive_struct_get(node, target_def, call_args)
-      type = @type
-      assert_type type, CStructType
+      type = @type as CStructType
 
       name = target_def.name
 
@@ -546,11 +538,9 @@ module Crystal
     end
 
     def codegen_primitive_union_new(node, target_def, call_args)
-      type = node.type
-      assert_type type, PointerInstanceType
+      type = node.type as PointerInstanceType
 
-      union_type = type.var.type
-      assert_type union_type, CUnionType
+      union_type = type.var.type as CUnionType
 
       llvm_union_type = llvm_struct_type(union_type)
       @last = malloc llvm_union_type
@@ -559,8 +549,7 @@ module Crystal
     end
 
     def codegen_primitive_union_set(node, target_def, call_args)
-      type = @type
-      assert_type type, CUnionType
+      type = @type as CUnionType
 
       name = target_def.name[0 .. -2]
 
@@ -575,8 +564,7 @@ module Crystal
     end
 
     def codegen_primitive_union_get(node, target_def, call_args)
-      type = @type
-      assert_type type, CUnionType
+      type = @type as CUnionType
 
       name = target_def.name
 
@@ -697,13 +685,11 @@ module Crystal
         var = @vars[node_exp.name]
         @last = var.pointer
 
-        node_type = node.type
-        assert_type node_type, PointerInstanceType
+        node_type = node.type as PointerInstanceType
 
         @last = @builder.load @last if node_type.var.type.c_struct? || node_type.var.type.c_union?
       when InstanceVar
-        type = @type
-        assert_type type, InstanceVarContainer
+        type = @type as InstanceVarContainer
 
         @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_exp.name)
       when IndirectRead
@@ -827,8 +813,7 @@ module Crystal
     def visit(node : CastFunToReturnVoid)
       accept node.node
 
-      node_type = node.node.type
-      assert_type node_type, FunType
+      node_type = node.node.type as FunType
 
       types = node_type.arg_types.dup
       types << @mod.void
@@ -923,7 +908,7 @@ module Crystal
         # Pack the string bytes
         bytes = [] of LibLLVM::ValueRef
         length = str.length
-        length_ptr = pointerof(length).as(UInt8)
+        length_ptr = pointerof(length) as UInt8*
         (0..3).each { |i| bytes << int8(length_ptr[i]) }
         str.each_char { |c| bytes << int8(c.ord) }
         bytes << int8(0)
@@ -1232,8 +1217,7 @@ module Crystal
     end
 
     def codegen_assign_target(target : InstanceVar, value, llvm_value)
-      type = @type
-      assert_type type, InstanceVarContainer
+      type = @type as InstanceVarContainer
 
       ivar = type.lookup_instance_var(target.name)
       index = type.index_of_instance_var(target.name)
@@ -1476,8 +1460,7 @@ module Crystal
     end
 
     def visit(node : InstanceVar)
-      type = @type
-      assert_type type, InstanceVarContainer
+      type = @type as InstanceVarContainer
 
       ivar = type.lookup_instance_var(node.name)
       if ivar.type.union? || ivar.type.c_struct? || ivar.type.c_union?
@@ -1887,8 +1870,7 @@ module Crystal
     def visit_indirect(node)
       indices = [int32(0)]
 
-      type = node.obj.type
-      assert_type type, PointerInstanceType
+      type = node.obj.type as PointerInstanceType
 
       element_type = type.var.type
 
@@ -1970,8 +1952,7 @@ module Crystal
           when Var
             call_args << @vars[arg.name].pointer
           when InstanceVar
-            type = @type
-            assert_type type, InstanceVarContainer
+            type = @type as InstanceVarContainer
             call_args << (gep llvm_self_ptr, 0, type.index_of_instance_var(arg.name))
           else
             raise "Bug: out argument was #{arg}"
@@ -2428,7 +2409,6 @@ module Crystal
       # Special case: if the type is Object+ we want to match against Reference+,
       # because Object+ can only mean a Reference type (so we exclude Nil, for example).
       type = @mod.reference.hierarchy_type if type == @mod.object.hierarchy_type
-      # type = type.instance_type if type.hierarchy_metaclass?
 
       if type.union? || type.hierarchy_metaclass?
         if type.is_a?(HierarchyType) && type.base_type.subclasses.empty?

@@ -732,7 +732,7 @@ module LLVM
     end
 
     def to_string
-      to_pointer.as(String)
+      to_pointer as String
     end
 
     def to_pointer

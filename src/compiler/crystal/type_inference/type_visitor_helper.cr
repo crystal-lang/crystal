@@ -233,8 +233,7 @@ module Crystal
         counter = 0
         node.constants.each do |constant|
           if default_value = constant.default_value
-            assert_type default_value, NumberLiteral
-            counter = default_value.value.to_i
+            counter = (default_value as NumberLiteral).value.to_i
           else
             constant.default_value = NumberLiteral.new(counter, :i32)
           end
@@ -249,9 +248,7 @@ module Crystal
 
       var_type = check_primitive_like node.type_spec
 
-      type = current_type
-      assert_type type, LibType
-
+      type = current_type as LibType
       type.add_var node.name, var_type
     end
 

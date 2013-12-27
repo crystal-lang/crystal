@@ -5,8 +5,7 @@ describe "Global inference" do
   it "infers type of global assign" do
     node = parse "$foo = 1"
     result = infer_type node
-    mod, node = result.program, result.node
-    assert_type node, Assign
+    mod, node = result.program, result.node as Assign
 
     node.type.should eq(mod.int32)
     node.target.type.should eq(mod.int32)
@@ -16,16 +15,10 @@ describe "Global inference" do
   it "infers type of global assign with union" do
     nodes = parse "$foo = 1; $foo = 'a'"
     result = infer_type nodes
-    mod, node = result.program, result.node
-    assert_type node, Expressions
+    mod, node = result.program, result.node as Expressions
 
-    first = node[0]
-    assert_type first, Assign
-    first.target.type.should eq(mod.union_of(mod.int32, mod.char))
-
-    second = node[1]
-    assert_type second, Assign
-    second.target.type.should eq(mod.union_of(mod.int32, mod.char))
+    (node[0] as Assign).target.type.should eq(mod.union_of(mod.int32, mod.char))
+    (node[1] as Assign).target.type.should eq(mod.union_of(mod.int32, mod.char))
   end
 
   it "infers type of global reference" do

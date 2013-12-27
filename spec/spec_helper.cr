@@ -90,8 +90,8 @@ end
 
 def assert_interpret_primitive(code, expected_value)
   assert_interpret(code) do |value, program|
+    value = value as Interpreter::PrimitiveValue
     value.type.should eq(program.yield program)
-    assert_type value, Interpreter::PrimitiveValue
     value.value.should eq(expected_value)
   end
 end

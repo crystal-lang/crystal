@@ -71,7 +71,7 @@ class TCPSocket < Socket
 
     addr = C::SockAddrIn.new
     addr->family = C::AF_INET
-    addr->addr = server->addrlist[0].as(UInt32).value
+    addr->addr = (server->addrlist[0] as UInt32*).value
     addr->port = C.htons(port)
 
     if C.connect(@sock, addr, 16) != 0

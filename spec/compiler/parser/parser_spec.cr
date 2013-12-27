@@ -595,8 +595,7 @@ describe "Parser" do
   it_parses "foo.bar as Bar", Cast.new(Call.new("foo".call, "bar"), "Bar".ident)
 
   it "keeps instance variables declared in def" do
-    node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end")
-    assert_type node, Def
+    node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end") as Def
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
   end
 end

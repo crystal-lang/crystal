@@ -52,4 +52,25 @@ describe "Type inference: cast" do
       p as String
     ") { types["String"] }
   end
+
+  it "casts to module" do
+    assert_type("
+      module Moo
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+        include Moo
+      end
+
+      class Baz < Foo
+        include Moo
+      end
+
+      f = Foo.new || Bar.new || Baz.new
+      f as Moo
+      ") { union_of(types["Bar"].hierarchy_type, types["Baz"].hierarchy_type) }
+  end
 end

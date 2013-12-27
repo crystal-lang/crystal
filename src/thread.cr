@@ -36,12 +36,12 @@ class Thread(T, R)
   def start(x)
     ret = Pointer(R).malloc(1)
     ret.value = @func.call(@arg)
-    PThread.exit(ret.as(Void))
+    PThread.exit(ret as Void*)
   end
 
   def join
     PThread.join(@th, out ret)
-    ret.as(R).value
+    (ret as R*).value
   end
 end
 
