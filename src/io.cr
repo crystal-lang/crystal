@@ -46,7 +46,12 @@ end
 
 module IO
   def print(string)
-    C.fputs string, output
+    C.fputs string.to_s, output
+  end
+
+  def <<(string)
+    print(string)
+    self
   end
 
   def puts(string)
@@ -72,6 +77,54 @@ module IO
 
   def flush
     C.fflush output
+  end
+
+  def read(length)
+    buffer = Pointer(Char).malloc(length)
+    read_length = C.fread(buffer, 1_u64, length.to_sizet, input)
+    String.new(buffer, read_length)
+  end
+end
+
+class StringIO
+  def initialize(contents = nil)
+    @buffer = String::Buffer.new
+    @buffer << contents if contents
+    @pos = 0
+  end
+
+  def <<(obj)
+    @buffer << obj
+  end
+
+  def puts(obj)
+    self << obj << "\n"
+  end
+
+  def print(obj)
+    self << obj
+  end
+
+  def to_s
+    @buffer.to_s
+  end
+
+  def gets
+    return nil if @pos == @buffer.length
+    finish = @pos
+    while finish < @buffer.length && @buffer.buffer[finish] != '\n'
+      finish += 1
+    end
+    str = String.new(@buffer.buffer + @pos, finish - @pos + 1)
+    @pos = finish + 1
+    str
+  end
+
+  def read(length)
+    length = Math.min(length, @buffer.length - @pos)
+    str = String.new(@buffer.buffer + @pos, length)
+    @pos += length
+    str
   end
 end
 

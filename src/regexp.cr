@@ -86,6 +86,15 @@ class MatchData
     @string[start, finish - start]
   end
 
+  def to_s
+    String.build do |str|
+      str << "MatchData(\""
+      str << @string
+      str << "\""
+    end
+    "MatchData(#{@string.inspect} #{Array.new(length) { |i| self[i + 1] }})"
+  end
+
   # private
 
   def check_index_out_of_bounds(index)

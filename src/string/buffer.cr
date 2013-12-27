@@ -1,8 +1,12 @@
 class String::Buffer
-  def initialize(capacity)
+  def initialize(capacity = 64)
     @buffer = Pointer(Char).malloc(capacity)
     @length = 0
     @capacity = capacity
+  end
+
+  def buffer
+    @buffer
   end
 
   def <<(c : Char)

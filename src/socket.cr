@@ -95,6 +95,7 @@ class TCPSocket < Socket
     if C.close(@sock) != 0
       raise Errno.new("Error closing TCP socket")
     end
+    super
   end
 end
 
