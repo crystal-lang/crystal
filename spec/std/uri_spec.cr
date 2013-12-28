@@ -14,12 +14,12 @@ def assert_uri(string, scheme, host, port, path, query_string)
 end
 
 describe "URI" do
-  assert_uri("http://www.google.com", "http", "www.google.com", 80, nil, nil)
+  assert_uri("http://www.google.com", "http", "www.google.com", nil, nil, nil)
   assert_uri("http://www.google.com:81", "http", "www.google.com", 81, nil, nil)
-  assert_uri("http://www.google.com/foo", "http", "www.google.com", 80, "/foo", nil)
-  assert_uri("http://www.google.com/foo?q=1", "http", "www.google.com", 80, "/foo", "q=1")
-  assert_uri("http://www.google.com?q=1", "http", "www.google.com", 80, nil, "q=1")
-  assert_uri("https://www.google.com", "https", "www.google.com", 443, nil, nil)
+  assert_uri("http://www.google.com/foo", "http", "www.google.com", nil, "/foo", nil)
+  assert_uri("http://www.google.com/foo?q=1", "http", "www.google.com", nil, "/foo", "q=1")
+  assert_uri("http://www.google.com?q=1", "http", "www.google.com", nil, nil, "q=1")
+  assert_uri("https://www.google.com", "https", "www.google.com", nil, nil, nil)
 
   assert { URI.parse("http://www.google.com/foo").full_path.should eq("/foo") }
   assert { URI.parse("http://www.google.com").full_path.should eq("/") }
