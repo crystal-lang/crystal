@@ -2,7 +2,7 @@ require "socket"
 require "uri"
 
 class HTTPRequest
-  def initialize(@host, @port, method, @path, @headers = nil)
+  def initialize(method, @path, @headers = nil)
     @method = case method
     when :get then "GET"
     else method
@@ -51,13 +51,16 @@ class HTTPResponse
 end
 
 class HTTPClient
-  def self.get(host, port, path, headers = nil)
+  def self.exec(host, port, request)
     TCPSocket.open(host, port) do |socket|
-      request = HTTPRequest.new(host, port, "GET", path, headers)
       request.to_io(socket)
       socket.flush
       HTTPResponse.from_io(socket)
     end
+  end
+
+  def self.get(host, port, path, headers = nil)
+    exec(host, port, HTTPRequest.new("GET", path, headers))
   end
 
   def self.get(url : String)

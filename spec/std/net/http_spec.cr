@@ -4,7 +4,7 @@ require "net/http"
 
 describe "HTTP client" do
   it "performs GET request" do
-    request = HTTPRequest.new "localhost", 8080, :get, "/", {"Host" => "host.domain.com"} of String => String
+    request = HTTPRequest.new :get, "/", {"Host" => "host.domain.com"}
     io = String::Buffer.new
     request.to_io(io)
     io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n")
