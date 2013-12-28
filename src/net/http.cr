@@ -19,7 +19,7 @@ end
 class HTTPResponse
   def self.from_io(io)
     status_line = io.gets.not_nil!
-    status_line =~ Regexp.new("(HTTP/\\d\\.\\d)\\s(\\d\\d\\d)\\s(.*)\\r\\n$")
+    status_line =~ /\A(HTTP\/\d\.\d)\s(\d\d\d)\s(.*)\r\n\Z/
     http_version, status_code, status_message = $1, $2.to_i, $3
 
     headers = {} of String => String

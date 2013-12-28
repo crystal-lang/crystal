@@ -16,7 +16,7 @@ class URI
   end
 
   def self.parse(string)
-    string =~ Regexp.new("(?<scheme>.*):\\/\\/(?<host>[\\w\\.]*)(:(?<port>\\d*))?(?<path>\\/[^?]*)?(\\?(?<qs>.*))?")
+    string =~ /\A(?<scheme>.*):\/\/(?<host>[\w\.]*)(:(?<port>\d*))?(?<path>\/[^?]*)?(\?(?<qs>.*))?\Z/
     scheme = $1
     host = $2
     port = $4.empty? ? port_from_scheme($1) : $4.to_i
