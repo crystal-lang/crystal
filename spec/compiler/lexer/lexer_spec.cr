@@ -109,8 +109,8 @@ def it_lexes_symbols(symbols)
   end
 end
 
-def it_lexes_regex(regex)
-  it_lexes regex, :REGEXP, regex[1, regex.length - 2]
+def it_lexes_regex(regex, exepcted_value = regex[1, regex.length - 2])
+  it_lexes regex, :REGEXP, exepcted_value
 end
 
 def it_lexes_global_match(globals)
@@ -197,7 +197,11 @@ describe "Lexer" do
   it_lexes_class_var "@@foo"
   it_lexes_globals ["$foo", "$FOO", "$_foo", "$foo123", "$~"]
   it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\""]
+  it_lexes_regex "//", ""
   it_lexes_regex "/foo/"
+  it_lexes_regex "/foo\\/bar/", "foo/bar"
+  it_lexes_regex "/\\//", "/"
+  it_lexes_regex "/foo\\sbar/", "foo\\sbar"
   it_lexes_global_match ["$1", "$10"]
 
   it "lexes not instance var" do

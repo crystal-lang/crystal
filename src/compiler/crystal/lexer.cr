@@ -195,23 +195,30 @@ module Crystal
           @token.type = :"/"
         else
           start = @buffer
-          count = 1
+          string_buffer = String::Buffer.new(20)
 
           while true
-            char = next_char
             case char
+            when '\\'
+              if @buffer[1] == '/'
+                string_buffer << '/'
+                next_char
+              else
+                string_buffer << char
+              end
             when '/'
               next_char
               break
             when '\0'
               raise "unterminated regular expression"
             else
-              count += 1
+              string_buffer << char
             end
+            char = next_char
           end
 
           @token.type = :REGEXP
-          @token.value = String.new(start, count)
+          @token.value = string_buffer.to_s
         end
       when '%'
         case next_char
