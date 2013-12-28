@@ -16,16 +16,6 @@ lib LibGC("gc")
   fun pthread_join = GC_pthread_join(thread : PThread::Thread, value : Void**) : Int32
 end
 
-lib C
-  fun printf(str : Char*, ...) : Char
-end
-
-class String
-  def cstr
-    @c.ptr
-  end
-end
-
 fun __crystal_malloc(size : UInt32) : Void*
   LibGC.malloc(size)
 end
