@@ -2,10 +2,16 @@ require "socket"
 require "uri"
 
 class HTTPRequest
-  def initialize(method, @path, @headers = nil)
+  def initialize(method, @path, @headers = nil, @body = nil)
     @method = case method
     when :get then "GET"
+    when :post then "POST"
     else method
+    end
+
+    if body = @body
+      headers = @headers ||= {} of String => String
+      headers["Content-Length"] = body.length.to_s
     end
   end
 
@@ -17,6 +23,7 @@ class HTTPRequest
       end
     end
     io << "\r\n"
+    io << @body if @body
   end
 end
 
@@ -63,7 +70,21 @@ class HTTPClient
     exec(host, port, HTTPRequest.new("GET", path, headers))
   end
 
-  def self.get(url : String)
+  def self.get(url)
+    exec_url(url) do |path, headers|
+      HTTPRequest.new("GET", path, headers)
+    end
+  end
+
+  def self.post(url, body)
+    exec_url(url) do |path, headers|
+      HTTPRequest.new("POST", path, headers, body)
+    end
+  end
+
+  # private
+
+  def self.exec_url(url)
     uri = URI.parse(url)
     if uri_port = uri.port
       host_header = "#{uri.host}:#{uri.port}"
@@ -76,6 +97,7 @@ class HTTPClient
       end
     end
 
-    get(uri.host, port, uri.full_path, {"Host" => host_header})
+    request = yield uri.full_path, {"Host" => host_header}
+    exec(uri.host, port, request)
   end
 end

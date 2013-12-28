@@ -10,6 +10,13 @@ describe "HTTP client" do
     io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n")
   end
 
+  it "performs POST request" do
+    request = HTTPRequest.new :post, "/", nil, "thisisthebody"
+    io = String::Buffer.new
+    request.to_io(io)
+    io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
+  end
+
   it "gets response" do
     response = HTTPResponse.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"))
     response.version.should eq("HTTP/1.1")
