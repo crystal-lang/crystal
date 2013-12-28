@@ -51,9 +51,9 @@ class HTTPResponse
 end
 
 class HTTPClient
-  def self.get(host, port, path)
+  def self.get(host, port, path, headers = nil)
     TCPSocket.open(host, port) do |socket|
-      request = HTTPRequest.new(host, port, "GET", path)
+      request = HTTPRequest.new(host, port, "GET", path, headers)
       request.to_io(socket)
       socket.flush
       HTTPResponse.from_io(socket)
@@ -62,6 +62,17 @@ class HTTPClient
 
   def self.get(url : String)
     uri = URI.parse(url)
-    get(uri.host, uri.port, uri.full_path)
+    if uri_port = uri.port
+      host_header = "#{uri.host}:#{uri.port}"
+      port = uri_port
+    else
+      host_header = uri.host
+      port = case uri.scheme
+      when "http" then 80
+      else raise "Unsuported scheme: #{uri.scheme}"
+      end
+    end
+
+    get(uri.host, port, uri.full_path, {"Host" => host_header})
   end
 end
