@@ -1,5 +1,6 @@
 require "socket"
 require "uri"
+require "yaml"
 
 class HTTPRequest
   def initialize(method, @path, @headers = nil, @body = nil)
@@ -74,6 +75,10 @@ class HTTPClient
     exec_url(url) do |path, headers|
       HTTPRequest.new("GET", path, headers)
     end
+  end
+
+  def self.get_json(url)
+    Yaml.load(get(url).body)
   end
 
   def self.post(url, body)
