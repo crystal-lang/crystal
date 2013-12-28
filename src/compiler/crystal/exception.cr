@@ -20,6 +20,8 @@ module Crystal
         str << "Syntax error in line #{@line_number}: #{@message}"
       end
 
+      source = fetch_source(source)
+
       if source
         lines = source.lines
         if @line_number - 1 < lines.length
@@ -41,18 +43,21 @@ module Crystal
     end
 
     def to_s(source = nil)
-      filename = @filename
-
       String.build do |str|
-        case filename
-        when String
-          source = File.read(filename) if File.exists?(filename)
-        when VirtualFile
-          source = filename.source
-        end
-        append_to_s str, source
+        append_to_s str, fetch_source(source)
         nil # TODO: remove this line
       end
+    end
+
+    def fetch_source(source)
+      filename = @filename
+      case filename
+      when String
+        source = File.read(filename) if File.exists?(filename)
+      when VirtualFile
+        source = filename.source
+      end
+      source
     end
 
     def deepest_error_message

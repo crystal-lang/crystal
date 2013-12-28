@@ -843,6 +843,8 @@ module Crystal
       location = node.location
       required = @program.require(node.string, location.try &.filename).not_nil!
       required.transform(self)
+    rescue ex : Crystal::Exception
+      node.raise ex.message, ex
     rescue ex
       node.raise ex.message
     end
