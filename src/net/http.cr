@@ -11,7 +11,11 @@ class HTTPRequest
 
   def to_io(io)
     io << @method << " " << @path << " HTTP/1.1\r\n"
-    io << "Host: " << @host << ":" << @port << "\r\n"
+    if @headers
+      @headers.each do |name, value|
+        io << name << ": " << value << "\r\n"
+      end
+    end
     io << "\r\n"
   end
 end
