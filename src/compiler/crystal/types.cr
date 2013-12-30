@@ -10,6 +10,10 @@ module Crystal
       @metaclass ||= Metaclass.new(program, self)
     end
 
+    def force_metaclass(metaclass)
+      @metaclass = metaclass
+    end
+
     def type_id
       @type_id ||= program.next_type_id
     end
@@ -269,6 +273,14 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_instance_var"
     end
 
+    def lookup_instance_var?(name, create = false)
+      raise "Bug: #{self} doesn't implement lookup_instance_var?"
+    end
+
+    def owns_instance_var?(name)
+      raise "Bug: #{self} doesn't implement owns_instance_var?"
+    end
+
     def has_instance_var_in_initialize?(name)
       raise "Bug: #{self} doesn't implement has_instance_var_in_initialize?"
     end
@@ -279,6 +291,14 @@ module Crystal
 
     def remove_instance_var(name)
       raise "Bug: #{self} doesn't implement remove_instance_var"
+    end
+
+    def index_of_instance_var?(name)
+      raise "Bug: #{self} doesn't implement index_of_instance_var"
+    end
+
+    def all_instance_vars_count
+      raise "Bug: #{self} doesn't implement all_instance_vars_count"
     end
 
     def llvm_name
@@ -1633,16 +1653,28 @@ module Crystal
     include DefContainer
     include DefInstanceContainer
     include ClassVarContainer
+    include InstanceVarContainer
 
     getter program
     getter instance_type
 
-    def initialize(@program, @instance_type)
-      super(@program, @program, "#{@instance_type}:Class", @program.class_type)
+    def initialize(@program, instance_type, super_class = nil, name = nil)
+      @instance_type = instance_type
+      super_class ||= if instance_type.is_a?(ClassType) && instance_type.superclass
+                        instance_type.superclass.not_nil!.metaclass as ClassType
+                      else
+                        @program.class_type
+                      end
+
+      super(@program, @program, name || "#{@instance_type}:Class", super_class)
     end
 
     def allocated
       true
+    end
+
+    def metaclass
+      @program.class_type
     end
 
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
@@ -1674,7 +1706,7 @@ module Crystal
     end
 
     def to_s
-      "#{instance_type}:Class"
+      @name
     end
   end
 

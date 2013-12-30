@@ -17,7 +17,7 @@ module Crystal
 
     def define_object_primitives
       object.add_def Def.new("class", ([] of Arg), Primitive.new(:class))
-      object.metaclass.add_def Def.new("name", ([] of Arg), Primitive.new(:class_name))
+      # object.metaclass.add_def Def.new("name", ([] of Arg), Primitive.new(:class_name))
     end
 
     def define_primitive_types_primitives

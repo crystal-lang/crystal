@@ -154,7 +154,7 @@ module Crystal
       if scope
         if scope.is_a?(Crystal::Program)
           node.raise "can't use instance variables at the top level"
-        elsif scope.is_a?(PrimitiveType) || scope.metaclass?
+        elsif scope.is_a?(PrimitiveType) #|| scope.metaclass?
           node.raise "can't use instance variables inside #{@scope}"
         end
 

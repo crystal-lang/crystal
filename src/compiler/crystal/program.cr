@@ -66,7 +66,9 @@ module Crystal
       @string.lookup_instance_var("@length").set_type(@int32)
       @string.lookup_instance_var("@c").set_type(@char)
 
-      @types["Class"] = @class = NonGenericClassType.new self, self, "Class", @reference
+      @types["Class"] = @class = Metaclass.new(self, @object, @reference, "Class")
+      @object.force_metaclass @class
+      @class.force_metaclass @class
       @class.instance_vars_in_initialize = Set.new(["@name"])
       @class.lookup_instance_var("@name").set_type(@string)
       @class.allocated = true
