@@ -1,6 +1,6 @@
 class Nil
   def object_id
-    0
+    0_u64
   end
 
   def crystal_type_id

@@ -1,7 +1,6 @@
 require "gc"
 # require "gc/null"
 require "gc/boehm"
-require "compiler/crystal/ast.cr"
 require "c"
 require "int"
 require "pointer"

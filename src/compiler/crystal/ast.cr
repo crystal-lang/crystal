@@ -1,32 +1,6 @@
-require "location"
-
-# Some forward declarations
-class Array(T); end
-class Hash(K, V); end
-class Set(T); end
-
 module Crystal
-  # Need forward declaration to define instance variables' types
-  abstract class Type; end
-  abstract class TypeFilter; end
-  abstract class ASTNode; end
-  class Call < ASTNode; end
-
   # Base class for nodes in the grammar.
-  class ASTNode
-    @type :: Type+?
-    @location :: Location?
-    @dependencies :: Array(ASTNode)?
-    @type_filters :: Hash(String, TypeFilter)?
-    @freeze_type :: Bool?
-    @observers :: Array(ASTNode)?
-    @input_observers :: Array(Call)?
-    @dirty :: Bool?
-
-    def type?
-      @type
-    end
-
+  abstract class ASTNode
     def clone
       clone = clone_without_location
       clone.location = location
@@ -70,7 +44,7 @@ module Crystal
 
   # A container for one or many expressions.
   class Expressions < ASTNode
-    @expressions :: Array(ASTNode)
+    property :expressions
 
     def self.from(obj : Nil)
       Nop.new
@@ -92,13 +66,6 @@ module Crystal
     end
 
     def initialize(@expressions = [] of ASTNode)
-    end
-
-    def expressions=(@expressions)
-    end
-
-    def expressions
-      @expressions
     end
 
     def ==(other : self)
@@ -145,16 +112,9 @@ module Crystal
   #     'true' | 'false'
   #
   class BoolLiteral < ASTNode
-    @value :: Bool
+    property :value
 
     def initialize(@value)
-    end
-
-    def value=(@value)
-    end
-
-    def value
-      @value
     end
 
     def ==(other : self)
@@ -169,9 +129,9 @@ module Crystal
   # Any number literal.
   # kind stores a symbol indicating which type is it: i32, u16, f32, f64, etc.
   class NumberLiteral < ASTNode
-    @value :: String
-    @kind :: Symbol
-    @has_sign :: Bool
+    property :value
+    property :kind
+    property :has_sign
 
     def initialize(@value : String, @kind)
       @has_sign = value[0] == '+' || value[0] == '-'
@@ -180,24 +140,6 @@ module Crystal
     def initialize(value : Number, @kind)
       @value = value.to_s
       @has_sign = false
-    end
-
-    def value=(@value)
-    end
-
-    def value
-      @value
-    end
-
-    def kind=(@kind)
-    end
-
-    def kind
-      @kind
-    end
-
-    def has_sign
-      @has_sign
     end
 
     def ==(other : self)
@@ -226,16 +168,9 @@ module Crystal
   #     "'" \w "'"
   #
   class CharLiteral < ASTNode
-    @value :: String
+    property :value
 
     def initialize(@value)
-    end
-
-    def value=(@value)
-    end
-
-    def value
-      @value
     end
 
     def ==(other : self)
@@ -248,16 +183,9 @@ module Crystal
   end
 
   class StringLiteral < ASTNode
-    @value :: String
+    property :value
 
     def initialize(@value)
-    end
-
-    def value=(@value)
-    end
-
-    def value
-      @value
     end
 
     def ==(other : self)
@@ -278,16 +206,9 @@ module Crystal
   end
 
   class StringInterpolation < ASTNode
-    @expressions :: Array(ASTNode)
+    property :expressions
 
     def initialize(@expressions)
-    end
-
-    def expressions=(@expressions)
-    end
-
-    def expressions
-      @expressions
     end
 
     def accept_children(visitor)
@@ -304,16 +225,9 @@ module Crystal
   end
 
   class SymbolLiteral < ASTNode
-    @value :: String
+    property :value
 
     def initialize(@value)
-    end
-
-    def value=(@value)
-    end
-
-    def value
-      @value
     end
 
     def ==(other : self)
@@ -338,24 +252,10 @@ module Crystal
   #  '[' ( expression ( ',' expression )* ) ']'
   #
   class ArrayLiteral < ASTNode
-    @elements :: Array(ASTNode)
-    @of :: ASTNode+?
+    property :elements
+    property :of
 
     def initialize(@elements = [] of ASTNode, @of = nil)
-    end
-
-    def elements=(@elements)
-    end
-
-    def elements
-      @elements
-    end
-
-    def of=(@of)
-    end
-
-    def of
-      @of
     end
 
     def accept_children(visitor)
@@ -373,40 +273,12 @@ module Crystal
   end
 
   class HashLiteral < ASTNode
-    @keys :: Array(ASTNode)
-    @values :: Array(ASTNode)
-    @of_key :: ASTNode+?
-    @of_value :: ASTNode+?
+    property :keys
+    property :values
+    property :of_key
+    property :of_value
 
     def initialize(@keys = [] of ASTNode, @values = [] of ASTNode, @of_key = nil, @of_value = nil)
-    end
-
-    def keys=(@keys)
-    end
-
-    def keys
-      @keys
-    end
-
-    def values=(@values)
-    end
-
-    def values
-      @values
-    end
-
-    def of_key=(@of_key)
-    end
-
-    def of_key
-      @of_key
-    end
-
-    def of_value=(@of_value)
-    end
-
-    def of_value
-      @of_value
     end
 
     def accept_children(visitor)
@@ -426,32 +298,11 @@ module Crystal
   end
 
   class RangeLiteral < ASTNode
-    @from :: ASTNode+
-    @to :: ASTNode+
-    @exclusive :: Bool
+    property :from
+    property :to
+    property :exclusive
 
     def initialize(@from, @to, @exclusive)
-    end
-
-    def from=(@from)
-    end
-
-    def from
-      @from
-    end
-
-    def to=(@to)
-    end
-
-    def to
-      @to
-    end
-
-    def exclusive=(@exclusive)
-    end
-
-    def exclusive
-      @exclusive
     end
 
     def accept_children(visitor)
@@ -469,17 +320,10 @@ module Crystal
   end
 
   class RegexpLiteral < ASTNode
-    @value :: String
+    property :value
 
     def initialize(value)
       @value = value
-    end
-
-    def value=(@value)
-    end
-
-    def value
-      @value
     end
 
     def ==(other : self)
@@ -493,25 +337,11 @@ module Crystal
 
   # A local variable or block argument.
   class Var < ASTNode
-    @name :: String
-    @out :: Bool
+    property :name
+    property :out
 
     def initialize(@name, @type = nil)
       @out = false
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def out=(@out)
-    end
-
-    def out
-      @out
     end
 
     def name_length
@@ -546,25 +376,11 @@ module Crystal
   #     '{' [ '|' arg [ ',' arg ]* '|' ] body '}'
   #
   class Block < ASTNode
-    @args :: Array(Var)
-    @body :: ASTNode+
+    property :args
+    property :body
 
     def initialize(@args = [] of Var, body = nil)
       @body = Expressions.from body
-    end
-
-    def args=(@args)
-    end
-
-    def args
-      @args
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
     end
 
     def accept_children(visitor)
@@ -595,76 +411,17 @@ module Crystal
   # the symbol of that operator instead of a string.
   #
   class Call < ASTNode
-    @obj :: ASTNode+?
-    @name :: String
-    @args :: Array(ASTNode)
-    @block :: Block?
-    @block_arg :: ASTNode+?
-    @global :: Bool
-    @name_column_number :: Int32?
-    @has_parenthesis :: Bool
-    @name_length :: Int32?
+    property :obj
+    property :name
+    property :args
+    property :block
+    property :block_arg
+    property :global
+    property :name_column_number
+    property :has_parenthesis
+    property :name_length
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @global = false, @name_column_number = nil, @has_parenthesis = false)
-    end
-
-    def obj=(@obj)
-    end
-
-    def obj
-      @obj
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def args=(@args)
-    end
-
-    def args
-      @args
-    end
-
-    def block=(@block)
-    end
-
-    def block
-      @block
-    end
-
-    def block_arg=(@block_arg)
-    end
-
-    def block_arg
-      @block_arg
-    end
-
-    def global=(@global)
-    end
-
-    def global
-      @global
-    end
-
-    def name_column_number=(@name_column_number)
-    end
-
-    def name_column_number
-      @name_column_number
-    end
-
-    def has_parenthesis=(@has_parenthesis)
-    end
-
-    def has_parenthesis
-      @has_parenthesis
-    end
-
-    def name_length=(@name_length)
     end
 
     def name_length
@@ -714,42 +471,14 @@ module Crystal
   # An if elsif end is parsed as an If whose
   # else is another If.
   class If < ASTNode
-    @cond :: ASTNode+
-    @then :: ASTNode+
-    @else :: ASTNode+
-    @binary :: Symbol?
+    property :cond
+    property :then
+    property :else
+    property :binary
 
     def initialize(@cond, a_then = nil, a_else = nil)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
-    end
-
-    def cond=(@cond)
-    end
-
-    def cond
-      @cond
-    end
-
-    def then=(@then)
-    end
-
-    def then
-      @then
-    end
-
-    def else=(@else)
-    end
-
-    def else
-      @else
-    end
-
-    def binary=(@binary)
-    end
-
-    def binary
-      @binary
     end
 
     def accept_children(visitor)
@@ -770,35 +499,14 @@ module Crystal
   end
 
   class Unless < ASTNode
-    @cond :: ASTNode+
-    @then :: ASTNode+
-    @else :: ASTNode+
+    property :cond
+    property :then
+    property :else
 
     def initialize(@cond, a_then = nil, a_else = nil)
       @cond = cond
       @then = Expressions.from a_then
       @else = Expressions.from a_else
-    end
-
-    def cond=(@cond)
-    end
-
-    def cond
-      @cond
-    end
-
-    def then=(@then)
-    end
-
-    def then
-      @then
-    end
-
-    def else=(@else)
-    end
-
-    def else
-      @else
     end
 
     def accept_children(visitor)
@@ -829,34 +537,13 @@ module Crystal
   # An if elsif end is parsed as an If whose
   # else is another If.
   class IfDef < ASTNode
-    @cond :: ASTNode+
-    @then :: ASTNode+
-    @else :: ASTNode+
+    property :cond
+    property :then
+    property :else
 
     def initialize(@cond, a_then = nil, a_else = nil)
       @then = Expressions.from a_then
       @else = Expressions.from a_else
-    end
-
-    def cond=(@cond)
-    end
-
-    def cond
-      @cond
-    end
-
-    def then=(@then)
-    end
-
-    def then
-      @then
-    end
-
-    def else=(@else)
-    end
-
-    def else
-      @else
     end
 
     def accept_children(visitor)
@@ -879,24 +566,10 @@ module Crystal
   #     target '=' value
   #
   class Assign < ASTNode
-    @target :: ASTNode+
-    @value :: ASTNode+
+    property :target
+    property :value
 
     def initialize(@target, @value)
-    end
-
-    def target=(@target)
-    end
-
-    def target
-      @target
-    end
-
-    def value=(@value)
-    end
-
-    def value
-      @value
     end
 
     def accept_children(visitor)
@@ -918,24 +591,10 @@ module Crystal
   #     target [',' target]+ '=' value [',' value]*
   #
   class MultiAssign < ASTNode
-    @targets :: Array(ASTNode)
-    @values :: Array(ASTNode)
+    property :targets
+    property :values
 
     def initialize(@targets, @values)
-    end
-
-    def targets=(@targets)
-    end
-
-    def targets
-      @targets
-    end
-
-    def values=(@values)
-    end
-
-    def values
-      @values
     end
 
     def accept_children(visitor)
@@ -954,24 +613,10 @@ module Crystal
 
   # An instance variable.
   class InstanceVar < ASTNode
-    @name :: String
-    @out :: Bool
+    property :name
+    property :out
 
     def initialize(@name, @out = false)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def out=(@out)
-    end
-
-    def out
-      @out
     end
 
     def name_length
@@ -996,24 +641,10 @@ module Crystal
   end
 
   class ClassVar < ASTNode
-    @name :: String
-    @out :: Bool
+    property :name
+    property :out
 
     def initialize(@name, @out = false)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def out=(@out)
-    end
-
-    def out
-      @out
     end
 
     def ==(other : self)
@@ -1027,16 +658,9 @@ module Crystal
 
   # A global variable.
   class Global < ASTNode
-    @name :: String
+    property :name
 
     def initialize(@name)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
     end
 
     def name_length
@@ -1053,24 +677,10 @@ module Crystal
   end
 
   abstract class BinaryOp < ASTNode
-    @left :: ASTNode+
-    @right :: ASTNode+
+    property :left
+    property :right
 
     def initialize(@left, @right)
-    end
-
-    def left=(@left)
-    end
-
-    def left
-      @left
-    end
-
-    def right=(@right)
-    end
-
-    def right
-      @right
     end
 
     def accept_children(visitor)
@@ -1115,16 +725,9 @@ module Crystal
 
   # Used only for flags
   class Not < ASTNode
-    @exp :: ASTNode+
+    property :exp
 
     def initialize(@exp)
-    end
-
-    def exp=(@exp)
-    end
-
-    def exp
-      @exp
     end
 
     def accept_children(visitor)
@@ -1142,32 +745,11 @@ module Crystal
 
   # A def argument.
   class Arg < ASTNode
-    @name :: String
-    @default_value :: ASTNode+?
-    @type_restriction :: ASTNode+?
+    property :name
+    property :default_value
+    property :type_restriction
 
     def initialize(@name, @default_value = nil, @type_restriction = nil)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def default_value=(@default_value)
-    end
-
-    def default_value
-      @default_value
-    end
-
-    def type_restriction=(@type_restriction)
-    end
-
-    def type_restriction
-      @type_restriction
     end
 
     def accept_children(visitor)
@@ -1189,24 +771,10 @@ module Crystal
   end
 
   class FunTypeSpec < ASTNode
-    @inputs :: Array(ASTNode)?
-    @output :: ASTNode+?
+    property :inputs
+    property :output
 
     def initialize(@inputs = nil, @output = nil)
-    end
-
-    def inputs=(@inputs)
-    end
-
-    def inputs
-      @inputs
-    end
-
-    def output=(@output)
-    end
-
-    def output
-      @output
     end
 
     def accept_children(visitor)
@@ -1224,24 +792,10 @@ module Crystal
   end
 
   class BlockArg < ASTNode
-    @name :: String
-    @type_spec :: FunTypeSpec
+    property :name
+    property :type_spec
 
     def initialize(@name, @type_spec = FunTypeSpec.new)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def type_spec=(@type_spec)
-    end
-
-    def type_spec
-      @type_spec
     end
 
     def accept_children(visitor)
@@ -1276,89 +830,19 @@ module Crystal
   #     'end'
   #
   class Def < ASTNode
-    @receiver :: ASTNode+?
-    @name :: String
-    @args :: Array(Arg)
-    @body :: ASTNode+
-    @block_arg :: BlockArg?
-    @yields :: Int32?
-    @instance_vars :: Set(String)?
-    @calls_super :: Bool?
-    @uses_block_arg :: Bool?
-    @name_column_number :: Int32?
+    property :receiver
+    property :name
+    property :args
+    property :body
+    property :block_arg
+    property :yields
+    property :instance_vars
+    property :calls_super
+    property :uses_block_arg
+    property :name_column_number
 
     def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
       @body = Expressions.from body
-    end
-
-    def receiver=(@receiver)
-    end
-
-    def receiver
-      @receiver
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def args=(@args)
-    end
-
-    def args
-      @args
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
-    end
-
-    def block_arg=(@block_arg)
-    end
-
-    def block_arg
-      @block_arg
-    end
-
-    def yields=(@yields)
-    end
-
-    def yields
-      @yields
-    end
-
-    def instance_vars=(@instance_vars)
-    end
-
-    def instance_vars
-      @instance_vars
-    end
-
-    def calls_super=(@calls_super)
-    end
-
-    def calls_super
-      @calls_super
-    end
-
-    def uses_block_arg=(@uses_block_arg)
-    end
-
-    def uses_block_arg
-      @uses_block_arg
-    end
-
-    def name_column_number=(@name_column_number)
-    end
-
-    def name_column_number
-      @name_column_number
     end
 
     def accept_children(visitor)
@@ -1387,65 +871,16 @@ module Crystal
   end
 
   class Macro < ASTNode
-    @receiver :: ASTNode+?
-    @name :: String
-    @args :: Array(Arg)
-    @body :: ASTNode+
-    @block_arg :: BlockArg?
-    @yields :: Int32?
-    @name_column_number :: Int32?
+    property :receiver
+    property :name
+    property :args
+    property :body
+    property :block_arg
+    property :yields
+    property :name_column_number
 
     def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
       @body = Expressions.from body
-    end
-
-    def receiver=(@receiver)
-    end
-
-    def receiver
-      @receiver
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def args=(@args)
-    end
-
-    def args
-      @args
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
-    end
-
-    def block_arg=(@block_arg)
-    end
-
-    def block_arg
-      @block_arg
-    end
-
-    def yields=(@yields)
-    end
-
-    def yields
-      @yields
-    end
-
-    def name_column_number=(@name_column_number)
-    end
-
-    def name_column_number
-      @name_column_number
     end
 
     def accept_children(visitor)
@@ -1469,16 +904,9 @@ module Crystal
   end
 
   class PointerOf < ASTNode
-    @exp :: ASTNode+
+    property :exp
 
     def initialize(@exp)
-    end
-
-    def exp=(@exp)
-    end
-
-    def exp
-      @exp
     end
 
     def accept_children(visitor)
@@ -1495,24 +923,10 @@ module Crystal
   end
 
   class IsA < ASTNode
-    @obj :: ASTNode+
-    @const :: ASTNode+
+    property :obj
+    property :const
 
     def initialize(@obj, @const)
-    end
-
-    def obj=(@obj)
-    end
-
-    def obj
-      @obj
-    end
-
-    def const=(@const)
-    end
-
-    def const
-      @const
     end
 
     def accept_children(visitor)
@@ -1530,24 +944,10 @@ module Crystal
   end
 
   class RespondsTo < ASTNode
-    @obj :: ASTNode+
-    @name :: SymbolLiteral
+    property :obj
+    property :name
 
     def initialize(@obj, @name)
-    end
-
-    def obj=(@obj)
-    end
-
-    def obj
-      @obj
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
     end
 
     def accept_children(visitor)
@@ -1565,16 +965,9 @@ module Crystal
   end
 
   class Require < ASTNode
-    @string :: String
+    property :string
 
     def initialize(@string)
-    end
-
-    def string=(@string)
-    end
-
-    def string
-      @string
     end
 
     def ==(other : self)
@@ -1587,25 +980,11 @@ module Crystal
   end
 
   class When < ASTNode
-    @conds :: Array(ASTNode)
-    @body :: ASTNode+
+    property :conds
+    property :body
 
     def initialize(@conds, body = nil)
       @body = Expressions.from body
-    end
-
-    def conds=(@conds)
-    end
-
-    def conds
-      @conds
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
     end
 
     def accept_children(visitor)
@@ -1623,32 +1002,11 @@ module Crystal
   end
 
   class Case < ASTNode
-    @cond :: ASTNode+
-    @whens :: Array(When)
-    @else :: ASTNode+?
+    property :cond
+    property :whens
+    property :else
 
     def initialize(@cond, @whens, @else = nil)
-    end
-
-    def cond=(@cond)
-    end
-
-    def cond
-      @cond
-    end
-
-    def whens=(@whens)
-    end
-
-    def whens
-      @whens
-    end
-
-    def else=(@else)
-    end
-
-    def else
-      @else
     end
 
     def accept_children(visitor)
@@ -1670,32 +1028,11 @@ module Crystal
   #     const [ '::' const ]*
   #
   class Ident < ASTNode
-    @names :: Array(String)
-    @global :: Bool
-    @name_length :: Int32?
+    property :names
+    property :global
+    property :name_length
 
     def initialize(@names, @global = false)
-    end
-
-    def names=(@names)
-    end
-
-    def names
-      @names
-    end
-
-    def global=(@global)
-    end
-
-    def global
-      @global
-    end
-
-    def name_length=(@name_length)
-    end
-
-    def name_length
-      @name_length
     end
 
     def ==(other : self)
@@ -1724,57 +1061,15 @@ module Crystal
   #     'end'
   #
   class ClassDef < ASTNode
-    @name :: Ident
-    @body :: ASTNode+
-    @superclass :: ASTNode+?
-    @type_vars :: Array(String)?
-    @abstract :: Bool
-    @name_column_number :: Int32?
+    property :name
+    property :body
+    property :superclass
+    property :type_vars
+    property :abstract
+    property :name_column_number
 
     def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @name_column_number = nil)
       @body = Expressions.from body
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
-    end
-
-    def superclass=(@superclass)
-    end
-
-    def superclass
-      @superclass
-    end
-
-    def type_vars=(@type_vars)
-    end
-
-    def type_vars
-      @type_vars
-    end
-
-    def abstract=(@abstract)
-    end
-
-    def abstract
-      @abstract
-    end
-
-    def name_column_number=(@name_column_number)
-    end
-
-    def name_column_number
-      @name_column_number
     end
 
     def accept_children(visitor)
@@ -1798,41 +1093,13 @@ module Crystal
   #     'end'
   #
   class ModuleDef < ASTNode
-    @name :: Ident
-    @body :: ASTNode+
-    @type_vars :: Array(String)?
-    @name_column_number :: Int32?
+    property :name
+    property :body
+    property :type_vars
+    property :name_column_number
 
     def initialize(@name, body = nil, @type_vars = nil, @name_column_number = nil)
       @body = Expressions.from body
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
-    end
-
-    def type_vars=(@type_vars)
-    end
-
-    def type_vars
-      @type_vars
-    end
-
-    def name_column_number=(@name_column_number)
-    end
-
-    def name_column_number
-      @name_column_number
     end
 
     def accept_children(visitor)
@@ -1855,33 +1122,12 @@ module Crystal
   #     'end'
   #
   class While < ASTNode
-    @cond :: ASTNode+
-    @body :: ASTNode+
-    @run_once :: Bool
+    property :cond
+    property :body
+    property :run_once
 
     def initialize(@cond, body = nil, @run_once = false)
       @body = Expressions.from body
-    end
-
-    def cond=(@cond)
-    end
-
-    def cond
-      @cond
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
-    end
-
-    def run_once=(@run_once)
-    end
-
-    def run_once
-      @run_once
     end
 
     def accept_children(visitor)
@@ -1899,8 +1145,8 @@ module Crystal
   end
 
   class NewGenericClass < ASTNode
-    @name :: Ident
-    @type_vars :: Array(ASTNode)
+    property :name
+    property :type_vars
 
     def initialize(@name, @type_vars)
     end
@@ -1908,20 +1154,6 @@ module Crystal
     def accept_children(visitor)
       @name.accept visitor
       @type_vars.each { |v| v.accept visitor }
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def type_vars=(@type_vars)
-    end
-
-    def type_vars
-      @type_vars
     end
 
     def ==(other : self)
@@ -1934,24 +1166,10 @@ module Crystal
   end
 
   class DeclareVar < ASTNode
-    @var :: ASTNode+
-    @declared_type :: ASTNode+
+    property :var
+    property :declared_type
 
     def initialize(@var, @declared_type)
-    end
-
-    def var=(@var)
-    end
-
-    def var
-      @var
-    end
-
-    def declared_type=(@declared_type)
-    end
-
-    def declared_type
-      @declared_type
     end
 
     def accept_children(visitor)
@@ -1981,33 +1199,12 @@ module Crystal
   end
 
   class Rescue < ASTNode
-    @body :: ASTNode+
-    @types :: Array(ASTNode)?
-    @name :: String?
+    property :body
+    property :types
+    property :name
 
     def initialize(body = nil, @types = nil, @name = nil)
       @body = Expressions.from body
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
-    end
-
-    def types=(@types)
-    end
-
-    def types
-      @types
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
     end
 
     def accept_children(visitor)
@@ -2025,41 +1222,13 @@ module Crystal
   end
 
   class ExceptionHandler < ASTNode
-    @body :: ASTNode+
-    @rescues :: Array(Rescue)?
-    @else :: ASTNode+?
-    @ensure :: ASTNode+?
+    property :body
+    property :rescues
+    property :else
+    property :ensure
 
     def initialize(body = nil, @rescues = nil, @else = nil, @ensure = nil)
       @body = Expressions.from body
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
-    end
-
-    def rescues=(@rescues)
-    end
-
-    def rescues
-      @rescues
-    end
-
-    def else=(@else)
-    end
-
-    def else
-      @else
-    end
-
-    def ensure=(@ensure)
-    end
-
-    def ensure
-      @ensure
     end
 
     def accept_children(visitor)
@@ -2079,16 +1248,9 @@ module Crystal
   end
 
   class FunLiteral < ASTNode
-    @def :: Def
+    property :def
 
     def initialize(@def = Def.new("->", [] of Arg))
-    end
-
-    def def=(@def)
-    end
-
-    def def
-      @def
     end
 
     def accept_children(visitor)
@@ -2105,32 +1267,11 @@ module Crystal
   end
 
   class FunPointer < ASTNode
-    @obj :: ASTNode+?
-    @name :: String
-    @args :: Array(ASTNode)
+    property :obj
+    property :name
+    property :args
 
     def initialize(@obj, @name, @args = [] of ASTNode)
-    end
-
-    def obj=(@obj)
-    end
-
-    def obj
-      @obj
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def args=(@args)
-    end
-
-    def args
-      @args
     end
 
     def accept_children(visitor)
@@ -2148,16 +1289,9 @@ module Crystal
   end
 
   class IdentUnion < ASTNode
-    @idents :: Array(ASTNode)
+    property :idents
 
     def initialize(@idents)
-    end
-
-    def idents=(@idents)
-    end
-
-    def idents
-      @idents
     end
 
     def ==(other : self)
@@ -2174,16 +1308,9 @@ module Crystal
   end
 
   class Hierarchy < ASTNode
-    @name :: ASTNode+
+    property :name
 
     def initialize(@name)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
     end
 
     def ==(other : self)
@@ -2200,24 +1327,10 @@ module Crystal
   end
 
   class StaticArray < ASTNode
-    @name :: ASTNode+
-    @size :: Int32
+    property :name
+    property :size
 
     def initialize(@name, @size)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def size=(@size)
-    end
-
-    def size
-      @size
     end
 
     def ==(other : self)
@@ -2244,16 +1357,9 @@ module Crystal
   end
 
   abstract class ControlExpression < ASTNode
-    @exps :: Array(ASTNode)
+    property :exps
 
     def initialize(@exps = [] of ASTNode)
-    end
-
-    def exps=(@exps)
-    end
-
-    def exps
-      @exps
     end
 
     def accept_children(visitor)
@@ -2278,16 +1384,9 @@ module Crystal
   end
 
   class Yield < ControlExpression
-    @scope :: ASTNode+?
+    property :scope
 
     def initialize(@exps = [] of ASTNode, @scope = nil)
-    end
-
-    def scope=(@scope)
-    end
-
-    def scope
-      @scope
     end
 
     def accept_children(visitor)
@@ -2311,16 +1410,9 @@ module Crystal
   end
 
   class Include < ASTNode
-    @name :: ASTNode+
+    property :name
 
     def initialize(@name)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
     end
 
     def accept_children(visitor)
@@ -2337,41 +1429,13 @@ module Crystal
   end
 
   class LibDef < ASTNode
-    @name :: String
-    @libname :: String?
-    @body :: ASTNode+
-    @name_column_number :: Int32?
+    property :name
+    property :libname
+    property :body
+    property :name_column_number
 
     def initialize(@name, @libname = nil, body = nil, @name_column_number = nil)
       @body = Expressions.from body
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def libname=(@libname)
-    end
-
-    def libname
-      @libname
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
-    end
-
-    def name_column_number=(@name_column_number)
-    end
-
-    def name_column_number
-      @name_column_number
     end
 
     def accept_children(visitor)
@@ -2388,56 +1452,14 @@ module Crystal
   end
 
   class FunDef < ASTNode
-    @name :: String
-    @args :: Array(Arg)
-    @return_type :: ASTNode+?
-    @varargs :: Bool
-    @body :: ASTNode+?
-    @real_name :: String
+    property :name
+    property :args
+    property :return_type
+    property :varargs
+    property :body
+    property :real_name
 
     def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, @real_name = name)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def args=(@args)
-    end
-
-    def args
-      @args
-    end
-
-    def return_type=(@return_type)
-    end
-
-    def return_type
-      @return_type
-    end
-
-    def varargs=(@varargs)
-    end
-
-    def varargs
-      @varargs
-    end
-
-    def body=(@body)
-    end
-
-    def body
-      @body
-    end
-
-    def real_name=(@real_name)
-    end
-
-    def real_name
-      @real_name
     end
 
     def accept_children(visitor)
@@ -2456,32 +1478,11 @@ module Crystal
   end
 
   class TypeDef < ASTNode
-    @name :: String
-    @type_spec :: ASTNode+
-    @name_column_number :: Int32?
+    property :name
+    property :type_spec
+    property :name_column_number
 
     def initialize(@name, @type_spec, @name_column_number = nil)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def type_spec=(@type_spec)
-    end
-
-    def type_spec
-      @type_spec
-    end
-
-    def name_column_number=(@name_column_number)
-    end
-
-    def name_column_number
-      @name_column_number
     end
 
     def accept_children(visitor)
@@ -2498,24 +1499,10 @@ module Crystal
   end
 
   abstract class StructOrUnionDef < ASTNode
-    @name :: String
-    @fields :: Array(Arg)
+    property :name
+    property :fields
 
     def initialize(@name, @fields = [] of Arg)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def fields=(@fields)
-    end
-
-    def fields
-      @fields
     end
 
     def accept_children(visitor)
@@ -2540,24 +1527,10 @@ module Crystal
   end
 
   class EnumDef < ASTNode
-    @name :: String
-    @constants :: Array(Arg)
+    property :name
+    property :constants
 
     def initialize(@name, @constants)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def constants=(@constants)
-    end
-
-    def constants
-      @constants
     end
 
     def accept_children(visitor)
@@ -2574,24 +1547,10 @@ module Crystal
   end
 
   class ExternalVar < ASTNode
-    @name :: String
-    @type_spec :: ASTNode+
+    property :name
+    property :type_spec
 
     def initialize(@name, @type_spec)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def type_spec=(@type_spec)
-    end
-
-    def type_spec
-      @type_spec
     end
 
     def accept_children(visitor)
@@ -2608,49 +1567,17 @@ module Crystal
   end
 
   class External < Def
-    @real_name :: String
-    @varargs :: Bool?
-    @fun_def :: Def?
-    @dead :: Bool?
+    property :real_name
+    property :varargs
+    property! :fun_def
+    property :dead
 
     def initialize(name : String, args : Array(Arg), body = nil, receiver = nil, block_arg = nil, yields = -1, @real_name : String)
       super(name, args, body, receiver, block_arg, yields)
     end
 
-    def real_name=(@real_name)
-    end
-
-    def real_name
-      @real_name
-    end
-
-    def varargs=(@varargs)
-    end
-
-    def varargs
-      @varargs
-    end
-
-    def fun_def=(@fun_def)
-    end
-
-    def fun_def?
-      @fun_def
-    end
-
-    def fun_def
-      @fun_def.not_nil!
-    end
-
     def mangled_name(obj_type)
       real_name
-    end
-
-    def dead=(@dead)
-    end
-
-    def dead
-      @dead
     end
 
     def compatible_with?(other)
@@ -2675,24 +1602,10 @@ module Crystal
   end
 
   class Alias < ASTNode
-    @name :: String
-    @value :: ASTNode+
+    property :name
+    property :value
 
     def initialize(@name, @value)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
-    end
-
-    def value=(@value)
-    end
-
-    def value
-      @value
     end
 
     def accept_children(visitor)
@@ -2709,24 +1622,10 @@ module Crystal
   end
 
   class IndirectRead < ASTNode
-    @obj :: ASTNode+
-    @names :: Array(String)
+    property :obj
+    property :names
 
     def initialize(@obj, @names)
-    end
-
-    def obj=(@obj)
-    end
-
-    def obj
-      @obj
-    end
-
-    def names=(@names)
-    end
-
-    def names
-      @names
     end
 
     def accept_children(visitor)
@@ -2743,17 +1642,10 @@ module Crystal
   end
 
   class IndirectWrite < IndirectRead
-    @value :: ASTNode+
+    property :value
 
     def initialize(obj, names, @value)
       super(obj, names)
-    end
-
-    def value=(@value)
-    end
-
-    def value
-      @value
     end
 
     def accept_children(visitor)
@@ -2771,16 +1663,9 @@ module Crystal
   end
 
   class MetaclassNode < ASTNode
-    @name :: ASTNode+
+    property :name
 
     def initialize(@name)
-    end
-
-    def name=(@name)
-    end
-
-    def name
-      @name
     end
 
     def accept_children(visitor)
@@ -2797,24 +1682,10 @@ module Crystal
   end
 
   class Cast < ASTNode
-    @obj :: ASTNode+
-    @to :: ASTNode+
+    property :obj
+    property :to
 
     def initialize(@obj, @to)
-    end
-
-    def obj=(@obj)
-    end
-
-    def obj
-      @obj
-    end
-
-    def to=(@to)
-    end
-
-    def to
-      @to
     end
 
     def accept_children(visitor)
@@ -2833,16 +1704,9 @@ module Crystal
 
   # Ficticious node to represent primitives
   class Primitive < ASTNode
-    @name :: Symbol
+    getter name
 
     def initialize(@name, @type = nil)
-    end
-
-    # def name=(@name)
-    # end
-
-    def name
-      @name
     end
 
     def ==(other : self)
@@ -2856,14 +1720,10 @@ module Crystal
 
   # Ficticious node to cast a node with type FunType to return void
   class CastFunToReturnVoid < Primitive
-    @node :: ASTNode+
+    getter node
 
     def initialize(@node)
       @name = :cast_fun_to_return_void
-    end
-
-    def node
-      @node
     end
 
     def clone_without_location
@@ -2873,16 +1733,9 @@ module Crystal
 
   # Ficticious node that means: merge the type of the arguments
   class TypeMerge < ASTNode
-    @expressions :: Array(ASTNode)
+    property :expressions
 
     def initialize(@expressions)
-    end
-
-    def expressions=(@expressions)
-    end
-
-    def expressions
-      @expressions
     end
 
     def accept_children(visitor)
@@ -2901,13 +1754,9 @@ module Crystal
   # Ficticious node used in the codegen phase to say
   # "this is a node that has his type casted"
   class CastedVar < ASTNode
-    @name :: String
+    getter name
 
     def initialize(@name)
-    end
-
-    def name
-      @name
     end
 
     def clone_without_location

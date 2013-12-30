@@ -53,28 +53,6 @@ module Macro
     end
   end
 
-  class ArrayLiteral(T)
-    include Enumerable
-
-    def initialize(elements : Array(T))
-      @elements = elements
-    end
-
-    def elements
-      @elements
-    end
-
-    def each
-      @elements.each do |elem|
-        yield elem
-      end
-    end
-
-    def to_s_node
-      to_s
-    end
-  end
-
   class Var
     def initialize(name)
       @name = name
