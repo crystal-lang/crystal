@@ -895,19 +895,10 @@ module Crystal
       name = name.replace '@', '.'
       key = StringKey.new(@llvm_mod, str)
       @strings[key] ||= begin
-        global = @llvm_mod.globals.add(LLVM.array_type(LLVM::Int8, str.length + 5), name)
+        global = @llvm_mod.globals.add(LLVM.struct_type([LLVM::Int32, LLVM.array_type(LLVM::Int8, str.length + 1)]), name)
         LLVM.set_linkage global, LibLLVM::Linkage::Private
         LLVM.set_global_constant global, true
-
-        # Pack the string bytes
-        bytes = [] of LibLLVM::ValueRef
-        length = str.length
-        length_ptr = pointerof(length) as UInt8*
-        (0..3).each { |i| bytes << int8(length_ptr[i]) }
-        str.each_char { |c| bytes << int8(c.ord) }
-        bytes << int8(0)
-
-        LLVM.set_initializer global, LLVM.array(LLVM::Int8, bytes)
+        LLVM.set_initializer global, LLVM.struct([int32(str.length), LLVM.string(str)])
         cast_to global, @mod.string
       end
     end

@@ -219,7 +219,8 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun const_pointer_null = LLVMConstPointerNull(ty : TypeRef) : ValueRef
   fun const_real = LLVMConstReal(real_ty : TypeRef, n : Float64) : ValueRef
   fun const_real_of_string = LLVMConstRealOfString(real_type : TypeRef, value : Char*) : ValueRef
-  fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : UInt32) : ValueRef
+  fun const_string = LLVMConstString(str : Char*, length : UInt32, dont_null_terminate : Int32) : ValueRef
+  fun const_struct = LLVMConstStruct(contant_vals : ValueRef*, count : UInt32, packed : Int32) : ValueRef
   fun count_param_types = LLVMCountParamTypes(function_type : TypeRef) : UInt32
   fun create_builder = LLVMCreateBuilder : BuilderRef
   fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
@@ -666,8 +667,12 @@ module LLVM
     struct
   end
 
-  def self.struct_type(name, element_types, packed = false)
-    struct_type(name, packed) { element_types }
+  def self.struct_type(element_types, name = nil, packed = false)
+    if name
+      struct_type(name, packed) { element_types }
+    else
+      LibLLVM.struct_type(element_types.buffer, element_types.length.to_u32, packed ? 1 : 0)
+    end
   end
 
   def self.array_type(element_type, count)
@@ -704,6 +709,14 @@ module LLVM
 
   def self.array(type, values)
     LibLLVM.const_array(type, values.buffer, values.length.to_u32)
+  end
+
+  def self.struct(values, packed = false)
+    LibLLVM.const_struct(values.buffer, values.length.to_u32, packed ? 1 : 0)
+  end
+
+  def self.string(string)
+    LibLLVM.const_string(string.cstr, string.length.to_u32, 0)
   end
 
   def self.set_initializer(value, initializer)
