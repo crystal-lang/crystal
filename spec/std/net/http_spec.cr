@@ -17,6 +17,21 @@ describe "HTTP" do
       request.to_io(io)
       io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
     end
+
+    it "parses GET" do
+      request = HTTPRequest.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n"))
+      request.method.should eq("GET")
+      request.path.should eq("/")
+      request.headers.should eq({"host" => "host.domain.com"})
+    end
+
+    it "parses POST (with body)" do
+      request = HTTPRequest.from_io(StringIO.new("POST /foo HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody"))
+      request.method.should eq("POST")
+      request.path.should eq("/foo")
+      request.headers.should eq({"content-length" => "13"})
+      request.body.should eq("thisisthebody")
+    end
   end
 
   describe "Response" do
@@ -36,6 +51,13 @@ describe "HTTP" do
       response.status_message.should eq("Not Found")
       response.headers.length.should eq(0)
       response.body.should be_nil
+    end
+
+    it "serialize with body" do
+      response = HTTPResponse.new("HTTP/1.1", 200, "OK", {"Content-Type" => "text/plain", "Content-Length" => "5"}, "hello")
+      io = String::Buffer.new
+      response.to_io(io)
+      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello")
     end
   end
 end
