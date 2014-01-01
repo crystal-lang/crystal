@@ -214,4 +214,44 @@ describe "Interpreter" do
       a
       ", 6, &.int32
   end
+
+  it "interprets pointer malloc of int32 and sets value" do
+    assert_interpret("
+      p = Pointer(Int32).malloc(1_u64)
+      p.value = 1
+      p
+      ") do |value|
+      value = value as Interpreter::PointerValue
+      value.type.should eq(pointer_of(int32))
+      pointer_value = value.value as Interpreter::PrimitiveValue
+      pointer_value.type.should eq(int32)
+      pointer_value.value.should eq(1)
+    end
+  end
+
+  it "interprets pointer get value" do
+    assert_interpret_primitive "
+      p = Pointer(Int32).malloc(1_u64)
+      p.value = 1
+      p.value
+      ", 1, &.int32
+  end
+
+  it "interprets pointer new with address" do
+    assert_interpret_primitive "
+      p = Pointer(Int32).malloc(1_u64)
+      p.value = 1
+      p2 = Pointer(Int32).new(p.address)
+      p2.value
+      ", 1, &.int32
+  end
+
+
+  it "interprets const assign" do
+    assert_interpret_primitive "A = 1", 1, &.int32
+  end
+
+  it "interprets const assign and read" do
+    assert_interpret_primitive "A = 1; A", 1, &.int32
+  end
 end

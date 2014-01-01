@@ -252,6 +252,79 @@ module Crystal
       type.add_var node.name, var_type
     end
 
+    def process_fun_def(node : FunDef)
+      if node.body && !current_type.is_a?(Program)
+        node.raise "can only declare fun at lib or global scope"
+      end
+
+      args = node.args.map do |arg|
+        restriction = arg.type_restriction.not_nil!
+        restriction.accept self
+
+        arg_type = check_primitive_like(restriction.not_nil!)
+
+        fun_arg = Arg.new_with_type(arg.name, arg_type)
+        fun_arg.location = arg.location
+        fun_arg
+      end
+
+      node_return_type = node.return_type
+      if node_return_type
+        node_return_type.accept self
+        return_type = check_primitive_like(node_return_type)
+      else
+        return_type = @mod.void
+      end
+
+      external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
+      if node_body = node.body
+        vars = {} of String => Var
+        args.each do |arg|
+          var = Var.new(arg.name, arg.type)
+          var.bind_to var
+          vars[arg.name] = var
+        end
+        external.set_type(nil)
+
+        visitor = TypeVisitor.new(@mod, vars, @mod, self, nil, nil, external, external, args.map(&.type))
+        begin
+          node_body.accept visitor
+        rescue ex : Crystal::Exception
+          node.raise ex.message, ex
+        end
+
+        inferred_return_type = @mod.type_merge([node_body.type?, external.type?])
+
+        if return_type && return_type != @mod.void && inferred_return_type != return_type
+          node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
+        end
+
+        external.set_type(return_type)
+
+        if node.name == Crystal::RAISE_NAME
+          external.raises = true
+        end
+      elsif node.name == Crystal::MAIN_NAME
+        external.raises = true
+      end
+
+      begin
+        old_external = current_type.add_def external
+      rescue ex
+        node.raise ex.message
+      end
+
+      if old_external.is_a?(External)
+        old_external.dead = true
+      end
+
+      if node.body
+        current_type.add_def_instance external.object_id, external.args.map(&.type), nil, external
+      end
+
+      node.type = @mod.nil
+    end
+
     def process_ident_union(node : IdentUnion)
       node.type = @mod.type_merge(node.idents.map &.type.instance_type)
     end

@@ -305,6 +305,10 @@ module Crystal
       to_s
     end
 
+    def llvm_size
+      raise "Bug: #{self} doesn't implement llvm_size"
+    end
+
     def type_desc
       to_s
     end

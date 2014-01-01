@@ -54,8 +54,9 @@ last_line = line_number
 msg = nil
 program = Program.new
 
-# HACK
-program.infer_type(NilLiteral.new || Nop.new)
+node = Require.new("prelude")
+node = program.normalize(node)
+program.infer_type node
 
 interpreter = Interpreter.new(program)
 
@@ -76,8 +77,10 @@ loop do
 
       if openings == 0
         begin
+          time = Time.now
           value = interpreter.interpret(buffer.to_s)
-          puts "=> #{value}"
+          time = Time.now - time
+          puts "=> #{value} (executed in #{time} seconds)"
           incomplete_expression = false
         rescue ex : Crystal::Exception
           msg = ex.message

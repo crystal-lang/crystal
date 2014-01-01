@@ -106,6 +106,15 @@ module Crystal
       when InstanceVar
         node.value.accept self
         self_value[target.name] = @value
+      when Ident
+        type = current_type.types[target.names.first]?
+        if type
+          target.raise "already initialized constant #{target}"
+        end
+
+        node.value.accept self
+
+        current_type.types[target.names.first] = ConstValue.new(@mod, current_type, @value)
       else
         raise "Assign not implemented yet: #{node.to_s_node}"
       end
@@ -230,6 +239,11 @@ module Crystal
       false
     end
 
+    def visit(node : FunDef)
+      process_fun_def(node)
+      false
+    end
+
     def end_visit(node : IdentUnion)
       process_ident_union(node)
       @value = MetaclassValue.new(node.type)
@@ -240,9 +254,25 @@ module Crystal
       @value = MetaclassValue.new(node.type)
     end
 
+    def visit(node : TypeMerge)
+      types = [] of Type
+      node.expressions.each do |exp|
+        exp.accept self
+        types << @value.type
+      end
+
+      node.type = @mod.type_merge(types)
+      @value = MetaclassValue.new(node.type)
+    end
+
     def end_visit(node : NewGenericClass)
       process_new_generic_class(node)
       @value = MetaclassValue.new(node.type)
+    end
+
+    def visit(node : DeclareVar)
+      # Nothing to do (yet)
+      false
     end
 
     def visit(node : Call)
@@ -291,9 +321,21 @@ module Crystal
           end
         end
 
-        node.raise "undefined method #{node.name} for #{call_scope}"
+        # This is just so that we can reuse code from the call
+        error_call = node.clone
+        error_call.mod = @mod
+        error_call.args.zip(types) { |arg, type| arg.set_type(type) }
+
+        error_call.raise_matches_not_found(call_scope, node.name)
       when 1
-        @value = execute_call(matches.first, call_scope, call_vars, values, node)
+        match = matches.first
+
+        # if node.block && (block_arg = match.def.block_arg) && (yields = match.def.yields) && yields > 0
+        #   node.block.not_nil!.accept self
+        #   puts @parent_interpreter.not_nil!.value
+        # end
+
+        @value = execute_call(match, call_scope, call_vars, values, node)
       else
         node.raise "Bug: more than one match found for #{call_scope}##{node.name}"
       end
@@ -303,6 +345,10 @@ module Crystal
 
     def execute_call(match, call_scope, call_vars, values, call)
       target_def = match.def
+      if target_def.is_a?(External)
+        call.raise "can't interpret external calls"
+      end
+
       target_def.args.zip(values) do |arg, value|
         call_vars[arg.name] = value
       end
@@ -355,6 +401,20 @@ module Crystal
         visit_allocate node
       when :object_id
         visit_object_id node
+      when :pointer_malloc
+        visit_pointer_malloc node
+      when :pointer_set
+        visit_pointer_set node
+      when :pointer_get
+        visit_pointer_get node
+      when :pointer_add
+        visit_pointer_add node
+      when :pointer_address
+        visit_pointer_address node
+      when :pointer_new
+        visit_pointer_new node
+      when :pointer_cast
+        visit_pointer_cast node
       else
         node.raise "Bug: unhandled primitive in interpret: #{node.name}"
       end
@@ -494,18 +554,74 @@ module Crystal
       @value = PrimitiveValue.new(@mod.uint64, self_value.object_id)
     end
 
+    def visit_pointer_malloc(node)
+      scope = @scope.not_nil!.instance_type as PointerInstanceType
+
+      size = @vars["size"] as PrimitiveValue
+      size_value = size.value as UInt64
+
+      size_value *= scope.llvm_size
+
+      @value = PointerValue.new(scope, Pointer(Int8).malloc(size_value))
+    end
+
+    def visit_pointer_set(node)
+      self_value = @vars["self"] as PointerValue
+
+      value = @vars["value"]
+
+      self_value.value = value
+
+      @value = value
+    end
+
+    def visit_pointer_get(node)
+      self_value = @vars["self"] as PointerValue
+
+      @value = self_value.value
+    end
+
+    def visit_pointer_add(node)
+      self_value = @vars["self"] as PointerValue
+      offset = @vars["offset"] as PrimitiveValue
+      offset_value  = offset.value as Int64
+      type = self_value.type as PointerInstanceType
+      size = type.var.type.llvm_size
+      @value = PointerValue.new(self_value.type, self_value.data + (size * offset_value))
+    end
+
+    def visit_pointer_address(node)
+      self_value = @vars["self"] as PointerValue
+      @value = PrimitiveValue.new(@mod.uint64, self_value.data.address)
+    end
+
+    def visit_pointer_new(node)
+      scope = @scope.not_nil!.instance_type as PointerInstanceType
+
+      address = @vars["address"] as PrimitiveValue
+      address_value = address.value as UInt64
+
+      @value = PointerValue.new(scope, Pointer(Int8).new(address_value))
+    end
+
+    def visit_pointer_cast(node)
+      self_value = @vars["self"] as PointerValue
+
+      type = @vars["type"]
+      type_type = type.type.instance_type
+
+      if type_type.class?
+        @value = PointerValue.new(type_type, self_value.data)
+      else
+        @value = PointerValue.new(@mod.pointer_of(type_type), self_value.data)
+      end
+    end
+
     def visit(node : Ident)
       type = resolve_ident(node)
       case type
-      # when Const
-      #   unless type.value.type?
-      #     old_types, old_scope, old_vars = @types, @scope, @vars
-      #     @types, @scope, @vars = type.scope_types, type.scope, ({} of String => Var)
-      #     type.value.accept self
-      #     @types, @scope, @vars = old_types, old_scope, old_vars
-      #   end
-      #   node.target_const = type
-      #   node.bind_to type.value
+      when ConstValue
+        @value = type.value
       when Type
         ident_type = type.remove_alias_if_simple.metaclass
         node.type = ident_type
@@ -581,6 +697,83 @@ module Crystal
       end
     end
 
+    class PointerValue < Value
+      getter data
+
+      def initialize(type, @data)
+        super(type)
+      end
+
+      def value=(value : PrimitiveValue)
+        type = @type as PointerInstanceType
+
+        value_value = value.value
+
+        case value_value
+        when Nil
+          (@data as Nil*).value = value_value
+        when Bool
+          (@data as Bool*).value = value_value
+        when Char
+          (@data as Char*).value = value_value
+        when Int8
+          (@data as Int8*).value = value_value
+        when UInt8
+          (@data as UInt8*).value = value_value
+        when Int16
+          (@data as Int16*).value = value_value
+        when UInt16
+          (@data as UInt16*).value = value_value
+        when Int32
+          (@data as Int32*).value = value_value
+        when UInt32
+          (@data as UInt32*).value = value_value
+        when Int64
+          (@data as Int64*).value = value_value
+        when UInt64
+          (@data as UInt64*).value = value_value
+        when Float32
+          (@data as Float32*).value = value_value
+        when Float64
+          (@data as Float64*).value = value_value
+        end
+      end
+
+      def value=(value)
+        # TODO
+      end
+
+      def value
+        type = @type as PointerInstanceType
+
+        if type.var.type.is_a?(PrimitiveType)
+          size = type.var.type.llvm_size
+          case size
+          when 1
+            PrimitiveValue.new(type.var.type, (@data as Int8*).value)
+          when 2
+            PrimitiveValue.new(type.var.type, (@data as Int16*).value)
+          when 4
+            PrimitiveValue.new(type.var.type, (@data as Int32*).value)
+          when 8
+            PrimitiveValue.new(type.var.type, (@data as Int64*).value)
+          else
+            raise "Unhandled size: #{size}"
+          end
+        else
+          raise "Not yet implemented for #{type.var.type}"
+        end
+      end
+
+      def truthy?
+        !@data.nil?
+      end
+
+      def to_s
+        "* :: #{type} @ #{@data.address}"
+      end
+    end
+
     class MetaclassValue < Value
       def truthy?
         true
@@ -588,6 +781,14 @@ module Crystal
 
       def to_s
         @type.to_s
+      end
+    end
+
+    class ConstValue < ::Crystal::ContainedType
+      getter value
+
+      def initialize(program, container, @value)
+        super(program, container)
       end
     end
   end

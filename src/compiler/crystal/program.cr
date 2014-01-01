@@ -6,6 +6,9 @@ module Crystal
   make_tuple MacroCacheKey, def_object_id, node_ids
 
   class Program < NonGenericModuleType
+    # TODO: change this
+    POINTER_SIZE = 8
+
     include DefContainer
     include DefInstanceContainer
     include MatchesLookup

@@ -18,7 +18,7 @@ def count_openings(string)
     when :IDENT
       unless last_is_dot
         case token.value
-        when :begin, :class, :def, :if, :unless, :while, :macro, :case, :lib, :struct, :union, :enum
+        when :begin, :class, :module, :def, :if, :unless, :while, :macro, :case, :lib, :struct, :union, :enum
           openings += 1
         when :do
           openings += 1
