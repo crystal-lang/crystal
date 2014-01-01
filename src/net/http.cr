@@ -38,7 +38,11 @@ class HTTPResponse
 
     while line = io.gets
       if line == "\r\n"
-        return new http_version, status_code, status_message, headers, io.read(headers["content-length"].to_i)
+        body = nil
+        if content_length = headers["content-length"]?
+          body = io.read(content_length.to_i)
+        end
+        return new http_version, status_code, status_message, headers, body
       end
 
       name, value = line.chomp.split ':', 2
