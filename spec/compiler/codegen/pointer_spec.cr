@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "Code gen: pointer" do
@@ -138,6 +138,15 @@ describe "Code gen: pointer" do
     run("
       x = 1
       (pointerof(x) + 1_i64) - pointerof(x)
+    ").to_i.should eq(1)
+  end
+
+  it "can dereference pointer to func" do
+    run("
+      def foo; 1; end
+      x = ->foo
+      y = pointerof(x)
+      y.value.call
     ").to_i.should eq(1)
   end
 end

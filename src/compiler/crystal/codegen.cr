@@ -455,7 +455,7 @@ module Crystal
     def codegen_primitive_pointer_get(node, target_def, call_args)
       type = @type as PointerInstanceType
 
-      if type.var.type.union? || type.var.type.c_struct? || type.var.type.c_union? || type.var.type.fun_type?
+      if type.var.type.union? || type.var.type.c_struct? || type.var.type.c_union?
         @last = call_args[0]
       else
         @builder.load call_args[0]
