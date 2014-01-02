@@ -1,5 +1,7 @@
 module Crystal
   class MacroExpander
+    SLOW = ENV["SLOW_MACROS"] == "1"
+
     def initialize(@mod, @untyped_def)
       @macro_name = "~~macro_#{untyped_def.name}"
     end
@@ -25,7 +27,7 @@ module Crystal
 
       macro_arg_types = mapped_args.map &.crystal_type_id
       info = @untyped_def.lookup_instance(macro_arg_types)
-      unless info
+      if SLOW || !info
         args = Array(ASTNode).new(mapped_args.length)
         mapped_args.each do |arg|
           args.push arg.to_crystal_node.not_nil!
@@ -58,9 +60,10 @@ module Crystal
 
       @mod.load_libs
 
+      info = info.not_nil!
       func = info.func
 
-      if func
+      if func && !SLOW
         macro_args = macro_args.map do |arg|
           pointer = Pointer(Void).new(arg.object_id)
           LibLLVM.create_generic_value_of_pointer(pointer)
