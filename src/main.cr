@@ -17,6 +17,10 @@ rescue ex
   puts ex
   1
 ensure
-  $at_exit_handlers.try &.each &.call
+  begin
+    $at_exit_handlers.try &.each &.call
+  rescue handler_ex
+    puts "Error running at_exit handler: #{handler_ex}"
+  end
 end
 

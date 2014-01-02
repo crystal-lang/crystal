@@ -288,4 +288,15 @@ describe "Exception" do
     fixed = "\x2ACrystal\x3A\x3ACompiler\x23compile\x3CCrystal\x3A\x3ACompiler\x3E\x3ANil"
     Exception.unescape_linux_backtrace_frame(frame).should eq(fixed)
   end
+
+  it "handle exception raised by fun literal" do
+    x = 0
+    f = -> { raise "Foo" if 1 == 1 }
+    begin
+      f.call
+    rescue
+      x = 1
+    end
+    x.should eq(1)
+  end
 end

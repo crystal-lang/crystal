@@ -647,8 +647,12 @@ module LLVM
       lpad
     end
 
-    def invoke(fn, args, a_then, a_catch, name = "")
-      LibLLVM.build_invoke @builder, fn.fun, args.buffer, args.length.to_u32, a_then, a_catch, name
+    def invoke(fn : Function, args, a_then, a_catch, name = "")
+      invoke fn.llvm_function, args, a_then, a_catch, name
+    end
+
+    def invoke(fn : LibLLVM::ValueRef, args, a_then, a_catch, name = "")
+      LibLLVM.build_invoke @builder, fn, args.buffer, args.length.to_u32, a_then, a_catch, name
     end
   end
 

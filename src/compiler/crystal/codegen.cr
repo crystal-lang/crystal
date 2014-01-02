@@ -646,7 +646,7 @@ module Crystal
     end
 
     def codegen_primitive_fun_call(node, target_def, call_args)
-      @last = @builder.call call_args[0], call_args[1 .. -1]
+      codegen_call_or_invoke(call_args[0], call_args[1 .. -1], true)
 
       if target_def.type.no_return?
         @builder.unreachable
