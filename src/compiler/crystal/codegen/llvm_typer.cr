@@ -116,7 +116,8 @@ module Crystal
         @struct_cache[type] = struct
 
         ivars = type.all_instance_vars
-        element_types = Array(LibLLVM::TypeRef).new(ivars.length)
+        element_types = Array(LibLLVM::TypeRef).new(ivars.length + 1)
+        element_types.push LLVM::Int32 # For the type id
         ivars.each { |name, ivar| element_types.push llvm_embedded_type(ivar.type) }
         element_types
       end

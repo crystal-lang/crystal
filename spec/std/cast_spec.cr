@@ -86,11 +86,12 @@ describe "Cast" do
   end
 
   it "casts pointer to string" do
-    c = Pointer(Char).malloc(7)
-    (c as Int32*).value = 2
-    c[4] = 'h'
-    c[5] = 'i'
-    c[6] = '\0'
+    c = Pointer(Char).malloc(11)
+    (c as Int32*).value = "".crystal_type_id
+    ((c as Int32*) + 1).value = 2
+    c[8] = 'h'
+    c[9] = 'i'
+    c[10] = '\0'
     str = c as String
     str.length.should eq(2)
     str.should eq("hi")

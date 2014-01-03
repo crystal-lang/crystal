@@ -22,35 +22,34 @@ class String
   include Comparable
 
   def self.new(chars : Char*)
-    length = C.strlen(chars)
-    str = Pointer(Char).malloc(length + 5)
-    (str as Int32*).value = length
-    C.strcpy((str as Char*) + 4, chars)
-    str as String
+    new(chars, C.strlen(chars))
   end
 
   def self.new(chars : Char*, length)
-    str = Pointer(Char).malloc(length + 5)
-    (str as Int32*).value = length
-    C.strncpy((str as Char*) + 4, chars, length)
-    ((str + length + 4) as Char*).value = '\0'
+    str = Pointer(Char).malloc(length + 9)
+    (str as Int32*).value = "".crystal_type_id
+    ((str as Int32*) + 1).value = length
+    C.strncpy((str as Char*) + 8, chars, length)
+    ((str + length + 8) as Char*).value = '\0'
     str as String
   end
 
   def self.new_with_capacity(capacity)
-    str = Pointer(Char).malloc(capacity + 5)
+    str = Pointer(Char).malloc(capacity + 9)
     buffer = (str as String).cstr
     yield buffer
-    (str as Int32*).value = C.strlen(buffer)
+    (str as Int32*).value = "".crystal_type_id
+    ((str as Int32*) + 1).value = C.strlen(buffer)
     str as String
   end
 
   def self.new_with_length(length)
-    str = Pointer(Char).malloc(length + 5)
+    str = Pointer(Char).malloc(length + 9)
     buffer = (str as String).cstr
     yield buffer
     buffer[length] = '\0'
-    (str as Int32*).value = length
+    (str as Int32*).value = "".crystal_type_id
+    ((str as Int32*) + 1).value = length
     str as String
   end
 
@@ -274,8 +273,8 @@ class String
 
   def delete(char : Char)
     new_length = length
-    str = Pointer(Char).malloc(length + 5)
-    i = 4
+    str = Pointer(Char).malloc(length + 9)
+    i = 8
     each_char do |my_char|
       if my_char == char
         new_length -= 1
@@ -284,7 +283,8 @@ class String
         i += 1
       end
     end
-    (str as Int32*).value = new_length
+    (str as Int32*).value = "".crystal_type_id
+    ((str as Int32*) + 1).value = new_length
     str[i] = '\0'
     str as String
   end

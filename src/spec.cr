@@ -180,7 +180,7 @@ def it(description)
 end
 
 def pending(description, &block)
-    Spec::RootContext.report(:pending, description)
+  Spec::RootContext.report(:pending, description)
 end
 
 def assert

@@ -404,20 +404,14 @@ module Crystal
     end
 
     def codegen_primitive_allocate(node, target_def, call_args)
-      node_type = node.type
-      if node_type.is_a?(HierarchyType)
-        type = node_type.base_type
-      else
-        type = node_type
-      end
+      type = node.type
 
       struct_type = llvm_struct_type(type)
       @last = malloc struct_type
       memset @last, int8(0), LLVM.size_of(struct_type)
 
-      if node_type.is_a?(HierarchyType)
-        @last = box_object_in_hierarchy(node_type.base_type, node.type, @last, false)
-      end
+      type_id_ptr = gep @last, 0, 0
+      @builder.store int32(type.type_id), type_id_ptr
 
       @last
     end
@@ -685,7 +679,7 @@ module Crystal
       when InstanceVar
         type = @type as InstanceVarContainer
 
-        @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node_exp.name)
+        @last = gep llvm_self_ptr, 0, (type.index_of_instance_var(node_exp.name) + 1)
       when IndirectRead
         @last = visit_indirect(node_exp)
       else
@@ -895,10 +889,10 @@ module Crystal
       name = name.replace '@', '.'
       key = StringKey.new(@llvm_mod, str)
       @strings[key] ||= begin
-        global = @llvm_mod.globals.add(LLVM.struct_type([LLVM::Int32, LLVM.array_type(LLVM::Int8, str.length + 1)]), name)
+        global = @llvm_mod.globals.add(LLVM.struct_type([LLVM::Int32, LLVM::Int32, LLVM.array_type(LLVM::Int8, str.length + 1)]), name)
         LLVM.set_linkage global, LibLLVM::Linkage::Private
         LLVM.set_global_constant global, true
-        LLVM.set_initializer global, LLVM.struct([int32(str.length), LLVM.string(str)])
+        LLVM.set_initializer global, LLVM.struct([int32(@mod.string.type_id), int32(str.length), LLVM.string(str)])
         cast_to global, @mod.string
       end
     end
@@ -1205,7 +1199,7 @@ module Crystal
       type = @type as InstanceVarContainer
 
       ivar = type.lookup_instance_var(target.name)
-      index = type.index_of_instance_var(target.name)
+      index = type.index_of_instance_var(target.name) + 1
 
       ptr = gep llvm_self_ptr, 0, index
       codegen_assign(ptr, target.type, value.type, llvm_value)
@@ -1449,7 +1443,11 @@ module Crystal
 
       ivar = type.lookup_instance_var(node.name)
       if ivar.type.union? || ivar.type.c_struct? || ivar.type.c_union?
-        @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node.name)
+        if ivar.type.union?
+          @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node.name) + 1
+        else
+          @last = gep llvm_self_ptr, 0, type.index_of_instance_var(node.name)
+        end
         unless node.type == ivar.type
           if node.type.union?
             @last = cast_to_pointer @last, node.type
@@ -1460,7 +1458,7 @@ module Crystal
           end
         end
       else
-        index = type.index_of_instance_var(node.name)
+        index = type.index_of_instance_var(node.name) + 1
 
         struct = @builder.load llvm_self_ptr
         @last = @builder.extract_value struct, index, node.name
@@ -1938,7 +1936,7 @@ module Crystal
             call_args << @vars[arg.name].pointer
           when InstanceVar
             type = @type as InstanceVarContainer
-            call_args << (gep llvm_self_ptr, 0, type.index_of_instance_var(arg.name))
+            call_args << (gep llvm_self_ptr, 0, (type.index_of_instance_var(arg.name) + 1))
           else
             raise "Bug: out argument was #{arg}"
           end
