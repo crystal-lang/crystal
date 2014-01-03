@@ -105,6 +105,16 @@ class HTTPClient
     end
   end
 
+  def self.exec_ssl(host, port, request)
+    TCPSocket.open(host, port) do |socket|
+      SSLSocket.open(socket) do |ssl_socket|
+        request.to_io(ssl_socket)
+        ssl_socket.flush
+        HTTPResponse.from_io(ssl_socket)
+      end
+    end
+  end
+
   def self.get(host, port, path, headers = nil)
     exec(host, port, HTTPRequest.new("GET", path, headers))
   end
@@ -116,7 +126,7 @@ class HTTPClient
   end
 
   def self.get_json(url)
-    Yaml.load(get(url).body)
+    Yaml.load(get(url).body.not_nil!)
   end
 
   def self.post(url, body)
@@ -129,18 +139,13 @@ class HTTPClient
 
   def self.exec_url(url)
     uri = URI.parse(url)
-    if uri_port = uri.port
-      host_header = "#{uri.host}:#{uri.port}"
-      port = uri_port
-    else
-      host_header = uri.host
-      port = case uri.scheme
-      when "http" then 80
-      else raise "Unsuported scheme: #{uri.scheme}"
-      end
-    end
-
+    host_header = uri.port ? "#{uri.host}:#{uri.port}" : uri.host
     request = yield uri.full_path, {"Host" => host_header}
-    exec(uri.host, port, request)
+
+    case uri.scheme
+    when "http" then exec(uri.host, uri.port || 80, request)
+    when "https" then exec_ssl(uri.host, uri.port || 443, request)
+    else raise "Unsuported scheme: #{uri.scheme}"
+    end
   end
 end

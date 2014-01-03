@@ -61,6 +61,8 @@ class Socket
 end
 
 class TCPSocket < Socket
+  getter sock
+
   def initialize(host, port)
     server = C.gethostbyname(host)
     unless server
