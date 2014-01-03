@@ -1,6 +1,7 @@
 require "socket"
 require "uri"
 require "yaml"
+require "ssl"
 
 def parse_headers_and_body(io)
   headers = {} of String => String
