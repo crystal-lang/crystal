@@ -65,6 +65,7 @@ module Crystal
       @types["String"] = @string = NonGenericClassType.new self, self, "String", @reference
       @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
       @string.allocated = true
+      @string.type_id = 1
 
       @string.lookup_instance_var("@length").set_type(@int32)
       @string.lookup_instance_var("@c").set_type(@char)
@@ -88,7 +89,7 @@ module Crystal
       @global_vars = {} of String => Var
       @requires = Set(String).new
       @temp_var_counter = 0
-      @type_id_counter = 0
+      @type_id_counter = 1
       @nil_var = Var.new("<nil_var>", self.nil)
       @crystal_path = (ENV["CRYSTAL_PATH"] || "").split(':')
 

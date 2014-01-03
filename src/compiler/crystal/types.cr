@@ -18,6 +18,9 @@ module Crystal
       @type_id ||= program.next_type_id
     end
 
+    def type_id=(@type_id)
+    end
+
     def passed_as_self?
       true
     end
