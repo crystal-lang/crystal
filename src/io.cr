@@ -8,7 +8,7 @@ lib C
   fun system(str : Char*) : Int32
 
   fun fopen(filename : Char*, mode : Char*) : File
-  fun fputs(str : Char*, file : File) : Int32
+  fun fwrite(buf : Void*, size : C::SizeT, count : C::SizeT, fp : File) : SizeT
   fun fclose(file : File) : Int32
   fun feof(file : File) : Int32
   fun getline(linep : Char**, linecap : Int64*, file : File) : Int64
@@ -46,7 +46,8 @@ end
 
 module IO
   def print(string)
-    C.fputs string.to_s, output
+    string = string.to_s
+    C.fwrite (string.cstr as Void*), 1.to_sizet, string.length.to_sizet, output
   end
 
   def <<(string)
@@ -56,7 +57,7 @@ module IO
 
   def puts(string)
     print string
-    C.fputs "\n", output
+    print "\n"
   end
 
   def gets
