@@ -220,4 +220,11 @@ describe "Hash" do
     h.empty?.should be_true
     h.shift?.should be_nil
   end
+
+  it "works with custom comparator" do
+    h = Hash(String, Int32).new(nil, String::CaseInsensitiveComparator)
+    h["FOO"] = 1
+    h["foo"].should eq(1)
+    h["Foo"].should eq(1)
+  end
 end

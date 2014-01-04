@@ -3,7 +3,17 @@ require "int"
 require "nil"
 
 class Hash(K, V)
-  def initialize(block = nil)
+  module StandardComparator
+    def self.hash(object)
+      object.hash
+    end
+
+    def self.equals?(o1, o2)
+      o1 == o2
+    end
+  end
+
+  def initialize(block = nil, @comp = StandardComparator)
     @buckets = Array(Array(Entry(K, V))?).new(17, nil)
     @length = 0
     @block = block
@@ -79,7 +89,7 @@ class Hash(K, V)
     bucket = @buckets[index]
     if bucket
       bucket.delete_if do |entry|
-        if entry.key == key
+        if @comp.equals?(entry.key, key)
           previous_entry = entry.previous
           next_entry = entry.next
           if next_entry
@@ -247,7 +257,7 @@ class Hash(K, V)
 
   def find_entry_in_bucket(bucket, key)
     bucket.each do |entry|
-      if entry.key == key
+      if @comp.equals?(entry.key, key)
         return entry
       end
     end
@@ -255,7 +265,7 @@ class Hash(K, V)
   end
 
   def bucket_index(key)
-    (key.hash % @buckets.length).to_i
+    (@comp.hash(key) % @buckets.length).to_i
   end
 
   class Entry(K, V)
