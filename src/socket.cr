@@ -32,13 +32,12 @@ lib C
   fun accept(fd : Int32, addr : SockAddrIn*, addr_len : Int32*) : Int32
   fun connect(fd : Int32, addr : SockAddrIn*, addr_len : Int32) : Int32
   fun gethostbyname(name : Char*) : HostEnt*
-  fun close(fd : Int32) : Int32
 
   AF_INET = 2_u8
   SOCK_STREAM = 1
 end
 
-class TCPSocket < FileDescriptorStream
+class TCPSocket < FileDescriptorIO
   def initialize(host, port)
     server = C.gethostbyname(host)
     unless server
@@ -90,7 +89,6 @@ class TCPServer
     client_addr = C::SockAddrIn.new
     client_addr_len = 16
     client_fd = C.accept(@sock, client_addr, pointerof(client_addr_len))
-    FileDescriptorStream.new(client_fd)
+    FileDescriptorIO.new(client_fd)
   end
 end
-

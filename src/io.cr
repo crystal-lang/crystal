@@ -10,6 +10,7 @@ lib C
   fun dup2(fd : Int32, fd2 : Int32) : Int32
   fun read(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SizeT
   fun write(fd : Int32, buffer : UInt8*, nbyte : C::SizeT)
+  fun close(fd : Int32) : Int32
 end
 
 require "string/buffer"
@@ -104,8 +105,11 @@ class StringIO
   end
 end
 
-module FileDescriptorIO
+class FileDescriptorIO
   include IO
+
+  def initialize(@fd)
+  end
 
   def read(buffer : UInt8*, count)
     C.read(@fd, buffer, count.to_sizet)
@@ -114,13 +118,6 @@ module FileDescriptorIO
   def write(buffer : UInt8*, count)
     C.write(@fd, buffer, count.to_sizet)
   end
-end
-
-class FileDescriptorStream
-  include FileDescriptorIO
-
-  def initialize(@fd)
-  end
 
   def fd
     @fd
@@ -128,14 +125,14 @@ class FileDescriptorStream
 
   def close
     if C.close(@fd) != 0
-      raise Errno.new("Error closing TCP socket")
+      raise Errno.new("Error closing file")
     end
   end
 end
 
-STDIN = FileDescriptorStream.new(0)
-STDOUT = FileDescriptorStream.new(1)
-STDERR = FileDescriptorStream.new(2)
+STDIN = FileDescriptorIO.new(0)
+STDOUT = FileDescriptorIO.new(1)
+STDERR = FileDescriptorIO.new(2)
 
 def gets
   STDIN.gets
