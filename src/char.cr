@@ -49,7 +49,28 @@ class Char
   end
 
   def inspect
-    "'#{to_s}'"
+    "'#{dump}'"
+  end
+
+  def dump
+    case self
+    when '\''  then "\\'"
+    when '\f' then "\\f"
+    when '\n' then "\\n"
+    when '\r' then "\\r"
+    when '\t' then "\\t"
+    when '\v' then "\\v"
+    else
+      if ord < 32 || ord > 127
+        high = ord / 16
+        low = ord % 16
+        high = high < 10 ? ('0'.ord + high).chr : ('A'.ord + high - 10).chr
+        low = low < 10 ? ('0'.ord + low).chr : ('A'.ord + low - 10).chr
+        "\\x#{high}#{low}"
+      else
+        nil
+      end
+    end
   end
 
   def to_i

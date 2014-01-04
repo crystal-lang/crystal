@@ -522,7 +522,16 @@ class String
       when '\r' then "\\r"
       when '\t' then "\\t"
       when '\v' then "\\v"
-      when '\0' then "\\0"
+      else
+        if char.ord < 32 || char.ord > 127
+          high = char.ord / 16
+          low = char.ord % 16
+          high = high < 10 ? ('0'.ord + high).chr : ('A'.ord + high - 10).chr
+          low = low < 10 ? ('0'.ord + low).chr : ('A'.ord + low - 10).chr
+          "\\x#{high}#{low}"
+        else
+          nil
+        end
       end
     end
   end
