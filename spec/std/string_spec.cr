@@ -32,6 +32,10 @@ describe "String" do
     "1234".to_i.should eq(1234)
   end
 
+  it "does to_i with base" do
+    "12ab".to_i(16).should eq(4779)
+  end
+
   it "does to_i32" do
     "1234".to_i32.should eq(1234)
   end

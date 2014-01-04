@@ -16,6 +16,7 @@ lib C
   fun strncpy(s1 : Char*, s2 : Char*, n : Int32) : Char*
   fun sprintf(str : Char*, format : Char*, ...) : Int32
   fun memcpy(dest : Void*, src : Void*, num : Int32) : Void*
+  fun strtol(str : Char*, endptr : Char**, base : Int32) : Int32
 end
 
 class String
@@ -67,6 +68,10 @@ class String
 
   def to_i
     C.atoi cstr
+  end
+
+  def to_i(base)
+    C.strtol(cstr, nil, base)
   end
 
   def to_i8
