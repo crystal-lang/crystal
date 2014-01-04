@@ -48,8 +48,14 @@ class SSLSocket
 
   def read(length)
     buffer = Pointer(Char).malloc(length)
-    read_length = OpenSSL.ssl_read(@ssl, buffer, length)
-    String.new(buffer, read_length)
+    buffer_pointer = buffer
+    remaining_length = length
+    while remaining_length > 0
+      read_length = OpenSSL.ssl_read(@ssl, buffer_pointer, remaining_length)
+      remaining_length -= read_length
+      buffer_pointer += read_length
+    end
+    String.new(buffer, length)
   end
 
   def flush
