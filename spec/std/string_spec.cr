@@ -360,4 +360,16 @@ describe "String" do
     "\xAB"[0].ord.should eq(10 * 16 + 11)
     "\xAB1"[1].should eq('1')
   end
+
+  it "allows creating a string with zeros" do
+    p = Pointer(Char).malloc(3)
+    p[0] = 'a'
+    p[1] = '\0'
+    p[2] = 'b'
+    s = String.new(p, 3)
+    s[0].should eq('a')
+    s[1].should eq('\0')
+    s[2].should eq('b')
+    s.length.should eq(3)
+  end
 end

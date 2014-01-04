@@ -13,7 +13,6 @@ lib C
   fun strcpy(dest : Char*, src : Char*) : Char*
   fun strcat(dest : Char*, src : Char*) : Char*
   fun strcmp(s1 : Char*, s2 : Char*) : Int32
-  fun strncpy(s1 : Char*, s2 : Char*, n : Int32) : Char*
   fun sprintf(str : Char*, format : Char*, ...) : Int32
   fun memcpy(dest : Void*, src : Void*, num : Int32) : Void*
   fun strtol(str : Char*, endptr : Char**, base : Int32) : Int32
@@ -30,7 +29,7 @@ class String
     str = Pointer(Char).malloc(length + 9)
     (str as Int32*).value = "".crystal_type_id
     ((str as Int32*) + 1).value = length
-    C.strncpy((str as Char*) + 8, chars, length)
+    ((str as Char*) + 8).memcpy(chars, length)
     ((str + length + 8) as Char*).value = '\0'
     str as String
   end
@@ -136,7 +135,7 @@ class String
 
   def [](start : Int, count : Int)
     String.new_with_length(count) do |buffer|
-      C.strncpy(buffer, cstr + start, count)
+      buffer.memcpy(cstr + start, count)
     end
   end
 
