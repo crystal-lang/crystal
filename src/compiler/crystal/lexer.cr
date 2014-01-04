@@ -217,7 +217,28 @@ module Crystal
             char = next_char
           end
 
+          modifiers = 0
+          while true
+            case @buffer.value
+            when 'i'
+              modifiers |= Regexp::IGNORE_CASE
+              next_char
+            when 'm'
+              modifiers |= Regexp::MULTILINE
+              next_char
+            when 'x'
+              modifiers |= Regexp::EXTENDED
+              next_char
+            else
+              if 'a' <= @buffer.value.downcase <= 'z'
+                raise "unknown regexp option: #{@buffer.value}"
+              end
+              break
+            end
+          end
+
           @token.type = :REGEXP
+          @token.regexp_modifiers = modifiers
           @token.value = string_buffer.to_s
         end
       when '%'
@@ -1243,7 +1264,7 @@ module Crystal
       end
     end
 
-    def raise(message, line_number = @line_number, column_number = @token.column_number, filename = @filename)
+    def raise(message, line_number = @line_number, column_number = @column_number, filename = @filename)
       ::raise Crystal::SyntaxException.new(message, line_number, column_number, filename)
     end
 

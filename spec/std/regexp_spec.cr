@@ -40,4 +40,14 @@ describe "Regexp" do
     $~["g1"].should eq("oo")
     $~["g2"].should eq("ba")
   end
+
+  it "matches multiline" do
+    ("foo\n<bar\n>baz" =~ /<bar.*?>/).should be_nil
+    ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
+  end
+
+  it "matches ignore case" do
+    ("HeLlO" =~ /hello/).should be_nil
+    ("HeLlO" =~ /hello/i).should eq(0)
+  end
 end

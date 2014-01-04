@@ -498,6 +498,10 @@ describe "Parser" do
   it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo".symbol)
 
   it_parses "/foo/", RegexpLiteral.new("foo")
+  it_parses "/foo/i", RegexpLiteral.new("foo", Regexp::IGNORE_CASE)
+  it_parses "/foo/m", RegexpLiteral.new("foo", Regexp::MULTILINE)
+  it_parses "/foo/x", RegexpLiteral.new("foo", Regexp::EXTENDED)
+  it_parses "/foo/imximx", RegexpLiteral.new("foo", Regexp::IGNORE_CASE | Regexp::MULTILINE | Regexp::EXTENDED)
 
   it_parses "1 =~ 2", Call.new(1.int32, "=~", [2.int32] of ASTNode)
   it_parses "1.=~(2)", Call.new(1.int32, "=~", [2.int32] of ASTNode)

@@ -559,6 +559,15 @@ module Crystal
       false
     end
 
+    def visit(node : RegexpLiteral)
+      @str << "/"
+      @str << node.value
+      @str << "/"
+      @str << "i" if (node.modifiers & Regexp::IGNORE_CASE) != 0
+      @str << "m" if (node.modifiers & Regexp::MULTILINE) != 0
+      @str << "x" if (node.modifiers & Regexp::EXTENDED) != 0
+    end
+
     def visit(node : DeclareVar)
       node.var.accept self
       @str << " :: "

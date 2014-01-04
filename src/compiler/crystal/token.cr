@@ -11,6 +11,7 @@ module Crystal
     property :line_number
     property :column_number
     property :filename
+    property :regexp_modifiers
 
     def initialize
       @type = :EOF
@@ -20,6 +21,7 @@ module Crystal
       @string_open_count = 0
       @line_number = 0
       @column_number = 0
+      @regexp_modifiers = 0
     end
 
     def location

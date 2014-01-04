@@ -10,13 +10,16 @@ lib PCRE("pcre")
 end
 
 class Regexp
+  IGNORE_CASE = 1
+  MULTILINE = 4
+  EXTENDED = 8
   ANCHORED = 16
 
-  def initialize(str)
+  def initialize(str, modifiers = 0)
     @source = str
     errptr = Pointer(Char).malloc(0)
     erroffset = 1
-    @re = PCRE.compile(str, 0, pointerof(errptr), pointerof(erroffset), nil)
+    @re = PCRE.compile(str, modifiers, pointerof(errptr), pointerof(erroffset), nil)
     if @re == 0
       raise "#{String.new(errptr)} at #{erroffset}"
     end

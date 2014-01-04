@@ -615,7 +615,7 @@ module Crystal
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :REGEXP
-        node_and_next_token RegexpLiteral.new(@token.value.to_s)
+        node_and_next_token RegexpLiteral.new(@token.value.to_s, @token.regexp_modifiers)
       when :GLOBAL
         node_and_next_token Global.new(@token.value.to_s)
       when :GLOBAL_MATCH

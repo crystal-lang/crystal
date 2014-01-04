@@ -321,17 +321,17 @@ module Crystal
 
   class RegexpLiteral < ASTNode
     property :value
+    property :modifiers
 
-    def initialize(value)
-      @value = value
+    def initialize(@value, @modifiers = 0)
     end
 
     def ==(other : self)
-      other.value == value
+      other.value == value && other.modifiers == modifiers
     end
 
     def clone_without_location
-      RegexpLiteral.new(@value)
+      RegexpLiteral.new(@value, @modifiers)
     end
   end
 
