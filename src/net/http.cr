@@ -4,7 +4,7 @@ require "yaml"
 require "ssl"
 
 def parse_headers_and_body(io)
-  headers = Hash(String, String).new(nil, String::CaseInsensitiveComparator)
+  headers = Hash(String, String).new(nil, Hash::CaseInsensitiveComparator)
 
   while line = io.gets
     if line == "\r\n"

@@ -222,7 +222,7 @@ describe "Hash" do
   end
 
   it "works with custom comparator" do
-    h = Hash(String, Int32).new(nil, String::CaseInsensitiveComparator)
+    h = Hash(String, Int32).new(nil, Hash::CaseInsensitiveComparator)
     h["FOO"] = 1
     h["foo"].should eq(1)
     h["Foo"].should eq(1)

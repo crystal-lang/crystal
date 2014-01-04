@@ -13,6 +13,18 @@ class Hash(K, V)
     end
   end
 
+  module CaseInsensitiveComparator
+    include StandardComparator
+
+    def self.hash(str : String)
+      str.downcase.hash
+    end
+
+    def self.equals?(str1 : String, str2 : String)
+      str1.downcase == str2.downcase
+    end
+  end
+
   def initialize(block = nil, @comp = StandardComparator)
     @buckets = Array(Array(Entry(K, V))?).new(17, nil)
     @length = 0

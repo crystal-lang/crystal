@@ -570,14 +570,4 @@ class String
   def cstr
     pointerof(@c)
   end
-
-  module CaseInsensitiveComparator
-    def self.hash(str)
-      str.downcase.hash
-    end
-
-    def self.equals?(str1, str2)
-      str1.downcase == str2.downcase
-    end
-  end
 end
