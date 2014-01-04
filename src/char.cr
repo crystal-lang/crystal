@@ -68,7 +68,7 @@ class Char
         low = low < 10 ? ('0'.ord + low).chr : ('A'.ord + low - 10).chr
         "\\x#{high}#{low}"
       else
-        nil
+        self.to_s
       end
     end
   end
