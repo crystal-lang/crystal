@@ -38,49 +38,25 @@ lib C
   SOCK_STREAM = 1
 end
 
-class Socket
-  include IO
-
-  def initialize(fd)
-    @input = C.fdopen(fd, "r")
-    @output = C.fdopen(fd, "w")
-  end
-
-  def input
-    @input
-  end
-
-  def output
-    @output
-  end
-
-  def close
-    C.fclose @input
-    C.fclose @output
-  end
-end
-
-class TCPSocket < Socket
-  getter sock
-
+class TCPSocket < FileDescriptorStream
   def initialize(host, port)
     server = C.gethostbyname(host)
     unless server
       raise Errno.new("Error resolving hostname '#{host}'")
     end
 
-    @sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
+    sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
 
     addr = C::SockAddrIn.new
     addr->family = C::AF_INET
     addr->addr = (server->addrlist[0] as UInt32*).value
     addr->port = C.htons(port)
 
-    if C.connect(@sock, addr, 16) != 0
+    if C.connect(sock, addr, 16) != 0
       raise Errno.new("Error connecting to '#{host}:#{port}'")
     end
 
-    super @sock
+    super sock
   end
 
   def self.open(host, port)
@@ -90,14 +66,6 @@ class TCPSocket < Socket
     ensure
       sock.close
     end
-  end
-
-  def close
-    flush
-    if C.close(@sock) != 0
-      raise Errno.new("Error closing TCP socket")
-    end
-    super
   end
 end
 
@@ -122,7 +90,7 @@ class TCPServer
     client_addr = C::SockAddrIn.new
     client_addr_len = 16
     client_fd = C.accept(@sock, client_addr, pointerof(client_addr_len))
-    Socket.new(client_fd)
+    FileDescriptorStream.new(client_fd)
   end
 end
 

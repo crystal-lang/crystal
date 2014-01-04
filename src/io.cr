@@ -1,53 +1,23 @@
 lib C
-  type File : Void*
-
   fun getchar : Char
   fun putchar(c : Char) : Char
   fun puts(str : Char*) : Int32
   fun printf(str : Char*, ...) : Char
   fun system(str : Char*) : Int32
-
-  fun fopen(filename : Char*, mode : Char*) : File
-  fun fwrite(buf : Void*, size : C::SizeT, count : C::SizeT, fp : File) : SizeT
-  fun fclose(file : File) : Int32
-  fun feof(file : File) : Int32
-  fun getline(linep : Char**, linecap : Int64*, file : File) : Int64
-  fun fflush(file : File) : Int32
-  fun fread(buffer : Char*, size : C::SizeT, nitems : C::SizeT, file : File) : Int32
-  fun access(filename : Char*, how : Int32) : Int32
-  fun realpath(path : Char*, resolved_path : Char*) : Char*
-  fun fdopen(fd : Int32, mode : Char*) : File
-  fun fgets(buffer : Char*, maxlength : Int32, file : File) : Char*
-  fun unlink(filename : Char*) : Char*
-  fun popen(command : Char*, mode : Char*) : File
-  fun pclose(stream : File) : Int32
   fun execl(path : Char*, arg0 : Char*, ...) : Int32
   fun waitpid(pid : Int32, stat_loc : Int32*, options : Int32) : Int32
   fun open(path : Char*, oflag : Int32) : Int32
   fun dup2(fd : Int32, fd2 : Int32) : Int32
-
-  ifdef x86_64
-    fun fseeko(file : File, offset : Int64, whence : Int32) : Int32
-    fun ftello(file : File) : Int64
-  else
-    fun fseeko = fseeko64(file : File, offset : Int64, whence : Int32) : Int32
-    fun ftello = ftello64(file : File) : Int64
-  end
-
-  SEEK_SET = 0
-  SEEK_CUR = 1
-  SEEK_END = 2
-
-  F_OK = 0
-  X_OK = 1 << 0
-  W_OK = 1 << 1
-  R_OK = 1 << 2
+  fun read(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SizeT
+  fun write(fd : Int32, buffer : UInt8*, nbyte : C::SizeT)
 end
+
+require "string/buffer"
 
 module IO
   def print(string)
     string = string.to_s
-    C.fwrite (string.cstr as Void*), 1.to_sizet, string.length.to_sizet, output
+    write string.cstr as UInt8*, string.length
   end
 
   def <<(string)
@@ -60,30 +30,35 @@ module IO
     print "\n"
   end
 
-  def gets
-    String.build do |str|
-      while true
-        buffer = Pointer(Char).malloc(256)
-        return nil unless C.fgets(buffer, 256, input)
-        read = String.new(buffer)
-        str << read
-        break if read.ends_with?('\n')
-      end
+  def read_byte
+    byte :: UInt8
+    if read(pointerof(byte), 1) == 1
+      byte
+    else
+      nil
     end
   end
 
-  def eof?
-    C.feof(input) != 0
-  end
-
-  def flush
-    C.fflush output
+  def gets
+    buffer = String::Buffer.new
+    while true
+      return nil unless ch = read_byte
+      ch = ch.chr
+      buffer << ch
+      break if ch == '\n'
+    end
+    buffer.to_s
   end
 
   def read(length)
-    buffer = Pointer(Char).malloc(length)
-    read_length = C.fread(buffer, 1_u64, length.to_sizet, input)
-    String.new(buffer, read_length)
+    buffer_pointer = buffer = Pointer(UInt8).malloc(length)
+    remaining_length = length
+    while remaining_length > 0
+      read_length = read(buffer_pointer, remaining_length)
+      remaining_length -= read_length
+      buffer_pointer += read_length
+    end
+    String.new(buffer as Char*, length.to_i)
   end
 end
 
@@ -129,36 +104,38 @@ class StringIO
   end
 end
 
+module FileDescriptorIO
+  include IO
+
+  def read(buffer : UInt8*, count)
+    C.read(@fd, buffer, count.to_sizet)
+  end
+
+  def write(buffer : UInt8*, count)
+    C.write(@fd, buffer, count.to_sizet)
+  end
+end
+
 class FileDescriptorStream
-  include IO
+  include FileDescriptorIO
 
-  def initialize(fd, mode)
-    @fd = C.fdopen(fd, mode)
+  def initialize(@fd)
   end
 
-  def input
+  def fd
     @fd
   end
 
-  def output
-    @fd
+  def close
+    if C.close(@fd) != 0
+      raise Errno.new("Error closing TCP socket")
+    end
   end
 end
 
-class FileStream
-  include IO
-
-  def initialize(@file)
-  end
-
-  def input
-    @file
-  end
-end
-
-STDIN = FileDescriptorStream.new(0, "r")
-STDOUT = FileDescriptorStream.new(1, "w")
-STDERR = FileDescriptorStream.new(2, "w")
+STDIN = FileDescriptorStream.new(0)
+STDOUT = FileDescriptorStream.new(1)
+STDERR = FileDescriptorStream.new(2)
 
 def gets
   STDIN.gets
@@ -274,23 +251,6 @@ def system(command)
 
   C.waitpid(pid, out stat, 0)
   stat
-end
-
-def system2(command)
-  pipe = C.popen(command, "r")
-  unless pipe
-    raise Errno.new("Error executing system command '#{command}'")
-  end
-  begin
-    stream = FileStream.new(pipe)
-    output = [] of String
-    while line = stream.gets
-      output << line.chomp
-    end
-    output
-  ensure
-    $exit = C.pclose(pipe)
-  end
 end
 
 macro pp(var)

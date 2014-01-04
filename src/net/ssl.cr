@@ -11,8 +11,8 @@ lib OpenSSL("ssl")
   fun ssl_new = SSL_new(context : SSLContext) : SSL
   fun ssl_set_fd = SSL_set_fd(handle : SSL, socket : Int32) : Int32
   fun ssl_connect = SSL_connect(handle : SSL) : Int32
-  fun ssl_write = SSL_write(handle : SSL, text : Char*, length : Int32) : Int32
-  fun ssl_read = SSL_read(handle : SSL, buffer : Char*, read_size : Int32) : Int32
+  fun ssl_write = SSL_write(handle : SSL, text : UInt8*, length : Int32) : Int32
+  fun ssl_read = SSL_read(handle : SSL, buffer : UInt8*, read_size : Int32) : Int32
   fun ssl_shutdown = SSL_shutdown(handle : SSL)
   fun ssl_free = SSL_free(handle : SSL)
 end
@@ -21,45 +21,21 @@ OpenSSL.ssl_load_error_strings
 OpenSSL.ssl_library_init
 
 class SSLSocket
-  def initialize(@sock)
+  include IO
+
+  def initialize(sock)
     @context = OpenSSL.ssl_ctx_new(OpenSSL.sslv23_client_method)
     @ssl = OpenSSL.ssl_new(@context)
-    OpenSSL.ssl_set_fd(@ssl, @sock.sock)
+    OpenSSL.ssl_set_fd(@ssl, sock.fd)
     OpenSSL.ssl_connect(@ssl)
   end
 
-  def <<(string)
-    print(string)
-    self
+  def read(buffer : UInt8*, count)
+    OpenSSL.ssl_read(@ssl, buffer, count)
   end
 
-  def print(string)
-    OpenSSL.ssl_write(@ssl, string, string.length)
-  end
-
-  def gets
-    line = [] of Char
-    while OpenSSL.ssl_read(@ssl, out ch, 1) == 1
-      line << ch
-      return String.new(line.buffer, line.count) if ch == '\n'
-    end
-    nil
-  end
-
-  def read(length)
-    buffer = Pointer(Char).malloc(length)
-    buffer_pointer = buffer
-    remaining_length = length
-    while remaining_length > 0
-      read_length = OpenSSL.ssl_read(@ssl, buffer_pointer, remaining_length)
-      remaining_length -= read_length
-      buffer_pointer += read_length
-    end
-    String.new(buffer, length)
-  end
-
-  def flush
-    # TBD?
+  def write(buffer : UInt8*, count)
+    OpenSSL.ssl_write(@ssl, buffer, count)
   end
 
   def close

@@ -120,9 +120,7 @@ module Crystal
       flags
     end
 
-    class PopenCommand
-      include IO
-
+    class PopenCommand < File
       getter input
 
       def initialize(command)
@@ -130,6 +128,7 @@ module Crystal
         unless @input
           raise Errno.new("Error opening pipe for executing '#{command}'")
         end
+        super @input
       end
 
       def close

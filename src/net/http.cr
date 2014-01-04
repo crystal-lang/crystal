@@ -113,7 +113,6 @@ class HTTPClient
   def self.exec(host, port, request)
     TCPSocket.open(host, port) do |socket|
       request.to_io(socket)
-      socket.flush
       HTTPResponse.from_io(socket)
     end
   end
@@ -122,7 +121,6 @@ class HTTPClient
     TCPSocket.open(host, port) do |socket|
       SSLSocket.open(socket) do |ssl_socket|
         request.to_io(ssl_socket)
-        ssl_socket.flush
         HTTPResponse.from_io(ssl_socket)
       end
     end

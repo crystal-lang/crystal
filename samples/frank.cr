@@ -28,7 +28,6 @@ at_exit -> do
           response = HTTPResponse.new("HTTP/1.1", 404, "Not Found", {"Content-Type" => "text/plain"}, "Not Found")
         end
         response.to_io sock
-        sock.flush
       end
     ensure
       sock.close
