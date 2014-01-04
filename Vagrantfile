@@ -16,13 +16,12 @@ Vagrant.configure("2") do |config|
     vb.customize ["modifyvm", :id, "--memory", 4096]
   end
 
-  config.vm.provision :shell, :inline => %(
-    apt-get update
-    apt-get install -y build-essential git libpcre3-dev libunwind7-dev libgc-dev curl
+  config.vm.provision :shell, :privileged => false, :inline => %(
+    sudo apt-get update
+    sudo apt-get install -y build-essential git libpcre3-dev libunwind7-dev libgc-dev curl
 
-    if [ ! -a crystal ]; then
-      git clone /vagrant crystal
-      chown vagrant:vagrant -R crystal
-    fi
+    git clone /vagrant crystal
+    cd crystal
+    bin/crystal --setup
   )
 end

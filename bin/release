@@ -1,0 +1,27 @@
+#!/bin/bash
+
+function crossCompile() {
+  echo "Building $3.bc"
+  CMD=`bin/crystal src/compiler/crystal.cr --release --cross-compile "$1" --llc "-mcpu=$2" -o $3`
+  vagrant up $4
+  echo "Cross compiling $3"
+  vagrant ssh $4 -c "cd crystal; \
+    cp /vagrant/$3.bc .; \
+    export PATH=/home/vagrant/crystal/deps/llvm/bin:\$PATH; \
+    $CMD; \
+    cp $3 /vagrant/$3-latest"
+  gzip -9 $3-latest
+}
+
+
+crossCompile "Linux i686" i686 crystal-linux32 precise32
+crossCompile "Linux x86_64" x86-64 crystal-linux64 precise64
+
+echo "Building crystal-darwin"
+bin/crystal src/compiler/crystal.cr --release --llc "-mcpu=x86-64" -o crystal-darwin-latest
+gzip -9 crystal-darwin-latest
+
+echo "Uploading to S3"
+for file in crystal-linux32-latest.gz crystal-linux64-latest.gz crystal-darwin-latest.gz; do
+  s3cmd -c ~/.s3cfg-crystal put -P $file s3://crystal-lang
+done
