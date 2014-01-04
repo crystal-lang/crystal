@@ -4,7 +4,7 @@ require "yaml"
 require "ssl"
 
 def parse_headers_and_body(io)
-  headers = {} of String => String
+  headers = Hash(String, String).new(nil, String::CaseInsensitiveComparator)
 
   while line = io.gets
     if line == "\r\n"
@@ -20,7 +20,7 @@ def parse_headers_and_body(io)
     end
 
     name, value = line.chomp.split ':', 2
-    headers[name.downcase] = value.lstrip
+    headers[name] = value.lstrip
   end
 end
 
@@ -52,7 +52,7 @@ class HTTPRequest
     else method
     end
 
-    if (body = @body) && @headers.nil?
+    if (body = @body)
       headers = @headers = {} of String => String
       headers["Content-Length"] = body.length.to_s
     end
