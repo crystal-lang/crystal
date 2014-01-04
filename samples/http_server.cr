@@ -13,7 +13,6 @@ while true
       sock.print "Content-Length: 12\r\n"
       sock.print "\r\n"
       sock.print "Hello world!"
-      sock.flush
       sock.close
     end
   end
