@@ -11,6 +11,8 @@ def parse_headers_and_body(io)
       body = nil
       if content_length = headers["content-length"]?
         body = io.read(content_length.to_i)
+      elsif headers["transfer-encoding"]? == "chunked"
+        body = read_chunked_body(io)
       end
 
       yield headers, body
@@ -19,6 +21,16 @@ def parse_headers_and_body(io)
 
     name, value = line.chomp.split ':', 2
     headers[name.downcase] = value.lstrip
+  end
+end
+
+def read_chunked_body(io)
+  String.build do |builder|
+    while (chunk_size = io.gets.not_nil!.to_i(16)) > 0
+      builder << io.read(chunk_size)
+      io.read(2) # Read \r\n
+    end
+    io.read(2) # Read \r\n
   end
 end
 

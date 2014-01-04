@@ -53,6 +53,12 @@ describe "HTTP" do
       response.body.should be_nil
     end
 
+    it "parses response with chunked body" do
+      response = HTTPResponse.from_io(io = StringIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n"))
+      response.body.should eq("abcde0123456789")
+      io.gets.should be_nil
+    end
+
     it "serialize with body" do
       response = HTTPResponse.new("HTTP/1.1", 200, "OK", {"Content-Type" => "text/plain", "Content-Length" => "5"}, "hello")
       io = String::Buffer.new
