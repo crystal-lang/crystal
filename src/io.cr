@@ -63,6 +63,49 @@ module IO
   end
 end
 
+class BufferedIO
+  include IO
+
+  def initialize(@io)
+    @buffer = @buffer_rem = Pointer(UInt8).malloc(16 * 1024)
+    @buffer_rem_size = 0
+  end
+
+  def gets
+    String.build do |buffer|
+      loop do
+        fill_buffer if @buffer_rem_size == 0
+        return nil if @buffer_rem_size <= 0
+
+        endl = @buffer_rem.index(@buffer_rem_size, '\n'.ord.to_u8)
+        if endl >= 0
+          buffer << String.new(@buffer_rem as Char*, endl + 1)
+          @buffer_rem_size -= (endl + 1)
+          @buffer_rem += (endl + 1)
+          break
+        else
+          buffer << String.new(@buffer_rem as Char*, @buffer_rem_size)
+          @buffer_rem_size = 0
+        end
+      end
+    end
+  end
+
+  def read(buffer : UInt8*, count)
+    fill_buffer if @buffer_rem_size == 0
+    count = Math.min(count, @buffer_rem_size)
+    buffer.memcpy(@buffer_rem, count)
+    @buffer_rem += count
+    @buffer_rem_size -= count
+    count
+  end
+
+  def fill_buffer
+    @buffer_rem_size = @io.read(@buffer, 16 * 1024)
+    @buffer_rem = @buffer
+  end
+end
+
 class StringIO
   def initialize(contents = nil)
     @buffer = String::Buffer.new

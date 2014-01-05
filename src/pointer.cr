@@ -64,6 +64,13 @@ class Pointer(T)
     map(length) { |elem| elem }
   end
 
+  def index(length, value : T)
+    length.times do |i|
+      return i if self[i] == value
+    end
+    -1
+  end
+
   def realloc(size : Int)
     realloc(size.to_u64)
   end
