@@ -218,4 +218,23 @@ describe "Code gen: struct" do
       c.is_a?(Foo::Coco)
     ").to_b.should be_true
   end
+
+  it "codegens passing pointerof(struct) to fun" do
+    run("
+      lib C
+        struct Foo
+          a : Int32
+        end
+      end
+
+      fun foo(x : C::Foo*) :: Int32
+        x->a
+      end
+
+      f :: C::Foo
+      f.a = 1
+
+      foo pointerof(f)
+      ").to_i.should eq(1)
+  end
 end

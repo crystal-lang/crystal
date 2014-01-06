@@ -672,10 +672,6 @@ module Crystal
       when Var
         var = @vars[node_exp.name]
         @last = var.pointer
-
-        node_type = node.type as PointerInstanceType
-
-        @last = @builder.load @last if node_type.var.type.c_struct? || node_type.var.type.c_union?
       when InstanceVar
         type = @type as InstanceVarContainer
 
