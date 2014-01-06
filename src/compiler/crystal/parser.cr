@@ -1206,7 +1206,7 @@ module Crystal
       keys = [] of ASTNode
       values = [] of ASTNode
       while @token.type != :"}"
-        if @token.type == :IDENT && @buffer.value == ':'
+        if (@token.type == :IDENT || @token.type == :CONST) && @buffer.value == ':'
           keys << SymbolLiteral.new(@token.value.to_s)
           next_token
         else
