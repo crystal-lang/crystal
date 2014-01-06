@@ -64,7 +64,7 @@ class Pointer(T)
     map(length) { |elem| elem }
   end
 
-  def index(length, value : T)
+  def index(value : T, length)
     length.times do |i|
       return i if self[i] == value
     end

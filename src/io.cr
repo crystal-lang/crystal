@@ -77,7 +77,7 @@ class BufferedIO
         fill_buffer if @buffer_rem_size == 0
         return nil if @buffer_rem_size <= 0
 
-        endl = @buffer_rem.index(@buffer_rem_size, '\n'.ord.to_u8)
+        endl = @buffer_rem.index('\n'.ord.to_u8, @buffer_rem_size)
         if endl >= 0
           buffer << String.new(@buffer_rem as Char*, endl + 1)
           @buffer_rem_size -= (endl + 1)
