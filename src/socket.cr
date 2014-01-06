@@ -46,12 +46,12 @@ class TCPSocket < FileDescriptorIO
 
     sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
 
-    addr = C::SockAddrIn.new
-    addr->family = C::AF_INET
-    addr->addr = (server->addrlist[0] as UInt32*).value
-    addr->port = C.htons(port)
+    addr :: C::SockAddrIn
+    addr.family = C::AF_INET
+    addr.addr = (server->addrlist[0] as UInt32*).value
+    addr.port = C.htons(port)
 
-    if C.connect(sock, addr, 16) != 0
+    if C.connect(sock, pointerof(addr), 16) != 0
       raise Errno.new("Error connecting to '#{host}:#{port}'")
     end
 
@@ -72,11 +72,11 @@ class TCPServer
   def initialize(port)
     @sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
 
-    addr = C::SockAddrIn.new
-    addr->family = C::AF_INET
-    addr->addr = 0_u32
-    addr->port = C.htons(port)
-    if C.bind(@sock, addr, 16) != 0
+    addr :: C::SockAddrIn
+    addr.family = C::AF_INET
+    addr.addr = 0_u32
+    addr.port = C.htons(port)
+    if C.bind(@sock, pointerof(addr), 16) != 0
       raise Errno.new("Error binding TCP server at #{port}")
     end
 
@@ -86,9 +86,9 @@ class TCPServer
   end
 
   def accept
-    client_addr = C::SockAddrIn.new
+    client_addr :: C::SockAddrIn
     client_addr_len = 16
-    client_fd = C.accept(@sock, client_addr, pointerof(client_addr_len))
+    client_fd = C.accept(@sock, pointerof(client_addr), pointerof(client_addr_len))
     FileDescriptorIO.new(client_fd)
   end
 end
