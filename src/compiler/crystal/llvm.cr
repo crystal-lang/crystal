@@ -836,4 +836,10 @@ module LLVM
   Int64 = LibLLVM.int_type(64)
   Float = LibLLVM.float_type
   Double = LibLLVM.double_type
+
+  ifdef x86_64
+    SizeT = Int64
+  else
+    SizeT = Int32
+  end
 end

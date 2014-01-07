@@ -75,7 +75,7 @@ module Crystal
 
     def initialize(@mod, @node, @llvm_mod, @single_module = false, @use_host_flags = false)
       @main_mod = @llvm_mod
-      @llvm_typer = LLVMTyper.new(@use_host_flags ? @mod.host_flags : @mod.flags)
+      @llvm_typer = LLVMTyper.new
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_type(node.type)
       @fun = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM.pointer_type(LLVM.pointer_type(LLVM::Int8))], ret_type)
