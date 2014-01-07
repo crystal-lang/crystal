@@ -183,31 +183,37 @@ end
 
 def print(obj : Char)
   C.putchar obj
+  C.fflush(nil)
   nil
 end
 
 def print(obj : Int32)
   C.printf "%d", obj
+  C.fflush(nil)
   nil
 end
 
 def print(obj : Int64)
   C.printf "%ld", obj
+  C.fflush(nil)
   nil
 end
 
 def print(obj : Float32)
   C.printf "%f", obj
+  C.fflush(nil)
   nil
 end
 
 def print(obj : Float64)
   C.printf "%g", obj
+  C.fflush(nil)
   nil
 end
 
 def print(obj)
   C.printf obj.to_s
+  C.fflush(nil)
   nil
 end
 
