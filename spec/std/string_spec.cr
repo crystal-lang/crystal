@@ -279,7 +279,7 @@ describe "String" do
     replaced.should eq("somethingthingbexr")
   end
 
-  it "replaces with regexp" do
+  it "replaces with regex" do
     actual = "foo booor booooz".replace(/o+/) do |match|
       "#{match}#{match.length.to_s}"
     end

@@ -1174,8 +1174,8 @@ module Crystal
       raise "Bug: When node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
 
-    def visit(node : RegexpLiteral)
-      raise "Bug: RegexpLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    def visit(node : RegexLiteral)
+      raise "Bug: RegexLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
 
     def visit(node : ArrayLiteral)

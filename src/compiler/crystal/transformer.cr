@@ -368,7 +368,7 @@ module Crystal
       node
     end
 
-    def transform(node : RegexpLiteral)
+    def transform(node : RegexLiteral)
       node
     end
 

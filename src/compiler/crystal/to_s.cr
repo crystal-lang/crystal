@@ -559,13 +559,13 @@ module Crystal
       false
     end
 
-    def visit(node : RegexpLiteral)
+    def visit(node : RegexLiteral)
       @str << "/"
       @str << node.value
       @str << "/"
-      @str << "i" if (node.modifiers & Regexp::IGNORE_CASE) != 0
-      @str << "m" if (node.modifiers & Regexp::MULTILINE) != 0
-      @str << "x" if (node.modifiers & Regexp::EXTENDED) != 0
+      @str << "i" if (node.modifiers & Regex::IGNORE_CASE) != 0
+      @str << "m" if (node.modifiers & Regex::MULTILINE) != 0
+      @str << "x" if (node.modifiers & Regex::EXTENDED) != 0
     end
 
     def visit(node : DeclareVar)

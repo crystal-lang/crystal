@@ -110,7 +110,7 @@ def it_lexes_symbols(symbols)
 end
 
 def it_lexes_regex(regex, exepcted_value = regex[1, regex.length - 2])
-  it_lexes regex, :REGEXP, exepcted_value
+  it_lexes regex, :REGEX, exepcted_value
 end
 
 def it_lexes_global_match(globals)

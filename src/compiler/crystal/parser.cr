@@ -614,8 +614,8 @@ module Crystal
         parse_string_array
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
-      when :REGEXP
-        node_and_next_token RegexpLiteral.new(@token.value.to_s, @token.regexp_modifiers)
+      when :REGEX
+        node_and_next_token RegexLiteral.new(@token.value.to_s, @token.regex_modifiers)
       when :GLOBAL
         node_and_next_token Global.new(@token.value.to_s)
       when :GLOBAL_MATCH
@@ -1923,7 +1923,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEXP, :"(", :"!", :"[", :"[]", :"+", :"-", :"&", :"->"
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"&", :"->"
         # Nothing
       else
         return nil

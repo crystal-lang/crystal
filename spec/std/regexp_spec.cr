@@ -1,7 +1,7 @@
 #!/usr/bin/env bin/crystal --run
 require "spec"
 
-describe "Regexp" do
+describe "Regex" do
   it "matches with =~ and captures" do
     ("fooba" =~ /f(o+)(bar?)/).should eq(0)
     $~.length.should eq(2)

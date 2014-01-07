@@ -244,7 +244,7 @@ class String
     replace(char, replacement.to_s)
   end
 
-  def replace(pattern : Regexp)
+  def replace(pattern : Regex)
     len = length
     offset = 0
     buffer = String::Buffer.new(len)

@@ -319,7 +319,7 @@ module Crystal
     end
   end
 
-  class RegexpLiteral < ASTNode
+  class RegexLiteral < ASTNode
     property :value
     property :modifiers
 
@@ -331,7 +331,7 @@ module Crystal
     end
 
     def clone_without_location
-      RegexpLiteral.new(@value, @modifiers)
+      RegexLiteral.new(@value, @modifiers)
     end
   end
 

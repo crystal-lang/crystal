@@ -9,7 +9,7 @@ lib PCRE("pcre")
   INFO_CAPTURECOUNT = 2
 end
 
-class Regexp
+class Regex
   IGNORE_CASE = 1
   MULTILINE = 4
   EXTENDED = 8
