@@ -597,17 +597,6 @@ module Crystal
     end
 
     def transform(node : Macro)
-      # if node.has_default_arguments?
-      #   exps = node.expand_default_arguments.map! { |a_def| a_def.transform(self) }
-      #   return Expressions.new(exps)
-      # end
-
-      if node.body
-        pushing_vars_from_args(node.args) do
-          node.body = node.body.transform(self)
-        end
-      end
-
       node
     end
 

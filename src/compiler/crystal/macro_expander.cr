@@ -7,6 +7,26 @@ module Crystal
     end
 
     def expand(node)
+      body = @untyped_def.body
+
+      # A simple case: when the macro is just a string interpolation with variables,
+      # we do it without a JIT
+      if body.is_a?(StringInterpolation)
+        if body.expressions.all? { |exp| exp.is_a?(StringLiteral) || exp.is_a?(Var) }
+          return String.build do |str|
+            body.expressions.each do |exp|
+              case exp
+              when StringLiteral
+                str << exp.value
+              when Var
+                index = @untyped_def.args.index { |arg| arg.name == exp.name }.not_nil!
+                str << node.args[index].to_s
+              end
+            end
+          end
+        end
+      end
+
       mapped_args = node.args.map do |arg|
         if arg.is_a?(Call) && !arg.obj && !arg.block && !arg.block_arg && arg.args.length == 0
           Var.new(arg.name)
