@@ -3,7 +3,6 @@ require "../ast"
 module Crystal
   class ASTNode
     property! type
-    property location
     property! dependencies
     property type_filters
     property freeze_type

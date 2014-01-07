@@ -7,7 +7,7 @@ module Crystal
     def normalize(node)
       normalizer = Normalizer.new(self)
       node = normalizer.normalize(node)
-      puts node.to_s_node if ENV["SSA"] == "1"
+      puts node if ENV["SSA"] == "1"
       node
     end
   end

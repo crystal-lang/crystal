@@ -1,6 +1,8 @@
 module Crystal
   # Base class for nodes in the grammar.
   abstract class ASTNode
+    property location
+
     def clone
       clone = clone_without_location
       clone.location = location
@@ -19,12 +21,8 @@ module Crystal
       false
     end
 
-    def class_name
-      raise "class_name not yet implemented for #{self.to_s_node}"
-    end
-
-    def to_s
-      to_s_node
+    def to_s_for_macro
+      to_s
     end
   end
 
@@ -154,12 +152,8 @@ module Crystal
       NumberLiteral.new(@value, @kind)
     end
 
-    def to_s
+    def to_s_for_macro
       @value.to_s
-    end
-
-    def class_name
-      "NumberLiteral"
     end
   end
 
@@ -196,11 +190,7 @@ module Crystal
       StringLiteral.new(@value)
     end
 
-    def class_name
-      "StringLiteral"
-    end
-
-    def to_s
+    def to_s_for_macro
       @value
     end
   end
@@ -238,12 +228,8 @@ module Crystal
       SymbolLiteral.new(@value)
     end
 
-    def to_s
+    def to_s_for_macro
       @value
-    end
-
-    def class_name
-      "SymbolLiteral"
     end
   end
 
@@ -358,12 +344,8 @@ module Crystal
       var
     end
 
-    def to_s
+    def to_s_for_macro
       name
-    end
-
-    def class_name
-      "Var"
     end
   end
 
@@ -445,16 +427,12 @@ module Crystal
       clone
     end
 
-    def to_s
+    def to_s_for_macro
       if !obj && !block && args.empty?
         @name
       else
-        to_s_node
+        to_s
       end
-    end
-
-    def class_name
-      "Call"
     end
   end
 
@@ -631,12 +609,8 @@ module Crystal
       InstanceVar.new(@name, @out)
     end
 
-    def to_s
+    def to_s_for_macro
       @name
-    end
-
-    def class_name
-      "InstanceVar"
     end
   end
 
@@ -1045,11 +1019,7 @@ module Crystal
       ident
     end
 
-    def class_name
-      "Ident"
-    end
-
-    def to_s
+    def to_s_for_macro
       @names.join "::"
     end
   end

@@ -957,7 +957,7 @@ module Crystal
               node_exp.accept self
               visit_indirect(node_exp)
             else
-              node.raise "can't take address of #{node.to_s_node}"
+              node.raise "can't take address of #{node}"
             end
       node.bind_to var
     end
@@ -972,7 +972,7 @@ module Crystal
           type.accept self
           instance_type = type.type.instance_type
           unless instance_type.is_subclass_of?(@mod.exception)
-            type.raise "#{type.to_s_node} is not a subclass of Exception"
+            type.raise "#{type} is not a subclass of Exception"
           end
           instance_type
         end

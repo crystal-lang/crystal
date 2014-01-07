@@ -129,7 +129,7 @@ module Crystal
       end
 
       unless type.module?
-        node.name.raise "#{node.name.to_s_node} is not a module, it's a #{type.type_desc}"
+        node.name.raise "#{node.name} is not a module, it's a #{type.type_desc}"
       end
 
       current_type = current_type()
@@ -411,7 +411,7 @@ module Crystal
       end
 
       unless target_type
-        node.raise "uninitialized constant #{node.to_s_node}"
+        node.raise "uninitialized constant #{node}"
       end
 
       target_type

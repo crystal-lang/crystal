@@ -6,7 +6,7 @@ module Crystal
   class Program
     def after_type_inference(node)
       node = node.transform(AfterTypeInferenceTransformer.new(self))
-      puts node.to_s_node if ENV["AFTER"] == "1"
+      puts node if ENV["AFTER"] == "1"
       node
     end
   end

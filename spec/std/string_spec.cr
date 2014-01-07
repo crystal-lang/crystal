@@ -281,7 +281,7 @@ describe "String" do
 
   it "replaces with regex" do
     actual = "foo booor booooz".replace(/o+/) do |match|
-      "#{match}#{match.length.to_s}"
+      "#{match}#{match.length}"
     end
     actual.should eq("foo2 booo3r boooo4z")
   end

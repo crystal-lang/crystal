@@ -52,13 +52,13 @@ def assert_normalize(from, to, flags = nil)
   normalizer = Normalizer.new(program)
   from_nodes = Parser.parse(from)
   to_nodes = normalizer.normalize(from_nodes)
-  to_nodes.to_s_node.strip.should eq(to.strip)
+  to_nodes.to_s.strip.should eq(to.strip)
 end
 
 def assert_after_type_inference(before, after)
   node = Parser.parse(before)
   result = infer_type node
-  result.node.to_s_node.strip.should eq(after.strip)
+  result.node.to_s.strip.should eq(after.strip)
 end
 
 def assert_syntax_error(str, message)

@@ -312,7 +312,7 @@ module Crystal
             if output.is_a?(SelfType)
               raise "block expected to return #{match.owner}, not #{block_type}"
             else
-              raise "block expected to return #{output.to_s_node}, not #{block_type}"
+              raise "block expected to return #{output}, not #{block_type}"
             end
           end
           block.body.freeze_type = true
@@ -525,10 +525,10 @@ module Crystal
                 if type_var = owner.type_vars[res.names[0]]?
                   msg << type_var.type
                 else
-                  msg << res.to_s_node
+                  msg << res
                 end
               else
-                msg << res.to_s_node
+                msg << res
               end
             end
           end

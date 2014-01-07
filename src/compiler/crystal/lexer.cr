@@ -1,4 +1,5 @@
 require "token"
+require "exception"
 
 class Char
   def ident_start?

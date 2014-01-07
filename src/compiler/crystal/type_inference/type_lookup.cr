@@ -14,7 +14,7 @@ module Crystal
       if the_type && the_type.is_a?(Type)
         @type = the_type.remove_alias_if_simple
       else
-        node.raise("uninitialized constant #{node.to_s_node}")
+        node.raise("uninitialized constant #{node}")
       end
     end
 

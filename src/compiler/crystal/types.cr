@@ -1348,7 +1348,7 @@ module Crystal
         if existing.compatible_with?(a_def)
           return
         else
-          raise "fun redefinition with different signature (was #{existing.to_s})"
+          raise "fun redefinition with different signature (was #{existing})"
         end
       end
 

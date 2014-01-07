@@ -2,7 +2,7 @@ require "visitor"
 
 module Crystal
   class ASTNode
-    def to_s_node
+    def to_s
       visitor = ToSVisitor.new
       self.accept visitor
       visitor.to_s
@@ -428,10 +428,6 @@ module Crystal
       if node_type_restriction = node.type_restriction
         @str << " : "
         node_type_restriction.accept self
-      end
-      if node_type = node.type?
-        @str << " : "
-        @str << node_type
       end
       false
     end

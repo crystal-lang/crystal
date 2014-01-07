@@ -116,7 +116,7 @@ module Crystal
 
         current_type.types[target.names.first] = ConstValue.new(@mod, current_type, @value)
       else
-        raise "Assign not implemented yet: #{node.to_s_node}"
+        raise "Assign not implemented yet: #{node}"
       end
 
       false

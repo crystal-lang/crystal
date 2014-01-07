@@ -679,7 +679,7 @@ module Crystal
       when IndirectRead
         @last = visit_indirect(node_exp)
       else
-        raise "Bug: pointerof(#{node.to_s_node})"
+        raise "Bug: pointerof(#{node})"
       end
       false
     end
