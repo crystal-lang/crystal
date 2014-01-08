@@ -49,4 +49,23 @@ describe "Code gen: c union" do
       a->z->lala
       ").to_i.should eq(10)
   end
+
+  it "codegens assign c union to union" do
+    run("
+      lib Foo
+        union Bar
+          x : Int32
+        end
+      end
+
+      bar :: Foo::Bar
+      bar.x = 10
+      x = bar || nil
+      if x
+        x.x
+      else
+        1
+      end
+      ").to_i.should eq(10)
+  end
 end

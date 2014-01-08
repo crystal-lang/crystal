@@ -1322,7 +1322,7 @@ module Crystal
 
         unless type == @mod.void
           casted_value_ptr = cast_to_pointer value_ptr, type
-          value = @builder.load value if type.c_struct?
+          value = @builder.load value if type.c_struct? || type.c_union?
           @builder.store value, casted_value_ptr
         end
       end
