@@ -85,6 +85,7 @@ module Crystal
     end
 
     forward cond, "cond, then_block, else_block"
+    forward phi, "type, table : LLVM::PhiTable, name = \"\"", "type, table, name"
     forward phi, "type, incoming_blocks, incoming_values, name = \"\"", "type, incoming_blocks, incoming_values, name"
     forward call, "func, args = [] of LibLLVM::ValueRef", "func, args"
     forward_named alloca, "type"

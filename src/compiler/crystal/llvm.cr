@@ -283,6 +283,25 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
 end
 
 module LLVM
+  class PhiTable
+    getter blocks
+    getter values
+
+    def initialize
+      @blocks = [] of LibLLVM::BasicBlockRef
+      @values = [] of LibLLVM::ValueRef
+    end
+
+    def add(block, value)
+      @blocks << block
+      @values << value
+    end
+
+    def empty?
+      @blocks.empty?
+    end
+  end
+
   def self.init_x86
     LibLLVM.initialize_x86_target_info
     LibLLVM.initialize_x86_target
@@ -523,6 +542,10 @@ module LLVM
 
     def cond(cond, then_block, else_block)
       LibLLVM.build_cond(@builder, cond, then_block, else_block)
+    end
+
+    def phi(type, table : LLVM::PhiTable, name = "")
+      phi type, table.blocks, table.values, name
     end
 
     def phi(type, incoming_blocks, incoming_values, name = "")
@@ -826,7 +849,6 @@ module LLVM
       LibLLVM.get_pointer_to_global(@jit, value)
     end
   end
-
 
   Void = LibLLVM.void_type
   Int1 = LibLLVM.int_type(1)
