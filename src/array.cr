@@ -132,6 +132,20 @@ class Array(T)
     end
   end
 
+  def shift(n)
+    if n < 0
+      raise ArgumentError.new("can't shift negative count")
+    end
+
+    n = Math.min(n, @length)
+    ary = Array(T).new(n) { |i| @buffer[i] }
+
+    @buffer.memmove(@buffer + n, @length - n)
+    @length -= n
+
+    ary
+  end
+
   def unshift(obj : T)
     insert 0, obj
   end

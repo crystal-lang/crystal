@@ -346,6 +346,29 @@ describe "Array" do
       rescue IndexOutOfBounds
       end
     end
+
+    it "shifts many elements" do
+      a = [1, 2, 3, 4, 5]
+      b = a.shift(3)
+      b.should eq([1, 2, 3])
+      a.should eq([4, 5])
+    end
+
+    it "shifts more than what is available" do
+      a = [1, 2, 3, 4, 5]
+      b = a.shift(10)
+      b.should eq([1, 2, 3, 4, 5])
+      a.should eq([] of Int32)
+    end
+
+    it "shifts negative count raises" do
+      begin
+        a = [1, 2]
+        a.shift(-1)
+        fail "exepcted to raise ArgumentError"
+      rescue ArgumentError
+      end
+    end
   end
 
   describe "first" do
