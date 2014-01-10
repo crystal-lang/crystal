@@ -93,6 +93,10 @@ module Crystal
       false
     end
 
+    def c_struct_or_union?
+      c_struct? || c_union?
+    end
+
     def c_enum?
       false
     end
