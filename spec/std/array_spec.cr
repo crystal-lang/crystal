@@ -482,7 +482,7 @@ describe "Array" do
       a = [1, 2, 3]
       a.shuffle!
       b = [1, 2, 3]
-      3.times { a.includes?(b.shift).should eq(true) }
+      3.times { a.includes?(b.shift).should be_true }
     end
 
     it "shuffle" do
@@ -491,14 +491,46 @@ describe "Array" do
       a.same?(b).should be_false
       a.should eq([1, 2, 3])
 
-      3.times { b.includes?(a.shift).should eq(true) }
+      3.times { b.includes?(a.shift).should be_true }
     end
 
     it "sample" do
       [1].sample.should eq(1)
 
       x = [1, 2, 3].sample
-      [1, 2, 3].includes?(x).should eq(true)
+      [1, 2, 3].includes?(x).should be_true
+    end
+
+    it "gets sample of negative count elements raises" do
+      begin
+        [1].sample(-1)
+        fail "expected to raise ArgumentError"
+      rescue ArgumentError
+      end
+    end
+
+    it "gets sample of 0 elements" do
+      [1].sample(0).should eq([] of Int32)
+    end
+
+    it "gets sample of 1 elements" do
+      [1].sample(1).should eq([1])
+
+      x = [1, 2, 3].sample(1)
+      x.length.should eq(1)
+      x = x.first
+      [1, 2, 3].includes?(x).should be_true
+    end
+
+    it "gets sample of k elements out of n" do
+      a = [1, 2, 3, 4, 5]
+      b = a.sample(3)
+      set = Set.new(b)
+      set.length.should eq(3)
+
+      set.each do |e|
+        a.includes?(e).should be_true
+      end
     end
   end
 

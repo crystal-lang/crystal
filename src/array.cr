@@ -532,6 +532,33 @@ class Array(T)
     @buffer[rand(@length)]
   end
 
+  def sample(n)
+    if n < 0
+      raise ArgumentError.new("can't get negative count sample")
+    end
+
+    case n
+    when 0
+      return [] of T
+    when 1
+      return [sample] of T
+    else
+      n = Math.min(n, @length)
+
+      ary = Array.new(n) { |i| @buffer[i] }
+      buffer = ary.buffer
+
+      n.upto(@length - 1) do |i|
+        j = rand(i + 1)
+        if j <= n
+          buffer[j] = @buffer[i]
+        end
+      end
+
+      ary
+    end
+  end
+
   def shuffle!
     (length - 1).downto(1) do |i|
       j = rand(i + 1)
