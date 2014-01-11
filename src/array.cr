@@ -351,9 +351,7 @@ class Array(T)
     i = 0
     j = length - 1
     while i != j
-      tmp = @buffer[i]
-      @buffer[i] = @buffer[j]
-      @buffer[j] = tmp
+      @buffer.swap(i, j)
       i += 1
       j -= 1
     end
@@ -537,9 +535,7 @@ class Array(T)
   def shuffle!
     (length - 1).downto(1) do |i|
       j = rand(i + 1)
-      tmp = @buffer[i]
-      @buffer[i] = @buffer[j]
-      @buffer[j] = tmp
+      @buffer.swap(i, j)
     end
     self
   end

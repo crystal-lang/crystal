@@ -56,6 +56,10 @@ class Pointer(T)
     true
   end
 
+  def swap(i, j)
+    self[i], self[j] = self[j], self[i]
+  end
+
   def map(times, &block : T -> U)
     Array(U).new(times) { |i| yield self[i] }
   end
