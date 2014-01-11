@@ -17,7 +17,14 @@ class String::Buffer
   end
 
   def <<(obj : String)
-    obj_length = obj.length
+    append obj.cstr, obj.length
+  end
+
+  def <<(obj)
+    self << obj.to_s
+  end
+
+  def append(buffer : Char*, obj_length)
     new_length = length + obj_length
     if new_length > @capacity
       cap2 = Math.log2(new_length).ceil
@@ -25,14 +32,10 @@ class String::Buffer
       resize_to_capacity(new_capacity)
     end
 
-    (@buffer + @length).memcpy(obj.cstr, obj_length)
+    (@buffer + @length).memcpy(buffer, obj_length)
     @length += obj_length
 
     self
-  end
-
-  def <<(obj)
-    self << obj.to_s
   end
 
   def clear
@@ -41,6 +44,10 @@ class String::Buffer
 
   def length
     @length
+  end
+
+  def empty?
+    @length == 0
   end
 
   def to_s

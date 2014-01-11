@@ -15,6 +15,13 @@ end
 
 require "string/buffer"
 
+# Classes including IO must define:
+#
+#   * read(buffer : UInt8*, count)
+#     reads count bytes into buffer
+#
+#   * write(buffer : UInt8*, count)
+#     writes count btyes from buffer
 module IO
   def print(string)
     string = string.to_s
@@ -43,7 +50,10 @@ module IO
   def gets
     buffer = String::Buffer.new
     while true
-      return nil unless ch = read_byte
+      unless ch = read_byte
+        return buffer.empty? ? nil : buffer.to_s
+      end
+
       ch = ch.chr
       buffer << ch
       break if ch == '\n'
@@ -56,6 +66,10 @@ module IO
     remaining_length = length
     while remaining_length > 0
       read_length = read(buffer_pointer, remaining_length)
+      if read_length == 0
+        length -= remaining_length
+        break
+      end
       remaining_length -= read_length
       buffer_pointer += read_length
     end
@@ -75,7 +89,13 @@ class BufferedIO
     String.build do |buffer|
       loop do
         fill_buffer if @buffer_rem_size == 0
-        return nil if @buffer_rem_size <= 0
+        if @buffer_rem_size <= 0
+          if buffer.length == 0
+            return nil
+          else
+            break
+          end
+        end
 
         endl = @buffer_rem.index('\n'.ord.to_u8, @buffer_rem_size)
         if endl >= 0
@@ -107,44 +127,27 @@ class BufferedIO
 end
 
 class StringIO
+  include IO
+
   def initialize(contents = nil)
     @buffer = String::Buffer.new
     @buffer << contents if contents
     @pos = 0
   end
 
-  def <<(obj)
-    @buffer << obj
+  def read(buffer, count)
+    count = Math.min(count, @buffer.length - @pos)
+    (buffer as Char*).memcpy(@buffer.buffer + @pos, count)
+    @pos += count
+    count
   end
 
-  def puts(obj)
-    self << obj << "\n"
-  end
-
-  def print(obj)
-    self << obj
+  def write(bytes, count)
+    @buffer.append (bytes as Char*), count
   end
 
   def to_s
     @buffer.to_s
-  end
-
-  def gets
-    return nil if @pos == @buffer.length
-    finish = @pos
-    while finish < @buffer.length && @buffer.buffer[finish] != '\n'
-      finish += 1
-    end
-    str = String.new(@buffer.buffer + @pos, finish - @pos + 1)
-    @pos = finish + 1
-    str
-  end
-
-  def read(length)
-    length = Math.min(length, @buffer.length - @pos)
-    str = String.new(@buffer.buffer + @pos, length)
-    @pos += length
-    str
   end
 end
 
