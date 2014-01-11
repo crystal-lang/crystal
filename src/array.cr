@@ -543,7 +543,9 @@ class Array(T)
     when 1
       return [sample] of T
     else
-      n = Math.min(n, @length)
+      if n >= @length
+        return dup.shuffle!
+      end
 
       ary = Array.new(n) { |i| @buffer[i] }
       buffer = ary.buffer
