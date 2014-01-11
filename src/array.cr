@@ -554,6 +554,7 @@ class Array(T)
           buffer[j] = @buffer[i]
         end
       end
+      ary.shuffle!
 
       ary
     end

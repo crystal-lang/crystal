@@ -532,6 +532,18 @@ describe "Array" do
         a.includes?(e).should be_true
       end
     end
+
+    it "gets sample of k elements out of n, where k > n" do
+      a = [1, 2, 3, 4, 5]
+      b = a.sample(10)
+      b.length.should eq(5)
+      set = Set.new(b)
+      set.length.should eq(5)
+
+      set.each do |e|
+        a.includes?(e).should be_true
+      end
+    end
   end
 
   describe "flat_map" do
