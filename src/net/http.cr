@@ -1,6 +1,6 @@
 require "socket"
 require "uri"
-require "yaml"
+require "json"
 require "ssl"
 
 def parse_headers_and_body(io)
@@ -138,7 +138,7 @@ class HTTPClient
   end
 
   def self.get_json(url)
-    Yaml.load(get(url).body.not_nil!)
+    Json.parse(get(url).body.not_nil!)
   end
 
   def self.post(url, body)

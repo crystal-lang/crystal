@@ -21,7 +21,7 @@ class Char
   end
 
   def whitespace?
-    self == ' ' || self == '\t' || self == '\n' || self == '\v' || self == '\f' || self == '\r'
+    self == ' ' || 9 <= ord <= 13
   end
 
   def downcase
