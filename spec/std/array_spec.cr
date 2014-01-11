@@ -330,6 +330,29 @@ describe "Array" do
       rescue IndexOutOfBounds
       end
     end
+
+    it "pops many elements" do
+      a = [1, 2, 3, 4, 5]
+      b = a.pop(3)
+      b.should eq([3, 4, 5])
+      a.should eq([1, 2])
+    end
+
+    it "pops more elements that what is available" do
+      a = [1, 2, 3, 4, 5]
+      b = a.pop(10)
+      b.should eq([1, 2, 3, 4, 5])
+      a.should eq([] of Int32)
+    end
+
+    it "pops negative count raises" do
+      begin
+        a = [1, 2]
+        a.pop(-1)
+        fail "exepcted to raise ArgumentError"
+      rescue ArgumentError
+      end
+    end
   end
 
   describe "shift" do

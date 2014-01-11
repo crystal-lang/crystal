@@ -113,6 +113,19 @@ class Array(T)
     end
   end
 
+  def pop(n)
+    if n < 0
+      raise ArgumentError.new("can't pop negative count")
+    end
+
+    n = Math.min(n, @length)
+    ary = Array(T).new(n) { |i| @buffer[@length - n + i] }
+
+    @length -= n
+
+    ary
+  end
+
   def shift
     shift { raise IndexOutOfBounds.new }
   end
