@@ -25,6 +25,13 @@ describe "HTTP" do
       request.headers.should eq({"Host" => "host.domain.com"})
     end
 
+    it "parses GET without \\r" do
+      request = HTTPRequest.from_io(StringIO.new("GET / HTTP/1.1\nHost: host.domain.com\n\n"))
+      request.method.should eq("GET")
+      request.path.should eq("/")
+      request.headers.should eq({"Host" => "host.domain.com"})
+    end
+
     it "headers are case insensitive" do
       request = HTTPRequest.from_io(StringIO.new("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n"))
       headers = request.headers.not_nil!
@@ -45,6 +52,16 @@ describe "HTTP" do
   describe "Response" do
     it "parses response with body" do
       response = HTTPResponse.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"))
+      response.version.should eq("HTTP/1.1")
+      response.status_code.should eq(200)
+      response.status_message.should eq("OK")
+      response.headers["content-type"].should eq("text/plain")
+      response.headers["content-length"].should eq("5")
+      response.body.should eq("hello")
+    end
+
+    it "parses response with body without \\r" do
+      response = HTTPResponse.from_io(StringIO.new("HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 5\n\nhelloworld"))
       response.version.should eq("HTTP/1.1")
       response.status_code.should eq(200)
       response.status_message.should eq("OK")

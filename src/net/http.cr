@@ -7,7 +7,7 @@ def parse_headers_and_body(io)
   headers = Hash(String, String).new(nil, Hash::CaseInsensitiveComparator)
 
   while line = io.gets
-    if line == "\r\n"
+    if line == "\r\n" || line == "\n"
       body = nil
       if content_length = headers["content-length"]?
         body = io.read(content_length.to_i)
@@ -65,7 +65,7 @@ class HTTPRequest
 
   def self.from_io(io)
     request_line = io.gets.not_nil!
-    request_line =~ /\A(\w+)\s([^\s]+)\s(HTTP\/\d\.\d)\r\n\Z/
+    request_line =~ /\A(\w+)\s([^\s]+)\s(HTTP\/\d\.\d)\r?\n\Z/
     method, path, http_version = $1, $2, $3
 
     parse_headers_and_body(io) do |headers, body|
@@ -92,7 +92,8 @@ class HTTPResponse
 
   def self.from_io(io)
     status_line = io.gets.not_nil!
-    status_line =~ /\A(HTTP\/\d\.\d)\s(\d\d\d)\s(.*)\r\n\Z/
+    status_line =~ /\A(HTTP\/\d\.\d)\s(\d\d\d)\s(.*?)\r?\n\Z/
+
     http_version, status_code, status_message = $1, $2.to_i, $3
 
     parse_headers_and_body(io) do |headers, body|
