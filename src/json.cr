@@ -4,7 +4,7 @@ module Json
     getter column_number
 
     def initialize(message, @line_number, @column_number)
-      super(message)
+      super "#{message} at #{@line_number}:#{@column_number}"
     end
   end
 
@@ -146,7 +146,7 @@ module Json
             buffer << '\t'
           # TODO when 'u'
           else
-            raise ParseException.new("uknown escape char: #{char}", @line_number, @column_number)
+            raise "uknown escape char: #{char}"
           end
         when '"'
           next_char
@@ -271,7 +271,11 @@ module Json
     end
 
     def unexpected_char(char = current_char)
-      raise ParseException.new("unexpected char: #{char}", @line_number, @column_number)
+      raise "unexpected char '#{char}'"
+    end
+
+    def raise(msg)
+      ::raise ParseException.new(msg, @line_number, @column_number)
     end
   end
 
@@ -389,7 +393,7 @@ module Json
     end
 
     def unexpected_token
-      raise ParseException.new("unexpected token: #{@token}", @token.line_number, @token.column_number)
+      raise ParseException.new("unexpected token '#{@token}'", @token.line_number, @token.column_number)
     end
   end
 
