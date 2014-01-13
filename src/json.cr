@@ -45,175 +45,199 @@ module Json
       @token = Token.new
       @line_number = 1
       @column_number = 1
+      @string_buffer = String::Buffer.new
     end
 
     def next_token
-      # Skip whitespaces
-      while @buffer.value.whitespace?
-        if @buffer.value == '\n'
-          @line_number += 1
-          @column_number = 0
-        end
-        next_char
-      end
+      skip_whitespace
 
       @token.line_number = @line_number
       @token.column_number = @column_number
 
-      case @buffer.value
+      case current_char
       when '\0'
         @token.type = :EOF
       when '{'
-        next_char
-        @token.type = :"{"
+        next_char :"{"
       when '}'
-        next_char
-        @token.type = :"}"
+        next_char :"}"
       when '['
-        next_char
-        @token.type = :"["
+        next_char :"["
       when ']'
-        next_char
-        @token.type = :"]"
+        next_char :"]"
       when ','
-        next_char
-        @token.type = :","
+        next_char :","
       when ':'
-        next_char
-        @token.type = :":"
+        next_char :":"
       when 'f'
-        if next_char == 'a' && next_char == 'l' && next_char == 's' && next_char == 'e'
-          next_char
-          @token.type = :false
-        else
-          unexpected_char
-        end
+        consume_false
       when 'n'
-        if next_char == 'u' && next_char == 'l' && next_char == 'l'
-          next_char
-          @token.type = :null
-        else
-          unexpected_char
-        end
+        consume_null
       when 't'
-        if next_char == 'r' && next_char == 'u' && next_char == 'e'
-          next_char
-          @token.type = :true
-        else
-          unexpected_char
-        end
+        consume_true
       when '"'
-        buffer = String::Buffer.new
-        while true
-          char = next_char
-          case char
-          when '\0'
-            raise "unterminated string"
-          when '\\'
-            char = next_char
-            case char
-            when '\\', '"', '/'
-              buffer << char
-            when 'b'
-              buffer << '\b'
-            when 'f'
-              buffer << '\f'
-            when 'n'
-              buffer << '\n'
-            when 'r'
-              buffer << '\r'
-            when 't'
-              buffer << '\t'
-            # TODO when 'u'
-            else
-              raise ParseException.new("uknown escape char: #{char}", @line_number, @column_number)
-            end
-          when '"'
-            next_char
-            break
-          else
-            buffer << char
-          end
-        end
-        @token.type = :STRING
-        @token.string_value = buffer.to_s
+        consume_string
       else
-        start = @buffer
-        count = 1
-
-        if @buffer.value == '-'
-          count += 1
-          next_char
-        end
-
-        if @buffer.value == '0'
-          if @buffer[1] == '.'
-            next_char
-            count += 1
-            consume_float(start, count)
-          elsif @buffer[1] == 'e'
-            next_char
-            consume_exponent(start, 2)
-          elsif '0' <= @buffer[1] <= '9' || @buffer[1] == 'e' || @buffer[1] == 'E'
-            unexpected_char
-          else
-            next_char
-            @token.type = :INT
-            @token.int_value = 0_i64
-          end
-        elsif '1' <= @buffer.value <= '9'
-          char = next_char
-          while '0' <= char <= '9'
-            count += 1
-            char = next_char
-          end
-
-          case char
-          when '.'
-            count += 1
-            consume_float(start, count)
-          when 'e'
-            consume_exponent(start, count)
-          else
-            @token.type = :INT
-            @token.int_value = String.new(start, count).to_i64
-          end
-        else
-          unexpected_char
-        end
+        consume_number
       end
 
       @token
     end
 
-    def consume_float(start, count)
-      char = next_char
-      while '0' <= char <= '9'
-        count += 1
-        char = next_char
-      end
-
-      if char == 'e' || char == 'E'
-        consume_exponent(start, count)
-      else
-        @token.type = :FLOAT
-        @token.float_value = String.new(start, count).to_f
+    def skip_whitespace
+      while current_char.whitespace?
+        if current_char == '\n'
+          @line_number += 1
+          @column_number = 0
+        end
+        next_char
       end
     end
 
-    def consume_exponent(start, count)
-      count += 1
-      char = next_char
-      if char == '+' || char == '-'
+    def consume_true
+      if next_char == 'r' && next_char == 'u' && next_char == 'e'
+        next_char
+        @token.type = :true
+      else
+        unexpected_char
+      end
+    end
+
+    def consume_false
+      if next_char == 'a' && next_char == 'l' && next_char == 's' && next_char == 'e'
+        next_char
+        @token.type = :false
+      else
+        unexpected_char
+      end
+    end
+
+    def consume_null
+      if next_char == 'u' && next_char == 'l' && next_char == 'l'
+        next_char
+        @token.type = :null
+      else
+        unexpected_char
+      end
+    end
+
+    def consume_string
+      @string_buffer.clear
+      buffer = @string_buffer
+      while true
         char = next_char
-        count += 1
+        case char
+        when '\0'
+          raise "unterminated string"
+        when '\\'
+          char = next_char
+          case char
+          when '\\', '"', '/'
+            buffer << char
+          when 'b'
+            buffer << '\b'
+          when 'f'
+            buffer << '\f'
+          when 'n'
+            buffer << '\n'
+          when 'r'
+            buffer << '\r'
+          when 't'
+            buffer << '\t'
+          # TODO when 'u'
+          else
+            raise ParseException.new("uknown escape char: #{char}", @line_number, @column_number)
+          end
+        when '"'
+          next_char
+          break
+        else
+          buffer << char
+        end
+      end
+      @token.type = :STRING
+      @token.string_value = buffer.to_s
+    end
+
+    def consume_number
+      integer = 0_i64
+      negative = false
+
+      if current_char == '-'
+        negative = true
+        next_char
+      end
+
+      if current_char == '0'
+        next_char
+        if current_char == '.'
+          consume_float(negative, integer)
+        elsif current_char == 'e'
+          consume_exponent(negative, integer.to_f64)
+        elsif '0' <= current_char <= '9' || current_char == 'e' || current_char == 'E'
+          unexpected_char
+        else
+          @token.type = :INT
+          @token.int_value = 0_i64
+        end
+      elsif '1' <= current_char <= '9'
+        integer = (current_char.ord - '0'.ord).to_i64
+        char = next_char
+        while '0' <= char <= '9'
+          integer *= 10
+          integer += (char.ord - '0'.ord)
+          char = next_char
+        end
+
+        case char
+        when '.'
+          consume_float(negative, integer)
+        when 'e'
+          consume_exponent(negative, integer.to_f64)
+        else
+          @token.type = :INT
+          @token.int_value = negative ? -integer : integer
+        end
+      else
+        unexpected_char
+      end
+    end
+
+    def consume_float(negative, integer)
+      divisor = 1
+      char = next_char
+      while '0' <= char <= '9'
+        integer *= 10
+        integer += (char.ord - '0'.ord)
+        divisor *= 10
+        char = next_char
+      end
+      float = integer.to_f64 / divisor
+
+      if char == 'e' || char == 'E'
+        consume_exponent(negative, float)
+      else
+        @token.type = :FLOAT
+        @token.float_value = negative ? -float : float
+      end
+    end
+
+    def consume_exponent(negative, float)
+      exponent = 0
+      negative_exponent = false
+
+      char = next_char
+      if char == '+'
+        char = next_char
+      elsif char == '-'
+        char = next_char
+        negative_exponent = true
       end
 
       if '0' <= char <= '9'
-        count += 1
-        char = next_char
         while '0' <= char <= '9'
-          count += 1
+          exponent *= 10
+          exponent += (char.ord - '0'.ord)
           char = next_char
         end
       else
@@ -221,7 +245,10 @@ module Json
       end
 
       @token.type = :FLOAT
-      @token.float_value = String.new(start, count).to_f
+
+      exponent = -exponent if negative_exponent
+      float *= (10_f64 ** exponent)
+      @token.float_value = negative ? -float : float
     end
 
     def next_char
@@ -231,19 +258,32 @@ module Json
 
     def next_char_no_column_increment
       @buffer += 1
+      current_char
+    end
+
+    def next_char(token_type)
+      @token.type = token_type
+      next_char
+    end
+
+    def current_char
       @buffer.value
     end
 
-    def unexpected_char(char = @buffer.value)
+    def unexpected_char(char = current_char)
       raise ParseException.new("unexpected char: #{char}", @line_number, @column_number)
     end
   end
 
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(Type) | Hash(String, Type)
 
-  class Parser < Lexer
+  class Parser
+    def initialize(string)
+      @lexer = Lexer.new(string)
+      @token = next_token
+    end
+
     def parse
-      next_token
       parse_array_or_object
     end
 
@@ -263,12 +303,17 @@ module Json
 
       ary = [] of Type
 
-      while @token.type != :"]"
-        ary << parse_value
+      if @token.type != :"]"
+        while true
+          ary << parse_value
 
-        if @token.type == :","
-          next_token
-          unexpected_token if @token.type == :"]"
+          case @token.type
+          when :","
+            next_token
+            unexpected_token if @token.type == :"]"
+          when :"]"
+            break
+          end
         end
       end
 
@@ -282,22 +327,27 @@ module Json
 
       object = {} of String => Type
 
-      while @token.type != :"}"
-        check :STRING
-        key = @token.string_value
+      if @token.type != :"}"
+        while true
+          check :STRING
+          key = @token.string_value
 
-        next_token
-
-        check :":"
-        next_token
-
-        value = parse_value
-
-        object[key] = value
-
-        if @token.type == :","
           next_token
-          unexpected_token if @token.type == :"}"
+
+          check :":"
+          next_token
+
+          value = parse_value
+
+          object[key] = value
+
+          case @token.type
+          when :","
+            next_token
+            unexpected_token if @token.type == :"}"
+          when :"}"
+            break
+          end
         end
       end
 
@@ -332,6 +382,10 @@ module Json
 
     def check(token_type)
       unexpected_token unless @token.type == token_type
+    end
+
+    def next_token
+      @token = @lexer.next_token
     end
 
     def unexpected_token
