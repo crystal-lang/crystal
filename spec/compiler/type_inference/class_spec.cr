@@ -624,4 +624,41 @@ describe "Type inference: class" do
       Foo(1).foo
       ") { int32 }
   end
+
+  it "uses self as type var" do
+    assert_type("
+      class Foo(T)
+      end
+
+      class Bar
+        def self.coco
+          Foo(self)
+        end
+      end
+
+      Bar.coco.new
+      ") do
+        (types["Foo"] as GenericClassType).instantiate([types["Bar"]] of Type | ASTNode)
+      end
+  end
+
+  it "uses self as type var" do
+    assert_type("
+      class Foo(T)
+      end
+
+      class Bar
+        def self.coco
+          Foo(self)
+        end
+      end
+
+      class Baz < Bar
+      end
+
+      Baz.coco.new
+      ") do
+        (types["Foo"] as GenericClassType).instantiate([types["Baz"]] of Type | ASTNode)
+      end
+  end
 end

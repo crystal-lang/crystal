@@ -945,6 +945,10 @@ module Crystal
       node.type = instance_type
     end
 
+    def visit(node : SelfType)
+      node.type = scope.instance_type
+    end
+
     def visit(node : PointerOf)
       node.mod = @mod
       node_exp = node.exp
