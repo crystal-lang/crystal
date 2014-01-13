@@ -26,7 +26,7 @@ class Hash(K, V)
   end
 
   def initialize(block = nil, @comp = StandardComparator)
-    @buckets = Array(Array(Entry(K, V))?).new(17, nil)
+    @buckets = Array(Array(Entry(K, V))?).new(11, nil)
     @length = 0
     @block = block
   end
@@ -38,6 +38,8 @@ class Hash(K, V)
   end
 
   def []=(key : K, value : V)
+    rehash if @length > 5 * @buckets.length
+
     index = bucket_index key
     bucket = @buckets[index]
 
@@ -280,6 +282,29 @@ class Hash(K, V)
     (@comp.hash(key) % @buckets.length).to_i
   end
 
+  def rehash
+    new_size = calculate_new_size(@length)
+    @buckets = Array(Array(Entry(K, V))?).new(new_size, nil)
+    entry = @first
+    while entry
+      index = bucket_index entry.key
+      bucket = (@buckets[index] ||= Array(Entry(K, V)).new)
+      bucket.push entry
+      entry = entry.next
+    end
+  end
+
+  def calculate_new_size(size)
+    i = 0
+    new_size = 8
+    while i < HASH_PRIMES.length
+      return HASH_PRIMES[i] if new_size > size
+      i += 1
+      new_size <<= 1
+    end
+    raise "Hash table too big"
+  end
+
   class Entry(K, V)
     def initialize(key : K, value : V)
       @key = key
@@ -314,4 +339,37 @@ class Hash(K, V)
       @previous = p
     end
   end
+
+  HASH_PRIMES = [
+    8 + 3,
+    16 + 3,
+    32 + 5,
+    64 + 3,
+    128 + 3,
+    256 + 27,
+    512 + 9,
+    1024 + 9,
+    2048 + 5,
+    4096 + 3,
+    8192 + 27,
+    16384 + 43,
+    32768 + 3,
+    65536 + 45,
+    131072 + 29,
+    262144 + 3,
+    524288 + 21,
+    1048576 + 7,
+    2097152 + 17,
+    4194304 + 15,
+    8388608 + 9,
+    16777216 + 43,
+    33554432 + 35,
+    67108864 + 15,
+    134217728 + 29,
+    268435456 + 3,
+    536870912 + 11,
+    1073741824 + 85,
+    0
+  ]
+
 end
