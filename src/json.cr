@@ -288,7 +288,9 @@ module Json
     end
 
     def parse
-      parse_array_or_object
+      json = parse_array_or_object
+      check :EOF
+      json
     end
 
     def parse_array_or_object

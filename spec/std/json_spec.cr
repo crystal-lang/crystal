@@ -47,7 +47,7 @@ def it_raises_on_parse_json(string)
     begin
       Json.parse(string)
       fail "expected Json.parse to raise"
-    rescue
+    rescue Json::ParseException
     end
   end
 end
@@ -99,6 +99,7 @@ describe "Json" do
     it_parses_json "[false]", [false]
     it_parses_json %(["hello"]), ["hello"]
     it_parses_json "[0]", [0]
+    it_parses_json " [ 0 ] ", [0]
 
     it_parses_json "{}", {} of String => Json::Type
     it_parses_json %({"foo": 1}), {"foo" => 1}
@@ -112,5 +113,7 @@ describe "Json" do
     it_raises_on_parse_json "{1}"
     it_raises_on_parse_json %({"foo"1})
     it_raises_on_parse_json %("{"foo":})
+    it_raises_on_parse_json "[0]1"
+    it_raises_on_parse_json "[0] 1 "
   end
 end
