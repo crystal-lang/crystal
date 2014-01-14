@@ -476,4 +476,67 @@ describe "Code gen: hierarchy type" do
       some_long_var.coco
       ").to_i.should eq(2)
   end
+
+  it "codegens new for simple type, then for hierarchy" do
+    run("
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      x = Foo.new(1)
+      y = (Foo || Bar).new(1)
+      y.x
+      ").to_i.should eq(1)
+  end
+
+  it "codegens new twice for hierarchy" do
+    run("
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      y = (Foo || Bar).new(1)
+      y = (Foo || Bar).new(1)
+      y.x
+      ").to_i.should eq(1)
+  end
+
+  it "codegens allocate for hierarchy type with custom new" do
+    run("
+      class Foo
+        def self.new
+          allocate
+        end
+
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      foo = (Bar || Foo).new
+      foo.foo
+      ").to_i.should eq(2)
+  end
 end

@@ -405,13 +405,18 @@ module Crystal
 
     def codegen_primitive_allocate(node, target_def, call_args)
       type = node.type
+      base_type = type.is_a?(HierarchyType) ? type.base_type : type
 
-      struct_type = llvm_struct_type(type)
+      struct_type = llvm_struct_type(base_type)
       @last = malloc struct_type
       memset @last, int8(0), LLVM.size_of(struct_type)
 
       type_id_ptr = gep @last, 0, 0
-      @builder.store int32(type.type_id), type_id_ptr
+      @builder.store int32(base_type.type_id), type_id_ptr
+
+      if type.is_a?(HierarchyType)
+        @last = box_object_in_hierarchy(base_type, type, @last, false)
+      end
 
       @last
     end
