@@ -124,7 +124,7 @@ module Crystal
         str << msg
       end
 
-      if lines && @line && (line = lines[@line - 1])
+      if lines && @line && (line = lines[@line - 1]?)
         str << "\n\n"
         str << line.chomp
         str << "\n"
