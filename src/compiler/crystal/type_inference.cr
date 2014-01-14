@@ -548,6 +548,14 @@ module Crystal
     end
 
     def end_visit(node : Cast)
+      obj_type = node.obj.type?
+      if obj_type.is_a?(PointerInstanceType)
+        to_type = node.to.type.instance_type
+        if to_type.is_a?(GenericType)
+          node.raise "can't cast #{obj_type} to #{to_type}"
+        end
+      end
+
       node.obj.add_observer node
       node.update
     end

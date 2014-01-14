@@ -1269,6 +1269,10 @@ module Crystal
     def llvm_size
       Crystal::Program::POINTER_SIZE
     end
+
+    def to_s
+      "#{var.type}*"
+    end
   end
 
   class IncludedGenericModule < Type
