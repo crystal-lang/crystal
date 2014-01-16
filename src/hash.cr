@@ -146,6 +146,16 @@ class Hash(K, V)
       yield current.key, current.value
       current = current.next
     end
+    self
+  end
+
+  def each_with_index
+    i = 0
+    each do |key, value|
+      yield key, value, i
+      i += 1
+    end
+    self
   end
 
   def keys
@@ -158,6 +168,13 @@ class Hash(K, V)
     values = Array(V).new
     each { |key, value| values << value }
     values
+  end
+
+  def key_index(key)
+    each_with_index do |my_key, my_value, i|
+      return i if key == my_key
+    end
+    nil
   end
 
   def map(&block : K, V -> U)

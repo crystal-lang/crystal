@@ -227,4 +227,10 @@ describe "Hash" do
     h["foo"].should eq(1)
     h["Foo"].should eq(1)
   end
+
+  it "gets key index" do
+    h = {1 => 2, 3 => 4}
+    h.key_index(3).should eq(1)
+    h.key_index(2).should be_nil
+  end
 end

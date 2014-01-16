@@ -1787,7 +1787,7 @@ module Crystal
       node.names.each do |name|
         case element_type
         when CStructType
-          index = element_type.vars.keys.index(name).not_nil!
+          index = element_type.vars.key_index(name).not_nil!
           var = element_type.vars[name]
 
           indices << int32(index)

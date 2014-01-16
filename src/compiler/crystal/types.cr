@@ -828,7 +828,7 @@ module Crystal
         if index
           index
         else
-          index = instance_vars.keys.index(name)
+          index = instance_vars.key_index(name)
           if index
             sup.all_instance_vars_count + index
           else
@@ -836,7 +836,7 @@ module Crystal
           end
         end
       else
-        instance_vars.keys.index(name)
+        instance_vars.key_index(name)
       end
     end
 
@@ -1564,7 +1564,7 @@ module Crystal
     end
 
     def index_of_var(name)
-      @vars.keys.index(name).not_nil!
+      @vars.key_index(name).not_nil!
     end
 
     def type_desc
