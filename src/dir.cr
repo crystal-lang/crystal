@@ -7,7 +7,7 @@ lib C
       reclen : UInt16
       type : UInt8
       namelen : UInt8
-      name : Char
+      name : UInt8
     end
   elsif linux
    struct DirEntry
@@ -15,7 +15,7 @@ lib C
       d_off : Int64
       reclen : UInt16
       type : UInt8
-      name : Char
+      name : UInt8
     end
   end
 
@@ -31,8 +31,8 @@ lib C
     WHT = 14_u8
   end
 
-  fun getcwd(buffer : Char*, size : Int32) : Char*
-  fun opendir(name : Char*) : Dir*
+  fun getcwd(buffer : UInt8*, size : Int32) : UInt8*
+  fun opendir(name : UInt8*) : Dir*
   fun closedir(dir : Dir*) : Int32
 
   ifdef darwin

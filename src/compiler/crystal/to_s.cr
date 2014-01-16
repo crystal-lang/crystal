@@ -286,7 +286,7 @@ module Crystal
     end
 
     def is_alpha(string)
-      'a' <= string[0].downcase <= 'z'
+      'a' <= string[0].chr.downcase <= 'z'
     end
 
     def visit(node : Assign)

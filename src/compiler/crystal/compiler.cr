@@ -2,7 +2,7 @@ require "option_parser"
 require "thread"
 
 lib C
-  fun tmpnam(result : Char*) : Char*
+  fun tmpnam(result : UInt8*) : UInt8*
 end
 
 module Crystal

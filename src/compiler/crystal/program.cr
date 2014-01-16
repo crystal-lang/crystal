@@ -36,7 +36,7 @@ module Crystal
       @types["Void"] = @void = VoidType.new self, self, "Void", @value, LLVM::Void, 1
       @types["Nil"] = @nil = NilType.new self, self, "Nil", @value, LLVM::Int1, 1
       @types["Bool"] = @bool = BoolType.new self, self, "Bool", @value, LLVM::Int1, 1
-      @types["Char"] = @char = CharType.new self, self, "Char", @value, LLVM::Int8, 1
+      @types["Char"] = @char = CharType.new self, self, "Char", @value, LLVM::Int32, 4
 
       @types["Int"] = @int = ValueType.new self, self, "Int", @number
       @int.abstract = true
@@ -68,7 +68,7 @@ module Crystal
       @string.type_id = 1
 
       @string.lookup_instance_var("@length").set_type(@int32)
-      @string.lookup_instance_var("@c").set_type(@char)
+      @string.lookup_instance_var("@c").set_type(@uint8)
 
       @types["Class"] = @class = Metaclass.new(self, @object, @reference, "Class")
       @object.force_metaclass @class
@@ -340,8 +340,8 @@ module Crystal
 
     getter :nil_var
 
-    def char_pointer
-      pointer_of char
+    def uint8_pointer
+      pointer_of uint8
     end
 
     def pointer_of(type)

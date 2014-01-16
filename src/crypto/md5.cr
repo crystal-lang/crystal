@@ -1,5 +1,5 @@
 lib OpenSSLCrypto("crypto")
-  fun md5 = MD5(data : Char*, lengh : Int32, buffer : Char*) : UInt8*
+  fun md5 = MD5(data : UInt8*, lengh : Int32, buffer : UInt8*) : UInt8*
 end
 
 module Crypto
@@ -15,7 +15,7 @@ module Crypto
     end
 
     def self.to_hex(c)
-      ((c < 10 ? 48 : 87) + c).chr
+      ((c < 10 ? 48_u8 : 87_u8) + c)
     end
   end
 end

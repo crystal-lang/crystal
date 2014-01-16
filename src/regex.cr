@@ -1,10 +1,10 @@
 lib PCRE("pcre")
   type Pcre : Void*
-  fun compile = pcre_compile(pattern : Char*, options : Int32, errptr : Char**, erroffset : Int32*, tableptr : Void*) : Pcre
-  fun exec = pcre_exec(code : Pcre, extra : Void*, subject : Char*, length : Int32, offset : Int32, options : Int32,
+  fun compile = pcre_compile(pattern : UInt8*, options : Int32, errptr : UInt8**, erroffset : Int32*, tableptr : Void*) : Pcre
+  fun exec = pcre_exec(code : Pcre, extra : Void*, subject : UInt8*, length : Int32, offset : Int32, options : Int32,
                 ovector : Int32*, ovecsize : Int32) : Int32
   fun full_info = pcre_fullinfo(code : Pcre, extra : Void*, what : Int32, where : Void*) : Int32
-  fun get_named_substring = pcre_get_named_substring(code : Pcre, subject : Char*, ovector : Int32*, string_count : Int32, string_name : Char*, string_ptr : Char**) : Int32
+  fun get_named_substring = pcre_get_named_substring(code : Pcre, subject : UInt8*, ovector : Int32*, string_count : Int32, string_name : UInt8*, string_ptr : UInt8**) : Int32
 
   INFO_CAPTURECOUNT = 2
 end
@@ -17,7 +17,7 @@ class Regex
 
   def initialize(str, modifiers = 0)
     @source = str
-    errptr = Pointer(Char).malloc(0)
+    errptr = Pointer(UInt8).malloc(0)
     erroffset = 1
     @re = PCRE.compile(str, modifiers, pointerof(errptr), pointerof(erroffset), nil)
     if @re == 0

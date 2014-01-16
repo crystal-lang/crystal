@@ -158,8 +158,8 @@ lib LibYaml("yaml")
   end
 
   struct TagDirective
-    handle : Char*
-    prefix : Char*
+    handle : UInt8*
+    prefix : UInt8*
   end
 
   enum ScalarStyle
@@ -199,13 +199,13 @@ lib LibYaml("yaml")
   end
 
   struct AliasEvent
-    anchor : Char*
+    anchor : UInt8*
   end
 
   struct ScalarEvent
-    anchor : Char*
-    tag : Char*
-    value : Char*
+    anchor : UInt8*
+    tag : UInt8*
+    value : UInt8*
     length : UInt64
     plain_implicit : Int32
     quoted_implicit : Int32
@@ -213,15 +213,15 @@ lib LibYaml("yaml")
   end
 
   struct SequenceStartEvent
-    anchor : Char*
-    tag : Char*
+    anchor : UInt8*
+    tag : UInt8*
     implicit : Int32
     style : SequenceStyle
   end
 
   struct MappingStartEvent
-    anchor : Char*
-    tag : Char*
+    anchor : UInt8*
+    tag : UInt8*
     implicit : Int32
     style : MappingStyle
   end
@@ -264,7 +264,7 @@ lib LibYaml("yaml")
   end
 
   fun yaml_parser_initialize(parser : Parser*) : Int32
-  fun yaml_parser_set_input_string(parser : Parser*, input : Char*, length : Int32)
+  fun yaml_parser_set_input_string(parser : Parser*, input : UInt8*, length : Int32)
   fun yaml_parser_parse(parser : Parser*, event : Event*) : Int32
   fun yaml_parser_delete(parser : Parser*)
   fun yaml_event_delete(event : Event*)

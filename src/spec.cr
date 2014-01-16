@@ -225,7 +225,7 @@ class Object
   end
 end
 
-fun main(argc : Int32, argv : Char**) : Int32
+fun main(argc : Int32, argv : UInt8**) : Int32
   GC.init
   time = Time.now
   CrystalMain.__crystal_main(argc, argv)

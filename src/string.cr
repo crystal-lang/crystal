@@ -4,38 +4,38 @@ require "string/buffer"
 require "string/formatter"
 
 lib C
-  fun atoi(str : Char*) : Int32
-  fun atoll(str : Char*) : Int64
-  fun atof(str : Char*) : Float64
-  fun strtof(str : Char*, endp : Char**) : Float32
-  fun strncmp(s1 : Char*, s2 : Char*, n : Int32) : Int32
-  fun strlen(s : Char*) : Int32
-  fun strcpy(dest : Char*, src : Char*) : Char*
-  fun strcat(dest : Char*, src : Char*) : Char*
-  fun strcmp(s1 : Char*, s2 : Char*) : Int32
-  fun sprintf(str : Char*, format : Char*, ...) : Int32
+  fun atoi(str : UInt8*) : Int32
+  fun atoll(str : UInt8*) : Int64
+  fun atof(str : UInt8*) : Float64
+  fun strtof(str : UInt8*, endp : UInt8**) : Float32
+  fun strncmp(s1 : UInt8*, s2 : UInt8*, n : Int32) : Int32
+  fun strlen(s : UInt8*) : Int32
+  fun strcpy(dest : UInt8*, src : UInt8*) : UInt8*
+  fun strcat(dest : UInt8*, src : UInt8*) : UInt8*
+  fun strcmp(s1 : UInt8*, s2 : UInt8*) : Int32
+  fun sprintf(str : UInt8*, format : UInt8*, ...) : Int32
   fun memcpy(dest : Void*, src : Void*, num : Int32) : Void*
-  fun strtol(str : Char*, endptr : Char**, base : Int32) : Int32
+  fun strtol(str : UInt8*, endptr : UInt8**, base : Int32) : Int32
 end
 
 class String
   include Comparable
 
-  def self.new(chars : Char*)
+  def self.new(chars : UInt8*)
     new(chars, C.strlen(chars))
   end
 
-  def self.new(chars : Char*, length)
-    str = Pointer(Char).malloc(length + 9)
+  def self.new(chars : UInt8*, length)
+    str = Pointer(UInt8).malloc(length + 9)
     (str as Int32*).value = "".crystal_type_id
     ((str as Int32*) + 1).value = length
-    ((str as Char*) + 8).memcpy(chars, length)
-    ((str + length + 8) as Char*).value = '\0'
+    ((str as UInt8*) + 8).memcpy(chars, length)
+    ((str + length + 8) as UInt8*).value = 0_u8
     str as String
   end
 
   def self.new_with_capacity(capacity)
-    str = Pointer(Char).malloc(capacity + 9)
+    str = Pointer(UInt8).malloc(capacity + 9)
     buffer = (str as String).cstr
     yield buffer
     (str as Int32*).value = "".crystal_type_id
@@ -44,10 +44,10 @@ class String
   end
 
   def self.new_with_length(length)
-    str = Pointer(Char).malloc(length + 9)
+    str = Pointer(UInt8).malloc(length + 9)
     buffer = (str as String).cstr
     yield buffer
-    buffer[length] = '\0'
+    buffer[length] = 0_u8
     (str as Int32*).value = "".crystal_type_id
     ((str as Int32*) + 1).value = length
     str as String
@@ -142,7 +142,7 @@ class String
   def downcase
     String.new_with_length(length) do |buffer|
       length.times do |i|
-        buffer[i] = cstr[i].downcase
+        buffer[i] = cstr[i].chr.downcase.ord.to_u8
       end
     end
   end
@@ -150,7 +150,7 @@ class String
   def upcase
     String.new_with_length(length) do |buffer|
       length.times do |i|
-        buffer[i] = cstr[i].upcase
+        buffer[i] = cstr[i].chr.upcase.ord.to_u8
       end
     end
   end
@@ -159,9 +159,9 @@ class String
     return self if length == 0
 
     String.new_with_length(length) do |buffer|
-      buffer[0] = cstr[0].upcase
+      buffer[0] = cstr[0].chr.upcase.ord.to_u8
       (length - 1).times do |i|
-        buffer[i + 1] = cstr[i + 1].downcase
+        buffer[i + 1] = cstr[i + 1].chr.downcase.ord.to_u8
       end
     end
   end
@@ -181,12 +181,12 @@ class String
 
   def strip
     excess_right = 0
-    while cstr[length - 1 - excess_right].whitespace?
+    while cstr[length - 1 - excess_right].chr.whitespace?
       excess_right += 1
     end
 
     excess_left = 0
-    while cstr[excess_left].whitespace?
+    while cstr[excess_left].chr.whitespace?
       excess_left += 1
     end
 
@@ -199,7 +199,7 @@ class String
 
   def rstrip
     excess_right = 0
-    while cstr[length - 1 - excess_right].whitespace?
+    while cstr[length - 1 - excess_right].chr.whitespace?
       excess_right += 1
     end
 
@@ -212,7 +212,7 @@ class String
 
   def lstrip
     excess_left = 0
-    while cstr[excess_left].whitespace?
+    while cstr[excess_left].chr.whitespace?
       excess_left += 1
     end
 
@@ -226,7 +226,7 @@ class String
   def replace(&block : Char -> String)
     String.new_from_buffer(length) do |buffer|
       each_char do |my_char|
-        replacement = yield my_char
+        replacement = yield my_char.chr
         if replacement
           buffer << replacement
         else
@@ -277,7 +277,7 @@ class String
 
   def delete(char : Char)
     new_length = length
-    str = Pointer(Char).malloc(length + 9)
+    str = Pointer(UInt8).malloc(length + 9)
     i = 8
     each_char do |my_char|
       if my_char == char
@@ -289,7 +289,7 @@ class String
     end
     (str as Int32*).value = "".crystal_type_id
     ((str as Int32*) + 1).value = new_length
-    str[i] = '\0'
+    str[i] = 0_u8
     str as String
   end
 
@@ -396,7 +396,7 @@ class String
         while i < len
           c = buffer[i]
           i += 1
-          if c.whitespace?
+          if c.chr.whitespace?
             ary.push String.new(buffer + index, i - 1 - index)
             looking_for_space = false
             break
@@ -406,7 +406,7 @@ class String
         while i < len
           c = buffer[i]
           i += 1
-          unless c.whitespace?
+          unless c.chr.whitespace?
             index = i - 1
             looking_for_space = true
             break
@@ -457,7 +457,7 @@ class String
     when 0
       # Special case: return all chars as strings
       each_char do |c|
-        ary.push c.to_s
+        ary.push c.chr.to_s
       end
       return ary
     when 1
@@ -566,7 +566,7 @@ class String
   def hash
     h = 0
     each_char do |c|
-      h = 31 * h + c.ord
+      h = 31 * h + c
     end
     h
   end

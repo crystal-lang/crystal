@@ -1,4 +1,8 @@
 class Int
+  def ==(other : Char)
+    self == other.ord
+  end
+
   def +@
     self
   end

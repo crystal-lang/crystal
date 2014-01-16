@@ -805,7 +805,7 @@ module Crystal
       when :argc
         node.type = @mod.int32
       when :argv
-        node.type = @mod.pointer_of(@mod.pointer_of(@mod.char))
+        node.type = @mod.pointer_of(@mod.pointer_of(@mod.uint8))
       when :float32_infinity
         node.type = @mod.float32
       when :float64_infinity
@@ -829,7 +829,7 @@ module Crystal
       when :object_id
         node.type = mod.uint64
       when :object_to_cstr
-        node.type = mod.char_pointer
+        node.type = mod.uint8_pointer
       when :object_crystal_type_id
         node.type = mod.int32
       when :math_sqrt_float32

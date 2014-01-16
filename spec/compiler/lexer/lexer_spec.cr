@@ -298,4 +298,11 @@ describe "Lexer" do
       ex.message.should eq("unterminated quoted symbol")
     end
   end
+
+  pending "lexes utf-8 char" do
+    lexer = Lexer.new "'á'"
+    token = lexer.next_token
+    token.type.should eq(:CHAR)
+    token.value.should eq(225)
+  end
 end

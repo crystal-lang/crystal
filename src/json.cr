@@ -267,7 +267,7 @@ module Json
     end
 
     def current_char
-      @buffer.value
+      @buffer.value.chr
     end
 
     def unexpected_char(char = current_char)

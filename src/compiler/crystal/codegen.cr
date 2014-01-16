@@ -388,7 +388,7 @@ module Crystal
     end
 
     def codegen_cast(from_type : IntegerType, to_type : CharType, arg)
-      codegen_cast(from_type, @mod.int8, arg)
+      codegen_cast(from_type, @mod.int32, arg)
     end
 
     def codegen_cast(from_type : CharType, to_type : IntegerType, arg)
@@ -684,7 +684,7 @@ module Crystal
     end
 
     def visit(node : CharLiteral)
-      @last = int8(node.value[0].ord)
+      @last = int32(node.value[0])
     end
 
     def visit(node : StringLiteral)

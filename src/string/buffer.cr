@@ -1,6 +1,6 @@
 class String::Buffer
   def initialize(capacity = 64)
-    @buffer = Pointer(Char).malloc(capacity)
+    @buffer = Pointer(UInt8).malloc(capacity)
     @length = 0
     @capacity = capacity
   end
@@ -9,7 +9,7 @@ class String::Buffer
     @buffer
   end
 
-  def <<(c : Char)
+  def <<(c : UInt8)
     check_needs_resize
     @buffer[@length] = c
     @length += 1
@@ -24,7 +24,7 @@ class String::Buffer
     self << obj.to_s
   end
 
-  def append(buffer : Char*, obj_length)
+  def append(buffer : UInt8*, obj_length)
     new_length = length + obj_length
     if new_length > @capacity
       cap2 = Math.log2(new_length).ceil

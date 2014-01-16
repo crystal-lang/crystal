@@ -1,4 +1,8 @@
 class Char
+  def ==(other : Int)
+    ord == other
+  end
+
   def ==(other)
     false
   end
@@ -102,7 +106,7 @@ class Char
 
   def to_s
     String.new_with_length(1) do |buffer|
-      buffer.value = self
+      buffer.value = self.ord.to_u8
     end
   end
 end

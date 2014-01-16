@@ -361,10 +361,10 @@ module Crystal
         when :NUMBER
           case @token.value.to_s[0]
           when '+'
-            left = Call.new left, @token.value.to_s[0].to_s, [NumberLiteral.new(@token.value.to_s, @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
+            left = Call.new left, @token.value.to_s[0].chr.to_s, [NumberLiteral.new(@token.value.to_s, @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value.to_s[0].to_s, [NumberLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1], @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
+            left = Call.new left, @token.value.to_s[0].chr.to_s, [NumberLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1], @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -1206,7 +1206,7 @@ module Crystal
       keys = [] of ASTNode
       values = [] of ASTNode
       while @token.type != :"}"
-        if (@token.type == :IDENT || @token.type == :CONST) && @buffer.value == ':'
+        if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':'
           keys << SymbolLiteral.new(@token.value.to_s)
           next_token
         else
@@ -1362,7 +1362,7 @@ module Crystal
 
       next_token
 
-      case @buffer.value
+      case current_char
       when '%'
         @buffer += 1
         @token.type = :"%"
@@ -1729,7 +1729,7 @@ module Crystal
       else
         if args
           if (!force_call && is_var?(name)) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign)
-            sign = num.value[0].to_s
+            sign = num.value[0].chr.to_s
             num.value = num.value[1, num.value.length - 1]
             Call.new(Var.new(name), sign, args)
           else
@@ -1860,7 +1860,7 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :")"
           if @token.type == :"&"
-            unless @buffer.value.whitespace?
+            unless current_char.whitespace?
               return parse_call_block_arg(args, true)
             end
           end
@@ -1916,10 +1916,10 @@ module Crystal
 
       case @token.type
       when :"&"
-        return nil if @buffer.value.whitespace?
+        return nil if current_char.whitespace?
       when :"+", :"-"
         if check_plus_and_minus
-          return nil if @buffer.value.whitespace?
+          return nil if current_char.whitespace?
         end
       when :"{"
         return nil unless allow_curly
@@ -1937,7 +1937,7 @@ module Crystal
       args = [] of ASTNode
       while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :")" && @token.type != :":" && !is_end_token
         if @token.type == :"&"
-          unless @buffer.value.whitespace?
+          unless current_char.whitespace?
             return parse_call_block_arg(args, false)
           end
         end

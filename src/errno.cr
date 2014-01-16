@@ -1,6 +1,6 @@
 lib C
   $errno : Int32
-  fun strerror(errnum : Int32) : Char*
+  fun strerror(errnum : Int32) : UInt8*
 end
 
 class Errno < Exception

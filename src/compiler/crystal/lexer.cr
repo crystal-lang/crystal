@@ -33,7 +33,7 @@ module Crystal
       reset_token
 
       # Skip comments
-      if @buffer.value == '#'
+      if current_char == '#'
         char = next_char_no_column_increment
         while char != '\n' && char != '\0'
           char = next_char_no_column_increment
@@ -43,13 +43,13 @@ module Crystal
       start = @buffer
       start_column = @column_number
 
-      case @buffer.value
+      case current_char
       when '\0'
         @token.type = :EOF
       when ' ', '\t'
         @token.type = :SPACE
         next_char
-        while @buffer.value == ' ' || @buffer.value == '\t'
+        while current_char == ' ' || current_char == '\t'
           @buffer += 1
           @column_number += 1
         end
@@ -58,7 +58,7 @@ module Crystal
         next_char
         @line_number += 1
         @column_number = 1
-        while @buffer.value == '\n'
+        while current_char == '\n'
           @buffer += 1
           @line_number += 1
         end
@@ -83,7 +83,7 @@ module Crystal
         when '='
           next_char :"!="
         when '@'
-          if @buffer[1].ident_start?
+          if peek_next_char.ident_start?
             @token.type = :"!"
           else
             next_char :"!@"
@@ -129,13 +129,13 @@ module Crystal
         when '='
           next_char :"+="
         when '@'
-          if @buffer[1].ident_start?
+          if peek_next_char.ident_start?
             @token.type = :"+"
           else
             next_char :"+@"
           end
         when '0'
-          case @buffer[1]
+          case peek_next_char
           when 'x'
             scan_hex_number
           when 'b'
@@ -153,7 +153,7 @@ module Crystal
         when '='
           next_char :"-="
         when '@'
-          if @buffer[1].ident_start?
+          if peek_next_char.ident_start?
             @token.type = :"-"
           else
             next_char :"-@"
@@ -161,7 +161,7 @@ module Crystal
         when '>'
           next_char :"->"
         when '0'
-          case @buffer[1]
+          case peek_next_char
           when 'x'
             scan_hex_number(-1)
           when 'b'
@@ -201,7 +201,7 @@ module Crystal
           while true
             case char
             when '\\'
-              if @buffer[1] == '/'
+              if peek_next_char == '/'
                 string_buffer << '/'
                 next_char
               else
@@ -220,7 +220,7 @@ module Crystal
 
           modifiers = 0
           while true
-            case @buffer.value
+            case current_char
             when 'i'
               modifiers |= Regex::IGNORE_CASE
               next_char
@@ -231,8 +231,8 @@ module Crystal
               modifiers |= Regex::EXTENDED
               next_char
             else
-              if 'a' <= @buffer.value.downcase <= 'z'
-                raise "unknown regex option: #{@buffer.value}"
+              if 'a' <= current_char.downcase <= 'z'
+                raise "unknown regex option: #{current_char}"
               end
               break
             end
@@ -255,7 +255,7 @@ module Crystal
         when '<'
           string_start_pair '<', '>'
         when 'w'
-          if @buffer[1] == '('
+          if peek_next_char == '('
             next_char
             next_char :STRING_ARRAY_START
           else
@@ -296,7 +296,7 @@ module Crystal
           while next_char.ident_part?
             count += 1
           end
-          if @buffer.value == '!' || @buffer.value == '?'
+          if current_char == '!' || current_char == '?'
             next_char
             count += 1
           end
@@ -418,7 +418,7 @@ module Crystal
         @token.string_end = '"'
         @token.string_open_count = 0
       when '0'
-        case @buffer[1]
+        case peek_next_char
         when 'x'
           scan_hex_number
         when 'b'
@@ -433,36 +433,36 @@ module Crystal
         next_char
         class_var = false
         count = 2
-        if @buffer.value == '@'
+        if current_char == '@'
           class_var = true
           count += 1
           next_char
         end
-        if @buffer.value.ident_start?
+        if current_char.ident_start?
           while next_char.ident_part?
             count += 1
           end
           @token.type = class_var ? :CLASS_VAR : :INSTANCE_VAR
           @token.value = String.new(start, count)
         else
-          raise "unknown token: #{@buffer.value}", @line_number, @column_number
+          raise "unknown token: #{current_char}", @line_number, @column_number
         end
       when '$'
         start = @buffer
         next_char
-        if @buffer.value == '~'
+        if current_char == '~'
           next_char
           @token.type = :GLOBAL
           @token.value = "$~"
-        elsif @buffer.value.digit?
-          number = @buffer.value - '0'
+        elsif current_char.digit?
+          number = current_char - '0'
           while (char = next_char).digit?
             number *= 10
             number += char - '0'
           end
           @token.type = :GLOBAL_MATCH
           @token.value = number
-        elsif @buffer.value.ident_start?
+        elsif current_char.ident_start?
           count = 2
           while next_char.ident_part?
             count += 1
@@ -470,7 +470,7 @@ module Crystal
           @token.type = :GLOBAL
           @token.value = String.new(start, count)
         else
-          raise "unknown token: #{@buffer.value}", @line_number, @column_number
+          raise "unknown token: #{current_char}", @line_number, @column_number
         end
       when 'a'
         case next_char
@@ -562,7 +562,7 @@ module Crystal
       when 'i'
         case next_char
         when 'f'
-          if @buffer[1] == 'd'
+          if peek_next_char == 'd'
             next_char
             if next_char == 'e' && next_char == 'f'
               return check_ident_or_keyword(:ifdef, start, start_column)
@@ -720,7 +720,7 @@ module Crystal
           case next_char
           when 'D'
             if next_char == 'I' && next_char == 'R' next_char == '_' && next_char == '_'
-              if @buffer[1].ident_part_or_end?
+              if peek_next_char.ident_part_or_end?
                 scan_ident(start, start_column)
               else
                 next_char
@@ -732,7 +732,7 @@ module Crystal
             end
           when 'F'
             if next_char == 'I' && next_char == 'L' && next_char == 'E' && next_char == '_' && next_char == '_'
-              if @buffer[1].ident_part_or_end?
+              if peek_next_char.ident_part_or_end?
                 scan_ident(start, start_column)
               else
                 next_char
@@ -743,7 +743,7 @@ module Crystal
             end
           when 'L'
             if next_char == 'I' && next_char == 'N' && next_char == 'E' && next_char == '_' && next_char == '_'
-              if @buffer[1].ident_part_or_end?
+              if peek_next_char.ident_part_or_end?
                 scan_ident(start, start_column)
               else
                 next_char
@@ -757,7 +757,7 @@ module Crystal
         end
         scan_ident(start, start_column)
       else
-        if 'A' <= @buffer.value <= 'Z'
+        if 'A' <= current_char <= 'Z'
           start = @buffer
           count = 1
           while next_char.ident_part?
@@ -765,11 +765,11 @@ module Crystal
           end
           @token.type = :CONST
           @token.value = String.new(start, count)
-        elsif ('a' <= @buffer.value <= 'z') || @buffer.value == '_'
+        elsif ('a' <= current_char <= 'z') || current_char == '_'
           next_char
           scan_ident(start, start_column)
         else
-          raise "unknown token: #{@buffer.value}", @line_number, @column_number
+          raise "unknown token: #{current_char}", @line_number, @column_number
         end
       end
 
@@ -777,7 +777,7 @@ module Crystal
     end
 
     def check_ident_or_keyword(symbol, start, start_column)
-      if @buffer[1].ident_part_or_end?
+      if peek_next_char.ident_part_or_end?
         scan_ident(start, start_column)
       else
         next_char
@@ -788,15 +788,15 @@ module Crystal
     end
 
     def scan_ident(start, start_column)
-      while @buffer.value.ident_part?
+      while current_char.ident_part?
         next_char
       end
-      case @buffer.value
+      case current_char
       when '!', '?'
         next_char
       when '$'
         next_char
-        while @buffer.value.digit?
+        while current_char.digit?
           next_char
         end
       end
@@ -822,9 +822,9 @@ module Crystal
         end
       end
 
-      case @buffer.value
+      case current_char
       when '.'
-        if @buffer[1].digit?
+        if peek_next_char.digit?
           count += 1
 
           while true
@@ -839,19 +839,19 @@ module Crystal
             end
           end
 
-          if @buffer.value == 'e' || @buffer.value == 'E'
+          if current_char == 'e' || current_char == 'E'
             count += 1
             next_char
 
-            if @buffer.value == '+' || @buffer.value == '-'
+            if current_char == '+' || current_char == '-'
               count += 1
               next_char
             end
 
             while true
-              if @buffer.value.digit?
+              if current_char.digit?
                 count += 1
-              elsif @buffer.value == '_'
+              elsif current_char == '_'
                 count += 1
                 has_underscore = true
               else
@@ -861,7 +861,7 @@ module Crystal
             end
           end
 
-          if @buffer.value == 'f' || @buffer.value == 'F'
+          if current_char == 'f' || current_char == 'F'
             consume_float_suffix :f64
           else
             @token.number_kind = :f64
@@ -873,15 +873,15 @@ module Crystal
         count += 1
         next_char
 
-        if @buffer.value == '+' || @buffer.value == '-'
+        if current_char == '+' || current_char == '-'
           count += 1
           next_char
         end
 
         while true
-          if @buffer.value.digit?
+          if current_char.digit?
             count += 1
-          elsif @buffer.value == '_'
+          elsif current_char == '_'
             count += 1
             has_underscore = true
           else
@@ -890,7 +890,7 @@ module Crystal
           next_char
         end
 
-        if @buffer.value == 'f' || @buffer.value == 'F'
+        if current_char == 'f' || current_char == 'F'
           consume_float_suffix :f64
         else
           @token.number_kind = :f64
@@ -931,7 +931,7 @@ module Crystal
 
       num *= multiplier
 
-      case @buffer.value
+      case current_char
       when 'i'
         consume_int_suffix :i32
       when 'u'
@@ -968,21 +968,21 @@ module Crystal
     end
 
     def consume_int_suffix(default)
-      if @buffer[1] == '8'
+      if peek_next_char == '8'
         next_char
         next_char
         @token.number_kind = :i8
-      elsif @buffer[1] == '1' && @buffer[2] == '6'
+      elsif peek_next_char == '1' && @buffer[2] == '6'
         next_char
         next_char
         next_char
         @token.number_kind = :i16
-      elsif @buffer[1] == '3' && @buffer[2] == '2'
+      elsif peek_next_char == '3' && @buffer[2] == '2'
         next_char
         next_char
         next_char
         @token.number_kind = :i32
-      elsif @buffer[1] == '6' && @buffer[2] == '4'
+      elsif peek_next_char == '6' && @buffer[2] == '4'
         next_char
         next_char
         next_char
@@ -993,21 +993,21 @@ module Crystal
     end
 
     def consume_uint_suffix(default)
-      if @buffer[1] == '8'
+      if peek_next_char == '8'
         next_char
         next_char
         @token.number_kind = :u8
-      elsif @buffer[1] == '1' && @buffer[2] == '6'
+      elsif peek_next_char == '1' && @buffer[2] == '6'
         next_char
         next_char
         next_char
         @token.number_kind = :u16
-      elsif @buffer[1] == '3' && @buffer[2] == '2'
+      elsif peek_next_char == '3' && @buffer[2] == '2'
         next_char
         next_char
         next_char
         @token.number_kind = :u32
-      elsif @buffer[1] == '6' && @buffer[2] == '4'
+      elsif peek_next_char == '6' && @buffer[2] == '4'
         next_char
         next_char
         next_char
@@ -1018,12 +1018,12 @@ module Crystal
     end
 
     def consume_float_suffix(default)
-      if @buffer[1] == '3' && @buffer[2] == '2'
+      if peek_next_char == '3' && @buffer[2] == '2'
         next_char
         next_char
         next_char
         @token.number_kind = :f32
-      elsif @buffer[1] == '6' && @buffer[2] == '4'
+      elsif peek_next_char == '6' && @buffer[2] == '4'
         next_char
         next_char
         next_char
@@ -1034,7 +1034,7 @@ module Crystal
     end
 
     def next_string_token(string_nest, string_end, string_open_count)
-      case @buffer.value
+      case current_char
       when '\0'
         raise "unterminated string literal", @line_number, @column_number
       when string_end
@@ -1077,11 +1077,11 @@ module Crystal
           @token.value = char_value.chr.to_s
         else
           @token.type = :STRING
-          @token.value = @buffer.value.to_s
+          @token.value = current_char.to_s
           next_char
         end
       when '#'
-        if @buffer[1] == '{'
+        if peek_next_char == '{'
           next_char
           next_char
           @token.type = :INTERPOLATION_START
@@ -1099,12 +1099,12 @@ module Crystal
       else
         start = @buffer
         count = 0
-        while @buffer.value != string_end &&
-              @buffer.value != string_nest &&
-              @buffer.value != '\0' &&
-              @buffer.value != '\\' &&
-              @buffer.value != '#' &&
-              @buffer.value != '\n'
+        while current_char != string_end &&
+              current_char != string_nest &&
+              current_char != '\0' &&
+              current_char != '\\' &&
+              current_char != '#' &&
+              current_char != '\n'
           next_char
           count += 1
         end
@@ -1119,9 +1119,9 @@ module Crystal
     def consume_octal_escape(char)
       char_value = char - '0'
       count = 1
-      while count <= 3 && '0' <= @buffer[1] && @buffer[1] <= '8'
+      while count <= 3 && '0' <= peek_next_char && peek_next_char <= '8'
         next_char
-        char_value = char_value * 8 + (@buffer.value - '0')
+        char_value = char_value * 8 + (current_char - '0')
         count += 1
       end
       char_value
@@ -1141,7 +1141,7 @@ module Crystal
 
       value = value.not_nil!
 
-      after_x2 = @buffer[1]
+      after_x2 = peek_next_char
       if '0' <= after_x2 <= '9'
         value = 16 * value + (after_x2 - '0')
         next_char
@@ -1172,18 +1172,18 @@ module Crystal
 
     def next_string_array_token
       while true
-        if @buffer.value == '\n'
+        if current_char == '\n'
           next_char
           @column_number = 1
           @line_number += 1
-        elsif @buffer.value.whitespace?
+        elsif current_char.whitespace?
           next_char
         else
           break
         end
       end
 
-      if @buffer.value == ')'
+      if current_char == ')'
         next_char
         @token.type = :STRING_ARRAY_END
         return @token
@@ -1191,7 +1191,7 @@ module Crystal
 
       start = @buffer
       count = 0
-      while !@buffer.value.whitespace? && @buffer.value != '\0' && @buffer.value != ')'
+      while !current_char.whitespace? && current_char != '\0' && current_char != ')'
         next_char
         count += 1
       end
@@ -1204,7 +1204,7 @@ module Crystal
 
     def next_char_no_column_increment
       @buffer += 1
-      @buffer.value
+      current_char
     end
 
     def next_char
@@ -1226,10 +1226,10 @@ module Crystal
 
     def next_comes_uppercase
       i = 0
-      while @buffer[i].whitespace?
+      while @buffer[i].chr.whitespace?
         i += 1
       end
-      return 'A' <= @buffer[i] <= 'Z'
+      return 'A' <= @buffer[i].chr <= 'Z'
     end
 
     def next_token_skip_space
@@ -1245,6 +1245,14 @@ module Crystal
     def next_token_skip_statement_end
       next_token
       skip_statement_end
+    end
+
+    def current_char
+      @buffer.value.chr
+    end
+
+    def peek_next_char
+      @buffer[1].chr
     end
 
     def skip_space

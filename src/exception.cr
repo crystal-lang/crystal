@@ -9,7 +9,7 @@ ifdef darwin
     fun init_local = unw_init_local(cursor : C::SizeT*, context : C::SizeT*) : Int32
     fun step = unw_step(cursor : C::SizeT*) : Int32
     fun get_reg = unw_get_reg(cursor : C::SizeT*, regnum : Int32, reg : C::SizeT*) : Int32
-    fun get_proc_name = unw_get_proc_name(cursor : C::SizeT*, name : Char*, size : Int32, offset : C::SizeT*) : Int32
+    fun get_proc_name = unw_get_proc_name(cursor : C::SizeT*, name : UInt8*, size : Int32, offset : C::SizeT*) : Int32
   end
 elsif linux
   ifdef x86_64
@@ -23,7 +23,7 @@ elsif linux
       fun init_local = _ULx86_64_init_local(cursor : C::SizeT*, context : C::SizeT*) : Int32
       fun step = _ULx86_64_step(cursor : C::SizeT*) : Int32
       fun get_reg = _ULx86_64_get_reg(cursor : C::SizeT*, regnum : Int32, reg : C::SizeT*) : Int32
-      fun get_proc_name = _ULx86_64_get_proc_name(cursor : C::SizeT*, name : Char*, size : Int32, offset : C::SizeT*) : Int32
+      fun get_proc_name = _ULx86_64_get_proc_name(cursor : C::SizeT*, name : UInt8*, size : Int32, offset : C::SizeT*) : Int32
     end
   else
     lib Unwind("unwind")
@@ -36,7 +36,7 @@ elsif linux
       fun init_local = _ULx86_init_local(cursor : C::SizeT*, context : C::SizeT*) : Int32
       fun step = _ULx86_step(cursor : C::SizeT*) : Int32
       fun get_reg = _ULx86_get_reg(cursor : C::SizeT*, regnum : Int32, reg : C::SizeT*) : Int32
-      fun get_proc_name = _ULx86_get_proc_name(cursor : C::SizeT*, name : Char*, size : Int32, offset : C::SizeT*) : Int32
+      fun get_proc_name = _ULx86_get_proc_name(cursor : C::SizeT*, name : UInt8*, size : Int32, offset : C::SizeT*) : Int32
     end
   end
 end
@@ -48,7 +48,7 @@ def caller
   Unwind.get_context(context)
   Unwind.init_local(cursor, context)
   fname_size = 64
-  fname_buffer = Pointer(Char).malloc(fname_size)
+  fname_buffer = Pointer(UInt8).malloc(fname_size)
 
   backtrace = [] of String
   while Unwind.step(cursor) > 0
@@ -100,8 +100,8 @@ class Exception
 
   def self.unescape_linux_backtrace_frame(frame)
     frame.replace(/_(\d|A|B|C|D|E|F)(\d|A|B|C|D|E|F)_/) do |match|
-      first = match[1].to_i(16) * 16
-      second = match[2].to_i(16)
+      first = match[1].chr.to_i(16) * 16
+      second = match[2].chr.to_i(16)
       value = first + second
       value.chr
     end

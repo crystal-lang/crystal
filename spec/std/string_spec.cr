@@ -347,25 +347,25 @@ describe "String" do
   end
 
   it "escapes with octal" do
-    "\3"[0].ord.should eq(3)
-    "\23"[0].ord.should eq((2 * 8) + 3)
-    "\123"[0].ord.should eq((1 * 8 * 8) + (2 * 8) + 3)
-    "\033"[0].ord.should eq((3 * 8) + 3)
+    "\3"[0].should eq(3)
+    "\23"[0].should eq((2 * 8) + 3)
+    "\123"[0].should eq((1 * 8 * 8) + (2 * 8) + 3)
+    "\033"[0].should eq((3 * 8) + 3)
     "\033a"[1].should eq('a')
   end
 
   it "escapes with hex" do
-    "\x12"[0].ord.should eq(1 * 16 + 2)
-    "\xA"[0].ord.should eq(10)
-    "\xAB"[0].ord.should eq(10 * 16 + 11)
-    "\xAB1"[1].should eq('1')
+    "\x12"[0].should eq(1 * 16 + 2)
+    "\xA"[0].should eq(10)
+    "\xAB"[0].should eq(10 * 16 + 11)
+    "\xAB1"[1].should eq('1'.ord)
   end
 
   it "allows creating a string with zeros" do
-    p = Pointer(Char).malloc(3)
-    p[0] = 'a'
-    p[1] = '\0'
-    p[2] = 'b'
+    p = Pointer(UInt8).malloc(3)
+    p[0] = 'a'.ord.to_u8
+    p[1] = '\0'.ord.to_u8
+    p[2] = 'b'.ord.to_u8
     s = String.new(p, 3)
     s[0].should eq('a')
     s[1].should eq('\0')

@@ -1,16 +1,16 @@
 lib C
   type File : Void*
 
-  fun fopen(filename : Char*, mode : Char*) : File
+  fun fopen(filename : UInt8*, mode : UInt8*) : File
   fun fwrite(buf : UInt8*, size : C::SizeT, count : C::SizeT, fp : File) : SizeT
   fun fclose(file : File) : Int32
   fun feof(file : File) : Int32
   fun fflush(file : File) : Int32
   fun fread(buffer : UInt8*, size : C::SizeT, nitems : C::SizeT, file : File) : Int32
-  fun access(filename : Char*, how : Int32) : Int32
-  fun realpath(path : Char*, resolved_path : Char*) : Char*
-  fun unlink(filename : Char*) : Char*
-  fun popen(command : Char*, mode : Char*) : File
+  fun access(filename : UInt8*, how : Int32) : Int32
+  fun realpath(path : UInt8*, resolved_path : UInt8*) : UInt8*
+  fun unlink(filename : UInt8*) : UInt8*
+  fun popen(command : UInt8*, mode : UInt8*) : File
   fun pclose(stream : File) : Int32
 
   ifdef x86_64
