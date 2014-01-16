@@ -43,7 +43,7 @@ module Crystal
     end
 
     def visit(node : CharLiteral)
-      @value = PrimitiveValue.new(mod.char, node.value[0])
+      @value = PrimitiveValue.new(mod.char, node.value)
     end
 
     def visit(node : NumberLiteral)

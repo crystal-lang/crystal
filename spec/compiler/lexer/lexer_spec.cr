@@ -75,7 +75,7 @@ def it_lexes_char(string, value)
     lexer = Lexer.new string
     token = lexer.next_token
     token.type.should eq(:CHAR)
-    token.value.to_s.should eq(value.to_s)
+    (token.value as Char).should eq(value)
   end
 end
 
@@ -299,10 +299,17 @@ describe "Lexer" do
     end
   end
 
-  pending "lexes utf-8 char" do
+  it "lexes utf-8 char" do
     lexer = Lexer.new "'á'"
     token = lexer.next_token
     token.type.should eq(:CHAR)
-    token.value.should eq(225)
+    (token.value as Char).ord.should eq(225)
+  end
+
+  it "lexes utf-8 multibyte char" do
+    lexer = Lexer.new "'日'"
+    token = lexer.next_token
+    token.type.should eq(:CHAR)
+    (token.value as Char).ord.should eq(26085)
   end
 end

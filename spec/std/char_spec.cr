@@ -65,4 +65,8 @@ describe "Char" do
       c.to_i(16).should eq(10 + i)
     end
   end
+
+  it "does ord for multibyte char" do
+    '日'.ord.should eq(26085)
+  end
 end

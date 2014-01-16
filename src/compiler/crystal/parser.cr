@@ -607,7 +607,7 @@ module Crystal
       when :NUMBER
         node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
       when :CHAR
-        node_and_next_token CharLiteral.new(@token.value.to_s)
+        node_and_next_token CharLiteral.new(@token.value as Char)
       when :STRING, :STRING_START
         parse_string
       when :STRING_ARRAY_START
@@ -1364,11 +1364,11 @@ module Crystal
 
       case current_char
       when '%'
-        @buffer += 1
+        next_char
         @token.type = :"%"
         @token.column_number += 1
       when '/'
-        @buffer += 1
+        next_char
         @token.type = :"/"
         @token.column_number += 1
       else

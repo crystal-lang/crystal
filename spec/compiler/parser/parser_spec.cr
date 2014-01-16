@@ -124,7 +124,7 @@ describe "Parser" do
 
   it_parses "2.3_f32", 2.3.float32
 
-  it_parses "'a'", CharLiteral.new("a")
+  it_parses "'a'", CharLiteral.new('a')
 
   it_parses %("foo"), StringLiteral.new("foo")
   it_parses %(""), StringLiteral.new("")

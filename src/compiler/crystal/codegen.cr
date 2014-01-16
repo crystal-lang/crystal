@@ -684,7 +684,7 @@ module Crystal
     end
 
     def visit(node : CharLiteral)
-      @last = int32(node.value[0])
+      @last = int32(node.value.ord)
     end
 
     def visit(node : StringLiteral)
