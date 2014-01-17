@@ -1,13 +1,21 @@
 class CharReader
-  getter string
-  getter current_char
-  getter pos
-
   def initialize(@string)
     @pos = 0
     @current_char = '\0'
     @current_char_width = 0
     decode_current_char
+  end
+
+  def string
+    @string
+  end
+
+  def current_char
+    @current_char
+  end
+
+  def pos
+    @pos
   end
 
   def next_char

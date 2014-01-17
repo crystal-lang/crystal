@@ -105,8 +105,8 @@ class Char
   end
 
   def to_s
-    String.new_with_length(1) do |buffer|
-      buffer.value = self.ord.to_u8
-    end
+    buffer = String::Buffer.new(4)
+    buffer << self
+    buffer.to_s
   end
 end

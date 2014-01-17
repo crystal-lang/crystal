@@ -2,6 +2,7 @@ require "range"
 require "comparable"
 require "string/buffer"
 require "string/formatter"
+require "char_reader"
 
 lib C
   fun atoi(str : UInt8*) : Int32
@@ -226,7 +227,7 @@ class String
   def replace(&block : Char -> String)
     String.new_from_buffer(length) do |buffer|
       each_char do |my_char|
-        replacement = yield my_char.chr
+        replacement = yield my_char
         if replacement
           buffer << replacement
         else
@@ -254,7 +255,7 @@ class String
         index = match.begin(0)
         if index > offset
           offset.upto(index - 1) do |i|
-            buffer << cstr[i]
+            buffer.append_byte cstr[i]
           end
         end
         str = match[0]
@@ -268,7 +269,7 @@ class String
 
     if offset < len
       offset.upto(len - 1) do |i|
-        buffer << cstr[i]
+        buffer.append_byte cstr[i]
       end
     end
 
@@ -276,21 +277,11 @@ class String
   end
 
   def delete(char : Char)
-    new_length = length
-    str = Pointer(UInt8).malloc(length + 9)
-    i = 8
-    each_char do |my_char|
-      if my_char == char
-        new_length -= 1
-      else
-        str[i] = my_char
-        i += 1
+    String.new_from_buffer(length) do |buffer|
+      each_char do |my_char|
+        buffer << my_char unless my_char == char
       end
     end
-    (str as Int32*).value = "".crystal_type_id
-    ((str as Int32*) + 1).value = new_length
-    str[i] = 0_u8
-    str as String
   end
 
   def empty?
@@ -457,7 +448,7 @@ class String
     when 0
       # Special case: return all chars as strings
       each_char do |c|
-        ary.push c.chr.to_s
+        ary.push c.to_s
       end
       return ary
     when 1
@@ -501,10 +492,10 @@ class String
   end
 
   def each_char
-    p = cstr
-    length.times do
-      yield p.value
-      p += 1
+    reader = CharReader.new(self)
+    while (c = reader.current_char) != '\0'
+      yield c
+      reader.next_char
     end
   end
 
@@ -566,7 +557,7 @@ class String
   def hash
     h = 0
     each_char do |c|
-      h = 31 * h + c
+      h = 31 * h + c.ord
     end
     h
   end

@@ -69,4 +69,8 @@ describe "Char" do
   it "does ord for multibyte char" do
     '日'.ord.should eq(26085)
   end
+
+  it "does to_s for multibyte char" do
+    '日'.to_s.should eq("日")
+  end
 end

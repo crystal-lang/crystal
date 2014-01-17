@@ -9,11 +9,29 @@ class String::Buffer
     @buffer
   end
 
-  def <<(c : UInt8)
-    check_needs_resize
-    @buffer[@length] = c
-    @length += 1
-    self
+  def <<(c : Char)
+    c = c.ord
+    if c <= 0x7f
+      # 0xxxxxxx
+      append_byte(c.to_u8)
+    elsif c <= 0x7ff
+      # 110xxxxx  10xxxxxx
+      append_byte((0xc0 | c >> 6).to_u8)
+      append_byte((0x80 | c & 0x3f).to_u8)
+    elsif c <= 0xffff
+      # 1110xxxx  10xxxxxx  10xxxxxx
+      append_byte((0xe0 | c >> 12).to_u8)
+      append_byte((0x80 | c >> 6 & 0x3f).to_u8)
+      append_byte((0x80 | c & 0x3f).to_u8)
+    elsif c <= 0x1fffff
+      # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
+      append_byte((0xf0 | c >> 18).to_u8)
+      append_byte((0x80 | c >> 12 & 0x3f).to_u8)
+      append_byte((0x80 | c >> 6 & 0x3f).to_u8)
+      append_byte((0x80 | c & 0x3f).to_u8)
+    else
+      raise "Invalid char value"
+    end
   end
 
   def <<(obj : String)
@@ -36,6 +54,12 @@ class String::Buffer
     @length += obj_length
 
     self
+  end
+
+  def append_byte(byte : UInt8)
+    check_needs_resize
+    @buffer[@length] = byte
+    @length += 1
   end
 
   def clear
