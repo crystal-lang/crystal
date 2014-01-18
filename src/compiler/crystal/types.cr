@@ -797,7 +797,7 @@ module Crystal
     end
 
     def type_desc
-      "class"
+      struct? ? "struct" : "class"
     end
   end
 
@@ -1185,6 +1185,7 @@ module Crystal
     delegate :abstract, @generic_class
     delegate :struct?, @generic_class
     delegate :passed_by_val?, @generic_class
+    delegate :type_desc, @generic_class
 
     def class?
       true
