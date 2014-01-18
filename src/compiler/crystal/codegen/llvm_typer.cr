@@ -29,7 +29,11 @@ module Crystal
     end
 
     def create_llvm_type(type : InstanceVarContainer)
-      LLVM.pointer_type(llvm_struct_type(type))
+      final_type = llvm_struct_type(type)
+      unless type.struct?
+        final_type = LLVM.pointer_type(final_type)
+      end
+      final_type
     end
 
     def create_llvm_type(type : Metaclass)
@@ -51,8 +55,8 @@ module Crystal
     end
 
     def create_llvm_type(type : UnionType)
-      LLVM.struct_type(type.llvm_name) do |struct|
-        @cache[type] = struct
+      LLVM.struct_type(type.llvm_name) do |a_struct|
+        @cache[type] = a_struct
 
         max_size = 0
         type.union_types.each do |subtype|
@@ -117,20 +121,30 @@ module Crystal
     end
 
     def create_llvm_struct_type(type : InstanceVarContainer)
-      LLVM.struct_type(type.llvm_name) do |struct|
-        @struct_cache[type] = struct
+      LLVM.struct_type(type.llvm_name) do |a_struct|
+        @struct_cache[type] = a_struct
 
         ivars = type.all_instance_vars
-        element_types = Array(LibLLVM::TypeRef).new(ivars.length + 1)
-        element_types.push LLVM::Int32 # For the type id
+        ivars_length = ivars.length
+
+        unless type.struct?
+          ivars_length += 1
+        end
+
+        element_types = Array(LibLLVM::TypeRef).new(ivars_length)
+
+        unless type.struct?
+          element_types.push LLVM::Int32 # For the type id
+        end
+
         ivars.each { |name, ivar| element_types.push llvm_embedded_type(ivar.type) }
         element_types
       end
     end
 
     def create_llvm_struct_type(type : CStructType)
-      LLVM.struct_type(type.llvm_name) do |struct|
-        @struct_cache[type] = struct
+      LLVM.struct_type(type.llvm_name) do |a_struct|
+        @struct_cache[type] = a_struct
 
         vars = type.vars
         element_types = Array(LibLLVM::TypeRef).new(vars.length)
@@ -163,6 +177,14 @@ module Crystal
 
     def llvm_arg_type(type)
       @arg_cache[type] ||= create_llvm_arg_type(type)
+    end
+
+    def create_llvm_arg_type(type : InstanceVarContainer)
+      if type.struct?
+        LLVM.pointer_type llvm_type(type)
+      else
+        llvm_type type
+      end
     end
 
     def create_llvm_arg_type(type : UnionType)
@@ -203,6 +225,14 @@ module Crystal
 
     def create_llvm_embedded_type(type : CUnionType)
       llvm_struct_type type
+    end
+
+    def create_llvm_embedded_type(type : InstanceVarContainer)
+      if type.struct?
+        llvm_struct_type type
+      else
+        llvm_type type
+      end
     end
 
     def create_llvm_embedded_type(type : NoReturnType)

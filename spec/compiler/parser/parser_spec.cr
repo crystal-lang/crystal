@@ -330,6 +330,8 @@ describe "Parser" do
   it_parses "class Foo(T); end", ClassDef.new("Foo".ident, nil, nil, ["T"])
   it_parses "abstract class Foo; end", ClassDef.new("Foo".ident, nil, nil, nil, true)
 
+  it_parses "struct Foo; end", ClassDef.new("Foo".ident, nil, nil, nil, false, true)
+
   it_parses "Foo(T)", NewGenericClass.new("Foo".ident, ["T".ident] of ASTNode)
   it_parses "Foo(T | U)", NewGenericClass.new("Foo".ident, [IdentUnion.new(["T".ident, "U".ident] of ASTNode)] of ASTNode)
   it_parses "Foo(Bar(T | U))", NewGenericClass.new("Foo".ident, [NewGenericClass.new("Bar".ident, [IdentUnion.new(["T".ident, "U".ident] of ASTNode)] of ASTNode)] of ASTNode)

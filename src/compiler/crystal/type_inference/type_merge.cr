@@ -109,6 +109,10 @@ module Crystal
         return self
       end
 
+      if struct?
+        return nil
+      end
+
       if depth == other.depth
         my_superclass = @superclass
         other_superclass = other.superclass

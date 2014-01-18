@@ -654,6 +654,8 @@ module Crystal
           parse_include
         when :class
           parse_class_def
+        when :struct
+          parse_class_def false, true
         when :module
           parse_module_def
         when :while
@@ -887,7 +889,7 @@ module Crystal
       return CallArgs.new args, block, block_arg
     end
 
-    def parse_class_def(is_abstract = false)
+    def parse_class_def(is_abstract = false, is_struct = false)
       location = @token.location
 
       next_token_skip_space_or_newline
@@ -912,7 +914,7 @@ module Crystal
 
       raise "Bug: ClassDef name can only be an Ident" unless name.is_a?(Ident)
 
-      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, name_column_number
+      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number
       class_def.location = location
       class_def
     end

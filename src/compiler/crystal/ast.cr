@@ -1036,9 +1036,10 @@ module Crystal
     property :superclass
     property :type_vars
     property :abstract
+    property :struct
     property :name_column_number
 
-    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @name_column_number = nil)
+    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = nil)
       @body = Expressions.from body
     end
 
@@ -1048,11 +1049,11 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.body == body && other.superclass == superclass && other.type_vars == type_vars && @abstract == other.abstract
+      other.name == name && other.body == body && other.superclass == superclass && other.type_vars == type_vars && @abstract == other.abstract && @struct == other.struct
     end
 
     def clone_without_location
-      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @name_column_number)
+      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_column_number)
     end
   end
 

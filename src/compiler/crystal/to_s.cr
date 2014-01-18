@@ -149,7 +149,11 @@ module Crystal
 
     def visit(node : ClassDef)
       @str << "abstract " if node.abstract
-      @str << "class "
+      if node.struct
+        @str << "class "
+      else
+        @str << "struct "
+      end
       node.name.accept self
       if type_vars = node.type_vars
         @str << "("

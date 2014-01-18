@@ -94,6 +94,7 @@ module Crystal
     forward_named malloc, "type"
     forward_named array_malloc, "type, value"
     forward_named gep, "value, indices"
+    forward_named inbounds_gep, "value, indices"
     forward_named extract_value, "value, index"
     forward_named bit_cast, "value, type"
     forward_named si2fp, "value, type"

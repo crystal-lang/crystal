@@ -53,7 +53,7 @@ class Regex
 end
 
 class MatchData
-  EMPTY = MatchData.new("", nil, "", 0, Pointer(Int32).malloc(0), 0)
+  EMPTY = MatchData.new("", nil, "", 0, Pointer(Int32).null, 0)
 
   def initialize(@regex, @code, @string, @pos, @ovector, @length)
   end

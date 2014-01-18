@@ -181,6 +181,7 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun build_fptrunc = LLVMBuildFPTrunc(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : UInt8*) : ValueRef
   fun build_fsub = LLVMBuildFSub(builder : BuilderRef, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_gep = LLVMBuildGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : UInt8*) : ValueRef
+  fun build_inbounds_gep = LLVMBuildInBoundsGEP(builder : BuilderRef, pointer : ValueRef, indices : ValueRef*, num_indices : UInt32, name : UInt8*) : ValueRef
   fun build_global_string_ptr = LLVMBuildGlobalStringPtr(builder : BuilderRef, str : UInt8*, name : UInt8*) : ValueRef
   fun build_icmp = LLVMBuildICmp(builder : BuilderRef, op : IntPredicate, lhs : ValueRef, rhs : ValueRef, name : UInt8*) : ValueRef
   fun build_int2ptr = LLVMBuildIntToPtr(builder : BuilderRef, val : ValueRef, dest_ty : TypeRef, name : UInt8*) : ValueRef
@@ -251,6 +252,7 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : UInt8*
   fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : TypeKind
+  fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun initialize_x86_asm_printer = LLVMInitializeX86AsmPrinter
   fun initialize_x86_target = LLVMInitializeX86Target
   fun initialize_x86_target_info = LLVMInitializeX86TargetInfo
@@ -353,6 +355,10 @@ module LLVM
 
   def self.set_thread_local(value, thread_local = true)
     LibLLVM.set_thread_local(value, thread_local ? 1 : 0)
+  end
+
+  def self.undef(type)
+    LibLLVM.get_undef(type)
   end
 
   class Context
@@ -586,6 +592,10 @@ module LLVM
       LibLLVM.build_gep(@builder, value, indices.buffer, indices.length.to_u32, name)
     end
 
+    def inbounds_gep(value, indices, name = "")
+      LibLLVM.build_inbounds_gep(@builder, value, indices.buffer, indices.length.to_u32, name)
+    end
+
     def extract_value(value, index, name = "")
       LibLLVM.build_extract_value(@builder, value, index.to_u32, name)
     end
@@ -688,10 +698,10 @@ module LLVM
   end
 
   def self.struct_type(name, packed = false)
-    struct = LibLLVM.struct_create_named(Context.global, name)
-    element_types = yield struct
-    LibLLVM.struct_set_body(struct, element_types.buffer, element_types.length.to_u32, packed ? 1 : 0)
-    struct
+    a_struct = LibLLVM.struct_create_named(Context.global, name)
+    element_types = yield a_struct
+    LibLLVM.struct_set_body(a_struct, element_types.buffer, element_types.length.to_u32, packed ? 1 : 0)
+    a_struct
   end
 
   def self.struct_type(element_types, name = nil, packed = false)

@@ -5,6 +5,8 @@ module Crystal
     def process_class_def(node : ClassDef)
       superclass = if node_superclass = node.superclass
                      lookup_ident_type node_superclass
+                   elsif node.struct
+                    mod.value
                    else
                      mod.reference
                    end
@@ -35,6 +37,7 @@ module Crystal
           type = NonGenericClassType.new @mod, scope, name, superclass, false
         end
         type.abstract = node.abstract
+        type.struct = node.struct
         scope.types[name] = type
       end
 

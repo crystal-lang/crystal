@@ -37,6 +37,10 @@ module Crystal
       false
     end
 
+    def struct?
+      false
+    end
+
     def subclasses
       raise "Bug: #{self} doesn't implement subclasses"
     end
@@ -93,8 +97,8 @@ module Crystal
       false
     end
 
-    def c_struct_or_union?
-      c_struct? || c_union?
+    def value_like?
+      c_struct? || c_union? || struct?
     end
 
     def c_enum?
@@ -669,6 +673,7 @@ module Crystal
     getter :subclasses
     getter :depth
     property :abstract
+    property :struct
     getter :owned_instance_vars
     property :instance_vars_in_initialize
     getter :allocated
@@ -781,6 +786,14 @@ module Crystal
       else
         self
       end
+    end
+
+    def struct?
+      @struct
+    end
+
+    def passed_by_val?
+      struct?
     end
 
     def type_desc
@@ -1170,6 +1183,8 @@ module Crystal
     delegate instance_vars_in_initialize, @generic_class
     delegate macros, @generic_class
     delegate :abstract, @generic_class
+    delegate :struct?, @generic_class
+    delegate :passed_by_val?, @generic_class
 
     def class?
       true

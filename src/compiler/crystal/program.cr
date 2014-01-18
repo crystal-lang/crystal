@@ -182,7 +182,7 @@ module Crystal
           nil_index = types.index(&.nil_type?).not_nil!
           other_index = 1 - nil_index
           other_type = types[other_index]
-          if other_type.class?
+          if other_type.class? && !other_type.struct?
             return @unions[types_ids] ||= NilableType.new(self, other_type)
           end
         end
