@@ -1,6 +1,6 @@
 require "enumerable"
 
-class Range(B, E)
+struct Range(B, E)
   include Enumerable(B)
 
   def initialize(@begin : B, @end : E, @exclusive)
