@@ -53,8 +53,8 @@ class HTTPRequest
     end
 
     if (body = @body)
-      headers = @headers = {} of String => String
-      headers["Content-Length"] = body.length.to_s
+      new_headers = @headers ||= {} of String => String
+      new_headers["Content-Length"] = body.length.to_s
     end
   end
 
