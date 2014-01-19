@@ -269,7 +269,7 @@ module Crystal
     def transform_assign_var(node)
       indices = @vars[node.name]?
       if indices
-        if indices.frozen || @exception_handler_count > 0
+        if indices.frozen || @in_initialize || @exception_handler_count > 0
           node.name = var_name_with_index(node.name, indices.read)
         else
           increment_var node.name, indices
