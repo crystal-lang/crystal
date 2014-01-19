@@ -1,7 +1,7 @@
 lib C
   ifdef darwin
     struct SockAddrIn
-      len : Char
+      len : UInt8
       family : UInt8
       port : Int16
       addr : UInt32
@@ -17,8 +17,8 @@ lib C
   end
 
   struct HostEnt
-    name : Char*
-    aliases : Char**
+    name : UInt8*
+    aliases : UInt8**
     addrtype : Int32
     length : Int32
     addrlist : UInt8**
@@ -31,7 +31,7 @@ lib C
   fun listen(fd : Int32, backlog : Int32) : Int32
   fun accept(fd : Int32, addr : SockAddrIn*, addr_len : Int32*) : Int32
   fun connect(fd : Int32, addr : SockAddrIn*, addr_len : Int32) : Int32
-  fun gethostbyname(name : Char*) : HostEnt*
+  fun gethostbyname(name : UInt8*) : HostEnt*
 
   AF_INET = 2_u8
   SOCK_STREAM = 1
