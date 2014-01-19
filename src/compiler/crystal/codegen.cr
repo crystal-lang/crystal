@@ -1053,7 +1053,7 @@ module Crystal
       end
 
       def add_value(block, type, value)
-        @codegen.assign_to_union(@union_ptr, @node.type, type, value)
+        @codegen.codegen_assign(@union_ptr, @node.type, type, value)
         @count += 1
       end
 
@@ -1096,7 +1096,7 @@ module Crystal
     def new_branched_block(node)
       exit_block = new_block("exit")
       node_type = node.type?
-      if node_type && node_type.union?
+      if node_type && (node_type.union? || node_type.struct_like?)
         UnionBranchedBlock.new node, exit_block, self
       else
         PhiBranchedBlock.new node, exit_block, self

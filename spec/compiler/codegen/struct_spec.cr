@@ -276,4 +276,24 @@ describe "Code gen: struct" do
       g.x
       ").to_i.should eq(2)
   end
+
+  it "does phi of struct" do
+    run("
+      struct Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      x = if 1 == 2
+            Foo.new(2)
+          else
+            Foo.new(1)
+          end
+      x.x
+      ").to_i.should eq(1)
+  end
 end
