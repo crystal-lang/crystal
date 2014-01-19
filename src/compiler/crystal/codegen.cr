@@ -70,7 +70,7 @@ module Crystal
       end
     end
 
-    make_tuple Handler, node, catch_block
+    make_tuple Handler, node, catch_block, vars
     make_tuple StringKey, mod, string
 
     def initialize(@mod, @node, @llvm_mod, @single_module = false, @use_host_flags = false)
@@ -793,8 +793,11 @@ module Crystal
       if handler = @exception_handlers.last?
         if node_ensure = handler.node.ensure
           old_last = @last
+          old_vars = @vars
+          @vars = handler.vars
           accept(node_ensure)
           @last = old_last
+          @vars = old_vars
         end
       end
 
@@ -1698,7 +1701,7 @@ module Crystal
       catch_block = new_block "catch"
       branch = new_branched_block(node)
 
-      @exception_handlers << Handler.new(node, catch_block)
+      @exception_handlers << Handler.new(node, catch_block, @vars)
       accept(node.body)
       @exception_handlers.pop
 

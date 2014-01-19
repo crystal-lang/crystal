@@ -159,6 +159,26 @@ describe "Exception" do
     x.should eq(1)
   end
 
+  def foo2(x)
+    begin
+      yield
+    ensure
+      x.value = 1
+    end
+  end
+
+  def bar2(y)
+    foo2(y) do
+      return if 1 == 1
+    end
+  end
+
+  it "execute ensure when the main block yields and returns" do
+    x = 0
+    bar2(pointerof(x))
+    x.should eq(1)
+  end
+
 
   it "rescue with type" do
     a = begin
