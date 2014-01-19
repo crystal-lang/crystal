@@ -790,6 +790,14 @@ module Crystal
     end
 
     def end_visit(node : Return)
+      if handler = @exception_handlers.last?
+        if node_ensure = handler.node.ensure
+          old_last = @last
+          accept(node_ensure)
+          @last = old_last
+        end
+      end
+
       return_type = @return_type.not_nil!
 
       if return_block = @return_block

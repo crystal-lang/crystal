@@ -145,6 +145,20 @@ describe "Exception" do
     a.should eq(1)
   end
 
+  def foo(x)
+    begin
+      return 0 if 1 == 1
+    ensure
+      x.value = 1
+    end
+  end
+
+  it "execute ensure when the main block returns" do
+    x = 0
+    foo(pointerof(x)).should eq(0)
+    x.should eq(1)
+  end
+
 
   it "rescue with type" do
     a = begin
