@@ -354,7 +354,7 @@ describe "String" do
     "\033a"[1].should eq('a')
   end
 
-  it "escapes with hex" do
+  pending "escapes with hex" do
     "\x12"[0].should eq(1 * 16 + 2)
     "\xA"[0].should eq(10)
     "\xAB"[0].should eq(10 * 16 + 11)
