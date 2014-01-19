@@ -49,7 +49,7 @@ describe "Code gen: primitives" do
 
   it "defined method that calls primitive (bug)" do
     run("
-      class Int64
+      struct Int64
         def foo
           to_u64
         end

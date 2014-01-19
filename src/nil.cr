@@ -1,4 +1,4 @@
-class Nil
+struct Nil
   def object_id
     0_u64
   end

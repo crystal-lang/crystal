@@ -135,13 +135,13 @@ describe "Type inference: is_a?" do
 
   it "checks union with union" do
     assert_type("
-      class Char
+      struct Char
         def +(other : Int32)
           self
         end
       end
 
-      class Bool
+      struct Bool
         def foo
           2
         end

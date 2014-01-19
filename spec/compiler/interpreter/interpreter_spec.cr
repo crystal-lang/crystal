@@ -65,7 +65,7 @@ describe "Interpreter" do
   end
 
   it "interprets a def and a call with self" do
-    assert_interpret_primitive "class Int32; def foo; self; end; end; 1.foo", 1, &.int32
+    assert_interpret_primitive "struct Int32; def foo; self; end; end; 1.foo", 1, &.int32
   end
 
   it "interprets primitive +" do

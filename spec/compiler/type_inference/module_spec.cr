@@ -205,7 +205,7 @@ describe "Type inference: module" do
     assert_type("
       require \"prelude\"
 
-      class Int32
+      struct Int32
         include Enumerable(Int32)
 
         def each

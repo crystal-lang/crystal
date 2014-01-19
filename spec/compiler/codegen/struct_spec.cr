@@ -212,13 +212,13 @@ describe "Code gen: struct" do
 
   it "uses nilable struct" do
     run("
-      class Nil
+      struct Nil
         def nil?
           true
         end
       end
 
-      class Value
+      struct Value
         def nil?
           false
         end

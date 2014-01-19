@@ -15,11 +15,11 @@ describe "Code gen: return" do
   end
 
   it "return from function with union type" do
-    run("class Char; def to_i; 2; end; end; def foo; return 1 if 1 == 1; 'a'; end; foo.to_i").to_i.should eq(1)
+    run("struct Char; def to_i; 2; end; end; def foo; return 1 if 1 == 1; 'a'; end; foo.to_i").to_i.should eq(1)
   end
 
   it "return union" do
-    run("class Char; def to_i; 2; end; end; def foo; 1 == 2 ? return 1 : return 'a'; end; foo.to_i").to_i.should eq(2)
+    run("struct Char; def to_i; 2; end; end; def foo; 1 == 2 ? return 1 : return 'a'; end; foo.to_i").to_i.should eq(2)
   end
 
   it "return from function with nilable type" do
@@ -32,7 +32,7 @@ describe "Code gen: return" do
 
   it "returns empty from function" do
     run("
-      class Nil; def to_i; 0; end; end
+      struct Nil; def to_i; 0; end; end
       def foo(x)
         return if x == 1
         1

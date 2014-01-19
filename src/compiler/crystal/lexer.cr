@@ -2,7 +2,7 @@ require "token"
 require "exception"
 require "char_reader"
 
-class Char
+struct Char
   def ident_start?
     alpha? || self == '_'
   end

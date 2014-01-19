@@ -1,4 +1,4 @@
-class Float
+struct Float
   def +@
     self
   end
@@ -16,7 +16,7 @@ class Float
   end
 end
 
-class Float32
+struct Float32
   MIN = -INFINITY
   MAX =  INFINITY
 
@@ -33,7 +33,7 @@ class Float32
   end
 end
 
-class Float64
+struct Float64
   MIN = -INFINITY
   MAX =  INFINITY
 

@@ -20,8 +20,22 @@ module Crystal
       end
 
       type = scope.types[name]?
+
+      if !type && superclass
+        if (!!node.struct) != (!!superclass.struct?)
+          node.raise "can't make #{node.struct ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
+        end
+      end
+
       if type
-        node.raise "#{name} is not a class, it's a #{type.type_desc}" unless type.is_a?(ClassType)
+        unless type.is_a?(ClassType)
+          node.raise "#{name} is not a #{node.struct ? "struct" : "class"}, it's a #{type.type_desc}"
+        end
+
+        if (!!node.struct) != (!!type.struct?)
+          node.raise "#{name} is not a #{node.struct ? "struct" : "class"}, it's a #{type.type_desc}"
+        end
+
         if node.superclass && type.superclass != superclass
           node.raise "superclass mismatch for class #{type} (#{superclass} for #{type.superclass})"
         end

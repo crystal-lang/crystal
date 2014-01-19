@@ -23,7 +23,7 @@ describe "Code gen: def" do
   end
 
   it "uses self" do
-    run("class Int; def foo; self + 1; end; end; 3.foo").to_i.should eq(4)
+    run("struct Int; def foo; self + 1; end; end; 3.foo").to_i.should eq(4)
   end
 
   it "uses var after external" do
@@ -138,7 +138,7 @@ describe "Code gen: def" do
     run("
       require \"prelude\"
 
-      class Int
+      struct Int
         def baz(x)
         end
       end

@@ -97,7 +97,7 @@ module Crystal
       false
     end
 
-    def value_like?
+    def struct_like?
       c_struct? || c_union? || struct?
     end
 
@@ -924,6 +924,7 @@ module Crystal
 
     def initialize(program, container, name, superclass, @llvm_type, @llvm_size)
       super(program, container, name, superclass)
+      self.struct = true
     end
 
     def llvm_name
@@ -936,6 +937,14 @@ module Crystal
 
     def primitive_like?
       true
+    end
+
+    def struct_like?
+      false
+    end
+
+    def passed_by_val?
+      false
     end
 
     def allocated
@@ -1020,8 +1029,21 @@ module Crystal
   end
 
   class ValueType < NonGenericClassType
+    def initialize(program, container, name, superclass, add_subclass = true)
+      super
+      self.struct = true
+    end
+
     def value?
       true
+    end
+
+    def struct_like?
+      false
+    end
+
+    def passed_by_val?
+      false
     end
   end
 

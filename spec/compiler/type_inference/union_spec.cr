@@ -3,15 +3,15 @@ require "../../spec_helper"
 
 describe "Type inference: union" do
   it "types union when obj is union" do
-    assert_type("class Char; def +(other); self; end; end; a = 1 || 'a'; a + 1") { union_of(int32, char) }
+    assert_type("struct Char; def +(other); self; end; end; a = 1 || 'a'; a + 1") { union_of(int32, char) }
   end
 
   it "types union when arg is union" do
-    assert_type("class Int; def +(x : Char); x; end; end; a = 1 || 'a'; 1 + a") { union_of(int32, char) }
+    assert_type("struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; 1 + a") { union_of(int32, char) }
   end
 
   it "types union when both obj and arg are union" do
-    assert_type("class Char; def +(other); self; end; end; class Int; def +(x : Char); x; end; end; a = 1 || 'a'; a + a") { union_of(int32, char) }
+    assert_type("struct Char; def +(other); self; end; end; struct Int; def +(x : Char); x; end; end; a = 1 || 'a'; a + a") { union_of(int32, char) }
   end
 
   it "types union of classes" do

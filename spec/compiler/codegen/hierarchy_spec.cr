@@ -243,7 +243,7 @@ describe "Code gen: hierarchy type" do
       class Bar < Foo
       end
 
-      class Nil
+      struct Nil
         def foo
           2
         end

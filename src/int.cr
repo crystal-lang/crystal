@@ -1,4 +1,4 @@
-class Int
+struct Int
   def ==(other : Char)
     self == other.ord
   end
@@ -91,7 +91,7 @@ class Int
   end
 end
 
-class Int8
+struct Int8
   MIN = -128_i8
   MAX =  127_i8
 
@@ -106,7 +106,7 @@ class Int8
   end
 end
 
-class Int16
+struct Int16
   MIN = -32768_i16
   MAX =  32767_i16
 
@@ -121,7 +121,7 @@ class Int16
   end
 end
 
-class Int32
+struct Int32
   MIN = -2147483648_i32
   MAX =  2147483647_i32
 
@@ -136,7 +136,7 @@ class Int32
   end
 end
 
-class Int64
+struct Int64
   MIN = -9223372036854775808_i64
   MAX =  9223372036854775807_i64
 
@@ -151,7 +151,7 @@ class Int64
   end
 end
 
-class UInt8
+struct UInt8
   MIN = 0_u8
   MAX = 255_u8
 
@@ -162,7 +162,7 @@ class UInt8
   end
 end
 
-class UInt16
+struct UInt16
   MIN = 0_u16
   MAX = 65535_u16
 
@@ -173,7 +173,7 @@ class UInt16
   end
 end
 
-class UInt32
+struct UInt32
   MIN = 0_u32
   MAX = 4294967295_u32
 
@@ -184,7 +184,7 @@ class UInt32
   end
 end
 
-class UInt64
+struct UInt64
   MIN = 0_u64
   MAX = 18446744073709551615_u64
 

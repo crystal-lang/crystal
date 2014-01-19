@@ -19,7 +19,7 @@ describe "Codegen: responds_to?" do
   end
 
   it "codegens is_a? with nilable gives true" do
-    run("class Nil; def foo; end; end; (1 == 1 ? nil : Reference.new).responds_to?(:foo)").to_b.should be_true
+    run("struct Nil; def foo; end; end; (1 == 1 ? nil : Reference.new).responds_to?(:foo)").to_b.should be_true
   end
 
   it "codegens is_a? with nilable gives false becuase other type 1" do

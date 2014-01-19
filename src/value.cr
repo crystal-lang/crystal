@@ -1,4 +1,4 @@
-class Value
+struct Value
   def !@
     false
   end

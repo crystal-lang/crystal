@@ -1,7 +1,7 @@
 #!/usr/bin/env crystal --run
 require "../../spec_helper"
 
-class Number
+struct Number
   def int32
     NumberLiteral.new to_s, :i32
   end
@@ -19,7 +19,7 @@ class Number
   end
 end
 
-class Bool
+struct Bool
   def bool
     BoolLiteral.new self
   end

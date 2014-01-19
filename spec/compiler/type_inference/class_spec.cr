@@ -245,7 +245,7 @@ describe "Type inference: class" do
   end
 
   it "reports undefined method when method inside a class" do
-    assert_error "class Int; def foo; 1; end; end; foo",
+    assert_error "struct Int; def foo; 1; end; end; foo",
       "undefined local variable or method 'foo'"
   end
 

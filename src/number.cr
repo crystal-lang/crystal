@@ -1,4 +1,4 @@
-class Number
+struct Number
   def ==(other)
     false
   end

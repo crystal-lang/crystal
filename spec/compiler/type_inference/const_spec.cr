@@ -104,7 +104,7 @@ describe "Type inference: const" do
 
   it "finds const from restriction" do
     assert_type("
-      class Int32
+      struct Int32
         FOO = 'a'
       end
 

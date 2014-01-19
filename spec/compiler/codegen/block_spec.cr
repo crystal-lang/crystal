@@ -40,7 +40,7 @@ describe "Code gen: block" do
 
   it "pass self to yielder function" do
     run("
-      class Int
+      struct Int
         def foo
           yield self
         end
@@ -54,7 +54,7 @@ describe "Code gen: block" do
 
   it "pass self and arguments to yielder function" do
     run("
-      class Int
+      struct Int
         def foo(i)
           yield self, i
         end
@@ -550,7 +550,7 @@ describe "Code gen: block" do
       end
 
 
-      class Int
+      struct Int
         def foo
           x = Foo.new
           x = Bar.new
@@ -708,7 +708,7 @@ describe "Code gen: block" do
 
   it "allows yields with less arguments than in block" do
     run("
-      class Nil
+      struct Nil
         def to_i
           0
         end
@@ -812,7 +812,7 @@ describe "Code gen: block" do
 
   it "codegens block with union arg" do
     run("
-      class Number
+      struct Number
         def abs
           self
         end

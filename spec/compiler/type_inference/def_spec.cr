@@ -65,7 +65,7 @@ describe "Type inference: def" do
   end
 
   it "assigns def owner" do
-    input = parse "class Int; def foo; 2.5; end; end; 1.foo"
+    input = parse "struct Int; def foo; 2.5; end; end; 1.foo"
     result = infer_type input
     mod, input = result.program, result.node as Expressions
     (input.last as Call).target_def.owner.should eq(mod.int32)
@@ -116,7 +116,7 @@ describe "Type inference: def" do
   end
 
   it "defines class method with self" do
-    assert_type("class Int; def self.foo; 2.5; end; end; Int.foo") { float64 }
+    assert_type("struct Int; def self.foo; 2.5; end; end; Int.foo") { float64 }
   end
 
   it "calls with default argument" do

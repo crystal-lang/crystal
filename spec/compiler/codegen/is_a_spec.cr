@@ -70,7 +70,7 @@ describe "Codegen: is_a?" do
 
   it "evaluate method on filtered type nilable type nil" do
     run("
-      class Nil
+      struct Nil
         def foo
           1
         end
@@ -251,13 +251,13 @@ describe "Codegen: is_a?" do
 
   it "restricts union with union" do
     run("
-      class Char
+      struct Char
         def +(other : Int32)
           other
         end
       end
 
-      class Bool
+      struct Bool
         def foo
           2
         end

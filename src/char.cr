@@ -1,4 +1,4 @@
-class Char
+struct Char
   def ==(other : Int)
     ord == other
   end

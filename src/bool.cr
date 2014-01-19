@@ -1,4 +1,4 @@
-class Bool
+struct Bool
   def !@
     self ? false : true
   end

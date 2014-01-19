@@ -16,7 +16,7 @@ describe "Type inference: if" do
 
   it "types and if with and and assignment" do
     assert_type("
-      class Number
+      struct Number
         def abs
           self
         end

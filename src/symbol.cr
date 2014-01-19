@@ -1,4 +1,4 @@
-class Symbol
+struct Symbol
   def ==(other)
     false
   end

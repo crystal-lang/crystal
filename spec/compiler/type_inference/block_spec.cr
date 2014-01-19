@@ -93,7 +93,7 @@ describe "Block inference" do
 
   it "infers type of block before call" do
     result = assert_type("
-      class Int32
+      struct Int32
         def foo
           10.5
         end
