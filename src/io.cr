@@ -75,6 +75,14 @@ module IO
     end
     String.new(buffer as UInt8*, length.to_i)
   end
+
+  def write(array : Array(UInt8))
+    write array.buffer, array.length
+  end
+
+  def write_byte(byte : UInt8)
+    write pointerof(byte), 1
+  end
 end
 
 class BufferedIO
@@ -144,6 +152,10 @@ class StringIO
 
   def write(bytes, count)
     @buffer.append (bytes as UInt8*), count
+  end
+
+  def buffer
+    @buffer
   end
 
   def to_s
