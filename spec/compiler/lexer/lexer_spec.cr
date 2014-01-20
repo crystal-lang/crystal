@@ -312,4 +312,30 @@ describe "Lexer" do
     token.type.should eq(:CHAR)
     (token.value as Char).ord.should eq(26085)
   end
+
+  it "doesn't raise if slash r with slash n" do
+    lexer = Lexer.new("\r\n1")
+    token = lexer.next_token
+    token.type.should eq(:NEWLINE)
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+  end
+
+  it "doesn't raise if many slash r with slash n" do
+    lexer = Lexer.new("\r\n\r\n\r\n1")
+    token = lexer.next_token
+    token.type.should eq(:NEWLINE)
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+  end
+
+  it "raises if slash r without slash n" do
+    lexer = Lexer.new("\r1")
+    begin
+      lexer.next_token
+      fail "expected to raise"
+    rescue ex : Crystal::SyntaxException
+      ex.message.should eq("expected '\\n' after '\\r'")
+    end
+  end
 end

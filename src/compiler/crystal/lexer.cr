@@ -57,9 +57,16 @@ module Crystal
         next_char
         @line_number += 1
         @column_number = 1
-        while current_char == '\n'
-          next_char_no_column_increment
+        consume_newlines
+      when '\r'
+        if next_char == '\n'
+          next_char
+          @token.type = :NEWLINE
           @line_number += 1
+          @column_number = 1
+          consume_newlines
+        else
+          raise "expected '\\n' after '\\r'"
         end
       when '='
         case next_char
@@ -443,7 +450,7 @@ module Crystal
           @token.type = class_var ? :CLASS_VAR : :INSTANCE_VAR
           @token.value = string_range(start)
         else
-          raise "unknown token: #{current_char}", @line_number, @column_number
+          unknown_token
         end
       when '$'
         start = current_pos
@@ -467,7 +474,7 @@ module Crystal
           @token.type = :GLOBAL
           @token.value = string_range(start)
         else
-          raise "unknown token: #{current_char}", @line_number, @column_number
+          unknown_token
         end
       when 'a'
         case next_char
@@ -764,11 +771,28 @@ module Crystal
           next_char
           scan_ident(start)
         else
-          raise "unknown token: #{current_char}", @line_number, @column_number
+          unknown_token
         end
       end
 
       @token
+    end
+
+    def consume_newlines
+      while true
+        case current_char
+        when '\n'
+          next_char_no_column_increment
+          @line_number += 1
+        when '\r'
+          if next_char_no_column_increment != '\n'
+            raise "expected '\\n' after '\\r'"
+          end
+          @line_number += 1
+        else
+          break
+        end
+      end
     end
 
     def check_ident_or_keyword(symbol, start)
@@ -1298,6 +1322,10 @@ module Crystal
       while (@token.type == :SPACE || @token.type == :NEWLINE || @token.type == :";")
         next_token
       end
+    end
+
+    def unknown_token
+      raise "unknown token: #{current_char.inspect}", @line_number, @column_number
     end
 
     def raise(message, line_number = @line_number, column_number = @column_number, filename = @filename)
