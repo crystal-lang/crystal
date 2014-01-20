@@ -916,4 +916,18 @@ describe "Code gen: block" do
       end
       ").to_i.should eq(1)
   end
+
+  it "returns void when called with block" do
+    run("
+      fun foo : Void
+      end
+
+      def bar
+        yield
+        foo
+      end
+
+      bar {}
+      ")
+  end
  end

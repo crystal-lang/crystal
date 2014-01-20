@@ -1957,6 +1957,8 @@ module Crystal
               end
             elsif node_target_def_type.is_a?(NilableType) && node_target_def_body && node_target_def_body.type? && node_target_def_body.type.nil_type?
               return_block_table.add @builder.insert_block, LLVM.null(llvm_type(node_target_def_type.not_nil_type))
+            elsif return_type.void?
+              # Nothing to do
             else
               value = @last
               return_block_table.add @builder.insert_block, value
@@ -1976,6 +1978,8 @@ module Crystal
           if node_type && !node_type.nil_type?
             if @return_union
               @last = @return_union
+            elsif return_block_table.empty?
+              @last = llvm_nil
             else
               phi_type = llvm_type(node_type)
               phi_type = LLVM.pointer_type(phi_type) if node_type.union?
