@@ -39,24 +39,31 @@ lib ABI
   fun unwind_get_language_specific_data = _Unwind_GetLanguageSpecificData(context : Void*) : UInt8*
 end
 
-module LEBReader
-  def self.read_uint8(data)
-    value = (data.value as UInt8*).value
-    data.value += 1
+struct LEBReader
+  def initialize(@data : UInt8*)
+  end
+
+  def data
+    @data
+  end
+
+  def read_uint8
+    value = @data.value
+    @data += 1
     value
   end
 
-  def self.read_uint32(data)
-    value = (data.value as UInt32*).value
-    data.value += 4
+  def read_uint32
+    value = (@data as UInt32*).value
+    @data += 4
     value
   end
 
-  def self.read_uleb128(data)
+  def read_uleb128
     result = 0_u64
     shift = 0
     while true
-      byte = read_uint8(data)
+      byte = read_uint8
       result |= ((0x7f_u64 & byte) << shift);
       break if (byte & 0x80_u8) == 0
       shift += 7
@@ -72,19 +79,20 @@ fun __crystal_personality(version : Int32, actions : Int32, exception_class : UI
   lsd = ABI.unwind_get_language_specific_data(context)
   # puts "Personality - actions : #{actions}, start: #{start}, ip: #{ip}, throw_offset: #{throw_offset}"
 
-  LEBReader.read_uint8(pointerof(lsd)) # @LPStart encoding
-  if LEBReader.read_uint8(pointerof(lsd)) != 0xff_u8 # @TType encoding
-    LEBReader.read_uleb128(pointerof(lsd)) # @TType base offset
+  leb = LEBReader.new(lsd)
+  leb.read_uint8 # @LPStart encoding
+  if leb.read_uint8 != 0xff_u8 # @TType encoding
+    leb.read_uleb128 # @TType base offset
   end
-  LEBReader.read_uint8(pointerof(lsd)) # CS Encoding
-  cs_table_length = LEBReader.read_uleb128(pointerof(lsd)) # CS table length
-  cs_table_end = lsd + cs_table_length
+  leb.read_uint8 # CS Encoding
+  cs_table_length = leb.read_uleb128 # CS table length
+  cs_table_end = leb.data + cs_table_length
 
-  while lsd < cs_table_end
-    cs_offset = LEBReader.read_uint32(pointerof(lsd))
-    cs_length = LEBReader.read_uint32(pointerof(lsd))
-    cs_addr = LEBReader.read_uint32(pointerof(lsd))
-    action = LEBReader.read_uleb128(pointerof(lsd))
+  while leb.data < cs_table_end
+    cs_offset = leb.read_uint32
+    cs_length = leb.read_uint32
+    cs_addr = leb.read_uint32
+    action = leb.read_uleb128
     # puts "cs_offset: #{cs_offset}, cs_length: #{cs_length}, cs_addr: #{cs_addr}, action: #{action}"
 
     if cs_addr != 0
