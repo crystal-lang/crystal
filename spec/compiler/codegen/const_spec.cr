@@ -136,4 +136,18 @@ describe "Codegen: const" do
       Foo.new.compile
       ").to_i.should eq(1)
   end
+
+  it "initialize const that might raise an exception" do
+    run("
+      require \"prelude\"
+      CONST = (raise \"OH NO\" if 1 == 2)
+
+      def doit
+        CONST
+      rescue
+      end
+
+      doit.nil?
+    ").to_b.should be_true
+  end
 end

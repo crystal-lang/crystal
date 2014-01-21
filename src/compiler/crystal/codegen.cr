@@ -2451,6 +2451,8 @@ module Crystal
       old_fun = @fun
       old_in_const_block = @in_const_block
       old_llvm_mod = @llvm_mod
+      old_exception_handlers = @exception_handlers
+      @exception_handlers = [] of Handler
       @in_const_block = true
       @llvm_mod = @main_mod
 
@@ -2469,6 +2471,7 @@ module Crystal
       @fun = old_fun
       @llvm_mod = old_llvm_mod
       @in_const_block = old_in_const_block
+      @exception_handlers = old_exception_handlers
     end
 
     def printf(format, args = [] of LibLLVM::ValueRef)
