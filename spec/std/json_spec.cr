@@ -74,6 +74,7 @@ describe "Json" do
     it_lexes_json_string "\"hello\\nworld\"", "hello\nworld"
     it_lexes_json_string "\"hello\\rworld\"", "hello\rworld"
     it_lexes_json_string "\"hello\\tworld\"", "hello\tworld"
+    it_lexes_json_string "\"\\u201chello world\\u201d\"", "“hello world”"
     it_lexes_json_int "0", 0
     it_lexes_json_int "1", 1
     it_lexes_json_int "1234", 1234

@@ -144,7 +144,12 @@ module Json
             buffer << '\r'
           when 't'
             buffer << '\t'
-          # TODO when 'u'
+          when 'u'
+            unicode = 0
+            4.times do
+              unicode = (unicode << 4) | next_char.to_i(16)
+            end
+            buffer << unicode.chr
           else
             raise "uknown escape char: #{char}"
           end
