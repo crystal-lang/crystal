@@ -16,7 +16,7 @@ class URI
   end
 
   def self.parse(string)
-    string =~ /\A(?<scheme>.*):\/\/(?<host>[\w\.]*)(:(?<port>\d*))?(?<path>\/[^?]*)?(\?(?<qs>.*))?\Z/
+    string =~ /\A(?<scheme>.*):\/\/(?<host>[^:\/\?]*)(:(?<port>\d*))?(?<path>\/[^?]*)?(\?(?<qs>.*))?\Z/
     scheme = $1
     host = $2
     port = $4.empty? ? nil : $4.to_i
