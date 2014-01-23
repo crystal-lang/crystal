@@ -117,5 +117,6 @@ describe "Json" do
     it_raises_on_parse_json %("{"foo":})
     it_raises_on_parse_json "[0]1"
     it_raises_on_parse_json "[0] 1 "
+    it_raises_on_parse_json "[\"\\u123z\"]"
   end
 end

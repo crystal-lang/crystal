@@ -172,7 +172,8 @@ module Json
     def read_hex_number
       hexnum = 0
       4.times do
-        hexnum = (hexnum << 4) | next_char.to_i(16)
+        char = next_char
+        hexnum = (hexnum << 4) | char.to_i(16) { raise "unexpected char in hex number: #{char.inspect}" }
       end
       hexnum
     end

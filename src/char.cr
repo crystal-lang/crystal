@@ -78,17 +78,25 @@ struct Char
   end
 
   def to_i
+    to_i { 0 }
+  end
+
+  def to_i
     if '0' <= self <= '9'
       self - '0'
     else
-      0
+      yield
     end
+  end
+
+  def to_i(base)
+    to_i(base) { 0 }
   end
 
   def to_i(base)
     case base
     when 10
-      to_i
+      to_i { yield }
     when 16
       if '0' <= self <= '9'
         self - '0'
@@ -97,7 +105,7 @@ struct Char
       elsif 'A' <= self <= 'F'
         10 + (self - 'A')
       else
-        0
+        yield
       end
     else
       raise "Unsupported base: #{base}"
