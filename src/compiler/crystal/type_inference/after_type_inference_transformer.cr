@@ -95,6 +95,12 @@ module Crystal
     def transform(node : Call)
       super
 
+      node.args.each do |arg|
+        if arg.type?.try &.no_return?
+          arg.raise "can't call '#{node.name}' with an argument that never returns"
+        end
+      end
+
       if target_defs = node.target_defs
         changed = false
         allocated_defs = [] of Def

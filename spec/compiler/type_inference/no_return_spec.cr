@@ -46,8 +46,8 @@ describe "Type inference: NoReturn" do
   #     "undefined method 'foo' for NoReturn"
   # end
 
-  it "types call as no return if one argument is no return" do
-    assert_type("
+  it "errors if one argument is no return" do
+    assert_error "
       lib C
         fun exit : NoReturn
       end
@@ -57,6 +57,7 @@ describe "Type inference: NoReturn" do
       end
 
       foo(C.exit)
-      ") { no_return }
+      ",
+        "can't call 'foo' with an argument that never returns"
   end
 end
