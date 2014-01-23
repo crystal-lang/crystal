@@ -41,7 +41,7 @@ module Json
 
   class Lexer
     def initialize(string)
-      @buffer = string.cstr
+      @reader = CharReader.new(string)
       @token = Token.new
       @line_number = 1
       @column_number = 1
@@ -276,8 +276,7 @@ module Json
     end
 
     def next_char_no_column_increment
-      @buffer += 1
-      current_char
+      @reader.next_char
     end
 
     def next_char(token_type)
@@ -286,7 +285,7 @@ module Json
     end
 
     def current_char
-      @buffer.value.chr
+      @reader.current_char
     end
 
     def unexpected_char(char = current_char)

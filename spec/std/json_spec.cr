@@ -110,6 +110,8 @@ describe "Json" do
     it_parses_json "[[1]]", [[1]]
     it_parses_json %([{"foo": 1}]), [{"foo" => 1}]
 
+    it_parses_json "[\"日\"]", ["日"]
+
     it_raises_on_parse_json "[1,]"
     it_raises_on_parse_json %({"foo": 1,})
     it_raises_on_parse_json "{1}"
