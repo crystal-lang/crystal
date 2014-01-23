@@ -304,6 +304,8 @@ module Crystal
         block.accept parent_visitor
 
         if output = block_arg.type_spec.output
+          raise "can't infer block type" unless block.body.type?
+
           block_type = block.body.type
           type_lookup = match.type_lookup as MatchesLookup
 
