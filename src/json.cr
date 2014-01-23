@@ -145,11 +145,16 @@ module Json
           when 't'
             buffer << '\t'
           when 'u'
-            unicode = 0
-            4.times do
-              unicode = (unicode << 4) | next_char.to_i(16)
+            hexnum1 = read_hex_number
+            if hexnum1 > 0xD800 && hexnum1 < 0xDBFF
+              if next_char != '\\' || next_char != 'u'
+                raise "Unterminated UTF-16 sequence"
+              end
+              hexnum2 = read_hex_number
+              buffer << (0x10000 | (hexnum1 & 0x3FF) << 10 | (hexnum2 & 0x3FF)).chr
+            else
+              buffer << hexnum1.chr
             end
-            buffer << unicode.chr
           else
             raise "uknown escape char: #{char}"
           end
@@ -162,6 +167,14 @@ module Json
       end
       @token.type = :STRING
       @token.string_value = buffer.to_s
+    end
+
+    def read_hex_number
+      hexnum = 0
+      4.times do
+        hexnum = (hexnum << 4) | next_char.to_i(16)
+      end
+      hexnum
     end
 
     def consume_number
