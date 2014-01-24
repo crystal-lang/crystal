@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "spec"
 
 describe "File" do
@@ -45,5 +45,13 @@ describe "File" do
     File.extname("/foo/bar/.profile.sh").should eq(".sh")
     File.extname("/foo/bar/foo.").should eq("")
     File.extname("test").should eq("")
+  end
+
+  it "constructs a path from parts" do
+    File.join(["///foo", "bar"]).should eq("/foo/bar")
+    File.join(["///foo", "//bar"]).should eq("/foo/bar")
+    File.join(["foo", "bar", "baz"]).should eq("foo/bar/baz")
+    File.join(["foo", "//bar//", "baz///"]).should eq("foo/bar/baz/")
+    File.join(["/foo/", "/bar/", nil, "/baz/"]).should eq("/foo/bar/baz/")
   end
 end
