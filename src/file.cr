@@ -156,6 +156,31 @@ class File
     end
     lines
   end
+
+  def self.join(parts = [] of String)
+    return "" if parts.empty?
+
+    parts.map_with_index do |part, index|
+      if part
+        lindex = 0
+        while lindex < part.length
+          break if part[lindex] != '/'
+          lindex += 1
+        end
+
+        rindex = part.length - 1
+        while rindex >= 0
+          break if part[rindex] != '/'
+          rindex -= 1
+        end
+
+        lindex -= 1 if index == 0 && lindex != 0
+        rindex += 1 if index == parts.size - 1 && rindex + 1 != part.length
+
+        part[lindex..rindex]
+      end
+    end.compact.join('/')
+  end
 end
 
 def system2(command)

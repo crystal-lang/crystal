@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 describe "after type inference transformer" do
