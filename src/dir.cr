@@ -62,4 +62,10 @@ class Dir
       C.closedir(dir)
     end
   end
+
+  def self.exists?(dirname)
+    return false unless (dir = C.opendir(dirname))
+    C.closedir(dir)
+    true
+  end
 end
