@@ -287,4 +287,14 @@ describe "Codegen: is_a?" do
       2.is_a?(A)
       ").to_b.should be_false
   end
+
+  it "gives false if generic type doesn't match exactly" do
+    run("
+      class Foo(T)
+      end
+
+      foo = Foo(Int32 | Float64).new
+      foo.is_a?(Foo(Int32)) ? 1 : 2
+      ").to_i.should eq(2)
+  end
 end

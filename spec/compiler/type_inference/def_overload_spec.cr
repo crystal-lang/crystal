@@ -519,4 +519,17 @@ describe "Type inference: def overload" do
       1
       ") { int32 }
   end
+
+  it "errors if generic type doesn't match" do
+    assert_error "
+      class Foo(T)
+      end
+
+      def foo(x : Foo(Int32))
+      end
+
+      foo Foo(Int32 | Float64).new
+      ",
+      "no overload matches"
+  end
 end

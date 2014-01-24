@@ -236,7 +236,7 @@ module Crystal
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[i]
         restricted = type_var.type.restrict other_type_var, owner, type_lookup, free_vars
-        return nil unless restricted
+        return nil unless restricted == type_var.type
         i += 1
       end
 
@@ -249,7 +249,7 @@ module Crystal
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]
         restricted = type_var.type.restrict(other_type_var.type, owner, type_lookup, free_vars)
-        return nil unless restricted
+        return nil unless restricted == type_var.type
       end
 
       self

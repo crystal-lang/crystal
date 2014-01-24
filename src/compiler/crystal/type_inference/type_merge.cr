@@ -2,7 +2,7 @@ require "../program"
 
 module Crystal
   class Program
-    def type_merge(types : Array(Type))
+    def type_merge(types : Array(Type?))
       combined_union_of compact_types(types)
     end
 
