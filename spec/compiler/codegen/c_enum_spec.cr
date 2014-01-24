@@ -1,4 +1,4 @@
-#!/usr/bin/env bin/crystal -run
+#!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
 CodeGenEnumString = "lib Foo; enum Bar; X, Y, Z = 10, W; end end"
