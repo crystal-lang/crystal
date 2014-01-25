@@ -23,7 +23,7 @@ describe "Dir" do
 
   it "tests mkdir with an existing path" do
     begin
-      Dir.mkdir(File.join([__DIR__, "../"]), 0700)
+      Dir.mkdir(__DIR__, 0700)
       fail "Expected Errno to be raised"
     rescue Errno
     end
@@ -40,7 +40,7 @@ describe "Dir" do
 
   it "tests rmdir with a path that cannot be removed" do
     begin
-      Dir.rmdir(File.join([__DIR__, "../"]))
+      Dir.rmdir(__DIR__)
       fail "Expected Errno to be raised"
     rescue Errno
     end
