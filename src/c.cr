@@ -1,9 +1,7 @@
 lib C
   ifdef x86_64
-    alias ModeT = Int32
     alias SizeT = UInt64
   else
-    alias ModeT = Int16
     alias SizeT = UInt32
   end
 
