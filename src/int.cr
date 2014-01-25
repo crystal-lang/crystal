@@ -82,6 +82,18 @@ struct Int
     self % other
   end
 
+  def to_i(base)
+    to_s.to_i(base)
+  end
+
+  def to_modet
+    ifdef x86_64
+      to_i32
+    else
+      to_i16
+    end
+  end
+
   def to_sizet
     ifdef x86_64
       to_u64
