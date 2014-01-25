@@ -177,6 +177,10 @@ describe "Lexer" do
 
   it_lexes_number :u64, ["0xFFFF_u64", "65535"]
 
+  it_lexes_i32 [["0123", "83"], ["-0123", "-83"], ["+0123", "83"]]
+  it_lexes_f64 [["0.5", "0.5"], ["+0.5", "+0.5"], ["-0.5", "-0.5"]]
+  it_lexes_i64 [["0123_i64", "83"], ["0x1_i64", "1"], ["0b1_i64", "1"]]
+
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'
