@@ -147,8 +147,10 @@ module Crystal
             scan_hex_number
           when 'b'
             scan_bin_number
-          else
+          when '.'
             scan_number(start)
+          else
+            scan_octal_number
           end
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number(start)
@@ -174,8 +176,10 @@ module Crystal
             scan_hex_number(-1)
           when 'b'
             scan_bin_number(-1)
-          else
+          when '.'
             scan_number(start)
+          else
+            scan_octal_number(-1)
           end
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number(start)
@@ -430,8 +434,10 @@ module Crystal
           scan_hex_number
         when 'b'
           scan_bin_number
+        when '.'
+          scan_number(start)
         else
-          scan_number current_pos
+          scan_octal_number
         end
       when '1', '2', '3', '4', '5', '6', '7', '8', '9'
         scan_number current_pos
@@ -940,17 +946,29 @@ module Crystal
       end
 
       num *= multiplier
+      @token.value = num.to_s
 
-      case current_char
-      when 'i'
-        consume_int_suffix
-      when 'u'
-        consume_uint_suffix
-      else
-        @token.number_kind = :i32
+      consume_optional_int_suffix
+    end
+
+    def scan_octal_number(multiplier = 1)
+      @token.type = :NUMBER
+      num = 0
+
+      while true
+        char = next_char
+        if '0' <= char <= '7'
+          num = num * 8 + (char - '0')
+        elsif char == '_'
+        else
+          break
+        end
       end
 
+      num *= multiplier
       @token.value = num.to_s
+
+      consume_optional_int_suffix
     end
 
     def scan_bin_number(multiplier = 1)
@@ -972,9 +990,20 @@ module Crystal
       end
 
       num *= multiplier
-
       @token.value = num.to_s
-      @token.number_kind = :i32
+
+      consume_optional_int_suffix
+    end
+
+    def consume_optional_int_suffix
+      case current_char
+      when 'i'
+        consume_int_suffix
+      when 'u'
+        consume_uint_suffix
+      else
+        @token.number_kind = :i32
+      end
     end
 
     def consume_int_suffix
