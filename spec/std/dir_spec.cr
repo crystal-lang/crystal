@@ -30,9 +30,8 @@ describe "Dir" do
   end
 
   it "tests rmdir with an nonexistent path" do
-    path = "/tmp/crystal_mkdir_test_#{Process.pid}/"
     begin
-      Dir.rmdir(path)
+      Dir.rmdir("/tmp/crystal_mkdir_test_#{Process.pid}/")
       fail "Expected Errno to be raised"
     rescue Errno
     end
