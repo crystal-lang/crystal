@@ -35,9 +35,6 @@ lib C
   fun opendir(name : UInt8*) : Dir*
   fun closedir(dir : Dir*) : Int32
 
-  fun mkdir(path : UInt8*, mode : C::ModeT) : Int32
-  fun rmdir(path : UInt8*) : Int32
-
   ifdef darwin
     fun readdir(dir : Dir*) : DirEntry*
   elsif linux
@@ -70,19 +67,5 @@ class Dir
     return false unless (dir = C.opendir(dirname))
     C.closedir(dir)
     true
-  end
-
-  def self.mkdir(path, mode)
-    if C.mkdir(path, mode.to_i(8).to_modet) == -1
-      raise Errno.new("Unable to create directory '#{path}'")
-    end
-    0
-  end
-
-  def self.rmdir(path)
-    if C.rmdir(path) == -1
-      raise Errno.new("Unable to remove directory '#{path}'")
-    end
-    0
   end
 end
