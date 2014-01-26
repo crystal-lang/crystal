@@ -112,7 +112,6 @@ module Crystal
       @last = llvm_nil
       @in_const_block = false
       @trampoline_wrappers = {} of UInt64 => LLVM::Function
-      @block_context = [] of BlockContext
       @fun_literal_count = 0
     end
 
@@ -1031,21 +1030,13 @@ module Crystal
     end
 
     def block_returns?
-      return false if @block_context.empty?
-
-      context = @block_context.pop
-      breaks = context && (context.block.returns? || (context.block.yields? && block_returns?))
-      @block_context.push context
-      breaks
+      return false unless context.block? && context.block_context?
+      context.block.returns? || (context.block.yields? && with_context(context.block_context) { block_returns? })
     end
 
     def block_breaks?
-      return false if @block_context.empty?
-
-      context = @block_context.pop
-      breaks = context && (context.block.breaks? || (context.block.yields? && block_breaks?))
-      @block_context.push context
-      breaks
+      return false unless context.block? && context.block_context?
+      context.block.breaks? || (context.block.yields? && with_context(context.block_context) { block_breaks? })
     end
 
     abstract class BranchedBlock
@@ -1628,6 +1619,8 @@ module Crystal
       property break_union
       property while_block
       property while_exit_block
+      property! block
+      property! block_context
 
       def initialize(@fun, @type, @vars = {} of String => LLVMVar)
       end
@@ -1643,36 +1636,32 @@ module Crystal
         context.break_union = break_union
         context.while_block = while_block
         context.while_exit_block = while_exit_block
+        context.block = @block
+        context.block_context = @block_context
         context
       end
     end
 
-    def with_cloned_context
+    def with_cloned_context(new_context = @context)
       old_context = @context
-      @context = @context.clone
+      @context = new_context.clone
       value = yield old_context
       @context = old_context
       value
     end
 
-    class BlockContext
-      getter block
-      getter vars
-      getter type
-      getter return_block
-      getter return_block_table
-      getter return_type
-      getter return_union
-
-      def initialize(@block, @vars, @type, @return_block, @return_block_table, @return_type, @return_union)
-      end
+    def with_context(new_context)
+      old_context = @context
+      @context = new_context
+      value = yield old_context
+      @context = old_context
+      value
     end
 
     def visit(node : Yield)
-      if @block_context.length > 0
-        block_context = @block_context.pop
+      if block_context = context.block_context?
         new_vars = block_context.vars.dup
-        block = block_context.block
+        block = context.block
 
         if node_scope = node.scope
           node_scope.accept self
@@ -1696,13 +1685,8 @@ module Crystal
           end
         end
 
-        with_cloned_context do |old|
-          context.type = block_context.type
+        with_cloned_context(block_context) do |old|
           context.vars = new_vars
-          context.return_block = block_context.return_block
-          context.return_block_table = block_context.return_block_table
-          context.return_type = block_context.return_type
-          context.return_union = block_context.return_union
           context.break_table = old.return_block_table
           context.break_type = old.return_type
           context.break_union = old.return_union
@@ -1713,8 +1697,6 @@ module Crystal
         if !node.type? || node.type.nil_type?
           @last = llvm_nil
         end
-
-        @block_context << block_context
       end
       false
     end
@@ -1922,9 +1904,9 @@ module Crystal
       return if node.args.any?(&.yields?) && block_breaks?
 
       if block = node.block
-        @block_context << BlockContext.new(block, context.vars, context.type, context.return_block, context.return_block_table, context.return_type, context.return_union)
-
-        with_cloned_context do
+        with_cloned_context do |old|
+          context.block = block
+          context.block_context = old
           context.vars = {} of String => LLVMVar
           if owner
             context.type = owner
@@ -2008,8 +1990,6 @@ module Crystal
             end
           end
         end
-
-        old_block_context = @block_context.pop
       else
         with_cloned_context do
           context.return_block = nil
