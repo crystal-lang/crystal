@@ -294,4 +294,16 @@ describe "Lexer string" do
       token.type.should eq(:EOF)
     end
   end
+
+  it "lexes heredoc" do
+    string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERE"
+    lexer = Lexer.new("<<-HERE\n#{string}\nHERE")
+    
+    token = lexer.next_token
+    token.type.should eq(:STRING)
+    token.value.should eq(string)
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
 end

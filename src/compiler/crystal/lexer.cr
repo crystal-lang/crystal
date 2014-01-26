@@ -110,6 +110,46 @@ module Crystal
           case next_char
           when '='
             next_char :"<<="
+          when '-'
+            here = String::Buffer.new(20)
+            here_start = 0
+            
+            while true
+              case char = next_char
+              when '\n'
+                next_char
+                here_start = current_pos
+                break
+              else
+                here << char
+              end
+            end
+
+            here = here.to_s
+
+            while true
+              case char = next_char
+              when '\0'
+                raise "unterminated heredoc"
+              when '\n'
+                here_end = current_pos
+                is_here  = false
+                here.each_char do |c|
+                  unless c == next_char
+                    is_here = false
+                    break
+                  end
+                  is_here = true
+                end
+
+                if is_here
+                  next_char
+                  @token.value = string_range(here_start, here_end)
+                  @token.type = :STRING
+                  break
+                end
+              end
+            end
           else
             @token.type = :"<<"
           end
