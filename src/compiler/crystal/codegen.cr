@@ -2196,7 +2196,6 @@ module Crystal
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
       old_exception_handlers = @exception_handlers
-      old_target_def = @target_def
       old_in_const_block = @in_const_block
       old_llvm_mod = @llvm_mod
 
