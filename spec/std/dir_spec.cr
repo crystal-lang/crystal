@@ -19,6 +19,7 @@ describe "Dir" do
     Dir.mkdir(path, 0700).should eq(0)
     Dir.exists?(path).should be_true
     Dir.rmdir(path).should eq(0)
+    Dir.exists?(path).should be_false
   end
 
   it "tests mkdir with an existing path" do
