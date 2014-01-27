@@ -203,11 +203,11 @@ module Crystal
 
           timing("Codegen (llc+clang)") do
             threads = Array.new(8) do
-              Thread.new(self) do |compiler|
+              Thread(self, Nil).new(self, ->(compiler : self) do
                 while unit = compiler.mutex.synchronize { compiler.units.shift? }
                   unit.compile
                 end
-              end
+              end)
             end
             threads.each &.join
           end
