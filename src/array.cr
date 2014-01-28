@@ -14,10 +14,7 @@ class Array(T)
   end
 
   def initialize(size, value : T)
-    if size < 0
-      raise ArgumentError.new("negative array size: #{size}")
-    end
-
+    raise ArgumentError.new("negative array size: #{size}") if size < 0
     @length = size
     @capacity = Math.max(size, 16)
     @buffer = Pointer(T).malloc(size, value)
@@ -26,9 +23,7 @@ class Array(T)
   def self.new(size, &block : Int32 -> T)
     ary = Array(T).new(size)
     ary.length = size
-    size.times do |i|
-      ary.buffer[i] = yield i
-    end
+    size.times { |i| ary.buffer[i] = yield i }
     ary
   end
 
@@ -54,11 +49,7 @@ class Array(T)
 
   def at(index : Int)
     index += length if index < 0
-    if index >= length || index < 0
-      yield
-    else
-      @buffer[index]
-    end
+    index >= length || index < 0 ? yield : @buffer[index]
   end
 
   def [](index : Int)
@@ -114,24 +105,20 @@ class Array(T)
   end
 
   def pop(n)
-    if n < 0
-      raise ArgumentError.new("can't pop negative count")
-    end
-
+    raise ArgumentError.new("can't pop negative count") if n < 0
     n = Math.min(n, @length)
     ary = Array(T).new(n) { |i| @buffer[@length - n + i] }
-
     @length -= n
-
     ary
   end
 
-  def shift
-    shift { raise IndexOutOfBounds.new }
-  end
-
-  def shift?
-    shift { nil }
+  def shift(n)
+    raise ArgumentError.new("can't shift negative count") if n < 0
+    n = Math.min(n, @length)
+    ary = Array(T).new(n) { |i| @buffer[i] }
+    @buffer.memmove(@buffer + n, @length - n)
+    @length -= n
+    ary
   end
 
   def shift
@@ -145,18 +132,12 @@ class Array(T)
     end
   end
 
-  def shift(n)
-    if n < 0
-      raise ArgumentError.new("can't shift negative count")
-    end
+  def shift
+    shift { raise IndexOutOfBounds.new }
+  end
 
-    n = Math.min(n, @length)
-    ary = Array(T).new(n) { |i| @buffer[i] }
-
-    @buffer.memmove(@buffer + n, @length - n)
-    @length -= n
-
-    ary
+  def shift?
+    shift { nil }
   end
 
   def unshift(obj : T)
@@ -192,17 +173,13 @@ class Array(T)
   end
 
   def delete_at(index : Int)
-    index += length if index < 0
-    raise IndexOutOfBounds.new if index < 0 || index >= length
+    index += @length if index < 0
+    raise IndexOutOfBounds.new if index < 0 || index >= @length
 
     elem = @buffer[index]
-    (@buffer + index).memmove(@buffer + index + 1, length - index - 1)
+    (@buffer + index).memmove(@buffer + index + 1, @length - index - 1)
     @length -= 1
     elem
-  end
-
-  def delete(obj)
-    delete_if { |e| e == obj }
   end
 
   def delete_if
@@ -211,20 +188,42 @@ class Array(T)
     while i1 < @length
       e = @buffer[i1]
       unless yield e
-        if i1 != i2
-          @buffer[i2] = e
-        end
+        @buffer[i2] = e if i1 != i2
         i2 += 1
       end
-
       i1 += 1
     end
+    
     if i2 != i1
       @length -= (i1 - i2)
       true
     else
       false
     end
+  end
+
+
+  def delete(obj)
+    delete_if { |e| e == obj }
+  end
+
+  def <=>(other : Array(T))
+    return @length <=> other.length unless @length == other.length
+    each_with_index do |elem, i|
+      result = elem <=> other[i]
+      return result if result != 0
+    end
+    0
+  end
+
+  def *(multiplicator : Int)
+    x = Array(T).new
+    multiplicator.times { x += self }
+    x
+  end
+
+  def *(separator : (String | Char))
+    join(separator)
   end
 
   def &(other : Array(U))
@@ -262,15 +261,13 @@ class Array(T)
 
   def -(other : Array(U))
     ary = Array(T).new(length - other.length)
-    hash = other.each_with_object(Hash(T, Bool).new) { |o, h| h[o] = true }
-    each do |obj|
-      ary << obj unless hash.has_key?(obj)
-    end
+    hash = other.each_with_object({} of T => Bool) { |o, h| h[o] = true }
+    each { |obj| ary << obj unless hash.has_key?(obj) }
     ary
   end
 
   def compact
-    select { |x| !x.nil? }
+    select { |x| !!x }
   end
 
   def compact!
@@ -278,9 +275,7 @@ class Array(T)
   end
 
   def compact(array)
-    each do |elem|
-      array.push elem if elem
-    end
+    each { |elem| array.push elem if elem }
   end
 
   # def flatten(target : Array(U))
@@ -336,6 +331,10 @@ class Array(T)
     self
   end
 
+  def rotate(step = 1)
+    at(step..-1) + at(0...step)
+  end
+
   def reverse
     ary = Array(T).new(length)
     i = 0
@@ -374,6 +373,14 @@ class Array(T)
 
   def uniq!
     uniq! { |x| x }
+  end
+
+  def uniq
+    dup.uniq! { |x| x }
+  end
+
+  def uniq(&block)
+    dup.uniq!(&block)
   end
 
   def clear
@@ -533,31 +540,24 @@ class Array(T)
   end
 
   def sample(n)
-    if n < 0
-      raise ArgumentError.new("can't get negative count sample")
-    end
+    raise ArgumentError.new("can't get negative count sample") if n < 0
 
     case n
     when 0
-      return [] of T
+      [] of T
     when 1
-      return [sample] of T
+      [sample] of T
     else
-      if n >= @length
-        return dup.shuffle!
-      end
-
+      return dup.shuffle! if n >= @length
       ary = Array.new(n) { |i| @buffer[i] }
       buffer = ary.buffer
 
       n.upto(@length - 1) do |i|
         j = rand(i + 1)
-        if j <= n
-          buffer[j] = @buffer[i]
-        end
+        buffer[j] = @buffer[i] if j <= n
       end
-      ary.shuffle!
 
+      ary.shuffle!
       ary
     end
   end
@@ -576,8 +576,7 @@ class Array(T)
 
   # protected
 
-  def length=(length)
-    @length = length
+  def length=(@length)
   end
 
   # private
