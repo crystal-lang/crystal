@@ -338,4 +338,29 @@ module Crystal
       end
     end
   end
+
+  class FunType
+    def restrict(other : FunTypeSpec, owner, type_lookup, free_vars)
+      inputs = other.inputs
+      inputs_len = inputs ? inputs.length : 0
+      output = other.output
+
+      return nil if fun_types.length != inputs_len + 1
+
+      if inputs
+        inputs.zip(fun_types) do |input, my_input|
+          restricted = my_input.restrict(input, owner, type_lookup, free_vars)
+          return nil unless restricted == my_input
+        end
+      end
+
+      if output
+        my_output = fun_types.last
+        restricted = my_output.restrict(output, owner, type_lookup, free_vars)
+        return nil unless restricted == my_output
+      end
+
+      self
+    end
+  end
 end

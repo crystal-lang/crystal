@@ -121,4 +121,57 @@ describe "Type inference: fun" do
       f
     ") { fun_of(union_of(int32, char)) }
   end
+
+  it "has fun literal as restriction and works" do
+    assert_type("
+      def foo(x : Int32 -> Float64)
+        x.call(1)
+      end
+
+      foo ->(x : Int32) { x.to_f }
+      ") { float64 }
+  end
+
+  it "has fun literal as restriction and works when output not specified" do
+    assert_type("
+      def foo(x : Int32 -> )
+        x.call(1)
+      end
+
+      foo ->(x : Int32) { x.to_f }
+      ") { float64 }
+  end
+
+  it "has fun literal as restriction and errors if output is different" do
+    assert_error "
+      def foo(x : Int32 -> Float64)
+        x.call(1)
+      end
+
+      foo ->(x : Int32) { x }
+      ",
+      "no overload matches"
+  end
+
+  it "has fun literal as restriction and errors if input is different" do
+    assert_error "
+      def foo(x : Int32 -> Float64)
+        x.call(1)
+      end
+
+      foo ->(x : Int64) { x.to_f }
+      ",
+      "no overload matches"
+  end
+
+  it "has fun literal as restriction and errors if lengths is different" do
+    assert_error "
+      def foo(x : Int32 -> Float64)
+        x.call(1)
+      end
+
+      foo ->(x : Int32, y : Int32) { x.to_f }
+      ",
+      "no overload matches"
+  end
 end
