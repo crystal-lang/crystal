@@ -11,9 +11,12 @@ lib LibGC("gc")
   fun add_roots = GC_add_roots(low : Void*, high : Void*)
   fun enable = GC_enable
   fun disable = GC_disable
+end
 
-  fun pthread_create = GC_pthread_create(thread : PThread::Thread*, attr : Void*, start : Void* ->, arg : Void*)
-  fun pthread_join = GC_pthread_join(thread : PThread::Thread, value : Void**) : Int32
+# Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
+lib PThread
+  fun create = GC_pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*)
+  fun join = GC_pthread_join(thread : Thread, value : Void**) : Int32
 end
 
 fun __crystal_malloc(size : UInt32) : Void*
@@ -45,19 +48,3 @@ module GC
     LibGC.free(pointer)
   end
 end
-
-# Rewrite Thread creation and join using LibGC routines
-class Thread(T, R)
-  def initialize(arg : T, func : T -> R)
-    @func = func
-    @arg = arg
-    LibGC.pthread_create(out @th, nil, ->start(Void*), nil)
-  end
-
-  def join
-    LibGC.pthread_join(@th, out ret)
-    (ret as R*).value
-  end
-end
-
-
