@@ -1391,9 +1391,7 @@ module Crystal
       existing = existing_defs.first_value?
       if existing
         existing = existing as External
-        if existing.compatible_with?(a_def)
-          super
-        else
+        unless existing.compatible_with?(a_def)
           raise "fun redefinition with different signature (was #{existing})"
         end
       end
