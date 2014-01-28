@@ -116,4 +116,21 @@ describe "Type inference: lib" do
       ") { int32 }
   end
 
+  it "overrides definition of fun" do
+    result = assert_type("
+      lib C
+        fun foo(x : Int32) : Float64
+      end
+
+      lib C
+        fun foo = bar(x : Int32) : Float64
+      end
+
+      C.foo(1)
+      ") { float64 }
+    mod = result.program
+    lib_type = mod.types["C"] as LibType
+    foo = lib_type.lookup_first_def("foo", false) as External
+    foo.real_name.should eq("bar")
+  end
 end

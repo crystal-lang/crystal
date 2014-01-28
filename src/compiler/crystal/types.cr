@@ -1392,7 +1392,7 @@ module Crystal
       if existing
         existing = existing as External
         if existing.compatible_with?(a_def)
-          return
+          super
         else
           raise "fun redefinition with different signature (was #{existing})"
         end
