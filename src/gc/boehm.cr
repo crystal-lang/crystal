@@ -48,7 +48,7 @@ end
 
 # Rewrite Thread creation and join using LibGC routines
 class Thread(T, R)
-  def initialize(arg : T, func)
+  def initialize(arg : T, func : T -> R)
     @func = func
     @arg = arg
     LibGC.pthread_create(out @th, nil, ->start(Void*), nil)

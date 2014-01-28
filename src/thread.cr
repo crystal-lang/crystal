@@ -27,7 +27,7 @@ class Thread(T, R)
     Thread(Nil, R).new(nil, block)
   end
 
-  def initialize(arg : T, func)
+  def initialize(arg : T, func : T -> R)
     @func = func
     @arg = arg
     PThread.create(out @th, nil, ->start(Void*), nil)
