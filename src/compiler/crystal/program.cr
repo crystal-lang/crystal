@@ -215,11 +215,16 @@ module Crystal
         return Expressions.new(nodes)
       end
 
-      filename = "#{filename}.cr" unless filename.ends_with? ".cr"
       if relative_to.is_a?(String)
         relative_filename = "#{relative_to}/#{filename}"
-        if File.exists?(relative_filename)
-          return require_absolute relative_filename
+        relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
+
+        if File.exists?(relative_filename_cr)
+          return require_absolute relative_filename_cr
+        end
+
+        if Dir.exists?(relative_filename)
+          return require_absolute("#{relative_filename}/#{filename}.cr")
         end
       end
 
