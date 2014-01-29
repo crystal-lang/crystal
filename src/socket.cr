@@ -7,13 +7,21 @@ lib C
       addr : UInt32
       zero : Int64
     end
+
+    AF_INET = 2_u8
+
+    fun socket(domain : UInt8, t : Int32, protocol : Int32) : Int32
   else
     struct SockAddrIn
-      family : UInt8
+      family : UInt16
       port : Int16
       addr : UInt32
       zero : Int64
     end
+
+    AF_INET = 2_u16
+
+    fun socket(domain : UInt16, t : Int32, protocol : Int32) : Int32
   end
 
   struct HostEnt
@@ -24,8 +32,6 @@ lib C
     addrlist : UInt8**
   end
 
-
-  fun socket(domain : UInt8, t : Int32, protocol : Int32) : Int32
   fun htons(n : Int32) : Int16
   fun bind(fd : Int32, addr : SockAddrIn*, addr_len : Int32) : Int32
   fun listen(fd : Int32, backlog : Int32) : Int32
@@ -33,7 +39,6 @@ lib C
   fun connect(fd : Int32, addr : SockAddrIn*, addr_len : Int32) : Int32
   fun gethostbyname(name : UInt8*) : HostEnt*
 
-  AF_INET = 2_u8
   SOCK_STREAM = 1
 end
 
