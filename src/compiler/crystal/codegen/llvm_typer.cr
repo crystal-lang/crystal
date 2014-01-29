@@ -1,5 +1,5 @@
 require "../types"
-require "../llvm"
+require "llvm"
 
 module Crystal
   class LLVMTyper

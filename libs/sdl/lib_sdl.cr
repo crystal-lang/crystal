@@ -129,7 +129,7 @@ lib LibSDL("SDL")
   end
 
   fun init = SDL_Init(flags : UInt32) : Int32
-  fun get_error = SDL_GetError() : Char*
+  fun get_error = SDL_GetError() : UInt8*
   fun quit = SDL_Quit() : Void
   fun set_video_mode = SDL_SetVideoMode(width : Int32, height : Int32, bpp : Int32, flags : UInt32) : Surface*
   fun delay = SDL_Delay(ms : UInt32) : Void
@@ -141,84 +141,4 @@ lib LibSDL("SDL")
   fun show_cursor = SDL_ShowCursor(toggle : Int32) : Int32
   fun get_ticks = SDL_GetTicks : UInt32
   fun flip = SDL_Flip(screen : Surface*) : Int32
-end
-
-module SDL
-  def self.init(flags = LibSDL::INIT_EVERYTHING)
-    if LibSDL.init(flags) != 0
-      raise "Can't initialize SDL: #{error}"
-    end
-  end
-
-  def self.set_video_mode(width, height, bpp, flags)
-    surface = LibSDL.set_video_mode(width, height, bpp, flags)
-    if surface.nil?
-      raise "Can't set SDL video mode: #{error}"
-    end
-    Surface.new(surface, width, height, bpp)
-  end
-
-  def self.show_cursor
-    LibSDL.show_cursor LibSDL::ENABLE
-  end
-
-  def self.hide_cursor
-    LibSDL.show_cursor LibSDL::DISABLE
-  end
-
-  def self.error
-    String.new LibSDL.get_error
-  end
-
-  def self.ticks
-    LibSDL.get_ticks
-  end
-
-  def self.quit
-    LibSDL.quit
-  end
-
-  def self.poll_events
-    while LibSDL.poll_event(out event) == 1
-      yield event
-    end
-  end
-
-  class Surface
-    getter :surface
-    getter :width
-    getter :height
-    getter :bpp
-
-    def initialize(@surface, @width, @height, @bpp)
-    end
-
-    def lock
-      LibSDL.lock_surface @surface
-    end
-
-    def unlock
-      LibSDL.unlock_surface @surface
-    end
-
-    def update_rect(x, y, w, h)
-      LibSDL.update_rect @surface, x, y, w, h
-    end
-
-    def flip
-      LibSDL.flip @surface
-    end
-
-    def []=(offset, color)
-      (@surface.value.pixels as UInt32*)[offset] = color.to_u32
-    end
-
-    def []=(x, y, color)
-      self[y.to_i32 * @width + x.to_i32] = color
-    end
-
-    def offset(x, y)
-      x.to_i32 + (y.to_i32 * @width)
-    end
-  end
 end
