@@ -250,11 +250,6 @@ module Crystal
       node
     end
 
-    def transform(node : StaticArray)
-      node.name = node.name.transform self
-      node
-    end
-
     def transform(node : Arg)
       if default_value = node.default_value
         node.default_value = default_value.transform(self)

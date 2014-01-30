@@ -83,6 +83,10 @@ class String
   def symbol
     Crystal::SymbolLiteral.new self
   end
+
+  def static_array_of(size)
+    NewGenericClass.new(Ident.new(["StaticArray"], true), [Ident.new([self]), NumberLiteral.new(size, :i32)])
+  end
 end
 
 class Crystal::ASTNode
@@ -214,7 +218,7 @@ describe "Parser" do
   it_parses "def foo(var : Int, Float -> Double); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident] of ASTNode, "Double".ident))], nil)
   it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident] of ASTNode, "Double".ident))], nil)
   it_parses "def foo(var : (Int, Float) -> Double); end", Def.new("foo", [Arg.new("var", nil, FunTypeSpec.new(["Int".ident, "Float".ident] of ASTNode, "Double".ident))], nil)
-  it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", nil, StaticArray.new("Char".ident, 256))], nil)
+  it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", nil, "Char".static_array_of(256))], nil)
   it_parses "def foo(var : Foo+); end", Def.new("foo", [Arg.new("var", nil, Hierarchy.new("Foo".ident))], nil)
   it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".ident)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new] of ASTNode, nil, nil, 0)

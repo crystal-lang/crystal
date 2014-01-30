@@ -62,6 +62,12 @@ module Crystal
       @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", @value, LLVM::Int32, 4
       @pointer = @types["Pointer"] = PointerType.new self, self, "Pointer", value, ["T"]
 
+      @static_array = @types["StaticArray"] = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
+      @static_array.struct = true
+      @static_array.declare_instance_var("@buffer", Ident.new(["T"]))
+      @static_array.instance_vars_in_initialize = Set.new(["@buffer"])
+      @static_array.allocated = true
+
       @types["String"] = @string = NonGenericClassType.new self, self, "String", @reference
       @string.instance_vars_in_initialize = Set.new(["@length", "@c"])
       @string.allocated = true
@@ -351,6 +357,10 @@ module Crystal
 
     def pointer_of(type)
       @pointer.instantiate([type] of Type | ASTNode)
+    end
+
+    def static_array_of(type, num)
+      @static_array.instantiate([type, NumberLiteral.new(num, :i32)] of Type | ASTNode)
     end
 
     def new_temp_var

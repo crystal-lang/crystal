@@ -1297,26 +1297,6 @@ module Crystal
     end
   end
 
-  class StaticArray < ASTNode
-    property :name
-    property :size
-
-    def initialize(@name, @size)
-    end
-
-    def ==(other : self)
-      other.name == name && other.size == size
-    end
-
-    def accept_children(visitor)
-      @name.accept visitor
-    end
-
-    def clone_without_location
-      StaticArray.new(@name.clone, @size)
-    end
-  end
-
   class SelfType < ASTNode
     def ==(other : self)
       true

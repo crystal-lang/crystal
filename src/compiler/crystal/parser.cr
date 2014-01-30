@@ -2204,7 +2204,7 @@ module Crystal
           next_token_skip_space
           check :"]"
           next_token_skip_space
-          type = StaticArray.new(type, size)
+          type = make_static_array_type(type, size)
         when :"+"
           type = Hierarchy.new(type)
           next_token_skip_space
@@ -2223,6 +2223,10 @@ module Crystal
 
     def make_pointer_type(node)
       NewGenericClass.new(Ident.new(["Pointer"], true), [node] of ASTNode)
+    end
+
+    def make_static_array_type(type, size)
+      NewGenericClass.new(Ident.new(["StaticArray"], true), [type, NumberLiteral.new(size, :i32)] of ASTNode)
     end
 
     def parse_yield

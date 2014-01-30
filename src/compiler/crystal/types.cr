@@ -1313,6 +1313,38 @@ module Crystal
     end
   end
 
+  class StaticArrayType < GenericClassType
+    def instance_class
+      StaticArrayInstanceType
+    end
+  end
+
+  class StaticArrayInstanceType < GenericClassInstanceType
+    def var
+      type_vars["T"]
+    end
+
+    def size
+      type_vars["N"]
+    end
+
+    def allocated
+      true
+    end
+
+    def primitive_like?
+      var.type.primitive_like?
+    end
+
+    # def llvm_size
+    #   Crystal::Program::POINTER_SIZE
+    # end
+
+    def to_s
+      "#{var.type}[#{size}]"
+    end
+  end
+
   class IncludedGenericModule < Type
     include MatchesLookup
 

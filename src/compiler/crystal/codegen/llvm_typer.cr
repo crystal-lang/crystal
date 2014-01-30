@@ -54,6 +54,12 @@ module Crystal
       LLVM.pointer_type(pointed_type)
     end
 
+    def create_llvm_type(type : StaticArrayInstanceType)
+      pointed_type = llvm_embedded_type type.var.type
+      pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
+      LLVM.array_type(pointed_type, (type.size as NumberLiteral).value.to_i)
+    end
+
     def create_llvm_type(type : UnionType)
       LLVM.struct_type(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
