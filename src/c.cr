@@ -1,10 +1,16 @@
 lib C
+  ifdef darwin
+    alias ModeT = UInt16
+  elsif linux
+    alias ModeT = UInt32
+  end
+
   ifdef x86_64
-    alias ModeT = Int32
     alias SizeT = UInt64
+    alias TimeT = Int64
   else
-    alias ModeT = Int16
     alias SizeT = UInt32
+    alias TimeT = Int32
   end
 
   fun time(t : Int64) : Int64
