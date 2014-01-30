@@ -104,6 +104,19 @@ module Crystal
       end
     end
 
+    # Convert and to if:
+    #
+    # From:
+    #
+    #     a && b
+    #
+    # To:
+    #
+    #     if temp = a
+    #       b
+    #     else
+    #       temp
+    #     end
     def transform(node : And)
       left = node.left.transform(self)
       right = node.right.transform(self)
@@ -118,6 +131,19 @@ module Crystal
       new_node
     end
 
+    # Convert or to if
+    #
+    # From:
+    #
+    #     a || b
+    #
+    # To:
+    #
+    #     if temp = a
+    #       temp
+    #     else
+    #       b
+    #     end
     def transform(node : Or)
       left = node.left
       new_node = if left.is_a?(Var)
@@ -131,6 +157,17 @@ module Crystal
       new_node.transform(self)
     end
 
+    # Store regex in a constant and replace the regex by this constant
+    # (so we don't create an object each time).
+    #
+    # From:
+    #
+    #     /regex/
+    #
+    # To:
+    #
+    #     ::CONST = /regex/
+    #     CONST
     def transform(node : RegexLiteral)
       const_name = "#Regex_#{node.value}_#{node.modifiers}"
       unless program.types[const_name]?
@@ -141,6 +178,15 @@ module Crystal
       Ident.new([const_name], true)
     end
 
+    # Convert an interpolation to a concatenation with a StringBuilder:
+    #
+    # From:
+    #
+    #     "foo#{bar}baz"
+    #
+    # To:
+    #
+    #     (StringBuilder.new << "foo" << bar << "baz").to_s
     def transform(node : StringInterpolation)
       super
 
@@ -151,12 +197,52 @@ module Crystal
       Call.new(call, "to_s")
     end
 
+    # Transform a range literal into creating a Range object.
+    #
+    # From:
+    #
+    #    1 .. 3
+    #
+    # To:
+    #
+    #    Range.new(1, 3, true)
+    #
+    # From:
+    #
+    #    1 ... 3
+    #
+    # To:
+    #
+    #    Range.new(1, 3, false)
     def transform(node : RangeLiteral)
       super
 
       Call.new(Ident.new(["Range"], true), "new", [node.from, node.to, BoolLiteral.new(node.exclusive)])
     end
 
+    # Convert an array literal to creating an Array and storing the values:
+    #
+    # From:
+    #
+    #     [] of T
+    #
+    # To:
+    #
+    #     Array(T).new
+    #
+    # From:
+    #
+    #     [1, 2, 3]
+    #
+    # To:
+    #
+    #     ary = Array(typeof(1, 2, 3)).new(3)
+    #     ary.length = 3
+    #     buffer = ary.buffer
+    #     buffer[0] = 1
+    #     buffer[1] = 2
+    #     buffer[2] = 3
+    #     ary
     def transform(node : ArrayLiteral)
       super
 
@@ -216,6 +302,26 @@ module Crystal
       exps
     end
 
+    # Convert a HashLiteral into creating a Hash and assigning keys and values:
+    #
+    # From:
+    #
+    #     {} of K => V
+    #
+    # To:
+    #
+    #     Hash(K, V).new
+    #
+    # From:
+    #
+    #     {a => b, c => d}
+    #
+    # To:
+    #
+    #     hash = Hash(typeof(a, c), typeof(b, d)).new
+    #     hash[a] = b
+    #     hash[c] = d
+    #     hash
     def transform(node : HashLiteral)
       super
 
@@ -314,7 +420,18 @@ module Crystal
       node
     end
 
+    # Transform a multi assign into many assigns.
     def transform(node : MultiAssign)
+      # From:
+      #
+      #     a, b = 1
+      #
+      #
+      # To:
+      #
+      #     temp = 1
+      #     a = temp
+      #     b = temp
       if node.values.length == 1
         value = node.values[0]
 
@@ -332,10 +449,29 @@ module Crystal
           assigns << transform_multi_assign_target(target, call)
         end
         exps = Expressions.new(assigns)
+
+      # From:
+      #
+      #     a = 1, 2, 3
+      #
+      # To:
+      #
+      #     a = [1, 2, 3]
       elsif node.targets.length == 1
         target = node.targets.first
         array = ArrayLiteral.new(node.values)
         exps = transform_multi_assign_target(target, array)
+
+      # From:
+      #
+      #     a, b = c, d
+      #
+      # To:
+      #
+      #     temp1 = c
+      #     temp2 = d
+      #     a = temp1
+      #     b = temp2
       else
         temp_vars = node.values.map { new_temp_var }
 
@@ -540,6 +676,27 @@ module Crystal
     end
 
     def transform(node : Def)
+      # Expand a def with default arguments into many defs:
+      #
+      # From:
+      #
+      #   def foo(x, y = 1, z = 2)
+      #     ...
+      #   end
+      #
+      # To:
+      #
+      #   def foo(x)
+      #     foo(x, 1)
+      #   end
+      #
+      #   def foo(x, y)
+      #     foo(x, y, 2)
+      #   end
+      #
+      #   def foo(x, y, z)
+      #     ...
+      #   end
       if node.has_default_arguments?
         exps = [] of ASTNode
         node.expand_default_arguments.each do |exp|
@@ -600,6 +757,45 @@ module Crystal
       node
     end
 
+    # Convert a Case into a series of if ... elseif ... end:
+    #
+    # From:
+    #
+    #     case foo
+    #     when bar, baz
+    #       1
+    #     when bun
+    #       2
+    #     else
+    #       3
+    #     end
+    #
+    # To:
+    #
+    #     temp = foo
+    #     if bar === temp || baz === temp
+    #       1
+    #     elsif bun === temp
+    #       2
+    #     else
+    #       3
+    #     end
+    #
+    # But, when the "when" has a constant name, it's transformed to is_a?:
+    #
+    # From:
+    #
+    #     case foo
+    #     when Bar
+    #       1
+    #     end
+    #
+    # To:
+    #
+    #     temp = foo
+    #     if temp.is_a?(Bar)
+    #       1
+    #     end
     def transform(node : Case)
       node.cond = node.cond.transform(self)
 
@@ -757,10 +953,30 @@ module Crystal
       node
     end
 
+    # Convert unless to if:
+    #
+    # From:
+    #
+    #     unless foo
+    #       bar
+    #     else
+    #       baz
+    #     end
+    #
+    # To:
+    #
+    #     if foo
+    #       baz
+    #     else
+    #       bar
+    #     end
     def transform(node : Unless)
       If.new(node.cond, node.else, node.then).transform(self)
     end
 
+    # Evaluate the ifdef's flags.
+    # If they hold, keep the "then" part.
+    # If they don't, keep the "else" part.
     def transform(node : IfDef)
       cond_value = eval_flags(node.cond)
       if cond_value
@@ -828,6 +1044,8 @@ module Crystal
       node
     end
 
+    # Transform require to its source code.
+    # The source code can be a Nop if the file was already required.
     def transform(node : Require)
       location = node.location
       required = @program.require(node.string, location.try &.filename).not_nil!
