@@ -595,9 +595,17 @@ module Crystal
         raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.length} for 0)"
       end
 
+      # This creates:
+      #
+      #    x = allocate
+      #    GC.add_finalizer x
+      #    x
+      var = Var.new("x")
       alloc = Call.new(nil, "allocate")
+      assign = Assign.new(var, alloc)
+      call_gc = Call.new(Ident.new(["GC"], true), "add_finalizer", [var] of ASTNode)
 
-      match_def = Def.new("new", [] of Arg, [alloc] of ASTNode)
+      match_def = Def.new("new", [] of Arg, [alloc, assign, call_gc, var] of ASTNode)
       match = Match.new(scope, match_def, scope, arg_types)
 
       scope.add_def match_def
@@ -633,6 +641,11 @@ module Crystal
           end
         end
 
+        # This creates:
+        #
+        #    x = allocate
+        #    x.initialize ...
+        #    x
         var = Var.new("x")
         new_vars = Array(ASTNode).new(arg_types.length)
         arg_types.each_with_index do |dummy, i|
@@ -646,10 +659,13 @@ module Crystal
           new_args.push arg
         end
 
+        assign = Assign.new(var, alloc)
+        call_gc = Call.new(Ident.new(["GC"], true), "add_finalizer", [var] of ASTNode)
         init = Call.new(var, "initialize", new_vars)
 
         match_def = Def.new("new", new_args, [
-          Assign.new(var, alloc),
+          assign,
+          call_gc,
           init,
           var
         ])

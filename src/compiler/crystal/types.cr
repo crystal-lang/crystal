@@ -1384,6 +1384,10 @@ module Crystal
       @module.match_arg(arg_type, arg, owner, type_lookup, free_vars)
     end
 
+    def has_def?(name)
+      @module.has_def?(name)
+    end
+
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       if (names.length == 1) && (m = @mapping[names[0]]?)
         case m
@@ -1981,7 +1985,7 @@ module Crystal
 
   class Const < ContainedType
     getter name
-    getter value
+    property value
     getter scope_types
     getter scope
 

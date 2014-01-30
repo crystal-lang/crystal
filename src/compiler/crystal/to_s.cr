@@ -747,7 +747,7 @@ module Crystal
 
     def visit(node : Cast)
       node.obj.accept self
-      @str << "as"
+      @str << " as "
       node.to.accept self
       false
     end

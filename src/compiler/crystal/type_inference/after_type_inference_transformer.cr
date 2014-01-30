@@ -5,8 +5,15 @@ require "../transformer"
 module Crystal
   class Program
     def after_type_inference(node)
-      node = node.transform(AfterTypeInferenceTransformer.new(self))
+      transformer = AfterTypeInferenceTransformer.new(self)
+      node = node.transform(transformer)
       puts node if ENV["AFTER"] == "1"
+
+      # Make sure to transform regexes constants (see Normalizer#trnasform(Regex))
+      regexes.each do |const|
+        const.value = const.value.transform(transformer)
+      end
+
       node
     end
   end
@@ -37,14 +44,6 @@ module Crystal
     end
 
     def transform(node : Def)
-      node
-    end
-
-    def transform(node : ClassDef)
-      node
-    end
-
-    def transform(node : ModuleDef)
       node
     end
 

@@ -17,6 +17,7 @@ module Crystal
     getter symbols
     getter global_vars
     getter macros_cache
+    getter regexes
 
     def initialize
       super(self, self, "main")
@@ -24,6 +25,7 @@ module Crystal
       @unions = {} of Array(Int32) => Type
       @macros_cache = {} of MacroCacheKey => MacroExpander
       @funs = {} of Array(Int32) => Type
+      @regexes = [] of Const
 
       @types["Object"] = @object = NonGenericClassType.new self, self, "Object", nil
       @object.abstract = true
@@ -90,6 +92,9 @@ module Crystal
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
 
       @types["Math"] = @math = NonGenericModuleType.new self, self, "Math"
+
+      @types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
+      gc.metaclass.add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
 
       @symbols = Set(String).new
       @global_vars = {} of String => Var

@@ -11,6 +11,10 @@ lib LibGC("gc")
   fun add_roots = GC_add_roots(low : Void*, high : Void*)
   fun enable = GC_enable
   fun disable = GC_disable
+
+  type Finalizer : Void*, Void* ->
+  fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
+  fun invoke_finalizers = GC_invoke_finalizers : Int32
 end
 
 # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
@@ -46,5 +50,18 @@ module GC
 
   def self.free(pointer : Void*)
     LibGC.free(pointer)
+  end
+
+  def self.add_finalizer(object : T)
+    if object.responds_to?(:finalize)
+      LibGC.register_finalizer(Pointer(Void).new(object.object_id),
+        ->(obj : Void*, data : Void*) {
+          same_object = obj as T
+          if same_object.responds_to?(:finalize)
+            same_object.finalize
+          end
+        }, nil, nil, nil)
+      nil
+    end
   end
 end

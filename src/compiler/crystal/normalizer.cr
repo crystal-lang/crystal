@@ -172,7 +172,8 @@ module Crystal
       const_name = "#Regex_#{node.value}_#{node.modifiers}"
       unless program.types[const_name]?
         constructor = Call.new(Ident.new(["Regex"], true), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers, :i32)] of ASTNode)
-        program.types[const_name] = Const.new program, program, const_name, constructor, [program] of Type, program
+        program.types[const_name] = const = Const.new program, program, const_name, constructor, [program] of Type, program
+        @program.regexes << const
       end
 
       Ident.new([const_name], true)
@@ -750,6 +751,13 @@ module Crystal
         end
       end
 
+      node
+    end
+
+    def transform(node : FunLiteral)
+      pushing_vars do
+        node.def.body = node.def.body.transform(self)
+      end
       node
     end
 

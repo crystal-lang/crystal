@@ -28,4 +28,7 @@ module GC
   def self.free(pointer : Void*)
     C.free(pointer)
   end
+
+  def self.add_finalizer(object)
+  end
 end
