@@ -607,6 +607,8 @@ describe "Parser" do
   it_parses "foo as Bar", Cast.new("foo".call, "Bar".ident)
   it_parses "foo.bar as Bar", Cast.new(Call.new("foo".call, "bar"), "Bar".ident)
 
+  it_parses "typeof(1)", TypeOf.new([1.int32] of ASTNode)
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end") as Def
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))

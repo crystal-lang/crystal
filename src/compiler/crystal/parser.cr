@@ -674,6 +674,8 @@ module Crystal
           parse_alias
         when :pointerof
           parse_pointerof
+        when :typeof
+          parse_typeof
         else
           parse_var_or_call
         end

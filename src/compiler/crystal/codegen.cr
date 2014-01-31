@@ -857,6 +857,7 @@ module Crystal
     end
 
     def visit(node : TypeOf)
+      @last = int(node.type.type_id)
       false
     end
 
