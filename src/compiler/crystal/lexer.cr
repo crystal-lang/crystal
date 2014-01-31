@@ -8,7 +8,7 @@ struct Char
   end
 
   def ident_part?
-    ident_start? || digit?
+    ident_start? || digit? || self == '$'
   end
 
   def ident_part_or_end?
@@ -113,7 +113,7 @@ module Crystal
           when '-'
             here = String::Buffer.new(20)
             here_start = 0
-            
+
             while true
               case char = next_char
               when '\n'
@@ -859,11 +859,6 @@ module Crystal
       case current_char
       when '!', '?'
         next_char
-      when '$'
-        next_char
-        while current_char.digit?
-          next_char
-        end
       end
       @token.type = :IDENT
       @token.value = string_range(start)
