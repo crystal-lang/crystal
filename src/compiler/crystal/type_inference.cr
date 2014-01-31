@@ -292,7 +292,7 @@ module Crystal
       false
     end
 
-    def end_visit(node : TypeMerge)
+    def end_visit(node : TypeOf)
       node.bind_to node.expressions
     end
 
@@ -974,7 +974,7 @@ module Crystal
       node.bind_to var
     end
 
-    def end_visit(node : TypeMerge)
+    def end_visit(node : TypeOf)
       node.bind_to node.expressions
     end
 

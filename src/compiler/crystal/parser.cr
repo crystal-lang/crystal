@@ -2189,7 +2189,11 @@ module Crystal
         end
       end
 
-      type = parse_ident
+      if @token.keyword?(:typeof)
+        type = parse_typeof
+      else
+        type = parse_ident
+      end
 
       skip_space
 
@@ -2226,6 +2230,26 @@ module Crystal
       end
 
       types << type
+    end
+
+    def parse_typeof
+      next_token_skip_space
+      check :"("
+      next_token_skip_space_or_newline
+      if @token.type == :")"
+        raise "missing typeof argument"
+      end
+
+      exps = [] of ASTNode
+      while @token.type != :")"
+        exps << parse_op_assign
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        end
+      end
+      next_token_skip_space
+
+      type = TypeOf.new(exps)
     end
 
     def make_pointer_type(node)

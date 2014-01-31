@@ -1633,6 +1633,7 @@ module Crystal
     end
   end
 
+  # obj as to
   class Cast < ASTNode
     property :obj
     property :to
@@ -1653,6 +1654,27 @@ module Crystal
       Cast.new(@obj.clone, @to.clone)
     end
   end
+
+  # typeof(exp, exp, ...)
+  class TypeOf < ASTNode
+    property :expressions
+
+    def initialize(@expressions)
+    end
+
+    def accept_children(visitor)
+      @expressions.each { |e| e.accept visitor }
+    end
+
+    def ==(other : self)
+      other.expressions == expressions
+    end
+
+    def clone_without_location
+      TypeOf.new(@expressions.clone)
+    end
+  end
+
 
   # Ficticious node to represent primitives
   class Primitive < ASTNode
@@ -1680,26 +1702,6 @@ module Crystal
 
     def clone_without_location
       CastFunToReturnVoid.new(@node)
-    end
-  end
-
-  # Ficticious node that means: merge the type of the arguments
-  class TypeMerge < ASTNode
-    property :expressions
-
-    def initialize(@expressions)
-    end
-
-    def accept_children(visitor)
-      @expressions.each { |e| e.accept visitor }
-    end
-
-    def ==(other : self)
-      other.expressions == expressions
-    end
-
-    def clone_without_location
-      TypeMerge.new(@expressions.clone)
     end
   end
 

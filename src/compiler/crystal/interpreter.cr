@@ -254,7 +254,7 @@ module Crystal
       @value = MetaclassValue.new(node.type)
     end
 
-    def visit(node : TypeMerge)
+    def visit(node : TypeOf)
       types = [] of Type
       node.expressions.each do |exp|
         exp.accept self

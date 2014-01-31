@@ -856,7 +856,7 @@ module Crystal
       false
     end
 
-    def visit(node : TypeMerge)
+    def visit(node : TypeOf)
       false
     end
 

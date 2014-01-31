@@ -259,7 +259,7 @@ module Crystal
 
         type_var = node_of
       else
-        type_var = TypeMerge.new(node.elements)
+        type_var = TypeOf.new(node.elements)
       end
 
       length = node.elements.length
@@ -332,7 +332,7 @@ module Crystal
 
         type_vars = [node_of_key, node_of_value] of ASTNode
       else
-        type_vars = [TypeMerge.new(node.keys), TypeMerge.new(node.values)] of ASTNode
+        type_vars = [TypeOf.new(node.keys), TypeOf.new(node.values)] of ASTNode
       end
 
       constructor = Call.new(NewGenericClass.new(Ident.new(["Hash"], true), type_vars), "new")

@@ -726,7 +726,14 @@ module Crystal
           end
         when 'y'
           if next_char == 'p' && next_char == 'e'
-            return check_ident_or_keyword(:type, start)
+            if peek_next_char == 'o'
+              next_char
+              if next_char == 'f'
+                return check_ident_or_keyword(:typeof, start)
+              end
+            else
+              return check_ident_or_keyword(:type, start)
+            end
           end
         end
         scan_ident(start)

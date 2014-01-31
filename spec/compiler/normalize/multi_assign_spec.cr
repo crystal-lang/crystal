@@ -11,7 +11,7 @@ describe "Normalize: multi assign" do
   end
 
   it "normalizes n to 1" do
-    assert_normalize "a = 1, 2", "a = begin\n  #temp_1 = ::Array(<type_merge>(1, 2)).new(16)\n  #temp_1.length = 2\n  #temp_2 = #temp_1.buffer\n  #temp_2[0] = 1\n  #temp_2[1] = 2\n  #temp_1\nend"
+    assert_normalize "a = 1, 2", "a = begin\n  #temp_1 = ::Array(typeof(1, 2)).new(16)\n  #temp_1.length = 2\n  #temp_2 = #temp_1.buffer\n  #temp_2[0] = 1\n  #temp_2[1] = 2\n  #temp_1\nend"
   end
 
   it "normalizes n to n with []" do
@@ -23,7 +23,7 @@ describe "Normalize: multi assign" do
   end
 
   it "normalizes n to 1 with []" do
-    assert_normalize "a = 1; a[0] = 1, 2, 3","a = 1\na[0] = #temp_1 = ::Array(<type_merge>(1, 2, 3)).new(16)\n#temp_1.length = 3\n#temp_2 = #temp_1.buffer\n#temp_2[0] = 1\n#temp_2[1] = 2\n#temp_2[2] = 3\n#temp_1"
+    assert_normalize "a = 1; a[0] = 1, 2, 3","a = 1\na[0] = #temp_1 = ::Array(typeof(1, 2, 3)).new(16)\n#temp_1.length = 3\n#temp_2 = #temp_1.buffer\n#temp_2[0] = 1\n#temp_2[1] = 2\n#temp_2[2] = 3\n#temp_1"
   end
 
   it "normalizes n to n with call" do
@@ -35,6 +35,6 @@ describe "Normalize: multi assign" do
   end
 
   it "normalizes n to 1 with call" do
-    assert_normalize "a = 1; a.foo = 1, 2, 3","a = 1\na.foo = #temp_1 = ::Array(<type_merge>(1, 2, 3)).new(16)\n#temp_1.length = 3\n#temp_2 = #temp_1.buffer\n#temp_2[0] = 1\n#temp_2[1] = 2\n#temp_2[2] = 3\n#temp_1"
+    assert_normalize "a = 1; a.foo = 1, 2, 3","a = 1\na.foo = #temp_1 = ::Array(typeof(1, 2, 3)).new(16)\n#temp_1.length = 3\n#temp_2 = #temp_1.buffer\n#temp_2[0] = 1\n#temp_2[1] = 2\n#temp_2[2] = 3\n#temp_1"
   end
 end

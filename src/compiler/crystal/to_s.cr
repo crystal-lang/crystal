@@ -884,8 +884,8 @@ module Crystal
       @str << "<primitive>"
     end
 
-    def visit(node : TypeMerge)
-      @str << "<type_merge>("
+    def visit(node : TypeOf)
+      @str << "typeof("
       node.expressions.each_with_index do |exp, i|
         @str << ", " if i > 0
         exp.accept self

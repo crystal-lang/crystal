@@ -344,6 +344,7 @@ describe "Parser" do
   it_parses "Foo(T, 1)", NewGenericClass.new("Foo".ident, ["T".ident, NumberLiteral.new("1", :i32)] of ASTNode)
   it_parses "Foo(T, U, 1)", NewGenericClass.new("Foo".ident, ["T".ident, "U".ident, NumberLiteral.new("1", :i32)] of ASTNode)
   it_parses "Foo(T, 1, U)", NewGenericClass.new("Foo".ident, ["T".ident, NumberLiteral.new("1", :i32), "U".ident] of ASTNode)
+  it_parses "Foo(typeof(1))", NewGenericClass.new("Foo".ident, [TypeOf.new([1.int32] of ASTNode)] of ASTNode)
 
   it_parses "module Foo; end", ModuleDef.new("Foo".ident)
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".ident, [Def.new("foo", [] of Arg, nil)] of ASTNode)

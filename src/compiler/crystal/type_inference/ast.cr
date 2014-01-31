@@ -143,7 +143,7 @@ module Crystal
     end
   end
 
-  class TypeMerge
+  class TypeOf
     def map_type(type)
       type.metaclass
     end

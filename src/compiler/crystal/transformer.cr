@@ -435,7 +435,7 @@ module Crystal
       node
     end
 
-    def transform(node : TypeMerge)
+    def transform(node : TypeOf)
       node
     end
 
