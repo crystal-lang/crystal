@@ -266,7 +266,7 @@ module Crystal
       var_type = check_primitive_like node.type_spec
 
       type = current_type as LibType
-      type.add_var node.name, var_type
+      type.add_var node.name, var_type, (node.real_name || node.name)
     end
 
     def process_fun_def(node : FunDef)

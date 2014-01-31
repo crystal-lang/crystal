@@ -472,6 +472,7 @@ describe "Parser" do
   it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", nil, [FunDef.new("getch", [] of Arg, nil, false, nil, "GetChar")] of ASTNode)
   it_parses "lib C\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("C", nil, [ExternalVar.new("errno", "Int32".ident), ExternalVar.new("errno2", "Int32".ident)] of ASTNode)
   it_parses "lib C\n$errno : B, C -> D\nend", LibDef.new("C", nil, [ExternalVar.new("errno", FunTypeSpec.new(["B".ident, "C".ident] of ASTNode, "D".ident))] of ASTNode)
+  it_parses "lib C\n$errno = Foo : Int32\nend", LibDef.new("C", nil, [ExternalVar.new("errno", "Int32".ident, "Foo")] of ASTNode)
   it_parses "lib C\nalias Foo = Bar\nend", LibDef.new("C", nil, [Alias.new("Foo", "Bar".ident)] of ASTNode)
 
   it_parses "lib C\nifdef foo\ntype A : B\nend\nend", LibDef.new("C", nil, [IfDef.new("foo".var, TypeDef.new("A", "B".ident))] of ASTNode)

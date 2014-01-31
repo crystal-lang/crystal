@@ -1500,8 +1500,9 @@ module Crystal
   class ExternalVar < ASTNode
     property :name
     property :type_spec
+    property :real_name
 
-    def initialize(@name, @type_spec)
+    def initialize(@name, @type_spec, @real_name = nil)
     end
 
     def accept_children(visitor)
@@ -1509,11 +1510,11 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.type_spec == type_spec
+      other.name == name && other.type_spec == type_spec && real_name == other.real_name
     end
 
     def clone_without_location
-      ExternalVar.new(@name, @type_spec.clone)
+      ExternalVar.new(@name, @type_spec.clone, @real_name)
     end
   end
 

@@ -558,7 +558,7 @@ module Crystal
     end
 
     def codegen_primitive_external_var_set(node, target_def, call_args)
-      name = target_def.name[0 .. -2]
+      name = (target_def as External).real_name
       var = declare_lib_var name, node.type
       @last = call_args[0]
       @builder.store @last, var
@@ -566,7 +566,7 @@ module Crystal
     end
 
     def codegen_primitive_external_var_get(node, target_def, call_args)
-      name = target_def.name
+      name = (target_def as External).real_name
       var = declare_lib_var name, node.type
       @builder.load var
     end

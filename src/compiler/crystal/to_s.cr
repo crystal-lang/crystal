@@ -418,6 +418,17 @@ module Crystal
       false
     end
 
+    def visit(node : ExternalVar)
+      @str << node.name
+      if real_name = node.real_name
+        @str << " = "
+        @str << real_name
+      end
+      @str << " : "
+      node.type_spec.accept self
+      false
+    end
+
     def visit(node : Arg)
       # @str << "out " if node.out
       if node.name

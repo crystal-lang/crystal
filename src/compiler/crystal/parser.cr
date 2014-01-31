@@ -2369,11 +2369,17 @@ module Crystal
         when :GLOBAL
           name = @token.value.to_s[1 .. -1]
           next_token_skip_space_or_newline
+          if @token.type == :"="
+            next_token_skip_space
+            check [:IDENT, :CONST]
+            real_name = @token.value.to_s
+            next_token_skip_space
+          end
           check :":"
           next_token_skip_space_or_newline
           type = parse_single_type
           skip_statement_end
-          expressions << ExternalVar.new(name, type)
+          expressions << ExternalVar.new(name, type, real_name)
         else
           break
         end
