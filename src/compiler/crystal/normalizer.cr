@@ -1059,9 +1059,9 @@ module Crystal
       required = @program.require(node.string, location.try &.filename).not_nil!
       required.transform(self)
     rescue ex : Crystal::Exception
-      node.raise ex.message, ex
+      node.raise "while requiring \"#{node.string}\"", ex
     rescue ex
-      node.raise ex.message
+      node.raise "while requiring \"#{node.string}\": #{ex.message}"
     end
 
     def eval_flags(node)
