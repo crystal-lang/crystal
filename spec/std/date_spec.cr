@@ -12,3 +12,25 @@ describe "Date" do
     date.to_s.should eq("2014-01-31")
   end
 end
+
+
+describe "Date::Interval" do
+  it "initializes from an Int" do
+    Date::Interval.new(3)
+  end
+
+  it "can be compared with another Date::Interval" do
+    Date::Interval.new(3).should eq(Date::Interval.new(3))
+    (Date::Interval.new(2) < Date::Interval.new(3)).should be_true
+    (Date::Interval.new(3) > Date::Interval.new(2)).should be_true
+  end
+
+  it "can be gotten from Int#days" do
+    3.days.should eq(Date::Interval.new(3))
+  end
+
+  it "can be added to another Date::Interval" do
+    (3.days + 4.days).should eq(Date::Interval.new(7))
+  end
+
+end
