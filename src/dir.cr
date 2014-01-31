@@ -7,7 +7,7 @@ lib C
       reclen : UInt16
       type : UInt8
       namelen : UInt8
-      name : UInt8
+      name : UInt8[1024]
     end
   elsif linux
    struct DirEntry
@@ -15,7 +15,7 @@ lib C
       d_off : Int64
       reclen : UInt16
       type : UInt8
-      name : UInt8
+      name : UInt8[256]
     end
   end
 
@@ -59,7 +59,7 @@ class Dir
 
     begin
       while ent = C.readdir(dir)
-        yield String.new(pointerof(ent->name)), ent.value.type
+        yield String.new((ent->name).buffer), ent.value.type
       end
     ensure
       C.closedir(dir)
