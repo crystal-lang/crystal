@@ -14,6 +14,14 @@ struct Float
   def round
     (self + 0.5).to_i32
   end
+
+  def to_timet
+    ifdef x86_64
+      to_i64
+    else
+      to_i32
+    end
+  end
 end
 
 struct Float32
