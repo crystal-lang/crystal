@@ -1440,12 +1440,10 @@ module Crystal
     end
 
     def add_var(name, type, real_name)
-      setter = External.new("#{name}=", [Arg.new_with_type("value", type)], Primitive.new(:external_var_set, type))
-      setter.real_name = real_name
+      setter = External.new("#{name}=", [Arg.new_with_type("value", type)], Primitive.new(:external_var_set, type), real_name)
       setter.set_type(type)
 
-      getter = External.new("#{name}", ([] of Arg), Primitive.new(:external_var_get, type))
-      getter.real_name = real_name
+      getter = External.new("#{name}", ([] of Arg), Primitive.new(:external_var_get, type), real_name)
       getter.set_type(type)
 
       add_def setter

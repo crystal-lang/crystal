@@ -1524,8 +1524,8 @@ module Crystal
     property! :fun_def
     property :dead
 
-    def initialize(name : String, args : Array(Arg), body = nil, receiver = nil, block_arg = nil, yields = -1, @real_name : String)
-      super(name, args, body, receiver, block_arg, yields)
+    def initialize(name : String, args : Array(Arg), body, @real_name : String)
+      super(name, args, body, nil, nil, nil)
     end
 
     def mangled_name(obj_type)
@@ -1544,7 +1544,7 @@ module Crystal
     end
 
     def self.for_fun(name, real_name, args, return_type, varargs, body, fun_def)
-      external = External.new(name, args, body, nil, nil, nil, real_name)
+      external = External.new(name, args, body, real_name)
       external.varargs = varargs
       external.set_type(return_type)
       external.fun_def = fun_def
