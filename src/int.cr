@@ -83,10 +83,10 @@ struct Int
   end
 
   def to_modet
-    ifdef x86_64
-      to_i32
-    else
-      to_i16
+    ifdef darwin
+      to_u16
+    elsif linux
+      to_u32
     end
   end
 
@@ -95,6 +95,14 @@ struct Int
       to_u64
     else
       to_u32
+    end
+  end
+
+  def to_timet
+    ifdef x86_64
+      to_i64
+    else
+      to_i32
     end
   end
 end
