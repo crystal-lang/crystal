@@ -38,7 +38,7 @@ end
 
 ifdef linux
   lib Librt("rt")
-    fun clock_gettime(clk_id : Int32, tp : TimeSpec*)
+    fun clock_gettime(clk_id : Int32, tp : C::TimeSpec*)
   end
 end
 
@@ -49,7 +49,7 @@ class Time
       @seconds = tp.tv_sec + tp.tv_usec / 1e6
     elsif linux
       Librt.clock_gettime(0, out ts)
-      @seconds = time.tv_sec + time.tv_nsec / 1e9
+      @seconds = ts.tv_sec + ts.tv_nsec / 1e9
     end
   end
 
