@@ -1,4 +1,4 @@
-class Date
+struct Date
   def initialize(@year, @month, @day, @calendar = Date::Calendar::DEFAULT)
   end
 
@@ -8,7 +8,7 @@ class Date
 end
 
 
-class Date::Calendar
+struct Date::Calendar
   DEFAULT = nil
 end
 
