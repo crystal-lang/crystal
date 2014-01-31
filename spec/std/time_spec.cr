@@ -9,8 +9,7 @@ describe "Time" do
 
   it "initializes from year, month, ..." do
     time = Time.new(2007, 11, 1, 15, 25, 1)
-    time.to_i.should eq(1193927101)
-    time.to_f.should eq(1193927101.0)
+    time.utc.strftime("%F %T").should eq("2007-11-01 14:25:01")
   end
 
   it "initializes from float" do
@@ -48,14 +47,7 @@ describe "Time" do
   it "converts from local time to utc" do
     time = Time.at(1391172409)
     time.to_i.should eq(1391172409)
-    time.strftime("%Y-%m-%d %H:%M").should eq("2014-01-31 13:46")
-    time.utc
-    time.strftime("%Y-%m-%d %H:%M").should eq("2014-01-31 12:46")
+    time.utc.to_s.should eq("2014-01-31 12:46:49 UTC")
     time.to_i.should eq(1391172409)
-  end
-
-  it "formats time to a string" do
-    time = Time.at(1391094476)
-    time.strftime("%Y-%m-%d %H:%M").should eq("2014-01-30 16:07")
   end
 end
