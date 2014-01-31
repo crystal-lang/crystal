@@ -11,6 +11,11 @@ describe "Date" do
     date = Date.new(2014, 1, 31)
     date.to_s.should eq("2014-01-31")
   end
+
+  it "can get the Julian day number" do
+    date = Date.new(2014, 1, 31)
+    date.jdn.should eq(2456689)
+  end
 end
 
 
