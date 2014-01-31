@@ -1423,11 +1423,13 @@ module Crystal
         name ||= "" # TODO: this is to satisfy the compiler, fix
       end
 
+      found_default_value = false
+
       case @token.type
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          block_arg = parse_arg(args, ivar_assigns, true)
+          block_arg = parse_arg(args, ivar_assigns, true, pointerof(found_default_value))
           if block_arg
             if inputs = block_arg.type_spec.inputs
               @yields = inputs.length
@@ -1441,7 +1443,7 @@ module Crystal
         next_token_skip_statement_end
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg = parse_arg(args, ivar_assigns, false)
+          block_arg = parse_arg(args, ivar_assigns, false, pointerof(found_default_value))
           if block_arg
             if inputs = block_arg.type_spec.inputs
               @yields = inputs.length
@@ -1481,19 +1483,19 @@ module Crystal
       node
     end
 
-    def parse_arg(args, ivar_assigns, parenthesis = false)
+    def parse_arg(args, ivar_assigns, parenthesis, found_default_value_ptr)
       if @token.type == :"&"
         next_token_skip_space_or_newline
         return parse_block_arg
       end
 
+      arg_location = @token.location
+
       case @token.type
       when :IDENT
         arg_name = @token.value.to_s
-        arg_location = @token.location
       when :INSTANCE_VAR
         arg_name = @token.value.to_s[1 .. -1]
-        arg_location = @token.location
         ivar = InstanceVar.new(@token.value.to_s)
         ivar.location = arg_location
         var = Var.new(arg_name)
@@ -1522,7 +1524,12 @@ module Crystal
       if @token.type == :"="
         next_token_skip_space_or_newline
         default_value = parse_expression
+        found_default_value_ptr.value = true
         skip_space
+      else
+        if found_default_value_ptr.value
+          raise "argument must have a default value", arg_location
+        end
       end
 
       if @token.type == :":"

@@ -610,4 +610,9 @@ describe "Parser" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end") as Def
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
   end
+
+  it "errors if arg doesn't have a default value after a previous one has one" do
+    assert_syntax_error "def foo(x = 1, y); end",
+      "argument must have a default value"
+  end
 end
