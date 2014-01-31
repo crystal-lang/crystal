@@ -2,6 +2,12 @@ struct Date
   def initialize(@year, @month, @day, @calendar = Date::Calendar::DEFAULT)
   end
 
+  include Comparable
+
+  def <=>(other : Date)
+    self.jdn <=> other.jdn
+  end
+
   # Returns the Julian Day Number (JDN) as an Int.
   def jdn
     # Algorithm from http://en.wikipedia.org/wiki/Julian_day#Converting_Julian_or_Gregorian_calendar_date_to_Julian_Day_Number
