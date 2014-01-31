@@ -9,7 +9,7 @@ describe "Time" do
 
   it "initializes from year, month, ..." do
     time = Time.new(2007, 11, 1, 15, 25, 1)
-    time.utc.strftime("%F %T").should eq("2007-11-01 14:25:01")
+    time.strftime("%F %T").should eq("2007-11-01 15:25:01")
   end
 
   it "initializes from float" do
