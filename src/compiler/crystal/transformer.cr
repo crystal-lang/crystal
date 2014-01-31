@@ -436,6 +436,7 @@ module Crystal
     end
 
     def transform(node : TypeOf)
+      transform_many node.expressions
       node
     end
 
