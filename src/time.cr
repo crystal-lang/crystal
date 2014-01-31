@@ -71,10 +71,6 @@ class Time
     @seconds = time.tv_sec + time.tv_nsec / 1e9
   end
 
-#  def initialize(time : C::Tm)
-#    @seconds = C.mktime(time).to_f64
-#  end
-
   def -(other : Number)
     Time.at(to_f - other)
   end
