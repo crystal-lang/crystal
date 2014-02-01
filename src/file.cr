@@ -164,13 +164,13 @@ class File
       if part
         lindex = 0
         while lindex < part.length
-          break if part[lindex] != '/'
+          break if part[lindex] != SEPARATOR
           lindex += 1
         end
 
         rindex = part.length - 1
         while rindex >= 0
-          break if part[rindex] != '/'
+          break if part[rindex] != SEPARATOR
           rindex -= 1
         end
 
