@@ -92,7 +92,7 @@ class Exception
     end
     bt = bt.join("\n")
     if @message
-      "#{@message}:\n#{bt}"
+      "#{@message}\n#{bt}"
     else
       bt
     end
