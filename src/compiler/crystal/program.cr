@@ -287,7 +287,7 @@ module Crystal
     end
 
     def require_from_crystal_path(filename, relative_to)
-      @crystal_path.each do |path|
+      crystal_path.each do |path|
         required = self.require_relative_to_dir(filename, path, false)
         return required if required
       end
@@ -297,6 +297,10 @@ module Crystal
       else
         raise "can't find require file '#{filename}'"
       end
+    end
+
+    def crystal_path
+      @crystal_path.empty? ? ["./src"] : @crystal_path
     end
 
     def library_names
