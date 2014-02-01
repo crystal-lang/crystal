@@ -148,10 +148,6 @@ module Crystal
             next_token_skip_statement_end
             exp = parse_op_assign
             atomic = While.new(exp, atomic, true)
-          when :rescue
-            next_token_skip_space
-            rescue_body = parse_expression
-            atomic = ExceptionHandler.new(atomic, [Rescue.new(rescue_body)] of Rescue)
           else
             break
           end
@@ -174,6 +170,13 @@ module Crystal
         case @token.type
         when :SPACE
           next_token
+        when :IDENT
+          if @token.value == :rescue
+            next_token_skip_space
+            rescue_body = parse_expression
+            atomic = ExceptionHandler.new(atomic, [Rescue.new(rescue_body)] of Rescue)
+          end
+          break
         when :"="
           if atomic.is_a?(Call) && atomic.name == "[]"
             next_token_skip_space_or_newline
