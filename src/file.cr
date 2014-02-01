@@ -1,3 +1,5 @@
+require "file/stat"
+
 lib C
   type File : Void*
 
@@ -8,10 +10,15 @@ lib C
   fun fflush(file : File) : Int32
   fun fread(buffer : UInt8*, size : C::SizeT, nitems : C::SizeT, file : File) : Int32
   fun access(filename : UInt8*, how : Int32) : Int32
+  fun fileno(file : File) : Int32
   fun realpath(path : UInt8*, resolved_path : UInt8*) : UInt8*
   fun unlink(filename : UInt8*) : UInt8*
   fun popen(command : UInt8*, mode : UInt8*) : File
   fun pclose(stream : File) : Int32
+
+  fun stat(path : UInt8*, stat : Stat*) : Int32
+  fun lstat(path : UInt8*, stat : Stat *) : Int32
+  fun fstat(fileno : Int32, stat : Stat*) : Int32
 
   ifdef x86_64
     fun fseeko(file : File, offset : Int64, whence : Int32) : Int32
@@ -64,11 +71,30 @@ class File
   end
 
   def seek(offset, origin)
-    C.fseeko @file, offset.to_i64, origin
+    C.fseeko(@file, offset.to_i64, origin)
   end
 
   def tell
-    C.ftello @file
+    C.ftello(@file)
+  end
+
+  def fileno
+    C.fileno(@file)
+  end
+
+  def stat
+    C.fstat(fileno, out stat)
+    Stat.new(stat)
+  end
+
+  def self.stat(path)
+    C.stat(path, out stat)
+    Stat.new(stat)
+  end
+
+  def self.lstat(path)
+    C.lstat(path, out stat)
+    Stat.new(stat)
   end
 
   def self.exists?(filename)

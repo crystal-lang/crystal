@@ -7,8 +7,10 @@ lib C
 
   ifdef x86_64
     alias SizeT = UInt64
+    alias TimeT = Int64
   else
     alias SizeT = UInt32
+    alias TimeT = Int32
   end
 
   fun time(t : Int64) : Int64

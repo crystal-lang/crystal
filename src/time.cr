@@ -1,42 +1,40 @@
-# lib C
-#   struct Tm
-#     sec : Int32
-#     min : Int32
-#     hour : Int32
-#     mday : Int32
-#     mon : Int32
-#     year : Int32
-#     wday : Int32
-#     yday : Int32
-#     isdst : Int32
-#     gmtoff : Int32
-#     zone : Char*
-#   end
-
-#   fun mktime(broken_time : Tm*) : Int64
-# end
-
-ifdef darwin
-  lib C
-    struct TimeVal
-      tv_sec : Int64
-      tv_usec : Int32
-    end
-
-    struct TimeZone
-      tz_minuteswest : Int32
-      tz_dsttime : Int32
-    end
-
-    fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int32
+lib C
+  struct Tm
+    tm_sec    : Int32
+    tm_min    : Int32
+    tm_hour   : Int32
+    tm_mday   : Int32
+    tm_mon    : Int32
+    tm_year   : Int32
+    tm_wday   : Int32
+    tm_yday   : Int32
+    tm_isdst  : Int32
+    tm_gmtoff : Int64
+    tm_zone   : UInt8*
   end
-elsif linux
+
+  struct TimeSpec
+    tv_sec  : C::TimeT
+    tv_nsec : C::TimeT
+  end
+
+  struct TimeVal
+    tv_sec  : C::TimeT
+    tv_usec : Int32
+  end
+
+  struct TimeZone
+    tz_minuteswest : Int32
+    tz_dsttime     : Int32
+  end
+
+  fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int32
+#   fun mktime(broken_time : Tm*) : Int64
+end
+
+ifdef linux
   lib Librt("rt")
-    struct TimeSpec
-      tv_sec : C::SizeT
-      tv_nsec : C::SizeT
-    end
-    fun clock_gettime(clk_id : Int32, tp : TimeSpec*)
+    fun clock_gettime(clk_id : Int32, tp : C::TimeSpec*)
   end
 end
 
