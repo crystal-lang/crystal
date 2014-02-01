@@ -66,10 +66,8 @@ class Dir
     end
   end
 
-  def self.exists?(dirname)
-    return false unless (dir = C.opendir(dirname))
-    C.closedir(dir)
-    true
+  def self.exists?(path)
+    File.stat(path).directory?
   end
 
   def self.mkdir(path, mode)
