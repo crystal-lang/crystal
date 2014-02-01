@@ -81,6 +81,12 @@ end
 
 class File
   class Stat
+    def initialize(filename : String)
+      if C.stat(filename, out @stat) != 0
+        raise Errno.new("Unable to get stat for '#{filename}'")
+      end
+    end
+
     def initialize(@stat : C::Stat)
     end
 

@@ -67,7 +67,10 @@ class Dir
   end
 
   def self.exists?(path)
-    File.stat(path).directory?
+    if C.stat(path, out stat) != 0
+      return false
+    end
+    File::Stat.new(stat).directory?
   end
 
   def self.mkdir(path, mode)

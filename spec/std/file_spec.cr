@@ -88,4 +88,12 @@ describe "File" do
       stat.file?.should be_true
     end
   end
+
+  it "gets stat for non-existent file and raises" do
+    begin
+      File.stat("non-existent")
+      fail "expected Errno to be raised"
+    rescue Errno
+    end
+  end
 end

@@ -83,17 +83,23 @@ class File
   end
 
   def stat
-    C.fstat(fileno, out stat)
+    if C.fstat(fileno, out stat) != 0
+      raise Errno.new("Unable to get stat")
+    end
     Stat.new(stat)
   end
 
   def self.stat(path)
-    C.stat(path, out stat)
-    Stat.new(stat)
+    if C.stat(path, out stat) != 0
+      raise Errno.new("Unable to get stat for '#{path}'")
+    end
+    Stat.new(path)
   end
 
   def self.lstat(path)
-    C.lstat(path, out stat)
+    if C.lstat(path, out stat) != 0
+      raise Errno.new("Unable to get lstat for '#{path}'")
+    end
     Stat.new(stat)
   end
 
