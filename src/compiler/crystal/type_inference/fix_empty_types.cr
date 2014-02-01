@@ -12,7 +12,7 @@ module Crystal
   class FixEmptyTypesVisitor < Visitor
     def initialize(mod)
       @mod = mod
-      @fixed = Set(UInt64).new
+      @fixed = Set(typeof(object_id)).new
     end
 
     def visit(node : ASTNode)

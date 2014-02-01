@@ -40,7 +40,7 @@ module Crystal
 
   class AfterTypeInferenceTransformer < Transformer
     def initialize(@program)
-      @transformed = Set(UInt64).new
+      @transformed = Set(typeof(object_id)).new
     end
 
     def transform(node : Def)

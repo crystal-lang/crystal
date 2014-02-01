@@ -184,7 +184,7 @@ module Crystal
     def find_owner_trace(node, owner)
       owner_trace = [] of ASTNode
 
-      visited = Set(UInt64).new
+      visited = Set(typeof(object_id)).new
       visited.add node.object_id
       while deps = node.dependencies?
         dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
