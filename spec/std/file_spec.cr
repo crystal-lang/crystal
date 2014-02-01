@@ -54,4 +54,38 @@ describe "File" do
     File.join(["foo", "//bar//", "baz///"]).should eq("foo/bar/baz/")
     File.join(["/foo/", "/bar/", nil, "/baz/"]).should eq("/foo/bar/baz/")
   end
+
+  it "gets stat for this file" do
+    stat = File.stat(__FILE__)
+    stat.blockdev?.should be_false
+    stat.chardev?.should be_false
+    stat.directory?.should be_false
+    stat.file?.should be_true
+  end
+
+  it "gets stat for this directory" do
+    stat = File.stat(__DIR__)
+    stat.blockdev?.should be_false
+    stat.chardev?.should be_false
+    stat.directory?.should be_true
+    stat.file?.should be_false
+  end
+
+  it "gets stat for a character device" do
+    stat = File.stat("/dev/null")
+    stat.blockdev?.should be_false
+    stat.chardev?.should be_true
+    stat.directory?.should be_false
+    stat.file?.should be_false
+  end
+
+  it "gets stat for open file" do
+    File.open(__FILE__, "r") do |file|
+      stat = file.stat
+      stat.blockdev?.should be_false
+      stat.chardev?.should be_false
+      stat.directory?.should be_false
+      stat.file?.should be_true
+    end
+  end
 end

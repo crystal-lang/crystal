@@ -97,6 +97,14 @@ struct Int
       to_u32
     end
   end
+
+  def to_timet
+    ifdef x86_64
+      to_i64
+    else
+      to_i32
+    end
+  end
 end
 
 struct Int8
