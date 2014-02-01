@@ -43,6 +43,21 @@ describe "Code gen: fun" do
     )).to_i.should eq(1)
   end
 
+  it "call fun pointer of instance method that raises" do
+    run(%(
+      require "prelude"
+      class Foo
+        def coco
+          raise "foo"
+        end
+      end
+
+      foo = Foo.new
+      f = ->foo.coco
+      f.call rescue 1
+    )).to_i.should eq(1)
+  end
+
   it "codegens fun with another var" do
     run("
       def foo(x)
