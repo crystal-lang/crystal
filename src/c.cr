@@ -1,9 +1,13 @@
 lib C
+  ifdef darwin
+    alias ModeT = UInt16
+  elsif linux
+    alias ModeT = UInt32
+  end
+
   ifdef x86_64
-    alias ModeT = Int32
     alias SizeT = UInt64
   else
-    alias ModeT = Int16
     alias SizeT = UInt32
   end
 
