@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+SCRIPT_PATH=`dirname $(readlink $0 || echo $0)`
+DEPS_DIR="$SCRIPT_PATH/../deps"
+ICR_BIN="$DEPS_DIR/icr"
+
+# Build icr if it's not where we expect it.
+if [ ! -x "$ICR_BIN" ]; then
+  echo "Building icr - this will take just a while."
+  "$SCRIPT_PATH/crystal" "$SCRIPT_PATH/../src/compiler/icr.cr" -o "$DEPS_DIR/icr"
+fi
+
+# Make sure Crystal knows where to find its libraries.
+export CRYSTAL_PATH="$SCRIPT_PATH/../src:libs"
+"$ICR_BIN" "$@"
