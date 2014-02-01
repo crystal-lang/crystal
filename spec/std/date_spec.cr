@@ -7,6 +7,11 @@ describe "Date" do
     date = Date.new(2014, 1, 31)
   end
 
+  it "can be created for a given Julian Day Number" do
+    date = Date.for_jdn(2456689)
+    date.jdn.should eq(2456689)
+  end
+
   it "prints in yyyy-mm-dd format" do
     date = Date.new(2014, 1, 31)
     date.to_s.should eq("2014-01-31")
@@ -26,6 +31,11 @@ describe "Date" do
     (date1 >= date2).should be_true
     (date1 < date3).should be_true
     (date1 > date3).should be_false
+  end
+
+  it "can be added to a Date::Interval" do
+    date = Date.new(2014, 1, 31)
+    (date + 3.days).should eq(Date.new(2014, 2, 3))
   end
 end
 
