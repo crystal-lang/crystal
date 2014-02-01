@@ -6,8 +6,8 @@ module LLVM
     LibLLVM.initialize_x86_target
     LibLLVM.initialize_x86_target_mc
     LibLLVM.initialize_x86_asm_printer
-    LibLLVM.link_in_jit
-    # LibLLVM.link_in_mc_jit
+    # LibLLVM.link_in_jit
+    LibLLVM.link_in_mc_jit
   end
 
   def self.dump(value)

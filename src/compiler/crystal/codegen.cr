@@ -34,7 +34,7 @@ module Crystal
       engine.run_function llvm_mod.functions[MAIN_NAME], [argc, argv]
     end
 
-    def build(node, single_module = false, llvm_mod = LLVM::Module.new("main"))
+    def build(node, single_module = false, llvm_mod = LLVM::Module.new("main_module"))
       visitor = CodeGenVisitor.new(self, node, llvm_mod, single_module)
       begin
         node.accept visitor

@@ -25,16 +25,14 @@ describe "Code gen: fun" do
     ").to_i.should eq(3)
   end
 
-  pending "call fun pointer of instance method" do
-    run("
-      require "prelude"
+  it "call fun pointer of instance method" do
+    run(%(
       class Foo
         def initialize
           @x = 1
         end
 
         def coco
-          puts "Hola"
           @x
         end
       end
@@ -42,7 +40,7 @@ describe "Code gen: fun" do
       foo = Foo.new
       f = ->foo.coco
       f.call
-    ").to_i.should eq(1)
+    )).to_i.should eq(1)
   end
 
   it "codegens fun with another var" do
