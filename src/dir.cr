@@ -48,7 +48,7 @@ end
 class Dir
   def self.working_directory
     dir = C.getcwd(nil, 0)
-    String.new(dir)
+    String.new_and_free(dir)
   end
 
   def self.list(dirname)

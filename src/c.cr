@@ -15,6 +15,7 @@ lib C
 
   fun time(t : Int64) : Int64
   fun sleep(seconds : UInt32) : UInt32
+  fun free(ptr : Void*)
 end
 
 def exit(status = 0)

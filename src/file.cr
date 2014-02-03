@@ -157,8 +157,7 @@ class File
       raise Errno.new("Error expanding path '#{filename}'")
     end
 
-    length = C.strlen(str)
-    String.new(str, length)
+    String.new_and_free(str)
   end
 
   def self.open(filename, mode)

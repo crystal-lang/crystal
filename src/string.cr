@@ -35,6 +35,12 @@ class String
     str as String
   end
 
+  def self.new_and_free(chars : UInt8*)
+    str = new(chars, C.strlen(chars))
+    C.free(chars as Void*)
+    str
+  end
+
   def self.new_with_capacity(capacity)
     str = Pointer(UInt8).malloc(capacity + 9)
     buffer = (str as String).cstr
