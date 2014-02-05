@@ -83,11 +83,7 @@ loop do
             nodes = program.infer_type nodes
             if nodes.type?
               program.load_libs
-              llvm_mod = program.build(nodes, true)[""]
-              engine = LLVM::JITCompiler.new(llvm_mod)
-              argc = LibLLVM.create_generic_value_of_int(LLVM::Int32, 0_u64, 1)
-              argv = LibLLVM.create_generic_value_of_pointer(nil)
-              result = engine.run_function llvm_mod.functions[Crystal::MAIN_NAME], [argc, argv]
+              result = program.evaluate(nodes)
               puts "=> #{result.to_string}"
             else
               puts "=> nil"
