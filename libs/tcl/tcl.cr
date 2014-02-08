@@ -24,6 +24,10 @@ module Tcl
     def create_obj(value : Bool)
       BoolObj.new(self, LibTcl.new_boolean_obj(Tcl.bool_to_i(value)))
     end
+
+    def create_obj(value : Array(T))
+      ListObj.new(self, LibTcl.new_list_obj(0, nil))
+    end
   end
 
   class BoolObj
@@ -67,6 +71,27 @@ module Tcl
     def value=(v : Int)
       LibTcl.set_int_obj(lib_obj, v)
       self
+    end
+  end
+
+  class ListObj
+    getter :interpreter
+    getter :lib_obj
+
+    def initialize(interpreter, lib_obj)
+      @interpreter = interpreter
+      @lib_obj = lib_obj
+    end
+
+    def length
+      res = 0
+      status = LibTcl.list_obj_length(interpreter.lib_interp, lib_obj, out res)
+      raise "ERROR Tcl_ListObjLength" unless status == LibTcl::OK
+      res
+    end
+
+    def size
+      length
     end
   end
 end

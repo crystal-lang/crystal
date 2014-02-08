@@ -40,4 +40,12 @@ describe "Interpreter" do
     v.value = false
     v.value.should eq(false)
   end
+
+  it "should create empty list" do
+    i = create_interp
+    v = i.create_obj [] of Int32
+
+    v.is_a?(Tcl::ListObj).should be_true
+    v.length.should eq(0)
+  end
 end
