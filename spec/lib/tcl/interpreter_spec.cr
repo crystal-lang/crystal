@@ -25,4 +25,19 @@ describe "Interpreter" do
     v.value = 35
     v.value.should eq(35)
   end
+
+  it "should create boolean" do
+    i = create_interp
+    v = i.create_obj true
+
+    v.is_a?(Tcl::BoolObj).should be_true
+    v.value.should eq(true)
+  end
+
+  it "should update boolean value" do
+    i = create_interp
+    v = i.create_obj true
+    v.value = false
+    v.value.should eq(false)
+  end
 end

@@ -6,6 +6,10 @@ module Tcl
     "#{major}.#{minor} (patch level: #{patch_level})"
   end
 
+  def self.bool_to_i(value)
+    value ? 1 : 0
+  end
+
   class Interpreter
     getter :lib_interp
 
@@ -15,6 +19,32 @@ module Tcl
 
     def create_obj(value : Int)
       IntObj.new(self, LibTcl.new_int_obj(value))
+    end
+
+    def create_obj(value : Bool)
+      BoolObj.new(self, LibTcl.new_boolean_obj(Tcl.bool_to_i(value)))
+    end
+  end
+
+  class BoolObj
+    getter :interpreter
+    getter :lib_obj
+
+    def initialize(interpreter, lib_obj)
+      @interpreter = interpreter
+      @lib_obj = lib_obj
+    end
+
+    def value
+      res = 0
+      status = LibTcl.get_boolean_from_obj(interpreter.lib_interp, lib_obj, out res)
+      raise "ERROR Tcl_GetBooleanFromObj" unless status == LibTcl::OK
+      res != 0
+    end
+
+    def value=(v : Bool)
+      LibTcl.set_boolean_obj(lib_obj, Tcl.bool_to_i(v))
+      self
     end
   end
 
