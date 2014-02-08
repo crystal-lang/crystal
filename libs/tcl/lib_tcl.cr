@@ -25,10 +25,8 @@ lib LibTcl("tcl")
   fun set_int_obj = Tcl_SetIntObj(objPtr : Obj*, intValue : Int32)
   fun get_int_from_obj = Tcl_GetIntFromObj(interp : Interp*, objPtr : Obj*, intPtr : Int32*) : Int32
 
-  #   int
-  # Tcl_ListObjAppendList(interp, listPtr, elemListPtr)
-  # int
-  # Tcl_ListObjAppendElement(interp, listPtr, objPtr)
+  # fun list_obj_append_list = Tcl_ListObjAppendList(interp : Interp*, listPtr : Obj*, elemListPtr : Obj*) : Int32
+  fun list_obj_append_element = Tcl_ListObjAppendElement(interp : Interp*, listPtr : Obj*, objPtr : Obj*) : Int32
   fun new_list_obj = Tcl_NewListObj(objc : Int32, objv : Obj**) : Obj*
   # Tcl_SetListObj(objPtr, objc, objv)
   # int
@@ -36,7 +34,7 @@ lib LibTcl("tcl")
   # int
   fun list_obj_length = Tcl_ListObjLength(interp : Interp*, listPtr : Obj*, intPtr : Int32*) : Int32
   # int
-  # Tcl_ListObjIndex(interp, listPtr, index, objPtrPtr)
+  fun list_obj_index = Tcl_ListObjIndex(interp : Interp*, listPtr : Obj*, index : Int32, objPtrPtr : Obj**) : Int32
   # int
   # Tcl_ListObjReplace(interp, listPtr, first, count, objc, objv)
 end
