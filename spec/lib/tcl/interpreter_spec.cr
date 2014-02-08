@@ -41,6 +41,21 @@ describe "Interpreter" do
     v.value.should eq(false)
   end
 
+  it "should create strings" do
+    i = create_interp
+    v = i.create_obj "lorem"
+
+    v.is_a?(Tcl::StringObj).should be_true
+    v.value.should eq("lorem")
+  end
+
+  it "should update string value" do
+    i = create_interp
+    v = i.create_obj "lorem"
+    v.value = "ipsum"
+    v.value.should eq("ipsum")
+  end
+
   it "should create empty list" do
     i = create_interp
     v = i.create_obj [] of Int32
@@ -72,10 +87,31 @@ describe "Interpreter" do
     v[1].value.should eq(4)
   end
 
+  it "should get element by index with mixed types" do
+    i = create_interp
+    v = i.create_obj [3,"foo",false]
+    v[0].is_a?(Tcl::IntObj).should be_true
+    v[1].is_a?(Tcl::StringObj).should be_true
+    v[2].is_a?(Tcl::BoolObj).should be_true
+    v[0].value.should eq(3)
+    v[1].value.should eq("foo")
+    v[2].value.should eq(false)
+  end
+
   it "should convert to tcl object" do
     i = create_interp
     42.to_tcl(i).value.should eq(42)
     true.to_tcl(i).value.should be_true
     false.to_tcl(i).value.should be_false
+    "foo".to_tcl(i).value.should eq("foo")
+  end
+
+  def tcl_type(i, v)
+    Tcl.type_name(v.to_tcl(i).lib_obj)
+  end
+
+  it "should keep ObjType" do
+    i = create_interp
+    tcl_type(i, 35).should eq(tcl_type(i, 23))
   end
 end

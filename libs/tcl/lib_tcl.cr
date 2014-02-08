@@ -5,6 +5,7 @@ lib LibTcl("tcl")
   end
 
   struct ObjType
+    name : UInt8*
   end
 
   struct Obj
@@ -25,6 +26,13 @@ lib LibTcl("tcl")
   fun set_int_obj = Tcl_SetIntObj(objPtr : Obj*, intValue : Int32)
   fun get_int_from_obj = Tcl_GetIntFromObj(interp : Interp*, objPtr : Obj*, intPtr : Int32*) : Int32
 
+  fun new_string_obj = Tcl_NewStringObj(bytes : UInt8*, length : Int32) : Obj*
+  fun set_string_obj = Tcl_SetStringObj(objPtr : Obj*, bytes : UInt8*, length : Int32)
+  fun get_string_from_obj = Tcl_GetStringFromObj(interp : Interp*, objPtr : Obj*, lengthPtr : Int32*) : UInt8*
+  fun get_string = Tcl_GetString(objPtr : Obj*) : UInt8*
+  # Tcl_StringObjAppend(interp, objPtr, bytes, length)
+  # Tcl_StringObjAppendObj(interp, objPtr, srcPtr)
+
   # fun list_obj_append_list = Tcl_ListObjAppendList(interp : Interp*, listPtr : Obj*, elemListPtr : Obj*) : Int32
   fun list_obj_append_element = Tcl_ListObjAppendElement(interp : Interp*, listPtr : Obj*, objPtr : Obj*) : Int32
   fun new_list_obj = Tcl_NewListObj(objc : Int32, objv : Obj**) : Obj*
@@ -37,4 +45,7 @@ lib LibTcl("tcl")
   fun list_obj_index = Tcl_ListObjIndex(interp : Interp*, listPtr : Obj*, index : Int32, objPtrPtr : Obj**) : Int32
   # int
   # Tcl_ListObjReplace(interp, listPtr, first, count, objc, objv)
+
+  fun append_all_obj_types = Tcl_AppendAllObjTypes(interp : Interp*, obj : Obj*) : Int32
+
 end
