@@ -11,15 +11,22 @@ module Tcl
   end
 
   def self.type_name(obj : Pointer(LibTcl::Obj))
-    # String.new(obj.value.typePtr.value.name)
-    obj.value.typePtr.address
+    # FAQ: Pointer is not == nil but .address == 0
+    if obj != nil && obj.value.typePtr.address != 0
+      String.new(obj.value.typePtr.value.name)
+    else
+      "error"
+    end
   end
 
   class Interpreter
     getter :lib_interp
+    getter :types
 
     def initialize
       @lib_interp = LibTcl.create_interp
+      @types = {} of Int => String
+      refresh_types
     end
 
     def create_obj(value : Int)
@@ -47,6 +54,26 @@ module Tcl
         status = LibTcl.append_all_obj_types(lib_interp, res.lib_obj)
         raise "ERROR Tcl_AppendAllObjTypes" unless status == LibTcl::OK
       end
+    end
+
+    def refresh_types
+      self.all_obj_types.raw_each do |obj|
+        name = obj.to_tcl_s
+        type = LibTcl.get_obj_type(name)
+        @types[type.address.to_i] = name
+      end
+    end
+
+    def raw_result
+      Obj.new(self, LibTcl.get_obj_result(lib_interp))
+    end
+
+    # def result
+    # end
+
+    def eval(s)
+      status = LibTcl.eval_ex(lib_interp, s, s.length, LibTcl::EVAL_DIRECT)
+      raise "ERROR Tcl_EvalEx '#{s}'" unless status == LibTcl::OK
     end
   end
 
@@ -142,6 +169,13 @@ module Tcl
       Obj.concrete_new(interpreter, res)
     end
 
+    # get element as Tcl::Obj without concrete subclass
+    def raw_at(index : Int)
+      status = LibTcl.list_obj_index(interpreter.lib_interp, lib_obj, index, out res)
+      raise "ERROR Tcl_ListObjIndex" unless status == LibTcl::OK
+      Obj.new(interpreter, res)
+    end
+
     def [](index : Int)
       at(index)
     end
@@ -153,6 +187,13 @@ module Tcl
     def push(value : Obj)
       status = LibTcl.list_obj_append_element(interpreter.lib_interp, lib_obj, value.lib_obj)
       raise "ERROR Tcl_ListObjLength" unless status == LibTcl::OK
+    end
+
+    def raw_each
+      length.times do |i|
+        yield raw_at(i)
+      end
+      self
     end
   end
 end

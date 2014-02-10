@@ -1,6 +1,11 @@
 lib LibTcl("tcl")
   OK = 0x00_u32
 
+  NO_EVAL = 0x10000_u32
+  EVAL_GLOBAL = 0x20000_u32
+  EVAL_DIRECT = 0x40000_u32
+  EVAL_INVOKE = 0x80000_u32
+
   struct Interp
   end
 
@@ -17,6 +22,8 @@ lib LibTcl("tcl")
 
   fun get_version = Tcl_GetVersion(major : Int32*, minor : Int32*, patch_level : Int32*, type : Int32*)
   fun create_interp = Tcl_CreateInterp() : Interp*
+
+  fun get_obj_type = Tcl_GetObjType(typeName : UInt8*) : ObjType*
 
   fun new_boolean_obj = Tcl_NewBooleanObj(boolValue : Int32) : Obj*
   fun set_boolean_obj = Tcl_SetBooleanObj(objPtr : Obj*, boolValue : Int32)
@@ -47,5 +54,8 @@ lib LibTcl("tcl")
   # Tcl_ListObjReplace(interp, listPtr, first, count, objc, objv)
 
   fun append_all_obj_types = Tcl_AppendAllObjTypes(interp : Interp*, obj : Obj*) : Int32
+
+  fun get_obj_result = Tcl_GetObjResult(interp : Interp*) : Obj*
+  fun eval_ex = Tcl_EvalEx(interp : Interp*, script : UInt8*, numBytes : Int32, flags : UInt32) : Int32
 
 end
