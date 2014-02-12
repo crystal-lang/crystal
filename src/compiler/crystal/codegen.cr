@@ -1671,21 +1671,26 @@ module Crystal
           new_vars["%scope"] = LLVMVar.new(@last, node_scope.type)
         end
 
-        if block.args
-          block.args.each_with_index do |arg, i|
-            exp = node.exps[i]?
-            if exp
-              exp_type = exp.type
-              exp.accept self
-            else
-              exp_type = @mod.nil
-              @last = llvm_nil
-            end
+        # First accept all yield expressions
+        node.exps.each_with_index do |exp, i|
+          exp.accept self
 
+          arg = block.args[i]?
+          if arg
             copy = alloca llvm_type(arg.type), "block_#{arg.name}"
-            codegen_assign copy, arg.type, exp_type, @last
+            codegen_assign copy, arg.type, exp.type, @last
             new_vars[arg.name] = LLVMVar.new(copy, arg.type)
           end
+        end
+
+        # Then assign nil to remaining block args
+        node.exps.length.upto(block.args.length - 1) do |i|
+          arg = block.args[i]
+          @last = llvm_nil
+
+          copy = alloca llvm_type(arg.type), "block_#{arg.name}"
+          codegen_assign copy, arg.type, @mod.nil, @last
+          new_vars[arg.name] = LLVMVar.new(copy, arg.type)
         end
 
         with_cloned_context(block_context) do |old|

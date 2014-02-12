@@ -930,4 +930,16 @@ describe "Code gen: block" do
       bar {}
       ")
   end
+
+  it "executes yield expression if no arg is given for block" do
+    run("
+      def foo
+        a = 1
+        yield (a = 2)
+        a
+      end
+
+      foo { }
+      ").to_i.should eq(2)
+  end
  end
