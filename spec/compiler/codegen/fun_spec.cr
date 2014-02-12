@@ -92,4 +92,32 @@ describe "Code gen: fun" do
       f.call(1).to_i
       ").to_i.should eq(2)
   end
+
+  it "makes sure that fun pointer is transformed after type inference" do
+    run("
+      require \"prelude\"
+
+      class B
+        def initialize(@x)
+        end
+        def x
+          @x
+        end
+      end
+
+      class A
+        def on_something
+          B.new(1)
+        end
+      end
+
+      def _on_(p : A*)
+        p.value.on_something.x
+      end
+
+      c = ->_on_(A*)
+      a = A.new
+      c.call(pointerof(a))
+      ").to_i.should eq(1)
+  end
 end

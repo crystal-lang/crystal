@@ -164,6 +164,12 @@ module Crystal
       node
     end
 
+    def transform(node : FunPointer)
+      super
+      node.call?.try &.transform(self)
+      node
+    end
+
     def untyped_expression
       @untyped_expression ||= begin
         call = Call.new(nil, "raise", [StringLiteral.new("untyped expression")] of ASTNode, nil, nil, true)
