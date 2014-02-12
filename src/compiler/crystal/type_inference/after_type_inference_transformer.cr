@@ -83,15 +83,28 @@ module Crystal
     def transform(node : Assign)
       super
 
-      if node.value.type?.try &.no_return?
-        rebind_node node, node.value
-        return node.value
+      # We don't want to transform constant assignments into no return
+      unless node.target.is_a?(Ident)
+        if node.value.type?.try &.no_return?
+          rebind_node node, node.value
+          return node.value
+        end
       end
 
       node
     end
 
     def transform(node : Call)
+      if target_macro = node.target_macro
+        node.target_macro = target_macro.transform self
+        return node
+      end
+
+      obj = node.obj
+      if (obj && (!obj.type? || !obj.type.allocated)) || node.args.any? { |arg| !arg.type? || !arg.type.allocated }
+        return untyped_expression
+      end
+
       super
 
       node.args.each do |arg|
@@ -140,11 +153,34 @@ module Crystal
             exps.push obj
           end
           node.args.each { |arg| exps.push arg }
-          return Expressions.from exps
+          call_exps = Expressions.from exps
+          call_exps.set_type(exps.last.type?) if exps.length > 0
+          return call_exps
         end
       end
 
       # check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
+
+      node
+    end
+
+    def untyped_expression
+      @untyped_expression ||= begin
+        call = Call.new(nil, "raise", [StringLiteral.new("untyped expression")] of ASTNode, nil, nil, true)
+        call.accept TypeVisitor.new(@program)
+        call
+      end
+    end
+
+    def transform(node : Yield)
+      super
+
+      no_return_index = node.exps.index &.no_returns?
+      if no_return_index
+        exps = Expressions.new(node.exps[0, no_return_index + 1])
+        exps.bind_to(exps.expressions.last)
+        return exps
+      end
 
       node
     end
@@ -166,17 +202,22 @@ module Crystal
     # end
 
     def transform(node : If)
-      super
+      node.cond = node.cond.transform(self)
 
       if node.cond.true_literal?
+        node.then = node.then.transform(self)
         rebind_node node, node.then
         return node.then
       end
 
       if node.cond.false_literal?
+        node.else = node.else.transform(self)
         rebind_node node, node.else
         return node.else
       end
+
+      node.then = node.then.transform(self)
+      node.else = node.else.transform(self)
 
       node_cond = node.cond
 

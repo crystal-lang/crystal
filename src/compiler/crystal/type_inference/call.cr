@@ -436,7 +436,9 @@ module Crystal
 
       if fun_conversions
         fun_conversions.each do |i|
-          self.args[i] = CastFunToReturnVoid.new(self.args[i])
+          void = CastFunToReturnVoid.new(self.args[i])
+          void.set_type(mod.void)
+          self.args[i] = void
         end
       end
     end

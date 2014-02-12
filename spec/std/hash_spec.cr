@@ -233,4 +233,16 @@ describe "Hash" do
     h.key_index(3).should eq(1)
     h.key_index(2).should be_nil
   end
+
+  class Breaker
+    getter x
+    def initialize(@x)
+    end
+  end
+
+  it "fetches from empty hash with default value" do
+    x = {} of Int32 => Breaker
+    breaker = x.fetch(10) { Breaker.new(1) }
+    breaker.x.should eq(1)
+  end
 end

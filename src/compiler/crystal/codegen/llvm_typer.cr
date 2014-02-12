@@ -143,7 +143,14 @@ module Crystal
           element_types.push LLVM::Int32 # For the type id
         end
 
-        ivars.each { |name, ivar| element_types.push llvm_embedded_type(ivar.type) }
+        ivars.each do |name, ivar|
+          if ivar_type = ivar.type?
+            element_types.push llvm_embedded_type(ivar_type)
+          else
+            # This is for untyped fields: we don't really care how to represent them in memory.
+            element_types.push LLVM::Int8
+          end
+        end
         element_types
       end
     end
