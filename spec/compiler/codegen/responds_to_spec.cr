@@ -18,15 +18,15 @@ describe "Codegen: responds_to?" do
     run("(1 == 1 ? 1 : 'a').responds_to?(:\"foo\")").to_b.should be_false
   end
 
-  it "codegens is_a? with nilable gives true" do
+  it "codegens responds_to? with nilable gives true" do
     run("struct Nil; def foo; end; end; (1 == 1 ? nil : Reference.new).responds_to?(:foo)").to_b.should be_true
   end
 
-  it "codegens is_a? with nilable gives false becuase other type 1" do
+  it "codegens responds_to? with nilable gives false becuase other type 1" do
     run("(1 == 1 ? nil : Reference.new).responds_to?(:foo)").to_b.should be_false
   end
 
-  it "codegens is_a? with nilable gives false becuase other type 2" do
+  it "codegens responds_to? with nilable gives false becuase other type 2" do
     run("class Reference; def foo; end; end; (1 == 2 ? nil : Reference.new).responds_to?(:foo)").to_b.should be_true
   end
 end
