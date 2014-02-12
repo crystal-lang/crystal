@@ -12,7 +12,7 @@ lib C
   fun access(filename : UInt8*, how : Int32) : Int32
   fun fileno(file : File) : Int32
   fun realpath(path : UInt8*, resolved_path : UInt8*) : UInt8*
-  fun unlink(filename : UInt8*) : UInt8*
+  fun unlink(filename : UInt8*) : Int32
   fun popen(command : UInt8*, mode : UInt8*) : File
   fun pclose(stream : File) : Int32
 
