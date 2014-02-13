@@ -136,10 +136,8 @@ module Crystal
   end
 
   class PointerOf
-    property! mod
-
     def map_type(type)
-      mod.pointer_of(type)
+      type.try &.program.pointer_of(type)
     end
   end
 
@@ -170,8 +168,6 @@ module Crystal
   end
 
   class FunLiteral
-    property! mod
-
     def update(from = nil)
       return unless self.def.args.all? &.type?
       return unless self.def.body.type?
@@ -179,7 +175,7 @@ module Crystal
       types = self.def.args.map(&.type)
       types.push self.def.body.type
 
-      self.type = mod.fun_of(types)
+      self.type = self.def.body.type.program.fun_of(types)
     end
   end
 

@@ -366,7 +366,6 @@ module Crystal
         arg.type
       end
 
-      node.mod = @mod
       node.bind_to node.def.body
 
       node.def.bind_to node.def.body
@@ -956,7 +955,6 @@ module Crystal
     end
 
     def visit(node : PointerOf)
-      node.mod = @mod
       node_exp = node.exp
       var = case node_exp
             when Var
