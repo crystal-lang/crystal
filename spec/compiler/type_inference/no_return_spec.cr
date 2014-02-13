@@ -40,24 +40,4 @@ describe "Type inference: NoReturn" do
       foo.foo
     ") { int32 }
   end
-
-  # it "errors if calling method on no return" do
-  #   assert_error %(require "prelude"; exit.foo),
-  #     "undefined method 'foo' for NoReturn"
-  # end
-
-  it "errors if one argument is no return" do
-    assert_error "
-      lib C
-        fun exit : NoReturn
-      end
-
-      def foo(x)
-        1
-      end
-
-      foo(C.exit)
-      ",
-        "can't call 'foo' with an argument that never returns"
-  end
 end

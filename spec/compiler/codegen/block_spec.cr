@@ -441,7 +441,7 @@ describe "Code gen: block" do
     ").to_i.should eq(20)
   end
 
-  pending "doesn't codegen call if arg yields and always breaks" do
+  it "doesn't codegen call if arg yields and always breaks" do
     run("
       require \"nil\"
 
@@ -487,7 +487,7 @@ describe "Code gen: block" do
     ").to_i.should eq(2)
   end
 
-  pending "codegens call with block with call with arg that yields" do
+  it "codegens call with block with call with arg that yields" do
     run("
       def bar
         yield

@@ -100,6 +100,8 @@ module Crystal
         return node
       end
 
+      # Check if we have an untyped expression in this call, or an expression
+      # whose' type was never allocated. Replace it with raise.
       obj = node.obj
       if (obj && (!obj.type? || !obj.type.allocated)) || node.args.any? { |arg| !arg.type? || !arg.type.allocated }
         return untyped_expression
@@ -107,10 +109,25 @@ module Crystal
 
       super
 
-      node.args.each do |arg|
-        if arg.type?.try &.no_return?
-          arg.raise "can't call '#{node.name}' with an argument that never returns"
+      # If the block doesn't have a type, it's a no-return.
+      if (block = node.block) && !block.type?
+        block.type = @program.no_return
+      end
+
+      # If any expression is no-return, replace the call with its expressions up to
+      # the one that no returns.
+      if (obj.try &.type?.try &.no_return?) || node.args.any? &.type?.try &.no_return?
+        call_exps = [] of ASTNode
+        call_exps << obj if obj
+        unless obj.try &.type?.try &.no_return?
+          node.args.each do |arg|
+            call_exps << arg
+            break if arg.type?.try &.no_return?
+          end
         end
+        exps = Expressions.new(call_exps)
+        exps.set_type(call_exps.last.type?) unless call_exps.empty?
+        return exps
       end
 
       if target_defs = node.target_defs
@@ -154,7 +171,7 @@ module Crystal
           end
           node.args.each { |arg| exps.push arg }
           call_exps = Expressions.from exps
-          call_exps.set_type(exps.last.type?) if exps.length > 0
+          call_exps.set_type(exps.last.type?) unless exps.empty?
           return call_exps
         end
       end
@@ -181,6 +198,8 @@ module Crystal
     def transform(node : Yield)
       super
 
+      # If the yield has a no-return expression, the yield never happens:
+      # replace it with a series of expressions up to the one that no-returns.
       no_return_index = node.exps.index &.no_returns?
       if no_return_index
         exps = Expressions.new(node.exps[0, no_return_index + 1])

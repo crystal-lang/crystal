@@ -767,7 +767,9 @@ module Crystal
 
     def end_visit(node : Next)
       if block = @block
-        unless node.exps.empty?
+        if node.exps.empty?
+          block.type = @mod.nil
+        else
           block.bind_to node.exps.first
         end
       elsif @while_stack.empty?

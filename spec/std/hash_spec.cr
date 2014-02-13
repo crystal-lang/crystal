@@ -240,9 +240,17 @@ describe "Hash" do
     end
   end
 
+  class NeverInstantiated
+  end
+
   it "fetches from empty hash with default value" do
     x = {} of Int32 => Breaker
     breaker = x.fetch(10) { Breaker.new(1) }
     breaker.x.should eq(1)
+  end
+
+  it "does to to_s with instance that was never instantiated" do
+    x = {} of Int32 => NeverInstantiated
+    x.to_s.should eq("{}")
   end
 end
