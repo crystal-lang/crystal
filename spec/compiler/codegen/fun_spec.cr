@@ -120,4 +120,27 @@ describe "Code gen: fun" do
       c.call(pointerof(a))
       ").to_i.should eq(1)
   end
+
+  it "binds function pointer to associated call" do
+    run("
+      class A
+        def initialize(@e : Int32)
+        end
+
+        def on_something
+          @e
+        end
+      end
+
+      def _on_(p : A*)
+        p.value.on_something
+      end
+
+      c = ->_on_(A*)
+      a = A.new(12)
+      a.on_something
+
+      c.call(pointerof(a))
+      ").to_i.should eq(12)
+  end
 end

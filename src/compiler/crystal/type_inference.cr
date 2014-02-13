@@ -387,11 +387,10 @@ module Crystal
       call = Call.new(obj, node.name)
       prepare_call(call)
 
-      arg_types = node.args.map { |arg| arg.accept(self); arg.type.instance_type }
-
-      call.args = [] of ASTNode
-      arg_types.each_with_index do |arg_type, i|
-        call.args << Var.new("arg#{i}", arg_type)
+      call.args = Array(ASTNode).new(node.args.length)
+      node.args.each_with_index do |arg, i|
+        arg.accept(self)
+        call.args << Var.new("arg#{i}", arg.type.instance_type)
       end
 
       begin
@@ -400,10 +399,9 @@ module Crystal
         node.raise "error instantiating #{node}", ex
       end
 
-      arg_types.push call.type
-
-      node.type = mod.fun_of(arg_types)
       node.call = call
+      node.bind_to call
+
       false
     end
 

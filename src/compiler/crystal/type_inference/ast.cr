@@ -326,6 +326,15 @@ module Crystal
 
   class FunPointer
     property! :call
+
+    def map_type(type)
+      return nil unless call.type?
+
+      arg_types = call.args.map &.type
+      arg_types.push call.type
+
+      call.type.program.fun_of(arg_types)
+    end
   end
 
   class IsA
