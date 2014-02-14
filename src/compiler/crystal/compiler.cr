@@ -29,6 +29,7 @@ module Crystal
       @dump_ll = false
       @no_build = false
       @print_types = false
+      @print_hierarchy = false
       @run = false
       @stats = false
       @release = false
@@ -51,6 +52,9 @@ module Crystal
         end
         opts.on("-e 'command'", "one line script. Omit [programfile]") do |command|
           @command = command
+        end
+        opts.on("--hierarchy", "Prints types hierarchy") do
+          @print_hierarchy = true
         end
         opts.on("-ll", "Dump ll to standard output") do
           @dump_ll = true
@@ -151,6 +155,7 @@ module Crystal
         end
 
         print_types node if @print_types
+        print_hierarchy program if @print_hierarchy
         exit if @no_build
 
         llvm_modules = timing("Codegen (crystal)") do

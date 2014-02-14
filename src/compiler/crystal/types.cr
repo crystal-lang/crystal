@@ -1163,7 +1163,7 @@ module Crystal
     end
 
     def type_desc
-      "generic class"
+      struct? ? "generic struct" : "generic class"
     end
 
     def to_s
@@ -1285,6 +1285,10 @@ module Crystal
     def pointer?
       true
     end
+
+    def type_desc
+      "generic struct"
+    end
   end
 
   class PointerInstanceType < GenericClassInstanceType
@@ -1310,6 +1314,10 @@ module Crystal
 
     def to_s
       "#{var.type}*"
+    end
+
+    def type_desc
+      "struct"
     end
   end
 

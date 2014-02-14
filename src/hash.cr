@@ -149,6 +149,18 @@ class Hash(K, V)
     self
   end
 
+  def each_key
+    each do |key, value|
+      yield key
+    end
+  end
+
+  def each_value
+    each do |key, value|
+      yield value
+    end
+  end
+
   def each_with_index
     i = 0
     each do |key, value|
