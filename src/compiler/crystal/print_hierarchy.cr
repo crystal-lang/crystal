@@ -52,7 +52,7 @@ module Crystal
       print_type type
     end
 
-    def print_type(type : NonGenericClassType | GenericClassInstanceType)
+    def print_type_name(type)
       print_indent
       print "+" unless @indents.empty?
       print "- "
@@ -60,24 +60,13 @@ module Crystal
       print " "
       print type
       puts
+    end
+
+    def print_type(type : NonGenericClassType | GenericClassInstanceType)
+      print_type_name type
 
       subtypes = type.subclasses.select { |sub| must_print?(sub) }
-
-      type.instance_vars.each_value do |ivar|
-        print_indent
-        print (@indents.last ? "|" : " ")
-        if subtypes.empty?
-          print "      "
-        else
-          print "  .   "
-        end
-        print "\e[0;37m"
-        print ivar.name
-        print " : "
-        print ivar.type
-        print "\e[1;37m"
-        puts
-      end
+      print_instance_vars type, !subtypes.empty?
 
       with_indent do
         print_subtypes subtypes.select { |t| !t.is_a?(GenericClassInstanceType) }
@@ -89,12 +78,8 @@ module Crystal
     end
 
     def print_type(type : GenericClassType)
-      print_indent
-      print "+" unless @indents.empty?
-      print "- "
-      print type.type_desc
-      print " "
-      puts type
+      print_type_name type
+
       with_indent do
         print_subtypes type.generic_types.values.select { |sub| must_print?(sub) }
       end
@@ -103,6 +88,24 @@ module Crystal
 
     def print_type(type)
       # Nothing to do
+    end
+
+    def print_instance_vars(type, has_subtypes)
+      type.instance_vars.each_value do |ivar|
+        print_indent
+        print (@indents.last ? "|" : " ")
+        if has_subtypes
+          print "  .   "
+        else
+          print "      "
+        end
+        print "\e[0;37m"
+        print ivar.name
+        print " : "
+        print ivar.type
+        print "\e[1;37m"
+        puts
+      end
     end
 
     def must_print?(type : NonGenericClassType | GenericClassInstanceType)
