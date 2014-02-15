@@ -60,8 +60,14 @@ class Pointer(T)
     self[i], self[j] = self[j], self[i]
   end
 
-  def map(times, &block : T -> U)
-    Array(U).new(times) { |i| yield self[i] }
+  def each(count)
+    count.times do |i|
+      yield self[i]
+    end
+  end
+
+  def map(count, &block : T -> U)
+    Array(U).new(count) { |i| yield self[i] }
   end
 
   def to_a(length)

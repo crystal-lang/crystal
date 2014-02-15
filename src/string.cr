@@ -505,6 +505,12 @@ class String
     end
   end
 
+  def each_byte
+    cstr.each(length) do |byte|
+      yield byte
+    end
+  end
+
   def inspect
     "\"#{dump}\""
   end
@@ -562,8 +568,8 @@ class String
 
   def hash
     h = 0
-    each_char do |c|
-      h = 31 * h + c.ord
+    each_byte do |c|
+      h = 31 * h + c
     end
     h
   end
