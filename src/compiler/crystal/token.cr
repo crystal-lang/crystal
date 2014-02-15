@@ -25,7 +25,10 @@ module Crystal
     end
 
     def location
-      Location.new(line_number, column_number, filename)
+      @location ||= Location.new(line_number, column_number, filename)
+    end
+
+    def location=(@location)
     end
 
     def token?(token)

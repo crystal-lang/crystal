@@ -1326,6 +1326,7 @@ module Crystal
       @token.line_number = @line_number
       @token.column_number = @column_number
       @token.filename = @filename
+      @token.location = nil
     end
 
     def next_comes_uppercase
