@@ -129,15 +129,16 @@ module Crystal
   class NumberLiteral < ASTNode
     property :value
     property :kind
-    property :has_sign
 
     def initialize(@value : String, @kind)
-      @has_sign = value[0] == '+' || value[0] == '-'
     end
 
     def initialize(value : Number, @kind)
       @value = value.to_s
-      @has_sign = false
+    end
+
+    def has_sign?
+      @value[0] == '+' || @value[0] == '-'
     end
 
     def ==(other : self)

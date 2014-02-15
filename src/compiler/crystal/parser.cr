@@ -1742,7 +1742,7 @@ module Crystal
         Call.new nil, name, (args || [] of ASTNode), block, block_arg, global, name_column_number, @last_call_has_parenthesis
       else
         if args
-          if (!force_call && is_var?(name)) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign)
+          if (!force_call && is_var?(name)) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
             sign = num.value[0].chr.to_s
             num.value = num.value[1, num.value.length - 1]
             Call.new(Var.new(name), sign, args)
