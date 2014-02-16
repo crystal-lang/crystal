@@ -1,5 +1,5 @@
 struct Bool
-  def !@
+  def !
     self ? false : true
   end
 

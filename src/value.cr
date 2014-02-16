@@ -1,5 +1,5 @@
 struct Value
-  def !@
+  def !
     false
   end
 

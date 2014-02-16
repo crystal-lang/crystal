@@ -3,7 +3,7 @@ struct Int
     self == other.ord
   end
 
-  def +@
+  def +
     self
   end
 
@@ -111,7 +111,7 @@ struct Int8
   MIN = -128_i8
   MAX =  127_i8
 
-  def -@
+  def -
     0_i8 - self
   end
 
@@ -126,7 +126,7 @@ struct Int16
   MIN = -32768_i16
   MAX =  32767_i16
 
-  def -@
+  def -
     0_i16 - self
   end
 
@@ -141,7 +141,7 @@ struct Int32
   MIN = -2147483648_i32
   MAX =  2147483647_i32
 
-  def -@
+  def -
     0 - self
   end
 
@@ -156,7 +156,7 @@ struct Int64
   MIN = -9223372036854775808_i64
   MAX =  9223372036854775807_i64
 
-  def -@
+  def -
     0_i64 - self
   end
 

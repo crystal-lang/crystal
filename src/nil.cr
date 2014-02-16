@@ -19,7 +19,7 @@ struct Nil
     true
   end
 
-  def !@
+  def !
     true
   end
 

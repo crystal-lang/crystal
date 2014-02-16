@@ -1,5 +1,5 @@
 struct Float
-  def +@
+  def +
     self
   end
 
@@ -20,7 +20,7 @@ struct Float32
   MIN = -INFINITY
   MAX =  INFINITY
 
-  def -@
+  def -
     0.0_f32 - self
   end
 
@@ -37,7 +37,7 @@ struct Float64
   MIN = -INFINITY
   MAX =  INFINITY
 
-  def -@
+  def -
     0.0 - self
   end
 

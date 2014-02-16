@@ -39,7 +39,7 @@ class Vec3
   define_op "*"
   define_op "/"
 
-  def -@
+  def -
     Vec3.new(-@x, -@y, -@z)
   end
 

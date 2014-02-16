@@ -88,12 +88,6 @@ module Crystal
         case next_char
         when '='
           next_char :"!="
-        when '@'
-          if peek_next_char.ident_start?
-            @token.type = :"!"
-          else
-            next_char :"!@"
-          end
         else
           @token.type = :"!"
         end
@@ -175,12 +169,6 @@ module Crystal
         case next_char
         when '='
           next_char :"+="
-        when '@'
-          if peek_next_char.ident_start?
-            @token.type = :"+"
-          else
-            next_char :"+@"
-          end
         when '0'
           case peek_next_char
           when 'x'
@@ -202,12 +190,6 @@ module Crystal
         case next_char
         when '='
           next_char :"-="
-        when '@'
-          if peek_next_char.ident_start?
-            @token.type = :"-"
-          else
-            next_char :"-@"
-          end
         when '>'
           next_char :"->"
         when '0'
@@ -376,12 +358,7 @@ module Crystal
           @token.type = :":"
         end
       when '~'
-        case next_char
-        when '@'
-          next_char :"~@"
-        else
-          @token.type = :"~"
-        end
+        next_char :"~"
       when '.'
         case next_char
         when '.'

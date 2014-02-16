@@ -161,7 +161,10 @@ describe "Parser" do
   it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, "/", [3.int32] of ASTNode), "+", [Call.new(4.int32, "/", [5.int32] of ASTNode)] of ASTNode)
   it_parses "2 * (3 + 4)", Call.new(2.int32, "*", [Call.new(3.int32, "+", [4.int32] of ASTNode)] of ASTNode)
 
-  it_parses "!1", Call.new(1.int32, "!@")
+  it_parses "!1", Call.new(1.int32, "!")
+  it_parses "- 1", Call.new(1.int32, "-")
+  it_parses "+ 1", Call.new(1.int32, "+")
+  it_parses "~ 1", Call.new(1.int32, "~")
   it_parses "1 && 2", And.new(1.int32, 2.int32)
   it_parses "1 || 2", Or.new(1.int32, 2.int32)
 
@@ -270,19 +273,19 @@ describe "Parser" do
   it_parses "foo &.block[0]", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Call.new(Var.new("#arg0"), "block"), "[]", [0.int32] of ASTNode)))
   it_parses "foo &.[0]", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "[]", [0.int32] of ASTNode)))
 
-  it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, "!@")] of ASTNode)
-  it_parses "!a && b", And.new(Call.new("a".call, "!@"), "b".call)
+  it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, "!")] of ASTNode)
+  it_parses "!a && b", And.new(Call.new("a".call, "!"), "b".call)
 
   it_parses "foo.bar.baz", Call.new(Call.new("foo".call, "bar"), "baz")
   it_parses "f.x Foo.new", Call.new("f".call, "x", [Call.new("Foo".ident, "new")] of ASTNode)
   it_parses "f.x = Foo.new", Call.new("f".call, "x=", [Call.new("Foo".ident, "new")] of ASTNode)
-  it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int32, "-@")] of ASTNode)
+  it_parses "f.x = - 1", Call.new("f".call, "x=", [Call.new(1.int32, "-")] of ASTNode)
 
   ["+", "-", "*", "/", "%", "|", "&", "^", "**", "<<", ">>"].each do |op|
     it_parses "f.x #{op}= 2", Call.new("f".call, "x=", [Call.new(Call.new("f".call, "x"), op, [2.int32] of ASTNode)] of ASTNode)
   end
 
-  ["/", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "%", "&", "|", "^", "**", "+@", "-@", "~@", "!@", "==="].each do |op|
+  ["/", "<", "<=", "==", "!=", ">", ">=", "+", "-", "*", "/", "!", "~", "%", "&", "|", "^", "**", "==="].each do |op|
     it_parses "def #{op}; end;", Def.new(op, [] of Arg, nil)
   end
 
@@ -420,11 +423,11 @@ describe "Parser" do
 
   it_parses "@foo", "@foo".instance_var
   it_parses "@foo = 1", Assign.new("@foo".instance_var, 1.int32)
-  it_parses "-@foo", Call.new("@foo".instance_var, "-@")
+  it_parses "-@foo", Call.new("@foo".instance_var, "-")
 
   it_parses "@@foo", "@@foo".class_var
   it_parses "@@foo = 1", Assign.new("@@foo".class_var, 1.int32)
-  it_parses "-@@foo", Call.new("@@foo".class_var, "-@")
+  it_parses "-@@foo", Call.new("@@foo".class_var, "-")
 
   it_parses "call @foo.bar", Call.new(nil, "call", [Call.new("@foo".instance_var, "bar")] of ASTNode)
   it_parses "call \"foo\"", Call.new(nil, "call", ["foo".string] of ASTNode)
@@ -551,7 +554,7 @@ describe "Parser" do
   it_parses "foo(\n1\n)", Call.new(nil, "foo", [1.int32] of ASTNode)
 
   it_parses "a = 1\nfoo - a", [Assign.new("a".var, 1.int32), Call.new("foo".call, "-", ["a".var] of ASTNode)]
-  it_parses "a = 1\nfoo -a", [Assign.new("a".var, 1.int32), Call.new(nil, "foo", [Call.new("a".var, "-@")] of ASTNode)]
+  it_parses "a = 1\nfoo -a", [Assign.new("a".var, 1.int32), Call.new(nil, "foo", [Call.new("a".var, "-")] of ASTNode)]
 
   it_parses "a :: Foo", DeclareVar.new("a".var, "Foo".ident)
   it_parses "a :: Foo | Int32", DeclareVar.new("a".var, IdentUnion.new(["Foo".ident, "Int32".ident] of ASTNode))

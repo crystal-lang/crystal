@@ -385,16 +385,16 @@ module Crystal
       case @token.type
       when :"!"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "!@", [] of ASTNode, nil, nil, false, column_number
+        Call.new parse_prefix, "!", [] of ASTNode, nil, nil, false, column_number
       when :"+"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "+@", [] of ASTNode, nil, nil, false, column_number
+        Call.new parse_prefix, "+", [] of ASTNode, nil, nil, false, column_number
       when :"-"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "-@", [] of ASTNode, nil, nil, false, column_number
+        Call.new parse_prefix, "-", [] of ASTNode, nil, nil, false, column_number
       when :"~"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "~@", [] of ASTNode, nil, nil, false, column_number
+        Call.new parse_prefix, "~", [] of ASTNode, nil, nil, false, column_number
       else
         parse_pow
       end
@@ -703,19 +703,6 @@ module Crystal
         end
       when :CLASS_VAR
         node_and_next_token ClassVar.new(@token.value.to_s)
-      when :"-@"
-        next_token
-        case @token.type
-        when :IDENT
-          ivar_name = "@#{@token.value}"
-          @instance_vars.add ivar_name if @instance_vars
-          node_and_next_token Call.new(InstanceVar.new(ivar_name), "-@")
-        when :INSTANCE_VAR
-          class_var_name = "@#{@token.value}"
-          node_and_next_token Call.new(ClassVar.new(class_var_name), "-@")
-        else
-          unexpected_token "-@"
-        end
       else
         unexpected_token
       end
@@ -1361,8 +1348,8 @@ module Crystal
       parse_def_or_macro Crystal::Macro
     end
 
-    DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
-    DefOrMacroCheck2 = [:IDENT, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"%", :"+@", :"-@", :"~@", :"!@", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
+    DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
+    DefOrMacroCheck2 = [:IDENT, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
 
     def parse_def_or_macro(klass)
       push_def

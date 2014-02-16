@@ -15,7 +15,7 @@ class Reference
     false
   end
 
-  def !@
+  def !
     false
   end
 
