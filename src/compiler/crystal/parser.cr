@@ -2464,7 +2464,7 @@ module Crystal
           else
             arg_types = parse_types
             arg_types.each do |arg_type_2|
-              arg2 = Arg.new("?", nil, arg_type_2)
+              arg2 = Arg.new("", nil, arg_type_2)
               arg2.location = arg_type_2.location
               args << arg2
             end
