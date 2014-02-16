@@ -2152,42 +2152,40 @@ module Crystal
       if @token.keyword?("self")
         type = SelfType.new
         next_token_skip_space
-        types << type
-        return
-      end
-
-      if @token.type == :"("
-        next_token_skip_space_or_newline
-        type = parse_type(allow_primitives)
-        check :")"
-        next_token_skip_space
-        case type
-        when Array
-          types.concat type
-        when ASTNode
-          types << type
-        else
-          raise "Bug"
-        end
-        return
-      end
-
-      if allow_primitives
-        case @token.type
-        when :NUMBER
-          types << node_and_next_token(NumberLiteral.new(@token.value.to_s, @token.number_kind))
-          skip_space
-          return types
-        end
-      end
-
-      if @token.keyword?(:typeof)
-        type = parse_typeof
       else
-        type = parse_ident
-      end
+        if @token.type == :"("
+          next_token_skip_space_or_newline
+          type = parse_type(allow_primitives)
+          check :")"
+          next_token_skip_space
+          case type
+          when Array
+            types.concat type
+          when ASTNode
+            types << type
+          else
+            raise "Bug"
+          end
+          return
+        end
 
-      skip_space
+        if allow_primitives
+          case @token.type
+          when :NUMBER
+            types << node_and_next_token(NumberLiteral.new(@token.value.to_s, @token.number_kind))
+            skip_space
+            return types
+          end
+        end
+
+        if @token.keyword?(:typeof)
+          type = parse_typeof
+        else
+          type = parse_ident
+        end
+
+        skip_space
+      end
 
       while true
         case @token.type

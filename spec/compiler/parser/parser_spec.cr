@@ -213,6 +213,8 @@ describe "Parser" do
   it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, "Int".ident)], nil)
   it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfType.new)], nil)
   it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.new)], nil)
+  it_parses "def foo(var : self.class); end", Def.new("foo", [Arg.new("var", nil, MetaclassNode.new(SelfType.new))], nil)
+  it_parses "def foo(var : self*); end", Def.new("foo", [Arg.new("var", nil, SelfType.new.pointer_of)], nil)
   it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Double".ident] of ASTNode))], nil)
   it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, IdentUnion.new(["Int".ident, "Nil".ident(true)] of ASTNode))], nil)
   it_parses "def foo(var : Int*); end", Def.new("foo", [Arg.new("var", nil, "Int".ident.pointer_of)], nil)
