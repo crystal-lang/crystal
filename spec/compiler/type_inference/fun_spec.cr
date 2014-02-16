@@ -174,4 +174,15 @@ describe "Type inference: fun" do
       ",
       "no overload matches"
   end
+
+  it "allows passing nil as fun callback" do
+    assert_type("
+      lib C
+        type Cb : Int32 ->
+        fun bla(Cb) : Int32
+      end
+
+      C.bla(nil)
+      ") { int32 }
+  end
 end

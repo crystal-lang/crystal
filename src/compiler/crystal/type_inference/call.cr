@@ -392,7 +392,7 @@ module Crystal
         actual_type = self_arg.type
         actual_type = mod.pointer_of(actual_type) if self.args[i].out?
         if actual_type != expected_type
-          if actual_type.nil_type? && expected_type.pointer?
+          if actual_type.nil_type? && (expected_type.pointer? || expected_type.fun_type?)
             nil_conversions ||= [] of Int32
             nil_conversions << i
           elsif (actual_type == mod.string || actual_type == mod.string.hierarchy_type) && (expected_type.is_a?(PointerInstanceType) && expected_type.var.type == mod.uint8)
