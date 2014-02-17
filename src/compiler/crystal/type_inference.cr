@@ -21,11 +21,12 @@ module Crystal
     getter! untyped_def
     property block
 
-    def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [new_type_filter])
+    def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [nil] of Hash(String, TypeFilter)?)
       @types = [@mod] of Type
       @while_stack = [] of While
       typed_def = @typed_def
       typed_def.vars = @vars if typed_def
+      @needs_type_filters = 0
     end
 
     def visit(node : ASTNode)
@@ -89,7 +90,9 @@ module Crystal
       if var
         filter = build_var_filter var
         node.bind_to(filter || var)
-        node.type_filters = and_type_filters(not_nil_filter(node), var.type_filters)
+        if needs_type_filters?
+          node.type_filters = and_type_filters(not_nil_filter(node), var.type_filters)
+        end
       elsif node.name == "self"
         node.raise "there's no self in this scope"
       else
@@ -140,7 +143,9 @@ module Crystal
 
       filter = build_var_filter var
       node.bind_to(filter || var)
-      node.type_filters = not_nil_filter(node)
+      if needs_type_filters?
+        node.type_filters = not_nil_filter(node)
+      end
       node.bind_to var
     end
 
@@ -218,7 +223,9 @@ module Crystal
       node.bind_to value
       var.bind_to node
 
-      var.type_filters = node.type_filters = and_type_filters(not_nil_filter(target), value.type_filters)
+      if needs_type_filters?
+        var.type_filters = node.type_filters = and_type_filters(not_nil_filter(target), value.type_filters)
+      end
     end
 
     def type_assign(target : InstanceVar, value, node)
@@ -345,7 +352,7 @@ module Crystal
         block_vars[arg.name] = arg
       end
 
-      pushing_type_filters(new_type_filter) do
+      pushing_type_filters do
         block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
         block_visitor.block = node
         node.body.accept block_visitor
@@ -540,7 +547,9 @@ module Crystal
         node.syntax_replacement = comp
         node.bind_to comp
       elsif obj.is_a?(Var)
-        node.type_filters = new_type_filter(obj, SimpleTypeFilter.new(node.const.type.instance_type))
+        if needs_type_filters?
+          node.type_filters = new_type_filter(obj, SimpleTypeFilter.new(node.const.type.instance_type))
+        end
       end
     end
 
@@ -561,7 +570,9 @@ module Crystal
       node.type = mod.bool
       obj = node.obj
       if obj.is_a?(Var)
-        node.type_filters = new_type_filter(obj, RespondsToTypeFilter.new(node.name.value))
+        if needs_type_filters?
+          node.type_filters = new_type_filter(obj, RespondsToTypeFilter.new(node.name.value))
+        end
       end
     end
 
@@ -672,15 +683,16 @@ module Crystal
     end
 
     def visit(node : If)
-      node.cond.accept self
-      node_cond_type_filters = node.cond.type_filters
+      request_type_filters do
+        node.cond.accept self
+      end
+
+      cond_type_filters = node.cond.type_filters
 
       if node.then.nop?
         node.then.accept self
       else
-        then_filters = node_cond_type_filters || new_type_filter
-
-        pushing_type_filters(then_filters) do
+        pushing_type_filters(cond_type_filters) do
           node.then.accept self
         end
       end
@@ -688,10 +700,8 @@ module Crystal
       if node.else.nop?
         node.else.accept self
       else
-        if (filters = node_cond_type_filters) && !node.cond.is_a?(If)
+        if (filters = cond_type_filters) && !node.cond.is_a?(If)
           else_filters = negate_filters(filters)
-        else
-          else_filters = new_type_filter
         end
 
         pushing_type_filters(else_filters) do
@@ -699,23 +709,25 @@ module Crystal
         end
       end
 
-      case node.binary
-      when :and
-        node.type_filters = and_type_filters(and_type_filters(node_cond_type_filters, node.then.type_filters), node.else.type_filters)
-      when :or
-        node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
+      if needs_type_filters?
+        case node.binary
+        when :and
+          node.type_filters = and_type_filters(and_type_filters(cond_type_filters, node.then.type_filters), node.else.type_filters)
+        when :or
+          node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
+        end
       end
 
       # If the then branch exists, we can safely assume that tyhe type
       # filters after the if will be those of the condition, negated
-      if node.then.no_returns? && node_cond_type_filters && !@type_filter_stack.empty?
-        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, negate_filters(node_cond_type_filters))
+      if node.then.no_returns? && cond_type_filters && !@type_filter_stack.empty?
+        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, negate_filters(cond_type_filters))
       end
 
       # If the else branch exits, we can safely assume that the type
       # filters in the condition will still apply after the if
-      if (node.else.no_returns? || node.else.returns?) && node_cond_type_filters && !@type_filter_stack.empty?
-        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, node_cond_type_filters)
+      if (node.else.no_returns? || node.else.returns?) && cond_type_filters && !@type_filter_stack.empty?
+        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, cond_type_filters)
       end
 
       false
@@ -726,14 +738,12 @@ module Crystal
     end
 
     def visit(node : While)
-      node.cond.accept self
+      request_type_filters do
+        node.cond.accept self
+      end
 
       @while_stack.push node
-      if type_filters = node.cond.type_filters
-        pushing_type_filters(type_filters) do
-          node.body.accept self
-        end
-      else
+      pushing_type_filters(node.cond.type_filters) do
         node.body.accept self
       end
 
@@ -1092,9 +1102,12 @@ module Crystal
     def build_var_filter(var)
       filters = [] of TypeFilter
       @type_filter_stack.each do |hash|
-        filter = hash[var.name]?
-        filters.push filter if filter
+        if hash
+          filter = hash[var.name]?
+          filters.push filter if filter
+        end
       end
+
       return if filters.empty?
 
       final_filter = filters.length == 1 ? filters.first : AndTypeFilter.new(filters)
@@ -1140,7 +1153,7 @@ module Crystal
       negated_filters
     end
 
-    def pushing_type_filters(filters)
+    def pushing_type_filters(filters = nil)
       @type_filter_stack.push(filters)
       yield
       @type_filter_stack.pop
@@ -1158,6 +1171,16 @@ module Crystal
 
     def not_nil_filter(node)
       new_type_filter(node, NotNilFilter.instance)
+    end
+
+    def needs_type_filters?
+      @needs_type_filters > 0
+    end
+
+    def request_type_filters
+      @needs_type_filters += 1
+      yield
+      @needs_type_filters -= 1
     end
 
     def visit(node : And)

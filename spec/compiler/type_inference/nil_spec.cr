@@ -185,22 +185,4 @@ describe "Type inference: nil" do
       1
       ") { int32 }
   end
-
-  it "restricts type when using previously assigned var" do
-    assert_type("
-      class Foo
-        def bar
-          1
-        end
-      end
-
-      f = Foo.new || nil
-      x = f
-      if x
-        f.bar
-      else
-        2
-      end
-      ") { int32 }
-  end
 end
