@@ -263,7 +263,7 @@ module Crystal
       end
 
       length = node.elements.length
-      capacity = length < 16 ? 16 : 2 ** Math.log(length, 2).ceil
+      capacity = length
 
       generic = NewGenericClass.new(Ident.new(["Array"], true), [type_var] of ASTNode)
       generic.location = node.location

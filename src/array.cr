@@ -6,8 +6,8 @@ require "set"
 class Array(T)
   include Enumerable
 
-  def initialize(initial_capacity = 16)
-    initial_capacity = Math.max(initial_capacity, 16)
+  def initialize(initial_capacity = 3)
+    initial_capacity = Math.max(initial_capacity, 3)
     @length = 0
     @capacity = initial_capacity
     @buffer = Pointer(T).malloc(initial_capacity)
@@ -19,7 +19,7 @@ class Array(T)
     end
 
     @length = size
-    @capacity = Math.max(size, 16)
+    @capacity = Math.max(size, 3)
     @buffer = Pointer(T).malloc(size, value)
   end
 
