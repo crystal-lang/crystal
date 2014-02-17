@@ -91,7 +91,7 @@ module Crystal
         filter = build_var_filter var
         node.bind_to(filter || var)
         if needs_type_filters?
-          node.type_filters = and_type_filters(not_nil_filter(node), var.type_filters)
+          @type_filters = not_nil_filter(node)
         end
       elsif node.name == "self"
         node.raise "there's no self in this scope"
@@ -144,7 +144,7 @@ module Crystal
       filter = build_var_filter var
       node.bind_to(filter || var)
       if needs_type_filters?
-        node.type_filters = not_nil_filter(node)
+        @type_filters = not_nil_filter(node)
       end
       node.bind_to var
     end
@@ -217,6 +217,9 @@ module Crystal
     def type_assign(target : Var, value, node)
       value.accept self
 
+      value_type_filters = @type_filters
+      @type_filters = nil
+
       var = lookup_var target.name
       target.bind_to var
 
@@ -224,7 +227,7 @@ module Crystal
       var.bind_to node
 
       if needs_type_filters?
-        var.type_filters = node.type_filters = and_type_filters(not_nil_filter(target), value.type_filters)
+        @type_filters = and_type_filters(not_nil_filter(target), value_type_filters)
       end
     end
 
@@ -334,6 +337,8 @@ module Crystal
       end
 
       node.bind_to block
+
+      @type_filters = nil
     end
 
     def bind_block_args_to_yield_exps(block, node)
@@ -457,6 +462,8 @@ module Crystal
         block_arg.accept self
       end
 
+      @type_filters = nil
+
       false
     end
 
@@ -548,7 +555,7 @@ module Crystal
         node.bind_to comp
       elsif obj.is_a?(Var)
         if needs_type_filters?
-          node.type_filters = new_type_filter(obj, SimpleTypeFilter.new(node.const.type.instance_type))
+          @type_filters = new_type_filter(obj, SimpleTypeFilter.new(node.const.type.instance_type))
         end
       end
     end
@@ -571,7 +578,7 @@ module Crystal
       obj = node.obj
       if obj.is_a?(Var)
         if needs_type_filters?
-          node.type_filters = new_type_filter(obj, RespondsToTypeFilter.new(node.name.value))
+          @type_filters = new_type_filter(obj, RespondsToTypeFilter.new(node.name.value))
         end
       end
     end
@@ -687,7 +694,8 @@ module Crystal
         node.cond.accept self
       end
 
-      cond_type_filters = node.cond.type_filters
+      cond_type_filters = @type_filters
+      @type_filters = nil
 
       if node.then.nop?
         node.then.accept self
@@ -697,11 +705,14 @@ module Crystal
         end
       end
 
+      then_type_filters = @type_filters
+      @type_filters = nil
+
       if node.else.nop?
         node.else.accept self
       else
-        if (filters = cond_type_filters) && !node.cond.is_a?(If)
-          else_filters = negate_filters(filters)
+        if cond_type_filters && !node.cond.is_a?(If)
+          else_filters = negate_filters(cond_type_filters)
         end
 
         pushing_type_filters(else_filters) do
@@ -709,12 +720,16 @@ module Crystal
         end
       end
 
+      else_type_filters = @type_filters
+      @type_filters = nil
+
       if needs_type_filters?
         case node.binary
         when :and
-          node.type_filters = and_type_filters(and_type_filters(cond_type_filters, node.then.type_filters), node.else.type_filters)
-        when :or
-          node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
+          @type_filters = and_type_filters(and_type_filters(cond_type_filters, then_type_filters), else_type_filters)
+        # TODO: or type filters
+        # when :or
+        #   node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
         end
       end
 
@@ -742,8 +757,11 @@ module Crystal
         node.cond.accept self
       end
 
+      cond_type_filters = @type_filters
+      @type_filters = nil
+
       @while_stack.push node
-      pushing_type_filters(node.cond.type_filters) do
+      pushing_type_filters(cond_type_filters) do
         node.body.accept self
       end
 
@@ -1178,6 +1196,7 @@ module Crystal
     end
 
     def request_type_filters
+      @type_filters = nil
       @needs_type_filters += 1
       yield
       @needs_type_filters -= 1

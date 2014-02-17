@@ -4,7 +4,6 @@ module Crystal
   class ASTNode
     property! type
     property! dependencies
-    property type_filters
     property freeze_type
     property observers
     property input_observers
