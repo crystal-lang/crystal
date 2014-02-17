@@ -171,13 +171,13 @@ class Hash(K, V)
   end
 
   def keys
-    keys = Array(K).new
+    keys = Array(K).new(@length)
     each { |key| keys << key }
     keys
   end
 
   def values
-    values = Array(V).new
+    values = Array(V).new(@length)
     each { |key, value| values << value }
     values
   end
