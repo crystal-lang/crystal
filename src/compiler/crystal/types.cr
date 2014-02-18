@@ -312,14 +312,6 @@ module Crystal
       raise "Bug: #{self} doesn't implement all_instance_vars_count"
     end
 
-    def llvm_name
-      to_s
-    end
-
-    def llvm_size
-      raise "Bug: #{self} doesn't implement llvm_size"
-    end
-
     def type_desc
       to_s
     end
@@ -880,10 +872,6 @@ module Crystal
     def has_instance_var_in_initialize?(name)
       (ivars = instance_vars_in_initialize) && ivars.includes?(name) || ((sup = superclass) && sup.has_instance_var_in_initialize?(name))
     end
-
-    def llvm_size
-      Crystal::Program::POINTER_SIZE
-    end
   end
 
   class NonGenericClassType < ClassType
@@ -919,16 +907,11 @@ module Crystal
   class PrimitiveType < ClassType
     include DefInstanceContainer
 
-    getter :llvm_type
-    getter :llvm_size
+    getter :bytes
 
-    def initialize(program, container, name, superclass, @llvm_type, @llvm_size)
+    def initialize(program, container, name, superclass, @bytes : Int32)
       super(program, container, name, superclass)
       self.struct = true
-    end
-
-    def llvm_name
-      name
     end
 
     def value?
@@ -972,8 +955,8 @@ module Crystal
   class IntegerType < PrimitiveType
     getter :rank
 
-    def initialize(program, container, name, superclass, llvm_type, llvm_size, @rank)
-      super(program, container, name, superclass, llvm_type, llvm_size)
+    def initialize(program, container, name, superclass, bytes, @rank)
+      super(program, container, name, superclass, bytes)
     end
 
     def integer?
@@ -1000,8 +983,8 @@ module Crystal
   class FloatType < PrimitiveType
     getter :rank
 
-    def initialize(program, container, name, superclass, llvm_type, llvm_size, @rank)
-      super(program, container, name, superclass, llvm_type, llvm_size)
+    def initialize(program, container, name, superclass, bytes, @rank)
+      super(program, container, name, superclass, bytes)
     end
 
     def float?
@@ -1308,10 +1291,6 @@ module Crystal
       var.type.primitive_like?
     end
 
-    def llvm_size
-      Crystal::Program::POINTER_SIZE
-    end
-
     def to_s
       "#{var.type}*"
     end
@@ -1343,10 +1322,6 @@ module Crystal
     def primitive_like?
       var.type.primitive_like?
     end
-
-    # def llvm_size
-    #   Crystal::Program::POINTER_SIZE
-    # end
 
     def to_s
       "#{var.type}[#{size}]"
@@ -1481,7 +1456,6 @@ module Crystal
       super(program, container)
     end
 
-    delegate llvm_name, typedef
     delegate pointer?, typedef
     delegate parents, typedef
 
@@ -1588,10 +1562,6 @@ module Crystal
       @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
     end
 
-    def llvm_name
-      "alias.#{to_s}"
-    end
-
     def to_s
       full_name
     end
@@ -1637,10 +1607,6 @@ module Crystal
         metaclass.add_def Def.new("new", ([] of Arg), Primitive.new(:struct_new))
         metaclass
       end
-    end
-
-    def llvm_name
-      "struct.#{to_s}"
     end
 
     def index_of_var(name)
@@ -1696,10 +1662,6 @@ module Crystal
         metaclass.add_def Def.new("new", ([] of Arg), Primitive.new(:union_new))
         metaclass
       end
-    end
-
-    def llvm_name
-      "union.#{to_s}"
     end
 
     def type_desc
@@ -1835,10 +1797,6 @@ module Crystal
 
     def parents
       instance_type.parents.map &.metaclass
-    end
-
-    def llvm_size
-      4
     end
 
     def to_s
@@ -2305,10 +2263,6 @@ module Crystal
 
     def fun_type?
       true
-    end
-
-    def llvm_size
-      Crystal::Program::POINTER_SIZE
     end
 
     def to_s

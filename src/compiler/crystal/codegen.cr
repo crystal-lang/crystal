@@ -266,9 +266,9 @@ module Crystal
       if t1.normal_rank == t2.normal_rank
         # Nothing to do
       elsif t1.rank < t2.rank
-        p1 = t1.signed? ? @builder.sext(p1, t2.llvm_type) : @builder.zext(p1, t2.llvm_type)
+        p1 = t1.signed? ? @builder.sext(p1, llvm_type(t2)) : @builder.zext(p1, llvm_type(t2))
       else
-        p2 = t2.signed? ? @builder.sext(p2, t1.llvm_type) : @builder.zext(p2, t1.llvm_type)
+        p2 = t2.signed? ? @builder.sext(p2, llvm_type(t1)) : @builder.zext(p2, llvm_type(t1))
       end
 
       @last = case op
@@ -292,7 +292,7 @@ module Crystal
               end
 
       if t1.normal_rank != t2.normal_rank  && t1.rank < t2.rank
-        @last = trunc @last, t1.llvm_type
+        @last = trunc @last, llvm_type(t1)
       end
 
       @last
@@ -300,27 +300,27 @@ module Crystal
 
     def codegen_binary_op(op, t1 : IntegerType, t2 : FloatType, p1, p2)
       p1 = if t1.signed?
-            @builder.si2fp(p1, t2.llvm_type)
+            @builder.si2fp(p1, llvm_type(t2))
            else
-             @builder.ui2fp(p1, t2.llvm_type)
+             @builder.ui2fp(p1, llvm_type(t2))
            end
       codegen_binary_op(op, t2, t2, p1, p2)
     end
 
     def codegen_binary_op(op, t1 : FloatType, t2 : IntegerType, p1, p2)
       p2 = if t2.signed?
-            @builder.si2fp(p2, t1.llvm_type)
+            @builder.si2fp(p2, llvm_type(t1))
            else
-             @builder.ui2fp(p2, t1.llvm_type)
+             @builder.ui2fp(p2, llvm_type(t1))
            end
       codegen_binary_op op, t1, t1, p1, p2
     end
 
     def codegen_binary_op(op, t1 : FloatType, t2 : FloatType, p1, p2)
       if t1.rank < t2.rank
-        p1 = @builder.fpext(p1, t2.llvm_type)
+        p1 = @builder.fpext(p1, llvm_type(t2))
       elsif t1.rank > t2.rank
-        p2 = @builder.fpext(p2, t1.llvm_type)
+        p2 = @builder.fpext(p2, llvm_type(t1))
       end
 
       @last = case op
@@ -338,7 +338,7 @@ module Crystal
               end
 
       if t1.rank < t2.rank
-        @last = @builder.fptrunc(@last, t1.llvm_type)
+        @last = @builder.fptrunc(@last, llvm_type(t1))
       end
 
       @last
@@ -358,33 +358,33 @@ module Crystal
       if from_type.normal_rank == to_type.normal_rank
         arg
       elsif from_type.rank < to_type.rank
-        from_type.signed? ? @builder.sext(arg, to_type.llvm_type) : @builder.zext(arg, to_type.llvm_type)
+        from_type.signed? ? @builder.sext(arg, llvm_type(to_type)) : @builder.zext(arg, llvm_type(to_type))
       else
-        trunc(arg, to_type.llvm_type)
+        trunc arg, llvm_type(to_type)
       end
     end
 
     def codegen_cast(from_type : IntegerType, to_type : FloatType, arg)
       if from_type.signed?
-        @builder.si2fp(arg, to_type.llvm_type)
+        @builder.si2fp arg, llvm_type(to_type)
       else
-        @builder.ui2fp(arg, to_type.llvm_type)
+        @builder.ui2fp arg, llvm_type(to_type)
       end
     end
 
     def codegen_cast(from_type : FloatType, to_type : IntegerType, arg)
       if to_type.signed?
-        @builder.fp2si(arg, to_type.llvm_type)
+        @builder.fp2si arg, llvm_type(to_type)
       else
-        @builder.fp2ui(arg, to_type.llvm_type)
+        @builder.fp2ui arg, llvm_type(to_type)
       end
     end
 
     def codegen_cast(from_type : FloatType, to_type : FloatType, arg)
       if from_type.rank < to_type.rank
-        @builder.fpext(arg, to_type.llvm_type)
+        @builder.fpext arg, llvm_type(to_type)
       elsif from_type.rank > to_type.rank
-        @builder.fptrunc(arg, to_type.llvm_type)
+        @builder.fptrunc arg, llvm_type(to_type)
       else
         arg
       end
@@ -395,7 +395,7 @@ module Crystal
     end
 
     def codegen_cast(from_type : CharType, to_type : IntegerType, arg)
-      @builder.zext(arg, to_type.llvm_type)
+      @builder.zext(arg, llvm_type(to_type))
     end
 
     def codegen_cast(from_type : SymbolType, to_type : IntegerType, arg)
@@ -1242,9 +1242,9 @@ module Crystal
     def cast_number(target_type : IntegerType, value_type : IntegerType, value)
       if target_type.normal_rank != value_type.normal_rank
         if target_type.unsigned? && value_type.unsigned?
-          value = @builder.zext(value, target_type.llvm_type)
+          value = @builder.zext(value, llvm_type(target_type))
         else
-          value = @builder.sext(value, target_type.llvm_type)
+          value = @builder.sext(value, llvm_type(target_type))
         end
       end
       value
@@ -1252,9 +1252,9 @@ module Crystal
 
     def cast_number(target_type : FloatType, value_type : IntegerType, value)
       if value_type.unsigned?
-        @builder.ui2fp(value, target_type.llvm_type)
+        @builder.ui2fp(value, llvm_type(target_type))
       else
-        @builder.si2fp(value, target_type.llvm_type)
+        @builder.si2fp(value, llvm_type(target_type))
       end
     end
 

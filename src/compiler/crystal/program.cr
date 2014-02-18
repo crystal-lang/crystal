@@ -6,9 +6,6 @@ module Crystal
   make_tuple MacroCacheKey, def_object_id, node_ids
 
   class Program < NonGenericModuleType
-    # TODO: change this
-    POINTER_SIZE = 8
-
     include DefContainer
     include DefInstanceContainer
     include MatchesLookup
@@ -35,33 +32,33 @@ module Crystal
       @types["Number"] = @number = ValueType.new self, self, "Number", @value
 
       @types["NoReturn"] = @no_return = NoReturnType.new self
-      @types["Void"] = @void = VoidType.new self, self, "Void", @value, LLVM::Void, 1
-      @types["Nil"] = @nil = NilType.new self, self, "Nil", @value, LLVM::Int1, 1
-      @types["Bool"] = @bool = BoolType.new self, self, "Bool", @value, LLVM::Int1, 1
-      @types["Char"] = @char = CharType.new self, self, "Char", @value, LLVM::Int32, 4
+      @types["Void"] = @void = VoidType.new self, self, "Void", @value, 1
+      @types["Nil"] = @nil = NilType.new self, self, "Nil", @value, 1
+      @types["Bool"] = @bool = BoolType.new self, self, "Bool", @value, 1
+      @types["Char"] = @char = CharType.new self, self, "Char", @value, 4
 
       @types["Int"] = @int = ValueType.new self, self, "Int", @number
       @int.abstract = true
 
-      @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", @int, LLVM::Int8, 1, 1
-      @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", @int, LLVM::Int8, 1, 2
-      @types["Int16"] = @int16 = IntegerType.new self, self, "Int16", @int, LLVM::Int16, 2, 3
-      @types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", @int, LLVM::Int16, 2, 4
-      @types["Int32"] = @int32 = IntegerType.new self, self, "Int32", @int, LLVM::Int32, 4, 5
-      @types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", @int, LLVM::Int32, 4, 6
-      @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", @int, LLVM::Int64, 8, 7
-      @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", @int, LLVM::Int64, 8, 8
+      @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", @int, 1, 1
+      @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", @int, 1, 2
+      @types["Int16"] = @int16 = IntegerType.new self, self, "Int16", @int, 2, 3
+      @types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", @int, 2, 4
+      @types["Int32"] = @int32 = IntegerType.new self, self, "Int32", @int, 4, 5
+      @types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", @int, 4, 6
+      @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", @int, 8, 7
+      @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", @int, 8, 8
 
       @types["Float"] = @float = ValueType.new self, self, "Float", @number
       @float.abstract = true
 
-      @types["Float32"] = @float32 = FloatType.new self, self, "Float32", @float, LLVM::Float, 4, 9
+      @types["Float32"] = @float32 = FloatType.new self, self, "Float32", @float, 4, 9
       @float32.types["INFINITY"] = Const.new self, @float32, "FLOAT_INFINITY", Primitive.new(:float32_infinity)
 
-      @types["Float64"] = @float64 = FloatType.new self, self, "Float64", @float, LLVM::Double, 8, 10
+      @types["Float64"] = @float64 = FloatType.new self, self, "Float64", @float, 8, 10
       @float64.types["INFINITY"] = Const.new self, @float64, "FLOAT_INFINITY", Primitive.new(:float64_infinity)
 
-      @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", @value, LLVM::Int32, 4
+      @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", @value, 4
       @pointer = @types["Pointer"] = PointerType.new self, self, "Pointer", value, ["T"]
 
       @static_array = @types["StaticArray"] = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]

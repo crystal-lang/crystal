@@ -560,7 +560,7 @@ module Crystal
       size = @vars["size"] as PrimitiveValue
       size_value = size.value as UInt64
 
-      size_value *= scope.llvm_size
+      size_value *= size_of(scope)
 
       @value = PointerValue.new(scope, Pointer(Int8).malloc(size_value))
     end
@@ -586,7 +586,7 @@ module Crystal
       offset = @vars["offset"] as PrimitiveValue
       offset_value  = offset.value as Int64
       type = self_value.type as PointerInstanceType
-      size = type.var.type.llvm_size
+      size = size_of(type.var.type)
       @value = PointerValue.new(self_value.type, self_value.data + (size * offset_value))
     end
 
@@ -638,6 +638,11 @@ module Crystal
 
     def self_value
       @vars["self"] as ClassValue
+    end
+
+    def size_of(type)
+      # TODO
+      8
     end
 
     abstract class Value
@@ -745,23 +750,24 @@ module Crystal
 
       def value
         type = @type as PointerInstanceType
+        element_type = type.var.type
 
-        if type.var.type.is_a?(PrimitiveType)
-          size = type.var.type.llvm_size
+        if element_type.is_a?(PrimitiveType)
+          size = element_type.bytes
           case size
           when 1
-            PrimitiveValue.new(type.var.type, (@data as Int8*).value)
+            PrimitiveValue.new(element_type, (@data as Int8*).value)
           when 2
-            PrimitiveValue.new(type.var.type, (@data as Int16*).value)
+            PrimitiveValue.new(element_type, (@data as Int16*).value)
           when 4
-            PrimitiveValue.new(type.var.type, (@data as Int32*).value)
+            PrimitiveValue.new(element_type, (@data as Int32*).value)
           when 8
-            PrimitiveValue.new(type.var.type, (@data as Int64*).value)
+            PrimitiveValue.new(element_type, (@data as Int64*).value)
           else
             raise "Unhandled size: #{size}"
           end
         else
-          raise "Not yet implemented for #{type.var.type}"
+          raise "Not yet implemented for #{element_type}"
         end
       end
 

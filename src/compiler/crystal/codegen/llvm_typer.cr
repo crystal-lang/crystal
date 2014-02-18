@@ -24,8 +24,36 @@ module Crystal
       @cache[type] ||= create_llvm_type(type)
     end
 
-    def create_llvm_type(type : PrimitiveType)
-      type.llvm_type
+    def create_llvm_type(type : NoReturnType)
+      LLVM::Void
+    end
+
+    def create_llvm_type(type : VoidType)
+      LLVM::Void
+    end
+
+    def create_llvm_type(type : NilType)
+      LLVM::Int1
+    end
+
+    def create_llvm_type(type : BoolType)
+      LLVM::Int1
+    end
+
+    def create_llvm_type(type : CharType)
+      LLVM::Int32
+    end
+
+    def create_llvm_type(type : IntegerType)
+      LibLLVM.int_type(8 * type.bytes)
+    end
+
+    def create_llvm_type(type : FloatType)
+      type.bytes == 4 ? LLVM::Float : LLVM::Double
+    end
+
+    def create_llvm_type(type : SymbolType)
+      LLVM::Int32
     end
 
     def create_llvm_type(type : InstanceVarContainer)
@@ -99,10 +127,6 @@ module Crystal
 
     def create_llvm_type(type : TypeDefType)
       llvm_type type.typedef
-    end
-
-    def create_llvm_type(type : NoReturnType)
-      LLVM::Void
     end
 
     def create_llvm_type(type : HierarchyType)
