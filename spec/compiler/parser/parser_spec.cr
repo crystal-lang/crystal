@@ -413,6 +413,7 @@ describe "Parser" do
   it_parses "Int[8, 4]", Call.new("Int".ident, "[]", [8.int32, 4.int32] of ASTNode)
   it_parses "Int[8, 4,]", Call.new("Int".ident, "[]", [8.int32, 4.int32] of ASTNode)
   it_parses "Int[8]?", Call.new("Int".ident, "[]?", [8.int32] of ASTNode)
+  it_parses "x[0] ? 1 : 0", If.new(Call.new("x".call, "[]", [0.int32] of ASTNode), 1.int32, 0.int32)
 
   it_parses "def [](x); end", Def.new("[]", ["x".arg], nil)
 

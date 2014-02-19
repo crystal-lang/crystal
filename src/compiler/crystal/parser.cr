@@ -495,11 +495,11 @@ module Crystal
             when :","
               next_token_skip_space_or_newline
               if @token.type == :"]"
-                next_token_skip_space
+                next_token
                 break
               end
             when :"]"
-              next_token_skip_space
+              next_token
               break
             end
           end
