@@ -63,7 +63,7 @@ module Crystal
 
       @static_array = @types["StaticArray"] = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       @static_array.struct = true
-      @static_array.declare_instance_var("@buffer", Ident.new(["T"]))
+      @static_array.declare_instance_var("@buffer", Path.new(["T"]))
       @static_array.instance_vars_in_initialize = Set.new(["@buffer"])
       @static_array.allocated = true
 

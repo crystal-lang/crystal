@@ -1149,7 +1149,7 @@ module Crystal
     end
 
     def codegen_assign_node(target, value)
-      if target.is_a?(Ident)
+      if target.is_a?(Path)
         @last = llvm_nil
         return false
       end
@@ -1561,7 +1561,7 @@ module Crystal
       false
     end
 
-    def visit(node : Ident)
+    def visit(node : Path)
       if const = node.target_const
         global_name = const.llvm_name
         global = @main_mod.globals[global_name]?

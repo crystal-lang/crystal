@@ -286,7 +286,7 @@ module Crystal
         block = @block.not_nil!
         ident_lookup = MatchTypeLookup.new(match)
 
-        if inputs = block_arg.type_spec.inputs
+        if inputs = block_arg.fun.inputs
           yield_vars = [] of Var
           inputs.each_with_index do |input, i|
             type = lookup_node_type(ident_lookup, input)
@@ -303,7 +303,7 @@ module Crystal
 
         block.accept parent_visitor
 
-        if output = block_arg.type_spec.output
+        if output = block_arg.fun.output
           raise "can't infer block type" unless block.body.type?
 
           block_type = block.body.type
@@ -334,7 +334,7 @@ module Crystal
         super(match.type_lookup)
       end
 
-      def visit(node : Ident)
+      def visit(node : Path)
         if node.names.length == 1 && @match.free_vars
           if type = @match.free_vars[node.names.first]?
             @type = type
@@ -523,9 +523,9 @@ module Crystal
             if arg_type = arg.type?
               msg << " : "
               msg << arg_type
-            elsif res = arg.type_restriction
+            elsif res = arg.restriction
               msg << " : "
-              if owner.is_a?(GenericClassInstanceType) && res.is_a?(Ident) && res.names.length == 1
+              if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.length == 1
                 if type_var = owner.type_vars[res.names[0]]?
                   msg << type_var.type
                 else
@@ -605,7 +605,7 @@ module Crystal
       var = Var.new("x")
       alloc = Call.new(nil, "allocate")
       assign = Assign.new(var, alloc)
-      call_gc = Call.new(Ident.new(["GC"], true), "add_finalizer", [var] of ASTNode)
+      call_gc = Call.new(Path.new(["GC"], true), "add_finalizer", [var] of ASTNode)
 
       match_def = Def.new("new", [] of Arg, [alloc, assign, call_gc, var] of ASTNode)
       match = Match.new(scope, match_def, scope, arg_types)
@@ -626,7 +626,7 @@ module Crystal
           match.free_vars.each do |name, type|
             idx = generic_class.type_vars.index(name)
             if idx
-              type_vars[idx] = Ident.new([name])
+              type_vars[idx] = Path.new([name])
             end
           end
 
@@ -636,7 +636,7 @@ module Crystal
               not_nil_type_vars.push type_var.not_nil!
             end
 
-            new_generic = NewGenericClass.new(Ident.new([generic_class.name] of String), not_nil_type_vars)
+            new_generic = NewGenericClass.new(Path.new([generic_class.name] of String), not_nil_type_vars)
             alloc = Call.new(new_generic, "allocate")
           else
             alloc = Call.new(nil, "allocate")
@@ -657,12 +657,12 @@ module Crystal
         new_args = Array(Arg).new(arg_types.length)
         arg_types.each_with_index do |dummy, i|
           arg = Arg.new("arg#{i}")
-          arg.type_restriction = match.def.args[i]?.try &.type_restriction
+          arg.restriction = match.def.args[i]?.try &.restriction
           new_args.push arg
         end
 
         assign = Assign.new(var, alloc)
-        call_gc = Call.new(Ident.new(["GC"], true), "add_finalizer", [var] of ASTNode)
+        call_gc = Call.new(Path.new(["GC"], true), "add_finalizer", [var] of ASTNode)
         init = Call.new(var, "initialize", new_vars)
 
         match_def = Def.new("new", new_args, [

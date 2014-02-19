@@ -84,7 +84,7 @@ module Crystal
       super
 
       # We don't want to transform constant assignments into no return
-      unless node.target.is_a?(Ident)
+      unless node.target.is_a?(Path)
         if node.value.type?.try &.no_return?
           rebind_node node, node.value
           return node.value

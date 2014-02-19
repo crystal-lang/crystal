@@ -200,7 +200,7 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_def_instance"
     end
 
-    def lookup_type(node : Ident)
+    def lookup_type(node : Path)
       (node.global ? program : self).lookup_type(node.names)
     end
 
@@ -379,7 +379,7 @@ module Crystal
     end
 
     def match_arg(arg_type, arg : Arg, owner, type_lookup, free_vars)
-      restriction = arg.type? || arg.type_restriction
+      restriction = arg.type? || arg.restriction
       arg_type.not_nil!.restrict restriction, owner, type_lookup, free_vars
     end
 
@@ -491,7 +491,7 @@ module Crystal
     def add_def(a_def)
       a_def.owner = self
       restrictions = Array(Type | ASTNode | Nil).new(a_def.args.length)
-      a_def.args.each { |arg| restrictions.push(arg.type? || arg.type_restriction) }
+      a_def.args.each { |arg| restrictions.push(arg.type? || arg.restriction) }
       key = DefKey.new(restrictions, !!a_def.yields)
       old_def = defs[a_def.name][key]?
       defs[a_def.name][key] = a_def

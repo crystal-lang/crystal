@@ -245,7 +245,7 @@ module Crystal
       var.bind_to node
     end
 
-    def type_assign(target : Ident, value, node)
+    def type_assign(target : Path, value, node)
       type = current_type.types[target.names.first]?
       if type
         target.raise "already initialized constant #{target}"
@@ -373,7 +373,7 @@ module Crystal
     def visit(node : FunLiteral)
       fun_vars = {} of String => Var
       types = node.def.args.map do |arg|
-        restriction = arg.type_restriction.not_nil!
+        restriction = arg.restriction.not_nil!
         restriction.accept self
         arg.type = restriction.type.instance_type
         fun_vars[arg.name] = Var.new(arg.name, arg.type)
@@ -418,7 +418,7 @@ module Crystal
       false
     end
 
-    def end_visit(node : FunTypeSpec)
+    def end_visit(node : Fun)
       if inputs = node.inputs
         types = inputs.map &.type.instance_type
       else
@@ -551,7 +551,7 @@ module Crystal
 
       # When doing x.is_a?(A) and A turns out to be a constant (not a type),
       # replace it with a === comparison. Most usually this happens in a case expression.
-      if const.is_a?(Ident) && const.target_const
+      if const.is_a?(Path) && const.target_const
         comp = Call.new(const, "===", [obj])
         comp.location = node.location
         comp.accept self
@@ -661,7 +661,7 @@ module Crystal
       false
     end
 
-    def visit(node : Ident)
+    def visit(node : Path)
       type = resolve_ident(node)
       case type
       when Const
@@ -681,7 +681,7 @@ module Crystal
       end
     end
 
-    def end_visit(node : IdentUnion)
+    def end_visit(node : Union)
       process_ident_union(node)
     end
 

@@ -4,7 +4,7 @@ module Crystal
   module TypeVisitorHelper
     def process_class_def(node : ClassDef)
       superclass = if node_superclass = node.superclass
-                     lookup_ident_type node_superclass
+                     lookup_path_type node_superclass
                    elsif node.struct
                     mod.value
                    else
@@ -16,7 +16,7 @@ module Crystal
         name = node.name.names.first
       else
         name = node.name.names.pop
-        scope = lookup_ident_type node.name, true
+        scope = lookup_path_type node.name, true
       end
 
       type = scope.types[name]?
@@ -73,7 +73,7 @@ module Crystal
         name = node.name.names.first
       else
         name = node.name.names.pop
-        scope = lookup_ident_type node.name, true
+        scope = lookup_path_type node.name, true
       end
 
       type = scope.types[name]?
@@ -103,7 +103,7 @@ module Crystal
         if receiver.is_a?(Var) && receiver.name == "self"
           target_type = current_type.metaclass
         else
-          target_type = lookup_ident_type(receiver).metaclass
+          target_type = lookup_path_type(receiver).metaclass
         end
       else
         target_type = current_type
@@ -120,7 +120,7 @@ module Crystal
         if receiver.is_a?(Var) && receiver.name == "self"
           target_type = current_type.metaclass
         else
-          target_type = lookup_ident_type(receiver).metaclass
+          target_type = lookup_path_type(receiver).metaclass
         end
       else
         target_type = current_type
@@ -140,9 +140,9 @@ module Crystal
       node_name = node.name
 
       if node_name.is_a?(NewGenericClass)
-        type = lookup_ident_type(node_name.name)
+        type = lookup_path_type(node_name.name)
       else
-        type = lookup_ident_type(node_name)
+        type = lookup_path_type(node_name)
       end
 
       unless type.module?
@@ -164,7 +164,7 @@ module Crystal
           if type_var.is_a?(SelfType)
             current_type
           else
-            unless type_var.is_a?(Ident)
+            unless type_var.is_a?(Path)
               type_var.raise "only simple names are supported for now, not #{type_var}"
             end
 
@@ -172,7 +172,7 @@ module Crystal
             if current_type.is_a?(GenericType) && current_type.type_vars.includes?(type_var_name)
               type_var_name
             else
-              lookup_ident_type(type_var)
+              lookup_path_type(type_var)
             end
           end
         end
@@ -235,7 +235,7 @@ module Crystal
         node.raise "#{node.name} is already defined"
       else
         fields = node.fields.map do |field|
-          field_type = check_primitive_like field.type_restriction.not_nil!
+          field_type = check_primitive_like field.restriction.not_nil!
           Var.new(field.name, field_type)
         end
         current_type.types[node.name] = klass.new @mod, current_type, node.name, fields
@@ -275,7 +275,7 @@ module Crystal
       end
 
       args = node.args.map do |arg|
-        restriction = arg.type_restriction.not_nil!
+        restriction = arg.restriction.not_nil!
         restriction.accept self
 
         arg_type = check_primitive_like(restriction.not_nil!)
@@ -342,8 +342,8 @@ module Crystal
       node.type = @mod.nil
     end
 
-    def process_ident_union(node : IdentUnion)
-      node.type = @mod.type_merge(node.idents.map &.type.instance_type)
+    def process_ident_union(node : Union)
+      node.type = @mod.type_merge(node.types.map &.type.instance_type)
     end
 
     def process_hierarchy(node : Hierarchy)
@@ -384,7 +384,7 @@ module Crystal
       instance_type
     end
 
-    def lookup_ident_type(node : Ident, create_modules_if_missing = false)
+    def lookup_path_type(node : Path, create_modules_if_missing = false)
       target_type = resolve_ident(node, create_modules_if_missing)
       if target_type.is_a?(Type)
         target_type.remove_alias_if_simple
@@ -393,11 +393,11 @@ module Crystal
       end
     end
 
-    def lookup_ident_type(node)
-      raise "lookup_ident_type not implemented for #{node}"
+    def lookup_path_type(node)
+      raise "lookup_path_type not implemented for #{node}"
     end
 
-    def resolve_ident(node : Ident, create_modules_if_missing = false)
+    def resolve_ident(node : Path, create_modules_if_missing = false)
       free_vars = @free_vars
       if free_vars && !node.global && (type = free_vars[node.names.first]?)
         if node.names.length == 1

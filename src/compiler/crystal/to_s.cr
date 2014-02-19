@@ -436,27 +436,27 @@ module Crystal
       else
         @str << "?"
       end
-      if node_default_value = node.default_value
+      if default_value = node.default_value
         @str << " = "
-        node_default_value.accept self
+        default_value.accept self
       end
-      if node_type_restriction = node.type_restriction
+      if restriction = node.restriction
         @str << " : "
-        node_type_restriction.accept self
+        restriction.accept self
       end
       false
     end
 
     def visit(node : BlockArg)
       @str << node.name
-      if type_spec = node.type_spec
+      if a_fun = node.fun
         @str << " : "
-        type_spec.accept self
+        a_fun.accept self
       end
       false
     end
 
-    def visit(node : FunTypeSpec)
+    def visit(node : Fun)
       if inputs = node.inputs
         inputs.each_with_index do |input, i|
           @str << ", " if i > 0
@@ -474,7 +474,7 @@ module Crystal
       @str << "self"
     end
 
-    def visit(node : Ident)
+    def visit(node : Path)
       node.names.each_with_index do |name, i|
         @str << "::" if i > 0 || node.global
         @str << name
@@ -492,8 +492,8 @@ module Crystal
       false
     end
 
-    def visit(node : IdentUnion)
-      node.idents.each_with_index do |ident, i|
+    def visit(node : Union)
+      node.types.each_with_index do |ident, i|
         @str << " | " if  i > 0
         ident.accept self
       end

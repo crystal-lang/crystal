@@ -213,7 +213,7 @@ module Crystal
       self_def.instance_vars = instance_vars
       self_def.args.each { |arg| arg.default_value = nil }
 
-      retain_body = yields || args.any? { |arg| arg.default_value && arg.type_restriction }
+      retain_body = yields || args.any? { |arg| arg.default_value && arg.restriction }
 
       expansions = [self_def]
 
@@ -287,7 +287,7 @@ module Crystal
     property! class_scope
   end
 
-  class Ident
+  class Path
     property target_const
     property syntax_replacement
   end
@@ -301,7 +301,7 @@ module Crystal
 
     def self.new_with_restriction(name, restriction)
       arg = Arg.new(name)
-      arg.type_restriction = restriction
+      arg.restriction = restriction
       arg
     end
   end

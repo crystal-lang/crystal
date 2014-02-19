@@ -722,18 +722,18 @@ module Crystal
   class Arg < ASTNode
     property :name
     property :default_value
-    property :type_restriction
+    property :restriction
 
-    def initialize(@name, @default_value = nil, @type_restriction = nil)
+    def initialize(@name, @default_value = nil, @restriction = nil)
     end
 
     def accept_children(visitor)
       @default_value.accept visitor if @default_value
-      @type_restriction.accept visitor if @type_restriction
+      @restriction.accept visitor if @restriction
     end
 
     def ==(other : self)
-      other.name == name && other.default_value == default_value && other.type_restriction == type_restriction# && other.out == out
+      other.name == name && other.default_value == default_value && other.restriction == restriction
     end
 
     def name_length
@@ -741,11 +741,11 @@ module Crystal
     end
 
     def clone_without_location
-      Arg.new(@name, @default_value.clone, @type_restriction.clone)
+      Arg.new(@name, @default_value.clone, @restriction.clone)
     end
   end
 
-  class FunTypeSpec < ASTNode
+  class Fun < ASTNode
     property :inputs
     property :output
 
@@ -762,23 +762,23 @@ module Crystal
     end
 
     def clone_without_location
-      FunTypeSpec.new(@inputs.clone, @output.clone)
+      Fun.new(@inputs.clone, @output.clone)
     end
   end
 
   class BlockArg < ASTNode
     property :name
-    property :type_spec
+    property :fun
 
-    def initialize(@name, @type_spec = FunTypeSpec.new)
+    def initialize(@name, @fun = Fun.new)
     end
 
     def accept_children(visitor)
-      @type_spec.accept visitor if @type_spec
+      @fun.accept visitor if @fun
     end
 
     def ==(other : self)
-      other.name == name && other.type_spec == type_spec
+      other.name == name && other.fun == @fun
     end
 
     def name_length
@@ -786,7 +786,7 @@ module Crystal
     end
 
     def clone_without_location
-      BlockArg.new(@name, @type_spec.clone)
+      BlockArg.new(@name, @fun.clone)
     end
   end
 
@@ -1002,7 +1002,7 @@ module Crystal
   #
   #     const [ '::' const ]*
   #
-  class Ident < ASTNode
+  class Path < ASTNode
     property :names
     property :global
     property :name_length
@@ -1015,7 +1015,7 @@ module Crystal
     end
 
     def clone_without_location
-      ident = Ident.new(@names.clone, @global)
+      ident = Path.new(@names.clone, @global)
       ident.name_length = name_length
       ident
     end
@@ -1260,22 +1260,22 @@ module Crystal
     end
   end
 
-  class IdentUnion < ASTNode
-    property :idents
+  class Union < ASTNode
+    property :types
 
-    def initialize(@idents)
+    def initialize(@types)
     end
 
     def ==(other : self)
-      other.idents == idents
+      other.types == types
     end
 
     def accept_children(visitor)
-      @idents.each { |ident| ident.accept visitor }
+      @types.each { |type| type.accept visitor }
     end
 
     def clone_without_location
-      IdentUnion.new(@idents.clone)
+      Union.new(@types.clone)
     end
   end
 

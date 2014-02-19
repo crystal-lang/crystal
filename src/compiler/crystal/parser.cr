@@ -114,7 +114,7 @@ module Crystal
     end
 
     def to_lhs(exp)
-      if exp.is_a?(Ident) && @def_vars.length > 1
+      if exp.is_a?(Path) && @def_vars.length > 1
         raise "dynamic constant assignment"
       end
 
@@ -187,7 +187,7 @@ module Crystal
           else
             break unless can_be_assigned?(atomic)
 
-            if atomic.is_a?(Ident) && @def_vars.length > 1
+            if atomic.is_a?(Path) && @def_vars.length > 1
               raise "dynamic constant assignment"
             end
 
@@ -200,9 +200,9 @@ module Crystal
             next_token_skip_space_or_newline
 
             # Constants need a new scope for their value
-            push_def if atomic.is_a?(Ident)
+            push_def if atomic.is_a?(Path)
             value = parse_op_assign
-            pop_def if atomic.is_a?(Ident)
+            pop_def if atomic.is_a?(Path)
 
             push_var atomic
 
@@ -211,7 +211,7 @@ module Crystal
         when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>=", :"||=", :"&&="
           break unless can_be_assigned?(atomic)
 
-          if atomic.is_a?(Ident)
+          if atomic.is_a?(Path)
             raise "can't reassign to constant"
           end
 
@@ -364,10 +364,10 @@ module Crystal
         when :NUMBER
           case @token.value.to_s[0]
           when '+'
-            left = Call.new left, @token.value.to_s[0].chr.to_s, [NumberLiteral.new(@token.value.to_s, @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
+            left = Call.new left, "+", [NumberLiteral.new(@token.value.to_s, @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, @token.value.to_s[0].chr.to_s, [NumberLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1], @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
+            left = Call.new left, "-", [NumberLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1], @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -904,7 +904,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      raise "Bug: ClassDef name can only be an Ident" unless name.is_a?(Ident)
+      raise "Bug: ClassDef name can only be a Path" unless name.is_a?(Path)
 
       class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number
       class_def.location = location
@@ -953,7 +953,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      raise "Bug: ModuleDef name can only be an Ident" unless name.is_a?(Ident)
+      raise "Bug: ModuleDef name can only be a Path" unless name.is_a?(Path)
 
       module_def = ModuleDef.new name, body, type_vars, name_column_number
       module_def.location = location
@@ -1423,7 +1423,7 @@ module Crystal
         while @token.type != :")"
           block_arg = parse_arg(args, ivar_assigns, true, pointerof(found_default_value))
           if block_arg
-            if inputs = block_arg.type_spec.inputs
+            if inputs = block_arg.fun.inputs
               @yields = inputs.length
             else
               @yields = 0
@@ -1437,7 +1437,7 @@ module Crystal
         while @token.type != :NEWLINE && @token.type != :";"
           block_arg = parse_arg(args, ivar_assigns, false, pointerof(found_default_value))
           if block_arg
-            if inputs = block_arg.type_spec.inputs
+            if inputs = block_arg.fun.inputs
               @yields = inputs.length
             else
               @yields = 0
@@ -1505,7 +1505,7 @@ module Crystal
       end
 
       default_value = nil
-      type_restriction = nil
+      restriction = nil
 
       if parenthesis
         next_token_skip_space_or_newline
@@ -1527,12 +1527,12 @@ module Crystal
       if @token.type == :":"
         next_token_skip_space_or_newline
         location = @token.location
-        type_restriction = parse_single_type
+        restriction = parse_single_type
       end
 
       raise "Bug: arg_name is nil" unless arg_name
 
-      arg = Arg.new(arg_name, default_value, type_restriction)
+      arg = Arg.new(arg_name, default_value, restriction)
       arg.location = arg_location
       args << arg
       push_var arg
@@ -1560,11 +1560,11 @@ module Crystal
         location = @token.location
 
         type_spec = parse_single_type
-        unless type_spec.is_a?(FunTypeSpec)
+        unless type_spec.is_a?(Fun)
           raise "expected block argument type to be a function", location
         end
       else
-        type_spec = FunTypeSpec.new
+        type_spec = Fun.new
       end
 
       block_arg = BlockArg.new(name, type_spec)
@@ -2026,7 +2026,7 @@ module Crystal
         next_token
       end
 
-      const = Ident.new names, global
+      const = Path.new names, global
       const.location = location
 
       token_location = @token.location
@@ -2114,7 +2114,7 @@ module Crystal
             return_type = type_union
           end
         end
-        type = FunTypeSpec.new(input_types, return_type)
+        type = Fun.new(input_types, return_type)
         type.location = location
         type
       else
@@ -2139,7 +2139,7 @@ module Crystal
         if types.length == 1
           types.first
         else
-          IdentUnion.new types
+          Union.new types
         end
       elsif types.length == 1
         types.first
@@ -2190,7 +2190,7 @@ module Crystal
       while true
         case @token.type
         when :"?"
-          type = IdentUnion.new([type, Ident.new(["Nil"], true)] of ASTNode)
+          type = Union.new([type, Path.new(["Nil"], true)] of ASTNode)
           next_token_skip_space
         when :"*"
           type = make_pointer_type(type)
@@ -2243,11 +2243,11 @@ module Crystal
     end
 
     def make_pointer_type(node)
-      NewGenericClass.new(Ident.new(["Pointer"], true), [node] of ASTNode)
+      NewGenericClass.new(Path.new(["Pointer"], true), [node] of ASTNode)
     end
 
     def make_static_array_type(type, size)
-      NewGenericClass.new(Ident.new(["StaticArray"], true), [type, NumberLiteral.new(size, :i32)] of ASTNode)
+      NewGenericClass.new(Path.new(["StaticArray"], true), [type, NumberLiteral.new(size, :i32)] of ASTNode)
     end
 
     def parse_yield
@@ -2668,7 +2668,7 @@ module Crystal
 
     def can_be_assigned?(node)
       case node
-      when Var, InstanceVar, ClassVar, Ident, Global
+      when Var, InstanceVar, ClassVar, Path, Global
         true
       when Call
         (node.obj.nil? && node.args.length == 0 && node.block.nil?) || node.name == "[]"

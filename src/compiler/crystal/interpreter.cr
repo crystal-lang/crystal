@@ -106,7 +106,7 @@ module Crystal
       when InstanceVar
         node.value.accept self
         self_value[target.name] = @value
-      when Ident
+      when Path
         type = current_type.types[target.names.first]?
         if type
           target.raise "already initialized constant #{target}"
@@ -244,7 +244,7 @@ module Crystal
       false
     end
 
-    def end_visit(node : IdentUnion)
+    def end_visit(node : Union)
       process_ident_union(node)
       @value = MetaclassValue.new(node.type)
     end
@@ -617,7 +617,7 @@ module Crystal
       end
     end
 
-    def visit(node : Ident)
+    def visit(node : Path)
       type = resolve_ident(node)
       case type
       when ConstValue

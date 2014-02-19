@@ -235,8 +235,8 @@ module Crystal
       node
     end
 
-    def transform(node : IdentUnion)
-      transform_many node.idents
+    def transform(node : Union)
+      transform_many node.types
       node
     end
 
@@ -255,19 +255,19 @@ module Crystal
         node.default_value = default_value.transform(self)
       end
 
-      if type_restriction = node.type_restriction
-        node.type_restriction = type_restriction.transform(self)
+      if restriction = node.restriction
+        node.restriction = restriction.transform(self)
       end
 
       node
     end
 
     def transform(node : BlockArg)
-      node.type_spec = node.type_spec.transform(self)
+      node.fun = node.fun.transform(self)
       node
     end
 
-    def transform(node : FunTypeSpec)
+    def transform(node : Fun)
       transform_many node.inputs
 
       if output = node.output
@@ -387,7 +387,7 @@ module Crystal
       node
     end
 
-    def transform(node : Ident)
+    def transform(node : Path)
       node
     end
 

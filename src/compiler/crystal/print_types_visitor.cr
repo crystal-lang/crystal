@@ -40,7 +40,7 @@ module Crystal
     end
 
     def visit(node : Assign)
-      !node.target.is_a?(Ident)
+      !node.target.is_a?(Path)
     end
 
     def visit(node : Var)

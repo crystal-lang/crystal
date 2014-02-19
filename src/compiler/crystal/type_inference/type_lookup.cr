@@ -9,7 +9,7 @@ module Crystal
       true
     end
 
-    def visit(node : Ident)
+    def visit(node : Path)
       the_type = @root.lookup_type(node)
       if the_type && the_type.is_a?(Type)
         @type = the_type.remove_alias_if_simple
@@ -18,8 +18,8 @@ module Crystal
       end
     end
 
-    def visit(node : IdentUnion)
-      types = node.idents.map do |ident|
+    def visit(node : Union)
+      types = node.types.map do |ident|
         ident.accept self
         type
       end
@@ -57,7 +57,7 @@ module Crystal
       false
     end
 
-    def visit(node : FunTypeSpec)
+    def visit(node : Fun)
       types = [] of Type
       if inputs = node.inputs
         inputs.each do |input|

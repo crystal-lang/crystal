@@ -10,7 +10,7 @@ describe "Normalize: case" do
     assert_normalize "x = 1; case x; when 1; 'b'; end", "x = 1\nif 1 === x\n  'b'\nend"
   end
 
-  it "normalizes case with Ident to is_a?" do
+  it "normalizes case with Path to is_a?" do
     assert_normalize "x = 1; case x; when Foo; 'b'; end", "x = 1\nif x.is_a?(Foo)\n  'b'\nend"
   end
 

@@ -171,12 +171,12 @@ module Crystal
     def transform(node : RegexLiteral)
       const_name = "#Regex_#{node.value}_#{node.modifiers}"
       unless program.types[const_name]?
-        constructor = Call.new(Ident.new(["Regex"], true), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers, :i32)] of ASTNode)
+        constructor = Call.new(Path.new(["Regex"], true), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers, :i32)] of ASTNode)
         program.types[const_name] = const = Const.new program, program, const_name, constructor, [program] of Type, program
         @program.regexes << const
       end
 
-      Ident.new([const_name], true)
+      Path.new([const_name], true)
     end
 
     # Convert an interpolation to a concatenation with a StringBuilder:
@@ -191,7 +191,7 @@ module Crystal
     def transform(node : StringInterpolation)
       super
 
-      call = Call.new(Ident.new(["StringBuilder"], true), "new")
+      call = Call.new(Path.new(["StringBuilder"], true), "new")
       node.expressions.each do |piece|
         call = Call.new(call, "<<", [piece])
       end
@@ -218,7 +218,7 @@ module Crystal
     def transform(node : RangeLiteral)
       super
 
-      Call.new(Ident.new(["Range"], true), "new", [node.from, node.to, BoolLiteral.new(node.exclusive)])
+      Call.new(Path.new(["Range"], true), "new", [node.from, node.to, BoolLiteral.new(node.exclusive)])
     end
 
     # Convert an array literal to creating an Array and storing the values:
@@ -249,7 +249,7 @@ module Crystal
 
       if node_of = node.of
         if node.elements.length == 0
-          generic = NewGenericClass.new(Ident.new(["Array"], true), [node_of] of ASTNode)
+          generic = NewGenericClass.new(Path.new(["Array"], true), [node_of] of ASTNode)
           generic.location = node.location
 
           call = Call.new(generic, "new")
@@ -265,7 +265,7 @@ module Crystal
       length = node.elements.length
       capacity = length
 
-      generic = NewGenericClass.new(Ident.new(["Array"], true), [type_var] of ASTNode)
+      generic = NewGenericClass.new(Path.new(["Array"], true), [type_var] of ASTNode)
       generic.location = node.location
 
       constructor = Call.new(generic, "new", [NumberLiteral.new(capacity, :i32)] of ASTNode)
@@ -335,7 +335,7 @@ module Crystal
         type_vars = [TypeOf.new(node.keys), TypeOf.new(node.values)] of ASTNode
       end
 
-      constructor = Call.new(NewGenericClass.new(Ident.new(["Hash"], true), type_vars), "new")
+      constructor = Call.new(NewGenericClass.new(Path.new(["Hash"], true), type_vars), "new")
       if node.keys.length == 0
         constructor
       else
@@ -357,7 +357,7 @@ module Crystal
       when Var
         node.value = node.value.transform(self)
         transform_assign_var(target)
-      when Ident
+      when Path
         pushing_vars do
           node.value = node.value.transform(self)
         end
@@ -709,7 +709,7 @@ module Crystal
       if node.body
         if node.uses_block_arg
           block_arg = node.block_arg.not_nil!
-          if inputs = block_arg.type_spec.inputs
+          if inputs = block_arg.fun.inputs
             args = inputs.map_with_index { |input, i| Arg.new("#arg#{i}", nil, input) }
             yield_args = [] of ASTNode
             args.each { |arg| yield_args << Var.new(arg.name) }
@@ -821,7 +821,7 @@ module Crystal
         wh.conds.each do |cond|
           right_side = temp_var
 
-          if cond.is_a?(Ident)
+          if cond.is_a?(Path)
             comp = IsA.new(right_side, cond)
           else
             comp = Call.new(cond, "===", [right_side] of ASTNode)

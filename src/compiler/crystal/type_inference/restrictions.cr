@@ -29,8 +29,8 @@ module Crystal
   class Def
     def is_restriction_of?(other : Def, owner)
       args.zip(other.args) do |self_arg, other_arg|
-        self_type = self_arg.type? || self_arg.type_restriction
-        other_type = other_arg.type? || other_arg.type_restriction
+        self_type = self_arg.type? || self_arg.restriction
+        other_type = other_arg.type? || other_arg.restriction
         return false if self_type == nil && other_type != nil
         if self_type && other_type
           return false unless self_type.is_restriction_of?(other_type, owner)
@@ -41,8 +41,8 @@ module Crystal
   end
 
 
-  class Ident
-    def is_restriction_of?(other : Ident, owner)
+  class Path
+    def is_restriction_of?(other : Path, owner)
       return true if self == other
 
       self_type = owner.lookup_type(self)
@@ -58,8 +58,8 @@ module Crystal
       false
     end
 
-    def is_restriction_of?(other : IdentUnion, owner)
-      return other.idents.any? { |o| self.is_restriction_of?(o, owner) }
+    def is_restriction_of?(other : Union, owner)
+      return other.types.any? { |o| self.is_restriction_of?(o, owner) }
     end
 
     def is_restriction_of?(other, owner)
@@ -118,16 +118,16 @@ module Crystal
       is_subclass_of?(other.base_type) ? self : nil
     end
 
-    def restrict(other : IdentUnion, owner, type_lookup, free_vars)
+    def restrict(other : Union, owner, type_lookup, free_vars)
       matches = [] of Type
-      other.idents.each do |ident|
+      other.types.each do |ident|
         match = restrict ident, owner, type_lookup, free_vars
         matches << match if match
       end
       matches.length > 0 ? program.type_merge_union_of(matches) : nil
     end
 
-    def restrict(other : Ident, owner, type_lookup, free_vars)
+    def restrict(other : Path, owner, type_lookup, free_vars)
       single_name = other.names.length == 1
       if single_name
         ident_type = free_vars[other.names.first]?
@@ -212,7 +212,7 @@ module Crystal
   end
 
   class GenericClassInstanceType
-    def restrict(other : Ident, owner, type_lookup, free_vars)
+    def restrict(other : Path, owner, type_lookup, free_vars)
       ident_type = type_lookup.lookup_type other
       if ident_type
         restrict(ident_type, owner, type_lookup, free_vars)
@@ -340,7 +340,7 @@ module Crystal
   end
 
   class FunType
-    def restrict(other : FunTypeSpec, owner, type_lookup, free_vars)
+    def restrict(other : Fun, owner, type_lookup, free_vars)
       inputs = other.inputs
       inputs_len = inputs ? inputs.length : 0
       output = other.output

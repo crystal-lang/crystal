@@ -42,7 +42,7 @@ module Crystal
         indices = @indices = Array(Bool).new(@arg_types.length, false)
         @matches.each do |match|
           match.def.args.each_with_index do |arg, i|
-            indices[i] ||= !!(arg.type? || arg.type_restriction)
+            indices[i] ||= !!(arg.type? || arg.restriction)
           end
         end
 
