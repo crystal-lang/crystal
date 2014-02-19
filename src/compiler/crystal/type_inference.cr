@@ -332,7 +332,9 @@ module Crystal
           if node_scope = node.scope
             block.scope = node_scope.type
           end
-          block.accept call.parent_visitor.not_nil!
+          ignore_type_filters do
+            block.accept call.parent_visitor.not_nil!
+          end
         end
       end
 
@@ -455,11 +457,13 @@ module Crystal
       end
       node.recalculate
 
-      obj.accept self if obj
-      node.args.each &.accept(self)
+      ignore_type_filters do
+        obj.accept self if obj
+        node.args.each &.accept(self)
 
-      if block_arg
-        block_arg.accept self
+        if block_arg
+          block_arg.accept self
+        end
       end
 
       @type_filters = nil
@@ -1200,6 +1204,12 @@ module Crystal
       @needs_type_filters += 1
       yield
       @needs_type_filters -= 1
+    end
+
+    def ignore_type_filters
+      needs_type_filters, @needs_type_filters = @needs_type_filters, 0
+      yield
+      @needs_type_filters = needs_type_filters
     end
 
     def visit(node : And)
