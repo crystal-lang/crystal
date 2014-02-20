@@ -586,7 +586,7 @@ module Crystal
       offset = @vars["offset"] as PrimitiveValue
       offset_value  = offset.value as Int64
       type = self_value.type as PointerInstanceType
-      size = size_of(type.var.type)
+      size = size_of(type.element_type)
       @value = PointerValue.new(self_value.type, self_value.data + (size * offset_value))
     end
 
@@ -750,7 +750,7 @@ module Crystal
 
       def value
         type = @type as PointerInstanceType
-        element_type = type.var.type
+        element_type = type.element_type
 
         if element_type.is_a?(PrimitiveType)
           size = element_type.bytes

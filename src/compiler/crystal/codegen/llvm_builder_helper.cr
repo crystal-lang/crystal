@@ -144,6 +144,10 @@ module Crystal
       builder.ret value
     end
 
+    def cast_to_void_pointer(pointer)
+      bit_cast pointer, pointer_type(LLVM::Int8)
+    end
+
     def pointer_type(type)
       LLVM.pointer_type(type)
     end

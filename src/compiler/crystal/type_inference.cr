@@ -1063,7 +1063,7 @@ module Crystal
       var = visit_indirect(node)
       if var.type != node.value.type
         type = node.obj.type as PointerInstanceType
-        node.raise "field '#{node.names.join "->"}' of struct #{type.var.type} has type #{var.type}, not #{node.value.type}"
+        node.raise "field '#{node.names.join "->"}' of struct #{type.element_type} has type #{var.type}, not #{node.value.type}"
       end
 
       node.bind_to node.value
@@ -1072,7 +1072,7 @@ module Crystal
     def visit_indirect(node)
       type = node.obj.type
       if type.is_a?(PointerInstanceType)
-        element_type = type.var.type
+        element_type = type.element_type
         var = nil
         node.names.each do |name|
           # TOOD remove duplicate code

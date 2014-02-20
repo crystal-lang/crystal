@@ -447,7 +447,7 @@ module Crystal
 
       if type.c_enum?
         type = @mod.int32
-      elsif type.is_a?(TypeDefType) && type.typedef.fun_type?
+      elsif type.is_a?(TypeDefType) && type.typedef.fun?
         type = type.typedef
       end
 

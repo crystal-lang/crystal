@@ -108,13 +108,17 @@ module Crystal
         @symbol_table_values << build_string_constant(sym, sym)
       end
 
-      symbol_table = @llvm_mod.globals.add(LLVM.array_type(llvm_type(mod.string), @symbol_table_values.count), "symbol_table")
-      LLVM.set_initializer symbol_table, LLVM.array(llvm_type(mod.string), @symbol_table_values)
+      symbol_table = define_symbol_table @llvm_mod
+      LLVM.set_initializer symbol_table, LLVM.array(llvm_type(@mod.string), @symbol_table_values)
 
       @last = llvm_nil
       @in_const_block = false
       @trampoline_wrappers = {} of UInt64 => LLVM::Function
       @fun_literal_count = 0
+    end
+
+    def define_symbol_table(llvm_mod)
+      llvm_mod.globals.add(LLVM.array_type(llvm_type(@mod.string), @symbol_table_values.count), "symbol_table")
     end
 
     def type
@@ -125,9 +129,7 @@ module Crystal
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
       val = return_from_fun nil, @main_ret_type unless @main_ret_type && @main_ret_type.no_return?
-      if DUMP_LLVM
-        @llvm_mod.dump
-      end
+      @llvm_mod.dump if DUMP_LLVM
       val
     end
 
@@ -391,11 +393,11 @@ module Crystal
     end
 
     def codegen_cast(from_type : IntegerType, to_type : CharType, arg)
-      codegen_cast(from_type, @mod.int32, arg)
+      codegen_cast from_type, @mod.int32, arg
     end
 
     def codegen_cast(from_type : CharType, to_type : IntegerType, arg)
-      @builder.zext(arg, llvm_type(to_type))
+      @builder.zext arg, llvm_type(to_type)
     end
 
     def codegen_cast(from_type : SymbolType, to_type : IntegerType, arg)
@@ -421,7 +423,7 @@ module Crystal
       memset @last, int8(0), size_of(struct_type)
 
       unless type.struct?
-        type_id_ptr = gep @last, 0, 0
+        type_id_ptr = aggregate_index(@last, 0)
         store int32(base_type.type_id), type_id_ptr
       end
 
@@ -434,22 +436,20 @@ module Crystal
 
     def codegen_primitive_pointer_malloc(node, target_def, call_args)
       type = node.type as PointerInstanceType
-      llvm_type = llvm_embedded_type(type.var.type)
+      llvm_type = llvm_embedded_type(type.element_type)
       array_malloc(llvm_type, call_args[1])
     end
 
     def codegen_primitive_pointer_set(node, target_def, call_args)
       type = context.type as PointerInstanceType
       value = call_args[1]
-      codegen_assign call_args[0], type.var.type, node.type, value
+      codegen_assign call_args[0], type.element_type, node.type, value
       value
     end
 
     def codegen_primitive_pointer_get(node, target_def, call_args)
       type = context.type as PointerInstanceType
-      @last = call_args[0]
-      @last = load @last unless type.var.type.union? || type.var.type.struct_like?
-      @last
+      ptr_as_target call_args[0], type.element_type
     end
 
     def codegen_primitive_pointer_address(node, target_def, call_args)
@@ -465,9 +465,9 @@ module Crystal
 
       casted_ptr = cast_to_void_pointer(call_args[0])
       size = call_args[1]
-      size = @builder.mul size, llvm_size(type.var.type)
+      size = @builder.mul size, llvm_size(type.element_type)
       reallocated_ptr = realloc casted_ptr, size
-      @last = cast_to_pointer reallocated_ptr, type.var.type
+      @last = cast_to_pointer reallocated_ptr, type.element_type
     end
 
     def codegen_primitive_pointer_add(node, target_def, call_args)
@@ -481,7 +481,7 @@ module Crystal
     def codegen_primitive_struct_new(node, target_def, call_args)
       type = node.type as PointerInstanceType
 
-      struct_type = type.var.type as CStructType
+      struct_type = type.element_type as CStructType
 
       llvm_struct_type = llvm_struct_type(struct_type)
       @last = malloc llvm_struct_type
@@ -494,10 +494,7 @@ module Crystal
 
       name = target_def.name[0 .. -2]
 
-      @last = call_args[1]
-
-      value = @last
-      value = load value if node.type.struct_like?
+      value = ptr_as_value call_args[1], node.type
 
       ptr = struct_field_ptr(type, name, call_args[0])
       store value, ptr
@@ -507,23 +504,19 @@ module Crystal
 
     def codegen_primitive_struct_get(node, target_def, call_args)
       type = context.type as CStructType
-
       name = target_def.name
-
-      @last = struct_field_ptr(type, name, call_args[0])
-      @last = load @last unless node.type.struct_like?
-      @last
+      ptr_as_target struct_field_ptr(type, name, call_args[0]), node.type
     end
 
     def struct_field_ptr(type, field_name, pointer)
       index = type.index_of_var(field_name)
-      gep pointer, 0, index
+      aggregate_index pointer, index
     end
 
     def codegen_primitive_union_new(node, target_def, call_args)
       type = node.type as PointerInstanceType
 
-      union_type = type.var.type as CUnionType
+      union_type = type.element_type as CUnionType
 
       llvm_union_type = llvm_struct_type(union_type)
       @last = malloc llvm_union_type
@@ -536,8 +529,7 @@ module Crystal
 
       name = target_def.name[0 .. -2]
 
-      @last = call_args[1]
-      @last = load @last if node.type.struct_like?
+      @last = ptr_as_value call_args[1], node.type
 
       ptr = union_field_ptr(node, call_args[0])
       store @last, ptr
@@ -546,16 +538,12 @@ module Crystal
 
     def codegen_primitive_union_get(node, target_def, call_args)
       type = context.type as CUnionType
-
       name = target_def.name
-
-      @last = union_field_ptr(node, call_args[0])
-      @last = load @last unless node.type.struct_like?
-      @last
+      ptr_as_target union_field_ptr(node, call_args[0]), node.type
     end
 
     def union_field_ptr(node, pointer)
-      ptr = gep pointer, 0, 0
+      ptr = aggregate_index pointer, 0
       cast_to_pointer ptr, node.type
     end
 
@@ -575,13 +563,13 @@ module Crystal
 
     def codegen_primitive_object_id(node, target_def, call_args)
       obj = call_args[0]
-      obj = load(gep obj, 0, 1) if type.hierarchy?
+      obj = load(union_value obj) if type.hierarchy?
       ptr2int obj, LLVM::Int64
     end
 
     def codegen_primitive_object_to_cstr(node, target_def, call_args)
       obj = call_args[0]
-      obj = load(gep obj, 0, 1) if type.hierarchy?
+      obj = load(union_value obj) if type.hierarchy?
       buffer = array_malloc(LLVM::Int8, int(context.type.to_s.length + 23))
       call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("<#{context.type}:0x%016lx>"), obj] of LibLLVM::ValueRef
       buffer
@@ -823,8 +811,7 @@ module Crystal
           ret @last
         end
       else
-        @last = load @last if return_type.struct_like?
-        ret @last
+        ret(ptr_as_value @last, return_type)
       end
     end
 
@@ -888,10 +875,6 @@ module Crystal
 
     def cast_to_pointer(value, type)
       bit_cast(value, pointer_type(llvm_type(type)))
-    end
-
-    def cast_to_void_pointer(pointer)
-      bit_cast pointer, pointer_type(LLVM::Int8)
     end
 
     def visit(node : If)
@@ -1087,8 +1070,7 @@ module Crystal
         if @node.type.nilable? && LLVM.type_kind_of(type_of value) == LibLLVM::TypeKind::Integer
           @phi_table.add block, int2ptr(value, @codegen.llvm_type(node.type))
         else
-          value = load value if type.struct_like?
-          @phi_table.add block, value
+          @phi_table.add block, @codegen.ptr_as_value(value, type)
         end
         @count += 1
       end
@@ -1108,7 +1090,7 @@ module Crystal
     def new_branched_block(node)
       exit_block = new_block("exit")
       node_type = node.type?
-      if node_type && (node_type.union? || node_type.struct_like?)
+      if node_type.try &.passed_by_value?
         UnionBranchedBlock.new node, exit_block, self
       else
         PhiBranchedBlock.new node, exit_block, self
@@ -1181,7 +1163,7 @@ module Crystal
     end
 
     def codegen_assign_target(target : Var, value, llvm_value)
-      if target.type == @mod.void
+      if target.type.void?
         context.vars[target.name] = LLVMVar.new(llvm_nil, @mod.void)
         return
       end
@@ -1222,10 +1204,9 @@ module Crystal
       false
     end
 
-    def codegen_assign(pointer, target_type, value_type, value, load_struct_and_union = true)
+    def codegen_assign(pointer, target_type, value_type, value)
       if target_type == value_type
-        value = load value if target_type.union? || (load_struct_and_union && target_type.struct_like?)
-        store value, pointer
+        store ptr_as_value(value, target_type), pointer
       elsif target_type.is_a?(HierarchyTypeMetaclass) && value_type.is_a?(Metaclass)
         store value, pointer
       # Hack until we fix it in the type inference
@@ -1288,10 +1269,9 @@ module Crystal
         index = type.type_id
         store int32(index), type_id_ptr
 
-        unless type == @mod.void
-          casted_value_ptr = cast_to_pointer value_ptr, type
-          value = load value if type.struct_like?
-          store value, casted_value_ptr
+        unless type.void?
+          casted_value_ptr = cast_to_pointer(value_ptr, type)
+          store ptr_as_value(value, type), casted_value_ptr
         end
       end
     end
@@ -1303,21 +1283,25 @@ module Crystal
     end
 
     def union_type_id(union_pointer)
-      gep union_pointer, 0, 0
+      aggregate_index union_pointer, 0
     end
 
     def union_value(union_pointer)
-      gep union_pointer, 0, 1
+      aggregate_index union_pointer, 1
+    end
+
+    def aggregate_index(ptr, index)
+      gep ptr, 0, index
     end
 
     def visit(node : Var)
       var = context.vars[node.name]
       var_type = var.type
       @last = var.pointer
-      if var_type == @mod.void
+      if var_type.void?
         # Nothing to do
       elsif var_type == node.type
-        @last = load @last unless var.treated_as_pointer || var_type.union? || var_type.struct_like?
+        @last = ptr_as_target @last, var_type unless var.treated_as_pointer
       elsif var_type.is_a?(NilableType)
         if node.type.nil_type?
           @last = null_pointer?(@last)
@@ -1329,7 +1313,7 @@ module Crystal
       else
         value_ptr = union_value(@last)
         @last = cast_to_pointer value_ptr, node.type
-        @last = load @last unless node.type.passed_by_val?
+        @last = ptr_as_target @last, node.type
       end
     end
 
@@ -1340,7 +1324,7 @@ module Crystal
 
     def cast_value(value, to_type, from_type, treated_as_pointer = false)
       @last = value
-      if from_type == @mod.void
+      if from_type.void?
         # Nothing to do
       elsif from_type == to_type
         @last = load @last unless (treated_as_pointer || from_type.union?)
@@ -1363,8 +1347,8 @@ module Crystal
         @last = cast_to_pointer @last, to_type
       else
         value_ptr = union_value(@last)
-        @last = cast_to_pointer value_ptr, to_type
-        @last = load @last unless to_type.struct_like?
+        @last = cast_to_pointer(value_ptr, to_type)
+        @last = ptr_as_target @last, to_type
       end
     end
 
@@ -1398,8 +1382,7 @@ module Crystal
 
     def read_global(name, type)
       @last = get_global name, type
-      @last = load @last unless type.union? || type.struct_like?
-      @last
+      @last = ptr_as_target @last, type
     end
 
     def visit(node : InstanceVar)
@@ -1408,7 +1391,7 @@ module Crystal
       ivar = type.lookup_instance_var(node.name)
       @last = instance_var_ptr type, node.name, llvm_self_ptr
 
-      if ivar.type.union? || ivar.type.struct_like?
+      if ivar.type.passed_by_value?
         unless node.type == ivar.type
           if node.type.union?
             @last = cast_to_pointer @last, node.type
@@ -1436,14 +1419,9 @@ module Crystal
       to_type = node.to.type.instance_type
 
       if obj_type.pointer?
-        resulting_type = to_type
-      else
-        resulting_type = obj_type.filter_by(to_type).not_nil!
-      end
-
-      if obj_type.pointer?
-        @last = cast_to last_value, resulting_type
+        @last = cast_to last_value, to_type
       elsif obj_type.union?
+        resulting_type = obj_type.filter_by(to_type).not_nil!
         type_id_ptr = union_type_id last_value
         type_id = load type_id_ptr
 
@@ -1577,7 +1555,7 @@ module Crystal
                 LLVM.set_initializer global, @last
                 LLVM.set_global_constant global, true
               else
-                if const.value.type.struct_like?
+                if const.value.type.passed_by_value?
                   @last = load @last
                   LLVM.set_initializer global, LLVM.undef(llvm_type(const.value.type))
                 else
@@ -1602,8 +1580,7 @@ module Crystal
           global ||= @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
         end
 
-        @last = global
-        @last = load @last unless const.value.type.struct_like?
+        @last = ptr_as_target global, const.value.type
       elsif replacement = node.syntax_replacement
         replacement.accept self
       else
@@ -1794,12 +1771,7 @@ module Crystal
     def visit(node : IndirectRead)
       ptr = visit_indirect(node)
       ptr = cast_to_pointer ptr, node.type
-
-      if node.type.struct_like?
-        @last = ptr
-      else
-        @last = load ptr
-      end
+      @last = ptr_as_target ptr, node.type
 
       false
     end
@@ -1810,9 +1782,7 @@ module Crystal
 
       node.value.accept self
 
-      if node.value.type.struct_like?
-        @last = load @last
-      end
+      @last = ptr_as_value @last, node.value.type
 
       store @last, ptr
 
@@ -1824,7 +1794,7 @@ module Crystal
 
       type = node.obj.type as PointerInstanceType
 
-      element_type = type.var.type
+      element_type = type.element_type
 
       node.names.each do |name|
         case element_type
@@ -1924,8 +1894,7 @@ module Crystal
             args_base_index = 1
             if owner.union?
               ptr = alloca(llvm_type(owner))
-              value = call_args[0]
-              value = load(value) if owner.passed_by_val?
+              value = load call_args[0]
               store value, ptr
               context.vars["self"] = LLVMVar.new(ptr, owner)
             else
@@ -1948,7 +1917,7 @@ module Crystal
           return_block = context.return_block = new_block "return"
           return_block_table = context.return_block_table = LLVM::PhiTable.new
           return_type = context.return_type = node.type
-          if return_type.union? || return_type.struct_like?
+          if return_type.passed_by_value?
             context.return_union = alloca(llvm_type(node.type), "return")
           else
             context.return_union = nil
@@ -2151,7 +2120,7 @@ module Crystal
         unreachable
       end
 
-      if type.union? || type.struct_like?
+      if type.passed_by_value?
         union = alloca llvm_type(type)
         store @last, union
         @last = union
@@ -2197,7 +2166,7 @@ module Crystal
     end
 
     def codegen_fun(mangled_name, target_def, self_type, is_exported_fun_def = false, fun_module = type_module(self_type))
-      if target_def.type == @mod.void
+      if target_def.type.void?
         llvm_return_type = LLVM::Void
       else
         llvm_return_type = llvm_type(target_def.type)
@@ -2248,7 +2217,7 @@ module Crystal
           LLVM.set_name param, arg.name
 
           # Set 'byval' attribute
-          if arg.type.passed_by_val?
+          if arg.type.passed_by_value?
             # but don't set it if it's the "self" argument and it's a struct
             unless i == 0 && self_type.try &.struct?
               LLVM.add_attribute param, LibLLVM::Attribute::ByVal
@@ -2263,13 +2232,13 @@ module Crystal
           target_def_vars = target_def.vars
 
           args.each_with_index do |arg, i|
-            if (self_type && i == 0 && !self_type.union?) || arg.type.passed_by_val?
+            if (self_type && i == 0 && !self_type.union?) || arg.type.passed_by_value?
               context.vars[arg.name] = LLVMVar.new(context.fun.get_param(i), arg.type, true)
             else
               var_type = target_def_vars ? target_def_vars[arg.name].type : arg.type
               pointer = alloca(llvm_type(var_type), arg.name)
               context.vars[arg.name] = LLVMVar.new(pointer, var_type)
-              codegen_assign(pointer, var_type, arg.type, context.fun.get_param(i), false)
+              codegen_assign pointer, var_type, arg.type, context.fun.get_param(i)
             end
           end
 
@@ -2300,36 +2269,25 @@ module Crystal
     end
 
     def return_from_fun(target_def, return_type)
-      if target_def && target_def.type == @mod.void
+      if return_type.void?
         ret
-      elsif target_def && target_def.body.no_returns?
+      elsif return_type.no_return?
         unreachable
+      elsif return_type.union?
+        if target_def && target_def.body.type? != return_type && !target_def.body.returns?
+          return_union = return_union(  )
+          assign_to_union(return_union, return_type, target_def.body.type, @last)
+          @last = return_union
+        end
+        @last = load @last
+        ret @last
+      elsif return_type.is_a?(NilableType)
+        if target_def.try &.body.type?.try &.nil_type?
+          @last = LLVM.null(llvm_type(return_type))
+        end
+        ret @last
       else
-        if return_type.union?
-          if target_def && target_def.body.type? != return_type && !target_def.body.returns?
-            return_union = return_union()
-            assign_to_union(return_union, return_type, target_def.body.type, @last)
-            @last = load return_union
-          else
-            @last = load @last
-          end
-        end
-
-        if return_type.is_a?(NilableType)
-          if target_def
-            if (target_def_body_type = target_def.body.type?) && target_def_body_type.nil_type?
-              return ret LLVM.null(llvm_type(return_type))
-            end
-          end
-        end
-
-        if return_type == @mod.void
-          ret
-        elsif return_type.struct_like?
-          ret(load @last)
-        else
-          ret(@last)
-        end
+        ret ptr_as_value(@last, return_type)
       end
     end
 
@@ -2379,7 +2337,7 @@ module Crystal
       llvm_mod = @modules[type_name]?
       unless llvm_mod
         llvm_mod = LLVM::Module.new(type_name)
-        llvm_mod.globals.add(LLVM.array_type(llvm_type(@mod.string), @symbol_table_values.count), "symbol_table")
+        define_symbol_table llvm_mod
         @modules[type_name] = llvm_mod
       end
       llvm_mod
@@ -2511,6 +2469,14 @@ module Crystal
       end
     end
 
+    def ptr_as_target(ptr, type)
+      type.passed_by_value? ? ptr : load ptr
+    end
+
+    def ptr_as_value(ptr, type)
+      type.passed_by_value? ? load ptr : ptr
+    end
+
     def llvm_type(type)
       @llvm_typer.llvm_type(type)
     end
@@ -2553,7 +2519,7 @@ module Crystal
     def instance_var_ptr(type, name, pointer)
       index = type.index_of_instance_var(name)
       index += 1 unless type.struct?
-      gep pointer, 0, index
+      aggregate_index pointer, index
     end
 
     def accept(node)

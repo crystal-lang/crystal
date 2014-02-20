@@ -266,7 +266,7 @@ module Crystal
           arg_type = arg.type
           if arg_type.is_a?(PointerInstanceType)
             var = parent_visitor.lookup_var_or_instance_var(call_arg)
-            var.bind_to Var.new("out", arg_type.var.type)
+            var.bind_to Var.new("out", arg_type.element_type)
           else
             call_arg.raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
           end
@@ -392,10 +392,10 @@ module Crystal
         actual_type = self_arg.type
         actual_type = mod.pointer_of(actual_type) if self.args[i].out?
         if actual_type != expected_type
-          if actual_type.nil_type? && (expected_type.pointer? || expected_type.fun_type?)
+          if actual_type.nil_type? && (expected_type.pointer? || expected_type.fun?)
             nil_conversions ||= [] of Int32
             nil_conversions << i
-          elsif (actual_type == mod.string || actual_type == mod.string.hierarchy_type) && (expected_type.is_a?(PointerInstanceType) && expected_type.var.type == mod.uint8)
+          elsif (actual_type == mod.string || actual_type == mod.string.hierarchy_type) && (expected_type.is_a?(PointerInstanceType) && expected_type.element_type == mod.uint8)
             string_conversions ||= [] of Int32
             string_conversions << i
           elsif expected_type.is_a?(FunType) && actual_type.is_a?(FunType) && expected_type.return_type == mod.void && expected_type.arg_types == actual_type.arg_types

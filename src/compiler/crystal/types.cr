@@ -25,7 +25,8 @@ module Crystal
       true
     end
 
-    def passed_by_val?
+    # Is this type passed by value if it's not a primitive type?
+    def passed_by_value?
       false
     end
 
@@ -89,18 +90,6 @@ module Crystal
       false
     end
 
-    def c_struct?
-      false
-    end
-
-    def c_union?
-      false
-    end
-
-    def struct_like?
-      c_struct? || c_union? || struct?
-    end
-
     def c_enum?
       false
     end
@@ -129,7 +118,7 @@ module Crystal
       false
     end
 
-    def fun_type?
+    def fun?
       false
     end
 
@@ -784,7 +773,7 @@ module Crystal
       @struct
     end
 
-    def passed_by_val?
+    def passed_by_value?
       struct?
     end
 
@@ -922,11 +911,7 @@ module Crystal
       true
     end
 
-    def struct_like?
-      false
-    end
-
-    def passed_by_val?
+    def passed_by_value?
       false
     end
 
@@ -1021,11 +1006,7 @@ module Crystal
       true
     end
 
-    def struct_like?
-      false
-    end
-
-    def passed_by_val?
+    def passed_by_value?
       false
     end
   end
@@ -1189,7 +1170,7 @@ module Crystal
     delegate macros, @generic_class
     delegate :abstract, @generic_class
     delegate :struct?, @generic_class
-    delegate :passed_by_val?, @generic_class
+    delegate :passed_by_value?, @generic_class
     delegate :type_desc, @generic_class
 
     def class?
@@ -1279,6 +1260,10 @@ module Crystal
       type_vars["T"]
     end
 
+    def element_type
+      var.type
+    end
+
     def pointer?
       true
     end
@@ -1313,6 +1298,10 @@ module Crystal
 
     def size
       type_vars["N"]
+    end
+
+    def element_type
+      var.type
     end
 
     def allocated
@@ -1585,11 +1574,7 @@ module Crystal
       end
     end
 
-    def c_struct?
-      true
-    end
-
-    def passed_by_val?
+    def passed_by_value?
       true
     end
 
@@ -1640,11 +1625,7 @@ module Crystal
       end
     end
 
-    def c_union?
-      true
-    end
-
-    def passed_by_val?
+    def passed_by_value?
       true
     end
 
@@ -1839,7 +1820,7 @@ module Crystal
       true
     end
 
-    def passed_by_val?
+    def passed_by_value?
       true
     end
 
@@ -1940,7 +1921,7 @@ module Crystal
       true
     end
 
-    def passed_by_val?
+    def passed_by_value?
       false
     end
 
@@ -2175,7 +2156,7 @@ module Crystal
       true
     end
 
-    def passed_by_val?
+    def passed_by_value?
       true
     end
   end
@@ -2261,7 +2242,7 @@ module Crystal
       fun_types.all? &.primitive_like?
     end
 
-    def fun_type?
+    def fun?
       true
     end
 
