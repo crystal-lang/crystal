@@ -1018,16 +1018,6 @@ module Crystal
       end
     end
 
-    def block_returns?
-      return false unless context.block? && context.block_context?
-      context.block.returns? || (context.block.yields? && with_context(context.block_context) { block_returns? })
-    end
-
-    def block_breaks?
-      return false unless context.block? && context.block_context?
-      context.block.breaks? || (context.block.yields? && with_context(context.block_context) { block_breaks? })
-    end
-
     abstract class BranchedBlock
       include LLVMBuilderHelper
 
@@ -1142,39 +1132,27 @@ module Crystal
         return
       end
 
-      codegen_assign_target(target, value, @last) if @last
+      ptr = case target
+            when InstanceVar
+              instance_var_ptr (context.type as InstanceVarContainer), target.name, llvm_self_ptr
+            when Global
+              get_global target.name, target.type
+            when ClassVar
+              get_global class_var_global_name(target), target.type
+            when Var
+              if target.type.void?
+                context.vars[target.name] = LLVMVar.new(llvm_nil, @mod.void)
+                return
+              end
+
+              declare_var(target).pointer
+            else
+              raise "Unknown assign target in codegen: #{target}"
+            end
+
+      codegen_assign ptr, target.type, value.type, @last
 
       false
-    end
-
-    def codegen_assign_target(target : InstanceVar, value, llvm_value)
-      ptr = instance_var_ptr (context.type as InstanceVarContainer), target.name, llvm_self_ptr
-      codegen_assign(ptr, target.type, value.type, llvm_value)
-    end
-
-    def codegen_assign_target(target : Global, value, llvm_value)
-      ptr = get_global target.name, target.type
-      codegen_assign(ptr, target.type, value.type, llvm_value)
-    end
-
-    def codegen_assign_target(target : ClassVar, value, llvm_value)
-      ptr = get_global class_var_global_name(target), target.type
-      codegen_assign(ptr, target.type, value.type, llvm_value)
-    end
-
-    def codegen_assign_target(target : Var, value, llvm_value)
-      if target.type.void?
-        context.vars[target.name] = LLVMVar.new(llvm_nil, @mod.void)
-        return
-      end
-
-      var = declare_var(target)
-      ptr = var.pointer
-      codegen_assign(ptr, target.type, value.type, llvm_value)
-    end
-
-    def codegen_assign_target(target, value, llvm_value)
-      raise "Unknown assign target in codegen: #{target}"
     end
 
     def get_global(name, type)
@@ -1218,29 +1196,6 @@ module Crystal
       else
         assign_to_union(pointer, target_type, value_type, value)
       end
-    end
-
-    def cast_number(target_type : IntegerType, value_type : IntegerType, value)
-      if target_type.normal_rank != value_type.normal_rank
-        if target_type.unsigned? && value_type.unsigned?
-          value = @builder.zext(value, llvm_type(target_type))
-        else
-          value = @builder.sext(value, llvm_type(target_type))
-        end
-      end
-      value
-    end
-
-    def cast_number(target_type : FloatType, value_type : IntegerType, value)
-      if value_type.unsigned?
-        @builder.ui2fp(value, llvm_type(target_type))
-      else
-        @builder.si2fp(value, llvm_type(target_type))
-      end
-    end
-
-    def cast_number(target_type, value_type, value)
-      raise "Bug: called cast_number with types #{target_type} <- #{value_type}"
     end
 
     def assign_to_union(union_pointer, union_type : NilableType, type, value)
@@ -1306,7 +1261,7 @@ module Crystal
         if node.type.nil_type?
           @last = null_pointer?(@last)
         else
-          @last = load @last unless var.treated_as_pointer
+          @last = load @last
         end
       elsif node.type.union?
         @last = cast_to_pointer @last, node.type
@@ -1327,7 +1282,7 @@ module Crystal
       if from_type.void?
         # Nothing to do
       elsif from_type == to_type
-        @last = load @last unless (treated_as_pointer || from_type.union?)
+        @last = ptr_as_target @last, from_type unless treated_as_pointer
       elsif from_type.is_a?(NilableType)
         if to_type.nil_type?
           @last = llvm_nil
@@ -1608,6 +1563,14 @@ module Crystal
       def initialize(@fun, @type, @vars = {} of String => LLVMVar)
       end
 
+      def block_returns?
+        (block = @block) && (block_context = @block_context) && (block.returns? || (block.yields? && block_context.block_returns?))
+      end
+
+      def block_breaks?
+        (block = @block) && (block_context = @block_context) && (block.breaks? || (block.yields? && block_context.block_breaks?))
+      end
+
       def clone
         context = Context.new @fun, @type, @vars
         context.return_block = return_block
@@ -1626,11 +1589,7 @@ module Crystal
     end
 
     def with_cloned_context(new_context = @context)
-      old_context = @context
-      @context = new_context.clone
-      value = yield old_context
-      @context = old_context
-      value
+      with_context(new_context.clone) { |ctx| yield ctx }
     end
 
     def with_context(new_context)
@@ -1639,6 +1598,14 @@ module Crystal
       value = yield old_context
       @context = old_context
       value
+    end
+
+    def block_returns?
+      context.block_returns?
+    end
+
+    def block_breaks?
+      context.block_breaks?
     end
 
     def visit(node : Yield)
@@ -1988,23 +1955,13 @@ module Crystal
       if node_obj = node.obj
         owner = node_obj.type
         node_obj.accept(self)
-
-        if owner.union?
-          obj_type_id = load union_type_id(@last)
-        elsif owner.nilable? || owner.hierarchy_metaclass?
-          obj_type_id = @last
-        end
+        obj_type_id = @last
       else
         owner = node.scope
-
-        if owner == @mod.program
-          # Nothing
-        elsif owner.union?
-          obj_type_id = load union_type_id(llvm_self)
-        else
-          obj_type_id = llvm_self
-        end
+        obj_type_id = llvm_self
       end
+
+      obj_type_id = dispatch_type_id(obj_type_id, owner)
 
       call = Call.new(node_obj ? CastedVar.new("%self") : nil, node.name, Array(ASTNode).new(node.args.length) { |i| CastedVar.new("%arg#{i}") }, node.block)
       call.scope = node.scope
@@ -2015,16 +1972,10 @@ module Crystal
         new_vars["%self"] = LLVMVar.new(@last, node_obj.type, true)
       end
 
-      arg_type_ids = [] of LibLLVM::ValueRef?
+      arg_type_ids = [] of LibLLVM::ValueRef
       node.args.each_with_index do |arg, i|
         arg.accept self
-        if arg.type.union?
-          arg_type_ids.push load(union_type_id(@last))
-        elsif arg.type.nilable?
-          arg_type_ids.push @last
-        else
-          arg_type_ids.push nil
-        end
+        arg_type_ids.push dispatch_type_id(@last, arg.type)
         new_vars["%arg#{i}"] = LLVMVar.new(@last, arg.type, true)
       end
 
@@ -2034,28 +1985,30 @@ module Crystal
         next_def_label = nil
         target_defs.each do |a_def|
           if owner.union?
-            result = match_any_type_id(a_def.owner.not_nil!, obj_type_id.not_nil!)
+            result = match_any_type_id(a_def.owner.not_nil!, obj_type_id)
           elsif owner.nilable?
             if a_def.owner.not_nil!.nil_type?
-              result = null_pointer?(obj_type_id.not_nil!)
+              result = null_pointer?(obj_type_id)
             else
-              result = not_null_pointer?(obj_type_id.not_nil!)
+              result = not_null_pointer?(obj_type_id)
             end
           elsif owner.hierarchy_metaclass?
-            result = match_any_type_id(a_def.owner.not_nil!, obj_type_id.not_nil!)
+            result = match_any_type_id(a_def.owner.not_nil!, obj_type_id)
           else
             result = llvm_true
           end
 
           a_def.args.each_with_index do |arg, i|
-            if node.args[i].type.union?
-              comp = match_any_type_id(arg.type, arg_type_ids[i].not_nil!)
+            arg_type_id = arg_type_ids[i]
+            node_arg = node.args[i]
+            if node_arg.type.union?
+              comp = match_any_type_id(arg.type, arg_type_id)
               result = and(result, comp)
-            elsif node.args[i].type.nilable?
+            elsif node_arg.type.nilable?
               if arg.type.nil_type?
-                result = and(result, null_pointer?(arg_type_ids[i].not_nil!))
+                result = and(result, null_pointer?(arg_type_id))
               else
-                result = and(result, not_null_pointer?(arg_type_ids[i].not_nil!))
+                result = and(result, not_null_pointer?(arg_type_id))
               end
             end
           end
@@ -2086,6 +2039,14 @@ module Crystal
 
         unreachable
         close_branched_block(branch)
+      end
+    end
+
+    def dispatch_type_id(ptr, type)
+      if type.union?
+        load(union_type_id(ptr))
+      else
+        ptr
       end
     end
 

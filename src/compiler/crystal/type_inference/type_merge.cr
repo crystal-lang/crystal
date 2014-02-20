@@ -57,10 +57,6 @@ module Crystal
     end
 
     def type_combine(types)
-      # if types.all? &.number?
-      #   return [types.max_by &.rank] of Type
-      # end
-
       all_types = [types.shift] of Type
 
       types.each do |t2|
