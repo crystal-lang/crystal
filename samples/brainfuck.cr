@@ -1,6 +1,6 @@
 # Brainf*ck interpreter
 
-class Tape
+struct Tape
   def initialize
     @tape = [0]
     @pos = 0
@@ -25,33 +25,28 @@ class Tape
 
   def devance
     @pos -= 1
+    raise "pos should be > 0" if @pos < 0
   end
 end
 
 class Program
-  def initialize(text, bracket_map)
-    @text = text
-    @bracket_map = bracket_map
-    @tape = Tape.new
-    @pc = 0
-  end
-
-  def step(code)
-    case code
-      when '>'; @tape.advance
-      when '<'; @tape.devance
-      when '+'; @tape.inc
-      when '-'; @tape.dec
-      when '.'; print(@tape.get.chr)
-      when '['; @pc = @bracket_map[@pc] if @tape.get == 0
-      when ']'; @pc = @bracket_map[@pc] if @tape.get != 0
-    end
+  def initialize(@text, @bracket_map)
   end
 
   def run
-    while @pc < @text.length
-      step(@text[@pc])
-      @pc += 1
+    tape = Tape.new
+    pc = 0
+    while pc < @text.length
+      case @text[pc]
+        when '>'; tape.advance
+        when '<'; tape.devance
+        when '+'; tape.inc
+        when '-'; tape.dec
+        when '.'; print(tape.get.chr)
+        when '['; pc = @bracket_map[pc] if tape.get == 0
+        when ']'; pc = @bracket_map[pc] if tape.get != 0
+      end
+      pc += 1
     end
   end
 
@@ -61,17 +56,15 @@ class Program
     leftstack = [] of Int32
     pc = 0
     text.each_char do |char|
-      if ['[', ']', '<', '>', '+', '-', ',', '.'].includes?(char)
+      if "[]<>+-,.".includes?(char)
         parsed += char.to_s
         if char == '['
           leftstack << pc
         elsif char == ']' && !leftstack.empty?
           left = leftstack.pop
           right = pc
-          if left && right
-            bracket_map[left] = right
-            bracket_map[right] = left
-          end
+          bracket_map[left] = right
+          bracket_map[right] = left
         end
         pc += 1
       end
@@ -84,7 +77,8 @@ end
 text = if ARGV.size > 0
   File.read(ARGV[0])
 else
-  ">++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++
+  " Benchmark brainf*ck program
+>++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++
 [>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++
 ++++++++[>++++++++++[>++++++++++[>++++++++++[>+
 +++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.
