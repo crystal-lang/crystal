@@ -292,4 +292,50 @@ describe "Code gen: def" do
       foo(2).to_i
     ").to_i.should eq(0)
   end
+
+  it "codegens return nil when nilable type (1)" do
+    run("
+      struct Nil
+        def nil?
+          true
+        end
+      end
+
+      class Reference
+        def nil?
+          false
+        end
+      end
+
+      def foo
+        return if 1 == 1
+        Reference.new
+      end
+
+      foo.nil?
+      ").to_b.should be_true
+  end
+
+  it "codegens return nil when nilable type (2)" do
+    run("
+      struct Nil
+        def nil?
+          true
+        end
+      end
+
+      class Reference
+        def nil?
+          false
+        end
+      end
+
+      def foo
+        return nil if 1 == 1
+        Reference.new
+      end
+
+      foo.nil?
+      ").to_b.should be_true
+  end
 end

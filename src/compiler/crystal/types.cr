@@ -74,7 +74,8 @@ module Crystal
       false
     end
 
-    def union?
+    # Is this type represented as a union in llvm? Something like: {type_id, value}
+    def represented_as_union?
       false
     end
 
@@ -1816,7 +1817,7 @@ module Crystal
       nil
     end
 
-    def union?
+    def represented_as_union?
       true
     end
 
@@ -1913,7 +1914,7 @@ module Crystal
       super(@program, [@program.nil, @not_nil_type] of Type)
     end
 
-    def union?
+    def represented_as_union?
       false
     end
 
@@ -2152,7 +2153,7 @@ module Crystal
       to_s
     end
 
-    def union?
+    def represented_as_union?
       true
     end
 

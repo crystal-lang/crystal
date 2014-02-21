@@ -796,20 +796,17 @@ module Crystal
 
       return_type = context.return_type.not_nil!
 
+      if return_type.represented_as_union?
+        @last = assign_to_return_union(return_type, node.exps[0].type, @last)
+      end
+
       if return_block = context.return_block
-        if return_type.union?
-          @last = assign_to_return_union(return_type, node.exps[0].type, @last)
-        end
         context.return_block_table.not_nil!.add(insert_block, @last)
         br return_block
-      elsif return_type.union?
-        ret assign_to_return_union(return_type, node.exps[0].type, @last)
+      elsif return_type.represented_as_union?
+        ret @last
       elsif return_type.nilable?
-        if LLVM.type_kind_of(type_of @last) == LibLLVM::TypeKind::Integer
-          ret int2ptr(@last, llvm_type(return_type))
-        else
-          ret @last
-        end
+        ret ptr_to_nilable(@last, return_type, control_expression_exp_type(node))
       else
         ret(ptr_as_value @last, return_type)
       end
@@ -819,6 +816,14 @@ module Crystal
       return_union = return_union()
       assign_to_union(return_union, return_type, value_type, value)
       load return_union
+    end
+
+    def control_expression_exp_type(node)
+      node.exps.empty? ? @mod.nil : (node.exps.first.type? || @mod.nil)
+    end
+
+    def ptr_to_nilable(ptr, to_type, from_type)
+      from_type.nil_type? ? LLVM.null(llvm_type(to_type)) : ptr
     end
 
     def return_union
@@ -993,7 +998,7 @@ module Crystal
       break_type = context.break_type
       break_table = context.break_table
 
-      if break_type && break_type.union?
+      if break_type && break_type.represented_as_union?
         break_union = context.break_union.not_nil!
 
         if node.exps.length > 0
@@ -1002,11 +1007,10 @@ module Crystal
           assign_to_union(break_union, break_type, @mod.nil, llvm_nil)
         end
       elsif break_table
-        if break_type && break_type.nilable? && node.exps.empty?
-          break_table.add insert_block, int2ptr(llvm_nil, llvm_type(break_type))
-        else
-          break_table.add insert_block, @last
+        if break_type && break_type.nilable?
+          @last = ptr_to_nilable(@last, break_type, control_expression_exp_type(node))
         end
+        break_table.add insert_block, @last
       end
 
       br context.while_exit_block.not_nil!
@@ -1057,8 +1061,8 @@ module Crystal
       end
 
       def add_value(block, type, value)
-        if @node.type.nilable? && LLVM.type_kind_of(type_of value) == LibLLVM::TypeKind::Integer
-          @phi_table.add block, int2ptr(value, @codegen.llvm_type(node.type))
+        if @node.type.nilable?
+          @phi_table.add block, @codegen.ptr_to_nilable(value, node.type, type)
         else
           @phi_table.add block, @codegen.ptr_as_value(value, type)
         end
@@ -1199,14 +1203,11 @@ module Crystal
     end
 
     def assign_to_union(union_pointer, union_type : NilableType, type, value)
-      if LLVM.type_kind_of(type_of value) == LibLLVM::TypeKind::Integer
-        value = int2ptr value, llvm_type(union_type)
-      end
-      store value, union_pointer
+      store ptr_to_nilable(value, union_type, type), union_pointer
     end
 
     def assign_to_union(union_pointer, union_type, type, value)
-      if type.union?
+      if type.represented_as_union?
         casted_value = cast_to_pointer value, union_type
         store load(casted_value), union_pointer
       elsif type.is_a?(NilableType)
@@ -1263,7 +1264,7 @@ module Crystal
         else
           @last = load @last
         end
-      elsif node.type.union?
+      elsif node.type.represented_as_union?
         @last = cast_to_pointer @last, node.type
       else
         value_ptr = union_value(@last)
@@ -1298,7 +1299,7 @@ module Crystal
         end
       elsif from_type.metaclass?
         # Nothing to do
-      elsif to_type.union?
+      elsif to_type.represented_as_union?
         @last = cast_to_pointer @last, to_type
       else
         value_ptr = union_value(@last)
@@ -1310,14 +1311,8 @@ module Crystal
     def box_object_in_hierarchy(object, hierarchy, value, load = true)
       hierarchy_type = alloca llvm_type(hierarchy)
       type_id_ptr, value_ptr = union_type_id_and_value(hierarchy_type)
-      if object.is_a?(NilableType)
-        null_pointer = null_pointer?(value)
-        value_id = @builder.select null_pointer?(value), int(@mod.nil.type_id), int(object.not_nil_type.type_id)
-      else
-        value_id = int(object.type_id)
-      end
 
-      store value_id, type_id_ptr
+      store int(object.type_id), type_id_ptr
 
       store cast_to_void_pointer(value), value_ptr
       if load
@@ -1348,7 +1343,7 @@ module Crystal
 
       if ivar.type.passed_by_value?
         unless node.type == ivar.type
-          if node.type.union?
+          if node.type.represented_as_union?
             @last = cast_to_pointer @last, node.type
           else
             value_ptr = union_value(@last)
@@ -1375,7 +1370,7 @@ module Crystal
 
       if obj_type.pointer?
         @last = cast_to last_value, to_type
-      elsif obj_type.union?
+      elsif obj_type.represented_as_union?
         resulting_type = obj_type.filter_by(to_type).not_nil!
         type_id_ptr = union_type_id last_value
         type_id = load type_id_ptr
@@ -1859,7 +1854,7 @@ module Crystal
           if owner
             context.type = owner
             args_base_index = 1
-            if owner.union?
+            if owner.represented_as_union?
               ptr = alloca(llvm_type(owner))
               value = load call_args[0]
               store value, ptr
@@ -1931,7 +1926,7 @@ module Crystal
                 @last = llvm_nil
               else
                 phi_type = llvm_type(node_type)
-                phi_type = pointer_type(phi_type) if node_type.union?
+                phi_type = pointer_type(phi_type) if node_type.represented_as_union?
                 @last = phi phi_type, return_block_table
               end
             end
@@ -1984,7 +1979,7 @@ module Crystal
 
         next_def_label = nil
         target_defs.each do |a_def|
-          if owner.union?
+          if owner.represented_as_union?
             result = match_any_type_id(a_def.owner.not_nil!, obj_type_id)
           elsif owner.nilable?
             if a_def.owner.not_nil!.nil_type?
@@ -2001,7 +1996,7 @@ module Crystal
           a_def.args.each_with_index do |arg, i|
             arg_type_id = arg_type_ids[i]
             node_arg = node.args[i]
-            if node_arg.type.union?
+            if node_arg.type.represented_as_union?
               comp = match_any_type_id(arg.type, arg_type_id)
               result = and(result, comp)
             elsif node_arg.type.nilable?
@@ -2043,7 +2038,7 @@ module Crystal
     end
 
     def dispatch_type_id(ptr, type)
-      if type.union?
+      if type.represented_as_union?
         load(union_type_id(ptr))
       else
         ptr
@@ -2193,7 +2188,7 @@ module Crystal
           target_def_vars = target_def.vars
 
           args.each_with_index do |arg, i|
-            if (self_type && i == 0 && !self_type.union?) || arg.type.passed_by_value?
+            if (self_type && i == 0 && !self_type.represented_as_union?) || arg.type.passed_by_value?
               context.vars[arg.name] = LLVMVar.new(context.fun.get_param(i), arg.type, true)
             else
               var_type = target_def_vars ? target_def_vars[arg.name].type : arg.type
@@ -2205,7 +2200,7 @@ module Crystal
 
           if body
             return_type = context.return_type = target_def.type
-            context.return_union = alloca(llvm_type(return_type), "return") if return_type.union?
+            context.return_union = alloca(llvm_type(return_type), "return") if return_type.represented_as_union?
 
             accept body
 
@@ -2234,13 +2229,12 @@ module Crystal
         ret
       elsif return_type.no_return?
         unreachable
-      elsif return_type.union?
+      elsif return_type.represented_as_union?
         if target_def && target_def.body.type? != return_type && !target_def.body.returns?
-          return_union = return_union(  )
-          assign_to_union(return_union, return_type, target_def.body.type, @last)
-          @last = return_union
+          @last = assign_to_return_union(return_type, target_def.body.type, @last)
+        else
+          @last = load @last
         end
-        @last = load @last
         ret @last
       elsif return_type.is_a?(NilableType)
         if target_def.try &.body.type?.try &.nil_type?
@@ -2257,7 +2251,7 @@ module Crystal
       # because Object+ can only mean a Reference type (so we exclude Nil, for example).
       type = @mod.reference.hierarchy_type if type == @mod.object.hierarchy_type
 
-      if type.union? || type.hierarchy_metaclass?
+      if type.represented_as_union? || type.hierarchy_metaclass?
         if type.is_a?(HierarchyType) && type.base_type.subclasses.empty?
           return equal? int(type.base_type.type_id), type_id
         end

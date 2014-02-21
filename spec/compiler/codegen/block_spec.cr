@@ -502,7 +502,7 @@ describe "Code gen: block" do
     ").to_i.should eq(3)
   end
 
-  it "can break without value from yielder that returns nilable" do
+  it "can break without value from yielder that returns nilable (1)" do
     run("
       require \"nil\"
       require \"reference\"
@@ -514,6 +514,24 @@ describe "Code gen: block" do
 
       a = foo do
         break
+      end
+
+      a.nil?
+    ").to_b.should be_true
+  end
+
+  it "can break without value from yielder that returns nilable (2)" do
+    run("
+      require \"nil\"
+      require \"reference\"
+
+      def foo
+        yield
+        \"\"
+      end
+
+      a = foo do
+        break nil
       end
 
       a.nil?
