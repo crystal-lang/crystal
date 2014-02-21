@@ -744,8 +744,11 @@ describe "Code gen: block" do
       ").to_i.should eq(1)
   end
 
-  it "codegens block with nilable type with return" do
+  it "codegens block with nilable type with return (1)" do
     run("
+      struct Nil; def nil?; true; end; end
+      class Reference; def nil?; false; end; end
+
       def foo
         if yield
           return Reference.new
@@ -753,8 +756,24 @@ describe "Code gen: block" do
         nil
       end
 
-      foo { false }
-      ")
+      foo { false }.nil?
+      ").to_b.should be_true
+  end
+
+  it "codegens block with nilable type with return (2)" do
+    run("
+      struct Nil; def nil?; true; end; end
+      class Reference; def nil?; false; end; end
+
+      def foo
+        if yield
+          return nil
+        end
+        Reference.new
+      end
+
+      foo { false }.nil?
+      ").to_b.should be_false
   end
 
   it "codegens block with union with return" do

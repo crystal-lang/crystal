@@ -409,6 +409,17 @@ describe "Array" do
     end
   end
 
+  describe "first?" do
+    it "gets first? when non empty" do
+      a = [1, 2, 3]
+      a.first?.should eq(1)
+    end
+
+    it "gives nil when empty" do
+      ([] of Int32).first?.should be_nil
+    end
+  end
+
   describe "last" do
     it "gets last when non empty" do
       a = [1, 2, 3]

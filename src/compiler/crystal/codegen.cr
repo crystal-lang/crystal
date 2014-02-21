@@ -798,17 +798,17 @@ module Crystal
 
       if return_type.represented_as_union?
         @last = assign_to_return_union(return_type, node.exps[0].type, @last)
+      elsif return_type.nilable?
+        @last = ptr_to_nilable(@last, return_type, control_expression_exp_type(node))
+      else
+        @last = ptr_as_value @last, return_type
       end
 
       if return_block = context.return_block
         context.return_block_table.not_nil!.add(insert_block, @last)
         br return_block
-      elsif return_type.represented_as_union?
-        ret @last
-      elsif return_type.nilable?
-        ret ptr_to_nilable(@last, return_type, control_expression_exp_type(node))
       else
-        ret(ptr_as_value @last, return_type)
+        ret @last
       end
     end
 
@@ -819,10 +819,11 @@ module Crystal
     end
 
     def control_expression_exp_type(node)
-      node.exps.empty? ? @mod.nil : (node.exps.first.type? || @mod.nil)
+      node.exps.first?.try &.type?
     end
 
     def ptr_to_nilable(ptr, to_type, from_type)
+      from_type ||= @mod.nil
       from_type.nil_type? ? LLVM.null(llvm_type(to_type)) : ptr
     end
 
@@ -1890,25 +1891,22 @@ module Crystal
           if node.target_def.no_returns? || node.target_def.body.no_returns? || node.target_def.body.returns?
             unreachable
           else
-            node_target_def_type = node.target_def.type?
+            node_target_def_type = node.target_def.type
             node_target_def_body = node.target_def.body
-            if node_target_def_type && !node_target_def_type.nil_type? && !block.breaks?
-              if return_union = context.return_union
+            unless block.breaks?
+              if return_type.void?
+                # Nothing to do
+              elsif return_union = context.return_union
                 if node_target_def_body && node_target_def_body.type?
                   codegen_assign(return_union, return_type, node_target_def_body.type, @last)
                 else
                   unreachable
                 end
-              elsif node_target_def_type.is_a?(NilableType) && node_target_def_body && node_target_def_body.type? && node_target_def_body.type.nil_type?
-                return_block_table.add insert_block, LLVM.null(llvm_type(node_target_def_type.not_nil_type))
-              elsif return_type.void?
-                # Nothing to do
+              elsif node_target_def_type.is_a?(NilableType)
+                return_block_table.add insert_block, ptr_to_nilable(@last, node_target_def_type, node_target_def_body.try &.type?)
               else
-                value = @last
-                return_block_table.add insert_block, value
+                return_block_table.add insert_block, @last
               end
-            elsif (!node_target_def_type || (node_target_def_type && node_target_def_type.nil_type?)) && node.type.nilable?
-              return_block_table.add insert_block, int2ptr(llvm_nil, llvm_type(node.type))
             end
             br return_block
           end
@@ -1945,8 +1943,9 @@ module Crystal
     end
 
     def codegen_dispatch(node, target_defs)
-      branch = new_branched_block(node)
+      new_vars = context.vars.dup
 
+      # Get type_id of obj or owner
       if node_obj = node.obj
         owner = node_obj.type
         node_obj.accept(self)
@@ -1955,57 +1954,34 @@ module Crystal
         owner = node.scope
         obj_type_id = llvm_self
       end
-
       obj_type_id = dispatch_type_id(obj_type_id, owner)
 
-      call = Call.new(node_obj ? CastedVar.new("%self") : nil, node.name, Array(ASTNode).new(node.args.length) { |i| CastedVar.new("%arg#{i}") }, node.block)
-      call.scope = node.scope
-
-      new_vars = context.vars.dup
-
+      # Create self var if available
       if node_obj && node_obj.type.passed_as_self?
         new_vars["%self"] = LLVMVar.new(@last, node_obj.type, true)
       end
 
-      arg_type_ids = [] of LibLLVM::ValueRef
-      node.args.each_with_index do |arg, i|
+      # Get type if of args and create arg vars
+      arg_type_ids = node.args.map_with_index do |arg, i|
         arg.accept self
-        arg_type_ids.push dispatch_type_id(@last, arg.type)
         new_vars["%arg#{i}"] = LLVMVar.new(@last, arg.type, true)
+        dispatch_type_id(@last, arg.type)
       end
+
+      # Reuse this call for each dispatch branch
+      call = Call.new(node_obj ? CastedVar.new("%self") : nil, node.name, Array(ASTNode).new(node.args.length) { |i| CastedVar.new("%arg#{i}") }, node.block)
+      call.scope = node.scope
 
       with_cloned_context do
         context.vars = new_vars
+        branch = new_branched_block(node)
 
-        next_def_label = nil
+        # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
         target_defs.each do |a_def|
-          if owner.represented_as_union?
-            result = match_any_type_id(a_def.owner.not_nil!, obj_type_id)
-          elsif owner.nilable?
-            if a_def.owner.not_nil!.nil_type?
-              result = null_pointer?(obj_type_id)
-            else
-              result = not_null_pointer?(obj_type_id)
-            end
-          elsif owner.hierarchy_metaclass?
-            result = match_any_type_id(a_def.owner.not_nil!, obj_type_id)
-          else
-            result = llvm_true
-          end
-
+          result = match_dispatch_type_id(owner, a_def.owner.not_nil!, obj_type_id)
           a_def.args.each_with_index do |arg, i|
             arg_type_id = arg_type_ids[i]
-            node_arg = node.args[i]
-            if node_arg.type.represented_as_union?
-              comp = match_any_type_id(arg.type, arg_type_id)
-              result = and(result, comp)
-            elsif node_arg.type.nilable?
-              if arg.type.nil_type?
-                result = and(result, null_pointer?(arg_type_id))
-              else
-                result = and(result, not_null_pointer?(arg_type_id))
-              end
-            end
+            result = and(result, match_dispatch_type_id(node.args[i].type, arg.type, arg_type_id))
           end
 
           current_def_label, next_def_label = new_blocks ["current_def", "next_def"]
@@ -2013,11 +1989,9 @@ module Crystal
 
           position_at_end current_def_label
 
-          if call_obj = call.obj
-            call_obj.set_type(a_def.owner)
-          end
-
+          # Prepare this specific call
           call.target_defs = [a_def] of Def
+          call.obj.try &.set_type(a_def.owner)
           call.args.zip(a_def.args) do |call_arg, a_def_arg|
             call_arg.set_type(a_def_arg.type)
           end
@@ -2042,6 +2016,18 @@ module Crystal
         load(union_type_id(ptr))
       else
         ptr
+      end
+    end
+
+    def match_dispatch_type_id(node_type, def_type, type_id)
+      if node_type.represented_as_union?
+        match_any_type_id(def_type, type_id)
+      elsif node_type.nilable?
+        def_type.nil_type? ? null_pointer?(type_id) : not_null_pointer?(type_id)
+      elsif node_type.hierarchy_metaclass?
+        match_any_type_id(def_type, type_id)
+      else
+        llvm_true
       end
     end
 

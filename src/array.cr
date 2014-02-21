@@ -172,6 +172,10 @@ class Array(T)
     @buffer[0]
   end
 
+  def first?
+    @length == 0 ? nil : @buffer[0]
+  end
+
   def last
     raise IndexOutOfBounds.new if @length == 0
     @buffer[@length - 1]
