@@ -807,6 +807,10 @@ module Crystal
       false
     end
 
+    def visit(node : ImplicitObj)
+      false
+    end
+
     def visit(node : ExceptionHandler)
       @str << "begin\n"
 

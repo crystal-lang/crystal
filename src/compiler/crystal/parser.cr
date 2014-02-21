@@ -1268,7 +1268,14 @@ module Crystal
             next_token_skip_space_or_newline
             when_conds = [] of ASTNode
             while true
-              when_conds << parse_expression
+              if @token.type == :"."
+                next_token
+                call = parse_var_or_call(false, true) as Call
+                call.obj = ImplicitObj.new
+                when_conds << call
+              else
+                when_conds << parse_expression
+              end
               skip_space
               if @token.keyword?(:then)
                 next_token_skip_space_or_newline

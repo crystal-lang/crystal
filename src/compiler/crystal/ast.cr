@@ -998,6 +998,21 @@ module Crystal
     end
   end
 
+  # Node that represents an implicit obj in:
+  #
+  #     case foo
+  #     when .bar? #=> this is a call with an implicit obj
+  #     end
+  class ImplicitObj < ASTNode
+    def ==(other : self)
+      true
+    end
+
+    def clone_without_location
+      self
+    end
+  end
+
   # A qualified identifier.
   #
   #     const [ '::' const ]*

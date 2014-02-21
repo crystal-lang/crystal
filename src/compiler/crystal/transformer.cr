@@ -191,6 +191,10 @@ module Crystal
       node
     end
 
+    def transform(node : ImplicitObj)
+      node
+    end
+
     def transform(node : ClassDef)
       node.body = node.body.transform(self)
 

@@ -823,6 +823,10 @@ module Crystal
 
           if cond.is_a?(Path)
             comp = IsA.new(right_side, cond)
+          elsif cond.is_a?(Call) && cond.obj.is_a?(ImplicitObj)
+            implicit_call = cond.clone as Call
+            implicit_call.obj = temp_var
+            comp = implicit_call
           else
             comp = Call.new(cond, "===", [right_side] of ASTNode)
           end

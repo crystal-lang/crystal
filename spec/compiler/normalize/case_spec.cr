@@ -17,4 +17,8 @@ describe "Normalize: case" do
   it "normalizes case with many expressions in when" do
     assert_normalize "x = 1; case x; when 1, 2; 'b'; end", "x = 1\nif 1 === x or 2 === x\n  'b'\nend"
   end
+
+  it "normalizes case with implicit call" do
+    assert_normalize "case x; when .foo(1); 2; end", "#temp_1 = x()\nif #temp_1.foo(1)\n  2\nend"
+  end
 end
