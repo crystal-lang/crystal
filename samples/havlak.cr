@@ -1,12 +1,13 @@
 # Havlak benchmark: https://code.google.com/p/multi-language-bench/
-# Crystal Implementation
+# Crystal Implementation (translated from Python version)
 
 # Intel i5 2.5GHz
-# c++: 28.8s 147Mb
-# java: 33.7s 909Mb
-# crystal: 35.1s 387Mb
-# go: 67.7s 456Mb 
-# scala: 66.8s 316Mb
+# c++:     27.8s 147Mb
+# java:    31.5s 909Mb
+# crystal: 35.3s 409Mb
+# scala:   66.8s 316Mb
+# go:      67.7s 456Mb
+# python:  958.4s 713Mb
 
 class BasicBlock
   def initialize(@name)
@@ -38,7 +39,6 @@ end
 
 class CFG
   def initialize
-    @startNode     = nil
     @basicBlockMap = {} of Int32 => BasicBlock
     @edgeList      = [] of BasicBlockEdge
   end
@@ -46,15 +46,9 @@ class CFG
   property :startNode
   property :basicBlockMap
 
-  def createNode(name : Int32)
-    node = if @basicBlockMap.has_key?(name)
-      @basicBlockMap[name]
-    else 
-      bb = BasicBlock.new(name)
-      @basicBlockMap[name] = bb
-      bb
-    end
-    @startNode = node unless @startNode
+  def createNode(name)
+    node = (@basicBlockMap[name] ||= BasicBlock.new(name))
+    @startNode ||= node
     node
   end
 
@@ -69,8 +63,8 @@ end
 
 class SimpleLoop
   def initialize
-    @basicBlocks  = [] of BasicBlock
-    @children     = [] of SimpleLoop
+    @basicBlocks  = Set(BasicBlock).new
+    @children     = Set(SimpleLoop).new
     @parent       = nil
     @header       = nil
 
@@ -90,11 +84,11 @@ class SimpleLoop
   property :nestingLevel
 
   def addNode(bb)
-    @basicBlocks << bb
+    @basicBlocks.add(bb)
   end
 
-  def addChildLoop(_loop)
-    @children << _loop
+  def addChildLoop(l)
+    @children.add(l)
   end
 
   def setParent(parent)
@@ -103,7 +97,7 @@ class SimpleLoop
   end
 
   def setHeader(bb)
-    @basicBlocks << bb
+    @basicBlocks.add(bb)
     @header = bb
   end
 
@@ -118,18 +112,15 @@ $loopCounter = 0
 class LSG
   def initialize
     @loops = [] of SimpleLoop
-    @root  = SimpleLoop.new
+    @root  = createNewLoop
     @root.setNestingLevel(0)
-    @root.counter = $loopCounter
-    $loopCounter += 1
     addLoop(@root)
   end
 
   def createNewLoop
-    l = SimpleLoop.new
-    l.counter = $loopCounter
-    $loopCounter += 1
-    l
+    s = SimpleLoop.new
+    s.counter = $loopCounter += 1
+    s
   end
 
   def addLoop(l)
@@ -169,7 +160,6 @@ class UnionFindNode
     @parent     = self
     @bb         = bb
     @dfsNumber  = dfsNumber
-    @l          = nil
   end
 
   property :bb
@@ -181,11 +171,9 @@ class UnionFindNode
     nodeList = [] of UnionFindNode
 
     node = self
-    parent = node.parent.not_nil!
-    while node != parent
-      nodeList << node if parent != parent.parent
+    while node != node.parent
+      nodeList << node if node.parent != node.parent.not_nil!.parent
       node = node.parent.not_nil!
-      parent = node.parent.not_nil!
     end
 
     nodeList.each { |iter| iter.parent = node.parent }
@@ -213,13 +201,11 @@ class HavlakLoopFinder
   # Safeguard against pathologic algorithm behavior.
   MAXNONBACKPREDS = (32 * 1024)
 
-  def initialize(cfgParm, lsgParm)
-    @cfg = cfgParm
-    @lsg = lsgParm
+  def initialize(@cfg, @lsg)
   end
 
   def isAncestor(w, v, last)
-    w <= v && v <= last[w]
+    w <= v <= last[w]
   end
 
   def dfs(currentNode, nodes, number, last, current)
@@ -238,32 +224,23 @@ class HavlakLoopFinder
   end
 
   def findLoops
-    return 0 if @cfg.startNode == nil
+    return 0 unless @cfg.startNode
     size = @cfg.getNumNodes
 
-    nonBackPreds    = [] of Set(Int32)
-    backPreds       = [] of Array(Int32)
+    nonBackPreds    = Array(Set(Int32)).new(size) { Set(Int32).new }
+    backPreds       = Array(Array(Int32)).new(size) { Array(Int32).new }
     number          = {} of BasicBlock => Int32
-    header          = [] of Int32
-    types           = [] of Int32
-    last            = [] of Int32
-    nodes           = [] of UnionFindNode
-
-    size.times do |i|
-      nonBackPreds << Set(Int32).new
-      backPreds << Array(Int32).new
-      header << 0
-      types << 0
-      last << 0
-      nodes << UnionFindNode.new
-    end
+    header          = Array(Int32).new(size, 0)
+    types           = Array(Int32).new(size, 0)
+    last            = Array(Int32).new(size, 0)
+    nodes           = Array(UnionFindNode).new(size) { UnionFindNode.new }
 
     # Step a:
     #   - initialize all nodes as unvisited.
     #   - depth-first traversal and numbering.
     #   - unreached BB's are marked as dead.
     #
-    @cfg.basicBlockMap.each { |_, v| number[v] = UNVISITED }
+    @cfg.basicBlockMap.each_value { |v| number[v] = UNVISITED }
     dfs(@cfg.startNode.not_nil!, nodes, number, last, 0)
 
     # Step b:
@@ -281,10 +258,7 @@ class HavlakLoopFinder
       types[w]  = BB_NONHEADER
 
       nodeW = nodes[w].bb
-      if nodeW == nil
-        types[w] = BB_DEAD
-      else
-        nodeW = nodeW.not_nil!
+      if nodeW
         nodeW.inEdges.each do |nodeV|
           v = number[nodeV]
           if v != UNVISITED
@@ -295,6 +269,8 @@ class HavlakLoopFinder
             end
           end
         end
+      else
+        types[w] = BB_DEAD
       end
     end
 
@@ -318,8 +294,7 @@ class HavlakLoopFinder
       nodePool = [] of UnionFindNode
 
       nodeW = nodes[w].bb
-      if nodeW != nil # dead BB
-        nodeW = nodeW.not_nil!
+      if nodeW # dead BB
 
         # Step d:
         backPreds[w].each do |v|
@@ -339,7 +314,7 @@ class HavlakLoopFinder
         # work the list...
         #
         while !workList.empty?
-          x = workList.pop
+          x = workList.shift
 
           # Step e:
           #
@@ -401,8 +376,8 @@ class HavlakLoopFinder
             node.union(nodes[w])
 
             # Nested loops are not added, but linked together.
-            if node.l != nil
-              node.l.not_nil!.setParent(l)
+            if node_l = node.l
+              node_l.setParent(l)
             else
               l.addNode(node.bb.not_nil!)
             end
@@ -458,8 +433,8 @@ puts "Welcome to LoopTesterApp, Crystal edition"
 puts "Constructing Simple CFG..."
 
 $cfg.createNode(0)  # top
-$cfg.createNode(1)  # bottom
 buildBaseLoop(0)
+$cfg.createNode(1)  # bottom
 buildConnect(0, 2)
 
 # execute loop recognition 15000 times to force compilation
@@ -478,7 +453,7 @@ n = 2
   100.times do |i|
     top = n
     n = buildStraight(n, 1)
-    25.times { |j| n = buildBaseLoop(n) }
+    25.times { n = buildBaseLoop(n) }
 
     bottom = buildStraight(n, 1)
     buildConnect(n, top)
@@ -489,7 +464,6 @@ n = 2
 end
 
 puts "Performing Loop Recognition\n1 Iteration"
-t = Time.now
 lsg = LSG.new
 loops = HavlakLoopFinder.new($cfg, lsg).findLoops
 
