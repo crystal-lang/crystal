@@ -1720,19 +1720,6 @@ module Crystal
       CastFunToReturnVoid.new(@node)
     end
   end
-
-  # Ficticious node used in the codegen phase to say
-  # "this is a node that has his type casted"
-  class CastedVar < ASTNode
-    getter name
-
-    def initialize(@name)
-    end
-
-    def clone_without_location
-      CastedVar.new(@name)
-    end
-  end
 end
 
 require "to_s"

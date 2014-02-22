@@ -15,4 +15,8 @@ class LLVM::PhiTable
   def empty?
     @blocks.empty?
   end
+
+  def length
+    @blocks.length
+  end
 end

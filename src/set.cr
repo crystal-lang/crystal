@@ -33,7 +33,7 @@ class Set(T)
   end
 
   def each
-    @hash.each do |key, value|
+    @hash.each_key do |key|
       yield key
     end
   end

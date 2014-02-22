@@ -140,7 +140,11 @@ module Crystal
       builder.ret
     end
 
-    def ret(value)
+    def ret(value : Nil)
+      ret
+    end
+
+    def ret(value : LibLLVM::ValueRef)
       builder.ret value
     end
 
@@ -186,6 +190,14 @@ module Crystal
       else
         @builder.fp2ui value, llvm_type(to_type)
       end
+    end
+
+    def cast_to(value, type)
+      bit_cast(value, llvm_type(type))
+    end
+
+    def cast_to_pointer(value, type)
+      bit_cast(value, pointer_type(llvm_type(type)))
     end
 
     def llvm_type(type)
