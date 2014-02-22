@@ -12,10 +12,9 @@ module Crystal
     property target_macro
 
     def target_def
-      # TODO: fix
-      if (defs = @target_defs)
+      if defs = @target_defs
         if defs.length == 1
-          return defs[0]
+          return defs.first
         else
           ::raise "#{defs.length} target defs for #{self}"
         end

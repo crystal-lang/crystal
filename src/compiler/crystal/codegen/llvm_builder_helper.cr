@@ -159,5 +159,53 @@ module Crystal
     def type_of(value)
       LLVM.type_of value
     end
+
+    def extend_int(from_type, to_type, value)
+      from_type.signed? ? @builder.sext(value, llvm_type(to_type)) : @builder.zext(value, llvm_type(to_type))
+    end
+
+    def extend_float(to_type, value)
+      @builder.fpext value, llvm_type(to_type)
+    end
+
+    def trunc_float(to_type, value)
+      @builder.fptrunc value, llvm_type(to_type)
+    end
+
+    def int_to_float(from_type, to_type, value)
+      if from_type.signed?
+        @builder.si2fp value, llvm_type(to_type)
+      else
+        @builder.ui2fp value, llvm_type(to_type)
+      end
+    end
+
+    def float_to_int(from_type, to_type, value)
+      if to_type.signed?
+        @builder.fp2si value, llvm_type(to_type)
+      else
+        @builder.fp2ui value, llvm_type(to_type)
+      end
+    end
+
+    def llvm_type(type)
+      llvm_typer.llvm_type(type)
+    end
+
+    def llvm_struct_type(type)
+      llvm_typer.llvm_struct_type(type)
+    end
+
+    def llvm_arg_type(type)
+      llvm_typer.llvm_arg_type(type)
+    end
+
+    def llvm_embedded_type(type)
+      llvm_typer.llvm_embedded_type(type)
+    end
+
+    def llvm_size(type)
+      size_of llvm_type(type)
+    end
   end
 end

@@ -61,6 +61,7 @@ module Crystal
     getter :main
     getter :modules
     getter :context
+    getter :llvm_typer
 
     class LLVMVar
       getter pointer
@@ -135,7 +136,7 @@ module Crystal
 
     def visit(node : FunDef)
       unless node.external.dead
-        codegen_fun node.real_name, node.external, nil, true
+        codegen_fun node.real_name, node.external, @mod, true
       end
 
       false
@@ -268,9 +269,9 @@ module Crystal
       if t1.normal_rank == t2.normal_rank
         # Nothing to do
       elsif t1.rank < t2.rank
-        p1 = t1.signed? ? @builder.sext(p1, llvm_type(t2)) : @builder.zext(p1, llvm_type(t2))
+        p1 = extend_int t1, t2, p1
       else
-        p2 = t2.signed? ? @builder.sext(p2, llvm_type(t1)) : @builder.zext(p2, llvm_type(t1))
+        p2 = extend_int t2, t1, p2
       end
 
       @last = case op
@@ -301,28 +302,20 @@ module Crystal
     end
 
     def codegen_binary_op(op, t1 : IntegerType, t2 : FloatType, p1, p2)
-      p1 = if t1.signed?
-            @builder.si2fp(p1, llvm_type(t2))
-           else
-             @builder.ui2fp(p1, llvm_type(t2))
-           end
+      p1 = codegen_cast(t1, t2, p1)
       codegen_binary_op(op, t2, t2, p1, p2)
     end
 
     def codegen_binary_op(op, t1 : FloatType, t2 : IntegerType, p1, p2)
-      p2 = if t2.signed?
-            @builder.si2fp(p2, llvm_type(t1))
-           else
-             @builder.ui2fp(p2, llvm_type(t1))
-           end
+      p2 = codegen_cast(t2, t1, p2)
       codegen_binary_op op, t1, t1, p1, p2
     end
 
     def codegen_binary_op(op, t1 : FloatType, t2 : FloatType, p1, p2)
       if t1.rank < t2.rank
-        p1 = @builder.fpext(p1, llvm_type(t2))
+        p1 = extend_float t2, p1
       elsif t1.rank > t2.rank
-        p2 = @builder.fpext(p2, llvm_type(t1))
+        p2 = extend_float t1, p2
       end
 
       @last = case op
@@ -338,11 +331,7 @@ module Crystal
               when ">=" then return @builder.fcmp LibLLVM::RealPredicate::OGE, p1, p2
               else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
               end
-
-      if t1.rank < t2.rank
-        @last = @builder.fptrunc(@last, llvm_type(t1))
-      end
-
+      @last = trunc_float t1, @last if t1.rank < t2.rank
       @last
     end
 
@@ -360,33 +349,25 @@ module Crystal
       if from_type.normal_rank == to_type.normal_rank
         arg
       elsif from_type.rank < to_type.rank
-        from_type.signed? ? @builder.sext(arg, llvm_type(to_type)) : @builder.zext(arg, llvm_type(to_type))
+        extend_int from_type, to_type, arg
       else
         trunc arg, llvm_type(to_type)
       end
     end
 
     def codegen_cast(from_type : IntegerType, to_type : FloatType, arg)
-      if from_type.signed?
-        @builder.si2fp arg, llvm_type(to_type)
-      else
-        @builder.ui2fp arg, llvm_type(to_type)
-      end
+      int_to_float from_type, to_type, arg
     end
 
     def codegen_cast(from_type : FloatType, to_type : IntegerType, arg)
-      if to_type.signed?
-        @builder.fp2si arg, llvm_type(to_type)
-      else
-        @builder.fp2ui arg, llvm_type(to_type)
-      end
+      float_to_int from_type, to_type, arg
     end
 
     def codegen_cast(from_type : FloatType, to_type : FloatType, arg)
       if from_type.rank < to_type.rank
-        @builder.fpext arg, llvm_type(to_type)
+        extend_float to_type, arg
       elsif from_type.rank > to_type.rank
-        @builder.fptrunc arg, llvm_type(to_type)
+        trunc_float to_type, arg
       else
         arg
       end
@@ -412,15 +393,7 @@ module Crystal
       type = node.type
       base_type = type.is_a?(HierarchyType) ? type.base_type : type
 
-      struct_type = llvm_struct_type(base_type)
-
-      if type.struct?
-        @last = @builder.alloca struct_type
-      else
-        @last = malloc struct_type
-      end
-
-      memset @last, int8(0), size_of(struct_type)
+      allocate_aggregate base_type
 
       unless type.struct?
         type_id_ptr = aggregate_index(@last, 0)
@@ -479,14 +452,7 @@ module Crystal
     end
 
     def codegen_primitive_struct_new(node, target_def, call_args)
-      type = node.type as PointerInstanceType
-
-      struct_type = type.element_type as CStructType
-
-      llvm_struct_type = llvm_struct_type(struct_type)
-      @last = malloc llvm_struct_type
-      memset @last, int8(0), size_of(llvm_struct_type)
-      @last
+      allocate_aggregate (node.type as PointerInstanceType).element_type
     end
 
     def codegen_primitive_struct_set(node, target_def, call_args)
@@ -514,14 +480,7 @@ module Crystal
     end
 
     def codegen_primitive_union_new(node, target_def, call_args)
-      type = node.type as PointerInstanceType
-
-      union_type = type.element_type as CUnionType
-
-      llvm_union_type = llvm_struct_type(union_type)
-      @last = malloc llvm_union_type
-      memset @last, int8(0), size_of(llvm_union_type)
-      @last
+      allocate_aggregate (node.type as PointerInstanceType).element_type
     end
 
     def codegen_primitive_union_set(node, target_def, call_args)
@@ -529,16 +488,16 @@ module Crystal
 
       name = target_def.name[0 .. -2]
 
-      @last = ptr_as_value call_args[1], node.type
+      value = ptr_as_value call_args[1], node.type
 
       ptr = union_field_ptr(node, call_args[0])
-      store @last, ptr
-      @last
+      store value, ptr
+
+      call_args[1]
     end
 
     def codegen_primitive_union_get(node, target_def, call_args)
       type = context.type as CUnionType
-      name = target_def.name
       ptr_as_target union_field_ptr(node, call_args[0]), node.type
     end
 
@@ -605,8 +564,7 @@ module Crystal
 
     def codegen_primitive_class(node, target_def, call_args)
       if node.type.hierarchy_metaclass?
-        type_ptr = union_type_id call_args[0]
-        load type_ptr
+        load aggregate_index(call_args[0], 0)
       else
         int(node.type.type_id)
       end
@@ -643,18 +601,28 @@ module Crystal
     end
 
     def visit(node : SimpleOr)
-      node.left.accept self
-      left = codegen_cond(node.left.type)
-
-      node.right.accept self
-      right = codegen_cond(node.right.type)
-
-      @last = or left, right
+      @last = or codegen_cond(node.left), codegen_cond(node.right)
       false
     end
 
     def visit(node : ASTNode)
       true
+    end
+
+    def visit(node : Nop)
+      @last = llvm_nil
+    end
+
+    def visit(node : NilLiteral)
+      @last = llvm_nil
+    end
+
+    def visit(node : BoolLiteral)
+      @last = int1(node.value ? 1 : 0)
+    end
+
+    def visit(node : CharLiteral)
+      @last = int32(node.value.ord)
     end
 
     def visit(node : NumberLiteral)
@@ -674,18 +642,6 @@ module Crystal
       end
     end
 
-    def visit(node : BoolLiteral)
-      @last = int1(node.value ? 1 : 0)
-    end
-
-    def visit(node : LongLiteral)
-      @last = int64(node.value.to_i)
-    end
-
-    def visit(node : CharLiteral)
-      @last = int32(node.value.ord)
-    end
-
     def visit(node : StringLiteral)
       @last = build_string_constant(node.value)
     end
@@ -698,8 +654,7 @@ module Crystal
       @fun_literal_count += 1
 
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
-      the_fun = codegen_fun(fun_literal_name, node.def, nil, false, @main_mod)
-      @last = the_fun.fun
+      the_fun = codegen_fun(fun_literal_name, node.def, @mod, false, @main_mod)
       @last = (check_main_fun fun_literal_name, the_fun).fun
 
       false
@@ -707,17 +662,16 @@ module Crystal
 
     def visit(node : FunPointer)
       owner = node.call.target_def.owner.not_nil!
-      owner = nil unless owner.passed_as_self?
       if obj = node.obj
-        accept(obj)
+        accept obj
         call_self = @last
-      elsif owner
+      elsif owner.passed_as_self?
         call_self = llvm_self
       end
       last_fun = target_def_fun(node.call.target_def, owner)
       @last = last_fun.fun
 
-      if owner && call_self
+      if call_self
         wrapper = trampoline_wrapper(node.call.target_def, last_fun)
         tramp_ptr = array_malloc(LLVM::Int8, int(32))
         call @mod.trampoline_init(@llvm_mod), [
@@ -726,7 +680,7 @@ module Crystal
           bit_cast(call_self, pointer_type(LLVM::Int8))
         ]
         @last = call @mod.trampoline_adjust(@llvm_mod), [tramp_ptr]
-        @last = cast_to(@last, node.type)
+        @last = cast_to @last, node.type
       end
 
       false
@@ -742,9 +696,10 @@ module Crystal
           LLVM.add_attribute func.get_param(0), LibLLVM::Attribute::Nest
           func.append_basic_block("entry") do |builder|
             call_ret = builder.call target_fun, func.params
-            if target_def.no_returns?
+            case target_def.type
+            when .no_return?
               builder.unreachable
-            elsif target_def.type.void?
+            when .void?
               builder.ret
             else
               builder.ret call_ret
@@ -766,17 +721,9 @@ module Crystal
       @last = cast_to @last, type
     end
 
-    def visit(node : Nop)
-      @last = llvm_nil
-    end
-
-    def visit(node : NilLiteral)
-      @last = llvm_nil
-    end
-
     def visit(node : Expressions)
       node.expressions.each do |exp|
-        accept(exp)
+        accept exp
         break if exp.no_returns? || exp.returns? || exp.breaks? || (exp.yields? && (block_returns? || block_breaks?))
       end
       false
@@ -788,7 +735,7 @@ module Crystal
           old_last = @last
           with_cloned_context do
             context.vars = handler.vars
-            accept(node_ensure)
+            accept node_ensure
           end
           @last = old_last
         end
@@ -796,10 +743,11 @@ module Crystal
 
       return_type = context.return_type.not_nil!
 
-      if return_type.represented_as_union?
+      case return_type
+      when .represented_as_union?
         @last = assign_to_return_union(return_type, node.exps[0].type, @last)
-      elsif return_type.nilable?
-        @last = ptr_to_nilable(@last, return_type, control_expression_exp_type(node))
+      when .nilable?
+        @last = ptr_to_nilable(@last, return_type, node.exps.first?.try &.type?)
       else
         @last = ptr_as_value @last, return_type
       end
@@ -818,27 +766,18 @@ module Crystal
       load return_union
     end
 
-    def control_expression_exp_type(node)
-      node.exps.first?.try &.type?
-    end
-
-    def ptr_to_nilable(ptr, to_type, from_type)
-      from_type ||= @mod.nil
-      from_type.nil_type? ? LLVM.null(llvm_type(to_type)) : ptr
-    end
-
     def return_union
       context.return_union.not_nil!
     end
 
     def visit(node : ClassDef)
-      node.body.accept self
+      accept node.body
       @last = llvm_nil
       false
     end
 
     def visit(node : ModuleDef)
-      node.body.accept self
+      accept node.body
       @last = llvm_nil
       false
     end
@@ -884,26 +823,23 @@ module Crystal
     end
 
     def visit(node : If)
-      accept(node.cond)
-
       then_block, else_block = new_blocks ["then", "else"]
-      codegen_cond_branch(node.cond, then_block, else_block)
 
-      branch = new_branched_block(node)
+      codegen_cond_branch node.cond, then_block, else_block
 
-      position_at_end then_block
-      accept(node.then)
-      add_branched_block_value(branch, node.then.type?, @last)
-      br branch.exit_block
-
-      position_at_end else_block
-      accept(node.else)
-      add_branched_block_value(branch, node.else.type?, @last)
-      br branch.exit_block
-
-      close_branched_block(branch)
+      branch = new_branched_block node
+      codegen_if_branch branch, node.then, then_block
+      codegen_if_branch branch, node.else, else_block
+      close_branched_block branch
 
       false
+    end
+
+    def codegen_if_branch(branch, node, branch_block)
+      position_at_end branch_block
+      accept node
+      add_branched_block_value(branch, node.type?, @last)
+      br branch.exit_block
     end
 
     def visit(node : While)
@@ -921,11 +857,10 @@ module Crystal
 
         position_at_end while_block
 
-        accept(node.cond)
-        codegen_cond_branch(node.cond, body_block, exit_block)
+        codegen_cond_branch node.cond, body_block, exit_block
 
         position_at_end body_block
-        accept(node.body)
+        accept node.body
         br while_block
 
         position_at_end exit_block
@@ -938,9 +873,15 @@ module Crystal
     end
 
     def codegen_cond_branch(node_cond, then_block, else_block)
-      cond(codegen_cond(node_cond.type), then_block, else_block)
+      accept node_cond
+      cond codegen_cond(node_cond.type), then_block, else_block
 
       nil
+    end
+
+    def codegen_cond(node : ASTNode)
+      accept node
+      codegen_cond node.type
     end
 
     def codegen_cond(type : NilType)
@@ -1009,7 +950,7 @@ module Crystal
         end
       elsif break_table
         if break_type && break_type.nilable?
-          @last = ptr_to_nilable(@last, break_type, control_expression_exp_type(node))
+          @last = ptr_to_nilable(@last, break_type, node.exps.first?.try &.type?)
         end
         break_table.add insert_block, @last
       end
@@ -1084,8 +1025,7 @@ module Crystal
 
     def new_branched_block(node)
       exit_block = new_block("exit")
-      node_type = node.type?
-      if node_type.try &.passed_by_value?
+      if node.type?.try &.passed_by_value?
         UnionBranchedBlock.new node, exit_block, self
       else
         PhiBranchedBlock.new node, exit_block, self
@@ -1122,16 +1062,14 @@ module Crystal
     end
 
     def visit(node : Assign)
-      codegen_assign_node(node.target, node.value)
-    end
+      target, value = node.target, node.value
 
-    def codegen_assign_node(target, value)
       if target.is_a?(Path)
         @last = llvm_nil
         return false
       end
 
-      accept(value)
+      accept value
 
       if value.no_returns? || value.returns? || value.breaks? || (value.yields? && (block_returns? || block_breaks?))
         return
@@ -1164,11 +1102,10 @@ module Crystal
       ptr = @llvm_mod.globals[name]?
       unless ptr
         llvm_type = llvm_type(type)
+        ptr = @llvm_mod.globals.add(llvm_type, name)
         if @llvm_mod == @main_mod
-          ptr = @llvm_mod.globals.add(llvm_type, name)
           LLVM.set_initializer ptr, LLVM.null(llvm_type)
         else
-          ptr = @llvm_mod.globals.add(llvm_type, name)
           LLVM.set_linkage ptr, LibLLVM::Linkage::External
         end
       end
@@ -1231,24 +1168,6 @@ module Crystal
           store ptr_as_value(value, type), casted_value_ptr
         end
       end
-    end
-
-    def union_type_id_and_value(union_pointer)
-      type_id_ptr = union_type_id(union_pointer)
-      value_ptr = union_value(union_pointer)
-      [type_id_ptr, value_ptr]
-    end
-
-    def union_type_id(union_pointer)
-      aggregate_index union_pointer, 0
-    end
-
-    def union_value(union_pointer)
-      aggregate_index union_pointer, 1
-    end
-
-    def aggregate_index(ptr, index)
-      gep ptr, 0, index
     end
 
     def visit(node : Var)
@@ -1363,7 +1282,7 @@ module Crystal
     end
 
     def visit(node : Cast)
-      node.obj.accept self
+      accept node.obj
       last_value = @last
 
       obj_type = node.obj.type
@@ -1382,7 +1301,7 @@ module Crystal
         cond cmp, matches_block, doesnt_match_block
 
         position_at_end doesnt_match_block
-        type_cast_exception_call.accept self
+        accept type_cast_exception_call
 
         position_at_end matches_block
         cast_value last_value, resulting_type, obj_type
@@ -1406,7 +1325,7 @@ module Crystal
     end
 
     def codegen_type_filter(node)
-      accept(node.obj)
+      accept node.obj
 
       obj_type = node.obj.type
 
@@ -1451,14 +1370,7 @@ module Crystal
     end
 
     def declare_var(var)
-      context.vars[var.name] ||= begin
-        llvm_var = LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
-        var_type = var.type
-        if var_type.is_a?(UnionType) && var_type.union_types.any?(&.nil_type?)
-          in_alloca_block { assign_to_union(llvm_var.pointer, var.type, @mod.nil, llvm_nil) }
-        end
-        llvm_var
-      end
+      context.vars[var.name] ||= LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
     end
 
     def declare_lib_var(name, type)
@@ -1469,15 +1381,6 @@ module Crystal
         @lib_vars[name] = var
       end
       var
-    end
-
-    def declare_out_arguments(call)
-      call.target_def.args.each_with_index do |arg, i|
-        var = call.args[i]
-        if var.out? && var.is_a?(Var)
-          declare_var(var)
-        end
-      end
     end
 
     def visit(node : Def)
@@ -1500,7 +1403,7 @@ module Crystal
 
           if const.value.needs_const_block?
             in_const_block("const_#{global_name}") do
-              accept(const.not_nil!.value)
+              accept const.not_nil!.value
 
               if LLVM.constant? @last
                 LLVM.set_initializer global, @last
@@ -1519,7 +1422,7 @@ module Crystal
           else
             old_llvm_mod = @llvm_mod
             @llvm_mod = @main_mod
-            accept(const.value)
+            accept const.value
             LLVM.set_initializer global, @last
             LLVM.set_global_constant global, true
             @llvm_mod = old_llvm_mod
@@ -1533,7 +1436,7 @@ module Crystal
 
         @last = ptr_as_target global, const.value.type
       elsif replacement = node.syntax_replacement
-        replacement.accept self
+        accept replacement
       else
         @last = int(node.type.type_id)
       end
@@ -1610,13 +1513,13 @@ module Crystal
         block = context.block
 
         if node_scope = node.scope
-          node_scope.accept self
+          accept node_scope
           new_vars["%scope"] = LLVMVar.new(@last, node_scope.type)
         end
 
         # First accept all yield expressions
         node.exps.each_with_index do |exp, i|
-          exp.accept self
+          accept exp
 
           arg = block.args[i]?
           if arg
@@ -1642,7 +1545,7 @@ module Crystal
           context.break_type = old.return_type
           context.break_union = old.return_union
           context.while_exit_block = old.return_block
-          accept(block)
+          accept block
         end
 
         if !node.type? || node.type.nil_type?
@@ -1657,20 +1560,20 @@ module Crystal
       branch = new_branched_block(node)
 
       @exception_handlers << Handler.new(node, catch_block, context.vars)
-      accept(node.body)
+      accept node.body
       @exception_handlers.pop
 
       if node_else = node.else
-        accept(node_else)
-        add_branched_block_value(branch, node_else.type, @last)
+        accept node_else
+        add_branched_block_value branch, node_else.type, @last
       else
-        add_branched_block_value(branch, node.body.type, @last)
+        add_branched_block_value branch, node.body.type, @last
       end
 
       br branch.exit_block
 
       position_at_end catch_block
-      lp_ret_type = @llvm_typer.landing_pad_type
+      lp_ret_type = llvm_typer.landing_pad_type
       lp = @builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME).fun, [] of LibLLVM::ValueRef
       unwind_ex_obj = @builder.extract_value lp, 0
       ex_type_id = @builder.extract_value lp, 1
@@ -1705,9 +1608,9 @@ module Crystal
               context.vars[a_rescue_name] = LLVMVar.new(ex_union, a_rescue.type)
             end
 
-            accept(a_rescue.body)
+            accept a_rescue.body
           end
-          add_branched_block_value(branch, a_rescue.body.type, @last)
+          add_branched_block_value branch, a_rescue.body.type, @last
           br branch.exit_block
 
           position_at_end next_rescue_block
@@ -1715,7 +1618,7 @@ module Crystal
       end
 
       if node_ensure = node.ensure
-        accept(node_ensure)
+        accept node_ensure
       end
 
       raise_fun = main_fun(RAISE_NAME)
@@ -1724,7 +1627,7 @@ module Crystal
       close_branched_block(branch)
       if node_ensure
         old_last = @last
-        accept(node_ensure)
+        accept node_ensure
         @last = old_last
       end
 
@@ -1743,7 +1646,7 @@ module Crystal
       ptr = visit_indirect(node)
       ptr = cast_to_pointer ptr, node.value.type
 
-      node.value.accept self
+      accept node.value
 
       @last = ptr_as_value @last, node.value.type
 
@@ -1777,51 +1680,34 @@ module Crystal
         end
       end
 
-      node.obj.accept self
+      accept node.obj
 
       @builder.gep @last, indices
     end
 
     def visit(node : Call)
       if target_macro = node.target_macro
-        accept(target_macro)
+        accept target_macro
         return false
       end
 
       target_defs = node.target_defs
 
-      if target_defs
-        if target_defs.length > 1
-          codegen_dispatch(node, target_defs)
-          return false
-        end
-
-        if node.target_def.is_a?(External)
-          declare_out_arguments(node)
-        end
+      if target_defs && target_defs.length > 1
+        codegen_dispatch(node, target_defs)
+        return false
       end
 
-      if !node.target_defs || node.target_def.owner.try &.is_subclass_of?(@mod.value)
-        if node_obj = node.obj
-          owner = node_obj.type?
-        end
-        owner ||= node.scope
-      elsif node.name == "super"
-        owner = node.scope
-      else
-        owner = node.target_def.owner
-      end
+      target_def = node.target_def
 
-      if owner && !owner.passed_as_self?
-        owner = nil
-      end
+      owner = node.name == "super" ? node.scope : target_def.owner.not_nil!
 
       call_args = [] of LibLLVM::ValueRef
 
       if (obj = node.obj) && obj.type.passed_as_self?
-        accept(obj)
+        accept obj
         call_args << @last
-      elsif owner
+      elsif owner.passed_as_self?
         if yield_scope = context.vars["%scope"]?
           call_args << yield_scope.pointer
         else
@@ -1833,6 +1719,7 @@ module Crystal
         if arg.out?
           case arg
           when Var
+            declare_var(arg)
             call_args << context.vars[arg.name].pointer
           when InstanceVar
             call_args << instance_var_ptr(type, arg.name, llvm_self_ptr)
@@ -1840,7 +1727,7 @@ module Crystal
             raise "Bug: out argument was #{arg}"
           end
         else
-          accept(arg)
+          accept arg
           call_args << @last
         end
       end
@@ -1852,8 +1739,9 @@ module Crystal
           context.block = block
           context.block_context = old
           context.vars = {} of String => LLVMVar
-          if owner
-            context.type = owner
+          context.type = owner
+
+          if owner.passed_as_self?
             args_base_index = 1
             if owner.represented_as_union?
               ptr = alloca(llvm_type(owner))
@@ -1867,9 +1755,9 @@ module Crystal
             args_base_index = 0
           end
 
-          target_def_vars = node.target_def.vars
+          target_def_vars = target_def.vars
 
-          node.target_def.args.each_with_index do |arg, i|
+          target_def.args.each_with_index do |arg, i|
             var_type = target_def_vars ? target_def_vars[arg.name].type : arg.type
             ptr = alloca(llvm_type(var_type), arg.name)
             context.vars[arg.name] = LLVMVar.new(ptr, var_type)
@@ -1886,13 +1774,13 @@ module Crystal
             context.return_union = nil
           end
 
-          accept(node.target_def.body)
+          accept target_def.body
 
-          if node.target_def.no_returns? || node.target_def.body.no_returns? || node.target_def.body.returns?
+          if target_def.no_returns? || target_def.body.no_returns? || target_def.body.returns?
             unreachable
           else
-            node_target_def_type = node.target_def.type
-            node_target_def_body = node.target_def.body
+            node_target_def_type = target_def.type
+            node_target_def_body = target_def.body
             unless block.breaks?
               if return_type.void?
                 # Nothing to do
@@ -1948,7 +1836,7 @@ module Crystal
       # Get type_id of obj or owner
       if node_obj = node.obj
         owner = node_obj.type
-        node_obj.accept(self)
+        accept node_obj
         obj_type_id = @last
       else
         owner = node.scope
@@ -1963,7 +1851,7 @@ module Crystal
 
       # Get type if of args and create arg vars
       arg_type_ids = node.args.map_with_index do |arg, i|
-        arg.accept self
+        accept arg
         new_vars["%arg#{i}"] = LLVMVar.new(@last, arg.type, true)
         dispatch_type_id(@last, arg.type)
       end
@@ -2000,7 +1888,7 @@ module Crystal
           else
             call.set_type(a_def.type)
           end
-          call.accept self
+          accept call
 
           add_branched_block_value(branch, a_def.type, @last)
           position_at_end next_def_label
@@ -2122,6 +2010,7 @@ module Crystal
       old_llvm_mod = @llvm_mod
 
       with_cloned_context do
+        context.type = self_type
         context.vars = {} of String => LLVMVar
         @llvm_mod = fun_module
 
@@ -2131,8 +2020,7 @@ module Crystal
         @exception_handlers = [] of Handler
 
         args = [] of Arg
-        if self_type
-          context.type = self_type
+        if self_type.passed_as_self?
           args << Arg.new_with_type("self", self_type)
         end
         args.concat target_def.args
@@ -2161,7 +2049,7 @@ module Crystal
           # Set 'byval' attribute
           if arg.type.passed_by_value?
             # but don't set it if it's the "self" argument and it's a struct
-            unless i == 0 && self_type.try &.struct?
+            unless i == 0 && self_type.struct?
               LLVM.add_attribute param, LibLLVM::Attribute::ByVal
             end
           end
@@ -2174,7 +2062,7 @@ module Crystal
           target_def_vars = target_def.vars
 
           args.each_with_index do |arg, i|
-            if (self_type && i == 0 && !self_type.represented_as_union?) || arg.type.passed_by_value?
+            if (self_type.passed_as_self? && i == 0 && !self_type.represented_as_union?) || arg.type.passed_by_value?
               context.vars[arg.name] = LLVMVar.new(context.fun.get_param(i), arg.type, true)
             else
               var_type = target_def_vars ? target_def_vars[arg.name].type : arg.type
@@ -2273,7 +2161,12 @@ module Crystal
       return @main_mod if @single_module
 
       type = type.typedef if type.is_a?(TypeDefType)
-      type_name = (type ? type.instance_type : nil).to_s
+      case type
+      when Nil, Program
+        type_name = ""
+      else
+        type_name = type.instance_type.to_s
+      end
 
       llvm_mod = @modules[type_name]?
       unless llvm_mod
@@ -2368,6 +2261,17 @@ module Crystal
       call @mod.printf(@llvm_mod), [@builder.global_string_pointer(format)] + args
     end
 
+    def allocate_aggregate(type)
+      struct_type = llvm_struct_type(type)
+      if type.struct?
+        @last = alloca struct_type
+      else
+        @last = malloc struct_type
+      end
+      memset @last, int8(0), size_of(struct_type)
+      @last
+    end
+
     def malloc(type)
       @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
       if malloc_fun = @malloc_fun
@@ -2418,25 +2322,29 @@ module Crystal
       type.passed_by_value? ? load ptr : ptr
     end
 
-    def llvm_type(type)
-      @llvm_typer.llvm_type(type)
+    def ptr_to_nilable(ptr, to_type, from_type)
+      from_type ||= @mod.nil
+      from_type.nil_type? ? LLVM.null(llvm_type(to_type)) : ptr
     end
 
-    def llvm_struct_type(type)
-      @llvm_typer.llvm_struct_type(type)
+    def union_type_id_and_value(union_pointer)
+      type_id_ptr = union_type_id(union_pointer)
+      value_ptr = union_value(union_pointer)
+      [type_id_ptr, value_ptr]
     end
 
-    def llvm_arg_type(type)
-      @llvm_typer.llvm_arg_type(type)
+    def union_type_id(union_pointer)
+      aggregate_index union_pointer, 0
     end
 
-    def llvm_embedded_type(type)
-      @llvm_typer.llvm_embedded_type(type)
+    def union_value(union_pointer)
+      aggregate_index union_pointer, 1
     end
 
-    def llvm_size(type)
-      size_of llvm_type(type)
+    def aggregate_index(ptr, index)
+      gep ptr, 0, index
     end
+
 
     def llvm_self(type = context.type)
       self_var = context.vars["self"]?
