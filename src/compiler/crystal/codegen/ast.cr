@@ -173,5 +173,9 @@ module Crystal
         end
       end
     end
+
+    def varargs
+      false
+    end
   end
 end

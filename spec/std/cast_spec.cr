@@ -102,4 +102,34 @@ describe "Cast" do
     m = a as CastSpecMoo
     m.moo.should eq(2)
   end
+
+  it "casts from nilable to nil" do
+    a = 1 == 2 ? Reference.new : nil
+    c = a as Nil
+    c.should be_nil
+  end
+
+  it "casts from nilable to nil raises" do
+    begin
+      a = 1 == 1 ? Reference.new : nil
+      a as Nil
+    rescue ex
+      ex.message.should eq("type cast exception")
+    end
+  end
+
+  it "casts from nilable to reference" do
+    a = 1 == 1 ? Reference.new : nil
+    c = a as Reference
+    c.should_not be_nil
+  end
+
+  it "casts from nilable to reference raises" do
+    begin
+      a = 1 == 2 ? Reference.new : nil
+      a as Reference
+    rescue ex
+      ex.message.should eq("type cast exception")
+    end
+  end
 end
