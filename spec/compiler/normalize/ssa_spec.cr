@@ -23,25 +23,25 @@ describe "Normalize: ssa" do
   end
 
   it "performs ssa on if without else" do
-    assert_normalize "a = 1; if true; a = 2; end; a", "a = 1\nif true\n  #temp_1 = a$1 = 2\n  a$2 = a$1\n  #temp_1\nelse\n  a$2 = a\n  nil\nend\na$2"
+    assert_normalize "a = 1; if true; a = 2; end; a", "a = 1\nif true\n  a$1 = 2\n  a$2 = a$1\n  a$2\nelse\n  a$2 = a\n  nil\nend\na$2"
   end
 
   it "performs ssa on if without then" do
-    assert_normalize "a = 1; if true; else; a = 2; end; a", "a = 1\nif true\n  a$2 = a\n  nil\nelse\n  #temp_1 = a$1 = 2\n  a$2 = a$1\n  #temp_1\nend\na$2"
+    assert_normalize "a = 1; if true; else; a = 2; end; a", "a = 1\nif true\n  a$2 = a\n  nil\nelse\n  a$1 = 2\n  a$2 = a$1\n  a$2\nend\na$2"
   end
 
   it "performs ssa on if" do
-    assert_normalize "a = 1; if true; a = 2; else; a = 3; end; a", "a = 1\nif true\n  #temp_1 = a$1 = 2\n  a$3 = a$1\n  #temp_1\nelse\n  #temp_2 = a$2 = 3\n  a$3 = a$2\n  #temp_2\nend\na$3"
+    assert_normalize "a = 1; if true; a = 2; else; a = 3; end; a", "a = 1\nif true\n  a$1 = 2\n  a$3 = a$1\n  a$3\nelse\n  a$2 = 3\n  a$3 = a$2\n  a$3\nend\na$3"
   end
 
   it "performs ssa on if assigns many times on then" do
     assert_normalize "a = 1; if true; a = 2; a = 3; a = 4; else; a = 5; end; a",
-      "a = 1\nif true\n  #temp_1 = begin\n    a$1 = 2\n    a$2 = 3\n    a$3 = 4\n  end\n  a$5 = a$3\n  #temp_1\nelse\n  #temp_2 = a$4 = 5\n  a$5 = a$4\n  #temp_2\nend\na$5"
+      "a = 1\nif true\n  #temp_1 = begin\n    a$1 = 2\n    a$2 = 3\n    a$3 = 4\n  end\n  a$5 = a$3\n  #temp_1\nelse\n  a$4 = 5\n  a$5 = a$4\n  a$5\nend\na$5"
   end
 
   it "performs ssa on if assigns many times on else" do
     assert_normalize "a = 1; if true; a = 5; else; a = 2; a = 3; a = 4; end; a",
-      "a = 1\nif true\n  #temp_1 = a$1 = 5\n  a$5 = a$1\n  #temp_1\nelse\n  #temp_2 = begin\n    a$2 = 2\n    a$3 = 3\n    a$4 = 4\n  end\n  a$5 = a$4\n  #temp_2\nend\na$5"
+      "a = 1\nif true\n  a$1 = 5\n  a$5 = a$1\n  a$5\nelse\n  #temp_1 = begin\n    a$2 = 2\n    a$3 = 3\n    a$4 = 4\n  end\n  a$5 = a$4\n  #temp_1\nend\na$5"
   end
 
   it "performs ssa on if declares var inside then" do
@@ -66,16 +66,16 @@ describe "Normalize: ssa" do
 
   it "performs ssa on if declares var inside both branches" do
     assert_normalize "if true; a = 1; else; a = 2; end; a",
-      "if true\n  #temp_1 = a = 1\n  a$2 = a\n  #temp_1\nelse\n  #temp_2 = a$1 = 2\n  a$2 = a$1\n  #temp_2\nend\na$2"
+      "if true\n  a = 1\n  a$2 = a\n  a$2\nelse\n  a$1 = 2\n  a$2 = a$1\n  a$2\nend\na$2"
   end
 
   it "performs ssa on if don't assign other vars" do
     assert_normalize "a = 1; if true; b = 1; else; b = 2; end\na",
-      "a = 1\nif true\n  #temp_1 = b = 1\n  b$2 = b\n  #temp_1\nelse\n  #temp_2 = b$1 = 2\n  b$2 = b$1\n  #temp_2\nend\na"
+      "a = 1\nif true\n  b = 1\n  b$2 = b\n  b$2\nelse\n  b$1 = 2\n  b$2 = b$1\n  b$2\nend\na"
   end
 
   it "performs ssa on if with break" do
-    assert_normalize "a = 1; if true; a = 2; else; break; end; a", "a = 1\nif true\n  #temp_1 = a$1 = 2\n  a$2 = a$1\n  #temp_1\nelse\n  a$2 = a\n  break\nend\na$2"
+    assert_normalize "a = 1; if true; a = 2; else; break; end; a", "a = 1\nif true\n  a$1 = 2\n  a$2 = a$1\n  a$2\nelse\n  a$2 = a\n  break\nend\na$2"
   end
 
   it "performs ssa on block" do
@@ -95,17 +95,17 @@ describe "Normalize: ssa" do
 
   it "performs ssa on while" do
     assert_normalize "a = 1; a = 2; while a = a.parent; a = a.parent; end; a = a + 1; a",
-      "a = 1\na$1 = 2\nwhile a$2 = a$1.parent\n  #temp_1 = a$3 = a$2.parent\n  a$1 = a$3\n  #temp_1\nend\na$4 = a$2 + 1\na$4"
+      "a = 1\na$1 = 2\nwhile a$2 = a$1.parent\n  a$3 = a$2.parent\n  a$1 = a$3\n  a$1\nend\na$4 = a$2 + 1\na$4"
   end
 
   it "performs ssa on while with +=" do
     assert_normalize "a = 1; while a < 10; a += 1; end; a = a + 1; a",
-      "a = 1\nwhile a < 10\n  #temp_1 = a$1 = a + 1\n  a = a$1\n  #temp_1\nend\na$2 = a + 1\na$2"
+      "a = 1\nwhile a < 10\n  a$1 = a + 1\n  a = a$1\n  a\nend\na$2 = a + 1\na$2"
   end
 
   it "performs ssa on while inside else" do
     assert_normalize "if true; a = 1; else; while true; end; end",
-      "if true\n  #temp_1 = a = 1\n  a$1 = a\n  #temp_1\nelse\n  #temp_2 = while true\n  end\n  a$1 = nil\n  #temp_2\nend"
+      "if true\n  a = 1\n  a$1 = a\n  a$1\nelse\n  #temp_1 = while true\n  end\n  a$1 = nil\n  #temp_1\nend"
   end
 
   ["break", "next"].each do |keyword|
@@ -137,7 +137,7 @@ describe "Normalize: ssa" do
 
   it "performs ssa on while with break with variable declared inside else" do
     assert_normalize "while true; if true; break; else; b = 2; end; end",
-      "b$2 = nil\nwhile true\n  #temp_2 = if true\n    b$1 = nil\n    b$2 = b$1\n    break\n  else\n    #temp_1 = b = 2\n    b$1 = b\n    #temp_1\n  end\n  b$2 = b$1\n  #temp_2\nend"
+      "b$2 = nil\nwhile true\n  #temp_1 = if true\n    b$1 = nil\n    b$2 = b$1\n    break\n  else\n    b = 2\n    b$1 = b\n    b$1\n  end\n  b$2 = b$1\n  #temp_1\nend"
   end
 
   it "performs ssa on simple assignment inside def" do
@@ -193,15 +193,15 @@ describe "Normalize: ssa" do
   end
 
   it "performs ssa on var on nested if" do
-    assert_normalize "foo = 1; if 0; if 0; foo = 2; else; foo = 3; end; end; foo", "foo = 1\nif 0\n  #temp_3 = if 0\n    #temp_1 = foo$1 = 2\n    foo$3 = foo$1\n    #temp_1\n  else\n    #temp_2 = foo$2 = 3\n    foo$3 = foo$2\n    #temp_2\n  end\n  foo$4 = foo$3\n  #temp_3\nelse\n  foo$4 = foo\n  nil\nend\nfoo$4"
+    assert_normalize "foo = 1; if 0; if 0; foo = 2; else; foo = 3; end; end; foo", "foo = 1\nif 0\n  #temp_1 = if 0\n    foo$1 = 2\n    foo$3 = foo$1\n    foo$3\n  else\n    foo$2 = 3\n    foo$3 = foo$2\n    foo$3\n  end\n  foo$4 = foo$3\n  #temp_1\nelse\n  foo$4 = foo\n  nil\nend\nfoo$4"
   end
 
   it "performs ssa on var on nested if 2" do
-    assert_normalize "foo = 1; if 0; else; if 0; foo = 2; else; foo = 3; end; end; foo", "foo = 1\nif 0\n  foo$4 = foo\n  nil\nelse\n  #temp_3 = if 0\n    #temp_1 = foo$1 = 2\n    foo$3 = foo$1\n    #temp_1\n  else\n    #temp_2 = foo$2 = 3\n    foo$3 = foo$2\n    #temp_2\n  end\n  foo$4 = foo$3\n  #temp_3\nend\nfoo$4"
+    assert_normalize "foo = 1; if 0; else; if 0; foo = 2; else; foo = 3; end; end; foo", "foo = 1\nif 0\n  foo$4 = foo\n  nil\nelse\n  #temp_1 = if 0\n    foo$1 = 2\n    foo$3 = foo$1\n    foo$3\n  else\n    foo$2 = 3\n    foo$3 = foo$2\n    foo$3\n  end\n  foo$4 = foo$3\n  #temp_1\nend\nfoo$4"
   end
 
   it "performs ssa on while, if, var and break" do
-    assert_normalize "a = 1; a = 2; while 1 == 1; if 1 == 2; a = 3; else; break; end; end; puts a", "a = 1\na$1 = 2\nwhile 1 == 1\n  #temp_2 = if 1 == 2\n    #temp_1 = a$2 = 3\n    a$3 = a$2\n    #temp_1\n  else\n    a$3 = a$1\n    a$1 = a$3\n    break\n  end\n  a$1 = a$3\n  #temp_2\nend\nputs(a$1)"
+    assert_normalize "a = 1; a = 2; while 1 == 1; if 1 == 2; a = 3; else; break; end; end; puts a", "a = 1\na$1 = 2\nwhile 1 == 1\n  #temp_1 = if 1 == 2\n    a$2 = 3\n    a$3 = a$2\n    a$3\n  else\n    a$3 = a$1\n    a$1 = a$3\n    break\n  end\n  a$1 = a$3\n  #temp_1\nend\nputs(a$1)"
   end
 
   it "performs ssa on instance var and while" do
@@ -213,11 +213,11 @@ describe "Normalize: ssa" do
   end
 
   it "performs on while which declares a var and uses it outside" do
-    assert_normalize "while 1 == 2; a = 2; end; a", "a$1 = nil\nwhile 1 == 2\n  #temp_1 = a = 2\n  a$1 = a\n  #temp_1\nend\na$1"
+    assert_normalize "while 1 == 2; a = 2; end; a", "a$1 = nil\nwhile 1 == 2\n  a = 2\n  a$1 = a\n  a$1\nend\na$1"
   end
 
   it "performs on assignment to variable inside block" do
-    assert_normalize "if 1\n  a = 1\nelse\n  foo do\n    a = 2\n  end\n end", "if 1\n  #temp_2 = a = 1\n  a$3 = a\n  #temp_2\nelse\n  #temp_3 = begin\n    a$2 = nil\n    foo() do\n      #temp_1 = a$1 = 2\n      a$2 = a$1\n      #temp_1\n    end\n  end\n  a$3 = a$2\n  #temp_3\nend"
+    assert_normalize "if 1\n  a = 1\nelse\n  foo do\n    a = 2\n  end\n end", "if 1\n  a = 1\n  a$3 = a\n  a$3\nelse\n  #temp_1 = begin\n    a$2 = nil\n    foo() do\n      a$1 = 2\n      a$2 = a$1\n      a$2\n    end\n  end\n  a$3 = a$2\n  #temp_1\nend"
   end
 
   it "performs ssa on var and block in initialize" do

@@ -118,17 +118,16 @@ module Crystal
     #       temp
     #     end
     def transform(node : And)
-      left = node.left.transform(self)
-      right = node.right.transform(self)
+      left = node.left
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
-               If.new(left, right, left.clone)
+               If.new(left, node.right, left.clone)
              else
                temp_var = new_temp_var
-               If.new(Assign.new(temp_var, left), right, temp_var)
+               If.new(Assign.new(temp_var, left), node.right, temp_var)
              end
       new_node.binary = :and
       new_node.location = node.location
-      new_node
+      new_node.transform(self)
     end
 
     # Convert or to if
@@ -1202,19 +1201,67 @@ module Crystal
     def concat_preserving_return_value(node, vars)
       return node if vars.empty?
 
-      if node.nop?
+      case node
+      when Nop
         exps = Array(ASTNode).new(vars.length + 1)
         exps.concat vars
         exps.push NilLiteral.new
-      else
-        temp_var = new_temp_var
-        assign = Assign.new(temp_var, node)
-
-        exps = Array(ASTNode).new(vars.length + 2)
-        exps.push assign
-        exps.concat vars
-        exps.push temp_var
+        return Expressions.new exps
+      when Assign
+        # Special case:
+        #
+        #   vars:
+        #     b$1 = b
+        #     #temp_1 = ...
+        #     #temp_2 = ...
+        #
+        #   node:
+        #     b = ...
+        #
+        # That is, there's an Assign in vars whose right hand side
+        # is the same one as the left hand of the assignment, we
+        # preserve the return value like this:
+        #
+        #     b = ...
+        #     b$1 = b
+        #     #temp_1 = ...
+        #     #temp_2 = ...
+        #     b$1
+        #
+        # In this way, if b$1 was part of a condition, b$1's type
+        # filter will be not-nill.
+        #
+        # This happens when you have something like:
+        #
+        # if foo && (bar = 1)
+        #   # here we want bar (or something bar was assigned to, like bar$1)
+        #   # to be not-nil
+        # end
+        left = node.target
+        if left.is_a?(Var)
+          left_name = left.name
+          vars.each do |var|
+            if var.is_a?(Assign)
+              right = var.value
+              if right.is_a?(Var) && right.name == left.name
+                exps = Array(ASTNode).new(vars.length + 1)
+                exps.push node
+                exps.concat vars
+                exps.push var.target
+                return Expressions.new exps
+              end
+            end
+          end
+        end
       end
+
+      temp_var = new_temp_var
+      assign = Assign.new(temp_var, node)
+
+      exps = Array(ASTNode).new(vars.length + 2)
+      exps.push assign
+      exps.concat vars
+      exps.push temp_var
 
       Expressions.new exps
     end

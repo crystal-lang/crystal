@@ -153,4 +153,38 @@ describe "Code gen: and" do
       (a && 3).to_i
     ").to_i.should eq(0)
   end
+
+  it "codegens assign in right node, after must be nilable" do
+    run("
+      struct Nil; def nil?; true; end; end
+      class Reference; def nil?; false; end; end
+
+      a = 1 == 2 && (b = Reference.new)
+      b.nil?
+      ").to_b.should be_true
+  end
+
+  it "codegens assign in right node, inside if must not be nil" do
+    run("
+      struct Nil; end
+      class Foo; def foo; 1; end; end
+
+      if 1 == 1 && (b = Foo.new)
+        b.foo
+      else
+        0
+      end
+      ").to_i.should eq(1)
+  end
+
+  it "codegens assign in right node, after if must be nilable" do
+    run("
+      struct Nil; def nil?; true; end; end
+      class Reference; def nil?; false; end; end
+
+      if 1 == 2 && (b = Reference.new)
+      end
+      b.nil?
+      ").to_b.should be_true
+  end
 end
