@@ -237,4 +237,11 @@ module Enumerable(T)
     true
   end
 
+  def sum(initial = 0)
+    sum(initial) { |e| e }
+  end
+
+  def sum(initial = 0)
+    inject(initial) { |memo, e| memo + (yield e) }
+  end
 end

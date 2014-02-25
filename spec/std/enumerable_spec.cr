@@ -75,4 +75,12 @@ describe "Enumerable" do
     assert { [1, 2, 2, 3].partition { |x| x == 2 }.should eq([[2, 2], [1, 3]]) }
   end
 
+  describe "sum" do
+    assert { ([] of Int32).sum.should eq(0) }
+    assert { [1, 2, 3].sum.should eq(6) }
+    assert { [1, 2, 3].sum(4).should eq(10) }
+    assert { [1, 2, 3].sum(4.5).should eq(10.5) }
+    assert { (1..3).sum { |x| x * 2 }.should eq(12) }
+    assert { (1..3).sum(1.5) { |x| x * 2 }.should eq(13.5) }
+  end
 end
