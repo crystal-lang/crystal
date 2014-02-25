@@ -459,6 +459,10 @@ class Array(T)
     self
   end
 
+  def product(ary)
+    self.each { |a| ary.each { |b| yield a, b } }
+  end
+
   def zip(other : Array)
     each_with_index do |elem, i|
       yield elem, other[i]
