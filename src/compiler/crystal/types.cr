@@ -74,11 +74,6 @@ module Crystal
       false
     end
 
-    # Is this type represented as a union in llvm? Something like: {type_id, value}
-    def represented_as_union?
-      false
-    end
-
     def pointer?
       false
     end
@@ -1817,10 +1812,6 @@ module Crystal
       nil
     end
 
-    def represented_as_union?
-      true
-    end
-
     def passed_by_value?
       true
     end
@@ -1912,10 +1903,6 @@ module Crystal
 
     def initialize(@program, @not_nil_type)
       super(@program, [@program.nil, @not_nil_type] of Type)
-    end
-
-    def represented_as_union?
-      false
     end
 
     def nilable?
@@ -2151,14 +2138,6 @@ module Crystal
 
     def name
       to_s
-    end
-
-    def represented_as_union?
-      true
-    end
-
-    def passed_by_value?
-      true
     end
   end
 

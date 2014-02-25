@@ -299,4 +299,82 @@ describe "Codegen: is_a?" do
       foo.is_a?(Foo(Int32)) ? 1 : 2
       ").to_i.should eq(2)
   end
+
+  it "does is_a? with more strict hierarchy type" do
+    run("
+      class Foo
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      f = Bar.new || Foo.new
+      if f.is_a?(Bar)
+        f.foo
+      else
+        1
+      end
+      ").to_i.should eq(2)
+  end
+
+  it "codegens is_a? casts union to nilable" do
+    run("
+      class Foo; end
+
+      var = \"hello\" || Foo.new || nil
+      if var.is_a?(Foo | Nil)
+        var2 = var
+        1
+      else
+        2
+      end
+      ").to_i.should eq(2)
+  end
+
+  it "codegens is_a? casts union to nilable in method" do
+    run("
+      class Foo; end
+
+      def foo(var)
+        if var.is_a?(Foo | Nil)
+          var2 = var
+          1
+        else
+          2
+        end
+      end
+
+      var = \"hello\" || Foo.new || nil
+      foo(var)
+      ").to_i.should eq(2)
+  end
+
+  it "codegens is_a? from hierarchy type to module" do
+    run("
+      module Moo
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+        include Moo
+      end
+
+      class Baz < Foo
+        include Moo
+      end
+
+      f = Bar.new || Baz.new
+      if f.is_a?(Moo)
+        g = f
+        1
+      else
+        2
+      end
+      ").to_i.should eq(1)
+  end
 end

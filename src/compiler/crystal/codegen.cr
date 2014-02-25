@@ -401,7 +401,7 @@ module Crystal
       end
 
       if type.is_a?(HierarchyType)
-        @last = box_object_in_hierarchy(base_type, type, @last, false)
+        @last = cast_to @last, type
       end
 
       @last
@@ -512,16 +512,12 @@ module Crystal
     end
 
     def codegen_primitive_object_id(node, target_def, call_args)
-      obj = call_args[0]
-      obj = load(union_value obj) if type.hierarchy?
-      ptr2int obj, LLVM::Int64
+      ptr2int call_args[0], LLVM::Int64
     end
 
     def codegen_primitive_object_to_cstr(node, target_def, call_args)
-      obj = call_args[0]
-      obj = load(union_value obj) if type.hierarchy?
       buffer = array_malloc(LLVM::Int8, int(context.type.to_s.length + 23))
-      call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("<#{context.type}:0x%016lx>"), obj] of LibLLVM::ValueRef
+      call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("<#{context.type}:0x%016lx>"), call_args[0]] of LibLLVM::ValueRef
       buffer
     end
 
@@ -745,23 +741,6 @@ module Crystal
       end
     end
 
-    def codegen_return(exp_type, fun_type)
-      case fun_type
-      when VoidType
-        yield nil
-      when NoReturnType
-        unreachable
-      when .passed_by_value?
-        return_union = context.return_union.not_nil!
-        assign(return_union, fun_type, exp_type.not_nil!, @last)
-        yield load(return_union)
-      when NilableType
-        yield to_nilable(@last, fun_type, exp_type)
-      else
-        yield to_rhs(@last, fun_type)
-      end
-    end
-
     def visit(node : ClassDef)
       accept node.body
       @last = llvm_nil
@@ -855,43 +834,6 @@ module Crystal
       codegen_cond node.type
     end
 
-    def codegen_cond(type : Type)
-      case type
-      when NilType
-        llvm_false
-      when BoolType
-        @last
-      when NilableType, PointerInstanceType
-        not_null_pointer? @last
-      when TypeDefType
-        codegen_cond type.typedef
-      when UnionType
-        has_nil = type.union_types.any? &.nil_type?
-        has_bool = type.union_types.any? &.bool_type?
-
-        cond = llvm_true
-
-        if has_nil || has_bool
-          type_id = load union_type_id(@last)
-
-          if has_nil
-            is_nil = equal? type_id, int(@mod.nil.type_id)
-            cond = and cond, not(is_nil)
-          end
-
-          if has_bool
-            value = load(bit_cast union_value(@last), pointer_type(LLVM::Int1))
-            is_bool = equal? type_id, int(@mod.bool.type_id)
-            cond = and cond, not(and(is_bool, not(value)))
-          end
-        end
-
-        cond
-      else
-        llvm_true
-      end
-    end
-
     def visit(node : Break)
       if node.exps.empty?
         @last = llvm_nil
@@ -900,12 +842,13 @@ module Crystal
       end
 
       if break_type = context.break_type
+        # TODO: check hierarchy type here
         case break_type
-        when .represented_as_union?
-          break_union = context.break_union.not_nil!
-          assign(break_union, break_type, control_expression_type(node), @last)
         when NilableType
           context.break_table.not_nil!.add insert_block, to_nilable(@last, break_type, control_expression_type(node))
+        when UnionType
+          break_union = context.break_union.not_nil!
+          assign(break_union, break_type, control_expression_type(node), @last)
         else
           context.break_table.not_nil!.add insert_block, @last
         end
@@ -940,12 +883,16 @@ module Crystal
       def builder
         @codegen.builder
       end
+
+      def llvm_typer
+        @codegen.llvm_typer
+      end
     end
 
     class UnionBranchedBlock < BranchedBlock
       def initialize(node, exit_block, codegen)
         super
-        @union_ptr = @codegen.alloca(@codegen.llvm_type(node.type))
+        @union_ptr = @codegen.alloca(llvm_type(node.type))
       end
 
       def add_value(block, type, value)
@@ -965,11 +912,15 @@ module Crystal
       end
 
       def add_value(block, type, value)
-        if @node.type.nilable?
-          @phi_table.add block, @codegen.to_nilable(value, node.type, type)
+        case node.type
+        when NilableType
+          value = @codegen.to_nilable(value, node.type, type)
+        when HierarchyType
+          value = cast_to value, node.type
         else
-          @phi_table.add block, @codegen.to_rhs(value, type)
+          value = @codegen.to_rhs(value, type)
         end
+        @phi_table.add block, value
         @count += 1
       end
 
@@ -978,9 +929,9 @@ module Crystal
           unreachable
         elsif @phi_table.empty?
           # All branches are void or no return
-          @codegen.llvm_nil
+          llvm_nil
         else
-          phi @codegen.llvm_type(@node.type), @phi_table
+          phi llvm_type(@node.type), @phi_table
         end
       end
     end
@@ -1086,94 +1037,9 @@ module Crystal
       false
     end
 
-    def assign(target_pointer, target_type, value_type, value)
-      if target_type == value_type
-        store to_rhs(value, target_type), target_pointer
-      # Hack until we fix it in the type inference
-      elsif value_type.is_a?(HierarchyType) && value_type.base_type == target_type
-        # TODO: this should never happen, but it does. Sometimes we have:
-        #
-        #     def foo
-        #       yield e
-        #     end
-        #
-        #        foo do |x|
-        #     end
-        #
-        # with e's type a HierarchyType and x's type its base type.
-        #
-        # I have no idea how to reproduce this, so this hack will remain here
-        # until we figure it out.
-        union_ptr = union_value value
-        union_ptr = cast_to_pointer union_ptr, target_type
-        union = load(union_ptr)
-        store union, target_pointer
-      else
-        assign_distinct target_pointer, target_type, value_type, value
-      end
-    end
-
-    def assign_distinct(target_pointer, target_type : HierarchyTypeMetaclass, value_type : Metaclass, value)
-      store value, target_pointer
-    end
-
-    def assign_distinct(target_pointer, target_type : NilableType, value_type : Type, value)
-      store to_nilable(value, target_type, value_type), target_pointer
-    end
-
-    def assign_distinct(target_pointer, target_type : UnionType | HierarchyType, value_type : UnionType | HierarchyType, value)
-      casted_value = cast_to_pointer value, target_type
-      store load(casted_value), target_pointer
-    end
-
-    def assign_distinct(target_pointer, target_type : UnionType, value_type : NilableType, value)
-      store_in_union target_pointer, value_type, value
-    end
-
-    def assign_distinct(target_pointer, target_type : UnionType | HierarchyType, value_type : VoidType, value)
-      store int(value_type.type_id), union_type_id(target_pointer)
-    end
-
-    def assign_distinct(target_pointer, target_type : UnionType | HierarchyType, value_type : Type, value)
-      store_in_union target_pointer, value_type, to_rhs(value, value_type)
-    end
-
-    def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
-      raise "Bug: trying to assign #{target_type} = #{value_type}"
-    end
-
     def visit(node : Var)
       var = context.vars[node.name]
       @last = cast_value(var.pointer, node.type, var.type, var.already_loaded)
-    end
-
-    def cast_value(value, to_type, from_type, already_loaded = false)
-      if from_type.void?
-        # Nothing to do
-      elsif from_type == to_type
-        value = to_lhs value, from_type unless already_loaded
-      elsif from_type.is_a?(NilableType)
-        if to_type.nil_type?
-          value = llvm_nil
-        else
-          value = load value unless already_loaded
-        end
-      elsif from_type.metaclass?
-        # Nothing to do
-      elsif to_type.represented_as_union?
-        value = cast_to_pointer value, to_type
-      else
-        value_ptr = union_value(value)
-        value = cast_to_pointer(value_ptr, to_type)
-        value = to_lhs value, to_type
-      end
-      value
-    end
-
-    def box_object_in_hierarchy(object_type, hierarchy_type, value, load = true)
-      target_pointer = alloca llvm_type(hierarchy_type)
-      store_in_union target_pointer, object_type, value
-      load ? load(target_pointer) : target_pointer
     end
 
     def visit(node : Global)
@@ -1469,7 +1335,7 @@ module Crystal
             cond = nil
             a_rescue_types.each do |type|
               rescue_type = type.type.instance_type.hierarchy_type
-              rescue_type_cond = match_any_type_id(rescue_type, ex_type_id.not_nil!)
+              rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
               cond = cond ? or(cond, rescue_type_cond) : rescue_type_cond
             end
             cond cond.not_nil!, this_rescue_block, next_rescue_block
@@ -1483,12 +1349,8 @@ module Crystal
               context.vars = context.vars.dup
               get_exception_fun = main_fun(GET_EXCEPTION_NAME)
               exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, type_of(get_exception_fun.get_param(0)))]
-
-              exception = int2ptr exception_ptr, pointer_type(LLVM::Int8)
-              ex_union = alloca llvm_type(a_rescue.type)
-              store ex_type_id, union_type_id(ex_union)
-              store exception, union_value(ex_union)
-              context.vars[a_rescue_name] = LLVMVar.new(ex_union, a_rescue.type)
+              exception = int2ptr exception_ptr, LLVMTyper::HIERARCHY_LLVM_TYPE
+              context.vars[a_rescue_name] = LLVMVar.new(exception, a_rescue.type, true)
             end
 
             accept a_rescue.body
@@ -1746,28 +1608,6 @@ module Crystal
       end
     end
 
-    def type_id(value, type)
-      case type
-      when NilableType
-        @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.not_nil_type.type_id)
-      when UnionType, HierarchyType
-        load(union_type_id(value))
-      when HierarchyTypeMetaclass
-        value
-      else
-        int(type.type_id)
-      end
-    end
-
-    def match_type_id(type, restriction, type_id)
-      case type
-      when UnionType, HierarchyType, HierarchyTypeMetaclass
-        match_any_type_id(restriction, type_id)
-      else
-        equal? int(restriction.type_id), type_id
-      end
-    end
-
     def setup_context_return(context, return_type)
       context.return_type = return_type
       if return_type.passed_by_value?
@@ -1963,6 +1803,181 @@ module Crystal
       context.vars[arg.name] = LLVMVar.new(pointer, var_type)
     end
 
+    def type_id(value, type)
+      case type
+      when NilableType
+        @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.not_nil_type.type_id)
+      when UnionType
+        load(union_type_id(value))
+      when HierarchyType
+        load(value)
+      when HierarchyTypeMetaclass
+        value
+      else
+        int(type.type_id)
+      end
+    end
+
+    def match_type_id(type, restriction, type_id)
+      case type
+      when UnionType, HierarchyType, HierarchyTypeMetaclass
+        match_any_type_id(restriction, type_id)
+      else
+        equal? int(restriction.type_id), type_id
+      end
+    end
+
+    def codegen_cond(type : Type)
+      case type
+      when NilType
+        llvm_false
+      when BoolType
+        @last
+      when NilableType, PointerInstanceType
+        not_null_pointer? @last
+      when TypeDefType
+        codegen_cond type.typedef
+      when UnionType
+        has_nil = type.union_types.any? &.nil_type?
+        has_bool = type.union_types.any? &.bool_type?
+
+        cond = llvm_true
+
+        if has_nil || has_bool
+          type_id = load union_type_id(@last)
+
+          if has_nil
+            is_nil = equal? type_id, int(@mod.nil.type_id)
+            cond = and cond, not(is_nil)
+          end
+
+          if has_bool
+            value = load(bit_cast union_value(@last), pointer_type(LLVM::Int1))
+            is_bool = equal? type_id, int(@mod.bool.type_id)
+            cond = and cond, not(and(is_bool, not(value)))
+          end
+        end
+
+        cond
+      else
+        llvm_true
+      end
+    end
+
+    def assign(target_pointer, target_type, value_type, value)
+      if target_type == value_type
+        store to_rhs(value, target_type), target_pointer
+      # Hack until we fix it in the type inference
+      elsif value_type.is_a?(HierarchyType) && value_type.base_type == target_type
+        # TODO: this should never happen, but it does. Sometimes we have:
+        #
+        #     def foo
+        #       yield e
+        #     end
+        #
+        #        foo do |x|
+        #     end
+        #
+        # with e's type a HierarchyType and x's type its base type.
+        #
+        # I have no idea how to reproduce this, so this hack will remain here
+        # until we figure it out.
+        store cast_to(value, target_type), target_pointer
+      else
+        assign_distinct target_pointer, target_type, value_type, value
+      end
+    end
+
+    def assign_distinct(target_pointer, target_type : HierarchyTypeMetaclass, value_type : Metaclass, value)
+      store value, target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : NilableType, value_type : Type, value)
+      store to_nilable(value, target_type, value_type), target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : UnionType, value_type : UnionType, value)
+      casted_value = cast_to_pointer value, target_type
+      store load(casted_value), target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : UnionType, value_type : NilableType, value)
+      store_in_union target_pointer, value_type, value
+    end
+
+    def assign_distinct(target_pointer, target_type : UnionType, value_type : VoidType, value)
+      store int(value_type.type_id), union_type_id(target_pointer)
+    end
+
+    def assign_distinct(target_pointer, target_type : UnionType, value_type : Type, value)
+      store_in_union target_pointer, value_type, to_rhs(value, value_type)
+    end
+
+    def assign_distinct(target_pointer, target_type : HierarchyType, value_type : UnionType, value)
+      casted_value = cast_to_pointer(union_value(value), target_type)
+      store load(casted_value), target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : HierarchyType, value_type : Type, value)
+      store cast_to(value, target_type), target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
+      raise "Bug: trying to assign #{target_type} = #{value_type}"
+    end
+
+    def cast_value(value, to_type, from_type, already_loaded = false)
+      if from_type.void?
+        value
+      elsif from_type == to_type
+        already_loaded ? value : to_lhs(value, from_type)
+      else
+        cast_value_distinct value, to_type, from_type, already_loaded
+      end
+    end
+
+    def cast_value_distinct(value, to_type, from_type : NilableType, already_loaded)
+      if to_type.nil_type?
+        value = llvm_nil
+      else
+        already_loaded ? value : load value
+      end
+    end
+
+    def cast_value_distinct(value, to_type, from_type : Metaclass | GenericClassInstanceMetaclass | HierarchyTypeMetaclass, already_loaded)
+      value
+    end
+
+    def cast_value_distinct(value, to_type : HierarchyType, from_type : HierarchyType, already_loaded)
+      already_loaded ? value : load value
+    end
+
+    def cast_value_distinct(value, to_type : UnionType, from_type : HierarchyType, already_loaded)
+      # This happens if the restriction is a UnionType:
+      # we keep each of the union types as the result, we don't fully merge
+      union_ptr = alloca llvm_type(to_type)
+      store_in_union union_ptr, from_type, (already_loaded ? value : load value)
+      union_ptr
+    end
+
+    def cast_value_distinct(value, to_type : UnionType, from_type : UnionType, already_loaded)
+      cast_to_pointer value, to_type
+    end
+
+    def cast_value_distinct(value, to_type : NilableType, from_type : UnionType, already_loaded)
+      load cast_to_pointer(union_value(value), to_type)
+    end
+
+    def cast_value_distinct(value, to_type : Type, from_type : UnionType, already_loaded)
+      value_ptr = union_value(value)
+      value = cast_to_pointer(value_ptr, to_type)
+      to_lhs value, to_type
+    end
+
+    def cast_value_distinct(value, to_type : Type, from_type : Type, already_loaded)
+      raise "Bug: trying to cast #{to_type} = #{from_type}"
+    end
+
     def match_any_type_id(type, type_id)
       # Special case: if the type is Object+ we want to match against Reference+,
       # because Object+ can only mean a Reference type (so we exclude Nil, for example).
@@ -2007,6 +2022,43 @@ module Crystal
 
     def create_match_fun(name, type)
       raise "Bug: shouldn't create match fun for #{type}"
+    end
+
+    def llvm_self(type = context.type)
+      self_var = context.vars["self"]?
+      if self_var
+        self_var.pointer
+      else
+        int32(type.not_nil!.type_id)
+      end
+    end
+
+    def codegen_return(exp_type, fun_type)
+      case fun_type
+      when VoidType
+        yield nil
+      when NoReturnType
+        unreachable
+      when .passed_by_value?
+        return_union = context.return_union.not_nil!
+        assign(return_union, fun_type, exp_type.not_nil!, @last)
+        yield load(return_union)
+      when NilableType
+        yield to_nilable(@last, fun_type, exp_type)
+      when HierarchyType
+        yield cast_to @last, fun_type
+      else
+        yield to_rhs(@last, fun_type)
+      end
+    end
+
+    def llvm_self_ptr
+      type = context.type
+      if type.is_a?(HierarchyType)
+        cast_to llvm_self, type.base_type
+      else
+        llvm_self
+      end
     end
 
     def type_module(type)
@@ -2192,28 +2244,17 @@ module Crystal
       gep ptr, 0, index
     end
 
-    def llvm_self(type = context.type)
-      self_var = context.vars["self"]?
-      if self_var
-        self_var.pointer
-      else
-        int32(type.not_nil!.type_id)
-      end
-    end
-
-    def llvm_self_ptr
-      type = context.type
-      if type.is_a?(HierarchyType)
-        ptr = load(union_value(llvm_self))
-        cast_to ptr, type.base_type
-      else
-        llvm_self
-      end
-    end
-
     def instance_var_ptr(type, name, pointer)
       index = type.index_of_instance_var(name)
-      index += 1 unless type.struct?
+
+      unless type.struct?
+        index += 1
+      end
+
+      if type.is_a?(HierarchyType)
+        pointer = cast_to pointer, type.base_type
+      end
+
       aggregate_index pointer, index
     end
 

@@ -539,4 +539,88 @@ describe "Code gen: hierarchy type" do
       foo.foo
       ").to_i.should eq(2)
   end
+
+  it "returns type with hierarchy type def type" do
+    run("
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      def foo
+        return Foo.new if 1 == 1
+        Bar.new
+      end
+
+      foo.foo
+    ").to_i.should eq(1)
+  end
+
+  it "casts hierarchy type to union" do
+    run("
+      class Foo
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      class Baz < Foo
+        def foo
+          3
+        end
+      end
+
+      def x(f : Bar | Baz)
+        f.foo
+      end
+
+      def x(f)
+        0
+      end
+
+      f = Baz.new || Bar.new
+      x(f)
+      ").to_i.should eq(3)
+  end
+
+  it "casts union to hierarchy" do
+    run("
+      module Moo
+      end
+
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        include Moo
+      end
+
+      class Baz < Foo
+        include Moo
+      end
+
+      def foo(x : Moo)
+        p = Pointer(Foo).malloc(1_u64)
+        p.value = x
+        p.value.object_id
+      end
+
+      def foo(x)
+        0_u64
+      end
+
+      reference = Bar.new || Baz.new
+      reference.object_id == foo(reference)
+      ").to_b.should be_true
+  end
 end

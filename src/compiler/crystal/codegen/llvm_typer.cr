@@ -3,8 +3,7 @@ require "llvm"
 
 module Crystal
   class LLVMTyper
-    HIERARCHY_LLVM_TYPE = LLVM.struct_type([LLVM::Int32, LLVM.pointer_type(LLVM::Int8)], "Object+")
-    HIERARCHY_LLVM_ARG_TYPE = LLVM.pointer_type(HIERARCHY_LLVM_TYPE)
+    HIERARCHY_LLVM_TYPE = LLVM.pointer_type(LLVM::Int32)
 
     getter landing_pad_type
 
@@ -238,10 +237,6 @@ module Crystal
 
     def create_llvm_arg_type(type : NilableType)
       llvm_type(type)
-    end
-
-    def create_llvm_arg_type(type : HierarchyType)
-      HIERARCHY_LLVM_ARG_TYPE
     end
 
     def create_llvm_arg_type(type : AliasType)
