@@ -567,6 +567,14 @@ describe "Array" do
     end
   end
 
+  describe "product" do
+    it "does example 1" do
+      r = [] of Int32
+      [1,2,3].product([5,6]) { |a, b| r << a; r << b }
+      r.should eq([1,5,1,6,2,5,2,6,3,5,3,6])
+    end
+  end
+
   describe "swap" do
     it "swaps" do
       a = [1, 2, 3]

@@ -1,11 +1,5 @@
 # Copied with little modifications from: https://github.com/jruby/rubybench/blob/master/time/bench_neural_net.rb
 
-class Array
-  def product(ary)
-    self.each { |a| ary.each { |b| yield a, b } }
-  end
-end
-
 class Synapse
   property :weight
   property :prev_weight
