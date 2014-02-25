@@ -39,6 +39,18 @@ struct Int
     self == 0 ? other.abs : (other % self).gcd(self)
   end
 
+  def divisible_by?(num)
+    self % num == 0
+  end
+
+  def even?
+    divisible_by? 2
+  end
+
+  def odd?
+    !even?
+  end
+
   def hash
     self
   end
