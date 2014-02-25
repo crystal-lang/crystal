@@ -2,13 +2,13 @@
 # Compute prime numbers up to 100 with the Sieve of Eratosthenes
 max = 100
 
-sieve = Array.new(max, true)
+sieve = Array.new(max + 1, true)
 sieve[0] = false
 sieve[1] = false
 
 (2...max).each do |i|
   if sieve[i]
-    (2 * i).step(max - 1, i) do |j|
+    (2 * i).step(max, i) do |j|
       sieve[j] = false
     end
   end
