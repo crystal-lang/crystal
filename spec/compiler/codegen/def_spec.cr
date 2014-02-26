@@ -338,4 +338,15 @@ describe "Code gen: def" do
       foo.nil?
       ").to_b.should be_true
   end
+
+  it "codegens dispatch with nilable reference union type" do
+    run("
+      struct Nil; def object_id; 0_u64; end; end
+      class Foo; end
+      class Bar; end
+
+      f = 1 == 1 ? nil : (Foo.new || Bar.new)
+      f.object_id
+      ").to_i.should eq(0)
+  end
 end

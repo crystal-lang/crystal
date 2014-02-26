@@ -235,4 +235,21 @@ describe "Code gen: class" do
       a
       ").to_i.should eq(2)
   end
+
+  it "assigns type to reference union type" do
+    run("
+      class Foo
+        def initialize(@x)
+        end
+        def x=(@x); end
+      end
+
+      class Bar; end
+      class Baz; end
+
+      f = Foo.new(Bar.new)
+      f.x = Baz.new
+      1
+      ").to_i.should eq(1)
+  end
 end

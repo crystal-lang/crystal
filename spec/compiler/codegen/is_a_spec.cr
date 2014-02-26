@@ -377,4 +377,40 @@ describe "Codegen: is_a?" do
       end
       ").to_i.should eq(1)
   end
+
+  it "codegens is_a? from nilable reference union type to nil" do
+    run("
+      class Foo
+      end
+
+      class Bar
+      end
+
+      a = Foo.new || Bar.new || nil
+      if a.is_a?(Nil)
+        b = a
+        1
+      else
+        2
+      end
+      ").to_i.should eq(2)
+  end
+
+  it "codegens is_a? from nilable reference union type to type" do
+    run("
+      class Foo
+      end
+
+      class Bar
+      end
+
+      a = Foo.new || Bar.new || nil
+      if a.is_a?(Foo)
+        b = a
+        1
+      else
+        2
+      end
+      ").to_i.should eq(1)
+  end
 end

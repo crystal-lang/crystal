@@ -846,7 +846,9 @@ module Crystal
         case break_type
         when NilableType
           context.break_table.not_nil!.add insert_block, to_nilable(@last, break_type, control_expression_type(node))
-        when UnionType
+        when NilableReferenceUnionType
+          context.break_table.not_nil!.add insert_block, to_nilable(@last, break_type, control_expression_type(node))
+        when MixedUnionType
           break_union = context.break_union.not_nil!
           assign(break_union, break_type, control_expression_type(node), @last)
         else
@@ -915,6 +917,10 @@ module Crystal
         case node.type
         when NilableType
           value = @codegen.to_nilable(value, node.type, type)
+        when NilableReferenceUnionType
+          value = @codegen.to_nilable(value, node.type, type)
+        when ReferenceUnionType
+          value = cast_to value, node.type
         when HierarchyType
           value = cast_to value, node.type
         else
@@ -1349,7 +1355,7 @@ module Crystal
               context.vars = context.vars.dup
               get_exception_fun = main_fun(GET_EXCEPTION_NAME)
               exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, type_of(get_exception_fun.get_param(0)))]
-              exception = int2ptr exception_ptr, LLVMTyper::HIERARCHY_LLVM_TYPE
+              exception = int2ptr exception_ptr, LLVMTyper::TYPE_ID_POINTER
               context.vars[a_rescue_name] = LLVMVar.new(exception, a_rescue.type, true)
             end
 
@@ -1807,7 +1813,25 @@ module Crystal
       case type
       when NilableType
         @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.not_nil_type.type_id)
-      when UnionType
+      when ReferenceUnionType
+        load(value)
+      when NilableReferenceUnionType
+        nil_block, not_nil_block, exit_block = new_blocks ["nil", "not_nil", "exit"]
+        phi_table = LLVM::PhiTable.new
+
+        cond null_pointer?(value), nil_block, not_nil_block
+
+        position_at_end nil_block
+        phi_table.add insert_block, int(@mod.nil.type_id)
+        br exit_block
+
+        position_at_end not_nil_block
+        phi_table.add insert_block, load(value)
+        br exit_block
+
+        position_at_end exit_block
+        phi LLVM::Int32, phi_table
+      when MixedUnionType
         load(union_type_id(value))
       when HierarchyType
         load(value)
@@ -1833,11 +1857,11 @@ module Crystal
         llvm_false
       when BoolType
         @last
-      when NilableType, PointerInstanceType
-        not_null_pointer? @last
       when TypeDefType
         codegen_cond type.typedef
-      when UnionType
+      when NilableType, NilableReferenceUnionType, PointerInstanceType
+        not_null_pointer? @last
+      when MixedUnionType
         has_nil = type.union_types.any? &.nil_type?
         has_bool = type.union_types.any? &.bool_type?
 
@@ -1888,32 +1912,44 @@ module Crystal
       end
     end
 
-    def assign_distinct(target_pointer, target_type : HierarchyTypeMetaclass, value_type : Metaclass, value)
-      store value, target_pointer
-    end
-
     def assign_distinct(target_pointer, target_type : NilableType, value_type : Type, value)
       store to_nilable(value, target_type, value_type), target_pointer
     end
 
-    def assign_distinct(target_pointer, target_type : UnionType, value_type : UnionType, value)
+    def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : ReferenceUnionType, value)
+      store value, target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : HierarchyType, value)
+      store value, target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : Type, value)
+      store cast_to(value, target_type), target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : NilableReferenceUnionType, value_type : Type, value)
+      store to_nilable(value, target_type, value_type), target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : MixedUnionType, value)
       casted_value = cast_to_pointer value, target_type
       store load(casted_value), target_pointer
     end
 
-    def assign_distinct(target_pointer, target_type : UnionType, value_type : NilableType, value)
+    def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilableType, value)
       store_in_union target_pointer, value_type, value
     end
 
-    def assign_distinct(target_pointer, target_type : UnionType, value_type : VoidType, value)
+    def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : VoidType, value)
       store int(value_type.type_id), union_type_id(target_pointer)
     end
 
-    def assign_distinct(target_pointer, target_type : UnionType, value_type : Type, value)
+    def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : Type, value)
       store_in_union target_pointer, value_type, to_rhs(value, value_type)
     end
 
-    def assign_distinct(target_pointer, target_type : HierarchyType, value_type : UnionType, value)
+    def assign_distinct(target_pointer, target_type : HierarchyType, value_type : MixedUnionType, value)
       casted_value = cast_to_pointer(union_value(value), target_type)
       store load(casted_value), target_pointer
     end
@@ -1922,8 +1958,12 @@ module Crystal
       store cast_to(value, target_type), target_pointer
     end
 
+    def assign_distinct(target_pointer, target_type : HierarchyTypeMetaclass, value_type : Metaclass, value)
+      store value, target_pointer
+    end
+
     def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
-      raise "Bug: trying to assign #{target_type} = #{value_type}"
+      raise "Bug: trying to assign #{target_type} <- #{value_type}"
     end
 
     def cast_value(value, to_type, from_type, already_loaded = false)
@@ -1936,14 +1976,6 @@ module Crystal
       end
     end
 
-    def cast_value_distinct(value, to_type, from_type : NilableType, already_loaded)
-      if to_type.nil_type?
-        value = llvm_nil
-      else
-        already_loaded ? value : load value
-      end
-    end
-
     def cast_value_distinct(value, to_type, from_type : Metaclass | GenericClassInstanceMetaclass | HierarchyTypeMetaclass, already_loaded)
       value
     end
@@ -1952,30 +1984,76 @@ module Crystal
       already_loaded ? value : load value
     end
 
-    def cast_value_distinct(value, to_type : UnionType, from_type : HierarchyType, already_loaded)
-      # This happens if the restriction is a UnionType:
+    def cast_value_distinct(value, to_type : MixedUnionType, from_type : HierarchyType, already_loaded)
+      # This happens if the restriction is a union:
       # we keep each of the union types as the result, we don't fully merge
       union_ptr = alloca llvm_type(to_type)
       store_in_union union_ptr, from_type, (already_loaded ? value : load value)
       union_ptr
     end
 
-    def cast_value_distinct(value, to_type : UnionType, from_type : UnionType, already_loaded)
+    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : HierarchyType, already_loaded)
+      # This happens if the restriction is a union:
+      # we keep each of the union types as the result, we don't fully merge
+      already_loaded ? value : load value
+    end
+
+    def cast_value_distinct(value, to_type : NilType, from_type : NilableType, already_loaded)
+      llvm_nil
+    end
+
+    def cast_value_distinct(value, to_type : Type, from_type : NilableType, already_loaded)
+      already_loaded ? value : load value
+    end
+
+    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType, already_loaded)
+      already_loaded ? value : load value
+    end
+
+    def cast_value_distinct(value, to_type : HierarchyType, from_type : ReferenceUnionType, already_loaded)
+      already_loaded ? value : load value
+    end
+
+    def cast_value_distinct(value, to_type : Type, from_type : ReferenceUnionType, already_loaded)
+      cast_to (already_loaded ? value : load value), to_type
+    end
+
+    def cast_value_distinct(value, to_type : HierarchyType, from_type : NilableReferenceUnionType, already_loaded)
+      already_loaded ? value : load value
+    end
+
+    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : NilableReferenceUnionType, already_loaded)
+      already_loaded ? value : load value
+    end
+
+    def cast_value_distinct(value, to_type : NilableType, from_type : NilableReferenceUnionType, already_loaded)
+      cast_to (already_loaded ? value : load value), to_type
+    end
+
+    def cast_value_distinct(value, to_type : NilType, from_type : NilableReferenceUnionType, already_loaded)
+      llvm_nil
+    end
+
+    def cast_value_distinct(value, to_type : Type, from_type : NilableReferenceUnionType, already_loaded)
+      cast_to (already_loaded ? value : load value), to_type
+    end
+
+    def cast_value_distinct(value, to_type : MixedUnionType, from_type : MixedUnionType, already_loaded)
       cast_to_pointer value, to_type
     end
 
-    def cast_value_distinct(value, to_type : NilableType, from_type : UnionType, already_loaded)
+    def cast_value_distinct(value, to_type : NilableType, from_type : MixedUnionType, already_loaded)
       load cast_to_pointer(union_value(value), to_type)
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : UnionType, already_loaded)
+    def cast_value_distinct(value, to_type : Type, from_type : MixedUnionType, already_loaded)
       value_ptr = union_value(value)
       value = cast_to_pointer(value_ptr, to_type)
       to_lhs value, to_type
     end
 
     def cast_value_distinct(value, to_type : Type, from_type : Type, already_loaded)
-      raise "Bug: trying to cast #{to_type} = #{from_type}"
+      raise "Bug: trying to cast #{to_type} <- #{from_type}"
     end
 
     def match_any_type_id(type, type_id)
@@ -2033,6 +2111,15 @@ module Crystal
       end
     end
 
+    def llvm_self_ptr
+      type = context.type
+      if type.is_a?(HierarchyType)
+        cast_to llvm_self, type.base_type
+      else
+        llvm_self
+      end
+    end
+
     def codegen_return(exp_type, fun_type)
       case fun_type
       when VoidType
@@ -2045,19 +2132,14 @@ module Crystal
         yield load(return_union)
       when NilableType
         yield to_nilable(@last, fun_type, exp_type)
+      when NilableReferenceUnionType
+        yield to_nilable(@last, fun_type, exp_type)
+      when ReferenceUnionType
+        yield cast_to @last, fun_type
       when HierarchyType
         yield cast_to @last, fun_type
       else
         yield to_rhs(@last, fun_type)
-      end
-    end
-
-    def llvm_self_ptr
-      type = context.type
-      if type.is_a?(HierarchyType)
-        cast_to llvm_self, type.base_type
-      else
-        llvm_self
       end
     end
 
@@ -2222,8 +2304,24 @@ module Crystal
       type.passed_by_value? ? load ptr : ptr
     end
 
-    def to_nilable(ptr, to_type, from_type)
-      (from_type || @mod.nil).nil_type? ? LLVM.null(llvm_type(to_type)) : ptr
+    def to_nilable(ptr, to_type : NilableType, from_type : NilType | Nil)
+      LLVM.null(llvm_type(to_type))
+    end
+
+    def to_nilable(ptr, to_type : NilableType, from_type : Type)
+      ptr
+    end
+
+    def to_nilable(ptr, to_type : NilableReferenceUnionType, from_type : NilType | Nil)
+      LLVM.null(llvm_type(to_type))
+    end
+
+    def to_nilable(ptr, to_type : NilableReferenceUnionType, from_type : Type)
+      cast_to ptr, to_type
+    end
+
+    def to_nilable(ptr, to_type : Type, from_type : Type)
+      raise "Bug: to_nilable with #{to_type} <- #{from_type}"
     end
 
     def union_type_id(union_pointer)

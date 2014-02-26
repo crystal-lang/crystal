@@ -3,7 +3,7 @@ require "llvm"
 
 module Crystal
   class LLVMTyper
-    HIERARCHY_LLVM_TYPE = LLVM.pointer_type(LLVM::Int32)
+    TYPE_ID_POINTER = LLVM.pointer_type(LLVM::Int32)
 
     getter landing_pad_type
 
@@ -87,7 +87,19 @@ module Crystal
       LLVM.array_type(pointed_type, (type.size as NumberLiteral).value.to_i)
     end
 
-    def create_llvm_type(type : UnionType)
+    def create_llvm_type(type : NilableType)
+      llvm_type type.not_nil_type
+    end
+
+    def create_llvm_type(type : ReferenceUnionType)
+      TYPE_ID_POINTER
+    end
+
+    def create_llvm_type(type : NilableReferenceUnionType)
+      TYPE_ID_POINTER
+    end
+
+    def create_llvm_type(type : MixedUnionType)
       LLVM.struct_type(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
 
@@ -112,9 +124,6 @@ module Crystal
       end
     end
 
-    def create_llvm_type(type : NilableType)
-      llvm_type type.not_nil_type
-    end
 
     def create_llvm_type(type : CStructType)
       llvm_struct_type(type)
@@ -129,7 +138,7 @@ module Crystal
     end
 
     def create_llvm_type(type : HierarchyType)
-      HIERARCHY_LLVM_TYPE
+      TYPE_ID_POINTER
     end
 
     def create_llvm_type(type : FunType)
@@ -223,10 +232,6 @@ module Crystal
       end
     end
 
-    def create_llvm_arg_type(type : UnionType)
-      LLVM.pointer_type llvm_type(type)
-    end
-
     def create_llvm_arg_type(type : CStructType)
       LLVM.pointer_type llvm_type(type)
     end
@@ -235,8 +240,8 @@ module Crystal
       LLVM.pointer_type llvm_type(type)
     end
 
-    def create_llvm_arg_type(type : NilableType)
-      llvm_type(type)
+    def create_llvm_arg_type(type : MixedUnionType)
+      LLVM.pointer_type llvm_type(type)
     end
 
     def create_llvm_arg_type(type : AliasType)

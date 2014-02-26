@@ -122,6 +122,10 @@ module Crystal
       false
     end
 
+    def reference_like?
+      false
+    end
+
     def hierarchy_type
       self
     end
@@ -881,6 +885,10 @@ module Crystal
       true
     end
 
+    def reference_like?
+      !struct?
+    end
+
     def declare_instance_var(name, type)
       ivar = Var.new(name, type)
       ivar.bind_to ivar
@@ -982,6 +990,10 @@ module Crystal
     end
 
     def nil_type?
+      true
+    end
+
+    def reference_like?
       true
     end
   end
@@ -1177,6 +1189,10 @@ module Crystal
       true
     end
 
+    def reference_like?
+      !struct?
+    end
+
     def metaclass
       @metaclass ||= GenericClassInstanceMetaclass.new(program, self)
     end
@@ -1264,6 +1280,10 @@ module Crystal
       true
     end
 
+    def reference_like?
+      false
+    end
+
     def allocated
       true
     end
@@ -1306,6 +1326,10 @@ module Crystal
 
     def primitive_like?
       var.type.primitive_like?
+    end
+
+    def reference_like?
+      false
     end
 
     def to_s
@@ -1789,7 +1813,8 @@ module Crystal
     end
   end
 
-  class UnionType < Type
+  # Base class for union types.
+  abstract class UnionType < Type
     include MultiType
 
     getter :program
@@ -1810,10 +1835,6 @@ module Crystal
 
     def parents
       nil
-    end
-
-    def passed_by_value?
-      true
     end
 
     def includes_type?(other_type)
@@ -1898,23 +1919,45 @@ module Crystal
     end
   end
 
+  # A union type that has two types: Nil and another Reference type.
+  # Can be represented as a maybe-null pointer where the type id
+  # of the type that is not nil is known at compile time.
   class NilableType < UnionType
-    getter :not_nil_type
-
-    def initialize(@program, @not_nil_type)
-      super(@program, [@program.nil, @not_nil_type] of Type)
+    def initialize(@program, not_nil_type)
+      super(@program, [@program.nil, not_nil_type] of Type)
     end
 
     def nilable?
       true
     end
 
-    def passed_by_value?
-      false
+    def not_nil_type
+      @union_types.last
     end
 
     def to_s
-      "#{@not_nil_type}?"
+      "#{not_nil_type}?"
+    end
+  end
+
+  # A union type that has Nil and other reference-like types.
+  # Can be represented as a maybe-null pointer but the type id is
+  # not known at compile time.
+  class NilableReferenceUnionType < UnionType
+  end
+
+  # A union type that doesn't have nil, and all types are reference-like.
+  # Can be represented as a never-null pointer.
+  class ReferenceUnionType < UnionType
+  end
+
+  # A union type that doesn't match any of the previous definitions,
+  # so it can contain Nil with primitive types, or Reference types with
+  # primitives types.
+  # Must be represented as a union.
+  class MixedUnionType < UnionType
+    def passed_by_value?
+      true
     end
   end
 
@@ -2065,6 +2108,10 @@ module Crystal
     end
 
     def hierarchy?
+      true
+    end
+
+    def reference_like?
       true
     end
 

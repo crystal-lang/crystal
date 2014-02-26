@@ -185,18 +185,35 @@ module Crystal
         types.first
       else
         types_ids = types.map(&.type_id).sort!
+        @unions[types_ids] ||= make_union_type(types, types_ids)
+      end
+    end
 
-        if types_ids.length == 2 && types_ids[0] == 0 # NilType has type_id == 0
+    def make_union_type(types, types_ids)
+      # NilType has type_id == 0
+      if types_ids.first == 0
+        # Check if it's a Nilable type
+        if types.length == 2
           nil_index = types.index(&.nil_type?).not_nil!
           other_index = 1 - nil_index
           other_type = types[other_index]
-          if other_type.class? && !other_type.struct?
-            return @unions[types_ids] ||= NilableType.new(self, other_type)
+          if other_type.reference_like? && !other_type.hierarchy?
+            return NilableType.new(self, other_type)
           end
         end
 
-        @unions[types_ids] ||= UnionType.new(self, types)
+        if types.all? &.reference_like?
+          return NilableReferenceUnionType.new(self, types)
+        else
+          return MixedUnionType.new(self, types)
+        end
       end
+
+      if types.all? &.reference_like?
+        return ReferenceUnionType.new(self, types)
+      end
+
+      MixedUnionType.new(self, types)
     end
 
     def fun_of(types : Array)
