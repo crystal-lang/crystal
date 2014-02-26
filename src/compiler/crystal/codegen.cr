@@ -66,6 +66,15 @@ module Crystal
     class LLVMVar
       getter pointer
       getter type
+
+      # Normally a variable is associated with an alloca.
+      # So for example, if you have a "x = Reference.new" you will have
+      # an "Reference**" llvm value and you need to load that value
+      # to access it.
+      # However, the "self" argument is not copied to a local variable:
+      # it's accessed from the arguments list, and it a "Reference*"
+      # llvm value, so in a way it's "already loaded".
+      # This field is true if that's the case.
       getter already_loaded
 
       def initialize(@pointer, @type, @already_loaded = false)
@@ -1045,7 +1054,7 @@ module Crystal
 
     def visit(node : Var)
       var = context.vars[node.name]
-      @last = cast_value(var.pointer, node.type, var.type, var.already_loaded)
+      @last = cast_value var.pointer, node.type, var.type, var.already_loaded
     end
 
     def visit(node : Global)
@@ -1065,7 +1074,7 @@ module Crystal
       type = context.type as InstanceVarContainer
       ivar = type.lookup_instance_var(node.name)
       ivar_ptr = instance_var_ptr type, node.name, llvm_self_ptr
-      @last = cast_value ivar_ptr, node.type, ivar.type
+      @last = cast_value ivar_ptr, node.type, ivar.type, false
     end
 
     def visit(node : Cast)
@@ -1966,93 +1975,95 @@ module Crystal
       raise "Bug: trying to assign #{target_type} <- #{value_type}"
     end
 
-    def cast_value(value, to_type, from_type, already_loaded = false)
-      if from_type.void?
-        value
-      elsif from_type == to_type
-        already_loaded ? value : to_lhs(value, from_type)
-      else
-        cast_value_distinct value, to_type, from_type, already_loaded
-      end
-    end
-
-    def cast_value_distinct(value, to_type, from_type : Metaclass | GenericClassInstanceMetaclass | HierarchyTypeMetaclass, already_loaded)
+    def cast_value(value, to_type, from_type : VoidType, already_loaded)
       value
     end
 
-    def cast_value_distinct(value, to_type : HierarchyType, from_type : HierarchyType, already_loaded)
-      already_loaded ? value : load value
+    def cast_value(value, to_type, from_type : Type, already_loaded)
+      value = to_lhs(value, from_type) unless already_loaded
+      if from_type != to_type
+        value = cast_value_distinct value, to_type, from_type
+      end
+      value
     end
 
-    def cast_value_distinct(value, to_type : MixedUnionType, from_type : HierarchyType, already_loaded)
+    def cast_value_distinct(value, to_type, from_type : Metaclass | GenericClassInstanceMetaclass | HierarchyTypeMetaclass)
+      value
+    end
+
+    def cast_value_distinct(value, to_type : HierarchyType, from_type : HierarchyType)
+      value
+    end
+
+    def cast_value_distinct(value, to_type : MixedUnionType, from_type : HierarchyType)
       # This happens if the restriction is a union:
       # we keep each of the union types as the result, we don't fully merge
       union_ptr = alloca llvm_type(to_type)
-      store_in_union union_ptr, from_type, (already_loaded ? value : load value)
+      store_in_union union_ptr, from_type, value
       union_ptr
     end
 
-    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : HierarchyType, already_loaded)
+    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : HierarchyType)
       # This happens if the restriction is a union:
       # we keep each of the union types as the result, we don't fully merge
-      already_loaded ? value : load value
+      value
     end
 
-    def cast_value_distinct(value, to_type : NilType, from_type : NilableType, already_loaded)
+    def cast_value_distinct(value, to_type : NilType, from_type : NilableType)
       llvm_nil
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : NilableType, already_loaded)
-      already_loaded ? value : load value
+    def cast_value_distinct(value, to_type : Type, from_type : NilableType)
+      value
     end
 
-    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType, already_loaded)
-      already_loaded ? value : load value
+    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType)
+      value
     end
 
-    def cast_value_distinct(value, to_type : HierarchyType, from_type : ReferenceUnionType, already_loaded)
-      already_loaded ? value : load value
+    def cast_value_distinct(value, to_type : HierarchyType, from_type : ReferenceUnionType)
+      value
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : ReferenceUnionType, already_loaded)
-      cast_to (already_loaded ? value : load value), to_type
+    def cast_value_distinct(value, to_type : Type, from_type : ReferenceUnionType)
+      cast_to value, to_type
     end
 
-    def cast_value_distinct(value, to_type : HierarchyType, from_type : NilableReferenceUnionType, already_loaded)
-      already_loaded ? value : load value
+    def cast_value_distinct(value, to_type : HierarchyType, from_type : NilableReferenceUnionType)
+      value
     end
 
-    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : NilableReferenceUnionType, already_loaded)
-      already_loaded ? value : load value
+    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : NilableReferenceUnionType)
+      value
     end
 
-    def cast_value_distinct(value, to_type : NilableType, from_type : NilableReferenceUnionType, already_loaded)
-      cast_to (already_loaded ? value : load value), to_type
+    def cast_value_distinct(value, to_type : NilableType, from_type : NilableReferenceUnionType)
+      cast_to value, to_type
     end
 
-    def cast_value_distinct(value, to_type : NilType, from_type : NilableReferenceUnionType, already_loaded)
+    def cast_value_distinct(value, to_type : NilType, from_type : NilableReferenceUnionType)
       llvm_nil
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : NilableReferenceUnionType, already_loaded)
-      cast_to (already_loaded ? value : load value), to_type
+    def cast_value_distinct(value, to_type : Type, from_type : NilableReferenceUnionType)
+      cast_to value, to_type
     end
 
-    def cast_value_distinct(value, to_type : MixedUnionType, from_type : MixedUnionType, already_loaded)
+    def cast_value_distinct(value, to_type : MixedUnionType, from_type : MixedUnionType)
       cast_to_pointer value, to_type
     end
 
-    def cast_value_distinct(value, to_type : NilableType, from_type : MixedUnionType, already_loaded)
+    def cast_value_distinct(value, to_type : NilableType, from_type : MixedUnionType)
       load cast_to_pointer(union_value(value), to_type)
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : MixedUnionType, already_loaded)
+    def cast_value_distinct(value, to_type : Type, from_type : MixedUnionType)
       value_ptr = union_value(value)
       value = cast_to_pointer(value_ptr, to_type)
       to_lhs value, to_type
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : Type, already_loaded)
+    def cast_value_distinct(value, to_type : Type, from_type : Type)
       raise "Bug: trying to cast #{to_type} <- #{from_type}"
     end
 
