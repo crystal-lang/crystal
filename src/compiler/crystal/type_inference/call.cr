@@ -615,36 +615,25 @@ module Crystal
     end
 
     def self.define_new_with_initialize(scope, arg_types, matches)
+      instance_type = scope.instance_type
+      instance_type = instance_type.generic_class if instance_type.is_a?(GenericClassInstanceType)
+
       ms = matches.map do |match|
-        if match.free_vars.empty?
-          alloc = Call.new(nil, "allocate")
+        if instance_type.is_a?(GenericClassType)
+          generic_type_args = Array(ASTNode).new(instance_type.type_vars.length)
+          instance_type.type_vars.each do |type_var|
+            generic_type_args << Path.new([type_var])
+          end
+          new_generic = NewGenericClass.new(Path.new([instance_type.name]), generic_type_args)
+          alloc = Call.new(new_generic, "allocate")
         else
-          generic_class = scope.instance_type as GenericClassType
-
-          type_vars = Array(ASTNode?).new(generic_class.type_vars.length, nil)
-          match.free_vars.each do |name, type|
-            idx = generic_class.type_vars.index(name)
-            if idx
-              type_vars[idx] = Path.new([name])
-            end
-          end
-
-          if type_vars.all?
-            not_nil_type_vars = Array(ASTNode).new(generic_class.type_vars.length)
-            type_vars.each do |type_var|
-              not_nil_type_vars.push type_var.not_nil!
-            end
-
-            new_generic = NewGenericClass.new(Path.new([generic_class.name] of String), not_nil_type_vars)
-            alloc = Call.new(new_generic, "allocate")
-          else
-            alloc = Call.new(nil, "allocate")
-          end
+          alloc = Call.new(nil, "allocate")
         end
 
         # This creates:
         #
         #    x = allocate
+        #    GC.add_finalizer x
         #    x.initialize ...
         #    x
         var = Var.new("x")

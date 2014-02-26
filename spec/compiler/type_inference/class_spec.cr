@@ -661,4 +661,21 @@ describe "Type inference: class" do
         (types["Foo"] as GenericClassType).instantiate([types["Baz"]] of Type | ASTNode)
       end
   end
+
+  it "infers generic type after instance was created with explicit type" do
+    assert_type("
+      class Foo(T)
+        def initialize(@x : T)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo1 = Foo(Bool).new(true)
+      foo2 = Foo.new(1)
+      foo2.x
+      ") { int32 }
+  end
 end
