@@ -39,6 +39,19 @@ module Crystal
       @type == :IDENT && @value == keyword
     end
 
+    def copy_from(other)
+      @type = other.type
+      @value = other.value
+      @number_kind = other.number_kind
+      @string_end = other.string_end
+      @string_nest = other.string_nest
+      @string_open_count = other.string_open_count
+      @line_number = other.line_number
+      @column_number = other.column_number
+      @filename = other.filename
+      @regex_modifiers = other.regex_modifiers
+    end
+
     def to_s
       @value ? @value.to_s : @type.to_s
     end

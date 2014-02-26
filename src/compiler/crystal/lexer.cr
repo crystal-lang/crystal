@@ -1343,6 +1343,10 @@ module Crystal
       @reader.pos
     end
 
+    def current_pos=(pos)
+      @reader.pos = pos
+    end
+
     def string
       @reader.string
     end

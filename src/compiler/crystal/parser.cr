@@ -11,7 +11,7 @@ module Crystal
     def initialize(str, @def_vars = [Set(String).new])
       super(str)
       @last_call_has_parenthesis = false
-      @yields = nil
+      @temp_token = Token.new
     end
 
     def parse
@@ -425,6 +425,16 @@ module Crystal
             to = parse_single_type
             atomic = Cast.new(atomic, to)
           else
+            break
+          end
+        when :NEWLINE
+          # Allow '.' after newline for chaining calls
+          old_pos, old_line, old_column = current_pos, @line_number, @column_number
+          @temp_token.copy_from @token
+          next_token_skip_space_or_newline
+          unless @token.type == :"."
+            self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
+            @token.copy_from @temp_token
             break
           end
         when :"."
