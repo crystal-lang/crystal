@@ -2100,7 +2100,7 @@ module Crystal
     end
 
     def metaclass
-      @metaclass ||= HierarchyTypeMetaclass.new(program, self)
+      @metaclass ||= HierarchyMetaclassType.new(program, self)
     end
 
     def is_subclass_of?(other)
@@ -2188,7 +2188,7 @@ module Crystal
     end
   end
 
-  class HierarchyTypeMetaclass < Type
+  class HierarchyMetaclassType < Type
     include DefInstanceContainer
     include HierarchyTypeLookup
 

@@ -155,7 +155,7 @@ module Crystal
     end
   end
 
-  class HierarchyTypeMetaclass
+  class HierarchyMetaclassType
     def common_ancestor(other)
       common = instance_type.base_type.metaclass.common_ancestor(other)
       common.try &.hierarchy_type

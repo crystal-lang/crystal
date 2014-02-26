@@ -1844,7 +1844,7 @@ module Crystal
         load(union_type_id(value))
       when HierarchyType
         load(value)
-      when HierarchyTypeMetaclass
+      when HierarchyMetaclassType
         value
       else
         int(type.type_id)
@@ -1853,7 +1853,7 @@ module Crystal
 
     def match_type_id(type, restriction, type_id)
       case type
-      when UnionType, HierarchyType, HierarchyTypeMetaclass
+      when UnionType, HierarchyType, HierarchyMetaclassType
         match_any_type_id(restriction, type_id)
       else
         equal? int(restriction.type_id), type_id
@@ -1967,7 +1967,7 @@ module Crystal
       store cast_to(value, target_type), target_pointer
     end
 
-    def assign_distinct(target_pointer, target_type : HierarchyTypeMetaclass, value_type : Metaclass, value)
+    def assign_distinct(target_pointer, target_type : HierarchyMetaclassType, value_type : Metaclass, value)
       store value, target_pointer
     end
 
@@ -1987,7 +1987,7 @@ module Crystal
       value
     end
 
-    def cast_value_distinct(value, to_type, from_type : Metaclass | GenericClassInstanceMetaclass | HierarchyTypeMetaclass)
+    def cast_value_distinct(value, to_type, from_type : Metaclass | GenericClassInstanceMetaclass | HierarchyMetaclassType)
       value
     end
 
@@ -2075,7 +2075,7 @@ module Crystal
       case type
       when UnionType
         match_any_type_id_with_function(type, type_id)
-      when HierarchyTypeMetaclass
+      when HierarchyMetaclassType
         match_any_type_id_with_function(type, type_id)
       when HierarchyType
         if type.base_type.subclasses.empty?
@@ -2095,7 +2095,7 @@ module Crystal
       return call func, [type_id] of LibLLVM::ValueRef
     end
 
-    def create_match_fun(name, type : UnionType | HierarchyType | HierarchyTypeMetaclass)
+    def create_match_fun(name, type : UnionType | HierarchyType | HierarchyMetaclassType)
       @main_mod.functions.add(name, ([LLVM::Int32] of LibLLVM::TypeRef), LLVM::Int1) do |func|
         type_id = func.get_param(0)
         func.append_basic_block("entry") do |builder|

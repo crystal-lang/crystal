@@ -329,7 +329,7 @@ module Crystal
       end
     end
 
-    def restrict(other : HierarchyTypeMetaclass, owner, type_lookup, free_vars)
+    def restrict(other : HierarchyMetaclassType, owner, type_lookup, free_vars)
       restricted = instance_type.restrict(other.instance_type.base_type, owner, type_lookup, free_vars)
       if restricted
         self
