@@ -8,10 +8,10 @@ class String::Formatter
 
   def format
     while @i < @length
-      case (char = current_char)
+      case char = current_char
       when '%'
         @i += 1
-        case (char = current_char)
+        case char = current_char
         when 's'
           append_string do |arg, arg_s|
             @buffer << arg_s
@@ -26,7 +26,7 @@ class String::Formatter
           append_with_left_padding(' ')
         when '+'
           @i += 1
-          case (char = current_char)
+          case char = current_char
           when 'd'
             append_integer do |arg, arg_s|
               @buffer << '+' if arg >= 0
@@ -53,7 +53,7 @@ class String::Formatter
           end
         when ' '
           @i += 1
-          case (char = current_char)
+          case char = current_char
           when 'd'
             append_integer do |arg, arg_s|
               @buffer << ' ' if arg >= 0
@@ -74,7 +74,7 @@ class String::Formatter
           end
         when '-'
           @i += 1
-          case (char = current_char)
+          case char = current_char
           when 'd'
             append_integer do |arg, arg_s|
               @buffer << arg_s
@@ -91,7 +91,7 @@ class String::Formatter
             end
           when '+'
             @i += 1
-            case (char = current_char)
+            case char = current_char
             when '1' .. '9'
               append_with_padding do |arg, arg_s, num|
                 num -= arg_s.length
@@ -107,7 +107,7 @@ class String::Formatter
             end
           when ' '
             @i += 1
-            case (char = current_char)
+            case char = current_char
             when '1' .. '9'
               append_with_padding do |arg, arg_s, num|
                 num -= arg_s.length
@@ -167,7 +167,7 @@ class String::Formatter
 
   def append_with_padding
     num = consume_number
-    case (char = current_char)
+    case char = current_char
     when 'd'
       append_integer do |arg, arg_s|
         yield arg, arg_s, num
@@ -185,7 +185,7 @@ class String::Formatter
     num = current_char.ord - '0'.ord
     @i += 1
     while @i < @length
-      case (char = current_char)
+      case char = current_char
       when '0' .. '9'
         @i += 1
         num *= 10

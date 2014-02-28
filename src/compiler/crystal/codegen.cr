@@ -627,8 +627,7 @@ module Crystal
     end
 
     def visit(node : PointerOf)
-      node_exp = node.exp
-      @last = case node_exp
+      @last = case node_exp = node.exp
               when Var
                 context.vars[node_exp.name].pointer
               when InstanceVar
@@ -852,7 +851,7 @@ module Crystal
 
       if break_type = context.break_type
         # TODO: check hierarchy type here
-        case break_type
+        case break_type = context.break_type
         when NilableType
           context.break_table.not_nil!.add insert_block, to_nilable(@last, break_type, control_expression_type(node))
         when NilableReferenceUnionType

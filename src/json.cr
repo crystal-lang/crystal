@@ -125,13 +125,11 @@ module Json
       @string_buffer.clear
       buffer = @string_buffer
       while true
-        char = next_char
-        case char
+        case char = next_char
         when '\0'
           raise "unterminated string"
         when '\\'
-          char = next_char
-          case char
+          case char = next_char
           when '\\', '"', '/'
             buffer << char
           when 'b'

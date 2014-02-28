@@ -50,8 +50,7 @@ module Crystal
     end
 
     def fetch_source(source)
-      filename = @filename
-      case filename
+      case filename = @filename
       when String
         source = File.read(filename) if File.exists?(filename)
       when VirtualFile

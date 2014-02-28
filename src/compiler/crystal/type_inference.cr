@@ -101,8 +101,7 @@ module Crystal
     end
 
     def visit(node : DeclareVar)
-      var = node.var
-      case var
+      case var = node.var
       when Var
         node.declared_type.accept self
         node.type = node.declared_type.type.instance_type
@@ -989,8 +988,7 @@ module Crystal
     end
 
     def visit(node : PointerOf)
-      node_exp = node.exp
-      var = case node_exp
+      var = case node_exp = node.exp
             when Var
               lookup_var node_exp.name
             when InstanceVar

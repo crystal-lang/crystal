@@ -98,8 +98,7 @@ module Crystal
     end
 
     def visit(node : Assign)
-      target = node.target
-      case target
+      case target = node.target
       when Var
         node.value.accept self
         @vars[target.name] = @value
@@ -712,9 +711,7 @@ module Crystal
       def value=(value : PrimitiveValue)
         type = @type as PointerInstanceType
 
-        value_value = value.value
-
-        case value_value
+        case value_value = value.value
         when Nil
           (@data as Nil*).value = value_value
         when Bool
@@ -753,8 +750,7 @@ module Crystal
         element_type = type.element_type
 
         if element_type.is_a?(PrimitiveType)
-          size = element_type.bytes
-          case size
+          case size = element_type.bytes
           when 1
             PrimitiveValue.new(element_type, (@data as Int8*).value)
           when 2

@@ -351,8 +351,7 @@ module Crystal
     end
 
     def transform(node : Assign)
-      target = node.target
-      case target
+      case target = node.target
       when Var
         node.value = node.value.transform(self)
         transform_assign_var(target)
@@ -571,8 +570,7 @@ module Crystal
     def transform(node : Call)
       # Convert 'a <= b <= c' to 'a <= b && b <= c'
       if comparison?(node.name) && (obj = node.obj) && obj.is_a?(Call) && comparison?(obj.name)
-        middle = obj.args.first
-        case middle
+        case middle = obj.args.first
         when NumberLiteral, Var, InstanceVar
           transform_many node.args
           left = obj
@@ -805,9 +803,8 @@ module Crystal
     #     end
     def transform(node : Case)
       node.cond = node.cond.transform(self)
-      node_cond = node.cond
 
-      case node_cond
+      case node_cond = node.cond
       when Var, InstanceVar
         temp_var = node.cond
       when Assign
