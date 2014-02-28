@@ -241,7 +241,7 @@ describe "Type inference: class" do
 
   it "reports uninitialized constant" do
     assert_error "Foo.new",
-      "uninitialized constant Foo"
+      "undefined constant Foo"
   end
 
   it "reports undefined method when method inside a class" do
@@ -256,7 +256,7 @@ describe "Type inference: class" do
 
   it "reports unknown class when extending" do
     assert_error "class Foo < Bar; end",
-      "uninitialized constant Bar"
+      "undefined constant Bar"
   end
 
   it "reports superclass mismatch" do

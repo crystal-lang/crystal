@@ -1,3 +1,5 @@
+require "levenshtein"
+
 module Crystal
   abstract class Type
     include Enumerable(self)
@@ -197,6 +199,14 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_type"
     end
 
+    def lookup_similar_type_name(node : Path)
+      (node.global ? program : self).lookup_similar_type_name(node.names)
+    end
+
+    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      nil
+    end
+
     def types
       raise "Bug: #{self} doesn't implement types"
     end
@@ -231,6 +241,10 @@ module Crystal
 
     def lookup_first_def(name, yields)
       raise "Bug: #{self} doesn't implement lookup_first_def"
+    end
+
+    def lookup_similar_def_name(name, args_length, yields)
+      nil
     end
 
     def macros
@@ -381,6 +395,7 @@ module Crystal
         matches_array ||= [] of Match
         defs.each do |a_def|
           match = match_def_args(arg_types, a_def, owner, type_lookup)
+
           if match
             matches_array.push match
             if match.arg_types == arg_types
@@ -447,6 +462,36 @@ module Crystal
       end
 
       [] of Def
+    end
+
+    def lookup_similar_def_name(name, args_length, yields)
+      return nil unless name =~ /\A[a-z_\!\?]/
+
+      tolerance = (name.length / 5.0).ceil
+      candidates = [] of String
+
+      self.defs.each do |def_name, defs|
+        if def_name =~ /\A[a-z_\!\?]/
+          defs.each do |filter, overload|
+            if filter.restrictions.length == args_length && filter.yields == yields
+              if levenshtein(def_name, name) <= tolerance
+                candidates << def_name
+              end
+            end
+          end
+        end
+      end
+
+      unless candidates.empty?
+        return candidates.min_by { |candidate| levenshtein(candidate, name) }
+      end
+
+      parents.try &.each do |parent|
+        similar_def_name = parent.lookup_similar_def_name(name, args_length, yields)
+        return similar_def_name if similar_def_name
+      end
+
+      nil
     end
 
     def lookup_macro(name, args_length)
@@ -582,6 +627,43 @@ module Crystal
       end
 
       lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
+    end
+
+    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      return nil if already_looked_up.includes?(type_id)
+
+      if lookup_in_container
+        already_looked_up.add(type_id)
+      end
+
+      type = self
+      names.each_with_index do |name, idx|
+        previous_type = type.not_nil!
+        type = previous_type.types[name]?
+        unless type
+          tolerance = (name.length / 5.0).ceil
+          name_downcase = name.downcase
+          candidates = [] of String
+
+          previous_type.types.each_key do |type_name|
+            if levenshtein(type_name.downcase, name_downcase) <= tolerance
+              candidates.push type_name
+            end
+          end
+
+          unless candidates.empty?
+            similar_name = candidates.min_by { |candidate| levenshtein(candidate, name) }
+            return (names[0 ... idx] + [similar_name]).join "::"
+          end
+        end
+      end
+
+      parents.each do |parent|
+        match = parent.lookup_similar_type_name(names, already_looked_up, false)
+        return match if match
+      end
+
+      lookup_in_container && container ? container.lookup_similar_type_name(names, already_looked_up) : nil
     end
 
     def full_name
@@ -1372,6 +1454,10 @@ module Crystal
       @module.lookup_defs(name)
     end
 
+    def lookup_similar_def_name(name)
+      @module.lookup_similar_def_name(name)
+    end
+
     def match_arg(arg_type, arg, owner, type_lookup, free_vars)
       @module.match_arg(arg_type, arg, owner, type_lookup, free_vars)
     end
@@ -1396,6 +1482,10 @@ module Crystal
       end
 
       @module.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      @module.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
     def to_s
@@ -1480,6 +1570,10 @@ module Crystal
       typedef.lookup_first_def(name, yields)
     end
 
+    def lookup_similar_def_name(name)
+      typedef.lookup_similar_def_name(name)
+    end
+
     def primitive_like?
       true
     end
@@ -1520,6 +1614,10 @@ module Crystal
 
     def lookup_first_def(name, yields)
       aliased_type.lookup_first_def(name, yields)
+    end
+
+    def lookup_similar_def_name(name)
+      aliased_type.lookup_similar_def_name(name)
     end
 
     def def_instances
@@ -1739,6 +1837,10 @@ module Crystal
       instance_type.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
+    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
+    end
+
     delegate :abstract, instance_type
 
     def class_var_owner
@@ -1790,6 +1892,10 @@ module Crystal
 
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       instance_type.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
     def metaclass?
@@ -2006,6 +2112,7 @@ module Crystal
           subtype_hierarchy_lookup = hierarchy_lookup(subtype.hierarchy_type)
 
           subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, yields, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+
           concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
           if concrete && !subtype_matches.cover_all? && !base_type_matches.not_nil!.cover_all?
             covered_by_superclass = false
@@ -2063,6 +2170,10 @@ module Crystal
       base_type.lookup_defs(name)
     end
 
+    def lookup_similar_def_name(name)
+      base_type.lookup_similar_def_name(name)
+    end
+
     def lookup_instance_var(name, create = true)
       base_type.lookup_instance_var(name, create)
     end
@@ -2077,6 +2188,10 @@ module Crystal
 
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       base_type.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      base_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
     def has_instance_var_in_initialize?(name)
@@ -2207,6 +2322,10 @@ module Crystal
 
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       instance_type.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
     def parents

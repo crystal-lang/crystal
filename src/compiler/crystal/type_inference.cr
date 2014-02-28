@@ -20,6 +20,7 @@ module Crystal
     getter! typed_def
     getter! untyped_def
     property block
+    getter vars
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [nil] of Hash(String, TypeFilter)?)
       @types = [@mod] of Type
@@ -1208,6 +1209,18 @@ module Crystal
       needs_type_filters, @needs_type_filters = @needs_type_filters, 0
       yield
       @needs_type_filters = needs_type_filters
+    end
+
+    def lookup_similar_var_name(name)
+      tolerance = (name.length / 5.0).ceil
+      @vars.each_key do |var_name|
+        pieces = var_name.split '$'
+        var_name = pieces.first if pieces.length == 2
+        if levenshtein(var_name, name) <= tolerance
+          return var_name
+        end
+      end
+      nil
     end
 
     def visit(node : And)

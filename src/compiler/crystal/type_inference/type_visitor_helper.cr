@@ -409,26 +409,34 @@ module Crystal
         base_lookup = node.global ? mod : (@scope || @types.last)
         target_type = base_lookup.lookup_type node
 
-        if !target_type && create_modules_if_missing
-          next_type = base_lookup
-          node.names.each do |name|
-            next_type = base_lookup.lookup_type([name])
-            if next_type
-              if next_type.is_a?(ASTNode)
-                node.raise "execpted #{name} to be a type"
+        unless target_type
+          if create_modules_if_missing
+            next_type = base_lookup
+            node.names.each do |name|
+              next_type = base_lookup.lookup_type([name])
+              if next_type
+                if next_type.is_a?(ASTNode)
+                  node.raise "execpted #{name} to be a type"
+                end
+              else
+                next_type = NonGenericModuleType.new(@mod, base_lookup, name)
+                base_lookup.types[name] = next_type
               end
-            else
-              next_type = NonGenericModuleType.new(@mod, base_lookup, name)
-              base_lookup.types[name] = next_type
+              base_lookup = next_type
             end
-            base_lookup = next_type
+            target_type = next_type
+          else
+            similar_name = base_lookup.lookup_similar_type_name(node)
           end
-          target_type = next_type
         end
       end
 
       unless target_type
-        node.raise "uninitialized constant #{node}"
+        error_msg = String.build do |msg|
+          msg << "undefined constant #{node}"
+          msg << " \e[1;33m(did you mean '#{similar_name}'?)\e[0m" if similar_name
+        end
+        node.raise error_msg
       end
 
       target_type

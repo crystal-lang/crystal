@@ -474,17 +474,20 @@ module Crystal
       obj = @obj
       if defs.empty?
         owner_trace = find_owner_trace(obj, owner) if obj
+        similar_name = owner.lookup_similar_def_name(def_name, self.args.length, !!block)
 
-        if obj || !owner.is_a?(Program)
-          error_msg = "undefined method '#{def_name}' for #{owner}"
-          # similar_name = owner.lookup_similar_defs(def_name, self.args.length, !!block)
-          # error_msg << " \033[1;33m(did you mean '#{similar_name}'?)\033[0m" if similar_name
-          raise error_msg, owner_trace
-        elsif args.length > 0 || has_parenthesis
-          raise "undefined method '#{def_name}'", owner_trace
-        else
-          raise "undefined local variable or method '#{def_name}'", owner_trace
+        error_msg = String.build do |msg|
+          if obj && owner != @mod
+            msg << "undefined method '#{def_name}' for #{owner}"
+          elsif args.length > 0 || has_parenthesis
+            msg << "undefined method '#{def_name}'"
+          else
+            similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name
+            msg << "undefined local variable or method '#{def_name}'"
+          end
+          msg << " \e[1;33m(did you mean '#{similar_name}'?)\e[0m" if similar_name
         end
+        raise error_msg, owner_trace
       end
 
       defs_matching_args_length = defs.select { |a_def| a_def.args.length == self.args.length }
