@@ -21,4 +21,8 @@ describe "Normalize: case" do
   it "normalizes case with implicit call" do
     assert_normalize "case x; when .foo(1); 2; end", "#temp_1 = x()\nif #temp_1.foo(1)\n  2\nend"
   end
+
+  it "normalizes case with assignment" do
+    assert_normalize "case x = 1; when 2; 3; end", "x = 1\nif 2 === x\n  3\nend"
+  end
 end

@@ -805,12 +805,17 @@ module Crystal
     #     end
     def transform(node : Case)
       node.cond = node.cond.transform(self)
+      node_cond = node.cond
 
-      if node.cond.is_a?(Var) || node.cond.is_a?(InstanceVar)
+      case node_cond
+      when Var, InstanceVar
         temp_var = node.cond
+      when Assign
+        temp_var = node_cond.target
+        assign = node_cond
       else
         temp_var = new_temp_var
-        assign = Assign.new(temp_var, node.cond)
+        assign = Assign.new(temp_var, node_cond)
       end
 
       a_if = nil
