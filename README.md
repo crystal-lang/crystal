@@ -38,11 +38,11 @@ Status
 Installing
 ----------
 
-Currently it only works on Mac OSX and Linux 64 bit (but this will change soon, we promise!)
+Currently it only works on Mac OSX and Linux 32/64 bit.
 
 1. Clone the repository
 1. Execute `bin/crystal --setup`
-1. You will need libgc. In mac: `brew install bdw-gc`. In Ubuntu: `sudo apt-get install libgc`.
+1. You will need libgc. In mac: `brew install bdw-gc`. In Ubuntu: `sudo apt-get install libgc-dev`.
 
 That's all. Try to run:
 
