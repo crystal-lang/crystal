@@ -14,6 +14,10 @@ describe "Normalize: case" do
     assert_normalize "x = 1; case x; when Foo; 'b'; end", "x = 1\nif x.is_a?(Foo)\n  'b'\nend"
   end
 
+  it "normalizes case with NewGenericClass to is_a?" do
+    assert_normalize "x = 1; case x; when Foo(T); 'b'; end", "x = 1\nif x.is_a?(Foo(T))\n  'b'\nend"
+  end
+
   it "normalizes case with many expressions in when" do
     assert_normalize "x = 1; case x; when 1, 2; 'b'; end", "x = 1\nif 1 === x or 2 === x\n  'b'\nend"
   end

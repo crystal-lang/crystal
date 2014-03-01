@@ -822,7 +822,7 @@ module Crystal
         wh.conds.each do |cond|
           right_side = temp_var
 
-          if cond.is_a?(Path)
+          if cond.is_a?(Path) || cond.is_a?(NewGenericClass)
             comp = IsA.new(right_side, cond)
           elsif cond.is_a?(Call) && cond.obj.is_a?(ImplicitObj)
             implicit_call = cond.clone as Call
