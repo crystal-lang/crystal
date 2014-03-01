@@ -22,4 +22,24 @@ describe "Int" do
     assert { 2.odd?.should be_false }
     assert { 3.odd?.should be_true }
   end
+
+  describe "abs" do
+    it "does for signed" do
+      1_i8.abs.should eq(1_i8)
+      -1_i8.abs.should eq(1_i8)
+      1_i16.abs.should eq(1_i16)
+      -1_i16.abs.should eq(1_i16)
+      1_i32.abs.should eq(1_i32)
+      -1_i32.abs.should eq(1_i32)
+      1_i64.abs.should eq(1_i64)
+      -1_i64.abs.should eq(1_i64)
+    end
+
+    it "does for unsigned" do
+      1_u8.abs.should eq(1_u8)
+      1_u16.abs.should eq(1_u16)
+      1_u32.abs.should eq(1_u32)
+      1_u64.abs.should eq(1_u64)
+    end
+  end
 end

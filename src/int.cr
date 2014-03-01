@@ -183,6 +183,10 @@ struct UInt8
   MIN = 0_u8
   MAX = 255_u8
 
+  def abs
+    self
+  end
+
   def to_s
     String.new_with_capacity(5) do |buffer|
       C.sprintf(buffer, "%hhu", self)
@@ -193,6 +197,10 @@ end
 struct UInt16
   MIN = 0_u16
   MAX = 65535_u16
+
+  def abs
+    self
+  end
 
   def to_s
     String.new_with_capacity(7) do |buffer|
@@ -205,6 +213,10 @@ struct UInt32
   MIN = 0_u32
   MAX = 4294967295_u32
 
+  def abs
+    self
+  end
+
   def to_s
     String.new_with_capacity(12) do |buffer|
       C.sprintf(buffer, "%u", self)
@@ -215,6 +227,10 @@ end
 struct UInt64
   MIN = 0_u64
   MAX = 18446744073709551615_u64
+
+  def abs
+    self
+  end
 
   def to_s
     String.new_with_capacity(22) do |buffer|
