@@ -942,7 +942,7 @@ describe "Code gen: block" do
       ")
   end
 
-  it "codegens next" do
+  pending "codegens next" do
     run("
       def foo
         yield

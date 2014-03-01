@@ -1279,42 +1279,42 @@ module Crystal
     end
 
     def visit(node : Yield)
-      if block_context = context.block_context?
-        new_vars = block_context.vars.dup
-        block = context.block
+      block_context = context.block_context.not_nil!
+      new_vars = block_context.vars.dup
+      block = context.block
 
-        if node_scope = node.scope
-          accept node_scope
-          new_vars["%scope"] = LLVMVar.new(@last, node_scope.type)
-        end
+      if node_scope = node.scope
+        accept node_scope
+        new_vars["%scope"] = LLVMVar.new(@last, node_scope.type)
+      end
 
-        # First accept all yield expressions
-        node.exps.each_with_index do |exp, i|
-          accept exp
+      # First accept all yield expressions
+      node.exps.each_with_index do |exp, i|
+        accept exp
 
-          if arg = block.args[i]?
-            create_yield_var arg, exp.type, new_vars, @last
-          end
-        end
-
-        # Then assign nil to remaining block args
-        node.exps.length.upto(block.args.length - 1) do |i|
-          create_yield_var block.args[i], @mod.nil, new_vars, llvm_nil
-        end
-
-        with_cloned_context(block_context) do |old|
-          context.vars = new_vars
-          context.break_table = old.return_table
-          context.break_type = old.return_type
-          context.break_union = old.return_union
-          context.while_exit_block = old.return_block
-          accept block
-        end
-
-        if !node.type? || node.type.nil_type?
-          @last = llvm_nil
+        if arg = block.args[i]?
+          create_yield_var arg, exp.type, new_vars, @last
         end
       end
+
+      # Then assign nil to remaining block args
+      node.exps.length.upto(block.args.length - 1) do |i|
+        create_yield_var block.args[i], @mod.nil, new_vars, llvm_nil
+      end
+
+      with_cloned_context(block_context) do |old|
+        context.vars = new_vars
+        context.break_table = old.return_table
+        context.break_type = old.return_type
+        context.break_union = old.return_union
+        context.while_exit_block = old.return_block
+        accept block
+      end
+
+      if !node.type? || node.type.nil_type?
+        @last = llvm_nil
+      end
+
       false
     end
 

@@ -369,7 +369,7 @@ describe "Block inference" do
       ") { array_of(union_of(types["Foo1"].hierarchy_type, types["Foo2"].hierarchy_type)) }
   end
 
-  it "does next from block without value" do
+  pending "does next from block without value" do
     assert_type("
       def foo; yield; end
 
@@ -379,7 +379,7 @@ describe "Block inference" do
     ") { |mod| mod.nil }
   end
 
-  it "does next from block with value" do
+  pending "does next from block with value" do
     assert_type("
       def foo; yield; end
 
@@ -389,7 +389,7 @@ describe "Block inference" do
     ") { int32 }
   end
 
-  it "does next from block with value 2" do
+  pending "does next from block with value 2" do
     assert_type("
       def foo; yield; end
 
