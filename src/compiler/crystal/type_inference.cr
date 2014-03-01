@@ -799,6 +799,7 @@ module Crystal
 
     def end_visit(node : Next)
       if block = @block
+        node.raise "Sorry, next inside a block is not yet implemented :-("
         if node.exps.empty?
           block.type = @mod.nil
         else
