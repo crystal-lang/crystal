@@ -178,7 +178,7 @@ module Crystal
     end
   end
 
-  class NewGenericClass
+  class Generic
     property! instance_type
 
     def update(from = nil)

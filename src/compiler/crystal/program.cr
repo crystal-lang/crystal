@@ -75,7 +75,7 @@ module Crystal
       @string.lookup_instance_var("@length").set_type(@int32)
       @string.lookup_instance_var("@c").set_type(@uint8)
 
-      @types["Class"] = @class = Metaclass.new(self, @object, @reference, "Class")
+      @types["Class"] = @class = MetaclassType.new(self, @object, @reference, "Class")
       @object.force_metaclass @class
       @class.force_metaclass @class
       @class.instance_vars_in_initialize = Set.new(["@name"])

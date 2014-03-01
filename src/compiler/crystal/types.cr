@@ -9,7 +9,7 @@ module Crystal
     end
 
     def metaclass
-      @metaclass ||= Metaclass.new(program, self)
+      @metaclass ||= MetaclassType.new(program, self)
     end
 
     def force_metaclass(metaclass)
@@ -953,7 +953,7 @@ module Crystal
 
     def metaclass
       @metaclass ||= begin
-        metaclass = Metaclass.new(program, self)
+        metaclass = MetaclassType.new(program, self)
         metaclass.add_def Def.new("allocate", ([] of Arg), Primitive.new(:allocate))
         metaclass
       end
@@ -1210,7 +1210,7 @@ module Crystal
 
     def metaclass
       @metaclass ||= begin
-        metaclass = Metaclass.new(program, self)
+        metaclass = MetaclassType.new(program, self)
         metaclass.add_def Def.new("allocate", ([] of Arg), Primitive.new(:allocate))
         metaclass
       end
@@ -1276,7 +1276,7 @@ module Crystal
     end
 
     def metaclass
-      @metaclass ||= GenericClassInstanceMetaclass.new(program, self)
+      @metaclass ||= GenericClassInstanceMetaclassType.new(program, self)
     end
 
     def is_subclass_of?(type)
@@ -1706,7 +1706,7 @@ module Crystal
 
     def metaclass
       @metaclass ||= begin
-        metaclass = Metaclass.new(program, self)
+        metaclass = MetaclassType.new(program, self)
         metaclass.add_def Def.new("new", ([] of Arg), Primitive.new(:struct_new))
         metaclass
       end
@@ -1757,7 +1757,7 @@ module Crystal
 
     def metaclass
       @metaclass ||= begin
-        metaclass = Metaclass.new(program, self)
+        metaclass = MetaclassType.new(program, self)
         metaclass.add_def Def.new("new", ([] of Arg), Primitive.new(:union_new))
         metaclass
       end
@@ -1805,7 +1805,7 @@ module Crystal
     end
   end
 
-  class Metaclass < ClassType
+  class MetaclassType < ClassType
     include DefContainer
     include DefInstanceContainer
     include ClassVarContainer
@@ -1862,7 +1862,7 @@ module Crystal
     end
 
     def types
-      raise "Metaclass doesn't have types"
+      raise "MetaclassType doesn't have types"
     end
 
     def to_s
@@ -1870,7 +1870,7 @@ module Crystal
     end
   end
 
-  class GenericClassInstanceMetaclass < Type
+  class GenericClassInstanceMetaclassType < Type
     include MatchesLookup
     include DefInstanceContainer
 

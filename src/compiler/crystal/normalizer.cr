@@ -248,7 +248,7 @@ module Crystal
 
       if node_of = node.of
         if node.elements.length == 0
-          generic = NewGenericClass.new(Path.new(["Array"], true), [node_of] of ASTNode)
+          generic = Generic.new(Path.new(["Array"], true), [node_of] of ASTNode)
           generic.location = node.location
 
           call = Call.new(generic, "new")
@@ -264,7 +264,7 @@ module Crystal
       length = node.elements.length
       capacity = length
 
-      generic = NewGenericClass.new(Path.new(["Array"], true), [type_var] of ASTNode)
+      generic = Generic.new(Path.new(["Array"], true), [type_var] of ASTNode)
       generic.location = node.location
 
       constructor = Call.new(generic, "new", [NumberLiteral.new(capacity, :i32)] of ASTNode)
@@ -334,7 +334,7 @@ module Crystal
         type_vars = [TypeOf.new(node.keys), TypeOf.new(node.values)] of ASTNode
       end
 
-      constructor = Call.new(NewGenericClass.new(Path.new(["Hash"], true), type_vars), "new")
+      constructor = Call.new(Generic.new(Path.new(["Hash"], true), type_vars), "new")
       if node.keys.length == 0
         constructor
       else
@@ -822,7 +822,7 @@ module Crystal
         wh.conds.each do |cond|
           right_side = temp_var
 
-          if cond.is_a?(Path) || cond.is_a?(NewGenericClass)
+          if cond.is_a?(Path) || cond.is_a?(Generic)
             comp = IsA.new(right_side, cond)
           elsif cond.is_a?(Call) && cond.obj.is_a?(ImplicitObj)
             implicit_call = cond.clone as Call

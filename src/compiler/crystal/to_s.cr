@@ -470,7 +470,7 @@ module Crystal
       end
     end
 
-    def visit(node : SelfType)
+    def visit(node : Self)
       @str << "self"
     end
 
@@ -481,7 +481,7 @@ module Crystal
       end
     end
 
-    def visit(node : NewGenericClass)
+    def visit(node : Generic)
       node.name.accept self
       @str << "("
       node.type_vars.each_with_index do |var, i|
@@ -506,7 +506,7 @@ module Crystal
       false
     end
 
-    def visit(node : MetaclassNode)
+    def visit(node : Metaclass)
       node.name.accept self
       @str << ".class"
       false

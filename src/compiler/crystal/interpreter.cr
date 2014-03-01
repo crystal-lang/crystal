@@ -264,8 +264,8 @@ module Crystal
       @value = MetaclassValue.new(node.type)
     end
 
-    def end_visit(node : NewGenericClass)
-      process_new_generic_class(node)
+    def end_visit(node : Generic)
+      process_generic(node)
       @value = MetaclassValue.new(node.type)
     end
 

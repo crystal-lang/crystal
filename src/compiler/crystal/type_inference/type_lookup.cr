@@ -31,11 +31,11 @@ module Crystal
       @type = type.instance_type.hierarchy_type
     end
 
-    def end_visit(node : MetaclassNode)
+    def end_visit(node : Metaclass)
       @type = type.hierarchy_type
     end
 
-    def visit(node : NewGenericClass)
+    def visit(node : Generic)
       node.name.accept self
 
       instance_type = @type.not_nil!

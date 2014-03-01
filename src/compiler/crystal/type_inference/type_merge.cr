@@ -136,8 +136,8 @@ module Crystal
     end
   end
 
-  class Metaclass
-    def common_ancestor(other : Metaclass)
+  class MetaclassType
+    def common_ancestor(other : MetaclassType)
       common = instance_type.common_ancestor(other.instance_type)
       common.try &.metaclass
     end

@@ -186,7 +186,7 @@ module Crystal
 
     def lookup_class_var(node, bind_to_nil_if_non_existent = true)
       scope = (@typed_def ? @scope : current_type).not_nil!
-      if scope.is_a?(Metaclass)
+      if scope.is_a?(MetaclassType)
         owner = scope.class_var_owner
       else
         owner = scope
@@ -540,8 +540,8 @@ module Crystal
       end
     end
 
-    def end_visit(node : NewGenericClass)
-      process_new_generic_class(node)
+    def end_visit(node : Generic)
+      process_generic(node)
     end
 
     def end_visit(node : IsA)
@@ -689,8 +689,8 @@ module Crystal
       process_hierarchy(node)
     end
 
-    def end_visit(node : MetaclassNode)
-      process_metaclass_node(node)
+    def end_visit(node : Metaclass)
+      process_metaclass(node)
     end
 
     def visit(node : If)
@@ -984,7 +984,7 @@ module Crystal
       node.type = instance_type
     end
 
-    def visit(node : SelfType)
+    def visit(node : Self)
       node.type = scope.instance_type
     end
 

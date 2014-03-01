@@ -63,11 +63,11 @@ module Crystal
       final_type
     end
 
-    def create_llvm_type(type : Metaclass)
+    def create_llvm_type(type : MetaclassType)
       LLVM::Int32
     end
 
-    def create_llvm_type(type : GenericClassInstanceMetaclass)
+    def create_llvm_type(type : GenericClassInstanceMetaclassType)
       LLVM::Int32
     end
 

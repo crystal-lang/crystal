@@ -83,7 +83,7 @@ module Crystal
       pointer.add_def Def.new("address", ([] of Arg), Primitive.new(:pointer_address))
       pointer.add_def Def.new("realloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_realloc))
       pointer.add_def Def.new("+", [Arg.new_with_type("offset", int64)], Primitive.new(:pointer_add))
-      pointer.add_def Def.new("-", [Arg.new_with_restriction("other", SelfType.new)], Primitive.new(:pointer_diff))
+      pointer.add_def Def.new("-", [Arg.new_with_restriction("other", Self.new)], Primitive.new(:pointer_diff))
     end
 
     def define_symbol_primitives

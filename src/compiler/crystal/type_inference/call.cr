@@ -310,7 +310,7 @@ module Crystal
 
           matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
           unless matched
-            if output.is_a?(SelfType)
+            if output.is_a?(Self)
               raise "block expected to return #{match.owner}, not #{block_type}"
             else
               raise "block expected to return #{output}, not #{block_type}"
@@ -344,7 +344,7 @@ module Crystal
         super
       end
 
-      def visit(node : SelfType)
+      def visit(node : Self)
         @type = @match.owner
         false
       end
@@ -627,7 +627,7 @@ module Crystal
           instance_type.type_vars.each do |type_var|
             generic_type_args << Path.new([type_var])
           end
-          new_generic = NewGenericClass.new(Path.new([instance_type.name]), generic_type_args)
+          new_generic = Generic.new(Path.new([instance_type.name]), generic_type_args)
           alloc = Call.new(new_generic, "allocate")
         else
           alloc = Call.new(nil, "allocate")

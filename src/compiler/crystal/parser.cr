@@ -2062,7 +2062,7 @@ module Crystal
         check :")"
         next_token_skip_space
 
-        const = NewGenericClass.new const, types
+        const = Generic.new const, types
         const.location = location
       end
 
@@ -2167,7 +2167,7 @@ module Crystal
 
     def parse_type_with_suffix(types, allow_primitives)
       if @token.keyword?("self")
-        type = SelfType.new
+        type = Self.new
         next_token_skip_space
       else
         if @token.type == :"("
@@ -2229,7 +2229,7 @@ module Crystal
         when :"."
           next_token
           check_ident :class
-          type = MetaclassNode.new(type)
+          type = Metaclass.new(type)
           next_token_skip_space
         else
           break
@@ -2260,11 +2260,11 @@ module Crystal
     end
 
     def make_pointer_type(node)
-      NewGenericClass.new(Path.new(["Pointer"], true), [node] of ASTNode)
+      Generic.new(Path.new(["Pointer"], true), [node] of ASTNode)
     end
 
     def make_static_array_type(type, size)
-      NewGenericClass.new(Path.new(["StaticArray"], true), [type, NumberLiteral.new(size, :i32)] of ASTNode)
+      Generic.new(Path.new(["StaticArray"], true), [type, NumberLiteral.new(size, :i32)] of ASTNode)
     end
 
     def parse_yield

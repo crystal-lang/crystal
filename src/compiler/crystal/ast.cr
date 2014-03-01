@@ -1001,7 +1001,7 @@ module Crystal
   # Node that represents an implicit obj in:
   #
   #     case foo
-  #     when .bar? #=> this is a call with an implicit obj
+  #     when .bar? # this is a call with an implicit obj
   #     end
   class ImplicitObj < ASTNode
     def ==(other : self)
@@ -1131,7 +1131,7 @@ module Crystal
     end
   end
 
-  class NewGenericClass < ASTNode
+  class Generic < ASTNode
     property :name
     property :type_vars
 
@@ -1148,7 +1148,7 @@ module Crystal
     end
 
     def clone_without_location
-      NewGenericClass.new(@name.clone, @type_vars.clone)
+      Generic.new(@name.clone, @type_vars.clone)
     end
   end
 
@@ -1313,13 +1313,13 @@ module Crystal
     end
   end
 
-  class SelfType < ASTNode
+  class Self < ASTNode
     def ==(other : self)
       true
     end
 
     def clone_without_location
-      SelfType.new
+      Self.new
     end
   end
 
@@ -1630,7 +1630,7 @@ module Crystal
     end
   end
 
-  class MetaclassNode < ASTNode
+  class Metaclass < ASTNode
     property :name
 
     def initialize(@name)
@@ -1645,7 +1645,7 @@ module Crystal
     end
 
     def clone_without_location
-      MetaclassNode.new(@name.clone)
+      Metaclass.new(@name.clone)
     end
   end
 

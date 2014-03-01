@@ -139,7 +139,7 @@ module Crystal
     def process_include(node : Include)
       node_name = node.name
 
-      if node_name.is_a?(NewGenericClass)
+      if node_name.is_a?(Generic)
         type = lookup_path_type(node_name.name)
       else
         type = lookup_path_type(node_name)
@@ -151,7 +151,7 @@ module Crystal
 
       current_type = current_type()
 
-      if node_name.is_a?(NewGenericClass)
+      if node_name.is_a?(Generic)
         unless type.is_a?(GenericModuleType)
           node_name.raise "#{type} is not a generic module"
         end
@@ -161,7 +161,7 @@ module Crystal
         end
 
         type_vars_types = node_name.type_vars.map do |type_var|
-          if type_var.is_a?(SelfType)
+          if type_var.is_a?(Self)
             current_type
           else
             unless type_var.is_a?(Path)
@@ -350,11 +350,11 @@ module Crystal
       node.type = node.name.type.instance_type.hierarchy_type.metaclass
     end
 
-    def process_metaclass_node(node : MetaclassNode)
+    def process_metaclass(node : Metaclass)
       node.type = node.name.type.hierarchy_type.metaclass
     end
 
-    def process_new_generic_class(node : NewGenericClass)
+    def process_generic(node : Generic)
       return if node.type?
 
       instance_type = node.name.type.instance_type

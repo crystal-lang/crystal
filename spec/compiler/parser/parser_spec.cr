@@ -85,13 +85,13 @@ class String
   end
 
   def static_array_of(size)
-    NewGenericClass.new(Path.new(["StaticArray"], true), [Path.new([self]), NumberLiteral.new(size, :i32)])
+    Generic.new(Path.new(["StaticArray"], true), [Path.new([self]), NumberLiteral.new(size, :i32)])
   end
 end
 
 class Crystal::ASTNode
   def pointer_of
-    NewGenericClass.new(Path.new(["Pointer"], true), [self] of ASTNode)
+    Generic.new(Path.new(["Pointer"], true), [self] of ASTNode)
   end
 end
 
@@ -211,10 +211,10 @@ describe "Parser" do
   it_parses "def foo var = 1; end", Def.new("foo", [Arg.new("var", 1.int32)], nil)
   it_parses "def foo(var : Int); end", Def.new("foo", [Arg.new("var", nil, "Int".path)], nil)
   it_parses "def foo var : Int; end", Def.new("foo", [Arg.new("var", nil, "Int".path)], nil)
-  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, SelfType.new)], nil)
-  it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, SelfType.new)], nil)
-  it_parses "def foo(var : self.class); end", Def.new("foo", [Arg.new("var", nil, MetaclassNode.new(SelfType.new))], nil)
-  it_parses "def foo(var : self*); end", Def.new("foo", [Arg.new("var", nil, SelfType.new.pointer_of)], nil)
+  it_parses "def foo(var : self); end", Def.new("foo", [Arg.new("var", nil, Self.new)], nil)
+  it_parses "def foo var : self; end", Def.new("foo", [Arg.new("var", nil, Self.new)], nil)
+  it_parses "def foo(var : self.class); end", Def.new("foo", [Arg.new("var", nil, Metaclass.new(Self.new))], nil)
+  it_parses "def foo(var : self*); end", Def.new("foo", [Arg.new("var", nil, Self.new.pointer_of)], nil)
   it_parses "def foo(var : Int | Double); end", Def.new("foo", [Arg.new("var", nil, Union.new(["Int".path, "Double".path] of ASTNode))], nil)
   it_parses "def foo(var : Int?); end", Def.new("foo", [Arg.new("var", nil, Union.new(["Int".path, "Nil".path(true)] of ASTNode))], nil)
   it_parses "def foo(var : Int*); end", Def.new("foo", [Arg.new("var", nil, "Int".path.pointer_of)], nil)
@@ -236,7 +236,7 @@ describe "Parser" do
   it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", Fun.new(["Int".path, "Float".path] of ASTNode, "Double".path)), 2)
   it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", Fun.new(nil, "Double".path)), 0)
   it_parses "def foo(a, &block : Int -> ); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", Fun.new(["Int".path] of ASTNode)), 1)
-  it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", Fun.new(([SelfType.new] of ASTNode), SelfType.new)), 1)
+  it_parses "def foo(a, &block : self -> self); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", Fun.new(([Self.new] of ASTNode), Self.new)), 1)
   it_parses "def foo; a.yield; end", Def.new("foo", [] of Arg, [Yield.new([] of ASTNode, "a".call)] of ASTNode, nil, nil, 1)
   it_parses "def foo; a.yield 1; end", Def.new("foo", [] of Arg, [Yield.new([1.int32] of ASTNode, "a".call)] of ASTNode, nil, nil, 1)
   it_parses "def foo(@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
@@ -341,15 +341,15 @@ describe "Parser" do
 
   it_parses "struct Foo; end", ClassDef.new("Foo".path, nil, nil, nil, false, true)
 
-  it_parses "Foo(T)", NewGenericClass.new("Foo".path, ["T".path] of ASTNode)
-  it_parses "Foo(T | U)", NewGenericClass.new("Foo".path, [Union.new(["T".path, "U".path] of ASTNode)] of ASTNode)
-  it_parses "Foo(Bar(T | U))", NewGenericClass.new("Foo".path, [NewGenericClass.new("Bar".path, [Union.new(["T".path, "U".path] of ASTNode)] of ASTNode)] of ASTNode)
-  it_parses "Foo(T?)", NewGenericClass.new("Foo".path, [Union.new(["T".path, Path.new(["Nil"], true)] of ASTNode)] of ASTNode)
-  it_parses "Foo(1)", NewGenericClass.new("Foo".path, [NumberLiteral.new("1", :i32)] of ASTNode)
-  it_parses "Foo(T, 1)", NewGenericClass.new("Foo".path, ["T".path, NumberLiteral.new("1", :i32)] of ASTNode)
-  it_parses "Foo(T, U, 1)", NewGenericClass.new("Foo".path, ["T".path, "U".path, NumberLiteral.new("1", :i32)] of ASTNode)
-  it_parses "Foo(T, 1, U)", NewGenericClass.new("Foo".path, ["T".path, NumberLiteral.new("1", :i32), "U".path] of ASTNode)
-  it_parses "Foo(typeof(1))", NewGenericClass.new("Foo".path, [TypeOf.new([1.int32] of ASTNode)] of ASTNode)
+  it_parses "Foo(T)", Generic.new("Foo".path, ["T".path] of ASTNode)
+  it_parses "Foo(T | U)", Generic.new("Foo".path, [Union.new(["T".path, "U".path] of ASTNode)] of ASTNode)
+  it_parses "Foo(Bar(T | U))", Generic.new("Foo".path, [Generic.new("Bar".path, [Union.new(["T".path, "U".path] of ASTNode)] of ASTNode)] of ASTNode)
+  it_parses "Foo(T?)", Generic.new("Foo".path, [Union.new(["T".path, Path.new(["Nil"], true)] of ASTNode)] of ASTNode)
+  it_parses "Foo(1)", Generic.new("Foo".path, [NumberLiteral.new("1", :i32)] of ASTNode)
+  it_parses "Foo(T, 1)", Generic.new("Foo".path, ["T".path, NumberLiteral.new("1", :i32)] of ASTNode)
+  it_parses "Foo(T, U, 1)", Generic.new("Foo".path, ["T".path, "U".path, NumberLiteral.new("1", :i32)] of ASTNode)
+  it_parses "Foo(T, 1, U)", Generic.new("Foo".path, ["T".path, NumberLiteral.new("1", :i32), "U".path] of ASTNode)
+  it_parses "Foo(typeof(1))", Generic.new("Foo".path, [TypeOf.new([1.int32] of ASTNode)] of ASTNode)
 
   it_parses "module Foo; end", ModuleDef.new("Foo".path)
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".path, [Def.new("foo", [] of Arg, nil)] of ASTNode)
@@ -466,7 +466,7 @@ describe "Parser" do
   it_parses "lib C; type A : B; end", LibDef.new("C", nil, [TypeDef.new("A", "B".path)] of ASTNode)
   it_parses "lib C; type A : B*; end", LibDef.new("C", nil, [TypeDef.new("A", "B".path.pointer_of)] of ASTNode)
   it_parses "lib C; type A : B**; end", LibDef.new("C", nil, [TypeDef.new("A", "B".path.pointer_of.pointer_of)] of ASTNode)
-  it_parses "lib C; type A : B.class; end", LibDef.new("C", nil, [TypeDef.new("A", MetaclassNode.new("B".path))] of ASTNode)
+  it_parses "lib C; type A : B.class; end", LibDef.new("C", nil, [TypeDef.new("A", Metaclass.new("B".path))] of ASTNode)
   it_parses "lib C; struct Foo; end end", LibDef.new("C", nil, [StructDef.new("Foo")] of ASTNode)
   it_parses "lib C; struct Foo; x : Int; y : Float; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".path), Arg.new("y", nil, "Float".path)])] of ASTNode)
   it_parses "lib C; struct Foo; x : Int*; end end", LibDef.new("C", nil, [StructDef.new("Foo", [Arg.new("x", nil, "Int".path.pointer_of)])] of ASTNode)

@@ -1971,7 +1971,7 @@ module Crystal
       store cast_to(value, target_type), target_pointer
     end
 
-    def assign_distinct(target_pointer, target_type : HierarchyMetaclassType, value_type : Metaclass, value)
+    def assign_distinct(target_pointer, target_type : HierarchyMetaclassType, value_type : MetaclassType, value)
       store value, target_pointer
     end
 
@@ -1991,7 +1991,7 @@ module Crystal
       value
     end
 
-    def cast_value_distinct(value, to_type, from_type : Metaclass | GenericClassInstanceMetaclass | HierarchyMetaclassType)
+    def cast_value_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | HierarchyMetaclassType)
       value
     end
 

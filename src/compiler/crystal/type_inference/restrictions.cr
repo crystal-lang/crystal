@@ -12,12 +12,12 @@ module Crystal
     end
   end
 
-  class SelfType
+  class Self
     def is_restriction_of?(type : Type, owner)
       owner.is_restriction_of?(type, owner)
     end
 
-    def is_restriction_of?(type : SelfType, owner)
+    def is_restriction_of?(type : Self, owner)
       true
     end
 
@@ -67,8 +67,8 @@ module Crystal
     end
   end
 
-  class NewGenericClass
-    def is_restriction_of?(other : NewGenericClass, owner)
+  class Generic
+    def is_restriction_of?(other : Generic, owner)
       return true if self == other
       return false unless name == other.name && type_vars.length == other.type_vars.length
 
@@ -105,7 +105,7 @@ module Crystal
       end
     end
 
-    def restrict(other : SelfType, owner, type_lookup, free_vars)
+    def restrict(other : Self, owner, type_lookup, free_vars)
       restrict(owner, owner, type_lookup, free_vars)
     end
 
@@ -143,11 +143,11 @@ module Crystal
       end
     end
 
-    def restrict(other : NewGenericClass, owner, type_lookup, free_vars)
+    def restrict(other : Generic, owner, type_lookup, free_vars)
       nil
     end
 
-    def restrict(other : MetaclassNode, owner, type_lookup, free_vars)
+    def restrict(other : Metaclass, owner, type_lookup, free_vars)
       nil
     end
 
@@ -201,7 +201,7 @@ module Crystal
       self == type || union_types.any? &.is_restriction_of?(type, owner)
     end
 
-    def restrict(other : Type | NewGenericClass, owner, type_lookup, free_vars)
+    def restrict(other : Type | Generic, owner, type_lookup, free_vars)
       types = [] of Type
       union_types.each do |type|
         restricted = type.restrict(other, owner, type_lookup, free_vars)
@@ -225,7 +225,7 @@ module Crystal
       generic_class == other ? self : nil
     end
 
-    def restrict(other : NewGenericClass, owner, type_lookup, free_vars)
+    def restrict(other : Generic, owner, type_lookup, free_vars)
       generic_class = type_lookup.lookup_type other.name
       return nil unless generic_class == self.generic_class
 
@@ -319,8 +319,8 @@ module Crystal
     end
   end
 
-  class Metaclass
-    def restrict(other : MetaclassNode, owner, type_lookup, free_vars)
+  class MetaclassType
+    def restrict(other : Metaclass, owner, type_lookup, free_vars)
       restricted = instance_type.restrict(other.name, owner, type_lookup, free_vars)
       if restricted
         self

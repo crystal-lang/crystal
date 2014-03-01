@@ -216,7 +216,7 @@ module Crystal
       node
     end
 
-    def transform(node : NewGenericClass)
+    def transform(node : Generic)
       node.name = node.name.transform(self)
       transform_many node.type_vars
       node
@@ -249,7 +249,7 @@ module Crystal
       node
     end
 
-    def transform(node : MetaclassNode)
+    def transform(node : Metaclass)
       node.name = node.name.transform(self)
       node
     end
@@ -395,7 +395,7 @@ module Crystal
       node
     end
 
-    def transform(node : SelfType)
+    def transform(node : Self)
       node
     end
 
