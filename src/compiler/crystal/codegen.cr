@@ -139,7 +139,12 @@ module Crystal
     def finish
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
-      codegen_return(@main_ret_type, @main_ret_type) { |value| ret value }
+
+      # Because we swtich blocks, the unreachable info is lost
+      unless @main_ret_type.try &.no_return?
+        codegen_return(@main_ret_type, @main_ret_type) { |value| ret value }
+      end
+
       @llvm_mod.dump if DUMP_LLVM
     end
 
