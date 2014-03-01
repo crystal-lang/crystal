@@ -178,12 +178,18 @@ class File
     end
   end
 
-  def self.read_lines(filename)
-    lines = [] of String
+  def self.each_line(filename)
     File.open(filename, "r") do |file|
       while line = file.gets
-        lines << line
+        yield line
       end
+    end
+  end
+
+  def self.read_lines(filename)
+    lines = [] of String
+    each_line(filename) do |line|
+      lines << line
     end
     lines
   end

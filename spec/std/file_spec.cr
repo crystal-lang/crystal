@@ -10,7 +10,18 @@ describe "File" do
   it "reads lines from file" do
     lines = File.read_lines "#{__DIR__}/data/test_file.txt"
     lines.length.should eq(20)
-    # TODO: lines.first.should eq("Hello World\n")
+    lines.first.should eq("Hello World\n")
+  end
+
+  it "reads lines from file with each" do
+    idx = 0
+    File.each_line("#{__DIR__}/data/test_file.txt") do |line|
+      if idx == 0
+        line.should eq("Hello World\n")
+      end
+      idx += 1
+    end
+    idx.should eq(20)
   end
 
   it "tests exists? and gives true" do
