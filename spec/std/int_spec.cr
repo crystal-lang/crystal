@@ -42,4 +42,12 @@ describe "Int" do
       1_u64.abs.should eq(1_u64)
     end
   end
+
+  describe "lcm" do
+    assert { 2.lcm(2).should eq(2) }
+    assert { 3.lcm(-7).should eq(21) }
+    assert { 4.lcm(6).should eq(12) }
+    assert { 0.lcm(2).should eq(0) }
+    assert { 2.lcm(0).should eq(0) }
+  end
 end
