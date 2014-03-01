@@ -21,11 +21,10 @@ describe "Hash" do
     a[1].should eq(2)
   end
 
-  # pending
-  # it "gets from union" do
-  #   a = {1 => 2, :foo => 1.1}
-  #   a[1].should eq(2)
-  # end
+  it "gets from union" do
+    a = {1 => 2, :foo => 1.1}
+    a[1].should eq(2)
+  end
 
   it "gets nilable" do
     a = {1 => 2}
@@ -91,7 +90,6 @@ describe "Hash" do
     it "fetches with one argument" do
       a = {1 => 2}
       a.fetch(1).should eq(2)
-      # a.fetch(2).should raise_exception
       a.should eq({1 => 2})
     end
 
@@ -107,6 +105,15 @@ describe "Hash" do
       a.fetch(1) { |k| k * 3 }.should eq(2)
       a.fetch(2) { |k| k * 3 }.should eq(6)
       a.should eq({1 => 2})
+    end
+
+    it "fetches and raises" do
+      a = {1 => 2}
+      begin
+        a.fetch(2)
+        fail "expected fetch to raise"
+      rescue
+      end
     end
   end
 
