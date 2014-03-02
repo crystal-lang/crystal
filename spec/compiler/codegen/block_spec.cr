@@ -847,7 +847,17 @@ describe "Code gen: block" do
     ").to_i.should eq(1)
   end
 
-  it "codegens block with union arg" do
+  it "codegens block with union arg (1)" do
+    run("
+      def foo
+        yield 1 || 1.5
+      end
+
+      foo { |x| x }.to_i
+      ").to_i.should eq(1)
+  end
+
+  it "codegens block with union arg (2)" do
     run("
       struct Number
         def abs
@@ -914,7 +924,28 @@ describe "Code gen: block" do
     ").to_i.should eq(1)
   end
 
-  it "codegens dispatch with block and break" do
+  it "codegens dispatch with block and break (1)" do
+    run("
+      class Foo(T)
+        def initialize(@x : T)
+        end
+
+        def each
+          yield @x
+        end
+      end
+
+      n = 0
+      f = Foo.new(1) || Foo.new(1.5)
+      f.each do |x|
+        break if x > 2
+        n += x
+      end
+      n.to_i
+      ").to_i.should eq(1)
+  end
+
+  it "codegens dispatch with block and break (2)" do
     run("
       require \"prelude\"
 
@@ -940,18 +971,6 @@ describe "Code gen: block" do
       foo(1) do
       end
       ")
-  end
-
-  pending "codegens next" do
-    run("
-      def foo
-        yield
-      end
-
-      foo do
-        next 1
-      end
-      ").to_i.should eq(1)
   end
 
   it "returns void when called with block" do

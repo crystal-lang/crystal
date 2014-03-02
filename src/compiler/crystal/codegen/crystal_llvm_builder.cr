@@ -1,5 +1,7 @@
 module Crystal
   class CrystalLLVMBuilder
+    getter :end
+
     def initialize(@builder, @codegen)
       @end = false
     end

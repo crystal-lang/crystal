@@ -811,6 +811,7 @@ module Crystal
         context.break_type = nil
         context.break_table = nil
         context.break_union = nil
+        context.next_block = nil
 
         while_block, body_block, exit_block = new_blocks ["while", "body", "exit"]
 
@@ -875,7 +876,20 @@ module Crystal
     end
 
     def end_visit(node : Next)
-      if while_block = context.while_block
+      if next_block = context.next_block
+        case next_type = context.next_type
+        when NilableType
+          context.next_table.not_nil!.add insert_block, to_nilable(@last, next_type, control_expression_type(node))
+        when NilableReferenceUnionType
+          context.next_table.not_nil!.add insert_block, to_nilable(@last, next_type, control_expression_type(node))
+        when MixedUnionType
+          next_union = context.next_union.not_nil!
+          assign(next_union, next_type, control_expression_type(node), @last)
+        else
+          context.next_table.not_nil!.add insert_block, @last
+        end
+        br next_block
+      elsif while_block = context.while_block
         br while_block
       end
     end
@@ -1222,6 +1236,10 @@ module Crystal
       property break_table
       property break_type
       property break_union
+      property next_block
+      property next_table
+      property next_type
+      property next_union
       property while_block
       property while_exit_block
       property! block
@@ -1249,6 +1267,10 @@ module Crystal
         context.break_table = break_table
         context.break_type = break_type
         context.break_union = break_union
+        context.next_block = next_block
+        context.next_table = next_table
+        context.next_type = next_type
+        context.next_union = next_union
         context.while_block = while_block
         context.while_exit_block = while_exit_block
         context.block = @block
@@ -1302,17 +1324,59 @@ module Crystal
         create_yield_var block.args[i], @mod.nil, new_vars, llvm_nil
       end
 
+      unless block.no_returns?
+        exit_block = new_block "exit"
+      end
+
+      if block.type.passed_by_value?
+        next_union = alloca(llvm_type(block.type), "next")
+      else
+        next_table = LLVM::PhiTable.new
+      end
+
       with_cloned_context(block_context) do |old|
         context.vars = new_vars
         context.break_table = old.return_table
         context.break_type = old.return_type
         context.break_union = old.return_union
         context.while_exit_block = old.return_block
+        context.next_block = exit_block
+        context.next_type = block.type
+        if block.type.passed_by_value?
+          context.next_union = next_union
+        else
+          context.next_table = next_table
+        end
         accept block
       end
 
-      if !node.type? || node.type.nil_type?
-        @last = llvm_nil
+      unless block.no_returns?
+        exit_block = exit_block.not_nil!
+
+        if !@builder.end && !block.nexts?
+          if next_table
+            next_table.add insert_block, @last
+          else
+            assign(next_union.not_nil!, block.type, block.body.type, @last)
+          end
+        end
+
+        br exit_block
+        position_at_end exit_block
+
+        case block.type
+        when .void?
+          # Nothing to do
+        when .passed_by_value?
+          @last = next_union.not_nil!
+        else
+          next_table = next_table.not_nil!
+          if next_table.empty?
+            @last = llvm_nil
+          else
+            @last = phi llvm_type(block.type), next_table
+          end
+        end
       end
 
       false
@@ -1537,7 +1601,12 @@ module Crystal
         unreachable
       else
         unless block.breaks?
-          codegen_return(target_def.body.type, target_def.type) do |ret_value|
+          fun_type = target_def.type
+          if block.break.type?
+            fun_type = @mod.type_merge([fun_type, block.break.type]).not_nil!
+          end
+
+          codegen_return(target_def.body.type, fun_type) do |ret_value|
             return_table.add insert_block, ret_value if ret_value
           end
         end

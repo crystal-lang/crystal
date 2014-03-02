@@ -449,31 +449,31 @@ describe "Array" do
       a.should_not eq(b)
     end
 
-    it "sort! with a block" do
-      a = ["foo", "a", "hello"]
-      a.sort! { |x, y| x.length <=> y.length }
-      a.should eq(["a", "foo", "hello"])
-    end
+    # it "sort! with a block" do
+    #   a = ["foo", "a", "hello"]
+    #   a.sort! { |x, y| x.length <=> y.length }
+    #   a.should eq(["a", "foo", "hello"])
+    # end
 
-    it "sort with a block" do
-      a = ["foo", "a", "hello"]
-      b = a.sort { |x, y| x.length <=> y.length }
-      b.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
-    end
+    # it "sort with a block" do
+    #   a = ["foo", "a", "hello"]
+    #   b = a.sort { |x, y| x.length <=> y.length }
+    #   b.should eq(["a", "foo", "hello"])
+    #   a.should_not eq(b)
+    # end
 
-    it "sorts by!" do
-      a = ["foo", "a", "hello"]
-      a.sort_by! &.length
-      a.should eq(["a", "foo", "hello"])
-    end
+    # it "sorts by!" do
+    #   a = ["foo", "a", "hello"]
+    #   a.sort_by! &.length
+    #   a.should eq(["a", "foo", "hello"])
+    # end
 
-    it "sorts by" do
-      a = ["foo", "a", "hello"]
-      b = a.sort_by &.length
-      b.should eq(["a", "foo", "hello"])
-      a.should_not eq(b)
-    end
+    # it "sorts by" do
+    #   a = ["foo", "a", "hello"]
+    #   b = a.sort_by &.length
+    #   b.should eq(["a", "foo", "hello"])
+    #   a.should_not eq(b)
+    # end
   end
 
   describe "dup" do

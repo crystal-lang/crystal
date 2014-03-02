@@ -763,6 +763,7 @@ module Crystal
 
       cond_type_filters = @type_filters
       @type_filters = nil
+      @block, old_block = nil, @block
 
       @while_stack.push node
       pushing_type_filters(cond_type_filters) do
@@ -770,6 +771,7 @@ module Crystal
       end
 
       @while_stack.pop
+      @block = old_block
 
       false
     end
@@ -799,9 +801,8 @@ module Crystal
 
     def end_visit(node : Next)
       if block = @block
-        node.raise "Sorry, next inside a block is not yet implemented :-("
         if node.exps.empty?
-          block.type = @mod.nil
+          block.bind_to @mod.nil_var
         else
           block.bind_to node.exps.first
         end

@@ -512,28 +512,28 @@ class Array(T)
     self
   end
 
-  def sort!(&block: T, T -> Int32)
-    Array(T).quicksort!(@buffer, @length, block)
-    self
-  end
+  # def sort!(&block: T, T -> Int32)
+  #   Array(T).quicksort!(@buffer, @length, block)
+  #   self
+  # end
 
-  def sort_by!(&block: T -> )
-    sort! { |x, y| (yield x) <=> (yield y) }
-  end
+  # def sort_by!(&block: T -> )
+  #   sort! { |x, y| (yield x) <=> (yield y) }
+  # end
 
   def sort
     dup.sort!
   end
 
-  def sort(&block: T, T -> Int32)
-    x = dup
-    Array(T).quicksort!(x.buffer, x.length, block)
-    x
-  end
+  # def sort(&block: T, T -> Int32)
+  #   x = dup
+  #   Array(T).quicksort!(x.buffer, x.length, block)
+  #   x
+  # end
 
-  def sort_by(&block: T -> )
-    sort { |x, y| (yield x) <=> (yield y) }
-  end
+  # def sort_by(&block: T -> )
+  #   sort { |x, y| (yield x) <=> (yield y) }
+  # end
 
   def sample
     raise IndexOutOfBounds.new if @length == 0

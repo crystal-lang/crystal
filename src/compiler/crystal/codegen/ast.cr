@@ -14,6 +14,10 @@ module Crystal
       false
     end
 
+    def nexts?
+      false
+    end
+
     def no_returns?
       type?.try &.no_return?
     end
@@ -50,6 +54,10 @@ module Crystal
     def breaks?
       value.breaks?
     end
+
+    def nexts?
+      value.breaks?
+    end
   end
 
   class Primitive
@@ -81,6 +89,12 @@ module Crystal
     end
   end
 
+  class Next
+    def nexts?
+      true
+    end
+  end
+
   class Expressions
     def returns?
       expressions.any? &.returns?
@@ -91,6 +105,10 @@ module Crystal
     end
 
     def breaks?
+      expressions.any? &.breaks?
+    end
+
+    def nexts?
       expressions.any? &.breaks?
     end
   end
@@ -107,6 +125,10 @@ module Crystal
     def yields?
       body && body.yields?
     end
+
+    def nexts?
+      body && body.nexts?
+    end
   end
 
   class If
@@ -120,6 +142,10 @@ module Crystal
 
     def breaks?
       self.then.breaks? && self.else.breaks?
+    end
+
+    def nexts?
+      self.then.nexts? && self.else.nexts?
     end
   end
 
