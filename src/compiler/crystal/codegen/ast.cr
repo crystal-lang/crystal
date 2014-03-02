@@ -115,19 +115,19 @@ module Crystal
 
   class Block
     def returns?
-      body && body.returns?
+      body.returns?
     end
 
     def breaks?
-      body && body.breaks?
+      body.breaks?
     end
 
     def yields?
-      body && body.yields?
+      body.yields?
     end
 
     def nexts?
-      body && body.nexts?
+      body.nexts?
     end
   end
 

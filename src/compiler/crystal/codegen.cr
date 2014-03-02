@@ -62,6 +62,7 @@ module Crystal
     getter :modules
     getter :context
     getter :llvm_typer
+    property :last
 
     class LLVMVar
       getter pointer
@@ -125,7 +126,7 @@ module Crystal
       @trampoline_wrappers = {} of UInt64 => LLVM::Function
       @fun_literal_count = 0
 
-      setup_context_return context, @main_ret_type
+      context.return_phi = Phi.new(self, @node)
     end
 
     def define_symbol_table(llvm_mod)
@@ -142,7 +143,8 @@ module Crystal
 
       # Because we swtich blocks, the unreachable info is lost
       unless @main_ret_type.try &.no_return?
-        codegen_return(@main_ret_type, @main_ret_type) { |value| ret value }
+        context.return_phi.add @last, @main_ret_type
+        context.return_phi.close_and_return
       end
 
       @llvm_mod.dump if DUMP_LLVM
@@ -741,17 +743,7 @@ module Crystal
         end
       end
 
-      exp_type = control_expression_type(node)
-      return_type = context.return_type.not_nil!
-
-      codegen_return(exp_type, return_type) do |value|
-        if return_block = context.return_block
-          context.return_table.not_nil!.add(insert_block, value) if value
-          br return_block
-        else
-          ret value
-        end
-      end
+      context.return_phi.add @last, control_expression_type(node)
     end
 
     def visit(node : ClassDef)
@@ -791,32 +783,28 @@ module Crystal
 
       codegen_cond_branch node.cond, then_block, else_block
 
-      branch = new_branched_block node
-      codegen_if_branch branch, node.then, then_block
-      codegen_if_branch branch, node.else, else_block
-      close_branched_block branch
+      Phi.open(self, node) do |phi|
+        codegen_if_branch phi, node.then, then_block
+        codegen_if_branch phi, node.else, else_block
+      end
 
       false
     end
 
-    def codegen_if_branch(branch, node, branch_block)
+    def codegen_if_branch(phi, node, branch_block)
       position_at_end branch_block
       accept node
-      add_branched_block_value(branch, node.type?, @last)
-      br branch.exit_block
+      phi.add @last, node.type?
     end
 
     def visit(node : While)
       with_cloned_context do
-        context.break_type = nil
-        context.break_table = nil
-        context.break_union = nil
-        context.next_block = nil
-
         while_block, body_block, exit_block = new_blocks ["while", "body", "exit"]
 
         context.while_block = while_block
         context.while_exit_block = exit_block
+        context.break_phi = nil
+        context.next_phi = nil
 
         br node.run_once ? body_block : while_block
 
@@ -829,9 +817,12 @@ module Crystal
         br while_block
 
         position_at_end exit_block
-        unreachable if node.no_returns? || (node.body.yields? && block_breaks?)
 
-        @last = llvm_nil
+        if node.no_returns? || (node.body.yields? && block_breaks?)
+          unreachable
+        else
+          @last = llvm_nil
+        end
       end
 
       false
@@ -855,156 +846,29 @@ module Crystal
         accept node.exps.first
       end
 
-      if break_type = context.break_type
-        # TODO: check hierarchy type here
-        case break_type = context.break_type
-        when NilableType
-          context.break_table.not_nil!.add insert_block, to_nilable(@last, break_type, control_expression_type(node))
-        when NilableReferenceUnionType
-          context.break_table.not_nil!.add insert_block, to_nilable(@last, break_type, control_expression_type(node))
-        when MixedUnionType
-          break_union = context.break_union.not_nil!
-          assign(break_union, break_type, control_expression_type(node), @last)
-        else
-          context.break_table.not_nil!.add insert_block, @last
-        end
+      if break_phi = context.break_phi
+        break_phi.add @last, control_expression_type(node)
+      elsif while_exit_block = context.while_exit_block
+        br while_exit_block
+      else
+        node.raise "Bug: unknown exit for break"
       end
-
-      br context.while_exit_block.not_nil!
 
       false
     end
 
     def end_visit(node : Next)
-      if next_block = context.next_block
-        case next_type = context.next_type
-        when NilableType
-          context.next_table.not_nil!.add insert_block, to_nilable(@last, next_type, control_expression_type(node))
-        when NilableReferenceUnionType
-          context.next_table.not_nil!.add insert_block, to_nilable(@last, next_type, control_expression_type(node))
-        when MixedUnionType
-          next_union = context.next_union.not_nil!
-          assign(next_union, next_type, control_expression_type(node), @last)
-        else
-          context.next_table.not_nil!.add insert_block, @last
-        end
-        br next_block
+      if next_phi = context.next_phi
+        next_phi.add @last, control_expression_type(node)
       elsif while_block = context.while_block
         br while_block
+      else
+        node.raise "Bug: unknown exit for next"
       end
     end
 
     def control_expression_type(node)
       node.exps.first?.try &.type? || @mod.nil
-    end
-
-    abstract class BranchedBlock
-      include LLVMBuilderHelper
-
-      property node
-      property count
-      property exit_block
-
-      def initialize(@node, @exit_block, @codegen)
-        @count = 0
-      end
-
-      def builder
-        @codegen.builder
-      end
-
-      def llvm_typer
-        @codegen.llvm_typer
-      end
-    end
-
-    class UnionBranchedBlock < BranchedBlock
-      def initialize(node, exit_block, codegen)
-        super
-        @union_ptr = @codegen.alloca(llvm_type(node.type))
-      end
-
-      def add_value(block, type, value)
-        @codegen.assign(@union_ptr, @node.type, type, value)
-        @count += 1
-      end
-
-      def close
-        @union_ptr
-      end
-    end
-
-    class PhiBranchedBlock < BranchedBlock
-      def initialize(node, exit_block, codegen)
-        super
-        @phi_table = LLVM::PhiTable.new
-      end
-
-      def add_value(block, type, value)
-        case node.type
-        when NilableType
-          value = @codegen.to_nilable(value, node.type, type)
-        when NilableReferenceUnionType
-          value = @codegen.to_nilable(value, node.type, type)
-        when ReferenceUnionType
-          value = cast_to value, node.type
-        when HierarchyType
-          value = cast_to value, node.type
-        else
-          value = @codegen.to_rhs(value, type)
-        end
-        @phi_table.add block, value
-        @count += 1
-      end
-
-      def close
-        if @count == 0
-          unreachable
-        elsif @phi_table.empty?
-          # All branches are void or no return
-          llvm_nil
-        else
-          phi llvm_type(@node.type), @phi_table
-        end
-      end
-    end
-
-    def new_branched_block(node)
-      exit_block = new_block("exit")
-      if node.type?.try &.passed_by_value?
-        UnionBranchedBlock.new node, exit_block, self
-      else
-        PhiBranchedBlock.new node, exit_block, self
-      end
-    end
-
-    def add_branched_block_value(branch, type : Nil, value)
-      unreachable
-    end
-
-    def add_branched_block_value(branch, type : NoReturnType, value)
-      unreachable
-    end
-
-    def add_branched_block_value(branch, type : VoidType, value)
-      branch.count += 1
-    end
-
-    def add_branched_block_value(branch, type : Type, value)
-      branch.add_value insert_block, type, value
-      br branch.exit_block
-    end
-
-    def close_branched_block(branch)
-      position_at_end branch.exit_block
-      if branch.node.returns? || branch.node.no_returns?
-        unreachable
-      else
-        branch_value = branch.close
-        if branch_value
-          @last = branch_value
-        end
-      end
     end
 
     def visit(node : Assign)
@@ -1036,7 +900,7 @@ module Crystal
 
               declare_var(target).pointer
             else
-              raise "Unknown assign target in codegen: #{target}"
+              node.raise "Unknown assign target in codegen: #{target}"
             end
 
       assign ptr, target.type, value.type, @last
@@ -1072,7 +936,7 @@ module Crystal
 
     def visit(node : Var)
       var = context.vars[node.name]
-      @last = cast_value var.pointer, node.type, var.type, var.already_loaded
+      @last = downcast var.pointer, node.type, var.type, var.already_loaded
     end
 
     def visit(node : Global)
@@ -1092,7 +956,7 @@ module Crystal
       type = context.type as InstanceVarContainer
       ivar = type.lookup_instance_var(node.name)
       ivar_ptr = instance_var_ptr type, node.name, llvm_self_ptr
-      @last = cast_value ivar_ptr, node.type, ivar.type, false
+      @last = downcast ivar_ptr, node.type, ivar.type, false
     end
 
     def visit(node : Cast)
@@ -1117,7 +981,7 @@ module Crystal
         accept type_cast_exception_call
 
         position_at_end matches_block
-        @last = cast_value last_value, resulting_type, obj_type, true
+        @last = downcast last_value, resulting_type, obj_type, true
       end
 
       false
@@ -1225,81 +1089,6 @@ module Crystal
       false
     end
 
-    class Context
-      property :fun
-      property type
-      property vars
-      property return_block
-      property return_table
-      property return_type
-      property return_union
-      property break_table
-      property break_type
-      property break_union
-      property next_block
-      property next_table
-      property next_type
-      property next_union
-      property while_block
-      property while_exit_block
-      property! block
-      property! block_context
-      property in_const_block
-
-      def initialize(@fun, @type, @vars = {} of String => LLVMVar)
-        @in_const_block = false
-      end
-
-      def block_returns?
-        (block = @block) && (block_context = @block_context) && (block.returns? || (block.yields? && block_context.block_returns?))
-      end
-
-      def block_breaks?
-        (block = @block) && (block_context = @block_context) && (block.breaks? || (block.yields? && block_context.block_breaks?))
-      end
-
-      def clone
-        context = Context.new @fun, @type, @vars
-        context.return_block = return_block
-        context.return_table = return_table
-        context.return_type = return_type
-        context.return_union = return_union
-        context.break_table = break_table
-        context.break_type = break_type
-        context.break_union = break_union
-        context.next_block = next_block
-        context.next_table = next_table
-        context.next_type = next_type
-        context.next_union = next_union
-        context.while_block = while_block
-        context.while_exit_block = while_exit_block
-        context.block = @block
-        context.block_context = @block_context
-        context.in_const_block = @in_const_block
-        context
-      end
-    end
-
-    def with_cloned_context(new_context = @context)
-      with_context(new_context.clone) { |ctx| yield ctx }
-    end
-
-    def with_context(new_context)
-      old_context = @context
-      @context = new_context
-      value = yield old_context
-      @context = old_context
-      value
-    end
-
-    def block_returns?
-      context.block_returns?
-    end
-
-    def block_breaks?
-      context.block_breaks?
-    end
-
     def visit(node : Yield)
       block_context = context.block_context.not_nil!
       new_vars = block_context.vars.dup
@@ -1324,59 +1113,16 @@ module Crystal
         create_yield_var block.args[i], @mod.nil, new_vars, llvm_nil
       end
 
-      unless block.no_returns?
-        exit_block = new_block "exit"
-      end
-
-      if block.type.passed_by_value?
-        next_union = alloca(llvm_type(block.type), "next")
-      else
-        next_table = LLVM::PhiTable.new
-      end
-
-      with_cloned_context(block_context) do |old|
-        context.vars = new_vars
-        context.break_table = old.return_table
-        context.break_type = old.return_type
-        context.break_union = old.return_union
-        context.while_exit_block = old.return_block
-        context.next_block = exit_block
-        context.next_type = block.type
-        if block.type.passed_by_value?
-          context.next_union = next_union
-        else
-          context.next_table = next_table
-        end
-        accept block
-      end
-
-      unless block.no_returns?
-        exit_block = exit_block.not_nil!
-
-        if !@builder.end && !block.nexts?
-          if next_table
-            next_table.add insert_block, @last
-          else
-            assign(next_union.not_nil!, block.type, block.body.type, @last)
-          end
+      Phi.open(self, block) do |phi|
+        with_cloned_context(block_context) do |old|
+          context.vars = new_vars
+          context.break_phi = old.return_phi
+          context.next_phi = phi
+          context.while_exit_block = nil
+          accept block
         end
 
-        br exit_block
-        position_at_end exit_block
-
-        case block.type
-        when .void?
-          # Nothing to do
-        when .passed_by_value?
-          @last = next_union.not_nil!
-        else
-          next_table = next_table.not_nil!
-          if next_table.empty?
-            @last = llvm_nil
-          else
-            @last = phi llvm_type(block.type), next_table
-          end
-        end
+        phi.add @last, block.body.type?
       end
 
       false
@@ -1390,69 +1136,67 @@ module Crystal
 
     def visit(node : ExceptionHandler)
       catch_block = new_block "catch"
-      branch = new_branched_block(node)
+      node_ensure = node.ensure
 
-      @exception_handlers << Handler.new(node, catch_block, context.vars)
-      accept node.body
-      @exception_handlers.pop
+      Phi.open(self, node) do |phi|
+        @exception_handlers << Handler.new(node, catch_block, context.vars)
+        accept node.body
+        @exception_handlers.pop
 
-      if node_else = node.else
-        accept node_else
-        add_branched_block_value branch, node_else.type, @last
-      else
-        add_branched_block_value branch, node.body.type, @last
-      end
-
-      br branch.exit_block
-
-      position_at_end catch_block
-      lp_ret_type = llvm_typer.landing_pad_type
-      lp = @builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME).fun, [] of LibLLVM::ValueRef
-      unwind_ex_obj = @builder.extract_value lp, 0
-      ex_type_id = @builder.extract_value lp, 1
-
-      if node_rescues = node.rescues
-        node_rescues.each do |a_rescue|
-          this_rescue_block, next_rescue_block = new_blocks ["this_rescue", "next_rescue"]
-          if a_rescue_types = a_rescue.types
-            cond = nil
-            a_rescue_types.each do |type|
-              rescue_type = type.type.instance_type.hierarchy_type
-              rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
-              cond = cond ? or(cond, rescue_type_cond) : rescue_type_cond
-            end
-            cond cond.not_nil!, this_rescue_block, next_rescue_block
-          else
-            br this_rescue_block
-          end
-          position_at_end this_rescue_block
-
-          with_cloned_context do
-            if a_rescue_name = a_rescue.name
-              context.vars = context.vars.dup
-              get_exception_fun = main_fun(GET_EXCEPTION_NAME)
-              exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, type_of(get_exception_fun.get_param(0)))]
-              exception = int2ptr exception_ptr, LLVMTyper::TYPE_ID_POINTER
-              context.vars[a_rescue_name] = LLVMVar.new(exception, a_rescue.type, true)
-            end
-
-            accept a_rescue.body
-          end
-          add_branched_block_value branch, a_rescue.body.type, @last
-          br branch.exit_block
-
-          position_at_end next_rescue_block
+        if node_else = node.else
+          accept node_else
+          phi.add @last, node_else.type
+        else
+          phi.add @last, node.body.type
         end
+
+        position_at_end catch_block
+        lp_ret_type = llvm_typer.landing_pad_type
+        lp = @builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME).fun, [] of LibLLVM::ValueRef
+        unwind_ex_obj = @builder.extract_value lp, 0
+        ex_type_id = @builder.extract_value lp, 1
+
+        if node_rescues = node.rescues
+          node_rescues.each do |a_rescue|
+            this_rescue_block, next_rescue_block = new_blocks ["this_rescue", "next_rescue"]
+            if a_rescue_types = a_rescue.types
+              cond = nil
+              a_rescue_types.each do |type|
+                rescue_type = type.type.instance_type.hierarchy_type
+                rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
+                cond = cond ? or(cond, rescue_type_cond) : rescue_type_cond
+              end
+              cond cond.not_nil!, this_rescue_block, next_rescue_block
+            else
+              br this_rescue_block
+            end
+            position_at_end this_rescue_block
+
+            with_cloned_context do
+              if a_rescue_name = a_rescue.name
+                context.vars = context.vars.dup
+                get_exception_fun = main_fun(GET_EXCEPTION_NAME)
+                exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, type_of(get_exception_fun.get_param(0)))]
+                exception = int2ptr exception_ptr, LLVMTyper::TYPE_ID_POINTER
+                context.vars[a_rescue_name] = LLVMVar.new(exception, a_rescue.type, true)
+              end
+
+              accept a_rescue.body
+            end
+            phi.add @last, a_rescue.body.type
+
+            position_at_end next_rescue_block
+          end
+        end
+
+        if node_ensure
+          accept node_ensure
+        end
+
+        raise_fun = main_fun(RAISE_NAME)
+        codegen_call_or_invoke(raise_fun, [bit_cast(unwind_ex_obj, type_of(raise_fun.get_param(0)))], true, @mod.no_return)
       end
 
-      if node_ensure = node.ensure
-        accept node_ensure
-      end
-
-      raise_fun = main_fun(RAISE_NAME)
-      codegen_call_or_invoke(raise_fun, [bit_cast(unwind_ex_obj, type_of(raise_fun.get_param(0)))], true, @mod.no_return)
-
-      close_branched_block(branch)
       if node_ensure
         old_last = @last
         accept node_ensure
@@ -1504,7 +1248,7 @@ module Crystal
           indices << int32(0)
           element_type = var.type
         else
-          raise "Bug: #{node} had a wrong type (#{element_type})"
+          node.raise "Bug: #{node} had a wrong type (#{element_type})"
         end
       end
 
@@ -1535,9 +1279,6 @@ module Crystal
         if block = node.block
           codegen_call_with_block(node, block, owner, call_args, old_context)
         else
-          context.return_block = nil
-          context.return_table = nil
-          context.break_table = nil
           codegen_call(node.target_def, owner, call_args)
         end
       end
@@ -1570,7 +1311,7 @@ module Crystal
           when InstanceVar
             call_args << instance_var_ptr(type, arg.name, llvm_self_ptr)
           else
-            raise "Bug: out argument was #{arg}"
+            arg.raise "Bug: out argument was #{arg}"
           end
         else
           accept arg
@@ -1591,39 +1332,13 @@ module Crystal
 
       create_local_copy_of_block_args(target_def, self_type, call_args)
 
-      return_block = context.return_block = new_block "return"
-      return_table = context.return_table = LLVM::PhiTable.new
-      return_type = setup_context_return context, node.type
+      Phi.open(self, node) do |phi|
+        context.return_phi = phi
 
-      accept target_def.body
+        accept target_def.body
 
-      if target_def.no_returns? || target_def.body.no_returns? || target_def.body.returns?
-        unreachable
-      else
         unless block.breaks?
-          fun_type = target_def.type
-          if block.break.type?
-            fun_type = @mod.type_merge([fun_type, block.break.type]).not_nil!
-          end
-
-          codegen_return(target_def.body.type, fun_type) do |ret_value|
-            return_table.add insert_block, ret_value if ret_value
-          end
-        end
-        br return_block
-      end
-
-      position_at_end return_block
-
-      if node.no_returns? || node.returns? || block_returns? || ((node_block = node.block) && node_block.yields? && block_breaks?)
-        unreachable
-      elsif node_type = node.type?
-        if return_union = context.return_union
-          @last = return_union
-        elsif return_table.empty?
-          @last = llvm_nil
-        else
-          @last = phi llvm_type(node_type), return_table
+          phi.add @last, target_def.body.type?
         end
       end
     end
@@ -1660,50 +1375,39 @@ module Crystal
 
       with_cloned_context do
         context.vars = new_vars
-        branch = new_branched_block(node)
 
-        # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
-        target_defs.each do |a_def|
-          result = match_type_id(owner, a_def.owner.not_nil!, obj_type_id)
-          a_def.args.each_with_index do |arg, i|
-            result = and(result, match_type_id(node.args[i].type, arg.type, arg_type_ids[i]))
+        Phi.open(self, node) do |phi|
+          # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
+          target_defs.each do |a_def|
+            result = match_type_id(owner, a_def.owner.not_nil!, obj_type_id)
+            a_def.args.each_with_index do |arg, i|
+              result = and(result, match_type_id(node.args[i].type, arg.type, arg_type_ids[i]))
+            end
+
+            current_def_label, next_def_label = new_blocks ["current_def", "next_def"]
+            cond result, current_def_label, next_def_label
+
+            position_at_end current_def_label
+
+            # Prepare this specific call
+            call.target_defs = [a_def] of Def
+            call.obj.try &.set_type(a_def.owner)
+            call.args.zip(a_def.args) do |call_arg, a_def_arg|
+              call_arg.set_type(a_def_arg.type)
+            end
+            if (node_block = node.block) && node_block.break.type?
+              call.set_type(@mod.type_merge [a_def.type, node_block.break.type] of Type)
+            else
+              call.set_type(a_def.type)
+            end
+            accept call
+
+            phi.add @last, a_def.type
+            position_at_end next_def_label
           end
-
-          current_def_label, next_def_label = new_blocks ["current_def", "next_def"]
-          cond result, current_def_label, next_def_label
-
-          position_at_end current_def_label
-
-          # Prepare this specific call
-          call.target_defs = [a_def] of Def
-          call.obj.try &.set_type(a_def.owner)
-          call.args.zip(a_def.args) do |call_arg, a_def_arg|
-            call_arg.set_type(a_def_arg.type)
-          end
-          if (node_block = node.block) && node_block.break.type?
-            call.set_type(@mod.type_merge [a_def.type, node_block.break.type] of Type)
-          else
-            call.set_type(a_def.type)
-          end
-          accept call
-
-          add_branched_block_value(branch, a_def.type, @last)
-          position_at_end next_def_label
+          unreachable
         end
-
-        unreachable
-        close_branched_block(branch)
       end
-    end
-
-    def setup_context_return(context, return_type)
-      context.return_type = return_type
-      if return_type.passed_by_value?
-        context.return_union = alloca(llvm_type(return_type), "return")
-      else
-        context.return_union = nil
-      end
-      return_type
     end
 
     def codegen_call(target_def, self_type, call_args)
@@ -1804,12 +1508,13 @@ module Crystal
 
           create_local_copy_of_fun_args(target_def, self_type, args)
 
-          return_type = setup_context_return context, target_def.type
-          accept target_def.body
-          if target_def.body.returns?
-            unreachable
-          else
-            codegen_return(target_def.body.type?, return_type) { |value| ret value }
+          Phi.open_for_return(self, target_def) do |phi|
+            context.return_phi = phi
+            accept target_def.body
+
+            unless target_def.body.returns?
+              phi.add @last, target_def.body.type?
+            end
           end
 
           br_from_alloca_to_entry
@@ -1995,7 +1700,7 @@ module Crystal
     end
 
     def assign_distinct(target_pointer, target_type : NilableType, value_type : Type, value)
-      store to_nilable(value, target_type, value_type), target_pointer
+      store upcast(value, target_type, value_type), target_pointer
     end
 
     def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : ReferenceUnionType, value)
@@ -2011,7 +1716,7 @@ module Crystal
     end
 
     def assign_distinct(target_pointer, target_type : NilableReferenceUnionType, value_type : Type, value)
-      store to_nilable(value, target_type, value_type), target_pointer
+      store upcast(value, target_type, value_type), target_pointer
     end
 
     def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : MixedUnionType, value)
@@ -2048,27 +1753,27 @@ module Crystal
       raise "Bug: trying to assign #{target_type} <- #{value_type}"
     end
 
-    def cast_value(value, to_type, from_type : VoidType, already_loaded)
+    def downcast(value, to_type, from_type : VoidType, already_loaded)
       value
     end
 
-    def cast_value(value, to_type, from_type : Type, already_loaded)
+    def downcast(value, to_type, from_type : Type, already_loaded)
       value = to_lhs(value, from_type) unless already_loaded
       if from_type != to_type
-        value = cast_value_distinct value, to_type, from_type
+        value = downcast_distinct value, to_type, from_type
       end
       value
     end
 
-    def cast_value_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | HierarchyMetaclassType)
+    def downcast_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | HierarchyMetaclassType)
       value
     end
 
-    def cast_value_distinct(value, to_type : HierarchyType, from_type : HierarchyType)
+    def downcast_distinct(value, to_type : HierarchyType, from_type : HierarchyType)
       value
     end
 
-    def cast_value_distinct(value, to_type : MixedUnionType, from_type : HierarchyType)
+    def downcast_distinct(value, to_type : MixedUnionType, from_type : HierarchyType)
       # This happens if the restriction is a union:
       # we keep each of the union types as the result, we don't fully merge
       union_ptr = alloca llvm_type(to_type)
@@ -2076,68 +1781,123 @@ module Crystal
       union_ptr
     end
 
-    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : HierarchyType)
+    def downcast_distinct(value, to_type : ReferenceUnionType, from_type : HierarchyType)
       # This happens if the restriction is a union:
       # we keep each of the union types as the result, we don't fully merge
       value
     end
 
-    def cast_value_distinct(value, to_type : NilType, from_type : NilableType)
+    def downcast_distinct(value, to_type : NilType, from_type : NilableType)
       llvm_nil
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : NilableType)
+    def downcast_distinct(value, to_type : Type, from_type : NilableType)
       value
     end
 
-    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType)
+    def downcast_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType)
       value
     end
 
-    def cast_value_distinct(value, to_type : HierarchyType, from_type : ReferenceUnionType)
+    def downcast_distinct(value, to_type : HierarchyType, from_type : ReferenceUnionType)
       value
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : ReferenceUnionType)
+    def downcast_distinct(value, to_type : Type, from_type : ReferenceUnionType)
       cast_to value, to_type
     end
 
-    def cast_value_distinct(value, to_type : HierarchyType, from_type : NilableReferenceUnionType)
+    def downcast_distinct(value, to_type : HierarchyType, from_type : NilableReferenceUnionType)
       value
     end
 
-    def cast_value_distinct(value, to_type : ReferenceUnionType, from_type : NilableReferenceUnionType)
+    def downcast_distinct(value, to_type : ReferenceUnionType, from_type : NilableReferenceUnionType)
       value
     end
 
-    def cast_value_distinct(value, to_type : NilableType, from_type : NilableReferenceUnionType)
+    def downcast_distinct(value, to_type : NilableType, from_type : NilableReferenceUnionType)
       cast_to value, to_type
     end
 
-    def cast_value_distinct(value, to_type : NilType, from_type : NilableReferenceUnionType)
+    def downcast_distinct(value, to_type : NilType, from_type : NilableReferenceUnionType)
       llvm_nil
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : NilableReferenceUnionType)
+    def downcast_distinct(value, to_type : Type, from_type : NilableReferenceUnionType)
       cast_to value, to_type
     end
 
-    def cast_value_distinct(value, to_type : MixedUnionType, from_type : MixedUnionType)
+    def downcast_distinct(value, to_type : MixedUnionType, from_type : MixedUnionType)
       cast_to_pointer value, to_type
     end
 
-    def cast_value_distinct(value, to_type : NilableType, from_type : MixedUnionType)
+    def downcast_distinct(value, to_type : NilableType, from_type : MixedUnionType)
       load cast_to_pointer(union_value(value), to_type)
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : MixedUnionType)
+    def downcast_distinct(value, to_type : Type, from_type : MixedUnionType)
       value_ptr = union_value(value)
       value = cast_to_pointer(value_ptr, to_type)
       to_lhs value, to_type
     end
 
-    def cast_value_distinct(value, to_type : Type, from_type : Type)
-      raise "Bug: trying to cast #{to_type} <- #{from_type}"
+    def downcast_distinct(value, to_type : Type, from_type : Type)
+      raise "Bug: trying to downcast #{to_type} <- #{from_type}"
+    end
+
+    def upcast(value, to_type, from_type)
+      if to_type != from_type
+        value = upcast_distinct(value, to_type, from_type)
+      end
+      value
+    end
+
+    def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | HierarchyMetaclassType, from_type)
+      value
+    end
+
+    def upcast_distinct(value, to_type : HierarchyType, from_type)
+      cast_to value, to_type
+    end
+
+    def upcast_distinct(value, to_type : NilableType, from_type : NilType?)
+      LLVM.null(llvm_type(to_type))
+    end
+
+    def upcast_distinct(value, to_type : NilableType, from_type : Type)
+      value
+    end
+
+    def upcast_distinct(value, to_type : NilableReferenceUnionType, from_type : NilType?)
+      LLVM.null(llvm_type(to_type))
+    end
+
+    def upcast_distinct(value, to_type : NilableReferenceUnionType, from_type : Type)
+      cast_to value, to_type
+    end
+
+    def upcast_distinct(value, to_type : ReferenceUnionType, from_type)
+      cast_to value, to_type
+    end
+
+    def upcast_distinct(value, to_type : MixedUnionType, from_type : MixedUnionType)
+      cast_to_pointer value, to_type
+    end
+
+    def upcast_distinct(value, to_type : MixedUnionType, from_type : VoidType)
+      union_ptr = alloca(llvm_type(to_type))
+      store int(from_type.type_id), union_type_id(union_ptr)
+      union_ptr
+    end
+
+    def upcast_distinct(value, to_type : MixedUnionType, from_type : Type)
+      union_ptr = alloca(llvm_type(to_type))
+      store_in_union(union_ptr, from_type, to_rhs(value, from_type))
+      union_ptr
+    end
+
+    def upcast_distinct(value, to_type : Type, from_type : Type)
+      raise "Bug: trying to upcast #{to_type} <- #{from_type}"
     end
 
     def match_any_type_id(type, type_id)
@@ -2168,7 +1928,7 @@ module Crystal
       return call func, [type_id] of LibLLVM::ValueRef
     end
 
-    def create_match_fun(name, type : UnionType | HierarchyType | HierarchyMetaclassType)
+    def create_match_fun(name, type)
       @main_mod.functions.add(name, ([LLVM::Int32] of LibLLVM::TypeRef), LLVM::Int1) do |func|
         type_id = func.get_param(0)
         func.append_basic_block("entry") do |builder|
@@ -2180,10 +1940,6 @@ module Crystal
           builder.ret result.not_nil!
         end
       end
-    end
-
-    def create_match_fun(name, type)
-      raise "Bug: shouldn't create match fun for #{type}"
     end
 
     def llvm_self(type = context.type)
@@ -2201,29 +1957,6 @@ module Crystal
         cast_to llvm_self, type.base_type
       else
         llvm_self
-      end
-    end
-
-    def codegen_return(exp_type, fun_type)
-      case fun_type
-      when VoidType
-        yield nil
-      when NoReturnType
-        unreachable
-      when .passed_by_value?
-        return_union = context.return_union.not_nil!
-        assign(return_union, fun_type, exp_type.not_nil!, @last)
-        yield load(return_union)
-      when NilableType
-        yield to_nilable(@last, fun_type, exp_type)
-      when NilableReferenceUnionType
-        yield to_nilable(@last, fun_type, exp_type)
-      when ReferenceUnionType
-        yield cast_to @last, fun_type
-      when HierarchyType
-        yield cast_to @last, fun_type
-      else
-        yield to_rhs(@last, fun_type)
       end
     end
 
@@ -2380,32 +2113,12 @@ module Crystal
       end
     end
 
-    def to_lhs(ptr, type)
-      type.passed_by_value? ? ptr : load ptr
+    def to_lhs(value, type)
+      type.passed_by_value? ? value : load value
     end
 
-    def to_rhs(ptr, type)
-      type.passed_by_value? ? load ptr : ptr
-    end
-
-    def to_nilable(ptr, to_type : NilableType, from_type : NilType | Nil)
-      LLVM.null(llvm_type(to_type))
-    end
-
-    def to_nilable(ptr, to_type : NilableType, from_type : Type)
-      ptr
-    end
-
-    def to_nilable(ptr, to_type : NilableReferenceUnionType, from_type : NilType | Nil)
-      LLVM.null(llvm_type(to_type))
-    end
-
-    def to_nilable(ptr, to_type : NilableReferenceUnionType, from_type : Type)
-      cast_to ptr, to_type
-    end
-
-    def to_nilable(ptr, to_type : Type, from_type : Type)
-      raise "Bug: to_nilable with #{to_type} <- #{from_type}"
+    def to_rhs(value, type)
+      type.passed_by_value? ? load value : value
     end
 
     def union_type_id(union_pointer)
@@ -2456,6 +2169,143 @@ module Crystal
       # old_current_node = @current_node
       node.accept self
       # @current_node = old_current_node
+    end
+
+    class Context
+      property :fun
+      property type
+      property vars
+      property! return_phi
+      property break_phi
+      property next_phi
+      property while_block
+      property while_exit_block
+      property! block
+      property! block_context
+      property in_const_block
+
+      def initialize(@fun, @type, @vars = {} of String => LLVMVar)
+        @in_const_block = false
+      end
+
+      def block_returns?
+        (block = @block) && (block_context = @block_context) && (block.returns? || (block.yields? && block_context.block_returns?))
+      end
+
+      def block_breaks?
+        (block = @block) && (block_context = @block_context) && (block.breaks? || (block.yields? && block_context.block_breaks?))
+      end
+
+      def clone
+        context = Context.new @fun, @type, @vars
+        context.return_phi = return_phi
+        context.break_phi = break_phi
+        context.next_phi = next_phi
+        context.while_block = while_block
+        context.while_exit_block = while_exit_block
+        context.block = @block
+        context.block_context = @block_context
+        context.in_const_block = @in_const_block
+        context
+      end
+    end
+
+    class Phi
+      include LLVMBuilderHelper
+
+      getter node
+      getter count
+      getter exit_block
+
+      def self.open(codegen, node)
+        block = new codegen, node
+        yield block
+        block.close
+      end
+
+      def self.open_for_return(codegen, node)
+        block = new codegen, node
+        yield block
+        block.close_and_return
+      end
+
+      def initialize(@codegen, @node)
+        @phi_table = LLVM::PhiTable.new
+        @exit_block = @codegen.new_block "exit"
+        @count = 0
+      end
+
+      def builder
+        @codegen.builder
+      end
+
+      def llvm_typer
+        @codegen.llvm_typer
+      end
+
+      def add(value, type : Nil)
+        unreachable
+      end
+
+      def add(value, type : NoReturnType)
+        unreachable
+      end
+
+      def add(value, type : Type)
+        unless node.type.void?
+          value = @codegen.upcast value, node.type, type
+          @phi_table.add insert_block, value
+        end
+        @count += 1
+        br exit_block
+      end
+
+      def close
+        position_at_end exit_block
+        if node.returns? || node.no_returns?
+          unreachable
+        else
+          if @count == 0
+            unreachable
+          elsif @phi_table.empty?
+            # All branches are void or no return
+            @codegen.last = llvm_nil
+          else
+            @codegen.last = phi llvm_arg_type(@node.type), @phi_table
+          end
+        end
+      end
+
+      def close_and_return
+        value = close
+        if value
+          if @node.type.void?
+            ret
+          else
+            ret @codegen.to_rhs(value, @node.type)
+          end
+        end
+      end
+    end
+
+    def with_cloned_context(new_context = @context)
+      with_context(new_context.clone) { |ctx| yield ctx }
+    end
+
+    def with_context(new_context)
+      old_context = @context
+      @context = new_context
+      value = yield old_context
+      @context = old_context
+      value
+    end
+
+    def block_returns?
+      context.block_returns?
+    end
+
+    def block_breaks?
+      context.block_breaks?
     end
   end
 end
