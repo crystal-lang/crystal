@@ -31,7 +31,7 @@ class Hash(K, V)
     @block = block
   end
 
-  def self.new(&block : Hash(K, V), K -> V)
+  def self.new(block : Hash(K, V), K -> V)
     hash = allocate
     hash.initialize(block)
     hash

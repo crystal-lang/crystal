@@ -177,7 +177,7 @@ describe "Hash" do
   end
 
   it "initializes with block" do
-    h1 = Hash(String, Array(Int32)).new { |h, k| h[k] = [] of Int32 }
+    h1 = Hash(String, Array(Int32)).new ->(h : Hash(String, Array(Int32)), k : String) { h[k] = [] of Int32 }
     h1["foo"].should eq([] of Int32)
     h1["bar"].push 2
     h1["bar"].should eq([2])

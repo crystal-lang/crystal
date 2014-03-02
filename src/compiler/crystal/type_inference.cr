@@ -21,6 +21,7 @@ module Crystal
     getter! untyped_def
     property block
     getter vars
+    property in_fun_literal
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [nil] of Hash(String, TypeFilter)?)
       @types = [@mod] of Type
@@ -28,6 +29,7 @@ module Crystal
       typed_def = @typed_def
       typed_def.vars = @vars if typed_def
       @needs_type_filters = 0
+      @in_fun_literal = false
     end
 
     def visit(node : ASTNode)
@@ -306,6 +308,11 @@ module Crystal
       node.bind_to node.expressions
     end
 
+    def visit(node : Yield)
+      node.raise "can't yield from function literal" if @in_fun_literal
+      true
+    end
+
     def end_visit(node : Yield)
       call = @call.not_nil!
       block = call.block || node.raise("no block given")
@@ -381,10 +388,10 @@ module Crystal
       end
 
       node.bind_to node.def.body
-
       node.def.bind_to node.def.body
 
       block_visitor = TypeVisitor.new(mod, fun_vars, @scope, @parent, @call, @owner, node.def, nil, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
+      block_visitor.in_fun_literal = true
       node.def.body.accept block_visitor
 
       types.push node.def.body.type
@@ -524,6 +531,7 @@ module Crystal
     end
 
     def visit(node : Return)
+      node.raise "can't return from function literal" if @in_fun_literal
       node.raise "can't return from top level" unless @typed_def
 
       if node.exps.empty?

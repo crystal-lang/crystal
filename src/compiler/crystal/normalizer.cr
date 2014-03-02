@@ -704,28 +704,29 @@ module Crystal
       end
 
       if node.body
-        if node.uses_block_arg
-          block_arg = node.block_arg.not_nil!
-          if inputs = block_arg.fun.inputs
-            args = inputs.map_with_index { |input, i| Arg.new("#arg#{i}", nil, input) }
-            yield_args = [] of ASTNode
-            args.each { |arg| yield_args << Var.new(arg.name) }
+        # TODO: we need closures to correctly implement this
+        # if node.uses_block_arg
+        #   block_arg = node.block_arg.not_nil!
+        #   if inputs = block_arg.fun.inputs
+        #     args = inputs.map_with_index { |input, i| Arg.new("#arg#{i}", nil, input) }
+        #     yield_args = [] of ASTNode
+        #     args.each { |arg| yield_args << Var.new(arg.name) }
 
-            body = Yield.new(yield_args)
-          else
-            args = [] of Arg
-            body = Yield.new
-          end
-          block_def = FunLiteral.new(Def.new("->", args, body))
-          assign = Assign.new(Var.new(block_arg.name), block_def)
+        #     body = Yield.new(yield_args)
+        #   else
+        #     args = [] of Arg
+        #     body = Yield.new
+        #   end
+        #   block_def = FunLiteral.new(Def.new("->", args, body))
+        #   assign = Assign.new(Var.new(block_arg.name), block_def)
 
-          node_body = node.body
-          if node_body.is_a?(Expressions)
-            node_body.expressions.unshift(assign)
-          else
-            node.body = Expressions.new([assign, node_body] of ASTNode)
-          end
-        end
+        #   node_body = node.body
+        #   if node_body.is_a?(Expressions)
+        #     node_body.expressions.unshift(assign)
+        #   else
+        #     node.body = Expressions.new([assign, node_body] of ASTNode)
+        #   end
+        # end
 
         pushing_vars_from_args(node.args) do
           @in_initialize = node.name == "initialize"

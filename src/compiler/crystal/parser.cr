@@ -1018,8 +1018,9 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      current_vars = @def_vars.last.dup
-      push_def current_vars
+      # current_vars = @def_vars.last.dup
+      # push_def current_vars
+      push_def
       push_vars args
 
       if @token.keyword?(:do)

@@ -515,11 +515,11 @@ module Crystal
     make_tuple SortedDefKey, name, length, yields
 
     def defs
-      @defs ||= Hash(String, Hash(DefKey, Def)).new { |h, k| h[k] = {} of DefKey => Def }
+      @defs ||= Hash(String, Hash(DefKey, Def)).new ->(h : Hash(String, Hash(DefKey, Def)), k : String) { h[k] = {} of DefKey => Def }
     end
 
     def sorted_defs
-      @sorted_defs ||= Hash(SortedDefKey, Array(Def)).new { |h, k| h[k] = [] of Def }
+      @sorted_defs ||= Hash(SortedDefKey, Array(Def)).new ->(h : Hash(SortedDefKey, Array(Def)), k : SortedDefKey) { h[k] = [] of Def }
     end
 
     def add_def(a_def)
@@ -545,7 +545,7 @@ module Crystal
     end
 
     def macros
-      @macros ||= Hash(String, Hash(Int32, Macro)).new { |h, k| h[k] = {} of Int32 => Macro }
+      @macros ||= Hash(String, Hash(Int32, Macro)).new ->(h : Hash(String, Hash(Int32, Macro)), k : String) { h[k] = {} of Int32 => Macro }
     end
 
     def add_macro(a_def)
