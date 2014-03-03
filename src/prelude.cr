@@ -1,7 +1,7 @@
+require "c"
 require "gc"
 # require "gc/null"
 require "gc/boehm"
-require "c"
 require "int"
 require "pointer"
 require "static_array"

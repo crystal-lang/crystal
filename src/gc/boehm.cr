@@ -15,6 +15,9 @@ lib LibGC("gc")
   type Finalizer : Void*, Void* ->
   fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
   fun invoke_finalizers = GC_invoke_finalizers : Int32
+
+  fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : C::SizeT*, free_bytes : C::SizeT*, unmapped_bytes : C::SizeT*, bytes_since_gc : C::SizeT*, total_bytes : C::SizeT*)
+  fun set_max_heap_size = GC_set_max_heap_size(C::SizeT)
 end
 
 # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
