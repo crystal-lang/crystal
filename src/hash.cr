@@ -1,3 +1,4 @@
+require "object"
 require "array"
 require "int"
 require "nil"
@@ -26,7 +27,7 @@ class Hash(K, V)
   end
 
   def initialize(block = nil, @comp = StandardComparator)
-    @buckets = Array(Array(Entry(K, V))?).new(11, nil)
+    @buckets = Array(Entry(K, V)?).new(11, nil)
     @length = 0
     @block = block
   end
@@ -41,25 +42,14 @@ class Hash(K, V)
     rehash if @length > 5 * @buckets.length
 
     index = bucket_index key
-    bucket = @buckets[index]
-
-    if bucket
-      entry = find_entry_in_bucket(bucket, key)
-      if entry
-        entry.value = value
-        return value
-      end
-    else
-      @buckets[index] = bucket = Array(Entry(K, V)).new
-    end
+    entry = insert_in_bucket index, key, value
+    return value unless entry
 
     @length += 1
-    entry = Entry(K, V).new(key, value)
-    bucket.push entry
 
     if @last
-      @last.next = entry
-      entry.previous = @last
+      @last.fore = entry
+      entry.back = @last
     end
 
     @last = entry
@@ -100,36 +90,42 @@ class Hash(K, V)
 
   def delete(key)
     index = bucket_index(key)
-    bucket = @buckets[index]
-    if bucket
-      bucket.delete_if do |entry|
-        if @comp.equals?(entry.key, key)
-          previous_entry = entry.previous
-          next_entry = entry.next
-          if next_entry
-            if previous_entry
-              previous_entry.next = next_entry
-              next_entry.previous = previous_entry
-            else
-              @first = next_entry
-              next_entry.previous = nil
-            end
+    entry = @buckets[index]
+
+    previous_entry = nil
+    while entry
+      if @comp.equals?(entry.key, key)
+        back_entry = entry.back
+        fore_entry = entry.fore
+        if fore_entry
+          if back_entry
+            back_entry.fore = fore_entry
+            fore_entry.back = back_entry
           else
-            if previous_entry
-              previous_entry.next = nil
-              @last = previous_entry
-            else
-              @first = nil
-              @last = nil
-            end
+            @first = fore_entry
+            fore_entry.back = nil
           end
-          @length -= 1
-          true
         else
-          false
+          if back_entry
+            back_entry.fore = nil
+            @last = back_entry
+          else
+            @first = nil
+            @last = nil
+          end
         end
+        if previous_entry
+          previous_entry.next = entry.next
+        else
+          @buckets[index] = entry.next
+        end
+        @length -= 1
+        return true
       end
+      previous_entry = entry
+      entry = entry.next
     end
+    false
   end
 
   def length
@@ -144,7 +140,7 @@ class Hash(K, V)
     current = @first
     while current
       yield current.key, current.value
-      current = current.next
+      current = current.fore
     end
     self
   end
@@ -294,15 +290,50 @@ class Hash(K, V)
 
   def find_entry(key)
     index = bucket_index key
-    bucket = @buckets[index]
-    bucket ? find_entry_in_bucket(bucket, key) : nil
+    entry = @buckets[index]
+    find_entry_in_bucket entry, key
   end
 
-  def find_entry_in_bucket(bucket, key)
-    bucket.each do |entry|
+  def insert_in_bucket(index, key, value)
+    entry = @buckets[index]
+    if entry
+      while entry
+        if @comp.equals?(entry.key, key)
+          entry.value = value
+          return nil
+        end
+        if entry.next
+          entry = entry.next
+        else
+          return entry.next = Entry(K, V).new(key, value)
+        end
+      end
+    else
+      return @buckets[index] = Entry(K, V).new(key, value)
+    end
+  end
+
+  def insert_in_bucket_end(index, existing_entry)
+    entry = @buckets[index]
+    if entry
+      while entry
+        if entry.next
+          entry = entry.next
+        else
+          return entry.next = existing_entry
+        end
+      end
+    else
+      @buckets[index] = existing_entry
+    end
+  end
+
+  def find_entry_in_bucket(entry, key)
+    while entry
       if @comp.equals?(entry.key, key)
         return entry
       end
+      entry = entry.next
     end
     nil
   end
@@ -313,13 +344,13 @@ class Hash(K, V)
 
   def rehash
     new_size = calculate_new_size(@length)
-    @buckets = Array(Array(Entry(K, V))?).new(new_size, nil)
+    @buckets = Array(Entry(K, V)?).new(new_size, nil)
     entry = @first
     while entry
+      entry.next = nil
       index = bucket_index entry.key
-      bucket = (@buckets[index] ||= Array(Entry(K, V)).new)
-      bucket.push entry
-      entry = entry.next
+      insert_in_bucket_end index, entry
+      entry = entry.fore
     end
   end
 
@@ -335,37 +366,23 @@ class Hash(K, V)
   end
 
   class Entry(K, V)
-    def initialize(key : K, value : V)
-      @key = key
-      @value = value
+    getter :key
+    property :value
+
+    # Next in the linked list of each bucket
+    property :next
+
+    # Next in the ordered sense of hash
+    property :fore
+
+    # Previous in the ordered sense of hash
+    property :back
+
+    def initialize(@key : K, @value : V)
     end
 
-    def key
-      @key
-    end
-
-    def value
-      @value
-    end
-
-    def value=(v : V)
-      @value = v
-    end
-
-    def next
-      @next
-    end
-
-    def next=(n)
-      @next = n
-    end
-
-    def previous
-      @previous
-    end
-
-    def previous=(p)
-      @previous = p
+    def to_s
+      "(#{key}: #{value})#{self.next ? "*" : ""}"
     end
   end
 

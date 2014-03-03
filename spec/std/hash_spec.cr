@@ -133,6 +133,9 @@ describe "Hash" do
     it "deletes key in the beginning" do
       a = {1 => 2, 3 => 4, 5 => 6}
       a.delete(1)
+      a.has_key?(1).should be_false
+      a.has_key?(3).should be_true
+      a.has_key?(5).should be_true
       a.length.should eq(2)
       a.should eq({3 => 4, 5 => 6})
     end
@@ -140,6 +143,9 @@ describe "Hash" do
     it "deletes key in the middle" do
       a = {1 => 2, 3 => 4, 5 => 6}
       a.delete(3)
+      a.has_key?(1).should be_true
+      a.has_key?(3).should be_false
+      a.has_key?(5).should be_true
       a.length.should eq(2)
       a.should eq({1 => 2, 5 => 6})
     end
@@ -147,6 +153,9 @@ describe "Hash" do
     it "deletes key in the end" do
       a = {1 => 2, 3 => 4, 5 => 6}
       a.delete(5)
+      a.has_key?(1).should be_true
+      a.has_key?(3).should be_true
+      a.has_key?(5).should be_false
       a.length.should eq(2)
       a.should eq({1 => 2, 3 =>4})
     end
@@ -154,6 +163,7 @@ describe "Hash" do
     it "deletes only remaining entry" do
       a = {1 => 2}
       a.delete(1)
+      a.has_key?(1).should be_false
       a.length.should eq(0)
       a.should eq({} of Int32 => Int32)
     end
@@ -239,6 +249,32 @@ describe "Hash" do
     h = {1 => 2, 3 => 4}
     h.key_index(3).should eq(1)
     h.key_index(2).should be_nil
+  end
+
+  it "inserts many" do
+    times = 1000
+    h = {} of Int32 => Int32
+    times.times do |i|
+      h[i] = i
+      h.length.should eq(i + 1)
+    end
+    times.times do |i|
+      h[i].should eq(i)
+    end
+    h.first_key.should eq(0)
+    h.first_value.should eq(0)
+    times.times do |i|
+      h.delete(i).should be_true
+      h.has_key?(i).should be_false
+      h.length.should eq(times - i - 1)
+    end
+  end
+
+  it "inserts in one bucket and deletes from the same one" do
+    h = {11 => 1}
+    h.delete(0).should be_false
+    h.has_key?(11).should be_true
+    h.length.should eq(1)
   end
 
   class Breaker
