@@ -136,4 +136,22 @@ describe "Code gen: next" do
       end
       ").to_i.should eq(30)
   end
+
+  it "codegens next without expressions" do
+    run("
+      struct Nil; def to_i; 0; end; end
+
+      def foo
+        yield
+      end
+
+      foo do
+        if 1 == 1
+          1
+        else
+          next
+        end
+      end.to_i
+      ").to_i.should eq(1)
+  end
 end

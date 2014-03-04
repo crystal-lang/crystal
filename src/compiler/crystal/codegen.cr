@@ -783,7 +783,9 @@ module Crystal
       false
     end
 
-    def end_visit(node : Return)
+    def visit(node : Return)
+      node_type = accept_control_expression(node)
+
       if handler = @exception_handlers.last?
         if node_ensure = handler.node.ensure
           old_last = @last
@@ -795,7 +797,9 @@ module Crystal
         end
       end
 
-      context.return_phi.add @last, control_expression_type(node)
+      context.return_phi.add @last, node_type
+
+      false
     end
 
     def visit(node : ClassDef)
@@ -892,14 +896,10 @@ module Crystal
     end
 
     def visit(node : Break)
-      if node.exps.empty?
-        @last = llvm_nil
-      else
-        accept node.exps.first
-      end
+      node_type = accept_control_expression(node)
 
       if break_phi = context.break_phi
-        break_phi.add @last, control_expression_type(node)
+        break_phi.add @last, node_type
       elsif while_exit_block = context.while_exit_block
         br while_exit_block
       else
@@ -909,18 +909,29 @@ module Crystal
       false
     end
 
-    def end_visit(node : Next)
+    def visit(node : Next)
+      node_type = accept_control_expression(node)
+
       if next_phi = context.next_phi
-        next_phi.add @last, control_expression_type(node)
+        next_phi.add @last, node_type
       elsif while_block = context.while_block
         br while_block
       else
         node.raise "Bug: unknown exit for next"
       end
+
+      false
     end
 
-    def control_expression_type(node)
-      node.exps.first?.try &.type? || @mod.nil
+    def accept_control_expression(node)
+      if node.exps.empty?
+        @last = llvm_nil
+        @mod.nil
+      else
+        exp = node.exps.first
+        accept exp
+        exp.type?
+      end
     end
 
     def visit(node : Assign)
