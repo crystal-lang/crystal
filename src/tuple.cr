@@ -1,3 +1,11 @@
+class Tuple
+  def each
+    length.times do |i|
+      yield self[i]
+    end
+  end
+end
+
 macro make_tuple(name, field0)
   "
   class #{name}

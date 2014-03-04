@@ -612,7 +612,7 @@ module Crystal
       when :"["
         parse_array_literal
       when :"{"
-        parse_hash_literal
+        parse_hash_or_tuple_literal
       when :"::"
         parse_ident_or_global_call
       when :"->"
@@ -1203,13 +1203,48 @@ module Crystal
       ArrayLiteral.new exps, of
     end
 
-    def parse_hash_literal
+    def parse_hash_or_tuple_literal
       column = @token.column_number
       line = @line_number
 
       next_token_skip_space_or_newline
+
+      if @token.type == :"}"
+        next_token_skip_space
+        new_hash_literal([] of ASTNode, [] of ASTNode)
+      else
+        # "{foo:" or "{Foo:" means a hash literal with symbol key
+        if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':'
+          first_key = SymbolLiteral.new(@token.value.to_s)
+          next_token
+        else
+          first_key = parse_expression
+          skip_space
+          case @token.type
+          when :","
+            next_token_skip_space_or_newline
+            return parse_tuple first_key
+          when :"}"
+            return parse_tuple first_key
+          end
+          check :"=>"
+        end
+        next_token_skip_space_or_newline
+        parse_hash_literal first_key
+      end
+    end
+
+    def parse_hash_literal(first_key)
       keys = [] of ASTNode
       values = [] of ASTNode
+
+      keys << first_key
+      values << parse_expression
+      skip_space_or_newline
+      if @token.type == :","
+        next_token_skip_space_or_newline
+      end
+
       while @token.type != :"}"
         if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':'
           keys << SymbolLiteral.new(@token.value.to_s)
@@ -1228,6 +1263,25 @@ module Crystal
       end
       next_token_skip_space
 
+      new_hash_literal keys, values
+    end
+
+    def parse_tuple(first_exp)
+      exps = [] of ASTNode
+      exps << first_exp
+
+      while @token.type != :"}"
+        exps << parse_expression
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        end
+      end
+      next_token_skip_space
+
+      TupleLiteral.new exps
+    end
+
+    def new_hash_literal(keys, values)
       of_key = nil
       of_value = nil
       if @token.keyword?(:of)

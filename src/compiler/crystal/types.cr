@@ -1103,6 +1103,7 @@ module Crystal
 
   module GenericType
     getter type_vars
+    property variadic
 
     def generic_types
       @generic_types ||= {} of Array(Type | ASTNode) => Type
@@ -1114,14 +1115,25 @@ module Crystal
       end
 
       instance_type_vars = {} of String => ASTNode
-      self.type_vars.zip(type_vars) do |name, type_var|
-        case type_var
-        when Type
-          var = Var.new(name, type_var)
-          var.bind_to var
-          instance_type_vars[name] = var
-        when ASTNode
-          instance_type_vars[name] = type_var
+      last_index = self.type_vars.length - 1
+      self.type_vars.each_with_index do |name, index|
+        if variadic && index == last_index
+          types = [] of Type | ASTNode
+          index.upto(type_vars.length - 1) do |second_index|
+            types << type_vars[second_index]
+          end
+          tuple_type = program.tuple.instantiate(types) as TupleInstanceType
+          instance_type_vars[name] = tuple_type.var
+        else
+          type_var = type_vars[index]
+          case type_var
+          when Type
+            var = Var.new(name, type_var)
+            var.bind_to var
+            instance_type_vars[name] = var
+          when ASTNode
+            instance_type_vars[name] = type_var
+          end
         end
       end
 
@@ -1416,6 +1428,77 @@ module Crystal
 
     def to_s
       "#{var.type}[#{size}]"
+    end
+  end
+
+  class TupleType < GenericClassType
+    def initialize(program, container, name, superclass, type_vars, add_subclass = true)
+      super
+      add_def Def.new("length", ([] of Arg), Primitive.new(:tuple_length))
+      add_def Def.new("[]", ([Arg.new("index", Path.new(["Int32"], true))]), Primitive.new(:tuple_indexer))
+    end
+
+    def instantiate(type_vars)
+      if (instance = generic_types[type_vars]?)
+        return instance
+      end
+
+      types = [] of Type
+      type_vars.each do |type_var|
+        types << type_var as Type
+      end
+      instance = TupleInstanceType.new(program, types)
+      generic_types[type_vars] = instance
+      initialize_instance instance
+      instance.after_initialize
+      instance
+    end
+
+    def instance_class
+      TupleInstanceType
+    end
+
+    def type_desc
+      "tuple"
+    end
+  end
+
+  class TupleInstanceType < GenericClassInstanceType
+    getter tuple_types
+
+    def initialize(program, @tuple_types)
+      var = Var.new("T", self)
+      var.bind_to var
+      super(program, program.tuple, {"T" => var} of String => ASTNode)
+      @tuple_indexers = {} of Int32 => Def
+    end
+
+    def tuple_indexer(index)
+      @tuple_indexers[index] ||= Def.new("[]", [Arg.new("index")], TupleIndexer.new(index))
+    end
+
+    def var
+      type_vars["T"]
+    end
+
+    def reference_like?
+      false
+    end
+
+    def passed_by_value?
+      true
+    end
+
+    def allocated
+      true
+    end
+
+    def to_s
+      "{#{@tuple_types.join ", "}}"
+    end
+
+    def type_desc
+      "tuple"
     end
   end
 

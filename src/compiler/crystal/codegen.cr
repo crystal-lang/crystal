@@ -242,6 +242,12 @@ module Crystal
                 codegen_primitive_pointer_diff node, target_def, call_args
               when :pointer_null
                 codegen_primitive_pointer_null node, target_def, call_args
+              when :tuple_length
+                codegen_primitive_tuple_length node, target_def, call_args
+              when :tuple_indexer_known_index
+                codegen_primitive_tuple_indexer_known_index node, target_def, call_args
+              when :tuple_indexer
+                codegen_primitive_tuple_indexer node, target_def, call_args
               else
                 raise "Bug: unhandled primitive in codegen: #{node.name}"
               end
@@ -588,6 +594,39 @@ module Crystal
       LLVM.null(llvm_type(node.type))
     end
 
+    def codegen_primitive_tuple_length(node, target_def, call_args)
+      type = context.type as TupleInstanceType
+      int(type.tuple_types.length)
+    end
+
+    def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)
+      type = context.type as TupleInstanceType
+      index = (node as TupleIndexer).index
+      ptr = aggregate_index call_args[0], index
+      to_lhs ptr, type.tuple_types[index]
+    end
+
+    def codegen_primitive_tuple_indexer(node, target_def, call_args)
+      type = context.type as TupleInstanceType
+      tuple = call_args[0]
+      index = call_args[1]
+      Phi.open(self, node) do |phi|
+        type.tuple_types.each_with_index do |tuple_type, i|
+          current_index_label, next_index_label = new_blocks ["current_index", "next_index"]
+          cond equal?(index, int(i)), current_index_label, next_index_label
+
+          position_at_end current_index_label
+
+          ptr = aggregate_index tuple, i
+          value = to_lhs(ptr, tuple_type)
+          phi.add value, tuple_type
+
+          position_at_end next_index_label
+        end
+        accept index_out_of_bounds_exception_call
+      end
+    end
+
     def visit(node : ASTNode)
       true
     end
@@ -631,6 +670,19 @@ module Crystal
 
     def visit(node : SymbolLiteral)
       @last = int(@symbols[node.value])
+    end
+
+    def visit(node : TupleLiteral)
+      type = node.type as TupleInstanceType
+      struct_type = alloca llvm_type(type)
+      i = 0
+      node.exps.zip(type.tuple_types) do |exp, tuple_type|
+        exp.accept self
+        assign aggregate_index(struct_type, i), tuple_type, exp.type, @last
+        i += 1
+      end
+      @last = struct_type
+      false
     end
 
     def visit(node : PointerOf)
@@ -990,6 +1042,14 @@ module Crystal
     def type_cast_exception_call
       @type_cast_exception_call ||= begin
         call = Call.new(nil, "raise", [StringLiteral.new("type cast exception")] of ASTNode, nil, nil, true)
+        @mod.infer_type call
+        call
+      end
+    end
+
+    def index_out_of_bounds_exception_call
+      @index_out_of_bounds_exception_call ||= begin
+        call = Call.new(nil, "raise", [StringLiteral.new("index out of bounds")] of ASTNode, nil, nil, true)
         @mod.infer_type call
         call
       end
@@ -1434,11 +1494,10 @@ module Crystal
         position_at_end invoke_out_block
       end
 
-      if type.no_return?
+      case type
+      when .no_return?
         unreachable
-      end
-
-      if type.passed_by_value?
+      when .passed_by_value?
         union = alloca llvm_type(type)
         store @last, union
         @last = union
@@ -2274,6 +2333,7 @@ module Crystal
             @codegen.last = phi llvm_arg_type(@node.type), @phi_table
           end
         end
+        @codegen.last
       end
 
       def close_and_return

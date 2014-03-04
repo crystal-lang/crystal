@@ -59,7 +59,9 @@ module Crystal
       @float64.types["INFINITY"] = Const.new self, @float64, "FLOAT_INFINITY", Primitive.new(:float64_infinity)
 
       @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", @value, 4
-      @pointer = @types["Pointer"] = PointerType.new self, self, "Pointer", value, ["T"]
+      @types["Pointer"] = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
+      @types["Tuple"] = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
+      @tuple.variadic = true
 
       @static_array = @types["StaticArray"] = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       @static_array.struct = true
@@ -175,6 +177,10 @@ module Crystal
 
     def array_of(type)
       @array.instantiate [type] of Type | ASTNode
+    end
+
+    def tuple_of(types)
+      @tuple.instantiate types
     end
 
     def union_of(types : Array)
@@ -363,6 +369,7 @@ module Crystal
     getter :pointer
     getter :math
     getter :exception
+    getter :tuple
 
     def class_type
       @class

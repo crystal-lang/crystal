@@ -98,7 +98,9 @@ module Crystal
 
     def lookup_matches_in(owner : Type, self_type = nil, def_name = self.name)
       arg_types = args.map &.type
-      matches = owner.lookup_matches(def_name, arg_types, !!block)
+
+      matches = check_tuple_indexer(owner, def_name, args, arg_types)
+      matches ||= owner.lookup_matches(def_name, arg_types, !!block)
 
       if matches.empty?
         if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.hierarchy?) && !owner.instance_type.pointer?
@@ -162,6 +164,23 @@ module Crystal
 
     def lookup_matches_in(owner : Nil)
       raise "Bug: trying to lookup matches in nil in #{self}"
+    end
+
+    def check_tuple_indexer(owner, def_name, args, arg_types)
+      if owner.is_a?(TupleInstanceType) && def_name == "[]" && args.length == 1
+        arg = args.first
+        if arg.is_a?(NumberLiteral) && arg.kind == :i32
+          index = arg.value.to_i
+          if 0 <= index < owner.tuple_types.length
+            indexer_def = owner.tuple_indexer(index)
+            indexer_match = Match.new(owner, indexer_def, owner, arg_types)
+            return Matches.new([indexer_match], true)
+          else
+            raise "index out of bounds for tuple #{owner}"
+          end
+        end
+      end
+      nil
     end
 
     def replace_block_arg_with_block(block_arg)

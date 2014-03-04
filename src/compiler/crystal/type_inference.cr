@@ -897,6 +897,10 @@ module Crystal
         visit_pointer_null node
       when :class_name
         node.type = mod.string
+      when :tuple_length
+        node.type = mod.int32
+      when :tuple_indexer
+        visit_tuple_indexer node
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
@@ -992,6 +996,11 @@ module Crystal
       end
 
       node.type = instance_type
+    end
+
+    def visit_tuple_indexer(node)
+      tuple_type = scope as TupleInstanceType
+      node.type = @mod.type_merge tuple_type.tuple_types
     end
 
     def visit(node : Self)
@@ -1111,6 +1120,16 @@ module Crystal
       end
 
       node.raise "#{type} is not a pointer to a struct or union, it's a #{type.type_desc} #{type}"
+    end
+
+    def end_visit(node : TupleLiteral)
+      node.bind_to node.exps
+      false
+    end
+
+    def visit(node : TupleIndexer)
+      node.type = (scope as TupleInstanceType).tuple_types[node.index] as Type
+      false
     end
 
     def lookup_var(name)

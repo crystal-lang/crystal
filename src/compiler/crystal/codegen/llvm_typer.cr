@@ -87,6 +87,18 @@ module Crystal
       LLVM.array_type(pointed_type, (type.size as NumberLiteral).value.to_i)
     end
 
+    def create_llvm_type(type : TupleInstanceType)
+      LLVM.struct_type(type.llvm_name) do |a_struct|
+        @cache[type] = a_struct
+
+        element_types = Array(LibLLVM::TypeRef).new(type.tuple_types.length)
+        type.tuple_types.each do |tuple_type|
+          element_types << llvm_embedded_type(tuple_type)
+        end
+        element_types
+      end
+    end
+
     def create_llvm_type(type : NilableType)
       llvm_type type.not_nil_type
     end
@@ -124,7 +136,6 @@ module Crystal
       end
     end
 
-
     def create_llvm_type(type : CStructType)
       llvm_struct_type(type)
     end
@@ -150,7 +161,7 @@ module Crystal
       llvm_type(type.remove_alias)
     end
 
-    def create_llvm_type(type)
+    def create_llvm_type(type : Type)
       raise "Bug: called create_llvm_type for #{type}"
     end
 
@@ -216,7 +227,7 @@ module Crystal
       LLVM.struct_type([max_type] of LibLLVM::TypeRef, type.llvm_name)
     end
 
-    def create_llvm_struct_type(type)
+    def create_llvm_struct_type(type : Type)
       raise "Bug: called llvm_struct_type for #{type}"
     end
 
@@ -224,32 +235,16 @@ module Crystal
       @arg_cache[type] ||= create_llvm_arg_type(type)
     end
 
-    def create_llvm_arg_type(type : InstanceVarContainer)
-      if type.struct?
-        LLVM.pointer_type llvm_type(type)
-      else
-        llvm_type type
-      end
-    end
-
-    def create_llvm_arg_type(type : CStructType)
-      LLVM.pointer_type llvm_type(type)
-    end
-
-    def create_llvm_arg_type(type : CUnionType)
-      LLVM.pointer_type llvm_type(type)
-    end
-
-    def create_llvm_arg_type(type : MixedUnionType)
-      LLVM.pointer_type llvm_type(type)
-    end
-
     def create_llvm_arg_type(type : AliasType)
       llvm_arg_type(type.remove_alias)
     end
 
-    def create_llvm_arg_type(type)
-      llvm_type type
+    def create_llvm_arg_type(type : Type)
+      if type.passed_by_value?
+        LLVM.pointer_type llvm_type(type)
+      else
+        llvm_type(type)
+      end
     end
 
     def llvm_embedded_type(type)

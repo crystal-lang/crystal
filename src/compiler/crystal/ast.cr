@@ -322,6 +322,25 @@ module Crystal
     end
   end
 
+  class TupleLiteral < ASTNode
+    property :exps
+
+    def initialize(@exps)
+    end
+
+    def accept_children(visitor)
+      exps.each { |exp| exp.accept visitor }
+    end
+
+    def ==(other : self)
+      other.exps == exps
+    end
+
+    def clone_without_location
+      TupleLiteral.new(exps.clone)
+    end
+  end
+
   # A local variable or block argument.
   class Var < ASTNode
     property :name
@@ -1705,6 +1724,23 @@ module Crystal
 
     def clone_without_location
       Primitive.new(@name, @type)
+    end
+  end
+
+  # Ficticious node to represent a tuple indexer
+  class TupleIndexer < Primitive
+    getter index
+
+    def initialize(@index)
+      @name = :tuple_indexer_known_index
+    end
+
+    def ==(other : self)
+      index == other.index
+    end
+
+    def clone_without_location
+      TupleIndexer.new(index)
     end
   end
 

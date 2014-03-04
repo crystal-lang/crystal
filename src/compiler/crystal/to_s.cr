@@ -15,9 +15,6 @@ module Crystal
       @indent = 0
     end
 
-    def visit(node : ASTNode)
-    end
-
     def visit(node : Primitive)
       @str << "<"
       @str << node.name
@@ -569,6 +566,16 @@ module Crystal
       @str << "i" if (node.modifiers & Regex::IGNORE_CASE) != 0
       @str << "m" if (node.modifiers & Regex::MULTILINE) != 0
       @str << "x" if (node.modifiers & Regex::EXTENDED) != 0
+    end
+
+    def visit(node : TupleLiteral)
+      @str << "{"
+      node.exps.each_with_index do |exp, i|
+        @str << ", " if i > 0
+        exp.accept self
+      end
+      @str << "}"
+      false
     end
 
     def visit(node : DeclareVar)

@@ -199,6 +199,18 @@ module Crystal
     end
   end
 
+  class TupleLiteral
+    def map_type(type)
+      if exps.all? &.type?
+        types = [] of Type | ASTNode
+        exps.each { |exp| types << exp.type }
+        exps.first.type.program.tuple_of types
+      else
+        nil
+      end
+    end
+  end
+
   class Def
     property :owner
     property :vars

@@ -456,6 +456,11 @@ module Crystal
       node
     end
 
+    def transform(node : TupleLiteral)
+      transform_many node.exps
+      node
+    end
+
     def transform(node : Cast)
       node.obj = node.obj.transform(self)
       node.to = node.to.transform(self)
@@ -470,6 +475,10 @@ module Crystal
 
     def transform(node : Alias)
       node.value = node.value.transform(self)
+      node
+    end
+
+    def transform(node : TupleIndexer)
       node
     end
 
