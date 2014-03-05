@@ -4,6 +4,30 @@ class Tuple
       yield self[i]
     end
   end
+
+  def ==(other : self)
+    length.times do |i|
+      return false unless self[i] == other[i]
+    end
+    true
+  end
+
+  def ==(other)
+    false
+  end
+
+  def to_s
+    String.build do |str|
+      str << "{"
+      i = 0
+      each do |elem|
+        str << ", " if i > 0
+        str << elem.inspect
+        i += 1
+      end
+      str << "}"
+    end
+  end
 end
 
 macro make_tuple(name, field0)
