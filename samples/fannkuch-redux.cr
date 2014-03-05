@@ -25,9 +25,7 @@ def fannkuch(n)
           i, j = 2, q1 - 1
 
           while true
-            tmp = q[i]
-            q[i] = q[j]
-            q[j] = tmp
+            q.swap i, j
             i = i + 1
             j = j - 1
             break if !(i < j)
@@ -41,15 +39,11 @@ def fannkuch(n)
     # Permute.
     if sign == 1
       # Rotate 1<-2.
-      tmp = w[1]
-      w[1] = w[2]
-      w[2] = tmp
+      w.swap 1, 2
       sign = -1
     else
       # Rotate 1<-2 and 1<-2<-3.
-      tmp = w[3]
-      w[3] = w[2]
-      w[2] = tmp
+      w.swap 2, 3
 
       sign = 1
       3.upto(n) do |ki|
@@ -58,11 +52,11 @@ def fannkuch(n)
           break
         end
 
-	return [sum, maxflips] if ki == n 	# Out of permutations.
+        return [sum, maxflips] if ki == n 	# Out of permutations.
 
         s[ki] = ki
         # Rotate 1<-...<-i+1.
-	t = w[1]
+        t = w[1]
         1.upto(ki) do |kj|
           w[kj] = w[kj+1]
         end

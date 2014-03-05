@@ -2,9 +2,9 @@
 # Crystal Implementation (translated from Python version)
 
 # Intel i5 2.5GHz
-# c++:     27.8s 147Mb
+# crystal: 26.5s 359Mb
+# c++:     28.2s 150Mb
 # java:    31.5s 909Mb
-# crystal: 35.3s 409Mb
 # scala:   66.8s 316Mb
 # go:      67.7s 456Mb
 # python:  958.4s 713Mb
@@ -42,7 +42,7 @@ class CFG
     @basicBlockMap = {} of Int32 => BasicBlock
     @edgeList      = [] of BasicBlockEdge
   end
-  
+
   property :startNode
   property :basicBlockMap
 
@@ -172,8 +172,9 @@ class UnionFindNode
 
     node = self
     while node != node.parent
-      nodeList << node if node.parent != node.parent.not_nil!.parent
-      node = node.parent.not_nil!
+      parent = node.parent.not_nil!
+      nodeList << node if parent != parent.parent
+      node = parent
     end
 
     nodeList.each { |iter| iter.parent = node.parent }
@@ -224,7 +225,8 @@ class HavlakLoopFinder
   end
 
   def findLoops
-    return 0 unless @cfg.startNode
+    startNode = @cfg.startNode
+    return 0 unless startNode
     size = @cfg.getNumNodes
 
     nonBackPreds    = Array(Set(Int32)).new(size) { Set(Int32).new }
@@ -241,7 +243,7 @@ class HavlakLoopFinder
     #   - unreached BB's are marked as dead.
     #
     @cfg.basicBlockMap.each_value { |v| number[v] = UNVISITED }
-    dfs(@cfg.startNode.not_nil!, nodes, number, last, 0)
+    dfs(startNode, nodes, number, last, 0)
 
     # Step b:
     #   - iterate over all nodes.
@@ -439,7 +441,7 @@ buildConnect(0, 2)
 
 # execute loop recognition 15000 times to force compilation
 puts "15000 dummy loops"
-15000.times do 
+15000.times do
   HavlakLoopFinder.new($cfg, LSG.new).findLoops
 end
 
@@ -464,8 +466,7 @@ n = 2
 end
 
 puts "Performing Loop Recognition\n1 Iteration"
-lsg = LSG.new
-loops = HavlakLoopFinder.new($cfg, lsg).findLoops
+loops = HavlakLoopFinder.new($cfg, LSG.new).findLoops
 
 puts "Another 50 iterations..."
 
