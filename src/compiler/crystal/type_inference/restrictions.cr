@@ -256,6 +256,12 @@ module Crystal
     end
   end
 
+  class TupleInstanceType
+    def restrict(other : TupleInstanceType, owner, type_lookup, free_vars)
+      self == other ? self : nil
+    end
+  end
+
   class IncludedGenericModule
     def is_restriction_of?(other : Type, owner)
       @module.is_restriction_of?(other, owner)
