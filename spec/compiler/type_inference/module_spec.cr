@@ -248,4 +248,48 @@ describe "Type inference: module" do
       foo.metaclass
     }
   end
+
+  it "includes generic module with another generic type" do
+    assert_type("
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      class Baz(X)
+      end
+
+      class Bar(U)
+        include Foo(Baz(U))
+      end
+
+      Bar(Int32).new.foo
+      ") {
+        baz = types["Baz"] as GenericClassType
+        baz.instantiate([int32] of ASTNode | Type).metaclass
+      }
+  end
+
+  it "includes generic module with self" do
+    assert_type("
+      module Foo(T)
+        def foo
+          T
+        end
+      end
+
+      class Baz(X)
+      end
+
+      class Bar(U)
+        include Foo(self)
+      end
+
+      Bar(Int32).new.foo
+      ") {
+        bar = types["Bar"] as GenericClassType
+        bar.instantiate([int32] of ASTNode | Type).metaclass
+      }
+  end
 end

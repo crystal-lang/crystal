@@ -1510,8 +1510,6 @@ module Crystal
     getter including_class
     getter mapping
 
-    # delegate [:lookup_similar_defs, :lookup_macro] => :@module
-
     def initialize(@program, @module, @including_class, @mapping)
     end
 
@@ -1541,6 +1539,10 @@ module Crystal
       @module.lookup_similar_def_name(name)
     end
 
+    def lookup_macro(name, args_length)
+      @module.lookup_macro(name, args_length)
+    end
+
     def match_arg(arg_type, arg, owner, type_lookup, free_vars)
       @module.match_arg(arg_type, arg, owner, type_lookup, free_vars)
     end
@@ -1551,16 +1553,11 @@ module Crystal
 
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       if (names.length == 1) && (m = @mapping[names[0]]?)
-        case m
-        when Type
-          return m
-        when String
-          including_class = @including_class
-
-          if including_class.is_a?(GenericClassInstanceType)
-            type_var = including_class.type_vars[m]?
-            return type_var ? type_var.type : nil
-          end
+        case @including_class
+        when GenericClassType, GenericModuleType
+          # skip
+        else
+          return TypeLookup.lookup(@including_class, m)
         end
       end
 
@@ -2239,8 +2236,6 @@ module Crystal
 
     getter program
     getter base_type
-
-    # delegate [:lookup_similar_defs, :allocated, :allocated=] => :base_type
 
     def initialize(@program, @base_type)
     end

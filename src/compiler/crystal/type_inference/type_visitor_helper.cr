@@ -160,24 +160,7 @@ module Crystal
           node_name.raise "wrong number of type vars for #{type} (#{node_name.type_vars.length} for #{type.type_vars.length})"
         end
 
-        type_vars_types = node_name.type_vars.map do |type_var|
-          if type_var.is_a?(Self)
-            current_type
-          else
-            unless type_var.is_a?(Path)
-              type_var.raise "only simple names are supported for now, not #{type_var}"
-            end
-
-            type_var_name = type_var.names[0]
-            if current_type.is_a?(GenericType) && current_type.type_vars.includes?(type_var_name)
-              type_var_name
-            else
-              lookup_path_type(type_var)
-            end
-          end
-        end
-
-        mapping = Hash.zip(type.type_vars, type_vars_types)
+        mapping = Hash.zip(type.type_vars, node_name.type_vars)
         current_type.include IncludedGenericModule.new(@mod, type, current_type, mapping)
       else
         if type.is_a?(GenericModuleType)
@@ -187,7 +170,11 @@ module Crystal
               node_name.raise "#{type} wrong number of type vars for #{type} (#{current_type_type_vars_length} for #{current_type.type_vars.length})"
             end
 
-            mapping = Hash.zip(type.type_vars, current_type.type_vars)
+            mapping = {} of String => ASTNode
+            type.type_vars.zip(current_type.type_vars) do |type_var, current_type_var|
+              mapping[type_var] = Path.new([current_type_var])
+            end
+
             current_type.include IncludedGenericModule.new(@mod, type, current_type, mapping)
           else
             node_name.raise "#{type} is a generic module"
