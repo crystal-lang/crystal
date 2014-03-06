@@ -126,7 +126,7 @@ module Crystal
       @trampoline_wrappers = {} of UInt64 => LLVM::Function
       @fun_literal_count = 0
 
-      context.return_phi = Phi.new(self, @node)
+      context.return_type = @main_ret_type
     end
 
     def define_symbol_table(llvm_mod)
@@ -141,11 +141,7 @@ module Crystal
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
 
-      # Because we swtich blocks, the unreachable info is lost
-      unless @main_ret_type.try &.no_return?
-        context.return_phi.add @last, @main_ret_type
-        context.return_phi.close_and_return
-      end
+      codegen_return @main_ret_type
 
       @llvm_mod.dump if DUMP_LLVM
     end
@@ -797,9 +793,27 @@ module Crystal
         end
       end
 
-      context.return_phi.add @last, node_type
+      if return_phi = context.return_phi
+        return_phi.add @last, node_type
+      else
+        codegen_return node_type
+      end
 
       false
+    end
+
+    def codegen_return(type : NoReturnType | Nil)
+      unreachable
+    end
+
+    def codegen_return(type : Type)
+      method_type = context.return_type.not_nil!
+      if method_type.void?
+        ret
+      else
+        value = upcast(@last, method_type, type)
+        ret to_rhs(value, method_type)
+      end
     end
 
     def visit(node : ClassDef)
@@ -930,7 +944,7 @@ module Crystal
       else
         exp = node.exps.first
         accept exp
-        exp.type?
+        exp.type? || @mod.nil
       end
     end
 
@@ -1578,14 +1592,12 @@ module Crystal
 
           create_local_copy_of_fun_args(target_def, self_type, args)
 
-          Phi.open_for_return(self, target_def) do |phi|
-            context.return_phi = phi
-            accept target_def.body
+          context.return_type = target_def.type?
+          context.return_phi = nil
 
-            unless target_def.body.returns?
-              phi.add @last, target_def.body.type?
-            end
-          end
+          accept target_def.body
+
+          codegen_return target_def.body.type?
 
           br_from_alloca_to_entry
         end
@@ -2245,7 +2257,8 @@ module Crystal
       property :fun
       property type
       property vars
-      property! return_phi
+      property return_type
+      property return_phi
       property break_phi
       property next_phi
       property while_block
@@ -2268,6 +2281,7 @@ module Crystal
 
       def clone
         context = Context.new @fun, @type, @vars
+        context.return_type = return_type
         context.return_phi = return_phi
         context.break_phi = break_phi
         context.next_phi = next_phi
@@ -2291,12 +2305,6 @@ module Crystal
         block = new codegen, node
         yield block
         block.close
-      end
-
-      def self.open_for_return(codegen, node)
-        block = new codegen, node
-        yield block
-        block.close_and_return
       end
 
       def initialize(@codegen, @node)
@@ -2345,17 +2353,6 @@ module Crystal
           end
         end
         @codegen.last
-      end
-
-      def close_and_return
-        value = close
-        if value
-          if @node.type.void?
-            ret
-          else
-            ret @codegen.to_rhs(value, @node.type)
-          end
-        end
       end
     end
 
