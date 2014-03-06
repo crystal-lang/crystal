@@ -16,6 +16,14 @@ class Tuple
     false
   end
 
+  def hash
+    hash = 31 * length
+    each do |elem|
+      hash = 31 * hash + elem.hash
+    end
+    hash
+  end
+
   def to_s
     String.build do |str|
       str << "{"
