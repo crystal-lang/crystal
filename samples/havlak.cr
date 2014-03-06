@@ -229,13 +229,13 @@ class HavlakLoopFinder
     return 0 unless startNode
     size = @cfg.getNumNodes
 
-    nonBackPreds    = Array(Set(Int32)).new(size) { Set(Int32).new }
-    backPreds       = Array(Array(Int32)).new(size) { Array(Int32).new }
+    nonBackPreds    = Array.new(size) { Set(Int32).new }
+    backPreds       = Array.new(size) { Array(Int32).new }
     number          = {} of BasicBlock => Int32
-    header          = Array(Int32).new(size, 0)
-    types           = Array(Int32).new(size, 0)
-    last            = Array(Int32).new(size, 0)
-    nodes           = Array(UnionFindNode).new(size) { UnionFindNode.new }
+    header          = Array.new(size, 0)
+    types           = Array.new(size, 0)
+    last            = Array.new(size, 0)
+    nodes           = Array.new(size) { UnionFindNode.new }
 
     # Step a:
     #   - initialize all nodes as unvisited.
