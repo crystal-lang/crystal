@@ -651,7 +651,9 @@ module Crystal
             end
           end
 
-          unless candidates.empty?
+          if candidates.empty?
+            break
+          else
             similar_name = candidates.min_by { |candidate| levenshtein(candidate, name) }
             return (names[0 ... idx] + [similar_name]).join "::"
           end
