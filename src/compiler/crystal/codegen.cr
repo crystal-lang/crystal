@@ -140,10 +140,10 @@ module Crystal
     end
 
     def finish
+      codegen_return @main_ret_type
+
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
-
-      codegen_return @main_ret_type
 
       @llvm_mod.dump if DUMP_LLVM
     end
