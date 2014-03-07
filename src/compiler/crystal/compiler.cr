@@ -56,7 +56,7 @@ module Crystal
         opts.on("--hierarchy", "Prints types hierarchy") do
           @print_hierarchy = true
         end
-        opts.on("-ll", "Dump ll to standard output") do
+        opts.on("-ll", "Dump ll to .crystal directory") do
           @dump_ll = true
         end
         opts.on("--llc ", "Additional flags to pass to llc") do |llc_flags|
