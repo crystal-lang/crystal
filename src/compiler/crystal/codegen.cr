@@ -1604,12 +1604,7 @@ module Crystal
         if !target_def.is_a?(External) || is_exported_fun
           new_entry_block
 
-          if is_closure
-            prepare_closure_context target_def
-          else
-            create_closure_context target_def.closured_vars?
-          end
-
+          setup_closure_context target_def, is_closure
           create_local_copy_of_fun_args(target_def, self_type, args)
 
           context.return_type = target_def.type?
@@ -1674,6 +1669,14 @@ module Crystal
       end
 
       args
+    end
+
+    def setup_closure_context(target_def, is_closure)
+      if is_closure
+        prepare_closure_context target_def
+      else
+        create_closure_context target_def.closured_vars?
+      end
     end
 
     def create_closure_context(closure_vars)
