@@ -279,6 +279,12 @@ module Crystal
       llvm_type type
     end
 
+    def closure_context_type(vars)
+      LLVM.struct_type("closure") do |a_struct|
+        vars.map { |var| llvm_type(var.type) }
+      end
+    end
+
     def size_of(type)
       @layout.size_in_bytes type
     end

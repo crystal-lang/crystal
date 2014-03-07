@@ -30,6 +30,9 @@ module Crystal
       typed_def.vars = @vars if typed_def
       @needs_type_filters = 0
       @in_fun_literal = false
+      @vars.each_value do |var|
+        var.context = current_context unless var.context
+      end
     end
 
     def visit(node : ASTNode)
@@ -91,6 +94,7 @@ module Crystal
     def visit(node : Var)
       var = @vars[node.name]?
       if var
+        check_closured var
         filter = build_var_filter var
         node.bind_to(filter || var)
         if needs_type_filters?
@@ -109,6 +113,7 @@ module Crystal
         node.declared_type.accept self
         node.type = node.declared_type.type.instance_type
         var.bind_to node
+        var.context = current_context
 
         @vars[var.name] = var
       when InstanceVar
@@ -378,23 +383,20 @@ module Crystal
     end
 
     def visit(node : FunLiteral)
-      fun_vars = {} of String => Var
-      types = node.def.args.map do |arg|
+      fun_vars = @vars.dup
+      node.def.args.each do |arg|
         restriction = arg.restriction.not_nil!
         restriction.accept self
         arg.type = restriction.type.instance_type
         fun_vars[arg.name] = Var.new(arg.name, arg.type)
-        arg.type
       end
 
-      node.bind_to node.def.body
+      node.bind_to node.def
       node.def.bind_to node.def.body
 
-      block_visitor = TypeVisitor.new(mod, fun_vars, @scope, @parent, @call, @owner, node.def, nil, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
+      block_visitor = TypeVisitor.new(mod, fun_vars, @scope, @parent, @call, @owner, node.def, node.def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
       block_visitor.in_fun_literal = true
       node.def.body.accept block_visitor
-
-      types.push node.def.body.type
 
       false
     end
@@ -531,7 +533,6 @@ module Crystal
     end
 
     def visit(node : Return)
-      node.raise "can't return from function literal" if @in_fun_literal
       node.raise "can't return from top level" unless @typed_def
 
       if node.exps.empty?
@@ -1133,7 +1134,29 @@ module Crystal
     end
 
     def lookup_var(name)
-      @vars[name] ||= Var.new(name)
+      var = @vars[name] ||= begin
+        var = Var.new(name)
+        var.context = current_context
+        var
+      end
+      check_closured var
+      var
+    end
+
+    def check_closured(var)
+      # puts "#{var.name}, #{var.context}, #{current_context}"
+      if var.context != current_context && !var.closured
+        var.closured = true
+        if context = var.context
+          context.closured_vars << var
+        else
+          var.raise "Bug: missing closure for var #{var.name}"
+        end
+      end
+    end
+
+    def current_context
+      @typed_def || @mod
     end
 
     def lookup_var_or_instance_var(var : Var)

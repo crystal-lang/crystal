@@ -127,6 +127,8 @@ module Crystal
       @fun_literal_count = 0
 
       context.return_type = @main_ret_type
+
+      create_closure_context @mod.closured_vars?
     end
 
     def define_symbol_table(llvm_mod)
@@ -704,8 +706,20 @@ module Crystal
       @fun_literal_count += 1
 
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
-      the_fun = codegen_fun(fun_literal_name, node.def, @mod, false, @main_mod)
+      is_closure = !!context.closure_vars
+      the_fun = codegen_fun(fun_literal_name, node.def, @mod, false, @main_mod, is_closure)
       @last = (check_main_fun fun_literal_name, the_fun).fun
+
+      if is_closure
+        tramp_ptr = array_malloc(LLVM::Int8, int(32))
+        call @mod.trampoline_init(@llvm_mod), [
+          tramp_ptr,
+          bit_cast(@last, pointer_type(LLVM::Int8)),
+          bit_cast(context.closure_ptr.not_nil!, pointer_type(LLVM::Int8))
+        ]
+        @last = call @mod.trampoline_adjust(@llvm_mod), [tramp_ptr]
+        @last = cast_to @last, node.type
+      end
 
       false
     end
@@ -1567,7 +1581,7 @@ module Crystal
       new_fun
     end
 
-    def codegen_fun(mangled_name, target_def, self_type, is_exported_fun = false, fun_module = type_module(self_type))
+    def codegen_fun(mangled_name, target_def, self_type, is_exported_fun = false, fun_module = type_module(self_type), is_closure = false)
       old_position = insert_block
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
@@ -1585,10 +1599,16 @@ module Crystal
         @trampoline_wrappers = {} of UInt64 => LLVM::Function
         @exception_handlers = [] of Handler
 
-        args = prepare_fun(mangled_name, target_def, self_type)
+        args = codegen_fun_signature(mangled_name, target_def, self_type, is_closure)
 
         if !target_def.is_a?(External) || is_exported_fun
           new_entry_block
+
+          if is_closure
+            prepare_closure_context target_def
+          else
+            create_closure_context target_def.closured_vars?
+          end
 
           create_local_copy_of_fun_args(target_def, self_type, args)
 
@@ -1616,14 +1636,19 @@ module Crystal
       end
     end
 
-    def prepare_fun(mangled_name, target_def, self_type)
+    def codegen_fun_signature(mangled_name, target_def, self_type, is_closure)
       args = Array(Arg).new(target_def.args.length + 1)
       args.push Arg.new_with_type("self", self_type) if self_type.passed_as_self?
       args.concat target_def.args
 
+      llvm_args_types = args.map { |arg| llvm_arg_type(arg.type) }
+      if is_closure
+        llvm_args_types << LLVM.pointer_type(context.closure_type.not_nil!)
+      end
+
       context.fun = @llvm_mod.functions.add(
         mangled_name,
-        args.map { |arg| llvm_arg_type(arg.type) },
+        llvm_args_types,
         llvm_type(target_def.type),
         target_def.varargs,
       )
@@ -1644,7 +1669,37 @@ module Crystal
         end
       end
 
+      if is_closure
+        LLVM.add_attribute context.fun.get_param(llvm_args_types.length - 1), LibLLVM::Attribute::Nest
+      end
+
       args
+    end
+
+    def create_closure_context(closure_vars)
+      if closure_vars
+        closure_type = @llvm_typer.closure_context_type(closure_vars)
+        closure_ptr = malloc closure_type
+        define_closure_context_vars closure_ptr, closure_vars
+        context.closure_vars = closure_vars
+        context.closure_type = closure_type
+        context.closure_ptr = closure_ptr
+      else
+        context.closure_vars = nil
+        context.closure_type = nil
+        context.closure_ptr = nil
+      end
+    end
+
+    def prepare_closure_context(target_def)
+      closure_ptr = context.fun.get_param(target_def.args.length)
+      define_closure_context_vars closure_ptr, context.closure_vars.not_nil!
+    end
+
+    def define_closure_context_vars(closure_ptr, closure_vars)
+      closure_vars.each_with_index do |var, i|
+        context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i), var.type)
+      end
     end
 
     def create_local_copy_of_fun_args(target_def, self_type, args)
@@ -1652,6 +1707,7 @@ module Crystal
       args.each_with_index do |arg, i|
         param = context.fun.get_param(i)
         if (i == 0 && self_type.passed_as_self?) || arg.type.passed_by_value?
+          # TODO: check if the variable is closured
           context.vars[arg.name] = LLVMVar.new(param, arg.type, true)
         else
           create_local_copy_of_arg(target_def_vars, arg, param)
@@ -1673,9 +1729,13 @@ module Crystal
 
     def create_local_copy_of_arg(target_def_vars, arg, value)
       var_type = (target_def_vars ? target_def_vars[arg.name] : arg).type
-      pointer = alloca(llvm_type(var_type), arg.name)
+      if closured_var = context.vars[arg.name]?
+        pointer = closured_var.pointer
+      else
+        pointer = alloca(llvm_type(var_type), arg.name)
+        context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+      end
       assign pointer, var_type, arg.type, value
-      context.vars[arg.name] = LLVMVar.new(pointer, var_type)
     end
 
     def type_id(value, type)
@@ -2266,6 +2326,9 @@ module Crystal
       property! block
       property! block_context
       property in_const_block
+      property closure_vars
+      property closure_type
+      property closure_ptr
 
       def initialize(@fun, @type, @vars = {} of String => LLVMVar)
         @in_const_block = false
@@ -2281,15 +2344,18 @@ module Crystal
 
       def clone
         context = Context.new @fun, @type, @vars
-        context.return_type = return_type
-        context.return_phi = return_phi
-        context.break_phi = break_phi
-        context.next_phi = next_phi
-        context.while_block = while_block
-        context.while_exit_block = while_exit_block
+        context.return_type = @return_type
+        context.return_phi = @return_phi
+        context.break_phi = @break_phi
+        context.next_phi = @next_phi
+        context.while_block = @while_block
+        context.while_exit_block = @while_exit_block
         context.block = @block
         context.block_context = @block_context
         context.in_const_block = @in_const_block
+        context.closure_vars = @closure_vars
+        context.closure_type = @closure_type
+        context.closure_ptr = @closure_ptr
         context
       end
     end

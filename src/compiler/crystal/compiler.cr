@@ -156,7 +156,7 @@ module Crystal
 
         print_types node if @print_types
         print_hierarchy program if @print_hierarchy
-        exit if @no_build
+        return if @no_build
 
         llvm_modules = timing("Codegen (crystal)") do
           program.build node, (@release || @cross_compile)

@@ -1,0 +1,33 @@
+#!/usr/bin/env bin/crystal --run
+require "../../spec_helper"
+
+describe "Code gen: closure" do
+  it "codegens simple closure at global scope" do
+    run("
+      a = 1
+      foo = ->{ a }
+      foo.call
+    ").to_i.should eq(1)
+  end
+
+  it "codegens simple closure in function" do
+    run("
+      def foo
+        a = 1
+        ->{ a }
+      end
+
+      foo.call
+    ").to_i.should eq(1)
+  end
+
+  it "codegens simple closure in function with argument" do
+    run("
+      def foo(a)
+        ->{ a }
+      end
+
+      foo(1).call
+    ").to_i.should eq(1)
+  end
+end

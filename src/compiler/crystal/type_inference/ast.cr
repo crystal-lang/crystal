@@ -169,12 +169,12 @@ module Crystal
   class FunLiteral
     def update(from = nil)
       return unless self.def.args.all? &.type?
-      return unless self.def.body.type?
+      return unless self.def.type?
 
-      types = self.def.args.map(&.type)
-      types.push self.def.body.type
+      types = self.def.args.map &.type
+      types.push self.def.type
 
-      self.type = self.def.body.type.program.fun_of(types)
+      self.type = self.def.type.program.fun_of(types)
     end
   end
 
@@ -215,6 +215,14 @@ module Crystal
     property :owner
     property :vars
     property :raises
+
+    def closured_vars?
+      @closured_vars
+    end
+
+    def closured_vars
+      @closured_vars ||= [] of Var
+    end
 
     def has_default_arguments?
       args.length > 0 && args.last.default_value
@@ -282,6 +290,9 @@ module Crystal
   end
 
   class Var
+    property :context
+    property :closured
+
     def out?
       out
     end

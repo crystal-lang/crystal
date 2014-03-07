@@ -106,6 +106,14 @@ module Crystal
       define_primitives
     end
 
+    def closured_vars?
+      @closured_vars
+    end
+
+    def closured_vars
+      @closured_vars ||= [] of Var
+    end
+
     def has_flag?(name)
       flags.includes?(name)
     end

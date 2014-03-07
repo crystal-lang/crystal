@@ -143,4 +143,8 @@ describe "Code gen: fun" do
       c.call(pointerof(a))
       ").to_i.should eq(12)
   end
+
+  it "call simple fun literal with return" do
+    run("x = -> { return 1 }; x.call").to_i.should eq(1)
+  end
 end
