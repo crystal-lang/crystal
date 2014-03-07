@@ -72,4 +72,18 @@ describe "Codegen: class var" do
       @@foo.to_i
       ").to_i.should eq(0)
   end
+
+  it "codegens class var inside module" do
+    run("
+      module Foo
+        @@foo = 1
+
+        def self.foo
+          @@foo
+        end
+      end
+
+      Foo.foo
+      ").to_i.should eq(1)
+  end
 end

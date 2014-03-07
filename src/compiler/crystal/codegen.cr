@@ -1003,11 +1003,20 @@ module Crystal
       ptr = @llvm_mod.globals[name]?
       unless ptr
         llvm_type = llvm_type(type)
+
+        # Declare global in this module as external
         ptr = @llvm_mod.globals.add(llvm_type, name)
         if @llvm_mod == @main_mod
           LLVM.set_initializer ptr, LLVM.null(llvm_type)
         else
           LLVM.set_linkage ptr, LibLLVM::Linkage::External
+
+          # Define it in main if it's not already defined
+          main_ptr = @main_mod.globals[name]?
+          unless main_ptr
+            main_ptr = @main_mod.globals.add(llvm_type, name)
+            LLVM.set_initializer main_ptr, LLVM.null(llvm_type)
+          end
         end
       end
       ptr

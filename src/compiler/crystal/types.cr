@@ -679,14 +679,6 @@ module Crystal
     end
   end
 
-  class NonGenericModuleType < ModuleType
-    include DefInstanceContainer
-
-    def module?
-      true
-    end
-  end
-
   module ClassVarContainer
     def class_vars
       @class_vars ||= {} of String => Var
@@ -727,6 +719,15 @@ module Crystal
   end
 
   module NonGenericOrGenericClassInstanceType
+  end
+
+  class NonGenericModuleType < ModuleType
+    include DefInstanceContainer
+    include ClassVarContainer
+
+    def module?
+      true
+    end
   end
 
   abstract class ClassType < ModuleType
