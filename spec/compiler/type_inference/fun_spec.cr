@@ -185,4 +185,35 @@ describe "Type inference: fun" do
       C.bla(nil)
       ") { int32 }
   end
+
+  it "allows casting a fun type to one accepting more arguments" do
+    assert_type("
+      f = ->(x : Int32) { x.to_f }
+      f as Int32, Int32 -> Float64
+      ") { fun_of [int32, int32, float64] }
+  end
+
+  it "disallows casting a fun type to one accepting less arguments" do
+    assert_error "
+      f = ->(x : Int32) { x.to_f }
+      f as -> Float64
+      ",
+      "can't cast Int32 -> Float64 to  -> Float64"
+  end
+
+  it "disallows casting a fun type to one accepting same length argument but different output" do
+    assert_error "
+      f = ->(x : Int32) { x.to_f }
+      f as Int32 -> Int32
+      ",
+      "can't cast Int32 -> Float64 to Int32 -> Int32"
+  end
+
+  it "disallows casting a fun type to one accepting same length argument but different input" do
+    assert_error "
+      f = ->(x : Int32) { x.to_f }
+      f as Float64 -> Float64
+      ",
+      "can't cast Int32 -> Float64 to Float64 -> Float64"
+  # end
 end

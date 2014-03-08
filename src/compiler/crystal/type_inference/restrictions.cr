@@ -368,5 +368,23 @@ module Crystal
 
       self
     end
+
+    def restrict(other : FunType, owner, type_lookup, free_vars)
+      arg_types = arg_types()
+      return_type = return_type()
+      other_arg_types = other.arg_types()
+      other_return_type = other.return_type()
+
+      return nil unless return_type == other_return_type
+
+      # Allow casting a function to another one accepting more arguments
+      return nil if arg_types.length > other_arg_types.length
+
+      arg_types.zip(other_arg_types) do |arg_type, other_arg_type|
+        return nil unless arg_type == other_arg_type
+      end
+
+      other
+    end
   end
 end

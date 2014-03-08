@@ -1066,7 +1066,7 @@ module Crystal
       obj_type = node.obj.type
       to_type = node.to.type.instance_type
 
-      if obj_type.pointer?
+      if obj_type.pointer? || obj_type.fun?
         @last = cast_to last_value, to_type
       else
         resulting_type = obj_type.filter_by(to_type).not_nil!
