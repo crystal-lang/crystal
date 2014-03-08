@@ -153,6 +153,12 @@ module Crystal
   end
 
   class Cast
+    def self.apply(node : ASTNode, type : Type)
+      cast = Cast.new(node, Var.new("cast", type))
+      cast.set_type(type)
+      cast
+    end
+
     def update(from = nil)
       obj_type = obj.type?
       return unless obj_type

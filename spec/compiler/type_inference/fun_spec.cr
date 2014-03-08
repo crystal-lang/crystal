@@ -81,7 +81,7 @@ describe "Type inference: fun" do
   #   assert_type("def foo(&block : Int32 ->); block; end; foo { |x| x + 2 }") { fun_of(int32, int32) }
   # end
 
-  it "allows fun to return something else than void if it's not void" do
+  it "allows implicit cast of fun to return void in C function" do
     assert_type("
       lib C
         fun atexit(fun : -> ) : Int32
@@ -191,6 +191,13 @@ describe "Type inference: fun" do
       f = ->(x : Int32) { x.to_f }
       f as Int32, Int32 -> Float64
       ") { fun_of [int32, int32, float64] }
+  end
+
+  it "allows casting a fun type to one with void argument" do
+    assert_type("
+      f = ->(x : Int32) { x.to_f }
+      f as Int32 -> Void
+      ") { fun_of [int32, void] }
   end
 
   it "disallows casting a fun type to one accepting less arguments" do

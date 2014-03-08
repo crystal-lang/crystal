@@ -375,7 +375,7 @@ module Crystal
       other_arg_types = other.arg_types()
       other_return_type = other.return_type()
 
-      return nil unless return_type == other_return_type
+      return nil unless return_type == other_return_type || other_return_type.void?
 
       # Allow casting a function to another one accepting more arguments
       return nil if arg_types.length > other_arg_types.length

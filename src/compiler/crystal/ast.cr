@@ -1710,7 +1710,6 @@ module Crystal
     end
   end
 
-
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     getter name
@@ -1741,19 +1740,6 @@ module Crystal
 
     def clone_without_location
       TupleIndexer.new(index)
-    end
-  end
-
-  # Ficticious node to cast a node with type FunType to return void
-  class CastFunToReturnVoid < Primitive
-    getter node
-
-    def initialize(@node)
-      @name = :cast_fun_to_return_void
-    end
-
-    def clone_without_location
-      CastFunToReturnVoid.new(@node)
     end
   end
 end

@@ -773,18 +773,6 @@ module Crystal
       end
     end
 
-    def visit(node : CastFunToReturnVoid)
-      accept node.node
-
-      node_type = node.node.type as FunType
-
-      types = node_type.arg_types.dup
-      types << @mod.void
-      type = @mod.fun_of types
-
-      @last = cast_to @last, type
-    end
-
     def visit(node : Expressions)
       node.expressions.each do |exp|
         accept exp
