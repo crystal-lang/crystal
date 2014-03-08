@@ -19,12 +19,8 @@ lib PThread
 end
 
 class Thread(T, R)
-  def self.new(arg : T, &block : T -> R)
-    Thread(T, R).new(arg, block)
-  end
-
-  def self.new(&block : Nil -> R)
-    Thread(Nil, R).new(nil, block)
+  def self.new(func : -> R)
+    Thread(Nil, R).new(nil, func as Nil -> R)
   end
 
   def initialize(arg : T, func : T -> R)
