@@ -517,9 +517,9 @@ class Array(T)
     self
   end
 
-  # def sort_by!(&block: T -> )
-  #   sort! { |x, y| (yield x) <=> (yield y) }
-  # end
+  def sort_by!(block: T -> )
+    sort! ->(x : T, y : T){ block.call(x) <=> block.call(y) }
+  end
 
   def sort
     dup.sort!
@@ -531,9 +531,9 @@ class Array(T)
     x
   end
 
-  # def sort_by(&block: T -> )
-  #   sort { |x, y| (yield x) <=> (yield y) }
-  # end
+  def sort_by(block: T -> )
+    dup.sort_by! block
+  end
 
   def sample
     raise IndexOutOfBounds.new if @length == 0

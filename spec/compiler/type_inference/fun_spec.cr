@@ -215,5 +215,5 @@ describe "Type inference: fun" do
       f as Float64 -> Float64
       ",
       "can't cast Int32 -> Float64 to Float64 -> Float64"
-  # end
+  end
 end
