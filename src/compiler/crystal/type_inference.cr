@@ -1148,7 +1148,7 @@ module Crystal
       if var.context != current_context && !var.closured
         var.closured = true
         if context = var.context
-          context.closured_vars << var
+          (context as ClosureContext).closured_vars << var
         else
           var.raise "Bug: missing closure for var #{var.name}"
         end
@@ -1156,7 +1156,7 @@ module Crystal
     end
 
     def current_context
-      @typed_def || @mod
+      @block || @typed_def || @mod
     end
 
     def lookup_var_or_instance_var(var : Var)

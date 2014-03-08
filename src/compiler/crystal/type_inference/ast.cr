@@ -1,4 +1,5 @@
 require "../ast"
+require "../closure_context"
 
 module Crystal
   class ASTNode
@@ -212,17 +213,11 @@ module Crystal
   end
 
   class Def
+    include ClosureContext
+
     property :owner
     property :vars
     property :raises
-
-    def closured_vars?
-      @closured_vars
-    end
-
-    def closured_vars
-      @closured_vars ||= [] of Var
-    end
 
     def has_default_arguments?
       args.length > 0 && args.last.default_value
@@ -330,6 +325,8 @@ module Crystal
   end
 
   class Block
+    include ClosureContext
+
     property :visited
     property :scope
 

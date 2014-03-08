@@ -27,4 +27,27 @@ describe "Type inference: closure" do
     meta_var.closured.should be_true
     call.target_def.closured_vars.should eq([meta_var])
   end
+
+  it "marks variable as closured in block" do
+    result = assert_type("
+      def foo
+        yield
+      end
+
+      foo do
+        x = 1
+        -> { x }
+        1
+      end
+      ") { int32 }
+    node = result.node as Expressions
+    call = node.expressions.last as Call
+    block = call.block.not_nil!
+    assign = (block.body as Expressions).expressions.first as Assign
+    var = assign.target as Var
+    meta_var = var.dependencies.first as Var
+    meta_var.closured.should be_true
+
+    block.closured_vars.should eq([meta_var])
+  end
 end

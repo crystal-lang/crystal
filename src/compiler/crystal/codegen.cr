@@ -1438,6 +1438,7 @@ module Crystal
 
       target_def = node.target_def
 
+      create_closure_context block.closured_vars?, old_context
       create_local_copy_of_block_args(target_def, self_type, call_args)
 
       Phi.open(self, node) do |phi|
@@ -1688,18 +1689,18 @@ module Crystal
       end
     end
 
-    def create_closure_context(closure_vars)
+    def create_closure_context(closure_vars, in_context = context)
       if closure_vars
         closure_type = @llvm_typer.closure_context_type(closure_vars)
         closure_ptr = malloc closure_type
-        define_closure_context_vars closure_ptr, closure_vars
-        context.closure_vars = closure_vars
-        context.closure_type = closure_type
-        context.closure_ptr = closure_ptr
+        define_closure_context_vars closure_ptr, closure_vars, in_context
+        in_context.closure_vars = closure_vars
+        in_context.closure_type = closure_type
+        in_context.closure_ptr = closure_ptr
       else
-        context.closure_vars = nil
-        context.closure_type = nil
-        context.closure_ptr = nil
+        in_context.closure_vars = nil
+        in_context.closure_type = nil
+        in_context.closure_ptr = nil
       end
     end
 
@@ -1708,9 +1709,9 @@ module Crystal
       define_closure_context_vars closure_ptr, context.closure_vars.not_nil!
     end
 
-    def define_closure_context_vars(closure_ptr, closure_vars)
+    def define_closure_context_vars(closure_ptr, closure_vars, in_context = context)
       closure_vars.each_with_index do |var, i|
-        context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i), var.type)
+        in_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i), var.type)
       end
     end
 

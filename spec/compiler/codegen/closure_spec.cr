@@ -39,4 +39,19 @@ describe "Code gen: closure" do
       f.call
       ").to_i.should eq(2)
   end
+
+  it "codegens simple closure in block" do
+    run("
+      def foo
+        yield
+      end
+
+      f = foo do
+        x = 1
+        -> { x }
+      end
+
+      f.call
+    ").to_i.should eq(1)
+  end
 end
