@@ -630,6 +630,8 @@ describe "Parser" do
   it_parses "{1}", TupleLiteral.new([1.int32] of ASTNode)
   it_parses "{1, 2, 3}", TupleLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode)
 
+  it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", ([] of ASTNode), Block.new(([] of Var), Assign.new("a".var, 1.int32))), "a".call] of ASTNode
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end") as Def
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))

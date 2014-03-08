@@ -223,4 +223,12 @@ describe "Normalize: ssa" do
   it "performs ssa on var and block in initialize" do
     assert_normalize "def initialize; x = 1; foo { x = 2 }; end", "def initialize\n  x = 1\n  foo() do\n    x = 2\n  end\nend"
   end
+
+  it "doesn't perform ssa on fun literal" do
+    assert_normalize "a = 1; f = ->{ a = 2; a = 3; a }; a = 3", "a = 1\nf = -> do\n  a = 2\n  a = 3\n  a\nend\na = 3"
+  end
+
+  it "doesn't perform ssa on fun literal" do
+    assert_normalize "a = 1; f = ->{ a }; a = 3", "a = 1\nf = -> do\n  a\nend\na = 3"
+  end
 end

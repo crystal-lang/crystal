@@ -30,4 +30,13 @@ describe "Code gen: closure" do
       foo(1).call
     ").to_i.should eq(1)
   end
+
+  it "codegens closure with redefined var" do
+    run("
+      a = true
+      a = 1
+      f = ->{ a + 1 }
+      f.call
+      ").to_i.should eq(2)
+  end
 end

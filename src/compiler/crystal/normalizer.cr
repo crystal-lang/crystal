@@ -47,6 +47,7 @@ module Crystal
       @in_def = false
       @dead_code = false
       @exception_handler_count = 0
+      @fun_literal_count = 0
     end
 
     def normalize(node)
@@ -374,8 +375,11 @@ module Crystal
     def transform_assign_var(node)
       indices = @vars[node.name]?
       if indices
-        if indices.frozen || @in_initialize || @exception_handler_count > 0
+        if indices.frozen || @in_initialize || @exception_handler_count > 0 || @fun_literal_count > 0
           node.name = var_name_with_index(node.name, indices.read)
+          if @fun_literal_count > 0
+            indices.freeze
+          end
         else
           increment_var node.name, indices
           node.name = var_name_with_index(node.name, indices.write)
@@ -512,6 +516,9 @@ module Crystal
 
       indices = @vars[node.name]?
       node.name = var_name_with_index(node.name, indices ? indices.read : nil)
+      if indices && @fun_literal_count > 0
+        indices.freeze
+      end
       node
     end
 
@@ -753,9 +760,18 @@ module Crystal
     end
 
     def transform(node : FunLiteral)
-      pushing_vars do
-        node.def.body = node.def.body.transform(self)
+      @fun_literal_count += 1
+
+      before_vars = @vars.dup
+      node.def.body = node.def.body.transform(self)
+
+      # Delete vars delcared in fun literal
+      fun_vars = @vars.keys - before_vars.keys
+      fun_vars.each do |fun_var|
+        @vars.delete fun_var
       end
+
+      @fun_literal_count -= 1
       node
     end
 
