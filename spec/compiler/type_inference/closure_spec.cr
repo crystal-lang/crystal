@@ -28,7 +28,7 @@ describe "Type inference: closure" do
     call.target_def.closured_vars.should eq([meta_var])
   end
 
-  it "marks variable as closured in block" do
+  pending "marks variable as closured in block" do
     result = assert_type("
       def foo
         yield

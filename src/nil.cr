@@ -15,6 +15,14 @@ struct Nil
     false
   end
 
+  def same?(other : Nil)
+    true
+  end
+
+  def same?(other : Reference)
+    false
+  end
+
   def nil?
     true
   end

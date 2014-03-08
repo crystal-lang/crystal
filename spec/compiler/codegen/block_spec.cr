@@ -998,4 +998,19 @@ describe "Code gen: block" do
       foo { }
       ").to_i.should eq(2)
   end
- end
+
+  it "codegens bug with block and arg and var" do
+    run("
+      def foo
+        yield 1
+      end
+
+      foo { |a| x = a }
+
+      foo do
+        a = 'A'
+        a.ord
+      end
+      ").to_i.should eq(65)
+  end
+end

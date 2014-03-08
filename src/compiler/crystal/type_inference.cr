@@ -19,7 +19,7 @@ module Crystal
     getter! scope
     getter! typed_def
     getter! untyped_def
-    property block
+    getter block
     getter vars
     property in_fun_literal
 
@@ -33,6 +33,10 @@ module Crystal
       @vars.each_value do |var|
         var.context = current_context unless var.context
       end
+    end
+
+    def block=(@block)
+      @block_context = @block
     end
 
     def visit(node : ASTNode)
@@ -368,6 +372,7 @@ module Crystal
 
       block_vars = @vars.dup
       node.args.each do |arg|
+        arg.context = node
         block_vars[arg.name] = arg
       end
 
@@ -1144,8 +1149,8 @@ module Crystal
     end
 
     def check_closured(var)
-      # puts "#{var.name}, #{var.context}, #{current_context}"
-      if var.context != current_context && !var.closured
+      context = current_context
+      if !var.context.same?(context) && !var.closured && !context.is_a?(Block)
         var.closured = true
         if context = var.context
           (context as ClosureContext).closured_vars << var
@@ -1156,7 +1161,7 @@ module Crystal
     end
 
     def current_context
-      @block || @typed_def || @mod
+      @block_context || @typed_def || @mod
     end
 
     def lookup_var_or_instance_var(var : Var)

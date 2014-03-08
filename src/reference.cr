@@ -11,6 +11,10 @@ class Reference
     object_id == other.object_id
   end
 
+  def same?(other : Nil)
+    false
+  end
+
   def nil?
     false
   end
