@@ -349,4 +349,47 @@ describe "Code gen: def" do
       f.object_id
       ").to_i.should eq(0)
   end
+
+  it "codegens dispatch without obj, bug 1" do
+    run("
+      def coco(x : Int32)
+        2
+      end
+
+      def coco(x)
+        3
+      end
+
+      class Foo
+        def foo
+          coco(1 || nil)
+        end
+      end
+
+      Foo.new.foo
+      ").to_i.should eq(2)
+  end
+
+  it "codegens dispatch without obj, bug 1" do
+    run("
+      def coco(x : Int32)
+        2
+      end
+
+      def coco(x)
+        3
+      end
+
+      class Foo
+        def foo
+          coco(1 || nil)
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      (Foo.new || Bar.new).foo
+      ").to_i.should eq(2)
+  end
 end

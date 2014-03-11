@@ -1777,6 +1777,10 @@ module Crystal
       end
     end
 
+    def match_type_id(type, restriction : Program, type_id)
+      llvm_true
+    end
+
     def match_type_id(type, restriction, type_id)
       case type
       when UnionType, HierarchyType, HierarchyMetaclassType
