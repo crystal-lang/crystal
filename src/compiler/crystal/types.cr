@@ -215,6 +215,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement parents"
     end
 
+    def superclass
+      raise "Bug: #{self} doesn't implement superclass"
+    end
+
     def defs
       raise "Bug: #{self} doesn't implement defs"
     end
@@ -591,15 +595,17 @@ module Crystal
     include DefContainer
 
     getter :name
-    getter :parents
 
     def initialize(program, container, @name)
       super(program, container)
-      @parents = [] of Type
+    end
+
+    def parents
+      @parents ||= [] of Type
     end
 
     def include(mod)
-      @parents.insert 0, mod unless parents.any? &.==(mod)
+      parents.insert 0, mod unless parents.includes?(mod)
     end
 
     def implements?(other_type)
@@ -752,7 +758,7 @@ module Crystal
         @depth = 0
       end
       @subclasses = [] of Type
-      @parents.push superclass if superclass
+      parents.push superclass if superclass
       @owned_instance_vars = Set(String).new
       force_add_subclass if add_subclass
     end
@@ -1254,12 +1260,23 @@ module Crystal
     getter subclasses
     property allocated
 
-    def initialize(@program, @generic_class, @type_vars)
+    def initialize(@program, generic_class, @type_vars)
+      @generic_class = generic_class
       @subclasses = [] of Type
     end
 
     def after_initialize
       @generic_class.superclass.not_nil!.add_subclass(self)
+    end
+
+    def parents
+      @parents ||= generic_class.parents.map do |t|
+        if t.is_a?(IncludedGenericModule)
+          IncludedGenericModule.new(program, t.module, self, t.mapping)
+        else
+          t
+        end
+      end
     end
 
     def hierarchy_type
@@ -1333,16 +1350,6 @@ module Crystal
       end
 
       nil
-    end
-
-    def parents
-      generic_class.parents.map do |t|
-        if t.is_a?(IncludedGenericModule)
-          IncludedGenericModule.new(program, t.module, self, t.mapping)
-        else
-          t
-        end
-      end
     end
 
     def to_s
@@ -1904,7 +1911,6 @@ module Crystal
                       else
                         @program.class_type
                       end
-
       super(@program, @program, name || "#{@instance_type}:Class", super_class)
     end
 
@@ -1928,12 +1934,6 @@ module Crystal
 
     def class_var_owner
       instance_type
-    end
-
-    def parents
-      parents = (instance_type.parents.try &.map &.metaclass || [] of Type)
-      parents.concat super
-      parents
     end
 
     def metaclass?
@@ -1960,7 +1960,12 @@ module Crystal
     getter program
     getter instance_type
 
-    def initialize(@program, @instance_type)
+    def initialize(@program, instance_type)
+      @instance_type = instance_type
+    end
+
+    def parents
+      @parents ||= [instance_type.superclass.try(&.metaclass) || @program.class_type] of Type
     end
 
     def add_def(a_def)
@@ -1983,10 +1988,6 @@ module Crystal
 
     def metaclass?
       true
-    end
-
-    def parents
-      instance_type.parents.map &.metaclass
     end
 
     def to_s
@@ -2243,6 +2244,10 @@ module Crystal
     def initialize(@program, @base_type)
     end
 
+    def superclass
+      base_type.superclass
+    end
+
     def lookup_first_def(name, yields)
       base_type.lookup_first_def(name, yields)
     end
@@ -2391,7 +2396,12 @@ module Crystal
     getter program
     getter instance_type
 
-    def initialize(@program, @instance_type)
+    def initialize(@program, instance_type)
+      @instance_type = instance_type
+    end
+
+    def parents
+      @parents ||= [instance_type.superclass.try(&.metaclass) || @program.class_type] of Type
     end
 
     delegate base_type, instance_type
@@ -2407,10 +2417,6 @@ module Crystal
 
     def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
-    end
-
-    def parents
-      instance_type.base_type.parents.try &.map &.metaclass
     end
 
     def hierarchy_lookup(type)

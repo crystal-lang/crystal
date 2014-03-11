@@ -15,14 +15,20 @@ class Hash(K, V)
   end
 
   module CaseInsensitiveComparator
-    include StandardComparator
-
     def self.hash(str : String)
       str.downcase.hash
     end
 
     def self.equals?(str1 : String, str2 : String)
       str1.downcase == str2.downcase
+    end
+
+    def self.hash(object)
+      object.hash
+    end
+
+    def self.equals?(o1, o2)
+      o1 == o2
     end
   end
 

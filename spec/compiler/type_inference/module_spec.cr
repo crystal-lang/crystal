@@ -292,4 +292,20 @@ describe "Type inference: module" do
         bar.instantiate([int32] of ASTNode | Type).metaclass
       }
   end
+
+  it "includes module but can't access metaclass methods" do
+    assert_error "
+      module Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar
+        include Foo
+      end
+
+      Bar.foo
+      ", "undefined method 'foo'"
+  end
 end
