@@ -1414,6 +1414,25 @@ module Crystal
     end
   end
 
+  class Extend < ASTNode
+    property :name
+
+    def initialize(@name)
+    end
+
+    def accept_children(visitor)
+      @name.accept visitor
+    end
+
+    def ==(other : self)
+      other.name == name
+    end
+
+    def clone_without_location
+      Extend.new(@name)
+    end
+  end
+
   class LibDef < ASTNode
     property :name
     property :libname

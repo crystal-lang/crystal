@@ -637,6 +637,14 @@ module Crystal
       false
     end
 
+    def visit(node : Extend)
+      process_extend(node)
+
+      node.type = @mod.nil
+
+      false
+    end
+
     def visit(node : LibDef)
       process_lib_def(node) do
         node.body.accept self

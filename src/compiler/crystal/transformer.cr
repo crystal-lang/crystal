@@ -327,6 +327,11 @@ module Crystal
       node
     end
 
+    def transform(node : Extend)
+      node.name = node.name.transform(self)
+      node
+    end
+
     def transform(node : RangeLiteral)
       node.from = node.from.transform(self)
       node.to = node.to.transform(self)

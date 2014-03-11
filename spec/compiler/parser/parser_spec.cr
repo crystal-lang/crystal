@@ -328,6 +328,8 @@ describe "Parser" do
 
   it_parses "include Foo", Include.new("Foo".path)
   it_parses "include Foo\nif true; end", [Include.new("Foo".path), If.new(true.bool)]
+  it_parses "extend Foo", Extend.new("Foo".path)
+  it_parses "extend Foo\nif true; end", [Extend.new("Foo".path), If.new(true.bool)]
 
   it_parses "unless foo; 1; end", Unless.new("foo".call, 1.int32)
   it_parses "unless foo; 1; else; 2; end", Unless.new("foo".call, 1.int32, 2.int32)

@@ -572,6 +572,10 @@ module Crystal
               return check_ident_or_keyword(:enum, start)
             end
           end
+        when 'x'
+          if next_char == 't' && next_char == 'e' && next_char == 'n' && next_char == 'd'
+            return check_ident_or_keyword(:extend, start)
+          end
         end
         scan_ident(start)
       when 'f'

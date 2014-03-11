@@ -612,6 +612,12 @@ module Crystal
       false
     end
 
+    def visit(node : Extend)
+      @str << "extend "
+      node.name.accept self
+      false
+    end
+
     def visit(node : And)
       to_s_binary node, "&&"
     end

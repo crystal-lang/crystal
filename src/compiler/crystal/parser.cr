@@ -665,6 +665,8 @@ module Crystal
           parse_unless
         when :include
           parse_include
+        when :extend
+          parse_extend
         when :class
           parse_class_def
         when :struct
@@ -1388,13 +1390,21 @@ module Crystal
     end
 
     def parse_include
+      parse_include_or_extend Include
+    end
+
+    def parse_extend
+      parse_include_or_extend Extend
+    end
+
+    def parse_include_or_extend(klass)
       location = @token.location
 
       next_token_skip_space_or_newline
 
       name = parse_ident
 
-      inc = Include.new name
+      inc = klass.new name
       inc.location = location
       inc
     end

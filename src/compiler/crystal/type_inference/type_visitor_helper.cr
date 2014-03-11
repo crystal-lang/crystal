@@ -137,8 +137,14 @@ module Crystal
     end
 
     def process_include(node : Include)
-      node_name = node.name
+      include_in current_type, node.name
+    end
 
+    def process_extend(node : Extend)
+      include_in current_type.metaclass, node.name
+    end
+
+    def include_in(current_type, node_name)
       if node_name.is_a?(Generic)
         type = lookup_path_type(node_name.name)
       else
@@ -146,10 +152,8 @@ module Crystal
       end
 
       unless type.module?
-        node.name.raise "#{node.name} is not a module, it's a #{type.type_desc}"
+        node_name.raise "#{node_name} is not a module, it's a #{type.type_desc}"
       end
-
-      current_type = current_type()
 
       if node_name.is_a?(Generic)
         unless type.is_a?(GenericModuleType)

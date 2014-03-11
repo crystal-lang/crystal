@@ -308,4 +308,20 @@ describe "Type inference: module" do
       Bar.foo
       ", "undefined method 'foo'"
   end
+
+  it "extends a module" do
+    assert_type("
+      module Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        extend Foo
+      end
+
+      Bar.foo
+      ") { int32 }
+  end
 end
