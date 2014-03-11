@@ -375,6 +375,10 @@ module Crystal
       instance_type
     end
 
+    def lookup_path_type(node : Self, create_modules_if_missing = false)
+      current_type
+    end
+
     def lookup_path_type(node : Path, create_modules_if_missing = false)
       target_type = resolve_ident(node, create_modules_if_missing)
       if target_type.is_a?(Type)
@@ -384,7 +388,7 @@ module Crystal
       end
     end
 
-    def lookup_path_type(node)
+    def lookup_path_type(node, create_modules_if_missing = false)
       raise "lookup_path_type not implemented for #{node}"
     end
 

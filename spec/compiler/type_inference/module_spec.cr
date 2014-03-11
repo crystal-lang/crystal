@@ -324,4 +324,18 @@ describe "Type inference: module" do
       Bar.foo
       ") { int32 }
   end
+
+  it "extends self" do
+    assert_type("
+      module Foo
+        extend self
+
+        def foo
+          1
+        end
+      end
+
+      Foo.foo
+      ") { int32 }
+  end
 end

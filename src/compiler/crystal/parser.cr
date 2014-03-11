@@ -1402,7 +1402,12 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      name = parse_ident
+      if @token.keyword?("self")
+        name = Self.new
+        next_token_skip_space
+      else
+        name = parse_ident
+      end
 
       inc = klass.new name
       inc.location = location
