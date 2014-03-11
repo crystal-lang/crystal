@@ -338,4 +338,27 @@ describe "Type inference: module" do
       Foo.foo
       ") { int32 }
   end
+
+  it "gives error when including self" do
+    assert_error "
+      module Foo
+        include self
+      end
+      ", "cyclic include detected"
+  end
+
+  pending "gives error with cyclic include" do
+    assert_error "
+      module Foo
+      end
+
+      module Bar
+        include Foo
+      end
+
+      module Foo
+        include Bar
+      end
+      ", "cyclic include detected"
+  end
 end

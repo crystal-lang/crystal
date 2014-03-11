@@ -605,7 +605,11 @@ module Crystal
     end
 
     def include(mod)
-      parents.insert 0, mod unless parents.includes?(mod)
+      if mod == self
+        raise "cyclic include detected"
+      else
+        parents.insert 0, mod unless parents.includes?(mod)
+      end
     end
 
     def implements?(other_type)

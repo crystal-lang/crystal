@@ -850,6 +850,11 @@ module Crystal
       false
     end
 
+    def visit(node : Extend)
+      @last = llvm_nil
+      false
+    end
+
     def visit(node : If)
       then_block, else_block = new_blocks ["then", "else"]
 

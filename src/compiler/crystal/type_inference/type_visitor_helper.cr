@@ -187,6 +187,8 @@ module Crystal
           current_type.include type
         end
       end
+    rescue ex
+      node_name.raise ex.message
     end
 
     def process_lib_def(node : LibDef)
