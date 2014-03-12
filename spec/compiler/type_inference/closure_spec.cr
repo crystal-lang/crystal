@@ -28,7 +28,7 @@ describe "Type inference: closure" do
     call.target_def.closured_vars.should eq([meta_var])
   end
 
-  pending "marks variable as closured in block" do
+  it "marks variable as closured in block" do
     result = assert_type("
       def foo
         yield
@@ -49,5 +49,17 @@ describe "Type inference: closure" do
     meta_var.closured.should be_true
 
     block.closured_vars.should eq([meta_var])
+  end
+
+  it "transforms block to fun literal" do
+    assert_type("
+      def foo(&block : Int32 ->)
+        block.call(1)
+      end
+
+      foo do |x|
+        x.to_f
+      end
+      ") { float64 }
   end
 end

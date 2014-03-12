@@ -390,9 +390,12 @@ module Crystal
     def visit(node : FunLiteral)
       fun_vars = @vars.dup
       node.def.args.each do |arg|
-        restriction = arg.restriction.not_nil!
-        restriction.accept self
-        arg.type = restriction.type.instance_type
+        # It can happen that the argument has a type already,
+        # when converting a block to a fun literal
+        if restriction = arg.restriction
+          restriction.accept self
+          arg.type = restriction.type.instance_type
+        end
         fun_vars[arg.name] = Var.new(arg.name, arg.type)
       end
 

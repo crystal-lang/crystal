@@ -54,4 +54,16 @@ describe "Code gen: closure" do
       f.call
     ").to_i.should eq(1)
   end
+
+  it "transforms block to fun literal" do
+    run("
+      def foo(&block : Int32 ->)
+        block.call(1)
+      end
+
+      foo do |x|
+        x + 1
+      end
+      ").to_i.should eq(2)
+  end
 end

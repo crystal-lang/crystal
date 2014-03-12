@@ -1434,6 +1434,10 @@ module Crystal
       create_closure_context block.closured_vars?, old_context
       create_local_copy_of_block_args(target_def, self_type, call_args)
 
+      if target_def.uses_block_arg
+        transform_block_to_fun_literal target_def, block
+      end
+
       Phi.open(self, node) do |phi|
         context.return_phi = phi
 
@@ -1443,6 +1447,18 @@ module Crystal
           phi.add @last, target_def.body.type?
         end
       end
+    end
+
+    def transform_block_to_fun_literal(target_def, block)
+      block_arg = target_def.block_arg.not_nil!
+      fun_literal_args = block.args.map { |ba| Arg.new_with_type(ba.name, ba.type) }
+      fun_literal_def = Def.new("->", fun_literal_args, block.body)
+      fun_literal = FunLiteral.new(fun_literal_def)
+      block_arg_type = target_def.vars.not_nil![block_arg.name].type as FunType
+      fun_literal_def.set_type(block_arg_type.return_type)
+      fun_literal.set_type(block_arg_type)
+      fun_literal.accept self
+      context.vars[block_arg.name] = LLVMVar.new(@last, fun_literal.type, true)
     end
 
     def codegen_dispatch(node, target_defs)
