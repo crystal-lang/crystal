@@ -552,18 +552,6 @@ module Crystal
     def check_special_call(atomic, location)
       if atomic.is_a?(Call) && (atomic_obj = atomic.obj)
         case atomic.name
-        # when "ptr"
-        #   if !(atomic_obj.is_a?(Var) || atomic_obj.is_a?(InstanceVar))
-        #     raise "can only get 'ptr' of variable or instance variable"
-        #   end
-        #   if atomic.args.length != 0
-        #     raise "wrong number of arguments for 'ptr' (#{atomic.args.length} for 0)"
-        #   end
-        #   if atomic.block
-        #     raise "'ptr' can't receive a block"
-        #   end
-        #   atomic = PointerOf.new(atomic_obj)
-        #   atomic.location = location
         when "responds_to?"
           if atomic.args.length != 1
             raise "wrong number of arguments for 'responds_to?' (#{atomic.args.length} for 1)"
@@ -703,13 +691,13 @@ module Crystal
         if @token.type == :"->"
           parse_indirect(ivar)
         else
+          @instance_vars.add name if @instance_vars
           skip_space
           if @token.type == :"::"
             next_token_skip_space
             ivar_type = parse_single_type
             DeclareVar.new(ivar, ivar_type)
           else
-            @instance_vars.add name if @instance_vars
             ivar
           end
         end

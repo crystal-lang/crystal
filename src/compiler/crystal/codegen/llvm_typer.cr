@@ -169,6 +169,10 @@ module Crystal
       @struct_cache[type] ||= create_llvm_struct_type(type)
     end
 
+    def create_llvm_struct_type(type : StaticArrayInstanceType)
+      llvm_type type
+    end
+
     def create_llvm_struct_type(type : InstanceVarContainer)
       LLVM.struct_type(type.llvm_name) do |a_struct|
         @struct_cache[type] = a_struct
@@ -265,6 +269,10 @@ module Crystal
       else
         llvm_type type
       end
+    end
+
+    def create_llvm_embedded_type(type : StaticArrayInstanceType)
+      llvm_type type
     end
 
     def create_llvm_embedded_type(type : NoReturnType)

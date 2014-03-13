@@ -60,4 +60,20 @@ describe "Type inference: declare var" do
         foo_i32
     end
   end
+
+  it "declares an instance variable in initialize" do
+    assert_type("
+      class Foo
+        def initialize
+          @x :: Int32
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      ") { int32 }
+  end
 end

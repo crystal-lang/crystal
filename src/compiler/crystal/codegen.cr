@@ -1021,8 +1021,12 @@ module Crystal
 
     def visit(node : DeclareVar)
       var = node.var
-      if var.is_a?(Var)
-        declare_var var
+      case var
+      when Var
+        llvm_var = declare_var var
+        @last = llvm_var.pointer
+      when InstanceVar
+        var.accept self
       end
       false
     end

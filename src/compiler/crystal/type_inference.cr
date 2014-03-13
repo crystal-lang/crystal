@@ -123,7 +123,11 @@ module Crystal
       when InstanceVar
         type = scope? || current_type
         if @untyped_def
-          node.raise "initializing an instance variable is not yet supported"
+          node.declared_type.accept self
+          node.type = node.declared_type.type.instance_type
+          ivar = lookup_instance_var var
+          ivar.bind_to node
+          var.bind_to node
         end
         if type.is_a?(NonGenericClassType)
           node.declared_type.accept self
