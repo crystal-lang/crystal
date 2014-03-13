@@ -28,106 +28,108 @@ ifdef linux
 end
 
 module Math
+  extend self
+
   E  = C.exp(1.0)
   PI = 3.14159265358979323846
 
-  def self.acos(value)
+  def acos(value)
     C.acos(value.to_f64)
   end
 
-  def self.acosh(value)
+  def acosh(value)
     C.acosh(value.to_f64)
   end
 
-  def self.asin(value)
+  def asin(value)
     C.asin(value.to_f64)
   end
 
-  def self.asinh(value)
+  def asinh(value)
     C.asinh(value.to_f64)
   end
 
-  def self.atan(value)
+  def atan(value)
     C.atan(value.to_f64)
   end
 
-  def self.atan2(y, x)
+  def atan2(y, x)
     C.atan2(y.to_f64, x.to_f64)
   end
 
-  def self.cbrt(value)
+  def cbrt(value)
     C.cbrt(value.to_f64)
   end
 
-  def self.cos(value)
+  def cos(value)
     C.cos(value.to_f64)
   end
 
-  def self.erf(value)
+  def erf(value)
     C.erf(value.to_f64)
   end
 
-  def self.erfc(value)
+  def erfc(value)
     C.erfc(value.to_f64)
   end
 
-  def self.exp(value)
+  def exp(value)
     C.exp(value.to_f64)
   end
 
-  def self.gamma(value)
+  def gamma(value)
     C.tgamma(value.to_f64)
   end
 
-  def self.hypot(x, y)
+  def hypot(x, y)
     C.hypot(x.to_f64, y.to_f64)
   end
 
-  def self.ldexp(flt, int : Int)
+  def ldexp(flt, int : Int)
     C.ldexp(flt.to_f64, int)
   end
 
-  def self.log(numeric)
+  def log(numeric)
     C.log(numeric.to_f64)
   end
 
-  def self.log(numeric, base)
+  def log(numeric, base)
     log(numeric) / log(base)
   end
 
-  def self.log10(numeric)
+  def log10(numeric)
     C.log10(numeric.to_f64)
   end
 
-  def self.log2(numeric)
+  def log2(numeric)
     C.log2(numeric.to_f64)
   end
 
-  def self.min(value1, value2)
+  def min(value1, value2)
     value1 <= value2 ? value1 : value2
   end
 
-  def self.max(value1, value2)
+  def max(value1, value2)
     value1 >= value2 ? value1 : value2
   end
 
-  def self.sin(value)
+  def sin(value)
     C.sin(value.to_f64)
   end
 
-  def self.sinh(value)
+  def sinh(value)
     C.sinh(value.to_f64)
   end
 
-  def self.tan(value)
+  def tan(value)
     C.tan(value.to_f64)
   end
 
-  def self.tanh(value)
+  def tanh(value)
     C.tanh(value.to_f64)
   end
 
-  def self.sqrt(value : Int)
+  def sqrt(value : Int)
     sqrt value.to_f64
   end
 end
