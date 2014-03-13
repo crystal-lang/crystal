@@ -28,7 +28,7 @@ end
 class Noise2DContext
   def initialize
     @rgradients = Array.new(256) { random_gradient }
-    @permutations = (0..256).to_a.shuffle!
+    @permutations = (0...256).to_a.shuffle!
     @origins = Array.new(4) { Vec2.new(0.0, 0.0) }
     @gradients = Array.new(4) { Vec2.new(0.0, 0.0) }
   end
