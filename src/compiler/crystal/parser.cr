@@ -2239,7 +2239,21 @@ module Crystal
         type = Self.new
         next_token_skip_space
       else
-        if @token.type == :"("
+        case @token.type
+        when :"{"
+          next_token_skip_space_or_newline
+          type = parse_type(allow_primitives)
+          check :"}"
+          next_token_skip_space
+          case type
+          when Array
+            type = make_tuple_type(type)
+          when ASTNode
+            type = make_tuple_type([type] of ASTNode)
+          else
+            raise "Bug"
+          end
+        when :"("
           next_token_skip_space_or_newline
           type = parse_type(allow_primitives)
           check :")"
@@ -2253,24 +2267,24 @@ module Crystal
             raise "Bug"
           end
           return
-        end
-
-        if allow_primitives
-          case @token.type
-          when :NUMBER
-            types << node_and_next_token(NumberLiteral.new(@token.value.to_s, @token.number_kind))
-            skip_space
-            return types
-          end
-        end
-
-        if @token.keyword?(:typeof)
-          type = parse_typeof
         else
-          type = parse_ident
-        end
+          if allow_primitives
+            case @token.type
+            when :NUMBER
+              types << node_and_next_token(NumberLiteral.new(@token.value.to_s, @token.number_kind))
+              skip_space
+              return types
+            end
+          end
 
-        skip_space
+          if @token.keyword?(:typeof)
+            type = parse_typeof
+          else
+            type = parse_ident
+          end
+
+          skip_space
+        end
       end
 
       while true
@@ -2334,6 +2348,10 @@ module Crystal
 
     def make_static_array_type(type, size)
       Generic.new(Path.new(["StaticArray"], true), [type, NumberLiteral.new(size, :i32)] of ASTNode)
+    end
+
+    def make_tuple_type(types)
+      Generic.new(Path.new(["Tuple"], true), types)
     end
 
     def parse_yield
