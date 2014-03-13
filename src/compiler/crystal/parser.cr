@@ -1215,7 +1215,7 @@ module Crystal
         new_hash_literal([] of ASTNode, [] of ASTNode)
       else
         # "{foo:" or "{Foo:" means a hash literal with symbol key
-        if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':'
+        if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':' && peek_next_char != ':'
           first_key = SymbolLiteral.new(@token.value.to_s)
           next_token
         else
