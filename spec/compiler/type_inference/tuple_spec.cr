@@ -34,4 +34,8 @@ describe "Type inference: tuples" do
     assert_error "{1, 'a'}[2]",
       "index out of bounds for tuple {Int32, Char}"
   end
+
+  it "can name a tuple type" do
+    assert_type("Tuple(Int32, Float64)") { tuple_of([int32, float64]).metaclass }
+  end
 end

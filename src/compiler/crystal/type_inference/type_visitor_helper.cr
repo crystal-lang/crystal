@@ -355,9 +355,17 @@ module Crystal
         node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
       end
 
-      if instance_type.type_vars.length != node.type_vars.length
-        node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
+      if instance_type.variadic
+        min_needed = instance_type.type_vars.length - 1
+        if node.type_vars.length < min_needed
+          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{min_needed}..)"
+        end
+      else
+        if instance_type.type_vars.length != node.type_vars.length
+          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.length} for #{instance_type.type_vars.length})"
+        end
       end
+
       node.instance_type = instance_type
       node.type_vars.each &.add_observer(node)
       node.update
