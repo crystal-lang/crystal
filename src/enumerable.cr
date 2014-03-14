@@ -65,6 +65,15 @@ module Enumerable(T)
     ary
   end
 
+  def compact_map(&block : T -> Nil | U)
+    ary = [] of U
+    each do |e|
+      v = yield e
+      ary << v if v
+    end
+    ary
+  end
+
   def select(&block : T ->)
     ary = [] of T
     each { |e| ary << e if yield e }

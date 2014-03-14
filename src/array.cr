@@ -274,7 +274,7 @@ class Array(T)
   end
 
   def compact
-    select { |x| !x.nil? }
+    compact_map { |x| x }
   end
 
   def compact!
