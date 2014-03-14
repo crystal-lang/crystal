@@ -543,6 +543,16 @@ describe "Type inference: def overload" do
       ") { int32.metaclass }
   end
 
+  it "gets free variable from union restriction (2)" do
+    assert_type("
+      def foo(x : Nil | U)
+        U
+      end
+
+      foo(nil || 1)
+      ") { int32.metaclass }
+  end
+
   it "gets free variable from union restriction without a union" do
     assert_type("
       def foo(x : Nil | U)

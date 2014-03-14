@@ -203,11 +203,15 @@ module Crystal
 
     def restrict(other : Union, owner, type_lookup, free_vars)
       types = [] of Type
+      discarded = [] of Type
       other.types.each do |other_type|
         self.union_types.each do |type|
+          next if discarded.includes?(type)
+
           restricted = type.restrict(other_type, owner, type_lookup, free_vars)
           if restricted
             types << restricted
+            discarded << type
             break
           end
         end
