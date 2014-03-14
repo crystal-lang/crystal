@@ -4,3 +4,4 @@
 .crystal
 coverage/
 deps/
+.build
