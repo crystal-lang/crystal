@@ -201,6 +201,20 @@ module Crystal
       self == type || union_types.any? &.is_restriction_of?(type, owner)
     end
 
+    def restrict(other : Union, owner, type_lookup, free_vars)
+      types = [] of Type
+      other.types.each do |other_type|
+        self.union_types.each do |type|
+          restricted = type.restrict(other_type, owner, type_lookup, free_vars)
+          if restricted
+            types << restricted
+            break
+          end
+        end
+      end
+      program.type_merge_union_of(types)
+    end
+
     def restrict(other : Type | Generic, owner, type_lookup, free_vars)
       types = [] of Type
       union_types.each do |type|
