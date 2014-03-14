@@ -6,9 +6,9 @@ module Crystal
 
     def llvm_config
       @llvm_config ||= begin
-        if system("which llvm-config-3.3 > /dev/null") == 0
+        if system("which llvm-config-3.3 > /dev/null 2>&1") == 0
           "llvm-config-3.3"
-        elsif system("which llvm-config > /dev/null") == 0
+        elsif system("which llvm-config > /dev/null 2>&1") == 0
           "llvm-config"
         else
           raise "Couldn't determine llvm-config binary"
