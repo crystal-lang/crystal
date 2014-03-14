@@ -2,6 +2,11 @@
 SCRIPT_PATH=`dirname $(readlink $0 || echo $0)`
 DEPS_DIR="$SCRIPT_PATH/../deps"
 
+CRYSTAL_DIR="$SCRIPT_PATH/../.build"
+if [ ! -x $CRYSTAL_DIR/crystal ] ; then
+  CRYSTAL_DIR=$DEPS_DIR
+fi
+
 OS_NAME=`uname -s`
 HW_NAME=`uname -m`
 EXTRACT_FLAG="z"
@@ -72,4 +77,4 @@ fi
 
 export PATH="$DEPS_DIR/llvm/bin":$PATH
 export CRYSTAL_PATH="$SCRIPT_PATH/../src:libs"
-"$DEPS_DIR/crystal" "$@"
+"$CRYSTAL_DIR/crystal" "$@"
