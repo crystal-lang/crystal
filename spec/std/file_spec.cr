@@ -107,4 +107,23 @@ describe "File" do
     rescue Errno
     end
   end
+
+  describe "size" do
+    assert { File.size("#{__DIR__}/data/test_file.txt").should eq(240) }
+    assert do
+      File.open("#{__DIR__}/data/test_file.txt", "r") do |file|
+        file.size.should eq(240)
+      end
+    end
+  end
+
+  describe "cmp" do
+    it "compares two equal files" do
+      File.cmp("#{__DIR__}/data/test_file.txt", "#{__DIR__}/data/test_file.txt").should be_true
+    end
+
+    it "compares two different files" do
+      File.cmp("#{__DIR__}/data/test_file.txt", "#{__DIR__}/data/test_file.ini").should be_false
+    end
+  end
 end
