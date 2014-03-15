@@ -324,9 +324,8 @@ module Crystal
         must_compile = true
 
         if !compiler.llc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
-          cmd_output = system "cmp -s #{bc_name} #{bc_name_new}"
-          if cmd_output == 0
-            system "rm #{bc_name_new}"
+          if File.cmp(bc_name, bc_name_new)
+            File.delete bc_name_new
             must_compile = false
           end
         end
