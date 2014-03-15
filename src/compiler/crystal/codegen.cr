@@ -672,14 +672,11 @@ module Crystal
 
     def visit(node : TupleLiteral)
       type = node.type as TupleInstanceType
-      struct_type = alloca llvm_type(type)
-      i = 0
-      node.exps.zip(type.tuple_types) do |exp, tuple_type|
+      @last = allocate_tuple(type) do |tuple_type, i|
+        exp = node.exps[i]
         exp.accept self
-        assign aggregate_index(struct_type, i), tuple_type, exp.type, @last
-        i += 1
+        {exp.type, @last}
       end
-      @last = struct_type
       false
     end
 
@@ -1189,7 +1186,15 @@ module Crystal
       elsif replacement = node.syntax_replacement
         accept replacement
       else
-        @last = int(node.type.type_id)
+        node_type = node.type
+        # Special case: if the type is a type tuple we need to create a tuple for it
+        if node_type.is_a?(TupleInstanceType)
+          @last = allocate_tuple(node_type) do |tuple_type, i|
+            {tuple_type, int(tuple_type.type_id)}
+          end
+        else
+          @last = int(node.type.type_id)
+        end
       end
       false
     end
@@ -2241,6 +2246,15 @@ module Crystal
       end
       memset @last, int8(0), size_of(struct_type)
       @last
+    end
+
+    def allocate_tuple(type)
+      struct_type = alloca llvm_type(type)
+      type.tuple_types.each_with_index do |tuple_type, i|
+        exp_type, value = yield tuple_type, i
+        assign aggregate_index(struct_type, i), tuple_type, exp_type, value
+      end
+      struct_type
     end
 
     def malloc(type)

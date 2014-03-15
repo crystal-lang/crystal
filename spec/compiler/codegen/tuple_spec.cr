@@ -59,4 +59,27 @@ describe "Code gen: tuple" do
       foo({1, 2, 3})
       ").to_i.should eq(2)
   end
+
+  it "accesses a tuple type and creates instance from it" do
+    run("
+      class Tuple
+        def types
+          T
+        end
+      end
+
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      t = {Foo.new(1)}
+      f = t.types[0].new(2)
+      f.x
+      ").to_i.should eq(2)
+  end
 end

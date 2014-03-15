@@ -1507,6 +1507,14 @@ module Crystal
       true
     end
 
+    def instance_type
+      program.tuple.instantiate tuple_types.map(&.instance_type)
+    end
+
+    def metaclass
+      program.tuple.instantiate tuple_types.map(&.metaclass)
+    end
+
     def to_s
       "{#{@tuple_types.join ", "}}"
     end

@@ -38,4 +38,17 @@ describe "Type inference: tuples" do
   it "can name a tuple type" do
     assert_type("Tuple(Int32, Float64)") { tuple_of([int32, float64]).metaclass }
   end
+
+  it "types T as a tuple of metalcasses" do
+    assert_type("
+      class Tuple
+        def types
+          T
+        end
+      end
+
+      x = {1, 1.5, 'a'}
+      x.types
+      ") { tuple_of [int32.metaclass, float64.metaclass, char.metaclass] }
+  end
 end
