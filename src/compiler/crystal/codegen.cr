@@ -708,14 +708,7 @@ module Crystal
       @last = (check_main_fun fun_literal_name, the_fun).fun
 
       if is_closure
-        tramp_ptr = array_malloc(LLVM::Int8, int(32))
-        call @mod.trampoline_init(@llvm_mod), [
-          tramp_ptr,
-          bit_cast(@last, pointer_type(LLVM::Int8)),
-          bit_cast(context.closure_ptr.not_nil!, pointer_type(LLVM::Int8))
-        ]
-        @last = call @mod.trampoline_adjust(@llvm_mod), [tramp_ptr]
-        @last = cast_to @last, node.type
+        trampoline_init node.type, @last, context.closure_ptr.not_nil!
       end
 
       false
@@ -734,14 +727,7 @@ module Crystal
 
       if call_self
         wrapper = trampoline_wrapper(node.call.target_def, last_fun)
-        tramp_ptr = array_malloc(LLVM::Int8, int(32))
-        call @mod.trampoline_init(@llvm_mod), [
-          tramp_ptr,
-          bit_cast(wrapper.fun, pointer_type(LLVM::Int8)),
-          bit_cast(call_self, pointer_type(LLVM::Int8))
-        ]
-        @last = call @mod.trampoline_adjust(@llvm_mod), [tramp_ptr]
-        @last = cast_to @last, node.type
+        trampoline_init node.type, wrapper.fun, call_self
       end
 
       false
@@ -768,6 +754,17 @@ module Crystal
           end
         end
       end
+    end
+
+    def trampoline_init(type, wrapper, nest)
+      tramp_ptr = array_malloc(LLVM::Int8, int(32))
+      call @mod.trampoline_init(@llvm_mod), [
+        tramp_ptr,
+        bit_cast(wrapper, pointer_type(LLVM::Int8)),
+        bit_cast(nest, pointer_type(LLVM::Int8))
+      ]
+      @last = call @mod.trampoline_adjust(@llvm_mod), [tramp_ptr]
+      @last = cast_to @last, type
     end
 
     def visit(node : Expressions)
