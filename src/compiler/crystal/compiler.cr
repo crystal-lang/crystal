@@ -1,8 +1,9 @@
 require "option_parser"
 require "thread"
+require "io"
 
 lib C
-  fun tmpnam(result : UInt8*) : UInt8*
+  fun mkstemp(result : UInt8*) : Int32
 end
 
 module Crystal
@@ -112,7 +113,10 @@ module Crystal
         output_filename = @output_filename
       else
         if @run
-          output_filename = String.new(C.tmpnam(nil))
+          output_filename = "#{ENV["TMPDIR"] || "/tmp"}/.crystal-run.XXXXXX"
+          tmp_fd = C.mkstemp output_filename.cstr
+          raise "Error creating temp file #{output_filename}" if tmp_fd == -1
+          C.close tmp_fd
         else
           output_filename = File.basename(filename, File.extname(filename))
         end
