@@ -1,7 +1,8 @@
-.tags
-.tags_sorted_by_file
-.vagrant
-.crystal
+/.tags
+/.tags_sorted_by_file
+/.vagrant
+.crystal/
 coverage/
-deps/
-.build
+/deps/
+/.build/
+.*.swp
