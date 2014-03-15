@@ -126,4 +126,14 @@ describe "File" do
       File.cmp("#{__DIR__}/data/test_file.txt", "#{__DIR__}/data/test_file.ini").should be_false
     end
   end
+
+  describe "delete" do
+    it "deletes a file" do
+      filename = "#{__DIR__}/data/temp1.txt"
+      File.open(filename, "w") {}
+      File.exists?(filename).should be_true
+      File.delete(filename)
+      File.exists?(filename).should be_false
+    end
+  end
 end
