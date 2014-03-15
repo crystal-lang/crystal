@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-SCRIPT_PATH=`dirname $(readlink $0 || echo $0)`
-DEPS_DIR="$SCRIPT_PATH/../deps"
+SCRIPT_ROOT="$(dirname $(readlink $0 || echo $0))/.."
+DEPS_DIR="$SCRIPT_ROOT/deps"
 
-CRYSTAL_DIR="$SCRIPT_PATH/../.build"
-if [ ! -x $CRYSTAL_DIR/crystal ] ; then
-  CRYSTAL_DIR=$DEPS_DIR
-fi
+CRYSTAL_DIR="$SCRIPT_ROOT/.build"
+[ -x $CRYSTAL_DIR/crystal ] || CRYSTAL_DIR=$DEPS_DIR
 
 OS_NAME=`uname -s`
 HW_NAME=`uname -m`
@@ -76,5 +74,5 @@ if [ ! -d  "$DEPS_DIR" ]; then
 fi
 
 export PATH="$DEPS_DIR/llvm/bin":$PATH
-export CRYSTAL_PATH="$SCRIPT_PATH/../src:libs"
+export CRYSTAL_PATH="$SCRIPT_ROOT/src:libs"
 "$CRYSTAL_DIR/crystal" "$@"
