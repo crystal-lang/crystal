@@ -1,6 +1,8 @@
 # Perlin noise benchmark: https://github.com/nsf/pnoise
 
 struct Vec2
+  ZERO = Vec2.new(0.0, 0.0)
+
   def initialize(@x, @y)
   end
   getter :x
@@ -29,10 +31,10 @@ class Noise2DContext
   def initialize
     @rgradients = Array.new(256) { random_gradient }
     @permutations = (0...256).to_a.shuffle!
-    @origins = Array.new(4) { Vec2.new(0.0, 0.0) }
-    @gradients = Array.new(4) { Vec2.new(0.0, 0.0) }
+    @origins = {Vec2::ZERO, Vec2::ZERO, Vec2::ZERO, Vec2::ZERO}
+    @gradients = {Vec2::ZERO, Vec2::ZERO, Vec2::ZERO, Vec2::ZERO}
   end
- 
+
   def get_gradient(x, y)
     idx = @permutations[x & 255] + @permutations[y & 255]
     @rgradients[idx & 255]
@@ -46,15 +48,19 @@ class Noise2DContext
     x1 = x0 + 1
     y1 = y0 + 1
 
-    @gradients[0] = get_gradient(x0, y0)
-    @gradients[1] = get_gradient(x1, y0)
-    @gradients[2] = get_gradient(x0, y1)
-    @gradients[3] = get_gradient(x1, y1)
+    @gradients = {
+      get_gradient(x0, y0),
+      get_gradient(x1, y0),
+      get_gradient(x0, y1),
+      get_gradient(x1, y1),
+    }
 
-    @origins[0] = Vec2.new(x0f + 0.0, y0f + 0.0)
-    @origins[1] = Vec2.new(x0f + 1.0, y0f + 0.0)
-    @origins[2] = Vec2.new(x0f + 0.0, y0f + 1.0)
-    @origins[3] = Vec2.new(x0f + 1.0, y0f + 1.0)    
+    @origins = {
+      Vec2.new(x0f + 0.0, y0f + 0.0),
+      Vec2.new(x0f + 1.0, y0f + 0.0),
+      Vec2.new(x0f + 0.0, y0f + 1.0),
+      Vec2.new(x0f + 1.0, y0f + 1.0),
+    }
   end
 
   def get(x, y)
@@ -68,27 +74,28 @@ class Noise2DContext
     vx0 = lerp(v0, v1, fx)
     vx1 = lerp(v2, v3, fx)
     fy = smooth(y - @origins[0].y)
-    lerp(vx0, vx1, fy)    
+    lerp(vx0, vx1, fy)
   end
 end
 
-symbols = [' ', '░', '▒', '▓', '█', '█']
-pixels = Array.new(256) { Array.new(256, ' ') }
+symbols = [" ", "░", "▒", "▓", "█", "█"]
+pixels = Array.new(256) { Array.new(256, 0.0) }
 
 n2d = Noise2DContext.new
 
-100.times do |i| 
+100.times do |i|
   256.times do |y|
     256.times do |x|
       v = n2d.get(x * 0.1, (y + (i * 128)) * 0.1) * 0.5 + 0.5
-      pixels[y][x] = symbols[(v / 0.2).to_i]
+      pixels[y][x] = v
     end
   end
 end
 
 256.times do |y|
   256.times do |x|
-    print(pixels[y][x])
+    v = pixels[y][x]
+    print(symbols[(v / 0.2).to_i])
   end
   puts
 end
