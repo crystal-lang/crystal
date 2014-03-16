@@ -282,4 +282,7 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun verify_module = LLVMVerifyModule(module : ModuleRef, action : VerifierFailureAction, outmessage : UInt8**) : Int32
   fun link_in_jit = LLVMLinkInJIT
   fun link_in_mc_jit = LLVMLinkInMCJIT
+  fun start_multithreaded = LLVMStartMultithreaded : Int32
+  fun stop_multithreaded = LLVMStopMultithreaded
+  fun is_multithreaded = LLVMIsMultithreaded : Int32
 end

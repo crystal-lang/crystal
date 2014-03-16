@@ -25,6 +25,7 @@ module Crystal
     getter! output_dir
     getter! mutex
     getter! units
+    getter multithreaded
 
     def initialize
       @dump_ll = false
@@ -39,6 +40,7 @@ module Crystal
       @command = nil
       @cross_compile = nil
       @llc_flags_changed = true
+      @multithreaded = false
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -188,9 +190,13 @@ module Crystal
           system "#{opt} #{compilation_unit_bc_name} -O3 -o #{compilation_unit_bc_name}" if @release
           puts "llc #{compilation_unit_bc_name} #{llc_flags} -o #{compilation_unit_s_name} && clang #{compilation_unit_s_name} -o #{output_filename} #{lib_flags(program)}"
         else
+          @multithreaded = LLVM.start_multithreaded
+
           # First write bitcodes: it breaks if we paralellize it
-          timing("Codegen (bitcode)") do
-            units.each &.write_bitcode
+          unless @multithreaded
+            timing("Codegen (bitcode)") do
+              units.each &.write_bitcode
+            end
           end
 
           @mutex = Mutex.new
@@ -210,10 +216,12 @@ module Crystal
 
           @llc_flags_changed = llc_flags_changed
 
-          timing("Codegen (llc+clang)") do
+          msg = @multithreaded ? "Codegen (bitcode+llc+clang)" : "Codegen (llc+clang)"
+          timing(msg) do
             threads = Array.new(8) do
               Thread.new(self, ->(compiler : self) do
                 while unit = compiler.mutex.synchronize { compiler.units.shift? }
+                  unit.write_bitcode if compiler.multithreaded
                   unit.compile
                 end
               end)

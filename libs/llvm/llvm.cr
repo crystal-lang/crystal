@@ -129,6 +129,18 @@ module LLVM
     LibLLVM.set_initializer(value, initializer)
   end
 
+  def self.start_multithreaded
+    LibLLVM.start_multithreaded != 0
+  end
+
+  def self.stop_multithreaded
+    LibLLVM.stop_multithreaded
+  end
+
+  def self.multithreaded?
+    LibLLVM.is_multithreaded != 0
+  end
+
   Void = LibLLVM.void_type
   Int1 = LibLLVM.int_type(1)
   Int8 = LibLLVM.int_type(8)
