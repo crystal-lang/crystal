@@ -101,7 +101,7 @@ module Crystal
       LLVM.set_name @argv, "argv"
 
       builder = LLVM::Builder.new
-      @builder = CrystalLLVMBuilder.new builder, self
+      @builder = DebugLLVMBuilder.new builder, self
 
       @modules = {"" => @main_mod} of String => LLVM::Module
 
@@ -129,6 +129,11 @@ module Crystal
       context.return_type = @main_ret_type
 
       create_closure_context @mod.closured_vars?
+
+      @empty_md_list = metadata([0])
+      @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
+      @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)]
+      # @subprograms = [] of LibLLVM::ValueRef
     end
 
     def define_symbol_table(llvm_mod)
@@ -144,6 +149,10 @@ module Crystal
 
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
+
+      @modules.each do |name, mod|
+        add_compile_unit_metadata(mod, name == "" ? "main" : name)
+      end
 
       @llvm_mod.dump if DUMP_LLVM
     end
@@ -1627,6 +1636,13 @@ module Crystal
         args = codegen_fun_signature(mangled_name, target_def, self_type, is_closure)
 
         if !target_def.is_a?(External) || is_exported_fun
+          unless target_def.name == MAIN_NAME
+            if def_md = def_metadata(context.fun, target_def)
+              @subprograms[@llvm_mod] ||= [] of LibLLVM::ValueRef?
+              @subprograms[@llvm_mod] << def_md
+            end
+          end
+
           new_entry_block
 
           setup_closure_context target_def, is_closure
@@ -2473,6 +2489,16 @@ module Crystal
       value = yield old_context
       @context = old_context
       value
+    end
+
+    def visit_any(node)
+      @current_node = node
+    end
+
+    def accept(node)
+      old_current_node = @current_node
+      node.accept self
+      @current_node = old_current_node
     end
 
     def block_returns?

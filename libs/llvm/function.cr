@@ -24,6 +24,10 @@ class LLVM::Function
     LLVM.dump @fun
   end
 
+  def name
+    String.new LibLLVM.get_value_name(@fun)
+  end
+
   def llvm_function
     @fun
   end

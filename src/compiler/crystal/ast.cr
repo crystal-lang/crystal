@@ -1602,6 +1602,7 @@ module Crystal
       external.varargs = varargs
       external.set_type(return_type)
       external.fun_def = fun_def
+      external.location = fun_def.location
       fun_def.external = external
       external
     end

@@ -194,6 +194,12 @@ class File
     lines
   end
 
+  def self.write(filename, content)
+    File.open(filename, "w") do |file|
+      file.print(content)
+    end
+  end
+
   def self.join(parts = [] of String)
     return "" if parts.empty?
 

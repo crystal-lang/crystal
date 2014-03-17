@@ -46,11 +46,15 @@ module Crystal
       @end = false
     end
 
+    def wrap(value)
+      value
+    end
+
     macro self.forward(name)
       "
       def #{name}
         return llvm_nil if @end
-        @builder.#{name}
+        wrap(@builder.#{name})
       end
       "
     end
@@ -59,7 +63,7 @@ module Crystal
       "
       def #{name}(#{args})
         return llvm_nil if @end
-        @builder.#{name}(#{args})
+        wrap(@builder.#{name}(#{args}))
       end
       "
     end
@@ -68,7 +72,7 @@ module Crystal
       "
       def #{name}(#{def_args})
         return llvm_nil if @end
-        @builder.#{name}(#{call_args})
+        wrap(@builder.#{name}(#{call_args}))
       end
       "
     end
@@ -77,7 +81,7 @@ module Crystal
       "
       def #{name}(#{args}, name = \"\")
         return llvm_nil if @end
-        @builder.#{name}(#{args}, name)
+        wrap(@builder.#{name}(#{args}, name))
       end
       "
     end
