@@ -16,15 +16,20 @@ module Crystal
     include TypeVisitorHelper
 
     getter mod
-    getter! scope
+    property! scope
     getter! typed_def
-    getter! untyped_def
+    property! untyped_def
     getter block
     getter vars
+    property parent
+    property call
     property type_lookup
     property in_fun_literal
+    property free_vars
+    property yield_vars
+    property type_filter_stack
 
-    def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [nil] of Hash(String, TypeFilter)?)
+    def initialize(@mod, @vars = {} of String => Var, @typed_def = nil)
       @types = [@mod] of Type
       @while_stack = [] of While
       typed_def = @typed_def
@@ -382,7 +387,14 @@ module Crystal
       end
 
       pushing_type_filters do
-        block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
+        block_visitor = TypeVisitor.new(mod, block_vars, @typed_def)
+        block_visitor.type_filter_stack = @type_filter_stack
+        block_visitor.yield_vars = @yield_vars
+        block_visitor.free_vars = @free_vars
+        block_visitor.untyped_def = @untyped_def
+        block_visitor.call = @call
+        block_visitor.scope = node.scope || @scope
+        block_visitor.parent = parent
         block_visitor.block = node
         block_visitor.type_lookup = type_lookup
         node.body.accept block_visitor
@@ -408,9 +420,16 @@ module Crystal
       node.bind_to node.def
       node.def.bind_to node.def.body
 
-      block_visitor = TypeVisitor.new(mod, fun_vars, @scope, @parent, @call, @owner, node.def, node.def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
-      block_visitor.in_fun_literal = true
+      block_visitor = TypeVisitor.new(mod, fun_vars, node.def)
+      block_visitor.type_filter_stack = @type_filter_stack
+      block_visitor.yield_vars = @yield_vars
+      block_visitor.free_vars = @free_vars
+      block_visitor.untyped_def = node.def
+      block_visitor.call = @call
+      block_visitor.scope = @scope
+      block_visitor.parent = parent
       block_visitor.type_lookup = type_lookup
+      block_visitor.in_fun_literal = true
       node.def.body.accept block_visitor
 
       false
@@ -771,14 +790,15 @@ module Crystal
 
       # If the then branch exists, we can safely assume that tyhe type
       # filters after the if will be those of the condition, negated
-      if node.then.no_returns? && cond_type_filters && !@type_filter_stack.empty?
-        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, negate_filters(cond_type_filters))
+      type_filter_stack = @type_filter_stack
+      if node.then.no_returns? && cond_type_filters && (type_filter_stack && !type_filter_stack.empty?)
+        type_filter_stack[-1] = and_type_filters(type_filter_stack.last, negate_filters(cond_type_filters))
       end
 
       # If the else branch exits, we can safely assume that the type
       # filters in the condition will still apply after the if
-      if (node.else.no_returns? || node.else.returns?) && cond_type_filters && !@type_filter_stack.empty?
-        @type_filter_stack[-1] = and_type_filters(@type_filter_stack.last, cond_type_filters)
+      if (node.else.no_returns? || node.else.returns?) && cond_type_filters && (type_filter_stack && !type_filter_stack.empty?)
+        type_filter_stack[-1] = and_type_filters(type_filter_stack.last, cond_type_filters)
       end
 
       false
@@ -1197,7 +1217,7 @@ module Crystal
 
     def build_var_filter(var)
       filters = [] of TypeFilter
-      @type_filter_stack.each do |hash|
+      @type_filter_stack.try &.each do |hash|
         if hash
           filter = hash[var.name]?
           filters.push filter if filter
@@ -1250,9 +1270,10 @@ module Crystal
     end
 
     def pushing_type_filters(filters = nil)
-      @type_filter_stack.push(filters)
+      type_filter_stack = (@type_filter_stack ||= [nil] of Hash(String, TypeFilter)?)
+      type_filter_stack.push(filters)
       yield
-      @type_filter_stack.pop
+      type_filter_stack.pop
     end
 
     def new_type_filter

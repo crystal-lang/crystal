@@ -6,7 +6,7 @@ module Crystal
       superclass = if node_superclass = node.superclass
                      lookup_path_type node_superclass
                    elsif node.struct
-                    mod.value
+                     mod.value
                    else
                      mod.reference
                    end
@@ -296,7 +296,10 @@ module Crystal
         end
         external.set_type(nil)
 
-        visitor = TypeVisitor.new(@mod, vars, @mod, self, nil, nil, external, external, args.map(&.type))
+        visitor = TypeVisitor.new(@mod, vars, external)
+        visitor.untyped_def = external
+        visitor.scope = @mod
+        visitor.parent = self
         begin
           node_body.accept visitor
         rescue ex : Crystal::Exception

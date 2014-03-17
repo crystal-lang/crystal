@@ -151,7 +151,13 @@ module Crystal
           match_owner.add_def_instance(match.def.object_id, lookup_arg_types, block_type, typed_def) if use_cache
           if typed_def.body
             bubbling_exception do
-              visitor = TypeVisitor.new(mod, typed_def_args, lookup_self_type, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars, yield_vars)
+              visitor = TypeVisitor.new(mod, typed_def_args, typed_def)
+              visitor.yield_vars = yield_vars
+              visitor.free_vars = match.free_vars
+              visitor.untyped_def = match.def
+              visitor.call = self
+              visitor.scope = lookup_self_type
+              visitor.parent = parent_visitor
               visitor.type_lookup = match.type_lookup
               typed_def.body.accept visitor
             end
