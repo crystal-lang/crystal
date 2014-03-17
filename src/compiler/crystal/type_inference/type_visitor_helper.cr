@@ -411,7 +411,7 @@ module Crystal
           target_type = type.not_nil!.lookup_type(node.names[1 .. -1])
         end
       else
-        base_lookup = node.global ? mod : (@scope || @types.last)
+        base_lookup = node.global ? mod : (@type_lookup || @scope || @types.last)
         target_type = base_lookup.lookup_type node
 
         unless target_type

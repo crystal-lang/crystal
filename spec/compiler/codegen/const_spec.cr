@@ -91,7 +91,23 @@ describe "Codegen: const" do
   end
 
   it "uses correct types lookup" do
-    run("module A; class B; def foo; 1; end; end; C = B.new; end; def foo; A::C.foo; end; foo").to_i.should eq(1)
+    run("
+      module A
+        class B
+          def foo
+            1
+          end
+        end
+
+        C = B.new;
+      end
+
+      def foo
+        A::C.foo
+      end
+
+      foo
+      ").to_i.should eq(1)
   end
 
   it "codegens variable assignment in const" do

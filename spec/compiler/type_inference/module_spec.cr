@@ -361,4 +361,26 @@ describe "Type inference: module" do
       end
       ", "cyclic include detected"
   end
+
+  it "finds types close to included module" do
+    assert_type("
+      module Foo
+        class T
+        end
+
+        def foo
+          T
+        end
+      end
+
+      class Bar
+        class T
+        end
+
+        include Foo
+      end
+
+      Bar.new.foo
+      ") { types["Foo"].types["T"].metaclass }
+  end
 end

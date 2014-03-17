@@ -147,13 +147,12 @@ module Crystal
         match_owner = match.owner
         typed_def = match_owner.lookup_def_instance(match.def.object_id, lookup_arg_types, block_type) if use_cache
         unless typed_def
-          prepared_typed_def = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types, fun_literal)
-          typed_def = prepared_typed_def.typed_def
-          typed_def_args = prepared_typed_def.args
+          typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types, fun_literal)
           match_owner.add_def_instance(match.def.object_id, lookup_arg_types, block_type, typed_def) if use_cache
           if typed_def.body
             bubbling_exception do
               visitor = TypeVisitor.new(mod, typed_def_args, lookup_self_type, parent_visitor, self, owner, match.def, typed_def, match.arg_types, match.free_vars, yield_vars)
+              visitor.type_lookup = match.type_lookup
               typed_def.body.accept visitor
             end
           end
@@ -756,7 +755,7 @@ module Crystal
         args[var.name] = var
       end
 
-      PreparedTypedDef.new(typed_def, args)
+      {typed_def, args}
     end
   end
 end

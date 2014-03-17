@@ -21,6 +21,7 @@ module Crystal
     getter! untyped_def
     getter block
     getter vars
+    property type_lookup
     property in_fun_literal
 
     def initialize(@mod, @vars = {} of String => Var, @scope = nil, @parent = nil, @call = nil, @owner = nil, @untyped_def = nil, @typed_def = nil, @arg_types = nil, @free_vars = nil, @yield_vars = nil, @type_filter_stack = [nil] of Hash(String, TypeFilter)?)
@@ -268,7 +269,7 @@ module Crystal
 
       target.bind_to value
 
-      current_type.types[target.names.first] = Const.new(@mod, current_type, target.names.first, value, @types.clone, @scope)
+      current_type.types[target.names.first] = Const.new(@mod, current_type, target.names.first, value, @types.dup, @scope)
 
       node.type = @mod.nil
     end
@@ -383,6 +384,7 @@ module Crystal
       pushing_type_filters do
         block_visitor = TypeVisitor.new(mod, block_vars, (node.scope || @scope), @parent, @call, @owner, @untyped_def, @typed_def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
         block_visitor.block = node
+        block_visitor.type_lookup = type_lookup
         node.body.accept block_visitor
       end
 
@@ -408,6 +410,7 @@ module Crystal
 
       block_visitor = TypeVisitor.new(mod, fun_vars, @scope, @parent, @call, @owner, node.def, node.def, @arg_types, @free_vars, @yield_vars, @type_filter_stack)
       block_visitor.in_fun_literal = true
+      block_visitor.type_lookup = type_lookup
       node.def.body.accept block_visitor
 
       false
@@ -695,10 +698,10 @@ module Crystal
       case type
       when Const
         unless type.value.type?
-          old_types, old_scope, old_vars = @types, @scope, @vars
-          @types, @scope, @vars = type.scope_types, type.scope, ({} of String => Var)
+          old_types, old_scope, old_vars, old_type_lookup = @types, @scope, @vars, @type_lookup
+          @types, @scope, @vars, @type_lookup = type.scope_types, type.scope, ({} of String => Var), nil
           type.value.accept self
-          @types, @scope, @vars = old_types, old_scope, old_vars
+          @types, @scope, @vars, @type_lookup = old_types, old_scope, old_vars, old_type_lookup
         end
         node.target_const = type
         node.bind_to type.value

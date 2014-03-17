@@ -87,5 +87,14 @@ module Crystal
       @type = @root
       false
     end
+
+    def visit(node : TypeOf)
+      visitor = TypeVisitor.new(@root.program, {"self" => Var.new("self", @root.instance_type)})
+      node.expressions.each do |exp|
+        exp.accept visitor
+      end
+      @type = @root.program.type_merge(node.expressions.map &.type)
+      false
+    end
   end
 end
