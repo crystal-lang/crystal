@@ -207,7 +207,7 @@ module Enumerable(T)
         objmax = elem
       end
     end
-    [objmin, objmax]
+    {objmin, objmax}
   end
 
   def partition(&block : T -> U)
@@ -216,7 +216,7 @@ module Enumerable(T)
       value = yield(e)
       value ? a.push(e) : b.push(e)
     end
-    [a, b]
+    {a, b}
   end
 
   def group_by(&block : T -> U)

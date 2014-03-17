@@ -30,7 +30,7 @@ describe "Enumerable" do
   end
 
   describe "minmax" do
-    assert { [1, 2, 3].minmax.should eq([1, 3]) }
+    assert { [1, 2, 3].minmax.should eq({1, 3}) }
   end
 
   describe "min_by" do
@@ -42,7 +42,7 @@ describe "Enumerable" do
   end
 
   describe "minmax_by" do
-    assert { [-1, -2, -3].minmax_by { |x| -x }.should eq([-1, -3]) }
+    assert { [-1, -2, -3].minmax_by { |x| -x }.should eq({-1, -3}) }
   end
 
   describe "take" do
@@ -72,7 +72,7 @@ describe "Enumerable" do
   end
 
   describe "partition" do
-    assert { [1, 2, 2, 3].partition { |x| x == 2 }.should eq([[2, 2], [1, 3]]) }
+    assert { [1, 2, 2, 3].partition { |x| x == 2 }.should eq({[2, 2], [1, 3]}) }
   end
 
   describe "sum" do

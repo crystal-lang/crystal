@@ -246,7 +246,7 @@ class Hash(K, V)
     first = @first
     if first
       delete first.key
-      first
+      {first.key, first.value}
     else
       yield
     end

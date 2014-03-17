@@ -58,12 +58,12 @@ class DegreeDays
 
   def heating_degree(temp)
     deg = base_temperature - (temp + heating_insulation)
-    [deg, 0].max
+    {deg, 0}.max
   end
 
   def cooling_degree(temp)
     deg = (temp - cooling_insulation) - base_temperature
-    [deg, 0].max
+    {deg, 0}.max
   end
 
   def base_temperature

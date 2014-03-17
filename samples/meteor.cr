@@ -141,6 +141,22 @@ def print_sol(str)
   puts
 end
 
+class SolutionNode
+  def initialize(@x, @prev)
+  end
+  getter :x
+  getter :prev
+
+  def each
+    yield @x
+    p = prev
+    while y = p
+      yield y.x
+      p = p.prev
+    end
+  end
+end
+
 class Meteor
   def initialize(@masks : Masks, @stop_after)
     @nb = 0
@@ -155,21 +171,25 @@ class Meteor
     @nb += 2
     sol1 = to_utf8(cur)
     sol2 = sol1.reverse
-    @min = [sol1, sol2, @min].min
-    @max = [sol1, sol2, @max].max
+    @min = {sol1, sol2, @min}.min
+    @max = {sol1, sol2, @max}.max
     nb < @stop_after
   end
 
-  def search(board, i, cur)
+  def search(board, i, cur = nil)
     while bm(board, i) != 0 && (i < 50)
       i += 1
     end
 
-    return handle_sol(cur) if i >= 50
+    return handle_sol(cur) if i >= 50 && cur
 
-    (0...10).select{ |id| bm(board, id + 50) == 0 }.each do |id|
-      @masks[id][i].select{ |m| board & m == 0 }.each do |m|
-        return false if !search(board | m, i + 1, cur.dup.unshift(m))
+    (0...10).each do |id|
+      if bm(board, id + 50) == 0
+        @masks[id][i].each do |m|
+          if board & m == 0
+            return false if !search(board | m, i + 1, SolutionNode.new(m, cur))
+          end
+        end
       end
     end
 
@@ -180,7 +200,7 @@ end
 stop_after = (ARGV[0]? || 2098).to_i
 masks = filter_masks(make_masks)
 data = Meteor.new(masks, stop_after)
-data.search(0_u64, 0, [] of UInt64)
+data.search(0_u64, 0)
 puts "#{data.nb} solutions found"
 print_sol(data.min)
 print_sol(data.max)
