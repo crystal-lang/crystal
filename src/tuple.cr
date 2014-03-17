@@ -1,4 +1,6 @@
 class Tuple
+  include Enumerable(typeof((i = 0; self[i])))
+
   def each
     length.times do |i|
       yield self[i]
