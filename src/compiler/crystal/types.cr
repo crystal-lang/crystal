@@ -227,6 +227,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement sorted_defs"
     end
 
+    def splat_defs
+      raise "Bug: #{self} doesn't implement splat_defs"
+    end
+
     def add_def(a_def)
       raise "Bug: #{self} doesn't implement add_def"
     end
@@ -385,6 +389,11 @@ module Crystal
       match
     end
 
+    def match_splat_def_args(args, a_def, owner, type_lookup)
+      # TODO:
+      nil
+    end
+
     def match_arg(arg_type, arg : Arg, owner, type_lookup, free_vars)
       restriction = arg.type? || arg.restriction
       arg_type.not_nil!.restrict restriction, owner, type_lookup, free_vars
@@ -405,6 +414,16 @@ module Crystal
             if match.arg_types == arg_types
               return Matches.new(matches_array, true, owner)
             end
+          end
+        end
+      end
+
+      if matches_array.empty?
+        splat_defs = self.splat_defs[DefContainer::SplatDefKey.new(name, yields)]?
+        if splat_defs
+          splat_defs.each do |a_def|
+            match = match_splat_def_args(arg_types, a_def, owner, type_lookup)
+            matches_array.push match if match
           end
         end
       end
@@ -517,6 +536,7 @@ module Crystal
 
     make_tuple DefKey, restrictions, yields
     make_tuple SortedDefKey, name, length, yields
+    make_tuple SplatDefKey, name, yields
 
     def defs
       @defs ||= Hash(String, Hash(DefKey, Def)).new ->(h : Hash(String, Hash(DefKey, Def)), k : String) { h[k] = {} of DefKey => Def }
@@ -526,6 +546,10 @@ module Crystal
       @sorted_defs ||= Hash(SortedDefKey, Array(Def)).new ->(h : Hash(SortedDefKey, Array(Def)), k : SortedDefKey) { h[k] = [] of Def }
     end
 
+    def splat_defs
+      @splat_defs ||= Hash(SplatDefKey, Array(Def)).new ->(h : Hash(SplatDefKey, Array(Def)), k : SplatDefKey) { h[k] = [] of Def }
+    end
+
     def add_def(a_def)
       a_def.owner = self
       restrictions = Array(Type | ASTNode | Nil).new(a_def.args.length)
@@ -533,7 +557,11 @@ module Crystal
       key = DefKey.new(restrictions, !!a_def.yields)
       old_def = defs[a_def.name][key]?
       defs[a_def.name][key] = a_def
-      add_sorted_def(a_def)
+      if a_def.has_splat_argument?
+        add_splat_def(a_def)
+      else
+        add_sorted_def(a_def)
+      end
       old_def
     end
 
@@ -546,6 +574,17 @@ module Crystal
         end
       end
       sorted_defs << a_def
+    end
+
+    def add_splat_def(a_def)
+      splat_defs = self.splat_defs[SplatDefKey.new(a_def.name, !!a_def.yields)]
+      splat_defs.each_with_index do |ex_def, i|
+        if a_def.splat_arg_idx == ex_def.splat_arg_idx && a_def.is_restriction_of?(ex_def, self)
+          splat_defs.insert(i, a_def)
+          return
+        end
+      end
+      splat_defs << a_def
     end
 
     def macros
@@ -1290,6 +1329,7 @@ module Crystal
     delegate depth, @generic_class
     delegate defs, @generic_class
     delegate sorted_defs, @generic_class
+    delegate splat_defs, @generic_class
     delegate superclass, @generic_class
     delegate owned_instance_vars, @generic_class
     delegate instance_vars_in_initialize, @generic_class
@@ -1986,6 +2026,7 @@ module Crystal
 
     delegate defs, :"instance_type.generic_class.metaclass"
     delegate sorted_defs, :"instance_type.generic_class.metaclass"
+    delegate splat_defs, :"instance_type.generic_class.metaclass"
     delegate macros, :"instance_type.generic_class.metaclass"
     delegate type_vars, instance_type
     delegate :abstract, instance_type

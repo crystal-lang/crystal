@@ -1471,6 +1471,7 @@ module Crystal
       end
 
       args = [] of Arg
+      splat_arg_idx = -1
       ivar_assigns = [] of ASTNode
 
       if @token.type == :"."
@@ -1497,10 +1498,17 @@ module Crystal
 
       found_default_value = false
 
+      idx = 0
       case @token.type
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
+          if @token.type == :"*"
+            next_token_skip_space_or_newline
+            raise "only one splat argument allowed" unless splat_arg_idx == -1
+            splat_arg_idx = idx
+          end
+
           block_arg = parse_arg(args, ivar_assigns, true, pointerof(found_default_value))
           if block_arg
             if inputs = block_arg.fun.inputs
@@ -1511,10 +1519,16 @@ module Crystal
             check :")"
             break
           end
+          idx += 1
         end
         next_token_skip_statement_end
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
+          if @token.type == :"*"
+            next_token_skip_space_or_newline
+            raise "only one splat argument allowed" unless splat_arg_idx == -1
+            splat_arg_idx = idx
+          end
           block_arg = parse_arg(args, ivar_assigns, false, pointerof(found_default_value))
           if block_arg
             if inputs = block_arg.fun.inputs
@@ -1524,6 +1538,7 @@ module Crystal
             end
             break
           end
+          idx += 1
         end
         next_token_skip_statement_end
       else
@@ -1550,7 +1565,7 @@ module Crystal
 
       pop_def
 
-      node = klass.new name, args, body, receiver, block_arg, @yields
+      node = klass.new name, args, body, receiver, block_arg, @yields, splat_arg_idx
       node.name_column_number = name_column_number
       node
     end

@@ -75,4 +75,4 @@ fi
 
 export PATH="$DEPS_DIR/llvm/bin":$PATH
 export CRYSTAL_PATH="$SCRIPT_ROOT/src:libs"
-"$CRYSTAL_DIR/crystal" "$@"
+exec "$CRYSTAL_DIR/crystal" "$@"
