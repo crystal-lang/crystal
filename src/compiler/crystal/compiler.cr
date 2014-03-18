@@ -42,6 +42,7 @@ module Crystal
       @llc_flags_changed = true
       @multithreaded = false
       @prelude = "prelude"
+      @n_threads = 8.to_i32
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -86,6 +87,9 @@ module Crystal
         end
         opts.on("-t", "--types", "Prints types of global variables") do
           @print_types = true
+        end
+        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
+          @n_threads = n_threads.to_i32
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
@@ -222,7 +226,7 @@ module Crystal
 
           msg = @multithreaded ? "Codegen (bitcode+llc+clang)" : "Codegen (llc+clang)"
           timing(msg) do
-            threads = Array.new(8) do
+            threads = Array.new(@n_threads) do
               Thread.new(self, ->(compiler : self) do
                 while unit = compiler.mutex.synchronize { compiler.units.shift? }
                   unit.write_bitcode if compiler.multithreaded
