@@ -117,12 +117,14 @@ module Crystal
       return unless current_node
       location = current_node.location
       return unless location
-      # fun_metadata(context.fun, context.fun.name, location.filename, location.line_number)
+      fun_md = fun_metadatas[context.fun]?
+      return unless fun_md
+
       metadata([
         location.line_number || 1,
         location.column_number,
         # lexical_block_metadata(context.fun, @current_node),
-        fun_metadatas[context.fun],
+        fun_md,
         nil
       ])
     end
