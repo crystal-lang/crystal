@@ -1,5 +1,7 @@
 .PHONY: all spec crystal clean
 
+-include Makefile.local # for optional local options e.g. threads
+
 O := .build
 SOURCES := $(shell find src -name '*.cr')
 SPEC_SOURCES := $(shell find spec -name '*.cr')
@@ -15,7 +17,7 @@ all_spec: $(SOURCES) $(SPEC_SOURCES)
 
 $(O)/crystal: $(SOURCES)
 	@mkdir -p $(O)
-	./bin/crystal $(if $(release),--release) $(if $(stats),-stats) -o $@ src/compiler/crystal.cr
+	./bin/crystal $(if $(release),--release )$(if $(stats),--stats )$(if $(threads),--threads $(threads) )-o $@ src/compiler/crystal.cr
 
 clean:
 	rm -rf $(O)

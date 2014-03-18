@@ -69,24 +69,18 @@ class OptionParser
   def parse_flag(flag)
     case flag
     when /--(\S+)\s+\[\S+\]/
-      value = flag_value("--#{$1}")
+      value = double_flag_value("--#{$1}")
       yield value if value
-    when /--(\S+)\s+\S+/, /--(\S+)\s+/
-      value = flag_value("--#{$1}", true)
+    when /--(\S+)(\s+|\=)(\S+)?/
+      value = double_flag_value("--#{$1}", true)
       yield value if value
     when /--\S+/
       flag_present?(flag) && yield ""
-    when /-(.)\s+\[\S+\]/
-      value = flag_value(flag[0 .. 1])
+    when /-(.)\s*\[\S+\]/
+      value = single_flag_value(flag[0 .. 1])
       yield value if value
-    when /-(.)\s+\S+/, /-(.)\s+/
-      value = flag_value(flag[0 .. 1], true)
-      yield value if value
-    when /-(.)\[\S+\]/
-      value = inline_flag_value(flag[0 ..1])
-      yield value if value
-    when /-(.)\S+/
-      value = inline_flag_value(flag[0 .. 1], true)
+    when /-(.)\s+\S+/, /-(.)\s+/, /-(.)\S+/
+      value = single_flag_value(flag[0 .. 1], true)
       yield value if value
     else
       flag_present?(flag) && yield ""
@@ -103,27 +97,49 @@ class OptionParser
     end
   end
 
-  def flag_value(flag, raise_if_missing = false)
-    index = @args.index(flag)
-    if index
-      begin
-        @args.delete_at(index)
-        @args.delete_at(index)
-      rescue IndexOutOfBounds
-        raise MissingOption.new(flag) if raise_if_missing
-        ""
+  def double_flag_value(flag, raise_if_missing = false)
+    @args.each_with_index do |arg, index|
+      if arg.starts_with?(flag)
+        if arg.length == flag.length
+          @args.delete_at(index)
+          if index < @args.length
+            return @args.delete_at(index)
+          else
+            if raise_if_missing
+              raise MissingOption.new(flag)
+            else
+              return nil
+            end
+          end
+        elsif arg[flag.length].chr == '='
+          @args.delete_at(index)
+          value = arg[flag.length + 1 .. -1]
+          if value.empty?
+            raise MissingOption.new(flag)
+          else
+            return value
+          end
+        end
       end
-    else
-      nil
     end
+    nil
   end
 
-  def inline_flag_value(flag, raise_if_missing = false)
+  def single_flag_value(flag, raise_if_missing = false)
     index = @args.index { |arg| arg.starts_with?(flag) }
     if index
-      value = @args.delete_at(index)[2 .. -1]
-      raise MissingOption.new(flag) if raise_if_missing && value.empty?
-      value
+      arg = @args.delete_at(index)
+      if arg.length == flag.length
+        if index < @args.length
+          @args.delete_at(index)
+        else
+          raise MissingOption.new(flag) if raise_if_missing
+        end
+      else
+        value = arg[2 .. -1]
+        raise MissingOption.new(flag) if raise_if_missing && value.empty?
+        value
+      end
     else
       nil
     end

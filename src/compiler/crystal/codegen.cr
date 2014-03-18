@@ -151,10 +151,9 @@ module Crystal
       br_block_chain [@const_block, @entry_block]
 
       @modules.each do |name, mod|
+        mod.dump if Crystal::DUMP_LLVM
         add_compile_unit_metadata(mod, name == "" ? "main" : name)
       end
-
-      @llvm_mod.dump if DUMP_LLVM
     end
 
     def visit(node : FunDef)

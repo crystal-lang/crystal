@@ -6,3 +6,4 @@ coverage/
 /deps/
 /.build/
 .*.swp
+/Makefile.local

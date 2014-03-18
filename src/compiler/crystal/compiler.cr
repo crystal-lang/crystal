@@ -41,6 +41,8 @@ module Crystal
       @cross_compile = nil
       @llc_flags_changed = true
       @multithreaded = false
+      @prelude = "prelude"
+      @n_threads = 8.to_i32
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -59,17 +61,20 @@ module Crystal
         opts.on("--hierarchy", "Prints types hierarchy") do
           @print_hierarchy = true
         end
-        opts.on("-ll", "Dump ll to .crystal directory") do
+        opts.on("--ll", "Dump ll to .crystal directory") do
           @dump_ll = true
         end
         opts.on("--llc ", "Additional flags to pass to llc") do |llc_flags|
           @llc_flags = llc_flags
         end
-        opts.on("-no-build", "Disable build output") do
+        opts.on("--no-build", "Disable build output") do
           @no_build = true
         end
         opts.on("-o ", "Output filename") do |output_filename|
           @output_filename = output_filename
+        end
+        opts.on("--prelude ", "Use given file as prelude") do |prelude|
+          @prelude = prelude
         end
         opts.on("--release", "Compile in release mode") do
           @release = true
@@ -77,11 +82,14 @@ module Crystal
         opts.on("--run", "Execute program") do
           @run = true
         end
-        opts.on("-stats", "Enable statistis output") do
+        opts.on("-s", "--stats", "Enable statistis output") do
           @stats = true
         end
-        opts.on("-types", "Prints types of global variables") do
+        opts.on("-t", "--types", "Prints types of global variables") do
           @print_types = true
+        end
+        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
+          @n_threads = n_threads.to_i32
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
@@ -147,7 +155,7 @@ module Crystal
         parser.filename = filename
         node = parser.parse
 
-        require_node = Require.new("prelude")
+        require_node = Require.new(@prelude)
         require_node.location = Location.new(1, 1, filename)
 
         node = Expressions.new([require_node, node] of ASTNode)
@@ -218,7 +226,7 @@ module Crystal
 
           msg = @multithreaded ? "Codegen (bitcode+llc+clang)" : "Codegen (llc+clang)"
           timing(msg) do
-            threads = Array.new(8) do
+            threads = Array.new(@n_threads) do
               Thread.new(self, ->(compiler : self) do
                 while unit = compiler.mutex.synchronize { compiler.units.shift? }
                   unit.write_bitcode if compiler.multithreaded
@@ -316,7 +324,6 @@ module Crystal
       end
 
       def write_bitcode(output_name)
-        @llvm_mod.dump if Crystal::DUMP_LLVM
         @llvm_mod.write_bitcode output_name
       end
 
