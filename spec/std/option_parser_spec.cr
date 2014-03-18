@@ -67,12 +67,20 @@ describe "OptionParser" do
     expect_capture_option ["-f123"], "-fFLAG", "123"
   end
 
+  it "has required option next to flag but given separated" do
+    expect_capture_option ["-f", "123"], "-fFLAG", "123"
+  end
+
   it "raises if missing option next to flag" do
     expect_missing_option ["-f"], "-fFLAG", "-f"
   end
 
   it "has required option separated from flag" do
     expect_capture_option ["-f", "123"], "-f FLAG", "123"
+  end
+
+  it "has required option separated from flag but given together" do
+    expect_capture_option ["-f123"], "-f FLAG", "123"
   end
 
   it "gets short option with value that looks like flag" do
@@ -85,6 +93,18 @@ describe "OptionParser" do
 
   it "has required option separated from long flag" do
     expect_capture_option ["--flag", "123"], "--flag FLAG", "123"
+  end
+
+  it "has required option with =" do
+    expect_capture_option ["--flag=123"], "--flag FLAG", "123"
+  end
+
+  it "has required option with = (2)" do
+    expect_capture_option ["--flag=123"], "--flag=FLAG", "123"
+  end
+
+  it "has required option with = (3) raises" do
+    expect_missing_option ["--flag="], "--flag=FLAG", "--flag"
   end
 
   it "raises if missing required argument separated from long flag" do
