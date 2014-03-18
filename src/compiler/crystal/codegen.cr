@@ -145,7 +145,7 @@ module Crystal
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
 
-      @llvm_mod.dump if DUMP_LLVM
+      @modules.each_value &.dump if Crystal::DUMP_LLVM
     end
 
     def visit(node : FunDef)

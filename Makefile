@@ -15,7 +15,7 @@ all_spec: $(SOURCES) $(SPEC_SOURCES)
 
 $(O)/crystal: $(SOURCES)
 	@mkdir -p $(O)
-	./bin/crystal $(if $(release),--release) $(if $(stats),-stats) -o $@ src/compiler/crystal.cr
+	./bin/crystal $(if $(release),--release) $(if $(stats),--stats) -o $@ src/compiler/crystal.cr
 
 clean:
 	rm -rf $(O)
