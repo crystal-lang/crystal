@@ -34,10 +34,14 @@ module Enumerable(T)
 
   def inject
     memo :: T
+    found = false
+
     each_with_index do |elem, i|
       memo = i == 0 ? elem : yield memo, elem
+      found = true
     end
-    memo
+
+    found ? memo : raise EmptyEnumerable.new
   end
 
   def inject(memo)
@@ -168,27 +172,35 @@ module Enumerable(T)
   def min_by(&block : T -> U)
     min :: U
     obj :: T
+    found = false
+
     each_with_index do |elem, i|
       value = yield elem
       if i == 0 || value < min
         min = value
         obj = elem
       end
+      found = true
     end
-    obj
+
+    found ? obj : raise EmptyEnumerable.new
   end
 
   def max_by(&block : T -> U)
     min :: U
     obj :: T
+    found = false
+
     each_with_index do |elem, i|
       value = yield elem
       if i == 0 || value > min
         min = value
         obj = elem
       end
+      found = true
     end
-    obj
+
+    found ? obj : raise EmptyEnumerable.new
   end
 
   def minmax_by(&block : T -> U)
@@ -196,6 +208,8 @@ module Enumerable(T)
     max :: U
     objmin :: T
     objmax :: T
+    found = false
+
     each_with_index do |elem, i|
       value = yield elem
       if i == 0 || value < min
@@ -206,8 +220,10 @@ module Enumerable(T)
         max = value
         objmax = elem
       end
+      found = true
     end
-    {objmin, objmax}
+
+    found ? {objmin, objmax} : raise EmptyEnumerable.new
   end
 
   def partition(&block : T -> U)
