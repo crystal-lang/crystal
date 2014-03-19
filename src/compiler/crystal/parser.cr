@@ -679,6 +679,8 @@ module Crystal
           parse_pointerof
         when :sizeof
           parse_sizeof
+        when :instance_sizeof
+          parse_instance_sizeof
         when :typeof
           parse_typeof
         else
@@ -2630,18 +2632,30 @@ module Crystal
     end
 
     def parse_sizeof
+      parse_sizeof SizeOf
+    end
+
+    def parse_instance_sizeof
+      parse_sizeof InstanceSizeOf
+    end
+
+    def parse_sizeof(klass)
       next_token_skip_space
 
       check :"("
       next_token_skip_space_or_newline
 
+      location = @token.location
+
       exp = parse_single_type
+      exp.location = location
+
       skip_space
 
       check :")"
       next_token_skip_space
 
-      SizeOf.new(exp)
+      klass.new(exp)
     end
 
     def parse_type_def

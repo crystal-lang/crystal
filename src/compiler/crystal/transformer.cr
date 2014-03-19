@@ -168,6 +168,11 @@ module Crystal
       node
     end
 
+    def transform(node : InstanceSizeOf)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
     def transform(node : IsA)
       node.obj = node.obj.transform(self)
       node.const = node.const.transform(self)

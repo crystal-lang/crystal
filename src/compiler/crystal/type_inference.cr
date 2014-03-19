@@ -1072,6 +1072,10 @@ module Crystal
       node.type = @mod.int32
     end
 
+    def end_visit(node : InstanceSizeOf)
+      node.type = @mod.int32
+    end
+
     def visit(node : Rescue)
       if node_types = node.types
         types = node_types.map do |type|

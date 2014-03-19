@@ -53,4 +53,8 @@ describe "Type inference: primitives" do
   it "types sizeof" do
     assert_type("sizeof(Float64)") { int32 }
   end
+
+  it "types instance_sizeof" do
+    assert_type("instance_sizeof(Reference)") { int32 }
+  end
 end

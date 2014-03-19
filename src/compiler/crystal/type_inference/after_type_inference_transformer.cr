@@ -371,6 +371,19 @@ module Crystal
       node
     end
 
+    def transform(node : InstanceSizeOf)
+      exp_type = node.exp.type?
+
+      if exp_type
+        instance_type = exp_type.instance_type
+        unless instance_type.class?
+          node.exp.raise "#{instance_type} is not a class, it's a #{instance_type.type_desc}"
+        end
+      end
+
+      node
+    end
+
     def rebind_node(node, dependency)
       node.unbind_from node.dependencies?
       if dependency

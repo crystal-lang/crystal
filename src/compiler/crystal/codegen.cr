@@ -855,6 +855,11 @@ module Crystal
       false
     end
 
+    def visit(node : InstanceSizeOf)
+      @last = trunc(llvm_struct_size(node.exp.type.instance_type), LLVM::Int32)
+      false
+    end
+
     def visit(node : Include)
       @last = llvm_nil
       false
