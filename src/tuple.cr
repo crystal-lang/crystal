@@ -26,6 +26,10 @@ class Tuple
     hash
   end
 
+  def types
+    T
+  end
+
   def to_s
     String.build do |str|
       str << "{"
