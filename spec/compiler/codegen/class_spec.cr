@@ -252,4 +252,12 @@ describe "Code gen: class" do
       1
       ").to_i.should eq(1)
   end
+
+  it "does to_s for class" do
+    run(%(
+      require "prelude"
+
+      Reference.to_s
+      )).to_string.should eq("Reference")
+  end
 end
