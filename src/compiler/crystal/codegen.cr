@@ -2139,7 +2139,7 @@ module Crystal
 
       type = type.typedef if type.is_a?(TypeDefType)
       case type
-      when Nil, Program
+      when Nil, Program, LibType
         type_name = ""
       else
         type_name = type.instance_type.to_s
