@@ -761,6 +761,13 @@ module Crystal
       false
     end
 
+    def visit(node : SizeOf)
+      @str << "sizeof("
+      node.exp.accept(self)
+      @str << ")"
+      false
+    end
+
     def visit(node : IsA)
       node.obj.accept self
       @str << ".is_a?("

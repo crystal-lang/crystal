@@ -196,8 +196,6 @@ module Crystal
                 codegen_primitive_pointer_realloc node, target_def, call_args
               when :pointer_add
                 codegen_primitive_pointer_add node, target_def, call_args
-              when :byte_size
-                codegen_primitive_byte_size node, target_def, call_args
               when :struct_new
                 codegen_primitive_struct_new node, target_def, call_args
               when :struct_set
@@ -464,10 +462,6 @@ module Crystal
 
     def codegen_primitive_pointer_add(node, target_def, call_args)
       gep call_args[0], call_args[1]
-    end
-
-    def codegen_primitive_byte_size(node, target_def, call_args)
-      llvm_size(type.instance_type)
     end
 
     def codegen_primitive_struct_new(node, target_def, call_args)
@@ -853,6 +847,11 @@ module Crystal
 
     def visit(node : TypeOf)
       @last = int(node.type.type_id)
+      false
+    end
+
+    def visit(node : SizeOf)
+      @last = trunc(llvm_size(node.exp.type.instance_type), LLVM::Int32)
       false
     end
 

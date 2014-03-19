@@ -916,6 +916,25 @@ module Crystal
     end
   end
 
+  class SizeOf < ASTNode
+    property :exp
+
+    def initialize(@exp)
+    end
+
+    def accept_children(visitor)
+      @exp.accept visitor
+    end
+
+    def ==(other : self)
+      other.exp == exp
+    end
+
+    def clone_without_location
+      SizeOf.new(@exp.clone)
+    end
+  end
+
   class IsA < ASTNode
     property :obj
     property :const

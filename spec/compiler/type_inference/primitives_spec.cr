@@ -49,4 +49,8 @@ describe "Type inference: primitives" do
   it "types 1 + 2" do
     assert_type("1 + 2") { int32 }
   end
+
+  it "types sizeof" do
+    assert_type("sizeof(Float64)") { int32 }
+  end
 end

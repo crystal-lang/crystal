@@ -677,6 +677,8 @@ module Crystal
           parse_alias
         when :pointerof
           parse_pointerof
+        when :sizeof
+          parse_sizeof
         when :typeof
           parse_typeof
         else
@@ -2625,6 +2627,21 @@ module Crystal
       next_token_skip_space
 
       PointerOf.new(exp)
+    end
+
+    def parse_sizeof
+      next_token_skip_space
+
+      check :"("
+      next_token_skip_space_or_newline
+
+      exp = parse_single_type
+      skip_space
+
+      check :")"
+      next_token_skip_space
+
+      SizeOf.new(exp)
     end
 
     def parse_type_def

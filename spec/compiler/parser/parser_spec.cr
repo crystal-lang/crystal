@@ -511,6 +511,8 @@ describe "Parser" do
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
 
+  it_parses "sizeof(X)", SizeOf.new("X".path)
+
   it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".path)
   it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Union.new(["Foo".path, "Bar".path] of ASTNode))
   it_parses "foo.responds_to?(:foo)", RespondsTo.new("foo".call, "foo".symbol)

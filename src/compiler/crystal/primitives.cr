@@ -11,7 +11,6 @@ module Crystal
       define_reference_primitives
       define_pointer_primitives
       define_symbol_primitives
-      define_type_sizes
       define_math_primitives
     end
 
@@ -89,13 +88,6 @@ module Crystal
     def define_symbol_primitives
       symbol.add_def Def.new("hash", ([] of Arg), Primitive.new(:symbol_hash))
       symbol.add_def Def.new("to_s", ([] of Arg), Primitive.new(:symbol_to_s))
-    end
-
-    def define_type_sizes
-      byte_size = Primitive.new(:byte_size)
-      [void, self.nil, bool, char, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, symbol, reference, pointer].each do |t|
-        t.metaclass.add_def Def.new("byte_size", ([] of Arg), byte_size)
-      end
     end
 
     def define_math_primitives
