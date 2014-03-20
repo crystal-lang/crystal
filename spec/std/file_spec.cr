@@ -117,16 +117,6 @@ describe "File" do
     end
   end
 
-  describe "cmp" do
-    it "compares two equal files" do
-      File.cmp("#{__DIR__}/data/test_file.txt", "#{__DIR__}/data/test_file.txt").should be_true
-    end
-
-    it "compares two different files" do
-      File.cmp("#{__DIR__}/data/test_file.txt", "#{__DIR__}/data/test_file.ini").should be_false
-    end
-  end
-
   describe "delete" do
     it "deletes a file" do
       filename = "#{__DIR__}/data/temp1.txt"

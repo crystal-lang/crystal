@@ -1,6 +1,7 @@
 require "option_parser"
 require "thread"
 require "io"
+require "file_utils"
 
 lib C
   fun mkstemp(result : UInt8*) : Int32
@@ -339,7 +340,7 @@ module Crystal
         must_compile = true
 
         if !compiler.llc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
-          if File.cmp(bc_name, bc_name_new)
+          if FileUtils.cmp(bc_name, bc_name_new)
             File.delete bc_name_new
             must_compile = false
           end
