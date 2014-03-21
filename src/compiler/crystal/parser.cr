@@ -470,6 +470,7 @@ module Crystal
                 if call_args
                   args = call_args.args
                   block = call_args.block
+                  block_arg = call_args.block_arg
                 end
               end
             else
@@ -477,12 +478,13 @@ module Crystal
               if call_args
                 args = call_args.args
                 block = call_args.block
+                block_arg = call_args.block_arg
               end
             end
 
             block = parse_block(block)
-            if block
-              atomic = Call.new atomic, name, (args || [] of ASTNode), block, nil, false, name_column_number
+            if block || block_arg
+              atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, false, name_column_number
             else
               atomic = args ? (Call.new atomic, name, args, nil, nil, false, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, nil, false, name_column_number)
             end

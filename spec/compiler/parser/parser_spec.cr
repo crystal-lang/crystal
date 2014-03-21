@@ -265,6 +265,8 @@ describe "Parser" do
 
   it_parses "foo(&block)", Call.new(nil, "foo", [] of ASTNode, nil, "block".call)
   it_parses "foo &block", Call.new(nil, "foo", [] of ASTNode, nil, "block".call)
+  it_parses "a.foo &block", Call.new("a".call, "foo", [] of ASTNode, nil, "block".call)
+  it_parses "a.foo(&block)", Call.new("a".call, "foo", [] of ASTNode, nil, "block".call)
 
   it_parses "foo(&.block)", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block")))
   it_parses "foo &.block", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block")))
