@@ -1449,7 +1449,7 @@ module Crystal
     def initialize(program, container, name, superclass, type_vars, add_subclass = true)
       super
       add_def Def.new("length", ([] of Arg), Primitive.new(:tuple_length))
-      add_def Def.new("[]", ([Arg.new("index", Path.new(["Int32"], true))]), Primitive.new(:tuple_indexer))
+      add_def Def.new("[]", ([Arg.new_with_restriction("index", Path.new(["Int32"], true))]), Primitive.new(:tuple_indexer))
     end
 
     def instantiate(type_vars)
