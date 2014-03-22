@@ -2059,9 +2059,7 @@ module Crystal
     end
 
     def cover_length
-      sum = 0
-      union_types.each { |t| sum += t.cover_length }
-      sum
+      union_types.sum &.cover_length
     end
 
     def filter_by_responds_to(name)
@@ -2347,9 +2345,7 @@ module Crystal
 
     def cover_length
       if base_type.abstract
-        sum = 0
-        base_type.subclasses.each { |s| sum += s.hierarchy_type.cover_length }
-        sum
+        base_type.subclasses.sum &.hierarchy_type.cover_length
       else
         1
       end

@@ -361,11 +361,9 @@ class Hash(K, V)
   end
 
   def calculate_new_size(size)
-    i = 0
     new_size = 8
-    while i < HASH_PRIMES.length
-      return HASH_PRIMES[i] if new_size > size
-      i += 1
+    HASH_PRIMES.each do |hash_size|
+      return hash_size if new_size > size
       new_size <<= 1
     end
     raise "Hash table too big"
