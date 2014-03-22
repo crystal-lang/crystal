@@ -8,10 +8,7 @@ module Crystal
     def wrap(value)
       if value.is_a?(LibLLVM::ValueRef) && !LLVM.constant?(value) && !value.is_a?(LibLLVM::BasicBlockRef)
         if md = @codegen.dbg_metadata
-          # puts "DUMP"
-          # LLVM.dump md
           LibLLVM.set_metadata(value, @dbg_kind, md) rescue nil
-          # LLVM.dump value
         end
       end
       value

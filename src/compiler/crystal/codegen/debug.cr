@@ -27,8 +27,9 @@ module Crystal
 
     def fun_metadata(a_fun, name, file, line)
       return nil unless file && line
-      unless md = fun_metadatas[a_fun]?
-        md = metadata([
+
+      fun_metadatas[a_fun] = begin
+        metadata([
           46 + LLVMDebugVersion,        # Tag
           file_metadata(file),          # Source directory (including trailing slash) & file pair
           file_descriptor(file),        # Reference to context descriptor
@@ -51,8 +52,6 @@ module Crystal
           line                          # Line number where the scope of the subprogram begins
         ])
       end
-      fun_metadatas[a_fun] = md
-      md
     end
 
     def fun_type

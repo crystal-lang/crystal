@@ -1567,8 +1567,10 @@ module Crystal
       body = target_def.body
       if body.is_a?(Primitive)
         with_cloned_context do
+          old_current_node, @current_node = @current_node, body
           context.type = self_type
           codegen_primitive(body, target_def, call_args)
+          @current_node = old_current_node
         end
         return
       end
@@ -2382,12 +2384,6 @@ module Crystal
         LLVM.set_initializer global, LLVM.struct([int32(@mod.string.type_id), int32(str.length), LLVM.string(str)])
         cast_to global, @mod.string
       end
-    end
-
-    def accept(node)
-      # old_current_node = @current_node
-      node.accept self
-      # @current_node = old_current_node
     end
 
     class Context
