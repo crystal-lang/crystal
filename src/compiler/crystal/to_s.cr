@@ -144,7 +144,7 @@ module Crystal
         accept_with_indent(node.else)
       end
       append_indent
-      @str << "end"
+      @str << keyword("end")
       false
     end
 
