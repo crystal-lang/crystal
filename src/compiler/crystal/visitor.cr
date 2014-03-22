@@ -1,6 +1,7 @@
 module Crystal
   class Visitor
     def visit_any(node)
+      true
     end
 
     # def visit(node)
@@ -13,11 +14,12 @@ module Crystal
 
   class ASTNode
     def accept(visitor)
-      visitor.visit_any self
-      if visitor.visit self
-        accept_children visitor
+      if visitor.visit_any self
+        if visitor.visit self
+          accept_children visitor
+        end
+        visitor.end_visit self
       end
-      visitor.end_visit self
     end
 
     def accept_children(visitor)

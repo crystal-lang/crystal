@@ -644,7 +644,7 @@ module Crystal
       assign = Assign.new(var, alloc)
       call_gc = Call.new(Path.new(["GC"], true), "add_finalizer", [var] of ASTNode)
 
-      match_def = Def.new("new", [] of Arg, [alloc, assign, call_gc, var] of ASTNode)
+      match_def = Def.new("new", [] of Arg, [assign, call_gc, var] of ASTNode)
       match = Match.new(scope, match_def, scope, arg_types)
 
       scope.add_def match_def

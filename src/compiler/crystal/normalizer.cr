@@ -176,7 +176,9 @@ module Crystal
         @program.regexes << const
       end
 
-      Path.new([const_name], true)
+      path = Path.new([const_name], true)
+      path.location = node.location
+      path
     end
 
     # Convert an interpolation to a concatenation with a StringBuilder:
@@ -195,7 +197,9 @@ module Crystal
       node.expressions.each do |piece|
         call = Call.new(call, "<<", [piece])
       end
-      Call.new(call, "to_s")
+      call = Call.new(call, "to_s")
+      call.location = node.location
+      call
     end
 
     # Transform a range literal into creating a Range object.
@@ -337,6 +341,7 @@ module Crystal
 
       constructor = Call.new(Generic.new(Path.new(["Hash"], true), type_vars), "new")
       if node.keys.length == 0
+        constructor.location = node.location
         constructor
       else
         temp_var = new_temp_var
@@ -347,7 +352,9 @@ module Crystal
           exps << Call.new(temp_var, "[]=", [key, node.values[i]])
         end
         exps << temp_var
-        Expressions.new exps
+        exp = Expressions.new exps
+        exp.location = node.location
+        exp
       end
     end
 
@@ -1001,7 +1008,9 @@ module Crystal
     #       bar
     #     end
     def transform(node : Unless)
-      If.new(node.cond, node.else, node.then).transform(self)
+      a_if = If.new(node.cond, node.else, node.then).transform(self)
+      a_if.location = node.location
+      a_if
     end
 
     # Evaluate the ifdef's flags.
