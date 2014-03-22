@@ -96,4 +96,13 @@ class TCPServer
     client_fd = C.accept(@sock, pointerof(client_addr), pointerof(client_addr_len))
     FileDescriptorIO.new(client_fd)
   end
+
+  def accept
+    sock = accept
+    begin
+      yield sock
+    ensure
+      sock.close
+    end
+  end
 end

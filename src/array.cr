@@ -406,14 +406,6 @@ class Array(T)
     self
   end
 
-  def max
-    max = self[0]
-    1.upto(length - 1) do |i|
-      max = self[i] if self[i] > max
-    end
-    max
-  end
-
   def +(other : Array(U))
     new_length = length + other.length
     ary = Array(T | U).new(new_length)

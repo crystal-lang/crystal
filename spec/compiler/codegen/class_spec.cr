@@ -34,10 +34,6 @@ describe "Code gen: class" do
       ").to_i.should eq(42)
   end
 
-  it "codegens byte size of Int32" do
-    run("Int32.byte_size").to_i.should eq(4)
-  end
-
   it "codegens recursive type" do
     run("
       class Foo
@@ -251,5 +247,13 @@ describe "Code gen: class" do
       f.x = Baz.new
       1
       ").to_i.should eq(1)
+  end
+
+  it "does to_s for class" do
+    run(%(
+      require "prelude"
+
+      Reference.to_s
+      )).to_string.should eq("Reference")
   end
 end

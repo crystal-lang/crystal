@@ -204,8 +204,6 @@ module Crystal
                 codegen_primitive_pointer_realloc node, target_def, call_args
               when :pointer_add
                 codegen_primitive_pointer_add node, target_def, call_args
-              when :byte_size
-                codegen_primitive_byte_size node, target_def, call_args
               when :struct_new
                 codegen_primitive_struct_new node, target_def, call_args
               when :struct_set
@@ -474,10 +472,6 @@ module Crystal
       gep call_args[0], call_args[1]
     end
 
-    def codegen_primitive_byte_size(node, target_def, call_args)
-      llvm_size(type.instance_type)
-    end
-
     def codegen_primitive_struct_new(node, target_def, call_args)
       allocate_aggregate (node.type as PointerInstanceType).element_type
     end
@@ -544,9 +538,26 @@ module Crystal
     end
 
     def codegen_primitive_object_to_cstr(node, target_def, call_args)
-      buffer = array_malloc(LLVM::Int8, int(context.type.to_s.length + 23))
-      call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("<#{context.type}:0x%016lx>"), call_args[0]] of LibLLVM::ValueRef
-      buffer
+      type = context.type
+      case type
+      when MetaclassType
+        type_to_s = type.instance_type.to_s
+        want_object_id = false
+      when GenericClassInstanceMetaclassType
+        type_to_s = type.instance_type.to_s
+        want_object_id = false
+      else
+        type_to_s = type.to_s
+        want_object_id = true
+      end
+
+      if want_object_id
+        buffer = array_malloc(LLVM::Int8, int(type_to_s.length + 23))
+        call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("<#{type_to_s}:0x%016lx>"), call_args[0]] of LibLLVM::ValueRef
+        buffer
+      else
+        @builder.global_string_pointer(type_to_s)
+      end
     end
 
     def codegen_primitive_object_crystal_type_id(node, target_def, call_args)
@@ -844,6 +855,16 @@ module Crystal
 
     def visit(node : TypeOf)
       @last = int(node.type.type_id)
+      false
+    end
+
+    def visit(node : SizeOf)
+      @last = trunc(llvm_size(node.exp.type.instance_type), LLVM::Int32)
+      false
+    end
+
+    def visit(node : InstanceSizeOf)
+      @last = trunc(llvm_struct_size(node.exp.type.instance_type), LLVM::Int32)
       false
     end
 
@@ -2154,7 +2175,7 @@ module Crystal
 
       type = type.typedef if type.is_a?(TypeDefType)
       case type
-      when Nil, Program
+      when Nil, Program, LibType
         type_name = ""
       else
         type_name = type.instance_type.to_s

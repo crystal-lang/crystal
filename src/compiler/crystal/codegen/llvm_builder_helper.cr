@@ -219,5 +219,9 @@ module Crystal
     def llvm_size(type)
       size_of llvm_type(type)
     end
+
+    def llvm_struct_size(type)
+      size_of llvm_struct_type(type)
+    end
   end
 end

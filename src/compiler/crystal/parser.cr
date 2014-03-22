@@ -470,6 +470,7 @@ module Crystal
                 if call_args
                   args = call_args.args
                   block = call_args.block
+                  block_arg = call_args.block_arg
                 end
               end
             else
@@ -477,12 +478,13 @@ module Crystal
               if call_args
                 args = call_args.args
                 block = call_args.block
+                block_arg = call_args.block_arg
               end
             end
 
             block = parse_block(block)
-            if block
-              atomic = Call.new atomic, name, (args || [] of ASTNode), block, nil, false, name_column_number
+            if block || block_arg
+              atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, false, name_column_number
             else
               atomic = args ? (Call.new atomic, name, args, nil, nil, false, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, nil, false, name_column_number)
             end
@@ -677,6 +679,10 @@ module Crystal
           parse_alias
         when :pointerof
           parse_pointerof
+        when :sizeof
+          parse_sizeof
+        when :instance_sizeof
+          parse_instance_sizeof
         when :typeof
           parse_typeof
         else
@@ -2625,6 +2631,33 @@ module Crystal
       next_token_skip_space
 
       PointerOf.new(exp)
+    end
+
+    def parse_sizeof
+      parse_sizeof SizeOf
+    end
+
+    def parse_instance_sizeof
+      parse_sizeof InstanceSizeOf
+    end
+
+    def parse_sizeof(klass)
+      next_token_skip_space
+
+      check :"("
+      next_token_skip_space_or_newline
+
+      location = @token.location
+
+      exp = parse_single_type
+      exp.location = location
+
+      skip_space
+
+      check :")"
+      next_token_skip_space
+
+      klass.new(exp)
     end
 
     def parse_type_def

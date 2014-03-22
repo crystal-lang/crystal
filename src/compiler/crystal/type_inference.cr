@@ -885,8 +885,6 @@ module Crystal
         node.type = scope
       when :pointer_add
         node.type = scope
-      when :byte_size
-        node.type = @mod.uint64
       when :argc
         node.type = @mod.int32
       when :argv
@@ -1068,6 +1066,14 @@ module Crystal
 
     def end_visit(node : TypeOf)
       node.bind_to node.expressions
+    end
+
+    def end_visit(node : SizeOf)
+      node.type = @mod.int32
+    end
+
+    def end_visit(node : InstanceSizeOf)
+      node.type = @mod.int32
     end
 
     def visit(node : Rescue)

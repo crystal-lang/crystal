@@ -108,6 +108,9 @@ class Exception
   end
 end
 
+class EmptyEnumerable < Exception
+end
+
 class IndexOutOfBounds < Exception
 end
 

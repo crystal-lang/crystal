@@ -265,6 +265,8 @@ describe "Parser" do
 
   it_parses "foo(&block)", Call.new(nil, "foo", [] of ASTNode, nil, "block".call)
   it_parses "foo &block", Call.new(nil, "foo", [] of ASTNode, nil, "block".call)
+  it_parses "a.foo &block", Call.new("a".call, "foo", [] of ASTNode, nil, "block".call)
+  it_parses "a.foo(&block)", Call.new("a".call, "foo", [] of ASTNode, nil, "block".call)
 
   it_parses "foo(&.block)", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block")))
   it_parses "foo &.block", Call.new(nil, "foo", ([] of ASTNode), Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "block")))
@@ -510,6 +512,9 @@ describe "Parser" do
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
+
+  it_parses "sizeof(X)", SizeOf.new("X".path)
+  it_parses "instance_sizeof(X)", InstanceSizeOf.new("X".path)
 
   it_parses "foo.is_a?(Const)", IsA.new("foo".call, "Const".path)
   it_parses "foo.is_a?(Foo | Bar)", IsA.new("foo".call, Union.new(["Foo".path, "Bar".path] of ASTNode))

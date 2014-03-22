@@ -1,6 +1,9 @@
 require "option_parser"
 require "thread"
 require "io"
+require "file_utils"
+require "socket"
+require "net/http"
 
 lib C
   fun mkstemp(result : UInt8*) : Int32
@@ -43,6 +46,7 @@ module Crystal
       @multithreaded = false
       @prelude = "prelude"
       @n_threads = 8.to_i32
+      @browser = false
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -57,6 +61,9 @@ module Crystal
         end
         opts.on("-e 'command'", "one line script. Omit [programfile]") do |command|
           @command = command
+        end
+        opts.on("--browser", "Opens an http server to browse the code") do
+          @browser = true
         end
         opts.on("--hierarchy", "Prints types hierarchy") do
           @print_hierarchy = true
@@ -158,11 +165,13 @@ module Crystal
         require_node = Require.new(@prelude)
         require_node.location = Location.new(1, 1, filename)
 
-        node = Expressions.new([require_node, node] of ASTNode)
-
-        node = timing("Normalize") do
-          program.normalize(node)
+        timing("Normalize") do
+          require_node = program.normalize(require_node)
+          node = program.normalize(node)
         end
+
+        original_node = node
+        node = Expressions.new([require_node, node] of ASTNode)
 
         node = timing("Type inference") do
           program.infer_type node
@@ -170,6 +179,8 @@ module Crystal
 
         print_types node if @print_types
         print_hierarchy program if @print_hierarchy
+        return open_browser(original_node) if @browser
+
         return if @no_build
 
         llvm_modules = timing("Codegen (crystal)") do
@@ -260,6 +271,30 @@ module Crystal
       end
     end
 
+    def open_browser(node)
+      browser = Browser.new(node)
+      server, port = create_server
+      puts "Browser open at http://0.0.0.0:#{port}"
+      ifdef darwin
+        system "open http://localhost:#{port}"
+      end
+      while true
+        server.accept do |sock|
+          if request = HTTPRequest.from_io(sock)
+            html = browser.handle(request.path)
+            response = HTTPResponse.new("HTTP/1.1", 200, "OK", {"Content-Type" => "text/html"}, html)
+            response.to_io sock
+          end
+        end
+      end
+    end
+
+    def create_server(port = 4000)
+      {TCPServer.new(port), port}
+    rescue
+      create_server(port + 1)
+    end
+
     def timing(label)
       if @stats
         time = Time.now
@@ -339,7 +374,7 @@ module Crystal
         must_compile = true
 
         if !compiler.llc_flags_changed && File.exists?(bc_name) && File.exists?(o_name)
-          if File.cmp(bc_name, bc_name_new)
+          if FileUtils.cmp(bc_name, bc_name_new)
             File.delete bc_name_new
             must_compile = false
           end

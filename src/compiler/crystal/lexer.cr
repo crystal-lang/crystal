@@ -602,8 +602,15 @@ module Crystal
             return check_ident_or_keyword(:if, start)
           end
         when 'n'
-          if next_char == 'c' && next_char == 'l' && next_char == 'u' && next_char == 'd' && next_char == 'e'
-            return check_ident_or_keyword(:include, start)
+          case next_char
+          when 'c'
+            if next_char == 'l' && next_char == 'u' && next_char == 'd' && next_char == 'e'
+              return check_ident_or_keyword(:include, start)
+            end
+          when 's'
+            if next_char == 't' && next_char == 'a' && next_char == 'n' && next_char == 'c' && next_char == 'e' && next_char == '_' && next_char == 's' && next_char == 'i' && next_char == 'z' && next_char == 'e' && next_char == 'o' && next_char == 'f'
+              return check_ident_or_keyword(:instance_sizeof, start)
+            end
           end
         when 's'
           if next_char == '_' && next_char == 'a' && next_char == '?'
@@ -688,8 +695,15 @@ module Crystal
         end
         scan_ident(start)
       when 's'
-        if next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't'
-          return check_ident_or_keyword(:struct, start)
+        case next_char
+        when 'i'
+          if next_char == 'z' && next_char == 'e' && next_char == 'o' && next_char == 'f'
+            return check_ident_or_keyword(:sizeof, start)
+          end
+        when 't'
+          if next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't'
+            return check_ident_or_keyword(:struct, start)
+          end
         end
         scan_ident(start)
       when 't'
