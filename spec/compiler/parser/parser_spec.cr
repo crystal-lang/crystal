@@ -242,6 +242,7 @@ describe "Parser" do
   it_parses "def foo(@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
   it_parses "def foo(@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
   it_parses "def foo(@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
+  it_parses "def foo(*vars); ; end", Def.new("foo", [Arg.new("vars")], [] of ASTNode, nil, nil, nil, 0)
 
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call
@@ -650,5 +651,10 @@ describe "Parser" do
   it "errors if arg doesn't have a default value after a previous one has one" do
     assert_syntax_error "def foo(x = 1, y); end",
       "argument must have a default value"
+  end
+
+  it "errors if def contains more than one splat argument" do
+    assert_syntax_error "def foo(*x, *y); end",
+      "only one splat argument allowed"
   end
 end

@@ -831,11 +831,12 @@ module Crystal
     property :block_arg
     property :yields
     property :instance_vars
+    property :splat_arg_idx
     property :calls_super
     property :uses_block_arg
     property :name_column_number
 
-    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
+    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil, @splat_arg_idx = -1)
       @body = Expressions.from body
     end
 
@@ -847,7 +848,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
+      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg && other.splat_arg_idx == splat_arg_idx 
     end
 
     def name_length
@@ -862,6 +863,10 @@ module Crystal
       a_def.name_column_number = name_column_number
       a_def
     end
+
+    def has_splat_argument?
+      @splat_arg_idx != -1
+    end
   end
 
   class Macro < ASTNode
@@ -873,7 +878,7 @@ module Crystal
     property :yields
     property :name_column_number
 
-    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
+    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil, @splat_arg_idx = -1)
       @body = Expressions.from body
     end
 

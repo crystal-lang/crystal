@@ -525,9 +525,17 @@ module Crystal
         raise error_msg, owner_trace
       end
 
-      defs_matching_args_length = defs.select { |a_def| a_def.args.length == self.args.length }
+      defs_matching_args_length = defs.select do |a_def|
+        ! a_def.has_splat_argument? && a_def.args.length == self.args.length
+      end
       if defs_matching_args_length.empty?
-        all_arguments_lengths = defs.map { |a_def| a_def.args.length }.uniq!
+        all_arguments_lengths = defs.map do |a_def|
+          if a_def.has_splat_argument?
+            a_def.args.length.to_s + "+"
+          else
+            a_def.args.length.to_s
+          end
+        end.uniq!
         raise "wrong number of arguments for '#{full_name(owner, def_name)}' (#{args.length} for #{all_arguments_lengths.join ", "})"
       end
 
