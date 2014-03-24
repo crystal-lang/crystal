@@ -6,7 +6,7 @@ module Crystal
       superclass = if node_superclass = node.superclass
                      lookup_path_type node_superclass
                    elsif node.struct
-                     mod.value
+                     mod.struct
                    else
                      mod.reference
                    end

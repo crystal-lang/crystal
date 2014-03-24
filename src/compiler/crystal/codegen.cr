@@ -156,7 +156,8 @@ module Crystal
       false
     end
 
-    # Can only happen in a Const or as an argument cast
+    # Can only happen in a Const or as an argument cast,
+    # or for primitives where we want a body, like Struct#hash and Struct#==
     def visit(node : Primitive)
       @last = case node.name
               when :argc
@@ -169,6 +170,10 @@ module Crystal
                 LLVM.double(Float64::INFINITY)
               when :nil_pointer
                 LLVM.null(llvm_type(node.type))
+              when :struct_hash
+                codegen_primitive_struct_hash
+              when :struct_equals
+                codegen_primitive_struct_equals
               else
                 raise "Bug: unhandled primitive in codegen visit: #{node.name}"
               end
@@ -634,6 +639,90 @@ module Crystal
         end
         accept index_out_of_bounds_exception_call
       end
+    end
+
+    def codegen_primitive_struct_hash
+      type = context.type as InstanceVarContainer
+      ivars = type.all_instance_vars
+
+      # Generate:
+      # hash = 0
+      # - for each instance var
+      #   hash = 31 * hash + @ivar.hash
+      # - end
+      # hash
+
+      hash_var = Var.new("hash")
+      n0 = NumberLiteral.new(0, :i32)
+      n31 = NumberLiteral.new(31, :i32)
+
+      vars = {} of String => Var
+
+      exps = [] of ASTNode
+      exps << Assign.new(hash_var, n0)
+      i = 0
+      ivars.each_value do |ivar|
+        ivar_name = "#ivar#{i}"
+        ivar_var = Var.new(ivar_name, ivar.type)
+
+        context.vars[ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
+        vars[ivar_name] = ivar_var
+
+        mul = Call.new(n31, "*", [hash_var] of ASTNode)
+        ivar_hash = Call.new(ivar_var, "hash")
+        add = Call.new(mul, "+", [ivar_hash] of ASTNode)
+        exps << Assign.new(hash_var, add)
+        i += 1
+      end
+      exps << hash_var
+      exps = Expressions.new(exps)
+      exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
+      exps.accept self
+      @last
+    end
+
+    def codegen_primitive_struct_equals
+      type = context.type as InstanceVarContainer
+      ivars = type.all_instance_vars
+
+      other = context.vars["other"].pointer
+
+      # Generate:
+      # - for each instance var
+      #   return false if self.ivar != other.ivar
+      # - end
+      # true
+      # hash
+
+      vars = {} of String => Var
+
+      exps = [] of ASTNode
+
+      i = 0
+      ivars.each_value do |ivar|
+        self_ivar_name = "#my_ivar#{i}"
+        other_ivar_name = "#other_ivar#{i}"
+
+        self_ivar = Var.new(self_ivar_name, ivar.type)
+        other_ivar = Var.new(other_ivar_name, ivar.type)
+
+        context.vars[self_ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
+        context.vars[other_ivar_name] = LLVMVar.new(aggregate_index(other, i), ivar.type)
+
+        vars[self_ivar_name] = self_ivar
+        vars[other_ivar_name] = other_ivar
+
+        cmp = Call.new(self_ivar, "!=", [other_ivar] of ASTNode)
+        exps << If.new(cmp, Return.new([BoolLiteral.new(false)] of ASTNode))
+
+        i += 1
+      end
+
+      exps << BoolLiteral.new(true)
+      exps = Expressions.from(exps)
+      exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
+      exps.accept self
+      @last
     end
 
     def visit(node : ASTNode)
@@ -1558,11 +1647,16 @@ module Crystal
     def codegen_call(target_def, self_type, call_args)
       body = target_def.body
       if body.is_a?(Primitive)
-        with_cloned_context do
-          context.type = self_type
-          codegen_primitive(body, target_def, call_args)
+        case body.name
+        when :struct_hash, :struct_equals
+          # Skip: we want a method body for these
+        else
+          with_cloned_context do
+            context.type = self_type
+            codegen_primitive(body, target_def, call_args)
+          end
+          return
         end
-        return
       end
 
       func = target_def_fun(target_def, self_type)

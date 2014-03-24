@@ -89,6 +89,10 @@ module Crystal
       @types["Array"] = @array = GenericClassType.new self, self, "Array", @reference, ["T"]
       @types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", @reference
 
+      @types["Struct"] = @struct = NonGenericClassType.new self, self, "Struct", @value
+      @struct.abstract = true
+      @struct.struct = true
+
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
 
@@ -348,6 +352,7 @@ module Crystal
     getter :object
     getter :no_return
     getter :value
+    getter :struct
     getter :number
     getter :reference
     getter :void

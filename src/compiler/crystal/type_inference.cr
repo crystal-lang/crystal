@@ -927,6 +927,10 @@ module Crystal
         node.type = mod.int32
       when :symbol_to_s
         node.type = mod.string
+      when :struct_hash
+        node.type = mod.int32
+      when :struct_equals
+        node.type = mod.bool
       when :class
         node.type = scope.metaclass
       when :fun_call

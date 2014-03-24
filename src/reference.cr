@@ -1,10 +1,10 @@
 class Reference
-  def ==(other : Value)
-    false
+  def ==(other : self)
+    same?(other)
   end
 
-  def ==(other : Reference)
-    same?(other)
+  def ==(other)
+    false
   end
 
   def same?(other : Reference)

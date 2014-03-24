@@ -19,10 +19,6 @@ class Pointer(T)
     address <=> other.address
   end
 
-  def ==(other)
-    false
-  end
-
   def [](offset)
     (self + offset).value
   end
@@ -58,6 +54,14 @@ class Pointer(T)
 
   def swap(i, j)
     self[i], self[j] = self[j], self[i]
+  end
+
+  def hash
+    address.hash
+  end
+
+  def to_s
+    "Pointer(#{T})@#{address}"
   end
 
   def each(count)
