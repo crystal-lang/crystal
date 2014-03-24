@@ -1,14 +1,6 @@
-require "wrapper"
-
 struct LLVM::Builder
-  include LLVM::Wrapper
-
   def initialize
     @builder = LibLLVM.create_builder
-  end
-
-  def wrapped_pointer
-    @builder
   end
 
   def position_at_end(block)

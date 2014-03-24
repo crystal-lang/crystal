@@ -1,15 +1,7 @@
-require "wrapper"
-
 struct LLVM::Function
-  include LLVM::Wrapper
-
   getter :fun
 
   def initialize(@fun)
-  end
-
-  def wrapped_pointer
-    @fun
   end
 
   def dump

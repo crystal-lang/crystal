@@ -1,14 +1,6 @@
-require "wrapper"
-
 struct LLVM::Module
-  include LLVM::Wrapper
-
   def initialize(name)
     @module = LibLLVM.module_create_with_name name
-  end
-
-  def wrapped_pointer
-    @module
   end
 
   def dump
