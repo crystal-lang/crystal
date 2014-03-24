@@ -1676,6 +1676,10 @@ module Crystal
       typedef.lookup_similar_def_name(name)
     end
 
+    def lookup_macro(name, args_length)
+      typedef.lookup_macro(name, args_length)
+    end
+
     def primitive_like?
       true
     end
