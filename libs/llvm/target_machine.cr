@@ -1,5 +1,13 @@
-class LLVM::TargetMachine
+require "wrapper"
+
+struct LLVM::TargetMachine
+  include LLVM::Wrapper
+
   def initialize(@target_machine)
+  end
+
+  def wrapped_pointer
+    @target_machine
   end
 
   def data_layout

@@ -1,9 +1,17 @@
-class LLVM::Target
+require "wrapper"
+
+struct LLVM::Target
+  include LLVM::Wrapper
+
   def self.first
     Target.new LibLLVM.get_first_target
   end
 
   def initialize(@target)
+  end
+
+  def wrapped_pointer
+    @target
   end
 
   def name

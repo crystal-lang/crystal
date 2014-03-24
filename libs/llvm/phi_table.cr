@@ -1,4 +1,4 @@
-class LLVM::PhiTable
+struct LLVM::PhiTable
   getter blocks
   getter values
 

@@ -1,6 +1,14 @@
-class LLVM::GenericValue
+require "wrapper"
+
+struct LLVM::GenericValue
+  include LLVM::Wrapper
+
   def initialize(value)
     @value = value
+  end
+
+  def wrapped_pointer
+    @value
   end
 
   def to_i

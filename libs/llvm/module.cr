@@ -1,8 +1,14 @@
-class LLVM::Module
+require "wrapper"
+
+struct LLVM::Module
+  include LLVM::Wrapper
+
   def initialize(name)
     @module = LibLLVM.module_create_with_name name
-    @functions = FunctionCollection.new(self)
-    @globals = GlobalCollection.new(self)
+  end
+
+  def wrapped_pointer
+    @module
   end
 
   def dump
@@ -10,11 +16,11 @@ class LLVM::Module
   end
 
   def functions
-    @functions
+    FunctionCollection.new(self)
   end
 
   def globals
-    @globals
+    GlobalCollection.new(self)
   end
 
   def llvm_module

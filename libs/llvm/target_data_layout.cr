@@ -1,5 +1,13 @@
-class LLVM::TargetDataLayout
+require "wrapper"
+
+struct LLVM::TargetDataLayout
+  include LLVM::Wrapper
+
   def initialize(@target_data)
+  end
+
+  def wrapped_pointer
+    @target_data
   end
 
   def size_in_bits(type)
