@@ -61,7 +61,9 @@ class Pointer(T)
   end
 
   def to_s
-    "Pointer(#{T})@#{address}"
+    String.new_with_capacity(30) do |buffer|
+      C.sprintf(buffer, "Pointer(%s)@%lx", T.to_s, address)
+    end
   end
 
   def each(count)
