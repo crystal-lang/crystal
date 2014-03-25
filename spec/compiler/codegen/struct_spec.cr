@@ -390,4 +390,41 @@ describe "Code gen: struct" do
       Foo.new(1, 2) == Foo.new(1, 1)
       ").to_b.should be_false
   end
+
+  it "does to_s for empty struct" do
+    run("
+      require \"prelude\"
+
+      struct Foo
+      end
+
+      Foo.new.to_s
+      ").to_string.should eq("Foo()")
+  end
+
+  it "does to_s for one field struct" do
+    run("
+      require \"prelude\"
+
+      struct Foo
+        def initialize(@x)
+        end
+      end
+
+      Foo.new(1).to_s
+      ").to_string.should eq("Foo(@x=1)")
+  end
+
+  it "does to_s for two field struct" do
+    run("
+      require \"prelude\"
+
+      struct Foo
+        def initialize(@x, @y)
+        end
+      end
+
+      Foo.new(1, 2).to_s
+      ").to_string.should eq("Foo(@x=1, @y=2)")
+  end
 end

@@ -174,6 +174,8 @@ module Crystal
                 codegen_primitive_struct_hash
               when :struct_equals
                 codegen_primitive_struct_equals
+              when :struct_to_s
+                codegen_primitive_struct_to_s
               else
                 raise "Bug: unhandled primitive in codegen visit: #{node.name}"
               end
@@ -720,6 +722,37 @@ module Crystal
 
       exps << BoolLiteral.new(true)
       exps = Expressions.from(exps)
+      exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
+      exps.accept self
+      @last
+    end
+
+    def codegen_primitive_struct_to_s
+      type = context.type as InstanceVarContainer
+      ivars = type.all_instance_vars
+
+      # Generate
+      # "ClassName(#{ivar_name}=#{ivar_value}, ...)"
+
+      vars = {} of String => Var
+
+      exps = [] of ASTNode
+      exps << StringLiteral.new("#{type}(")
+      i = 0
+      ivars.each_value do |ivar|
+        ivar_name = "#ivar#{i}"
+        ivar_var = Var.new(ivar_name, ivar.type)
+
+        context.vars[ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
+        vars[ivar_name] = ivar_var
+
+        exps << StringLiteral.new(i == 0 ? "#{ivar.name}=" : ", #{ivar.name}=")
+        exps << ivar_var
+        i += 1
+      end
+      exps << StringLiteral.new(")")
+      exps = StringInterpolation.new(exps)
+      exps = @mod.normalize(exps)
       exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
       exps.accept self
       @last
@@ -1648,7 +1681,7 @@ module Crystal
       body = target_def.body
       if body.is_a?(Primitive)
         case body.name
-        when :struct_hash, :struct_equals
+        when :struct_hash, :struct_equals, :struct_to_s
           # Skip: we want a method body for these
         else
           with_cloned_context do
