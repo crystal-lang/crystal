@@ -2,7 +2,7 @@ require "../ast"
 
 module Crystal
   module TypeVisitorHelper
-    ExternalVarAttributes = ["ThreadLocal"]
+    ValidExternalVarAttributes = ["ThreadLocal"]
 
     def process_class_def(node : ClassDef)
       superclass = if node_superclass = node.superclass
@@ -256,7 +256,7 @@ module Crystal
     end
 
     def process_external_var(node : ExternalVar)
-      check_valid_attributes node, ExternalVarAttributes, "external var"
+      check_valid_attributes node, ValidExternalVarAttributes, "external var"
 
       node.type_spec.accept self
 

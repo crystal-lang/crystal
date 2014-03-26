@@ -364,6 +364,16 @@ module Crystal
       @out = false
     end
 
+    def add_attributes(attributes)
+      if attributes
+        if @attributes
+          @attributes.concat attributes
+        else
+          @attributes = attributes.dup
+        end
+      end
+    end
+
     def name_length
       name.length
     end
