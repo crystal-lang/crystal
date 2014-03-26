@@ -583,22 +583,11 @@ module Crystal
     end
 
     def parse_atomic
-      column_number = @token.column_number
       case @token.type
       when :"("
         parse_parenthesized_expression
       when :"[]"
-        line = @line_number
-        column = @token.column_number
-
-        next_token_skip_space
-        if @token.keyword?(:of)
-          next_token_skip_space_or_newline
-          of = parse_single_type
-          ArrayLiteral.new([] of ASTNode, of)
-        else
-          raise "for empty arrays use '[] of ElementType'"#, line, column
-        end
+        parse_empty_array_literal
       when :"["
         parse_array_literal
       when :"{"
@@ -1177,6 +1166,20 @@ module Crystal
       ArrayLiteral.new strings
     end
 
+    def parse_empty_array_literal
+      line = @line_number
+      column = @token.column_number
+
+      next_token_skip_space
+      if @token.keyword?(:of)
+        next_token_skip_space_or_newline
+        of = parse_single_type
+        ArrayLiteral.new([] of ASTNode, of)
+      else
+        raise "for empty arrays use '[] of ElementType'", line, column
+      end
+    end
+
     def parse_array_literal
       next_token_skip_space_or_newline
       exps = [] of ASTNode
@@ -1199,14 +1202,14 @@ module Crystal
     end
 
     def parse_hash_or_tuple_literal
-      column = @token.column_number
       line = @line_number
+      column = @token.column_number
 
       next_token_skip_space_or_newline
 
       if @token.type == :"}"
         next_token_skip_space
-        new_hash_literal([] of ASTNode, [] of ASTNode)
+        new_hash_literal([] of ASTNode, [] of ASTNode, line, column)
       else
         # "{foo:" or "{Foo:" means a hash literal with symbol key
         if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':' && peek_next_char != ':'
@@ -1230,6 +1233,9 @@ module Crystal
     end
 
     def parse_hash_literal(first_key)
+      line = @line_number
+      column = @token.column_number
+
       keys = [] of ASTNode
       values = [] of ASTNode
 
@@ -1258,7 +1264,7 @@ module Crystal
       end
       next_token_skip_space
 
-      new_hash_literal keys, values
+      new_hash_literal keys, values, line, column
     end
 
     def parse_tuple(first_exp)
@@ -1276,7 +1282,7 @@ module Crystal
       TupleLiteral.new exps
     end
 
-    def new_hash_literal(keys, values)
+    def new_hash_literal(keys, values, line, column)
       of_key = nil
       of_value = nil
       if @token.keyword?(:of)
@@ -1288,7 +1294,7 @@ module Crystal
       end
 
       if keys.length == 0 && !of_key
-        raise "for empty hashes use '{} of KeyType => ValueType'"#, line, column
+        raise "for empty hashes use '{} of KeyType => ValueType'", line, column
       end
 
       Crystal::HashLiteral.new keys, values, of_key, of_value
