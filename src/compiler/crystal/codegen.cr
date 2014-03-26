@@ -1137,7 +1137,7 @@ module Crystal
         llvm_type = llvm_type(type)
 
         global_var = @mod.global_vars[name]?
-        thread_local = global_var && has_attribute?(global_var.attributes, "ThreadLocal")
+        thread_local = global_var.try &.has_attribute?("ThreadLocal")
 
         # Declare global in this module as external
         ptr = @llvm_mod.globals.add(llvm_type, name)
@@ -1272,14 +1272,10 @@ module Crystal
       unless var = @lib_vars[name]?
         var = @llvm_mod.globals.add(llvm_type(type), name)
         LLVM.set_linkage var, LibLLVM::Linkage::External
-        LLVM.set_thread_local var if has_attribute?(attributes, "ThreadLocal")
+        LLVM.set_thread_local var if Attribute.any?(attributes, "ThreadLocal")
         @lib_vars[name] = var
       end
       var
-    end
-
-    def has_attribute?(attributes, name)
-      attributes.try &.any? { |attr| attr.name == name }
     end
 
     def visit(node : Def)

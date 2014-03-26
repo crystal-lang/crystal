@@ -1788,11 +1788,13 @@ module Crystal
 
     getter name
     getter vars
+    property :packed
 
     def initialize(program, container, @name, vars)
       super(program, container)
       @name = name
       @vars = {} of String => Var
+      @packed = false
       vars.each do |var|
         @vars[var.name] = var
         add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:struct_set))

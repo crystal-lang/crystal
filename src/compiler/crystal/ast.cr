@@ -18,6 +18,10 @@ module Crystal
       nil
     end
 
+    def has_attribute?(name)
+      Attribute.any?(attributes, name)
+    end
+
     def accepts_attributes?
       false
     end
@@ -1834,6 +1838,10 @@ module Crystal
 
     def clone_without_location
       Attribute.new(name)
+    end
+
+    def self.any?(attributes, name)
+      attributes.try &.any? { |attr| attr.name == name }
     end
   end
 

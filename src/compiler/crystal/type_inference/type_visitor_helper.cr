@@ -3,6 +3,7 @@ require "../ast"
 module Crystal
   module TypeVisitorHelper
     ValidExternalVarAttributes = ["ThreadLocal"]
+    ValidStructDefAttributes = ["Packed"]
 
     def process_class_def(node : ClassDef)
       superclass = if node_superclass = node.superclass
@@ -217,7 +218,11 @@ module Crystal
     end
 
     def process_struct_def(node : StructDef)
-      process_struct_or_union_def node, CStructType
+      check_valid_attributes node, ValidStructDefAttributes, "struct"
+
+      type = process_struct_or_union_def node, CStructType
+      type.packed = true if node.has_attribute?("Packed")
+      type
     end
 
     def process_union_def(node : UnionDef)
@@ -270,7 +275,7 @@ module Crystal
       if attrs = node.attributes
         attrs.each do |attr|
           unless valid_attributes.includes?(attr.name)
-            attr.raise "illegal attribute for #{desc}"
+            attr.raise "illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
           end
         end
       end
