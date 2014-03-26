@@ -1682,6 +1682,10 @@ module Crystal
       typedef.lookup_macro(name, args_length)
     end
 
+    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+      typedef.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
     def primitive_like?
       true
     end
