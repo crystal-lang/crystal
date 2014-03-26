@@ -1,4 +1,4 @@
-class LLVM::Function
+struct LLVM::Function
   getter :fun
 
   def initialize(@fun)

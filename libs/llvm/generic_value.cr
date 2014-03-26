@@ -1,4 +1,4 @@
-class LLVM::GenericValue
+struct LLVM::GenericValue
   def initialize(value)
     @value = value
   end

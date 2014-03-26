@@ -1,8 +1,6 @@
-class LLVM::Module
+struct LLVM::Module
   def initialize(name)
     @module = LibLLVM.module_create_with_name name
-    @functions = FunctionCollection.new(self)
-    @globals = GlobalCollection.new(self)
   end
 
   def dump
@@ -10,11 +8,11 @@ class LLVM::Module
   end
 
   def functions
-    @functions
+    FunctionCollection.new(self)
   end
 
   def globals
-    @globals
+    GlobalCollection.new(self)
   end
 
   def llvm_module

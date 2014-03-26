@@ -1,4 +1,4 @@
-class LLVM::TargetMachine
+struct LLVM::TargetMachine
   def initialize(@target_machine)
   end
 

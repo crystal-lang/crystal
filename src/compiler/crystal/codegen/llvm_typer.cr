@@ -203,7 +203,7 @@ module Crystal
     end
 
     def create_llvm_struct_type(type : CStructType)
-      LLVM.struct_type(type.llvm_name) do |a_struct|
+      LLVM.struct_type(type.llvm_name, type.packed) do |a_struct|
         @struct_cache[type] = a_struct
 
         vars = type.vars

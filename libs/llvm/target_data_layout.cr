@@ -1,4 +1,4 @@
-class LLVM::TargetDataLayout
+struct LLVM::TargetDataLayout
   def initialize(@target_data)
   end
 

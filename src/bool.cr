@@ -3,10 +3,6 @@ struct Bool
     self ? false : true
   end
 
-  def ==(other)
-    false
-  end
-
   def |(other : Bool)
     self ? true : other
   end

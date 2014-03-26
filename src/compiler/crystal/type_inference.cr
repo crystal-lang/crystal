@@ -15,6 +15,8 @@ module Crystal
   class TypeVisitor < Visitor
     include TypeVisitorHelper
 
+    ValidGlobalAttributes = ["ThreadLocal"]
+
     getter mod
     property! scope
     getter! typed_def
@@ -280,6 +282,8 @@ module Crystal
     end
 
     def type_assign(target : Global, value, node)
+      check_valid_attributes target, ValidGlobalAttributes, "global variable"
+
       value.accept self
 
       var = mod.global_vars[target.name]?
@@ -290,6 +294,7 @@ module Crystal
         end
         mod.global_vars[target.name] = var
       end
+      var.add_attributes(target.attributes)
 
       target.bind_to var
 
@@ -926,6 +931,12 @@ module Crystal
       when :symbol_hash
         node.type = mod.int32
       when :symbol_to_s
+        node.type = mod.string
+      when :struct_hash
+        node.type = mod.int32
+      when :struct_equals
+        node.type = mod.bool
+      when :struct_to_s
         node.type = mod.string
       when :class
         node.type = scope.metaclass

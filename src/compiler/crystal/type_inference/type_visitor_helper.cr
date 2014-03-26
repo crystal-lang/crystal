@@ -2,11 +2,14 @@ require "../ast"
 
 module Crystal
   module TypeVisitorHelper
+    ValidExternalVarAttributes = ["ThreadLocal"]
+    ValidStructDefAttributes = ["Packed"]
+
     def process_class_def(node : ClassDef)
       superclass = if node_superclass = node.superclass
                      lookup_path_type node_superclass
                    elsif node.struct
-                     mod.value
+                     mod.struct
                    else
                      mod.reference
                    end
@@ -215,7 +218,11 @@ module Crystal
     end
 
     def process_struct_def(node : StructDef)
-      process_struct_or_union_def node, CStructType
+      check_valid_attributes node, ValidStructDefAttributes, "struct"
+
+      type = process_struct_or_union_def node, CStructType
+      type.packed = true if node.has_attribute?("Packed")
+      type
     end
 
     def process_union_def(node : UnionDef)
@@ -254,12 +261,24 @@ module Crystal
     end
 
     def process_external_var(node : ExternalVar)
+      check_valid_attributes node, ValidExternalVarAttributes, "external var"
+
       node.type_spec.accept self
 
       var_type = check_primitive_like node.type_spec
 
       type = current_type as LibType
-      type.add_var node.name, var_type, (node.real_name || node.name)
+      type.add_var node.name, var_type, (node.real_name || node.name), node.attributes
+    end
+
+    def check_valid_attributes(node, valid_attributes, desc)
+      if attrs = node.attributes
+        attrs.each do |attr|
+          unless valid_attributes.includes?(attr.name)
+            attr.raise "illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
+          end
+        end
+      end
     end
 
     def process_fun_def(node : FunDef)

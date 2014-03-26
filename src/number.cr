@@ -1,8 +1,4 @@
 struct Number
-  def ==(other)
-    false
-  end
-
   def step(limit, step = 1)
     x = self
     if step > 0 && self < limit

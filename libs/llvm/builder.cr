@@ -1,4 +1,4 @@
-class LLVM::Builder
+struct LLVM::Builder
   def initialize
     @builder = LibLLVM.create_builder
   end

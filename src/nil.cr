@@ -11,10 +11,6 @@ struct Nil
     true
   end
 
-  def ==(other)
-    false
-  end
-
   def same?(other : Nil)
     true
   end

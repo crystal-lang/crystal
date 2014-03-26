@@ -3,10 +3,6 @@ struct Char
     ord == other
   end
 
-  def ==(other)
-    false
-  end
-
   def -(other : Char)
     ord - other.ord
   end

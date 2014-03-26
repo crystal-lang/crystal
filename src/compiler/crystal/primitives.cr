@@ -8,6 +8,7 @@ module Crystal
     def define_primitives
       define_object_primitives
       define_primitive_types_primitives
+      define_struct_primitives
       define_reference_primitives
       define_pointer_primitives
       define_symbol_primitives
@@ -71,6 +72,12 @@ module Crystal
       [object, value, bool, char, int32, int64, float32, float64, symbol, reference].each do |type|
         type.add_def Def.new("crystal_type_id", ([] of Arg), Primitive.new(:object_crystal_type_id))
       end
+    end
+
+    def define_struct_primitives
+      self.struct.add_def Def.new("hash", ([] of Arg), Primitive.new(:struct_hash))
+      self.struct.add_def Def.new("==", [Arg.new_with_restriction("other", Self.new)], Primitive.new(:struct_equals))
+      self.struct.add_def Def.new("to_s", ([] of Arg), Primitive.new(:struct_to_s))
     end
 
     def define_pointer_primitives

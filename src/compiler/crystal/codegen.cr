@@ -164,7 +164,8 @@ module Crystal
       false
     end
 
-    # Can only happen in a Const or as an argument cast
+    # Can only happen in a Const or as an argument cast,
+    # or for primitives where we want a body, like Struct#hash and Struct#==
     def visit(node : Primitive)
       @last = case node.name
               when :argc
@@ -177,6 +178,12 @@ module Crystal
                 LLVM.double(Float64::INFINITY)
               when :nil_pointer
                 LLVM.null(llvm_type(node.type))
+              when :struct_hash
+                codegen_primitive_struct_hash
+              when :struct_equals
+                codegen_primitive_struct_equals
+              when :struct_to_s
+                codegen_primitive_struct_to_s
               else
                 raise "Bug: unhandled primitive in codegen visit: #{node.name}"
               end
@@ -520,16 +527,18 @@ module Crystal
     end
 
     def codegen_primitive_external_var_set(node, target_def, call_args)
-      name = (target_def as External).real_name
-      var = declare_lib_var name, node.type
+      external = target_def as External
+      name = external.real_name
+      var = declare_lib_var name, node.type, external.attributes
       @last = call_args[0]
       store @last, var
       @last
     end
 
     def codegen_primitive_external_var_get(node, target_def, call_args)
+      external = target_def as External
       name = (target_def as External).real_name
-      var = declare_lib_var name, node.type
+      var = declare_lib_var name, node.type, external.attributes
       load var
     end
 
@@ -642,6 +651,121 @@ module Crystal
         end
         accept index_out_of_bounds_exception_call
       end
+    end
+
+    def codegen_primitive_struct_hash
+      type = context.type as InstanceVarContainer
+      ivars = type.all_instance_vars
+
+      # Generate:
+      # hash = 0
+      # - for each instance var
+      #   hash = 31 * hash + @ivar.hash
+      # - end
+      # hash
+
+      hash_var = Var.new("hash")
+      n0 = NumberLiteral.new(0, :i32)
+      n31 = NumberLiteral.new(31, :i32)
+
+      vars = {} of String => Var
+
+      exps = [] of ASTNode
+      exps << Assign.new(hash_var, n0)
+      i = 0
+      ivars.each_value do |ivar|
+        ivar_name = "#ivar#{i}"
+        ivar_var = Var.new(ivar_name, ivar.type)
+
+        context.vars[ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
+        vars[ivar_name] = ivar_var
+
+        mul = Call.new(n31, "*", [hash_var] of ASTNode)
+        ivar_hash = Call.new(ivar_var, "hash")
+        add = Call.new(mul, "+", [ivar_hash] of ASTNode)
+        exps << Assign.new(hash_var, add)
+        i += 1
+      end
+      exps << hash_var
+      exps = Expressions.new(exps)
+      exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
+      exps.accept self
+      @last
+    end
+
+    def codegen_primitive_struct_equals
+      type = context.type as InstanceVarContainer
+      ivars = type.all_instance_vars
+
+      other = context.vars["other"].pointer
+
+      # Generate:
+      # - for each instance var
+      #   return false if self.ivar != other.ivar
+      # - end
+      # true
+      # hash
+
+      vars = {} of String => Var
+
+      exps = [] of ASTNode
+
+      i = 0
+      ivars.each_value do |ivar|
+        self_ivar_name = "#my_ivar#{i}"
+        other_ivar_name = "#other_ivar#{i}"
+
+        self_ivar = Var.new(self_ivar_name, ivar.type)
+        other_ivar = Var.new(other_ivar_name, ivar.type)
+
+        context.vars[self_ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
+        context.vars[other_ivar_name] = LLVMVar.new(aggregate_index(other, i), ivar.type)
+
+        vars[self_ivar_name] = self_ivar
+        vars[other_ivar_name] = other_ivar
+
+        cmp = Call.new(self_ivar, "!=", [other_ivar] of ASTNode)
+        exps << If.new(cmp, Return.new([BoolLiteral.new(false)] of ASTNode))
+
+        i += 1
+      end
+
+      exps << BoolLiteral.new(true)
+      exps = Expressions.from(exps)
+      exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
+      exps.accept self
+      @last
+    end
+
+    def codegen_primitive_struct_to_s
+      type = context.type as InstanceVarContainer
+      ivars = type.all_instance_vars
+
+      # Generate
+      # "ClassName(#{ivar_name}=#{ivar_value}, ...)"
+
+      vars = {} of String => Var
+
+      exps = [] of ASTNode
+      exps << StringLiteral.new("#{type}(")
+      i = 0
+      ivars.each_value do |ivar|
+        ivar_name = "#ivar#{i}"
+        ivar_var = Var.new(ivar_name, ivar.type)
+
+        context.vars[ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
+        vars[ivar_name] = ivar_var
+
+        exps << StringLiteral.new(i == 0 ? "#{ivar.name}=" : ", #{ivar.name}=")
+        exps << ivar_var
+        i += 1
+      end
+      exps << StringLiteral.new(")")
+      exps = StringInterpolation.new(exps)
+      exps = @mod.normalize(exps)
+      exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
+      exps.accept self
+      @last
     end
 
     def visit(node : ASTNode)
@@ -1020,8 +1144,13 @@ module Crystal
       unless ptr
         llvm_type = llvm_type(type)
 
+        global_var = @mod.global_vars[name]?
+        thread_local = global_var.try &.has_attribute?("ThreadLocal")
+
         # Declare global in this module as external
         ptr = @llvm_mod.globals.add(llvm_type, name)
+        LLVM.set_thread_local ptr, thread_local if thread_local
+
         if @llvm_mod == @main_mod
           LLVM.set_initializer ptr, LLVM.null(llvm_type)
         else
@@ -1032,6 +1161,7 @@ module Crystal
           unless main_ptr
             main_ptr = @main_mod.globals.add(llvm_type, name)
             LLVM.set_initializer main_ptr, LLVM.null(llvm_type)
+            LLVM.set_thread_local main_ptr, thread_local if thread_local
           end
         end
       end
@@ -1147,11 +1277,11 @@ module Crystal
       context.vars[var.name] ||= LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
     end
 
-    def declare_lib_var(name, type)
+    def declare_lib_var(name, type, attributes)
       unless var = @lib_vars[name]?
         var = @llvm_mod.globals.add(llvm_type(type), name)
         LLVM.set_linkage var, LibLLVM::Linkage::External
-        LLVM.set_thread_local var if @mod.has_flag?("linux")
+        LLVM.set_thread_local var if Attribute.any?(attributes, "ThreadLocal")
         @lib_vars[name] = var
       end
       var
@@ -1571,8 +1701,18 @@ module Crystal
           context.type = self_type
           codegen_primitive(body, target_def, call_args)
           @current_node = old_current_node
+
+          case body.name
+          when :struct_hash, :struct_equals, :struct_to_s
+            # Skip: we want a method body for these
+          else
+            with_cloned_context do
+              context.type = self_type
+              codegen_primitive(body, target_def, call_args)
+            end
+            return
+          end
         end
-        return
       end
 
       func = target_def_fun(target_def, self_type)

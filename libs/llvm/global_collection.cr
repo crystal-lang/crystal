@@ -1,4 +1,4 @@
-class LLVM::GlobalCollection
+struct LLVM::GlobalCollection
   def initialize(@mod)
   end
 

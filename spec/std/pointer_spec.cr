@@ -32,4 +32,12 @@ describe "Pointer" do
       p1.memcmp(p3, 4).should be_false
     end
   end
+
+  it "compares two pointers by address" do
+    p1 = Pointer(Int32).malloc(1)
+    p2 = Pointer(Int32).malloc(1)
+    p1.should eq(p1)
+    p1.should_not eq(p2)
+    p1.should_not eq(1)
+  end
 end

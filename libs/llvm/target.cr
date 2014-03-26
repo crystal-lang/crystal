@@ -1,4 +1,4 @@
-class LLVM::Target
+struct LLVM::Target
   def self.first
     Target.new LibLLVM.get_first_target
   end

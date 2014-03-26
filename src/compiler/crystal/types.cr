@@ -1623,12 +1623,14 @@ module Crystal
       raise "Bug: shouldn't be adding a Def in a LibType"
     end
 
-    def add_var(name, type, real_name)
+    def add_var(name, type, real_name, attributes)
       setter = External.new("#{name}=", [Arg.new_with_type("value", type)], Primitive.new(:external_var_set, type), real_name)
       setter.set_type(type)
+      setter.attributes = attributes
 
       getter = External.new("#{name}", ([] of Arg), Primitive.new(:external_var_get, type), real_name)
       getter.set_type(type)
+      getter.attributes = attributes
 
       add_def setter
       add_def getter
@@ -1674,6 +1676,10 @@ module Crystal
 
     def lookup_similar_def_name(name)
       typedef.lookup_similar_def_name(name)
+    end
+
+    def lookup_macro(name, args_length)
+      typedef.lookup_macro(name, args_length)
     end
 
     def primitive_like?
@@ -1782,11 +1788,13 @@ module Crystal
 
     getter name
     getter vars
+    property :packed
 
     def initialize(program, container, @name, vars)
       super(program, container)
       @name = name
       @vars = {} of String => Var
+      @packed = false
       vars.each do |var|
         @vars[var.name] = var
         add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:struct_set))

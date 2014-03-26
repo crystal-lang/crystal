@@ -6,7 +6,24 @@ module Crystal
     def clone
       clone = clone_without_location
       clone.location = location
+      clone.attributes = attributes
       clone
+    end
+
+    def attributes
+      nil
+    end
+
+    def attributes=(attributes)
+      nil
+    end
+
+    def has_attribute?(name)
+      Attribute.any?(attributes, name)
+    end
+
+    def accepts_attributes?
+      false
     end
 
     def name_column_number
@@ -345,9 +362,20 @@ module Crystal
   class Var < ASTNode
     property :name
     property :out
+    property :attributes
 
     def initialize(@name, @type = nil)
       @out = false
+    end
+
+    def add_attributes(attributes)
+      if attributes
+        if @attributes
+          @attributes.concat attributes
+        else
+          @attributes = attributes.dup
+        end
+      end
     end
 
     def name_length
@@ -653,8 +681,13 @@ module Crystal
   # A global variable.
   class Global < ASTNode
     property :name
+    property :attributes
 
     def initialize(@name)
+    end
+
+    def accepts_attributes?
+      true
     end
 
     def name_length
@@ -834,9 +867,14 @@ module Crystal
     property :calls_super
     property :uses_block_arg
     property :name_column_number
+    property :attributes
 
     def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
       @body = Expressions.from body
+    end
+
+    def accepts_attributes?
+      true
     end
 
     def accept_children(visitor)
@@ -1111,9 +1149,14 @@ module Crystal
     property :abstract
     property :struct
     property :name_column_number
+    property :attributes
 
     def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = nil)
       @body = Expressions.from body
+    end
+
+    def accepts_attributes?
+      true
     end
 
     def accept_children(visitor)
@@ -1501,8 +1544,13 @@ module Crystal
     property :varargs
     property :body
     property :real_name
+    property :attributes
 
     def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, @real_name = name)
+    end
+
+    def accepts_attributes?
+      true
     end
 
     def accept_children(visitor)
@@ -1558,6 +1606,12 @@ module Crystal
   end
 
   class StructDef < StructOrUnionDef
+    property :attributes
+
+    def accepts_attributes?
+      true
+    end
+
     def clone_without_location
       StructDef.new(@name, @fields.clone)
     end
@@ -1593,8 +1647,13 @@ module Crystal
     property :name
     property :type_spec
     property :real_name
+    property :attributes
 
     def initialize(@name, @type_spec, @real_name = nil)
+    end
+
+    def accepts_attributes?
+      true
     end
 
     def accept_children(visitor)
@@ -1765,6 +1824,25 @@ module Crystal
 
     def clone_without_location
       TypeOf.new(@expressions.clone)
+    end
+  end
+
+  class Attribute < ASTNode
+    property :name
+
+    def initialize(@name)
+    end
+
+    def ==(other : self)
+      other.name == name
+    end
+
+    def clone_without_location
+      Attribute.new(name)
+    end
+
+    def self.any?(attributes, name)
+      attributes.try &.any? { |attr| attr.name == name }
     end
   end
 

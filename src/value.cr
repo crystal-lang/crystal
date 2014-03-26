@@ -1,4 +1,8 @@
 struct Value
+  def ==(other)
+    false
+  end
+
   def !
     false
   end

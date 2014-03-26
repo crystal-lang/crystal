@@ -1,4 +1,4 @@
-class LLVM::FunctionCollection
+struct LLVM::FunctionCollection
   def initialize(@mod)
   end
 

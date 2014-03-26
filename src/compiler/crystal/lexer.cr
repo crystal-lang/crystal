@@ -460,20 +460,23 @@ module Crystal
         scan_number current_pos
       when '@'
         start = current_pos
-        next_char
-        class_var = false
-        if current_char == '@'
-          class_var = true
-          next_char
-        end
-        if current_char.ident_start?
-          while next_char.ident_part?
-            # Nothing to do
-          end
-          @token.type = class_var ? :CLASS_VAR : :INSTANCE_VAR
-          @token.value = string_range(start)
+        if next_char == ':'
+          next_char :"@:"
         else
-          unknown_token
+          class_var = false
+          if current_char == '@'
+            class_var = true
+            next_char
+          end
+          if current_char.ident_start?
+            while next_char.ident_part?
+              # Nothing to do
+            end
+            @token.type = class_var ? :CLASS_VAR : :INSTANCE_VAR
+            @token.value = string_range(start)
+          else
+            unknown_token
+          end
         end
       when '$'
         start = current_pos
