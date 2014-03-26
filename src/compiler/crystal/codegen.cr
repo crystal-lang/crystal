@@ -519,16 +519,18 @@ module Crystal
     end
 
     def codegen_primitive_external_var_set(node, target_def, call_args)
-      name = (target_def as External).real_name
-      var = declare_lib_var name, node.type
+      external = target_def as External
+      name = external.real_name
+      var = declare_lib_var name, node.type, external.attributes
       @last = call_args[0]
       store @last, var
       @last
     end
 
     def codegen_primitive_external_var_get(node, target_def, call_args)
+      external = target_def as External
       name = (target_def as External).real_name
-      var = declare_lib_var name, node.type
+      var = declare_lib_var name, node.type, external.attributes
       load var
     end
 
@@ -1261,14 +1263,18 @@ module Crystal
       context.vars[var.name] ||= LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
     end
 
-    def declare_lib_var(name, type)
+    def declare_lib_var(name, type, attributes)
       unless var = @lib_vars[name]?
         var = @llvm_mod.globals.add(llvm_type(type), name)
         LLVM.set_linkage var, LibLLVM::Linkage::External
-        LLVM.set_thread_local var if @mod.has_flag?("linux")
+        LLVM.set_thread_local var if has_attribute?(attributes, "ThreadLocal")
         @lib_vars[name] = var
       end
       var
+    end
+
+    def has_attribute?(attributes, name)
+      attributes.try &.any? { |attr| attr.name == name }
     end
 
     def visit(node : Def)

@@ -1,5 +1,11 @@
 lib C
-  $errno : Int32
+  ifdef linux
+    @:ThreadLocal
+    $errno : Int32
+  else
+    $errno : Int32
+  end
+
   fun strerror(errnum : Int32) : UInt8*
 end
 

@@ -853,9 +853,14 @@ module Crystal
     property :calls_super
     property :uses_block_arg
     property :name_column_number
+    property :attributes
 
     def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
       @body = Expressions.from body
+    end
+
+    def accepts_attributes?
+      true
     end
 
     def accept_children(visitor)

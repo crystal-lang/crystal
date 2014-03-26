@@ -2,6 +2,8 @@ require "../ast"
 
 module Crystal
   module TypeVisitorHelper
+    ExternalVarAttributes = ["ThreadLocal"]
+
     def process_class_def(node : ClassDef)
       superclass = if node_superclass = node.superclass
                      lookup_path_type node_superclass
@@ -254,12 +256,24 @@ module Crystal
     end
 
     def process_external_var(node : ExternalVar)
+      check_valid_attributes node, ExternalVarAttributes, "external var"
+
       node.type_spec.accept self
 
       var_type = check_primitive_like node.type_spec
 
       type = current_type as LibType
-      type.add_var node.name, var_type, (node.real_name || node.name)
+      type.add_var node.name, var_type, (node.real_name || node.name), node.attributes
+    end
+
+    def check_valid_attributes(node, valid_attributes, desc)
+      if attrs = node.attributes
+        attrs.each do |attr|
+          unless valid_attributes.includes?(attr.name)
+            attr.raise "illegal attribute for #{desc}"
+          end
+        end
+      end
     end
 
     def process_fun_def(node : FunDef)
