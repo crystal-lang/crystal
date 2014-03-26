@@ -595,7 +595,7 @@ module Crystal
         location = @token.location
         atomic = yield
         unless atomic.accepts_attributes?
-          raise "this doesn't accept attributes: #{atomic}", location
+          raise "this doesn't accept attributes", location
         end
         atomic.attributes = attributes
         atomic
