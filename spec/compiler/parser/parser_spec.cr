@@ -642,6 +642,70 @@ describe "Parser" do
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", ([] of ASTNode), Block.new(([] of Var), Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 
+  it_parses "lib C; ifdef foo; $foo : Int32; else; $foo : Float64; end; end", LibDef.new("C", nil, IfDef.new("foo".var, ExternalVar.new("foo", "Int32".path), ExternalVar.new("foo", "Float64".path)))
+
+  it "parses class with attributes" do
+    node = Parser.parse("
+      @:Foo
+      @:Bar
+      class Foo
+      end
+      ")
+    node.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
+  end
+
+  it "parses c struct with attributes" do
+    node = Parser.parse("
+      lib C
+        @:Foo
+        @:Bar
+        struct Foo
+        end
+      end
+      ") as LibDef
+    node.body.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
+  end
+
+  it "parses c fun with attributes" do
+    node = Parser.parse("
+      lib C
+        @:Foo
+        @:Bar
+        fun foo
+      end
+      ") as LibDef
+    node.body.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
+  end
+
+  it "parses c var with attributes" do
+    node = Parser.parse("
+      lib C
+        @:Foo
+        @:Bar
+        $foo : Int32
+      end
+      ") as LibDef
+    node.body.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
+  end
+
+  it "parses global var with attributes" do
+    node = Parser.parse("
+      @:Foo
+      @:Bar
+      $foo
+      ")
+    node.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
+  end
+
+  it "parses global assign with attributes" do
+    node = Parser.parse("
+      @:Foo
+      @:Bar
+      $foo = 1
+      ") as Assign
+    node.target.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
+  end
+
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end") as Def
     node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))

@@ -406,16 +406,12 @@ module Crystal
 
     def parse_atomic_with_method
       location = @token.location
-      atomic = parse_atomic
+      atomic = parse_with_attributes { parse_atomic }
       parse_atomic_method_suffix atomic, location
     end
 
     def parse_atomic_method_suffix(atomic, location)
-      # This line is needed until we fix a bug in the codegen
-      atomic = atomic
       while true
-        atomic.location = location
-
         case @token.type
         when :SPACE
           next_token
@@ -424,6 +420,7 @@ module Crystal
             next_token_skip_space
             to = parse_single_type
             atomic = Cast.new(atomic, to)
+            atomic.location
           else
             break
           end
@@ -444,6 +441,7 @@ module Crystal
 
           if @token.value == :is_a?
             atomic = parse_is_a(atomic)
+            atomic.location = location
           else
             name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
             next_token
@@ -457,6 +455,7 @@ module Crystal
                 args = [parse_op_assign] of ASTNode
 
                 atomic = Call.new(atomic, "#{name}=", args, nil, nil, false, name_column_number)
+                atomic.location = location
                 next
               when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
                 # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
@@ -464,6 +463,7 @@ module Crystal
                 next_token_skip_space
                 value = parse_expression
                 atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name, [] of ASTNode, nil, nil, false, name_column_number), method, [value] of ASTNode, nil, nil, false, name_column_number)] of ASTNode, nil, nil, false, name_column_number)
+                atomic.location = location
                 next
               else
                 call_args = parse_call_args_space_consumed
@@ -489,12 +489,14 @@ module Crystal
               atomic = args ? (Call.new atomic, name, args, nil, nil, false, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, nil, false, name_column_number)
             end
 
-            atomic = check_special_call(atomic, location)
+            atomic = check_special_call(atomic)
+            atomic.location = location
           end
         when :"[]"
           column_number = @token.column_number
           next_token_skip_space
           atomic = Call.new atomic, "[]", [] of ASTNode, nil, nil, false, column_number
+          atomic.location = location
           atomic.name_length = 0 if atomic.is_a?(Call)
           atomic
         when :"["
@@ -525,6 +527,7 @@ module Crystal
           end
 
           atomic = Call.new atomic, method_name, args, nil, nil, false, column_number
+          atomic.location = location
           atomic.name_length = 0 if atomic.is_a?(Call)
           atomic
         else
@@ -551,7 +554,7 @@ module Crystal
       IsA.new(atomic, type)
     end
 
-    def check_special_call(atomic, location)
+    def check_special_call(atomic)
       if atomic.is_a?(Call) && (atomic_obj = atomic.obj)
         case atomic.name
         when "responds_to?"
@@ -566,7 +569,6 @@ module Crystal
             raise "'responds_to?' can't receive a block"
           end
           atomic = RespondsTo.new(atomic_obj, arg)
-          atomic.location = location
         when "yield"
           if atomic.block
             raise "'yield' can't receive a block"
@@ -576,13 +578,40 @@ module Crystal
             @yields = atomic.args.length
           end
           atomic = Yield.new(atomic.args, atomic.obj)
-          atomic.location = location
         end
       end
       atomic
     end
 
+    def parse_with_attributes
+      if @token.type == :"@:"
+        attributes = [] of Attribute
+
+        while true
+          attributes << parse_attribute
+          break unless @token.type == :"@:"
+        end
+
+        location = @token.location
+        atomic = yield
+        unless atomic.accepts_attributes?
+          raise "this doesn't accept attributes: #{atomic}", location
+        end
+        atomic.attributes = attributes
+        atomic
+      else
+        yield
+      end
+    end
+
     def parse_atomic
+      location = @token.location
+      atomic = parse_atomic_without_location
+      atomic.location = location
+      atomic
+    end
+
+    def parse_atomic_without_location
       case @token.type
       when :"("
         parse_parenthesized_expression
@@ -701,6 +730,18 @@ module Crystal
       else
         unexpected_token
       end
+    end
+
+    def parse_attribute
+      location = @token.location
+      next_token_skip_space
+      check :CONST
+      name = @token.value.to_s
+      next_token_skip_space_or_newline
+
+      attribute = Attribute.new(name)
+      attribute.location = location
+      attribute
     end
 
     def parse_begin
@@ -2443,73 +2484,67 @@ module Crystal
     def parse_lib_body
       expressions = [] of ASTNode
       while true
-        location = @token.location
-
-        case @token.type
-        when :SPACE, :NEWLINE, :";"
-          next_token
-        when :IDENT
-          case @token.value
-          when :alias
-            exp = parse_alias
-            exp.location = location
-            expressions << exp
-          when :fun
-            exp = parse_fun_def
-            exp.location = location
-            expressions << exp
-          when :type
-            exp = parse_type_def
-            exp.location = location
-            expressions << exp
-          when :struct
-            exp = parse_struct_or_union StructDef
-            exp.location = location
-            expressions << exp
-          when :union
-            exp = parse_struct_or_union UnionDef
-            exp.location = location
-            expressions << exp
-          when :enum
-            exp = parse_enum
-            exp.location = location
-            expressions << exp
-          when :ifdef
-            exp = parse_ifdef true, true
-            exp.location = location
-            expressions << exp
-          when :end
-            break
-          else
-            break
-          end
-        when :CONST
-          ident = parse_ident
-          next_token_skip_space
-          check :"="
-          next_token_skip_space_or_newline
-          value = parse_expression
-          skip_statement_end
-          expressions << Assign.new(ident, value)
-        when :GLOBAL
-          name = @token.value.to_s[1 .. -1]
-          next_token_skip_space_or_newline
-          if @token.type == :"="
-            next_token_skip_space
-            check [:IDENT, :CONST]
-            real_name = @token.value.to_s
-            next_token_skip_space
-          end
-          check :":"
-          next_token_skip_space_or_newline
-          type = parse_single_type
-          skip_statement_end
-          expressions << ExternalVar.new(name, type, real_name)
-        else
-          break
-        end
+        skip_statement_end
+        break if is_end_token
+        expressions << parse_with_attributes { parse_lib_body_exp }
       end
       expressions
+    end
+
+    def parse_lib_body_exp
+      location = @token.location
+
+      exp = parse_lib_body_exp_without_location
+      exp.location = location
+      exp
+    end
+
+    def parse_lib_body_exp_without_location
+      case @token.type
+      when :IDENT
+        case @token.value
+        when :alias
+          parse_alias
+        when :fun
+          parse_fun_def
+        when :type
+          parse_type_def
+        when :struct
+          parse_struct_or_union StructDef
+        when :union
+          parse_struct_or_union UnionDef
+        when :enum
+          parse_enum
+        when :ifdef
+          parse_ifdef true, true
+        else
+          unexpected_token
+        end
+      when :CONST
+        ident = parse_ident
+        next_token_skip_space
+        check :"="
+        next_token_skip_space_or_newline
+        value = parse_expression
+        skip_statement_end
+        Assign.new(ident, value)
+      when :GLOBAL
+        name = @token.value.to_s[1 .. -1]
+        next_token_skip_space_or_newline
+        if @token.type == :"="
+          next_token_skip_space
+          check [:IDENT, :CONST]
+          real_name = @token.value.to_s
+          next_token_skip_space
+        end
+        check :":"
+        next_token_skip_space_or_newline
+        type = parse_single_type
+        skip_statement_end
+        ExternalVar.new(name, type, real_name)
+      else
+        unexpected_token
+      end
     end
 
     IdentOrConst = [:IDENT, :CONST]

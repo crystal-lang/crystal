@@ -1040,6 +1040,12 @@ module Crystal
       false
     end
 
+    def visit(node : Attribute)
+      @str << "@:"
+      @str << node.name
+      false
+    end
+
     def newline
       "\n"
     end
