@@ -1141,9 +1141,10 @@ module Crystal
 
         # Declare global in this module as external
         ptr = @llvm_mod.globals.add(llvm_type, name)
+        LLVM.set_thread_local ptr, thread_local if thread_local
+
         if @llvm_mod == @main_mod
           LLVM.set_initializer ptr, LLVM.null(llvm_type)
-          LLVM.set_thread_local ptr, thread_local if thread_local
         else
           LLVM.set_linkage ptr, LibLLVM::Linkage::External
 
