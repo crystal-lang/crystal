@@ -100,7 +100,9 @@ module Crystal
       @argv = @main.get_param(1)
       LLVM.set_name @argv, "argv"
 
-      @builder = LLVM::Builder.new
+      builder = LLVM::Builder.new
+      @builder = CrystalLLVMBuilder.new builder, self
+
       @dbg_kind = LibLLVM.get_md_kind_id("dbg", 3_u32)
 
       @modules = {"" => @main_mod} of String => LLVM::Module
@@ -606,7 +608,7 @@ module Crystal
     end
 
     def codegen_primitive_fun_call(node, target_def, call_args)
-      codegen_call_or_invoke(call_args[0], call_args[1 .. -1], true, target_def.type)
+      codegen_call_or_invoke(node, call_args[0], call_args[1 .. -1], true, target_def.type)
     end
 
     def codegen_primitive_pointer_diff(node, target_def, call_args)
@@ -1134,8 +1136,8 @@ module Crystal
               node.raise "Unknown assign target in codegen: #{target}"
             end
 
-      store_value = assign ptr, target.type, value.type, @last
-      wrap_debug store_value
+      store_instruction = assign ptr, target.type, value.type, @last
+      emit_debug_metadata node, store_instruction
 
       false
     end
@@ -1461,7 +1463,7 @@ module Crystal
         end
 
         raise_fun = main_fun(RAISE_NAME)
-        codegen_call_or_invoke(raise_fun, [bit_cast(unwind_ex_obj, type_of(raise_fun.get_param(0)))], true, @mod.no_return)
+        codegen_call_or_invoke(node, raise_fun, [bit_cast(unwind_ex_obj, type_of(raise_fun.get_param(0)))], true, @mod.no_return)
       end
 
       if node_ensure
@@ -1546,7 +1548,7 @@ module Crystal
         if block = node.block
           codegen_call_with_block(node, block, owner, call_args, old_context)
         else
-          codegen_call(node.target_def, owner, call_args)
+          codegen_call(node, node.target_def, owner, call_args)
         end
       end
 
@@ -1694,7 +1696,7 @@ module Crystal
       end
     end
 
-    def codegen_call(target_def, self_type, call_args)
+    def codegen_call(node, target_def, self_type, call_args)
       body = target_def.body
       if body.is_a?(Primitive)
         case body.name
@@ -1702,20 +1704,18 @@ module Crystal
           # Skip: we want a method body for these
         else
           with_cloned_context do
-            old_current_node, @current_node = @current_node, body
             context.type = self_type
             codegen_primitive(body, target_def, call_args)
-            @current_node = old_current_node
           end
           return
         end
       end
 
       func = target_def_fun(target_def, self_type)
-      codegen_call_or_invoke(func, call_args, target_def.raises, target_def.type)
+      codegen_call_or_invoke(node, func, call_args, target_def.raises, target_def.type)
     end
 
-    def codegen_call_or_invoke(func, call_args, raises, type)
+    def codegen_call_or_invoke(node, func, call_args, raises, type)
       if @exception_handlers.empty? || !raises
         @last = call func, call_args
       else
@@ -1725,7 +1725,7 @@ module Crystal
         position_at_end invoke_out_block
       end
 
-      wrap_debug @last
+      emit_debug_metadata node, @last
 
       case type
       when .no_return?
@@ -1739,9 +1739,9 @@ module Crystal
       @last
     end
 
-    def wrap_debug(value)
+    def emit_debug_metadata(node, value)
       # if value.is_a?(LibLLVM::ValueRef) && !LLVM.constant?(value) && !value.is_a?(LibLLVM::BasicBlockRef)
-        if md = dbg_metadata()
+        if md = dbg_metadata(node)
           LibLLVM.set_metadata(value, @dbg_kind, md) rescue nil
         end
       # end
@@ -2653,14 +2653,8 @@ module Crystal
       value
     end
 
-    def visit_any(node)
-      @current_node = node
-    end
-
     def accept(node)
-      old_current_node = @current_node
       node.accept self
-      @current_node = old_current_node
     end
 
     def block_returns?

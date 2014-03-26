@@ -111,10 +111,8 @@ module Crystal
       ])
     end
 
-    def dbg_metadata
-      current_node = @current_node
-      return unless current_node
-      location = current_node.location
+    def dbg_metadata(node)
+      location = node.location
       return unless location
       fun_md = fun_metadatas[context.fun]?
       return unless fun_md
@@ -122,7 +120,7 @@ module Crystal
       metadata([
         location.line_number || 1,
         location.column_number,
-        # lexical_block_metadata(context.fun, @current_node),
+        # lexical_block_metadata(context.fun, node),
         fun_md,
         nil
       ])
