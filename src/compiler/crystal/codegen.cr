@@ -100,8 +100,8 @@ module Crystal
       @argv = @main.get_param(1)
       LLVM.set_name @argv, "argv"
 
-      builder = LLVM::Builder.new
-      @builder = DebugLLVMBuilder.new builder, self
+      @builder = LLVM::Builder.new
+      @dbg_kind = LibLLVM.get_md_kind_id("dbg", 3_u32)
 
       @modules = {"" => @main_mod} of String => LLVM::Module
 
@@ -1134,7 +1134,8 @@ module Crystal
               node.raise "Unknown assign target in codegen: #{target}"
             end
 
-      assign ptr, target.type, value.type, @last
+      store_value = assign ptr, target.type, value.type, @last
+      wrap_debug store_value
 
       false
     end
@@ -1696,22 +1697,17 @@ module Crystal
     def codegen_call(target_def, self_type, call_args)
       body = target_def.body
       if body.is_a?(Primitive)
-        with_cloned_context do
-          old_current_node, @current_node = @current_node, body
-          context.type = self_type
-          codegen_primitive(body, target_def, call_args)
-          @current_node = old_current_node
-
-          case body.name
-          when :struct_hash, :struct_equals, :struct_to_s
-            # Skip: we want a method body for these
-          else
-            with_cloned_context do
-              context.type = self_type
-              codegen_primitive(body, target_def, call_args)
-            end
-            return
+        case body.name
+        when :struct_hash, :struct_equals, :struct_to_s
+          # Skip: we want a method body for these
+        else
+          with_cloned_context do
+            old_current_node, @current_node = @current_node, body
+            context.type = self_type
+            codegen_primitive(body, target_def, call_args)
+            @current_node = old_current_node
           end
+          return
         end
       end
 
@@ -1729,6 +1725,8 @@ module Crystal
         position_at_end invoke_out_block
       end
 
+      wrap_debug @last
+
       case type
       when .no_return?
         unreachable
@@ -1739,6 +1737,14 @@ module Crystal
       end
 
       @last
+    end
+
+    def wrap_debug(value)
+      # if value.is_a?(LibLLVM::ValueRef) && !LLVM.constant?(value) && !value.is_a?(LibLLVM::BasicBlockRef)
+        if md = dbg_metadata()
+          LibLLVM.set_metadata(value, @dbg_kind, md) rescue nil
+        end
+      # end
     end
 
     def target_def_fun(target_def, self_type)
