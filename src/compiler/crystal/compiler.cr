@@ -49,6 +49,7 @@ module Crystal
       @prelude = "prelude"
       @n_threads = 8.to_i32
       @browser = false
+      @single_module = false
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -96,6 +97,9 @@ module Crystal
         end
         opts.on("-s", "--stats", "Enable statistis output") do
           @stats = true
+        end
+        opts.on("--single-module", "Generate a single LLVM module") do
+          @single_module = true
         end
         opts.on("-t", "--types", "Prints types of global variables") do
           @print_types = true
@@ -190,7 +194,7 @@ module Crystal
 
         llvm_modules = timing("Codegen (crystal)") do
           options = Program::BuildOptions.new
-          options.single_module = @release || @cross_compile
+          options.single_module = @single_module || @release || @cross_compile
           options.debug = @debug
           program.build node, options
         end
