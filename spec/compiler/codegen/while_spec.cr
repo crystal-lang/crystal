@@ -30,7 +30,7 @@ describe "Codegen: while" do
     program = Program.new
     node = parse "while true; end"
     node = program.infer_type node
-    program.build node, true
+    program.build node, Program::BuildOptions.single_module
   end
 
   it "codegens while with declared var 1" do

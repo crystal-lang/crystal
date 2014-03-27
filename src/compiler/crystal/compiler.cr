@@ -21,6 +21,7 @@ module Crystal
     getter clang
     getter llvm_dis
     getter dump_ll
+    getter debug
     getter release
     getter llc_flags
     getter llc_flags_changed
@@ -37,6 +38,7 @@ module Crystal
       @print_hierarchy = false
       @run = false
       @stats = false
+      @debug = false
       @release = false
       @output_filename = nil
       @llc_flags = nil
@@ -59,7 +61,10 @@ module Crystal
         opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
           @cross_compile = cross_compile
         end
-        opts.on("-e 'command'", "one line script. Omit [programfile]") do |command|
+        opts.on("-d", "--debug", "Add symbolic debug info") do
+          @debug = true
+        end
+        opts.on("-e 'command'", "One line script. Omit [programfile]") do |command|
           @command = command
         end
         opts.on("--browser", "Opens an http server to browse the code") do
@@ -184,7 +189,10 @@ module Crystal
         return if @no_build
 
         llvm_modules = timing("Codegen (crystal)") do
-          program.build node, (@release || @cross_compile)
+          options = Program::BuildOptions.new
+          options.single_module = @release || @cross_compile
+          options.debug = @debug
+          program.build node, options
         end
 
         if @cross_compile

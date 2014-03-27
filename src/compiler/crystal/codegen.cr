@@ -15,6 +15,26 @@ module Crystal
   REALLOC_NAME = "__crystal_realloc"
 
   class Program
+    struct BuildOptions
+      property single_module
+      property debug
+      property llvm_mod
+      property use_host_flags
+
+      def initialize
+        @single_module = false
+        @debug = false
+        @llvm_mod = LLVM::Module.new("main_module")
+        @use_host_flags = false
+      end
+
+      def self.single_module
+        options = BuildOptions.new
+        options.single_module = true
+        options
+      end
+    end
+
     def run(code)
       node = Parser.parse(code)
       node = normalize node
@@ -24,7 +44,7 @@ module Crystal
     end
 
     def evaluate(node)
-      llvm_mod = build(node, true)[""]
+      llvm_mod = build(node, BuildOptions.single_module)[""]
       llvm_mod.verify
       engine = LLVM::JITCompiler.new(llvm_mod)
 
@@ -34,8 +54,8 @@ module Crystal
       engine.run_function llvm_mod.functions[MAIN_NAME], [argc, argv]
     end
 
-    def build(node, single_module = false, llvm_mod = LLVM::Module.new("main_module"))
-      visitor = CodeGenVisitor.new(self, node, llvm_mod, single_module)
+    def build(node, build_options)
+      visitor = CodeGenVisitor.new(self, node, build_options)
       begin
         node.accept visitor
         visitor.finish
@@ -85,7 +105,12 @@ module Crystal
     make_tuple Handler, node, catch_block, vars
     make_tuple StringKey, mod, string
 
-    def initialize(@mod, @node, @llvm_mod, @single_module = false, @use_host_flags = false)
+    def initialize(@mod, @node, build_options = BuildOptions.new)
+      @llvm_mod = build_options.llvm_mod
+      @single_module = build_options.single_module
+      @use_host_flags = build_options.use_host_flags
+      @debug = build_options.debug
+
       @main_mod = @llvm_mod
       @llvm_typer = LLVMTyper.new
       @main_ret_type = node.type
@@ -134,8 +159,7 @@ module Crystal
 
       @empty_md_list = metadata([0])
       @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
-      @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)]
-      # @subprograms = [] of LibLLVM::ValueRef
+      @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
     end
 
     def define_symbol_table(llvm_mod)
@@ -154,7 +178,10 @@ module Crystal
 
       @modules.each do |name, mod|
         mod.dump if Crystal::DUMP_LLVM
-        add_compile_unit_metadata(mod, name == "" ? "main" : name)
+
+        if @debug
+          add_compile_unit_metadata(mod, name == "" ? "main" : name)
+        end
       end
     end
 
@@ -1137,7 +1164,7 @@ module Crystal
             end
 
       store_instruction = assign ptr, target.type, value.type, @last
-      emit_debug_metadata node, store_instruction
+      emit_debug_metadata node, store_instruction if @debug
 
       false
     end
@@ -1725,7 +1752,7 @@ module Crystal
         position_at_end invoke_out_block
       end
 
-      emit_debug_metadata node, @last
+      emit_debug_metadata node, @last if @debug
 
       case type
       when .no_return?
@@ -1745,6 +1772,15 @@ module Crystal
           LibLLVM.set_metadata(value, @dbg_kind, md) rescue nil
         end
       # end
+    end
+
+    def emit_def_debug_metadata(target_def)
+      unless target_def.name == MAIN_NAME
+        if def_md = def_metadata(context.fun, target_def)
+          @subprograms[@llvm_mod] ||= [] of LibLLVM::ValueRef?
+          @subprograms[@llvm_mod] << def_md
+        end
+      end
     end
 
     def target_def_fun(target_def, self_type)
@@ -1804,12 +1840,7 @@ module Crystal
         args = codegen_fun_signature(mangled_name, target_def, self_type, is_closure)
 
         if !target_def.is_a?(External) || is_exported_fun
-          unless target_def.name == MAIN_NAME
-            if def_md = def_metadata(context.fun, target_def)
-              @subprograms[@llvm_mod] ||= [] of LibLLVM::ValueRef?
-              @subprograms[@llvm_mod] << def_md
-            end
-          end
+          emit_def_debug_metadata target_def if @debug
 
           new_entry_block
 

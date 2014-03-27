@@ -54,7 +54,7 @@ describe "Code gen: def" do
   it "builds infinite recursive function" do
     node = parse "def foo; foo; end; foo"
     result = infer_type node
-    result.program.build result.node, true
+    result.program.build result.node, Program::BuildOptions.single_module
   end
 
   it "unifies all calls to same def" do
