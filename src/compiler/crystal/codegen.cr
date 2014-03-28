@@ -102,8 +102,8 @@ module Crystal
       end
     end
 
-    make_tuple Handler, node, catch_block, vars
-    make_tuple StringKey, mod, string
+    make_named_tuple Handler, node, catch_block, vars
+    make_named_tuple StringKey, mod, string
 
     def initialize(@mod, @node, build_options = BuildOptions.new)
       @llvm_mod = build_options.llvm_mod

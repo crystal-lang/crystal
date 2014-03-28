@@ -277,8 +277,8 @@ module Crystal
   end
 
   class Macro
-    make_tuple InstanceKey, types
-    make_tuple Info, llvm_mod, engine, func
+    make_named_tuple InstanceKey, types
+    make_named_tuple Info, llvm_mod, engine, func
 
     def add_instance(info, arg_types)
       @instances ||= {} of InstanceKey => Info

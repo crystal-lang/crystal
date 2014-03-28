@@ -4,7 +4,7 @@ require "dl"
 require "closure_context"
 
 module Crystal
-  make_tuple MacroCacheKey, def_object_id, node_ids
+  make_named_tuple MacroCacheKey, def_object_id, node_ids
 
   class Program < NonGenericModuleType
     include DefContainer

@@ -44,9 +44,9 @@ class Tuple
   end
 end
 
-macro make_tuple(name, field0)
+macro make_named_tuple(name, field0)
   "
-  class #{name}
+  struct #{name}
     getter #{field0}
 
     def initialize(@#{field0})
@@ -69,9 +69,9 @@ macro make_tuple(name, field0)
   "
 end
 
-macro make_tuple(name, field0, field1)
+macro make_named_tuple(name, field0, field1)
   "
-  class #{name}
+  struct #{name}
     getter #{field0}
     getter #{field1}
 
@@ -96,9 +96,9 @@ macro make_tuple(name, field0, field1)
   "
 end
 
-macro make_tuple(name, field0, field1, field2)
+macro make_named_tuple(name, field0, field1, field2)
   "
-  class #{name}
+  struct #{name}
     getter #{field0}
     getter #{field1}
     getter #{field2}

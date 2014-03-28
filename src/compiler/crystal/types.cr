@@ -395,15 +395,17 @@ module Crystal
     end
 
     def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      if defs = self.sorted_defs[DefContainer::SortedDefKey.new(name, arg_types.length, yields)]
-        matches_array ||= [] of Match
-        defs.each do |a_def|
-          match = match_def_args(arg_types, a_def, owner, type_lookup)
+      if sorted_defs = self.sorted_defs()
+        if defs = sorted_defs[DefContainer::SortedDefKey.new(name, arg_types.length, yields)]?
+          matches_array ||= [] of Match
+          defs.each do |a_def|
+            match = match_def_args(arg_types, a_def, owner, type_lookup)
 
-          if match
-            matches_array.push match
-            if match.arg_types == arg_types
-              return Matches.new(matches_array, true, owner)
+            if match
+              matches_array.push match
+              if match.arg_types == arg_types
+                return Matches.new(matches_array, true, owner)
+              end
             end
           end
         end
@@ -453,12 +455,15 @@ module Crystal
 
     def lookup_first_def(name, yields)
       yields = !!yields
-      self.defs[name].values.find { |a_def| !!a_def.yields == yields }
+      if (defs = self.defs) && (hash = defs[name]?)
+        hash.values.find { |a_def| !!a_def.yields == yields }
+      end
     end
 
     def lookup_defs(name)
-      defs = self.defs[name]
-      return defs.values unless defs.empty?
+      if (defs = self.defs) && (hash = defs[name]?)
+        return hash.values unless hash.empty?
+      end
 
       parents.try &.each do |parent|
         parent_defs = parent.lookup_defs(name)
@@ -474,12 +479,14 @@ module Crystal
       tolerance = (name.length / 5.0).ceil
       candidates = [] of String
 
-      self.defs.each do |def_name, defs|
-        if def_name =~ /\A[a-z_\!\?]/
-          defs.each do |filter, overload|
-            if filter.restrictions.length == args_length && filter.yields == yields
-              if levenshtein(def_name, name) <= tolerance
-                candidates << def_name
+      if (defs = self.defs)
+        defs.each do |def_name, hash|
+          if def_name =~ /\A[a-z_\!\?]/
+            hash.each do |filter, overload|
+              if filter.restrictions.length == args_length && filter.yields == yields
+                if levenshtein(def_name, name) <= tolerance
+                  candidates << def_name
+                end
               end
             end
           end
@@ -499,7 +506,7 @@ module Crystal
     end
 
     def lookup_macro(name, args_length)
-      if a_macro = self.macros[name][args_length]?
+      if (macros = self.macros) && (hash = macros[name]?) && (a_macro = hash[args_length]?)
         return a_macro
       end
 
@@ -515,45 +522,45 @@ module Crystal
   module DefContainer
     include MatchesLookup
 
-    make_tuple DefKey, restrictions, yields
-    make_tuple SortedDefKey, name, length, yields
+    make_named_tuple DefKey, restrictions, yields
+    make_named_tuple SortedDefKey, name, length, yields
 
-    def defs
-      @defs ||= Hash(String, Hash(DefKey, Def)).new ->(h : Hash(String, Hash(DefKey, Def)), k : String) { h[k] = {} of DefKey => Def }
-    end
-
-    def sorted_defs
-      @sorted_defs ||= Hash(SortedDefKey, Array(Def)).new ->(h : Hash(SortedDefKey, Array(Def)), k : SortedDefKey) { h[k] = [] of Def }
-    end
+    getter defs
+    getter sorted_defs
+    getter macros
 
     def add_def(a_def)
       a_def.owner = self
       restrictions = Array(Type | ASTNode | Nil).new(a_def.args.length)
       a_def.args.each { |arg| restrictions.push(arg.type? || arg.restriction) }
       key = DefKey.new(restrictions, !!a_def.yields)
-      old_def = defs[a_def.name][key]?
-      defs[a_def.name][key] = a_def
+
+      defs = (@defs ||= {} of String => Hash(DefKey, Def))
+      hash = (defs[a_def.name] ||= {} of DefKey => Def)
+      old_def = hash[key]?
+      hash[key] = a_def
+
       add_sorted_def(a_def)
       old_def
     end
 
     def add_sorted_def(a_def)
-      sorted_defs = self.sorted_defs[SortedDefKey.new(a_def.name, a_def.args.length, !!a_def.yields)]
-      sorted_defs.each_with_index do |ex_def, i|
+      sorted_defs = (@sorted_defs ||= {} of SortedDefKey => Array(Def))
+      key = SortedDefKey.new(a_def.name, a_def.args.length, !!a_def.yields)
+      list = (sorted_defs[key] ||= [] of Def)
+      list.each_with_index do |ex_def, i|
         if a_def.is_restriction_of?(ex_def, self)
-          sorted_defs.insert(i, a_def)
+          list.insert(i, a_def)
           return
         end
       end
-      sorted_defs << a_def
-    end
-
-    def macros
-      @macros ||= Hash(String, Hash(Int32, Macro)).new ->(h : Hash(String, Hash(Int32, Macro)), k : String) { h[k] = {} of Int32 => Macro }
+      list << a_def
     end
 
     def add_macro(a_def)
-      self.macros[a_def.name][a_def.args.length] = a_def
+      macros = (@macros ||= {} of String => Hash(Int32, Macro))
+      hash = (macros[a_def.name] ||= {} of Int32 => Macro)
+      hash[a_def.args.length] = a_def
     end
 
     def filter_by_responds_to(name)
@@ -561,6 +568,8 @@ module Crystal
     end
 
     def has_def?(name)
+      defs = self.defs()
+      return false unless defs
       return true if defs.has_key?(name)
 
       parents.try &.each do |parent|
@@ -572,7 +581,7 @@ module Crystal
   end
 
   module DefInstanceContainer
-    make_tuple DefInstanceKey, def_object_id, arg_types, block_type
+    make_named_tuple DefInstanceKey, def_object_id, arg_types, block_type
 
     def def_instances
       @def_instances ||= {} of DefInstanceKey => Def
@@ -833,9 +842,11 @@ module Crystal
     end
 
     def transfer_instance_vars_of_mod(mod)
-      mod.defs.each do |def_name, hash|
-        hash.each do |restrictions, a_def|
-          transfer_instance_vars a_def
+      if (defs = mod.defs)
+        defs.each do |def_name, hash|
+          hash.each do |restrictions, a_def|
+            transfer_instance_vars a_def
+          end
         end
       end
 
@@ -1607,12 +1618,15 @@ module Crystal
     end
 
     def add_def(a_def : External)
-      existing_defs = defs[a_def.name]
-      existing = existing_defs.first_value?
-      if existing
-        existing = existing as External
-        unless existing.compatible_with?(a_def)
-          raise "fun redefinition with different signature (was #{existing})"
+      if defs = self.defs
+        if existing_defs = defs[a_def.name]?
+          existing = existing_defs.first_value?
+          if existing
+            existing = existing as External
+            unless existing.compatible_with?(a_def)
+              raise "fun redefinition with different signature (was #{existing})"
+            end
+          end
         end
       end
 
