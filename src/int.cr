@@ -98,6 +98,41 @@ struct Int
     self % other
   end
 
+  def to_s(radix : Int)
+    if radix < 1 || radix > 36
+      raise "Invalid radix #{radix}"
+    end
+
+    str = String::Buffer.new
+    num = self
+
+    if num < 0
+      str.append_byte '-'.ord.to_u8
+      num = num.abs
+      init = 1
+    else
+      init = 0
+    end
+
+    while num > 0
+      digit = num % radix
+      if digit >= 10
+        str.append_byte ('a'.ord + digit - 10).to_u8
+      else
+        str.append_byte ('0'.ord + digit).to_u8
+      end
+      num /= radix
+    end
+
+    # Reverse buffer
+    buffer = str.buffer
+    init.upto(str.length / 2 + init - 1) do |i|
+      buffer.swap(i, str.length - i - 1 + init)
+    end
+
+    str.to_s
+  end
+
   def to_modet
     ifdef darwin
       to_u16

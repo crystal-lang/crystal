@@ -50,4 +50,15 @@ describe "Int" do
     assert { 0.lcm(2).should eq(0) }
     assert { 2.lcm(0).should eq(0) }
   end
+
+  describe "to_s" do
+    assert { 123.to_s.should eq("123") }
+    assert { 12.to_s(2).should eq("1100") }
+    assert { -12.to_s(2).should eq("-1100") }
+    assert { -123456.to_s(2).should eq("-11110001001000000") }
+    assert { 1234.to_s(16).should eq("4d2") }
+    assert { -1234.to_s(16).should eq("-4d2") }
+    assert { 1234.to_s(36).should eq("ya") }
+    assert { -1234.to_s(36).should eq("-ya") }
+  end
 end
