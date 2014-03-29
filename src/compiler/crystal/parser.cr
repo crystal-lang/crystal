@@ -4,6 +4,8 @@ require "set"
 
 module Crystal
   class Parser < Lexer
+    make_named_tuple Unclosed, name, location
+
     def self.parse(str, def_vars = [Set(String).new])
       new(str, def_vars).parse
     end
@@ -12,6 +14,7 @@ module Crystal
       super(str)
       @last_call_has_parenthesis = false
       @temp_token = Token.new
+      @unclosed_stack = [] of Unclosed
     end
 
     def parse
@@ -728,7 +731,7 @@ module Crystal
       when :CLASS_VAR
         node_and_next_token ClassVar.new(@token.value.to_s)
       else
-        unexpected_token
+        unexpected_token_in_atomic
       end
     end
 
@@ -997,6 +1000,7 @@ module Crystal
     end
 
     def parse_parenthesized_expression
+      location = @token.location
       next_token_skip_space_or_newline
 
       if @token.type == :")"
@@ -1014,7 +1018,7 @@ module Crystal
         when :NEWLINE, :";"
           next_token_skip_space
         else
-          unexpected_token
+          raise "unterminated parenthesized expression", location
         end
       end
 
@@ -1222,16 +1226,19 @@ module Crystal
     end
 
     def parse_array_literal
-      next_token_skip_space_or_newline
       exps = [] of ASTNode
-      while @token.type != :"]"
-        exps << parse_expression
-        skip_space_or_newline
-        if @token.type == :","
-          next_token_skip_space_or_newline
+
+      open(:array_literal) do
+        next_token_skip_space_or_newline
+        while @token.type != :"]"
+          exps << parse_expression
+          skip_space_or_newline
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
         end
+        next_token_skip_space
       end
-      next_token_skip_space
 
       of = nil
       if @token.keyword?(:of)
@@ -1243,6 +1250,7 @@ module Crystal
     end
 
     def parse_hash_or_tuple_literal
+      location = @token.location
       line = @line_number
       column = @token.column_number
 
@@ -1262,63 +1270,67 @@ module Crystal
           case @token.type
           when :","
             next_token_skip_space_or_newline
-            return parse_tuple first_key
+            return parse_tuple first_key, location
           when :"}"
-            return parse_tuple first_key
+            return parse_tuple first_key, location
           end
           check :"=>"
         end
         next_token_skip_space_or_newline
-        parse_hash_literal first_key
+        parse_hash_literal first_key, location
       end
     end
 
-    def parse_hash_literal(first_key)
+    def parse_hash_literal(first_key, location)
       line = @line_number
       column = @token.column_number
 
       keys = [] of ASTNode
       values = [] of ASTNode
 
-      keys << first_key
-      values << parse_expression
-      skip_space_or_newline
-      if @token.type == :","
-        next_token_skip_space_or_newline
-      end
-
-      while @token.type != :"}"
-        if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':'
-          keys << SymbolLiteral.new(@token.value.to_s)
-          next_token
-        else
-          keys << parse_expression
-          skip_space_or_newline
-          check :"=>"
-        end
-        next_token_skip_space_or_newline
+      open(:hash_literal, location) do
+        keys << first_key
         values << parse_expression
         skip_space_or_newline
         if @token.type == :","
           next_token_skip_space_or_newline
         end
+
+        while @token.type != :"}"
+          if (@token.type == :IDENT || @token.type == :CONST) && current_char == ':'
+            keys << SymbolLiteral.new(@token.value.to_s)
+            next_token
+          else
+            keys << parse_expression
+            skip_space_or_newline
+            check :"=>"
+          end
+          next_token_skip_space_or_newline
+          values << parse_expression
+          skip_space_or_newline
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
+        end
+        next_token_skip_space
       end
-      next_token_skip_space
 
       new_hash_literal keys, values, line, column
     end
 
-    def parse_tuple(first_exp)
+    def parse_tuple(first_exp, location)
       exps = [] of ASTNode
-      exps << first_exp
 
-      while @token.type != :"}"
-        exps << parse_expression
-        if @token.type == :","
-          next_token_skip_space_or_newline
+      open(:tuple_literal, location) do
+        exps << first_exp
+        while @token.type != :"}"
+          exps << parse_expression
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          end
         end
+        next_token_skip_space
       end
-      next_token_skip_space
 
       TupleLiteral.new exps
     end
@@ -1985,47 +1997,51 @@ module Crystal
         nil
       when :"("
         args = [] of ASTNode
-        next_token_skip_space_or_newline
-        while @token.type != :")"
-          if @token.type == :"&"
-            unless current_char.whitespace?
-              return parse_call_block_arg(args, true)
+
+        open(:call) do
+          next_token_skip_space_or_newline
+          while @token.type != :")"
+            if @token.type == :"&"
+              unless current_char.whitespace?
+                return parse_call_block_arg(args, true)
+              end
             end
-          end
 
-          if @token.keyword?(:out)
-            next_token_skip_space_or_newline
+            if @token.keyword?(:out)
+              next_token_skip_space_or_newline
 
-            case @token.type
-            when :IDENT
-              var = Var.new(@token.value.to_s)
-              var.out = true
-              var.location = @token.location
-              push_var var
-              args << var
-            when :INSTANCE_VAR
-              ivar = InstanceVar.new(@token.value.to_s)
-              ivar.out = true
-              ivar.location = @token.location
-              args << ivar
+              case @token.type
+              when :IDENT
+                var = Var.new(@token.value.to_s)
+                var.out = true
+                var.location = @token.location
+                push_var var
+                args << var
+              when :INSTANCE_VAR
+                ivar = InstanceVar.new(@token.value.to_s)
+                ivar.out = true
+                ivar.location = @token.location
+                args << ivar
 
-              @instance_vars.add @token.value.to_s if @instance_vars
+                @instance_vars.add @token.value.to_s if @instance_vars
+              else
+                raise "expecting variable or instance variable after out"
+              end
+
+              next_token_skip_space
             else
-              raise "expecting variable or instance variable after out"
+              args << parse_expression
             end
 
-            next_token_skip_space
-          else
-            args << parse_expression
+            skip_space_or_newline
+            if @token.type == :","
+              next_token_skip_space_or_newline
+            end
           end
-
-          skip_space_or_newline
-          if @token.type == :","
-            next_token_skip_space_or_newline
-          end
+          next_token_skip_space
+          @last_call_has_parenthesis = true
         end
-        next_token_skip_space
-        @last_call_has_parenthesis = true
+
         CallArgs.new args
       when :SPACE
         next_token
@@ -2892,6 +2908,13 @@ module Crystal
       # Nothing
     end
 
+    def open(symbol, location = @token.location)
+      @unclosed_stack.push Unclosed.new(symbol, location)
+      value = yield
+      @unclosed_stack.pop
+      value
+    end
+
     def check(token_types : Array)
       raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token.type.to_s}')" unless token_types.any? { |type| @token.type == type }
     end
@@ -2914,6 +2937,23 @@ module Crystal
       else
         raise "unexpected token: #{token}"
       end
+    end
+
+    def unexpected_token_in_atomic
+      if unclosed = @unclosed_stack.last?
+        case unclosed.name
+        when :array_literal
+          raise "unterminated array literal", unclosed.location
+        when :hash_literal
+          raise "unterminated hash literal", unclosed.location
+        when :tuple_literal
+          raise "unterminated tuple literal", unclosed.location
+        when :call
+          raise "unterminated call", unclosed.location
+        end
+      end
+
+      unexpected_token
     end
 
     def is_var?(name)

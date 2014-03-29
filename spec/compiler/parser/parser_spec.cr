@@ -715,4 +715,54 @@ describe "Parser" do
     assert_syntax_error "def foo(x = 1, y); end",
       "argument must have a default value"
   end
+
+  it "says unterminated array literal" do
+    begin
+      Parser.parse(" [1, 2, 3 end")
+    rescue ex : Crystal::SyntaxException
+      ex.message.not_nil!.includes?("unterminated array literal").should be_true
+      ex.line_number.should eq(1)
+      ex.column_number.should eq(2)
+    end
+  end
+
+  it "says unterminated hash literal" do
+    begin
+      Parser.parse(" {1 => end")
+    rescue ex : Crystal::SyntaxException
+      ex.message.not_nil!.includes?("unterminated hash literal").should be_true
+      ex.line_number.should eq(1)
+      ex.column_number.should eq(2)
+    end
+  end
+
+  it "says unterminated tuple literal" do
+    begin
+      Parser.parse(" {1, 2, 3 end")
+    rescue ex : Crystal::SyntaxException
+      ex.message.not_nil!.includes?("unterminated tuple literal").should be_true
+      ex.line_number.should eq(1)
+      ex.column_number.should eq(2)
+    end
+  end
+
+  it "says unterminated parenthesized expression" do
+    begin
+      Parser.parse(" (1, 2, 3 end")
+    rescue ex : Crystal::SyntaxException
+      ex.message.not_nil!.includes?("unterminated parenthesized expression").should be_true
+      ex.line_number.should eq(1)
+      ex.column_number.should eq(2)
+    end
+  end
+
+  it "says unterminated call" do
+    begin
+      Parser.parse("foo(1, 2, 3 end")
+    rescue ex : Crystal::SyntaxException
+      ex.message.not_nil!.includes?("unterminated call").should be_true
+      ex.line_number.should eq(1)
+      ex.column_number.should eq(4)
+    end
+  end
 end

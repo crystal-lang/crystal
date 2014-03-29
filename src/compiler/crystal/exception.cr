@@ -5,6 +5,10 @@ module Crystal
   end
 
   class SyntaxException < Exception
+    getter line_number
+    getter column_number
+    getter filename
+
     def initialize(message, @line_number, @column_number, @filename)
       super(message)
     end
