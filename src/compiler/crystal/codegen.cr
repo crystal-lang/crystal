@@ -459,7 +459,7 @@ module Crystal
 
       unless type.struct?
         type_id_ptr = aggregate_index(@last, 0)
-        store int32(base_type.type_id), type_id_ptr
+        store type_id(base_type), type_id_ptr
       end
 
       if type.is_a?(HierarchyType)
@@ -599,7 +599,7 @@ module Crystal
     end
 
     def codegen_primitive_object_crystal_type_id(node, target_def, call_args)
-      int(type.type_id)
+      type_id(type)
     end
 
     def codegen_primitive_math_sqrt_float32(node, target_def, call_args)
@@ -630,7 +630,7 @@ module Crystal
       if node.type.hierarchy_metaclass?
         load aggregate_index(call_args[0], 0)
       else
-        int(node.type.type_id)
+        type_id(node.type)
       end
     end
 
@@ -1007,7 +1007,7 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      @last = int(node.type.type_id)
+      @last = type_id(node.type)
       false
     end
 
@@ -1376,10 +1376,10 @@ module Crystal
         # Special case: if the type is a type tuple we need to create a tuple for it
         if node_type.is_a?(TupleInstanceType)
           @last = allocate_tuple(node_type) do |tuple_type, i|
-            {tuple_type, int(tuple_type.type_id)}
+            {tuple_type, type_id(tuple_type)}
           end
         else
-          @last = int(node.type.type_id)
+          @last = type_id(node.type)
         end
       end
       false
@@ -1984,7 +1984,7 @@ module Crystal
     def type_id(value, type)
       case type
       when NilableType
-        @builder.select null_pointer?(value), int(@mod.nil.type_id), int(type.not_nil_type.type_id)
+        @builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.not_nil_type)
       when ReferenceUnionType
         load(value)
       when NilableReferenceUnionType
@@ -1994,7 +1994,7 @@ module Crystal
         cond null_pointer?(value), nil_block, not_nil_block
 
         position_at_end nil_block
-        phi_table.add insert_block, int(@mod.nil.type_id)
+        phi_table.add insert_block, type_id(@mod.nil)
         br exit_block
 
         position_at_end not_nil_block
@@ -2010,8 +2010,12 @@ module Crystal
       when HierarchyMetaclassType
         value
       else
-        int(type.type_id)
+        type_id(type)
       end
+    end
+
+    def type_id(type)
+      int(type.type_id)
     end
 
     def match_type_id(type, restriction : Program, type_id)
@@ -2023,7 +2027,7 @@ module Crystal
       when UnionType, HierarchyType, HierarchyMetaclassType
         match_any_type_id(restriction, type_id)
       else
-        equal? int(restriction.type_id), type_id
+        equal? type_id(restriction), type_id
       end
     end
 
@@ -2047,13 +2051,13 @@ module Crystal
           type_id = load union_type_id(@last)
 
           if has_nil
-            is_nil = equal? type_id, int(@mod.nil.type_id)
+            is_nil = equal? type_id, type_id(@mod.nil)
             cond = and cond, not(is_nil)
           end
 
           if has_bool
             value = load(bit_cast union_value(@last), pointer_type(LLVM::Int1))
-            is_bool = equal? type_id, int(@mod.bool.type_id)
+            is_bool = equal? type_id, type_id(@mod.bool)
             cond = and cond, not(and(is_bool, not(value)))
           end
         end
@@ -2118,7 +2122,7 @@ module Crystal
     end
 
     def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : VoidType, value)
-      store int(value_type.type_id), union_type_id(target_pointer)
+      store type_id(value_type), union_type_id(target_pointer)
     end
 
     def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : Type, value)
@@ -2275,7 +2279,7 @@ module Crystal
 
     def upcast_distinct(value, to_type : MixedUnionType, from_type : VoidType)
       union_ptr = alloca(llvm_type(to_type))
-      store int(from_type.type_id), union_type_id(union_ptr)
+      store type_id(from_type), union_type_id(union_ptr)
       union_ptr
     end
 
@@ -2301,12 +2305,12 @@ module Crystal
         match_any_type_id_with_function(type, type_id)
       when HierarchyType
         if type.base_type.subclasses.empty?
-          equal? int(type.base_type.type_id), type_id
+          equal? type_id(type.base_type), type_id
         else
           match_any_type_id_with_function(type, type_id)
         end
       else
-        equal? int(type.type_id), type_id
+        equal? type_id(type), type_id
       end
     end
 
@@ -2323,7 +2327,7 @@ module Crystal
         func.append_basic_block("entry") do |builder|
           result = nil
           type.each_concrete_type do |sub_type|
-            sub_type_cond = builder.icmp(LibLLVM::IntPredicate::EQ, int(sub_type.type_id), type_id)
+            sub_type_cond = builder.icmp(LibLLVM::IntPredicate::EQ, type_id(sub_type), type_id)
             result = result ? builder.or(result, sub_type_cond) : sub_type_cond
           end
           builder.ret result.not_nil!
@@ -2336,7 +2340,7 @@ module Crystal
       if self_var
         self_var.pointer
       else
-        int32(type.not_nil!.type_id)
+        type_id(type.not_nil!)
       end
     end
 
@@ -2558,7 +2562,7 @@ module Crystal
         global = @llvm_mod.globals.add(LLVM.struct_type([LLVM::Int32, LLVM::Int32, LLVM.array_type(LLVM::Int8, str.length + 1)]), name)
         LLVM.set_linkage global, LibLLVM::Linkage::Private
         LLVM.set_global_constant global, true
-        LLVM.set_initializer global, LLVM.struct([int32(@mod.string.type_id), int32(str.length), LLVM.string(str)])
+        LLVM.set_initializer global, LLVM.struct([type_id(@mod.string), int32(str.length), LLVM.string(str)])
         cast_to global, @mod.string
       end
     end
