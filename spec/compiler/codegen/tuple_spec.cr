@@ -82,4 +82,23 @@ describe "Code gen: tuple" do
       f.x
       ").to_i.should eq(2)
   end
+
+  it "allows malloc pointer of tuple" do
+    run("
+      class Pointer
+        def self.malloc(size : Int)
+          malloc(size.to_u64)
+        end
+      end
+
+      def foo(x : T)
+        p = Pointer(T).malloc(1)
+        p.value = x
+        p
+      end
+
+      p = foo({1, 2})
+      p.value[0] + p.value[1]
+      ").to_i.should eq(3)
+  end
 end

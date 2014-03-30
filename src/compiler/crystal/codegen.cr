@@ -1385,6 +1385,11 @@ module Crystal
       false
     end
 
+    def visit(node : Generic)
+      @last = type_id(node.type)
+      false
+    end
+
     def visit(node : Yield)
       block_context = context.block_context.not_nil!
       new_vars = block_context.vars.dup
