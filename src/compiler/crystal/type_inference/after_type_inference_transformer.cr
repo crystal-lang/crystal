@@ -47,6 +47,14 @@ module Crystal
       node
     end
 
+    def transform(node : Include)
+      node
+    end
+
+    def transform(node : Extend)
+      node
+    end
+
     def transform(node : Expressions)
       exps = [] of ASTNode
 

@@ -157,7 +157,6 @@ module Crystal
               visitor.untyped_def = match.def
               visitor.call = self
               visitor.scope = lookup_self_type
-              visitor.parent = parent_visitor
               visitor.type_lookup = match.type_lookup
               typed_def.body.accept visitor
             end
@@ -644,7 +643,12 @@ module Crystal
       assign = Assign.new(var, alloc)
       call_gc = Call.new(Path.new(["GC"], true), "add_finalizer", [var] of ASTNode)
 
-      match_def = Def.new("new", [] of Arg, [assign, call_gc, var] of ASTNode)
+      exps = Array(ASTNode).new(3)
+      exps << assign
+      exps << call_gc unless scope.instance_type.struct?
+      exps << var
+
+      match_def = Def.new("new", [] of Arg, exps)
       match = Match.new(scope, match_def, scope, arg_types)
 
       scope.add_def match_def
@@ -691,12 +695,13 @@ module Crystal
         call_gc = Call.new(Path.new(["GC"], true), "add_finalizer", [var] of ASTNode)
         init = Call.new(var, "initialize", new_vars)
 
-        match_def = Def.new("new", new_args, [
-          assign,
-          call_gc,
-          init,
-          var
-        ])
+        exps = Array(ASTNode).new(4)
+        exps << assign
+        exps << call_gc unless instance_type.struct?
+        exps << init
+        exps << var
+
+        match_def = Def.new("new", new_args, exps)
 
         new_match = Match.new(scope, match_def, match.type_lookup, match.arg_types, match.free_vars)
 

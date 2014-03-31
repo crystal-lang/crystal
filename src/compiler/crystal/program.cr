@@ -31,7 +31,10 @@ module Crystal
 
       @types["Reference"] = @reference = NonGenericClassType.new self, self, "Reference", @object
       @types["Value"] = @value = ValueType.new self, self, "Value", @object
+      @value.abstract = true
+
       @types["Number"] = @number = ValueType.new self, self, "Number", @value
+      @number.abstract = true
 
       @types["NoReturn"] = @no_return = NoReturnType.new self
       @types["Void"] = @void = VoidType.new self, self, "Void", @value, 1

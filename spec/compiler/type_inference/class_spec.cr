@@ -678,4 +678,12 @@ describe "Type inference: class" do
       foo2.x
       ") { int32 }
   end
+
+  it "errors when creating Value" do
+    assert_error "Value.allocate", "can't instantiate abstract struct Value"
+  end
+
+  it "errors when creating Number" do
+    assert_error "Number.allocate", "can't instantiate abstract struct Number"
+  end
 end

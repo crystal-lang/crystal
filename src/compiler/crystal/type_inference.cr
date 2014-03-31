@@ -23,7 +23,6 @@ module Crystal
     property! untyped_def
     getter block
     getter vars
-    property parent
     property call
     property type_lookup
     property in_fun_literal
@@ -65,28 +64,17 @@ module Crystal
 
     def visit(node : NumberLiteral)
       node.type = case node.kind
-                  when :i8
-                    mod.int8
-                  when :i16
-                    mod.int16
-                  when :i32
-                    mod.int32
-                  when :i64
-                    mod.int64
-                  when :u8
-                    mod.uint8
-                  when :u16
-                    mod.uint16
-                  when :u32
-                    mod.uint32
-                  when :u64
-                    mod.uint64
-                  when :f32
-                    mod.float32
-                  when :f64
-                    mod.float64
-                  else
-                   raise "Invalid node kind: #{node.kind}"
+                  when :i8 then mod.int8
+                  when :i16 then mod.int16
+                  when :i32 then mod.int32
+                  when :i64 then mod.int64
+                  when :u8 then mod.uint8
+                  when :u16 then mod.uint16
+                  when :u32 then mod.uint32
+                  when :u64 then mod.uint64
+                  when :f32 then mod.float32
+                  when :f64 then mod.float64
+                  else raise "Invalid node kind: #{node.kind}"
                   end
     end
 
@@ -399,7 +387,6 @@ module Crystal
         block_visitor.untyped_def = @untyped_def
         block_visitor.call = @call
         block_visitor.scope = node.scope || @scope
-        block_visitor.parent = parent
         block_visitor.block = node
         block_visitor.type_lookup = type_lookup
         node.body.accept block_visitor
@@ -432,7 +419,6 @@ module Crystal
       block_visitor.untyped_def = node.def
       block_visitor.call = @call
       block_visitor.scope = @scope
-      block_visitor.parent = parent
       block_visitor.type_lookup = type_lookup
       block_visitor.in_fun_literal = true
       node.def.body.accept block_visitor

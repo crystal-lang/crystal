@@ -318,7 +318,6 @@ module Crystal
         visitor = TypeVisitor.new(@mod, vars, external)
         visitor.untyped_def = external
         visitor.scope = @mod
-        visitor.parent = self
         begin
           node_body.accept visitor
         rescue ex : Crystal::Exception
@@ -400,8 +399,8 @@ module Crystal
         node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
       end
 
-      if instance_type.is_a?(ClassType) && instance_type.abstract
-        node.raise "can't instantiate abstract class #{instance_type}"
+      if !instance_type.hierarchy? && instance_type.abstract
+        node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
       end
 
       instance_type
@@ -427,10 +426,9 @@ module Crystal
     def resolve_ident(node : Path, create_modules_if_missing = false)
       free_vars = @free_vars
       if free_vars && !node.global && (type = free_vars[node.names.first]?)
-        if node.names.length == 1
-          target_type = type.not_nil!
-        else
-          target_type = type.not_nil!.lookup_type(node.names[1 .. -1])
+        target_type = type.not_nil!
+        if node.names.length > 1
+          target_type = target_type.lookup_type(node.names[1 .. -1])
         end
       else
         base_lookup = node.global ? mod : (@type_lookup || @scope || @types.last)

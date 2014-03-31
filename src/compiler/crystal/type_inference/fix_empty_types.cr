@@ -28,9 +28,7 @@ module Crystal
     end
 
     def end_visit(node : Call)
-      return unless node.target_defs
-
-      node.target_defs.not_nil!.each do |target_def|
+      node.target_defs.try &.each do |target_def|
         unless @fixed.includes?(target_def.object_id)
           @fixed.add(target_def.object_id)
 

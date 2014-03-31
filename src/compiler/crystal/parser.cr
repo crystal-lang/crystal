@@ -883,6 +883,8 @@ module Crystal
     end
 
     def parse_call_block_arg(args, check_paren)
+      location = @token.location
+
       next_token_skip_space
 
       if @token.type == :"."
@@ -893,8 +895,10 @@ module Crystal
 
         if @token.type == :"["
           call = parse_atomic_method_suffix obj, location
+          call.location = location
         else
           call = parse_var_or_call(false, true)
+          call.location = location
 
           if call.is_a?(Call)
             call.obj = obj
@@ -906,6 +910,7 @@ module Crystal
         end
 
         block = Block.new([Var.new("#arg0")], call)
+        block.location = location
       else
         block_arg = parse_expression
       end
@@ -917,7 +922,7 @@ module Crystal
         skip_space
       end
 
-      return CallArgs.new args, block, block_arg
+      CallArgs.new args, block, block_arg
     end
 
     def parse_class_def(is_abstract = false, is_struct = false)
@@ -1822,14 +1827,14 @@ module Crystal
         check :")"
         next_token_skip_space
 
-        return atomic
+        atomic
       when :"!"
         next_token_skip_space
-        return Not.new(parse_flags_atomic)
+        Not.new(parse_flags_atomic)
       when :IDENT
         str = @token.to_s
         next_token_skip_space
-        return Var.new(str)
+        Var.new(str)
       else
         raise "unexpected token: #{@token}"
       end
@@ -1981,14 +1986,7 @@ module Crystal
       Block.new(block_args, block_body)
     end
 
-    class CallArgs
-      getter :args
-      getter :block
-      getter :block_arg
-
-      def initialize(@args, @block = nil, @block_arg = nil)
-      end
-    end
+    make_named_tuple CallArgs, args, block, block_arg
 
     def parse_call_args
       case @token.type
@@ -2042,7 +2040,7 @@ module Crystal
           @last_call_has_parenthesis = true
         end
 
-        CallArgs.new args
+        CallArgs.new args, nil, nil
       when :SPACE
         next_token
         @last_call_has_parenthesis = false
@@ -2121,7 +2119,7 @@ module Crystal
           break
         end
       end
-      CallArgs.new args
+      CallArgs.new args, nil, nil
     end
 
     def parse_ident_or_global_call
