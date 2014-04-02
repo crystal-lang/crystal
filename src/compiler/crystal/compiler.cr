@@ -10,8 +10,6 @@ lib C
 end
 
 module Crystal
-  VERIFY_LLVM = ENV["VERIFY"] == "1"
-
   class Compiler
     include Crystal
 
@@ -208,7 +206,6 @@ module Crystal
         system "mkdir -p #{output_dir}"
 
         units = llvm_modules.map do |type_name, llvm_mod|
-          llvm_mod.verify if VERIFY_LLVM
           CompilationUnit.new(self, type_name, llvm_mod)
         end
         object_names = units.map &.object_name

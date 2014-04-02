@@ -9,6 +9,8 @@ LLVM.init_x86
 
 module Crystal
   DUMP_LLVM = ENV["DUMP"] == "1"
+  VERIFY_LLVM = ENV["VERIFY"] == "1"
+
   MAIN_NAME = "__crystal_main"
   RAISE_NAME = "__crystal_raise"
   MALLOC_NAME = "__crystal_malloc"
@@ -113,6 +115,7 @@ module Crystal
 
       @main_mod = @llvm_mod
       @llvm_typer = LLVMTyper.new
+      @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type
       ret_type = llvm_type(node.type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, pointer_type(pointer_type(LLVM::Int8))], ret_type)
@@ -178,6 +181,7 @@ module Crystal
 
       @modules.each do |name, mod|
         mod.dump if Crystal::DUMP_LLVM
+        mod.verify if Crystal::VERIFY_LLVM
 
         if @debug
           add_compile_unit_metadata(mod, name == "" ? "main" : name)
@@ -2020,7 +2024,7 @@ module Crystal
     end
 
     def type_id(type)
-      int(type.type_id)
+      int(@llvm_id.type_id(type))
     end
 
     def match_type_id(type, restriction : Program, type_id)
@@ -2327,17 +2331,48 @@ module Crystal
     end
 
     def create_match_fun(name, type)
-      @main_mod.functions.add(name, ([LLVM::Int32] of LibLLVM::TypeRef), LLVM::Int1) do |func|
+      old_builder = @builder
+      old_llvm_mod = @llvm_mod
+      @llvm_mod = @main_mod
+
+      a_fun = @main_mod.functions.add(name, ([LLVM::Int32] of LibLLVM::TypeRef), LLVM::Int1) do |func|
         type_id = func.get_param(0)
         func.append_basic_block("entry") do |builder|
-          result = nil
-          type.each_concrete_type do |sub_type|
-            sub_type_cond = builder.icmp(LibLLVM::IntPredicate::EQ, type_id(sub_type), type_id)
-            result = result ? builder.or(result, sub_type_cond) : sub_type_cond
-          end
-          builder.ret result.not_nil!
+          @builder = builder
+          create_match_fun_body(type, type_id)
         end
       end
+
+      @builder = old_builder
+      @llvm_mod = old_llvm_mod
+
+      a_fun
+    end
+
+    def create_match_fun_body(type : UnionType, type_id)
+      result = nil
+      type.union_types.each do |sub_type|
+        sub_type_cond = match_any_type_id(sub_type, type_id)
+        result = result ? or(result, sub_type_cond) : sub_type_cond
+      end
+      ret result.not_nil!
+    end
+
+    def create_match_fun_body(type : HierarchyType, type_id)
+      min_max = @llvm_id.min_max_type_id(type.base_type).not_nil!
+      ret(
+        and (builder.icmp LibLLVM::IntPredicate::SGE, type_id, int(min_max[0])),
+                     (builder.icmp LibLLVM::IntPredicate::SLE, type_id, int(min_max[1]))
+                  )
+    end
+
+    def create_match_fun_body(type, type_id)
+      result = nil
+      type.each_concrete_type do |sub_type|
+        sub_type_cond = equal? type_id(sub_type), type_id
+        result = result ? or(result, sub_type_cond) : sub_type_cond
+      end
+      ret result.not_nil!
     end
 
     def llvm_self(type = context.type)
