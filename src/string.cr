@@ -42,11 +42,18 @@ class String
   end
 
   def self.new_with_capacity(capacity)
+    new_with_capacity_and_length(capacity) do |buffer|
+      yield buffer
+      C.strlen(buffer)
+    end
+  end
+
+  def self.new_with_capacity_and_length(capacity)
     str = Pointer(UInt8).malloc(capacity + 9)
     buffer = (str as String).cstr
-    yield buffer
+    length = yield buffer
     (str as Int32*).value = "".crystal_type_id
-    ((str as Int32*) + 1).value = C.strlen(buffer)
+    ((str as Int32*) + 1).value = length
     str as String
   end
 
@@ -244,11 +251,19 @@ class String
   end
 
   def replace(char : Char, replacement : String)
-    replace { |my_char| char == my_char ? replacement : nil }
+    if includes?(char)
+      replace { |my_char| char == my_char ? replacement : nil }
+    else
+      self
+    end
   end
 
   def replace(char : Char, replacement : Char)
-    replace(char, replacement.to_s)
+    if includes?(char)
+      replace(char, replacement.to_s)
+    else
+      self
+    end
   end
 
   def replace(pattern : Regex)
@@ -329,56 +344,56 @@ class String
 
   def index(c : Char, offset = 0)
     offset += length if offset < 0
-    return -1 if offset < 0
+    return nil if offset < 0
 
     while offset < length
       return offset if cstr[offset] == c
       offset += 1
     end
-    -1
+    nil
   end
 
   def index(c : String, offset = 0)
     offset += length if offset < 0
-    return -1 if offset < 0
+    return nil if offset < 0
 
     end_length = length - c.length
     while offset <= end_length
       return offset if (cstr + offset).memcmp(c.cstr, c.length)
       offset += 1
     end
-    -1
+    nil
   end
 
   def rindex(c : Char, offset = length - 1)
     offset += length if offset < 0
-    return -1 if offset < 0
+    return nil if offset < 0
 
     while offset >= 0
       return offset if cstr[offset] == c
       offset -= 1
     end
-    -1
+    nil
   end
 
   def rindex(c : String, offset = length - c.length)
     offset += length if offset < 0
-    return -1 if offset < 0
+    return nil if offset < 0
 
     offset = length - c.length if offset > length - c.length
     while offset >= 0
       return offset if (cstr + offset).memcmp(c.cstr, c.length)
       offset -= 1
     end
-    -1
+    nil
   end
 
   def includes?(c : Char)
-    index(c) >= 0
+    !!index(c)
   end
 
   def includes?(str : String)
-    index(str) >= 0
+    !!index(str)
   end
 
   def split
@@ -475,7 +490,7 @@ class String
       i += 1
     end
     if index != length
-        ary.push String.new(buffer + index, length - index)
+      ary.push String.new(buffer + index, length - index)
     end
     ary
   end

@@ -133,28 +133,28 @@ describe "String" do
   describe "index" do
     describe "by char" do
       assert { "foo".index('o').should eq(1) }
-      assert { "foo".index('g').should eq(-1) }
+      assert { "foo".index('g').should be_nil }
       assert { "bar".index('r').should eq(2) }
 
       describe "with offset" do
         assert { "foobarbaz".index('a', 5).should eq(7) }
         assert { "foobarbaz".index('a', -4).should eq(7) }
-        assert { "foo".index('g', 1).should eq(-1) }
-        assert { "foo".index('g', -20).should eq(-1) }
+        assert { "foo".index('g', 1).should be_nil }
+        assert { "foo".index('g', -20).should be_nil }
       end
     end
 
     describe "by string" do
       assert { "foo bar".index("o b").should eq(2) }
-      assert { "foo".index("fg").should eq(-1) }
+      assert { "foo".index("fg").should be_nil }
       assert { "foo".index("").should eq(0) }
       assert { "foo".index("foo").should eq(0) }
 
       describe "with offset" do
         assert { "foobarbaz".index("ba", 4).should eq(6) }
         assert { "foobarbaz".index("ba", -5).should eq(6) }
-        assert { "foo".index("ba", 1).should eq(-1) }
-        assert { "foo".index("ba", -20).should eq(-1) }
+        assert { "foo".index("ba", 1).should be_nil }
+        assert { "foo".index("ba", -20).should be_nil }
       end
     end
   end
@@ -162,7 +162,7 @@ describe "String" do
   describe "rindex" do
     describe "by char" do
       assert { "foobar".rindex('a').should eq(4) }
-      assert { "foobar".rindex('g').should eq(-1) }
+      assert { "foobar".rindex('g').should be_nil }
 
       describe "with offset" do
         assert { "faobar".rindex('a', 3).should eq(1) }
@@ -172,7 +172,7 @@ describe "String" do
 
     describe "by string" do
       assert { "foo baro baz".rindex("o b").should eq(7) }
-      assert { "foo baro baz".rindex("fg").should eq(-1) }
+      assert { "foo baro baz".rindex("fg").should be_nil }
     end
   end
 

@@ -48,6 +48,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement subclasses"
     end
 
+    def leaf?
+      subclasses.length == 0
+    end
+
     def integer?
       false
     end
@@ -330,6 +334,12 @@ module Crystal
     def remove_alias_if_simple
       self
     end
+
+    def to_s
+      String.build do |str|
+        self.append_to_s(str)
+      end
+    end
   end
 
   class NoReturnType < Type
@@ -354,8 +364,8 @@ module Crystal
       nil
     end
 
-    def to_s
-      "NoReturn"
+    def append_to_s(str)
+      str << "NoReturn"
     end
   end
 
@@ -366,6 +376,26 @@ module Crystal
 
     def initialize(@program, @container)
       @types = {} of String => Type
+    end
+  end
+
+  abstract class NamedType < ContainedType
+    getter :name
+
+    def initialize(program, container, @name)
+      super(program, container)
+    end
+
+    def append_full_name(str)
+      if @container && !@container.is_a?(Program)
+        @container.append_to_s(str)
+        str << "::"
+      end
+      str << @name
+    end
+
+    def append_to_s(str)
+      append_full_name(str)
     end
   end
 
@@ -397,11 +427,11 @@ module Crystal
     def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
       if sorted_defs = self.sorted_defs()
         if defs = sorted_defs[DefContainer::SortedDefKey.new(name, arg_types.length, yields)]?
-          matches_array ||= [] of Match
           defs.each do |a_def|
             match = match_def_args(arg_types, a_def, owner, type_lookup)
 
             if match
+              matches_array ||= [] of Match
               matches_array.push match
               if match.arg_types == arg_types
                 return Matches.new(matches_array, true, owner)
@@ -420,18 +450,18 @@ module Crystal
       matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
       return matches unless matches.empty?
 
+      cover = matches.cover
+
       if (my_parents = parents) && !(name == "new" && owner.metaclass?)
         my_parents.each do |parent|
           break unless parent.is_a?(IncludedGenericModule) || parent.module?
 
-          parent_matches = parent.lookup_matches_with_modules(name, arg_types, yields, owner, parent, matches.matches)
-          return parent_matches unless parent_matches.empty?
-
-          matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
+          matches = parent.lookup_matches_with_modules(name, arg_types, yields, owner, parent, matches_array)
+          return matches unless matches.empty?
         end
       end
 
-      Matches.new(matches.matches, matches.cover, owner, false)
+      Matches.new(matches_array, cover, owner, false)
     end
 
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
@@ -440,17 +470,16 @@ module Crystal
       matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
       return matches if matches.cover_all?
 
+      cover = matches.cover
+
       if (my_parents = parents) && !(name == "new" && owner.metaclass?)
         my_parents.each do |parent|
-          parent_matches = parent.lookup_matches(name, arg_types, yields, owner, parent, matches.matches)
-          return parent_matches if parent_matches.cover_all?
-
-          matches = parent_matches unless !parent_matches.matches || parent_matches.matches.empty?
+          matches = parent.lookup_matches(name, arg_types, yields, owner, parent, matches_array)
+          return matches if matches.cover_all?
         end
       end
 
-      Matches.new(matches.matches, matches.cover, owner, false)
-
+      Matches.new(matches_array, cover, owner, false)
     end
 
     def lookup_first_def(name, yields)
@@ -600,14 +629,8 @@ module Crystal
     end
   end
 
-  abstract class ModuleType < ContainedType
+  abstract class ModuleType < NamedType
     include DefContainer
-
-    getter :name
-
-    def initialize(program, container, @name)
-      super(program, container)
-    end
 
     def parents
       @parents ||= [] of Type
@@ -685,14 +708,6 @@ module Crystal
       end
 
       lookup_in_container && container ? container.lookup_similar_type_name(names, already_looked_up) : nil
-    end
-
-    def full_name
-      @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
-    end
-
-    def to_s
-      full_name
     end
 
     def type_desc
@@ -1193,8 +1208,14 @@ module Crystal
       "generic module"
     end
 
-    def to_s
-      "#{super}(#{type_vars.join ", "})"
+    def append_to_s(str)
+      super
+      str << "("
+      type_vars.each_with_index do |type_var, i|
+        str << ", " if i > 0
+        str << type_var
+      end
+      str << ")"
     end
   end
 
@@ -1256,8 +1277,14 @@ module Crystal
       struct? ? "generic struct" : "generic class"
     end
 
-    def to_s
-      "#{super}(#{type_vars.join ", "})"
+    def append_to_s(str)
+      super
+      str << "("
+      type_vars.each_with_index do |type_var, i|
+        str << ", " if i > 0
+        str << type_var
+      end
+      str << ")"
     end
   end
 
@@ -1367,8 +1394,20 @@ module Crystal
       nil
     end
 
-    def to_s
-      "#{generic_class.full_name}(#{type_vars.values.map { |t| (t.is_a?(Var) ? t.type : t).to_s }.join ", "})"
+    def append_to_s(str)
+      generic_class.append_full_name(str)
+      str << "("
+      i = 0
+      type_vars.each_value do |type_var|
+        str << ", " if i > 0
+        if type_var.is_a?(Var)
+          type_var.type.append_to_s(str)
+        else
+          type_var.append_to_s(str)
+        end
+        i += 1
+      end
+      str << ")"
     end
   end
 
@@ -1411,8 +1450,9 @@ module Crystal
       var.type.primitive_like?
     end
 
-    def to_s
-      "#{var.type}*"
+    def append_to_s(str)
+      var.type.append_to_s(str)
+      str << "*"
     end
 
     def type_desc
@@ -1451,8 +1491,11 @@ module Crystal
       false
     end
 
-    def to_s
-      "#{var.type}[#{size}]"
+    def append_to_s(str)
+      var.type.append_to_s(str)
+      str << "["
+      size.append_to_s(str)
+      str << "]"
     end
   end
 
@@ -1526,8 +1569,13 @@ module Crystal
       program.tuple.instantiate tuple_types.map(&.metaclass)
     end
 
-    def to_s
-      "{#{@tuple_types.join ", "}}"
+    def append_to_s(str)
+      str << "{"
+      @tuple_types.each_with_index do |tuple_type, i|
+        str << ", " if i > 0
+        tuple_type.append_to_s(str)
+      end
+      str << "}"
     end
 
     def type_desc
@@ -1601,8 +1649,11 @@ module Crystal
       @module.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
-    def to_s
-      "#{@module}(#{@including_class})"
+    def append_to_s(str)
+      @module.append_to_s(str)
+      str << "("
+      @including_class.append_to_s(str)
+      str << ")"
     end
   end
 
@@ -1657,20 +1708,15 @@ module Crystal
     def type_desc
       "lib"
     end
-
-    # def to_s
-    #   name
-    # end
   end
 
-  class TypeDefType < ContainedType
+  class TypeDefType < NamedType
     include DefInstanceContainer
 
-    getter :name
     getter :typedef
 
-    def initialize(program, container, @name, @typedef)
-      super(program, container)
+    def initialize(program, container, name, @typedef)
+      super(program, container, name)
     end
 
     delegate pointer?, typedef
@@ -1711,22 +1757,13 @@ module Crystal
     def type_desc
       "type def"
     end
-
-    def full_name
-      @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
-    end
-
-    def to_s
-      full_name
-    end
   end
 
-  class AliasType < ContainedType
-    getter :name
+  class AliasType < NamedType
     property! :aliased_type
 
-    def initialize(program, container, @name)
-      super(program, container)
+    def initialize(program, container, name)
+      super(program, container, name)
       @simple = true
     end
 
@@ -1790,26 +1827,17 @@ module Crystal
     def type_desc
       "alias"
     end
-
-    def full_name
-      @container && !@container.is_a?(Program) ? "#{@container}::#{@name}" : @name
-    end
-
-    def to_s
-      full_name
-    end
   end
 
-  class CStructType < ContainedType
+  class CStructType < NamedType
     include DefContainer
     include DefInstanceContainer
 
-    getter name
     getter vars
     property :packed
 
-    def initialize(program, container, @name, vars)
-      super(program, container)
+    def initialize(program, container, name, vars)
+      super(program, container, name)
       @name = name
       @vars = {} of String => Var
       @packed = false
@@ -1847,21 +1875,16 @@ module Crystal
     def type_desc
       "struct"
     end
-
-    def to_s
-      "#{container}::#{name}"
-    end
   end
 
-  class CUnionType < ContainedType
+  class CUnionType < NamedType
     include DefContainer
     include DefInstanceContainer
 
-    getter name
     getter vars
 
-    def initialize(program, container, @name, vars)
-      super(program, container)
+    def initialize(program, container, name, vars)
+      super(program, container, name)
       @name = name
       @vars = {} of String => Var
       vars.each do |var|
@@ -1894,18 +1917,13 @@ module Crystal
     def type_desc
       "union"
     end
-
-    def to_s
-      "#{container}::#{name}"
-    end
   end
 
-  class CEnumType < ContainedType
-    property name
+  class CEnumType < NamedType
     property base_type
 
-    def initialize(program, container, @name, constants)
-      super(program, container)
+    def initialize(program, container, name, constants)
+      super(program, container, name)
 
       constants.each do |constant|
         @types[constant.name] = Const.new(program, self, constant.name, constant.default_value.not_nil!)
@@ -2028,8 +2046,9 @@ module Crystal
       true
     end
 
-    def to_s
-      "#{instance_type}:Class"
+    def append_to_s(str)
+      instance_type.append_to_s(str)
+      str << ":Class"
     end
   end
 
@@ -2136,8 +2155,11 @@ module Crystal
       end
     end
 
-    def to_s
-      @union_types.join " | "
+    def append_to_s(str)
+      @union_types.each_with_index do |union_type, i|
+        str << " | " if i > 0
+        union_type.append_to_s(str)
+      end
     end
 
     def type_desc
@@ -2161,8 +2183,9 @@ module Crystal
       @union_types.last
     end
 
-    def to_s
-      "#{not_nil_type}?"
+    def append_to_s(str)
+      not_nil_type.append_to_s(str)
+      str << "?"
     end
   end
 
@@ -2187,43 +2210,41 @@ module Crystal
     end
   end
 
-  class Const < ContainedType
-    getter name
+  class Const < NamedType
     property value
     getter scope_types
     getter scope
 
-    def initialize(program, container, @name, @value, @scope_types = [] of Type, @scope = nil)
-      super(program, container)
-    end
-
-    def full_name
-      container && !container.is_a?(Program) ? "#{container}::#{name}" : name
+    def initialize(program, container, name, @value, @scope_types = [] of Type, @scope = nil)
+      super(program, container, name)
     end
 
     def type_desc
       "constant"
-    end
-
-    def to_s
-      full_name
     end
   end
 
   module HierarchyTypeLookup
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
       base_type_lookup = hierarchy_lookup(base_type)
-      concrete_classes = cover()
-      concrete_classes = [concrete_classes] of Type if concrete_classes.is_a?(Type)
-
       base_type_matches = base_type_lookup.lookup_matches(name, arg_types, yields, self)
-      if !base_type.abstract && !base_type_matches.cover_all?
+
+      # If there are no subclasses no need to look further
+      if leaf?
+        return base_type_matches
+      end
+
+      base_type_covers_all = base_type_matches.cover_all?
+
+      # If the base type doesn't cover every possible type combination, it's a failure
+      if !base_type.abstract && !base_type_covers_all
         return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
       end
 
-      all_matches = {} of Int32 => Matches
+      all_matches = {} of Type => Matches
       matches = base_type_matches.matches
 
+      # Traverse all subtypes
       instance_type.subtypes(base_type).each do |subtype|
         unless subtype.value?
           subtype = subtype as NonGenericOrGenericClassInstanceType
@@ -2231,16 +2252,17 @@ module Crystal
           subtype_lookup = hierarchy_lookup(subtype)
           subtype_hierarchy_lookup = hierarchy_lookup(subtype.hierarchy_type)
 
+          # Check matches but without parents: only included modules
           subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, yields, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+          all_matches[subtype] = subtype_matches
 
-          concrete = concrete_classes.any? { |c| c.type_id == subtype.type_id }
-          if concrete && !subtype_matches.cover_all? && !base_type_matches.not_nil!.cover_all?
+          # If the subtype is non-abstract but doesn't cover all,
+          # we need to check if a parent covers it
+          if !subtype.abstract && !base_type_covers_all && !subtype_matches.cover_all?
             covered_by_superclass = false
             superclass = subtype.superclass
             while superclass && superclass != base_type
-              superclass_lookup = hierarchy_lookup(superclass)
-              superclass_hierarchy_lookup = hierarchy_lookup(superclass.hierarchy_type)
-              superclass_matches = all_matches[superclass.type_id] ||= superclass_lookup.lookup_matches_with_modules(name, arg_types, yields, superclass_hierarchy_lookup, superclass_hierarchy_lookup)
+              superclass_matches = all_matches[superclass]
               if superclass_matches.cover_all?
                 covered_by_superclass = true
                 break
@@ -2254,6 +2276,8 @@ module Crystal
           end
 
           if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
+            # We need to insert the matches before the previous ones
+            # because subtypes are more specific matches
             subtype_matches_matches.concat matches
             matches = subtype_matches_matches
           end
@@ -2278,6 +2302,10 @@ module Crystal
     getter base_type
 
     def initialize(@program, @base_type)
+    end
+
+    def leaf?
+      base_type.leaf?
     end
 
     def superclass
@@ -2414,8 +2442,9 @@ module Crystal
       end
     end
 
-    def to_s
-      "#{base_type}+"
+    def append_to_s(str)
+      base_type.append_to_s(str)
+      str << "+"
     end
 
     def name
@@ -2436,6 +2465,10 @@ module Crystal
 
     def parents
       @parents ||= [instance_type.superclass.try(&.metaclass) || @program.class_type] of Type
+    end
+
+    def leaf?
+      instance_type.leaf?
     end
 
     delegate base_type, instance_type
@@ -2475,8 +2508,9 @@ module Crystal
       end
     end
 
-    def to_s
-      "#{instance_type}:Class"
+    def append_to_s(str)
+      instance_type.append_to_s(str)
+      str << ":Class"
     end
   end
 
@@ -2513,8 +2547,16 @@ module Crystal
       true
     end
 
-    def to_s
-      "#{arg_types.join ", "} -> #{return_type}"
+    def append_to_s(str)
+      len = fun_types.length
+      fun_types.each_with_index do |fun_type, i|
+        if i == len - 1
+          str << " -> "
+        elsif i > 0
+          str << ", "
+        end
+        fun_type.append_to_s(str)
+      end
     end
   end
 end

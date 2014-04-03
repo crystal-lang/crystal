@@ -134,7 +134,7 @@ class Crystal::Browser
 
   class ToHtmlVisitor < ToSVisitor
     def initialize(@browser)
-      super()
+      super(StringBuilder.new)
     end
 
     def visit(node : NumberLiteral)

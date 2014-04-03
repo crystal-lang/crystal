@@ -109,9 +109,15 @@ class File
 
   def self.dirname(filename)
     index = filename.rindex SEPARATOR
-    return "." if index == -1
-    return "/" if index == 0
-    filename[0, index]
+    if index
+      if index == 0
+        "/"
+      else
+        filename[0, index]
+      end
+    else
+      "."
+    end
   end
 
   def self.basename(filename)
@@ -121,9 +127,11 @@ class File
     last -= 1 if filename[last] == SEPARATOR
 
     index = filename.rindex SEPARATOR, last
-    return filename if index == -1
-
-    filename[index + 1, last - index]
+    if index
+      filename[index + 1, last - index]
+    else
+      filename
+    end
   end
 
   def self.basename(filename, suffix)
@@ -142,13 +150,11 @@ class File
   def self.extname(filename)
     dot_index = filename.rindex('.')
 
-    if dot_index == -1 ||
-       dot_index == filename.length - 1 ||
-       (dot_index > 0 && filename[dot_index - 1] == SEPARATOR)
-      return ""
+    if dot_index && dot_index != filename.length - 1  && filename[dot_index - 1] != SEPARATOR
+      filename[dot_index, filename.length - dot_index]
+    else
+      ""
     end
-
-    return filename[dot_index, filename.length - dot_index]
   end
 
   def self.expand_path(filename)

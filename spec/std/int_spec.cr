@@ -61,4 +61,11 @@ describe "Int" do
     assert { 1234.to_s(36).should eq("ya") }
     assert { -1234.to_s(36).should eq("-ya") }
   end
+
+  describe "bit" do
+    assert { 5.bit(0).should eq(1) }
+    assert { 5.bit(1).should eq(0) }
+    assert { 5.bit(2).should eq(1) }
+    assert { 5.bit(3).should eq(0) }
+  end
 end

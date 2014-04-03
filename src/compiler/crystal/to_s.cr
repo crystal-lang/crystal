@@ -2,16 +2,20 @@ require "visitor"
 
 module Crystal
   class ASTNode
-    def to_s
-      visitor = ToSVisitor.new
+    def append_to_s(str)
+      visitor = ToSVisitor.new(str)
       self.accept visitor
-      visitor.to_s
+    end
+
+    def to_s
+      str = StringBuilder.new
+      append_to_s(str)
+      str.to_s
     end
   end
 
   class ToSVisitor < Visitor
-    def initialize
-      @str = StringBuilder.new
+    def initialize(@str = StringBuilder.new)
       @indent = 0
     end
 
@@ -52,7 +56,7 @@ module Crystal
     end
 
     def visit(node : StringInterpolation)
-      @str << '"'
+      @str << %(")
       node.expressions.each do |exp|
         if exp.is_a?(StringLiteral)
           @str << exp.value.replace('"', "\\\"")
@@ -62,7 +66,7 @@ module Crystal
           @str << "}"
         end
       end
-      @str << '"'
+      @str << %(")
       false
     end
 

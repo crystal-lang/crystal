@@ -1219,21 +1219,27 @@ module Crystal
     end
 
     def build_var_filter(var)
-      filters = [] of TypeFilter
-      @type_filter_stack.try &.each do |hash|
-        if hash
-          filter = hash[var.name]?
-          filters.push filter if filter
+      type_filter_stack = @type_filter_stack
+
+      if type_filter_stack
+        filters = nil
+        type_filter_stack.try &.each do |hash|
+          if hash && (filter = hash[var.name]?)
+            filters ||= [] of TypeFilter
+            filters.push filter
+          end
+        end
+
+        if filters
+          final_filter = filters.length == 1 ? filters.first : AndTypeFilter.new(filters)
+
+          filtered_node = TypeFilteredNode.new(final_filter)
+          filtered_node.bind_to var
+          return filtered_node
         end
       end
 
-      return if filters.empty?
-
-      final_filter = filters.length == 1 ? filters.first : AndTypeFilter.new(filters)
-
-      filtered_node = TypeFilteredNode.new(final_filter)
-      filtered_node.bind_to var
-      filtered_node
+      nil
     end
 
     def and_type_filters(filters1, filters2)

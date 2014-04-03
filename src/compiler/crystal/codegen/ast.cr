@@ -166,36 +166,38 @@ module Crystal
 
   class Def
     def mangled_name(self_type)
-      arg_types = args.map &.type
-
       String.build do |str|
         str << "*"
 
         if owner = @owner
           if owner.metaclass?
-            str << owner.instance_type.llvm_name
+            owner.instance_type.append_llvm_name(str)
             str << "::"
           elsif !owner.is_a?(Crystal::Program)
-            str << owner.llvm_name
-            str << '#'
+            owner.append_llvm_name(str)
+            str << "#"
           end
         end
-        str << name.to_s.replace('@', '.')
 
-        if arg_types.length > 0 || self_type
-          str << '<'
+        str << name.replace('@', '.')
+
+        if args.length > 0 || self_type
+          str << "<"
           if self_type
-            str << self_type.llvm_name
+            self_type.append_llvm_name(str)
           end
-          if arg_types.length > 0
+          if args.length > 0
             str << ", " if self_type
-            str << arg_types.map(&.llvm_name).join(", ")
+            args.each_with_index do |arg, i|
+              str << ", " if i > 0
+              arg.type.append_llvm_name(str)
+            end
           end
-          str << '>'
+          str << ">"
         end
         if return_type = @type
-          str << ':'
-          str << return_type.llvm_name
+          str << ":"
+          return_type.append_llvm_name(str)
         end
       end
     end

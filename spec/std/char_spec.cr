@@ -70,7 +70,16 @@ describe "Char" do
     '日'.ord.should eq(26085)
   end
 
+  it "does to_s for single-byte char" do
+    'a'.to_s.should eq("a")
+  end
+
   it "does to_s for multibyte char" do
     '日'.to_s.should eq("日")
+  end
+
+  describe "index" do
+    assert { "foo".index('o').should eq(1) }
+    assert { "foo".index('x').should be_nil }
   end
 end

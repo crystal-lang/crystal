@@ -134,12 +134,12 @@ module Crystal
       @dbg_kind = LibLLVM.get_md_kind_id("dbg", 3_u32)
 
       @modules = {"" => @main_mod} of String => LLVM::Module
+      @types_to_modules = {} of Type => LLVM::Module
 
-      @alloca_block, @const_block, @entry_block = new_entry_block_chain ["alloca", "const", "entry"]
+      @alloca_block, @const_block, @entry_block = new_entry_block_chain({"alloca", "const", "entry"})
       @main_alloca_block = @alloca_block
 
       @const_block_entry = @const_block
-      @exception_handlers = [] of Handler
       @lib_vars = {} of String => LibLLVM::ValueRef
       @strings = {} of StringKey => LibLLVM::ValueRef
       @symbols = {} of String => Int32
@@ -153,7 +153,6 @@ module Crystal
       LLVM.set_initializer symbol_table, LLVM.array(llvm_type(@mod.string), @symbol_table_values)
 
       @last = llvm_nil
-      @trampoline_wrappers = {} of UInt64 => LLVM::Function
       @fun_literal_count = 0
 
       context.return_type = @main_ret_type
@@ -671,7 +670,7 @@ module Crystal
       index = call_args[1]
       Phi.open(self, node) do |phi|
         type.tuple_types.each_with_index do |tuple_type, i|
-          current_index_label, next_index_label = new_blocks ["current_index", "next_index"]
+          current_index_label, next_index_label = new_blocks({"current_index", "next_index"})
           cond equal?(index, int(i)), current_index_label, next_index_label
 
           position_at_end current_index_label
@@ -911,7 +910,8 @@ module Crystal
 
     def trampoline_wrapper(target_def, target_fun)
       key = target_def.object_id
-      @trampoline_wrappers[key] ||= begin
+      wrappers = (@trampoline_wrappers ||= {} of UInt64 => LLVM::Function)
+      wrappers[key] ||= begin
         param_types = target_fun.param_types
         ret_type = target_fun.return_type
         @llvm_mod.functions.add("trampoline_wrapper_#{key}", param_types, ret_type) do |func|
@@ -954,7 +954,7 @@ module Crystal
     def visit(node : Return)
       node_type = accept_control_expression(node)
 
-      if handler = @exception_handlers.last?
+      if handler = @exception_handlers.try &.last?
         if node_ensure = handler.node.ensure
           old_last = @last
           with_cloned_context do
@@ -1036,7 +1036,7 @@ module Crystal
     end
 
     def visit(node : If)
-      then_block, else_block = new_blocks ["then", "else"]
+      then_block, else_block = new_blocks({"then", "else"})
 
       codegen_cond_branch node.cond, then_block, else_block
 
@@ -1056,7 +1056,7 @@ module Crystal
 
     def visit(node : While)
       with_cloned_context do
-        while_block, body_block, exit_block = new_blocks ["while", "body", "exit"]
+        while_block, body_block, exit_block = new_blocks({"while", "body", "exit"})
 
         context.while_block = while_block
         context.while_exit_block = exit_block
@@ -1258,7 +1258,7 @@ module Crystal
         type_id = type_id last_value, obj_type
         cmp = match_type_id obj_type, resulting_type, type_id
 
-        matches_block, doesnt_match_block = new_blocks ["matches", "doesnt_match"]
+        matches_block, doesnt_match_block = new_blocks({"matches", "doesnt_match"})
         cond cmp, matches_block, doesnt_match_block
 
         position_at_end doesnt_match_block
@@ -1444,9 +1444,10 @@ module Crystal
       node_ensure = node.ensure
 
       Phi.open(self, node) do |phi|
-        @exception_handlers << Handler.new(node, catch_block, context.vars)
+        exception_handlers = (@exception_handlers ||= [] of Handler)
+        exception_handlers << Handler.new(node, catch_block, context.vars)
         accept node.body
-        @exception_handlers.pop
+        exception_handlers.pop
 
         if node_else = node.else
           accept node_else
@@ -1463,7 +1464,7 @@ module Crystal
 
         if node_rescues = node.rescues
           node_rescues.each do |a_rescue|
-            this_rescue_block, next_rescue_block = new_blocks ["this_rescue", "next_rescue"]
+            this_rescue_block, next_rescue_block = new_blocks({"this_rescue", "next_rescue"})
             if a_rescue_types = a_rescue.types
               cond = nil
               a_rescue_types.each do |type|
@@ -1580,19 +1581,19 @@ module Crystal
 
       return if node.args.any?(&.yields?) && block_breaks?
 
-      with_cloned_context do |old_context|
-        if block = node.block
+      if block = node.block
+        with_cloned_context do |old_context|
           codegen_call_with_block(node, block, owner, call_args, old_context)
-        else
-          codegen_call(node, node.target_def, owner, call_args)
         end
+      else
+        codegen_call(node, node.target_def, owner, call_args)
       end
 
       false
     end
 
     def prepare_call_args(node, owner)
-      call_args = [] of LibLLVM::ValueRef
+      call_args = Array(LibLLVM::ValueRef).new(node.args.length + 1)
 
       # First self.
       if (obj = node.obj) && obj.type.passed_as_self?
@@ -1706,7 +1707,7 @@ module Crystal
               result = and(result, match_type_id(node.args[i].type, arg.type, arg_type_ids[i]))
             end
 
-            current_def_label, next_def_label = new_blocks ["current_def", "next_def"]
+            current_def_label, next_def_label = new_blocks({"current_def", "next_def"})
             cond result, current_def_label, next_def_label
 
             position_at_end current_def_label
@@ -1739,10 +1740,11 @@ module Crystal
         when :struct_hash, :struct_equals, :struct_to_s
           # Skip: we want a method body for these
         else
-          with_cloned_context do
-            context.type = self_type
-            codegen_primitive(body, target_def, call_args)
-          end
+          # Change context type: faster then creating a new context
+          old_type = context.type
+          context.type = self_type
+          codegen_primitive(body, target_def, call_args)
+          context.type = old_type
           return
         end
       end
@@ -1752,13 +1754,12 @@ module Crystal
     end
 
     def codegen_call_or_invoke(node, func, call_args, raises, type)
-      if @exception_handlers.empty? || !raises
-        @last = call func, call_args
-      else
-        handler = @exception_handlers.last
+      if raises && (handler = @exception_handlers.try &.last?)
         invoke_out_block = new_block "invoke_out"
         @last = @builder.invoke func, call_args, invoke_out_block, handler.catch_block
         position_at_end invoke_out_block
+      else
+        @last = call func, call_args
       end
 
       emit_debug_metadata node, @last if @debug
@@ -1843,8 +1844,8 @@ module Crystal
 
         @llvm_mod = fun_module
 
-        @trampoline_wrappers = {} of UInt64 => LLVM::Function
-        @exception_handlers = [] of Handler
+        @trampoline_wrappers = nil
+        @exception_handlers = nil
 
         args = codegen_fun_signature(mangled_name, target_def, self_type, is_closure)
 
@@ -1997,7 +1998,7 @@ module Crystal
       when ReferenceUnionType
         load(value)
       when NilableReferenceUnionType
-        nil_block, not_nil_block, exit_block = new_blocks ["nil", "not_nil", "exit"]
+        nil_block, not_nil_block, exit_block = new_blocks({"nil", "not_nil", "exit"})
         phi_table = LLVM::PhiTable.new
 
         cond null_pointer?(value), nil_block, not_nil_block
@@ -2396,23 +2397,25 @@ module Crystal
     def type_module(type)
       return @main_mod if @single_module
 
-      type = type.typedef if type.is_a?(TypeDefType)
-      case type
-      when Nil, Program, LibType
-        type_name = ""
-      else
-        type_name = type.instance_type.to_s
-      end
+      @types_to_modules[type] ||= begin
+        type = type.typedef if type.is_a?(TypeDefType)
+        case type
+        when Nil, Program, LibType
+          type_name = ""
+        else
+          type_name = type.instance_type.to_s
+        end
 
-      @modules[type_name] ||= begin
-        llvm_mod = LLVM::Module.new(type_name)
-        define_symbol_table llvm_mod
-        llvm_mod
+        @modules[type_name] ||= begin
+          llvm_mod = LLVM::Module.new(type_name)
+          define_symbol_table llvm_mod
+          llvm_mod
+        end
       end
     end
 
     def new_entry_block
-      @alloca_block, @entry_block = new_entry_block_chain ["alloca", "entry"]
+      @alloca_block, @entry_block = new_entry_block_chain({"alloca", "entry"})
     end
 
     def new_entry_block_chain names
@@ -2422,7 +2425,7 @@ module Crystal
     end
 
     def br_from_alloca_to_entry
-      br_block_chain [@alloca_block, @entry_block]
+      br_block_chain({@alloca_block, @entry_block})
     end
 
     def br_block_chain blocks
@@ -2469,7 +2472,7 @@ module Crystal
         context.fun = @main
         context.in_const_block = true
 
-        @exception_handlers = [] of Handler
+        @exception_handlers = nil
         @llvm_mod = @main_mod
 
         const_block = new_block const_block_name

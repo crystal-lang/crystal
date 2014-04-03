@@ -10,7 +10,7 @@ module Crystal
     end
   end
 
-  class Matches
+  struct Matches
     include Enumerable(Match)
 
     property :matches

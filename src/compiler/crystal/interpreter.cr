@@ -792,6 +792,10 @@ module Crystal
       def initialize(program, container, @value)
         super(program, container)
       end
+
+      def append_to_s(str)
+        str << "TODO"
+      end
     end
   end
 end

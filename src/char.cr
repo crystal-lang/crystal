@@ -108,9 +108,40 @@ struct Char
     end
   end
 
+  def each_byte
+    c = ord
+    if c <= 0x7f
+      # 0xxxxxxx
+      yield c.to_u8
+    elsif c <= 0x7ff
+      # 110xxxxx  10xxxxxx
+      yield (0xc0 | c >> 6).to_u8
+      yield (0x80 | c & 0x3f).to_u8
+    elsif c <= 0xffff
+      # 1110xxxx  10xxxxxx  10xxxxxx
+      yield (0xe0 | c >> 12).to_u8
+      yield (0x80 | c >> 6 & 0x3f).to_u8
+      yield (0x80 | c & 0x3f).to_u8
+    elsif c <= 0x1fffff
+      # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
+      yield (0xf0 | c >> 18).to_u8
+      yield (0x80 | c >> 12 & 0x3f).to_u8
+      yield (0x80 | c >> 6 & 0x3f).to_u8
+      yield (0x80 | c & 0x3f).to_u8
+    else
+      raise "Invalid char value"
+    end
+  end
+
   def to_s
-    buffer = String::Buffer.new(4)
-    buffer << self
-    buffer.to_s
+    String.new_with_capacity_and_length(4) do |buffer|
+      i = 0
+      each_byte do |byte|
+        buffer[i] = byte
+        i += 1
+      end
+      buffer[i] = 0_u8
+      i
+    end
   end
 end

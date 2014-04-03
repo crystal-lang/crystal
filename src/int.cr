@@ -31,7 +31,7 @@ struct Int
     to_f64 ** other
   end
 
-  def [](bit)
+  def bit(bit)
     self & (1 << bit) == 0 ? 0 : 1
   end
 
