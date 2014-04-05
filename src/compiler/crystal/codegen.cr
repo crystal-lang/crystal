@@ -162,6 +162,8 @@ module Crystal
       @empty_md_list = metadata([0])
       @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
       @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
+
+      alloca_vars @mod.vars
     end
 
     def define_symbol_table(llvm_mod)
@@ -1149,6 +1151,8 @@ module Crystal
         return
       end
 
+      target_type = target.type
+
       ptr = case target
             when InstanceVar
               instance_var_ptr (context.type as InstanceVarContainer), target.name, llvm_self_ptr
@@ -1158,16 +1162,19 @@ module Crystal
               get_global class_var_global_name(target), target.type
             when Var
               if target.type.void?
-                context.vars[target.name] = LLVMVar.new(llvm_nil, @mod.void)
+                # TODO
+                # context.vars[target.name] = LLVMVar.new(llvm_nil, @mod.void)
                 return
               end
 
-              declare_var(target).pointer
+              var = context.vars[target.name]
+              target_type = var.type
+              var.pointer
             else
               node.raise "Unknown assign target in codegen: #{target}"
             end
 
-      store_instruction = assign ptr, target.type, value.type, @last
+      store_instruction = assign ptr, target_type, value.type, @last
       emit_debug_metadata node, store_instruction if @debug
 
       false
@@ -1855,6 +1862,7 @@ module Crystal
           new_entry_block
 
           setup_closure_context target_def, is_closure
+          alloca_vars target_def.vars
           create_local_copy_of_fun_args(target_def, self_type, args)
 
           context.return_type = target_def.type?
@@ -2445,6 +2453,19 @@ module Crystal
 
     def new_blocks(names)
       names.map { |name| new_block name }
+    end
+
+    def alloca_vars(vars)
+      return unless vars
+
+      in_alloca_block do
+        vars.each do |name, var|
+          next if name == "self"
+
+          ptr = @builder.alloca llvm_type(var.type), name
+          context.vars[name] = LLVMVar.new(ptr, var.type)
+        end
+      end
     end
 
     def alloca(type, name = "")

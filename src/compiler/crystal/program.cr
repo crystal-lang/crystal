@@ -17,6 +17,7 @@ module Crystal
     getter global_vars
     getter macros_cache
     getter regexes
+    property vars
 
     def initialize
       super(self, self, "main")

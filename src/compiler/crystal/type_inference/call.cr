@@ -726,14 +726,6 @@ module Crystal
       matches
     end
 
-    class PreparedTypedDef
-      getter :typed_def
-      getter :args
-
-      def initialize(@typed_def, @args)
-      end
-    end
-
     def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types, fun_literal)
       args_start_index = 0
 

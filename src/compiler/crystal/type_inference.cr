@@ -34,7 +34,22 @@ module Crystal
       @types = [@mod] of Type
       @while_stack = [] of While
       typed_def = @typed_def
-      typed_def.vars = @vars if typed_def
+
+      @meta_vars = {} of String => Var
+      @vars.each do |name, var|
+        meta_var = Var.new(name)
+        meta_var.bind_to(var)
+        @meta_vars[name] = meta_var
+      end
+
+      if typed_def
+        typed_def.vars = @meta_vars
+      else
+        @mod.vars = @meta_vars
+      end
+
+      @vars_deps = @vars.dup
+
       @needs_type_filters = 0
       @in_fun_literal = false
       @vars.each_value do |var|
@@ -92,9 +107,9 @@ module Crystal
     end
 
     def visit(node : Var)
-      var = @vars[node.name]?
+      var = @vars_deps[node.name]?
       if var
-        check_closured var
+        # check_closured var
         filter = build_var_filter var
         node.bind_to(filter || var)
         if needs_type_filters?
@@ -231,11 +246,13 @@ module Crystal
       value_type_filters = @type_filters
       @type_filters = nil
 
-      var = lookup_var target.name
-      target.bind_to var
-
+      target.bind_to value
       node.bind_to value
-      var.bind_to node
+
+      meta_var = (@meta_vars[target.name] ||= Var.new(target.name))
+      meta_var.bind_to value
+
+      @vars_deps[target.name] = target
 
       if needs_type_filters?
         @type_filters = and_type_filters(not_nil_filter(target), value_type_filters)
@@ -1185,7 +1202,7 @@ module Crystal
         var.context = current_context
         var
       end
-      check_closured var
+      # check_closured var
       var
     end
 
