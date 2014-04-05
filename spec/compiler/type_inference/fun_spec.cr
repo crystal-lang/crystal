@@ -223,4 +223,8 @@ describe "Type inference: fun" do
       ",
       "can't cast Int32 -> Float64 to Float64 -> Float64"
   end
+
+  it "inherits Reference" do
+    assert_type("->{}.object_id") { uint64 }
+  end
 end

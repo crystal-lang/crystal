@@ -2539,7 +2539,7 @@ module Crystal
     end
 
     def parents
-      nil
+      @parents ||= [@program.reference] of Type
     end
 
     def primitive_like?
