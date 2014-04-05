@@ -2464,6 +2464,11 @@ module Crystal
 
           ptr = @builder.alloca llvm_type(var.type), name
           context.vars[name] = LLVMVar.new(ptr, var.type)
+
+          # Assign default nil for variables that are bound to the nil variable
+          if var.dependencies.any? &.same?(@mod.nil_var)
+            assign ptr, var.type, @mod.nil, llvm_nil
+          end
         end
       end
     end

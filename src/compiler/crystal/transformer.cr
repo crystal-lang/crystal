@@ -420,6 +420,9 @@ module Crystal
     end
 
     def transform(node : FunDef)
+      if body = node.body
+        node.body = body.transform(self)
+      end
       node
     end
 

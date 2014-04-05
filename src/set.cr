@@ -12,6 +12,10 @@ class Set(T)
     end
   end
 
+  def <<(object : T)
+    add(object)
+  end
+
   def add(object : T)
     @hash[object] = true
   end

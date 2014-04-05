@@ -758,7 +758,10 @@ module Crystal
       end
 
       cond_type_filters = @type_filters
+      cond_vars_deps = @vars_deps
+
       @type_filters = nil
+      @vars_deps = then_vars_deps = cond_vars_deps.dup
 
       if node.then.nop?
         node.then.accept self
@@ -771,6 +774,8 @@ module Crystal
       then_type_filters = @type_filters
       @type_filters = nil
 
+      @vars_deps = else_vars_deps = cond_vars_deps.dup
+
       if node.else.nop?
         node.else.accept self
       else
@@ -782,6 +787,8 @@ module Crystal
           node.else.accept self
         end
       end
+
+      merge_if_vars node, cond_vars_deps, then_vars_deps, else_vars_deps
 
       else_type_filters = @type_filters
       @type_filters = nil
@@ -810,6 +817,50 @@ module Crystal
       end
 
       false
+    end
+
+    def merge_if_vars(node, cond_vars_deps, then_vars_deps, else_vars_deps)
+      all_vars_names = Set(String).new
+      then_vars_deps.each_key do |name|
+        all_vars_names << name
+      end
+      else_vars_deps.each_key do |name|
+        all_vars_names << name
+      end
+
+      all_vars_names.each do |name|
+        cond_var = cond_vars_deps[name]?
+        then_var = then_vars_deps[name]?
+        else_var = else_vars_deps[name]?
+
+        # Check wether the var didn't change at all
+        next if then_var.same?(else_var)
+
+        if_var = Var.new(name)
+
+        if then_var && else_var
+          if_var.bind_to then_var
+          if_var.bind_to else_var
+        elsif then_var
+          if_var.bind_to then_var
+          if cond_var
+            if_var.bind_to cond_var
+          else
+            if_var.bind_to @mod.nil_var
+            @meta_vars[name].bind_to @mod.nil_var
+          end
+        elsif else_var
+          if_var.bind_to else_var
+          if cond_var
+            if_var.bind_to cond_var
+          else
+            if_var.bind_to @mod.nil_var
+            @meta_vars[name].bind_to @mod.nil_var
+          end
+        end
+
+        @vars_deps[name] = if_var
+      end
     end
 
     def end_visit(node : If)

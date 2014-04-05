@@ -460,7 +460,7 @@ module Crystal
         return Expressions.new(exps)
       end
 
-      node
+      super
     end
 
     def transform(node : Macro)
