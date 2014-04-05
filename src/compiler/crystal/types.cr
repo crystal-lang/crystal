@@ -2241,7 +2241,7 @@ module Crystal
         return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
       end
 
-      all_matches = {} of Type => Matches
+      type_to_matches = nil
       matches = base_type_matches.matches
 
       # Traverse all subtypes
@@ -2254,7 +2254,10 @@ module Crystal
 
           # Check matches but without parents: only included modules
           subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, yields, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
-          all_matches[subtype] = subtype_matches
+          unless subtype.leaf?
+            type_to_matches ||= {} of Type => Matches
+            type_to_matches[subtype] = subtype_matches
+          end
 
           # If the subtype is non-abstract but doesn't cover all,
           # we need to check if a parent covers it
@@ -2262,7 +2265,7 @@ module Crystal
             covered_by_superclass = false
             superclass = subtype.superclass
             while superclass && superclass != base_type
-              superclass_matches = all_matches[superclass]
+              superclass_matches = type_to_matches.not_nil![superclass]
               if superclass_matches.cover_all?
                 covered_by_superclass = true
                 break
