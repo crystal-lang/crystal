@@ -141,7 +141,10 @@ module Crystal
         var.bind_to node
         var.context = current_context
 
-        @vars[var.name] = var
+        @vars_deps[var.name] = var
+
+        # TODO: check if we need a second var here
+        @meta_vars[var.name] = var
       when InstanceVar
         type = scope? || current_type
         if @untyped_def
