@@ -21,8 +21,8 @@ module Crystal
     property! scope
     getter! typed_def
     property! untyped_def
-    getter block
     getter vars
+    getter block
     property call
     property type_lookup
     property in_fun_literal
@@ -30,39 +30,35 @@ module Crystal
     property yield_vars
     property type_filter_stack
 
-    def initialize(@mod, @vars = {} of String => Var, @typed_def = nil, meta_vars = nil)
+    def initialize(@mod, vars = {} of String => Var, @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
       @while_stack = [] of While
       typed_def = @typed_def
 
-      @meta_vars = initialize_meta_vars @mod, typed_def, meta_vars
-      @vars_deps = @meta_vars.dup
+      @meta_vars = initialize_meta_vars @mod, vars, typed_def, meta_vars
+      @vars = @meta_vars.dup
 
       @needs_type_filters = 0
       @in_fun_literal = false
-      @vars.each_value do |var|
+
+      # TODO: check closure
+      vars.each_value do |var|
         var.context = current_context unless var.context
       end
     end
 
-    def initialize_meta_vars(mod, typed_def, meta_vars)
+    def initialize_meta_vars(mod, vars, typed_def, meta_vars)
       unless meta_vars
         if typed_def
-          meta_vars = {} of String => Var
+          meta_vars = typed_def.vars = {} of String => Var
         else
-          meta_vars = (@mod.vars = @mod.vars || {} of String => Var)
+          meta_vars = @mod.vars
         end
-        @vars.each do |name, var|
+        vars.each do |name, var|
           meta_var = Var.new(name)
           meta_var.bind_to(var)
           meta_vars[name] = meta_var
         end
-      end
-
-      if typed_def
-        typed_def.vars = meta_vars
-      else
-        @mod.vars = meta_vars
       end
 
       meta_vars
@@ -118,7 +114,7 @@ module Crystal
     end
 
     def visit(node : Var)
-      var = @vars_deps[node.name]?
+      var = @vars[node.name]?
       if var
         # check_closured var
         filter = build_var_filter var
@@ -141,7 +137,7 @@ module Crystal
         var.bind_to node
         var.context = current_context
 
-        @vars_deps[var.name] = var
+        @vars[var.name] = var
 
         # TODO: check if we need a second var here
         @meta_vars[var.name] = var
@@ -266,7 +262,7 @@ module Crystal
       meta_var = (@meta_vars[target.name] ||= Var.new(target.name))
       meta_var.bind_to value
 
-      @vars_deps[target.name] = target
+      @vars[target.name] = target
 
       if needs_type_filters?
         @type_filters = and_type_filters(not_nil_filter(target), value_type_filters)
@@ -414,6 +410,8 @@ module Crystal
         meta_var.bind_to(arg)
         meta_vars[arg.name] = meta_var
       end
+
+      node.vars = meta_vars
 
       pushing_type_filters do
         block_visitor = TypeVisitor.new(mod, block_vars, @typed_def, meta_vars)
@@ -785,10 +783,10 @@ module Crystal
       end
 
       cond_type_filters = @type_filters
-      cond_vars_deps = @vars_deps
+      cond_vars = @vars
 
       @type_filters = nil
-      @vars_deps = then_vars_deps = cond_vars_deps.dup
+      @vars = then_vars = cond_vars.dup
 
       if node.then.nop?
         node.then.accept self
@@ -801,7 +799,7 @@ module Crystal
       then_type_filters = @type_filters
       @type_filters = nil
 
-      @vars_deps = else_vars_deps = cond_vars_deps.dup
+      @vars = else_vars = cond_vars.dup
 
       if node.else.nop?
         node.else.accept self
@@ -815,7 +813,7 @@ module Crystal
         end
       end
 
-      merge_if_vars node, cond_vars_deps, then_vars_deps, else_vars_deps
+      merge_if_vars node, cond_vars, then_vars, else_vars
 
       else_type_filters = @type_filters
       @type_filters = nil
@@ -846,19 +844,19 @@ module Crystal
       false
     end
 
-    def merge_if_vars(node, cond_vars_deps, then_vars_deps, else_vars_deps)
+    def merge_if_vars(node, cond_vars, then_vars, else_vars)
       all_vars_names = Set(String).new
-      then_vars_deps.each_key do |name|
+      then_vars.each_key do |name|
         all_vars_names << name
       end
-      else_vars_deps.each_key do |name|
+      else_vars.each_key do |name|
         all_vars_names << name
       end
 
       all_vars_names.each do |name|
-        cond_var = cond_vars_deps[name]?
-        then_var = then_vars_deps[name]?
-        else_var = else_vars_deps[name]?
+        cond_var = cond_vars[name]?
+        then_var = then_vars[name]?
+        else_var = else_vars[name]?
 
         # Check wether the var didn't change at all
         next if then_var.same?(else_var)
@@ -886,7 +884,7 @@ module Crystal
           end
         end
 
-        @vars_deps[name] = if_var
+        @vars[name] = if_var
       end
     end
 
@@ -1275,7 +1273,7 @@ module Crystal
     end
 
     def lookup_var(name)
-      var = @vars_deps[name] ||= begin
+      var = @vars[name] ||= begin
         var = Var.new(name)
         var.context = current_context
         var
@@ -1413,9 +1411,8 @@ module Crystal
 
     def lookup_similar_var_name(name)
       tolerance = (name.length / 5.0).ceil
-      @vars.each_key do |var_name|
-        pieces = var_name.split '$'
-        var_name = pieces.first if pieces.length == 2
+      # TODO: check this
+      @meta_vars.each_key do |var_name|
         if levenshtein(var_name, name) <= tolerance
           return var_name
         end

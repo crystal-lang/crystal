@@ -112,6 +112,7 @@ module Crystal
       @type_id_counter = 1
       @nil_var = Var.new("<nil_var>", self.nil)
       @crystal_path = (ENV["CRYSTAL_PATH"] || "").split(':')
+      @vars = {} of String => Var
 
       define_primitives
     end

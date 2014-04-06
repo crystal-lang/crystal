@@ -1432,6 +1432,10 @@ module Crystal
       Phi.open(self, block) do |phi|
         with_cloned_context(block_context) do |old|
           context.vars = new_vars
+
+          # Declare block args
+          alloca_vars block.vars
+
           context.break_phi = old.return_phi
           context.next_phi = phi
           context.while_exit_block = nil
@@ -2465,7 +2469,7 @@ module Crystal
 
       in_alloca_block do
         vars.each do |name, var|
-          next if name == "self"
+          next if name == "self" || context.vars[name]?
 
           ptr = @builder.alloca llvm_type(var.type), name
           context.vars[name] = LLVMVar.new(ptr, var.type)

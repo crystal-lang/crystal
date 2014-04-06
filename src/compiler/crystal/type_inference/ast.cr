@@ -335,6 +335,7 @@ module Crystal
 
     property :visited
     property :scope
+    property :vars
 
     def break
       @break ||= Var.new("%break")
