@@ -30,31 +30,42 @@ module Crystal
     property yield_vars
     property type_filter_stack
 
-    def initialize(@mod, @vars = {} of String => Var, @typed_def = nil)
+    def initialize(@mod, @vars = {} of String => Var, @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
       @while_stack = [] of While
       typed_def = @typed_def
 
-      @meta_vars = {} of String => Var
-      @vars.each do |name, var|
-        meta_var = Var.new(name)
-        meta_var.bind_to(var)
-        @meta_vars[name] = meta_var
-      end
-
-      if typed_def
-        typed_def.vars = @meta_vars
-      else
-        @mod.vars = @meta_vars
-      end
-
-      @vars_deps = @vars.dup
+      @meta_vars = initialize_meta_vars @mod, typed_def, meta_vars
+      @vars_deps = @meta_vars.dup
 
       @needs_type_filters = 0
       @in_fun_literal = false
       @vars.each_value do |var|
         var.context = current_context unless var.context
       end
+    end
+
+    def initialize_meta_vars(mod, typed_def, meta_vars)
+      unless meta_vars
+        if typed_def
+          meta_vars = {} of String => Var
+        else
+          meta_vars = (@mod.vars = @mod.vars || {} of String => Var)
+        end
+        @vars.each do |name, var|
+          meta_var = Var.new(name)
+          meta_var.bind_to(var)
+          meta_vars[name] = meta_var
+        end
+      end
+
+      if typed_def
+        typed_def.vars = meta_vars
+      else
+        @mod.vars = meta_vars
+      end
+
+      meta_vars
     end
 
     def block=(@block)
@@ -391,13 +402,18 @@ module Crystal
       node.visited = true
 
       block_vars = @vars.dup
+      meta_vars = @meta_vars.dup
       node.args.each do |arg|
         arg.context = node
         block_vars[arg.name] = arg
+
+        meta_var = Var.new(arg.name)
+        meta_var.bind_to(arg)
+        meta_vars[arg.name] = meta_var
       end
 
       pushing_type_filters do
-        block_visitor = TypeVisitor.new(mod, block_vars, @typed_def)
+        block_visitor = TypeVisitor.new(mod, block_vars, @typed_def, meta_vars)
         block_visitor.type_filter_stack = @type_filter_stack
         block_visitor.yield_vars = @yield_vars
         block_visitor.free_vars = @free_vars
@@ -416,6 +432,8 @@ module Crystal
 
     def visit(node : FunLiteral)
       fun_vars = @vars.dup
+      meta_vars = @meta_vars.dup
+
       node.def.args.each do |arg|
         # It can happen that the argument has a type already,
         # when converting a block to a fun literal
@@ -423,13 +441,19 @@ module Crystal
           restriction.accept self
           arg.type = restriction.type.instance_type
         end
-        fun_vars[arg.name] = Var.new(arg.name, arg.type)
+        fun_var = Var.new(arg.name, arg.type)
+        fun_vars[arg.name] = fun_var
+
+        meta_var = Var.new(arg.name)
+        meta_var.bind_to fun_var
+        meta_vars[arg.name] = meta_var
       end
 
       node.bind_to node.def
       node.def.bind_to node.def.body
 
-      block_visitor = TypeVisitor.new(mod, fun_vars, node.def)
+      # TODO: pass meta-vars along
+      block_visitor = TypeVisitor.new(mod, fun_vars, node.def, meta_vars)
       block_visitor.type_filter_stack = @type_filter_stack
       block_visitor.yield_vars = @yield_vars
       block_visitor.free_vars = @free_vars
@@ -1248,7 +1272,7 @@ module Crystal
     end
 
     def lookup_var(name)
-      var = @vars[name] ||= begin
+      var = @vars_deps[name] ||= begin
         var = Var.new(name)
         var.context = current_context
         var

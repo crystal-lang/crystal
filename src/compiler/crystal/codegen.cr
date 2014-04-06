@@ -1167,9 +1167,13 @@ module Crystal
                 return
               end
 
-              var = context.vars[target.name]
-              target_type = var.type
-              var.pointer
+              var = context.vars[target.name]?
+              if var
+                target_type = var.type
+                var.pointer
+              else
+                target.raise "Bug: missing var #{target}"
+              end
             else
               node.raise "Unknown assign target in codegen: #{target}"
             end
@@ -1644,6 +1648,7 @@ module Crystal
       target_def = node.target_def
 
       create_closure_context block.closured_vars?, old_context
+      alloca_vars target_def.vars
       create_local_copy_of_block_args(target_def, self_type, call_args)
 
       if target_def.uses_block_arg
