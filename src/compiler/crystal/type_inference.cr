@@ -22,6 +22,7 @@ module Crystal
     getter! typed_def
     property! untyped_def
     getter vars
+    getter meta_vars
     getter block
     property call
     property type_lookup

@@ -703,6 +703,7 @@ module Crystal
       n31 = NumberLiteral.new(31, :i32)
 
       vars = {} of String => Var
+      vars["hash"] = hash_var
 
       exps = [] of ASTNode
       exps << Assign.new(hash_var, n0)
@@ -722,7 +723,9 @@ module Crystal
       end
       exps << hash_var
       exps = Expressions.new(exps)
-      exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
+      visitor = TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
+      exps.accept visitor
+      alloca_vars visitor.meta_vars
       exps.accept self
       @last
     end
