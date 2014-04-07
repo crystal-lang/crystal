@@ -290,6 +290,7 @@ module Crystal
             var = parent_visitor.lookup_var_or_instance_var(call_arg)
             var.bind_to Var.new("out", arg_type.element_type)
             call_arg.bind_to var
+            parent_visitor.bind_meta_var(call_arg)
           else
             call_arg.raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
           end

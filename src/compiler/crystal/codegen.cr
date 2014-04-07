@@ -1592,7 +1592,7 @@ module Crystal
 
       owner = node.name == "super" ? node.scope : node.target_def.owner.not_nil!
 
-      call_args = prepare_call_args node, owner
+      call_args, has_out = prepare_call_args node, owner
 
       return if node.args.any?(&.yields?) && block_breaks?
 
@@ -1604,10 +1604,22 @@ module Crystal
         codegen_call(node, node.target_def, owner, call_args)
       end
 
+      # Now we move out values to the variables. This can be done automatically
+      # because if declared inside a while, for example, the variable is nilable.
+      if has_out
+        node.args.zip(call_args) do |node_arg, call_arg|
+          if node_arg.out? && node_arg.is_a?(Var)
+            node_var = context.vars[node_arg.name]
+            assign node_var.pointer, node_var.type, node_arg.type, to_lhs(call_arg, node_arg.type)
+          end
+        end
+      end
+
       false
     end
 
     def prepare_call_args(node, owner)
+      has_out = false
       call_args = Array(LibLLVM::ValueRef).new(node.args.length + 1)
 
       # First self.
@@ -1625,10 +1637,12 @@ module Crystal
       # Then the arguments.
       node.args.each_with_index do |arg, i|
         if arg.out?
+          has_out = true
           case arg
           when Var
-            declare_var(arg)
-            call_args << context.vars[arg.name].pointer
+            # For out arguments we reserve the space. After the call
+            # we move the value to the variable.
+            call_args << alloca(llvm_type(arg.type))
           when InstanceVar
             call_args << instance_var_ptr(type, arg.name, llvm_self_ptr)
           else
@@ -1640,7 +1654,7 @@ module Crystal
         end
       end
 
-      call_args
+      {call_args, has_out}
     end
 
     def codegen_call_with_block(node, block, self_type, call_args, old_context)
@@ -2205,6 +2219,10 @@ module Crystal
       # This happens if the restriction is a union:
       # we keep each of the union types as the result, we don't fully merge
       value
+    end
+
+    def downcast_distinct(value, to_type : NonGenericClassType | GenericClassInstanceType, from_type : HierarchyType)
+      cast_to value, to_type
     end
 
     def downcast_distinct(value, to_type : NilType, from_type : NilableType)

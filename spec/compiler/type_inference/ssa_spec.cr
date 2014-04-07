@@ -100,4 +100,57 @@ describe "Type inference: ssa" do
       a
       )) { union_of(int32, char) }
   end
+
+  it "types a var that is re-assigned in a while" do
+    assert_type(%(
+      a = 1
+      while 1 == 2
+        a = 'a'
+      end
+      a
+      )) { union_of(int32, char) }
+  end
+
+  it "types a var that is declared in a while" do
+    assert_type(%(
+      while 1 == 2
+        a = 1
+      end
+      a
+      )) { |mod| union_of(mod.nil, mod.int32) }
+  end
+
+  it "types a var that is re-assigned in a while condition" do
+    assert_type(%(
+      a = 1
+      while a = 'a'
+        a = "hello"
+      end
+      a
+      )) { char }
+  end
+
+  it "types a var that is declared in a while condition" do
+    assert_type(%(
+      while a = 'a'
+        a = "hello"
+      end
+      a
+      )) { char }
+  end
+
+  it "types a var that is declared in a while with out" do
+    assert_type(%(
+      lib C
+        fun foo(x : Int32*)
+      end
+
+      a = 'a'
+      while 1 == 2
+        C.foo(out x)
+        a = x
+      end
+      a
+      )) { union_of(char, int32) }
+  end
 end

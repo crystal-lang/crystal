@@ -114,8 +114,13 @@ module Crystal
     end
 
     def visit(node : Var)
-      # out variables are dealt in the Call's logic
-      return if node.out
+      # We declare out variables
+      # TODO: check that the out variable didn't exist before
+      if node.out
+        @meta_vars[node.name] = Var.new(node.name)
+        @vars[node.name] = Var.new(node.name)
+        return
+      end
 
       var = @vars[node.name]?
       if var
@@ -835,7 +840,7 @@ module Crystal
         end
       end
 
-      merge_if_vars node, cond_vars, then_vars, else_vars
+      merge_if_vars cond_vars, then_vars, else_vars
 
       else_type_filters = @type_filters
       @type_filters = nil
@@ -866,7 +871,7 @@ module Crystal
       false
     end
 
-    def merge_if_vars(node, cond_vars, then_vars, else_vars)
+    def merge_if_vars(cond_vars, then_vars, else_vars)
       all_vars_names = Set(String).new
       then_vars.each_key do |name|
         all_vars_names << name
@@ -915,9 +920,13 @@ module Crystal
     end
 
     def visit(node : While)
+      before_cond_vars = @vars.dup
+
       request_type_filters do
         node.cond.accept self
       end
+
+      after_cond_vars = @vars.dup
 
       cond_type_filters = @type_filters
       @type_filters = nil
@@ -928,10 +937,34 @@ module Crystal
         node.body.accept self
       end
 
+      merge_while_vars before_cond_vars, after_cond_vars, @vars
+
       @while_stack.pop
       @block = old_block
 
       false
+    end
+
+    def merge_while_vars(before_cond_vars, after_cond_vars, while_vars)
+      while_vars.each do |name, while_var|
+        before_cond_var = before_cond_vars[name]?
+        after_cond_var = after_cond_vars[name]?
+
+        if after_cond_var && !after_cond_var.same?(before_cond_var)
+          before_cond_vars[name] = after_cond_var
+        elsif before_cond_var
+          before_cond_var.bind_to(while_var)
+        else
+          nilable_var = Var.new(name)
+          nilable_var.bind_to(while_var)
+          nilable_var.bind_to(@mod.nil_var)
+          before_cond_vars[name] = nilable_var
+
+          @meta_vars[name].bind_to @mod.nil_var
+        end
+      end
+
+      @vars = before_cond_vars
     end
 
     def end_visit(node : While)
@@ -1331,6 +1364,18 @@ module Crystal
 
     def lookup_var_or_instance_var(var)
       raise "Bug: trying to lookup var or instance var but got #{var}"
+    end
+
+    def bind_meta_var(var : Var)
+      @meta_vars[var.name].bind_to(var)
+    end
+
+    def bind_meta_var(var : InstanceVar)
+      # Nothing to do
+    end
+
+    def bind_meta_var(var)
+      raise "Bug: trying to bind var or instance var but got #{var}"
     end
 
     def build_var_filter(var)
