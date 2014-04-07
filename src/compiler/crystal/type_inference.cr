@@ -1206,7 +1206,7 @@ module Crystal
     def visit(node : PointerOf)
       var = case node_exp = node.exp
             when Var
-              lookup_var node_exp.name
+              @meta_vars[node_exp.name]
             when InstanceVar
               lookup_instance_var node_exp
             when IndirectRead
