@@ -113,7 +113,7 @@ describe "Type inference: nil" do
       ") { int32 }
   end
 
-  it "restricts type of 'if @foo'" do
+  pending "restricts type of 'if @foo'" do
     assert_type("
       class Foo
         def initialize
@@ -135,7 +135,7 @@ describe "Type inference: nil" do
       ") { int32 }
   end
 
-  it "restricts type of 'if @foo' on assign" do
+  pending "restricts type of 'if @foo' on assign" do
     assert_type("
       class Foo
         def foo

@@ -427,7 +427,7 @@ module Crystal
         meta_vars[arg.name] = meta_var
       end
 
-      call_vars = node.vars.not_nil!
+      call_vars = node.vars
 
       pushing_type_filters do
         block_visitor = TypeVisitor.new(mod, block_vars, @typed_def, meta_vars)
@@ -441,9 +441,12 @@ module Crystal
         block_visitor.type_lookup = type_lookup
         node.body.accept block_visitor
 
-        # Check re-assigned variables and bind them
-        block_visitor.vars.each do |name, block_var|
-          call_vars[name]?.try &.bind_to(block_var)
+        # Check re-assigned variables and bind them.
+        # call_vars can be nil in the case of a block argument
+        if call_vars
+          block_visitor.vars.each do |name, block_var|
+            call_vars[name]?.try &.bind_to(block_var)
+          end
         end
       end
 

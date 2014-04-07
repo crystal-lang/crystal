@@ -94,8 +94,8 @@ describe "Type inference: class" do
     input = parse("
       class Node
         def add
-          if @next
-            @next.add
+          if next_node = @next
+            next_node.add
           else
             @next = Node.new
           end
