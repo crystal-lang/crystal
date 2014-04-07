@@ -86,4 +86,18 @@ describe "Type inference: ssa" do
       a
       )) { int32 }
   end
+
+  it "types a var that is re-assigned in a block" do
+    assert_type(%(
+      def foo
+        yield
+      end
+
+      a = 1
+      foo do
+        a = 'a'
+      end
+      a
+      )) { union_of(int32, char) }
+  end
 end

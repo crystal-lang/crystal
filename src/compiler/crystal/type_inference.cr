@@ -414,7 +414,7 @@ module Crystal
         meta_vars[arg.name] = meta_var
       end
 
-      node.vars = meta_vars
+      call_vars = node.vars.not_nil!
 
       pushing_type_filters do
         block_visitor = TypeVisitor.new(mod, block_vars, @typed_def, meta_vars)
@@ -427,7 +427,14 @@ module Crystal
         block_visitor.block = node
         block_visitor.type_lookup = type_lookup
         node.body.accept block_visitor
+
+        # Check re-assigned variables and bind them
+        block_visitor.vars.each do |name, block_var|
+          call_vars[name]?.try &.bind_to(block_var)
+        end
       end
+
+      node.vars = meta_vars
 
       node.bind_to node.body
 
@@ -539,6 +546,21 @@ module Crystal
       obj.try &.add_input_observer(node)
       node.args.each &.add_input_observer(node)
       block_arg.try &.add_input_observer node
+
+      # If the call has a block we need to create a copy of the variables
+      # and bind them to the current variables. Then, when visiting
+      # the block we will bind more variables to these ones if variables
+      # are reassigned.
+      if block = node.block
+        call_vars = {} of String => Var
+        @vars.each do |name, var|
+          call_var = Var.new(name)
+          call_var.bind_to(var)
+          call_vars[name] = call_var
+        end
+        @vars = call_vars
+        block.vars = call_vars
+      end
 
       node.recalculate
 
