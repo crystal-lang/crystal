@@ -197,7 +197,9 @@ module Crystal
           vars << arg
           args << arg
         end
-        self.block = Block.new(vars, Call.new(block_arg, "call", args))
+        block = Block.new(vars, Call.new(block_arg, "call", args))
+        block.vars = self.vars
+        self.block = block
       else
         block_arg.raise "expected a function type, not #{block_arg.type}"
       end

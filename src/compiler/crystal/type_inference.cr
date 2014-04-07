@@ -567,7 +567,7 @@ module Crystal
       # and bind them to the current variables. Then, when visiting
       # the block we will bind more variables to these ones if variables
       # are reassigned.
-      if block = node.block
+      if node.block || block_arg
         call_vars = {} of String => Var
         @vars.each do |name, var|
           call_var = Var.new(name)
@@ -575,7 +575,12 @@ module Crystal
           call_vars[name] = call_var
           @vars[name] = call_var
         end
-        block.vars = call_vars
+
+        if block = node.block
+          block.vars = call_vars
+        else
+          node.vars = call_vars
+        end
       end
 
       node.recalculate

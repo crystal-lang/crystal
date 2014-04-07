@@ -53,9 +53,9 @@ class Hash(K, V)
 
     @length += 1
 
-    if @last
-      @last.fore = entry
-      entry.back = @last
+    if last = @last
+      last.fore = entry
+      entry.back = last
     end
 
     @last = entry
@@ -77,8 +77,8 @@ class Hash(K, V)
 
   def fetch(key)
     fetch(key) do
-      if @block
-        @block.call(self, key)
+      if block = @block
+        block.call(self, key)
       else
         raise "Missing hash value: #{key}"
       end

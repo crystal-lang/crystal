@@ -330,6 +330,10 @@ module Crystal
     end
   end
 
+  class Call
+    property :vars
+  end
+
   class Block
     include ClosureContext
 
