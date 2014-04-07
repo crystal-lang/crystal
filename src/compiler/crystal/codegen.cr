@@ -1164,11 +1164,8 @@ module Crystal
             when ClassVar
               get_global class_var_global_name(target), target.type
             when Var
-              if target.type.void?
-                # TODO
-                # context.vars[target.name] = LLVMVar.new(llvm_nil, @mod.void)
-                return
-              end
+              # Can't assign void
+              return if target.type.void?
 
               var = context.vars[target.name]?
               if var
@@ -2493,12 +2490,16 @@ module Crystal
         vars.each do |name, var|
           next if name == "self" || context.vars[name]?
 
-          ptr = @builder.alloca llvm_type(var.type), name
-          context.vars[name] = LLVMVar.new(ptr, var.type)
+          if var.type.void?
+            context.vars[name] = LLVMVar.new(llvm_nil, @mod.void)
+          else
+            ptr = @builder.alloca llvm_type(var.type), name
+            context.vars[name] = LLVMVar.new(ptr, var.type)
 
-          # Assign default nil for variables that are bound to the nil variable
-          if var.dependencies.any? &.same?(@mod.nil_var)
-            assign ptr, var.type, @mod.nil, llvm_nil
+            # Assign default nil for variables that are bound to the nil variable
+            if var.dependencies.any? &.same?(@mod.nil_var)
+              assign ptr, var.type, @mod.nil, llvm_nil
+            end
           end
         end
       end
