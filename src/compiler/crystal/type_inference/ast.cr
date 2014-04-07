@@ -293,6 +293,7 @@ module Crystal
   class Var
     property :context
     property :closured
+    property :nil_if_read
 
     def out?
       out

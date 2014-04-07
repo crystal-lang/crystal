@@ -128,6 +128,12 @@ module Crystal
         # check_closured var
         filter = build_var_filter var
         node.bind_to(filter || var)
+
+        if var.nil_if_read
+          meta_var = @meta_vars[node.name]
+          meta_var.bind_to(@mod.nil_var) unless meta_var.dependencies.try &.any? &.same?(@mod.nil_var)
+        end
+
         if needs_type_filters?
           @type_filters = not_nil_filter(node)
         end
@@ -579,6 +585,7 @@ module Crystal
         if block = node.block
           block.vars = call_vars
         else
+          # TODO: think how no to store vars in call in this case
           node.vars = call_vars
         end
       end
@@ -916,7 +923,8 @@ module Crystal
             if_var.bind_to cond_var
           else
             if_var.bind_to @mod.nil_var
-            @meta_vars[name].bind_to @mod.nil_var
+            if_var.nil_if_read = true
+            # @meta_vars[name].bind_to @mod.nil_var
           end
         elsif else_var
           if_var.bind_to else_var
@@ -924,7 +932,8 @@ module Crystal
             if_var.bind_to cond_var
           else
             if_var.bind_to @mod.nil_var
-            @meta_vars[name].bind_to @mod.nil_var
+            if_var.nil_if_read = true
+            # @meta_vars[name].bind_to @mod.nil_var
           end
         end
 
@@ -976,8 +985,7 @@ module Crystal
           nilable_var.bind_to(while_var)
           nilable_var.bind_to(@mod.nil_var)
           before_cond_vars[name] = nilable_var
-
-          @meta_vars[name].bind_to @mod.nil_var
+          nilable_var.nil_if_read = true
         end
       end
 
