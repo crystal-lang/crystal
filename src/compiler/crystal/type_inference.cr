@@ -92,6 +92,9 @@ module Crystal
     end
 
     def visit(node : Var)
+      # out variables are dealt in the Call's logic
+      return if node.out
+
       var = @vars[node.name]?
       if var
         check_closured var
@@ -483,22 +486,19 @@ module Crystal
       end
 
       obj = node.obj
-
-      obj.add_input_observer node if obj
-      node.args.each &.add_input_observer(node)
-      if block_arg = node.block_arg
-        block_arg.add_input_observer node
-      end
-      node.recalculate
+      block_arg = node.block_arg
 
       ignore_type_filters do
-        obj.accept self if obj
+        obj.try &.accept(self)
         node.args.each &.accept(self)
-
-        if block_arg
-          block_arg.accept self
-        end
+        block_arg.try &.accept self
       end
+
+      obj.try &.add_input_observer(node)
+      node.args.each &.add_input_observer(node)
+      block_arg.try &.add_input_observer node
+
+      node.recalculate
 
       @type_filters = nil
 
