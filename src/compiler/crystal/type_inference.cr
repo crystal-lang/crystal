@@ -784,10 +784,11 @@ module Crystal
       case type
       when Const
         unless type.value.type?
-          old_types, old_scope, old_vars, old_type_lookup = @types, @scope, @vars, @type_lookup
-          @types, @scope, @vars, @type_lookup = type.scope_types, type.scope, ({} of String => Var), nil
+          old_types, old_scope, old_vars, old_meta_vars, old_type_lookup = @types, @scope, @vars, @meta_vars, @type_lookup
+          @types, @scope, @vars, @meta_vars, @type_lookup = type.scope_types, type.scope, ({} of String => Var), ({} of String => Var), nil
           type.value.accept self
-          @types, @scope, @vars, @type_lookup = old_types, old_scope, old_vars, old_type_lookup
+          type.vars = @meta_vars
+          @types, @scope, @vars, @meta_vars, @type_lookup = old_types, old_scope, old_vars, old_meta_vars, old_type_lookup
         end
         node.target_const = type
         node.bind_to type.value

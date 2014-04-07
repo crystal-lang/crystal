@@ -1352,6 +1352,7 @@ module Crystal
 
           if const.value.needs_const_block?
             in_const_block("const_#{global_name}") do
+              alloca_vars const.vars
               accept const.not_nil!.value
 
               if LLVM.constant? @last

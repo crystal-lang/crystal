@@ -2214,6 +2214,7 @@ module Crystal
     property value
     getter scope_types
     getter scope
+    property! vars
 
     def initialize(program, container, name, @value, @scope_types = [] of Type, @scope = nil)
       super(program, container, name)
