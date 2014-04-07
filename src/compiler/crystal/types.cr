@@ -737,7 +737,7 @@ module Crystal
     def add_subclass(subclass)
       subclasses << subclass
       notify_subclass_added
-      @superclass.notify_subclass_added if @superclass
+      @superclass.try &.notify_subclass_added
     end
 
     def add_subclass_observer(observer)
@@ -792,7 +792,7 @@ module Crystal
     end
 
     def force_add_subclass
-      @superclass.add_subclass(self) if @superclass
+      @superclass.try &.add_subclass(self)
     end
 
     def all_subclasses
@@ -1235,8 +1235,8 @@ module Crystal
     end
 
     def declare_instance_var(name, node)
-      @declared_instance_vars ||= {} of String => ASTNode
-      @declared_instance_vars[name] = node
+      declared_instance_vars = (@declared_instance_vars ||= {} of String => ASTNode)
+      declared_instance_vars[name] = node
 
       generic_types.each do |key, instance|
         instance = instance as GenericClassInstanceType

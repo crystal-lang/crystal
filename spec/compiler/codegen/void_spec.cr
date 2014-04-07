@@ -55,4 +55,13 @@ describe "Code gen: void" do
       1
       ").to_i.should eq(1)
   end
+
+  it "codegens unreachable code" do
+    run(%(
+      a = nil
+      if a
+        b = a.foo
+      end
+      ))
+  end
 end

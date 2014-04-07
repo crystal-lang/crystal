@@ -27,7 +27,7 @@ module Crystal
     end
 
     def name_column_number
-      @location ? @location.column_number : nil
+      @location.try &.column_number
     end
 
     def name_length
@@ -780,8 +780,8 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @default_value.accept visitor if @default_value
-      @restriction.accept visitor if @restriction
+      @default_value.try &.accept visitor
+      @restriction.try &.accept visitor
     end
 
     def ==(other : self)
@@ -878,10 +878,10 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @receiver.accept visitor if @receiver
+      @receiver.try &.accept visitor
       @args.each { |arg| arg.accept visitor }
       @body.accept visitor
-      @block_arg.accept visitor if @block_arg
+      @block_arg.try &.accept visitor
     end
 
     def ==(other : self)

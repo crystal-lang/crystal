@@ -127,7 +127,7 @@ module Crystal
         str << msg
       end
 
-      if lines && @line && (line = lines[@line - 1]?)
+      if lines && (line_number = @line) && (line = lines[line_number - 1]?)
         str << "\n\n"
         str << line.chomp
         str << "\n"
@@ -161,8 +161,8 @@ module Crystal
     end
 
     def deepest_error_message
-      if @inner
-        @inner.deepest_error_message
+      if inner = @inner
+        inner.deepest_error_message
       else
         @message
       end

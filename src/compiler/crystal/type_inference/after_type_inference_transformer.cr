@@ -237,26 +237,27 @@ module Crystal
     def transform(node : If)
       node.cond = node.cond.transform(self)
 
-      if node.cond.true_literal?
+      node_cond = node.cond
+
+      if node_cond.true_literal?
         node.then = node.then.transform(self)
         rebind_node node, node.then
         return node.then
       end
 
-      if node.cond.false_literal?
+      if node_cond.false_literal?
         node.else = node.else.transform(self)
         rebind_node node, node.else
         return node.else
       end
 
-      node.then = node.then.transform(self)
-      node.else = node.else.transform(self)
-
-      node_cond = node.cond
-
       if (cond_type = node_cond.type?) && cond_type.nil_type?
+        node.else = node.else.transform(self)
         return replace_if_with_branch(node, node.else)
       end
+
+      node.then = node.then.transform(self)
+      node.else = node.else.transform(self)
 
       if node_cond.is_a?(Assign)
         if node_cond.value.true_literal?

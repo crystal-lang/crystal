@@ -5,14 +5,14 @@ class Node
 
   def add(x)
     if x < @value
-      if @left
-        @left.add(x)
+      if left = @left
+        left.add(x)
       else
         @left = Node.new(x)
       end
     else
-      if @right
-        @right.add(x)
+      if right = @right
+        right.add(x)
       else
         @right = Node.new(x)
       end
@@ -20,9 +20,9 @@ class Node
   end
 
   def print
-    @left.print if @left
+    @left.try &.print
     print @value
-    @right.print if @right
+    @right.try &.print
   end
 end
 

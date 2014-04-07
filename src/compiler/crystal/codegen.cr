@@ -1886,7 +1886,12 @@ module Crystal
           new_entry_block
 
           setup_closure_context target_def, is_closure
-          alloca_vars target_def.vars
+          begin
+            alloca_vars target_def.vars
+          rescue ex
+            puts mangled_name
+            raise ex
+          end
           create_local_copy_of_fun_args(target_def, self_type, args)
 
           context.return_type = target_def.type?
@@ -2490,15 +2495,17 @@ module Crystal
         vars.each do |name, var|
           next if name == "self" || context.vars[name]?
 
-          if var.type.void?
+          var_type = var.type? || @mod.nil
+
+          if var_type.void?
             context.vars[name] = LLVMVar.new(llvm_nil, @mod.void)
           else
-            ptr = @builder.alloca llvm_type(var.type), name
-            context.vars[name] = LLVMVar.new(ptr, var.type)
+            ptr = @builder.alloca llvm_type(var_type), name
+            context.vars[name] = LLVMVar.new(ptr, var_type)
 
             # Assign default nil for variables that are bound to the nil variable
             if var.dependencies.any? &.same?(@mod.nil_var)
-              assign ptr, var.type, @mod.nil, llvm_nil
+              assign ptr, var_type, @mod.nil, llvm_nil
             end
           end
         end
