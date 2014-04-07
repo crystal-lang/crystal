@@ -81,7 +81,7 @@ module Crystal
                If.new(left, node.right, left.clone)
              else
                temp_var = new_temp_var
-               If.new(Assign.new(temp_var, left), node.right, temp_var)
+               If.new(Assign.new(temp_var.clone, left), node.right, temp_var.clone)
              end
       new_node.binary = :and
       new_node.location = node.location
@@ -107,7 +107,7 @@ module Crystal
                    If.new(left, left.clone, node.right)
                  else
                    temp_var = new_temp_var
-                   If.new(Assign.new(temp_var, left), temp_var, node.right)
+                   If.new(Assign.new(temp_var.clone, left), temp_var.clone, node.right)
                  end
       new_node.binary = :or
       new_node.location = node.location
@@ -233,31 +233,31 @@ module Crystal
       constructor.location = node.location
 
       temp_var = new_temp_var
-      assign = Assign.new(temp_var, constructor)
+      assign = Assign.new(temp_var.clone, constructor)
       assign.location = node.location
 
-      set_length = Call.new(temp_var, "length=", [NumberLiteral.new(length, :i32)] of ASTNode)
+      set_length = Call.new(temp_var.clone, "length=", [NumberLiteral.new(length, :i32)] of ASTNode)
       set_length.location = node.location
 
-      get_buffer = Call.new(temp_var, "buffer")
+      get_buffer = Call.new(temp_var.clone, "buffer")
       get_buffer.location = node.location
 
       buffer = new_temp_var
       buffer.location = node.location
 
-      assign_buffer = Assign.new(buffer, get_buffer)
+      assign_buffer = Assign.new(buffer.clone, get_buffer)
       assign_buffer.location = node.location
 
       exps = [assign, set_length, assign_buffer] of ASTNode
 
       node.elements.each_with_index do |elem, i|
-        assign_index = Call.new(buffer, "[]=", [NumberLiteral.new(i, :i32), elem] of ASTNode)
+        assign_index = Call.new(buffer.clone, "[]=", [NumberLiteral.new(i, :i32), elem] of ASTNode)
         assign_index.location = node.location
 
         exps << assign_index
       end
 
-      exps << temp_var
+      exps << temp_var.clone
 
       exps = Expressions.new(exps)
       exps.location = node.location
@@ -302,13 +302,13 @@ module Crystal
         constructor
       else
         temp_var = new_temp_var
-        assign = Assign.new(temp_var, constructor)
+        assign = Assign.new(temp_var.clone, constructor)
 
         exps = [assign] of ASTNode
         node.keys.each_with_index do |key, i|
-          exps << Call.new(temp_var, "[]=", [key, node.values[i]])
+          exps << Call.new(temp_var.clone, "[]=", [key, node.values[i]])
         end
-        exps << temp_var
+        exps << temp_var.clone
         exp = Expressions.new exps
         exp.location = node.location
         exp
@@ -334,12 +334,12 @@ module Crystal
 
         assigns = [] of ASTNode
 
-        assign = Assign.new(temp_var, value)
+        assign = Assign.new(temp_var.clone, value)
         assign.location = value.location
         assigns << assign
 
         node.targets.each_with_index do |target, i|
-          call = Call.new(temp_var, "[]", [NumberLiteral.new(i, :i32)] of ASTNode)
+          call = Call.new(temp_var.clone, "[]", [NumberLiteral.new(i, :i32)] of ASTNode)
           call.location = value.location
           assigns << transform_multi_assign_target(target, call)
         end
@@ -374,10 +374,10 @@ module Crystal
         assign_from_temps = [] of ASTNode
 
         temp_vars.each_with_index do |temp_var_2, i|
-          assign = Assign.new(temp_var_2, node.values[i])
+          assign = Assign.new(temp_var_2.clone, node.values[i])
           assign.location = node.location
           assign_to_temps << assign
-          assign_from_temps << transform_multi_assign_target(node.targets[i], temp_var_2)
+          assign_from_temps << transform_multi_assign_target(node.targets[i], temp_var_2.clone)
         end
 
         exps = Expressions.new(assign_to_temps + assign_from_temps)
@@ -408,9 +408,9 @@ module Crystal
           right = Call.new(middle, node.name, node.args)
         else
           temp_var = new_temp_var
-          temp_assign = Assign.new(temp_var, middle)
+          temp_assign = Assign.new(temp_var.clone, middle)
           left = Call.new(obj.obj, obj.name, [temp_assign] of ASTNode)
-          right = Call.new(temp_var, node.name, node.args)
+          right = Call.new(temp_var.clone, node.name, node.args)
         end
         node = And.new(left, right)
         node = node.transform self
@@ -517,7 +517,7 @@ module Crystal
         assign = node_cond
       else
         temp_var = new_temp_var
-        assign = Assign.new(temp_var, node_cond)
+        assign = Assign.new(temp_var.clone, node_cond)
       end
 
       a_if = nil
@@ -525,13 +525,13 @@ module Crystal
       node.whens.each do |wh|
         final_comp = nil
         wh.conds.each do |cond|
-          right_side = temp_var
+          right_side = temp_var.clone
 
           if cond.is_a?(Path) || cond.is_a?(Generic)
             comp = IsA.new(right_side, cond)
           elsif cond.is_a?(Call) && cond.obj.is_a?(ImplicitObj)
             implicit_call = cond.clone as Call
-            implicit_call.obj = temp_var
+            implicit_call.obj = temp_var.clone
             comp = implicit_call
           else
             comp = Call.new(cond, "===", [right_side] of ASTNode)
