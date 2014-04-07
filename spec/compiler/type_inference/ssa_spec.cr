@@ -194,4 +194,24 @@ describe "Type inference: ssa" do
       b
       )) { union_of [int32, char, string] of Type }
   end
+
+  it "doesn't change type to nilable inside if" do
+    assert_type("
+      def foo
+        yield
+      end
+
+      def bar
+        if 1 == 2
+          l = 1
+          foo {}
+          l
+        else
+          2
+        end
+      end
+
+      x = bar
+      ") { int32 }
+  end
 end

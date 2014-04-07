@@ -37,7 +37,7 @@ module Crystal
       typed_def = @typed_def
 
       @meta_vars = initialize_meta_vars @mod, vars, typed_def, meta_vars
-      @vars = @meta_vars.dup
+      @vars = vars
 
       @needs_type_filters = 0
       @in_fun_literal = false
@@ -416,7 +416,8 @@ module Crystal
       return if node.visited
       node.visited = true
 
-      block_vars = @vars.dup
+      block_vars = node.vars.try(&.dup) || {} of String => Var
+
       meta_vars = @meta_vars.dup
       node.args.each do |arg|
         arg.context = node
@@ -426,8 +427,6 @@ module Crystal
         meta_var.bind_to(arg)
         meta_vars[arg.name] = meta_var
       end
-
-      call_vars = node.vars
 
       pushing_type_filters do
         block_visitor = TypeVisitor.new(mod, block_vars, @typed_def, meta_vars)
@@ -443,7 +442,7 @@ module Crystal
 
         # Check re-assigned variables and bind them.
         # call_vars can be nil in the case of a block argument
-        if call_vars
+        if call_vars = node.vars
           block_visitor.vars.each do |name, block_var|
             call_vars[name]?.try &.bind_to(block_var)
           end
@@ -574,8 +573,8 @@ module Crystal
           call_var = Var.new(name)
           call_var.bind_to(var)
           call_vars[name] = call_var
+          @vars[name] = call_var
         end
-        @vars = call_vars
         block.vars = call_vars
       end
 
