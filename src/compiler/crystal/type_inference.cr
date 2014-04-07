@@ -259,6 +259,8 @@ module Crystal
     end
 
     def type_assign(target : Var, value, node)
+      var_name = target.name
+
       value.accept self
 
       value_type_filters = @type_filters
@@ -267,10 +269,15 @@ module Crystal
       target.bind_to value
       node.bind_to value
 
-      meta_var = (@meta_vars[target.name] ||= Var.new(target.name))
+      meta_var = (@meta_vars[var_name] ||= Var.new(var_name))
       meta_var.bind_to value
 
-      @vars[target.name] = target
+      @vars[var_name] = target
+
+      if exception_handler_vars = @exception_handler_vars
+        var = (exception_handler_vars[var_name] ||= Var.new(var_name))
+        var.bind_to(value)
+      end
 
       if needs_type_filters?
         @type_filters = and_type_filters(not_nil_filter(target), value_type_filters)
@@ -1253,7 +1260,25 @@ module Crystal
       false
     end
 
-    def end_visit(node : ExceptionHandler)
+    def visit(node : ExceptionHandler)
+      old_exception_handler_vars = @exception_handler_vars
+      exception_handler_vars = @exception_handler_vars = @vars.dup
+
+      # First accept body
+      node.body.accept self
+
+      # TODO: we need to do this well, variables don't end with the correct types
+
+      @vars = exception_handler_vars.dup
+      exception_handler_vars = @exception_handler_vars = exception_handler_vars.dup
+
+      node.rescues.try &.each &.accept self
+
+      @vars = exception_handler_vars.dup
+
+      node.else.try &.accept self
+      node.ensure.try &.accept self
+
       if node_else = node.else
         node.bind_to node_else
       else
@@ -1265,6 +1290,10 @@ module Crystal
           node.bind_to a_rescue.body
         end
       end
+
+      old_exception_handler_vars = @exception_handler_vars
+
+      false
     end
 
     def end_visit(node : IndirectRead)

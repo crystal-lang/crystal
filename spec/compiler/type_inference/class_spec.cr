@@ -373,7 +373,7 @@ describe "Type inference: class" do
   #   input.last.type.immutable.should be_true
   # end
 
-  it "infers types of instance variables to nilable" do
+  pending "infers types of instance variables to nilable" do
     input = parse("
       def bar
       end

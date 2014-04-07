@@ -153,4 +153,45 @@ describe "Type inference: ssa" do
       a
       )) { union_of(char, int32) }
   end
+
+  it "types a var after begin rescue as having all possible types in begin" do
+    assert_type(%(
+      a = 1.5
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      ensure
+      end
+      a
+      )) { union_of [float64, int32, char, string] of Type }
+  end
+
+  it "types a var after begin rescue as having all possible types in begin and rescue" do
+    assert_type(%(
+      a = 1.5
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      rescue ex
+        a = false
+      end
+      a
+      )) { union_of [float64, int32, char, string, bool] of Type }
+  end
+
+  it "types a var after begin rescue as having all possible types in begin and rescue (2)" do
+    assert_type(%(
+      b = 2
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      rescue ex
+        b = a
+      end
+      b
+      )) { union_of [int32, char, string] of Type }
+  end
 end
