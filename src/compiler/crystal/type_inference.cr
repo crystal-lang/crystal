@@ -474,6 +474,7 @@ module Crystal
 
       node.bind_to node.def
       node.def.bind_to node.def.body
+      node.def.vars = meta_vars
 
       # TODO: pass meta-vars along
       block_visitor = TypeVisitor.new(mod, fun_vars, node.def, meta_vars)
