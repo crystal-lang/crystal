@@ -467,8 +467,10 @@ module Crystal
     end
 
     def visit(node : FunLiteral)
-      fun_vars = @vars.dup
-      meta_vars = @meta_vars.dup
+      # fun_vars = @vars.dup
+      fun_vars = {} of String => Var
+      meta_vars = {} of String => Var
+      # meta_vars = @meta_vars.dup
 
       node.def.args.each do |arg|
         # It can happen that the argument has a type already,

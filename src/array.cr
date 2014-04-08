@@ -509,9 +509,13 @@ class Array(T)
     self
   end
 
-  def sort_by!(block: T -> )
-    sort! ->(x : T, y : T){ block.call(x) <=> block.call(y) }
-  end
+  # def sort_by!(block: T -> )
+  #   sort! ->(x : T, y : T){ block.call(x) <=> block.call(y) }
+  # end
+
+  # def sort_by(block: T -> )
+  #   dup.sort_by! block
+  # end
 
   def sort
     dup.sort!
@@ -521,10 +525,6 @@ class Array(T)
     x = dup
     Array(T).quicksort!(x.buffer, x.length, block)
     x
-  end
-
-  def sort_by(block: T -> )
-    dup.sort_by! block
   end
 
   def sample
