@@ -41,6 +41,7 @@ module Crystal
 
       @needs_type_filters = 0
       @in_fun_literal = false
+      @unreachable = false
 
       # TODO: check closure
       vars.each_value do |var|
@@ -67,6 +68,11 @@ module Crystal
 
     def block=(@block)
       @block_context = @block
+    end
+
+    def visit_any(node)
+      @unreachable = false
+      true
     end
 
     def visit(node : ASTNode)
@@ -593,6 +599,7 @@ module Crystal
       node.recalculate
 
       @type_filters = nil
+      @unreachable = node.no_returns?
 
       false
     end
@@ -664,6 +671,7 @@ module Crystal
       node.exps.each do |exp|
         typed_def.bind_to exp
       end
+      @unreachable = true
     end
 
     def end_visit(node : Generic)
@@ -838,6 +846,7 @@ module Crystal
 
       @type_filters = nil
       @vars = then_vars = cond_vars.dup
+      @unreachable = false
 
       if node.then.nop?
         node.then.accept self
@@ -847,10 +856,12 @@ module Crystal
         end
       end
 
+      then_unreachable = @unreachable
+
       then_type_filters = @type_filters
       @type_filters = nil
-
       @vars = else_vars = cond_vars.dup
+      @unreachable = false
 
       if node.else.nop?
         node.else.accept self
@@ -864,7 +875,9 @@ module Crystal
         end
       end
 
-      merge_if_vars cond_vars, then_vars, else_vars
+      else_unreachable = @unreachable
+
+      merge_if_vars cond_vars, then_vars, else_vars, then_unreachable, else_unreachable
 
       else_type_filters = @type_filters
       @type_filters = nil
@@ -892,10 +905,12 @@ module Crystal
         type_filter_stack[-1] = and_type_filters(type_filter_stack.last, cond_type_filters)
       end
 
+      @unreachable = then_unreachable && else_unreachable
+
       false
     end
 
-    def merge_if_vars(cond_vars, then_vars, else_vars)
+    def merge_if_vars(cond_vars, then_vars, else_vars, then_unreachable, else_unreachable)
       all_vars_names = Set(String).new
       then_vars.each_key do |name|
         all_vars_names << name
@@ -915,25 +930,23 @@ module Crystal
         if_var = Var.new(name)
 
         if then_var && else_var
-          if_var.bind_to then_var
-          if_var.bind_to else_var
+          if_var.bind_to then_var unless then_unreachable
+          if_var.bind_to else_var unless else_unreachable
         elsif then_var
-          if_var.bind_to then_var
+          if_var.bind_to then_var unless then_unreachable
           if cond_var
             if_var.bind_to cond_var
-          else
+          elsif !else_unreachable
             if_var.bind_to @mod.nil_var
             if_var.nil_if_read = true
-            # @meta_vars[name].bind_to @mod.nil_var
           end
         elsif else_var
-          if_var.bind_to else_var
+          if_var.bind_to else_var unless else_unreachable
           if cond_var
             if_var.bind_to cond_var
-          else
+          elsif !then_unreachable
             if_var.bind_to @mod.nil_var
             if_var.nil_if_read = true
-            # @meta_vars[name].bind_to @mod.nil_var
           end
         end
 
@@ -1013,6 +1026,8 @@ module Crystal
       else
         container.bind_to(node.exps.length > 0 ? node.exps[0] : mod.nil_var)
       end
+
+      @unreachable = true
     end
 
     def end_visit(node : Next)
@@ -1025,6 +1040,8 @@ module Crystal
       elsif @while_stack.empty?
         node.raise "Invalid next"
       end
+
+      @unreachable = true
     end
 
     def visit(node : Primitive)

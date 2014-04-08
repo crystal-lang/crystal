@@ -214,4 +214,140 @@ describe "Type inference: ssa" do
       x = bar
       ") { int32 }
   end
+
+  it "types if with return in then" do
+    assert_type("
+      def foo
+        if 1 == 1
+          a = 1
+        else
+          return 2
+        end
+        a
+      end
+
+      foo
+      ") { int32 }
+  end
+
+  it "types if with return in then with assign" do
+    assert_type("
+      def foo
+        if 1 == 1
+          a = 1
+        else
+          a = 'a'
+          return 2
+        end
+        a
+      end
+
+      foo
+      ") { int32 }
+  end
+
+  it "types if with return in else" do
+    assert_type("
+      def foo
+        if 1 == 1
+          return 2
+        else
+          a = 1
+        end
+        a
+      end
+
+      foo
+      ") { int32 }
+  end
+
+  it "types if with return in else with assign" do
+    assert_type("
+      def foo
+        if 1 == 1
+          a = 'a'
+          return 2
+        else
+          a = 1
+        end
+        a
+      end
+
+      foo
+      ") { int32 }
+  end
+
+  it "types if with return in both branches" do
+    assert_type("
+      def foo
+        if 1 == 1
+          if 2 == 2
+            a = 'a'
+            return 2
+          else
+            a = false
+            return 3
+          end
+        else
+          a = 1
+        end
+        a
+      end
+
+      foo
+      ") { int32 }
+  end
+
+  it "types if with unreachable in then" do
+    assert_type("
+      lib C
+        fun exit : NoReturn
+      end
+
+      if 1 == 1
+        a = 1
+      else
+        a = 'a'
+        C.exit
+      end
+
+      a
+      ") { int32 }
+  end
+
+  it "types if with break in then" do
+    assert_type("
+      b = 1
+
+      while 1 == 2
+        if 1 == 1
+          a = 1
+        else
+          a = 'a'
+          break
+        end
+        b = a
+      end
+
+      b
+      ") { int32 }
+  end
+
+  it "types if with next in then" do
+    assert_type("
+      b = 1
+
+      while 1 == 2
+        if 1 == 1
+          a = 1
+        else
+          a = 'a'
+          next
+        end
+        b = a
+      end
+
+      b
+      ") { int32 }
+  end
 end
