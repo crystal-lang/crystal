@@ -959,6 +959,7 @@ module Crystal
     end
 
     def visit(node : While)
+      old_while_vars = @while_vars
       before_cond_vars = @vars.dup
 
       request_type_filters do
@@ -966,6 +967,7 @@ module Crystal
       end
 
       after_cond_vars = @vars.dup
+      @while_vars = after_cond_vars
 
       cond_type_filters = @type_filters
       @type_filters = nil
@@ -976,33 +978,49 @@ module Crystal
         node.body.accept self
       end
 
-      merge_while_vars before_cond_vars, after_cond_vars, @vars
+      merge_while_vars before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
       @block = old_block
+      @while_vars = old_while_vars
 
       false
     end
 
-    def merge_while_vars(before_cond_vars, after_cond_vars, while_vars)
+    def merge_while_vars(before_cond_vars, after_cond_vars, while_vars, all_break_vars)
+      after_while_vars = {} of String => Var
+
       while_vars.each do |name, while_var|
         before_cond_var = before_cond_vars[name]?
         after_cond_var = after_cond_vars[name]?
 
         if after_cond_var && !after_cond_var.same?(before_cond_var)
-          before_cond_vars[name] = after_cond_var
+          after_while_var = Var.new(name)
+          after_while_var.bind_to(after_cond_var)
+          after_while_vars[name] = after_while_var
         elsif before_cond_var
-          before_cond_var.bind_to(while_var)
+          after_while_var = Var.new(name)
+          after_while_var.bind_to(before_cond_var)
+          after_while_var.bind_to(while_var)
+          after_while_vars[name] = after_while_var
         else
           nilable_var = Var.new(name)
           nilable_var.bind_to(while_var)
           nilable_var.bind_to(@mod.nil_var)
-          before_cond_vars[name] = nilable_var
           nilable_var.nil_if_read = true
+          after_while_vars[name] = nilable_var
         end
       end
 
-      @vars = before_cond_vars
+      @vars = after_while_vars
+
+      if all_break_vars
+        all_break_vars.each do |break_vars|
+          break_vars.each do |name, var|
+            @vars[name].bind_to(var)
+          end
+        end
+      end
     end
 
     def end_visit(node : While)
@@ -1023,6 +1041,9 @@ module Crystal
 
       if container.is_a?(While)
         container.has_breaks = true
+
+        break_vars = (container.break_vars = container.break_vars || [] of Hash(String, Var))
+        break_vars.push @vars.dup
       else
         container.bind_to(node.exps.length > 0 ? node.exps[0] : mod.nil_var)
       end
@@ -1042,6 +1063,12 @@ module Crystal
       end
 
       @unreachable = true
+
+      if while_vars = @while_vars
+        @vars.each do |name, var|
+          while_vars[name]?.try &.bind_to(var)
+        end
+      end
     end
 
     def visit(node : Primitive)

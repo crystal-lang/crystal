@@ -350,4 +350,68 @@ describe "Type inference: ssa" do
       b
       ") { int32 }
   end
+
+  it "types while with break" do
+    assert_type("
+      a = 1
+
+      while 1 == 2
+        if 1 == 1
+          a = 'a'
+          break
+        end
+        a = 1
+      end
+
+      a
+      ") { union_of(int32, char) }
+  end
+
+  it "types while with break with new var" do
+    assert_type("
+      while 1 == 2
+        if 1 == 1
+          b = 'a'
+          break
+        end
+      end
+
+      b
+      ") { |mod| union_of(mod.nil, mod.char) }
+  end
+
+  it "types while with break doesn't infect initial vas" do
+    assert_type("
+      a = 1
+      b = 1
+
+      while 1 == 2
+        b = a
+        if 1 == 1
+          a = 'a'
+          break
+        end
+        a = 1
+      end
+
+      b
+      ") { int32 }
+  end
+
+  it "types while with next" do
+    assert_type("
+      a = 1
+      b = 1
+      while 1 == 2
+        b = a
+        if 1 == 1
+          a = 'a'
+          next
+        end
+        a = 1
+      end
+
+      b
+      ") { union_of(int32, char) }
+  end
 end

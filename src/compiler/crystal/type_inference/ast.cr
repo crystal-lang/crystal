@@ -349,6 +349,7 @@ module Crystal
 
   class While
     property :has_breaks
+    property :break_vars
   end
 
   class FunPointer
