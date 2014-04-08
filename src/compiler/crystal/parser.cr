@@ -474,6 +474,8 @@ module Crystal
                   args = call_args.args
                   block = call_args.block
                   block_arg = call_args.block_arg
+                else
+                  args = block = block_arg = nil
                 end
               end
             else
@@ -482,6 +484,8 @@ module Crystal
                 args = call_args.args
                 block = call_args.block
                 block_arg = call_args.block_arg
+              else
+                args = block = block_arg = nil
               end
             end
 

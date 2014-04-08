@@ -644,6 +644,8 @@ describe "Parser" do
 
   it_parses "lib C; ifdef foo; $foo : Int32; else; $foo : Float64; end; end", LibDef.new("C", nil, IfDef.new("foo".var, ExternalVar.new("foo", "Int32".path), ExternalVar.new("foo", "Float64".path)))
 
+  it_parses "foo.bar(1).baz", Call.new(Call.new("foo".call, "bar", [1.int32] of ASTNode), "baz")
+
   it "parses class with attributes" do
     node = Parser.parse("
       @:Foo
