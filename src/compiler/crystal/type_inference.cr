@@ -29,7 +29,6 @@ module Crystal
     property in_fun_literal
     property free_vars
     property yield_vars
-    property type_filter_stack
 
     def initialize(@mod, vars = {} of String => MetaVar : Hash(String, MetaVar), @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
@@ -438,22 +437,19 @@ module Crystal
         meta_vars[arg.name] = meta_var
       end
 
-      pushing_type_filters do
-        block_visitor = TypeVisitor.new(mod, before_block_vars, @typed_def, meta_vars)
-        block_visitor.type_filter_stack = @type_filter_stack
-        block_visitor.yield_vars = @yield_vars
-        block_visitor.free_vars = @free_vars
-        block_visitor.untyped_def = @untyped_def
-        block_visitor.call = @call
-        block_visitor.scope = node.scope || @scope
-        block_visitor.block = node
-        block_visitor.type_lookup = type_lookup
-        node.body.accept block_visitor
+      block_visitor = TypeVisitor.new(mod, before_block_vars, @typed_def, meta_vars)
+      block_visitor.yield_vars = @yield_vars
+      block_visitor.free_vars = @free_vars
+      block_visitor.untyped_def = @untyped_def
+      block_visitor.call = @call
+      block_visitor.scope = node.scope || @scope
+      block_visitor.block = node
+      block_visitor.type_lookup = type_lookup
+      node.body.accept block_visitor
 
-        # Check re-assigned variables and bind them.
-        bind_vars block_visitor.vars, node.before_vars
-        bind_vars block_visitor.vars, node.after_vars
-      end
+      # Check re-assigned variables and bind them.
+      bind_vars block_visitor.vars, node.before_vars
+      bind_vars block_visitor.vars, node.after_vars
 
       node.before_vars = meta_vars
 
@@ -496,7 +492,6 @@ module Crystal
       node.def.vars = meta_vars
 
       block_visitor = TypeVisitor.new(mod, fun_vars, node.def, meta_vars)
-      block_visitor.type_filter_stack = @type_filter_stack
       block_visitor.yield_vars = @yield_vars
       block_visitor.free_vars = @free_vars
       block_visitor.untyped_def = node.def
@@ -873,9 +868,7 @@ module Crystal
       if node.then.nop?
         node.then.accept self
       else
-        pushing_type_filters(cond_type_filters) do
-          node.then.accept self
-        end
+        node.then.accept self
       end
 
       then_vars = @vars
@@ -907,9 +900,7 @@ module Crystal
           else_filters = negate_filters(cond_type_filters)
         end
 
-        pushing_type_filters(else_filters) do
-          node.else.accept self
-        end
+        node.else.accept self
       end
 
       else_vars = @vars
@@ -929,19 +920,6 @@ module Crystal
         end
       end
 
-      # If the then branch exists, we can safely assume that tyhe type
-      # filters after the if will be those of the condition, negated
-      type_filter_stack = @type_filter_stack
-      if node.then.no_returns? && cond_type_filters && (type_filter_stack && !type_filter_stack.empty?)
-        type_filter_stack[-1] = and_type_filters(type_filter_stack.last, negate_filters(cond_type_filters))
-      end
-
-      # If the else branch exits, we can safely assume that the type
-      # filters in the condition will still apply after the if
-      if (node.else.no_returns? || node.else.returns?) && cond_type_filters && (type_filter_stack && !type_filter_stack.empty?)
-        type_filter_stack[-1] = and_type_filters(type_filter_stack.last, cond_type_filters)
-      end
-
       @unreachable = then_unreachable && else_unreachable
 
       false
@@ -955,8 +933,6 @@ module Crystal
       else_vars.each_key do |name|
         all_vars_names << name
       end
-
-      type_filters = @type_filter_stack.try &.last
 
       all_vars_names.each do |name|
         cond_var = cond_vars[name]?
@@ -991,7 +967,6 @@ module Crystal
         end
 
         @vars[name] = if_var
-        type_filters.try &.delete(name)
       end
     end
 
@@ -1026,9 +1001,7 @@ module Crystal
       @block, old_block = nil, @block
 
       @while_stack.push node
-      pushing_type_filters(cond_type_filters) do
-        node.body.accept self
-      end
+      node.body.accept self
 
       merge_while_vars before_cond_vars, after_cond_vars, @vars, node.break_vars
 
@@ -1042,8 +1015,6 @@ module Crystal
     def merge_while_vars(before_cond_vars, after_cond_vars, while_vars, all_break_vars)
       after_while_vars = {} of String => MetaVar
 
-      type_filters = @type_filter_stack.try &.last
-
       while_vars.each do |name, while_var|
         before_cond_var = before_cond_vars[name]?
         after_cond_var = after_cond_vars[name]?
@@ -1053,7 +1024,6 @@ module Crystal
           after_while_var.bind_to(after_cond_var)
           after_while_var.nil_if_read = after_cond_var.nil_if_read
           after_while_vars[name] = after_while_var
-          type_filters.try &.delete(name)
         elsif before_cond_var
           before_cond_var.bind_to(while_var)
           after_while_var = MetaVar.new(name)
@@ -1061,14 +1031,12 @@ module Crystal
           after_while_var.bind_to(while_var)
           after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
           after_while_vars[name] = after_while_var
-          type_filters.try &.delete(name)
         else
           nilable_var = MetaVar.new(name)
           nilable_var.bind_to(while_var)
           nilable_var.bind_to(@mod.nil_var)
           nilable_var.nil_if_read = true
           after_while_vars[name] = nilable_var
-          type_filters.try &.delete(name)
         end
       end
 
@@ -1563,13 +1531,6 @@ module Crystal
         negated_filters[name] = NotFilter.new(filter)
       end
       negated_filters
-    end
-
-    def pushing_type_filters(filters = nil)
-      type_filter_stack = (@type_filter_stack ||= [nil] of Hash(String, TypeFilter)?)
-      type_filter_stack.push(filters)
-      yield
-      type_filter_stack.pop
     end
 
     def new_type_filter
