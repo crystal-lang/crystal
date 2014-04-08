@@ -153,7 +153,7 @@ module Crystal
     end
 
     def has_location?
-      if @inner && @inner.has_location?
+      if @inner.try &.has_location?
         true
       else
         @filename || @line

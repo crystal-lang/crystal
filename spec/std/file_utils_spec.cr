@@ -1,5 +1,6 @@
 #!/usr/bin/env bin/crystal --run
 require "spec"
+require "file_utils"
 
 describe "FileUtils" do
   describe "cmp" do

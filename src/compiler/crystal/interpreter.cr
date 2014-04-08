@@ -283,8 +283,8 @@ module Crystal
         call_scope = obj_value.type
         call_vars["self"] = obj_value
       else
-        if @scope
-          call_scope = @scope
+        if scope = @scope
+          call_scope = scope
           call_vars["self"] = @vars["self"]
         else
           call_scope = @mod

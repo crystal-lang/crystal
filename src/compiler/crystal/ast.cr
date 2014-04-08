@@ -100,7 +100,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @expressions.each { |exp| exp.accept visitor }
+      @expressions.each &.accept visitor
     end
 
     def clone_without_location
@@ -220,7 +220,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @expressions.each { |e| e.accept visitor }
+      @expressions.each &.accept visitor
     end
 
     def ==(other : self)
@@ -263,8 +263,8 @@ module Crystal
     end
 
     def accept_children(visitor)
-      elements.each { |exp| exp.accept visitor }
-      @of.accept visitor if @of
+      elements.each &.accept visitor
+      @of.try &.accept visitor
     end
 
     def ==(other : self)
@@ -286,10 +286,10 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @keys.each { |key| key.accept visitor }
-      @values.each { |value| value.accept visitor }
-      @of_key.accept visitor if @of_key
-      @of_value.accept visitor if @of_value
+      @keys.each &.accept visitor
+      @values.each &.accept visitor
+      @of_key.try &.accept visitor
+      @of_value.try &.accept visitor
     end
 
     def ==(other : self)
@@ -346,7 +346,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      exps.each { |exp| exp.accept visitor }
+      exps.each &.accept visitor
     end
 
     def ==(other : self)
@@ -370,8 +370,8 @@ module Crystal
 
     def add_attributes(attributes)
       if attributes
-        if @attributes
-          @attributes.concat attributes
+        if my_attributes = @attributes
+          my_attributes.concat attributes
         else
           @attributes = attributes.dup
         end
@@ -414,7 +414,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @args.each { |arg| arg.accept visitor }
+      @args.each &.accept visitor
       @body.accept visitor
     end
 
@@ -459,10 +459,10 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @obj.accept visitor if @obj
-      @args.each { |arg| arg.accept visitor }
-      @block_arg.accept visitor if @block_arg
-      @block.accept visitor if @block
+      @obj.try &.accept visitor
+      @args.each &.accept visitor
+      @block_arg.try &.accept visitor
+      @block.try &.accept visitor
     end
 
     def ==(other : self)
@@ -624,8 +624,8 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @targets.each { |target| target.accept visitor }
-      @values.each { |value| value.accept visitor }
+      @targets.each &.accept visitor
+      @values.each &.accept visitor
     end
 
     def ==(other : self)
@@ -805,8 +805,8 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @inputs.each { |input| input.accept visitor } if @inputs
-      @output.accept visitor if @output
+      @inputs.try &.each &.accept visitor
+      @output.try &.accept visitor
     end
 
     def ==(other : self)
@@ -826,7 +826,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @fun.accept visitor if @fun
+      @fun.try &.accept visitor
     end
 
     def ==(other : self)
@@ -879,7 +879,7 @@ module Crystal
 
     def accept_children(visitor)
       @receiver.try &.accept visitor
-      @args.each { |arg| arg.accept visitor }
+      @args.each &.accept visitor
       @body.accept visitor
       @block_arg.try &.accept visitor
     end
@@ -916,10 +916,10 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @receiver.accept visitor if @receiver
-      @args.each { |arg| arg.accept visitor }
+      @receiver.try &.accept visitor
+      @args.each &.accept visitor
       @body.accept visitor
-      @block_arg.accept visitor if @block_arg
+      @block_arg.try &.accept visitor
     end
 
     def ==(other : self)
@@ -1058,7 +1058,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @conds.each { |cond| cond.accept visitor }
+      @conds.each &.accept visitor
       @body.accept visitor
     end
 
@@ -1080,8 +1080,8 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @whens.each { |w| w.accept visitor }
-      @else.accept visitor if @else
+      @whens.each &.accept visitor
+      @else.try &.accept visitor
     end
 
     def ==(other : self)
@@ -1160,7 +1160,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @superclass.accept visitor if @superclass
+      @superclass.try &.accept visitor
       @body.accept visitor
     end
 
@@ -1240,7 +1240,7 @@ module Crystal
 
     def accept_children(visitor)
       @name.accept visitor
-      @type_vars.each { |v| v.accept visitor }
+      @type_vars.each &.accept visitor
     end
 
     def ==(other : self)
@@ -1296,7 +1296,7 @@ module Crystal
 
     def accept_children(visitor)
       @body.accept visitor
-      @types.each { |type| type.accept visitor } if @types
+      @types.try &.each &.accept visitor
     end
 
     def ==(other : self)
@@ -1320,9 +1320,9 @@ module Crystal
 
     def accept_children(visitor)
       @body.accept visitor
-      @rescues.each { |a_rescue| a_rescue.accept visitor } if @rescues
-      @else.accept visitor if @else
-      @ensure.accept visitor if @ensure
+      @rescues.try &.each &.accept visitor
+      @else.try &.accept visitor
+      @ensure.try &.accept visitor
     end
 
     def ==(other : self)
@@ -1362,7 +1362,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @obj.accept visitor if @obj
+      @obj.try &.accept visitor
       @args.each &.accept visitor
     end
 
@@ -1386,7 +1386,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @types.each { |type| type.accept visitor }
+      @types.each &.accept visitor
     end
 
     def clone_without_location
@@ -1430,7 +1430,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @exps.each { |e| e.accept visitor }
+      @exps.each &.accept visitor
     end
 
     def ==(other : self)
@@ -1457,8 +1457,8 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @scope.accept visitor if @scope
-      @exps.each { |e| e.accept visitor }
+      @scope.try &.accept visitor
+      @exps.each &.accept visitor
     end
 
     def ==(other : self)
@@ -1554,9 +1554,9 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @args.each { |arg| arg.accept visitor }
-      @return_type.accept visitor if @return_type
-      @body.accept visitor if @body
+      @args.each &.accept visitor
+      @return_type.try &.accept visitor
+      @body.try &.accept visitor
     end
 
     def ==(other : self)
@@ -1597,7 +1597,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @fields.each { |field| field.accept visitor }
+      @fields.each &.accept visitor
     end
 
     def ==(other : self)
@@ -1631,7 +1631,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @constants.each { |constant| constant.accept visitor }
+      @constants.each &.accept visitor
     end
 
     def ==(other : self)
@@ -1815,7 +1815,7 @@ module Crystal
     end
 
     def accept_children(visitor)
-      @expressions.each { |e| e.accept visitor }
+      @expressions.each &.accept visitor
     end
 
     def ==(other : self)

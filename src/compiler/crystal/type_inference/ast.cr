@@ -76,13 +76,13 @@ module Crystal
     end
 
     def add_observer(observer)
-      @observers ||= [] of ASTNode
-      @observers << observer
+      observers = (@observers ||= [] of ASTNode)
+      observers << observer
     end
 
     def add_input_observer(observer)
-      @input_observers ||= [] of Call
-      @input_observers << observer
+      input_observers = (@input_observers ||= [] of Call)
+      input_observers << observer
     end
 
     def remove_observer(observer)

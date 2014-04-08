@@ -87,6 +87,19 @@ describe "Type inference: ssa" do
       )) { int32 }
   end
 
+  it "types a var with an if with nested if" do
+    assert_type(%(
+      if 1 == 2
+        a = 1
+      else
+        if 2 == 3
+        end
+        a = 4
+      end
+      a
+      )) { int32 }
+  end
+
   it "types a var that is re-assigned in a block" do
     assert_type(%(
       def foo
@@ -501,5 +514,29 @@ describe "Type inference: ssa" do
 
       b
       ") { union_of(int32, char) }
+  end
+
+  it "types if with restricted type in then" do
+    assert_type("
+      a = 1 || 'a'
+      if a.is_a?(Int32)
+        a = 'a'
+      else
+        # a = 'a'
+      end
+      a
+      ") { char }
+  end
+
+  it "types if with restricted type in else" do
+    assert_type("
+      a = 1 || 'a'
+      if a.is_a?(Int32)
+        # a = 1
+      else
+        a = 1
+      end
+      a
+      ") { int32 }
   end
 end

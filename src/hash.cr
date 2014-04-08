@@ -223,7 +223,7 @@ class Hash(K, V)
   end
 
   def first_key?
-    @first ? @first.key : nil
+    @first.try &.key
   end
 
   def first_value
@@ -231,7 +231,7 @@ class Hash(K, V)
   end
 
   def first_value?
-    @first ? @first.value : nil
+    @first.try &.value
   end
 
   def shift

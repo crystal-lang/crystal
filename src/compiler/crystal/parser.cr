@@ -718,7 +718,7 @@ module Crystal
         if @token.type == :"->"
           parse_indirect(ivar)
         else
-          @instance_vars.add name if @instance_vars
+          @instance_vars.try &.add name
           skip_space
           if @token.type == :"::"
             next_token_skip_space
@@ -1643,7 +1643,7 @@ module Crystal
         else
           raise "can't use @instance_variable here"
         end
-        @instance_vars.add ivar.name if @instance_vars
+        @instance_vars.try &.add ivar.name
       else
         raise "unexpected token: #{@token}"
       end
@@ -2021,7 +2021,7 @@ module Crystal
                 ivar.location = @token.location
                 args << ivar
 
-                @instance_vars.add @token.value.to_s if @instance_vars
+                @instance_vars.try &.add @token.value.to_s
               else
                 raise "expecting variable or instance variable after out"
               end
@@ -2100,7 +2100,7 @@ module Crystal
             ivar.location = @token.location
             args << ivar
 
-            @instance_vars.add @token.value.to_s if @instance_vars
+            @instance_vars.try &.add @token.value.to_s
           else
             raise "expecting variable or instance variable after out"
           end

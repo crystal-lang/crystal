@@ -741,8 +741,8 @@ module Crystal
     end
 
     def add_subclass_observer(observer)
-      @subclass_observers ||= [] of Call
-      @subclass_observers << observer
+      observers = (@subclass_observers ||= [] of Call)
+      observers << observer
     end
 
     def remove_subclass_observer(observer)
@@ -836,8 +836,8 @@ module Crystal
         end
 
         if a_def.name == "initialize"
-          if @instance_vars_in_initialize
-            @instance_vars_in_initialize = @instance_vars_in_initialize & a_def_instance_vars
+          if ivii = @instance_vars_in_initialize
+            @instance_vars_in_initialize = ivii & a_def_instance_vars
           else
             @instance_vars_in_initialize = a_def_instance_vars
           end

@@ -197,13 +197,7 @@ module Crystal
 
     def visit(node : InstanceVar)
       var = lookup_instance_var node
-
-      filter = build_var_filter var
-      node.bind_to(filter || var)
-      if needs_type_filters?
-        @type_filters = not_nil_filter(node)
-      end
-      node.bind_to var
+      node.bind_to(var)
     end
 
     def visit(node : ClassVar)
@@ -495,7 +489,6 @@ module Crystal
       node.def.bind_to node.def.body
       node.def.vars = meta_vars
 
-      # TODO: pass meta-vars along
       block_visitor = TypeVisitor.new(mod, fun_vars, node.def, meta_vars)
       block_visitor.type_filter_stack = @type_filter_stack
       block_visitor.yield_vars = @yield_vars
@@ -585,20 +578,24 @@ module Crystal
       # are reassigned.
       if node.block || block_arg
         before_vars = {} of String => Var
+        after_vars = {} of String => Var
 
         @vars.each do |name, var|
           before_var = Var.new(name)
           before_var.bind_to(var)
+          before_var.nil_if_read = var.nil_if_read
           before_vars[name] = before_var
 
           after_var = Var.new(name)
           after_var.bind_to(var)
+          after_var.nil_if_read = var.nil_if_read
+          after_vars[name] = after_var
           @vars[name] = after_var
         end
 
         if block = node.block
           block.before_vars = before_vars
-          block.after_vars = @vars
+          block.after_vars = after_vars
         else
           node.before_vars = before_vars
         end
@@ -853,8 +850,20 @@ module Crystal
       cond_vars = @vars
 
       @type_filters = nil
-      @vars = then_vars = cond_vars.dup
+      @vars = cond_vars.dup
       @unreachable = false
+
+      # Declare variables in "then" with filtered types, so
+      # merging them gives the correct types.
+      cond_type_filters.try &.each do |name, filter|
+        existing_var = @vars[name]
+        type_filtered_node = TypeFilteredNode.new(filter)
+        type_filtered_node.bind_to(existing_var)
+        filtered_var = Var.new(name)
+        filtered_var.bind_to(type_filtered_node)
+        filtered_var.nil_if_read = existing_var.nil_if_read
+        @vars[name] = filtered_var
+      end
 
       if node.then.nop?
         node.then.accept self
@@ -864,12 +873,25 @@ module Crystal
         end
       end
 
-      then_unreachable = @unreachable
-
+      then_vars = @vars
       then_type_filters = @type_filters
       @type_filters = nil
-      @vars = else_vars = cond_vars.dup
+      then_unreachable = @unreachable
+
+      @vars = cond_vars.dup
       @unreachable = false
+
+      # Declare variables in "else" with filtered types, so
+      # merging them gives the correct types.
+      cond_type_filters.try &.each do |name, filter|
+        existing_var = @vars[name]
+        type_filtered_node = TypeFilteredNode.new(NotFilter.new(filter))
+        type_filtered_node.bind_to(existing_var)
+        filtered_var = Var.new(name)
+        filtered_var.bind_to(type_filtered_node)
+        filtered_var.nil_if_read = existing_var.nil_if_read
+        @vars[name] = filtered_var
+      end
 
       if node.else.nop?
         node.else.accept self
@@ -883,12 +905,12 @@ module Crystal
         end
       end
 
-      else_unreachable = @unreachable
-
-      merge_if_vars cond_vars, then_vars, else_vars, then_unreachable, else_unreachable
-
+      else_vars = @vars
       else_type_filters = @type_filters
       @type_filters = nil
+      else_unreachable = @unreachable
+
+      merge_if_vars node, cond_vars, then_vars, else_vars, then_unreachable, else_unreachable
 
       if needs_type_filters?
         case node.binary
@@ -918,7 +940,7 @@ module Crystal
       false
     end
 
-    def merge_if_vars(cond_vars, then_vars, else_vars, then_unreachable, else_unreachable)
+    def merge_if_vars(node, cond_vars, then_vars, else_vars, then_unreachable, else_unreachable)
       all_vars_names = Set(String).new
       then_vars.each_key do |name|
         all_vars_names << name
@@ -936,6 +958,7 @@ module Crystal
         next if then_var.same?(else_var)
 
         if_var = Var.new(name)
+        if_var.nil_if_read = then_var.try(&.nil_if_read) || else_var.try(&.nil_if_read)
 
         if then_var && else_var
           if_var.bind_to then_var unless then_unreachable
@@ -1005,12 +1028,14 @@ module Crystal
         if after_cond_var && !after_cond_var.same?(before_cond_var)
           after_while_var = Var.new(name)
           after_while_var.bind_to(after_cond_var)
+          after_while_var.nil_if_read = after_cond_var.nil_if_read
           after_while_vars[name] = after_while_var
         elsif before_cond_var
           before_cond_var.bind_to(while_var)
           after_while_var = Var.new(name)
           after_while_var.bind_to(before_cond_var)
           after_while_var.bind_to(while_var)
+          after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
           after_while_vars[name] = after_while_var
         else
           nilable_var = Var.new(name)
