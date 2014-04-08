@@ -159,4 +159,29 @@ describe "Code gen: ssa" do
       b
       )).to_i.should eq(3)
   end
+
+  it "codegens ssa bug (1)" do
+    run(%(
+      struct Nil
+        def to_i
+          0
+        end
+      end
+
+      index = nil
+      if index
+        a = index
+        1
+      else
+        if 1 == 1
+          index = 1
+        else
+          1
+        end
+        a = index
+        1
+      end
+      a.to_i
+      )).to_i.should eq(1)
+  end
 end

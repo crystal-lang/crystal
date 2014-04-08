@@ -552,4 +552,46 @@ describe "Type inference: ssa" do
       d
       ") { |mod| union_of(mod.nil, mod.int32) }
   end
+
+  it "types re-assign inside if (bug)" do
+    assert_type("
+      struct Nil
+        def to_i
+          0
+        end
+      end
+
+      index = nil
+      if index
+        a = index
+      else
+        if 1 == 1
+          index = 1
+        end
+        a = index
+      end
+      a
+      ") { |mod| union_of(mod.nil, mod.int32) }
+  end
+
+  it "types re-assign inside while (bug)" do
+    assert_type("
+      struct Nil
+        def to_i
+          0
+        end
+      end
+
+      index = nil
+      if index
+        a = index
+      else
+        while 1 == 2
+          index = 1
+        end
+        a = index
+      end
+      a
+      ") { |mod| union_of(mod.nil, mod.int32) }
+  end
 end

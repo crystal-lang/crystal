@@ -951,6 +951,8 @@ module Crystal
         all_vars_names << name
       end
 
+      type_filters = @type_filter_stack.try &.last
+
       all_vars_names.each do |name|
         cond_var = cond_vars[name]?
         then_var = then_vars[name]?
@@ -984,6 +986,7 @@ module Crystal
         end
 
         @vars[name] = if_var
+        type_filters.try &.delete(name)
       end
     end
 
@@ -1023,6 +1026,8 @@ module Crystal
     def merge_while_vars(before_cond_vars, after_cond_vars, while_vars, all_break_vars)
       after_while_vars = {} of String => Var
 
+      type_filters = @type_filter_stack.try &.last
+
       while_vars.each do |name, while_var|
         before_cond_var = before_cond_vars[name]?
         after_cond_var = after_cond_vars[name]?
@@ -1032,6 +1037,7 @@ module Crystal
           after_while_var.bind_to(after_cond_var)
           after_while_var.nil_if_read = after_cond_var.nil_if_read
           after_while_vars[name] = after_while_var
+          type_filters.try &.delete(name)
         elsif before_cond_var
           before_cond_var.bind_to(while_var)
           after_while_var = Var.new(name)
@@ -1039,12 +1045,14 @@ module Crystal
           after_while_var.bind_to(while_var)
           after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
           after_while_vars[name] = after_while_var
+          type_filters.try &.delete(name)
         else
           nilable_var = Var.new(name)
           nilable_var.bind_to(while_var)
           nilable_var.bind_to(@mod.nil_var)
           nilable_var.nil_if_read = true
           after_while_vars[name] = nilable_var
+          type_filters.try &.delete(name)
         end
       end
 
