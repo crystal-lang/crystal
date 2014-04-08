@@ -295,6 +295,7 @@ module Crystal
     property :context
     property :closured
     property :nil_if_read
+    property :filter
 
     def initialize(@name, @type = nil)
     end

@@ -132,8 +132,7 @@ module Crystal
       var = @vars[node.name]?
       if var
         # check_closured var
-        filter = build_var_filter var
-        node.bind_to(filter || var)
+        node.bind_to(var)
 
         if var.nil_if_read
           meta_var = @meta_vars[node.name]
@@ -862,14 +861,13 @@ module Crystal
 
       # Declare variables in "then" with filtered types, so
       # merging them gives the correct types.
-      unless node.cond.is_a?(If)
-        cond_type_filters.try &.each do |name, filter|
-          existing_var = @vars[name]
-          filtered_var = MetaVar.new(name)
-          filtered_var.bind_to(existing_var.filtered_by(filter))
-          filtered_var.nil_if_read = existing_var.nil_if_read
-          @vars[name] = filtered_var
-        end
+      cond_type_filters.try &.each do |name, filter|
+        existing_var = @vars[name]
+        filtered_var = MetaVar.new(name)
+        filtered_var.filter = filter
+        filtered_var.bind_to(existing_var.filtered_by(filter))
+        filtered_var.nil_if_read = existing_var.nil_if_read
+        @vars[name] = filtered_var
       end
 
       if node.then.nop?
@@ -893,8 +891,10 @@ module Crystal
       unless node.cond.is_a?(If)
         cond_type_filters.try &.each do |name, filter|
           existing_var = @vars[name]
+          not_filter = filter.not
           filtered_var = MetaVar.new(name)
-          filtered_var.bind_to(existing_var.filtered_by(filter.not))
+          filtered_var.filter = not_filter
+          filtered_var.bind_to(existing_var.filtered_by(not_filter))
           filtered_var.nil_if_read = existing_var.nil_if_read
           @vars[name] = filtered_var
         end
@@ -1007,10 +1007,21 @@ module Crystal
         node.cond.accept self
       end
 
+      cond_type_filters = @type_filters
+
       after_cond_vars = @vars.dup
       @while_vars = after_cond_vars
 
-      cond_type_filters = @type_filters
+      # Declare vars inside while with correct filters
+      cond_type_filters.try &.each do |name, filter|
+        existing_var = @vars[name]
+        filtered_var = MetaVar.new(name)
+        filtered_var.filter = filter
+        filtered_var.bind_to(existing_var.filtered_by(filter))
+        filtered_var.nil_if_read = existing_var.nil_if_read
+        @vars[name] = filtered_var
+      end
+
       @type_filters = nil
       @block, old_block = nil, @block
 
@@ -1516,26 +1527,6 @@ module Crystal
 
     def bind_meta_var(var)
       raise "Bug: trying to bind var or instance var but got #{var}"
-    end
-
-    def build_var_filter(var)
-      type_filter_stack = @type_filter_stack
-
-      if type_filter_stack
-        filters = nil
-        type_filter_stack.try &.each do |hash|
-          if hash && (filter = hash[var.name]?)
-            filters ||= [] of TypeFilter
-            filters.push filter
-          end
-        end
-
-        if filters
-          return var.filtered_by(TypeFilter.and(filters))
-        end
-      end
-
-      nil
     end
 
     def and_type_filters(filters1, filters2)
