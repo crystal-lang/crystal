@@ -740,16 +740,16 @@ module Crystal
         typed_def.bind_to body
       end
 
-      args = {} of String => Var
+      args = {} of String => MetaVar
 
       if self_type.is_a?(Type)
-        args["self"] = Var.new("self", self_type)
+        args["self"] = MetaVar.new("self", self_type)
       end
 
       0.upto(self.args.length - 1) do |index|
         arg = typed_def.args[index]
         type = arg_types[args_start_index + index]
-        var = Var.new(arg.name, type)
+        var = MetaVar.new(arg.name, type)
         var.location = arg.location
         var.bind_to(var)
         args[arg.name] = var
@@ -757,7 +757,7 @@ module Crystal
       end
 
       if untyped_def.uses_block_arg
-        var = Var.new(untyped_def.block_arg.not_nil!.name)
+        var = MetaVar.new(untyped_def.block_arg.not_nil!.name)
         var.type = fun_literal.not_nil!.type
         args[var.name] = var
       end

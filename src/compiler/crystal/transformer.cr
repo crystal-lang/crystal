@@ -390,6 +390,10 @@ module Crystal
       node
     end
 
+    def transform(node : MetaVar)
+      node
+    end
+
     def transform(node : InstanceVar)
       node
     end

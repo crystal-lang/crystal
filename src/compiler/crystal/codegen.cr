@@ -702,8 +702,8 @@ module Crystal
       n0 = NumberLiteral.new(0, :i32)
       n31 = NumberLiteral.new(31, :i32)
 
-      vars = {} of String => Var
-      vars["hash"] = hash_var
+      vars = {} of String => MetaVar
+      vars["hash"] = MetaVar.new(hash_var.name)
 
       exps = [] of ASTNode
       exps << Assign.new(hash_var, n0)
@@ -713,7 +713,7 @@ module Crystal
         ivar_var = Var.new(ivar_name, ivar.type)
 
         context.vars[ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
-        vars[ivar_name] = ivar_var
+        vars[ivar_name] = MetaVar.new(ivar_var.name)
 
         mul = Call.new(n31, "*", [hash_var] of ASTNode)
         ivar_hash = Call.new(ivar_var, "hash")
@@ -743,7 +743,7 @@ module Crystal
       # true
       # hash
 
-      vars = {} of String => Var
+      vars = {} of String => MetaVar
 
       exps = [] of ASTNode
 
@@ -758,8 +758,8 @@ module Crystal
         context.vars[self_ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
         context.vars[other_ivar_name] = LLVMVar.new(aggregate_index(other, i), ivar.type)
 
-        vars[self_ivar_name] = self_ivar
-        vars[other_ivar_name] = other_ivar
+        vars[self_ivar_name] = MetaVar.new(self_ivar.name)
+        vars[other_ivar_name] = MetaVar.new(other_ivar.name)
 
         cmp = Call.new(self_ivar, "!=", [other_ivar] of ASTNode)
         exps << If.new(cmp, Return.new([BoolLiteral.new(false)] of ASTNode))
@@ -781,7 +781,7 @@ module Crystal
       # Generate
       # "ClassName(#{ivar_name}=#{ivar_value}, ...)"
 
-      vars = {} of String => Var
+      vars = {} of String => MetaVar
 
       exps = [] of ASTNode
       exps << StringLiteral.new("#{type}(")
@@ -791,7 +791,7 @@ module Crystal
         ivar_var = Var.new(ivar_name, ivar.type)
 
         context.vars[ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
-        vars[ivar_name] = ivar_var
+        vars[ivar_name] = MetaVar.new(ivar_var.name)
 
         exps << StringLiteral.new(i == 0 ? "#{ivar.name}=" : ", #{ivar.name}=")
         exps << ivar_var

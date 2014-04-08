@@ -402,6 +402,10 @@ module Crystal
       @str << decorate_var(node, node.name)
     end
 
+    def visit(node : MetaVar)
+      @str << node.name
+    end
+
     def visit(node : FunLiteral)
       @str << "->"
       if node.def.args.length > 0

@@ -290,11 +290,25 @@ module Crystal
     end
   end
 
-  class Var
+  class MetaVar < ASTNode
+    property :name
     property :context
     property :closured
     property :nil_if_read
 
+    def initialize(@name, @type = nil)
+    end
+
+    def ==(other : self)
+      name == other.name
+    end
+
+    def clone_without_location
+      self
+    end
+  end
+
+  class Var
     def out?
       out
     end

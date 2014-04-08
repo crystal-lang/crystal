@@ -31,7 +31,7 @@ module Crystal
     property yield_vars
     property type_filter_stack
 
-    def initialize(@mod, vars = {} of String => Var, @typed_def = nil, meta_vars = nil)
+    def initialize(@mod, vars = {} of String => MetaVar : Hash(String, MetaVar), @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
       @while_stack = [] of While
       typed_def = @typed_def
@@ -52,12 +52,12 @@ module Crystal
     def initialize_meta_vars(mod, vars, typed_def, meta_vars)
       unless meta_vars
         if typed_def
-          meta_vars = typed_def.vars = {} of String => Var
+          meta_vars = typed_def.vars = {} of String => MetaVar
         else
           meta_vars = @mod.vars
         end
         vars.each do |name, var|
-          meta_var = Var.new(name)
+          meta_var = MetaVar.new(name)
           meta_var.bind_to(var)
           meta_vars[name] = meta_var
         end
@@ -124,8 +124,8 @@ module Crystal
       # We declare out variables
       # TODO: check that the out variable didn't exist before
       if node.out
-        @meta_vars[node.name] = Var.new(node.name)
-        @vars[node.name] = Var.new(node.name)
+        @meta_vars[node.name] = MetaVar.new(node.name)
+        @vars[node.name] = MetaVar.new(node.name)
         return
       end
 
@@ -156,12 +156,13 @@ module Crystal
         node.declared_type.accept self
         node.type = node.declared_type.type.instance_type
         var.bind_to node
-        var.context = current_context
 
-        @vars[var.name] = var
+        meta_var = MetaVar.new(var.name)
+        meta_var.bind_to(var)
+        meta_var.context = current_context
 
-        # TODO: check if we need a second var here
-        @meta_vars[var.name] = var
+        @vars[var.name] = meta_var
+        @meta_vars[var.name] = meta_var
       when InstanceVar
         type = scope? || current_type
         if @untyped_def
@@ -276,13 +277,16 @@ module Crystal
       target.bind_to value
       node.bind_to value
 
-      meta_var = (@meta_vars[var_name] ||= Var.new(var_name))
+      meta_var = (@meta_vars[var_name] ||= MetaVar.new(var_name))
       meta_var.bind_to value
 
-      @vars[var_name] = target
+      simple_var = MetaVar.new(var_name)
+      simple_var.bind_to(target)
+
+      @vars[var_name] = simple_var
 
       if exception_handler_vars = @exception_handler_vars
-        var = (exception_handler_vars[var_name] ||= Var.new(var_name))
+        var = (exception_handler_vars[var_name] ||= MetaVar.new(var_name))
         var.bind_to(value)
       end
 
@@ -422,15 +426,16 @@ module Crystal
       return if node.visited
       node.visited = true
 
-      before_block_vars = node.before_vars.try(&.dup) || {} of String => Var
+      before_block_vars = node.before_vars.try(&.dup) || {} of String => MetaVar
 
       meta_vars = @meta_vars.dup
       node.args.each do |arg|
-        arg.context = node
-        before_block_vars[arg.name] = arg
-
-        meta_var = Var.new(arg.name)
+        meta_var = MetaVar.new(arg.name)
+        meta_var.context = node
         meta_var.bind_to(arg)
+
+        # TODO: check if we need a second meta-var
+        before_block_vars[arg.name] = meta_var
         meta_vars[arg.name] = meta_var
       end
 
@@ -468,8 +473,8 @@ module Crystal
 
     def visit(node : FunLiteral)
       # fun_vars = @vars.dup
-      fun_vars = {} of String => Var
-      meta_vars = {} of String => Var
+      fun_vars = {} of String => MetaVar
+      meta_vars = {} of String => MetaVar
       # meta_vars = @meta_vars.dup
 
       node.def.args.each do |arg|
@@ -479,10 +484,10 @@ module Crystal
           restriction.accept self
           arg.type = restriction.type.instance_type
         end
-        fun_var = Var.new(arg.name, arg.type)
+        fun_var = MetaVar.new(arg.name, arg.type)
         fun_vars[arg.name] = fun_var
 
-        meta_var = Var.new(arg.name)
+        meta_var = MetaVar.new(arg.name)
         meta_var.bind_to fun_var
         meta_vars[arg.name] = meta_var
       end
@@ -579,16 +584,16 @@ module Crystal
       # the block we will bind more variables to these ones if variables
       # are reassigned.
       if node.block || block_arg
-        before_vars = {} of String => Var
-        after_vars = {} of String => Var
+        before_vars = {} of String => MetaVar
+        after_vars = {} of String => MetaVar
 
         @vars.each do |name, var|
-          before_var = Var.new(name)
+          before_var = MetaVar.new(name)
           before_var.bind_to(var)
           before_var.nil_if_read = var.nil_if_read
           before_vars[name] = before_var
 
-          after_var = Var.new(name)
+          after_var = MetaVar.new(name)
           after_var.bind_to(var)
           after_var.nil_if_read = var.nil_if_read
           after_vars[name] = after_var
@@ -816,7 +821,7 @@ module Crystal
       when Const
         unless type.value.type?
           old_types, old_scope, old_vars, old_meta_vars, old_type_lookup = @types, @scope, @vars, @meta_vars, @type_lookup
-          @types, @scope, @vars, @meta_vars, @type_lookup = type.scope_types, type.scope, ({} of String => Var), ({} of String => Var), nil
+          @types, @scope, @vars, @meta_vars, @type_lookup = type.scope_types, type.scope, ({} of String => MetaVar), ({} of String => MetaVar), nil
           type.value.accept self
           type.vars = @meta_vars
           @types, @scope, @vars, @meta_vars, @type_lookup = old_types, old_scope, old_vars, old_meta_vars, old_type_lookup
@@ -860,7 +865,7 @@ module Crystal
       unless node.cond.is_a?(If)
         cond_type_filters.try &.each do |name, filter|
           existing_var = @vars[name]
-          filtered_var = Var.new(name)
+          filtered_var = MetaVar.new(name)
           filtered_var.bind_to(existing_var.filtered_by(filter))
           filtered_var.nil_if_read = existing_var.nil_if_read
           @vars[name] = filtered_var
@@ -888,7 +893,7 @@ module Crystal
       unless node.cond.is_a?(If)
         cond_type_filters.try &.each do |name, filter|
           existing_var = @vars[name]
-          filtered_var = Var.new(name)
+          filtered_var = MetaVar.new(name)
           filtered_var.bind_to(existing_var.filtered_by(filter.not))
           filtered_var.nil_if_read = existing_var.nil_if_read
           @vars[name] = filtered_var
@@ -961,7 +966,7 @@ module Crystal
         # Check wether the var didn't change at all
         next if then_var.same?(else_var)
 
-        if_var = Var.new(name)
+        if_var = MetaVar.new(name)
         if_var.nil_if_read = then_var.try(&.nil_if_read) || else_var.try(&.nil_if_read)
 
         if then_var && else_var
@@ -1024,7 +1029,7 @@ module Crystal
     end
 
     def merge_while_vars(before_cond_vars, after_cond_vars, while_vars, all_break_vars)
-      after_while_vars = {} of String => Var
+      after_while_vars = {} of String => MetaVar
 
       type_filters = @type_filter_stack.try &.last
 
@@ -1033,21 +1038,21 @@ module Crystal
         after_cond_var = after_cond_vars[name]?
 
         if after_cond_var && !after_cond_var.same?(before_cond_var)
-          after_while_var = Var.new(name)
+          after_while_var = MetaVar.new(name)
           after_while_var.bind_to(after_cond_var)
           after_while_var.nil_if_read = after_cond_var.nil_if_read
           after_while_vars[name] = after_while_var
           type_filters.try &.delete(name)
         elsif before_cond_var
           before_cond_var.bind_to(while_var)
-          after_while_var = Var.new(name)
+          after_while_var = MetaVar.new(name)
           after_while_var.bind_to(before_cond_var)
           after_while_var.bind_to(while_var)
           after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
           after_while_vars[name] = after_while_var
           type_filters.try &.delete(name)
         else
-          nilable_var = Var.new(name)
+          nilable_var = MetaVar.new(name)
           nilable_var.bind_to(while_var)
           nilable_var.bind_to(@mod.nil_var)
           nilable_var.nil_if_read = true
@@ -1086,7 +1091,7 @@ module Crystal
       if container.is_a?(While)
         container.has_breaks = true
 
-        break_vars = (container.break_vars = container.break_vars || [] of Hash(String, Var))
+        break_vars = (container.break_vars = container.break_vars || [] of Hash(String, MetaVar))
         break_vars.push @vars.dup
       else
         container.bind_to(node.exps.length > 0 ? node.exps[0] : mod.nil_var)
@@ -1464,7 +1469,7 @@ module Crystal
 
     def lookup_var(name)
       var = @vars[name] ||= begin
-        var = Var.new(name)
+        var = MetaVar.new(name)
         var.context = current_context
         var
       end
