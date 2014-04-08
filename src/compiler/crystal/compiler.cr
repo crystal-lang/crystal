@@ -113,8 +113,8 @@ module Crystal
     end
 
     def compile
-      if @command
-        source = @command
+      if command = @command
+        source = command
         filename = "-"
         @run = true
       else
@@ -133,9 +133,8 @@ module Crystal
         source = File.read filename
       end
 
-      if @output_filename
-        output_filename = @output_filename
-      else
+      output_filename = @output_filename
+      unless output_filename
         if @run
           output_filename = "#{ENV["TMPDIR"] || "/tmp"}/.crystal-run.XXXXXX"
           tmp_fd = C.mkstemp output_filename.cstr
@@ -148,7 +147,9 @@ module Crystal
 
       begin
         program = Program.new
-        program.flags = @cross_compile if @cross_compile
+        if cross_compile = @cross_compile
+          program.flags = cross_compile
+        end
 
         unless File.exists?(@clang)
           if program.has_flag?("darwin")
