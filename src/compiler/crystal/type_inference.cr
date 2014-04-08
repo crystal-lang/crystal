@@ -428,12 +428,12 @@ module Crystal
       return if node.visited
       node.visited = true
 
-      block_vars = node.vars.try(&.dup) || {} of String => Var
+      before_block_vars = node.before_vars.try(&.dup) || {} of String => Var
 
       meta_vars = @meta_vars.dup
       node.args.each do |arg|
         arg.context = node
-        block_vars[arg.name] = arg
+        before_block_vars[arg.name] = arg
 
         meta_var = Var.new(arg.name)
         meta_var.bind_to(arg)
@@ -441,7 +441,7 @@ module Crystal
       end
 
       pushing_type_filters do
-        block_visitor = TypeVisitor.new(mod, block_vars, @typed_def, meta_vars)
+        block_visitor = TypeVisitor.new(mod, before_block_vars, @typed_def, meta_vars)
         block_visitor.type_filter_stack = @type_filter_stack
         block_visitor.yield_vars = @yield_vars
         block_visitor.free_vars = @free_vars
@@ -453,19 +453,23 @@ module Crystal
         node.body.accept block_visitor
 
         # Check re-assigned variables and bind them.
-        # call_vars can be nil in the case of a block argument
-        if call_vars = node.vars
-          block_visitor.vars.each do |name, block_var|
-            call_vars[name]?.try &.bind_to(block_var)
-          end
-        end
+        bind_vars block_visitor.vars, node.before_vars
+        bind_vars block_visitor.vars, node.after_vars
       end
 
-      node.vars = meta_vars
+      node.before_vars = meta_vars
 
       node.bind_to node.body
 
       false
+    end
+
+    def bind_vars(from_vars, to_vars)
+      if to_vars
+        from_vars.each do |name, block_var|
+          to_vars[name]?.try &.bind_to(block_var)
+        end
+      end
     end
 
     def visit(node : FunLiteral)
@@ -580,19 +584,23 @@ module Crystal
       # the block we will bind more variables to these ones if variables
       # are reassigned.
       if node.block || block_arg
-        call_vars = {} of String => Var
+        before_vars = {} of String => Var
+
         @vars.each do |name, var|
-          call_var = Var.new(name)
-          call_var.bind_to(var)
-          call_vars[name] = call_var
-          @vars[name] = call_var
+          before_var = Var.new(name)
+          before_var.bind_to(var)
+          before_vars[name] = before_var
+
+          after_var = Var.new(name)
+          after_var.bind_to(var)
+          @vars[name] = after_var
         end
 
         if block = node.block
-          block.vars = call_vars
+          block.before_vars = before_vars
+          block.after_vars = @vars
         else
-          # TODO: think how no to store vars in call in this case
-          node.vars = call_vars
+          node.before_vars = before_vars
         end
       end
 
@@ -999,6 +1007,7 @@ module Crystal
           after_while_var.bind_to(after_cond_var)
           after_while_vars[name] = after_while_var
         elsif before_cond_var
+          before_cond_var.bind_to(while_var)
           after_while_var = Var.new(name)
           after_while_var.bind_to(before_cond_var)
           after_while_var.bind_to(while_var)
@@ -1046,6 +1055,7 @@ module Crystal
         break_vars.push @vars.dup
       else
         container.bind_to(node.exps.length > 0 ? node.exps[0] : mod.nil_var)
+        bind_vars @vars, block.not_nil!.after_vars
       end
 
       @unreachable = true
@@ -1058,17 +1068,16 @@ module Crystal
         else
           block.bind_to node.exps.first
         end
+
+        bind_vars @vars, block.before_vars
+        bind_vars @vars, block.after_vars
       elsif @while_stack.empty?
         node.raise "Invalid next"
+      else
+        bind_vars @vars, @while_vars
       end
 
       @unreachable = true
-
-      if while_vars = @while_vars
-        @vars.each do |name, var|
-          while_vars[name]?.try &.bind_to(var)
-        end
-      end
     end
 
     def visit(node : Primitive)

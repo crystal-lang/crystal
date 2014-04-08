@@ -1435,7 +1435,7 @@ module Crystal
           context.vars = new_vars
 
           # Declare block args
-          alloca_vars block.vars
+          alloca_vars block.before_vars
 
           context.break_phi = old.return_phi
           context.next_phi = phi

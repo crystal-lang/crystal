@@ -332,7 +332,7 @@ module Crystal
   end
 
   class Call
-    property :vars
+    property :before_vars
   end
 
   class Block
@@ -340,7 +340,8 @@ module Crystal
 
     property :visited
     property :scope
-    property :vars
+    property :before_vars
+    property :after_vars
 
     def break
       @break ||= Var.new("%break")

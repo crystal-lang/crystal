@@ -111,6 +111,30 @@ describe "Type inference: ssa" do
       )) { union_of(int32, char) }
   end
 
+  it "types a var that is re-assigned in a while and used in condiiton" do
+    assert_type(%(
+      a = 1
+      while b = a
+        a = 'a'
+      end
+      b
+      )) { union_of(int32, char) }
+  end
+
+  it "types a var that is re-assigned in a while in next and used in condiiton" do
+    assert_type(%(
+      a = 1
+      while b = a
+        if 1 == 1
+          a = 'a'
+          next
+        end
+        a = 1
+      end
+      b
+      )) { union_of(int32, char) }
+  end
+
   it "types a var that is declared in a while" do
     assert_type(%(
       while 1 == 2
@@ -403,6 +427,70 @@ describe "Type inference: ssa" do
       a = 1
       b = 1
       while 1 == 2
+        b = a
+        if 1 == 1
+          a = 'a'
+          next
+        end
+        a = 1
+      end
+
+      b
+      ") { union_of(int32, char) }
+  end
+
+  it "types block with break" do
+    assert_type("
+      def foo
+        yield
+      end
+
+      a = 1
+
+      foo do
+        if 1 == 1
+          a = 'a'
+          break
+        end
+        a = 1
+      end
+
+      a
+      ") { union_of(int32, char) }
+  end
+
+  it "types block with break doesn't infect initial vars" do
+    assert_type("
+      def foo
+        yield
+      end
+
+      a = 1
+      b = 1
+
+      foo do
+        b = a
+        if 1 == 1
+          a = 'a'
+          break
+        end
+        a = 1
+      end
+
+      b
+      ") { int32 }
+  end
+
+  it "types block with next" do
+    assert_type("
+      def foo
+        yield
+      end
+
+      a = 1
+      b = 1
+
+      foo do
         b = a
         if 1 == 1
           a = 'a'
