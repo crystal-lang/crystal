@@ -145,4 +145,18 @@ describe "Code gen: ssa" do
       a.to_i
       )).to_i.should eq(1)
   end
+
+  it "codegens ssa bug with if/else on var" do
+    run(%(
+      a = 1 || nil
+      if a && false
+        b = 2
+      elsif a
+        b = 3
+      else
+        b = 4
+      end
+      b
+      )).to_i.should eq(3)
+  end
 end

@@ -539,4 +539,17 @@ describe "Type inference: ssa" do
       a
       ") { int32 }
   end
+
+  it "types if/else with var (bug)" do
+    assert_type("
+      a = 1 || nil
+      d = nil
+      if a && 1 == 2
+        b = 2
+      else
+        d = a
+      end
+      d
+      ") { |mod| union_of(mod.nil, mod.int32) }
+  end
 end

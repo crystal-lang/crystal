@@ -857,14 +857,14 @@ module Crystal
 
       # Declare variables in "then" with filtered types, so
       # merging them gives the correct types.
-      cond_type_filters.try &.each do |name, filter|
-        existing_var = @vars[name]
-        type_filtered_node = TypeFilteredNode.new(filter)
-        type_filtered_node.bind_to(existing_var)
-        filtered_var = Var.new(name)
-        filtered_var.bind_to(type_filtered_node)
-        filtered_var.nil_if_read = existing_var.nil_if_read
-        @vars[name] = filtered_var
+      unless node.cond.is_a?(If)
+        cond_type_filters.try &.each do |name, filter|
+          existing_var = @vars[name]
+          filtered_var = Var.new(name)
+          filtered_var.bind_to(existing_var.filtered_by(filter))
+          filtered_var.nil_if_read = existing_var.nil_if_read
+          @vars[name] = filtered_var
+        end
       end
 
       if node.then.nop?
@@ -885,14 +885,14 @@ module Crystal
 
       # Declare variables in "else" with filtered types, so
       # merging them gives the correct types.
-      cond_type_filters.try &.each do |name, filter|
-        existing_var = @vars[name]
-        type_filtered_node = TypeFilteredNode.new(NotFilter.new(filter))
-        type_filtered_node.bind_to(existing_var)
-        filtered_var = Var.new(name)
-        filtered_var.bind_to(type_filtered_node)
-        filtered_var.nil_if_read = existing_var.nil_if_read
-        @vars[name] = filtered_var
+      unless node.cond.is_a?(If)
+        cond_type_filters.try &.each do |name, filter|
+          existing_var = @vars[name]
+          filtered_var = Var.new(name)
+          filtered_var.bind_to(existing_var.filtered_by(filter.not))
+          filtered_var.nil_if_read = existing_var.nil_if_read
+          @vars[name] = filtered_var
+        end
       end
 
       if node.else.nop?
@@ -1518,11 +1518,7 @@ module Crystal
         end
 
         if filters
-          final_filter = filters.length == 1 ? filters.first : AndTypeFilter.new(filters)
-
-          filtered_node = TypeFilteredNode.new(final_filter)
-          filtered_node.bind_to var
-          return filtered_node
+          return var.filtered_by(TypeFilter.and(filters))
         end
       end
 
@@ -1537,7 +1533,7 @@ module Crystal
           filter1 = filters1[name]?
           filter2 = filters2[name]?
           if filter1 && filter2
-            new_filters[name] = AndTypeFilter.new([filter1, filter2] of TypeFilter)
+            new_filters[name] = TypeFilter.and(filter1, filter2)
           elsif filter1
             new_filters[name] = filter1
           elsif filter2

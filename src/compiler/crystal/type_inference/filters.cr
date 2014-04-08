@@ -1,13 +1,9 @@
 module Crystal
   class TypeFilteredNode < ASTNode
-    def initialize(@filter)
-    end
-
-    def bind_to(node : ASTNode)
-      @dependencies = [node] of ASTNode
-      @node = node
+    def initialize(@filter, @node)
+      @dependencies = [@node] of ASTNode
       node.add_observer self
-      update(node)
+      update(@node)
     end
 
     def update(from)
@@ -19,7 +15,7 @@ module Crystal
     end
 
     def clone_without_location
-      TypeFilteredNode.new(@filter)
+      TypeFilteredNode.new(@filter, @node)
     end
 
     def to_s
@@ -27,7 +23,34 @@ module Crystal
     end
   end
 
+  class ASTNode
+    def filtered_by(filter)
+      TypeFilteredNode.new(filter, self)
+    end
+  end
+
   abstract class TypeFilter
+    def self.and(filters)
+      set = Set.new(filters)
+      uniq = set.to_a
+      if uniq.length == 1
+        return uniq.first
+      else
+        AndTypeFilter.new(uniq)
+      end
+    end
+
+    def self.and(type_filter1, type_filter2)
+      if type_filter1 == type_filter2
+        return type_filter1
+      else
+        AndTypeFilter.new([type_filter1, type_filter2])
+      end
+    end
+
+    def not
+      NotFilter.new(self)
+    end
   end
 
   class SimpleTypeFilter < TypeFilter
@@ -53,7 +76,7 @@ module Crystal
     getter filters
 
     def initialize(filters)
-      @filters = Set(TypeFilter).new(filters)
+      @filters = filters
     end
 
     def apply(other)
@@ -96,7 +119,7 @@ module Crystal
     end
 
     def to_s
-      "!F(Nil)"
+      "not-nil"
     end
 
     @@instance = NotNilFilter.new
