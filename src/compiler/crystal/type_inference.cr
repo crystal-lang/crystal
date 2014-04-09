@@ -1060,7 +1060,7 @@ module Crystal
         end
       end
 
-      node.bind_to mod.nil_var
+      node.set_type(@mod.nil)
     end
 
     def end_visit(node : Break)

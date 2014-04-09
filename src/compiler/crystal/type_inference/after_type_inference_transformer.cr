@@ -58,7 +58,6 @@ module Crystal
     def transform(node : Expressions)
       exps = [] of ASTNode
 
-      found_no_return = false
       length = node.expressions.length
       node.expressions.each_with_index do |exp, i|
         new_exp = exp.transform(self)
@@ -70,7 +69,6 @@ module Crystal
           end
 
           if new_exp.no_returns?
-            found_no_return = true
             break
           end
         end
