@@ -1437,6 +1437,9 @@ module Crystal
           # Declare block args
           alloca_vars block.before_vars
 
+          # And reset those that are declared inside the block and are nilable.
+          reset_block_vars block
+
           context.break_phi = old.return_phi
           context.next_phi = phi
           context.while_exit_block = nil
@@ -2504,12 +2507,28 @@ module Crystal
             context.vars[name] = LLVMVar.new(ptr, var_type)
 
             # Assign default nil for variables that are bound to the nil variable
-            if var.dependencies.any? &.same?(@mod.nil_var)
+            if bound_to_mod_nil?(var)
               assign ptr, var_type, @mod.nil, llvm_nil
             end
           end
         end
       end
+    end
+
+    def reset_block_vars(block)
+      vars = block.before_vars
+      return unless vars
+
+      vars.each do |name, var|
+        if var.context == block && bound_to_mod_nil?(var)
+          context_var = context.vars[name]
+          assign context_var.pointer, context_var.type, @mod.nil, llvm_nil
+        end
+      end
+    end
+
+    def bound_to_mod_nil?(var)
+      var.dependencies.any? &.same?(@mod.nil_var)
     end
 
     def alloca(type, name = "")

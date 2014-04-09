@@ -41,11 +41,6 @@ module Crystal
       @needs_type_filters = 0
       @in_fun_literal = false
       @unreachable = false
-
-      # TODO: check closure
-      vars.each_value do |var|
-        var.context = current_context unless var.context
-      end
     end
 
     def initialize_meta_vars(mod, vars, typed_def, meta_vars)
@@ -56,13 +51,19 @@ module Crystal
           meta_vars = @mod.vars
         end
         vars.each do |name, var|
-          meta_var = MetaVar.new(name)
+          meta_var = new_meta_var(name)
           meta_var.bind_to(var)
           meta_vars[name] = meta_var
         end
       end
 
       meta_vars
+    end
+
+    def new_meta_var(name)
+      meta_var = MetaVar.new(name)
+      meta_var.context = current_context
+      meta_var
     end
 
     def block=(@block)
@@ -123,8 +124,8 @@ module Crystal
       # We declare out variables
       # TODO: check that the out variable didn't exist before
       if node.out
-        @meta_vars[node.name] = MetaVar.new(node.name)
-        @vars[node.name] = MetaVar.new(node.name)
+        @meta_vars[node.name] = new_meta_var(node.name)
+        @vars[node.name] = new_meta_var(node.name)
         return
       end
 
@@ -155,9 +156,8 @@ module Crystal
         node.type = node.declared_type.type.instance_type
         var.bind_to node
 
-        meta_var = MetaVar.new(var.name)
+        meta_var = new_meta_var(var.name)
         meta_var.bind_to(var)
-        meta_var.context = current_context
 
         @vars[var.name] = meta_var
         @meta_vars[var.name] = meta_var
@@ -275,7 +275,7 @@ module Crystal
       target.bind_to value
       node.bind_to value
 
-      meta_var = (@meta_vars[var_name] ||= MetaVar.new(var_name))
+      meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
       meta_var.bind_to value
 
       simple_var = MetaVar.new(var_name)
@@ -482,7 +482,7 @@ module Crystal
         fun_var = MetaVar.new(arg.name, arg.type)
         fun_vars[arg.name] = fun_var
 
-        meta_var = MetaVar.new(arg.name)
+        meta_var = new_meta_var(arg.name)
         meta_var.bind_to fun_var
         meta_vars[arg.name] = meta_var
       end
@@ -1331,7 +1331,7 @@ module Crystal
       end
 
       if node_name = node.name
-        var = lookup_var node_name
+        var = @vars[node_name] = new_meta_var(node_name)
 
         if types
           unified_type = @mod.type_merge(types).not_nil!
@@ -1446,16 +1446,6 @@ module Crystal
       false
     end
 
-    def lookup_var(name)
-      var = @vars[name] ||= begin
-        var = MetaVar.new(name)
-        var.context = current_context
-        var
-      end
-      # check_closured var
-      var
-    end
-
     def check_closured(var)
       context = current_context
       if !var.context.same?(context) && !var.closured && !context.is_a?(Block)
@@ -1473,7 +1463,7 @@ module Crystal
     end
 
     def lookup_var_or_instance_var(var : Var)
-      lookup_var(var.name)
+      @vars[var.name]
     end
 
     def lookup_var_or_instance_var(var : InstanceVar)

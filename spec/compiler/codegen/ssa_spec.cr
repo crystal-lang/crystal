@@ -184,4 +184,31 @@ describe "Code gen: ssa" do
       a.to_i
       )).to_i.should eq(1)
   end
+
+  it "codegens ssa bug (2)" do
+    # This shows a bug where a block variable (coconio in this case)
+    # wasn't reset to nil before each block iteration.
+    run(%(
+      struct Nil
+        def to_i
+          0
+        end
+      end
+
+      def foo
+        i = 1
+        while i <= 3
+          yield i
+          i += 1
+        end
+      end
+
+      a = 0
+      foo do |x|
+        coconio = x if x == 1
+        a += coconio.to_i
+      end
+      a
+      )).to_i.should eq(1)
+  end
 end
