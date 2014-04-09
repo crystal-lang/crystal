@@ -246,7 +246,9 @@ module Crystal
               atomic.args.push value
               assign = Call.new(obj, "[]=", atomic.args, nil, nil, false, method_column_number)
               assign.location = location
-              atomic = And.new(atomic_clone, assign)
+              fetch = atomic_clone
+              fetch.name = "[]?"
+              atomic = And.new(fetch, assign)
             when :"||="
               atomic.args.push value
               assign = Call.new(obj, "[]=", atomic.args, nil, nil, false, method_column_number)
@@ -449,37 +451,61 @@ module Crystal
             name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
             next_token
 
+            space_consumed = false
             if @token.type == :SPACE
               next_token
-              case @token.type
-              when :"="
-                # Rewrite 'f.x = arg' as f.x=(arg)
-                next_token_skip_space_or_newline
-                args = [parse_op_assign] of ASTNode
+              space_consumed = true
+            end
 
-                atomic = Call.new(atomic, "#{name}=", args, nil, nil, false, name_column_number)
-                atomic.location = location
-                next
-              when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
-                # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
-                method = @token.type.to_s[0, @token.type.to_s.length - 1]
-                next_token_skip_space
-                value = parse_expression
-                atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic, name, [] of ASTNode, nil, nil, false, name_column_number), method, [value] of ASTNode, nil, nil, false, name_column_number)] of ASTNode, nil, nil, false, name_column_number)
-                atomic.location = location
-                next
-              else
-                call_args = parse_call_args_space_consumed
-                if call_args
-                  args = call_args.args
-                  block = call_args.block
-                  block_arg = call_args.block_arg
-                else
-                  args = block = block_arg = nil
-                end
-              end
+            case @token.type
+            when :"="
+              # Rewrite 'f.x = arg' as f.x=(arg)
+              next_token_skip_space_or_newline
+              args = [parse_op_assign] of ASTNode
+
+              atomic = Call.new(atomic, "#{name}=", args, nil, nil, false, name_column_number)
+              atomic.location = location
+              next
+            when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
+              # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
+              method = @token.type.to_s[0, @token.type.to_s.length - 1]
+              next_token_skip_space
+              value = parse_expression
+              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, [] of ASTNode, nil, nil, false, name_column_number), method, [value] of ASTNode, nil, nil, false, name_column_number)] of ASTNode, nil, nil, false, name_column_number)
+              atomic.location = location
+              next
+            when :"||="
+              # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
+
+              next_token_skip_space
+              value = parse_expression
+
+              left = Call.new(atomic, name)
+              left.location = location
+
+              right = Call.new(atomic.clone, "#{name}=", [value] of ASTNode)
+              right.location = location
+
+              atomic = Or.new(left, right)
+              atomic.location = location
+              next
+            when :"&&="
+              # Rewrite 'f.x &&= value' as 'f.x && f.x=(value)'
+
+              next_token_skip_space
+              value = parse_expression
+
+              left = Call.new(atomic, name)
+              left.location = location
+
+              right = Call.new(atomic.clone, "#{name}=", [value] of ASTNode)
+              right.location = location
+
+              atomic = And.new(left, right)
+              atomic.location = location
+              next
             else
-              call_args = parse_call_args
+              call_args = space_consumed ? parse_call_args_space_consumed : parse_call_args
               if call_args
                 args = call_args.args
                 block = call_args.block

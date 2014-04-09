@@ -313,7 +313,7 @@ describe "Parser" do
   it_parses "a = 1; a &&= 1", [Assign.new("a".var, 1.int32), And.new("a".var, Assign.new("a".var, 1.int32))]
   it_parses "a = 1; a ||= 1", [Assign.new("a".var, 1.int32), Or.new("a".var, Assign.new("a".var, 1.int32))]
 
-  it_parses "a = 1; a[2] &&= 3", [Assign.new("a".var, 1.int32), And.new(Call.new("a".var, "[]", [2.int32] of ASTNode), Call.new("a".var, "[]=", [2.int32, 3.int32] of ASTNode))]
+  it_parses "a = 1; a[2] &&= 3", [Assign.new("a".var, 1.int32), And.new(Call.new("a".var, "[]?", [2.int32] of ASTNode), Call.new("a".var, "[]=", [2.int32, 3.int32] of ASTNode))]
   it_parses "a = 1; a[2] ||= 3", [Assign.new("a".var, 1.int32), Or.new(Call.new("a".var, "[]?", [2.int32] of ASTNode), Call.new("a".var, "[]=", [2.int32, 3.int32] of ASTNode))]
 
   it_parses "if foo; 1; end", If.new("foo".call, 1.int32)
@@ -645,6 +645,9 @@ describe "Parser" do
   it_parses "lib C; ifdef foo; $foo : Int32; else; $foo : Float64; end; end", LibDef.new("C", nil, IfDef.new("foo".var, ExternalVar.new("foo", "Int32".path), ExternalVar.new("foo", "Float64".path)))
 
   it_parses "foo.bar(1).baz", Call.new(Call.new("foo".call, "bar", [1.int32] of ASTNode), "baz")
+
+  it_parses "b.c ||= 1", Or.new(Call.new("b".call, "c"), Call.new("b".call, "c=", [1.int32] of ASTNode))
+  it_parses "b.c &&= 1", And.new(Call.new("b".call, "c"), Call.new("b".call, "c=", [1.int32] of ASTNode))
 
   it "parses class with attributes" do
     node = Parser.parse("
