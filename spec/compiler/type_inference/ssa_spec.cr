@@ -271,6 +271,16 @@ describe "Type inference: ssa" do
       )) { union_of [int32, char, string] of Type }
   end
 
+  it "types a var after rescue as being nilable" do
+    assert_type(%(
+      begin
+      rescue
+        a = 1
+      end
+      a
+      )) { |mod| union_of(mod.nil, mod.int32) }
+  end
+
   it "doesn't change type to nilable inside if" do
     assert_type("
       def foo

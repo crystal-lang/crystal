@@ -864,7 +864,6 @@ module Crystal
         filtered_var = MetaVar.new(name)
         filtered_var.filter = filter
         filtered_var.bind_to(existing_var.filtered_by(filter))
-        # filtered_var.nil_if_read = existing_var.nil_if_read
         @vars[name] = filtered_var
       end
 
@@ -891,7 +890,6 @@ module Crystal
           filtered_var = MetaVar.new(name)
           filtered_var.filter = not_filter
           filtered_var.bind_to(existing_var.filtered_by(not_filter))
-          # filtered_var.nil_if_read = existing_var.nil_if_read
           @vars[name] = filtered_var
         end
       end
@@ -1366,6 +1364,8 @@ module Crystal
 
       node.body.accept self
 
+      @exception_handler_vars = nil
+
       if node.rescues || node.else
         # Any variable introduced in the begin block is possibly nil
         # in the rescue/else blocks because we can't know if an exception
@@ -1456,14 +1456,18 @@ module Crystal
       all_rescue_vars.each do |rescue_vars|
         rescue_vars.each do |name, var|
           after_var = (after_vars[name] ||= new_meta_var(name))
-          after_var.nil_if_read = true if var.nil_if_read
+          if var.nil_if_read || !before_vars[name]?
+            after_var.nil_if_read = true
+          end
           after_var.bind_to(var)
         end
       end
 
       before_vars.each do |name, var|
         after_var = (after_vars[name] ||= new_meta_var(name))
-        after_var.nil_if_read = true if var.nil_if_read
+        if var.nil_if_read
+          after_var.nil_if_read = true
+        end
         after_var.bind_to(var)
       end
 
