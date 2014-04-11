@@ -1,7 +1,6 @@
 require "types"
 require "llvm"
 require "dl"
-require "closure_context"
 
 module Crystal
   make_named_tuple MacroCacheKey, def_object_id, node_ids
@@ -11,7 +10,6 @@ module Crystal
     include DefInstanceContainer
     include MatchesLookup
     include ClassVarContainer
-    include ClosureContext
 
     getter symbols
     getter global_vars

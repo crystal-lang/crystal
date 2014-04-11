@@ -462,18 +462,18 @@ describe "Array" do
       a.should_not eq(b)
     end
 
-    # it "sorts by!" do
-    #   a = ["foo", "a", "hello"]
-    #   a.sort_by! ->(x : String) { x.length }
-    #   a.should eq(["a", "foo", "hello"])
-    # end
+    it "sorts by!" do
+      a = ["foo", "a", "hello"]
+      a.sort_by! ->(x : String) { x.length }
+      a.should eq(["a", "foo", "hello"])
+    end
 
-    # it "sorts by" do
-    #   a = ["foo", "a", "hello"]
-    #   b = a.sort_by ->(x : String) { x.length }
-    #   b.should eq(["a", "foo", "hello"])
-    #   a.should_not eq(b)
-    # end
+    it "sorts by" do
+      a = ["foo", "a", "hello"]
+      b = a.sort_by ->(x : String) { x.length }
+      b.should eq(["a", "foo", "hello"])
+      a.should_not eq(b)
+    end
   end
 
   describe "dup" do

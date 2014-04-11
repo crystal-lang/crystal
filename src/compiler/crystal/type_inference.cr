@@ -131,11 +131,12 @@ module Crystal
 
       var = @vars[node.name]?
       if var
-        # check_closured var
         node.bind_to(var)
 
+        meta_var = @meta_vars[node.name]
+        check_closured meta_var
+
         if var.nil_if_read
-          meta_var = @meta_vars[node.name]
           meta_var.bind_to(@mod.nil_var) unless meta_var.dependencies.try &.any? &.same?(@mod.nil_var)
           node.bind_to(@mod.nil_var)
         end
@@ -278,6 +279,7 @@ module Crystal
 
       meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
       meta_var.bind_to value
+      check_closured meta_var
 
       simple_var = MetaVar.new(var_name)
       simple_var.bind_to(target)
@@ -470,10 +472,8 @@ module Crystal
     end
 
     def visit(node : FunLiteral)
-      # fun_vars = @vars.dup
-      fun_vars = MetaVars.new
-      meta_vars = MetaVars.new
-      # meta_vars = @meta_vars.dup
+      fun_vars = @vars.dup
+      meta_vars = @meta_vars.dup
 
       node.def.args.each do |arg|
         # It can happen that the argument has a type already,
@@ -1333,6 +1333,8 @@ module Crystal
 
       if node_name = node.name
         var = @vars[node_name] = new_meta_var(node_name)
+        meta_var = @meta_vars[node_name] = new_meta_var(node_name)
+        meta_var.bind_to(var)
 
         if types
           unified_type = @mod.type_merge(types).not_nil!
@@ -1536,13 +1538,8 @@ module Crystal
 
     def check_closured(var)
       context = current_context
-      if !var.context.same?(context) && !var.closured && !context.is_a?(Block)
+      if !var.closured && !var.context.same?(context) && !context.is_a?(Block)
         var.closured = true
-        if context = var.context
-          (context as ClosureContext).closured_vars << var
-        else
-          var.raise "Bug: missing closure for var #{var.name}"
-        end
       end
     end
 

@@ -411,6 +411,9 @@ module Crystal
       if node.nil_if_read
         @str << " (nil-if-read)"
       end
+      if node.closured
+        @str << " (closured)"
+      end
     end
 
     def visit(node : FunLiteral)

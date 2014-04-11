@@ -1083,8 +1083,7 @@ module Crystal
         next_token_skip_space_or_newline
       end
 
-      # current_vars = @def_vars.last.dup
-      current_vars = Set(String).new
+      current_vars = @def_vars.last.dup
       push_def current_vars
       push_vars args
 

@@ -600,7 +600,7 @@ describe "Parser" do
   it_parses "->() { }", FunLiteral.new
   it_parses "->(x : Int32) { }", FunLiteral.new(Def.new("->", [Arg.new("x", nil, "Int32".path)]))
   it_parses "->(x : Int32) { x }", FunLiteral.new(Def.new("->", [Arg.new("x", nil, "Int32".path)], "x".var))
-  # it_parses "x = 1; ->{ x }", [Assign.new("x".var, 1.int32), FunLiteral.new(Def.new("->", ([] of Arg), "x".var))]
+  it_parses "x = 1; ->{ x }", [Assign.new("x".var, 1.int32), FunLiteral.new(Def.new("->", ([] of Arg), "x".var))]
 
   it_parses "->foo", FunPointer.new(nil, "foo")
   it_parses "->Foo.foo", FunPointer.new("Foo".path, "foo")

@@ -1,5 +1,4 @@
 require "../ast"
-require "../closure_context"
 
 module Crystal
   class ASTNode
@@ -219,8 +218,6 @@ module Crystal
   end
 
   class Def
-    include ClosureContext
-
     property :owner
     property :vars
     property :raises
@@ -298,6 +295,16 @@ module Crystal
     property :filter
 
     def initialize(@name, @type = nil)
+      @nil_if_read = false
+      @closured = false
+    end
+
+    def closure_in?(context)
+      closured && belongs_to?(context)
+    end
+
+    def belongs_to?(context)
+      @context.same?(context)
     end
 
     def ==(other : self)
@@ -353,8 +360,6 @@ module Crystal
   end
 
   class Block
-    include ClosureContext
-
     property :visited
     property :scope
     property :before_vars

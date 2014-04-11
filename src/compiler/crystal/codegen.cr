@@ -157,13 +157,11 @@ module Crystal
 
       context.return_type = @main_ret_type
 
-      create_closure_context @mod.closured_vars?
-
       @empty_md_list = metadata([0])
       @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
       @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
 
-      alloca_vars @mod.vars
+      alloca_vars @mod.vars, @mod
     end
 
     def define_symbol_table(llvm_mod)
@@ -1435,7 +1433,7 @@ module Crystal
           context.vars = new_vars
 
           # Declare block args
-          alloca_vars block.before_vars
+          alloca_vars block.before_vars, block
 
           # And reset those that are declared inside the block and are nilable.
           reset_block_vars block
@@ -1672,8 +1670,7 @@ module Crystal
 
       target_def = node.target_def
 
-      create_closure_context block.closured_vars?, old_context
-      alloca_vars target_def.vars
+      alloca_vars target_def.vars, target_def
       create_local_copy_of_block_args(target_def, self_type, call_args)
 
       if target_def.uses_block_arg
@@ -1891,13 +1888,11 @@ module Crystal
 
           new_entry_block
 
-          setup_closure_context target_def, is_closure
-          begin
-            alloca_vars target_def.vars
-          rescue ex
-            puts mangled_name
-            raise ex
+          if is_closure && (context_closure_vars = context.closure_vars)
+            setup_closure_vars context_closure_vars
           end
+
+          alloca_vars target_def.vars, target_def
           create_local_copy_of_fun_args(target_def, self_type, args)
 
           context.return_type = target_def.type?
@@ -1964,37 +1959,10 @@ module Crystal
       args
     end
 
-    def setup_closure_context(target_def, is_closure)
-      if is_closure
-        prepare_closure_context target_def
-      else
-        create_closure_context target_def.closured_vars?
-      end
-    end
-
-    def create_closure_context(closure_vars, in_context = context)
-      if closure_vars
-        closure_type = @llvm_typer.closure_context_type(closure_vars)
-        closure_ptr = malloc closure_type
-        define_closure_context_vars closure_ptr, closure_vars, in_context
-        in_context.closure_vars = closure_vars
-        in_context.closure_type = closure_type
-        in_context.closure_ptr = closure_ptr
-      else
-        in_context.closure_vars = nil
-        in_context.closure_type = nil
-        in_context.closure_ptr = nil
-      end
-    end
-
-    def prepare_closure_context(target_def)
-      closure_ptr = context.fun.get_param(target_def.args.length)
-      define_closure_context_vars closure_ptr, context.closure_vars.not_nil!
-    end
-
-    def define_closure_context_vars(closure_ptr, closure_vars, in_context = context)
+    def setup_closure_vars(closure_vars)
+      closure_ptr = context.fun.get_param(context.fun.param_count - 1)
       closure_vars.each_with_index do |var, i|
-        in_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i), var.type)
+        context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i), var.type)
       end
     end
 
@@ -2025,8 +1993,8 @@ module Crystal
 
     def create_local_copy_of_arg(target_def_vars, arg, value)
       var_type = (target_def_vars ? target_def_vars[arg.name] : arg).type
-      if closured_var = context.vars[arg.name]?
-        pointer = closured_var.pointer
+      if closure_var = context.vars[arg.name]?
+        pointer = closure_var.pointer
       else
         pointer = alloca(llvm_type(var_type), arg.name)
         context.vars[arg.name] = LLVMVar.new(pointer, var_type)
@@ -2494,10 +2462,13 @@ module Crystal
       names.map { |name| new_block name }
     end
 
-    def alloca_vars(vars)
+    def alloca_vars(vars, obj = nil)
       return unless vars
 
       in_alloca_block do
+        closure_vars = nil
+
+        # Allocate all variables which are not closured and don't belong to an outer closure
         vars.each do |name, var|
           next if name == "self" || context.vars[name]?
 
@@ -2505,7 +2476,10 @@ module Crystal
 
           if var_type.void?
             context.vars[name] = LLVMVar.new(llvm_nil, @mod.void)
-          else
+          elsif var.closure_in?(obj)
+            closure_vars ||= [] of MetaVar
+            closure_vars << var
+          elsif !obj || var.belongs_to?(obj)
             ptr = @builder.alloca llvm_type(var_type), name
             context.vars[name] = LLVMVar.new(ptr, var_type)
 
@@ -2513,7 +2487,25 @@ module Crystal
             if bound_to_mod_nil?(var)
               assign ptr, var_type, @mod.nil, llvm_nil
             end
+          else
+            # The variable belong to an outer closure
           end
+        end
+
+        # Alocate current closure
+        if closure_vars
+          closure_type = @llvm_typer.closure_context_type(closure_vars)
+          closure_ptr = malloc closure_type
+          closure_vars.each_with_index do |var, i|
+            context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i), var.type)
+          end
+          context.closure_vars = closure_vars
+          context.closure_type = closure_type
+          context.closure_ptr = closure_ptr
+        else
+          context.closure_vars = nil
+          context.closure_type = nil
+          context.closure_ptr = nil
         end
       end
     end
