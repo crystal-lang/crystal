@@ -434,7 +434,7 @@ module Crystal
           if actual_type.nil_type? && (expected_type.pointer? || expected_type.fun?)
             nil_conversions ||= [] of Int32
             nil_conversions << i
-          elsif (actual_type == mod.string || actual_type == mod.string.hierarchy_type) && (expected_type.is_a?(PointerInstanceType) && expected_type.element_type == mod.uint8)
+          elsif actual_type == mod.string && (expected_type.is_a?(PointerInstanceType) && expected_type.element_type == mod.uint8)
             string_conversions ||= [] of Int32
             string_conversions << i
           elsif expected_type.is_a?(FunType) && actual_type.is_a?(FunType) && expected_type.return_type == mod.void && expected_type.arg_types == actual_type.arg_types

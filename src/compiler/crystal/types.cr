@@ -999,7 +999,13 @@ module Crystal
     end
 
     def hierarchy_type
-      @hierarchy_type ||= HierarchyType.new(program, self)
+      if leaf? && !self.abstract
+        self
+      else
+        @hierarchy_type ||= begin
+          HierarchyType.new(program, self)
+        end
+      end
     end
 
     def class?
@@ -1322,7 +1328,7 @@ module Crystal
     end
 
     def hierarchy_type
-      @hierarchy_type ||= HierarchyType.new(program, self)
+      self
     end
 
     delegate depth, @generic_class

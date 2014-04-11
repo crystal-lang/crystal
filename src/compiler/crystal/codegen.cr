@@ -1503,6 +1503,9 @@ module Crystal
                 get_exception_fun = main_fun(GET_EXCEPTION_NAME)
                 exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, type_of(get_exception_fun.get_param(0)))]
                 exception = int2ptr exception_ptr, LLVMTyper::TYPE_ID_POINTER
+                unless a_rescue.type.hierarchy?
+                  exception = cast_to exception, a_rescue.type
+                end
                 context.vars[a_rescue_name] = LLVMVar.new(exception, a_rescue.type, true)
               end
 
@@ -2423,7 +2426,7 @@ module Crystal
     def llvm_self(type = context.type)
       self_var = context.vars["self"]?
       if self_var
-        self_var.pointer
+        downcast self_var.pointer, type, self_var.type, true
       else
         type_id(type.not_nil!)
       end

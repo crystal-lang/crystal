@@ -113,6 +113,9 @@ describe "Type inference: hierarchy metaclass" do
       class Foo
       end
 
+      class Bar < Foo
+      end
+
       a :: Foo.class
       a
       ") { types["Foo"].hierarchy_type.metaclass }

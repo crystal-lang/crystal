@@ -318,7 +318,6 @@ module Crystal
             restricted = subclass.hierarchy_type.restrict(other, owner, type_lookup, free_vars)
             types << restricted if restricted
           end
-          nil
           program.type_merge_union_of types
         end
       else
