@@ -404,6 +404,13 @@ module Crystal
 
     def visit(node : MetaVar)
       @str << node.name
+      if type = node.type?
+        @str << " :: "
+        type.append_to_s(@str)
+      end
+      if node.nil_if_read
+        @str << " (nil-if-read)"
+      end
     end
 
     def visit(node : FunLiteral)

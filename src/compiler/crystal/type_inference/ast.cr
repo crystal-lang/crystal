@@ -309,6 +309,8 @@ module Crystal
     end
   end
 
+  alias MetaVars = Hash(String, MetaVar)
+
   class Var
     def out?
       out

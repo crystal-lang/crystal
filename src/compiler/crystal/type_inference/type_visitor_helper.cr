@@ -307,7 +307,7 @@ module Crystal
 
       external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
       if node_body = node.body
-        vars = {} of String => MetaVar
+        vars = MetaVars.new
         args.each do |arg|
           var = MetaVar.new(arg.name, arg.type)
           var.bind_to var

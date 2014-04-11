@@ -30,7 +30,7 @@ module Crystal
     property free_vars
     property yield_vars
 
-    def initialize(@mod, vars = {} of String => MetaVar : Hash(String, MetaVar), @typed_def = nil, meta_vars = nil)
+    def initialize(@mod, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
       @while_stack = [] of While
       typed_def = @typed_def
@@ -46,7 +46,7 @@ module Crystal
     def initialize_meta_vars(mod, vars, typed_def, meta_vars)
       unless meta_vars
         if typed_def
-          meta_vars = typed_def.vars = {} of String => MetaVar
+          meta_vars = typed_def.vars = MetaVars.new
         else
           meta_vars = @mod.vars
         end
@@ -137,6 +137,7 @@ module Crystal
         if var.nil_if_read
           meta_var = @meta_vars[node.name]
           meta_var.bind_to(@mod.nil_var) unless meta_var.dependencies.try &.any? &.same?(@mod.nil_var)
+          node.bind_to(@mod.nil_var)
         end
 
         if needs_type_filters?
@@ -283,6 +284,8 @@ module Crystal
 
       @vars[var_name] = simple_var
 
+      # If inside a begin part of an exception handler, bind this type to
+      # the variable that will be used in the rescue/else blocks.
       if exception_handler_vars = @exception_handler_vars
         var = (exception_handler_vars[var_name] ||= MetaVar.new(var_name))
         var.bind_to(value)
@@ -424,7 +427,7 @@ module Crystal
       return if node.visited
       node.visited = true
 
-      before_block_vars = node.before_vars.try(&.dup) || {} of String => MetaVar
+      before_block_vars = node.before_vars.try(&.dup) || MetaVars.new
 
       meta_vars = @meta_vars.dup
       node.args.each do |arg|
@@ -468,8 +471,8 @@ module Crystal
 
     def visit(node : FunLiteral)
       # fun_vars = @vars.dup
-      fun_vars = {} of String => MetaVar
-      meta_vars = {} of String => MetaVar
+      fun_vars = MetaVars.new
+      meta_vars = MetaVars.new
       # meta_vars = @meta_vars.dup
 
       node.def.args.each do |arg|
@@ -578,8 +581,8 @@ module Crystal
       # the block we will bind more variables to these ones if variables
       # are reassigned.
       if node.block || block_arg
-        before_vars = {} of String => MetaVar
-        after_vars = {} of String => MetaVar
+        before_vars = MetaVars.new
+        after_vars = MetaVars.new
 
         @vars.each do |name, var|
           before_var = MetaVar.new(name)
@@ -605,7 +608,7 @@ module Crystal
       node.recalculate
 
       @type_filters = nil
-      @unreachable = node.no_returns?
+      @unreachable = true if node.no_returns?
 
       false
     end
@@ -815,7 +818,7 @@ module Crystal
       when Const
         unless type.value.type?
           old_types, old_scope, old_vars, old_meta_vars, old_type_lookup = @types, @scope, @vars, @meta_vars, @type_lookup
-          @types, @scope, @vars, @meta_vars, @type_lookup = type.scope_types, type.scope, ({} of String => MetaVar), ({} of String => MetaVar), nil
+          @types, @scope, @vars, @meta_vars, @type_lookup = type.scope_types, type.scope, MetaVars.new, MetaVars.new, nil
           type.value.accept self
           type.vars = @meta_vars
           @types, @scope, @vars, @meta_vars, @type_lookup = old_types, old_scope, old_vars, old_meta_vars, old_type_lookup
@@ -861,7 +864,7 @@ module Crystal
         filtered_var = MetaVar.new(name)
         filtered_var.filter = filter
         filtered_var.bind_to(existing_var.filtered_by(filter))
-        filtered_var.nil_if_read = existing_var.nil_if_read
+        # filtered_var.nil_if_read = existing_var.nil_if_read
         @vars[name] = filtered_var
       end
 
@@ -888,7 +891,7 @@ module Crystal
           filtered_var = MetaVar.new(name)
           filtered_var.filter = not_filter
           filtered_var.bind_to(existing_var.filtered_by(not_filter))
-          filtered_var.nil_if_read = existing_var.nil_if_read
+          # filtered_var.nil_if_read = existing_var.nil_if_read
           @vars[name] = filtered_var
         end
       end
@@ -1013,7 +1016,7 @@ module Crystal
     end
 
     def merge_while_vars(before_cond_vars, after_cond_vars, while_vars, all_break_vars)
-      after_while_vars = {} of String => MetaVar
+      after_while_vars = MetaVars.new
 
       while_vars.each do |name, while_var|
         before_cond_var = before_cond_vars[name]?
@@ -1070,7 +1073,7 @@ module Crystal
       if container.is_a?(While)
         container.has_breaks = true
 
-        break_vars = (container.break_vars = container.break_vars || [] of Hash(String, MetaVar))
+        break_vars = (container.break_vars = container.break_vars || [] of MetaVars)
         break_vars.push @vars.dup
       else
         container.bind_to(node.exps.length > 0 ? node.exps[0] : mod.nil_var)
@@ -1352,22 +1355,83 @@ module Crystal
 
     def visit(node : ExceptionHandler)
       old_exception_handler_vars = @exception_handler_vars
+
+      # Save old vars to know if new variables are declared inside begin/rescue/else
+      before_body_vars = @vars.dup
+
+      # Any variable assigned in the body (begin) will have, inside rescue/else
+      # blocks, all types that were assigned to them, because we can't know at which
+      # point an exception is raised.
       exception_handler_vars = @exception_handler_vars = @vars.dup
 
-      # First accept body
       node.body.accept self
 
-      # TODO: we need to do this well, variables don't end with the correct types
+      if node.rescues || node.else
+        # Any variable introduced in the begin block is possibly nil
+        # in the rescue/else blocks because we can't know if an exception
+        # was raised before assigning any of the vars.
+        exception_handler_vars.each do |name, var|
+          unless before_body_vars[name]?
+            var.nil_if_read = true
+          end
+        end
 
-      @vars = exception_handler_vars.dup
-      exception_handler_vars = @exception_handler_vars = exception_handler_vars.dup
+        # Now, using these vars, visit all rescue/else blocks and keep
+        # the results in this variable.
+        all_rescue_vars = [] of MetaVars
 
-      node.rescues.try &.each &.accept self
+        node.rescues.try &.each do |a_rescue|
+          @vars = exception_handler_vars.dup
+          @unreachable = false
+          a_rescue.accept self
+          all_rescue_vars << @vars unless @unreachable
+        end
 
-      @vars = exception_handler_vars.dup
+        node.else.try do |a_else|
+          @vars = exception_handler_vars.dup
+          @unreachable = false
+          a_else.accept self
+          all_rescue_vars << @vars unless @unreachable
+        end
 
-      node.else.try &.accept self
-      node.ensure.try &.accept self
+        # If all rescue/else blocks are unreachable, then afterwards
+        # the flow continues as if there were no rescue/else blocks.
+        if all_rescue_vars.empty?
+          all_rescue_vars = nil
+        else
+          # Otherwise, merge all types that resulted from all rescue/else blocks
+          merge_rescue_vars exception_handler_vars, all_rescue_vars
+
+          # And then accept the ensure part
+          node.ensure.try &.accept self
+        end
+      end
+
+      # If there were no rescue/else blocks or all of them were unreachable
+      unless all_rescue_vars
+        if node_ensure = node.ensure
+          # Variables in the ensure block might be nil because we don't know
+          # if an exception was thrown before any assignment.
+          @vars.each do |name, var|
+            unless before_body_vars[name]?
+              var.nil_if_read = true
+            end
+          end
+
+          node_ensure.accept self
+        end
+
+        # However, those previous variables can't be nil afterwards:
+        # if an exception was raised then we won't running the code
+        # after the ensure clause, so variables don't matter. But if
+        # an exception was not raised then all variables were declared
+        # successfuly.
+        @vars.each do |name, var|
+          unless before_body_vars[name]?
+            var.nil_if_read = false
+          end
+        end
+      end
 
       if node_else = node.else
         node.bind_to node_else
@@ -1384,6 +1448,26 @@ module Crystal
       old_exception_handler_vars = @exception_handler_vars
 
       false
+    end
+
+    def merge_rescue_vars(before_vars, all_rescue_vars)
+      after_vars = MetaVars.new
+
+      all_rescue_vars.each do |rescue_vars|
+        rescue_vars.each do |name, var|
+          after_var = (after_vars[name] ||= new_meta_var(name))
+          after_var.nil_if_read = true if var.nil_if_read
+          after_var.bind_to(var)
+        end
+      end
+
+      before_vars.each do |name, var|
+        after_var = (after_vars[name] ||= new_meta_var(name))
+        after_var.nil_if_read = true if var.nil_if_read
+        after_var.bind_to(var)
+      end
+
+      @vars = after_vars
     end
 
     def end_visit(node : IndirectRead)

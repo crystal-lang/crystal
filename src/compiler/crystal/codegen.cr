@@ -702,7 +702,7 @@ module Crystal
       n0 = NumberLiteral.new(0, :i32)
       n31 = NumberLiteral.new(31, :i32)
 
-      vars = {} of String => MetaVar
+      vars = MetaVars.new
       vars["hash"] = MetaVar.new(hash_var.name)
 
       exps = [] of ASTNode
@@ -743,7 +743,7 @@ module Crystal
       # true
       # hash
 
-      vars = {} of String => MetaVar
+      vars = MetaVars.new
 
       exps = [] of ASTNode
 
@@ -781,7 +781,7 @@ module Crystal
       # Generate
       # "ClassName(#{ivar_name}=#{ivar_value}, ...)"
 
-      vars = {} of String => MetaVar
+      vars = MetaVars.new
 
       exps = [] of ASTNode
       exps << StringLiteral.new("#{type}(")

@@ -191,7 +191,7 @@ describe "Type inference: ssa" do
       )) { union_of(char, int32) }
   end
 
-  it "types a var after begin rescue as having all possible types in begin" do
+  it "types a var after begin ensure as having last type" do
     assert_type(%(
       a = 1.5
       begin
@@ -201,7 +201,29 @@ describe "Type inference: ssa" do
       ensure
       end
       a
-      )) { union_of [float64, int32, char, string] of Type }
+      )) { string }
+  end
+
+  it "types a var after begin ensure as having last type (2)" do
+    assert_type(%(
+      begin
+        a = 2
+        a = 'a'
+      ensure
+      end
+      a
+      )) { char }
+  end
+
+  it "types a var after begin rescue as having all possible types and nil in begin if read (2)" do
+    assert_type(%(
+      begin
+        a = 2
+        a = 'a'
+      rescue
+      end
+      a
+      )) { |mod| union_of [mod.int32, mod.char, mod.nil] of Type }
   end
 
   it "types a var after begin rescue as having all possible types in begin and rescue" do
@@ -229,6 +251,23 @@ describe "Type inference: ssa" do
         b = a
       end
       b
+      )) { |mod| union_of [mod.int32, mod.char, mod.string, mod.nil] of Type }
+  end
+
+  it "types a var after begin rescue with no-return in rescue" do
+    assert_type(%(
+      lib C
+        fun exit : NoReturn
+      end
+
+      begin
+        a = 2
+        a = 'a'
+        a = "hello"
+      rescue ex
+        C.exit
+      end
+      a
       )) { union_of [int32, char, string] of Type }
   end
 

@@ -740,7 +740,7 @@ module Crystal
         typed_def.bind_to body
       end
 
-      args = {} of String => MetaVar
+      args = MetaVars.new
 
       if self_type.is_a?(Type)
         args["self"] = MetaVar.new("self", self_type)
