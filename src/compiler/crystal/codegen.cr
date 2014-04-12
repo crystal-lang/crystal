@@ -2436,7 +2436,13 @@ module Crystal
     end
 
     def br_from_alloca_to_entry
-      br_block_chain({@alloca_block, @entry_block})
+      # If there are no instructions in the alloca we can delete
+      # it and just keep the entry block (less noise).
+      if LLVM.first_instruction(@alloca_block)
+        br_block_chain({@alloca_block, @entry_block})
+      else
+        LLVM.delete_basic_block(@alloca_block)
+      end
     end
 
     def br_block_chain blocks

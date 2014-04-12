@@ -141,6 +141,14 @@ module LLVM
     LibLLVM.is_multithreaded != 0
   end
 
+  def self.first_instruction(block)
+    LibLLVM.get_first_instruction(block)
+  end
+
+  def self.delete_basic_block(block)
+    LibLLVM.delete_basic_block(block)
+  end
+
   Void = LibLLVM.void_type
   Int1 = LibLLVM.int_type(1)
   Int8 = LibLLVM.int_type(8)
