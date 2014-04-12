@@ -2938,8 +2938,11 @@ module Crystal
 
     def open(symbol, location = @token.location)
       @unclosed_stack.push Unclosed.new(symbol, location)
-      value = yield
-      @unclosed_stack.pop
+      begin
+        value = yield
+      ensure
+        @unclosed_stack.pop
+      end
       value
     end
 

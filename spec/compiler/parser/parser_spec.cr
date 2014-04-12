@@ -770,4 +770,14 @@ describe "Parser" do
       ex.column_number.should eq(4)
     end
   end
+
+  it "says unterminated call with block arg" do
+    begin
+      Parser.parse("foo(foo(&.block)")
+    rescue ex : Crystal::SyntaxException
+      ex.message.not_nil!.includes?("unterminated call").should be_true
+      ex.line_number.should eq(1)
+      ex.column_number.should eq(4)
+    end
+  end
 end
