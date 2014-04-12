@@ -1876,7 +1876,7 @@ module Crystal
             setup_closure_vars context_closure_vars
           end
 
-          alloca_vars target_def.vars, target_def
+          alloca_vars target_def.vars, target_def, args
           create_local_copy_of_fun_args(target_def, self_type, args)
 
           context.return_type = target_def.type?
@@ -1976,13 +1976,25 @@ module Crystal
     end
 
     def create_local_copy_of_arg(target_def_vars, arg, value)
-      var_type = (target_def_vars ? target_def_vars[arg.name] : arg).type
+      target_def_var = target_def_vars.try &.[arg.name]
+
+      var_type = (target_def_var || arg).type
       if closure_var = context.vars[arg.name]?
         pointer = closure_var.pointer
       else
-        pointer = alloca(llvm_type(var_type), arg.name)
-        context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+        # We don't need to create a copy of the argument if it's never
+        # assigned a value inside the function.
+        deps_count = target_def_var.try(&.dependencies?.try(&.length)) || 0
+        needs_copy = deps_count > 1
+        if needs_copy
+          pointer = alloca(llvm_type(var_type), arg.name)
+          context.vars[arg.name] = LLVMVar.new(pointer, var_type)
+        else
+          context.vars[arg.name] = LLVMVar.new(value, var_type, true)
+          return
+        end
       end
+
       assign pointer, var_type, arg.type, value
     end
 
@@ -2446,7 +2458,7 @@ module Crystal
       names.map { |name| new_block name }
     end
 
-    def alloca_vars(vars, obj = nil)
+    def alloca_vars(vars, obj = nil, args = nil)
       return unless vars
 
       in_alloca_block do
@@ -2464,6 +2476,10 @@ module Crystal
             closure_vars ||= [] of MetaVar
             closure_vars << var
           elsif !obj || var.belongs_to?(obj)
+            # We deal with arguments later
+            is_arg = args.try &.any? { |arg| arg.name == var.name }
+            next if is_arg
+
             ptr = @builder.alloca llvm_type(var_type), name
             context.vars[name] = LLVMVar.new(ptr, var_type)
 
