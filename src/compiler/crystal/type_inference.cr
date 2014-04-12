@@ -21,14 +21,27 @@ module Crystal
     property! scope
     getter! typed_def
     property! untyped_def
-    getter vars
-    getter meta_vars
     getter block
     property call
     property type_lookup
     property in_fun_literal
+
+    # These are the free variables that came from matches. We look up
+    # here first if we find a single-element Path like `T`.
     property free_vars
+
+    # These are the variables and types that come from a block specification
+    # like `&block : Int32 -> Int32`. When doing `yield 1` we need to verify
+    # that the yielded expression has the type that the block specification said.
     property yield_vars
+
+    # In vars we store the types of variables as we traverse the nodes.
+    # These type are not cummulative: if you do `x = 1`, 'x' will have
+    # type Int32. Then if you do `x = false`, 'x' will have type Bool.
+    getter vars
+
+    # Here we store the cummulative types of variables as we traverse the nodes.
+    getter meta_vars
 
     def initialize(@mod, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
@@ -43,6 +56,9 @@ module Crystal
       @unreachable = false
     end
 
+    # We initialize meta_vars from vars given in the constructor.
+    # We store those meta vars either in the typed def or in the program
+    # so the codegen phase knows the cummulative types to do allocas.
     def initialize_meta_vars(mod, vars, typed_def, meta_vars)
       unless meta_vars
         if typed_def
@@ -857,21 +873,9 @@ module Crystal
       @vars = cond_vars.dup
       @unreachable = false
 
-      # Declare variables in "then" with filtered types, so
-      # merging them gives the correct types.
-      cond_type_filters.try &.each do |name, filter|
-        existing_var = @vars[name]
-        filtered_var = MetaVar.new(name)
-        filtered_var.filter = filter
-        filtered_var.bind_to(existing_var.filtered_by(filter))
-        @vars[name] = filtered_var
-      end
+      filter_vars cond_type_filters
 
-      if node.then.nop?
-        node.then.accept self
-      else
-        node.then.accept self
-      end
+      node.then.accept self
 
       then_vars = @vars
       then_type_filters = @type_filters
@@ -881,28 +885,14 @@ module Crystal
       @vars = cond_vars.dup
       @unreachable = false
 
-      # Declare variables in "else" with filtered types, so
-      # merging them gives the correct types.
+      # If we have something like 'a && b' or 'a || b', which
+      # are transformed to an If in Normalizer, we don't need
+      # type filters in the else block (we can't deduce anything).
       unless node.cond.is_a?(If)
-        cond_type_filters.try &.each do |name, filter|
-          existing_var = @vars[name]
-          not_filter = filter.not
-          filtered_var = MetaVar.new(name)
-          filtered_var.filter = not_filter
-          filtered_var.bind_to(existing_var.filtered_by(not_filter))
-          @vars[name] = filtered_var
-        end
+        filter_vars cond_type_filters, &.not
       end
 
-      if node.else.nop?
-        node.else.accept self
-      else
-        if cond_type_filters && !node.cond.is_a?(If)
-          else_filters = negate_filters(cond_type_filters)
-        end
-
-        node.else.accept self
-      end
+      node.else.accept self
 
       else_vars = @vars
       else_type_filters = @type_filters
@@ -923,9 +913,19 @@ module Crystal
 
       @unreachable = then_unreachable && else_unreachable
 
+      node.bind_to [node.then, node.else]
+
       false
     end
 
+    # Here we merge the variables from both branches of an if.
+    # We basically:
+    #   - Create a variable whose type is the merged types of the last
+    #     type of each branch.
+    #   - Make the variable nilable if the variable wasn't declared
+    #     before the 'if' and it doesn't appear in one of the branches.
+    #   - Don't use the type of a branch that is unreachable (ends with return,
+    #     break or with a call that is NoReturn)
     def merge_if_vars(node, cond_vars, then_vars, else_vars, then_unreachable, else_unreachable)
       all_vars_names = Set(String).new
       then_vars.each_key do |name|
@@ -971,10 +971,6 @@ module Crystal
       end
     end
 
-    def end_visit(node : If)
-      node.bind_to [node.then, node.else]
-    end
-
     def visit(node : While)
       old_while_vars = @while_vars
       before_cond_vars = @vars.dup
@@ -988,15 +984,7 @@ module Crystal
       after_cond_vars = @vars.dup
       @while_vars = after_cond_vars
 
-      # Declare vars inside while with correct filters
-      cond_type_filters.try &.each do |name, filter|
-        existing_var = @vars[name]
-        filtered_var = MetaVar.new(name)
-        filtered_var.filter = filter
-        filtered_var.bind_to(existing_var.filtered_by(filter))
-        filtered_var.nil_if_read = existing_var.nil_if_read
-        @vars[name] = filtered_var
-      end
+      filter_vars cond_type_filters
 
       @type_filters = nil
       @block, old_block = nil, @block
@@ -1013,6 +1001,7 @@ module Crystal
       false
     end
 
+    # Here we assign the types of variables after a while.
     def merge_while_vars(before_cond_vars, after_cond_vars, while_vars, all_break_vars)
       after_while_vars = MetaVars.new
 
@@ -1020,11 +1009,15 @@ module Crystal
         before_cond_var = before_cond_vars[name]?
         after_cond_var = after_cond_vars[name]?
 
+        # If a variable was assigned in the condition, it has that type.
         if after_cond_var && !after_cond_var.same?(before_cond_var)
           after_while_var = MetaVar.new(name)
           after_while_var.bind_to(after_cond_var)
           after_while_var.nil_if_read = after_cond_var.nil_if_read
           after_while_vars[name] = after_while_var
+
+        # If there was a previous variable, we use that type merged
+        # with the last type inside the while.
         elsif before_cond_var
           before_cond_var.bind_to(while_var)
           after_while_var = MetaVar.new(name)
@@ -1032,6 +1025,9 @@ module Crystal
           after_while_var.bind_to(while_var)
           after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
           after_while_vars[name] = after_while_var
+
+        # Otherwise, it's a new variable inside the while: used
+        # outside it must be nilable.
         else
           nilable_var = MetaVar.new(name)
           nilable_var.bind_to(while_var)
@@ -1043,6 +1039,7 @@ module Crystal
 
       @vars = after_while_vars
 
+      # We also need to merge types from breaks inside while.
       if all_break_vars
         all_break_vars.each do |break_vars|
           break_vars.each do |name, var|
@@ -1063,6 +1060,34 @@ module Crystal
 
       node.type = @mod.nil
     end
+
+    # If we have:
+    #
+    #   if a
+    #     ...
+    #   end
+    #
+    # then inside the if 'a' must not be nil.
+    #
+    # This is what we do here: we create a meta-variable for
+    # it and filter it accordingly. This also applied to
+    # .is_a? and .responds_to?.
+    #
+    # This also applies to 'while' conditions and also
+    # to the else part of an if, but with filters inverted.
+    def filter_vars(filters)
+      filter_vars(filters) { |filter| filter }
+    end
+
+    def filter_vars(filters)
+      filters.try &.each do |name, filter|
+        existing_var = @vars[name]
+        filtered_var = MetaVar.new(name)
+        filtered_var.bind_to(existing_var.filtered_by(yield filter))
+        @vars[name] = filtered_var
+      end
+    end
+
 
     def end_visit(node : Break)
       container = @while_stack.last? || (block.try &.break)

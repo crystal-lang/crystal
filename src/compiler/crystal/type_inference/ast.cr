@@ -289,20 +289,32 @@ module Crystal
 
   class MetaVar < ASTNode
     property :name
-    property :context
-    property :closured
+
+    # True if we need to mark this variable as nilable
+    # if this variable is read.
     property :nil_if_read
-    property :filter
+
+    # This is the context of the variable: who allocates it.
+    # It can either be the Program (for top level variables),
+    # a Def or a Block.
+    property :context
+
+    # A variable is closured if it's used in a FunLiteral context
+    # where it wasn't created.
+    property :closured
 
     def initialize(@name, @type = nil)
       @nil_if_read = false
       @closured = false
     end
 
+    # True if this variable belongs to the given context
+    # but must be allocated in a closure.
     def closure_in?(context)
       closured && belongs_to?(context)
     end
 
+    # True if this variable belongs to the given context.
     def belongs_to?(context)
       @context.same?(context)
     end

@@ -1169,7 +1169,7 @@ module Crystal
         types = [] of ASTNode
       end
 
-      FunPointer.new(obj, name.not_nil!, types)
+      FunPointer.new(obj, name, types)
     end
 
     def parse_string

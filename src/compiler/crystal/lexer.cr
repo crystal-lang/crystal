@@ -1244,8 +1244,6 @@ module Crystal
         raise "invalid hex escape", @line_number, @column_number
       end
 
-      value = value.not_nil!
-
       after_x2 = peek_next_char
       if '0' <= after_x2 <= '9'
         value = 16 * value + (after_x2 - '0')

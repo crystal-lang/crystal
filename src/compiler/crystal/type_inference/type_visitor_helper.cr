@@ -426,7 +426,7 @@ module Crystal
     def resolve_ident(node : Path, create_modules_if_missing = false)
       free_vars = @free_vars
       if free_vars && !node.global && (type = free_vars[node.names.first]?)
-        target_type = type.not_nil!
+        target_type = type
         if node.names.length > 1
           target_type = target_type.lookup_type(node.names[1 .. -1])
         end

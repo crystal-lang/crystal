@@ -657,7 +657,7 @@ module Crystal
 
       type = self
       names.each do |name|
-        type = type.not_nil!.types[name]?
+        type = type.types[name]?
         break unless type
       end
 
@@ -680,7 +680,7 @@ module Crystal
 
       type = self
       names.each_with_index do |name, idx|
-        previous_type = type.not_nil!
+        previous_type = type
         type = previous_type.types[name]?
         unless type
           tolerance = (name.length / 5.0).ceil
@@ -1382,7 +1382,7 @@ module Crystal
 
       type = generic_class
       names.each do |name|
-        type = type.not_nil!.types[name]?
+        type = type.types[name]?
         break unless type
       end
 
