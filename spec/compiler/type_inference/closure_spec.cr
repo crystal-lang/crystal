@@ -48,7 +48,7 @@ describe "Type inference: closure" do
     var.closured.should be_true
   end
 
-  it "transforms block to fun literal" do
+  pending "transforms block to fun literal" do
     assert_type("
       def foo(&block : Int32 ->)
         block.call(1)

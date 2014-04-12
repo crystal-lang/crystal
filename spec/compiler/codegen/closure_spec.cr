@@ -55,7 +55,7 @@ describe "Code gen: closure" do
     ").to_i.should eq(1)
   end
 
-  it "transforms block to fun literal" do
+  pending "transforms block to fun literal" do
     run("
       def foo(&block : Int32 ->)
         block.call(1)

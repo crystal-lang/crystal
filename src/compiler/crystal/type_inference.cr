@@ -501,7 +501,8 @@ module Crystal
         fun_var = MetaVar.new(arg.name, arg.type)
         fun_vars[arg.name] = fun_var
 
-        meta_var = new_meta_var(arg.name)
+        meta_var = MetaVar.new(arg.name)
+        meta_var.context = node.def
         meta_var.bind_to fun_var
         meta_vars[arg.name] = meta_var
       end

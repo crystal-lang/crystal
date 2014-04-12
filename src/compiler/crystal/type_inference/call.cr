@@ -133,7 +133,7 @@ module Crystal
       block = @block
 
       matches.map do |match|
-        yield_vars, fun_literal = match_block_arg(match)
+        yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
         block_type = block && block.body && match.def.block_arg ? block.body.type? : nil
         lookup_self_type = self_type || match.owner
@@ -147,7 +147,7 @@ module Crystal
         match_owner = match.owner
         typed_def = match_owner.lookup_def_instance(match.def.object_id, lookup_arg_types, block_type) if use_cache
         unless typed_def
-          typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types, fun_literal)
+          typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types)
           match_owner.add_def_instance(match.def.object_id, lookup_arg_types, block_type, typed_def) if use_cache
           if typed_def.body
             bubbling_exception do
@@ -307,7 +307,6 @@ module Crystal
 
     def match_block_arg(match)
       yield_vars = nil
-      fun_literal = nil
 
       # TODO: check this 'yields > 0', in the past just checking yieldness (without > 0)
       # led to a compiler crash, maybe this is fixed now.
@@ -331,13 +330,7 @@ module Crystal
         end
 
         if match.def.uses_block_arg
-          fun_literal_args = block.args.map do |ba|
-            arg = Arg.new(ba.name)
-            arg.bind_to ba
-            arg
-          end
-          fun_literal = FunLiteral.new(Def.new("->", fun_literal_args, block.body))
-          fun_literal.accept parent_visitor
+          raise "passing blocks as function pointers is not yet supported"
         end
 
         block.accept parent_visitor
@@ -360,7 +353,7 @@ module Crystal
         end
       end
 
-      {yield_vars, fun_literal}
+      yield_vars
     end
 
     def lookup_node_type(visitor, node)
@@ -730,7 +723,7 @@ module Crystal
       matches
     end
 
-    def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types, fun_literal)
+    def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
       args_start_index = 0
 
       typed_def = untyped_def.clone
@@ -754,12 +747,6 @@ module Crystal
         var.bind_to(var)
         args[arg.name] = var
         arg.type = type
-      end
-
-      if untyped_def.uses_block_arg
-        var = MetaVar.new(untyped_def.block_arg.not_nil!.name)
-        var.type = fun_literal.not_nil!.type
-        args[var.name] = var
       end
 
       {typed_def, args}
