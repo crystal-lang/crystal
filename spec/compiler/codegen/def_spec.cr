@@ -392,4 +392,53 @@ describe "Code gen: def" do
       (Foo.new || Bar.new).foo
       ").to_i.should eq(2)
   end
+
+  it "codegens dispatch with single def when discarding unallocated ones (1)" do
+    run("
+      class Foo
+        def bar
+          1
+        end
+      end
+
+      class Bar
+        def bar
+          2
+        end
+      end
+
+      foo = 1 == 1 ? Foo.new : (Pointer(Int32).null as Bar)
+      foo.bar
+      ").to_i.should eq(1)
+  end
+
+  it "codegens dispatch with single def when discarding unallocated ones (2)" do
+    run("
+      class Foo
+      end
+
+      class Bar
+      end
+
+      def something(x : Foo)
+        1
+      end
+
+      def something(x : Bar)
+        2
+      end
+
+      foo = 1 == 1 ? Foo.new : (Pointer(Int32).null as Bar)
+      something(foo)
+      ").to_i.should eq(1)
+  end
+
+  it "codegens bug #119" do
+    run(%(
+      require "prelude"
+
+      x = {} of String => Hash(String, String)
+      x.has_key?("a")
+      )).to_b.should be_false
+  end
 end

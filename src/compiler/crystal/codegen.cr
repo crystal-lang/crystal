@@ -1593,12 +1593,13 @@ module Crystal
     end
 
     def prepare_call_args(node, owner)
+      target_def = node.target_def
       call_args = Array(LibLLVM::ValueRef).new(node.args.length + 1)
 
       # First self.
       if (obj = node.obj) && obj.type.passed_as_self?
         accept obj
-        call_args << @last
+        call_args << downcast(@last, target_def.owner.not_nil!, obj.type, true)
       elsif owner.passed_as_self?
         if yield_scope = context.vars["%scope"]?
           call_args << yield_scope.pointer
@@ -1621,7 +1622,14 @@ module Crystal
           end
         else
           accept arg
-          call_args << @last
+
+          def_arg = target_def.args[i]?
+          if def_arg
+            call_args << downcast(@last, def_arg.type, arg.type, true)
+          else
+            # Def argument might be missing if it's a variadic call
+            call_args << @last
+          end
         end
       end
 
