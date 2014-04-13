@@ -313,9 +313,13 @@ class String
     same?(other) ? 0 : C.strcmp(cstr, other)
   end
 
-  def =~(regex)
+  def =~(regex : Regex)
     match = regex.match(self)
     match ? match.begin(0) : nil
+  end
+
+  def =~(other)
+    nil
   end
 
   def +(other)

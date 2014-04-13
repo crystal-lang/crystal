@@ -8,7 +8,6 @@ require "program"
 LLVM.init_x86
 
 module Crystal
-  DUMP_LLVM = ENV["DUMP"] == "1"
   VERIFY_LLVM = ENV["VERIFY"] == "1"
 
   MAIN_NAME = "__crystal_main"
@@ -184,8 +183,18 @@ module Crystal
       br_block_chain [@alloca_block, @const_block_entry]
       br_block_chain [@const_block, @entry_block]
 
+      env_dump = ENV["DUMP"]
+      case env_dump
+      when Nil
+        # Nothing
+      when "1"
+        dump_all_llvm = true
+      else
+        dump_llvm_regex = Regex.new(env_dump)
+      end
+
       @modules.each do |name, mod|
-        mod.dump if Crystal::DUMP_LLVM
+        mod.dump if dump_all_llvm || name =~ dump_llvm_regex
         mod.verify if Crystal::VERIFY_LLVM
 
         if @debug
