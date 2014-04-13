@@ -121,6 +121,7 @@ module Crystal
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, pointer_type(pointer_type(LLVM::Int8))], ret_type)
 
       @context = Context.new @main, @mod
+      @context.return_type = @main_ret_type
 
       @argc = @main.get_param(0)
       LLVM.set_name @argc, "argc"
@@ -155,7 +156,12 @@ module Crystal
       @last = llvm_nil
       @fun_literal_count = 0
 
-      context.return_type = @main_ret_type
+      # This flag is to generate less code. If there's an if in the middle
+      # of a series of expressions we don't need the result, so there's no
+      # need to build a phi for it.
+      # Also, we don't need the value of unions returned from calls if they
+      # are not going to be used.
+      @needs_value = true
 
       @empty_md_list = metadata([0])
       @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
@@ -668,7 +674,7 @@ module Crystal
       type = context.type as TupleInstanceType
       tuple = call_args[0]
       index = call_args[1]
-      Phi.open(self, node) do |phi|
+      Phi.open(self, node, @needs_value) do |phi|
         type.tuple_types.each_with_index do |tuple_type, i|
           current_index_label, next_index_label = new_blocks({"current_index", "next_index"})
           cond equal?(index, int(i)), current_index_label, next_index_label
@@ -849,11 +855,13 @@ module Crystal
     end
 
     def visit(node : TupleLiteral)
-      type = node.type as TupleInstanceType
-      @last = allocate_tuple(type) do |tuple_type, i|
-        exp = node.exps[i]
-        exp.accept self
-        {exp.type, @last}
+      request_value do
+        type = node.type as TupleInstanceType
+        @last = allocate_tuple(type) do |tuple_type, i|
+          exp = node.exps[i]
+          exp.accept self
+          {exp.type, @last}
+        end
       end
       false
     end
@@ -947,10 +955,20 @@ module Crystal
     end
 
     def visit(node : Expressions)
-      node.expressions.each do |exp|
+      old_needs_value = @needs_value
+      @needs_value = false
+
+      expressions_length = node.expressions.length
+      node.expressions.each_with_index do |exp, i|
+        breaks = exp.no_returns? || exp.returns? || exp.breaks? || (exp.yields? && (block_returns? || block_breaks?))
+        if old_needs_value && (breaks || i == expressions_length - 1)
+          @needs_value = true
+        end
         accept exp
-        break if exp.no_returns? || exp.returns? || exp.breaks? || (exp.yields? && (block_returns? || block_breaks?))
+        break if breaks
       end
+
+      @needs_value = old_needs_value
       false
     end
 
@@ -1041,9 +1059,11 @@ module Crystal
     def visit(node : If)
       then_block, else_block = new_blocks({"then", "else"})
 
-      codegen_cond_branch node.cond, then_block, else_block
+      request_value do
+        codegen_cond_branch node.cond, then_block, else_block
+      end
 
-      Phi.open(self, node) do |phi|
+      Phi.open(self, node, @needs_value) do |phi|
         codegen_if_branch phi, node.then, then_block
         codegen_if_branch phi, node.else, else_block
       end
@@ -1070,10 +1090,15 @@ module Crystal
 
         position_at_end while_block
 
-        codegen_cond_branch node.cond, body_block, exit_block
+        request_value do
+          codegen_cond_branch node.cond, body_block, exit_block
+        end
 
         position_at_end body_block
-        accept node.body
+
+        request_value(false) do
+          accept node.body
+        end
         br while_block
 
         position_at_end exit_block
@@ -1084,7 +1109,6 @@ module Crystal
           @last = llvm_nil
         end
       end
-
       false
     end
 
@@ -1133,7 +1157,9 @@ module Crystal
         @mod.nil
       else
         exp = node.exps.first
-        accept exp
+        request_value do
+          accept exp
+        end
         exp.type? || @mod.nil
       end
     end
@@ -1146,7 +1172,9 @@ module Crystal
         return false
       end
 
-      accept value
+      request_value do
+        accept value
+      end
 
       if value.no_returns? || value.returns? || value.breaks? || (value.yields? && (block_returns? || block_breaks?))
         return
@@ -1351,7 +1379,10 @@ module Crystal
           if const.value.needs_const_block?
             in_const_block("const_#{global_name}") do
               alloca_vars const.vars
-              accept const.not_nil!.value
+
+              request_value do
+                accept const.not_nil!.value
+              end
 
               if LLVM.constant? @last
                 LLVM.set_initializer global, @last
@@ -1370,7 +1401,9 @@ module Crystal
           else
             old_llvm_mod = @llvm_mod
             @llvm_mod = @main_mod
-            accept const.value
+            request_value do
+              accept const.value
+            end
             LLVM.set_initializer global, @last
             LLVM.set_global_constant global, true
             @llvm_mod = old_llvm_mod
@@ -1415,11 +1448,13 @@ module Crystal
       end
 
       # First accept all yield expressions
-      node.exps.each_with_index do |exp, i|
-        accept exp
+      request_value do
+        node.exps.each_with_index do |exp, i|
+          accept exp
 
-        if arg = block.args[i]?
-          create_yield_var arg, exp.type, new_vars, @last
+          if arg = block.args[i]?
+            create_yield_var arg, exp.type, new_vars, @last
+          end
         end
       end
 
@@ -1428,7 +1463,7 @@ module Crystal
         create_yield_var block.args[i], @mod.nil, new_vars, llvm_nil
       end
 
-      Phi.open(self, block) do |phi|
+      Phi.open(self, block, @needs_value) do |phi|
         with_cloned_context(block_context) do |old|
           context.vars = new_vars
 
@@ -1441,6 +1476,8 @@ module Crystal
           context.break_phi = old.return_phi
           context.next_phi = phi
           context.while_exit_block = nil
+
+          @needs_value = true
           accept block
         end
 
@@ -1460,7 +1497,7 @@ module Crystal
       catch_block = new_block "catch"
       node_ensure = node.ensure
 
-      Phi.open(self, node) do |phi|
+      Phi.open(self, node, @needs_value) do |phi|
         exception_handlers = (@exception_handlers ||= [] of Handler)
         exception_handlers << Handler.new(node, catch_block, context.vars)
         accept node.body
@@ -1626,9 +1663,11 @@ module Crystal
     def prepare_call_args(node, owner)
       has_out = false
       call_args = Array(LibLLVM::ValueRef).new(node.args.length + 1)
+      old_needs_value = @needs_value
 
       # First self.
       if (obj = node.obj) && obj.type.passed_as_self?
+        @needs_value = true
         accept obj
         call_args << @last
       elsif owner.passed_as_self?
@@ -1654,10 +1693,13 @@ module Crystal
             arg.raise "Bug: out argument was #{arg}"
           end
         else
+          @needs_value = true
           accept arg
           call_args << @last
         end
       end
+
+      @needs_value = old_needs_value
 
       {call_args, has_out}
     end
@@ -1676,7 +1718,9 @@ module Crystal
       Phi.open(self, node) do |phi|
         context.return_phi = phi
 
-        accept target_def.body
+        request_value do
+          accept target_def.body
+        end
 
         unless block.breaks?
           phi.add @last, target_def.body.type?
@@ -1686,10 +1730,12 @@ module Crystal
 
     def codegen_dispatch(node, target_defs)
       new_vars = context.vars.dup
+      old_needs_value = @needs_value
 
       # Get type_id of obj or owner
       if node_obj = node.obj
         owner = node_obj.type
+        @needs_value = true
         accept node_obj
         obj_type_id = @last
       else
@@ -1705,6 +1751,7 @@ module Crystal
 
       # Get type if of args and create arg vars
       arg_type_ids = node.args.map_with_index do |arg, i|
+        @needs_value = true
         accept arg
         new_vars["%arg#{i}"] = LLVMVar.new(@last, arg.type, true)
         type_id(@last, arg.type)
@@ -1717,7 +1764,7 @@ module Crystal
       with_cloned_context do
         context.vars = new_vars
 
-        Phi.open(self, node) do |phi|
+        Phi.open(self, node, old_needs_value) do |phi|
           # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
           target_defs.each do |a_def|
             result = match_type_id(owner, a_def.owner.not_nil!, obj_type_id)
@@ -1749,6 +1796,8 @@ module Crystal
           unreachable
         end
       end
+
+      @needs_value = old_needs_value
     end
 
     def codegen_call(node, target_def, self_type, call_args)
@@ -1786,9 +1835,13 @@ module Crystal
       when .no_return?
         unreachable
       when .passed_by_value?
-        union = alloca llvm_type(type)
-        store @last, union
-        @last = union
+        if @needs_value
+          union = alloca llvm_type(type)
+          store @last, union
+          @last = union
+        else
+          @last = llvm_nil
+        end
       end
 
       @last
@@ -1854,6 +1907,7 @@ module Crystal
       old_exception_handlers = @exception_handlers
       old_trampoline_wrappes = @trampoline_wrappers
       old_llvm_mod = @llvm_mod
+      old_needs_value = @needs_value
 
       with_cloned_context do
         context.type = self_type
@@ -1864,6 +1918,7 @@ module Crystal
 
         @trampoline_wrappers = nil
         @exception_handlers = nil
+        @needs_value = true
 
         args = codegen_fun_signature(mangled_name, target_def, self_type, is_closure)
 
@@ -1898,6 +1953,7 @@ module Crystal
         @trampoline_wrappers = old_trampoline_wrappes
         @entry_block = old_entry_block
         @alloca_block = old_alloca_block
+        @needs_value = old_needs_value
 
         context.fun
       end
@@ -2168,7 +2224,9 @@ module Crystal
     end
 
     def downcast(value, to_type, from_type : Type, already_loaded)
-      value = to_lhs(value, from_type) unless already_loaded
+      unless already_loaded
+        value = to_lhs(value, from_type)
+      end
       if from_type != to_type
         value = downcast_distinct value, to_type, from_type
       end
@@ -2749,14 +2807,14 @@ module Crystal
       getter count
       getter exit_block
 
-      def self.open(codegen, node)
-        block = new codegen, node
+      def self.open(codegen, node, needs_value = true)
+        block = new codegen, node, needs_value
         yield block
         block.close
       end
 
-      def initialize(@codegen, @node)
-        @phi_table = LLVM::PhiTable.new
+      def initialize(@codegen, @node, @needs_value)
+        @phi_table = @needs_value ? LLVM::PhiTable.new : nil
         @exit_block = @codegen.new_block "exit"
         @count = 0
       end
@@ -2778,9 +2836,11 @@ module Crystal
       end
 
       def add(value, type : Type)
-        unless node.type.void?
-          value = @codegen.upcast value, node.type, type
-          @phi_table.add insert_block, value
+        if @needs_value
+          unless node.type.void?
+            value = @codegen.upcast value, node.type, type
+            @phi_table.not_nil!.add insert_block, value
+          end
         end
         @count += 1
         br exit_block
@@ -2793,11 +2853,16 @@ module Crystal
         else
           if @count == 0
             unreachable
-          elsif @phi_table.empty?
-            # All branches are void or no return
-            @codegen.last = llvm_nil
+          elsif @needs_value
+            phi_table = @phi_table.not_nil!
+            if phi_table.empty?
+              # All branches are void or no return
+              @codegen.last = llvm_nil
+            else
+              @codegen.last = phi llvm_arg_type(@node.type), phi_table
+            end
           else
-            @codegen.last = phi llvm_arg_type(@node.type), @phi_table
+            @codegen.last = llvm_nil
           end
         end
         @codegen.last
@@ -2814,6 +2879,16 @@ module Crystal
       value = yield old_context
       @context = old_context
       value
+    end
+
+    def request_value(request = true)
+      old_needs_value = @needs_value
+      @needs_value = request
+      begin
+        yield
+      ensure
+        @needs_value = old_needs_value
+      end
     end
 
     def accept(node)
