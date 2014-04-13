@@ -886,10 +886,12 @@ module Crystal
       @vars = cond_vars.dup
       @unreachable = false
 
-      # If we have something like 'a && b' or 'a || b', which
-      # are transformed to an If in Normalizer, we don't need
-      # type filters in the else block (we can't deduce anything).
-      unless node.cond.is_a?(If)
+      # The only cases where we can deduce something for the 'else'
+      # block is when the condition is a Var (in the else it must be
+      # nil), IsA (in the else it's not that type) or RespondsTo
+      # (in the else it doesn't respond to that message).
+      case node.cond
+      when Var, IsA, RespondsTo
         filter_vars cond_type_filters, &.not
       end
 
