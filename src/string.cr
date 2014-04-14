@@ -250,6 +250,44 @@ class String
     end
   end
 
+  def tr(from : String, to : String)
+    multi = {} of Char => Char
+    table = Array.new(256, -1)
+    reader = CharReader.new(to)
+    char = reader.current_char
+    next_char = reader.next_char
+    from.each_char do |ch|
+      if ch.ord >= 256
+        multi[ch] = char
+      else
+        table[ch.ord] = char.ord
+      end
+      if next_char != Char::ZERO
+        char = next_char
+        reader.next_char
+        next_char = reader.current_char
+      end
+    end
+
+    String.new_from_buffer(length) do |buffer|
+      each_char do |ch|
+        if ch.ord < 256
+          if (a = table[ch.ord]) >= 0
+            buffer << a.chr
+          else
+            buffer << ch
+          end
+        else
+          if a = multi[ch]?
+            buffer << a
+          else
+            buffer << ch
+          end
+        end
+      end
+    end
+  end
+
   def replace(char : Char, replacement : String)
     if includes?(char)
       replace { |my_char| char == my_char ? replacement : nil }

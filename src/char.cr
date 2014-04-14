@@ -1,4 +1,6 @@
 struct Char
+  ZERO = '\0'
+
   def ==(other : Int)
     ord == other
   end
