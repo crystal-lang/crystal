@@ -1487,7 +1487,7 @@ module Crystal
           context.while_exit_block = nil
 
           @needs_value = true
-          accept block
+          accept block.body
         end
 
         phi.add_last @last, block.body.type?
