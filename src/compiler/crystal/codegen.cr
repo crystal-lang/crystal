@@ -1073,17 +1073,17 @@ module Crystal
       end
 
       Phi.open(self, node, @needs_value) do |phi|
-        codegen_if_branch phi, node.then, then_block
-        codegen_if_branch phi, node.else, else_block
+        codegen_if_branch phi, node.then, then_block, false
+        codegen_if_branch phi, node.else, else_block, true
       end
 
       false
     end
 
-    def codegen_if_branch(phi, node, branch_block)
+    def codegen_if_branch(phi, node, branch_block, last)
       position_at_end branch_block
       accept node
-      phi.add @last, node.type?
+      phi.add @last, node.type?, last
     end
 
     def visit(node : While)
@@ -1490,7 +1490,7 @@ module Crystal
           accept block
         end
 
-        phi.add @last, block.body.type?
+        phi.add_last @last, block.body.type?
       end
 
       false
@@ -1740,7 +1740,7 @@ module Crystal
         end
 
         unless block.breaks?
-          phi.add @last, target_def.body.type?
+          phi.add_last @last, target_def.body.type?
         end
       end
     end
@@ -2832,8 +2832,11 @@ module Crystal
 
       def initialize(@codegen, @node, @needs_value)
         @phi_table = @needs_value ? LLVM::PhiTable.new : nil
-        @exit_block = @codegen.new_block "exit"
         @count = 0
+      end
+
+      def exit_block
+        @exit_block ||= @codegen.new_block "exit"
       end
 
       def builder
@@ -2844,15 +2847,19 @@ module Crystal
         @codegen.llvm_typer
       end
 
-      def add(value, type : Nil)
+      def add_last(value, type)
+        add value, type, true
+      end
+
+      def add(value, type : Nil, last = false)
         unreachable
       end
 
-      def add(value, type : NoReturnType)
+      def add(value, type : NoReturnType, last = false)
         unreachable
       end
 
-      def add(value, type : Type)
+      def add(value, type : Type, last = false)
         if @needs_value
           unless node.type.void?
             value = @codegen.upcast value, node.type, type
@@ -2860,11 +2867,17 @@ module Crystal
           end
         end
         @count += 1
-        br exit_block
+        if last && @count == 1
+          # Don't create exit block for just one value
+        else
+          br exit_block
+        end
       end
 
       def close
-        position_at_end exit_block
+        if @exit_block
+          position_at_end exit_block
+        end
         if node.returns? || node.no_returns?
           unreachable
         else
@@ -2876,7 +2889,11 @@ module Crystal
               # All branches are void or no return
               @codegen.last = llvm_nil
             else
-              @codegen.last = phi llvm_arg_type(@node.type), phi_table
+              if @exit_block
+                @codegen.last = phi llvm_arg_type(@node.type), phi_table
+              else
+                @codegen.last = phi_table.values.first
+              end
             end
           else
             @codegen.last = llvm_nil
