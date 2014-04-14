@@ -251,13 +251,15 @@ class String
   end
 
   def tr(from : String, to : String)
-    multi = {} of Char => Char
-    table = Array.new(256, -1)
+    multi = nil
+    table :: Int32[256]
+    256.times { |i| table[i] = -1 }
     reader = CharReader.new(to)
     char = reader.current_char
     next_char = reader.next_char
     from.each_char do |ch|
       if ch.ord >= 256
+        multi ||= {} of Char => Char
         multi[ch] = char
       else
         table[ch.ord] = char.ord
@@ -278,7 +280,7 @@ class String
             buffer << ch
           end
         else
-          if a = multi[ch]?
+          if a = multi.try &.[ch]?
             buffer << a
           else
             buffer << ch
