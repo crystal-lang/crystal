@@ -1497,7 +1497,7 @@ module Crystal
     end
 
     def create_yield_var(arg, exp_type, vars, value)
-      copy = alloca llvm_type(arg.type), "block_#{arg.name}"
+      copy = alloca llvm_type(arg.type), arg.name
       assign copy, arg.type, exp_type, value
       vars[arg.name] = LLVMVar.new(copy, arg.type)
     end
