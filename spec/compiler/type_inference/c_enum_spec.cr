@@ -31,8 +31,8 @@ describe "Type inference: enum" do
       end
 
       f = C::Bar.new
-      f->x = C::Foo::A
-      f->x
+      f.x = C::Foo::A
+      f.x
     ") { int32 }
   end
 end

@@ -527,7 +527,7 @@ module Crystal
     end
 
     def codegen_primitive_struct_new(node, target_def, call_args)
-      allocate_aggregate (node.type as PointerInstanceType).element_type
+      allocate_aggregate node.type
     end
 
     def codegen_primitive_struct_set(node, target_def, call_args)
@@ -549,7 +549,7 @@ module Crystal
     end
 
     def codegen_primitive_union_new(node, target_def, call_args)
-      allocate_aggregate (node.type as PointerInstanceType).element_type
+      allocate_aggregate node.type
     end
 
     def codegen_primitive_union_set(node, target_def, call_args)
@@ -2658,7 +2658,7 @@ module Crystal
 
     def allocate_aggregate(type)
       struct_type = llvm_struct_type(type)
-      if type.struct?
+      if type.passed_by_value?
         @last = alloca struct_type
       else
         @last = malloc struct_type

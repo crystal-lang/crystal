@@ -10,31 +10,25 @@ describe "Type inference: c union" do
     bar.vars["y"].type.should eq(mod.float64)
   end
 
-  it "types Union declare" do
-    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; x :: Foo::Bar; x") do
+  it "types Union#new" do
+    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; Foo::Bar.new") do
       types["Foo"].types["Bar"]
     end
   end
 
-  it "types Union#new" do
-    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; Foo::Bar.new") do
-      pointer_of(types["Foo"].types["Bar"])
-    end
-  end
-
   it "types union setter" do
-    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; bar :: Foo::Bar; bar.x = 1") { int32 }
+    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; bar = Foo::Bar.new; bar.x = 1") { int32 }
   end
 
   it "types union getter" do
-    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; bar :: Foo::Bar; bar.x") { int32 }
+    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; bar = Foo::Bar.new; bar.x") { int32 }
   end
 
-  it "types union setter via new" do
-    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; bar = Foo::Bar.new; bar->x = 1") { int32 }
+  it "types union setter via pointer" do
+    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; bar = Pointer(Foo::Bar).malloc(1_u64); bar->x = 1") { int32 }
   end
 
-  it "types union getter" do
-    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; bar = Foo::Bar.new; bar->x") { int32 }
+  it "types union getter via pointer" do
+    assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; bar = Pointer(Foo::Bar).malloc(1_u64); bar->x") { int32 }
   end
 end

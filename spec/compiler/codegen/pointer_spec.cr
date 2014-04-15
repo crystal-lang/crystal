@@ -106,10 +106,10 @@ describe "Code gen: pointer" do
         end
       end
 
-      color = C::Color.new
+      color = Pointer(C::Color).malloc(1_u64)
       color->r = 10_u8
 
-      color2 = C::Color.new
+      color2 = Pointer(C::Color).malloc(1_u64)
       color2->r = 20_u8
 
       color.value = color2.value

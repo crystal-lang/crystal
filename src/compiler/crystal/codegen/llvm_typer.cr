@@ -215,7 +215,7 @@ module Crystal
 
     def create_llvm_struct_type(type : CUnionType)
       max_size = 0
-      max_type :: LibLLVM::TypeRef
+      max_type = nil
       type.vars.each do |name, var|
         var_type = var.type
         unless var_type.void?
@@ -228,7 +228,7 @@ module Crystal
         end
       end
 
-      LLVM.struct_type([max_type] of LibLLVM::TypeRef, type.llvm_name)
+      LLVM.struct_type([max_type.not_nil!] of LibLLVM::TypeRef, type.llvm_name)
     end
 
     def create_llvm_struct_type(type : Type)

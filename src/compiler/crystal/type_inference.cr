@@ -1159,13 +1159,13 @@ module Crystal
       when :float64_infinity
         node.type = @mod.float64
       when :struct_new
-        node.type = @mod.pointer_of(scope.instance_type)
+        node.type = scope.instance_type
       when :struct_set
         node.bind_to @vars["value"]
       when :struct_get
         visit_struct_get node
       when :union_new
-        node.type = @mod.pointer_of(scope.instance_type)
+        node.type = scope.instance_type
       when :union_set
         node.bind_to @vars["value"]
       when :union_get

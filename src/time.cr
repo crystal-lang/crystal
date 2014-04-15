@@ -74,7 +74,7 @@ class Time
   end
 
   # def self.at(year, month = 1, day = 1, hour = 0, minutes = 0, seconds = 0)
-  #   tm :: C::Tm
+  #   tm = C::Tm.new
   #   tm.year = year - 1900
   #   tm.mon = month - 1
   #   tm.mday = day

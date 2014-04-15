@@ -5,23 +5,23 @@ CodeGenStructString = "lib Foo; struct Bar; x : Int32; y : Float32; end; end"
 
 describe "Code gen: struct" do
   it "codegens struct property default value" do
-    run("#{CodeGenStructString}; bar = Foo::Bar.new; bar->x").to_i.should eq(0)
+    run("#{CodeGenStructString}; bar = Pointer(Foo::Bar).malloc(1_u64); bar->x").to_i.should eq(0)
   end
 
   it "codegens struct property setter" do
-    run("#{CodeGenStructString}; bar :: Foo::Bar; bar.y = 2.5_f32; bar.y").to_f32.should eq(2.5)
+    run("#{CodeGenStructString}; bar = Foo::Bar.new; bar.y = 2.5_f32; bar.y").to_f32.should eq(2.5)
   end
 
   it "codegens struct property setter via pointer" do
-    run("#{CodeGenStructString}; bar = Foo::Bar.new; bar.value.y = 2.5_f32; bar->y").to_f32.should eq(2.5)
+    run("#{CodeGenStructString}; bar = Pointer(Foo::Bar).malloc(1_u64); bar.value.y = 2.5_f32; bar->y").to_f32.should eq(2.5)
   end
 
-  it "codegens struct property setter via new" do
-    run("#{CodeGenStructString}; bar = Foo::Bar.new; bar->y = 2.5_f32; bar->y").to_f32.should eq(2.5)
+  it "codegens struct property setter via pointer" do
+    run("#{CodeGenStructString}; bar = Pointer(Foo::Bar).malloc(1_u64); bar->y = 2.5_f32; bar->y").to_f32.should eq(2.5)
   end
 
   it "codegens set struct value with constant" do
-    run("#{CodeGenStructString}; CONST = 1; bar :: Foo::Bar; bar.x = CONST; bar.x").to_i.should eq(1)
+    run("#{CodeGenStructString}; CONST = 1; bar = Foo::Bar.new; bar.x = CONST; bar.x").to_i.should eq(1)
   end
 
   it "codegens union inside struct" do
@@ -37,7 +37,7 @@ describe "Code gen: struct" do
         end
       end
 
-      a = Foo::Baz.new
+      a = Pointer(Foo::Baz).malloc(1_u64)
       a->lala->x = 10
       a->lala->x
       ").to_i.should eq(10)
@@ -56,7 +56,7 @@ describe "Code gen: struct" do
         end
       end
 
-      foo = C::Foo.new
+      foo = Pointer(C::Foo).malloc(1_u64)
       ((foo as Int32*) + 1_i64).value = 2
 
       foo->bar->y
@@ -76,10 +76,10 @@ describe "Code gen: struct" do
         end
       end
 
-      foo = C::Foo.new
+      foo = Pointer(C::Foo).malloc(1_u64)
       bar = C::Bar.new
-      bar->y = 2
-      foo->bar = bar.value
+      bar.y = 2
+      foo->bar = bar
 
       foo->bar->y
       ").to_i.should eq(2)
@@ -112,7 +112,7 @@ describe "Code gen: struct" do
         f
       end
 
-      f1 :: C::Foo
+      f1 = C::Foo.new
       f1.x = 1
 
       f2 = foo(f1)
@@ -134,7 +134,7 @@ describe "Code gen: struct" do
         f
       end
 
-      f1 :: C::Foo
+      f1 = C::Foo.new
       f1.x = 1
 
       f2 = foo(f1)
@@ -158,7 +158,7 @@ describe "Code gen: struct" do
         end
       end
 
-      e = C::Event.new
+      e = Pointer(C::Event).malloc(1_u64)
       e->data.scalar.x
       ").to_i.should eq(0)
   end
@@ -180,7 +180,7 @@ describe "Code gen: struct" do
       end
 
       def foo
-        e = C::Event.new
+        e = Pointer(C::Event).malloc(1_u64)
         yield e->data
       end
 
@@ -199,7 +199,7 @@ describe "Code gen: struct" do
         end
       end
 
-      f = Foo::Bar.new
+      f = Pointer(Foo::Bar).malloc(1_u64)
       pointerof(f->y).value = 1
       f->y
       ").to_i.should eq(1)
@@ -213,7 +213,7 @@ describe "Code gen: struct" do
         end
       end
 
-      x :: Foo::Coco
+      x = Foo::Coco.new
       c = x || 0
       c.is_a?(Foo::Coco)
     ").to_b.should be_true
@@ -227,11 +227,11 @@ describe "Code gen: struct" do
         end
       end
 
-      fun foo(x : C::Foo*) :: Int32
+      fun foo(x : C::Foo*) : Int32
         x->a
       end
 
-      f :: C::Foo
+      f = C::Foo.new
       f.a = 1
 
       foo pointerof(f)

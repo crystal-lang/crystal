@@ -30,38 +30,38 @@ class YamlParser
     @anchors = {} of String => YamlType
 
     next_event
-    raise "Expected STREAM_START" unless @event->type == LibYaml::EventType::STREAM_START
+    raise "Expected STREAM_START" unless @event.type == LibYaml::EventType::STREAM_START
   end
 
   def close
     LibYaml.yaml_parser_delete(@parser)
-    LibYaml.yaml_event_delete(@event)
+    LibYaml.yaml_event_delete(pointerof(@event))
   end
 
   def parse_all
     documents = [] of YamlType
     loop do
       next_event
-      case @event->type
+      case @event.type
       when LibYaml::EventType::STREAM_END
         return documents
       when LibYaml::EventType::DOCUMENT_START
         documents << parse_document
       else
-        raise "Unexpected event: #{@event->type}"
+        raise "Unexpected event: #{@event.type}"
       end
     end
   end
 
   def parse
     next_event
-    case @event->type
+    case @event.type
     when LibYaml::EventType::STREAM_END
       nil
     when LibYaml::EventType::DOCUMENT_START
       parse_document
     else
-      raise "Unexpected event: #{@event->type}"
+      raise "Unexpected event: #{@event.type}"
     end
   end
 
@@ -69,24 +69,26 @@ class YamlParser
     next_event
     value = parse_node
     next_event
-    raise "Expected DOCUMENT_END" unless @event->type == LibYaml::EventType::DOCUMENT_END
+    raise "Expected DOCUMENT_END" unless @event.type == LibYaml::EventType::DOCUMENT_END
     value
   end
 
   def parse_node
-    case @event->type
+    event = pointerof(@event)
+    case event->type
     when LibYaml::EventType::SCALAR
-      String.new(@event->data->scalar->value).tap do |scalar|
+      String.new(event->data->scalar->value).tap do |scalar|
         anchor scalar, &.scalar
       end
     when LibYaml::EventType::ALIAS
-      @anchors[String.new(@event->data->alias->anchor)]
+      event = pointerof(@event)
+      @anchors[String.new(event->data->alias->anchor)]
     when LibYaml::EventType::SEQUENCE_START
       parse_sequence
     when LibYaml::EventType::MAPPING_START
       parse_mapping
     else
-      raise "Unexpected event #{event_to_s(@event->type)}"
+      raise "Unexpected event #{event_to_s(event->type)}"
     end
   end
 
@@ -96,7 +98,7 @@ class YamlParser
 
     loop do
       next_event
-      case @event->type
+      case @event.type
       when LibYaml::EventType::SEQUENCE_END
         return sequence
       else
@@ -109,7 +111,7 @@ class YamlParser
     mapping = {} of YamlType => YamlType
     loop do
       next_event
-      case @event->type
+      case @event.type
       when LibYaml::EventType::MAPPING_END
         return mapping
       else
@@ -122,7 +124,7 @@ class YamlParser
   end
 
   def anchor(value)
-    anchor = yield(@event->data).anchor
+    anchor = yield(@event.data).anchor
     @anchors[String.new(anchor)] = value if anchor
   end
 
@@ -143,8 +145,8 @@ class YamlParser
   end
 
   def next_event
-    LibYaml.yaml_event_delete(@event)
-    LibYaml.yaml_parser_parse(@parser, @event)
+    LibYaml.yaml_event_delete(pointerof(@event))
+    LibYaml.yaml_parser_parse(@parser, pointerof(@event))
   end
 end
 
