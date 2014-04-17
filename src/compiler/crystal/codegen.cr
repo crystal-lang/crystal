@@ -1448,38 +1448,37 @@ module Crystal
 
     def visit(node : Yield)
       block_context = context.block_context.not_nil!
-      new_vars = block_context.vars.dup
       block = context.block
+
+      old_scope = block_context.vars["%scope"]?
 
       if node_scope = node.scope
         accept node_scope
-        new_vars["%scope"] = LLVMVar.new(@last, node_scope.type)
+        block_context.vars["%scope"] = LLVMVar.new(@last, node_scope.type)
       end
 
-      # First accept all yield expressions
+      # First accept all yield expressions and assign them to block vars
       request_value do
         node.exps.each_with_index do |exp, i|
           accept exp
 
           if arg = block.args[i]?
-            create_yield_var arg, exp.type, new_vars, @last
+            block_var = block_context.vars[arg.name]
+            assign block_var.pointer, block_var.type, exp.type, @last
           end
         end
       end
 
       # Then assign nil to remaining block args
       node.exps.length.upto(block.args.length - 1) do |i|
-        create_yield_var block.args[i], @mod.nil, new_vars, llvm_nil
+        arg = block.args[i]
+        block_var = block_context.vars[arg.name]
+        assign block_var.pointer, block_var.type, @mod.nil, llvm_nil
       end
 
       Phi.open(self, block, @needs_value) do |phi|
         with_cloned_context(block_context) do |old|
-          context.vars = new_vars
-
-          # Declare block args
-          alloca_vars block.before_vars, block
-
-          # And reset those that are declared inside the block and are nilable.
+          # Reset those vars that are declared inside the block and are nilable.
           reset_block_vars block
 
           context.break_phi = old.return_phi
@@ -1493,13 +1492,11 @@ module Crystal
         phi.add_last @last, block.body.type?
       end
 
-      false
-    end
+      if old_scope
+        block_context.vars["%scope"] = old_scope
+      end
 
-    def create_yield_var(arg, exp_type, vars, value)
-      copy = alloca llvm_type(arg.type), arg.name
-      assign copy, arg.type, exp_type, value
-      vars[arg.name] = LLVMVar.new(copy, arg.type)
+      false
     end
 
     def visit(node : ExceptionHandler)
@@ -1648,9 +1645,7 @@ module Crystal
       return if node.args.any?(&.yields?) && block_breaks?
 
       if block = node.block
-        with_cloned_context do |old_context|
-          codegen_call_with_block(node, block, owner, call_args, old_context)
-        end
+        codegen_call_with_block(node, block, owner, call_args)
       else
         codegen_call(node, node.target_def, owner, call_args)
       end
@@ -1721,26 +1716,37 @@ module Crystal
       {call_args, has_out}
     end
 
-    def codegen_call_with_block(node, block, self_type, call_args, old_context)
-      context.block = block
-      context.block_context = old_context
-      context.vars = {} of String => LLVMVar
-      context.type = self_type
+    def codegen_call_with_block(node, block, self_type, call_args)
+      with_cloned_context do |old_block_context|
+        context.vars = old_block_context.vars.dup
 
-      target_def = node.target_def
+        # Allocate block vars, but first undefine variables outside
+        # the block with the same name
+        undef_vars block.before_vars, block
+        alloca_vars block.before_vars, block
 
-      alloca_vars target_def.vars, target_def
-      create_local_copy_of_block_args(target_def, self_type, call_args)
+        with_cloned_context do |old_context|
+          context.block = block
+          context.block_context = old_context
+          context.vars = {} of String => LLVMVar
+          context.type = self_type
 
-      Phi.open(self, node) do |phi|
-        context.return_phi = phi
+          target_def = node.target_def
 
-        request_value do
-          accept target_def.body
-        end
+          alloca_vars target_def.vars, target_def
+          create_local_copy_of_block_args(target_def, self_type, call_args)
 
-        unless block.breaks?
-          phi.add_last @last, target_def.body.type?
+          Phi.open(self, node) do |phi|
+            context.return_phi = phi
+
+            request_value do
+              accept target_def.body
+            end
+
+            unless block.breaks?
+              phi.add_last @last, target_def.body.type?
+            end
+          end
         end
       end
     end
@@ -2588,6 +2594,14 @@ module Crystal
           context.closure_type = nil
           context.closure_ptr = nil
         end
+      end
+    end
+
+    def undef_vars(vars, obj)
+      return unless vars
+
+      vars.each do |name, var|
+        context.vars.delete(name) if var.belongs_to?(obj)
       end
     end
 
