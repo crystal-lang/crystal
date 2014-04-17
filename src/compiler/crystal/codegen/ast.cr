@@ -166,7 +166,7 @@ module Crystal
 
   class Def
     def mangled_name(self_type)
-      String.build do |str|
+      name = String.build do |str|
         str << "*"
 
         if owner = @owner
@@ -200,6 +200,23 @@ module Crystal
           return_type.append_llvm_name(str)
         end
       end
+
+      # Windows only allows alphanumeric, dot, dollar and underscore
+      # for mangled names.
+      ifdef windows
+        name = name.replace do |char|
+          case char
+          when '<', '>', '(', ')', '*', ':', ',', '#', ' '
+            "."
+          when '+'
+            ".."
+          else
+            nil
+          end
+        end
+      end
+
+      name
     end
 
     def varargs
