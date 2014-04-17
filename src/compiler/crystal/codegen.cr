@@ -180,8 +180,15 @@ module Crystal
     def finish
       codegen_return @main_ret_type
 
-      br_block_chain [@alloca_block, @const_block_entry]
-      br_block_chain [@const_block, @entry_block]
+      # If there are no instructions in the alloca block and the
+      # const block, we just removed them (less noise)
+      if LLVM.first_instruction(@alloca_block) || LLVM.first_instruction(@const_block_entry)
+        br_block_chain [@alloca_block, @const_block_entry]
+        br_block_chain [@const_block, @entry_block]
+      else
+        LLVM.delete_basic_block(@alloca_block)
+        LLVM.delete_basic_block(@const_block_entry)
+      end
 
       env_dump = ENV["DUMP"]
       case env_dump
