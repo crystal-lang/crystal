@@ -497,7 +497,9 @@ module Crystal
     def codegen_primitive_pointer_malloc(node, target_def, call_args)
       type = node.type as PointerInstanceType
       llvm_type = llvm_embedded_type(type.element_type)
-      array_malloc(llvm_type, call_args[1])
+      last = array_malloc(llvm_type, call_args[1])
+      memset last, int8(0), size_of(llvm_type)
+      last
     end
 
     def codegen_primitive_pointer_set(node, target_def, call_args)
