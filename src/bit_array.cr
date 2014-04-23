@@ -6,22 +6,16 @@ class BitArray
   end
 
   def [](index)
-    index += @length if index < 0
-    raise IndexOutOfBounds.new if index >= @length || index < 0
-
-    bit_index, sub_index = index.divmod(32)
+    bit_index, sub_index = bit_index_and_sub_index(index)
     (@bits[bit_index] & (1 << sub_index)) > 0
   end
 
   def []=(index, value : Bool)
-    index += @length if index < 0
-    raise IndexOutOfBounds.new if index >= @length || index < 0
-
-    bit_index, sub_index = index.divmod(32)
+    bit_index, sub_index = bit_index_and_sub_index(index)
     if value
       @bits[bit_index] |= 1 << sub_index
     else
-      @bits[bit_index] &= (UInt32::MAX - (1 << sub_index))
+      @bits[bit_index] &= ~(1 << sub_index)
     end
   end
 
@@ -43,5 +37,14 @@ class BitArray
       end
       str << "]"
     end
+  end
+
+  # private
+
+  def bit_index_and_sub_index(index)
+    index += @length if index < 0
+    raise IndexOutOfBounds.new if index >= @length || index < 0
+
+    index.divmod(32)
   end
 end

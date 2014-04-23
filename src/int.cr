@@ -7,6 +7,10 @@ struct Int
     self
   end
 
+  def ~
+    self ^ -1
+  end
+
   def abs
     self >= 0 ? self : -self
   end

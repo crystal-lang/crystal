@@ -72,4 +72,9 @@ describe "Int" do
   describe "divmod" do
     assert { 5.divmod(3).should eq({1, 2}) }
   end
+
+  describe "~" do
+    assert { (~1).should eq(-2) }
+    assert { (~1_u32).should eq(4294967294) }
+  end
 end
