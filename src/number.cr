@@ -19,6 +19,10 @@ struct Number
     self < 0 ? -self : self
   end
 
+  def divmod(number)
+    {self / number, self % number}
+  end
+
   def <=>(other)
     self > other ? 1 : (self < other ? -1 : 0)
   end

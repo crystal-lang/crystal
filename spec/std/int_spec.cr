@@ -68,4 +68,8 @@ describe "Int" do
     assert { 5.bit(2).should eq(1) }
     assert { 5.bit(3).should eq(0) }
   end
+
+  describe "divmod" do
+    assert { 5.divmod(3).should eq({1, 2}) }
+  end
 end
