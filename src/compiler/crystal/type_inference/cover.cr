@@ -1,3 +1,5 @@
+require "bit_array"
+
 module Crystal
   class Cover
     getter :arg_types
@@ -30,7 +32,7 @@ module Crystal
 
     def compute_cover
       unless @cover
-        cover = @cover = Array(Bool).new(cover_length, false)
+        cover = @cover = BitArray.new(cover_length)
         cover_arg_types = @cover_arg_types = @arg_types.map(&.cover)
         @matches.each { |match| mark_cover(match, cover, cover_arg_types) } if @matches
       end
@@ -39,16 +41,18 @@ module Crystal
     def compute_fast_cover
       unless @cover
         # Check which arg indices of the matches have types or type restrictions
-        indices = @indices = Array(Bool).new(@arg_types.length, false)
+        indices = @indices = BitArray.new(@arg_types.length)
         @matches.each do |match|
           match.def.args.each_with_index do |arg, i|
-            indices[i] ||= !!(arg.type? || arg.restriction)
+            if arg.type? || arg.restriction
+              indices[i] = true
+            end
           end
         end
 
-        cover = @cover = Array(Bool).new(cover_length(indices), false)
+        cover = @cover = BitArray.new(cover_length(indices))
         cover_arg_types = @cover_arg_types = @arg_types.map_with_index do |arg_type, i|
-          indices[i]? ? arg_type.cover : nil
+          indices[i] ? arg_type.cover : nil
         end
 
         @matches.each { |match| mark_cover(match, cover, cover_arg_types, indices) } if @matches
@@ -64,7 +68,7 @@ module Crystal
     def cover_length(indices)
       i = 0
       @arg_types.inject(1) do |num, type|
-        if indices[i]?
+        if indices[i]
           val = num * type.cover_length
         else
           val = num
@@ -109,7 +113,7 @@ module Crystal
 
     def add_missing(missing, cover, cover_arg_types, types = [] of Type, index = 0, position = 0, multiplier = 1)
       if index == cover_arg_types.length
-        unless cover[position]?
+        unless cover[position]
           missing.push types.dup
         end
         return
