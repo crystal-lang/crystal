@@ -256,4 +256,21 @@ describe "Code gen: class" do
       Reference.to_s
       )).to_string.should eq("Reference")
   end
+
+  it "allows fixing an instance variable's type" do
+    run(%(
+      class Foo
+        @x :: Bool
+
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(true).x
+      )).to_b.should be_true
+  end
 end

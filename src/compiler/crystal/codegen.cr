@@ -1268,7 +1268,9 @@ module Crystal
         llvm_var = declare_var var
         @last = llvm_var.pointer
       when InstanceVar
-        var.accept self
+        if context.type.is_a?(InstanceVarContainer)
+          var.accept self
+        end
       end
       false
     end
