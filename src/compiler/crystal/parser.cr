@@ -666,6 +666,8 @@ module Crystal
         parse_string
       when :STRING_ARRAY_START
         parse_string_array
+      when :SYMBOL_ARRAY_START
+        parse_symbol_array
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :REGEX
@@ -1227,19 +1229,27 @@ module Crystal
     end
 
     def parse_string_array
+      parse_string_or_symbol_array StringLiteral
+    end
+
+    def parse_symbol_array
+      parse_string_or_symbol_array SymbolLiteral
+    end
+
+    def parse_string_or_symbol_array(klass)
       strings = [] of ASTNode
 
       next_string_array_token
       while true
         case @token.type
         when :STRING
-          strings << StringLiteral.new(@token.value.to_s)
+          strings << klass.new(@token.value.to_s)
           next_string_array_token
         when :STRING_ARRAY_END
           next_token
           break
         when :EOF
-          raise "Unterminated string array literal"
+          raise "Unterminated symbol array literal"
         end
       end
 
@@ -2095,7 +2105,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->"
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->"
         # Nothing
       else
         return nil

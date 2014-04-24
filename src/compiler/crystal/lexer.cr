@@ -295,6 +295,13 @@ module Crystal
           else
             @token.type = :"%"
           end
+        when 'i'
+          if peek_next_char == '('
+            next_char
+            next_char :SYMBOL_ARRAY_START
+          else
+            @token.type = :"%"
+          end
         else
           @token.type = :"%"
         end

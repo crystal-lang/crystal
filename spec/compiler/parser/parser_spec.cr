@@ -498,6 +498,7 @@ describe "Parser" do
   it_parses "A = 1", Assign.new("A".path, 1.int32)
 
   it_parses "puts %w(one two)", Call.new(nil, "puts", [(["one".string, "two".string] of ASTNode).array] of ASTNode)
+  it_parses "puts %i(one two)", Call.new(nil, "puts", [(["one".symbol, "two".symbol] of ASTNode).array] of ASTNode)
 
   it_parses "[] of Int", ([] of ASTNode).array_of("Int".path)
   it_parses "[1, 2] of Int", ([1.int32, 2.int32] of ASTNode).array_of("Int".path)
