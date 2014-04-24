@@ -1456,11 +1456,6 @@ module Crystal
       var.type.primitive_like?
     end
 
-    def append_to_s(str)
-      var.type.append_to_s(str)
-      str << "*"
-    end
-
     def type_desc
       "struct"
     end
@@ -1495,13 +1490,6 @@ module Crystal
 
     def reference_like?
       false
-    end
-
-    def append_to_s(str)
-      var.type.append_to_s(str)
-      str << "["
-      size.append_to_s(str)
-      str << "]"
     end
   end
 

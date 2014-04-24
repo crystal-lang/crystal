@@ -24,7 +24,7 @@ describe "Type inference: cast" do
       a = 1
       pointerof(a) as Foo
       ",
-      "can't cast Int32* to Foo(T)"
+      "can't cast Pointer(Int32) to Foo(T)"
   end
 
   it "casts from union to compatible union" do
