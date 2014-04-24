@@ -1,73 +1,73 @@
 require "bit_array"
 
 module Crystal
-  class Cover
+  struct Cover
     getter :arg_types
     getter :matches
 
+    def self.create(arg_types, matches)
+      case matches.length
+      when 0
+        false
+      when 1
+        matches[0].arg_types == arg_types
+      else
+        Cover.new(arg_types, matches)
+      end
+    end
+
     def initialize(@arg_types, @matches)
-      @arg_types = arg_types
-      @matches = matches
     end
 
     def all?
-      if @matches.length == 1
-        return @matches[0].arg_types == @arg_types
-      end
-
-      compute_fast_cover
-      @cover.not_nil!.all?
+      compute_fast_cover.all?
     end
 
     def missing
-      @cover = nil
-      compute_cover
+      cover, cover_arg_types = compute_cover
 
       missing = [] of Array(Type)
-      add_missing missing, @cover.not_nil!, @cover_arg_types.not_nil!
+      add_missing missing, cover, cover_arg_types
       missing
     end
 
     # private
 
     def compute_cover
-      unless @cover
-        cover = @cover = BitArray.new(cover_length)
-        cover_arg_types = @cover_arg_types = @arg_types.map(&.cover)
-        @matches.each { |match| mark_cover(match, cover, cover_arg_types) } if @matches
-      end
+      cover = BitArray.new(cover_length)
+      cover_arg_types = arg_types.map(&.cover)
+      matches.each { |match| mark_cover(match, cover, cover_arg_types) }
+      {cover, cover_arg_types}
     end
 
     def compute_fast_cover
-      unless @cover
-        # Check which arg indices of the matches have types or type restrictions
-        indices = @indices = BitArray.new(@arg_types.length)
-        @matches.each do |match|
-          match.def.args.each_with_index do |arg, i|
-            if arg.type? || arg.restriction
-              indices[i] = true
-            end
+      # Check which arg indices of the matches have types or type restrictions
+      indices = BitArray.new(arg_types.length)
+      matches.each do |match|
+        match.def.args.each_with_index do |arg, i|
+          if arg.type? || arg.restriction
+            indices[i] = true
           end
         end
-
-        cover = @cover = BitArray.new(cover_length(indices))
-        cover_arg_types = @cover_arg_types = @arg_types.map_with_index do |arg_type, i|
-          indices[i] ? arg_type.cover : nil
-        end
-
-        @matches.each { |match| mark_cover(match, cover, cover_arg_types, indices) } if @matches
       end
+
+      cover = BitArray.new(cover_length(indices))
+      cover_arg_types = arg_types.map_with_index do |arg_type, i|
+        indices[i] ? arg_type.cover : nil
+      end
+      matches.each { |match| mark_cover(match, cover, cover_arg_types, indices) }
+      cover
     end
 
     def cover_length
-      @arg_types.inject(1) do |num, type|
+      arg_types.inject(1) do |num, type|
         num * type.cover_length
       end
     end
 
     def cover_length(indices)
       i = 0
-      @arg_types.inject(1) do |num, type|
+      arg_types.inject(1) do |num, type|
         if indices[i]
           val = num * type.cover_length
         else

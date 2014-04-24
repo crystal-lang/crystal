@@ -441,7 +441,7 @@ module Crystal
         end
       end
 
-      Matches.new(matches_array, Cover.new(arg_types, matches_array), owner)
+      Matches.new(matches_array, Cover.create(arg_types, matches_array), owner)
     end
 
     def lookup_matches_with_modules(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
