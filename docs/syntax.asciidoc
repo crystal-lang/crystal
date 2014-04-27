@@ -53,6 +53,7 @@ false
 "hello world"
 "escapes: \n \t \\ \" etc.'
 "octals: \123 \12 \8"
+"hex: \x12"
 "interpolation also allowed: 1 + 2 = #{1 + 2}"
 %(this is also a string (supports nested parenthesis) as well as "quotes")
 
@@ -81,6 +82,9 @@ false
 
 # Regular expressions
 /foo\s+bar/
+
+# Tuples
+{1, 'a', "hello"}
 -------------
 
 === Assignments and variables ===
@@ -94,10 +98,6 @@ age = 1
 -------------
 
 Their type is inferred from their usage, not only from their initializer.
-
-However, the source code is first transformed to a kind of http://en.wikipedia.org/wiki/Static_single_assignment_form[Single Static Assignment form (SSA)]. What this means is that
-reassigning a variable outside an `if`, `unless`, `while` or a block introduces a new
-variable with a new type. More on this later.
 
 === Conditionals ===
 
