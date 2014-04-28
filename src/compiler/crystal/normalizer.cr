@@ -79,6 +79,8 @@ module Crystal
       left = node.left
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
                If.new(left, node.right, left.clone)
+             elsif left.is_a?(Assign) && left.target.is_a?(Var)
+               If.new(left, node.right, left.target.clone)
              else
                temp_var = new_temp_var
                If.new(Assign.new(temp_var.clone, left), node.right, temp_var.clone)
@@ -105,6 +107,8 @@ module Crystal
       left = node.left
       new_node = if left.is_a?(Var)
                    If.new(left, left.clone, node.right)
+                 elsif left.is_a?(Assign) && left.target.is_a?(Var)
+                   If.new(left, left.target.clone, node.right)
                  else
                    temp_var = new_temp_var
                    If.new(Assign.new(temp_var.clone, left), temp_var.clone, node.right)
@@ -636,6 +640,7 @@ module Crystal
       getter value
 
       def initialize(@program)
+        @value = false
       end
 
       def visit(node : ASTNode)

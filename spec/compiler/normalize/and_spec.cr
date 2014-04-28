@@ -17,4 +17,8 @@ describe "Normalize: and" do
   it "normalizes and with is_a? on exp" do
     assert_normalize "a = 1; 1.is_a?(Foo) && b", "a = 1\nif #temp_1 = 1.is_a?(Foo)\n  b()\nelse\n  #temp_1\nend"
   end
+
+  it "normalizes and with assignment" do
+    assert_normalize "(a = 1) && b", "if a = 1\n  b()\nelse\n  a\nend"
+  end
 end
