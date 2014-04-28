@@ -1,2 +1,3 @@
 name: Crystal Programming Language
 pygments: true
+markdown: kramdown
