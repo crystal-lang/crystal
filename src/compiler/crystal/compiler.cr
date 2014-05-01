@@ -391,7 +391,7 @@ module Crystal
         end
 
         if must_compile
-          system "mv #{bc_name_new} #{bc_name}"
+          File.rename(bc_name_new, bc_name)
           if compiler.release
             system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
             final_bc_name = bc_name_opt
