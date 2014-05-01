@@ -125,5 +125,14 @@ describe "File" do
       File.delete(filename)
       File.exists?(filename).should be_false
     end
+
+    it "raises errno when file doesn't exist" do
+      filename = "#{__DIR__}/data/temp1.txt"
+      begin
+        File.delete(filename)
+        fail "expected Errno to be raised"
+      rescue Errno
+      end
+    end
   end
 end
