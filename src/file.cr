@@ -19,6 +19,7 @@ lib C
   fun stat(path : UInt8*, stat : Stat*) : Int32
   fun lstat(path : UInt8*, stat : Stat *) : Int32
   fun fstat(fileno : Int32, stat : Stat*) : Int32
+  fun rename(oldname : UInt8*, newname : UInt8*) : Int32
 
   ifdef x86_64
     fun fseeko(file : File, offset : Int64, whence : Int32) : Int32
@@ -233,6 +234,14 @@ class File
 
   def self.size(filename)
     stat(filename).size
+  end
+
+  def self.rename(old_filename, new_filename)
+    code = C.rename(old_filename, new_filename)
+    if code != 0
+      raise Errno.new("Error renaming file '#{old_filename}' to '#{new_filename}'")
+    end
+    code
   end
 
   def size

@@ -135,4 +135,25 @@ describe "File" do
       end
     end
   end
+
+  describe "rename" do
+    it "renames a file" do
+      filename = "#{__DIR__}/data/temp1.txt"
+      filename2 = "#{__DIR__}/data/temp2.txt"
+      File.open(filename, "w") { |f| f.puts "hello" }
+      File.rename(filename, filename2)
+      File.exists?(filename).should be_false
+      File.exists?(filename2).should be_true
+      File.read(filename2).strip.should eq("hello")
+    end
+
+    it "raises if old file doesn't exist" do
+      filename = "#{__DIR__}/data/temp1.txt"
+      begin
+        File.rename(filename, "#{filename}.new")
+        fail "expected Errno to be raised"
+      rescue Errno
+      end
+    end
+  end
 end
