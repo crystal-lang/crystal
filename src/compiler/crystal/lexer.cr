@@ -227,6 +227,8 @@ module Crystal
           @token.type = :"*"
         end
       when '/'
+        line = @line_number
+        column = @column_number
         char = next_char
         if char == '='
           next_char :"/="
@@ -249,7 +251,7 @@ module Crystal
               next_char
               break
             when '\0'
-              raise "unterminated regular expression"
+              raise "unterminated regular expression", line, column
             else
               string_buffer << char
             end
@@ -348,6 +350,8 @@ module Crystal
           @token.type = :SYMBOL
           @token.value = string_range(start)
         elsif char == '"'
+          line = @line_number
+          column = @column_number
           start = current_pos + 1
           count = 0
 
@@ -357,7 +361,7 @@ module Crystal
             when '"'
               break
             when '\0'
-              raise "unterminated quoted symbol"
+              raise "unterminated quoted symbol", line, column
             else
               count += 1
             end
@@ -420,6 +424,8 @@ module Crystal
           @token.type = :"^"
         end
       when '\''
+        line = @line_number
+        column = @column_number
         @token.type = :CHAR
         case char1 = next_char
         when '\\'
@@ -449,7 +455,7 @@ module Crystal
           @token.value = char1
         end
         if next_char != '\''
-          raise "unterminated char literal", @line_number, @column_number
+          raise "unterminated char literal", line, column
         end
         next_char
       when '"'
