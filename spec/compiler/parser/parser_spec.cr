@@ -160,6 +160,10 @@ describe "Parser" do
   it_parses "1 / -2", Call.new(1.int32, "/", [-2.int32] of ASTNode)
   it_parses "2 / 3 + 4 / 5", Call.new(Call.new(2.int32, "/", [3.int32] of ASTNode), "+", [Call.new(4.int32, "/", [5.int32] of ASTNode)] of ASTNode)
   it_parses "2 * (3 + 4)", Call.new(2.int32, "*", [Call.new(3.int32, "+", [4.int32] of ASTNode)] of ASTNode)
+  it_parses "1/2", Call.new(1.int32, "/", [2.int32] of ASTNode)
+  it_parses "1 + /foo/", Call.new(1.int32, "+", [RegexLiteral.new("foo")] of ASTNode)
+  it_parses "a = 1; a /b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", ["b".call] of ASTNode)]
+  it_parses "a = 1; a/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", ["b".call] of ASTNode)]
 
   it_parses "!1", Call.new(1.int32, "!")
   it_parses "- 1", Call.new(1.int32, "-")

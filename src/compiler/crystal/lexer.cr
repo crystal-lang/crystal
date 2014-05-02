@@ -24,6 +24,7 @@ module Crystal
       @line_number = 1
       @column_number = 1
       @filename = ""
+      @wants_regex = true
     end
 
     def filename=(filename)
@@ -43,6 +44,8 @@ module Crystal
 
       start = current_pos
 
+      reset_wants_regex = true
+
       case current_char
       when '\0'
         @token.type = :EOF
@@ -52,6 +55,7 @@ module Crystal
         while current_char == ' ' || current_char == '\t'
           next_char
         end
+        reset_wants_regex = false
       when '\n'
         @token.type = :NEWLINE
         next_char
@@ -228,7 +232,7 @@ module Crystal
           next_char :"/="
         elsif char.whitespace? || char == '\0' || char == ';'
           @token.type = :"/"
-        else
+        elsif @wants_regex
           start = current_pos
           string_buffer = String::Buffer.new(20)
 
@@ -275,6 +279,8 @@ module Crystal
           @token.type = :REGEX
           @token.regex_modifiers = modifiers
           @token.value = string_buffer.to_s
+        else
+          @token.type = :"/"
         end
       when '%'
         case next_char
@@ -832,6 +838,8 @@ module Crystal
           unknown_token
         end
       end
+
+      @wants_regex = true if reset_wants_regex
 
       @token
     end

@@ -659,6 +659,7 @@ module Crystal
       when :"->"
         parse_fun_literal
       when :NUMBER
+        @wants_regex = false
         node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
       when :CHAR
         node_and_next_token CharLiteral.new(@token.value as Char)
@@ -1890,9 +1891,19 @@ module Crystal
         name = @token.type.to_s
       end
 
+      is_var = is_var?(name)
+
+      # We don't want the next token to be a regex literal if the call's name is
+      # a variable in the current scope (it's unlikely that there will be a method
+      # with that name that accepts a regex as a first argument).
+      # This allows us to write: a = 1; b = 2; a /b
+      if is_var
+        @wants_regex = false
+      end
+
       next_token
 
-      if @token.type == :"->" &&  is_var?(name)
+      if @token.type == :"->" && is_var
         var = Var.new(name)
         var.location = location
         return parse_indirect(var)
@@ -1913,7 +1924,7 @@ module Crystal
         Call.new nil, name, (args || [] of ASTNode), block, block_arg, global, name_column_number, @last_call_has_parenthesis
       else
         if args
-          if (!force_call && is_var?(name)) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
+          if (!force_call && is_var) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
             sign = num.value[0].chr.to_s
             num.value = num.value[1, num.value.length - 1]
             Call.new(Var.new(name), sign, args)
@@ -1922,7 +1933,7 @@ module Crystal
           end
         else
           if @token.type == :"::"
-            if is_var? name
+            if is_var
               raise "variable '#{name}' is already declared"
             end
 
@@ -1931,7 +1942,7 @@ module Crystal
             declare_var = DeclareVar.new(Var.new(name), declared_type)
             push_var declare_var
             declare_var
-          elsif (!force_call && is_var?(name))
+          elsif (!force_call && is_var)
             if @block_arg_name && !@uses_block_arg && name == @block_arg_name
               @uses_block_arg = true
             end
