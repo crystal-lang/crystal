@@ -1,6 +1,7 @@
 # Translated from: https://github.com/mozilla/rust/blob/master/src/test/bench/shootout-meteor.rs
 
 alias Masks = Array(Array(Array(UInt64)))
+alias Point = Tuple(Int32, Int32)
 
 class Iterator(T)
   include Enumerable
@@ -25,22 +26,19 @@ def bm(mask, offset) # bit mask
 end
 
 def transform(piece, all)
-  i = Iterator.new(piece, ->(rot : Array(Array(Int32))) { rot.map{ |yx| [yx[1] + yx[0], -yx[0]] } } )
+  i = Iterator.new(piece, ->(rot : Array(Point)) { rot.map{ |yx| {yx[1] + yx[0], -yx[0]} } } )
   rots = i.take(all ? 6 : 3)
   res = rots.flat_map do |cur_piece|
-    i2 = Iterator.new(cur_piece, ->(mir : Array(Array(Int32))) { mir.map { |yx| [yx[1], yx[0]] } } )
+    i2 = Iterator.new(cur_piece, ->(mir : Array(Point)) { mir.map { |yx| {yx[1], yx[0]} } } )
     i2.take(2)
   end
 
-  res.each do |cur_piece|
-    dy, dx = cur_piece.min_by { |yx| yx[0] * 10 + yx[1] }
-    cur_piece.each do |yx|
-      yx[0] -= dy
-      yx[1] -= dx
+  res.map do |cur_piece|
+    dy, dx = cur_piece.min
+    cur_piece.map do |yx|
+      {yx[0] - dy, yx[1] - dx}
     end
   end
-
-  res
 end
 
 def mask(dy, dx, id, p)
@@ -57,16 +55,16 @@ def mask(dy, dx, id, p)
 end
 
 PIECES = [
-    [[0,0],[0,1],[0,2],[0,3],[1,3]],
-    [[0,0],[0,2],[0,3],[1,0],[1,1]],
-    [[0,0],[0,1],[0,2],[1,2],[2,1]],
-    [[0,0],[0,1],[0,2],[1,1],[2,1]],
-    [[0,0],[0,2],[1,0],[1,1],[2,1]],
-    [[0,0],[0,1],[0,2],[1,1],[1,2]],
-    [[0,0],[0,1],[1,1],[1,2],[2,1]],
-    [[0,0],[0,1],[0,2],[1,0],[1,2]],
-    [[0,0],[0,1],[0,2],[1,2],[1,3]],
-    [[0,0],[0,1],[0,2],[0,3],[1,2]]
+    [{0,0}{0,1}{0,2}{0,3}{1,3}],
+    [{0,0}{0,2}{0,3}{1,0}{1,1}],
+    [{0,0}{0,1}{0,2}{1,2}{2,1}],
+    [{0,0}{0,1}{0,2}{1,1}{2,1}],
+    [{0,0}{0,2}{1,0}{1,1}{2,1}],
+    [{0,0}{0,1}{0,2}{1,1}{1,2}],
+    [{0,0}{0,1}{1,1}{1,2}{2,1}],
+    [{0,0}{0,1}{0,2}{1,0}{1,2}],
+    [{0,0}{0,1}{0,2}{1,2}{1,3}],
+    [{0,0}{0,1}{0,2}{0,3}{1,2}]
 ]
 
 def make_masks
@@ -76,8 +74,7 @@ def make_masks
     cur_piece = [] of Array(UInt64)
     10.times do |dy|
       5.times do |dx|
-        masks = trans.map { |t| mask(dy, dx, id, t) }.compact.map{|c| c.not_nil! }
-        cur_piece << masks
+        cur_piece << trans.compact_map { |t| mask(dy, dx, id, t) }
       end
     end
     res << cur_piece

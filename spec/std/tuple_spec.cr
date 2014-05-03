@@ -15,6 +15,16 @@ describe "Tuple" do
     a.should_not eq(d)
   end
 
+  it "does compare" do
+    a = {1, 2}
+    b = {3, 4}
+    c = {1, 6}
+    d = {3, 5}
+    e = {0, 8}
+    [a, b, c, d, e].sort.should eq([e, a, c, b, d])
+    [a, b, c, d, e].min.should eq(e)
+  end
+
   it "does to_s" do
     {1, 2, 3}.to_s.should eq("{1, 2, 3}")
   end
