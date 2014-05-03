@@ -155,4 +155,15 @@ describe "Code gen: fun" do
       g.call(10, 20)
       ").to_i.should eq(11)
   end
+
+  it "calls fun pointer with union (passed by value) arg" do
+    run("
+      struct Number
+        def abs; self; end
+      end
+
+      f = ->(x : Int32 | Float64) { x.abs }
+      f.call(1 || 1.5).to_i
+      ").to_i.should eq(1)
+  end
 end

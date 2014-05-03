@@ -153,6 +153,7 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   end
 
   fun add_attribute = LLVMAddAttribute(arg : ValueRef, attr : Int32)
+  fun add_instr_attribute = LLVMAddInstrAttribute(instr : ValueRef, index : UInt32, attr : Attribute)
   fun add_clause = LLVMAddClause(lpad : ValueRef, clause_val : ValueRef)
   fun add_function = LLVMAddFunction(module : ModuleRef, name : UInt8*, type : TypeRef) : ValueRef
   fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : Int32);

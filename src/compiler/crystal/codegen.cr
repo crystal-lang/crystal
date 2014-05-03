@@ -662,7 +662,7 @@ module Crystal
     end
 
     def codegen_primitive_fun_call(node, target_def, call_args)
-      codegen_call_or_invoke(node, call_args[0], call_args[1 .. -1], true, target_def.type)
+      codegen_call_or_invoke(node, target_def, nil, call_args[0], call_args[1 .. -1], true, target_def.type)
     end
 
     def codegen_primitive_pointer_diff(node, target_def, call_args)
@@ -1574,7 +1574,7 @@ module Crystal
         end
 
         raise_fun = main_fun(RAISE_NAME)
-        codegen_call_or_invoke(node, raise_fun, [bit_cast(unwind_ex_obj, type_of(raise_fun.get_param(0)))], true, @mod.no_return)
+        codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj, type_of(raise_fun.get_param(0)))], true, @mod.no_return)
       end
 
       if node_ensure
@@ -1713,12 +1713,12 @@ module Crystal
           accept arg
 
           def_arg = target_def.args[i]?
-          if def_arg
-            call_args << downcast(@last, def_arg.type, arg.type, true)
-          else
-            # Def argument might be missing if it's a variadic call
-            call_args << @last
-          end
+          call_arg = @last
+
+          # Def argument might be missing if it's a variadic call
+          call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
+
+          call_args << call_arg
         end
       end
 
@@ -1851,10 +1851,10 @@ module Crystal
       end
 
       func = target_def_fun(target_def, self_type)
-      codegen_call_or_invoke(node, func, call_args, target_def.raises, target_def.type)
+      codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
     end
 
-    def codegen_call_or_invoke(node, func, call_args, raises, type)
+    def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type)
       if raises && (handler = @exception_handlers.try &.last?)
         invoke_out_block = new_block "invoke_out"
         @last = @builder.invoke func, call_args, invoke_out_block, handler.catch_block
@@ -1863,6 +1863,7 @@ module Crystal
         @last = call func, call_args
       end
 
+      set_call_by_val_attributes node, target_def, self_type
       emit_debug_metadata node, @last if @debug
 
       case type
@@ -1879,6 +1880,25 @@ module Crystal
       end
 
       @last
+    end
+
+    def set_call_by_val_attributes(node, target_def, self_type)
+      # We don't want by_val in C functions
+      return if target_def.is_a?(External)
+
+      arg_offset = 1
+      if node.is_a?(Call)
+        args = node.args
+        arg_offset += 1 if node.obj.try(&.type.passed_as_self?) || self_type.try(&.passed_as_self?)
+      else
+        args = target_def.try(&.args)
+      end
+
+      args.try &.each_with_index do |arg, i|
+        if arg.type.passed_by_value?
+          LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LibLLVM::Attribute::ByVal)
+        end
+      end
     end
 
     def emit_debug_metadata(node, value)
