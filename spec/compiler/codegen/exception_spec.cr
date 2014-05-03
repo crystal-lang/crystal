@@ -24,4 +24,20 @@ describe "Code gen: exception" do
       end
       )).to_i.should eq(1)
   end
+
+  it "codegens exception handler with return" do
+    run(%(
+      require "prelude"
+
+      def foo
+        begin
+          return 1
+        ensure
+          1 + 2
+        end
+      end
+
+      foo
+      )).to_i.should eq(1)
+  end
 end

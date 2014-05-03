@@ -1522,9 +1522,9 @@ module Crystal
 
         if node_else = node.else
           accept node_else
-          phi.add @last, node_else.type
+          phi.add @last, node_else.type?
         else
-          phi.add @last, node.body.type
+          phi.add @last, node.body.type?
         end
 
         position_at_end catch_block
@@ -1563,7 +1563,7 @@ module Crystal
 
               accept a_rescue.body
             end
-            phi.add @last, a_rescue.body.type
+            phi.add @last, a_rescue.body.type?
 
             position_at_end next_rescue_block
           end

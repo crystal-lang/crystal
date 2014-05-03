@@ -74,16 +74,15 @@ module Crystal
         end
       end
 
-      case exps.length
-      when 0
-        Nop.new
-      when 1
-        exps[0]
-      else
-        node.expressions = exps
-        rebind_node node, exps.last
-        node
+      if exps.empty?
+        nop = Nop.new
+        nop.set_type(@program.nil)
+        exps << nop
       end
+
+      node.expressions = exps
+      rebind_node node, exps.last
+      node
     end
 
     def transform(node : Assign)
@@ -348,7 +347,7 @@ module Crystal
     end
 
     def transform(node : ExceptionHandler)
-      super
+      node = super
 
       if node.body.no_returns?
         node.else = nil
