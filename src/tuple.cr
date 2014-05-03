@@ -1,5 +1,6 @@
 class Tuple
   include Enumerable(typeof((i = 0; self[i])))
+  include Comparable
 
   def each
     length.times do |i|
@@ -16,6 +17,14 @@ class Tuple
 
   def ==(other)
     false
+  end
+
+  def <=>(other : self)
+    length.times do |i|
+      cmp = self[i] <=> other[i]
+      return cmp unless cmp == 0
+    end
+    0
   end
 
   def hash
