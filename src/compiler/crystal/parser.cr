@@ -1229,6 +1229,15 @@ module Crystal
       end
     end
 
+    def parse_string_without_interpolation
+      string = parse_string
+      if string.is_a?(StringLiteral)
+        string.value
+      else
+        yield
+      end
+    end
+
     def parse_string_array
       parse_string_or_symbol_array StringLiteral
     end
@@ -1402,15 +1411,7 @@ module Crystal
     def parse_require
       next_token_skip_space
       check :STRING_START
-      string_literal = parse_string
-
-      if string_literal.is_a?(StringLiteral)
-        string = string_literal.value
-      else
-        raise "Interpolation not allowed in require"
-      end
-
-      raise "Bug: string is nil" unless string
+      string = parse_string_without_interpolation { "interpolation not allowed in require" }
 
       skip_space
 
@@ -2523,13 +2524,7 @@ module Crystal
 
       if @token.type == :"("
         next_token_skip_space_or_newline
-
-        string_literal = parse_string
-        if string_literal.is_a?(StringLiteral)
-          libname = string_literal.value
-        else
-          raise "Interpolation not allowed in lib name"
-        end
+        libname = parse_string_without_interpolation { "interpolation not allowed in lib name" }
 
         skip_space_or_newline
         check :")"
@@ -2626,9 +2621,15 @@ module Crystal
 
       if @token.type == :"="
         next_token_skip_space_or_newline
-        check IdentOrConst
-        real_name = @token.value.to_s
-        next_token_skip_space_or_newline
+        case @token.type
+        when :IDENT, :CONST
+          real_name = @token.value.to_s
+          next_token_skip_space_or_newline
+        when :STRING_START
+          real_name = parse_string_without_interpolation { "interpolation not allowed in fun name" }
+        else
+          unexpected_token
+        end
       else
         real_name = name
       end
