@@ -28,20 +28,12 @@ class Pointer(T)
   end
 
   def memcpy(source : Pointer(T), count : Int)
-    while (count -= 1) >= 0
-      self[count] = source[count]
-    end
+    Intrinsics.memcpy(self as Void*, source as Void*, (count * sizeof(T)).to_u32, 0_u32, false)
     self
   end
 
   def memmove(source : Pointer(T), count : Int)
-    if source.address < address
-      memcpy(source, count)
-    else
-      count.times do |i|
-        self[i] = source[i]
-      end
-    end
+    Intrinsics.memmove(self as Void*, source as Void*, (count * sizeof(T)).to_u32, 0_u32, false)
     self
   end
 

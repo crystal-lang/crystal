@@ -2,6 +2,17 @@
 require "spec"
 
 describe "Pointer" do
+  describe "memcpy" do
+    it "performs" do
+      p1 = Pointer.malloc(4) { |i| i }
+      p2 = Pointer.malloc(4) { 0 }
+      p2.memcpy(p1, 4)
+      4.times do |i|
+        p2[0].should eq(p1[0])
+      end
+    end
+  end
+
   describe "memmove" do
     it "performs with overlap right to left" do
       p1 = Pointer.malloc(4) { |i| i }
