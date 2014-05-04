@@ -1706,6 +1706,7 @@ module Crystal
 
   class TypeDefType < NamedType
     include DefInstanceContainer
+    include MatchesLookup
 
     getter :typedef
 
@@ -1714,30 +1715,28 @@ module Crystal
     end
 
     delegate pointer?, typedef
-    delegate parents, typedef
-
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      typedef.lookup_matches(name, arg_types, yields, owner, type_lookup)
-    end
-
-    def lookup_defs(name)
-      typedef.lookup_defs(name)
-    end
-
-    def lookup_first_def(name, yields)
-      typedef.lookup_first_def(name, yields)
-    end
-
-    def lookup_similar_def_name(name)
-      typedef.lookup_similar_def_name(name)
-    end
-
-    def lookup_macro(name, args_length)
-      typedef.lookup_macro(name, args_length)
-    end
+    delegate defs, typedef
+    delegate sorted_defs, typedef
+    delegate macros, typedef
 
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       typedef.lookup_type(names, already_looked_up, lookup_in_container)
+    end
+
+    def parents
+      typedef_parents = typedef.parents
+
+      # We need to repoint "self" in included generic modules to this typedef,
+      # so "self" restrictions match and don't point to the typdefed type.
+      if typedef_parents
+        typedef_parents.each_with_index do |t, i|
+          if t.is_a?(IncludedGenericModule)
+            typedef_parents[i] = IncludedGenericModule.new(program, t.module, self, t.mapping)
+          end
+        end
+      end
+
+      typedef_parents
     end
 
     def primitive_like?
