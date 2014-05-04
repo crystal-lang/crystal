@@ -16,6 +16,7 @@ lib C
   fun time(t : Int64) : Int64
   fun sleep(seconds : UInt32) : UInt32
   fun free(ptr : Void*)
+  fun memcmp(p1 : Void*, p2 : Void*, size : C::SizeT) : Int32
 end
 
 def exit(status = 0)

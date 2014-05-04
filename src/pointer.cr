@@ -38,10 +38,7 @@ class Pointer(T)
   end
 
   def memcmp(other : Pointer(T), count : Int)
-    count.times do |i|
-      return false unless self[i] == other[i]
-    end
-    true
+    C.memcmp(self as Void*, other as Void*, (count * sizeof(T)).to_sizet) == 0
   end
 
   def swap(i, j)
