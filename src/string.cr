@@ -20,7 +20,7 @@ lib C
 end
 
 class String
-  include Comparable
+  include Comparable(self)
 
   def self.new(chars : UInt8*)
     new(chars, C.strlen(chars))

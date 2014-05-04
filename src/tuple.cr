@@ -1,6 +1,6 @@
 class Tuple
   include Enumerable(typeof((i = 0; self[i])))
-  include Comparable
+  include Comparable(self)
 
   def each
     length.times do |i|

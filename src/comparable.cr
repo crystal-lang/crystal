@@ -1,21 +1,21 @@
-module Comparable
-  def <(other : self)
+module Comparable(T)
+  def <(other : T)
     (self <=> other) < 0
   end
 
-  def <=(other : self)
+  def <=(other : T)
     (self <=> other) <= 0
   end
 
-  def ==(other : self)
+  def ==(other : T)
     (self <=> other) == 0
   end
 
-  def >(other : self)
+  def >(other : T)
     (self <=> other) > 0
   end
 
-  def >=(other : self)
+  def >=(other : T)
     (self <=> other) >= 0
   end
 

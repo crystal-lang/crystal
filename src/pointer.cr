@@ -1,7 +1,7 @@
 require "comparable"
 
 class Pointer(T)
-  include Comparable
+  include Comparable(self)
 
   def nil?
     address == 0
