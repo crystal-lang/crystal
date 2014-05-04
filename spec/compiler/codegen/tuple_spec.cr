@@ -101,4 +101,13 @@ describe "Code gen: tuple" do
       p.value[0] + p.value[1]
       ").to_i.should eq(3)
   end
+
+  it "codegens tuple union (bug because union size was computed incorrectly)" do
+    run(%(
+      require "prelude"
+      x = 1 == 1 ? {1, 1, 1} : {1}
+      i = 2
+      x[i]
+      )).to_i.should eq(1)
+  end
 end

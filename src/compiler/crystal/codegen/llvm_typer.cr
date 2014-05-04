@@ -124,10 +124,11 @@ module Crystal
         end
 
         ifdef x86_64
-          max_size /= 8
+          max_size /= 8.0
         else
-          max_size /= 4
+          max_size /= 4.0
         end
+        max_size = max_size.ceil
 
         max_size = 1 if max_size == 0
 
