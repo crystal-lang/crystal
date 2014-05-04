@@ -1,3 +1,8 @@
+lib C
+  fun ceilf(x : Float32) : Float32
+  fun ceil(x : Float64) : Float64
+end
+
 struct Float
   def +
     self
@@ -5,10 +10,6 @@ struct Float
 
   def floor
     to_i32
-  end
-
-  def ceil
-    to_i32 + 1
   end
 
   def round
@@ -22,6 +23,10 @@ struct Float32
 
   def -
     0.0_f32 - self
+  end
+
+  def ceil
+    C.ceilf(self).to_i
   end
 
   def **(other)
@@ -39,6 +44,10 @@ struct Float64
 
   def -
     0.0 - self
+  end
+
+  def ceil
+    C.ceil(self).to_i
   end
 
   def **(other)

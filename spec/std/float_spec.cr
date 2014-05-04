@@ -19,7 +19,13 @@ describe "Float" do
   end
 
   describe "ceil" do
+    assert { 2.0_f32.ceil.should eq(2) }
+    assert { 2.0.ceil.should eq(2) }
+
+    assert { 2.1_f32.ceil.should eq(3_f32) }
     assert { 2.1.ceil.should eq(3) }
+
+    assert { 2.9_f32.ceil.should eq(3) }
     assert { 2.9.ceil.should eq(3) }
   end
 end
