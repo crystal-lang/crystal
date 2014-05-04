@@ -25,6 +25,16 @@ describe "Tuple" do
     [a, b, c, d, e].min.should eq(e)
   end
 
+  it "does compare with different lengths" do
+    a = {2}
+    b = {1, 2, 3}
+    c = {1, 2}
+    d = {1, 1}
+    e = {1, 1, 3}
+    [a, b, c, d, e].sort.should eq([d, e, c, b, a])
+    [a, b, c, d, e].min.should eq(d)
+  end
+
   it "does to_s" do
     {1, 2, 3}.to_s.should eq("{1, 2, 3}")
   end

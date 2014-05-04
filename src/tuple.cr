@@ -1,6 +1,6 @@
 class Tuple
   include Enumerable(typeof((i = 0; self[i])))
-  include Comparable(self)
+  include Comparable(Tuple)
 
   def each
     length.times do |i|
@@ -19,12 +19,13 @@ class Tuple
     false
   end
 
-  def <=>(other : self)
-    length.times do |i|
+  def <=>(other : Tuple)
+    min_length = Math.min(length, other.length)
+    min_length.times do |i|
       cmp = self[i] <=> other[i]
       return cmp unless cmp == 0
     end
-    0
+    length <=> other.length
   end
 
   def hash
