@@ -6,17 +6,11 @@ lib C
   fun atan(x : Float64) : Float64
   fun atan2(y : Float64, x : Float64) : Float64
   fun cbrt(x : Float64) : Float64
-  fun cos(x : Float64) : Float64
   fun erf(x : Float64) : Float64
   fun erfc(x : Float64) : Float64
-  fun exp(x : Float64) : Float64
   fun hypot(x : Float64, y : Float64) : Float64
   fun ldexp(flt : Float64, int : Int32) : Float64
   fun lgamma(x : Float64) : Float64
-  fun log(x : Float64) : Float64
-  fun log10(x : Float64) : Float64
-  fun log2(x : Float64) : Float64
-  fun sin(x : Float64) : Float64
   fun sinh(x : Float64) : Float64
   fun tan(x : Float64) : Float64
   fun tanh(x : Float64) : Float64
@@ -30,7 +24,7 @@ end
 module Math
   extend self
 
-  E  = C.exp(1.0)
+  E  = Intrinsics.exp_f64(1.0)
   PI = 3.14159265358979323846
 
   def acos(value)
@@ -61,8 +55,16 @@ module Math
     C.cbrt(value.to_f64)
   end
 
+  def cos(value : Float32)
+    Intrinsics.cos_f32(value)
+  end
+
+  def cos(value : Float64)
+    Intrinsics.cos_f64(value)
+  end
+
   def cos(value)
-    C.cos(value.to_f64)
+    cos(value.to_f64)
   end
 
   def erf(value)
@@ -73,8 +75,16 @@ module Math
     C.erfc(value.to_f64)
   end
 
+  def exp(value : Float32)
+    Intrinsics.exp_f32(value)
+  end
+
+  def exp(value : Float64)
+    Intrinsics.exp_f64(value)
+  end
+
   def exp(value)
-    C.exp(value.to_f64)
+    exp(value.to_f64)
   end
 
   def gamma(value)
@@ -89,20 +99,44 @@ module Math
     C.ldexp(flt.to_f64, int)
   end
 
-  def log(numeric)
-    C.log(numeric.to_f64)
+  def log(value : Float32)
+    Intrinsics.log_f32(value)
+  end
+
+  def log(value : Float64)
+    Intrinsics.log_f64(value)
+  end
+
+  def log(value)
+    log(value.to_f64)
   end
 
   def log(numeric, base)
     log(numeric) / log(base)
   end
 
-  def log10(numeric)
-    C.log10(numeric.to_f64)
+  def log2(value : Float32)
+    Intrinsics.log2_f32(value)
   end
 
-  def log2(numeric)
-    C.log2(numeric.to_f64)
+  def log2(value : Float64)
+    Intrinsics.log2_f64(value)
+  end
+
+  def log2(value)
+    log2(value.to_f64)
+  end
+
+  def log10(value : Float32)
+    Intrinsics.log10_f32(value)
+  end
+
+  def log10(value : Float64)
+    Intrinsics.log10_f64(value)
+  end
+
+  def log10(value)
+    log10(value.to_f64)
   end
 
   def min(value1, value2)
@@ -113,8 +147,16 @@ module Math
     value1 >= value2 ? value1 : value2
   end
 
+  def sin(value : Float32)
+    Intrinsics.sin_f32(value)
+  end
+
+  def sin(value : Float64)
+    Intrinsics.sin_f64(value)
+  end
+
   def sin(value)
-    C.sin(value.to_f64)
+    sin(value.to_f64)
   end
 
   def sinh(value)

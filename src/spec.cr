@@ -146,7 +146,7 @@ module Spec
 
     def match(value)
       @target = value
-      (@target - @expected).abs <= @delta
+      (value - @expected).abs <= @delta
     end
 
     def failure_message

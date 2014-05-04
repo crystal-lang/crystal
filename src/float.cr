@@ -1,8 +1,3 @@
-lib C
-  fun ceilf(x : Float32) : Float32
-  fun ceil(x : Float64) : Float64
-end
-
 struct Float
   def +
     self
@@ -26,7 +21,7 @@ struct Float32
   end
 
   def ceil
-    C.ceilf(self).to_i
+    Intrinsics.ceil_f32(self).to_i
   end
 
   def **(other : Float32)
@@ -51,7 +46,7 @@ struct Float64
   end
 
   def ceil
-    C.ceil(self).to_i
+    Intrinsics.ceil_f64(self).to_i
   end
 
   def **(other : Float64)
