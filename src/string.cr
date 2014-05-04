@@ -9,13 +9,8 @@ lib C
   fun atoll(str : UInt8*) : Int64
   fun atof(str : UInt8*) : Float64
   fun strtof(str : UInt8*, endp : UInt8**) : Float32
-  fun strncmp(s1 : UInt8*, s2 : UInt8*, n : Int32) : Int32
   fun strlen(s : UInt8*) : Int32
-  fun strcpy(dest : UInt8*, src : UInt8*) : UInt8*
-  fun strcat(dest : UInt8*, src : UInt8*) : UInt8*
-  fun strcmp(s1 : UInt8*, s2 : UInt8*) : Int32
   fun sprintf(str : UInt8*, format : UInt8*, ...) : Int32
-  fun memcpy(dest : Void*, src : Void*, num : Int32) : Void*
   fun strtol(str : UInt8*, endptr : UInt8**, base : Int32) : Int32
 end
 
@@ -349,8 +344,17 @@ class String
     @length == 0
   end
 
+  def ==(other : self)
+    return true if same?(other)
+    return false unless length == other.length
+    cstr.memcmp(other.cstr, length)
+  end
+
   def <=>(other : self)
-    same?(other) ? 0 : C.strcmp(cstr, other)
+    return 0 if same?(other)
+    min_length = Math.min(length, other.length)
+    cmp = C.memcmp(cstr as Void*, other.cstr as Void*, length.to_sizet)
+    cmp == 0 ? (length <=> other.length) : cmp
   end
 
   def =~(regex : Regex)
@@ -599,7 +603,7 @@ class String
 
   def starts_with?(str : String)
     return false if str.length > length
-    C.strncmp(cstr, str, str.length) == 0
+    C.memcmp(cstr as Void*, str.cstr as Void*, str.length.to_sizet) == 0
   end
 
   def starts_with?(char : Char)
@@ -608,7 +612,7 @@ class String
 
   def ends_with?(str : String)
     return false if str.length > length
-    C.strncmp(cstr + length - str.length, str, str.length) == 0
+    C.memcmp((cstr + length - str.length) as Void*, str.cstr as Void*, str.length.to_sizet) == 0
   end
 
   def ends_with?(char : Char)

@@ -29,7 +29,7 @@ class StringBuilder
     String.new_with_length(@length) do |cstr|
       buffer = cstr
       @parts.each do |part|
-        C.strcpy(buffer, part.cstr)
+        buffer.memcpy(part.cstr, part.length)
         buffer += part.length
       end
     end

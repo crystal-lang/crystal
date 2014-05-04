@@ -386,4 +386,29 @@ describe "String" do
     "this".tr("this", "ⓧ").should eq("ⓧⓧⓧⓧ")
     "über".tr("ü","u").should eq("uber")
   end
+
+  describe "compare" do
+    it "compares with == when same string" do
+      "foo".should eq("foo")
+    end
+
+    it "compares with == when different strings same contents" do
+      s1 = "foo#{1}"
+      s2 = "foo#{1}"
+      s1.should eq(s2)
+    end
+
+    it "compares with == when different contents" do
+      s1 = "foo#{1}"
+      s2 = "foo#{2}"
+      s1.should_not eq(s2)
+    end
+
+    it "sorts strings" do
+      s1 = "foo1"
+      s2 = "foo"
+      s3 = "bar"
+      [s1, s2, s3].sort.should eq(["bar", "foo", "foo1"])
+    end
+  end
 end
