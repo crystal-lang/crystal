@@ -287,14 +287,6 @@ module Crystal
                 codegen_primitive_object_to_cstr node, target_def, call_args
               when :object_crystal_type_id
                 codegen_primitive_object_crystal_type_id node, target_def, call_args
-              when :math_sqrt_float32
-                codegen_primitive_math_sqrt_float32 node, target_def, call_args
-              when :math_sqrt_float64
-                codegen_primitive_math_sqrt_float64 node, target_def, call_args
-              when :float32_pow
-                codegen_primitive_float32_pow node, target_def, call_args
-              when :float64_pow
-                codegen_primitive_float64_pow node, target_def, call_args
               when :symbol_hash
                 codegen_primitive_symbol_hash node, target_def, call_args
               when :symbol_to_s
@@ -627,22 +619,6 @@ module Crystal
 
     def codegen_primitive_object_crystal_type_id(node, target_def, call_args)
       type_id(type)
-    end
-
-    def codegen_primitive_math_sqrt_float32(node, target_def, call_args)
-      call @mod.sqrt_float32(@llvm_mod), [call_args[1]]
-    end
-
-    def codegen_primitive_math_sqrt_float64(node, target_def, call_args)
-      call @mod.sqrt_float64(@llvm_mod), [call_args[1]]
-    end
-
-    def codegen_primitive_float32_pow(node, target_def, call_args)
-      call @mod.pow_float32(@llvm_mod), call_args
-    end
-
-    def codegen_primitive_float64_pow(node, target_def, call_args)
-      call @mod.pow_float64(@llvm_mod), call_args
     end
 
     def codegen_primitive_symbol_to_s(node, target_def, call_args)

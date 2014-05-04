@@ -29,6 +29,10 @@ struct Float32
     C.ceilf(self).to_i
   end
 
+  def **(other : Float32)
+    Intrinsics.pow_f32(self, other)
+  end
+
   def **(other)
     self ** other.to_f32
   end
@@ -48,6 +52,10 @@ struct Float64
 
   def ceil
     C.ceil(self).to_i
+  end
+
+  def **(other : Float64)
+    Intrinsics.pow_f64(self, other)
   end
 
   def **(other)

@@ -98,8 +98,6 @@ module Crystal
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
 
-      @types["Math"] = @math = NonGenericModuleType.new self, self, "Math"
-
       @types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
 
@@ -377,7 +375,6 @@ module Crystal
     getter :string
     getter :symbol
     getter :pointer
-    getter :math
     getter :exception
     getter :tuple
 

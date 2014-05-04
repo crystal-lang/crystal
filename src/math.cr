@@ -129,6 +129,14 @@ module Math
     C.tanh(value.to_f64)
   end
 
+  def sqrt(value : Float32)
+    Intrinsics.sqrt_f32(value)
+  end
+
+  def sqrt(value : Float64)
+    Intrinsics.sqrt_f64(value)
+  end
+
   def sqrt(value : Int)
     sqrt value.to_f64
   end

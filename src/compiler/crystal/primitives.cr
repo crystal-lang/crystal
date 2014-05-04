@@ -12,7 +12,6 @@ module Crystal
       define_reference_primitives
       define_pointer_primitives
       define_symbol_primitives
-      define_math_primitives
     end
 
     def define_object_primitives
@@ -60,9 +59,6 @@ module Crystal
       int.add_def Def.new("chr", ([] of Arg), cast)
       char.add_def Def.new("ord", ([] of Arg), cast)
       symbol.add_def Def.new("to_i", ([] of Arg), cast)
-
-      float32.add_def Def.new("**", [Arg.new_with_type("other", float32)], Primitive.new(:float32_pow))
-      float64.add_def Def.new("**", [Arg.new_with_type("other", float64)], Primitive.new(:float64_pow))
     end
 
     def define_reference_primitives
@@ -97,12 +93,6 @@ module Crystal
       symbol.add_def Def.new("to_s", ([] of Arg), Primitive.new(:symbol_to_s))
     end
 
-    def define_math_primitives
-      math = types["Math"].metaclass
-      math.add_def Def.new("sqrt", [Arg.new_with_type("value", float32)], Primitive.new(:math_sqrt_float32))
-      math.add_def Def.new("sqrt", [Arg.new_with_type("value", float64)], Primitive.new(:math_sqrt_float64))
-    end
-
     def sprintf(llvm_mod)
       llvm_mod.functions["sprintf"]? || llvm_mod.functions.add("sprintf", [LLVM.pointer_type(LLVM::Int8)], LLVM::Int32, true)
     end
@@ -117,22 +107,6 @@ module Crystal
 
     def memset(llvm_mod)
       llvm_mod.functions["llvm.memset.p0i8.i32"]? || llvm_mod.functions.add("llvm.memset.p0i8.i32", [LLVM.pointer_type(LLVM::Int8), LLVM::Int8, LLVM::Int32, LLVM::Int32, LLVM::Int1], LLVM::Void)
-    end
-
-    def sqrt_float64(llvm_mod)
-      llvm_mod.functions["llvm.sqrt.f64"]? || llvm_mod.functions.add("llvm.sqrt.f64", [LLVM::Double], LLVM::Double)
-    end
-
-    def sqrt_float32(llvm_mod)
-      llvm_mod.functions["llvm.sqrt.f32"]? || llvm_mod.functions.add("llvm.sqrt.f32", [LLVM::Float], LLVM::Float)
-    end
-
-    def pow_float64(llvm_mod)
-      llvm_mod.functions["llvm.pow.f64"]? || llvm_mod.functions.add("llvm.pow.f64", [LLVM::Double, LLVM::Double], LLVM::Double)
-    end
-
-    def pow_float32(llvm_mod)
-      llvm_mod.functions["llvm.pow.f32"]? || llvm_mod.functions.add("llvm.pow.f32", [LLVM::Float, LLVM::Float], LLVM::Float)
     end
 
     def trampoline_init(llvm_mod)

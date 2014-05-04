@@ -1,3 +1,4 @@
+require "intrinsics"
 require "c"
 require "gc"
 # require "gc/null"
