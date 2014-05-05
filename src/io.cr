@@ -1,4 +1,17 @@
 lib C
+  enum FCNTL
+    F_GETFL = 3
+    F_SETFL = 4
+  end
+
+  enum FD
+    O_NONBLOCK = 04000
+  end
+
+  EWOULDBLOCK = 140
+  EAGAIN      = 11
+
+  fun fcntl(fd : Int32, cmd : Int32, ...) : Int32
   fun getchar : Char
   fun putchar(c : Char) : Char
   fun puts(str : UInt8*) : Int32
@@ -171,6 +184,24 @@ class FileDescriptorIO
 
   def read(buffer : UInt8*, count)
     C.read(@fd, buffer, count.to_sizet)
+  end
+
+
+  def read_nonblock(length)
+    before = C.fcntl(fd, C::FCNTL::F_GETFL)
+    mode = C.fcntl(fd, C::FCNTL::F_GETFL)
+    mode |= C::FD::O_NONBLOCK
+    C.fcntl(fd, C::FCNTL::F_SETFL, mode)
+
+    buffer = Pointer(UInt8).malloc(length)
+    read_length = read(buffer, length)
+    if read_length == 0 || C.errno == C::EWOULDBLOCK || C.errno == C::EAGAIN
+      nil
+    else
+      String.new(buffer as UInt8*, read_length.to_i)
+    end
+  ensure
+    C.fcntl(fd, C::FCNTL::F_SETFL, before) if before
   end
 
   def write(buffer : UInt8*, count)
