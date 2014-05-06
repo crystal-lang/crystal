@@ -1631,7 +1631,7 @@ module Crystal
             break
           end
         end
-        next_token_skip_statement_end
+        skip_statement_end
       else
         skip_statement_end
       end

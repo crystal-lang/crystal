@@ -236,6 +236,7 @@ describe "Parser" do
   it_parses "def foo(a, b = a); end", Def.new("foo", [Arg.new("a"), Arg.new("b", "a".var)], nil)
   it_parses "def foo(&block); end", Def.new("foo", [] of Arg, nil, nil, BlockArg.new("block"), 0)
   it_parses "def foo(a, &block); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block"), 0)
+  it_parses "def foo a, &block\nend", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block"), 0)
   it_parses "def foo(a, &block : Int -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", Fun.new(["Int".path] of ASTNode, "Double".path)), 1)
   it_parses "def foo(a, &block : Int, Float -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", Fun.new(["Int".path, "Float".path] of ASTNode, "Double".path)), 2)
   it_parses "def foo(a, &block : -> Double); end", Def.new("foo", [Arg.new("a")], nil, nil, BlockArg.new("block", Fun.new(nil, "Double".path)), 0)
