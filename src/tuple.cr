@@ -36,6 +36,14 @@ class Tuple
     hash
   end
 
+  def empty?
+    length == 0
+  end
+
+  def size
+    length
+  end
+  
   def types
     T
   end
