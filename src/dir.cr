@@ -73,10 +73,29 @@ class Dir
     File::Stat.new(stat).directory?
   end
 
-  def self.mkdir(path, mode)
+  def self.mkdir(path, mode=0777)
     if C.mkdir(path, mode.to_modet) == -1
       raise Errno.new("Unable to create directory '#{path}'")
     end
+    0
+  end
+
+  def self.mkdir_p(path, mode=0777)
+    return 0 if Dir.exists?(path)
+
+    components = path.split(File::SEPARATOR)
+    if components.first == "." || components.first == ""
+      subpath = components.shift
+    else
+      subpath = "."
+    end
+
+    components.each do |component|
+      subpath = File.join({subpath, component})
+
+      mkdir(subpath, mode) unless Dir.exists?(subpath)
+    end
+
     0
   end
 
