@@ -8,7 +8,7 @@ struct Char
   end
 
   def ident_part?
-    ident_start? || digit? || self == '$'
+    ident_start? || digit? || ord > 0x9F
   end
 
   def ident_part_or_end?
@@ -837,7 +837,7 @@ module Crystal
           end
           @token.type = :CONST
           @token.value = string_range(start)
-        elsif ('a' <= current_char <= 'z') || current_char == '_'
+        elsif ('a' <= current_char <= 'z') || current_char == '_' || current_char.ord > 0x9F
           next_char
           scan_ident(start)
         else
