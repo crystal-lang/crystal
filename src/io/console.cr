@@ -167,11 +167,52 @@ lib Termios
   fun tcsetattr(fd : Int32, optional_actions : Int32, termios_p : Termios::Struct*) : Int32
 end
 
-lib C
+class FileDescriptorIO
+  def cooked
+    before = tc_mode
+    begin
+      cooked!
+      yield self
+    ensure
+      self.tc_mode = before
+    end
+  end
 
-end
+  def cooked!
+    mode = Pointer(Termios::Struct).malloc 1_u64
+    mode->iflag = mode->iflag | Termios::IFlag::BRKINT |
+                  Termios::IFlag::ISTRIP |
+                  Termios::IFlag::ICRNL |
+                  Termios::IFlag::IXON
+    mode->oflag = mode->oflag | Termios::OFlag::OPOST
+    mode->lflag = mode->lflag | Termios::LFlag::ECHO |
+                  Termios::LFlag::ECHOE |
+                  Termios::LFlag::ECHOK |
+                  Termios::LFlag::ECHONL |
+                  Termios::LFlag::ICANON |
+                  Termios::LFlag::ISIG |
+                  Termios::LFlag::IEXTEN
+    self.tc_mode = mode
+  end
 
-module IO
+  def raw
+    before = tc_mode
+    begin
+      raw!
+      yield self
+    ensure
+      self.tc_mode = before
+    end
+  end
+
+  def raw!
+    mode = Pointer(Termios::Struct).malloc 1_u64
+    Termios.cfmakeraw(mode)
+    Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, mode)
+  end
+
+  # private
+
   def tc_mode
     mode = Pointer(Termios::Struct).malloc 1_u64
     Termios.tcgetattr(fd, mode)
@@ -180,44 +221,5 @@ module IO
 
   def tc_mode=(mode)
     Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, mode)
-  end
-
-  def cooked
-    before = tc_mode
-    cooked!
-    yield self
-  ensure
-    self.tc_mode = before if before
-  end
-
-  def cooked!
-    mode = Pointer(Termios::Struct).malloc 1_u64
-    mode.iflag |= Termios::IFlag::BRKINT|
-                  Termios::IFlag::ISTRIP|
-                  Termios::IFlag::ICRNL|
-                  Termios::IFlag::IXON
-    mode.oflag |= Termios::OFlag::OPOST
-    mode.lflag |= Termios::LFlag::ECHO|
-                  Termios::LFlag::ECHOE|
-                  Termios::LFlag::ECHOK|
-                  Termios::LFlag::ECHONL|
-                  Termios::LFlag::ICANON|
-                  Termios::LFlag::ISIG|
-                  Termios::LFlag::IEXTEN
-    self.tc_mode = mode
-  end
-
-  def raw
-    before = tc_mode
-    raw!
-    yield self
-  ensure
-    self.tc_mode = before if before
-  end
-
-  def raw!
-    mode = Pointer(Termios::Struct).malloc 1_u64
-    Termios.cfmakeraw(mode)
-    self.tc_mode = mode
   end
 end

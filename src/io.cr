@@ -186,22 +186,22 @@ class FileDescriptorIO
     C.read(@fd, buffer, count.to_sizet)
   end
 
-
   def read_nonblock(length)
     before = C.fcntl(fd, C::FCNTL::F_GETFL)
-    mode = C.fcntl(fd, C::FCNTL::F_GETFL)
-    mode |= C::FD::O_NONBLOCK
-    C.fcntl(fd, C::FCNTL::F_SETFL, mode)
+    C.fcntl(fd, C::FCNTL::F_SETFL, before | C::FD::O_NONBLOCK)
 
-    buffer = Pointer(UInt8).malloc(length)
-    read_length = read(buffer, length)
-    if read_length == 0 || C.errno == C::EWOULDBLOCK || C.errno == C::EAGAIN
-      nil
-    else
-      String.new(buffer as UInt8*, read_length.to_i)
+    begin
+      buffer = Pointer(UInt8).malloc(length)
+      read_length = read(buffer, length)
+      if read_length == 0 || C.errno == C::EWOULDBLOCK || C.errno == C::EAGAIN
+        # TODO: raise exception when errno != 0
+        nil
+      else
+        String.new(buffer, read_length.to_i)
+      end
+    ensure
+      C.fcntl(fd, C::FCNTL::F_SETFL, before)
     end
-  ensure
-    C.fcntl(fd, C::FCNTL::F_SETFL, before) if before
   end
 
   def write(buffer : UInt8*, count)

@@ -61,8 +61,8 @@ module Screen
       input = io.read 1
       if input == "\e"
         remaining = io.read_nonblock 3
-        remaining = io.read_nonblock 2 if remaining.is_a? Nil
-        input = input+remaining unless remaining.is_a? Nil
+        remaining = io.read_nonblock 2 unless remaining
+        input = input+remaining if remaining
       end
 
       case input
@@ -316,7 +316,7 @@ class Game
   end
 
   # This method could be cleaned up with some way to iterate
-  # from, for example,  x = 0 to y = 20 and from x = 20 to y = 0 
+  # from, for example,  x = 0 to y = 20 and from x = 20 to y = 0
   # with the same x.to(y) do |i| call
   def movable_tiles direction, drow, dcol
     macro movable_tiles_action rows, cols
