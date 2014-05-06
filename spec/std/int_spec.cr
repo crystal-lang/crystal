@@ -77,4 +77,24 @@ describe "Int" do
     assert { (~1).should eq(-2) }
     assert { (~1_u32).should eq(4294967294) }
   end
+
+  describe "to" do
+    it "does upwards" do
+      a = 0
+      1.to(3) { |i| a += i }
+      a.should eq(6)
+    end
+
+    it "does downards" do
+      a = 0
+      4.to(2) { |i| a += i }
+      a.should eq(9)
+    end
+
+    it "does when same" do
+      a = 0
+      2.to(2) { |i| a += i }
+      a.should eq(2)
+    end
+  end
 end

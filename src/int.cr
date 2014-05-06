@@ -77,23 +77,30 @@ struct Int
   end
 
   def upto(n, &block : self -> )
-    if self <= n
-      x = self
-      while x <= n
-        yield x
-        x += 1
-      end
+    x = self
+    while x <= n
+      yield x
+      x += 1
     end
     self
   end
 
   def downto(n, &block : self -> )
-    if self >= n
-      x = self
-      while x >= n
-        yield x
-        x -= 1
-      end
+    x = self
+    while x >= n
+      yield x
+      x -= 1
+    end
+    self
+  end
+
+  def to(n, &block : self -> )
+    if self < n
+      upto(n) { |i| yield i }
+    elsif self > n
+      downto(n) { |i| yield i }
+    else
+      yield self
     end
     self
   end
