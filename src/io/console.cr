@@ -208,7 +208,7 @@ class FileDescriptorIO
   def raw!
     mode = Pointer(Termios::Struct).malloc 1_u64
     Termios.cfmakeraw(mode)
-    Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, mode)
+    self.tc_mode = mode
   end
 
   # private
