@@ -87,8 +87,9 @@ module Crystal
         realfile = case file
           when String then file
           when VirtualFile
-            File.write(".macro#{file.object_id}.cr", file.source)
-            "./.macro#{file.object_id}.cr"
+            Dir.mkdir_p(".crystal")
+            File.write(".crystal/macro#{file.object_id}.cr", file.source)
+            ".crystal/macro#{file.object_id}.cr"
           else
             raise "Unknown file type: #{file}"
           end
