@@ -7,3 +7,4 @@ coverage/
 /.build/
 .*.swp
 /Makefile.local
+all_spec
