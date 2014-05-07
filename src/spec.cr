@@ -107,12 +107,10 @@ module Spec
       success = @results[:success]
       total = pendings.length + failures.length + errors.length + success.length
 
-      final_status = if (failures.length + errors.length) > 0
-                       :fail
-                     elsif pendings.length > 0
-                       :pending
-                     else
-                       :success
+      final_status = case
+                     when (failures.length + errors.length) > 0 then :fail
+                     when pendings.length > 0                   then :pending
+                     else                                            :success
                      end
 
       puts "Finished in #{elapsed_time} seconds"
