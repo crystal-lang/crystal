@@ -3,7 +3,12 @@ SCRIPT_ROOT="$(dirname $(readlink $0 || echo $0))/.."
 DEPS_DIR="$SCRIPT_ROOT/deps"
 
 CRYSTAL_DIR="$SCRIPT_ROOT/.build"
-[ -x $CRYSTAL_DIR/crystal ] || CRYSTAL_DIR=$DEPS_DIR
+if [ -x $CRYSTAL_DIR/crystal ]
+then
+  echo -e "\x1B[33mUsing compiled compiler at .build/crystal\x1B[0m"
+else
+  CRYSTAL_DIR=$DEPS_DIR
+fi
 
 OS_NAME=`uname -s`
 HW_NAME=`uname -m`
