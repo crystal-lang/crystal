@@ -8,12 +8,14 @@ SPEC_SOURCES := $(shell find spec -name '*.cr')
 
 all: crystal
 spec: all_spec
-	./all_spec
+	$(O)/all_spec
 
 crystal: $(O)/crystal
+all_spec: $(O)/all_spec
 
-all_spec: $(SOURCES) $(SPEC_SOURCES)
-	./bin/crystal spec/all_spec.cr
+$(O)/all_spec: $(SOURCES) $(SPEC_SOURCES)
+	@mkdir -p $(O)
+	./bin/crystal -o $@ spec/all_spec.cr
 
 $(O)/crystal: $(SOURCES)
 	@mkdir -p $(O)
