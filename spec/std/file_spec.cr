@@ -145,6 +145,7 @@ describe "File" do
       File.exists?(filename).should be_false
       File.exists?(filename2).should be_true
       File.read(filename2).strip.should eq("hello")
+      File.delete(filename2)
     end
 
     it "raises if old file doesn't exist" do
