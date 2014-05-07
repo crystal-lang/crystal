@@ -29,16 +29,20 @@ module Spec
       @@contexts_stack.last.report(kind, description, ex)
     end
 
+    def color(str, num = 7)
+      "\e[0;3#{num}m#{str}\e[0m"
+    end
+
     def report(kind, description, ex = nil)
       case kind
       when :success
-        print '.'
+        print color('.', 2)
       when :fail
-        print 'F'
+        print color('F', 1)
       when :error
-        print 'E'
+        print color('E', 6)
       when :pending
-        print '*'
+        print color('*', 3)
       end
       C.fflush nil
       @results[kind] << Result.new(kind, description, ex)
@@ -93,13 +97,13 @@ module Spec
         end
       end
 
-      puts unless pendings.empty? && failures.empty? && errors.empty?
+      puts
 
       success = @results[:success]
       total = pendings.length + failures.length + errors.length + success.length
 
       puts "Finished in #{elapsed_time} seconds"
-      puts "#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending"
+      puts color("#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending", 2)
     end
 
     @@instance = RootContext.new
