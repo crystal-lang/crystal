@@ -70,4 +70,17 @@ describe "Code gen: case" do
       end.to_i
       ").to_i.should eq(-1)
   end
+
+  it "codegens value-less case" do
+    run("
+      case
+      when 1 == 2
+        1
+      when 2 == 2
+        2
+      else
+        3
+      end
+      ").to_i.should eq(2)
+  end
 end

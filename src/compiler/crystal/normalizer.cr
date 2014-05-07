@@ -511,17 +511,20 @@ module Crystal
     #       1
     #     end
     def transform(node : Case)
-      node.cond = node.cond.transform(self)
+      node.cond = node.cond.try &.transform(self)
 
-      case node_cond = node.cond
-      when Var, InstanceVar
-        temp_var = node.cond
-      when Assign
-        temp_var = node_cond.target
-        assign = node_cond
-      else
-        temp_var = new_temp_var
-        assign = Assign.new(temp_var.clone, node_cond)
+      node_cond = node.cond
+      if node_cond
+        case node_cond
+        when Var, InstanceVar
+          temp_var = node.cond
+        when Assign
+          temp_var = node_cond.target
+          assign = node_cond
+        else
+          temp_var = new_temp_var
+          assign = Assign.new(temp_var.clone, node_cond)
+        end
       end
 
       a_if = nil
@@ -529,17 +532,21 @@ module Crystal
       node.whens.each do |wh|
         final_comp = nil
         wh.conds.each do |cond|
-          right_side = temp_var.clone
-
-          if cond.is_a?(Path) || cond.is_a?(Generic)
-            comp = IsA.new(right_side, cond)
-          elsif cond.is_a?(Call) && cond.obj.is_a?(ImplicitObj)
-            implicit_call = cond.clone as Call
-            implicit_call.obj = temp_var.clone
-            comp = implicit_call
+          if temp_var
+            right_side = temp_var.clone
+            if cond.is_a?(Path) || cond.is_a?(Generic)
+              comp = IsA.new(right_side, cond)
+            elsif cond.is_a?(Call) && cond.obj.is_a?(ImplicitObj)
+              implicit_call = cond.clone as Call
+              implicit_call.obj = temp_var.clone
+              comp = implicit_call
+            else
+              comp = Call.new(cond, "===", [right_side] of ASTNode)
+            end
           else
-            comp = Call.new(cond, "===", [right_side] of ASTNode)
+            comp = cond
           end
+
           if final_comp
             final_comp = SimpleOr.new(final_comp, comp)
           else

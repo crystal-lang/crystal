@@ -1420,8 +1420,10 @@ module Crystal
 
     def parse_case
       next_token_skip_space_or_newline
-      cond = parse_expression
-      skip_statement_end
+      unless @token.keyword?(:when)
+        cond = parse_expression
+        skip_statement_end
+      end
 
       whens = [] of When
       a_else = nil
@@ -1434,7 +1436,7 @@ module Crystal
             next_token_skip_space_or_newline
             when_conds = [] of ASTNode
             while true
-              if @token.type == :"."
+              if cond && @token.type == :"."
                 next_token
                 call = parse_var_or_call(false, true) as Call
                 call.obj = ImplicitObj.new

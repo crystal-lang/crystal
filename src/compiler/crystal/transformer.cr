@@ -185,7 +185,7 @@ module Crystal
     end
 
     def transform(node : Case)
-      node.cond = node.cond.transform(self)
+      node.cond = node.cond.try &.transform(self)
       transform_many node.whens
 
       if node_else = node.else

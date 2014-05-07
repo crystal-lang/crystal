@@ -29,4 +29,12 @@ describe "Normalize: case" do
   it "normalizes case with assignment" do
     assert_normalize "case x = 1; when 2; 3; end", "x = 1\nif 2 === x\n  3\nend"
   end
+
+  it "normalizes case without value" do
+    assert_normalize "case when 2; 3; when 4; 5; end", "if 2\n  3\nelse\n  if 4\n    5\n  end\nend"
+  end
+
+  it "normalizes case without value with many expressions in when" do
+    assert_normalize "case when 2, 9; 3; when 4; 5; end", "if 2 or 9\n  3\nelse\n  if 4\n    5\n  end\nend"
+  end
 end

@@ -564,8 +564,11 @@ describe "Parser" do
 
   it_parses "case 1; when 1 then 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
   it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
+  it_parses "case\n1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
 
   it_parses "case 1\nwhen .foo\n2\nend", Case.new(1.int32, [When.new([Call.new(ImplicitObj.new, "foo")] of ASTNode, 2.int32)])
+  it_parses "case when 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)])
+  it_parses "case \nwhen 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)])
 
   it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
 
@@ -786,6 +789,14 @@ describe "Parser" do
       ex.message.not_nil!.includes?("unterminated call").should be_true
       ex.line_number.should eq(1)
       ex.column_number.should eq(4)
+    end
+  end
+
+  it "can't parse implicit call in value-less case" do
+    begin
+      Parser.parse("case when .foo? then 1; end")
+      fail "syntax exception should have been raised"
+    rescue ex : Crystal::SyntaxException
     end
   end
 end
