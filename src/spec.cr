@@ -12,6 +12,20 @@ module Spec
   end
 
   class RootContext < Context
+    COLORS = {
+      success: 32,
+      fail: 31,
+      error: 31,
+      pending: 33,
+    }
+
+    LETTERS = {
+      success: '.',
+      fail: 'F',
+      error: 'E',
+      pending: '*',
+    }
+
     def initialize
       @results = {
         success: [] of Result,
@@ -29,21 +43,12 @@ module Spec
       @@contexts_stack.last.report(kind, description, ex)
     end
 
-    def color(str, num = 7)
-      "\e[0;3#{num}m#{str}\e[0m"
+    def color(str, status)
+      "\e[0;#{COLORS[status]}m#{str}\e[0m"
     end
 
     def report(kind, description, ex = nil)
-      case kind
-      when :success
-        print color('.', 2)
-      when :fail
-        print color('F', 1)
-      when :error
-        print color('E', 6)
-      when :pending
-        print color('*', 3)
-      end
+      print color(LETTERS[kind], kind)
       C.fflush nil
       @results[kind] << Result.new(kind, description, ex)
     end
@@ -64,7 +69,7 @@ module Spec
         puts
         puts "Pending:"
         pendings.each do |pending|
-          puts "  #{pending.description}"
+          puts color("  #{pending.description}", :pending)
         end
       end
 
@@ -83,14 +88,14 @@ module Spec
               msg.split("\n").each do |line|
                 print "       "
                 unless ex.is_a?(AssertionFailed)
-                  print "Exception: "
+                  print color("Exception: ", :error)
                 end
-                puts line
+                puts color(line, :error)
               end
             end
             unless ex.is_a?(AssertionFailed)
               ex.backtrace.each do |trace|
-                puts "       #{trace}"
+                puts color("       #{trace}", :error)
               end
             end
           end
@@ -102,8 +107,16 @@ module Spec
       success = @results[:success]
       total = pendings.length + failures.length + errors.length + success.length
 
+      final_status = if (failures.length + errors.length) > 0
+                       :fail
+                     elsif pendings.length > 0
+                       :pending
+                     else
+                       :success
+                     end
+
       puts "Finished in #{elapsed_time} seconds"
-      puts color("#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending", 2)
+      puts color("#{total} examples, #{failures.length} failures, #{errors.length} errors, #{pendings.length} pending", final_status)
     end
 
     @@instance = RootContext.new
