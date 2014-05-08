@@ -1,17 +1,17 @@
 module FileUtils
   extend self
 
-  def cmp(filename1, filename2)
+  def cmp(filename1 : String, filename2 : String)
     return false unless File.size(filename1) == File.size(filename2)
 
     File.open(filename1, "rb") do |file1|
       File.open(filename2, "rb") do |file2|
-        compare_stream(file1, file2)
+        cmp(file1, file2)
       end
     end
   end
 
-  def compare_stream(stream1, stream2)
+  def cmp(stream1 : IO, stream2 : IO)
     buf1 :: UInt8[1024]
     buf2 :: UInt8[1024]
 
