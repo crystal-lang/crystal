@@ -1717,5 +1717,9 @@ module Crystal
     def visit(node : MultiAssign)
       raise "Bug: MultiAssign node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
+
+    def visit(node : Until)
+      raise "Bug: Until node '#{node}' (#{node.location}) should have been eliminated in normalize"
+    end
   end
 end

@@ -1231,6 +1231,35 @@ module Crystal
     end
   end
 
+  # Until expression.
+  #
+  #     'until' cond
+  #       body
+  #     'end'
+  #
+  class Until < ASTNode
+    property :cond
+    property :body
+    property :run_once
+
+    def initialize(@cond, body = nil, @run_once = false)
+      @body = Expressions.from body
+    end
+
+    def accept_children(visitor)
+      @cond.accept visitor
+      @body.accept visitor
+    end
+
+    def ==(other : self)
+      other.cond == cond && other.body == body && other.run_once == run_once
+    end
+
+    def clone_without_location
+      Until.new(@cond.clone, @body.clone, @run_once)
+    end
+  end
+
   class Generic < ASTNode
     property :name
     property :type_vars

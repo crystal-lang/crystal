@@ -151,6 +151,10 @@ module Crystal
             next_token_skip_statement_end
             exp = parse_op_assign
             atomic = While.new(exp, atomic, true)
+          when :until
+            next_token_skip_statement_end
+            exp = parse_op_assign
+            atomic = Until.new(exp, atomic, true)
           else
             break
           end
@@ -719,6 +723,8 @@ module Crystal
           parse_module_def
         when :while
           parse_while
+        when :until
+          parse_until
         when :return
           parse_return
         when :next
@@ -897,6 +903,14 @@ module Crystal
     end
 
     def parse_while
+      parse_while_or_until While
+    end
+
+    def parse_until
+      parse_while_or_until Until
+    end
+
+    def parse_while_or_until(klass)
       location = @token.location
 
       next_token_skip_space_or_newline
@@ -910,7 +924,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      node = While.new cond, body
+      node = klass.new cond, body
       node.location = location
       node
     end

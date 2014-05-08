@@ -369,6 +369,9 @@ describe "Parser" do
   it_parses "while true; end;", While.new(true.bool)
   it_parses "while true; 1; end;", While.new(true.bool, 1.int32)
 
+  it_parses "until true; end;", Until.new(true.bool)
+  it_parses "until true; 1; end;", Until.new(true.bool, 1.int32)
+
   it_parses "foo do; 1; end", Call.new(nil, "foo", ([] of ASTNode), Block.new([] of Var, 1.int32))
   it_parses "foo do |a|; 1; end", Call.new(nil, "foo", ([] of ASTNode), Block.new(["a".var], 1.int32))
 
@@ -383,6 +386,7 @@ describe "Parser" do
   it_parses "1 if 3", If.new(3.int32, 1.int32)
   it_parses "1 unless 3", Unless.new(3.int32, 1.int32)
   it_parses "1 while 3", While.new(3.int32, 1.int32, true)
+  it_parses "1 until 3", Until.new(3.int32, 1.int32, true)
   it_parses "a = 1; a += 10 if a += 20", [Assign.new("a".var, 1.int32), If.new(Assign.new("a".var, Call.new("a".var, "+", [20.int32] of ASTNode)), Assign.new("a".var, Call.new("a".var, "+", [10.int32] of ASTNode)))]
   it_parses "puts a if true", If.new(true.bool, Call.new(nil, "puts", ["a".call] of ASTNode))
   it_parses "puts a unless true", Unless.new(true.bool, Call.new(nil, "puts", ["a".call] of ASTNode))

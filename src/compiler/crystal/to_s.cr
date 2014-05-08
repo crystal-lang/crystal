@@ -365,6 +365,14 @@ module Crystal
     end
 
     def visit(node : While)
+      visit_while_or_until node, "while"
+    end
+
+    def visit(node : Until)
+      visit_while_or_until node, "until"
+    end
+
+    def visit_while_or_until(node, name)
       if node.run_once
         if node.body.is_a?(Expressions)
           @str << keyword("begin")
@@ -373,17 +381,17 @@ module Crystal
           append_indent
           @str << keyword("end")
           @str << " "
-          @str << keyword("while")
+          @str << keyword(name)
           @str << " "
         else
           node.body.accept self
           @str << " "
-          @str << keyword("while")
+          @str << keyword(name)
           @str << " "
         end
         node.cond.accept self
       else
-        @str << keyword("while")
+        @str << keyword(name)
         @str << " "
         node.cond.accept self
         @str << newline

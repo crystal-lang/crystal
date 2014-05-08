@@ -765,6 +765,10 @@ module Crystal
             if next_char == 'e' && next_char == 's' && next_char == 's'
               return check_ident_or_keyword(:unless, start)
             end
+          when 't'
+            if next_char == 'i' && next_char == 'l'
+              return check_ident_or_keyword(:until, start)
+            end
           end
         end
         scan_ident(start)

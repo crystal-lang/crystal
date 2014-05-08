@@ -613,6 +613,28 @@ module Crystal
       a_if
     end
 
+    # Convert unless to while:
+    #
+    # From:
+    #
+    #    until foo
+    #      bar
+    #    end
+    #
+    # To:
+    #
+    #    while !foo
+    #      bar
+    #    end
+    def transform(node : Until)
+      node = super
+      not = Call.new(node.cond, "!")
+      not.location = node.cond.location
+      while_node = While.new(not, node.body, node.run_once)
+      while_node.location = node.location
+      while_node
+    end
+
     # Evaluate the ifdef's flags.
     # If they hold, keep the "then" part.
     # If they don't, keep the "else" part.
