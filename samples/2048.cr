@@ -212,8 +212,7 @@ class Game
   def run
     draw
 
-    while !won? && !lost?
-    #until won? || lost? # would be nicer here
+    until won? || lost?
       insert_tile if execute_action read_action
       draw
     end
