@@ -199,12 +199,13 @@ module Crystal
         end
 
         if @cross_compile
-          @output_dir = "."
+          output_dir = "."
         else
-          @output_dir = ".crystal/#{filename}"
+          output_dir = ".crystal/#{filename}"
         end
 
-        system "mkdir -p #{output_dir}"
+        Dir.mkdir_p(output_dir)
+        @output_dir = output_dir
 
         units = llvm_modules.map do |type_name, llvm_mod|
           CompilationUnit.new(self, type_name, llvm_mod)

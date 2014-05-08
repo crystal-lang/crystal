@@ -30,6 +30,24 @@ describe "Dir" do
     end
   end
 
+  it "tests mkdir_p with a new path" do
+    path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
+    Dir.mkdir_p(path).should eq(0)
+    Dir.exists?(path).should be_true
+    path = File.join({path, "a", "b", "c"})    
+    Dir.mkdir_p(path).should eq(0)
+    Dir.exists?(path).should be_true
+  end
+
+  it "tests mkdir_p with an existing path" do
+    Dir.mkdir_p(__DIR__).should eq(0)
+    begin
+      Dir.mkdir_p(__FILE__)
+      fail "Expected Errno to be raised"
+    rescue Errno
+    end
+  end
+
   it "tests rmdir with an nonexistent path" do
     begin
       Dir.rmdir("/tmp/crystal_mkdir_test_#{Process.pid}/")
