@@ -72,4 +72,21 @@ describe "Code gen: declare var" do
       Bar.new.x
       ").to_i.should eq(1)
   end
+
+  it "codegens initialize instance var with var declaration" do
+    run("
+      class Foo
+        @x = begin
+          a = 1
+          a
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      ").to_i.should eq(1)
+  end
 end

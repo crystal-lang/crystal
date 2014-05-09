@@ -103,6 +103,8 @@ module Crystal
       end
     end
 
+    alias LLVMVars = Hash(String, LLVMVar)
+
     make_named_tuple Handler, node, catch_block, vars
     make_named_tuple StringKey, mod, string
 
@@ -915,7 +917,7 @@ module Crystal
 
     def trampoline_wrapper(target_def, target_fun)
       key = target_def.object_id
-      wrappers = (@trampoline_wrappers ||= {} of UInt64 => LLVM::Function)
+      wrappers = (@trampoline_wrappers ||= {} of typeof(object_id) => LLVM::Function)
       wrappers[key] ||= begin
         param_types = target_fun.param_types
         ret_type = target_fun.return_type
@@ -1721,7 +1723,7 @@ module Crystal
         with_cloned_context do |old_context|
           context.block = block
           context.block_context = old_context
-          context.vars = {} of String => LLVMVar
+          context.vars = LLVMVars.new
           context.type = self_type
 
           target_def = node.target_def
@@ -1947,7 +1949,7 @@ module Crystal
 
       with_cloned_context do
         context.type = self_type
-        context.vars = {} of String => LLVMVar
+        context.vars = LLVMVars.new
         context.in_const_block = false
 
         @llvm_mod = fun_module
@@ -2715,13 +2717,16 @@ module Crystal
       initializers = type.instance_vars_initializers
       return unless initializers
 
-      initializers.each do |tuple|
-        name, value = tuple
+      initializers.each do |init|
+        with_cloned_context do
+          context.vars = LLVMVars.new
+          alloca_vars init.meta_vars
 
-        value.accept self
+          init.value.accept self
 
-        ivar_ptr = instance_var_ptr type, name, type_ptr
-        assign ivar_ptr, type.lookup_instance_var(name).type, value.type, @last
+          ivar_ptr = instance_var_ptr type, init.name, type_ptr
+          assign ivar_ptr, type.lookup_instance_var(init.name).type, init.value.type, @last
+        end
       end
     end
 
@@ -2836,7 +2841,7 @@ module Crystal
       property closure_type
       property closure_ptr
 
-      def initialize(@fun, @type, @vars = {} of String => LLVMVar)
+      def initialize(@fun, @type, @vars = LLVMVars.new)
         @in_const_block = false
       end
 

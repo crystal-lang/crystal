@@ -319,14 +319,19 @@ module Crystal
       unless @scope
         current_type = current_type()
         if current_type.is_a?(ClassType)
-          current_type.add_instance_var_initializer(target.name, value)
+          ivar_visitor = TypeVisitor.new(mod)
+          value.accept ivar_visitor
+
+          current_type.add_instance_var_initializer(target.name, value, ivar_visitor.meta_vars)
           var = current_type.lookup_instance_var(target.name, true)
         end
       end
 
-      value.accept self
+      unless var
+        value.accept self
+        var = lookup_instance_var target
+      end
 
-      var ||= lookup_instance_var target
       target.bind_to var
 
       node.bind_to value

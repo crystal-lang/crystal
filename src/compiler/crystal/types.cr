@@ -874,9 +874,11 @@ module Crystal
       end
     end
 
-    def add_instance_var_initializer(name, value)
-      initializers = @instance_vars_initializers ||= [] of {String, ASTNode}
-      initializers << {name, value}
+    make_named_tuple InstanceVarInitializer, name, value, meta_vars
+
+    def add_instance_var_initializer(name, value, meta_vars)
+      initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer
+      initializers << InstanceVarInitializer.new(name, value, meta_vars)
     end
 
     def include(mod)
@@ -989,7 +991,7 @@ module Crystal
     end
 
     def has_instance_var_in_initialize?(name)
-      instance_vars_initializers.try(&.any? { |tuple| tuple[0] == name }) ||
+      instance_vars_initializers.try(&.any? { |init| init.name == name }) ||
         instance_vars_in_initialize.try(&.includes?(name)) ||
         superclass.try &.has_instance_var_in_initialize?(name)
     end
