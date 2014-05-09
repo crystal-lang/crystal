@@ -1178,7 +1178,13 @@ module Crystal
 
       ptr = case target
             when InstanceVar
-              instance_var_ptr (context.type as InstanceVarContainer), target.name, llvm_self_ptr
+              context_type = context.type
+              if context_type.is_a?(InstanceVarContainer)
+                instance_var_ptr context_type, target.name, llvm_self_ptr
+              else
+                # This is the case of an instance variable initializer
+                return false
+              end
             when Global
               get_global target.name, target.type
             when ClassVar
@@ -2685,7 +2691,9 @@ module Crystal
         @last = malloc struct_type
       end
       memset @last, int8(0), size_of(struct_type)
-      @last
+      type_ptr = @last
+      run_instance_vars_initializers(type, type_ptr)
+      @last = type_ptr
     end
 
     def allocate_tuple(type)
@@ -2695,6 +2703,26 @@ module Crystal
         assign aggregate_index(struct_type, i), tuple_type, exp_type, value
       end
       struct_type
+    end
+
+    def run_instance_vars_initializers(type, type_ptr)
+      return unless type.is_a?(ClassType)
+
+      if superclass = type.superclass
+        run_instance_vars_initializers(superclass, type_ptr)
+      end
+
+      initializers = type.instance_vars_initializers
+      return unless initializers
+
+      initializers.each do |tuple|
+        name, value = tuple
+
+        value.accept self
+
+        ivar_ptr = instance_var_ptr type, name, type_ptr
+        assign ivar_ptr, type.lookup_instance_var(name).type, value.type, @last
+      end
     end
 
     def malloc(type)

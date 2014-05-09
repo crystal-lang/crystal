@@ -15,6 +15,7 @@ module Crystal
       @last_call_has_parenthesis = false
       @temp_token = Token.new
       @unclosed_stack = [] of Unclosed
+      @def_nest = 0
     end
 
     def parse
@@ -207,9 +208,18 @@ module Crystal
             next_token_skip_space_or_newline
 
             # Constants need a new scope for their value
-            push_def if atomic.is_a?(Path)
+            case atomic
+            when Path
+              needs_new_scope = true
+            when InstanceVar
+              needs_new_scope = @def_nest == 0
+            else
+              needs_new_scope = false
+            end
+
+            push_def if needs_new_scope
             value = parse_op_assign
-            pop_def if atomic.is_a?(Path)
+            pop_def if needs_new_scope
 
             push_var atomic
 
@@ -1555,6 +1565,7 @@ module Crystal
 
     def parse_def_or_macro(klass)
       push_def
+      @def_nest += 1
 
       next_token
 
@@ -1670,6 +1681,7 @@ module Crystal
         body = parse_exception_handler body
       end
 
+      @def_nest -= 1
       pop_def
 
       node = klass.new name, args, body, receiver, block_arg, @yields

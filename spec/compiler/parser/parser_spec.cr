@@ -664,6 +664,8 @@ describe "Parser" do
   it_parses "b.c ||= 1", Or.new(Call.new("b".call, "c"), Call.new("b".call, "c=", [1.int32] of ASTNode))
   it_parses "b.c &&= 1", And.new(Call.new("b".call, "c"), Call.new("b".call, "c=", [1.int32] of ASTNode))
 
+  it_parses "a = 1; class Foo; @x = a; end", [Assign.new("a".var, 1.int32), ClassDef.new("Foo".path, Assign.new("@x".instance_var, "a".call))]
+
   it "parses class with attributes" do
     node = Parser.parse("
       @:Foo

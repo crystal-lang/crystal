@@ -315,14 +315,19 @@ module Crystal
     end
 
     def type_assign(target : InstanceVar, value, node)
+      # Check if this is an instance variable initializer
+      unless @scope
+        current_type = current_type()
+        if current_type.is_a?(ClassType)
+          current_type.add_instance_var_initializer(target.name, value)
+          var = current_type.lookup_instance_var(target.name, true)
+        end
+      end
+
       value.accept self
 
-      var = lookup_instance_var target
+      var ||= lookup_instance_var target
       target.bind_to var
-
-      # unless @typed_def.name == "initialize"
-      #   @scope.immutable = false
-      # end
 
       node.bind_to value
       var.bind_to node

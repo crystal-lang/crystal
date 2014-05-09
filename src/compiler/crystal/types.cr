@@ -777,6 +777,7 @@ module Crystal
     getter :owned_instance_vars
     property :instance_vars_in_initialize
     getter :allocated
+    getter :instance_vars_initializers
 
     def initialize(program, container, name, @superclass, add_subclass = true)
       super(program, container, name)
@@ -868,6 +869,11 @@ module Crystal
       mod.parents.try &.each do |parent|
         transfer_instance_vars_of_mod parent
       end
+    end
+
+    def add_instance_var_initializer(name, value)
+      initializers = @instance_vars_initializers ||= [] of {String, ASTNode}
+      initializers << {name, value}
     end
 
     def include(mod)
@@ -980,7 +986,9 @@ module Crystal
     end
 
     def has_instance_var_in_initialize?(name)
-      (ivars = instance_vars_in_initialize) && ivars.includes?(name) || ((sup = superclass) && sup.has_instance_var_in_initialize?(name))
+      instance_vars_initializers.try(&.any? { |tuple| tuple[0] == name }) ||
+        instance_vars_in_initialize.try(&.includes?(name)) ||
+        superclass.try &.has_instance_var_in_initialize?(name)
     end
   end
 
@@ -1337,6 +1345,7 @@ module Crystal
     delegate superclass, @generic_class
     delegate owned_instance_vars, @generic_class
     delegate instance_vars_in_initialize, @generic_class
+    delegate instance_vars_initializers, @generic_class
     delegate macros, @generic_class
     delegate :abstract, @generic_class
     delegate :struct?, @generic_class

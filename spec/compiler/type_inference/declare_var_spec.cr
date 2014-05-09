@@ -76,4 +76,38 @@ describe "Type inference: declare var" do
       Foo.new.x
       ") { int32 }
   end
+
+  it "declares instance var with initial value" do
+    assert_type("
+      class Foo
+        @x = 0
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      ") { int32 }
+  end
+
+  it "declares instance var with initial value, with subclass" do
+    assert_type("
+      class Foo
+        @x = 0
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          @z = 1
+        end
+      end
+
+      Bar.new.x
+      ") { int32 }
+  end
 end
