@@ -15,6 +15,8 @@ module Crystal
       @last_call_has_parenthesis = false
       @temp_token = Token.new
       @unclosed_stack = [] of Unclosed
+      @calls_super = false
+      @uses_block_arg = false
       @def_nest = 0
     end
 

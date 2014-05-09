@@ -952,7 +952,7 @@ module Crystal
         next if then_var.same?(else_var)
 
         if_var = MetaVar.new(name)
-        if_var.nil_if_read = then_var.try(&.nil_if_read) || else_var.try(&.nil_if_read)
+        if_var.nil_if_read = !!(then_var.try(&.nil_if_read) || else_var.try(&.nil_if_read))
 
         if then_var && else_var
           if_var.bind_to then_var unless then_unreachable

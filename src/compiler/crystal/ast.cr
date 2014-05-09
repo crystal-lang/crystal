@@ -871,6 +871,9 @@ module Crystal
 
     def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
       @body = Expressions.from body
+      @calls_super = false
+      @uses_block_arg = false
+      @raises = false
     end
 
     def accepts_attributes?
@@ -1706,6 +1709,8 @@ module Crystal
 
     def initialize(name : String, args : Array(Arg), body, @real_name : String)
       super(name, args, body, nil, nil, nil)
+      @varargs = false
+      @dead = false
     end
 
     def mangled_name(obj_type)

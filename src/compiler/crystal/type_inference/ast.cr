@@ -8,6 +8,9 @@ module Crystal
     property observers
     property input_observers
 
+    @freeze_type = false
+    @dirty = false
+
     def out?
       false
     end
@@ -346,6 +349,8 @@ module Crystal
     property! owner
     property! var
     property! class_scope
+
+    @class_scope = false
   end
 
   class Path
@@ -377,6 +382,8 @@ module Crystal
     property :before_vars
     property :after_vars
 
+    @visited = false
+
     def break
       @break ||= Var.new("%break")
     end
@@ -385,6 +392,8 @@ module Crystal
   class While
     property :has_breaks
     property :break_vars
+
+    @has_breaks = false
   end
 
   class FunPointer

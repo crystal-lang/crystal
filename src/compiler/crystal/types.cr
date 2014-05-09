@@ -787,6 +787,9 @@ module Crystal
         @depth = 0
       end
       @subclasses = [] of Type
+      @abstract = false
+      @struct = false
+      @allocated = false
       parents.push superclass if superclass
       @owned_instance_vars = Set(String).new
       force_add_subclass if add_subclass
@@ -1238,6 +1241,7 @@ module Crystal
 
     def initialize(program, container, name, superclass, @type_vars, add_subclass = true)
       super(program, container, name, superclass, add_subclass)
+      @variadic = false
     end
 
     def instance_class
@@ -1319,6 +1323,7 @@ module Crystal
     def initialize(@program, generic_class, @type_vars)
       @generic_class = generic_class
       @subclasses = [] of Type
+      @allocated = false
     end
 
     def after_initialize
