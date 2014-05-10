@@ -2718,14 +2718,27 @@ module Crystal
       return unless initializers
 
       initializers.each do |init|
+        ivar = type.lookup_instance_var(init.name)
+        value = init.value
+
+        # Don't need to initialize false
+        if ivar.type == @mod.bool && value.false?
+          next
+        end
+
+        # Don't need to initialize zero
+        if ivar.type == @mod.int32 && value.zero?
+          next
+        end
+
         with_cloned_context do
           context.vars = LLVMVars.new
           alloca_vars init.meta_vars
 
-          init.value.accept self
+          value.accept self
 
           ivar_ptr = instance_var_ptr type, init.name, type_ptr
-          assign ivar_ptr, type.lookup_instance_var(init.name).type, init.value.type, @last
+          assign ivar_ptr, ivar.type, value.type, @last
         end
       end
     end

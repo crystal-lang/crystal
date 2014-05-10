@@ -25,6 +25,31 @@ module Crystal
     def needs_const_block?
       true
     end
+
+    def zero?
+      false
+    end
+
+    def false?
+      false
+    end
+  end
+
+  class BoolLiteral
+    def false?
+      !value
+    end
+  end
+
+  class NumberLiteral
+    def zero?
+      case :kind
+      when :f32, :f64
+        value == "0.0"
+      else
+        value == "0"
+      end
+    end
   end
 
   macro self.doesnt_need_const_block(klass)"
