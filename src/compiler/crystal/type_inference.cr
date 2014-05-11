@@ -295,6 +295,7 @@ module Crystal
 
       meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
       meta_var.bind_to value
+      meta_var.assigned_to = true
       check_closured meta_var
 
       simple_var = MetaVar.new(var_name)
@@ -1325,7 +1326,9 @@ module Crystal
     def visit(node : PointerOf)
       var = case node_exp = node.exp
             when Var
-              @meta_vars[node_exp.name]
+              meta_var = @meta_vars[node_exp.name]
+              meta_var.assigned_to = true
+              meta_var
             when InstanceVar
               lookup_instance_var node_exp
             when IndirectRead

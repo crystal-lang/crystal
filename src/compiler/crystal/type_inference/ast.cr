@@ -306,9 +306,13 @@ module Crystal
     # where it wasn't created.
     property :closured
 
+    # Is this metavar assigned a value?
+    property :assigned_to
+
     def initialize(@name, @type = nil)
       @nil_if_read = false
       @closured = false
+      @assigned_to = false
     end
 
     # True if this variable belongs to the given context

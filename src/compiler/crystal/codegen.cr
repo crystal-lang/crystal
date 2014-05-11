@@ -2078,8 +2078,7 @@ module Crystal
       else
         # We don't need to create a copy of the argument if it's never
         # assigned a value inside the function.
-        deps_count = target_def_var.try(&.dependencies?.try(&.length)) || 0
-        needs_copy = deps_count > 1
+        needs_copy = target_def_var.try &.assigned_to
         if needs_copy
           pointer = alloca(llvm_type(var_type), arg.name)
           context.vars[arg.name] = LLVMVar.new(pointer, var_type)

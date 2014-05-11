@@ -149,4 +149,15 @@ describe "Code gen: pointer" do
       y.value.call
     ").to_i.should eq(1)
   end
+
+  it "gets pointer of argument that is never assigned to" do
+    run("
+      def foo(x)
+        pointerof(x)
+      end
+
+      foo(1)
+      1
+      ").to_i.should eq(1)
+  end
 end

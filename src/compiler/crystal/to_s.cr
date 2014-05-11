@@ -422,6 +422,9 @@ module Crystal
       if node.closured
         @str << " (closured)"
       end
+      if node.assigned_to
+        @str << " (assigned-to)"
+      end
     end
 
     def visit(node : FunLiteral)
