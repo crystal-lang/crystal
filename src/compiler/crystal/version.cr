@@ -14,8 +14,8 @@ module Crystal
   end
 
   def self.version_string
-    uname = system2("uname -a 2>/dev/null")
-    platform = uname[0]? ? uname[0].split(" ")[-2..-1].join(" ") : "-"
-    "v#{VERSION} #{version_sha} [#{platform}]"
+    machine = system2("uname -m 2>/dev/null")[0]? || "-"
+    system = system2("uname -s 2>/dev/null")[0]? || "-"
+    "v#{VERSION} #{version_sha} [#{system} #{machine}]"
   end
 end
