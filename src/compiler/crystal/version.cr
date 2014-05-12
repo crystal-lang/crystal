@@ -18,8 +18,7 @@ module Crystal
   end
 
   def self.version_string
-    machine = system2("uname -m 2>/dev/null")[0]? || "-"
-    system = system2("uname -s 2>/dev/null")[0]? || "-"
-    "v#{version_tag}-p#{version_patch} #{version_sha} [#{system} #{machine}]"
+    uname = system2("uname -s -m 2>/dev/null")[0]? || ""
+    "v#{version_tag}-p#{version_patch} #{version_sha} [#{uname}]"
   end
 end
