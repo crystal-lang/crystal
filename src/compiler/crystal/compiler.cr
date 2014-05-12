@@ -55,8 +55,14 @@ module Crystal
       @clang = @config.bin "clang"
       @llvm_dis = @config.bin "llvm-dis"
 
+      Crystal.dump_version
+
       @options = OptionParser.parse! do |opts|
-        opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
+        opts.banner = "Crystal #{Crystal.version_string}\nUsage: crystal [switches] [--] [programfile] [arguments]"
+        opts.on("-v", "--version", "Crystal version") do
+          puts Crystal.version_string
+          exit
+        end
         opts.on("--browser", "Opens an http server to browse the code") do
           @browser = true
         end
@@ -68,10 +74,6 @@ module Crystal
         end
         opts.on("-e 'command'", "One line script. Omit [programfile]") do |command|
           @command = command
-        end
-        opts.on("-h", "--help", "Show this message") do
-          puts opts
-          exit 1
         end
         opts.on("--hierarchy", "Prints types hierarchy") do
           @print_hierarchy = true
@@ -108,6 +110,10 @@ module Crystal
         end
         opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
           @n_threads = n_threads.to_i32
+        end
+        opts.on("-h", "--help", "Show this message") do
+          puts opts
+          exit 1
         end
       end
     end
