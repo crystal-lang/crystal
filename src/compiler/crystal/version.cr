@@ -4,7 +4,7 @@ module Crystal
   def self.version_patch; "0"; end
 
   def self.dump_version
-    describe = system2("git describe --tags 2>/dev/null")[0]? || "."
+    describe = system2("git describe --tags --long 2>/dev/null")[0]? || "."
     tag, patch, sha = describe.split("-")
     
     File.open(__DIR__ + "/version_generated.cr", "w") do |f|
@@ -14,6 +14,7 @@ module Crystal
       f.puts "  def self.version_patch; \"#{patch}\"; end"
       f.puts "end"
     end
+  rescue
   end
 
   def self.version_string
