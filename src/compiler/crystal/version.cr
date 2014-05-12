@@ -19,5 +19,3 @@ module Crystal
     "v#{VERSION} #{version_sha} [#{platform}]"
   end
 end
-
-require "./version_generated"
