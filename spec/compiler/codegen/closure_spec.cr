@@ -55,15 +55,30 @@ describe "Code gen: closure" do
     ").to_i.should eq(1)
   end
 
-  pending "transforms block to fun literal" do
+  it "codegens closured nested in block" do
     run("
-      def foo(&block : Int32 ->)
-        block.call(1)
+      def foo
+        yield
       end
 
-      foo do |x|
-        x + 1
+      a = 1
+      f = foo do
+        b = 2
+        -> { a + b }
       end
-      ").to_i.should eq(2)
+      f.call
+    ").to_i.should eq(3)
   end
+
+  # pending "transforms block to fun literal" do
+  #   run("
+  #     def foo(&block : Int32 ->)
+  #       block.call(1)
+  #     end
+
+  #     foo do |x|
+  #       x + 1
+  #     end
+  #     ").to_i.should eq(2)
+  # end
 end
