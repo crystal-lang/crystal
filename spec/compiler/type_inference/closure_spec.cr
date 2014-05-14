@@ -44,7 +44,7 @@ describe "Type inference: closure" do
     node = result.node as Expressions
     call = node.expressions.last as Call
     block = call.block.not_nil!
-    var = block.before_vars.not_nil!["x"]
+    var = block.vars.not_nil!["x"]
     var.closured.should be_true
   end
 

@@ -1720,8 +1720,8 @@ module Crystal
 
         # Allocate block vars, but first undefine variables outside
         # the block with the same name
-        undef_vars block.before_vars, block
-        context.block_context_vars = alloca_vars block.before_vars, block
+        undef_vars block.vars, block
+        context.block_context_vars = alloca_vars block.vars, block
 
         with_cloned_context do |old_context|
           context.block = block
@@ -2641,7 +2641,7 @@ module Crystal
     end
 
     def reset_block_vars(block)
-      vars = block.before_vars
+      vars = block.vars
       return unless vars
 
       vars.each do |name, var|

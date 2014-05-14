@@ -383,7 +383,7 @@ module Crystal
   class Block
     property :visited
     property :scope
-    property :before_vars
+    property :vars
     property :after_vars
 
     @visited = false

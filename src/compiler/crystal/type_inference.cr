@@ -456,7 +456,7 @@ module Crystal
       return if node.visited
       node.visited = true
 
-      before_block_vars = node.before_vars.try(&.dup) || MetaVars.new
+      before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
       meta_vars = @meta_vars.dup
       node.args.each do |arg|
@@ -480,10 +480,10 @@ module Crystal
       node.body.accept block_visitor
 
       # Check re-assigned variables and bind them.
-      bind_vars block_visitor.vars, node.before_vars
+      bind_vars block_visitor.vars, node.vars
       bind_vars block_visitor.vars, node.after_vars
 
-      node.before_vars = meta_vars
+      node.vars = meta_vars
 
       node.bind_to node.body
 
@@ -626,7 +626,7 @@ module Crystal
         end
 
         if block = node.block
-          block.before_vars = before_vars
+          block.vars = before_vars
           block.after_vars = after_vars
         else
           node.before_vars = before_vars
@@ -1128,7 +1128,7 @@ module Crystal
           block.bind_to node.exps.first
         end
 
-        bind_vars @vars, block.before_vars
+        bind_vars @vars, block.vars
         bind_vars @vars, block.after_vars
       elsif @while_stack.empty?
         node.raise "Invalid next"
