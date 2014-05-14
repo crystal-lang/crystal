@@ -149,6 +149,49 @@ describe "Code gen: closure" do
       ").to_i.should eq(1)
   end
 
+  it "codegens closure with nested context without new closured vars" do
+    run("
+      def foo
+        yield
+      end
+
+      def bar
+        yield
+      end
+
+      a = 1
+      f = foo do
+        b = 1
+        bar do
+          -> { a + b }
+        end
+      end
+      f.call
+      ").to_i.should eq(2)
+  end
+
+  it "codegens closure with nested context without new closured vars but with block arg" do
+    run("
+      def foo
+        yield
+      end
+
+      def bar
+        yield 3
+      end
+
+      a = 1
+      f = foo do
+        b = 1
+        bar do |x|
+          x
+          -> { a + b }
+        end
+      end
+      f.call
+      ").to_i.should eq(2)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)
