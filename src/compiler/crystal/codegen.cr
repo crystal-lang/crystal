@@ -168,7 +168,7 @@ module Crystal
       @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
       @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
 
-      alloca_all_vars @mod.vars, @mod
+      alloca_vars @mod.vars, @mod
     end
 
     def define_symbol_table(llvm_mod)
@@ -725,7 +725,7 @@ module Crystal
       exps = Expressions.new(exps)
       visitor = TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
       exps.accept visitor
-      alloca_all_vars visitor.meta_vars
+      alloca_vars visitor.meta_vars
       exps.accept self
       @last
     end
@@ -1382,7 +1382,7 @@ module Crystal
 
           if const.value.needs_const_block?
             in_const_block("const_#{global_name}") do
-              alloca_all_vars const.vars
+              alloca_vars const.vars
 
               request_value do
                 accept const.not_nil!.value
@@ -1445,7 +1445,7 @@ module Crystal
       block_context = context.block_context.not_nil!
       block = context.block
 
-      malloc_closure block_context.block_context_vars, block_context
+      malloc_closure closured_vars(block.vars, block), block_context
 
       old_scope = block_context.vars["%scope"]?
 
@@ -1721,7 +1721,7 @@ module Crystal
         # Allocate block vars, but first undefine variables outside
         # the block with the same name
         undef_vars block.vars, block
-        context.block_context_vars = alloca_vars block.vars, block
+        alloca_non_closured_vars block.vars, block
 
         with_cloned_context do |old_context|
           context.block = block
@@ -1731,7 +1731,7 @@ module Crystal
 
           target_def = node.target_def
 
-          alloca_vars target_def.vars, target_def
+          alloca_non_closured_vars target_def.vars, target_def
           create_local_copy_of_block_args(target_def, self_type, call_args)
 
           Phi.open(self, node) do |phi|
@@ -1972,7 +1972,7 @@ module Crystal
             setup_closure_vars context_closure_vars
           end
 
-          alloca_all_vars target_def.vars, target_def, args
+          alloca_vars target_def.vars, target_def, args
           create_local_copy_of_fun_args(target_def, self_type, args)
 
           context.return_type = target_def.type?
@@ -2567,15 +2567,14 @@ module Crystal
       names.map { |name| new_block name }
     end
 
-    def alloca_all_vars(vars, obj = nil, args = nil)
-      closure_vars = alloca_vars(vars, obj, args)
-      malloc_closure closure_vars
+    def alloca_vars(vars, obj = nil, args = nil)
+      closured_vars = closured_vars(vars, obj)
+      alloca_non_closured_vars(vars, obj, args)
+      malloc_closure closured_vars
     end
 
-    def alloca_vars(vars, obj = nil, args = nil)
+    def alloca_non_closured_vars(vars, obj = nil, args = nil)
       return unless vars
-
-      closure_vars = nil
 
       in_alloca_block do
         # Allocate all variables which are not closured and don't belong to an outer closure
@@ -2587,8 +2586,7 @@ module Crystal
           if var_type.void?
             context.vars[name] = LLVMVar.new(llvm_nil, @mod.void)
           elsif var.closure_in?(obj)
-            closure_vars ||= [] of MetaVar
-            closure_vars << var
+            # We deal with closured vars later
           elsif !obj || var.belongs_to?(obj)
             # We deal with arguments later
             is_arg = args.try &.any? { |arg| arg.name == var.name }
@@ -2604,6 +2602,23 @@ module Crystal
           else
             # The variable belong to an outer closure
           end
+        end
+      end
+    end
+
+    def closured_vars(vars, obj = nil)
+      return unless vars
+
+      closure_vars = nil
+
+      vars.each do |name, var|
+        next if name == "self" || context.vars[name]?
+
+        var_type = var.type? || @mod.nil
+
+        if !var_type.void? && var.closure_in?(obj)
+          closure_vars ||= [] of MetaVar
+          closure_vars << var
         end
       end
 
@@ -2873,7 +2888,6 @@ module Crystal
       property closure_vars
       property closure_type
       property closure_ptr
-      property block_context_vars
       property parent_closure_context
 
       def initialize(@fun, @type, @vars = LLVMVars.new)
@@ -2902,7 +2916,6 @@ module Crystal
         context.closure_vars = @closure_vars
         context.closure_type = @closure_type
         context.closure_ptr = @closure_ptr
-        context.block_context_vars = @block_context_vars
         context.parent_closure_context = @parent_closure_context
         context
       end
