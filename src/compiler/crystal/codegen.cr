@@ -2635,15 +2635,19 @@ module Crystal
     end
 
     def malloc_closure(closure_vars, current_context, parent_context = nil)
-      if closure_vars
-        closure_type = @llvm_typer.closure_context_type(closure_vars, parent_context.try &.closure_type)
+      parent_closure_type = parent_context.try &.closure_type
+
+      if closure_vars || parent_closure_type
+        closure_vars ||= [] of MetaVar
+
+        closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type)
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
           current_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
         end
 
-        if parent_context && parent_context.closure_type
-          store parent_context.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.length, "parent")
+        if parent_closure_type
+          store parent_context.not_nil!.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.length, "parent")
         end
       end
 
