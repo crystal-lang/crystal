@@ -18,6 +18,7 @@ module Crystal
       @calls_super = false
       @uses_block_arg = false
       @def_nest = 0
+      @block_arg_count = 0
     end
 
     def parse
@@ -947,7 +948,10 @@ module Crystal
       next_token_skip_space
 
       if @token.type == :"."
-        obj = Var.new("#arg0")
+        block_arg_name = "#arg#{@block_arg_count}"
+        @block_arg_count += 1
+
+        obj = Var.new(block_arg_name)
         next_token_skip_space
 
         location = @token.location
@@ -968,7 +972,7 @@ module Crystal
           call = parse_atomic_method_suffix call, location
         end
 
-        block = Block.new([Var.new("#arg0")], call)
+        block = Block.new([Var.new(block_arg_name)], call)
         block.location = location
       else
         block_arg = parse_expression
