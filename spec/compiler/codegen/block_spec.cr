@@ -1013,4 +1013,16 @@ describe "Code gen: block" do
       end
       ").to_i.should eq(65)
   end
+
+  it "allows using var as block arg with outer var" do
+    run("
+      def foo
+        yield 'a'
+      end
+
+      a = foo do |a|
+        1
+      end
+      ").to_i.should eq(1)
+  end
 end

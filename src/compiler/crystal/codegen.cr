@@ -1719,7 +1719,12 @@ module Crystal
         context.vars = old_block_context.vars.dup
 
         # Allocate block vars, but first undefine variables outside
-        # the block with the same name
+        # the block with the same name. This can only happen in this case:
+        #
+        #     a = foo { |a| }
+        #
+        # that is, when assigning to a variable with the same name as
+        # a block argument (no shadowing here)
         undef_vars block.vars, block
         alloca_non_closured_vars block.vars, block
 
