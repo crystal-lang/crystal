@@ -70,6 +70,22 @@ describe "Code gen: closure" do
     ").to_i.should eq(3)
   end
 
+  it "codegens closured nested in block with a call with a closure with same names" do
+    run("
+      def foo
+        a = 3
+        f = -> { a }
+        yield f.call
+      end
+
+      a = 1
+      f = foo do |x|
+        -> { a + x }
+      end
+      f.call
+    ").to_i.should eq(4)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)

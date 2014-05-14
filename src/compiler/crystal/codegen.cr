@@ -1481,7 +1481,7 @@ module Crystal
           context.break_phi = old.return_phi
           context.next_phi = phi
           context.while_exit_block = nil
-          context.parent_closure_context = old
+          context.parent_closure_context = block_context.parent_closure_context
 
           @needs_value = true
           accept block.body
@@ -1717,6 +1717,7 @@ module Crystal
     def codegen_call_with_block(node, block, self_type, call_args)
       with_cloned_context do |old_block_context|
         context.vars = old_block_context.vars.dup
+        context.parent_closure_context = old_block_context
 
         # Allocate block vars, but first undefine variables outside
         # the block with the same name. This can only happen in this case:
@@ -1734,9 +1735,14 @@ module Crystal
           context.vars = LLVMVars.new
           context.type = self_type
 
+          context.closure_vars = nil
+          context.closure_type = nil
+          context.closure_ptr = nil
+          context.parent_closure_context = nil
+
           target_def = node.target_def
 
-          alloca_non_closured_vars target_def.vars, target_def
+          alloca_vars target_def.vars, target_def
           create_local_copy_of_block_args(target_def, self_type, call_args)
 
           Phi.open(self, node) do |phi|
