@@ -1447,7 +1447,7 @@ module Crystal
 
       closured_vars = closured_vars(block.vars, block)
 
-      malloc_closure closured_vars, block_context
+      malloc_closure closured_vars, block_context, block_context.parent_closure_context
 
       old_scope = block_context.vars["%scope"]?
 
@@ -2583,7 +2583,7 @@ module Crystal
     def alloca_vars(vars, obj = nil, args = nil)
       closured_vars = closured_vars(vars, obj)
       alloca_non_closured_vars(vars, obj, args)
-      malloc_closure closured_vars
+      malloc_closure closured_vars, context
     end
 
     def alloca_non_closured_vars(vars, obj = nil, args = nil)
@@ -2634,26 +2634,22 @@ module Crystal
       closure_vars
     end
 
-    def malloc_closure(closure_vars, context = self.context)
+    def malloc_closure(closure_vars, current_context, parent_context = nil)
       if closure_vars
-        closure_type = @llvm_typer.closure_context_type(closure_vars, context.closure_type)
+        closure_type = @llvm_typer.closure_context_type(closure_vars, parent_context.try &.closure_type)
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
-          context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
+          current_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
         end
 
-        if context.closure_type
-          store context.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.length, "parent")
+        if parent_context && parent_context.closure_type
+          store parent_context.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.length, "parent")
         end
-
-        context.closure_vars = closure_vars
-        context.closure_type = closure_type
-        context.closure_ptr = closure_ptr
-      else
-        context.closure_vars = nil
-        context.closure_type = nil
-        context.closure_ptr = nil
       end
+
+      current_context.closure_vars = closure_vars
+      current_context.closure_type = closure_type
+      current_context.closure_ptr = closure_ptr
     end
 
     def undef_vars(vars, obj)

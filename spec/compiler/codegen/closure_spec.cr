@@ -101,6 +101,40 @@ describe "Code gen: closure" do
       ").to_i.should eq(3)
   end
 
+  it "codegens closure with def that has an if" do
+    run("
+      def foo
+        yield 1 if 1
+        yield 2
+      end
+
+      f = foo do |x|
+        -> { x }
+      end
+      f.call
+      ").to_i.should eq(2)
+  end
+
+  it "codegens multiple nested blocks" do
+    run("
+      def foo
+        yield 1
+        yield 2
+        yield 3
+      end
+
+      a = 1
+      f = foo do |x|
+        b = 1
+        foo do |y|
+          c = 1
+          -> { a + b + c + x + y }
+        end
+      end
+      f.call
+      ").to_i.should eq(9)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)
