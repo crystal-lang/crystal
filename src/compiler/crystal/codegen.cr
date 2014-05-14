@@ -2042,13 +2042,13 @@ module Crystal
 
     def setup_closure_vars(closure_vars, context = self.context, closure_ptr = context.fun.get_param(context.fun.param_count - 1))
       closure_vars.each_with_index do |var, i|
-        self.context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i), var.type)
+        self.context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
       end
 
       if (parent_closure_context = context.parent_closure_context) &&
           (parent_vars = parent_closure_context.closure_vars)
-        parent_closure_ptr = gep(closure_ptr, 0, closure_vars.length)
-        setup_closure_vars(parent_vars, parent_closure_context, load(parent_closure_ptr))
+        parent_closure_ptr = gep(closure_ptr, 0, closure_vars.length, "parent_ptr")
+        setup_closure_vars(parent_vars, parent_closure_context, load(parent_closure_ptr, "parent"))
       end
     end
 
@@ -2630,11 +2630,11 @@ module Crystal
         closure_type = @llvm_typer.closure_context_type(closure_vars, context.closure_type)
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
-          context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i), var.type)
+          context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
         end
 
         if context.closure_type
-          store context.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.length)
+          store context.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.length, "parent")
         end
 
         context.closure_vars = closure_vars

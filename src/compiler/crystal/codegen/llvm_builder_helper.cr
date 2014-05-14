@@ -56,20 +56,20 @@ module Crystal
       not_equal? builder.ptr2int(value, LLVM::Int32), null
     end
 
-    def gep(ptr, index0 : Int32)
-      gep ptr, int32(index0)
+    def gep(ptr, index0 : Int32, name = "")
+      gep ptr, int32(index0), name
     end
 
-    def gep(ptr, index0 : LibLLVM::ValueRef)
-      builder.gep ptr, [index0]
+    def gep(ptr, index0 : LibLLVM::ValueRef, name = "")
+      builder.gep ptr, [index0], name
     end
 
-    def gep(ptr, index0 : Int32, index1 : Int32)
-      gep ptr, int32(index0), int32(index1)
+    def gep(ptr, index0 : Int32, index1 : Int32, name = "")
+      gep ptr, int32(index0), int32(index1), name
     end
 
-    def gep(ptr, index0 : LibLLVM::ValueRef, index1 : LibLLVM::ValueRef)
-      builder.gep ptr, [index0, index1]
+    def gep(ptr, index0 : LibLLVM::ValueRef, index1 : LibLLVM::ValueRef, name = "")
+      builder.gep ptr, [index0, index1], name
     end
 
     def ptr2int(value, type)
@@ -104,8 +104,8 @@ module Crystal
       builder.trunc value, type
     end
 
-    def load(value)
-      builder.load value
+    def load(value, name = "")
+      builder.load value, name
     end
 
     def store(value, ptr)
