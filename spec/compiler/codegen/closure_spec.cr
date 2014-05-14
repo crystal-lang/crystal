@@ -86,6 +86,21 @@ describe "Code gen: closure" do
     ").to_i.should eq(4)
   end
 
+  it "codegens closure with block that declares same var" do
+    run("
+      def foo
+        a = 1
+        yield a
+      end
+
+      f = foo do |x|
+        a = 2
+        -> { a + x }
+      end
+      f.call
+      ").to_i.should eq(3)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)

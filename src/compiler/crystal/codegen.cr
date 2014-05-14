@@ -1445,7 +1445,9 @@ module Crystal
       block_context = context.block_context.not_nil!
       block = context.block
 
-      malloc_closure closured_vars(block.vars, block), block_context
+      closured_vars = closured_vars(block.vars, block)
+
+      malloc_closure closured_vars, block_context
 
       old_scope = block_context.vars["%scope"]?
 
@@ -2622,12 +2624,8 @@ module Crystal
 
       closure_vars = nil
 
-      vars.each do |name, var|
-        next if name == "self" || context.vars[name]?
-
-        var_type = var.type? || @mod.nil
-
-        if !var_type.void? && var.closure_in?(obj)
+      vars.each_value do |var|
+        if var.closure_in?(obj)
           closure_vars ||= [] of MetaVar
           closure_vars << var
         end
