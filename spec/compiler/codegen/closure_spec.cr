@@ -31,15 +31,6 @@ describe "Code gen: closure" do
     ").to_i.should eq(1)
   end
 
-  it "codegens closure with redefined var" do
-    run("
-      a = true
-      a = 1
-      f = ->{ a + 1 }
-      f.call
-      ").to_i.should eq(2)
-  end
-
   it "codegens simple closure in block" do
     run("
       def foo
@@ -189,6 +180,15 @@ describe "Code gen: closure" do
         end
       end
       f.call
+      ").to_i.should eq(2)
+  end
+
+  it "unifies types of closured var" do
+    run("
+      a = 1
+      f = -> { a }
+      a = 2.5
+      f.call.to_i
       ").to_i.should eq(2)
   end
 

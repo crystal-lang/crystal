@@ -147,8 +147,6 @@ module Crystal
 
       var = @vars[node.name]?
       if var
-        node.bind_to(var)
-
         meta_var = @meta_vars[node.name]
         check_closured meta_var
 
@@ -156,6 +154,14 @@ module Crystal
           meta_var.bind_to(@mod.nil_var) unless meta_var.dependencies.try &.any? &.same?(@mod.nil_var)
           node.bind_to(@mod.nil_var)
         end
+
+        if meta_var.closured
+          simple_var = MetaVar.new(node.name)
+          simple_var.bind_to(meta_var)
+          var = @vars[node.name] = simple_var
+        end
+
+        node.bind_to(var)
 
         if needs_type_filters?
           @type_filters = not_nil_filter(node)
@@ -300,6 +306,10 @@ module Crystal
 
       simple_var = MetaVar.new(var_name)
       simple_var.bind_to(target)
+
+      if meta_var.closured
+        simple_var.bind_to(meta_var)
+      end
 
       @vars[var_name] = simple_var
 

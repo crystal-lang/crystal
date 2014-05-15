@@ -48,6 +48,24 @@ describe "Type inference: closure" do
     var.closured.should be_true
   end
 
+  it "unifies types of closured var (1)" do
+    assert_type("
+      a = 1
+      f = -> { a }
+      a = 2.5
+      a
+      ") { union_of(int32, float64) }
+  end
+
+  it "unifies types of closured var (2)" do
+    assert_type("
+      a = 1
+      f = -> { a }
+      a = 2.5
+      f.call
+      ") { union_of(int32, float64) }
+  end
+
   pending "transforms block to fun literal" do
     assert_type("
       def foo(&block : Int32 ->)
