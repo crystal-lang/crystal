@@ -156,9 +156,7 @@ module Crystal
         end
 
         if meta_var.closured
-          simple_var = MetaVar.new(node.name)
-          simple_var.bind_to(meta_var)
-          var = @vars[node.name] = simple_var
+          var.bind_to(meta_var)
         end
 
         node.bind_to(var)
