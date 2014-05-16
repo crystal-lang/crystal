@@ -106,11 +106,9 @@ module Crystal
         if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.hierarchy?) && !owner.instance_type.pointer?
           new_matches = define_new owner, arg_types
           matches = new_matches unless new_matches.empty?
-        else
-          unless owner == mod
-            mod_matches = mod.lookup_matches(def_name, arg_types, !!block)
-            matches = mod_matches unless obj || mod_matches.empty?
-          end
+        elsif !obj && owner != mod
+          mod_matches = mod.lookup_matches(def_name, arg_types, !!block)
+          matches = mod_matches unless mod_matches.empty?
         end
       end
 
@@ -138,7 +136,7 @@ module Crystal
         block_type = block && block.body && match.def.block_arg ? block.body.type? : nil
         lookup_self_type = self_type || match.owner
         if self_type
-          lookup_arg_types = [] of Type
+          lookup_arg_types = Array(Type).new(match.arg_types.length + 1)
           lookup_arg_types.push self_type
           lookup_arg_types.concat match.arg_types
         else

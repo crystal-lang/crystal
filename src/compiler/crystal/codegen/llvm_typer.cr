@@ -290,7 +290,7 @@ module Crystal
 
     def closure_context_type(vars, parent_type = nil)
       LLVM.struct_type("closure") do |a_struct|
-        elems = [] of LibLLVM::TypeRef
+        elems = Array(LibLLVM::TypeRef).new(vars.length + (parent_type ? 1 : 0))
         vars.each do |var|
           elems << llvm_type(var.type)
         end
