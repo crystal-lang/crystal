@@ -385,6 +385,7 @@ module Crystal
     property :scope
     property :vars
     property :after_vars
+    property :context
 
     @visited = false
 

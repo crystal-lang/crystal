@@ -66,6 +66,21 @@ describe "Type inference: closure" do
       ") { union_of(int32, float64) }
   end
 
+  it "marks variable as closured inside block in fun" do
+    result = assert_type("
+      def foo
+        yield
+      end
+
+      a = 1
+      -> { foo { a } }
+      a
+      ") { int32 }
+    program = result.program
+    var = program.vars.not_nil!["a"]
+    var.closured.should be_true
+  end
+
   pending "transforms block to fun literal" do
     assert_type("
       def foo(&block : Int32 ->)

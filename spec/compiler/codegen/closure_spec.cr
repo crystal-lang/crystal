@@ -192,6 +192,17 @@ describe "Code gen: closure" do
       ").to_i.should eq(2)
   end
 
+  it "codegens closure with block" do
+    run("
+      def foo
+        yield
+      end
+
+      a = 1
+      ->{ foo { a } }.call
+      ").to_i.should eq(1)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)

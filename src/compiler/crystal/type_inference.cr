@@ -463,6 +463,7 @@ module Crystal
     def visit(node : Block)
       return if node.visited
       node.visited = true
+      node.context = current_non_block_context
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
@@ -1579,13 +1580,26 @@ module Crystal
 
     def check_closured(var)
       context = current_context
-      if !var.closured && !var.context.same?(context) && !context.is_a?(Block)
-        var.closured = true
+      var_context = var.context
+      if !var.closured && !var_context.same?(context)
+        # If the contexts are not the same, it might be that we are in a block
+        # inside a method, or a block inside another block. We don't want
+        # those cases to closure a variable. So if any context is a block
+        # we go to the block's context (a def or a fun literal) and compare
+        # if those are the same to determine whether the variable is closured.
+        context = context.context if context.is_a?(Block)
+        var_context = var_context.context if var_context.is_a?(Block)
+
+        var.closured = !context.same?(var_context)
       end
     end
 
     def current_context
-      @block_context || @typed_def || @mod
+      @block_context || current_non_block_context
+    end
+
+    def current_non_block_context
+      @typed_def || @mod
     end
 
     def lookup_var_or_instance_var(var : Var)
