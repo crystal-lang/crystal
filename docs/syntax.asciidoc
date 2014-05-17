@@ -1,8 +1,8 @@
-== Syntax ==
+== Syntax and semantic
 
 The program's source code must be encoded in UTF-8.
 
-=== Comments ===
+=== Comments
 
 Comments start with the sharp (`'#'`) character.
 Only one-line comments are supported for now.
@@ -12,7 +12,7 @@ Only one-line comments are supported for now.
 # This is a comment
 -------------
 
-=== Local Variables ===
+=== Local Variables
 
 Local variables start with lowercase letters or underscore.
 They are declared when you first assign them a value.
@@ -40,7 +40,7 @@ var = 1
 # At this point 'var' is an Int32
 -------------
 
-=== Global Variables ===
+=== Global Variables
 
 Global variables start with a dollar sign (`'$'`).
 They are declared when you first assign them a value.
@@ -54,7 +54,7 @@ Their type is the combined type of all expressions that were assigned to them.
 Additionally, if you program reads a global variable before it was ever assigned
 a value it will also have the `Nil` type.
 
-==== Thread-local global variables ====
+==== Thread-local
 
 You can mark a global variable as thread-local with the `@:ThreadLocal` attribute:
 
@@ -64,7 +64,7 @@ You can mark a global variable as thread-local with the `@:ThreadLocal` attribut
 $year = 2014
 -------------
 
-=== Assignment ===
+=== Assignment
 
 Assignment is done with the equal (`'='`) character.
 
@@ -123,7 +123,7 @@ objects[1] ||= 2       # same as: objects[1]? || (objects[1] = 2)
 objects[1] &&= 2       # same as: objects[1]? && (objects[1] = 2)
 -------------
 
-=== Multiple assignment ===
+=== Multiple assignment
 
 You can declare/assign multiple variables at the same time by separating
 expressions with a comma (`','`):
@@ -199,4 +199,109 @@ temp2 = 4
 objects[1] = 3
 objects[2] = 4
 -------------
+
+=== Control expressions
+
+Before talking about control expressions we need to know what are
+`truthy` and `falsey` values.
+
+==== Truthy and falsey
+
+A _truthy_ value is a value that is considered `true` for an `if`, `unless`,
+`while` or `until` guard. A _falsey_ value is a value that is considered `false`
+in those places.
+
+The only _falsey_ values are `nil`, `false` and null pointers (pointers whose
+memory address is zero). Any other value is _truthy_.
+
+WARNING: If you come from C/C++, be warned that zero (0) is _truthy_.
+
+==== if
+
+An `if` evaluates the `then` branch if its condition is truthy, and evaluates
+the `else` branch, if there's any, otherwise.
+
+[source,ruby]
+-------------
+a = 1
+if a > 0
+  a = 10
+end
+# Here a will be 10
+
+b = 1
+if b > 2
+  b = 10
+else
+  b = 20
+end
+# Here b will be 20
+-------------
+
+After an `if`, a variable's type depends on the type of the expressions used in both
+branches.
+
+[source,ruby]
+-------------
+a = 1
+if some_condition
+  a = "hello"
+else
+  a = true
+end
+# Here a will be String or Bool
+
+b = 1
+if some_condition
+  b = "hello"
+end
+# Here b will be Int32 or String
+
+if some_condition
+  c = 1
+else
+  c = "hello"
+end
+# Here c will be Int32 or String
+
+if some_condition
+  d = 1
+end
+# Here d will be Int32 or Nil
+-------------
+
+Note that if a variable is declared inside one of the branches but not in the other one,
+at the end of the `if` it will also contain the `Nil` type.
+
+Inside an `if`'s branch the type of a variable is the one it got assigned in that
+branch, or the one that it had before the branch if it was not reassigned:
+
+[source,ruby]
+-------------
+a = 1
+if some_condition
+  a = "hello"
+  # here a is String, so the following call is valid
+  a.length
+end
+# here a is String or Int32
+-------------
+
+That is, a variable's type is the type of the last expression(s) assigned to it.
+
+===== As a suffix
+
+An `if can be written as an expression's suffix:
+
+[source,ruby]
+-------------
+a = 2 if some_condition
+
+# The above is the same as:
+if some_condition
+  a = 2
+end
+-------------
+
+This sometimes leads to code that is more natural to read.
 

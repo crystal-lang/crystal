@@ -1,4 +1,4 @@
-= The Crystal Programming Language =
+= The Crystal Programming Language
 :doctype: book
 :toclevels: 3
 
