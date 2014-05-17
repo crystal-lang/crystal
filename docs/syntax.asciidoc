@@ -337,15 +337,34 @@ a = if 2 > 1
 # Here a will be 3
 -------------
 
-If an `if` doesn't have an `else` branch and the condition is falsey,
-the `if`'s value will be `nil`:
+If an `if` branch is empty, or it's missing, it's considered as if
+it had `nil` in it:
 
 [source,ruby]
 -------------
-a = if 1 > 2
-      3
-    end
-# Here a will be nil (a's type is Int32 or Nil)
+if 1 > 2
+  3
+end
+
+# The above is the same as:
+if 1 > 2
+  3
+else
+  nil
+end
+
+# Another example:
+if 1 > 2
+else
+  3
+end
+
+# The above is the same as:
+if 1 > 2
+  nil
+else
+  3
+end
 -------------
 
 ===== Ternary if
@@ -389,6 +408,9 @@ if a && b
   # here both a and b are guaranteed not to be Nil
 end
 -------------
+
+Here, the right-hand side of the `&&` expression is also guaranteed
+to have `a` as not `Nil`.
 
 Of course, reassigning a variable inside the `then` branch makes
 that variable have a new type based on the expression assigned.

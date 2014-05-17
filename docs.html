@@ -1365,13 +1365,32 @@ each of its branches:</p></div>
     <span class="k">end</span>
 <span class="c1"># Here a will be 3</span>
 </pre></div></div></div>
-<div class="paragraph"><p>If an <span class="monospaced">if</span> doesn&#8217;t have an <span class="monospaced">else</span> branch and the condition is falsey,
-the <span class="monospaced">if</span>'s value will be <span class="monospaced">nil</span>:</p></div>
+<div class="paragraph"><p>If an <span class="monospaced">if</span> branch is empty, or it&#8217;s missing, it&#8217;s considered as if
+it had <span class="monospaced">nil</span> in it:</p></div>
 <div class="listingblock">
-<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="k">if</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">2</span>
-      <span class="mi">3</span>
-    <span class="k">end</span>
-<span class="c1"># Here a will be nil (a&#39;s type is Int32 or Nil)</span>
+<div class="content"><div class="highlight"><pre><span class="k">if</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">2</span>
+  <span class="mi">3</span>
+<span class="k">end</span>
+
+<span class="c1"># The above is the same as:</span>
+<span class="k">if</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">2</span>
+  <span class="mi">3</span>
+<span class="k">else</span>
+  <span class="kp">nil</span>
+<span class="k">end</span>
+
+<span class="c1"># Another example:</span>
+<span class="k">if</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">2</span>
+<span class="k">else</span>
+  <span class="mi">3</span>
+<span class="k">end</span>
+
+<span class="c1"># The above is the same as:</span>
+<span class="k">if</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">2</span>
+  <span class="kp">nil</span>
+<span class="k">else</span>
+  <span class="mi">3</span>
+<span class="k">end</span>
 </pre></div></div></div>
 </div>
 <div class="sect4">
@@ -1408,6 +1427,8 @@ variable will be considered as not having the <span class="monospaced">Nil</span
   <span class="c1"># here both a and b are guaranteed not to be Nil</span>
 <span class="k">end</span>
 </pre></div></div></div>
+<div class="paragraph"><p>Here, the right-hand side of the <span class="monospaced">&amp;&amp;</span> expression is also guaranteed
+to have <span class="monospaced">a</span> as not <span class="monospaced">Nil</span>.</p></div>
 <div class="paragraph"><p>Of course, reassigning a variable inside the <span class="monospaced">then</span> branch makes
 that variable have a new type based on the expression assigned.</p></div>
 </div>
