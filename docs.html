@@ -1117,7 +1117,7 @@ a value it will also have the <span class="monospaced">Nil</span> type.</p></div
 indexers. Note that <span class="monospaced">||</span> and <span class="monospaced">&amp;&amp;</span> use the <span class="monospaced">[]?</span> method to check
 for key prescence.</p></div>
 <div class="listingblock">
-<div class="content"><div class="highlight"><pre><span class="n">person</span><span class="o">.</span><span class="n">age</span> <span class="o">+=</span> <span class="mi">1</span>        <span class="c1"># same as: person.name = person.name + 1</span>
+<div class="content"><div class="highlight"><pre><span class="n">person</span><span class="o">.</span><span class="n">age</span> <span class="o">+=</span> <span class="mi">1</span>        <span class="c1"># same as: person.age = person.age + 1</span>
 
 <span class="n">person</span><span class="o">.</span><span class="n">name</span> <span class="o">||=</span> <span class="s2">&quot;John&quot;</span> <span class="c1"># same as: person.name || (person.name = &quot;John&quot;)</span>
 <span class="n">person</span><span class="o">.</span><span class="n">name</span> <span class="o">&amp;&amp;=</span> <span class="s2">&quot;John&quot;</span> <span class="c1"># same as: person.name &amp;&amp; (person.name = &quot;John&quot;)</span>

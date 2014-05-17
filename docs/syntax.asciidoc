@@ -112,7 +112,7 @@ for key prescence.
 
 [source,ruby]
 -------------
-person.age += 1        # same as: person.name = person.name + 1
+person.age += 1        # same as: person.age = person.age + 1
 
 person.name ||= "John" # same as: person.name || (person.name = "John")
 person.name &&= "John" # same as: person.name && (person.name = "John")
