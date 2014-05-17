@@ -291,7 +291,7 @@ That is, a variable's type is the type of the last expression(s) assigned to it.
 
 ===== As a suffix
 
-An `if can be written as an expression's suffix:
+An `if` can be written as an expression's suffix:
 
 [source,ruby]
 -------------
