@@ -6,7 +6,7 @@
 
 Then you will have available the `bin/crystal` executable.
 
-To make is simpler to use, you can create a symbolic link to the executable:
+To make it simpler to use, you can create a symbolic link to the executable:
 
 [source,sh]
 -----------

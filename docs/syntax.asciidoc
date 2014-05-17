@@ -1,95 +1,21 @@
 == Syntax ==
 
+The program's source code must be encoded in UTF-8.
+
 === Comments ===
 
-Only one line comments are supported for now.
+Comments start with the sharp (`'#'`) character.
+Only one-line comments are supported for now.
 
 [source,ruby]
 -------------
 # This is a comment
 -------------
 
-=== Literals ===
+=== Local Variables ===
 
-[source,ruby]
--------------
-# The only instance of the Nil class
-nil
-
-# The only instances of Bool
-true
-false
-
-# Integers. Without a suffix they are instances of Int32
-1234
-1_000_000
-
-# Hexadecimal
-0xABCD_1234
-
-# Binary
-0b1010_0110
-
-# With a suffix they can be Int64, UInt16, etc.
-12_i64
-45_u16
-
-# Floats. Without a suffix they are instances of Float64
-1234.56
-123e-09
-
-# With a suffix they can be Float32 or Float64
-12.34_f32
-68.91_f64
-
-# Characters
-'a'
-'\n'
-
-# With octal notation
-'\033'
-
-# Strings
-"hello world"
-"escapes: \n \t \\ \" etc.'
-"octals: \123 \12 \8"
-"hex: \x12"
-"interpolation also allowed: 1 + 2 = #{1 + 2}"
-%(this is also a string (supports nested parenthesis) as well as "quotes")
-
-# Symbols
-:foo
-:"another symbol"
-
-# Array
-[1, 2, 3]
-
-# Empty Array (must indicate element type)
-[] of String
-
-# Hash
-{1 => 2, 3 => 4}
-{"foo" => "bar"}
-{:foo => 1}
-{foo: 1} # same as above
-
-# Empty Hash (must indicate key and value types)
-{} of Symbol => Int32
-
-# Ranges
-1..5  # inclusive end
-1...5 # exclusive end
-
-# Regular expressions
-/foo\s+bar/
-
-# Tuples
-{1, 'a', "hello"}
--------------
-
-=== Assignments and variables ===
-
-Variables must begin with lowercase. They are declared when you assign a value to them.
+Local variables start with lowercase letters or underscore.
+They are declared when you first assign them a value.
 
 [source,ruby]
 -------------
@@ -98,93 +24,179 @@ age = 1
 -------------
 
 Their type is inferred from their usage, not only from their initializer.
+In general, they are just value holders associated with the type that
+the programmer expects them to have according to their location and usage
+on the program.
 
-=== Conditionals ===
-
-You can use `if` and `unless`:
-
-[source,ruby]
--------------
-name = "Crystal"
-age = 1
-
-if name == "Crystal"
-  # name is "Crystal"
-end
-
-if age == 1
-  # age is 1
-elsif age == 2
-  # age is 2
-else
-  # age is neither 1 nor 2
-end
-
-unless age == 3
-  # age is not 3
-end
--------------
-
-The `then` part of an `if` is executed if the condition is _truthy_. The `else` part of an `if`,
-and the `then` part of an `unless` are executed if the condition is _falsy_. The only _falsy_ values
-are `nil`, `false`, and a nil pointer. Anything else is _truthy_.
-
-WARNING: If you come from C/C++, be warned that zero (0) is _truthy_.
-
-Conditionals can also be used in a suffix fashion:
+For example, reassinging a variable with a different expression makes it have
+that expression's type:
 
 [source,ruby]
 -------------
-name = "Crystal"
-age = 1
+var = "Hello"
+# At this point 'var' is a String
 
-name = "Crystal!!" if name == "Crystal"
-age = 2 unless age == 3
+var = 1
+# At this point 'var' is an Int32
 -------------
 
-There is also a short form for the `if`, known as the ternary operator:
+=== Global Variables ===
+
+Global variables start with a dollar sign (`'$'`).
+They are declared when you first assign them a value.
 
 [source,ruby]
 -------------
-age = 1
-old = age > 100 ? "yes" : "no"
+$year = 2014
 -------------
 
-=== Loops ===
+Their type is the combined type of all expressions that were assigned to them.
+Additionally, if you program reads a global variable before it was ever assigned
+a value it will also have the `Nil` type.
 
-`while` is the only syntax supported for loops. More complex loops can be built with blocks.
+==== Thread-local global variables ====
+
+You can mark a global variable as thread-local with the `@:ThreadLocal` attribute:
 
 [source,ruby]
 -------------
-age = 1
-
-while age < 10
-  age += 1
-end
-
-# here age is 10
+@:ThreadLocal
+$year = 2014
 -------------
 
-The condition is first evaluated, and if it is _truthy_ the body is executed while the condition
-remains _truthy_.
+=== Assignment ===
 
-If a `while` appears in a suffix fashion, the body is executed at least once:
+Assignment is done with the equal (`'='`) character.
 
 [source,ruby]
 -------------
-age = 1
-age += 1 while age < 0
-# here age is 2
+local = 1
+@instance = 2
+@@class = 3
+$global = 4
 -------------
 
-To achieve this last behaviour with more than one expression, use `begin` and `end`:
+Some syntax sugar that contains the `'='` character is available:
 
 [source,ruby]
 -------------
-age = 1
+local += 1  # same as: local = local + 1
 
-begin
-  age += 10
-  age /= 2
-end while age < 10
+# The above is valid with these operators:
+# +, -, *, /, %, |, &, ^, **, <<, >>
+
+local ||= 1 # same as: local || (local = 1)
+local &&= 1 # same as: local && (local = 1)
 -------------
+
+A method invocation that ends with `'='` has syntax sugar:
+
+[source,ruby]
+-------------
+# A setter
+person.name=("John")
+
+# The above can be written as:
+person.name = "John"
+
+# An indexed assignment
+objects.[]=(2, 3)
+
+# The above can be written as:
+objects[2] = 3
+-------------
+
+The `=` operator syntax sugar is also available to setters and
+indexers. Note that `||` and `&&` use the `[]?` method to check
+for key prescence.
+
+[source,ruby]
+-------------
+person.age += 1        # same as: person.name = person.name + 1
+
+person.name ||= "John" # same as: person.name || (person.name = "John")
+person.name &&= "John" # same as: person.name && (person.name = "John")
+
+objects[1] += 2        # same as: objects[1] = objects[1] + 2
+
+objects[1] ||= 2       # same as: objects[1]? || (objects[1] = 2)
+objects[1] &&= 2       # same as: objects[1]? && (objects[1] = 2)
+-------------
+
+=== Multiple assignment ===
+
+You can declare/assign multiple variables at the same time by separating
+expressions with a comma (`','`):
+
+[source,ruby]
+-------------
+name, age = "Crystal", 1
+
+# The above is the same as this:
+temp1 = "Crystal"
+temp2 = 1
+name = temp1
+aeg = temp2
+-------------
+
+Note that because expressions are assigned to temporary variables it is
+possible to exchange variables's contents in a single line:
+
+[source,ruby]
+-------------
+a, b = 1, 2
+a, b = b, a
+# Now a is 2 and b is 1
+-------------
+
+If the right-hand side contains just one expression, it is considered
+an indexed type and the following syntax sugar applies:
+
+[source,ruby]
+-------------
+name, age, source = "Crystal,1,github".split(",")
+
+# The above is the same as this:
+temp = "Crystal,1".split(",")
+name   = temp[0]
+age    = temp[1]
+source = temp[2]
+-------------
+
+If the left-hand side contains just one variable, the right-hand side
+is considered an array:
+
+[source,ruby]
+-------------
+names = "John", "Peter", "Jack"
+
+# The above is the same as:
+names = ["John", "Peter", "Jack"]
+-------------
+
+Multiple assignment is also available to methods that end with `=`:
+
+[source,ruby]
+-------------
+person.name, person.age = "John", 32
+
+# Same as:
+temp1 = "John"
+temp2 = 32
+person.name = temp1
+person.age = temp2
+-------------
+
+And it is also available to indexers (`[]=`):
+
+[source,ruby]
+-------------
+objects[1], objects[2] = 3, 4
+
+# Same as:
+temp1 = 3
+temp2 = 4
+objects[1] = 3
+objects[2] = 4
+-------------
+
