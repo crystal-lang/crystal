@@ -1293,25 +1293,25 @@ branches.</p></div>
 <span class="k">else</span>
   <span class="n">a</span> <span class="o">=</span> <span class="kp">true</span>
 <span class="k">end</span>
-<span class="c1"># Here a will be String or Bool</span>
+<span class="c1"># Here a is String or Bool</span>
 
 <span class="n">b</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="k">if</span> <span class="n">some_condition</span>
   <span class="n">b</span> <span class="o">=</span> <span class="s2">&quot;hello&quot;</span>
 <span class="k">end</span>
-<span class="c1"># Here b will be Int32 or String</span>
+<span class="c1"># Here b is Int32 or String</span>
 
 <span class="k">if</span> <span class="n">some_condition</span>
   <span class="n">c</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="k">else</span>
   <span class="n">c</span> <span class="o">=</span> <span class="s2">&quot;hello&quot;</span>
 <span class="k">end</span>
-<span class="c1"># Here c will be Int32 or String</span>
+<span class="c1"># Here c is Int32 or String</span>
 
 <span class="k">if</span> <span class="n">some_condition</span>
   <span class="n">d</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="k">end</span>
-<span class="c1"># Here d will be Int32 or Nil</span>
+<span class="c1"># Here d is Int32 or Nil</span>
 </pre></div></div></div>
 <div class="paragraph"><p>Note that if a variable is declared inside one of the branches but not in the other one,
 at the end of the <span class="monospaced">if</span> it will also contain the <span class="monospaced">Nil</span> type.</p></div>
@@ -1327,6 +1327,19 @@ branch, or the one that it had before the branch if it was not reassigned:</p></
 <span class="c1"># here a is String or Int32</span>
 </pre></div></div></div>
 <div class="paragraph"><p>That is, a variable&#8217;s type is the type of the last expression(s) assigned to it.</p></div>
+<div class="paragraph"><p>If one of the branches never reaches past the end of an if, like in the case
+of a <span class="monospaced">return</span>, <span class="monospaced">next</span>, <span class="monospaced">break</span> or <span class="monospaced">raise</span>, that type is not considered at the end of
+the <span class="monospaced">if</span>:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="k">if</span> <span class="n">some_condition</span>
+  <span class="n">e</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">else</span>
+  <span class="n">e</span> <span class="o">=</span> <span class="s2">&quot;hello&quot;</span>
+  <span class="c1"># here e is String</span>
+  <span class="k">return</span>
+<span class="k">end</span>
+<span class="c1"># here e is Int32</span>
+</pre></div></div></div>
 <div class="sect4">
 <h5 id="_as_a_suffix">As a suffix</h5>
 <div class="paragraph"><p>An <span class="monospaced">if</span> can be written as an expression&#8217;s suffix:</p></div>
@@ -1339,6 +1352,64 @@ branch, or the one that it had before the branch if it was not reassigned:</p></
 <span class="k">end</span>
 </pre></div></div></div>
 <div class="paragraph"><p>This sometimes leads to code that is more natural to read.</p></div>
+</div>
+<div class="sect4">
+<h5 id="_as_an_expression">As an expression</h5>
+<div class="paragraph"><p>The value of an <span class="monospaced">if</span> is the value of the last expression found in
+each of its branches:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="k">if</span> <span class="mi">2</span> <span class="o">&gt;</span> <span class="mi">1</span>
+      <span class="mi">3</span>
+    <span class="k">else</span>
+      <span class="mi">4</span>
+    <span class="k">end</span>
+<span class="c1"># Here a will be 3</span>
+</pre></div></div></div>
+<div class="paragraph"><p>If an <span class="monospaced">if</span> doesn&#8217;t have an <span class="monospaced">else</span> branch and the condition is falsey,
+the <span class="monospaced">if</span>'s value will be <span class="monospaced">nil</span>:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="k">if</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">2</span>
+      <span class="mi">3</span>
+    <span class="k">end</span>
+<span class="c1"># Here a will be nil (a&#39;s type is Int32 or Nil)</span>
+</pre></div></div></div>
+</div>
+<div class="sect4">
+<h5 id="_ternary_if">Ternary if</h5>
+<div class="paragraph"><p>The ternary <span class="monospaced">if</span> allows writing an <span class="monospaced">if</span> in a shorter way:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="o">?</span> <span class="mi">3</span> <span class="p">:</span> <span class="mi">4</span>
+
+<span class="c1"># The above is the same as:</span>
+<span class="n">a</span> <span class="o">=</span> <span class="k">if</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">2</span>
+      <span class="mi">3</span>
+    <span class="k">else</span>
+      <span class="mi">4</span>
+    <span class="k">end</span>
+</pre></div></div></div>
+</div>
+<div class="sect4">
+<h5 id="_if_var">if var</h5>
+<div class="paragraph"><p>If a variable is the condition of an <span class="monospaced">if</span>, inside the <span class="monospaced">then</span> branch the
+variable will be considered as not having the <span class="monospaced">Nil</span> type:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="o">?</span> <span class="kp">nil</span> <span class="p">:</span> <span class="mi">3</span>
+<span class="c1"># a is Int32 or Nil</span>
+
+<span class="k">if</span> <span class="n">a</span>
+  <span class="c1"># Since the only way to get here is if a is truthy,</span>
+  <span class="c1"># a can&#39;t be nil. So here a is Int32.</span>
+  <span class="n">a</span><span class="o">.</span><span class="n">abs</span>
+<span class="k">end</span>
+</pre></div></div></div>
+<div class="paragraph"><p>This even applies if there are ands (<span class="monospaced">&amp;&amp;</span>) in the condition:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="k">if</span> <span class="n">a</span> <span class="o">&amp;&amp;</span> <span class="n">b</span>
+  <span class="c1"># here both a and b are guaranteed not to be Nil</span>
+<span class="k">end</span>
+</pre></div></div></div>
+<div class="paragraph"><p>Of course, reassigning a variable inside the <span class="monospaced">then</span> branch makes
+that variable have a new type based on the expression assigned.</p></div>
 </div>
 </div>
 </div>

@@ -249,25 +249,25 @@ if some_condition
 else
   a = true
 end
-# Here a will be String or Bool
+# Here a is String or Bool
 
 b = 1
 if some_condition
   b = "hello"
 end
-# Here b will be Int32 or String
+# Here b is Int32 or String
 
 if some_condition
   c = 1
 else
   c = "hello"
 end
-# Here c will be Int32 or String
+# Here c is Int32 or String
 
 if some_condition
   d = 1
 end
-# Here d will be Int32 or Nil
+# Here d is Int32 or Nil
 -------------
 
 Note that if a variable is declared inside one of the branches but not in the other one,
@@ -289,6 +289,23 @@ end
 
 That is, a variable's type is the type of the last expression(s) assigned to it.
 
+If one of the branches never reaches past the end of an if, like in the case
+of a `return`, `next`, `break` or `raise`, that type is not considered at the end of
+the `if`:
+
+
+[source,ruby]
+-------------
+if some_condition
+  e = 1
+else
+  e = "hello"
+  # here e is String
+  return
+end
+# here e is Int32
+-------------
+
 ===== As a suffix
 
 An `if` can be written as an expression's suffix:
@@ -304,4 +321,75 @@ end
 -------------
 
 This sometimes leads to code that is more natural to read.
+
+===== As an expression
+
+The value of an `if` is the value of the last expression found in
+each of its branches:
+
+[source,ruby]
+-------------
+a = if 2 > 1
+      3
+    else
+      4
+    end
+# Here a will be 3
+-------------
+
+If an `if` doesn't have an `else` branch and the condition is falsey,
+the `if`'s value will be `nil`:
+
+[source,ruby]
+-------------
+a = if 1 > 2
+      3
+    end
+# Here a will be nil (a's type is Int32 or Nil)
+-------------
+
+===== Ternary if
+
+The ternary `if` allows writing an `if` in a shorter way:
+
+[source,ruby]
+-------------
+a = 1 > 2 ? 3 : 4
+
+# The above is the same as:
+a = if 1 > 2
+      3
+    else
+      4
+    end
+-------------
+
+===== if var
+
+If a variable is the condition of an `if`, inside the `then` branch the
+variable will be considered as not having the `Nil` type:
+
+[source,ruby]
+-------------
+a = 1 > 2 ? nil : 3
+# a is Int32 or Nil
+
+if a
+  # Since the only way to get here is if a is truthy,
+  # a can't be nil. So here a is Int32.
+  a.abs
+end
+-------------
+
+This even applies if there are ands (`&&`) in the condition:
+
+[source,ruby]
+-------------
+if a && b
+  # here both a and b are guaranteed not to be Nil
+end
+-------------
+
+Of course, reassigning a variable inside the `then` branch makes
+that variable have a new type based on the expression assigned.
 
