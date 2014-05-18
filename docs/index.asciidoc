@@ -1,6 +1,6 @@
 = The Crystal Programming Language
 :doctype: book
-:toclevels: 3
+:toclevels: 4
 
 This is the documentation for the Crystal programming language.
 

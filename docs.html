@@ -892,7 +892,7 @@ install: function(toclevels) {
 }
 
 }
-asciidoc.install(3);
+asciidoc.install(4);
 /*]]>*/
 </script>
 </head>
@@ -1460,6 +1460,40 @@ thread could change that instance variable after checking the condition.</p></di
 <span class="k">end</span>
 </pre></div></div></div>
 </div>
+<div class="sect4">
+<h5 id="_if_var_is_a_type">if var.is_a?(Type)</h5>
+<div class="paragraph"><p>If an <span class="monospaced">if</span>'s condition is an <span class="monospaced">is_a?</span> test, the type of a variable is
+guaranteed to be restricted by that type:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">String</span><span class="p">)</span>
+  <span class="c1"># here a is a String</span>
+<span class="k">end</span>
+
+<span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Number</span><span class="p">)</span>
+  <span class="c1"># here b is a Number</span>
+<span class="k">end</span>
+</pre></div></div></div>
+<div class="paragraph"><p>Note that you can use any type as an <span class="monospaced">is_a?</span> test, like abstract classes
+and modules.</p></div>
+<div class="paragraph"><p>The above also works if there are ands (<span class="monospaced">&amp;&amp;</span>) in the condition:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">String</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">b</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Number</span><span class="p">)</span>
+  <span class="c1"># here a is a String and b is a Number</span>
+<span class="k">end</span>
+</pre></div></div></div>
+<div class="paragraph"><p>This doesn&#8217;t work with instance variables, class variables or global variables.
+To work with these, first assign them to a variable:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="k">if</span> <span class="vi">@a</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">String</span><span class="p">)</span>
+  <span class="c1"># here @a is not guaranteed to be a String</span>
+<span class="k">end</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="vi">@a</span>
+<span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">String</span><span class="p">)</span>
+  <span class="c1"># here a is guaranteed to be a String</span>
+<span class="k">end</span>
+</pre></div></div></div>
+</div>
 </div>
 </div>
 </div>
@@ -1468,7 +1502,7 @@ thread could change that instance variable after checking the condition.</p></di
 <div id="footnotes"><hr></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-05-17 15:19:59 ART
+Last updated 2014-05-18 18:10:17 ART
 </div>
 </div>
 </body>
