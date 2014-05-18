@@ -400,7 +400,16 @@ if a
 end
 -------------
 
-This even applies if there are ands (`&&`) in the condition:
+This also applies when a variable is assigned in an `if`'s condition:
+
+[source,ruby]
+-------------
+if a = some_expression
+  # here a is not nil
+end
+-------------
+
+This logic also applies if there are ands (`&&`) in the condition:
 
 [source,ruby]
 -------------
@@ -414,4 +423,33 @@ to have `a` as not `Nil`.
 
 Of course, reassigning a variable inside the `then` branch makes
 that variable have a new type based on the expression assigned.
+
+The above logic doesn't work with instance variables, class variables
+or global variables:
+
+[source,ruby]
+-------------
+if @a
+  # here @a can be nil
+end
+-------------
+
+This is because any method call could potentially affect that
+instance variable, rendering it `nil`. Another reason is that another
+thread could change that instance variable after checking the condition.
+
+To do something with `@a` only when it is not nil you have two options:
+
+[source,ruby]
+-------------
+# First option: assign it to a variable
+if a = @a
+  # here a can't be nil
+end
+
+# Second option: use `Object#try` found in the standard library
+@a.try do |a|
+  # here a can't be nil
+end
+-------------
 
