@@ -20,3 +20,5 @@ include::syntax.truthy_and_falsey.asciidoc[]
 include::syntax.if.asciidoc[]
 
 include::syntax.unless.asciidoc[]
+
+include::syntax.case.asciidoc[]

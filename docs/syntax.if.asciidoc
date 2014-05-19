@@ -20,6 +20,19 @@ end
 # Here b will be 20
 -------------
 
+To write a chain of `if`-`else`-`if` you use `elsif`:
+
+[source,ruby]
+-------------
+if some_condition
+  do_something
+elsif some_other_condition
+  do_something_else
+else
+  do_that
+end
+-------------
+
 After an `if`, a variable's type depends on the type of the expressions used in both
 branches.
 
