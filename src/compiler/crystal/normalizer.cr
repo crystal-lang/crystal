@@ -329,8 +329,8 @@ module Crystal
       # To:
       #
       #     temp = 1
-      #     a = temp
-      #     b = temp
+      #     a = temp[0]
+      #     b = temp[1]
       if node.values.length == 1
         value = node.values[0]
 
