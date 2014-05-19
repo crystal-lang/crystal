@@ -81,6 +81,41 @@ describe "Type inference: closure" do
     var.closured.should be_true
   end
 
+  it "doesn't mark var as closured if only used in block" do
+    result = assert_type("
+      x = 1
+
+      def foo
+        yield
+      end
+
+      foo { x }
+      ") { int32 }
+    program = result.program
+    var = program.vars["x"]
+    var.closured.should be_false
+  end
+
+  it "doesn't mark var as closured if only used in two block" do
+    result = assert_type("
+      def foo
+        yield
+      end
+
+      foo do
+        x = 1
+        foo do
+          x
+        end
+      end
+      ") { int32 }
+    node = result.node as Expressions
+    call = node[1] as Call
+    block = call.block.not_nil!
+    var = block.vars.not_nil!["x"]
+    var.closured.should be_false
+  end
+
   pending "transforms block to fun literal" do
     assert_type("
       def foo(&block : Int32 ->)
