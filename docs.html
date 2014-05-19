@@ -1463,7 +1463,7 @@ thread could change that instance variable after checking the condition.</p></di
 <div class="sect4">
 <h5 id="_if_var_is_a">if var.is_a?</h5>
 <div class="paragraph"><p>If an <span class="monospaced">if</span>'s condition is an <span class="monospaced">is_a?</span> test, the type of a variable is
-guaranteed to be restricted by that type:</p></div>
+guaranteed to be restricted by that type in the <span class="monospaced">then</span> branch.</p></div>
 <div class="listingblock">
 <div class="content"><div class="highlight"><pre><span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">String</span><span class="p">)</span>
   <span class="c1"># here a is a String</span>
@@ -1471,6 +1471,18 @@ guaranteed to be restricted by that type:</p></div>
 
 <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Number</span><span class="p">)</span>
   <span class="c1"># here b is a Number</span>
+<span class="k">end</span>
+</pre></div></div></div>
+<div class="paragraph"><p>Additionally, in the <span class="monospaced">else</span> branch the type of the variable is guaranteed to
+not be restricted by that type:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="n">some_condition</span> <span class="p">?</span> <span class="mi">1</span> <span class="p">:</span> <span class="s2">&quot;hello&quot;</span>
+<span class="c1"># here a is Int32 or String</span>
+
+<span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">Number</span><span class="p">)</span>
+  <span class="c1"># here a is an Int32</span>
+<span class="k">else</span>
+  <span class="c1"># here a is a String</span>
 <span class="k">end</span>
 </pre></div></div></div>
 <div class="paragraph"><p>Note that you can use any type as an <span class="monospaced">is_a?</span> test, like abstract classes
@@ -1496,14 +1508,49 @@ To work with these, first assign them to a variable:</p></div>
 </div>
 <div class="sect4">
 <h5 id="_if_var_responds_to">if var.responds_to?</h5>
-<div class="paragraph"><p>If an <span class="monospaced">if</span>'s condition is a <span class="monospaced">responds_to?</span> test, the type of a variable is
-guaranteed to be restricted by that types that respond to that method:</p></div>
+<div class="paragraph"><p>If an <span class="monospaced">if</span>'s condition is a <span class="monospaced">responds_to?</span> test, in the <span class="monospaced">then</span> branch the type of
+a variable is guaranteed to be restricted to the types that respond to that method:</p></div>
 <div class="listingblock">
 <div class="content"><div class="highlight"><pre><span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">responds_to?</span><span class="p">(</span><span class="ss">:abs</span><span class="p">)</span>
   <span class="c1"># here a&#39;s type will be reduced to those responding to the &#39;abs&#39; method</span>
 <span class="k">end</span>
 </pre></div></div></div>
+<div class="paragraph"><p>Additionally, in the <span class="monospaced">else</span> branch the type of the variable is guaranteed to be
+restricted to the types that don&#8217;t respond to that method:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="n">some_condition</span> <span class="p">?</span> <span class="mi">1</span> <span class="p">:</span> <span class="s2">&quot;hello&quot;</span>
+<span class="c1"># here a is Int32 or String</span>
+
+<span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">responds_to?</span><span class="p">(</span><span class="ss">:abs</span><span class="p">)</span>
+  <span class="c1"># here a will be Int32, since Int32#abs exists but String#abs doesn&#39;t</span>
+<span class="k">else</span>
+  <span class="c1"># here a will be String</span>
+<span class="k">end</span>
+</pre></div></div></div>
 </div>
+</div>
+<div class="sect3">
+<h4 id="_unless">unless</h4>
+<div class="paragraph"><p>An <span class="monospaced">unless</span> evaluates the <span class="monospaced">then</span> branch if its condition is falsey, and evaluates
+the <span class="monospaced">else</span> branch, if there&#8217;s any, otherwise. That is, it behaves in the opposite
+way of an if:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="k">unless</span> <span class="n">some_condition</span>
+  <span class="n">then_expression</span>
+<span class="k">else</span>
+  <span class="n">else_expression</span>
+<span class="k">end</span>
+
+<span class="c1"># The above is the same as:</span>
+<span class="k">if</span> <span class="n">some_condition</span>
+  <span class="n">else_expression</span>
+<span class="k">else</span>
+  <span class="n">then_expression</span>
+<span class="k">end</span>
+
+<span class="c1"># Can also be written as a suffix</span>
+<span class="n">open_door</span> <span class="k">unless</span> <span class="n">door_closed?</span>
+</pre></div></div></div>
 </div>
 </div>
 </div>

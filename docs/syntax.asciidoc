@@ -18,3 +18,5 @@ Before talking about control expressions we need to know what are
 include::syntax.truthy_and_falsey.asciidoc[]
 
 include::syntax.if.asciidoc[]
+
+include::syntax.unless.asciidoc[]
