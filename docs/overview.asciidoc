@@ -2,7 +2,7 @@
 
 The documentation is divided in three parts:
 
-- The syntax, which resembles Ruby a lot, and it's associated semantic
+- The syntax, which resembles Ruby a lot, and its associated semantic
 - The built-in types and their built-in methods
 - Some common types used across programs and their associated syntax sugar
 
