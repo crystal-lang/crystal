@@ -1267,7 +1267,7 @@ vr6+wTfK/4tEfzeeMmUKkydPzhg8jJAAREgEg0H6+vrQNC2pFL8ZUVWVrKws8vPzycnJQVXVjH/s
 </div>
 <div class="sect3">
 <h4 id="_if">if</h4>
-<div class="paragraph"><p>An <span class="monospaced">if</span> evaluates the <span class="monospaced">then</span> branch if its condition is truthy, and evaluates
+<div class="paragraph"><p>An <span class="monospaced">if</span> evaluates the <span class="monospaced">then</span> branch if its condition is <em>truthy</em>, and evaluates
 the <span class="monospaced">else</span> branch, if there&#8217;s any, otherwise.</p></div>
 <div class="listingblock">
 <div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
@@ -1649,6 +1649,77 @@ syntax:</p></div>
 <span class="k">end</span>
 </pre></div></div></div>
 <div class="paragraph"><p>This sometimes leads to code that is more natural to read.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_while">while</h4>
+<div class="paragraph"><p>A <span class="monospaced">while</span> executes its body as long as its condiiton is <em>truthy</em>.</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="k">while</span> <span class="n">some_condition</span>
+  <span class="n">do_this</span>
+<span class="k">end</span>
+</pre></div></div></div>
+<div class="paragraph"><p>In the above form, the condition is first tested and, if <em>truthy</em>,
+the body is executed. That is, the body might never be executed.</p></div>
+<div class="paragraph"><p>To execute the body at least once and then continue executing it
+while the condition is <em>truthy</em>, write the <span class="monospaced">while</span> as a prefix:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">do_this</span> <span class="k">while</span> <span class="n">some_condition</span>
+</pre></div></div></div>
+<div class="paragraph"><p>If you need to execute multiple expressions, group them between
+<span class="monospaced">begin</span> and <span class="monospaced">end</span>:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="k">begin</span>
+  <span class="n">do_this</span>
+  <span class="n">do_that</span>
+<span class="k">end</span> <span class="k">while</span> <span class="n">some_condition</span>
+</pre></div></div></div>
+<div class="paragraph"><p>A <span class="monospaced">while</span>'s type is always <span class="monospaced">Nil</span>.</p></div>
+<div class="paragraph"><p>Similar to an <span class="monospaced">if</span>, if a <span class="monospaced">while</span>'s condition is a variable, the variable
+is guaranteed to not be <span class="monospaced">nil</span> inside the body. If the condition is an
+<span class="monospaced">var.is_a?(Type)</span> test, <span class="monospaced">var</span> is guaranteed to be of type <span class="monospaced">Type</span> inside the
+body. And if the condition is a <span class="monospaced">var.responds_to?(:method)</span>, <span class="monospaced">var</span> is
+guaranteed to be of a type that responds to that method.</p></div>
+<div class="paragraph"><p>The type of a variable after a <span class="monospaced">while</span> depends on the type it had
+before the <span class="monospaced">while</span> and the type it had before leaving the <span class="monospaced">while</span>'s body:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">while</span> <span class="n">some_condition</span>
+  <span class="c1"># here a is Int32 or String</span>
+  <span class="n">a</span> <span class="o">=</span> <span class="s2">&quot;hello&quot;</span>
+<span class="k">end</span>
+<span class="c1"># here a is Int32 or String</span>
+</pre></div></div></div>
+<div class="sect4">
+<h5 id="_break">break</h5>
+<div class="paragraph"><p>You can use <span class="monospaced">break</span> to break out of a <span class="monospaced">while</span> loop:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="k">while</span> <span class="p">(</span><span class="n">a</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">20</span>
+  <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">10</span>
+    <span class="c1"># goes to &#39;puts a&#39;</span>
+    <span class="k">break</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+<span class="nb">puts</span> <span class="n">a</span> <span class="c1"># prints 10</span>
+</pre></div></div></div>
+</div>
+<div class="sect4">
+<h5 id="_next">next</h5>
+<div class="paragraph"><p>You can use <span class="monospaced">next</span> to try to execute the next iteration of a <span class="monospaced">while</span> loop.
+After executing <span class="monospaced">next</span>, the <span class="monospaced">while</span>'s condition is checked and, if <em>truthy</em>,
+the body will be executed.</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">while</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="mi">5</span>
+  <span class="n">a</span> <span class="o">+=</span> <span class="mi">1</span>
+  <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">3</span>
+    <span class="k">next</span>
+  <span class="k">end</span>
+  <span class="nb">puts</span> <span class="n">a</span>
+<span class="k">end</span>
+<span class="c1"># The above prints the numbers 2, 4 and 5</span>
+</pre></div></div></div>
+</div>
 </div>
 </div>
 </div>

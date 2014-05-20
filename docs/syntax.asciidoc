@@ -22,3 +22,5 @@ include::syntax.if.asciidoc[]
 include::syntax.unless.asciidoc[]
 
 include::syntax.case.asciidoc[]
+
+include::syntax.while.asciidoc[]

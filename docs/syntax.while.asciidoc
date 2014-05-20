@@ -1,0 +1,88 @@
+==== while
+
+A `while` executes its body as long as its condiiton is _truthy_.
+
+[source,ruby]
+-------------
+while some_condition
+  do_this
+end
+-------------
+
+In the above form, the condition is first tested and, if _truthy_,
+the body is executed. That is, the body might never be executed.
+
+To execute the body at least once and then continue executing it
+while the condition is _truthy_, write the `while` as a prefix:
+
+[source,ruby]
+-------------
+do_this while some_condition
+-------------
+
+If you need to execute multiple expressions, group them between
+`begin` and `end`:
+
+[source,ruby]
+-------------
+begin
+  do_this
+  do_that
+end while some_condition
+-------------
+
+A `while`'s type is always `Nil`.
+
+Similar to an `if`, if a `while`'s condition is a variable, the variable
+is guaranteed to not be `nil` inside the body. If the condition is an
+`var.is_a?(Type)` test, `var` is guaranteed to be of type `Type` inside the
+body. And if the condition is a `var.responds_to?(:method)`, `var` is
+guaranteed to be of a type that responds to that method.
+
+The type of a variable after a `while` depends on the type it had
+before the `while` and the type it had before leaving the `while`'s body:
+
+[source,ruby]
+-------------
+a = 1
+while some_condition
+  # here a is Int32 or String
+  a = "hello"
+end
+# here a is Int32 or String
+-------------
+
+===== break
+
+You can use `break` to break out of a `while` loop:
+
+[source,ruby]
+-------------
+a = 2
+while (a += 1) < 20
+  if a == 10
+    # goes to 'puts a'
+    break
+  end
+end
+puts a # prints 10
+-------------
+
+===== next
+
+You can use `next` to try to execute the next iteration of a `while` loop.
+After executing `next`, the `while`'s condition is checked and, if _truthy_,
+the body will be executed.
+
+[source,ruby]
+-------------
+a = 1
+while a < 5
+  a += 1
+  if a == 3
+    next
+  end
+  puts a
+end
+# The above prints the numbers 2, 4 and 5
+-------------

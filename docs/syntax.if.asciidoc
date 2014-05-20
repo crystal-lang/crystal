@@ -1,6 +1,6 @@
 ==== if
 
-An `if` evaluates the `then` branch if its condition is truthy, and evaluates
+An `if` evaluates the `then` branch if its condition is _truthy_, and evaluates
 the `else` branch, if there's any, otherwise.
 
 [source,ruby]
