@@ -1721,6 +1721,23 @@ the body will be executed.</p></div>
 </pre></div></div></div>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_until">until</h4>
+<div class="paragraph"><p>An <span class="monospaced">until</span> executes its body until its condiiton is <em>truthy</em>.
+An <span class="monospaced">until</span> is just syntax sugar for a <span class="monospaced">while</span> with the condition negated:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="k">until</span> <span class="n">some_condition</span>
+  <span class="n">do_this</span>
+<span class="k">end</span>
+
+<span class="c1"># The above is the same as:</span>
+<span class="k">while</span> <span class="o">!</span><span class="n">some_condition</span>
+  <span class="n">do_this</span>
+<span class="k">end</span>
+</pre></div></div></div>
+<div class="paragraph"><p>An <span class="monospaced">until</span> can also be used in its suffix form, causing the body to be
+executed at least once. <span class="monospaced">break</span> and <span class="monospaced">next</span> can also be used inside an <span class="monospaced">until</span>.</p></div>
+</div>
 </div>
 </div>
 </div>
