@@ -26,3 +26,7 @@ include::syntax.case.asciidoc[]
 include::syntax.while.asciidoc[]
 
 include::syntax.until.asciidoc[]
+
+include::syntax.and.asciidoc[]
+
+include::syntax.or.asciidoc[]

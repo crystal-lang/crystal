@@ -1738,6 +1738,42 @@ An <span class="monospaced">until</span> is just syntax sugar for a <span class=
 <div class="paragraph"><p>An <span class="monospaced">until</span> can also be used in its suffix form, causing the body to be
 executed at least once. <span class="monospaced">break</span> and <span class="monospaced">next</span> can also be used inside an <span class="monospaced">until</span>.</p></div>
 </div>
+<div class="sect3">
+<h4 id="_amp_amp">&amp;&amp;</h4>
+<div class="paragraph"><p>An <span class="monospaced">&amp;&amp;</span> (and) evaluates its left hand side. If its <em>truthy</em>, it evaluates its right hand side and
+has that value. Otherwise it has the value of the left hand side.
+Its type it the union of the types of both sides.</p></div>
+<div class="paragraph"><p>You can think of an <span class="monospaced">&amp;&amp;</span> as syntax sugar of an <span class="monospaced">if</span>:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">some_exp1</span> <span class="o">&amp;&amp;</span> <span class="n">some_exp2</span>
+
+<span class="c1"># The above is the same as:</span>
+<span class="n">tmp</span> <span class="o">=</span> <span class="n">some_exp1</span>
+<span class="k">if</span> <span class="n">tmp</span>
+  <span class="n">some_exp2</span>
+<span class="k">else</span>
+  <span class="n">tmp</span>
+<span class="k">end</span>
+</pre></div></div></div>
+</div>
+<div class="sect3">
+<h4 id="_">||</h4>
+<div class="paragraph"><p>An <span class="monospaced">||</span> (or) evaluates its left hand side. If its <em>falsey</em>, it evaluates its right hand side
+and has that value. Otherwise it has the value of the left hand side.
+Its type it the union of the types of both sides.</p></div>
+<div class="paragraph"><p>You can think of an <span class="monospaced">||</span> as syntax sugar of an <span class="monospaced">if</span>:</p></div>
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span class="n">some_exp1</span> <span class="o">||</span> <span class="n">some_exp2</span>
+
+<span class="c1"># The above is the same as:</span>
+<span class="n">tmp</span> <span class="o">=</span> <span class="n">some_exp1</span>
+<span class="k">if</span> <span class="n">tmp</span>
+  <span class="n">tmp</span>
+<span class="k">else</span>
+  <span class="n">some_exp2</span>
+<span class="k">end</span>
+</pre></div></div></div>
+</div>
 </div>
 </div>
 </div>
