@@ -885,8 +885,8 @@ module Crystal
       @fun_literal_count += 1
 
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
-      is_closure = !!context.closure_vars
-      the_fun = codegen_fun(fun_literal_name, node.def, context.type, false, @main_mod, is_closure)
+      is_closure = context.closure_vars || context.closure_self
+      the_fun = codegen_fun(fun_literal_name, node.def, context.type, false, @main_mod, true, is_closure)
       @last = (check_main_fun fun_literal_name, the_fun).fun
 
       if is_closure
@@ -1954,7 +1954,7 @@ module Crystal
       new_fun
     end
 
-    def codegen_fun(mangled_name, target_def, self_type, is_exported_fun = false, fun_module = type_module(self_type), is_closure = false)
+    def codegen_fun(mangled_name, target_def, self_type, is_exported_fun = false, fun_module = type_module(self_type), is_fun_literal = false, is_closure = false)
       old_position = insert_block
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
@@ -1974,7 +1974,7 @@ module Crystal
         @exception_handlers = nil
         @needs_value = true
 
-        args = codegen_fun_signature(mangled_name, target_def, self_type, is_closure)
+        args = codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
 
         if !target_def.is_a?(External) || is_exported_fun
           emit_def_debug_metadata target_def if @debug
@@ -1985,12 +1985,12 @@ module Crystal
             setup_closure_vars context.closure_vars.not_nil!
           end
 
-          if !is_closure && self_type.passed_as_self?
+          if !is_fun_literal && self_type.passed_as_self?
             context.vars["self"] = LLVMVar.new(context.fun.get_param(0), self_type, true)
           end
 
           alloca_vars target_def.vars, target_def, args
-          create_local_copy_of_fun_args(target_def, self_type, args)
+          create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal)
 
           context.return_type = target_def.type?
           context.return_phi = nil
@@ -2017,10 +2017,10 @@ module Crystal
       end
     end
 
-    def codegen_fun_signature(mangled_name, target_def, self_type, is_closure)
+    def codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
       args = Array(Arg).new(target_def.args.length + 1)
 
-      if !is_closure && self_type.passed_as_self?
+      if !is_fun_literal && self_type.passed_as_self?
         args.push Arg.new_with_type("self", self_type)
       end
 
@@ -2074,20 +2074,18 @@ module Crystal
             (parent_vars = parent_closure_context.closure_vars)
           parent_closure_ptr = gep(closure_ptr, 0, closure_vars.length, "parent_ptr")
           setup_closure_vars(parent_vars, parent_closure_context, load(parent_closure_ptr, "parent"))
-        end
-
-        if closure_self = context.closure_self
+        elsif closure_self = context.closure_self
           offset = context.parent_closure_context ? 1 : 0
           self.context.vars["self"] = LLVMVar.new(load(gep(closure_ptr, 0, closure_vars.length + offset, "self")), closure_self, true)
         end
       end
     end
 
-    def create_local_copy_of_fun_args(target_def, self_type, args)
+    def create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal)
       target_def_vars = target_def.vars
       args.each_with_index do |arg, i|
         param = context.fun.get_param(i)
-        if (i == 0 && self_type.passed_as_self?)
+        if !is_fun_literal && (i == 0 && self_type.passed_as_self?)
           # here self is already in context.vars
         elsif arg.type.passed_by_value?
           context.vars[arg.name] = LLVMVar.new(param, arg.type, true)
@@ -2662,7 +2660,8 @@ module Crystal
     def malloc_closure(closure_vars, current_context, parent_context = nil, self_closured = false)
       parent_closure_type = parent_context.try &.closure_type
 
-      if closure_vars
+      if closure_vars || self_closured
+        closure_vars ||= [] of MetaVar
         closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|

@@ -259,6 +259,55 @@ describe "Code gen: closure" do
       ").to_i.should eq(3)
   end
 
+  it "codegens closure with instance var" do
+    run("
+      class Foo
+        def initialize(@x)
+        end
+
+        def foo
+          ->{ @x }
+        end
+      end
+
+      Foo.new(1).foo.call
+      ").to_i.should eq(1)
+  end
+
+  it "codegens closure with instance var and block" do
+    run("
+      def bar
+        yield
+      end
+
+      class Foo
+        def initialize(@x)
+        end
+
+        def foo
+          bar do
+            a = 2
+            ->{ @x + a }
+          end
+        end
+      end
+
+      Foo.new(1).foo.call
+      ").to_i.should eq(3)
+  end
+
+  it "codegen closure in instance method without self closured" do
+    run("
+      class Foo
+        def foo
+          ->(a : Int32) { a }
+        end
+      end
+
+      Foo.new.foo.call(1)
+      ").to_i.should eq(1)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)
