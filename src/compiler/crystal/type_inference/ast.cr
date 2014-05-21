@@ -224,6 +224,8 @@ module Crystal
     property :owner
     property :vars
     property :raises
+    property :self_closured
+    @self_closured = false
 
     def has_default_arguments?
       args.length > 0 && args.last.default_value

@@ -24,7 +24,7 @@ module Crystal
     getter block
     property call
     property type_lookup
-    property in_fun_literal
+    property fun_literal_context
 
     # These are the free variables that came from matches. We look up
     # here first if we find a single-element Path like `T`.
@@ -52,7 +52,6 @@ module Crystal
       @vars = vars
 
       @needs_type_filters = 0
-      @in_fun_literal = false
       @unreachable = false
     end
 
@@ -250,6 +249,8 @@ module Crystal
 
         raise "Bug: var is nil" unless var
 
+        check_self_closured
+
         var
       else
         node.raise "can't use instance variables at the top level"
@@ -412,7 +413,7 @@ module Crystal
     end
 
     def visit(node : Yield)
-      node.raise "can't yield from function literal" if @in_fun_literal
+      node.raise "can't yield from function literal" if @fun_literal_context
       true
     end
 
@@ -538,7 +539,7 @@ module Crystal
       block_visitor.call = @call
       block_visitor.scope = @scope
       block_visitor.type_lookup = type_lookup
-      block_visitor.in_fun_literal = true
+      block_visitor.fun_literal_context = @fun_literal_context || @typed_def || @mod
       node.def.body.accept block_visitor
 
       false
@@ -1579,6 +1580,11 @@ module Crystal
     end
 
     def check_closured(var)
+      if var.name == "self"
+        check_self_closured
+        return
+      end
+
       context = current_context
       var_context = var.context
       if !var.closured && !var_context.same?(context)
@@ -1591,6 +1597,12 @@ module Crystal
         var_context = var_context.context if var_context.is_a?(Block)
 
         var.closured = !context.same?(var_context)
+      end
+    end
+
+    def check_self_closured
+      if (context = @fun_literal_context) && context.is_a?(Def)
+        context.self_closured = true
       end
     end
 

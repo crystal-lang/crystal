@@ -123,6 +123,11 @@ module Crystal
         end
       end
 
+      # If this call is an implicit call to self
+      if !obj && !mod_matches && !owner.is_a?(Program)
+        parent_visitor.check_self_closured
+      end
+
       if owner.is_a?(HierarchyType)
         owner.base_type.add_subclass_observer(self)
         @subclass_notifier = owner.base_type

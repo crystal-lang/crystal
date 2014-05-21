@@ -116,6 +116,95 @@ describe "Type inference: closure" do
     var.closured.should be_false
   end
 
+  it "doesn't mark self var as closured, but marks method as self closured" do
+    result = assert_type("
+      class Foo
+        def foo
+          -> { self }
+        end
+      end
+
+      Foo.new.foo
+      1
+    ") { int32 }
+    node = result.node as Expressions
+    call = node.expressions[-2] as Call
+    target_def = call.target_def
+    var = target_def.vars.not_nil!["self"]
+    var.closured.should be_false
+    target_def.self_closured.should be_true
+  end
+
+  it "marks method as self closured if instance var is read" do
+    result = assert_type("
+      class Foo
+        def foo
+          -> { @x }
+        end
+      end
+
+      Foo.new.foo
+      1
+    ") { int32 }
+    node = result.node as Expressions
+    call = node.expressions[-2] as Call
+    call.target_def.self_closured.should be_true
+  end
+
+  it "marks method as self closured if instance var is written" do
+    result = assert_type("
+      class Foo
+        def foo
+          -> { @x = 1 }
+        end
+      end
+
+      Foo.new.foo
+      1
+    ") { int32 }
+    node = result.node as Expressions
+    call = node.expressions[-2] as Call
+    call.target_def.self_closured.should be_true
+  end
+
+  it "marks method as self closured if explicit self call is made" do
+    result = assert_type("
+      class Foo
+        def foo
+          -> { self.bar }
+        end
+
+        def bar
+        end
+      end
+
+      Foo.new.foo
+      1
+    ") { int32 }
+    node = result.node as Expressions
+    call = node.expressions[-2] as Call
+    call.target_def.self_closured.should be_true
+  end
+
+  it "marks method as self closured if implicit self call is made" do
+    result = assert_type("
+      class Foo
+        def foo
+          -> { bar }
+        end
+
+        def bar
+        end
+      end
+
+      Foo.new.foo
+      1
+    ") { int32 }
+    node = result.node as Expressions
+    call = node.expressions[-2] as Call
+    call.target_def.self_closured.should be_true
+  end
+
   pending "transforms block to fun literal" do
     assert_type("
       def foo(&block : Int32 ->)
