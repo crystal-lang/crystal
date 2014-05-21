@@ -886,7 +886,7 @@ module Crystal
 
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
       is_closure = !!context.closure_vars
-      the_fun = codegen_fun(fun_literal_name, node.def, @mod, false, @main_mod, is_closure)
+      the_fun = codegen_fun(fun_literal_name, node.def, context.type, false, @main_mod, is_closure)
       @last = (check_main_fun fun_literal_name, the_fun).fun
 
       if is_closure
@@ -1985,6 +1985,10 @@ module Crystal
             setup_closure_vars context.closure_vars.not_nil!
           end
 
+          if !is_closure && self_type.passed_as_self?
+            context.vars["self"] = LLVMVar.new(context.fun.get_param(0), self_type, true)
+          end
+
           alloca_vars target_def.vars, target_def, args
           create_local_copy_of_fun_args(target_def, self_type, args)
 
@@ -2015,7 +2019,11 @@ module Crystal
 
     def codegen_fun_signature(mangled_name, target_def, self_type, is_closure)
       args = Array(Arg).new(target_def.args.length + 1)
-      args.push Arg.new_with_type("self", self_type) if self_type.passed_as_self?
+
+      if !is_closure && self_type.passed_as_self?
+        args.push Arg.new_with_type("self", self_type)
+      end
+
       args.concat target_def.args
 
       llvm_args_types = args.map { |arg| llvm_arg_type(arg.type) }
@@ -2041,7 +2049,7 @@ module Crystal
 
         # Set 'byval' attribute
         # but don't set it if it's the "self" argument and it's a struct.
-        if arg.type.passed_by_value? && !(i == 0 && self_type.struct?)
+        if !is_closure && arg.type.passed_by_value? && !(i == 0 && self_type.struct?)
           LLVM.add_attribute param, LibLLVM::Attribute::ByVal
         end
       end
@@ -2067,6 +2075,11 @@ module Crystal
           parent_closure_ptr = gep(closure_ptr, 0, closure_vars.length, "parent_ptr")
           setup_closure_vars(parent_vars, parent_closure_context, load(parent_closure_ptr, "parent"))
         end
+
+        if closure_self = context.closure_self
+          offset = context.parent_closure_context ? 1 : 0
+          self.context.vars["self"] = LLVMVar.new(load(gep(closure_ptr, 0, closure_vars.length + offset, "self")), closure_self, true)
+        end
       end
     end
 
@@ -2074,8 +2087,9 @@ module Crystal
       target_def_vars = target_def.vars
       args.each_with_index do |arg, i|
         param = context.fun.get_param(i)
-        if (i == 0 && self_type.passed_as_self?) || arg.type.passed_by_value?
-          # TODO: check if the variable is closured
+        if (i == 0 && self_type.passed_as_self?)
+          # here self is already in context.vars
+        elsif arg.type.passed_by_value?
           context.vars[arg.name] = LLVMVar.new(param, arg.type, true)
         else
           create_local_copy_of_arg(target_def_vars, arg, param)
@@ -2586,9 +2600,15 @@ module Crystal
     end
 
     def alloca_vars(vars, obj = nil, args = nil)
+      self_closured = false
+      if obj.is_a?(Def)
+        self_closured = obj.self_closured
+      end
+
       closured_vars = closured_vars(vars, obj)
+
       alloca_non_closured_vars(vars, obj, args)
-      malloc_closure closured_vars, context
+      malloc_closure closured_vars, context, nil, self_closured
     end
 
     def alloca_non_closured_vars(vars, obj = nil, args = nil)
@@ -2639,11 +2659,11 @@ module Crystal
       closure_vars
     end
 
-    def malloc_closure(closure_vars, current_context, parent_context = nil)
+    def malloc_closure(closure_vars, current_context, parent_context = nil, self_closured = false)
       parent_closure_type = parent_context.try &.closure_type
 
       if closure_vars
-        closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type)
+        closure_type = @llvm_typer.closure_context_type(closure_vars, parent_closure_type, (self_closured ? current_context.type : nil))
         closure_ptr = malloc closure_type
         closure_vars.each_with_index do |var, i|
           current_context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
@@ -2652,6 +2672,12 @@ module Crystal
 
         if parent_closure_type
           store parent_context.not_nil!.closure_ptr.not_nil!, gep(closure_ptr, 0, closure_vars.length, "parent")
+        end
+
+        if self_closured
+          offset = parent_closure_type ? 1 : 0
+          store llvm_self, gep(closure_ptr, 0, closure_vars.length + offset, "self")
+          current_context.closure_self = current_context.type
         end
       elsif parent_context && parent_context.closure_type
         closure_vars = parent_context.closure_vars
@@ -2915,9 +2941,11 @@ module Crystal
       property closure_ptr
       property closure_skip_parent
       property parent_closure_context
+      property closure_self
 
       def initialize(@fun, @type, @vars = LLVMVars.new)
         @in_const_block = false
+        @closure_skip_parent = false
       end
 
       def block_returns?
@@ -2944,6 +2972,7 @@ module Crystal
         context.closure_ptr = @closure_ptr
         context.closure_skip_parent = @closure_skip_parent
         context.parent_closure_context = @parent_closure_context
+        context.closure_self = @closure_self
         context
       end
     end

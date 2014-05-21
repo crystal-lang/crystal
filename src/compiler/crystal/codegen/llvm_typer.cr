@@ -288,14 +288,17 @@ module Crystal
       llvm_type type
     end
 
-    def closure_context_type(vars, parent_type = nil)
+    def closure_context_type(vars, parent_llvm_type, self_type)
       LLVM.struct_type("closure") do |a_struct|
-        elems = Array(LibLLVM::TypeRef).new(vars.length + (parent_type ? 1 : 0))
+        elems = Array(LibLLVM::TypeRef).new(vars.length + (parent_llvm_type ? 1 : 0))
         vars.each do |var|
           elems << llvm_type(var.type)
         end
-        if parent_type
-          elems << LLVM.pointer_type(parent_type)
+        if parent_llvm_type
+          elems << LLVM.pointer_type(parent_llvm_type)
+        end
+        if self_type
+          elems << llvm_type(self_type)
         end
         elems
       end
