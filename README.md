@@ -9,10 +9,6 @@ Crystal is a programming language with the following goals:
 * Have compile-time evaluation and generation of code, to avoid boilerplate code.
 * Compile to efficient native code.
 
-Interested? Read the [introduction](https://github.com/manastech/crystal/wiki/Introduction) or the [docs for developers](https://github.com/manastech/crystal/wiki/Developers).
-
-Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang) or join our IRC channel #crystal-lang at irc.freenode.net
-
 Why?
 ----
 
@@ -53,3 +49,8 @@ Or compile some example:
 > `bin/crystal samples/mandelbrot.cr && ./mandelbrot`
 
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/25b65355cae65602787d6952d0bdb8cf "githalytics.com")](http://githalytics.com/manastech/crystal)
+
+Community
+---------
+
+Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang) or join our IRC channel #crystal-lang at irc.freenode.net
