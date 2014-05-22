@@ -308,6 +308,24 @@ describe "Code gen: closure" do
       ").to_i.should eq(1)
   end
 
+  it "codegens closure inside initialize inside block with self" do
+    run("
+      def foo
+        yield
+      end
+
+      class Foo
+        def initialize
+          -> { self }
+        end
+      end
+
+      foo do
+        Foo.new
+      end
+      ")
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)

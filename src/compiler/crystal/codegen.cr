@@ -1447,7 +1447,7 @@ module Crystal
 
       closured_vars = closured_vars(block.vars, block)
 
-      malloc_closure closured_vars, block_context, block_context.parent_closure_context
+      malloc_closure closured_vars, block_context, block_context.closure_parent_context
 
       old_scope = block_context.vars["%scope"]?
 
@@ -1483,7 +1483,7 @@ module Crystal
           context.break_phi = old.return_phi
           context.next_phi = phi
           context.while_exit_block = nil
-          context.parent_closure_context = block_context.parent_closure_context
+          context.closure_parent_context = block_context.closure_parent_context
 
           @needs_value = true
           accept block.body
@@ -1719,7 +1719,7 @@ module Crystal
     def codegen_call_with_block(node, block, self_type, call_args)
       with_cloned_context do |old_block_context|
         context.vars = old_block_context.vars.dup
-        context.parent_closure_context = old_block_context
+        context.closure_parent_context = old_block_context
 
         # Allocate block vars, but first undefine variables outside
         # the block with the same name. This can only happen in this case:
@@ -1736,11 +1736,7 @@ module Crystal
           context.block_context = old_context
           context.vars = LLVMVars.new
           context.type = self_type
-
-          context.closure_vars = nil
-          context.closure_type = nil
-          context.closure_ptr = nil
-          context.parent_closure_context = nil
+          context.reset_closure
 
           target_def = node.target_def
 
@@ -1983,6 +1979,8 @@ module Crystal
 
           if is_closure
             setup_closure_vars context.closure_vars.not_nil!
+          else
+            context.reset_closure
           end
 
           if !is_fun_literal && self_type.passed_as_self?
@@ -2063,19 +2061,19 @@ module Crystal
 
     def setup_closure_vars(closure_vars, context = self.context, closure_ptr = context.fun.get_param(context.fun.param_count - 1))
       if context.closure_skip_parent
-        parent_context = context.parent_closure_context.not_nil!
+        parent_context = context.closure_parent_context.not_nil!
         setup_closure_vars(parent_context.closure_vars.not_nil!, parent_context, closure_ptr)
       else
         closure_vars.each_with_index do |var, i|
           self.context.vars[var.name] = LLVMVar.new(gep(closure_ptr, 0, i, var.name), var.type)
         end
 
-        if (parent_closure_context = context.parent_closure_context) &&
-            (parent_vars = parent_closure_context.closure_vars)
+        if (closure_parent_context = context.closure_parent_context) &&
+            (parent_vars = closure_parent_context.closure_vars)
           parent_closure_ptr = gep(closure_ptr, 0, closure_vars.length, "parent_ptr")
-          setup_closure_vars(parent_vars, parent_closure_context, load(parent_closure_ptr, "parent"))
+          setup_closure_vars(parent_vars, closure_parent_context, load(parent_closure_ptr, "parent"))
         elsif closure_self = context.closure_self
-          offset = context.parent_closure_context ? 1 : 0
+          offset = context.closure_parent_context ? 1 : 0
           self.context.vars["self"] = LLVMVar.new(load(gep(closure_ptr, 0, closure_vars.length + offset, "self")), closure_self, true)
         end
       end
@@ -2939,7 +2937,7 @@ module Crystal
       property closure_type
       property closure_ptr
       property closure_skip_parent
-      property parent_closure_context
+      property closure_parent_context
       property closure_self
 
       def initialize(@fun, @type, @vars = LLVMVars.new)
@@ -2953,6 +2951,15 @@ module Crystal
 
       def block_breaks?
         (block = @block) && (block_context = @block_context) && (block.breaks? || (block.yields? && block_context.block_breaks?))
+      end
+
+      def reset_closure
+        @closure_vars = nil
+        @closure_type = nil
+        @closure_ptr = nil
+        @closure_skip_parent = false
+        @closure_parent_context = nil
+        @closure_self = nil
       end
 
       def clone
@@ -2970,7 +2977,7 @@ module Crystal
         context.closure_type = @closure_type
         context.closure_ptr = @closure_ptr
         context.closure_skip_parent = @closure_skip_parent
-        context.parent_closure_context = @parent_closure_context
+        context.closure_parent_context = @closure_parent_context
         context.closure_self = @closure_self
         context
       end
