@@ -502,15 +502,17 @@ module Crystal
       [] of Def
     end
 
+    SuggestableName =/\A[a-z_]/
+
     def lookup_similar_def_name(name, args_length, yields)
-      return nil unless name =~ /\A[a-z_\!\?]/
+      return nil unless name =~ SuggestableName
 
       tolerance = (name.length / 5.0).ceil
       candidates = [] of String
 
       if (defs = self.defs)
         defs.each do |def_name, hash|
-          if def_name =~ /\A[a-z_\!\?]/
+          if def_name =~ SuggestableName
             hash.each do |filter, overload|
               if filter.restrictions.length == args_length && filter.yields == yields
                 if levenshtein(def_name, name) <= tolerance

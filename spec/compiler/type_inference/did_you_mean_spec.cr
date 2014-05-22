@@ -101,4 +101,21 @@ describe "Type inference: did you mean" do
       ",
       "did you mean 'Barbara'"
   end
+
+  it "doesn't suggest for operator" do
+    nodes = parse %(
+      class Foo
+        def !
+        end
+      end
+
+      Foo.new.a
+      )
+    begin
+      infer_type nodes
+      fail "TypeException wasn't raised"
+    rescue ex : Crystal::TypeException
+      ex.to_s.includes?("did you mean").should be_false
+    end
+  end
 end
