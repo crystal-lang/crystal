@@ -273,4 +273,17 @@ describe "Code gen: class" do
       Foo.new(true).x
       )).to_b.should be_true
   end
+
+  it "codegens initialize with instance var" do
+    run(%(
+      class Foo
+        def initialize
+          @x
+        end
+      end
+
+      Foo.new
+      1
+      )).to_i.should eq(1)
+  end
 end

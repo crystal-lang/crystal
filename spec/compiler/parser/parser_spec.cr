@@ -730,7 +730,22 @@ describe "Parser" do
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end") as Def
-    node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
+    node.instance_vars.should eq(Set.new(["@x", "@y"]))
+  end
+
+  it "keeps instance variables declared in def in multi-assign" do
+    node = Parser.parse("def foo; @x, @y = 1, 2; end") as Def
+    node.instance_vars.should eq(Set.new(["@x", "@y"]))
+  end
+
+  it "keeps instance variables declared in def with ||= and &&=" do
+    node = Parser.parse("def foo; @x ||= 1; @y &&= 1; end") as Def
+    node.instance_vars.should eq(Set.new(["@x", "@y"]))
+  end
+
+  it "keeps instance variables declared in def with declare var" do
+    node = Parser.parse("def foo; @x :: Int32; end") as Def
+    node.instance_vars.should eq(Set.new(["@x"]))
   end
 
   it "errors if arg doesn't have a default value after a previous one has one" do

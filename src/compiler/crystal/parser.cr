@@ -74,6 +74,11 @@ module Crystal
 
         if assign_index
           targets = exps[0 ... assign_index].map { |exp| to_lhs(exp) }
+          if ivars = @instance_vars
+            targets.each do |target|
+              ivars.add target.name if target.is_a?(InstanceVar)
+            end
+          end
 
           if (assign = exps[assign_index])
             values = [] of ASTNode
@@ -216,6 +221,7 @@ module Crystal
               needs_new_scope = true
             when InstanceVar
               needs_new_scope = @def_nest == 0
+              @instance_vars.try &.add atomic.name
             else
               needs_new_scope = false
             end
@@ -282,10 +288,18 @@ module Crystal
           else
             case token_type
             when :"&&="
+              if (ivars = @instance_vars) && atomic.is_a?(InstanceVar)
+                ivars.add atomic.name
+              end
+
               assign = Assign.new(atomic, value)
               assign.location = location
               atomic = And.new(atomic.clone, assign)
             when :"||="
+              if (ivars = @instance_vars) && atomic.is_a?(InstanceVar)
+                ivars.add atomic.name
+              end
+
               assign = Assign.new(atomic, value)
               assign.location = location
               atomic = Or.new(atomic.clone, assign)
@@ -770,9 +784,9 @@ module Crystal
         if @token.type == :"->"
           parse_indirect(ivar)
         else
-          @instance_vars.try &.add name
           skip_space
           if @token.type == :"::"
+            @instance_vars.try &.add name
             next_token_skip_space
             ivar_type = parse_single_type
             DeclareVar.new(ivar, ivar_type)

@@ -10,7 +10,7 @@ describe "Code gen: declare var" do
     run("a :: Int32; while a != 10; a = 10; end; a").to_i.should eq(10)
   end
 
-  it "codeges declare instance var" do
+  it "codegens declare instance var" do
     run("
       class Foo
         def initialize
@@ -26,7 +26,7 @@ describe "Code gen: declare var" do
       ").to_i.should eq(0)
   end
 
-  it "codeges declare instance var with static array type" do
+  it "codegens declare instance var with static array type" do
     run("
       class Foo
         def initialize

@@ -401,21 +401,4 @@ describe "Block inference" do
       end
     ") { union_of(int32, bool) }
   end
-
-  it "errors if can't infer block type" do
-    assert_error "
-      class Foo
-        def initialize
-          foo { @x }
-        end
-
-        def foo(&block : Int32 -> U)
-          1
-        end
-      end
-
-      Foo.new
-      ",
-      "can't infer block type"
-  end
 end
