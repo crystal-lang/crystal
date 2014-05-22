@@ -1561,12 +1561,16 @@ module Crystal
     end
 
     def parse_def
-      @instance_vars = Set(String).new
+      instance_vars = @instance_vars = Set(String).new
       @calls_super = false
       @uses_block_arg = false
       @block_arg_name = nil
       a_def = parse_def_or_macro Def
-      a_def.instance_vars = @instance_vars
+
+      # Small memory optimization: don't keep the Set in the Def if it's empty
+      instance_vars = nil if instance_vars.empty?
+
+      a_def.instance_vars = instance_vars
       a_def.calls_super = @calls_super
       a_def.uses_block_arg = @uses_block_arg
       @instance_vars = nil
