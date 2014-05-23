@@ -940,11 +940,18 @@ module Crystal
     end
 
     def trampoline_init(type, wrapper, nest)
-      tramp_ptr = array_malloc(LLVM::Int8, int(32))
+      # HACK: because the nest pointer's address is in the tramploline but
+      # it might not be aligned, we ask for a little more memory and store
+      # its address there.
+      nest_ptr = bit_cast(nest, pointer_type(LLVM::Int8))
+      tramp_ptr = array_malloc(LLVM::Int8, int(32 + sizeof(C::SizeT)))
+      store nest_ptr, bit_cast(tramp_ptr, pointer_type(pointer_type(LLVM::Int8)))
+      tramp_ptr = gep(tramp_ptr, sizeof(C::SizeT))
+
       call @mod.trampoline_init(@llvm_mod), [
         tramp_ptr,
         bit_cast(wrapper, pointer_type(LLVM::Int8)),
-        bit_cast(nest, pointer_type(LLVM::Int8))
+        nest_ptr,
       ]
       @last = call @mod.trampoline_adjust(@llvm_mod), [tramp_ptr]
       @last = cast_to @last, type

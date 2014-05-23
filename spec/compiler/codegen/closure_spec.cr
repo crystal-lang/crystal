@@ -326,6 +326,32 @@ describe "Code gen: closure" do
       ")
   end
 
+  it "doesn't free closure memory (bug)" do
+    run(%(
+      require "prelude"
+
+      def foo
+        i = 0
+        while i < 50_000
+          yield i
+          i += 1
+        end
+      end
+
+      funcs = [] of -> Int32
+
+      foo do |x|
+        funcs.push(->{ x })
+      end
+
+      a = 0_i64
+      funcs.each do |func|
+        a += func.call
+      end
+      a
+      )).to_i.should eq(1249975000_i64)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)
