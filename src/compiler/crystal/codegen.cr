@@ -640,7 +640,17 @@ module Crystal
     end
 
     def codegen_primitive_fun_call(node, target_def, call_args)
-      codegen_call_or_invoke(node, target_def, nil, call_args[0], call_args[1 .. -1], true, target_def.type)
+      closure_ptr = call_args[0]
+      args = call_args[1 .. -1]
+
+      fun_ptr = @builder.extract_value closure_ptr, 0
+      fun_ptr = bit_cast fun_ptr, llvm_fun_type(context.type)
+
+      ctx_ptr = @builder.extract_value closure_ptr, 1
+
+      args.push ctx_ptr
+
+      codegen_call_or_invoke(node, target_def, nil, fun_ptr, args, true, target_def.type)
     end
 
     def codegen_primitive_pointer_diff(node, target_def, call_args)
@@ -887,11 +897,14 @@ module Crystal
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
       is_closure = context.closure_vars || context.closure_self
       the_fun = codegen_fun(fun_literal_name, node.def, context.type, false, @main_mod, true, is_closure)
-      @last = (check_main_fun fun_literal_name, the_fun).fun
+      fun_ptr = (check_main_fun fun_literal_name, the_fun).fun
 
+      closure_ptr = alloca llvm_type(node.type)
+      store bit_cast(fun_ptr, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
       if is_closure
-        trampoline_init node.type, @last, context.closure_ptr.not_nil!
+        store bit_cast(context.closure_ptr.not_nil!, LLVM::VoidPointer), gep(closure_ptr, 0, 1)
       end
+      @last = load(closure_ptr)
 
       false
     end
@@ -905,12 +918,13 @@ module Crystal
         call_self = llvm_self
       end
       last_fun = target_def_fun(node.call.target_def, owner)
-      @last = last_fun.fun
 
+      closure_ptr = alloca llvm_type(node.type)
+      store bit_cast(last_fun.fun, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
       if call_self
-        wrapper = trampoline_wrapper(node.call.target_def, last_fun)
-        trampoline_init node.type, wrapper.fun, call_self
+        store bit_cast(call_self, LLVM::VoidPointer), gep(closure_ptr, 0, 1)
       end
+      @last = load(closure_ptr)
 
       false
     end
@@ -1298,8 +1312,10 @@ module Crystal
       obj_type = node.obj.type
       to_type = node.to.type.instance_type
 
-      if obj_type.pointer? || obj_type.fun?
+      if obj_type.pointer?
         @last = cast_to last_value, to_type
+      elsif obj_type.fun?
+        # Nothing to do
       else
         resulting_type = obj_type.filter_by(to_type).not_nil!
 
@@ -1674,6 +1690,7 @@ module Crystal
     def prepare_call_args(node, owner)
       has_out = false
       target_def = node.target_def
+      is_external = target_def.is_a?(External)
       call_args = Array(LibLLVM::ValueRef).new(node.args.length + 1)
       old_needs_value = @needs_value
 
@@ -1698,9 +1715,9 @@ module Crystal
           when Var
             # For out arguments we reserve the space. After the call
             # we move the value to the variable.
-            call_args << alloca(llvm_type(arg.type))
+            call_arg = alloca(llvm_type(arg.type))
           when InstanceVar
-            call_args << instance_var_ptr(type, arg.name, llvm_self_ptr)
+            call_arg = instance_var_ptr(type, arg.name, llvm_self_ptr)
           else
             arg.raise "Bug: out argument was #{arg}"
           end
@@ -1713,9 +1730,14 @@ module Crystal
 
           # Def argument might be missing if it's a variadic call
           call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
-
-          call_args << call_arg
         end
+
+        if is_external && arg.type.fun?
+          fun_ptr = @builder.extract_value call_arg, 0
+          call_arg = bit_cast fun_ptr, llvm_fun_type(arg.type)
+        end
+
+        call_args << call_arg
       end
 
       @needs_value = old_needs_value
@@ -2023,6 +2045,8 @@ module Crystal
     end
 
     def codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
+      is_external = target_def.is_a?(External)
+
       args = Array(Arg).new(target_def.args.length + 1)
 
       if !is_fun_literal && self_type.passed_as_self?
@@ -2031,15 +2055,22 @@ module Crystal
 
       args.concat target_def.args
 
-      llvm_args_types = args.map { |arg| llvm_arg_type(arg.type) }
-      if is_closure
-        llvm_args_types << LLVM.pointer_type(context.closure_type.not_nil!)
+      if is_external
+        llvm_args_types = args.map { |arg| llvm_c_type(arg.type) }
+        llvm_return_type = llvm_c_type(target_def.type)
+      else
+        llvm_args_types = args.map { |arg| llvm_arg_type(arg.type) }
+        llvm_return_type = llvm_type(target_def.type)
+      end
+
+      if is_fun_literal
+        llvm_args_types << LLVM::VoidPointer
       end
 
       context.fun = @llvm_mod.functions.add(
         mangled_name,
         llvm_args_types,
-        llvm_type(target_def.type),
+        llvm_return_type,
         target_def.varargs,
       )
       context.fun.add_attribute LibLLVM::Attribute::NoReturn if target_def.no_returns?
@@ -2059,14 +2090,10 @@ module Crystal
         end
       end
 
-      if is_closure
-        LLVM.add_attribute context.fun.get_param(llvm_args_types.length - 1), LibLLVM::Attribute::Nest
-      end
-
       args
     end
 
-    def setup_closure_vars(closure_vars, context = self.context, closure_ptr = context.fun.get_param(context.fun.param_count - 1))
+    def setup_closure_vars(closure_vars, context = self.context, closure_ptr = context_fun_closure_ptr)
       if context.closure_skip_parent
         parent_context = context.closure_parent_context.not_nil!
         setup_closure_vars(parent_context.closure_vars.not_nil!, parent_context, closure_ptr)
@@ -2084,6 +2111,11 @@ module Crystal
           self.context.vars["self"] = LLVMVar.new(load(gep(closure_ptr, 0, closure_vars.length + offset, "self")), closure_self, true)
         end
       end
+    end
+
+    def context_fun_closure_ptr
+      void_ptr = context.fun.get_param(context.fun.param_count - 1)
+      bit_cast void_ptr, LLVM.pointer_type(context.closure_type.not_nil!)
     end
 
     def create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal)

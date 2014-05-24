@@ -216,6 +216,14 @@ module Crystal
       llvm_typer.llvm_embedded_type(type)
     end
 
+    def llvm_fun_type(type)
+      llvm_typer.fun_type(type as FunType)
+    end
+
+    def llvm_c_type(type)
+      llvm_typer.llvm_c_type(type)
+    end
+
     def llvm_size(type)
       size_of llvm_type(type)
     end

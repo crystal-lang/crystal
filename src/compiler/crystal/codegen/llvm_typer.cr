@@ -4,6 +4,7 @@ require "llvm"
 module Crystal
   class LLVMTyper
     TYPE_ID_POINTER = LLVM.pointer_type(LLVM::Int32)
+    FUN_TYPE = LLVM.struct_type [LLVM::VoidPointer, LLVM::VoidPointer], "->"
 
     getter landing_pad_type
 
@@ -11,12 +12,13 @@ module Crystal
       @cache = {} of Type => LibLLVM::TypeRef
       @struct_cache = {} of Type => LibLLVM::TypeRef
       @arg_cache = {} of Type => LibLLVM::TypeRef
+      @c_cache = {} of Type => LibLLVM::TypeRef
       @embedded_cache = {} of Type => LibLLVM::TypeRef
 
       target = LLVM::Target.first
       machine = target.create_target_machine("i686-unknown-linux").not_nil!
       @layout = machine.data_layout.not_nil!
-      @landing_pad_type = LLVM.struct_type([LLVM.pointer_type(LLVM::Int8), LLVM::Int32], "landing_pad")
+      @landing_pad_type = LLVM.struct_type([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
     end
 
     def llvm_type(type)
@@ -154,8 +156,7 @@ module Crystal
     end
 
     def create_llvm_type(type : FunType)
-      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
-      LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
+      FUN_TYPE
     end
 
     def create_llvm_type(type : AliasType)
@@ -286,6 +287,24 @@ module Crystal
 
     def create_llvm_embedded_type(type)
       llvm_type type
+    end
+
+    def llvm_c_type(type : Type)
+      @c_cache[type] ||= create_llvm_c_type(type)
+    end
+
+    def create_llvm_c_type(type : FunType)
+      fun_type(type)
+    end
+
+    def create_llvm_c_type(type)
+      llvm_arg_type(type)
+    end
+
+    def fun_type(type : FunType)
+      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
+      arg_types << LLVM::VoidPointer
+      LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
     end
 
     def closure_context_type(vars, parent_llvm_type, self_type)

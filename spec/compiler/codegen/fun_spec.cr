@@ -166,4 +166,22 @@ describe "Code gen: fun" do
       f.call(1 || 1.5).to_i
       ").to_i.should eq(1)
   end
+
+  it "allows passing fun type to C automatically" do
+    run(%(
+      require "prelude"
+
+      lib C
+        fun qsort(base : Void*, nel : C::SizeT, width : C::SizeT, (Void*, Void* -> Int32))
+      end
+
+      ary = [3, 1, 4, 2]
+      C.qsort(ary.buffer as Void*, ary.length.to_sizet, sizeof(Int32).to_sizet, ->(a : Void*, b : Void*) {
+        a = a as Int32*
+        b = b as Int32*
+        a.value <=> b.value
+      })
+      ary[0]
+      )).to_i.should eq(1)
+  end
 end

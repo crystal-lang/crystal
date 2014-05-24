@@ -158,6 +158,8 @@ module LLVM
   Float = LibLLVM.float_type
   Double = LibLLVM.double_type
 
+  VoidPointer = LLVM.pointer_type(LLVM::Int8)
+
   ifdef x86_64
     SizeT = Int64
   else
