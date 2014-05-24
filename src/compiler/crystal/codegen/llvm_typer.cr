@@ -16,7 +16,7 @@ module Crystal
       target = LLVM::Target.first
       machine = target.create_target_machine("i686-unknown-linux").not_nil!
       @layout = machine.data_layout.not_nil!
-      @landing_pad_type = LLVM.struct_type([LLVM.pointer_type(LLVM::Int8), LLVM::Int32], "landing_pad")
+      @landing_pad_type = LLVM.struct_type([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
     end
 
     def llvm_type(type)

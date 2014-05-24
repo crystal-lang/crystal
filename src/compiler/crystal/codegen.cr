@@ -119,7 +119,7 @@ module Crystal
       @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type
       ret_type = llvm_type(node.type)
-      @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, pointer_type(pointer_type(LLVM::Int8))], ret_type)
+      @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, pointer_type(LLVM::VoidPointer)], ret_type)
 
       @context = Context.new @main, @mod
       @context.return_type = @main_ret_type
@@ -943,14 +943,14 @@ module Crystal
       # HACK: because the nest pointer's address is in the tramploline but
       # it might not be aligned, we ask for a little more memory and store
       # its address there.
-      nest_ptr = bit_cast(nest, pointer_type(LLVM::Int8))
+      nest_ptr = bit_cast(nest, LLVM::VoidPointer)
       tramp_ptr = array_malloc(LLVM::Int8, int(32 + sizeof(C::SizeT)))
-      store nest_ptr, bit_cast(tramp_ptr, pointer_type(pointer_type(LLVM::Int8)))
+      store nest_ptr, bit_cast(tramp_ptr, pointer_type(LLVM::VoidPointer))
       tramp_ptr = gep(tramp_ptr, sizeof(C::SizeT))
 
       call @mod.trampoline_init(@llvm_mod), [
         tramp_ptr,
-        bit_cast(wrapper, pointer_type(LLVM::Int8)),
+        bit_cast(wrapper, LLVM::VoidPointer),
         nest_ptr,
       ]
       @last = call @mod.trampoline_adjust(@llvm_mod), [tramp_ptr]
