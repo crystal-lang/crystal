@@ -1388,11 +1388,11 @@ module Crystal
           global = @main_mod.globals.add(llvm_type(const.value.type), global_name)
 
           if const.value.needs_const_block?
-            in_const_block("const_#{global_name}") do
+            in_const_block("const_#{global_name}", const.container) do
               alloca_vars const.vars
 
               request_value do
-                accept const.not_nil!.value
+                accept const.value
               end
 
               if LLVM.constant? @last
@@ -2751,7 +2751,7 @@ module Crystal
       value
     end
 
-    def in_const_block(const_block_name)
+    def in_const_block(const_block_name, container)
       old_position = insert_block
       old_llvm_mod = @llvm_mod
       old_exception_handlers = @exception_handlers
@@ -2759,6 +2759,12 @@ module Crystal
       with_cloned_context do
         context.fun = @main
         context.in_const_block = true
+
+        # "self" in a constant is the constant's container
+        context.type = container
+
+        # Start with fresh variables
+        context.vars = LLVMVars.new
 
         @exception_handlers = nil
         @llvm_mod = @main_mod
