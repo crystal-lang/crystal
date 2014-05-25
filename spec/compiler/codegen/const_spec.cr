@@ -166,4 +166,24 @@ describe "Codegen: const" do
       doit.nil?
     ").to_b.should be_true
   end
+
+  it "allows implicit self in constant, called from another class (bug)" do
+    run("
+      module Foo
+        def self.foo
+          1
+        end
+
+        A = foo
+      end
+
+      class Bar
+        def bar
+          Foo::A
+        end
+      end
+
+      Bar.new.bar
+      ").to_i.should eq(1)
+  end
 end

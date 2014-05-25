@@ -94,31 +94,31 @@ module Crystal
     end
 
     def sprintf(llvm_mod)
-      llvm_mod.functions["sprintf"]? || llvm_mod.functions.add("sprintf", [LLVM.pointer_type(LLVM::Int8)], LLVM::Int32, true)
+      llvm_mod.functions["sprintf"]? || llvm_mod.functions.add("sprintf", [LLVM::VoidPointer], LLVM::Int32, true)
     end
 
     def printf(llvm_mod)
-      llvm_mod.functions["printf"]? || llvm_mod.functions.add("printf", [LLVM.pointer_type(LLVM::Int8)], LLVM::Int32, true)
+      llvm_mod.functions["printf"]? || llvm_mod.functions.add("printf", [LLVM::VoidPointer], LLVM::Int32, true)
     end
 
     def realloc(llvm_mod)
-      llvm_mod.functions["realloc"]? || llvm_mod.functions.add("realloc", ([LLVM.pointer_type(LLVM::Int8), LLVM::Int64]), LLVM.pointer_type(LLVM::Int8))
+      llvm_mod.functions["realloc"]? || llvm_mod.functions.add("realloc", ([LLVM::VoidPointer, LLVM::Int64]), LLVM::VoidPointer)
     end
 
     def memset(llvm_mod)
-      llvm_mod.functions["llvm.memset.p0i8.i32"]? || llvm_mod.functions.add("llvm.memset.p0i8.i32", [LLVM.pointer_type(LLVM::Int8), LLVM::Int8, LLVM::Int32, LLVM::Int32, LLVM::Int1], LLVM::Void)
+      llvm_mod.functions["llvm.memset.p0i8.i32"]? || llvm_mod.functions.add("llvm.memset.p0i8.i32", [LLVM::VoidPointer, LLVM::Int8, LLVM::Int32, LLVM::Int32, LLVM::Int1], LLVM::Void)
     end
 
     def trampoline_init(llvm_mod)
       llvm_mod.functions["llvm.init.trampoline"]? || llvm_mod.functions.add("llvm.init.trampoline", [
-        LLVM.pointer_type(LLVM::Int8), LLVM.pointer_type(LLVM::Int8), LLVM.pointer_type(LLVM::Int8)
+        LLVM::VoidPointer, LLVM::VoidPointer, LLVM::VoidPointer
       ], LLVM::Void)
     end
 
     def trampoline_adjust(llvm_mod)
       llvm_mod.functions["llvm.adjust.trampoline"]? || llvm_mod.functions.add("llvm.adjust.trampoline", [
-        LLVM.pointer_type(LLVM::Int8)
-      ], LLVM.pointer_type(LLVM::Int8))
+        LLVM::VoidPointer
+      ], LLVM::VoidPointer)
     end
   end
 

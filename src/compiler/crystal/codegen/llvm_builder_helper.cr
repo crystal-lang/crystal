@@ -149,7 +149,7 @@ module Crystal
     end
 
     def cast_to_void_pointer(pointer)
-      bit_cast pointer, pointer_type(LLVM::Int8)
+      bit_cast pointer, LLVM::VoidPointer
     end
 
     def pointer_type(type)
