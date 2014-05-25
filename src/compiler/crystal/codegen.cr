@@ -1995,22 +1995,15 @@ module Crystal
           end
 
           if is_closure
-            closure_parent_context = old_context.clone
-
             # In the case of a closure fun literal (-> { ... }), the closure_ptr is not
             # the one of the parent context, it's the last parameter of this fun literal.
+            closure_parent_context = old_context.clone
             closure_parent_context.closure_ptr = fun_literal_closure_ptr
-
-            # Also, if this fun literal doesn't have closure vars then malloc_closure
-            # will define the closured variables to the variables of the parent context.
-            # But the parent context is in another function, all the variables needed for
-            # this are in this context.
-            closure_parent_context.vars = context.vars
-
             context.closure_parent_context = closure_parent_context
           end
 
           alloca_vars target_def.vars, target_def, args, context.closure_parent_context
+
           create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal)
 
           context.return_type = target_def.type?
@@ -2708,10 +2701,6 @@ module Crystal
         closure_type = parent_context.closure_type
         closure_ptr = parent_context.closure_ptr
         closure_skip_parent = true
-
-        closure_vars.not_nil!.each do |var|
-          current_context.vars[var.name] = parent_context.vars[var.name]
-        end
       else
         closure_skip_parent = false
       end
