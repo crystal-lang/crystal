@@ -51,4 +51,21 @@ describe "Type inference: tuples" do
       x.types
       ") { tuple_of [int32.metaclass, float64.metaclass, char.metaclass] }
   end
+
+  it "types tuple in fun literal (bug)" do
+    assert_type("
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      ->(f : Foo) do
+        {Foo.new(f.x), 0}
+      end
+      ") { fun_of(types["Foo"], tuple_of([types["Foo"], int32])) }
+  end
 end

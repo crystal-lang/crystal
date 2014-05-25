@@ -209,14 +209,12 @@ module Crystal
   end
 
   class TupleLiteral
-    def map_type(type)
-      if exps.all? &.type?
-        types = [] of Type | ASTNode
-        exps.each { |exp| types << exp.type }
-        exps.first.type.program.tuple_of types
-      else
-        nil
-      end
+    def update(from = nil)
+      return unless exps.all? &.type?
+
+      types = [] of Type | ASTNode
+      exps.each { |exp| types << exp.type }
+      self.type = exps.first.type.program.tuple_of types
     end
   end
 
