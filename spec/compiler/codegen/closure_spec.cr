@@ -352,6 +352,77 @@ describe "Code gen: closure" do
       )).to_i.should eq(1249975000_i64)
   end
 
+  it "codegens nested closure" do
+    run(%(
+      a = 1
+      ->{ ->{ a } }.call.call
+      )).to_i.should eq(1)
+  end
+
+  it "codegens super nested closure" do
+    run(%(
+      a = 1
+      ->{ ->{ -> { -> { a } } } }.call.call.call.call
+      )).to_i.should eq(1)
+  end
+
+  it "codegens nested closure with block (1)" do
+    run(%(
+      def foo
+        yield
+      end
+
+      a = 1
+      ->{ foo { ->{ a } } }.call.call
+      )).to_i.should eq(1)
+  end
+
+  it "codegens nested closure with block (2)" do
+    run(%(
+      def foo
+        yield
+      end
+
+      a = 1
+      ->{ ->{ foo { a } } }.call.call
+      )).to_i.should eq(1)
+  end
+
+  it "codegens nested closure with nested closured variable" do
+    run(%(
+      a = 1
+      ->{
+        b = 2
+        ->{ a + b }
+      }.call.call
+      )).to_i.should eq(3)
+  end
+
+  it "codegens super nested closure with nested closured variable" do
+    run(%(
+      def foo
+        yield 4
+      end
+
+      a = 1
+      ->{
+        b = 2
+        ->{
+          -> {
+            -> {
+              c = 3
+              foo do |d|
+                -> {
+                  a + b + c + d
+                }
+              end
+            }
+          }
+        }
+      }.call.call.call.call.call
+      )).to_i.should eq(10)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)

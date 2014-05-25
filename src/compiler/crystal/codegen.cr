@@ -885,7 +885,7 @@ module Crystal
       @fun_literal_count += 1
 
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
-      is_closure = context.closure_vars || context.closure_self
+      is_closure = !!(context.closure_vars || context.closure_self)
       the_fun = codegen_fun(fun_literal_name, node.def, context.type, false, @main_mod, true, is_closure)
       @last = (check_main_fun fun_literal_name, the_fun).fun
 
@@ -1966,7 +1966,7 @@ module Crystal
       old_llvm_mod = @llvm_mod
       old_needs_value = @needs_value
 
-      with_cloned_context do
+      with_cloned_context do |old_context|
         context.type = self_type
         context.vars = LLVMVars.new
         context.in_const_block = false
@@ -1994,7 +1994,23 @@ module Crystal
             context.vars["self"] = LLVMVar.new(context.fun.get_param(0), self_type, true)
           end
 
-          alloca_vars target_def.vars, target_def, args
+          if is_closure
+            closure_parent_context = old_context.clone
+
+            # In the case of a closure fun literal (-> { ... }), the closure_ptr is not
+            # the one of the parent context, it's the last parameter of this fun literal.
+            closure_parent_context.closure_ptr = fun_literal_closure_ptr
+
+            # Also, if this fun literal doesn't have closure vars then malloc_closure
+            # will define the closured variables to the variables of the parent context.
+            # But the parent context is in another function, all the variables needed for
+            # this are in this context.
+            closure_parent_context.vars = context.vars
+
+            context.closure_parent_context = closure_parent_context
+          end
+
+          alloca_vars target_def.vars, target_def, args, context.closure_parent_context
           create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal)
 
           context.return_type = target_def.type?
@@ -2066,7 +2082,7 @@ module Crystal
       args
     end
 
-    def setup_closure_vars(closure_vars, context = self.context, closure_ptr = context.fun.get_param(context.fun.param_count - 1))
+    def setup_closure_vars(closure_vars, context = self.context, closure_ptr = fun_literal_closure_ptr)
       if context.closure_skip_parent
         parent_context = context.closure_parent_context.not_nil!
         setup_closure_vars(parent_context.closure_vars.not_nil!, parent_context, closure_ptr)
@@ -2084,6 +2100,10 @@ module Crystal
           self.context.vars["self"] = LLVMVar.new(load(gep(closure_ptr, 0, closure_vars.length + offset, "self")), closure_self, true)
         end
       end
+    end
+
+    def fun_literal_closure_ptr
+      context.fun.get_param(context.fun.param_count - 1)
     end
 
     def create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal)
@@ -2602,7 +2622,7 @@ module Crystal
       names.map { |name| new_block name }
     end
 
-    def alloca_vars(vars, obj = nil, args = nil)
+    def alloca_vars(vars, obj = nil, args = nil, parent_context = nil)
       self_closured = false
       if obj.is_a?(Def)
         self_closured = obj.self_closured
@@ -2611,7 +2631,7 @@ module Crystal
       closured_vars = closured_vars(vars, obj)
 
       alloca_non_closured_vars(vars, obj, args)
-      malloc_closure closured_vars, context, nil, self_closured
+      malloc_closure closured_vars, context, parent_context, self_closured
     end
 
     def alloca_non_closured_vars(vars, obj = nil, args = nil)
