@@ -13,3 +13,5 @@ include::installing.asciidoc[]
 include::overview.asciidoc[]
 
 include::syntax.asciidoc[]
+
+include::google_analytics.asciidoc[]
