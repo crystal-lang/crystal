@@ -166,4 +166,17 @@ describe "Code gen: fun" do
       f.call(1 || 1.5).to_i
       ").to_i.should eq(1)
   end
+
+  it "allows fun pointer where self is a class" do
+    run("
+      class A
+        def self.bla
+          1
+        end
+      end
+
+      f = ->A.bla
+      f.call
+      ").to_i.should eq(1)
+  end
 end

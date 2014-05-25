@@ -907,25 +907,49 @@ module Crystal
       last_fun = target_def_fun(node.call.target_def, owner)
       @last = last_fun.fun
 
+      is_metaclass = owner.metaclass?
+
       if call_self
-        wrapper = trampoline_wrapper(node.call.target_def, last_fun)
+        wrapper = trampoline_wrapper(node.call.target_def, last_fun, is_metaclass)
+
+        # In the case of a metaclass we set the closure context to be a pointer
+        # to the type id.
+        if is_metaclass
+          new_call_self = malloc llvm_type(owner)
+          store call_self, new_call_self
+          call_self = new_call_self
+        end
+
         trampoline_init node.type, wrapper.fun, call_self
       end
 
       false
     end
 
-    def trampoline_wrapper(target_def, target_fun)
+    def trampoline_wrapper(target_def, target_fun, is_metaclass)
       key = target_def.object_id
       wrappers = (@trampoline_wrappers ||= {} of typeof(object_id) => LLVM::Function)
       wrappers[key] ||= begin
         param_types = target_fun.param_types
         ret_type = target_fun.return_type
+
+        # In the case of a metaclass, we want the nest type to be i32*, not i32
+        if is_metaclass
+          param_types[0] = pointer_type(param_types[0])
+        end
+
         @llvm_mod.functions.add("trampoline_wrapper_#{key}", param_types, ret_type) do |func|
           func.linkage = LibLLVM::Linkage::Internal if @single_module
           LLVM.add_attribute func.get_param(0), LibLLVM::Attribute::Nest
           func.append_basic_block("entry") do |builder|
-            call_ret = builder.call target_fun, func.params
+            params = func.params
+
+            # In the case of a metaclass, we load the type id from the i32* parameter
+            if is_metaclass
+              params[0] = builder.load params[0]
+            end
+
+            call_ret = builder.call target_fun, params
             case target_def.type
             when .no_return?
               builder.unreachable
