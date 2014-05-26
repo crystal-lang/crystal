@@ -222,6 +222,10 @@ module Crystal
     property :owner
     property :vars
     property :raises
+
+    property closure
+    @closure = false
+
     property :self_closured
     @self_closured = false
 
