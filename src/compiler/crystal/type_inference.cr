@@ -542,6 +542,11 @@ module Crystal
       block_visitor.fun_literal_context = @fun_literal_context || @typed_def || @mod
       node.def.body.accept block_visitor
 
+      if node.def.closure
+        context = current_non_block_context
+        context.closure = true if context.is_a?(Def)
+      end
+
       false
     end
 
@@ -1597,13 +1602,20 @@ module Crystal
         context = context.context if context.is_a?(Block)
         var_context = var_context.context if var_context.is_a?(Block)
 
-        var.closured = !context.same?(var_context)
+        closured = !context.same?(var_context)
+        if closured
+          var.closured = true
+          context.closure = true if context.is_a?(Def)
+        end
       end
     end
 
     def check_self_closured
       if (context = @fun_literal_context) && context.is_a?(Def)
         context.self_closured = true
+
+        non_block_context = current_non_block_context
+        non_block_context.closure = true if non_block_context.is_a?(Def)
       end
     end
 

@@ -895,7 +895,8 @@ module Crystal
       @fun_literal_count += 1
 
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
-      is_closure = !!(context.closure_vars || context.closure_self)
+      is_closure = node.def.closure
+
       the_fun = codegen_fun(fun_literal_name, node.def, context.type, false, @main_mod, true, is_closure)
       fun_ptr = (check_main_fun fun_literal_name, the_fun).fun
 
