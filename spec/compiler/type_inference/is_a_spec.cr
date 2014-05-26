@@ -155,4 +155,15 @@ describe "Type inference: is_a?" do
       end
       ") { union_of(int32, char) }
   end
+
+  it "restricts in assignment" do
+    assert_type("
+      a = 1 || 'a'
+      if (b = a).is_a?(Int32)
+        b
+      else
+        2
+      end
+      ") { int32 }
+  end
 end

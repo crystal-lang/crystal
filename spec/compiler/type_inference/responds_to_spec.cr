@@ -28,4 +28,15 @@ describe "Type inference: responds_to?" do
       end
       ") { int32 }
   end
+
+  it "restricts in assignment" do
+    assert_type("
+      a = 1 || 'a'
+      if (b = a).responds_to?(:abs)
+        b
+      else
+        2
+      end
+      ") { int32 }
+  end
 end
