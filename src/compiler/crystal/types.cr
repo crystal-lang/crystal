@@ -997,6 +997,23 @@ module Crystal
         instance_vars_in_initialize.try(&.includes?(name)) ||
         superclass.try &.has_instance_var_in_initialize?(name)
     end
+
+    def lookup_similar_instance_var_name(name)
+      tolerance = (name.length / 5.0).ceil
+      candidates = [] of String
+
+      all_instance_vars.each_key do |ivar_name|
+        if name != ivar_name && levenshtein(name, ivar_name) <= tolerance
+          candidates << ivar_name
+        end
+      end
+
+      if candidates.empty?
+        nil
+      else
+        candidates.min_by { |candidate| levenshtein(candidate, name) }
+      end
+    end
   end
 
   class NonGenericClassType < ClassType

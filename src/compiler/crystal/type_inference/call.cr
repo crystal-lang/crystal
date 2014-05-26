@@ -528,6 +528,20 @@ module Crystal
             msg << "undefined local variable or method '#{def_name}'"
           end
           msg << " \e[1;33m(did you mean '#{similar_name}'?)\e[0m" if similar_name
+
+          # Check if it's an instance variable that was never assigned a value
+          if obj.is_a?(InstanceVar)
+            scope = scope as InstanceVarContainer
+            ivar = scope.lookup_instance_var(obj.name)
+            if ivar.dependencies.length == 1 && ivar.dependencies[0].same?(mod.nil_var)
+              similar_name = scope.lookup_similar_instance_var_name(ivar.name)
+              if similar_name
+                msg << " \e[1;33m(#{ivar.name} was never assigned a value, did you mean #{similar_name}?)\e[0m"
+              else
+                msg << " \e[1;33m(#{ivar.name} was never assigned a value)\e[0m"
+              end
+            end
+          end
         end
         raise error_msg, owner_trace
       end
