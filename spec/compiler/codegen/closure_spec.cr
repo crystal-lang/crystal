@@ -423,6 +423,26 @@ describe "Code gen: closure" do
       )).to_i.should eq(10)
   end
 
+  it "codegens closure with struct" do
+    run(%(
+      struct Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      a = 1
+      f = ->(foo : Foo) {
+        foo.x + a
+      }
+
+      f.call(Foo.new(2))
+      )).to_i.should eq(3)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)

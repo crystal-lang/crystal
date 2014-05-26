@@ -43,6 +43,8 @@ module Crystal
         return
       end
 
+      assume_allocated_if_new_call obj_type
+
       return unless obj_and_args_types_set?
 
       # Ignore extra recalculations when more than one argument changes at the same time
@@ -85,6 +87,12 @@ module Crystal
 
       if (parent_visitor = @parent_visitor) && parent_visitor.typed_def? && matches && matches.any?(&.raises)
         parent_visitor.typed_def.raises = true
+      end
+    end
+
+    def assume_allocated_if_new_call(obj_type)
+      if obj_type && obj_type.metaclass? && name == "new"
+        obj_type.instance_type.allocated = true
       end
     end
 

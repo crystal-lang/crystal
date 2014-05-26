@@ -153,7 +153,7 @@ module Crystal
     end
 
     def allocated=(value)
-      raise "Bug: #{self} doesn't implement allocated="
+      false
     end
 
     def implements?(other_type : Type)

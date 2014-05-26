@@ -921,7 +921,7 @@ module Crystal
 
       closure_ptr = alloca llvm_type(node.type)
       store bit_cast(last_fun.fun, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
-      if call_self
+      if call_self && !owner.metaclass?
         store bit_cast(call_self, LLVM::VoidPointer), gep(closure_ptr, 0, 1)
       end
       @last = load(closure_ptr)
@@ -929,17 +929,30 @@ module Crystal
       false
     end
 
-    def trampoline_wrapper(target_def, target_fun)
+    def trampoline_wrapper(target_def, target_fun, is_metaclass)
       key = target_def.object_id
       wrappers = (@trampoline_wrappers ||= {} of typeof(object_id) => LLVM::Function)
       wrappers[key] ||= begin
         param_types = target_fun.param_types
         ret_type = target_fun.return_type
+
+        # In the case of a metaclass, we want the nest type to be i32*, not i32
+        if is_metaclass
+          param_types[0] = pointer_type(param_types[0])
+        end
+
         @llvm_mod.functions.add("trampoline_wrapper_#{key}", param_types, ret_type) do |func|
           func.linkage = LibLLVM::Linkage::Internal if @single_module
           LLVM.add_attribute func.get_param(0), LibLLVM::Attribute::Nest
           func.append_basic_block("entry") do |builder|
-            call_ret = builder.call target_fun, func.params
+            params = func.params
+
+            # In the case of a metaclass, we load the type id from the i32* parameter
+            if is_metaclass
+              params[0] = builder.load params[0]
+            end
+
+            call_ret = builder.call target_fun, params
             case target_def.type
             when .no_return?
               builder.unreachable
@@ -2093,8 +2106,8 @@ module Crystal
         LLVM.set_name param, arg.name
 
         # Set 'byval' attribute
-        # but don't set it if it's the "self" argument and it's a struct.
-        if !is_closure && arg.type.passed_by_value? && !(i == 0 && self_type.struct?)
+        # but don't set it if it's the "self" argument and it's a struct (while not in a closure).
+        if arg.type.passed_by_value? && (is_closure || !(i == 0 && self_type.struct?))
           LLVM.add_attribute param, LibLLVM::Attribute::ByVal
         end
       end
