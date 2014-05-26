@@ -443,6 +443,17 @@ describe "Code gen: closure" do
       )).to_i.should eq(3)
   end
 
+  it "codegens nested closure that mentions var in both contexts" do
+    run(%(
+      a = 1
+      f = ->{
+        a
+        -> { a }
+      }
+      f.call.call
+      )).to_i.should eq(1)
+  end
+
   # pending "transforms block to fun literal" do
   #   run("
   #     def foo(&block : Int32 ->)

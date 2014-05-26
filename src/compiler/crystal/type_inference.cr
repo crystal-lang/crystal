@@ -1593,7 +1593,7 @@ module Crystal
 
       context = current_context
       var_context = var.context
-      if !var.closured && !var_context.same?(context)
+      if !var_context.same?(context)
         # If the contexts are not the same, it might be that we are in a block
         # inside a method, or a block inside another block. We don't want
         # those cases to closure a variable. So if any context is a block
