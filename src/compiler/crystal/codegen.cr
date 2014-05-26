@@ -2086,8 +2086,8 @@ module Crystal
         LLVM.set_name param, arg.name
 
         # Set 'byval' attribute
-        # but don't set it if it's the "self" argument and it's a struct.
-        if !is_closure && arg.type.passed_by_value? && !(i == 0 && self_type.struct?)
+        # but don't set it if it's the "self" argument and it's a struct (while not in a closure).
+        if arg.type.passed_by_value? && (is_closure || !(i == 0 && self_type.struct?))
           LLVM.add_attribute param, LibLLVM::Attribute::ByVal
         end
       end
