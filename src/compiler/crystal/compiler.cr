@@ -134,7 +134,7 @@ module Crystal
       unless output_filename
         if @run
           output_filename = "#{ENV["TMPDIR"] || "/tmp"}/.crystal-run.XXXXXX"
-          tmp_fd = C.mkstemp output_filename.cstr
+          tmp_fd = C.mkstemp output_filename
           raise "Error creating temp file #{output_filename}" if tmp_fd == -1
           C.close tmp_fd
         else
@@ -268,7 +268,7 @@ module Crystal
           end
 
           if @run
-            C.system "#{output_filename}"
+            C.system "#{output_filename} #{ARGV[1 .. -1].join " "}"
             File.delete output_filename
           end
         end
