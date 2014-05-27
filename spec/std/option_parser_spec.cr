@@ -164,4 +164,57 @@ describe "OptionParser" do
       ex.message.should eq("Invalid option: -j")
     end
   end
+
+  describe "--" do
+    it "ignores everything after -- with bool flag" do
+      args = ["-f", "bar", "--", "baz", "qux", "-g"]
+      f = false
+      g = false
+      OptionParser.parse(args) do |opts|
+        opts.on("-f", "some flag") do
+          f = true
+        end
+        opts.on("-g", "some flag") do
+          g = true
+        end
+      end
+      f.should be_true
+      g.should be_false
+      args.should eq(["bar", "baz", "qux", "-g"])
+    end
+
+    it "ignores everything after -- with single flag)" do
+      args = ["-f", "bar", "x", "--", "baz", "qux", "-g", "lala"]
+      f = nil
+      g = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("-f FLAG", "some flag") do |v|
+          f = v
+        end
+        opts.on("-g FLAG", "some flag") do |v|
+          g = v
+        end
+      end
+      f.should eq("bar")
+      g.should be_nil
+      args.should eq(["x", "baz", "qux", "-g", "lala"])
+    end
+
+    it "ignores everything after -- with double flag" do
+      args = ["--f", "bar", "x", "--", "baz", "qux", "--g", "lala"]
+      f = nil
+      g = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("--f FLAG", "some flag") do |v|
+          f = v
+        end
+        opts.on("--g FLAG", "some flag") do |v|
+          g = v
+        end
+      end
+      f.should eq("bar")
+      g.should be_nil
+      args.should eq(["x", "baz", "qux", "--g", "lala"])
+    end
+  end
 end

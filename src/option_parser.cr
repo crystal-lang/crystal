@@ -24,6 +24,10 @@ class OptionParser
 
   def initialize(@args)
     @flags = [] of String
+    double_dash_index = @double_dash_index = @args.index("--")
+    if double_dash_index
+      @args.delete_at(double_dash_index)
+    end
   end
 
   def banner=(@banner)
@@ -88,22 +92,22 @@ class OptionParser
   end
 
   def flag_present?(flag)
-    index = @args.index(flag)
+    index = args_index(flag)
     if index
-      @args.delete_at(index)
-      true
-    else
-      false
+      delete_arg_at_index(index)
+      return true
     end
+
+    false
   end
 
   def double_flag_value(flag, raise_if_missing = false)
-    @args.each_with_index do |arg, index|
+    each_arg_with_index do |arg, index|
       if arg.starts_with?(flag)
         if arg.length == flag.length
-          @args.delete_at(index)
-          if index < @args.length
-            return @args.delete_at(index)
+          delete_arg_at_index(index)
+          if index < args_length
+            return delete_arg_at_index(index)
           else
             if raise_if_missing
               raise MissingOption.new(flag)
@@ -112,7 +116,7 @@ class OptionParser
             end
           end
         elsif arg[flag.length].chr == '='
-          @args.delete_at(index)
+          delete_arg_at_index(index)
           value = arg[flag.length + 1 .. -1]
           if value.empty?
             raise MissingOption.new(flag)
@@ -126,12 +130,12 @@ class OptionParser
   end
 
   def single_flag_value(flag, raise_if_missing = false)
-    index = @args.index { |arg| arg.starts_with?(flag) }
+    index = args_index { |arg| arg.starts_with?(flag) }
     if index
-      arg = @args.delete_at(index)
+      arg = delete_arg_at_index(index)
       if arg.length == flag.length
-        if index < @args.length
-          @args.delete_at(index)
+        if index < args_length
+          delete_arg_at_index(index)
         else
           raise MissingOption.new(flag) if raise_if_missing
         end
@@ -145,8 +149,53 @@ class OptionParser
     end
   end
 
+  def each_arg_with_index
+    if double_dash_index = @double_dash_index
+      @args.each_with_index do |arg, index|
+        break if index == double_dash_index
+        yield arg, index
+      end
+    else
+      @args.each_with_index do |arg, index|
+        yield arg, index
+      end
+    end
+  end
+
+  def args_length
+    @double_dash_index || @args.length
+  end
+
+  def args_index(flag)
+    args_index { |arg| arg == flag }
+  end
+
+  def args_index
+    index = @args.index { |arg| yield arg }
+    if index
+      if (double_dash_index = @double_dash_index) && index >= double_dash_index
+        return nil
+      end
+    end
+    index
+  end
+
+  def delete_arg_at_index(index)
+    arg = @args.delete_at(index)
+    decrement_double_dash_index
+    arg
+  end
+
+  def decrement_double_dash_index
+    if double_dash_index = @double_dash_index
+      @double_dash_index = double_dash_index - 1
+    end
+  end
+
   def check_invalid_options
-    @args.each do |arg|
+    @args.each_with_index do |arg, index|
+      return if (double_dash_index = @double_dash_index) && index >= double_dash_index
+
       if arg.starts_with?('-')
         raise InvalidOption.new(arg)
       end
