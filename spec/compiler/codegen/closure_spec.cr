@@ -423,6 +423,24 @@ describe "Code gen: closure" do
       )).to_i.should eq(10)
   end
 
+  it "codegens fun literal with struct" do
+    run(%(
+      struct Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      f = ->(foo : Foo) { foo.x }
+
+      obj = Foo.new(2)
+      f.call(obj)
+      )).to_i.should eq(2)
+  end
+
   it "codegens closure with struct" do
     run(%(
       struct Foo
@@ -439,7 +457,28 @@ describe "Code gen: closure" do
         foo.x + a
       }
 
-      f.call(Foo.new(2))
+      obj = Foo.new(2)
+      f.call(obj)
+      )).to_i.should eq(3)
+  end
+
+  it "codegens closure with self and arguments" do
+    run(%(
+      class Foo
+        def initialize(@x)
+        end
+
+        def foo(x)
+          @x + x
+        end
+
+        def bar
+          ->foo(Int32)
+        end
+      end
+
+      f = Foo.new(1).bar
+      f.call(2)
       )).to_i.should eq(3)
   end
 

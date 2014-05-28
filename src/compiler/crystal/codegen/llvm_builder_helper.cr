@@ -220,6 +220,10 @@ module Crystal
       llvm_typer.fun_type(type as FunType)
     end
 
+    def llvm_closure_type(type)
+      llvm_typer.closure_type(type as FunType)
+    end
+
     def llvm_c_type(type)
       llvm_typer.llvm_c_type(type)
     end

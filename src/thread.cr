@@ -20,16 +20,20 @@ end
 
 class Thread(T, R)
   def self.new(func : -> R)
-    Thread(Nil, R).new(nil, func as Nil -> R)
+    Thread(Nil, R).new(nil, ->(x : Nil) { func.call })
   end
 
   def initialize(arg : T, func : T -> R)
     @func = func
     @arg = arg
-    PThread.create(out @th, nil, ->start(Void*), nil)
+    PThread.create(out @th, nil, ->(x : Void*) {
+        obj = x as Thread(T, R)
+        obj.start
+      },
+      Pointer(Void).new(object_id))
   end
 
-  def start(x)
+  def start
     ret = Pointer(R).malloc(1)
     ret.value = @func.call(@arg)
     PThread.exit(ret as Void*)

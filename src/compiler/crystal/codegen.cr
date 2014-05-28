@@ -644,13 +644,26 @@ module Crystal
       args = call_args[1 .. -1]
 
       fun_ptr = @builder.extract_value closure_ptr, 0
-      fun_ptr = bit_cast fun_ptr, llvm_fun_type(context.type)
-
       ctx_ptr = @builder.extract_value closure_ptr, 1
 
-      args.push ctx_ptr
+      ctx_is_null_block = new_block "ctx_is_null"
+      ctx_is_not_null_block = new_block "ctx_is_not_null"
 
-      codegen_call_or_invoke(node, target_def, nil, fun_ptr, args, true, target_def.type)
+      ctx_is_null = equal? ctx_ptr, LLVM.null(LLVM::VoidPointer)
+      cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
+
+      Phi.open(self, node, true) do |phi|
+        position_at_end ctx_is_null_block
+        real_fun_ptr = bit_cast fun_ptr, llvm_fun_type(context.type)
+        value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, false)
+        phi.add value, node.type
+
+        position_at_end ctx_is_not_null_block
+        real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
+        args.insert(0, ctx_ptr)
+        value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true)
+        phi.add value, node.type, true
+      end
     end
 
     def codegen_primitive_pointer_diff(node, target_def, call_args)
@@ -904,6 +917,8 @@ module Crystal
       store bit_cast(fun_ptr, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
       if is_closure
         store bit_cast(context.closure_ptr.not_nil!, LLVM::VoidPointer), gep(closure_ptr, 0, 1)
+      else
+        store LLVM.null(LLVM::VoidPointer), gep(closure_ptr, 0, 1)
       end
       @last = load(closure_ptr)
 
@@ -918,71 +933,19 @@ module Crystal
       elsif owner.passed_as_self?
         call_self = llvm_self
       end
+
       last_fun = target_def_fun(node.call.target_def, owner)
 
       closure_ptr = alloca llvm_type(node.type)
       store bit_cast(last_fun.fun, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
       if call_self && !owner.metaclass?
         store bit_cast(call_self, LLVM::VoidPointer), gep(closure_ptr, 0, 1)
+      else
+        store LLVM.null(LLVM::VoidPointer), gep(closure_ptr, 0, 1)
       end
       @last = load(closure_ptr)
 
       false
-    end
-
-    def trampoline_wrapper(target_def, target_fun, is_metaclass)
-      key = target_def.object_id
-      wrappers = (@trampoline_wrappers ||= {} of typeof(object_id) => LLVM::Function)
-      wrappers[key] ||= begin
-        param_types = target_fun.param_types
-        ret_type = target_fun.return_type
-
-        # In the case of a metaclass, we want the nest type to be i32*, not i32
-        if is_metaclass
-          param_types[0] = pointer_type(param_types[0])
-        end
-
-        @llvm_mod.functions.add("trampoline_wrapper_#{key}", param_types, ret_type) do |func|
-          func.linkage = LibLLVM::Linkage::Internal if @single_module
-          LLVM.add_attribute func.get_param(0), LibLLVM::Attribute::Nest
-          func.append_basic_block("entry") do |builder|
-            params = func.params
-
-            # In the case of a metaclass, we load the type id from the i32* parameter
-            if is_metaclass
-              params[0] = builder.load params[0]
-            end
-
-            call_ret = builder.call target_fun, params
-            case target_def.type
-            when .no_return?
-              builder.unreachable
-            when .void?
-              builder.ret
-            else
-              builder.ret call_ret
-            end
-          end
-        end
-      end
-    end
-
-    def trampoline_init(type, wrapper, nest)
-      # HACK: because the nest pointer's address is in the tramploline but
-      # it might not be aligned, we ask for a little more memory and store
-      # its address there.
-      nest_ptr = bit_cast(nest, LLVM::VoidPointer)
-      tramp_ptr = array_malloc(LLVM::Int8, int(32 + sizeof(C::SizeT)))
-      store nest_ptr, bit_cast(tramp_ptr, pointer_type(LLVM::VoidPointer))
-      tramp_ptr = gep(tramp_ptr, sizeof(C::SizeT))
-
-      call @mod.trampoline_init(@llvm_mod), [
-        tramp_ptr,
-        bit_cast(wrapper, LLVM::VoidPointer),
-        nest_ptr,
-      ]
-      @last = call @mod.trampoline_adjust(@llvm_mod), [tramp_ptr]
-      @last = cast_to @last, type
     end
 
     def visit(node : Expressions)
@@ -1746,6 +1709,7 @@ module Crystal
 
         if is_external && arg.type.fun?
           fun_ptr = @builder.extract_value call_arg, 0
+          # TODO: check that ctx_ptr is null, otherwise raise
           call_arg = bit_cast fun_ptr, llvm_fun_type(arg.type)
         end
 
@@ -1891,7 +1855,7 @@ module Crystal
       codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
     end
 
-    def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type)
+    def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false)
       if raises && (handler = @exception_handlers.try &.last?)
         invoke_out_block = new_block "invoke_out"
         @last = @builder.invoke func, call_args, invoke_out_block, handler.catch_block
@@ -1900,7 +1864,7 @@ module Crystal
         @last = call func, call_args
       end
 
-      set_call_by_val_attributes node, target_def, self_type
+      set_call_by_val_attributes node, target_def, self_type, is_closure
       emit_debug_metadata node, @last if @debug
 
       case type
@@ -1919,7 +1883,7 @@ module Crystal
       @last
     end
 
-    def set_call_by_val_attributes(node, target_def, self_type)
+    def set_call_by_val_attributes(node, target_def, self_type, is_closure)
       # We don't want by_val in C functions
       return if target_def.is_a?(External)
 
@@ -1929,6 +1893,7 @@ module Crystal
         arg_offset += 1 if node.obj.try(&.type.passed_as_self?) || self_type.try(&.passed_as_self?)
       else
         args = target_def.try(&.args)
+        arg_offset += 1 if is_closure
       end
 
       args.try &.each_with_index do |arg, i|
@@ -1996,7 +1961,6 @@ module Crystal
       old_entry_block = @entry_block
       old_alloca_block = @alloca_block
       old_exception_handlers = @exception_handlers
-      old_trampoline_wrappes = @trampoline_wrappers
       old_llvm_mod = @llvm_mod
       old_needs_value = @needs_value
 
@@ -2007,7 +1971,6 @@ module Crystal
 
         @llvm_mod = fun_module
 
-        @trampoline_wrappers = nil
         @exception_handlers = nil
         @needs_value = true
 
@@ -2038,7 +2001,7 @@ module Crystal
 
           alloca_vars target_def.vars, target_def, args, context.closure_parent_context
 
-          create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal)
+          create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
 
           context.return_type = target_def.type?
           context.return_phi = nil
@@ -2056,7 +2019,6 @@ module Crystal
 
         @llvm_mod = old_llvm_mod
         @exception_handlers = old_exception_handlers
-        @trampoline_wrappers = old_trampoline_wrappes
         @entry_block = old_entry_block
         @alloca_block = old_alloca_block
         @needs_value = old_needs_value
@@ -2084,8 +2046,11 @@ module Crystal
         llvm_return_type = llvm_type(target_def.type)
       end
 
-      if is_fun_literal
-        llvm_args_types << LLVM::VoidPointer
+      if is_closure
+        llvm_args_types.insert(0, LLVM::VoidPointer)
+        offset = 1
+      else
+        offset = 0
       end
 
       context.fun = @llvm_mod.functions.add(
@@ -2101,7 +2066,7 @@ module Crystal
       end
 
       args.each_with_index do |arg, i|
-        param = context.fun.get_param(i)
+        param = context.fun.get_param(i + offset)
         LLVM.set_name param, arg.name
 
         # Set 'byval' attribute
@@ -2135,14 +2100,16 @@ module Crystal
     end
 
     def fun_literal_closure_ptr
-      void_ptr = context.fun.get_param(context.fun.param_count - 1)
+      void_ptr = context.fun.get_param(0)
       bit_cast void_ptr, LLVM.pointer_type(context.closure_type.not_nil!)
     end
 
-    def create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal)
+    def create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
+      offset = is_closure ? 1 : 0
+
       target_def_vars = target_def.vars
       args.each_with_index do |arg, i|
-        param = context.fun.get_param(i)
+        param = context.fun.get_param(i + offset)
         if !is_fun_literal && (i == 0 && self_type.passed_as_self?)
           # here self is already in context.vars
         elsif arg.type.passed_by_value?

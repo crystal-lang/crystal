@@ -301,9 +301,14 @@ module Crystal
       llvm_arg_type(type)
     end
 
+    def closure_type(type : FunType)
+      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
+      arg_types.insert(0, LLVM::VoidPointer)
+      LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
+    end
+
     def fun_type(type : FunType)
       arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
-      arg_types << LLVM::VoidPointer
       LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
     end
 

@@ -342,8 +342,6 @@ module Crystal
             end
           end
         end
-        flags << " -Wl,-allow_stack_execute" if mod.has_flag?("darwin")
-        flags << " -Wl,-z,execstack" if mod.has_flag?("linux")
       end
     end
 
