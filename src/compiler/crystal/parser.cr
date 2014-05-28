@@ -1585,7 +1585,7 @@ module Crystal
     end
 
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
-    DefOrMacroCheck2 = [:IDENT, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
+    DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
 
     def parse_def_or_macro(klass)
       push_def
@@ -1639,10 +1639,23 @@ module Crystal
           end
         end
         next_token_skip_space
-        check DefOrMacroCheck2
-        name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
-        name_column_number = @token.column_number
-        next_token_skip_space
+
+        if @token.type == :IDENT
+          name = @token.value.to_s
+          name_column_number = @token.column_number
+          next_token
+          if @token.type == :"="
+            name = "#{name}="
+            next_token_skip_space
+          else
+            skip_space
+          end
+        else
+          check DefOrMacroCheck2
+          name = @token.type.to_s
+          name_column_number = @token.column_number
+          next_token_skip_space
+        end
       else
         if receiver
           unexpected_token
