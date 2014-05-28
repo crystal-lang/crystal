@@ -686,4 +686,31 @@ describe "Type inference: class" do
   it "errors when creating Number" do
     assert_error "Number.allocate", "can't instantiate abstract struct Number"
   end
+
+  it "errors when instance variable never assigned" do
+    assert_error %(
+      class Foo
+        def foo
+          @x.foo
+        end
+      end
+
+      Foo.new.foo
+      ), "(@x was never assigned a value)"
+  end
+
+  it "errors when instance variable never assigned" do
+    assert_error %(
+      class Foo
+        def initialize
+          @barbar = 1
+        end
+        def foo
+          @barbaz.foo
+        end
+      end
+
+      Foo.new.foo
+      ), "(@barbaz was never assigned a value, did you mean @barbar?)"
+  end
 end

@@ -43,8 +43,6 @@ module Crystal
         return
       end
 
-      assume_allocated_if_new_call obj_type
-
       return unless obj_and_args_types_set?
 
       # Ignore extra recalculations when more than one argument changes at the same time
@@ -87,12 +85,6 @@ module Crystal
 
       if (parent_visitor = @parent_visitor) && parent_visitor.typed_def? && matches && matches.any?(&.raises)
         parent_visitor.typed_def.raises = true
-      end
-    end
-
-    def assume_allocated_if_new_call(obj_type)
-      if obj_type && obj_type.metaclass? && name == "new"
-        obj_type.instance_type.allocated = true
       end
     end
 
@@ -528,6 +520,20 @@ module Crystal
             msg << "undefined local variable or method '#{def_name}'"
           end
           msg << " \e[1;33m(did you mean '#{similar_name}'?)\e[0m" if similar_name
+
+          # Check if it's an instance variable that was never assigned a value
+          if obj.is_a?(InstanceVar)
+            scope = scope as InstanceVarContainer
+            ivar = scope.lookup_instance_var(obj.name)
+            if ivar.dependencies.length == 1 && ivar.dependencies[0].same?(mod.nil_var)
+              similar_name = scope.lookup_similar_instance_var_name(ivar.name)
+              if similar_name
+                msg << " \e[1;33m(#{ivar.name} was never assigned a value, did you mean #{similar_name}?)\e[0m"
+              else
+                msg << " \e[1;33m(#{ivar.name} was never assigned a value)\e[0m"
+              end
+            end
+          end
         end
         raise error_msg, owner_trace
       end

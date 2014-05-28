@@ -201,6 +201,9 @@ describe "Parser" do
   it_parses "def type(type); end", Def.new("type", ["type".arg], nil)
 
   it_parses "def self.foo\n1\nend", Def.new("foo", [] of Arg, 1.int32, "self".var)
+  it_parses "def self.foo()\n1\nend", Def.new("foo", [] of Arg, 1.int32, "self".var)
+  it_parses "def self.foo=\n1\nend", Def.new("foo=", [] of Arg, 1.int32, "self".var)
+  it_parses "def self.foo=()\n1\nend", Def.new("foo=", [] of Arg, 1.int32, "self".var)
   it_parses "def Foo.foo\n1\nend", Def.new("foo", [] of Arg, 1.int32, "Foo".path)
   it_parses "def Foo::Bar.foo\n1\nend", Def.new("foo", [] of Arg, 1.int32, ["Foo", "Bar"].path)
 
@@ -247,6 +250,9 @@ describe "Parser" do
   it_parses "def foo(@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
   it_parses "def foo(@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
   it_parses "def foo(@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@var".instance_var, "var".var), 1.int32] of ASTNode)
+  it_parses "def foo(@@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
+  it_parses "def foo(@@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
+  it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
 
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call

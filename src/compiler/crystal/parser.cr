@@ -1585,7 +1585,7 @@ module Crystal
     end
 
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
-    DefOrMacroCheck2 = [:IDENT, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
+    DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
 
     def parse_def_or_macro(klass)
       push_def
@@ -1628,7 +1628,7 @@ module Crystal
       end
 
       args = [] of Arg
-      ivar_assigns = [] of ASTNode
+      extra_assigns = [] of ASTNode
 
       if @token.type == :"."
         unless receiver
@@ -1639,10 +1639,23 @@ module Crystal
           end
         end
         next_token_skip_space
-        check DefOrMacroCheck2
-        name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
-        name_column_number = @token.column_number
-        next_token_skip_space
+
+        if @token.type == :IDENT
+          name = @token.value.to_s
+          name_column_number = @token.column_number
+          next_token
+          if @token.type == :"="
+            name = "#{name}="
+            next_token_skip_space
+          else
+            skip_space
+          end
+        else
+          check DefOrMacroCheck2
+          name = @token.type.to_s
+          name_column_number = @token.column_number
+          next_token_skip_space
+        end
       else
         if receiver
           unexpected_token
@@ -1658,7 +1671,7 @@ module Crystal
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          block_arg = parse_arg(args, ivar_assigns, true, pointerof(found_default_value))
+          block_arg = parse_arg(args, extra_assigns, true, pointerof(found_default_value))
           if block_arg
             if inputs = block_arg.fun.inputs
               @yields = inputs.length
@@ -1672,7 +1685,7 @@ module Crystal
         next_token_skip_statement_end
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg = parse_arg(args, ivar_assigns, false, pointerof(found_default_value))
+          block_arg = parse_arg(args, extra_assigns, false, pointerof(found_default_value))
           if block_arg
             if inputs = block_arg.fun.inputs
               @yields = inputs.length
@@ -1688,13 +1701,13 @@ module Crystal
       end
 
       if @token.keyword?(:end)
-        body = Expressions.from(ivar_assigns)
+        body = Expressions.from(extra_assigns)
         next_token_skip_space
       else
         body = parse_expressions
-        if ivar_assigns.length > 0
+        if extra_assigns.length > 0
           exps = [] of ASTNode
-          exps.concat ivar_assigns
+          exps.concat extra_assigns
           if body.is_a?(Expressions)
             exps.concat body.expressions
           else
@@ -1713,7 +1726,7 @@ module Crystal
       node
     end
 
-    def parse_arg(args, ivar_assigns, parenthesis, found_default_value_ptr)
+    def parse_arg(args, extra_assigns, parenthesis, found_default_value_ptr)
       if @token.type == :"&"
         next_token_skip_space_or_newline
         return parse_block_arg
@@ -1732,12 +1745,25 @@ module Crystal
         var.location = arg_location
         assign = Assign.new(ivar, var)
         assign.location = arg_location
-        if ivar_assigns
-          ivar_assigns.push assign
+        if extra_assigns
+          extra_assigns.push assign
         else
           raise "can't use @instance_variable here"
         end
         @instance_vars.try &.add ivar.name
+      when :CLASS_VAR
+        arg_name = @token.value.to_s[2 .. -1]
+        cvar = ClassVar.new(@token.value.to_s)
+        cvar.location = arg_location
+        var = Var.new(arg_name)
+        var.location = arg_location
+        assign = Assign.new(cvar, var)
+        assign.location = arg_location
+        if extra_assigns
+          extra_assigns.push assign
+        else
+          raise "can't use @@class_var here"
+        end
       else
         raise "unexpected token: #{@token}"
       end

@@ -732,22 +732,43 @@ module Crystal
 
     def end_visit(node : IsA)
       node.type = mod.bool
-      obj = node.obj
       const = node.const
 
       # When doing x.is_a?(A) and A turns out to be a constant (not a type),
       # replace it with a === comparison. Most usually this happens in a case expression.
       if const.is_a?(Path) && const.target_const
-        comp = Call.new(const, "===", [obj])
+        comp = Call.new(const, "===", [node.obj])
         comp.location = node.location
         comp.accept self
         node.syntax_replacement = comp
         node.bind_to comp
-      elsif obj.is_a?(Var)
-        if needs_type_filters?
-          @type_filters = new_type_filter(obj, SimpleTypeFilter.new(node.const.type.instance_type))
-        end
+        return
       end
+
+      if needs_type_filters? && (var = get_expression_var(node.obj))
+        @type_filters = new_type_filter(var, SimpleTypeFilter.new(node.const.type.instance_type))
+      end
+    end
+
+    def end_visit(node : RespondsTo)
+      node.type = mod.bool
+      if needs_type_filters? && (var = get_expression_var(node.obj))
+        @type_filters = new_type_filter(var, RespondsToTypeFilter.new(node.name.value))
+      end
+    end
+
+    # Get the variable of an expression.
+    # If it's a variable, it's that variable.
+    # If it's an assignment to a variable, it's that variable.
+    def get_expression_var(exp)
+      case exp
+      when Var
+        return exp
+      when Assign
+        target = exp.target
+        return target if target.is_a?(Var)
+      end
+      nil
     end
 
     def end_visit(node : Cast)
@@ -761,16 +782,6 @@ module Crystal
 
       node.obj.add_observer node
       node.update
-    end
-
-    def end_visit(node : RespondsTo)
-      node.type = mod.bool
-      obj = node.obj
-      if obj.is_a?(Var)
-        if needs_type_filters?
-          @type_filters = new_type_filter(obj, RespondsToTypeFilter.new(node.name.value))
-        end
-      end
     end
 
     def visit(node : ClassDef)
@@ -1593,7 +1604,7 @@ module Crystal
 
       context = current_context
       var_context = var.context
-      if !var.closured && !var_context.same?(context)
+      if !var_context.same?(context)
         # If the contexts are not the same, it might be that we are in a block
         # inside a method, or a block inside another block. We don't want
         # those cases to closure a variable. So if any context is a block
