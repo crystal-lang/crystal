@@ -139,7 +139,7 @@ describe "Type inference: fun" do
       end
 
       foo ->(x : Int32) { x.to_f }
-      ") { float64 }
+      ") { void }
   end
 
   it "has fun literal as restriction and errors if output is different" do
@@ -246,5 +246,28 @@ describe "Type inference: fun" do
         {Foo.new(f.x), 0}
       end
       )) { fun_of(types["Foo"], tuple_of([no_return, int32])) }
+  end
+
+  it "allows implicit cast of fun to return void in non-generic restriction" do
+    assert_type("
+      def foo(x : ->)
+        x
+      end
+
+      foo ->{ 1 }
+      ") { fun_of(void) }
+  end
+
+  it "allows implicit cast of fun to return void in generic restriction" do
+    assert_type("
+      class Foo(T)
+        def foo(x : T)
+          x
+        end
+      end
+
+      foo = Foo(->).new
+      foo.foo ->{ 1 }
+      ") { fun_of(void) }
   end
 end

@@ -216,4 +216,18 @@ describe "Code gen: fun" do
       1
       )).to_i.should eq(1)
   end
+
+  it "automatically casts fun that returns something to fun that returns void" do
+    run("
+      $a = 0
+
+      def foo(x : ->)
+        x.call
+      end
+
+      foo ->{ $a = 1 }
+
+      $a
+      ").to_i.should eq(1)
+  end
 end

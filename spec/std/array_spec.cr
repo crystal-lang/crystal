@@ -606,4 +606,29 @@ describe "Array" do
       end
     end
   end
+
+  describe "==" do
+    it "compares" do
+      a = [1, 2, 3]
+      b = [1, 2, 3]
+      c = [1, 2, 3, 4]
+      d = [1, 2, 4]
+      (a == b).should be_true
+      (b == c).should be_false
+      (a == d).should be_false
+    end
+  end
+
+  describe "equals?" do
+    it "compares with custom block" do
+      a = [1, 3, 2]
+      b = [3, 9, 4]
+      c = [5, 7, 3]
+      d = [1, 3, 2, 4]
+      f = ->(x : Int32, y : Int32) { (x % 2) == (y % 2) }
+      a.equals?(b, &f).should be_true
+      a.equals?(c, &f).should be_false
+      a.equals?(d, &f).should be_false
+    end
+  end
 end

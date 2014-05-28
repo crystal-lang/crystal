@@ -433,7 +433,12 @@ module Crystal
             if match
               matches_array ||= [] of Match
               matches_array.push match
-              if match.arg_types == arg_types
+
+              # If the argument types are compatible with the match's argument types,
+              # we are done. We don't just compare types with ==, there is a special case:
+              # a function type with return T can be transpass a restriction of a function
+              # with with the same arguments but which returns Void.
+              if arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
                 return Matches.new(matches_array, true, owner)
               end
             end

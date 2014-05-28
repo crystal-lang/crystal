@@ -2413,6 +2413,10 @@ module Crystal
       to_lhs value, to_type
     end
 
+    def downcast_distinct(value, to_type : FunType, from_type : FunType)
+      bit_cast value, llvm_type(to_type)
+    end
+
     def downcast_distinct(value, to_type : Type, from_type : Type)
       raise "Bug: trying to downcast #{to_type} <- #{from_type}"
     end

@@ -194,6 +194,10 @@ module Crystal
     def is_restriction_of_all?(type)
       is_restriction_of? type, type
     end
+
+    def compatible_with?(type)
+      self == type
+    end
   end
 
   class UnionType
@@ -381,27 +385,33 @@ module Crystal
         my_output = fun_types.last
         restricted = my_output.restrict(output, owner, type_lookup, free_vars)
         return nil unless restricted == my_output
-      end
 
-      self
+        self
+      else
+        program.fun_of(arg_types + [program.void])
+      end
     end
 
     def restrict(other : FunType, owner, type_lookup, free_vars)
+      compatible_with?(other) ? other : nil
+    end
+
+    def compatible_with?(other : FunType)
       arg_types = arg_types()
       return_type = return_type()
       other_arg_types = other.arg_types()
       other_return_type = other.return_type()
 
-      return nil unless return_type == other_return_type || other_return_type.void?
+      return false unless return_type == other_return_type || other_return_type.void?
 
       # Disallow casting a function to another one accepting different argument count
       return nil if arg_types.length != other_arg_types.length
 
       arg_types.zip(other_arg_types) do |arg_type, other_arg_type|
-        return nil unless arg_type == other_arg_type
+        return false unless arg_type == other_arg_type
       end
 
-      other
+      true
     end
   end
 end

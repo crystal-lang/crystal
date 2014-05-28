@@ -473,9 +473,13 @@ class Array(T)
   end
 
   def ==(other : Array)
+    equals?(other) { |x, y| x == y }
+  end
+
+  def equals?(other : Array)
     return false if @length != other.length
     each_with_index do |item, i|
-      return false if item != other[i]
+      return false unless yield(item, other[i])
     end
     true
   end
@@ -509,11 +513,11 @@ class Array(T)
     self
   end
 
-  def sort_by!(block: T -> )
+  def sort_by!(block: T -> U)
     sort! ->(x : T, y : T){ block.call(x) <=> block.call(y) }
   end
 
-  def sort_by(block: T -> )
+  def sort_by(block: T -> U)
     dup.sort_by! block
   end
 
