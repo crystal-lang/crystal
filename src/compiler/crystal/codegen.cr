@@ -1328,8 +1328,6 @@ module Crystal
 
       if obj_type.pointer?
         @last = cast_to last_value, to_type
-      elsif obj_type.fun?
-        # Nothing to do
       else
         resulting_type = obj_type.filter_by(to_type).not_nil!
 

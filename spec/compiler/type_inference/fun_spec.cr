@@ -186,11 +186,12 @@ describe "Type inference: fun" do
       ") { int32 }
   end
 
-  it "allows casting a fun type to one accepting more arguments" do
-    assert_type("
+  it "disallows casting a fun type to one accepting more arguments" do
+    assert_error("
       f = ->(x : Int32) { x.to_f }
       f as Int32, Int32 -> Float64
-      ") { fun_of [int32, int32, float64] }
+      ",
+      "can't cast")
   end
 
   it "allows casting a fun type to one with void argument" do

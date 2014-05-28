@@ -148,14 +148,6 @@ describe "Code gen: fun" do
     run("x = -> { return 1 }; x.call").to_i.should eq(1)
   end
 
-  it "casts fun to another one accepting more arguments" do
-    run("
-      f = ->(x : Int32) { x + 1 }
-      g = f as Int32, Int32 -> Int32
-      g.call(10, 20)
-      ").to_i.should eq(11)
-  end
-
   it "calls fun pointer with union (passed by value) arg" do
     run("
       struct Number
