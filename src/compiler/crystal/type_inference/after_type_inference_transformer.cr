@@ -192,6 +192,21 @@ module Crystal
       node
     end
 
+    def transform(node : FunLiteral)
+      super
+
+      node.def.body = node.def.body.transform(self)
+
+      body = node.def.body
+      if !body.type? && !body.is_a?(Return)
+        node.def.body = untyped_expression
+        rebind_node node.def, node.def.body
+        node.update
+      end
+
+      node
+    end
+
     def untyped_expression
       @untyped_expression ||= begin
         call = Call.new(nil, "raise", [StringLiteral.new("untyped expression")] of ASTNode, nil, nil, true)
@@ -387,6 +402,12 @@ module Crystal
         end
       end
 
+      node
+    end
+
+    def transform(node : TupleLiteral)
+      super
+      node.update
       node
     end
 

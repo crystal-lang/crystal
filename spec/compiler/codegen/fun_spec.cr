@@ -179,4 +179,31 @@ describe "Code gen: fun" do
       f.call
       ").to_i.should eq(1)
   end
+
+  it "codegens fun literal hard type inference (1)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      def foo(s)
+        Foo.new(s.x)
+      end
+
+      def bar
+        ->(s : Foo) { ->foo(Foo) }
+      end
+
+      bar
+
+      1
+      )).to_i.should eq(1)
+  end
 end

@@ -227,4 +227,23 @@ describe "Type inference: fun" do
   it "inherits Reference" do
     assert_type("->{}.object_id") { uint64 }
   end
+
+  it "types fun literal hard type inference (1)" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      ->(f : Foo) do
+        {Foo.new(f.x), 0}
+      end
+      )) { fun_of(types["Foo"], tuple_of([no_return, int32])) }
+  end
 end
