@@ -200,6 +200,12 @@ module Crystal
     end
   end
 
+  class IntegerType
+    def restrict(other : CEnumType, owner, type_lookup, free_vars)
+      self == other.base_type ? self : nil
+    end
+  end
+
   class UnionType
     def is_restriction_of?(type, owner)
       self == type || union_types.any? &.is_restriction_of?(type, owner)

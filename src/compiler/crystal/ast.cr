@@ -1658,20 +1658,22 @@ module Crystal
   class EnumDef < ASTNode
     property :name
     property :constants
+    property :base_type
 
-    def initialize(@name, @constants)
+    def initialize(@name, @constants, @base_type = nil)
     end
 
     def accept_children(visitor)
       @constants.each &.accept visitor
+      @base_type.try &.accept visitor
     end
 
     def ==(other : self)
-      other.name == name && other.constants == constants
+      other.name == name && other.constants == constants && other.base_type == base_type
     end
 
     def clone_without_location
-      EnumDef.new(@name, @constants.clone)
+      EnumDef.new(@name, @constants.clone, @base_type.clone)
     end
   end
 

@@ -864,6 +864,10 @@ module Crystal
       @str << keyword("enum")
       @str << " "
       @str << node.name.to_s
+      if base_type = node.base_type
+        @str << " < "
+        base_type.accept self
+      end
       @str << newline
       with_indent do
         node.constants.each do |constant|

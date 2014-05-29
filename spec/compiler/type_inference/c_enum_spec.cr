@@ -35,4 +35,13 @@ describe "Type inference: enum" do
       f.x
     ") { int32 }
   end
+
+  it "types enum value with base type" do
+    assert_type("lib Foo; enum Bar < Int16; X end end Foo::Bar::X") { int16 }
+  end
+
+  it "errors if enum base type is not an integer" do
+    assert_error "lib Foo; enum Bar < Float32; X end end Foo::Bar::X",
+      "enum base type must be an integer type"
+  end
 end

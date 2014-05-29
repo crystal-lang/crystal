@@ -1107,8 +1107,9 @@ module Crystal
 
   class IntegerType < PrimitiveType
     getter :rank
+    getter :kind
 
-    def initialize(program, container, name, superclass, bytes, @rank)
+    def initialize(program, container, name, superclass, bytes, @rank, @kind)
       super(program, container, name, superclass, bytes)
     end
 
@@ -1953,9 +1954,9 @@ module Crystal
   end
 
   class CEnumType < NamedType
-    property base_type
+    getter base_type
 
-    def initialize(program, container, name, constants)
+    def initialize(program, container, name, @base_type, constants)
       super(program, container, name)
 
       constants.each do |constant|

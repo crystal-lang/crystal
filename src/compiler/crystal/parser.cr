@@ -2924,7 +2924,15 @@ module Crystal
 
       check :CONST
       name = @token.value.to_s
-      next_token_skip_statement_end
+
+      next_token_skip_space
+      if @token.type == :"<"
+        next_token_skip_space_or_newline
+        base_type = parse_single_type
+        skip_statement_end
+      else
+        next_token_skip_statement_end
+      end
 
       constants = [] of Arg
       while !@token.keyword?(:end)
@@ -2956,7 +2964,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      EnumDef.new name, constants
+      EnumDef.new name, constants, base_type
     end
 
     def node_and_next_token(node)

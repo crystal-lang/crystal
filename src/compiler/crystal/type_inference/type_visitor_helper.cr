@@ -247,16 +247,25 @@ module Crystal
       if type
         node.raise "#{node.name} is already defined"
       else
+        if base_type = node.base_type
+          base_type.accept self
+          enum_base_type = base_type.type.instance_type
+          unless enum_base_type.is_a?(IntegerType)
+            base_type.raise "enum base type must be an integer type"
+          end
+        else
+          enum_base_type = @mod.int32
+        end
+
         counter = 0
         node.constants.each do |constant|
           if default_value = constant.default_value
             counter = (default_value as NumberLiteral).value.to_i
-          else
-            constant.default_value = NumberLiteral.new(counter, :i32)
           end
+          constant.default_value = NumberLiteral.new(counter, enum_base_type.kind)
           counter += 1
         end
-        current_type.types[node.name] = CEnumType.new(@mod, current_type, node.name, node.constants)
+        current_type.types[node.name] = CEnumType.new(@mod, current_type, node.name, enum_base_type, node.constants)
       end
     end
 

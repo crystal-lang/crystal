@@ -244,4 +244,18 @@ describe "Code gen: fun" do
       }.call(Foo::MyEnum::X)
       ").to_i.should eq(1)
   end
+
+  it "allows fun type of enum type with base type" do
+    run("
+      lib Foo
+        enum MyEnum < UInt16
+          X = 1
+        end
+      end
+
+      ->(x : Foo::MyEnum) {
+        x
+      }.call(Foo::MyEnum::X)
+      ").to_i.should eq(1)
+  end
 end

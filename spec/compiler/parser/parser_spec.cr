@@ -496,6 +496,7 @@ describe "Parser" do
   it_parses "lib C; union Foo; end end", LibDef.new("C", nil, [UnionDef.new("Foo")] of ASTNode)
   it_parses "lib C; enum Foo; A\nB, C\nD = 1; end end", LibDef.new("C", nil, [EnumDef.new("Foo", [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)])] of ASTNode)
   it_parses "lib C; enum Foo; A = 1, B; end end", LibDef.new("C", nil, [EnumDef.new("Foo", [Arg.new("A", 1.int32), Arg.new("B")])] of ASTNode)
+  it_parses "lib C; enum Foo < UInt16; end end", LibDef.new("C", nil, [EnumDef.new("Foo", [] of Arg, "UInt16".path)] of ASTNode)
   it_parses "lib C; Foo = 1; end", LibDef.new("C", nil, [Assign.new("Foo".path, 1.int32)] of ASTNode)
   it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", nil, [FunDef.new("getch", [] of Arg, nil, false, nil, "GetChar")] of ASTNode)
   it_parses %(lib C\nfun getch = "get.char"\nend), LibDef.new("C", nil, [FunDef.new("getch", [] of Arg, nil, false, nil, "get.char")] of ASTNode)

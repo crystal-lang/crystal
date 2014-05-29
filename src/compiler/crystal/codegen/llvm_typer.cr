@@ -58,7 +58,7 @@ module Crystal
     end
 
     def create_llvm_type(type : CEnumType)
-      LLVM::Int32
+      llvm_type(type.base_type)
     end
 
     def create_llvm_type(type : InstanceVarContainer)

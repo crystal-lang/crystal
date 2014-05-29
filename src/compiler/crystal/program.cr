@@ -44,14 +44,14 @@ module Crystal
       @types["Int"] = @int = ValueType.new self, self, "Int", @number
       @int.abstract = true
 
-      @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", @int, 1, 1
-      @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", @int, 1, 2
-      @types["Int16"] = @int16 = IntegerType.new self, self, "Int16", @int, 2, 3
-      @types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", @int, 2, 4
-      @types["Int32"] = @int32 = IntegerType.new self, self, "Int32", @int, 4, 5
-      @types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", @int, 4, 6
-      @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", @int, 8, 7
-      @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", @int, 8, 8
+      @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", @int, 1, 1, :i8
+      @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", @int, 1, 2, :u8
+      @types["Int16"] = @int16 = IntegerType.new self, self, "Int16", @int, 2, 3, :i16
+      @types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", @int, 2, 4, :u16
+      @types["Int32"] = @int32 = IntegerType.new self, self, "Int32", @int, 4, 5, :i32
+      @types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", @int, 4, 6, :u32
+      @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", @int, 8, 7, :i64
+      @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", @int, 8, 8, :u64
 
       @types["Float"] = @float = ValueType.new self, self, "Float", @number
       @float.abstract = true
