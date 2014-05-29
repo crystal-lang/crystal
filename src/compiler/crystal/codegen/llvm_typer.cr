@@ -57,6 +57,10 @@ module Crystal
       LLVM::Int32
     end
 
+    def create_llvm_type(type : CEnumType)
+      LLVM::Int32
+    end
+
     def create_llvm_type(type : InstanceVarContainer)
       final_type = llvm_struct_type(type)
       unless type.struct?

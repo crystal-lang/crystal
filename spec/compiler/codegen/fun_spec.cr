@@ -230,4 +230,18 @@ describe "Code gen: fun" do
       $a
       ").to_i.should eq(1)
   end
+
+  it "allows fun type of enum type" do
+    run("
+      lib Foo
+        enum MyEnum
+          X = 1
+        end
+      end
+
+      ->(x : Foo::MyEnum) {
+        x
+      }.call(Foo::MyEnum::X)
+      ").to_i.should eq(1)
+  end
 end
