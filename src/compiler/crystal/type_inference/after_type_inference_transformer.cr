@@ -139,6 +139,10 @@ module Crystal
         changed = false
         allocated_defs = [] of Def
 
+        if target_defs.length == 1 && target_defs[0].is_a?(External)
+          check_args_are_not_closure node
+        end
+
         target_defs.each do |target_def|
           allocated = target_def.owner.try(&.allocated) && target_def.args.all? &.type.allocated
           if allocated
@@ -184,6 +188,26 @@ module Crystal
       # check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
 
       node
+    end
+
+    def check_args_are_not_closure(node)
+      node.args.each do |arg|
+        case arg
+        when FunLiteral
+          if arg.def.closure
+            arg.raise "can't send closure to C function"
+          end
+        when FunPointer
+          if arg.obj
+            arg.raise "can't send closure to C function"
+          end
+
+          owner = arg.call.target_def.owner.not_nil!
+          if owner.passed_as_self?
+            arg.raise "can't send closure to C function"
+          end
+        end
+      end
     end
 
     def transform(node : FunPointer)

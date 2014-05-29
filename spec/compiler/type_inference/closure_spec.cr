@@ -205,6 +205,55 @@ describe "Type inference: closure" do
     call.target_def.self_closured.should be_true
   end
 
+  it "errors if sending closured fun literal to C" do
+    assert_error %(
+      lib C
+        fun foo(callback : ->)
+      end
+
+      a = 1
+      C.foo(-> { a })
+      ),
+      "can't send closure to C function"
+  end
+
+  it "errors if sending closured fun pointer to C (1)" do
+    assert_error %(
+      lib C
+        fun foo(callback : ->)
+      end
+
+      class Foo
+        def foo
+          C.foo(->bar)
+        end
+
+        def bar
+        end
+      end
+
+      Foo.new.foo
+      ),
+      "can't send closure to C function"
+  end
+
+  it "errors if sending closured fun pointer to C (2)" do
+    assert_error %(
+      lib C
+        fun foo(callback : ->)
+      end
+
+      class Foo
+        def bar
+        end
+      end
+
+      foo = Foo.new
+      C.foo(->foo.bar)
+      ),
+      "can't send closure to C function"
+  end
+
   pending "transforms block to fun literal" do
     assert_type("
       def foo(&block : Int32 ->)
