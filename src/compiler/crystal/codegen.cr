@@ -232,8 +232,6 @@ module Crystal
                 LLVM.float(Float32::INFINITY)
               when :float64_infinity
                 LLVM.double(Float64::INFINITY)
-              when :nil_pointer
-                LLVM.null(llvm_type(node.type))
               when :struct_hash
                 codegen_primitive_struct_hash
               when :struct_equals
@@ -1706,6 +1704,9 @@ module Crystal
           if is_external && arg.type == @mod.string
             # String to UInt8*
             call_arg = gep(call_arg, 0, 2)
+          elsif is_external && def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
+            # Nil to pointer
+            call_arg = LLVM.null(llvm_c_type(def_arg.type))
           else
             # Def argument might be missing if it's a variadic call
             call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
@@ -1715,7 +1716,9 @@ module Crystal
         if is_external && arg.type.fun?
           fun_ptr = @builder.extract_value call_arg, 0
           # TODO: check that ctx_ptr is null, otherwise raise
-          call_arg = bit_cast fun_ptr, llvm_fun_type(arg.type)
+          # Try first with the def arg type (might be a fun pointer that return void,
+          # while the argument's type a fun pointer that return something else)
+          call_arg = bit_cast fun_ptr, llvm_fun_type(def_arg.try(&.type) || arg.type)
         end
 
         call_args << call_arg
@@ -2419,7 +2422,8 @@ module Crystal
     end
 
     def downcast_distinct(value, to_type : FunType, from_type : FunType)
-      bit_cast value, llvm_type(to_type)
+      # Nothing to do
+      value
     end
 
     def downcast_distinct(value, to_type : Type, from_type : Type)

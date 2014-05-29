@@ -1233,8 +1233,6 @@ module Crystal
         # Nothing to do
       when :pointer_diff
         node.type = mod.int64
-      when :nil_pointer
-        # Nothing to do
       when :pointer_null
         visit_pointer_null node
       when :class_name

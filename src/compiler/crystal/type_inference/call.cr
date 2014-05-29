@@ -418,7 +418,6 @@ module Crystal
     end
 
     def check_fun_args_types_match(obj_type, typed_def)
-      nil_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type
         self_arg = self.args[i]
@@ -426,8 +425,7 @@ module Crystal
         actual_type = mod.pointer_of(actual_type) if self.args[i].out?
         if actual_type != expected_type
           if actual_type.nil_type? && (expected_type.pointer? || expected_type.fun?)
-            nil_conversions ||= [] of Int32
-            nil_conversions << i
+            # OK: nil will be sent as pointer
           elsif actual_type == mod.string && (expected_type.is_a?(PointerInstanceType) && expected_type.element_type == mod.uint8)
             # OK: string will be sent as UInt8
           elsif expected_type.is_a?(FunType) && actual_type.is_a?(FunType) && expected_type.return_type == mod.void && expected_type.arg_types == actual_type.arg_types
@@ -436,12 +434,6 @@ module Crystal
             arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
             self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
           end
-        end
-      end
-
-      if nil_conversions
-        nil_conversions.each do |i|
-          self.args[i] = Primitive.new(:nil_pointer, typed_def.args[i].type)
         end
       end
     end
