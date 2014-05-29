@@ -713,4 +713,15 @@ describe "Type inference: class" do
       Foo.new.foo
       ), "(@barbaz was never assigned a value, did you mean @barbar?)"
   end
+
+  it "errors if invoking new with zero arguments and new has one" do
+    assert_error %(
+      class Foo
+        def self.new(x)
+        end
+      end
+
+      Foo.new
+      ), "wrong number of arguments"
+  end
 end

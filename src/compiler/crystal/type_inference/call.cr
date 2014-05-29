@@ -593,7 +593,13 @@ module Crystal
 
       matches = scope.instance_type.lookup_matches("initialize", arg_types, !!block)
       if matches.empty?
-        define_new_without_initialize(scope, arg_types)
+        # We first need to check if there aren't any "new" methods in the class
+        defs = scope.lookup_defs("new")
+        if defs.any? { |a_def| a_def.args.length > 0 }
+          Matches.new([] of Match, false)
+        else
+          define_new_without_initialize(scope, arg_types)
+        end
       else
         Call.define_new_with_initialize(scope, arg_types, matches)
       end
