@@ -420,7 +420,6 @@ module Crystal
     def check_fun_args_types_match(obj_type, typed_def)
       string_conversions = nil
       nil_conversions = nil
-      fun_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type
         self_arg = self.args[i]
@@ -434,8 +433,7 @@ module Crystal
             string_conversions ||= [] of Int32
             string_conversions << i
           elsif expected_type.is_a?(FunType) && actual_type.is_a?(FunType) && expected_type.return_type == mod.void && expected_type.arg_types == actual_type.arg_types
-            fun_conversions ||= [] of Int32
-            fun_conversions << i
+            # OK: fun will be cast to return void
           else
             arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
             self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
@@ -466,12 +464,6 @@ module Crystal
       if nil_conversions
         nil_conversions.each do |i|
           self.args[i] = Primitive.new(:nil_pointer, typed_def.args[i].type)
-        end
-      end
-
-      if fun_conversions
-        fun_conversions.each do |i|
-          self.args[i] = Cast.apply(self.args[i], typed_def.args[i].type)
         end
       end
     end
