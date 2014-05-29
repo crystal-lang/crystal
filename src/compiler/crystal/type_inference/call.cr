@@ -418,7 +418,6 @@ module Crystal
     end
 
     def check_fun_args_types_match(obj_type, typed_def)
-      string_conversions = nil
       nil_conversions = nil
       typed_def.args.each_with_index do |typed_def_arg, i|
         expected_type = typed_def_arg.type
@@ -430,34 +429,13 @@ module Crystal
             nil_conversions ||= [] of Int32
             nil_conversions << i
           elsif actual_type == mod.string && (expected_type.is_a?(PointerInstanceType) && expected_type.element_type == mod.uint8)
-            string_conversions ||= [] of Int32
-            string_conversions << i
+            # OK: string will be sent as UInt8
           elsif expected_type.is_a?(FunType) && actual_type.is_a?(FunType) && expected_type.return_type == mod.void && expected_type.arg_types == actual_type.arg_types
             # OK: fun will be cast to return void
           else
             arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
             self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
           end
-        end
-      end
-
-      if typed_def.is_a?(External) && typed_def.varargs
-        typed_def.args.length.upto(args.length - 1) do |i|
-          if self.args[i].type == mod.string
-            string_conversions ||= [] of Int32
-            string_conversions << i
-          end
-        end
-      end
-
-      if string_conversions
-        string_conversions.each do |i|
-          call = Call.new(self.args[i], "cstr")
-          call.mod = mod
-          call.scope = scope
-          call.parent_visitor = parent_visitor
-          call.recalculate
-          self.args[i] = call
         end
       end
 

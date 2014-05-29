@@ -1703,8 +1703,13 @@ module Crystal
           def_arg = target_def.args[i]?
           call_arg = @last
 
-          # Def argument might be missing if it's a variadic call
-          call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
+          if is_external && arg.type == @mod.string
+            # String to UInt8*
+            call_arg = gep(call_arg, 0, 2)
+          else
+            # Def argument might be missing if it's a variadic call
+            call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
+          end
         end
 
         if is_external && arg.type.fun?
