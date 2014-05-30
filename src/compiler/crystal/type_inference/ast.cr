@@ -167,7 +167,7 @@ module Crystal
 
       to_type = to.type.instance_type
 
-      if obj_type.pointer?
+      if obj_type.pointer? || to_type.pointer?
         self.type = to_type
       else
         self.type = obj_type.filter_by(to_type)

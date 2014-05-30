@@ -2227,11 +2227,17 @@ module Crystal
   # Can be represented as a maybe-null pointer but the type id is
   # not known at compile time.
   class NilableReferenceUnionType < UnionType
+    def reference_like?
+      true
+    end
   end
 
   # A union type that doesn't have nil, and all types are reference-like.
   # Can be represented as a never-null pointer.
   class ReferenceUnionType < UnionType
+    def reference_like?
+      true
+    end
   end
 
   # A union type that doesn't match any of the previous definitions,

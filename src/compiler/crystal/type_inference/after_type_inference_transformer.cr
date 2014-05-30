@@ -106,7 +106,7 @@ module Crystal
       end
 
       # Check if we have an untyped expression in this call, or an expression
-      # whose' type was never allocated. Replace it with raise.
+      # whose type was never allocated. Replace it with raise.
       obj = node.obj
       if (obj && (!obj.type? || !obj.type.allocated)) || node.args.any? { |arg| !arg.type? || !arg.type.allocated }
         return untyped_expression
@@ -363,10 +363,22 @@ module Crystal
 
       to_type = node.to.type.instance_type
 
-      unless obj_type.pointer?
+      if to_type.pointer?
+        if obj_type.pointer? || obj_type.reference_like?
+          return node
+        else
+          node.raise "can't cast #{obj_type} to #{to_type}"
+        end
+      end
+
+      if obj_type.pointer?
+        unless to_type.pointer? || to_type.reference_like?
+          node.raise "can't cast #{obj_type} to #{to_type}"
+        end
+      else
         resulting_type = obj_type.filter_by(to_type)
         unless resulting_type
-          node.raise "can't cast #{node.obj.type} to #{node.to.type.instance_type}"
+          node.raise "can't cast #{obj_type} to #{to_type}"
         end
       end
 

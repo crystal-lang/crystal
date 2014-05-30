@@ -84,4 +84,49 @@ describe "Type inference: cast" do
       f as Moo
       ") { union_of(types["Bar"].hierarchy_type, types["Baz"].hierarchy_type) }
   end
+
+  it "allows casting object to void pointer" do
+    assert_type("
+      class Foo
+      end
+
+      Foo.new as Void*
+      ") { pointer_of(void) }
+  end
+
+  it "allows casting reference union to void pointer" do
+    assert_type("
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      foo = Foo.new || Bar.new
+      foo as Void*
+      ") { pointer_of(void) }
+  end
+
+  it "disallows casting int to pointer" do
+    assert_error %(
+      1 as Void*
+      ),
+      "can't cast Int32 to Pointer(Void)"
+  end
+
+  it "disallows casting fun to pointer" do
+    assert_error %(
+      f = ->{ 1 }
+      f as Void*
+      ),
+      "can't cast  -> Int32 to Pointer(Void)"
+  end
+
+  it "disallows casting pointer to fun" do
+    assert_error %(
+      a :: Void*
+      a as -> Int32
+      ),
+      "can't cast Pointer(Void) to  -> Int32"
+  end
 end
