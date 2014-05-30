@@ -46,7 +46,7 @@ module Crystal
       @end = false
     end
 
-    macro self.forward(name)
+    macro forward(name)
       "
       def #{name}
         return llvm_nil if @end
@@ -55,7 +55,7 @@ module Crystal
       "
     end
 
-    macro self.forward(name, args)
+    macro forward(name, args)
       "
       def #{name}(#{args})
         return llvm_nil if @end
@@ -64,7 +64,7 @@ module Crystal
       "
     end
 
-    macro self.forward(name, def_args, call_args)
+    macro forward(name, def_args, call_args)
       "
       def #{name}(#{def_args})
         return llvm_nil if @end
@@ -73,7 +73,7 @@ module Crystal
       "
     end
 
-    macro self.forward_named(name, args)
+    macro forward_named(name, args)
       "
       def #{name}(#{args}, name = \"\")
         return llvm_nil if @end

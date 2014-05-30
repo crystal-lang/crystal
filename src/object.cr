@@ -28,13 +28,13 @@ class Object
     self
   end
 
-  macro self.getter(name)"
+  macro getter(name)"
     def #{name}
       @#{name}
     end
   "end
 
-  macro self.getter!(name)"
+  macro getter!(name)"
     def #{name}?
       @#{name}
     end
@@ -44,22 +44,22 @@ class Object
     end
   "end
 
-  macro self.setter(name)"
+  macro setter(name)"
     def #{name}=(@#{name})
     end
   "end
 
-  macro self.property(name)"
+  macro property(name)"
     getter :#{name}
     setter :#{name}
   "end
 
-  macro self.property!(name)"
+  macro property!(name)"
     getter! :#{name}
     setter :#{name}
   "end
 
-  macro self.delegate(method, to)"
+  macro delegate(method, to)"
     def #{method}
       #{to}.#{method}
     end

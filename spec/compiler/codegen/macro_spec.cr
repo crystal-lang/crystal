@@ -17,7 +17,7 @@ describe "Code gen: macro" do
   it "expands macro defined in class" do
     run("
       class Foo
-        macro self.foo\"
+        macro foo\"
           def bar; 1; end
         \"end
 
@@ -32,7 +32,7 @@ describe "Code gen: macro" do
   it "expands macro defined in base class" do
     run("
       class Object
-        macro self.foo\"
+        macro foo\"
           def bar; 1; end
         \"end
       end

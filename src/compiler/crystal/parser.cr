@@ -349,7 +349,7 @@ module Crystal
       end
     end
 
-    macro self.parse_operator(name, next_operator, node, operators)"
+    macro parse_operator(name, next_operator, node, operators)"
       def parse_#{name}
         location = @token.location
 
