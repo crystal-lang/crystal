@@ -1594,7 +1594,7 @@ module Crystal
       check :IDENT
 
       name = @token.value.to_s
-      next_token
+      next_token_skip_space
 
       args = [] of Arg
 
@@ -1610,7 +1610,7 @@ module Crystal
             break
           end
         end
-        next_token_skip_statement_end
+        next_token
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
           block_arg = parse_arg(args, nil, false, pointerof(found_default_value))
@@ -1618,18 +1618,13 @@ module Crystal
             break
           end
         end
-        skip_statement_end
-      else
-        skip_statement_end
       end
 
       if @token.keyword?(:end)
-        body = Nop.new
+        body = StringLiteral.new("")
         next_token_skip_space
       else
-        body = parse_expressions
-        check_ident :end
-        next_token_skip_space
+        body = parse_macro_body
       end
 
       @def_nest -= 1
@@ -1638,6 +1633,30 @@ module Crystal
       node = Macro.new name, args, body, block_arg
       node.name_column_number = name_column_number
       node
+    end
+
+    def parse_macro_body
+      @token.macro_whitespace = true
+      @token.macro_nest = 0
+
+      pieces = [] of ASTNode
+
+      while true
+        next_macro_token
+
+        case @token.type
+        when :MACRO_LITERAL
+          pieces << StringLiteral.new(@token.value.to_s)
+        when :MACRO_EXPRESSION
+          pieces << Var.new(@token.value.to_s)
+        when :MACRO_END
+          break
+        end
+      end
+
+      next_token
+
+      StringInterpolation.new(pieces)
     end
 
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]

@@ -130,10 +130,10 @@ describe "Parser" do
 
   it_parses "'a'", CharLiteral.new('a')
 
-  it_parses %("foo"), StringLiteral.new("foo")
-  it_parses %(""), StringLiteral.new("")
+  it_parses %("foo"), "foo".string
+  it_parses %(""), "".string
 
-  it_parses ":foo", SymbolLiteral.new("foo")
+  it_parses ":foo", "foo".symbol
 
   it_parses "[1, 2]", ([1.int32, 2.int32] of ASTNode).array
   it_parses "[\n1, 2]", ([1.int32, 2.int32] of ASTNode).array
@@ -525,8 +525,13 @@ describe "Parser" do
 
   it_parses "$foo", Global.new("$foo")
 
-  it_parses "macro foo;end", Crystal::Macro.new("foo", [] of Arg)
-  it_parses "macro foo; \"1 + 2\"; end", Crystal::Macro.new("foo", ([] of Arg), StringLiteral.new("1 + 2"))
+  it_parses "macro foo;end", Crystal::Macro.new("foo", ([] of Arg), StringInterpolation.new([] of ASTNode))
+  it_parses %(macro foo; 1 + 2; end), Crystal::Macro.new("foo", ([] of Arg), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
+  it_parses %(macro foo x; 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
+  it_parses %(macro foo x\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
+  it_parses %(macro foo(x); 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
+  it_parses %(macro foo(x)\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
+  it_parses "macro foo; 1 + 2 {{foo}} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), StringInterpolation.new([" 1 + 2 ".string, "foo".var, " 3 + 4; ".string]))
 
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
@@ -584,7 +589,7 @@ describe "Parser" do
 
   it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
 
-  it_parses "\"foo\#{bar}baz\"", StringInterpolation.new([StringLiteral.new("foo"), "bar".call, StringLiteral.new("baz")])
+  it_parses "\"foo\#{bar}baz\"", StringInterpolation.new(["foo".string, "bar".call, "baz".string])
 
   it_parses "lib Foo\nend\nif true\nend", [LibDef.new("Foo"), If.new(true.bool)]
 

@@ -12,6 +12,8 @@ module Crystal
     property :column_number
     property :filename
     property :regex_modifiers
+    property :macro_nest
+    property :macro_whitespace
 
     def initialize
       @type = :EOF
@@ -22,6 +24,8 @@ module Crystal
       @line_number = 0
       @column_number = 0
       @regex_modifiers = 0
+      @macro_whitespace = true
+      @macro_nest = 0
     end
 
     def location
