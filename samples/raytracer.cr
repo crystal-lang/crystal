@@ -24,15 +24,15 @@ class Vec3
   def initialize(@x, @y, @z)
   end
 
-  macro define_op(op)"
-    def #{op}(other : Vec3)
-      Vec3.new(@x #{op} other.x, @y #{op} other.y, @z #{op} other.z)
+  macro define_op(op)
+    def {{op}}(other : Vec3)
+      Vec3.new(@x {{op}} other.x, @y {{op}} other.y, @z {{op}} other.z)
     end
 
-    def #{op}(other : Float)
-      Vec3.new(@x #{op} other, @y #{op} other, @z #{op} other)
+    def {{op}}(other : Float)
+      Vec3.new(@x {{op}} other, @y {{op}} other, @z {{op}} other)
     end
-  "end
+  end
 
   define_op "+"
   define_op "-"

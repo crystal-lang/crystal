@@ -47,39 +47,31 @@ module Crystal
     end
 
     macro forward(name)
-      "
-      def #{name}
+      def {{name}}
         return llvm_nil if @end
-        @builder.#{name}
+        @builder.{{name}}
       end
-      "
     end
 
     macro forward(name, args)
-      "
-      def #{name}(#{args})
+      def {{name}}({{args}})
         return llvm_nil if @end
-        @builder.#{name}(#{args})
+        @builder.{{name}}({{args}})
       end
-      "
     end
 
     macro forward(name, def_args, call_args)
-      "
-      def #{name}(#{def_args})
+      def {{name}}({{def_args}})
         return llvm_nil if @end
-        @builder.#{name}(#{call_args})
+        @builder.{{name}}({{call_args}})
       end
-      "
     end
 
     macro forward_named(name, args)
-      "
-      def #{name}(#{args}, name = \"\")
+      def {{name}}({{args}}, name = "")
         return llvm_nil if @end
-        @builder.#{name}(#{args}, name)
+        @builder.{{name}}({{args}}, name)
       end
-      "
     end
 
     def insert_block

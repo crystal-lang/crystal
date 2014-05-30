@@ -52,13 +52,13 @@ module Crystal
     end
   end
 
-  macro doesnt_need_const_block(klass)"
-    class #{klass}
+  macro doesnt_need_const_block(klass)
+    class {{klass}}
       def needs_const_block?
         false
       end
     end
-  "end
+  end
 
   doesnt_need_const_block NilLiteral
   doesnt_need_const_block BoolLiteral

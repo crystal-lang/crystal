@@ -349,30 +349,30 @@ module Crystal
       end
     end
 
-    macro parse_operator(name, next_operator, node, operators)"
-      def parse_#{name}
+    macro parse_operator(name, next_operator, node, operators)
+      def parse_{{name}}
         location = @token.location
 
-        left = parse_#{next_operator}
+        left = parse_{{next_operator}}
         while true
           left.location = location
 
           case @token.type
           when :SPACE
             next_token
-          when #{operators}
+          when {{operators}}
             method = @token.type.to_s
             method_column_number = @token.column_number
 
             next_token_skip_space_or_newline
-            right = parse_#{next_operator}
-            left = #{node}
+            right = parse_{{next_operator}}
+            left = {{node}}
           else
             return left
           end
         end
       end
-    "end
+    end
 
     parse_operator :or, :and, "Or.new left, right", ":\"||\""
     parse_operator :and, :equality, "And.new left, right", ":\"&&\""

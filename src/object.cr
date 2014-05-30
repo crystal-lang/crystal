@@ -28,40 +28,40 @@ class Object
     self
   end
 
-  macro getter(name)"
-    def #{name}
-      @#{name}
+  macro getter(name)
+    def {{name}}
+      @{{name}}
     end
-  "end
+  end
 
-  macro getter!(name)"
-    def #{name}?
-      @#{name}
+  macro getter!(name)
+    def {{name}}?
+      @{{name}}
     end
 
-    def #{name}
-      @#{name}.not_nil!
+    def {{name}}
+      @{{name}}.not_nil!
     end
-  "end
+  end
 
-  macro setter(name)"
-    def #{name}=(@#{name})
+  macro setter(name)
+    def {{name}}=(@{{name}})
     end
-  "end
+  end
 
-  macro property(name)"
-    getter :#{name}
-    setter :#{name}
-  "end
+  macro property(name)
+    getter :{{name}}
+    setter :{{name}}
+  end
 
-  macro property!(name)"
-    getter! :#{name}
-    setter :#{name}
-  "end
+  macro property!(name)
+    getter! :{{name}}
+    setter :{{name}}
+  end
 
-  macro delegate(method, to)"
-    def #{method}
-      #{to}.#{method}
+  macro delegate(method, to)
+    def {{method}}
+      {{to}}.{{method}}
     end
-  "end
+  end
 end

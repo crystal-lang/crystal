@@ -77,11 +77,11 @@ struct LLVM::Builder
     LibLLVM.build_extract_value(@builder, value, index.to_u32, name)
   end
 
-  macro define_cast(name)"
-    def #{name}(value, type, name = \"\")
-      LibLLVM.build_#{name}(@builder, value, type, name)
+  macro define_cast(name)
+    def {{name}}(value, type, name = "")
+      LibLLVM.build_{{name}}(@builder, value, type, name)
     end
-  "end
+  end
 
   define_cast bit_cast
   define_cast si2fp
@@ -98,11 +98,11 @@ struct LLVM::Builder
   define_cast int2ptr
   define_cast ptr2int
 
-  macro define_binary(name)"
-    def #{name}(lhs, rhs, name = \"\")
-      LibLLVM.build_#{name}(@builder, lhs, rhs, name)
+  macro define_binary(name)
+    def {{name}}(lhs, rhs, name = "")
+      LibLLVM.build_{{name}}(@builder, lhs, rhs, name)
     end
-  "end
+  end
 
   define_binary add
   define_binary sub
@@ -123,11 +123,11 @@ struct LLVM::Builder
   define_binary fmul
   define_binary fdiv
 
-  macro define_cmp(name)"
-    def #{name}(op, lhs, rhs, name = \"\")
-      LibLLVM.build_#{name}(@builder, op, lhs, rhs, name)
+  macro define_cmp(name)
+    def {{name}}(op, lhs, rhs, name = "")
+      LibLLVM.build_{{name}}(@builder, op, lhs, rhs, name)
     end
-  "end
+  end
 
   define_cmp icmp
   define_cmp fcmp
