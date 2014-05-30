@@ -19,8 +19,12 @@ module Crystal
               when StringLiteral
                 str << exp.value
               when Var
-                index = @untyped_def.args.index { |arg| arg.name == exp.name }.not_nil!
-                str << node.args[index].to_s_for_macro
+                index = @untyped_def.args.index { |arg| arg.name == exp.name }
+                if index
+                  str << node.args[index].to_s_for_macro
+                else
+                  exp.raise "undefined macro variable '#{exp.name}'"
+                end
               end
             end
           end

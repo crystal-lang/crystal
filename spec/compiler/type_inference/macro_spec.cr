@@ -8,4 +8,9 @@ describe "Type inference: macro" do
     node = result.node as Expressions
     (node.last as Call).target_macro.should eq(parse "1")
   end
+
+  it "errors if macro uses undefined variable" do
+    assert_error "macro foo(x) {{y}} end; foo(1)",
+      "undefined macro variable 'y'"
+  end
 end
