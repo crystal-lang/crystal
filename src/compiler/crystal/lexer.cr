@@ -1252,6 +1252,11 @@ module Crystal
 
       start = current_pos
 
+      if current_char == '\0'
+        @token.type = :EOF
+        return @token
+      end
+
       if current_char == '{' && next_char == '{'
         char = next_char
         start = current_pos
@@ -1285,7 +1290,7 @@ module Crystal
 
       char = current_char
 
-      while char != 'e' && char != '{'
+      while char != 'e' && char != '{' && char != '\0'
         if whitespace &&
           (
             (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||

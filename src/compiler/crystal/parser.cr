@@ -1589,6 +1589,7 @@ module Crystal
       skip_space_or_newline
       check DefOrMacroCheck1
 
+      name_line_number = @token.line_number
       name_column_number = @token.column_number
 
       check :IDENT
@@ -1624,7 +1625,7 @@ module Crystal
         body = StringLiteral.new("")
         next_token_skip_space
       else
-        body = parse_macro_body
+        body = parse_macro_body(name_line_number, name_column_number)
       end
 
       @def_nest -= 1
@@ -1635,7 +1636,7 @@ module Crystal
       node
     end
 
-    def parse_macro_body
+    def parse_macro_body(start_line, start_column)
       @token.macro_whitespace = true
       @token.macro_nest = 0
 
@@ -1651,6 +1652,8 @@ module Crystal
           pieces << Var.new(@token.value.to_s)
         when :MACRO_END
           break
+        when :EOF
+          raise "unterminated macro", start_line, start_column
         end
       end
 

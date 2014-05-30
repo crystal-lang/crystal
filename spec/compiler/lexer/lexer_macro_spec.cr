@@ -94,4 +94,15 @@ describe "Lexer macro" do
     token = lexer.next_macro_token
     token.type.should eq(:MACRO_END)
   end
+
+  it "reaches end" do
+    lexer = Lexer.new(%(fail))
+
+    token = lexer.next_macro_token
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("fail")
+
+    token = lexer.next_macro_token
+    token.type.should eq(:EOF)
+  end
 end
