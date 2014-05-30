@@ -101,18 +101,7 @@ module Crystal
     end
 
     def process_macro(node : Macro)
-      if receiver = node.receiver
-        # TODO: hack
-        if receiver.is_a?(Var) && receiver.name == "self"
-          target_type = current_type.metaclass
-        else
-          target_type = lookup_path_type(receiver).metaclass
-        end
-      else
-        target_type = current_type
-      end
-
-      target_type.add_macro node
+      current_type.metaclass.add_macro node
 
       false
     end
