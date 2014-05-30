@@ -1565,7 +1565,7 @@ module Crystal
       @calls_super = false
       @uses_block_arg = false
       @block_arg_name = nil
-      a_def = parse_def_or_macro Def
+      a_def = parse_def_helper
 
       # Small memory optimization: don't keep the Set in the Def if it's empty
       instance_vars = nil if instance_vars.empty?
@@ -1581,13 +1581,69 @@ module Crystal
     end
 
     def parse_macro
-      parse_def_or_macro Crystal::Macro
+      push_def
+      @def_nest += 1
+
+      next_token
+
+      skip_space_or_newline
+      check DefOrMacroCheck1
+
+      name_column_number = @token.column_number
+
+      check :IDENT
+
+      name = @token.value.to_s
+      next_token
+
+      args = [] of Arg
+
+      found_default_value = false
+
+      case @token.type
+      when :"("
+        next_token_skip_space_or_newline
+        while @token.type != :")"
+          block_arg = parse_arg(args, nil, true, pointerof(found_default_value))
+          if block_arg
+            check :")"
+            break
+          end
+        end
+        next_token_skip_statement_end
+      when :IDENT
+        while @token.type != :NEWLINE && @token.type != :";"
+          block_arg = parse_arg(args, nil, false, pointerof(found_default_value))
+          if block_arg
+            break
+          end
+        end
+        skip_statement_end
+      else
+        skip_statement_end
+      end
+
+      if @token.keyword?(:end)
+        body = Nop.new
+        next_token_skip_space
+      else
+        body = parse_expressions
+        check_ident :end
+        next_token_skip_space
+      end
+
+      @def_nest -= 1
+      pop_def
+
+      node = Macro.new name, args, body, block_arg
+      node.name_column_number = name_column_number
+      node
     end
 
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
 
-    def parse_def_or_macro(klass)
+    def parse_def_helper
       push_def
       @def_nest += 1
 
@@ -1721,7 +1777,7 @@ module Crystal
       @def_nest -= 1
       pop_def
 
-      node = klass.new name, args, body, receiver, block_arg, @yields
+      node = Def.new name, args, body, receiver, block_arg, @yields
       node.name_column_number = name_column_number
       node
     end

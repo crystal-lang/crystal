@@ -147,10 +147,6 @@ module Crystal
       transform_many node.args
       node.body = node.body.transform(self)
 
-      if receiver = node.receiver
-        node.receiver = receiver.transform(self)
-      end
-
       if block_arg = node.block_arg
         node.block_arg = block_arg.transform(self)
       end

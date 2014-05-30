@@ -526,6 +526,7 @@ describe "Parser" do
   it_parses "$foo", Global.new("$foo")
 
   it_parses "macro foo;end", Crystal::Macro.new("foo", [] of Arg)
+  it_parses "macro foo; \"1 + 2\"; end", Crystal::Macro.new("foo", ([] of Arg), StringLiteral.new("1 + 2"))
 
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)

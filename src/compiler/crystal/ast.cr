@@ -906,27 +906,24 @@ module Crystal
   end
 
   class Macro < ASTNode
-    property :receiver
     property :name
     property :args
     property :body
     property :block_arg
-    property :yields
     property :name_column_number
 
-    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
+    def initialize(@name, @args : Array(Arg), body = nil, @block_arg = nil)
       @body = Expressions.from body
     end
 
     def accept_children(visitor)
-      @receiver.try &.accept visitor
       @args.each &.accept visitor
       @body.accept visitor
       @block_arg.try &.accept visitor
     end
 
     def ==(other : self)
-      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
+      other.name == name && other.args == args && other.body == body && other.block_arg == block_arg
     end
 
     def name_length
@@ -934,7 +931,7 @@ module Crystal
     end
 
     def clone_without_location
-      Macro.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @yields)
+      Macro.new(@name, @args.clone, @body.clone, @block_arg.clone)
     end
   end
 
