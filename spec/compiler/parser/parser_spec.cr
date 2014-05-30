@@ -525,13 +525,13 @@ describe "Parser" do
 
   it_parses "$foo", Global.new("$foo")
 
-  it_parses "macro foo;end", Crystal::Macro.new("foo", ([] of Arg), StringInterpolation.new([] of ASTNode))
-  it_parses %(macro foo; 1 + 2; end), Crystal::Macro.new("foo", ([] of Arg), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
-  it_parses %(macro foo x; 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
-  it_parses %(macro foo x\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
-  it_parses %(macro foo(x); 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
-  it_parses %(macro foo(x)\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), StringInterpolation.new([" 1 + 2; ".string] of ASTNode))
-  it_parses "macro foo; 1 + 2 {{foo}} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), StringInterpolation.new([" 1 + 2 ".string, "foo".var, " 3 + 4; ".string]))
+  it_parses "macro foo;end", Crystal::Macro.new("foo", ([] of Arg), [] of ASTNode)
+  it_parses %(macro foo; 1 + 2; end), Crystal::Macro.new("foo", ([] of Arg), [" 1 + 2; ".string] of ASTNode)
+  it_parses %(macro foo x; 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), [" 1 + 2; ".string] of ASTNode)
+  it_parses %(macro foo x\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), [" 1 + 2; ".string] of ASTNode)
+  it_parses %(macro foo(x); 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), [" 1 + 2; ".string] of ASTNode)
+  it_parses %(macro foo(x)\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), [" 1 + 2; ".string] of ASTNode)
+  it_parses "macro foo; 1 + 2 {{foo}} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), [" 1 + 2 ".string, "foo".var, " 3 + 4; ".string])
 
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)

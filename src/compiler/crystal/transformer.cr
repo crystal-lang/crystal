@@ -145,7 +145,6 @@ module Crystal
 
     def transform(node : Macro)
       transform_many node.args
-      node.body = node.body.transform(self)
 
       if block_arg = node.block_arg
         node.block_arg = block_arg.transform(self)

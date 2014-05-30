@@ -912,13 +912,13 @@ module Crystal
     property :block_arg
     property :name_column_number
 
-    def initialize(@name, @args : Array(Arg), body = nil, @block_arg = nil)
-      @body = Expressions.from body
+    def initialize(@name, @args : Array(Arg), body, @block_arg = nil)
+      @body = body
     end
 
     def accept_children(visitor)
       @args.each &.accept visitor
-      @body.accept visitor
+      @body.each &.accept visitor
       @block_arg.try &.accept visitor
     end
 

@@ -511,7 +511,11 @@ module Crystal
         @str << ")"
       end
       @str << newline
-      accept_with_indent(node.body)
+      with_indent do
+        node.body.each do |element|
+          element.accept self
+        end
+      end
       append_indent
       @str << keyword("end")
       false
