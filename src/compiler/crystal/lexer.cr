@@ -1247,6 +1247,10 @@ module Crystal
     end
 
     def next_macro_token
+      @token.location = nil
+      @token.line_number = @line_number
+      @token.column_number = @column_number
+
       nest = @token.macro_nest
       whitespace = @token.macro_whitespace
 
@@ -1260,6 +1264,7 @@ module Crystal
       if current_char == '{' && next_char == '{'
         char = next_char
         start = current_pos
+        @token.column_number = @column_number
         while true
           if char == '}' && peek_next_char == '}'
             @token.value = string_range(start)
@@ -1315,6 +1320,11 @@ module Crystal
           whitespace = true
         else
           char = current_char
+          if char == '\n'
+            @line_number += 1
+            @column_number = 0
+          end
+
           whitespace = char.whitespace?
           char = next_char
         end
@@ -1417,6 +1427,16 @@ module Crystal
     def next_char
       @column_number += 1
       next_char_no_column_increment
+    end
+
+    def next_char_check_line
+      @column_number += 1
+      char = next_char_no_column_increment
+      if char == '\n'
+        @line_number += 1
+        @column_number = 1
+      end
+      char
     end
 
     def next_char(token_type)

@@ -105,4 +105,23 @@ describe "Lexer macro" do
     token = lexer.next_macro_token
     token.type.should eq(:EOF)
   end
+
+  it "keeps correct column and line numbers" do
+    lexer = Lexer.new("\nfoo\nbarf{{var}}end")
+
+    token = lexer.next_macro_token
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("\nfoo\nbarf")
+    token.column_number.should eq(1)
+    token.line_number.should eq(1)
+
+    token = lexer.next_macro_token
+    token.type.should eq(:MACRO_EXPRESSION)
+    token.value.should eq("var")
+    token.line_number.should eq(3)
+    token.column_number.should eq(7)
+
+    token = lexer.next_macro_token
+    token.type.should eq(:MACRO_END)
+  end
 end

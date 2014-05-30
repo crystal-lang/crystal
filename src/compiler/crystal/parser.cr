@@ -1649,7 +1649,9 @@ module Crystal
         when :MACRO_LITERAL
           pieces << StringLiteral.new(@token.value.to_s)
         when :MACRO_EXPRESSION
-          pieces << Var.new(@token.value.to_s)
+          var = Var.new(@token.value.to_s)
+          var.location = @token.location
+          pieces << var
         when :MACRO_END
           break
         when :EOF

@@ -680,7 +680,11 @@ module Crystal
       macros_cache_key = MacroCacheKey.new(untyped_def.object_id, node.args.map(&.crystal_type_id))
       expander = mod.macros_cache[macros_cache_key] ||= MacroExpander.new(mod, untyped_def)
 
-      generated_source = expander.expand node
+      begin
+        generated_source = expander.expand node
+      rescue ex : Crystal::Exception
+        node.raise "expanding macro", ex
+      end
 
       begin
         parser = Parser.new(generated_source, [Set.new(@vars.keys)])
