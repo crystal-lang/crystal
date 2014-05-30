@@ -30,8 +30,7 @@ class Thread(T, R)
   end
 
   def start
-    ret = Pointer(R).malloc(1)
-    ret.value = @func.call(@arg)
+    ret = Pointer(R).malloc_one(@func.call(@arg))
     PThread.exit(ret as Void*)
   end
 

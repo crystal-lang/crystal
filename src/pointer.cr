@@ -93,4 +93,10 @@ class Pointer(T)
     size.times { |i| ptr[i] = yield i }
     ptr
   end
+
+  def self.malloc_one(value : T)
+    ptr = Pointer(T).malloc(1)
+    ptr.value = value
+    ptr
+  end
 end
