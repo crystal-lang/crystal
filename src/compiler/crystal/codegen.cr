@@ -831,6 +831,14 @@ module Crystal
     end
 
     def visit(node : ArrayLiteral)
+      visit_expanded node
+    end
+
+    def visit(node : HashLiteral)
+      visit_expanded node
+    end
+
+    def visit_expanded(node)
       node.expanded.try &.accept self
       false
     end

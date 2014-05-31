@@ -86,6 +86,14 @@ module Crystal
     end
 
     def transform(node : ArrayLiteral)
+      transform_expanded node
+    end
+
+    def transform(node : HashLiteral)
+      transform_expanded node
+    end
+
+    def transform_expanded(node)
       if expanded = node.expanded
         node.expanded = expanded.transform(self)
       end

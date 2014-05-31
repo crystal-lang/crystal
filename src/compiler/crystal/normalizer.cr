@@ -186,57 +186,6 @@ module Crystal
       Call.new(Path.new(["Range"], true), "new", [node.from, node.to, BoolLiteral.new(node.exclusive)])
     end
 
-    # Convert a HashLiteral into creating a Hash and assigning keys and values:
-    #
-    # From:
-    #
-    #     {} of K => V
-    #
-    # To:
-    #
-    #     Hash(K, V).new
-    #
-    # From:
-    #
-    #     {a => b, c => d}
-    #
-    # To:
-    #
-    #     hash = Hash(typeof(a, c), typeof(b, d)).new
-    #     hash[a] = b
-    #     hash[c] = d
-    #     hash
-    def transform(node : HashLiteral)
-      super
-
-      if (node_of_key = node.of_key)
-        node_of_value = node.of_value
-        raise "Bug: node.of_value shouldn't be nil if node.of_key is not nil" unless node_of_value
-
-        type_vars = [node_of_key, node_of_value] of ASTNode
-      else
-        type_vars = [TypeOf.new(node.keys), TypeOf.new(node.values)] of ASTNode
-      end
-
-      constructor = Call.new(Generic.new(Path.new(["Hash"], true), type_vars), "new")
-      if node.keys.length == 0
-        constructor.location = node.location
-        constructor
-      else
-        temp_var = new_temp_var
-        assign = Assign.new(temp_var.clone, constructor)
-
-        exps = [assign] of ASTNode
-        node.keys.each_with_index do |key, i|
-          exps << Call.new(temp_var.clone, "[]=", [key, node.values[i]])
-        end
-        exps << temp_var.clone
-        exp = Expressions.new exps
-        exp.location = node.location
-        exp
-      end
-    end
-
     # Transform a multi assign into many assigns.
     def transform(node : MultiAssign)
       # From:

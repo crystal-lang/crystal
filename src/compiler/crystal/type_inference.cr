@@ -1772,15 +1772,19 @@ module Crystal
     end
 
     def visit(node : ArrayLiteral)
+      expand(node)
+    end
+
+    def visit(node : HashLiteral)
+      expand(node)
+    end
+
+    def expand(node)
       expanded = @mod.literal_expander.expand node
       expanded.accept self
       node.expanded = expanded
       node.bind_to expanded
       false
-    end
-
-    def visit(node : HashLiteral)
-      raise "Bug: HashLiteral node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
 
     def visit(node : Unless)

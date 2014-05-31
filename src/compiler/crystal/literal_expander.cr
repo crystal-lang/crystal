@@ -83,6 +83,52 @@ module Crystal
       exps
     end
 
+    # Convert a HashLiteral into creating a Hash and assigning keys and values:
+    #
+    # From:
+    #
+    #     {} of K => V
+    #
+    # To:
+    #
+    #     Hash(K, V).new
+    #
+    # From:
+    #
+    #     {a => b, c => d}
+    #
+    # To:
+    #
+    #     hash = Hash(typeof(a, c), typeof(b, d)).new
+    #     hash[a] = b
+    #     hash[c] = d
+    #     hash
+    def expand(node : HashLiteral)
+      if (node_of_key = node.of_key)
+        type_vars = [node_of_key, node.of_value.not_nil!] of ASTNode
+      else
+        type_vars = [TypeOf.new(node.keys), TypeOf.new(node.values)] of ASTNode
+      end
+
+      constructor = Call.new(Generic.new(Path.new(["Hash"], true), type_vars), "new")
+      if node.keys.length == 0
+        constructor.location = node.location
+        constructor
+      else
+        temp_var = new_temp_var
+        assign = Assign.new(temp_var.clone, constructor)
+
+        exps = [assign] of ASTNode
+        node.keys.each_with_index do |key, i|
+          exps << Call.new(temp_var.clone, "[]=", [key, node.values[i]])
+        end
+        exps << temp_var.clone
+        exp = Expressions.new exps
+        exp.location = node.location
+        exp
+      end
+    end
+
     def expand(node)
       raise "#{node} can't be expanded"
     end

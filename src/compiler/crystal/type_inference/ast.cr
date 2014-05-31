@@ -425,4 +425,8 @@ module Crystal
   class ArrayLiteral
     property :expanded
   end
+
+  class HashLiteral
+    property :expanded
+  end
 end
