@@ -87,6 +87,14 @@ class String
   def static_array_of(size)
     Generic.new(Path.new(["StaticArray"], true), [Path.new([self]), NumberLiteral.new(size, :i32)])
   end
+
+  def macro_literal
+    MacroLiteral.new(self)
+  end
+
+  def macro_var
+    MacroVar.new(self)
+  end
 end
 
 class Crystal::ASTNode
@@ -525,13 +533,13 @@ describe "Parser" do
 
   it_parses "$foo", Global.new("$foo")
 
-  it_parses "macro foo;end", Crystal::Macro.new("foo", ([] of Arg), [] of ASTNode)
-  it_parses %(macro foo; 1 + 2; end), Crystal::Macro.new("foo", ([] of Arg), [" 1 + 2; ".string] of ASTNode)
-  it_parses %(macro foo x; 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), [" 1 + 2; ".string] of ASTNode)
-  it_parses %(macro foo x\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), [" 1 + 2; ".string] of ASTNode)
-  it_parses %(macro foo(x); 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), [" 1 + 2; ".string] of ASTNode)
-  it_parses %(macro foo(x)\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), [" 1 + 2; ".string] of ASTNode)
-  it_parses "macro foo; 1 + 2 {{foo}} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), [" 1 + 2 ".string, "foo".var, " 3 + 4; ".string])
+  it_parses "macro foo;end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([] of ASTNode))
+  it_parses %(macro foo; 1 + 2; end), Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
+  it_parses %(macro foo x; 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
+  it_parses %(macro foo x\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
+  it_parses %(macro foo(x); 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
+  it_parses %(macro foo(x)\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
+  it_parses "macro foo; 1 + 2 {{foo}} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2 ".macro_literal, "foo".macro_var, " 3 + 4; ".macro_literal] of ASTNode))
 
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)

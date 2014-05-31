@@ -3,8 +3,6 @@ require "llvm"
 require "dl"
 
 module Crystal
-  make_named_tuple MacroCacheKey, def_object_id, node_ids
-
   class Program < NonGenericModuleType
     include DefContainer
     include DefInstanceContainer
@@ -13,7 +11,6 @@ module Crystal
 
     getter symbols
     getter global_vars
-    getter macros_cache
     getter regexes
     property vars
     property literal_expander
@@ -22,7 +19,6 @@ module Crystal
       super(self, self, "main")
 
       @unions = {} of Array(Int32) => Type
-      @macros_cache = {} of MacroCacheKey => MacroExpander
       @funs = {} of Array(Int32) => Type
       @regexes = [] of Const
 
@@ -111,6 +107,7 @@ module Crystal
       @crystal_path = (ENV["CRYSTAL_PATH"] || "").split(':')
       @vars = MetaVars.new
       @literal_expander = LiteralExpander.new self
+      @macro_expander = MacroExpander.new self
 
       define_primitives
     end
@@ -137,6 +134,10 @@ module Crystal
         flags.add uname.downcase
       end
       flags
+    end
+
+    def expand_macro(a_macro, call)
+      @macro_expander.expand a_macro, call
     end
 
     class PopenCommand < File

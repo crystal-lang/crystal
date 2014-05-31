@@ -511,13 +511,21 @@ module Crystal
         @str << ")"
       end
       @str << newline
-      with_indent do
-        node.body.each do |element|
-          element.accept self
-        end
-      end
+      accept_with_indent node.body
       append_indent
       @str << keyword("end")
+      false
+    end
+
+    def visit(node : MacroLiteral)
+      @str << node.value
+      false
+    end
+
+    def visit(node : MacroVar)
+      @str << "{{"
+      @str << node.name
+      @str << "}}"
       false
     end
 

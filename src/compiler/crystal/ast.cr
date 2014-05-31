@@ -918,7 +918,7 @@ module Crystal
 
     def accept_children(visitor)
       @args.each &.accept visitor
-      @body.each &.accept visitor
+      @body.accept visitor
       @block_arg.try &.accept visitor
     end
 
@@ -1876,6 +1876,34 @@ module Crystal
 
     def self.any?(attributes, name)
       attributes.try &.any? { |attr| attr.name == name }
+    end
+  end
+
+  abstract class MacroFragment < ASTNode
+    def clone_without_location
+      self
+    end
+  end
+
+  class MacroLiteral < MacroFragment
+    property value
+
+    def initialize(@value)
+    end
+
+    def ==(other : self)
+      value == other.value
+    end
+  end
+
+  class MacroVar < MacroFragment
+    property name
+
+    def initialize(@name)
+    end
+
+    def ==(other : self)
+      name == other.name
     end
   end
 

@@ -280,20 +280,6 @@ module Crystal
     end
   end
 
-  class Macro
-    make_named_tuple InstanceKey, types
-    make_named_tuple Info, llvm_mod, engine, func
-
-    def add_instance(info, arg_types)
-      @instances ||= {} of InstanceKey => Info
-      @instances[InstanceKey.new(arg_types)] = info
-    end
-
-    def lookup_instance(arg_types)
-      @instances ? @instances[InstanceKey.new(arg_types)]? : nil
-    end
-  end
-
   class MetaVar < ASTNode
     property :name
 

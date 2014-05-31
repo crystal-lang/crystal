@@ -1622,7 +1622,7 @@ module Crystal
       end
 
       if @token.keyword?(:end)
-        body = [] of ASTNode
+        body = Expressions.new
         next_token_skip_space
       else
         body = parse_macro_body(name_line_number, name_column_number)
@@ -1647,9 +1647,9 @@ module Crystal
 
         case @token.type
         when :MACRO_LITERAL
-          pieces << StringLiteral.new(@token.value.to_s)
+          pieces << MacroLiteral.new(@token.value.to_s)
         when :MACRO_EXPRESSION
-          var = Var.new(@token.value.to_s)
+          var = MacroVar.new(@token.value.to_s)
           var.location = @token.location
           pieces << var
         when :MACRO_END
@@ -1661,7 +1661,7 @@ module Crystal
 
       next_token
 
-      pieces
+      Expressions.from pieces
     end
 
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]

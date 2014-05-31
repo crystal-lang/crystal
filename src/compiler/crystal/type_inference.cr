@@ -670,25 +670,22 @@ module Crystal
     def expand_macro(node)
       return false if node.obj || node.name == "super"
 
-      untyped_def = node.scope.lookup_macro(node.name, node.args.length)
-      if !untyped_def && node.scope.metaclass? && node.scope.instance_type.module?
-        untyped_def = @mod.object.metaclass.lookup_macro(node.name, node.args.length)
+      the_macro = node.scope.lookup_macro(node.name, node.args.length)
+      if !the_macro && node.scope.metaclass? && node.scope.instance_type.module?
+        the_macro = @mod.object.metaclass.lookup_macro(node.name, node.args.length)
       end
-      untyped_def ||= mod.lookup_macro(node.name, node.args.length)
-      return false unless untyped_def
-
-      macros_cache_key = MacroCacheKey.new(untyped_def.object_id, node.args.map(&.crystal_type_id))
-      expander = mod.macros_cache[macros_cache_key] ||= MacroExpander.new(mod, untyped_def)
+      the_macro ||= @mod.lookup_macro(node.name, node.args.length)
+      return false unless the_macro
 
       begin
-        generated_source = expander.expand node
+        generated_source = @mod.expand_macro the_macro, node
       rescue ex : Crystal::Exception
         node.raise "expanding macro", ex
       end
 
       begin
         parser = Parser.new(generated_source, [Set.new(@vars.keys)])
-        parser.filename = VirtualFile.new(untyped_def, generated_source)
+        parser.filename = VirtualFile.new(the_macro, generated_source)
         generated_nodes = parser.parse
       rescue ex : Crystal::SyntaxException
         node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}#{"=" * 80}"
