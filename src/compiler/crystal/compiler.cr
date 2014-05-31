@@ -268,7 +268,8 @@ module Crystal
           end
 
           if @run
-            C.system "#{output_filename} #{ARGV[1 .. -1].join " "}"
+            errcode = C.system("#{output_filename} #{ARGV[1 .. -1].join " "}")
+            puts "Program terminated abnormally with eror code: #{errcode}" if errcode != 0
             File.delete output_filename
           end
         end
