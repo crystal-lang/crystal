@@ -32,6 +32,11 @@ module Crystal
       false
     end
 
+    def visit(node : ArrayLiteral)
+      node.expanded.try &.accept self
+      false
+    end
+
     def end_visit(node : Call)
       node.target_defs.try &.each do |target_def|
         unless @fixed.includes?(target_def.object_id)

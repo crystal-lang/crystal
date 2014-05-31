@@ -55,6 +55,12 @@ def assert_normalize(from, to, flags = nil)
   to_nodes.to_s.strip.should eq(to.strip)
 end
 
+def assert_expand(from, to)
+  from_nodes = Parser.parse(from)
+  to_nodes = LiteralExpander.new(Program.new).expand(from_nodes)
+  to_nodes.to_s.strip.should eq(to.strip)
+end
+
 def assert_after_type_inference(before, after)
   node = Parser.parse(before)
   result = infer_type node

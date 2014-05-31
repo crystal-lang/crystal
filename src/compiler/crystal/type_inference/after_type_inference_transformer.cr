@@ -85,6 +85,13 @@ module Crystal
       node
     end
 
+    def transform(node : ArrayLiteral)
+      if expanded = node.expanded
+        node.expanded = expanded.transform(self)
+      end
+      node
+    end
+
     def transform(node : Assign)
       super
 

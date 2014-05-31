@@ -421,4 +421,8 @@ module Crystal
   class IsA
     property :syntax_replacement
   end
+
+  class ArrayLiteral
+    property :expanded
+  end
 end

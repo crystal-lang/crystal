@@ -830,6 +830,11 @@ module Crystal
       true
     end
 
+    def visit(node : ArrayLiteral)
+      node.expanded.try &.accept self
+      false
+    end
+
     def visit(node : Nop)
       @last = llvm_nil
     end

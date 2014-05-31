@@ -16,6 +16,7 @@ module Crystal
     getter macros_cache
     getter regexes
     property vars
+    property literal_expander
 
     def initialize
       super(self, self, "main")
@@ -109,6 +110,7 @@ module Crystal
       @nil_var = Var.new("<nil_var>", self.nil)
       @crystal_path = (ENV["CRYSTAL_PATH"] || "").split(':')
       @vars = MetaVars.new
+      @literal_expander = LiteralExpander.new self
 
       define_primitives
     end
