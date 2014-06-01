@@ -17,6 +17,7 @@ module Crystal
   class ToSVisitor < Visitor
     def initialize(@str = StringBuilder.new)
       @indent = 0
+      @inside_macro = false
     end
 
     def visit(node : Primitive)
@@ -113,11 +114,15 @@ module Crystal
     end
 
     def visit(node : Expressions)
-      node.expressions.each do |exp|
-        unless exp.nop?
-          append_indent
-          exp.accept self
-          @str << newline
+      if @inside_macro
+        node.expressions.each &.accept self
+      else
+        node.expressions.each do |exp|
+          unless exp.nop?
+            append_indent
+            exp.accept self
+            @str << newline
+          end
         end
       end
       false
@@ -511,21 +516,31 @@ module Crystal
         @str << ")"
       end
       @str << newline
+
+      @inside_macro = true
       accept_with_indent node.body
+      @inside_macro = false
+
+      @str << newline
       append_indent
       @str << keyword("end")
       false
     end
 
+    def visit(node : MacroExpression)
+      @str << "{{"
+      node.exp.accept self
+      @str << "}}"
+      false
+    end
+
     def visit(node : MacroLiteral)
-      @str << node.value
+      @str << node.value.dump
       false
     end
 
     def visit(node : MacroVar)
-      @str << "{{"
       @str << node.name
-      @str << "}}"
       false
     end
 

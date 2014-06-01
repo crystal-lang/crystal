@@ -912,8 +912,7 @@ module Crystal
     property :block_arg
     property :name_column_number
 
-    def initialize(@name, @args : Array(Arg), body, @block_arg = nil)
-      @body = body
+    def initialize(@name, @args, @body, @block_arg = nil)
     end
 
     def accept_children(visitor)
@@ -1885,6 +1884,23 @@ module Crystal
     end
   end
 
+  # A macro expression, surrounded by {{ ... }}
+  class MacroExpression < MacroFragment
+    property exp
+
+    def initialize(@exp)
+    end
+
+    def accept_children(visitor)
+      @exp.accept visitor
+    end
+
+    def ==(other : self)
+      exp == other.exp
+    end
+  end
+
+  # Free text that is part of a macro
   class MacroLiteral < MacroFragment
     property value
 
@@ -1896,6 +1912,7 @@ module Crystal
     end
   end
 
+  # A variable to be replaced in a macro
   class MacroVar < MacroFragment
     property name
 

@@ -10,8 +10,17 @@ module Crystal
     end
 
     class MacroVisitor < Visitor
-      def initialize(@mod, @macro, @call)
+      def initialize(@mod, a_macro, call)
         @str = StringBuilder.new
+        @vars = {} of String => ASTNode
+        a_macro.args.zip(call.args) do |macro_arg, call_arg|
+          @vars[macro_arg.name] = call_arg
+        end
+      end
+
+      def visit(node : MacroExpression)
+        node.exp.accept self
+        false
       end
 
       def visit(node : MacroLiteral)
@@ -19,9 +28,9 @@ module Crystal
       end
 
       def visit(node : MacroVar)
-        index = @macro.args.index { |arg| arg.name == node.name }
-        if index
-          @str << @call.args[index].to_s_for_macro
+        var = @vars[node.name]?
+        if var
+          @str << var.to_s_for_macro
         else
           node.raise "undefined macro variable '#{node.name}'"
         end

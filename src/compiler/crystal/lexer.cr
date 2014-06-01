@@ -1246,13 +1246,10 @@ module Crystal
       @token
     end
 
-    def next_macro_token
+    def next_macro_token(nest, whitespace)
       @token.location = nil
       @token.line_number = @line_number
       @token.column_number = @column_number
-
-      nest = @token.macro_nest
-      whitespace = @token.macro_whitespace
 
       start = current_pos
 
@@ -1262,22 +1259,9 @@ module Crystal
       end
 
       if current_char == '{' && next_char == '{'
-        char = next_char
-        start = current_pos
-        @token.column_number = @column_number
-        while true
-          if char == '}' && peek_next_char == '}'
-            @token.value = string_range(start)
-            @token.type = :MACRO_EXPRESSION
-            @token.macro_nest = nest
-            @token.macro_whitespace = false
-            next_char
-            next_char
-            return @token
-          else
-            char = next_char
-          end
-        end
+        next_char
+        @token.type = :MACRO_EXPRESSION_START
+        return @token
       end
 
       if current_char == 'e' && next_char == 'n' && next_char == 'd' && !peek_next_char.ident_part_or_end?

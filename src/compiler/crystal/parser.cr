@@ -1637,21 +1637,20 @@ module Crystal
     end
 
     def parse_macro_body(start_line, start_column)
-      @token.macro_whitespace = true
-      @token.macro_nest = 0
+      nest, whitespace = 0, true
 
       pieces = [] of ASTNode
 
       while true
-        next_macro_token
+        next_macro_token nest, whitespace
+        nest, whitespace = @token.macro_nest, @token.macro_whitespace
 
         case @token.type
         when :MACRO_LITERAL
           pieces << MacroLiteral.new(@token.value.to_s)
-        when :MACRO_EXPRESSION
-          var = MacroVar.new(@token.value.to_s)
-          var.location = @token.location
-          pieces << var
+        when :MACRO_EXPRESSION_START
+          pieces << MacroExpression.new(parse_macro_expression)
+          check_macro_expression_end
         when :MACRO_END
           break
         when :EOF
@@ -1662,6 +1661,23 @@ module Crystal
       next_token
 
       Expressions.from pieces
+    end
+
+    def parse_macro_expression
+      next_token_skip_space
+      check :IDENT
+
+      var = MacroVar.new(@token.value.to_s)
+      var.location = @token.location
+      var
+    end
+
+    def check_macro_expression_end
+      next_token_skip_space
+      check :"}"
+
+      next_token
+      check :"}"
     end
 
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]

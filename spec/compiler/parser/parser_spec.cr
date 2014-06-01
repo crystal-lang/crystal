@@ -539,7 +539,8 @@ describe "Parser" do
   it_parses %(macro foo x\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
   it_parses %(macro foo(x); 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
   it_parses %(macro foo(x)\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
-  it_parses "macro foo; 1 + 2 {{foo}} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2 ".macro_literal, "foo".macro_var, " 3 + 4; ".macro_literal] of ASTNode))
+  it_parses "macro foo; 1 + 2 {{foo}} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2 ".macro_literal, MacroExpression.new("foo".macro_var), " 3 + 4; ".macro_literal] of ASTNode))
+  it_parses "macro foo; 1 + 2 {{ foo }} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2 ".macro_literal, MacroExpression.new("foo".macro_var), " 3 + 4; ".macro_literal] of ASTNode))
 
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
