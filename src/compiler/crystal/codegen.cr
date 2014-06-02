@@ -2177,37 +2177,42 @@ module Crystal
       assign pointer, var_type, arg.type, value
     end
 
+    def type_id(value, type : NilableType)
+      @builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.not_nil_type)
+    end
+
+    def type_id(value, type : ReferenceUnionType | HierarchyType)
+      load(value)
+    end
+
+    def type_id(value, type : NilableReferenceUnionType)
+      nil_block, not_nil_block, exit_block = new_blocks({"nil", "not_nil", "exit"})
+      phi_table = LLVM::PhiTable.new
+
+      cond null_pointer?(value), nil_block, not_nil_block
+
+      position_at_end nil_block
+      phi_table.add insert_block, type_id(@mod.nil)
+      br exit_block
+
+      position_at_end not_nil_block
+      phi_table.add insert_block, load(value)
+      br exit_block
+
+      position_at_end exit_block
+      phi LLVM::Int32, phi_table
+    end
+
+    def type_id(value, type : MixedUnionType)
+      load(union_type_id(value))
+    end
+
+    def type_id(value, type : HierarchyMetaclassType)
+      value
+    end
+
     def type_id(value, type)
-      case type
-      when NilableType
-        @builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.not_nil_type)
-      when ReferenceUnionType
-        load(value)
-      when NilableReferenceUnionType
-        nil_block, not_nil_block, exit_block = new_blocks({"nil", "not_nil", "exit"})
-        phi_table = LLVM::PhiTable.new
-
-        cond null_pointer?(value), nil_block, not_nil_block
-
-        position_at_end nil_block
-        phi_table.add insert_block, type_id(@mod.nil)
-        br exit_block
-
-        position_at_end not_nil_block
-        phi_table.add insert_block, load(value)
-        br exit_block
-
-        position_at_end exit_block
-        phi LLVM::Int32, phi_table
-      when MixedUnionType
-        load(union_type_id(value))
-      when HierarchyType
-        load(value)
-      when HierarchyMetaclassType
-        value
-      else
-        type_id(type)
-      end
+      type_id(type)
     end
 
     def type_id(type)
@@ -2218,50 +2223,56 @@ module Crystal
       llvm_true
     end
 
+    def match_type_id(type : UnionType | HierarchyType | HierarchyMetaclassType, restriction, type_id)
+      match_any_type_id(restriction, type_id)
+    end
+
     def match_type_id(type, restriction, type_id)
-      case type
-      when UnionType, HierarchyType, HierarchyMetaclassType
-        match_any_type_id(restriction, type_id)
-      else
-        equal? type_id(restriction), type_id
+      equal? type_id(restriction), type_id
+    end
+
+    def codegen_cond(type : NilType)
+      llvm_false
+    end
+
+    def codegen_cond(type : BoolType)
+      @last
+    end
+
+    def codegen_cond(type : TypeDefType)
+      codegen_cond type.typedef
+    end
+
+    def codegen_cond(type : NilableType | NilableReferenceUnionType | PointerInstanceType)
+      not_null_pointer? @last
+    end
+
+    def codegen_cond(type : MixedUnionType)
+      has_nil = type.union_types.any? &.nil_type?
+      has_bool = type.union_types.any? &.bool_type?
+
+      cond = llvm_true
+
+      if has_nil || has_bool
+        type_id = load union_type_id(@last)
+
+        if has_nil
+          is_nil = equal? type_id, type_id(@mod.nil)
+          cond = and cond, not(is_nil)
+        end
+
+        if has_bool
+          value = load(bit_cast union_value(@last), pointer_type(LLVM::Int1))
+          is_bool = equal? type_id, type_id(@mod.bool)
+          cond = and cond, not(and(is_bool, not(value)))
+        end
       end
+
+      cond
     end
 
     def codegen_cond(type : Type)
-      case type
-      when NilType
-        llvm_false
-      when BoolType
-        @last
-      when TypeDefType
-        codegen_cond type.typedef
-      when NilableType, NilableReferenceUnionType, PointerInstanceType
-        not_null_pointer? @last
-      when MixedUnionType
-        has_nil = type.union_types.any? &.nil_type?
-        has_bool = type.union_types.any? &.bool_type?
-
-        cond = llvm_true
-
-        if has_nil || has_bool
-          type_id = load union_type_id(@last)
-
-          if has_nil
-            is_nil = equal? type_id, type_id(@mod.nil)
-            cond = and cond, not(is_nil)
-          end
-
-          if has_bool
-            value = load(bit_cast union_value(@last), pointer_type(LLVM::Int1))
-            is_bool = equal? type_id, type_id(@mod.bool)
-            cond = and cond, not(and(is_bool, not(value)))
-          end
-        end
-
-        cond
-      else
-        llvm_true
-      end
+      llvm_true
     end
 
     def assign(target_pointer, target_type, value_type, value)
