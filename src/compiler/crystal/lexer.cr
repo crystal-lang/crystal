@@ -1257,7 +1257,17 @@ module Crystal
       @token
     end
 
-    def next_macro_token(nest, whitespace)
+    def next_macro_token(nest, whitespace, skip_whitespace)
+      if skip_whitespace
+        while current_char.whitespace?
+          if current_char == '\n'
+            @line_number += 1
+            @column_number = 0
+          end
+          next_char
+        end
+      end
+
       @token.location = nil
       @token.line_number = @line_number
       @token.column_number = @column_number

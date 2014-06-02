@@ -1638,11 +1638,16 @@ module Crystal
     end
 
     def parse_macro_body(start_line, start_column, nest = 0, whitespace = true)
+      skip_whitespace = check_macro_skip_whitespace
+
       pieces = [] of ASTNode
 
       while true
-        next_macro_token nest, whitespace
-        nest, whitespace = @token.macro_nest, @token.macro_whitespace
+
+        next_macro_token nest, whitespace, skip_whitespace
+        nest = @token.macro_nest
+        whitespace = @token.macro_whitespace
+        skip_whitespace = false
 
         case @token.type
         when :MACRO_LITERAL
@@ -1650,10 +1655,12 @@ module Crystal
         when :MACRO_EXPRESSION_START
           pieces << MacroExpression.new(parse_macro_expression)
           check_macro_expression_end
+          skip_whitespace = check_macro_skip_whitespace
         when :MACRO_CONTROL_START
           macro_control = parse_macro_control(start_line, start_column, nest, whitespace)
           if macro_control
             pieces << macro_control
+            skip_whitespace = check_macro_skip_whitespace
           else
             return Expressions.from pieces
           end
@@ -1669,6 +1676,15 @@ module Crystal
       next_token
 
       Expressions.from pieces
+    end
+
+    def check_macro_skip_whitespace
+      if current_char == '\\'
+        next_char
+        true
+      else
+        false
+      end
     end
 
     def parse_macro_expression
