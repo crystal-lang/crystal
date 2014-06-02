@@ -1878,6 +1878,40 @@ module Crystal
     end
   end
 
+  # if inside a macro
+  #
+  #     {% 'if' cond }
+  #       then
+  #     [
+  #     {% 'else' }
+  #       else
+  #     ]
+  #     %{ 'end' }
+  class MacroIf < ASTNode
+    property :cond
+    property :then
+    property :else
+
+    def initialize(@cond, a_then = nil, a_else = nil)
+      @then = Expressions.from a_then
+      @else = Expressions.from a_else
+    end
+
+    def accept_children(visitor)
+      @cond.accept visitor
+      @then.accept visitor
+      @else.accept visitor
+    end
+
+    def ==(other : self)
+      other.cond == cond && other.then == self.then && other.else == self.else
+    end
+
+    def clone_without_location
+      self
+    end
+  end
+
   # for inside a macro:
   #
   #    {- for x1, x2, ... , xn in exp }

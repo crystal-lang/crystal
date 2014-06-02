@@ -68,4 +68,34 @@ describe "Code gen: macro" do
       foo.bar
     )).to_i.should eq(1)
   end
+
+  it "expands inline macro for" do
+    run(%(
+      a = 0
+      {% for i in [1, 2, 3] }
+        a += {{i}}
+      {% end }
+      a
+      )).to_i.should eq(6)
+  end
+
+  it "expands inline macro if (true)" do
+    run(%(
+      a = 0
+      {% if 1 == 1 }
+        a += 1
+      {% end }
+      a
+      )).to_i.should eq(1)
+  end
+
+  it "expands inline macro if (false)" do
+    run(%(
+      a = 0
+      {% if 1 == 2 }
+        a += 1
+      {% end }
+      a
+      )).to_i.should eq(0)
+  end
 end

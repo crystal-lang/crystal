@@ -534,8 +534,21 @@ module Crystal
       false
     end
 
+    def visit(node : MacroIf)
+      @str << "{% if "
+      node.cond.accept self
+      @str << " }"
+      node.then.accept self
+      unless node.else.nop?
+        @str << "{% else }"
+        node.else.accept self
+      end
+      @str << "{% end }"
+      false
+    end
+
     def visit(node : MacroFor)
-      @str << "{- for "
+      @str << "{% for "
       node.vars.each_with_index do |var, i|
         @str << ", " if i > 0
         var.accept self
@@ -544,7 +557,7 @@ module Crystal
       node.exp.accept self
       @str << " }"
       node.body.accept self
-      @str << "{- end }"
+      @str << "{% end }"
       false
     end
 

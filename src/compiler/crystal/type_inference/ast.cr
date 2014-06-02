@@ -415,4 +415,12 @@ module Crystal
   class HashLiteral
     property :expanded
   end
+
+  class MacroIf
+    property :expanded
+  end
+
+  class MacroFor
+    property :expanded
+  end
 end

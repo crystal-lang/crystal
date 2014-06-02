@@ -517,6 +517,10 @@ module Crystal
       node
     end
 
+    def transform(node : MacroIf)
+      node
+    end
+
     def transform(node : MacroFor)
       node
     end

@@ -315,7 +315,13 @@ module Crystal
         end
       when '(' then next_char :"("
       when ')' then next_char :")"
-      when '{' then next_char :"{"
+      when '{'
+        char = next_char
+        if char == '%'
+          next_char :"{%"
+        else
+          @token.type = :"{"
+        end
       when '}' then next_char :"}"
       when '['
         case next_char

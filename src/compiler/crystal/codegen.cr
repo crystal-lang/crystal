@@ -838,6 +838,14 @@ module Crystal
       visit_expanded node
     end
 
+    def visit(node : MacroIf)
+      visit_expanded node
+    end
+
+    def visit(node : MacroFor)
+      visit_expanded node
+    end
+
     def visit_expanded(node)
       node.expanded.try &.accept self
       false

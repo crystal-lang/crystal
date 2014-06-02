@@ -677,8 +677,41 @@ module Crystal
       the_macro ||= @mod.lookup_macro(node.name, node.args.length)
       return false unless the_macro
 
+      generated_nodes = expand_macro(the_macro, node) do
+        @mod.expand_macro the_macro, node
+      end
+
+      node.target_macro = generated_nodes
+      node.bind_to generated_nodes
+
+      true
+    end
+
+    def visit(node : MacroIf)
+      expand_inline_macro node
+    end
+
+    def visit(node : MacroFor)
+      expand_inline_macro node
+    end
+
+    def expand_inline_macro(node)
+      the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node)
+      the_macro.location = node.location
+
+      generated_nodes = expand_macro(the_macro, node) do
+        @mod.expand_macro node
+      end
+
+      node.expanded = generated_nodes
+      node.bind_to generated_nodes
+
+      false
+    end
+
+    def expand_macro(the_macro, node)
       begin
-        generated_source = @mod.expand_macro the_macro, node
+        generated_source = yield
       rescue ex : Crystal::Exception
         node.raise "expanding macro", ex
       end
@@ -699,10 +732,7 @@ module Crystal
         node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}#{"=" * 80}"
       end
 
-      node.target_macro = generated_nodes
-      node.bind_to generated_nodes
-
-      true
+      generated_nodes
     end
 
     def number_lines(source)

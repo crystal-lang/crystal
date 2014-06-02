@@ -686,6 +686,15 @@ module Crystal
         parse_array_literal
       when :"{"
         parse_hash_or_tuple_literal
+      when :"{%"
+        macro_control = parse_macro_control(@line_number, @column_number, 0, true)
+        if macro_control
+          check :"}"
+          next_token_skip_space_or_newline
+          macro_control
+        else
+          unexpected_token_in_atomic
+        end
       when :"::"
         parse_ident_or_global_call
       when :"->"
@@ -1788,7 +1797,7 @@ module Crystal
         unexpected_token
       end
 
-      return If.new(cond, a_then, a_else)
+      return MacroIf.new(cond, a_then, a_else)
     end
 
     def parse_expression_inside_macro

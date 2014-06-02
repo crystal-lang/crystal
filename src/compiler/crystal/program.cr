@@ -140,6 +140,10 @@ module Crystal
       @macro_expander.expand a_macro, call
     end
 
+    def expand_macro(node)
+      @macro_expander.expand node
+    end
+
     class PopenCommand < File
       getter input
 

@@ -9,14 +9,25 @@ module Crystal
       visitor.to_s
     end
 
+    def expand(node)
+      visitor = MacroVisitor.new @mod
+      node.accept visitor
+      visitor.to_s
+    end
+
     class MacroVisitor < Visitor
-      def initialize(@mod, a_macro, call)
-        @str = StringBuilder.new
-        @vars = {} of String => ASTNode
-        @last = Nop.new
+      def self.new(mod, a_macro, call)
+        vars = {} of String => ASTNode
         a_macro.args.zip(call.args) do |macro_arg, call_arg|
-          @vars[macro_arg.name] = call_arg
+          vars[macro_arg.name] = call_arg
         end
+
+        new(mod, vars)
+      end
+
+      def initialize(@mod, @vars = {} of String => ASTNode)
+        @str = StringBuilder.new
+        @last = Nop.new
       end
 
       def visit(node : Expressions)
@@ -48,7 +59,7 @@ module Crystal
         end
       end
 
-      def visit(node : If)
+      def visit(node : MacroIf)
         node.cond.accept self
 
         if @last.truthy?
