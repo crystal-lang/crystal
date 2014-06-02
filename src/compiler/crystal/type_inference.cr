@@ -721,7 +721,7 @@ module Crystal
         parser.filename = VirtualFile.new(the_macro, generated_source)
         generated_nodes = parser.parse
       rescue ex : Crystal::SyntaxException
-        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}#{"=" * 80}"
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
       end
 
       generated_nodes = mod.normalize(generated_nodes)
@@ -729,7 +729,7 @@ module Crystal
       begin
         generated_nodes.accept self
       rescue ex : Crystal::Exception
-        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}#{"=" * 80}"
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
       end
 
       generated_nodes
