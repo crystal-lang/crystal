@@ -8,8 +8,6 @@ describe "Code gen: macro" do
 
   it "expands macro with arguments" do
     run(%(
-      require "prelude"
-
       macro foo(n)
         {{n}} + 2
       end

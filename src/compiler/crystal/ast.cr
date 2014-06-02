@@ -37,10 +37,6 @@ module Crystal
     def nop?
       false
     end
-
-    def to_s_for_macro
-      to_s
-    end
   end
 
   class Nop < ASTNode
@@ -169,10 +165,6 @@ module Crystal
     def clone_without_location
       NumberLiteral.new(@value, @kind)
     end
-
-    def to_s_for_macro
-      @value.to_s
-    end
   end
 
   # A char literal.
@@ -207,10 +199,6 @@ module Crystal
     def clone_without_location
       StringLiteral.new(@value)
     end
-
-    def to_s_for_macro
-      @value
-    end
   end
 
   class StringInterpolation < ASTNode
@@ -244,10 +232,6 @@ module Crystal
 
     def clone_without_location
       SymbolLiteral.new(@value)
-    end
-
-    def to_s_for_macro
-      @value
     end
   end
 
@@ -391,10 +375,6 @@ module Crystal
       var.out = @out
       var
     end
-
-    def to_s_for_macro
-      name
-    end
   end
 
   # A code block.
@@ -473,14 +453,6 @@ module Crystal
       clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @global, @name_column_number, @has_parenthesis)
       clone.name_length = name_length
       clone
-    end
-
-    def to_s_for_macro
-      if !obj && !block && args.empty?
-        @name
-      else
-        to_s
-      end
     end
   end
 
@@ -655,10 +627,6 @@ module Crystal
 
     def clone_without_location
       InstanceVar.new(@name, @out)
-    end
-
-    def to_s_for_macro
-      @name
     end
   end
 
@@ -1127,10 +1095,6 @@ module Crystal
       ident = Path.new(@names.clone, @global)
       ident.name_length = name_length
       ident
-    end
-
-    def to_s_for_macro
-      @names.join "::"
     end
   end
 
@@ -1878,14 +1842,8 @@ module Crystal
     end
   end
 
-  abstract class MacroFragment < ASTNode
-    def clone_without_location
-      self
-    end
-  end
-
   # A macro expression, surrounded by {{ ... }}
-  class MacroExpression < MacroFragment
+  class MacroExpression < ASTNode
     property exp
 
     def initialize(@exp)
@@ -1898,10 +1856,14 @@ module Crystal
     def ==(other : self)
       exp == other.exp
     end
+
+    def clone_without_location
+      self
+    end
   end
 
   # Free text that is part of a macro
-  class MacroLiteral < MacroFragment
+  class MacroLiteral < ASTNode
     property value
 
     def initialize(@value)
@@ -1910,17 +1872,37 @@ module Crystal
     def ==(other : self)
       value == other.value
     end
+
+    def clone_without_location
+      self
+    end
   end
 
-  # A variable to be replaced in a macro
-  class MacroVar < MacroFragment
-    property name
+  # for inside a macro:
+  #
+  #    {- for x1, x2, ... , xn in exp }
+  #      body
+  #    {- end }
+  class MacroFor < ASTNode
+    property vars
+    property exp
+    property body
 
-    def initialize(@name)
+    def initialize(@vars, @exp, @body)
+    end
+
+    def accept_children(visitor)
+      @vars.each &.accept visitor
+      @exp.accept visitor
+      @body.accept visitor
     end
 
     def ==(other : self)
-      name == other.name
+      vars == other.vars && exp == other.exp && body == other.body
+    end
+
+    def clone_without_location
+      self
     end
   end
 

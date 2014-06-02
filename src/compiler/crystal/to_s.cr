@@ -534,13 +534,22 @@ module Crystal
       false
     end
 
-    def visit(node : MacroLiteral)
-      @str << node.value.dump
+    def visit(node : MacroFor)
+      @str << "{- for "
+      node.vars.each_with_index do |var, i|
+        @str << ", " if i > 0
+        var.accept self
+      end
+      @str << " in "
+      node.exp.accept self
+      @str << " }"
+      node.body.accept self
+      @str << "{- end }"
       false
     end
 
-    def visit(node : MacroVar)
-      @str << node.name
+    def visit(node : MacroLiteral)
+      @str << node.value.dump
       false
     end
 

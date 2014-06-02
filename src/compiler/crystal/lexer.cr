@@ -606,6 +606,10 @@ module Crystal
           if next_char == 'l' && next_char == 's' && next_char == 'e'
             return check_ident_or_keyword(:false, start)
           end
+        when 'o'
+          if next_char == 'r'
+            return check_ident_or_keyword(:for, start)
+          end
         when 'u'
           if next_char == 'n'
             return check_ident_or_keyword(:fun, start)
@@ -624,15 +628,22 @@ module Crystal
             return check_ident_or_keyword(:if, start)
           end
         when 'n'
-          case next_char
-          when 'c'
-            if next_char == 'l' && next_char == 'u' && next_char == 'd' && next_char == 'e'
-              return check_ident_or_keyword(:include, start)
+          if peek_next_char.ident_part_or_end?
+            case next_char
+            when 'c'
+              if next_char == 'l' && next_char == 'u' && next_char == 'd' && next_char == 'e'
+                return check_ident_or_keyword(:include, start)
+              end
+            when 's'
+              if next_char == 't' && next_char == 'a' && next_char == 'n' && next_char == 'c' && next_char == 'e' && next_char == '_' && next_char == 's' && next_char == 'i' && next_char == 'z' && next_char == 'e' && next_char == 'o' && next_char == 'f'
+                return check_ident_or_keyword(:instance_sizeof, start)
+              end
             end
-          when 's'
-            if next_char == 't' && next_char == 'a' && next_char == 'n' && next_char == 'c' && next_char == 'e' && next_char == '_' && next_char == 's' && next_char == 'i' && next_char == 'z' && next_char == 'e' && next_char == 'o' && next_char == 'f'
-              return check_ident_or_keyword(:instance_sizeof, start)
-            end
+          else
+            next_char
+            @token.type = :IDENT
+            @token.value = :in
+            return @token
           end
         when 's'
           if next_char == '_' && next_char == 'a' && next_char == '?'
@@ -1258,10 +1269,17 @@ module Crystal
         return @token
       end
 
-      if current_char == '{' && next_char == '{'
-        next_char
-        @token.type = :MACRO_EXPRESSION_START
-        return @token
+      if current_char == '{'
+        case next_char
+        when '{'
+          next_char
+          @token.type = :MACRO_EXPRESSION_START
+          return @token
+        when '%'
+          next_char
+          @token.type = :MACRO_CONTROL_START
+          return @token
+        end
       end
 
       if current_char == 'e' && next_char == 'n' && next_char == 'd' && !peek_next_char.ident_part_or_end?

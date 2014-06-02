@@ -155,4 +155,15 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token_before_expression.macro_nest, token_before_expression.macro_whitespace)
     token.type.should eq(:MACRO_END)
   end
+
+  it "lexes macro with control" do
+    lexer = Lexer.new("foo{% if }bar")
+
+    token = lexer.next_macro_token(0, true)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("foo")
+
+    token = lexer.next_macro_token(token.macro_nest, token.macro_whitespace)
+    token.type.should eq(:MACRO_CONTROL_START)
+  end
 end
