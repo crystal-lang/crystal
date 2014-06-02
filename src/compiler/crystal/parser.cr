@@ -4,7 +4,7 @@ require "set"
 
 module Crystal
   class Parser < Lexer
-    make_named_tuple Unclosed, name, location
+    make_named_tuple Unclosed, [name, location]
 
     def self.parse(str, def_vars = [Set(String).new])
       new(str, def_vars).parse
@@ -19,6 +19,7 @@ module Crystal
       @uses_block_arg = false
       @def_nest = 0
       @block_arg_count = 0
+      @in_macro_expression = false
     end
 
     def parse
@@ -1636,14 +1637,17 @@ module Crystal
       node
     end
 
-    def parse_macro_body(start_line, start_column)
-      nest, whitespace = 0, true
+    def parse_macro_body(start_line, start_column, nest = 0, whitespace = true)
+      skip_whitespace = check_macro_skip_whitespace
 
       pieces = [] of ASTNode
 
       while true
-        next_macro_token nest, whitespace
-        nest, whitespace = @token.macro_nest, @token.macro_whitespace
+
+        next_macro_token nest, whitespace, skip_whitespace
+        nest = @token.macro_nest
+        whitespace = @token.macro_whitespace
+        skip_whitespace = false
 
         case @token.type
         when :MACRO_LITERAL
@@ -1651,10 +1655,21 @@ module Crystal
         when :MACRO_EXPRESSION_START
           pieces << MacroExpression.new(parse_macro_expression)
           check_macro_expression_end
+          skip_whitespace = check_macro_skip_whitespace
+        when :MACRO_CONTROL_START
+          macro_control = parse_macro_control(start_line, start_column, nest, whitespace)
+          if macro_control
+            pieces << macro_control
+            skip_whitespace = check_macro_skip_whitespace
+          else
+            return Expressions.from pieces
+          end
         when :MACRO_END
           break
         when :EOF
           raise "unterminated macro", start_line, start_column
+        else
+          unexpected_token
         end
       end
 
@@ -1663,21 +1678,124 @@ module Crystal
       Expressions.from pieces
     end
 
+    def check_macro_skip_whitespace
+      if current_char == '\\'
+        next_char
+        true
+      else
+        false
+      end
+    end
+
     def parse_macro_expression
       next_token_skip_space
-      check :IDENT
-
-      var = MacroVar.new(@token.value.to_s)
-      var.location = @token.location
-      var
+      parse_expression_inside_macro
     end
 
     def check_macro_expression_end
-      next_token_skip_space
       check :"}"
 
       next_token
       check :"}"
+    end
+
+    def parse_macro_control(start_line, start_column, nest, whitespace)
+      next_token_skip_space
+
+      case @token.type
+      when :IDENT
+        case @token.value
+        when :for
+          next_token_skip_space
+
+          vars = [] of Var
+
+          while true
+            check :IDENT
+            var = Var.new(@token.to_s)
+            var.location = @token.location
+            vars << var
+
+            next_token_skip_space
+            if @token.type == :","
+              next_token_skip_space
+            else
+              break
+            end
+          end
+
+          check_ident :in
+          next_token_skip_space
+
+          exp = parse_expression_inside_macro
+
+          check :"}"
+
+          body = parse_macro_body(start_line, start_column, nest, whitespace)
+
+          check_ident :end
+          next_token_skip_space
+          check :"}"
+
+          return MacroFor.new(vars, exp, body)
+        when :if
+          return parse_macro_if(start_line, start_column, nest, whitespace)
+        when :else, :elsif, :end
+          return nil
+        end
+      end
+
+      unexpected_token
+    end
+
+    def parse_macro_if(start_line, start_column, nest, whitespace, check_end = true)
+      next_token_skip_space
+
+      cond = parse_expression_inside_macro
+
+      check :"}"
+
+      a_then = parse_macro_body(start_line, start_column, nest, whitespace)
+
+      if @token.type == :IDENT
+        case @token.value
+        when :else
+          next_token_skip_space
+          check :"}"
+
+          a_else = parse_macro_body(start_line, start_column, nest, whitespace)
+
+          check_ident :end
+          next_token_skip_space
+          check :"}"
+        when :elsif
+          a_else = parse_macro_if(start_line, start_column, nest, whitespace, false)
+
+          if check_end
+            check_ident :end
+            next_token_skip_space
+            check :"}"
+          end
+        when :end
+          if check_end
+            next_token_skip_space
+            check :"}"
+          end
+        else
+          unexpected_token
+        end
+      else
+        unexpected_token
+      end
+
+      return If.new(cond, a_then, a_else)
+    end
+
+    def parse_expression_inside_macro
+      @in_macro_expression = true
+      exp = parse_expression
+      @in_macro_expression = false
+      exp
     end
 
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
@@ -2212,7 +2330,7 @@ module Crystal
       Block.new(block_args, block_body)
     end
 
-    make_named_tuple CallArgs, args, block, block_arg
+    make_named_tuple CallArgs, [args, block, block_arg]
 
     def parse_call_args
       case @token.type
@@ -3192,6 +3310,8 @@ module Crystal
     end
 
     def is_var?(name)
+      return true if @in_macro_expression
+
       name = name.to_s
       name == "self" || @def_vars.last.includes?(name)
     end

@@ -558,8 +558,8 @@ module Crystal
   module DefContainer
     include MatchesLookup
 
-    make_named_tuple DefKey, restrictions, yields
-    make_named_tuple SortedDefKey, name, length, yields
+    make_named_tuple DefKey, [restrictions, yields]
+    make_named_tuple SortedDefKey, [name, length, yields]
 
     getter defs
     getter sorted_defs
@@ -617,7 +617,7 @@ module Crystal
   end
 
   module DefInstanceContainer
-    make_named_tuple DefInstanceKey, def_object_id, arg_types, block_type
+    make_named_tuple DefInstanceKey, [def_object_id, arg_types, block_type]
 
     def def_instances
       @def_instances ||= {} of DefInstanceKey => Def
@@ -881,7 +881,7 @@ module Crystal
       end
     end
 
-    make_named_tuple InstanceVarInitializer, name, value, meta_vars
+    make_named_tuple InstanceVarInitializer, [name, value, meta_vars]
 
     def add_instance_var_initializer(name, value, meta_vars)
       initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer

@@ -91,10 +91,6 @@ class String
   def macro_literal
     MacroLiteral.new(self)
   end
-
-  def macro_var
-    MacroVar.new(self)
-  end
 end
 
 class Crystal::ASTNode
@@ -539,8 +535,17 @@ describe "Parser" do
   it_parses %(macro foo x\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
   it_parses %(macro foo(x); 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
   it_parses %(macro foo(x)\n 1 + 2; end), Crystal::Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
-  it_parses "macro foo; 1 + 2 {{foo}} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2 ".macro_literal, MacroExpression.new("foo".macro_var), " 3 + 4; ".macro_literal] of ASTNode))
-  it_parses "macro foo; 1 + 2 {{ foo }} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2 ".macro_literal, MacroExpression.new("foo".macro_var), " 3 + 4; ".macro_literal] of ASTNode))
+  it_parses "macro foo; 1 + 2 {{foo}} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2 ".macro_literal, MacroExpression.new("foo".var), " 3 + 4; ".macro_literal] of ASTNode))
+  it_parses "macro foo; 1 + 2 {{ foo }} 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2 ".macro_literal, MacroExpression.new("foo".var), " 3 + 4; ".macro_literal] of ASTNode))
+  it_parses "macro foo;bar{% for x in y }body{% end}baz;end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from(["bar".macro_literal, MacroFor.new(["x".var], "y".var, "body".macro_literal), "baz;".macro_literal] of ASTNode))
+  it_parses "macro foo;bar{% for x, y in z }body{% end}baz;end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from(["bar".macro_literal, MacroFor.new(["x".var, "y".var], "z".var, "body".macro_literal), "baz;".macro_literal] of ASTNode))
+  it_parses "macro foo;bar{% if x }body{% end}baz;end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from(["bar".macro_literal, If.new("x".var, "body".macro_literal), "baz;".macro_literal] of ASTNode))
+  it_parses "macro foo;bar{% if x }body{% else}body2{%end}baz;end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from(["bar".macro_literal, If.new("x".var, "body".macro_literal, "body2".macro_literal), "baz;".macro_literal] of ASTNode))
+  it_parses "macro foo;bar{% if x }body{% elsif y}body2{%end}baz;end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from(["bar".macro_literal, If.new("x".var, "body".macro_literal, If.new("y".var, "body2".macro_literal)), "baz;".macro_literal] of ASTNode))
+
+  it_parses "macro foo;bar{% for x in y }\\  \n   body{% end}baz;end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from(["bar".macro_literal, MacroFor.new(["x".var], "y".var, "body".macro_literal), "baz;".macro_literal] of ASTNode))
+  it_parses "macro foo;bar{% for x in y }\\  \n   body{% end}\\   baz;end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from(["bar".macro_literal, MacroFor.new(["x".var], "y".var, "body".macro_literal), "baz;".macro_literal] of ASTNode))
+  it_parses "macro foo; 1 + 2 {{foo}}\\ 3 + 4; end", Crystal::Macro.new("foo", ([] of Arg), Expressions.from([" 1 + 2 ".macro_literal, MacroExpression.new("foo".var), "3 + 4; ".macro_literal] of ASTNode))
 
   it_parses "a = 1; pointerof(a)", [Assign.new("a".var, 1.int32), PointerOf.new("a".var)]
   it_parses "pointerof(@a)", PointerOf.new("@a".instance_var)
@@ -838,6 +843,14 @@ describe "Parser" do
   it "can't parse implicit call in value-less case" do
     begin
       Parser.parse("case when .foo? then 1; end")
+      fail "syntax exception should have been raised"
+    rescue ex : Crystal::SyntaxException
+    end
+  end
+
+  it "says unexpected end in macro" do
+    begin
+      Parser.parse "macro foo;{%end};end"
       fail "syntax exception should have been raised"
     rescue ex : Crystal::SyntaxException
     end

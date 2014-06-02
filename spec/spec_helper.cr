@@ -23,7 +23,7 @@ class Crystal::Program
   end
 end
 
-make_named_tuple InferTypeResult, program, node
+make_named_tuple InferTypeResult, [program, node]
 
 def assert_type(str)
   program = Program.new
@@ -100,6 +100,17 @@ def assert_interpret_primitive(code, expected_value)
     value.type.should eq(program.yield program)
     value.value.should eq(expected_value)
   end
+end
+
+def assert_macro(macro_args, macro_body, call_args, expected)
+  macro_def = "macro foo(#{macro_args});#{macro_body};end"
+  a_macro = Parser.parse(macro_def) as Macro
+
+  program = Program.new
+  call = Call.new(nil, "", call_args)
+  result = program.expand_macro a_macro, call
+  result = result[0 .. -2] if result.ends_with?(';')
+  result.should eq(expected)
 end
 
 def parse(string)

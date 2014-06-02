@@ -509,7 +509,15 @@ module Crystal
       node
     end
 
-    def transform(node : MacroFragment)
+    def transform(node : MacroExpression)
+      node
+    end
+
+    def transform(node : MacroLiteral)
+      node
+    end
+
+    def transform(node : MacroFor)
       node
     end
 
