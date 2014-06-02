@@ -2223,14 +2223,22 @@ module Crystal
       llvm_true
     end
 
-    def match_type_id(type, restriction, type_id)
-      case type
-      when UnionType, HierarchyType, HierarchyMetaclassType
-        match_any_type_id(restriction, type_id)
-      else
-        equal? type_id(restriction), type_id
-      end
+    def match_type_id(type : UnionType | HierarchyType | HierarchyMetaclassType, restriction, type_id)
+      match_any_type_id(restriction, type_id)
     end
+
+    def match_type_id(type, restriction, type_id)
+      equal? type_id(restriction), type_id
+    end
+
+    # def match_type_id(type, restriction, type_id)
+    #   case type
+    #   when UnionType, HierarchyType, HierarchyMetaclassType
+    #     match_any_type_id(restriction, type_id)
+    #   else
+    #     equal? type_id(restriction), type_id
+    #   end
+    # end
 
     def codegen_cond(type : Type)
       case type
