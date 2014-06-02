@@ -8,3 +8,4 @@ coverage/
 .*.swp
 /Makefile.local
 all_spec
+version_generated.cr
