@@ -31,11 +31,11 @@ describe "MacroExpander" do
   end
 
   it "expands macro with string" do
-    assert_macro "", %({{"hello"}}), [] of ASTNode, %("hello")
+    assert_macro "", %({{"hello"}}), [] of ASTNode, %(hello)
   end
 
   it "expands macro with symbol" do
-    assert_macro "", %({{:foo}}), [] of ASTNode, %(:foo)
+    assert_macro "", %({{:foo}}), [] of ASTNode, %(foo)
   end
 
   it "expands macro with nil" do
@@ -128,5 +128,29 @@ describe "MacroExpander" do
 
   it "executes <= on numbers (false)" do
     assert_macro "", "{%if 3 <= 2}hello{%else}bye{%end}", [] of ASTNode, "bye"
+  end
+
+  it "executes string split without arguments" do
+    assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"])
+  end
+
+  it "executes string split with arguments" do
+    assert_macro "", %({{"1-2-3".split("-")}}), [] of ASTNode, %(["1", "2", "3"])
+  end
+
+  it "executes string strip" do
+    assert_macro "", %({{"  hello   ".strip}}), [] of ASTNode, "hello"
+  end
+
+  it "executes string downcase" do
+    assert_macro "", %({{"HELLO".downcase}}), [] of ASTNode, "hello"
+  end
+
+  it "executes string upcase" do
+    assert_macro "", %({{"hello".upcase}}), [] of ASTNode, "HELLO"
+  end
+
+  it "executes string lines" do
+    assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
   end
 end

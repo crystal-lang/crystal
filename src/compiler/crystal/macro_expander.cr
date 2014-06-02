@@ -38,11 +38,8 @@ module Crystal
       def visit(node : MacroExpression)
         node.exp.accept self
 
-        if node.exp.is_a?(Var)
-          @str << @last.to_macro_id
-        else
-          @str << @last.to_s
-        end
+        @str << @last.to_macro_id
+
         false
       end
 
@@ -101,21 +98,57 @@ module Crystal
 
       def visit(node : Call)
         obj = node.obj
-        unless obj
-          node.raise "can't execute call without receiver in a macro"
+        if obj
+          obj.accept self
+          receiver = @last
+
+          args = node.args.map do |arg|
+            arg.accept self
+            @last
+          end
+
+          @last = receiver.interpret(node.name, args)
+        else
+          # no receiver: special calls
+          execute_special_call node
         end
-
-        obj.accept self
-        receiver = @last
-
-        args = node.args.map do |arg|
-          arg.accept self
-          @last
-        end
-
-        @last = receiver.interpret(node.name, args)
 
         false
+      end
+
+      def execute_special_call(node)
+        case node.name
+        when "puts", "p"
+          execute_puts(node)
+        when "system"
+          execute_system(node)
+        else
+          node.raise "unknown special macro call: '#{node.name}'"
+        end
+      end
+
+      def execute_puts(node)
+        node.args.each do |arg|
+          arg.accept self
+          puts @last
+        end
+
+        @last = NilLiteral.new
+      end
+
+      def execute_system(node)
+        cmd = node.args.map do |arg|
+          arg.accept self
+          @last.to_macro_id
+        end
+        cmd = cmd.join " "
+
+        result = system2(cmd).join "\n"
+        if $exit == 0
+          @last = StringLiteral.new(result)
+        else
+          node.raise "Error executing command: #{cmd}\n\nGot:\n\n#{result}\n"
+        end
       end
 
       def visit(node : BoolLiteral)
@@ -177,8 +210,13 @@ module Crystal
           raise "wrong number of arguments for stringify (#{args.length} for 0)"
         end
 
-        if self.is_a?(StringLiteral)
-          self
+        me = self
+
+        case me
+        when StringLiteral
+          StringLiteral.new("\"#{me.value.dump}\"")
+        when SymbolLiteral
+          StringLiteral.new("\":#{me.value.dump}\"")
         else
           StringLiteral.new(to_s)
         end
@@ -190,6 +228,15 @@ module Crystal
         raise "undefined macro method: '#{method}'"
       end
     end
+
+    def interpret_argumentless_method(method, args)
+      unless args.length == 0
+        raise "wrong number of arguments for #{method} (#{args.length} for 0)"
+      end
+
+      yield
+    end
+
   end
 
   class NilLiteral
@@ -244,6 +291,34 @@ module Crystal
   class StringLiteral
     def to_macro_id
       @value
+    end
+
+    def interpret(method, args)
+      case method
+      when "downcase"
+        interpret_argumentless_method(method, args) { StringLiteral.new(@value.downcase) }
+      when "lines"
+        interpret_argumentless_method(method, args) { create_array_literal_from_values(@value.lines) }
+      when "split"
+        case args.length
+        when 0
+          create_array_literal_from_values(@value.split)
+        when 1
+          create_array_literal_from_values(@value.split(args.first.to_macro_id))
+        else
+          raise "wrong number of arguments for split (#{args.length} for 0, 1)"
+        end
+      when "strip"
+        interpret_argumentless_method(method, args) { StringLiteral.new(@value.strip) }
+      when "upcase"
+        interpret_argumentless_method(method, args) { StringLiteral.new(@value.upcase) }
+      else
+        super
+      end
+    end
+
+    def create_array_literal_from_values(values)
+      ArrayLiteral.new(Array(ASTNode).new(values.length) { |i| StringLiteral.new(values[i]) })
     end
   end
 
