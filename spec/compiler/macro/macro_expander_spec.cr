@@ -134,8 +134,12 @@ describe "MacroExpander" do
     assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"])
   end
 
-  it "executes string split with arguments" do
+  it "executes string split with string argument" do
     assert_macro "", %({{"1-2-3".split("-")}}), [] of ASTNode, %(["1", "2", "3"])
+  end
+
+  it "executes string split with char argument" do
+    assert_macro "", %({{"1-2-3".split('-')}}), [] of ASTNode, %(["1", "2", "3"])
   end
 
   it "executes string strip" do
@@ -152,5 +156,17 @@ describe "MacroExpander" do
 
   it "executes string lines" do
     assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
+  end
+
+  it "executes array index 0" do
+    assert_macro "", %({{[1, 2, 3][0]}}), [] of ASTNode, "1"
+  end
+
+  it "executes array index 1" do
+    assert_macro "", %({{[1, 2, 3][1]}}), [] of ASTNode, "2"
+  end
+
+  it "executes array length" do
+    assert_macro "", %({{[1, 2, 3].length}}), [] of ASTNode, "3"
   end
 end

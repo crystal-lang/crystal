@@ -304,7 +304,12 @@ module Crystal
         when 0
           create_array_literal_from_values(@value.split)
         when 1
-          create_array_literal_from_values(@value.split(args.first.to_macro_id))
+          first_arg = args.first
+          if first_arg.is_a?(CharLiteral)
+            create_array_literal_from_values(@value.split(first_arg.value))
+          else
+            create_array_literal_from_values(@value.split(first_arg.to_macro_id))
+          end
         else
           raise "wrong number of arguments for split (#{args.length} for 0, 1)"
         end
@@ -319,6 +324,35 @@ module Crystal
 
     def create_array_literal_from_values(values)
       ArrayLiteral.new(Array(ASTNode).new(values.length) { |i| StringLiteral.new(values[i]) })
+    end
+  end
+
+  class ArrayLiteral
+    def interpret(method, args)
+      case method
+      when "length"
+        interpret_argumentless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
+      when "[]"
+        case args.length
+        when 1
+          arg = args.first
+          unless arg.is_a?(NumberLiteral)
+            arg.raise "argument to [] must be a number, not #{arg}"
+          end
+
+          index = arg.to_number.to_i
+          value = elements[index]?
+          if value
+            value
+          else
+            raise "array index out of bounds: #{index} in #{self}"
+          end
+        else
+          raise "wrong number of arguments for [] (#{args.length} for 1)"
+        end
+      else
+        super
+      end
     end
   end
 
