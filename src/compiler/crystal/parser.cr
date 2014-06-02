@@ -4,7 +4,7 @@ require "set"
 
 module Crystal
   class Parser < Lexer
-    make_named_tuple Unclosed, name, location
+    make_named_tuple Unclosed, [name, location]
 
     def self.parse(str, def_vars = [Set(String).new])
       new(str, def_vars).parse
@@ -2330,7 +2330,7 @@ module Crystal
       Block.new(block_args, block_body)
     end
 
-    make_named_tuple CallArgs, args, block, block_arg
+    make_named_tuple CallArgs, [args, block, block_arg]
 
     def parse_call_args
       case @token.type
