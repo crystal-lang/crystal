@@ -2231,50 +2231,48 @@ module Crystal
       equal? type_id(restriction), type_id
     end
 
-    # def match_type_id(type, restriction, type_id)
-    #   case type
-    #   when UnionType, HierarchyType, HierarchyMetaclassType
-    #     match_any_type_id(restriction, type_id)
-    #   else
-    #     equal? type_id(restriction), type_id
-    #   end
-    # end
+    def codegen_cond(type : NilType)
+      llvm_false
+    end
 
-    def codegen_cond(type : Type)
-      case type
-      when NilType
-        llvm_false
-      when BoolType
-        @last
-      when TypeDefType
-        codegen_cond type.typedef
-      when NilableType, NilableReferenceUnionType, PointerInstanceType
-        not_null_pointer? @last
-      when MixedUnionType
-        has_nil = type.union_types.any? &.nil_type?
-        has_bool = type.union_types.any? &.bool_type?
+    def codegen_cond(type : BoolType)
+      @last
+    end
 
-        cond = llvm_true
+    def codegen_cond(type : TypeDefType)
+      codegen_cond type.typedef
+    end
 
-        if has_nil || has_bool
-          type_id = load union_type_id(@last)
+    def codegen_cond(type : NilableType | NilableReferenceUnionType | PointerInstanceType)
+      not_null_pointer? @last
+    end
 
-          if has_nil
-            is_nil = equal? type_id, type_id(@mod.nil)
-            cond = and cond, not(is_nil)
-          end
+    def codegen_cond(type : MixedUnionType)
+      has_nil = type.union_types.any? &.nil_type?
+      has_bool = type.union_types.any? &.bool_type?
 
-          if has_bool
-            value = load(bit_cast union_value(@last), pointer_type(LLVM::Int1))
-            is_bool = equal? type_id, type_id(@mod.bool)
-            cond = and cond, not(and(is_bool, not(value)))
-          end
+      cond = llvm_true
+
+      if has_nil || has_bool
+        type_id = load union_type_id(@last)
+
+        if has_nil
+          is_nil = equal? type_id, type_id(@mod.nil)
+          cond = and cond, not(is_nil)
         end
 
-        cond
-      else
-        llvm_true
+        if has_bool
+          value = load(bit_cast union_value(@last), pointer_type(LLVM::Int1))
+          is_bool = equal? type_id, type_id(@mod.bool)
+          cond = and cond, not(and(is_bool, not(value)))
+        end
       end
+
+      cond
+    end
+
+    def codegen_cond(type : Type)
+      llvm_true
     end
 
     def assign(target_pointer, target_type, value_type, value)
