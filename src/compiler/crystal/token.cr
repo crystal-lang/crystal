@@ -5,27 +5,37 @@ module Crystal
     property :type
     property :value
     property :number_kind
-    property :string_end
-    property :string_nest
-    property :string_open_count
     property :line_number
     property :column_number
     property :filename
     property :regex_modifiers
-    property :macro_nest
-    property :macro_whitespace
+    property :string_state
+    property :macro_state
+
+    make_named_tuple MacroState, [whitespace, nest]
+
+    struct MacroState
+      def self.default
+        MacroState.new(true, 0)
+      end
+    end
+
+    make_named_tuple StringState, [:end, nest, open_count]
+
+    struct StringState
+      def self.default
+        StringState.new('\0', '\0', 0)
+      end
+    end
 
     def initialize
       @type = :EOF
       @number_kind = :i32
-      @string_end = '\0'
-      @string_nest = '\0'
-      @string_open_count = 0
       @line_number = 0
       @column_number = 0
       @regex_modifiers = 0
-      @macro_whitespace = true
-      @macro_nest = 0
+      @string_state = StringState.default
+      @macro_state = MacroState.default
     end
 
     def location
@@ -47,13 +57,12 @@ module Crystal
       @type = other.type
       @value = other.value
       @number_kind = other.number_kind
-      @string_end = other.string_end
-      @string_nest = other.string_nest
-      @string_open_count = other.string_open_count
       @line_number = other.line_number
       @column_number = other.column_number
       @filename = other.filename
       @regex_modifiers = other.regex_modifiers
+      @string_state = other.string_state
+      @macro_state = other.macro_state
     end
 
     def to_s

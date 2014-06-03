@@ -7,15 +7,17 @@ describe "Lexer string" do
 
     token = lexer.next_token
     token.type.should eq(:STRING_START)
-    token.string_end.should eq('"')
-    token.string_nest.should eq('"')
-    token.string_open_count.should eq(0)
+    token.string_state.end.should eq('"')
+    token.string_state.nest.should eq('"')
+    token.string_state.open_count.should eq(0)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("hello")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
 
     token = lexer.next_token
@@ -28,19 +30,21 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("hello")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("\n")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("world")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -50,19 +54,21 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("hello")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("\\")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("world")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -72,11 +78,13 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("\"")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -86,11 +94,13 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("\t")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -100,11 +110,13 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("hello ")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:INTERPOLATION_START)
 
     token = lexer.next_token
@@ -114,7 +126,7 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:"}")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -124,19 +136,21 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("hello")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("#")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("world")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -146,19 +160,21 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("hello")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("\n")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("world")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
 
     token = lexer.next_token
@@ -172,11 +188,13 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("\n")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -186,15 +204,17 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("#")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("#")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -204,15 +224,17 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("hello ")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("#")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:INTERPOLATION_START)
 
     token = lexer.next_token
@@ -222,7 +244,7 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:"}")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -232,11 +254,13 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:STRING_START)
 
-    token = lexer.next_string_token('"', '"', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("h")
 
-    token = lexer.next_string_token('"', '"', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
   end
 
@@ -245,14 +269,16 @@ describe "Lexer string" do
 
     token = lexer.next_token
     token.type.should eq(:STRING_START)
-    token.string_end.should eq(')')
-    token.string_nest.should eq('(')
+    token.string_state.end.should eq(')')
+    token.string_state.nest.should eq('(')
 
-    token = lexer.next_string_token('(', ')', 0)
+    string_state = token.string_state
+
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING)
     token.value.should eq("hello")
 
-    token = lexer.next_string_token('(', ')', 0)
+    token = lexer.next_string_token(string_state)
     token.type.should eq(:STRING_END)
 
     token = lexer.next_token
@@ -265,29 +291,35 @@ describe "Lexer string" do
 
       token = lexer.next_token
       token.type.should eq(:STRING_START)
-      token.string_nest.should eq(pair[0])
-      token.string_end.should eq(pair[1])
-      token.string_open_count.should eq(0)
+      token.string_state.nest.should eq(pair[0])
+      token.string_state.end.should eq(pair[1])
+      token.string_state.open_count.should eq(0)
 
-      token = lexer.next_string_token(pair[0], pair[1], 0)
+      string_state = token.string_state
+
+      token = lexer.next_string_token(string_state)
       token.type.should eq(:STRING)
       token.value.should eq("hello ")
 
-      token = lexer.next_string_token(pair[0], pair[1], 0)
+      token = lexer.next_string_token(string_state)
       token.type.should eq(:STRING)
       token.value.should eq(pair[0].to_s)
-      token.string_open_count.should eq(1)
+      token.string_state.open_count.should eq(1)
 
-      token = lexer.next_string_token(pair[0], pair[1], 1)
+      string_state = token.string_state
+
+      token = lexer.next_string_token(string_state)
       token.type.should eq(:STRING)
       token.value.should eq("world")
 
-      token = lexer.next_string_token(pair[0], pair[1], 1)
+      token = lexer.next_string_token(string_state)
       token.type.should eq(:STRING)
       token.value.should eq(pair[1].to_s)
-      token.string_open_count.should eq(0)
+      token.string_state.open_count.should eq(0)
 
-      token = lexer.next_string_token(pair[0], pair[1], 0)
+      string_state = token.string_state
+
+      token = lexer.next_string_token(string_state)
       token.type.should eq(:STRING_END)
 
       token = lexer.next_token
@@ -298,7 +330,7 @@ describe "Lexer string" do
   it "lexes heredoc" do
     string = "Hello, mom! I am HERE.\nHER dress is beatiful.\nHE is OK.\n  HERE"
     lexer = Lexer.new("<<-HERE\n#{string}\nHERE")
-    
+
     token = lexer.next_token
     token.type.should eq(:STRING)
     token.value.should eq(string)

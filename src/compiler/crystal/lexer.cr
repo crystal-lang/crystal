@@ -467,9 +467,7 @@ module Crystal
       when '"'
         next_char
         @token.type = :STRING_START
-        @token.string_nest = '"'
-        @token.string_end = '"'
-        @token.string_open_count = 0
+        @token.string_state = Token::StringState.new('"', '"', 0)
       when '0'
         case peek_next_char
         when 'x'
@@ -1181,7 +1179,11 @@ module Crystal
       end
     end
 
-    def next_string_token(string_nest, string_end, string_open_count)
+    def next_string_token(string_state)
+      string_end = string_state.end
+      string_nest = string_state.nest
+      string_open_count = string_state.open_count
+
       case current_char
       when '\0'
         raise "unterminated string literal", @line_number, @column_number
@@ -1192,13 +1194,13 @@ module Crystal
         else
           @token.type = :STRING
           @token.value = string_end.to_s
-          @token.string_open_count = string_open_count - 1
+          @token.string_state = Token::StringState.new(@token.string_state.end, @token.string_state.nest, @token.string_state.open_count - 1)
         end
       when string_nest
         next_char
         @token.type = :STRING
         @token.value = string_nest.to_s
-        @token.string_open_count = string_open_count + 1
+        @token.string_state = Token::StringState.new(@token.string_state.end, @token.string_state.nest, @token.string_state.open_count + 1)
       when '\\'
         case char = next_char
         when 'n'
@@ -1263,7 +1265,10 @@ module Crystal
       @token
     end
 
-    def next_macro_token(nest, whitespace, skip_whitespace)
+    def next_macro_token(macro_state, skip_whitespace)
+      nest = macro_state.nest
+      whitespace = macro_state.whitespace
+
       if skip_whitespace
         while current_char.whitespace?
           if current_char == '\n'
@@ -1302,7 +1307,7 @@ module Crystal
         if nest == 0
           next_char
           @token.type = :MACRO_END
-          @token.macro_nest = nest
+          @token.macro_state = Token::MacroState.new(true, nest)
           return @token
         else
           nest -= 1
@@ -1350,8 +1355,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_nest = nest
-      @token.macro_whitespace = whitespace
+      @token.macro_state = Token::MacroState.new(whitespace, nest)
 
       @token
     end
@@ -1403,9 +1407,7 @@ module Crystal
     def string_start_pair(string_nest, string_end)
       next_char
       @token.type = :STRING_START
-      @token.string_nest = string_nest
-      @token.string_end = string_end
-      @token.string_open_count = 0
+      @token.string_state = Token::StringState.new(string_end, string_nest, 0)
     end
 
     def next_string_array_token

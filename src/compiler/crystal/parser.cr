@@ -687,7 +687,7 @@ module Crystal
       when :"{"
         parse_hash_or_tuple_literal
       when :"{%"
-        macro_control = parse_macro_control(@line_number, @column_number, 0, true)
+        macro_control = parse_macro_control(@line_number, @column_number)
         if macro_control
           check :"}"
           next_token_skip_space_or_newline
@@ -1234,14 +1234,12 @@ module Crystal
         return node_and_next_token StringLiteral.new(@token.value.to_s)
       end
 
-      string_nest = @token.string_nest
-      string_end = @token.string_end
-      string_open_count = @token.string_open_count
+      string_state = @token.string_state
 
       check :STRING_START
 
-      next_string_token(string_nest, string_end, string_open_count)
-      string_open_count = @token.string_open_count
+      next_string_token(string_state)
+      string_state = @token.string_state
 
       pieces = [] of ASTNode | String
       has_interpolation = false
@@ -1251,8 +1249,8 @@ module Crystal
         when :STRING
           pieces << @token.value.to_s
 
-          next_string_token(string_nest, string_end, string_open_count)
-          string_open_count = @token.string_open_count
+          next_string_token(string_state)
+          string_state = @token.string_state
         when :STRING_END
           next_token
           break
@@ -1268,8 +1266,8 @@ module Crystal
             raise "Unterminated string interpolation"
           end
 
-          next_string_token(string_nest, string_end, string_open_count)
-          string_open_count = @token.string_open_count
+          next_string_token(string_state)
+          string_state = @token.string_state
         end
       end
 
@@ -1646,16 +1644,14 @@ module Crystal
       node
     end
 
-    def parse_macro_body(start_line, start_column, nest = 0, whitespace = true)
+    def parse_macro_body(start_line, start_column, macro_state = Token::MacroState.default)
       skip_whitespace = check_macro_skip_whitespace
 
       pieces = [] of ASTNode
 
       while true
-
-        next_macro_token nest, whitespace, skip_whitespace
-        nest = @token.macro_nest
-        whitespace = @token.macro_whitespace
+        next_macro_token macro_state, skip_whitespace
+        macro_state = @token.macro_state
         skip_whitespace = false
 
         case @token.type
@@ -1666,7 +1662,7 @@ module Crystal
           check_macro_expression_end
           skip_whitespace = check_macro_skip_whitespace
         when :MACRO_CONTROL_START
-          macro_control = parse_macro_control(start_line, start_column, nest, whitespace)
+          macro_control = parse_macro_control(start_line, start_column, macro_state)
           if macro_control
             pieces << macro_control
             skip_whitespace = check_macro_skip_whitespace
@@ -1708,7 +1704,7 @@ module Crystal
       check :"}"
     end
 
-    def parse_macro_control(start_line, start_column, nest, whitespace)
+    def parse_macro_control(start_line, start_column, macro_state = Token::MacroState.default)
       next_token_skip_space
 
       case @token.type
@@ -1740,7 +1736,7 @@ module Crystal
 
           check :"}"
 
-          body = parse_macro_body(start_line, start_column, nest, whitespace)
+          body = parse_macro_body(start_line, start_column, macro_state)
 
           check_ident :end
           next_token_skip_space
@@ -1748,7 +1744,7 @@ module Crystal
 
           return MacroFor.new(vars, exp, body)
         when :if
-          return parse_macro_if(start_line, start_column, nest, whitespace)
+          return parse_macro_if(start_line, start_column, macro_state)
         when :else, :elsif, :end
           return nil
         end
@@ -1757,14 +1753,14 @@ module Crystal
       unexpected_token
     end
 
-    def parse_macro_if(start_line, start_column, nest, whitespace, check_end = true)
+    def parse_macro_if(start_line, start_column, macro_state, check_end = true)
       next_token_skip_space
 
       cond = parse_expression_inside_macro
 
       check :"}"
 
-      a_then = parse_macro_body(start_line, start_column, nest, whitespace)
+      a_then = parse_macro_body(start_line, start_column, macro_state)
 
       if @token.type == :IDENT
         case @token.value
@@ -1772,13 +1768,13 @@ module Crystal
           next_token_skip_space
           check :"}"
 
-          a_else = parse_macro_body(start_line, start_column, nest, whitespace)
+          a_else = parse_macro_body(start_line, start_column, macro_state)
 
           check_ident :end
           next_token_skip_space
           check :"}"
         when :elsif
-          a_else = parse_macro_if(start_line, start_column, nest, whitespace, false)
+          a_else = parse_macro_if(start_line, start_column, macro_state, false)
 
           if check_end
             check_ident :end
