@@ -324,21 +324,21 @@ module Crystal
   end
 
   class TupleLiteral < ASTNode
-    property :exps
+    property :elements
 
-    def initialize(@exps)
+    def initialize(@elements)
     end
 
     def accept_children(visitor)
-      exps.each &.accept visitor
+      elements.each &.accept visitor
     end
 
     def ==(other : self)
-      other.exps == exps
+      other.elements == elements
     end
 
     def clone_without_location
-      TupleLiteral.new(exps.clone)
+      TupleLiteral.new(elements.clone)
     end
   end
 

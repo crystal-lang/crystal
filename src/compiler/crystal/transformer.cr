@@ -480,7 +480,7 @@ module Crystal
     end
 
     def transform(node : TupleLiteral)
-      transform_many node.exps
+      transform_many node.elements
       node
     end
 

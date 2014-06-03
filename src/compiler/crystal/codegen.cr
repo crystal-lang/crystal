@@ -896,7 +896,7 @@ module Crystal
       request_value do
         type = node.type as TupleInstanceType
         @last = allocate_tuple(type) do |tuple_type, i|
-          exp = node.exps[i]
+          exp = node.elements[i]
           exp.accept self
           {exp.type, @last}
         end

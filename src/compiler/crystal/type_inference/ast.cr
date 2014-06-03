@@ -210,11 +210,11 @@ module Crystal
 
   class TupleLiteral
     def update(from = nil)
-      return unless exps.all? &.type?
+      return unless elements.all? &.type?
 
       types = [] of Type | ASTNode
-      exps.each { |exp| types << exp.type }
-      self.type = exps.first.type.program.tuple_of types
+      elements.each { |exp| types << exp.type }
+      self.type = elements.first.type.program.tuple_of types
     end
   end
 

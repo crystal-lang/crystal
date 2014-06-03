@@ -733,7 +733,7 @@ module Crystal
 
     def visit(node : TupleLiteral)
       @str << "{"
-      node.exps.each_with_index do |exp, i|
+      node.elements.each_with_index do |exp, i|
         @str << ", " if i > 0
         exp.accept self
       end

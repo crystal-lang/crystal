@@ -73,7 +73,7 @@ module Crystal
 
         exp = @last
         case exp
-        when ArrayLiteral
+        when ArrayLiteral, TupleLiteral
           element_var = node.vars[0]
           index_var = node.vars[1]?
 
@@ -86,9 +86,30 @@ module Crystal
           end
 
           @vars.delete element_var.name
-          if index_var
-            @vars.delete index_var.name
+          @vars.delete index_var.name if index_var
+        when HashLiteral
+          key_var = node.vars[0]
+          value_var = node.vars[1]?
+          index_var = node.vars[2]?
+
+          i = 0
+          exp.keys.zip(exp.values) do |key, value|
+            @vars[key_var.name] = key
+            if value_var
+              @vars[value_var.name] = value
+            end
+            if index_var
+              @vars[index_var.name] = NumberLiteral.new(i, :i32)
+            end
+
+            node.body.accept self
+
+            i += 1
           end
+
+          @vars.delete key_var.name
+          @vars.delete value_var.name if value_var
+          @vars.delete index_var.name if index_var
         else
           node.exp.raise "for expression must be an array, hash or tuple literal, not:\n\n#{exp}"
         end
@@ -176,6 +197,16 @@ module Crystal
       end
 
       def visit(node : ArrayLiteral)
+        @last = node
+        false
+      end
+
+      def visit(node : TupleLiteral)
+        @last = node
+        false
+      end
+
+      def visit(node : HashLiteral)
         @last = node
         false
       end
@@ -352,6 +383,64 @@ module Crystal
             value
           else
             raise "array index out of bounds: #{index} in #{self}"
+          end
+        else
+          raise "wrong number of arguments for [] (#{args.length} for 1)"
+        end
+      else
+        super
+      end
+    end
+  end
+
+  class HashLiteral
+    def interpret(method, args)
+      case method
+      when "empty?"
+        interpret_argumentless_method(method, args) { BoolLiteral.new(keys.empty?) }
+      when "length"
+        interpret_argumentless_method(method, args) { NumberLiteral.new(keys.length, :i32) }
+      when "[]"
+        case args.length
+        when 1
+          arg = args.first
+
+          index = keys.index(arg)
+          if index
+            values[index]
+          else
+            NilLiteral.new
+          end
+        else
+          raise "wrong number of arguments for [] (#{args.length} for 1)"
+        end
+      else
+        super
+      end
+    end
+  end
+
+  class TupleLiteral
+    def interpret(method, args)
+      case method
+      when "empty?"
+        interpret_argumentless_method(method, args) { BoolLiteral.new(elements.empty?) }
+      when "length"
+        interpret_argumentless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
+      when "[]"
+        case args.length
+        when 1
+          arg = args.first
+          unless arg.is_a?(NumberLiteral)
+            arg.raise "argument to [] must be a number, not #{arg}"
+          end
+
+          index = arg.to_number.to_i
+          value = elements[index]?
+          if value
+            value
+          else
+            raise "tuple index out of bounds: #{index} in #{self}"
           end
         else
           raise "wrong number of arguments for [] (#{args.length} for 1)"

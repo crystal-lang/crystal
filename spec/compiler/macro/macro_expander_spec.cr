@@ -46,6 +46,14 @@ describe "MacroExpander" do
     assert_macro "", %({{[1, 2, 3]}}), [] of ASTNode, %([1, 2, 3])
   end
 
+  it "expands macro with hash" do
+    assert_macro "", %({{{a: 1, b: 2}}}), [] of ASTNode, "{:a => 1, :b => 2}"
+  end
+
+  it "expands macro with tuple" do
+    assert_macro "", %({{{1, 2, 3}}}), [] of ASTNode, %({1, 2, 3})
+  end
+
   it "expands macro with var sustitution" do
     assert_macro "x", "{{x}}", [Var.new("hello")] of ASTNode, "hello"
   end
@@ -68,6 +76,18 @@ describe "MacroExpander" do
 
   it "expands macro with for over embedded array literal" do
     assert_macro "", "{%for e in [1, 2]}{{e}}{%end}", [] of ASTNode, "12"
+  end
+
+  it "expands macro with for over hash literal" do
+    assert_macro "x", "{%for k, v in x}{{k}}{{v}}{%end}", [HashLiteral.new([Var.new("a"), Var.new("b")] of ASTNode, [Var.new("c"), Var.new("d")] of ASTNode)] of ASTNode, "acbd"
+  end
+
+  it "expands macro with for over hash literal with index" do
+    assert_macro "x", "{%for k, v, i in x}{{k}}{{v}}{{i}}{%end}", [HashLiteral.new([Var.new("a"), Var.new("b")] of ASTNode, [Var.new("c"), Var.new("d")] of ASTNode)] of ASTNode, "ac0bd1"
+  end
+
+  it "expands macro with for over tuple literal" do
+    assert_macro "x", "{%for e, i in x}{{e}}{{i}}{%end}", [TupleLiteral.new([Var.new("a"), Var.new("b")] of ASTNode)] of ASTNode, "a0b1"
   end
 
   it "expands macro with if when truthy" do
@@ -180,5 +200,33 @@ describe "MacroExpander" do
 
   it "executes array empty?" do
     assert_macro "", %({{[1, 2, 3].empty?}}), [] of ASTNode, "false"
+  end
+
+  it "executes hash length" do
+    assert_macro "", %({{{a: 1, b: 3}.length}}), [] of ASTNode, "2"
+  end
+
+  it "executes hash empty?" do
+    assert_macro "", %({{{a: 1}.empty?}}), [] of ASTNode, "false"
+  end
+
+  it "executes hash index" do
+    assert_macro "", %({{{a: 1}[:a]}}), [] of ASTNode, "1"
+  end
+
+  it "executes hash index not found" do
+    assert_macro "", %({{{a: 1}[:b]}}), [] of ASTNode, "nil"
+  end
+
+  it "executes tuple length" do
+    assert_macro "", %({{{1, 2, 3}.length}}), [] of ASTNode, "3"
+  end
+
+  it "executes tuple empty?" do
+    assert_macro "", %({{{1, 2, 3}.empty?}}), [] of ASTNode, "false"
+  end
+
+  it "executes tuple index 1" do
+    assert_macro "", %({{{1, 2, 3}[1]}}), [] of ASTNode, "2"
   end
 end

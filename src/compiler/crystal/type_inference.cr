@@ -1857,7 +1857,7 @@ module Crystal
     end
 
     def end_visit(node : TupleLiteral)
-      node.exps.each &.add_observer(node)
+      node.elements.each &.add_observer(node)
       node.update
       false
     end
