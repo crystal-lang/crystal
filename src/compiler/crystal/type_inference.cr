@@ -680,8 +680,11 @@ module Crystal
     def expand_macro(node)
       return false if node.obj || node.name == "super"
 
-      the_macro = node.scope.lookup_macro(node.name, node.args.length)
-      if !the_macro && node.scope.metaclass? && node.scope.instance_type.module?
+      node_scope = node.scope
+      node_scope = node_scope.metaclass unless node_scope.metaclass?
+
+      the_macro = node_scope.lookup_macro(node.name, node.args.length)
+      if !the_macro && node_scope.metaclass? && node.scope.instance_type.module?
         the_macro = @mod.object.metaclass.lookup_macro(node.name, node.args.length)
       end
       the_macro ||= @mod.lookup_macro(node.name, node.args.length)

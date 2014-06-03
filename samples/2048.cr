@@ -314,23 +314,23 @@ class Game
     end
   end
 
+  macro movable_tiles_action(rows, cols)
+    {{rows}} do |row|
+      {{cols}} do |col|
+        tile = @grid[row][col]
+        if tile == :empty || to_border?(direction, row, col, drow, dcol)
+          next
+        end
+
+        yield tile, row, col
+      end
+    end
+  end
+
   # This method could be cleaned up with some way to iterate
   # from, for example,  x = 0 to y = 20 and from x = 20 to y = 0
   # with the same x.to(y) do |i| call
   def movable_tiles direction, drow, dcol
-    macro movable_tiles_action rows, cols
-      {{rows}} do |row|
-        {{cols}} do |col|
-          tile = @grid[row][col]
-          if tile == :empty || to_border?(direction, row, col, drow, dcol)
-            next
-          end
-
-          yield tile, row, col
-        end
-      end
-    end
-
     case direction
     when :up
       movable_tiles_action "0.upto(@grid.size-1)", "0.upto(@grid.size-1)"

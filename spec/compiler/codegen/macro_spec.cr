@@ -98,4 +98,20 @@ describe "Code gen: macro" do
       a
       )).to_i.should eq(0)
   end
+
+  it "finds macro in class" do
+    run(%(
+      class Foo
+        macro foo
+          1 + 2
+        end
+
+        def bar
+          foo
+        end
+      end
+
+      Foo.new.bar
+      )).to_i.should eq(3)
+  end
 end
