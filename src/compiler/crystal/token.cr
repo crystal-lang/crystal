@@ -12,19 +12,23 @@ module Crystal
     property :string_state
     property :macro_state
 
-    make_named_tuple MacroState, [whitespace, nest]
+    make_named_tuple MacroState, [whitespace, nest, string_state]
 
     struct MacroState
       def self.default
-        MacroState.new(true, 0)
+        MacroState.new(true, 0, nil)
       end
     end
 
-    make_named_tuple StringState, [:end, nest, open_count]
+    make_named_tuple StringState, [nest, :end, open_count]
 
     struct StringState
       def self.default
         StringState.new('\0', '\0', 0)
+      end
+
+      def with_open_count_delta(delta)
+        StringState.new(@nest, @end, @open_count + delta)
       end
     end
 

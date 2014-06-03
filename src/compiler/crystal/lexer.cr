@@ -1194,13 +1194,13 @@ module Crystal
         else
           @token.type = :STRING
           @token.value = string_end.to_s
-          @token.string_state = Token::StringState.new(@token.string_state.end, @token.string_state.nest, @token.string_state.open_count - 1)
+          @token.string_state = @token.string_state.with_open_count_delta(-1)
         end
       when string_nest
         next_char
         @token.type = :STRING
         @token.value = string_nest.to_s
-        @token.string_state = Token::StringState.new(@token.string_state.end, @token.string_state.nest, @token.string_state.open_count + 1)
+        @token.string_state = @token.string_state.with_open_count_delta(+1)
       when '\\'
         case char = next_char
         when 'n'
@@ -1268,6 +1268,7 @@ module Crystal
     def next_macro_token(macro_state, skip_whitespace)
       nest = macro_state.nest
       whitespace = macro_state.whitespace
+      string_state = macro_state.string_state
 
       if skip_whitespace
         while current_char.whitespace?
@@ -1303,11 +1304,11 @@ module Crystal
         end
       end
 
-      if current_char == 'e' && next_char == 'n' && next_char == 'd' && !peek_next_char.ident_part_or_end?
+      if !string_state && current_char == 'e' && next_char == 'n' && next_char == 'd' && !peek_next_char.ident_part_or_end?
         if nest == 0
           next_char
           @token.type = :MACRO_END
-          @token.macro_state = Token::MacroState.new(true, nest)
+          @token.macro_state = Token::MacroState.new(true, nest, nil)
           return @token
         else
           nest -= 1
@@ -1318,8 +1319,8 @@ module Crystal
 
       char = current_char
 
-      while char != 'e' && char != '{' && char != '\0'
-        if whitespace &&
+      until char == '{' || char == '\0' || (!string_state && char == 'e')
+        if !string_state && whitespace &&
           (
             (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||
             (char == 'c' && (char = next_char) &&
@@ -1343,19 +1344,66 @@ module Crystal
           whitespace = true
         else
           char = current_char
-          if char == '\n'
+          case char
+          when '\n'
             @line_number += 1
             @column_number = 0
-          end
+            whitespace = true
+          when '\\'
+            if string_state
+              char = next_char
+              if char == '"'
+                char = next_char
+              end
+              whitespace = false
+            else
+              whitespace = false
+            end
+          when '"'
+            if string_state
+              string_state = nil
+            else
+              string_state = Token::StringState.new('"', '"', 0)
+            end
+            whitespace = false
+          when '%'
+            if string_state
+              whitespace = false
+            else
+              char = next_char
+              case char
+              when '('
+                string_state = Token::StringState.new('(', ')', 1)
+              when '['
+                string_state = Token::StringState.new('[', ']', 1)
+              when '<'
+                string_state = Token::StringState.new('<', '>', 1)
+              else
+                whitespace = false
+              end
+            end
+          else
+            if string_state
+              case char
+              when string_state.nest
+                string_state = string_state.with_open_count_delta(+1)
+              when string_state.end
+                string_state = string_state.with_open_count_delta(-1)
+                if string_state.open_count == 0
+                  string_state = nil
+                end
+              end
+            end
 
-          whitespace = char.whitespace?
+            whitespace = char.whitespace?
+          end
           char = next_char
         end
       end
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, string_state)
 
       @token
     end
@@ -1407,7 +1455,7 @@ module Crystal
     def string_start_pair(string_nest, string_end)
       next_char
       @token.type = :STRING_START
-      @token.string_state = Token::StringState.new(string_end, string_nest, 0)
+      @token.string_state = Token::StringState.new(string_nest, string_end, 0)
     end
 
     def next_string_array_token

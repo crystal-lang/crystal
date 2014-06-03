@@ -174,4 +174,88 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_LITERAL)
     token.value.should eq("coco")
   end
+
+  it "lexes macro with embedded string" do
+    lexer = Lexer.new(%(good " end " day end))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%(good " end " day ))
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
+
+  it "lexes macro with embedded string and backslash" do
+    lexer = Lexer.new("good \" end \\\" \" day end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("good \" end \\\" \" day ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
+
+  it "lexes macro with embedded string and expression" do
+    lexer = Lexer.new(%(good " end {{foo}} " day end))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%(good " end ))
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_EXPRESSION_START)
+
+    macro_state = token.macro_state
+
+    token = lexer.next_token
+    token.type.should eq(:IDENT)
+    token.value.should eq("foo")
+
+    lexer.next_token.type.should eq(:"}")
+    lexer.next_token.type.should eq(:"}")
+
+    token = lexer.next_macro_token(macro_state, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%( " day ))
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
+
+  [{"(", ")"}, {"[", "]"}, {"<", ">"}].each do |tuple|
+    it "lexes macro with embedded string with %#{tuple[0]}" do
+      lexer = Lexer.new("good %#{tuple[0]} end #{tuple[1]} day end")
+
+      token = lexer.next_macro_token(Token::MacroState.default, false)
+      token.type.should eq(:MACRO_LITERAL)
+      token.value.should eq("good %#{tuple[0]} end #{tuple[1]} day ")
+
+      token = lexer.next_macro_token(token.macro_state, false)
+      token.type.should eq(:MACRO_END)
+    end
+
+    it "lexes macro with embedded string with %#{tuple[0]} ignores begin" do
+      lexer = Lexer.new("good %#{tuple[0]} begin #{tuple[1]} day end")
+
+      token = lexer.next_macro_token(Token::MacroState.default, false)
+      token.type.should eq(:MACRO_LITERAL)
+      token.value.should eq("good %#{tuple[0]} begin #{tuple[1]} day ")
+
+      token = lexer.next_macro_token(token.macro_state, false)
+      token.type.should eq(:MACRO_END)
+    end
+  end
+
+  it "lexes macro with nested embedded string with %(" do
+    lexer = Lexer.new("good %( ( ) end ) day end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("good %( ( ) end ) day ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
 end
