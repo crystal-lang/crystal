@@ -65,7 +65,7 @@ end
 macro make_named_tuple(name, fields)
   struct {{name}}
     {% for field in fields }
-      getter {{field}}
+      getter :{{field}}
     {% end }
 
     def initialize(
