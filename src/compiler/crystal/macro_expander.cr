@@ -90,7 +90,7 @@ module Crystal
             @vars.delete index_var.name
           end
         else
-          node.exp.raise "for expression must be an array, hash or tuple literal"
+          node.exp.raise "for expression must be an array, hash or tuple literal, not:\n\n#{exp}"
         end
 
         false
@@ -297,6 +297,10 @@ module Crystal
       case method
       when "downcase"
         interpret_argumentless_method(method, args) { StringLiteral.new(@value.downcase) }
+      when "empty?"
+        interpret_argumentless_method(method, args) { BoolLiteral.new(@value.empty?) }
+      when "length"
+        interpret_argumentless_method(method, args) { NumberLiteral.new(@value.length, :i32) }
       when "lines"
         interpret_argumentless_method(method, args) { create_array_literal_from_values(@value.lines) }
       when "split"
@@ -330,6 +334,8 @@ module Crystal
   class ArrayLiteral
     def interpret(method, args)
       case method
+      when "empty?"
+        interpret_argumentless_method(method, args) { BoolLiteral.new(elements.empty?) }
       when "length"
         interpret_argumentless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
       when "[]"

@@ -158,6 +158,14 @@ describe "MacroExpander" do
     assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
   end
 
+  it "executes string length" do
+    assert_macro "", %({{"hello".length}}), [] of ASTNode, "5"
+  end
+
+  it "executes string empty" do
+    assert_macro "", %({{"hello".empty?}}), [] of ASTNode, "false"
+  end
+
   it "executes array index 0" do
     assert_macro "", %({{[1, 2, 3][0]}}), [] of ASTNode, "1"
   end
@@ -168,5 +176,9 @@ describe "MacroExpander" do
 
   it "executes array length" do
     assert_macro "", %({{[1, 2, 3].length}}), [] of ASTNode, "3"
+  end
+
+  it "executes array empty?" do
+    assert_macro "", %({{[1, 2, 3].empty?}}), [] of ASTNode, "false"
   end
 end
