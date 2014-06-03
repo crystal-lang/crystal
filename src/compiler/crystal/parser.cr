@@ -20,6 +20,7 @@ module Crystal
       @def_nest = 0
       @block_arg_count = 0
       @in_macro_expression = false
+      @in_def_count = 0
     end
 
     def parse
@@ -731,13 +732,15 @@ module Crystal
         when :yield
           parse_yield
         when :abstract
-          next_token_skip_space_or_newline
-          check_ident :class
-          parse_class_def true
+          unless_in_def do
+            next_token_skip_space_or_newline
+            check_ident :class
+            parse_class_def true
+          end
         when :def
-          parse_def
+          unless_in_def { parse_def }
         when :macro
-          parse_macro
+          unless_in_def { parse_macro }
         when :require
           parse_require
         when :case
@@ -749,15 +752,15 @@ module Crystal
         when :unless
           parse_unless
         when :include
-          parse_include
+          unless_in_def { parse_include }
         when :extend
-          parse_extend
+          unless_in_def { parse_extend }
         when :class
-          parse_class_def
+          unless_in_def { parse_class_def }
         when :struct
-          parse_class_def false, true
+          unless_in_def { parse_class_def false, true }
         when :module
-          parse_module_def
+          unless_in_def { parse_module_def }
         when :while
           parse_while
         when :until
@@ -769,11 +772,11 @@ module Crystal
         when :break
           parse_break
         when :lib
-          parse_lib
+          unless_in_def { parse_lib }
         when :fun
-          parse_fun_def(true)
+          unless_in_def { parse_fun_def(true) }
         when :alias
-          parse_alias
+          unless_in_def { parse_alias }
         when :pointerof
           parse_pointerof
         when :sizeof
@@ -808,6 +811,14 @@ module Crystal
         node_and_next_token ClassVar.new(@token.value.to_s)
       else
         unexpected_token_in_atomic
+      end
+    end
+
+    def unless_in_def
+      if @def_nest == 0
+        yield
+      else
+        parse_var_or_call
       end
     end
 

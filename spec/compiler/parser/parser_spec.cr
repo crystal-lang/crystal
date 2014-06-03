@@ -696,6 +696,10 @@ describe "Parser" do
 
   it_parses "a = 1; class Foo; @x = a; end", [Assign.new("a".var, 1.int32), ClassDef.new("Foo".path, Assign.new("@x".instance_var, "a".call))]
 
+  %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
+    it_parses "def foo\n#{keyword}\nend", Def.new("foo", [] of Arg, [keyword.call] of ASTNode)
+  end
+
   it "parses class with attributes" do
     node = Parser.parse("
       @:Foo
