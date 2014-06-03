@@ -12,11 +12,11 @@ module Crystal
     property :string_state
     property :macro_state
 
-    make_named_tuple MacroState, [whitespace, nest, string_state]
+    make_named_tuple MacroState, [whitespace, nest, string_state, in_comment]
 
     struct MacroState
       def self.default
-        MacroState.new(true, 0, nil)
+        MacroState.new(true, 0, nil, false)
       end
     end
 

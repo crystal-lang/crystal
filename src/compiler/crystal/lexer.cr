@@ -1269,12 +1269,14 @@ module Crystal
       nest = macro_state.nest
       whitespace = macro_state.whitespace
       string_state = macro_state.string_state
+      in_comment = macro_state.in_comment
 
       if skip_whitespace
         while current_char.whitespace?
           if current_char == '\n'
             @line_number += 1
             @column_number = 0
+            in_comment = false
           end
           next_char
         end
@@ -1304,11 +1306,11 @@ module Crystal
         end
       end
 
-      if !string_state && current_char == 'e' && next_char == 'n' && next_char == 'd' && !peek_next_char.ident_part_or_end?
+      if !in_comment && !string_state && current_char == 'e' && next_char == 'n' && next_char == 'd' && !peek_next_char.ident_part_or_end?
         if nest == 0
           next_char
           @token.type = :MACRO_END
-          @token.macro_state = Token::MacroState.new(true, nest, nil)
+          @token.macro_state = Token::MacroState.default
           return @token
         else
           nest -= 1
@@ -1319,8 +1321,8 @@ module Crystal
 
       char = current_char
 
-      until char == '{' || char == '\0' || (!string_state && char == 'e')
-        if !string_state && whitespace &&
+      until char == '{' || char == '\0' || (!in_comment && !string_state && char == 'e')
+        if !in_comment && !string_state && whitespace &&
           (
             (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||
             (char == 'c' && (char = next_char) &&
@@ -1349,6 +1351,7 @@ module Crystal
             @line_number += 1
             @column_number = 0
             whitespace = true
+            in_comment = false
           when '\\'
             if string_state
               char = next_char
@@ -1382,6 +1385,9 @@ module Crystal
                 whitespace = false
               end
             end
+          when '#'
+            in_comment = true
+            whitespace = false
           else
             if string_state
               case char
@@ -1403,7 +1409,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, string_state)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, in_comment)
 
       @token
     end
