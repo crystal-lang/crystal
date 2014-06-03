@@ -77,60 +77,23 @@ struct LLVM::Builder
     LibLLVM.build_extract_value(@builder, value, index.to_u32, name)
   end
 
-  macro define_cast(name)
+  {% for name in %w(bit_cast si2fp ui2fp zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) }
     def {{name}}(value, type, name = "")
       LibLLVM.build_{{name}}(@builder, value, type, name)
     end
-  end
+  {% end }
 
-  define_cast bit_cast
-  define_cast si2fp
-  define_cast ui2fp
-  define_cast zext
-  define_cast sext
-  define_cast trunc
-  define_cast fpext
-  define_cast fptrunc
-  define_cast fp2si
-  define_cast fp2ui
-  define_cast si2fp
-  define_cast ui2fp
-  define_cast int2ptr
-  define_cast ptr2int
-
-  macro define_binary(name)
+  {% for name in %w(add sub mul sdiv exact_sdiv udiv srem urem shl ashr lshr or and xor fadd fsub fmul fdiv) }
     def {{name}}(lhs, rhs, name = "")
       LibLLVM.build_{{name}}(@builder, lhs, rhs, name)
     end
-  end
+  {% end }
 
-  define_binary add
-  define_binary sub
-  define_binary mul
-  define_binary sdiv
-  define_binary exact_sdiv
-  define_binary udiv
-  define_binary srem
-  define_binary urem
-  define_binary shl
-  define_binary ashr
-  define_binary lshr
-  define_binary or
-  define_binary and
-  define_binary xor
-  define_binary fadd
-  define_binary fsub
-  define_binary fmul
-  define_binary fdiv
-
-  macro define_cmp(name)
+  {% for name in %w(icmp fcmp) }
     def {{name}}(op, lhs, rhs, name = "")
       LibLLVM.build_{{name}}(@builder, op, lhs, rhs, name)
     end
-  end
-
-  define_cmp icmp
-  define_cmp fcmp
+  {% end }
 
   def not(value, name = "")
     LibLLVM.build_not(@builder, value, name)

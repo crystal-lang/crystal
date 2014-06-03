@@ -24,7 +24,7 @@ class Vec3
   def initialize(@x, @y, @z)
   end
 
-  macro define_op(op)
+  {% for op in %w(+ - * /) }
     def {{op}}(other : Vec3)
       Vec3.new(@x {{op}} other.x, @y {{op}} other.y, @z {{op}} other.z)
     end
@@ -32,12 +32,7 @@ class Vec3
     def {{op}}(other : Float)
       Vec3.new(@x {{op}} other, @y {{op}} other, @z {{op}} other)
     end
-  end
-
-  define_op "+"
-  define_op "-"
-  define_op "*"
-  define_op "/"
+  {% end }
 
   def -
     Vec3.new(-@x, -@y, -@z)
