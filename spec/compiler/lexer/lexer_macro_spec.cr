@@ -259,23 +259,17 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_END)
   end
 
-  it "lexes macro with comments (1)" do
+  it "lexes macro with comments" do
     lexer = Lexer.new("good # end\n day end")
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("good # end\n day ")
-
-    token = lexer.next_macro_token(token.macro_state, false)
-    token.type.should eq(:MACRO_END)
-  end
-
-  it "lexes macro with comments (2)" do
-    lexer = Lexer.new("good # begin\n day end")
+    token.value.should eq("good ")
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("good # begin\n day ")
+    token.value.should eq("\n day ")
+    token.line_number.should eq(2)
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)
