@@ -700,6 +700,10 @@ module Crystal
       true
     end
 
+    def visit(node : MacroExpression)
+      expand_inline_macro node
+    end
+
     def visit(node : MacroIf)
       expand_inline_macro node
     end

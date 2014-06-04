@@ -42,6 +42,11 @@ module Crystal
       false
     end
 
+    def visit(node : MacroExpression)
+      node.expanded.try &.accept self
+      false
+    end
+
     def visit(node : MacroIf)
       node.expanded.try &.accept self
       false

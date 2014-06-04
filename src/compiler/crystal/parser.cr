@@ -687,6 +687,11 @@ module Crystal
         parse_array_literal
       when :"{"
         parse_hash_or_tuple_literal
+      when :"{{"
+        macro_exp = parse_macro_expression
+        check_macro_expression_end
+        next_token
+        MacroExpression.new(macro_exp)
       when :"{%"
         macro_control = parse_macro_control(@line_number, @column_number)
         if macro_control

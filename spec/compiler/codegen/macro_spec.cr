@@ -69,6 +69,13 @@ describe "Code gen: macro" do
     )).to_i.should eq(1)
   end
 
+  it "expands inline macro" do
+    run(%(
+      a = {{ 1 }}
+      a
+      )).to_i.should eq(1)
+  end
+
   it "expands inline macro for" do
     run(%(
       a = 0

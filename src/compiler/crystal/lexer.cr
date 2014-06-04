@@ -317,8 +317,11 @@ module Crystal
       when ')' then next_char :")"
       when '{'
         char = next_char
-        if char == '%'
+        case char
+        when '%'
           next_char :"{%"
+        when '{'
+          next_char :"{{"
         else
           @token.type = :"{"
         end

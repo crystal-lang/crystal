@@ -93,6 +93,10 @@ module Crystal
       transform_expanded node
     end
 
+    def transform(node : MacroExpression)
+      transform_expanded node
+    end
+
     def transform(node : MacroIf)
       transform_expanded node
     end

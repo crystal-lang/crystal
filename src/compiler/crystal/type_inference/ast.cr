@@ -416,6 +416,10 @@ module Crystal
     property :expanded
   end
 
+  class MacroExpression
+    property :expanded
+  end
+
   class MacroIf
     property :expanded
   end

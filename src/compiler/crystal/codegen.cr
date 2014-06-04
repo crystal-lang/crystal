@@ -838,6 +838,10 @@ module Crystal
       visit_expanded node
     end
 
+    def visit(node : MacroExpression)
+      visit_expanded node
+    end
+
     def visit(node : MacroIf)
       visit_expanded node
     end
