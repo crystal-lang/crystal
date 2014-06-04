@@ -68,19 +68,11 @@ macro make_named_tuple(name, fields)
       getter :{{field}}
     {% end }
 
-    def initialize(
-      {% for field, i in fields }\
-        {% if i > 0}, {% end}\
-        @{{field}}\
-      {% end }
-      )
+    def initialize({{ fields.map { |field| "@#{field}" }.join ", " }})
     end
 
     def ==(other : self)
-      {% for field, i in fields }\
-        {% if i > 0 } && {% end }\
-        other.{{field}} == {{field}}\
-      {% end}
+      {{ fields.map { |field| "other.#{field} == #{field}" }.join " && " }}
     end
 
     def hash
