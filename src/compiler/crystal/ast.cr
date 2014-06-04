@@ -1972,6 +1972,22 @@ module Crystal
       TupleIndexer.new(index)
     end
   end
+
+  # Ficticious node to wrap a call inside a macro
+  class MacroCallWrapper < ASTNode
+    property call
+
+    def initialize(@call)
+    end
+
+    def to_macro_id
+      call.to_macro_id
+    end
+
+    def clone_without_location
+      self
+    end
+  end
 end
 
 require "to_s"

@@ -16,10 +16,12 @@ module Crystal
     end
 
     class MacroVisitor < Visitor
+      getter last
+
       def self.new(mod, a_macro, call)
         vars = {} of String => ASTNode
         a_macro.args.zip(call.args) do |macro_arg, call_arg|
-          vars[macro_arg.name] = call_arg
+          vars[macro_arg.name] = call_arg.to_macro_var
         end
 
         new(mod, vars)
@@ -28,6 +30,15 @@ module Crystal
       def initialize(@mod, @vars = {} of String => ASTNode)
         @str = StringBuilder.new
         @last = Nop.new
+      end
+
+      def define_var(name, value)
+        @vars[name] = value
+      end
+
+      def accept(node)
+        node.accept self
+        @last
       end
 
       def visit(node : Expressions)
@@ -54,6 +65,20 @@ module Crystal
         else
           node.raise "undefined macro variable '#{node.name}'"
         end
+      end
+
+      def visit(node : StringInterpolation)
+        @last = StringLiteral.new(String.build do |str|
+          node.expressions.each do |exp|
+            if exp.is_a?(StringLiteral)
+              str << exp.value
+            else
+              exp.accept self
+              str << @last.to_macro_id
+            end
+          end
+        end)
+        false
       end
 
       def visit(node : MacroIf)
@@ -128,7 +153,7 @@ module Crystal
             @last
           end
 
-          @last = receiver.interpret(node.name, args)
+          @last = receiver.interpret(node.name, args, node.block, self)
         else
           # no receiver: special calls
           execute_special_call node
@@ -215,6 +240,10 @@ module Crystal
         @last = node
       end
 
+      def visit(node : MacroCallWrapper)
+        @last = node
+      end
+
       def visit(node : ASTNode)
         node.raise "can't execute this in a macro"
       end
@@ -230,11 +259,15 @@ module Crystal
       to_s
     end
 
+    def to_macro_var
+      self
+    end
+
     def truthy?
       true
     end
 
-    def interpret(method, args)
+    def interpret(method, args, block, interpreter)
       case method
       when "stringify"
         unless args.length == 0
@@ -260,14 +293,21 @@ module Crystal
       end
     end
 
-    def interpret_argumentless_method(method, args)
-      unless args.length == 0
-        raise "wrong number of arguments for #{method} (#{args.length} for 0)"
-      end
-
+    def interpret_argless_method(method, args)
+      interpret_check_args_length method, args, 0
       yield
     end
 
+    def interpret_one_arg_method(method, args)
+      interpret_check_args_length method, args, 1
+      yield args.first
+    end
+
+    def interpret_check_args_length(method, args, length)
+      unless args.length == length
+        raise "wrong number of arguments for #{method} (#{args.length} for #{length})"
+      end
+    end
   end
 
   class NilLiteral
@@ -291,7 +331,7 @@ module Crystal
   end
 
   class NumberLiteral
-    def interpret(method, args)
+    def interpret(method, args, block, interpreter)
       case method
       when ">"
         compare_to(args.first) { |me, other| me > other }
@@ -324,16 +364,16 @@ module Crystal
       @value
     end
 
-    def interpret(method, args)
+    def interpret(method, args, block, interpreter)
       case method
       when "downcase"
-        interpret_argumentless_method(method, args) { StringLiteral.new(@value.downcase) }
+        interpret_argless_method(method, args) { StringLiteral.new(@value.downcase) }
       when "empty?"
-        interpret_argumentless_method(method, args) { BoolLiteral.new(@value.empty?) }
+        interpret_argless_method(method, args) { BoolLiteral.new(@value.empty?) }
       when "length"
-        interpret_argumentless_method(method, args) { NumberLiteral.new(@value.length, :i32) }
+        interpret_argless_method(method, args) { NumberLiteral.new(@value.length, :i32) }
       when "lines"
-        interpret_argumentless_method(method, args) { create_array_literal_from_values(@value.lines) }
+        interpret_argless_method(method, args) { create_array_literal_from_values(@value.lines) }
       when "split"
         case args.length
         when 0
@@ -349,9 +389,9 @@ module Crystal
           raise "wrong number of arguments for split (#{args.length} for 0, 1)"
         end
       when "strip"
-        interpret_argumentless_method(method, args) { StringLiteral.new(@value.strip) }
+        interpret_argless_method(method, args) { StringLiteral.new(@value.strip) }
       when "upcase"
-        interpret_argumentless_method(method, args) { StringLiteral.new(@value.upcase) }
+        interpret_argless_method(method, args) { StringLiteral.new(@value.upcase) }
       else
         super
       end
@@ -363,12 +403,64 @@ module Crystal
   end
 
   class ArrayLiteral
-    def interpret(method, args)
+    def interpret(method, args, block, interpreter)
       case method
+      when "any?"
+        interpret_argless_method(method, args) do
+          raise "any? expects a block" unless block
+
+          block_arg = block.args.first?
+
+          BoolLiteral.new(elements.any? do |elem|
+            block_value = interpreter.accept elem.to_macro_var
+            interpreter.define_var(block_arg.name, block_value) if block_arg
+            interpreter.accept(block.body).truthy?
+          end)
+        end
+      when "all?"
+        interpret_argless_method(method, args) do
+          raise "all? expects a block" unless block
+
+          block_arg = block.args.first?
+
+          BoolLiteral.new(elements.all? do |elem|
+            block_value = interpreter.accept elem.to_macro_var
+            interpreter.define_var(block_arg.name, block_value) if block_arg
+            interpreter.accept(block.body).truthy?
+          end)
+        end
       when "empty?"
-        interpret_argumentless_method(method, args) { BoolLiteral.new(elements.empty?) }
+        interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
+      when "join"
+        interpret_one_arg_method(method, args) do |arg|
+          StringLiteral.new(elements.map(&.to_macro_id).join arg.to_macro_id)
+        end
       when "length"
-        interpret_argumentless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
+        interpret_argless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
+      when "map"
+        interpret_argless_method(method, args) do
+          raise "map expects a block" unless block
+
+          block_arg = block.args.first?
+
+          ArrayLiteral.new(elements.map do |elem|
+            block_value = interpreter.accept elem.to_macro_var
+            interpreter.define_var(block_arg.name, block_value) if block_arg
+            interpreter.accept block.body
+          end)
+        end
+      when "select"
+        interpret_argless_method(method, args) do
+          raise "select expects a block" unless block
+
+          block_arg = block.args.first?
+
+          ArrayLiteral.new(elements.select do |elem|
+            block_value = interpreter.accept elem.to_macro_var
+            interpreter.define_var(block_arg.name, block_value) if block_arg
+            interpreter.accept(block.body).truthy?
+          end)
+        end
       when "[]"
         case args.length
         when 1
@@ -394,12 +486,12 @@ module Crystal
   end
 
   class HashLiteral
-    def interpret(method, args)
+    def interpret(method, args, block, interpreter)
       case method
       when "empty?"
-        interpret_argumentless_method(method, args) { BoolLiteral.new(keys.empty?) }
+        interpret_argless_method(method, args) { BoolLiteral.new(keys.empty?) }
       when "length"
-        interpret_argumentless_method(method, args) { NumberLiteral.new(keys.length, :i32) }
+        interpret_argless_method(method, args) { NumberLiteral.new(keys.length, :i32) }
       when "[]"
         case args.length
         when 1
@@ -421,12 +513,12 @@ module Crystal
   end
 
   class TupleLiteral
-    def interpret(method, args)
+    def interpret(method, args, block, interpreter)
       case method
       when "empty?"
-        interpret_argumentless_method(method, args) { BoolLiteral.new(elements.empty?) }
+        interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
       when "length"
-        interpret_argumentless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
+        interpret_argless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
       when "[]"
         case args.length
         when 1
@@ -470,6 +562,10 @@ module Crystal
       else
         to_s
       end
+    end
+
+    def to_macro_var
+      MacroCallWrapper.new(self)
     end
   end
 

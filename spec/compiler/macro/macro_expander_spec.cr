@@ -54,6 +54,10 @@ describe "MacroExpander" do
     assert_macro "", %({{{1, 2, 3}}}), [] of ASTNode, %({1, 2, 3})
   end
 
+  it "expands macro with string interpolation" do
+    assert_macro "", "{{ \"hello\#{1 == 1}world\" }}", [] of ASTNode, "hellotrueworld"
+  end
+
   it "expands macro with var sustitution" do
     assert_macro "x", "{{x}}", [Var.new("hello")] of ASTNode, "hello"
   end
@@ -200,6 +204,42 @@ describe "MacroExpander" do
 
   it "executes array empty?" do
     assert_macro "", %({{[1, 2, 3].empty?}}), [] of ASTNode, "false"
+  end
+
+  it "executes array join" do
+    assert_macro "", %({{[1, 2, 3].join ", "}}), [] of ASTNode, "1, 2, 3"
+  end
+
+  it "executes array join with strings" do
+    assert_macro "", %({{["a", "b"].join ", "}}), [] of ASTNode, "a, b"
+  end
+
+  it "executes array map" do
+    assert_macro "", %({{[1, 2, 3].map { |e| e == 2 }}}), [] of ASTNode, "[false, true, false]"
+  end
+
+  it "executes array map with arg" do
+    assert_macro "x", %({{x.map { |e| e }}}), [ArrayLiteral.new([Call.new(nil, "hello")] of ASTNode)] of ASTNode, "[hello]"
+  end
+
+  it "executes array select" do
+    assert_macro "", %({{[1, 2, 3].select { |e| e == 1 }}}), [] of ASTNode, "[1]"
+  end
+
+  it "executes array any? (true)" do
+    assert_macro "", %({{[1, 2, 3].any? { |e| e == 1 }}}), [] of ASTNode, "true"
+  end
+
+  it "executes array any? (false)" do
+    assert_macro "", %({{[1, 2, 3].any? { |e| e == 4 }}}), [] of ASTNode, "false"
+  end
+
+  it "executes array all? (true)" do
+    assert_macro "", %({{[1, 1, 1].all? { |e| e == 1 }}}), [] of ASTNode, "true"
+  end
+
+  it "executes array all? (false)" do
+    assert_macro "", %({{[1, 2, 1].all? { |e| e == 1 }}}), [] of ASTNode, "false"
   end
 
   it "executes hash length" do

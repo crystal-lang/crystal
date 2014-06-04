@@ -301,6 +301,11 @@ module Crystal
       !(node.obj && node.args.empty?) || node.block_arg
     end
 
+    def visit(node : MacroCallWrapper)
+      @str << node.call.to_macro_id
+      false
+    end
+
     def keyword(str)
       str
     end
