@@ -247,6 +247,7 @@ module Crystal
             threads = Array.new(@n_threads) do
               Thread.new ->do
                 while unit = mutex.synchronize { units.shift? }
+                  unit.target = @config.host_target
                   unit.write_bitcode if multithreaded
                   unit.compile
                 end
@@ -360,6 +361,10 @@ module Crystal
         end
       end
 
+      def target=(target)
+        @llvm_mod.target = target
+      end
+
       def write_bitcode
         write_bitcode(bc_name_new)
       end
@@ -390,12 +395,11 @@ module Crystal
           File.rename(bc_name_new, bc_name)
           if compiler.release
             system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
-            final_bc_name = bc_name_opt
+            system "#{compiler.llc} #{bc_name_opt} -o #{s_name} #{compiler.llc_flags}"
+            system "#{compiler.clang} -c #{s_name} -o #{o_name}"
           else
-            final_bc_name = bc_name
+            system "#{compiler.clang} -c #{bc_name} -o #{o_name}"
           end
-          system "#{compiler.llc} #{final_bc_name} -o #{s_name} #{compiler.llc_flags}"
-          system "#{compiler.clang} -c #{s_name} -o #{o_name}"
         end
 
         if compiler.dump_ll

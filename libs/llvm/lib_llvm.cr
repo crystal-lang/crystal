@@ -277,6 +277,7 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
   fun set_metadata = LLVMSetMetadata(value : ValueRef, kind_id : UInt32, node : ValueRef)
+  fun set_target = LLVMSetTarget(mod : ModuleRef, triple : UInt8*)
   fun set_thread_local = LLVMSetThreadLocal(global_var : ValueRef, is_thread_local : Int32)
   fun set_value_name = LLVMSetValueName(val : ValueRef, name : UInt8*)
   fun size_of = LLVMSizeOf(ty : TypeRef) : ValueRef

@@ -3,6 +3,10 @@ struct LLVM::Module
     @module = LibLLVM.module_create_with_name name
   end
 
+  def target=(target)
+    LibLLVM.set_target(@module, target)
+  end
+
   def dump
     LibLLVM.dump_module(@module)
   end
