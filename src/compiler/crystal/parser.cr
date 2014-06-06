@@ -1844,6 +1844,7 @@ module Crystal
 
       receiver = nil
       @yields = nil
+      name_line_number = @token.line_number
       name_column_number = @token.column_number
 
       if @token.type == :CONST
@@ -1917,7 +1918,7 @@ module Crystal
             break
           end
         end
-        next_token_skip_statement_end
+        next_token_skip_space
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
           block_arg = parse_arg(args, extra_assigns, false, pointerof(found_default_value))
@@ -1930,33 +1931,44 @@ module Crystal
             break
           end
         end
-        skip_statement_end
-      else
-        skip_statement_end
       end
 
-      if @token.keyword?(:end)
-        body = Expressions.from(extra_assigns)
+      if @token.type == :":"
         next_token_skip_space
-      else
-        body = parse_expressions
-        if extra_assigns.length > 0
-          exps = [] of ASTNode
-          exps.concat extra_assigns
-          if body.is_a?(Expressions)
-            exps.concat body.expressions
-          else
-            exps.push body
-          end
-          body = Expressions.from exps
+        return_type = parse_single_type
+
+        if @token.keyword?(:end)
+          body = Expressions.new
+          next_token_skip_space
+        else
+          body = parse_macro_body(name_line_number, name_column_number)
         end
-        body = parse_exception_handler body
+      else
+        skip_statement_end
+
+        if @token.keyword?(:end)
+          body = Expressions.from(extra_assigns)
+          next_token_skip_space
+        else
+          body = parse_expressions
+          if extra_assigns.length > 0
+            exps = [] of ASTNode
+            exps.concat extra_assigns
+            if body.is_a?(Expressions)
+              exps.concat body.expressions
+            else
+              exps.push body
+            end
+            body = Expressions.from exps
+          end
+          body = parse_exception_handler body
+        end
       end
 
       @def_nest -= 1
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, @yields
+      node = Def.new name, args, body, receiver, block_arg, return_type, @yields
       node.name_column_number = name_column_number
       node
     end

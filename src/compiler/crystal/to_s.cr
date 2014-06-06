@@ -496,6 +496,10 @@ module Crystal
         end
         @str << ")"
       end
+      if return_type = node.return_type
+        @str << " : "
+        return_type.accept self
+      end
       @str << newline
       accept_with_indent(node.body)
       append_indent

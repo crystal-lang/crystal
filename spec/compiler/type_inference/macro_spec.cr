@@ -13,4 +13,82 @@ describe "Type inference: macro" do
     assert_error "macro foo(x) {{y}} end; foo(1)",
       "undefined macro variable 'y'"
   end
+
+  it "types def macro" do
+    assert_type(%(
+      def foo : Int32
+        1
+      end
+
+      foo
+      )) { int32 }
+  end
+
+  it "errors if def macro type not found" do
+    assert_error "def foo : Foo; end; foo",
+      "undefined constant Foo"
+  end
+
+  it "errors if def macro type doesn't match found" do
+    assert_error "def foo : Int32; 'a'; end; foo",
+      "expected 'foo' to return Int32, not Char"
+  end
+
+  it "types def macro that calls another method" do
+    assert_type(%(
+      def bar_baz
+        1
+      end
+
+      def foo : Int32
+        bar_{{ "baz" }}
+      end
+
+      foo
+      )) { int32 }
+  end
+
+  it "types def macro that calls another method inside a class" do
+    assert_type(%(
+      class Foo
+        def bar_baz
+          1
+        end
+
+        def foo : Int32
+          bar_{{ "baz" }}
+        end
+      end
+
+      Foo.new.foo
+      )) { int32 }
+  end
+
+  it "types def macro that calls another method inside a class" do
+    assert_type(%(
+      class Foo
+        def foo : Int32
+          bar_{{ "baz" }}
+        end
+      end
+
+      class Bar < Foo
+        def bar_baz
+          1
+        end
+      end
+
+      Bar.new.foo
+      )) { int32 }
+  end
+
+  it "types def macro with argument" do
+    assert_type(%(
+      def foo(x) : Int32
+        x
+      end
+
+      foo(1)
+      )) { int32 }
+  end
 end

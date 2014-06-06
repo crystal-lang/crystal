@@ -830,6 +830,7 @@ module Crystal
     property :args
     property :body
     property :block_arg
+    property :return_type
     property :yields
     property :instance_vars
     property :calls_super
@@ -837,7 +838,7 @@ module Crystal
     property :name_column_number
     property :attributes
 
-    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @yields = nil)
+    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @yields = nil)
       @body = Expressions.from body
       @calls_super = false
       @uses_block_arg = false
@@ -851,12 +852,13 @@ module Crystal
     def accept_children(visitor)
       @receiver.try &.accept visitor
       @args.each &.accept visitor
-      @body.accept visitor
       @block_arg.try &.accept visitor
+      @return_type.try &.accept visitor
+      @body.accept visitor
     end
 
     def ==(other : self)
-      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg
+      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg && other.return_type == return_type
     end
 
     def name_length
@@ -864,7 +866,7 @@ module Crystal
     end
 
     def clone_without_location
-      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @yields)
+      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @yields)
       a_def.instance_vars = instance_vars
       a_def.calls_super = calls_super
       a_def.uses_block_arg = uses_block_arg

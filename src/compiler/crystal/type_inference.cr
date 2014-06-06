@@ -2230,5 +2230,9 @@ module Crystal
     def visit(node : Until)
       raise "Bug: Until node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
+
+    def visit(node : MacroLiteral)
+      raise "Bug: shouldn't visit macro literal in type inference"
+    end
   end
 end

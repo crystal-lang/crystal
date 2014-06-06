@@ -121,4 +121,28 @@ describe "Code gen: macro" do
       Foo.new.bar
       )).to_i.should eq(3)
   end
+
+  it "expands def macro" do
+    run(%(
+      def bar_baz
+        1
+      end
+
+      def foo : Int32
+        bar_{{ "baz" }}
+      end
+
+      foo
+      )).to_i.should eq(1)
+  end
+
+  it "expands def macro with var" do
+    run(%(
+      def foo : Int32
+        a = {{ 1 }}
+      end
+
+      foo
+      )).to_i.should eq(1)
+  end
 end

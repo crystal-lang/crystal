@@ -178,14 +178,11 @@ module Crystal
             unless @transformed.includes?(target_def.object_id)
               @transformed.add(target_def.object_id)
 
-              if body = target_def.body
-                node.bubbling_exception do
-                  target_def.body = body.transform(self)
-                end
-
-                # If the body was completely removed, rebind to nil
-                unless target_def.body
-                  rebind_node target_def, @program.nil_var
+              node.bubbling_exception do
+                if return_type = target_def.return_type
+                  expand_def_macro target_def, target_def.type
+                else
+                  target_def.body = target_def.body.transform(self)
                 end
               end
             end
@@ -215,6 +212,52 @@ module Crystal
       # check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
 
       node
+    end
+
+    def expand_def_macro(target_def, return_type)
+      the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body)
+      the_macro.location = target_def.location
+
+      begin
+        generated_source = @program.expand_macro target_def.body
+      rescue ex : Crystal::Exception
+        target_def.raise "expanding macro", ex
+      end
+
+      vars = MetaVars.new
+      target_def.args.each do |arg|
+        vars[arg.name] = MetaVar.new(arg.name, arg.type)
+      end
+      target_def.vars = vars
+
+      begin
+        arg_names = target_def.args.map(&.name)
+
+        parser = Parser.new(generated_source, [Set.new(arg_names)])
+        parser.filename = VirtualFile.new(the_macro, generated_source)
+        generated_nodes = parser.parse
+      rescue ex : Crystal::SyntaxException
+        target_def.raise "def macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
+      end
+
+      generated_nodes = @program.normalize(generated_nodes)
+
+      type_visitor = TypeVisitor.new(@program, vars, target_def)
+      type_visitor.scope = target_def.owner
+      generated_nodes.accept type_visitor
+
+      @program.fix_empty_types generated_nodes
+      generated_nodes = generated_nodes.transform(self)
+
+      if generated_nodes.type != return_type
+        target_def.raise "expected '#{target_def.name}' to return #{return_type}, not #{generated_nodes.type}"
+      end
+
+      target_def.body = generated_nodes
+    end
+
+    def number_lines(source)
+      source.lines.to_s_with_line_numbers
     end
 
     def check_args_are_not_closure(node)
