@@ -174,16 +174,7 @@ module Crystal
         when '='
           next_char :"+="
         when '0'
-          case peek_next_char
-          when 'x'
-            scan_hex_number
-          when 'b'
-            scan_bin_number
-          when '.'
-            scan_number(start)
-          else
-            scan_octal_number
-          end
+          scan_zero_number(start)
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number(start)
         else
@@ -197,16 +188,7 @@ module Crystal
         when '>'
           next_char :"->"
         when '0'
-          case peek_next_char
-          when 'x'
-            scan_hex_number(-1)
-          when 'b'
-            scan_bin_number(-1)
-          when '.'
-            scan_number(start)
-          else
-            scan_octal_number(-1)
-          end
+          scan_zero_number(start, -1)
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
           scan_number(start)
         else
@@ -472,16 +454,7 @@ module Crystal
         @token.type = :STRING_START
         @token.string_state = Token::StringState.new('"', '"', 0)
       when '0'
-        case peek_next_char
-        when 'x'
-          scan_hex_number
-        when 'b'
-          scan_bin_number
-        when '.'
-          scan_number(start)
-        else
-          scan_octal_number
-        end
+        scan_zero_number(start)
       when '1', '2', '3', '4', '5', '6', '7', '8', '9'
         scan_number current_pos
       when '@'
@@ -1032,6 +1005,54 @@ module Crystal
       @token.value = num.to_s
 
       consume_optional_int_suffix
+    end
+
+    def scan_zero_number(start, multiplier = 1)
+      case peek_next_char
+      when 'x'
+        scan_hex_number(multiplier)
+      when 'b'
+        scan_bin_number(multiplier)
+      when '.'
+        scan_number(start)
+      when 'i'
+        @token.type = :NUMBER
+        @token.value = "0"
+        next_char
+        consume_int_suffix
+      when 'f'
+        @token.type = :NUMBER
+        @token.value = "0"
+        next_char
+        consume_float_suffix
+      when 'u'
+        @token.type = :NUMBER
+        @token.value = "0"
+        next_char
+        consume_uint_suffix
+      when '_'
+        case peek_next_char
+        when 'i'
+          @token.type = :NUMBER
+          @token.value = "0"
+          next_char
+          consume_int_suffix
+        when 'f'
+          @token.type = :NUMBER
+          @token.value = "0"
+          next_char
+          consume_float_suffix
+        when 'u'
+          @token.type = :NUMBER
+          @token.value = "0"
+          next_char
+          consume_uint_suffix
+        else
+          scan_number(start)
+        end
+      else
+        scan_octal_number(multiplier)
+      end
     end
 
     def scan_octal_number(multiplier = 1)
