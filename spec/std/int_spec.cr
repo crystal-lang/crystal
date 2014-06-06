@@ -60,6 +60,7 @@ describe "Int" do
     assert { -1234.to_s(16).should eq("-4d2") }
     assert { 1234.to_s(36).should eq("ya") }
     assert { -1234.to_s(36).should eq("-ya") }
+    assert { 0.to_s(16).should eq("0") }
   end
 
   describe "bit" do

@@ -114,6 +114,10 @@ struct Int
       raise "Invalid radix #{radix}"
     end
 
+    if self == 0
+      return "0"
+    end
+
     str = String::Buffer.new
     num = self
 

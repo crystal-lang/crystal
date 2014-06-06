@@ -50,7 +50,11 @@ class Pointer(T)
   end
 
   def to_s
-    "Pointer(#{T})@#{address.to_s(16)}"
+    if address == 0
+      "Pointer(#{T}).null"
+    else
+      "Pointer(#{T})@#{address.to_s(16)}"
+    end
   end
 
   def each(count)
