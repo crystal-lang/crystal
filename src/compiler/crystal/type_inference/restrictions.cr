@@ -144,6 +144,11 @@ module Crystal
     end
 
     def restrict(other : Generic, owner, type_lookup, free_vars)
+      parents.try &.each do |parent|
+        restricted = parent.restrict other, owner, type_lookup, free_vars
+        return self if restricted
+      end
+
       nil
     end
 
@@ -255,7 +260,7 @@ module Crystal
 
     def restrict(other : Generic, owner, type_lookup, free_vars)
       generic_class = type_lookup.lookup_type other.name
-      return nil unless generic_class == self.generic_class
+      return super unless generic_class == self.generic_class
 
       generic_class = generic_class as GenericClassType
       return nil unless generic_class.type_vars.length == self.generic_class.type_vars.length
@@ -293,6 +298,26 @@ module Crystal
   class IncludedGenericModule
     def is_restriction_of?(other : Type, owner)
       @module.is_restriction_of?(other, owner)
+    end
+
+    def restrict(other : Generic, owner, type_lookup, free_vars)
+      generic_module = type_lookup.lookup_type other.name
+      return nil unless generic_module == @module
+
+      generic_module = generic_module as GenericModuleType
+      return nil unless generic_module.type_vars.length == @module.type_vars.length
+
+      @module.type_vars.zip(other.type_vars) do |module_type_var, other_type_var|
+        if m = @mapping[module_type_var]?
+          t = TypeLookup.lookup(@including_class, m)
+          restricted = t.restrict other_type_var, owner, type_lookup, free_vars
+          return nil unless restricted
+
+          free_vars[module_type_var] = restricted
+        end
+      end
+
+      self
     end
   end
 

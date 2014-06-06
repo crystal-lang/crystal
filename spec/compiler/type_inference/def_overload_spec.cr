@@ -562,4 +562,55 @@ describe "Type inference: def overload" do
       foo(1)
       ") { int32.metaclass }
   end
+
+  it "matches a generic module argument" do
+    assert_type("
+      module Bar(T)
+      end
+
+      class Foo
+        include Bar(Int32)
+      end
+
+      def foo(x : Bar(Int32))
+        1
+      end
+
+      foo(Foo.new)
+      ") { int32 }
+  end
+
+  it "matches a generic module argument with free var" do
+    assert_type("
+      module Bar(T)
+      end
+
+      class Foo
+        include Bar(Int32)
+      end
+
+      def foo(x : Bar(T))
+        T
+      end
+
+      foo(Foo.new)
+      ") { int32.metaclass }
+  end
+
+  it "matches a generic module argument with free var (2)" do
+    assert_type("
+      module Bar(T)
+      end
+
+      class Foo(T)
+        include Bar(T)
+      end
+
+      def foo(x : Bar(T))
+        T
+      end
+
+      foo(Foo(Int32).new)
+      ") { int32.metaclass }
+  end
 end
