@@ -695,7 +695,7 @@ module Crystal
       when :"{%"
         macro_control = parse_macro_control(@line_number, @column_number)
         if macro_control
-          check :"}"
+          check :"%}"
           next_token_skip_space_or_newline
           macro_control
         else
@@ -1750,13 +1750,13 @@ module Crystal
 
           exp = parse_expression_inside_macro
 
-          check :"}"
+          check :"%}"
 
           body = parse_macro_body(start_line, start_column, macro_state)
 
           check_ident :end
           next_token_skip_space
-          check :"}"
+          check :"%}"
 
           return MacroFor.new(vars, exp, body)
         when :if
@@ -1774,7 +1774,7 @@ module Crystal
 
       cond = parse_expression_inside_macro
 
-      check :"}"
+      check :"%}"
 
       a_then = parse_macro_body(start_line, start_column, macro_state)
 
@@ -1782,25 +1782,25 @@ module Crystal
         case @token.value
         when :else
           next_token_skip_space
-          check :"}"
+          check :"%}"
 
           a_else = parse_macro_body(start_line, start_column, macro_state)
 
           check_ident :end
           next_token_skip_space
-          check :"}"
+          check :"%}"
         when :elsif
           a_else = parse_macro_if(start_line, start_column, macro_state, false)
 
           if check_end
             check_ident :end
             next_token_skip_space
-            check :"}"
+            check :"%}"
           end
         when :end
           if check_end
             next_token_skip_space
-            check :"}"
+            check :"%}"
           end
         else
           unexpected_token

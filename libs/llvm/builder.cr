@@ -77,23 +77,23 @@ struct LLVM::Builder
     LibLLVM.build_extract_value(@builder, value, index.to_u32, name)
   end
 
-  {% for name in %w(bit_cast si2fp ui2fp zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) }
+  {% for name in %w(bit_cast si2fp ui2fp zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) %}
     def {{name}}(value, type, name = "")
       LibLLVM.build_{{name}}(@builder, value, type, name)
     end
-  {% end }
+  {% end %}
 
-  {% for name in %w(add sub mul sdiv exact_sdiv udiv srem urem shl ashr lshr or and xor fadd fsub fmul fdiv) }
+  {% for name in %w(add sub mul sdiv exact_sdiv udiv srem urem shl ashr lshr or and xor fadd fsub fmul fdiv) %}
     def {{name}}(lhs, rhs, name = "")
       LibLLVM.build_{{name}}(@builder, lhs, rhs, name)
     end
-  {% end }
+  {% end %}
 
-  {% for name in %w(icmp fcmp) }
+  {% for name in %w(icmp fcmp) %}
     def {{name}}(op, lhs, rhs, name = "")
       LibLLVM.build_{{name}}(@builder, op, lhs, rhs, name)
     end
-  {% end }
+  {% end %}
 
   def not(value, name = "")
     LibLLVM.build_not(@builder, value, name)

@@ -157,7 +157,7 @@ describe "Lexer macro" do
   end
 
   it "lexes macro with control" do
-    lexer = Lexer.new("foo{% if }bar")
+    lexer = Lexer.new("foo{% if ")
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)

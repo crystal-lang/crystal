@@ -79,9 +79,9 @@ describe "Code gen: macro" do
   it "expands inline macro for" do
     run(%(
       a = 0
-      {% for i in [1, 2, 3] }
+      {% for i in [1, 2, 3] %}
         a += {{i}}
-      {% end }
+      {% end %}
       a
       )).to_i.should eq(6)
   end
@@ -89,9 +89,9 @@ describe "Code gen: macro" do
   it "expands inline macro if (true)" do
     run(%(
       a = 0
-      {% if 1 == 1 }
+      {% if 1 == 1 %}
         a += 1
-      {% end }
+      {% end %}
       a
       )).to_i.should eq(1)
   end
@@ -99,9 +99,9 @@ describe "Code gen: macro" do
   it "expands inline macro if (false)" do
     run(%(
       a = 0
-      {% if 1 == 2 }
+      {% if 1 == 2 %}
         a += 1
-      {% end }
+      {% end %}
       a
       )).to_i.should eq(0)
   end

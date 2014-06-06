@@ -52,13 +52,13 @@ module Crystal
     end
   end
 
-  {% for klass in %w(Nil Bool Number Char String Symbol) }
+  {% for klass in %w(Nil Bool Number Char String Symbol) %}
     class {{klass}}Literal
       def needs_const_block?
         false
       end
     end
-  {% end }
+  {% end %}
 
   class Assign
     def returns?

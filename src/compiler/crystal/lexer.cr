@@ -292,6 +292,8 @@ module Crystal
           else
             @token.type = :"%"
           end
+        when '}'
+          next_char :"%}"
         else
           @token.type = :"%"
         end

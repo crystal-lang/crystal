@@ -64,9 +64,9 @@ end
 
 macro make_named_tuple(name, fields)
   struct {{name}}
-    {% for field in fields }
+    {% for field in fields %}
       getter :{{field}}
-    {% end }
+    {% end %}
 
     def initialize({{ fields.map { |field| "@#{field}" }.join ", " }})
     end
@@ -77,22 +77,22 @@ macro make_named_tuple(name, fields)
 
     def hash
       hash = 0
-      {% for field in fields }
+      {% for field in fields %}
         hash = 31 * hash + {{field}}.hash
-      {% end }
+      {% end %}
       hash
     end
 
     def to_s
       String.build do |str|
         str << "{{name}}("
-        {% for field, i in fields }
-          {% if i > 0 }
+        {% for field, i in fields %}
+          {% if i > 0 %}
             str << ", "
-          {% end }
+          {% end %}
           str << "{{field}} = "
           str << {{field}}
-        {% end }
+        {% end %}
         str << ")"
       end
     end
