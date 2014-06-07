@@ -71,6 +71,10 @@ class Set(T)
     @hash.keys
   end
 
+  def inspect
+    to_s
+  end
+
   def to_s
     "Set{#{join ", "}}"
   end

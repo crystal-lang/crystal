@@ -145,4 +145,74 @@ describe "Code gen: macro" do
       foo
       )).to_i.should eq(1)
   end
+
+  it "expands def macro with @instance_vars" do
+    run(%(
+      class Foo
+        def initialize(@x)
+        end
+
+        def to_s : String
+          {{ @instance_vars.first.stringify }}
+        end
+      end
+
+      foo = Foo.new(1)
+      foo.to_s
+      )).to_string.should eq("@x")
+  end
+
+  it "expands def macro with @instance_vars" do
+    run(%(
+      class Reference
+        def to_s : String
+          {{ @instance_vars.last.stringify }}
+        end
+      end
+
+      class Foo
+        def initialize(@x)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(@x, @y)
+        end
+      end
+
+      (Bar.new(1, 2) || Foo.new(1)).to_s
+      )).to_string.should eq("@y")
+  end
+
+  it "expands def macro with @name" do
+    run(%(
+      class Foo
+        def initialize(@x)
+        end
+
+        def to_s : String
+          {{ @name.stringify }}
+        end
+      end
+
+      foo = Foo.new(1)
+      foo.to_s
+      )).to_string.should eq("Foo")
+  end
+
+  it "expands macro and resolves type correctly" do
+    run(%(
+      class Foo
+        def foo : Int32
+          1
+        end
+      end
+
+      class Bar < Foo
+        Int32 = 2
+      end
+
+      Bar.new.foo
+      )).to_i.should eq(1)
+  end
 end

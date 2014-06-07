@@ -277,6 +277,10 @@ class Hash(K, V)
     hash
   end
 
+  def inspect
+    to_s
+  end
+
   def to_s
     String.build do |str|
       str << "{"

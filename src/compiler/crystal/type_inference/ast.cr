@@ -229,6 +229,13 @@ module Crystal
     property :self_closured
     @self_closured = false
 
+    def macro_owner=(@macro_owner)
+    end
+
+    def macro_owner
+      @macro_owner || @owner
+    end
+
     def has_default_arguments?
       args.length > 0 && args.last.default_value
     end

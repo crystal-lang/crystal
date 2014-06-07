@@ -790,6 +790,7 @@ module Crystal
       super(program, container, name)
       if superclass
         @depth = superclass.depth + 1
+        copy_def_macros superclass
       else
         @depth = 0
       end
@@ -804,6 +805,18 @@ module Crystal
 
     def force_add_subclass
       @superclass.try &.add_subclass(self)
+    end
+
+    def copy_def_macros(superclass)
+      superclass.defs.try &.each do |name, hash|
+        hash.each do |def_key, def|
+          if def.return_type
+            cloned_def = def.clone
+            cloned_def.macro_owner = def.macro_owner
+            add_def cloned_def
+          end
+        end
+      end
     end
 
     def all_subclasses

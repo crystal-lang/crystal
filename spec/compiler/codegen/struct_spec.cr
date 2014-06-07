@@ -297,47 +297,6 @@ describe "Code gen: struct" do
       ").to_i.should eq(1)
   end
 
-  it "does hash for empty struct" do
-    run("
-      struct Foo
-      end
-
-      Foo.new.hash
-      ").to_i.should eq(0)
-  end
-
-  it "does hash for struct with one member" do
-    run("
-      struct Bool
-        def hash
-          self ? 42 : 24
-        end
-      end
-      struct Foo
-        def initialize(@x)
-        end
-      end
-
-      Foo.new(true).hash
-      ").to_i.should eq(42)
-  end
-
-  it "does hash for struct with two members" do
-    run("
-      struct Bool
-        def hash
-          self ? 42 : 24
-        end
-      end
-      struct Foo
-        def initialize(@x, @y)
-        end
-      end
-
-      Foo.new(true, false).hash
-      ").to_i.should eq(31 * 42 + 24)
-  end
-
   it "does == for empty struct" do
     run("
       struct Foo

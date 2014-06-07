@@ -7,6 +7,7 @@ module Crystal
   class Program
     def infer_type(node)
       node.accept TypeVisitor.new(self)
+      expand_def_macros
       fix_empty_types node
       after_type_inference node
     end
@@ -691,7 +692,7 @@ module Crystal
       return false unless the_macro
 
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro the_macro, node
+        @mod.expand_macro (@scope || @mod), the_macro, node
       end
 
       node.target_macro = generated_nodes
@@ -717,7 +718,7 @@ module Crystal
       the_macro.location = node.location
 
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro node
+        @mod.expand_macro (@scope || @mod), node
       end
 
       node.expanded = generated_nodes
@@ -738,7 +739,7 @@ module Crystal
         parser.filename = VirtualFile.new(the_macro, generated_source)
         generated_nodes = parser.parse
       rescue ex : Crystal::SyntaxException
-        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
       end
 
       generated_nodes = mod.normalize(generated_nodes)
@@ -746,14 +747,10 @@ module Crystal
       begin
         generated_nodes.accept self
       rescue ex : Crystal::Exception
-        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{number_lines generated_source}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
       end
 
       generated_nodes
-    end
-
-    def number_lines(source)
-      source.lines.to_s_with_line_numbers
     end
 
     def visit(node : Return)
@@ -1489,12 +1486,8 @@ module Crystal
         node.type = mod.int32
       when :symbol_to_s
         node.type = mod.string
-      when :struct_hash
-        node.type = mod.int32
       when :struct_equals
         node.type = mod.bool
-      when :struct_to_s
-        node.type = mod.string
       when :class
         node.type = scope.metaclass
       when :fun_call

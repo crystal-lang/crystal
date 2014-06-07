@@ -70,31 +70,5 @@ macro make_named_tuple(name, fields)
 
     def initialize({{ fields.map { |field| "@#{field}" }.join ", " }})
     end
-
-    def ==(other : self)
-      {{ fields.map { |field| "other.#{field} == #{field}" }.join " && " }}
-    end
-
-    def hash
-      hash = 0
-      {% for field in fields %}
-        hash = 31 * hash + {{field}}.hash
-      {% end %}
-      hash
-    end
-
-    def to_s
-      String.build do |str|
-        str << "{{name}}("
-        {% for field, i in fields %}
-          {% if i > 0 %}
-            str << ", "
-          {% end %}
-          str << "{{field}} = "
-          str << {{field}}
-        {% end %}
-        str << ")"
-      end
-    end
   end
 end

@@ -232,12 +232,8 @@ module Crystal
                 LLVM.float(Float32::INFINITY)
               when :float64_infinity
                 LLVM.double(Float64::INFINITY)
-              when :struct_hash
-                codegen_primitive_struct_hash
               when :struct_equals
                 codegen_primitive_struct_equals
-              when :struct_to_s
-                codegen_primitive_struct_to_s
               else
                 raise "Bug: unhandled primitive in codegen visit: #{node.name}"
               end
@@ -708,49 +704,6 @@ module Crystal
       end
     end
 
-    def codegen_primitive_struct_hash
-      type = context.type as InstanceVarContainer
-      ivars = type.all_instance_vars
-
-      # Generate:
-      # hash = 0
-      # - for each instance var
-      #   hash = 31 * hash + @ivar.hash
-      # - end
-      # hash
-
-      hash_var = Var.new("hash")
-      n0 = NumberLiteral.new(0, :i32)
-      n31 = NumberLiteral.new(31, :i32)
-
-      vars = MetaVars.new
-      vars["hash"] = MetaVar.new(hash_var.name)
-
-      exps = [] of ASTNode
-      exps << Assign.new(hash_var, n0)
-      i = 0
-      ivars.each_value do |ivar|
-        ivar_name = "#ivar#{i}"
-        ivar_var = Var.new(ivar_name, ivar.type)
-
-        context.vars[ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
-        vars[ivar_name] = MetaVar.new(ivar_var.name)
-
-        mul = Call.new(n31, "*", [hash_var] of ASTNode)
-        ivar_hash = Call.new(ivar_var, "hash")
-        add = Call.new(mul, "+", [ivar_hash] of ASTNode)
-        exps << Assign.new(hash_var, add)
-        i += 1
-      end
-      exps << hash_var
-      exps = Expressions.new(exps)
-      visitor = TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
-      exps.accept visitor
-      alloca_vars visitor.meta_vars
-      exps.accept self
-      @last
-    end
-
     def codegen_primitive_struct_equals
       type = context.type as InstanceVarContainer
       ivars = type.all_instance_vars
@@ -790,37 +743,6 @@ module Crystal
 
       exps << BoolLiteral.new(true)
       exps = Expressions.from(exps)
-      exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
-      exps.accept self
-      @last
-    end
-
-    def codegen_primitive_struct_to_s
-      type = context.type as InstanceVarContainer
-      ivars = type.all_instance_vars
-
-      # Generate
-      # "ClassName(#{ivar_name}=#{ivar_value}, ...)"
-
-      vars = MetaVars.new
-
-      exps = [] of ASTNode
-      exps << StringLiteral.new("#{type}(")
-      i = 0
-      ivars.each_value do |ivar|
-        ivar_name = "#ivar#{i}"
-        ivar_var = Var.new(ivar_name, ivar.type)
-
-        context.vars[ivar_name] = LLVMVar.new(aggregate_index(llvm_self, i), ivar.type)
-        vars[ivar_name] = MetaVar.new(ivar_var.name)
-
-        exps << StringLiteral.new(i == 0 ? "#{ivar.name}=" : ", #{ivar.name}=")
-        exps << ivar_var
-        i += 1
-      end
-      exps << StringLiteral.new(")")
-      exps = StringInterpolation.new(exps)
-      exps = @mod.normalize(exps)
       exps.accept TypeVisitor.new(@mod, vars, Def.new("dummy", [] of Arg))
       exps.accept self
       @last
@@ -1874,7 +1796,7 @@ module Crystal
       body = target_def.body
       if body.is_a?(Primitive)
         case body.name
-        when :struct_hash, :struct_equals, :struct_to_s
+        when :struct_equals
           # Skip: we want a method body for these
         else
           # Change context type: faster then creating a new context

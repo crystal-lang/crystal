@@ -242,6 +242,14 @@ describe "MacroExpander" do
     assert_macro "", %({{[1, 2, 1].all? { |e| e == 1 }}}), [] of ASTNode, "false"
   end
 
+  it "executes array first" do
+    assert_macro "", %({{[1, 2, 3].first}}), [] of ASTNode, "1"
+  end
+
+  it "executes array last" do
+    assert_macro "", %({{[1, 2, 3].last}}), [] of ASTNode, "3"
+  end
+
   it "executes hash length" do
     assert_macro "", %({{{a: 1, b: 3}.length}}), [] of ASTNode, "2"
   end

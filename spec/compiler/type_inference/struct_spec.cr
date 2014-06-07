@@ -83,15 +83,6 @@ describe "Type inference: struct" do
       ", "Foo is not a class, it's a struct"
   end
 
-  it "has hash" do
-    assert_type("
-      struct Foo
-      end
-
-      Foo.new.hash
-      ") { int32 }
-  end
-
   it "has == with self type" do
     assert_type("
       struct Foo
@@ -99,14 +90,5 @@ describe "Type inference: struct" do
 
       Foo.new == Foo.new
       ") { bool }
-  end
-
-  it "has to_s" do
-    assert_type("
-      struct Foo
-      end
-
-      Foo.new.to_s
-      ") { string }
   end
 end

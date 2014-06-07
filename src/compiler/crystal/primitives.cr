@@ -71,9 +71,7 @@ module Crystal
     end
 
     def define_struct_primitives
-      self.struct.add_def Def.new("hash", ([] of Arg), Primitive.new(:struct_hash))
       self.struct.add_def Def.new("==", [Arg.new_with_restriction("other", Self.new)], Primitive.new(:struct_equals))
-      self.struct.add_def Def.new("to_s", ([] of Arg), Primitive.new(:struct_to_s))
     end
 
     def define_pointer_primitives

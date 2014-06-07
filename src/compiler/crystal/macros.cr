@@ -1,16 +1,66 @@
 module Crystal
+  class Program
+    def expand_def_macros
+      until @def_macros.empty?
+        def_macro = @def_macros.pop
+        expand_def_macro def_macro
+      end
+    end
+
+    def expand_def_macro(target_def)
+      the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body)
+      the_macro.location = target_def.location
+
+      owner = target_def.owner.not_nil!
+
+      begin
+        generated_source = @program.expand_macro owner, target_def.body
+      rescue ex : Crystal::Exception
+        target_def.raise "expanding macro", ex
+      end
+
+      vars = MetaVars.new
+      target_def.args.each do |arg|
+        vars[arg.name] = MetaVar.new(arg.name, arg.type)
+      end
+      target_def.vars = vars
+
+      begin
+        arg_names = target_def.args.map(&.name)
+
+        parser = Parser.new(generated_source, [Set.new(arg_names)])
+        parser.filename = VirtualFile.new(the_macro, generated_source)
+        generated_nodes = parser.parse
+      rescue ex : Crystal::SyntaxException
+        target_def.raise "def macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
+      end
+
+      generated_nodes = @program.normalize(generated_nodes)
+
+      type_visitor = TypeVisitor.new(@program, vars, target_def)
+      type_visitor.scope = owner
+      generated_nodes.accept type_visitor
+
+      if generated_nodes.type != target_def.type
+        target_def.raise "expected '#{target_def.name}' to return #{target_def.type}, not #{generated_nodes.type}"
+      end
+
+      target_def.body = generated_nodes
+    end
+  end
+
   class MacroExpander
     def initialize(@mod)
     end
 
-    def expand(a_macro, call)
-      visitor = MacroVisitor.new @mod, a_macro, call
+    def expand(scope : Type, a_macro, call)
+      visitor = MacroVisitor.new @mod, scope, a_macro, call
       a_macro.body.accept visitor
       visitor.to_s
     end
 
-    def expand(node)
-      visitor = MacroVisitor.new @mod
+    def expand(scope : Type, node)
+      visitor = MacroVisitor.new @mod, scope
       node.accept visitor
       visitor.to_s
     end
@@ -18,16 +68,16 @@ module Crystal
     class MacroVisitor < Visitor
       getter last
 
-      def self.new(mod, a_macro, call)
+      def self.new(mod, scope, a_macro, call)
         vars = {} of String => ASTNode
         a_macro.args.zip(call.args) do |macro_arg, call_arg|
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 
-        new(mod, vars)
+        new(mod, scope, vars)
       end
 
-      def initialize(@mod, @vars = {} of String => ASTNode)
+      def initialize(@mod, @scope, @vars = {} of String => ASTNode)
         @str = StringBuilder.new
         @last = Nop.new
       end
@@ -197,6 +247,33 @@ module Crystal
         end
       end
 
+      def visit(node : InstanceVar)
+        case node.name
+        when "@name"
+          @last = StringLiteral.new(@scope.to_s)
+        when "@instance_vars"
+          scope = @scope
+          unless scope.is_a?(InstanceVarContainer)
+            node.raise "#{scope} can't have instance vars"
+          end
+
+          all_ivars = scope.all_instance_vars
+
+          ivars = Array(ASTNode).new(all_ivars.length)
+          all_ivars.each do |name, ivar|
+            ivars.push MetaVar.new(name, ivar.type)
+          end
+
+          @last = ArrayLiteral.new(ivars)
+        else
+          node.raise "unknown macro instance var: '#{node.name}'"
+        end
+      end
+
+      def visit(node : MetaVar)
+        @last = node
+      end
+
       def visit(node : BoolLiteral)
         @last = node
       end
@@ -274,16 +351,7 @@ module Crystal
           raise "wrong number of arguments for stringify (#{args.length} for 0)"
         end
 
-        me = self
-
-        case me
-        when StringLiteral
-          StringLiteral.new("\"#{me.value.dump}\"")
-        when SymbolLiteral
-          StringLiteral.new("\":#{me.value.dump}\"")
-        else
-          StringLiteral.new(to_s)
-        end
+        stringify
       when "=="
         BoolLiteral.new(self == args.first)
       when "!="
@@ -307,6 +375,10 @@ module Crystal
       unless args.length == length
         raise "wrong number of arguments for #{method} (#{args.length} for #{length})"
       end
+    end
+
+    def stringify
+      StringLiteral.new(to_macro_id)
     end
   end
 
@@ -362,6 +434,10 @@ module Crystal
   class StringLiteral
     def to_macro_id
       @value
+    end
+
+    def stringify
+      StringLiteral.new("\"#{@value.dump}\"")
     end
 
     def interpret(method, args, block, interpreter)
@@ -431,10 +507,14 @@ module Crystal
         end
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
+      when "first"
+        interpret_argless_method(method, args) { elements.first? || NilLiteral.new }
       when "join"
         interpret_one_arg_method(method, args) do |arg|
           StringLiteral.new(elements.map(&.to_macro_id).join arg.to_macro_id)
         end
+      when "last"
+        interpret_argless_method(method, args) { elements.last? || NilLiteral.new }
       when "length"
         interpret_argless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
       when "map"
@@ -543,9 +623,23 @@ module Crystal
     end
   end
 
+  class MetaVar
+    def to_macro_id
+      @name
+    end
+
+    def stringify
+      StringLiteral.new("\"#{@name}\"")
+    end
+  end
+
   class SymbolLiteral
     def to_macro_id
       @value
+    end
+
+    def stringify
+      StringLiteral.new("\":#{@value.dump}\"")
     end
   end
 

@@ -108,6 +108,7 @@ module Crystal
       @vars = MetaVars.new
       @literal_expander = LiteralExpander.new self
       @macro_expander = MacroExpander.new self
+      @def_macros = [] of Def
 
       define_primitives
     end
@@ -136,12 +137,16 @@ module Crystal
       flags
     end
 
-    def expand_macro(a_macro, call)
-      @macro_expander.expand a_macro, call
+    def push_def_macro(def)
+      @def_macros << def
     end
 
-    def expand_macro(node)
-      @macro_expander.expand node
+    def expand_macro(scope : Type, a_macro, call)
+      @macro_expander.expand scope, a_macro, call
+    end
+
+    def expand_macro(scope : Type, node)
+      @macro_expander.expand scope, node
     end
 
     class PopenCommand < File
