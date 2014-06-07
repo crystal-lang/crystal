@@ -497,13 +497,15 @@ class Array(T)
   end
 
   def to_s
-    String.build do |str|
-      str << "["
-      each_with_index do |elem, i|
-        str << ", " if i > 0
-        str << elem.inspect
+    exec_recursive(:to_s, "[...]") do
+      String.build do |str|
+        str << "["
+        each_with_index do |elem, i|
+          str << ", " if i > 0
+          str << elem.inspect
+        end
+        str << "]"
       end
-      str << "]"
     end
   end
 

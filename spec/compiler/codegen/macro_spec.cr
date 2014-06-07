@@ -162,7 +162,29 @@ describe "Code gen: macro" do
       )).to_string.should eq("@x")
   end
 
-  it "expands def macro with @instance_vars" do
+  it "expands def macro with @instance_vars with subclass" do
+    run(%(
+      class Reference
+        def to_s : String
+          {{ @instance_vars.last.stringify }}
+        end
+      end
+
+      class Foo
+        def initialize(@x)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(@x, @y)
+        end
+      end
+
+      Bar.new(1, 2).to_s
+      )).to_string.should eq("@y")
+  end
+
+  it "expands def macro with @instance_vars with hierarchy" do
     run(%(
       class Reference
         def to_s : String
@@ -214,5 +236,26 @@ describe "Code gen: macro" do
 
       Bar.new.foo
       )).to_i.should eq(1)
+  end
+
+  it "allows overriding macro definition when redefining base class" do
+    run(%(
+      class Foo
+        def inspect : String
+          {{ @name.stringify }}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      class Foo
+        def inspect
+          "OH NO"
+        end
+      end
+
+      Bar.new.inspect
+      )).to_string.should eq("OH NO")
   end
 end

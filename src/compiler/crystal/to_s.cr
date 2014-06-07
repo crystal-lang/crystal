@@ -7,6 +7,10 @@ module Crystal
       self.accept visitor
     end
 
+    def inspect
+      to_s
+    end
+
     def to_s
       str = StringBuilder.new
       append_to_s(str)

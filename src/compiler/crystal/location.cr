@@ -7,6 +7,10 @@ module Crystal
     def initialize(@line_number, @column_number, @filename)
     end
 
+    def inspect
+      to_s
+    end
+
     def to_s
       "#{filename}:#{line_number}:#{column_number}"
     end

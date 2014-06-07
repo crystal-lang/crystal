@@ -335,6 +335,10 @@ module Crystal
       self
     end
 
+    def inspect
+      to_s
+    end
+
     def to_s
       String.build do |str|
         self.append_to_s(str)
@@ -790,7 +794,6 @@ module Crystal
       super(program, container, name)
       if superclass
         @depth = superclass.depth + 1
-        copy_def_macros superclass
       else
         @depth = 0
       end
@@ -805,18 +808,6 @@ module Crystal
 
     def force_add_subclass
       @superclass.try &.add_subclass(self)
-    end
-
-    def copy_def_macros(superclass)
-      superclass.defs.try &.each do |name, hash|
-        hash.each do |def_key, def|
-          if def.return_type
-            cloned_def = def.clone
-            cloned_def.macro_owner = def.macro_owner
-            add_def cloned_def
-          end
-        end
-      end
     end
 
     def all_subclasses
@@ -2308,6 +2299,28 @@ module Crystal
 
           # Check matches but without parents: only included modules
           subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, yields, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+
+          # If we didn't find a match in a subclass, and the base type match is a macro
+          # def, we need to copy it to the subclass so that @name, @instance_vars and other
+          # macro vars resolve correctly.
+          if subtype_matches.empty?
+            new_subtype_matches = nil
+
+            base_type_matches.each do |base_type_match|
+              if base_type_match.def.return_type
+                cloned_def = base_type_match.def.clone
+                cloned_def.macro_owner = base_type_match.def.macro_owner
+                subtype.add_def base_type_match.def
+                new_subtype_matches ||= [] of Match
+                new_subtype_matches.push Match.new(subtype, cloned_def, base_type_match.type_lookup, base_type_match.arg_types, base_type_match.free_vars)
+              end
+            end
+
+            if new_subtype_matches
+              subtype_matches = Matches.new(new_subtype_matches, Cover.create(arg_types, new_subtype_matches))
+            end
+          end
+
           unless subtype.leaf?
             type_to_matches ||= {} of Type => Matches
             type_to_matches[subtype] = subtype_matches

@@ -282,17 +282,19 @@ class Hash(K, V)
   end
 
   def to_s
-    String.build do |str|
-      str << "{"
-      found_one = false
-      each do |key, value|
-        str << ", " if found_one
-        str << key.inspect
-        str << " => "
-        str << value.inspect
-        found_one = true
+    exec_recursive(:to_s, "{...}") do
+      String.build do |str|
+        str << "{"
+        found_one = false
+        each do |key, value|
+          str << ", " if found_one
+          str << key.inspect
+          str << " => "
+          str << value.inspect
+          found_one = true
+        end
+        str << "}"
       end
-      str << "}"
     end
   end
 

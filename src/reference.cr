@@ -32,19 +32,35 @@ class Reference
   end
 
   def inspect : String
-    String.build do |str|
-      str << "#<"
-      str << {{@name.stringify}}
-      str << ":0x"
-      str << object_id.to_s(16)
-      {% for ivar, i in @instance_vars %}
-        {% if i > 0 %}
-          str << ","
+    hex_object_id = object_id.to_s(16)
+    exec_recursive(:inspect, "#<{{@name}}:0x#{hex_object_id} ...>") do
+      String.build do |str|
+        str << "#<"
+        str << {{@name.stringify}}
+        str << ":0x"
+        str << hex_object_id
+        {% for ivar, i in @instance_vars %}
+          {% if i > 0 %}
+            str << ","
+          {% end %}
+          str << " {{ivar}}="
+          str << {{ivar}}.inspect
         {% end %}
-        str << " {{ivar}}="
-        str << {{ivar}}.inspect
-      {% end %}
-      str << ">"
+        str << ">"
+      end
+    end
+  end
+
+  def exec_recursive(method, default_value)
+    hash = (@:ThreadLocal $_exec_recursive ||= {} of Tuple(UInt64, Symbol) => Bool)
+    key = {object_id, method}
+    if hash[key]?
+      default_value
+    else
+      hash[key] = true
+      value = yield
+      hash.delete(key)
+      value
     end
   end
 
