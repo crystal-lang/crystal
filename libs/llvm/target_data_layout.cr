@@ -1,9 +1,9 @@
 struct LLVM::TargetDataLayout
-  def initialize(@target_data)
+  def initialize(@unwrap)
   end
 
   def size_in_bits(type)
-    LibLLVM.size_of_type_in_bits(@target_data, type)
+    LibLLVM.size_of_type_in_bits(self, type)
   end
 
   def size_in_bytes(type)

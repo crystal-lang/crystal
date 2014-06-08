@@ -3,30 +3,30 @@ struct Curses::Window
     new LibCurses.newwin(height, width, top, left)
   end
 
-  def initialize(@window : LibCurses::Window)
+  def initialize(@unwrap : LibCurses::Window)
   end
 
   def box(vert : Char, hor : Char)
-    LibCurses.box @window, vert.ord, hor.ord
+    LibCurses.box self, vert.ord, hor.ord
   end
 
   def setpos(x, y)
-    LibCurses.wmove @window, x, y
+    LibCurses.wmove self, x, y
   end
 
   def addstr(str)
-    LibCurses.waddstr @window, str
+    LibCurses.waddstr self, str
   end
 
   def getch
-    LibCurses.wgetch @window
+    LibCurses.wgetch self
   end
 
   def refresh
-    LibCurses.wrefresh @window
+    LibCurses.wrefresh self
   end
 
   def close
-    LibCurses.delwin @window
+    LibCurses.delwin self
   end
 end

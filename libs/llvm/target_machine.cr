@@ -1,9 +1,9 @@
 struct LLVM::TargetMachine
-  def initialize(@target_machine)
+  def initialize(@unwrap)
   end
 
   def data_layout
-    layout = LibLLVM.get_target_machine_data(@target_machine)
+    layout = LibLLVM.get_target_machine_data(self)
     layout ? TargetDataLayout.new(layout) : nil
   end
 end

@@ -1,15 +1,15 @@
 struct LLVM::Function
-  getter :fun
+  getter :unwrap
 
-  def initialize(@fun)
+  def initialize(@unwrap)
   end
 
   def dump
-    LLVM.dump @fun
+    LLVM.dump self
   end
 
   def append_basic_block(name)
-    LibLLVM.append_basic_block(@fun, name)
+    LibLLVM.append_basic_block(self, name)
   end
 
   def append_basic_block(name)
@@ -20,32 +20,24 @@ struct LLVM::Function
     block
   end
 
-  def dump
-    LLVM.dump @fun
-  end
-
   def name
-    String.new LibLLVM.get_value_name(@fun)
-  end
-
-  def llvm_function
-    @fun
+    String.new LibLLVM.get_value_name(self)
   end
 
   def get_param(index)
-    LibLLVM.get_param(@fun, index)
+    LibLLVM.get_param(self, index)
   end
 
   def linkage=(linkage)
-    LibLLVM.set_linkage(@fun, linkage)
+    LibLLVM.set_linkage(self, linkage)
   end
 
   def add_attribute(attribute)
-    LibLLVM.add_function_attr @fun, attribute
+    LibLLVM.add_function_attr self, attribute
   end
 
   def function_type
-    LibLLVM.get_element_type(LLVM.type_of(@fun))
+    LibLLVM.get_element_type(LLVM.type_of(self))
   end
 
   def return_type

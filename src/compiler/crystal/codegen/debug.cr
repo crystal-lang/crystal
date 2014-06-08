@@ -4,7 +4,7 @@ module Crystal
   class CodeGenVisitor < Visitor
     def add_compile_unit_metadata(mod, file)
       return unless @subprograms[mod]?
-      LibLLVM.add_named_metadata_operand mod.llvm_module, "llvm.dbg.cu", metadata([
+      LibLLVM.add_named_metadata_operand mod, "llvm.dbg.cu", metadata([
         LLVMDebugVersion + 17,                   # Tag = 17 (DW_TAG_compile_unit)
         file_metadata(file),                     # Source directory (including trailing slash) & file pair
         100,                                     # DWARF language identifier (ex. DW_LANG_C89)
@@ -175,7 +175,7 @@ module Crystal
         when Number then int32(value)
         when Bool then int1(value ? 1 : 0)
         when LibLLVM::ValueRef then value
-        when LLVM::Function then value.fun
+        when LLVM::Function then value.unwrap
         when Nil then Pointer(Void).null as LibLLVM::ValueRef
         else raise "Unsuported value type"
         end

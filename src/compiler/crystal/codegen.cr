@@ -810,10 +810,10 @@ module Crystal
       is_closure = node.def.closure
 
       the_fun = codegen_fun(fun_literal_name, node.def, context.type, false, @main_mod, true, is_closure)
-      fun_ptr = (check_main_fun fun_literal_name, the_fun).fun
+      the_fun = check_main_fun fun_literal_name, the_fun
 
       closure_ptr = alloca llvm_type(node.type)
-      store bit_cast(fun_ptr, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
+      store bit_cast(the_fun, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
       if is_closure
         store bit_cast(context.closure_ptr.not_nil!, LLVM::VoidPointer), gep(closure_ptr, 0, 1)
       else
@@ -836,7 +836,7 @@ module Crystal
       last_fun = target_def_fun(node.call.target_def, owner)
 
       closure_ptr = alloca llvm_type(node.type)
-      store bit_cast(last_fun.fun, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
+      store bit_cast(last_fun, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
       if call_self && !owner.metaclass?
         store bit_cast(call_self, LLVM::VoidPointer), gep(closure_ptr, 0, 1)
       else
@@ -1425,7 +1425,7 @@ module Crystal
 
         position_at_end catch_block
         lp_ret_type = llvm_typer.landing_pad_type
-        lp = @builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME).fun, [] of LibLLVM::ValueRef
+        lp = @builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LibLLVM::ValueRef
         unwind_ex_obj = @builder.extract_value lp, 0
         ex_type_id = @builder.extract_value lp, 1
 

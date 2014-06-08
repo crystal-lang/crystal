@@ -4,7 +4,7 @@ struct LLVM::FunctionCollection
 
   def add(name, arg_types, ret_type, varargs = false)
     fun_type = LLVM.function_type(arg_types, ret_type, varargs)
-    func = LibLLVM.add_function(@mod.llvm_module, name, fun_type)
+    func = LibLLVM.add_function(@mod, name, fun_type)
     Function.new(func)
   end
 
@@ -20,7 +20,7 @@ struct LLVM::FunctionCollection
   end
 
   def []?(name)
-    func = LibLLVM.get_named_function(@mod.llvm_module, name)
+    func = LibLLVM.get_named_function(@mod, name)
     func ? Function.new(func) : nil
   end
 end

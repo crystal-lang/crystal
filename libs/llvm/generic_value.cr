@@ -1,10 +1,9 @@
 struct LLVM::GenericValue
-  def initialize(value)
-    @value = value
+  def initialize(@unwrap)
   end
 
   def to_i
-    LibLLVM.generic_value_to_int(@value, 1)
+    LibLLVM.generic_value_to_int(self, 1)
   end
 
   def to_b
@@ -12,11 +11,11 @@ struct LLVM::GenericValue
   end
 
   def to_f32
-    LibLLVM.generic_value_to_float(LLVM::Float, @value)
+    LibLLVM.generic_value_to_float(LLVM::Float, self)
   end
 
   def to_f64
-    LibLLVM.generic_value_to_float(LLVM::Double, @value)
+    LibLLVM.generic_value_to_float(LLVM::Double, self)
   end
 
   def to_string
@@ -24,6 +23,6 @@ struct LLVM::GenericValue
   end
 
   def to_pointer
-    LibLLVM.generic_value_to_pointer(@value)
+    LibLLVM.generic_value_to_pointer(self)
   end
 end
