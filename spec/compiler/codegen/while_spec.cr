@@ -27,10 +27,7 @@ describe "Codegen: while" do
   end
 
   it "codegens endless while" do
-    program = Program.new
-    node = parse "while true; end"
-    node = program.infer_type node
-    program.build node, Program::BuildOptions.single_module
+    build "while true; end"
   end
 
   it "codegens while with declared var 1" do

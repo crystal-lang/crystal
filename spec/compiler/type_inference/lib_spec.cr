@@ -133,4 +133,37 @@ describe "Type inference: lib" do
     foo = lib_type.lookup_first_def("foo", false) as External
     foo.real_name.should eq("bar")
   end
+
+  it "allows passing wrapper struct to c" do
+    assert_type("
+      lib C
+        fun foo(x : Void*) : Int32
+      end
+
+      struct Wrapper
+        def initialize(@x)
+        end
+      end
+
+      w = Wrapper.new(Pointer(Void).null)
+      C.foo(w)
+      ") { int32 }
+  end
+
+  it "allows passing pointer of wrapper struct to c" do
+    assert_type("
+      lib C
+        fun foo(x : Void**) : Int32
+      end
+
+      struct Wrapper
+        def initialize(@x)
+        end
+      end
+
+      w = Wrapper.new(Pointer(Void).null)
+      p = Pointer(Wrapper).null
+      C.foo(p)
+      ") { int32 }
+  end
 end

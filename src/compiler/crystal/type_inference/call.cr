@@ -433,6 +433,8 @@ module Crystal
             # OK: string will be sent as UInt8
           elsif expected_type.is_a?(FunType) && actual_type.is_a?(FunType) && expected_type.return_type == mod.void && expected_type.arg_types == actual_type.arg_types
             # OK: fun will be cast to return void
+          elsif actual_type.struct_wrapper_of?(expected_type) || actual_type.pointer_struct_wrapper_of?(expected_type)
+            # OK: same memory layout
           else
             arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
             self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"

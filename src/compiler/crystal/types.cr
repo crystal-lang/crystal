@@ -187,6 +187,14 @@ module Crystal
       1
     end
 
+    def struct_wrapper_of?(type)
+      false
+    end
+
+    def pointer_struct_wrapper_of?(type)
+      false
+    end
+
     def lookup_def_instance(def_object_id, arg_types, block_type)
       raise "Bug: #{self} doesn't implement lookup_def_instance"
     end
@@ -920,6 +928,15 @@ module Crystal
       struct?
     end
 
+    def struct_wrapper_of?(type)
+      return false unless struct?
+
+      ivars = all_instance_vars
+      return false unless ivars.length == 1
+
+      ivars.first_value.type? == type
+    end
+
     def type_desc
       struct? ? "struct" : "class"
     end
@@ -1084,6 +1101,10 @@ module Crystal
     end
 
     def passed_by_value?
+      false
+    end
+
+    def struct_wrapper_of?(type)
       false
     end
 
@@ -1491,6 +1512,12 @@ module Crystal
 
     def reference_like?
       false
+    end
+
+    def pointer_struct_wrapper_of?(type)
+      return false unless type.is_a?(PointerInstanceType)
+
+      element_type.struct_wrapper_of?(type.element_type)
     end
 
     def allocated

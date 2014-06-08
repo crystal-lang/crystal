@@ -26,4 +26,37 @@ describe "Code gen: lib" do
       foo
     ")
   end
+
+  it "allows passing wrapper struct to c" do
+    build("
+      lib C
+        fun foo(x : Void*) : Int32
+      end
+
+      struct Wrapper
+        def initialize(@x)
+        end
+      end
+
+      w = Wrapper.new(Pointer(Void).null)
+      C.foo(w)
+      ")
+  end
+
+  it "allows passing pointer wrapper struct to c" do
+    build("
+      lib C
+        fun foo(x : Void**) : Int32
+      end
+
+      struct Wrapper
+        def initialize(@x)
+        end
+      end
+
+      w = Wrapper.new(Pointer(Void).null)
+      p = Pointer(Wrapper).null
+      C.foo(p)
+      ")
+  end
 end

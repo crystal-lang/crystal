@@ -117,6 +117,12 @@ def parse(string)
   Parser.parse string
 end
 
+def build(code)
+  node = parse code
+  result = infer_type node
+  result.program.build result.node, Program::BuildOptions.single_module
+end
+
 def run(code)
   Program.new.run(code)
 end

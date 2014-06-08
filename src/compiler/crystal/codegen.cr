@@ -1618,6 +1618,10 @@ module Crystal
           elsif is_external && def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
             # Nil to pointer
             call_arg = LLVM.null(llvm_c_type(def_arg.type))
+          elsif is_external && def_arg && arg.type.struct_wrapper_of?(def_arg.type)
+            call_arg = @builder.extract_value load(call_arg), 0
+          elsif is_external && def_arg && arg.type.pointer_struct_wrapper_of?(def_arg.type)
+            call_arg = bit_cast call_arg, llvm_type(def_arg.type)
           else
             # Def argument might be missing if it's a variadic call
             call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
