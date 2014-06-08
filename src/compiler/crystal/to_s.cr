@@ -687,6 +687,13 @@ module Crystal
       @str << decorate_instance_var(node, node.name)
     end
 
+    def visit(node : ReadInstanceVar)
+      node.obj.accept self
+      @str << "."
+      @str << node.name
+      false
+    end
+
     def visit(node : ClassVar)
       if node.out
         @str << keyword("out")

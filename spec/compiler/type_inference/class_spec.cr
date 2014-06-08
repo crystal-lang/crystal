@@ -724,4 +724,34 @@ describe "Type inference: class" do
       Foo.new
       ), "wrong number of arguments"
   end
+
+  it "reads an object instance var" do
+    assert_type(%(
+      class Foo
+        def initialize(@x)
+        end
+      end
+
+      foo = Foo.new(1)
+      foo.@x
+      )) { int32 }
+  end
+
+  it "errors if reading non-existent ivar" do
+    assert_error %(
+      class Foo
+      end
+
+      foo = Foo.new
+      foo.@y
+      ),
+      "Foo doesn't have an instance var named '@y'"
+  end
+
+  it "errors if reading ivar from non-ivar container" do
+    assert_error %(
+      1.@y
+      ),
+      "Int32 doesn't have instance vars"
+  end
 end

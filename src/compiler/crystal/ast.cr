@@ -630,6 +630,26 @@ module Crystal
     end
   end
 
+  class ReadInstanceVar < ASTNode
+    property :obj
+    property :name
+
+    def initialize(@obj, @name)
+    end
+
+    def accept_children(visitor)
+      @obj.accept visitor
+    end
+
+    def ==(other : self)
+      other.obj == obj && other.name == name
+    end
+
+    def clone_without_location
+      ReadInstanceVar.new(@obj.clone, @name)
+    end
+  end
+
   class ClassVar < ASTNode
     property :name
     property :out

@@ -474,6 +474,16 @@ module Crystal
           end
         when :"."
           next_token_skip_space_or_newline
+
+          if @token.type == :INSTANCE_VAR
+            ivar_name = @token.value.to_s
+            next_token_skip_space
+
+            atomic = ReadInstanceVar.new(atomic, ivar_name)
+            atomic.location = location
+            next
+          end
+
           check AtomicWithMethodCheck
           name_column_number = @token.column_number
 

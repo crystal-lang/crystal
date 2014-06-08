@@ -221,6 +221,20 @@ module Crystal
       node.bind_to(var)
     end
 
+    def end_visit(node : ReadInstanceVar)
+      obj_type = node.obj.type
+      unless obj_type.is_a?(InstanceVarContainer)
+        node.raise "#{obj_type} doesn't have instance vars"
+      end
+
+      ivar = obj_type.lookup_instance_var?(node.name, false)
+      unless ivar
+        node.raise "#{obj_type} doesn't have an instance var named '#{node.name}'"
+      end
+
+      node.bind_to ivar
+    end
+
     def visit(node : ClassVar)
       node.bind_to lookup_class_var(node)
     end

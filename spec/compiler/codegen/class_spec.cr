@@ -286,4 +286,16 @@ describe "Code gen: class" do
       1
       )).to_i.should eq(1)
   end
+
+  it "reads other instance var" do
+    run(%(
+      class Foo
+        def initialize(@x)
+        end
+      end
+
+      foo = Foo.new(1)
+      foo.@x
+      )).to_i.should eq(1)
+  end
 end

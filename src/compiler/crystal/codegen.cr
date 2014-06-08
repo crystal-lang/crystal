@@ -1221,10 +1221,18 @@ module Crystal
     end
 
     def visit(node : InstanceVar)
-      type = context.type as InstanceVarContainer
+      read_instance_var node, context.type, node.name, llvm_self_ptr
+    end
+
+    def end_visit(node : ReadInstanceVar)
+      read_instance_var node, node.obj.type, node.name, @last
+    end
+
+    def read_instance_var(node, type, name, value)
       ivar = type.lookup_instance_var(node.name)
-      ivar_ptr = instance_var_ptr type, node.name, llvm_self_ptr
+      ivar_ptr = instance_var_ptr type, node.name, value
       @last = downcast ivar_ptr, node.type, ivar.type, false
+      false
     end
 
     def visit(node : Cast)
