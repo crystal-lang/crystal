@@ -1,4 +1,11 @@
 struct Struct
+  def ==(other : self) : Bool
+    {% for ivar in @instance_vars %}
+      return false unless {{ivar}} == other.{{ivar}}
+    {% end %}
+    true
+  end
+
   def hash : Int32
     hash = 0
     {% for ivar in @instance_vars %}

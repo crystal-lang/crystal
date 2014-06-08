@@ -58,7 +58,7 @@ class Set(T)
   end
 
   def ==(other : Set)
-    same?(other) || internal_hash == other.internal_hash
+    same?(other) || @hash == other.@hash
   end
 
   def dup
@@ -77,11 +77,5 @@ class Set(T)
 
   def to_s
     "Set{#{join ", "}}"
-  end
-
-  # protected
-
-  def internal_hash
-    @hash
   end
 end
