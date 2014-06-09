@@ -514,24 +514,25 @@ class Array(T)
     self
   end
 
-  def sort!(block: T, T -> Int32)
+  def sort!(&block: T, T -> Int32)
     Array(T).quicksort!(@buffer, @length, block)
     self
   end
 
-  def sort_by!(block: T -> U)
-    sort! ->(x : T, y : T){ block.call(x) <=> block.call(y) }
+  def sort_by!(&block: T -> U)
+    f = ->(x : T, y : T){ block.call(x) <=> block.call(y) }
+    sort! &f
   end
 
-  def sort_by(block: T -> U)
-    dup.sort_by! block
+  def sort_by(&block: T -> U)
+    dup.sort_by! &block
   end
 
   def sort
     dup.sort!
   end
 
-  def sort(block: T, T -> Int32)
+  def sort(&block: T, T -> Int32)
     x = dup
     Array(T).quicksort!(x.buffer, x.length, block)
     x

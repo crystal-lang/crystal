@@ -15,7 +15,7 @@ lib PThread
 end
 
 class Thread(T, R)
-  def self.new(func : -> R)
+  def self.new(&func : -> R)
     Thread(Nil, R).new(nil, ->(x : Nil) { func.call })
   end
 

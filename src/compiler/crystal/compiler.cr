@@ -256,7 +256,7 @@ module Crystal
           msg = multithreaded ? "Codegen (bitcode+llc+clang)" : "Codegen (llc+clang)"
           timing(msg) do
             threads = Array.new(@n_threads) do
-              Thread.new ->do
+              Thread.new do
                 while unit = mutex.synchronize { units.shift? }
                   unit.llvm_mod.target = @config.host_target
                   ifdef darwin

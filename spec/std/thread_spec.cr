@@ -4,7 +4,7 @@ require "spec"
 describe "Thread" do
   it "allows passing an argumentless fun to execute" do
     a = 0
-    thread = Thread.new -> { a = 1; 10 }
+    thread = Thread.new { a = 1; 10 }
     thread.join.should eq(10)
     a.should eq(1)
   end
