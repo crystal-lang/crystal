@@ -1530,7 +1530,7 @@ module Crystal
 
       accept node.obj
 
-      @builder.gep @last, indices
+      @builder.inbounds_gep @last, indices
     end
 
     def visit(node : Call)
