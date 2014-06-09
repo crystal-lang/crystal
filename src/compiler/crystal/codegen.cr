@@ -2227,6 +2227,14 @@ module Crystal
       store type_id(value_type), union_type_id(target_pointer)
     end
 
+    def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : BoolType, value)
+      store_bool_in_union target_pointer, value
+    end
+
+    def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : NilType, value)
+      store type_id(value, value_type), union_type_id(target_pointer)
+    end
+
     def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : Type, value)
       store_in_union target_pointer, value_type, to_rhs(value, value_type)
     end
@@ -2336,6 +2344,17 @@ module Crystal
       load cast_to_pointer(union_value(value), to_type)
     end
 
+    def downcast_distinct(value, to_type : NilType, from_type : MixedUnionType)
+      llvm_nil
+    end
+
+    def downcast_distinct(value, to_type : BoolType, from_type : MixedUnionType)
+      value_ptr = union_value(value)
+      value = cast_to_pointer(value_ptr, @mod.int8)
+      value = load(value)
+      trunc value, LLVM::Int1
+    end
+
     def downcast_distinct(value, to_type : Type, from_type : MixedUnionType)
       value_ptr = union_value(value)
       value = cast_to_pointer(value_ptr, to_type)
@@ -2391,6 +2410,18 @@ module Crystal
     end
 
     def upcast_distinct(value, to_type : MixedUnionType, from_type : VoidType)
+      union_ptr = alloca(llvm_type(to_type))
+      store type_id(from_type), union_type_id(union_ptr)
+      union_ptr
+    end
+
+    def upcast_distinct(value, to_type : MixedUnionType, from_type : BoolType)
+      union_ptr = alloca(llvm_type(to_type))
+      store_bool_in_union union_ptr, value
+      union_ptr
+    end
+
+    def upcast_distinct(value, to_type : MixedUnionType, from_type : NilType)
       union_ptr = alloca(llvm_type(to_type))
       store type_id(from_type), union_type_id(union_ptr)
       union_ptr
@@ -2851,6 +2882,13 @@ module Crystal
       store type_id(value, value_type), union_type_id(union_pointer)
       casted_value_ptr = cast_to_pointer(union_value(union_pointer), value_type)
       store value, casted_value_ptr
+    end
+
+    def store_bool_in_union(union_pointer, value)
+      store type_id(value, @mod.bool), union_type_id(union_pointer)
+      bool_as_i64 = @builder.zext(value, llvm_type(@mod.int64))
+      casted_value_ptr = cast_to_pointer(union_value(union_pointer), @mod.int64)
+      store bool_as_i64, casted_value_ptr
     end
 
     def aggregate_index(ptr, index)
