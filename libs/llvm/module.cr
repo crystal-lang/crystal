@@ -9,6 +9,10 @@ struct LLVM::Module
     LibLLVM.set_target(self, target)
   end
 
+  def data_layout=(data)
+    LibLLVM.set_data_layout(self, data)
+  end
+
   def dump
     LibLLVM.dump_module(self)
   end

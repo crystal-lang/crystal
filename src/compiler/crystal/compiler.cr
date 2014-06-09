@@ -13,6 +13,9 @@ module Crystal
   class Compiler
     include Crystal
 
+    DarwinDataLayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
+    LinuxDataLayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
+
     getter config
     getter llc
     getter opt
@@ -213,6 +216,14 @@ module Crystal
           compilation_unit = units.first
           compilation_unit_bc_name = "#{output_filename}.bc"
           compilation_unit_s_name = "#{output_filename}.s"
+
+          case program
+          when .has_flag?("darwin")
+            compilation_unit.llvm_mod.data_layout = DarwinDataLayout
+          when .has_flag?("linux")
+            compilation_unit.llvm_mod.data_layout = LinuxDataLayout
+          end
+
           compilation_unit.write_bitcode compilation_unit_bc_name
           system "#{opt} #{compilation_unit_bc_name} -O3 -o #{compilation_unit_bc_name}" if @release
           puts "llc #{compilation_unit_bc_name} #{llc_flags} -o #{compilation_unit_s_name} && clang #{compilation_unit_s_name} -o #{output_filename} #{lib_flags(program)}"
@@ -247,7 +258,12 @@ module Crystal
             threads = Array.new(@n_threads) do
               Thread.new ->do
                 while unit = mutex.synchronize { units.shift? }
-                  unit.target = @config.host_target
+                  unit.llvm_mod.target = @config.host_target
+                  ifdef darwin
+                    unit.llvm_mod.data_layout = DarwinDataLayout
+                  elsif linux
+                    unit.llvm_mod.data_layout = LinuxDataLayout
+                  end
                   unit.write_bitcode if multithreaded
                   unit.compile
                 end
@@ -349,6 +365,7 @@ module Crystal
 
     class CompilationUnit
       getter compiler
+      getter llvm_mod
 
       def initialize(@compiler, type_name, @llvm_mod)
         type_name = "main" if type_name == ""
@@ -359,10 +376,6 @@ module Crystal
             char.ord.to_s
           end
         end
-      end
-
-      def target=(target)
-        @llvm_mod.target = target
       end
 
       def write_bitcode

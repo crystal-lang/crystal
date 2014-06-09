@@ -273,6 +273,7 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
   fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : GenericValueRef*) : GenericValueRef
   fun set_cleanup = LLVMSetCleanup(lpad : ValueRef, val : Int32)
+  fun set_data_layout = LLVMSetDataLayout(mod : ModuleRef, data : UInt8*)
   fun set_global_constant = LLVMSetGlobalConstant(global : ValueRef, is_constant : Int32)
   fun set_initializer = LLVMSetInitializer(global_var : ValueRef, constant_val : ValueRef)
   fun set_linkage = LLVMSetLinkage(global : ValueRef, linkage : Linkage)
