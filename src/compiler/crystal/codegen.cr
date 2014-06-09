@@ -1552,7 +1552,11 @@ module Crystal
       return if node.args.any?(&.yields?) && block_breaks?
 
       if block = node.block
-        codegen_call_with_block(node, block, owner, call_args)
+        if fun_literal = block.fun_literal
+          codegen_call_with_block_as_fun_literal(node, fun_literal, owner, call_args)
+        else
+          codegen_call_with_block(node, block, owner, call_args)
+        end
       else
         codegen_call(node, node.target_def, owner, call_args)
       end
@@ -1684,6 +1688,16 @@ module Crystal
           end
         end
       end
+    end
+
+    def codegen_call_with_block_as_fun_literal(node, fun_literal, self_type, call_args)
+      target_def = node.target_def
+      func = target_def_fun(target_def, self_type)
+
+      fun_literal.accept self
+      call_args.push @last
+
+      codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
     end
 
     def codegen_dispatch(node, target_defs)
@@ -1955,6 +1969,11 @@ module Crystal
       end
 
       args.concat target_def.args
+
+      if target_def.uses_block_arg
+        block_arg = target_def.block_arg.not_nil!
+        args.push Arg.new_with_type(block_arg.name, block_arg.type)
+      end
 
       if is_external
         llvm_args_types = args.map { |arg| llvm_c_type(arg.type) }

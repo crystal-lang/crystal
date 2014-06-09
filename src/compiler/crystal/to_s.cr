@@ -610,6 +610,10 @@ module Crystal
         @str << " : "
         restriction.accept self
       end
+      if type = node.type?
+        @str << " : "
+        type.append_to_s(@str)
+      end
       false
     end
 

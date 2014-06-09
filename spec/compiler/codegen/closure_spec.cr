@@ -493,15 +493,27 @@ describe "Code gen: closure" do
       )).to_i.should eq(1)
   end
 
-  # pending "transforms block to fun literal" do
-  #   run("
-  #     def foo(&block : Int32 ->)
-  #       block.call(1)
-  #     end
+  it "transforms block to fun literal" do
+    run("
+      def foo(&block : Int32 -> Int32)
+        block.call(1)
+      end
 
-  #     foo do |x|
-  #       x + 1
-  #     end
-  #     ").to_i.should eq(2)
-  # end
+      foo do |x|
+        x + 1
+      end
+      ").to_i.should eq(2)
+  end
+
+  it "transforms block to fun literal with free var" do
+    run("
+      def foo(&block : Int32 -> U)
+        block
+      end
+
+      g = foo { |x| x + 1 }
+      h = foo { |x| x.to_f }
+      (g.call(3) + h.call(5)).to_i
+      ").to_i.should eq(9)
+  end
 end

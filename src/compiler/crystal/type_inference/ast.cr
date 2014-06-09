@@ -176,12 +176,19 @@ module Crystal
   end
 
   class FunLiteral
+    property :force_void
+    @force_void = false
+
     def update(from = nil)
       return unless self.def.args.all? &.type?
       return unless self.def.type?
 
       types = self.def.args.map &.type
-      types.push self.def.type
+      if @force_void
+        types.push self.def.type.program.void
+      else
+        types.push self.def.type
+      end
 
       self.type = self.def.type.program.fun_of(types)
     end
@@ -383,6 +390,7 @@ module Crystal
     property :vars
     property :after_vars
     property :context
+    property :fun_literal
 
     @visited = false
 

@@ -336,26 +336,61 @@ module Crystal
         end
 
         if match.def.uses_block_arg
-          raise "passing blocks as function pointers is not yet supported"
-        end
-
-        block.accept parent_visitor
-
-        if output = block_arg.fun.output
-          raise "can't infer block type" unless block.body.type?
-
-          block_type = block.body.type
-          type_lookup = match.type_lookup as MatchesLookup
-
-          matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
-          unless matched
-            if output.is_a?(Self)
-              raise "block expected to return #{match.owner}, not #{block_type}"
-            else
-              raise "block expected to return #{output}, not #{block_type}"
+          # Automatically convert block to function pointer
+          if yield_vars
+            fun_args = yield_vars.map_with_index do |var, i|
+              Arg.new_with_type(block.args[i].name, var.type)
             end
+          else
+            fun_args = [] of Arg
           end
-          block.body.freeze_type = true
+
+          if block.args.length != fun_args.length
+            raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
+          end
+
+          fun_def = Def.new("->", fun_args, block.body)
+          fun_literal = FunLiteral.new(fun_def)
+
+          unless block_arg.fun.output
+            fun_literal.force_void = true
+          end
+
+          block.fun_literal = fun_literal
+          fun_literal.accept parent_visitor
+
+          fun_literal_type = fun_literal.type?
+          if fun_literal_type
+            if output = block_arg.fun.output
+              block_type = (fun_literal_type as FunType).return_type
+              type_lookup = match.type_lookup as MatchesLookup
+              matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
+              unless matched
+                raise "expected block to return #{output}, not #{block_type}"
+              end
+            end
+          else
+            raise "cant' deduce type of block"
+          end
+        else
+          block.accept parent_visitor
+
+          if output = block_arg.fun.output
+            raise "can't infer block type" unless block.body.type?
+
+            block_type = block.body.type
+            type_lookup = match.type_lookup as MatchesLookup
+
+            matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
+            unless matched
+              if output.is_a?(Self)
+                raise "block expected to return #{match.owner}, not #{block_type}"
+              else
+                raise "block expected to return #{output}, not #{block_type}"
+              end
+            end
+            block.body.freeze_type = true
+          end
         end
       end
 
@@ -737,6 +772,15 @@ module Crystal
         var.bind_to(var)
         args[arg.name] = var
         arg.type = type
+      end
+
+      fun_literal = @block.try &.fun_literal
+      if fun_literal
+        block_arg = untyped_def.block_arg.not_nil!
+        var = MetaVar.new(block_arg.name, fun_literal.type)
+        args[block_arg.name] = var
+
+        typed_def.block_arg.not_nil!.type = fun_literal.type
       end
 
       {typed_def, args}

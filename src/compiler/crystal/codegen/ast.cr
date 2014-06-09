@@ -199,7 +199,7 @@ module Crystal
 
         str << name.replace('@', '.')
 
-        if args.length > 0 || self_type
+        if args.length > 0 || self_type || uses_block_arg
           str << "<"
           if self_type
             self_type.append_llvm_name(str)
@@ -210,6 +210,10 @@ module Crystal
               str << ", " if i > 0
               arg.type.append_llvm_name(str)
             end
+          end
+          if uses_block_arg
+            str << ", " if self_type || args.length > 0
+            block_arg.not_nil!.type.append_llvm_name(str)
           end
           str << ">"
         end

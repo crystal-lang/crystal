@@ -254,9 +254,9 @@ describe "Type inference: closure" do
       "can't send closure to C function"
   end
 
-  pending "transforms block to fun literal" do
+  it "transforms block to fun literal" do
     assert_type("
-      def foo(&block : Int32 ->)
+      def foo(&block : Int32 -> Float64)
         block.call(1)
       end
 
@@ -264,5 +264,67 @@ describe "Type inference: closure" do
         x.to_f
       end
       ") { float64 }
+  end
+
+  it "transforms block to fun literal with void type" do
+    assert_type("
+      def foo(&block : Int32 -> )
+        block.call(1)
+      end
+
+      foo do |x|
+        x.to_f
+      end
+      ") { void }
+  end
+
+  it "errors when transforming block to fun literal if type mismatch" do
+    assert_error "
+      def foo(&block : Int32 -> Int32)
+        block.call(1)
+      end
+
+      foo do |x|
+        x.to_f
+      end
+      ",
+      "expected block to return Int32, not Float64"
+  end
+
+  it "transforms block to fun literal with free var" do
+    assert_type("
+      def foo(&block : Int32 -> U)
+        block.call(1)
+      end
+
+      foo do |x|
+        x.to_f
+      end
+      ") { float64 }
+  end
+
+  it "transforms block to fun literal without arguments" do
+    assert_type("
+      def foo(&block : -> U)
+        block.call
+      end
+
+      foo do
+        1.5
+      end
+      ") { float64 }
+  end
+
+  it "errors if giving more block args when transforming block to fun literal" do
+    assert_error "
+      def foo(&block : -> U)
+        block.call
+      end
+
+      foo do |x|
+        x.to_f
+      end
+      ",
+      "wrong number of block arguments (1 for 0)"
   end
 end
