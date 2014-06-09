@@ -1006,7 +1006,10 @@ module Crystal
 
         location = @token.location
 
-        if @token.type == :"["
+        if @token.value == :is_a?
+          call = parse_is_a(obj)
+          call.location = location
+        elsif @token.type == :"["
           call = parse_atomic_method_suffix obj, location
           call.location = location
         else
@@ -1020,6 +1023,7 @@ module Crystal
           end
 
           call = parse_atomic_method_suffix call, location
+          call = check_special_call(call)
         end
 
         block = Block.new([Var.new(block_arg_name)], call)
