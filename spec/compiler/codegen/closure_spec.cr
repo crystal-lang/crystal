@@ -516,4 +516,34 @@ describe "Code gen: closure" do
       (g.call(3) + h.call(5)).to_i
       ").to_i.should eq(9)
   end
+
+  it "allows passing block as fun literal to new and to initialize" do
+    run("
+      class Foo
+        def initialize(&block : Int32 -> Float64)
+          @block = block
+        end
+
+        def block
+          @block
+        end
+      end
+
+      foo = Foo.new { |x| x.to_f + 1 }
+      foo.block.call(1).to_i
+      ").to_i.should eq(2)
+  end
+
+  it "allows giving less block args when transforming block to fun literal" do
+    run("
+      def foo(&block : Int32 -> U)
+        block.call(1)
+      end
+
+      v = foo do
+        2.5
+      end
+      v.to_i
+      ").to_i.should eq(2)
+  end
 end

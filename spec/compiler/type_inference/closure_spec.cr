@@ -327,4 +327,33 @@ describe "Type inference: closure" do
       ",
       "wrong number of block arguments (1 for 0)"
   end
+
+  it "allows giving less block args when transforming block to fun literal" do
+    assert_type("
+      def foo(&block : Int32 -> U)
+        block.call(1)
+      end
+
+      foo do
+        1.5
+      end
+      ") { float64 }
+  end
+
+  it "allows passing block as fun literal to new and to initialize" do
+    assert_type("
+      class Foo
+        def initialize(&block : Int32 -> Float64)
+          @block = block
+        end
+
+        def block
+          @block
+        end
+      end
+
+      foo = Foo.new { |x| x.to_f }
+      foo.block
+      ") { fun_of(int32, float64) }
+  end
 end

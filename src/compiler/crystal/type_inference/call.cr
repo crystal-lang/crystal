@@ -339,13 +339,18 @@ module Crystal
           # Automatically convert block to function pointer
           if yield_vars
             fun_args = yield_vars.map_with_index do |var, i|
-              Arg.new_with_type(block.args[i].name, var.type)
+              arg = block.args[i]?
+              if arg
+                Arg.new_with_type(arg.name, var.type)
+              else
+                Arg.new_with_type(mod.new_temp_var_name, var.type)
+              end
             end
           else
             fun_args = [] of Arg
           end
 
-          if block.args.length != fun_args.length
+          if block.args.length > fun_args.length
             raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
           end
 
@@ -698,7 +703,7 @@ module Crystal
         #
         #    x = allocate
         #    GC.add_finalizer x
-        #    x.initialize ...
+        #    x.initialize ..., &block
         #    x
         var = Var.new("x")
         new_vars = Array(ASTNode).new(arg_types.length)
@@ -717,6 +722,7 @@ module Crystal
         call_gc = Call.new(Path.new(["GC"], true), "add_finalizer", [var] of ASTNode)
         init = Call.new(var, "initialize", new_vars)
 
+
         exps = Array(ASTNode).new(4)
         exps << assign
         exps << call_gc unless instance_type.struct?
@@ -724,6 +730,14 @@ module Crystal
         exps << var
 
         match_def = Def.new("new", new_args, exps)
+
+        # Forward block argument if any
+        if match.def.uses_block_arg
+          block_arg = match.def.block_arg.not_nil!
+          init.block_arg = Var.new(block_arg.name)
+          match_def.block_arg = block_arg.clone
+          match_def.uses_block_arg = true
+        end
 
         new_match = Match.new(scope, match_def, match.type_lookup, match.arg_types, match.free_vars)
 

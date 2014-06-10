@@ -409,7 +409,11 @@ module Crystal
     end
 
     def new_temp_var
-      Var.new("#temp_#{@temp_var_counter += 1}")
+      Var.new(new_temp_var_name)
+    end
+
+    def new_temp_var_name
+      "#temp_#{@temp_var_counter += 1}"
     end
 
     def type_desc
