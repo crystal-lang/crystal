@@ -113,47 +113,6 @@ describe "Type inference: nil" do
       ") { int32 }
   end
 
-  pending "restricts type of 'if @foo'" do
-    assert_type("
-      class Foo
-        def initialize
-          @foo = Foo.new || nil
-        end
-        def foo
-          if @foo
-            @foo.bar
-          else
-            10
-          end
-        end
-        def bar
-          1
-        end
-      end
-
-      Foo.new.foo
-      ") { int32 }
-  end
-
-  pending "restricts type of 'if @foo' on assign" do
-    assert_type("
-      class Foo
-        def foo
-          @foo = Foo.new || nil
-          if @foo
-            @foo.bar
-          else
-            10
-          end
-        end
-        def bar
-          1
-        end
-      end
-
-      Foo.new.foo
-      ") { int32 }
-  end
 
   it "restricts type of 'while foo'" do
     assert_type("
