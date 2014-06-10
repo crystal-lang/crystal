@@ -555,7 +555,8 @@ module Crystal
           if obj.is_a?(InstanceVar)
             scope = scope as InstanceVarContainer
             ivar = scope.lookup_instance_var(obj.name)
-            if ivar.dependencies.length == 1 && ivar.dependencies[0].same?(mod.nil_var)
+            deps = ivar.dependencies?
+            if deps && deps.length == 1 && deps[0].same?(mod.nil_var)
               similar_name = scope.lookup_similar_instance_var_name(ivar.name)
               if similar_name
                 msg << " \e[1;33m(#{ivar.name} was never assigned a value, did you mean #{similar_name}?)\e[0m"
