@@ -167,7 +167,7 @@ module Crystal
       elsif node.name == "self"
         node.raise "there's no self in this scope"
       else
-        node.raise "Bug: missing variable declaration for: #{node.name}"
+        node.raise "read before definition of '#{node.name}'"
       end
     end
 

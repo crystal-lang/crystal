@@ -54,4 +54,9 @@ describe "Type inference: var" do
   it "reports can't change the value of self" do
     assert_syntax_error "self = 1", "can't change the value of self"
   end
+
+  it "reports variable always nil" do
+    assert_error "1 == 2 ? (a = 1) : a",
+      "read before definition of 'a'"
+  end
 end
