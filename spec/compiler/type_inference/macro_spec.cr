@@ -91,4 +91,20 @@ describe "Type inference: macro" do
       foo(1)
       )) { int32 }
   end
+
+  it "expands macro with block" do
+    assert_type(%(
+      macro foo
+        {{yield}}
+      end
+
+      foo do
+        def bar
+          1
+        end
+      end
+
+      bar
+      )) { int32 }
+  end
 end

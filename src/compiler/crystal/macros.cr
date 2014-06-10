@@ -68,16 +68,16 @@ module Crystal
     class MacroVisitor < Visitor
       getter last
 
-      def self.new(mod, scope, a_macro, call)
+      def self.new(mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
         a_macro.args.zip(call.args) do |macro_arg, call_arg|
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 
-        new(mod, scope, vars)
+        new(mod, scope, vars, call.block)
       end
 
-      def initialize(@mod, @scope, @vars = {} of String => ASTNode)
+      def initialize(@mod, @scope, @vars = {} of String => ASTNode, @block = nil)
         @str = StringBuilder.new
         @last = Nop.new
       end
@@ -209,6 +209,15 @@ module Crystal
           execute_special_call node
         end
 
+        false
+      end
+
+      def visit(node : Yield)
+        if block = @block
+          @last = block.body
+        else
+          @last = Nop.new
+        end
         false
       end
 
