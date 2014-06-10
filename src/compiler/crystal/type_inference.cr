@@ -1791,24 +1791,21 @@ module Crystal
       false
     end
 
-    def merge_rescue_vars(before_vars, all_rescue_vars)
+    def merge_rescue_vars(body_vars, all_rescue_vars)
       after_vars = MetaVars.new
 
       all_rescue_vars.each do |rescue_vars|
         rescue_vars.each do |name, var|
           after_var = (after_vars[name] ||= new_meta_var(name))
-          if var.nil_if_read || !before_vars[name]?
+          if var.nil_if_read || !body_vars[name]?
             after_var.nil_if_read = true
           end
           after_var.bind_to(var)
         end
       end
 
-      before_vars.each do |name, var|
+      body_vars.each do |name, var|
         after_var = (after_vars[name] ||= new_meta_var(name))
-        if var.nil_if_read
-          after_var.nil_if_read = true
-        end
         after_var.bind_to(var)
       end
 

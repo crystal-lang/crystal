@@ -98,6 +98,45 @@ describe "Type inference: exception" do
     ") { |mod| union_of(mod.nil, types["Ex"].hierarchy_type) }
   end
 
+  it "types var as not nil if defined inside begin and defined inside rescue" do
+    assert_type("
+      begin
+        a = 1
+      rescue
+        a = 2
+      end
+      a
+      ") { int32 }
+  end
+
+  it "types var as nialble if previously nilable (1)" do
+    assert_type("
+      if 1 == 2
+        a = 1
+      end
+
+      begin
+        a = 2
+      rescue
+      end
+      a
+      ") { |mod| union_of(mod.int32, mod.nil) }
+  end
+
+  it "types var as nialble if previously nilable (2)" do
+    assert_type("
+      if 1 == 2
+        a = 1
+      end
+
+      begin
+      rescue
+        a = 2
+      end
+      a
+      ") { |mod| union_of(mod.int32, mod.nil) }
+  end
+
   it "errors if exception var shadows local var" do
     assert_syntax_error "ex = 1; begin; rescue ex; end", "exception variable 'ex' shadows local variable 'ex'"
   end
