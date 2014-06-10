@@ -16,10 +16,10 @@ end
 
 class Thread(T, R)
   def self.new(&func : -> R)
-    Thread(Nil, R).new(nil, ->(x : Nil) { func.call })
+    Thread(Nil, R).new(nil, &->(x : Nil) { func.call })
   end
 
-  def initialize(arg : T, func : T -> R)
+  def initialize(arg : T, &func : T -> R)
     @func = func
     @arg = arg
     PThread.create(out @th, nil, ->(x : Void*) {

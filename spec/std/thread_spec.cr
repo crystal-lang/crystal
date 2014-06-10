@@ -11,7 +11,7 @@ describe "Thread" do
 
   it "allows passing a fun with an argument to execute" do
     a = 0
-    thread = Thread.new 3, ->(i : Int32) { a += i; 20 }
+    thread = Thread.new(3) { |i| a += i; 20 }
     thread.join.should eq(20)
     a.should eq(3)
   end
