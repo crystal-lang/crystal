@@ -37,6 +37,10 @@ module Crystal
     def nop?
       false
     end
+
+    def class_desc : String
+      {{@name.split("::").last.stringify}}
+    end
   end
 
   class Nop < ASTNode

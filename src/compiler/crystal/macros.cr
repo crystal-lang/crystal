@@ -186,7 +186,7 @@ module Crystal
           @vars.delete value_var.name if value_var
           @vars.delete index_var.name if index_var
         else
-          node.exp.raise "for expression must be an array, hash or tuple literal, not:\n\n#{exp}"
+          node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"
         end
 
         false
@@ -203,7 +203,11 @@ module Crystal
             @last
           end
 
-          @last = receiver.interpret(node.name, args, node.block, self)
+          begin
+            @last = receiver.interpret(node.name, args, node.block, self)
+          rescue ex
+            node.raise ex.message
+          end
         else
           # no receiver: special calls
           execute_special_call node
@@ -331,7 +335,7 @@ module Crystal
       end
 
       def visit(node : ASTNode)
-        node.raise "can't execute this in a macro"
+        node.raise "can't execute #{node.class_desc} in a macro"
       end
 
       def to_s
@@ -366,7 +370,7 @@ module Crystal
       when "!="
         BoolLiteral.new(self != args.first)
       else
-        raise "undefined macro method: '#{method}'"
+        raise "undefined macro method #{class_desc}##{method}'"
       end
     end
 
@@ -555,7 +559,7 @@ module Crystal
         when 1
           arg = args.first
           unless arg.is_a?(NumberLiteral)
-            arg.raise "argument to [] must be a number, not #{arg}"
+            arg.raise "argument to [] must be a number, not #{arg.class_desc}:\n\n#{arg}"
           end
 
           index = arg.to_number.to_i
@@ -613,7 +617,7 @@ module Crystal
         when 1
           arg = args.first
           unless arg.is_a?(NumberLiteral)
-            arg.raise "argument to [] must be a number, not #{arg}"
+            arg.raise "argument to [] must be a number, not #{arg.class_desc}:\n\n#{arg}"
           end
 
           index = arg.to_number.to_i
