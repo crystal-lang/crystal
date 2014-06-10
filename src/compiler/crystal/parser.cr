@@ -1990,44 +1990,11 @@ module Crystal
     def parse_arg(args, extra_assigns, parenthesis, found_default_value_ptr)
       if @token.type == :"&"
         next_token_skip_space_or_newline
-        return parse_block_arg
+        return parse_block_arg(extra_assigns)
       end
 
       arg_location = @token.location
-
-      case @token.type
-      when :IDENT
-        arg_name = @token.value.to_s
-      when :INSTANCE_VAR
-        arg_name = @token.value.to_s[1 .. -1]
-        ivar = InstanceVar.new(@token.value.to_s)
-        ivar.location = arg_location
-        var = Var.new(arg_name)
-        var.location = arg_location
-        assign = Assign.new(ivar, var)
-        assign.location = arg_location
-        if extra_assigns
-          extra_assigns.push assign
-        else
-          raise "can't use @instance_variable here"
-        end
-        @instance_vars.try &.add ivar.name
-      when :CLASS_VAR
-        arg_name = @token.value.to_s[2 .. -1]
-        cvar = ClassVar.new(@token.value.to_s)
-        cvar.location = arg_location
-        var = Var.new(arg_name)
-        var.location = arg_location
-        assign = Assign.new(cvar, var)
-        assign.location = arg_location
-        if extra_assigns
-          extra_assigns.push assign
-        else
-          raise "can't use @@class_var here"
-        end
-      else
-        raise "unexpected token: #{@token}"
-      end
+      arg_name, uses_arg = parse_arg_name(arg_location, extra_assigns)
 
       default_value = nil
       restriction = nil
@@ -2069,10 +2036,10 @@ module Crystal
       nil
     end
 
-    def parse_block_arg
-      check :IDENT
-      name = @token.value.to_s
+    def parse_block_arg(extra_assigns)
       name_location = @token.location
+      arg_name, uses_arg = parse_arg_name(name_location, extra_assigns)
+      @uses_block_arg = true if uses_arg
 
       next_token_skip_space_or_newline
 
@@ -2092,7 +2059,7 @@ module Crystal
         type_spec = Fun.new
       end
 
-      block_arg = BlockArg.new(name, type_spec)
+      block_arg = BlockArg.new(arg_name, type_spec)
       block_arg.location = name_location
 
       push_var block_arg
@@ -2100,6 +2067,47 @@ module Crystal
       @block_arg_name = block_arg.name
 
       block_arg
+    end
+
+    def parse_arg_name(arg_location, extra_assigns)
+      case @token.type
+      when :IDENT
+        arg_name = @token.value.to_s
+        uses_arg = false
+      when :INSTANCE_VAR
+        arg_name = @token.value.to_s[1 .. -1]
+        ivar = InstanceVar.new(@token.value.to_s)
+        ivar.location = arg_location
+        var = Var.new(arg_name)
+        var.location = arg_location
+        assign = Assign.new(ivar, var)
+        assign.location = arg_location
+        if extra_assigns
+          extra_assigns.push assign
+        else
+          raise "can't use @instance_variable here"
+        end
+        @instance_vars.try &.add ivar.name
+        uses_arg = true
+      when :CLASS_VAR
+        arg_name = @token.value.to_s[2 .. -1]
+        cvar = ClassVar.new(@token.value.to_s)
+        cvar.location = arg_location
+        var = Var.new(arg_name)
+        var.location = arg_location
+        assign = Assign.new(cvar, var)
+        assign.location = arg_location
+        if extra_assigns
+          extra_assigns.push assign
+        else
+          raise "can't use @@class_var here"
+        end
+        uses_arg = true
+      else
+        raise "unexpected token: #{@token}"
+      end
+
+      {arg_name, uses_arg}
     end
 
     def parse_if(check_end = true)
