@@ -356,4 +356,28 @@ describe "Type inference: closure" do
       foo.block
       ") { fun_of(int32, float64) }
   end
+
+  it "errors if forwaring block arg doesn't match input type" do
+    assert_error "
+      def foo(&block : Int32 -> U)
+        block
+      end
+
+      f = ->(x : Int64) { x + 1 }
+      foo &f
+      ",
+      "expected block argument's argument #1 to be Int32, not Int64"
+  end
+
+  it "errors if forwaring block arg doesn't match input type length" do
+    assert_error "
+      def foo(&block : Int32, Int32 -> U)
+        block
+      end
+
+      f = ->(x : Int32) { x + 1 }
+      foo &f
+      ",
+      "wrong number of block argument's arguments (1 for 2)"
+  end
 end

@@ -499,8 +499,9 @@ describe "Code gen: closure" do
         block.call(1)
       end
 
+      a = 1
       foo do |x|
-        x + 1
+        x + a
       end
       ").to_i.should eq(2)
   end
@@ -511,10 +512,11 @@ describe "Code gen: closure" do
         block
       end
 
-      g = foo { |x| x + 1 }
-      h = foo { |x| x.to_f }
+      a = 1
+      g = foo { |x| x + a }
+      h = foo { |x| x.to_f + a }
       (g.call(3) + h.call(5)).to_i
-      ").to_i.should eq(9)
+      ").to_i.should eq(10)
   end
 
   it "allows passing block as fun literal to new and to initialize" do
@@ -529,7 +531,8 @@ describe "Code gen: closure" do
         end
       end
 
-      foo = Foo.new { |x| x.to_f + 1 }
+      a = 1
+      foo = Foo.new { |x| x.to_f + a }
       foo.block.call(1).to_i
       ").to_i.should eq(2)
   end
@@ -540,10 +543,23 @@ describe "Code gen: closure" do
         block.call(1)
       end
 
+      a = 1
       v = foo do
-        2.5
+        1.5 + a
       end
       v.to_i
+      ").to_i.should eq(2)
+  end
+
+  it "allows passing fun literal to def that captures block with &" do
+    run("
+      def foo(&block : Int32 -> Int32)
+        block.call(1)
+      end
+
+      a = 1
+      f = ->(x : Int32) { x + a }
+      foo &f
       ").to_i.should eq(2)
   end
 end

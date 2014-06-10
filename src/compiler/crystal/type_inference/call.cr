@@ -350,19 +350,43 @@ module Crystal
             fun_args = [] of Arg
           end
 
-          if block.args.length > fun_args.length
-            raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
-          end
+          # But first check if the call has a block_arg
+          if call_block_arg = self.block_arg
+            # Check input types
+            call_block_arg_types = (call_block_arg.type as FunType).arg_types
+            if yield_vars
+              if yield_vars.length != call_block_arg_types.length
+                raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for #{yield_vars.length})"
+              end
 
-          fun_def = Def.new("->", fun_args, block.body)
-          fun_literal = FunLiteral.new(fun_def)
+              i = 1
+              yield_vars.zip(call_block_arg_types) do |yield_var, call_block_arg_type|
+                if yield_var.type != call_block_arg_type
+                  raise "expected block argument's argument ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
+                end
+                i += 1
+              end
+            elsif call_block_arg_types.length != 0
+              raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for 0)"
+            end
 
-          unless block_arg.fun.output
-            fun_literal.force_void = true
+            fun_literal = call_block_arg
+          else
+            if block.args.length > fun_args.length
+              raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
+            end
+
+            fun_def = Def.new("->", fun_args, block.body)
+            fun_literal = FunLiteral.new(fun_def)
+
+            unless block_arg.fun.output
+              fun_literal.force_void = true
+            end
+
+            fun_literal.accept parent_visitor
           end
 
           block.fun_literal = fun_literal
-          fun_literal.accept parent_visitor
 
           fun_literal_type = fun_literal.type?
           if fun_literal_type
@@ -385,7 +409,6 @@ module Crystal
 
             block_type = block.body.type
             type_lookup = match.type_lookup as MatchesLookup
-
             matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
             unless matched
               if output.is_a?(Self)
