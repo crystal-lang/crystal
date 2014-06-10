@@ -193,7 +193,7 @@ describe "Block inference" do
 
       foo { 'a' }
       ",
-      "block expected to return Float64, not Char"
+      "expected block to return Float64, not Char"
   end
 
   it "reports error if block changes type" do
@@ -282,7 +282,7 @@ describe "Block inference" do
       f = Foo.new
       f.foo { 1 }
       ",
-      "block expected to return Foo, not Int32"
+      "expected block to return Foo, not Int32"
   end
 
   it "errors when block varaible shadows local variable" do

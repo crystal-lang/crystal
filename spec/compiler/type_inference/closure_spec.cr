@@ -380,4 +380,20 @@ describe "Type inference: closure" do
       ",
       "wrong number of block argument's arguments (1 for 2)"
   end
+
+  it "lookups return type in correct scope" do
+    assert_type("
+      module Mod
+        def foo(&block : Int32 -> T)
+          block
+        end
+      end
+
+      class Foo(T)
+        include Mod
+      end
+
+      Foo(Int32).new.foo { |x| x.to_f }
+      ") { fun_of(int32, float64) }
+  end
 end

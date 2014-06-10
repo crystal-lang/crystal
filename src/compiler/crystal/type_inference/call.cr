@@ -393,7 +393,7 @@ module Crystal
             if output = block_arg.fun.output
               block_type = (fun_literal_type as FunType).return_type
               type_lookup = match.type_lookup as MatchesLookup
-              matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
+              matched = type_lookup.match_arg(block_type, output, match.owner, type_lookup, match.free_vars)
               unless matched
                 raise "expected block to return #{output}, not #{block_type}"
               end
@@ -409,12 +409,12 @@ module Crystal
 
             block_type = block.body.type
             type_lookup = match.type_lookup as MatchesLookup
-            matched = type_lookup.match_arg(block_type, output, match.owner, match.owner, match.free_vars)
+            matched = type_lookup.match_arg(block_type, output, match.owner, type_lookup, match.free_vars)
             unless matched
               if output.is_a?(Self)
-                raise "block expected to return #{match.owner}, not #{block_type}"
+                raise "expected block to return #{match.owner}, not #{block_type}"
               else
-                raise "block expected to return #{output}, not #{block_type}"
+                raise "expected block to return #{output}, not #{block_type}"
               end
             end
             block.body.freeze_type = true
