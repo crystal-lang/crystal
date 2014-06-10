@@ -142,7 +142,6 @@ module Crystal
       @main_alloca_block = @alloca_block
 
       @const_block_entry = @const_block
-      @lib_vars = {} of String => LibLLVM::ValueRef
       @strings = {} of StringKey => LibLLVM::ValueRef
       @symbols = {} of String => Int32
       @symbol_table_values = [] of LibLLVM::ValueRef
@@ -1260,11 +1259,11 @@ module Crystal
     end
 
     def declare_lib_var(name, type, attributes)
-      unless var = @lib_vars[name]?
-        var = @llvm_mod.globals.add(llvm_type(type), name)
+      var = @llvm_mod.globals[name]?
+      unless var
+        var = llvm_mod.globals.add(llvm_type(type), name)
         LLVM.set_linkage var, LibLLVM::Linkage::External
         LLVM.set_thread_local var if Attribute.any?(attributes, "ThreadLocal")
-        @lib_vars[name] = var
       end
       var
     end
