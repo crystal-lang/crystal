@@ -3,11 +3,11 @@ require "net/http"
 
 $routes = {} of String => (->String)
 
-def get(path, &block)
+def get(path, &block : -> String)
   $routes[path] = block
 end
 
-at_exit -> do
+at_exit do
   server = TCPServer.new(8080)
   puts "Listening on http://0.0.0.0:8080"
 
@@ -38,3 +38,4 @@ end
 get "/" do
   "Hello world!"
 end
+

@@ -4,8 +4,8 @@ end
 
 $at_exit_handlers = nil
 
-def at_exit(handler)
-  handlers = $at_exit_handlers ||= [] of (-> Nil)
+def at_exit(&handler)
+  handlers = $at_exit_handlers ||= [] of ->
   handlers << handler
 end
 

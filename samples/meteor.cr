@@ -6,8 +6,7 @@ alias Point = Tuple(Int32, Int32)
 class Iterator(T)
   include Enumerable
 
-  def initialize(@data : T, &block : T -> T)
-    @block = block
+  def initialize(@data : T, &@block : T -> T)
   end
 
   def each
@@ -27,10 +26,10 @@ def bm(mask, offset) # bit mask
 end
 
 def transform(piece, all)
-  i = Iterator.new(piece) { |rot| rot.map{ |yx| {yx[1] + yx[0], -yx[0]} } }
+  i = Iterator.new piece, &.map{ |yx| {yx[1] + yx[0], -yx[0]} }
   rots = i.take(all ? 6 : 3)
   res = rots.flat_map do |cur_piece|
-    i2 = Iterator.new(cur_piece) { |mir| mir.map { |yx| {yx[1], yx[0]} } }
+    i2 = Iterator.new cur_piece, &.map { |yx| {yx[1], yx[0]} }
     i2.take(2)
   end
 
