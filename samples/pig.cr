@@ -15,7 +15,7 @@ typeof(Score.new(0, 0, 0))
 # If the roll value is 1, then this_turn score is abandoned, and the players'
 # roles swap.  Otherwise, the roll value is added to this_turn.
 def roll(s)
-  outcome = rand(6) + 1
+  outcome = rand 1..6
   if outcome == 1
     {Score.new(s.opponent, s.player, 0), true}
   else

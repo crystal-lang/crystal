@@ -15,4 +15,36 @@ describe "Random" do
     (x > 0).should be_true
     (x < 1).should be_true
   end
+
+  it "raises on invalid number" do
+    begin
+      rand(0)
+      fail "expect rand(0) to raise"
+    rescue ex
+      ex.message.should eq("incorrect rand value: 0")
+    end
+  end
+
+  it "does with inclusive range" do
+    rand(1..1).should eq(1)
+    x = rand(1..3)
+    (x >= 1).should be_true
+    (x <= 3).should be_true
+  end
+
+  it "does with exclusive range" do
+    rand(1...2).should eq(1)
+    x = rand(1...4)
+    (x >= 1).should be_true
+    (x < 4).should be_true
+  end
+
+  it "raises on invalid range" do
+    begin
+      rand(1...1)
+      fail "expect rand(1...1) to raise"
+    rescue ex
+      ex.message.should eq("incorrect rand value: 1...1")
+    end
+  end
 end

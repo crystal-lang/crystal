@@ -21,6 +21,16 @@ def rand(x : Int)
   if x > 0
     C.rand % x
   else
-    raise "incorrect value"
+    raise "incorrect rand value: #{x}"
+  end
+end
+
+def rand(x : Range(Int32, Int32))
+  span = x.end - x.begin
+  span += 1 unless x.excludes_end?
+  if span > 0
+    x.begin + rand(span)
+  else
+    raise "incorrect rand value: #{x}"
   end
 end
