@@ -70,5 +70,7 @@ macro make_named_tuple(name, fields)
 
     def initialize({{ fields.map { |field| "@#{field}" }.join ", " }})
     end
+
+    {{yield}}
   end
 end
