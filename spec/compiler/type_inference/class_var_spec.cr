@@ -62,9 +62,21 @@ describe "Type inference: class var" do
       ") { int32 }
   end
 
-  it "types class var of program as nil" do
+  it "types class var inside fun literal" do
     assert_type("
-      @@foo
-      ") { |mod| mod.nil }
+      @@foo = 1
+      f = -> { @@foo }
+      f.call
+      ") { int32 }
+  end
+
+  it "types class var inside fun literal inside class" do
+    assert_type("
+      class Foo
+        @@foo = 1
+        f = -> { @@foo }
+      end
+      f.call
+      ") { int32 }
   end
 end

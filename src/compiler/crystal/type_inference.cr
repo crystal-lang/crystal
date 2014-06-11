@@ -26,6 +26,7 @@ module Crystal
     property call
     property type_lookup
     property fun_literal_context
+    property types
 
     # These are the free variables that came from matches. We look up
     # here first if we find a single-element Path like `T`.
@@ -273,7 +274,7 @@ module Crystal
     end
 
     def lookup_class_var(node, bind_to_nil_if_non_existent = true)
-      scope = (@typed_def ? @scope : current_type).not_nil!
+      scope = ((@typed_def && !@fun_literal_context) ? @scope : current_type).not_nil!
       if scope.is_a?(MetaclassType)
         owner = scope.class_var_owner
       else
@@ -558,6 +559,7 @@ module Crystal
       node.def.vars = meta_vars
 
       block_visitor = TypeVisitor.new(mod, fun_vars, node.def, meta_vars)
+      block_visitor.types = @types
       block_visitor.yield_vars = @yield_vars
       block_visitor.free_vars = @free_vars
       block_visitor.untyped_def = node.def
