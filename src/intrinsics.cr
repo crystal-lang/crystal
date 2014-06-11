@@ -21,3 +21,7 @@ lib Intrinsics
   fun sqrt_f64 = "llvm.sqrt.f64"(value : Float64) : Float64
   fun debugtrap = "llvm.debugtrap"
 end
+
+macro debugger
+  Intrinsics.debugtrap
+end
