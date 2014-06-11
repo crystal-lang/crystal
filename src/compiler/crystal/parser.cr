@@ -800,6 +800,8 @@ module Crystal
           parse_instance_sizeof
         when :typeof
           parse_typeof
+        when :undef
+          parse_undef
         else
           parse_var_or_call
         end
@@ -2806,6 +2808,14 @@ module Crystal
 
     def make_tuple_type(types)
       Generic.new(Path.new(["Tuple"], true), types)
+    end
+
+    def parse_undef
+      next_token_skip_space
+      check :IDENT
+      name = @token.value.to_s
+      next_token_skip_space_or_newline
+      Undef.new name
     end
 
     def parse_yield

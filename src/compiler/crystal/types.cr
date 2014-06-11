@@ -243,6 +243,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_def"
     end
 
+    def undef(def_name)
+      raise "Bug: #{self} doesn't implement undef"
+    end
+
     def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches"
     end
@@ -603,6 +607,30 @@ module Crystal
         end
       end
       list << a_def
+    end
+
+    def undef(def_name)
+      found_def = @defs.try &.delete def_name
+      return false unless found_def
+
+      found_def.each do |key, a_def|
+        a_def.dead = true if a_def.is_a?(External)
+      end
+
+      if sorted_defs = @sorted_defs
+        keys_to_remove = [] of SortedDefKey
+        sorted_defs.each do |key, defs|
+          if key.name == def_name
+            keys_to_remove << key
+          end
+        end
+
+        keys_to_remove.each do |key|
+          sorted_defs.delete(key)
+        end
+      end
+
+      true
     end
 
     def add_macro(a_def)

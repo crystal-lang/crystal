@@ -842,6 +842,11 @@ module Crystal
       @str << node.name
     end
 
+    def visit(node : Undef)
+      @str << "undef "
+      @str << node.name
+    end
+
     def visit(node : LibDef)
       @str << keyword("lib")
       @str << " "

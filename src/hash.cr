@@ -126,12 +126,12 @@ class Hash(K, V)
           @buckets[index] = entry.next
         end
         @length -= 1
-        return true
+        return entry.value
       end
       previous_entry = entry
       entry = entry.next
     end
-    false
+    nil
   end
 
   def length

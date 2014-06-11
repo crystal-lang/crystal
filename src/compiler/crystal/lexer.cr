@@ -750,6 +750,10 @@ module Crystal
       when 'u'
         if next_char == 'n'
           case next_char
+          when 'd'
+            if next_char == 'e' && next_char == 'f'
+              return check_ident_or_keyword(:undef, start)
+            end
           when 'i'
             if next_char == 'o' && next_char == 'n'
               return check_ident_or_keyword(:union, start)

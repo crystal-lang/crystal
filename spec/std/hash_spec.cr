@@ -132,7 +132,7 @@ describe "Hash" do
   describe "delete" do
     it "deletes key in the beginning" do
       a = {1 => 2, 3 => 4, 5 => 6}
-      a.delete(1)
+      a.delete(1).should eq(2)
       a.has_key?(1).should be_false
       a.has_key?(3).should be_true
       a.has_key?(5).should be_true
@@ -142,7 +142,7 @@ describe "Hash" do
 
     it "deletes key in the middle" do
       a = {1 => 2, 3 => 4, 5 => 6}
-      a.delete(3)
+      a.delete(3).should eq(4)
       a.has_key?(1).should be_true
       a.has_key?(3).should be_false
       a.has_key?(5).should be_true
@@ -152,7 +152,7 @@ describe "Hash" do
 
     it "deletes key in the end" do
       a = {1 => 2, 3 => 4, 5 => 6}
-      a.delete(5)
+      a.delete(5).should eq(6)
       a.has_key?(1).should be_true
       a.has_key?(3).should be_true
       a.has_key?(5).should be_false
@@ -162,10 +162,15 @@ describe "Hash" do
 
     it "deletes only remaining entry" do
       a = {1 => 2}
-      a.delete(1)
+      a.delete(1).should eq(2)
       a.has_key?(1).should be_false
       a.length.should eq(0)
       a.should eq({} of Int32 => Int32)
+    end
+
+    it "deletes not found" do
+      a = {1 => 2}
+      a.delete(2).should be_nil
     end
   end
 
@@ -258,7 +263,7 @@ describe "Hash" do
     h.first_key.should eq(0)
     h.first_value.should eq(0)
     times.times do |i|
-      h.delete(i).should be_true
+      h.delete(i).should eq(i)
       h.has_key?(i).should be_false
       h.length.should eq(times - i - 1)
     end
@@ -266,7 +271,7 @@ describe "Hash" do
 
   it "inserts in one bucket and deletes from the same one" do
     h = {11 => 1}
-    h.delete(0).should be_false
+    h.delete(0).should be_nil
     h.has_key?(11).should be_true
     h.length.should eq(1)
   end

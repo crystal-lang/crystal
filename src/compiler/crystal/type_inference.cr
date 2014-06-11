@@ -443,6 +443,12 @@ module Crystal
       node.bind_to node.expressions
     end
 
+    def visit(node : Undef)
+      unless current_type.undef(node.name)
+        node.raise "undefined method #{node.name} for #{current_type.type_desc} #{current_type}"
+      end
+    end
+
     def visit(node : Yield)
       node.raise "can't yield from function literal" if @fun_literal_context
       true

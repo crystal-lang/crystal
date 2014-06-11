@@ -275,4 +275,17 @@ describe "Type inference: fun" do
     result = assert_type("1 == 1 ? nil : ->{}") { |mod| union_of(mod.nil, mod.fun_of(mod.nil)) }
     result.node.type.is_a?(NilableFunType).should be_true
   end
+
+  it "undefs fun" do
+    assert_error %(
+      fun foo : Int32
+        1
+      end
+
+      undef foo
+
+      foo
+      ),
+      "undefined local variable or method 'foo'"
+  end
 end
