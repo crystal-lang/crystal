@@ -15,6 +15,7 @@ $main_stacktop = LibGC.stackbottom
 $first_fiber = nil
 $last_fiber = nil
 
+@:NoInline
 fun get_stack_top : Void*
   dummy :: Int32
   pointerof(dummy) as Void*
