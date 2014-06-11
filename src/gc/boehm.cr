@@ -18,6 +18,16 @@ lib LibGC("gc")
 
   fun get_heap_usage_safe = GC_get_heap_usage_safe(heap_size : C::SizeT*, free_bytes : C::SizeT*, unmapped_bytes : C::SizeT*, bytes_since_gc : C::SizeT*, total_bytes : C::SizeT*)
   fun set_max_heap_size = GC_set_max_heap_size(C::SizeT)
+
+  fun get_start_callback = GC_get_start_callback : Void*
+  fun set_start_callback = GC_set_start_callback(callback : ->)
+
+  fun set_push_other_roots = GC_set_push_other_roots(proc : ->)
+  fun get_push_other_roots = GC_get_push_other_roots : ->
+
+  fun push_all = GC_push_all(bottom : Void*, top : Void*)
+
+  $stackbottom = GC_stackbottom : Void*
 end
 
 # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
