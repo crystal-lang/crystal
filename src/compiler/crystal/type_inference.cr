@@ -1133,7 +1133,7 @@ module Crystal
         counter = 0
         node.constants.each do |constant|
           if default_value = constant.default_value
-            counter = (default_value as NumberLiteral).value.to_i
+            counter = interpret_enum_value(default_value)
           end
           constant.default_value = NumberLiteral.new(counter, enum_base_type.kind)
           counter += 1
@@ -1141,6 +1141,46 @@ module Crystal
         current_type.types[node.name] = CEnumType.new(@mod, current_type, node.name, enum_base_type, node.constants)
       end
       false
+    end
+
+    def interpret_enum_value(node : NumberLiteral)
+      case node.kind
+      when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64
+        node.value.to_i
+      else
+        node.raise "enum constant value must be an integer, not #{node.kind}"
+      end
+    end
+
+    def interpret_enum_value(node : Call)
+      obj = node.obj
+      unless obj
+        node.raise "invalid enum constant value"
+      end
+      if node.args.length != 1
+        node.raise "invalid enum constant value"
+      end
+
+      left = interpret_enum_value(obj)
+      right = interpret_enum_value(node.args.first)
+
+      case node.name
+      when "+"  then left + right
+      when "-"  then left - right
+      when "*"  then left * right
+      when "/"  then left / right
+      when "&"  then left & right
+      when "|"  then left | right
+      when "<<" then left << right
+      when ">>" then left >> right
+      when "%"  then left % right
+      else
+        node.raise "invalid enum constant value"
+      end
+    end
+
+    def interpret_enum_value(node : ASTNode)
+      node.raise "invalid enum constant value"
     end
 
     def visit(node : ExternalVar)

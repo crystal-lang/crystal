@@ -3211,12 +3211,8 @@ module Crystal
         next_token_skip_space
         if @token.type == :"="
           next_token_skip_space_or_newline
-          check :NUMBER
-          kind = @token.number_kind
-          if kind == :f32 || kind == :f64
-            raise "expecting integer constant"
-          end
-          constant_value = NumberLiteral.new(@token.value.to_s, kind)
+
+          constant_value = parse_logical_or
           next_token_skip_statement_end
         else
           constant_value = nil

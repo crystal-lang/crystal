@@ -19,4 +19,29 @@ describe "Code gen: enum" do
   it "codegens enum value 4" do
     run("#{CodeGenEnumString}; Foo::Bar::W").to_i.should eq(11)
   end
+
+  [
+    {"1 + 2", 3},
+    {"3 - 2", 1},
+    {"3 * 2", 6},
+    {"10 / 2", 5},
+    {"1 << 3", 8},
+    {"100 >> 3", 12},
+    {"10 & 3", 2},
+    {"10 | 3", 11},
+    {"(1 + 2) * 3", 9},
+    {"10 % 3", 1},
+  ].each do |test_case|
+    it "codegens enum with #{test_case[0]} " do
+      run("
+        lib Foo
+          enum Bar
+            X = #{test_case[0]}
+          end
+        end
+
+        Foo::Bar::X
+        ").to_i.should eq(test_case[1])
+    end
+  end
 end
