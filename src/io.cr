@@ -142,6 +142,10 @@ class BufferedIO
     count
   end
 
+  def write(buffer, count)
+    @io.write buffer, count
+  end
+
   def fill_buffer
     @buffer_rem_size = @io.read(@buffer, 16 * 1024)
     @buffer_rem = @buffer
