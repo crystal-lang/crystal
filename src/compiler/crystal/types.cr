@@ -2293,6 +2293,27 @@ module Crystal
     end
   end
 
+  # A union type of nil and a single pointer type.
+  class NilablePointerType < UnionType
+    def initialize(@program, pointer_type)
+      super(@program, [@program.nil, pointer_type] of Type)
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def pointer_type
+      @union_types.last as PointerInstanceType
+    end
+
+    def append_to_s(str)
+      pointer_type.append_to_s(str)
+      str << "?"
+    end
+  end
+
+
   # A union type that doesn't match any of the previous definitions,
   # so it can contain Nil with primitive types, or Reference types with
   # primitives types.

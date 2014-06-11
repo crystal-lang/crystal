@@ -226,6 +226,8 @@ module Crystal
             return NilableType.new(self, other_type)
           elsif other_type.fun?
             return NilableFunType.new(self, other_type)
+          elsif other_type.is_a?(PointerInstanceType)
+            return NilablePointerType.new(self, other_type)
           end
         end
 

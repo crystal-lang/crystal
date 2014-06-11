@@ -121,6 +121,10 @@ module Crystal
       FUN_TYPE
     end
 
+    def create_llvm_type(type : NilablePointerType)
+      llvm_type(type.pointer_type)
+    end
+
     def create_llvm_type(type : MixedUnionType)
       LLVM.struct_type(type.llvm_name) do |a_struct|
         @cache[type] = a_struct

@@ -304,4 +304,30 @@ describe "Code gen: fun" do
       end
       ")
   end
+
+  it "assigns nil and fun to nilable fun type" do
+    run("
+      class Foo
+        def initialize
+        end
+
+        def x=(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.x = nil
+      foo.x = -> { 1 }
+      z = foo.x
+      if z
+        z.call
+      else
+        2
+      end
+      ").to_i.should eq(1)
+  end
 end

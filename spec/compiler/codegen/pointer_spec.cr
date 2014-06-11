@@ -160,4 +160,59 @@ describe "Code gen: pointer" do
       1
       ").to_i.should eq(1)
   end
+
+  it "codegens nilable pointer type (1)" do
+    run("
+      p = Pointer(Int32).malloc(1_u64)
+      p.value = 3
+      a = 1 == 2 ? nil : p
+      if a
+        a.value
+      else
+        4
+      end
+      ").to_i.should eq(3)
+  end
+
+  it "codegens nilable pointer type (2)" do
+    run("
+      p = Pointer(Int32).malloc(1_u64)
+      p.value = 3
+      a = 1 == 1 ? nil : p
+      if a
+        a.value
+      else
+        4
+      end
+      ").to_i.should eq(4)
+  end
+
+  it "assigns nil and pointer to nilable pointer type" do
+    run("
+      class Foo
+        def initialize
+        end
+
+        def x=(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      p = Pointer(Int32).malloc(1_u64)
+      p.value = 3
+
+      foo = Foo.new
+      foo.x = nil
+      foo.x = p
+      z = foo.x
+      if z
+        p.value
+      else
+        2
+      end
+      ").to_i.should eq(3)
+  end
 end

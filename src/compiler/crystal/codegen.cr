@@ -1845,6 +1845,11 @@ module Crystal
       load(closure_ptr)
     end
 
+    def make_nilable_fun(type)
+      null = LLVM.null(LLVM::VoidPointer)
+      make_fun type, null, null
+    end
+
     def emit_debug_metadata(node, value)
       # if value.is_a?(LibLLVM::ValueRef) && !LLVM.constant?(value) && !value.is_a?(LibLLVM::BasicBlockRef)
         if md = dbg_metadata(node)
@@ -2167,7 +2172,7 @@ module Crystal
       codegen_cond type.typedef
     end
 
-    def codegen_cond(type : NilableType | NilableReferenceUnionType | PointerInstanceType)
+    def codegen_cond(type : NilableType | NilableReferenceUnionType | PointerInstanceType | NilablePointerType)
       not_null_pointer? @last
     end
 
@@ -2286,6 +2291,23 @@ module Crystal
       store value, target_pointer
     end
 
+    def assign_distinct(target_pointer, target_type : NilableFunType, value_type : NilType, value)
+      nilable_fun = make_nilable_fun target_type
+      store nilable_fun, target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : NilableFunType, value_type : FunType, value)
+      store value, target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : NilType, value)
+      store LLVM.null(llvm_type(target_type)), target_pointer
+    end
+
+    def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : PointerInstanceType, value)
+      store value, target_pointer
+    end
+
     def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
       raise "Bug: trying to assign #{target_type} <- #{value_type}"
     end
@@ -2302,6 +2324,10 @@ module Crystal
         value = downcast_distinct value, to_type, from_type
       end
       value
+    end
+
+    def downcast_distinct(value, to_type : NilType, from_type : Type)
+      llvm_nil
     end
 
     def downcast_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | HierarchyMetaclassType)
@@ -2330,10 +2356,6 @@ module Crystal
       cast_to value, to_type
     end
 
-    def downcast_distinct(value, to_type : NilType, from_type : NilableType)
-      llvm_nil
-    end
-
     def downcast_distinct(value, to_type : Type, from_type : NilableType)
       value
     end
@@ -2342,8 +2364,8 @@ module Crystal
       value
     end
 
-    def downcast_distinct(value, to_type : NilType, from_type : NilableFunType)
-      llvm_nil
+    def downcast_distinct(value, to_type : PointerInstanceType, from_type : NilablePointerType)
+      value
     end
 
     def downcast_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType)
@@ -2370,10 +2392,6 @@ module Crystal
       cast_to value, to_type
     end
 
-    def downcast_distinct(value, to_type : NilType, from_type : NilableReferenceUnionType)
-      llvm_nil
-    end
-
     def downcast_distinct(value, to_type : Type, from_type : NilableReferenceUnionType)
       cast_to value, to_type
     end
@@ -2384,10 +2402,6 @@ module Crystal
 
     def downcast_distinct(value, to_type : NilableType, from_type : MixedUnionType)
       load cast_to_pointer(union_value(value), to_type)
-    end
-
-    def downcast_distinct(value, to_type : NilType, from_type : MixedUnionType)
-      llvm_nil
     end
 
     def downcast_distinct(value, to_type : BoolType, from_type : MixedUnionType)
@@ -2444,11 +2458,18 @@ module Crystal
     end
 
     def upcast_distinct(value, to_type : NilableFunType, from_type : NilType)
-      null = LLVM.null(LLVM::VoidPointer)
-      make_fun to_type, null, null
+      make_nilable_fun to_type
     end
 
     def upcast_distinct(value, to_type : NilableFunType, from_type : FunType)
+      value
+    end
+
+    def upcast_distinct(value, to_type : NilablePointerType, from_type : NilType)
+      LLVM.null(llvm_type(to_type))
+    end
+
+    def upcast_distinct(value, to_type : NilablePointerType, from_type : PointerInstanceType)
       value
     end
 

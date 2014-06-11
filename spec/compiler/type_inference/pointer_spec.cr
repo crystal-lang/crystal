@@ -59,4 +59,9 @@ describe "Type inference: pointer" do
   it "create pointer by address" do
     assert_type("Pointer(Int32).new(123_u64)") { pointer_of(int32) }
   end
+
+  it "types nil or pointer type" do
+    result = assert_type("1 == 1 ? nil : Pointer(Int32).null") { |mod| union_of(mod.nil, mod.pointer_of(mod.int32)) }
+    result.node.type.is_a?(NilablePointerType).should be_true
+  end
 end
