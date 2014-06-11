@@ -2,7 +2,7 @@ require "socket"
 require "uri"
 require "json"
 require "ssl"
-require "http/*"
+require "http/**"
 
 module HTTP
   def self.parse_headers_and_body(io)
