@@ -1722,6 +1722,7 @@ module Crystal
       external.set_type(return_type)
       external.fun_def = fun_def
       external.location = fun_def.location
+      external.attributes = fun_def.attributes
       fun_def.external = external
       external
     end

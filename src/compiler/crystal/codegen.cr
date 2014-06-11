@@ -2013,7 +2013,21 @@ module Crystal
       )
       context.fun.add_attribute LibLLVM::Attribute::NoReturn if target_def.no_returns?
 
-      if @single_module && !target_def.is_a?(External)
+      no_inline = false
+      target_def.attributes.try &.each do |attribute|
+        case attribute.name
+        when "NoInline"
+          context.fun.add_attribute LibLLVM::Attribute::NoInline
+          context.fun.linkage = LibLLVM::Linkage::External
+          no_inline = true
+        when "AlwaysInline"
+          context.fun.add_attribute LibLLVM::Attribute::AlwaysInline
+        when "ReturnsTwice"
+          context.fun.add_attribute LibLLVM::Attribute::ReturnsTwice
+        end
+      end
+
+      if @single_module && !target_def.is_a?(External) && !no_inline
         context.fun.linkage = LibLLVM::Linkage::Internal
       end
 

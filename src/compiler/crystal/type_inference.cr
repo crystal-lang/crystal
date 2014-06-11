@@ -17,6 +17,7 @@ module Crystal
     ValidGlobalAttributes = ["ThreadLocal"]
     ValidExternalVarAttributes = ["ThreadLocal"]
     ValidStructDefAttributes = ["Packed"]
+    ValidDefAttributes = ["AlwaysInline", "NoInline", "ReturnsTwice"]
 
     getter mod
     property! scope
@@ -426,6 +427,10 @@ module Crystal
       target_type.add_def node
       node.set_type @mod.nil
       false
+    end
+
+    def end_visit(node : Def)
+      check_valid_attributes node, ValidDefAttributes, "def"
     end
 
     def visit(node : Macro)
@@ -1083,6 +1088,10 @@ module Crystal
       node.type = @mod.nil
 
       false
+    end
+
+    def end_visit(node : FunDef)
+      check_valid_attributes node, ValidDefAttributes, "fun"
     end
 
     def end_visit(node : TypeDef)

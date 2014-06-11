@@ -15,19 +15,19 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
   type TargetMachineRef : Void*
 
   enum Attribute
-    ZExt       = 1
-    SExt       = 2
-    NoReturn   = 4
-    InReg      = 8
-    StructRet  = 16
-    NoUnwind   = 32
-    NoAlias    = 64
-    ByVal      = 128
-    Nest       = 256
-    # ReadNone   = 1 << 9
-    # ReadOnly   = 1 << 10
-    # NoInline   = 1 << 11
-    # AlwaysInline    = 1 << 12
+    ZExt          = 1
+    SExt          = 2
+    NoReturn      = 4
+    InReg         = 8
+    StructRet     = 16
+    NoUnwind      = 32
+    NoAlias       = 64
+    ByVal         = 128
+    Nest          = 256
+    ReadNone      = 512
+    ReadOnly      = 1024
+    NoInline      = 2048
+    AlwaysInline  = 4096
     # OptimizeForSize = 1 << 13
     # StackProtect    = 1 << 14
     # StackProtectReq = 1 << 15
@@ -38,7 +38,7 @@ lib LibLLVM("`llvm-config --libs --ldflags`")
     # Naked      = 1 << 24
     # InlineHint = 1 << 25
     # StackAlignment = 7 << 26
-    # ReturnsTwice = 1 << 29
+    ReturnsTwice = 536870912
     # UWTable = 1 << 30
     # NonLazyBind = 1 << 3
     # AddressSafety = 1_u64 << 32,
