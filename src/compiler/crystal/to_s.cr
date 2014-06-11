@@ -708,8 +708,9 @@ module Crystal
 
     def visit(node : Yield)
       if scope = node.scope
+        @str << "with "
         scope.accept self
-        @str << "."
+        @str << " "
       end
       @str << keyword("yield")
       if node.exps.length > 0

@@ -5,7 +5,7 @@ describe "Type inference: yield with scope" do
   it "uses scope in global method" do
     run("
       require \"int\"
-      def foo; 1.yield; end
+      def foo; with 1 yield; end
 
       foo do
         succ
@@ -16,7 +16,7 @@ describe "Type inference: yield with scope" do
   it "uses scope in instance method" do
     run("
       require \"int\"
-      def foo; 1.yield; end
+      def foo; with 1 yield; end
 
       class Foo
         def test
@@ -37,7 +37,7 @@ describe "Type inference: yield with scope" do
   it "it uses self for instance method" do
     run("
       require \"int\"
-      def foo; 1.yield; end
+      def foo; with 1 yield; end
 
       class Foo
         def test
@@ -60,7 +60,7 @@ describe "Type inference: yield with scope" do
       require \"int\"
 
       def foo
-        -1.yield
+        with -1 yield
       end
 
       def plus_two(x)

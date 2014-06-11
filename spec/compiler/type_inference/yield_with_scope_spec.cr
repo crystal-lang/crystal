@@ -4,7 +4,7 @@ require "../../spec_helper"
 describe "Type inference: yield with scope" do
   it "infer type of empty block body" do
     assert_type("
-      def foo; 1.yield; end
+      def foo; with 1 yield; end
 
       foo do
       end
@@ -13,7 +13,7 @@ describe "Type inference: yield with scope" do
 
   it "infer type of block body" do
     input = parse "
-      def foo; 1.yield; end
+      def foo; with 1 yield; end
 
       foo do
         x = 1
@@ -28,7 +28,7 @@ describe "Type inference: yield with scope" do
 
   it "infer type of block body with yield scope" do
     input = parse "
-      def foo; 1.yield; end
+      def foo; with 1 yield; end
 
       foo do
         to_i64
@@ -41,7 +41,7 @@ describe "Type inference: yield with scope" do
 
   it "infer type of block body with yield scope and arguments" do
     input = parse "
-      def foo; 1.yield 1.5; end
+      def foo; with 1 yield 1.5; end
 
       foo do |f|
         to_i64 + f

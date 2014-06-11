@@ -782,6 +782,10 @@ module Crystal
               return check_ident_or_keyword(:while, start)
             end
           end
+        when 'i'
+          if next_char == 't' && next_char == 'h'
+            return check_ident_or_keyword(:with, start)
+          end
         end
         scan_ident(start)
       when 'y'

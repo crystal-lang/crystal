@@ -21,6 +21,7 @@ module Crystal
       @block_arg_count = 0
       @in_macro_expression = false
       @in_def_count = 0
+      @stop_on_yield = 0
     end
 
     def parse
@@ -645,15 +646,6 @@ module Crystal
             raise "'responds_to?' can't receive a block"
           end
           atomic = RespondsTo.new(atomic_obj, arg)
-        when "yield"
-          if atomic.block
-            raise "'yield' can't receive a block"
-          end
-          yields = (@yields ||= 1)
-          if atomic.args && atomic.args.length > yields
-            @yields = atomic.args.length
-          end
-          atomic = Yield.new(atomic.args, atomic.obj)
         end
       end
       atomic
@@ -746,6 +738,8 @@ module Crystal
           node_and_next_token BoolLiteral.new(false)
         when :yield
           parse_yield
+        when :with
+          parse_yield_with_scope
         when :abstract
           unless_in_def do
             next_token_skip_space_or_newline
@@ -2475,6 +2469,8 @@ module Crystal
       case @token.value
       when :if, :unless, :while
         return nil
+      when :yield
+        return nil if @stop_on_yield > 0
       end
 
       args = [] of ASTNode
@@ -2818,7 +2814,19 @@ module Crystal
       Undef.new name
     end
 
-    def parse_yield
+    def parse_yield_with_scope
+      location = @token.location
+      next_token_skip_space
+      @stop_on_yield += 1
+      @yields ||= 1
+      scope = parse_op_assign
+      @stop_on_yield -= 1
+      skip_space
+      check_ident :yield
+      parse_yield scope, location
+    end
+
+    def parse_yield(scope = nil, location = @token.location)
       next_token
 
       call_args = parse_call_args
@@ -2829,8 +2837,7 @@ module Crystal
         @yields = args.length
       end
 
-      location = @token.location
-      node = Yield.new(args || [] of ASTNode)
+      node = Yield.new(args || [] of ASTNode, scope)
       node.location = location
       node
     end
