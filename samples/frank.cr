@@ -1,38 +1,49 @@
 require "socket"
 require "net/http"
 
-$routes = {} of String => (->String)
-
 def get(path, &block : -> String)
-  $routes[path] = block
+  $frank_handler.add_route(path, block)
 end
 
-at_exit do
-  server = TCPServer.new(8080)
-  puts "Listening on http://0.0.0.0:8080"
+class LogHandler < HTTP::Handler
+  def call(request)
+    puts "#{request.path} - #{request.headers}"
+    @next.not_nil!.call request
+  end
+end
 
-  while server != nil
-    sock = server.accept
-    begin
-      if request = HTTPRequest.from_io(sock)
-        puts "#{request.path} - #{request.headers}"
+class FrankHandler < HTTP::Handler
+  def initialize
+    @routes = {} of String => (->String)
+  end
 
-        if handler = $routes[request.path]?
-          begin
-            body = handler.call
-            response = HTTPResponse.new("HTTP/1.1", 200, "OK", {"Content-Type" => "text/plain"}, body)
-          rescue ex
-            response = HTTPResponse.new("HTTP/1.1", 500, "Internal Server Error", {"Content-Type" => "text/plain"}, ex.to_s)
-          end
-        else
-          response = HTTPResponse.new("HTTP/1.1", 404, "Not Found", {"Content-Type" => "text/plain"}, "Not Found")
-        end
-        response.to_io sock
+  def call(request)
+    if handler = @routes[request.path]?
+      begin
+        HTTP::Response.new("HTTP/1.1", 200, "OK", {"Content-Type" => "text/plain"}, handler.call)
+      rescue ex
+        HTTP::Response.new("HTTP/1.1", 500, "Internal Server Error", {"Content-Type" => "text/plain"}, ex.to_s)
       end
-    ensure
-      sock.close
+    else
+      HTTP::Response.new("HTTP/1.1", 404, "Not Found", {"Content-Type" => "text/plain"}, "Not Found")
     end
   end
+
+  def add_route(path, handler)
+    @routes[path] = handler
+  end
+end
+
+$frank_handler = FrankHandler.new
+
+at_exit do
+  handlers = [] of HTTP::Handler
+  handlers << LogHandler.new
+  handlers << $frank_handler
+  server = HTTP::Server.new(8080, HTTP::Server.build_middleware handlers)
+
+  puts "Listening on http://0.0.0.0:8080"
+  server.listen
 end
 
 get "/" do
