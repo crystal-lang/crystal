@@ -9,18 +9,23 @@ def at_exit(&handler)
   handlers << handler
 end
 
-fun main(argc : Int32, argv : UInt8**) : Int32
-  GC.init
-  CrystalMain.__crystal_main(argc, argv)
-  0
-rescue ex
-  puts ex
-  1
-ensure
-  begin
-    $at_exit_handlers.try &.each &.call
-  rescue handler_ex
-    puts "Error running at_exit handler: #{handler_ex}"
+macro redefine_main
+  fun main(argc : Int32, argv : UInt8**) : Int32
+    GC.init
+    {{yield CrystalMain.__crystal_main(argc, argv)}}
+    0
+  rescue ex
+    puts ex
+    1
+  ensure
+    begin
+      $at_exit_handlers.try &.each &.call
+    rescue handler_ex
+      puts "Error running at_exit handler: #{handler_ex}"
+    end
   end
 end
 
+redefine_main do |main|
+  {{main}}
+end

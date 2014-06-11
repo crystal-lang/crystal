@@ -240,14 +240,10 @@ class Object
   end
 end
 
-fun main(argc : Int32, argv : UInt8**) : Int32
-  GC.init
+redefine_main do |main|
   time = Time.now
-  CrystalMain.__crystal_main(argc, argv)
+  {{main}}
   elapsed_time = Time.now - time
   Spec::RootContext.print_results(elapsed_time)
   Spec::RootContext.succeeded ? 0 : 1
-rescue ex
-  puts ex
-  1
 end
