@@ -4,18 +4,21 @@ require "objc"
 NSAutoreleasePool.new
 app = NSApplication.sharedApplication
 
-# app.activationPolicy = NSApplication::ActivationPolicyRegular
+app.activationPolicy = NSApplication::ActivationPolicyRegular
 
-# menubar = NSMenu.new.autorelease
-# appMenuItem = NSMenuItem.new.autorelease
+# menubar = NSMenu.new
+# appMenuItem = NSMenuItem.new
 # menubar << appMenuItem
+
 # app.mainMenu = menubar
 
-window = NSWindow.new(NSRect.new(30, 0, 200, 200), 1_u64, 2_u64, 0_u8)
+window = NSWindow.new(NSRect.new(30, 0, 200, 200), NSWindow::NSTitledWindowMask, NSWindow::NSBackingStoreBuffered, false)
 window.makeKeyAndOrderFront = nil
 
-# app.activateIgnoringOtherApps = true
+app.activateIgnoringOtherApps = true
 
 app.run
+
+# app.performSelectorOnMainThread "run", nil, true
 
 # C.getchar

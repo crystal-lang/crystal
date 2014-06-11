@@ -11,6 +11,14 @@ app = NSApplication.sharedApplication
 
 # puts "sdf"
 
+NSRect.new 0,0,0,0
+
+puts sizeof(NSRect)
+puts sizeof(LibCF::Rect)
+
+
+puts sizeof(NSPoint)
+puts sizeof(LibCF::Point)
 
 LibAppKit.ns_run_alert_panel("Testing".to_nsstring.obj as LibCF::CFString,
                 "This is a simple test to display NSAlertPanel.".to_nsstring.obj as LibCF::CFString,

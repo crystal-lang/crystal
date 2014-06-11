@@ -32,6 +32,10 @@ struct Nil
   def to_sel
     self
   end
+
+  def obj
+    nil
+  end
 end
 
 struct Float
@@ -57,6 +61,10 @@ struct Int
     self.to_u64
   end
 
+  def to_nsenum
+    self.to_u32
+  end
+
   def to_nsbool
     (self != 0).to_nsbool
   end
@@ -68,7 +76,7 @@ struct Bool
   end
 end
 
-struct NSObject
+class NSObject
   property :obj
 
   # region parameters outboxing
@@ -117,6 +125,11 @@ struct NSObject
 
   def initialize(pointer : UInt8*)
     @obj = pointer
+    retain
+  end
+
+  def finalize
+    release
   end
 
   def autorelease
@@ -132,6 +145,10 @@ struct NSObject
   def release
     msgSend "release"
     self
+  end
+
+  def performSelectorOnMainThread(sel, withObject, waitUntilDone)
+    msgSend "performSelectorOnMainThread:withObject:waitUntilDone:", sel.to_sel, withObject.obj, waitUntilDone.to_nsbool
   end
 
   def objc_class
@@ -158,10 +175,18 @@ struct NSObject
     LibObjC.msgSend(self.obj, name.to_sel, outbox(arg0))
   end
 
+  def msgSend(name, arg0, arg1)
+    LibObjC.msgSend(self.obj, name.to_sel, outbox(arg0), outbox(arg1))
+  end
+
+  def msgSend(name, arg0, arg1, arg2)
+    LibObjC.msgSend(self.obj, name.to_sel, outbox(arg0), outbox(arg1), outbox(arg2))
+  end
+
 end
 
 macro initializable_object(klass)
-  struct {{klass}} < NSObject
+  class {{klass}} < NSObject
     def initialize
       @obj = initialize_using "init"
     end
@@ -170,7 +195,7 @@ macro initializable_object(klass)
   end
 end
 
-struct NSString < NSObject
+class NSString < NSObject
   def initialize(s : String)
     @obj = initialize_using "initWithUTF8String:", s.to_s.cstr
   end
@@ -210,8 +235,10 @@ end
 
 initializable_object :NSAutoreleasePool
 
-struct NSApplication < NSObject
-  ActivationPolicyRegular = 0.to_nsinteger
+class NSApplication < NSObject
+  ActivationPolicyRegular = 0
+  ActivationPolicyAccessory = 1
+  ActivationPolicyProhibited = 2
 
   def self.sharedApplication
     NSApplication.new(msgSend("sharedApplication"))
@@ -222,7 +249,7 @@ struct NSApplication < NSObject
   end
 
   def activationPolicy=(policy)
-    msgSend "setActivationPolicy:", policy.to_nsinteger
+    msgSend "setActivationPolicy:", policy.to_nsenum
   end
 
   def activateIgnoringOtherApps=(value)
@@ -270,19 +297,18 @@ struct NSRect
     @obj.origin = NSPoint.new(x, y).obj
     @obj.size.width = w.to_cgfloat
     @obj.size.height = h.to_cgfloat
-    puts "rect built"
     @obj
   end
 end
 
-struct NSWindow < NSObject
-  NSTitledWindowMask = 1_u64.to_nsuinteger
+class NSWindow < NSObject
+  NSTitledWindowMask = 1
+  NSBackingStoreBuffered = 2
 
-  NSBackingStoreBuffered = 2_u64.to_nsuinteger
-
-  def initialize(rect, styleMask, backing, defer)
+  def initialize(rect : NSRect, styleMask, backing, defer)
     obj = self.class.msgSend "alloc"
-    @obj = LibObjC.msgSend(obj, "initWithContentRect:styleMask:backing:defer:".to_sel, rect, styleMask, backing, defer)
+    @obj = LibObjC.msgSend(obj, "initWithContentRect:styleMask:backing:defer:".to_sel, rect.obj, styleMask.to_nsenum, backing.to_nsenum, defer.to_nsbool)
+    # @obj = LibObjC.msgSend(obj, "initWithContentRect:styleMask:backing:defer:".to_sel, rect, 1_u32, 0_u32, 0_u8)
   end
 
   def cascadeTopLeftFromPoint=(point : NSPoint)
@@ -298,7 +324,7 @@ struct NSWindow < NSObject
   end
 end
 
-struct NSProcessInfo < NSObject
+class NSProcessInfo < NSObject
   def self.processInfo
     NSProcessInfo.new(msgSend("processInfo"))
   end
