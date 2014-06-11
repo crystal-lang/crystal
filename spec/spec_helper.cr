@@ -30,7 +30,7 @@ def assert_type(str)
   input = parse str
   input = program.normalize input
   input = program.infer_type input
-  expected_type = program.yield(program)
+  expected_type = with program yield program
   if input.is_a?(Expressions)
     input.last.type.should eq(expected_type)
   else
@@ -83,22 +83,6 @@ def assert_error(str, message)
     fail "TypeException wasn't raised"
   rescue ex : Crystal::TypeException
     fail "Expected '#{ex}' to contain '#{message}'" unless ex.to_s.includes? message
-  end
-end
-
-def assert_interpret(code)
-  program = Program.new
-  interpreter = Interpreter.new(program)
-  interpreter.interpret(code)
-  value = interpreter.value
-  program.yield value, program
-end
-
-def assert_interpret_primitive(code, expected_value)
-  assert_interpret(code) do |value, program|
-    value = value as Interpreter::PrimitiveValue
-    value.type.should eq(program.yield program)
-    value.value.should eq(expected_value)
   end
 end
 

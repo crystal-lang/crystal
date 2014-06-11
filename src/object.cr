@@ -17,7 +17,7 @@ class Object
   end
 
   def instance_eval
-    self.yield
+    with self yield
   end
 
   def try
