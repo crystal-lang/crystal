@@ -19,7 +19,7 @@ class HTTP::Request
 
   def to_io(io)
     io << @method << " " << @path << " HTTP/1.1\r\n"
-    serialize_headers_and_body(io, @headers, @body)
+    HTTP.serialize_headers_and_body(io, @headers, @body)
   end
 
   def self.from_io(io)
