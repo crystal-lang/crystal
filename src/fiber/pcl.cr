@@ -77,14 +77,14 @@ class Fiber
     @arg
   end
 
-  def suspend(@arg = nil)
+  def yield(@arg = nil)
     @stack_top = get_stack_top
     Pcl.co_resume
     @arg
   end
 
-  def self.suspend(arg = nil)
-    current.not_nil!.suspend(arg)
+  def self.yield(arg = nil)
+    current.not_nil!.yield(arg)
   end
 
   def self.current
