@@ -29,7 +29,7 @@ class Fiber
   property :next_fiber
   property :prev_fiber
 
-  def initialize(@proc)
+  def initialize(&@proc)
     @stack = C.malloc(STACK_SIZE.to_u32)
     @stack_top = @stack_bottom = @stack + STACK_SIZE
     @cr = Pcl.co_create(->(f : Void*) { (f as Fiber).run }, pointerof(self) as Void*, @stack, STACK_SIZE)
