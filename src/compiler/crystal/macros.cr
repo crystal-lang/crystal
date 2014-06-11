@@ -218,11 +218,39 @@ module Crystal
 
       def visit(node : Yield)
         if block = @block
-          @last = block.body
+          if node.exps.empty?
+            @last = block.body
+          else
+            block_vars = {} of String => ASTNode
+            node.exps.each_with_index do |exp, i|
+              if block_arg = block.args[i]?
+                block_vars[block_arg.name] = exp
+              end
+            end
+            @last = replace_block_vars block.body.clone, block_vars
+          end
         else
           @last = Nop.new
         end
         false
+      end
+
+      class ReplaceBlockVarsTransformer < Transformer
+        def initialize(@vars)
+        end
+
+        def transform(node : MacroExpression)
+          if (exp = node.exp).is_a?(Var)
+            replacement = @vars[exp.name]?
+            return replacement if replacement
+          end
+          node
+        end
+      end
+
+      def replace_block_vars(body, vars)
+        transformer = ReplaceBlockVarsTransformer.new(vars)
+        body.transform transformer
       end
 
       def execute_special_call(node)

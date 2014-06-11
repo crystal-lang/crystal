@@ -1337,16 +1337,27 @@ module Crystal
         end
       end
 
-      if !string_state && current_char == 'e' && next_char == 'n' && next_char == 'd' && !peek_next_char.ident_part_or_end?
-        if nest == 0
-          next_char
-          @token.type = :MACRO_END
-          @token.macro_state = Token::MacroState.default
-          return @token
-        else
-          nest -= 1
-          whitespace = current_char.whitespace?
-          next_char
+      if !string_state && current_char == 'e' && next_char == 'n'
+        case next_char
+        when 'd'
+          unless peek_next_char.ident_part_or_end?
+            if nest == 0
+              next_char
+              @token.type = :MACRO_END
+              @token.macro_state = Token::MacroState.default
+              return @token
+            else
+              nest -= 1
+              whitespace = current_char.whitespace?
+              next_char
+            end
+          end
+        when 'u'
+          if !string_state && whitespace && next_char == 'm' && !next_char.ident_part_or_end?
+            char = current_char
+            nest += 1
+            whitespace = true
+          end
         end
       end
 
@@ -1356,18 +1367,21 @@ module Crystal
         if !string_state && whitespace &&
           (
             (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||
+            (char == 'l' && next_char == 'i' && next_char == 'b') ||
+            (char == 'f' && next_char == 'u' && next_char == 'n') ||
+            (char == 'i' && next_char == 'f') ||
+            (char == 's' && next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't') ||
             (char == 'c' && (char = next_char) &&
               (char == 'a' && next_char == 's' && next_char == 'e') ||
               (char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's')) ||
             (char == 'd' && (char = next_char) &&
               ((char == 'o') ||
                (char == 'e' && next_char == 'f'))) ||
-            (char == 'i' && next_char == 'f') ||
             (char == 'm' && (char = next_char) &&
               (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o') ||
               (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e')) ||
-            (char == 's' && next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't') ||
             (char == 'u' && next_char == 'n' && (char = next_char) &&
+              (char == 'i' && next_char == 'o' && next_char == 'n') ||
               (char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's') ||
               (char == 't' && next_char == 'i' && next_char == 'l')) ||
             (char == 'w' && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e')) &&
