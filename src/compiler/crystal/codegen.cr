@@ -811,14 +811,13 @@ module Crystal
       the_fun = codegen_fun(fun_literal_name, node.def, context.type, false, @main_mod, true, is_closure)
       the_fun = check_main_fun fun_literal_name, the_fun
 
-      closure_ptr = alloca llvm_type(node.type)
-      store bit_cast(the_fun, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
+      fun_ptr = bit_cast(the_fun, LLVM::VoidPointer)
       if is_closure
-        store bit_cast(context.closure_ptr.not_nil!, LLVM::VoidPointer), gep(closure_ptr, 0, 1)
+        ctx_ptr = bit_cast(context.closure_ptr.not_nil!, LLVM::VoidPointer)
       else
-        store LLVM.null(LLVM::VoidPointer), gep(closure_ptr, 0, 1)
+        ctx_ptr = LLVM.null(LLVM::VoidPointer)
       end
-      @last = load(closure_ptr)
+      @last = make_fun node.type, fun_ptr, ctx_ptr
 
       false
     end
@@ -834,14 +833,13 @@ module Crystal
 
       last_fun = target_def_fun(node.call.target_def, owner)
 
-      closure_ptr = alloca llvm_type(node.type)
-      store bit_cast(last_fun, LLVM::VoidPointer), gep(closure_ptr, 0, 0)
+      fun_ptr = bit_cast(last_fun, LLVM::VoidPointer)
       if call_self && !owner.metaclass?
-        store bit_cast(call_self, LLVM::VoidPointer), gep(closure_ptr, 0, 1)
+        ctx_ptr = bit_cast(call_self, LLVM::VoidPointer)
       else
-        store LLVM.null(LLVM::VoidPointer), gep(closure_ptr, 0, 1)
+        ctx_ptr = LLVM.null(LLVM::VoidPointer)
       end
-      @last = load(closure_ptr)
+      @last = make_fun node.type, fun_ptr, ctx_ptr
 
       false
     end
@@ -1798,6 +1796,12 @@ module Crystal
       set_call_by_val_attributes node, target_def, self_type, is_closure
       emit_debug_metadata node, @last if @debug
 
+      if target_def.is_a?(External) && (target_def.type.fun? || target_def.type.is_a?(NilableFunType))
+        fun_ptr = bit_cast(@last, LLVM::VoidPointer)
+        ctx_ptr = LLVM.null(LLVM::VoidPointer)
+        return @last = make_fun(target_def.type, fun_ptr, ctx_ptr)
+      end
+
       case type
       when .no_return?
         unreachable
@@ -1832,6 +1836,13 @@ module Crystal
           LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LibLLVM::Attribute::ByVal)
         end
       end
+    end
+
+    def make_fun(type, fun_ptr, ctx_ptr)
+      closure_ptr = alloca llvm_type(type)
+      store fun_ptr, gep(closure_ptr, 0, 0)
+      store ctx_ptr, gep(closure_ptr, 0, 1)
+      load(closure_ptr)
     end
 
     def emit_debug_metadata(node, value)
@@ -2160,6 +2171,11 @@ module Crystal
       not_null_pointer? @last
     end
 
+    def codegen_cond(type : NilableFunType)
+      fun_ptr = @builder.extract_value @last, 0
+      not_null_pointer? fun_ptr
+    end
+
     def codegen_cond(type : MixedUnionType)
       has_nil = type.union_types.any? &.nil_type?
       has_bool = type.union_types.any? &.bool_type?
@@ -2322,6 +2338,14 @@ module Crystal
       value
     end
 
+    def downcast_distinct(value, to_type : FunType, from_type : NilableFunType)
+      value
+    end
+
+    def downcast_distinct(value, to_type : NilType, from_type : NilableFunType)
+      llvm_nil
+    end
+
     def downcast_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType)
       value
     end
@@ -2417,6 +2441,15 @@ module Crystal
 
     def upcast_distinct(value, to_type : NilableReferenceUnionType, from_type : Type)
       cast_to value, to_type
+    end
+
+    def upcast_distinct(value, to_type : NilableFunType, from_type : NilType)
+      null = LLVM.null(LLVM::VoidPointer)
+      make_fun to_type, null, null
+    end
+
+    def upcast_distinct(value, to_type : NilableFunType, from_type : FunType)
+      value
     end
 
     def upcast_distinct(value, to_type : ReferenceUnionType, from_type)

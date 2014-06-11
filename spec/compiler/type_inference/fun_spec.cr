@@ -270,4 +270,9 @@ describe "Type inference: fun" do
       foo.foo ->{ 1 }
       ") { fun_of(void) }
   end
+
+  it "types nil or fun type" do
+    result = assert_type("1 == 1 ? nil : ->{}") { |mod| union_of(mod.nil, mod.fun_of(mod.nil)) }
+    result.node.type.is_a?(NilableFunType).should be_true
+  end
 end

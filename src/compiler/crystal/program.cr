@@ -224,6 +224,8 @@ module Crystal
           other_type = types[other_index]
           if other_type.reference_like? && !other_type.hierarchy?
             return NilableType.new(self, other_type)
+          elsif other_type.fun?
+            return NilableFunType.new(self, other_type)
           end
         end
 

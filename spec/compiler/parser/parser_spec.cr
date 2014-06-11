@@ -486,6 +486,7 @@ describe "Parser" do
   it_parses "lib C\nfun getchar\nend", LibDef.new("C", nil, [FunDef.new("getchar")] of ASTNode)
   it_parses "lib C\nfun getchar(...)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [] of Arg, nil, true)] of ASTNode)
   it_parses "lib C\nfun getchar : Int\nend", LibDef.new("C", nil, [FunDef.new("getchar", [] of Arg, "Int".path)] of ASTNode)
+  it_parses "lib C\nfun getchar : (->)?\nend", LibDef.new("C", nil, [FunDef.new("getchar", ([] of Arg), Union.new([Fun.new, "Nil".path(true)] of ASTNode))] of ASTNode)
   it_parses "lib C\nfun getchar(Int, Float)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("", nil, "Int".path), Arg.new("", nil, "Float".path)])] of ASTNode)
   it_parses "lib C\nfun getchar(a : Int, b : Float)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".path), Arg.new("b", nil, "Float".path)])] of ASTNode)
   it_parses "lib C\nfun getchar(a : Int)\nend", LibDef.new("C", nil, [FunDef.new("getchar", [Arg.new("a", nil, "Int".path)])] of ASTNode)

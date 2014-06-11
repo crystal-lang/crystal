@@ -258,4 +258,50 @@ describe "Code gen: fun" do
       }.call(Foo::MyEnum::X)
       ").to_i.should eq(1)
   end
+
+  it "codegens nilable fun type (1)" do
+    run("
+      a = 1 == 2 ? nil : ->{ 3 }
+      if a
+        a.call
+      else
+        4
+      end
+      ").to_i.should eq(3)
+  end
+
+  it "codegens nilable fun type (2)" do
+    run("
+      a = 1 == 1 ? nil : ->{ 3 }
+      if a
+        a.call
+      else
+        4
+      end
+      ").to_i.should eq(4)
+  end
+
+  it "builds fun type from fun" do
+    build("
+      lib C
+        fun foo : ->
+      end
+
+      x = C.foo
+      x.call
+      ")
+  end
+
+  it "builds nilable fun type from fun" do
+    build("
+      lib C
+        fun foo : (->)?
+      end
+
+      x = C.foo
+      if x
+        x.call
+      end
+      ")
+  end
 end

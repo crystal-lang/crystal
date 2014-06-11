@@ -2715,12 +2715,12 @@ module Crystal
           case type
           when Array
             types.concat type
+            return
           when ASTNode
-            types << type
+            # skip
           else
             raise "Bug"
           end
-          return
         else
           if allow_primitives
             case @token.type

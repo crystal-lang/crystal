@@ -2271,6 +2271,28 @@ module Crystal
     end
   end
 
+  # A union type of nil and a single function type.
+  class NilableFunType < UnionType
+    def initialize(@program, fun_type)
+      super(@program, [@program.nil, fun_type] of Type)
+    end
+
+    def primitive_like?
+      true
+    end
+
+    def fun_type
+      @union_types.last as FunType
+    end
+
+    def append_to_s(str)
+      str << "("
+      fun_type.append_to_s(str)
+      str << ")"
+      str << "?"
+    end
+  end
+
   # A union type that doesn't match any of the previous definitions,
   # so it can contain Nil with primitive types, or Reference types with
   # primitives types.
