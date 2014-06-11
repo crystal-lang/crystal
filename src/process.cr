@@ -1,5 +1,7 @@
 lib C
+  @:ReturnsTwice
   fun fork : Int32
+
   fun getpid : Int32
   fun getppid : Int32
   fun exit(status : Int32) : NoReturn
