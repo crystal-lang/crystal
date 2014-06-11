@@ -330,4 +330,19 @@ describe "Code gen: fun" do
       end
       ").to_i.should eq(1)
   end
+
+  it "allows invoking fun literal with smaller type" do
+    run("
+      struct Nil
+        def to_i
+          0
+        end
+      end
+
+      f = ->(x : Int32 | Nil) {
+        x
+      }
+      f.call(1).to_i
+      ").to_i.should eq(1)
+  end
 end

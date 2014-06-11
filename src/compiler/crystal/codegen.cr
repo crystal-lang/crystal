@@ -634,6 +634,14 @@ module Crystal
       closure_ptr = call_args[0]
       args = call_args[1 .. -1]
 
+      fun_type = context.type as FunType
+      0.upto(target_def.args.length - 1) do |i|
+        arg = args[i]
+        fun_arg_type = fun_type.fun_types[i]
+        target_def_arg_type = target_def.args[i].type
+        args[i] = upcast arg, fun_arg_type, target_def_arg_type
+      end
+
       fun_ptr = @builder.extract_value closure_ptr, 0
       ctx_ptr = @builder.extract_value closure_ptr, 1
 
@@ -646,13 +654,13 @@ module Crystal
       Phi.open(self, node, true) do |phi|
         position_at_end ctx_is_null_block
         real_fun_ptr = bit_cast fun_ptr, llvm_fun_type(context.type)
-        value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, false)
+        value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, false, fun_type)
         phi.add value, node.type
 
         position_at_end ctx_is_not_null_block
         real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
         args.insert(0, ctx_ptr)
-        value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true)
+        value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true, fun_type)
         phi.add value, node.type, true
       end
     end
@@ -1784,7 +1792,7 @@ module Crystal
       codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
     end
 
-    def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false)
+    def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
       if raises && (handler = @exception_handlers.try &.last?)
         invoke_out_block = new_block "invoke_out"
         @last = @builder.invoke func, call_args, invoke_out_block, handler.catch_block
@@ -1793,7 +1801,7 @@ module Crystal
         @last = call func, call_args
       end
 
-      set_call_by_val_attributes node, target_def, self_type, is_closure
+      set_call_by_val_attributes node, target_def, self_type, is_closure, fun_type
       emit_debug_metadata node, @last if @debug
 
       if target_def.is_a?(External) && (target_def.type.fun? || target_def.type.is_a?(NilableFunType))
@@ -1818,21 +1826,25 @@ module Crystal
       @last
     end
 
-    def set_call_by_val_attributes(node, target_def, self_type, is_closure)
+    def set_call_by_val_attributes(node, target_def, self_type, is_closure, fun_type)
       # We don't want by_val in C functions
       return if target_def.is_a?(External)
 
       arg_offset = 1
       if node.is_a?(Call)
-        args = node.args
+        arg_types = node.args.map &.type
         arg_offset += 1 if node.obj.try(&.type.passed_as_self?) || self_type.try(&.passed_as_self?)
       else
-        args = target_def.try(&.args)
+        if fun_type
+          arg_types = fun_type.arg_types
+        else
+          arg_types = target_def.try &.args.map &.type
+        end
         arg_offset += 1 if is_closure
       end
 
-      args.try &.each_with_index do |arg, i|
-        if arg.type.passed_by_value?
+      arg_types.try &.each_with_index do |arg_type, i|
+        if arg_type.passed_by_value?
           LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LibLLVM::Attribute::ByVal)
         end
       end
@@ -2517,6 +2529,10 @@ module Crystal
       union_ptr = alloca(llvm_type(to_type))
       store_in_union(union_ptr, from_type, to_rhs(value, from_type))
       union_ptr
+    end
+
+    def upcast_distinct(value, to_type : CEnumType, from_type : Type)
+      value
     end
 
     def upcast_distinct(value, to_type : Type, from_type : Type)

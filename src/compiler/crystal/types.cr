@@ -2249,10 +2249,12 @@ module Crystal
     end
 
     def append_to_s(str)
+      str << "("
       @union_types.each_with_index do |union_type, i|
         str << " | " if i > 0
         union_type.append_to_s(str)
       end
+      str << ")"
     end
 
     def type_desc
@@ -2716,6 +2718,7 @@ module Crystal
     end
 
     def append_to_s(str)
+      str << "("
       len = fun_types.length
       fun_types.each_with_index do |fun_type, i|
         if i == len - 1
@@ -2725,6 +2728,7 @@ module Crystal
         end
         fun_type.append_to_s(str)
       end
+      str << ")"
     end
   end
 end

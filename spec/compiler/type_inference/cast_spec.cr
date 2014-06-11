@@ -119,7 +119,7 @@ describe "Type inference: cast" do
       f = ->{ 1 }
       f as Void*
       ),
-      "can't cast  -> Int32 to Pointer(Void)"
+      "can't cast ( -> Int32) to Pointer(Void)"
   end
 
   it "disallows casting pointer to fun" do
@@ -127,6 +127,6 @@ describe "Type inference: cast" do
       a :: Void*
       a as -> Int32
       ),
-      "can't cast Pointer(Void) to  -> Int32"
+      "can't cast Pointer(Void) to ( -> Int32)"
   end
 end
