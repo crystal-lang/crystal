@@ -1,9 +1,3 @@
-lib C
-  fun malloc(size : UInt32) : Void*
-  fun realloc(ptr : Void*, size : UInt32) : Void*
-  fun free(ptr : Void*)
-end
-
 fun __crystal_malloc(size : UInt32) : Void*
   C.malloc(size)
 end

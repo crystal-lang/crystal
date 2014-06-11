@@ -13,6 +13,9 @@ lib C
     alias TimeT = Int32
   end
 
+  fun malloc(size : UInt32) : Void*
+  fun realloc(ptr : Void*, size : UInt32) : Void*
+  fun free(ptr : Void*)
   fun time(t : Int64) : Int64
   fun sleep(seconds : UInt32) : UInt32
   fun free(ptr : Void*)
