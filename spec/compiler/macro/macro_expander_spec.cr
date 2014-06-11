@@ -54,6 +54,10 @@ describe "MacroExpander" do
     assert_macro "", %({{{1, 2, 3}}}), [] of ASTNode, %({1, 2, 3})
   end
 
+  it "expands macro with range" do
+    assert_macro "", %({{1..3}}), [] of ASTNode, %(1..3)
+  end
+
   it "expands macro with string interpolation" do
     assert_macro "", "{{ \"hello\#{1 == 1}world\" }}", [] of ASTNode, "hellotrueworld"
   end
@@ -62,219 +66,249 @@ describe "MacroExpander" do
     assert_macro "x", "{{x}}", [Var.new("hello")] of ASTNode, "hello"
   end
 
-  it "expands macro with stringify call on string" do
-    assert_macro "x", "{{x.stringify}}", [StringLiteral.new("hello")] of ASTNode, %("hello")
+  describe "if" do
+    it "expands macro with if when truthy" do
+      assert_macro "", "{%if true%}hello{%end%}", [] of ASTNode, "hello"
+    end
+
+    it "expands macro with if when falsey" do
+      assert_macro "", "{%if false%}hello{%end%}", [] of ASTNode, ""
+    end
+
+    it "expands macro with if else when falsey" do
+      assert_macro "", "{%if false%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
+    end
   end
 
-  it "expands macro with stringify call on symbol" do
-    assert_macro "x", "{{x.stringify}}", [SymbolLiteral.new("hello")] of ASTNode, %(":hello")
+  describe "for" do
+    it "expands macro with for over array literal" do
+      assert_macro "x", "{%for e in x %}{{e}}{%end%}", [ArrayLiteral.new([Var.new("hello"), Var.new("world")] of ASTNode)] of ASTNode, "helloworld"
+    end
+
+    it "expands macro with for over array literal with index" do
+      assert_macro "x", "{%for e, i in x%}{{e}}{{i}}{%end%}", [ArrayLiteral.new([Var.new("hello"), Var.new("world")] of ASTNode)] of ASTNode, "hello0world1"
+    end
+
+    it "expands macro with for over embedded array literal" do
+      assert_macro "", "{%for e in [1, 2]%}{{e}}{%end%}", [] of ASTNode, "12"
+    end
+
+    it "expands macro with for over hash literal" do
+      assert_macro "x", "{%for k, v in x%}{{k}}{{v}}{%end%}", [HashLiteral.new([Var.new("a"), Var.new("b")] of ASTNode, [Var.new("c"), Var.new("d")] of ASTNode)] of ASTNode, "acbd"
+    end
+
+    it "expands macro with for over hash literal with index" do
+      assert_macro "x", "{%for k, v, i in x%}{{k}}{{v}}{{i}}{%end%}", [HashLiteral.new([Var.new("a"), Var.new("b")] of ASTNode, [Var.new("c"), Var.new("d")] of ASTNode)] of ASTNode, "ac0bd1"
+    end
+
+    it "expands macro with for over tuple literal" do
+      assert_macro "x", "{%for e, i in x%}{{e}}{{i}}{%end%}", [TupleLiteral.new([Var.new("a"), Var.new("b")] of ASTNode)] of ASTNode, "a0b1"
+    end
   end
 
-  it "expands macro with for over array literal" do
-    assert_macro "x", "{%for e in x %}{{e}}{%end%}", [ArrayLiteral.new([Var.new("hello"), Var.new("world")] of ASTNode)] of ASTNode, "helloworld"
+  describe "node methods" do
+    it "expands macro with stringify call on string" do
+      assert_macro "x", "{{x.stringify}}", [StringLiteral.new("hello")] of ASTNode, %("hello")
+    end
+
+    it "expands macro with stringify call on symbol" do
+      assert_macro "x", "{{x.stringify}}", [SymbolLiteral.new("hello")] of ASTNode, %(":hello")
+    end
+
+    it "executes == on numbers (true)" do
+      assert_macro "", "{%if 1 == 1%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
+    end
+
+    it "executes == on numbers (false)" do
+      assert_macro "", "{%if 1 == 2%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
+    end
+
+    it "executes != on numbers (true)" do
+      assert_macro "", "{%if 1 != 2%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
+    end
+
+    it "executes != on numbers (false)" do
+      assert_macro "", "{%if 1 != 1%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
+    end
   end
 
-  it "expands macro with for over array literal with index" do
-    assert_macro "x", "{%for e, i in x%}{{e}}{{i}}{%end%}", [ArrayLiteral.new([Var.new("hello"), Var.new("world")] of ASTNode)] of ASTNode, "hello0world1"
+  describe "number methods" do
+    it "executes > (true)" do
+      assert_macro "", "{%if 2 > 1%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
+    end
+
+    it "executes > (false)" do
+      assert_macro "", "{%if 2 > 3%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
+    end
+
+    it "executes >= (true)" do
+      assert_macro "", "{%if 1 >= 1%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
+    end
+
+    it "executes >= (false)" do
+      assert_macro "", "{%if 2 >= 3%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
+    end
+
+    it "executes < (true)" do
+      assert_macro "", "{%if 1 < 2%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
+    end
+
+    it "executes < (false)" do
+      assert_macro "", "{%if 3 < 2%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
+    end
+
+    it "executes <= (true)" do
+      assert_macro "", "{%if 1 <= 1%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
+    end
+
+    it "executes <= (false)" do
+      assert_macro "", "{%if 3 <= 2%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
+    end
   end
 
-  it "expands macro with for over embedded array literal" do
-    assert_macro "", "{%for e in [1, 2]%}{{e}}{%end%}", [] of ASTNode, "12"
+  describe "string methods" do
+    it "executes split without arguments" do
+      assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"])
+    end
+
+    it "executes split with argument" do
+      assert_macro "", %({{"1-2-3".split("-")}}), [] of ASTNode, %(["1", "2", "3"])
+    end
+
+    it "executes split with char argument" do
+      assert_macro "", %({{"1-2-3".split('-')}}), [] of ASTNode, %(["1", "2", "3"])
+    end
+
+    it "executes strip" do
+      assert_macro "", %({{"  hello   ".strip}}), [] of ASTNode, "hello"
+    end
+
+    it "executes downcase" do
+      assert_macro "", %({{"HELLO".downcase}}), [] of ASTNode, "hello"
+    end
+
+    it "executes upcase" do
+      assert_macro "", %({{"hello".upcase}}), [] of ASTNode, "HELLO"
+    end
+
+    it "executes lines" do
+      assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
+    end
+
+    it "executes length" do
+      assert_macro "", %({{"hello".length}}), [] of ASTNode, "5"
+    end
+
+    it "executes empty" do
+      assert_macro "", %({{"hello".empty?}}), [] of ASTNode, "false"
+    end
+
+    it "executes string [Range] inclusive" do
+      assert_macro "", %({{"hello"[1..-2]}}), [] of ASTNode, "ell"
+    end
+
+    it "executes string [Range] exclusive" do
+      assert_macro "", %({{"hello"[1...-2]}}), [] of ASTNode, "el"
+    end
   end
 
-  it "expands macro with for over hash literal" do
-    assert_macro "x", "{%for k, v in x%}{{k}}{{v}}{%end%}", [HashLiteral.new([Var.new("a"), Var.new("b")] of ASTNode, [Var.new("c"), Var.new("d")] of ASTNode)] of ASTNode, "acbd"
+  describe "array methods" do
+    it "executes index 0" do
+      assert_macro "", %({{[1, 2, 3][0]}}), [] of ASTNode, "1"
+    end
+
+    it "executes index 1" do
+      assert_macro "", %({{[1, 2, 3][1]}}), [] of ASTNode, "2"
+    end
+
+    it "executes length" do
+      assert_macro "", %({{[1, 2, 3].length}}), [] of ASTNode, "3"
+    end
+
+    it "executes empty?" do
+      assert_macro "", %({{[1, 2, 3].empty?}}), [] of ASTNode, "false"
+    end
+
+    it "executes join" do
+      assert_macro "", %({{[1, 2, 3].join ", "}}), [] of ASTNode, "1, 2, 3"
+    end
+
+    it "executes join with strings" do
+      assert_macro "", %({{["a", "b"].join ", "}}), [] of ASTNode, "a, b"
+    end
+
+    it "executes map" do
+      assert_macro "", %({{[1, 2, 3].map { |e| e == 2 }}}), [] of ASTNode, "[false, true, false]"
+    end
+
+    it "executes map with arg" do
+      assert_macro "x", %({{x.map { |e| e }}}), [ArrayLiteral.new([Call.new(nil, "hello")] of ASTNode)] of ASTNode, "[hello]"
+    end
+
+    it "executes select" do
+      assert_macro "", %({{[1, 2, 3].select { |e| e == 1 }}}), [] of ASTNode, "[1]"
+    end
+
+    it "executes any? (true)" do
+      assert_macro "", %({{[1, 2, 3].any? { |e| e == 1 }}}), [] of ASTNode, "true"
+    end
+
+    it "executes any? (false)" do
+      assert_macro "", %({{[1, 2, 3].any? { |e| e == 4 }}}), [] of ASTNode, "false"
+    end
+
+    it "executes all? (true)" do
+      assert_macro "", %({{[1, 1, 1].all? { |e| e == 1 }}}), [] of ASTNode, "true"
+    end
+
+    it "executes all? (false)" do
+      assert_macro "", %({{[1, 2, 1].all? { |e| e == 1 }}}), [] of ASTNode, "false"
+    end
+
+    it "executes first" do
+      assert_macro "", %({{[1, 2, 3].first}}), [] of ASTNode, "1"
+    end
+
+    it "executes last" do
+      assert_macro "", %({{[1, 2, 3].last}}), [] of ASTNode, "3"
+    end
   end
 
-  it "expands macro with for over hash literal with index" do
-    assert_macro "x", "{%for k, v, i in x%}{{k}}{{v}}{{i}}{%end%}", [HashLiteral.new([Var.new("a"), Var.new("b")] of ASTNode, [Var.new("c"), Var.new("d")] of ASTNode)] of ASTNode, "ac0bd1"
+  describe "hash methods" do
+    it "executes length" do
+      assert_macro "", %({{{a: 1, b: 3}.length}}), [] of ASTNode, "2"
+    end
+
+    it "executes empty?" do
+      assert_macro "", %({{{a: 1}.empty?}}), [] of ASTNode, "false"
+    end
+
+    it "executes index" do
+      assert_macro "", %({{{a: 1}[:a]}}), [] of ASTNode, "1"
+    end
+
+    it "executes index not found" do
+      assert_macro "", %({{{a: 1}[:b]}}), [] of ASTNode, "nil"
+    end
   end
 
-  it "expands macro with for over tuple literal" do
-    assert_macro "x", "{%for e, i in x%}{{e}}{{i}}{%end%}", [TupleLiteral.new([Var.new("a"), Var.new("b")] of ASTNode)] of ASTNode, "a0b1"
+  describe "tuple methods" do
+    it "executes length" do
+      assert_macro "", %({{{1, 2, 3}.length}}), [] of ASTNode, "3"
+    end
+
+    it "executes empty?" do
+      assert_macro "", %({{{1, 2, 3}.empty?}}), [] of ASTNode, "false"
+    end
+
+    it "executes index 1" do
+      assert_macro "", %({{{1, 2, 3}[1]}}), [] of ASTNode, "2"
+    end
   end
 
-  it "expands macro with if when truthy" do
-    assert_macro "", "{%if true%}hello{%end%}", [] of ASTNode, "hello"
-  end
-
-  it "expands macro with if when falsey" do
-    assert_macro "", "{%if false%}hello{%end%}", [] of ASTNode, ""
-  end
-
-  it "expands macro with if else when falsey" do
-    assert_macro "", "{%if false%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
-  end
-
-  it "executes == on numbers (true)" do
-    assert_macro "", "{%if 1 == 1%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
-  end
-
-  it "executes == on numbers (false)" do
-    assert_macro "", "{%if 1 == 2%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
-  end
-
-  it "executes != on numbers (true)" do
-    assert_macro "", "{%if 1 != 2%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
-  end
-
-  it "executes != on numbers (false)" do
-    assert_macro "", "{%if 1 != 1%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
-  end
-
-  it "executes > on numbers (true)" do
-    assert_macro "", "{%if 2 > 1%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
-  end
-
-  it "executes > on numbers (false)" do
-    assert_macro "", "{%if 2 > 3%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
-  end
-
-  it "executes >= on numbers (true)" do
-    assert_macro "", "{%if 1 >= 1%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
-  end
-
-  it "executes >= on numbers (false)" do
-    assert_macro "", "{%if 2 >= 3%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
-  end
-
-  it "executes < on numbers (true)" do
-    assert_macro "", "{%if 1 < 2%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
-  end
-
-  it "executes < on numbers (false)" do
-    assert_macro "", "{%if 3 < 2%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
-  end
-
-  it "executes <= on numbers (true)" do
-    assert_macro "", "{%if 1 <= 1%}hello{%else%}bye{%end%}", [] of ASTNode, "hello"
-  end
-
-  it "executes <= on numbers (false)" do
-    assert_macro "", "{%if 3 <= 2%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
-  end
-
-  it "executes string split without arguments" do
-    assert_macro "", %({{"1 2 3".split}}), [] of ASTNode, %(["1", "2", "3"])
-  end
-
-  it "executes string split with string argument" do
-    assert_macro "", %({{"1-2-3".split("-")}}), [] of ASTNode, %(["1", "2", "3"])
-  end
-
-  it "executes string split with char argument" do
-    assert_macro "", %({{"1-2-3".split('-')}}), [] of ASTNode, %(["1", "2", "3"])
-  end
-
-  it "executes string strip" do
-    assert_macro "", %({{"  hello   ".strip}}), [] of ASTNode, "hello"
-  end
-
-  it "executes string downcase" do
-    assert_macro "", %({{"HELLO".downcase}}), [] of ASTNode, "hello"
-  end
-
-  it "executes string upcase" do
-    assert_macro "", %({{"hello".upcase}}), [] of ASTNode, "HELLO"
-  end
-
-  it "executes string lines" do
-    assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
-  end
-
-  it "executes string length" do
-    assert_macro "", %({{"hello".length}}), [] of ASTNode, "5"
-  end
-
-  it "executes string empty" do
-    assert_macro "", %({{"hello".empty?}}), [] of ASTNode, "false"
-  end
-
-  it "executes array index 0" do
-    assert_macro "", %({{[1, 2, 3][0]}}), [] of ASTNode, "1"
-  end
-
-  it "executes array index 1" do
-    assert_macro "", %({{[1, 2, 3][1]}}), [] of ASTNode, "2"
-  end
-
-  it "executes array length" do
-    assert_macro "", %({{[1, 2, 3].length}}), [] of ASTNode, "3"
-  end
-
-  it "executes array empty?" do
-    assert_macro "", %({{[1, 2, 3].empty?}}), [] of ASTNode, "false"
-  end
-
-  it "executes array join" do
-    assert_macro "", %({{[1, 2, 3].join ", "}}), [] of ASTNode, "1, 2, 3"
-  end
-
-  it "executes array join with strings" do
-    assert_macro "", %({{["a", "b"].join ", "}}), [] of ASTNode, "a, b"
-  end
-
-  it "executes array map" do
-    assert_macro "", %({{[1, 2, 3].map { |e| e == 2 }}}), [] of ASTNode, "[false, true, false]"
-  end
-
-  it "executes array map with arg" do
-    assert_macro "x", %({{x.map { |e| e }}}), [ArrayLiteral.new([Call.new(nil, "hello")] of ASTNode)] of ASTNode, "[hello]"
-  end
-
-  it "executes array select" do
-    assert_macro "", %({{[1, 2, 3].select { |e| e == 1 }}}), [] of ASTNode, "[1]"
-  end
-
-  it "executes array any? (true)" do
-    assert_macro "", %({{[1, 2, 3].any? { |e| e == 1 }}}), [] of ASTNode, "true"
-  end
-
-  it "executes array any? (false)" do
-    assert_macro "", %({{[1, 2, 3].any? { |e| e == 4 }}}), [] of ASTNode, "false"
-  end
-
-  it "executes array all? (true)" do
-    assert_macro "", %({{[1, 1, 1].all? { |e| e == 1 }}}), [] of ASTNode, "true"
-  end
-
-  it "executes array all? (false)" do
-    assert_macro "", %({{[1, 2, 1].all? { |e| e == 1 }}}), [] of ASTNode, "false"
-  end
-
-  it "executes array first" do
-    assert_macro "", %({{[1, 2, 3].first}}), [] of ASTNode, "1"
-  end
-
-  it "executes array last" do
-    assert_macro "", %({{[1, 2, 3].last}}), [] of ASTNode, "3"
-  end
-
-  it "executes hash length" do
-    assert_macro "", %({{{a: 1, b: 3}.length}}), [] of ASTNode, "2"
-  end
-
-  it "executes hash empty?" do
-    assert_macro "", %({{{a: 1}.empty?}}), [] of ASTNode, "false"
-  end
-
-  it "executes hash index" do
-    assert_macro "", %({{{a: 1}[:a]}}), [] of ASTNode, "1"
-  end
-
-  it "executes hash index not found" do
-    assert_macro "", %({{{a: 1}[:b]}}), [] of ASTNode, "nil"
-  end
-
-  it "executes tuple length" do
-    assert_macro "", %({{{1, 2, 3}.length}}), [] of ASTNode, "3"
-  end
-
-  it "executes tuple empty?" do
-    assert_macro "", %({{{1, 2, 3}.empty?}}), [] of ASTNode, "false"
-  end
-
-  it "executes tuple index 1" do
-    assert_macro "", %({{{1, 2, 3}[1]}}), [] of ASTNode, "2"
+  describe "metavar methods" do
+    it "executes name" do
+      assert_macro "x", %({{x.name}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, "foo"
+    end
   end
 end

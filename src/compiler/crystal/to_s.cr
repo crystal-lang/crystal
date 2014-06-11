@@ -953,9 +953,9 @@ module Crystal
     def visit(node : RangeLiteral)
       node.from.accept self
       if node.exclusive
-        @str << ".."
-      else
         @str << "..."
+      else
+        @str << ".."
       end
       node.to.accept self
       false

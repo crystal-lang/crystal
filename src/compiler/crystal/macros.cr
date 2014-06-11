@@ -287,44 +287,12 @@ module Crystal
         @last = node
       end
 
-      def visit(node : BoolLiteral)
-        @last = node
-      end
-
-      def visit(node : NumberLiteral)
-        @last = node
-      end
-
-      def visit(node : CharLiteral)
-        @last = node
-      end
-
-      def visit(node : StringLiteral)
-        @last = node
-      end
-
-      def visit(node : SymbolLiteral)
-        @last = node
-      end
-
-      def visit(node : NilLiteral)
-        @last = node
-      end
-
-      def visit(node : ArrayLiteral)
-        @last = node
-        false
-      end
-
-      def visit(node : TupleLiteral)
-        @last = node
-        false
-      end
-
-      def visit(node : HashLiteral)
-        @last = node
-        false
-      end
+      {% for name in %w(Bool Number Char String Symbol Nil Array Range Tuple Hash) %}
+        def visit(node : {{name}}Literal)
+          @last = node
+          false
+        end
+      {% end %}
 
       def visit(node : Nop)
         @last = node
@@ -455,6 +423,26 @@ module Crystal
 
     def interpret(method, args, block, interpreter)
       case method
+      when "[]"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when RangeLiteral
+            from, to = arg.from, arg.to
+            unless from.is_a?(NumberLiteral)
+              raise "range from in StringLiteral#[] must be a number, not #{from.class_desc}: #{from}"
+            end
+
+            unless to.is_a?(NumberLiteral)
+              raise "range to in StringLiteral#[] must be a number, not #{to.class_desc}: #{from}"
+            end
+
+            from, to = from.to_number.to_i, to = to.to_number.to_i
+            range = Range.new(from, to, arg.exclusive)
+            StringLiteral.new(@value[range])
+          else
+            raise "wrong argument for StringLiteral#[] (#{arg.class_desc}): #{arg}"
+          end
+        end
       when "downcase"
         interpret_argless_method(method, args) { StringLiteral.new(@value.downcase) }
       when "empty?"
@@ -643,6 +631,15 @@ module Crystal
 
     def stringify
       StringLiteral.new("\"#{@name}\"")
+    end
+
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        interpret_argless_method(method, args) { StringLiteral.new(@name) }
+      else
+        super
+      end
     end
   end
 
