@@ -94,7 +94,8 @@ module IO
   end
 
   def write_byte(byte : UInt8)
-    write pointerof(byte), 1
+    x = byte
+    write pointerof(x), 1
   end
 end
 

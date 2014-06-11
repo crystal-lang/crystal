@@ -37,4 +37,10 @@ describe "StringIO" do
     io.read(3).should eq("foo")
     io.read(50).should eq("barbaz")
   end
+
+  it "write single byte" do
+    io = StringIO.new
+    io.write_byte 97_u8
+    io.to_s.should eq("a")
+  end
 end
