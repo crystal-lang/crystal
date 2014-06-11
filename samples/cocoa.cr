@@ -1,32 +1,21 @@
 #!/usr/bin/env bin/crystal --run
 require "objc"
 
-pool = LibObjC.getClass("NSAutoreleasePool")
+puts NSProcessInfo.processInfo.processName
 
-puts pool.address
+pool = NSAutoreleasePool.new
 
-pool = LibObjC.msgSend(pool, LibObjC.sel_registerName("alloc"))
+app = NSApplication.sharedApplication
 
-puts pool.address
+# # LibAppKit.ns_application_main(0_u32, nil)
 
-pool = LibObjC.msgSend(pool, LibObjC.sel_registerName("init"))
-
-puts pool.address
-
-app = LibObjC.msgSend(LibObjC.getClass("NSApplication"),
-                       LibObjC.sel_registerName("sharedApplication"))
-
-# LibAppKit.ns_application_main(0_u32, nil)
-
-puts "sdf"
-
-puts LibCF.str("Testing")
-
-LibAppKit.ns_run_alert_panel(LibCF.str("Testing"),
-                LibCF.str("This is a simple test to display NSAlertPanel."),
-                LibCF.str("OK"), nil, nil)
+# puts "sdf"
 
 
-puts "sdf"
+LibAppKit.ns_run_alert_panel("Testing".to_nsstring.obj as LibCF::CFString,
+                "This is a simple test to display NSAlertPanel.".to_nsstring.obj as LibCF::CFString,
+                "OK".to_nsstring.obj as LibCF::CFString, nil, nil)
 
-LibObjC.msgSend(pool, LibObjC.sel_registerName("release"))
+# puts "sdf"
+
+pool.release

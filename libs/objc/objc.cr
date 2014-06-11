@@ -68,22 +68,6 @@ struct Bool
   end
 end
 
-# macro initializable_object(klass)
-#   struct {{klass}} < NSObject
-#     def initialize
-#       @obj = initialize_using "init"
-#     end
-
-#     yield
-#   end
-# end
-
-macro initializable_object
-  def initialize
-    @obj = initialize_using "init"
-  end
-end
-
 struct NSObject
   property :obj
 
@@ -176,6 +160,16 @@ struct NSObject
 
 end
 
+macro initializable_object(klass)
+  struct {{klass}} < NSObject
+    def initialize
+      @obj = initialize_using "init"
+    end
+
+    {{yield}}
+  end
+end
+
 struct NSString < NSObject
   def initialize(s : String)
     @obj = initialize_using "initWithUTF8String:", s.to_s.cstr
@@ -198,15 +192,7 @@ struct NSString < NSObject
   end
 end
 
-# initializable_object "NSMutableArray" do
-#   def count
-#     msgSend("count").address
-#   end
-# end
-
-struct NSMutableArray < NSObject
-  initializable_object
-
+initializable_object :NSMutableArray do
   def count
     msgSend("count").address
   end
@@ -222,9 +208,7 @@ struct NSMutableArray < NSObject
 end
 
 
-struct NSAutoreleasePool < NSObject
-  initializable_object
-end
+initializable_object :NSAutoreleasePool
 
 struct NSApplication < NSObject
   ActivationPolicyRegular = 0.to_nsinteger
@@ -250,17 +234,13 @@ struct NSApplication < NSObject
   end
 end
 
-struct NSMenu < NSObject
-  initializable_object
-
+initializable_object :NSMenu do
   def <<(item : NSMenuItem)
     msgSend "addItem:", item
   end
 end
 
-struct NSMenuItem < NSObject
-  initializable_object
-
+initializable_object :NSMenuItem do
   def initialize(title : String, action : String?, keyEquivalent : String)
     obj = self.class.msgSend "alloc"
     @obj = LibObjC.msgSend(obj, "initWithTitle:action:keyEquivalent:".to_sel, title.to_nsstring, action.to_sel, keyEquivalent.to_nsstring)
@@ -319,10 +299,6 @@ struct NSWindow < NSObject
 end
 
 struct NSProcessInfo < NSObject
-  def initialize(obj)
-    @obj = obj
-  end
-
   def self.processInfo
     NSProcessInfo.new(msgSend("processInfo"))
   end
