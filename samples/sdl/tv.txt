@@ -1,0 +1,29 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      xxxxx   xxxx    x   x   xxxxx   xxxxx   xxxxx   x
+      x.....  x...x   x.  x.  x.....   .x...  x...x.  x.
+      x.      x.  x.  x.  x.  x.        x.    x.  x.  x.
+      x.      x.  x.  x.  x.  x.        x.    x.  x.  x.
+      x.      xxxx     x x .  xxxxx     x.    xxxxx.  x.
+      x.      x...x     x .    ...x.    x.    x...x.  x.
+      x.      x.  x.    x.        x.    x.    x.  x.  x.
+      x.      x.  x.    x.        x.    x.    x.  x.  x.
+      xxxxx   x.  x.    x.    xxxxx.    x.    x.  x.  xxxxx
+       .....   .   .     .     .....     .     .   .   .....
