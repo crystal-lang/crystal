@@ -240,7 +240,7 @@ class Object
   end
 end
 
-redefine_main do |main|
+redefine_main("main") do |main|
   time = Time.now
   {{main}}
   elapsed_time = Time.now - time

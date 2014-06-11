@@ -142,3 +142,17 @@ lib LibSDL("SDL")
   fun get_ticks = SDL_GetTicks : UInt32
   fun flip = SDL_Flip(screen : Surface*) : Int32
 end
+
+lib SDLMain("SDLMain")
+end
+
+ifdef darwin
+  lib LibCocoa("`echo \"-framework Cocoa\"`")
+  end
+end
+
+undef main
+
+redefine_main("SDL_main") do |main|
+  {{main}}
+end

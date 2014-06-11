@@ -8,7 +8,7 @@ HEIGHT = 720
 FOV = 45.0
 MAX_DEPTH = 6
 
-class Vec3
+struct Vec3
   getter :x
   getter :y
   getter :z
@@ -24,7 +24,7 @@ class Vec3
   def initialize(@x, @y, @z)
   end
 
-  {% for op in %w(+ - * /) }
+  {% for op in %w(+ - * /) %}
     def {{op}}(other : Vec3)
       Vec3.new(@x {{op}} other.x, @y {{op}} other.y, @z {{op}} other.z)
     end
@@ -32,7 +32,7 @@ class Vec3
     def {{op}}(other : Float)
       Vec3.new(@x {{op}} other, @y {{op}} other, @z {{op}} other)
     end
-  {% end }
+  {% end %}
 
   def -
     Vec3.new(-@x, -@y, -@z)
@@ -52,7 +52,7 @@ class Vec3
   end
 end
 
-class Ray
+struct Ray
   getter :start
   getter :dir
 
@@ -149,7 +149,7 @@ def trace(ray, scene, depth)
       r = Ray.new(point_of_hit + normE5, light_direction)
 
       # go through the scene check whether we're blocked from the lights
-      blocked = scene.objects.any? { |it| it.intersects?(r) }
+      blocked = scene.objects.any? &.intersects? r
 
       unless blocked
         temp = lgt.color

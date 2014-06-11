@@ -9,8 +9,8 @@ def at_exit(&handler)
   handlers << handler
 end
 
-macro redefine_main
-  fun main(argc : Int32, argv : UInt8**) : Int32
+macro redefine_main(name)
+  fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
     GC.init
     {{yield CrystalMain.__crystal_main(argc, argv)}}
     0
@@ -26,6 +26,6 @@ macro redefine_main
   end
 end
 
-redefine_main do |main|
+redefine_main("main") do |main|
   {{main}}
 end
