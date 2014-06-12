@@ -1,11 +1,11 @@
 #!/usr/bin/env bin/crystal --run
 require "spec"
-require "net/http/builder"
+require "html/builder"
 
-describe "HTTP" do
+describe "HTML" do
   describe "Builder" do
     it "builds html" do
-      str = Html::Builder.new.build do
+      str = HTML::Builder.new.build do
         html do
           head do
             title { text "Crystal Programming Language" }

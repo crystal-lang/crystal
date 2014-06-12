@@ -1,4 +1,4 @@
-struct Html::Builder
+struct HTML::Builder
   def initialize
     @str = StringBuilder.new
   end

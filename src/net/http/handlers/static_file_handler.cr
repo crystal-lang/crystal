@@ -1,3 +1,5 @@
+require "html/builder"
+
 class HTTP::StaticFileHandler < HTTP::Handler
   def initialize(@publicdir)
   end
@@ -21,7 +23,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
   end
 
   def directory_listing(request_path, path)
-    Html::Builder.new.build do
+    HTML::Builder.new.build do
       html do
         title { text "Directory listing for #{request_path}" }
         body do
