@@ -471,6 +471,8 @@ module Crystal
             raise "wrong argument for StringLiteral#[] (#{arg.class_desc}): #{arg}"
           end
         end
+      when "capitalize"
+        interpret_argless_method(method, args) { StringLiteral.new(@value.capitalize) }
       when "downcase"
         interpret_argless_method(method, args) { StringLiteral.new(@value.downcase) }
       when "empty?"

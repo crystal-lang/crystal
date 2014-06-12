@@ -191,6 +191,10 @@ describe "MacroExpander" do
       assert_macro "", %({{"hello".upcase}}), [] of ASTNode, "HELLO"
     end
 
+    it "executes capitalize" do
+      assert_macro "", %({{"hello".capitalize}}), [] of ASTNode, "Hello"
+    end
+
     it "executes lines" do
       assert_macro "x", %({{x.lines}}), [StringLiteral.new("1\n2\n3")] of ASTNode, %(["1", "2", "3"])
     end
