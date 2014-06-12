@@ -22,14 +22,17 @@ class HTTP::Server
 
     while true
       sock = server.accept
+      buffered_sock = BufferedIO.new(sock)
+
       begin
         begin
-          request = HTTP::Request.from_io(sock)
+          request = HTTP::Request.from_io(buffered_sock)
         rescue
           next
         end
         response = @handler.call(request)
-        response.to_io sock
+        response.to_io buffered_sock
+        buffered_sock.flush
       ensure
         sock.close
       end
