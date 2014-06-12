@@ -168,6 +168,7 @@ describe "Parser" do
   it_parses "1 + /foo/", Call.new(1.int32, "+", [RegexLiteral.new("foo")] of ASTNode)
   it_parses "a = 1; a /b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", ["b".call] of ASTNode)]
   it_parses "a = 1; a/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", ["b".call] of ASTNode)]
+  it_parses "a = 1; (a)/b", [Assign.new("a".var, 1.int32), Call.new("a".var, "/", ["b".call] of ASTNode)]
 
   it_parses "!1", Call.new(1.int32, "!")
   it_parses "- 1", Call.new(1.int32, "-")
@@ -697,6 +698,7 @@ describe "Parser" do
   it_parses "{1}", TupleLiteral.new([1.int32] of ASTNode)
   it_parses "{1, 2, 3}", TupleLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode)
   it_parses "{A::B}", TupleLiteral.new([Path.new(["A", "B"])] of ASTNode)
+  it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", ([] of ASTNode), Block.new(([] of Var), Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 

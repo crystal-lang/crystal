@@ -1131,6 +1131,7 @@ module Crystal
         exps << parse_expression
         case @token.type
         when :")"
+          @wants_regex = false
           next_token_skip_space
           break
         when :NEWLINE, :";"
@@ -1458,6 +1459,7 @@ module Crystal
         exps << first_exp
         while @token.type != :"}"
           exps << parse_expression
+          skip_space_or_newline
           if @token.type == :","
             next_token_skip_space_or_newline
           end
