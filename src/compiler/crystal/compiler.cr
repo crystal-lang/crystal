@@ -27,6 +27,7 @@ module Crystal
     getter llc_flags
     getter llc_flags_changed
     getter cross_compile
+    getter uses_gcc
     getter! output_dir
 
     def initialize
@@ -48,6 +49,7 @@ module Crystal
       @n_threads = 8.to_i32
       @browser = false
       @single_module = false
+      @uses_gcc = false
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -160,6 +162,7 @@ module Crystal
           clang = program.exec "which gcc"
           if clang
             @clang = clang
+            @uses_gcc = true
           else
             puts "Could not find a C compiler. Install clang (3.3) or gcc."
             exit 1
@@ -409,6 +412,9 @@ module Crystal
           if compiler.release
             system "#{compiler.opt} #{bc_name} -O3 -o #{bc_name_opt}"
             system "#{compiler.llc} #{bc_name_opt} -o #{s_name} #{compiler.llc_flags}"
+            system "#{compiler.clang} -c #{s_name} -o #{o_name}"
+          elsif compiler.uses_gcc
+            system "#{compiler.llc} #{bc_name} -o #{s_name} #{compiler.llc_flags}"
             system "#{compiler.clang} -c #{s_name} -o #{o_name}"
           else
             system "#{compiler.clang} -c #{bc_name} -o #{o_name}"
