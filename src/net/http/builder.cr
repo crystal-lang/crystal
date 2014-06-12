@@ -8,7 +8,7 @@ struct Html::Builder
     @str.to_s
   end
 
-  {% for tag in %w(a b body div em head html i img input li ol p s script span strong table tbody td textarea thead thead title tr u ul) %}
+  {% for tag in %w(a b body div em h1 h2 h3 head html i img input li ol p s script span strong table tbody td textarea thead thead title tr u ul) %}
     def {{tag}}(attrs = nil : Hash?)
       @str << "<{{tag}}"
       if attrs
@@ -29,6 +29,10 @@ struct Html::Builder
 
   def br
     @str << "<br/>"
+  end
+
+  def hr
+    @str << "<hr/>"
   end
 
   def text(text)
