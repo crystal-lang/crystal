@@ -1827,11 +1827,11 @@ module Crystal
     end
 
     def set_call_by_val_attributes(node, target_def, self_type, is_closure, fun_type)
-      # We don't want by_val in C functions
-      return if target_def.is_a?(External)
+      is_external = target_def.is_a?(External)
 
       arg_offset = 1
       if node.is_a?(Call)
+        call_args = node.args
         arg_types = node.args.map &.type
         arg_offset += 1 if node.obj.try(&.type.passed_as_self?) || self_type.try(&.passed_as_self?)
       else
@@ -1845,6 +1845,16 @@ module Crystal
 
       arg_types.try &.each_with_index do |arg_type, i|
         if arg_type.passed_by_value?
+          call_arg = call_args.try &.[i]?
+          next if call_arg.try &.out?
+
+          if is_external
+            if arg_type.struct?
+              wrapped = (arg_type as InstanceVarContainer).all_instance_vars.first_value
+              next unless wrapped.type.is_a?(CStructType)
+            end
+          end
+
           LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LibLLVM::Attribute::ByVal)
         end
       end
