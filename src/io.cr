@@ -105,6 +105,7 @@ class BufferedIO
   def initialize(@io)
     @buffer = @buffer_rem = Pointer(UInt8).malloc(16 * 1024)
     @buffer_rem_size = 0
+    @out_buffer = StringIO.new
   end
 
   def gets
@@ -143,7 +144,12 @@ class BufferedIO
   end
 
   def write(buffer, count)
-    @io.write buffer, count
+    @out_buffer.write buffer, count
+  end
+
+  def flush
+    @io << @out_buffer.to_s
+    @out_buffer = StringIO.new
   end
 
   def fill_buffer
