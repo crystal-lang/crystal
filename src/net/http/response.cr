@@ -8,6 +8,10 @@ class HTTP::Response
   def initialize(@version, @status_code, @status_message, @headers, @body)
   end
 
+  def self.not_found
+    HTTP::Response.new("HTTP/1.1", 404, "Not Found", {"Content-Type" => "text/plain"}, "Not Found")
+  end
+
   def to_io(io)
     io << @version << " " << @status_code << " " << @status_message << "\r\n"
     HTTP.serialize_headers_and_body(io, @headers, @body)

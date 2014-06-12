@@ -1,5 +1,13 @@
 abstract class HTTP::Handler
   property :next
+
+  def call_next(request)
+    if next_handler = @next
+      next_handler.call(request)
+    else
+      HTTP::Response.not_found
+    end
+  end
 end
 
 class HTTP::Server
