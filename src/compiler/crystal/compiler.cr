@@ -73,6 +73,10 @@ module Crystal
         opts.on("-e 'command'", "One line script. Omit [programfile]") do |command|
           @command = command
         end
+        opts.on("-h", "--help", "Show this message") do
+          puts opts
+          exit 1
+        end
         opts.on("--hierarchy", "Prints types hierarchy") do
           @print_hierarchy = true
         end
@@ -111,10 +115,6 @@ module Crystal
         end
         opts.on("--verbose", "Display executed commands") do
           @verbose = true
-        end
-        opts.on("-h", "--help", "Show this message") do
-          puts opts
-          exit 1
         end
       end
     end

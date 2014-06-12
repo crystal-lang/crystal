@@ -11,9 +11,12 @@ class OptionParser
     end
   end
 
+  make_named_tuple Handler, [flag, block]
+
   def self.parse(args)
     parser = OptionParser.new(args)
     yield parser
+    parser.parse
     parser.check_invalid_options
     parser
   end
@@ -28,20 +31,27 @@ class OptionParser
     if double_dash_index
       @args.delete_at(double_dash_index)
     end
+    @handlers = [] of Handler
+  end
+
+  def parse
+    @handlers.each do |handler|
+      parse_flag(handler.flag, &handler.block)
+    end
   end
 
   def banner=(@banner)
   end
 
-  def on(flag, description)
+  def on(flag, description, &block : String ->)
     append_flag flag.to_s, description
-    parse_flag(flag) { |value| yield value }
+    @handlers << Handler.new(flag, block)
   end
 
-  def on(short_flag, long_flag, description)
+  def on(short_flag, long_flag, description, &block : String ->)
     append_flag "#{short_flag}, #{long_flag}", description
-    parse_flag(short_flag) { |value| yield value }
-    parse_flag(long_flag) { |value| yield value }
+    @handlers << Handler.new(short_flag, block)
+    @handlers << Handler.new(long_flag, block)
   end
 
   def to_s
