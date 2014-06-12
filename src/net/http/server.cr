@@ -14,6 +14,10 @@ class HTTP::Server
   def initialize(@port, &@handler : Request -> Response)
   end
 
+  def initialize(@port handlers : Array(HTTP::Handler))
+    @handler = HTTP::Server.build_middleware handlers
+  end
+
   def initialize(@port, @handler)
   end
 
