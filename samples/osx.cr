@@ -2,14 +2,14 @@
 require "objc"
 
 NSAutoreleasePool.new
-app = NSApplication.sharedApplication
+NSApplication.sharedApplication
 
-app.activationPolicy = NSApplication::ActivationPolicyRegular
+NSApp.activationPolicy = NSApplication::ActivationPolicyRegular
 
 menubar = NSMenu.new
 appMenuItem = NSMenuItem.new
 menubar << appMenuItem
-app.mainMenu = menubar
+NSApp.mainMenu = menubar
 
 appMenu = NSMenu.new
 appName = NSProcessInfo.processInfo.processName
@@ -24,5 +24,5 @@ window.cascadeTopLeftFromPoint = NSPoint.new(20, 20)
 window.title = appName
 window.makeKeyAndOrderFront = nil
 
-app.activateIgnoringOtherApps = true
-app.run
+NSApp.activateIgnoringOtherApps = true
+NSApp.run

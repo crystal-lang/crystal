@@ -62,7 +62,7 @@ struct Int
   end
 
   def to_nsenum
-    self.to_u32
+    self.to_u64
   end
 
   def to_nsbool
@@ -235,6 +235,8 @@ end
 
 initializable_object :NSAutoreleasePool
 
+NSApp = NSApplication.sharedApplication
+
 class NSApplication < NSObject
   ActivationPolicyRegular = 0
   ActivationPolicyAccessory = 1
@@ -287,6 +289,14 @@ struct NSPoint
     @obj.y = y.to_cgfloat
     @obj
   end
+
+  def x
+    @obj.x
+  end
+
+  def y
+    @obj.y
+  end
 end
 
 struct NSRect
@@ -299,6 +309,14 @@ struct NSRect
     @obj.size.height = h.to_cgfloat
     @obj
   end
+
+  def origin
+    @obj.origin
+  end
+
+  def size
+    @obj.size
+  end
 end
 
 class NSWindow < NSObject
@@ -307,8 +325,7 @@ class NSWindow < NSObject
 
   def initialize(rect : NSRect, styleMask, backing, defer)
     obj = self.class.msgSend "alloc"
-    @obj = LibObjC.msgSend(obj, "initWithContentRect:styleMask:backing:defer:".to_sel, rect.obj, styleMask.to_nsenum, backing.to_nsenum, defer.to_nsbool)
-    # @obj = LibObjC.msgSend(obj, "initWithContentRect:styleMask:backing:defer:".to_sel, rect, 1_u32, 0_u32, 0_u8)
+    @obj = LibObjC.msgSend(obj, "initWithContentRect:styleMask:backing:defer:".to_sel, rect, styleMask.to_nsuinteger, backing.to_nsenum, defer.to_nsbool)
   end
 
   def cascadeTopLeftFromPoint=(point : NSPoint)
