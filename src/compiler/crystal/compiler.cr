@@ -28,6 +28,7 @@ module Crystal
     getter llc_flags_changed
     getter cross_compile
     getter uses_gcc
+    getter verbose
     getter! output_dir
 
     def initialize
@@ -50,6 +51,7 @@ module Crystal
       @browser = false
       @single_module = false
       @uses_gcc = false
+      @verbose = false
 
       @config = LLVMConfig.new
       @llc = @config.bin "llc"
@@ -70,10 +72,6 @@ module Crystal
         end
         opts.on("-e 'command'", "One line script. Omit [programfile]") do |command|
           @command = command
-        end
-        opts.on("-h", "--help", "Show this message") do
-          puts opts
-          exit 1
         end
         opts.on("--hierarchy", "Prints types hierarchy") do
           @print_hierarchy = true
@@ -110,6 +108,13 @@ module Crystal
         end
         opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
           @n_threads = n_threads.to_i32
+        end
+        opts.on("--verbose", "Display executed commands") do
+          @verbose = true
+        end
+        opts.on("-h", "--help", "Show this message") do
+          puts opts
+          exit 1
         end
       end
     end
@@ -323,6 +328,11 @@ module Crystal
       create_server(port + 1)
     end
 
+    def system(command)
+      puts command if verbose
+      ::system(command)
+    end
+
     def timing(label)
       if @stats
         time = Time.now
@@ -387,6 +397,10 @@ module Crystal
 
       def write_bitcode(output_name)
         @llvm_mod.write_bitcode output_name
+      end
+
+      def system(command)
+        compiler.system command
       end
 
       def compile
