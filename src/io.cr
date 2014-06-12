@@ -121,12 +121,12 @@ class BufferedIO
 
         endl = @buffer_rem.index('\n'.ord.to_u8, @buffer_rem_size)
         if endl >= 0
-          buffer << String.new(@buffer_rem as Char*, endl + 1)
+          buffer << String.new(@buffer_rem as UInt8*, endl + 1)
           @buffer_rem_size -= (endl + 1)
           @buffer_rem += (endl + 1)
           break
         else
-          buffer << String.new(@buffer_rem as Char*, @buffer_rem_size)
+          buffer << String.new(@buffer_rem as UInt8*, @buffer_rem_size)
           @buffer_rem_size = 0
         end
       end
@@ -147,7 +147,7 @@ class BufferedIO
   end
 
   def fill_buffer
-    @buffer_rem_size = @io.read(@buffer, 16 * 1024)
+    @buffer_rem_size = @io.read(@buffer, 16 * 1024).to_i
     @buffer_rem = @buffer
   end
 end
