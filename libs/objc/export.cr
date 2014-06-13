@@ -19,9 +19,9 @@ macro objc_class(class_name)
   end
 end
 
-macro objc_export(class_name, method_name)
-  $x_{{class_name}}_{{method_name}}_imp = ->(_self : UInt8*, _cmd : LibObjC::SEL) {
-    {{class_name}}.new(_self).{{method_name}}
+macro objc_export(method_name)
+  $x_{{@name}}_{{method_name}}_imp = ->(_self : UInt8*, _cmd : LibObjC::SEL) {
+    {{@name}}.new(_self).{{method_name}}
   }
-  LibObjC.class_addMethod($x_{{class_name}}_objc_class.obj, "{{method_name}}".to_sel, $x_{{class_name}}_{{method_name}}_imp, "v@:")
+  LibObjC.class_addMethod($x_{{@name}}_objc_class.obj, "{{method_name}}".to_sel, $x_{{@name}}_{{method_name}}_imp, "v@:")
 end

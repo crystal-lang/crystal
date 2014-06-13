@@ -4,7 +4,6 @@
 require "objc"
 
 NSAutoreleasePool.new
-NSApplication.sharedApplication
 
 NSApp.activationPolicy = NSApplication::ActivationPolicyRegular
 
@@ -39,7 +38,7 @@ objc_class :Foo do
     puts "Hi there"
   end
 
-  objc_export :Foo, :bar
+  objc_export :bar
 end
 
 b.target = Foo.new
