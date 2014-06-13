@@ -408,10 +408,18 @@ class NSView < NSObject
   end
 end
 
-class NSButton < NSObject
+class NSControl < NSObject
   def initialize(rect : NSRect)
     obj = self.class.msgSend "alloc"
     @obj = LibObjC.msgSend(obj, "initWithFrame:".to_sel, outbox(rect))
+  end
+
+  def value=(value : String)
+    msgSend "setStringValue:", value.to_nsstring
+  end
+
+  def string_value
+    checked_wrap(NSString, msgSend("stringValue")).to_s
   end
 
   def action=(value)
@@ -423,12 +431,25 @@ class NSButton < NSObject
   end
 end
 
+class NSButton < NSControl
+  def title=(value)
+    msgSend "setTitle:", value.to_nsstring
+  end
+end
+
+class NSTextField < NSControl
+
+  def value
+    self.string_value
+  end
+end
+
 class NSProcessInfo < NSObject
   def self.processInfo
     NSProcessInfo.new(msgSend("processInfo"))
   end
 
   def processName
-    NSString.new(msgSend("processName"))
+    checked_wrap(NSString, msgSend("processName")).to_s
   end
 end
