@@ -338,13 +338,22 @@ struct NSPoint
     @obj
   end
 
-  def x
-    @obj.x
+  delegate x, @obj
+  delegate y, @obj
+end
+
+struct NSSize
+  property :obj
+
+  def initialize(width, height)
+    @obj = LibCF::Size.new
+    @obj.width = width.to_cgfloat
+    @obj.height = height.to_cgfloat
+    @obj
   end
 
-  def y
-    @obj.y
-  end
+  delegate width, @obj
+  delegate height, @obj
 end
 
 struct NSRect
@@ -353,18 +362,12 @@ struct NSRect
   def initialize(x, y, w, h)
     @obj = LibCF::Rect.new
     @obj.origin = NSPoint.new(x, y).obj
-    @obj.size.width = w.to_cgfloat
-    @obj.size.height = h.to_cgfloat
+    @obj.size = NSSize.new(w, h).obj
     @obj
   end
 
-  def origin
-    @obj.origin
-  end
-
-  def size
-    @obj.size
-  end
+  delegate origin, @obj
+  delegate size, @obj
 end
 
 class NSWindow < NSObject
@@ -438,7 +441,6 @@ class NSButton < NSControl
 end
 
 class NSTextField < NSControl
-
   def value
     self.string_value
   end
