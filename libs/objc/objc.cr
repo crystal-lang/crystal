@@ -272,7 +272,11 @@ end
 initializable_object :NSMenuItem do
   def initialize(title : String, action : String?, keyEquivalent : String)
     obj = self.class.msgSend "alloc"
-    @obj = LibObjC.msgSend(obj, "initWithTitle:action:keyEquivalent:".to_sel, title.to_nsstring, action.to_sel, keyEquivalent.to_nsstring)
+    @obj = LibObjC.msgSend(obj, "initWithTitle:action:keyEquivalent:".to_sel, outbox(title.to_nsstring), outbox(action.to_sel), outbox(keyEquivalent.to_nsstring))
+  end
+
+  def title=(value)
+    msgSend "setTitle:", value
   end
 
   def submenu=(menu : NSMenu)
@@ -325,7 +329,7 @@ class NSWindow < NSObject
 
   def initialize(rect : NSRect, styleMask, backing, defer)
     obj = self.class.msgSend "alloc"
-    @obj = LibObjC.msgSend(obj, "initWithContentRect:styleMask:backing:defer:".to_sel, rect, styleMask.to_nsuinteger, backing.to_nsenum, defer.to_nsbool)
+    @obj = LibObjC.msgSend(obj, "initWithContentRect:styleMask:backing:defer:".to_sel, outbox(rect), outbox(styleMask.to_nsuinteger), outbox(backing.to_nsenum), outbox(defer.to_nsbool))
   end
 
   def cascadeTopLeftFromPoint=(point : NSPoint)

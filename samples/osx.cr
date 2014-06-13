@@ -1,4 +1,6 @@
 #!/usr/bin/env bin/crystal --run
+
+# based on http://www.cocoawithlove.com/2010/09/minimalist-cocoa-programming.html
 require "objc"
 
 NSAutoreleasePool.new
@@ -13,10 +15,9 @@ NSApp.mainMenu = menubar
 
 appMenu = NSMenu.new
 appName = NSProcessInfo.processInfo.processName
-puts "appName: #{appName}"
 
-# quitMenuItem = NSMenuItem.new "Quit #{appName}", "terminate:", "q"
-# appMenu << quitMenuItem
+quitMenuItem = NSMenuItem.new "Quit #{appName}", "terminate:", "q"
+appMenu << quitMenuItem
 appMenuItem.submenu = appMenu
 
 window = NSWindow.new(NSRect.new(0, 0, 200, 200), NSWindow::NSTitledWindowMask, NSWindow::NSBackingStoreBuffered, false)

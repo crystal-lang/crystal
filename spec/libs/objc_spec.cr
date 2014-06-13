@@ -3,36 +3,40 @@ require "spec"
 require "objc"
 
 describe "ObjCClass" do
-  describe "name" do
+  it "name" do
     ObjCClass.new("NSString").name.should eq("NSString")
   end
 end
 
 describe "NSString" do
-  describe "length" do
+  it "length" do
     "".to_nsstring.length.should eq(0)
     "a".to_nsstring.length.should eq(1)
     "lorem".to_nsstring.length.should eq(5)
   end
 
-  describe "[]" do
+  it "[]" do
     "a".to_nsstring[0].should eq('a')
     "lorem".to_nsstring[2].should eq('r')
   end
 
-  describe "to_s" do
+  it "to_s" do
     "lorem".to_nsstring.to_s.should eq("lorem")
+  end
+
+  it "should be a NSObject" do
+    "lorem".to_nsstring.is_a?(NSObject)
   end
 end
 
 describe "NSObject" do
-  describe "objc_class" do
+  it "objc_class" do
     "a".to_nsstring.objc_class.name.should eq("__NSCFConstantString")
   end
 end
 
 describe "NSMutableArray" do
-  describe "count" do
+  it "count" do
     NSMutableArray.new.count.should eq(0)
     NSMutableArray.new.tap do |a|
       a << "foo".to_nsstring
@@ -40,7 +44,7 @@ describe "NSMutableArray" do
     end
   end
 
-  describe "index" do
+  it "index" do
     NSMutableArray.new.tap do |a|
       a << "foo".to_nsstring
       a[0].is_a?(NSString).should eq(true)
