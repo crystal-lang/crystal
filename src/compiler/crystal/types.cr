@@ -148,6 +148,24 @@ module Crystal
       self == type
     end
 
+    def is_implicitly_converted_in_c_to?(expected_type)
+      if self.nil_type? && (expected_type.pointer? || expected_type.fun?)
+        # OK: nil will be sent as pointer
+        true
+      elsif self == program.string && (expected_type.is_a?(PointerInstanceType) && expected_type.element_type == program.uint8)
+        # OK: string will be sent as UInt8
+        true
+      elsif expected_type.is_a?(FunType) && self.is_a?(FunType) && expected_type.return_type == program.void && expected_type.arg_types == self.arg_types
+        # OK: fun will be cast to return void
+        true
+      elsif self.struct_wrapper_of?(expected_type) || self.pointer_struct_wrapper_of?(expected_type)
+        # OK: same memory layout
+        true
+      else
+        false
+      end
+    end
+
     def allocated
       true
     end

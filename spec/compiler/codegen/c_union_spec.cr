@@ -68,4 +68,19 @@ describe "Code gen: c union" do
       end
       ").to_i.should eq(10)
   end
+
+  it "builds union setter with fun type" do
+    build(%(
+      require "prelude"
+
+      lib C
+        union Foo
+          x : ->
+        end
+      end
+
+      foo = C::Foo.new
+      foo.x = -> { }
+      ))
+  end
 end

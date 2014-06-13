@@ -490,15 +490,7 @@ module Crystal
         actual_type = self_arg.type
         actual_type = mod.pointer_of(actual_type) if self.args[i].out?
         if actual_type != expected_type
-          if actual_type.nil_type? && (expected_type.pointer? || expected_type.fun?)
-            # OK: nil will be sent as pointer
-          elsif actual_type == mod.string && (expected_type.is_a?(PointerInstanceType) && expected_type.element_type == mod.uint8)
-            # OK: string will be sent as UInt8
-          elsif expected_type.is_a?(FunType) && actual_type.is_a?(FunType) && expected_type.return_type == mod.void && expected_type.arg_types == actual_type.arg_types
-            # OK: fun will be cast to return void
-          elsif actual_type.struct_wrapper_of?(expected_type) || actual_type.pointer_struct_wrapper_of?(expected_type)
-            # OK: same memory layout
-          else
+          unless actual_type.is_implicitly_converted_in_c_to?(expected_type)
             arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
             self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
           end

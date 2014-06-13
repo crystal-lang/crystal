@@ -308,7 +308,7 @@ module Crystal
               when InstanceVar
                 instance_var_ptr (context.type as InstanceVarContainer), node_exp.name, llvm_self_ptr
               when IndirectRead
-                visit_indirect(node_exp)
+                visit_indirect(node_exp)[0]
               else
                 raise "Bug: pointerof(#{node})"
               end
@@ -1006,7 +1006,7 @@ module Crystal
     end
 
     def visit(node : IndirectRead)
-      ptr = visit_indirect(node)
+      ptr, var = visit_indirect(node)
       ptr = cast_to_pointer ptr, node.type
       @last = to_lhs ptr, node.type
 
@@ -1014,14 +1014,25 @@ module Crystal
     end
 
     def visit(node : IndirectWrite)
-      ptr = visit_indirect(node)
-      ptr = cast_to_pointer ptr, node.value.type
+      ptr, var = visit_indirect(node)
+
+      if var.type.fun?
+        ptr = bit_cast(ptr, pointer_type(llvm_fun_type(var.type)))
+      else
+        ptr = cast_to_pointer ptr, node.value.type
+      end
 
       accept node.value
 
-      @last = to_rhs @last, node.value.type
-
-      store @last, ptr
+      if var.type.fun?
+        last_value = @last
+        value = check_fun_is_not_closure(@last, var.type)
+        store value, ptr
+        @last = last_value
+      else
+        @last = to_rhs @last, node.value.type
+        store @last, ptr
+      end
 
       false
     end
@@ -1032,6 +1043,8 @@ module Crystal
       type = node.obj.type as PointerInstanceType
 
       element_type = type.element_type
+
+      var = nil
 
       node.names.each do |name|
         case element_type
@@ -1053,7 +1066,7 @@ module Crystal
 
       accept node.obj
 
-      @builder.inbounds_gep @last, indices
+      {@builder.inbounds_gep(@last, indices), var.not_nil!}
     end
 
     def visit(node : Call)
@@ -1156,10 +1169,9 @@ module Crystal
         end
 
         if is_external && arg.type.fun?
-          fun_ptr = check_fun_is_not_closure(call_arg)
           # Try first with the def arg type (might be a fun pointer that return void,
           # while the argument's type a fun pointer that return something else)
-          call_arg = bit_cast fun_ptr, llvm_fun_type(def_arg.try(&.type) || arg.type)
+          call_arg = check_fun_is_not_closure(call_arg, def_arg.try(&.type) || arg.type)
         end
 
         call_args << call_arg
@@ -1170,11 +1182,12 @@ module Crystal
       {call_args, has_out}
     end
 
-    def check_fun_is_not_closure(value)
+    def check_fun_is_not_closure(value, type)
       check_fun_name = "~check_fun_is_not_closure"
       func = @main_mod.functions[check_fun_name]? || create_check_fun_is_not_closure_fun(check_fun_name)
       func = check_main_fun check_fun_name, func
-      return call func, [value] of LibLLVM::ValueRef
+      value = call func, [value] of LibLLVM::ValueRef
+      bit_cast value, llvm_fun_type(type)
     end
 
     def create_check_fun_is_not_closure_fun(fun_name)

@@ -1877,8 +1877,10 @@ module Crystal
     def end_visit(node : IndirectWrite)
       var = visit_indirect(node)
       if var.type != node.value.type
-        type = node.obj.type as PointerInstanceType
-        node.raise "field '#{node.names.join "->"}' of struct #{type.element_type} has type #{var.type}, not #{node.value.type}"
+        unless node.value.type.is_implicitly_converted_in_c_to?(var.type)
+          type = node.obj.type as PointerInstanceType
+          node.raise "field '#{node.names.join "->"}' of struct #{type.element_type} has type #{var.type}, not #{node.value.type}"
+        end
       end
 
       node.bind_to node.value

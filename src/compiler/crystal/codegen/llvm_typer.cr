@@ -8,12 +8,15 @@ module Crystal
 
     getter landing_pad_type
 
+    alias TypeCache = Hash(Type, LibLLVM::TypeRef)
+
     def initialize
-      @cache = {} of Type => LibLLVM::TypeRef
-      @struct_cache = {} of Type => LibLLVM::TypeRef
-      @arg_cache = {} of Type => LibLLVM::TypeRef
-      @c_cache = {} of Type => LibLLVM::TypeRef
-      @embedded_cache = {} of Type => LibLLVM::TypeRef
+      @cache = TypeCache.new
+      @struct_cache = TypeCache.new
+      @arg_cache = TypeCache.new
+      @c_cache = TypeCache.new
+      @embedded_cache = TypeCache.new
+      @embedded_c_cache = TypeCache.new
 
       target = LLVM::Target.first
       machine = target.create_target_machine("i686-unknown-linux").not_nil!
@@ -222,7 +225,7 @@ module Crystal
 
         vars = type.vars
         element_types = Array(LibLLVM::TypeRef).new(vars.length)
-        vars.each { |name, var| element_types.push llvm_embedded_type(var.type) }
+        vars.each { |name, var| element_types.push llvm_embedded_c_type(var.type) }
         element_types
       end
     end
@@ -233,7 +236,7 @@ module Crystal
       type.vars.each do |name, var|
         var_type = var.type
         unless var_type.void?
-          llvm_type = llvm_embedded_type(var_type)
+          llvm_type = llvm_embedded_c_type(var_type)
           size = size_of(llvm_type)
           if size > max_size
             max_size = size
@@ -299,6 +302,18 @@ module Crystal
 
     def create_llvm_embedded_type(type)
       llvm_type type
+    end
+
+    def llvm_embedded_c_type(type)
+      @embedded_c_cache[type] ||= create_llvm_embedded_c_type type
+    end
+
+    def create_llvm_embedded_c_type(type : FunType)
+      fun_type(type)
+    end
+
+    def create_llvm_embedded_c_type(type)
+      llvm_embedded_type type
     end
 
     def llvm_c_type(type : Type)

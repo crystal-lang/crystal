@@ -237,4 +237,34 @@ describe "Code gen: struct" do
       foo pointerof(f)
       ").to_i.should eq(1)
   end
+
+  it "builds struct setter with fun type" do
+    build(%(
+      require "prelude"
+
+      lib C
+        struct Foo
+          x : ->
+        end
+      end
+
+      foo = C::Foo.new
+      foo.x = -> { }
+      ))
+  end
+
+  it "builds struct setter with fun type" do
+    build(%(
+      require "prelude"
+
+      lib C
+        struct Foo
+          x : ->
+        end
+      end
+
+      foo = Pointer(C::Foo).malloc(1)
+      foo->x = -> { }
+      ))
+  end
 end

@@ -135,7 +135,8 @@ module Crystal
       # Check if we have an untyped expression in this call, or an expression
       # whose type was never allocated. Replace it with raise.
       obj = node.obj
-      if (obj && (!obj.type? || !obj.type.allocated)) || node.args.any? { |arg| !arg.type? || !arg.type.allocated }
+      obj_type = obj.try &.type?
+      if (obj && (!obj_type || !obj.type.allocated)) || node.args.any? { |arg| !arg.type? || !arg.type.allocated }
         return untyped_expression
       end
 
@@ -166,8 +167,14 @@ module Crystal
         changed = false
         allocated_defs = [] of Def
 
-        if target_defs.length == 1 && target_defs[0].is_a?(External)
-          check_args_are_not_closure node
+        if target_defs.length == 1
+          if target_defs[0].is_a?(External)
+            check_args_are_not_closure node, "can't send closure to C function"
+          elsif obj_type.is_a?(CStructType) && node.name.ends_with?('=')
+            check_args_are_not_closure node, "can't set closure as C struct member"
+          elsif obj_type.is_a?(CUnionType) && node.name.ends_with?('=')
+            check_args_are_not_closure node, "can't set closure as C union member"
+          end
         end
 
         target_defs.each do |target_def|
@@ -214,21 +221,21 @@ module Crystal
       source.lines.to_s_with_line_numbers
     end
 
-    def check_args_are_not_closure(node)
+    def check_args_are_not_closure(node, message)
       node.args.each do |arg|
         case arg
         when FunLiteral
           if arg.def.closure
-            arg.raise "can't send closure to C function"
+            arg.raise message
           end
         when FunPointer
           if arg.obj
-            arg.raise "can't send closure to C function"
+            arg.raise message
           end
 
           owner = arg.call.target_def.owner.not_nil!
           if owner.passed_as_self?
-            arg.raise "can't send closure to C function"
+            arg.raise message
           end
         end
       end

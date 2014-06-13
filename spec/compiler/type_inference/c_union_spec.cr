@@ -31,4 +31,20 @@ describe "Type inference: c union" do
   it "types union getter via pointer" do
     assert_type("lib Foo; union Bar; x : Int32; y : Float64; end; end; bar = Pointer(Foo::Bar).malloc(1_u64); bar->x") { int32 }
   end
+
+  it "errors if setting closure" do
+    assert_error %(
+      lib Foo
+        union Bar
+          x : ->
+        end
+      end
+
+      a = 1
+
+      bar = Foo::Bar.new
+      bar.x = -> { a }
+      ),
+      "can't set closure as C union member"
+  end
 end

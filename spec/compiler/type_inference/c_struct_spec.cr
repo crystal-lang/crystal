@@ -99,4 +99,20 @@ describe "Type inference: struct" do
       pointerof(f->y)
       ") { pointer_of(float64) }
   end
+
+  it "errors if setting closure" do
+    assert_error %(
+      lib Foo
+        struct Bar
+          x : ->
+        end
+      end
+
+      a = 1
+
+      bar = Foo::Bar.new
+      bar.x = -> { a }
+      ),
+      "can't set closure as C struct member"
+  end
 end

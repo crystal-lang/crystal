@@ -305,9 +305,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_primitive_struct_set(node, target_def, call_args)
-    set_aggregate_field(node, target_def, call_args) do
+    set_aggregate_field(node, target_def, call_args, true) do
       type = context.type as CStructType
       name = target_def.name[0 .. -2]
+
       struct_field_ptr(type, name, call_args[0])
     end
   end
@@ -336,10 +337,18 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     to_lhs union_field_ptr(node, call_args[0]), node.type
   end
 
-  def set_aggregate_field(node, target_def, call_args)
-    value = to_rhs call_args[1], node.type
+  def set_aggregate_field(node, target_def, call_args, check_c_fun = false)
+    original_call_arg = call_args[1]
+    call_arg = original_call_arg
+
+    if check_c_fun && node.type.fun?
+      call_arg = check_fun_is_not_closure(call_arg, node.type)
+    end
+
+    value = to_rhs call_arg, node.type
     store value, yield
-    call_args[1]
+
+    original_call_arg
   end
 
   def union_field_ptr(node, pointer)
