@@ -719,7 +719,7 @@ module Crystal
       return false unless the_macro
 
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro (@scope || @mod), the_macro, node
+        @mod.expand_macro (@scope || current_type), the_macro, node
       end
 
       node.target_macro = generated_nodes
@@ -745,7 +745,7 @@ module Crystal
       the_macro.location = node.location
 
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro (@scope || @mod), node
+        @mod.expand_macro (@scope || current_type), node
       end
 
       node.expanded = generated_nodes

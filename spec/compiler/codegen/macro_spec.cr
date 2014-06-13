@@ -258,4 +258,20 @@ describe "Code gen: macro" do
       Bar.new.inspect
       )).to_string.should eq("OH NO")
   end
+
+  it "uses invocation context" do
+    run(%(
+      macro foo
+        def bar
+          {{@name.stringify}}
+        end
+      end
+
+      class Foo
+        foo
+      end
+
+      Foo.new.bar
+      )).to_string.should eq("Foo")
+  end
 end
