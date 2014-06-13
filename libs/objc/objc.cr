@@ -1,6 +1,8 @@
 require "./*"
 
 struct ObjCClass
+  property :obj
+
   def initialize(c : UInt8*)
     @obj = c
   end
@@ -414,6 +416,10 @@ class NSButton < NSObject
 
   def action=(value)
     msgSend "setAction:", value.to_sel
+  end
+
+  def target=(value)
+    msgSend "setTarget:", value
   end
 end
 
