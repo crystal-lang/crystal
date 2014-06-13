@@ -25,5 +25,9 @@ window.cascadeTopLeftFromPoint = NSPoint.new(20, 20)
 window.title = appName
 window.makeKeyAndOrderFront = nil
 
+b = NSButton.new NSRect.new(50, 50, 100, 100)
+b.action = "terminate:"
+window.contentView.addSubview b
+
 NSApp.activateIgnoringOtherApps = true
 NSApp.run

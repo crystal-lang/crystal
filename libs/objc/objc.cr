@@ -76,6 +76,24 @@ struct Bool
   end
 end
 
+# class Object
+#   def initialize(pointer : UInt8*)
+#     # required for compilation
+#     raise "Should be a NSObject based class"
+#   end
+# end
+
+# macro checked_wrap(expectedType, o)
+#   o = {{o}}
+#   klass = ObjCClass.new(LibObjC.msgSend(o, "class".to_sel))
+#   raise "Expected #{{{expectedType}}} got #{klass.name}" if klass.name != {{expectedType}}.to_s
+#   {{expectedType}}.new(o)
+# end
+
+macro checked_wrap(expectedType, o)
+  {{expectedType}}.new({{o}})
+end
+
 class NSObject
   property :obj
 
@@ -94,8 +112,22 @@ class NSObject
 
   def self.inbox(o)
     klass = ObjCClass.new(LibObjC.msgSend(o, "class".to_sel))
+    # map = {
+    #   "__NSCFString" => NSString.class,
+    #   "NSView" => NSView.class
+    # }
+    # target = map.fetch(klass, nil)
+    # if target.nil?
+    #   puts "Obj-c inbox unmatched for class #{klass}"
+    #   o
+    # else
+    #   target.new(o)
+    # end
+
     if klass.name == "__NSCFString"
       NSString.new(o)
+    elsif klass.name == "NSView"
+      NSView.new(o)
     else
       o
     end
@@ -104,6 +136,16 @@ class NSObject
   def inbox(o)
     self.class.inbox(o)
   end
+
+  # def self.inbox(expectedType, o)
+  #   klass = ObjCClass.new(LibObjC.msgSend(o, "class".to_sel))
+  #   raise "Expected #{expectedType} got #{klass.name}" if klass.name != expectedType.to_s
+  #   expectedType.new(o)
+  # end
+
+  # def inbox(expectedType, o)
+  #   self.class.inbox(expectedType, o)
+  # end
 
   # end
 
@@ -340,8 +382,38 @@ class NSWindow < NSObject
     msgSend "setTitle:", value.to_nsstring
   end
 
+  def addSubview(view)
+    msgSend "addSubview:", view
+  end
+
   def makeKeyAndOrderFront=(value)
     msgSend "makeKeyAndOrderFront:", value
+  end
+
+  def contentView
+    checked_wrap(NSView, msgSend("contentView"))
+  end
+end
+
+class NSView < NSObject
+  def initialize(rect : NSRect)
+    obj = self.class.msgSend "alloc"
+    @obj = LibObjC.msgSend(obj, "initWithFrame:".to_sel, outbox(rect))
+  end
+
+  def addSubview(view)
+    msgSend "addSubview:", view
+  end
+end
+
+class NSButton < NSObject
+  def initialize(rect : NSRect)
+    obj = self.class.msgSend "alloc"
+    @obj = LibObjC.msgSend(obj, "initWithFrame:".to_sel, outbox(rect))
+  end
+
+  def action=(value)
+    msgSend "setAction:", value.to_sel
   end
 end
 
