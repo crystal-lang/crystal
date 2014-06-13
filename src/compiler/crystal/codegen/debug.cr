@@ -189,5 +189,22 @@ module Crystal
         llvm_mod.functions.add("llvm.dbg.declare", [metadata_type, metadata_type], LLVM::Void)
       end
     end
+
+    def emit_debug_metadata(node, value)
+      # if value.is_a?(LibLLVM::ValueRef) && !LLVM.constant?(value) && !value.is_a?(LibLLVM::BasicBlockRef)
+        if md = dbg_metadata(node)
+          LibLLVM.set_metadata(value, @dbg_kind, md) rescue nil
+        end
+      # end
+    end
+
+    def emit_def_debug_metadata(target_def)
+      unless target_def.name == MAIN_NAME
+        if def_md = def_metadata(context.fun, target_def)
+          @subprograms[@llvm_mod] ||= [] of LibLLVM::ValueRef?
+          @subprograms[@llvm_mod] << def_md
+        end
+      end
+    end
   end
 end

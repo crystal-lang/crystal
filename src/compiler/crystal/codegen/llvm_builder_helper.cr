@@ -200,6 +200,10 @@ module Crystal
       bit_cast(value, pointer_type(llvm_type(type)))
     end
 
+    def extract_value(value, index)
+      @builder.extract_value value, index
+    end
+
     def llvm_type(type)
       llvm_typer.llvm_type(type)
     end

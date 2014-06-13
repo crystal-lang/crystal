@@ -191,6 +191,10 @@ module Crystal
       false
     end
 
+    def c_value_wrapper?
+      false
+    end
+
     def pointer_struct_wrapper_of?(type)
       false
     end
@@ -963,6 +967,16 @@ module Crystal
       return false unless ivars.length == 1
 
       ivars.first_value.type? == type
+    end
+
+    def c_value_wrapper?
+      return false unless struct?
+
+      ivars = all_instance_vars
+      return false unless ivars.length == 1
+
+      type = ivars.first_value.type?
+      type.is_a?(CStructType) || type.is_a?(CUnionType)
     end
 
     def type_desc
