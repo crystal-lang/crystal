@@ -750,6 +750,14 @@ module Crystal
       end
     end
 
+    def cant_pass_closure_to_c_exception_call
+      @cant_pass_closure_to_c_exception_call ||= begin
+        call = Call.new(nil, "raise", [StringLiteral.new("passing a closure to C is not allowed")] of ASTNode, nil, nil, true)
+        @mod.infer_type call
+        call
+      end
+    end
+
     def visit(node : IsA)
       codegen_type_filter node, &.filter_by(node.const.type.instance_type)
     end
@@ -1163,9 +1171,31 @@ module Crystal
     end
 
     def check_fun_is_not_closure(value)
-      # TODO: check that ctx_ptr is null, otherwise raise
-      fun_ptr = extract_value value, 0
-      # ctx_ptr = extract_value value, 1
+      check_fun_name = "~check_fun_is_not_closure"
+      func = @main_mod.functions[check_fun_name]? || create_check_fun_is_not_closure_fun(check_fun_name)
+      func = check_main_fun check_fun_name, func
+      return call func, [value] of LibLLVM::ValueRef
+    end
+
+    def create_check_fun_is_not_closure_fun(fun_name)
+      define_main_function(fun_name, ([LLVMTyper::FUN_TYPE] of LibLLVM::TypeRef), LLVM::VoidPointer) do |func|
+        param = func.get_param(0)
+
+        fun_ptr = extract_value param, 0
+        ctx_ptr = extract_value param, 1
+
+        ctx_is_null_block = new_block "ctx_is_null"
+        ctx_is_not_null_block = new_block "ctx_is_not_null"
+
+        ctx_is_null = equal? ctx_ptr, LLVM.null(LLVM::VoidPointer)
+        cond ctx_is_null, ctx_is_null_block, ctx_is_not_null_block
+
+        position_at_end ctx_is_null_block
+        ret fun_ptr
+
+        position_at_end ctx_is_not_null_block
+        accept cant_pass_closure_to_c_exception_call
+      end
     end
 
     def codegen_call_with_block(node, block, self_type, call_args)
@@ -1387,9 +1417,11 @@ module Crystal
     def define_main_function(name, arg_types, return_type)
       old_builder = @builder
       old_llvm_mod = @llvm_mod
+      old_fun = context.fun
       @llvm_mod = @main_mod
 
       a_fun = @main_mod.functions.add(name, arg_types, return_type) do |func|
+        context.fun = func
         func.append_basic_block("entry") do |builder|
           @builder = builder
           yield func
@@ -1398,6 +1430,7 @@ module Crystal
 
       @builder = old_builder
       @llvm_mod = old_llvm_mod
+      context.fun = old_fun
 
       a_fun
     end
