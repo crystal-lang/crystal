@@ -59,11 +59,17 @@ module Crystal
     end
 
     def is_restriction_of?(other : Union, owner)
-      return other.types.any? { |o| self.is_restriction_of?(o, owner) }
+      other.types.any? { |o| self.is_restriction_of?(o, owner) }
     end
 
     def is_restriction_of?(other, owner)
       false
+    end
+  end
+
+  class Union
+    def is_restriction_of?(other : Path, owner)
+      !other.is_restriction_of?(self, owner)
     end
   end
 

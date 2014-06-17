@@ -6,14 +6,7 @@ module Crystal
     getter :matches
 
     def self.create(arg_types, matches)
-      case matches.length
-      when 0
-        false
-      when 1
-        matches[0].arg_types == arg_types
-      else
-        Cover.new(arg_types, matches)
-      end
+      matches.empty? ? false : Cover.new(arg_types, matches)
     end
 
     def initialize(@arg_types, @matches)

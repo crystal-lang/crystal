@@ -439,4 +439,28 @@ describe "Code gen: def" do
       x.has_key?("a")
       )).to_b.should be_false
   end
+
+  it "puts union before single type in matches preferences" do
+    run("
+      abstract class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      def foo(x : Foo)
+        2
+      end
+
+      def foo(x : Bar | Baz)
+        1
+      end
+
+      node = Baz.new || Bar.new
+      foo(node)
+      ").to_i.should eq(1)
+  end
 end

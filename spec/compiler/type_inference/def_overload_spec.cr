@@ -613,4 +613,24 @@ describe "Type inference: def overload" do
       foo(Foo(Int32).new)
       ") { int32.metaclass }
   end
+
+  it "matches hierarchy type to union" do
+    assert_type("
+      abstract class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      def foo(x : Bar | Baz)
+        1
+      end
+
+      node = Bar.new || Baz.new
+      foo(node)
+      ") { int32 }
+  end
 end
