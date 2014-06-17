@@ -219,31 +219,7 @@ module Crystal
       false
     end
 
-    def visit(node : ASTNode)
-      true
-    end
-
-    def visit(node : ArrayLiteral)
-      visit_expanded node
-    end
-
-    def visit(node : HashLiteral)
-      visit_expanded node
-    end
-
-    def visit(node : MacroExpression)
-      visit_expanded node
-    end
-
-    def visit(node : MacroIf)
-      visit_expanded node
-    end
-
-    def visit(node : MacroFor)
-      visit_expanded node
-    end
-
-    def visit_expanded(node)
+    def visit(node : ExpandableNode)
       node.expanded.try &.accept self
       false
     end
@@ -1937,6 +1913,10 @@ module Crystal
 
     def block_breaks?
       context.block_breaks?
+    end
+
+    def visit(node : ASTNode)
+      true
     end
   end
 end

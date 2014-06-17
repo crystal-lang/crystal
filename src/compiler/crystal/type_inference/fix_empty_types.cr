@@ -32,27 +32,7 @@ module Crystal
       false
     end
 
-    def visit(node : ArrayLiteral)
-      node.expanded.try &.accept self
-      false
-    end
-
-    def visit(node : HashLiteral)
-      node.expanded.try &.accept self
-      false
-    end
-
-    def visit(node : MacroExpression)
-      node.expanded.try &.accept self
-      false
-    end
-
-    def visit(node : MacroIf)
-      node.expanded.try &.accept self
-      false
-    end
-
-    def visit(node : MacroFor)
+    def visit(node : ExpandableNode)
       node.expanded.try &.accept self
       false
     end

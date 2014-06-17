@@ -423,23 +423,13 @@ module Crystal
     property :syntax_replacement
   end
 
-  class ArrayLiteral
+  module ExpandableNode
     property :expanded
   end
 
-  class HashLiteral
-    property :expanded
-  end
-
-  class MacroExpression
-    property :expanded
-  end
-
-  class MacroIf
-    property :expanded
-  end
-
-  class MacroFor
-    property :expanded
-  end
+  {% for name in %w(ArrayLiteral HashLiteral MacroExpression MacroIf MacroFor) %}
+    class {{name}}
+      include ExpandableNode
+    end
+  {% end %}
 end
