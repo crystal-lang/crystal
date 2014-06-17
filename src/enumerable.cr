@@ -269,4 +269,12 @@ module Enumerable(T)
   def sum(initial = 0)
     inject(initial) { |memo, e| memo + (yield e) }
   end
+
+  def index_by(&block : T -> U)
+    hash = {} of U => T
+    each do |elem|
+      hash[yield elem] = elem
+    end
+    hash
+  end
 end

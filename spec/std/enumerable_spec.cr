@@ -119,4 +119,13 @@ describe "Enumerable" do
   describe "compact map" do
     assert { [1, nil, 2, nil, 3].compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
   end
+
+  it "indexes by" do
+    ["foo", "hello", "goodbye", "something"].index_by(&.length).should eq({
+        3 => "foo",
+        5 => "hello",
+        7 => "goodbye",
+        9 => "something",
+      })
+  end
 end
