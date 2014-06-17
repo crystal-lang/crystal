@@ -181,7 +181,9 @@ class File
       file.seek 0, Seek::End
       size = file.tell
       file.seek 0, Seek::Begin
-      file.read(size)
+      String.new_with_length(size.to_i) do |buffer|
+        file.read(buffer, size)
+      end
     end
   end
 
