@@ -128,4 +128,12 @@ describe "Enumerable" do
         9 => "something",
       })
   end
+
+  it "selects" do
+    [1, 2, 3, 4].select(&.even?).should eq([2, 4])
+  end
+
+  it "rejects" do
+    [1, 2, 3, 4].reject(&.even?).should eq([1, 3])
+  end
 end

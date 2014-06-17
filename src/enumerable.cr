@@ -84,6 +84,12 @@ module Enumerable(T)
     ary
   end
 
+  def reject(&block : T ->)
+    ary = [] of T
+    each { |e| ary << e unless yield e }
+    ary
+  end
+
   def join(sep = "")
     String.build do |str|
       each_with_index do |elem, i|
