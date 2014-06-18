@@ -377,6 +377,12 @@ describe "Parser" do
   it_parses "Foo(T, 1, U)", Generic.new("Foo".path, ["T".path, NumberLiteral.new("1", :i32), "U".path] of ASTNode)
   it_parses "Foo(typeof(1))", Generic.new("Foo".path, [TypeOf.new([1.int32] of ASTNode)] of ASTNode)
   it_parses "Foo({X, Y})", Generic.new("Foo".path, [Generic.new(Path.new(["Tuple"], true), ["X".path, "Y".path] of ASTNode)] of ASTNode)
+  it_parses "Foo({X, Y})", Generic.new("Foo".path, [Generic.new(Path.new(["Tuple"], true), ["X".path, "Y".path] of ASTNode)] of ASTNode)
+  it_parses "Foo({->})", Generic.new("Foo".path, [Generic.new(Path.new(["Tuple"], true), [Fun.new] of ASTNode)] of ASTNode)
+  it_parses "Foo({String, ->})", Generic.new("Foo".path, [Generic.new(Path.new(["Tuple"], true), ["String".path, Fun.new] of ASTNode)] of ASTNode)
+  it_parses "Foo({String, ->, ->})", Generic.new("Foo".path, [Generic.new(Path.new(["Tuple"], true), ["String".path, Fun.new, Fun.new] of ASTNode)] of ASTNode)
+  it_parses "[] of {String, ->}", ArrayLiteral.new(([] of ASTNode), Generic.new(Path.new(["Tuple"], true), ["String".path, Fun.new] of ASTNode))
+  it_parses "x([] of Foo, Bar.new)", Call.new(nil, "x", [ArrayLiteral.new(([] of ASTNode), "Foo".path), Call.new("Bar".path, "new")] of ASTNode)
 
   it_parses "module Foo; end", ModuleDef.new("Foo".path)
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".path, [Def.new("foo", [] of Arg, nil)] of ASTNode)

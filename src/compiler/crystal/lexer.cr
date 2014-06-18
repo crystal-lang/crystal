@@ -1581,16 +1581,6 @@ module Crystal
       @token.location = nil
     end
 
-    def next_comes_uppercase
-      pos = current_pos
-      while current_char.whitespace?
-        next_char
-      end
-      comes_uppercase = 'A' <= current_char <= 'Z'
-      @reader.pos = pos
-      comes_uppercase
-    end
-
     def next_token_skip_space
       next_token
       skip_space

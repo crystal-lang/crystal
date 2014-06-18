@@ -2625,9 +2625,18 @@ module Crystal
       else
         input_types = parse_type_union(allow_primitives)
         input_types = [input_types] unless input_types.is_a?(Array)
-        if @token.type == :"," && (allow_primitives || next_comes_uppercase)
-          while @token.type == :"," && (allow_primitives || next_comes_uppercase)
-            next_token_skip_space_or_newline
+        while @token.type == :"," && ((allow_primitives && next_comes_type_or_int) || (!allow_primitives && next_comes_type))
+          next_token_skip_space_or_newline
+          if @token.type == :"->"
+            next_types = parse_type(false)
+            case next_types
+            when Array
+              input_types.concat next_types
+            when ASTNode
+              input_types << next_types
+            end
+            next
+          else
             type_union = parse_type_union(allow_primitives)
             if type_union.is_a?(Array)
               input_types.concat type_union
@@ -2641,7 +2650,7 @@ module Crystal
       if @token.type == :"->"
         next_token_skip_space
         case @token.type
-        when :",", :")"
+        when :",", :")", :"}"
           return_type = nil
         when :NEWLINE
           skip_space_or_newline
@@ -2731,16 +2740,24 @@ module Crystal
             end
           end
 
-          if @token.keyword?(:typeof)
-            type = parse_typeof
-          else
-            type = parse_ident
-          end
-
-          skip_space
+          type = parse_simple_type
         end
       end
 
+      types << parse_type_suffix(type)
+    end
+
+    def parse_simple_type
+      if @token.keyword?(:typeof)
+        type = parse_typeof
+      else
+        type = parse_ident
+      end
+      skip_space
+      type
+    end
+
+    def parse_type_suffix(type)
       while true
         case @token.type
         when :"?"
@@ -2772,8 +2789,7 @@ module Crystal
           break
         end
       end
-
-      types << type
+      type
     end
 
     def parse_typeof
@@ -2794,6 +2810,45 @@ module Crystal
       next_token_skip_space
 
       type = TypeOf.new(exps)
+    end
+
+    def next_comes_type
+      next_comes_type_or_int(false)
+    end
+
+    def next_comes_type_or_int(allow_int = true)
+      pos = current_pos
+      @temp_token.copy_from(@token)
+
+      next_token_skip_space
+
+      while @token.type == :"{" || @token.type == :"("
+        next_token_skip_space
+      end
+
+      begin
+        case @token.type
+        when :CONST
+          next_token_skip_space
+          if @token.type == :"."
+            next_token_skip_space
+            if @token.keyword?(:class)
+              return true
+            end
+          else
+            return true
+          end
+        when :"->"
+          return true
+        when :NUMBER
+          return allow_int && @token.number_kind == :i32
+        end
+
+        false
+      ensure
+        @token.copy_from(@temp_token)
+        @reader.pos = pos
+      end
     end
 
     def make_pointer_type(node)
