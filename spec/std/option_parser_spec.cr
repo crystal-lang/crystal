@@ -52,7 +52,7 @@ describe "OptionParser" do
   end
 
   it "doesn't have flag" do
-    expect_doesnt_capture_option ([] of String), "-f"
+    expect_doesnt_capture_option [] of String, "-f"
   end
 
   it "has flag with double dash" do
@@ -60,7 +60,7 @@ describe "OptionParser" do
   end
 
   it "doesn't have flag with double dash" do
-    expect_doesnt_capture_option ([] of String), "--flag"
+    expect_doesnt_capture_option [] of String, "--flag"
   end
 
   it "has required option next to flag" do
@@ -120,23 +120,23 @@ describe "OptionParser" do
   end
 
   it "doesn't raise if required option is not specified" do
-    expect_doesnt_capture_option ([] of String), "-f "
+    expect_doesnt_capture_option [] of String, "-f "
   end
 
   it "doesn't raise if optional option is not specified with short flag" do
-    expect_doesnt_capture_option ([] of String), "-f[FLAG]"
+    expect_doesnt_capture_option [] of String, "-f[FLAG]"
   end
 
   it "doesn't raise if optional option is not specified with long flag" do
-    expect_doesnt_capture_option ([] of String), "--flag [FLAG]"
+    expect_doesnt_capture_option [] of String, "--flag [FLAG]"
   end
 
   it "doesn't raise if optional option is not specified with separated short flag" do
-    expect_doesnt_capture_option ([] of String), "-f [FLAG]"
+    expect_doesnt_capture_option [] of String, "-f [FLAG]"
   end
 
   it "doesn't raise if required option is not specified with separated short flag 2" do
-    expect_doesnt_capture_option ([] of String), "-f FLAG"
+    expect_doesnt_capture_option [] of String, "-f FLAG"
   end
 
   it "does to_s with banner" do

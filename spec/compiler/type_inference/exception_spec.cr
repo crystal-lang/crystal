@@ -69,7 +69,7 @@ describe "Type inference: exception" do
     ") { int32 }
     mod = result.program
     a_def = mod.lookup_first_def("foo", false)
-    def_instance = mod.lookup_def_instance(a_def.object_id, ([] of Type), nil)
+    def_instance = mod.lookup_def_instance(a_def.object_id, [] of Type, nil)
     def_instance.not_nil!.raises.should be_true
   end
 
