@@ -113,6 +113,10 @@ module Crystal
         opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
           @n_threads = n_threads.to_i32
         end
+        opts.on("-v", "--version", "Print Crystal version") do
+          puts "Crystal #{Crystal.version_string}"
+          exit
+        end
         opts.on("--verbose", "Display executed commands") do
           @verbose = true
         end
