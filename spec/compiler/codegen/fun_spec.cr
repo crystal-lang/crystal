@@ -164,7 +164,7 @@ describe "Code gen: fun" do
       require "prelude"
 
       lib C
-        fun qsort(base : Void*, nel : C::SizeT, width : C::SizeT, callabck : (Void*, Void* -> Int32))
+        fun qsort(base : Void*, nel : C::SizeT, width : C::SizeT, callback : (Void*, Void* -> Int32))
       end
 
       ary = [3, 1, 4, 2]
