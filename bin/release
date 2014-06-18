@@ -2,26 +2,42 @@
 
 function crossCompile() {
   echo "Building $3.bc"
-  CMD=`bin/crystal src/compiler/crystal.cr --release --cross-compile "$1" --llc "-mcpu=$2" -o $3`
+  CMD=`bin/crystal src/compiler/crystal.cr --release --cross-compile "$1" --llc "-mcpu=$2" -o crystal-$3`
   vagrant up $4
-  echo "Cross compiling $3"
+  echo "Cross compiling crystal-$3"
   vagrant ssh $4 -c "cd crystal; \
-    cp /vagrant/$3.bc .; \
+    cp /vagrant/crystal-$3.bc .; \
     export PATH=/home/vagrant/crystal/deps/llvm/bin:\$PATH; \
     $CMD; \
-    cp $3 /vagrant/$3-latest"
-  gzip -9 $3-latest
+    cp crystal-$3 /vagrant/crystal-$3"
 }
 
+function dist() {
+  DIST_DIR=`mktemp -d dist.XXXX`
+  mkdir -p $DIST_DIR/crystal/bin
+  cp -R libs samples src LICENSE $DIST_DIR/crystal
+  cp dist/crystal $DIST_DIR/crystal/bin/crystal
+  cp crystal-$1 $DIST_DIR/crystal/bin/crystal-exe
 
-crossCompile "Linux i686" i686 crystal-linux32 precise32
-crossCompile "Linux x86_64" x86-64 crystal-linux64 precise64
+
+
+  tar czf crystal-$1-$VERSION.tar.gz -C $DIST_DIR crystal
+  rm -Rf $DIST_DIR
+}
+
+TAG=`git describe --tags --long | cut -d- -f 1`
+PATCH=`git describe --tags --long | cut -d- -f 2`
+VERSION="$TAG-p$PATCH"
+
+crossCompile "Linux i686" i686 linux32 precise32
+crossCompile "Linux x86_64" x86-64 linux64 precise64
 
 echo "Building crystal-darwin"
-bin/crystal src/compiler/crystal.cr --release --llc "-mcpu=x86-64" -o crystal-darwin-latest
-gzip -9 crystal-darwin-latest
+bin/crystal src/compiler/crystal.cr --release --llc "-mcpu=x86-64" -o crystal-darwin
 
 echo "Uploading to S3"
-for file in crystal-linux32-latest.gz crystal-linux64-latest.gz crystal-darwin-latest.gz; do
-  s3cmd -c ~/.s3cfg-crystal put -P $file s3://crystal-lang
+for target in darwin linux32 linux64; do
+  dist $target
+  s3cmd -c ~/.s3cfg-crystal put -P crystal-$target-$VERSION.tar.gz s3://crystal-lang
+  s3cmd -c ~/.s3cfg-crystal cp -P s3://crystal-lang/crystal-$target-$VERSION.tar.gz s3://crystal-lang/crystal-$target-latest.tar.gz
 done

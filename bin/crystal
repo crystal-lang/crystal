@@ -17,20 +17,20 @@ EXTRACT_FLAG="z"
 case $OS_NAME in
   Darwin)
     LLVM_URL="http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz"
-    CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-darwin-latest.gz"
+    CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-darwin-latest.tar.gz"
     ;;
 
   Linux)
     case $HW_NAME in
       x86_64)
         LLVM_URL="http://llvm.org/releases/3.3/clang+llvm-3.3-amd64-Ubuntu-12.04.2.tar.gz"
-        CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-linux64-latest.gz"
+        CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-linux64-latest.tar.gz"
         ;;
 
       x86|i386|i686)
         LLVM_URL="http://llvm.org/releases/3.3/clang+llvm-3.3-i386-debian6.tar.bz2"
         EXTRACT_FLAG="j"
-        CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-linux32-latest.gz"
+        CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-linux32-latest.tar.gz"
         ;;
 
       *)
@@ -46,7 +46,8 @@ esac
 
 function downloadCompiler {
   echo "Downloading Crystal compiler"
-  curl "$CRYSTAL_URL" | gzip -d > "$DEPS_DIR/crystal"
+  curl "$CRYSTAL_URL" | tar -xz --strip-components=2 crystal/bin/crystal-exe
+  mv crystal-exe "$DEPS_DIR/crystal"
   chmod +x "$DEPS_DIR/crystal"
 }
 
