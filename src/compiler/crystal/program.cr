@@ -224,10 +224,13 @@ module Crystal
           other_type = types[other_index]
           if other_type.reference_like? && !other_type.hierarchy?
             return NilableType.new(self, other_type)
-          elsif other_type.fun?
-            return NilableFunType.new(self, other_type)
-          elsif other_type.is_a?(PointerInstanceType)
-            return NilablePointerType.new(self, other_type)
+          else
+            untyped_type = other_type.remove_typedef
+            if untyped_type.fun?
+              return NilableFunType.new(self, other_type)
+            elsif untyped_type.is_a?(PointerInstanceType)
+              return NilablePointerType.new(self, other_type)
+            end
           end
         end
 

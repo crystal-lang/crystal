@@ -64,4 +64,15 @@ describe "Type inference: pointer" do
     result = assert_type("1 == 1 ? nil : Pointer(Int32).null") { |mod| union_of(mod.nil, mod.pointer_of(mod.int32)) }
     result.node.type.is_a?(NilablePointerType).should be_true
   end
+
+  it "types nil or pointer type with typedef" do
+    result = assert_type(%(
+      lib C
+        type T : Void*
+        fun foo : T?
+      end
+      C.foo
+      )) { |mod| union_of(mod.nil, mod.types["C"].types["T"]) }
+    result.node.type.is_a?(NilablePointerType).should be_true
+  end
 end

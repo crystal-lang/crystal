@@ -8,6 +8,10 @@ module Crystal
       assign_id(program.object)
     end
 
+    def type_id(type : TypeDefType)
+      type_id(type.typedef)
+    end
+
     def type_id(type)
       min_max = @ids[type]?
       if min_max

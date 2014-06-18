@@ -1450,6 +1450,15 @@ module Crystal
       phi LLVM::Int32, phi_table
     end
 
+    def type_id(value, type : NilablePointerType)
+      @builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.pointer_type)
+    end
+
+    def type_id(value, type : NilableFunType)
+      fun_ptr = extract_value value, 0
+      @builder.select null_pointer?(fun_ptr), type_id(@mod.nil), type_id(type.fun_type)
+    end
+
     def type_id(value, type : MixedUnionType)
       load(union_type_id(value))
     end

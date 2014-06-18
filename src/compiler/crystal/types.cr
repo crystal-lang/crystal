@@ -148,6 +148,10 @@ module Crystal
       self == type
     end
 
+    def remove_typedef
+      self
+    end
+
     def is_implicitly_converted_in_c_to?(expected_type)
       if self.nil_type? && (expected_type.pointer? || expected_type.fun?)
         # OK: nil will be sent as pointer
@@ -1846,6 +1850,10 @@ module Crystal
       super(program, container, name)
     end
 
+    def remove_typedef
+      typedef.remove_typedef
+    end
+
     delegate pointer?, typedef
     delegate defs, typedef
     delegate sorted_defs, typedef
@@ -2344,12 +2352,12 @@ module Crystal
     end
 
     def fun_type
-      @union_types.last as FunType
+      @union_types.last.remove_typedef as FunType
     end
 
     def append_to_s(str)
       str << "("
-      fun_type.append_to_s(str)
+      @union_types.last.append_to_s(str)
       str << ")"
       str << "?"
     end
@@ -2366,11 +2374,11 @@ module Crystal
     end
 
     def pointer_type
-      @union_types.last as PointerInstanceType
+      @union_types.last.remove_typedef as PointerInstanceType
     end
 
     def append_to_s(str)
-      pointer_type.append_to_s(str)
+      @union_types.last.append_to_s(str)
       str << "?"
     end
   end

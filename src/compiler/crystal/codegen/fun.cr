@@ -256,7 +256,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     return @main_mod if @single_module
 
     @types_to_modules[type] ||= begin
-      type = type.typedef if type.is_a?(TypeDefType)
+      type = type.remove_typedef
       case type
       when Nil, Program, LibType
         type_name = ""

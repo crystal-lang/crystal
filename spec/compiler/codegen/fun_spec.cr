@@ -281,6 +281,36 @@ describe "Code gen: fun" do
       ").to_i.should eq(4)
   end
 
+  it "codegens nilable fun type dispatch (1)" do
+    run("
+      def foo(x : -> U)
+        x.call
+      end
+
+      def foo(x : Nil)
+        0
+      end
+
+      a = 1 == 1 ? (->{ 3 }) : nil
+      foo(a)
+      ").to_i.should eq(3)
+  end
+
+  it "codegens nilable fun type dispatch (2)" do
+    run("
+      def foo(x : -> U)
+        x.call
+      end
+
+      def foo(x : Nil)
+        0
+      end
+
+      a = 1 == 1 ? nil : ->{ 3 }
+      foo(a)
+      ").to_i.should eq(0)
+  end
+
   it "builds fun type from fun" do
     build("
       lib C

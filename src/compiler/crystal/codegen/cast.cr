@@ -90,12 +90,20 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     store value, target_pointer
   end
 
+  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : TypeDefType, value)
+    assign_distinct target_pointer, target_type, value_type.typedef, value
+  end
+
   def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : NilType, value)
     store LLVM.null(llvm_type(target_type)), target_pointer
   end
 
   def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : PointerInstanceType, value)
     store value, target_pointer
+  end
+
+  def assign_distinct(target_pointer, target_type : NilablePointerType, value_type : TypeDefType, value)
+    assign_distinct target_pointer, target_type, value_type.typedef, value
   end
 
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
@@ -154,8 +162,16 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     value
   end
 
+  def downcast_distinct(value, to_type : TypeDefType, from_type : NilableFunType)
+    downcast_distinct value, to_type.typedef, from_type
+  end
+
   def downcast_distinct(value, to_type : PointerInstanceType, from_type : NilablePointerType)
     value
+  end
+
+  def downcast_distinct(value, to_type : TypeDefType, from_type : NilablePointerType)
+    downcast_distinct value, to_type.typedef, from_type
   end
 
   def downcast_distinct(value, to_type : ReferenceUnionType, from_type : ReferenceUnionType)
@@ -255,12 +271,20 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     value
   end
 
+  def upcast_distinct(value, to_type : NilableFunType, from_type : TypeDefType)
+    upcast_distinct value, to_type, from_type.typedef
+  end
+
   def upcast_distinct(value, to_type : NilablePointerType, from_type : NilType)
     LLVM.null(llvm_type(to_type))
   end
 
   def upcast_distinct(value, to_type : NilablePointerType, from_type : PointerInstanceType)
     value
+  end
+
+  def upcast_distinct(value, to_type : NilablePointerType, from_type : TypeDefType)
+    upcast_distinct value, to_type, from_type.typedef
   end
 
   def upcast_distinct(value, to_type : ReferenceUnionType, from_type)
