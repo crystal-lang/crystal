@@ -9,7 +9,7 @@ module Benchmark
     getter real
     getter label
 
-    def initialize(@utime = 0.0, @stime = 0.0, @cutime = 0.0, @cstime = 0.0, @real = 0.0, @label = "")
+    def initialize(@utime, @stime, @cutime, @cstime, @real, @label)
     end
 
     def total
@@ -23,18 +23,33 @@ module Benchmark
     end
   end
 
-  struct Report
-    def initialize(@label_width)
+  class Report
+    def initialize
+      @reports = [] of {String, ->}
+      @label_width = 0
     end
 
-    def report(label = " ")
-      print label
-      diff = @label_width - label.length + 1
-      if diff > 0
-        print " " * diff
+    def report(label = " ", &block)
+      @label_width = label.length if label.length > @label_width
+      @reports << {label, block}
+    end
+
+    def execute
+      if @label_width > 0
+        print " " * @label_width
       end
-      print Benchmark.measure(label) { yield }
-      puts
+      puts "       user     system      total        real"
+
+      @reports.each do |report|
+        label, block = report
+        print label
+        diff = @label_width - label.length + 1
+        if diff > 0
+          print " " * diff
+        end
+        print Benchmark.measure(label, &block)
+        puts
+      end
     end
   end
 
@@ -56,13 +71,10 @@ module Benchmark
     Time.now - r0
   end
 
-  def bm(label_width = 0)
-    if label_width > 0
-      print " " * label_width
-    end
-    puts "       user     system      total        real"
-    report = Report.new(label_width)
+  def bm
+    report = Report.new
     yield report
+    report.execute
     report
   end
 end
