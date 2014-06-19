@@ -8,11 +8,13 @@ author: asterite
 
 Null pointer exceptions, also known as NPEs, are pretty common errors.
 
-*  In Java: java.lang.NullPointerException
-*  In Ruby: undefined method '...' for nil:NilClass
-*  In Python: AttributeError: 'NoneType' object has no attribute '...'
-*  In C#: Object reference not set to an instance of an object
-*  In C/C++: segmentation fault
+<ul class="goals">
+  <li>In Java: java.lang.NullPointerException</li>
+  <li>In Ruby: undefined method '...' for nil:NilClass</li>
+  <li>In Python: AttributeError: 'NoneType' object has no attribute '...'</li>
+  <li>In C#: Object reference not set to an instance of an object</li>
+  <li>In C/C++: segmentation fault</li>
+</ul>
 
 Heck, two days ago I couldn't buy a bus ticket because I got a nice "Object reference not set to an instance of an object" in the payment page.
 

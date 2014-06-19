@@ -362,11 +362,13 @@ The best of both worlds.
 
 There are a lot more things to implement and we have many ideas to try out.
 
-*  We still need a Garbage Collector, and we want an efficient, concurrent one.
-*  We want to have concurrency primitives, similar to Erlang or Go.
-*  We want to have better metaprogramming.
-*  We might have structs, not only for C bindings, to allow writing efficient wrappers and allocating less memory.
-*  We want tuples, named tuples and named arguments.
+<ul class="goals">
+  <li>We still need a Garbage Collector, and we want an efficient, concurrent one.</li>
+  <li>We want to have concurrency primitives, similar to Erlang or Go.</li>
+  <li>We want to have better metaprogramming.</li>
+  <li>We might have structs, not only for C bindings, to allow writing efficient wrappers and allocating less memory.</li>
+  <li>We want tuples, named tuples and named arguments.</li>
+</ul>
 
 But the thing we want most right now is to have the compiler written in Crystal. Once
 we do this, we won't need Ruby anymore. We won't need to maintain two implementations

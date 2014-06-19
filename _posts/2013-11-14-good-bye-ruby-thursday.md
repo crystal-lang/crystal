@@ -11,8 +11,10 @@ similar to Ruby, except that it is not interpreted, it compiles programs to nati
 
 So we chose to implement a compiler for Crystal in Ruby. Why?
 
-*  Ruby is an awesome language with an elegant syntax, suitable for very fast prototyping.
-*  One day we could write the compiler in Crystal, and porting the code should be relatively easy if the syntax and semantic are similar to Ruby.
+<ul class="goals">
+  <li>Ruby is an awesome language with an elegant syntax, suitable for very fast prototyping.</li>
+  <li>One day we could write the compiler in Crystal, and porting the code should be relatively easy if the syntax and semantic are similar to Ruby.</li>
+</ul>
 
 We tried many times to implement the compiler in Crystal. But we always had problems with it.
 
@@ -72,10 +74,12 @@ So one day we decided to do a feature freeze (and also a bug freeze, unless we c
 
 It was a long path, but also a very interesting and enlightening one:
 
-*  Porting the code from Ruby to Crystal is very easy and most of the time needs few modifications.
-*  The ported code behaved exactly the same as in Ruby. We are still amazed that we could capture Ruby's syntax and semantic so well.
-*  The ported code revealed bugs in the compiler written in Ruby, which means that, in theory, Crystal
-helps you have more robust and correct code.
+<ul class="goals">
+  <li>Porting the code from Ruby to Crystal is very easy and most of the time needs few modifications.</li>
+  <li>The ported code behaved exactly the same as in Ruby. We are still amazed that we could capture Ruby's syntax and semantic so well.</li>
+  <li>The ported code revealed bugs in the compiler written in Ruby, which means that, in theory, Crystal
+helps you have more robust and correct code.</li>
+</ul>
 
 And today, Thursday, [we finally did it](https://github.com/manastech/crystal/commit/ad2e815e271aaa7f478cababd478b14e5b789789). We managed to write a compiler for Crystal written in Crystal itself. Yay! The new compiler can compile itself successfully, and this new compiler can compile itself, and the resulting binary is exactly the same as the old one. It can also compile its specs, and they all pass.
 

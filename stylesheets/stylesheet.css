@@ -345,6 +345,10 @@ ul.goals li:before {
   left: 0px;
   top: 4px;
 }
+ul.spaced {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
 .blog_roll {
   *zoom: 1;
 }
