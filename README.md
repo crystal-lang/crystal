@@ -36,17 +36,24 @@ Installing
 
 Currently it only works on Mac OSX and Linux 32/64 bit.
 
-1. Clone the repository
+### Installing on Mac OSX using Homebrew
+
+    brew tap manastech/crystal
+    brew install crystal
+
+### Installing from source repository
+
+1. Clone the repository: `git clone https://github.com/manastech/crystal.git`
 1. Execute `bin/crystal --setup`
-1. You will need libgc. In mac: `brew install bdw-gc`. In Ubuntu: `sudo apt-get install libgc-dev`.
+1. You will need libgc. In Mac: `brew install bdw-gc`. In Ubuntu: `sudo apt-get install libgc-dev`.
 
 That's all. Try to run:
 
-> `bin/crystal --help`
+    bin/crystal --help
 
 Or compile some example:
 
-> `bin/crystal samples/mandelbrot.cr && ./mandelbrot`
+    bin/crystal samples/mandelbrot.cr && ./mandelbrot
 
 Community
 ---------
