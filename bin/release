@@ -19,9 +19,7 @@ function dist() {
   cp dist/crystal $DIST_DIR/crystal/bin/crystal
   cp crystal-$1 $DIST_DIR/crystal/bin/crystal-exe
 
-
-
-  tar czf crystal-$1-$VERSION.tar.gz -C $DIST_DIR crystal
+  COPYFILE_DISABLE=1 tar czf crystal-$1-$VERSION.tar.gz -C $DIST_DIR crystal
   rm -Rf $DIST_DIR
 }
 
