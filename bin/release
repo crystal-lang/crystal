@@ -15,7 +15,7 @@ function crossCompile() {
 function dist() {
   DIST_DIR=`mktemp -d dist.XXXX`
   mkdir -p $DIST_DIR/crystal/bin
-  cp -R libs samples src LICENSE $DIST_DIR/crystal
+  cp -R libs samples src LICENSE CHANGELOG.md $DIST_DIR/crystal
   cp dist/crystal $DIST_DIR/crystal/bin/crystal
   cp crystal-$1 $DIST_DIR/crystal/bin/crystal-exe
 
