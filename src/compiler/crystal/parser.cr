@@ -75,45 +75,40 @@ module Crystal
           assign_index = i
         end
 
-        if assign_index
-          targets = exps[0 ... assign_index].map { |exp| to_lhs(exp) }
-          if ivars = @instance_vars
-            targets.each do |target|
-              ivars.add target.name if target.is_a?(InstanceVar)
-            end
-          end
-
-          if (assign = exps[assign_index])
-            values = [] of ASTNode
-
-            case assign
-            when Assign
-              targets << to_lhs(assign.target)
-              values << assign.value
-            when Call
-              assign.name = assign.name[0, assign.name.length - 1]
-              targets << assign
-              values << assign.args.pop
-            else
-              raise "Impossible"
-            end
-
-            values.concat exps[assign_index + 1 .. -1]
-            if values.length != 1 && targets.length != 1 && targets.length != values.length
-              raise "Multiple assignment count mismatch", location
-            end
-
-            multi = MultiAssign.new(targets, values)
-            multi.location = location
-            multi
-          else
-            raise "Impossible"
-          end
-        else
-          exps = Expressions.new exps
-          exps.location = location
-          exps
+        if assign_index == -1
+          unexpected_token
         end
+
+        targets = exps[0 ... assign_index].map { |exp| to_lhs(exp) }
+        if ivars = @instance_vars
+          targets.each do |target|
+            ivars.add target.name if target.is_a?(InstanceVar)
+          end
+        end
+
+        assign = exps[assign_index]
+        values = [] of ASTNode
+
+        case assign
+        when Assign
+          targets << to_lhs(assign.target)
+          values << assign.value
+        when Call
+          assign.name = assign.name[0, assign.name.length - 1]
+          targets << assign
+          values << assign.args.pop
+        else
+          raise "Bug: mutliassign index expression can only be Assign or Call"
+        end
+
+        values.concat exps[assign_index + 1 .. -1]
+        if values.length != 1 && targets.length != 1 && targets.length != values.length
+          raise "Multiple assignment count mismatch", location
+        end
+
+        multi = MultiAssign.new(targets, values)
+        multi.location = location
+        multi
       end
     end
 
@@ -3411,9 +3406,9 @@ module Crystal
 
     def unexpected_token(token = @token.to_s, msg = nil)
       if msg
-        raise "unexpected token: #{token} (#{msg})"
+        raise "unexpected token: #{token} (#{msg})", @token.line_number, @token.column_number
       else
-        raise "unexpected token: #{token}"
+        raise "unexpected token: #{token}", @token.line_number, @token.column_number
       end
     end
 

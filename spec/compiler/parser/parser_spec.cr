@@ -885,4 +885,13 @@ describe "Parser" do
     rescue ex : Crystal::SyntaxException
     end
   end
+
+  it "says unexpected token on comma in curly block" do
+    begin
+      Parser.parse "foo {1, 2}"
+      fail "syntax exception should have been raised"
+    rescue ex : Crystal::SyntaxException
+      ex.message.not_nil!.includes?("unexpected token: }").should be_true
+    end
+  end
 end
