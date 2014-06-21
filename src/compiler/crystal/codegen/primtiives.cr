@@ -412,11 +412,24 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def codegen_primitive_class(node, target_def, call_args)
-    if node.type.hierarchy_metaclass?
-      load aggregate_index(call_args[0], 0)
-    else
-      type_id(node.type)
+    codegen_primitive_class_with_type(node.type, call_args[0])
+  end
+
+  def codegen_primitive_class_with_type(node_type : HierarchyMetaclassType, value)
+    load aggregate_index(value, 0)
+  end
+
+  def codegen_primitive_class_with_type(node_type : TupleInstanceType, value)
+    allocate_tuple(node_type) do |tuple_type, i|
+      elem_type = node_type.tuple_types[i]
+      ptr = aggregate_index value, i
+      ptr = to_lhs ptr, elem_type
+      {tuple_type, codegen_primitive_class_with_type(elem_type, ptr)}
     end
+  end
+
+  def codegen_primitive_class_with_type(node_type : Type, value)
+    type_id(node_type)
   end
 
   def codegen_primitive_fun_call(node, target_def, call_args)

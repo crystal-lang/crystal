@@ -110,4 +110,29 @@ describe "Code gen: tuple" do
       x[i]
       )).to_i.should eq(1)
   end
+
+  it "codegens tuple class" do
+    run(%(
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+      end
+
+      foo = Foo.new(1)
+      bar = Bar.new
+
+      tuple = {foo, bar}
+      tuple_class = tuple.class
+      foo_class = tuple_class[0]
+      foo2 = foo_class.new(2)
+      foo2.x
+      )).to_i.should eq(2)
+  end
 end
