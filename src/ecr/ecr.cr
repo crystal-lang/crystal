@@ -1,7 +1,13 @@
 module ECR
   extend self
 
-  def process_ecr(string, buffer_name = "__str__")
+  DefaultBufferName = "__str__"
+
+  def process_file(filename, buffer_name = DefaultBufferName)
+    process_string File.read(filename), buffer_name
+  end
+
+  def process_string(string, buffer_name = DefaultBufferName)
     lexer = Lexer.new string
 
     String.build do |str|
@@ -33,6 +39,6 @@ module ECR
   end
 end
 
-require "./*"
+require "./lexer"
 
 

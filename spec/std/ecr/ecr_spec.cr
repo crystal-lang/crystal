@@ -4,7 +4,7 @@ require "ecr"
 
 describe "ECR" do
   it "builds a crystal program from a source" do
-    program = ECR.process_ecr "hello <%= 1 %> world <% while true %> 2 <% end %>"
+    program = ECR.process_string "hello <%= 1 %> world <% while true %> 2 <% end %>"
 
     pieces = [
       %(String.build do |__str__|),
