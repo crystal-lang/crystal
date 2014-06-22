@@ -69,10 +69,10 @@ end
 macro make_named_tuple(name, fields)
   struct {{name}}
     {% for field in fields %}
-      getter :{{field}}
+      getter :{{field.id}}
     {% end %}
 
-    def initialize({{ fields.map { |field| "@#{field}" }.join ", " }})
+    def initialize({{ (fields.map { |field| "@#{field.id}" }.join ", ").id }})
     end
 
     {{yield}}

@@ -348,23 +348,23 @@ module Crystal
     end
 
     macro parse_operator(name, next_operator, node, operators)
-      def parse_{{name}}
+      def parse_{{name.id}}
         location = @token.location
 
-        left = parse_{{next_operator}}
+        left = parse_{{next_operator.id}}
         while true
           left.location = location
 
           case @token.type
           when :SPACE
             next_token
-          when {{operators}}
+          when {{operators.id}}
             method = @token.type.to_s
             method_column_number = @token.column_number
 
             next_token_skip_space_or_newline
-            right = parse_{{next_operator}}
-            left = {{node}}
+            right = parse_{{next_operator.id}}
+            left = {{node.id}}
           else
             return left
           end

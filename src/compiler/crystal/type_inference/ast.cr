@@ -441,7 +441,7 @@ module Crystal
   end
 
   {% for name in %w(ArrayLiteral HashLiteral MacroExpression MacroIf MacroFor) %}
-    class {{name}}
+    class {{name.id}}
       include ExpandableNode
     end
   {% end %}

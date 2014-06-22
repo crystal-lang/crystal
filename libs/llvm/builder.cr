@@ -74,20 +74,20 @@ struct LLVM::Builder
   end
 
   {% for name in %w(bit_cast si2fp ui2fp zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) %}
-    def {{name}}(value, type, name = "")
-      LibLLVM.build_{{name}}(self, value, type, name)
+    def {{name.id}}(value, type, name = "")
+      LibLLVM.build_{{name.id}}(self, value, type, name)
     end
   {% end %}
 
   {% for name in %w(add sub mul sdiv exact_sdiv udiv srem urem shl ashr lshr or and xor fadd fsub fmul fdiv) %}
-    def {{name}}(lhs, rhs, name = "")
-      LibLLVM.build_{{name}}(self, lhs, rhs, name)
+    def {{name.id}}(lhs, rhs, name = "")
+      LibLLVM.build_{{name.id}}(self, lhs, rhs, name)
     end
   {% end %}
 
   {% for name in %w(icmp fcmp) %}
-    def {{name}}(op, lhs, rhs, name = "")
-      LibLLVM.build_{{name}}(self, op, lhs, rhs, name)
+    def {{name.id}}(op, lhs, rhs, name = "")
+      LibLLVM.build_{{name.id}}(self, op, lhs, rhs, name)
     end
   {% end %}
 

@@ -1,7 +1,7 @@
 struct Struct
   def ==(other : self) : Bool
     {% for ivar in @instance_vars %}
-      return false unless {{ivar}} == other.{{ivar}}
+      return false unless {{ivar.id}} == other.{{ivar.id}}
     {% end %}
     true
   end
@@ -9,21 +9,21 @@ struct Struct
   def hash : Int32
     hash = 0
     {% for ivar in @instance_vars %}
-      hash = 31 * hash + {{ivar}}.hash
+      hash = 31 * hash + {{ivar.id}}.hash
     {% end %}
     hash
   end
 
   def to_s : String
     String.build do |str|
-      str << {{@name.stringify}}
+      str << {{@name}}
       str << "("
       {% for ivar, i in @instance_vars %}
         {% if i > 0 %}
           str << ", "
         {% end %}
-        str << "{{ivar}}="
-        str << {{ivar}}.inspect
+        str << "{{ivar.id}}="
+        str << {{ivar.id}}.inspect
       {% end %}
       str << ")"
     end

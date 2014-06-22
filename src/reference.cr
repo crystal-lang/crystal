@@ -33,18 +33,18 @@ class Reference
 
   def inspect : String
     hex_object_id = object_id.to_s(16)
-    exec_recursive(:inspect, "#<{{@name}}:0x#{hex_object_id} ...>") do
+    exec_recursive(:inspect, "#<{{@name.id}}:0x#{hex_object_id} ...>") do
       String.build do |str|
         str << "#<"
-        str << {{@name.stringify}}
+        str << {{@name}}
         str << ":0x"
         str << hex_object_id
         {% for ivar, i in @instance_vars %}
           {% if i > 0 %}
             str << ","
           {% end %}
-          str << " {{ivar}}="
-          str << {{ivar}}.inspect
+          str << " {{ivar.id}}="
+          str << {{ivar.id}}.inspect
         {% end %}
         str << ">"
       end

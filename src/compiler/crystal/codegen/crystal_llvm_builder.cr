@@ -47,30 +47,30 @@ module Crystal
     end
 
     macro forward(name)
-      def {{name}}
+      def {{name.id}}
         return llvm_nil if @end
-        @builder.{{name}}
+        @builder.{{name.id}}
       end
     end
 
     macro forward(name, args)
-      def {{name}}({{args}})
+      def {{name.id}}({{args.id}})
         return llvm_nil if @end
-        @builder.{{name}}({{args}})
+        @builder.{{name.id}}({{args.id}})
       end
     end
 
     macro forward(name, def_args, call_args)
-      def {{name}}({{def_args}})
+      def {{name.id}}({{def_args.id}})
         return llvm_nil if @end
-        @builder.{{name}}({{call_args}})
+        @builder.{{name.id}}({{call_args.id}})
       end
     end
 
     macro forward_named(name, args)
-      def {{name}}({{args}}, name = "")
+      def {{name.id}}({{args.id}}, name = "")
         return llvm_nil if @end
-        @builder.{{name}}({{args}}, name)
+        @builder.{{name.id}}({{args.id}}, name)
       end
     end
 

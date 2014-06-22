@@ -322,7 +322,7 @@ module Crystal
       end
 
       {% for name in %w(Bool Number Char String Symbol Nil Array Range Tuple Hash) %}
-        def visit(node : {{name}}Literal)
+        def visit(node : {{name.id}}Literal)
           @last = node
           false
         end

@@ -53,7 +53,7 @@ module Crystal
   end
 
   {% for klass in %w(Nil Bool Number Char String Symbol) %}
-    class {{klass}}Literal
+    class {{klass.id}}Literal
       def needs_const_block?
         false
       end

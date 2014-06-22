@@ -9,8 +9,8 @@ struct HTML::Builder
   end
 
   {% for tag in %w(a b body div em h1 h2 h3 head html i img input li ol p s script span strong table tbody td textarea thead thead title tr u ul) %}
-    def {{tag}}(attrs = nil : Hash?)
-      @str << "<{{tag}}"
+    def {{tag.id}}(attrs = nil : Hash?)
+      @str << "<{{tag.id}}"
       if attrs
         @str << " "
         attrs.each do |name, value|
@@ -23,7 +23,7 @@ struct HTML::Builder
       end
       @str << ">"
       with self yield self
-      @str << "</{{tag}}>"
+      @str << "</{{tag.id}}>"
     end
   {% end %}
 

@@ -29,39 +29,39 @@ class Object
   end
 
   macro getter(name)
-    def {{name}}
-      @{{name}}
+    def {{name.id}}
+      @{{name.id}}
     end
   end
 
   macro getter!(name)
-    def {{name}}?
-      @{{name}}
+    def {{name.id}}?
+      @{{name.id}}
     end
 
-    def {{name}}
-      @{{name}}.not_nil!
+    def {{name.id}}
+      @{{name.id}}.not_nil!
     end
   end
 
   macro setter(name)
-    def {{name}}=(@{{name}})
+    def {{name.id}}=(@{{name.id}})
     end
   end
 
   macro property(name)
-    getter :{{name}}
-    setter :{{name}}
+    getter :{{name.id}}
+    setter :{{name.id}}
   end
 
   macro property!(name)
-    getter! :{{name}}
-    setter :{{name}}
+    getter! :{{name.id}}
+    setter :{{name.id}}
   end
 
   macro delegate(method, to)
-    def {{method}}
-      {{to}}.{{method}}
+    def {{method.id}}
+      {{to.id}}.{{method.id}}
     end
   end
 end
