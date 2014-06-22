@@ -253,23 +253,38 @@ module Crystal
       @funs[type_ids] ||= FunType.new(self, types)
     end
 
-    def require(filename, relative_to_filename = nil)
+    def add_to_requires(filename)
+      if @requires.includes? filename
+        false
+      else
+        @requires.add filename
+        true
+      end
+    end
+
+    def find_in_path(filename, relative_to_filename = nil)
+      result = find_in_path_internal(filename, relative_to_filename)
+      result = [result] if result.is_a?(String)
+      result
+    end
+
+    def find_in_path_internal(filename, relative_to_filename)
       if File.exists?(filename) && filename[0] == '/'
-        return require_absolute filename
+        return find_in_path_absolute filename
       end
 
       relative_to_filename = File.dirname(relative_to_filename) if relative_to_filename.is_a?(String)
-      require_relative_to_dir(filename, relative_to_filename, true)
+      find_in_path_relative_to_dir(filename, relative_to_filename, true)
     end
 
-    def require_relative_to_dir(filename, relative_to, check_crystal_path)
+    def find_in_path_relative_to_dir(filename, relative_to, check_crystal_path)
       if relative_to.is_a?(String) && ((single = filename.ends_with?("/*")) || (multi = filename.ends_with?("/**")))
         filename_dir_index = filename.rindex('/').not_nil!
         filename_dir = filename[0 .. filename_dir_index]
         relative_dir = "#{relative_to}/#{filename_dir}"
-        nodes = [] of ASTNode
-        require_dir(relative_dir, nodes, multi)
-        return Expressions.new(nodes)
+        files = [] of String
+        find_in_path_dir(relative_dir, files, multi)
+        return files
       end
 
       if relative_to.is_a?(String)
@@ -277,22 +292,22 @@ module Crystal
         relative_filename_cr = relative_filename.ends_with?(".cr") ? relative_filename : "#{relative_filename}.cr"
 
         if File.exists?(relative_filename_cr)
-          return require_absolute relative_filename_cr
+          return find_in_path_absolute relative_filename_cr
         end
 
         if Dir.exists?(relative_filename)
-          return require_absolute("#{relative_filename}/#{filename}.cr")
+          return find_in_path_absolute("#{relative_filename}/#{filename}.cr")
         end
       end
 
       if check_crystal_path
-        require_from_crystal_path filename, relative_to
+        find_in_path_from_crystal_path filename, relative_to
       else
         nil
       end
     end
 
-    def require_dir(dir, nodes, recursive)
+    def find_in_path_dir(dir, files_accumulator, recursive)
       files = [] of String
       dirs = [] of String
 
@@ -312,36 +327,29 @@ module Crystal
       dirs.sort!
 
       files.each do |file|
-        nodes << Require.new(File.expand_path(file))
+        files_accumulator << File.expand_path(file)
       end
 
       dirs.each do |subdir|
-        require_dir("#{dir}/#{subdir}", nodes, recursive)
+        find_in_path_dir("#{dir}/#{subdir}", files_accumulator, recursive)
       end
     end
 
-    def require_absolute(filename)
+    def find_in_path_absolute(filename)
       filename = "#{Dir.working_directory}/#{filename}" unless filename.starts_with?('/')
-      filename = File.expand_path(filename)
-      return Nop.new if @requires.includes? filename
-
-      @requires.add filename
-
-      parser = Parser.new File.read(filename)
-      parser.filename = filename
-      parser.parse
+      File.expand_path(filename)
     end
 
-    def require_from_crystal_path(filename, relative_to)
+    def find_in_path_from_crystal_path(filename, relative_to)
       @crystal_path.each do |path|
-        required = self.require_relative_to_dir(filename, path, false)
+        required = find_in_path_relative_to_dir(filename, path, false)
         return required if required
       end
 
       if relative_to
-        raise "can't find require file '#{filename}' relative to '#{relative_to}'"
+        raise "can't find file '#{filename}' relative to '#{relative_to}'"
       else
-        raise "can't find require file '#{filename}'"
+        raise "can't find file '#{filename}'"
       end
     end
 

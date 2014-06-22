@@ -518,8 +518,20 @@ module Crystal
     # The source code can be a Nop if the file was already required.
     def transform(node : Require)
       location = node.location
-      required = @program.require(node.string, location.try &.filename).not_nil!
-      required.transform(self)
+      filenames = @program.find_in_path(node.string, location.try &.filename)
+      if filenames
+        nodes = Array(ASTNode).new(filenames.length)
+        filenames.each do |filename|
+          if @program.add_to_requires(filename)
+            parser = Parser.new File.read(filename)
+            parser.filename = filename
+            nodes << parser.parse.transform(self)
+          end
+        end
+        Expressions.from(nodes)
+      else
+        Nop.new
+      end
     rescue ex : Crystal::Exception
       node.raise "while requiring \"#{node.string}\"", ex
     rescue ex
