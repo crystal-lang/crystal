@@ -1,4 +1,4 @@
 require "crystal/**"
 
 compiler = Crystal::Compiler.new
-compiler.compile
+compiler.process_options

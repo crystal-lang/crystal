@@ -20,6 +20,7 @@ lib C
   fun lstat(path : UInt8*, stat : Stat *) : Int32
   fun fstat(fileno : Int32, stat : Stat*) : Int32
   fun rename(oldname : UInt8*, newname : UInt8*) : Int32
+  fun mkstemp(result : UInt8*) : Int32
 
   ifdef x86_64
     fun fseeko(file : File, offset : Int64, whence : Int32) : Int32

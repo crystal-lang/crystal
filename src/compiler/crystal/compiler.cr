@@ -1,13 +1,8 @@
 require "option_parser"
 require "thread"
-require "io"
 require "file_utils"
 require "socket"
 require "net/http"
-
-lib C
-  fun mkstemp(result : UInt8*) : Int32
-end
 
 module Crystal
   class Compiler
@@ -30,6 +25,7 @@ module Crystal
     getter uses_gcc
     getter verbose
     getter! output_dir
+    property output_filename
 
     def initialize
       @dump_ll = false
@@ -45,7 +41,6 @@ module Crystal
       @command = nil
       @cross_compile = nil
       @llc_flags_changed = true
-      @multithreaded = false
       @prelude = "prelude"
       @n_threads = 8.to_i32
       @browser = false
@@ -58,8 +53,54 @@ module Crystal
       @opt = @config.bin "opt"
       @clang = @config.bin "clang"
       @llvm_dis = @config.bin "llvm-dis"
+    end
 
-      @options = OptionParser.parse! do |opts|
+    def check_clang_or_gcc
+      unless File.exists?(@clang)
+        if program.has_flag?("darwin")
+          puts "Could not find clang. Install clang 3.3: brew tap homebrew/versions; brew install llvm33 --with-clang"
+          exit 1
+        end
+
+        clang = program.exec "which gcc"
+        if clang
+          @clang = clang
+          @uses_gcc = true
+        else
+          puts "Could not find a C compiler. Install clang (3.3) or gcc."
+          exit 1
+        end
+      end
+    end
+
+    def process_options(options = ARGV)
+      command = process_options_internal(options)
+      if command
+        source = command
+        filename = "-"
+        @run = true
+      else
+        if ARGV.length == 0
+          puts options
+          exit 1
+        end
+
+        filename = ARGV.shift
+        unless File.exists?(filename)
+          puts "File #{filename} does not exist"
+          exit 1
+        end
+
+        filename = File.expand_path(filename)
+        source = File.read filename
+      end
+
+      compile filename, source
+    end
+
+    def process_options_internal(options)
+      command = nil
+      options = OptionParser.parse(options) do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
         opts.on("--browser", "Opens an http server to browse the code") do
           @browser = true
@@ -70,8 +111,8 @@ module Crystal
         opts.on("-d", "--debug", "Add symbolic debug info") do
           @debug = true
         end
-        opts.on("-e 'command'", "One line script. Omit [programfile]") do |command|
-          @command = command
+        opts.on("-e 'command'", "One line script. Omit [programfile]") do |the_command|
+          command = the_command
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
@@ -111,7 +152,7 @@ module Crystal
           @print_types = true
         end
         opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
-          @n_threads = n_threads.to_i32
+          @n_threads = n_threads.to_i
         end
         opts.on("-v", "--version", "Print Crystal version") do
           puts "Crystal #{Crystal.version_string}"
@@ -121,29 +162,10 @@ module Crystal
           @verbose = true
         end
       end
+      command
     end
 
-    def compile
-      if command = @command
-        source = command
-        filename = "-"
-        @run = true
-      else
-        if ARGV.length == 0
-          puts @options
-          exit 1
-        end
-
-        filename = ARGV[0]
-        unless File.exists?(filename)
-          puts "File #{filename} does not exist"
-          exit 1
-        end
-
-        filename = File.expand_path(filename) #unless filename == '-'
-        source = File.read filename
-      end
-
+    def compile(filename, source)
       output_filename = @output_filename
       unless output_filename
         if @run
@@ -162,22 +184,6 @@ module Crystal
           program.flags = cross_compile
         end
 
-        unless File.exists?(@clang)
-          if program.has_flag?("darwin")
-            puts "Could not find clang. Install clang 3.3: brew tap homebrew/versions; brew install llvm33 --with-clang"
-            exit 1
-          end
-
-          clang = program.exec "which gcc"
-          if clang
-            @clang = clang
-            @uses_gcc = true
-          else
-            puts "Could not find a C compiler. Install clang (3.3) or gcc."
-            exit 1
-          end
-        end
-
         parser = Parser.new(source)
         parser.filename = filename
         node = parser.parse
@@ -185,7 +191,7 @@ module Crystal
         require_node = Require.new(@prelude)
         require_node.location = Location.new(1, 1, filename)
 
-        timing("Normalize") do
+        timing("Parsing") do
           require_node = program.normalize(require_node)
           node = program.normalize(node)
         end
@@ -297,7 +303,7 @@ module Crystal
           end
 
           if @run
-            errcode = C.system("#{output_filename} #{ARGV[1 .. -1].join " "}")
+            errcode = C.system("#{output_filename} #{ARGV.join " "}")
             puts "Program terminated abnormally with eror code: #{errcode}" if errcode != 0
             File.delete output_filename
           end
