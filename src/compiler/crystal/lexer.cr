@@ -1332,6 +1332,14 @@ module Crystal
         @token.line_number += 1
       end
 
+      if current_char == '\\' && peek_next_char == '{'
+        next_char
+        next_char
+        @token.type = :MACRO_LITERAL
+        @token.value = "{"
+        return @token
+      end
+
       if current_char == '{'
         case next_char
         when '{'
@@ -1371,7 +1379,7 @@ module Crystal
 
       char = current_char
 
-      until char == '{' || char == '\0' || (!string_state && char == 'e')
+      until char == '{' || char == '\0' || (char == '\\' && peek_next_char == '{') || (!string_state && char == 'e')
         if !string_state && whitespace &&
           (
             (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||
