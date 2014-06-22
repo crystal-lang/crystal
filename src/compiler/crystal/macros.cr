@@ -99,7 +99,7 @@ module Crystal
       def visit(node : MacroExpression)
         node.exp.accept self
 
-        @str << @last.to_macro_id
+        @str << @last.to_s
 
         false
       end
@@ -124,7 +124,7 @@ module Crystal
               str << exp.value
             else
               exp.accept self
-              str << @last.to_macro_id
+              str << @last.to_s
             end
           end
         end)
@@ -276,13 +276,19 @@ module Crystal
       def execute_system(node)
         cmd = node.args.map do |arg|
           arg.accept self
-          @last.to_macro_id
+          last = @last
+          case last
+          when StringLiteral
+            last.value
+          else
+            last
+          end
         end
         cmd = cmd.join " "
 
         result = system2(cmd).join "\n"
         if $exit == 0
-          @last = StringLiteral.new(result)
+          @last = MacroId.new(result)
         else
           node.raise "Error executing command: #{cmd}\n\nGot:\n\n#{result}\n"
         end
@@ -326,7 +332,7 @@ module Crystal
         @last = node
       end
 
-      def visit(node : MacroCallWrapper)
+      def visit(node : MacroId)
         @last = node
       end
 
@@ -355,12 +361,10 @@ module Crystal
 
     def interpret(method, args, block, interpreter)
       case method
+      when "id"
+        interpret_argless_method("id", args) { MacroId.new(to_macro_id) }
       when "stringify"
-        unless args.length == 0
-          raise "wrong number of arguments for stringify (#{args.length} for 0)"
-        end
-
-        stringify
+        interpret_argless_method("stringify", args) { stringify }
       when "=="
         BoolLiteral.new(self == args.first)
       when "!="
@@ -387,7 +391,11 @@ module Crystal
     end
 
     def stringify
-      StringLiteral.new(to_macro_id)
+      StringLiteral.new(to_s)
+    end
+
+    def to_macro_id
+      to_s
     end
   end
 
@@ -441,14 +449,6 @@ module Crystal
   end
 
   class StringLiteral
-    def to_macro_id
-      @value
-    end
-
-    def stringify
-      StringLiteral.new("\"#{@value.dump}\"")
-    end
-
     def interpret(method, args, block, interpreter)
       case method
       when "[]"
@@ -487,11 +487,16 @@ module Crystal
           create_array_literal_from_values(@value.split)
         when 1
           first_arg = args.first
-          if first_arg.is_a?(CharLiteral)
-            create_array_literal_from_values(@value.split(first_arg.value))
+          case first_arg
+          when CharLiteral
+            splitter = first_arg.value
+          when StringLiteral
+            splitter = first_arg.value
           else
-            create_array_literal_from_values(@value.split(first_arg.to_macro_id))
+            splitter = first_arg.to_s
           end
+
+          create_array_literal_from_values(@value.split(splitter))
         else
           raise "wrong number of arguments for split (#{args.length} for 0, 1)"
         end
@@ -507,6 +512,14 @@ module Crystal
     def create_array_literal_from_values(values)
       ArrayLiteral.new(Array(ASTNode).new(values.length) { |i| StringLiteral.new(values[i]) })
     end
+
+    def to_macro_id
+      @value
+    end
+
+    # def stringify
+    #   StringLiteral.new(to_s)
+    # end
   end
 
   class ArrayLiteral
@@ -542,7 +555,15 @@ module Crystal
         interpret_argless_method(method, args) { elements.first? || NilLiteral.new }
       when "join"
         interpret_one_arg_method(method, args) do |arg|
-          StringLiteral.new(elements.map(&.to_macro_id).join arg.to_macro_id)
+          joiner = arg.is_a?(StringLiteral) ? arg.value : arg.to_s
+          joined_elements = elements.map do |element|
+            if element.is_a?(StringLiteral)
+              element.value
+            else
+              element.to_s
+            end
+          end
+          StringLiteral.new(joined_elements.join joiner)
         end
       when "last"
         interpret_argless_method(method, args) { elements.last? || NilLiteral.new }
@@ -659,10 +680,6 @@ module Crystal
       @name
     end
 
-    def stringify
-      StringLiteral.new("\"#{@name}\"")
-    end
-
     def interpret(method, args, block, interpreter)
       case method
       when "name"
@@ -676,10 +693,6 @@ module Crystal
   class SymbolLiteral
     def to_macro_id
       @value
-    end
-
-    def stringify
-      StringLiteral.new("\":#{@value.dump}\"")
     end
   end
 
@@ -699,7 +712,7 @@ module Crystal
     end
 
     def to_macro_var
-      MacroCallWrapper.new(self)
+      MacroId.new(to_macro_id)
     end
   end
 

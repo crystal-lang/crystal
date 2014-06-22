@@ -587,6 +587,7 @@ class String
       when '\r' then "\\r"
       when '\t' then "\\t"
       when '\v' then "\\v"
+      when '\\' then "\\\\"
       else
         if char.ord < 32 || char.ord > 127
           high = char.ord / 16

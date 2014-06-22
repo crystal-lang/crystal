@@ -7,11 +7,11 @@ describe "MacroExpander" do
   end
 
   it "expands macro with string sustitution" do
-    assert_macro "x", "{{x}}", [StringLiteral.new("hello")] of ASTNode, "hello"
+    assert_macro "x", "{{x}}", [StringLiteral.new("hello")] of ASTNode, %("hello")
   end
 
   it "expands macro with symbol sustitution" do
-    assert_macro "x", "{{x}}", [SymbolLiteral.new("hello")] of ASTNode, "hello"
+    assert_macro "x", "{{x}}", [SymbolLiteral.new("hello")] of ASTNode, ":hello"
   end
 
   it "expands macro with argument-less call sustitution" do
@@ -31,11 +31,11 @@ describe "MacroExpander" do
   end
 
   it "expands macro with string" do
-    assert_macro "", %({{"hello"}}), [] of ASTNode, %(hello)
+    assert_macro "", %({{"hello"}}), [] of ASTNode, %("hello")
   end
 
   it "expands macro with symbol" do
-    assert_macro "", %({{:foo}}), [] of ASTNode, %(foo)
+    assert_macro "", %({{:foo}}), [] of ASTNode, %(:foo)
   end
 
   it "expands macro with nil" do
@@ -59,7 +59,7 @@ describe "MacroExpander" do
   end
 
   it "expands macro with string interpolation" do
-    assert_macro "", "{{ \"hello\#{1 == 1}world\" }}", [] of ASTNode, "hellotrueworld"
+    assert_macro "", "{{ \"hello\#{1 == 1}world\" }}", [] of ASTNode, %("hellotrueworld")
   end
 
   it "expands macro with var sustitution" do
@@ -107,12 +107,40 @@ describe "MacroExpander" do
   end
 
   describe "node methods" do
-    it "expands macro with stringify call on string" do
-      assert_macro "x", "{{x.stringify}}", [StringLiteral.new("hello")] of ASTNode, %("hello")
+    describe "stringify" do
+      it "expands macro with stringify call on string" do
+        assert_macro "x", "{{x.stringify}}", [StringLiteral.new("hello")] of ASTNode, "\"\\\"hello\\\"\""
+      end
+
+      it "expands macro with stringify call on symbol" do
+        assert_macro "x", "{{x.stringify}}", [SymbolLiteral.new("hello")] of ASTNode, %(":hello")
+      end
+
+      it "expands macro with stringify call on call" do
+        assert_macro "x", "{{x.stringify}}", [Call.new(nil, "hello")] of ASTNode, %("hello")
+      end
+
+      it "expands macro with stringify call on number" do
+        assert_macro "x", "{{x.stringify}}", [NumberLiteral.new(1, :i32)] of ASTNode, %("1")
+      end
     end
 
-    it "expands macro with stringify call on symbol" do
-      assert_macro "x", "{{x.stringify}}", [SymbolLiteral.new("hello")] of ASTNode, %(":hello")
+    describe "id" do
+      it "expands macro with id call on string" do
+        assert_macro "x", "{{x.id}}", [StringLiteral.new("hello")] of ASTNode, "hello"
+      end
+
+      it "expands macro with id call on symbol" do
+        assert_macro "x", "{{x.id}}", [SymbolLiteral.new("hello")] of ASTNode, "hello"
+      end
+
+      it "expands macro with id call on call" do
+        assert_macro "x", "{{x.id}}", [Call.new(nil, "hello")] of ASTNode, "hello"
+      end
+
+      it "expands macro with id call on number" do
+        assert_macro "x", "{{x.id}}", [NumberLiteral.new(1, :i32)] of ASTNode, %(1)
+      end
     end
 
     it "executes == on numbers (true)" do
@@ -180,19 +208,19 @@ describe "MacroExpander" do
     end
 
     it "executes strip" do
-      assert_macro "", %({{"  hello   ".strip}}), [] of ASTNode, "hello"
+      assert_macro "", %({{"  hello   ".strip}}), [] of ASTNode, %("hello")
     end
 
     it "executes downcase" do
-      assert_macro "", %({{"HELLO".downcase}}), [] of ASTNode, "hello"
+      assert_macro "", %({{"HELLO".downcase}}), [] of ASTNode, %("hello")
     end
 
     it "executes upcase" do
-      assert_macro "", %({{"hello".upcase}}), [] of ASTNode, "HELLO"
+      assert_macro "", %({{"hello".upcase}}), [] of ASTNode, %("HELLO")
     end
 
     it "executes capitalize" do
-      assert_macro "", %({{"hello".capitalize}}), [] of ASTNode, "Hello"
+      assert_macro "", %({{"hello".capitalize}}), [] of ASTNode, %("Hello")
     end
 
     it "executes lines" do
@@ -208,11 +236,11 @@ describe "MacroExpander" do
     end
 
     it "executes string [Range] inclusive" do
-      assert_macro "", %({{"hello"[1..-2]}}), [] of ASTNode, "ell"
+      assert_macro "", %({{"hello"[1..-2]}}), [] of ASTNode, %("ell")
     end
 
     it "executes string [Range] exclusive" do
-      assert_macro "", %({{"hello"[1...-2]}}), [] of ASTNode, "el"
+      assert_macro "", %({{"hello"[1...-2]}}), [] of ASTNode, %("el")
     end
   end
 
@@ -234,11 +262,11 @@ describe "MacroExpander" do
     end
 
     it "executes join" do
-      assert_macro "", %({{[1, 2, 3].join ", "}}), [] of ASTNode, "1, 2, 3"
+      assert_macro "", %({{[1, 2, 3].join ", "}}), [] of ASTNode, %("1, 2, 3")
     end
 
     it "executes join with strings" do
-      assert_macro "", %({{["a", "b"].join ", "}}), [] of ASTNode, "a, b"
+      assert_macro "", %({{["a", "b"].join ", "}}), [] of ASTNode, %("a, b")
     end
 
     it "executes map" do
@@ -311,8 +339,16 @@ describe "MacroExpander" do
   end
 
   describe "metavar methods" do
+    it "executes nothing" do
+      assert_macro "x", %({{x}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
+    end
+
     it "executes name" do
-      assert_macro "x", %({{x.name}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, "foo"
+      assert_macro "x", %({{x.name}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %("foo")
+    end
+
+    it "executes id" do
+      assert_macro "x", %({{x.id}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
     end
   end
 end

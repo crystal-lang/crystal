@@ -2015,15 +2015,15 @@ module Crystal
     end
   end
 
-  # Ficticious node to wrap a call inside a macro
-  class MacroCallWrapper < ASTNode
-    property call
+  # Ficticious node to represent an id inside a macro
+  class MacroId < ASTNode
+    property value
 
-    def initialize(@call)
+    def initialize(@value)
     end
 
     def to_macro_id
-      call.to_macro_id
+      @value
     end
 
     def clone_without_location

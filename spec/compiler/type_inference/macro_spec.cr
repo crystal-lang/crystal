@@ -41,7 +41,7 @@ describe "Type inference: macro" do
       end
 
       def foo : Int32
-        bar_{{ "baz" }}
+        bar_{{ "baz".id }}
       end
 
       foo
@@ -56,7 +56,7 @@ describe "Type inference: macro" do
         end
 
         def foo : Int32
-          bar_{{ "baz" }}
+          bar_{{ "baz".id }}
         end
       end
 
@@ -68,7 +68,7 @@ describe "Type inference: macro" do
     assert_type(%(
       class Foo
         def foo : Int32
-          bar_{{ "baz" }}
+          bar_{{ "baz".id }}
         end
       end
 

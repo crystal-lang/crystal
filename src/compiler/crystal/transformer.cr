@@ -534,7 +534,7 @@ module Crystal
       node
     end
 
-    def transform(node : MacroCallWrapper)
+    def transform(node : MacroId)
       node
     end
 

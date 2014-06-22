@@ -287,11 +287,11 @@ describe "String" do
   end
 
   it "dumps" do
-    "\" \\ \f \n \r \t \v cool \x1 \x1F \x79".dump.should eq("\\\" \\ \\f \\n \\r \\t \\v cool \\x01 \\x1F y")
+    "\" \\ \f \n \r \t \v cool \x1 \x1F \x79".dump.should eq("\\\" \\\\ \\f \\n \\r \\t \\v cool \\x01 \\x1F y")
   end
 
   it "inspects" do
-    "\" \\ \f \n \r \t \v cool".inspect.should eq("\"\\\" \\ \\f \\n \\r \\t \\v cool\"")
+    "\" \\ \f \n \r \t \v cool".inspect.should eq("\"\\\" \\\\ \\f \\n \\r \\t \\v cool\"")
   end
 
   it "does *" do

@@ -337,6 +337,19 @@ module Crystal
     def clone_without_location
       self
     end
+
+    def inspect
+      String.build do |str|
+        str << name
+        if type = type?
+          str << " :: "
+          type.append_to_s(str)
+        end
+        str << " (nil-if-read)" if nil_if_read
+        str << " (closured)" if closured
+        str << " (assigned-to)" if assigned_to
+      end
+    end
   end
 
   alias MetaVars = Hash(String, MetaVar)

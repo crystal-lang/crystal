@@ -55,9 +55,7 @@ module Crystal
     end
 
     def visit(node : StringLiteral)
-      @str << "\""
-      @str << node.value.dump
-      @str << "\""
+      @str << node.value.inspect
     end
 
     def visit(node : StringInterpolation)
@@ -305,8 +303,8 @@ module Crystal
       !(node.obj && node.args.empty?) || node.block_arg
     end
 
-    def visit(node : MacroCallWrapper)
-      @str << node.call.to_macro_id
+    def visit(node : MacroId)
+      @str << node.value
       false
     end
 
@@ -426,19 +424,6 @@ module Crystal
 
     def visit(node : MetaVar)
       @str << node.name
-      if type = node.type?
-        @str << " :: "
-        type.append_to_s(@str)
-      end
-      if node.nil_if_read
-        @str << " (nil-if-read)"
-      end
-      if node.closured
-        @str << " (closured)"
-      end
-      if node.assigned_to
-        @str << " (assigned-to)"
-      end
     end
 
     def visit(node : FunLiteral)

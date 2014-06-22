@@ -129,7 +129,7 @@ describe "Code gen: macro" do
       end
 
       def foo : Int32
-        bar_{{ "baz" }}
+        bar_{{ "baz".id }}
       end
 
       foo
@@ -213,7 +213,7 @@ describe "Code gen: macro" do
         end
 
         def to_s : String
-          {{ @name.stringify }}
+          {{@name}}
         end
       end
 
@@ -242,7 +242,7 @@ describe "Code gen: macro" do
     run(%(
       class Foo
         def inspect : String
-          {{ @name.stringify }}
+          {{@name}}
         end
       end
 
@@ -263,7 +263,7 @@ describe "Code gen: macro" do
     run(%(
       macro foo
         def bar
-          {{@name.stringify}}
+          {{@name}}
         end
       end
 
