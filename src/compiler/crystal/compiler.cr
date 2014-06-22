@@ -74,14 +74,14 @@ module Crystal
     end
 
     def process_options(options = ARGV)
-      command = process_options_internal(options)
+      options_parser, command = process_options_internal(options)
       if command
         source = command
         filename = "-"
         @run = true
       else
         if ARGV.length == 0
-          puts options
+          puts options_parser
           exit 1
         end
 
@@ -162,7 +162,7 @@ module Crystal
           @verbose = true
         end
       end
-      command
+      {options, command}
     end
 
     def compile(filename, source)
