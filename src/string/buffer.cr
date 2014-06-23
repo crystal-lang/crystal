@@ -5,6 +5,12 @@ class String::Buffer
     @capacity = capacity
   end
 
+  def self.build(capacity = 64)
+    buffer = String::Buffer.new(capacity)
+    yield buffer
+    buffer.to_s
+  end
+
   def buffer
     @buffer
   end

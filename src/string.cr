@@ -547,6 +547,51 @@ class String
     split "\n"
   end
 
+  def underscore
+    first = true
+    last_is_downcase = false
+
+    String::Buffer.build(length + 10) do |str|
+      each_char do |char|
+        downcase = 'a' <= char <= 'z'
+        upcase = 'A' <= char <= 'Z'
+
+        if first
+          str << char.downcase
+        elsif last_is_downcase && upcase
+          str << '_'
+          str << char.downcase
+        else
+          str << char
+        end
+
+        last_is_downcase = downcase
+        first = false
+      end
+    end
+  end
+
+  def camelcase
+    first = true
+    last_is_underscore = false
+
+    String::Buffer.build(length) do |str|
+      each_char do |char|
+        if first
+          str << char.upcase
+        elsif char == '_'
+          last_is_underscore = true
+        elsif last_is_underscore
+          str << char.upcase
+          last_is_underscore = false
+        else
+          str << char
+        end
+        first = false
+      end
+    end
+  end
+
   def length
     @length
   end

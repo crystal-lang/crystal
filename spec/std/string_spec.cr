@@ -411,4 +411,14 @@ describe "String" do
       [s1, s2, s3].sort.should eq(["bar", "foo", "foo1"])
     end
   end
+
+  it "does underscore" do
+    "Foo".underscore.should eq("foo")
+    "FooBar".underscore.should eq("foo_bar")
+  end
+
+  it "does camelcase" do
+    "foo".camelcase.should eq("Foo")
+    "foo_bar".camelcase.should eq("FooBar")
+  end
 end
