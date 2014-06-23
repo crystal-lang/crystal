@@ -303,7 +303,7 @@ module Crystal
           end
 
           if @run
-            errcode = C.system("#{output_filename} #{ARGV.join " "}")
+            errcode = C.system("#{output_filename} #{ARGV.map(&.inspect).join " "}")
             puts "Program terminated abnormally with eror code: #{errcode}" if errcode != 0
             File.delete output_filename
           end
