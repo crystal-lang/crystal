@@ -26,6 +26,6 @@ macro redefine_main(name)
   end
 end
 
-redefine_main("main") do |main|
+redefine_main(main) do |main|
   {{main}}
 end

@@ -153,6 +153,6 @@ end
 
 undef main
 
-redefine_main("SDL_main") do |main|
+redefine_main(SDL_main) do |main|
   {{main}}
 end

@@ -230,7 +230,7 @@ class NSObject
 end
 
 macro initializable_object(klass)
-  class {{klass}} < NSObject
+  class {{klass.id}} < NSObject
     def initialize
       @obj = initialize_using "init"
     end

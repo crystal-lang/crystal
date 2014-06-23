@@ -333,13 +333,13 @@ class Game
   def movable_tiles direction, drow, dcol
     case direction
     when :up
-      movable_tiles_action "0.upto(@grid.size-1)", "0.upto(@grid.size-1)"
+      movable_tiles_action 0.upto(@grid.size-1), 0.upto(@grid.size-1)
     when :down
-      movable_tiles_action "(@grid.size-1).downto(0)", "0.upto(@grid.size-1)"
+      movable_tiles_action (@grid.size-1).downto(0), 0.upto(@grid.size-1)
     when :left
-      movable_tiles_action "0.upto(@grid.size-1)", "0.upto(@grid.size-1)"
+      movable_tiles_action 0.upto(@grid.size-1), 0.upto(@grid.size-1)
     when :right
-      movable_tiles_action "0.upto(@grid.size-1)", "(@grid.size-1).downto(0)"
+      movable_tiles_action 0.upto(@grid.size-1), (@grid.size-1).downto(0)
     else
       raise ArgumentError.new "Unknown direction #{direction}"
        # Makes the parser happy, through the macro it doesn't realize that the method

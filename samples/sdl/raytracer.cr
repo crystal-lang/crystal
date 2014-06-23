@@ -25,12 +25,12 @@ struct Vec3
   end
 
   {% for op in %w(+ - * /) %}
-    def {{op}}(other : Vec3)
-      Vec3.new(@x {{op}} other.x, @y {{op}} other.y, @z {{op}} other.z)
+    def {{op.id}}(other : Vec3)
+      Vec3.new(@x {{op.id}} other.x, @y {{op.id}} other.y, @z {{op.id}} other.z)
     end
 
-    def {{op}}(other : Float)
-      Vec3.new(@x {{op}} other, @y {{op}} other, @z {{op}} other)
+    def {{op.id}}(other : Float)
+      Vec3.new(@x {{op.id}} other, @y {{op.id}} other, @z {{op.id}} other)
     end
   {% end %}
 
