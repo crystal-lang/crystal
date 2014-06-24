@@ -210,8 +210,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       param = context.fun.get_param(i + offset)
       if !is_fun_literal && (i == 0 && self_type.passed_as_self?)
         # here self is already in context.vars
-      elsif arg.type.passed_by_value?
-        context.vars[arg.name] = LLVMVar.new(param, arg.type, true)
       else
         create_local_copy_of_arg(target_def_vars, arg, param)
       end

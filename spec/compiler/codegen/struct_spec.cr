@@ -296,4 +296,20 @@ describe "Code gen: struct" do
       x.x
       ").to_i.should eq(1)
   end
+
+  it "allows assinging to struct argument (bug)" do
+    run("
+      struct Foo
+        def bar
+          2
+        end
+      end
+
+      def foo(x)
+        x = x.bar
+      end
+
+      foo(Foo.new)
+      ").to_i.should eq(2)
+  end
 end
