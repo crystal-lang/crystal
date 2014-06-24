@@ -2,19 +2,27 @@ class ECR::Lexer
   class Token
     property :type
     property :value
+    property :line_number
+    property :column_number
 
     def initialize
       @type = :EOF
       @value = ""
+      @line_number = 0
+      @column_number = 0
     end
   end
 
   def initialize(string)
     @reader = CharReader.new(string)
     @token = Token.new
+    @line_number = 1
+    @column_number = 1
   end
 
   def next_token
+    copy_location_info_to_token
+
     case current_char
     when '\0'
       @token.type = :EOF
@@ -24,9 +32,11 @@ class ECR::Lexer
         next_char
         next_char
         if current_char == '='
-          is_output = true
           next_char
+          copy_location_info_to_token
+          is_output = true
         else
+          copy_location_info_to_token
           is_output = false
         end
 
@@ -43,6 +53,9 @@ class ECR::Lexer
       case current_char
       when '\0'
         break
+      when '\n'
+        @line_number += 1
+        @column_number = 0
       when '<'
         if peek_next_char == '%'
           break
@@ -66,6 +79,9 @@ class ECR::Lexer
         else
           raise "unexpected end of file inside <% ..."
         end
+      when '\n'
+        @line_number += 1
+        @column_number = 0
       when '%'
         if peek_next_char == '>'
           @token.value = string_range(start_pos)
@@ -81,11 +97,21 @@ class ECR::Lexer
     @token
   end
 
+  def copy_location_info_to_token
+    @token.line_number = @line_number
+    @token.column_number = @column_number
+  end
+
   def current_char
     @reader.current_char
   end
 
   def next_char
+    @column_number += 1
+    next_char_no_column_increment
+  end
+
+  def next_char_no_column_increment
     @reader.next_char
   end
 
