@@ -36,4 +36,36 @@ describe "Lexer: location" do
     assert_token_column_number lexer, :NEWLINE, 16
     assert_token_column_number lexer, :NUMBER, 1
   end
+
+  it "overrides location with pragma" do
+    lexer = Lexer.new %(1 + #<loc:"foo",12,34>2)
+    lexer.filename = "bar"
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.line_number.should eq(1)
+    token.column_number.should eq(1)
+    token.filename.should eq("bar")
+
+    token = lexer.next_token
+    token.type.should eq(:SPACE)
+    token.line_number.should eq(1)
+    token.column_number.should eq(2)
+
+    token = lexer.next_token
+    token.type.should eq(:"+")
+    token.line_number.should eq(1)
+    token.column_number.should eq(3)
+
+    token = lexer.next_token
+    token.type.should eq(:SPACE)
+    token.line_number.should eq(1)
+    token.column_number.should eq(4)
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.line_number.should eq(12)
+    token.column_number.should eq(34)
+    token.filename.should eq("foo")
+  end
 end

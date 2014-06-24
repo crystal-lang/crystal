@@ -37,8 +37,20 @@ module Crystal
       # Skip comments
       if current_char == '#'
         char = next_char_no_column_increment
-        while char != '\n' && char != '\0'
-          char = next_char_no_column_increment
+
+        # Check #<loc:"file",line,column> pragma comment
+        if char == '<' &&
+          (char = next_char_no_column_increment) == 'l' &&
+          (char = next_char_no_column_increment) == 'o' &&
+          (char = next_char_no_column_increment) == 'c' &&
+          (char = next_char_no_column_increment) == ':' &&
+          (char = next_char_no_column_increment) == '"'
+          next_char_no_column_increment
+          consume_loc_pragma
+        else
+          while char != '\n' && char != '\0'
+            char = next_char_no_column_increment
+          end
         end
       end
 
@@ -1555,6 +1567,63 @@ module Crystal
       @token.value = string_range(start)
 
       @token
+    end
+
+    def consume_loc_pragma
+      filename_pos = current_pos
+
+      while true
+        case current_char
+        when '"'
+          break
+        when '\0'
+          raise "unexpected end of file in loc pragma"
+        else
+          next_char_no_column_increment
+        end
+      end
+
+      filename = string_range(filename_pos)
+
+      # skip '"'
+      next_char
+
+      unless current_char == ','
+        raise "expected ',' in loc pragma after filename"
+      end
+      next_char
+
+      line_number = 0
+      while true
+        case current_char
+        when '0' .. '9'
+          line_number = 10 * line_number + (current_char - '0').to_i
+        when ','
+          next_char
+          break
+        else
+          raise "expected digit or ',' in loc pragma for line number"
+        end
+        next_char
+      end
+
+      column_number = 0
+      while true
+        case current_char
+        when '0' .. '9'
+          column_number = 10 * column_number + (current_char - '0').to_i
+        when '>'
+          next_char
+          break
+        else
+          raise "expected digit or '>' in loc pragma for column_number number"
+        end
+        next_char
+      end
+
+      @token.filename = @filename = filename
+      @token.line_number = @line_number = line_number
+      @token.column_number = @column_number = column_number
     end
 
     def next_char_no_column_increment
