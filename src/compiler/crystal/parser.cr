@@ -1279,10 +1279,15 @@ module Crystal
         when :EOF
           raise "Unterminated string literal"
         else
-          has_interpolation = true
-
           next_token_skip_space_or_newline
-          pieces << parse_expression
+          exp = parse_expression
+
+          if exp.is_a?(StringLiteral)
+            pieces << exp.value
+          else
+            pieces << exp
+            has_interpolation = true
+          end
 
           if @token.type != :"}"
             raise "Unterminated string interpolation"

@@ -628,6 +628,10 @@ describe "Parser" do
 
   it_parses "\"foo\#{bar}baz\"", StringInterpolation.new(["foo".string, "bar".call, "baz".string])
 
+  # When interpolating a string we don't necessarily need interpolation.
+  # This is useful for example when interpolating __FILE__ and __DIR__
+  it_parses "\"foo\#{\"bar\"}baz\"", "foobarbaz".string
+
   it_parses "lib Foo\nend\nif true\nend", [LibDef.new("Foo"), If.new(true.bool)]
 
   it_parses "foo(\n1\n)", Call.new(nil, "foo", [1.int32] of ASTNode)
