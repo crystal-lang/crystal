@@ -29,7 +29,7 @@ module Crystal
         arg_names = target_def.args.map(&.name)
 
         parser = Parser.new(generated_source, [Set.new(arg_names)])
-        parser.filename = VirtualFile.new(the_macro, generated_source)
+        parser.filename = VirtualFile.new(the_macro, generated_source, target_def.location)
         generated_nodes = parser.parse
       rescue ex : Crystal::SyntaxException
         target_def.raise "def macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
@@ -60,7 +60,7 @@ module Crystal
     end
 
     def expand(scope : Type, node)
-      visitor = MacroVisitor.new @mod, scope
+      visitor = MacroVisitor.new @mod, scope, node.location
       node.accept visitor
       visitor.to_s
     end
@@ -74,10 +74,10 @@ module Crystal
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 
-        new(mod, scope, vars, call.block)
+        new(mod, scope, a_macro.location, vars, call.block)
       end
 
-      def initialize(@mod, @scope, @vars = {} of String => ASTNode, @block = nil)
+      def initialize(@mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
         @str = StringBuilder.new
         @last = Nop.new
       end
@@ -259,6 +259,8 @@ module Crystal
           execute_puts(node)
         when "system"
           execute_system(node)
+        when "run"
+          execute_run(node)
         else
           node.raise "unknown special macro call: '#{node.name}'"
         end
@@ -276,13 +278,7 @@ module Crystal
       def execute_system(node)
         cmd = node.args.map do |arg|
           arg.accept self
-          last = @last
-          case last
-          when StringLiteral
-            last.value
-          else
-            last
-          end
+          @last.to_macro_id
         end
         cmd = cmd.join " "
 
@@ -290,7 +286,71 @@ module Crystal
         if $exit == 0
           @last = MacroId.new(result)
         else
-          node.raise "Error executing command: #{cmd}\n\nGot:\n\n#{result}\n"
+          node.raise "error executing command: #{cmd}\n\nGot:\n\n#{result}\n"
+        end
+      end
+
+      def execute_run(node)
+        if node.args.length == 0
+          node.raise "wrong number of arguments for macro run (0 for 1..)"
+        end
+
+        node.args.first.accept self
+        filename = @last.to_macro_id
+        original_filanme = filename
+
+        begin
+          relative_to = @location.try &.filename
+          if relative_to.is_a?(VirtualFile)
+            relative_to = relative_to.expanded_location.try(&.filename)
+          end
+
+          found_filenames = @mod.find_in_path(filename, relative_to)
+        rescue ex
+          node.raise "error executing macro run: #{ex.message}"
+        end
+
+        unless found_filenames
+          node.raise "error executing macro run: can't find file '#{filename}'"
+        end
+
+        if found_filenames.length > 1
+          node.raise "error executing macro run: '#{filename}' is a directory"
+        end
+
+        filename = found_filenames.first
+        source = File.read(filename)
+
+        run_args = [] of String
+        node.args.each_with_index do |arg, i|
+          next if i == 0
+
+          arg.accept self
+          run_args << @last.to_macro_id
+        end
+
+        output_filename = "#{ENV["TMPDIR"] || "/tmp"}/.crystal-run.XXXXXX"
+        tmp_fd = C.mkstemp output_filename
+
+        compiler = Compiler.new
+        compiler.output_filename = output_filename
+        compiler.compile(filename, source)
+
+        command = String.build do |str|
+          str << output_filename
+          run_args.each do |run_arg|
+            str << " "
+            str << run_arg.inspect
+          end
+        end
+
+        result = system2(command).join "\n"
+        C.close tmp_fd
+
+        if $exit == 0
+          @last = MacroId.new(result)
+        else
+          node.raise "Error executing run: #{original_filanme} #{run_args.map(&.inspect).join " "}\n\nGot:\n\n#{result}\n"
         end
       end
 
@@ -516,10 +576,6 @@ module Crystal
     def to_macro_id
       @value
     end
-
-    # def stringify
-    #   StringLiteral.new(to_s)
-    # end
   end
 
   class ArrayLiteral
@@ -555,15 +611,7 @@ module Crystal
         interpret_argless_method(method, args) { elements.first? || NilLiteral.new }
       when "join"
         interpret_one_arg_method(method, args) do |arg|
-          joiner = arg.is_a?(StringLiteral) ? arg.value : arg.to_s
-          joined_elements = elements.map do |element|
-            if element.is_a?(StringLiteral)
-              element.value
-            else
-              element.to_s
-            end
-          end
-          StringLiteral.new(joined_elements.join joiner)
+          StringLiteral.new(elements.map(&.to_macro_id).join arg.to_macro_id)
         end
       when "last"
         interpret_argless_method(method, args) { elements.last? || NilLiteral.new }

@@ -2,8 +2,9 @@ module Crystal
   class VirtualFile
     getter :macro
     getter :source
+    getter :expanded_location
 
-    def initialize(@macro, @source)
+    def initialize(@macro, @source, @expanded_location)
     end
 
     def to_s
