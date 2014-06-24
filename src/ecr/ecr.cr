@@ -4,10 +4,10 @@ module ECR
   DefaultBufferName = "__str__"
 
   def process_file(filename, buffer_name = DefaultBufferName)
-    process_string File.read(filename), buffer_name
+    process_string File.read(filename), filename, buffer_name
   end
 
-  def process_string(string, buffer_name = DefaultBufferName)
+  def process_string(string, filename, buffer_name = DefaultBufferName)
     lexer = Lexer.new string
 
     String.build do |str|
@@ -25,9 +25,11 @@ module ECR
         when :OUTPUT
           str << buffer_name
           str << " << "
+          append_loc(str, filename, token)
           str << token.value
           str << "\n"
         when :CONTROL
+          append_loc(str, filename, token)
           str << token.value
           str << "\n"
         when :EOF
@@ -36,6 +38,16 @@ module ECR
       end
       str << "end"
     end
+  end
+
+  def append_loc(str, filename, token)
+    str << %(#<loc:")
+    str << filename
+    str << %(",)
+    str << token.line_number
+    str << %(,)
+    str << token.column_number
+    str << %(>)
   end
 end
 
