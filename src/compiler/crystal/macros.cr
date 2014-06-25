@@ -50,34 +50,72 @@ module Crystal
   end
 
   class MacroExpander
+    make_named_tuple CompiledFile, [name, handle]
+
     def initialize(@mod)
+      @cache = {} of String => CompiledFile
     end
 
     def expand(scope : Type, a_macro, call)
-      visitor = MacroVisitor.new @mod, scope, a_macro, call
+      visitor = MacroVisitor.new self, @mod, scope, a_macro, call
       a_macro.body.accept visitor
       visitor.to_s
     end
 
     def expand(scope : Type, node)
-      visitor = MacroVisitor.new @mod, scope, node.location
+      visitor = MacroVisitor.new self, @mod, scope, node.location
       node.accept visitor
       visitor.to_s
+    end
+
+    def run(filename, args)
+      compiled_file = @cache[filename] ||= compile(filename)
+
+      command = String.build do |str|
+        str << compiled_file.name
+        args.each do |arg|
+          str << " "
+          str << arg.inspect
+        end
+      end
+
+      result = system2(command).join "\n"
+      {$exit == 0, result}
+    end
+
+    def compile(filename)
+      source = File.read(filename)
+
+      output_filename = "#{ENV["TMPDIR"] || "/tmp"}/.crystal-run.XXXXXX"
+      tmp_fd = C.mkstemp output_filename
+      raise "Error creating temp file #{output_filename}" if tmp_fd == -1
+      C.close tmp_fd
+
+      compiler = Compiler.new
+      compiler.output_filename = output_filename
+
+      # Although release takes longer, once the bc is cached in .crystal
+      # the subsequent times will make program execution faster.
+      compiler.release = true
+
+      compiler.compile(filename, source)
+
+      CompiledFile.new(output_filename, tmp_fd)
     end
 
     class MacroVisitor < Visitor
       getter last
 
-      def self.new(mod, scope, a_macro : Macro, call)
+      def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
         a_macro.args.zip(call.args) do |macro_arg, call_arg|
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 
-        new(mod, scope, a_macro.location, vars, call.block)
+        new(expander, mod, scope, a_macro.location, vars, call.block)
       end
 
-      def initialize(@mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
+      def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
         @str = StringBuilder.new
         @last = Nop.new
       end
@@ -319,7 +357,6 @@ module Crystal
         end
 
         filename = found_filenames.first
-        source = File.read(filename)
 
         run_args = [] of String
         node.args.each_with_index do |arg, i|
@@ -329,25 +366,8 @@ module Crystal
           run_args << @last.to_macro_id
         end
 
-        output_filename = "#{ENV["TMPDIR"] || "/tmp"}/.crystal-run.XXXXXX"
-        tmp_fd = C.mkstemp output_filename
-
-        compiler = Compiler.new
-        compiler.output_filename = output_filename
-        compiler.compile(filename, source)
-
-        command = String.build do |str|
-          str << output_filename
-          run_args.each do |run_arg|
-            str << " "
-            str << run_arg.inspect
-          end
-        end
-
-        result = system2(command).join "\n"
-        C.close tmp_fd
-
-        if $exit == 0
+        success, result = @expander.run(filename, run_args)
+        if success
           @last = MacroId.new(result)
         else
           node.raise "Error executing run: #{original_filanme} #{run_args.map(&.inspect).join " "}\n\nGot:\n\n#{result}\n"

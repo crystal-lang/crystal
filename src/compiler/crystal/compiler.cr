@@ -18,7 +18,7 @@ module Crystal
     getter llvm_dis
     getter dump_ll
     getter debug
-    getter release
+    property release
     getter llc_flags
     getter llc_flags_changed
     getter cross_compile
