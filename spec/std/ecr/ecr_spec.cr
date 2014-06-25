@@ -1,6 +1,14 @@
 #!/usr/bin/env bin/crystal --run
 require "spec"
 require "ecr"
+require "ecr/macros"
+
+class ECRSpecHelloView
+  def initialize(@msg)
+  end
+
+  ecr_file "#{__DIR__}/../data/test_template.ecr"
+end
 
 describe "ECR" do
   it "builds a crystal program from a source" do
@@ -17,5 +25,10 @@ describe "ECR" do
       %(end),
     ]
     program.should eq(pieces.join "\n")
+  end
+
+  it "does ecr_file" do
+    view = ECRSpecHelloView.new("world!")
+    view.to_s.strip.should eq("Hello world! 012")
   end
 end
