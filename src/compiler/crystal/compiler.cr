@@ -77,12 +77,12 @@ module Crystal
         filename = "-"
         @run = true
       else
-        if ARGV.length == 0
+        if options.length == 0
           puts options_parser
           exit 1
         end
 
-        filename = ARGV.shift
+        filename = options.shift
         unless File.exists?(filename)
           puts "File #{filename} does not exist"
           exit 1
@@ -92,7 +92,7 @@ module Crystal
         source = File.read filename
       end
 
-      compile filename, source
+      compile filename, source, options
     end
 
     def process_options_internal(options)
@@ -162,7 +162,7 @@ module Crystal
       {options, command}
     end
 
-    def compile(filename, source)
+    def compile(filename, source, run_args = [] of String)
       output_filename = @output_filename
       unless output_filename
         if @run
@@ -300,7 +300,7 @@ module Crystal
           end
 
           if @run
-            errcode = C.system("#{output_filename} #{ARGV.map(&.inspect).join " "}")
+            errcode = C.system("#{output_filename} #{run_args.map(&.inspect).join " "}")
             puts "Program terminated abnormally with eror code: #{errcode}" if errcode != 0
             File.delete output_filename
           end
