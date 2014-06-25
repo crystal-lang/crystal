@@ -53,16 +53,13 @@ module Crystal
       @opt = @config.bin "opt"
       @clang = @config.bin "clang"
       @llvm_dis = @config.bin "llvm-dis"
+
+      check_clang_or_gcc
     end
 
     def check_clang_or_gcc
       unless File.exists?(@clang)
-        if program.has_flag?("darwin")
-          puts "Could not find clang. Install clang 3.3: brew tap homebrew/versions; brew install llvm33 --with-clang"
-          exit 1
-        end
-
-        clang = program.exec "which gcc"
+        clang = Program.exec "which gcc"
         if clang
           @clang = clang
           @uses_gcc = true
