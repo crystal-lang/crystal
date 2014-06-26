@@ -398,6 +398,12 @@ class Array(T)
     self
   end
 
+  def each_index
+    length.times do |i|
+      yield i
+    end
+  end
+
   def buffer
     @buffer
   end

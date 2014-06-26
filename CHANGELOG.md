@@ -1,3 +1,7 @@
+## Next
+
+* Added `Array#each_index`
+
 ## 0.2.0 (2014-06-24)
 
 * Removed icr (a REPL): it is abandoned for the moment because it was done in a hacky, non-reliable way

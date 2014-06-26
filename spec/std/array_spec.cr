@@ -631,4 +631,11 @@ describe "Array" do
       a.equals?(d, &f).should be_false
     end
   end
+
+  it "does each_index" do
+    a = [1, 1, 1]
+    b = 0
+    a.each_index { |i| b += i }
+    b.should eq(3)
+  end
 end
