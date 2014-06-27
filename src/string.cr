@@ -374,7 +374,13 @@ class String
   end
 
   def *(times : Int)
-    return "" if times <= 0 || length == 0
+    if times <= 0 || length == 0
+      return ""
+    elsif length == 1
+      return String.new_with_length(times) do |buffer|
+        Intrinsics.memset(buffer as Void*, cstr[0], times.to_u32, 0_u32, false)
+      end
+    end
 
     total_length = length * times
     String.new_with_length(total_length) do |buffer|

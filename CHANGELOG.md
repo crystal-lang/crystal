@@ -1,6 +1,7 @@
 ## Next
 
 * Added `Array#each_index`
+* Optimized `String#*` for the case when the string has length one.
 
 ## 0.2.0 (2014-06-24)
 

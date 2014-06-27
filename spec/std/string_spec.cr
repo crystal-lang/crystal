@@ -87,6 +87,12 @@ describe "String" do
     (str * 3).should eq("foofoofoo")
   end
 
+  it "multiplies with length one" do
+    str = "f"
+    (str * 0).should eq("")
+    (str * 10).should eq("ffffffffff")
+  end
+
   describe "downcase" do
     assert { "HELLO!".downcase.should eq("hello!") }
     assert { "HELLO MAN!".downcase.should eq("hello man!") }
