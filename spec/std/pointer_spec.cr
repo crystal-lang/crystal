@@ -2,6 +2,26 @@
 require "spec"
 
 describe "Pointer" do
+  it "does malloc with value" do
+    p1 = Pointer.malloc(4, 1)
+    4.times do |i|
+      p1[i].should eq(1)
+    end
+  end
+
+  it "does malloc with value from block" do
+    p1 = Pointer.malloc(4) { |i| i }
+    4.times do |i|
+      p1[i].should eq(i)
+    end
+  end
+
+  it "does index with count" do
+    p1 = Pointer.malloc(4) { |i| i ** 2 }
+    p1.index(4, 4).should eq(2)
+    p1.index(5, 4).should be_nil
+  end
+
   describe "memcpy" do
     it "performs" do
       p1 = Pointer.malloc(4) { |i| i }

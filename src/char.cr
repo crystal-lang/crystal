@@ -137,13 +137,10 @@ struct Char
 
   def to_s
     String.new_with_capacity_and_length(4) do |buffer|
-      i = 0
-      each_byte do |byte|
-        buffer[i] = byte
-        i += 1
-      end
-      buffer[i] = 0_u8
-      i
+      appender = buffer.appender
+      each_byte { |byte| appender << byte }
+      appender << 0_u8
+      appender.count - 1
     end
   end
 end

@@ -75,7 +75,7 @@ class Pointer(T)
     length.times do |i|
       return i if self[i] == value
     end
-    -1
+    nil
   end
 
   def realloc(size : Int)
@@ -102,5 +102,29 @@ class Pointer(T)
     ptr = Pointer(T).malloc(1)
     ptr.value = value
     ptr
+  end
+
+  def appender
+    PointerAppender.new(self)
+  end
+end
+
+struct PointerAppender(T)
+  def initialize(@pointer : Pointer(T))
+    @count = 0
+  end
+
+  def <<(value : T)
+    @pointer.value = value
+    @pointer += 1
+    @count += 1
+  end
+
+  def count
+    @count
+  end
+
+  def pointer
+    @pointer
   end
 end

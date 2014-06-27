@@ -9,76 +9,70 @@ module Base64
 
   class Error < Exception; end
 
-  def self.encode64(str)
+  def encode64(str)
     String.new_with_capacity_and_length(encode_size(str.length, true)) do |buf|
-      bufc = 0
       inc = 0
-      to_base64(str, CHARS_STD, true) do |byte| 
-        buf[bufc] = byte
-        bufc += 1
+      appender = buf.appender
+      to_base64(str, CHARS_STD, true) do |byte|
+        appender << byte
         inc += 1
         if inc >= LINE_SIZE
-          buf[bufc] = NL
-          bufc += 1
+          appender << NL
           inc = 0
         end
       end
       if inc > 0
-        buf[bufc] = NL
-        bufc += 1
+        appender << NL
       end
-      bufc
+      appender.count
     end
   end
 
-  def self.strict_encode64(str : String)
+  def strict_encode64(str : String)
     String.new_with_capacity_and_length(encode_size(str.length)) do |buf|
-      bufc = 0
-      to_base64(str, CHARS_STD, true) { |b| buf[bufc] = b; bufc += 1 }
-      bufc
+      appender = buf.appender
+      to_base64(str, CHARS_STD, true) { |byte| appender << byte }
+      appender.count
     end
   end
 
-  def self.urlsafe_encode64(str)
+  def urlsafe_encode64(str)
     String.new_with_capacity_and_length(encode_size(str.length)) do |buf|
-      bufc = 0
-      to_base64(str, CHARS_SAFE, false) { |byte| buf[bufc] = byte; bufc += 1 }
-      bufc
+      appender = buf.appender
+      to_base64(str, CHARS_SAFE, false) { |byte| appender << byte }
+      appender.count
     end
   end
 
-  def self.decode64(str)
+  def decode64(str)
     String.new_with_capacity_and_length(decode_size(str.length)) do |buf|
-      bufc = 0
-      from_base64(str) do |b|
-        buf[bufc] = b
-        bufc += 1
-      end
-      bufc
+      appender = buf.appender
+      from_base64(str) { |byte| appender << byte }
+      appender.count
     end
   end
 
-  def self.strict_decode64(str)
+  def strict_decode64(str)
     decode64(str)
   end
-  
-  def self.urlsafe_decode64(str)
+
+  def urlsafe_decode64(str)
     decode64(str)
   end
 
 # private
 
-  def self.encode_size(str_size, new_lines = false)    
+  def encode_size(str_size, new_lines = false)
     size = (str_size * 4 / 3.0).to_i + 6
     size += size / LINE_SIZE if new_lines
-    size 
+    size
   end
 
-  def self.decode_size(str_size)
+  def decode_size(str_size)
     (str_size * 3 / 4.0).to_i + 6
   end
 
-  def self.to_base64(str, chars, pad = false)
+  def to_base64(str, chars, pad = false)
     bytes = chars.cstr
     len = str.length
     cstr = str.cstr
@@ -111,8 +105,8 @@ module Base64
   end
 
   DECODE_TABLE = Array.new(256, -1)
- 
-  def self.from_base64(str)
+
+  def from_base64(str)
     buf = 0
     mod = 0
     dt = DECODE_TABLE.buffer
@@ -143,7 +137,7 @@ module Base64
     end
   end
 
-  def self.fill_decode_table
+  def fill_decode_table
     256.times do |i|
       DECODE_TABLE[i] = case i.chr
         when 'A'..'Z'; i - 0x41
