@@ -1,4 +1,6 @@
 module Base64
+  extend self
+
   CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
   CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
   LINE_SIZE = 60
@@ -8,7 +10,7 @@ module Base64
   class Error < Exception; end
 
   def self.encode64(str)
-    String.new_with_capacity_and_return_length(encode_size(str.length, true)) do |buf|
+    String.new_with_capacity_and_length(encode_size(str.length, true)) do |buf|
       bufc = 0
       inc = 0
       to_base64(str, CHARS_STD, true) do |byte| 
@@ -30,7 +32,7 @@ module Base64
   end
 
   def self.strict_encode64(str : String)
-    String.new_with_capacity_and_return_length(encode_size(str.length)) do |buf|
+    String.new_with_capacity_and_length(encode_size(str.length)) do |buf|
       bufc = 0
       to_base64(str, CHARS_STD, true) { |b| buf[bufc] = b; bufc += 1 }
       bufc
@@ -38,7 +40,7 @@ module Base64
   end
 
   def self.urlsafe_encode64(str)
-    String.new_with_capacity_and_return_length(encode_size(str.length)) do |buf|
+    String.new_with_capacity_and_length(encode_size(str.length)) do |buf|
       bufc = 0
       to_base64(str, CHARS_SAFE, false) { |byte| buf[bufc] = byte; bufc += 1 }
       bufc
@@ -46,7 +48,7 @@ module Base64
   end
 
   def self.decode64(str)
-    String.new_with_capacity_and_return_length(decode_size(str.length)) do |buf|
+    String.new_with_capacity_and_length(decode_size(str.length)) do |buf|
       bufc = 0
       from_base64(str) do |b|
         buf[bufc] = b
