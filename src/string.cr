@@ -22,7 +22,7 @@ class String
   end
 
   def self.new(chars : UInt8*, length)
-    str = Pointer(UInt8).malloc(length + 9)
+    str = GC.malloc_atomic((length + 9).to_u32) as UInt8*
     (str as Int32*).value = "".crystal_type_id
     ((str as Int32*) + 1).value = length
     ((str as UInt8*) + 8).memcpy(chars, length)
@@ -44,7 +44,7 @@ class String
   end
 
   def self.new_with_capacity_and_length(capacity)
-    str = Pointer(UInt8).malloc(capacity + 9)
+    str = GC.malloc_atomic((capacity + 9).to_u32) as UInt8*
     buffer = (str as String).cstr
     length = yield buffer
     (str as Int32*).value = "".crystal_type_id
@@ -53,7 +53,7 @@ class String
   end
 
   def self.new_with_length(length)
-    str = Pointer(UInt8).malloc(length + 9)
+    str = GC.malloc_atomic((length + 9).to_u32) as UInt8*
     buffer = (str as String).cstr
     yield buffer
     buffer[length] = 0_u8

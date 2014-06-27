@@ -1,6 +1,6 @@
 class String::Buffer
   def initialize(capacity = 64)
-    @buffer = Pointer(UInt8).malloc(capacity)
+    @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
     @length = 0
     @capacity = capacity
   end

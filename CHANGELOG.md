@@ -2,6 +2,7 @@
 
 * Added `Array#each_index`
 * Optimized `String#*` for the case when the string has length one.
+* Use `GC.malloc_atomic` for String and String::Buffer (as they don't contain internal pointers)
 
 ## 0.2.0 (2014-06-24)
 

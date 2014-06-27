@@ -40,6 +40,10 @@ fun __crystal_malloc(size : UInt32) : Void*
   LibGC.malloc(size)
 end
 
+fun __crystal_malloc_atomic(size : UInt32) : Void*
+  LibGC.malloc_atomic(size)
+end
+
 fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
   LibGC.realloc(ptr, size)
 end

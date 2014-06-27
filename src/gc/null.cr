@@ -2,6 +2,10 @@ fun __crystal_malloc(size : UInt32) : Void*
   C.malloc(size)
 end
 
+fun __crystal_malloc_atomic(size : UInt32) : Void*
+  C.malloc(size)
+end
+
 fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
   C.realloc(ptr, size)
 end
