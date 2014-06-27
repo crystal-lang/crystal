@@ -52,6 +52,15 @@ class String
     str as String
   end
 
+  def self.new_with_capacity_and_return_length(capacity)
+    str = Pointer(UInt8).malloc(capacity + 9)
+    buffer = (str as String).cstr
+    len = yield buffer
+    (str as Int32*).value = "".crystal_type_id
+    ((str as Int32*) + 1).value = len
+    str as String
+  end
+
   def self.new_with_length(length)
     str = Pointer(UInt8).malloc(length + 9)
     buffer = (str as String).cstr
