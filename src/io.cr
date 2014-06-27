@@ -60,6 +60,16 @@ module IO
     end
   end
 
+  def read_fully(buffer : UInt8*, count)
+    while count > 0
+      read_bytes = read(buffer, count)
+      raise "Unexpected EOF" if read_bytes == 0
+      count -= read_bytes
+      buffer += read_bytes
+    end
+    count
+  end
+
   def gets
     buffer = String::Buffer.new
     while true
