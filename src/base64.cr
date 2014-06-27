@@ -104,8 +104,6 @@ module Base64
     end
   end
 
-  DECODE_TABLE = Array.new(256, -1)
-
   def from_base64(str)
     buf = 0
     mod = 0
@@ -137,20 +135,16 @@ module Base64
     end
   end
 
-  def fill_decode_table
-    256.times do |i|
-      DECODE_TABLE[i] = case i.chr
-        when 'A'..'Z'; i - 0x41
-        when 'a'..'z'; i - 0x47
-        when '0'..'9'; i + 0x04
-        when '+', '-'; 0x3E
-        when '/', '_'; 0x3F
-        when '\n', '\r'; -2
-        when '='; -3
-        else; -1
-      end
+  DECODE_TABLE = Array.new(256) do |i|
+    case i.chr
+    when 'A'..'Z'   then i - 0x41
+    when 'a'..'z'   then i - 0x47
+    when '0'..'9'   then i + 0x04
+    when '+', '-'   then 0x3E
+    when '/', '_'   then 0x3F
+    when '\n', '\r' then -2
+    when '='        then -3
+    else                 -1
     end
   end
-
-  fill_decode_table
 end
