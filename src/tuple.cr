@@ -67,7 +67,7 @@ class Tuple
 end
 
 macro make_named_tuple(name, fields)
-  struct {{name}}
+  struct {{name.id}}
     {% for field in fields %}
       getter :{{field.id}}
     {% end %}
