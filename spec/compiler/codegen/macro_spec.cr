@@ -274,4 +274,18 @@ describe "Code gen: macro" do
       Foo.new.bar
       )).to_string.should eq("Foo")
   end
+
+  it "allows macro with default arguments" do
+    run(%(
+      def bar
+        2
+      end
+
+      macro foo(x, y = :bar)
+        {{x}} + {{y.id}}
+      end
+
+      foo(1)
+      )).to_i.should eq(3)
+  end
 end

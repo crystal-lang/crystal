@@ -5,6 +5,7 @@
 * Use `GC.malloc_atomic` for String and String::Buffer (as they don't contain internal pointers.)
 * Added a `PointerAppender` struct to easily append to a `Pointer` while counting at the same time (thanks @kostya for the idea).
 * Added a `Base64` module (thanks @kostya)
+* Allow default arguments in macros
 
 ## 0.2.0 (2014-06-24)
 

@@ -108,7 +108,9 @@ module Crystal
 
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
-        a_macro.args.zip(call.args) do |macro_arg, call_arg|
+
+        a_macro.args.each_with_index do |macro_arg, index|
+          call_arg = call.args[index]? || macro_arg.default_value.not_nil!
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 

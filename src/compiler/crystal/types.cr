@@ -662,7 +662,12 @@ module Crystal
     def add_macro(a_def)
       macros = (@macros ||= {} of String => Hash(Int32, Macro))
       hash = (macros[a_def.name] ||= {} of Int32 => Macro)
-      hash[a_def.args.length] = a_def
+
+      args_length = a_def.args.length
+      min_args_length = a_def.args.index(&.default_value) || args_length
+      min_args_length.upto(args_length) do |num_args|
+        hash[num_args] = a_def
+      end
     end
 
     def filter_by_responds_to(name)
