@@ -77,6 +77,10 @@ lib C
   S_IFLNK  = 0120000
   S_IFSOCK = 0140000
   S_IFMT   = 0170000
+
+  fun stat(path : UInt8*, stat : Stat*) : Int32
+  fun lstat(path : UInt8*, stat : Stat *) : Int32
+  fun fstat(fileno : Int32, stat : Stat*) : Int32
 end
 
 class File

@@ -1,5 +1,3 @@
-require "file/stat"
-
 lib C
   type File : Void*
 
@@ -16,9 +14,6 @@ lib C
   fun popen(command : UInt8*, mode : UInt8*) : File
   fun pclose(stream : File) : Int32
 
-  fun stat(path : UInt8*, stat : Stat*) : Int32
-  fun lstat(path : UInt8*, stat : Stat *) : Int32
-  fun fstat(fileno : Int32, stat : Stat*) : Int32
   fun rename(oldname : UInt8*, newname : UInt8*) : Int32
   fun mkstemp(result : UInt8*) : Int32
 
@@ -40,55 +35,53 @@ lib C
   R_OK = 1 << 2
 end
 
-class File
-  include IO
+class File < FileDescriptorIO
   SEPARATOR = '/'
 
-  module Seek
-    Begin = C::SEEK_SET
-    End = C::SEEK_END
-  end
-
   def initialize(filename, mode)
-    @file = C.fopen filename, mode
-    unless @file
+    if mode.length == 0
+      raise "invalid access mode #{mode}"
+    end
+
+    m = 0
+    o = 0
+    case mode[0]
+    when 'r'
+      m = C::O_RDONLY
+    when 'w'
+      m = C::O_WRONLY
+      o = C::O_CREAT | C::O_TRUNC
+    when 'a'
+      m = C::O_WRONLY
+      o = C::O_CREAT | C::O_APPEND
+    else
+      raise "invalid access mode #{mode}"
+    end
+
+    case mode.length
+    when 1
+      # Nothing
+    when 2
+      case mode[1]
+      when '+'
+        m = C::O_RDWR
+      when 'b'
+        # Nothing
+      else
+        raise "invalid access mode #{mode}"
+      end
+    else
+      raise "invalid access mode #{mode}"
+    end
+
+    oflag = m | o
+
+    fd = C.open(filename, oflag, C::S_IRUSR | C::S_IWUSR)
+    if fd < 0
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
     end
-    initialize @file
-  end
 
-  def initialize(@file)
-  end
-
-  def read(buffer : UInt8*, count)
-    C.fread(buffer, 1.to_sizet, count.to_sizet, @file)
-  end
-
-  def write(buffer : UInt8*, count)
-    C.fwrite(buffer, 1.to_sizet, count.to_sizet, @file)
-  end
-
-  def close
-    C.fclose(@file)
-  end
-
-  def seek(offset, origin)
-    C.fseeko(@file, offset.to_i64, origin)
-  end
-
-  def tell
-    C.ftello(@file)
-  end
-
-  def fileno
-    C.fileno(@file)
-  end
-
-  def stat
-    if C.fstat(fileno, out stat) != 0
-      raise Errno.new("Unable to get stat")
-    end
-    Stat.new(stat)
+    super(fd)
   end
 
   def self.stat(path)
@@ -179,9 +172,9 @@ class File
 
   def self.read(filename)
     File.open(filename, "r") do |file|
-      file.seek 0, Seek::End
+      file.seek 0, SEEK_END
       size = file.tell
-      file.seek 0, Seek::Begin
+      file.seek 0, SEEK_SET
       String.new_with_length(size.to_i) do |buffer|
         file.read(buffer, size)
       end
@@ -252,19 +245,46 @@ class File
   end
 end
 
-def system2(command)
-  pipe = C.popen(command, "r")
-  unless pipe
-    raise Errno.new("Error executing system command '#{command}'")
+require "file/stat"
+
+class Pipe
+  include IO
+
+  def self.open(command, mode)
+    pipe = new(command, mode)
+    begin
+      yield pipe
+    ensure
+      $exit = pipe.close
+    end
   end
-  begin
-    stream = File.new(pipe)
+
+  def initialize(command, mode)
+    @pipe = C.popen(command, mode)
+    unless @pipe
+      raise Errno.new("Error executing system command '#{command}'")
+    end
+  end
+
+  def read(buffer : UInt8*, count)
+    C.fread(buffer, 1.to_sizet, count.to_sizet, @pipe)
+  end
+
+  def write(buffer : UInt8*, count)
+    C.fwrite(buffer, 1.to_sizet, count.to_sizet, @pipe)
+  end
+
+  def close
+    C.pclose(@pipe)
+  end
+end
+
+def system2(command)
+  Pipe.open(command, "r") do |pipe|
     output = [] of String
-    while line = stream.gets
+    while line = pipe.gets
       output << line.chomp
     end
     output
-  ensure
-    $exit = C.pclose(pipe)
   end
 end

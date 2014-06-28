@@ -4,6 +4,18 @@ lib C
     F_SETFL = 4
   end
 
+  O_RDONLY   = 0
+  O_WRONLY   = 1 <<  0
+  O_RDWR     = 1 <<  1
+  O_APPEND   = 1 <<  3
+  O_NOFOLLOW = 1 <<  8
+  O_CREAT    = 1 <<  9
+  O_TRUNC    = 1 << 10
+  O_EXCL     = 1 << 11
+
+  S_IWUSR    = 1 <<  7
+  S_IRUSR    = 1 <<  8
+
   enum FD
     O_NONBLOCK = 04000
   end
@@ -19,10 +31,11 @@ lib C
   fun system(str : UInt8*) : Int32
   fun execl(path : UInt8*, arg0 : UInt8*, ...) : Int32
   fun waitpid(pid : Int32, stat_loc : Int32*, options : Int32) : Int32
-  fun open(path : UInt8*, oflag : Int32) : Int32
+  fun open(path : UInt8*, oflag : Int32, ...) : Int32
   fun dup2(fd : Int32, fd2 : Int32) : Int32
   fun read(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SizeT
   fun write(fd : Int32, buffer : UInt8*, nbyte : C::SizeT)
+  fun lseek(fd : Int32, offset : Int64, whence : Int32) : Int32
   fun close(fd : Int32) : Int32
 end
 

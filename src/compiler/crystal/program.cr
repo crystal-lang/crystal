@@ -149,28 +149,9 @@ module Crystal
       @macro_expander.expand scope, node
     end
 
-    class PopenCommand < File
-      getter input
-
-      def initialize(command)
-        @input = C.popen(command, "r")
-        unless @input
-          raise Errno.new("Error opening pipe for executing '#{command}'")
-        end
-        super @input
-      end
-
-      def close
-        C.pclose @input
-      end
-    end
-
     def self.exec(command)
-      cmd = PopenCommand.new(command)
-      begin
-        value = cmd.gets.try &.strip
-      ensure
-        cmd.close
+      Pipe.open(command, "r") do |pipe|
+        pipe.gets.try &.strip
       end
     end
 
