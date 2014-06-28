@@ -13,13 +13,13 @@ class FileDescriptorIO
     C.fcntl(fd, C::FCNTL::F_SETFL, before | C::FD::O_NONBLOCK)
 
     begin
-      buffer = Pointer(UInt8).malloc(length)
-      read_length = read(buffer, length)
-      if read_length == 0 || C.errno == C::EWOULDBLOCK || C.errno == C::EAGAIN
-        # TODO: raise exception when errno != 0
-        nil
-      else
-        String.new(buffer, read_length.to_i)
+      String.new_with_capacity_and_length(length) do |buffer|
+        read_length = read(buffer, length)
+        if read_length == 0 || C.errno == C::EWOULDBLOCK || C.errno == C::EAGAIN
+          raise "exception in read_nonblock"
+        else
+          read_length.to_i
+        end
       end
     ensure
       C.fcntl(fd, C::FCNTL::F_SETFL, before)
