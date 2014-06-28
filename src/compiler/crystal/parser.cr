@@ -1584,7 +1584,7 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      if @token.keyword?("self")
+      if @token.keyword?(:self)
         name = Self.new
         next_token_skip_space
       else
@@ -2698,7 +2698,7 @@ module Crystal
     end
 
     def parse_type_with_suffix(types, allow_primitives)
-      if @token.keyword?("self")
+      if @token.keyword?(:self)
         type = Self.new
         next_token_skip_space
       else
@@ -3151,6 +3151,10 @@ module Crystal
 
       check :"("
       next_token_skip_space_or_newline
+
+      if @token.keyword?(:self)
+        raise "can't take pointerof(self)", @token.line_number, @token.column_number
+      end
 
       exp = parse_expression
       skip_space

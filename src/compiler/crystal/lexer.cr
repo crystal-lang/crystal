@@ -723,6 +723,10 @@ module Crystal
         scan_ident(start)
       when 's'
         case next_char
+        when 'e'
+          if next_char == 'l' && next_char == 'f'
+            return check_ident_or_keyword(:self, start)
+          end
         when 'i'
           if next_char == 'z' && next_char == 'e' && next_char == 'o' && next_char == 'f'
             return check_ident_or_keyword(:sizeof, start)
@@ -730,6 +734,10 @@ module Crystal
         when 't'
           if next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't'
             return check_ident_or_keyword(:struct, start)
+          end
+        when 'u'
+          if next_char == 'p' && next_char == 'e' && next_char == 'r'
+            return check_ident_or_keyword(:super, start)
           end
         end
         scan_ident(start)

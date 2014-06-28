@@ -898,4 +898,13 @@ describe "Parser" do
       ex.message.not_nil!.includes?("unexpected token: }").should be_true
     end
   end
+
+  it "says error on pointerof(self)" do
+    begin
+      Parser.parse "pointerof(self)"
+      fail "syntax exception should have been raised"
+    rescue ex : Crystal::SyntaxException
+      ex.message.not_nil!.includes?("can't take pointerof(self)").should be_true
+    end
+  end
 end
