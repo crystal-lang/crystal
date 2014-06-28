@@ -557,6 +557,8 @@ module Crystal
         interpret_argless_method(method, args) { StringLiteral.new(@value.downcase) }
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(@value.empty?) }
+      when "identify"
+        interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
       when "length"
         interpret_argless_method(method, args) { NumberLiteral.new(@value.length, :i32) }
       when "lines"

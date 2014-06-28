@@ -261,6 +261,11 @@ describe "MacroExpander" do
       assert_macro "", %({{[1, 2, 3].empty?}}), [] of ASTNode, "false"
     end
 
+    it "executes identify" do
+      assert_macro "", %({{"A::B".identify}}), [] of ASTNode, "\"A__B\""
+      assert_macro "", %({{"A".identify}}), [] of ASTNode, "\"A\""
+    end
+
     it "executes join" do
       assert_macro "", %({{[1, 2, 3].join ", "}}), [] of ASTNode, %("1, 2, 3")
     end
