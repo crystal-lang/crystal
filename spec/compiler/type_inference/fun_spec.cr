@@ -288,4 +288,44 @@ describe "Type inference: fun" do
       ),
       "undefined local variable or method 'foo'"
   end
+
+  it "allows passing NoReturn type for any return type (1)" do
+    assert_type("
+      lib C
+        fun exit : NoReturn
+      end
+
+      def foo(f : -> Int32)
+        f.call
+      end
+
+      foo ->{ C.exit }
+      ") { no_return }
+  end
+
+  it "allows passing NoReturn type for any return type (2)" do
+    assert_type("
+      lib C
+        fun exit : NoReturn
+        fun foo(x : -> Int32) : Int32
+      end
+
+      C.foo ->{ C.exit }
+      ") { int32 }
+  end
+
+  it "allows passing NoReturn type for any return type (3)" do
+    assert_type("
+      lib C
+        fun exit : NoReturn
+        struct S
+          x : -> Int32
+        end
+      end
+
+      s = C::S.new
+      s.x = ->{ C.exit }
+      s.x
+      ") { fun_of(int32) }
+  end
 end

@@ -489,11 +489,9 @@ module Crystal
         self_arg = self.args[i]
         actual_type = self_arg.type
         actual_type = mod.pointer_of(actual_type) if self.args[i].out?
-        if actual_type != expected_type
-          unless actual_type.is_implicitly_converted_in_c_to?(expected_type)
-            arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
-            self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
-          end
+        unless actual_type.compatible_with?(expected_type) || actual_type.is_implicitly_converted_in_c_to?(expected_type)
+          arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
+          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
         end
       end
     end

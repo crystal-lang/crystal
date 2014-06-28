@@ -436,8 +436,12 @@ module Crystal
 
       if output
         my_output = fun_types.last
-        restricted = my_output.restrict(output, owner, type_lookup, free_vars)
-        return nil unless restricted == my_output
+        if my_output.no_return?
+          # Ok, NoReturn can be "cast" to anything
+        else
+          restricted = my_output.restrict(output, owner, type_lookup, free_vars)
+          return nil unless restricted == my_output
+        end
 
         self
       else
@@ -455,7 +459,15 @@ module Crystal
       other_arg_types = other.arg_types()
       other_return_type = other.return_type()
 
-      return false unless return_type == other_return_type || other_return_type.void?
+      if return_type == other_return_type
+        # Ok
+      elsif other_return_type.void?
+        # Ok, can cast fun to void
+      elsif return_type.no_return?
+        # Ok, NoReturn can be "cast" to anything
+      else
+        return false
+      end
 
       # Disallow casting a function to another one accepting different argument count
       return nil if arg_types.length != other_arg_types.length
