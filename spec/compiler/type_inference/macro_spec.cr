@@ -123,4 +123,14 @@ describe "Type inference: macro" do
       bar
       )) { int32 }
   end
+
+  it "errors if find macros but wrong arguments" do
+    assert_error %(
+      macro foo
+        1
+      end
+
+      foo(1)
+      ), "wrong number of arguments for macro 'foo' (1 for 0)"
+  end
 end

@@ -311,6 +311,22 @@ module Crystal
       recalculate
     end
 
+    def lookup_macro
+      in_macro_target &.lookup_macro(name, args.length)
+    end
+
+    def in_macro_target
+      node_scope = scope
+      node_scope = node_scope.metaclass unless node_scope.metaclass?
+
+      macros = yield node_scope
+      if !macros && node_scope.metaclass? && node_scope.instance_type.module?
+        macros = yield mod.object.metaclass
+      end
+      macros ||= yield mod
+      macros
+    end
+
     def match_block_arg(match)
       yield_vars = nil
 
@@ -527,6 +543,8 @@ module Crystal
       defs = owner.lookup_defs(def_name)
       obj = @obj
       if defs.empty?
+        check_macro_wrong_number_of_arguments(def_name)
+
         owner_trace = find_owner_trace(obj, owner) if obj
         similar_name = owner.lookup_similar_def_name(def_name, self.args.length, !!block)
 
@@ -561,7 +579,7 @@ module Crystal
 
       defs_matching_args_length = defs.select { |a_def| a_def.args.length == self.args.length }
       if defs_matching_args_length.empty?
-        all_arguments_lengths = defs.map { |a_def| a_def.args.length }.uniq!
+        all_arguments_lengths = defs.map(&.args.length).uniq!
         raise "wrong number of arguments for '#{full_name(owner, def_name)}' (#{args.length} for #{all_arguments_lengths.join ", "})"
       end
 
@@ -637,6 +655,20 @@ module Crystal
       raise message, owner_trace
     end
 
+    def check_macro_wrong_number_of_arguments(def_name)
+      macros = in_macro_target &.lookup_macros(def_name)
+      if macros
+        all_arguments_lengths = Set(Int32).new
+        macros.each do |macro|
+          min_length = macro.args.index(&.default_value) || macro.args.length
+          min_length.upto(macro.args.length) do |args_length|
+            all_arguments_lengths << args_length
+          end
+        end
+
+        raise "wrong number of arguments for macro '#{def_name}' (#{args.length} for #{all_arguments_lengths.join ", "})"
+      end
+    end
 
     def full_name(owner, def_name = name)
       owner.is_a?(Program) ? name : "#{owner}##{def_name}"

@@ -305,6 +305,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_macro"
     end
 
+    def lookup_macros(name)
+      raise "Bug: #{self} doesn't implement lookup_macros"
+    end
+
     def include(mod)
       raise "Bug: #{self} doesn't implement include"
     end
@@ -591,6 +595,19 @@ module Crystal
       parents.try &.each do |parent|
         parent_macro = parent.lookup_macro(name, args_length)
         return parent_macro if parent_macro
+      end
+
+      nil
+    end
+
+    def lookup_macros(name)
+      if (macros = self.macros) && (hash = macros[name]?)
+        return hash.values
+      end
+
+      parents.try &.each do |parent|
+        parent_macros = parent.lookup_macros(name)
+        return parent_macros if parent_macros
       end
 
       nil
@@ -1759,6 +1776,10 @@ module Crystal
       @module.lookup_macro(name, args_length)
     end
 
+    def lookup_macros(name)
+      @module.lookup_macros(name)
+    end
+
     def match_arg(arg_type, arg, owner, type_lookup, free_vars)
       @module.match_arg(arg_type, arg, owner, type_lookup, free_vars)
     end
@@ -1935,6 +1956,10 @@ module Crystal
 
     def lookup_macro(name, args_length)
       aliased_type.lookup_macro(name, args_length)
+    end
+
+    def lookup_macros(name)
+      aliased_type.lookup_macros(name)
     end
 
     def remove_alias
@@ -2551,6 +2576,10 @@ module Crystal
       base_type.lookup_macro(name, args_length)
     end
 
+    def lookup_macros(name)
+      base_type.lookup_macros(name)
+    end
+
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
       base_type.lookup_type(names, already_looked_up, lookup_in_container)
     end
@@ -2710,6 +2739,10 @@ module Crystal
     end
 
     def lookup_macro(name, args_length)
+      nil
+    end
+
+    def lookup_macros(name)
       nil
     end
 
