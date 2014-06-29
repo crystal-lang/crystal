@@ -297,6 +297,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement macros"
     end
 
+    def hooks
+      nil
+    end
+
     def add_macro(a_def)
       raise "Bug: #{self} doesn't implement add_macro"
     end
@@ -619,10 +623,12 @@ module Crystal
 
     make_named_tuple DefKey, [restrictions, yields]
     make_named_tuple SortedDefKey, [name, length, yields]
+    make_named_tuple Hook, [kind, :macro]
 
     getter defs
     getter sorted_defs
     getter macros
+    getter hooks
 
     def add_def(a_def)
       a_def.owner = self
@@ -677,6 +683,15 @@ module Crystal
     end
 
     def add_macro(a_def)
+      case a_def.name
+      when "inherited"
+        return add_hook :inherited, a_def
+      when "included"
+        return add_hook :included, a_def
+      when "extended"
+        return add_hook :extended, a_def
+      end
+
       macros = (@macros ||= {} of String => Hash(Int32, Macro))
       hash = (macros[a_def.name] ||= {} of Int32 => Macro)
 
@@ -685,6 +700,15 @@ module Crystal
       min_args_length.upto(args_length) do |num_args|
         hash[num_args] = a_def
       end
+    end
+
+    def add_hook(kind, a_def)
+      if a_def.args.length != 0
+        raise "macro '#{kind}' cannot have arguments"
+      end
+
+      hooks = @hooks ||= [] of Hook
+      hooks << Hook.new(kind, a_def)
     end
 
     def filter_by_responds_to(name)

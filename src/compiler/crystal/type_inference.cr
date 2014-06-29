@@ -434,7 +434,12 @@ module Crystal
     end
 
     def visit(node : Macro)
-      current_type.metaclass.add_macro node
+      begin
+        current_type.metaclass.add_macro node
+      rescue ex
+        node.raise ex.message
+      end
+
       node.set_type @mod.nil
       false
     end
@@ -894,6 +899,8 @@ module Crystal
         end
       end
 
+      created_new_type = false
+
       if type
         unless type.is_a?(ClassType)
           node.raise "#{name} is not a #{node.struct ? "struct" : "class"}, it's a #{type.type_desc}"
@@ -911,7 +918,7 @@ module Crystal
           node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
         end
 
-        needs_force_add_subclass = true
+        created_new_type = true
         if type_vars = node.type_vars
           type = GenericClassType.new @mod, scope, name, superclass, type_vars, false
         else
@@ -923,10 +930,15 @@ module Crystal
       end
 
       @types.push type
+
+      if created_new_type
+        run_hooks(superclass.metaclass, type, :inherited, node)
+      end
+
       node.body.accept self
       @types.pop
 
-      if needs_force_add_subclass
+      if created_new_type
         raise "Bug" unless type.is_a?(InheritableClass)
         type.force_add_subclass
       end
@@ -934,6 +946,21 @@ module Crystal
       node.type = @mod.nil
 
       false
+    end
+
+    def run_hooks(type_with_hooks, current_type, kind, node)
+      hooks = type_with_hooks.hooks
+      return unless hooks
+
+      hooks.each do |hook|
+        next if hook.kind != kind
+
+        expanded = expand_macro(hook.macro, node) do
+          @mod.expand_macro current_type, hook.macro.body
+        end
+        expanded.accept self
+        node.add_runtime_initializer(expanded)
+      end
     end
 
     def visit(node : ModuleDef)
@@ -980,7 +1007,7 @@ module Crystal
     end
 
     def visit(node : Include)
-      include_in current_type, node.name
+      include_in current_type, node, :included
 
       node.type = @mod.nil
 
@@ -988,7 +1015,7 @@ module Crystal
     end
 
     def visit(node : Extend)
-      include_in current_type.metaclass, node.name
+      include_in current_type.metaclass, node, :extended
 
       node.type = @mod.nil
 
@@ -1925,7 +1952,8 @@ module Crystal
       false
     end
 
-    def include_in(current_type, node_name)
+    def include_in(current_type, node, kind)
+      node_name = node.name
       if node_name.is_a?(Generic)
         type = lookup_path_type(node_name.name)
       else
@@ -1946,7 +1974,7 @@ module Crystal
         end
 
         mapping = Hash.zip(type.type_vars, node_name.type_vars)
-        current_type.include IncludedGenericModule.new(@mod, type, current_type, mapping)
+        module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
       else
         if type.is_a?(GenericModuleType)
           if current_type.is_a?(GenericType)
@@ -1959,17 +1987,21 @@ module Crystal
             type.type_vars.zip(current_type.type_vars) do |type_var, current_type_var|
               mapping[type_var] = Path.new([current_type_var])
             end
-
-            current_type.include IncludedGenericModule.new(@mod, type, current_type, mapping)
+            module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
           else
             node_name.raise "#{type} is a generic module"
           end
         else
-          current_type.include type
+          module_to_include = type
         end
       end
-    rescue ex
-      node_name.raise ex.message
+
+      begin
+        current_type.include module_to_include
+        run_hooks type.metaclass, current_type, kind, node
+      rescue ex
+        node_name.raise ex.message
+      end
     end
 
     def process_struct_or_union_def(node, klass)

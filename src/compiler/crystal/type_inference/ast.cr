@@ -445,4 +445,25 @@ module Crystal
       include ExpandableNode
     end
   {% end %}
+
+  module RuntimeInitializable
+    getter runtime_initializers
+
+    def add_runtime_initializer(node)
+      initializers = @runtime_initializers ||= [] of ASTNode
+      initializers << node
+    end
+  end
+
+  class ClassDef
+    include RuntimeInitializable
+  end
+
+  class Include
+    include RuntimeInitializable
+  end
+
+  class Extend
+    include RuntimeInitializable
+  end
 end

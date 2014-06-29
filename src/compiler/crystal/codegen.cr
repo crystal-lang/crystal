@@ -394,6 +394,8 @@ module Crystal
     end
 
     def visit(node : ClassDef)
+      node.runtime_initializers.try &.each &.accept self
+
       accept node.body
       @last = llvm_nil
       false
@@ -431,11 +433,15 @@ module Crystal
     end
 
     def visit(node : Include)
+      node.runtime_initializers.try &.each &.accept self
+
       @last = llvm_nil
       false
     end
 
     def visit(node : Extend)
+      node.runtime_initializers.try &.each &.accept self
+
       @last = llvm_nil
       false
     end

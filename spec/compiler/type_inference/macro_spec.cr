@@ -133,4 +133,57 @@ describe "Type inference: macro" do
       foo(1)
       ), "wrong number of arguments for macro 'foo' (1 for 0)"
   end
+
+  it "does inherited macro" do
+    assert_type("
+      class Foo
+        macro inherited
+          def self.{{@name.downcase.id}}
+            1
+          end
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.bar
+      ") { int32 }
+  end
+
+  it "does included macro" do
+    assert_type("
+      module Foo
+        macro included
+          def self.{{@name.downcase.id}}
+            1
+          end
+        end
+      end
+
+      class Bar
+        include Foo
+      end
+
+      Bar.bar
+      ") { int32 }
+  end
+
+  it "does extended macro" do
+    assert_type("
+      module Foo
+        macro extended
+          def self.{{@name.downcase.id}}
+            1
+          end
+        end
+      end
+
+      class Bar
+        extend Foo
+      end
+
+      Bar.bar
+      ") { int32 }
+  end
 end
