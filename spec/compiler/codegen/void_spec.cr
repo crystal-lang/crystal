@@ -64,4 +64,15 @@ describe "Code gen: void" do
       end
       ))
   end
+
+  it "codegens no return assignment" do
+    build("
+      lib C
+        fun exit : NoReturn
+      end
+
+      a = C.exit
+      a
+      ")
+  end
 end

@@ -1,9 +1,10 @@
+ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
+ENV["VERIFY"] = "1"
+
 require "spec"
 require "../src/compiler/crystal/**"
 
 include Crystal
-
-ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
 
 class Crystal::Program
   def union_of(type1, type2)

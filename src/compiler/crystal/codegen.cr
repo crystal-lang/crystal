@@ -8,8 +8,6 @@ require "codegen/*"
 LLVM.init_x86
 
 module Crystal
-  VERIFY_LLVM = ENV["VERIFY"] == "1"
-
   MAIN_NAME = "__crystal_main"
   RAISE_NAME = "__crystal_raise"
   MALLOC_NAME = "__crystal_malloc"
@@ -192,6 +190,7 @@ module Crystal
       end
 
       env_dump = ENV["DUMP"]
+      env_verify = ENV["VERIFY"] == "1"
       case env_dump
       when Nil
         # Nothing
@@ -203,7 +202,7 @@ module Crystal
 
       @modules.each do |name, mod|
         mod.dump if dump_all_llvm || name =~ dump_llvm_regex
-        mod.verify if Crystal::VERIFY_LLVM
+        mod.verify if env_verify
 
         if @debug
           add_compile_unit_metadata(mod, name == "" ? "main" : name)
@@ -1611,6 +1610,8 @@ module Crystal
 
           if var_type.void?
             context.vars[name] = LLVMVar.new(llvm_nil, @mod.void)
+          elsif var_type.no_return?
+            # No alloca for NoReturn
           elsif var.closure_in?(obj)
             # We deal with closured vars later
           elsif !obj || var.belongs_to?(obj)
