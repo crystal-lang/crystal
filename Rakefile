@@ -50,8 +50,13 @@ task :less do
   puts 'Parsed main.sass'
 end
 
+desc 'Build docs'
+task :docs do
+  system "gitbook build ./_gitbook --output ./docs"
+end
+
 desc 'Parse all haml items'
 task haml: ['haml:layouts', 'haml:includes', 'haml:indexes']
 
 desc 'Build all haml and sass files for deployment'
-task build: [:haml, :less]
+task build: [:haml, :less, :docs]

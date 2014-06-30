@@ -1,1 +1,5 @@
-{}
+{
+  "links": {
+    "contributePrefix": "https://github.com/manastech/crystal/edit/gh-pages/_gitbook/"
+  }
+}
