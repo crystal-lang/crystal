@@ -26,7 +26,7 @@
        * [while](syntax_and_semantics/while.md)
            * [break](syntax_and_semantics/break.md)
            * [next](syntax_and_semantics/next.md)
-       * [until](syntax_and_semantics/ntil.md)
+       * [until](syntax_and_semantics/until.md)
        * [&&](syntax_and_semantics/and.md)
        * [||](syntax_and_semantics/or.md)
 
