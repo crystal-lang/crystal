@@ -364,4 +364,8 @@ describe "MacroExpander" do
       assert_macro "x", %({{x.id}}), [MetaVar.new("foo", Program.new.int32)] of ASTNode, %(foo)
     end
   end
+
+  it "executes assign" do
+    assert_macro "", %({{a = 1}}{{a}}), [] of ASTNode, "1"
+  end
 end

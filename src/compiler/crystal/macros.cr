@@ -152,7 +152,9 @@ module Crystal
       def visit(node : MacroExpression)
         node.exp.accept self
 
-        @str << @last.to_s
+        unless node.exp.is_a?(Assign)
+          @str << @last.to_s
+        end
 
         false
       end
@@ -240,6 +242,18 @@ module Crystal
           @vars.delete index_var.name if index_var
         else
           node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"
+        end
+
+        false
+      end
+
+      def visit(node : Assign)
+        case target = node.target
+        when Var
+          node.value.accept self
+          @vars[target.name] = @last
+        else
+          node.raise "can only assign to variables, not #{target.class_desc}"
         end
 
         false
