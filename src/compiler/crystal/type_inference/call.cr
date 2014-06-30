@@ -100,20 +100,27 @@ module Crystal
       arg_types = args.map &.type
 
       matches = check_tuple_indexer(owner, def_name, args, arg_types)
-      matches ||= owner.lookup_matches(def_name, arg_types, !!block)
+      matches ||= owner.lookup_matches(def_name, arg_types, block)
 
       if matches.empty?
         if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.hierarchy?) && !owner.instance_type.pointer?
           new_matches = define_new owner, arg_types
           matches = new_matches unless new_matches.empty?
         elsif !obj && owner != mod
-          mod_matches = mod.lookup_matches(def_name, arg_types, !!block)
+          mod_matches = mod.lookup_matches(def_name, arg_types, block)
           matches = mod_matches unless mod_matches.empty?
         end
       end
 
       if matches.empty? && owner.class? && owner.abstract
-        matches = owner.hierarchy_type.lookup_matches(def_name, arg_types, !!block)
+        matches = owner.hierarchy_type.lookup_matches(def_name, arg_types, block)
+      end
+
+      if matches.empty?
+        defined_method_missing = owner.check_method_missing(def_name, arg_types, block)
+        if defined_method_missing
+          matches = owner.lookup_matches(def_name, arg_types, block)
+        end
       end
 
       if matches.empty?
@@ -261,7 +268,7 @@ module Crystal
       if parents && parents.length > 0
         parents_length = parents.length
         parents.each_with_index do |parent, i|
-          if i == parents_length - 1 || parent.lookup_first_def(untyped_def.name, !!block)
+          if i == parents_length - 1 || parent.lookup_first_def(untyped_def.name, block)
             return lookup_matches_in(parent, scope, untyped_def.name)
           end
         end
@@ -546,7 +553,7 @@ module Crystal
         check_macro_wrong_number_of_arguments(def_name)
 
         owner_trace = find_owner_trace(obj, owner) if obj
-        similar_name = owner.lookup_similar_def_name(def_name, self.args.length, !!block)
+        similar_name = owner.lookup_similar_def_name(def_name, self.args.length, block)
 
         error_msg = String.build do |msg|
           if obj && owner != @mod
@@ -682,7 +689,7 @@ module Crystal
         return Matches.new(matches, scope)
       end
 
-      matches = scope.instance_type.lookup_matches("initialize", arg_types, !!block)
+      matches = scope.instance_type.lookup_matches("initialize", arg_types, block)
       if matches.empty?
         # We first need to check if there aren't any "new" methods in the class
         defs = scope.lookup_defs("new")

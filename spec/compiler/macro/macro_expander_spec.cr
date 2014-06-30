@@ -78,6 +78,10 @@ describe "MacroExpander" do
     it "expands macro with if else when falsey" do
       assert_macro "", "{%if false%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
     end
+
+    it "expands macro with if with nop" do
+      assert_macro "x", "{%if x%}hello{%else%}bye{%end%}", [Nop.new] of ASTNode, "bye"
+    end
   end
 
   describe "for" do
@@ -308,6 +312,10 @@ describe "MacroExpander" do
 
     it "executes last" do
       assert_macro "", %({{[1, 2, 3].last}}), [] of ASTNode, "3"
+    end
+
+    it "executes argify" do
+      assert_macro "", %({{[1, 2, 3].argify}}), [] of ASTNode, "1, 2, 3"
     end
   end
 

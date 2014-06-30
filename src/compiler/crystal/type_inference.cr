@@ -759,22 +759,8 @@ module Crystal
         node.raise "expanding macro", ex
       end
 
-      begin
-        parser = Parser.new(generated_source, [Set.new(@vars.keys)])
-        parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
-        generated_nodes = parser.parse
-      rescue ex : Crystal::SyntaxException
-        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
-      end
-
-      generated_nodes = mod.normalize(generated_nodes)
-
-      begin
-        generated_nodes.accept self
-      rescue ex : Crystal::Exception
-        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
-      end
-
+      generated_nodes = @mod.parse_macro_source(generated_source, the_macro, node, Set.new(@vars.keys))
+      generated_nodes.accept self
       generated_nodes
     end
 

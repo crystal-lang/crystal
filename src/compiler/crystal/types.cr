@@ -273,11 +273,11 @@ module Crystal
       raise "Bug: #{self} doesn't implement undef"
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches"
     end
 
-    def lookup_matches_with_modules(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches_with_modules(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches_with_modules"
     end
 
@@ -285,11 +285,11 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_defs"
     end
 
-    def lookup_first_def(name, yields)
+    def lookup_first_def(name, block)
       raise "Bug: #{self} doesn't implement lookup_first_def"
     end
 
-    def lookup_similar_def_name(name, args_length, yields)
+    def lookup_similar_def_name(name, args_length, block)
       nil
     end
 
@@ -311,6 +311,23 @@ module Crystal
 
     def lookup_macros(name)
       raise "Bug: #{self} doesn't implement lookup_macros"
+    end
+
+    def check_method_missing(name, arg_types, block)
+      false
+    end
+
+    def lookup_method_missing
+      # method_missing is actually stored in the metaclass
+      method_missing = metaclass.lookup_macro("method_missing", 3)
+      return method_missing if method_missing
+
+      parents.try &.each do |parent|
+        method_missing = parent.lookup_method_missing
+        return method_missing if method_missing
+      end
+
+      nil
     end
 
     def include(mod)
@@ -398,7 +415,7 @@ module Crystal
     def initialize(@program)
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
       Matches.new([] of Match, nil, self, false)
     end
 
@@ -474,9 +491,11 @@ module Crystal
       arg_type.not_nil!.restrict restriction, owner, type_lookup, free_vars
     end
 
-    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches_without_parents(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
       if sorted_defs = self.sorted_defs()
-        if defs = sorted_defs[DefContainer::SortedDefKey.new(name, arg_types.length, yields)]?
+        if defs = sorted_defs[DefContainer::SortedDefKey.new(name, arg_types.length, !!block)]?
+          found_defs = true
+
           defs.each do |a_def|
             match = match_def_args(arg_types, a_def, owner, type_lookup)
 
@@ -499,10 +518,10 @@ module Crystal
       Matches.new(matches_array, Cover.create(arg_types, matches_array), owner)
     end
 
-    def lookup_matches_with_modules(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches_with_modules(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
       matches_array ||= [] of Match
 
-      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
+      matches = lookup_matches_without_parents(name, arg_types, block, owner, type_lookup, matches_array)
       return matches unless matches.empty?
 
       cover = matches.cover
@@ -511,7 +530,7 @@ module Crystal
         my_parents.each do |parent|
           break unless parent.is_a?(IncludedGenericModule) || parent.module?
 
-          matches = parent.lookup_matches_with_modules(name, arg_types, yields, owner, parent, matches_array)
+          matches = parent.lookup_matches_with_modules(name, arg_types, block, owner, parent, matches_array)
           return matches unless matches.empty?
         end
       end
@@ -519,17 +538,17 @@ module Crystal
       Matches.new(matches_array, cover, owner, false)
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
       matches_array ||= [] of Match
 
-      matches = lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
+      matches = lookup_matches_without_parents(name, arg_types, block, owner, type_lookup, matches_array)
       return matches if matches.cover_all?
 
       cover = matches.cover
 
       if (my_parents = parents) && !(name == "new" && owner.metaclass?)
         my_parents.each do |parent|
-          matches = parent.lookup_matches(name, arg_types, yields, owner, parent, matches_array)
+          matches = parent.lookup_matches(name, arg_types, block, owner, parent, matches_array)
           return matches if matches.cover_all?
         end
       end
@@ -537,10 +556,10 @@ module Crystal
       Matches.new(matches_array, cover, owner, false)
     end
 
-    def lookup_first_def(name, yields)
-      yields = !!yields
+    def lookup_first_def(name, block)
+      block = !!block
       if (defs = self.defs) && (hash = defs[name]?)
-        hash.values.find { |a_def| !!a_def.yields == yields }
+        hash.values.find { |a_def| !!a_def.yields == block }
       end
     end
 
@@ -559,7 +578,7 @@ module Crystal
 
     SuggestableName =/\A[a-z_]/
 
-    def lookup_similar_def_name(name, args_length, yields)
+    def lookup_similar_def_name(name, args_length, block)
       return nil unless name =~ SuggestableName
 
       tolerance = (name.length / 5.0).ceil
@@ -569,7 +588,7 @@ module Crystal
         defs.each do |def_name, hash|
           if def_name =~ SuggestableName
             hash.each do |filter, overload|
-              if filter.restrictions.length == args_length && filter.yields == yields
+              if filter.restrictions.length == args_length && filter.yields == !!block
                 if levenshtein(def_name, name) <= tolerance
                   candidates << def_name
                 end
@@ -584,7 +603,7 @@ module Crystal
       end
 
       parents.try &.each do |parent|
-        similar_def_name = parent.lookup_similar_def_name(name, args_length, yields)
+        similar_def_name = parent.lookup_similar_def_name(name, args_length, block)
         return similar_def_name if similar_def_name
       end
 
@@ -615,6 +634,57 @@ module Crystal
       end
 
       nil
+    end
+
+    def check_method_missing(name, arg_types, block)
+      if !metaclass? && name != "initialize"
+        # Make sure to define method missing in the whole hierarchy
+        hierarchy_type = hierarchy_type()
+        if hierarchy_type == self
+          method_missing = lookup_method_missing
+          if method_missing
+            define_method_from_method_missing(method_missing, name, arg_types, block)
+            return true
+          end
+        else
+          return hierarchy_type.check_method_missing(name, arg_types, block)
+        end
+      end
+
+      false
+    end
+
+    def define_method_from_method_missing(method_missing, def_name, arg_types, block)
+      name_node = StringLiteral.new(def_name)
+      args_nodes = [] of ASTNode
+      args_nodes_names = Set(String).new
+      arg_types.each_index do |index|
+        arg_node_name = "_arg#{index}"
+        args_nodes << MacroId.new(arg_node_name)
+        args_nodes_names << arg_node_name
+      end
+      args_node = ArrayLiteral.new(args_nodes)
+      if block
+        block_vars = block.args.map_with_index do |var, index|
+          Var.new("_block_arg#{index}")
+        end
+        yield_exps = [] of ASTNode
+        block_vars.each { |block_var| yield_exps << block_var.clone }
+        block_body = Yield.new(yield_exps)
+        block_node = Block.new(block_vars, block_body)
+      else
+        block_node = Nop.new
+      end
+      fake_call = Call.new(nil, "method_missing", [name_node, args_node, block_node] of ASTNode)
+      generated_source = program.expand_macro self, method_missing, fake_call
+      generated_nodes = program.parse_macro_source(generated_source, method_missing, method_missing, args_nodes_names)
+
+      a_def = Def.new(def_name, args_nodes_names.map { |name| Arg.new(name) }, generated_nodes)
+      a_def.yields = block.try &.args.length
+
+      owner = self
+      owner = owner.base_type if owner.is_a?(HierarchyType)
+      owner.add_def(a_def) if owner.is_a?(DefContainer)
     end
   end
 
@@ -690,6 +760,10 @@ module Crystal
         return add_hook :included, a_def
       when "extended"
         return add_hook :extended, a_def
+      when "method_missing"
+        if a_def.args.length != 3
+          raise "macro 'method_missing' expects 3 arguments: name, args, block"
+        end
       end
 
       macros = (@macros ||= {} of String => Hash(Int32, Macro))
@@ -704,7 +778,7 @@ module Crystal
 
     def add_hook(kind, a_def)
       if a_def.args.length != 0
-        raise "macro '#{kind}' cannot have arguments"
+        raise "macro '#{kind}' must not have arguments"
       end
 
       hooks = @hooks ||= [] of Hook
@@ -1780,12 +1854,12 @@ module Crystal
       @module.implements?(other_type)
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      @module.lookup_matches(name, arg_types, yields, owner, type_lookup, matches_array)
+    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
+      @module.lookup_matches(name, arg_types, block, owner, type_lookup, matches_array)
     end
 
-    def lookup_matches_without_parents(name, arg_types, yields, owner = self, type_lookup = self, matches_array = nil)
-      @module.lookup_matches_without_parents(name, arg_types, yields, owner, type_lookup, matches_array)
+    def lookup_matches_without_parents(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
+      @module.lookup_matches_without_parents(name, arg_types, block, owner, type_lookup, matches_array)
     end
 
     def lookup_defs(name)
@@ -1950,16 +2024,16 @@ module Crystal
       @simple = true
     end
 
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
-      aliased_type.lookup_matches(name, arg_types, yields, owner, type_lookup)
+    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self)
+      aliased_type.lookup_matches(name, arg_types, block, owner, type_lookup)
     end
 
     def lookup_defs(name)
       aliased_type.lookup_defs(name)
     end
 
-    def lookup_first_def(name, yields)
-      aliased_type.lookup_first_def(name, yields)
+    def lookup_first_def(name, block)
+      aliased_type.lookup_first_def(name, block)
     end
 
     def lookup_similar_def_name(name)
@@ -2464,9 +2538,9 @@ module Crystal
   end
 
   module HierarchyTypeLookup
-    def lookup_matches(name, arg_types, yields, owner = self, type_lookup = self)
+    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self)
       base_type_lookup = hierarchy_lookup(base_type)
-      base_type_matches = base_type_lookup.lookup_matches(name, arg_types, yields, self)
+      base_type_matches = base_type_lookup.lookup_matches(name, arg_types, block, self)
 
       # If there are no subclasses no need to look further
       if leaf?
@@ -2492,7 +2566,7 @@ module Crystal
           subtype_hierarchy_lookup = hierarchy_lookup(subtype.hierarchy_type)
 
           # Check matches but without parents: only included modules
-          subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, yields, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+          subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, block, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
 
           # If we didn't find a match in a subclass, and the base type match is a macro
           # def, we need to copy it to the subclass so that @name, @instance_vars and other
@@ -2568,6 +2642,46 @@ module Crystal
     def initialize(@program, @base_type)
     end
 
+    def check_method_missing(name, arg_types, block)
+      method_missing = base_type.lookup_method_missing
+      defined = false
+      if method_missing
+        defined = base_type.define_method_from_method_missing(method_missing, name, arg_types, block) || defined
+      end
+
+      defined = add_subclasses_method_missing_matches(base_type, method_missing, name, arg_types, block) || defined
+      defined
+    end
+
+    def add_subclasses_method_missing_matches(base_type, method_missing, name, arg_types, block)
+      defined = false
+
+      base_type.subclasses.each do |subclass|
+        subclass = subclass as DefContainer
+
+        # First check if we can find the method
+        existing_def = subclass.lookup_first_def(name, block)
+        next if existing_def
+
+        subclass_method_missing = subclass.lookup_method_missing
+
+        # Check if the subclass redefined the method_missing
+        if subclass_method_missing && subclass_method_missing.object_id != method_missing.object_id
+          subclass.define_method_from_method_missing(subclass_method_missing, name, arg_types, block)
+          defined = true
+        elsif method_missing
+          # Otherwise, we need to define this method missing because of macro vars like @name
+          subclass.define_method_from_method_missing(method_missing, name, arg_types, block)
+          subclass_method_missing = method_missing
+          defined = true
+        end
+
+        defined = add_subclasses_method_missing_matches(subclass, subclass_method_missing, name, arg_types, block) || defined
+      end
+
+      defined
+    end
+
     def leaf?
       base_type.leaf?
     end
@@ -2576,8 +2690,8 @@ module Crystal
       base_type.superclass
     end
 
-    def lookup_first_def(name, yields)
-      base_type.lookup_first_def(name, yields)
+    def lookup_first_def(name, block)
+      base_type.lookup_first_def(name, block)
     end
 
     def lookup_defs(name)
@@ -2742,8 +2856,8 @@ module Crystal
     delegate base_type, instance_type
     delegate cover, instance_type
 
-    def lookup_first_def(name, yields)
-      instance_type.base_type.metaclass.lookup_first_def(name, yields)
+    def lookup_first_def(name, block)
+      instance_type.base_type.metaclass.lookup_first_def(name, block)
     end
 
     def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)

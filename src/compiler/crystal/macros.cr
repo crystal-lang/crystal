@@ -4,7 +4,7 @@ module Crystal
       @def_macros << def
     end
 
-    def expand_macro(scope : Type, a_macro, call)
+    def expand_macro(scope : Type, a_macro : Macro, call)
       @macro_expander.expand scope, a_macro, call
     end
 
@@ -36,18 +36,9 @@ module Crystal
         vars[arg.name] = MetaVar.new(arg.name, arg.type)
       end
       target_def.vars = vars
+      arg_names = target_def.args.map(&.name)
 
-      begin
-        arg_names = target_def.args.map(&.name)
-
-        parser = Parser.new(generated_source, [Set.new(arg_names)])
-        parser.filename = VirtualFile.new(the_macro, generated_source, target_def.location)
-        generated_nodes = parser.parse
-      rescue ex : Crystal::SyntaxException
-        target_def.raise "def macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
-      end
-
-      generated_nodes = @program.normalize(generated_nodes)
+      generated_nodes = parse_macro_source(generated_source, the_macro, target_def, arg_names.to_set)
 
       type_visitor = TypeVisitor.new(@program, vars, target_def)
       type_visitor.scope = owner
@@ -58,6 +49,16 @@ module Crystal
       end
 
       target_def.body = generated_nodes
+    end
+
+    def parse_macro_source(generated_source, the_macro, node, vars)
+      begin
+        parser = Parser.new(generated_source, [vars])
+        parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
+        normalize parser.parse
+      rescue ex : Crystal::SyntaxException
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
+      end
     end
   end
 
@@ -493,6 +494,12 @@ module Crystal
     end
   end
 
+  class Nop
+    def truthy?
+      false
+    end
+  end
+
   class NilLiteral
     def to_macro_id
       "nil"
@@ -640,6 +647,10 @@ module Crystal
             interpreter.define_var(block_arg.name, block_value) if block_arg
             interpreter.accept(block.body).truthy?
           end)
+        end
+      when "argify"
+        interpret_argless_method(method, args) do
+          MacroId.new(elements.map(&.to_macro_id).join ", ")
         end
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
