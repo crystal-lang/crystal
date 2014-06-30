@@ -93,7 +93,7 @@ module Crystal
     end
 
     def transform(node : Assign)
-      super
+      node = super
 
       # We don't want to transform constant assignments into no return
       unless node.target.is_a?(Path)
@@ -285,6 +285,10 @@ module Crystal
       node.cond = node.cond.transform(self)
 
       node_cond = node.cond
+
+      if node_cond.no_returns?
+        return node_cond
+      end
 
       if node_cond.true_literal?
         node.then = node.then.transform(self)

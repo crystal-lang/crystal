@@ -653,8 +653,12 @@ module Crystal
     end
 
     def visit(node : Var)
-      var = context.vars[node.name]
-      @last = downcast var.pointer, node.type, var.type, var.already_loaded
+      var = context.vars[node.name]?
+      if var
+        @last = downcast var.pointer, node.type, var.type, var.already_loaded
+      else
+        node.raise "Bug: missing context var: #{node.name}"
+      end
     end
 
     def visit(node : Global)

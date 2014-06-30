@@ -9,4 +9,17 @@ describe "Code gen: no return" do
   it "codegens Pointer(NoReturn).malloc" do
     run("Pointer(NoReturn).malloc(1_u64); 1").to_i.should eq(1)
   end
+
+  it "codegens if with no reutrn and variable used afterwards" do
+    build(%(
+      require "prelude"
+
+      lib C
+        fun exit2 : NoReturn
+      end
+
+      if (a = C.exit2) && a.length == 3
+      end
+      ))
+  end
 end
