@@ -1,0 +1,573 @@
+<!DOCTYPE HTML>
+<html lang="en-US" manifest="../manifest.appcache">
+    
+    <head>
+        
+        <meta charset="UTF-8">
+        <title>As a suffix | Crystal Programming Language</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 0.5.2">
+        <meta name="HandheldFriendly" content="true"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+        
+    
+    
+    <meta name="author" content="manastech">
+    
+    
+    <link rel="next" href="../syntax_and_semantics/as_an_expression.html" />
+    
+    
+    <link rel="prev" href="../syntax_and_semantics/article.html" />
+    
+
+        
+    </head>
+    <body>
+        
+        
+<link rel="stylesheet" href="../gitbook/style.css">
+
+
+        
+    <div class="book" data-github="manastech/crystal" data-level="3.5.2.1" data-basepath=".." data-revision="1404156861157">
+    <div class="book-header">
+    <!-- Actions Left -->
+    <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
+    
+    <a href="https://github.com/manastech/crystal" target="_blank" class="btn pull-left home-bookmark" aria-label="GitHub home"><i class="fa fa-bookmark-o"></i></a>
+    
+    <a href="#" class="btn pull-left toggle-search" aria-label="Toggle search"><i class="fa fa-search"></i></a>
+    <span id="font-settings-wrapper">
+        <a href="#" class="btn pull-left toggle-font-settings" aria-label="Toggle font settings"><i class="fa fa-font"></i>
+        </a>
+        <div class="dropdown-menu font-settings">
+    <div class="dropdown-caret">
+        <span class="caret-outer"></span>
+        <span class="caret-inner"></span>
+    </div>
+
+    <div class="btn-group btn-block">
+        <button id="reduce-font-size" class="btn btn-default">A</button>
+        <button id="enlarge-font-size" class="btn btn-default">A</button>
+    </div>
+
+    <ul class="list-group font-family-list">
+        <li class="list-group-item" data-font="0">Serif</li>
+        <li class="list-group-item" data-font="1">Sans</li>
+    </ul>
+
+    <div class="btn-group btn-group-xs btn-block color-theme-list">
+        <button type="button" class="btn btn-default" id="color-theme-preview-0" data-theme="0">White</button>
+        <button type="button" class="btn btn-default" id="color-theme-preview-1" data-theme="1">Sepia</button>
+        <button type="button" class="btn btn-default" id="color-theme-preview-2" data-theme="2">Night</button>
+    </div>
+</div>
+
+    </span>
+
+    <!-- Actions Right -->
+    
+    <a href="#" target="_blank" class="btn pull-right google-plus-sharing-link sharing-link" data-sharing="google-plus" aria-label="Share on Google Plus"><i class="fa fa-google-plus"></i></a>
+    
+    
+    <a href="#" target="_blank" class="btn pull-right facebook-sharing-link sharing-link" data-sharing="facebook" aria-label="Share on Facebook"><i class="fa fa-facebook"></i></a>
+    
+    
+    <a href="#" target="_blank" class="btn pull-right twitter-sharing-link sharing-link" data-sharing="twitter" aria-label="Share on Twitter"><i class="fa fa-twitter"></i></a>
+    
+
+    
+    <a href="https://github.com/manastech/crystal/stargazers" target="_blank" class="btn pull-right count-star hidden-xs"><i class="fa fa-star-o"></i> Star (<span>-</span>)</a>
+    <a href="https://github.com/manastech/crystal/watchers" target="_blank" class="btn pull-right count-watch hidden-xs"><i class="fa fa-eye"></i> Watch (<span>-</span>)</a>
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-spinner fa-spin"></i>
+        <a href="../" >Crystal Programming Language</a>
+    </h1>
+</div>
+
+    
+
+<div class="book-summary">
+    <div class="book-search">
+        <input type="text" placeholder="Search" class="form-control" />
+    </div>
+    <ul class="summary">
+        
+        
+        
+        <li>
+            <a href="https://github.com/manastech" target="blank" class="author-link">About the author</a>
+        </li>
+        
+
+        
+        
+        <li>
+            <a href="https://github.com/manastech/crystal/issues" target="blank"class="issues-link">Questions and Issues</a>
+        </li>
+        
+
+        
+        
+        <li>
+            <a href="https://github.com/manastech/crystal/edit/master/syntax_and_semantics/as_a_suffix.md" target="blank" class="contribute-link">Edit and Contribute</a>
+        </li>
+        
+
+        
+        <li class="divider"></li>
+        
+
+        <li data-level="0" data-path="index.html">
+            <a href="../"><i class="fa fa-check"></i> Introduction</a>
+        </li>
+        
+    
+        <li class="chapter " data-level="1" data-path="installation/README.html">
+            
+            <a href="../installation/README.html">
+                <i class="fa fa-check"></i> <b>1.</b> Installation
+            </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="1.1" data-path="installation/on_mac_osx_using_homebrew.html">
+            
+            <a href="../installation/on_mac_osx_using_homebrew.html">
+                <i class="fa fa-check"></i> <b>1.1.</b> On Mac OSX using Homebrew
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="installation/from_a_targz.html">
+            
+            <a href="../installation/from_a_targz.html">
+                <i class="fa fa-check"></i> <b>1.2.</b> From a tar.gz
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="installation/from_source_repository.html">
+            
+            <a href="../installation/from_source_repository.html">
+                <i class="fa fa-check"></i> <b>1.3.</b> From source repository
+            </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="2" data-path="overview/README.html">
+            
+            <a href="../overview/README.html">
+                <i class="fa fa-check"></i> <b>2.</b> Overview
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3" data-path="syntax_and_semantics/README.html">
+            
+            <a href="../syntax_and_semantics/README.html">
+                <i class="fa fa-check"></i> <b>3.</b> Syntax and semantics
+            </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.1" data-path="syntax_and_semantics/comments.html">
+            
+            <a href="../syntax_and_semantics/comments.html">
+                <i class="fa fa-check"></i> <b>3.1.</b> Comments
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="syntax_and_semantics/local_variables.html">
+            
+            <a href="../syntax_and_semantics/local_variables.html">
+                <i class="fa fa-check"></i> <b>3.2.</b> Local variables
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.3" data-path="syntax_and_semantics/global_variables.html">
+            
+            <a href="../syntax_and_semantics/global_variables.html">
+                <i class="fa fa-check"></i> <b>3.3.</b> Global variables
+            </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.3.1" data-path="syntax_and_semantics/thread_local.html">
+            
+            <a href="../syntax_and_semantics/thread_local.html">
+                <i class="fa fa-check"></i> <b>3.3.1.</b> Thread local
+            </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.4" data-path="syntax_and_semantics/assignment.html">
+            
+            <a href="../syntax_and_semantics/assignment.html">
+                <i class="fa fa-check"></i> <b>3.4.</b> Assignment
+            </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.4.1" data-path="syntax_and_semantics/multiple_assignment.html">
+            
+            <a href="../syntax_and_semantics/multiple_assignment.html">
+                <i class="fa fa-check"></i> <b>3.4.1.</b> Multiple assignment
+            </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5" data-path="syntax_and_semantics/control_expressions.html">
+            
+            <a href="../syntax_and_semantics/control_expressions.html">
+                <i class="fa fa-check"></i> <b>3.5.</b> Control expressions
+            </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.5.1" data-path="syntax_and_semantics/truthy_and_falsey_values.html">
+            
+            <a href="../syntax_and_semantics/truthy_and_falsey_values.html">
+                <i class="fa fa-check"></i> <b>3.5.1.</b> Truthy and falsey values
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.2" data-path="syntax_and_semantics/article.html">
+            
+            <a href="../syntax_and_semantics/article.html">
+                <i class="fa fa-check"></i> <b>3.5.2.</b> if
+            </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.5.2.1" data-path="syntax_and_semantics/as_a_suffix.html">
+            
+            <a href="../syntax_and_semantics/as_a_suffix.html">
+                <i class="fa fa-check"></i> <b>3.5.2.1.</b> As a suffix
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.2.2" data-path="syntax_and_semantics/as_an_expression.html">
+            
+            <a href="../syntax_and_semantics/as_an_expression.html">
+                <i class="fa fa-check"></i> <b>3.5.2.2.</b> As an expression
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.2.3" data-path="syntax_and_semantics/ternary_if.html">
+            
+            <a href="../syntax_and_semantics/ternary_if.html">
+                <i class="fa fa-check"></i> <b>3.5.2.3.</b> Ternary if
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.2.4" data-path="syntax_and_semantics/if_var.html">
+            
+            <a href="../syntax_and_semantics/if_var.html">
+                <i class="fa fa-check"></i> <b>3.5.2.4.</b> if var
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.2.5" data-path="syntax_and_semantics/if_varis_a.html">
+            
+            <a href="../syntax_and_semantics/if_varis_a.html">
+                <i class="fa fa-check"></i> <b>3.5.2.5.</b> if var.is_a?(...)
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.2.6" data-path="syntax_and_semantics/if_varresponds_to.html">
+            
+            <a href="../syntax_and_semantics/if_varresponds_to.html">
+                <i class="fa fa-check"></i> <b>3.5.2.6.</b> if var.responds_to?(...)
+            </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.3" data-path="syntax_and_semantics/unless.html">
+            
+            <a href="../syntax_and_semantics/unless.html">
+                <i class="fa fa-check"></i> <b>3.5.3.</b> unless
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.4" data-path="syntax_and_semantics/case.html">
+            
+            <a href="../syntax_and_semantics/case.html">
+                <i class="fa fa-check"></i> <b>3.5.4.</b> case
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.5" data-path="syntax_and_semantics/while.html">
+            
+            <a href="../syntax_and_semantics/while.html">
+                <i class="fa fa-check"></i> <b>3.5.5.</b> while
+            </a>
+            
+            
+            <ul class="articles">
+                
+    
+        <li class="chapter " data-level="3.5.5.1" data-path="syntax_and_semantics/break.html">
+            
+            <a href="../syntax_and_semantics/break.html">
+                <i class="fa fa-check"></i> <b>3.5.5.1.</b> break
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.5.2" data-path="syntax_and_semantics/next.html">
+            
+            <a href="../syntax_and_semantics/next.html">
+                <i class="fa fa-check"></i> <b>3.5.5.2.</b> next
+            </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.6" data-path="syntax_and_semantics/ntil.html">
+            
+            <a href="../syntax_and_semantics/ntil.html">
+                <i class="fa fa-check"></i> <b>3.5.6.</b> until
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.7" data-path="syntax_and_semantics/and.html">
+            
+            <a href="../syntax_and_semantics/and.html">
+                <i class="fa fa-check"></i> <b>3.5.7.</b> &amp;&amp;
+            </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="3.5.8" data-path="syntax_and_semantics/or.html">
+            
+            <a href="../syntax_and_semantics/or.html">
+                <i class="fa fa-check"></i> <b>3.5.8.</b> ||
+            </a>
+            
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+            </ul>
+            
+        </li>
+    
+
+
+        
+        <li class="divider"></li>
+        <li>
+            <a href="http://www.gitbook.io/" target="blank" class="gitbook-link">Generated using GitBook</a>
+        </li>
+        
+    </ul>
+</div>
+
+    <div class="book-body">
+        <div class="body-inner">
+            <div class="page-wrapper" tabindex="-1">
+                <div class="book-progress">
+    <div class="bar">
+        <div class="inner" style="width: 55.172413793103445%;min-width: 51.724137931034484%;"></div>
+    </div>
+    <div class="chapters">
+    
+        <a href="../index.html" title="Introduction" class="chapter done new-chapter" data-progress="0" style="left: 0%;"></a>
+    
+        <a href="../installation/README.html" title="Installation" class="chapter done new-chapter" data-progress="1" style="left: 3.4482758620689653%;"></a>
+    
+        <a href="../installation/on_mac_osx_using_homebrew.html" title="On Mac OSX using Homebrew" class="chapter done " data-progress="1.1" style="left: 6.896551724137931%;"></a>
+    
+        <a href="../installation/from_a_targz.html" title="From a tar.gz" class="chapter done " data-progress="1.2" style="left: 10.344827586206897%;"></a>
+    
+        <a href="../installation/from_source_repository.html" title="From source repository" class="chapter done " data-progress="1.3" style="left: 13.793103448275861%;"></a>
+    
+        <a href="../overview/README.html" title="Overview" class="chapter done new-chapter" data-progress="2" style="left: 17.24137931034483%;"></a>
+    
+        <a href="../syntax_and_semantics/README.html" title="Syntax and semantics" class="chapter done new-chapter" data-progress="3" style="left: 20.689655172413794%;"></a>
+    
+        <a href="../syntax_and_semantics/comments.html" title="Comments" class="chapter done " data-progress="3.1" style="left: 24.137931034482758%;"></a>
+    
+        <a href="../syntax_and_semantics/local_variables.html" title="Local variables" class="chapter done " data-progress="3.2" style="left: 27.586206896551722%;"></a>
+    
+        <a href="../syntax_and_semantics/global_variables.html" title="Global variables" class="chapter done " data-progress="3.3" style="left: 31.03448275862069%;"></a>
+    
+        <a href="../syntax_and_semantics/thread_local.html" title="Thread local" class="chapter done " data-progress="3.3.1" style="left: 34.48275862068966%;"></a>
+    
+        <a href="../syntax_and_semantics/assignment.html" title="Assignment" class="chapter done " data-progress="3.4" style="left: 37.93103448275862%;"></a>
+    
+        <a href="../syntax_and_semantics/multiple_assignment.html" title="Multiple assignment" class="chapter done " data-progress="3.4.1" style="left: 41.37931034482759%;"></a>
+    
+        <a href="../syntax_and_semantics/control_expressions.html" title="Control expressions" class="chapter done " data-progress="3.5" style="left: 44.827586206896555%;"></a>
+    
+        <a href="../syntax_and_semantics/truthy_and_falsey_values.html" title="Truthy and falsey values" class="chapter done " data-progress="3.5.1" style="left: 48.275862068965516%;"></a>
+    
+        <a href="../syntax_and_semantics/article.html" title="if" class="chapter done " data-progress="3.5.2" style="left: 51.724137931034484%;"></a>
+    
+        <a href="../syntax_and_semantics/as_a_suffix.html" title="As a suffix" class="chapter done " data-progress="3.5.2.1" style="left: 55.172413793103445%;"></a>
+    
+        <a href="../syntax_and_semantics/as_an_expression.html" title="As an expression" class="chapter  " data-progress="3.5.2.2" style="left: 58.62068965517241%;"></a>
+    
+        <a href="../syntax_and_semantics/ternary_if.html" title="Ternary if" class="chapter  " data-progress="3.5.2.3" style="left: 62.06896551724138%;"></a>
+    
+        <a href="../syntax_and_semantics/if_var.html" title="if var" class="chapter  " data-progress="3.5.2.4" style="left: 65.51724137931035%;"></a>
+    
+        <a href="../syntax_and_semantics/if_varis_a.html" title="if var.is_a?(...)" class="chapter  " data-progress="3.5.2.5" style="left: 68.96551724137932%;"></a>
+    
+        <a href="../syntax_and_semantics/if_varresponds_to.html" title="if var.responds_to?(...)" class="chapter  " data-progress="3.5.2.6" style="left: 72.41379310344827%;"></a>
+    
+        <a href="../syntax_and_semantics/unless.html" title="unless" class="chapter  " data-progress="3.5.3" style="left: 75.86206896551724%;"></a>
+    
+        <a href="../syntax_and_semantics/case.html" title="case" class="chapter  " data-progress="3.5.4" style="left: 79.3103448275862%;"></a>
+    
+        <a href="../syntax_and_semantics/while.html" title="while" class="chapter  " data-progress="3.5.5" style="left: 82.75862068965517%;"></a>
+    
+        <a href="../syntax_and_semantics/break.html" title="break" class="chapter  " data-progress="3.5.5.1" style="left: 86.20689655172414%;"></a>
+    
+        <a href="../syntax_and_semantics/next.html" title="next" class="chapter  " data-progress="3.5.5.2" style="left: 89.65517241379311%;"></a>
+    
+        <a href="../syntax_and_semantics/ntil.html" title="until" class="chapter  " data-progress="3.5.6" style="left: 93.10344827586206%;"></a>
+    
+        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter  " data-progress="3.5.7" style="left: 96.55172413793103%;"></a>
+    
+        <a href="../syntax_and_semantics/or.html" title="||" class="chapter  " data-progress="3.5.8" style="left: 100%;"></a>
+    
+    </div>
+</div>
+
+                <div class="page-inner">
+                
+                    <section class="normal" id="section-gitbook_13">
+                    
+                        <h1 id="as-a-suffix">As a suffix</h1>
+<p>An <code>if</code> can be written as an expression’s suffix:</p>
+<pre><code class="lang-ruby">a = <span class="hljs-number">2</span> <span class="hljs-keyword">if</span> some_condition
+
+<span class="hljs-comment"># The above is the same as:</span>
+<span class="hljs-keyword">if</span> some_condition
+  a = <span class="hljs-number">2</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>This sometimes leads to code that is more natural to read.</p>
+
+                    
+                    </section>
+                
+                </div>
+            </div>
+        </div>
+
+        
+        <a href="../syntax_and_semantics/article.html" class="navigation navigation-prev " aria-label="Previous page: if"><i class="fa fa-angle-left"></i></a>
+        
+        
+        <a href="../syntax_and_semantics/as_an_expression.html" class="navigation navigation-next " aria-label="Next page: As an expression"><i class="fa fa-angle-right"></i></a>
+        
+    </div>
+</div>
+
+        
+<script src="../gitbook/jsrepl/jsrepl.js" id="jsrepl-script"></script>
+<script src="../gitbook/app.js"></script>
+
+    
+    <script src="http://cdn.mathjax.org/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+
+    
+    <script src="../gitbook/plugins/gitbook-plugin-mathjax/plugin.js"></script>
+    
+
+<script>
+require(["gitbook"], function(gitbook) {
+    var config = {};
+    gitbook.start(config);
+});
+</script>
+
+        
+    </body>
+    
+</html>
