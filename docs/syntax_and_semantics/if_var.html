@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.5.2.4" data-basepath=".." data-revision="1404156861157">
+    <div class="book" data-github="manastech/crystal" data-level="3.5.2.4" data-basepath=".." data-revision="1404157704308">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -522,6 +522,45 @@
                     <section class="normal" id="section-gitbook_21">
                     
                         <h1 id="if-var">if var</h1>
+<p>If a variable is the condition of an <code>if</code>, inside the <code>then</code> branch the variable will be considered as not having the <code>Nil</code> type:</p>
+<pre><code class="lang-ruby">a = <span class="hljs-number">1</span> &gt; <span class="hljs-number">2</span> ? <span class="hljs-keyword">nil</span> <span class="hljs-symbol">:</span> <span class="hljs-number">3</span>
+<span class="hljs-comment"># a is Int32 or Nil</span>
+
+<span class="hljs-keyword">if</span> a
+  <span class="hljs-comment"># Since the only way to get here is if a is truthy,</span>
+  <span class="hljs-comment"># a can't be nil. So here a is Int32.</span>
+  a.abs
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>This also applies when a variable is assigned in an <code>if</code>&#39;s condition:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">if</span> a = some_expression
+  <span class="hljs-comment"># here a is not nil</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>This logic also applies if there are ands (<code>&amp;&amp;</code>) in the condition:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">if</span> a &amp;&amp; b
+  <span class="hljs-comment"># here both a and b are guaranteed not to be Nil</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Here, the right-hand side of the <code>&amp;&amp;</code> expression is also guaranteed to have <code>a</code> as not <code>Nil</code>.</p>
+<p>Of course, reassigning a variable inside the <code>then</code> branch makes that variable have a new type based on the expression assigned.</p>
+<p>The above logic doesn’t work with instance variables, class variables or global variables:</p>
+<pre><code class="lang-ruby"><span class="hljs-keyword">if</span> <span class="hljs-variable">@a</span>
+  <span class="hljs-comment"># here <span class="hljs-yardoctag">@a</span> can be nil</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>This is because any method call could potentially affect that instance variable, rendering it <code>nil</code>. Another reason is that another thread could change that instance variable after checking the condition.</p>
+<p>To do something with <code>@a</code> only when it is not <code>nil</code> you have two options:</p>
+<pre><code class="lang-ruby"><span class="hljs-comment"># First option: assign it to a variable</span>
+<span class="hljs-keyword">if</span> a = <span class="hljs-variable">@a</span>
+  <span class="hljs-comment"># here a can't be nil</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Second option: use `Object#try` found in the standard library</span>
+<span class="hljs-variable">@a</span>.try <span class="hljs-keyword">do</span> |a|
+  <span class="hljs-comment"># here a can't be nil</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
 
                     
                     </section>
