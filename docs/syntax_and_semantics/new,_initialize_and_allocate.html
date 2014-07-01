@@ -34,7 +34,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.6.3.1" data-basepath=".." data-revision="1404185668869">
+    <div class="book" data-github="manastech/crystal" data-level="3.6.3.1" data-basepath=".." data-revision="1404186096352">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1299,7 +1299,7 @@
 <p>You create an instance of a class by invoking <code>new</code> on that class:</p>
 <pre><code>person = Person.new
 </code></pre><p>Here, <code>person</code> is an instance of <code>Person</code>.</p>
-<p>We can&#39;t do much with <code>person</code>, so lets add some concepts to it. A <code>Person</code> has a name and an age. In the &quot;Everything is an object&quot; section we said that an object has a type and responds to some methods, which is the only way to interact with objects, so we&#39;ll need a <code>name</code> and <code>age</code> methods. We will store this information in instance variables, which are always prefixed with an <em>at</em> (<code>@</code>) character. We also want a Person to become to existence with a name of our choice and an age of zero. We code the &quot;become to existence&quot; part with a special <code>initialize</code> method, which is normally called a <em>constructor</em>:</p>
+<p>We can&#39;t do much with <code>person</code>, so lets add some concepts to it. A <code>Person</code> has a name and an age. In the &quot;Everything is an object&quot; section we said that an object has a type and responds to some methods, which is the only way to interact with objects, so we&#39;ll need a <code>name</code> and <code>age</code> methods. We will store this information in instance variables, which are always prefixed with an <em>at</em> (<code>@</code>) character. We also want a Person to come to existence with a name of our choice and an age of zero. We code the &quot;come to existence&quot; part with a special <code>initialize</code> method, which is normally called a <em>constructor</em>:</p>
 <pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(name)
     <span class="hljs-variable">@name</span> = name

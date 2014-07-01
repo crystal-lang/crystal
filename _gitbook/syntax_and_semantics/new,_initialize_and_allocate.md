@@ -8,7 +8,7 @@ person = Person.new
 
 Here, `person` is an instance of `Person`.
 
-We can't do much with `person`, so lets add some concepts to it. A `Person` has a name and an age. In the "Everything is an object" section we said that an object has a type and responds to some methods, which is the only way to interact with objects, so we'll need a `name` and `age` methods. We will store this information in instance variables, which are always prefixed with an *at* (`@`) character. We also want a Person to become to existence with a name of our choice and an age of zero. We code the "become to existence" part with a special `initialize` method, which is normally called a *constructor*:
+We can't do much with `person`, so lets add some concepts to it. A `Person` has a name and an age. In the "Everything is an object" section we said that an object has a type and responds to some methods, which is the only way to interact with objects, so we'll need a `name` and `age` methods. We will store this information in instance variables, which are always prefixed with an *at* (`@`) character. We also want a Person to come to existence with a name of our choice and an age of zero. We code the "come to existence" part with a special `initialize` method, which is normally called a *constructor*:
 
 ``` ruby
 class Person

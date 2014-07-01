@@ -40,7 +40,7 @@ macro define_foo(kind)
   {{kind.id}} Foo
 
   # We can't use a simple "end", because Crystal will think
-  # the macro ended
+  # the macro ends here
   {{:end.id}}
 end
 
@@ -86,4 +86,18 @@ end
 #   end
 getter name
 ```
+
+The `id` method in macros get rid of the colon from symbol literals and get rid of the quotes from string literals. For other kind of AST nodes it has no effect (returns the same node). This means we can also invoke `getter` like this:
+
+``` ruby
+getter "name"
+```
+
+And also like this:
+
+``` ruby
+getter name
+```
+
+This is because macro arguments are never evaluated, so it doesn't matter what `name` means here: for the macro it will only be some AST node.
 

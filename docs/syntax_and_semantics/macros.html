@@ -32,7 +32,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.13" data-basepath=".." data-revision="1404185668869">
+    <div class="book" data-github="manastech/crystal" data-level="3.13" data-basepath=".." data-revision="1404186096352">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -1323,7 +1323,7 @@
   {{kind.id}} <span class="hljs-constant">Foo</span>
 
   <span class="hljs-comment"># We can't use a simple "end", because Crystal will think</span>
-  <span class="hljs-comment"># the macro ended</span>
+  <span class="hljs-comment"># the macro ends here</span>
   {{<span class="hljs-symbol">:end</span>.id}}
 <span class="hljs-keyword">end</span>
 
@@ -1360,6 +1360,13 @@ getter <span class="hljs-symbol">:name</span>
 <span class="hljs-comment">#   end</span>
 getter name
 </code></pre>
+<p>The <code>id</code> method in macros get rid of the colon from symbol literals and get rid of the quotes from string literals. For other kind of AST nodes it has no effect (returns the same node). This means we can also invoke <code>getter</code> like this:</p>
+<pre><code class="lang-ruby">getter <span class="hljs-string">"name"</span>
+</code></pre>
+<p>And also like this:</p>
+<pre><code class="lang-ruby">getter name
+</code></pre>
+<p>This is because macro arguments are never evaluated, so it doesn&#39;t matter what <code>name</code> means here: for the macro it will only be some AST node.</p>
 
                     
                     </section>
