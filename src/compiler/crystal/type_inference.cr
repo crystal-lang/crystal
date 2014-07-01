@@ -653,7 +653,13 @@ module Crystal
       block_arg = node.block_arg
 
       ignore_type_filters do
-        obj.try &.accept(self)
+        if obj
+          obj.accept(self)
+          if check_special_new_call(node, obj.type?)
+            return false
+          end
+        end
+
         node.args.each &.accept(self)
         block_arg.try &.accept self
       end
@@ -710,6 +716,51 @@ module Crystal
       node.parent_visitor = self
     end
 
+    def check_special_new_call(node, obj_type)
+      return false unless obj_type
+      return false unless obj_type.metaclass?
+
+      instance_type = obj_type.instance_type.remove_typedef
+
+      if node.name == "new" && instance_type.is_a?(FunType)
+        return special_fun_type_new_call(node, instance_type)
+      end
+
+      false
+    end
+
+    def special_fun_type_new_call(node, fun_type)
+      if node.args.length != 0
+        node.raise "wrong number of arguments for #{fun_type}#new (#{node.args.length} for 0)"
+      end
+
+      block = node.block
+      unless block
+        node.raise "#{fun_type}#new is expected to be invoked with a block, but no block was given"
+      end
+
+      if block.args.length > fun_type.fun_types.length - 1
+        node.raise "wrong number of block arguments for #{fun_type}#new (#{block.args.length} for #{fun_type.fun_types.length - 1})"
+      end
+
+      # We create a ->(...) { } from the block
+      fun_args = fun_type.arg_types.map_with_index do |arg_type, index|
+        block_arg = block.args[index]?
+        Arg.new_with_type(block_arg.try(&.name) || @mod.new_temp_var_name, arg_type)
+      end
+
+      fun_def = Def.new("->", fun_args, block.body)
+      fun_literal = FunLiteral.new(fun_def)
+      fun_literal.location = node.location
+      fun_literal.expected_return_type = fun_type.return_type
+      fun_literal.accept self
+
+      node.bind_to fun_literal
+      node.expanded = fun_literal
+
+      true
+    end
+
     def expand_macro(node)
       return false if node.obj || node.name == "super"
 
@@ -720,7 +771,7 @@ module Crystal
         @mod.expand_macro (@scope || current_type), the_macro, node
       end
 
-      node.target_macro = generated_nodes
+      node.expanded = generated_nodes
       node.bind_to generated_nodes
 
       true
@@ -2222,14 +2273,20 @@ module Crystal
     def request_type_filters
       @type_filters = nil
       @needs_type_filters += 1
-      yield
-      @needs_type_filters -= 1
+      begin
+        yield
+      ensure
+        @needs_type_filters -= 1
+      end
     end
 
     def ignore_type_filters
       needs_type_filters, @needs_type_filters = @needs_type_filters, 0
-      yield
-      @needs_type_filters = needs_type_filters
+      begin
+        yield
+      ensure
+        @needs_type_filters = needs_type_filters
+      end
     end
 
     def lookup_similar_var_name(name)

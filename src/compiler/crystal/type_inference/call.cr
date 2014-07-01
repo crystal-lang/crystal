@@ -9,7 +9,7 @@ module Crystal
     property! scope
     property! parent_visitor
     property target_defs
-    property target_macro
+    property expanded
 
     def target_def
       if defs = @target_defs

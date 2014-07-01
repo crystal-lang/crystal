@@ -107,8 +107,8 @@ module Crystal
     end
 
     def transform(node : Call)
-      if target_macro = node.target_macro
-        node.target_macro = target_macro.transform self
+      if expanded = node.expanded
+        node.expanded = expanded.transform self
         return node
       end
 

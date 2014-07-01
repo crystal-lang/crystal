@@ -179,16 +179,25 @@ module Crystal
     property :force_void
     @force_void = false
 
+    property :expected_return_type
+
     def update(from = nil)
       return unless self.def.args.all? &.type?
       return unless self.def.type?
 
       types = self.def.args.map &.type
       if @force_void
-        types.push self.def.type.program.void
+        return_type = self.def.type.program.void
       else
-        types.push self.def.type
+        return_type = self.def.type
       end
+
+      expected_return_type = @expected_return_type
+      if expected_return_type && !expected_return_type.void? && expected_return_type != return_type
+        raise "expected new to return #{expected_return_type}, not #{return_type}"
+      end
+
+      types.push return_type
 
       self.type = self.def.type.program.fun_of(types)
     end

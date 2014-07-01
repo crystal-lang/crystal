@@ -324,4 +324,60 @@ describe "Type inference: fun" do
       s.x
       ") { fun_of(int32) }
   end
+
+  it "allows new on fun type" do
+    assert_type("
+      alias F = Int32 -> Int32
+      F.new { |x| x + 1 }
+      ") { fun_of(int32, int32) }
+  end
+
+  it "allows new on fun type that is a typedef" do
+    assert_type("
+      lib C
+        type F : Int32 -> Int32
+      end
+
+      C::F.new { |x| x + 1 }
+      ") { fun_of(int32, int32) }
+  end
+
+  it "allows new on fun type with less block args" do
+    assert_type("
+      alias F = Int32 -> Int32
+      F.new { 1 }
+      ") { fun_of(int32, int32) }
+  end
+
+  it "says wrong number of arguments in new on fun type" do
+    assert_error "
+      alias F = Int32 -> Int32
+      F.new(1) { |x| x + 1 }
+      ",
+      "wrong number of arguments for (Int32 -> Int32)#new (1 for 0)"
+  end
+
+  it "says expects block in new on fun type" do
+    assert_error "
+      alias F = Int32 -> Int32
+      F.new
+      ",
+      "(Int32 -> Int32)#new is expected to be invoked with a block, but no block was given"
+  end
+
+  it "says wrong number of block args in new on fun type" do
+    assert_error "
+      alias F = Int32 -> Int32
+      F.new { |x, y| }
+      ",
+      "wrong number of block arguments for (Int32 -> Int32)#new (2 for 1)"
+  end
+
+  it "says wrong return type in new on fun type" do
+    assert_error "
+      alias F = Int32 -> Int32
+      F.new &.to_f
+      ",
+      "expected new to return Int32, not Float64"
+  end
 end

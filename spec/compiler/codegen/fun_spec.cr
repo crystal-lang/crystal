@@ -388,4 +388,14 @@ describe "Code gen: fun" do
       ->{ a }.closure?
       ").to_b.should be_true
   end
+
+  it "does new on fun type" do
+    run("
+      alias F = Int32 -> Int32
+
+      a = 2
+      f = F.new { |x| x + a }
+      f.call(1)
+      ").to_i.should eq(3)
+  end
 end

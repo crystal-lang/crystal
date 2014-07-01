@@ -1055,8 +1055,8 @@ module Crystal
     end
 
     def visit(node : Call)
-      if target_macro = node.target_macro
-        accept target_macro
+      if expanded = node.expanded
+        accept expanded
         return false
       end
 
