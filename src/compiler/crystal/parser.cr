@@ -1195,10 +1195,11 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      check :":"
-      next_token_skip_space_or_newline
+      if @token.type == :":"
+        next_token_skip_space_or_newline
 
-      type = parse_single_type
+        type = parse_single_type
+      end
 
       if @token.type == :","
         next_token_skip_space_or_newline

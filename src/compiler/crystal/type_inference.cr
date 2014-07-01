@@ -560,7 +560,10 @@ module Crystal
         if restriction = arg.restriction
           restriction.accept self
           arg.type = restriction.type.instance_type
+        elsif !arg.type?
+          arg.raise "function argument '#{arg.name}' must have a type"
         end
+
         fun_var = MetaVar.new(arg.name, arg.type)
         fun_vars[arg.name] = fun_var
 
@@ -655,6 +658,9 @@ module Crystal
       ignore_type_filters do
         if obj
           obj.accept(self)
+
+          check_lib_call node, obj.type?
+
           if check_special_new_call(node, obj.type?)
             return false
           end
@@ -716,6 +722,34 @@ module Crystal
       node.parent_visitor = self
     end
 
+    # Fill function literal argument types for C functions
+    def check_lib_call(node, obj_type)
+      return unless obj_type.is_a?(LibType)
+
+      method = nil
+
+      node.args.each_with_index do |arg, index|
+        next unless arg.is_a?(FunLiteral)
+        next unless arg.def.args.any? { |def_arg| !def_arg.restriction && !def_arg.type? }
+
+        method ||= obj_type.lookup_first_def(node.name, false)
+        return unless method
+
+        method_arg = method.args[index]?
+        next unless method_arg
+
+        method_arg_type = method_arg.type
+        next unless method_arg_type.is_a?(FunType)
+
+        arg.def.args.each_with_index do |def_arg, def_arg_index|
+          if !def_arg.restriction && !def_arg.type?
+            def_arg.type = method_arg_type.fun_types[def_arg_index]?
+          end
+        end
+      end
+    end
+
+    # Check if it's FunType#new
     def check_special_new_call(node, obj_type)
       return false unless obj_type
       return false unless obj_type.metaclass?

@@ -380,4 +380,19 @@ describe "Type inference: fun" do
       ",
       "expected new to return Int32, not Float64"
   end
+
+  it "errors if missing argument type in fun literal" do
+    assert_error "->(x) { x }",
+      "function argument 'x' must have a type"
+  end
+
+  it "allows passing function to C without specifying types" do
+    assert_type(%(
+      lib C
+        fun foo(x : Int32 -> Int32) : Float64
+      end
+
+      C.foo ->(x) { x + 1 }
+      )) { float64 }
+  end
 end
