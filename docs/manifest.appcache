@@ -1,11 +1,11 @@
 CACHE MANIFEST
-# Revision 1404165911659
+# Revision 1404177302292
 
 CACHE:
 index.html
 installation/README.html
-installation/from_a_targz.html
 installation/from_source_repository.html
+installation/from_a_targz.html
 installation/on_mac_osx_using_homebrew.html
 overview/README.html
 syntax_and_semantics/if_varis_a.html
@@ -23,9 +23,9 @@ syntax_and_semantics/if_var.html
 syntax_and_semantics/and.html
 syntax_and_semantics/if_varresponds_to.html
 syntax_and_semantics/local_variables.html
+syntax_and_semantics/multiple_assignment.html
 syntax_and_semantics/next.html
 syntax_and_semantics/or.html
-syntax_and_semantics/multiple_assignment.html
 syntax_and_semantics/ternary_if.html
 syntax_and_semantics/thread_local.html
 syntax_and_semantics/truthy_and_falsey_values.html
