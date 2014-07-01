@@ -71,7 +71,7 @@ module GC
 
   def self.add_finalizer(object : T)
     if object.responds_to?(:finalize)
-      LibGC.register_finalizer(Pointer(Void).new(object.object_id),
+      LibGC.register_finalizer(object as Void*,
         ->(obj : Void*, data : Void*) {
           same_object = obj as T
           if same_object.responds_to?(:finalize)

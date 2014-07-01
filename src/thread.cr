@@ -16,7 +16,7 @@ end
 
 class Thread(T, R)
   def self.new(&func : -> R)
-    Thread(Nil, R).new(nil, &->(x : Nil) { func.call })
+    Thread(Nil, R).new(nil) { func.call }
   end
 
   def initialize(arg : T, &func : T -> R)
@@ -25,8 +25,7 @@ class Thread(T, R)
     PThread.create(out @th, nil, ->(x : Void*) {
         obj = x as Thread(T, R)
         obj.start
-      },
-      Pointer(Void).new(object_id))
+      }, self as Void*)
   end
 
   def start
