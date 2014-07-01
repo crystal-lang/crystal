@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>Assignment | Crystal Programming Language</title>
+        <title>Macros | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,10 +19,8 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../syntax_and_semantics/multiple_assignment.html" />
+    <link rel="next" href="../syntax_and_semantics/macro_methods.html" />
     
-    
-    <link rel="prev" href="../syntax_and_semantics/thread_local.html" />
     
 
         
@@ -34,7 +32,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.4" data-basepath=".." data-revision="1404185668869">
+    <div class="book" data-github="manastech/crystal" data-level="3.13" data-basepath=".." data-revision="1404185668869">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -118,7 +116,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/assignment.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/macros.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1208,7 +1206,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 29.72972972972973%;min-width: 27.027027027027028%;"></div>
+        <div class="inner" style="width: 97.29729729729729%;min-width: 94.5945945945946%;"></div>
     </div>
     <div class="chapters">
     
@@ -1236,55 +1234,55 @@
     
         <a href="../syntax_and_semantics/assignment.html" title="Assignment" class="chapter done " data-progress="3.4" style="left: 29.72972972972973%;"></a>
     
-        <a href="../syntax_and_semantics/multiple_assignment.html" title="Multiple assignment" class="chapter  " data-progress="3.4.1" style="left: 32.432432432432435%;"></a>
+        <a href="../syntax_and_semantics/multiple_assignment.html" title="Multiple assignment" class="chapter done " data-progress="3.4.1" style="left: 32.432432432432435%;"></a>
     
-        <a href="../syntax_and_semantics/control_expressions.html" title="Control expressions" class="chapter  " data-progress="3.5" style="left: 35.13513513513514%;"></a>
+        <a href="../syntax_and_semantics/control_expressions.html" title="Control expressions" class="chapter done " data-progress="3.5" style="left: 35.13513513513514%;"></a>
     
-        <a href="../syntax_and_semantics/truthy_and_falsey_values.html" title="Truthy and falsey values" class="chapter  " data-progress="3.5.1" style="left: 37.83783783783784%;"></a>
+        <a href="../syntax_and_semantics/truthy_and_falsey_values.html" title="Truthy and falsey values" class="chapter done " data-progress="3.5.1" style="left: 37.83783783783784%;"></a>
     
-        <a href="../syntax_and_semantics/article.html" title="if" class="chapter  " data-progress="3.5.2" style="left: 40.54054054054054%;"></a>
+        <a href="../syntax_and_semantics/article.html" title="if" class="chapter done " data-progress="3.5.2" style="left: 40.54054054054054%;"></a>
     
-        <a href="../syntax_and_semantics/as_a_suffix.html" title="As a suffix" class="chapter  " data-progress="3.5.2.1" style="left: 43.24324324324324%;"></a>
+        <a href="../syntax_and_semantics/as_a_suffix.html" title="As a suffix" class="chapter done " data-progress="3.5.2.1" style="left: 43.24324324324324%;"></a>
     
-        <a href="../syntax_and_semantics/as_an_expression.html" title="As an expression" class="chapter  " data-progress="3.5.2.2" style="left: 45.945945945945944%;"></a>
+        <a href="../syntax_and_semantics/as_an_expression.html" title="As an expression" class="chapter done " data-progress="3.5.2.2" style="left: 45.945945945945944%;"></a>
     
-        <a href="../syntax_and_semantics/ternary_if.html" title="Ternary if" class="chapter  " data-progress="3.5.2.3" style="left: 48.648648648648646%;"></a>
+        <a href="../syntax_and_semantics/ternary_if.html" title="Ternary if" class="chapter done " data-progress="3.5.2.3" style="left: 48.648648648648646%;"></a>
     
-        <a href="../syntax_and_semantics/if_var.html" title="if var" class="chapter  " data-progress="3.5.2.4" style="left: 51.351351351351354%;"></a>
+        <a href="../syntax_and_semantics/if_var.html" title="if var" class="chapter done " data-progress="3.5.2.4" style="left: 51.351351351351354%;"></a>
     
-        <a href="../syntax_and_semantics/if_varis_a.html" title="if var.is_a?(...)" class="chapter  " data-progress="3.5.2.5" style="left: 54.054054054054056%;"></a>
+        <a href="../syntax_and_semantics/if_varis_a.html" title="if var.is_a?(...)" class="chapter done " data-progress="3.5.2.5" style="left: 54.054054054054056%;"></a>
     
-        <a href="../syntax_and_semantics/if_varresponds_to.html" title="if var.responds_to?(...)" class="chapter  " data-progress="3.5.2.6" style="left: 56.75675675675676%;"></a>
+        <a href="../syntax_and_semantics/if_varresponds_to.html" title="if var.responds_to?(...)" class="chapter done " data-progress="3.5.2.6" style="left: 56.75675675675676%;"></a>
     
-        <a href="../syntax_and_semantics/unless.html" title="unless" class="chapter  " data-progress="3.5.3" style="left: 59.45945945945946%;"></a>
+        <a href="../syntax_and_semantics/unless.html" title="unless" class="chapter done " data-progress="3.5.3" style="left: 59.45945945945946%;"></a>
     
-        <a href="../syntax_and_semantics/case.html" title="case" class="chapter  " data-progress="3.5.4" style="left: 62.16216216216216%;"></a>
+        <a href="../syntax_and_semantics/case.html" title="case" class="chapter done " data-progress="3.5.4" style="left: 62.16216216216216%;"></a>
     
-        <a href="../syntax_and_semantics/while.html" title="while" class="chapter  " data-progress="3.5.5" style="left: 64.86486486486487%;"></a>
+        <a href="../syntax_and_semantics/while.html" title="while" class="chapter done " data-progress="3.5.5" style="left: 64.86486486486487%;"></a>
     
-        <a href="../syntax_and_semantics/break.html" title="break" class="chapter  " data-progress="3.5.5.1" style="left: 67.56756756756756%;"></a>
+        <a href="../syntax_and_semantics/break.html" title="break" class="chapter done " data-progress="3.5.5.1" style="left: 67.56756756756756%;"></a>
     
-        <a href="../syntax_and_semantics/next.html" title="next" class="chapter  " data-progress="3.5.5.2" style="left: 70.27027027027027%;"></a>
+        <a href="../syntax_and_semantics/next.html" title="next" class="chapter done " data-progress="3.5.5.2" style="left: 70.27027027027027%;"></a>
     
-        <a href="../syntax_and_semantics/until.html" title="until" class="chapter  " data-progress="3.5.6" style="left: 72.97297297297297%;"></a>
+        <a href="../syntax_and_semantics/until.html" title="until" class="chapter done " data-progress="3.5.6" style="left: 72.97297297297297%;"></a>
     
-        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter  " data-progress="3.5.7" style="left: 75.67567567567568%;"></a>
+        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter done " data-progress="3.5.7" style="left: 75.67567567567568%;"></a>
     
-        <a href="../syntax_and_semantics/or.html" title="||" class="chapter  " data-progress="3.5.8" style="left: 78.37837837837837%;"></a>
+        <a href="../syntax_and_semantics/or.html" title="||" class="chapter done " data-progress="3.5.8" style="left: 78.37837837837837%;"></a>
     
-        <a href="../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter  " data-progress="3.6" style="left: 81.08108108108108%;"></a>
+        <a href="../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter done " data-progress="3.6" style="left: 81.08108108108108%;"></a>
     
-        <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter  " data-progress="3.6.1" style="left: 83.78378378378379%;"></a>
+        <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter done " data-progress="3.6.1" style="left: 83.78378378378379%;"></a>
     
-        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter  " data-progress="3.6.2" style="left: 86.48648648648648%;"></a>
+        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter done " data-progress="3.6.2" style="left: 86.48648648648648%;"></a>
     
-        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter  " data-progress="3.6.3" style="left: 89.1891891891892%;"></a>
+        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter done " data-progress="3.6.3" style="left: 89.1891891891892%;"></a>
     
-        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter  " data-progress="3.6.3.1" style="left: 91.89189189189189%;"></a>
+        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter done " data-progress="3.6.3.1" style="left: 91.89189189189189%;"></a>
     
-        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter  " data-progress="3.6.3.2" style="left: 94.5945945945946%;"></a>
+        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter done " data-progress="3.6.3.2" style="left: 94.5945945945946%;"></a>
     
-        <a href="../syntax_and_semantics/macros.html" title="Macros" class="chapter  " data-progress="3.13" style="left: 97.29729729729729%;"></a>
+        <a href="../syntax_and_semantics/macros.html" title="Macros" class="chapter done " data-progress="3.13" style="left: 97.29729729729729%;"></a>
     
         <a href="../syntax_and_semantics/macro_methods.html" title="Macro methods" class="chapter  " data-progress="3.13.1" style="left: 100%;"></a>
     
@@ -1293,47 +1291,74 @@
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_12">
+                    <section class="normal" id="section-gitbook_25">
                     
-                        <h1 id="assignment">Assignment</h1>
-<p>Assignment is done with the equal (<code>=</code>) character.</p>
-<pre><code class="lang-ruby">local = <span class="hljs-number">1</span>
-<span class="hljs-variable">@instance</span> = <span class="hljs-number">2</span>
-<span class="hljs-variable">@@class</span> = <span class="hljs-number">3</span>
-<span class="hljs-variable">$global</span> = <span class="hljs-number">4</span>
+                        <h1 id="macros">Macros</h1>
+<p>Macros allow generating code at compile time.</p>
+<p>For example, this is the source code of the <code>getter</code> macro:</p>
+<pre><code class="lang-ruby">macro getter(name)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name.id}}
+    @{{name.id}}
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-comment"># Expands to:</span>
+  <span class="hljs-comment">#</span>
+  <span class="hljs-comment">#   def name</span>
+  <span class="hljs-comment">#     <span class="hljs-yardoctag">@name</span></span>
+  <span class="hljs-comment">#   end</span>
+  getter <span class="hljs-symbol">:name</span>
+<span class="hljs-keyword">end</span>
 </code></pre>
-<p>Some syntax sugar that contains the <code>=</code> character is available:</p>
-<pre><code class="lang-ruby">local += <span class="hljs-number">1</span>  <span class="hljs-comment"># same as: local = local + 1</span>
-
-<span class="hljs-comment"># The above is valid with these operators:</span>
-<span class="hljs-comment"># +, -, *, /, %, |, &amp;, ^, **, &lt;&lt;, &gt;&gt;</span>
-
-local ||= <span class="hljs-number">1</span> <span class="hljs-comment"># same as: local || (local = 1)</span>
-local &amp;&amp;= <span class="hljs-number">1</span> <span class="hljs-comment"># same as: local &amp;&amp; (local = 1)</span>
+<p>To understand the simple macro above we need to understand what&#39;s inside a <code>macro</code>&#39;s body, what are its arguments and what we can do with them.</p>
+<p>A <code>macro</code>&#39;s body consists of a sequence of characters that can contain macro interpolations (<code>{{...}}</code>) and macro controls (<code>{% ... %}</code>). This is a perfectly valid macro:</p>
+<pre><code class="lang-ruby">macro foo(really)
+  <span class="hljs-constant">I</span> can write whataver <span class="hljs-constant">I</span> want here (well... <span class="hljs-keyword">not</span> {{really}})
+<span class="hljs-keyword">end</span>
 </code></pre>
-<p>A method invocation that ends with <code>=</code> has syntax sugar:</p>
-<pre><code class="lang-ruby"><span class="hljs-comment"># A setter</span>
-person.name=(<span class="hljs-string">"John"</span>)
+<p>This means that a <code>macro</code>&#39;s body is not parsed using a regular Crystal parser. This also means that you can use macro interpolations and macro controls anywhere inside a <code>macro</code>&#39;s body, which gives you greater flexibility.</p>
+<p>So how does Crystal know when a macro ends? Well, it counts the opening and endings. Examples of openings are <code>def</code>, <code>class</code>, <code>if</code>. The only ending is <code>end</code>. This rule is because you will probably want to generate Crystal code with macros. Remmeber this rule, because it will allow you to trick the macro parser for your benefit:</p>
+<pre><code class="lang-ruby">macro define_foo(kind)
+  {{kind.id}} <span class="hljs-constant">Foo</span>
 
-<span class="hljs-comment"># The above can be written as:</span>
-person.name = <span class="hljs-string">"John"</span>
+  <span class="hljs-comment"># We can't use a simple "end", because Crystal will think</span>
+  <span class="hljs-comment"># the macro ended</span>
+  {{<span class="hljs-symbol">:end</span>.id}}
+<span class="hljs-keyword">end</span>
 
-<span class="hljs-comment"># An indexed assignment</span>
-objects.[]=(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>)
-
-<span class="hljs-comment"># The above can be written as:</span>
-objects[<span class="hljs-number">2</span>] = <span class="hljs-number">3</span>
+define_foo <span class="hljs-symbol">:struct</span>
 </code></pre>
-<p>The <code>=</code> operator syntax sugar is also available to setters and indexers. Note that <code>||</code> and <code>&amp;&amp;</code> use the <code>[]?</code> method to check for key prescence.</p>
-<pre><code class="lang-ruby">person.age += <span class="hljs-number">1</span>        <span class="hljs-comment"># same as: person.age = person.age + 1</span>
+<p>(don&#39;t worry, you will almost never have to do something like the above)</p>
+<p>Macros are executed at compile time, and receive <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank">AST nodes</a>. Applying macro interpolations and controls they evaluate to a string. This string must parse to a valid Crystal program.</p>
+<p>So, in the <code>getter</code> example, the macro receives a <code>SymbolLiteral</code> node. If we consider this alternative definition:</p>
+<pre><code class="lang-ruby">macro getter(name)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name}}
+    @{{name}}
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
 
-person.name ||= <span class="hljs-string">"John"</span> <span class="hljs-comment"># same as: person.name || (person.name = "John")</span>
-person.name &amp;&amp;= <span class="hljs-string">"John"</span> <span class="hljs-comment"># same as: person.name &amp;&amp; (person.name = "John")</span>
+<span class="hljs-comment"># Generates:</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment">#   def :name</span>
+<span class="hljs-comment">#     @:name</span>
+<span class="hljs-comment">#   end</span>
+getter <span class="hljs-symbol">:name</span>
+</code></pre>
+<p>We can see that the result we got is not what we expected. This is because we pasted the <code>SymbolLiteral</code> in the macro, and as we can see in the <code>getter :name</code> invocation, it contains a colon (<code>:</code>) before it.</p>
+<p>To get rid of the colon, we can invoke <code>id</code> on it before interpolating it:</p>
+<pre><code class="lang-ruby">macro getter(name)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>{{name.id}}
+    @{{name.id}}
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
 
-objects[<span class="hljs-number">1</span>] += <span class="hljs-number">2</span>        <span class="hljs-comment"># same as: objects[1] = objects[1] + 2</span>
-
-objects[<span class="hljs-number">1</span>] ||= <span class="hljs-number">2</span>       <span class="hljs-comment"># same as: objects[1]? || (objects[1] = 2)</span>
-objects[<span class="hljs-number">1</span>] &amp;&amp;= <span class="hljs-number">2</span>       <span class="hljs-comment"># same as: objects[1]? &amp;&amp; (objects[1] = 2)</span>
+<span class="hljs-comment"># Generates:</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment">#   def name</span>
+<span class="hljs-comment">#     <span class="hljs-yardoctag">@name</span></span>
+<span class="hljs-comment">#   end</span>
+getter name
 </code></pre>
 
                     
@@ -1344,10 +1369,8 @@ objects[<span class="hljs-number">1</span>] &amp;&amp;= <span class="hljs-number
         </div>
 
         
-        <a href="../syntax_and_semantics/thread_local.html" class="navigation navigation-prev " aria-label="Previous page: Thread local"><i class="fa fa-angle-left"></i></a>
         
-        
-        <a href="../syntax_and_semantics/multiple_assignment.html" class="navigation navigation-next " aria-label="Next page: Multiple assignment"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/macro_methods.html" class="navigation navigation-next navigation-unique" aria-label="Next page: Macro methods"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

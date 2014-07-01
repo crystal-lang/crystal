@@ -29,39 +29,42 @@
        * [until](syntax_and_semantics/until.md)
        * [&&](syntax_and_semantics/and.md)
        * [||](syntax_and_semantics/or.md)
-   * Types and methods
-     * Everything is an object
-     * The Program
-     * Classes and methods
-     * Inheritance
-     * Modules
-     * Generics
-     * Structs
-     * Constants
-     * Blocks, functions and closures
-        * Function literal
-        * Function pointer
-     * alias
+   * [Types and methods](syntax_and_semantics/types_and_methods.md)
+       * [Everything is an object](syntax_and_semantics/everything_is_an_object.md)
+       * [The Program](syntax_and_semantics/the_program.md)
+       * [Classes and methods](syntax_and_semantics/classes_and_methods.md)
+           * [new, initialize and allocate](syntax_and_semantics/new,_initialize_and_allocate.md)
+           * [Methods and instance variables](syntax_and_semantics/methods_and_instance_variables.md)
+       * Inheritance
+       * Modules
+       * Generics
+       * Structs
+       * Constants
+       * Blocks, functions and closures
+           * Function literal
+           * Function pointer
+       * alias
    * Type reflection
-      * is_a?
-      * responds_to?
-      * as
-      * typeof
+       * is_a?
+       * responds_to?
+       * as
+       * typeof
    * Attributes
-      * @:ThreadLocal
-      * @:Packed
-      * @:AlwaysInline
-      * @:NoInline
-      * @:ReturnsTwice
+       * @:ThreadLocal
+       * @:Packed
+       * @:AlwaysInline
+       * @:NoInline
+       * @:ReturnsTwice
    * Requiring files
    * Low-level primitives
-      * pointerof
-      * sizeof
-      * instance_sizeof
-      * declare var
+       * pointerof
+       * sizeof
+       * instance_sizeof
+       * declare var
    * Exception handling
    * Compile-time flags
-   * Macros
+   * [Macros](syntax_and_semantics/macros.md)
+       * [Macro methods](syntax_and_semantics/macro_methods.md)
    * C bindings
 * Built-in types
    * Bool
