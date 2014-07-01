@@ -2911,6 +2911,8 @@ module Crystal
       args = arg_types.map_with_index { |type, i| Arg.new_with_type("arg#{i}", type) }
       add_def Def.new("call", args, Primitive.new(:fun_call, return_type))
       add_def Def.new("arity", [] of Arg, NumberLiteral.new(fun_types.length - 1, :i32))
+      add_def Def.new("closure?", [] of Arg, Primitive.new(:fun_closure?, @program.bool))
+      add_def Def.new("to_s", [] of Arg, StringLiteral.new(to_s))
     end
 
     def arg_types
@@ -2922,7 +2924,7 @@ module Crystal
     end
 
     def parents
-      @parents ||= [@program.reference] of Type
+      @parents ||= [@program.value] of Type
     end
 
     def primitive_like?

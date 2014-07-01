@@ -375,4 +375,17 @@ describe "Code gen: fun" do
       f.call(1).to_i
       ").to_i.should eq(1)
   end
+
+  it "does closure? false" do
+    run("
+      ->{ 1 }.closure?
+      ").to_b.should be_false
+  end
+
+  it "does closure? false" do
+    run("
+      a = 1
+      ->{ a }.closure?
+      ").to_b.should be_true
+  end
 end

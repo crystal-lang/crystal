@@ -68,6 +68,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
               codegen_primitive_class node, target_def, call_args
             when :fun_call
               codegen_primitive_fun_call node, target_def, call_args
+            when :fun_closure?
+              codegen_primitive_fun_closure node, target_def, call_args
             when :pointer_diff
               codegen_primitive_pointer_diff node, target_def, call_args
             when :pointer_null
@@ -465,6 +467,12 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true, fun_type)
       phi.add value, node.type, true
     end
+  end
+
+  def codegen_primitive_fun_closure(node, target_def, call_args)
+    closure_ptr = call_args[0]
+    ctx_ptr = @builder.extract_value closure_ptr, 1
+    not_equal? ctx_ptr, LLVM.null(LLVM::VoidPointer)
   end
 
   def codegen_primitive_pointer_diff(node, target_def, call_args)
