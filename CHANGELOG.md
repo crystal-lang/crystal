@@ -8,6 +8,7 @@
 * Allow default arguments in macros
 * Allow invoking `new` on a function type. For example: `alias F = Int32 -> Int32; f = F.new { |x| x + 1 }; f.call(2) #=> 3`.
 * Allow ommiting function argument types when invoking C functions that accept functions as arguments.
+* Renamed `@name` to `@class_name` inside macros. `@name` will be deprecated in the next version.
 
 ## 0.2.0 (2014-06-24)
 

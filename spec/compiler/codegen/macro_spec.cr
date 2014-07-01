@@ -206,14 +206,14 @@ describe "Code gen: macro" do
       )).to_string.should eq("@y")
   end
 
-  it "expands def macro with @name" do
+  it "expands def macro with @class_name" do
     run(%(
       class Foo
         def initialize(@x)
         end
 
         def to_s : String
-          {{@name}}
+          {{@class_name}}
         end
       end
 
@@ -242,7 +242,7 @@ describe "Code gen: macro" do
     run(%(
       class Foo
         def inspect : String
-          {{@name}}
+          {{@class_name}}
         end
       end
 
@@ -263,7 +263,7 @@ describe "Code gen: macro" do
     run(%(
       macro foo
         def bar
-          {{@name}}
+          {{@class_name}}
         end
       end
 

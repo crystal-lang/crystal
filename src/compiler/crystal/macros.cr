@@ -405,7 +405,7 @@ module Crystal
 
       def visit(node : InstanceVar)
         case node.name
-        when "@name"
+        when "@name", "@class_name"
           @last = StringLiteral.new(@scope.to_s)
         when "@instance_vars"
           scope = @scope
