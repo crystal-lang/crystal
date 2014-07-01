@@ -30,8 +30,8 @@ end
 Now we can create people like this:
 
 ``` ruby
-john = Person.new("John")
-peter = Person.new("Peter")
+john = Person.new "John"
+peter = Person.new "Peter"
 
 john.name #=> "John"
 john.age #=> 0

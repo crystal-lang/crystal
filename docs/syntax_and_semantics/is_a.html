@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>Global variables | Crystal Programming Language</title>
+        <title>is_a? | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,10 +19,6 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../syntax_and_semantics/thread_local.html" />
-    
-    
-    <link rel="prev" href="../syntax_and_semantics/local_variables.html" />
     
 
         
@@ -34,7 +30,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.3" data-basepath=".." data-revision="1404255993414">
+    <div class="book" data-github="manastech/crystal" data-level="3.7.1" data-basepath=".." data-revision="1404255993414">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -118,7 +114,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/global_variables.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/is_a.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1272,7 +1268,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 21.428571428571427%;min-width: 19.047619047619047%;"></div>
+        <div class="inner" style="width: 95.23809523809524%;min-width: 92.85714285714286%;"></div>
     </div>
     <div class="chapters">
     
@@ -1296,67 +1292,67 @@
     
         <a href="../syntax_and_semantics/global_variables.html" title="Global variables" class="chapter done " data-progress="3.3" style="left: 21.428571428571427%;"></a>
     
-        <a href="../syntax_and_semantics/thread_local.html" title="Thread local" class="chapter  " data-progress="3.3.1" style="left: 23.80952380952381%;"></a>
+        <a href="../syntax_and_semantics/thread_local.html" title="Thread local" class="chapter done " data-progress="3.3.1" style="left: 23.80952380952381%;"></a>
     
-        <a href="../syntax_and_semantics/assignment.html" title="Assignment" class="chapter  " data-progress="3.4" style="left: 26.19047619047619%;"></a>
+        <a href="../syntax_and_semantics/assignment.html" title="Assignment" class="chapter done " data-progress="3.4" style="left: 26.19047619047619%;"></a>
     
-        <a href="../syntax_and_semantics/multiple_assignment.html" title="Multiple assignment" class="chapter  " data-progress="3.4.1" style="left: 28.571428571428573%;"></a>
+        <a href="../syntax_and_semantics/multiple_assignment.html" title="Multiple assignment" class="chapter done " data-progress="3.4.1" style="left: 28.571428571428573%;"></a>
     
-        <a href="../syntax_and_semantics/control_expressions.html" title="Control expressions" class="chapter  " data-progress="3.5" style="left: 30.952380952380953%;"></a>
+        <a href="../syntax_and_semantics/control_expressions.html" title="Control expressions" class="chapter done " data-progress="3.5" style="left: 30.952380952380953%;"></a>
     
-        <a href="../syntax_and_semantics/truthy_and_falsey_values.html" title="Truthy and falsey values" class="chapter  " data-progress="3.5.1" style="left: 33.333333333333336%;"></a>
+        <a href="../syntax_and_semantics/truthy_and_falsey_values.html" title="Truthy and falsey values" class="chapter done " data-progress="3.5.1" style="left: 33.333333333333336%;"></a>
     
-        <a href="../syntax_and_semantics/article.html" title="if" class="chapter  " data-progress="3.5.2" style="left: 35.714285714285715%;"></a>
+        <a href="../syntax_and_semantics/article.html" title="if" class="chapter done " data-progress="3.5.2" style="left: 35.714285714285715%;"></a>
     
-        <a href="../syntax_and_semantics/as_a_suffix.html" title="As a suffix" class="chapter  " data-progress="3.5.2.1" style="left: 38.095238095238095%;"></a>
+        <a href="../syntax_and_semantics/as_a_suffix.html" title="As a suffix" class="chapter done " data-progress="3.5.2.1" style="left: 38.095238095238095%;"></a>
     
-        <a href="../syntax_and_semantics/as_an_expression.html" title="As an expression" class="chapter  " data-progress="3.5.2.2" style="left: 40.476190476190474%;"></a>
+        <a href="../syntax_and_semantics/as_an_expression.html" title="As an expression" class="chapter done " data-progress="3.5.2.2" style="left: 40.476190476190474%;"></a>
     
-        <a href="../syntax_and_semantics/ternary_if.html" title="Ternary if" class="chapter  " data-progress="3.5.2.3" style="left: 42.857142857142854%;"></a>
+        <a href="../syntax_and_semantics/ternary_if.html" title="Ternary if" class="chapter done " data-progress="3.5.2.3" style="left: 42.857142857142854%;"></a>
     
-        <a href="../syntax_and_semantics/if_var.html" title="if var" class="chapter  " data-progress="3.5.2.4" style="left: 45.23809523809524%;"></a>
+        <a href="../syntax_and_semantics/if_var.html" title="if var" class="chapter done " data-progress="3.5.2.4" style="left: 45.23809523809524%;"></a>
     
-        <a href="../syntax_and_semantics/if_varis_a.html" title="if var.is_a?(...)" class="chapter  " data-progress="3.5.2.5" style="left: 47.61904761904762%;"></a>
+        <a href="../syntax_and_semantics/if_varis_a.html" title="if var.is_a?(...)" class="chapter done " data-progress="3.5.2.5" style="left: 47.61904761904762%;"></a>
     
-        <a href="../syntax_and_semantics/if_varresponds_to.html" title="if var.responds_to?(...)" class="chapter  " data-progress="3.5.2.6" style="left: 50%;"></a>
+        <a href="../syntax_and_semantics/if_varresponds_to.html" title="if var.responds_to?(...)" class="chapter done " data-progress="3.5.2.6" style="left: 50%;"></a>
     
-        <a href="../syntax_and_semantics/unless.html" title="unless" class="chapter  " data-progress="3.5.3" style="left: 52.38095238095238%;"></a>
+        <a href="../syntax_and_semantics/unless.html" title="unless" class="chapter done " data-progress="3.5.3" style="left: 52.38095238095238%;"></a>
     
-        <a href="../syntax_and_semantics/case.html" title="case" class="chapter  " data-progress="3.5.4" style="left: 54.76190476190476%;"></a>
+        <a href="../syntax_and_semantics/case.html" title="case" class="chapter done " data-progress="3.5.4" style="left: 54.76190476190476%;"></a>
     
-        <a href="../syntax_and_semantics/while.html" title="while" class="chapter  " data-progress="3.5.5" style="left: 57.142857142857146%;"></a>
+        <a href="../syntax_and_semantics/while.html" title="while" class="chapter done " data-progress="3.5.5" style="left: 57.142857142857146%;"></a>
     
-        <a href="../syntax_and_semantics/break.html" title="break" class="chapter  " data-progress="3.5.5.1" style="left: 59.523809523809526%;"></a>
+        <a href="../syntax_and_semantics/break.html" title="break" class="chapter done " data-progress="3.5.5.1" style="left: 59.523809523809526%;"></a>
     
-        <a href="../syntax_and_semantics/next.html" title="next" class="chapter  " data-progress="3.5.5.2" style="left: 61.904761904761905%;"></a>
+        <a href="../syntax_and_semantics/next.html" title="next" class="chapter done " data-progress="3.5.5.2" style="left: 61.904761904761905%;"></a>
     
-        <a href="../syntax_and_semantics/until.html" title="until" class="chapter  " data-progress="3.5.6" style="left: 64.28571428571429%;"></a>
+        <a href="../syntax_and_semantics/until.html" title="until" class="chapter done " data-progress="3.5.6" style="left: 64.28571428571429%;"></a>
     
-        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter  " data-progress="3.5.7" style="left: 66.66666666666667%;"></a>
+        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter done " data-progress="3.5.7" style="left: 66.66666666666667%;"></a>
     
-        <a href="../syntax_and_semantics/or.html" title="||" class="chapter  " data-progress="3.5.8" style="left: 69.04761904761905%;"></a>
+        <a href="../syntax_and_semantics/or.html" title="||" class="chapter done " data-progress="3.5.8" style="left: 69.04761904761905%;"></a>
     
-        <a href="../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter  " data-progress="3.6" style="left: 71.42857142857143%;"></a>
+        <a href="../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter done " data-progress="3.6" style="left: 71.42857142857143%;"></a>
     
-        <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter  " data-progress="3.6.1" style="left: 73.80952380952381%;"></a>
+        <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter done " data-progress="3.6.1" style="left: 73.80952380952381%;"></a>
     
-        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter  " data-progress="3.6.2" style="left: 76.19047619047619%;"></a>
+        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter done " data-progress="3.6.2" style="left: 76.19047619047619%;"></a>
     
-        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter  " data-progress="3.6.3" style="left: 78.57142857142857%;"></a>
+        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter done " data-progress="3.6.3" style="left: 78.57142857142857%;"></a>
     
-        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter  " data-progress="3.6.3.1" style="left: 80.95238095238095%;"></a>
+        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter done " data-progress="3.6.3.1" style="left: 80.95238095238095%;"></a>
     
-        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter  " data-progress="3.6.3.2" style="left: 83.33333333333333%;"></a>
+        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter done " data-progress="3.6.3.2" style="left: 83.33333333333333%;"></a>
     
-        <a href="../syntax_and_semantics/method_overloading.html" title="Method overloading" class="chapter  " data-progress="3.6.3.3" style="left: 85.71428571428571%;"></a>
+        <a href="../syntax_and_semantics/method_overloading.html" title="Method overloading" class="chapter done " data-progress="3.6.3.3" style="left: 85.71428571428571%;"></a>
     
-        <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter  " data-progress="3.6.3.4" style="left: 88.0952380952381%;"></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter done " data-progress="3.6.3.4" style="left: 88.0952380952381%;"></a>
     
-        <a href="../syntax_and_semantics/instace_variables_type_inference.html" title="Instace variables type inference" class="chapter  " data-progress="3.6.3.5" style="left: 90.47619047619048%;"></a>
+        <a href="../syntax_and_semantics/instace_variables_type_inference.html" title="Instace variables type inference" class="chapter done " data-progress="3.6.3.5" style="left: 90.47619047619048%;"></a>
     
-        <a href="../syntax_and_semantics/generics.html" title="Generics" class="chapter  " data-progress="3.6.6" style="left: 92.85714285714286%;"></a>
+        <a href="../syntax_and_semantics/generics.html" title="Generics" class="chapter done " data-progress="3.6.6" style="left: 92.85714285714286%;"></a>
     
-        <a href="../syntax_and_semantics/is_a.html" title="is_a?" class="chapter  " data-progress="3.7.1" style="left: 95.23809523809524%;"></a>
+        <a href="../syntax_and_semantics/is_a.html" title="is_a?" class="chapter done " data-progress="3.7.1" style="left: 95.23809523809524%;"></a>
     
         <a href="../syntax_and_semantics/macros.html" title="Macros" class="chapter  " data-progress="3.13" style="left: 97.61904761904762%;"></a>
     
@@ -1367,13 +1363,9 @@
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_20">
+                    <section class="normal" id="section-gitbook_7">
                     
-                        <h1 id="global-variables">Global variables</h1>
-<p>Global variables start with a dollar sign (<code>$</code>). They are declared when you first assign them a value.</p>
-<pre><code class="lang-ruby"><span class="hljs-variable">$year</span> = <span class="hljs-number">2014</span>
-</code></pre>
-<p>Their type is the combined type of all expressions that were assigned to them. Additionally, if you program reads a global variable before it was ever assigned a value it will also have the <code>Nil</code> type.</p>
+                        <h1 id="is_a-">is_a?</h1>
 
                     
                     </section>
@@ -1383,10 +1375,6 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/local_variables.html" class="navigation navigation-prev " aria-label="Previous page: Local variables"><i class="fa fa-angle-left"></i></a>
-        
-        
-        <a href="../syntax_and_semantics/thread_local.html" class="navigation navigation-next " aria-label="Next page: Thread local"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

@@ -35,9 +35,12 @@
        * [Classes and methods](syntax_and_semantics/classes_and_methods.md)
            * [new, initialize and allocate](syntax_and_semantics/new,_initialize_and_allocate.md)
            * [Methods and instance variables](syntax_and_semantics/methods_and_instance_variables.md)
+           * [Method overloading](syntax_and_semantics/method_overloading.md)
+           * [Type restrictions](syntax_and_semantics/type_restrictions.md)
+           * [Instace variables type inference](syntax_and_semantics/instace_variables_type_inference.md)
        * Inheritance
        * Modules
-       * Generics
+       * [Generics](syntax_and_semantics/generics.md)
        * Structs
        * Constants
        * Blocks, functions and closures
@@ -45,7 +48,7 @@
            * Function pointer
        * alias
    * Type reflection
-       * is_a?
+       * [is_a?](syntax_and_semantics/is_a.md)
        * responds_to?
        * as
        * typeof

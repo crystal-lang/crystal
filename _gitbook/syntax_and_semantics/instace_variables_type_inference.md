@@ -1,0 +1,159 @@
+# Instace variables type inference
+
+Did you notice that in all of the previous examples we never said the types of a `Person`'s `@name` and `@age`? This is because the compiler inferred them for us.
+
+When we wrote:
+
+``` ruby
+class Person
+  getter name
+
+  def initialize(@name)
+    @age = 0
+  end
+end
+
+john = Person.new "John"
+john.name #=> "John"
+john.name.length #=> 4
+```
+
+Since we invoked `Person.new` with a `String` argument, the compiler makes `@name` be a `String` too.
+
+If we had invoked `Person.new` with another type, `@name` would have taken a different type:
+
+``` ruby
+one = Person.new 1
+one.name #=> 1
+one.name + 2 #=> 3
+```
+
+If you compile the previous programs with `--hierarchy`, the compiler will show you a hierarchy graph with the types it inferred. In the first case:
+
+```
+- class Object
+  |
+  +- class Reference
+     |
+     +- class Person
+            @name : String
+            @age : Int32
+```
+
+In the second case:
+
+```
+- class Object
+  |
+  +- class Reference
+     |
+     +- class Person
+            @name : Int32
+            @age : Int32
+```
+
+What happens if we create two different people, one with a `String` and one with an `Int32`? Let's try it:
+
+``` ruby
+john = Person.new "John"
+one = Person.new 1
+```
+
+Inovking the compiler with `--hierarchy` we get:
+
+```
+- class Object
+  |
+  +- class Reference
+     |
+     +- class Person
+            @name : (String | Int32)
+            @age : Int32
+```
+
+We can see that now `@name` has a type `(String | Int32)`, which is read as a *union* of `String` and `Int32`. The compiler made `@name` have all types assigned to it.
+
+In this case, the compiler will consider any usage of `@name` as always being either a `String` or an `Int32` and will give a compile time error if a method is not found for *both* types:
+
+``` ruby
+john = Person.new "John"
+one = Person.new 1
+
+# Error: undefined method 'length' for Int32
+john.name.length
+
+# Error: no overload matches 'String#+' with types Int32
+john.name + 3
+```
+
+The compiler will even give an error if you first use a variable assuming it has a type and later you change that type:
+
+``` ruby
+john = Person.new "John"
+john.name.length
+one = Person.new 1
+```
+
+Gives this compile-time error:
+
+```
+Error in foo.cr:14: instantiating 'Person:Class#new(Int32)'
+
+one = Person.new 1
+             ^~~
+
+instantiating 'Person#initialize(Int32)'
+
+in foo.cr:12: undefined method 'length' for Int32
+
+john.name.length
+          ^~~~~~
+```
+
+That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead an put a type restriction like `def initialize(@name : String)`, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create `Person` instance with types that have the same *interface* as a `String`, as long as you use a `Person`'s name like if it were a `String`.
+
+If you do want to have different `Person` types, one with `@name` being an `Int32` and one with `@name` being a `String`, you must use [generics](generics.html).
+
+Finally, any instance variable not assigned in any `initlialize` will be considered as also having the type `Nil`:
+
+``` ruby
+class Person
+  getter name
+
+  def initialize(@name)
+    @age = 0
+  end
+
+  def address
+    @address
+  end
+
+  def address=(@address)
+  end
+end
+
+john = Person.new "John"
+john.address = "Argentina"
+```
+
+The hierarchy graph now shows:
+
+```
+- class Object
+  |
+  +- class Reference
+     |
+     +- class Person
+            @name : String
+            @age : Int32
+            @address : String?
+```
+
+You can see `@address` is `String?`, which is a short form notation of `String | Nil`. This means that the following gives a compile time error:
+
+```
+# Error: undefined method 'length' for Nil
+john.address.length
+```
+
+To deal with `Nil`, and generally with union types, you have several options: use an [if var](if_var.html), [if var.is_a?](if_varis_a.html), [case](case.html) and [is_a?](is_a.html).

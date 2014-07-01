@@ -19,8 +19,8 @@ class Person
   end
 end
 
-john = Person.new("John")
-peter = Person.new("Peter")
+john = Person.new "John"
+peter = Person.new "Peter"
 
 john.age #=> 0
 john.become_older
@@ -62,12 +62,12 @@ class Person
   end
 end
 
-person = Person.new("John")
+person = Person.new "John"
 person.become_older
 person.age #=> 2
 ```
 
-To futher simply our program, we can use some [macros](macros.html):
+To further simply our program, we can use some [macros](macros.html):
 
 ``` ruby
 class Person

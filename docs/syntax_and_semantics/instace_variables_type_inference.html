@@ -4,7 +4,7 @@
     <head>
         
         <meta charset="UTF-8">
-        <title>Global variables | Crystal Programming Language</title>
+        <title>Instace variables type inference | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 0.5.6">
@@ -19,10 +19,8 @@
     <meta name="author" content="manastech">
     
     
-    <link rel="next" href="../syntax_and_semantics/thread_local.html" />
     
-    
-    <link rel="prev" href="../syntax_and_semantics/local_variables.html" />
+    <link rel="prev" href="../syntax_and_semantics/type_restrictions.html" />
     
 
         
@@ -34,7 +32,7 @@
 
 
         
-    <div class="book" data-github="manastech/crystal" data-level="3.3" data-basepath=".." data-revision="1404255993414">
+    <div class="book" data-github="manastech/crystal" data-level="3.6.3.5" data-basepath=".." data-revision="1404255993414">
     <div class="book-header">
     <!-- Actions Left -->
     <a href="#" class="btn pull-left toggle-summary" aria-label="Toggle summary"><i class="fa fa-align-justify"></i></a>
@@ -118,7 +116,7 @@
         
         
         <li>
-            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/global_variables.md" target="blank" class="contribute-link">Edit and Contribute</a>
+            <a href="https://github.com/manastech/crystal/edit/gh-pages/_gitbook/syntax_and_semantics/instace_variables_type_inference.md" target="blank" class="contribute-link">Edit and Contribute</a>
         </li>
         
 
@@ -1272,7 +1270,7 @@
             <div class="page-wrapper" tabindex="-1">
                 <div class="book-progress">
     <div class="bar">
-        <div class="inner" style="width: 21.428571428571427%;min-width: 19.047619047619047%;"></div>
+        <div class="inner" style="width: 90.47619047619048%;min-width: 88.0952380952381%;"></div>
     </div>
     <div class="chapters">
     
@@ -1296,63 +1294,63 @@
     
         <a href="../syntax_and_semantics/global_variables.html" title="Global variables" class="chapter done " data-progress="3.3" style="left: 21.428571428571427%;"></a>
     
-        <a href="../syntax_and_semantics/thread_local.html" title="Thread local" class="chapter  " data-progress="3.3.1" style="left: 23.80952380952381%;"></a>
+        <a href="../syntax_and_semantics/thread_local.html" title="Thread local" class="chapter done " data-progress="3.3.1" style="left: 23.80952380952381%;"></a>
     
-        <a href="../syntax_and_semantics/assignment.html" title="Assignment" class="chapter  " data-progress="3.4" style="left: 26.19047619047619%;"></a>
+        <a href="../syntax_and_semantics/assignment.html" title="Assignment" class="chapter done " data-progress="3.4" style="left: 26.19047619047619%;"></a>
     
-        <a href="../syntax_and_semantics/multiple_assignment.html" title="Multiple assignment" class="chapter  " data-progress="3.4.1" style="left: 28.571428571428573%;"></a>
+        <a href="../syntax_and_semantics/multiple_assignment.html" title="Multiple assignment" class="chapter done " data-progress="3.4.1" style="left: 28.571428571428573%;"></a>
     
-        <a href="../syntax_and_semantics/control_expressions.html" title="Control expressions" class="chapter  " data-progress="3.5" style="left: 30.952380952380953%;"></a>
+        <a href="../syntax_and_semantics/control_expressions.html" title="Control expressions" class="chapter done " data-progress="3.5" style="left: 30.952380952380953%;"></a>
     
-        <a href="../syntax_and_semantics/truthy_and_falsey_values.html" title="Truthy and falsey values" class="chapter  " data-progress="3.5.1" style="left: 33.333333333333336%;"></a>
+        <a href="../syntax_and_semantics/truthy_and_falsey_values.html" title="Truthy and falsey values" class="chapter done " data-progress="3.5.1" style="left: 33.333333333333336%;"></a>
     
-        <a href="../syntax_and_semantics/article.html" title="if" class="chapter  " data-progress="3.5.2" style="left: 35.714285714285715%;"></a>
+        <a href="../syntax_and_semantics/article.html" title="if" class="chapter done " data-progress="3.5.2" style="left: 35.714285714285715%;"></a>
     
-        <a href="../syntax_and_semantics/as_a_suffix.html" title="As a suffix" class="chapter  " data-progress="3.5.2.1" style="left: 38.095238095238095%;"></a>
+        <a href="../syntax_and_semantics/as_a_suffix.html" title="As a suffix" class="chapter done " data-progress="3.5.2.1" style="left: 38.095238095238095%;"></a>
     
-        <a href="../syntax_and_semantics/as_an_expression.html" title="As an expression" class="chapter  " data-progress="3.5.2.2" style="left: 40.476190476190474%;"></a>
+        <a href="../syntax_and_semantics/as_an_expression.html" title="As an expression" class="chapter done " data-progress="3.5.2.2" style="left: 40.476190476190474%;"></a>
     
-        <a href="../syntax_and_semantics/ternary_if.html" title="Ternary if" class="chapter  " data-progress="3.5.2.3" style="left: 42.857142857142854%;"></a>
+        <a href="../syntax_and_semantics/ternary_if.html" title="Ternary if" class="chapter done " data-progress="3.5.2.3" style="left: 42.857142857142854%;"></a>
     
-        <a href="../syntax_and_semantics/if_var.html" title="if var" class="chapter  " data-progress="3.5.2.4" style="left: 45.23809523809524%;"></a>
+        <a href="../syntax_and_semantics/if_var.html" title="if var" class="chapter done " data-progress="3.5.2.4" style="left: 45.23809523809524%;"></a>
     
-        <a href="../syntax_and_semantics/if_varis_a.html" title="if var.is_a?(...)" class="chapter  " data-progress="3.5.2.5" style="left: 47.61904761904762%;"></a>
+        <a href="../syntax_and_semantics/if_varis_a.html" title="if var.is_a?(...)" class="chapter done " data-progress="3.5.2.5" style="left: 47.61904761904762%;"></a>
     
-        <a href="../syntax_and_semantics/if_varresponds_to.html" title="if var.responds_to?(...)" class="chapter  " data-progress="3.5.2.6" style="left: 50%;"></a>
+        <a href="../syntax_and_semantics/if_varresponds_to.html" title="if var.responds_to?(...)" class="chapter done " data-progress="3.5.2.6" style="left: 50%;"></a>
     
-        <a href="../syntax_and_semantics/unless.html" title="unless" class="chapter  " data-progress="3.5.3" style="left: 52.38095238095238%;"></a>
+        <a href="../syntax_and_semantics/unless.html" title="unless" class="chapter done " data-progress="3.5.3" style="left: 52.38095238095238%;"></a>
     
-        <a href="../syntax_and_semantics/case.html" title="case" class="chapter  " data-progress="3.5.4" style="left: 54.76190476190476%;"></a>
+        <a href="../syntax_and_semantics/case.html" title="case" class="chapter done " data-progress="3.5.4" style="left: 54.76190476190476%;"></a>
     
-        <a href="../syntax_and_semantics/while.html" title="while" class="chapter  " data-progress="3.5.5" style="left: 57.142857142857146%;"></a>
+        <a href="../syntax_and_semantics/while.html" title="while" class="chapter done " data-progress="3.5.5" style="left: 57.142857142857146%;"></a>
     
-        <a href="../syntax_and_semantics/break.html" title="break" class="chapter  " data-progress="3.5.5.1" style="left: 59.523809523809526%;"></a>
+        <a href="../syntax_and_semantics/break.html" title="break" class="chapter done " data-progress="3.5.5.1" style="left: 59.523809523809526%;"></a>
     
-        <a href="../syntax_and_semantics/next.html" title="next" class="chapter  " data-progress="3.5.5.2" style="left: 61.904761904761905%;"></a>
+        <a href="../syntax_and_semantics/next.html" title="next" class="chapter done " data-progress="3.5.5.2" style="left: 61.904761904761905%;"></a>
     
-        <a href="../syntax_and_semantics/until.html" title="until" class="chapter  " data-progress="3.5.6" style="left: 64.28571428571429%;"></a>
+        <a href="../syntax_and_semantics/until.html" title="until" class="chapter done " data-progress="3.5.6" style="left: 64.28571428571429%;"></a>
     
-        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter  " data-progress="3.5.7" style="left: 66.66666666666667%;"></a>
+        <a href="../syntax_and_semantics/and.html" title="&amp;&amp;" class="chapter done " data-progress="3.5.7" style="left: 66.66666666666667%;"></a>
     
-        <a href="../syntax_and_semantics/or.html" title="||" class="chapter  " data-progress="3.5.8" style="left: 69.04761904761905%;"></a>
+        <a href="../syntax_and_semantics/or.html" title="||" class="chapter done " data-progress="3.5.8" style="left: 69.04761904761905%;"></a>
     
-        <a href="../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter  " data-progress="3.6" style="left: 71.42857142857143%;"></a>
+        <a href="../syntax_and_semantics/types_and_methods.html" title="Types and methods" class="chapter done " data-progress="3.6" style="left: 71.42857142857143%;"></a>
     
-        <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter  " data-progress="3.6.1" style="left: 73.80952380952381%;"></a>
+        <a href="../syntax_and_semantics/everything_is_an_object.html" title="Everything is an object" class="chapter done " data-progress="3.6.1" style="left: 73.80952380952381%;"></a>
     
-        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter  " data-progress="3.6.2" style="left: 76.19047619047619%;"></a>
+        <a href="../syntax_and_semantics/the_program.html" title="The Program" class="chapter done " data-progress="3.6.2" style="left: 76.19047619047619%;"></a>
     
-        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter  " data-progress="3.6.3" style="left: 78.57142857142857%;"></a>
+        <a href="../syntax_and_semantics/classes_and_methods.html" title="Classes and methods" class="chapter done " data-progress="3.6.3" style="left: 78.57142857142857%;"></a>
     
-        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter  " data-progress="3.6.3.1" style="left: 80.95238095238095%;"></a>
+        <a href="../syntax_and_semantics/new,_initialize_and_allocate.html" title="new, initialize and allocate" class="chapter done " data-progress="3.6.3.1" style="left: 80.95238095238095%;"></a>
     
-        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter  " data-progress="3.6.3.2" style="left: 83.33333333333333%;"></a>
+        <a href="../syntax_and_semantics/methods_and_instance_variables.html" title="Methods and instance variables" class="chapter done " data-progress="3.6.3.2" style="left: 83.33333333333333%;"></a>
     
-        <a href="../syntax_and_semantics/method_overloading.html" title="Method overloading" class="chapter  " data-progress="3.6.3.3" style="left: 85.71428571428571%;"></a>
+        <a href="../syntax_and_semantics/method_overloading.html" title="Method overloading" class="chapter done " data-progress="3.6.3.3" style="left: 85.71428571428571%;"></a>
     
-        <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter  " data-progress="3.6.3.4" style="left: 88.0952380952381%;"></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" title="Type restrictions" class="chapter done " data-progress="3.6.3.4" style="left: 88.0952380952381%;"></a>
     
-        <a href="../syntax_and_semantics/instace_variables_type_inference.html" title="Instace variables type inference" class="chapter  " data-progress="3.6.3.5" style="left: 90.47619047619048%;"></a>
+        <a href="../syntax_and_semantics/instace_variables_type_inference.html" title="Instace variables type inference" class="chapter done " data-progress="3.6.3.5" style="left: 90.47619047619048%;"></a>
     
         <a href="../syntax_and_semantics/generics.html" title="Generics" class="chapter  " data-progress="3.6.6" style="left: 92.85714285714286%;"></a>
     
@@ -1367,13 +1365,119 @@
 
                 <div class="page-inner">
                 
-                    <section class="normal" id="section-gitbook_20">
+                    <section class="normal" id="section-gitbook_24">
                     
-                        <h1 id="global-variables">Global variables</h1>
-<p>Global variables start with a dollar sign (<code>$</code>). They are declared when you first assign them a value.</p>
-<pre><code class="lang-ruby"><span class="hljs-variable">$year</span> = <span class="hljs-number">2014</span>
+                        <h1 id="instace-variables-type-inference">Instace variables type inference</h1>
+<p>Did you notice that in all of the previous examples we never said the types of a <code>Person</code>&#39;s <code>@name</code> and <code>@age</code>? This is because the compiler inferred them for us.</p>
+<p>When we wrote:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  getter name
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@name</span>)
+    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"John"</span>
+john.name <span class="hljs-comment">#=&gt; "John"</span>
+john.name.length <span class="hljs-comment">#=&gt; 4</span>
 </code></pre>
-<p>Their type is the combined type of all expressions that were assigned to them. Additionally, if you program reads a global variable before it was ever assigned a value it will also have the <code>Nil</code> type.</p>
+<p>Since we invoked <code>Person.new</code> with a <code>String</code> argument, the compiler makes <code>@name</code> be a <code>String</code> too.</p>
+<p>If we had invoked <code>Person.new</code> with another type, <code>@name</code> would have taken a different type:</p>
+<pre><code class="lang-ruby">one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
+one.name <span class="hljs-comment">#=&gt; 1</span>
+one.name + <span class="hljs-number">2</span> <span class="hljs-comment">#=&gt; 3</span>
+</code></pre>
+<p>If you compile the previous programs with <code>--hierarchy</code>, the compiler will show you a hierarchy graph with the types it inferred. In the first case:</p>
+<pre><code>- class Object
+  |
+  +- class Reference
+     |
+     +- class Person
+            @name : String
+            @age : Int32
+</code></pre><p>In the second case:</p>
+<pre><code>- class Object
+  |
+  +- class Reference
+     |
+     +- class Person
+            @name : Int32
+            @age : Int32
+</code></pre><p>What happens if we create two different people, one with a <code>String</code> and one with an <code>Int32</code>? Let&#39;s try it:</p>
+<pre><code class="lang-ruby">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"John"</span>
+one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
+</code></pre>
+<p>Inovking the compiler with <code>--hierarchy</code> we get:</p>
+<pre><code>- class Object
+  |
+  +- class Reference
+     |
+     +- class Person
+            @name : (String | Int32)
+            @age : Int32
+</code></pre><p>We can see that now <code>@name</code> has a type <code>(String | Int32)</code>, which is read as a <em>union</em> of <code>String</code> and <code>Int32</code>. The compiler made <code>@name</code> have all types assigned to it.</p>
+<p>In this case, the compiler will consider any usage of <code>@name</code> as always being either a <code>String</code> or an <code>Int32</code> and will give a compile time error if a method is not found for <em>both</em> types:</p>
+<pre><code class="lang-ruby">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"John"</span>
+one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
+
+<span class="hljs-comment"># Error: undefined method 'length' for Int32</span>
+john.name.length
+
+<span class="hljs-comment"># Error: no overload matches 'String#+' with types Int32</span>
+john.name + <span class="hljs-number">3</span>
+</code></pre>
+<p>The compiler will even give an error if you first use a variable assuming it has a type and later you change that type:</p>
+<pre><code class="lang-ruby">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"John"</span>
+john.name.length
+one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
+</code></pre>
+<p>Gives this compile-time error:</p>
+<pre><code>Error in foo.cr:14: instantiating &#39;Person:Class#new(Int32)&#39;
+
+one = Person.new 1
+             ^~~
+
+instantiating &#39;Person#initialize(Int32)&#39;
+
+in foo.cr:12: undefined method &#39;length&#39; for Int32
+
+john.name.length
+          ^~~~~~
+</code></pre><p>That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead an put a type restriction like <code>def initialize(@name : String)</code>, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create <code>Person</code> instance with types that have the same <em>interface</em> as a <code>String</code>, as long as you use a <code>Person</code>&#39;s name like if it were a <code>String</code>.</p>
+<p>If you do want to have different <code>Person</code> types, one with <code>@name</code> being an <code>Int32</code> and one with <code>@name</code> being a <code>String</code>, you must use <a href="generics.html">generics</a>.</p>
+<p>Finally, any instance variable not assigned in any <code>initlialize</code> will be considered as also having the type <code>Nil</code>:</p>
+<pre><code class="lang-ruby"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  getter name
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>initialize(<span class="hljs-variable">@name</span>)
+    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>address
+    <span class="hljs-variable">@address</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> </span>address=(<span class="hljs-variable">@address</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">"John"</span>
+john.address = <span class="hljs-string">"Argentina"</span>
+</code></pre>
+<p>The hierarchy graph now shows:</p>
+<pre><code>- class Object
+  |
+  +- class Reference
+     |
+     +- class Person
+            @name : String
+            @age : Int32
+            @address : String?
+</code></pre><p>You can see <code>@address</code> is <code>String?</code>, which is a short form notation of <code>String | Nil</code>. This means that the following gives a compile time error:</p>
+<pre><code># Error: undefined method &#39;length&#39; for Nil
+john.address.length
+</code></pre><p>To deal with <code>Nil</code>, and generally with union types, you have several options: use an <a href="if_var.html">if var</a>, <a href="if_varis_a.html">if var.is_a?</a>, <a href="case.html">case</a> and <a href="is_a.html">is_a?</a>.</p>
 
                     
                     </section>
@@ -1383,10 +1487,8 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/local_variables.html" class="navigation navigation-prev " aria-label="Previous page: Local variables"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/type_restrictions.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Type restrictions"><i class="fa fa-angle-left"></i></a>
         
-        
-        <a href="../syntax_and_semantics/thread_local.html" class="navigation navigation-next " aria-label="Next page: Thread local"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
