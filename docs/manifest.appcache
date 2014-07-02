@@ -1,8 +1,13 @@
 CACHE MANIFEST
-# Revision 1404255993415
+# Revision 1404266477859
 
 CACHE:
 index.html
+builtin_types/README.html
+builtin_types/bool.html
+builtin_types/char.html
+builtin_types/floating_point_types.html
+builtin_types/integer_types.html
 installation/README.html
 installation/from_a_targz.html
 installation/from_source_repository.html

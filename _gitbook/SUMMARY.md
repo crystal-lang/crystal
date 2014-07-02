@@ -69,11 +69,11 @@
    * [Macros](syntax_and_semantics/macros.md)
        * [Macro methods](syntax_and_semantics/macro_methods.md)
    * C bindings
-* Built-in types
-   * Bool
-   * Integer types
-   * Floating point types
-   * Char
+* [Built-in types](builtin_types/README.md)
+   * [Bool](builtin_types/bool.md)
+   * [Integer types](builtin_types/integer_types.md)
+   * [Floating point types](builtin_types/floating_point_types.md)
+   * [Char](builtin_types/char.md)
    * String
    * Symbol
    * Reference
