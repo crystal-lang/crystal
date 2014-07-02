@@ -238,7 +238,7 @@ describe "Code gen: struct" do
       ").to_i.should eq(1)
   end
 
-  it "builds struct setter with fun type" do
+  it "builds struct setter with fun type (1)" do
     build(%(
       require "prelude"
 
@@ -253,7 +253,7 @@ describe "Code gen: struct" do
       ))
   end
 
-  it "builds struct setter with fun type" do
+  it "builds struct setter with fun type (2)" do
     build(%(
       require "prelude"
 

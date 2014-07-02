@@ -438,7 +438,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     closure_ptr = call_args[0]
     args = call_args[1 .. -1]
 
-    fun_type = context.type as FunType
+    fun_type = context.type as FunInstanceType
     0.upto(target_def.args.length - 1) do |i|
       arg = args[i]
       fun_arg_type = fun_type.fun_types[i]

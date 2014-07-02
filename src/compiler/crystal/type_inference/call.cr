@@ -202,7 +202,7 @@ module Crystal
 
     def replace_block_arg_with_block(block_arg)
       block_arg_type = block_arg.type
-      if block_arg_type.is_a?(FunType)
+      if block_arg_type.is_a?(FunInstanceType)
         vars = [] of Var
         args = [] of ASTNode
         block_arg_type.arg_types.map_with_index do |type, i|
@@ -376,7 +376,7 @@ module Crystal
           # But first check if the call has a block_arg
           if call_block_arg = self.block_arg
             # Check input types
-            call_block_arg_types = (call_block_arg.type as FunType).arg_types
+            call_block_arg_types = (call_block_arg.type as FunInstanceType).arg_types
             if yield_vars
               if yield_vars.length != call_block_arg_types.length
                 raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for #{yield_vars.length})"
@@ -414,7 +414,7 @@ module Crystal
           fun_literal_type = fun_literal.type?
           if fun_literal_type
             if output = block_arg.fun.output
-              block_type = (fun_literal_type as FunType).return_type
+              block_type = (fun_literal_type as FunInstanceType).return_type
               type_lookup = match.type_lookup as MatchesLookup
               matched = type_lookup.match_arg(block_type, output, match.owner, type_lookup, match.free_vars)
               unless matched

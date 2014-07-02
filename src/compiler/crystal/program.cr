@@ -62,7 +62,6 @@ module Crystal
       @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", @value, 4
       @types["Pointer"] = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
       @types["Tuple"] = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
-      @tuple.variadic = true
 
       @static_array = @types["StaticArray"] = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       @static_array.struct = true
@@ -91,6 +90,9 @@ module Crystal
       @types["Struct"] = @struct = NonGenericClassType.new self, self, "Struct", @value
       @struct.abstract = true
       @struct.struct = true
+
+      @types["Function"] = @function = FunType.new self, self, "Function", @value, ["T"]
+      @function.variadic = true
 
       @types["ARGC_UNSAFE"] = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
       @types["ARGV_UNSAFE"] = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
@@ -218,8 +220,7 @@ module Crystal
     end
 
     def fun_of(types : Array)
-      type_ids = types.map &.type_id
-      @funs[type_ids] ||= FunType.new(self, types)
+      @function.instantiate(types)
     end
 
     def add_to_requires(filename)
@@ -373,6 +374,7 @@ module Crystal
     getter :pointer
     getter :exception
     getter :tuple
+    getter :function
 
     def class_type
       @class

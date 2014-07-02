@@ -37,6 +37,7 @@ require "exception"
 require "errno"
 require "raise"
 require "tuple"
+require "function"
 require "assert"
 require "main"
 

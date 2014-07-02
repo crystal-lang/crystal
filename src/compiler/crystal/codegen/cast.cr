@@ -86,7 +86,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     store nilable_fun, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : FunType, value)
+  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : FunInstanceType, value)
     store value, target_pointer
   end
 
@@ -158,7 +158,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     value
   end
 
-  def downcast_distinct(value, to_type : FunType, from_type : NilableFunType)
+  def downcast_distinct(value, to_type : FunInstanceType, from_type : NilableFunType)
     value
   end
 
@@ -223,7 +223,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     to_lhs value, to_type
   end
 
-  def downcast_distinct(value, to_type : FunType, from_type : FunType)
+  def downcast_distinct(value, to_type : FunInstanceType, from_type : FunInstanceType)
     # Nothing to do
     value
   end
@@ -267,7 +267,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     make_nilable_fun to_type
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : FunType)
+  def upcast_distinct(value, to_type : NilableFunType, from_type : FunInstanceType)
     value
   end
 

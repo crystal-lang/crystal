@@ -221,11 +221,11 @@ module Crystal
     end
 
     def llvm_fun_type(type)
-      llvm_typer.fun_type(type as FunType)
+      llvm_typer.fun_type(type as FunInstanceType)
     end
 
     def llvm_closure_type(type)
-      llvm_typer.closure_type(type as FunType)
+      llvm_typer.closure_type(type as FunInstanceType)
     end
 
     def llvm_c_type(type)

@@ -739,7 +739,7 @@ module Crystal
         next unless method_arg
 
         method_arg_type = method_arg.type
-        next unless method_arg_type.is_a?(FunType)
+        next unless method_arg_type.is_a?(FunInstanceType)
 
         arg.def.args.each_with_index do |def_arg, def_arg_index|
           if !def_arg.restriction && !def_arg.type?
@@ -756,7 +756,7 @@ module Crystal
 
       instance_type = obj_type.instance_type.remove_typedef
 
-      if node.name == "new" && instance_type.is_a?(FunType)
+      if node.name == "new" && instance_type.is_a?(FunInstanceType)
         return special_fun_type_new_call(node, instance_type)
       end
 

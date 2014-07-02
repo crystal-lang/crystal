@@ -395,4 +395,40 @@ describe "Type inference: fun" do
       C.foo ->(x) { x + 1 }
       )) { float64 }
   end
+
+  it "allows writing a function type with Function" do
+    assert_type(%(
+      Function(Int32, Int32)
+      )) { fun_of(int32, int32).metaclass }
+  end
+
+  it "allows using Function as restriction (1)" do
+    assert_type(%(
+      def foo(x : Function(Int32, Int32))
+        x.call(2)
+      end
+
+      foo ->(x : Int32) { x + 1 }
+      )) { int32 }
+  end
+
+  it "allows using Function as restriction (2)" do
+    assert_type(%(
+      def foo(x : Function)
+        x.call(2)
+      end
+
+      foo ->(x : Int32) { x + 1 }
+      )) { int32 }
+  end
+
+  it "allows using Function as restriction (3)" do
+    assert_type(%(
+      def foo(x : Function(T, U))
+        T
+      end
+
+      foo ->(x : Int32) { x + 1 }
+      )) { int32.metaclass }
+  end
 end

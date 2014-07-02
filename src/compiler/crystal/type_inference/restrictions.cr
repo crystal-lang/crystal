@@ -419,7 +419,7 @@ module Crystal
     end
   end
 
-  class FunType
+  class FunInstanceType
     def restrict(other : Fun, owner, type_lookup, free_vars)
       inputs = other.inputs
       inputs_len = inputs ? inputs.length : 0
@@ -449,11 +449,26 @@ module Crystal
       end
     end
 
-    def restrict(other : FunType, owner, type_lookup, free_vars)
+    def restrict(other : FunInstanceType, owner, type_lookup, free_vars)
       compatible_with?(other) ? other : nil
     end
 
-    def compatible_with?(other : FunType)
+    def restrict(other : Generic, owner, type_lookup, free_vars)
+      generic_class = type_lookup.lookup_type other.name
+      return super unless generic_class.is_a?(FunType)
+
+      return nil unless other.type_vars.length == fun_types.length
+
+      fun_types.each_with_index do |fun_type, i|
+        other_type_var = other.type_vars[i]
+        restricted = fun_type.restrict other_type_var, owner, type_lookup, free_vars
+        return nil unless restricted == fun_type
+      end
+
+      self
+    end
+
+    def compatible_with?(other : FunInstanceType)
       arg_types = arg_types()
       return_type = return_type()
       other_arg_types = other.arg_types()

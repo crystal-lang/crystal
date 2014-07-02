@@ -159,7 +159,7 @@ module Crystal
       elsif self == program.string && (expected_type.is_a?(PointerInstanceType) && expected_type.element_type == program.uint8)
         # OK: string will be sent as UInt8
         true
-      elsif expected_type.is_a?(FunType) && self.is_a?(FunType) && expected_type.return_type == program.void && expected_type.arg_types == self.arg_types
+      elsif expected_type.is_a?(FunInstanceType) && self.is_a?(FunInstanceType) && expected_type.return_type == program.void && expected_type.arg_types == self.arg_types
         # OK: fun will be cast to return void
         true
       elsif self.struct_wrapper_of?(expected_type) || self.pointer_struct_wrapper_of?(expected_type)
@@ -1754,6 +1754,7 @@ module Crystal
       super
       add_def Def.new("length", [] of Arg, Primitive.new(:tuple_length))
       add_def Def.new("[]", ([Arg.new_with_restriction("index", Path.new(["Int32"], true))]), Primitive.new(:tuple_indexer))
+      @variadic = true
     end
 
     def instantiate(type_vars)
@@ -2480,7 +2481,7 @@ module Crystal
     end
 
     def fun_type
-      @union_types.last.remove_typedef as FunType
+      @union_types.last.remove_typedef as FunInstanceType
     end
 
     def append_to_s(str)
@@ -2900,7 +2901,40 @@ module Crystal
     end
   end
 
-  class FunType < Type
+  class FunType < GenericClassType
+    def initialize(program, container, name, superclass, type_vars, add_subclass = true)
+      super
+      @variadic = true
+      @struct = true
+    end
+
+    def instantiate(type_vars)
+      if (instance = generic_types[type_vars]?)
+        return instance
+      end
+
+      types = [] of Type
+      type_vars.each do |type_var|
+        types << type_var as Type
+      end
+
+      instance = FunInstanceType.new(program, types)
+      generic_types[type_vars] = instance
+      initialize_instance instance
+      instance.after_initialize
+      instance
+    end
+
+    def instance_class
+      FunInstanceType
+    end
+
+    def type_desc
+      "function"
+    end
+  end
+
+  class FunInstanceType < GenericClassInstanceType
     include DefContainer
     include DefInstanceContainer
 
@@ -2908,11 +2942,23 @@ module Crystal
     getter fun_types
 
     def initialize(@program, @fun_types)
+      var = Var.new("T", self)
+      var.bind_to var
+      super(program, program.function, {"T" => var} of String => ASTNode)
+
       args = arg_types.map_with_index { |type, i| Arg.new_with_type("arg#{i}", type) }
       add_def Def.new("call", args, Primitive.new(:fun_call, return_type))
       add_def Def.new("arity", [] of Arg, NumberLiteral.new(fun_types.length - 1, :i32))
       add_def Def.new("closure?", [] of Arg, Primitive.new(:fun_closure?, @program.bool))
       add_def Def.new("to_s", [] of Arg, StringLiteral.new(to_s))
+    end
+
+    def struct?
+      true
+    end
+
+    def allocated
+      true
     end
 
     def arg_types
@@ -2924,11 +2970,15 @@ module Crystal
     end
 
     def parents
-      @parents ||= [@program.value] of Type
+      @parents ||= [@program.function] of Type
     end
 
     def primitive_like?
       fun_types.all? &.primitive_like?
+    end
+
+    def passed_by_value?
+      false
     end
 
     def fun?

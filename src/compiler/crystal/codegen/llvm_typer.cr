@@ -64,6 +64,10 @@ module Crystal
       llvm_type(type.base_type)
     end
 
+    def create_llvm_type(type : FunInstanceType)
+      FUN_TYPE
+    end
+
     def create_llvm_type(type : InstanceVarContainer)
       final_type = llvm_struct_type(type)
       unless type.struct?
@@ -168,10 +172,6 @@ module Crystal
 
     def create_llvm_type(type : HierarchyType)
       TYPE_ID_POINTER
-    end
-
-    def create_llvm_type(type : FunType)
-      FUN_TYPE
     end
 
     def create_llvm_type(type : AliasType)
@@ -280,6 +280,10 @@ module Crystal
       llvm_struct_type type
     end
 
+    def create_llvm_embedded_type(type : FunInstanceType)
+      llvm_type type
+    end
+
     def create_llvm_embedded_type(type : InstanceVarContainer)
       if type.struct?
         llvm_struct_type type
@@ -308,7 +312,7 @@ module Crystal
       @embedded_c_cache[type] ||= create_llvm_embedded_c_type type
     end
 
-    def create_llvm_embedded_c_type(type : FunType)
+    def create_llvm_embedded_c_type(type : FunInstanceType)
       fun_type(type)
     end
 
@@ -320,7 +324,7 @@ module Crystal
       @c_cache[type] ||= create_llvm_c_type(type)
     end
 
-    def create_llvm_c_type(type : FunType)
+    def create_llvm_c_type(type : FunInstanceType)
       fun_type(type)
     end
 
@@ -332,13 +336,13 @@ module Crystal
       llvm_arg_type(type)
     end
 
-    def closure_type(type : FunType)
+    def closure_type(type : FunInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
       arg_types.insert(0, LLVM::VoidPointer)
       LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
     end
 
-    def fun_type(type : FunType)
+    def fun_type(type : FunInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
       LLVM.pointer_type(LLVM.function_type(arg_types, llvm_type(type.return_type)))
     end
