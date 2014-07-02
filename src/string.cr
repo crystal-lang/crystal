@@ -366,7 +366,7 @@ class String
     nil
   end
 
-  def +(other)
+  def +(other : self)
     String.new_with_length(length + other.length) do |buffer|
       buffer.memcpy(cstr, length)
       (buffer + length).memcpy(other.cstr, other.length)
