@@ -63,3 +63,9 @@ describe "MemoryFileSystem" do
 
   filesystem_spec(fs)
 end
+
+describe "EmbebedMemoryFileSystem" do
+  fs = embed_fs("#{__DIR__}/resources")
+
+  filesystem_spec(fs)
+end
