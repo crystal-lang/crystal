@@ -154,4 +154,6 @@ describe "Json::PullParser" do
   assert_pull_parse_error %({"foo": []:1})
   assert_pull_parse_error "[[]"
   assert_pull_parse_error %({"foo": {})
+  assert_pull_parse_error %({"name": "John", "age", 1})
+  assert_pull_parse_error %({"name": "John", "age": "foo", "bar"})
 end

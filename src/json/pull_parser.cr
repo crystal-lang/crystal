@@ -158,7 +158,9 @@ class Json::PullParser
         if current_object == :object && @token.type == :STRING
           @kind = :object_key
           @string_value = @token.string_value
-          next_token
+          if next_token.type != :":"
+            unexpected_token
+          end
           return
         end
       when :":"
