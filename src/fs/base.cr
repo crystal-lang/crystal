@@ -11,14 +11,14 @@ end
 
 module FS
   module FileContainer
-    def files(&block : FileEntry -> U)
+    def files(&block : FileEntry+ -> U)
       entries do |e|
         block.call(e) if e.is_a?(FileEntry)
       end
     end
     collect_alias_method "files", "FileEntry"
 
-    def dirs(&block : DirectoryEntry -> U)
+    def dirs(&block : DirectoryEntry+ -> U)
       entries do |e|
         block.call(e) if e.is_a?(DirectoryEntry)
       end
@@ -39,7 +39,7 @@ module FS
   end
 
   class Entry
-    def initialize(@fs, @path)
+    def initialize(@fs : FileSystem, @path : String)
     end
 
     # the name of the file or directory

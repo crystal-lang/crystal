@@ -7,8 +7,8 @@ module FS
     end
 
     def add_directory(name)
-      add_directory(name).tap do |mem_entry|
-        yield mem_entry
+      add_directory(name).tap do |entry|
+        yield entry
       end
     end
 
@@ -30,28 +30,28 @@ module FS
 
     def entries(&block : Entry+ -> U)
       # find_entries("", &block)
-      @data.each do |key, value|
-        block.call value.entry
+      @data.each_value do |entry|
+        block.call entry
       end
     end
 
     def entry(path)
-      memory_entry_for_path(path).entry
+      memory_entry_for_path(path)
     end
 
     def find_entries(path, &block : Entry+ -> U)
-      mem_entry = memory_entry_for_path(path)
-      if mem_entry.is_a? MemoryDirectoryEntry
-        mem_entry.data.each do |key, value|
-          block.call value.entry
+      entry = memory_entry_for_path(path)
+      if entry.is_a? MemoryDirectoryEntry
+        entry.data.each do |key, value|
+          block.call value
         end
       end
     end
 
     def read(path)
-      mem_entry = memory_entry_for_path(path)
-      if mem_entry.is_a? MemoryFileEntry
-        mem_entry.content
+      entry = memory_entry_for_path(path)
+      if entry.is_a? MemoryFileEntry
+        entry.content
       end
     end
 
@@ -87,7 +87,9 @@ module FS
     end
 
     def add_file(name, content)
-      @data[name] = MemoryFileEntry.new(@fs, @fs.combine(@prefix, name), content)
+      @data[name] = MemoryFileEntry.new(@fs, @fs.combine(@prefix, name)).tap do |entry|
+        entry.content = content
+      end
     end
 
     def add_directory(name)
@@ -95,10 +97,11 @@ module FS
     end
   end
 
-  class MemoryDirectoryEntry
+  class MemoryDirectoryEntry < DirectoryEntry
     property data
 
-    def initialize(@fs, @path)
+    def initialize(fs, path)
+      super
       @data = {} of String => MemoryDirectoryEntry | MemoryFileEntry
     end
 
@@ -107,21 +110,9 @@ module FS
     end
 
     include MemoryFileContainer
-
-    def entry
-      DirectoryEntry.new(@fs, @path)
-    end
   end
 
-  class MemoryFileEntry
-    property path
+  class MemoryFileEntry < FileEntry
     property content
-
-    def initialize(@fs, @path, @content)
-    end
-
-    def entry
-      FileEntry.new(@fs, @path)
-    end
   end
 end
