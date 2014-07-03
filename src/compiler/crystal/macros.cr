@@ -478,6 +478,8 @@ module Crystal
         BoolLiteral.new(self == args.first)
       when "!="
         BoolLiteral.new(self != args.first)
+      when "!"
+        BoolLiteral.new(!truthy?)
       else
         raise "undefined macro method #{class_desc}##{method}'"
       end

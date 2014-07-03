@@ -82,6 +82,10 @@ describe "MacroExpander" do
     it "expands macro with if with nop" do
       assert_macro "x", "{%if x%}hello{%else%}bye{%end%}", [Nop.new] of ASTNode, "bye"
     end
+
+    it "expands macro with if with not" do
+      assert_macro "", "{%if !true%}hello{%else%}bye{%end%}", [] of ASTNode, "bye"
+    end
   end
 
   describe "for" do
