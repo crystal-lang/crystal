@@ -35,8 +35,8 @@ module FS
       end
     end
 
-    def entry(path)
-      memory_entry_for_path(path).not_nil!
+    def entry?(path)
+      memory_entry_for_path(path)
     end
 
     def find_entries(path, &block : Entry+ -> U)

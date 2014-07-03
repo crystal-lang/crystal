@@ -48,6 +48,31 @@ macro filesystem_spec(fs)
     {{fs.id}}.exists?("no-existing").should be_false
     {{fs.id}}.exists?("folder1/no-existing.txt").should be_false
     {{fs.id}}.exists?("folder1/no-existing/").should be_false
+
+    {{fs.id}}.exists?("folder1").should be_true
+    {{fs.id}}.exists?("folder1/subfolder1").should be_true
+  end
+
+  it "should get if dir exists using dir?" do
+    {{fs.id}}.dir?("no-existing").should be_false
+    {{fs.id}}.dir?("folder1/no-existing.txt").should be_false
+    {{fs.id}}.dir?("folder1/no-existing/").should be_false
+
+    {{fs.id}}.dir?("folder1").should be_true
+    {{fs.id}}.dir?("folder1/subfolder1").should be_true
+    {{fs.id}}.dir?("top-level.txt").should be_false
+  end
+
+
+  it "should get if file exists using file?" do
+    {{fs.id}}.file?("no-existing").should be_false
+    {{fs.id}}.file?("folder1/no-existing.txt").should be_false
+    {{fs.id}}.file?("folder1/no-existing/").should be_false
+
+    {{fs.id}}.file?("folder1").should be_false
+    {{fs.id}}.file?("folder1/subfolder1").should be_false
+    {{fs.id}}.file?("folder2/second-level.txt").should be_true
+    {{fs.id}}.file?("top-level.txt").should be_true
   end
 end
 
@@ -61,10 +86,11 @@ describe "MemoryFileSystem" do
   fs = FS::MemoryFileSystem.new
 
   fs.add_directory "folder1" do |folder1|
-    folder1.add_directory "subfolder1" do |subfolder1|
-    end
+    folder1.add_directory "subfolder1"
   end
-  fs.add_directory "folder2"
+  fs.add_directory "folder2" do |folder2|
+    fs.add_file "second-level.txt", ""
+  end
   fs.add_file "top-level.txt", "Now is the time for all good coders\nto learn Crystal\n"
 
   filesystem_spec(fs)

@@ -9,13 +9,13 @@ module FS
       File.read scoped_file_name(path)
     end
 
-    def entry(path)
+    def entry?(path)
       if Dir.exists?(scoped_file_name(path))
         return create_entry(path, C::DirType::DIR)
       elsif File.exists?(scoped_file_name(path))
         return create_entry(path, C::DirType::REG)
       else
-        raise "invalid entry"
+        nil
       end
     end
 

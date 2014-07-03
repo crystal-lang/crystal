@@ -21,8 +21,15 @@ module FS
 
     # create Entry corresponding that corresponds to the specified
     # relative path to the file system
-    def entry(path)
+    def entry?(path)
       raise "subclass responsibility"
+    end
+
+    def entry(path)
+      entry = entry?(path)
+      raise "invalid entry" unless entry
+      entry.not_nil!
+      entry
     end
 
     # enumerate top level entries of file system
@@ -40,7 +47,15 @@ module FS
     collect_alias_method "find_entries(path)", "Entry+"
 
     def exists?(path)
-      find_entries(path).count == 1
+      !entry?(path).nil?
+    end
+
+    def dir?(path)
+      exists?(path) && entry(path).dir?
+    end
+
+    def file?(path)
+      exists?(path) && entry(path).file?
     end
   end
 end
