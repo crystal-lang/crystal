@@ -89,7 +89,7 @@ describe "MemoryFileSystem" do
     folder1.add_directory "subfolder1"
   end
   fs.add_directory "folder2" do |folder2|
-    fs.add_file "second-level.txt", ""
+    folder2.add_file "second-level.txt", ""
   end
   fs.add_file "top-level.txt", "Now is the time for all good coders\nto learn Crystal\n"
 
