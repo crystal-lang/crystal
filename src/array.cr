@@ -6,10 +6,10 @@ require "set"
 class Array(T)
   include Enumerable
 
-  def initialize(initial_capacity = 3)
+  def initialize(initial_capacity = 3 : Int)
     initial_capacity = Math.max(initial_capacity, 3)
     @length = 0
-    @capacity = initial_capacity
+    @capacity = initial_capacity.to_i
     @buffer = Pointer(T).malloc(initial_capacity)
   end
 
