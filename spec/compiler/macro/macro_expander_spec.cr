@@ -66,6 +66,22 @@ describe "MacroExpander" do
     assert_macro "x", "{{x}}", [Var.new("hello")] of ASTNode, "hello"
   end
 
+  it "expands macro with or (1)" do
+    assert_macro "x", "{{x || 1}}", [NilLiteral.new] of ASTNode, "1"
+  end
+
+  it "expands macro with or (2)" do
+    assert_macro "x", "{{x || 1}}", [Var.new("hello")] of ASTNode, "hello"
+  end
+
+  it "expands macro with and (1)" do
+    assert_macro "x", "{{x && 1}}", [NilLiteral.new] of ASTNode, "nil"
+  end
+
+  it "expands macro with and (2)" do
+    assert_macro "x", "{{x && 1}}", [Var.new("hello")] of ASTNode, "1"
+  end
+
   describe "if" do
     it "expands macro with if when truthy" do
       assert_macro "", "{%if true%}hello{%end%}", [] of ASTNode, "hello"
@@ -259,6 +275,10 @@ describe "MacroExpander" do
 
     it "executes index 1" do
       assert_macro "", %({{[1, 2, 3][1]}}), [] of ASTNode, "2"
+    end
+
+    it "executes index out of bounds" do
+      assert_macro "", %({{[1, 2, 3][3]}}), [] of ASTNode, "nil"
     end
 
     it "executes length" do

@@ -259,6 +259,22 @@ module Crystal
         false
       end
 
+      def visit(node : And)
+        node.left.accept self
+        if @last.truthy?
+          node.right.accept self
+        end
+        false
+      end
+
+      def visit(node : Or)
+        node.left.accept self
+        unless @last.truthy?
+          node.right.accept self
+        end
+        false
+      end
+
       def visit(node : Call)
         obj = node.obj
         if obj
@@ -717,7 +733,7 @@ module Crystal
           if value
             value
           else
-            raise "array index out of bounds: #{index} in #{self}"
+            NilLiteral.new
           end
         else
           raise "wrong number of arguments for [] (#{args.length} for 1)"
