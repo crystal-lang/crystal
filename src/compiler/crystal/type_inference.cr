@@ -28,6 +28,7 @@ module Crystal
     property type_lookup
     property fun_literal_context
     property types
+    property block_nest
 
     # These are the free variables that came from matches. We look up
     # here first if we find a single-element Path like `T`.
@@ -46,24 +47,24 @@ module Crystal
     # Here we store the cummulative types of variables as we traverse the nodes.
     getter meta_vars
 
+    getter is_initialize
+
     def initialize(@mod, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
       @while_stack = [] of While
-      typed_def = @typed_def
-
-      @meta_vars = initialize_meta_vars @mod, vars, typed_def, meta_vars
       @vars = vars
-
       @needs_type_filters = 0
       @unreachable = false
-    end
+      @block_nest = 0
+      @typeof_nest = 0
+      @is_initialize = typed_def && typed_def.name == "initialize"
+      @found_call_in_initialize = false
 
-    # We initialize meta_vars from vars given in the constructor.
-    # We store those meta vars either in the typed def or in the program
-    # so the codegen phase knows the cummulative types to do allocas.
-    def initialize_meta_vars(mod, vars, typed_def, meta_vars)
+      # We initialize meta_vars from vars given in the constructor.
+      # We store those meta vars either in the typed def or in the program
+      # so the codegen phase knows the cummulative types to do allocas.
       unless meta_vars
-        if typed_def
+        if typed_def = @typed_def
           meta_vars = typed_def.vars = MetaVars.new
         else
           meta_vars = @mod.vars
@@ -75,7 +76,7 @@ module Crystal
         end
       end
 
-      meta_vars
+      @meta_vars = meta_vars
     end
 
     def new_meta_var(name)
@@ -221,6 +222,15 @@ module Crystal
     def visit(node : InstanceVar)
       var = lookup_instance_var node
       node.bind_to(var)
+
+      if @is_initialize
+        if node.out
+          @vars[node.name] = MetaVar.new(node.name)
+        elsif !@vars.has_key? node.name
+          ivar = scope.lookup_instance_var(node.name)
+          ivar.bind_to @mod.nil_var
+        end
+      end
     end
 
     def end_visit(node : ReadInstanceVar)
@@ -363,6 +373,24 @@ module Crystal
 
       node.bind_to value
       var.bind_to node
+
+      if @is_initialize
+        var_name = target.name
+
+        meta_var = (@meta_vars[var_name] ||= new_meta_var(var_name))
+        meta_var.bind_to value
+        meta_var.assigned_to = true
+
+        simple_var = MetaVar.new(var_name)
+        simple_var.bind_to(target)
+
+        if @found_call_in_initialize || (@block_nest > 0 && !@vars.has_key?(var_name))
+          ivar = scope.lookup_instance_var(var_name)
+          ivar.bind_to @mod.nil_var
+        end
+
+        @vars[var_name] = simple_var
+      end
     end
 
     def type_assign(target : Path, value, node)
@@ -444,8 +472,13 @@ module Crystal
       false
     end
 
+    def visit(node : TypeOf)
+      @typeof_nest += 1
+    end
+
     def end_visit(node : TypeOf)
       node.bind_to node.expressions
+      @typeof_nest -= 1
     end
 
     def visit(node : Undef)
@@ -505,6 +538,7 @@ module Crystal
 
     def visit(node : Block)
       return if node.visited
+
       node.visited = true
       node.context = current_non_block_context
 
@@ -521,6 +555,8 @@ module Crystal
         meta_vars[arg.name] = meta_var
       end
 
+      @block_nest += 1
+
       block_visitor = TypeVisitor.new(mod, before_block_vars, @typed_def, meta_vars)
       block_visitor.yield_vars = @yield_vars
       block_visitor.free_vars = @free_vars
@@ -529,7 +565,11 @@ module Crystal
       block_visitor.scope = node.scope || @scope
       block_visitor.block = node
       block_visitor.type_lookup = type_lookup
+      block_visitor.block_nest = @block_nest
+
       node.body.accept block_visitor
+
+      @block_nest -= 1
 
       # Check re-assigned variables and bind them.
       bind_vars block_visitor.vars, node.vars
@@ -586,6 +626,8 @@ module Crystal
       block_visitor.scope = @scope
       block_visitor.type_lookup = type_lookup
       block_visitor.fun_literal_context = @fun_literal_context || @typed_def || @mod
+      block_visitor.block_nest = @block_nest
+
       node.def.body.accept block_visitor
 
       if node.def.closure
@@ -652,6 +694,8 @@ module Crystal
         return false
       end
 
+      check_super_in_initialize node
+
       obj = node.obj
       block_arg = node.block_arg
 
@@ -705,6 +749,8 @@ module Crystal
 
       node.recalculate
 
+      check_call_in_initialize node
+
       @type_filters = nil
       @unreachable = true if node.no_returns?
 
@@ -720,6 +766,41 @@ module Crystal
         node.scope = @scope || @types.last.metaclass
       end
       node.parent_visitor = self
+    end
+
+    # If it's a super call inside an initialize we treat
+    # set instance vars from superclasses to not-nil
+    def check_super_in_initialize(node)
+      if @is_initialize && node.name == "super" && !node.obj
+        superclass = scope.superclass
+
+        while superclass
+          superclass.instance_vars_in_initialize.try &.each do |name|
+            meta_var = MetaVar.new(name)
+            meta_var.bind_to scope.lookup_instance_var(name)
+            @vars[name] = meta_var
+          end
+
+          superclass = superclass.superclass
+        end
+      end
+    end
+
+    # Check if it's a call to self. In that case, all instance variables
+    # not mentioned so far will be considered nil.
+    def check_call_in_initialize(node)
+      return unless @is_initialize
+      return if @found_call_in_initialize
+      return if @typeof_nest > 0
+
+      node_obj = node.obj
+      if !node_obj || (node_obj.is_a?(Var) && node_obj.name == "self")
+        node.target_defs.try &.each do |target_def|
+          if target_def.owner == scope
+            @found_call_in_initialize = true
+          end
+        end
+      end
     end
 
     # Fill function literal argument types for C functions
@@ -1147,6 +1228,8 @@ module Crystal
         visitor = TypeVisitor.new(@mod, vars, external)
         visitor.untyped_def = external
         visitor.scope = @mod
+        visitor.block_nest = @block_nest
+
         begin
           node_body.accept visitor
         rescue ex : Crystal::Exception
@@ -2248,6 +2331,26 @@ module Crystal
 
     def bind_meta_var(var)
       raise "Bug: trying to bind var or instance var but got #{var}"
+    end
+
+    def bind_initialize_instance_vars(owner)
+      names_to_remove = [] of String
+
+      @vars.each do |name, var|
+        if name.starts_with? '@'
+          if var.nil_if_read
+            ivar = owner.lookup_instance_var(name)
+            ivar.bind_to @mod.nil_var
+          end
+
+          names_to_remove << name
+        end
+      end
+
+      names_to_remove.each do |name|
+        @meta_vars.delete name
+        @vars.delete name
+      end
     end
 
     def and_type_filters(filters1, filters2)

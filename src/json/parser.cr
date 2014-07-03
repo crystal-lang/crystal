@@ -1,7 +1,7 @@
 class Json::Parser
   def initialize(string)
     @lexer = Lexer.new(string)
-    @token = next_token
+    @token = @lexer.next_token
   end
 
   def parse

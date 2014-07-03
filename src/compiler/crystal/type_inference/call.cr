@@ -172,6 +172,10 @@ module Crystal
               visitor.scope = lookup_self_type
               visitor.type_lookup = match.type_lookup
               typed_def.body.accept visitor
+
+              if visitor.is_initialize
+                visitor.bind_initialize_instance_vars(owner)
+              end
             end
           end
         end

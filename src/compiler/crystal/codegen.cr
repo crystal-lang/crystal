@@ -116,7 +116,7 @@ module Crystal
       @llvm_typer = LLVMTyper.new
       @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type
-      ret_type = llvm_type(node.type)
+      ret_type = @llvm_typer.llvm_type(node.type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, pointer_type(LLVM::VoidPointer)], ret_type)
 
       @context = Context.new @main, @mod

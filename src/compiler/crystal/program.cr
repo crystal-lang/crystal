@@ -60,10 +60,10 @@ module Crystal
       @float64.types["INFINITY"] = Const.new self, @float64, "FLOAT_INFINITY", Primitive.new(:float64_infinity)
 
       @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", @value, 4
-      @types["Pointer"] = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
-      @types["Tuple"] = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
+      @types["Pointer"] = @pointer = PointerType.new self, self, "Pointer", @value, ["T"]
+      @types["Tuple"] = @tuple = TupleType.new self, self, "Tuple", @value, ["T"]
 
-      @static_array = @types["StaticArray"] = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
+      @static_array = @types["StaticArray"] = StaticArrayType.new self, self, "StaticArray", @value, ["T", "N"]
       @static_array.struct = true
       @static_array.declare_instance_var("@buffer", Path.new(["T"]))
       @static_array.instance_vars_in_initialize = Set.new(["@buffer"])
@@ -105,7 +105,7 @@ module Crystal
       @requires = Set(String).new
       @temp_var_counter = 0
       @type_id_counter = 1
-      @nil_var = Var.new("<nil_var>", self.nil)
+      @nil_var = Var.new("<nil_var>", @nil)
       @crystal_path = (ENV["CRYSTAL_PATH"] || "").split(':')
       @vars = MetaVars.new
       @literal_expander = LiteralExpander.new self

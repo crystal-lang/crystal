@@ -22,6 +22,10 @@ class Crystal::Program
   def fun_of(type1 : Type, type2 : Type)
     fun_of([type1, type2] of Type)
   end
+
+  def nilable(type)
+    union_of self.nil, type
+  end
 end
 
 make_named_tuple InferTypeResult, [program, node]

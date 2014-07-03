@@ -983,8 +983,8 @@ module Crystal
       @abstract = false
       @struct = false
       @allocated = false
-      parents.push superclass if superclass
       @owned_instance_vars = Set(String).new
+      parents.push superclass if superclass
       force_add_subclass if add_subclass
     end
 
