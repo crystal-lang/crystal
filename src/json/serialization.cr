@@ -56,8 +56,11 @@ end
 def Hash.new(pull : Json::PullParser)
   hash = new
   pull.read_object do |key|
-    hash[key] = V.new(pull)
+    if pull.kind == :null
+      pull.read_next
+    else
+      hash[key] = V.new(pull)
+    end
   end
   hash
 end
-

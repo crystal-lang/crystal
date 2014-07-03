@@ -34,5 +34,9 @@ describe "Json serialization" do
     it "does Hash(String, Int32)#from_json" do
       Hash(String, Int32).from_json(%({"foo": 1, "bar": 2})).should eq({"foo" => 1, "bar" => 2})
     end
+
+    it "does Hash(String, Int32)#from_json and skips null" do
+      Hash(String, Int32).from_json(%({"foo": 1, "bar": 2, "baz": null})).should eq({"foo" => 1, "bar" => 2})
+    end
   end
 end
