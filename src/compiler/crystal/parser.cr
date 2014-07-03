@@ -1774,6 +1774,10 @@ module Crystal
           return MacroFor.new(vars, exp, body)
         when :if
           return parse_macro_if(start_line, start_column, macro_state)
+        when :unless
+          macro_if = parse_macro_if(start_line, start_column, macro_state)
+          macro_if.then, macro_if.else = macro_if.else, macro_if.then
+          return macro_if
         when :else, :elsif, :end
           return nil
         end
