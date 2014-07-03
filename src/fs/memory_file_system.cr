@@ -36,7 +36,7 @@ module FS
     end
 
     def entry(path)
-      memory_entry_for_path(path)
+      memory_entry_for_path(path).not_nil!
     end
 
     def find_entries(path, &block : Entry+ -> U)
@@ -63,9 +63,10 @@ module FS
 
       path.split('/').each do |part|
         unless current_entries
-          raise "invalid entry #{path}"
+          # raise "invalid entry #{path}"
+          return nil
         else
-          current = current_entries[part]
+          current = current_entries[part]?
           if current.is_a? MemoryDirectoryEntry
             current_entries = current.data
           else
@@ -75,7 +76,8 @@ module FS
       end
 
       unless current
-        raise "invalid entry #{path}"
+        # raise "invalid entry #{path}"
+        return nil
       else
         current
       end

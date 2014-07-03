@@ -39,5 +39,8 @@ module FS
 
     collect_alias_method "find_entries(path)", "Entry+"
 
+    def exists?(path)
+      find_entries(path).count == 1
+    end
   end
 end

@@ -24,6 +24,8 @@ module FS
     end
 
     def find_entries(path, &block : Entry+ -> U)
+      return unless Dir.exists?(scoped_file_name(path))
+
       Dir.list(scoped_file_name(path)) do |entry, type|
         next if entry == "." || entry == ".."
         block.call(create_entry(combine(path, entry), type))

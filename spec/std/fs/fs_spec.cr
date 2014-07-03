@@ -43,6 +43,12 @@ macro filesystem_spec(fs)
   it "should read all file" do
     {{fs.id}}.file("top-level.txt").read.should eq("Now is the time for all good coders\nto learn Crystal\n")
   end
+
+  it "should check non existing entry" do
+    {{fs.id}}.exists?("no-existing").should be_false
+    {{fs.id}}.exists?("folder1/no-existing.txt").should be_false
+    {{fs.id}}.exists?("folder1/no-existing/").should be_false
+  end
 end
 
 describe "DirectoryFileSystem" do
