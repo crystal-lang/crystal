@@ -39,4 +39,38 @@ describe "Json serialization" do
       Hash(String, Int32).from_json(%({"foo": 1, "bar": 2, "baz": null})).should eq({"foo" => 1, "bar" => 2})
     end
   end
+
+  describe "to_json" do
+    it "does for Nil" do
+      nil.to_json.should eq("null")
+    end
+
+    it "does for Bool" do
+      true.to_json.should eq("true")
+    end
+
+    it "does for Int32" do
+      1.to_json.should eq("1")
+    end
+
+    it "does for Float64" do
+      1.5.to_json.should eq("1.5")
+    end
+
+    it "does for String" do
+      "hello".to_json.should eq("\"hello\"")
+    end
+
+    it "does for String with quote" do
+      "hel\"lo".to_json.should eq("\"hel\\\"lo\"")
+    end
+
+    it "does for Array" do
+      [1, 2, 3].to_json.should eq("[1, 2, 3]")
+    end
+
+    it "does for Hash" do
+      {"foo" => 1, "bar" => 2}.to_json.should eq(%({"foo": 1, "bar": 2}))
+    end
+  end
 end
