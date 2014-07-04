@@ -261,7 +261,9 @@ module Crystal
           node.raise "can't use instance variables inside #{@scope}"
         end
 
-        if scope.is_a?(InstanceVarContainer)
+        if scope.metaclass?
+          node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+        elsif scope.is_a?(InstanceVarContainer)
           var = scope.lookup_instance_var node.name
           unless scope.has_instance_var_in_initialize?(node.name)
             begin

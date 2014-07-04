@@ -520,4 +520,17 @@ describe "Type inference: class" do
       ),
       "Int32 doesn't have instance vars"
   end
+
+  it "says that instance vars are not allowed in metaclass" do
+    assert_error %(
+      module Foo
+        def self.foo
+          @foo
+        end
+      end
+
+      Foo.foo
+      ),
+      "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
+  end
 end
