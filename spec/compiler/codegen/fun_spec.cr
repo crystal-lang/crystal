@@ -398,4 +398,46 @@ describe "Code gen: fun" do
       f.call(1)
       ").to_i.should eq(3)
   end
+
+  it "allows invoking a function with a subtype" do
+    run(%(
+      class Foo
+        def x
+          1
+        end
+      end
+
+      class Bar < Foo
+        def x
+          2
+        end
+      end
+
+      f = ->(foo : Foo) { foo.x }
+      f.call Bar.new
+      )).to_i.should eq(2)
+  end
+
+  it "allows invoking a function with a subtype when defined as block spec" do
+    run(%(
+      class Foo
+        def x
+          1
+        end
+      end
+
+      class Bar < Foo
+        def x
+          2
+        end
+      end
+
+      def func(&block : Foo -> U)
+        block
+      end
+
+      f = func { |foo| foo.x }
+      f.call Bar.new
+      )).to_i.should eq(2)
+  end
 end

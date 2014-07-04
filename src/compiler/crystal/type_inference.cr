@@ -601,7 +601,7 @@ module Crystal
         # when converting a block to a fun literal
         if restriction = arg.restriction
           restriction.accept self
-          arg.type = restriction.type.instance_type
+          arg.type = restriction.type.instance_type.hierarchy_type
         elsif !arg.type?
           arg.raise "function argument '#{arg.name}' must have a type"
         end
