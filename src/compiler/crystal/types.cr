@@ -1018,6 +1018,9 @@ module Crystal
     end
 
     def transfer_instance_vars(a_def)
+      # Don't consider macro defs here (only later, when expanded)
+      return if a_def.return_type
+
       is_initialize = a_def.name == "initialize"
 
       if a_def_instance_vars = a_def.instance_vars

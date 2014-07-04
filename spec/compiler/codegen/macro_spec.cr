@@ -288,4 +288,23 @@ describe "Code gen: macro" do
       foo(1)
       )).to_i.should eq(3)
   end
+
+  it "expands def macro with instance var and method call (bug)" do
+    run(%(
+      struct Nil
+        def to_i
+          0
+        end
+      end
+
+      class Foo
+        def foo : Int32
+          name = 1
+          @name = name
+        end
+      end
+
+      Foo.new.foo.to_i
+      )).to_i.should eq(1)
+  end
 end

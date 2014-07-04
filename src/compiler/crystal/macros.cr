@@ -38,7 +38,9 @@ module Crystal
       target_def.vars = vars
       arg_names = target_def.args.map(&.name)
 
-      generated_nodes = parse_macro_source(generated_source, the_macro, target_def, arg_names.to_set)
+      generated_nodes = parse_macro_source(generated_source, the_macro, target_def, arg_names.to_set) do |parser|
+        parser.parse_to_def(target_def)
+      end
 
       type_visitor = TypeVisitor.new(@program, vars, target_def)
       type_visitor.scope = owner
@@ -52,10 +54,14 @@ module Crystal
     end
 
     def parse_macro_source(generated_source, the_macro, node, vars)
+      parse_macro_source generated_source, the_macro, node, vars, &.parse
+    end
+
+    def parse_macro_source(generated_source, the_macro, node, vars)
       begin
         parser = Parser.new(generated_source, [vars])
         parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
-        normalize parser.parse
+        normalize(yield parser)
       rescue ex : Crystal::SyntaxException
         node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s(generated_source)}\n#{"=" * 80}"
       end

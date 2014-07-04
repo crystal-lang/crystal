@@ -20,7 +20,6 @@ module Crystal
       @def_nest = 0
       @block_arg_count = 0
       @in_macro_expression = false
-      @in_def_count = 0
       @stop_on_yield = 0
     end
 
@@ -1597,11 +1596,24 @@ module Crystal
       inc
     end
 
+    def parse_to_def(a_def)
+      instance_vars = prepare_parse_def
+      @def_nest += 1
+
+      # Small memory optimization: don't keep the Set in the Def if it's empty
+      instance_vars = nil if instance_vars.empty?
+
+      result = parse
+
+      a_def.instance_vars = instance_vars
+      a_def.calls_super = @calls_super
+      a_def.uses_block_arg = @uses_block_arg
+
+      result
+    end
+
     def parse_def
-      instance_vars = @instance_vars = Set(String).new
-      @calls_super = false
-      @uses_block_arg = false
-      @block_arg_name = nil
+      instance_vars = prepare_parse_def
       a_def = parse_def_helper
 
       # Small memory optimization: don't keep the Set in the Def if it's empty
@@ -1615,6 +1627,13 @@ module Crystal
       @uses_block_arg = false
       @block_arg_name = nil
       a_def
+    end
+
+    def prepare_parse_def
+      @calls_super = false
+      @uses_block_arg = false
+      @block_arg_name = nil
+      @instance_vars = Set(String).new
     end
 
     def parse_macro
