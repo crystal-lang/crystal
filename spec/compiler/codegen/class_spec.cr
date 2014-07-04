@@ -298,4 +298,56 @@ describe "Code gen: class" do
       foo.@x
       )).to_i.should eq(1)
   end
+
+  it "runs with nil instance var" do
+    run("
+      struct Nil
+        def to_i
+          0
+        end
+      end
+
+      class Bar
+        def initialize
+        end
+
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      bar = Bar.new
+      bar.x.to_i
+      ").to_i.should eq(0)
+  end
+
+  it "runs with nil instance var when inheriting" do
+    run("
+      struct Nil
+        def to_i
+          0
+        end
+      end
+
+      class Foo
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+        end
+      end
+
+      bar = Bar.new
+      bar.x.to_i
+      ").to_i.should eq(0)
+  end
 end

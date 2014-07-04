@@ -1018,6 +1018,8 @@ module Crystal
     end
 
     def transfer_instance_vars(a_def)
+      is_initialize = a_def.name == "initialize"
+
       if a_def_instance_vars = a_def.instance_vars
         a_def_instance_vars.each do |ivar|
           if superclass = @superclass
@@ -1032,7 +1034,7 @@ module Crystal
           end
         end
 
-        if a_def.name == "initialize"
+        if is_initialize
           if ivii = @instance_vars_in_initialize
             @instance_vars_in_initialize = ivii & a_def_instance_vars
           else
@@ -1048,6 +1050,18 @@ module Crystal
               end
               sup = sup.superclass
             end
+          end
+        end
+      elsif is_initialize
+        # If it's an initialize without instance variables,
+        # then *all* instance variables are nilable
+        @instance_vars_in_initialize = Set(String).new
+
+        unless a_def.calls_super
+          sup = superclass
+          while sup
+            sup.instance_vars_in_initialize = Set(String).new
+            sup = sup.superclass
           end
         end
       end
