@@ -285,6 +285,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_defs"
     end
 
+    def lookup_defs_with_modules(name)
+      raise "Bug: #{self} doesn't implement lookup_defs_with_modules"
+    end
+
     def lookup_first_def(name, block)
       raise "Bug: #{self} doesn't implement lookup_first_def"
     end
@@ -570,6 +574,21 @@ module Crystal
 
       parents.try &.each do |parent|
         parent_defs = parent.lookup_defs(name)
+        return parent_defs unless parent_defs.empty?
+      end
+
+      [] of Def
+    end
+
+    def lookup_defs_with_modules(name)
+      if (defs = self.defs) && (hash = defs[name]?)
+        return hash.values unless hash.empty?
+      end
+
+      parents.try &.each do |parent|
+        next unless parent.module?
+
+        parent_defs = parent.lookup_defs_with_modules(name)
         return parent_defs unless parent_defs.empty?
       end
 
@@ -1884,6 +1903,10 @@ module Crystal
       @module.lookup_defs(name)
     end
 
+    def lookup_defs_with_modules(name)
+      @module.lookup_defs_with_modules(name)
+    end
+
     def lookup_similar_def_name(name)
       @module.lookup_similar_def_name(name)
     end
@@ -2048,6 +2071,10 @@ module Crystal
 
     def lookup_defs(name)
       aliased_type.lookup_defs(name)
+    end
+
+    def lookup_defs_with_modules(name)
+      aliased_type.lookup_defs_with_modules(name)
     end
 
     def lookup_first_def(name, block)
@@ -2714,6 +2741,10 @@ module Crystal
 
     def lookup_defs(name)
       base_type.lookup_defs(name)
+    end
+
+    def lookup_defs_with_modules(name)
+      base_type.lookup_defs_with_modules(name)
     end
 
     def lookup_similar_def_name(name)

@@ -693,7 +693,17 @@ module Crystal
         return Matches.new(matches, scope)
       end
 
-      matches = scope.instance_type.lookup_matches("initialize", arg_types, block)
+      # First check if this type has any initialize
+      initializers = instance_type.lookup_defs_with_modules("initialize")
+
+      # If there are no initialize at all, use parent's initialize
+      if initializers.empty?
+        matches = instance_type.lookup_matches("initialize", arg_types, block)
+      else
+        # Otherwise, use this type initializers
+        matches = instance_type.lookup_matches_with_modules("initialize", arg_types, block)
+      end
+
       if matches.empty?
         # We first need to check if there aren't any "new" methods in the class
         defs = scope.lookup_defs("new")

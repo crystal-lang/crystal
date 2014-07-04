@@ -533,4 +533,21 @@ describe "Type inference: class" do
       ),
       "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
   end
+
+  it "doesn't use initialize from base class" do
+    assert_error %(
+      class Foo
+        def initialize(x)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x, y)
+        end
+      end
+
+      Bar.new(1)
+      ),
+      "wrong number of arguments for 'Bar#initialize' (1 for 2)"
+  end
 end

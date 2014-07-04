@@ -109,19 +109,19 @@ class Exception
 end
 
 class EmptyEnumerable < Exception
-  def initialize
-    super("Empty enumerable")
+  def initialize(message = "Empty enumerable")
+    super(message)
   end
 end
 
 class IndexOutOfBounds < Exception
-  def initialize
-    super("Index out of bounds")
+  def initialize(message = "Index out of bounds")
+    super(message)
   end
 end
 
 class ArgumentError < Exception
-  def initialize
-    super("Argument error")
+  def initialize(message = "Argument error")
+    super(message)
   end
 end
