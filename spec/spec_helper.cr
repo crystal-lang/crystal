@@ -92,11 +92,15 @@ def assert_error(str, message)
 end
 
 def assert_macro(macro_args, macro_body, call_args, expected)
+  assert_macro(macro_args, macro_body, expected) { call_args }
+end
+
+def assert_macro(macro_args, macro_body, expected)
   macro_def = "macro foo(#{macro_args});#{macro_body};end"
   a_macro = Parser.parse(macro_def) as Macro
 
   program = Program.new
-  call = Call.new(nil, "", call_args)
+  call = Call.new(nil, "", yield program)
   result = program.expand_macro program, a_macro, call
   result = result[0 .. -2] if result.ends_with?(';')
   result.should eq(expected)

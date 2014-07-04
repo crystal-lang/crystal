@@ -2030,6 +2030,24 @@ module Crystal
       self
     end
   end
+
+  # Ficticious node to represent a type inside a macro
+  class MacroType < ASTNode
+    def initialize(@type)
+    end
+
+    def ==(other : MacroType)
+      type == other.type
+    end
+
+    def to_macro_id
+      @type.to_s
+    end
+
+    def clone_without_location
+      self
+    end
+  end
 end
 
 require "to_s"

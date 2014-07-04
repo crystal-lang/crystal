@@ -538,6 +538,10 @@ module Crystal
       node
     end
 
+    def transform(node : MacroType)
+      node
+    end
+
     def transform_many(exps)
       exps.map! { |exp| exp.transform(self) } if exps
     end

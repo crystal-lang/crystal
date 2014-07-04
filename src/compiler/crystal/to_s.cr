@@ -308,6 +308,11 @@ module Crystal
       false
     end
 
+    def visit(node : MacroType)
+      node.type.append_to_s(@str)
+      false
+    end
+
     def keyword(str)
       str
     end

@@ -430,19 +430,9 @@ module Crystal
         when "@name", "@class_name"
           @last = StringLiteral.new(@scope.to_s)
         when "@instance_vars"
-          scope = @scope
-          unless scope.is_a?(InstanceVarContainer)
-            node.raise "#{scope} can't have instance vars"
-          end
-
-          all_ivars = scope.all_instance_vars
-
-          ivars = Array(ASTNode).new(all_ivars.length)
-          all_ivars.each do |name, ivar|
-            ivars.push MetaVar.new(name, ivar.type)
-          end
-
-          @last = ArrayLiteral.new(ivars)
+          @last = MacroType.instance_vars(@scope)
+        when "@superclass"
+          @last = MacroType.superclass(@scope)
         else
           node.raise "unknown macro instance var: '#{node.name}'"
         end
@@ -817,9 +807,54 @@ module Crystal
       case method
       when "name"
         interpret_argless_method(method, args) { StringLiteral.new(@name) }
+      when "type"
+        interpret_argless_method(method, args) do
+          if type = @type
+            MacroType.new(type)
+          else
+            NilLiteral.new
+          end
+        end
       else
         super
       end
+    end
+  end
+
+  class MacroType
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        interpret_argless_method(method, args) { StringLiteral.new(type.to_s) }
+      when "instance_vars"
+        interpret_argless_method(method, args) { MacroType.instance_vars(type) }
+      when "superclass"
+        interpret_argless_method(method, args) { MacroType.superclass(type) }
+      else
+        super
+      end
+    end
+
+    def self.instance_vars(type)
+      unless type.is_a?(InstanceVarContainer)
+        return ArrayLiteral.new
+      end
+
+      all_ivars = type.all_instance_vars
+
+      ivars = Array(ASTNode).new(all_ivars.length)
+      all_ivars.each do |name, ivar|
+        ivars.push MetaVar.new(name, ivar.type)
+      end
+
+      ArrayLiteral.new(ivars)
+    end
+
+    def self.superclass(type)
+      superclass = type.superclass
+      superclass ? MacroType.new(superclass) : NilLiteral.new
+    rescue
+      NilLiteral.new
     end
   end
 
