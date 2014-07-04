@@ -550,4 +550,22 @@ describe "Type inference: class" do
       ),
       "wrong number of arguments for 'Bar#initialize' (1 for 2)"
   end
+
+  it "doesn't use initialize from base class with hierarchy type" do
+    assert_error %(
+      class Foo
+        def initialize(x)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x, y)
+        end
+      end
+
+      klass = 1 == 1 ? Foo : Bar
+      klass.new(1)
+      ),
+      "wrong number of arguments for 'Bar#initialize' (1 for 2)"
+  end
 end

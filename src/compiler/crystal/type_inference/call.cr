@@ -105,7 +105,13 @@ module Crystal
       if matches.empty?
         if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.hierarchy?) && !owner.instance_type.pointer?
           new_matches = define_new owner, arg_types
-          matches = new_matches unless new_matches.empty?
+          unless new_matches.empty?
+            if owner.hierarchy_metaclass?
+              matches = owner.lookup_matches(def_name, arg_types, block)
+            else
+              matches = new_matches
+            end
+          end
         elsif !obj && owner != mod
           mod_matches = mod.lookup_matches(def_name, arg_types, block)
           matches = mod_matches unless mod_matches.empty?
@@ -551,6 +557,11 @@ module Crystal
     end
 
     def raise_matches_not_found(owner, def_name, matches = nil)
+      # Special case: Foo+:Class#new
+      if owner.is_a?(HierarchyMetaclassType) && def_name == "new"
+        raise_matches_not_found_for_hierarchy_metaclass_new owner
+      end
+
       defs = owner.lookup_defs(def_name)
       obj = @obj
       if defs.empty?
@@ -664,6 +675,20 @@ module Crystal
       end
 
       raise message, owner_trace
+    end
+
+    def raise_matches_not_found_for_hierarchy_metaclass_new(owner)
+      arg_types = args.map &.type
+
+      owner.each_concrete_type do |concrete_type|
+        defs = concrete_type.instance_type.lookup_defs_with_modules("initialize")
+        defs = defs.select { |a_def| a_def.args.length != args.length }
+        unless defs.empty?
+          all_arguments_lengths = Set(Int32).new
+          defs.each { |a_def| all_arguments_lengths << a_def.args.length }
+          raise "wrong number of arguments for '#{concrete_type.instance_type}#initialize' (#{args.length} for #{all_arguments_lengths.join ", "})"
+        end
+      end
     end
 
     def check_macro_wrong_number_of_arguments(def_name)

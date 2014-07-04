@@ -1465,7 +1465,7 @@ module Crystal
         end
       end
 
-      instance = instance_class.new program, self, instance_type_vars
+      instance = self.new_generic_instance(program, self, instance_type_vars)
       generic_types[type_vars] = instance
       initialize_instance instance
 
@@ -1516,12 +1516,12 @@ module Crystal
       @variadic = false
     end
 
-    def instance_class
-      GenericClassInstanceType
-    end
-
     def class?
       true
+    end
+
+    def new_generic_instance(program, generic_type, type_vars)
+      GenericClassInstanceType.new program, generic_type, type_vars
     end
 
     def declare_instance_var(name, node)
@@ -1704,12 +1704,12 @@ module Crystal
   end
 
   class PointerType < GenericClassType
-    def instance_class
-      PointerInstanceType
-    end
-
     def pointer?
       true
+    end
+
+    def new_generic_instance(program, generic_type, type_vars)
+      PointerInstanceType.new program, generic_type, type_vars
     end
 
     def type_desc
@@ -1754,8 +1754,8 @@ module Crystal
   end
 
   class StaticArrayType < GenericClassType
-    def instance_class
-      StaticArrayInstanceType
+    def new_generic_instance(program, generic_type, type_vars)
+      StaticArrayInstanceType.new program, generic_type, type_vars
     end
   end
 
@@ -1809,8 +1809,8 @@ module Crystal
       instance
     end
 
-    def instance_class
-      TupleInstanceType
+    def new_generic_instance(program, generic_type, type_vars)
+      raise "Bug: TupleType#new_generic_instance shouldn't be invoked"
     end
 
     def type_desc
@@ -2584,6 +2584,8 @@ module Crystal
 
   module HierarchyTypeLookup
     def lookup_matches(name, arg_types, block, owner = self, type_lookup = self)
+      is_new = hierarchy_metaclass? && name == "new"
+
       base_type_lookup = hierarchy_lookup(base_type)
       base_type_matches = base_type_lookup.lookup_matches(name, arg_types, block, self)
 
@@ -2612,6 +2614,16 @@ module Crystal
 
           # Check matches but without parents: only included modules
           subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, block, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+
+          # For Foo+:Class#new we need to check that this subtype doesn't define
+          # an incompatible initialize: if so, we return empty matches, because
+          # all subtypes must have an initialize with the same number of arguments.
+          if is_new && subtype_matches.empty?
+            other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
+            unless other_initializers.empty?
+              return Matches.new([] of Match, false)
+            end
+          end
 
           # If we didn't find a match in a subclass, and the base type match is a macro
           # def, we need to copy it to the subclass so that @name, @instance_vars and other
@@ -2973,8 +2985,8 @@ module Crystal
       instance
     end
 
-    def instance_class
-      FunInstanceType
+    def new_generic_instance(program, generic_type, type_vars)
+      raise "Bug: FunType#new_generic_instance shouldn't be invoked"
     end
 
     def type_desc
