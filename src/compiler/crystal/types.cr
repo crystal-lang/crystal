@@ -1514,6 +1514,7 @@ module Crystal
     def initialize(program, container, name, superclass, @type_vars, add_subclass = true)
       super(program, container, name, superclass, add_subclass)
       @variadic = false
+      @allocated = true
     end
 
     def class?

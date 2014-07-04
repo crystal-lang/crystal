@@ -129,4 +129,31 @@ describe "Type inference: cast" do
       ),
       "can't cast Pointer(Void) to ( -> Int32)"
   end
+
+  it "errors if casting to a non-allocated type" do
+    assert_error %(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Foo
+      end
+
+      foo = Foo.new || Bar.new
+      foo as Baz
+      ),
+      "can't cast to Baz because it was never instantiated"
+  end
+
+  it "doesn't error if casting to a generic type" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      foo = Foo(Int32).new
+      foo as Foo
+      )) { (types["Foo"] as GenericClassType).instantiate([int32] of ASTNode | Type) }
+  end
 end
