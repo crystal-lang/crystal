@@ -474,15 +474,6 @@ module Crystal
       false
     end
 
-    def visit(node : TypeOf)
-      @typeof_nest += 1
-    end
-
-    def end_visit(node : TypeOf)
-      node.bind_to node.expressions
-      @typeof_nest -= 1
-    end
-
     def visit(node : Undef)
       unless current_type.undef(node.name)
         node.raise "undefined method #{node.name} for #{current_type.type_desc} #{current_type}"
@@ -1879,8 +1870,14 @@ module Crystal
       node.bind_to var
     end
 
-    def end_visit(node : TypeOf)
+    def visit(node : TypeOf)
+      @typeof_nest += 1
+      node.expressions.each &.accept self
+      @typeof_nest -= 1
+
       node.bind_to node.expressions
+
+      false
     end
 
     def end_visit(node : SizeOf)

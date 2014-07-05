@@ -23,11 +23,11 @@ alias YamlType = String | Hash(YamlType, YamlType) | Array(YamlType) | Nil
 class YamlParser
   def initialize(content)
     @parser = Pointer(Void).malloc(LibYaml::PARSER_SIZE) as LibYaml::Parser*
-    LibYaml.yaml_parser_initialize(@parser)
-    LibYaml.yaml_parser_set_input_string(@parser, content, content.length)
-
     @event = LibYaml::Event.new
     @anchors = {} of String => YamlType
+
+    LibYaml.yaml_parser_initialize(@parser)
+    LibYaml.yaml_parser_set_input_string(@parser, content, content.length)
 
     next_event
     raise "Expected STREAM_START" unless @event.type == LibYaml::EventType::STREAM_START
