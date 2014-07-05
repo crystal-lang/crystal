@@ -16,7 +16,7 @@ module Crystal
     end
 
     def set_type(type : Type)
-      type = type.remove_alias
+      type = type.remove_alias_if_simple
       # TODO: this should really be "type.implements?(my_type)"
       if @freeze_type && (my_type = @type) && !my_type.is_restriction_of_all?(type)
         raise "type must be #{my_type}, not #{type}", nil, Crystal::FrozenTypeException
@@ -144,8 +144,11 @@ module Crystal
   end
 
   class TypeOf
+    property in_generic_args
+    @in_generic_args = false
+
     def map_type(type)
-      type.metaclass
+      @in_generic_args ? type : type.metaclass
     end
 
     def update(from = nil)
@@ -205,6 +208,8 @@ module Crystal
 
   class Generic
     property! instance_type
+    property in_generic_args
+    @in_generic_args = false
 
     def update(from = nil)
       type_vars_types = [] of Type | ASTNode
@@ -215,12 +220,13 @@ module Crystal
         else
           node_type = node.type?
           self.raise "can't deduce generic type in recursive method" unless node_type
-          type_vars_types << node_type.instance_type.hierarchify
+          type_vars_types << node_type.hierarchify
         end
       end
 
       generic_type = instance_type.instantiate(type_vars_types)
-      self.type = generic_type.metaclass
+      generic_type = generic_type.metaclass unless @in_generic_args
+      self.type = generic_type
     end
   end
 

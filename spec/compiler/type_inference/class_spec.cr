@@ -37,6 +37,24 @@ describe "Type inference: class" do
     type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
   end
 
+  it "types generic of generic type" do
+    result = assert_type("
+      class Foo(T)
+        def set
+          @coco = 2
+        end
+      end
+
+      f = Foo(Foo(Int32)).new
+      f.set
+      f
+    ") do
+      foo = types["Foo"] as GenericClassType
+      foo_i32 = foo.instantiate([int32] of Type | ASTNode)
+      foo_foo_i32 = foo.instantiate([foo_i32] of Type | ASTNode)
+    end
+  end
+
   it "types instance variable" do
     input = parse "
       class Foo(T)

@@ -59,6 +59,7 @@ module Crystal
       @typeof_nest = 0
       @is_initialize = typed_def && typed_def.name == "initialize"
       @found_call_in_initialize = false
+      @in_generic_args = 0
 
       # We initialize meta_vars from vars given in the constructor.
       # We store those meta vars either in the typed def or in the program
@@ -941,8 +942,16 @@ module Crystal
       @unreachable = true
     end
 
-    def end_visit(node : Generic)
-      return if node.type?
+    def visit(node : Generic)
+      node.in_generic_args = @in_generic_args > 0
+
+      node.name.accept self
+
+      @in_generic_args += 1
+      node.type_vars.each &.accept self
+      @in_generic_args -= 1
+
+      return false if node.type?
 
       instance_type = node.name.type.instance_type
       unless instance_type.is_a?(GenericClassType)
@@ -963,6 +972,8 @@ module Crystal
       node.instance_type = instance_type
       node.type_vars.each &.add_observer(node)
       node.update
+
+      false
     end
 
     def end_visit(node : IsA)
@@ -1383,7 +1394,7 @@ module Crystal
         node.target_const = type
         node.bind_to type.value
       when Type
-        node.type = type.remove_alias_if_simple.metaclass
+        node.type = check_type_in_generic_args(type.remove_alias_if_simple)
       when ASTNode
         node.syntax_replacement = type
         node.bind_to type
@@ -1395,11 +1406,19 @@ module Crystal
     end
 
     def end_visit(node : Hierarchy)
-      node.type = node.name.type.instance_type.hierarchy_type.metaclass
+      node.type = check_type_in_generic_args node.name.type.instance_type.hierarchy_type
     end
 
     def end_visit(node : Metaclass)
       node.type = node.name.type.hierarchy_type.metaclass
+    end
+
+    def check_type_in_generic_args(type)
+      if @in_generic_args > 0
+        type
+      else
+        type.metaclass
+      end
     end
 
     def visit(node : If)
@@ -1871,9 +1890,16 @@ module Crystal
     end
 
     def visit(node : TypeOf)
+      node.in_generic_args = @in_generic_args > 0
+
+      old_in_generic_args = @in_generic_args
+      @in_generic_args = 0
+
       @typeof_nest += 1
       node.expressions.each &.accept self
       @typeof_nest -= 1
+
+      @in_generic_args = old_in_generic_args
 
       node.bind_to node.expressions
 

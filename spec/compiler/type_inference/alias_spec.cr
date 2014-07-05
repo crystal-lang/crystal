@@ -60,4 +60,12 @@ describe "type inference: alias" do
     aliased_type.union_types[0].should eq(mod.int32)
     aliased_type.union_types[1].should eq(foo_alias)
   end
+
+  it "allows recursive array with alias" do
+    assert_type(%(
+      alias Type = Nil | Pointer(Type)
+      p = Pointer(Type).malloc(1_u64)
+      1
+      )) { int32 }
+  end
 end
