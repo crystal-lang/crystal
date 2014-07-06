@@ -299,6 +299,10 @@ describe "Parser" do
   it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", [] of ASTNode, Block.new([Var.new("#arg0")], IsA.new(Var.new("#arg0"), "T".path)))
   it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", [] of ASTNode, Block.new([Var.new("#arg0")], RespondsTo.new(Var.new("#arg0"), "foo".symbol)))
 
+  it_parses "x = 1; foo x do\nend", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", ["x".var] of ASTNode, Block.new)]
+  it_parses "x = 1; foo x { }", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", [] of ASTNode, Block.new)] of ASTNode)]
+  it_parses "x = 1; foo x {\n}", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", [] of ASTNode, Block.new)] of ASTNode)]
+
   it_parses "foo !false", Call.new(nil, "foo", [Call.new(false.bool, "!")] of ASTNode)
   it_parses "!a && b", And.new(Call.new("a".call, "!"), "b".call)
 

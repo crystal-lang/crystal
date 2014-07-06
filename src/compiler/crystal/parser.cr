@@ -12,7 +12,7 @@ module Crystal
 
     def initialize(str, @def_vars = [Set(String).new])
       super(str)
-      @last_call_has_parenthesis = false
+      @last_call_has_parenthesis = true
       @temp_token = Token.new
       @unclosed_stack = [] of Unclosed
       @calls_super = false
@@ -1029,7 +1029,7 @@ module Crystal
         skip_space
       end
 
-      CallArgs.new args, block, block_arg
+      CallArgs.new args, block, block_arg, false
     end
 
     def parse_class_def(is_abstract = false, is_struct = false)
@@ -2285,17 +2285,35 @@ module Crystal
 
       @calls_super = true if name == "super"
 
-      call_args = parse_call_args
+      old_last_call_has_parenthesis = @last_call_has_parenthesis
+
+      call_args = parse_call_args(is_var && !@last_call_has_parenthesis)
       if call_args
         args = call_args.args
         block = call_args.block
         block_arg = call_args.block_arg
       end
 
-      block = parse_block(block)
+      if call_args && call_args.stopped_on_do_after_space
+        # This is the case when we have:
+        #
+        #     x = 1
+        #     foo x do
+        #     end
+        #
+        # In this case, since x is a variable and the previous call (foo)
+        # doesn't have parenthesis, we don't parse "x do end" as an invocation
+        # to a method x with a block. Instead, we just stop on x and we don't
+        # consume the block, leaving the block for 'foo' to consume.
+      else
+        block = parse_block(block)
+      end
+
+      last_call_has_parenthesis = @last_call_has_parenthesis
+      @last_call_has_parenthesis = old_last_call_has_parenthesis
 
       if block || block_arg || global
-        Call.new nil, name, (args || [] of ASTNode), block, block_arg, global, name_column_number, @last_call_has_parenthesis
+        Call.new nil, name, (args || [] of ASTNode), block, block_arg, global, name_column_number, last_call_has_parenthesis
       else
         if args
           if (!force_call && is_var) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
@@ -2303,7 +2321,7 @@ module Crystal
             num.value = num.value[1, num.value.length - 1]
             Call.new(Var.new(name), sign, args)
           else
-            Call.new(nil, name, args, nil, block_arg, global, name_column_number, @last_call_has_parenthesis)
+            Call.new(nil, name, args, nil, block_arg, global, name_column_number, last_call_has_parenthesis)
           end
         else
           if @token.type == :"::"
@@ -2322,7 +2340,7 @@ module Crystal
             end
             Var.new name
           else
-            Call.new nil, name, [] of ASTNode, nil, block_arg, global, name_column_number, @last_call_has_parenthesis
+            Call.new nil, name, [] of ASTNode, nil, block_arg, global, name_column_number, last_call_has_parenthesis
           end
         end
       end
@@ -2411,9 +2429,9 @@ module Crystal
       Block.new(block_args, block_body)
     end
 
-    make_named_tuple CallArgs, [args, block, block_arg]
+    make_named_tuple CallArgs, [args, block, block_arg, stopped_on_do_after_space]
 
-    def parse_call_args
+    def parse_call_args(stop_on_do_after_space = false)
       case @token.type
       when :"{"
         @last_call_has_parenthesis = false
@@ -2465,10 +2483,15 @@ module Crystal
           @last_call_has_parenthesis = true
         end
 
-        CallArgs.new args, nil, nil
+        CallArgs.new args, nil, nil, false
       when :SPACE
         next_token
         @last_call_has_parenthesis = false
+
+        if stop_on_do_after_space && @token.keyword?(:do)
+          return CallArgs.new nil, nil, nil, true
+        end
+
         parse_call_args_space_consumed
       else
         @last_call_has_parenthesis = false
@@ -2546,7 +2569,7 @@ module Crystal
           break
         end
       end
-      CallArgs.new args, nil, nil
+      CallArgs.new args, nil, nil, false
     end
 
     def parse_ident_or_global_call
