@@ -1955,7 +1955,7 @@ module Crystal
           end
         end
         next_token_skip_space
-      when :IDENT
+      when :IDENT, :INSTANCE_VAR
         while @token.type != :NEWLINE && @token.type != :";"
           block_arg = parse_arg(args, extra_assigns, false, pointerof(found_default_value))
           if block_arg
