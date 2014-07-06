@@ -276,6 +276,11 @@ describe "Hash" do
     h.length.should eq(1)
   end
 
+  it "gets hash entries as tuples" do
+    h = {1 => "hello", 2 => "bye"}
+    h.entries.should eq([{1, "hello"}, {2, "bye"}])
+  end
+
   class Breaker
     getter x
     def initialize(@x)

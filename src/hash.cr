@@ -182,6 +182,14 @@ class Hash(K, V)
     values
   end
 
+  def entries
+    ary = [] of {K, V}
+    each do |key, value|
+      ary << {key, value}
+    end
+    ary
+  end
+
   def key_index(key)
     each_with_index do |my_key, my_value, i|
       return i if key == my_key
