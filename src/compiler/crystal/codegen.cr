@@ -117,7 +117,7 @@ module Crystal
       @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_type(node.type)
-      @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM.pointer_type(LLVM::VoidPointer)], ret_type)
+      @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, pointer_type(LLVM::VoidPointer)], ret_type)
 
       @context = Context.new @main, @mod
       @context.return_type = @main_ret_type
@@ -136,16 +136,22 @@ module Crystal
       @modules = {"" => @main_mod} of String => LLVM::Module
       @types_to_modules = {} of Type => LLVM::Module
 
-      @main_alloca_block = @alloca_block = @context.fun.append_basic_block "alloca"
-      @const_block_entry = @const_block = @context.fun.append_basic_block "const"
-      @entry_block = @context.fun.append_basic_block "entry"
-      @builder.position_at_end @entry_block
+      @alloca_block, @const_block, @entry_block = new_entry_block_chain({"alloca", "const", "entry"})
+      @main_alloca_block = @alloca_block
+      @const_block_entry = @const_block
 
       @strings = {} of StringKey => LibLLVM::ValueRef
       @symbols = {} of String => Int32
       @symbol_table_values = [] of LibLLVM::ValueRef
+      mod.symbols.each_with_index do |sym, index|
+        @symbols[sym] = index
+        @symbol_table_values << build_string_constant(sym, sym)
+      end
 
-      @last = LLVM.int LLVM::Int1, 0
+      symbol_table = define_symbol_table @llvm_mod
+      LLVM.set_initializer symbol_table, LLVM.array(llvm_type(@mod.string), @symbol_table_values)
+
+      @last = llvm_nil
       @fun_literal_count = 0
 
       # This flag is to generate less code. If there's an if in the middle
@@ -154,19 +160,11 @@ module Crystal
       # Also, we don't need the value of unions returned from calls if they
       # are not going to be used.
       @needs_value = true
-      @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
 
       @empty_md_list = metadata([0])
 
+      @subprograms = {} of LLVM::Module => Array(LibLLVM::ValueRef?)
       @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
-
-      mod.symbols.each_with_index do |sym, index|
-        @symbols[sym] = index
-        @symbol_table_values << build_string_constant(sym, sym)
-      end
-
-      symbol_table = define_symbol_table @llvm_mod
-      LLVM.set_initializer symbol_table, LLVM.array(llvm_type(@mod.string), @symbol_table_values)
 
       alloca_vars @mod.vars, @mod
     end
