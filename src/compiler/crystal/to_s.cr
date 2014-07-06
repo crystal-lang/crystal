@@ -213,7 +213,20 @@ module Crystal
 
     def visit(node : Call)
       node_obj = node.obj
-      need_parens = (node_obj.is_a?(Call) && node_obj.args.length > 0) || node_obj.is_a?(Assign)
+      case node_obj
+      when Call
+        need_parens = node_obj.args.length > 0
+      when Assign
+        need_parens = true
+      when ArrayLiteral
+        need_parens = !!node_obj.of
+      when HashLiteral
+        need_parens = !!node_obj.of_key
+      else
+        need_parent = false
+      end
+
+      need_parens = (node_obj.is_a?(Call) && node_obj.args.length > 0) ||
 
       @str << "::" if node.global
 
@@ -278,8 +291,8 @@ module Crystal
         else
           @str << decorate_call(node, node.name)
 
-          need_call_parens = call_needs_parens(node)
-          @str << "(" if need_call_parens
+          call_args_need_parens = !(node.obj && node.args.empty?) || node.block_arg
+          @str << "(" if call_args_need_parens
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0
             arg.accept self
@@ -289,7 +302,7 @@ module Crystal
             @str << "&"
             block_arg.accept self
           end
-          @str << ")" if need_call_parens
+          @str << ")" if call_args_need_parens
         end
       end
       if block = node.block
@@ -297,10 +310,6 @@ module Crystal
         block.accept self
       end
       false
-    end
-
-    def call_needs_parens(node)
-      !(node.obj && node.args.empty?) || node.block_arg
     end
 
     def visit(node : MacroId)
