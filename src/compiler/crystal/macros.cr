@@ -376,8 +376,10 @@ module Crystal
         result = system2(cmd).join "\n"
         if $exit == 0
           @last = MacroId.new(result)
+        elsif result.empty?
+          node.raise "error executing command: #{cmd}, got exit status #{$exit}"
         else
-          node.raise "error executing command: #{cmd}\n\nGot:\n\n#{result}\n"
+          node.raise "error executing command: #{cmd}, got exit status #{$exit}:\n\n#{result}\n"
         end
       end
 
