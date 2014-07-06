@@ -310,7 +310,7 @@ describe "Type inference: initialize" do
       )) { int32 }
   end
 
-  it "types instance var as nilable if used after method call" do
+  it "types instance var as nilable if used after method call that reads var" do
     assert_type(%(
       class Foo
         def initialize
@@ -319,6 +319,7 @@ describe "Type inference: initialize" do
         end
 
         def foo
+          @x
         end
 
         def x
@@ -361,7 +362,182 @@ describe "Type inference: initialize" do
         end
 
         def foo
-          1
+          @x
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.x
+      )) { int32 }
+  end
+
+  it "doesn't type instance var as nilable if used after method call that doesn't read var" do
+    assert_type(%(
+      class Foo
+        def initialize
+          foo
+          @x = 1
+        end
+
+        def foo
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.x
+      )) { int32 }
+  end
+
+  it "types instance var as nilable if used after method call that reads var through other calls" do
+    assert_type(%(
+      class Foo
+        def initialize
+          foo
+          @x = 1
+        end
+
+        def foo
+          bar
+        end
+
+        def bar
+          x = 1 || 1.5
+          baz(x)
+        end
+
+        def baz(x : Int32)
+          @x
+        end
+
+        def baz(x : Float64)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.x
+      )) { nilable int32 }
+  end
+
+  it "doesn't type instance var as nilable if used after method call that assigns var" do
+    assert_type(%(
+      class Foo
+        def initialize
+          foo
+          @x = 1
+        end
+
+        def foo
+          @x = 2
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.x
+      )) { int32 }
+  end
+
+  it "finishes when analyzing recursive calls" do
+    assert_type(%(
+      class Foo
+        def initialize
+          foo
+          @x = 1
+        end
+
+        def foo
+          bar
+        end
+
+        def bar
+          foo
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.x
+      )) { int32 }
+  end
+
+  it "doesn't type instance var as nilable if not used in method call" do
+    assert_type(%(
+      class Foo
+        def initialize
+          foo
+          @x = 1
+        end
+
+        def foo
+          @y
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.x
+      )) { int32 }
+  end
+
+  it "types instance var as nilable if used in first of two method calls" do
+    assert_type(%(
+      class Foo
+        def initialize
+          foo
+          bar
+          @x = 1
+        end
+
+        def foo
+          @x
+        end
+
+        def bar
+          @y
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.x
+      )) { nilable int32 }
+  end
+
+  it "doesn't type instance var as nilable if assigned before method call" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = 1
+          foo
+          @x = 1
+        end
+
+        def foo
+          @x
         end
 
         def x

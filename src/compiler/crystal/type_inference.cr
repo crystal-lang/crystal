@@ -58,7 +58,7 @@ module Crystal
       @block_nest = 0
       @typeof_nest = 0
       @is_initialize = typed_def && typed_def.name == "initialize"
-      @found_call_in_initialize = false
+      @used_ivars_in_calls_in_initialize = nil
       @in_generic_args = 0
 
       # We initialize meta_vars from vars given in the constructor.
@@ -387,7 +387,8 @@ module Crystal
         simple_var = MetaVar.new(var_name)
         simple_var.bind_to(target)
 
-        if @found_call_in_initialize || (@block_nest > 0 && !@vars.has_key?(var_name))
+        used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
+        if used_ivars_in_calls_in_initialize.try(&.includes?(var_name)) || (@block_nest > 0 && !@vars.has_key?(var_name))
           ivar = scope.lookup_instance_var(var_name)
           ivar.bind_to @mod.nil_var
         end
@@ -784,14 +785,17 @@ module Crystal
     # not mentioned so far will be considered nil.
     def check_call_in_initialize(node)
       return unless @is_initialize
-      return if @found_call_in_initialize
       return if @typeof_nest > 0
 
       node_obj = node.obj
       if !node_obj || (node_obj.is_a?(Var) && node_obj.name == "self")
-        node.target_defs.try &.each do |target_def|
-          if target_def.owner == scope
-            @found_call_in_initialize = true
+        ivars = gather_instance_vars_read node
+        if ivars
+          used_ivars_in_calls_in_initialize = @used_ivars_in_calls_in_initialize
+          if used_ivars_in_calls_in_initialize
+            @used_ivars_in_calls_in_initialize = used_ivars_in_calls_in_initialize | ivars
+          else
+            @used_ivars_in_calls_in_initialize = ivars
           end
         end
       end
@@ -868,6 +872,50 @@ module Crystal
       node.expanded = fun_literal
 
       true
+    end
+
+    class InstanceVarsCollector < Visitor
+      getter ivars
+
+      def initialize(@scope, @vars)
+      end
+
+      def visit(node : InstanceVar)
+        unless @vars.has_key?(node.name)
+          ivars = @ivars ||= Set(String).new
+          ivars << node.name
+        end
+      end
+
+      def visit(node : Assign)
+        node.value.accept self
+        false
+      end
+
+      def visit(node : Call)
+        visited = @visited
+
+        node.target_defs.try &.each do |target_def|
+          if target_def.owner == @scope
+            next if visited.try &.includes?(target_def.object_id)
+
+            visited = @visited ||= Set(typeof(object_id)).new
+            visited << target_def.object_id
+
+            target_def.body.accept self
+          end
+        end
+      end
+
+      def visit(node : ASTNode)
+        true
+      end
+    end
+
+    def gather_instance_vars_read(node)
+      collector = InstanceVarsCollector.new(scope, @vars)
+      node.accept collector
+      collector.ivars
     end
 
     def expand_macro(node)
