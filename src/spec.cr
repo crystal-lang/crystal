@@ -226,6 +226,14 @@ def fail(msg)
   raise Spec::AssertionFailed.new(msg)
 end
 
+macro expect_raise(klass)
+  begin
+    {{yield}}
+    fail "expected to raise {{klass.id}}"
+  rescue {{klass.id}}
+  end
+end
+
 class Object
   def should(expectation)
     unless expectation.match self

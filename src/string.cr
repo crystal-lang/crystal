@@ -611,16 +611,17 @@ class String
 
   def each_char
     reader = CharReader.new(self)
-    while (c = reader.current_char) != '\0'
-      yield c
-      reader.next_char
+    reader.each do |char|
+      yield char
     end
+    self
   end
 
   def each_byte
     cstr.each(length) do |byte|
       yield byte
     end
+    self
   end
 
   def inspect
