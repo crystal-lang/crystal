@@ -17,6 +17,8 @@ end
 class String
   include Comparable(self)
 
+  getter length
+
   def self.new(chars : UInt8*)
     new(chars, C.strlen(chars))
   end
@@ -596,10 +598,6 @@ class String
         first = false
       end
     end
-  end
-
-  def length
-    @length
   end
 
   def reverse

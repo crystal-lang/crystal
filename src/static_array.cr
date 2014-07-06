@@ -46,4 +46,3 @@ struct StaticArray(T, N)
     end
   end
 end
-

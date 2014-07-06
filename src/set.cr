@@ -5,15 +5,16 @@ class Set(T)
     @hash = Hash(T, Bool).new
   end
 
-  def initialize(array : Array(T))
-    @hash = Hash(T, Bool).new
+  def self.new(array : Array(T))
+    set = Set(T).new
     array.each do |elem|
-      add(elem)
+      set << elem
     end
+    set
   end
 
   def <<(object : T)
-    add(object)
+    add object
   end
 
   def add(object : T)

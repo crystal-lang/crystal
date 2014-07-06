@@ -1,6 +1,8 @@
 class BitArray
   include Enumerable(Bool)
 
+  getter length
+
   def initialize(@length)
     @bits = Pointer(UInt32).malloc((length / 32.0).ceil)
   end
@@ -17,10 +19,6 @@ class BitArray
     else
       @bits[bit_index] &= ~(1 << sub_index)
     end
-  end
-
-  def length
-    @length
   end
 
   def each

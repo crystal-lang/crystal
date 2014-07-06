@@ -1,5 +1,5 @@
 lib C
-  fun getenv(name : UInt8*) : UInt8*
+  fun getenv(name : UInt8*) : UInt8*?
   fun setenv(name : UInt8*, value : UInt8*, overwrite : Int32) : Int32
 end
 

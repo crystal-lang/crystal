@@ -15,11 +15,12 @@ class Regex
   EXTENDED = 8
   ANCHORED = 16
 
-  def initialize(str, modifiers = 0)
-    @source = str
+  getter source
+
+  def initialize(@source, modifiers = 0)
     errptr = Pointer(UInt8).malloc(0)
     erroffset = 1
-    @re = PCRE.compile(str, modifiers, pointerof(errptr), pointerof(erroffset), nil)
+    @re = PCRE.compile(@source, modifiers, pointerof(errptr), pointerof(erroffset), nil)
     if @re == 0
       raise "#{String.new(errptr)} at #{erroffset}"
     end
@@ -43,10 +44,6 @@ class Regex
     !match(other).nil?
   end
 
-  def source
-    @source
-  end
-
   def to_s
     "/#{source}/"
   end
@@ -55,15 +52,11 @@ end
 class MatchData
   EMPTY = MatchData.new("", nil, "", 0, Pointer(Int32).null, 0)
 
+  getter regex
+  getter length
+  getter string
+
   def initialize(@regex, @code, @string, @pos, @ovector, @length)
-  end
-
-  def length
-    @length
-  end
-
-  def regex
-    @regex
   end
 
   def begin(n)
@@ -76,10 +69,6 @@ class MatchData
     check_index_out_of_bounds n
 
     @ovector[n * 2 + 1]
-  end
-
-  def string
-    @string
   end
 
   def [](n)

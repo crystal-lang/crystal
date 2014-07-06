@@ -1,15 +1,10 @@
-class Complex
-  def initialize(real, imag)
-    @real = real
-    @imag = imag
-  end
+struct Complex
+  getter real
+  getter imag
 
-  def real
-    @real
-  end
-
-  def imag
-    @imag
+  def initialize(real : Number, imag : Number)
+    @real = real.to_f
+    @imag = imag.to_f
   end
 
   def +(other)

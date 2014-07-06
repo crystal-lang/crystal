@@ -67,22 +67,14 @@ def caller
 end
 
 class Exception
+  getter message
+  getter inner_exception
+  getter backtrace
+
   def initialize(message = nil : String?, inner_exception = nil : Exception?)
     @message = message
     @inner_exception = inner_exception
     @backtrace = caller
-  end
-
-  def message
-    @message
-  end
-
-  def inner_exception
-    @inner_exception
-  end
-
-  def backtrace
-    @backtrace
   end
 
   def to_s

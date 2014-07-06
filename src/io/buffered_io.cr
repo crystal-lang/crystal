@@ -1,7 +1,7 @@
-class BufferedIO
+class BufferedIO(T)
   include IO
 
-  def initialize(@io)
+  def initialize(@io : T)
     @buffer = @buffer_rem = Pointer(UInt8).malloc(16 * 1024)
     @buffer_rem_size = 0
     @out_buffer = StringIO.new

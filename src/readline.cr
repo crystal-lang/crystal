@@ -4,11 +4,13 @@ lib LibReadline("readline")
 end
 
 module Readline
-  def self.readline(prompt, add_history = false)
-    line = LibReadline.readline(prompt.cstr)
+  extend self
+
+  def readline(prompt = "", add_history = false)
+    line = LibReadline.readline(prompt)
     if line
       LibReadline.add_history(line) if add_history
-      String.new(line)
+      String.new_and_free(line)
     else
       nil
     end

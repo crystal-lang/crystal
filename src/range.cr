@@ -3,6 +3,9 @@ require "enumerable"
 struct Range(B, E)
   include Enumerable(B)
 
+  getter :begin
+  getter :end
+
   def initialize(@begin : B, @end : E, @exclusive)
   end
 
@@ -24,14 +27,6 @@ struct Range(B, E)
     end
     yield current if current == @end && !@exclusive
     self
-  end
-
-  def begin
-    @begin
-  end
-
-  def end
-    @end
   end
 
   def excludes_end?

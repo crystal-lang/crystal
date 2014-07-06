@@ -1,4 +1,6 @@
 class StringBuilder
+  getter length
+
   def initialize
     @length = 0
     @parts = Array(String).new
@@ -19,10 +21,6 @@ class StringBuilder
     @parts << str
     @length += str.length
     self
-  end
-
-  def length
-    @length
   end
 
   def to_s

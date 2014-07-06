@@ -32,6 +32,8 @@ class Hash(K, V)
     end
   end
 
+  getter length
+
   def initialize(block = nil, @comp = StandardComparator)
     @buckets = Array(Entry(K, V)?).new(11, nil)
     @length = 0
@@ -132,10 +134,6 @@ class Hash(K, V)
       entry = entry.next
     end
     nil
-  end
-
-  def length
-    @length
   end
 
   def empty?

@@ -6,6 +6,8 @@ require "set"
 class Array(T)
   include Enumerable
 
+  getter length
+
   def initialize(initial_capacity = 3 : Int)
     initial_capacity = Math.max(initial_capacity, 3)
     @length = 0
@@ -30,10 +32,6 @@ class Array(T)
       ary.buffer[i] = yield i
     end
     ary
-  end
-
-  def length
-    @length
   end
 
   def count
