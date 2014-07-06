@@ -625,31 +625,60 @@ class String
   end
 
   def inspect
-    "\"#{dump}\""
+    String.new_from_buffer(length + 2) do |buffer|
+      inspect(buffer)
+    end
+  end
+
+  def inspect(io)
+    io << "\""
+    dump(io)
+    io << "\""
   end
 
   def dump
-    replace do |char|
-      case char
-      when '"'  then "\\\""
-      when '\f' then "\\f"
-      when '\n' then "\\n"
-      when '\r' then "\\r"
-      when '\t' then "\\t"
-      when '\v' then "\\v"
-      when '\{' then "\\{"
-      when '\\' then "\\\\"
+    String.new_from_buffer(length) do |buffer|
+      dump(buffer)
+    end
+  end
+
+  def dump(io)
+    reader = CharReader.new(self)
+    while reader.has_next?
+      current_char = reader.current_char
+      case current_char
+      when '"'  then io << "\\\""
+      when '\f' then io << "\\f"
+      when '\n' then io << "\\n"
+      when '\r' then io << "\\r"
+      when '\t' then io << "\\t"
+      when '\v' then io << "\\v"
+      when '\\' then io << "\\\\"
+      when '#'
+        current_char = reader.next_char
+        if current_char == '{'
+          io << "\\\#{"
+          reader.next_char
+          next
+        else
+          io << '#'
+          next
+        end
       else
-        if char.ord < 32 || char.ord > 127
-          high = char.ord / 16
-          low = char.ord % 16
+        ord = current_char.ord
+        if ord < 32 || ord > 127
+          high = ord / 16
+          low = ord % 16
           high = high < 10 ? ('0'.ord + high).chr : ('A'.ord + high - 10).chr
           low = low < 10 ? ('0'.ord + low).chr : ('A'.ord + low - 10).chr
-          "\\x#{high}#{low}"
+          io << "\\x"
+          io << high
+          io << low
         else
-          nil
+          io << current_char
         end
       end
+      reader.next_char
     end
   end
 
