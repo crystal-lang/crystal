@@ -905,6 +905,8 @@ module Crystal
             target_def.body.accept self
           end
         end
+
+        true
       end
 
       def visit(node : ASTNode)

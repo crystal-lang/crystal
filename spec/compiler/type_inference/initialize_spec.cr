@@ -332,6 +332,33 @@ describe "Type inference: initialize" do
       )) { nilable int32 }
   end
 
+  it "types instance var as nilable if used after method call that reads var (2)" do
+    assert_error %(
+      class Bar
+        def bar
+        end
+      end
+
+      class Foo
+        def initialize
+          my_method
+          @x = Bar.new
+        end
+
+        def my_method
+          @x.bar
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new
+      foo.x
+      ), "undefined method 'bar' for Nil"
+  end
+
   it "doesn't type instance var as nilable if used after global method call" do
     assert_type(%(
       def foo
