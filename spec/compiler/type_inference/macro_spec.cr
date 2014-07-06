@@ -133,4 +133,14 @@ describe "Type inference: macro" do
       foo(1)
       ), "wrong number of arguments for macro 'foo' (1 for 0)"
   end
+
+  it "executs raise inside macro" do
+    assert_error %(
+      macro foo
+        {{ raise "OH NO" }}
+      end
+
+      foo
+      ), "OH NO"
+  end
 end

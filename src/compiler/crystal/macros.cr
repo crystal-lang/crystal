@@ -348,6 +348,8 @@ module Crystal
           execute_puts(node)
         when "system"
           execute_system(node)
+        when "raise"
+          execute_raise(node)
         when "run"
           execute_run(node)
         else
@@ -377,6 +379,16 @@ module Crystal
         else
           node.raise "error executing command: #{cmd}\n\nGot:\n\n#{result}\n"
         end
+      end
+
+      def execute_raise(node)
+        msg = node.args.map do |arg|
+          arg.accept self
+          @last.to_macro_id
+        end
+        msg = msg.join " "
+
+        node.raise "can't expand macro: #{msg}"
       end
 
       def execute_run(node)
