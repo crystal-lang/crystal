@@ -1967,6 +1967,10 @@ module Crystal
             break
           end
         end
+      when :";", :"NEWLINE", :":"
+         # Skip
+      else
+        unexpected_token
       end
 
       if @token.type == :":"

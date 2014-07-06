@@ -910,4 +910,12 @@ describe "Parser" do
       ex.message.not_nil!.includes?("can't take pointerof(self)").should be_true
     end
   end
+
+  it "says error on def foo 1" do
+    begin
+      Parser.parse "def foo 1; end"
+      fail "syntax exception should have been raised"
+    rescue ex : Crystal::SyntaxException
+    end
+  end
 end

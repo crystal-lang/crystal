@@ -1112,7 +1112,7 @@ module Crystal
         next if hook.kind != kind
 
         expanded = expand_macro(hook.macro, node) do
-          @mod.expand_macro current_type, hook.macro.body
+          @mod.expand_macro current_type.instance_type, hook.macro.body
         end
         expanded.accept self
         node.add_runtime_initializer(expanded)
