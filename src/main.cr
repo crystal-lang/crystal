@@ -9,6 +9,14 @@ def at_exit(&handler)
   handlers << handler
 end
 
+def run_at_exit
+  begin
+    $at_exit_handlers.try &.each &.call
+  rescue handler_ex
+    puts "Error running at_exit handler: #{handler_ex}"
+  end
+end
+
 macro redefine_main(name)
   fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
     GC.init
@@ -18,11 +26,7 @@ macro redefine_main(name)
     puts ex
     1
   ensure
-    begin
-      $at_exit_handlers.try &.each &.call
-    rescue handler_ex
-      puts "Error running at_exit handler: #{handler_ex}"
-    end
+    run_at_exit
   end
 end
 

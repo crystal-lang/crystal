@@ -23,6 +23,7 @@ lib C
 end
 
 def exit(status = 0)
+  run_at_exit
   Process.exit(status)
 end
 
