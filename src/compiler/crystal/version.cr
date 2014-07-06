@@ -1,6 +1,6 @@
 module Crystal
   def self.version_string
-    str = {{ system("git describe --tags --long 2>/dev/null").stringify }}
+    str = {{ system(%((git describe --tags --long 2>/dev/null) || echo "?-?-?")).stringify }}
     build_date = {{ system("date -u").stringify }}
     a = str.split("-")
     tag = a[0]? || "?"
