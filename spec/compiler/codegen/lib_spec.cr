@@ -38,7 +38,7 @@ describe "Code gen: lib" do
         end
       end
 
-      w = Wrapper.new(Pointer(Void).null)
+      w = Wrapper.new(Pointer(Void).new(0_u64))
       C.foo(w)
       ")
   end
@@ -54,8 +54,8 @@ describe "Code gen: lib" do
         end
       end
 
-      w = Wrapper.new(Pointer(Void).null)
-      p = Pointer(Wrapper).null
+      w = Wrapper.new(Pointer(Void).new(0_u64))
+      p = Pointer(Wrapper).new(0_u64)
       C.foo(p)
       ")
   end

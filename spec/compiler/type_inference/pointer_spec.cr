@@ -22,10 +22,6 @@ describe "Type inference: pointer" do
     assert_type("p = Pointer(Int32).malloc(10_u64); p.value = 1; p") { pointer_of(int32) }
   end
 
-  it "types Pointer.null" do
-    assert_type("Pointer(Int32).null") { pointer_of(int32) }
-  end
-
   it "types realloc" do
     assert_type("p = Pointer(Int32).malloc(10_u64); p.value = 1; x = p.realloc(20_u64); x") { pointer_of(int32) }
   end
@@ -61,7 +57,7 @@ describe "Type inference: pointer" do
   end
 
   it "types nil or pointer type" do
-    result = assert_type("1 == 1 ? nil : Pointer(Int32).null") { |mod| union_of(mod.nil, mod.pointer_of(mod.int32)) }
+    result = assert_type("1 == 1 ? nil : Pointer(Int32).new(0_u64)") { |mod| union_of(mod.nil, mod.pointer_of(mod.int32)) }
     result.node.type.is_a?(NilablePointerType).should be_true
   end
 

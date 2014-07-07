@@ -70,8 +70,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
               codegen_primitive_fun_closure node, target_def, call_args
             when :pointer_diff
               codegen_primitive_pointer_diff node, target_def, call_args
-            when :pointer_null
-              codegen_primitive_pointer_null node, target_def, call_args
             when :tuple_length
               codegen_primitive_tuple_length node, target_def, call_args
             when :tuple_indexer_known_index
@@ -455,10 +453,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     p1 = ptr2int(call_args[1], LLVM::Int64)
     sub = @builder.sub p0, p1
     @builder.exact_sdiv sub, ptr2int(gep(LLVM.pointer_null(type_of(call_args[0])), 1), LLVM::Int64)
-  end
-
-  def codegen_primitive_pointer_null(node, target_def, call_args)
-    LLVM.null(llvm_type(node.type))
   end
 
   def codegen_primitive_tuple_length(node, target_def, call_args)

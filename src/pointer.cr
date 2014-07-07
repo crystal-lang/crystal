@@ -82,6 +82,10 @@ class Pointer(T)
     realloc(size.to_u64)
   end
 
+  def self.null
+    new 0_u64
+  end
+
   def self.malloc(size : Int)
     malloc(size.to_u64)
   end

@@ -1797,8 +1797,6 @@ module Crystal
         # Nothing to do
       when :pointer_diff
         node.type = mod.int64
-      when :pointer_null
-        visit_pointer_null node
       when :class_name
         node.type = mod.string
       when :tuple_length
@@ -1900,15 +1898,6 @@ module Crystal
     def visit_union_get(node)
       scope = @scope as CUnionType
       node.bind_to scope.vars[untyped_def.name]
-    end
-
-    def visit_pointer_null(node)
-      instance_type = scope.instance_type
-      if instance_type.is_a?(GenericClassType)
-        node.raise "can't instantiate pointer without type, use Pointer(Type).null"
-      end
-
-      node.type = instance_type
     end
 
     def visit_tuple_indexer(node)
