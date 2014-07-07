@@ -263,6 +263,11 @@ describe "Parser" do
   it_parses "def foo(&@block); end", Def.new("foo", [] of Arg, Assign.new("@block".instance_var, "block".var), nil, BlockArg.new("block"), nil, 0)
   it_parses "def foo @var, &block; end", Def.new("foo", [Arg.new("var")], [Assign.new("@var".instance_var, "var".var)] of ASTNode, nil, BlockArg.new("block"), nil, 0)
 
+  it_parses "abstract def foo", Def.new("foo", [] of Arg, Nop.new, nil, nil, nil, nil, true)
+  it_parses "abstract def foo; 1", [Def.new("foo", [] of Arg, Nop.new, nil, nil, nil, nil, true), 1.int32]
+  it_parses "abstract def foo\n1", [Def.new("foo", [] of Arg, Nop.new, nil, nil, nil, nil, true), 1.int32]
+  it_parses "abstract def foo(x)", Def.new("foo", ["x".arg], Nop.new, nil, nil, nil, nil, true)
+
   it_parses "foo", "foo".call
   it_parses "foo()", "foo".call
   it_parses "foo(1)", "foo".call([1.int32] of ASTNode)

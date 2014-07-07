@@ -149,6 +149,8 @@ module Crystal
       block = @block
 
       matches.map do |match|
+        check_not_abstract match.def, owner
+
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
         block_type = block && block.body && match.def.block_arg ? block.body.type? : nil
@@ -208,6 +210,15 @@ module Crystal
         end
       end
       nil
+    end
+
+    def check_not_abstract(a_def, owner)
+      if a_def.abstract
+        bubbling_exception do
+          owner = owner.base_type if owner.is_a?(HierarchyType)
+          a_def.raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
+        end
+      end
     end
 
     def replace_block_arg_with_block(block_arg)

@@ -251,4 +251,14 @@ describe "Type inference: def" do
       b[0].lookup_matches
       ") { int32 }
   end
+
+  it "errors if using abstract def" do
+    assert_error %(
+      class Foo
+        abstract def foo
+      end
+
+      Foo.new.foo
+      ), "abstract def Foo#foo must be implemented by Foo"
+  end
 end

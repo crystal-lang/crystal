@@ -737,8 +737,19 @@ module Crystal
         when :abstract
           unless_in_def do
             next_token_skip_space_or_newline
-            check_ident :class
-            parse_class_def true
+            case @token.type
+            when :IDENT
+              case @token.value
+              when :def
+                parse_def true
+              when :class
+                parse_class_def true
+              else
+                unexpected_token
+              end
+            else
+              unexpected_token
+            end
           end
         when :def
           unless_in_def { parse_def }
@@ -1612,9 +1623,9 @@ module Crystal
       result
     end
 
-    def parse_def
+    def parse_def(is_abstract = false)
       instance_vars = prepare_parse_def
-      a_def = parse_def_helper
+      a_def = parse_def_helper(is_abstract)
 
       # Small memory optimization: don't keep the Set in the Def if it's empty
       instance_vars = nil if instance_vars.empty?
@@ -1858,7 +1869,7 @@ module Crystal
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>"]
 
-    def parse_def_helper
+    def parse_def_helper(is_abstract)
       push_def
       @def_nest += 1
 
@@ -1970,45 +1981,57 @@ module Crystal
       when :";", :"NEWLINE", :":"
          # Skip
       else
-        unexpected_token
+        if is_abstract && @token.type == :EOF
+          # OK
+        else
+          unexpected_token
+        end
       end
 
       if @token.type == :":"
         next_token_skip_space
         return_type = parse_single_type
 
-        if @token.keyword?(:end)
-          body = Expressions.new
-          next_token_skip_space
+        if is_abstract
+          body = Nop.new
         else
-          body = parse_macro_body(name_line_number, name_column_number)
+          if @token.keyword?(:end)
+            body = Expressions.new
+            next_token_skip_space
+          else
+            body = parse_macro_body(name_line_number, name_column_number)
+          end
         end
       else
-        skip_statement_end
-
-        if @token.keyword?(:end)
-          body = Expressions.from(extra_assigns)
-          next_token_skip_space
+        if is_abstract
+          body = Nop.new
         else
-          body = parse_expressions
-          if extra_assigns.length > 0
-            exps = [] of ASTNode
-            exps.concat extra_assigns
-            if body.is_a?(Expressions)
-              exps.concat body.expressions
-            else
-              exps.push body
+          skip_statement_end
+
+          if @token.keyword?(:end)
+            body = Expressions.from(extra_assigns)
+            next_token_skip_space
+          else
+            body = parse_expressions
+            if extra_assigns.length > 0
+              exps = [] of ASTNode
+              exps.concat extra_assigns
+              if body.is_a?(Expressions)
+                exps.concat body.expressions
+              else
+                exps.push body
+              end
+              body = Expressions.from exps
             end
-            body = Expressions.from exps
+            body = parse_exception_handler body
           end
-          body = parse_exception_handler body
         end
       end
 
       @def_nest -= 1
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, @yields
+      node = Def.new name, args, body, receiver, block_arg, return_type, @yields, is_abstract
       node.name_column_number = name_column_number
       node
     end

@@ -860,9 +860,10 @@ module Crystal
     property :calls_super
     property :uses_block_arg
     property :name_column_number
+    property :abstract
     property :attributes
 
-    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @yields = nil)
+    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @yields = nil, @abstract = false)
       @body = Expressions.from body
       @calls_super = false
       @uses_block_arg = false
@@ -882,7 +883,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg && other.return_type == return_type
+      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg && other.return_type == return_type && @abstract == other.abstract
     end
 
     def name_length
@@ -895,6 +896,7 @@ module Crystal
       a_def.calls_super = calls_super
       a_def.uses_block_arg = uses_block_arg
       a_def.name_column_number = name_column_number
+      a_def.abstract = @abstract
       a_def
     end
   end

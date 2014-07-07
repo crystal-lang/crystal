@@ -47,7 +47,7 @@ describe "Reference" do
     String.to_s.should eq("String")
   end
 
-  it "does to_s for class if hierarchy" do
+  pending "does to_s for class if hierarchy" do
     [ReferenceSpecTestClassBase, ReferenceSpecTestClassSubclass].to_s.should eq("[ReferenceSpecTestClassBase, ReferenceSpecTestClassSubclass]")
   end
 end
