@@ -24,6 +24,7 @@ module Crystal
       the_macro.location = target_def.location
 
       owner = target_def.owner.not_nil!
+      owner = owner.base_type if owner.is_a?(HierarchyType)
 
       begin
         generated_source = @program.expand_macro owner, target_def.body

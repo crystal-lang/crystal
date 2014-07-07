@@ -238,6 +238,42 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
+  it "expands def macro with @class_name with hierarchy" do
+    run(%(
+      class Reference
+        def to_s : String
+          {{ @class_name }}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      (Bar.new || Foo.new).to_s
+      )).to_string.should eq("Bar")
+  end
+
+  it "expands def macro with @class_name with hierarchy (2)" do
+    run(%(
+      class Reference
+        def to_s : String
+          {{ @class_name }}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      (Foo.new || Bar.new).to_s
+      )).to_string.should eq("Foo")
+  end
+
   it "allows overriding macro definition when redefining base class" do
     run(%(
       class Foo
