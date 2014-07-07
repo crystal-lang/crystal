@@ -56,8 +56,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
               codegen_primitive_external_var_get node, target_def, call_args
             when :object_id
               codegen_primitive_object_id node, target_def, call_args
-            when :object_to_cstr
-              codegen_primitive_object_to_cstr node, target_def, call_args
             when :object_crystal_type_id
               codegen_primitive_object_crystal_type_id node, target_def, call_args
             when :symbol_hash
@@ -376,29 +374,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_primitive_object_id(node, target_def, call_args)
     ptr2int call_args[0], LLVM::Int64
-  end
-
-  def codegen_primitive_object_to_cstr(node, target_def, call_args)
-    type = context.type
-    case type
-    when MetaclassType
-      type_to_s = type.instance_type.to_s
-      want_object_id = false
-    when GenericClassInstanceMetaclassType
-      type_to_s = type.instance_type.to_s
-      want_object_id = false
-    else
-      type_to_s = type.to_s
-      want_object_id = true
-    end
-
-    if want_object_id
-      buffer = array_malloc(LLVM::Int8, int(type_to_s.length + 23))
-      call @mod.sprintf(@llvm_mod), [buffer, @builder.global_string_pointer("<#{type_to_s}:0x%016lx>"), call_args[0]] of LibLLVM::ValueRef
-      buffer
-    else
-      @builder.global_string_pointer(type_to_s)
-    end
   end
 
   def codegen_primitive_object_crystal_type_id(node, target_def, call_args)

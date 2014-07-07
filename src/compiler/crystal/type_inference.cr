@@ -1785,8 +1785,6 @@ module Crystal
         # Nothing to do
       when :object_id
         node.type = mod.uint64
-      when :object_to_cstr
-        node.type = mod.uint8_pointer
       when :object_crystal_type_id
         node.type = mod.int32
       when :symbol_hash

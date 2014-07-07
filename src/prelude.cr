@@ -38,14 +38,9 @@ require "errno"
 require "raise"
 require "tuple"
 require "function"
+require "class"
 require "assert"
 require "main"
-
-class Class
-  def inspect
-    to_s
-  end
-end
 
 def loop
   while true

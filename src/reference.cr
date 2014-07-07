@@ -51,6 +51,11 @@ class Reference
     end
   end
 
+  def to_s : String
+    hex_object_id = object_id.to_s(16)
+    "#<{{@name.id}}:0x#{hex_object_id}>"
+  end
+
   def exec_recursive(method, default_value)
     # hash = (@:ThreadLocal $_exec_recursive ||= {} of Tuple(UInt64, Symbol) => Bool)
     hash = ($_exec_recursive ||= {} of Tuple(UInt64, Symbol) => Bool)
@@ -63,9 +68,5 @@ class Reference
       hash.delete(key)
       value
     end
-  end
-
-  def to_s
-    String.new(to_cstr)
   end
 end

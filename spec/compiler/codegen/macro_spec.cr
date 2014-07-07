@@ -343,4 +343,46 @@ describe "Code gen: macro" do
       Foo.new.foo.to_i
       )).to_i.should eq(1)
   end
+
+  it "expands @class_name in hierarchy metaclass (1)" do
+    run(%(
+      class Class
+        def to_s : String
+          {{ @name }}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      p = Pointer(Foo.class).malloc(1_u64)
+      p.value = Bar
+      p.value = Foo
+      p.value.to_s
+      )).to_string.should eq("Foo:Class")
+  end
+
+  it "expands @class_name in hierarchy metaclass (2)" do
+    run(%(
+      class Class
+        def to_s : String
+          {{ @name }}
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      p = Pointer(Foo.class).malloc(1_u64)
+      p.value = Foo
+      p.value = Bar
+      p.value.to_s
+      )).to_string.should eq("Bar:Class")
+  end
 end

@@ -2636,9 +2636,11 @@ module Crystal
               if base_type_match.def.return_type
                 cloned_def = base_type_match.def.clone
                 cloned_def.macro_owner = base_type_match.def.macro_owner
-                subtype.add_def base_type_match.def
+                subtype.add_def cloned_def
+                cloned_def.owner = subtype_lookup
+
                 new_subtype_matches ||= [] of Match
-                new_subtype_matches.push Match.new(subtype, cloned_def, base_type_match.type_lookup, base_type_match.arg_types, base_type_match.free_vars)
+                new_subtype_matches.push Match.new(subtype_lookup, cloned_def, base_type_match.type_lookup, base_type_match.arg_types, base_type_match.free_vars)
               end
             end
 

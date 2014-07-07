@@ -24,7 +24,13 @@ module Crystal
       the_macro.location = target_def.location
 
       owner = target_def.owner.not_nil!
-      owner = owner.base_type if owner.is_a?(HierarchyType)
+
+      case owner
+      when HierarchyType
+        owner = owner.base_type
+      when HierarchyMetaclassType
+        owner = owner.instance_type.base_type.metaclass
+      end
 
       begin
         generated_source = @program.expand_macro owner, target_def.body
