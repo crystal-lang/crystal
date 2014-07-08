@@ -253,5 +253,5 @@ redefine_main(main) do |main|
   {{main}}
   elapsed_time = Time.now - time
   Spec::RootContext.print_results(elapsed_time)
-  Spec::RootContext.succeeded ? 0 : 1
+  exit 1 unless Spec::RootContext.succeeded
 end
