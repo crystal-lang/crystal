@@ -18,8 +18,9 @@ class BasicBlock
   property :inEdges
   property :outEdges
 
-  def to_s
-    "BB##{@name}"
+  def to_s(io)
+    io << "BB#"
+    io << @name
   end
 end
 

@@ -49,11 +49,15 @@ class Pointer(T)
     address.hash
   end
 
-  def to_s
+  def to_s(io)
+    io << "Pointer("
+    io << T.to_s
+    io << ")"
     if address == 0
-      "Pointer(#{T}).null"
+      io << ".null"
     else
-      "Pointer(#{T})@#{address.to_s(16)}"
+      io << "@"
+      address.to_s_in_base(16, io)
     end
   end
 

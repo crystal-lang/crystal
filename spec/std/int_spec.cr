@@ -51,16 +51,15 @@ describe "Int" do
     assert { 2.lcm(0).should eq(0) }
   end
 
-  describe "to_s" do
-    assert { 123.to_s.should eq("123") }
-    assert { 12.to_s(2).should eq("1100") }
-    assert { -12.to_s(2).should eq("-1100") }
-    assert { -123456.to_s(2).should eq("-11110001001000000") }
-    assert { 1234.to_s(16).should eq("4d2") }
-    assert { -1234.to_s(16).should eq("-4d2") }
-    assert { 1234.to_s(36).should eq("ya") }
-    assert { -1234.to_s(36).should eq("-ya") }
-    assert { 0.to_s(16).should eq("0") }
+  describe "to_s in base" do
+    assert { 12.to_s_in_base(2).should eq("1100") }
+    assert { -12.to_s_in_base(2).should eq("-1100") }
+    assert { -123456.to_s_in_base(2).should eq("-11110001001000000") }
+    assert { 1234.to_s_in_base(16).should eq("4d2") }
+    assert { -1234.to_s_in_base(16).should eq("-4d2") }
+    assert { 1234.to_s_in_base(36).should eq("ya") }
+    assert { -1234.to_s_in_base(36).should eq("-ya") }
+    assert { 0.to_s_in_base(16).should eq("0") }
   end
 
   describe "bit" do
@@ -96,6 +95,29 @@ describe "Int" do
       a = 0
       2.to(2) { |i| a += i }
       a.should eq(2)
+    end
+  end
+
+  describe "to_s" do
+    it "does to_s for various int sizes" do
+      127_i8.to_s.should eq("127")
+      -128_i8.to_s.should eq("-128")
+
+      32767_i16.to_s.should eq("32767")
+      -32768_i16.to_s.should eq("-32768")
+
+      2147483647.to_s.should eq("2147483647")
+      -2147483648.to_s.should eq("-2147483648")
+
+      9223372036854775807_i64.to_s.should eq("9223372036854775807")
+      -9223372036854775808_i64.to_s.should eq("-9223372036854775808")
+
+      255_u8.to_s.should eq("255")
+      65535_u16.to_s.should eq("65535")
+      4294967295_u32.to_s.should eq("4294967295")
+
+      # TODO: this fails, check why
+      #18446744073709551615_u64.to_s.should eq("18446744073709551615")
     end
   end
 end

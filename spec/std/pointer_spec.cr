@@ -71,4 +71,9 @@ describe "Pointer" do
     p1.should_not eq(p2)
     p1.should_not eq(1)
   end
+
+  it "does to_s" do
+    Pointer(Int32).null.to_s.should eq("Pointer(Int32).null")
+    Pointer(Int32).new(1234_u64).to_s.should eq("Pointer(Int32)@4d2")
+  end
 end

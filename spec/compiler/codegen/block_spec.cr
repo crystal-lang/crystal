@@ -360,7 +360,7 @@ describe "Code gen: block" do
 
   it "break block with yielder inside while" do
     run("
-      require \"int\"
+      require \"prelude\"
       a = 0
       10.times do
         a += 1
@@ -400,7 +400,7 @@ describe "Code gen: block" do
 
   it "returns from block with value" do
     run("
-      require \"nil\"
+      require \"prelude\"
 
       def foo
         while true
@@ -436,7 +436,7 @@ describe "Code gen: block" do
 
   it "break from block with value" do
     run("
-      require \"int\"
+      require \"prelude\"
       10.times { break 20 }
     ").to_i.should eq(20)
   end

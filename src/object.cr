@@ -7,8 +7,42 @@ class Object
     self == other
   end
 
+  # Returns a string representation of this object.
+  #
+  # Classes must usually **not** override this method. Instead,
+  # they must override `to_s(io)`, which must append to the given
+  # IO-like object.
+  def to_s
+    String.build do |io|
+      to_s io
+    end
+  end
+
+  # Appends a string representation of this object
+  # to the given IO-like object.
+  # abstract def to_s(io)
+
+  # Returns a String representation of this object.
+  #
+  # Similar to `to_s`, but usually returns more information about
+  # this object.
+  #
+  # Classes must usually **not** override this method. Instead,
+  # they must override `inspect(io)`, which must append to the
+  # given IO-like object.
   def inspect
-    to_s
+    String.new_from_buffer(64) do |str|
+      inspect(str)
+    end
+  end
+
+  # Appends a string representation of this object
+  # to the given IO-like object.
+  #
+  # Similar to `inspect(io)`, but usually appends more information
+  # about this object.
+  def inspect(io)
+    to_s io
   end
 
   def tap

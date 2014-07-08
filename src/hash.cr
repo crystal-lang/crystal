@@ -283,25 +283,24 @@ class Hash(K, V)
     hash
   end
 
-  def inspect
-    to_s
+  def inspect(io)
+    to_s(io)
   end
 
-  def to_s
-    exec_recursive(:to_s, "{...}") do
-      String.build do |str|
-        str << "{"
-        found_one = false
-        each do |key, value|
-          str << ", " if found_one
-          str << key.inspect
-          str << " => "
-          str << value.inspect
-          found_one = true
-        end
-        str << "}"
+  def to_s(io)
+    executed = exec_recursive(:to_s) do
+      io << "{"
+      found_one = false
+      each do |key, value|
+        io << ", " if found_one
+        io << key.inspect
+        io << " => "
+        io << value.inspect
+        found_one = true
       end
+      io << "}"
     end
+    io << "{...}" unless executed
   end
 
   # private
@@ -395,10 +394,6 @@ class Hash(K, V)
     property :back
 
     def initialize(@key : K, @value : V)
-    end
-
-    def to_s
-      "(#{key}: #{value})#{self.next ? "*" : ""}"
     end
   end
 

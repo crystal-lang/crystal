@@ -182,6 +182,13 @@ describe "Hash" do
 
   describe "to_s" do
     assert { {1 => 2, 3 => 4}.to_s.should eq("{1 => 2, 3 => 4}") }
+
+    alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
+    assert do
+      h = {} of RecursiveHash => RecursiveHash
+      h[h] = h
+      h.to_s.should eq("{{...} => {...}}")
+    end
   end
 
   it "clones" do

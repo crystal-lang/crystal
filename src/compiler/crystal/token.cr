@@ -67,8 +67,8 @@ module Crystal
       @macro_state = other.macro_state
     end
 
-    def to_s
-      @value ? @value.to_s : @type.to_s
+    def to_s(io)
+      @value ? @value.to_s(io) : @type.to_s(io)
     end
   end
 end

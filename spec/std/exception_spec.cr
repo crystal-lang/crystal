@@ -102,8 +102,8 @@ describe "Exception" do
   end
 
   class Ex1 < Exception
-    def to_s
-      "Ex1"
+    def to_s(io)
+      io << "Ex1"
     end
   end
 

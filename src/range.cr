@@ -49,11 +49,9 @@ struct Range(B, E)
     includes?(value)
   end
 
-  def to_s
-    if @exclusive
-      "#{@begin}...#{@end}"
-    else
-      "#{@begin}..#{@end}"
-    end
+  def to_s(io)
+    @begin.to_s(io)
+    io << (@exclusive ? "..." : "..")
+    @end.to_s(io)
   end
 end

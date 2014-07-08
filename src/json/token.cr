@@ -15,16 +15,16 @@ class Json::Token
     @float_value = 0.0
   end
 
-  def to_s
+  def to_s(io)
     case @type
     when :INT
-      @int_value.to_s
+      @int_value.to_s(io)
     when :FLOAT
-      @float_value.to_s
+      @float_value.to_s(io)
     when :STRING
-      @string_value
+      @string_value(io)
     else
-      @type.to_s
+      @type.to_s(io)
     end
   end
 end

@@ -18,8 +18,8 @@ module Crystal
       TypeFilteredNode.new(@filter, @node)
     end
 
-    def to_s
-      @filter.to_s
+    def to_s(io)
+      @filter.to_s(io)
     end
   end
 
@@ -67,8 +67,9 @@ module Crystal
       @type == other.type
     end
 
-    def to_s
-      "F(#{@type})"
+    def to_s(io)
+      io << "F("
+      @type.to_s(io)
     end
   end
 
@@ -91,8 +92,10 @@ module Crystal
       @filters == other.filters
     end
 
-    def to_s
-      "(#{@filters.join " && "})"
+    def to_s(io)
+      io << "("
+      @filters.join " && ", io
+      io << ")"
     end
   end
 
@@ -118,8 +121,8 @@ module Crystal
       true
     end
 
-    def to_s
-      "not-nil"
+    def to_s(io)
+      io << "not-nil"
     end
 
     @@instance = NotNilFilter.new
@@ -170,8 +173,9 @@ module Crystal
       @filter == other.filter
     end
 
-    def to_s
-      "!#{@filter}"
+    def to_s(io)
+      io << "!"
+      @filter.to_s(io)
     end
   end
 
@@ -183,8 +187,10 @@ module Crystal
       other.try &.filter_by_responds_to(@name)
     end
 
-    def to_s
-      "responds_to?(#{@name})"
+    def to_s(io)
+      io << "responds_to?("
+      @name.to_s(io)
+      io << ")"
     end
   end
 end

@@ -624,21 +624,15 @@ class String
     self
   end
 
-  def inspect
-    String.new_from_buffer(length + 2) do |buffer|
-      inspect(buffer)
-    end
-  end
-
   def inspect(io)
     io << "\""
-    dump(io)
+    dump io
     io << "\""
   end
 
   def dump
-    String.new_from_buffer(length) do |buffer|
-      dump(buffer)
+    String.build do |io|
+      dump io
     end
   end
 
@@ -720,6 +714,10 @@ class String
 
   def to_s
     self
+  end
+
+  def to_s(io)
+    io << self
   end
 
   def cstr

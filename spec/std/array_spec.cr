@@ -638,4 +638,15 @@ describe "Array" do
     a.each_index { |i| b += i }
     b.should eq(3)
   end
+
+  describe "to_s" do
+    assert { [1, 2, 3].to_s.should eq("[1, 2, 3]") }
+
+    alias RecursiveArray = Array(RecursiveArray)
+    assert do
+      ary = [] of RecursiveArray
+      ary << ary
+      ary.to_s.should eq("[[...]]")
+    end
+  end
 end

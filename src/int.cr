@@ -109,13 +109,20 @@ struct Int
     self % other
   end
 
-  def to_s(radix : Int)
+  def to_s_in_base(radix : Int)
+    String.build do |io|
+      to_s_in_base(radix, io)
+    end
+  end
+
+  def to_s_in_base(radix : Int, io)
     if radix < 1 || radix > 36
       raise "Invalid radix #{radix}"
     end
 
     if self == 0
-      return "0"
+      io << "0"
+      return
     end
 
     str = StringBuffer.new
@@ -145,7 +152,7 @@ struct Int
       buffer.swap(i, str.length - i - 1 + init)
     end
 
-    str.to_s
+    io << str.to_s
   end
 
   def to_modet
@@ -181,11 +188,7 @@ struct Int8
     0_i8 - self
   end
 
-  def to_s
-    String.new_with_capacity(5) do |buffer|
-      C.sprintf(buffer, "%hhd", self)
-    end
-  end
+  generate_to_s 5, "%hhd"
 end
 
 struct Int16
@@ -196,11 +199,7 @@ struct Int16
     0_i16 - self
   end
 
-  def to_s
-    String.new_with_capacity(7) do |buffer|
-      C.sprintf(buffer, "%hd", self)
-    end
-  end
+  generate_to_s 7, "%hd"
 end
 
 struct Int32
@@ -211,11 +210,7 @@ struct Int32
     0 - self
   end
 
-  def to_s
-    String.new_with_capacity(12) do |buffer|
-      C.sprintf(buffer, "%d", self)
-    end
-  end
+  generate_to_s 12, "%d"
 end
 
 struct Int64
@@ -226,11 +221,7 @@ struct Int64
     0_i64 - self
   end
 
-  def to_s
-    String.new_with_capacity(22) do |buffer|
-      C.sprintf(buffer, "%lld", self)
-    end
-  end
+  generate_to_s 22, "%lld"
 end
 
 struct UInt8
@@ -241,11 +232,7 @@ struct UInt8
     self
   end
 
-  def to_s
-    String.new_with_capacity(5) do |buffer|
-      C.sprintf(buffer, "%hhu", self)
-    end
-  end
+  generate_to_s 5, "%hhu"
 end
 
 struct UInt16
@@ -256,11 +243,7 @@ struct UInt16
     self
   end
 
-  def to_s
-    String.new_with_capacity(7) do |buffer|
-      C.sprintf(buffer, "%hu", self)
-    end
-  end
+  generate_to_s 7, "%hu"
 end
 
 struct UInt32
@@ -271,11 +254,7 @@ struct UInt32
     self
   end
 
-  def to_s
-    String.new_with_capacity(12) do |buffer|
-      C.sprintf(buffer, "%u", self)
-    end
-  end
+  generate_to_s 12, "%u"
 end
 
 struct UInt64
@@ -286,9 +265,5 @@ struct UInt64
     self
   end
 
-  def to_s
-    String.new_with_capacity(22) do |buffer|
-      C.sprintf(buffer, "%lu", self)
-    end
-  end
+  generate_to_s 22, "%lu"
 end

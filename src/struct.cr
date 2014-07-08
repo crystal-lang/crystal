@@ -14,18 +14,16 @@ struct Struct
     hash
   end
 
-  def to_s : String
-    String.build do |str|
-      str << {{@name}}
-      str << "("
-      {% for ivar, i in @instance_vars %}
-        {% if i > 0 %}
-          str << ", "
-        {% end %}
-        str << "{{ivar.id}}="
-        str << {{ivar.id}}.inspect
+  def to_s(io) : Nil
+    io << "{{@name.id}}("
+    {% for ivar, i in @instance_vars %}
+      {% if i > 0 %}
+        io << ", "
       {% end %}
-      str << ")"
-    end
+      io << "{{ivar.id}}="
+      {{ivar.id}}.inspect(io)
+    {% end %}
+    io << ")"
+    nil
   end
 end

@@ -50,4 +50,9 @@ describe "Regex" do
     ("HeLlO" =~ /hello/).should be_nil
     ("HeLlO" =~ /hello/i).should eq(0)
   end
+
+  it "does to_s" do
+    /foo/.to_s.should eq("/foo/")
+    /f(o)(x)/.match("fox").to_s.should eq(%(MatchData("fox" ["o", "x"])))
+  end
 end

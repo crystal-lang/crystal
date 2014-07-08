@@ -17,24 +17,28 @@ module Xml
   end
 
   class Element < Node
-    def to_s
+    def to_s(io)
       if child_nodes.count == 0
-        "<#{name}/>"
+        io << "<"
+        io << name
+        io << "/>"
       else
-        String.build do |str|
-          str << "<#{name}>"
-          child_nodes.each do |child|
-            str << child.to_s
-          end
-          str << "</#{name}>"
+        io << "<"
+        io << name
+        io << ">"
+        child_nodes.each do |child|
+          child.to_s(io)
         end
+        io << "</"
+        io << name
+        io << ">"
       end
     end
   end
 
   class Text < Node
-    def to_s
-      value || ""
+    def to_s(io)
+      (value || "").to_s(io)
     end
   end
 
@@ -69,9 +73,8 @@ module Xml
       doc
     end
 
-    def to_s
-      child_nodes.first.to_s
+    def to_s(io)
+      child_nodes.first.to_s(io)
     end
   end
-
 end

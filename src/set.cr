@@ -72,12 +72,14 @@ class Set(T)
     @hash.keys
   end
 
-  def inspect
-    to_s
+  def inspect(io)
+    to_s(io)
   end
 
-  def to_s
-    "Set{#{join ", "}}"
+  def to_s(io)
+    io << "Set{"
+    join ", ", io
+    io << "}"
   end
 end
 

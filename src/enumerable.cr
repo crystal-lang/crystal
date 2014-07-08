@@ -91,11 +91,15 @@ module Enumerable(T)
   end
 
   def join(sep = "")
-    String.build do |str|
-      each_with_index do |elem, i|
-        str << sep if i > 0
-        str << elem
-      end
+    String.build do |io|
+      join sep, io
+    end
+  end
+
+  def join(sep, io)
+    each_with_index do |elem, i|
+      io << sep if i > 0
+      elem.to_s(io)
     end
   end
 

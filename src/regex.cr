@@ -44,8 +44,10 @@ class Regex
     !match(other).nil?
   end
 
-  def to_s
-    "/#{source}/"
+  def to_s(io)
+    io << "/"
+    io << source
+    io << "/"
   end
 end
 
@@ -84,13 +86,18 @@ class MatchData
     String.new(value)
   end
 
-  def to_s
-    String.build do |str|
-      str << "MatchData(\""
-      str << @string
-      str << "\""
+  def to_s(io)
+    io << "MatchData("
+    @string.inspect(io)
+    if length > 0
+      io << " ["
+      length.times do |i|
+        io << ", " if i > 0
+        self[i + 1].inspect(io)
+      end
+      io << "]"
     end
-    "MatchData(#{@string.inspect} #{Array.new(length) { |i| self[i + 1] }})"
+    io << ")"
   end
 
   # private

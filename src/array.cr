@@ -496,21 +496,20 @@ class Array(T)
     hash
   end
 
-  def inspect
-    to_s
+  def inspect(io)
+    to_s io
   end
 
-  def to_s
-    exec_recursive(:to_s, "[...]") do
-      String.build do |str|
-        str << "["
-        each_with_index do |elem, i|
-          str << ", " if i > 0
-          str << elem.inspect
-        end
-        str << "]"
+  def to_s(io)
+    executed = exec_recursive(:to_s) do
+      io << "["
+      each_with_index do |elem, i|
+        io << ", " if i > 0
+        elem.inspect io
       end
+      io << "]"
     end
+    io << "[...]" unless executed
   end
 
   def sort!

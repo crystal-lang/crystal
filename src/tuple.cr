@@ -52,17 +52,15 @@ class Tuple
     to_s
   end
 
-  def to_s
-    String.build do |str|
-      str << "{"
-      i = 0
-      each do |elem|
-        str << ", " if i > 0
-        str << elem.inspect
-        i += 1
-      end
-      str << "}"
+  def to_s(io)
+    io << "{"
+    i = 0
+    each do |elem|
+      io << ", " if i > 0
+      io << elem.inspect
+      i += 1
     end
+    io << "}"
   end
 end
 

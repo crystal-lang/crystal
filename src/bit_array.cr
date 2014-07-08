@@ -27,14 +27,12 @@ class BitArray
     end
   end
 
-  def to_s
-    String.build do |str|
-      str << "BitArray["
-      each do |value|
-        str << (value ? "1" : "0")
-      end
-      str << "]"
+  def to_s(io)
+    io << "BitArray["
+    each do |value|
+      io << (value ? "1" : "0")
     end
+    io << "]"
   end
 
   # private

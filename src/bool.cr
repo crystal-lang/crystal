@@ -18,4 +18,8 @@ struct Bool
   def to_s
     self ? "true" : "false"
   end
+
+  def to_s(io)
+    io << to_s
+  end
 end

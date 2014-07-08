@@ -143,4 +143,8 @@ struct Char
       appender.count - 1
     end
   end
+
+  def to_s(io)
+    io << self
+  end
 end

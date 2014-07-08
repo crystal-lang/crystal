@@ -1,46 +1,46 @@
 module Crystal
   class Type
     def llvm_name
-      String.build do |str|
-        append_llvm_name(str)
+      String.build do |io|
+        llvm_name io
       end
     end
 
-    def append_llvm_name(str)
-      append_to_s(str)
+    def llvm_name(io)
+      to_s io
     end
   end
 
   class PrimitiveType
-    def append_llvm_name(str)
-      str << name
+    def llvm_name(io)
+      io << name
     end
   end
 
   class AliasType
-    def append_llvm_name(str)
-      str << "alias."
-      append_to_s(str)
+    def llvm_name(io)
+      io << "alias."
+      to_s io
     end
   end
 
   class CStructType
-    def append_llvm_name(str)
-      str << "struct."
-      append_to_s(str)
+    def llvm_name(io)
+      io << "struct."
+      to_s io
     end
   end
 
   class CUnionType
-    def append_llvm_name(str)
-      str << "union."
-      append_to_s(str)
+    def llvm_name(io)
+      io << "union."
+      to_s io
     end
   end
 
   class TypeDefType
-    def append_llvm_name(str)
-      typedef.append_llvm_name(str)
+    def llvm_name(io)
+      typedef.llvm_name(io)
     end
   end
 end

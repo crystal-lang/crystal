@@ -35,6 +35,10 @@ struct Float32
   def to_s
     to_f64.to_s
   end
+
+  def to_s(io)
+    to_f64.to_s(io)
+  end
 end
 
 struct Float64
@@ -57,9 +61,5 @@ struct Float64
     self ** other.to_f64
   end
 
-  def to_s
-    String.new_with_capacity(12) do |buffer|
-      C.sprintf(buffer, "%g", self)
-    end
-  end
+  generate_to_s 22, "%g"
 end

@@ -16,10 +16,13 @@ module Benchmark
       utime + stime + cutime + cstime
     end
 
-    def to_s
-      String.new_with_capacity(50) do |buffer|
-        C.sprintf(buffer, "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real)
-      end
+    def to_s(io)
+      chars :: UInt8[50]
+      chars.set_all_to 0_u8
+
+      C.sprintf(chars.buffer, "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real)
+
+      io.append_c_string(chars.buffer)
     end
   end
 

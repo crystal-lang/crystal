@@ -21,4 +21,9 @@ describe "Range" do
     (1 ... 5).includes?(1).should be_true
     (1 ... 5).includes?(5).should be_false
   end
+
+  it "does to_s" do
+    (1...5).to_s.should eq("1...5")
+    (1..5).to_s.should eq("1..5")
+  end
 end

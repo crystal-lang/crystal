@@ -11,9 +11,6 @@ module ECR
     lexer = Lexer.new string
 
     String.build do |str|
-      str << "String.build do |"
-      str << buffer_name
-      str << "|\n"
       while true
         token = lexer.next_token
         case token.type
@@ -23,10 +20,11 @@ module ECR
           str << token.value.dump
           str << "\"\n"
         when :OUTPUT
-          str << buffer_name
-          str << " << "
+          str << "("
           append_loc(str, filename, token)
           str << token.value
+          str << ").to_s "
+          str << buffer_name
           str << "\n"
         when :CONTROL
           append_loc(str, filename, token)
@@ -36,7 +34,6 @@ module ECR
           break
         end
       end
-      str << "end"
     end
   end
 

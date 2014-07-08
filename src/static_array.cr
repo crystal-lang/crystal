@@ -31,18 +31,22 @@ struct StaticArray(T, N)
     N
   end
 
+  def set_all_to(value)
+    length.times do |i|
+      buffer[i] = value
+    end
+  end
+
   def buffer
     pointerof(@buffer)
   end
 
-  def to_s
-    String.build do |str|
-      str << "["
-      each_with_index do |elem, i|
-        str << ", " if i > 0
-        str << elem.inspect
-      end
-      str << "]"
+  def to_s(io)
+    io << "["
+    each_with_index do |elem, i|
+      io << ", " if i > 0
+      elem.inspect(io)
     end
+    io << "]"
   end
 end

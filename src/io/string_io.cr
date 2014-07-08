@@ -25,4 +25,8 @@ class StringIO
   def to_s
     @buffer.to_s
   end
+
+  def to_s(io)
+    @buffer.to_s(io)
+  end
 end

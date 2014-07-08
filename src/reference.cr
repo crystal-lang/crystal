@@ -31,42 +31,44 @@ class Reference
     self
   end
 
-  def inspect : String
-    hex_object_id = object_id.to_s(16)
-    exec_recursive(:inspect, "#<{{@name.id}}:0x#{hex_object_id} ...>") do
-      String.build do |str|
-        str << "#<"
-        str << {{@name}}
-        str << ":0x"
-        str << hex_object_id
-        {% for ivar, i in @instance_vars %}
-          {% if i > 0 %}
-            str << ","
-          {% end %}
-          str << " {{ivar.id}}="
-          str << {{ivar.id}}.inspect
+  def inspect(io) : Nil
+    io << "#<{{@name.id}}:0x"
+    object_id.to_s_in_base(16, io)
+
+    executed = exec_recursive(:inspect) do
+      {% for ivar, i in @instance_vars %}
+        {% if i > 0 %}
+          io << ","
         {% end %}
-        str << ">"
-      end
+        io << " {{ivar.id}}="
+        {{ivar.id}}.inspect io
+      {% end %}
     end
+    unless executed
+      io << " ..."
+    end
+    io << ">"
+    nil
   end
 
-  def to_s : String
-    hex_object_id = object_id.to_s(16)
-    "#<{{@name.id}}:0x#{hex_object_id}>"
+  def to_s(io) : Nil
+    io << "#<{{@name.id}}:0x"
+    object_id.to_s_in_base(16, io)
+    io << ">"
+    nil
   end
 
-  def exec_recursive(method, default_value)
+  def exec_recursive(method)
     # hash = (@:ThreadLocal $_exec_recursive ||= {} of Tuple(UInt64, Symbol) => Bool)
     hash = ($_exec_recursive ||= {} of Tuple(UInt64, Symbol) => Bool)
     key = {object_id, method}
     if hash[key]?
-      default_value
+      false
     else
       hash[key] = true
       value = yield
       hash.delete(key)
-      value
+      true
     end
   end
 end

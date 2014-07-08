@@ -31,4 +31,11 @@ describe "Float" do
     assert { 2.9_f32.ceil.should eq(3) }
     assert { 2.9.ceil.should eq(3) }
   end
+
+  describe "to_s" do
+    it "does to_s for f32 and f64" do
+      12.34.to_s.should eq("12.34")
+      12.34_f64.to_s.should eq("12.34")
+    end
+  end
 end

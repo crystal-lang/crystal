@@ -34,12 +34,7 @@ class StringBuffer
   end
 
   def append(buffer : UInt8*, obj_length)
-    new_length = length + obj_length
-    if new_length > @capacity
-      cap2 = Math.log2(new_length).ceil
-      new_capacity = 2 ** cap2
-      resize_to_capacity(new_capacity)
-    end
+    make_room_for obj_length
 
     (@buffer + @length).memcpy(buffer, obj_length)
     @length += obj_length
@@ -49,6 +44,15 @@ class StringBuffer
 
   def append_c_string(buffer : UInt8*)
     append buffer, C.strlen(buffer)
+  end
+
+  def make_room_for(n_bytes : Int)
+    new_length = length + n_bytes
+    if new_length > @capacity
+      cap2 = Math.log2(new_length).ceil
+      new_capacity = 2 ** cap2
+      resize_to_capacity(new_capacity)
+    end
   end
 
   def clear
@@ -64,7 +68,11 @@ class StringBuffer
   end
 
   def to_s
-    String.new @buffer, length
+    String.new @buffer, @length
+  end
+
+  def to_s(io)
+    io.append @buffer, @length
   end
 
   # private

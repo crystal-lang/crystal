@@ -61,4 +61,8 @@ describe "Set" do
   it "does to_a" do
     Set.new([1, 2, 3]).to_a.should eq([1, 2, 3])
   end
+
+  it "does to_s" do
+    Set.new([1, 2, 3]).to_s.should eq("Set{1, 2, 3}")
+  end
 end

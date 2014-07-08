@@ -2,6 +2,20 @@ require "virtual_file"
 
 module Crystal
   abstract class Exception < ::Exception
+    def to_s(io)
+      to_s_with_source(nil, io)
+    end
+
+    def to_s_with_source(source)
+      String.build do |io|
+        to_s_with_source source, io
+      end
+    end
+
+    # TODO: remove this method, but fix the compiler first
+    def to_s_with_source(source, io)
+      raise "Bug: not implemented"
+    end
   end
 
   class SyntaxException < Exception
@@ -17,11 +31,11 @@ module Crystal
       @filename || @line
     end
 
-    def append_to_s(str, source)
+    def append_to_s(source, io)
       if @filename
-        str << "Syntax error in #{@filename}:#{@line_number}: #{@message}"
+        io << "Syntax error in #{@filename}:#{@line_number}: #{@message}"
       else
-        str << "Syntax error in line #{@line_number}: #{@message}"
+        io << "Syntax error in line #{@line_number}: #{@message}"
       end
 
       source = fetch_source(source)
@@ -31,26 +45,23 @@ module Crystal
         if @line_number - 1 < lines.length
           line = lines[@line_number - 1]
           if line
-            str << "\n\n"
-            str << line.chomp
-            str << "\n"
+            io << "\n\n"
+            io << line.chomp
+            io << "\n"
             (@column_number - 1).times do
-              str << " "
+              io << " "
             end
-            str << "\e[1;32m"
-            str << "^"
-            str << "\e[0m"
-            str << "\n"
+            io << "\e[1;32m"
+            io << "^"
+            io << "\e[0m"
+            io << "\n"
           end
         end
       end
     end
 
-    def to_s(source = nil)
-      String.build do |str|
-        append_to_s str, fetch_source(source)
-        nil # TODO: remove this line
-      end
+    def to_s_with_source(source, io)
+      append_to_s fetch_source(source), io
     end
 
     def fetch_source(source)
@@ -85,14 +96,12 @@ module Crystal
       super(message)
     end
 
-    def to_s(source = nil)
-      String.build do |str|
-        str << "Error "
-        append_to_s(str, source)
-      end
+    def to_s_with_source(source, io)
+      io << "Error "
+      append_to_s source, io
     end
 
-    def append_to_s(str, source)
+    def append_to_s(source, io)
       inner = @inner
       filename = @filename
 
@@ -110,45 +119,45 @@ module Crystal
       when String
         if File.exists?(filename)
           lines = File.read_lines(filename)
-          str << "in #{filename}:#{@line}: #{msg}"
+          io << "in #{filename}:#{@line}: #{msg}"
         else
           lines = source ? source.lines.to_a : nil
-          str << "in line #{@line}: " if @line
-          str << msg
+          io << "in line #{@line}: " if @line
+          io << msg
         end
       when VirtualFile
         lines = filename.source.lines.to_a
-        str << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
-        str << lines.to_s_with_line_numbers
+        io << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
+        io << lines.to_s_with_line_numbers
         is_macro = true
       else
         lines = source ? source.lines.to_a : nil
-        str << "in line #{@line}: " if @line
-        str << msg
+        io << "in line #{@line}: " if @line
+        io << msg
       end
 
       if lines && (line_number = @line) && (line = lines[line_number - 1]?)
-        str << "\n\n"
-        str << line.chomp
-        str << "\n"
-        str << (" " * (@column - 1))
-        str << "\e[1;32m"
-        str << "^"
+        io << "\n\n"
+        io << line.chomp
+        io << "\n"
+        io << (" " * (@column - 1))
+        io << "\e[1;32m"
+        io << "^"
         if @length && @length > 0
-          str << ("~" * (@length - 1))
+          io << ("~" * (@length - 1))
         end
-        str << "\e[0m"
+        io << "\e[0m"
       end
-      str << "\n"
+      io << "\n"
 
       if is_macro
-        str << "\n"
-        str << @message.to_s
+        io << "\n"
+        io << @message.to_s
       end
 
       if inner && inner.has_location?
-        str << "\n"
-        inner.append_to_s(str, source)
+        io << "\n"
+        inner.append_to_s source, io
       end
     end
 
@@ -178,17 +187,15 @@ module Crystal
       true
     end
 
-    def to_s(source = nil)
-      String.build do |str|
-        append_to_s(str, source)
-      end
+    def to_s_with_source(source, io)
+      append_to_s(source, io)
     end
 
-    def append_to_s(str, source)
+    def append_to_s(source, io)
       return unless @trace.length > 0
 
-      str << ("=" * 80)
-      str << "\n\n#{@owner} trace:"
+      io << ("=" * 80)
+      io << "\n\n#{@owner} trace:"
       @trace.each do |node|
         location = node.location
         if location
@@ -212,12 +219,12 @@ module Crystal
             line_number = location.line_number
             column_number = location.column_number
 
-            str << "\n\n"
-            str << "  "
-            str << filename
-            str << ":"
-            str << line_number
-            str << "\n\n"
+            io << "\n\n"
+            io << "  "
+            io << filename
+            io << ":"
+            io << line_number
+            io << "\n\n"
 
             if lines
               line = lines[line_number - 1]
@@ -225,15 +232,15 @@ module Crystal
               name_column = node.name_column_number
               name_length = node.name_length
 
-              str << "    "
-              str << line.chomp
-              str << "\n"
+              io << "    "
+              io << line.chomp
+              io << "\n"
               if name_column
-                str << "    "
-                str << (" " * (name_column - 1))
-                str << "^"
+                io << "    "
+                io << (" " * (name_column - 1))
+                io << "^"
                 if name_length
-                  str << ("~" * (name_length - 1)) if name_length
+                  io << ("~" * (name_length - 1)) if name_length
                 end
               end
             end

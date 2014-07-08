@@ -353,17 +353,15 @@ module Crystal
       self
     end
 
-    def inspect
-      String.build do |str|
-        str << name
-        if type = type?
-          str << " :: "
-          type.append_to_s(str)
-        end
-        str << " (nil-if-read)" if nil_if_read
-        str << " (closured)" if closured
-        str << " (assigned-to)" if assigned_to
+    def inspect(io)
+      io << name
+      if type = type?
+        io << " :: "
+        type.to_s(io)
       end
+      io << " (nil-if-read)" if nil_if_read
+      io << " (closured)" if closured
+      io << " (assigned-to)" if assigned_to
     end
   end
 

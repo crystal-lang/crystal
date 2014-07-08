@@ -23,8 +23,8 @@ class StringBuilder
     self
   end
 
-  def to_s
-    String.new_with_length(@length) do |cstr|
+  def to_s(io)
+    io << String.new_with_length(@length) do |cstr|
       buffer = cstr
       @parts.each do |part|
         buffer.memcpy(part.cstr, part.length)

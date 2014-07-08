@@ -8,7 +8,11 @@ module Crystal
     end
 
     def to_s
-      "expanded macro"
+      "expand macro"
+    end
+
+    def to_s(io)
+      io << to_s
     end
   end
 end

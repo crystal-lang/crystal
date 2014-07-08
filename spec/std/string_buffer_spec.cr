@@ -36,4 +36,13 @@ describe "StringBuffer" do
     end
     str.should eq("a")
   end
+
+  it "appends to another buffer" do
+    s1 = StringBuffer.new
+    s1 << "hello"
+
+    s2 = StringBuffer.new
+    s1.to_s(s2)
+    s2.to_s.should eq("hello")
+  end
 end

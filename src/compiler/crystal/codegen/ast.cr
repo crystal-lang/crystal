@@ -189,10 +189,10 @@ module Crystal
 
         if owner = @owner
           if owner.metaclass?
-            owner.instance_type.append_llvm_name(str)
+            owner.instance_type.llvm_name(str)
             str << "::"
           elsif !owner.is_a?(Crystal::Program)
-            owner.append_llvm_name(str)
+            owner.llvm_name(str)
             str << "#"
           end
         end
@@ -202,24 +202,24 @@ module Crystal
         if args.length > 0 || self_type || uses_block_arg
           str << "<"
           if self_type
-            self_type.append_llvm_name(str)
+            self_type.llvm_name(str)
           end
           if args.length > 0
             str << ", " if self_type
             args.each_with_index do |arg, i|
               str << ", " if i > 0
-              arg.type.append_llvm_name(str)
+              arg.type.llvm_name(str)
             end
           end
           if uses_block_arg
             str << ", " if self_type || args.length > 0
-            block_arg.not_nil!.type.append_llvm_name(str)
+            block_arg.not_nil!.type.llvm_name(str)
           end
           str << ">"
         end
         if return_type = @type
           str << ":"
-          return_type.append_llvm_name(str)
+          return_type.llvm_name(str)
         end
       end
 

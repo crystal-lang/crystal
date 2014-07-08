@@ -406,8 +406,8 @@ module Crystal
       "main"
     end
 
-    def to_s
-      "<Program>"
+    def to_s(io)
+      io << "<Program>"
     end
   end
 end

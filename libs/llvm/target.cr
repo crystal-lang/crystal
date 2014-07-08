@@ -22,7 +22,9 @@ struct LLVM::Target
     target_machine ? TargetMachine.new(target_machine) : nil
   end
 
-  def to_s
-    "#{name} - #{description}"
+  def to_s(io)
+    io.append_c_string LibLLVM.get_target_name(self)
+    io << " - "
+    io.append_c_string LibLLVM.get_target_description(self)
   end
 end

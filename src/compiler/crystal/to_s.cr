@@ -2,19 +2,13 @@ require "visitor"
 
 module Crystal
   class ASTNode
-    def append_to_s(str)
-      visitor = ToSVisitor.new(str)
+    def inspect(io)
+      to_s(io)
+    end
+
+    def to_s(io)
+      visitor = ToSVisitor.new(io)
       self.accept visitor
-    end
-
-    def inspect
-      to_s
-    end
-
-    def to_s
-      str = StringBuilder.new
-      append_to_s(str)
-      str.to_s
     end
   end
 
@@ -318,7 +312,7 @@ module Crystal
     end
 
     def visit(node : MacroType)
-      node.type.append_to_s(@str)
+      node.type.to_s(@str)
       false
     end
 
@@ -611,7 +605,7 @@ module Crystal
       end
       if type = node.type?
         @str << " : "
-        type.append_to_s(@str)
+        type.to_s(@str)
       end
       false
     end
@@ -1194,6 +1188,10 @@ module Crystal
 
     def to_s
       @str.to_s
+    end
+
+    def to_s(io)
+      @str.to_s(io)
     end
   end
 end

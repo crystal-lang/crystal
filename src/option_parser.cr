@@ -54,17 +54,12 @@ class OptionParser
     @handlers << Handler.new(long_flag, block)
   end
 
-  def to_s
-    String.build do |str|
-      if @banner
-        str << @banner
-        str << "\n"
-      end
-      @flags.each_with_index do |flag, i|
-        str << "\n" if i > 0
-        str << flag
-      end
+  def to_s(io)
+    if @banner
+      io << @banner
+      io << "\n"
     end
+    @flags.join "\n", io
   end
 
   # private

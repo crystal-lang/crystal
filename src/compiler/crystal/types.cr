@@ -402,14 +402,13 @@ module Crystal
       self
     end
 
-    def inspect
-      to_s
+    def inspect(io)
+      to_s(io)
     end
 
-    def to_s
-      String.build do |str|
-        self.append_to_s(str)
-      end
+    # TODO: remove this method, but fix the compiler first
+    def to_s(io)
+      raise "Bug: not implemented"
     end
   end
 
@@ -435,8 +434,8 @@ module Crystal
       nil
     end
 
-    def append_to_s(str)
-      str << "NoReturn"
+    def to_s(io)
+      io << "NoReturn"
     end
   end
 
@@ -457,16 +456,16 @@ module Crystal
       super(program, container)
     end
 
-    def append_full_name(str)
+    def append_full_name(io)
       if @container && !@container.is_a?(Program)
-        @container.append_to_s(str)
-        str << "::"
+        @container.to_s(io)
+        io << "::"
       end
-      str << @name
+      io << @name
     end
 
-    def append_to_s(str)
-      append_full_name(str)
+    def to_s(io)
+      append_full_name(io)
     end
   end
 
@@ -1497,14 +1496,14 @@ module Crystal
       "generic module"
     end
 
-    def append_to_s(str)
+    def to_s(io)
       super
-      str << "("
+      io << "("
       type_vars.each_with_index do |type_var, i|
-        str << ", " if i > 0
-        str << type_var
+        io << ", " if i > 0
+        type_var.to_s(io)
       end
-      str << ")"
+      io << ")"
     end
   end
 
@@ -1568,14 +1567,14 @@ module Crystal
       struct? ? "generic struct" : "generic class"
     end
 
-    def append_to_s(str)
+    def to_s(io)
       super
-      str << "("
+      io << "("
       type_vars.each_with_index do |type_var, i|
-        str << ", " if i > 0
-        str << type_var
+        io << ", " if i > 0
+        type_var.to_s(io)
       end
-      str << ")"
+      io << ")"
     end
   end
 
@@ -1687,20 +1686,20 @@ module Crystal
       nil
     end
 
-    def append_to_s(str)
-      generic_class.append_full_name(str)
-      str << "("
+    def to_s(io)
+      generic_class.append_full_name(io)
+      io << "("
       i = 0
       type_vars.each_value do |type_var|
-        str << ", " if i > 0
+        io << ", " if i > 0
         if type_var.is_a?(Var)
-          type_var.type.append_to_s(str)
+          type_var.type.to_s(io)
         else
-          type_var.append_to_s(str)
+          type_var.to_s(io)
         end
         i += 1
       end
-      str << ")"
+      io << ")"
     end
   end
 
@@ -1857,13 +1856,13 @@ module Crystal
       program.tuple.instantiate tuple_types.map(&.metaclass)
     end
 
-    def append_to_s(str)
-      str << "{"
+    def to_s(io)
+      io << "{"
       @tuple_types.each_with_index do |tuple_type, i|
-        str << ", " if i > 0
-        tuple_type.append_to_s(str)
+        io << ", " if i > 0
+        tuple_type.to_s(io)
       end
-      str << "}"
+      io << "}"
     end
 
     def type_desc
@@ -1945,11 +1944,11 @@ module Crystal
       @module.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
-    def append_to_s(str)
-      @module.append_to_s(str)
-      str << "("
-      @including_class.append_to_s(str)
-      str << ")"
+    def to_s(io)
+      @module.to_s(io)
+      io << "("
+      @including_class.to_s(io)
+      io << ")"
     end
   end
 
@@ -2253,8 +2252,10 @@ module Crystal
       "enum"
     end
 
-    def to_s
-      "#{container}::#{name}"
+    def to_s(io)
+      container.to_s(io)
+      io << "::"
+      name.to_s(io)
     end
   end
 
@@ -2311,8 +2312,8 @@ module Crystal
       raise "MetaclassType doesn't have types"
     end
 
-    def to_s
-      @name
+    def to_s(io)
+      io << @name
     end
   end
 
@@ -2353,9 +2354,9 @@ module Crystal
       true
     end
 
-    def append_to_s(str)
-      instance_type.append_to_s(str)
-      str << ":Class"
+    def to_s(io)
+      instance_type.to_s(io)
+      io << ":Class"
     end
   end
 
@@ -2462,13 +2463,13 @@ module Crystal
       end
     end
 
-    def append_to_s(str)
-      str << "("
+    def to_s(io)
+      io << "("
       @union_types.each_with_index do |union_type, i|
-        str << " | " if i > 0
-        union_type.append_to_s(str)
+        io << " | " if i > 0
+        union_type.to_s(io)
       end
-      str << ")"
+      io << ")"
     end
 
     def type_desc
@@ -2492,9 +2493,9 @@ module Crystal
       @union_types.last
     end
 
-    def append_to_s(str)
-      not_nil_type.append_to_s(str)
-      str << "?"
+    def to_s(io)
+      not_nil_type.to_s(io)
+      io << "?"
     end
   end
 
@@ -2529,11 +2530,11 @@ module Crystal
       @union_types.last.remove_typedef as FunInstanceType
     end
 
-    def append_to_s(str)
-      str << "("
-      @union_types.last.append_to_s(str)
-      str << ")"
-      str << "?"
+    def to_s(io)
+      io << "("
+      @union_types.last.to_s(io)
+      io << ")"
+      io << "?"
     end
   end
 
@@ -2551,9 +2552,9 @@ module Crystal
       @union_types.last.remove_typedef as PointerInstanceType
     end
 
-    def append_to_s(str)
-      @union_types.last.append_to_s(str)
-      str << "?"
+    def to_s(io)
+      @union_types.last.to_s(io)
+      io << "?"
     end
   end
 
@@ -2888,9 +2889,9 @@ module Crystal
       end
     end
 
-    def append_to_s(str)
-      base_type.append_to_s(str)
-      str << "+"
+    def to_s(io)
+      base_type.to_s(io)
+      io << "+"
     end
 
     def name
@@ -2958,9 +2959,9 @@ module Crystal
       end
     end
 
-    def append_to_s(str)
-      instance_type.append_to_s(str)
-      str << ":Class"
+    def to_s(io)
+      instance_type.to_s(io)
+      io << ":Class"
     end
   end
 
@@ -3048,18 +3049,18 @@ module Crystal
       true
     end
 
-    def append_to_s(str)
-      str << "("
+    def to_s(io)
+      io << "("
       len = fun_types.length
       fun_types.each_with_index do |fun_type, i|
         if i == len - 1
-          str << " -> "
+          io << " -> "
         elsif i > 0
-          str << ", "
+          io << ", "
         end
-        fun_type.append_to_s(str)
+        fun_type.to_s(io)
       end
-      str << ")"
+      io << ")"
     end
   end
 end

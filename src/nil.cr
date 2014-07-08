@@ -39,6 +39,10 @@ struct Nil
     ""
   end
 
+  def to_s(io)
+    # Nothing to do
+  end
+
   def inspect
     "nil"
   end

@@ -4,7 +4,7 @@ require "../../spec_helper"
 describe "Type inference: yield with scope" do
   it "uses scope in global method" do
     run("
-      require \"int\"
+      require \"prelude\"
       def foo; with 1 yield; end
 
       foo do
@@ -15,7 +15,7 @@ describe "Type inference: yield with scope" do
 
   it "uses scope in instance method" do
     run("
-      require \"int\"
+      require \"prelude\"
       def foo; with 1 yield; end
 
       class Foo
@@ -36,7 +36,7 @@ describe "Type inference: yield with scope" do
 
   it "it uses self for instance method" do
     run("
-      require \"int\"
+      require \"prelude\"
       def foo; with 1 yield; end
 
       class Foo
@@ -57,7 +57,7 @@ describe "Type inference: yield with scope" do
 
   it "it invokes global method inside block of yield scope" do
     run("
-      require \"int\"
+      require \"prelude\"
 
       def foo
         with -1 yield
