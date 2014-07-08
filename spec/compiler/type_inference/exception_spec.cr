@@ -164,4 +164,36 @@ describe "Type inference: exception" do
   it "errors if else without rescue" do
     assert_syntax_error "begin; else; 1; end", "'else' is useless without 'rescue'"
   end
+
+  it "types code with abstract exception that delegates method" do
+    assert_type(%(
+      require "prelude"
+
+      class Object
+        def foo
+          bar(1)
+        end
+
+        def bar(x)
+          1
+        end
+      end
+
+      class AssertionFailed < ::Exception
+      end
+
+      abstract class FooException < ::Exception
+        def bar(io)
+          bar2(nil, io)
+        end
+      end
+
+      begin
+      rescue ex
+        ex.foo
+      end
+
+      1
+      )) { int32 }
+  end
 end

@@ -2679,10 +2679,14 @@ module Crystal
           end
 
           if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
-            # We need to insert the matches before the previous ones
-            # because subtypes are more specific matches
-            subtype_matches_matches.concat matches
-            matches = subtype_matches_matches
+            if subtype.abstract && subtype.subclasses.empty?
+              # No need to add matches if for an abstract class without subclasses
+            else
+              # We need to insert the matches before the previous ones
+              # because subtypes are more specific matches
+              subtype_matches_matches.concat matches
+              matches = subtype_matches_matches
+            end
           end
         end
       end
