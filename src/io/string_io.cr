@@ -2,7 +2,7 @@ class StringIO
   include IO
 
   def initialize(contents = nil)
-    @buffer = String::Buffer.new
+    @buffer = StringBuffer.new
     @buffer << contents if contents
     @pos = 0
   end

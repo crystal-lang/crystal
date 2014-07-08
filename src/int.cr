@@ -118,7 +118,7 @@ struct Int
       return "0"
     end
 
-    str = String::Buffer.new
+    str = StringBuffer.new
     num = self
 
     if num < 0

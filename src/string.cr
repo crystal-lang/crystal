@@ -1,7 +1,7 @@
 require "range"
 require "comparable"
-require "string/buffer"
 require "string/formatter"
+require "string_buffer"
 require "char_reader"
 
 lib C
@@ -65,7 +65,7 @@ class String
   end
 
   def self.new_from_buffer(capacity = 16)
-    buffer = Buffer.new(capacity)
+    buffer = StringBuffer.new(capacity)
     yield buffer
     buffer.to_s
   end
@@ -306,7 +306,7 @@ class String
   def replace(pattern : Regex)
     len = length
     offset = 0
-    buffer = String::Buffer.new(len)
+    buffer = StringBuffer.new(len)
     while true
       match = pattern.match(self, offset)
       if match
@@ -559,7 +559,7 @@ class String
     first = true
     last_is_downcase = false
 
-    String::Buffer.build(length + 10) do |str|
+    StringBuffer.build(length + 10) do |str|
       each_char do |char|
         downcase = 'a' <= char <= 'z'
         upcase = 'A' <= char <= 'Z'
@@ -583,7 +583,7 @@ class String
     first = true
     last_is_underscore = false
 
-    String::Buffer.build(length) do |str|
+    StringBuffer.build(length) do |str|
       each_char do |char|
         if first
           str << char.upcase

@@ -1,4 +1,4 @@
-class String::Buffer
+class StringBuffer
   def initialize(capacity = 64)
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
     @length = 0
@@ -6,7 +6,7 @@ class String::Buffer
   end
 
   def self.build(capacity = 64)
-    buffer = String::Buffer.new(capacity)
+    buffer = new(capacity)
     yield buffer
     buffer.to_s
   end

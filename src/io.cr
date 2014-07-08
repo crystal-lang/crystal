@@ -39,16 +39,15 @@ lib C
   fun close(fd : Int32) : Int32
 end
 
-require "string/buffer"
+require "string_buffer"
 
-# Classes including IO must define:
-#
-#   * read(buffer : UInt8*, count)
-#     reads count bytes into buffer
-#
-#   * write(buffer : UInt8*, count)
-#     writes count btyes from buffer
 module IO
+  # Reads count bytes from this IO into buffer
+  # abstract def read(buffer : UInt8*, count)
+
+  # Writes count bytes from buffer into this IO
+  # abstract def write(buffer : UInt8*, count)
+
   def print(string)
     string = string.to_s
     write string.cstr, string.length
@@ -84,7 +83,7 @@ module IO
   end
 
   def gets
-    buffer = String::Buffer.new
+    buffer = StringBuffer.new
     while true
       unless ch = read_byte
         return buffer.empty? ? nil : buffer.to_s

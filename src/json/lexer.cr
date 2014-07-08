@@ -4,7 +4,7 @@ class Json::Lexer
     @token = Token.new
     @line_number = 1
     @column_number = 1
-    @string_buffer = String::Buffer.new
+    @string_buffer = StringBuffer.new
   end
 
   def next_token
