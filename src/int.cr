@@ -122,7 +122,7 @@ struct Int
     num = self
 
     if num < 0
-      str.append_byte '-'.ord.to_u8
+      str << '-'.ord.to_u8
       num = num.abs
       init = 1
     else
@@ -132,9 +132,9 @@ struct Int
     while num > 0
       digit = num % radix
       if digit >= 10
-        str.append_byte ('a'.ord + digit - 10).to_u8
+        str << ('a'.ord + digit - 10).to_u8
       else
-        str.append_byte ('0'.ord + digit).to_u8
+        str << ('0'.ord + digit).to_u8
       end
       num /= radix
     end

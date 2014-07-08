@@ -15,12 +15,18 @@ class StringBuffer
     @buffer
   end
 
-  def <<(c : Char)
-    c.each_byte { |byte| append_byte byte }
+  def <<(byte : UInt8)
+    check_needs_resize
+    @buffer[@length] = byte
+    @length += 1
   end
 
-  def <<(obj : String)
-    append obj.cstr, obj.length
+  def <<(char : Char)
+    char.each_byte { |byte| self << byte }
+  end
+
+  def <<(string : String)
+    append string.cstr, string.length
   end
 
   def <<(obj)
@@ -41,10 +47,8 @@ class StringBuffer
     self
   end
 
-  def append_byte(byte : UInt8)
-    check_needs_resize
-    @buffer[@length] = byte
-    @length += 1
+  def append_c_string(buffer : UInt8*)
+    append buffer, C.strlen(buffer)
   end
 
   def clear

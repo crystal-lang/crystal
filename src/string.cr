@@ -71,7 +71,7 @@ class String
   end
 
   def self.build
-    builder = StringBuilder.new
+    builder = StringBuffer.new
     yield builder
     builder.to_s
   end
@@ -313,7 +313,7 @@ class String
         index = match.begin(0)
         if index > offset
           offset.upto(index - 1) do |i|
-            buffer.append_byte cstr[i]
+            buffer << cstr[i]
           end
         end
         str = match[0]
@@ -327,7 +327,7 @@ class String
 
     if offset < len
       offset.upto(len - 1) do |i|
-        buffer.append_byte cstr[i]
+        buffer << cstr[i]
       end
     end
 
