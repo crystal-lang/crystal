@@ -18,7 +18,7 @@ macro filesystem_spec(fs)
   end
 
   it "should list top level entries" do
-    {{fs.id}}.entries.map(&.name).should eq(["folder1","folder2","top-level.txt"])
+    {{fs.id}}.entries.map(&.name).sort.should eq(["folder1","folder2","top-level.txt"])
   end
 
   it "should have path from filesystem root" do
