@@ -2635,13 +2635,17 @@ module Crystal
 
             base_type_matches.each do |base_type_match|
               if base_type_match.def.return_type
-                cloned_def = base_type_match.def.clone
-                cloned_def.macro_owner = base_type_match.def.macro_owner
-                subtype.add_def cloned_def
-                cloned_def.owner = subtype_lookup
+                # We need to check if the definition for the method is different than the one in the base type
+                full_subtype_matches = subtype_lookup.lookup_matches(name, arg_types, block, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+                if full_subtype_matches.any? { |match| match.def.same?(base_type_match.def) }
+                  cloned_def = base_type_match.def.clone
+                  cloned_def.macro_owner = base_type_match.def.macro_owner
+                  subtype.add_def cloned_def
+                  cloned_def.owner = subtype_lookup
 
-                new_subtype_matches ||= [] of Match
-                new_subtype_matches.push Match.new(subtype_lookup, cloned_def, base_type_match.type_lookup, base_type_match.arg_types, base_type_match.free_vars)
+                  new_subtype_matches ||= [] of Match
+                  new_subtype_matches.push Match.new(subtype_lookup, cloned_def, base_type_match.type_lookup, base_type_match.arg_types, base_type_match.free_vars)
+                end
               end
             end
 

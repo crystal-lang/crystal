@@ -385,4 +385,32 @@ describe "Code gen: macro" do
       p.value.to_s
       )).to_string.should eq("Bar:Class")
   end
+
+  it "doesn't skip abstract classes when defining macro methods" do
+    run(%(
+      class Object
+        def foo : Int32
+          1
+        end
+      end
+
+      class Type
+      end
+
+      class ModuleType < Type
+        def foo
+          2
+        end
+      end
+
+      class Type1 < ModuleType
+      end
+
+      class Type2 < Type
+      end
+
+      t = Type1.new || Type2.new
+      t.foo
+      )).to_i.should eq(2)
+  end
 end
