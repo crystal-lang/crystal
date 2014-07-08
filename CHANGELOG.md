@@ -1,4 +1,4 @@
-## Next
+## 0.3.0 (2014-07-08)
 
 * Added `Array#each_index`
 * Optimized `String#*` for the case when the string has length one.
@@ -9,6 +9,14 @@
 * Allow invoking `new` on a function type. For example: `alias F = Int32 -> Int32; f = F.new { |x| x + 1 }; f.call(2) #=> 3`.
 * Allow ommiting function argument types when invoking C functions that accept functions as arguments.
 * Renamed `@name` to `@class_name` inside macros. `@name` will be deprecated in the next version.
+* Added IO#read_fully
+* Macro hooks: `inherited`, `included` and `extended`
+* `method_missing` macro
+* Added `{{ raise ... }}` inside macros to issue a compile error.
+* Started JSON serialization and deserialization
+* Now `at_exit` handlers are run when you invoke `exit`
+* Methods can be marked as abstract
+* New convention for `to_s` and `inspect`: you must override them receiving an IO-like object
 
 ## 0.2.0 (2014-06-24)
 
