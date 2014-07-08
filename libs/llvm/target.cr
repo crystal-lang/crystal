@@ -23,8 +23,8 @@ struct LLVM::Target
   end
 
   def to_s(io)
-    io.append_c_string LibLLVM.get_target_name(self)
+    io << name
     io << " - "
-    io.append_c_string LibLLVM.get_target_description(self)
+    io << description
   end
 end

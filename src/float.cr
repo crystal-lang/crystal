@@ -61,5 +61,16 @@ struct Float64
     self ** other.to_f64
   end
 
-  generate_to_s 22, "%g"
+  def to_s
+    String.new_with_capacity(22) do |buffer|
+      C.sprintf(buffer, "%g", self)
+    end
+  end
+
+  def to_s(io)
+    chars :: UInt8[22]
+    chars.set_all_to 0_u8
+    C.sprintf(chars.buffer, "%g", self)
+    io.write(chars.buffer, C.strlen(chars.buffer))
+  end
 end

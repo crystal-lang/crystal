@@ -253,7 +253,7 @@ class NSString < NSObject
   end
 
   def to_s(io)
-    io.append_c_string msgSend("UTF8String")
+    io << String.new(msgSend("UTF8String"))
   end
 
   def to_nsstring

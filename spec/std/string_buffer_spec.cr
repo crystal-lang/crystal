@@ -23,13 +23,6 @@ describe "StringBuffer" do
     str.should eq("hel")
   end
 
-  it "appends a c string" do
-    str = String.build do |io|
-      io.append_c_string("hello".cstr)
-    end
-    str.should eq("hello")
-  end
-
   it "appends a byte" do
     str = String.build do |io|
       io.write_byte 'a'.ord.to_u8

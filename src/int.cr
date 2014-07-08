@@ -178,6 +178,42 @@ struct Int
       to_i32
     end
   end
+
+  macro generate_to_s(capacity)
+    def to_s
+      String.new_with_capacity_and_length({{capacity}}) do |buffer|
+        to_s PointerIO.new(pointerof(buffer))
+      end
+    end
+
+    def to_s(io)
+      if self == 0
+        io.write_byte '0'.ord.to_u8
+        return 1
+      end
+
+      chars :: UInt8[{{capacity}}]
+      position = {{capacity}} - 1
+      num = self
+      negative = num < 0
+
+      while num != 0
+        digit = (num % 10).abs
+        chars.buffer[position] = ('0'.ord + digit).to_u8
+        position -= 1
+        num /= 10
+      end
+
+      if negative
+        chars.buffer[position] = '-'.ord.to_u8
+        position -= 1
+      end
+
+      length = {{capacity}} - 1 - position
+      io.write(chars.buffer + position + 1, length)
+      length
+    end
+  end
 end
 
 struct Int8
@@ -188,7 +224,7 @@ struct Int8
     0_i8 - self
   end
 
-  generate_to_s 5, "%hhd"
+  generate_to_s 5
 end
 
 struct Int16
@@ -199,7 +235,7 @@ struct Int16
     0_i16 - self
   end
 
-  generate_to_s 7, "%hd"
+  generate_to_s 7
 end
 
 struct Int32
@@ -210,7 +246,7 @@ struct Int32
     0 - self
   end
 
-  generate_to_s 12, "%d"
+  generate_to_s 12
 end
 
 struct Int64
@@ -221,7 +257,7 @@ struct Int64
     0_i64 - self
   end
 
-  generate_to_s 22, "%lld"
+  generate_to_s 22
 end
 
 struct UInt8
@@ -232,7 +268,7 @@ struct UInt8
     self
   end
 
-  generate_to_s 5, "%hhu"
+  generate_to_s 5
 end
 
 struct UInt16
@@ -243,7 +279,7 @@ struct UInt16
     self
   end
 
-  generate_to_s 7, "%hu"
+  generate_to_s 7
 end
 
 struct UInt32
@@ -254,7 +290,7 @@ struct UInt32
     self
   end
 
-  generate_to_s 12, "%u"
+  generate_to_s 12
 end
 
 struct UInt64
@@ -265,5 +301,5 @@ struct UInt64
     self
   end
 
-  generate_to_s 22, "%lu"
+  generate_to_s 22
 end

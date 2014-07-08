@@ -46,10 +46,6 @@ class StringBuffer
     self
   end
 
-  def append_c_string(buffer : UInt8*)
-    append buffer, C.strlen(buffer)
-  end
-
   def make_room_for(n_bytes : Int)
     new_length = length + n_bytes
     if new_length > @capacity

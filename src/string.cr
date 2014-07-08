@@ -49,6 +49,7 @@ class String
     str = GC.malloc_atomic((capacity + 9).to_u32) as UInt8*
     buffer = (str as String).cstr
     length = yield buffer
+    buffer[length] = 0_u8
     (str as Int32*).value = "".crystal_type_id
     ((str as Int32*) + 1).value = length
     str as String
