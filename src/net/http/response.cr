@@ -6,6 +6,10 @@ class HTTP::Response
   getter body
 
   def initialize(@version, @status_code, @status_message, @headers, @body)
+    if (body = @body)
+      new_headers = @headers ||= {} of String => String
+      new_headers["Content-Length"] = body.length.to_s
+    end
   end
 
   def self.not_found

@@ -90,5 +90,10 @@ describe "HTTP" do
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello")
     end
+
+    it "sets content length from body" do
+      response = HTTP::Response.new("HTTP/1.1", 200, "OK", {} of String => String, "hello")
+      response.headers["Content-Length"].should eq("5")
+    end
   end
 end
