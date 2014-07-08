@@ -15,14 +15,14 @@ class StringBuffer
     @buffer
   end
 
-  def <<(byte : UInt8)
+  def write_byte(byte : UInt8)
     check_needs_resize
     @buffer[@length] = byte
     @length += 1
   end
 
   def <<(char : Char)
-    char.each_byte { |byte| self << byte }
+    char.each_byte { |byte| write_byte byte }
   end
 
   def <<(string : String)
@@ -33,11 +33,15 @@ class StringBuffer
     self << obj.to_s
   end
 
-  def append(buffer : UInt8*, obj_length)
-    make_room_for obj_length
+  def write(buffer : UInt8*, count)
+    append buffer, count
+  end
 
-    (@buffer + @length).memcpy(buffer, obj_length)
-    @length += obj_length
+  def append(buffer : UInt8*, count)
+    make_room_for count
+
+    (@buffer + @length).memcpy(buffer, count)
+    @length += count
 
     self
   end

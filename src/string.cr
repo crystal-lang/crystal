@@ -313,7 +313,7 @@ class String
         index = match.begin(0)
         if index > offset
           offset.upto(index - 1) do |i|
-            buffer << cstr[i]
+            buffer.write_byte cstr[i]
           end
         end
         str = match[0]
@@ -327,7 +327,7 @@ class String
 
     if offset < len
       offset.upto(len - 1) do |i|
-        buffer << cstr[i]
+        buffer.write_byte cstr[i]
       end
     end
 

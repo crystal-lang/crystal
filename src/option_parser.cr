@@ -55,8 +55,8 @@ class OptionParser
   end
 
   def to_s(io)
-    if @banner
-      io << @banner
+    if banner = @banner
+      io << banner
       io << "\n"
     end
     @flags.join "\n", io

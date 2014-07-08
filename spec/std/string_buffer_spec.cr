@@ -32,7 +32,7 @@ describe "StringBuffer" do
 
   it "appends a byte" do
     str = String.build do |io|
-      io << 'a'.ord.to_u8
+      io.write_byte 'a'.ord.to_u8
     end
     str.should eq("a")
   end
