@@ -154,7 +154,24 @@ module Crystal
     def transform(node : StringInterpolation)
       super
 
-      call = Call.new(Path.new(["StringIO"], true), "new")
+      # Compute how long at least the string will be, so we
+      # can allocate enough space.
+      capacity = 0
+      node.expressions.each do |piece|
+        case piece
+        when StringLiteral
+          capacity += piece.value.length
+        else
+          capacity += 15
+        end
+      end
+
+      if capacity <= 64
+        call = Call.new(Path.new(["StringIO"], true), "new")
+      else
+        call = Call.new(Path.new(["StringIO"], true), "new", [NumberLiteral.new(capacity, :i32)] of ASTNode)
+      end
+
       node.expressions.each do |piece|
         call = Call.new(call, "<<", [piece])
       end
