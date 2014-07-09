@@ -33,6 +33,9 @@ def abort(message, status = 1)
 end
 
 def sleep(seconds)
+  if seconds < 0
+    raise ArgumentError.new "sleep seconds must be positive"
+  end
   C.sleep seconds.to_u32
 end
 
