@@ -10,7 +10,7 @@ macro filesystem_spec(fs)
   end
 
   it "should list top level folders" do
-    {{fs.id}}.dirs.map(&.name).should eq(["folder1","folder2"])
+    {{fs.id}}.dirs.map(&.name).sort.should eq(["folder1","folder2"])
   end
 
   it "should list top level files" do
