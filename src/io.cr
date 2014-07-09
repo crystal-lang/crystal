@@ -135,88 +135,18 @@ def gets
   STDIN.gets
 end
 
-def print(obj : Int32)
-  C.printf "%d", obj
-  nil
-end
-
-def print(obj : Int64)
-  C.printf "%ld", obj
-  nil
-end
-
-def print(obj : Float32)
-  C.printf "%f", obj
-  nil
-end
-
-def print(obj : Float64)
-  C.printf "%g", obj
-  nil
-end
-
 def print(obj)
-  C.printf obj.to_s
-  nil
-end
-
-def puts(obj : Int8)
-  C.printf "%hhd\n", obj
-  nil
-end
-
-def puts(obj : Int16)
-  C.printf "%hd\n", obj
-  nil
-end
-
-def puts(obj : Int32)
-  C.printf "%d\n", obj
-  nil
-end
-
-def puts(obj : Int64)
-  C.printf "%lld\n", obj
-  nil
-end
-
-def puts(obj : UInt8)
-  C.printf "%hhu\n", obj
-  nil
-end
-
-def puts(obj : UInt16)
-  C.printf "%hu\n", obj
-  nil
-end
-
-def puts(obj : UInt32)
-  C.printf "%u\n", obj
-  nil
-end
-
-def puts(obj : UInt64)
-  C.printf "%llu\n", obj
-  nil
-end
-
-def puts(obj : Float32)
-  C.printf "%g\n", obj.to_f64
-  nil
-end
-
-def puts(obj : Float64)
-  C.printf "%g\n", obj
+  STDOUT.print obj
   nil
 end
 
 def puts(obj = "")
-  C.puts obj.to_s
-  nil
+  STDOUT.puts obj
 end
 
 def p(obj)
-  puts obj.inspect
+  obj.inspect(STDOUT)
+  puts
   obj
 end
 
