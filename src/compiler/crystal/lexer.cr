@@ -121,7 +121,7 @@ module Crystal
           when '='
             next_char :"<<="
           when '-'
-            here = StringBuffer.new(20)
+            here = StringIO.new(20)
             here_start = 0
 
             while true
@@ -230,7 +230,7 @@ module Crystal
           @token.type = :"/"
         elsif @wants_regex
           start = current_pos
-          string_buffer = StringBuffer.new(20)
+          string_buffer = StringIO.new(20)
 
           while true
             case char

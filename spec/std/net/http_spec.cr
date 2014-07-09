@@ -6,14 +6,14 @@ describe "HTTP" do
   describe "Request" do
     it "serialize GET" do
       request = HTTP::Request.new :get, "/", {"Host" => "host.domain.com"}
-      io = StringBuffer.new
+      io = StringIO.new
       request.to_io(io)
       io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.domain.com\r\n\r\n")
     end
 
     it "serialize POST (with body)" do
       request = HTTP::Request.new :post, "/", nil, "thisisthebody"
-      io = StringBuffer.new
+      io = StringIO.new
       request.to_io(io)
       io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
     end
@@ -86,7 +86,7 @@ describe "HTTP" do
 
     it "serialize with body" do
       response = HTTP::Response.new("HTTP/1.1", 200, "OK", {"Content-Type" => "text/plain", "Content-Length" => "5"}, "hello")
-      io = StringBuffer.new
+      io = StringIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello")
     end

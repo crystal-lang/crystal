@@ -55,7 +55,7 @@ class StringBuilder
   include Json::Builder
 end
 
-class StringBuffer
+class StringIO
   include Json::Builder
 end
 

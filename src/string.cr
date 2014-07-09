@@ -1,7 +1,6 @@
 require "range"
 require "comparable"
 require "string/formatter"
-require "string_buffer"
 require "char_reader"
 
 lib C
@@ -65,14 +64,8 @@ class String
     str as String
   end
 
-  def self.new_from_buffer(capacity = 16)
-    buffer = StringBuffer.new(capacity)
-    yield buffer
-    buffer.to_s
-  end
-
-  def self.build
-    builder = StringBuffer.new
+  def self.build(capacity = 64)
+    builder = StringIO.new(capacity)
     yield builder
     builder.to_s
   end
@@ -236,7 +229,7 @@ class String
   end
 
   def replace(&block : Char -> String)
-    String.new_from_buffer(length) do |buffer|
+    String.build(length) do |buffer|
       each_char do |my_char|
         replacement = yield my_char
         if replacement
@@ -269,7 +262,7 @@ class String
       end
     end
 
-    String.new_from_buffer(length) do |buffer|
+    String.build(length) do |buffer|
       each_char do |ch|
         if ch.ord < 256
           if (a = table[ch.ord]) >= 0
@@ -307,7 +300,7 @@ class String
   def replace(pattern : Regex)
     len = length
     offset = 0
-    buffer = StringBuffer.new(len)
+    buffer = StringIO.new(len)
     while true
       match = pattern.match(self, offset)
       if match
@@ -336,7 +329,7 @@ class String
   end
 
   def delete(char : Char)
-    String.new_from_buffer(length) do |buffer|
+    String.build(length) do |buffer|
       each_char do |my_char|
         buffer << my_char unless my_char == char
       end
@@ -560,7 +553,7 @@ class String
     first = true
     last_is_downcase = false
 
-    StringBuffer.build(length + 10) do |str|
+    String.build(length + 10) do |str|
       each_char do |char|
         downcase = 'a' <= char <= 'z'
         upcase = 'A' <= char <= 'Z'
@@ -584,7 +577,7 @@ class String
     first = true
     last_is_underscore = false
 
-    StringBuffer.build(length) do |str|
+    String.build(length) do |str|
       each_char do |char|
         if first
           str << char.upcase
@@ -696,7 +689,7 @@ class String
   end
 
   def %(args : Array)
-    String.new_from_buffer(length) do |buffer|
+    String.build(length) do |buffer|
       String::Formatter.new(self, args, buffer).format
     end
   end

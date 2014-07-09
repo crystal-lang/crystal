@@ -125,7 +125,7 @@ struct Int
       return
     end
 
-    str = StringBuffer.new
+    str = StringIO.new
     num = self
 
     if num < 0

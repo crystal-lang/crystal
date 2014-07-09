@@ -45,8 +45,6 @@ lib C
   fun close(fd : Int32) : Int32
 end
 
-require "string_buffer"
-
 module IO
   # Reads count bytes from this IO into buffer
   # abstract def read(buffer : UInt8*, count)
@@ -54,19 +52,23 @@ module IO
   # Writes count bytes from buffer into this IO
   # abstract def write(buffer : UInt8*, count)
 
-  def print(string)
-    string = string.to_s
+  def <<(string : String)
     write string.cstr, string.length
-  end
-
-  def <<(string)
-    print(string)
     self
   end
 
+  def <<(obj)
+    obj.to_s self
+    self
+  end
+
+  def print(string)
+    self << string
+  end
+
   def puts(string)
-    print string
-    print "\n"
+    self << string
+    self << "\n"
   end
 
   def read_byte
@@ -89,7 +91,7 @@ module IO
   end
 
   def gets
-    buffer = StringBuffer.new
+    buffer = StringIO.new
     while true
       unless ch = read_byte
         return buffer.empty? ? nil : buffer.to_s

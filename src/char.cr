@@ -145,6 +145,8 @@ struct Char
   end
 
   def to_s(io)
-    io << self
+    each_byte do |byte|
+      io.write_byte byte
+    end
   end
 end

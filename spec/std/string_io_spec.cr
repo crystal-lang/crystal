@@ -2,6 +2,43 @@
 require "spec"
 
 describe "StringIO" do
+  it "appends a char" do
+    str = String.build do |io|
+      io << 'a'
+    end
+    str.should eq("a")
+  end
+
+  it "appends a string" do
+    str = String.build do |io|
+      io << "hello"
+    end
+    str.should eq("hello")
+  end
+
+  it "writes to a buffer with count" do
+    str = String.build do |io|
+      io.write "hello".cstr, 3
+    end
+    str.should eq("hel")
+  end
+
+  it "appends a byte" do
+    str = String.build do |io|
+      io.write_byte 'a'.ord.to_u8
+    end
+    str.should eq("a")
+  end
+
+  it "appends to another buffer" do
+    s1 = StringIO.new
+    s1 << "hello"
+
+    s2 = StringIO.new
+    s1.to_s(s2)
+    s2.to_s.should eq("hello")
+  end
+
   it "writes" do
     io = StringIO.new
     io << "foo" << "bar"
@@ -42,5 +79,11 @@ describe "StringIO" do
     io = StringIO.new
     io.write_byte 97_u8
     io.to_s.should eq("a")
+  end
+
+  it "writes and reads" do
+    io = StringIO.new
+    io << "foo" << "bar"
+    io.gets.should eq("foobar")
   end
 end

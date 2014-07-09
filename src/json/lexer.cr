@@ -4,7 +4,7 @@ class Json::Lexer
     @token = Token.new
     @line_number = 1
     @column_number = 1
-    @string_buffer = StringBuffer.new
+    @string_io = StringIO.new
   end
 
   def next_token
@@ -81,8 +81,8 @@ class Json::Lexer
   end
 
   def consume_string
-    @string_buffer.clear
-    buffer = @string_buffer
+    @string_io.clear
+    buffer = @string_io
     while true
       case char = next_char
       when '\0'

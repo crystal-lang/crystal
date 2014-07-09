@@ -31,8 +31,8 @@ class Object
   # they must override `inspect(io)`, which must append to the
   # given IO-like object.
   def inspect
-    String.new_from_buffer(64) do |str|
-      inspect(str)
+    String.build do |io|
+      inspect io
     end
   end
 

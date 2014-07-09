@@ -15,13 +15,13 @@ describe "Base64" do
       it "decode from #{b.inspect} to #{a.inspect}" do
         Base64.decode64(b).should eq(a)
       end
-    end    
+    end
   end
 
   describe "base" do
     eqs = {"Send reinforcements" => "U2VuZCByZWluZm9yY2VtZW50cw==\n",
            "Now is the time for all good coders\nto learn Crystal" => "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g\nQ3J5c3RhbA==\n",
-           "This is line one\nThis is line two\nThis is line three\nAnd so on...\n" => 
+           "This is line one\nThis is line two\nThis is line three\nAnd so on...\n" =>
              "VGhpcyBpcyBsaW5lIG9uZQpUaGlzIGlzIGxpbmUgdHdvClRoaXMgaXMgbGlu\nZSB0aHJlZQpBbmQgc28gb24uLi4K\n",
            "hahah⊙ⓧ⊙" => "aGFoYWjiipnik6fiipk=\n"}
     eqs.each do |a, b|
@@ -45,7 +45,7 @@ describe "Base64" do
     end
 
     it "works for most characters" do
-      a = String.new_from_buffer(65536 * 4) do |buf|
+      a = String.build(65536 * 4) do |buf|
         65536.times { |i| buf << (i + 1).chr }
       end
       b = Base64.encode64(a)
@@ -63,7 +63,7 @@ describe "Base64" do
        "Now is the time for all good coders\nto learn Crystal")
     end
     it "with spec symbols" do
-      s = String.new_from_buffer { |b| (160..179).each{|i| b << i.chr } }
+      s = String.build { |b| (160..179).each{|i| b << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq/CsMKxwrLCsw=="
       Base64.strict_encode64(s).should eq(se)
       Base64.strict_decode64(se).should eq(s)
@@ -72,9 +72,9 @@ describe "Base64" do
 
   describe "urlsafe" do
     it "work" do
-      s = String.new_from_buffer { |b| (160..179).each{|i| b << i.chr } }
+      s = String.build { |b| (160..179).each{|i| b << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw"
-      Base64.urlsafe_encode64(s).should eq(se)      
+      Base64.urlsafe_encode64(s).should eq(se)
       Base64.urlsafe_decode64(se).should eq(s)
     end
   end
