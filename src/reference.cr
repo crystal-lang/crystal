@@ -32,7 +32,7 @@ class Reference
   end
 
   def inspect(io) : Nil
-    io << "#<{{@name.id}}:0x"
+    io << "#<{{@class_name.id}}:0x"
     object_id.to_s_in_base(16, io)
 
     executed = exec_recursive(:inspect) do
@@ -40,8 +40,8 @@ class Reference
         {% if i > 0 %}
           io << ","
         {% end %}
-        io << " {{ivar.id}}="
-        {{ivar.id}}.inspect io
+        io << " @{{ivar.id}}="
+        @{{ivar.id}}.inspect io
       {% end %}
     end
     unless executed
@@ -52,7 +52,7 @@ class Reference
   end
 
   def to_s(io) : Nil
-    io << "#<{{@name.id}}:0x"
+    io << "#<{{@class_name.id}}:0x"
     object_id.to_s_in_base(16, io)
     io << ">"
     nil

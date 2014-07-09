@@ -39,7 +39,7 @@ module Crystal
     end
 
     def class_desc : String
-      {{@name.split("::").last}}
+      {{@class_name.split("::").last}}
     end
   end
 

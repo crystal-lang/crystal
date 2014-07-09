@@ -159,7 +159,7 @@ describe "Code gen: macro" do
 
       foo = Foo.new(1)
       foo.to_s
-      )).to_string.should eq("@x")
+      )).to_string.should eq("x")
   end
 
   it "expands def macro with @instance_vars with subclass" do
@@ -181,7 +181,7 @@ describe "Code gen: macro" do
       end
 
       Bar.new(1, 2).to_s
-      )).to_string.should eq("@y")
+      )).to_string.should eq("y")
   end
 
   it "expands def macro with @instance_vars with hierarchy" do
@@ -203,7 +203,7 @@ describe "Code gen: macro" do
       end
 
       (Bar.new(1, 2) || Foo.new(1)).to_s
-      )).to_string.should eq("@y")
+      )).to_string.should eq("y")
   end
 
   it "expands def macro with @class_name" do
@@ -348,7 +348,7 @@ describe "Code gen: macro" do
     run(%(
       class Class
         def to_s : String
-          {{ @name }}
+          {{ @class_name }}
         end
       end
 
@@ -369,7 +369,7 @@ describe "Code gen: macro" do
     run(%(
       class Class
         def to_s : String
-          {{ @name }}
+          {{ @class_name }}
         end
       end
 

@@ -448,7 +448,7 @@ module Crystal
 
       def visit(node : InstanceVar)
         case node.name
-        when "@name", "@class_name"
+        when "@class_name"
           @last = StringLiteral.new(@scope.to_s)
         when "@instance_vars"
           @last = MacroType.instance_vars(@scope)
@@ -869,7 +869,7 @@ module Crystal
 
       ivars = Array(ASTNode).new(all_ivars.length)
       all_ivars.each do |name, ivar|
-        ivars.push MetaVar.new(name, ivar.type)
+        ivars.push MetaVar.new(name[1 .. -1], ivar.type)
       end
 
       ArrayLiteral.new(ivars)

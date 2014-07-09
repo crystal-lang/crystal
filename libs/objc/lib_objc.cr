@@ -3,7 +3,7 @@ lib LibObjC("objc")
   type SEL : Void*
   # type Class : UInt8*
   # type size_t : UInt32
-  type IMP : Pointer(UInt8), LibObjC::SEL -> Nil
+  type IMP : Pointer(UInt8), LibObjC::SEL ->
   # type IMP : Void*
 
   fun getClass = objc_getClass(UInt8*) : UInt8*

@@ -15,13 +15,17 @@ macro objc_class(class_name)
       @obj = initialize_using "init"
     end
 
+    def initialize(pointer : UInt8*)
+      super
+    end
+
     {{yield}}
   end
 end
 
 macro objc_export(method_name)
-  $x_{{@name.id}}_{{method_name.id}}_imp = ->(_self : UInt8*, _cmd : LibObjC::SEL) {
-    {{@name.id}}.new(_self).{{method_name.id}}
+  $x_{{@class_name.id}}_{{method_name.id}}_imp = ->(obj : UInt8*, _cmd : LibObjC::SEL) {
+    {{@class_name.id}}.new(obj).{{method_name.id}}
   }
-  LibObjC.class_addMethod($x_{{@name.id}}_objc_class.obj, {{method_name.id.stringify}}.to_sel, $x_{{@name.id}}_{{method_name.id}}_imp, "v@:")
+  LibObjC.class_addMethod($x_{{@class_name.id}}_objc_class.obj, {{method_name.id.stringify}}.to_sel, $x_{{@class_name.id}}_{{method_name.id}}_imp, "v@:")
 end

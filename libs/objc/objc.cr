@@ -244,6 +244,10 @@ class NSString < NSObject
     @obj = initialize_using "initWithUTF8String:", s.to_s.cstr
   end
 
+  def initialize(s : UInt8*)
+    super(s)
+  end
+
   def length
     msgSend("length").address
   end
@@ -404,6 +408,10 @@ class NSView < NSObject
   def initialize(rect : NSRect)
     obj = self.class.msgSend "alloc"
     @obj = LibObjC.msgSend(obj, "initWithFrame:".to_sel, outbox(rect))
+  end
+
+  def initialize(pointer : UInt8*)
+    super
   end
 
   def addSubview(view)

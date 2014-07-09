@@ -401,7 +401,7 @@ describe "MacroExpander" do
     end
 
     it "executes instance_vars" do
-      assert_macro("x", "{{x.instance_vars.map &.stringify}}", %(["@length", "@c"])) do |program|
+      assert_macro("x", "{{x.instance_vars.map &.stringify}}", %(["length", "c"])) do |program|
         [MacroType.new(program.string)] of ASTNode
       end
     end

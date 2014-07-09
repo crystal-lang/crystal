@@ -1,3 +1,8 @@
+## 0.3.1 (2014-07-09)
+
+* **(breaking change)** Replaced `@name` inside macros with `@class_name`.
+* **(breaking change)** Instance variables inside macros now don't have the `@` symbols in their names.
+
 ## 0.3.0 (2014-07-08)
 
 * Added `Array#each_index`
