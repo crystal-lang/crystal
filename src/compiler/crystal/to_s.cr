@@ -13,7 +13,7 @@ module Crystal
   end
 
   class ToSVisitor < Visitor
-    def initialize(@str = StringBuilder.new)
+    def initialize(@str = StringIO.new)
       @indent = 0
       @inside_macro = false
     end

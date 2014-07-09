@@ -11,11 +11,11 @@ struct Json::ObjectBuilder(T)
     @count = 0
   end
 
-  def field(name, value)
+  def field(name : String, value)
     field(name) { value.to_json(@io) }
   end
 
-  def field(name)
+  def field(name : String)
     @io << ", " if @count > 0
     @io << "\""
     @io << name
@@ -51,14 +51,6 @@ module Json::Builder
   end
 end
 
-class StringBuilder
-  include Json::Builder
-end
-
-class StringIO
-  include Json::Builder
-end
-
 module IO
   include Json::Builder
 end
@@ -71,26 +63,27 @@ end
 
 struct Bool
   def to_json(io)
-    io << to_s
+    to_s io
   end
 end
 
 struct Int
   def to_json(io)
-    io << to_s
+    to_s io
   end
 end
 
 struct Float
   def to_json(io)
-    io << to_s
+    to_s io
   end
 end
 
 class String
   def to_json(io)
     io << "\""
-    io << dump
+    # TODO: dump is OK for Crystal but not for JSON, do correct escaping
+    dump io
     io << "\""
   end
 end

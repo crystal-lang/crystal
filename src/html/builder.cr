@@ -1,6 +1,6 @@
 struct HTML::Builder
   def initialize
-    @str = StringBuilder.new
+    @str = StringIO.new
   end
 
   def build

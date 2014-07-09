@@ -144,7 +144,7 @@ module Crystal
       end
 
       def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
-        @str = StringBuilder.new
+        @str = StringIO.new
         @last = Nop.new
       end
 

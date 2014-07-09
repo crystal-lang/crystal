@@ -16,7 +16,8 @@
 * Started JSON serialization and deserialization
 * Now `at_exit` handlers are run when you invoke `exit`
 * Methods can be marked as abstract
-* New convention for `to_s` and `inspect`: you must override them receiving an IO-like object
+* New convention for `to_s` and `inspect`: you must override them receiving an IO object
+* StringBuilder and StringBuffer have been replaced by StringIO
 
 ## 0.2.0 (2014-06-24)
 
