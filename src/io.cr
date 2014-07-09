@@ -52,23 +52,23 @@ module IO
   # Writes count bytes from buffer into this IO
   abstract def write(buffer : UInt8*, count)
 
-  def <<(string : String)
-    write string.cstr, string.length
-    self
-  end
-
+  # Writes the given object into this IO.
+  # This ends up calling `to_s(io)` on the object.
   def <<(obj)
     obj.to_s self
     self
   end
 
-  def print(string)
-    self << string
+  # Same as `<<`
+  def print(obj)
+    self << obj
   end
 
-  def puts(string)
-    self << string
-    self << "\n"
+  # Writes the given object into this IO followed
+  # by a newline character.
+  def puts(obj)
+    self << obj
+    write_byte '\n'.ord.to_u8
   end
 
   def read_byte

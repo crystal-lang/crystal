@@ -711,7 +711,7 @@ class String
   end
 
   def to_s(io)
-    io << self
+    io.write cstr, @length
   end
 
   def cstr
