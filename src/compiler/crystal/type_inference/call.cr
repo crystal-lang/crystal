@@ -148,8 +148,13 @@ module Crystal
 
       block = @block
 
-      matches.map do |match|
-        check_not_abstract match.def, owner
+      typed_defs = Array(Def).new(matches.length)
+
+      matches.each do |match|
+        # Discard abstract defs for abstract classes
+        next if match.def.abstract && match.owner.abstract
+
+        check_not_abstract match, owner
 
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
@@ -187,8 +192,10 @@ module Crystal
             end
           end
         end
-        typed_def
+        typed_defs << typed_def
       end
+
+      typed_defs
     end
 
     def lookup_matches_in(owner : Nil)
@@ -212,11 +219,11 @@ module Crystal
       nil
     end
 
-    def check_not_abstract(a_def, owner)
-      if a_def.abstract
+    def check_not_abstract(match, owner)
+      if match.def.abstract
         bubbling_exception do
           owner = owner.base_type if owner.is_a?(HierarchyType)
-          a_def.raise "abstract def #{a_def.owner}##{a_def.name} must be implemented by #{owner}"
+          match.def.raise "abstract def #{match.def.owner}##{match.def.name} must be implemented by #{owner}"
         end
       end
     end
