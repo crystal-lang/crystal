@@ -3,7 +3,7 @@ require "../../spec_helper"
 
 describe "Normalize: case" do
   it "normalizes case with call" do
-    assert_normalize "case x; when 1; 'b'; when 2; 'c'; else; 'd'; end", "#temp_1 = x()\nif 1 === #temp_1\n  'b'\nelse\n  if 2 === #temp_1\n    'c'\n  else\n    'd'\n  end\nend"
+    assert_normalize "case x; when 1; 'b'; when 2; 'c'; else; 'd'; end", "#temp_1 = x\nif 1 === #temp_1\n  'b'\nelse\n  if 2 === #temp_1\n    'c'\n  else\n    'd'\n  end\nend"
   end
 
   it "normalizes case with var in cond" do
@@ -23,7 +23,7 @@ describe "Normalize: case" do
   end
 
   it "normalizes case with implicit call" do
-    assert_normalize "case x; when .foo(1); 2; end", "#temp_1 = x()\nif #temp_1.foo(1)\n  2\nend"
+    assert_normalize "case x; when .foo(1); 2; end", "#temp_1 = x\nif #temp_1.foo(1)\n  2\nend"
   end
 
   it "normalizes case with assignment" do

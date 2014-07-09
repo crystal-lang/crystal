@@ -285,7 +285,8 @@ module Crystal
         else
           @str << decorate_call(node, node.name)
 
-          call_args_need_parens = !(node.obj && node.args.empty?) || node.block_arg
+          call_args_need_parens = !node.args.empty? || node.block_arg
+
           @str << "(" if call_args_need_parens
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0

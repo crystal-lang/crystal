@@ -11,7 +11,7 @@ describe "Normalize: chained comparisons" do
   end
 
   it "normalizes one comparison with call" do
-    assert_normalize "1 <= b <= 3", "if #temp_2 = 1 <= #temp_1 = b()\n  #temp_1 <= 3\nelse\n  #temp_2\nend"
+    assert_normalize "1 <= b <= 3", "if #temp_2 = 1 <= #temp_1 = b\n  #temp_1 <= 3\nelse\n  #temp_2\nend"
   end
 
   it "normalizes two comparisons with literal" do
@@ -19,6 +19,6 @@ describe "Normalize: chained comparisons" do
   end
 
   it "normalizes two comparisons with calls" do
-    assert_normalize "1 <= a <= b <= 4", "if #temp_2 = if #temp_4 = 1 <= #temp_3 = a()\n  #temp_3 <= #temp_1 = b()\nelse\n  #temp_4\nend\n  #temp_1 <= 4\nelse\n  #temp_2\nend"
+    assert_normalize "1 <= a <= b <= 4", "if #temp_2 = if #temp_4 = 1 <= #temp_3 = a\n  #temp_3 <= #temp_1 = b\nelse\n  #temp_4\nend\n  #temp_1 <= 4\nelse\n  #temp_2\nend"
   end
 end
