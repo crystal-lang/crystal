@@ -49,7 +49,7 @@ def sleep(time)
   Fiber.yield
 end
 
-redefine_main(main) do |main|
+redefine_main do |main|
   {{main}}
   EventScheduler::INSTANCE.run_loop
 end

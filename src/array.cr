@@ -523,8 +523,7 @@ class Array(T)
   end
 
   def sort_by!(&block: T -> U)
-    f = ->(x : T, y : T){ block.call(x) <=> block.call(y) }
-    sort! &f
+    sort! { |x, y| block.call(x) <=> block.call(y) }
   end
 
   def sort_by(&block: T -> U)

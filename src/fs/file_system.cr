@@ -15,15 +15,11 @@ module FS
     end
 
     # read whole content of file in a string
-    def read(path)
-      raise "subclass responsibility"
-    end
+    # abstract def read(path)
 
     # create Entry corresponding that corresponds to the specified
     # relative path to the file system
-    def entry?(path)
-      raise "subclass responsibility"
-    end
+    # abstract def entry?(path)
 
     def entry(path)
       entry = entry?(path)
@@ -33,18 +29,14 @@ module FS
     end
 
     # enumerate top level entries of file system
-    def entries(&block : Entry+ -> U)
-      raise "subclass responsibility"
-    end
+    abstract def entries(&block : Entry -> U)
 
-    collect_alias_method "entries", "Entry+"
+    collect_alias_method entries, Entry
 
     # enumerate entries below specified relative path to the file system
-    def find_entries(path, &block : Entry+ -> U)
-      raise "subclass responsibility"
-    end
+    abstract def find_entries(path, &block : Entry -> U)
 
-    collect_alias_method "find_entries(path)", "Entry+"
+    collect_alias_method "find_entries(path)", Entry
 
     def exists?(path)
       !entry?(path).nil?

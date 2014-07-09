@@ -22,9 +22,8 @@ class Thread(T, R)
   def initialize(arg : T, &func : T -> R)
     @func = func
     @arg = arg
-    PThread.create(out @th, nil, ->(x : Void*) {
-        obj = x as Thread(T, R)
-        obj.start
+    PThread.create(out @th, nil, ->(data) {
+        (data as Thread(T, R)).start
       }, self as Void*)
   end
 

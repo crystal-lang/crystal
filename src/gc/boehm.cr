@@ -72,7 +72,7 @@ module GC
   def self.add_finalizer(object : T)
     if object.responds_to?(:finalize)
       LibGC.register_finalizer(object as Void*,
-        ->(obj : Void*, data : Void*) {
+        ->(obj, data) {
           same_object = obj as T
           if same_object.responds_to?(:finalize)
             same_object.finalize

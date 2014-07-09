@@ -20,7 +20,7 @@ class Object
 
   # Appends a string representation of this object
   # to the given IO-like object.
-  # abstract def to_s(io)
+  abstract def to_s(io)
 
   # Returns a String representation of this object.
   #

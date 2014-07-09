@@ -11,11 +11,6 @@ module Crystal
         to_s_with_source source, io
       end
     end
-
-    # TODO: remove this method, but fix the compiler first
-    def to_s_with_source(source, io)
-      raise "Bug: not implemented"
-    end
   end
 
   class SyntaxException < Exception

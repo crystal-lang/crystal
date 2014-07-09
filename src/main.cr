@@ -17,7 +17,7 @@ def run_at_exit
   end
 end
 
-macro redefine_main(name)
+macro redefine_main(name = main)
   fun main = {{name}}(argc : Int32, argv : UInt8**) : Int32
     GC.init
     {{yield CrystalMain.__crystal_main(argc, argv)}}
@@ -30,6 +30,6 @@ macro redefine_main(name)
   end
 end
 
-redefine_main(main) do |main|
+redefine_main do |main|
   {{main}}
 end

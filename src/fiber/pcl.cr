@@ -32,7 +32,7 @@ class Fiber
   def initialize(&@proc)
     @stack = C.malloc(STACK_SIZE.to_u32)
     @stack_top = @stack_bottom = @stack + STACK_SIZE
-    @cr = Pcl.co_create(->(f : Void*) { (f as Fiber).run }, self as Void*, @stack, STACK_SIZE)
+    @cr = Pcl.co_create(->(fiber) { (fiber as Fiber).run }, self as Void*, @stack, STACK_SIZE)
     Pcl.co_set_data(@cr, self as Void*)
 
     @prev_fiber = nil

@@ -47,10 +47,10 @@ end
 
 module IO
   # Reads count bytes from this IO into buffer
-  # abstract def read(buffer : UInt8*, count)
+  abstract def read(buffer : UInt8*, count)
 
   # Writes count bytes from buffer into this IO
-  # abstract def write(buffer : UInt8*, count)
+  abstract def write(buffer : UInt8*, count)
 
   def <<(string : String)
     write string.cstr, string.length

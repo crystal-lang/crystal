@@ -405,11 +405,6 @@ module Crystal
     def inspect(io)
       to_s(io)
     end
-
-    # TODO: remove this method, but fix the compiler first
-    def to_s(io)
-      raise "Bug: not implemented"
-    end
   end
 
   class NoReturnType < Type
