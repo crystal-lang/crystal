@@ -262,7 +262,7 @@ describe "Type inference: def" do
       ), "abstract def Foo#foo must be implemented by Foo"
   end
 
-  pending "errors if using abstract def on subclass" do
+  it "errors if using abstract def on subclass" do
     assert_error %(
       class Foo
         abstract def foo

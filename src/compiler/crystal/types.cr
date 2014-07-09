@@ -2649,6 +2649,23 @@ module Crystal
             end
           end
 
+          # Also, check if a base type match is abstract: if so,
+          # add it to this subtype
+          if subtype_matches.empty?
+            new_subtype_matches = nil
+
+            base_type_matches.each do |base_type_match|
+              if base_type_match.def.abstract
+                new_subtype_matches ||= [] of Match
+                new_subtype_matches << Match.new(subtype_lookup, base_type_match.def, base_type_match.type_lookup, base_type_match.arg_types, base_type_match.free_vars)
+              end
+            end
+
+            if new_subtype_matches
+              subtype_matches = Matches.new(new_subtype_matches, Cover.create(arg_types, new_subtype_matches))
+            end
+          end
+
           unless subtype.leaf?
             type_to_matches ||= {} of Type => Matches
             type_to_matches[subtype] = subtype_matches

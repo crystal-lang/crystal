@@ -154,7 +154,7 @@ module Crystal
         # Discard abstract defs for abstract classes
         next if match.def.abstract && match.owner.abstract
 
-        check_not_abstract match, owner
+        check_not_abstract match
 
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
@@ -219,9 +219,10 @@ module Crystal
       nil
     end
 
-    def check_not_abstract(match, owner)
+    def check_not_abstract(match)
       if match.def.abstract
         bubbling_exception do
+          owner = match.owner
           owner = owner.base_type if owner.is_a?(HierarchyType)
           match.def.raise "abstract def #{match.def.owner}##{match.def.name} must be implemented by #{owner}"
         end
