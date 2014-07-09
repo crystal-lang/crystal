@@ -142,7 +142,7 @@ module Crystal
       path
     end
 
-    # Convert an interpolation to a concatenation with a StringBuilder:
+    # Convert an interpolation to a concatenation with a StringIO:
     #
     # From:
     #
@@ -150,11 +150,11 @@ module Crystal
     #
     # To:
     #
-    #     (StringBuilder.new << "foo" << bar << "baz").to_s
+    #     (StringIO.new << "foo" << bar << "baz").to_s
     def transform(node : StringInterpolation)
       super
 
-      call = Call.new(Path.new(["StringBuilder"], true), "new")
+      call = Call.new(Path.new(["StringIO"], true), "new")
       node.expressions.each do |piece|
         call = Call.new(call, "<<", [piece])
       end
