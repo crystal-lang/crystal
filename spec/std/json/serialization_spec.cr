@@ -66,11 +66,11 @@ describe "Json serialization" do
     end
 
     it "does for Array" do
-      [1, 2, 3].to_json.should eq("[1, 2, 3]")
+      [1, 2, 3].to_json.should eq("[1,2,3]")
     end
 
     it "does for Hash" do
-      {"foo" => 1, "bar" => 2}.to_json.should eq(%({"foo": 1, "bar": 2}))
+      {"foo" => 1, "bar" => 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
   end
 end

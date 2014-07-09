@@ -16,10 +16,10 @@ struct Json::ObjectBuilder(T)
   end
 
   def field(name : String)
-    @io << ", " if @count > 0
+    @io << "," if @count > 0
     @io << "\""
     @io << name
-    @io << "\": "
+    @io << "\":"
     yield
     @count += 1
   end
@@ -31,7 +31,7 @@ struct Json::ArrayBuilder(T)
   end
 
   def <<(value)
-    @io << ", " if @count > 0
+    @io << "," if @count > 0
     value.to_json(@io)
     @count += 1
   end
