@@ -144,7 +144,7 @@ module Crystal
       end
 
       def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
-        @str = StringIO.new
+        @str = StringIO.new(512)
         @last = Nop.new
       end
 
@@ -166,7 +166,7 @@ module Crystal
         node.exp.accept self
 
         unless node.exp.is_a?(Assign)
-          @str << @last.to_s
+          @last.to_s(@str)
         end
 
         false
@@ -192,7 +192,7 @@ module Crystal
               str << exp.value
             else
               exp.accept self
-              str << @last.to_s
+              @last.to_s(str)
             end
           end
         end)
