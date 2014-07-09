@@ -76,7 +76,7 @@ class File < FileDescriptorIO
 
     oflag = m | o
 
-    fd = C.open(filename, oflag, C::S_IRUSR | C::S_IWUSR)
+    fd = C.open(filename, oflag, C::S_IRWXU)
     if fd < 0
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
     end

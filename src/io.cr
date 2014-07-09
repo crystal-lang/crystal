@@ -4,17 +4,23 @@ lib C
     F_SETFL = 4
   end
 
-  O_RDONLY   = 0
-  O_WRONLY   = 1 <<  0
-  O_RDWR     = 1 <<  1
-  O_APPEND   = 1 <<  3
-  O_NOFOLLOW = 1 <<  8
-  O_CREAT    = 1 <<  9
-  O_TRUNC    = 1 << 10
-  O_EXCL     = 1 << 11
+  ifdef linux
+    O_RDONLY   = 00000000
+    O_WRONLY   = 00000001
+    O_RDWR     = 00000002
+    O_APPEND   = 00002000
+    O_CREAT    = 00000100
+    O_TRUNC    = 00001000
+  elsif darwin
+    O_RDONLY   = 0x0000
+    O_WRONLY   = 0x0001
+    O_RDWR     = 0x0002
+    O_APPEND   = 0x0008
+    O_CREAT    = 0x0200
+    O_TRUNC    = 0x0400
+  end
 
-  S_IWUSR    = 1 <<  7
-  S_IRUSR    = 1 <<  8
+  S_IRWXU    = 0000700
 
   enum FD
     O_NONBLOCK = 04000
