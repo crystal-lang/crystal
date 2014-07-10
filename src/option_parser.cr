@@ -54,7 +54,7 @@ class OptionParser
     @handlers << Handler.new(long_flag, block)
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     if banner = @banner
       io << banner
       io << "\n"

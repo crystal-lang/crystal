@@ -144,7 +144,7 @@ struct Char
     end
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     each_byte do |byte|
       io.write_byte byte
     end

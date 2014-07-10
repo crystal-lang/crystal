@@ -49,7 +49,7 @@ struct Range(B, E)
     includes?(value)
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     @begin.to_s(io)
     io << (@exclusive ? "..." : "..")
     @end.to_s(io)

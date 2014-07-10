@@ -2,6 +2,7 @@
 
 * Integer literals without a suffix are inferred to be Int32, Int64 or UInt64 depending on their value.
 * Check that integer literals fit into their types.
+* Put back `Int#to_s(radix : Int)` (was renamed to `to_s_in_base` in the previous release) by also specifying a restriction in `Int#to_s(io : IO)`.
 
 ## 0.3.1 (2014-07-09)
 

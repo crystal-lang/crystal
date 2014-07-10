@@ -27,7 +27,7 @@ class BitArray
     end
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     io << "BitArray["
     each do |value|
       io << (value ? "1" : "0")

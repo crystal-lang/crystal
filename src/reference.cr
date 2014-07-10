@@ -31,7 +31,7 @@ class Reference
     self
   end
 
-  def inspect(io) : Nil
+  def inspect(io : IO) : Nil
     io << "#<{{@class_name.id}}:0x"
     object_id.to_s(16, io)
 
@@ -51,7 +51,7 @@ class Reference
     nil
   end
 
-  def to_s(io) : Nil
+  def to_s(io : IO) : Nil
     io << "#<{{@class_name.id}}:0x"
     object_id.to_s(16, io)
     io << ">"

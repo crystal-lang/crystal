@@ -49,7 +49,7 @@ class Pointer(T)
     address.hash
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     io << "Pointer("
     io << T.to_s
     io << ")"

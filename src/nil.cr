@@ -39,7 +39,7 @@ struct Nil
     ""
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     # Nothing to do
   end
 

@@ -36,7 +36,7 @@ struct Float32
     to_f64.to_s
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     to_f64.to_s(io)
   end
 end
@@ -67,7 +67,7 @@ struct Float64
     end
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     chars :: UInt8[22]
     chars.set_all_to 0_u8
     C.sprintf(chars.buffer, "%g", self)

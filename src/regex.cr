@@ -44,7 +44,7 @@ class Regex
     !match(other).nil?
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     io << "/"
     io << source
     io << "/"
@@ -86,7 +86,7 @@ class MatchData
     String.new(value)
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     io << "MatchData("
     @string.inspect(io)
     if length > 0

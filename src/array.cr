@@ -496,11 +496,11 @@ class Array(T)
     hash
   end
 
-  def inspect(io)
+  def inspect(io : IO)
     to_s io
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     executed = exec_recursive(:to_s) do
       io << "["
       each_with_index do |elem, i|

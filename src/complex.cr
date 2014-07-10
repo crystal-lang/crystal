@@ -19,7 +19,7 @@ struct Complex
     Math.sqrt(real * real + imag * imag)
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     real.to_s io
     io << " + "
     real.to_s imag

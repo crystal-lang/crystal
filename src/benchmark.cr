@@ -16,7 +16,7 @@ module Benchmark
       utime + stime + cutime + cstime
     end
 
-    def to_s(io)
+    def to_s(io : IO)
       chars :: UInt8[50]
       chars.set_all_to 0_u8
 

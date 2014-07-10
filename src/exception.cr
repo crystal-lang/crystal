@@ -77,7 +77,7 @@ class Exception
     @backtrace = caller
   end
 
-  def to_s(io)
+  def to_s(io : IO)
     bt = @backtrace
     if @message
       io << @message
