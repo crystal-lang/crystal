@@ -54,6 +54,10 @@ def it_lexes_i64(values)
   values.each { |value| it_lexes_number :i64, value }
 end
 
+def it_lexes_u64(values)
+  values.each { |value| it_lexes_number :u64, value }
+end
+
 def it_lexes_f32(values)
   values.each { |value| it_lexes_number :f32, value }
 end
@@ -119,6 +123,18 @@ def it_lexes_global_match(globals)
   end
 end
 
+def it_raises_doesnt_fit_in_integer(string, message)
+  it "errors if can't fit #{string} in integer" do
+    lexer = Lexer.new(string)
+    begin
+      lexer.next_token
+      fail "expected to raise"
+    rescue ex : Crystal::SyntaxException
+      ex.message.should eq(message)
+    end
+  end
+end
+
 describe "Lexer" do
   it_lexes "", :EOF
   it_lexes " ", :SPACE
@@ -181,6 +197,9 @@ describe "Lexer" do
   it_lexes_f64 [["0.5", "0.5"], ["+0.5", "+0.5"], ["-0.5", "-0.5"]]
   it_lexes_i64 [["0123_i64", "83"], ["0x1_i64", "1"], ["0b1_i64", "1"]]
 
+  it_lexes_i64 ["2147483648", "-2147483649", "-9223372036854775808"]
+  it_lexes_u64 ["9223372036854775808", "-9223372036854775809"]
+
   it_lexes_char "'a'", 'a'
   it_lexes_char "'\\n'", '\n'
   it_lexes_char "'\\t'", '\t'
@@ -207,6 +226,29 @@ describe "Lexer" do
   it_lexes_regex "/\\//", "/"
   it_lexes_regex "/foo\\sbar/", "foo\\sbar"
   it_lexes_global_match ["$1", "$10"]
+
+  it_raises_doesnt_fit_in_integer "128_i8", "128 doesn't fit in an Int8"
+  it_raises_doesnt_fit_in_integer "-129_i8", "-129 doesn't fit in an Int8"
+  it_raises_doesnt_fit_in_integer "256_u8", "256 doesn't fit in an UInt8"
+  it_raises_doesnt_fit_in_integer "-1_u8", "Invalid negative value -1 for UInt8"
+
+  it_raises_doesnt_fit_in_integer "32768_i16", "32768 doesn't fit in an Int16"
+  it_raises_doesnt_fit_in_integer "-32769_i16", "-32769 doesn't fit in an Int16"
+  it_raises_doesnt_fit_in_integer "65536_u16", "65536 doesn't fit in an UInt16"
+  it_raises_doesnt_fit_in_integer "-1_u16", "Invalid negative value -1 for UInt16"
+
+  it_raises_doesnt_fit_in_integer "2147483648_i32", "2147483648 doesn't fit in an Int32"
+  it_raises_doesnt_fit_in_integer "-2147483649_i32", "-2147483649 doesn't fit in an Int32"
+  it_raises_doesnt_fit_in_integer "4294967296_u32", "4294967296 doesn't fit in an UInt32"
+  it_raises_doesnt_fit_in_integer "-1_u32", "Invalid negative value -1 for UInt32"
+
+  it_raises_doesnt_fit_in_integer "9223372036854775808_i64", "9223372036854775808 doesn't fit in an Int64"
+  it_raises_doesnt_fit_in_integer "-9223372036854775809_i64", "-9223372036854775809 doesn't fit in an Int64"
+  it_raises_doesnt_fit_in_integer "118446744073709551616_u64", "118446744073709551616 doesn't fit in an UInt64"
+  it_raises_doesnt_fit_in_integer "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
+  it_raises_doesnt_fit_in_integer "-1_u64", "Invalid negative value -1 for UInt64"
+
+  it_raises_doesnt_fit_in_integer "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
 
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"

@@ -242,14 +242,22 @@ module Crystal
 
     def visit(node : NumberLiteral)
       case node.kind
-      when :i8, :u8
-        @last = int8(node.value.to_i)
-      when :i16, :u16
-        @last = int16(node.value.to_i)
-      when :i32, :u32
-        @last = int32(node.value.to_i)
-      when :i64, :u64
+      when :i8
+        @last = int8(node.value.to_i8)
+      when :u8
+        @last = int8(node.value.to_u8)
+      when :i16
+        @last = int16(node.value.to_i16)
+      when :u16
+        @last = int16(node.value.to_u16)
+      when :i32,
+        @last = int32(node.value.to_i32)
+      when :u32
+        @last = int32(node.value.to_u32)
+      when :i64
         @last = int64(node.value.to_i64)
+      when :u64
+        @last = int64(node.value.to_u64)
       when :f32
         @last = LLVM.float(node.value)
       when :f64

@@ -11,6 +11,7 @@ lib C
   fun strlen(s : UInt8*) : Int32
   fun sprintf(str : UInt8*, format : UInt8*, ...) : Int32
   fun strtol(str : UInt8*, endptr : UInt8**, base : Int32) : Int32
+  fun strtoul(str : UInt8*, endptr : UInt8**, base : Int32) : UInt64
 end
 
 class String
@@ -107,7 +108,7 @@ class String
   end
 
   def to_u64
-    to_i64.to_u64
+    C.strtoul(cstr, nil, 10)
   end
 
   def to_f

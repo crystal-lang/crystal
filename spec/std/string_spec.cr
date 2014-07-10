@@ -44,6 +44,10 @@ describe "String" do
     "1234123412341234".to_i64.should eq(1234123412341234_i64)
   end
 
+  pending "does to_u64" do
+    "9223372036854775808".to_u64.should eq(9223372036854775808_u64)
+  end
+
   it "does to_f" do
     "1234.56".to_f.should eq(1234.56_f64)
   end

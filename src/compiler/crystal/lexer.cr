@@ -200,9 +200,9 @@ module Crystal
         when '>'
           next_char :"->"
         when '0'
-          scan_zero_number(start, -1)
+          scan_zero_number(start, -1, true)
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
-          scan_number(start)
+          scan_number(start, true)
         else
           @token.type = :"-"
         end
@@ -916,10 +916,12 @@ module Crystal
       @token
     end
 
-    def scan_number(start)
+    def scan_number(start, negative = false)
       @token.type = :NUMBER
 
       has_underscore = false
+      is_integer = true
+      has_suffix = true
       suffix_length = 0
 
       while true
@@ -935,6 +937,8 @@ module Crystal
 
       case current_char
       when '.'
+        is_integer = false
+
         if peek_next_char.digit?
           while true
             char = next_char
@@ -975,6 +979,7 @@ module Crystal
           @token.number_kind = :i32
         end
       when 'e', 'E'
+        is_integer = false
         next_char
 
         if current_char == '+' || current_char == '-'
@@ -998,18 +1003,134 @@ module Crystal
           @token.number_kind = :f64
         end
       when 'f', 'F'
+        is_integer = false
         suffix_length = consume_float_suffix
       when 'i'
         suffix_length = consume_int_suffix
       when 'u'
         suffix_length = consume_uint_suffix
       else
+        has_suffix = false
         @token.number_kind = :i32
       end
 
-      string_value = string_range(start, current_pos - suffix_length)
+      end_pos = current_pos - suffix_length
+
+      string_value = string_range(start, end_pos)
       string_value = string_value.delete('_') if has_underscore
+
+      if is_integer
+        num_length = string_value.length
+        num_length -= 1 if negative
+
+        if has_suffix
+          check_integer_literal_fits_in_size string_value, num_length, negative, start
+        else
+          deduce_integer_kind string_value, num_length, negative, start
+        end
+      end
+
       @token.value = string_value
+    end
+
+    macro gen_check_int_fits_in_size(type, method, length)
+      if num_length >= {{length}}
+        int_value = absolute_integer_value(string_value, negative)
+        max = {{type}}::MAX.{{method}}
+        if negative
+          max += 1
+        end
+
+        if int_value > max
+          raise "#{string_value} doesn't fit in an {{type}}", @token, (current_pos - start)
+        end
+      end
+    end
+
+    macro gen_check_uint_fits_in_size(type, length)
+      if negative
+        raise "Invalid negative value #{string_value} for {{type}}"
+      end
+
+      if num_length >= {{length}}
+        int_value = absolute_integer_value(string_value, negative)
+        if int_value > {{type}}::MAX
+          raise "#{string_value} doesn't fit in an {{type}}", @token, (current_pos - start)
+        end
+      end
+    end
+
+    def check_integer_literal_fits_in_size(string_value, num_length, negative, start)
+      case @token.number_kind
+      when :i8
+        gen_check_int_fits_in_size Int8, to_u8, 3
+      when :u8
+        gen_check_uint_fits_in_size UInt8, 3
+      when :i16
+        gen_check_int_fits_in_size Int16, to_u16, 5
+      when :u16
+        gen_check_uint_fits_in_size UInt16, 5
+      when :i32
+        gen_check_int_fits_in_size Int32, to_u32, 10
+      when :u32
+        gen_check_uint_fits_in_size UInt32, 10
+      when :i64
+        gen_check_int_fits_in_size Int64, to_u64, 19
+      when :u64
+        if negative
+          raise "Invalid negative value #{string_value} for UInt64"
+        end
+
+        check_value_fits_in_uint64 string_value, num_length, start
+      end
+    end
+
+    def deduce_integer_kind(string_value, num_length, negative, start)
+      check_value_fits_in_uint64 string_value, num_length, start
+
+      if num_length >= 10
+        int_value = absolute_integer_value(string_value, negative)
+
+        int64max = Int64::MAX.to_u64
+        int64max += 1 if negative
+
+        int32max = Int32::MAX.to_u32
+        int32max += 1 if negative
+
+        if int_value > int64max
+          @token.number_kind = :u64
+        elsif int_value > int32max
+          @token.number_kind = :i64
+        end
+      end
+    end
+
+    def absolute_integer_value(string_value, negative)
+      if negative
+        string_value[1 .. -1].to_u64
+      else
+        string_value.to_u64
+      end
+    end
+
+    def check_value_fits_in_uint64(string_value, num_length, start)
+      if num_length > 20
+        raise_value_doesnt_fit_in_uint64 string_value, start
+      end
+
+      if num_length == 20
+        i = 0
+        "18446744073709551615".each_byte do |byte|
+          if string_value[i] > byte
+            raise_value_doesnt_fit_in_uint64 string_value, start
+          end
+          i += 1
+        end
+      end
+    end
+
+    def raise_value_doesnt_fit_in_uint64(string_value, start)
+      raise "#{string_value} doesn't fit in an UInt64", @token, (current_pos - start)
     end
 
     def scan_hex_number(multiplier = 1)
@@ -1037,7 +1158,7 @@ module Crystal
       consume_optional_int_suffix
     end
 
-    def scan_zero_number(start, multiplier = 1)
+    def scan_zero_number(start, multiplier = 1, negative = false)
       case peek_next_char
       when 'x'
         scan_hex_number(multiplier)
@@ -1733,6 +1854,10 @@ module Crystal
 
     def raise(message, line_number = @line_number, column_number = @column_number, filename = @filename)
       ::raise Crystal::SyntaxException.new(message, line_number, column_number, filename)
+    end
+
+    def raise(message, token : Token, length = nil)
+      ::raise Crystal::SyntaxException.new(message, token.line_number, token.column_number, token.filename, length)
     end
 
     def raise(message, location : Location)

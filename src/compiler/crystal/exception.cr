@@ -17,8 +17,9 @@ module Crystal
     getter line_number
     getter column_number
     getter filename
+    getter length
 
-    def initialize(message, @line_number, @column_number, @filename)
+    def initialize(message, @line_number, @column_number, @filename, @length = nil)
       super(message)
     end
 
@@ -48,6 +49,9 @@ module Crystal
             end
             io << "\e[1;32m"
             io << "^"
+            if length = @length
+              io << ("~" * (length - 1))
+            end
             io << "\e[0m"
             io << "\n"
           end

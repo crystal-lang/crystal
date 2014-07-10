@@ -1,3 +1,8 @@
+## Next
+
+* Integer literals without a suffix are inferred to be Int32, Int64 or UInt64 depending on their value.
+* Check that integer literals fit into their types.
+
 ## 0.3.1 (2014-07-09)
 
 * **(breaking change)** Replaced `@name` inside macros with `@class_name`.
