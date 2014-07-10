@@ -24,8 +24,7 @@ function dist() {
 }
 
 TAG=`git describe --tags --long | cut -d- -f 1`
-PATCH=`git describe --tags --long | cut -d- -f 2`
-VERSION="$TAG-p$PATCH"
+VERSION="$TAG"
 
 crossCompile "Linux i686" i686 linux32 precise32
 crossCompile "Linux x86_64" x86-64 linux64 precise64
