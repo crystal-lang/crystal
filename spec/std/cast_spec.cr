@@ -40,11 +40,8 @@ describe "Cast" do
 
   it "casts from union to single type raises" do
     a = 1 || 'a'
-    begin
+    expect_raises Exception, "type cast exception" do
       a as Char
-      fail "expected cast to raise"
-    rescue ex
-      ex.message.should eq("type cast exception")
     end
   end
 
@@ -56,11 +53,8 @@ describe "Cast" do
 
   pending "casts from union to another union raises" do
     a = 1 || 1.5 || 'a'
-    begin
+    expect_raises Exception, "type cast exception" do
       a as Float64 | Char
-      fail "expected cast to raise"
-    rescue ex
-      ex.message.should eq("type cast exception")
     end
   end
 
@@ -72,11 +66,8 @@ describe "Cast" do
 
   it "casts from hierarchy to single type raises" do
     a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new
-    begin
+    expect_raises Exception, "type cast exception" do
       a as CastSpecBaz
-      fail "expected cast to raise"
-    rescue ex
-      ex.message.should eq("type cast exception")
     end
   end
 

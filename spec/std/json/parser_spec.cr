@@ -9,10 +9,8 @@ end
 
 def it_raises_on_parse_json(string)
   it "raises on parse #{string}" do
-    begin
+    expect_raises Json::ParseException do
       Json.parse(string)
-      fail "expected Json.parse to raise"
-    rescue Json::ParseException
     end
   end
 end

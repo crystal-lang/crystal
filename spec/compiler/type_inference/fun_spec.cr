@@ -67,10 +67,8 @@ describe "Type inference: fun" do
       ") { float64 }
   end
 
-  it "errors when fun varaible shadows local variable" do
-    assert_syntax_error "a = 1; ->(a : Foo) { }",
-      "function argument 'a' shadows local variable 'a'"
-  end
+  assert_syntax_error "a = 1; ->(a : Foo) { }",
+                      "function argument 'a' shadows local variable 'a'"
 
   it "errors when using local varaible with fun argument name" do
     assert_error "->(a : Int32) { }; a",

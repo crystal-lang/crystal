@@ -137,9 +137,8 @@ describe "Type inference: exception" do
       ") { |mod| union_of(mod.int32, mod.nil) }
   end
 
-  it "errors if exception var shadows local var" do
-    assert_syntax_error "ex = 1; begin; rescue ex; end", "exception variable 'ex' shadows local variable 'ex'"
-  end
+  assert_syntax_error "ex = 1; begin; rescue ex; end",
+                      "exception variable 'ex' shadows local variable 'ex'"
 
   it "errors if catched exception is not a subclass of Exception" do
     assert_error "begin; rescue ex : Int32; end", "Int32 is not a subclass of Exception"
@@ -153,17 +152,14 @@ describe "Type inference: exception" do
     assert_error "begin; rescue ex; end; ex", "undefined local variable or method 'ex'"
   end
 
-  it "errors if catch-all rescue before specific rescue" do
-    assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex", "specific rescue must come before catch-all rescue"
-  end
+  assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",
+                      "specific rescue must come before catch-all rescue"
 
-  it "errors if catch-all rescue specified twice" do
-    assert_syntax_error "begin; rescue ex; rescue; end; ex", "catch-all rescue can only be specified once"
-  end
+  assert_syntax_error "begin; rescue ex; rescue; end; ex",
+                      "catch-all rescue can only be specified once"
 
-  it "errors if else without rescue" do
-    assert_syntax_error "begin; else; 1; end", "'else' is useless without 'rescue'"
-  end
+  assert_syntax_error "begin; else; 1; end",
+                      "'else' is useless without 'rescue'"
 
   it "types code with abstract exception that delegates method" do
     assert_type(%(

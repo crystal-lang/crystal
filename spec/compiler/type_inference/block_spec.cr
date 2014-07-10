@@ -285,10 +285,8 @@ describe "Block inference" do
       "expected block to return Foo, not Int32"
   end
 
-  it "errors when block varaible shadows local variable" do
-    assert_syntax_error "a = 1; foo { |a| }",
-      "block argument 'a' shadows local variable 'a'"
-  end
+  assert_syntax_error "a = 1; foo { |a| }",
+                      "block argument 'a' shadows local variable 'a'"
 
   it "errors when using local varaible with block argument name" do
     assert_error "def foo; yield; end; foo { |a| }; a",

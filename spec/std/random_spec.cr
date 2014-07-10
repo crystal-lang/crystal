@@ -17,11 +17,8 @@ describe "Random" do
   end
 
   it "raises on invalid number" do
-    begin
+    expect_raises ArgumentError, "incorrect rand value: 0" do
       rand(0)
-      fail "expect rand(0) to raise"
-    rescue ex
-      ex.message.should eq("incorrect rand value: 0")
     end
   end
 
@@ -40,11 +37,8 @@ describe "Random" do
   end
 
   it "raises on invalid range" do
-    begin
+    expect_raises ArgumentError, "incorrect rand value: 1...1" do
       rand(1...1)
-      fail "expect rand(1...1) to raise"
-    rescue ex
-      ex.message.should eq("incorrect rand value: 1...1")
     end
   end
 end

@@ -144,11 +144,9 @@ describe "Array" do
     end
 
     it "deletes out of bounds" do
-      begin
-        a = [1, 2, 3, 4]
+      a = [1, 2, 3, 4]
+      expect_raises IndexOutOfBounds do
         a.delete_at(4)
-        fail "Expected to raise IndexOutOfBounds"
-      rescue IndexOutOfBounds
       end
     end
   end
@@ -303,10 +301,8 @@ describe "Array" do
   end
 
   it "raises if out of bounds" do
-    begin
+    expect_raises IndexOutOfBounds do
       [1, 2, 3][4]
-      fail "Expected [] to raise"
-    rescue IndexOutOfBounds
     end
   end
 
@@ -324,10 +320,8 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      begin
+      expect_raises IndexOutOfBounds do
         ([] of Int32).pop
-        fail "expected to raise IndexOutOfBounds"
-      rescue IndexOutOfBounds
       end
     end
 
@@ -346,11 +340,9 @@ describe "Array" do
     end
 
     it "pops negative count raises" do
-      begin
-        a = [1, 2]
+      a = [1, 2]
+      expect_raises ArgumentError do
         a.pop(-1)
-        fail "exepcted to raise ArgumentError"
-      rescue ArgumentError
       end
     end
   end
@@ -363,10 +355,8 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      begin
+      expect_raises IndexOutOfBounds do
         ([] of Int32).shift
-        fail "expected to raise IndexOutOfBounds"
-      rescue IndexOutOfBounds
       end
     end
 
@@ -385,11 +375,9 @@ describe "Array" do
     end
 
     it "shifts negative count raises" do
-      begin
-        a = [1, 2]
+      a = [1, 2]
+      expect_raises ArgumentError do
         a.shift(-1)
-        fail "exepcted to raise ArgumentError"
-      rescue ArgumentError
       end
     end
   end
@@ -401,10 +389,8 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      begin
+      expect_raises IndexOutOfBounds do
         ([] of Int32).first
-        fail "expected to raise IndexOutOfBounds"
-      rescue IndexOutOfBounds
       end
     end
   end
@@ -427,10 +413,8 @@ describe "Array" do
     end
 
     it "raises when empty" do
-      begin
+      expect_raises IndexOutOfBounds do
         ([] of Int32).last
-        fail "expected to raise IndexOutOfBounds"
-      rescue IndexOutOfBounds
       end
     end
   end
@@ -513,10 +497,8 @@ describe "Array" do
     end
 
     it "gets sample of negative count elements raises" do
-      begin
+      expect_raises ArgumentError do
         [1].sample(-1)
-        fail "expected to raise ArgumentError"
-      rescue ArgumentError
       end
     end
 
@@ -590,19 +572,15 @@ describe "Array" do
 
     it "swaps but raises out of bounds on left" do
       a = [1, 2, 3]
-      begin
+      expect_raises IndexOutOfBounds do
         a.swap(3, 0)
-        fail "expected swap to fail"
-      rescue IndexOutOfBounds
       end
     end
 
     it "swaps but raises out of bounds on right" do
       a = [1, 2, 3]
-      begin
+      expect_raises IndexOutOfBounds do
         a.swap(0, 3)
-        fail "expected swap to fail"
-      rescue IndexOutOfBounds
       end
     end
   end

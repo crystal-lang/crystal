@@ -123,18 +123,6 @@ def it_lexes_global_match(globals)
   end
 end
 
-def it_raises_doesnt_fit_in_integer(string, message)
-  it "errors if can't fit #{string} in integer" do
-    lexer = Lexer.new(string)
-    begin
-      lexer.next_token
-      fail "expected to raise"
-    rescue ex : Crystal::SyntaxException
-      ex.message.should eq(message)
-    end
-  end
-end
-
 describe "Lexer" do
   it_lexes "", :EOF
   it_lexes " ", :SPACE
@@ -227,28 +215,28 @@ describe "Lexer" do
   it_lexes_regex "/foo\\sbar/", "foo\\sbar"
   it_lexes_global_match ["$1", "$10"]
 
-  it_raises_doesnt_fit_in_integer "128_i8", "128 doesn't fit in an Int8"
-  it_raises_doesnt_fit_in_integer "-129_i8", "-129 doesn't fit in an Int8"
-  it_raises_doesnt_fit_in_integer "256_u8", "256 doesn't fit in an UInt8"
-  it_raises_doesnt_fit_in_integer "-1_u8", "Invalid negative value -1 for UInt8"
+  assert_syntax_error "128_i8", "128 doesn't fit in an Int8"
+  assert_syntax_error "-129_i8", "-129 doesn't fit in an Int8"
+  assert_syntax_error "256_u8", "256 doesn't fit in an UInt8"
+  assert_syntax_error "-1_u8", "Invalid negative value -1 for UInt8"
 
-  it_raises_doesnt_fit_in_integer "32768_i16", "32768 doesn't fit in an Int16"
-  it_raises_doesnt_fit_in_integer "-32769_i16", "-32769 doesn't fit in an Int16"
-  it_raises_doesnt_fit_in_integer "65536_u16", "65536 doesn't fit in an UInt16"
-  it_raises_doesnt_fit_in_integer "-1_u16", "Invalid negative value -1 for UInt16"
+  assert_syntax_error "32768_i16", "32768 doesn't fit in an Int16"
+  assert_syntax_error "-32769_i16", "-32769 doesn't fit in an Int16"
+  assert_syntax_error "65536_u16", "65536 doesn't fit in an UInt16"
+  assert_syntax_error "-1_u16", "Invalid negative value -1 for UInt16"
 
-  it_raises_doesnt_fit_in_integer "2147483648_i32", "2147483648 doesn't fit in an Int32"
-  it_raises_doesnt_fit_in_integer "-2147483649_i32", "-2147483649 doesn't fit in an Int32"
-  it_raises_doesnt_fit_in_integer "4294967296_u32", "4294967296 doesn't fit in an UInt32"
-  it_raises_doesnt_fit_in_integer "-1_u32", "Invalid negative value -1 for UInt32"
+  assert_syntax_error "2147483648_i32", "2147483648 doesn't fit in an Int32"
+  assert_syntax_error "-2147483649_i32", "-2147483649 doesn't fit in an Int32"
+  assert_syntax_error "4294967296_u32", "4294967296 doesn't fit in an UInt32"
+  assert_syntax_error "-1_u32", "Invalid negative value -1 for UInt32"
 
-  it_raises_doesnt_fit_in_integer "9223372036854775808_i64", "9223372036854775808 doesn't fit in an Int64"
-  it_raises_doesnt_fit_in_integer "-9223372036854775809_i64", "-9223372036854775809 doesn't fit in an Int64"
-  it_raises_doesnt_fit_in_integer "118446744073709551616_u64", "118446744073709551616 doesn't fit in an UInt64"
-  it_raises_doesnt_fit_in_integer "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
-  it_raises_doesnt_fit_in_integer "-1_u64", "Invalid negative value -1 for UInt64"
+  assert_syntax_error "9223372036854775808_i64", "9223372036854775808 doesn't fit in an Int64"
+  assert_syntax_error "-9223372036854775809_i64", "-9223372036854775809 doesn't fit in an Int64"
+  assert_syntax_error "118446744073709551616_u64", "118446744073709551616 doesn't fit in an UInt64"
+  assert_syntax_error "18446744073709551616_u64", "18446744073709551616 doesn't fit in an UInt64"
+  assert_syntax_error "-1_u64", "Invalid negative value -1 for UInt64"
 
-  it_raises_doesnt_fit_in_integer "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
+  assert_syntax_error "18446744073709551616", "18446744073709551616 doesn't fit in an UInt64"
 
   it "lexes not instance var" do
     lexer = Lexer.new "!@foo"
@@ -325,25 +313,8 @@ describe "Lexer" do
     token.type.should eq(:EOF)
   end
 
-  it "raises unterminated regular expression" do
-    lexer = Lexer.new("/foo")
-    begin
-      lexer.next_token
-      fail "expected to raise"
-    rescue ex : Crystal::SyntaxException
-      ex.message.should eq("unterminated regular expression")
-    end
-  end
-
-  it "raises unterminated quoted symbol" do
-    lexer = Lexer.new(":\"foo")
-    begin
-      lexer.next_token
-      fail "expected to raise"
-    rescue ex : Crystal::SyntaxException
-      ex.message.should eq("unterminated quoted symbol")
-    end
-  end
+  assert_syntax_error "/foo", "unterminated regular expression"
+  assert_syntax_error ":\"foo", "unterminated quoted symbol"
 
   it "lexes utf-8 char" do
     lexer = Lexer.new "'á'"
@@ -375,13 +346,5 @@ describe "Lexer" do
     token.type.should eq(:NUMBER)
   end
 
-  it "raises if slash r without slash n" do
-    lexer = Lexer.new("\r1")
-    begin
-      lexer.next_token
-      fail "expected to raise"
-    rescue ex : Crystal::SyntaxException
-      ex.message.should eq("expected '\\n' after '\\r'")
-    end
-  end
+  assert_syntax_error "\r1", "expected '\\n' after '\\r'"
 end

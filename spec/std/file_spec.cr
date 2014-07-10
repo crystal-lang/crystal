@@ -101,10 +101,8 @@ describe "File" do
   end
 
   it "gets stat for non-existent file and raises" do
-    begin
+    expect_raises Errno do
       File.stat("non-existent")
-      fail "expected Errno to be raised"
-    rescue Errno
     end
   end
 
@@ -128,10 +126,8 @@ describe "File" do
 
     it "raises errno when file doesn't exist" do
       filename = "#{__DIR__}/data/temp1.txt"
-      begin
+      expect_raises Errno do
         File.delete(filename)
-        fail "expected Errno to be raised"
-      rescue Errno
       end
     end
   end
@@ -150,10 +146,8 @@ describe "File" do
 
     it "raises if old file doesn't exist" do
       filename = "#{__DIR__}/data/temp1.txt"
-      begin
+      expect_raises Errno do
         File.rename(filename, "#{filename}.new")
-        fail "expected Errno to be raised"
-      rescue Errno
       end
     end
   end

@@ -19,19 +19,15 @@ describe "Regex" do
 
   it "raises if outside match range with []" do
     "foo" =~ /foo/
-    begin
+    expect_raises IndexOutOfBounds do
       $1
-      fail "Expected $1 to raise"
-    rescue ex : IndexOutOfBounds
     end
   end
 
   it "raises if outside match range with begin" do
     "foo" =~ /foo/
-    begin
+    expect_raises IndexOutOfBounds do
       $1
-      fail "Expected $1 to raise"
-    rescue ex : IndexOutOfBounds
     end
   end
 

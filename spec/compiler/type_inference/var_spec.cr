@@ -37,10 +37,8 @@ describe "Type inference: var" do
     ", "undefined local variable or method 'something'"
   end
 
-  it "reports read before assignment" do
-    assert_syntax_error "a += 1",
-      "'+=' before definition of 'a'"
-  end
+  assert_syntax_error "a += 1",
+                      "'+=' before definition of 'a'"
 
   it "reports read before assignment" do
     assert_error "a = a + 1",
@@ -51,9 +49,8 @@ describe "Type inference: var" do
     assert_error "self", "there's no self in this scope"
   end
 
-  it "reports can't change the value of self" do
-    assert_syntax_error "self = 1", "can't change the value of self"
-  end
+  assert_syntax_error "self = 1",
+                      "can't change the value of self"
 
   it "reports variable always nil" do
     assert_error "1 == 2 ? (a = 1) : a",

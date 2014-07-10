@@ -23,10 +23,8 @@ describe "Dir" do
   end
 
   it "tests mkdir with an existing path" do
-    begin
+    expect_raises Errno do
       Dir.mkdir(__DIR__, 0700)
-      fail "Expected Errno to be raised"
-    rescue Errno
     end
   end
 
@@ -34,33 +32,27 @@ describe "Dir" do
     path = "/tmp/crystal_mkdir_ptest_#{Process.pid}/"
     Dir.mkdir_p(path).should eq(0)
     Dir.exists?(path).should be_true
-    path = File.join({path, "a", "b", "c"})    
+    path = File.join({path, "a", "b", "c"})
     Dir.mkdir_p(path).should eq(0)
     Dir.exists?(path).should be_true
   end
 
   it "tests mkdir_p with an existing path" do
     Dir.mkdir_p(__DIR__).should eq(0)
-    begin
+    expect_raises Errno do
       Dir.mkdir_p(__FILE__)
-      fail "Expected Errno to be raised"
-    rescue Errno
     end
   end
 
   it "tests rmdir with an nonexistent path" do
-    begin
+    expect_raises Errno do
       Dir.rmdir("/tmp/crystal_mkdir_test_#{Process.pid}/")
-      fail "Expected Errno to be raised"
-    rescue Errno
     end
   end
 
   it "tests rmdir with a path that cannot be removed" do
-    begin
+    expect_raises Errno do
       Dir.rmdir(__DIR__)
-      fail "Expected Errno to be raised"
-    rescue Errno
     end
   end
 end

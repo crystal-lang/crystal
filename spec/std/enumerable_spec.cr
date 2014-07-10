@@ -21,10 +21,8 @@ describe "Enumerable" do
     assert { [1, 2, 3].inject(10) { |memo, i| memo + i }.should eq(16) }
 
     it "raises if empty" do
-      begin
+      expect_raises EmptyEnumerable do
         ([] of Int32).inject { |memo, i| memo + i }
-        fail "expected inject to raise"
-      rescue EmptyEnumerable
       end
     end
   end
@@ -33,10 +31,8 @@ describe "Enumerable" do
     assert { [1, 2, 3].min.should eq(1) }
 
     it "raises if empty" do
-      begin
+      expect_raises EmptyEnumerable do
         ([] of Int32).min
-        fail "expected inject to raise"
-      rescue EmptyEnumerable
       end
     end
   end
@@ -45,10 +41,8 @@ describe "Enumerable" do
     assert { [1, 2, 3].max.should eq(3) }
 
     it "raises if empty" do
-      begin
+      expect_raises EmptyEnumerable do
         ([] of Int32).max
-        fail "expected inject to raise"
-      rescue EmptyEnumerable
       end
     end
   end
@@ -57,10 +51,8 @@ describe "Enumerable" do
     assert { [1, 2, 3].minmax.should eq({1, 3}) }
 
     it "raises if empty" do
-      begin
+      expect_raises EmptyEnumerable do
         ([] of Int32).minmax
-        fail "expected inject to raise"
-      rescue EmptyEnumerable
       end
     end
   end

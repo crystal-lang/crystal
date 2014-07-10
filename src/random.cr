@@ -21,7 +21,7 @@ def rand(x : Int)
   if x > 0
     C.rand % x
   else
-    raise "incorrect rand value: #{x}"
+    raise ArgumentError.new "incorrect rand value: #{x}"
   end
 end
 
@@ -31,6 +31,6 @@ def rand(x : Range(Int32, Int32))
   if span > 0
     x.begin + rand(span)
   else
-    raise "incorrect rand value: #{x}"
+    raise ArgumentError.new "incorrect rand value: #{x}"
   end
 end

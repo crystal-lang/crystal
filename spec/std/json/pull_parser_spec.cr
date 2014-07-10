@@ -86,9 +86,9 @@ class Json::PullParser
   end
 
   def assert_error
-    read_next
-    fail "expected to raise"
-  rescue Json::ParseException
+    expect_raises Json::ParseException do
+      read_next
+    end
   end
 end
 
@@ -102,13 +102,11 @@ end
 
 def assert_pull_parse_error(string)
   it "errors on #{string}" do
-    begin
+    expect_raises Json::ParseException do
       parser = Json::PullParser.new string
       while parser.kind != :EOF
         parser.read_next
       end
-      fail "expected to raise"
-    rescue Json::ParseException
     end
   end
 end

@@ -25,22 +25,21 @@ describe "OptionParser" do
   end
 
   def expect_missing_option(option)
-    OptionParser.parse([] of String) do |opts|
-      opts.on(option, "some flag") do |flag_value|
+    expect_raises OptionParser::MissingOption do
+      OptionParser.parse([] of String) do |opts|
+        opts.on(option, "some flag") do |flag_value|
+        end
       end
     end
-    fail "expected OptionParser::MissingOption to be raised"
-  rescue ex : OptionParser::MissingOption
   end
 
   def expect_missing_option(args, option, flag)
-    OptionParser.parse(args) do |opts|
-      opts.on(option, "some flag") do |flag_value|
+    expect_raises OptionParser::MissingOption, "Missing option: #{flag}" do
+      OptionParser.parse(args) do |opts|
+        opts.on(option, "some flag") do |flag_value|
+        end
       end
     end
-    fail "expected OptionParser::MissingOption to be raised"
-  rescue ex : OptionParser::MissingOption
-    ex.message.should eq("Missing option: #{flag}")
   end
 
   it "has flag" do
@@ -155,13 +154,10 @@ describe "OptionParser" do
   end
 
   it "raises on invalid option" do
-    begin
+    expect_raises OptionParser::InvalidOption, "Invalid option: -j" do
       OptionParser.parse(["-f", "-j"]) do |opts|
         opts.on("-f", "some flag") { }
       end
-      fail "Expected to raise OptionParser::InvalidOption"
-    rescue ex : OptionParser::InvalidOption
-      ex.message.should eq("Invalid option: -j")
     end
   end
 

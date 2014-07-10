@@ -226,11 +226,39 @@ def fail(msg)
   raise Spec::AssertionFailed.new(msg)
 end
 
-macro expect_raise(klass)
+macro expect_raises
+  begin
+    {{yield}}
+    fail "expected to raise"
+  rescue
+  end
+end
+
+macro expect_raises(klass)
   begin
     {{yield}}
     fail "expected to raise {{klass.id}}"
   rescue {{klass.id}}
+  end
+end
+
+macro expect_raises(klass, message)
+  begin
+    {{yield}}
+    fail "expected to raise {{klass.id}}"
+  rescue _ex_ : {{klass.id}}
+    _msg_ = {{message}}
+    _ex_to_s_ = _ex_.to_s
+    case _msg_
+    when Regex
+      unless (_ex_to_s_ =~ _msg_)
+        fail "expected {{klass.id}}'s message to match #{_msg_}, but was #{_ex_to_s_.inspect}"
+      end
+    when String
+      unless _ex_to_s_.includes?(_msg_)
+        fail "expected {{klass.id}}'s message to include #{_msg_.inspect}, but was #{_ex_to_s_.inspect}"
+      end
+    end
   end
 end
 

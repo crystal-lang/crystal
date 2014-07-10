@@ -72,22 +72,41 @@ def assert_after_type_inference(before, after)
   result.node.to_s.strip.should eq(after.strip)
 end
 
+def assert_syntax_error(str)
+  it "says syntax error on #{str.inspect}" do
+    expect_raises Crystal::SyntaxException do
+      parse str
+    end
+  end
+end
+
 def assert_syntax_error(str, message)
-  begin
-    parse str
-    fail "SyntaxException wasn't raised"
-  rescue ex : Crystal::SyntaxException
-    fail "Expected '#{ex}' to contain '#{message}'" unless ex.to_s.includes? message
+  it "says syntax error on #{str.inspect}" do
+    expect_raises Crystal::SyntaxException, message do
+      parse str
+    end
+  end
+end
+
+def assert_syntax_error(str, message, line, column)
+  it "says syntax error on #{str.inspect}" do
+    begin
+      Parser.parse(str)
+      fail "expected SyntaxException to be raised"
+    rescue ex : SyntaxException
+      ex.message.not_nil!.includes?(message).should be_true
+      ex.line_number.should eq(line)
+      ex.column_number.should eq(column)
+    end
   end
 end
 
 def assert_error(str, message)
-  nodes = parse str
-  begin
-    infer_type nodes
-    fail "TypeException wasn't raised"
-  rescue ex : Crystal::TypeException
-    fail "Expected '#{ex}' to contain '#{message}'" unless ex.to_s.includes? message
+  it "says type error on #{str.inspect}" do
+    nodes = parse str
+    expect_raises TypeException, message do
+      infer_type nodes
+    end
   end
 end
 

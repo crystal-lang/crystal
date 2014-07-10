@@ -9,7 +9,7 @@ describe "CharReader" do
     reader.current_char.ord.should eq(0)
     reader.has_next?.should be_false
 
-    expect_raise IndexOutOfBounds do
+    expect_raises IndexOutOfBounds do
       reader.next_char
     end
   end
@@ -22,7 +22,7 @@ describe "CharReader" do
     reader.next_char.ord.should eq(0)
     reader.has_next?.should be_false
 
-    expect_raise IndexOutOfBounds do
+    expect_raises IndexOutOfBounds do
       reader.next_char
     end
   end
@@ -46,7 +46,7 @@ describe "CharReader" do
     reader.next_char.ord.should eq(0)
     reader.has_next?.should be_false
 
-    expect_raise IndexOutOfBounds do
+    expect_raises IndexOutOfBounds do
       reader.next_char
     end
   end

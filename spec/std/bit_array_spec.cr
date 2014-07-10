@@ -50,10 +50,8 @@ describe "BitArray" do
 
   it "is raises when out of bounds" do
     ary = BitArray.new(10)
-    begin
+    expect_raises IndexOutOfBounds do
       ary[10] = true
-      fail "expected IndexOutOfBounds to be raised"
-    rescue IndexOutOfBounds
     end
   end
 
