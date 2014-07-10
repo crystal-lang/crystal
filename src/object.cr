@@ -23,7 +23,7 @@ class Object
   #
   # An object must never append itself to the `io` argument,
   # as this will in turn call `to_s(io)` on it.
-  abstract def to_s(io)
+  abstract def to_s(io : IO)
 
   # Returns a String representation of this object.
   #
@@ -44,7 +44,7 @@ class Object
   #
   # Similar to `to_s(io)`, but usually appends more information
   # about this object.
-  def inspect(io)
+  def inspect(io : IO)
     to_s io
   end
 

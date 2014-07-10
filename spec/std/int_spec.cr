@@ -52,14 +52,14 @@ describe "Int" do
   end
 
   describe "to_s in base" do
-    assert { 12.to_s_in_base(2).should eq("1100") }
-    assert { -12.to_s_in_base(2).should eq("-1100") }
-    assert { -123456.to_s_in_base(2).should eq("-11110001001000000") }
-    assert { 1234.to_s_in_base(16).should eq("4d2") }
-    assert { -1234.to_s_in_base(16).should eq("-4d2") }
-    assert { 1234.to_s_in_base(36).should eq("ya") }
-    assert { -1234.to_s_in_base(36).should eq("-ya") }
-    assert { 0.to_s_in_base(16).should eq("0") }
+    assert { 12.to_s(2).should eq("1100") }
+    assert { -12.to_s(2).should eq("-1100") }
+    assert { -123456.to_s(2).should eq("-11110001001000000") }
+    assert { 1234.to_s(16).should eq("4d2") }
+    assert { -1234.to_s(16).should eq("-4d2") }
+    assert { 1234.to_s(36).should eq("ya") }
+    assert { -1234.to_s(36).should eq("-ya") }
+    assert { 0.to_s(16).should eq("0") }
   end
 
   describe "bit" do

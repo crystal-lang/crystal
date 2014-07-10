@@ -57,7 +57,7 @@ class Pointer(T)
       io << ".null"
     else
       io << "@"
-      address.to_s_in_base(16, io)
+      address.to_s(16, io)
     end
   end
 

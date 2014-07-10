@@ -31,12 +31,12 @@ describe "Reference" do
 
   it "does inspect" do
     r = ReferenceSpecTestClass.new(1, "hello")
-    r.inspect.should eq(%(#<ReferenceSpecTestClass:0x#{r.object_id.to_s_in_base(16)} @x=1, @y="hello">))
+    r.inspect.should eq(%(#<ReferenceSpecTestClass:0x#{r.object_id.to_s(16)} @x=1, @y="hello">))
   end
 
   it "does to_s" do
     r = ReferenceSpecTestClass.new(1, "hello")
-    r.to_s.should eq(%(#<ReferenceSpecTestClass:0x#{r.object_id.to_s_in_base(16)}>))
+    r.to_s.should eq(%(#<ReferenceSpecTestClass:0x#{r.object_id.to_s(16)}>))
   end
 
   it "does inspect for class" do

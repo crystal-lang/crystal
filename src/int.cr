@@ -109,13 +109,13 @@ struct Int
     self % other
   end
 
-  def to_s_in_base(radix : Int)
+  def to_s(radix : Int)
     String.build do |io|
-      to_s_in_base(radix, io)
+      to_s(radix, io)
     end
   end
 
-  def to_s_in_base(radix : Int, io)
+  def to_s(radix : Int, io : IO)
     if radix < 1 || radix > 36
       raise "Invalid radix #{radix}"
     end
@@ -186,7 +186,7 @@ struct Int
       end
     end
 
-    def to_s(io)
+    def to_s(io : IO)
       if self == 0
         io.write_byte '0'.ord.to_u8
         return 1
