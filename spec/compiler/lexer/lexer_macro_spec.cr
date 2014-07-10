@@ -7,11 +7,7 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("h")
-
-    token = lexer.next_macro_token(token.macro_state, false)
-    token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("ello ")
+    token.value.should eq("hello ")
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)
@@ -22,11 +18,7 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("h")
-
-    token = lexer.next_macro_token(token.macro_state, false)
-    token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("ello ")
+    token.value.should eq("hello ")
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
@@ -50,15 +42,11 @@ describe "Lexer macro" do
 
   %w(begin do if unless class struct module def while until case macro fun lib union).each do |keyword|
     it "lexes macro with nested #{keyword}" do
-      lexer = Lexer.new(%(hello #{keyword} {{world}} end end))
+      lexer = Lexer.new(%(hello\n  #{keyword} {{world}} end end))
 
       token = lexer.next_macro_token(Token::MacroState.default, false)
       token.type.should eq(:MACRO_LITERAL)
-      token.value.should eq("h")
-
-      token = lexer.next_macro_token(token.macro_state, false)
-      token.type.should eq(:MACRO_LITERAL)
-      token.value.should eq("ello #{keyword} ")
+      token.value.should eq("hello\n  #{keyword} ")
       token.macro_state.nest.should eq(1)
 
       token = lexer.next_macro_token(token.macro_state, false)
@@ -91,12 +79,7 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("h")
-
-    token = lexer.next_macro_token(token.macro_state, false)
-    token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("ello ")
-    token.macro_state.nest.should eq(0)
+    token.value.should eq("hello ")
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_LITERAL)
@@ -132,11 +115,7 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("h")
-
-    token = lexer.next_macro_token(token.macro_state, false)
-    token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("elloif ")
+    token.value.should eq("helloif ")
     token.macro_state.nest.should eq(0)
 
     token = lexer.next_macro_token(token.macro_state, false)
@@ -171,7 +150,7 @@ describe "Lexer macro" do
   end
 
   it "keeps correct column and line numbers" do
-    lexer = Lexer.new("\nfoo\nbarf{{var}}end")
+    lexer = Lexer.new("\nfoo\nbarf{{var}}\nend")
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
@@ -192,6 +171,10 @@ describe "Lexer macro" do
 
     lexer.next_token.type.should eq(:"}")
     lexer.next_token.type.should eq(:"}")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("\n")
 
     token = lexer.next_macro_token(token_before_expression.macro_state, false)
     token.type.should eq(:MACRO_END)
@@ -317,7 +300,7 @@ describe "Lexer macro" do
   end
 
   it "lexes macro with curly escape" do
-    lexer = Lexer.new("good \\{{world}}end")
+    lexer = Lexer.new("good \\{{world}}\nend")
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
@@ -329,7 +312,60 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("{world}}")
+    token.value.should eq("{world}}\n")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
+
+  it "lexes macro with if as suffix" do
+    lexer = Lexer.new("foo if bar end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("foo if bar ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
+
+  it "lexes macro with if as suffix after return" do
+    lexer = Lexer.new("return if @end end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("return if @end ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
+
+  it "lexes macro with semicolon before end" do
+    lexer = Lexer.new(";end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(";")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_END)
+  end
+
+  it "lexes macro with if after assign" do
+    lexer = Lexer.new("x = if 1; 2; else; 3; end; end")
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("x = if 1; 2; ")
+    token.macro_state.nest.should eq(1)
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("else; 3; ")
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("end; ")
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)

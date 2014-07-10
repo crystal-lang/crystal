@@ -1444,12 +1444,15 @@ module Crystal
       nest = macro_state.nest
       whitespace = macro_state.whitespace
       string_state = macro_state.string_state
+      beginning_of_line = macro_state.beginning_of_line
 
       if skip_whitespace
         while current_char.whitespace?
+          whitespace = true
           if current_char == '\n'
             @line_number += 1
             @column_number = 0
+            beginning_of_line = true
           end
           next_char
         end
@@ -1471,33 +1474,42 @@ module Crystal
         end
         start = current_pos
         @token.line_number += 1
+        beginning_of_line = true
+        whitespace = true
       end
 
       if current_char == '\\' && peek_next_char == '{'
+        beginning_of_line = false
         next_char
         next_char
         @token.type = :MACRO_LITERAL
         @token.value = "{"
+        @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line)
         return @token
       end
 
       if current_char == '{'
         case next_char
         when '{'
+          beginning_of_line = false
           next_char
           @token.type = :MACRO_EXPRESSION_START
+          @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line)
           return @token
         when '%'
+          beginning_of_line = false
           next_char
           @token.type = :MACRO_CONTROL_START
+          @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line)
           return @token
         end
       end
 
       if !string_state && current_char == 'e' && next_char == 'n'
+        beginning_of_line = false
         case next_char
         when 'd'
-          unless peek_next_char.ident_part_or_end?
+          if whitespace && !peek_next_char.ident_part_or_end?
             if nest == 0
               next_char
               @token.type = :MACRO_END
@@ -1520,13 +1532,13 @@ module Crystal
 
       char = current_char
 
-      until char == '{' || char == '\0' || (char == '\\' && peek_next_char == '{') || (!string_state && char == 'e')
+      until char == '{' || char == '\0' || (char == '\\' && peek_next_char == '{') || (whitespace && !string_state && char == 'e')
         if !string_state && whitespace &&
           (
             (char == 'b' && next_char == 'e' && next_char == 'g' && next_char == 'i' && next_char == 'n') ||
             (char == 'l' && next_char == 'i' && next_char == 'b') ||
             (char == 'f' && next_char == 'u' && next_char == 'n') ||
-            (char == 'i' && next_char == 'f') ||
+            (beginning_of_line && char == 'i' && next_char == 'f') ||
             (char == 's' && next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't') ||
             (char == 'c' && (char = next_char) &&
               (char == 'a' && next_char == 's' && next_char == 'e') ||
@@ -1539,13 +1551,14 @@ module Crystal
               (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e')) ||
             (char == 'u' && next_char == 'n' && (char = next_char) &&
               (char == 'i' && next_char == 'o' && next_char == 'n') ||
-              (char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's') ||
-              (char == 't' && next_char == 'i' && next_char == 'l')) ||
-            (char == 'w' && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e')) &&
+              (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's') ||
+              (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l')) ||
+            (beginning_of_line && char == 'w' && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e')) &&
             !next_char.ident_part_or_end?
           char = current_char
           nest += 1
           whitespace = true
+          beginning_of_line = false
         else
           char = current_char
           case char
@@ -1553,6 +1566,7 @@ module Crystal
             @line_number += 1
             @column_number = 0
             whitespace = true
+            beginning_of_line = true
           when '\\'
             if string_state
               char = next_char
@@ -1605,7 +1619,16 @@ module Crystal
               end
             end
 
-            whitespace = char.whitespace?
+            # If an assignment comes, we accept if/unless/while/until as nesting
+            if char == '=' && peek_next_char.whitespace?
+              whitespace = false
+              beginning_of_line = true
+            else
+              whitespace = char.whitespace? || char == ';'
+              if beginning_of_line && !whitespace
+                beginning_of_line = false
+              end
+            end
           end
           char = next_char
         end
@@ -1613,7 +1636,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, string_state)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line)
 
       @token
     end

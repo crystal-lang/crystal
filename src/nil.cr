@@ -47,6 +47,10 @@ struct Nil
     "nil"
   end
 
+  def inspect(io)
+    io << "nil"
+  end
+
   def try(&block)
     self
   end
