@@ -1636,6 +1636,15 @@ module Crystal
       !struct?
     end
 
+    def struct_wrapper_of?(type)
+      return false unless struct?
+
+      ivars = all_instance_vars
+      return false unless ivars.length == 1
+
+      ivars.first_value.type? == type
+    end
+
     def metaclass
       @metaclass ||= GenericClassInstanceMetaclassType.new(program, self)
     end
