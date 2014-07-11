@@ -1037,9 +1037,7 @@ module Crystal
       if num_length >= {{length}}
         int_value = absolute_integer_value(string_value, negative)
         max = {{type}}::MAX.{{method}}
-        if negative
-          max += 1
-        end
+        max += 1 if negative
 
         if int_value > max
           raise "#{string_value} doesn't fit in an {{type}}", @token, (current_pos - start)
