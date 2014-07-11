@@ -134,36 +134,67 @@ describe "Type inference: lib" do
     foo.real_name.should eq("bar")
   end
 
-  it "allows passing wrapper struct to c" do
-    assert_type("
+  it "error if passing type to C with to_unsafe but type doesn't match" do
+    assert_error "
+      lib C
+        fun foo(x : Int32) : Int32
+      end
+
+      class Foo
+        def to_unsafe
+          'a'
+        end
+      end
+
+      C.foo Foo.new
+      ", "argument 'x' of 'C#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
+  end
+
+  it "error if passing nil to pointer through to_unsafe" do
+    assert_error "
       lib C
         fun foo(x : Void*) : Int32
       end
 
-      struct Wrapper
-        def initialize(@x)
+      class Foo
+        def to_unsafe
+          nil
         end
       end
 
-      w = Wrapper.new(Pointer(Void).new(0_u64))
-      C.foo(w)
-      ") { int32 }
+      C.foo Foo.new
+      ", "argument 'x' of 'C#foo' must be Pointer(Void), not Foo (nor Nil returned by 'Foo#to_unsafe')"
   end
 
-  it "allows passing pointer of wrapper struct to c" do
-    assert_type("
+  it "error if passing non primitive type as varargs" do
+    assert_error "
       lib C
-        fun foo(x : Void**) : Int32
+        fun foo(x : Int32, ...)
       end
 
-      struct Wrapper
-        def initialize(@x)
+      class Foo
+      end
+
+      C.foo 1, Foo.new
+      ", "argument #2 of 'C#foo' is not a primitive type and no Foo#to_unsafe method found"
+  end
+
+  it "error if passing non primitive type as varargs invoking to_unsafe" do
+    assert_error "
+      lib C
+        fun foo(x : Int32, ...)
+      end
+
+      class Bar
+      end
+
+      class Foo
+        def to_unsafe
+          Bar.new
         end
       end
 
-      w = Wrapper.new(Pointer(Void).new(0_u64))
-      p = Pointer(Wrapper).new(0_u64)
-      C.foo(p)
-      ") { int32 }
+      C.foo 1, Foo.new
+      ", "converted Foo invoking to_unsafe, but Bar is not a primitive type"
   end
 end

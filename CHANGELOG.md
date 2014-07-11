@@ -1,3 +1,7 @@
+## Next
+
+* Allow implicit conversion to C types by defining a `to_unsafe` method. This removed the hardcoded rule for converting a `String` to `UInt8*` and also allows passing an `Array(T)` to an argument expecting `Pointer(T)`.
+
 ## 0.3.2 (2017-07-10)
 
 * Integer literals without a suffix are inferred to be Int32, Int64 or UInt64 depending on their value.

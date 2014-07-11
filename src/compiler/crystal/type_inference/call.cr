@@ -542,10 +542,68 @@ module Crystal
         actual_type = self_arg.type
         actual_type = mod.pointer_of(actual_type) if self.args[i].out?
         unless actual_type.compatible_with?(expected_type) || actual_type.is_implicitly_converted_in_c_to?(expected_type)
-          arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
-          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
+          implicit_call = try_to_unsafe(self_arg) do |ex|
+            if ex.message.not_nil!.includes?("undefined method 'to_unsafe'")
+              arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
+              self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
+            else
+              self_arg.raise ex.message, ex
+            end
+          end
+          implicit_call_type = implicit_call.type?
+          if implicit_call_type
+            if implicit_call_type.compatible_with?(expected_type)
+              self.args[i] = implicit_call
+            else
+              arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
+              self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type} (nor #{implicit_call_type} returned by '#{actual_type}#to_unsafe')"
+            end
+          else
+            self_arg.raise "tried to convert #{actual_type} to #{expected_type} invoking to_unsafe, but can't deduce its type"
+          end
         end
       end
+
+      # Need to call to_unsafe on variadic args too
+      if typed_def.varargs
+        typed_def.args.length.upto(self.args.length - 1) do |i|
+          self_arg = self.args[i]
+          self_arg_type = self_arg.type?
+          if self_arg_type
+            unless self_arg_type.nil_type? || self_arg_type.primitive_like?
+              implicit_call = try_to_unsafe(self_arg) do |ex|
+                if ex.message.not_nil!.includes?("undefined method 'to_unsafe'")
+                  self_arg.raise "argument ##{i + 1} of '#{full_name(obj_type)}' is not a primitive type and no #{self_arg_type}#to_unsafe method found"
+                else
+                  self_arg.raise ex.message, ex
+                end
+              end
+              implicit_call_type = implicit_call.type?
+              if implicit_call_type
+                if implicit_call_type.primitive_like?
+                  self.args[i] = implicit_call
+                else
+                  self_arg.raise "converted #{self_arg_type} invoking to_unsafe, but #{implicit_call_type} is not a primitive type"
+                end
+              else
+                self_arg.raise "tried to convert #{self_arg_type} invoking to_unsafe, but can't deduce its type"
+              end
+            end
+          else
+            self_arg.raise "can't deduce argument type"
+          end
+        end
+      end
+    end
+
+    def try_to_unsafe(self_arg)
+      implicit_call = Call.new(self_arg.clone, "to_unsafe")
+      begin
+        implicit_call.accept parent_visitor
+      rescue ex : TypeException
+        yield ex
+      end
+      implicit_call
     end
 
     def obj_and_args_types_set?

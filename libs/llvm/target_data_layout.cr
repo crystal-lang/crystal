@@ -9,4 +9,8 @@ struct LLVM::TargetDataLayout
   def size_in_bytes(type)
     size_in_bits(type) / 8
   end
+
+  def to_unsafe
+    @unwrap
+  end
 end

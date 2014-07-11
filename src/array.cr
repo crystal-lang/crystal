@@ -406,6 +406,10 @@ class Array(T)
     @buffer
   end
 
+  def to_unsafe
+    @buffer
+  end
+
   def to_a
     self
   end

@@ -119,4 +119,8 @@ struct LLVM::Builder
   def invoke(fn, args, a_then, a_catch, name = "")
     LibLLVM.build_invoke self, fn, args.buffer, args.length.to_u32, a_then, a_catch, name
   end
+
+  def to_unsafe
+    @unwrap
+  end
 end

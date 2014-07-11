@@ -156,14 +156,8 @@ module Crystal
       if self.nil_type? && (expected_type.pointer? || expected_type.fun?)
         # OK: nil will be sent as pointer
         true
-      elsif self == program.string && (expected_type.is_a?(PointerInstanceType) && expected_type.element_type == program.uint8)
-        # OK: string will be sent as UInt8
-        true
       elsif expected_type.is_a?(FunInstanceType) && self.is_a?(FunInstanceType) && expected_type.return_type == program.void && expected_type.arg_types == self.arg_types
         # OK: fun will be cast to return void
-        true
-      elsif self.struct_wrapper_of?(expected_type) || self.pointer_struct_wrapper_of?(expected_type)
-        # OK: same memory layout
         true
       else
         false
@@ -207,18 +201,6 @@ module Crystal
 
     def cover_length
       1
-    end
-
-    def struct_wrapper_of?(type)
-      false
-    end
-
-    def c_value_wrapper?
-      false
-    end
-
-    def pointer_struct_wrapper_of?(type)
-      false
     end
 
     def lookup_def_instance(def_object_id, arg_types, block_type)
@@ -1132,25 +1114,6 @@ module Crystal
       struct?
     end
 
-    def struct_wrapper_of?(type)
-      return false unless struct?
-
-      ivars = all_instance_vars
-      return false unless ivars.length == 1
-
-      ivars.first_value.type? == type
-    end
-
-    def c_value_wrapper?
-      return false unless struct?
-
-      ivars = all_instance_vars
-      return false unless ivars.length == 1
-
-      type = ivars.first_value.type?
-      type.is_a?(CStructType) || type.is_a?(CUnionType)
-    end
-
     def type_desc
       struct? ? "struct" : "class"
     end
@@ -1315,10 +1278,6 @@ module Crystal
     end
 
     def passed_by_value?
-      false
-    end
-
-    def struct_wrapper_of?(type)
       false
     end
 
@@ -1636,15 +1595,6 @@ module Crystal
       !struct?
     end
 
-    def struct_wrapper_of?(type)
-      return false unless struct?
-
-      ivars = all_instance_vars
-      return false unless ivars.length == 1
-
-      ivars.first_value.type? == type
-    end
-
     def metaclass
       @metaclass ||= GenericClassInstanceMetaclassType.new(program, self)
     end
@@ -1736,12 +1686,6 @@ module Crystal
 
     def reference_like?
       false
-    end
-
-    def pointer_struct_wrapper_of?(type)
-      return false unless type.is_a?(PointerInstanceType)
-
-      element_type.struct_wrapper_of?(type.element_type)
     end
 
     def allocated

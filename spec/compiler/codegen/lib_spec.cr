@@ -27,69 +27,35 @@ describe "Code gen: lib" do
     ")
   end
 
-  it "allows passing wrapper struct to c" do
+  it "allows passing type to C if it has a coverter with to_unsafe" do
     build("
       lib C
-        fun foo(x : Void*) : Int32
+        fun foo(x : Int32) : Int32
       end
 
-      struct Wrapper
-        def initialize(@x)
+      class Foo
+        def to_unsafe
+          1
         end
       end
 
-      w = Wrapper.new(Pointer(Void).new(0_u64))
-      C.foo(w)
+      C.foo Foo.new
       ")
   end
 
-  it "allows passing pointer wrapper struct to c" do
-    build("
+  it "allows passing type to C if it has a coverter with to_unsafe (bug)" do
+    build(%(
+      require "prelude"
+
       lib C
-        fun foo(x : Void**) : Int32
+        fun foo(x : UInt8*)
       end
 
-      struct Wrapper
-        def initialize(@x)
-        end
+      def foo
+        yield 1
       end
 
-      w = Wrapper.new(Pointer(Void).new(0_u64))
-      p = Pointer(Wrapper).new(0_u64)
-      C.foo(p)
-      ")
-  end
-
-  it "allows passing wrapper generic struct to c" do
-    build("
-      lib C
-        fun foo(x : Void*) : Int32
-      end
-
-      struct Wrapper(T)
-        def initialize(@x)
-        end
-      end
-
-      w = Wrapper(Int32).new(Pointer(Void).new(0_u64))
-      C.foo(w)
-      ")
-  end
-
-  it "allows passing pointer wrapper generic struct to c" do
-    build("
-      lib C
-        fun foo(x : Void**) : Int32
-      end
-
-      struct Wrapper(T)
-        def initialize(@x)
-        end
-      end
-
-      w = Wrapper(Int32).new(Pointer(Void).new(0_u64))
-      p = Pointer(Wrapper(Int32)).new(0_u64)
-      C.foo(p)
-      ")
+      C.foo(foo &.to_s)
+      ))
   end
 end

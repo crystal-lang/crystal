@@ -27,4 +27,8 @@ struct LLVM::Target
     io << " - "
     io << description
   end
+
+  def to_unsafe
+    @unwrap
+  end
 end

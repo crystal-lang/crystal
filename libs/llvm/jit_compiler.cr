@@ -14,4 +14,8 @@ struct LLVM::JITCompiler
   def get_pointer_to_global(value)
     LibLLVM.get_pointer_to_global(self, value)
   end
+
+  def to_unsafe
+    @unwrap
+  end
 end

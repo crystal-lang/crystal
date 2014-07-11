@@ -1146,16 +1146,9 @@ module Crystal
           def_arg = target_def.args[i]?
           call_arg = @last
 
-          if is_external && arg.type == @mod.string
-            # String to UInt8*
-            call_arg = gep(call_arg, 0, 2)
-          elsif is_external && def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
+          if is_external && def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
             # Nil to pointer
             call_arg = LLVM.null(llvm_c_type(def_arg.type))
-          elsif is_external && def_arg && arg.type.struct_wrapper_of?(def_arg.type)
-            call_arg = extract_value load(call_arg), 0
-          elsif is_external && def_arg && arg.type.pointer_struct_wrapper_of?(def_arg.type)
-            call_arg = bit_cast call_arg, llvm_type(def_arg.type)
           else
             # Def argument might be missing if it's a variadic call
             call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
@@ -1390,10 +1383,6 @@ module Crystal
 
         # If the argument is out the type might be a struct but we don't pass anything byval
         next if call_args[i]?.try &.out?
-
-        # If the argument is a struct that wraps a value, but the value is not
-        # a struct or union (like a Void* wrapper), then we don't need to add byval to it
-        next if is_external && arg_type.struct? && !arg_type.c_value_wrapper?
 
         LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LibLLVM::Attribute::ByVal)
       end

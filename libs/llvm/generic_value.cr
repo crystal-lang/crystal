@@ -25,4 +25,8 @@ struct LLVM::GenericValue
   def to_pointer
     LibLLVM.generic_value_to_pointer(self)
   end
+
+  def to_unsafe
+    @unwrap
+  end
 end

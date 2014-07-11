@@ -718,4 +718,8 @@ class String
   def cstr
     pointerof(@c)
   end
+
+  def to_unsafe
+    cstr
+  end
 end

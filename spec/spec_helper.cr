@@ -102,11 +102,9 @@ def assert_syntax_error(str, message, line, column)
 end
 
 def assert_error(str, message)
-  it "says type error on #{str.inspect}" do
-    nodes = parse str
-    expect_raises TypeException, message do
-      infer_type nodes
-    end
+  nodes = parse str
+  expect_raises TypeException, message do
+    infer_type nodes
   end
 end
 

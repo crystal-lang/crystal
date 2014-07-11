@@ -63,4 +63,8 @@ struct LLVM::Function
   def varargs?
     LibLLVM.is_function_var_arg(function_type) != 0
   end
+
+  def to_unsafe
+    @unwrap
+  end
 end

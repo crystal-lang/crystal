@@ -34,4 +34,8 @@ struct LLVM::Module
       raise "Module validation failed: #{String.new(message)}"
     end
   end
+
+  def to_unsafe
+    @unwrap
+  end
 end

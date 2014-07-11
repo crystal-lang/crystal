@@ -6,4 +6,8 @@ struct LLVM::TargetMachine
     layout = LibLLVM.get_target_machine_data(self)
     layout ? TargetDataLayout.new(layout) : nil
   end
+
+  def to_unsafe
+    @unwrap
+  end
 end
