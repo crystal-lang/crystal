@@ -12,12 +12,13 @@ struct Date
     Date.new(ymd[0], ymd[1], ymd[2])
   end
 
-  include Comparable
-
+  # Allow comparing 2 dates.
+  include Comparable(self)
   def <=>(other : Date)
     self.jdn <=> other.jdn
   end
 
+  # A date interval (such as returned by `3.days`) can be added to a date, returning another date.
   def +(days : Date::Interval)
     Date.for_jdn(@jdn + days.to_i)
   end
@@ -71,7 +72,7 @@ struct Date::Interval
   def initialize(@number_of_days)
   end
 
-  include Comparable
+  include Comparable(self)
 
   def <=>(other : Date::Interval)
     self.to_i <=> other.to_i
