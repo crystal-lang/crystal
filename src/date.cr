@@ -1,10 +1,8 @@
 struct Date
-  def initialize(@year, @month, @day, @calendar = Date::Calendar::DEFAULT)
-    # Algorithm from http://en.wikipedia.org/wiki/Julian_day#Converting_Julian_or_Gregorian_calendar_date_to_Julian_Day_Number
-    a = ((14 - @month) / 12).floor
-    y = @year + 4800 - a
-    m = @month + 12 * a - 3
-    @jdn = @day + ((153 * m + 2) / 5).floor + 365 * y + (y / 4).floor - (y / 100).floor + (y / 400).floor - 32045
+
+  # Create a date with the given year/month/day in the given calendar system.
+  def initialize(year : Int, month : Int, day : Int, @calendar = Date::Calendar.default)
+    @jdn = @calendar.ymd_to_jdn(year, month, day)
   end
 
   # Create a new date for the given Julian Day Number (JDN).
@@ -27,7 +25,62 @@ struct Date
   # Returns the Julian Day Number (JDN) for this date as an Int64.
   getter :jdn
 
-  def self.ymd(jdn)
+  # Returns the calendar system associated with this date.
+  getter :calendar
+
+  def year
+    @calendar.jdn_to_ymd(@jdn)[0]
+  end
+
+  def month
+    @calendar.jdn_to_ymd(@jdn)[1]
+  end
+
+  def day
+    @calendar.jdn_to_ymd(@jdn)[2]
+  end
+
+  def to_s
+    "%04d-%02d-%02d" % [year, month, day]
+  end
+end
+
+
+struct Date::Calendar
+  def self.default
+    Date::Calendar::Gregorian.new
+  end
+
+  def name
+    raise "Subclass must implement."
+  end
+
+  def ymd_to_jdn(year : Int, month : Int, day : Int) : Int64
+    raise "Subclass must implement. Returns an Int64 representing the Julian Day Number (JDN)."
+  end
+
+  def jdn_to_ymd(jdn : Int64)
+    raise "Subclass must implement. Returns a Tuple representing the year, month, and day as Ints."
+  end
+end
+
+
+# NOTE: This is technically proleptic Gregorian. See http://en.wikipedia.org/wiki/Gregorian_calendar#Proleptic_Gregorian_calendar for details.
+struct Date::Calendar::Gregorian < Date::Calendar
+  def name
+    "Gregorian"
+  end
+
+  def ymd_to_jdn(year : Int, month : Int, day : Int) : Int64
+    # Algorithm from http://en.wikipedia.org/wiki/Julian_day#Converting_Julian_or_Gregorian_calendar_date_to_Julian_Day_Number
+    a = ((14 - month) / 12).floor
+    y = year + 4800 - a
+    m = month + 12 * a - 3
+    jdn = (day + ((153 * m + 2) / 5).floor + 365 * y + (y / 4).floor - (y / 100).floor + (y / 400).floor - 32045)
+    jdn.to_i64
+   end
+
+  def jdn_to_ymd(jdn : Int64)
     # Algorithm from http://quasar.as.utexas.edu/BillInfo/JulianDatesG.html
     q = jdn
     z = jdn
@@ -42,29 +95,8 @@ struct Date
     day = b - d - f + (q - z)
     month = (e - 1) <= 12 ? (e - 1) : (e - 13)
     year = c - 4715 - (month > 2 ? 1 : 0)
-    [year, month, day]
+    {year, month, day}
   end
-
-  def year
-    Date.ymd(@jdn)[0]
-  end
-
-  def month
-    Date.ymd(@jdn)[1]
-  end
-
-  def day
-    Date.ymd(@jdn)[2]
-  end
-
-  def to_s
-    "%04d-%02d-%02d" % [year, month, day]
-  end
-end
-
-
-struct Date::Calendar
-  DEFAULT = nil
 end
 
 
