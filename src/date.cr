@@ -1,3 +1,21 @@
+# A Date represents a single specific day.
+#
+# Dates are internally represented by a Julian Day Number (JDN) and a
+# calendar system. But you almost never need to worry about those.
+# You can just initialize with a year/month/day, and get the year/month/day
+# or a String back.
+#
+# However, the internal representation will allow working with other calendar
+# systems, such as the Julian calendar, Hebrew calendar, or Islamic calendar.
+#
+# A JDN is the number of days from a specific day in the distant past.
+# This allows us to abstract away calculations for various calendar systems.
+# By storing the JDN as a signed 64-bit integer, we can represent dates as
+# far back as the beginning of the universe, so this class can be used for
+# historic, geological, and astronomical use cases.
+#
+# Note, however, that the Gregorian (default calendar) algorithms do not
+# handle dates prior to about 4712 BCE.
 struct Date
 
   # Create a date with the given year/month/day in the given calendar system.
@@ -82,6 +100,7 @@ struct Date::Calendar::Gregorian < Date::Calendar
 
   def jdn_to_ymd(jdn : Int64)
     # Algorithm from http://quasar.as.utexas.edu/BillInfo/JulianDatesG.html
+    raise "Algorithm for Gregorian dates does support JDNs < 0 (about 4712 BCE)" if jdn < 0
     q = jdn
     z = jdn
     w = ((z - 1867216.25) / 36524.25).floor
