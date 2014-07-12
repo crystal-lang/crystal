@@ -73,7 +73,7 @@ struct Date::Calendar
     raise "Subclass must implement."
   end
 
-  def ymd_to_jdn(year : Int, month : Int, day : Int) : Int64
+  def ymd_to_jdn(year : Int, month : Int, day : Int)
     raise "Subclass must implement. Returns an Int64 representing the Julian Day Number (JDN)."
   end
 
@@ -89,7 +89,7 @@ struct Date::Calendar::Gregorian < Date::Calendar
     "Gregorian"
   end
 
-  def ymd_to_jdn(year : Int, month : Int, day : Int) : Int64
+  def ymd_to_jdn(year : Int, month : Int, day : Int)
     # Algorithm from http://en.wikipedia.org/wiki/Julian_day#Converting_Julian_or_Gregorian_calendar_date_to_Julian_Day_Number
     a = ((14 - month) / 12).floor
     y = year + 4800 - a
