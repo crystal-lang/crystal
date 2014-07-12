@@ -7,9 +7,10 @@ struct Date
     @jdn = @day + ((153 * m + 2) / 5).floor + 365 * y + (y / 4).floor - (y / 100).floor + (y / 400).floor - 32045
   end
 
-  def self.for_jdn(jdn)
-    ymd = ymd(jdn)
-    Date.new(ymd[0], ymd[1], ymd[2])
+  # Create a new date for the given Julian Day Number (JDN).
+  # We use JDN as our internal representation, to allow us to abstract away date calculations and different calendar systems.
+  def initialize(jdn, @calendar = Date::Calendar.default)
+    @jdn = jdn.to_i64
   end
 
   # Allow comparing 2 dates.
@@ -20,10 +21,10 @@ struct Date
 
   # A date interval (such as returned by `3.days`) can be added to a date, returning another date.
   def +(days : Date::Interval)
-    Date.for_jdn(@jdn + days.to_i)
+    Date.new(@jdn + days.to_i, @calendar)
   end
 
-  # Returns the Julian Day Number (JDN) as an Int.
+  # Returns the Julian Day Number (JDN) for this date as an Int64.
   getter :jdn
 
   def self.ymd(jdn)

@@ -8,7 +8,7 @@ describe "Date" do
   end
 
   it "can be created for a given Julian Day Number" do
-    date = Date.for_jdn(2456689)
+    date = Date.new(2456689)
     date.jdn.should eq(2456689)
   end
 
