@@ -40,6 +40,10 @@ struct Date
     Date.new(@jdn + days.to_i, @calendar)
   end
 
+  def -(days : Date::Interval)
+    Date.new(@jdn - days.to_i, @calendar)
+  end
+
   # Returns the Julian Day Number (JDN) for this date as an Int64.
   getter :jdn
 
@@ -132,6 +136,10 @@ struct Date::Interval
 
   def +(other : Date::Interval)
     Date::Interval.new(self.to_i + other.to_i)
+  end
+
+  def -(other : Date::Interval)
+    Date::Interval.new(self.to_i - other.to_i)
   end
 
   def to_i

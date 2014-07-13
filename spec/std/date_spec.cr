@@ -37,14 +37,15 @@ describe "Date" do
     date = Date.new(2014, 1, 31)
     (date + 3.days).should eq(Date.new(2014, 2, 3))
   end
+
+  it "can subtract a Date::Interval from it" do
+    date = Date.new(2014, 2, 3)
+    (date - 3.days).should eq(Date.new(2014, 1, 31))
+  end
 end
 
 
 describe "Date::Interval" do
-  it "initializes from an Int" do
-    Date::Interval.new(3)
-  end
-
   it "can be compared with another Date::Interval" do
     Date::Interval.new(3).should eq(Date::Interval.new(3))
     (Date::Interval.new(2) < Date::Interval.new(3)).should be_true
@@ -59,4 +60,7 @@ describe "Date::Interval" do
     (3.days + 4.days).should eq(Date::Interval.new(7))
   end
 
+  it "can be subtracted from another Date::Interval" do
+    (7.days - 4.days).should eq(Date::Interval.new(3))
+  end
 end
