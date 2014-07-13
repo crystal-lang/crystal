@@ -287,7 +287,7 @@ module Crystal
             threads.each &.join
           end
 
-          timing("Codegen (clang)") do
+          timing("Linking (clang)") do
             system "#{@clang} -o #{output_filename} #{object_names.join " "} #{lib_flags(program)}"
           end
 
@@ -354,10 +354,13 @@ module Crystal
     def lib_flags(mod)
       libs = mod.library_names
       String.build do |flags|
+        shared, static = libs.partition { |lib| lib[1] == :shared }
+        static.each { |lib| flags << " #{lib[0]}" }
         commands = [] of String
-        if libs.length > 0
+        if shared.length > 0
           flags << " -Wl"
-          libs.each do |libname|
+          shared.each do |lib|
+            libname, libtype = lib
             if libname =~ /^`(.*)`$/
               commands << $1
             else

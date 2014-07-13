@@ -324,17 +324,17 @@ module Crystal
     end
 
     def library_names
-      libs = [] of String
+      libs = [] of Tuple(String, Symbol)
       @types.each do |name, type|
-        if type.is_a?(LibType) && (libname = type.libname)
-          libs << libname
+        if type.is_a?(LibType) && (libname = type.libname) && (libtype = type.libtype)
+          libs << { libname, libtype }
         end
       end
       libs
     end
 
     def load_libs
-      libs = library_names
+      libs = library_names.map &.[0]
       if libs.length > 0
         if has_flag?("darwin")
           ext = "dylib"

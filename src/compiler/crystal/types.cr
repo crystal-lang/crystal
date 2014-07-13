@@ -1902,8 +1902,9 @@ module Crystal
 
   class LibType < ModuleType
     property :libname
+    property :libtype
 
-    def initialize(program, container, name, @libname = nil)
+    def initialize(program, container, name, @libname = nil, @libtype = :shared)
       super(program, container, name)
     end
 

@@ -787,6 +787,8 @@ module Crystal
           parse_break
         when :lib
           unless_in_def { parse_lib }
+        when :libstatic
+          unless_in_def { parse_lib(true) }
         when :fun
           unless_in_def { parse_fun_def(true) }
         when :alias
@@ -3009,7 +3011,7 @@ module Crystal
       node
     end
 
-    def parse_lib
+    def parse_lib(static = false)
       next_token_skip_space_or_newline
 
       check :CONST
@@ -3033,7 +3035,7 @@ module Crystal
       check_ident :end
       next_token_skip_space
 
-      LibDef.new name, libname, body, name_column_number
+      LibDef.new name, libname, body, name_column_number, (static ? :static : :shared)
     end
 
     def parse_lib_body

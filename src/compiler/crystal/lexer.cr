@@ -649,7 +649,14 @@ module Crystal
         case next_char
         when 'i'
           if next_char == 'b'
-            return check_ident_or_keyword(:lib, start)
+            if peek_next_char == 's'
+              next_char
+              if next_char == 't' && next_char == 'a' && next_char == 't' && next_char == 'i' && next_char == 'c'
+                return check_ident_or_keyword(:libstatic, start)
+              end
+            else
+              return check_ident_or_keyword(:lib, start)
+            end
           end
         end
         scan_ident(start)
