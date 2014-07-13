@@ -413,4 +413,10 @@ describe "Codegen: is_a?" do
       end
       ").to_i.should eq(1)
   end
+
+  it "says false for value.is_a?(Class)" do
+    run("
+      1.is_a?(Class)
+      ").to_b.should be_false
+  end
 end

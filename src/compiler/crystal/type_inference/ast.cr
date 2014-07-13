@@ -144,11 +144,11 @@ module Crystal
   end
 
   class TypeOf
-    property in_generic_args
-    @in_generic_args = false
+    property in_type_args
+    @in_type_args = false
 
     def map_type(type)
-      @in_generic_args ? type : type.metaclass
+      @in_type_args ? type : type.metaclass
     end
 
     def update(from = nil)
@@ -208,8 +208,8 @@ module Crystal
 
   class Generic
     property! instance_type
-    property in_generic_args
-    @in_generic_args = false
+    property in_type_args
+    @in_type_args = false
 
     def update(from = nil)
       type_vars_types = [] of Type | ASTNode
@@ -225,7 +225,7 @@ module Crystal
       end
 
       generic_type = instance_type.instantiate(type_vars_types)
-      generic_type = generic_type.metaclass unless @in_generic_args
+      generic_type = generic_type.metaclass unless @in_type_args
       self.type = generic_type
     end
   end
