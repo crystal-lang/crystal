@@ -37,11 +37,11 @@ struct Date
 
   # A date interval (such as returned by `3.days`) can be added to a date, returning another date.
   def +(days : Date::Interval)
-    Date.new(@jdn + days.to_i, @calendar)
+    Date.new(jdn + days.to_i, calendar)
   end
 
   def -(days : Date::Interval)
-    Date.new(@jdn - days.to_i, @calendar)
+    Date.new(jdn - days.to_i, calendar)
   end
 
   # Returns the Julian Day Number (JDN) for this date as an Int64.
@@ -51,15 +51,15 @@ struct Date
   getter :calendar
 
   def year
-    @calendar.jdn_to_ymd(@jdn)[0]
+    calendar.jdn_to_ymd(jdn)[0]
   end
 
   def month
-    @calendar.jdn_to_ymd(@jdn)[1]
+    calendar.jdn_to_ymd(jdn)[1]
   end
 
   def day
-    @calendar.jdn_to_ymd(@jdn)[2]
+    calendar.jdn_to_ymd(jdn)[2]
   end
 
   def to_s
@@ -142,8 +142,10 @@ struct Date::Interval
     Date::Interval.new(self.to_i - other.to_i)
   end
 
+  getter :number_of_days
+
   def to_i
-    @number_of_days
+    number_of_days
   end
 
   def inspect
