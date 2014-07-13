@@ -19,13 +19,21 @@
 struct Date
 
   # Create a date with the given year/month/day in the given calendar system.
-  def initialize(year : Int, month : Int, day : Int, @calendar = Date::Calendar.default)
+  def initialize(year : Int, month : Int, day : Int, @calendar = Date::Calendar.default : Date::Calendar)
+    @jdn = @calendar.ymd_to_jdn(year, month, day)
+  end
+  def initialize(year : Int, month : Int, day : Int, calendar : Class)
+    @calendar = calendar.new
     @jdn = @calendar.ymd_to_jdn(year, month, day)
   end
 
   # Create a new date for the given Julian Day Number (JDN).
   # We use JDN as our internal representation, to allow us to abstract away date calculations and different calendar systems.
-  def initialize(jdn, @calendar = Date::Calendar.default)
+  def initialize(jdn, @calendar = Date::Calendar.default : Date::Calendar)
+    @jdn = jdn.to_i64
+  end
+  def initialize(jdn, calendar : Class)
+    @calendar = calendar.new
     @jdn = jdn.to_i64
   end
 
