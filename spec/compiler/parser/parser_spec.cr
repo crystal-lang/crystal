@@ -733,70 +733,13 @@ describe "Parser" do
 
   it_parses "undef foo", Undef.new("foo")
 
+  it_parses "@:Foo", Attribute.new("Foo")
+  it_parses "@:Foo\n@:Bar", [Attribute.new("Foo"), Attribute.new("Bar")] of ASTNode
+
+  it_parses "lib C\n@:Bar;end", LibDef.new("C", nil, [Attribute.new("Bar")] of ASTNode)
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", [] of Arg, [keyword.call] of ASTNode)
-  end
-
-  it "parses class with attributes" do
-    node = Parser.parse("
-      @:Foo
-      @:Bar
-      class Foo
-      end
-      ")
-    node.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
-  end
-
-  it "parses c struct with attributes" do
-    node = Parser.parse("
-      lib C
-        @:Foo
-        @:Bar
-        struct Foo
-        end
-      end
-      ") as LibDef
-    node.body.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
-  end
-
-  it "parses c fun with attributes" do
-    node = Parser.parse("
-      lib C
-        @:Foo
-        @:Bar
-        fun foo
-      end
-      ") as LibDef
-    node.body.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
-  end
-
-  it "parses c var with attributes" do
-    node = Parser.parse("
-      lib C
-        @:Foo
-        @:Bar
-        $foo : Int32
-      end
-      ") as LibDef
-    node.body.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
-  end
-
-  it "parses global var with attributes" do
-    node = Parser.parse("
-      @:Foo
-      @:Bar
-      $foo
-      ")
-    node.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
-  end
-
-  it "parses global assign with attributes" do
-    node = Parser.parse("
-      @:Foo
-      @:Bar
-      $foo = 1
-      ") as Assign
-    node.target.attributes.should eq([Attribute.new("Foo"), Attribute.new("Bar")])
   end
 
   it "keeps instance variables declared in def" do

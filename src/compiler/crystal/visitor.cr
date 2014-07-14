@@ -10,6 +10,9 @@ module Crystal
 
     def end_visit(node)
     end
+
+    def end_visit_any(node)
+    end
   end
 
   class ASTNode
@@ -19,6 +22,7 @@ module Crystal
           accept_children visitor
         end
         visitor.end_visit self
+        visitor.end_visit_any self
       end
     end
 

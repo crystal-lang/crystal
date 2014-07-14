@@ -439,7 +439,7 @@ module Crystal
 
     def parse_atomic_with_method
       location = @token.location
-      atomic = parse_with_attributes { parse_atomic }
+      atomic = parse_atomic
       parse_atomic_method_suffix atomic, location
     end
 
@@ -645,27 +645,6 @@ module Crystal
       atomic
     end
 
-    def parse_with_attributes
-      if @token.type == :"@:"
-        attributes = [] of Attribute
-
-        while true
-          attributes << parse_attribute
-          break unless @token.type == :"@:"
-        end
-
-        location = @token.location
-        atomic = yield
-        unless atomic.accepts_attributes?
-          raise "this doesn't accept attributes", location
-        end
-        atomic.attributes = attributes
-        atomic
-      else
-        yield
-      end
-    end
-
     def parse_atomic
       location = @token.location
       atomic = parse_atomic_without_location
@@ -701,6 +680,8 @@ module Crystal
         parse_ident_or_global_call
       when :"->"
         parse_fun_literal
+      when :"@:"
+        parse_attribute
       when :NUMBER
         @wants_regex = false
         node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
@@ -3041,7 +3022,7 @@ module Crystal
       while true
         skip_statement_end
         break if is_end_token
-        expressions << parse_with_attributes { parse_lib_body_exp }
+        expressions << parse_lib_body_exp
       end
       expressions
     end
@@ -3056,6 +3037,8 @@ module Crystal
 
     def parse_lib_body_exp_without_location
       case @token.type
+      when :"@:"
+        parse_attribute
       when :IDENT
         case @token.value
         when :alias
