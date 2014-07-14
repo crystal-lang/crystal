@@ -1,11 +1,12 @@
 class Class
-  def inspect
-    to_s
+  def inspect(io)
+    to_s(io)
   end
 
-  def to_s : String
+  def to_s(io) : Nil
     # If we are Foo, the name is "Foo:Class",
     # so we remove the ":Class" part
-    {{@class_name[0 .. -7]}}
+    io << {{@class_name[0 .. -7]}}
+    nil
   end
 end
