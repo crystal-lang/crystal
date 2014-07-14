@@ -3,7 +3,7 @@ class Class
     to_s(io)
   end
 
-  def to_s(io) : Nil
+  macro def to_s(io) : Nil
     # If we are Foo, the name is "Foo:Class",
     # so we remove the ":Class" part
     io << {{@class_name[0 .. -7]}}

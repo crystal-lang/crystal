@@ -14,9 +14,9 @@ describe "Type inference: macro" do
       "undefined macro variable 'y'"
   end
 
-  it "types def macro" do
+  it "types macro def" do
     assert_type(%(
-      def foo : Int32
+      macro def foo : Int32
         1
       end
 
@@ -24,23 +24,23 @@ describe "Type inference: macro" do
       )) { int32 }
   end
 
-  it "errors if def macro type not found" do
-    assert_error "def foo : Foo; end; foo",
+  it "errors if macro def type not found" do
+    assert_error "macro def foo : Foo; end; foo",
       "undefined constant Foo"
   end
 
-  it "errors if def macro type doesn't match found" do
-    assert_error "def foo : Int32; 'a'; end; foo",
+  it "errors if macro def type doesn't match found" do
+    assert_error "macro def foo : Int32; 'a'; end; foo",
       "expected 'foo' to return Int32, not Char"
   end
 
-  it "types def macro that calls another method" do
+  it "types macro def that calls another method" do
     assert_type(%(
       def bar_baz
         1
       end
 
-      def foo : Int32
+      macro def foo : Int32
         bar_{{ "baz".id }}
       end
 
@@ -48,14 +48,14 @@ describe "Type inference: macro" do
       )) { int32 }
   end
 
-  it "types def macro that calls another method inside a class" do
+  it "types macro def that calls another method inside a class" do
     assert_type(%(
       class Foo
         def bar_baz
           1
         end
 
-        def foo : Int32
+        macro def foo : Int32
           bar_{{ "baz".id }}
         end
       end
@@ -64,10 +64,10 @@ describe "Type inference: macro" do
       )) { int32 }
   end
 
-  it "types def macro that calls another method inside a class" do
+  it "types macro def that calls another method inside a class" do
     assert_type(%(
       class Foo
-        def foo : Int32
+        macro def foo : Int32
           bar_{{ "baz".id }}
         end
       end
@@ -82,9 +82,9 @@ describe "Type inference: macro" do
       )) { int32 }
   end
 
-  it "types def macro with argument" do
+  it "types macro def with argument" do
     assert_type(%(
-      def foo(x) : Int32
+      macro def foo(x) : Int32
         x
       end
 

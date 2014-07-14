@@ -128,7 +128,7 @@ describe "Code gen: macro" do
         1
       end
 
-      def foo : Int32
+      macro def foo : Int32
         bar_{{ "baz".id }}
       end
 
@@ -138,7 +138,7 @@ describe "Code gen: macro" do
 
   it "expands def macro with var" do
     run(%(
-      def foo : Int32
+      macro def foo : Int32
         a = {{ 1 }}
       end
 
@@ -152,7 +152,7 @@ describe "Code gen: macro" do
         def initialize(@x)
         end
 
-        def to_s : String
+        macro def to_s : String
           {{ @instance_vars.first.stringify }}
         end
       end
@@ -165,7 +165,7 @@ describe "Code gen: macro" do
   it "expands def macro with @instance_vars with subclass" do
     run(%(
       class Reference
-        def to_s : String
+        macro def to_s : String
           {{ @instance_vars.last.stringify }}
         end
       end
@@ -187,7 +187,7 @@ describe "Code gen: macro" do
   it "expands def macro with @instance_vars with hierarchy" do
     run(%(
       class Reference
-        def to_s : String
+        macro def to_s : String
           {{ @instance_vars.last.stringify }}
         end
       end
@@ -212,7 +212,7 @@ describe "Code gen: macro" do
         def initialize(@x)
         end
 
-        def to_s : String
+        macro def to_s : String
           {{@class_name}}
         end
       end
@@ -225,7 +225,7 @@ describe "Code gen: macro" do
   it "expands macro and resolves type correctly" do
     run(%(
       class Foo
-        def foo : Int32
+        macro def foo : Int32
           1
         end
       end
@@ -241,7 +241,7 @@ describe "Code gen: macro" do
   it "expands def macro with @class_name with hierarchy" do
     run(%(
       class Reference
-        def to_s : String
+        macro def to_s : String
           {{ @class_name }}
         end
       end
@@ -259,7 +259,7 @@ describe "Code gen: macro" do
   it "expands def macro with @class_name with hierarchy (2)" do
     run(%(
       class Reference
-        def to_s : String
+        macro def to_s : String
           {{ @class_name }}
         end
       end
@@ -277,7 +277,7 @@ describe "Code gen: macro" do
   it "allows overriding macro definition when redefining base class" do
     run(%(
       class Foo
-        def inspect : String
+        macro def inspect : String
           {{@class_name}}
         end
       end
@@ -334,7 +334,7 @@ describe "Code gen: macro" do
       end
 
       class Foo
-        def foo : Int32
+        macro def foo : Int32
           name = 1
           @name = name
         end
@@ -347,7 +347,7 @@ describe "Code gen: macro" do
   it "expands @class_name in hierarchy metaclass (1)" do
     run(%(
       class Class
-        def to_s : String
+        macro def to_s : String
           {{ @class_name }}
         end
       end
@@ -368,7 +368,7 @@ describe "Code gen: macro" do
   it "expands @class_name in hierarchy metaclass (2)" do
     run(%(
       class Class
-        def to_s : String
+        macro def to_s : String
           {{ @class_name }}
         end
       end
@@ -389,7 +389,7 @@ describe "Code gen: macro" do
   it "doesn't skip abstract classes when defining macro methods" do
     run(%(
       class Object
-        def foo : Int32
+        macro def foo : Int32
           1
         end
       end

@@ -4,6 +4,7 @@
 * Fixed `.is_a?(Class)` not working (#162)
 * Attributes are now associated to AST nodes in the semantic pass, not during parsing. This allows macros to generate attributes that will be attached to subsequent expressions.
 * Make ENV#[] raise on missing key, and added ENV#[]?
+* Macro defs are now written like `macro def name(args) : ReturnType` instead of `def name(args) : ReturnType`, which was a bit confusing.
 
 ## 0.3.2 (2017-07-10)
 

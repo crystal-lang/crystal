@@ -38,7 +38,7 @@ module Crystal
       false
     end
 
-    def class_desc : String
+    macro def class_desc : String
       {{@class_name.split("::").last}}
     end
   end

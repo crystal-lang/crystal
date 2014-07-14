@@ -1604,9 +1604,9 @@ module Crystal
       result
     end
 
-    def parse_def(is_abstract = false)
+    def parse_def(is_abstract = false, allow_return_type = false)
       instance_vars = prepare_parse_def
-      a_def = parse_def_helper(is_abstract)
+      a_def = parse_def_helper(is_abstract, allow_return_type)
 
       # Small memory optimization: don't keep the Set in the Def if it's empty
       instance_vars = nil if instance_vars.empty?
@@ -1629,12 +1629,15 @@ module Crystal
     end
 
     def parse_macro
+      next_token_skip_space_or_newline
+
+      if @token.keyword?(:def)
+        return parse_def_helper(false, true)
+      end
+
       push_def
       @def_nest += 1
 
-      next_token
-
-      skip_space_or_newline
       check DefOrMacroCheck1
 
       name_line_number = @token.line_number
@@ -1850,7 +1853,7 @@ module Crystal
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>"]
 
-    def parse_def_helper(is_abstract)
+    def parse_def_helper(is_abstract, allow_return_type)
       push_def
       @def_nest += 1
 
@@ -1959,8 +1962,11 @@ module Crystal
             break
           end
         end
-      when :";", :"NEWLINE", :":"
+      when :";", :"NEWLINE"
          # Skip
+      when :":"
+        unexpected_token unless allow_return_type
+        # Skip
       else
         if is_abstract && @token.type == :EOF
           # OK
@@ -1969,7 +1975,7 @@ module Crystal
         end
       end
 
-      if @token.type == :":"
+      if allow_return_type && @token.type == :":"
         next_token_skip_space
         return_type = parse_single_type
 
