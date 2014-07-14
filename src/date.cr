@@ -131,6 +131,37 @@ struct Date::Calendar::Gregorian < Date::Calendar
 end
 
 
+# NOTE: This is technically proleptic Julian. See http://en.wikipedia.org/wiki/Proleptic_Julian_calendar for details.
+struct Date::Calendar::Julian < Date::Calendar
+  def name
+    "Julian"
+  end
+
+  def ymd_to_jdn(year : Int, month : Int, day : Int)
+    # Algorithm from http://en.wikipedia.org/wiki/Julian_day#Converting_Julian_or_Gregorian_calendar_date_to_Julian_Day_Number
+    a = ((14 - month) / 12).floor
+    y = year + 4800 - a
+    m = month + 12 * a - 3
+    jdn = (day + ((153 * m + 2) / 5).floor + 365 * y + (y / 4).floor - 32083)
+    jdn.to_i64
+   end
+
+  def jdn_to_ymd(jdn : Int64)
+    # Algorithm from http://www.tondering.dk/claus/cal/julperiod.php#formula
+    raise "Algorithm for Julian dates does support JDNs < 0 (about 4712 BCE)" if jdn < 0
+    b = 0
+    c = jdn + 32082
+    d = ((4 * c + 3) / 1461).floor
+    e = c - (1461 * d / 4).floor
+    m = ((5 * e + 2) / 153).floor
+    day = e - ((153 * m + 2) / 5).floor + 1
+    month = m + 3 - 12 * (m / 10).floor
+    year = 100 * b + d - 4800 + (m / 10).floor
+    {year, month, day}
+  end
+end
+
+
 # A Date::Interval represents a time period consisting of a number of (whole) days.
 struct Date::Interval
   def initialize(@number_of_days)

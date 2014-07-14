@@ -2,6 +2,7 @@
 require "spec"
 require "date"
 
+
 describe "Date" do
   it "can be created for a given year, month, day" do
     date = Date.new(2014, 1, 31)
@@ -42,6 +43,24 @@ describe "Date" do
     date = Date.new(2014, 2, 3)
     (date - 3.days).should eq(Date.new(2014, 1, 31))
   end
+
+  describe "using the Julian calendar" do
+    it "can be created for a given year, month, day" do
+      date = Date.new(2014, 1, 31, Date::Calendar::Julian)
+    end
+
+    it "can be created for a given Julian Day Number" do
+      date = Date.new(2456689, Date::Calendar::Julian)
+      date.jdn.should eq(2456689)
+    end
+
+    it "can be compared to another Date using a different calendar" do
+      date1 = Date.new(2014, 1, 31)
+      date2 = Date.new(2014, 1, 18, Date::Calendar::Julian)
+      date1.should eq(date2)
+    end
+  end
+
 end
 
 
