@@ -1,12 +1,12 @@
-## Next
+## 0.3.3 (2014-07-14)
 
 * Allow implicit conversion to C types by defining a `to_unsafe` method. This removed the hardcoded rule for converting a `String` to `UInt8*` and also allows passing an `Array(T)` to an argument expecting `Pointer(T)`.
 * Fixed `.is_a?(Class)` not working (#162)
 * Attributes are now associated to AST nodes in the semantic pass, not during parsing. This allows macros to generate attributes that will be attached to subsequent expressions.
-* Make ENV#[] raise on missing key, and added ENV#[]?
-* Macro defs are now written like `macro def name(args) : ReturnType` instead of `def name(args) : ReturnType`, which was a bit confusing.
+* **(breaking change)** Make ENV#[] raise on missing key, and added ENV#[]?
+* **(breaking change)** Macro defs are now written like `macro def name(args) : ReturnType` instead of `def name(args) : ReturnType`, which was a bit confusing.
 
-## 0.3.2 (2017-07-10)
+## 0.3.2 (2014-07-10)
 
 * Integer literals without a suffix are inferred to be Int32, Int64 or UInt64 depending on their value.
 * Check that integer literals fit into their types.
