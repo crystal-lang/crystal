@@ -59,7 +59,7 @@ module Crystal
       @typeof_nest = 0
       @is_initialize = typed_def && typed_def.name == "initialize"
       @used_ivars_in_calls_in_initialize = nil
-      @in_generic_args = 0
+      @in_type_args = 0
 
       # We initialize meta_vars from vars given in the constructor.
       # We store those meta vars either in the typed def or in the program
@@ -993,13 +993,13 @@ module Crystal
     end
 
     def visit(node : Generic)
-      node.in_generic_args = @in_generic_args > 0
+      node.in_type_args = @in_type_args > 0
 
       node.name.accept self
 
-      @in_generic_args += 1
+      @in_type_args += 1
       node.type_vars.each &.accept self
-      @in_generic_args -= 1
+      @in_type_args -= 1
 
       return false if node.type?
 
@@ -1026,7 +1026,13 @@ module Crystal
       false
     end
 
-    def end_visit(node : IsA)
+    def visit(node : IsA)
+      node.obj.accept self
+
+      @in_type_args += 1
+      node.const.accept self
+      @in_type_args -= 1
+
       node.type = mod.bool
       const = node.const
 
@@ -1042,8 +1048,10 @@ module Crystal
       end
 
       if needs_type_filters? && (var = get_expression_var(node.obj))
-        @type_filters = new_type_filter(var, SimpleTypeFilter.new(node.const.type.instance_type))
+        @type_filters = new_type_filter(var, SimpleTypeFilter.new(node.const.type))
       end
+
+      false
     end
 
     def end_visit(node : RespondsTo)
@@ -1444,7 +1452,7 @@ module Crystal
         node.target_const = type
         node.bind_to type.value
       when Type
-        node.type = check_type_in_generic_args(type.remove_alias_if_simple)
+        node.type = check_type_in_type_args(type.remove_alias_if_simple)
       when ASTNode
         node.syntax_replacement = type
         node.bind_to type
@@ -1456,15 +1464,15 @@ module Crystal
     end
 
     def end_visit(node : Hierarchy)
-      node.type = check_type_in_generic_args node.name.type.instance_type.hierarchy_type
+      node.type = check_type_in_type_args node.name.type.instance_type.hierarchy_type
     end
 
     def end_visit(node : Metaclass)
       node.type = node.name.type.hierarchy_type.metaclass
     end
 
-    def check_type_in_generic_args(type)
-      if @in_generic_args > 0
+    def check_type_in_type_args(type)
+      if @in_type_args > 0
         type
       else
         type.metaclass
@@ -1927,16 +1935,16 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      node.in_generic_args = @in_generic_args > 0
+      node.in_type_args = @in_type_args > 0
 
-      old_in_generic_args = @in_generic_args
-      @in_generic_args = 0
+      old_in_type_args = @in_type_args
+      @in_type_args = 0
 
       @typeof_nest += 1
       node.expressions.each &.accept self
       @typeof_nest -= 1
 
-      @in_generic_args = old_in_generic_args
+      @in_type_args = old_in_type_args
 
       node.bind_to node.expressions
 
