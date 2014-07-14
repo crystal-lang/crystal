@@ -1,6 +1,8 @@
 ## Next
 
 * Allow implicit conversion to C types by defining a `to_unsafe` method. This removed the hardcoded rule for converting a `String` to `UInt8*` and also allows passing an `Array(T)` to an argument expecting `Pointer(T)`.
+* Fixed `.is_a?(Class)` not working (#162)
+* Attributes are now associated to AST nodes in the semantic pass, not during parsing. This allows macros to generate attributes that will be attached to subsequent expressions.
 
 ## 0.3.2 (2017-07-10)
 
