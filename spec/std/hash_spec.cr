@@ -109,7 +109,7 @@ describe "Hash" do
 
     it "fetches and raises" do
       a = {1 => 2}
-      expect_raises Exception, "Missing hash value: 2" do
+      expect_raises MissingKey, "Missing hash value: 2" do
         a.fetch(2)
       end
     end

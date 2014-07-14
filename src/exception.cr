@@ -119,3 +119,6 @@ class ArgumentError < Exception
     super(message)
   end
 end
+
+class MissingKey < Exception
+end

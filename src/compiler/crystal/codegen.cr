@@ -190,8 +190,8 @@ module Crystal
         LLVM.delete_basic_block(@const_block_entry)
       end
 
-      env_dump = ENV["DUMP"]
-      env_verify = ENV["VERIFY"] == "1"
+      env_dump = ENV["DUMP"]?
+      env_verify = ENV["VERIFY"]? == "1"
       case env_dump
       when Nil
         # Nothing

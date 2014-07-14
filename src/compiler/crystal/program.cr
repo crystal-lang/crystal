@@ -106,7 +106,7 @@ module Crystal
       @temp_var_counter = 0
       @type_id_counter = 1
       @nil_var = Var.new("<nil_var>", @nil)
-      @crystal_path = (ENV["CRYSTAL_PATH"] || "").split(':')
+      @crystal_path = (ENV["CRYSTAL_PATH"]? || "").split(':')
       @vars = MetaVars.new
       @literal_expander = LiteralExpander.new self
       @macro_expander = MacroExpander.new self

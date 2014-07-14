@@ -32,7 +32,7 @@ module Crystal
     end
 
     def unreachable
-      if ENV["UNREACHABLE"] == "1"
+      if ENV["UNREACHABLE"]? == "1"
         @codegen.printf("Reached the unreachable!")
       end
       return if @end

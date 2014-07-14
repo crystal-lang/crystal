@@ -82,7 +82,7 @@ class Hash(K, V)
       if block = @block
         block.call(self, key)
       else
-        raise "Missing hash value: #{key}"
+        raise MissingKey.new "Missing hash value: #{key}"
       end
     end
   end
@@ -293,9 +293,9 @@ class Hash(K, V)
       found_one = false
       each do |key, value|
         io << ", " if found_one
-        io << key.inspect
+        key.inspect(io)
         io << " => "
-        io << value.inspect
+        value.inspect(io)
         found_one = true
       end
       io << "}"

@@ -7,7 +7,7 @@ module Crystal
     def after_type_inference(node)
       transformer = AfterTypeInferenceTransformer.new(self)
       node = node.transform(transformer)
-      puts node if ENV["AFTER"] == "1"
+      puts node if ENV["AFTER"]? == "1"
 
       # Make sure to transform regexes constants (see Normalizer#trnasform(Regex))
       regexes.each do |const|

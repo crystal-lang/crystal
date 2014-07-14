@@ -155,7 +155,6 @@ class File < FileDescriptorIO
   def self.expand_path(path, dir = nil)
     if path.starts_with?("~")
       home = ENV["HOME"]
-      raise "couldn't find HOME environment" unless home
       if path.length >= 2 && path[1] == '/'
         path = home + path[1..-1]
       elsif path.length < 2

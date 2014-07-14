@@ -166,7 +166,7 @@ module Crystal
       output_filename = @output_filename
       unless output_filename
         if @run
-          output_filename = "#{ENV["TMPDIR"] || "/tmp"}/.crystal-run.XXXXXX"
+          output_filename = "#{ENV["TMPDIR"]? || "/tmp"}/.crystal-run.XXXXXX"
           tmp_fd = C.mkstemp output_filename
           raise "Error creating temp file #{output_filename}" if tmp_fd == -1
           C.close tmp_fd
