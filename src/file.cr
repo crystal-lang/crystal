@@ -152,13 +152,46 @@ class File < FileDescriptorIO
     end
   end
 
-  def self.expand_path(filename)
-    str = C.realpath(filename, nil)
-    unless str
-      raise Errno.new("Error expanding path '#{filename}'")
+  def self.expand_path(path, dir = nil)
+    if path.starts_with?("~")
+      home = ENV["HOME"]
+      raise "couldn't find HOME environment" unless home
+      if path.length >= 2 && path[1] == '/'
+        path = home + path[1..-1]
+      elsif path.length < 2
+        return home
+      end
     end
 
-    String.new_and_free(str)
+    unless path.starts_with?("/")
+      dir = dir ? expand_path(dir) : Dir.working_directory
+      path = dir + "/" + path
+    end
+
+    ifdef windows
+      path = path.tr("\\", "/")
+    end
+
+    parts = path.split("/")
+    was_letter = false
+    first_slash = true
+    items = [] of String
+    parts.each do |part|
+      if part.empty? && !was_letter
+        items << part if !first_slash
+      elsif part == ".."
+        items.pop if items.size > 0
+      elsif !part.empty? && part != "."
+        was_letter = true
+        items << part
+      end
+    end
+
+    ifdef windows
+      items.join("/")
+    else
+      "/" + items.join("/")
+    end
   end
 
   def self.open(filename, mode)
