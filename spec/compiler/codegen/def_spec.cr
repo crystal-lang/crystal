@@ -463,4 +463,35 @@ describe "Code gen: def" do
       foo(node)
       ").to_i.should eq(1)
   end
+
+  it "dispatches on hierarchy type implementing generic module (related to bug #165)" do
+    run("
+      module Moo(T)
+        def moo
+          1
+        end
+      end
+
+      abstract class Foo
+      end
+
+      class Bar < Foo
+        include Moo(Int32)
+      end
+
+      class Baz < Foo
+      end
+
+      def method(x : Moo(Int32))
+        x.moo
+      end
+
+      def method(x : Baz)
+        2
+      end
+
+      foo = Bar.new || Baz.new
+      method(foo)
+      ").to_i.should eq(1)
+  end
 end

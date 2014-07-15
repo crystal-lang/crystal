@@ -381,6 +381,15 @@ module Crystal
         nil
       end
     end
+
+    def restrict(other : Generic, owner, type_lookup, free_vars)
+      types = [] of Type
+      base_type.subclasses.each do |subclass|
+        restricted = subclass.hierarchy_type.restrict(other, owner, type_lookup, free_vars)
+        types << restricted if restricted
+      end
+      program.type_merge_union_of types
+    end
   end
 
   class AliasType

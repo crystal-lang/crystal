@@ -303,4 +303,18 @@ describe "Type inference: def" do
       b.foo
       ) { int32 }
   end
+
+  it "fixes bug #165" do
+    assert_error %(
+      abstract class Node
+      end
+
+      def foo(nodes : Pointer(Node))
+        foo nodes.value
+      end
+
+      a = Pointer(Node).new(0_u64)
+      foo a
+      ), "no overload matches"
+  end
 end
