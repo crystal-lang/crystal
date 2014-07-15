@@ -44,6 +44,14 @@ describe "Date" do
     (date - 3.days).should eq(Date.new(2014, 1, 31))
   end
 
+  describe "using the default calendar" do
+    # Run `cal 9 1752` on a UNIX system to see why we want to do this.
+    # This is the transition date for Britain and its colonies; other coutries transitioned at different times.
+    it "changes from Julian to Gregorian in September 1752" do
+      (Date.new(1752, 9, 2) + 1.days).should eq(Date.new(1752, 9, 14))
+    end
+  end
+
   describe "using the Julian calendar" do
     it "can be created for a given year, month, day" do
       date = Date.new(2014, 1, 31, Date::Calendar::Julian)

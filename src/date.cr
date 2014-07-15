@@ -78,7 +78,12 @@ end
 
 struct Date::Calendar
   def self.default
-    Date::Calendar::Gregorian.new
+    # We're defaulting to the date that Britain and her colonies switched from Julian to Gregorian.
+    # For the dates that other countries switched, see http://www.tondering.dk/claus/cal/gregorian.php.
+    first_day_of_julian_calendar = Date.new(Int64::MIN, Date::Calendar::Julian)
+    first_day_of_gregorian_calendar = Date.new(1752, 9, 14, Date::Calendar::Gregorian)
+    Date::Calendar::Multiple.new({first_day_of_julian_calendar => Date::Calendar::Julian,
+                                  first_day_of_gregorian_calendar => Date::Calendar::Gregorian})
   end
 
   def name
@@ -91,6 +96,48 @@ struct Date::Calendar
 
   def jdn_to_ymd(jdn : Int64)
     raise "Subclass must implement. Returns a Tuple representing the year, month, and day as Ints."
+  end
+end
+
+
+struct Date::Calendar::Multiple < Date::Calendar
+  def name
+    "MULTIPLE" # TODO: Show all the names and the transition dates.
+  end
+
+  def initialize(date_to_calendar_mapping : Hash(Date, Class))
+    @jdn_to_calendar_mapping = Hash(Int64, Date::Calendar).new
+    date_to_calendar_mapping.each do |k, v|
+      @jdn_to_calendar_mapping[k.jdn] = v.new
+    end
+  end
+
+  def ymd_to_jdn(year : Int, month : Int, day : Int)
+    jdn = Int64::MIN
+    @jdn_to_calendar_mapping.each_with_index do |calendar_start_jdn, calendar, index|
+      if calendar.ymd_to_jdn(year, month, day) < calendar_start_jdn
+        return jdn
+      end
+      jdn = calendar.ymd_to_jdn(year, month, day)
+    end
+    return jdn
+  end
+
+  def jdn_to_ymd(jdn : Int64)
+    earliest_jdn = @jdn_to_calendar_mapping.keys.min
+    raise "No calendar system for that JDN" if jdn < earliest_jdn
+    # Cycle through hash of JDNs until we reach a JDN higher than `jdn`. Then use the previous calendar.
+    # NOTE: This assumes that the @jdn_to_calendar_mapping is an ordered hash, in JDN-increasing order.
+    @jdn_to_calendar_mapping.each_with_index do |calendar_start_jdn, calendar, index|
+      if jdn < calendar_start_jdn
+        previous_calendar_jdn = @jdn_to_calendar_mapping.keys[index - 1]
+        previous_calendar = @jdn_to_calendar_mapping[previous_calendar_jdn]
+        return previous_calendar.jdn_to_ymd(jdn)
+      end
+    end
+    last_calendar_jdn = @jdn_to_calendar_mapping.keys.last
+    last_calendar = @jdn_to_calendar_mapping[last_calendar_jdn]
+    return last_calendar.jdn_to_ymd(jdn)
   end
 end
 
