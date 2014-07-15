@@ -29,4 +29,8 @@ struct Curses::Window
   def close
     LibCurses.delwin self
   end
+
+  def to_unsafe
+    @unwrap
+  end
 end
