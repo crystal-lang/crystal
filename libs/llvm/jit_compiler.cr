@@ -6,8 +6,13 @@ struct LLVM::JITCompiler
     end
   end
 
-  def run_function(func, args = [] of LibLLVM::GenericValueRef)
-    ret = LibLLVM.run_function(self, func, args.length, args.buffer)
+  def run_function(func)
+    ret = LibLLVM.run_function(self, func, 0, nil)
+    GenericValue.new(ret)
+  end
+
+  def run_function(func, args)
+    ret = LibLLVM.run_function(self, func, args.length, args)
     GenericValue.new(ret)
   end
 

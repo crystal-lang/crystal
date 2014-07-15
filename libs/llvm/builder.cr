@@ -33,12 +33,16 @@ struct LLVM::Builder
 
   def phi(type, incoming_blocks, incoming_values, name = "")
     phi_node = LibLLVM.build_phi self, type, name
-    LibLLVM.add_incoming phi_node, incoming_values.buffer, incoming_blocks.buffer, incoming_blocks.length
+    LibLLVM.add_incoming phi_node, incoming_values, incoming_blocks, incoming_blocks.length
     phi_node
   end
 
-  def call(func, args = [] of LibLLVM::ValueRef)
-    LibLLVM.build_call(self, func, args.buffer, args.length, "")
+  def call(func)
+    LibLLVM.build_call(self, func, nil, 0, "")
+  end
+
+  def call(func, args)
+    LibLLVM.build_call(self, func, args, args.length, "")
   end
 
   def alloca(type, name = "")
@@ -62,11 +66,11 @@ struct LLVM::Builder
   end
 
   def gep(value, indices, name = "")
-    LibLLVM.build_gep(self, value, indices.buffer, indices.length.to_u32, name)
+    LibLLVM.build_gep(self, value, indices, indices.length.to_u32, name)
   end
 
   def inbounds_gep(value, indices, name = "")
-    LibLLVM.build_inbounds_gep(self, value, indices.buffer, indices.length.to_u32, name)
+    LibLLVM.build_inbounds_gep(self, value, indices, indices.length.to_u32, name)
   end
 
   def extract_value(value, index, name = "")
@@ -117,7 +121,7 @@ struct LLVM::Builder
   end
 
   def invoke(fn, args, a_then, a_catch, name = "")
-    LibLLVM.build_invoke self, fn, args.buffer, args.length.to_u32, a_then, a_catch, name
+    LibLLVM.build_invoke self, fn, args, args.length.to_u32, a_then, a_catch, name
   end
 
   def to_unsafe

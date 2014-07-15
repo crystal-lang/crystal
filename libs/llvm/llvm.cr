@@ -63,13 +63,13 @@ module LLVM
   end
 
   def self.function_type(arg_types, return_type, varargs = false)
-    LibLLVM.function_type(return_type, arg_types.buffer, arg_types.length.to_u32, varargs ? 1 : 0)
+    LibLLVM.function_type(return_type, arg_types, arg_types.length.to_u32, varargs ? 1 : 0)
   end
 
   def self.struct_type(name : String, packed = false)
     a_struct = LibLLVM.struct_create_named(Context.global, name)
     element_types = yield a_struct
-    LibLLVM.struct_set_body(a_struct, element_types.buffer, element_types.length.to_u32, packed ? 1 : 0)
+    LibLLVM.struct_set_body(a_struct, element_types, element_types.length.to_u32, packed ? 1 : 0)
     a_struct
   end
 
@@ -77,7 +77,7 @@ module LLVM
     if name
       struct_type(name, packed) { element_types }
     else
-      LibLLVM.struct_type(element_types.buffer, element_types.length.to_u32, packed ? 1 : 0)
+      LibLLVM.struct_type(element_types, element_types.length.to_u32, packed ? 1 : 0)
     end
   end
 
@@ -114,11 +114,11 @@ module LLVM
   end
 
   def self.array(type, values)
-    LibLLVM.const_array(type, values.buffer, values.length.to_u32)
+    LibLLVM.const_array(type, values, values.length.to_u32)
   end
 
   def self.struct(values, packed = false)
-    LibLLVM.const_struct(values.buffer, values.length.to_u32, packed ? 1 : 0)
+    LibLLVM.const_struct(values, values.length.to_u32, packed ? 1 : 0)
   end
 
   def self.string(string)

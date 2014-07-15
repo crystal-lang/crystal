@@ -20,7 +20,7 @@ module Benchmark
       chars :: UInt8[50]
       chars.set_all_to 0_u8
 
-      C.sprintf(chars.buffer, "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real)
+      C.sprintf(chars, "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real)
 
       io.write(chars.buffer, C.strlen(chars.buffer))
     end

@@ -41,6 +41,10 @@ struct StaticArray(T, N)
     pointerof(@buffer)
   end
 
+  def to_unsafe
+    buffer
+  end
+
   def to_s(io : IO)
     io << "["
     each_with_index do |elem, i|
