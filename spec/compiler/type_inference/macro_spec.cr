@@ -143,4 +143,14 @@ describe "Type inference: macro" do
       foo
       ), "OH NO"
   end
+
+  it "can specify tuple as return type" do
+    assert_type(%(
+      macro def foo : {Int32, Int32}
+        {1, 2}
+      end
+
+      foo
+      )) { tuple_of([int32, int32] of Type) }
+  end
 end
