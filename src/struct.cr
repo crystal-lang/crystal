@@ -14,7 +14,7 @@ struct Struct
     hash
   end
 
-  macro def to_s(io : IO) : Nil
+  macro def inspect(io : IO) : Nil
     io << "{{@class_name.id}}("
     {% for ivar, i in @instance_vars %}
       {% if i > 0 %}
@@ -25,5 +25,9 @@ struct Struct
     {% end %}
     io << ")"
     nil
+  end
+
+  def to_s(io)
+    inspect(io)
   end
 end
