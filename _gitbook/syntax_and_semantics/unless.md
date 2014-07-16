@@ -17,5 +17,5 @@ else
 end
 
 # Can also be written as a suffix
-open_door unless door_closed?
+close_door unless door_closed?
 ```

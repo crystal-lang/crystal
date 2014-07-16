@@ -14,7 +14,7 @@
        * [Multiple assignment](syntax_and_semantics/multiple_assignment.md)
    * [Control expressions](syntax_and_semantics/control_expressions.md)
        * [Truthy and falsey values](syntax_and_semantics/truthy_and_falsey_values.md)
-       * [if](syntax_and_semantics/article.md)
+       * [if](syntax_and_semantics/if.md)
            * [As a suffix](syntax_and_semantics/as_a_suffix.md)
            * [As an expression](syntax_and_semantics/as_an_expression.md)
            * [Ternary if](syntax_and_semantics/ternary_if.md)

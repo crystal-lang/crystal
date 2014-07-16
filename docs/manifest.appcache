@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# Revision 1404266477859
+# Revision 1405515406126
 
 CACHE:
 index.html
@@ -15,7 +15,6 @@ installation/on_mac_osx_using_homebrew.html
 overview/README.html
 syntax_and_semantics/is_a.html
 syntax_and_semantics/README.html
-syntax_and_semantics/article.html
 syntax_and_semantics/as_a_suffix.html
 syntax_and_semantics/as_an_expression.html
 syntax_and_semantics/assignment.html
@@ -27,6 +26,7 @@ syntax_and_semantics/control_expressions.html
 syntax_and_semantics/everything_is_an_object.html
 syntax_and_semantics/generics.html
 syntax_and_semantics/global_variables.html
+syntax_and_semantics/if.html
 syntax_and_semantics/if_var.html
 syntax_and_semantics/if_varis_a.html
 syntax_and_semantics/if_varresponds_to.html

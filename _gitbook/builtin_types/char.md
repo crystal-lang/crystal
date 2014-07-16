@@ -1,6 +1,6 @@
 # Char
 
-A `Char` represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point). A char literal is enclosed with single quotes and contains a character encoded in `UTF-8`.
+A `Char` represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point). A char literal is enclosed with single quotes and contains a character encoded in `UTF-8`. It occupies 32 bits.
 
 ``` ruby
 'a'
