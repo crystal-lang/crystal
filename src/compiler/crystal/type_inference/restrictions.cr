@@ -312,6 +312,21 @@ module Crystal
   end
 
   class TupleInstanceType
+    def restrict(other : Generic, owner, type_lookup, free_vars)
+      generic_class = type_lookup.lookup_type other.name
+      return super unless generic_class == self.generic_class
+
+      generic_class = generic_class as TupleType
+      return nil unless other.type_vars.length == tuple_types.length
+
+      tuple_types.zip(other.type_vars) do |tuple_type, type_var|
+        restricted = tuple_type.restrict(type_var, owner, type_lookup, free_vars)
+        return nil unless restricted == tuple_type
+      end
+
+      self
+    end
+
     def restrict(other : TupleInstanceType, owner, type_lookup, free_vars)
       self == other ? self : nil
     end

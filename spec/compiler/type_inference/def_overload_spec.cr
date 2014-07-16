@@ -633,4 +633,40 @@ describe "Type inference: def overload" do
       foo(node)
       ") { int32 }
   end
+
+  it "doesn't match tuples of different lengths" do
+    assert_error "
+      def foo(x : {X, Y, Z})
+        'a'
+      end
+
+      foo({1, 2})
+      ",
+      "no overload matches"
+  end
+
+  it "matches tuples of different lengths" do
+    assert_type("
+      def foo(x : {X, Y})
+        1
+      end
+
+      def foo(x : {X, Y, Z})
+        'a'
+      end
+
+      x = {1, 2} || {1, 2, 3}
+      foo x
+      ") { union_of(int32, char) }
+  end
+
+  it "matches tuples and uses free var" do
+    assert_type("
+      def foo(x : {X, Y})
+        Y
+      end
+
+      foo({1, 2.5})
+      ") { float64.metaclass }
+  end
 end
