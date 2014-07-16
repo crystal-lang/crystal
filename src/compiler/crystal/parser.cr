@@ -1604,9 +1604,9 @@ module Crystal
       result
     end
 
-    def parse_def(is_abstract = false, allow_return_type = false)
+    def parse_def(is_abstract = false, check_return_type = false)
       instance_vars = prepare_parse_def
-      a_def = parse_def_helper(is_abstract, allow_return_type)
+      a_def = parse_def_helper(is_abstract, check_return_type)
 
       # Small memory optimization: don't keep the Set in the Def if it's empty
       instance_vars = nil if instance_vars.empty?
@@ -1853,7 +1853,7 @@ module Crystal
     DefOrMacroCheck1 = [:IDENT, :CONST, :"=", :"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]=", :"<=>", :"[]?"]
     DefOrMacroCheck2 = [:"<<", :"<", :"<=", :"==", :"===", :"!=", :"=~", :">>", :">", :">=", :"+", :"-", :"*", :"/", :"!", :"~", :"%", :"&", :"|", :"^", :"**", :"[]", :"[]?", :"[]=", :"<=>"]
 
-    def parse_def_helper(is_abstract, allow_return_type)
+    def parse_def_helper(is_abstract, check_return_type)
       push_def
       @def_nest += 1
 
@@ -1965,7 +1965,7 @@ module Crystal
       when :";", :"NEWLINE"
          # Skip
       when :":"
-        unexpected_token unless allow_return_type
+        unexpected_token unless check_return_type
         # Skip
       else
         if is_abstract && @token.type == :EOF
@@ -1975,7 +1975,8 @@ module Crystal
         end
       end
 
-      if allow_return_type && @token.type == :":"
+      if check_return_type
+        check :":"
         next_token_skip_space
         return_type = parse_single_type
 
@@ -3461,19 +3462,19 @@ module Crystal
     end
 
     def check(token_types : Array)
-      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token.type.to_s}')" unless token_types.any? { |type| @token.type == type }
+      raise "expecting any of these tokens: #{token_types.join ", "} (not '#{@token.type.to_s}')", @token.line_number, @token.column_number unless token_types.any? { |type| @token.type == type }
     end
 
     def check(token_type)
-      raise "expecting token '#{token_type}', not '#{@token.to_s}'" unless token_type == @token.type
+      raise "expecting token '#{token_type}', not '#{@token.to_s}'", @token.line_number, @token.column_number unless token_type == @token.type
     end
 
     def check_token(value)
-      raise "expecting token '#{value}', not '#{@token.to_s}'" unless @token.type == :TOKEN && @token.value == value
+      raise "expecting token '#{value}', not '#{@token.to_s}'", @token.line_number, @token.column_number unless @token.type == :TOKEN && @token.value == value
     end
 
     def check_ident(value)
-      raise "expecting identifier '#{value}', not '#{@token.to_s}'" unless @token.keyword?(value)
+      raise "expecting identifier '#{value}', not '#{@token.to_s}'", @token.line_number, @token.column_number unless @token.keyword?(value)
     end
 
     def unexpected_token(token = @token.to_s, msg = nil)

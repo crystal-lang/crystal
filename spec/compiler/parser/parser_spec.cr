@@ -793,4 +793,5 @@ describe "Parser" do
   # We don't support specifying the return type just yet
   assert_syntax_error "def foo : String; 1; end"
   assert_syntax_error "def foo(x) : String; 1; end"
+  assert_syntax_error "macro def foo(x); 1; end"
 end
