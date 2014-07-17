@@ -199,20 +199,22 @@ module Crystal
 
         str << name.replace('@', '.')
 
-        if args.length > 0 || self_type || uses_block_arg
+        needs_self_type = self_type.try &.passed_as_self?
+
+        if args.length > 0 || needs_self_type || uses_block_arg
           str << "<"
-          if self_type
-            self_type.llvm_name(str)
+          if needs_self_type
+            self_type.not_nil!.llvm_name(str)
           end
           if args.length > 0
-            str << ", " if self_type
+            str << ", " if needs_self_type
             args.each_with_index do |arg, i|
               str << ", " if i > 0
               arg.type.llvm_name(str)
             end
           end
           if uses_block_arg
-            str << ", " if self_type || args.length > 0
+            str << ", " if needs_self_type || args.length > 0
             block_arg.not_nil!.type.llvm_name(str)
           end
           str << ">"

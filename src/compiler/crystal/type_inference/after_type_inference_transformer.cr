@@ -209,7 +209,7 @@ module Crystal
             arg.raise message
           end
         when FunPointer
-          if arg.obj
+          if arg.obj.try &.type?.try &.passed_as_self?
             arg.raise message
           end
 

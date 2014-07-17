@@ -2252,6 +2252,10 @@ module Crystal
       true
     end
 
+    def passed_as_self?
+      false
+    end
+
     def hierarchy_type
       instance_type.hierarchy_type.metaclass
     end
