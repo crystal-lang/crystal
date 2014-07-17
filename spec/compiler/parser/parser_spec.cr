@@ -794,4 +794,6 @@ describe "Parser" do
   assert_syntax_error "def foo : String; 1; end"
   assert_syntax_error "def foo(x) : String; 1; end"
   assert_syntax_error "macro def foo(x); 1; end"
+
+  assert_syntax_error "{x: [] of Int32,\n}\n1.foo(", "unterminated call", 3, 6
 end

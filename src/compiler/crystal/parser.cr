@@ -2879,7 +2879,8 @@ module Crystal
     end
 
     def next_comes_type_or_int(allow_int = true)
-      pos = current_pos
+      old_pos, old_line, old_column = current_pos, @line_number, @column_number
+
       @temp_token.copy_from(@token)
 
       next_token_skip_space
@@ -2909,7 +2910,7 @@ module Crystal
         false
       ensure
         @token.copy_from(@temp_token)
-        @reader.pos = pos
+        self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
       end
     end
 
