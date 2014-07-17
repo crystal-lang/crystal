@@ -2602,9 +2602,15 @@ module Crystal
 
       global = false
 
-      if @token.type == :"::"
+      case @token.type
+      when :"::"
         global = true
         next_token_skip_space_or_newline
+      when :UNDERSCORE
+        underscore = Underscore.new
+        underscore.location = location
+        next_token
+        return underscore
       end
 
       check :CONST
@@ -2901,6 +2907,8 @@ module Crystal
           else
             return true
           end
+        when :UNDERSCORE
+          return true
         when :"->"
           return true
         when :NUMBER

@@ -103,5 +103,9 @@ module Crystal
       @type = @root.program.type_merge(node.expressions.map &.type)
       false
     end
+
+    def visit(node : Underscore)
+      node.raise "can't use underscore as generic type argument"
+    end
   end
 end

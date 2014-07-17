@@ -1984,6 +1984,17 @@ module Crystal
     end
   end
 
+  # An underscore matches against any type
+  class Underscore < ASTNode
+    def ==(other : self)
+      true
+    end
+
+    def clone_without_location
+      Underscore.new
+    end
+  end
+
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     getter name

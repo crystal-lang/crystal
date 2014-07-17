@@ -656,6 +656,11 @@ module Crystal
       false
     end
 
+    def visit(node : Underscore)
+      @str << "_"
+      false
+    end
+
     def visit(node : Union)
       node.types.each_with_index do |ident, i|
         @str << " | " if  i > 0

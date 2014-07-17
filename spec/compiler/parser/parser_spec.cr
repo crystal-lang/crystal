@@ -739,6 +739,8 @@ describe "Parser" do
 
   it_parses "lib C\n@:Bar;end", LibDef.new("C", nil, [Attribute.new("Bar")] of ASTNode)
 
+  it_parses "Foo(_)", Generic.new("Foo".path, [Underscore.new] of ASTNode)
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", [] of Arg, [keyword.call] of ASTNode)
   end

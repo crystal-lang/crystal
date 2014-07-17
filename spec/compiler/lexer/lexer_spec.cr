@@ -129,6 +129,7 @@ describe "Lexer" do
   it_lexes "\t", :SPACE
   it_lexes "\n", :NEWLINE
   it_lexes "\n\n\n", :NEWLINE
+  it_lexes "_", :UNDERSCORE
   it_lexes_keywords [:def, :if, :else, :elsif, :end, :true, :false, :class, :module, :include, :extend, :while, :until, :nil, :do, :yield, :return, :unless, :next, :break, :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :ptr, :out, :require, :case, :when, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias, :pointerof, :sizeof, :instance_sizeof, :ifdef, :as, :typeof, :for, :in, :undef, :with, :self, :super]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar", "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?", "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]

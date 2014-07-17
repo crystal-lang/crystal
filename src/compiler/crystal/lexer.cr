@@ -852,7 +852,13 @@ module Crystal
               end
             end
           end
+        else
+          unless current_char.ident_part?
+            @token.type = :UNDERSCORE
+            return @token
+          end
         end
+
         scan_ident(start)
       else
         if 'A' <= current_char <= 'Z'

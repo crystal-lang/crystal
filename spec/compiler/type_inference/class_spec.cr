@@ -586,4 +586,13 @@ describe "Type inference: class" do
       ),
       "wrong number of arguments for 'Bar#initialize' (1 for 2)"
   end
+
+  it "errors if using underscore in generic class" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      Foo(_).new
+      ), "can't use underscore as generic type argument"
+  end
 end

@@ -166,6 +166,10 @@ module Crystal
       nil
     end
 
+    def restrict(other : Underscore, owner, type_lookup, free_vars)
+      self
+    end
+
     def restrict(other : ASTNode, owner, type_lookup, free_vars)
       raise "Bug: unsupported restriction: #{self} vs. #{other}"
     end

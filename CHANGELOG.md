@@ -1,6 +1,7 @@
 ## Next
 
 * Fixed [#165](https://github.com/manastech/crystal/issues/165): restrictions with generic types didn't work for hierarchy types.
+* Allow using a single underscore in restrictions, useful for matching against an n-tuple or an n-function where you don't care about the types (e.g.: `def foo(x : {_, _})`.
 
 ## 0.3.3 (2014-07-14)
 

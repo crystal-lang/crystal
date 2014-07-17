@@ -1049,6 +1049,10 @@ module Crystal
       false
     end
 
+    def visit(node : Underscore)
+      node.raise "can't use underscore as generic type argument"
+    end
+
     def visit(node : IsA)
       node.obj.accept self
 

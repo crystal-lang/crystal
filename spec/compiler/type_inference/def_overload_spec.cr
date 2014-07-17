@@ -669,4 +669,14 @@ describe "Type inference: def overload" do
       foo({1, 2.5})
       ") { float64.metaclass }
   end
+
+  it "matches tuple with underscore" do
+    assert_type("
+      def foo(x : {_, _})
+        x
+      end
+
+      foo({1, 2.5})
+      ") { tuple_of([int32, float64] of Type) }
+  end
 end
