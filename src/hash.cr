@@ -1,8 +1,3 @@
-require "object"
-require "array"
-require "int"
-require "nil"
-
 class Hash(K, V)
   module StandardComparator
     def self.hash(object)

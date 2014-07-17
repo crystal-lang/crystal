@@ -1,5 +1,3 @@
-require "comparable"
-
 class Pointer(T)
   include Comparable(self)
 

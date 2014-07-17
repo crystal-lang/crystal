@@ -1,5 +1,3 @@
-require "time"
-
 lib C
   RAND_MAX = 2147483647
 

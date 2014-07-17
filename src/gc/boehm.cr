@@ -1,5 +1,3 @@
-require "thread"
-
 lib LibGC("gc")
   fun init = GC_init
   fun malloc = GC_malloc(size : UInt32) : Void*

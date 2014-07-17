@@ -1,8 +1,3 @@
-require "range"
-require "comparable"
-require "string/formatter"
-require "char_reader"
-
 lib C
   fun atoi(str : UInt8*) : Int32
   fun atoll(str : UInt8*) : Int64
@@ -723,3 +718,5 @@ class String
     cstr
   end
 end
+
+require "string/formatter"

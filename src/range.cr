@@ -1,5 +1,3 @@
-require "enumerable"
-
 struct Range(B, E)
   include Enumerable(B)
 

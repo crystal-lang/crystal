@@ -1,5 +1,3 @@
-require "tuple"
-
 lib C
   @:ReturnsTwice
   fun fork : Int32

@@ -1,8 +1,3 @@
-require "enumerable"
-require "pointer"
-require "range"
-require "set"
-
 class Array(T)
   include Enumerable
 

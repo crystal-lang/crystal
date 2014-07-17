@@ -1,5 +1,3 @@
-require "enumerable"
-
 struct StaticArray(T, N)
   include Enumerable(T)
 
