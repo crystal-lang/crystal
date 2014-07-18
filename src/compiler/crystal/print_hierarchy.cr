@@ -10,6 +10,7 @@ module Crystal
     def initialize(@program)
       @indents = [] of Bool
       @printed = Set(Type).new
+      @llvm_typer = LLVMTyper.new
     end
 
     def execute
@@ -59,6 +60,15 @@ module Crystal
       print type.type_desc
       print " "
       print type
+      if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
+         !type.is_a?(PointerInstanceType) && !type.is_a?(FunInstanceType)
+        size = @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
+        print "\e[0;37m"
+        print " ("
+        print size.to_s
+        print " bytes)"
+        print "\e[1;37m"
+      end
       puts
     end
 
@@ -119,6 +129,10 @@ module Crystal
         print ivar.name
         print " : "
         print ivar.type
+        size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar.type))
+        print " ("
+        print size
+        print " bytes)"
         print "\e[1;37m"
         puts
       end
