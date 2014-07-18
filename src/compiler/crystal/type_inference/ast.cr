@@ -479,4 +479,9 @@ module Crystal
   class Extend
     include RuntimeInitializable
   end
+
+  class External
+    property :dead
+    @dead = false
+  end
 end

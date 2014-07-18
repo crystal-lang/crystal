@@ -55,6 +55,10 @@ module Crystal
     def clone_without_location
       Nop.new
     end
+
+    def hash
+      0
+    end
   end
 
   # A container for one or many expressions.
@@ -106,6 +110,10 @@ module Crystal
     def clone_without_location
       Expressions.new(@expressions.clone)
     end
+
+    def hash
+      expressions.hash
+    end
   end
 
   # The nil literal.
@@ -119,6 +127,10 @@ module Crystal
 
     def clone_without_location
       self
+    end
+
+    def hash
+      0
     end
   end
 
@@ -138,6 +150,10 @@ module Crystal
 
     def clone_without_location
       BoolLiteral.new(@value)
+    end
+
+    def hash
+      value.hash
     end
   end
 
@@ -169,6 +185,8 @@ module Crystal
     def clone_without_location
       NumberLiteral.new(@value, @kind)
     end
+
+    generate_hash [value, kind]
   end
 
   # A char literal.
@@ -188,6 +206,10 @@ module Crystal
     def clone_without_location
       CharLiteral.new(@value)
     end
+
+    def hash
+      value.hash
+    end
   end
 
   class StringLiteral < ASTNode
@@ -202,6 +224,10 @@ module Crystal
 
     def clone_without_location
       StringLiteral.new(@value)
+    end
+
+    def hash
+      value.hash
     end
   end
 
@@ -222,6 +248,10 @@ module Crystal
     def clone_without_location
       StringInterpolation.new(@expressions.clone)
     end
+
+    def hash
+      expressions.hash
+    end
   end
 
   class SymbolLiteral < ASTNode
@@ -236,6 +266,10 @@ module Crystal
 
     def clone_without_location
       SymbolLiteral.new(@value)
+    end
+
+    def hash
+      value.hash
     end
   end
 
@@ -262,6 +296,8 @@ module Crystal
     def clone_without_location
       ArrayLiteral.new(@elements.clone, @of.clone)
     end
+
+    generate_hash [@elements, @of]
   end
 
   class HashLiteral < ASTNode
@@ -287,6 +323,8 @@ module Crystal
     def clone_without_location
       HashLiteral.new(@keys.clone, @values.clone, @of_key.clone, @of_value.clone)
     end
+
+    generate_hash [@keys, @values, @of_key, @of_value]
   end
 
   class RangeLiteral < ASTNode
@@ -309,6 +347,8 @@ module Crystal
     def clone_without_location
       RangeLiteral.new(@from.clone, @to.clone, @exclusive.clone)
     end
+
+    generate_hash [@from, @to, @exclusive]
   end
 
   class RegexLiteral < ASTNode
@@ -325,6 +365,8 @@ module Crystal
     def clone_without_location
       RegexLiteral.new(@value, @modifiers)
     end
+
+    generate_hash [@value, @modifiers]
   end
 
   class TupleLiteral < ASTNode
@@ -343,6 +385,10 @@ module Crystal
 
     def clone_without_location
       TupleLiteral.new(elements.clone)
+    end
+
+    def hash
+      elements.hash
     end
   end
 
@@ -379,6 +425,8 @@ module Crystal
       var.out = @out
       var
     end
+
+    generate_hash [@name, @out]
   end
 
   # A code block.
@@ -409,6 +457,8 @@ module Crystal
     def clone_without_location
       Block.new(@args.clone, @body.clone)
     end
+
+    generate_hash [args, body]
   end
 
   # A method call.
@@ -458,6 +508,8 @@ module Crystal
       clone.name_length = name_length
       clone
     end
+
+    generate_hash [obj, name, args, block, block_arg, global, has_parenthesis]
   end
 
   # An if expression.
@@ -498,6 +550,8 @@ module Crystal
       a_if.binary = binary
       a_if
     end
+
+    generate_hash [@cond, @then, @else]
   end
 
   class Unless < ASTNode
@@ -524,6 +578,8 @@ module Crystal
     def clone_without_location
       Unless.new(@cond.clone, @then.clone, @else.clone)
     end
+
+    generate_hash [@cond, @then, @else]
   end
 
   # An ifdef expression.
@@ -561,6 +617,8 @@ module Crystal
     def clone_without_location
       IfDef.new(@cond.clone, @then.clone, @else.clone)
     end
+
+    generate_hash [@cond, @then, @else]
   end
 
   # Assign expression.
@@ -586,6 +644,8 @@ module Crystal
     def clone_without_location
       Assign.new(@target.clone, @value.clone)
     end
+
+    generate_hash [@target, @value]
   end
 
   # Assign expression.
@@ -611,6 +671,8 @@ module Crystal
     def clone_without_location
       MultiAssign.new(@targets.clone, @values.clone)
     end
+
+    generate_hash [@targets, @values]
   end
 
   # An instance variable.
@@ -632,6 +694,8 @@ module Crystal
     def clone_without_location
       InstanceVar.new(@name, @out)
     end
+
+    generate_hash [@name, @out]
   end
 
   class ReadInstanceVar < ASTNode
@@ -652,6 +716,8 @@ module Crystal
     def clone_without_location
       ReadInstanceVar.new(@obj.clone, @name)
     end
+
+    generate_hash [@obj, @name]
   end
 
   class ClassVar < ASTNode
@@ -668,6 +734,8 @@ module Crystal
     def clone_without_location
       ClassVar.new(@name, @out)
     end
+
+    generate_hash [@name, @out]
   end
 
   # A global variable.
@@ -693,6 +761,10 @@ module Crystal
     def clone_without_location
       Global.new(@name)
     end
+
+    def hash
+      name.hash
+    end
   end
 
   abstract class BinaryOp < ASTNode
@@ -710,6 +782,8 @@ module Crystal
     def ==(other : self)
       other.left == left && other.right == right
     end
+
+    generate_hash [left, right]
   end
 
   # Expressions and.
@@ -760,6 +834,10 @@ module Crystal
     def clone_without_location
       Not.new(@exp.clone)
     end
+
+    def hash
+      exp.hash
+    end
   end
 
   # A def argument.
@@ -787,6 +865,8 @@ module Crystal
     def clone_without_location
       Arg.new(@name, @default_value.clone, @restriction.clone)
     end
+
+    generate_hash [name, default_value, restriction]
   end
 
   class Fun < ASTNode
@@ -808,6 +888,8 @@ module Crystal
     def clone_without_location
       Fun.new(@inputs.clone, @output.clone)
     end
+
+    generate_hash [inputs, output]
   end
 
   class BlockArg < ASTNode
@@ -832,6 +914,8 @@ module Crystal
     def clone_without_location
       BlockArg.new(@name, @fun.clone)
     end
+
+    generate_hash [@name, @fun]
   end
 
   # A method definition.
@@ -899,6 +983,8 @@ module Crystal
       a_def.abstract = @abstract
       a_def
     end
+
+    generate_hash [@name, @args, @body, @receiver, @block_arg, @return_type, @abstract]
   end
 
   class Macro < ASTNode
@@ -928,6 +1014,8 @@ module Crystal
     def clone_without_location
       Macro.new(@name, @args.clone, @body.clone, @block_arg.clone)
     end
+
+    generate_hash [@name, @args, @body, @block_arg]
   end
 
   class PointerOf < ASTNode
@@ -946,6 +1034,10 @@ module Crystal
 
     def clone_without_location
       PointerOf.new(@exp.clone)
+    end
+
+    def hash
+      exp.hash
     end
   end
 
@@ -966,6 +1058,10 @@ module Crystal
     def clone_without_location
       SizeOf.new(@exp.clone)
     end
+
+    def hash
+      exp.hash
+    end
   end
 
   class InstanceSizeOf < ASTNode
@@ -984,6 +1080,10 @@ module Crystal
 
     def clone_without_location
       InstanceSizeOf.new(@exp.clone)
+    end
+
+    def hash
+      exp.hash
     end
   end
 
@@ -1006,6 +1106,8 @@ module Crystal
     def clone_without_location
       IsA.new(@obj.clone, @const.clone)
     end
+
+    generate_hash [@obj, @const]
   end
 
   class RespondsTo < ASTNode
@@ -1027,6 +1129,8 @@ module Crystal
     def clone_without_location
       RespondsTo.new(@obj.clone, @name)
     end
+
+    generate_hash [@obj, @name]
   end
 
   class Require < ASTNode
@@ -1041,6 +1145,10 @@ module Crystal
 
     def clone_without_location
       Require.new(@string)
+    end
+
+    def hash
+      string.hash
     end
   end
 
@@ -1064,6 +1172,8 @@ module Crystal
     def clone_without_location
       When.new(@conds.clone, @body.clone)
     end
+
+    generate_hash [@conds, @body]
   end
 
   class Case < ASTNode
@@ -1086,6 +1196,8 @@ module Crystal
     def clone_without_location
       Case.new(@cond.clone, @whens.clone, @else.clone)
     end
+
+    generate_hash [@cond, @whens, @else]
   end
 
   # Node that represents an implicit obj in:
@@ -1100,6 +1212,10 @@ module Crystal
 
     def clone_without_location
       self
+    end
+
+    def hash
+      0
     end
   end
 
@@ -1124,6 +1240,8 @@ module Crystal
       ident.name_length = name_length
       ident
     end
+
+    generate_hash [@names, @global]
   end
 
   # Class definition:
@@ -1162,6 +1280,8 @@ module Crystal
     def clone_without_location
       ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_column_number)
     end
+
+    generate_hash [@name, @body, @superclass, @type_vars, @abstract, @struct]
   end
 
   # Module definition:
@@ -1191,6 +1311,8 @@ module Crystal
     def clone_without_location
       ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_column_number)
     end
+
+    generate_hash [@name, @body, @type_vars]
   end
 
   # While expression.
@@ -1220,6 +1342,8 @@ module Crystal
     def clone_without_location
       While.new(@cond.clone, @body.clone, @run_once)
     end
+
+    generate_hash [@cond, @body, @run_once]
   end
 
   # Until expression.
@@ -1249,6 +1373,8 @@ module Crystal
     def clone_without_location
       Until.new(@cond.clone, @body.clone, @run_once)
     end
+
+    generate_hash [@cond, @body, @run_once]
   end
 
   class Generic < ASTNode
@@ -1270,6 +1396,8 @@ module Crystal
     def clone_without_location
       Generic.new(@name.clone, @type_vars.clone)
     end
+
+    generate_hash [@name, @type_vars]
   end
 
   class DeclareVar < ASTNode
@@ -1303,6 +1431,8 @@ module Crystal
     def clone_without_location
       DeclareVar.new(@var.clone, @declared_type.clone)
     end
+
+    generate_hash [@var, @declared_type]
   end
 
   class Rescue < ASTNode
@@ -1326,6 +1456,8 @@ module Crystal
     def clone_without_location
       Rescue.new(@body.clone, @types.clone, @name)
     end
+
+    generate_hash [@body, @types, @name]
   end
 
   class ExceptionHandler < ASTNode
@@ -1352,6 +1484,8 @@ module Crystal
     def clone_without_location
       ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
     end
+
+    generate_hash [@body, @rescues, @else, @ensure]
   end
 
   class FunLiteral < ASTNode
@@ -1370,6 +1504,10 @@ module Crystal
 
     def clone_without_location
       FunLiteral.new(@def.clone)
+    end
+
+    def hash
+      @def.hash
     end
   end
 
@@ -1393,6 +1531,8 @@ module Crystal
     def clone_without_location
       FunPointer.new(@obj.clone, @name, @args.clone)
     end
+
+    generate_hash [@obj, @name, @args]
   end
 
   class Union < ASTNode
@@ -1411,6 +1551,10 @@ module Crystal
 
     def clone_without_location
       Union.new(@types.clone)
+    end
+
+    def hash
+      types.hash
     end
   end
 
@@ -1431,6 +1575,10 @@ module Crystal
     def clone_without_location
       Hierarchy.new(@name.clone)
     end
+
+    def hash
+      name.hash
+    end
   end
 
   class Self < ASTNode
@@ -1440,6 +1588,10 @@ module Crystal
 
     def clone_without_location
       Self.new
+    end
+
+    def hash
+      0
     end
   end
 
@@ -1455,6 +1607,10 @@ module Crystal
 
     def ==(other : self)
       other.exps == exps
+    end
+
+    def hash
+      exps.hash
     end
   end
 
@@ -1473,7 +1629,8 @@ module Crystal
   class Yield < ControlExpression
     property :scope
 
-    def initialize(@exps = [] of ASTNode, @scope = nil)
+    def initialize(exps = [] of ASTNode, @scope = nil)
+      super(exps)
     end
 
     def accept_children(visitor)
@@ -1488,6 +1645,8 @@ module Crystal
     def clone_without_location
       Yield.new(@exps.clone, @scope.clone)
     end
+
+    generate_hash [@exps, @scope]
   end
 
   class Next < ControlExpression
@@ -1513,6 +1672,10 @@ module Crystal
     def clone_without_location
       Include.new(@name)
     end
+
+    def hash
+      name.hash
+    end
   end
 
   class Extend < ASTNode
@@ -1532,6 +1695,10 @@ module Crystal
     def clone_without_location
       Extend.new(@name)
     end
+
+    def hash
+      name.hash
+    end
   end
 
   class Undef < ASTNode
@@ -1546,6 +1713,10 @@ module Crystal
 
     def clone_without_location
       Undef.new(@name)
+    end
+
+    def hash
+      name.hash
     end
   end
 
@@ -1570,6 +1741,8 @@ module Crystal
     def clone_without_location
       LibDef.new(@name, @libname, @body.clone, @name_column_number)
     end
+
+    generate_hash [@name, @libname, @body]
   end
 
   class FunDef < ASTNode
@@ -1601,6 +1774,8 @@ module Crystal
     def clone_without_location
       FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
     end
+
+    generate_hash [@name, @args, @return_type, @varargs, @body, @real_name]
   end
 
   class TypeDef < ASTNode
@@ -1622,6 +1797,8 @@ module Crystal
     def clone_without_location
       TypeDef.new(@name, @type_spec.clone, @name_column_number)
     end
+
+    generate_hash [@name, @type_spec]
   end
 
   abstract class StructOrUnionDef < ASTNode
@@ -1638,6 +1815,8 @@ module Crystal
     def ==(other : self)
       other.name == name && other.fields == fields
     end
+
+    generate_hash [@name, @fields]
   end
 
   class StructDef < StructOrUnionDef
@@ -1678,6 +1857,8 @@ module Crystal
     def clone_without_location
       EnumDef.new(@name, @constants.clone, @base_type.clone)
     end
+
+    generate_hash [@name, @constants, @base_type]
   end
 
   class ExternalVar < ASTNode
@@ -1704,18 +1885,18 @@ module Crystal
     def clone_without_location
       ExternalVar.new(@name, @type_spec.clone, @real_name)
     end
+
+    generate_hash [@name, @type_spec, @real_name]
   end
 
   class External < Def
     property :real_name
     property :varargs
     property! :fun_def
-    property :dead
 
     def initialize(name : String, args : Array(Arg), body, @real_name : String)
       super(name, args, body, nil, nil, nil)
       @varargs = false
-      @dead = false
     end
 
     def mangled_name(obj_type)
@@ -1743,6 +1924,8 @@ module Crystal
       fun_def.external = external
       external
     end
+
+    generate_hash [@real_name, @varargs, @fun_def]
   end
 
   class Alias < ASTNode
@@ -1763,6 +1946,8 @@ module Crystal
     def clone_without_location
       Alias.new(@name, @value.clone)
     end
+
+    generate_hash [@name, @value]
   end
 
   class IndirectRead < ASTNode
@@ -1783,6 +1968,8 @@ module Crystal
     def clone_without_location
       IndirectRead.new(@obj.clone, @names)
     end
+
+    generate_hash [@obj, @names]
   end
 
   class IndirectWrite < IndirectRead
@@ -1804,6 +1991,10 @@ module Crystal
     def clone_without_location
       IndirectWrite.new(@obj.clone, @names, @value.clone)
     end
+
+    def hash
+      value.hash
+    end
   end
 
   class Metaclass < ASTNode
@@ -1822,6 +2013,10 @@ module Crystal
 
     def clone_without_location
       Metaclass.new(@name.clone)
+    end
+
+    def hash
+      name.hash
     end
   end
 
@@ -1845,6 +2040,8 @@ module Crystal
     def clone_without_location
       Cast.new(@obj.clone, @to.clone)
     end
+
+    generate_hash [@obj, @to]
   end
 
   # typeof(exp, exp, ...)
@@ -1865,6 +2062,10 @@ module Crystal
     def clone_without_location
       TypeOf.new(@expressions.clone)
     end
+
+    def hash
+      expressions.hash
+    end
   end
 
   class Attribute < ASTNode
@@ -1883,6 +2084,10 @@ module Crystal
 
     def self.any?(attributes, name)
       attributes.try &.any? { |attr| attr.name == name }
+    end
+
+    def hash
+      name.hash
     end
   end
 
@@ -1904,6 +2109,10 @@ module Crystal
     def clone_without_location
       self
     end
+
+    def hash
+      exp.hash
+    end
   end
 
   # Free text that is part of a macro
@@ -1919,6 +2128,10 @@ module Crystal
 
     def clone_without_location
       self
+    end
+
+    def hash
+      value.hash
     end
   end
 
@@ -1954,6 +2167,8 @@ module Crystal
     def clone_without_location
       self
     end
+
+    generate_hash [@cond, @then, @else]
   end
 
   # for inside a macro:
@@ -1982,6 +2197,8 @@ module Crystal
     def clone_without_location
       self
     end
+
+    generate_hash [@vars, @exp, @body]
   end
 
   # An underscore matches against any type
@@ -1992,6 +2209,10 @@ module Crystal
 
     def clone_without_location
       Underscore.new
+    end
+
+    def hash
+      0
     end
   end
 
@@ -2008,6 +2229,10 @@ module Crystal
 
     def clone_without_location
       Primitive.new(@name, @type)
+    end
+
+    def hash
+      @name.hash
     end
   end
 
@@ -2026,6 +2251,10 @@ module Crystal
     def clone_without_location
       TupleIndexer.new(index)
     end
+
+    def hash
+      @index.hash
+    end
   end
 
   # Ficticious node to represent an id inside a macro
@@ -2041,6 +2270,10 @@ module Crystal
 
     def clone_without_location
       self
+    end
+
+    def hash
+      @value.hash
     end
   end
 
@@ -2059,6 +2292,10 @@ module Crystal
 
     def clone_without_location
       self
+    end
+
+    def hash
+      @type.hash
     end
   end
 end

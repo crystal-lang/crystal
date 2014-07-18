@@ -101,4 +101,14 @@ class Object
       {{to.id}}.{{method.id}}
     end
   end
+
+  macro generate_hash(fields)
+    def hash
+      hash = 0
+      {% for field in fields %}
+        hash = 31 * hash + {{field}}.hash
+      {% end %}
+      hash
+    end
+  end
 end
