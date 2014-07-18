@@ -30,7 +30,8 @@ class Hash(K, V)
   getter length
 
   def initialize(block = nil, @comp = StandardComparator)
-    @buckets = Array(Entry(K, V)?).new(11, nil)
+    @buckets = Pointer(Entry(K, V)?).malloc(11)
+    @buckets_length = 11
     @length = 0
     @block = block
   end
@@ -42,7 +43,7 @@ class Hash(K, V)
   end
 
   def []=(key : K, value : V)
-    rehash if @length > 5 * @buckets.length
+    rehash if @length > 5 * @buckets_length
 
     index = bucket_index key
     entry = insert_in_bucket index, key, value
@@ -351,12 +352,14 @@ class Hash(K, V)
   end
 
   def bucket_index(key)
-    (@comp.hash(key) % @buckets.length).to_i
+    (@comp.hash(key).abs % @buckets_length).to_i
   end
 
   def rehash
     new_size = calculate_new_size(@length)
-    @buckets = Array(Entry(K, V)?).new(new_size, nil)
+    @buckets = @buckets.realloc(new_size)
+    new_size.times { |i| @buckets[i] = nil }
+    @buckets_length = new_size
     entry = @first
     while entry
       entry.next = nil
