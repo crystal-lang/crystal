@@ -1723,10 +1723,11 @@ module Crystal
   class LibDef < ASTNode
     property :name
     property :libname
+    property :libtype
     property :body
     property :name_column_number
 
-    def initialize(@name, @libname = nil, body = nil, @name_column_number = nil)
+    def initialize(@name, @libname = nil, body = nil, @name_column_number = nil, @libtype = :shared)
       @body = Expressions.from body
     end
 

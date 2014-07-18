@@ -1904,9 +1904,13 @@ module Crystal
 
   class LibType < ModuleType
     property :libname
+    property :libtype
 
-    def initialize(program, container, name, @libname = nil)
+    def initialize(program, container, name, @location = nil, @libname = nil, @libtype = :shared)
       super(program, container, name)
+      if (@libtype == :static) && (loc = @location) && (path = loc.filename) && (name = @libname)
+        @libname = File.expand_path(name, File.dirname(path.to_s))
+      end
     end
 
     def metaclass

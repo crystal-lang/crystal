@@ -1268,7 +1268,7 @@ module Crystal
       if type
         node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
       else
-        type = LibType.new @mod, current_type, node.name, node.libname
+        type = LibType.new @mod, current_type, node.name, node.location, node.libname, node.libtype
         current_type.types[node.name] = type
       end
       @types.push type
