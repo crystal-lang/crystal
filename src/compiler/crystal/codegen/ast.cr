@@ -199,6 +199,12 @@ module Crystal
 
         str << name.replace('@', '.')
 
+        next_def = self.next
+        while next_def
+          str << "'"
+          next_def = next_def.next
+        end
+
         needs_self_type = self_type.try &.passed_as_self?
 
         if args.length > 0 || needs_self_type || uses_block_arg

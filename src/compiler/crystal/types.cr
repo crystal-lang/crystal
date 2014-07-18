@@ -707,6 +707,8 @@ module Crystal
       hash[key] = a_def
 
       add_sorted_def(a_def)
+
+      a_def.previous = old_def
       old_def
     end
 

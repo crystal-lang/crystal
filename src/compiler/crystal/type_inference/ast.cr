@@ -251,6 +251,9 @@ module Crystal
     property :self_closured
     @self_closured = false
 
+    property :previous
+    property :next
+
     def macro_owner=(@macro_owner)
     end
 

@@ -65,12 +65,12 @@ module Crystal
 
       if obj
         matches = lookup_matches_in(obj.type)
+      elsif name == "super"
+        matches = lookup_matches_in_super
+      elsif name == "previous_def"
+        matches = lookup_previous_def_matches
       else
-        if name == "super"
-          matches = lookup_matches_in_super
-        else
-          matches = lookup_matches_in scope
-        end
+        matches = lookup_matches_in scope
       end
 
       # If @target_defs is set here it means there was a recalculation
@@ -146,6 +146,14 @@ module Crystal
         @subclass_notifier = owner.base_type
       end
 
+      instantiate matches, owner, self_type
+    end
+
+    def lookup_matches_in(owner : Nil)
+      raise "Bug: trying to lookup matches in nil in #{self}"
+    end
+
+    def instantiate(matches, owner, self_type = nil)
       block = @block
 
       typed_defs = Array(Def).new(matches.length)
@@ -196,10 +204,6 @@ module Crystal
       end
 
       typed_defs
-    end
-
-    def lookup_matches_in(owner : Nil)
-      raise "Bug: trying to lookup matches in nil in #{self}"
     end
 
     def check_tuple_indexer(owner, def_name, args, arg_types)
@@ -276,13 +280,7 @@ module Crystal
 
     def lookup_matches_in_super
       if args.empty? && !has_parenthesis
-        parent_args = parent_visitor.typed_def.args
-        self.args = Array(ASTNode).new(parent_args.length)
-        parent_args.each do |arg|
-          var = Var.new(arg.name)
-          var.bind_to arg
-          self.args.push var
-        end
+        copy_args_from_parent_typed_def
       end
 
       # TODO: do this better
@@ -304,6 +302,36 @@ module Crystal
       end
 
       nil
+    end
+
+    def lookup_previous_def_matches
+      untyped_def = parent_visitor.untyped_def
+      previous = untyped_def.previous
+      unless previous
+        raise "there is no previous definition of '#{untyped_def.name}'"
+      end
+
+      if args.empty? && !has_parenthesis
+        copy_args_from_parent_typed_def
+      end
+
+      match = Match.new(scope, previous, scope, args.map(&.type))
+      matches = Matches.new([match], true)
+      typed_defs = instantiate matches, scope
+      typed_defs.each do |typed_def|
+        typed_def.next = parent_visitor.typed_def
+      end
+      typed_defs
+    end
+
+    def copy_args_from_parent_typed_def
+      parent_args = parent_visitor.typed_def.args
+      self.args = Array(ASTNode).new(parent_args.length)
+      parent_args.each do |arg|
+        var = Var.new(arg.name)
+        var.bind_to arg
+        self.args.push var
+      end
     end
 
     def recalculate_lib_call(obj_type)
