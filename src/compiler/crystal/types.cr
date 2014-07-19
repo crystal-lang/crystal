@@ -1,6 +1,8 @@
 require "levenshtein"
 
 module Crystal
+  alias TypeIdSet = Set(Int32)
+
   abstract class Type
     include Enumerable(self)
 
@@ -188,7 +190,7 @@ module Crystal
     end
 
     def filter_by(other_type)
-      restrict(other_type, self, nil, nil)
+      restrict other_type, MatchContext.new(self, self)
     end
 
     def filter_by_responds_to(name)
@@ -215,7 +217,7 @@ module Crystal
       (node.global ? program : self).lookup_type(node.names)
     end
 
-    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       raise "Bug: #{self} doesn't implement lookup_type"
     end
 
@@ -223,7 +225,7 @@ module Crystal
       (node.global ? program : self).lookup_similar_type_name(node.names)
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       nil
     end
 
@@ -396,7 +398,7 @@ module Crystal
     end
 
     def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
-      Matches.new([] of Match, nil, self, false)
+      Matches.new(nil, nil, self, false)
     end
 
     def no_return?
@@ -447,37 +449,46 @@ module Crystal
   end
 
   module MatchesLookup
-    def match_def_args(args, a_def, owner, type_lookup)
-      match = Match.new(owner, a_def, type_lookup, [] of Type)
-      args.each_with_index do |arg, i|
+    def match_def_args(arg_types, a_def, context)
+      matched_arg_types = nil
+
+      arg_types.each_with_index do |arg, i|
         def_arg = a_def.args[i]
-        match_arg_type = match_arg(arg, def_arg, owner, type_lookup, match.free_vars)
+        match_arg_type = match_arg(arg, def_arg, context)
         if match_arg_type
-          match.arg_types.push match_arg_type
+          matched_arg_types ||= [] of Type
+          matched_arg_types.push match_arg_type
         else
           return nil
         end
       end
 
-      match
+      # We reuse a match contextx without free vars, but we create
+      # new ones when there are free vars.
+      if context.free_vars
+        context = context.clone
+      end
+
+      Match.new(a_def, (matched_arg_types || arg_types), context)
     end
 
-    def match_arg(arg_type, arg : Arg, owner, type_lookup, free_vars)
+    def match_arg(arg_type, arg : Arg, context : MatchContext)
       restriction = arg.type? || arg.restriction
-      arg_type.not_nil!.restrict restriction, owner, type_lookup, free_vars
+      arg_type.not_nil!.restrict restriction, context
     end
 
-    def match_arg(arg_type, restriction : ASTNode, owner, type_lookup, free_vars)
-      arg_type.not_nil!.restrict restriction, owner, type_lookup, free_vars
+    def match_arg(arg_type, restriction : ASTNode, context : MatchContext)
+      arg_type.not_nil!.restrict restriction, context
     end
 
     def lookup_matches_without_parents(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
       if sorted_defs = self.sorted_defs()
         if defs = sorted_defs[DefContainer::SortedDefKey.new(name, arg_types.length, !!block)]?
           found_defs = true
+          context = MatchContext.new(owner, type_lookup)
 
           defs.each do |a_def|
-            match = match_def_args(arg_types, a_def, owner, type_lookup)
+            match = match_def_args(arg_types, a_def, context)
 
             if match
               matches_array ||= [] of Match
@@ -499,12 +510,8 @@ module Crystal
     end
 
     def lookup_matches_with_modules(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
-      matches_array ||= [] of Match
-
       matches = lookup_matches_without_parents(name, arg_types, block, owner, type_lookup, matches_array)
       return matches unless matches.empty?
-
-      cover = matches.cover
 
       if (my_parents = parents) && !(name == "new" && owner.metaclass?)
         my_parents.each do |parent|
@@ -515,14 +522,16 @@ module Crystal
         end
       end
 
-      Matches.new(matches_array, cover, owner, false)
+      Matches.new(matches_array, Cover.create(arg_types, matches_array), owner, false)
     end
 
     def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
-      matches_array ||= [] of Match
+      # matches_array ||= [] of Match
 
       matches = lookup_matches_without_parents(name, arg_types, block, owner, type_lookup, matches_array)
       return matches if matches.cover_all?
+
+      matches_array = matches.matches
 
       cover = matches.cover
 
@@ -838,7 +847,7 @@ module Crystal
       super || parents.any? &.implements?(other_type)
     end
 
-    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       return nil if already_looked_up.includes?(type_id)
 
       if lookup_in_container
@@ -861,7 +870,7 @@ module Crystal
       lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       return nil if already_looked_up.includes?(type_id)
 
       if lookup_in_container
@@ -1609,7 +1618,7 @@ module Crystal
       super || generic_class.implements?(other_type)
     end
 
-    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       return nil if already_looked_up.includes?(type_id)
       already_looked_up.add(type_id)
 
@@ -1877,7 +1886,7 @@ module Crystal
       @module.has_def?(name)
     end
 
-    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       if (names.length == 1) && (m = @mapping[names[0]]?)
         case @including_class
         when GenericClassType, GenericModuleType
@@ -1890,7 +1899,7 @@ module Crystal
       @module.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       @module.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
@@ -1974,7 +1983,7 @@ module Crystal
     delegate sorted_defs, typedef
     delegate macros, typedef
 
-    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       typedef.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
@@ -2236,11 +2245,11 @@ module Crystal
       @program.class_type
     end
 
-    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       instance_type.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
@@ -2296,11 +2305,11 @@ module Crystal
     delegate type_vars, instance_type
     delegate :abstract, instance_type
 
-    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       instance_type.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
@@ -2577,7 +2586,7 @@ module Crystal
           if is_new && subtype_matches.empty?
             other_initializers = subtype_lookup.instance_type.lookup_defs_with_modules("initialize")
             unless other_initializers.empty?
-              return Matches.new([] of Match, false)
+              return Matches.new(nil, false)
             end
           end
 
@@ -2598,7 +2607,7 @@ module Crystal
                   cloned_def.owner = subtype_lookup
 
                   new_subtype_matches ||= [] of Match
-                  new_subtype_matches.push Match.new(subtype_lookup, cloned_def, base_type_match.type_lookup, base_type_match.arg_types, base_type_match.free_vars)
+                  new_subtype_matches.push Match.new(cloned_def, base_type_match.arg_types, MatchContext.new(subtype_lookup, base_type_match.context.type_lookup, base_type_match.context.free_vars))
                 end
               end
             end
@@ -2616,7 +2625,7 @@ module Crystal
             base_type_matches.each do |base_type_match|
               if base_type_match.def.abstract
                 new_subtype_matches ||= [] of Match
-                new_subtype_matches << Match.new(subtype_lookup, base_type_match.def, base_type_match.type_lookup, base_type_match.arg_types, base_type_match.free_vars)
+                new_subtype_matches.push Match.new(base_type_match.def, base_type_match.arg_types, MatchContext.new(subtype_lookup, base_type_match.context.type_lookup, base_type_match.context.free_vars))
               end
             end
 
@@ -2625,7 +2634,7 @@ module Crystal
             end
           end
 
-          unless subtype.leaf?
+          if !subtype.leaf? && subtype_matches.length > 0
             type_to_matches ||= {} of Type => Matches
             type_to_matches[subtype] = subtype_matches
           end
@@ -2636,8 +2645,8 @@ module Crystal
             covered_by_superclass = false
             superclass = subtype.superclass
             while superclass && superclass != base_type
-              superclass_matches = type_to_matches.not_nil![superclass]
-              if superclass_matches.cover_all?
+              superclass_matches = type_to_matches.try &.[superclass]?
+              if superclass_matches && superclass_matches.cover_all?
                 covered_by_superclass = true
                 break
               end
@@ -2655,14 +2664,16 @@ module Crystal
             else
               # We need to insert the matches before the previous ones
               # because subtypes are more specific matches
-              subtype_matches_matches.concat matches
+              if matches
+                subtype_matches_matches.concat matches
+              end
               matches = subtype_matches_matches
             end
           end
         end
       end
 
-      Matches.new(matches, matches.length > 0, self)
+      Matches.new(matches, (matches && matches.length > 0), self)
     end
 
     def hierarchy_lookup(type)
@@ -2762,11 +2773,11 @@ module Crystal
       base_type.lookup_macros(name)
     end
 
-    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       base_type.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       base_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
@@ -2904,11 +2915,11 @@ module Crystal
       instance_type.base_type.metaclass.lookup_first_def(name, block)
     end
 
-    def lookup_type(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       instance_type.lookup_type(names, already_looked_up, lookup_in_container)
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = Set(Int32).new, lookup_in_container = true)
+    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 

@@ -1,12 +1,32 @@
 module Crystal
+  class MatchContext
+    getter owner
+    getter type_lookup
+    getter free_vars
+
+    def initialize(@owner, @type_lookup, @free_vars = nil)
+    end
+
+    def get_free_var(name)
+      @free_vars.try &.[name]?
+    end
+
+    def set_free_var(name, type)
+      free_vars = @free_vars ||= {} of String => Type
+      free_vars[name] = type
+    end
+
+    def clone
+      MatchContext.new(@owner, @type_lookup, @free_vars.clone)
+    end
+  end
+
   class Match
     getter :def
-    getter :owner
-    getter :type_lookup
     getter :arg_types
-    getter :free_vars
+    getter :context
 
-    def initialize(@owner, @def, @type_lookup, @arg_types, @free_vars = {} of String => Type)
+    def initialize(@def, @arg_types, @context)
     end
   end
 
@@ -22,27 +42,32 @@ module Crystal
 
     def cover_all?
       cover = @cover
-      @success && @matches && @matches.length > 0 && (cover == true || (cover.is_a?(Cover) && cover.all?))
+      matches = @matches
+      @success && matches && matches.length > 0 && (cover == true || (cover.is_a?(Cover) && cover.all?))
     end
 
     def empty?
-      !@success || !@matches || @matches.empty?
+      return true unless @success
+
+      matches = @matches
+      if matches
+        matches.empty?
+      else
+        true
+      end
     end
 
     def each
-      if @success && @matches
-        @matches.each do |match|
+      matches = @matches
+      if @success && matches
+        matches.each do |match|
           yield match
         end
       end
     end
 
-    def first
-      @matches.first
-    end
-
     def length
-      @matches.length
+      @matches.try(&.length) || 0
     end
   end
 end

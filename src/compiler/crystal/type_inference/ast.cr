@@ -1,4 +1,5 @@
 require "../ast"
+require "simple_hash"
 
 module Crystal
   class ASTNode
@@ -41,16 +42,30 @@ module Crystal
     end
 
     def bind_to(node : ASTNode)
-      bind_to [node] of ASTNode
+      bind do |dependencies|
+        dependencies.push node
+        node.add_observer self
+        node
+      end
     end
 
     def bind_to(nodes : Array)
-      dependencies = @dependencies ||= [] of ASTNode
-      dependencies.concat nodes
-      nodes.each &.add_observer self
+      return if nodes.empty?
+
+      bind do |dependencies|
+        dependencies.concat nodes
+        nodes.each &.add_observer self
+        nodes.first
+      end
+    end
+
+    def bind
+      dependencies = @dependencies ||= Dependencies.new
+
+      node = yield dependencies
 
       if dependencies.length == 1
-        new_type = nodes[0].type?
+        new_type = node.type?
       else
         new_type = Type.merge dependencies
       end
@@ -71,7 +86,13 @@ module Crystal
       node.remove_observer self
     end
 
-    def unbind_from(nodes : Array)
+    def unbind_from(nodes : Array(ASTNode))
+      nodes.each do |node|
+        unbind_from node
+      end
+    end
+
+    def unbind_from(nodes : Dependencies)
       nodes.each do |node|
         unbind_from node
       end
@@ -368,7 +389,8 @@ module Crystal
     end
   end
 
-  alias MetaVars = Hash(String, MetaVar)
+  alias MetaVars = SimpleHash(String, MetaVar)
+  # alias MetaVars = Hash(String, MetaVar)
 
   class Var
     def out?

@@ -5,11 +5,14 @@ require "type_lookup"
 
 module Crystal
   class Call
-    property! mod
     property! scope
     property! parent_visitor
     property target_defs
     property expanded
+
+    def mod
+      scope.program
+    end
 
     def target_def
       if defs = @target_defs
@@ -160,14 +163,14 @@ module Crystal
 
       matches.each do |match|
         # Discard abstract defs for abstract classes
-        next if match.def.abstract && match.owner.abstract
+        next if match.def.abstract && match.context.owner.abstract
 
         check_not_abstract match
 
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
         block_type = block && block.body && match.def.block_arg ? block.body.type? : nil
-        lookup_self_type = self_type || match.owner
+        lookup_self_type = self_type || match.context.owner
         if self_type
           lookup_arg_types = Array(Type).new(match.arg_types.length + 1)
           lookup_arg_types.push self_type
@@ -175,7 +178,7 @@ module Crystal
         else
           lookup_arg_types = match.arg_types
         end
-        match_owner = match.owner
+        match_owner = match.context.owner
         typed_def = match_owner.lookup_def_instance(match.def.object_id, lookup_arg_types, block_type) if use_cache
         unless typed_def
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types)
@@ -187,11 +190,11 @@ module Crystal
             bubbling_exception do
               visitor = TypeVisitor.new(mod, typed_def_args, typed_def)
               visitor.yield_vars = yield_vars
-              visitor.free_vars = match.free_vars
+              visitor.free_vars = match.context.free_vars
               visitor.untyped_def = match.def
               visitor.call = self
               visitor.scope = lookup_self_type
-              visitor.type_lookup = match.type_lookup
+              visitor.type_lookup = match.context.type_lookup
               typed_def.body.accept visitor
 
               if visitor.is_initialize
@@ -213,7 +216,7 @@ module Crystal
           index = arg.value.to_i
           if 0 <= index < owner.tuple_types.length
             indexer_def = owner.tuple_indexer(index)
-            indexer_match = Match.new(owner, indexer_def, owner, arg_types)
+            indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
             return Matches.new([indexer_match], true)
           else
             raise "index out of bounds for tuple #{owner}"
@@ -226,7 +229,7 @@ module Crystal
     def check_not_abstract(match)
       if match.def.abstract
         bubbling_exception do
-          owner = match.owner
+          owner = match.context.owner
           owner = owner.base_type if owner.is_a?(HierarchyType)
           match.def.raise "abstract def #{match.def.owner}##{match.def.name} must be implemented by #{owner}"
         end
@@ -315,7 +318,7 @@ module Crystal
         copy_args_from_parent_typed_def
       end
 
-      match = Match.new(scope, previous, scope, args.map(&.type))
+      match = Match.new(previous, args.map(&.type), MatchContext.new(scope, scope))
       matches = Matches.new([match], true)
       typed_defs = instantiate matches, scope
       typed_defs.each do |typed_def|
@@ -398,7 +401,7 @@ module Crystal
       # led to a compiler crash, maybe this is fixed now.
       if (block_arg = match.def.block_arg) && (((yields = match.def.yields) && yields > 0) || match.def.uses_block_arg)
         block = @block.not_nil!
-        ident_lookup = MatchTypeLookup.new(match)
+        ident_lookup = MatchTypeLookup.new(match.context)
 
         if inputs = block_arg.fun.inputs
           yield_vars = [] of Var
@@ -472,8 +475,8 @@ module Crystal
           if fun_literal_type
             if output = block_arg.fun.output
               block_type = (fun_literal_type as FunInstanceType).return_type
-              type_lookup = match.type_lookup as MatchesLookup
-              matched = type_lookup.match_arg(block_type, output, match.owner, type_lookup, match.free_vars)
+              type_lookup = match.context.type_lookup as MatchesLookup
+              matched = type_lookup.match_arg(block_type, output, match.context)
               unless matched
                 raise "expected block to return #{output}, not #{block_type}"
               end
@@ -488,11 +491,11 @@ module Crystal
             raise "can't infer block type" unless block.body.type?
 
             block_type = block.body.type
-            type_lookup = match.type_lookup as MatchesLookup
-            matched = type_lookup.match_arg(block_type, output, match.owner, type_lookup, match.free_vars)
+            type_lookup = match.context.type_lookup as MatchesLookup
+            matched = type_lookup.match_arg(block_type, output, match.context)
             unless matched
               if output.is_a?(Self)
-                raise "expected block to return #{match.owner}, not #{block_type}"
+                raise "expected block to return #{match.context.owner}, not #{block_type}"
               else
                 raise "expected block to return #{output}, not #{block_type}"
               end
@@ -511,13 +514,13 @@ module Crystal
     end
 
     class MatchTypeLookup < TypeLookup
-      def initialize(@match)
-        super(match.type_lookup)
+      def initialize(@context)
+        super(@context.type_lookup)
       end
 
       def visit(node : Path)
-        if node.names.length == 1 && @match.free_vars
-          if type = @match.free_vars[node.names.first]?
+        if node.names.length == 1 && @context.free_vars
+          if type = @context.get_free_var(node.names.first)
             @type = type
             return
           end
@@ -527,7 +530,7 @@ module Crystal
       end
 
       def visit(node : Self)
-        @type = @match.owner
+        @type = @context.owner
         false
       end
     end
@@ -676,7 +679,7 @@ module Crystal
         similar_name = owner.lookup_similar_def_name(def_name, self.args.length, block)
 
         error_msg = String.build do |msg|
-          if obj && owner != @mod
+          if obj && owner != mod
             msg << "undefined method '#{def_name}' for #{owner}"
           elsif args.length > 0 || has_parenthesis
             msg << "undefined method '#{def_name}'"
@@ -691,7 +694,7 @@ module Crystal
             scope = scope as InstanceVarContainer
             ivar = scope.lookup_instance_var(obj.name)
             deps = ivar.dependencies?
-            if deps && deps.length == 1 && deps[0].same?(mod.nil_var)
+            if deps && deps.length == 1 && deps.first.same?(mod.nil_var)
               similar_name = scope.lookup_similar_instance_var_name(ivar.name)
               if similar_name
                 msg << " \e[1;33m(#{ivar.name} was never assigned a value, did you mean #{similar_name}?)\e[0m"
@@ -838,7 +841,7 @@ module Crystal
         # We first need to check if there aren't any "new" methods in the class
         defs = scope.lookup_defs("new")
         if defs.any? { |a_def| a_def.args.length > 0 }
-          Matches.new([] of Match, false)
+          Matches.new(nil, false)
         else
           define_new_without_initialize(scope, arg_types)
         end
@@ -873,7 +876,7 @@ module Crystal
       exps << var
 
       match_def = Def.new("new", [] of Arg, exps)
-      match = Match.new(scope, match_def, scope, arg_types)
+      match = Match.new(match_def, arg_types, MatchContext.new(scope, scope))
 
       scope.add_def match_def
 
@@ -936,7 +939,7 @@ module Crystal
           match_def.uses_block_arg = true
         end
 
-        new_match = Match.new(scope, match_def, match.type_lookup, match.arg_types, match.free_vars)
+        new_match = Match.new(match_def, match.arg_types, MatchContext.new(scope, scope, match.context.free_vars))
 
         scope.add_def match_def
 
@@ -948,7 +951,10 @@ module Crystal
     def define_new_recursive(owner, arg_types, matches = [] of Match)
       unless owner.abstract
         owner_matches = define_new(owner.metaclass, arg_types)
-        matches.concat owner_matches.matches
+        owner_matches_matches = owner_matches.matches
+        if owner_matches_matches
+          matches.concat owner_matches_matches
+        end
       end
 
       owner.subclasses.each do |subclass|

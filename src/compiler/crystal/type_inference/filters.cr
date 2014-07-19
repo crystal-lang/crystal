@@ -1,7 +1,7 @@
 module Crystal
   class TypeFilteredNode < ASTNode
     def initialize(@filter, @node)
-      @dependencies = [@node] of ASTNode
+      @dependencies = Dependencies.new(@node)
       node.add_observer self
       update(@node)
     end

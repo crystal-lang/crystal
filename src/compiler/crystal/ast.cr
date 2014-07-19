@@ -27,11 +27,11 @@ module Crystal
     end
 
     def name_column_number
-      @location.try &.column_number
+      @location.try(&.column_number) || 0
     end
 
     def name_length
-      nil
+      0
     end
 
     def nop?
@@ -475,6 +475,9 @@ module Crystal
   # the symbol of that operator instead of a string.
   #
   class Call < ASTNode
+    @global = false
+    @has_parenthesis = false
+
     property :obj
     property :name
     property :args
@@ -485,7 +488,8 @@ module Crystal
     property :has_parenthesis
     property :name_length
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @global = false, @name_column_number = nil, @has_parenthesis = false)
+    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @global = false, @name_column_number = 0, @has_parenthesis = false)
+      @name_length = 0
     end
 
     def name_length
@@ -952,6 +956,7 @@ module Crystal
       @calls_super = false
       @uses_block_arg = false
       @raises = false
+      @name_column_number = 0
     end
 
     def accepts_attributes?
@@ -995,6 +1000,7 @@ module Crystal
     property :name_column_number
 
     def initialize(@name, @args, @body, @block_arg = nil)
+      @name_column_number = 0
     end
 
     def accept_children(visitor)
@@ -1229,6 +1235,7 @@ module Crystal
     property :name_length
 
     def initialize(@names, @global = false)
+      @name_length = 0
     end
 
     def ==(other : self)
@@ -1260,7 +1267,7 @@ module Crystal
     property :name_column_number
     property :attributes
 
-    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = nil)
+    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0)
       @body = Expressions.from body
     end
 
@@ -1296,7 +1303,7 @@ module Crystal
     property :type_vars
     property :name_column_number
 
-    def initialize(@name, body = nil, @type_vars = nil, @name_column_number = nil)
+    def initialize(@name, body = nil, @type_vars = nil, @name_column_number = 0)
       @body = Expressions.from body
     end
 
@@ -1726,7 +1733,7 @@ module Crystal
     property :body
     property :name_column_number
 
-    def initialize(@name, @libname = nil, body = nil, @name_column_number = nil)
+    def initialize(@name, @libname = nil, body = nil, @name_column_number = 0)
       @body = Expressions.from body
     end
 
@@ -1783,7 +1790,7 @@ module Crystal
     property :type_spec
     property :name_column_number
 
-    def initialize(@name, @type_spec, @name_column_number = nil)
+    def initialize(@name, @type_spec, @name_column_number = 0)
     end
 
     def accept_children(visitor)

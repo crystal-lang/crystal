@@ -49,6 +49,9 @@ module Crystal
 
     getter is_initialize
 
+    @unreachable = false
+    @is_initialize = false
+
     def initialize(@mod, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       @types = [@mod] of Type
       @while_stack = [] of While
@@ -57,7 +60,7 @@ module Crystal
       @unreachable = false
       @block_nest = 0
       @typeof_nest = 0
-      @is_initialize = typed_def && typed_def.name == "initialize"
+      @is_initialize = !!(typed_def && typed_def.name == "initialize")
       @used_ivars_in_calls_in_initialize = nil
       @in_type_args = 0
       @attributes  = nil
@@ -776,8 +779,6 @@ module Crystal
     end
 
     def prepare_call(node)
-      node.mod = mod
-
       if node.global
         node.scope = @mod
       else

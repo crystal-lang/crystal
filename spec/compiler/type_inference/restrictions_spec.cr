@@ -13,17 +13,17 @@ describe "Restrictions" do
   describe "restrict" do
     it "restricts type with same type" do
       mod = Program.new
-      mod.int32.restrict(mod.int32, nil, nil, nil).should eq(mod.int32)
+      mod.int32.restrict(mod.int32, MatchContext.new(mod, mod)).should eq(mod.int32)
     end
 
     it "restricts type with another type" do
       mod = Program.new
-      mod.int32.restrict(mod.int16, nil, nil, nil).should be_nil
+      mod.int32.restrict(mod.int16, MatchContext.new(mod, mod)).should be_nil
     end
 
     it "restricts type with superclass" do
       mod = Program.new
-      mod.int32.restrict(mod.value, nil, nil, nil).should eq(mod.int32)
+      mod.int32.restrict(mod.value, MatchContext.new(mod, mod)).should eq(mod.int32)
     end
 
     it "restricts type with included module" do
@@ -37,7 +37,7 @@ describe "Restrictions" do
         end
       ")
 
-      mod.types["Foo"].restrict(mod.types["Mod"], nil, nil, nil).should eq(mod.types["Foo"])
+      mod.types["Foo"].restrict(mod.types["Mod"], MatchContext.new(mod, mod)).should eq(mod.types["Foo"])
     end
 
     it "restricts hierarchy type with included module 1" do
@@ -47,7 +47,7 @@ describe "Restrictions" do
         class A; include M; end
       ")
 
-      t(mod, "A+").restrict(t(mod, "M"), nil, nil, nil).should eq(t(mod, "A+"))
+      t(mod, "A+").restrict(t(mod, "M"), MatchContext.new(mod, mod)).should eq(t(mod, "A+"))
     end
 
     it "restricts hierarchy type with included module 2" do
@@ -61,7 +61,7 @@ describe "Restrictions" do
         class E < A; end
       ")
 
-      t(mod, "A+").restrict(t(mod, "M"), nil, nil, nil).should eq(mod.union_of(t(mod, "B+"), t(mod, "C+")))
+      t(mod, "A+").restrict(t(mod, "M"), MatchContext.new(mod, mod)).should eq(mod.union_of(t(mod, "B+"), t(mod, "C+")))
     end
   end
 end

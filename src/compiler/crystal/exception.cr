@@ -234,11 +234,11 @@ module Crystal
               io << "    "
               io << line.chomp
               io << "\n"
-              if name_column
+              if name_column > 0
                 io << "    "
                 io << (" " * (name_column - 1))
                 io << "^"
-                if name_length
+                if name_length > 0
                   io << ("~" * (name_length - 1)) if name_length
                 end
               end

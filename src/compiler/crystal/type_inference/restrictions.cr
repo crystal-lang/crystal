@@ -87,11 +87,11 @@ module Crystal
   end
 
   class Type
-    def restrict(other : Nil, owner, type_lookup, free_vars)
+    def restrict(other : Nil, context)
       self
     end
 
-    def restrict(other : Type, owner, type_lookup, free_vars)
+    def restrict(other : Type, context)
       if self == other
         return self
       end
@@ -103,74 +103,74 @@ module Crystal
       nil
     end
 
-    def restrict(other : AliasType, owner, type_lookup, free_vars)
+    def restrict(other : AliasType, context)
       if self == other
         self
       else
-        restrict(other.remove_alias, owner, type_lookup, free_vars)
+        restrict(other.remove_alias, context)
       end
     end
 
-    def restrict(other : Self, owner, type_lookup, free_vars)
-      restrict(owner, owner, type_lookup, free_vars)
+    def restrict(other : Self, context)
+      restrict(context.owner, context)
     end
 
-    def restrict(other : UnionType, owner, type_lookup, free_vars)
-      restricted = other.union_types.any? { |union_type| is_restriction_of?(union_type, owner) }
+    def restrict(other : UnionType, context)
+      restricted = other.union_types.any? { |union_type| is_restriction_of?(union_type, context.owner) }
       restricted ? self : nil
     end
 
-    def restrict(other : HierarchyType, owner, type_lookup, free_vars)
+    def restrict(other : HierarchyType, context)
       is_subclass_of?(other.base_type) ? self : nil
     end
 
-    def restrict(other : Union, owner, type_lookup, free_vars)
-      matches = [] of Type
+    def restrict(other : Union, context)
+      types = [] of Type
       other.types.each do |ident|
-        match = restrict ident, owner, type_lookup, free_vars
-        matches << match if match
+        restricted = restrict ident, context
+        types << restricted if restricted
       end
-      matches.length > 0 ? program.type_merge_union_of(matches) : nil
+      types.length > 0 ? program.type_merge_union_of(types) : nil
     end
 
-    def restrict(other : Path, owner, type_lookup, free_vars)
+    def restrict(other : Path, context)
       single_name = other.names.length == 1
       if single_name
-        ident_type = free_vars[other.names.first]?
+        ident_type = context.get_free_var(other.names.first)
       end
 
-      ident_type ||= type_lookup.lookup_type other
+      ident_type ||= context.type_lookup.lookup_type other
       if ident_type
-        restrict ident_type, owner, type_lookup, free_vars
+        restrict ident_type, context
       elsif single_name
-        free_vars[other.names.first] = self
+        context.set_free_var(other.names.first, self)
       else
         self
       end
     end
 
-    def restrict(other : Generic, owner, type_lookup, free_vars)
+    def restrict(other : Generic, context)
       parents.try &.each do |parent|
-        restricted = parent.restrict other, owner, type_lookup, free_vars
+        restricted = parent.restrict other, context
         return self if restricted
       end
 
       nil
     end
 
-    def restrict(other : Metaclass, owner, type_lookup, free_vars)
+    def restrict(other : Metaclass, context)
       nil
     end
 
-    def restrict(other : Fun, owner, type_lookup, free_vars)
+    def restrict(other : Fun, context)
       nil
     end
 
-    def restrict(other : Underscore, owner, type_lookup, free_vars)
+    def restrict(other : Underscore, context)
       self
     end
 
-    def restrict(other : ASTNode, owner, type_lookup, free_vars)
+    def restrict(other : ASTNode, context)
       raise "Bug: unsupported restriction: #{self} vs. #{other}"
     end
 
@@ -220,7 +220,7 @@ module Crystal
   end
 
   class IntegerType
-    def restrict(other : CEnumType, owner, type_lookup, free_vars)
+    def restrict(other : CEnumType, context)
       self == other.base_type ? self : nil
     end
   end
@@ -230,14 +230,14 @@ module Crystal
       self == type || union_types.any? &.is_restriction_of?(type, owner)
     end
 
-    def restrict(other : Union, owner, type_lookup, free_vars)
+    def restrict(other : Union, context)
       types = [] of Type
       discarded = [] of Type
       other.types.each do |other_type|
         self.union_types.each do |type|
           next if discarded.includes?(type)
 
-          restricted = type.restrict(other_type, owner, type_lookup, free_vars)
+          restricted = type.restrict(other_type, context)
           if restricted
             types << restricted
             discarded << type
@@ -248,22 +248,22 @@ module Crystal
       program.type_merge_union_of(types)
     end
 
-    def restrict(other : Type, owner, type_lookup, free_vars)
-      restrict_type_or_fun_or_generic other, owner, type_lookup, free_vars
+    def restrict(other : Type, context)
+      restrict_type_or_fun_or_generic other, context
     end
 
-    def restrict(other : Fun, owner, type_lookup, free_vars)
-      restrict_type_or_fun_or_generic other, owner, type_lookup, free_vars
+    def restrict(other : Fun, context)
+      restrict_type_or_fun_or_generic other, context
     end
 
-    def restrict(other : Generic, owner, type_lookup, free_vars)
-      restrict_type_or_fun_or_generic other, owner, type_lookup, free_vars
+    def restrict(other : Generic, context)
+      restrict_type_or_fun_or_generic other, context
     end
 
-    def restrict_type_or_fun_or_generic(other, owner, type_lookup, free_vars)
+    def restrict_type_or_fun_or_generic(other, context)
       types = [] of Type
       union_types.each do |type|
-        restricted = type.restrict(other, owner, type_lookup, free_vars)
+        restricted = type.restrict(other, context)
         types << restricted if restricted
       end
       program.type_merge_union_of(types)
@@ -271,21 +271,21 @@ module Crystal
   end
 
   class GenericClassInstanceType
-    def restrict(other : Path, owner, type_lookup, free_vars)
-      ident_type = type_lookup.lookup_type other
+    def restrict(other : Path, context)
+      ident_type = context.type_lookup.lookup_type other
       if ident_type
-        restrict(ident_type, owner, type_lookup, free_vars)
+        restrict(ident_type, context)
       else
         super
       end
     end
 
-    def restrict(other : GenericClassType, owner, type_lookup, free_vars)
+    def restrict(other : GenericClassType, context)
       generic_class == other ? self : nil
     end
 
-    def restrict(other : Generic, owner, type_lookup, free_vars)
-      generic_class = type_lookup.lookup_type other.name
+    def restrict(other : Generic, context)
+      generic_class = context.type_lookup.lookup_type other.name
       return super unless generic_class == self.generic_class
 
       generic_class = generic_class as GenericClassType
@@ -294,7 +294,7 @@ module Crystal
       i = 0
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[i]
-        restricted = type_var.type.restrict other_type_var, owner, type_lookup, free_vars
+        restricted = type_var.type.restrict other_type_var, context
         return nil unless restricted == type_var.type
         i += 1
       end
@@ -302,12 +302,12 @@ module Crystal
       self
     end
 
-    def restrict(other : GenericClassInstanceType, owner, type_lookup, free_vars)
+    def restrict(other : GenericClassInstanceType, context)
       return nil unless generic_class == other.generic_class
 
       type_vars.each do |name, type_var|
         other_type_var = other.type_vars[name]
-        restricted = type_var.type.restrict(other_type_var.type, owner, type_lookup, free_vars)
+        restricted = type_var.type.restrict(other_type_var.type, context)
         return nil unless restricted == type_var.type
       end
 
@@ -316,22 +316,22 @@ module Crystal
   end
 
   class TupleInstanceType
-    def restrict(other : Generic, owner, type_lookup, free_vars)
-      generic_class = type_lookup.lookup_type other.name
+    def restrict(other : Generic, context)
+      generic_class = context.type_lookup.lookup_type other.name
       return super unless generic_class == self.generic_class
 
       generic_class = generic_class as TupleType
       return nil unless other.type_vars.length == tuple_types.length
 
       tuple_types.zip(other.type_vars) do |tuple_type, type_var|
-        restricted = tuple_type.restrict(type_var, owner, type_lookup, free_vars)
+        restricted = tuple_type.restrict(type_var, context)
         return nil unless restricted == tuple_type
       end
 
       self
     end
 
-    def restrict(other : TupleInstanceType, owner, type_lookup, free_vars)
+    def restrict(other : TupleInstanceType, context)
       self == other ? self : nil
     end
   end
@@ -341,8 +341,8 @@ module Crystal
       @module.is_restriction_of?(other, owner)
     end
 
-    def restrict(other : Generic, owner, type_lookup, free_vars)
-      generic_module = type_lookup.lookup_type other.name
+    def restrict(other : Generic, context)
+      generic_module = context.type_lookup.lookup_type other.name
       return nil unless generic_module == @module
 
       generic_module = generic_module as GenericModuleType
@@ -351,10 +351,10 @@ module Crystal
       @module.type_vars.zip(other.type_vars) do |module_type_var, other_type_var|
         if m = @mapping[module_type_var]?
           t = TypeLookup.lookup(@including_class, m)
-          restricted = t.restrict other_type_var, owner, type_lookup, free_vars
+          restricted = t.restrict other_type_var, context
           return nil unless restricted
 
-          free_vars[module_type_var] = restricted
+          context.set_free_var(module_type_var, restricted)
         end
       end
 
@@ -368,18 +368,18 @@ module Crystal
       base_type.is_subclass_of?(other) || other.is_subclass_of?(base_type)
     end
 
-    def restrict(other : Type, owner, type_lookup, free_vars)
+    def restrict(other : Type, context)
       if self == other
         self
       elsif other.is_a?(UnionType)
         types = [] of Type
         other.union_types.each do |t|
-          restricted = self.restrict(t, owner, type_lookup, free_vars)
+          restricted = self.restrict(t, context)
           types << restricted if restricted
         end
         program.type_merge types
       elsif other.is_a?(HierarchyType)
-        result = base_type.restrict(other.base_type, owner, type_lookup, free_vars) || other.base_type.restrict(base_type, owner, type_lookup, free_vars)
+        result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
         result ? result.hierarchy_type : nil
       elsif other.is_subclass_of?(self.base_type)
         other.hierarchy_type
@@ -391,7 +391,7 @@ module Crystal
         else
           types = [] of Type
           base_type.subclasses.each do |subclass|
-            restricted = subclass.hierarchy_type.restrict(other, owner, type_lookup, free_vars)
+            restricted = subclass.hierarchy_type.restrict(other, context)
             types << restricted if restricted
           end
           program.type_merge_union_of types
@@ -401,10 +401,10 @@ module Crystal
       end
     end
 
-    def restrict(other : Generic, owner, type_lookup, free_vars)
+    def restrict(other : Generic, context)
       types = [] of Type
       base_type.subclasses.each do |subclass|
-        restricted = subclass.hierarchy_type.restrict(other, owner, type_lookup, free_vars)
+        restricted = subclass.hierarchy_type.restrict(other, context)
         types << restricted if restricted
       end
       program.type_merge_union_of types
@@ -418,18 +418,18 @@ module Crystal
       remove_alias.is_restriction_of?(other, owner)
     end
 
-    def restrict(other, owner, type_lookup, free_vars)
+    def restrict(other, context)
       if self == other
         self
       else
-        remove_alias.restrict(other, owner, type_lookup, free_vars)
+        remove_alias.restrict(other, context)
       end
     end
   end
 
   class MetaclassType
-    def restrict(other : Metaclass, owner, type_lookup, free_vars)
-      restricted = instance_type.restrict(other.name, owner, type_lookup, free_vars)
+    def restrict(other : Metaclass, context)
+      restricted = instance_type.restrict(other.name, context)
       if restricted
         self
       else
@@ -437,8 +437,8 @@ module Crystal
       end
     end
 
-    def restrict(other : HierarchyMetaclassType, owner, type_lookup, free_vars)
-      restricted = instance_type.restrict(other.instance_type.base_type, owner, type_lookup, free_vars)
+    def restrict(other : HierarchyMetaclassType, context)
+      restricted = instance_type.restrict(other.instance_type.base_type, context)
       if restricted
         self
       else
@@ -448,7 +448,7 @@ module Crystal
   end
 
   class FunInstanceType
-    def restrict(other : Fun, owner, type_lookup, free_vars)
+    def restrict(other : Fun, context)
       inputs = other.inputs
       inputs_len = inputs ? inputs.length : 0
       output = other.output
@@ -457,7 +457,7 @@ module Crystal
 
       if inputs
         inputs.zip(fun_types) do |input, my_input|
-          restricted = my_input.restrict(input, owner, type_lookup, free_vars)
+          restricted = my_input.restrict(input, context)
           return nil unless restricted == my_input
         end
       end
@@ -467,7 +467,7 @@ module Crystal
         if my_output.no_return?
           # Ok, NoReturn can be "cast" to anything
         else
-          restricted = my_output.restrict(output, owner, type_lookup, free_vars)
+          restricted = my_output.restrict(output, context)
           return nil unless restricted == my_output
         end
 
@@ -477,19 +477,19 @@ module Crystal
       end
     end
 
-    def restrict(other : FunInstanceType, owner, type_lookup, free_vars)
+    def restrict(other : FunInstanceType, context)
       compatible_with?(other) ? other : nil
     end
 
-    def restrict(other : Generic, owner, type_lookup, free_vars)
-      generic_class = type_lookup.lookup_type other.name
+    def restrict(other : Generic, context)
+      generic_class = context.type_lookup.lookup_type other.name
       return super unless generic_class.is_a?(FunType)
 
       return nil unless other.type_vars.length == fun_types.length
 
       fun_types.each_with_index do |fun_type, i|
         other_type_var = other.type_vars[i]
-        restricted = fun_type.restrict other_type_var, owner, type_lookup, free_vars
+        restricted = fun_type.restrict other_type_var, context
         return nil unless restricted == fun_type
       end
 

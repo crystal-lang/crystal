@@ -96,7 +96,10 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      visitor = TypeVisitor.new(@root.program, {"self" => MetaVar.new("self", @root.instance_type)})
+      meta_vars = MetaVars.new
+      meta_vars["self"] = MetaVar.new("self", @root.instance_type)
+
+      visitor = TypeVisitor.new(@root.program, meta_vars)
       node.expressions.each do |exp|
         exp.accept visitor
       end
