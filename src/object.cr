@@ -53,10 +53,6 @@ class Object
     self
   end
 
-  def instance_eval
-    with self yield
-  end
-
   def try
     yield self
   end
