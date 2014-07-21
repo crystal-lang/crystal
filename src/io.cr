@@ -71,6 +71,10 @@ module IO
     write_byte '\n'.ord.to_u8
   end
 
+  def puts
+    write_byte '\n'.ord.to_u8
+  end
+
   def read_byte
     byte :: UInt8
     if read(pointerof(byte), 1) == 1

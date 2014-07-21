@@ -86,4 +86,10 @@ describe "StringIO" do
     io << "foo" << "bar"
     io.gets.should eq("foobar")
   end
+
+  it "does puts" do
+    io = StringIO.new
+    io.puts
+    io.to_s.should eq("\n")
+  end
 end
