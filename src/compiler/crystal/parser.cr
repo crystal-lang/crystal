@@ -2971,37 +2971,35 @@ module Crystal
     end
 
     def parse_break
-      next_token
-
-      call_args = parse_call_args
-      args = call_args.args if call_args
-
-      location = @token.location
-      node = Break.new(args || [] of ASTNode)
-      node.location = location
-      node
+      parse_control_expression Break
     end
 
     def parse_return
-      next_token
-
-      call_args = parse_call_args
-      args = call_args.args if call_args
-
-      location = @token.location
-      node = Return.new(args || [] of ASTNode)
-      node.location = location
-      node
+      parse_control_expression Return
     end
 
     def parse_next
+      parse_control_expression Next
+    end
+
+    def parse_control_expression(klass)
       next_token
 
       call_args = parse_call_args
       args = call_args.args if call_args
 
       location = @token.location
-      node = Next.new(args || [] of ASTNode)
+
+      if args
+        if args.length == 1
+          node = klass.new(args.first)
+        else
+          node = klass.new(TupleLiteral.new(args))
+        end
+      else
+        node = klass.new
+      end
+
       node.location = location
       node
     end

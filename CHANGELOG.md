@@ -6,6 +6,7 @@
 * Added very basic `previous_def`: similar to `super`, but uses the previous definition of a method. Useful to decorate existing methods (similar to `alias_method_chain`). For now the method's type restrictions must match for a previous definition to be found.
 * Made the compiler a bit faster
 * Added `env` in macros, to fetch an environment value. Returns a StringLiteral if found or NilLiteral if not.
+* Make `return 1, 2` be the same as `return {1, 2}`. Same goes with `break` and `next`.
 
 ## 0.3.3 (2014-07-14)
 

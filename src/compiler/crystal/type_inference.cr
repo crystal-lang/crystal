@@ -1000,18 +1000,15 @@ module Crystal
 
     def visit(node : Return)
       node.raise "can't return from top level" unless @typed_def
-
-      if node.exps.empty?
-        node.exps << NilLiteral.new
-      end
-
       true
     end
 
     def end_visit(node : Return)
       typed_def = @typed_def.not_nil!
-      node.exps.each do |exp|
+      if exp = node.exp
         typed_def.bind_to exp
+      else
+        typed_def.bind_to @mod.nil_var
       end
       @unreachable = true
     end
@@ -1748,7 +1745,12 @@ module Crystal
         break_vars = (container.break_vars = container.break_vars || [] of MetaVars)
         break_vars.push @vars.dup
       else
-        container.bind_to(node.exps.length > 0 ? node.exps[0] : mod.nil_var)
+        if exp = node.exp
+          container.bind_to(exp)
+        else
+          container.bind_to mod.nil_var
+        end
+
         bind_vars @vars, block.not_nil!.after_vars
       end
 
@@ -1757,10 +1759,10 @@ module Crystal
 
     def end_visit(node : Next)
       if block = @block
-        if node.exps.empty?
-          block.bind_to @mod.nil_var
+        if exp = node.exp
+          block.bind_to exp
         else
-          block.bind_to node.exps.first
+          block.bind_to mod.nil_var
         end
 
         bind_vars @vars, block.vars

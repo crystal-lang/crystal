@@ -316,17 +316,17 @@ module Crystal
     end
 
     def transform(node : Return)
-      transform_many node.exps
+      node.exp = node.exp.try &.transform(self)
       node
     end
 
     def transform(node : Break)
-      transform_many node.exps
+      node.exp = node.exp.try &.transform(self)
       node
     end
 
     def transform(node : Next)
-      transform_many node.exps
+      node.exp = node.exp.try &.transform(self)
       node
     end
 

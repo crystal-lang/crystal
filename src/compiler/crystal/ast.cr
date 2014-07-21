@@ -820,30 +820,6 @@ module Crystal
     end
   end
 
-  # Used only for flags
-  class Not < ASTNode
-    property :exp
-
-    def initialize(@exp)
-    end
-
-    def accept_children(visitor)
-      @exp.accept visitor
-    end
-
-    def ==(other : self)
-      @exp == other.exp
-    end
-
-    def clone_without_location
-      Not.new(@exp.clone)
-    end
-
-    def hash
-      exp.hash
-    end
-  end
-
   # A def argument.
   class Arg < ASTNode
     property :name
@@ -1024,7 +1000,7 @@ module Crystal
     generate_hash [@name, @args, @body, @block_arg]
   end
 
-  class PointerOf < ASTNode
+  abstract class UnaryExpression < ASTNode
     property :exp
 
     def initialize(@exp)
@@ -1038,58 +1014,33 @@ module Crystal
       other.exp == exp
     end
 
+    def hash
+      exp.hash
+    end
+  end
+
+  # Used only for flags
+  class Not < UnaryExpression
+    def clone_without_location
+      Not.new(@exp.clone)
+    end
+  end
+
+  class PointerOf < UnaryExpression
     def clone_without_location
       PointerOf.new(@exp.clone)
     end
-
-    def hash
-      exp.hash
-    end
   end
 
-  class SizeOf < ASTNode
-    property :exp
-
-    def initialize(@exp)
-    end
-
-    def accept_children(visitor)
-      @exp.accept visitor
-    end
-
-    def ==(other : self)
-      other.exp == exp
-    end
-
+  class SizeOf < UnaryExpression
     def clone_without_location
       SizeOf.new(@exp.clone)
     end
-
-    def hash
-      exp.hash
-    end
   end
 
-  class InstanceSizeOf < ASTNode
-    property :exp
-
-    def initialize(@exp)
-    end
-
-    def accept_children(visitor)
-      @exp.accept visitor
-    end
-
-    def ==(other : self)
-      other.exp == exp
-    end
-
+  class InstanceSizeOf < UnaryExpression
     def clone_without_location
       InstanceSizeOf.new(@exp.clone)
-    end
-
-    def hash
-      exp.hash
     end
   end
 
@@ -1603,41 +1554,47 @@ module Crystal
   end
 
   abstract class ControlExpression < ASTNode
-    property :exps
+    property :exp
 
-    def initialize(@exps = [] of ASTNode)
+    def initialize(@exp = nil : ASTNode?)
     end
 
     def accept_children(visitor)
-      @exps.each &.accept visitor
+      @exp.try &.accept visitor
     end
 
     def ==(other : self)
-      other.exps == exps
+      other.exp == exp
     end
 
     def hash
-      exps.hash
+      exp.hash
     end
   end
 
   class Return < ControlExpression
     def clone_without_location
-      Return.new(@exps.clone)
+      Return.new(@exp.clone)
     end
   end
 
   class Break < ControlExpression
     def clone_without_location
-      Break.new(@exps.clone)
+      Break.new(@exp.clone)
     end
   end
 
-  class Yield < ControlExpression
+  class Next < ControlExpression
+    def clone_without_location
+      Next.new(@exp.clone)
+    end
+  end
+
+  class Yield < ASTNode
+    property :exps
     property :scope
 
-    def initialize(exps = [] of ASTNode, @scope = nil)
-      super(exps)
+    def initialize(@exps = [] of ASTNode, @scope = nil)
     end
 
     def accept_children(visitor)
@@ -1654,12 +1611,6 @@ module Crystal
     end
 
     generate_hash [@exps, @scope]
-  end
-
-  class Next < ControlExpression
-    def clone_without_location
-      Next.new(@exps.clone)
-    end
   end
 
   class Include < ASTNode

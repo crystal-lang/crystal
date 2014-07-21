@@ -424,20 +424,23 @@ describe "Parser" do
 
   it_parses "return", Return.new
   it_parses "return;", Return.new
-  it_parses "return 1", Return.new([1.int32] of ASTNode)
-  it_parses "return 1 if true", If.new(true.bool, Return.new([1.int32] of ASTNode))
+  it_parses "return 1", Return.new(1.int32)
+  it_parses "return 1, 2", Return.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
+  it_parses "return 1 if true", If.new(true.bool, Return.new(1.int32))
   it_parses "return if true", If.new(true.bool, Return.new)
 
   it_parses "break", Break.new
   it_parses "break;", Break.new
-  it_parses "break 1", Break.new([1.int32] of ASTNode)
-  it_parses "break 1 if true", If.new(true.bool, Break.new([1.int32] of ASTNode))
+  it_parses "break 1", Break.new(1.int32)
+  it_parses "break 1, 2", Break.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
+  it_parses "break 1 if true", If.new(true.bool, Break.new(1.int32))
   it_parses "break if true", If.new(true.bool, Break.new)
 
   it_parses "next", Next.new
   it_parses "next;", Next.new
-  it_parses "next 1", Next.new([1.int32] of ASTNode)
-  it_parses "next 1 if true", If.new(true.bool, Next.new([1.int32] of ASTNode))
+  it_parses "next 1", Next.new(1.int32)
+  it_parses "next 1, 2", Next.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
+  it_parses "next 1 if true", If.new(true.bool, Next.new(1.int32))
   it_parses "next if true", If.new(true.bool, Next.new)
 
   it_parses "yield", Yield.new

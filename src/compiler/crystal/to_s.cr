@@ -736,12 +736,9 @@ module Crystal
 
     def visit_control(node, keyword)
       @str << keyword(keyword)
-      if node.exps.length > 0
+      if exp = node.exp
         @str << " "
-        node.exps.each_with_index do |exp, i|
-          @str << ", " if i > 0
-          exp.accept self
-        end
+        exp.accept self
       end
       false
     end

@@ -550,15 +550,14 @@ module Crystal
     end
 
     def accept_control_expression(node)
-      if node.exps.empty?
-        @last = llvm_nil
-        @mod.nil
-      else
-        exp = node.exps.first
+      if exp = node.exp
         request_value do
           accept exp
         end
         exp.type? || @mod.nil
+      else
+        @last = llvm_nil
+        @mod.nil
       end
     end
 
