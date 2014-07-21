@@ -49,7 +49,6 @@ module Spec
 
     def report(kind, description, ex = nil)
       print color(LETTERS[kind], kind)
-      C.fflush nil
       @results[kind] << Result.new(kind, description, ex)
     end
 
