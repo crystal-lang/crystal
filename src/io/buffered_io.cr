@@ -19,7 +19,7 @@ class BufferedIO(T)
           end
         end
 
-        endl = @buffer_rem.index('\n'.ord.to_u8, @buffer_rem_size)
+        endl = @buffer_rem.as_enumerable(@buffer_rem_size).index('\n'.ord.to_u8)
         if endl
           buffer << String.new(@buffer_rem as UInt8*, endl + 1)
           @buffer_rem_size -= (endl + 1)

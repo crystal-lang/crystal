@@ -7,6 +7,9 @@
 * Made the compiler a bit faster
 * Added `env` in macros, to fetch an environment value. Returns a StringLiteral if found or NilLiteral if not.
 * Make `return 1, 2` be the same as `return {1, 2}`. Same goes with `break` and `next`.
+* Added `Pointer#as_enumerable(size : Int)` to create an `Enumerable` from a Pointer with an associated size, with zero overhead. Some methods removed from `Pointer`: `each`, `map`, `to_a`, `index`.
+* Added `StaticArray::new`, `StaticArray::new(value)`, `StaticArray::new(&block)`, `StaticArray#shuffle!` and `StaticArray#map!`.
+* Faster `Char#to_s(io : IO)`
 
 ## 0.3.3 (2014-07-14)
 

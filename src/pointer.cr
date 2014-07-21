@@ -59,29 +59,22 @@ class Pointer(T)
     end
   end
 
-  def each(count)
-    count.times do |i|
-      yield self[i]
-    end
-  end
-
-  def map(count, &block : T -> U)
-    Array(U).new(count) { |i| yield self[i] }
-  end
-
-  def to_a(length)
-    map(length) { |elem| elem }
-  end
-
-  def index(value : T, length)
-    length.times do |i|
-      return i if self[i] == value
-    end
-    nil
-  end
-
   def realloc(size : Int)
     realloc(size.to_u64)
+  end
+
+  def shuffle!(size : Int)
+    (size - 1).downto(1) do |i|
+      j = rand(i + 1)
+      swap(i, j)
+    end
+    self
+  end
+
+  def map!(size : Int)
+    size.times do |i|
+      self[i] = yield self[i]
+    end
   end
 
   def self.null
@@ -112,6 +105,23 @@ class Pointer(T)
 
   def appender
     PointerAppender.new(self)
+  end
+
+  def as_enumerable(size)
+    PointerEnumerable.new(self, size)
+  end
+
+  struct PointerEnumerable(T)
+    include Enumerable(T)
+
+    def initialize(@pointer : Pointer(T), @size)
+    end
+
+    def each
+      @size.times do |i|
+        yield @pointer[i]
+      end
+    end
   end
 end
 

@@ -145,8 +145,12 @@ struct Char
   end
 
   def to_s(io : IO)
+    chars :: UInt8[4]
+    i = 0
     each_byte do |byte|
-      io.write_byte byte
+      chars[i] = byte
+      i += 1
     end
+    io.write chars.buffer, i
   end
 end

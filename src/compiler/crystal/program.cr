@@ -372,6 +372,7 @@ module Crystal
     getter :string
     getter :symbol
     getter :pointer
+    getter :static_array
     getter :exception
     getter :tuple
     getter :function

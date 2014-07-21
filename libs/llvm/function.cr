@@ -57,7 +57,7 @@ struct LLVM::Function
     param_count = LibLLVM.count_param_types(type)
     param_types = Pointer(LibLLVM::TypeRef).malloc(param_count)
     LibLLVM.get_param_types(type, param_types)
-    param_types.to_a(param_count.to_i)
+    param_types.as_enumerable(param_count.to_i).to_a
   end
 
   def varargs?

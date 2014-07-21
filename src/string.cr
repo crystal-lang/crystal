@@ -608,7 +608,7 @@ class String
   end
 
   def each_byte
-    cstr.each(length) do |byte|
+    cstr.as_enumerable(length).each do |byte|
       yield byte
     end
     self

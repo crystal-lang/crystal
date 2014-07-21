@@ -18,8 +18,8 @@ describe "Pointer" do
 
   it "does index with count" do
     p1 = Pointer.malloc(4) { |i| i ** 2 }
-    p1.index(4, 4).should eq(2)
-    p1.index(5, 4).should be_nil
+    p1.as_enumerable(4).index(4).should eq(2)
+    p1.as_enumerable(4).index(5).should be_nil
   end
 
   describe "memcpy" do
@@ -75,5 +75,24 @@ describe "Pointer" do
   it "does to_s" do
     Pointer(Int32).null.to_s.should eq("Pointer(Int32).null")
     Pointer(Int32).new(1234_u64).to_s.should eq("Pointer(Int32)@4d2")
+  end
+
+  it "shuffles!" do
+    a = Pointer(Int32).malloc(3) { |i| i + 1}
+    a.shuffle!(3)
+
+    (a[0] + a[1] + a[2]).should eq(6)
+
+    3.times do |i|
+      a.as_enumerable(3).includes?(i + 1).should be_true
+    end
+  end
+
+  it "maps!" do
+    a = Pointer(Int32).malloc(3) { |i| i + 1}
+    a.map!(3) { |i| i + 1 }
+    a[0].should eq(2)
+    a[1].should eq(3)
+    a[2].should eq(4)
   end
 end

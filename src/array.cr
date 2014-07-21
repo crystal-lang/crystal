@@ -304,9 +304,7 @@ class Array(T)
   end
 
   def map!
-    length.times do |i|
-      @buffer[i] = yield @buffer[i]
-    end
+    @buffer.map!(length) { |e| yield e }
     self
   end
 
@@ -575,10 +573,7 @@ class Array(T)
   end
 
   def shuffle!
-    (length - 1).downto(1) do |i|
-      j = rand(i + 1)
-      @buffer.swap(i, j)
-    end
+    @buffer.shuffle!(length)
     self
   end
 

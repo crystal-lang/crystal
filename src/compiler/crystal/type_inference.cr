@@ -1798,6 +1798,8 @@ module Crystal
         node.type = scope
       when :pointer_add
         node.type = scope
+      when :static_array_new
+        visit_static_array_new node
       when :argc
         node.type = @mod.int32
       when :argv
@@ -1924,6 +1926,14 @@ module Crystal
     def visit_pointer_new(node)
       if scope.instance_type.is_a?(GenericClassType)
         node.raise "can't create pointer without type, use Pointer(Type).new(address)"
+      end
+
+      node.type = scope.instance_type
+    end
+
+    def visit_static_array_new(node)
+      if scope.instance_type.is_a?(GenericClassType)
+        node.raise "can't create static array without type and length, use StaticArray(Type, Length).new"
       end
 
       node.type = scope.instance_type

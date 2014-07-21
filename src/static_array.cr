@@ -1,6 +1,18 @@
 struct StaticArray(T, N)
   include Enumerable(T)
 
+  def self.new
+    array = new
+    N.times do |i|
+      array.buffer[i] = yield i
+    end
+    array
+  end
+
+  def self.new(value : T)
+    new { value }
+  end
+
   def each
     N.times do |i|
       yield buffer[i]
@@ -33,6 +45,16 @@ struct StaticArray(T, N)
     length.times do |i|
       buffer[i] = value
     end
+  end
+
+  def shuffle!
+    buffer.shuffle!(length)
+    self
+  end
+
+  def map!
+    buffer.map!(length) { |e| yield e }
+    self
   end
 
   def buffer
