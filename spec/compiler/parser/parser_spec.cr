@@ -422,26 +422,17 @@ describe "Parser" do
   it_parses "puts a unless true", Unless.new(true.bool, Call.new(nil, "puts", ["a".call] of ASTNode))
   it_parses "puts a while true", While.new(true.bool, Call.new(nil, "puts", ["a".call] of ASTNode), true)
 
-  it_parses "return", Return.new
-  it_parses "return;", Return.new
-  it_parses "return 1", Return.new(1.int32)
-  it_parses "return 1, 2", Return.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
-  it_parses "return 1 if true", If.new(true.bool, Return.new(1.int32))
-  it_parses "return if true", If.new(true.bool, Return.new)
-
-  it_parses "break", Break.new
-  it_parses "break;", Break.new
-  it_parses "break 1", Break.new(1.int32)
-  it_parses "break 1, 2", Break.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
-  it_parses "break 1 if true", If.new(true.bool, Break.new(1.int32))
-  it_parses "break if true", If.new(true.bool, Break.new)
-
-  it_parses "next", Next.new
-  it_parses "next;", Next.new
-  it_parses "next 1", Next.new(1.int32)
-  it_parses "next 1, 2", Next.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
-  it_parses "next 1 if true", If.new(true.bool, Next.new(1.int32))
-  it_parses "next if true", If.new(true.bool, Next.new)
+  { {"break", Break}, {"return", Return}, {"next", Next} }.each do |tuple|
+    keyword, klass = tuple
+    it_parses "#{keyword}", klass.new
+    it_parses "#{keyword};", klass.new
+    it_parses "#{keyword} 1", klass.new(1.int32)
+    it_parses "#{keyword} 1, 2", klass.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
+    it_parses "#{keyword} {1, 2}", klass.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode))
+    it_parses "#{keyword} {1 => 2}", klass.new(HashLiteral.new([1.int32] of ASTNode, [2.int32] of ASTNode))
+    it_parses "#{keyword} 1 if true", If.new(true.bool, klass.new(1.int32))
+    it_parses "#{keyword} if true", If.new(true.bool, klass.new)
+  end
 
   it_parses "yield", Yield.new
   it_parses "yield;", Yield.new

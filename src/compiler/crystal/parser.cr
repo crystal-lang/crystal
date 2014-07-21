@@ -2442,7 +2442,7 @@ module Crystal
 
     make_named_tuple CallArgs, [args, block, block_arg, stopped_on_do_after_space]
 
-    def parse_call_args(stop_on_do_after_space = false)
+    def parse_call_args(stop_on_do_after_space = false, allow_curly = false)
       case @token.type
       when :"{"
         @last_call_has_parenthesis = false
@@ -2503,7 +2503,7 @@ module Crystal
           return CallArgs.new nil, nil, nil, true
         end
 
-        parse_call_args_space_consumed
+        parse_call_args_space_consumed(true, allow_curly)
       else
         @last_call_has_parenthesis = false
         nil
@@ -2985,7 +2985,7 @@ module Crystal
     def parse_control_expression(klass)
       next_token
 
-      call_args = parse_call_args
+      call_args = parse_call_args(false, true)
       args = call_args.args if call_args
 
       location = @token.location
