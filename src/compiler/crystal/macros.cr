@@ -351,6 +351,8 @@ module Crystal
 
       def execute_special_call(node)
         case node.name
+        when "env"
+          execute_env(node)
         when "puts", "p"
           execute_puts(node)
         when "system"
@@ -361,6 +363,17 @@ module Crystal
           execute_run(node)
         else
           node.raise "unknown special macro call: '#{node.name}'"
+        end
+      end
+
+      def execute_env(node)
+        if node.args.length == 1
+          node.args[0].accept self
+          cmd = @last.to_macro_id
+          env_value = ENV[cmd]?
+          @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
+        else
+          node.raise "wrong number of arguments for macro call 'env' (#{node.args.length} for 1)"
         end
       end
 

@@ -5,6 +5,7 @@
 * Added a `generate_hash` macro that generates a `hash` methods based on some AST nodes.
 * Added very basic `previous_def`: similar to `super`, but uses the previous definition of a method. Useful to decorate existing methods (similar to `alias_method_chain`). For now the method's type restrictions must match for a previous definition to be found.
 * Made the compiler a bit faster
+* Added `env` in macros, to fetch an environment value. Returns a StringLiteral if found or NilLiteral if not.
 
 ## 0.3.3 (2014-07-14)
 

@@ -412,4 +412,17 @@ describe "MacroExpander" do
       end
     end
   end
+
+  describe "env" do
+    it "has key" do
+      ENV["FOO"] = "foo"
+      assert_macro "", %({{env("FOO")}}), [] of ASTNode, %("foo")
+      ENV.delete "FOO"
+    end
+
+    it "doesn't have key" do
+      ENV.delete "FOO"
+      assert_macro "", %({{env("FOO")}}), [] of ASTNode, %(nil)
+    end
+  end
 end
