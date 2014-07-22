@@ -218,7 +218,6 @@ module Crystal
               needs_new_scope = true
             when InstanceVar
               needs_new_scope = @def_nest == 0
-              @instance_vars.try &.add atomic.name
             else
               needs_new_scope = false
             end
@@ -789,6 +788,7 @@ module Crystal
         parse_ident
       when :INSTANCE_VAR
         name = @token.value.to_s
+        @instance_vars.try &.add name
         ivar = InstanceVar.new(name)
         next_token
         if @token.type == :"->"
@@ -796,7 +796,6 @@ module Crystal
         else
           skip_space
           if @token.type == :"::"
-            @instance_vars.try &.add name
             next_token_skip_space
             ivar_type = parse_single_type
             DeclareVar.new(ivar, ivar_type)

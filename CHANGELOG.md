@@ -1,3 +1,7 @@
+## Next
+
+* Fixed [#168](https://github.com/manastech/crystal/issues/168)
+
 ## 0.3.4 (2014-07-21)
 
 * Fixed [#165](https://github.com/manastech/crystal/issues/165): restrictions with generic types didn't work for hierarchy types.

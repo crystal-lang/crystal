@@ -350,4 +350,26 @@ describe "Code gen: class" do
       bar.x.to_i
       ").to_i.should eq(0)
   end
+
+  it "codegens bug #168" do
+    run("
+      class A
+        def foo
+          x = @x
+          if x
+            x.foo
+          else
+            1
+          end
+        end
+      end
+
+      class B < A
+        def initialize(@x)
+        end
+      end
+
+      B.new(A.new).foo
+      ").to_i.should eq(1)
+  end
 end

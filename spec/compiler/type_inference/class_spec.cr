@@ -595,4 +595,28 @@ describe "Type inference: class" do
       Foo(_).new
       ), "can't use underscore as generic type argument"
   end
+
+  it "types bug #168 (it inherits instance var even if not mentioned in initialize)" do
+    result = assert_type("
+      class A
+        def foo
+          x = @x
+          if x
+            x.foo
+          else
+            1
+          end
+        end
+      end
+
+      class B < A
+        def initialize(@x)
+        end
+      end
+
+      B.new(A.new).foo
+      ") { int32 }
+    b = result.program.types["B"] as InstanceVarContainer
+    b.instance_vars.length.should eq(0)
+  end
 end

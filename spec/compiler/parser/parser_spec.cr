@@ -741,7 +741,7 @@ describe "Parser" do
 
   it "keeps instance variables declared in def" do
     node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end") as Def
-    node.instance_vars.should eq(Set.new(["@x", "@y"]))
+    node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
   end
 
   it "keeps instance variables declared in def in multi-assign" do
