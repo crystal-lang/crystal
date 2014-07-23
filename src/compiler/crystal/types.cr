@@ -138,10 +138,6 @@ module Crystal
       self
     end
 
-    def hierarchify
-      self
-    end
-
     def instance_type
       self
     end
@@ -1106,14 +1102,6 @@ module Crystal
       @allocated = allocated
       if superclass = @superclass
         superclass.allocated = allocated
-      end
-    end
-
-    def hierarchify
-      if self.abstract
-        hierarchy_type
-      else
-        self
       end
     end
 
@@ -2418,9 +2406,9 @@ module Crystal
       end
     end
 
-    def hierarchify
-      if union_types.any? &.abstract
-        program.type_merge(union_types.map(&.hierarchify)).not_nil!
+    def hierarchy_type
+      if union_types.any? { |t| t.hierarchy_type != t }
+        program.type_merge(union_types.map(&.hierarchy_type)).not_nil!
       else
         self
       end

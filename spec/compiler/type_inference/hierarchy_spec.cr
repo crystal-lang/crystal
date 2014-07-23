@@ -530,25 +530,6 @@ describe "Type inference: hierarchy" do
   #     ") { |mod| union_of(mod.nil, int32, char) }
   # end
 
-  # it "marks all hierarchy as mutable" do
-  #   input = parse %q(
-  #     class Foo
-  #       def foo
-  #         @x = 1
-  #       end
-  #     end
-
-  #     class Bar < Foo
-  #     end
-
-  #     f = Foo.new || Bar.new
-  #     f.foo
-  #   )
-  #   mod, input = infer_type input
-  #   mod.types["Foo"].immutable.should be_false
-  #   mod.types["Bar"].immutable.should be_false
-  # end
-
   it "finds overloads of union of hierarchy, class and nil" do
     assert_type("
       class Foo
@@ -648,6 +629,9 @@ describe "Type inference: hierarchy" do
       abstract class Foo
       end
 
+      class Baz < Foo
+      end
+
       class Bar(T)
       end
 
@@ -657,5 +641,14 @@ describe "Type inference: hierarchy" do
         bar = types["Bar"] as GenericClassType
         bar.instantiate([union_of(foo.hierarchy_type, int32)] of Type | ASTNode)
       }
+  end
+
+  it "automatically does hierarchy for generic type if there are subclasses" do
+    assert_type("
+      class Foo; end
+      class Bar < Foo; end
+
+      Pointer(Foo).malloc(1_u64)
+      ") { pointer_of(types["Foo"].hierarchy_type) }
   end
 end
