@@ -74,21 +74,19 @@ class YamlParser
   end
 
   def parse_node
-    event = pointerof(@event)
-    case event->type
+    case @event.type
     when LibYaml::EventType::SCALAR
-      String.new(event->data->scalar->value).tap do |scalar|
+      String.new(@event.data.scalar.value).tap do |scalar|
         anchor scalar, &.scalar
       end
     when LibYaml::EventType::ALIAS
-      event = pointerof(@event)
-      @anchors[String.new(event->data->alias->anchor)]
+      @anchors[String.new(@event.data.alias.anchor)]
     when LibYaml::EventType::SEQUENCE_START
       parse_sequence
     when LibYaml::EventType::MAPPING_START
       parse_mapping
     else
-      raise "Unexpected event #{event_to_s(event->type)}"
+      raise "Unexpected event #{event_to_s(@event.type)}"
     end
   end
 

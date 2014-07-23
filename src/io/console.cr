@@ -180,12 +180,12 @@ class FileDescriptorIO
 
   def cooked!
     mode = Pointer(Termios::Struct).malloc 1_u64
-    mode->iflag = mode->iflag | Termios::IFlag::BRKINT |
+    mode.value.iflag = mode.value.iflag | Termios::IFlag::BRKINT |
                   Termios::IFlag::ISTRIP |
                   Termios::IFlag::ICRNL |
                   Termios::IFlag::IXON
-    mode->oflag = mode->oflag | Termios::OFlag::OPOST
-    mode->lflag = mode->lflag | Termios::LFlag::ECHO |
+    mode.value.oflag = mode.value.oflag | Termios::OFlag::OPOST
+    mode.value.lflag = mode.value.lflag | Termios::LFlag::ECHO |
                   Termios::LFlag::ECHOE |
                   Termios::LFlag::ECHOK |
                   Termios::LFlag::ECHONL |

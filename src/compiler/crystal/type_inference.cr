@@ -1966,9 +1966,6 @@ module Crystal
               meta_var
             when InstanceVar
               lookup_instance_var node_exp
-            when IndirectRead
-              node_exp.accept self
-              visit_indirect(node_exp)
             else
               node.raise "can't take address of #{node}"
             end
@@ -2152,58 +2149,6 @@ module Crystal
       end
 
       @vars = after_vars
-    end
-
-    def end_visit(node : IndirectRead)
-      var = visit_indirect(node)
-      node.bind_to var
-    end
-
-    def end_visit(node : IndirectWrite)
-      var = visit_indirect(node)
-      if var.type != node.value.type
-        unless node.value.type.is_implicitly_converted_in_c_to?(var.type)
-          type = node.obj.type as PointerInstanceType
-          node.raise "field '#{node.names.join "->"}' of struct #{type.element_type} has type #{var.type}, not #{node.value.type}"
-        end
-      end
-
-      node.bind_to node.value
-    end
-
-    def visit_indirect(node)
-      type = node.obj.type
-      if type.is_a?(PointerInstanceType)
-        element_type = type.element_type
-        var = nil
-        node.names.each do |name|
-          # TOOD remove duplicate code
-          case element_type
-          when CStructType
-            var = element_type.vars[name]?
-            if var
-              var_type = var.type
-              element_type = var_type
-            else
-              node.raise "#{element_type.type_desc} #{element_type} has no field '#{name}'"
-            end
-          when CUnionType
-            var = element_type.vars[name]?
-            if var
-              var_type = var.type
-              element_type = var_type
-            else
-              node.raise "#{element_type.type_desc} #{element_type} has no field '#{name}'"
-            end
-          else
-            node.raise "#{element_type.type_desc} is not a struct or union, it's a #{element_type}"
-          end
-        end
-
-        return var.not_nil!
-      end
-
-      node.raise "#{type} is not a pointer to a struct or union, it's a #{type.type_desc} #{type}"
     end
 
     def end_visit(node : TupleLiteral)

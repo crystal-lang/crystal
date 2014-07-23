@@ -103,14 +103,14 @@ describe "Code gen: pointer" do
       end
 
       color = Pointer(C::Color).malloc(1_u64)
-      color->r = 10_u8
+      color.value.r = 10_u8
 
       color2 = Pointer(C::Color).malloc(1_u64)
-      color2->r = 20_u8
+      color2.value.r = 20_u8
 
       color.value = color2.value
 
-      color->r
+      color.value.r
       ").to_i.should eq(20)
   end
 

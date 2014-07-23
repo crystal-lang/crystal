@@ -53,7 +53,7 @@ class TCPSocket < FileDescriptorIO
 
     addr = C::SockAddrIn.new
     addr.family = C::AF_INET
-    addr.addr = (server->addrlist[0] as UInt32*).value
+    addr.addr = (server.value.addrlist[0] as UInt32*).value
     addr.port = C.htons(port)
 
     if C.connect(sock, pointerof(addr), 16) != 0

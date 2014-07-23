@@ -790,18 +790,13 @@ module Crystal
         name = @token.value.to_s
         @instance_vars.try &.add name
         ivar = InstanceVar.new(name)
-        next_token
-        if @token.type == :"->"
-          parse_indirect(ivar)
+        next_token_skip_space
+        if @token.type == :"::"
+          next_token_skip_space
+          ivar_type = parse_single_type
+          DeclareVar.new(ivar, ivar_type)
         else
-          skip_space
-          if @token.type == :"::"
-            next_token_skip_space
-            ivar_type = parse_single_type
-            DeclareVar.new(ivar, ivar_type)
-          else
-            ivar
-          end
+          ivar
         end
       when :CLASS_VAR
         node_and_next_token ClassVar.new(@token.value.to_s)
@@ -2287,12 +2282,6 @@ module Crystal
 
       next_token
 
-      if @token.type == :"->" && is_var
-        var = Var.new(name)
-        var.location = location
-        return parse_indirect(var)
-      end
-
       @calls_super = true if name == "super"
 
       old_last_call_has_parenthesis = @last_call_has_parenthesis
@@ -2353,34 +2342,6 @@ module Crystal
             Call.new nil, name, [] of ASTNode, nil, block_arg, global, name_column_number, last_call_has_parenthesis
           end
         end
-      end
-    end
-
-    def parse_indirect(obj)
-      next_token
-
-      names = [] of String
-
-      while true
-        check :IDENT
-        names << @token.value.to_s
-        next_token
-
-        if @token.type == :"->"
-          next_token
-        else
-          break
-        end
-      end
-
-      skip_space
-
-      if @token.type == :"="
-        next_token_skip_space_or_newline
-        value = parse_op_assign
-        IndirectWrite.new(obj, names, value)
-      else
-        IndirectRead.new(obj, names)
       end
     end
 

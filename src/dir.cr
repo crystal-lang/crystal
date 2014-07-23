@@ -59,7 +59,7 @@ class Dir
 
     begin
       while ent = C.readdir(dir)
-        yield String.new((ent->name).buffer), ent.value.type
+        yield String.new(ent.value.name.buffer), ent.value.type
       end
     ensure
       C.closedir(dir)

@@ -689,12 +689,6 @@ describe "Parser" do
 
   it_parses "alias Foo = Bar", Alias.new("Foo", "Bar".path)
 
-  it_parses "foo = 1; foo->bar->baz->coco", [Assign.new("foo".var, 1.int32), IndirectRead.new("foo".var, ["bar", "baz", "coco"])] of ASTNode
-  it_parses "foo = 1; foo->bar->baz->coco = 1", [Assign.new("foo".var, 1.int32), IndirectWrite.new("foo".var, ["bar", "baz", "coco"], 1.int32)] of ASTNode
-
-  it_parses "@foo->bar->baz->coco", IndirectRead.new("@foo".instance_var, ["bar", "baz", "coco"])
-  it_parses "@foo->bar->baz->coco = 1", IndirectWrite.new("@foo".instance_var, ["bar", "baz", "coco"], 1.int32)
-
   it_parses "def foo\n1\nend\nif 1\nend", [Def.new("foo", [] of Arg, 1.int32), If.new(1.int32)] of ASTNode
 
   it_parses "1 as Bar", Cast.new(1.int32, "Bar".path)

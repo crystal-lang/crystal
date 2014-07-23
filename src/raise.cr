@@ -127,15 +127,15 @@ fun __crystal_raise(unwind_ex : ABI::UnwindException*) : NoReturn
 end
 
 fun __crystal_get_exception(unwind_ex : ABI::UnwindException*) : UInt64
-  unwind_ex->exception_object
+  unwind_ex.value.exception_object
 end
 
 def raise(ex : Exception)
   unwind_ex = Pointer(ABI::UnwindException).malloc(1)
-  unwind_ex->exception_class = 0.to_sizet
-  unwind_ex->exception_cleanup = 0.to_sizet
-  unwind_ex->exception_object = ex.object_id
-  unwind_ex->exception_type_id = ex.crystal_type_id
+  unwind_ex.value.exception_class = 0.to_sizet
+  unwind_ex.value.exception_cleanup = 0.to_sizet
+  unwind_ex.value.exception_object = ex.object_id
+  unwind_ex.value.exception_type_id = ex.crystal_type_id
   __crystal_raise(unwind_ex)
 end
 

@@ -25,14 +25,6 @@ describe "Type inference: struct" do
     assert_type("lib Foo; struct Bar; x : Int32; y : Float64; end; end; bar = Foo::Bar.new; bar.x") { int32 }
   end
 
-  it "types struct setter via malloc" do
-    assert_type("lib Foo; struct Bar; x : Int32; y : Float64; end; end; bar = Pointer(Foo::Bar).malloc(1_u64); bar->x = 1") { int32 }
-  end
-
-  it "types struct getter via malloc" do
-    assert_type("lib Foo; struct Bar; x : Int32; y : Float64; end; end; bar = Pointer(Foo::Bar).malloc(1_u64); bar->x") { int32 }
-  end
-
   it "types struct getter to struct" do
     assert_type("
       lib Foo
@@ -44,7 +36,7 @@ describe "Type inference: struct" do
         end
       end
       bar = Pointer(Foo::Bar).malloc(1_u64)
-      bar->x
+      bar.value.x
     ") { types["Foo"].types["Baz"] }
   end
 
@@ -59,7 +51,7 @@ describe "Type inference: struct" do
         end
       end
       bar = Pointer(Foo::Bar).malloc(1_u64)
-      bar->x->y
+      bar.value.x.y
     ") { int32 }
   end
 
@@ -78,26 +70,12 @@ describe "Type inference: struct" do
   end
 
   it "errors on struct setter if different type via new" do
-    assert_error "lib Foo; struct Bar; x : Int32; end; end; f = Pointer(Foo::Bar).malloc(1_u64); f->x = 'a'",
+    assert_error "lib Foo; struct Bar; x : Int32; end; end; f = Pointer(Foo::Bar).malloc(1_u64); f.value.x = 'a'",
       "field 'x' of struct Foo::Bar has type Int32, not Char"
   end
 
   it "types struct getter on pointer type" do
     assert_type("lib Foo; struct Bar; x : Int32*; end; end; b = Foo::Bar.new; b.x") { pointer_of(int32) }
-  end
-
-  it "types pointerof to indirect read" do
-    assert_type("
-      lib Foo
-        struct Bar
-          x : Int32
-          y : Float64
-        end
-      end
-
-      f = Pointer(Foo::Bar).malloc(1_u64)
-      pointerof(f->y)
-      ") { pointer_of(float64) }
   end
 
   it "errors if setting closure" do

@@ -291,8 +291,6 @@ module Crystal
                 context.vars[node_exp.name].pointer
               when InstanceVar
                 instance_var_ptr (context.type as InstanceVarContainer), node_exp.name, llvm_self_ptr
-              when IndirectRead
-                visit_indirect(node_exp)[0]
               else
                 raise "Bug: pointerof(#{node})"
               end
@@ -998,70 +996,6 @@ module Crystal
       end
 
       false
-    end
-
-    def visit(node : IndirectRead)
-      ptr, var = visit_indirect(node)
-      ptr = cast_to_pointer ptr, node.type
-      @last = to_lhs ptr, node.type
-
-      false
-    end
-
-    def visit(node : IndirectWrite)
-      ptr, var = visit_indirect(node)
-
-      if var.type.fun?
-        ptr = bit_cast(ptr, pointer_type(llvm_fun_type(var.type)))
-      else
-        ptr = cast_to_pointer ptr, node.value.type
-      end
-
-      accept node.value
-
-      if var.type.fun?
-        last_value = @last
-        value = check_fun_is_not_closure(@last, var.type)
-        store value, ptr
-        @last = last_value
-      else
-        @last = to_rhs @last, node.value.type
-        store @last, ptr
-      end
-
-      false
-    end
-
-    def visit_indirect(node)
-      indices = [int32(0)]
-
-      type = node.obj.type as PointerInstanceType
-
-      element_type = type.element_type
-
-      var = nil
-
-      node.names.each do |name|
-        case element_type
-        when CStructType
-          index = element_type.vars.key_index(name).not_nil!
-          var = element_type.vars[name]
-
-          indices << int32(index)
-          element_type = var.type
-        when CUnionType
-          var = element_type.vars[name]
-
-          indices << int32(0)
-          element_type = var.type
-        else
-          node.raise "Bug: #{node} had a wrong type (#{element_type})"
-        end
-      end
-
-      accept node.obj
-
-      {@builder.inbounds_gep(@last, indices), var.not_nil!}
     end
 
     def visit(node : Call)

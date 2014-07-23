@@ -1115,26 +1115,6 @@ module Crystal
       false
     end
 
-    def visit(node : IndirectRead)
-      node.obj.accept self
-      node.names.each do |name|
-        @str << "->"
-        @str << name
-      end
-      false
-    end
-
-    def visit(node : IndirectWrite)
-      node.obj.accept self
-      node.names.each do |name|
-        @str << "->"
-        @str << name
-      end
-      @str << " = "
-      node.value.accept self
-      false
-    end
-
     def visit(node : TypeOf)
       @str << keyword("typeof")
       @str << "("

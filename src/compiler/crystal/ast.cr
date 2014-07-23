@@ -1908,53 +1908,6 @@ module Crystal
     generate_hash [@name, @value]
   end
 
-  class IndirectRead < ASTNode
-    property :obj
-    property :names
-
-    def initialize(@obj, @names)
-    end
-
-    def accept_children(visitor)
-      @obj.accept visitor
-    end
-
-    def ==(other : self)
-      @obj == other.obj && @names == other.names
-    end
-
-    def clone_without_location
-      IndirectRead.new(@obj.clone, @names)
-    end
-
-    generate_hash [@obj, @names]
-  end
-
-  class IndirectWrite < IndirectRead
-    property :value
-
-    def initialize(obj, names, @value)
-      super(obj, names)
-    end
-
-    def accept_children(visitor)
-      @obj.accept visitor
-      @value.accept visitor
-    end
-
-    def ==(other : self)
-      @obj == other.obj && @names == other.names && @value == other.value
-    end
-
-    def clone_without_location
-      IndirectWrite.new(@obj.clone, @names, @value.clone)
-    end
-
-    def hash
-      value.hash
-    end
-  end
-
   class Metaclass < ASTNode
     property :name
 

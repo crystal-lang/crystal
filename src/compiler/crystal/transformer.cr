@@ -460,17 +460,6 @@ module Crystal
       node
     end
 
-    def transform(node : IndirectRead)
-      node.obj = node.obj.transform(self)
-      node
-    end
-
-    def transform(node : IndirectWrite)
-      node.obj = node.obj.transform(self)
-      node.value = node.value.transform(self)
-      node
-    end
-
     def transform(node : TypeOf)
       transform_many node.expressions
       node
