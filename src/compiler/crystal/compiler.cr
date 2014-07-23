@@ -353,29 +353,24 @@ module Crystal
     def lib_flags(mod)
       libs = mod.library_names
       String.build do |flags|
-        commands = [] of String
         if libs.length > 0
-          flags << " -Wl"
-          libs.each do |libname|
+          libs.reverse_each do |libname|
             if libname =~ /^`(.*)`$/
-              commands << $1
-            else
-              flags << ",-l"
-              flags << libname
-            end
-          end
-        end
-        commands.each do |cmd|
-          if @cross_compile
-            flags << " `#{cmd} | tr '\\n' ' '`"
-          else
-            cmdout = system2(cmd)
-            if $exit == 0
-              cmdout.each do |cmdoutline|
-                flags << " #{cmdoutline}"
+              cmd = $1
+              if @cross_compile
+                flags << " `#{cmd} | tr '\\n' ' '`"
+              else
+                cmdout = system2(cmd)
+                if $exit == 0
+                  cmdout.each do |cmdoutline|
+                    flags << " #{cmdoutline}"
+                  end
+                else
+                  raise "Error executing command: #{cmd}"
+                end
               end
             else
-              raise "Error executing command: #{cmd}"
+              flags << " -l" << libname
             end
           end
         end
@@ -434,8 +429,7 @@ module Crystal
             system "#{compiler.llc} #{bc_name_opt} -o #{s_name} #{compiler.llc_flags}"
             system "#{compiler.clang} -c #{s_name} -o #{o_name}"
           elsif compiler.uses_gcc
-            system "#{compiler.llc} #{bc_name} -o #{s_name} #{compiler.llc_flags}"
-            system "#{compiler.clang} -c #{s_name} -o #{o_name}"
+            system "#{compiler.llc} #{bc_name} -filetype=obj -o #{o_name} #{compiler.llc_flags}"
           else
             system "#{compiler.clang} -c #{bc_name} -o #{o_name}"
           end

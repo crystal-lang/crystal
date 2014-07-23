@@ -1,7 +1,7 @@
 lib StdCpp("stdc++")
 end
 
-lib LibLLVM("`llvm-config --libs --ldflags`")
+lib LibLLVM("`llvm-config --libs; llvm-config --ldflags`")
   type ContextRef : Void*
   type ModuleRef : Void*
   type TypeRef : Void*
