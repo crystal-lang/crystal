@@ -8,8 +8,8 @@ module Crystal
   class Compiler
     include Crystal
 
-    DarwinDataLayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
-    LinuxDataLayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
+    DataLayout32 = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
+    DataLayout64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
     getter config
     getter llc
@@ -232,11 +232,10 @@ module Crystal
           compilation_unit_bc_name = "#{output_filename}.bc"
           compilation_unit_s_name = "#{output_filename}.s"
 
-          case program
-          when .has_flag?("darwin")
-            compilation_unit.llvm_mod.data_layout = DarwinDataLayout
-          when .has_flag?("linux")
-            compilation_unit.llvm_mod.data_layout = LinuxDataLayout
+          if program.has_flag?("x86_64")
+            compilation_unit.llvm_mod.data_layout = DataLayout64
+          else
+            compilation_unit.llvm_mod.data_layout = DataLayout32
           end
 
           compilation_unit.write_bitcode compilation_unit_bc_name
@@ -274,10 +273,10 @@ module Crystal
               Thread.new do
                 while unit = mutex.synchronize { units.shift? }
                   unit.llvm_mod.target = @config.host_target
-                  ifdef darwin
-                    unit.llvm_mod.data_layout = DarwinDataLayout
-                  elsif linux
-                    unit.llvm_mod.data_layout = LinuxDataLayout
+                  ifdef x86_64
+                    unit.llvm_mod.data_layout = DataLayout64
+                  else
+                    unit.llvm_mod.data_layout = DataLayout32
                   end
                   unit.write_bitcode if multithreaded
                   unit.compile
