@@ -260,7 +260,7 @@ module Crystal
       node
     end
 
-    def transform(node : Hierarchy)
+    def transform(node : Virtual)
       node.name = node.name.transform(self)
       node
     end

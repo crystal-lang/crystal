@@ -191,7 +191,7 @@ describe "Codegen: is_a?" do
       ").to_i.should eq(1)
   end
 
-  it "codegens is_a? with hierarchy" do
+  it "codegens is_a? with virtual" do
     run("
       class Foo
       end
@@ -204,7 +204,7 @@ describe "Codegen: is_a?" do
       ").to_i.should eq(1)
   end
 
-  it "codegens is_a? with hierarchy and nil" do
+  it "codegens is_a? with virtual and nil" do
     run("
       class Foo
       end
@@ -217,7 +217,7 @@ describe "Codegen: is_a?" do
       ").to_i.should eq(1)
   end
 
-  it "codegens is_a? with hierarchy and module" do
+  it "codegens is_a? with virtual and module" do
     run("
       module Bar
       end
@@ -300,7 +300,7 @@ describe "Codegen: is_a?" do
       ").to_i.should eq(2)
   end
 
-  it "does is_a? with more strict hierarchy type" do
+  it "does is_a? with more strict virtual type" do
     run("
       class Foo
       end
@@ -352,7 +352,7 @@ describe "Codegen: is_a?" do
       ").to_i.should eq(2)
   end
 
-  it "codegens is_a? from hierarchy type to module" do
+  it "codegens is_a? from virtual type to module" do
     run("
       module Moo
       end

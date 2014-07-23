@@ -184,7 +184,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("y")
   end
 
-  it "expands def macro with @instance_vars with hierarchy" do
+  it "expands def macro with @instance_vars with virtual" do
     run(%(
       class Reference
         macro def to_s : String
@@ -238,7 +238,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands def macro with @class_name with hierarchy" do
+  it "expands def macro with @class_name with virtual" do
     run(%(
       class Reference
         macro def to_s : String
@@ -256,7 +256,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar")
   end
 
-  it "expands def macro with @class_name with hierarchy (2)" do
+  it "expands def macro with @class_name with virtual (2)" do
     run(%(
       class Reference
         macro def to_s : String
@@ -344,7 +344,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(1)
   end
 
-  it "expands @class_name in hierarchy metaclass (1)" do
+  it "expands @class_name in virtual metaclass (1)" do
     run(%(
       class Class
         macro def to_s : String
@@ -365,7 +365,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Foo:Class")
   end
 
-  it "expands @class_name in hierarchy metaclass (2)" do
+  it "expands @class_name in virtual metaclass (2)" do
     run(%(
       class Class
         macro def to_s : String

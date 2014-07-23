@@ -43,7 +43,7 @@ describe "Type inference: pointer" do
       a = Pointer(Object).malloc(1_u64)
       a.value = 1
       a.value
-    ") { union_of(object.hierarchy_type, int32) }
+    ") { union_of(object.virtual_type, int32) }
   end
 
   it "can't do Pointer.malloc without type var" do

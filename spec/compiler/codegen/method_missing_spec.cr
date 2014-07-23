@@ -68,7 +68,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(3)
   end
 
-  it "does method_missing macro with hierarchy type (1)" do
+  it "does method_missing macro with virtual type (1)" do
     run(%(
       class Foo
         macro method_missing(name, args, block)
@@ -84,7 +84,7 @@ describe "Code gen: method_missing" do
       )).to_string.should eq("Foococo")
   end
 
-  it "does method_missing macro with hierarchy type (2)" do
+  it "does method_missing macro with virtual type (2)" do
     run(%(
       class Foo
         macro method_missing(name, args, block)
@@ -100,7 +100,7 @@ describe "Code gen: method_missing" do
       )).to_string.should eq("Barcoco")
   end
 
-  it "does method_missing macro with hierarchy type (3)" do
+  it "does method_missing macro with virtual type (3)" do
     run(%(
       class Foo
         def lala
@@ -120,7 +120,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(1)
   end
 
-  it "does method_missing macro with hierarchy type (4)" do
+  it "does method_missing macro with virtual type (4)" do
     run(%(
       class Foo
         macro method_missing(name, args, block)
@@ -139,7 +139,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(2)
   end
 
-  it "does method_missing macro with hierarchy type (5)" do
+  it "does method_missing macro with virtual type (5)" do
     run(%(
       class Foo
         macro method_missing(name, args, block)
@@ -164,7 +164,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(3)
   end
 
-  it "does method_missing macro with hierarchy type (6)" do
+  it "does method_missing macro with virtual type (6)" do
     run(%(
       abstract class Foo
       end
@@ -186,7 +186,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(2)
   end
 
-  it "does method_missing macro with hierarchy type (7)" do
+  it "does method_missing macro with virtual type (7)" do
     run(%(
       abstract class Foo
       end
@@ -208,7 +208,7 @@ describe "Code gen: method_missing" do
       )).to_i.should eq(3)
   end
 
-  it "does method_missing macro with hierarchy type (8)" do
+  it "does method_missing macro with virtual type (8)" do
     run(%(
       class Foo
         macro method_missing(name, args, block)

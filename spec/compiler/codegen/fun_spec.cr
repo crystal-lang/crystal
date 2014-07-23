@@ -71,7 +71,7 @@ describe "Code gen: fun" do
       ")
   end
 
-  it "codegens fun that returns a hierarchy type" do
+  it "codegens fun that returns a virtual type" do
     run("
       class Foo
         def coco; 1; end

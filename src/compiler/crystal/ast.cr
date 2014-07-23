@@ -1516,7 +1516,7 @@ module Crystal
     end
   end
 
-  class Hierarchy < ASTNode
+  class Virtual < ASTNode
     property :name
 
     def initialize(@name)
@@ -1531,7 +1531,7 @@ module Crystal
     end
 
     def clone_without_location
-      Hierarchy.new(@name.clone)
+      Virtual.new(@name.clone)
     end
 
     def hash

@@ -620,7 +620,7 @@ module Crystal
         # when converting a block to a fun literal
         if restriction = arg.restriction
           restriction.accept self
-          arg.type = restriction.type.instance_type.hierarchy_type
+          arg.type = restriction.type.instance_type.virtual_type
         elsif !arg.type?
           arg.raise "function argument '#{arg.name}' must have a type"
         end
@@ -1489,12 +1489,12 @@ module Crystal
       node.type = @mod.type_merge(node.types.map &.type.instance_type)
     end
 
-    def end_visit(node : Hierarchy)
-      node.type = check_type_in_type_args node.name.type.instance_type.hierarchy_type
+    def end_visit(node : Virtual)
+      node.type = check_type_in_type_args node.name.type.instance_type.virtual_type
     end
 
     def end_visit(node : Metaclass)
-      node.type = node.name.type.hierarchy_type.metaclass
+      node.type = node.name.type.virtual_type.metaclass
     end
 
     def check_type_in_type_args(type)
@@ -1892,7 +1892,7 @@ module Crystal
         node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
       end
 
-      if !instance_type.hierarchy? && instance_type.abstract
+      if !instance_type.virtual? && instance_type.abstract
         node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
       end
 
@@ -2019,9 +2019,9 @@ module Crystal
 
         if types
           unified_type = @mod.type_merge(types).not_nil!
-          unified_type = unified_type.hierarchy_type unless unified_type.is_a?(HierarchyType)
+          unified_type = unified_type.virtual_type unless unified_type.is_a?(VirtualType)
         else
-          unified_type = @mod.exception.hierarchy_type
+          unified_type = @mod.exception.virtual_type
         end
         var.set_type(unified_type)
         var.freeze_type = true

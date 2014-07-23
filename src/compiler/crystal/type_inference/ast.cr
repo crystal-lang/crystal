@@ -241,7 +241,7 @@ module Crystal
         else
           node_type = node.type?
           self.raise "can't deduce generic type in recursive method" unless node_type
-          type_vars_types << node_type.hierarchy_type
+          type_vars_types << node_type.virtual_type
         end
       end
 

@@ -2845,7 +2845,7 @@ module Crystal
           next_token_skip_space
           type = make_static_array_type(type, size)
         when :"+"
-          type = Hierarchy.new(type)
+          type = Virtual.new(type)
           next_token_skip_space
         when :"."
           next_token

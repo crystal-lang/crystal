@@ -29,7 +29,7 @@ describe "Type inference: struct" do
     end
   end
 
-  it "doesn't allow struct to participate in hierarchy" do
+  it "doesn't allow struct to participate in virtual" do
     assert_type("
       struct Foo
       end

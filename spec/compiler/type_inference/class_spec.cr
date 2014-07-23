@@ -168,7 +168,7 @@ describe "Type inference: class" do
       end
 
       a = Foo.new || Bar.new
-      ") { types["Foo"].hierarchy_type }
+      ") { types["Foo"].virtual_type }
   end
 
   it "types class and subclass as one type" do
@@ -183,7 +183,7 @@ describe "Type inference: class" do
       end
 
       a = Bar.new || Baz.new
-      ") { types["Foo"].hierarchy_type }
+      ") { types["Foo"].virtual_type }
   end
 
   it "types class and subclass as one type" do
@@ -198,7 +198,7 @@ describe "Type inference: class" do
       end
 
       a = Foo.new || Bar.new || Baz.new
-      ") { types["Foo"].hierarchy_type }
+      ") { types["Foo"].virtual_type }
   end
 
   it "does automatic inference of new for generic types" do
@@ -569,7 +569,7 @@ describe "Type inference: class" do
       "wrong number of arguments for 'Bar#initialize' (1 for 2)"
   end
 
-  it "doesn't use initialize from base class with hierarchy type" do
+  it "doesn't use initialize from base class with virtual type" do
     assert_error %(
       class Foo
         def initialize(x)

@@ -58,13 +58,13 @@ describe "Cast" do
     end
   end
 
-  it "casts from hierarchy to single type" do
+  it "casts from virtual to single type" do
     a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new
     b = a as CastSpecBar
     b.bar.should eq(1)
   end
 
-  it "casts from hierarchy to single type raises" do
+  it "casts from virtual to single type raises" do
     a = CastSpecBar.new || CastSpecFoo.new || CastSpecBaz.new
     expect_raises Exception, "type cast exception" do
       a as CastSpecBaz

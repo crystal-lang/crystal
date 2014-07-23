@@ -669,7 +669,7 @@ module Crystal
       false
     end
 
-    def visit(node : Hierarchy)
+    def visit(node : Virtual)
       node.name.accept self
       @str << "+"
       false

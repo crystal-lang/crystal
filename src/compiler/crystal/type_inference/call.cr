@@ -106,10 +106,10 @@ module Crystal
       matches ||= owner.lookup_matches(def_name, arg_types, block)
 
       if matches.empty?
-        if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.hierarchy?) && !owner.instance_type.pointer?
+        if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.virtual?) && !owner.instance_type.pointer?
           new_matches = define_new owner, arg_types
           unless new_matches.empty?
-            if owner.hierarchy_metaclass?
+            if owner.virtual_metaclass?
               matches = owner.lookup_matches(def_name, arg_types, block)
             else
               matches = new_matches
@@ -122,7 +122,7 @@ module Crystal
       end
 
       if matches.empty? && owner.class? && owner.abstract
-        matches = owner.hierarchy_type.lookup_matches(def_name, arg_types, block)
+        matches = owner.virtual_type.lookup_matches(def_name, arg_types, block)
       end
 
       if matches.empty?
@@ -144,7 +144,7 @@ module Crystal
         parent_visitor.check_self_closured
       end
 
-      if owner.is_a?(HierarchyType)
+      if owner.is_a?(VirtualType)
         owner.base_type.add_subclass_observer(self)
         @subclass_notifier = owner.base_type
       end
@@ -230,7 +230,7 @@ module Crystal
       if match.def.abstract
         bubbling_exception do
           owner = match.context.owner
-          owner = owner.base_type if owner.is_a?(HierarchyType)
+          owner = owner.base_type if owner.is_a?(VirtualType)
           match.def.raise "abstract def #{match.def.owner}##{match.def.name} must be implemented by #{owner}"
         end
       end
@@ -289,7 +289,7 @@ module Crystal
       # TODO: do this better
       untyped_def = parent_visitor.untyped_def
       lookup = untyped_def.owner.not_nil!
-      if lookup.is_a?(HierarchyType)
+      if lookup.is_a?(VirtualType)
         parents = lookup.base_type.parents
       else
         parents = lookup.parents
@@ -407,7 +407,7 @@ module Crystal
           yield_vars = [] of Var
           inputs.each_with_index do |input, i|
             type = lookup_node_type(ident_lookup, input)
-            type = type.hierarchy_type
+            type = type.virtual_type
             yield_vars << Var.new("var#{i}", type)
           end
           block.args.each_with_index do |arg, i|
@@ -666,8 +666,8 @@ module Crystal
 
     def raise_matches_not_found(owner, def_name, matches = nil)
       # Special case: Foo+:Class#new
-      if owner.is_a?(HierarchyMetaclassType) && def_name == "new"
-        raise_matches_not_found_for_hierarchy_metaclass_new owner
+      if owner.is_a?(VirtualMetaclassType) && def_name == "new"
+        raise_matches_not_found_for_virtual_metaclass_new owner
       end
 
       defs = owner.lookup_defs(def_name)
@@ -785,7 +785,7 @@ module Crystal
       raise message, owner_trace
     end
 
-    def raise_matches_not_found_for_hierarchy_metaclass_new(owner)
+    def raise_matches_not_found_for_virtual_metaclass_new(owner)
       arg_types = args.map &.type
 
       owner.each_concrete_type do |concrete_type|
@@ -821,7 +821,7 @@ module Crystal
     def define_new(scope, arg_types)
       instance_type = scope.instance_type
 
-      if instance_type.is_a?(HierarchyType)
+      if instance_type.is_a?(VirtualType)
         matches = define_new_recursive(instance_type.base_type, arg_types)
         return Matches.new(matches, scope)
       end

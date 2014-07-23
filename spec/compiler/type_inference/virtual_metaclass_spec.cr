@@ -1,8 +1,8 @@
 #!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
-describe "Type inference: hierarchy metaclass" do
-  it "types hierarchy metaclass" do
+describe "Type inference: virtual metaclass" do
+  it "types virtual metaclass" do
     assert_type("
       class Foo
       end
@@ -12,10 +12,10 @@ describe "Type inference: hierarchy metaclass" do
 
       f = Foo.new || Bar.new
       f.class
-    ") { types["Foo"].hierarchy_type.metaclass }
+    ") { types["Foo"].virtual_type.metaclass }
   end
 
-  it "types hierarchy metaclass method" do
+  it "types virtual metaclass method" do
     assert_type("
       class Foo
         def self.foo
@@ -34,7 +34,7 @@ describe "Type inference: hierarchy metaclass" do
     ") { union_of(int32, float64) }
   end
 
-  it "allows allocating hierarchy type when base class is abstract" do
+  it "allows allocating virtual type when base class is abstract" do
     assert_type("
       abstract class Foo
       end
@@ -47,10 +47,10 @@ describe "Type inference: hierarchy metaclass" do
 
       bar = Bar.new || Baz.new
       baz = bar.class.allocate
-      ") { types["Foo"].hierarchy_type }
+      ") { types["Foo"].virtual_type }
   end
 
-  it "yields hierarchy type in block arg if class is abstract" do
+  it "yields virtual type in block arg if class is abstract" do
     assert_type("
       require \"prelude\"
 
@@ -78,7 +78,7 @@ describe "Type inference: hierarchy metaclass" do
 
       a = [Bar.new, Baz.new] of Foo
       b = a.map { |e| e.clone }
-      ") { array_of(types["Foo"].hierarchy_type) }
+      ") { array_of(types["Foo"].virtual_type) }
   end
 
   it "merges metaclass types" do
@@ -90,7 +90,7 @@ describe "Type inference: hierarchy metaclass" do
       end
 
       Foo || Bar
-      ") { types["Foo"].hierarchy_type.metaclass }
+      ") { types["Foo"].virtual_type.metaclass }
   end
 
   it "merges metaclass types with 3 types" do
@@ -105,7 +105,7 @@ describe "Type inference: hierarchy metaclass" do
       end
 
       Foo || Bar || Baz
-      ") { types["Foo"].hierarchy_type.metaclass }
+      ") { types["Foo"].virtual_type.metaclass }
   end
 
   it "types metaclass node" do
@@ -118,10 +118,10 @@ describe "Type inference: hierarchy metaclass" do
 
       a :: Foo.class
       a
-      ") { types["Foo"].hierarchy_type.metaclass }
+      ") { types["Foo"].virtual_type.metaclass }
   end
 
-  it "allows passing metaclass to hierarchy metaclass restriction" do
+  it "allows passing metaclass to virtual metaclass restriction" do
     assert_type("
       class Foo
       end
@@ -134,7 +134,7 @@ describe "Type inference: hierarchy metaclass" do
       ") { types["Foo"].metaclass }
   end
 
-  it "allows passing metaclass to hierarchy metaclass restriction" do
+  it "allows passing metaclass to virtual metaclass restriction" do
     assert_type("
       class Foo
       end

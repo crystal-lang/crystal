@@ -114,11 +114,11 @@ module Crystal
       false
     end
 
-    def hierarchy?
+    def virtual?
       false
     end
 
-    def hierarchy_metaclass?
+    def virtual_metaclass?
       false
     end
 
@@ -134,7 +134,7 @@ module Crystal
       false
     end
 
-    def hierarchy_type
+    def virtual_type
       self
     end
 
@@ -639,15 +639,15 @@ module Crystal
     def check_method_missing(name, arg_types, block)
       if !metaclass? && name != "initialize"
         # Make sure to define method missing in the whole hierarchy
-        hierarchy_type = hierarchy_type()
-        if hierarchy_type == self
+        virtual_type = virtual_type()
+        if virtual_type == self
           method_missing = lookup_method_missing
           if method_missing
             define_method_from_method_missing(method_missing, name, arg_types, block)
             return true
           end
         else
-          return hierarchy_type.check_method_missing(name, arg_types, block)
+          return virtual_type.check_method_missing(name, arg_types, block)
         end
       end
 
@@ -683,7 +683,7 @@ module Crystal
       a_def.yields = block.try &.args.length
 
       owner = self
-      owner = owner.base_type if owner.is_a?(HierarchyType)
+      owner = owner.base_type if owner.is_a?(VirtualType)
       owner.add_def(a_def) if owner.is_a?(DefContainer)
     end
   end
@@ -1232,12 +1232,12 @@ module Crystal
       end
     end
 
-    def hierarchy_type
+    def virtual_type
       if leaf? && !self.abstract
         self
       else
-        @hierarchy_type ||= begin
-          HierarchyType.new(program, self)
+        @virtual_type ||= begin
+          VirtualType.new(program, self)
         end
       end
     end
@@ -1565,7 +1565,7 @@ module Crystal
       end
     end
 
-    def hierarchy_type
+    def virtual_type
       self
     end
 
@@ -2255,8 +2255,8 @@ module Crystal
       false
     end
 
-    def hierarchy_type
-      instance_type.hierarchy_type.metaclass
+    def virtual_type
+      instance_type.virtual_type.metaclass
     end
 
     def types
@@ -2396,7 +2396,7 @@ module Crystal
 
     def each_concrete_type
       union_types.each do |type|
-        if type.is_a?(HierarchyType)
+        if type.is_a?(VirtualType)
           type.subtypes.each do |subtype|
             yield subtype
           end
@@ -2406,9 +2406,9 @@ module Crystal
       end
     end
 
-    def hierarchy_type
-      if union_types.any? { |t| t.hierarchy_type != t }
-        program.type_merge(union_types.map(&.hierarchy_type)).not_nil!
+    def virtual_type
+      if union_types.any? { |t| t.virtual_type != t }
+        program.type_merge(union_types.map(&.virtual_type)).not_nil!
       else
         self
       end
@@ -2535,11 +2535,11 @@ module Crystal
     end
   end
 
-  module HierarchyTypeLookup
+  module VirtualTypeLookup
     def lookup_matches(name, arg_types, block, owner = self, type_lookup = self)
-      is_new = hierarchy_metaclass? && name == "new"
+      is_new = virtual_metaclass? && name == "new"
 
-      base_type_lookup = hierarchy_lookup(base_type)
+      base_type_lookup = virtual_lookup(base_type)
       base_type_matches = base_type_lookup.lookup_matches(name, arg_types, block, self)
 
       # If there are no subclasses no need to look further
@@ -2562,11 +2562,11 @@ module Crystal
         unless subtype.value?
           subtype = subtype as NonGenericOrGenericClassInstanceType
 
-          subtype_lookup = hierarchy_lookup(subtype)
-          subtype_hierarchy_lookup = hierarchy_lookup(subtype.hierarchy_type)
+          subtype_lookup = virtual_lookup(subtype)
+          subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
 
           # Check matches but without parents: only included modules
-          subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, block, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+          subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, block, subtype_virtual_lookup, subtype_virtual_lookup)
 
           # For Foo+:Class#new we need to check that this subtype doesn't define
           # an incompatible initialize: if so, we return empty matches, because
@@ -2587,7 +2587,7 @@ module Crystal
             base_type_matches.each do |base_type_match|
               if base_type_match.def.return_type
                 # We need to check if the definition for the method is different than the one in the base type
-                full_subtype_matches = subtype_lookup.lookup_matches(name, arg_types, block, subtype_hierarchy_lookup, subtype_hierarchy_lookup)
+                full_subtype_matches = subtype_lookup.lookup_matches(name, arg_types, block, subtype_virtual_lookup, subtype_virtual_lookup)
                 if full_subtype_matches.any? { |match| match.def.same?(base_type_match.def) }
                   cloned_def = base_type_match.def.clone
                   cloned_def.macro_owner = base_type_match.def.macro_owner
@@ -2664,15 +2664,15 @@ module Crystal
       Matches.new(matches, (matches && matches.length > 0), self)
     end
 
-    def hierarchy_lookup(type)
+    def virtual_lookup(type)
       type
     end
   end
 
-  class HierarchyType < Type
+  class VirtualType < Type
     include MultiType
     include DefInstanceContainer
-    include HierarchyTypeLookup
+    include VirtualTypeLookup
     include InstanceVarContainer
 
     getter program
@@ -2790,14 +2790,14 @@ module Crystal
     end
 
     def metaclass
-      @metaclass ||= HierarchyMetaclassType.new(program, self)
+      @metaclass ||= VirtualMetaclassType.new(program, self)
     end
 
     def is_subclass_of?(other)
       base_type.is_subclass_of?(other)
     end
 
-    def hierarchy?
+    def virtual?
       true
     end
 
@@ -2809,7 +2809,7 @@ module Crystal
       if base_type.abstract
         cover = [] of Type
         base_type.subclasses.each do |s|
-          s_cover = s.hierarchy_type.cover
+          s_cover = s.virtual_type.cover
           if s_cover.is_a?(Array)
             cover.concat s_cover
           else
@@ -2824,7 +2824,7 @@ module Crystal
 
     def cover_length
       if base_type.abstract
-        base_type.subclasses.sum &.hierarchy_type.cover_length
+        base_type.subclasses.sum &.virtual_type.cover_length
       else
         1
       end
@@ -2877,9 +2877,9 @@ module Crystal
     end
   end
 
-  class HierarchyMetaclassType < Type
+  class VirtualMetaclassType < Type
     include DefInstanceContainer
-    include HierarchyTypeLookup
+    include VirtualTypeLookup
 
     getter program
     getter instance_type
@@ -2911,11 +2911,11 @@ module Crystal
       instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
-    def hierarchy_lookup(type)
+    def virtual_lookup(type)
       type.metaclass
     end
 
-    def hierarchy_metaclass?
+    def virtual_metaclass?
       true
     end
 

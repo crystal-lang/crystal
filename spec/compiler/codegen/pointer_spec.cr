@@ -73,7 +73,7 @@ describe "Code gen: pointer" do
     run("Pointer(Int32).new(0_u64) ? 1 : 2").to_i.should eq(2)
   end
 
-  it "gets pointer of instance variable in hierarchy type" do
+  it "gets pointer of instance variable in virtual type" do
     run("
       class Foo
         def initialize

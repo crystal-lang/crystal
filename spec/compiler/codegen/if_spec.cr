@@ -117,7 +117,7 @@ describe "Code gen: if" do
     ").to_i.should eq(1)
   end
 
-  it "codegens if with hierarchy" do
+  it "codegens if with virtual" do
     run("
       class Foo
       end

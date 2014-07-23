@@ -2,7 +2,7 @@
 require "../../spec_helper"
 
 describe "Type inference: method_missing" do
-  it "does error in method_missing macro with hierarchy type" do
+  it "does error in method_missing macro with virtual type" do
     assert_error %(
       abstract class Foo
       end

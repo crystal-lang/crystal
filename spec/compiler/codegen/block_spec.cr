@@ -882,7 +882,7 @@ describe "Code gen: block" do
       ").to_i.should eq(1)
   end
 
-  it "codegens block with hierarchy type arg" do
+  it "codegens block with virtual type arg" do
     run("
       class Var(T)
         def initialize(x : T)

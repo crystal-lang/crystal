@@ -3,7 +3,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     llvm_true
   end
 
-  def match_type_id(type : UnionType | HierarchyType | HierarchyMetaclassType, restriction, type_id)
+  def match_type_id(type : UnionType | VirtualType | VirtualMetaclassType, restriction, type_id)
     match_any_type_id(restriction, type_id)
   end
 
@@ -14,14 +14,14 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   def match_any_type_id(type, type_id)
     # Special case: if the type is Object+ we want to match against Reference+,
     # because Object+ can only mean a Reference type (so we exclude Nil, for example).
-    type = @mod.reference.hierarchy_type if type == @mod.object.hierarchy_type
+    type = @mod.reference.virtual_type if type == @mod.object.virtual_type
 
     case type
     when UnionType
       match_any_type_id_with_function(type, type_id)
-    when HierarchyMetaclassType
+    when VirtualMetaclassType
       match_any_type_id_with_function(type, type_id)
-    when HierarchyType
+    when VirtualType
       if type.base_type.subclasses.empty?
         equal? type_id(type.base_type), type_id
       else
@@ -55,7 +55,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     ret result.not_nil!
   end
 
-  def create_match_fun_body(type : HierarchyType, type_id)
+  def create_match_fun_body(type : VirtualType, type_id)
     min_max = @llvm_id.min_max_type_id(type.base_type).not_nil!
     ret(
       and (builder.icmp LibLLVM::IntPredicate::SGE, type_id, int(min_max[0])),

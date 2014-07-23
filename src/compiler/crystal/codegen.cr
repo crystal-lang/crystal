@@ -953,7 +953,7 @@ module Crystal
             if a_rescue_types = a_rescue.types
               cond = nil
               a_rescue_types.each do |type|
-                rescue_type = type.type.instance_type.hierarchy_type
+                rescue_type = type.type.instance_type.virtual_type
                 rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
                 cond = cond ? or(cond, rescue_type_cond) : rescue_type_cond
               end
@@ -969,7 +969,7 @@ module Crystal
                 get_exception_fun = main_fun(GET_EXCEPTION_NAME)
                 exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, type_of(get_exception_fun.get_param(0)))]
                 exception = int2ptr exception_ptr, LLVMTyper::TYPE_ID_POINTER
-                unless a_rescue.type.hierarchy?
+                unless a_rescue.type.virtual?
                   exception = cast_to exception, a_rescue.type
                 end
                 context.vars[a_rescue_name] = LLVMVar.new(exception, a_rescue.type, true)
@@ -1436,7 +1436,7 @@ module Crystal
       @builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.not_nil_type)
     end
 
-    def type_id(value, type : ReferenceUnionType | HierarchyType)
+    def type_id(value, type : ReferenceUnionType | VirtualType)
       load(value)
     end
 
@@ -1471,7 +1471,7 @@ module Crystal
       load(union_type_id(value))
     end
 
-    def type_id(value, type : HierarchyMetaclassType)
+    def type_id(value, type : VirtualMetaclassType)
       value
     end
 
@@ -1543,7 +1543,7 @@ module Crystal
 
     def llvm_self_ptr
       type = context.type
-      if type.is_a?(HierarchyType)
+      if type.is_a?(VirtualType)
         cast_to llvm_self, type.base_type
       else
         llvm_self
@@ -1893,7 +1893,7 @@ module Crystal
         index += 1
       end
 
-      if type.is_a?(HierarchyType)
+      if type.is_a?(VirtualType)
         pointer = cast_to pointer, type.base_type
       end
 

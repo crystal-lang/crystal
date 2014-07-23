@@ -3,7 +3,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     if target_type == value_type
       store to_rhs(value, target_type), target_pointer
     # Hack until we fix it in the type inference
-    elsif value_type.is_a?(HierarchyType) && value_type.base_type == target_type
+    elsif value_type.is_a?(VirtualType) && value_type.base_type == target_type
       # TODO: this should never happen, but it does. Sometimes we have:
       #
       #     def foo
@@ -13,7 +13,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       #        foo do |x|
       #     end
       #
-      # with e's type a HierarchyType and x's type its base type.
+      # with e's type a VirtualType and x's type its base type.
       #
       # I have no idea how to reproduce this, so this hack will remain here
       # until we figure it out.
@@ -31,7 +31,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : HierarchyType, value)
+  def assign_distinct(target_pointer, target_type : ReferenceUnionType, value_type : VirtualType, value)
     store value, target_pointer
   end
 
@@ -68,16 +68,16 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     store_in_union target_pointer, value_type, to_rhs(value, value_type)
   end
 
-  def assign_distinct(target_pointer, target_type : HierarchyType, value_type : MixedUnionType, value)
+  def assign_distinct(target_pointer, target_type : VirtualType, value_type : MixedUnionType, value)
     casted_value = cast_to_pointer(union_value(value), target_type)
     store load(casted_value), target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : HierarchyType, value_type : Type, value)
+  def assign_distinct(target_pointer, target_type : VirtualType, value_type : Type, value)
     store cast_to(value, target_type), target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : HierarchyMetaclassType, value_type : MetaclassType, value)
+  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : MetaclassType, value)
     store value, target_pointer
   end
 
@@ -128,15 +128,15 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     llvm_nil
   end
 
-  def downcast_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | HierarchyMetaclassType)
+  def downcast_distinct(value, to_type, from_type : MetaclassType | GenericClassInstanceMetaclassType | VirtualMetaclassType)
     value
   end
 
-  def downcast_distinct(value, to_type : HierarchyType, from_type : HierarchyType)
+  def downcast_distinct(value, to_type : VirtualType, from_type : VirtualType)
     value
   end
 
-  def downcast_distinct(value, to_type : MixedUnionType, from_type : HierarchyType)
+  def downcast_distinct(value, to_type : MixedUnionType, from_type : VirtualType)
     # This happens if the restriction is a union:
     # we keep each of the union types as the result, we don't fully merge
     union_ptr = alloca llvm_type(to_type)
@@ -144,13 +144,13 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     union_ptr
   end
 
-  def downcast_distinct(value, to_type : ReferenceUnionType, from_type : HierarchyType)
+  def downcast_distinct(value, to_type : ReferenceUnionType, from_type : VirtualType)
     # This happens if the restriction is a union:
     # we keep each of the union types as the result, we don't fully merge
     value
   end
 
-  def downcast_distinct(value, to_type : NonGenericClassType | GenericClassInstanceType, from_type : HierarchyType)
+  def downcast_distinct(value, to_type : NonGenericClassType | GenericClassInstanceType, from_type : VirtualType)
     cast_to value, to_type
   end
 
@@ -178,7 +178,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     value
   end
 
-  def downcast_distinct(value, to_type : HierarchyType, from_type : ReferenceUnionType)
+  def downcast_distinct(value, to_type : VirtualType, from_type : ReferenceUnionType)
     value
   end
 
@@ -186,7 +186,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     cast_to value, to_type
   end
 
-  def downcast_distinct(value, to_type : HierarchyType, from_type : NilableReferenceUnionType)
+  def downcast_distinct(value, to_type : VirtualType, from_type : NilableReferenceUnionType)
     value
   end
 
@@ -239,11 +239,11 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     value
   end
 
-  def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | HierarchyMetaclassType, from_type)
+  def upcast_distinct(value, to_type : MetaclassType | GenericClassInstanceMetaclassType | VirtualMetaclassType, from_type)
     value
   end
 
-  def upcast_distinct(value, to_type : HierarchyType, from_type)
+  def upcast_distinct(value, to_type : VirtualType, from_type)
     cast_to value, to_type
   end
 

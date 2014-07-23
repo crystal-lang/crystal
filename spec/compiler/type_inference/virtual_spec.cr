@@ -1,8 +1,8 @@
 #!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
-describe "Type inference: hierarchy" do
-  it "types two classes without a shared hierarchy" do
+describe "Type inference: virtual" do
+  it "types two classes without a shared virtual" do
     assert_type("
       class Foo
       end
@@ -23,7 +23,7 @@ describe "Type inference: hierarchy" do
       end
 
       a = Foo.new || Bar.new
-      ") { types["Foo"].hierarchy_type }
+      ") { types["Foo"].virtual_type }
   end
 
   it "types two subclasses" do
@@ -38,7 +38,7 @@ describe "Type inference: hierarchy" do
       end
 
       a = Bar.new || Baz.new
-      ") { types["Foo"].hierarchy_type }
+      ") { types["Foo"].virtual_type }
   end
 
   it "types class and two subclasses" do
@@ -53,10 +53,10 @@ describe "Type inference: hierarchy" do
       end
 
       a = Foo.new || Bar.new || Baz.new
-      ") { types["Foo"].hierarchy_type }
+      ") { types["Foo"].virtual_type }
   end
 
-  it "types method call of hierarchy type" do
+  it "types method call of virtual type" do
     assert_type("
       class Foo
         def foo
@@ -72,7 +72,7 @@ describe "Type inference: hierarchy" do
       ") { int32 }
   end
 
-  it "types method call of hierarchy type with override" do
+  it "types method call of virtual type with override" do
     assert_type("
       class Foo
         def foo
@@ -220,7 +220,7 @@ describe "Type inference: hierarchy" do
       ") { string }
   end
 
-  it "reports no matches for hierarchy type" do
+  it "reports no matches for virtual type" do
     assert_error "
       class Foo
       end
@@ -500,7 +500,7 @@ describe "Type inference: hierarchy" do
       ") { |mod| mod.nil }
   end
 
-  # it "recalculates hierarchy type when subclass is added" do
+  # it "recalculates virtual type when subclass is added" do
   #   assert_type("
   #     class Foo
   #       def foo
@@ -530,7 +530,7 @@ describe "Type inference: hierarchy" do
   #     ") { |mod| union_of(mod.nil, int32, char) }
   # end
 
-  it "finds overloads of union of hierarchy, class and nil" do
+  it "finds overloads of union of virtual, class and nil" do
     assert_type("
       class Foo
       end
@@ -551,7 +551,7 @@ describe "Type inference: hierarchy" do
       ") { union_of(int32, float64) }
   end
 
-  it "finds overloads of union of hierarchy, class and nil with abstract class" do
+  it "finds overloads of union of virtual, class and nil with abstract class" do
     assert_type("
       abstract class Foo
       end
@@ -608,7 +608,7 @@ describe "Type inference: hierarchy" do
       ") { union_of(int32, char, string) }
   end
 
-  it "uses hierarchy type as generic type if class is abstract" do
+  it "uses virtual type as generic type if class is abstract" do
     result = assert_type("
       abstract class Foo
       end
@@ -620,11 +620,11 @@ describe "Type inference: hierarchy" do
       ") {
         foo = types["Foo"]
         bar = types["Bar"] as GenericClassType
-        bar.instantiate([foo.hierarchy_type] of Type | ASTNode)
+        bar.instantiate([foo.virtual_type] of Type | ASTNode)
       }
   end
 
-  it "uses hierarchy type as generic type if class is abstract even in union" do
+  it "uses virtual type as generic type if class is abstract even in union" do
     result = assert_type("
       abstract class Foo
       end
@@ -639,16 +639,16 @@ describe "Type inference: hierarchy" do
       ") {
         foo = types["Foo"]
         bar = types["Bar"] as GenericClassType
-        bar.instantiate([union_of(foo.hierarchy_type, int32)] of Type | ASTNode)
+        bar.instantiate([union_of(foo.virtual_type, int32)] of Type | ASTNode)
       }
   end
 
-  it "automatically does hierarchy for generic type if there are subclasses" do
+  it "automatically does virtual for generic type if there are subclasses" do
     assert_type("
       class Foo; end
       class Bar < Foo; end
 
       Pointer(Foo).malloc(1_u64)
-      ") { pointer_of(types["Foo"].hierarchy_type) }
+      ") { pointer_of(types["Foo"].virtual_type) }
   end
 end

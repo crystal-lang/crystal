@@ -1,7 +1,7 @@
 #!/usr/bin/env bin/crystal --run
 require "../../spec_helper"
 
-describe "Code gen: hierarchy type" do
+describe "Code gen: virtual type" do
   it "call base method" do
     run("
       class Foo
@@ -59,7 +59,7 @@ describe "Code gen: hierarchy type" do
     ").to_i.should eq(1)
   end
 
-  it "dispatch call with hierarchy type argument" do
+  it "dispatch call with virtual type argument" do
     run("
       class Foo
       end
@@ -120,7 +120,7 @@ describe "Code gen: hierarchy type" do
     ").to_i.should eq(2)
   end
 
-  it "assign instance variable in hierarchy type" do
+  it "assign instance variable in virtual type" do
     run("
       class Foo
         def foo
@@ -159,7 +159,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(1)
   end
 
-  it "casts hierarchy type to base hierarchy type" do
+  it "casts virtual type to base virtual type" do
     run("
       class Object
         def bar
@@ -181,7 +181,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(1)
   end
 
-  it "codegens call to Object#to_s from hierarchy type" do
+  it "codegens call to Object#to_s from virtual type" do
     run("
       require \"prelude\"
 
@@ -289,7 +289,7 @@ describe "Code gen: hierarchy type" do
       ")
   end
 
-  it "doesn't lookup in Value+ when hierarchy type is Object+" do
+  it "doesn't lookup in Value+ when virtual type is Object+" do
     run("
       require \"bool\"
       require \"reference\"
@@ -308,7 +308,7 @@ describe "Code gen: hierarchy type" do
       ").to_b.should be_true
   end
 
-  it "correctly dispatch call with block when the obj is a hierarchy type" do
+  it "correctly dispatch call with block when the obj is a virtual type" do
     run("
       class Foo
         def each
@@ -335,7 +335,7 @@ describe "Code gen: hierarchy type" do
     ").to_i.should eq(2)
   end
 
-  it "dispatch call with nilable hierarchy arg" do
+  it "dispatch call with nilable virtual arg" do
     run("
       class Foo
       end
@@ -417,7 +417,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(1)
   end
 
-  it "dispatches on hierarchy metaclass (1)" do
+  it "dispatches on virtual metaclass (1)" do
     run("
       class Foo
         def self.coco
@@ -436,7 +436,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(1)
   end
 
-  it "dispatches on hierarchy metaclass (2)" do
+  it "dispatches on virtual metaclass (2)" do
     run("
       class Foo
         def self.coco
@@ -455,7 +455,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(2)
   end
 
-  it "dispatches on hierarchy metaclass (3)" do
+  it "dispatches on virtual metaclass (3)" do
     run("
       class Foo
         def self.coco
@@ -477,7 +477,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(2)
   end
 
-  it "codegens new for simple type, then for hierarchy" do
+  it "codegens new for simple type, then for virtual" do
     run("
       class Foo
         def initialize(@x)
@@ -497,7 +497,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(1)
   end
 
-  it "codegens new twice for hierarchy" do
+  it "codegens new twice for virtual" do
     run("
       class Foo
         def initialize(@x)
@@ -517,7 +517,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(1)
   end
 
-  it "codegens allocate for hierarchy type with custom new" do
+  it "codegens allocate for virtual type with custom new" do
     run("
       class Foo
         def self.new
@@ -540,7 +540,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(2)
   end
 
-  it "returns type with hierarchy type def type" do
+  it "returns type with virtual type def type" do
     run("
       class Foo
         def foo
@@ -563,7 +563,7 @@ describe "Code gen: hierarchy type" do
     ").to_i.should eq(1)
   end
 
-  it "casts hierarchy type to union" do
+  it "casts virtual type to union" do
     run("
       class Foo
       end
@@ -593,7 +593,7 @@ describe "Code gen: hierarchy type" do
       ").to_i.should eq(3)
   end
 
-  it "casts union to hierarchy" do
+  it "casts union to virtual" do
     run("
       module Moo
       end

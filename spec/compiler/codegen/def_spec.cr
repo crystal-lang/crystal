@@ -464,7 +464,7 @@ describe "Code gen: def" do
       ").to_i.should eq(1)
   end
 
-  it "dispatches on hierarchy type implementing generic module (related to bug #165)" do
+  it "dispatches on virtual type implementing generic module (related to bug #165)" do
     run("
       module Moo(T)
         def moo

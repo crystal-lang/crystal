@@ -81,7 +81,7 @@ describe "Type inference: exception" do
         a = ex
       end
       a
-    ") { |mod| union_of(mod.nil, exception.hierarchy_type) }
+    ") { |mod| union_of(mod.nil, exception.virtual_type) }
   end
 
   it "types exception with type" do
@@ -95,7 +95,7 @@ describe "Type inference: exception" do
         a = ex
       end
       a
-    ") { |mod| union_of(mod.nil, types["Ex"].hierarchy_type) }
+    ") { |mod| union_of(mod.nil, types["Ex"].virtual_type) }
   end
 
   it "types var as not nil if defined inside begin and defined inside rescue" do

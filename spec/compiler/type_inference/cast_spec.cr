@@ -82,7 +82,7 @@ describe "Type inference: cast" do
 
       f = Foo.new || Bar.new || Baz.new
       f as Moo
-      ") { union_of(types["Bar"].hierarchy_type, types["Baz"].hierarchy_type) }
+      ") { union_of(types["Bar"].virtual_type, types["Baz"].virtual_type) }
   end
 
   it "allows casting object to void pointer" do

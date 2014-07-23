@@ -26,9 +26,9 @@ module Crystal
       owner = target_def.owner.not_nil!
 
       case owner
-      when HierarchyType
+      when VirtualType
         owner = owner.base_type
-      when HierarchyMetaclassType
+      when VirtualMetaclassType
         owner = owner.instance_type.base_type.metaclass
       end
 

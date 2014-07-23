@@ -327,7 +327,7 @@ describe "Block inference" do
       ") { char }
   end
 
-  it "checks block type with hierarchy type" do
+  it "checks block type with virtual type" do
     assert_type("
       require \"prelude\"
 
@@ -364,7 +364,7 @@ describe "Block inference" do
 
       a = [Foo1.new, Foo2.new, Bar1.new, Bar2.new]
       a.map { |x| x }
-      ") { array_of(union_of(types["Foo1"].hierarchy_type, types["Foo2"].hierarchy_type)) }
+      ") { array_of(union_of(types["Foo1"].virtual_type, types["Foo2"].virtual_type)) }
   end
 
   it "does next from block without value" do

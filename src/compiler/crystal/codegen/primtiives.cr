@@ -243,7 +243,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_primitive_allocate(node, target_def, call_args)
     type = node.type
-    base_type = type.is_a?(HierarchyType) ? type.base_type : type
+    base_type = type.is_a?(VirtualType) ? type.base_type : type
 
     allocate_aggregate base_type
 
@@ -252,7 +252,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       store type_id(base_type), type_id_ptr
     end
 
-    if type.is_a?(HierarchyType)
+    if type.is_a?(VirtualType)
       @last = cast_to @last, type
     end
 
@@ -396,7 +396,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     codegen_primitive_class_with_type(node.type, call_args[0])
   end
 
-  def codegen_primitive_class_with_type(node_type : HierarchyMetaclassType, value)
+  def codegen_primitive_class_with_type(node_type : VirtualMetaclassType, value)
     load aggregate_index(value, 0)
   end
 

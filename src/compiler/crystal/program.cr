@@ -193,7 +193,7 @@ module Crystal
           nil_index = types.index(&.nil_type?).not_nil!
           other_index = 1 - nil_index
           other_type = types[other_index]
-          if other_type.reference_like? && !other_type.hierarchy?
+          if other_type.reference_like? && !other_type.virtual?
             return NilableType.new(self, other_type)
           else
             untyped_type = other_type.remove_typedef

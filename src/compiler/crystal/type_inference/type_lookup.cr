@@ -33,12 +33,12 @@ module Crystal
       false
     end
 
-    def end_visit(node : Hierarchy)
-      @type = type.instance_type.hierarchy_type
+    def end_visit(node : Virtual)
+      @type = type.instance_type.virtual_type
     end
 
     def end_visit(node : Metaclass)
-      @type = type.hierarchy_type
+      @type = type.virtual_type
     end
 
     def visit(node : Generic)

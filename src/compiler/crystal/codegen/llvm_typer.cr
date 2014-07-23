@@ -84,7 +84,7 @@ module Crystal
       LLVM::Int32
     end
 
-    def create_llvm_type(type : HierarchyMetaclassType)
+    def create_llvm_type(type : VirtualMetaclassType)
       LLVM::Int32
     end
 
@@ -170,7 +170,7 @@ module Crystal
       llvm_type type.typedef
     end
 
-    def create_llvm_type(type : HierarchyType)
+    def create_llvm_type(type : VirtualType)
       TYPE_ID_POINTER
     end
 

@@ -4,7 +4,7 @@ require "../../spec_helper"
 describe "Restrictions" do
   def t(mod, type)
     if type.ends_with?('+')
-      mod.types[type[0 .. -2]].hierarchy_type
+      mod.types[type[0 .. -2]].virtual_type
     else
       mod.types[type]
     end
@@ -40,7 +40,7 @@ describe "Restrictions" do
       mod.types["Foo"].restrict(mod.types["Mod"], MatchContext.new(mod, mod)).should eq(mod.types["Foo"])
     end
 
-    it "restricts hierarchy type with included module 1" do
+    it "restricts virtual type with included module 1" do
       mod = Program.new
       mod.infer_type parse("
         module M; end
@@ -50,7 +50,7 @@ describe "Restrictions" do
       t(mod, "A+").restrict(t(mod, "M"), MatchContext.new(mod, mod)).should eq(t(mod, "A+"))
     end
 
-    it "restricts hierarchy type with included module 2" do
+    it "restricts virtual type with included module 2" do
       mod = Program.new
       mod.infer_type parse("
         module M; end

@@ -73,7 +73,7 @@ describe "Type inference: def overload" do
     ") { char }
   end
 
-  it "types a call with overload matches hierarchy" do
+  it "types a call with overload matches virtual" do
     assert_type("
       class A; end
 
@@ -85,7 +85,7 @@ describe "Type inference: def overload" do
     ") { int32 }
   end
 
-  it "types a call with overload matches hierarchy 2" do
+  it "types a call with overload matches virtual 2" do
     assert_type("
       class A
       end
@@ -105,7 +105,7 @@ describe "Type inference: def overload" do
     ") { float64 }
   end
 
-  it "types a call with overload matches hierarchy 3" do
+  it "types a call with overload matches virtual 3" do
     assert_type("
       class A
       end
@@ -365,7 +365,7 @@ describe "Type inference: def overload" do
     ") { int32 }
   end
 
-  it "lookup matches in hierarchy type inside union" do
+  it "lookup matches in virtual type inside union" do
     assert_type("
       class Foo
         def foo
@@ -387,7 +387,7 @@ describe "Type inference: def overload" do
     ") { union_of(int32, char) }
   end
 
-  it "filter union type with hierarchy" do
+  it "filter union type with virtual" do
     assert_type("
       class Foo
       end
@@ -410,7 +410,7 @@ describe "Type inference: def overload" do
     ") { union_of(int32, float64) }
   end
 
-  it "restrict hierarchy type with hierarchy type" do
+  it "restrict virtual type with virtual type" do
     assert_type("
       def foo(x : T, y : T)
         1
@@ -614,7 +614,7 @@ describe "Type inference: def overload" do
       ") { int32.metaclass }
   end
 
-  it "matches hierarchy type to union" do
+  it "matches virtual type to union" do
     assert_type("
       abstract class Foo
       end

@@ -106,7 +106,7 @@ module Crystal
           ancestor = t1.common_ancestor(t2)
           if ancestor
             all_types.delete t1
-            all_types << ancestor.hierarchy_type
+            all_types << ancestor.virtual_type
             break
           end
         end
@@ -173,7 +173,7 @@ module Crystal
       nil
     end
 
-    def common_ancestor(other : HierarchyType)
+    def common_ancestor(other : VirtualType)
       common_ancestor(other.base_type)
     end
   end
@@ -191,16 +191,16 @@ module Crystal
     end
   end
 
-  class HierarchyType
+  class VirtualType
     def common_ancestor(other)
       base_type.common_ancestor(other)
     end
   end
 
-  class HierarchyMetaclassType
+  class VirtualMetaclassType
     def common_ancestor(other)
       common = instance_type.base_type.metaclass.common_ancestor(other)
-      common.try &.hierarchy_type
+      common.try &.virtual_type
     end
   end
 end

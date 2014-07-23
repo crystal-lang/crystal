@@ -120,7 +120,7 @@ module Crystal
       restricted ? self : nil
     end
 
-    def restrict(other : HierarchyType, context)
+    def restrict(other : VirtualType, context)
       is_subclass_of?(other.base_type) ? self : nil
     end
 
@@ -178,7 +178,7 @@ module Crystal
       other.union_types.any? { |subtype| is_restriction_of?(subtype, owner) }
     end
 
-    def is_restriction_of?(other : HierarchyType, owner)
+    def is_restriction_of?(other : VirtualType, owner)
       is_subclass_of? other.base_type
     end
 
@@ -362,9 +362,9 @@ module Crystal
     end
   end
 
-  class HierarchyType
+  class VirtualType
     def is_restriction_of?(other : Type, owner)
-      other = other.base_type if other.is_a?(HierarchyType)
+      other = other.base_type if other.is_a?(VirtualType)
       base_type.is_subclass_of?(other) || other.is_subclass_of?(base_type)
     end
 
@@ -378,11 +378,11 @@ module Crystal
           types << restricted if restricted
         end
         program.type_merge types
-      elsif other.is_a?(HierarchyType)
+      elsif other.is_a?(VirtualType)
         result = base_type.restrict(other.base_type, context) || other.base_type.restrict(base_type, context)
-        result ? result.hierarchy_type : nil
+        result ? result.virtual_type : nil
       elsif other.is_subclass_of?(self.base_type)
-        other.hierarchy_type
+        other.virtual_type
       elsif self.base_type.is_subclass_of?(other)
         self
       elsif other.module?
@@ -391,7 +391,7 @@ module Crystal
         else
           types = [] of Type
           base_type.subclasses.each do |subclass|
-            restricted = subclass.hierarchy_type.restrict(other, context)
+            restricted = subclass.virtual_type.restrict(other, context)
             types << restricted if restricted
           end
           program.type_merge_union_of types
@@ -404,7 +404,7 @@ module Crystal
     def restrict(other : Generic, context)
       types = [] of Type
       base_type.subclasses.each do |subclass|
-        restricted = subclass.hierarchy_type.restrict(other, context)
+        restricted = subclass.virtual_type.restrict(other, context)
         types << restricted if restricted
       end
       program.type_merge_union_of types
@@ -437,7 +437,7 @@ module Crystal
       end
     end
 
-    def restrict(other : HierarchyMetaclassType, context)
+    def restrict(other : VirtualMetaclassType, context)
       restricted = instance_type.restrict(other.instance_type.base_type, context)
       if restricted
         self
