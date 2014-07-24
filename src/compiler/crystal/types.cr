@@ -1582,6 +1582,10 @@ module Crystal
     delegate :passed_by_value?, @generic_class
     delegate :type_desc, @generic_class
 
+    def filter_by_responds_to(name)
+      @generic_class.filter_by_responds_to(name) ? self : nil
+    end
+
     def class?
       true
     end

@@ -29,4 +29,26 @@ describe "Codegen: responds_to?" do
   it "codegens responds_to? with nilable gives false becuase other type 2" do
     run("class Reference; def foo; end; end; (1 == 2 ? nil : Reference.new).responds_to?(:foo)").to_b.should be_true
   end
+
+  it "codegends responds_to? with generic class (1)" do
+    run(%(
+      class Foo(T)
+        def foo
+        end
+      end
+
+      Foo(Int32).new.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "codegends responds_to? with generic class (2)" do
+    run(%(
+      class Foo(T)
+        def foo
+        end
+      end
+
+      Foo(Int32).new.responds_to?(:bar)
+      )).to_b.should be_false
+  end
 end
