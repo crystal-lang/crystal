@@ -687,7 +687,7 @@ module Crystal
             similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name
             msg << "undefined local variable or method '#{def_name}'"
           end
-          msg << " \e[1;33m(did you mean '#{similar_name}'?)\e[0m" if similar_name
+          msg << " (did you mean '#{similar_name}'?)".colorize.yellow.bold if similar_name
 
           # Check if it's an instance variable that was never assigned a value
           if obj.is_a?(InstanceVar)
@@ -697,9 +697,9 @@ module Crystal
             if deps && deps.length == 1 && deps.first.same?(mod.nil_var)
               similar_name = scope.lookup_similar_instance_var_name(ivar.name)
               if similar_name
-                msg << " \e[1;33m(#{ivar.name} was never assigned a value, did you mean #{similar_name}?)\e[0m"
+                msg << " (#{ivar.name} was never assigned a value, did you mean #{similar_name}?)".colorize.yellow.bold
               else
-                msg << " \e[1;33m(#{ivar.name} was never assigned a value)\e[0m"
+                msg << " (#{ivar.name} was never assigned a value)".colorize.yellow.bold
               end
             end
           end

@@ -3,6 +3,7 @@ require "thread"
 require "file_utils"
 require "socket"
 require "net/http"
+require "colorize"
 
 module Crystal
   class Compiler
@@ -74,7 +75,8 @@ module Crystal
       begin
         options_parser, command = process_options_internal(options)
       rescue ex : OptionParser::Exception
-        puts "\e[0;31mError:\e[0m \e[1m#{ex.message}\e[0m"
+        print "Error: ".colorize.red.bold
+        puts ex.message.colorize.white.bold
         exit 1
       end
 

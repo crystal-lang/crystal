@@ -1,3 +1,5 @@
+require "colorize"
+
 module Spec
   class Result
     getter :kind
@@ -13,10 +15,10 @@ module Spec
 
   class RootContext < Context
     COLORS = {
-      success: 32,
-      fail: 31,
-      error: 31,
-      pending: 33,
+      success: :green,
+      fail: :red,
+      error: :red,
+      pending: :yellow,
     }
 
     LETTERS = {
@@ -44,7 +46,7 @@ module Spec
     end
 
     def color(str, status)
-      "\e[0;#{COLORS[status]}m#{str}\e[0m"
+      str.colorize(COLORS[status])
     end
 
     def report(kind, description, ex = nil)

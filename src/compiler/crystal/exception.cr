@@ -1,4 +1,5 @@
 require "virtual_file"
+require "colorize"
 
 module Crystal
   abstract class Exception < ::Exception
@@ -29,9 +30,9 @@ module Crystal
 
     def append_to_s(source, io)
       if @filename
-        io << "Syntax error in #{@filename}:#{@line_number}: \e[1m#{@message}\e[0m"
+        io << "Syntax error in #{@filename}:#{@line_number}: #{@message.colorize.white.bold}"
       else
-        io << "Syntax error in line #{@line_number}: \e[1m#{@message}\e[0m"
+        io << "Syntax error in line #{@line_number}: #{@message.colorize.white.bold}"
       end
 
       source = fetch_source(source)
@@ -47,12 +48,12 @@ module Crystal
             (@column_number - 1).times do
               io << " "
             end
-            io << "\e[1;32m"
-            io << "^"
-            if length = @length
-              io << ("~" * (length - 1))
+            with_color.green.bold.surround(io) do
+              io << "^"
+              if length = @length
+                io << ("~" * (length - 1))
+              end
             end
-            io << "\e[0m"
             io << "\n"
           end
         end
@@ -141,12 +142,12 @@ module Crystal
         io << line.chomp
         io << "\n"
         io << (" " * (@column - 1))
-        io << "\e[1;32m"
-        io << "^"
-        if @length && @length > 0
-          io << ("~" * (@length - 1))
+        with_color.green.bold.surround(io) do
+          io << "^"
+          if @length && @length > 0
+            io << ("~" * (@length - 1))
+          end
         end
-        io << "\e[0m"
       end
       io << "\n"
 
@@ -165,7 +166,7 @@ module Crystal
       if @inner
         io << msg
       else
-        io << "\e[1m" << msg << "\e[0m"
+        io << msg.colorize.white.bold
       end
     end
 

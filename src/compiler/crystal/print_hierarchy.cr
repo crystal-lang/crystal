@@ -1,5 +1,6 @@
 require "ast"
 require "set"
+require "colorize"
 
 module Crystal
   def print_hierarchy(program)
@@ -14,9 +15,9 @@ module Crystal
     end
 
     def execute
-      print "\e[1;37m"
-      print_types @program.types
-      print "\e[0m"
+      with_color.light_gray.bold.push(STDOUT) do
+        print_types @program.types
+      end
     end
 
     def print_types(types_hash)
@@ -63,11 +64,11 @@ module Crystal
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(FunInstanceType)
         size = @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
-        print "\e[0;37m"
-        print " ("
-        print size.to_s
-        print " bytes)"
-        print "\e[1;37m"
+        with_color.light_gray.push(STDOUT) do
+          print " ("
+          print size.to_s
+          print " bytes)"
+        end
       end
       puts
     end
@@ -125,15 +126,15 @@ module Crystal
         else
           print "      "
         end
-        print "\e[0;37m"
-        print ivar.name
-        print " : "
-        print ivar.type
-        size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar.type))
-        print " ("
-        print size
-        print " bytes)"
-        print "\e[1;37m"
+        with_color.light_gray.push(STDOUT) do
+          print ivar.name
+          print " : "
+          print ivar.type
+          size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar.type))
+          print " ("
+          print size
+          print " bytes)"
+        end
         puts
       end
     end
