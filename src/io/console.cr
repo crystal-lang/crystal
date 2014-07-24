@@ -167,7 +167,7 @@ lib Termios
   fun tcsetattr(fd : Int32, optional_actions : Int32, termios_p : Termios::Struct*) : Int32
 end
 
-class FileDescriptorIO
+struct CFileIO
   def cooked
     before = tc_mode
     begin
@@ -221,5 +221,23 @@ class FileDescriptorIO
 
   def tc_mode=(mode)
     Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, mode)
+  end
+
+  def read_nonblock(length)
+    before = C.fcntl(fd, C::FCNTL::F_GETFL)
+    C.fcntl(fd, C::FCNTL::F_SETFL, before | C::FD::O_NONBLOCK)
+
+    begin
+      String.new_with_capacity_and_length(length) do |buffer|
+        read_length = read(buffer, length)
+        if read_length == 0 || C.errno == C::EWOULDBLOCK || C.errno == C::EAGAIN
+          raise "exception in read_nonblock"
+        else
+          read_length.to_i
+        end
+      end
+    ensure
+      C.fcntl(fd, C::FCNTL::F_SETFL, before)
+    end
   end
 end

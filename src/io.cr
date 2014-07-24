@@ -144,6 +144,12 @@ def print(obj)
   nil
 end
 
+def print!(obj)
+  print obj
+  STDOUT.flush
+  nil
+end
+
 def puts(obj = "")
   STDOUT.puts obj
 end

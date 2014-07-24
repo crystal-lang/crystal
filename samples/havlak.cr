@@ -473,7 +473,7 @@ puts "Another 50 iterations..."
 
 sum = 0
 50.times do |i|
-  print "."
+  print! "."
   sum += HavlakLoopFinder.new($cfg, LSG.new).findLoops
 end
 

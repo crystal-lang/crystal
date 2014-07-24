@@ -48,7 +48,7 @@ module Spec
     end
 
     def report(kind, description, ex = nil)
-      print color(LETTERS[kind], kind)
+      print! color(LETTERS[kind], kind)
       @results[kind] << Result.new(kind, description, ex)
     end
 
