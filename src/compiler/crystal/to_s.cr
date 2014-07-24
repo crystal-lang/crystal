@@ -423,11 +423,13 @@ module Crystal
       false
     end
 
+    def visit(node : Out)
+      @str << "out "
+      node.exp.accept self
+      false
+    end
+
     def visit(node : Var)
-      if node.out
-        @str << keyword("out")
-        @str << " "
-      end
       @str << decorate_var(node, node.name)
     end
 
@@ -590,7 +592,6 @@ module Crystal
     end
 
     def visit(node : Arg)
-      # @str << "out " if node.out
       if node.name
         @str << decorate_arg(node, node.name)
       else
@@ -683,10 +684,6 @@ module Crystal
     end
 
     def visit(node : InstanceVar)
-      if node.out
-        @str << keyword("out")
-        @str << " "
-      end
       @str << decorate_instance_var(node, node.name)
     end
 
@@ -698,10 +695,6 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      if node.out
-        @str << keyword("out")
-        @str << " "
-      end
       @str << decorate_class_var(node, node.name)
     end
 

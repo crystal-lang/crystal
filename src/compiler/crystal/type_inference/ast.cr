@@ -12,10 +12,6 @@ module Crystal
     @freeze_type = false
     @dirty = false
 
-    def out?
-      false
-    end
-
     def set_type(type : Type)
       type = type.remove_alias_if_simple
       # TODO: this should really be "type.implements?(my_type)"
@@ -391,18 +387,6 @@ module Crystal
 
   alias MetaVars = SimpleHash(String, MetaVar)
   # alias MetaVars = Hash(String, MetaVar)
-
-  class Var
-    def out?
-      out
-    end
-  end
-
-  class InstanceVar
-    def out?
-      out
-    end
-  end
 
   class ClassVar
     property! owner

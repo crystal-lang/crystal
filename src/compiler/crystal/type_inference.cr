@@ -168,15 +168,30 @@ module Crystal
       node.type = mod.string
     end
 
-    def visit(node : Var)
-      # We declare out variables
-      # TODO: check that the out variable didn't exist before
-      if node.out
-        @meta_vars[node.name] = new_meta_var(node.name)
-        @vars[node.name] = new_meta_var(node.name)
-        return
+    def visit(node : Out)
+      case exp = node.exp
+      when Var
+        # We declare out variables
+        # TODO: check that the out variable didn't exist before
+        @meta_vars[exp.name] = new_meta_var(exp.name)
+        @vars[exp.name] = new_meta_var(exp.name)
+      when InstanceVar
+        var = lookup_instance_var exp
+        exp.bind_to(var)
+
+        if @is_initialize
+          @vars[exp.name] = MetaVar.new(exp.name)
+        end
+      else
+        node.raise "Bug: unexpected out exp: #{exp}"
       end
 
+      node.bind_to node.exp
+
+      false
+    end
+
+    def visit(node : Var)
       var = @vars[node.name]?
       if var
         meta_var = @meta_vars[node.name]
@@ -252,13 +267,9 @@ module Crystal
       var = lookup_instance_var node
       node.bind_to(var)
 
-      if @is_initialize
-        if node.out
-          @vars[node.name] = MetaVar.new(node.name)
-        elsif !@vars.has_key? node.name
-          ivar = scope.lookup_instance_var(node.name)
-          ivar.bind_to @mod.nil_var
-        end
+      if @is_initialize && !@vars.has_key? node.name
+        ivar = scope.lookup_instance_var(node.name)
+        ivar.bind_to @mod.nil_var
       end
     end
 

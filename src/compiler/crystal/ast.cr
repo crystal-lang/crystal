@@ -395,11 +395,9 @@ module Crystal
   # A local variable or block argument.
   class Var < ASTNode
     property :name
-    property :out
     property :attributes
 
     def initialize(@name, @type = nil)
-      @out = false
     end
 
     def add_attributes(attributes)
@@ -417,16 +415,16 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.type? == type? && other.out == out
+      other.name == name && other.type? == type?
     end
 
     def clone_without_location
-      var = Var.new(@name)
-      var.out = @out
-      var
+      Var.new(@name)
     end
 
-    generate_hash [@name, @out]
+    def hash
+      @name.hash
+    end
   end
 
   # A code block.
@@ -682,9 +680,8 @@ module Crystal
   # An instance variable.
   class InstanceVar < ASTNode
     property :name
-    property :out
 
-    def initialize(@name, @out = false)
+    def initialize(@name)
     end
 
     def name_length
@@ -692,14 +689,16 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.out == out
+      other.name == name
     end
 
     def clone_without_location
-      InstanceVar.new(@name, @out)
+      InstanceVar.new(@name)
     end
 
-    generate_hash [@name, @out]
+    def hash
+      @name.hash
+    end
   end
 
   class ReadInstanceVar < ASTNode
@@ -726,20 +725,21 @@ module Crystal
 
   class ClassVar < ASTNode
     property :name
-    property :out
 
-    def initialize(@name, @out = false)
+    def initialize(@name)
     end
 
     def ==(other : self)
-      other.name == @name && other.out == @out
+      other.name == @name
     end
 
     def clone_without_location
-      ClassVar.new(@name, @out)
+      ClassVar.new(@name)
     end
 
-    generate_hash [@name, @out]
+    def hash
+      @name.hash
+    end
   end
 
   # A global variable.
@@ -1041,6 +1041,12 @@ module Crystal
   class InstanceSizeOf < UnaryExpression
     def clone_without_location
       InstanceSizeOf.new(@exp.clone)
+    end
+  end
+
+  class Out < UnaryExpression
+    def clone_without_location
+      Out.new(@exp.clone)
     end
   end
 

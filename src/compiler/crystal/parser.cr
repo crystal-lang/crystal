@@ -2420,27 +2420,8 @@ module Crystal
             end
 
             if @token.keyword?(:out)
-              next_token_skip_space_or_newline
-
-              case @token.type
-              when :IDENT
-                var = Var.new(@token.value.to_s)
-                var.out = true
-                var.location = @token.location
-                push_var var
-                args << var
-              when :INSTANCE_VAR
-                ivar = InstanceVar.new(@token.value.to_s)
-                ivar.out = true
-                ivar.location = @token.location
-                args << ivar
-
-                @instance_vars.try &.add @token.value.to_s
-              else
-                raise "expecting variable or instance variable after out"
-              end
-
-              next_token_skip_space
+              args << parse_out
+              skip_space
             else
               args << parse_expression
             end
@@ -2506,27 +2487,7 @@ module Crystal
         end
 
         if @token.keyword?(:out)
-          next_token_skip_space_or_newline
-
-          case @token.type
-          when :IDENT
-            var = Var.new(@token.value.to_s)
-            var.out = true
-            var.location = @token.location
-            push_var var
-            args << var
-          when :INSTANCE_VAR
-            ivar = InstanceVar.new(@token.value.to_s)
-            ivar.out = true
-            ivar.location = @token.location
-            args << ivar
-
-            @instance_vars.try &.add @token.value.to_s
-          else
-            raise "expecting variable or instance variable after out"
-          end
-
-          next_token
+          args << parse_out
         else
           arg = parse_op_assign
           args << arg if arg.is_a?(ASTNode)
@@ -2541,6 +2502,34 @@ module Crystal
         end
       end
       CallArgs.new args, nil, nil, false
+    end
+
+    def parse_out
+      next_token_skip_space_or_newline
+
+      case @token.type
+      when :IDENT
+        var = Var.new(@token.value.to_s)
+        var.location = @token.location
+        var_out = Out.new(var)
+        var_out.location = @token.location
+        push_var var
+
+        next_token
+        var_out
+      when :INSTANCE_VAR
+        ivar = InstanceVar.new(@token.value.to_s)
+        ivar.location = @token.location
+        ivar_out = Out.new(ivar)
+        ivar_out.location = @token.location
+
+        @instance_vars.try &.add @token.value.to_s
+
+        next_token
+        ivar_out
+      else
+        raise "expecting variable or instance variable after out"
+      end
     end
 
     def parse_ident_or_global_call

@@ -360,6 +360,11 @@ module Crystal
       node
     end
 
+    def transform(node : Out)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
     def transform(node : Nop)
       node
     end

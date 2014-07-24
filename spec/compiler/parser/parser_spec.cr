@@ -602,8 +602,10 @@ describe "Parser" do
   it_parses "foo $1", Call.new(nil, "foo", [Call.new(Global.new("$~"), "[]", [1.int32] of ASTNode)] of ASTNode)
   it_parses "foo /a/", Call.new(nil, "foo", [RegexLiteral.new("a")] of ASTNode)
 
-  it_parses "foo out x; x", [Call.new(nil, "foo", [(v = Var.new("x"); v.out = true; v)] of ASTNode), Var.new("x")]
-  it_parses "foo(out x); x", [Call.new(nil, "foo", [(v = Var.new("x"); v.out = true; v)] of ASTNode), Var.new("x")]
+  it_parses "foo out x; x", [Call.new(nil, "foo", [Out.new("x".var)] of ASTNode), "x".var]
+  it_parses "foo(out x); x", [Call.new(nil, "foo", [Out.new("x".var)] of ASTNode), "x".var]
+  it_parses "foo out @x; @x", [Call.new(nil, "foo", [Out.new("@x".instance_var)] of ASTNode), "@x".instance_var]
+  it_parses "foo(out @x); @x", [Call.new(nil, "foo", [Out.new("@x".instance_var)] of ASTNode), "@x".instance_var]
 
   it_parses "{1 => 2, 3 => 4}", HashLiteral.new([1.int32, 3.int32] of ASTNode, [2.int32, 4.int32] of ASTNode)
   it_parses "{a: 1, b: 2}", HashLiteral.new(["a".symbol, "b".symbol] of ASTNode, [1.int32, 2.int32] of ASTNode)

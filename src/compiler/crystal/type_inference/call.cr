@@ -275,7 +275,7 @@ module Crystal
 
     def check_not_lib_out_args
       args.each do |arg|
-        if arg.out?
+        if arg.is_a?(Out)
           arg.raise "out can only be used with lib funs"
         end
       end
@@ -359,13 +359,13 @@ module Crystal
     def check_lib_out_args(untyped_def)
       untyped_def.args.each_with_index do |arg, i|
         call_arg = self.args[i]
-        if call_arg.out?
+        if call_arg.is_a?(Out)
           arg_type = arg.type
           if arg_type.is_a?(PointerInstanceType)
-            var = parent_visitor.lookup_var_or_instance_var(call_arg)
+            var = parent_visitor.lookup_var_or_instance_var(call_arg.exp)
             var.bind_to Var.new("out", arg_type.element_type)
-            call_arg.bind_to var
-            parent_visitor.bind_meta_var(call_arg)
+            call_arg.exp.bind_to var
+            parent_visitor.bind_meta_var(call_arg.exp)
           else
             call_arg.raise "argument \##{i + 1} to #{untyped_def.owner}.#{untyped_def.name} cannot be passed as 'out' because it is not a pointer"
           end
@@ -571,7 +571,7 @@ module Crystal
         expected_type = typed_def_arg.type
         self_arg = self.args[i]
         actual_type = self_arg.type
-        actual_type = mod.pointer_of(actual_type) if self.args[i].out?
+        actual_type = mod.pointer_of(actual_type) if self.args[i].is_a?(Out)
         unless actual_type.compatible_with?(expected_type) || actual_type.is_implicitly_converted_in_c_to?(expected_type)
           implicit_call = try_to_unsafe(self_arg) do |ex|
             if ex.message.not_nil!.includes?("undefined method 'to_unsafe'")

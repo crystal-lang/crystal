@@ -1030,8 +1030,8 @@ module Crystal
       # because if declared inside a while, for example, the variable is nilable.
       if has_out
         node.args.zip(call_args) do |node_arg, call_arg|
-          if node_arg.out? && node_arg.is_a?(Var)
-            node_var = context.vars[node_arg.name]
+          if node_arg.is_a?(Out) && (exp = node_arg.exp).is_a?(Var)
+            node_var = context.vars[exp.name]
             assign node_var.pointer, node_var.type, node_arg.type, to_lhs(call_arg, node_arg.type)
           end
         end
@@ -1062,17 +1062,17 @@ module Crystal
 
       # Then the arguments.
       node.args.each_with_index do |arg, i|
-        if arg.out?
+        if arg.is_a?(Out)
           has_out = true
-          case arg
+          case exp = arg.exp
           when Var
             # For out arguments we reserve the space. After the call
             # we move the value to the variable.
             call_arg = alloca(llvm_type(arg.type))
           when InstanceVar
-            call_arg = instance_var_ptr(type, arg.name, llvm_self_ptr)
+            call_arg = instance_var_ptr(type, exp.name, llvm_self_ptr)
           else
-            arg.raise "Bug: out argument was #{arg}"
+            arg.raise "Bug: out argument was #{exp}"
           end
         else
           @needs_value = true
@@ -1317,7 +1317,7 @@ module Crystal
         next unless arg_type.passed_by_value?
 
         # If the argument is out the type might be a struct but we don't pass anything byval
-        next if call_args[i]?.try &.out?
+        next if call_args[i]?.try &.is_a?(Out)
 
         LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LibLLVM::Attribute::ByVal)
       end
