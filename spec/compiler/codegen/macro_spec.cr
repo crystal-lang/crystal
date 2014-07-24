@@ -413,4 +413,17 @@ describe "Code gen: macro" do
       t.foo
       )).to_i.should eq(2)
   end
+
+  it "doesn't reuse macro nodes (bug)" do
+    run(%(
+      def foo(x)
+        {% for y in [1, 2] %}
+          x + 1
+        {% end %}
+      end
+
+      foo 1
+      foo(1.5).to_i
+      )).to_i.should eq(2)
+  end
 end

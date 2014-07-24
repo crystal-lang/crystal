@@ -2024,7 +2024,7 @@ module Crystal
     end
 
     def clone_without_location
-      self
+      MacroExpression.new(@exp.clone)
     end
 
     def hash
@@ -2082,7 +2082,7 @@ module Crystal
     end
 
     def clone_without_location
-      self
+      MacroIf.new(@cond.clone, @then.clone, @else.clone)
     end
 
     generate_hash [@cond, @then, @else]
@@ -2112,7 +2112,7 @@ module Crystal
     end
 
     def clone_without_location
-      self
+      MacroFor.new(@vars.clone, @exp.clone, @body.clone)
     end
 
     generate_hash [@vars, @exp, @body]
