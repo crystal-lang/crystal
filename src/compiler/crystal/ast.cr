@@ -489,7 +489,7 @@ module Crystal
     property :name_length
 
     def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @global = false, @name_column_number = 0, @has_parenthesis = false)
-      @name_length = 0
+      @name_length = nil
     end
 
     def name_length

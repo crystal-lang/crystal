@@ -1,4 +1,7 @@
 class OptionParser
+  class Exception < ::Exception
+  end
+
   class InvalidOption < Exception
     def initialize(option)
       super("Invalid option: #{option}")

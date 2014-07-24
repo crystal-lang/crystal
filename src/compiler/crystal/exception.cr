@@ -29,9 +29,9 @@ module Crystal
 
     def append_to_s(source, io)
       if @filename
-        io << "Syntax error in #{@filename}:#{@line_number}: #{@message}"
+        io << "Syntax error in #{@filename}:#{@line_number}: \e[1m#{@message}\e[0m"
       else
-        io << "Syntax error in line #{@line_number}: #{@message}"
+        io << "Syntax error in line #{@line_number}: \e[1m#{@message}\e[0m"
       end
 
       source = fetch_source(source)
@@ -118,11 +118,12 @@ module Crystal
       when String
         if File.exists?(filename)
           lines = File.read_lines(filename)
-          io << "in #{filename}:#{@line}: #{msg}"
+          io << "in " << filename << ":" << @line << ": "
+          append_error_message io, msg
         else
           lines = source ? source.lines.to_a : nil
           io << "in line #{@line}: " if @line
-          io << msg
+          append_error_message io, msg
         end
       when VirtualFile
         lines = filename.source.lines.to_a
@@ -132,7 +133,7 @@ module Crystal
       else
         lines = source ? source.lines.to_a : nil
         io << "in line #{@line}: " if @line
-        io << msg
+        append_error_message io, msg
       end
 
       if lines && (line_number = @line) && (line = lines[line_number - 1]?)
@@ -151,12 +152,20 @@ module Crystal
 
       if is_macro
         io << "\n"
-        io << @message.to_s
+        append_error_message io, @message
       end
 
       if inner && inner.has_location?
         io << "\n"
         inner.append_to_s source, io
+      end
+    end
+
+    def append_error_message(io, msg)
+      if @inner
+        io << msg
+      else
+        io << "\e[1m" << msg << "\e[0m"
       end
     end
 
@@ -220,9 +229,7 @@ module Crystal
 
             io << "\n\n"
             io << "  "
-            io << filename
-            io << ":"
-            io << line_number
+            io << filename << ":" << line_number
             io << "\n\n"
 
             if lines

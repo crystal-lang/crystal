@@ -71,7 +71,13 @@ module Crystal
     end
 
     def process_options(options = ARGV)
-      options_parser, command = process_options_internal(options)
+      begin
+        options_parser, command = process_options_internal(options)
+      rescue ex : OptionParser::Exception
+        puts "\e[0;31mError:\e[0m \e[1m#{ex.message}\e[0m"
+        exit 1
+      end
+
       if command
         source = command
         filename = "-"
@@ -97,7 +103,7 @@ module Crystal
 
     def process_options_internal(options)
       command = nil
-      options = OptionParser.parse(options) do |opts|
+      option_parser = OptionParser.parse(options) do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
         opts.on("--browser", "Opens an http server to browse the code") do
           @browser = true
@@ -159,7 +165,7 @@ module Crystal
           @verbose = true
         end
       end
-      {options, command}
+      {option_parser, command}
     end
 
     def compile(filename, source, run_args = [] of String)
