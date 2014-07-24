@@ -55,6 +55,10 @@ describe "colorize" do
     "hello".colorize.hidden.to_s.should eq("\e[8mhello\e[0m")
   end
 
+  it "colorizes mode combination" do
+    "hello".colorize.bold.dim.underline.blink.reverse.hidden.to_s.should eq("\e[1;2;4;5;7;8mhello\e[0m")
+  end
+
   it "colorizes foreground with background" do
     "hello".colorize.blue.on_green.to_s.should eq("\e[34;42mhello\e[0m")
   end
