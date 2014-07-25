@@ -383,4 +383,38 @@ describe "Type inference: module" do
       Bar.new.foo
       ") { types["Foo"].types["T"].metaclass }
   end
+
+  it "finds nested type inside method in block inside module" do
+    assert_type("
+      def foo
+        yield
+      end
+
+      module Foo
+        class Bar; end
+
+        $x = foo { Bar }
+      end
+
+      $x
+      ") { types["Foo"].types["Bar"].metaclass }
+  end
+
+  it "finds class method in block" do
+    assert_type("
+      def foo
+        yield
+      end
+
+      module Foo
+        def self.bar
+          1
+        end
+
+        $x = foo { bar }
+      end
+
+      $x
+      ") { int32 }
+  end
 end

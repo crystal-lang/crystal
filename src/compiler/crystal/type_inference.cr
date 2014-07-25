@@ -594,9 +594,14 @@ module Crystal
       block_visitor.free_vars = @free_vars
       block_visitor.untyped_def = @untyped_def
       block_visitor.call = @call
-      block_visitor.scope = node.scope || @scope
+
+      block_scope = node.scope || @scope
+      block_scope = current_type.metaclass unless current_type.is_a?(Program)
+
+      block_visitor.scope = block_scope
+
       block_visitor.block = node
-      block_visitor.type_lookup = type_lookup
+      block_visitor.type_lookup = type_lookup || current_type
       block_visitor.block_nest = @block_nest
 
       node.body.accept block_visitor
@@ -793,7 +798,7 @@ module Crystal
       if node.global
         node.scope = @mod
       else
-        node.scope = @scope || @types.last.metaclass
+        node.scope = @scope || current_type.metaclass
       end
       node.parent_visitor = self
     end
