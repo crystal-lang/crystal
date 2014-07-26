@@ -22,7 +22,7 @@ class Json::Token
     when :FLOAT
       @float_value.to_s(io)
     when :STRING
-      @string_value(io)
+      @string_value.to_s(io)
     else
       @type.to_s(io)
     end

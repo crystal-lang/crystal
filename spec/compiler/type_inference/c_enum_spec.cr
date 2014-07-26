@@ -3,7 +3,7 @@ require "../../spec_helper"
 
 describe "Type inference: enum" do
   it "types enum value" do
-    assert_type("lib Foo; enum Bar; X, Y, Z = 10, W; end end Foo::Bar::X") { int32 }
+    assert_type("lib Foo; enum Bar; X, Y, Z = 10, W; end; end; Foo::Bar::X") { int32 }
   end
 
   it "allows using an enum as a type in a fun" do
@@ -37,11 +37,11 @@ describe "Type inference: enum" do
   end
 
   it "types enum value with base type" do
-    assert_type("lib Foo; enum Bar < Int16; X end end Foo::Bar::X") { int16 }
+    assert_type("lib Foo; enum Bar < Int16; X; end; end; Foo::Bar::X") { int16 }
   end
 
   it "errors if enum base type is not an integer" do
-    assert_error "lib Foo; enum Bar < Float32; X end end Foo::Bar::X",
+    assert_error "lib Foo; enum Bar < Float32; X; end; end; Foo::Bar::X",
       "enum base type must be an integer type"
   end
 end

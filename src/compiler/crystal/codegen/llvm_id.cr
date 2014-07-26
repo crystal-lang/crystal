@@ -78,7 +78,7 @@ module Crystal
       end
     end
 
-    def put_id(type, min max)
+    def put_id(type, min, max)
       @ids[type] = {min, max}
     end
 

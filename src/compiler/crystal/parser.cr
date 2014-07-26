@@ -164,8 +164,14 @@ module Crystal
           else
             break
           end
-        else
+        when :")", :",", :";", :NEWLINE, :EOF
           break
+        else
+          if is_end_token
+            break
+          else
+            unexpected_token
+          end
         end
       end
 
@@ -239,7 +245,7 @@ module Crystal
 
           # Rewrite 'a += b' as 'a = a + b'
 
-          if atomic.is_a?(Call) && atomic.name != "[]" !@def_vars.last.includes?(atomic.name)
+          if atomic.is_a?(Call) && atomic.name != "[]" && !@def_vars.last.includes?(atomic.name)
             raise "'#{@token.type}' before definition of '#{atomic.name}'"
 
             atomic = Var.new(atomic.name)
@@ -670,7 +676,7 @@ module Crystal
         macro_control = parse_macro_control(@line_number, @column_number)
         if macro_control
           check :"%}"
-          next_token_skip_space_or_newline
+          next_token_skip_space
           macro_control
         else
           unexpected_token_in_atomic
@@ -818,7 +824,7 @@ module Crystal
       next_token_skip_space
       check :CONST
       name = @token.value.to_s
-      next_token_skip_space_or_newline
+      next_token_skip_space
 
       attribute = Attribute.new(name)
       attribute.location = location
@@ -1005,7 +1011,7 @@ module Crystal
         block = Block.new([Var.new(block_arg_name)], call)
         block.location = location
       else
-        block_arg = parse_expression
+        block_arg = parse_op_assign
       end
 
       if check_paren
@@ -1385,7 +1391,7 @@ module Crystal
           first_key = SymbolLiteral.new(@token.value.to_s)
           next_token
         else
-          first_key = parse_expression
+          first_key = parse_op_assign
           skip_space
           case @token.type
           when :","
@@ -1410,7 +1416,7 @@ module Crystal
 
       open(:hash_literal, location) do
         keys << first_key
-        values << parse_expression
+        values << parse_op_assign
         skip_space_or_newline
         if @token.type == :","
           next_token_skip_space_or_newline
@@ -1421,12 +1427,12 @@ module Crystal
             keys << SymbolLiteral.new(@token.value.to_s)
             next_token
           else
-            keys << parse_expression
+            keys << parse_op_assign
             skip_space_or_newline
             check :"=>"
           end
           next_token_skip_space_or_newline
-          values << parse_expression
+          values << parse_op_assign
           skip_space_or_newline
           if @token.type == :","
             next_token_skip_space_or_newline
@@ -1853,7 +1859,7 @@ module Crystal
 
     def parse_expression_inside_macro
       @in_macro_expression = true
-      exp = parse_expression
+      exp = parse_op_assign
       @in_macro_expression = false
       exp
     end
@@ -2066,7 +2072,7 @@ module Crystal
 
       if @token.type == :"="
         next_token_skip_space_or_newline
-        default_value = parse_expression
+        default_value = parse_op_assign
         found_default_value_ptr.value = true
         skip_space
       else
@@ -2447,7 +2453,7 @@ module Crystal
               args << parse_out
               skip_space
             else
-              args << parse_expression
+              args << parse_op_assign
             end
 
             skip_space_or_newline
@@ -3092,6 +3098,7 @@ module Crystal
           next_token_skip_space_or_newline
         when :STRING_START
           real_name = parse_string_without_interpolation { "interpolation not allowed in fun name" }
+          skip_space
         else
           unexpected_token
         end
@@ -3155,12 +3162,11 @@ module Crystal
       if require_body
         if @token.keyword?(:end)
           body = Nop.new
+          next_token
         else
           body = parse_expressions
           body = parse_exception_handler body
         end
-
-        next_token_skip_space
       else
         body = nil
       end
@@ -3200,7 +3206,7 @@ module Crystal
         raise "can't take pointerof(self)", @token.line_number, @token.column_number
       end
 
-      exp = parse_expression
+      exp = parse_op_assign
       skip_space
 
       check :")"

@@ -523,6 +523,7 @@ describe "Parser" do
   it_parses "lib C; Foo = 1; end", LibDef.new("C", nil, [Assign.new("Foo".path, 1.int32)] of ASTNode)
   it_parses "lib C\nfun getch = GetChar\nend", LibDef.new("C", nil, [FunDef.new("getch", [] of Arg, nil, false, nil, "GetChar")] of ASTNode)
   it_parses %(lib C\nfun getch = "get.char"\nend), LibDef.new("C", nil, [FunDef.new("getch", [] of Arg, nil, false, nil, "get.char")] of ASTNode)
+  it_parses %(lib C\nfun getch = "get.char" : Int32\nend), LibDef.new("C", nil, [FunDef.new("getch", [] of Arg, "Int32".path, false, nil, "get.char")] of ASTNode)
   it_parses %(lib C\nfun getch = "get.char"(x : Int32)\nend), LibDef.new("C", nil, [FunDef.new("getch", [Arg.new("x", nil, "Int32".path)], nil, false, nil, "get.char")] of ASTNode)
   it_parses "lib C\n$errno : Int32\n$errno2 : Int32\nend", LibDef.new("C", nil, [ExternalVar.new("errno", "Int32".path), ExternalVar.new("errno2", "Int32".path)] of ASTNode)
   it_parses "lib C\n$errno : B, C -> D\nend", LibDef.new("C", nil, [ExternalVar.new("errno", Fun.new(["B".path, "C".path] of ASTNode, "D".path))] of ASTNode)
@@ -731,6 +732,9 @@ describe "Parser" do
 
   it_parses "Foo(_)", Generic.new("Foo".path, [Underscore.new] of ASTNode)
 
+  it_parses "{% if true %}\n{% end %}\n{% if true %}\n{% end %}", [MacroIf.new(true.bool, MacroLiteral.new("\n")), MacroIf.new(true.bool, MacroLiteral.new("\n"))] of ASTNode
+  it_parses "fun foo : Int32; 1; end; 2", [FunDef.new("foo", [] of Arg, "Int32".path, false, 1.int32), 2.int32]
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", [] of Arg, [keyword.call] of ASTNode)
   end
@@ -793,4 +797,6 @@ describe "Parser" do
   assert_syntax_error "def foo x y; end", "unexpected token: y (expected ';' or newline)"
   assert_syntax_error "macro foo(x y); end", "unexpected token: y (expected ',' or ')')"
   assert_syntax_error "macro foo x y; end", "unexpected token: y (expected ';' or newline)"
+
+  assert_syntax_error "1 2", "unexpected token: 2"
 end
