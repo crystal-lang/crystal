@@ -21,6 +21,7 @@ lib Intrinsics
   fun sqrt_f32 = "llvm.sqrt.f32"(value : Float32) : Float32
   fun sqrt_f64 = "llvm.sqrt.f64"(value : Float64) : Float64
   fun debugtrap = "llvm.debugtrap"
+  fun read_cycle_counter = "llvm.readcyclecounter"() : UInt64
 end
 
 macro debugger

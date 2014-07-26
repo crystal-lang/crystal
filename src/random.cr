@@ -5,7 +5,7 @@ lib C
   fun rand() : Int32
 end
 
-C.srand(Time.now.to_i.to_u32)
+C.srand(Intrinsics.read_cycle_counter.to_u32)
 
 def srand(x)
   C.srand(x.to_u32)
