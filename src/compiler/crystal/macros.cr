@@ -368,6 +368,26 @@ module Crystal
         false
       end
 
+      def visit(node : Path)
+        matched_type = @scope.lookup_type(node)
+        unless matched_type
+          node.raise "undefined constant #{node}"
+        end
+
+        case matched_type
+        when Const
+          @last = matched_type.value
+        when Type
+          @last = MacroType.new(matched_type)
+        when ASTNode
+          @last = matched_type
+        else
+          node.raise "can't interpret #{node}"
+        end
+
+        false
+      end
+
       class ReplaceBlockVarsTransformer < Transformer
         def initialize(@vars)
         end

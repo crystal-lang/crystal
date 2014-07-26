@@ -426,4 +426,24 @@ describe "Code gen: macro" do
       foo(1.5).to_i
       )).to_i.should eq(2)
   end
+
+  it "can use constants" do
+    run(%(
+      A = 1
+      {{ A }}
+      )).to_i.should eq(1)
+  end
+
+  it "can refer to types" do
+    run(%(
+      class Foo
+        def initialize(@x, @y)
+        end
+      end
+
+      Foo.new(1, 2)
+
+      {{ Foo.instance_vars.last.name }}
+      )).to_string.should eq("y")
+  end
 end
