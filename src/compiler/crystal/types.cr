@@ -1643,6 +1643,10 @@ module Crystal
       nil
     end
 
+    def check_method_missing(name, arg_types, block)
+      @generic_class.check_method_missing(name, arg_types, block)
+    end
+
     def to_s(io)
       generic_class.append_full_name(io)
       io << "("

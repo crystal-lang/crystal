@@ -29,4 +29,16 @@ describe "Type inference: method_missing" do
       end
       ), "macro 'method_missing' expects 3 arguments: name, args, block"
   end
+
+  it "does method missing for generic type" do
+    assert_type(%(
+      class Foo(T)
+        macro method_missing(name, args, block)
+          1
+        end
+      end
+
+      Foo(Int32).new.foo
+      )) { int32 }
+  end
 end
