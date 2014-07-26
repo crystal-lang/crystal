@@ -2505,7 +2505,7 @@ module Crystal
         end
       when :"{"
         return nil unless allow_curly
-      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->"
+      when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{"
         # Nothing
       else
         return nil
