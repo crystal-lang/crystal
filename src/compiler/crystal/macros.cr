@@ -42,7 +42,9 @@ module Crystal
       target_def.args.each do |arg|
         vars[arg.name] = MetaVar.new(arg.name, arg.type)
       end
+      vars["self"] = MetaVar.new("self", owner) unless owner.is_a?(Program)
       target_def.vars = vars
+
       arg_names = target_def.args.map(&.name)
 
       generated_nodes = parse_macro_source(generated_source, the_macro, target_def, arg_names.to_set) do |parser|

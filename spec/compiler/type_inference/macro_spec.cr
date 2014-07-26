@@ -153,4 +153,31 @@ describe "Type inference: macro" do
       foo
       )) { tuple_of([int32, int32] of Type) }
   end
+
+  it "allows specifying self as macro def return type" do
+    assert_type(%(
+      class Foo
+        macro def foo : self
+          self
+        end
+      end
+
+      Foo.new.foo
+      )) { types["Foo"] }
+  end
+
+  it "allows specifying self as macro def return type (2)" do
+    assert_type(%(
+      class Foo
+        macro def foo : self
+          self
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.new.foo
+      )) { types["Bar"] }
+  end
 end

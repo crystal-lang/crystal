@@ -2,13 +2,17 @@ module Crystal
   class TypeLookup < Visitor
     getter! type
 
-    def self.lookup(root_type, node)
-      lookup = new root_type
+    def self.lookup(root_type, node, self_type = root_type)
+      lookup = new root_type, self_type
       node.accept lookup
       lookup.type.not_nil!
     end
 
     def initialize(@root)
+      @self_type = @root
+    end
+
+    def initialize(@root, @self_type)
     end
 
     def visit(node : ASTNode)
@@ -91,7 +95,7 @@ module Crystal
     end
 
     def visit(node : Self)
-      @type = @root
+      @type = @self_type
       false
     end
 
