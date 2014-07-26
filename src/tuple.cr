@@ -8,7 +8,9 @@ class Tuple
     end
   end
 
-  def ==(other : self)
+  def ==(other : Tuple)
+    return false unless length == other.length
+
     length.times do |i|
       return false unless self[i] == other[i]
     end

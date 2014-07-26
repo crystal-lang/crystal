@@ -15,6 +15,10 @@ describe "Tuple" do
     a.should_not eq(d)
   end
 
+  it "does == with differnt types but same length" do
+    {1, 2}.should eq({1.0, 2.0})
+  end
+
   it "does compare" do
     a = {1, 2}
     b = {3, 4}
