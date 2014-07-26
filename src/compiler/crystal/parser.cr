@@ -1654,6 +1654,13 @@ module Crystal
           if block_arg
             check :")"
             break
+          elsif @token.type == :","
+            next_token_skip_space_or_newline
+          else
+            skip_space
+            if @token.type != :")"
+              unexpected_token @token.to_s, "expected ',' or ')'"
+            end
           end
         end
         next_token
@@ -1662,6 +1669,13 @@ module Crystal
           block_arg = parse_arg(args, nil, false, pointerof(found_default_value))
           if block_arg
             break
+          elsif @token.type == :","
+            next_token_skip_space_or_newline
+          else
+            skip_space
+            if @token.type != :NEWLINE && @token.type != :";"
+              unexpected_token @token.to_s, "expected ';' or newline"
+            end
           end
         end
       end
@@ -1941,6 +1955,13 @@ module Crystal
             end
             check :")"
             break
+          elsif @token.type == :","
+            next_token_skip_space_or_newline
+          else
+            skip_space
+            if @token.type != :")"
+              unexpected_token @token.to_s, "expected ',' or ')'"
+            end
           end
         end
         next_token_skip_space
@@ -1954,6 +1975,13 @@ module Crystal
               @yields = 0
             end
             break
+          elsif @token.type == :","
+            next_token_skip_space_or_newline
+          else
+            skip_space
+            if @token.type != :NEWLINE && @token.type != :";"
+              unexpected_token @token.to_s, "expected ';' or newline"
+            end
           end
         end
       when :";", :"NEWLINE"
@@ -2059,10 +2087,6 @@ module Crystal
       arg.location = arg_location
       args << arg
       push_var arg
-
-      if @token.type == :","
-        next_token_skip_space_or_newline
-      end
 
       nil
     end

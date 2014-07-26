@@ -788,4 +788,9 @@ describe "Parser" do
   assert_syntax_error "macro def foo(x); 1; end"
 
   assert_syntax_error "{x: [] of Int32,\n}\n1.foo(", "unterminated call", 3, 6
+
+  assert_syntax_error "def foo(x y); end", "unexpected token: y (expected ',' or ')')"
+  assert_syntax_error "def foo x y; end", "unexpected token: y (expected ';' or newline)"
+  assert_syntax_error "macro foo(x y); end", "unexpected token: y (expected ',' or ')')"
+  assert_syntax_error "macro foo x y; end", "unexpected token: y (expected ';' or newline)"
 end
