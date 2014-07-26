@@ -619,4 +619,24 @@ describe "Type inference: class" do
     b = result.program.types["B"] as InstanceVarContainer
     b.instance_vars.length.should eq(0)
   end
+
+  it "doesn't mark instance variable as nilable if calling another initialize" do
+    assert_type(%(
+      class Foo
+        def initialize(x, y)
+          initialize(x)
+        end
+
+        def initialize(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Foo.new(1, 2)
+      foo.x
+      )) { int32 }
+  end
 end

@@ -922,6 +922,7 @@ module Crystal
     property :yields
     property :instance_vars
     property :calls_super
+    property :calls_initialize
     property :uses_block_arg
     property :name_column_number
     property :abstract
@@ -930,6 +931,7 @@ module Crystal
     def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @yields = nil, @abstract = false)
       @body = Expressions.from body
       @calls_super = false
+      @calls_initialize = false
       @uses_block_arg = false
       @raises = false
       @name_column_number = 0
@@ -959,6 +961,7 @@ module Crystal
       a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @yields)
       a_def.instance_vars = instance_vars
       a_def.calls_super = calls_super
+      a_def.calls_initialize = calls_initialize
       a_def.uses_block_arg = uses_block_arg
       a_def.name_column_number = name_column_number
       a_def.abstract = @abstract

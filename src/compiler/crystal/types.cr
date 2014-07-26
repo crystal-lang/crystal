@@ -1040,10 +1040,12 @@ module Crystal
         end
 
         if is_initialize
-          if ivii = @instance_vars_in_initialize
-            @instance_vars_in_initialize = ivii & a_def_instance_vars
-          else
-            @instance_vars_in_initialize = a_def_instance_vars
+          unless a_def.calls_initialize
+            if ivii = @instance_vars_in_initialize
+              @instance_vars_in_initialize = ivii & a_def_instance_vars
+            else
+              @instance_vars_in_initialize = a_def_instance_vars
+            end
           end
 
           unless a_def.calls_super
@@ -1060,7 +1062,9 @@ module Crystal
       elsif is_initialize
         # If it's an initialize without instance variables,
         # then *all* instance variables are nilable
-        @instance_vars_in_initialize = Set(String).new
+        unless a_def.calls_initialize
+          @instance_vars_in_initialize = Set(String).new
+        end
 
         unless a_def.calls_super
           sup = superclass

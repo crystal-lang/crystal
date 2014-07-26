@@ -296,6 +296,7 @@ module Crystal
         expansion = Def.new(name, self_def.args[0 ... i].map(&.clone), nil, receiver.clone, self_def.block_arg.clone, self_def.return_type.clone, self_def.yields)
         expansion.instance_vars = instance_vars
         expansion.calls_super = calls_super
+        expansion.calls_initialize = calls_initialize
         expansion.uses_block_arg = uses_block_arg
         expansion.yields = yields
 

@@ -16,6 +16,7 @@ module Crystal
       @temp_token = Token.new
       @unclosed_stack = [] of Unclosed
       @calls_super = false
+      @calls_initialize = false
       @uses_block_arg = false
       @def_nest = 0
       @block_arg_count = 0
@@ -1599,6 +1600,7 @@ module Crystal
 
       a_def.instance_vars = instance_vars
       a_def.calls_super = @calls_super
+      a_def.calls_initialize = @calls_initialize
       a_def.uses_block_arg = @uses_block_arg
 
       result
@@ -1613,9 +1615,11 @@ module Crystal
 
       a_def.instance_vars = instance_vars
       a_def.calls_super = @calls_super
+      a_def.calls_initialize = @calls_initialize
       a_def.uses_block_arg = @uses_block_arg
       @instance_vars = nil
       @calls_super = false
+      @calls_initialize = false
       @uses_block_arg = false
       @block_arg_name = nil
       a_def
@@ -1623,6 +1627,7 @@ module Crystal
 
     def prepare_parse_def
       @calls_super = false
+      @calls_initialize = false
       @uses_block_arg = false
       @block_arg_name = nil
       @instance_vars = Set(String).new
@@ -2312,7 +2317,12 @@ module Crystal
 
       next_token
 
-      @calls_super = true if name == "super"
+      case name
+      when "super"
+        @calls_super = true
+      when "initialize"
+        @calls_initialize = true
+      end
 
       old_last_call_has_parenthesis = @last_call_has_parenthesis
 
