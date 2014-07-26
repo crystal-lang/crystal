@@ -255,6 +255,41 @@ module Crystal
           @vars.delete key_var.name
           @vars.delete value_var.name if value_var
           @vars.delete index_var.name if index_var
+        when RangeLiteral
+          exp.from.accept self
+          from = @last
+
+          unless from.is_a?(NumberLiteral)
+            node.raise "range begin #{exp.from} must evaluate to a NumberLiteral"
+          end
+
+          from = from.to_number.to_i
+
+          exp.to.accept self
+          to = @last
+
+          unless to.is_a?(NumberLiteral)
+            node.raise "range end #{exp.to} must evaluate to a NumberLiteral"
+          end
+
+          to = to.to_number.to_i
+
+          exclusive = exp.exclusive
+
+          element_var = node.vars[0]
+          index_var = node.vars[1]?
+
+          range = Range.new(from, to, exclusive)
+          range.each_with_index do |element, index|
+            @vars[element_var.name] = NumberLiteral.new(element, :i32)
+            if index_var
+              @vars[index_var.name] = NumberLiteral.new(index, :i32)
+            end
+            node.body.accept self
+          end
+
+          @vars.delete element_var.name
+          @vars.delete index_var.name if index_var
         else
           node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"
         end

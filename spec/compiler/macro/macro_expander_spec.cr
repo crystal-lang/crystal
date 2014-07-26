@@ -128,6 +128,18 @@ describe "MacroExpander" do
     it "expands macro with for over tuple literal" do
       assert_macro "x", "{%for e, i in x%}{{e}}{{i}}{%end%}", [TupleLiteral.new([Var.new("a"), Var.new("b")] of ASTNode)] of ASTNode, "a0b1"
     end
+
+    it "expands macro with for over range literal" do
+      assert_macro "", "{%for e in 1..3 %}{{e}}{%end%}", [] of ASTNode, "123"
+    end
+
+    it "expands macro with for over range literal, evaluating elements" do
+      assert_macro "x, y", "{%for e in x..y %}{{e}}{%end%}", [NumberLiteral.new(3, :i32), NumberLiteral.new(6, :i32)] of ASTNode, "3456"
+    end
+
+    it "expands macro with for over range literal, evaluating elements (exclusive)" do
+      assert_macro "x, y", "{%for e in x...y %}{{e}}{%end%}", [NumberLiteral.new(3, :i32), NumberLiteral.new(6, :i32)] of ASTNode, "345"
+    end
   end
 
   describe "node methods" do
