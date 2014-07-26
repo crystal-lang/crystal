@@ -2,7 +2,7 @@ class HTTP::Client
   def self.exec(host, port, request)
     TCPSocket.open(host, port) do |socket|
       request.to_io(socket)
-      HTTPResponse.from_io(socket)
+      HTTP::Response.from_io(socket)
     end
   end
 
@@ -10,18 +10,18 @@ class HTTP::Client
     TCPSocket.open(host, port) do |socket|
       SSLSocket.open(socket) do |ssl_socket|
         request.to_io(ssl_socket)
-        HTTPResponse.from_io(ssl_socket)
+        HTTP::Response.from_io(ssl_socket)
       end
     end
   end
 
   def self.get(host, port, path, headers = nil)
-    exec(host, port, HTTPRequest.new("GET", path, headers))
+    exec(host, port, HTTP::Request.new("GET", path, headers))
   end
 
   def self.get(url)
     exec_url(url) do |path, headers|
-      HTTPRequest.new("GET", path, headers)
+      HTTP::Request.new("GET", path, headers)
     end
   end
 
@@ -31,7 +31,7 @@ class HTTP::Client
 
   def self.post(url, body)
     exec_url(url) do |path, headers|
-      HTTPRequest.new("POST", path, headers, body)
+      HTTP::Request.new("POST", path, headers, body)
     end
   end
 
