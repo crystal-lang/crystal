@@ -11,6 +11,8 @@ abstract class HTTP::Handler
 end
 
 class HTTP::Server
+  property ssl
+
   def initialize(@port, &@handler : Request -> Response)
   end
 
@@ -25,19 +27,25 @@ class HTTP::Server
     server = TCPServer.new(@port)
 
     while true
-      sock = server.accept
-      buffered_sock = BufferedIO.new(sock)
+      io = sock = server.accept
+      io = ssl_sock = SSLServerSocket.new(io, @ssl.not_nil!) if @ssl
+      io = BufferedIO.new(io)
 
       begin
         begin
-          request = HTTP::Request.from_io(buffered_sock)
+          request = HTTP::Request.from_io(io)
         rescue
+          # HACK: these lines can be removed once #171 is fixed
+          ssl_sock.try &.close if @ssl
+          sock.close
+
           next
         end
         response = @handler.call(request)
-        response.to_io buffered_sock
-        buffered_sock.flush
+        response.to_io io
+        io.flush
       ensure
+        ssl_sock.try &.close if @ssl
         sock.close
       end
     end
