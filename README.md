@@ -45,7 +45,7 @@ Currently it only works on Mac OSX and Linux 32/64 bit.
 
 1. Clone the repository: `git clone https://github.com/manastech/crystal.git`
 1. Execute `bin/crystal --setup`
-1. You will need libgc. In Mac: `brew install bdw-gc`. In Ubuntu: `sudo apt-get install libgc-dev`.
+1. You will need libgc. In Mac: `brew install bdw-gc`. In Ubuntu: `sudo apt-get install libgc-dev`. You may also need `libunwind7` and `libpcre3`, depending on what programs you run. On Ubuntu: `sudo apt-get install libunwind7-dev libpcre3-dev`.
 
 That's all. Try to run:
 
@@ -53,7 +53,7 @@ That's all. Try to run:
 
 Or compile some example:
 
-    bin/crystal samples/mandelbrot.cr && ./mandelbrot
+    bin/crystal samples/mandelbrot.cr --run
 
 Community
 ---------
