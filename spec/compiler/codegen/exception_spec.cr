@@ -41,6 +41,27 @@ describe "Code gen: exception" do
       )).to_i.should eq(1)
   end
 
+  it "does ensure after rescue which returns (#171)" do
+    run(%(
+      require "prelude"
+
+      $x = 0
+
+      def foo
+        raise "foo"
+      rescue
+        $x += 1
+        return
+      ensure
+        $x += 1
+      end
+
+      foo
+
+      $x
+      )).to_i.should eq(2)
+  end
+
   it "executes body if nothing raised (1)" do
     run(%(
       require "prelude"

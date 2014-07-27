@@ -975,7 +975,12 @@ module Crystal
                 context.vars[a_rescue_name] = LLVMVar.new(exception, a_rescue.type, true)
               end
 
+              # Make sure the rescue knows about the current ensure
+              # and the previous catch block
+              previous_catch_block = exception_handlers.last?.try &.catch_block
+              exception_handlers << Handler.new(node, previous_catch_block, context.vars)
               accept a_rescue.body
+              exception_handlers.pop
             end
             phi.add @last, a_rescue.body.type?
 
@@ -1275,9 +1280,9 @@ module Crystal
     end
 
     def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
-      if raises && (handler = @exception_handlers.try &.last?)
+      if raises && (handler = @exception_handlers.try &.last?) && (catch_block = handler.catch_block)
         invoke_out_block = new_block "invoke_out"
-        @last = @builder.invoke func, call_args, invoke_out_block, handler.catch_block
+        @last = @builder.invoke func, call_args, invoke_out_block, catch_block
         position_at_end invoke_out_block
       else
         @last = call func, call_args
