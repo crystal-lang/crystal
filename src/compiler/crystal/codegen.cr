@@ -875,7 +875,9 @@ module Crystal
       old_scope = block_context.vars["%scope"]?
 
       if node_scope = node.scope
-        accept node_scope
+        request_value do
+          accept node_scope
+        end
         block_context.vars["%scope"] = LLVMVar.new(@last, node_scope.type)
       end
 

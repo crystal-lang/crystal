@@ -72,4 +72,19 @@ describe "Type inference: yield with scope" do
       end
     ").to_i.should eq(3)
   end
+
+  it "generate right code when yielding struct as scope" do
+    run("
+      struct Foo
+        def bar; end
+      end
+
+      def foo
+        with Foo.new yield
+        1
+      end
+
+      foo { bar }
+    ").to_i.should eq(1)
+  end
 end
