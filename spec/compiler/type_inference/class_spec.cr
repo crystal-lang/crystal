@@ -639,4 +639,26 @@ describe "Type inference: class" do
       foo.x
       )) { int32 }
   end
+
+  it "says can't instantiate abstract class if wrong number of arguments" do
+    assert_error %(
+      abstract class Foo
+      end
+
+      Foo.new(1)
+      ),
+      "can't instantiate abstract class Foo"
+  end
+
+  it "says can't instantiate abstract class if wrong number of arguments (2)" do
+    assert_error %(
+      abstract class Foo
+        def initialize(x)
+        end
+      end
+
+      Foo.new
+      ),
+      "can't instantiate abstract class Foo"
+  end
 end

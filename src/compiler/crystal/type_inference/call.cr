@@ -873,11 +873,19 @@ module Crystal
     def define_new_without_initialize(scope, arg_types)
       defs = scope.instance_type.lookup_defs("initialize")
       if defs.length > 0
-        raise_matches_not_found scope.instance_type, "initialize"
+        if scope.abstract
+          raise "can't instantiate abstract class #{scope}"
+        else
+          raise_matches_not_found scope.instance_type, "initialize"
+        end
       end
 
       if defs.length == 0 && arg_types.length > 0
-        raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.length} for 0)"
+        if scope.abstract
+          raise "can't instantiate abstract class #{scope}"
+        else
+          raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.length} for 0)"
+        end
       end
 
       # This creates:
