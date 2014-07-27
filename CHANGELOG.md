@@ -1,9 +1,18 @@
 ## Next
 
-* Fixed [#168](https://github.com/manastech/crystal/issues/168)
 * **(breaking change)** Removed the special `->` operator for pointers of structs/unions: instead of `foo->bar` use `foo.value.bar`; instead of `foo->bar = 1` use `foo.value.bar = 1`.
-* Added `colorize` file that provides methods to easily output bash colors
+* Added `colorize` file that provides methods to easily output bash colors.
 * Now you can use modules as generic type arguments (for example, do `x = [] of IO`).
+* Added SSL sockets. Now HTTP::Server implements HTTPS.
+* Macros have access to constants and types.
+* Allow iterating a range in macros with `for`.
+* Use cpu cycle counter to initialize random.
+* `method_missing` now works in generic types.
+* Fixed [#168](https://github.com/manastech/crystal/issues/168): incorrect type inference of instance variables if not assigned in superclass.
+* Fixed [#169](https://github.com/manastech/crystal/issues/169): `responds_to?` wasn't working with generic types.
+* Fixed [#171](https://github.com/manastech/crystal/issues/171): ensure blocks are not executed if the rescue block returns from a def.
+* Fixed [#175](https://github.com/manastech/crystal/issues/175): invalid code generated when using with/yield with structs.
+* Fixed some parser issues and other small issues.
 
 ## 0.3.4 (2014-07-21)
 
