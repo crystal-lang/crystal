@@ -1411,6 +1411,14 @@ module Crystal
       value
     end
 
+    def type_id(value, type : Program)
+      type_id(type)
+    end
+
+    def type_id(value, type : NonGenericModuleType)
+      type_id(value, type.including_types.not_nil!)
+    end
+
     def type_id(value, type)
       type_id(type)
     end

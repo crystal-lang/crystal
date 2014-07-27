@@ -178,6 +178,14 @@ module Crystal
       llvm_type(type.remove_alias)
     end
 
+    def create_llvm_type(type : NonGenericModuleType)
+      if including_type = type.including_types
+        llvm_type(including_type)
+      else
+        LLVM::Int1
+      end
+    end
+
     def create_llvm_type(type : Type)
       raise "Bug: called create_llvm_type for #{type}"
     end

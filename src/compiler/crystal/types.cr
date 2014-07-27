@@ -86,14 +86,6 @@ module Crystal
       false
     end
 
-    def nilable?
-      false
-    end
-
-    def generic?
-      false
-    end
-
     def c_enum?
       false
     end
@@ -316,6 +308,14 @@ module Crystal
 
     def include(mod)
       raise "Bug: #{self} doesn't implement include"
+    end
+
+    def add_including_type(mod)
+      raise "Bug: #{self} doesn't implement add_including_type"
+    end
+
+    def including_types
+      raise "Bug: #{self} doesn't implement including_types"
     end
 
     def add_subclass_observer(observer)
@@ -835,7 +835,10 @@ module Crystal
       if mod == self
         raise "cyclic include detected"
       else
-        parents.insert 0, mod unless parents.includes?(mod)
+        unless parents.includes?(mod)
+          parents.insert 0, mod
+          mod.add_including_type(self)
+        end
       end
     end
 
@@ -928,13 +931,7 @@ module Crystal
     end
   end
 
-  module InheritableClass
-    def add_subclass(subclass)
-      subclasses << subclass
-      notify_subclass_added
-      @superclass.try &.notify_subclass_added
-    end
-
+  module SubclassObservable
     def add_subclass_observer(observer)
       observers = (@subclass_observers ||= [] of Call)
       observers << observer
@@ -949,12 +946,57 @@ module Crystal
     end
   end
 
+  module InheritableClass
+    include SubclassObservable
+
+    def add_subclass(subclass)
+      subclasses << subclass
+      notify_subclass_added
+      @superclass.try &.notify_subclass_added
+    end
+  end
+
   module NonGenericOrGenericClassInstanceType
   end
 
   class NonGenericModuleType < ModuleType
     include DefInstanceContainer
     include ClassVarContainer
+    include SubclassObservable
+
+    def add_including_type(type)
+      including_types = @including_types ||= [] of Type
+      including_types.push type
+
+      notify_subclass_added
+    end
+
+    def including_types
+      if including_types = @including_types
+        all_types = Array(Type).new(types.length)
+        including_types.each do |including_type|
+          if including_type.is_a?(GenericType)
+            including_type.generic_types.each_value do |generic_type|
+              all_types << generic_type
+            end
+          else
+            all_types << including_type.virtual_type
+          end
+        end
+        program.union_of(all_types)
+      else
+        nil
+      end
+    end
+
+    def passed_by_value?
+      including_types = including_types()
+      if including_types
+        including_types.passed_by_value?
+      else
+        false
+      end
+    end
 
     def module?
       true
@@ -1426,15 +1468,19 @@ module Crystal
       initialize_instance instance
 
       instance.after_initialize
+
+      # Notify modules that an instance was added
+      parents.try &.each do |parent|
+        if parent.is_a?(NonGenericModuleType)
+          parent.notify_subclass_added
+        end
+      end
+
       instance
     end
 
     def initialize_instance(instance)
       # Nothing
-    end
-
-    def generic?
-      true
     end
   end
 
@@ -1591,10 +1637,6 @@ module Crystal
     end
 
     def class?
-      true
-    end
-
-    def generic?
       true
     end
 
@@ -1838,6 +1880,10 @@ module Crystal
     getter mapping
 
     def initialize(@program, @module, @including_class, @mapping)
+    end
+
+    def add_including_type(type)
+      # TODO
     end
 
     delegate container, @module
@@ -2446,10 +2492,6 @@ module Crystal
   class NilableType < UnionType
     def initialize(@program, not_nil_type)
       super(@program, [@program.nil, not_nil_type] of Type)
-    end
-
-    def nilable?
-      true
     end
 
     def not_nil_type

@@ -3,6 +3,7 @@
 * Fixed [#168](https://github.com/manastech/crystal/issues/168)
 * **(breaking change)** Removed the special `->` operator for pointers of structs/unions: instead of `foo->bar` use `foo.value.bar`; instead of `foo->bar = 1` use `foo.value.bar = 1`.
 * Added `colorize` file that provides methods to easily output bash colors
+* Now you can use modules as generic type arguments (for example, do `x = [] of IO`).
 
 ## 0.3.4 (2014-07-21)
 

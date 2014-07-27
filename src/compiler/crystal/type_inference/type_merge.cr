@@ -137,6 +137,16 @@ module Crystal
     end
   end
 
+  class NonGenericModuleType
+    def common_ancestor(other : Type)
+      if other.implements?(self)
+        self
+      else
+        nil
+      end
+    end
+  end
+
   class ClassType
     def common_ancestor(other : ClassType)
       if depth <= 1
@@ -175,6 +185,10 @@ module Crystal
 
     def common_ancestor(other : VirtualType)
       common_ancestor(other.base_type)
+    end
+
+    def common_ancestor(other : NonGenericModuleType)
+      other.common_ancestor(self)
     end
   end
 

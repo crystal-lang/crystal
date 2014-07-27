@@ -99,7 +99,27 @@ module Crystal
       owner.union_types.flat_map { |type| lookup_matches_in(type) }
     end
 
+    def lookup_matches_in(owner : Program, self_type = nil, def_name = self.name)
+      lookup_matches_in_type(owner, self_type, def_name)
+    end
+
+    def lookup_matches_in(owner : NonGenericModuleType)
+      including_types = owner.including_types
+      if including_types
+        owner.add_subclass_observer(self)
+        @subclass_notifier = owner
+
+        lookup_matches_in(including_types)
+      else
+        raise "no type includes #{owner}"
+      end
+    end
+
     def lookup_matches_in(owner : Type, self_type = nil, def_name = self.name)
+      lookup_matches_in_type(owner, self_type, def_name)
+    end
+
+    def lookup_matches_in_type(owner, self_type, def_name)
       arg_types = args.map &.type
 
       matches = check_tuple_indexer(owner, def_name, args, arg_types)
@@ -217,7 +237,7 @@ module Crystal
           if 0 <= index < owner.tuple_types.length
             indexer_def = owner.tuple_indexer(index)
             indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
-            return Matches.new([indexer_match], true)
+            return Matches.new([indexer_match] of Match, true)
           else
             raise "index out of bounds for tuple #{owner}"
           end
@@ -893,7 +913,7 @@ module Crystal
           instance_type.type_vars.each do |type_var|
             generic_type_args << Path.new([type_var])
           end
-          new_generic = Generic.new(Path.new([instance_type.name]), generic_type_args)
+          new_generic = Generic.new(Path.new([instance_type.name] of String), generic_type_args)
           alloc = Call.new(new_generic, "allocate")
         else
           alloc = Call.new(nil, "allocate")

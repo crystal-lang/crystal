@@ -23,6 +23,14 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     end
   end
 
+  def assign_distinct(target_pointer, target_type : Type, value_type : NonGenericModuleType, value)
+    assign target_pointer, target_type, value_type.including_types.not_nil!, value
+  end
+
+  def assign_distinct(target_pointer, target_type : NonGenericModuleType, value_type : Type, value)
+    assign target_pointer, target_type.including_types.not_nil!, value_type, value
+  end
+
   def assign_distinct(target_pointer, target_type : NilableType, value_type : Type, value)
     store upcast(value, target_type, value_type), target_pointer
   end
@@ -111,6 +119,15 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
   end
 
   def downcast(value, to_type, from_type : VoidType, already_loaded)
+    value
+  end
+
+  def downcast(value, to_type, from_type : NonGenericModuleType, already_loaded)
+    if from_type == to_type
+      value = to_lhs(value, from_type) unless already_loaded
+    else
+      value = downcast(value, to_type, from_type.including_types.not_nil!, already_loaded)
+    end
     value
   end
 
@@ -225,6 +242,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def downcast_distinct(value, to_type : FunInstanceType, from_type : FunInstanceType)
     # Nothing to do
+    value
+  end
+
+  def downcast_distinct(value, to_type : NonGenericModuleType, from_type : Type)
     value
   end
 

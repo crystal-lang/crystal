@@ -417,4 +417,124 @@ describe "Type inference: module" do
       $x
       ") { int32 }
   end
+
+  it "types pointer of module" do
+    assert_type("
+      module Moo
+      end
+
+      class Foo
+        include Moo
+
+        def foo
+          1
+        end
+      end
+
+      p = Pointer(Moo).malloc(1_u64)
+      p.value = Foo.new
+      p.value
+      ") { types["Moo"] }
+  end
+
+  it "types pointer of module with method" do
+    assert_type("
+      module Moo
+      end
+
+      class Foo
+        include Moo
+
+        def foo
+          1
+        end
+      end
+
+      p = Pointer(Moo).malloc(1_u64)
+      p.value = Foo.new
+      p.value.foo
+      ") { int32 }
+  end
+
+  it "types pointer of module with method with two including types" do
+    assert_type("
+      module Moo
+      end
+
+      class Foo
+        include Moo
+
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        include Moo
+
+        def foo
+          'a'
+        end
+      end
+
+      p = Pointer(Moo).malloc(1_u64)
+      p.value = Foo.new
+      p.value = Bar.new
+      p.value.foo
+      ") { union_of(int32, char) }
+  end
+
+  it "types pointer of module with generic type" do
+    assert_type("
+      module Moo
+      end
+
+      class Foo(T)
+        include Moo
+
+        def foo
+          1
+        end
+      end
+
+      p = Pointer(Moo).malloc(1_u64)
+      p.value = Foo(Int32).new
+      p.value.foo
+      ") { int32 }
+  end
+
+  it "types pointer of module with generic type" do
+    assert_type("
+      module Moo
+      end
+
+      class Bar
+        def self.boo
+          1
+        end
+      end
+
+      class Baz
+        def self.boo
+          'a'
+        end
+      end
+
+      class Foo(T)
+        include Moo
+
+        def foo
+          T.boo
+        end
+      end
+
+      p = Pointer(Moo).malloc(1_u64)
+      p.value = Foo(Bar).new
+      x = p.value.foo
+
+      p.value = Foo(Baz).new
+
+      x
+      ") { union_of(int32, char) }
+  end
 end
