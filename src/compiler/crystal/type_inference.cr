@@ -1485,11 +1485,13 @@ module Crystal
       case type
       when Const
         unless type.value.type?
-          old_types, old_scope, old_vars, old_meta_vars, old_type_lookup = @types, @scope, @vars, @meta_vars, @type_lookup
-          @types, @scope, @vars, @meta_vars, @type_lookup = type.scope_types, type.scope, MetaVars.new, MetaVars.new, nil
-          type.value.accept self
-          type.vars = @meta_vars
-          @types, @scope, @vars, @meta_vars, @type_lookup = old_types, old_scope, old_vars, old_meta_vars, old_type_lookup
+          meta_vars = MetaVars.new
+          dummy_def = Def.new("const", [] of Arg)
+          type_visitor = TypeVisitor.new(@mod, meta_vars, dummy_def)
+          type_visitor.types = type.scope_types
+          type_visitor.scope = type.scope
+          type.value.accept type_visitor
+          type.vars = meta_vars
         end
         node.target_const = type
         node.bind_to type.value

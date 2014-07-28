@@ -115,4 +115,24 @@ describe "Type inference: const" do
       foo 1
       ") { char }
   end
+
+  it "doesn't crash with const used in initialize (bug)" do
+    assert_type("
+      COCO = init_coco
+
+      def init_coco
+        1
+      end
+
+      class Foo
+        def initialize
+          COCO
+        end
+      end
+
+      Foo.new
+
+      COCO
+      ") { int32 }
+  end
 end

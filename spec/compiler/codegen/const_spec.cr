@@ -186,4 +186,18 @@ describe "Codegen: const" do
       Bar.new.bar
       ").to_i.should eq(1)
   end
+
+  it "codegens two consts with same variable name" do
+    run("
+      A = begin
+            a = 1
+          end
+
+      B = begin
+            a = 2.3
+          end
+
+      (A + B).to_i
+      ").to_i.should eq(3)
+  end
 end
