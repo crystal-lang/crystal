@@ -116,8 +116,22 @@ module Crystal
       # whose type was never allocated. Replace it with raise.
       obj = node.obj
       obj_type = obj.try &.type?
-      if (obj && (!obj_type || !obj.type.allocated)) || node.args.any? { |arg| !arg.type? || !arg.type.allocated }
-        return untyped_expression
+      if (obj && !obj_type)
+        return untyped_expression(node, "`#{obj}` has no type")
+      end
+
+      if obj && !obj.type.allocated
+        return untyped_expression(node, "#{obj.type} in `#{obj}` was never instantiated")
+      end
+
+      node.args.each do |arg|
+        unless arg.type?
+          return untyped_expression(node, "`#{arg}` has no type")
+        end
+
+        unless arg.type.allocated
+          return untyped_expression(node, "#{arg.type} in `#{arg}` was never instantiated")
+        end
       end
 
       super
@@ -234,7 +248,7 @@ module Crystal
 
       body = node.def.body
       if !body.type? && !body.is_a?(Return)
-        node.def.body = untyped_expression
+        node.def.body = untyped_expression(body)
         rebind_node node.def, node.def.body
         node.update
       end
@@ -242,12 +256,22 @@ module Crystal
       node
     end
 
-    def untyped_expression
-      @untyped_expression ||= begin
-        call = Call.new(nil, "raise", [StringLiteral.new("untyped expression")] of ASTNode, nil, nil, true)
-        call.accept TypeVisitor.new(@program)
-        call
+    def untyped_expression(node, msg = nil)
+      ex_msg = String.build do |str|
+        str << "can't execute `"
+        str << node
+        str << "`"
+        str << " at "
+        str << node.location
+        if msg
+          str << ": "
+          str << msg
+        end
       end
+
+      call = Call.new(nil, "raise", [StringLiteral.new(ex_msg)] of ASTNode, nil, nil, true)
+      call.accept TypeVisitor.new(@program)
+      call
     end
 
     def transform(node : Yield)
