@@ -49,7 +49,7 @@ describe "Code gen: cast" do
         a as Char
         false
       rescue ex
-        ex.message == "type cast exception"
+        ex.message == "cast to Char failed"
       end
       )).to_b.should be_true
   end
@@ -64,7 +64,7 @@ describe "Code gen: cast" do
       )).to_i.should eq(1)
   end
 
-  pending "casts from union to another union raises" do
+  it "casts from union to another union raises" do
     run(%(
       require "prelude"
 
@@ -73,7 +73,7 @@ describe "Code gen: cast" do
         a as Float64 | Char
         false
       rescue ex
-        ex.message == "type cast exception"
+        ex.message == "cast to (Float64 | Char) failed"
       end
       )).to_b.should be_true
   end
@@ -121,7 +121,7 @@ describe "Code gen: cast" do
         a as CastSpecBaz
         false
       rescue ex
-        ex.message == "type cast exception"
+        ex.message == "cast to CastSpecBaz failed"
       end
       )).to_b.should be_true
   end
@@ -217,7 +217,7 @@ describe "Code gen: cast" do
         a as Nil
         false
       rescue ex
-        ex.message == "type cast exception"
+        ex.message.includes? "cast to Nil failed"
       end
       )).to_b.should be_true
   end
@@ -241,7 +241,7 @@ describe "Code gen: cast" do
         a as Reference
         false
       rescue ex
-        ex.message == "type cast exception"
+        ex.message == "cast to Reference failed"
       end
       )).to_b.should be_true
   end

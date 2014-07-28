@@ -722,7 +722,7 @@ module Crystal
         cond cmp, matches_block, doesnt_match_block
 
         position_at_end doesnt_match_block
-        accept type_cast_exception_call
+        accept type_cast_exception_call(to_type)
 
         position_at_end matches_block
         @last = downcast last_value, resulting_type, obj_type, true
@@ -731,12 +731,10 @@ module Crystal
       false
     end
 
-    def type_cast_exception_call
-      @type_cast_exception_call ||= begin
-        call = Call.new(nil, "raise", [StringLiteral.new("type cast exception")] of ASTNode, nil, nil, true)
-        @mod.infer_type call
-        call
-      end
+    def type_cast_exception_call(to_type)
+      call = Call.new(nil, "raise", [StringLiteral.new("cast to #{to_type} failed")] of ASTNode, nil, nil, true)
+      @mod.infer_type call
+      call
     end
 
     def index_out_of_bounds_exception_call
