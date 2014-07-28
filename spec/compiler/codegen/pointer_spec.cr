@@ -245,4 +245,11 @@ describe "Code gen: pointer" do
       end
       ").to_i.should eq(3)
   end
+
+  it "gets pointer to constant" do
+    run("
+      FOO = 1
+      pointerof(FOO).value
+    ").to_i.should eq(1)
+  end
 end

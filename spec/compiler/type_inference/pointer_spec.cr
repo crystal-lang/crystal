@@ -71,4 +71,15 @@ describe "Type inference: pointer" do
       )) { |mod| union_of(mod.nil, mod.types["C"].types["T"]) }
     result.node.type.is_a?(NilablePointerType).should be_true
   end
+
+  it "types pointer of constant" do
+    result = assert_type("
+      FOO = 1
+      pointerof(FOO)
+    ") { pointer_of(int32) }
+  end
+
+  it "pointer of class raises error" do
+    assert_error "pointerof(Int32)", "can't take address of Int32"
+  end
 end

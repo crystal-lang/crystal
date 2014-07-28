@@ -1982,6 +1982,13 @@ module Crystal
               meta_var
             when InstanceVar
               lookup_instance_var node_exp
+            when Path
+              node_exp.accept self
+              if const = node_exp.target_const
+                const.value
+              else
+                node.raise "can't take address of #{node_exp}"
+              end
             else
               node.raise "can't take address of #{node}"
             end

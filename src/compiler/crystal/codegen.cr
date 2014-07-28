@@ -291,6 +291,10 @@ module Crystal
                 context.vars[node_exp.name].pointer
               when InstanceVar
                 instance_var_ptr (context.type as InstanceVarContainer), node_exp.name, llvm_self_ptr
+              when Path
+                accept(node_exp)
+                global_name = node_exp.target_const.not_nil!.llvm_name
+                @main_mod.globals[global_name]
               else
                 raise "Bug: pointerof(#{node})"
               end
