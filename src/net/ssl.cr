@@ -131,29 +131,27 @@ class SSLContext
   end
 
   def new_client(io)
-    boxed_io, ssl = create_bio_and_ssl(io)
-
+    ssl = create_ssl(io)
     OpenSSL.ssl_connect(ssl)
     SSLSocket.new(ssl)
   end
 
   def new_server(io)
-    boxed_io, ssl = create_bio_and_ssl(io)
-
+    ssl = create_ssl(io)
     OpenSSL.ssl_accept(ssl)
     SSLSocket.new(ssl)
   end
 
   # private
 
-  def create_bio_and_ssl(io)
+  def create_ssl(io)
     bio = LibBIO.bio_new(pointerof(CRYSTAL_BIO))
     bio.value.ptr = boxed_io = Box(IO).box(io)
 
     ssl = OpenSSL.ssl_new(@handle)
     OpenSSL.ssl_set_bio(ssl, bio, bio)
 
-    {boxed_io, ssl}
+    ssl
   end
 end
 
