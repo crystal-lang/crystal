@@ -444,9 +444,11 @@ module Crystal
 
       target.bind_to value
 
-      current_type.types[target.names.first] = Const.new(@mod, current_type, target.names.first, value, @types.dup, @scope)
+      const = Const.new(@mod, current_type, target.names.first, value, @types.dup, @scope)
+      current_type.types[target.names.first] = const
 
       node.type = @mod.nil
+      target.target_const = const
     end
 
     def type_assign(target : Global, value, node)
@@ -1432,7 +1434,7 @@ module Crystal
           constant.default_value = NumberLiteral.new(counter, enum_base_type.kind)
           counter += 1
         end
-        current_type.types[node.name] = CEnumType.new(@mod, current_type, node.name, enum_base_type, node.constants)
+        node.c_enum_type = current_type.types[node.name] = CEnumType.new(@mod, current_type, node.name, enum_base_type, node.constants)
       end
       false
     end
@@ -1505,6 +1507,7 @@ module Crystal
         end
         node.target_const = type
         node.bind_to type.value
+        type.used = true
       when Type
         node.type = check_type_in_type_args(type.remove_alias_if_simple)
       when ASTNode

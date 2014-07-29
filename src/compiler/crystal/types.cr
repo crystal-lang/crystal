@@ -2564,9 +2564,11 @@ module Crystal
     getter scope_types
     getter scope
     property! vars
+    property used
 
     def initialize(program, container, name, @value, @scope_types = [] of Type, @scope = nil)
       super(program, container, name)
+      @used = false
     end
 
     def type_desc

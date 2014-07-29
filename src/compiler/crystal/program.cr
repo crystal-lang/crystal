@@ -11,7 +11,6 @@ module Crystal
 
     getter symbols
     getter global_vars
-    getter regexes
     property vars
     property literal_expander
 
@@ -20,7 +19,6 @@ module Crystal
 
       @unions = {} of Array(Int32) => Type
       @funs = {} of Array(Int32) => Type
-      @regexes = [] of Const
 
       @types["Object"] = @object = NonGenericClassType.new self, self, "Object", nil
       @object.abstract = true
@@ -54,10 +52,10 @@ module Crystal
       @float.abstract = true
 
       @types["Float32"] = @float32 = FloatType.new self, self, "Float32", @float, 4, 9
-      @float32.types["INFINITY"] = Const.new self, @float32, "FLOAT_INFINITY", Primitive.new(:float32_infinity)
+      @float32.types["INFINITY"] = Const.new self, @float32, "INFINITY", Primitive.new(:float32_infinity)
 
       @types["Float64"] = @float64 = FloatType.new self, self, "Float64", @float, 8, 10
-      @float64.types["INFINITY"] = Const.new self, @float64, "FLOAT_INFINITY", Primitive.new(:float64_infinity)
+      @float64.types["INFINITY"] = Const.new self, @float64, "INFINITY", Primitive.new(:float64_infinity)
 
       @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", @value, 4
       @types["Pointer"] = @pointer = PointerType.new self, self, "Pointer", @value, ["T"]

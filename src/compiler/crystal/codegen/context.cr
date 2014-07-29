@@ -11,7 +11,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     property while_exit_block
     property! block
     property! block_context
-    property in_const_block
     property closure_vars
     property closure_type
     property closure_ptr
@@ -20,7 +19,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     property closure_self
 
     def initialize(@fun, @type, @vars = LLVMVars.new)
-      @in_const_block = false
       @closure_skip_parent = false
     end
 
@@ -51,7 +49,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
       context.while_exit_block = @while_exit_block
       context.block = @block
       context.block_context = @block_context
-      context.in_const_block = @in_const_block
       context.closure_vars = @closure_vars
       context.closure_type = @closure_type
       context.closure_ptr = @closure_ptr

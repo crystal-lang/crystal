@@ -46,7 +46,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     with_cloned_context do |old_context|
       context.type = self_type
       context.vars = LLVMVars.new
-      context.in_const_block = false
 
       @llvm_mod = fun_module
 
@@ -55,7 +54,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
       args = codegen_fun_signature(mangled_name, target_def, self_type, is_fun_literal, is_closure)
 
-      if !target_def.is_a?(External) || is_exported_fun
+      needs_body = !target_def.is_a?(External) || is_exported_fun
+      if needs_body
         emit_def_debug_metadata target_def if @debug
 
         new_entry_block
@@ -120,6 +120,13 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     if target_def.uses_block_arg
       block_arg = target_def.block_arg.not_nil!
       args.push Arg.new_with_type(block_arg.name, block_arg.type)
+    end
+
+    # This is the case where we declared a fun that was not used and now we
+    # are defining its body.
+    if is_external && (existing_fun = @llvm_mod.functions[mangled_name]?)
+      context.fun = existing_fun
+      return args
     end
 
     if is_external

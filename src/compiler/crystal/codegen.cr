@@ -129,17 +129,17 @@ module Crystal
       LLVM.set_name @argv, "argv"
 
       builder = LLVM::Builder.new
-      @builder = CrystalLLVMBuilder.new builder, self
+      @builder = wrap_builder builder
 
       @dbg_kind = LibLLVM.get_md_kind_id("dbg", 3_u32)
 
       @modules = {"" => @main_mod} of String => LLVM::Module
       @types_to_modules = {} of Type => LLVM::Module
 
-      @alloca_block, @const_block, @entry_block = new_entry_block_chain({"alloca", "const", "entry"})
+      @alloca_block, @entry_block = new_entry_block_chain({"alloca", "entry"})
       @main_alloca_block = @alloca_block
-      @const_block_entry = @const_block
 
+      @in_lib = false
       @strings = {} of StringKey => LibLLVM::ValueRef
       @symbols = {} of String => Int32
       @symbol_table_values = [] of LibLLVM::ValueRef
@@ -167,6 +167,17 @@ module Crystal
       @subprograms[@main_mod] = [fun_metadata(context.fun, MAIN_NAME, "foo.cr", 1)] if @debug
 
       alloca_vars @mod.vars, @mod
+
+      declare_const(@mod.types["ARGC_UNSAFE"] as Const)
+      declare_const(@mod.types["ARGV_UNSAFE"] as Const)
+      declare_const(@mod.types["Float32"].types["INFINITY"] as Const)
+      declare_const(@mod.types["Float64"].types["INFINITY"] as Const)
+
+      @unused_fun_defs = [] of FunDef
+    end
+
+    def wrap_builder(builder)
+      CrystalLLVMBuilder.new builder, self
     end
 
     def define_symbol_table(llvm_mod)
@@ -182,12 +193,14 @@ module Crystal
 
       # If there are no instructions in the alloca block and the
       # const block, we just removed them (less noise)
-      if LLVM.first_instruction(@alloca_block) || LLVM.first_instruction(@const_block_entry)
-        br_block_chain [@alloca_block, @const_block_entry]
-        br_block_chain [@const_block, @entry_block]
+      if LLVM.first_instruction(@alloca_block)
+        br_block_chain [@alloca_block, @entry_block]
       else
         LLVM.delete_basic_block(@alloca_block)
-        LLVM.delete_basic_block(@const_block_entry)
+      end
+
+      @unused_fun_defs.each do |node|
+        codegen_fun node.real_name, node.external, @mod, true
       end
 
       env_dump = ENV["DUMP"]?
@@ -212,8 +225,22 @@ module Crystal
     end
 
     def visit(node : FunDef)
+      if @in_lib
+        return false
+      end
+
       unless node.external.dead
-        codegen_fun node.real_name, node.external, @mod, true
+        if node.external.used
+          codegen_fun node.real_name, node.external, @mod, true
+        else
+          # If the fun is not invoked we codegen it at the end so
+          # we don't have issues with constants being used before
+          # they are declared.
+          # But, apparenty, llvm requires us to define them so that
+          # calls can find them, so we do so.
+          codegen_fun node.real_name, node.external, @mod, false
+          @unused_fun_defs << node
+        end
       end
 
       false
@@ -418,6 +445,37 @@ module Crystal
     end
 
     def visit(node : LibDef)
+      @in_lib = true
+      node.body.accept self
+      @in_lib = false
+      @last = llvm_nil
+      false
+    end
+
+    def visit(node : StructDef)
+      @last = llvm_nil
+      false
+    end
+
+    def visit(node : UnionDef)
+      @last = llvm_nil
+      false
+    end
+
+    def visit(node : EnumDef)
+      node.c_enum_type.types.each_value do |type|
+        declare_const(type as Const)
+      end
+      @last = llvm_nil
+      false
+    end
+
+    def visit(node : ExternalVar)
+      @last = llvm_nil
+      false
+    end
+
+    def visit(node : TypeDef)
       @last = llvm_nil
       false
     end
@@ -566,7 +624,10 @@ module Crystal
     def visit(node : Assign)
       target, value = node.target, node.value
 
+      # Initialize constants if they are used
       if target.is_a?(Path)
+        const = target.target_const.not_nil!
+        declare_const(const)
         @last = llvm_nil
         return false
       end
@@ -800,44 +861,7 @@ module Crystal
     def visit(node : Path)
       if const = node.target_const
         global_name = const.llvm_name
-        global = @main_mod.globals[global_name]?
-
-        unless global
-          global = @main_mod.globals.add(llvm_type(const.value.type), global_name)
-
-          if const.value.needs_const_block?
-            in_const_block("const_#{global_name}", const.container) do
-              alloca_vars const.vars
-
-              request_value do
-                accept const.value
-              end
-
-              if LLVM.constant? @last
-                LLVM.set_initializer global, @last
-                LLVM.set_global_constant global, true
-              else
-                if const.value.type.passed_by_value?
-                  @last = load @last
-                  LLVM.set_initializer global, LLVM.undef(llvm_type(const.value.type))
-                else
-                  LLVM.set_initializer global, LLVM.null(type_of @last)
-                end
-
-                store @last, global
-              end
-            end
-          else
-            old_llvm_mod = @llvm_mod
-            @llvm_mod = @main_mod
-            request_value do
-              accept const.value
-            end
-            LLVM.set_initializer global, @last
-            LLVM.set_global_constant global, true
-            @llvm_mod = old_llvm_mod
-          end
-        end
+        global = @main_mod.globals[global_name]#? || declare_const(const).not_nil!
 
         if @llvm_mod != @main_mod
           global = @llvm_mod.globals[global_name]?
@@ -859,6 +883,36 @@ module Crystal
         end
       end
       false
+    end
+
+    def declare_const(const, global_name = const.llvm_name)
+      return nil unless const.used
+
+      global = @main_mod.globals.add(llvm_type(const.value.type), global_name)
+
+      in_const_block(const.container) do
+        alloca_vars const.vars
+
+        request_value do
+          accept const.value
+        end
+
+        if LLVM.constant? @last
+          LLVM.set_initializer global, @last
+          LLVM.set_global_constant global, true
+        else
+          if const.value.type.passed_by_value?
+            @last = load @last
+            LLVM.set_initializer global, LLVM.undef(llvm_type(const.value.type))
+          else
+            LLVM.set_initializer global, LLVM.null(type_of @last)
+          end
+
+          store @last, global
+        end
+      end
+
+      global
     end
 
     def visit(node : Generic)
@@ -1363,7 +1417,7 @@ module Crystal
       a_fun = @main_mod.functions.add(name, arg_types, return_type) do |func|
         context.fun = func
         func.append_basic_block("entry") do |builder|
-          @builder = builder
+          @builder = wrap_builder builder
           yield func
         end
       end
@@ -1668,24 +1722,21 @@ module Crystal
 
     def in_alloca_block
       old_block = insert_block
-      if context.in_const_block
-        position_at_end @main_alloca_block
-      else
-        position_at_end @alloca_block
-      end
+      position_at_end @alloca_block
       value = yield
       position_at_end old_block
       value
     end
 
-    def in_const_block(const_block_name, container)
-      old_position = insert_block
+    def in_const_block(container)
       old_llvm_mod = @llvm_mod
+      @llvm_mod = @main_mod
+
       old_exception_handlers = @exception_handlers
+      @exception_handlers = nil
 
       with_cloned_context do
         context.fun = @main
-        context.in_const_block = true
 
         # "self" in a constant is the constant's container
         context.type = container
@@ -1693,20 +1744,7 @@ module Crystal
         # Start with fresh variables
         context.vars = LLVMVars.new
 
-        @exception_handlers = nil
-        @llvm_mod = @main_mod
-
-        const_block = new_block const_block_name
-        position_at_end const_block
-
         yield
-
-        new_const_block = insert_block
-        position_at_end @const_block
-        br const_block
-        @const_block = new_const_block
-
-        position_at_end old_position
       end
 
       @llvm_mod = old_llvm_mod

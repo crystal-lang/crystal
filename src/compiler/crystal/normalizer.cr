@@ -123,23 +123,13 @@ module Crystal
     #
     # From:
     #
-    #     /regex/
+    #     /regex/flags
     #
     # To:
     #
-    #     ::CONST = /regex/
-    #     CONST
+    #     Regex.new("regex", flags)
     def transform(node : RegexLiteral)
-      const_name = "#Regex_#{node.value}_#{node.modifiers}"
-      unless program.types[const_name]?
-        constructor = Call.new(Path.new(["Regex"], true), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers, :i32)] of ASTNode)
-        program.types[const_name] = const = Const.new program, program, const_name, constructor, [program] of Type, program
-        @program.regexes << const
-      end
-
-      path = Path.new([const_name], true)
-      path.location = node.location
-      path
+      Call.new(Path.new(["Regex"], true), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers, :i32)] of ASTNode)
     end
 
     # Convert an interpolation to a concatenation with a StringIO:

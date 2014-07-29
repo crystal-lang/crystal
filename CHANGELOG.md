@@ -8,6 +8,7 @@
 * Allow iterating a range in macros with `for`.
 * Use cpu cycle counter to initialize random.
 * `method_missing` now works in generic types.
+* Fixed [#154](https://github.com/manastech/crystal/issues/154): bug, constants are initialized before global variables.
 * Fixed [#168](https://github.com/manastech/crystal/issues/168): incorrect type inference of instance variables if not assigned in superclass.
 * Fixed [#169](https://github.com/manastech/crystal/issues/169): `responds_to?` wasn't working with generic types.
 * Fixed [#171](https://github.com/manastech/crystal/issues/171): ensure blocks are not executed if the rescue block returns from a def.

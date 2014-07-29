@@ -493,5 +493,12 @@ module Crystal
   class External
     property :dead
     @dead = false
+
+    property :used
+    @used = false
+  end
+
+  class EnumDef
+    property! c_enum_type
   end
 end

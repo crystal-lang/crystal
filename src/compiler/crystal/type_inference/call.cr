@@ -360,7 +360,7 @@ module Crystal
     def recalculate_lib_call(obj_type)
       old_target_defs = @target_defs
 
-      untyped_def = obj_type.lookup_first_def(name, false) #or
+      untyped_def = obj_type.lookup_first_def(name, false)
       raise "undefined fun '#{name}' for #{obj_type}" unless untyped_def
 
       check_args_length_match obj_type, untyped_def
@@ -368,6 +368,8 @@ module Crystal
       return unless obj_and_args_types_set?
 
       check_fun_args_types_match obj_type, untyped_def
+
+      (untyped_def as External).used = true
 
       untyped_defs = [untyped_def]
       @target_defs = untyped_defs

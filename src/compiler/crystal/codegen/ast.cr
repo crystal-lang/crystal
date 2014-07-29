@@ -22,10 +22,6 @@ module Crystal
       type?.try &.no_return?
     end
 
-    def needs_const_block?
-      true
-    end
-
     def zero?
       false
     end
@@ -52,14 +48,6 @@ module Crystal
     end
   end
 
-  {% for klass in %w(Nil Bool Number Char String Symbol) %}
-    class {{klass.id}}Literal
-      def needs_const_block?
-        false
-      end
-    end
-  {% end %}
-
   class Assign
     def returns?
       value.returns?
@@ -75,17 +63,6 @@ module Crystal
 
     def nexts?
       value.breaks?
-    end
-  end
-
-  class Primitive
-    def needs_const_block?
-      case name
-      when :float32_infinity, :flaot64_infinity
-        false
-      else
-        true
-      end
     end
   end
 

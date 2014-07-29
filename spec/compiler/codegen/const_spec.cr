@@ -200,4 +200,12 @@ describe "Codegen: const" do
       (A + B).to_i
       ").to_i.should eq(3)
   end
+
+  it "works with const initialized after global variable" do
+    run(%(
+      $a = 1
+      COCO = $a
+      COCO
+      )).to_i.should eq(1)
+  end
 end

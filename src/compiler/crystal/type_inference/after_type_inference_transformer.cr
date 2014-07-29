@@ -8,12 +8,6 @@ module Crystal
       transformer = AfterTypeInferenceTransformer.new(self)
       node = node.transform(transformer)
       puts node if ENV["AFTER"]? == "1"
-
-      # Make sure to transform regexes constants (see Normalizer#trnasform(Regex))
-      regexes.each do |const|
-        const.value = const.value.transform(transformer)
-      end
-
       node
     end
   end
@@ -93,6 +87,15 @@ module Crystal
     end
 
     def transform(node : Assign)
+      target = node.target
+
+      if target.is_a?(Path)
+        const = target.target_const.not_nil!
+        unless const.used
+          return node
+        end
+      end
+
       node = super
 
       # We don't want to transform constant assignments into no return
