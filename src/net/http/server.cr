@@ -28,7 +28,7 @@ class HTTP::Server
 
     while true
       io = sock = server.accept
-      io = ssl_sock = SSLServerSocket.new(io, @ssl.not_nil!) if @ssl
+      io = ssl_sock = @ssl.not_nil!.new_server(io) if @ssl
       io = BufferedIO.new(io)
 
       begin

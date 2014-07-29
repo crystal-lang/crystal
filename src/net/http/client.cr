@@ -8,7 +8,7 @@ class HTTP::Client
 
   def self.exec_ssl(host, port, request)
     TCPSocket.open(host, port) do |socket|
-      SSLClientSocket.open(socket) do |ssl_socket|
+      SSLSocket.open_client(socket) do |ssl_socket|
         request.to_io(ssl_socket)
         HTTP::Response.from_io(ssl_socket)
       end
