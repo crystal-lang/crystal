@@ -42,6 +42,7 @@ require "exception"
 require "raise"
 require "errno"
 require "assert"
+require "box"
 require "main"
 
 def loop

@@ -15,6 +15,7 @@
 * Fixed some parser issues and other small issues.
 * Allow forward struct/union declarations in libs.
 * Added `String#replace(Regex, String)`
+* Added a `Box(T)` class, useful for boxing value types to pass them to C as `Void*`.
 
 ## 0.3.4 (2014-07-21)
 
