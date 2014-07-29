@@ -252,4 +252,32 @@ describe "Code gen: struct" do
       foo.value.x = -> { }
       ))
   end
+
+  it "allows forward delcarations" do
+    run(%(
+      lib C
+        struct A; end
+        struct B; end
+
+        struct A
+          x : B*
+          y : Int32
+        end
+
+        struct B
+          x : A*
+          y : Int32
+        end
+      end
+
+      a = C::A.new
+      a.y = 1
+
+      b = Pointer(C::B).malloc(1_u64)
+      b.value.y = 2
+      a.x = b
+
+      a.y + a.x.value.y
+      )).to_i.should eq(3)
+  end
 end

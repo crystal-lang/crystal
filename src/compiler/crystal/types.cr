@@ -2140,23 +2140,15 @@ module Crystal
     end
   end
 
-  class CStructType < NamedType
+  abstract class CStructOrUnionType < NamedType
     include DefContainer
     include DefInstanceContainer
 
     getter vars
-    property :packed
 
-    def initialize(program, container, name, vars)
+    def initialize(program, container, name)
       super(program, container, name)
-      @name = name
       @vars = {} of String => Var
-      @packed = false
-      vars.each do |var|
-        @vars[var.name] = var
-        add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:struct_set))
-        add_def Def.new(var.name, [] of Arg, Primitive.new(:struct_get))
-      end
     end
 
     def passed_by_value?
@@ -2169,6 +2161,19 @@ module Crystal
 
     def parents
       nil
+    end
+  end
+
+  class CStructType < CStructOrUnionType
+    property :packed
+    @packed = false
+
+    def vars=(vars)
+      vars.each do |var|
+        @vars[var.name] = var
+        add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:struct_set))
+        add_def Def.new(var.name, [] of Arg, Primitive.new(:struct_get))
+      end
     end
 
     def metaclass
@@ -2188,33 +2193,13 @@ module Crystal
     end
   end
 
-  class CUnionType < NamedType
-    include DefContainer
-    include DefInstanceContainer
-
-    getter vars
-
-    def initialize(program, container, name, vars)
-      super(program, container, name)
-      @name = name
-      @vars = {} of String => Var
+  class CUnionType < CStructOrUnionType
+    def vars=(vars)
       vars.each do |var|
         @vars[var.name] = var
         add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:union_set))
         add_def Def.new(var.name, [] of Arg, Primitive.new(:union_get))
       end
-    end
-
-    def passed_by_value?
-      true
-    end
-
-    def primitive_like?
-      true
-    end
-
-    def parents
-      nil
     end
 
     def metaclass

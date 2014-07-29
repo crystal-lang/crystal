@@ -1391,12 +1391,22 @@ module Crystal
     end
 
     def end_visit(node : StructDef)
-      type = process_struct_or_union_def node, CStructType
-      type.packed = true if node.has_attribute?("Packed")
+      type = process_struct_or_union_def(node, CStructType) do |t|
+        unless t.is_a?(CStructType)
+          node.raise "#{node.name} is already defined as #{t.type_desc}"
+        end
+      end
+      if node.has_attribute?("Packed")
+        (type as CStructType).packed = true
+      end
     end
 
     def end_visit(node : UnionDef)
-      process_struct_or_union_def node, CUnionType
+      process_struct_or_union_def(node, CUnionType) do |t|
+        unless t.is_a?(CUnionType)
+          node.raise "#{node.name} is already defined as #{t.type_desc}"
+        end
+      end
     end
 
     def visit(node : EnumDef)
@@ -2242,14 +2252,21 @@ module Crystal
     def process_struct_or_union_def(node, klass)
       type = current_type.types[node.name]?
       if type
-        node.raise "#{node.name} is already defined"
-      else
-        fields = node.fields.map do |field|
-          field_type = check_primitive_like field.restriction.not_nil!
-          Var.new(field.name, field_type)
+        yield type
+        type = type as CStructOrUnionType
+        unless type.vars.empty?
+          node.raise "#{node.name} is already defined"
         end
-        current_type.types[node.name] = klass.new @mod, current_type, node.name, fields
+      else
+        type = current_type.types[node.name] = klass.new @mod, current_type, node.name
       end
+
+      fields = node.fields.map do |field|
+        field_type = check_primitive_like field.restriction.not_nil!
+        Var.new(field.name, field_type)
+      end
+
+      type.vars = fields
     end
 
     def check_valid_attributes(node, valid_attributes, desc)

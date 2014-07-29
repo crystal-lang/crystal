@@ -93,4 +93,46 @@ describe "Type inference: struct" do
       ),
       "can't set closure as C struct member"
   end
+
+  it "errors if already defined" do
+    assert_error %(
+      lib C
+        struct Foo
+          x : Int32
+        end
+
+        struct Foo
+        end
+      end
+      ),
+      "Foo is already defined"
+  end
+
+  it "errors if already defined with another type" do
+    assert_error %(
+      lib C
+        enum Foo
+          X
+        end
+
+        struct Foo
+        end
+      end
+      ),
+      "Foo is already defined as enum"
+  end
+
+  it "errors if already defined with another type (2)" do
+    assert_error %(
+      lib C
+        union Foo
+          x : Int32
+        end
+
+        struct Foo
+        end
+      end
+      ),
+      "Foo is already defined as union"
+  end
 end
