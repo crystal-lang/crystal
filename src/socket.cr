@@ -74,7 +74,7 @@ class TCPSocket < FileDescriptorIO
 end
 
 class TCPServer
-  def initialize(port)
+  def initialize(port, backlog = 128)
     @sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
 
     addr = C::SockAddrIn.new
@@ -85,7 +85,7 @@ class TCPServer
       raise Errno.new("Error binding TCP server at #{port}")
     end
 
-    if C.listen(@sock, 5) != 0
+    if C.listen(@sock, backlog) != 0
       raise Errno.new("Error listening TCP server at #{port}")
     end
   end
