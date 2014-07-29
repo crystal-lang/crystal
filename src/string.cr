@@ -224,19 +224,6 @@ class String
     end
   end
 
-  def replace(&block : Char -> String)
-    String.build(length) do |buffer|
-      each_char do |my_char|
-        replacement = yield my_char
-        if replacement
-          buffer << replacement
-        else
-          buffer << my_char
-        end
-      end
-    end
-  end
-
   def tr(from : String, to : String)
     multi = nil
     table :: Int32[256]
@@ -272,6 +259,19 @@ class String
           else
             buffer << ch
           end
+        end
+      end
+    end
+  end
+
+  def replace(&block : Char -> String)
+    String.build(length) do |buffer|
+      each_char do |my_char|
+        replacement = yield my_char
+        if replacement
+          buffer << replacement
+        else
+          buffer << my_char
         end
       end
     end
@@ -322,6 +322,10 @@ class String
     end
 
     buffer.to_s
+  end
+
+  def replace(pattern : Regex, replacement : String)
+    replace(pattern) { replacement }
   end
 
   def delete(char : Char)

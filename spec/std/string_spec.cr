@@ -289,11 +289,15 @@ describe "String" do
     replaced.should eq("somethingthingbexr")
   end
 
-  it "replaces with regex" do
+  it "replaces with regex and block" do
     actual = "foo booor booooz".replace(/o+/) do |match|
       "#{match}#{match.length}"
     end
     actual.should eq("foo2 booo3r boooo4z")
+  end
+
+  it "replaces with regex and string" do
+    "foo boor booooz".replace(/o+/, "a").should eq("fa bar baz")
   end
 
   it "dumps" do

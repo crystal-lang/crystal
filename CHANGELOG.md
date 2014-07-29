@@ -14,6 +14,7 @@
 * Fixed [#175](https://github.com/manastech/crystal/issues/175): invalid code generated when using with/yield with structs.
 * Fixed some parser issues and other small issues.
 * Allow forward struct/union declarations in libs.
+* Added `String#replace(Regex, String)`
 
 ## 0.3.4 (2014-07-21)
 
