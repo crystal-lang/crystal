@@ -57,7 +57,7 @@ lib OpenSSL("ssl")
   fun ssl_accept = SSL_accept(handle : SSL) : Int32
   fun ssl_write = SSL_write(handle : SSL, text : UInt8*, length : Int32) : Int32
   fun ssl_read = SSL_read(handle : SSL, buffer : UInt8*, read_size : Int32) : Int32
-  fun ssl_shutdown = SSL_shutdown(handle : SSL)
+  fun ssl_shutdown = SSL_shutdown(handle : SSL) : Int32
   fun ssl_free = SSL_free(handle : SSL)
   fun ssl_ctx_use_certificate_chain_file = SSL_CTX_use_certificate_chain_file(ctx : SSLContext, file : UInt8*) : Int32
   fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int32
@@ -71,7 +71,7 @@ class SSLContext
   getter handle
 
   def self.default
-    @@default = SSLContext.new
+    @@default ||= SSLContext.new
   end
 
   CRYSTAL_BIO = begin
@@ -109,7 +109,7 @@ class SSLContext
       bio.value.num = -1
     end
 
-    crystal_bio.destroy = -> (bio : LibBIO::Bio*) { 1 }
+    crystal_bio.destroy = -> (bio : LibBIO::Bio*) { bio.value.ptr = Pointer(Void).null; 1 }
 
     crystal_bio
   end
@@ -131,34 +131,36 @@ class SSLContext
   end
 
   def new_client(io)
-    ssl = create_ssl(io)
+    boxed_io, ssl = create_bio_and_ssl(io)
+
     OpenSSL.ssl_connect(ssl)
-    SSLSocket.new(ssl)
+    SSLSocket.new(ssl, boxed_io)
   end
 
   def new_server(io)
-    ssl = create_ssl(io)
+    boxed_io, ssl = create_bio_and_ssl(io)
+
     OpenSSL.ssl_accept(ssl)
-    SSLSocket.new(ssl)
+    SSLSocket.new(ssl, boxed_io)
   end
 
   # private
 
-  def create_ssl(io)
+  def create_bio_and_ssl(io)
     bio = LibBIO.bio_new(pointerof(CRYSTAL_BIO))
     bio.value.ptr = boxed_io = Box(IO).box(io)
 
     ssl = OpenSSL.ssl_new(@handle)
     OpenSSL.ssl_set_bio(ssl, bio, bio)
 
-    ssl
+    {boxed_io, ssl}
   end
 end
 
 class SSLSocket
   include IO
 
-  def initialize(@ssl)
+  def initialize(@ssl, @boxed_io)
   end
 
   def read(buffer : UInt8*, count)
@@ -170,7 +172,7 @@ class SSLSocket
   end
 
   def close
-    OpenSSL.ssl_shutdown(@ssl)
+    while OpenSSL.ssl_shutdown(@ssl) == 0; end
     OpenSSL.ssl_free(@ssl)
   end
 
