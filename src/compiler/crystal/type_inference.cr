@@ -596,6 +596,7 @@ module Crystal
       block_visitor.free_vars = @free_vars
       block_visitor.untyped_def = @untyped_def
       block_visitor.call = @call
+      block_visitor.fun_literal_context = @fun_literal_context
 
       block_scope = node.scope || @scope
       block_scope = current_type.metaclass unless current_type.is_a?(Program)

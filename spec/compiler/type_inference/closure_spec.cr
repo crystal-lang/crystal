@@ -205,6 +205,26 @@ describe "Type inference: closure" do
     call.target_def.self_closured.should be_true
   end
 
+  it "marks method as self closured if used inside a block" do
+    result = assert_type("
+      def bar
+        yield
+      end
+
+      class Foo
+        def foo
+          ->{ bar { self } }
+        end
+      end
+
+      Foo.new.foo
+      1
+    ") { int32 }
+    node = result.node as Expressions
+    call = node.expressions[-2] as Call
+    call.target_def.self_closured.should be_true
+  end
+
   it "errors if sending closured fun literal to C" do
     assert_error %(
       lib C
