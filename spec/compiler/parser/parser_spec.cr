@@ -736,6 +736,9 @@ describe "Parser" do
   it_parses "{% if true %}\n{% end %}\n{% if true %}\n{% end %}", [MacroIf.new(true.bool, MacroLiteral.new("\n")), MacroIf.new(true.bool, MacroLiteral.new("\n"))] of ASTNode
   it_parses "fun foo : Int32; 1; end; 2", [FunDef.new("foo", [] of Arg, "Int32".path, false, 1.int32), 2.int32]
 
+  it_parses "[] of ->;", ArrayLiteral.new([] of ASTNode, Fun.new)
+  it_parses "[] of ->\n1", [ArrayLiteral.new([] of ASTNode, Fun.new), 1.int32]
+
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", [] of Arg, [keyword.call] of ASTNode)
   end

@@ -2707,10 +2707,7 @@ module Crystal
       if @token.type == :"->"
         next_token_skip_space
         case @token.type
-        when :",", :")", :"}"
-          return_type = nil
-        when :NEWLINE
-          skip_space_or_newline
+        when :",", :")", :"}", :";", :NEWLINE
           return_type = nil
         else
           type_union = parse_type_union(allow_primitives)
