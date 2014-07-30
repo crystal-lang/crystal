@@ -58,4 +58,17 @@ describe "Code gen: lib" do
       C.foo(foo &.to_s)
       ))
   end
+
+  it "allows setting/getting external variable as function pointer" do
+    build(%(
+      require "prelude"
+
+      lib C
+        $x : ->
+      end
+
+      C.x = ->{}
+      C.x.call
+      ))
+  end
 end
