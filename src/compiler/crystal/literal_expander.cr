@@ -1,6 +1,7 @@
 module Crystal
   class LiteralExpander
     def initialize(@program)
+      @regexes = [] of {String, Int32}
     end
 
     # Convert an array literal to creating an Array and storing the values:
@@ -127,6 +128,35 @@ module Crystal
         exp.location = node.location
         exp
       end
+    end
+
+    # From:
+    #
+    #     /regex/flags
+    #
+    # To:
+    #
+    #     if temp_var = $some_global
+    #       temp_var
+    #     else
+    #       $some_global = Regex.new("regex", flags)
+    #     end
+    #
+    # That is, cache the regex in a global variable.
+    def expand(node : RegexLiteral)
+      key = {node.value, node.modifiers}
+      index = @regexes.index key
+      unless index
+        index = @regexes.length
+        @regexes << key
+      end
+
+      global_name = "$Regex:#{index}"
+      temp_name = @program.new_temp_var_name
+      first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
+      regex = Call.new(Path.new(["Regex"], true), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers, :i32)] of ASTNode)
+      second_assign = Assign.new(Global.new(global_name), regex)
+      If.new(first_assign, Var.new(temp_name), second_assign)
     end
 
     def expand(node)

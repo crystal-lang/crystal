@@ -118,20 +118,6 @@ module Crystal
       new_node.transform(self)
     end
 
-    # Store regex in a constant and replace the regex by this constant
-    # (so we don't create an object each time).
-    #
-    # From:
-    #
-    #     /regex/flags
-    #
-    # To:
-    #
-    #     Regex.new("regex", flags)
-    def transform(node : RegexLiteral)
-      Call.new(Path.new(["Regex"], true), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers, :i32)] of ASTNode)
-    end
-
     # Convert an interpolation to a concatenation with a StringIO:
     #
     # From:
