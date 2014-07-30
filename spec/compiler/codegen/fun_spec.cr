@@ -389,6 +389,13 @@ describe "Code gen: fun" do
       ").to_b.should be_true
   end
 
+  it "does pointer" do
+    address = run("
+      ->{}.pointer.address
+      ").to_i
+    (address > 0).should be_true
+  end
+
   it "does new on fun type" do
     run("
       alias F = Int32 -> Int32

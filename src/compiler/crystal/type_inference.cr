@@ -1865,7 +1865,7 @@ module Crystal
         node.type = mod.string
       when :class
         node.type = scope.metaclass
-      when :fun_call, :fun_closure?
+      when :fun_call, :fun_closure?, :fun_pointer
         # Nothing to do
       when :pointer_diff
         node.type = mod.int64
