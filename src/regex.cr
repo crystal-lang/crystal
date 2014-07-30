@@ -7,7 +7,11 @@ lib PCRE("pcre")
   fun get_named_substring = pcre_get_named_substring(code : Pcre, subject : UInt8*, ovector : Int32*, string_count : Int32, string_name : UInt8*, string_ptr : UInt8**) : Int32
 
   INFO_CAPTURECOUNT = 2
+
+  $pcre_malloc : (UInt32 -> Void*)
 end
+
+PCRE.pcre_malloc = ->GC.malloc(UInt32)
 
 class Regex
   IGNORE_CASE = 1
