@@ -67,9 +67,35 @@ describe "colorize" do
     "hello".colorize.blue.on_green.bold.to_s.should eq("\e[34;42;1mhello\e[0m")
   end
 
-  it "colorized foreground with symbol" do
+  it "colorizes foreground with symbol" do
     "hello".colorize(:red).to_s.should eq("\e[31mhello\e[0m")
     "hello".colorize.fore(:red).to_s.should eq("\e[31mhello\e[0m")
+  end
+
+  it "colorizes mode with symbol" do
+    "hello".colorize.mode(:bold).to_s.should eq("\e[1mhello\e[0m")
+  end
+
+  it "raises on unknown foreground color" do
+    expect_raises ArgumentError, "unknown color: brown" do
+      "hello".colorize(:brown)
+    end
+  end
+
+  it "raises on unknown background color" do
+    expect_raises ArgumentError, "unknown color: brown" do
+      "hello".colorize.back(:brown)
+    end
+  end
+
+  it "raises on unknown mode" do
+    expect_raises ArgumentError, "unknown mode: bad" do
+      "hello".colorize.mode(:bad)
+    end
+  end
+
+  it "inspects" do
+    "hello".colorize(:red).inspect.should eq("\e[31m\"hello\"\e[0m")
   end
 
   it "colorizes io with method" do

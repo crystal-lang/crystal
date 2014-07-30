@@ -62,11 +62,15 @@ struct ColorizedObject(T)
   MODE_HIDDEN         =   "8"
 
   MODE_BOLD_FLAG      =    1
+  MODE_BRIGHT_FLAG    =    1
   MODE_DIM_FLAG       =    2
   MODE_UNDERLINE_FLAG =    4
   MODE_BLINK_FLAG     =    8
   MODE_REVERSE_FLAG   =   16
   MODE_HIDDEN_FLAG    =   32
+
+  COLORS = %w(black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white)
+  MODES = %w(bold bright dim underline blink reverse hidden)
 
   def initialize(@object : T)
     @fore = FORE_DEFAULT
@@ -74,60 +78,71 @@ struct ColorizedObject(T)
     @mode = 0
   end
 
-  {% if true %}
-    {{ colors = %w(black red green yellow blue magenta cyan light_gray dark_gray light_red light_green light_yellow light_blue light_magenta light_cyan white) }}
-
-    {% for name in colors %}
-      def {{name.id}}
-        @fore = FORE_{{name.upcase.id}}
-        self
-      end
-
-      def on_{{name.id}}
-        @back = BACK_{{name.upcase.id}}
-        self
-      end
-    {% end %}
-
-    def fore(color : Symbol)
-      case color
-      {% for name in colors %}
-        when :{{name.id}} then @fore = FORE_{{name.upcase.id}}
-      {% end %}
-      else raise "unknown color: #{color}"
-      end
+  {% for name in COLORS %}
+    def {{name.id}}
+      @fore = FORE_{{name.upcase.id}}
       self
     end
 
-    def back(color : Symbol)
-      case color
-      {% for name in colors %}
-        when :{{name.id}} then @back = BACK_{{name.upcase.id}}
-      {% end %}
-      else raise "unknown color: #{color}"
-      end
+    def on_{{name.id}}
+      @back = BACK_{{name.upcase.id}}
       self
     end
   {% end %}
 
-  {% for name in %w(bold dim underline blink reverse hidden) %}
+  {% for name in MODES %}
     def {{name.id}}
       @mode |= MODE_{{name.upcase.id}}_FLAG
       self
     end
   {% end %}
 
-  def on(color : Symbol)
-    back color
+  def fore(color : Symbol)
+    {% for name in COLORS %}
+      if color == :{{name.id}}
+        @fore = FORE_{{name.upcase.id}}
+        return self
+      end
+    {% end %}
+
+    raise ArgumentError.new "unknown color: #{color}"
   end
 
-  def bright
-    bold
+  def back(color : Symbol)
+    {% for name in COLORS %}
+      if color == :{{name.id}}
+        @back = BACK_{{name.upcase.id}}
+        return self
+      end
+    {% end %}
+
+    raise ArgumentError.new "unknown color: #{color}"
+  end
+
+  def mode(mode : Symbol)
+    {% for name in MODES %}
+      if mode == :{{name.id}}
+        @mode |= MODE_{{name.upcase.id}}_FLAG
+        return self
+      end
+    {% end %}
+
+    raise ArgumentError.new "unknown mode: #{mode}"
+  end
+
+  def on(color : Symbol)
+    back color
   end
 
   def to_s(io)
     surround(io) do
       io << @object
+    end
+  end
+
+  def inspect(io)
+    surround(io) do
+      @object.inspect(io)
     end
   end
 
@@ -137,16 +152,16 @@ struct ColorizedObject(T)
     append_end(io) if must_append_end
   end
 
-  $colorize_stack = [] of ColorizedObject(String)
+  STACK = [] of ColorizedObject(String)
 
   def push(io = STDOUT)
-    last_color = $colorize_stack.last?
+    last_color = STACK.last?
 
     append_start(io, !!last_color)
 
-    $colorize_stack.push self
+    STACK.push self
     yield io
-    $colorize_stack.pop
+    STACK.pop
 
     if last_color
       last_color.append_start(io, true)
