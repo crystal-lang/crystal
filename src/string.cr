@@ -641,6 +641,7 @@ class String
       when '\r' then io << "\\r"
       when '\t' then io << "\\t"
       when '\v' then io << "\\v"
+      when '\e' then io << "\\e"
       when '\\' then io << "\\\\"
       when '#'
         current_char = reader.next_char
