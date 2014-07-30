@@ -1,12 +1,6 @@
 # Perlin noise benchmark: https://github.com/nsf/pnoise
 
-struct Vec2
-  getter x
-  getter y
-
-  def initialize(@x, @y)
-  end
-end
+make_named_tuple Vec2, [x, y]
 
 def lerp(a, b, v)
   a * (1.0 - v) + b * v
