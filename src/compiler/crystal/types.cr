@@ -3034,7 +3034,6 @@ module Crystal
       add_def Def.new("arity", [] of Arg, NumberLiteral.new(fun_types.length - 1, :i32))
       add_def Def.new("pointer", [] of Arg, Primitive.new(:fun_pointer, @program.pointer_of(@program.void)))
       add_def Def.new("closure?", [] of Arg, Primitive.new(:fun_closure?, @program.bool))
-      add_def Def.new("to_s", [] of Arg, StringLiteral.new(to_s))
     end
 
     def struct?
