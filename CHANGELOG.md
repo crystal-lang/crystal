@@ -1,4 +1,4 @@
-## Next
+## 0.3.5 (2014-07-29)
 
 * **(breaking change)** Removed the special `->` operator for pointers of structs/unions: instead of `foo->bar` use `foo.value.bar`; instead of `foo->bar = 1` use `foo.value.bar = 1`.
 * Added `colorize` file that provides methods to easily output bash colors.
