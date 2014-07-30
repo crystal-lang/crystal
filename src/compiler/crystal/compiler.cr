@@ -301,7 +301,7 @@ module Crystal
 
           if @run
             errcode = C.system("#{output_filename} #{run_args.map(&.inspect).join " "}")
-            puts "Program terminated abnormally with eror code: #{errcode}" if errcode != 0
+            puts "Program terminated abnormally with error code: #{errcode}" if errcode != 0
             File.delete output_filename
           end
         end
