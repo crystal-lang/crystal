@@ -1034,6 +1034,7 @@ module Crystal
 
     def visit(node : Generic)
       node.in_type_args = @in_type_args > 0
+      node.scope = @scope
 
       node.name.accept self
 

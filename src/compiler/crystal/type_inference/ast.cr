@@ -225,6 +225,7 @@ module Crystal
 
   class Generic
     property! instance_type
+    property scope
     property in_type_args
     @in_type_args = false
 
@@ -236,7 +237,14 @@ module Crystal
           type_vars_types << node
         else
           node_type = node.type?
-          self.raise "can't deduce generic type in recursive method" unless node_type
+          unless node_type
+            scope = @scope
+            if scope && !scope.allocated
+              return
+            else
+              self.raise "can't deduce generic type in recursive method"
+            end
+          end
           type_vars_types << node_type.virtual_type
         end
       end

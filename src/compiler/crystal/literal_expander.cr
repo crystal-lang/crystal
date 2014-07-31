@@ -108,12 +108,22 @@ module Crystal
       if (node_of_key = node.of_key)
         type_vars = [node_of_key, node.of_value.not_nil!] of ASTNode
       else
-        type_vars = [TypeOf.new(node.keys), TypeOf.new(node.values)] of ASTNode
+        typeof_key = TypeOf.new(node.keys)
+        typeof_key.location = node.location
+
+        typeof_value = TypeOf.new(node.values)
+        typeof_value.location = node.location
+
+        type_vars = [typeof_key, typeof_value] of ASTNode
       end
 
-      constructor = Call.new(Generic.new(Path.new(["Hash"], true), type_vars), "new")
+      generic = Generic.new(Path.new(["Hash"], true), type_vars)
+      generic.location = node.location
+
+      constructor = Call.new(generic, "new")
+      constructor.location = node.location
+
       if node.keys.length == 0
-        constructor.location = node.location
         constructor
       else
         temp_var = new_temp_var
