@@ -417,113 +417,114 @@ module Crystal
     end
 
     def match_block_arg(match)
+      block_arg = match.def.block_arg
+      return unless block_arg
+      return unless ((yields = match.def.yields) && yields > 0) || match.def.uses_block_arg
+      return if !match.def.uses_block_arg && !block_arg.fun.inputs && !block_arg.fun.output
+
       yield_vars = nil
 
-      # TODO: check this 'yields > 0', in the past just checking yieldness (without > 0)
-      # led to a compiler crash, maybe this is fixed now.
-      if (block_arg = match.def.block_arg) && (((yields = match.def.yields) && yields > 0) || match.def.uses_block_arg)
-        block = @block.not_nil!
-        ident_lookup = MatchTypeLookup.new(match.context)
+      block = @block.not_nil!
+      ident_lookup = MatchTypeLookup.new(match.context)
 
-        if inputs = block_arg.fun.inputs
-          yield_vars = [] of Var
-          inputs.each_with_index do |input, i|
-            type = lookup_node_type(ident_lookup, input)
-            type = type.virtual_type
-            yield_vars << Var.new("var#{i}", type)
-          end
-          block.args.each_with_index do |arg, i|
-            var = yield_vars[i]?
-            arg.bind_to(var || mod.nil_var)
+      if inputs = block_arg.fun.inputs
+        yield_vars = [] of Var
+        inputs.each_with_index do |input, i|
+          type = lookup_node_type(ident_lookup, input)
+          type = type.virtual_type
+          yield_vars << Var.new("var#{i}", type)
+        end
+        block.args.each_with_index do |arg, i|
+          var = yield_vars[i]?
+          arg.bind_to(var || mod.nil_var)
+        end
+      else
+        block.args.each &.bind_to(mod.nil_var)
+      end
+
+      if match.def.uses_block_arg
+        # Automatically convert block to function pointer
+        if yield_vars
+          fun_args = yield_vars.map_with_index do |var, i|
+            arg = block.args[i]?
+            if arg
+              Arg.new_with_type(arg.name, var.type)
+            else
+              Arg.new_with_type(mod.new_temp_var_name, var.type)
+            end
           end
         else
-          block.args.each &.bind_to(mod.nil_var)
+          fun_args = [] of Arg
         end
 
-        if match.def.uses_block_arg
-          # Automatically convert block to function pointer
+        # But first check if the call has a block_arg
+        if call_block_arg = self.block_arg
+          # Check input types
+          call_block_arg_types = (call_block_arg.type as FunInstanceType).arg_types
           if yield_vars
-            fun_args = yield_vars.map_with_index do |var, i|
-              arg = block.args[i]?
-              if arg
-                Arg.new_with_type(arg.name, var.type)
-              else
-                Arg.new_with_type(mod.new_temp_var_name, var.type)
-              end
+            if yield_vars.length != call_block_arg_types.length
+              raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for #{yield_vars.length})"
             end
-          else
-            fun_args = [] of Arg
+
+            i = 1
+            yield_vars.zip(call_block_arg_types) do |yield_var, call_block_arg_type|
+              if yield_var.type != call_block_arg_type
+                raise "expected block argument's argument ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
+              end
+              i += 1
+            end
+          elsif call_block_arg_types.length != 0
+            raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for 0)"
           end
 
-          # But first check if the call has a block_arg
-          if call_block_arg = self.block_arg
-            # Check input types
-            call_block_arg_types = (call_block_arg.type as FunInstanceType).arg_types
-            if yield_vars
-              if yield_vars.length != call_block_arg_types.length
-                raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for #{yield_vars.length})"
-              end
-
-              i = 1
-              yield_vars.zip(call_block_arg_types) do |yield_var, call_block_arg_type|
-                if yield_var.type != call_block_arg_type
-                  raise "expected block argument's argument ##{i} to be #{yield_var.type}, not #{call_block_arg_type}"
-                end
-                i += 1
-              end
-            elsif call_block_arg_types.length != 0
-              raise "wrong number of block argument's arguments (#{call_block_arg_types.length} for 0)"
-            end
-
-            fun_literal = call_block_arg
-          else
-            if block.args.length > fun_args.length
-              raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
-            end
-
-            fun_def = Def.new("->", fun_args, block.body)
-            fun_literal = FunLiteral.new(fun_def)
-
-            unless block_arg.fun.output
-              fun_literal.force_void = true
-            end
-
-            fun_literal.accept parent_visitor
-          end
-
-          block.fun_literal = fun_literal
-
-          fun_literal_type = fun_literal.type?
-          if fun_literal_type
-            if output = block_arg.fun.output
-              block_type = (fun_literal_type as FunInstanceType).return_type
-              type_lookup = match.context.type_lookup as MatchesLookup
-              matched = type_lookup.match_arg(block_type, output, match.context)
-              unless matched
-                raise "expected block to return #{output}, not #{block_type}"
-              end
-            end
-          else
-            raise "cant' deduce type of block"
-          end
+          fun_literal = call_block_arg
         else
-          block.accept parent_visitor
+          if block.args.length > fun_args.length
+            raise "wrong number of block arguments (#{block.args.length} for #{fun_args.length})"
+          end
 
+          fun_def = Def.new("->", fun_args, block.body)
+          fun_literal = FunLiteral.new(fun_def)
+
+          unless block_arg.fun.output
+            fun_literal.force_void = true
+          end
+
+          fun_literal.accept parent_visitor
+        end
+
+        block.fun_literal = fun_literal
+
+        fun_literal_type = fun_literal.type?
+        if fun_literal_type
           if output = block_arg.fun.output
-            raise "can't infer block type" unless block.body.type?
-
-            block_type = block.body.type
+            block_type = (fun_literal_type as FunInstanceType).return_type
             type_lookup = match.context.type_lookup as MatchesLookup
             matched = type_lookup.match_arg(block_type, output, match.context)
             unless matched
-              if output.is_a?(Self)
-                raise "expected block to return #{match.context.owner}, not #{block_type}"
-              else
-                raise "expected block to return #{output}, not #{block_type}"
-              end
+              raise "expected block to return #{output}, not #{block_type}"
             end
-            block.body.freeze_type = true
           end
+        else
+          raise "cant' deduce type of block"
+        end
+      else
+        block.accept parent_visitor
+
+        if output = block_arg.fun.output
+          raise "can't infer block type" unless block.body.type?
+
+          block_type = block.body.type
+          type_lookup = match.context.type_lookup as MatchesLookup
+          matched = type_lookup.match_arg(block_type, output, match.context)
+          unless matched
+            if output.is_a?(Self)
+              raise "expected block to return #{match.context.owner}, not #{block_type}"
+            else
+              raise "expected block to return #{output}, not #{block_type}"
+            end
+          end
+          block.body.freeze_type = true
         end
       end
 

@@ -399,4 +399,16 @@ describe "Block inference" do
       end
     ") { union_of(int32, bool) }
   end
+
+  it "ignores block parameter if not used" do
+    assert_type(%(
+      def foo(&block)
+        yield 1
+      end
+
+      foo do |x|
+        x + 1
+      end
+      )) { int32 }
+  end
 end
