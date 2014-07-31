@@ -52,6 +52,10 @@ class HTTP::Server
   end
 
   def self.build_middleware(handlers)
+    if handlers.empty?
+      raise ArgumentError.new "no handlers specified"
+    end
+
     0.upto(handlers.length - 2) do |i|
       handlers[i].next = handlers[i + 1]
     end
