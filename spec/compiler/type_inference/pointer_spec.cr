@@ -82,4 +82,8 @@ describe "Type inference: pointer" do
   it "pointer of class raises error" do
     assert_error "pointerof(Int32)", "can't take address of Int32"
   end
+
+  it "pointer of value error" do
+    assert_error "pointerof(1)", "can't take address of 1"
+  end
 end

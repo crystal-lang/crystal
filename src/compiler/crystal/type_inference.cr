@@ -2003,10 +2003,10 @@ module Crystal
               if const = node_exp.target_const
                 const.value
               else
-                node.raise "can't take address of #{node_exp}"
+                node_exp.raise "can't take address of #{node_exp}"
               end
             else
-              node.raise "can't take address of #{node}"
+              node_exp.raise "can't take address of #{node_exp}"
             end
       node.bind_to var
     end
