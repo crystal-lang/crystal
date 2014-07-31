@@ -72,5 +72,9 @@ describe "Json serialization" do
     it "does for Hash" do
       {"foo" => 1, "bar" => 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
+
+    it "does for Hash with non-string keys" do
+      {foo: 1, bar: 2}.to_json.should eq(%({"foo":1,"bar":2}))
+    end
   end
 end

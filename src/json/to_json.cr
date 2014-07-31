@@ -11,14 +11,14 @@ struct Json::ObjectBuilder(T)
     @count = 0
   end
 
-  def field(name : String, value)
+  def field(name, value)
     field(name) { value.to_json(@io) }
   end
 
-  def field(name : String)
+  def field(name)
     @io << "," if @count > 0
     @io << "\""
-    @io << name
+    name.to_s(@io)
     @io << "\":"
     yield
     @count += 1
