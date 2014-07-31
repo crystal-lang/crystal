@@ -324,7 +324,17 @@ module Crystal
         return Expressions.new(exps)
       end
 
-      super
+      node = super
+
+      # If the def has a block argument without a specification
+      # and it doesn't use it, we remove it because it's useless
+      # and the semantic code won't have to bother checking it
+      block_arg = node.block_arg
+      if !node.uses_block_arg && block_arg && !block_arg.fun.inputs && !block_arg.fun.output
+        node.block_arg = nil
+      end
+
+      node
     end
 
     def transform(node : Macro)

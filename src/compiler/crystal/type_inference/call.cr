@@ -420,7 +420,6 @@ module Crystal
       block_arg = match.def.block_arg
       return unless block_arg
       return unless ((yields = match.def.yields) && yields > 0) || match.def.uses_block_arg
-      return if !match.def.uses_block_arg && !block_arg.fun.inputs && !block_arg.fun.output
 
       yield_vars = nil
 

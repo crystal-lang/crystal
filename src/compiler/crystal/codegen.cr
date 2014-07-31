@@ -1067,7 +1067,11 @@ module Crystal
         return false
       end
 
-      target_defs = node.target_defs.not_nil!
+      target_defs = node.target_defs
+      unless target_defs
+        node.raise "Bug: no target defs"
+      end
+
       if target_defs.length > 1
         codegen_dispatch node, target_defs
         return false

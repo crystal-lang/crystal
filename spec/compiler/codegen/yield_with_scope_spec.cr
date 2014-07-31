@@ -87,4 +87,19 @@ describe "Type inference: yield with scope" do
       foo { bar }
     ").to_i.should eq(1)
   end
+
+  it "doesn't explode if specifying &block but never using it (#181)" do
+    build(%(
+      class A
+        def a(&block)
+          with self yield
+        end
+        def aa
+        end
+      end
+      a = A.new
+      a.a { aa }
+      a.a { aa }
+      ))
+  end
 end
