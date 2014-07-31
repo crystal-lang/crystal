@@ -1,11 +1,9 @@
-lib OpenSSLCrypto("crypto")
-  fun md5 = MD5(data : UInt8*, lengh : Int32, buffer : UInt8*) : UInt8*
-end
+require "openssl/md5"
 
 module Crypto
   class MD5
     def self.hex_digest(data : String)
-      hash = OpenSSLCrypto.md5(data, data.length, nil)
+      hash = OpenSSL::MD5.hash(data)
       hash_str = String.new_with_length(32) do |buffer|
         0.upto(15) do |i|
           buffer[i * 2] = to_hex((hash[i]) >> 4)

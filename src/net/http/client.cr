@@ -1,3 +1,5 @@
+require "openssl"
+
 class HTTP::Client
   def self.exec(host, port, request)
     TCPSocket.open(host, port) do |socket|
@@ -8,7 +10,7 @@ class HTTP::Client
 
   def self.exec_ssl(host, port, request)
     TCPSocket.open(host, port) do |socket|
-      SSLSocket.open_client(socket) do |ssl_socket|
+      OpenSSL::SSL::Socket.open_client(socket) do |ssl_socket|
         request.to_io(ssl_socket)
         HTTP::Response.from_io(ssl_socket)
       end

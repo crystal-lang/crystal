@@ -1,7 +1,6 @@
 require "socket"
 require "uri"
 require "json"
-require "ssl"
 require "http/**"
 
 module HTTP
