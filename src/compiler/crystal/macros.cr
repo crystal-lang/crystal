@@ -137,8 +137,33 @@ module Crystal
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
 
-        a_macro.args.each_with_index do |macro_arg, index|
+        macro_args_length = a_macro.args.length
+        call_args_length = call.args.length
+        splat_index = a_macro.args.index(&.splat) || -1
+
+        # Args before the splat argument
+        0.upto(splat_index - 1) do |index|
+          macro_arg = a_macro.args[index]
           call_arg = call.args[index]? || macro_arg.default_value.not_nil!
+          vars[macro_arg.name] = call_arg.to_macro_var
+        end
+
+        # The splat argument
+        if splat_index == -1
+          splat_length = 0
+          offset = 0
+        else
+          splat_length = call_args_length - (macro_args_length - 1)
+          offset = splat_index + splat_length
+          splat_arg = a_macro.args[splat_index]
+          vars[splat_arg.name] = ArrayLiteral.new(call.args[splat_index, splat_length])
+        end
+
+        # Args after the splat argument
+        base = splat_index + 1
+        base.upto(macro_args_length - 1) do |index|
+          macro_arg = a_macro.args[index]
+          call_arg = call.args[offset + index - base]? || macro_arg.default_value.not_nil!
           vars[macro_arg.name] = call_arg.to_macro_var
         end
 

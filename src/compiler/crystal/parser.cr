@@ -1656,12 +1656,13 @@ module Crystal
       args = [] of Arg
 
       found_default_value = false
+      found_splat = false
 
       case @token.type
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          block_arg = parse_arg(args, nil, true, pointerof(found_default_value))
+          block_arg = parse_arg(args, nil, true, pointerof(found_default_value), pointerof(found_splat), true)
           if block_arg
             check :")"
             break
@@ -1677,7 +1678,7 @@ module Crystal
         next_token
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg = parse_arg(args, nil, false, pointerof(found_default_value))
+          block_arg = parse_arg(args, nil, false, pointerof(found_default_value), pointerof(found_splat), true)
           if block_arg
             break
           elsif @token.type == :","
@@ -1952,12 +1953,13 @@ module Crystal
       end
 
       found_default_value = false
+      found_splat = false
 
       case @token.type
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          block_arg = parse_arg(args, extra_assigns, true, pointerof(found_default_value))
+          block_arg = parse_arg(args, extra_assigns, true, pointerof(found_default_value), pointerof(found_splat), false)
           if block_arg
             if inputs = block_arg.fun.inputs
               @yields = inputs.length
@@ -1978,7 +1980,7 @@ module Crystal
         next_token_skip_space
       when :IDENT, :INSTANCE_VAR
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg = parse_arg(args, extra_assigns, false, pointerof(found_default_value))
+          block_arg = parse_arg(args, extra_assigns, false, pointerof(found_default_value), pointerof(found_splat), false)
           if block_arg
             if inputs = block_arg.fun.inputs
               @yields = inputs.length
@@ -2057,10 +2059,21 @@ module Crystal
       node
     end
 
-    def parse_arg(args, extra_assigns, parenthesis, found_default_value_ptr)
+    def parse_arg(args, extra_assigns, parenthesis, found_default_value_ptr, found_splat_ptr, allow_splat)
       if @token.type == :"&"
         next_token_skip_space_or_newline
         return parse_block_arg(extra_assigns)
+      end
+
+      splat = false
+      if @token.type == :"*"
+        if found_splat_ptr.value || !allow_splat
+          unexpected_token
+        end
+
+        splat = true
+        found_splat_ptr.value = true
+        next_token_skip_space
       end
 
       arg_location = @token.location
@@ -2094,7 +2107,7 @@ module Crystal
 
       raise "Bug: arg_name is nil" unless arg_name
 
-      arg = Arg.new(arg_name, default_value, restriction)
+      arg = Arg.new(arg_name, default_value, restriction, splat)
       arg.location = arg_location
       args << arg
       push_var arg

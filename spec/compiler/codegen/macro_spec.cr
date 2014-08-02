@@ -446,4 +446,74 @@ describe "Code gen: macro" do
       {{ Foo.instance_vars.last.name }}
       )).to_string.should eq("y")
   end
+
+  it "runs macro with splat" do
+    run(%(
+      macro foo(*args)
+        {{args.length}}
+      end
+
+      foo 1, 1, 1
+      )).to_i.should eq(3)
+  end
+
+  it "runs macro with arg and splat" do
+    run(%(
+      macro foo(name, *args)
+        {{args.length}}
+      end
+
+      foo bar, 1, 1, 1
+      )).to_i.should eq(3)
+  end
+
+  it "runs macro with arg and splat in first position (1)" do
+    run(%(
+      macro foo(*args, name)
+        {{args.length}}
+      end
+
+      foo 1, 1, 1, bar
+      )).to_i.should eq(3)
+  end
+
+  it "runs macro with arg and splat in first position (2)" do
+    run(%(
+      macro foo(*args, name)
+        {{name}}
+      end
+
+      foo 1, 1, 1, "hello"
+      )).to_string.should eq("hello")
+  end
+
+  it "runs macro with arg and splat in the middle (1)" do
+    run(%(
+      macro foo(foo, *args, name)
+        {{args.length}}
+      end
+
+      foo x, 1, 1, 1, bar
+      )).to_i.should eq(3)
+  end
+
+  it "runs macro with arg and splat in the middle (2)" do
+    run(%(
+      macro foo(foo, *args, name)
+        {{foo}}
+      end
+
+      foo "yellow", 1, 1, 1, bar
+      )).to_string.should eq("yellow")
+  end
+
+  it "runs macro with arg and splat in the middle (3)" do
+    run(%(
+      macro foo(foo, *args, name)
+        {{name}}
+      end
+
+      foo "yellow", 1, 1, 1, "cool"
+      )).to_string.should eq("cool")
+  end
 end

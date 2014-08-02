@@ -825,8 +825,9 @@ module Crystal
     property :name
     property :default_value
     property :restriction
+    property :splat
 
-    def initialize(@name, @default_value = nil, @restriction = nil)
+    def initialize(@name, @default_value = nil, @restriction = nil, @splat = false)
     end
 
     def accept_children(visitor)
@@ -835,7 +836,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.default_value == default_value && other.restriction == restriction
+      other.name == name && other.default_value == default_value && other.restriction == restriction && other.splat == splat
     end
 
     def name_length
@@ -843,10 +844,10 @@ module Crystal
     end
 
     def clone_without_location
-      Arg.new(@name, @default_value.clone, @restriction.clone)
+      Arg.new(@name, @default_value.clone, @restriction.clone, @splat)
     end
 
-    generate_hash [name, default_value, restriction]
+    generate_hash [name, default_value, restriction, splat]
   end
 
   class Fun < ASTNode
@@ -994,6 +995,17 @@ module Crystal
 
     def name_length
       name.length
+    end
+
+    def matches_args_length?(args_length)
+      my_args_length = args.length
+      min_args_length = args.index(&.default_value) || my_args_length
+      max_args_length = my_args_length
+      if args.any? &.splat
+        min_args_length -= 1
+        max_args_length = Int32::MAX
+      end
+      min_args_length <= args_length <= max_args_length
     end
 
     def clone_without_location

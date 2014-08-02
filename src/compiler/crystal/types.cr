@@ -611,8 +611,9 @@ module Crystal
     end
 
     def lookup_macro(name, args_length)
-      if (macros = self.macros) && (hash = macros[name]?) && (a_macro = hash[args_length]?)
-        return a_macro
+      if (macros = self.macros) && (array = macros[name]?)
+        match = array.find &.matches_args_length?(args_length)
+        return match if match
       end
 
       parents.try &.each do |parent|
@@ -624,8 +625,8 @@ module Crystal
     end
 
     def lookup_macros(name)
-      if (macros = self.macros) && (hash = macros[name]?)
-        return hash.values
+      if (macros = self.macros) && (array = macros[name]?)
+        return array
       end
 
       parents.try &.each do |parent|
@@ -768,14 +769,9 @@ module Crystal
         end
       end
 
-      macros = (@macros ||= {} of String => Hash(Int32, Macro))
-      hash = (macros[a_def.name] ||= {} of Int32 => Macro)
-
-      args_length = a_def.args.length
-      min_args_length = a_def.args.index(&.default_value) || args_length
-      min_args_length.upto(args_length) do |num_args|
-        hash[num_args] = a_def
-      end
+      macros = (@macros ||= {} of String => Array(Macro))
+      array = (macros[a_def.name] ||= [] of Macro)
+      array.push a_def
     end
 
     def add_hook(kind, a_def)

@@ -592,6 +592,9 @@ module Crystal
     end
 
     def visit(node : Arg)
+      if node.splat
+        @str << "*"
+      end
       if node.name
         @str << decorate_arg(node, node.name)
       else
