@@ -79,6 +79,7 @@ class Array(T)
   end
 
   def [](start : Int, count : Int)
+    count = Math.min(count, length)
     Array(T).new(count) { |i| @buffer[start + i] }
   end
 

@@ -43,6 +43,10 @@ describe "Array" do
     it "same access by at" do
       [1, 2, 3][1].should eq([1,2,3].at(1))
     end
+
+    it "doesn't exceed limits" do
+      [1][0..3].should eq([1])
+    end
   end
 
   describe "[]=" do
