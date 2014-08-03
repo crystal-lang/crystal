@@ -294,36 +294,7 @@ module Crystal
       end
     end
 
-    # Expand a def with default arguments into many defs:
-    #
-    # From:
-    #
-    #   def foo(x, y = 1, z = 2)
-    #     ...
-    #   end
-    #
-    # To:
-    #
-    #   def foo(x)
-    #     foo(x, 1)
-    #   end
-    #
-    #   def foo(x, y)
-    #     foo(x, y, 2)
-    #   end
-    #
-    #   def foo(x, y, z)
-    #     ...
-    #   end
     def transform(node : Def)
-      if node.has_default_arguments?
-        exps = [] of ASTNode
-        node.expand_default_arguments.each do |exp|
-          exps << exp.transform(self)
-        end
-        return Expressions.new(exps)
-      end
-
       node = super
 
       # If the def has a block argument without a specification

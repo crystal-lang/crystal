@@ -28,10 +28,20 @@ module Crystal
 
   struct DefWithMetadata
     def is_restriction_of?(other : DefWithMetadata, owner)
-      return false unless length == other.length
+      # A def with more required arguments than the other comes first
+      if min_length > other.max_length
+        return true
+      elsif other.min_length > max_length
+        return false
+      end
+
       return false unless yields == other.yields
 
-      self.def.args.zip(other.def.args) do |self_arg, other_arg|
+      min = Math.min(max_length, other.max_length)
+      0.upto(min - 1) do |index|
+        self_arg = self.def.args[index]
+        other_arg = other.def.args[index]
+
         self_type = self_arg.type? || self_arg.restriction
         other_type = other_arg.type? || other_arg.restriction
         return false if self_type == nil && other_type != nil
@@ -39,6 +49,7 @@ module Crystal
           return false unless self_type.is_restriction_of?(other_type, owner)
         end
       end
+
       true
     end
   end

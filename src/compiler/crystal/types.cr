@@ -482,7 +482,7 @@ module Crystal
           context = MatchContext.new(owner, type_lookup)
 
           defs.each do |item|
-            if item.length == args_length && item.yields == yields
+            if (item.min_length <= args_length <= item.max_length) && item.yields == yields
               a_def = item.def
               match = match_def_args(arg_types, a_def, context)
 
@@ -590,7 +590,7 @@ module Crystal
         defs.each do |def_name, hash|
           if def_name =~ SuggestableName
             hash.each do |filter, overload|
-              if filter.length == args_length && filter.yields == !!block
+              if filter.max_length == args_length && filter.yields == !!block
                 if levenshtein(def_name, name) <= tolerance
                   candidates << def_name
                 end
@@ -691,7 +691,7 @@ module Crystal
     end
   end
 
-  make_named_tuple DefWithMetadata, [length, yields, :def]
+  make_named_tuple DefWithMetadata, [min_length, max_length, yields, :def]
 
   module DefContainer
     include MatchesLookup
@@ -704,7 +704,11 @@ module Crystal
 
     def add_def(a_def)
       a_def.owner = self
-      item = DefWithMetadata.new(a_def.args.length, !!a_def.yields, a_def)
+
+      max_length = a_def.args.length
+      min_length = a_def.args.index(&.default_value) || max_length
+
+      item = DefWithMetadata.new(min_length, max_length, !!a_def.yields, a_def)
 
       defs = (@defs ||= {} of String => Array(DefWithMetadata))
       list = defs[a_def.name] ||= [] of DefWithMetadata

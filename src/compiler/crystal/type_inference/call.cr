@@ -996,6 +996,12 @@ module Crystal
     end
 
     def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
+      # If there are default arguments we return another def with less arguments
+      # and default arguments initialized
+      if arg_types.length != untyped_def.args.length
+        untyped_def = untyped_def.expand_default_arguments(arg_types.length)
+      end
+
       args_start_index = 0
 
       typed_def = untyped_def.clone

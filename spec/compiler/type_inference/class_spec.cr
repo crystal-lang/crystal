@@ -661,26 +661,4 @@ describe "Type inference: class" do
       ),
       "can't instantiate abstract class Foo"
   end
-
-  it "doesn't mix types of instance vars with initialize and new" do
-    assert_type(%(
-      class Foo
-        def initialize(x = 1)
-          @x = x
-        end
-
-        def self.new(x : String)
-          new(1)
-        end
-
-        def x
-          @x
-        end
-      end
-
-      Foo.new
-      Foo.new(1)
-      Foo.new("hello").x
-      )) { int32 }
-  end
 end

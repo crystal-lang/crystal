@@ -2,39 +2,45 @@
 require "../../spec_helper"
 
 describe "Normalize: def" do
-  it "expands a def with default arguments" do
+  it "expands a def on request with default arguments" do
     a_def = parse("def foo(x, y = 1, z = 2); x + y + z; end") as Def
-
-    expanded = a_def.expand_default_arguments
-
-    expanded1 = parse "def foo(x, y, z); x + y + z; end"
-    expanded2 = parse "def foo(x, y); foo(x, y, 2); end"
-    expanded3 = parse "def foo(x); foo(x, 1); end"
-
-    expanded.should eq([expanded1, expanded2, expanded3])
+    actual = a_def.expand_default_arguments(1)
+    expected = parse("def foo(x); foo(x, 1, 2); end")
+    actual.should eq(expected)
   end
 
-  it "expands a def with default arguments that yields" do
+  it "expands a def on request with default arguments (2)" do
+    a_def = parse("def foo(x, y = 1, z = 2); x + y + z; end") as Def
+    actual = a_def.expand_default_arguments(2)
+    expected = parse("def foo(x, y); foo(x, y, 2); end")
+    actual.should eq(expected)
+  end
+
+  it "expands a def on request with default arguments that yields" do
     a_def = parse("def foo(x, y = 1, z = 2); yield x + y + z; end") as Def
-
-    expanded = a_def.expand_default_arguments
-
-    expanded1 = parse "def foo(x, y, z); yield x + y + z; end"
-    expanded2 = parse "def foo(x, y); z = 2; yield x + y + z; end"
-    expanded3 = parse "def foo(x); y = 1; z = 2; yield x + y + z; end"
-
-    expanded.should eq([expanded1, expanded2, expanded3])
+    actual = a_def.expand_default_arguments(1)
+    expected = parse("def foo(x); y = 1; z = 2; yield x + y + z; end")
+    actual.should eq(expected)
   end
 
-  it "expands a def with default arguments and type restrictions" do
+  it "expands a def on request with default arguments that yields (2)" do
+    a_def = parse("def foo(x, y = 1, z = 2); yield x + y + z; end") as Def
+    actual = a_def.expand_default_arguments(2)
+    expected = parse("def foo(x, y); z = 2; yield x + y + z; end")
+    actual.should eq(expected)
+  end
+
+  it "expands a def on request with default arguments and type restrictions" do
     a_def = parse("def foo(x, y = 1 : Int32, z = 2 : Int64); x + y + z; end") as Def
+    actual = a_def.expand_default_arguments(1)
+    expected = parse("def foo(x); y = 1; z = 2; x + y + z; end")
+    actual.should eq(expected)
+  end
 
-    expanded = a_def.expand_default_arguments
-
-    expanded1 = parse "def foo(x, y : Int32, z : Int64); x + y + z; end"
-    expanded2 = parse "def foo(x, y : Int32); z = 2; x + y + z; end"
-    expanded3 = parse "def foo(x); y = 1; z = 2; x + y + z; end"
-
-    expanded.should eq([expanded1, expanded2, expanded3])
+  it "expands a def on request with default arguments and type restrictions (2)" do
+    a_def = parse("def foo(x, y = 1 : Int32, z = 2 : Int64); x + y + z; end") as Def
+    actual = a_def.expand_default_arguments(2)
+    expected = parse("def foo(x, y : Int32); z = 2; x + y + z; end")
+    actual.should eq(expected)
   end
 end
