@@ -2129,11 +2129,15 @@ module Crystal
       end
 
       if @token.type == :"="
+        if found_splat || splat
+          unexpected_token
+        end
+
         next_token_skip_space_or_newline
         default_value = parse_op_assign
         skip_space
       else
-        if found_default_value
+        if found_default_value && !splat
           raise "argument must have a default value", arg_location
         end
       end

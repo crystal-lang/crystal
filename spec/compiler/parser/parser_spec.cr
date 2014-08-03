@@ -746,6 +746,8 @@ describe "Parser" do
   it_parses "def foo(x, *y); 1; end", Def.new("foo", [Arg.new("x"), Arg.new("y")], 1.int32, nil, nil, nil, nil, false, 1)
   it_parses "macro foo(x, *y);end", Macro.new("foo", [Arg.new("x"), Arg.new("y")], Expressions.from([] of ASTNode), nil, 1)
 
+  it_parses "def foo(x = 1, *y); 1; end", Def.new("foo", [Arg.new("x", 1.int32), Arg.new("y")], 1.int32, nil, nil, nil, nil, false, 1)
+
   it_parses "foo *bar", Call.new(nil, "foo", ["bar".call.splat] of ASTNode)
   it_parses "foo(*bar)", Call.new(nil, "foo", ["bar".call.splat] of ASTNode)
   it_parses "foo x, *bar", Call.new(nil, "foo", ["x".call, "bar".call.splat] of ASTNode)
@@ -816,4 +818,5 @@ describe "Parser" do
 
   assert_syntax_error "1 2", "unexpected token: 2"
   assert_syntax_error "macro foo(*x, *y); end", "unexpected token: *"
+  assert_syntax_error "def foo(*x, y = 1); end", "unexpected token: ="
 end
