@@ -1067,6 +1067,10 @@ module Crystal
       false
     end
 
+    def end_visit(node : Splat)
+      node.bind_to node.exp
+    end
+
     def visit(node : Underscore)
       node.raise "can't use underscore as generic type argument"
     end

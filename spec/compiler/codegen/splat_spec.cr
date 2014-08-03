@@ -31,4 +31,15 @@ describe "Code gen: splat" do
       foo 10, 2, 20
       )).to_i.should eq(31)
   end
+
+  it "splats on call" do
+    run(%(
+      def foo(x, y)
+        x + y
+      end
+
+      tuple = {1, 2}
+      foo *tuple
+      )).to_i.should eq(3)
+  end
 end

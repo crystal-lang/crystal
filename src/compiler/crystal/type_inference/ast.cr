@@ -99,13 +99,17 @@ module Crystal
       observers << observer
     end
 
+    def remove_observer(observer)
+      @observers.try &.delete_if &.same?(observer)
+    end
+
     def add_input_observer(observer)
       input_observers = (@input_observers ||= [] of Call)
       input_observers << observer
     end
 
-    def remove_observer(observer)
-      @observers.try &.delete_if &.same?(observer)
+    def remove_input_observer(observer)
+      @input_observers.try &.delete_if &.same?(observer)
     end
 
     def notify_observers

@@ -663,6 +663,12 @@ module Crystal
       false
     end
 
+    def visit(node : Splat)
+      @str << "*"
+      node.exp.accept self
+      false
+    end
+
     def visit(node : Union)
       node.types.each_with_index do |ident, i|
         @str << " | " if  i > 0

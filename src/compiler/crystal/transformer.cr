@@ -504,6 +504,11 @@ module Crystal
       node
     end
 
+    def transform(node : Splat)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
     def transform(node : TupleIndexer)
       node
     end

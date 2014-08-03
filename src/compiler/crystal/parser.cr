@@ -1665,9 +1665,15 @@ module Crystal
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          block_arg, splat = parse_arg(args, nil, true, pointerof(found_default_value), pointerof(found_splat))
-          splat_index = index if splat
-          if block_arg
+          extras = parse_arg(args, nil, true, found_default_value, found_splat)
+          if !found_default_value && extras.default_value
+            found_default_value = true
+          end
+          if !splat_index && extras.splat
+            splat_index = index
+            found_splat = true
+          end
+          if block_arg = extras.block_arg
             check :")"
             break
           elsif @token.type == :","
@@ -1683,9 +1689,15 @@ module Crystal
         next_token
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg, splat = parse_arg(args, nil, false, pointerof(found_default_value), pointerof(found_splat))
-          splat_index = index if splat
-          if block_arg
+          extras = parse_arg(args, nil, false, found_default_value, found_splat)
+          if !found_default_value && extras.default_value
+            found_default_value = true
+          end
+          if !splat_index && extras.splat
+            splat_index = index
+            found_splat = true
+          end
+          if block_arg = extras.block_arg
             break
           elsif @token.type == :","
             next_token_skip_space_or_newline
@@ -1969,9 +1981,15 @@ module Crystal
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          block_arg, splat = parse_arg(args, extra_assigns, true, pointerof(found_default_value), pointerof(found_splat))
-          splat_index = index if splat
-          if block_arg
+          extras = parse_arg(args, extra_assigns, true, found_default_value, found_splat)
+          if !found_default_value && extras.default_value
+            found_default_value = true
+          end
+          if !splat_index && extras.splat
+            splat_index = index
+            found_splat = true
+          end
+          if block_arg = extras.block_arg
             if inputs = block_arg.fun.inputs
               @yields = inputs.length
             else
@@ -1992,9 +2010,15 @@ module Crystal
         next_token_skip_space
       when :IDENT, :INSTANCE_VAR
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg, splat = parse_arg(args, extra_assigns, false, pointerof(found_default_value), pointerof(found_splat))
-          splat_index = index if splat
-          if block_arg
+          extras = parse_arg(args, extra_assigns, false, found_default_value, found_splat)
+          if !found_default_value && extras.default_value
+            found_default_value = true
+          end
+          if !splat_index && extras.splat
+            splat_index = index
+            found_splat = true
+          end
+          if block_arg = extras.block_arg
             if inputs = block_arg.fun.inputs
               @yields = inputs.length
             else
@@ -2073,21 +2097,22 @@ module Crystal
       node
     end
 
-    def parse_arg(args, extra_assigns, parenthesis, found_default_value_ptr, found_splat_ptr)
+    make_named_tuple ArgExtras, [block_arg, default_value, splat]
+
+    def parse_arg(args, extra_assigns, parenthesis, found_default_value, found_splat)
       if @token.type == :"&"
         next_token_skip_space_or_newline
         block_arg = parse_block_arg(extra_assigns)
-        return {block_arg, false}
+        return ArgExtras.new(block_arg, false, false)
       end
 
       splat = false
       if @token.type == :"*"
-        if found_splat_ptr.value
+        if found_splat
           unexpected_token
         end
 
         splat = true
-        found_splat_ptr.value = true
         next_token_skip_space
       end
 
@@ -2106,10 +2131,9 @@ module Crystal
       if @token.type == :"="
         next_token_skip_space_or_newline
         default_value = parse_op_assign
-        found_default_value_ptr.value = true
         skip_space
       else
-        if found_default_value_ptr.value
+        if found_default_value
           raise "argument must have a default value", arg_location
         end
       end
@@ -2127,7 +2151,7 @@ module Crystal
       args << arg
       push_var arg
 
-      {nil, splat}
+      ArgExtras.new(nil, !!default_value, splat)
     end
 
     def parse_block_arg(extra_assigns)
@@ -2487,12 +2511,7 @@ module Crystal
               end
             end
 
-            if @token.keyword?(:out)
-              args << parse_out
-              skip_space
-            else
-              args << parse_op_assign
-            end
+            args << parse_call_arg
 
             skip_space_or_newline
             if @token.type == :","
@@ -2535,6 +2554,10 @@ module Crystal
         return nil unless allow_curly
       when :CHAR, :STRING, :STRING_START, :STRING_ARRAY_START, :SYMBOL_ARRAY_START, :NUMBER, :IDENT, :SYMBOL, :INSTANCE_VAR, :CLASS_VAR, :CONST, :GLOBAL, :GLOBAL_MATCH, :REGEX, :"(", :"!", :"[", :"[]", :"+", :"-", :"~", :"&", :"->", :"{{"
         # Nothing
+      when :"*"
+        unless current_char.ident_start?
+          return nil
+        end
       else
         return nil
       end
@@ -2554,12 +2577,7 @@ module Crystal
           end
         end
 
-        if @token.keyword?(:out)
-          args << parse_out
-        else
-          arg = parse_op_assign
-          args << arg if arg.is_a?(ASTNode)
-        end
+        args << parse_call_arg
 
         skip_space
 
@@ -2570,6 +2588,27 @@ module Crystal
         end
       end
       CallArgs.new args, nil, nil, false
+    end
+
+    def parse_call_arg
+      if @token.keyword?(:out)
+        parse_out
+      else
+        splat = false
+        if @token.type == :"*"
+          if current_char.ident_start?
+            splat = true
+            next_token
+          end
+        end
+        arg = parse_op_assign
+        if splat
+          splat_arg = Splat.new(arg)
+          splat_arg.location = arg.location
+          arg = splat_arg
+        end
+        arg
+      end
     end
 
     def parse_out

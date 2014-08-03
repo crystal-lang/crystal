@@ -48,6 +48,8 @@ module Crystal
 
       return unless obj_and_args_types_set?
 
+      replace_splats
+
       # Ignore extra recalculations when more than one argument changes at the same time
       # types_signature = args.map { |arg| arg.type.type_id }
       # types_signature << obj.type.type_id if obj
@@ -254,6 +256,29 @@ module Crystal
           match.def.raise "abstract def #{match.def.owner}##{match.def.name} must be implemented by #{owner}"
         end
       end
+    end
+
+    def replace_splats
+      return unless args.any? &.is_a?(Splat)
+
+      new_args = [] of ASTNode
+      args.each_with_index do |arg, i|
+        if arg.is_a?(Splat)
+          arg_type = arg.type
+          unless arg_type.is_a?(TupleInstanceType)
+            arg.raise "splat expects a tuple, not #{arg_type}"
+          end
+          arg_type.tuple_types.each_index do |index|
+            tuple_indexer = Call.new(arg.exp, "[]", [NumberLiteral.new(index, :i32)] of ASTNode)
+            tuple_indexer.accept parent_visitor
+            new_args << tuple_indexer
+            arg.remove_input_observer(self)
+          end
+        else
+          new_args << arg
+        end
+      end
+      self.args = new_args
     end
 
     def replace_block_arg_with_block(block_arg)

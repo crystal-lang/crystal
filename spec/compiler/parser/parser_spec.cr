@@ -97,6 +97,10 @@ class Crystal::ASTNode
   def pointer_of
     Generic.new(Path.new(["Pointer"], true), [self] of ASTNode)
   end
+
+  def splat
+    Splat.new(self)
+  end
 end
 
 def it_parses(string, expected_node)
@@ -572,9 +576,6 @@ describe "Parser" do
   it_parses "macro def foo : String; 1; end", Def.new("foo", [] of Arg, [MacroLiteral.new(" 1; ")] of ASTNode, nil, nil, "String".path)
   it_parses "macro def foo(x) : String; 1; end", Def.new("foo", ["x".arg], [MacroLiteral.new(" 1; ")] of ASTNode, nil, nil, "String".path)
 
-  it_parses "def foo(x, *y); 1; end", Def.new("foo", [Arg.new("x"), Arg.new("y")], 1.int32, nil, nil, nil, nil, false, 1)
-  it_parses "macro foo(x, *y);end", Macro.new("foo", [Arg.new("x"), Arg.new("y")], Expressions.from([] of ASTNode), nil, 1)
-
   it_parses "{% for x in y %}body{% end %}", MacroFor.new(["x".var], "y".var, "body".macro_literal)
   it_parses "{% if x %}body{% end %}", MacroIf.new("x".var, "body".macro_literal)
   it_parses "{{ foo }}", MacroExpression.new("foo".var)
@@ -741,6 +742,14 @@ describe "Parser" do
 
   it_parses "[] of ->;", ArrayLiteral.new([] of ASTNode, Fun.new)
   it_parses "[] of ->\n1", [ArrayLiteral.new([] of ASTNode, Fun.new), 1.int32]
+
+  it_parses "def foo(x, *y); 1; end", Def.new("foo", [Arg.new("x"), Arg.new("y")], 1.int32, nil, nil, nil, nil, false, 1)
+  it_parses "macro foo(x, *y);end", Macro.new("foo", [Arg.new("x"), Arg.new("y")], Expressions.from([] of ASTNode), nil, 1)
+
+  it_parses "foo *bar", Call.new(nil, "foo", ["bar".call.splat] of ASTNode)
+  it_parses "foo(*bar)", Call.new(nil, "foo", ["bar".call.splat] of ASTNode)
+  it_parses "foo x, *bar", Call.new(nil, "foo", ["x".call, "bar".call.splat] of ASTNode)
+  it_parses "foo(x, *bar, *baz, y)", Call.new(nil, "foo", ["x".call, "bar".call.splat, "baz".call.splat, "y".call] of ASTNode)
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", [] of Arg, [keyword.call] of ASTNode)
