@@ -52,7 +52,7 @@ module Crystal
         end
       end
 
-      %w(to_i to_i8 to_i32 to_i16 to_i32 to_i64 to_u to_u8 to_u16 to_u32 to_u64 to_f to_f32 to_f64).each do |op|
+      %w(to_i to_i8 to_i16 to_i32 to_i64 to_u to_u8 to_u16 to_u32 to_u64 to_f to_f32 to_f64).each do |op|
         number.add_def Def.new(op, [] of Arg, cast)
       end
 

@@ -447,4 +447,18 @@ describe "Code gen: fun" do
       f.call Bar.new
       )).to_i.should eq(2)
   end
+
+  it "allows redefining fun" do
+    run(%(
+      fun foo : Int32
+        1
+      end
+
+      fun foo : Int32
+        2
+      end
+
+      foo
+      )).to_i.should eq(2)
+  end
 end

@@ -339,7 +339,7 @@ module Crystal
       end
 
       match = Match.new(previous, args.map(&.type), MatchContext.new(scope, scope))
-      matches = Matches.new([match], true)
+      matches = Matches.new([match] of Match, true)
       typed_defs = instantiate matches, scope
       typed_defs.each do |typed_def|
         typed_def.next = parent_visitor.typed_def

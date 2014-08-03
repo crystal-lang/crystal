@@ -233,10 +233,6 @@ module Crystal
       raise "Bug: #{self} doesn't implement defs"
     end
 
-    def sorted_defs
-      raise "Bug: #{self} doesn't implement sorted_defs"
-    end
-
     def add_def(a_def)
       raise "Bug: #{self} doesn't implement add_def"
     end
@@ -478,24 +474,29 @@ module Crystal
     end
 
     def lookup_matches_without_parents(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
-      if sorted_defs = self.sorted_defs()
-        if defs = sorted_defs[DefContainer::SortedDefKey.new(name, arg_types.length, !!block)]?
+      if all_defs = self.defs()
+        if defs = all_defs[name]?
           found_defs = true
+          args_length = arg_types.length
+          yields = !!block
           context = MatchContext.new(owner, type_lookup)
 
-          defs.each do |a_def|
-            match = match_def_args(arg_types, a_def, context)
+          defs.each do |item|
+            if item.length == args_length && item.yields == yields
+              a_def = item.def
+              match = match_def_args(arg_types, a_def, context)
 
-            if match
-              matches_array ||= [] of Match
-              matches_array.push match
+              if match
+                matches_array ||= [] of Match
+                matches_array.push match
 
-              # If the argument types are compatible with the match's argument types,
-              # we are done. We don't just compare types with ==, there is a special case:
-              # a function type with return T can be transpass a restriction of a function
-              # with with the same arguments but which returns Void.
-              if arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
-                return Matches.new(matches_array, true, owner)
+                # If the argument types are compatible with the match's argument types,
+                # we are done. We don't just compare types with ==, there is a special case:
+                # a function type with return T can be transpass a restriction of a function
+                # with with the same arguments but which returns Void.
+                if arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
+                  return Matches.new(matches_array, true, owner)
+                end
               end
             end
           end
@@ -543,14 +544,15 @@ module Crystal
 
     def lookup_first_def(name, block)
       block = !!block
-      if (defs = self.defs) && (hash = defs[name]?)
-        hash.values.find { |a_def| !!a_def.yields == block }
+      if (defs = self.defs) && (list = defs[name]?)
+        value = list.find { |item| item.yields == block }
+        value.try &.def
       end
     end
 
     def lookup_defs(name)
-      if (defs = self.defs) && (hash = defs[name]?)
-        return hash.values unless hash.empty?
+      if (defs = self.defs) && (list = defs[name]?)
+        return list.map(&.def) unless list.empty?
       end
 
       parents.try &.each do |parent|
@@ -562,8 +564,8 @@ module Crystal
     end
 
     def lookup_defs_with_modules(name)
-      if (defs = self.defs) && (hash = defs[name]?)
-        return hash.values unless hash.empty?
+      if (defs = self.defs) && (list = defs[name]?)
+        return list.map(&.def) unless list.empty?
       end
 
       parents.try &.each do |parent|
@@ -588,7 +590,7 @@ module Crystal
         defs.each do |def_name, hash|
           if def_name =~ SuggestableName
             hash.each do |filter, overload|
-              if filter.restrictions.length == args_length && filter.yields == !!block
+              if filter.length == args_length && filter.yields == !!block
                 if levenshtein(def_name, name) <= tolerance
                   candidates << def_name
                 end
@@ -689,67 +691,46 @@ module Crystal
     end
   end
 
+  make_named_tuple DefWithMetadata, [length, yields, :def]
+
   module DefContainer
     include MatchesLookup
 
-    make_named_tuple DefKey, [restrictions, yields]
-    make_named_tuple SortedDefKey, [name, length, yields]
     make_named_tuple Hook, [kind, :macro]
 
     getter defs
-    getter sorted_defs
     getter macros
     getter hooks
 
     def add_def(a_def)
       a_def.owner = self
-      restrictions = Array(Type | ASTNode | Nil).new(a_def.args.length)
-      a_def.args.each { |arg| restrictions.push(arg.type? || arg.restriction) }
-      key = DefKey.new(restrictions, !!a_def.yields)
+      item = DefWithMetadata.new(a_def.args.length, !!a_def.yields, a_def)
 
-      defs = (@defs ||= {} of String => Hash(DefKey, Def))
-      hash = (defs[a_def.name] ||= {} of DefKey => Def)
-      old_def = hash[key]?
-      hash[key] = a_def
-
-      add_sorted_def(a_def)
-
-      a_def.previous = old_def
-      old_def
-    end
-
-    def add_sorted_def(a_def)
-      sorted_defs = (@sorted_defs ||= {} of SortedDefKey => Array(Def))
-      key = SortedDefKey.new(a_def.name, a_def.args.length, !!a_def.yields)
-      list = (sorted_defs[key] ||= [] of Def)
-      list.each_with_index do |ex_def, i|
-        if a_def.is_restriction_of?(ex_def, self)
-          list.insert(i, a_def)
-          return
+      defs = (@defs ||= {} of String => Array(DefWithMetadata))
+      list = defs[a_def.name] ||= [] of DefWithMetadata
+      list.each_with_index do |ex_item, i|
+        if item.is_restriction_of?(ex_item, self)
+          if ex_item.is_restriction_of?(item, self)
+            list[i] = item
+            a_def.previous = ex_item.def
+            return ex_item.def
+          else
+            list.insert(i, item)
+            return nil
+          end
         end
       end
-      list << a_def
+      list << item
+      nil
     end
 
     def undef(def_name)
-      found_def = @defs.try &.delete def_name
-      return false unless found_def
+      found_list = @defs.try &.delete def_name
+      return false unless found_list
 
-      found_def.each do |key, a_def|
+      found_list.each do |item|
+        a_def = item.def
         a_def.dead = true if a_def.is_a?(External)
-      end
-
-      if sorted_defs = @sorted_defs
-        keys_to_remove = [] of SortedDefKey
-        sorted_defs.each do |key, defs|
-          if key.name == def_name
-            keys_to_remove << key
-          end
-        end
-
-        keys_to_remove.each do |key|
-          sorted_defs.delete(key)
-        end
       end
 
       true
@@ -1116,9 +1097,9 @@ module Crystal
 
     def transfer_instance_vars_of_mod(mod)
       if (defs = mod.defs)
-        defs.each do |def_name, hash|
-          hash.each do |restrictions, a_def|
-            transfer_instance_vars a_def
+        defs.each do |def_name, list|
+          list.each do |item|
+            transfer_instance_vars item.def
           end
         end
       end
@@ -1617,7 +1598,6 @@ module Crystal
 
     delegate depth, @generic_class
     delegate defs, @generic_class
-    delegate sorted_defs, @generic_class
     delegate superclass, @generic_class
     delegate owned_instance_vars, @generic_class
     delegate instance_vars_in_initialize, @generic_class
@@ -1967,9 +1947,9 @@ module Crystal
     def add_def(a_def : External)
       if defs = self.defs
         if existing_defs = defs[a_def.name]?
-          existing = existing_defs.first_value?
+          existing = existing_defs.first?
           if existing
-            existing = existing as External
+            existing = existing.def as External
             unless existing.compatible_with?(a_def)
               raise "fun redefinition with different signature (was #{existing})"
             end
@@ -2022,7 +2002,6 @@ module Crystal
 
     delegate pointer?, typedef
     delegate defs, typedef
-    delegate sorted_defs, typedef
     delegate macros, typedef
 
     def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
@@ -2327,7 +2306,6 @@ module Crystal
     end
 
     delegate defs, :"instance_type.generic_class.metaclass"
-    delegate sorted_defs, :"instance_type.generic_class.metaclass"
     delegate macros, :"instance_type.generic_class.metaclass"
     delegate type_vars, instance_type
     delegate :abstract, instance_type

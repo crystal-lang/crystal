@@ -26,9 +26,12 @@ module Crystal
     end
   end
 
-  class Def
-    def is_restriction_of?(other : Def, owner)
-      args.zip(other.args) do |self_arg, other_arg|
+  struct DefWithMetadata
+    def is_restriction_of?(other : DefWithMetadata, owner)
+      return false unless length == other.length
+      return false unless yields == other.yields
+
+      self.def.args.zip(other.def.args) do |self_arg, other_arg|
         self_type = self_arg.type? || self_arg.restriction
         other_type = other_arg.type? || other_arg.restriction
         return false if self_type == nil && other_type != nil
@@ -39,7 +42,6 @@ module Crystal
       true
     end
   end
-
 
   class Path
     def is_restriction_of?(other : Path, owner)
