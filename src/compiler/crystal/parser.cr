@@ -1658,11 +1658,15 @@ module Crystal
       found_default_value = false
       found_splat = false
 
+      splat_index = nil
+      index = 0
+
       case @token.type
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          block_arg = parse_arg(args, nil, true, pointerof(found_default_value), pointerof(found_splat), true)
+          block_arg, splat = parse_arg(args, nil, true, pointerof(found_default_value), pointerof(found_splat))
+          splat_index = index if splat
           if block_arg
             check :")"
             break
@@ -1674,11 +1678,13 @@ module Crystal
               unexpected_token @token.to_s, "expected ',' or ')'"
             end
           end
+          index += 1
         end
         next_token
       when :IDENT
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg = parse_arg(args, nil, false, pointerof(found_default_value), pointerof(found_splat), true)
+          block_arg, splat = parse_arg(args, nil, false, pointerof(found_default_value), pointerof(found_splat))
+          splat_index = index if splat
           if block_arg
             break
           elsif @token.type == :","
@@ -1689,6 +1695,7 @@ module Crystal
               unexpected_token @token.to_s, "expected ';' or newline"
             end
           end
+          index += 1
         end
       end
 
@@ -1702,7 +1709,7 @@ module Crystal
       @def_nest -= 1
       pop_def
 
-      node = Macro.new name, args, body, block_arg
+      node = Macro.new name, args, body, block_arg, splat_index
       node.name_column_number = name_column_number
       node
     end
@@ -1955,11 +1962,15 @@ module Crystal
       found_default_value = false
       found_splat = false
 
+      index = 0
+      splat_index = nil
+
       case @token.type
       when :"("
         next_token_skip_space_or_newline
         while @token.type != :")"
-          block_arg = parse_arg(args, extra_assigns, true, pointerof(found_default_value), pointerof(found_splat), false)
+          block_arg, splat = parse_arg(args, extra_assigns, true, pointerof(found_default_value), pointerof(found_splat))
+          splat_index = index if splat
           if block_arg
             if inputs = block_arg.fun.inputs
               @yields = inputs.length
@@ -1976,11 +1987,13 @@ module Crystal
               unexpected_token @token.to_s, "expected ',' or ')'"
             end
           end
+          index += 1
         end
         next_token_skip_space
       when :IDENT, :INSTANCE_VAR
         while @token.type != :NEWLINE && @token.type != :";"
-          block_arg = parse_arg(args, extra_assigns, false, pointerof(found_default_value), pointerof(found_splat), false)
+          block_arg, splat = parse_arg(args, extra_assigns, false, pointerof(found_default_value), pointerof(found_splat))
+          splat_index = index if splat
           if block_arg
             if inputs = block_arg.fun.inputs
               @yields = inputs.length
@@ -1996,6 +2009,7 @@ module Crystal
               unexpected_token @token.to_s, "expected ';' or newline"
             end
           end
+          index += 1
         end
       when :";", :"NEWLINE"
          # Skip
@@ -2054,20 +2068,21 @@ module Crystal
       @def_nest -= 1
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, @yields, is_abstract
+      node = Def.new name, args, body, receiver, block_arg, return_type, @yields, is_abstract, splat_index
       node.name_column_number = name_column_number
       node
     end
 
-    def parse_arg(args, extra_assigns, parenthesis, found_default_value_ptr, found_splat_ptr, allow_splat)
+    def parse_arg(args, extra_assigns, parenthesis, found_default_value_ptr, found_splat_ptr)
       if @token.type == :"&"
         next_token_skip_space_or_newline
-        return parse_block_arg(extra_assigns)
+        block_arg = parse_block_arg(extra_assigns)
+        return {block_arg, false}
       end
 
       splat = false
       if @token.type == :"*"
-        if found_splat_ptr.value || !allow_splat
+        if found_splat_ptr.value
           unexpected_token
         end
 
@@ -2107,12 +2122,12 @@ module Crystal
 
       raise "Bug: arg_name is nil" unless arg_name
 
-      arg = Arg.new(arg_name, default_value, restriction, splat)
+      arg = Arg.new(arg_name, default_value, restriction)
       arg.location = arg_location
       args << arg
       push_var arg
 
-      nil
+      {nil, splat}
     end
 
     def parse_block_arg(extra_assigns)

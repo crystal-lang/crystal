@@ -43,4 +43,32 @@ describe "Normalize: def" do
     expected = parse("def foo(x, y : Int32); z = 2; x + y + z; end")
     actual.should eq(expected)
   end
+
+  it "expands with splat" do
+    a_def = parse("def foo(*args); args; end") as Def
+    actual = a_def.expand_default_arguments(3)
+    expected = parse("def foo(_arg0, _arg1, _arg2)\n  args = {_arg0, _arg1, _arg2}\n  args\nend")
+    actual.should eq(expected)
+  end
+
+  it "expands with splat with one arg before" do
+    a_def = parse("def foo(x, *args); args; end") as Def
+    actual = a_def.expand_default_arguments(3)
+    expected = parse("def foo(x, _arg0, _arg1)\n  args = {_arg0, _arg1}\n  args\nend")
+    actual.should eq(expected)
+  end
+
+  it "expands with splat with one arg after" do
+    a_def = parse("def foo(*args, x); args; end") as Def
+    actual = a_def.expand_default_arguments(3)
+    expected = parse("def foo(_arg0, _arg1, x)\n  args = {_arg0, _arg1}\n  args\nend")
+    actual.should eq(expected)
+  end
+
+  it "expands with splat with one arg before and after" do
+    a_def = parse("def foo(x, *args, z); args; end") as Def
+    actual = a_def.expand_default_arguments(3)
+    expected = parse("def foo(x, _arg0, z)\n  args = {_arg0}\n  args\nend")
+    actual.should eq(expected)
+  end
 end

@@ -825,9 +825,8 @@ module Crystal
     property :name
     property :default_value
     property :restriction
-    property :splat
 
-    def initialize(@name, @default_value = nil, @restriction = nil, @splat = false)
+    def initialize(@name, @default_value = nil, @restriction = nil)
     end
 
     def accept_children(visitor)
@@ -836,7 +835,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.default_value == default_value && other.restriction == restriction && other.splat == splat
+      other.name == name && other.default_value == default_value && other.restriction == restriction
     end
 
     def name_length
@@ -844,10 +843,10 @@ module Crystal
     end
 
     def clone_without_location
-      Arg.new(@name, @default_value.clone, @restriction.clone, @splat)
+      Arg.new(@name, @default_value.clone, @restriction.clone)
     end
 
-    generate_hash [name, default_value, restriction, splat]
+    generate_hash [name, default_value, restriction]
   end
 
   class Fun < ASTNode
@@ -928,8 +927,9 @@ module Crystal
     property :name_column_number
     property :abstract
     property :attributes
+    property :splat_index
 
-    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @yields = nil, @abstract = false)
+    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @yields = nil, @abstract = false, @splat_index = nil)
       @body = Expressions.from body
       @calls_super = false
       @calls_initialize = false
@@ -951,7 +951,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg && other.return_type == return_type && @abstract == other.abstract
+      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg && other.return_type == return_type && @abstract == other.abstract && splat_index == other.splat_index
     end
 
     def name_length
@@ -959,17 +959,16 @@ module Crystal
     end
 
     def clone_without_location
-      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @yields)
+      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @yields, @abstract, @splat_index)
       a_def.instance_vars = instance_vars
       a_def.calls_super = calls_super
       a_def.calls_initialize = calls_initialize
       a_def.uses_block_arg = uses_block_arg
       a_def.name_column_number = name_column_number
-      a_def.abstract = @abstract
       a_def
     end
 
-    generate_hash [@name, @args, @body, @receiver, @block_arg, @return_type, @abstract]
+    generate_hash [@name, @args, @body, @receiver, @block_arg, @return_type, @abstract, @splat_index]
   end
 
   class Macro < ASTNode
@@ -978,8 +977,9 @@ module Crystal
     property :body
     property :block_arg
     property :name_column_number
+    property :splat_index
 
-    def initialize(@name, @args, @body, @block_arg = nil)
+    def initialize(@name, @args, @body, @block_arg = nil, @splat_index = nil)
       @name_column_number = 0
     end
 
@@ -990,7 +990,7 @@ module Crystal
     end
 
     def ==(other : self)
-      other.name == name && other.args == args && other.body == body && other.block_arg == block_arg
+      other.name == name && other.args == args && other.body == body && other.block_arg == block_arg && other.splat_index == splat_index
     end
 
     def name_length
@@ -1001,7 +1001,7 @@ module Crystal
       my_args_length = args.length
       min_args_length = args.index(&.default_value) || my_args_length
       max_args_length = my_args_length
-      if args.any? &.splat
+      if splat_index
         min_args_length -= 1
         max_args_length = Int32::MAX
       end
@@ -1009,10 +1009,10 @@ module Crystal
     end
 
     def clone_without_location
-      Macro.new(@name, @args.clone, @body.clone, @block_arg.clone)
+      Macro.new(@name, @args.clone, @body.clone, @block_arg.clone, @splat_index)
     end
 
-    generate_hash [@name, @args, @body, @block_arg]
+    generate_hash [@name, @args, @body, @block_arg, @splat_index]
   end
 
   abstract class UnaryExpression < ASTNode

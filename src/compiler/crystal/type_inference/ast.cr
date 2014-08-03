@@ -291,9 +291,36 @@ module Crystal
     end
 
     def expand_default_arguments(args_length)
-      retain_body = yields || args.any? { |arg| arg.default_value && arg.restriction }
+      retain_body = yields || args.any? { |arg| arg.default_value && arg.restriction } || splat_index
 
-      expansion = Def.new(name, args[0 ... args_length].clone, nil, receiver.clone, block_arg.clone, return_type.clone, yields)
+      splat_index = splat_index() || -1
+
+      new_args = [] of Arg
+
+      # Args before splat index
+      0.upto(splat_index - 1) do |index|
+        new_args << args[index].clone
+      end
+
+      if splat_index == -1
+        splat_length = 0
+        offset = 0
+      else
+        splat_length = args_length - (args.length - 1)
+        offset = splat_index + splat_length
+      end
+
+      splat_length.times do |index|
+        new_args << Arg.new("_arg#{index}")
+      end
+
+      base = splat_index + 1
+      min_length = Math.min(args_length, args.length)
+      base.upto(min_length - 1) do |index|
+        new_args << args[index].clone
+      end
+
+      expansion = Def.new(name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, yields)
       expansion.instance_vars = instance_vars
       expansion.args.each { |arg| arg.default_value = nil }
       expansion.calls_super = calls_super
@@ -304,9 +331,20 @@ module Crystal
 
       if retain_body
         new_body = [] of ASTNode
+
+        if splat_index != -1
+          tuple_args = [] of ASTNode
+          splat_length.times do |index|
+            tuple_args << Var.new("_arg#{index}")
+          end
+          tuple = TupleLiteral.new(tuple_args)
+          new_body << Assign.new(Var.new(args[splat_index].name), tuple)
+        end
+
         args[args_length .. -1].each do |arg|
           new_body << Assign.new(Var.new(arg.name), arg.default_value.not_nil!)
         end
+
         new_body.push body.clone
         expansion.body = Expressions.new(new_body)
       else

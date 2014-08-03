@@ -996,9 +996,9 @@ module Crystal
     end
 
     def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
-      # If there are default arguments we return another def with less arguments
-      # and default arguments initialized
-      if arg_types.length != untyped_def.args.length
+      # If there's an argument count mismatch, or we have a splat, we create
+      # another def that sets ups everything for the real call.
+      if arg_types.length != untyped_def.args.length || untyped_def.splat_index
         untyped_def = untyped_def.expand_default_arguments(arg_types.length)
       end
 

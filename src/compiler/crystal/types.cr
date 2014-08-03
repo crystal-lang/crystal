@@ -444,9 +444,45 @@ module Crystal
     def match_def_args(arg_types, a_def, context)
       matched_arg_types = nil
 
-      arg_types.each_with_index do |arg, i|
-        def_arg = a_def.args[i]
-        match_arg_type = match_arg(arg, def_arg, context)
+      splat_index = a_def.splat_index || -1
+
+      # Args before the splat argument
+      0.upto(splat_index - 1) do |index|
+        def_arg = a_def.args[index]
+        arg_type = arg_types[index]
+        match_arg_type = match_arg(arg_type, def_arg, context)
+        if match_arg_type
+          matched_arg_types ||= [] of Type
+          matched_arg_types.push match_arg_type
+        else
+          return nil
+        end
+      end
+
+      # The splat argument (always matches)
+      if splat_index == -1
+        splat_length = 0
+        offset = 0
+      else
+        splat_length = arg_types.length - (a_def.args.length - 1)
+        offset = splat_index + splat_length
+
+        matched_arg_types ||= [] of Type
+        splat_length.times do |i|
+          matched_arg_types.push arg_types[splat_index + i]
+        end
+      end
+
+      # Args after the splat argument
+      base = splat_index + 1
+      base.upto(a_def.args.length - 1) do |index|
+        def_arg = a_def.args[index]
+        arg_type = arg_types[offset + index - base]?
+
+        # Because of default argument
+        break unless arg_type
+
+        match_arg_type = match_arg(arg_type, def_arg, context)
         if match_arg_type
           matched_arg_types ||= [] of Type
           matched_arg_types.push match_arg_type
@@ -707,6 +743,10 @@ module Crystal
 
       max_length = a_def.args.length
       min_length = a_def.args.index(&.default_value) || max_length
+      if a_def.splat_index
+        min_length -= 1
+        max_length = Int32::MAX
+      end
 
       item = DefWithMetadata.new(min_length, max_length, !!a_def.yields, a_def)
 

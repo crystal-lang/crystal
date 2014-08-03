@@ -139,7 +139,7 @@ module Crystal
 
         macro_args_length = a_macro.args.length
         call_args_length = call.args.length
-        splat_index = a_macro.args.index(&.splat) || -1
+        splat_index = a_macro.splat_index || -1
 
         # Args before the splat argument
         0.upto(splat_index - 1) do |index|

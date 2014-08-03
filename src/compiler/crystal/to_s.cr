@@ -487,6 +487,7 @@ module Crystal
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
+          @str << "*" if node.splat_index == i
           arg.accept self
         end
         if block_arg = node.block_arg
@@ -592,9 +593,6 @@ module Crystal
     end
 
     def visit(node : Arg)
-      if node.splat
-        @str << "*"
-      end
       if node.name
         @str << decorate_arg(node, node.name)
       else

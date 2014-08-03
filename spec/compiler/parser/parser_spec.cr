@@ -572,7 +572,8 @@ describe "Parser" do
   it_parses "macro def foo : String; 1; end", Def.new("foo", [] of Arg, [MacroLiteral.new(" 1; ")] of ASTNode, nil, nil, "String".path)
   it_parses "macro def foo(x) : String; 1; end", Def.new("foo", ["x".arg], [MacroLiteral.new(" 1; ")] of ASTNode, nil, nil, "String".path)
 
-  it_parses "macro foo(x, *y);end", Macro.new("foo", [Arg.new("x"), Arg.new("y", nil, nil, true)], Expressions.from([] of ASTNode))
+  it_parses "def foo(x, *y); 1; end", Def.new("foo", [Arg.new("x"), Arg.new("y")], 1.int32, nil, nil, nil, nil, false, 1)
+  it_parses "macro foo(x, *y);end", Macro.new("foo", [Arg.new("x"), Arg.new("y")], Expressions.from([] of ASTNode), nil, 1)
 
   it_parses "{% for x in y %}body{% end %}", MacroFor.new(["x".var], "y".var, "body".macro_literal)
   it_parses "{% if x %}body{% end %}", MacroIf.new("x".var, "body".macro_literal)
@@ -806,7 +807,4 @@ describe "Parser" do
 
   assert_syntax_error "1 2", "unexpected token: 2"
   assert_syntax_error "macro foo(*x, *y); end", "unexpected token: *"
-
-  # For now we don't support splats in defs, only in macros
-  assert_syntax_error "def foo(*x); end", "unexpected token: *"
 end
