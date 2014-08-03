@@ -77,18 +77,19 @@ class Exception
     @backtrace = caller
   end
 
+  def backtrace
+    backtrace = @backtrace
+    ifdef linux
+      backtrace = backtrace.map do |frame|
+        Exception.unescape_linux_backtrace_frame(frame)
+      end
+    end
+    backtrace
+  end
+
   def to_s(io : IO)
-    bt = @backtrace
     if @message
       io << @message
-    end
-
-    bt.each_with_index do |frame, i|
-      io << "\n"
-      ifdef linux
-        frame = Exception.unescape_linux_backtrace_frame(frame)
-      end
-      io << frame
     end
   end
 

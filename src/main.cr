@@ -24,6 +24,9 @@ macro redefine_main(name = main)
     0
   rescue ex
     puts ex
+    ex.backtrace.each do |frame|
+      puts frame
+    end
     1
   ensure
     run_at_exit

@@ -1,14 +1,7 @@
 require "colorize"
 
 module Spec
-  class Result
-    getter :kind
-    getter :description
-    getter :exception
-
-    def initialize(@kind, @description, @exception = nil)
-    end
-  end
+  make_named_tuple Result, [kind, description, exception]
 
   abstract class Context
   end
@@ -85,18 +78,15 @@ module Spec
             puts
             puts "  #{i + 1}) #{fail.description}"
             puts
-            if msg = ex.message
-              msg.split("\n").each do |line|
-                print "       "
-                unless ex.is_a?(AssertionFailed)
-                  print color("Exception: ", :error)
-                end
-                puts color(line, :error)
-              end
+
+            ex.to_s.split("\n").each do |line|
+              print "       "
+              puts color(line, :error)
             end
             unless ex.is_a?(AssertionFailed)
               ex.backtrace.each do |trace|
-                puts color("       #{trace}", :error)
+                print "       "
+                puts color(trace, :error)
               end
             end
           end
