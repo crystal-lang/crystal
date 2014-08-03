@@ -12,6 +12,9 @@ Vagrant.configure("2") do |config|
     c.vm.box_url = "http://files.vagrantup.com/precise64.box"
   end
 
+  config.vm.define("trusty32") { |c| c.vm.box = "ubuntu/trusty32" }
+  config.vm.define("trusty64") { |c| c.vm.box = "ubuntu/trusty64" }
+
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--memory", 4096]
   end
