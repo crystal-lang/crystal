@@ -130,11 +130,17 @@ module LLVM
   end
 
   def self.start_multithreaded
-    LibLLVM.start_multithreaded != 0
+    if multithreaded?
+      true
+    else
+      LibLLVM.start_multithreaded != 0
+    end
   end
 
   def self.stop_multithreaded
-    LibLLVM.stop_multithreaded
+    if multithreaded?
+      LibLLVM.stop_multithreaded
+    end
   end
 
   def self.multithreaded?
