@@ -42,4 +42,14 @@ describe "Code gen: splat" do
       foo *tuple
       )).to_i.should eq(3)
   end
+
+  it "splats without args" do
+    run(%(
+      def foo(*args)
+        args.length
+      end
+
+      foo
+      )).to_i.should eq(0)
+  end
 end

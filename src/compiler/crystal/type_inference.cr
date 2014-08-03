@@ -2197,6 +2197,7 @@ module Crystal
 
     def end_visit(node : TupleLiteral)
       node.elements.each &.add_observer(node)
+      node.mod = @mod
       node.update
       false
     end

@@ -260,12 +260,14 @@ module Crystal
   end
 
   class TupleLiteral
+    property! :mod
+
     def update(from = nil)
       return unless elements.all? &.type?
 
       types = [] of Type | ASTNode
       elements.each { |exp| types << exp.type }
-      self.type = elements.first.type.program.tuple_of types
+      self.type = mod.tuple_of types
     end
   end
 
@@ -345,8 +347,10 @@ module Crystal
           new_body << Assign.new(Var.new(args[splat_index].name), tuple)
         end
 
-        args[args_length .. -1].each do |arg|
-          new_body << Assign.new(Var.new(arg.name), arg.default_value.not_nil!)
+        if splat_index == -1
+          args[args_length .. -1].each do |arg|
+            new_body << Assign.new(Var.new(arg.name), arg.default_value.not_nil!)
+          end
         end
 
         new_body.push body.clone
