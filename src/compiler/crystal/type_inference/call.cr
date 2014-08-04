@@ -203,10 +203,11 @@ module Crystal
           lookup_arg_types = match.arg_types
         end
         match_owner = match.context.owner
-        typed_def = match_owner.lookup_def_instance(match.def.object_id, lookup_arg_types, block_type) if use_cache
+        def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type)
+        typed_def = match_owner.lookup_def_instance def_instance_key if use_cache
         unless typed_def
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types)
-          match_owner.add_def_instance(match.def.object_id, lookup_arg_types, block_type, typed_def) if use_cache
+          match_owner.add_def_instance(def_instance_key, typed_def) if use_cache
           if return_type = typed_def.return_type
             typed_def.type = TypeLookup.lookup(match.def.macro_owner.not_nil!, return_type, match_owner)
             mod.push_def_macro typed_def

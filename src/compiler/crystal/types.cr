@@ -193,11 +193,11 @@ module Crystal
       1
     end
 
-    def lookup_def_instance(def_object_id, arg_types, block_type)
+    def lookup_def_instance(key)
       raise "Bug: #{self} doesn't implement lookup_def_instance"
     end
 
-    def add_def_instance(def_object_id, arg_types, block_type, typed_def)
+    def add_def_instance(key, typed_def)
       raise "Bug: #{self} doesn't implement add_def_instance"
     end
 
@@ -829,23 +829,19 @@ module Crystal
     end
   end
 
-  module DefInstanceContainer
-    make_named_tuple DefInstanceKey, [def_object_id, arg_types, block_type]
+  make_named_tuple DefInstanceKey, [def_object_id, arg_types, block_type]
 
+  module DefInstanceContainer
     def def_instances
       @def_instances ||= {} of DefInstanceKey => Def
     end
 
-    def add_def_instance(def_object_id, arg_types, block_type, typed_def)
-      def_instances[def_instance_key(def_object_id, arg_types, block_type)] = typed_def
+    def add_def_instance(key, typed_def)
+      def_instances[key] = typed_def
     end
 
-    def lookup_def_instance(def_object_id, arg_types, block_type)
-      def_instances[def_instance_key(def_object_id, arg_types, block_type)]?
-    end
-
-    def def_instance_key(def_object_id, arg_types, block_type)
-      DefInstanceKey.new(def_object_id, arg_types, block_type)
+    def lookup_def_instance(key)
+      def_instances[key]?
     end
   end
 
@@ -2113,12 +2109,12 @@ module Crystal
       aliased_type.def_instances
     end
 
-    def add_def_instance(def_object_id, arg_types, block_type, typed_def)
-      aliased_type.add_def_instance(def_object_id, arg_types, block_type, typed_def)
+    def add_def_instance(key, typed_def)
+      aliased_type.add_def_instance(key, typed_def)
     end
 
-    def lookup_def_instance(def_object_id, arg_types, block_type)
-      aliased_type.lookup_def_instance(def_object_id, arg_types, block_type)
+    def lookup_def_instance(key)
+      aliased_type.lookup_def_instance(key)
     end
 
     def lookup_macro(name, args_length)

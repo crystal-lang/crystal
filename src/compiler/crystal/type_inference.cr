@@ -1375,7 +1375,8 @@ module Crystal
       end
 
       if node.body
-        current_type.add_def_instance external.object_id, external.args.map(&.type), nil, external
+        key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil
+        current_type.add_def_instance key, external
       end
 
       node.type = @mod.nil
