@@ -12,24 +12,19 @@ fi
 
 OS_NAME=`uname -s`
 HW_NAME=`uname -m`
-EXTRACT_FLAG="z"
 
 case $OS_NAME in
   Darwin)
-    LLVM_URL="http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz"
     CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-darwin-latest.tar.gz"
     ;;
 
   Linux)
     case $HW_NAME in
       x86_64)
-        LLVM_URL="http://llvm.org/releases/3.3/clang+llvm-3.3-amd64-Ubuntu-12.04.2.tar.gz"
         CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-linux64-latest.tar.gz"
         ;;
 
       x86|i386|i686)
-        LLVM_URL="http://llvm.org/releases/3.3/clang+llvm-3.3-i386-debian6.tar.bz2"
-        EXTRACT_FLAG="j"
         CRYSTAL_URL="https://s3.amazonaws.com/crystal-lang/crystal-linux32-latest.tar.gz"
         ;;
 
@@ -55,10 +50,6 @@ function setup {
   rm -rf "$DEPS_DIR"
   mkdir -p "$DEPS_DIR"
 
-  echo "Downloading precompiled LLVM 3.3 + Clang"
-  mkdir "$DEPS_DIR/llvm"
-  curl "$LLVM_URL" | tar x$EXTRACT_FLAG --strip-components=1 -C "$DEPS_DIR/llvm"
-
   downloadCompiler
 }
 
@@ -79,6 +70,5 @@ if [ ! -d  "$DEPS_DIR" ]; then
   exit 1
 fi
 
-export PATH="$DEPS_DIR/llvm/bin":$PATH
 export CRYSTAL_PATH="$SCRIPT_ROOT/src:$SCRIPT_ROOT/libs:libs"
 "$CRYSTAL_DIR/crystal" "$@"
