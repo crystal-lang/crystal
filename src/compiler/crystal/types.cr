@@ -241,11 +241,11 @@ module Crystal
       raise "Bug: #{self} doesn't implement undef"
     end
 
-    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches"
     end
 
-    def lookup_matches_with_modules(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches_with_modules(signature, owner = self, type_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches_with_modules"
     end
 
@@ -285,7 +285,7 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_macros"
     end
 
-    def check_method_missing(name, arg_types, block)
+    def check_method_missing(signature)
       false
     end
 
@@ -389,7 +389,7 @@ module Crystal
     def initialize(@program)
     end
 
-    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
       Matches.new(nil, nil, self, false)
     end
 
@@ -440,8 +440,10 @@ module Crystal
     end
   end
 
+  make_named_tuple DefSignature, [name, arg_types, block]
+
   module MatchesLookup
-    def match_def_args(arg_types, a_def, context)
+    def self.match_def_args(arg_types, a_def, context)
       matched_arg_types = nil
 
       splat_index = a_def.splat_index || -1
@@ -504,27 +506,27 @@ module Crystal
       Match.new(a_def, (matched_arg_types || arg_types), context)
     end
 
-    def match_arg(arg_type, arg : Arg, context : MatchContext)
+    def self.match_arg(arg_type, arg : Arg, context : MatchContext)
       restriction = arg.type? || arg.restriction
       arg_type.not_nil!.restrict restriction, context
     end
 
-    def match_arg(arg_type, restriction : ASTNode, context : MatchContext)
+    def self.match_arg(arg_type, restriction : ASTNode, context : MatchContext)
       arg_type.not_nil!.restrict restriction, context
     end
 
-    def lookup_matches_without_parents(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
       if all_defs = self.defs()
-        if defs = all_defs[name]?
+        if defs = all_defs[signature.name]?
           found_defs = true
-          args_length = arg_types.length
-          yields = !!block
+          args_length = signature.arg_types.length
+          yields = !!signature.block
           context = MatchContext.new(owner, type_lookup)
 
           defs.each do |item|
             if (item.min_length <= args_length <= item.max_length) && item.yields == yields
               a_def = item.def
-              match = match_def_args(arg_types, a_def, context)
+              match = MatchesLookup.match_def_args(signature.arg_types, a_def, context)
 
               if match
                 matches_array ||= [] of Match
@@ -534,7 +536,7 @@ module Crystal
                 # we are done. We don't just compare types with ==, there is a special case:
                 # a function type with return T can be transpass a restriction of a function
                 # with with the same arguments but which returns Void.
-                if arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
+                if signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
                   return Matches.new(matches_array, true, owner)
                 end
               end
@@ -543,38 +545,36 @@ module Crystal
         end
       end
 
-      Matches.new(matches_array, Cover.create(arg_types, matches_array), owner)
+      Matches.new(matches_array, Cover.create(signature.arg_types, matches_array), owner)
     end
 
-    def lookup_matches_with_modules(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
-      matches = lookup_matches_without_parents(name, arg_types, block, owner, type_lookup, matches_array)
+    def lookup_matches_with_modules(signature, owner = self, type_lookup = self, matches_array = nil)
+      matches = lookup_matches_without_parents(signature, owner, type_lookup, matches_array)
       return matches unless matches.empty?
 
-      if (my_parents = parents) && !(name == "new" && owner.metaclass?)
+      if (my_parents = parents) && !(signature.name == "new" && owner.metaclass?)
         my_parents.each do |parent|
           break unless parent.is_a?(IncludedGenericModule) || parent.module?
 
-          matches = parent.lookup_matches_with_modules(name, arg_types, block, owner, parent, matches_array)
+          matches = parent.lookup_matches_with_modules(signature, owner, parent, matches_array)
           return matches unless matches.empty?
         end
       end
 
-      Matches.new(matches_array, Cover.create(arg_types, matches_array), owner, false)
+      Matches.new(matches_array, Cover.create(signature.arg_types, matches_array), owner, false)
     end
 
-    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
-      # matches_array ||= [] of Match
-
-      matches = lookup_matches_without_parents(name, arg_types, block, owner, type_lookup, matches_array)
+    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
+      matches = lookup_matches_without_parents(signature, owner, type_lookup, matches_array)
       return matches if matches.cover_all?
 
       matches_array = matches.matches
 
       cover = matches.cover
 
-      if (my_parents = parents) && !(name == "new" && owner.metaclass?)
+      if (my_parents = parents) && !(signature.name == "new" && owner.metaclass?)
         my_parents.each do |parent|
-          matches = parent.lookup_matches(name, arg_types, block, owner, parent, matches_array)
+          matches = parent.lookup_matches(signature, owner, parent, matches_array)
           return matches if matches.cover_all?
         end
       end
@@ -679,35 +679,35 @@ module Crystal
       nil
     end
 
-    def check_method_missing(name, arg_types, block)
-      if !metaclass? && name != "initialize"
+    def check_method_missing(signature)
+      if !metaclass? && signature.name != "initialize"
         # Make sure to define method missing in the whole hierarchy
         virtual_type = virtual_type()
         if virtual_type == self
           method_missing = lookup_method_missing
           if method_missing
-            define_method_from_method_missing(method_missing, name, arg_types, block)
+            define_method_from_method_missing(method_missing, signature)
             return true
           end
         else
-          return virtual_type.check_method_missing(name, arg_types, block)
+          return virtual_type.check_method_missing(signature)
         end
       end
 
       false
     end
 
-    def define_method_from_method_missing(method_missing, def_name, arg_types, block)
-      name_node = StringLiteral.new(def_name)
+    def define_method_from_method_missing(method_missing, signature)
+      name_node = StringLiteral.new(signature.name)
       args_nodes = [] of ASTNode
       args_nodes_names = Set(String).new
-      arg_types.each_index do |index|
+      signature.arg_types.each_index do |index|
         arg_node_name = "_arg#{index}"
         args_nodes << MacroId.new(arg_node_name)
         args_nodes_names << arg_node_name
       end
       args_node = ArrayLiteral.new(args_nodes)
-      if block
+      if block = signature.block
         block_vars = block.args.map_with_index do |var, index|
           Var.new("_block_arg#{index}")
         end
@@ -722,7 +722,7 @@ module Crystal
       generated_source = program.expand_macro self, method_missing, fake_call
       generated_nodes = program.parse_macro_source(generated_source, method_missing, method_missing, args_nodes_names)
 
-      a_def = Def.new(def_name, args_nodes_names.map { |name| Arg.new(name) }, generated_nodes)
+      a_def = Def.new(signature.name, args_nodes_names.map { |name| Arg.new(name) }, generated_nodes)
       a_def.yields = block.try &.args.length
 
       owner = self
@@ -1713,8 +1713,8 @@ module Crystal
       nil
     end
 
-    def check_method_missing(name, arg_types, block)
-      @generic_class.check_method_missing(name, arg_types, block)
+    def check_method_missing(signature)
+      @generic_class.check_method_missing(signature)
     end
 
     def to_s(io)
@@ -1920,12 +1920,12 @@ module Crystal
       @module.implements?(other_type)
     end
 
-    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
-      @module.lookup_matches(name, arg_types, block, owner, type_lookup, matches_array)
+    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
+      @module.lookup_matches(signature, owner, type_lookup, matches_array)
     end
 
-    def lookup_matches_without_parents(name, arg_types, block, owner = self, type_lookup = self, matches_array = nil)
-      @module.lookup_matches_without_parents(name, arg_types, block, owner, type_lookup, matches_array)
+    def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
+      @module.lookup_matches_without_parents(signature, owner, type_lookup, matches_array)
     end
 
     def lookup_defs(name)
@@ -1946,10 +1946,6 @@ module Crystal
 
     def lookup_macros(name)
       @module.lookup_macros(name)
-    end
-
-    def match_arg(arg_type, arg, owner, type_lookup, free_vars)
-      @module.match_arg(arg_type, arg, owner, type_lookup, free_vars)
     end
 
     def has_def?(name)
@@ -2093,8 +2089,8 @@ module Crystal
       @simple = true
     end
 
-    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self)
-      aliased_type.lookup_matches(name, arg_types, block, owner, type_lookup)
+    def lookup_matches(signature, owner = self, type_lookup = self)
+      aliased_type.lookup_matches(signature, owner, type_lookup)
     end
 
     def lookup_defs(name)
@@ -2599,11 +2595,11 @@ module Crystal
   end
 
   module VirtualTypeLookup
-    def lookup_matches(name, arg_types, block, owner = self, type_lookup = self)
-      is_new = virtual_metaclass? && name == "new"
+    def lookup_matches(signature, owner = self, type_lookup = self)
+      is_new = virtual_metaclass? && signature.name == "new"
 
       base_type_lookup = virtual_lookup(base_type)
-      base_type_matches = base_type_lookup.lookup_matches(name, arg_types, block, self)
+      base_type_matches = base_type_lookup.lookup_matches(signature, self)
 
       # If there are no subclasses no need to look further
       if leaf?
@@ -2629,7 +2625,7 @@ module Crystal
           subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
 
           # Check matches but without parents: only included modules
-          subtype_matches = subtype_lookup.lookup_matches_with_modules(name, arg_types, block, subtype_virtual_lookup, subtype_virtual_lookup)
+          subtype_matches = subtype_lookup.lookup_matches_with_modules(signature, subtype_virtual_lookup, subtype_virtual_lookup)
 
           # For Foo+:Class#new we need to check that this subtype doesn't define
           # an incompatible initialize: if so, we return empty matches, because
@@ -2650,7 +2646,7 @@ module Crystal
             base_type_matches.each do |base_type_match|
               if base_type_match.def.return_type
                 # We need to check if the definition for the method is different than the one in the base type
-                full_subtype_matches = subtype_lookup.lookup_matches(name, arg_types, block, subtype_virtual_lookup, subtype_virtual_lookup)
+                full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
                 if full_subtype_matches.any? { |match| match.def.same?(base_type_match.def) }
                   cloned_def = base_type_match.def.clone
                   cloned_def.macro_owner = base_type_match.def.macro_owner
@@ -2664,7 +2660,7 @@ module Crystal
             end
 
             if new_subtype_matches
-              subtype_matches = Matches.new(new_subtype_matches, Cover.create(arg_types, new_subtype_matches))
+              subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature.arg_types, new_subtype_matches))
             end
           end
 
@@ -2681,7 +2677,7 @@ module Crystal
             end
 
             if new_subtype_matches
-              subtype_matches = Matches.new(new_subtype_matches, Cover.create(arg_types, new_subtype_matches))
+              subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature.arg_types, new_subtype_matches))
             end
           end
 
@@ -2744,41 +2740,41 @@ module Crystal
     def initialize(@program, @base_type)
     end
 
-    def check_method_missing(name, arg_types, block)
+    def check_method_missing(signature)
       method_missing = base_type.lookup_method_missing
       defined = false
       if method_missing
-        defined = base_type.define_method_from_method_missing(method_missing, name, arg_types, block) || defined
+        defined = base_type.define_method_from_method_missing(method_missing, signature) || defined
       end
 
-      defined = add_subclasses_method_missing_matches(base_type, method_missing, name, arg_types, block) || defined
+      defined = add_subclasses_method_missing_matches(base_type, method_missing, signature) || defined
       defined
     end
 
-    def add_subclasses_method_missing_matches(base_type, method_missing, name, arg_types, block)
+    def add_subclasses_method_missing_matches(base_type, method_missing, signature)
       defined = false
 
       base_type.subclasses.each do |subclass|
         subclass = subclass as DefContainer
 
         # First check if we can find the method
-        existing_def = subclass.lookup_first_def(name, block)
+        existing_def = subclass.lookup_first_def(signature.name, signature.block)
         next if existing_def
 
         subclass_method_missing = subclass.lookup_method_missing
 
         # Check if the subclass redefined the method_missing
         if subclass_method_missing && subclass_method_missing.object_id != method_missing.object_id
-          subclass.define_method_from_method_missing(subclass_method_missing, name, arg_types, block)
+          subclass.define_method_from_method_missing(subclass_method_missing, signature)
           defined = true
         elsif method_missing
           # Otherwise, we need to define this method missing because of macro vars like @name
-          subclass.define_method_from_method_missing(method_missing, name, arg_types, block)
+          subclass.define_method_from_method_missing(method_missing, signature)
           subclass_method_missing = method_missing
           defined = true
         end
 
-        defined = add_subclasses_method_missing_matches(subclass, subclass_method_missing, name, arg_types, block) || defined
+        defined = add_subclasses_method_missing_matches(subclass, subclass_method_missing, signature) || defined
       end
 
       defined

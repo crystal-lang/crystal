@@ -124,33 +124,35 @@ module Crystal
     def lookup_matches_in_type(owner, self_type, def_name)
       arg_types = args.map &.type
 
+      signature = DefSignature.new(def_name, arg_types, block)
+
       matches = check_tuple_indexer(owner, def_name, args, arg_types)
-      matches ||= owner.lookup_matches(def_name, arg_types, block)
+      matches ||= owner.lookup_matches signature
 
       if matches.empty?
         if def_name == "new" && owner.metaclass? && (owner.instance_type.class? || owner.instance_type.virtual?) && !owner.instance_type.pointer?
           new_matches = define_new owner, arg_types
           unless new_matches.empty?
             if owner.virtual_metaclass?
-              matches = owner.lookup_matches(def_name, arg_types, block)
+              matches = owner.lookup_matches(signature)
             else
               matches = new_matches
             end
           end
         elsif !obj && owner != mod
-          mod_matches = mod.lookup_matches(def_name, arg_types, block)
+          mod_matches = mod.lookup_matches(signature)
           matches = mod_matches unless mod_matches.empty?
         end
       end
 
       if matches.empty? && owner.class? && owner.abstract
-        matches = owner.virtual_type.lookup_matches(def_name, arg_types, block)
+        matches = owner.virtual_type.lookup_matches(signature)
       end
 
       if matches.empty?
-        defined_method_missing = owner.check_method_missing(def_name, arg_types, block)
+        defined_method_missing = owner.check_method_missing(signature)
         if defined_method_missing
-          matches = owner.lookup_matches(def_name, arg_types, block)
+          matches = owner.lookup_matches(signature)
         end
       end
 
@@ -523,8 +525,7 @@ module Crystal
         if fun_literal_type
           if output = block_arg.fun.output
             block_type = (fun_literal_type as FunInstanceType).return_type
-            type_lookup = match.context.type_lookup as MatchesLookup
-            matched = type_lookup.match_arg(block_type, output, match.context)
+            matched = MatchesLookup.match_arg(block_type, output, match.context)
             unless matched
               raise "expected block to return #{output}, not #{block_type}"
             end
@@ -539,8 +540,7 @@ module Crystal
           raise "can't infer block type" unless block.body.type?
 
           block_type = block.body.type
-          type_lookup = match.context.type_lookup as MatchesLookup
-          matched = type_lookup.match_arg(block_type, output, match.context)
+          matched = MatchesLookup.match_arg(block_type, output, match.context)
           unless matched
             if output.is_a?(Self)
               raise "expected block to return #{match.context.owner}, not #{block_type}"
@@ -878,10 +878,10 @@ module Crystal
 
       # If there are no initialize at all, use parent's initialize
       if initializers.empty?
-        matches = instance_type.lookup_matches("initialize", arg_types, block)
+        matches = instance_type.lookup_matches DefSignature.new("initialize", arg_types, block)
       else
         # Otherwise, use this type initializers
-        matches = instance_type.lookup_matches_with_modules("initialize", arg_types, block)
+        matches = instance_type.lookup_matches_with_modules DefSignature.new("initialize", arg_types, block)
       end
 
       if matches.empty?
