@@ -449,7 +449,11 @@ module Crystal
       # Args before the splat argument
       0.upto(splat_index - 1) do |index|
         def_arg = a_def.args[index]
-        arg_type = arg_types[index]
+        arg_type = arg_types[index]?
+
+        # Because of default argument
+        break unless arg_type
+
         match_arg_type = match_arg(arg_type, def_arg, context)
         if match_arg_type
           matched_arg_types ||= [] of Type

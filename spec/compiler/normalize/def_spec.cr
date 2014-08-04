@@ -77,4 +77,10 @@ describe "Normalize: def" do
     actual = a_def.expand_default_arguments(0)
     actual.to_s.should eq("def foo\n  args = {}\n  args\nend")
   end
+
+  it "expands with splat and default argument" do
+    a_def = parse("def foo(x = 1, *args); args; end") as Def
+    actual = a_def.expand_default_arguments(0)
+    actual.to_s.should eq("def foo\n  x = 1\n  args = {}\n  args\nend")
+  end
 end

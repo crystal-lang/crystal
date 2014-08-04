@@ -304,10 +304,11 @@ module Crystal
       new_args = [] of Arg
 
       # Args before splat index
-      0.upto(splat_index - 1) do |index|
+      0.upto(Math.min(args_length, splat_index) - 1) do |index|
         new_args << args[index].clone
       end
 
+      # Splat arg
       if splat_index == -1
         splat_length = 0
         offset = 0
@@ -320,6 +321,7 @@ module Crystal
         new_args << Arg.new("_arg#{index}")
       end
 
+      # Args after splat index
       base = splat_index + 1
       min_length = Math.min(args_length, args.length)
       base.upto(min_length - 1) do |index|
@@ -338,6 +340,18 @@ module Crystal
       if retain_body
         new_body = [] of ASTNode
 
+        # Default values
+        if splat_index == -1
+          end_index = args.length - 1
+        else
+          end_index = Math.min(args_length, splat_index - 1)
+        end
+        args_length.upto(end_index) do |index|
+          arg = args[index]
+          new_body << Assign.new(Var.new(arg.name), arg.default_value.not_nil!)
+        end
+
+        # Splat argument
         if splat_index != -1
           tuple_args = [] of ASTNode
           splat_length.times do |index|
@@ -345,12 +359,6 @@ module Crystal
           end
           tuple = TupleLiteral.new(tuple_args)
           new_body << Assign.new(Var.new(args[splat_index].name), tuple)
-        end
-
-        if splat_index == -1
-          args[args_length .. -1].each do |arg|
-            new_body << Assign.new(Var.new(arg.name), arg.default_value.not_nil!)
-          end
         end
 
         new_body.push body.clone

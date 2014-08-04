@@ -52,4 +52,34 @@ describe "Code gen: splat" do
       foo
       )).to_i.should eq(0)
   end
+
+  it "splats with default value" do
+    run(%(
+      def foo(x = 100, *args)
+        x + args.length
+      end
+
+      foo
+      )).to_i.should eq(100)
+  end
+
+  it "splats with default value (2)" do
+    run(%(
+      def foo(x, y = 100, *args)
+        x + y + args.length
+      end
+
+      foo 10
+      )).to_i.should eq(110)
+  end
+
+  it "splats with default value (3)" do
+    run(%(
+      def foo(x, y = 100, *args)
+        x + y + args.length
+      end
+
+      foo 10, 20, 30, 40
+      )).to_i.should eq(32)
+  end
 end
