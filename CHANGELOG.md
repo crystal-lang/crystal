@@ -1,6 +1,8 @@
 ## Next
 
 * Support splats in macros.
+* Support splats in defs and calls.
+* Added named arguments.
 
 ## 0.3.5 (2014-07-29)
 
