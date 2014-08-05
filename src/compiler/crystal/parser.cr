@@ -707,7 +707,7 @@ module Crystal
       when :GLOBAL
         node_and_next_token Global.new(@token.value.to_s)
       when :GLOBAL_MATCH
-        node_and_next_token Call.new(Global.new("$~"), "[]", [NumberLiteral.new(@token.value.to_s, :i32)] of ASTNode)
+        node_and_next_token Call.new(Call.new(Global.new("$~"), "not_nil!"), "[]", [NumberLiteral.new(@token.value.to_s, :i32)] of ASTNode)
       when :IDENT
         case @token.value
         when :begin

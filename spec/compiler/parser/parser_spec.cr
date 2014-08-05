@@ -613,8 +613,8 @@ describe "Parser" do
 
   it_parses "foo $a", Call.new(nil, "foo", [Global.new("$a")] of ASTNode)
 
-  it_parses "$1", Call.new(Global.new("$~"), "[]", [1.int32] of ASTNode)
-  it_parses "foo $1", Call.new(nil, "foo", [Call.new(Global.new("$~"), "[]", [1.int32] of ASTNode)] of ASTNode)
+  it_parses "$1", Call.new(Call.new(Global.new("$~"), "not_nil!"), "[]", [1.int32] of ASTNode)
+  it_parses "foo $1", Call.new(nil, "foo", [Call.new(Call.new(Global.new("$~"), "not_nil!"), "[]", [1.int32] of ASTNode)] of ASTNode)
   it_parses "foo /a/", Call.new(nil, "foo", [RegexLiteral.new("a")] of ASTNode)
 
   it_parses "foo out x; x", [Call.new(nil, "foo", [Out.new("x".var)] of ASTNode), "x".var]
