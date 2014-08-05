@@ -90,15 +90,15 @@ module Enumerable(T)
     ary
   end
 
-  def join(sep = "")
+  def join(separator = "")
     String.build do |io|
-      join sep, io
+      join separator, io
     end
   end
 
-  def join(sep, io)
+  def join(separator, io)
     each_with_index do |elem, i|
-      io << sep if i > 0
+      io << separator if i > 0
       elem.to_s(io)
     end
   end
