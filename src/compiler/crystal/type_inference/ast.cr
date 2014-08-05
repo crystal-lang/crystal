@@ -296,7 +296,7 @@ module Crystal
       args.length > 0 && args.last.default_value
     end
 
-    def expand_default_arguments(args_length)
+    def expand_default_arguments(args_length, named_args = nil)
       retain_body = yields || args.any? { |arg| arg.default_value && arg.restriction } || splat_index
 
       splat_index = splat_index() || -1
@@ -328,7 +328,20 @@ module Crystal
         new_args << args[index].clone
       end
 
-      expansion = Def.new(name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, yields)
+      if named_args
+        new_name = String.build do |str|
+          str << name
+          named_args.each do |named_arg|
+            str << ':'
+            str << named_arg
+            new_args << Arg.new(named_arg)
+          end
+        end
+      else
+        new_name = name
+      end
+
+      expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, yields)
       expansion.instance_vars = instance_vars
       expansion.args.each { |arg| arg.default_value = nil }
       expansion.calls_super = calls_super
@@ -350,7 +363,11 @@ module Crystal
         # Declare variables that are not covered
         args_length.upto(end_index) do |index|
           arg = args[index]
-          new_body << Assign.new(Var.new(arg.name), arg.default_value.not_nil!)
+
+          # But first check if we already have it in the named arguments
+          unless named_args.try &.index(arg.name)
+            new_body << Assign.new(Var.new(arg.name), arg.default_value.not_nil!)
+          end
         end
 
         # Splat argument
@@ -376,7 +393,14 @@ module Crystal
 
         # Append default values for those not covered
         args_length.upto(args.length - 1) do |index|
-          new_args.push args[index].default_value.not_nil!
+          arg = args[index]
+
+          # But first check if we already have it in the named arguments
+          if named_args.try &.index(arg.name)
+            new_args.push Var.new(arg.name)
+          else
+            new_args.push arg.default_value.not_nil!
+          end
         end
 
         expansion.body = Call.new(nil, name, new_args)

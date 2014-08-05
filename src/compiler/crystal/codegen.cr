@@ -1133,6 +1133,11 @@ module Crystal
         call_args << codegen_arg(target_def, is_external, arg, i)
       end
 
+      # Then the named arguments, if any
+      node.named_args.try &.each do |named_arg|
+        call_args << codegen_arg(target_def, is_external, named_arg.value, nil)
+      end
+
       @needs_value = old_needs_value
 
       {call_args, has_out}

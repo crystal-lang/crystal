@@ -737,7 +737,9 @@ module Crystal
       check_super_in_initialize node
 
       obj = node.obj
+      args = node.args
       block_arg = node.block_arg
+      named_args = node.named_args
 
       ignore_type_filters do
         if obj
@@ -750,13 +752,15 @@ module Crystal
           end
         end
 
-        node.args.each &.accept(self)
+        args.each &.accept(self)
         block_arg.try &.accept self
+        named_args.try &.each &.value.accept self
       end
 
       obj.try &.add_input_observer(node)
-      node.args.each &.add_input_observer(node)
+      args.each &.add_input_observer(node)
       block_arg.try &.add_input_observer node
+      named_args.try &.each &.value.add_input_observer(node)
 
       # If the call has a block we need to create a copy of the variables
       # and bind them to the current variables. Then, when visiting
@@ -1375,7 +1379,7 @@ module Crystal
       end
 
       if node.body
-        key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil
+        key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil
         current_type.add_def_instance key, external
       end
 

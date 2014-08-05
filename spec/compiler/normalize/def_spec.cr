@@ -83,4 +83,28 @@ describe "Normalize: def" do
     actual = a_def.expand_default_arguments(0)
     actual.to_s.should eq("def foo\n  x = 1\n  args = {}\n  args\nend")
   end
+
+  it "expands with named argument" do
+    a_def = parse("def foo(x = 1, y = 2); x + y; end") as Def
+    actual = a_def.expand_default_arguments(0, ["y"])
+    actual.to_s.should eq("def foo:y(y)\n  foo(1, y)\nend")
+  end
+
+  it "expands with two named argument" do
+    a_def = parse("def foo(x = 1, y = 2); x + y; end") as Def
+    actual = a_def.expand_default_arguments(0, ["y", "x"])
+    actual.to_s.should eq("def foo:y:x(y, x)\n  foo(x, y)\nend")
+  end
+
+  it "expands with two named argument and one not" do
+    a_def = parse("def foo(x, y = 2, z = 3); x + y; end") as Def
+    actual = a_def.expand_default_arguments(1, ["z"])
+    actual.to_s.should eq("def foo:z(x, z)\n  foo(x, 2, z)\nend")
+  end
+
+  it "expands with named argument and yield" do
+    a_def = parse("def foo(x = 1, y = 2); yield x + y; end") as Def
+    actual = a_def.expand_default_arguments(0, ["y"])
+    actual.to_s.should eq("def foo:y(y)\n  x = 1\n  yield x + y\nend")
+  end
 end

@@ -440,10 +440,12 @@ module Crystal
     end
   end
 
-  make_named_tuple CallSignature, [name, arg_types, block]
+  make_named_tuple CallSignature, [name, arg_types, block, named_args]
 
   module MatchesLookup
-    def self.match_def_args(arg_types, a_def, context)
+    def self.match_def(signature, a_def, context)
+      arg_types = signature.arg_types
+      named_args = signature.named_args
       matched_arg_types = nil
 
       splat_index = a_def.splat_index || -1
@@ -497,6 +499,12 @@ module Crystal
         end
       end
 
+      # Now check named args
+      named_args.try &.each do |named_arg|
+        found_named_arg = a_def.args.index { |arg| arg.name == named_arg.name }
+        return nil unless found_named_arg
+      end
+
       # We reuse a match contextx without free vars, but we create
       # new ones when there are free vars.
       if context.free_vars
@@ -526,7 +534,7 @@ module Crystal
           defs.each do |item|
             if (item.min_length <= args_length <= item.max_length) && item.yields == yields
               a_def = item.def
-              match = MatchesLookup.match_def_args(signature.arg_types, a_def, context)
+              match = MatchesLookup.match_def(signature, a_def, context)
 
               if match
                 matches_array ||= [] of Match
@@ -823,7 +831,7 @@ module Crystal
     end
   end
 
-  make_named_tuple DefInstanceKey, [def_object_id, arg_types, block_type]
+  make_named_tuple DefInstanceKey, [def_object_id, arg_types, block_type, named_args]
 
   module DefInstanceContainer
     def def_instances

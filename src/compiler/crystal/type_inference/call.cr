@@ -124,7 +124,7 @@ module Crystal
     def lookup_matches_in_type(owner, self_type, def_name)
       arg_types = args.map &.type
 
-      signature = CallSignature.new(def_name, arg_types, block)
+      signature = CallSignature.new(def_name, arg_types, block, named_args)
 
       matches = check_tuple_indexer(owner, def_name, args, arg_types)
       matches ||= owner.lookup_matches signature
@@ -203,7 +203,14 @@ module Crystal
           lookup_arg_types = match.arg_types
         end
         match_owner = match.context.owner
-        def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type)
+
+        if named_args = @named_args
+          named_args_key = named_args.map { |named_arg| {named_arg.name, named_arg.value.type} }
+        else
+          named_args_key = nil
+        end
+
+        def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type, named_args_key)
         typed_def = match_owner.lookup_def_instance def_instance_key if use_cache
         unless typed_def
           typed_def, typed_def_args = prepare_typed_def_with_args(match.def, match_owner, lookup_self_type, match.arg_types)
@@ -688,7 +695,25 @@ module Crystal
     def obj_and_args_types_set?
       obj = @obj
       block_arg = @block_arg
-      args.all?(&.type?) && (obj ? obj.type? : true) && (block_arg ? block_arg.type? : true)
+      named_args = @named_args
+
+      unless args.all? &.type?
+        return false
+      end
+
+      if obj && !obj.type?
+        return false
+      end
+
+      if block_arg && !block_arg.type?
+        return false
+      end
+
+      if named_args && named_args.any? { |arg| !arg.value.type? }
+        return false
+      end
+
+      true
     end
 
     def raise_matches_not_found(owner : CStructType, def_name, matches = nil)
@@ -755,10 +780,39 @@ module Crystal
         raise error_msg, owner_trace
       end
 
-      defs_matching_args_length = defs.select { |a_def| a_def.args.length == self.args.length }
+      defs_matching_args_length = defs.select do |a_def|
+        min_length, max_length = a_def.min_max_args_lengths
+        min_length <= self.args.length <= max_length
+      end
+
       if defs_matching_args_length.empty?
-        all_arguments_lengths = defs.map(&.args.length).uniq!
-        raise "wrong number of arguments for '#{full_name(owner, def_name)}' (#{args.length} for #{all_arguments_lengths.join ", "})"
+        all_arguments_lengths = [] of Int32
+        min_splat = Int32::MAX
+        defs.each do |a_def|
+          min_length, max_length = a_def.min_max_args_lengths
+          if max_length == Int32::MAX
+            min_splat = Math.min(min_length, min_splat)
+            all_arguments_lengths.push min_splat
+          else
+            min_length.upto(max_length) do |length|
+              all_arguments_lengths.push length
+            end
+          end
+        end
+        all_arguments_lengths.uniq!.sort!
+
+        raise String.build do |str|
+          str << "wrong number of arguments for '"
+          str << full_name(owner, def_name)
+          str << "' ("
+          str << args.length
+          str << " for "
+          all_arguments_lengths.join ", ", str
+          if min_splat != Int32::MAX
+            str << "+"
+          end
+          str << ")"
+        end
       end
 
       if defs_matching_args_length.length > 0
@@ -766,6 +820,18 @@ module Crystal
           raise "'#{full_name(owner, def_name)}' is not expected to be invoked with a block, but a block was given"
         elsif !block && defs_matching_args_length.all?(&.yields)
           raise "'#{full_name(owner, def_name)}' is expected to be invoked with a block, but no block was given"
+        end
+
+        if named_args = @named_args
+          # Check if there was a mistmatched named argument
+          defs_matching_args_length.each do |a_def|
+            named_args.each do |named_arg|
+              found_index = a_def.args.index { |arg| arg.name == named_arg.name }
+              unless found_index
+                named_arg.raise "no argument is named '#{named_arg.name}'"
+              end
+            end
+          end
         end
       end
 
@@ -877,7 +943,7 @@ module Crystal
       # First check if this type has any initialize
       initializers = instance_type.lookup_defs_with_modules("initialize")
 
-      signature = CallSignature.new("initialize", arg_types, block)
+      signature = CallSignature.new("initialize", arg_types, block, nil)
 
       if initializers.empty?
         # If there are no initialize at all, use parent's initialize
@@ -896,7 +962,7 @@ module Crystal
           define_new_without_initialize(scope, arg_types)
         end
       else
-        Call.define_new_with_initialize(scope, arg_types, matches)
+        define_new_with_initialize(scope, arg_types, matches)
       end
     end
 
@@ -941,7 +1007,7 @@ module Crystal
       Matches.new([match], true)
     end
 
-    def self.define_new_with_initialize(scope, arg_types, matches)
+    def define_new_with_initialize(scope, arg_types, matches)
       instance_type = scope.instance_type
       instance_type = instance_type.generic_class if instance_type.is_a?(GenericClassInstanceType)
 
@@ -963,23 +1029,15 @@ module Crystal
         #    GC.add_finalizer x
         #    x.initialize ..., &block
         #    x
-        var = Var.new("x")
-        new_vars = Array(ASTNode).new(arg_types.length)
-        arg_types.each_with_index do |dummy, i|
-          new_vars.push Var.new("arg#{i}")
-        end
-
-        new_args = Array(Arg).new(arg_types.length)
-        arg_types.each_with_index do |dummy, i|
-          arg = Arg.new("arg#{i}")
-          arg.restriction = match.def.args[i]?.try &.restriction
-          new_args.push arg
+        var = Var.new("_")
+        new_vars = Array(ASTNode).new(match.def.args.length)
+        match.def.args.each do |arg|
+          new_vars.push Var.new(arg.name)
         end
 
         assign = Assign.new(var, alloc)
         call_gc = Call.new(Path.new(["GC"], true), "add_finalizer", [var] of ASTNode)
         init = Call.new(var, "initialize", new_vars)
-
 
         exps = Array(ASTNode).new(4)
         exps << assign
@@ -987,7 +1045,7 @@ module Crystal
         exps << init
         exps << var
 
-        match_def = Def.new("new", new_args, exps)
+        match_def = Def.new("new", match.def.args.clone, exps)
 
         # Forward block argument if any
         if match.def.uses_block_arg
@@ -1024,10 +1082,13 @@ module Crystal
     end
 
     def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types)
-      # If there's an argument count mismatch, or we have a splat, we create
-      # another def that sets ups everything for the real call.
-      if arg_types.length != untyped_def.args.length || untyped_def.splat_index
-        untyped_def = untyped_def.expand_default_arguments(arg_types.length)
+      named_args = @named_args
+
+      # If there's an argument count mismatch, or we have a splat, or there are
+      # named arguments, we create another def that sets ups everything for the real call.
+      if arg_types.length != untyped_def.args.length || untyped_def.splat_index || named_args
+        named_args_names = named_args.try &.map &.name
+        untyped_def = untyped_def.expand_default_arguments(arg_types.length, named_args_names)
       end
 
       args_start_index = 0
@@ -1045,13 +1106,23 @@ module Crystal
         args["self"] = MetaVar.new("self", self_type)
       end
 
-      0.upto(self.args.length - 1) do |index|
+      self.args.each_index do |index|
         arg = typed_def.args[index]
         type = arg_types[args_start_index + index]
         var = MetaVar.new(arg.name, type)
         var.location = arg.location
         var.bind_to(var)
         args[arg.name] = var
+        arg.type = type
+      end
+
+      named_args.try &.each do |named_arg|
+        type = named_arg.value.type
+        var = MetaVar.new(named_arg.name, type)
+        var.location = named_arg.value.location
+        var.bind_to(var)
+        args[named_arg.name] = var
+        arg = typed_def.args.find { |arg| arg.name == named_arg.name }.not_nil!
         arg.type = type
       end
 
