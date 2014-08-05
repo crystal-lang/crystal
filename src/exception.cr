@@ -68,12 +68,12 @@ end
 
 class Exception
   getter message
-  getter inner_exception
+  getter cause
   getter backtrace
 
-  def initialize(message = nil : String?, inner_exception = nil : Exception?)
+  def initialize(message = nil : String?, cause = nil : Exception?)
     @message = message
-    @inner_exception = inner_exception
+    @cause = cause
     @backtrace = caller
   end
 
