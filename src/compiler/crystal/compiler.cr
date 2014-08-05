@@ -312,9 +312,18 @@ module Crystal
             File.delete output_filename
           end
         end
-      rescue ex
+      rescue ex : Crystal::Exception
         puts ex
         exit 1
+      rescue ex
+        print "Error: ".colorize.red.bold
+        puts "you've found a bug in the Crystal compiler. Please open an issue: https://github.com/manastech/crystal/issues".colorize.white.bright
+        puts
+        puts ex
+        ex.backtrace.each do |frame|
+          puts frame
+        end
+        exit 2
       end
     end
 

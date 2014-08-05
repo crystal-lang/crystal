@@ -745,13 +745,7 @@ module Crystal
     def add_def(a_def)
       a_def.owner = self
 
-      max_length = a_def.args.length
-      min_length = a_def.args.index(&.default_value) || max_length
-      if a_def.splat_index
-        min_length -= 1
-        max_length = Int32::MAX
-      end
-
+      min_length, max_length = a_def.min_max_args_lengths
       item = DefWithMetadata.new(min_length, max_length, !!a_def.yields, a_def)
 
       defs = (@defs ||= {} of String => Array(DefWithMetadata))

@@ -346,6 +346,8 @@ module Crystal
         else
           end_index = Math.min(args_length, splat_index - 1)
         end
+
+        # Declare variables that are not covered
         args_length.upto(end_index) do |index|
           arg = args[index]
           new_body << Assign.new(Var.new(arg.name), arg.default_value.not_nil!)
@@ -365,10 +367,14 @@ module Crystal
         expansion.body = Expressions.new(new_body)
       else
         new_args = [] of ASTNode
-        args[0 ... args_length].each do |arg|
+
+        # Append variables that are already covered
+        0.upto(args_length - 1) do |index|
+          arg = args[index]
           new_args.push Var.new(arg.name)
         end
 
+        # Append default values for those not covered
         args_length.upto(args.length - 1) do |index|
           new_args.push args[index].default_value.not_nil!
         end

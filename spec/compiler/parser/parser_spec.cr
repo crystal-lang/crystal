@@ -312,6 +312,9 @@ describe "Parser" do
   it_parses "foo 1, a: 1, b: 2", Call.new(nil, "foo", [1.int32] of ASTNode, nil, nil, [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], false)
   it_parses "foo 1, a: 1, b: 2\n1", [Call.new(nil, "foo", [1.int32] of ASTNode, nil, nil, [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], false), 1.int32]
 
+  it_parses "x.foo(a: 1, b: 2)", Call.new("x".call, "foo", [] of ASTNode, nil, nil, [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], false)
+  it_parses "x.foo a: 1, b: 2 ", Call.new("x".call, "foo", [] of ASTNode, nil, nil, [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], false)
+
   it_parses "x = 1; foo x do\nend", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", ["x".var] of ASTNode, Block.new)]
   it_parses "x = 1; foo x { }", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", [] of ASTNode, Block.new)] of ASTNode)]
   it_parses "x = 1; foo x {\n}", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", [] of ASTNode, Block.new)] of ASTNode)]

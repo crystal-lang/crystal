@@ -1129,46 +1129,56 @@ module Crystal
 
       # Then the arguments.
       node.args.each_with_index do |arg, i|
-        if arg.is_a?(Out)
-          has_out = true
-          case exp = arg.exp
-          when Var
-            # For out arguments we reserve the space. After the call
-            # we move the value to the variable.
-            call_arg = alloca(llvm_type(arg.type))
-          when InstanceVar
-            call_arg = instance_var_ptr(type, exp.name, llvm_self_ptr)
-          else
-            arg.raise "Bug: out argument was #{exp}"
-          end
-        else
-          @needs_value = true
-          accept arg
-
-          def_arg = target_def.args[i]?
-          call_arg = @last
-
-          if is_external && def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
-            # Nil to pointer
-            call_arg = LLVM.null(llvm_c_type(def_arg.type))
-          else
-            # Def argument might be missing if it's a variadic call
-            call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
-          end
-        end
-
-        if is_external && arg.type.fun?
-          # Try first with the def arg type (might be a fun pointer that return void,
-          # while the argument's type a fun pointer that return something else)
-          call_arg = check_fun_is_not_closure(call_arg, def_arg.try(&.type) || arg.type)
-        end
-
-        call_args << call_arg
+        has_out ||= arg.is_a?(Out)
+        call_args << codegen_arg(target_def, is_external, arg, i)
       end
 
       @needs_value = old_needs_value
 
       {call_args, has_out}
+    end
+
+    def codegen_arg(target_def, is_external, arg, i)
+      if arg.is_a?(Out)
+        has_out = true
+        case exp = arg.exp
+        when Var
+          # For out arguments we reserve the space. After the call
+          # we move the value to the variable.
+          call_arg = alloca(llvm_type(arg.type))
+        when InstanceVar
+          call_arg = instance_var_ptr(type, exp.name, llvm_self_ptr)
+        else
+          arg.raise "Bug: out argument was #{exp}"
+        end
+      else
+        @needs_value = true
+        accept arg
+
+        if i
+          def_arg = target_def.args[i]?
+        else
+          def_arg = nil
+        end
+
+        call_arg = @last
+
+        if is_external && def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
+          # Nil to pointer
+          call_arg = LLVM.null(llvm_c_type(def_arg.type))
+        else
+          # Def argument might be missing if it's a variadic call
+          call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
+        end
+      end
+
+      if is_external && arg.type.fun?
+        # Try first with the def arg type (might be a fun pointer that return void,
+        # while the argument's type a fun pointer that return something else)
+        call_arg = check_fun_is_not_closure(call_arg, def_arg.try(&.type) || arg.type)
+      end
+
+      call_arg
     end
 
     def check_fun_is_not_closure(value, type)

@@ -980,6 +980,17 @@ module Crystal
       name.length
     end
 
+    def min_max_args_lengths
+      max_length = args.length
+      default_value_index = args.index(&.default_value)
+      min_length = default_value_index || max_length
+      if splat_index
+        min_length -= 1 unless default_value_index
+        max_length = Int32::MAX
+      end
+      {min_length, max_length}
+    end
+
     def clone_without_location
       a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @yields, @abstract, @splat_index)
       a_def.instance_vars = instance_vars

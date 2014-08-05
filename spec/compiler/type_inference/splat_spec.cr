@@ -11,4 +11,14 @@ describe "Type inference: splat" do
       foo 1, 1.5, 'a'
       )) { tuple_of([int32, float64, char] of Type) }
   end
+
+  it "errors on zero args with named arg and splat" do
+    assert_error %(
+      def foo(x, y = 1, *z)
+      end
+
+      foo
+      ),
+      "wrong number of arguments"
+  end
 end
