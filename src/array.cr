@@ -421,9 +421,7 @@ class Array(T)
     other_length = other.length
     new_length = length + other_length
     if new_length > @capacity
-      cap2 = Math.log2(new_length).ceil
-      new_capacity = 2 ** cap2
-      resize_to_capacity(new_capacity)
+      resize_to_capacity(Math.pw2ceil(new_length))
     end
 
     (@buffer + @length).memcpy(other.buffer, other_length)

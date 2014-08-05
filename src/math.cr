@@ -182,4 +182,15 @@ module Math
   def sqrt(value : Int)
     sqrt value.to_f64
   end
+
+  def pw2ceil(v)
+    # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+    v -= 1
+    v |= v >> 1
+    v |= v >> 2
+    v |= v >> 4
+    v |= v >> 8
+    v |= v >> 16
+    v += 1
+  end
 end
