@@ -107,4 +107,18 @@ class Object
       hash
     end
   end
+
+  macro generate_equals(fields)
+    def ==(other : self)
+      {% for field in fields %}
+        return false unless {{field.id}} == other.{{field.id}}
+      {% end %}
+      true
+    end
+  end
+
+  macro generate_equals_and_hash(fields)
+    generate_equals {{fields}}
+    generate_hash {{fields}}
+  end
 end
