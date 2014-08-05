@@ -62,4 +62,23 @@ describe "Code gen: named args" do
       Foo.new(1, z: 10).value
       )).to_i.should eq(13)
   end
+
+  it "uses named args in dispatch" do
+    run(%(
+      class Foo
+        def foo(x, z = 2)
+          x + z + 1
+        end
+      end
+
+      class Bar
+        def foo(x, z = 2)
+          x + z
+        end
+      end
+
+      a = Foo.new || Bar.new
+      a.foo 1, z: 20
+      )).to_i.should eq(22)
+  end
 end

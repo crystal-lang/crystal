@@ -209,6 +209,15 @@ module Crystal
         end
       end
 
+      # Convert named arguments to regular arguments, because intermediate
+      # defs with the needed number of arguments are already defined.
+      if named_args = node.named_args
+        named_args.each do |named_arg|
+          node.args << named_arg.value
+        end
+        node.named_args = nil
+      end
+
       # check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
 
       node
