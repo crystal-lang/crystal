@@ -827,8 +827,13 @@ module Crystal
           defs_matching_args_length.each do |a_def|
             named_args.each do |named_arg|
               found_index = a_def.args.index { |arg| arg.name == named_arg.name }
-              unless found_index
-                named_arg.raise "no argument is named '#{named_arg.name}'"
+              if found_index
+                min_length, max_length = a_def.min_max_args_lengths
+                if found_index < min_length
+                  named_arg.raise "argument '#{named_arg.name}' already specified"
+                end
+              else
+                named_arg.raise "no argument named '#{named_arg.name}'"
               end
             end
           end
@@ -943,7 +948,7 @@ module Crystal
       # First check if this type has any initialize
       initializers = instance_type.lookup_defs_with_modules("initialize")
 
-      signature = CallSignature.new("initialize", arg_types, block, nil)
+      signature = CallSignature.new("initialize", arg_types, block, named_args)
 
       if initializers.empty?
         # If there are no initialize at all, use parent's initialize
@@ -1012,6 +1017,19 @@ module Crystal
       instance_type = instance_type.generic_class if instance_type.is_a?(GenericClassInstanceType)
 
       ms = matches.map do |match|
+        # Check that this call doesn't have a named arg not mentioned in new
+        @named_args.try &.each do |named_arg|
+          found_index = match.def.args.index { |arg| arg.name == named_arg.name }
+          if found_index
+            min_length, max_length = match.def.min_max_args_lengths
+            if found_index < min_length
+              named_arg.raise "argument '#{named_arg.name}' already specified"
+            end
+          else
+            named_arg.raise "no argument named '#{named_arg.name}'"
+          end
+        end
+
         if instance_type.is_a?(GenericClassType)
           generic_type_args = Array(ASTNode).new(instance_type.type_vars.length)
           instance_type.type_vars.each do |type_var|

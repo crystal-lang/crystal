@@ -443,7 +443,8 @@ module Crystal
   make_named_tuple CallSignature, [name, arg_types, block, named_args]
 
   module MatchesLookup
-    def self.match_def(signature, a_def, context)
+    def self.match_def(signature, def_metadata, context)
+      a_def = def_metadata.def
       arg_types = signature.arg_types
       named_args = signature.named_args
       matched_arg_types = nil
@@ -502,7 +503,14 @@ module Crystal
       # Now check named args
       named_args.try &.each do |named_arg|
         found_named_arg = a_def.args.index { |arg| arg.name == named_arg.name }
-        return nil unless found_named_arg
+        if found_named_arg
+          # Check whether the named arg refers to an argument before the first default argument
+          if found_named_arg < def_metadata.min_length
+            return nil
+          end
+        else
+          return nil
+        end
       end
 
       # We reuse a match contextx without free vars, but we create
@@ -533,8 +541,7 @@ module Crystal
 
           defs.each do |item|
             if (item.min_length <= args_length <= item.max_length) && item.yields == yields
-              a_def = item.def
-              match = MatchesLookup.match_def(signature, a_def, context)
+              match = MatchesLookup.match_def(signature, item, context)
 
               if match
                 matches_array ||= [] of Match
