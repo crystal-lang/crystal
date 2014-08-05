@@ -270,23 +270,23 @@ module Crystal
             case token_type
             when :"&&="
               atomic.args.push value
-              assign = Call.new(obj, "[]=", atomic.args, nil, nil, false, method_column_number)
+              assign = Call.new(obj, "[]=", atomic.args, nil, nil, nil, false, method_column_number)
               assign.location = location
               fetch = atomic_clone
               fetch.name = "[]?"
               atomic = And.new(fetch, assign)
             when :"||="
               atomic.args.push value
-              assign = Call.new(obj, "[]=", atomic.args, nil, nil, false, method_column_number)
+              assign = Call.new(obj, "[]=", atomic.args, nil, nil, nil, false, method_column_number)
               assign.location = location
               fetch = atomic_clone
               fetch.name = "[]?"
               atomic = Or.new(fetch, assign)
             else
-              call = Call.new(atomic_clone, method, [value] of ASTNode, nil, nil, false, method_column_number)
+              call = Call.new(atomic_clone, method, [value] of ASTNode, nil, nil, nil, false, method_column_number)
               call.location = location
               atomic.args.push call
-              atomic = Call.new(obj, "[]=", atomic.args, nil, nil, false, method_column_number)
+              atomic = Call.new(obj, "[]=", atomic.args, nil, nil, nil, false, method_column_number)
             end
           else
             case token_type
@@ -307,7 +307,7 @@ module Crystal
               assign.location = location
               atomic = Or.new(atomic.clone, assign)
             else
-              call = Call.new(atomic, method, [value] of ASTNode, nil, nil, false, method_column_number)
+              call = Call.new(atomic, method, [value] of ASTNode, nil, nil, nil, false, method_column_number)
               call.location = location
               atomic = Assign.new(atomic.clone, call)
             end
@@ -379,11 +379,11 @@ module Crystal
 
     parse_operator :or, :and, "Or.new left, right", ":\"||\""
     parse_operator :and, :equality, "And.new left, right", ":\"&&\""
-    parse_operator :equality, :cmp, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
-    parse_operator :cmp, :logical_or, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"==\", :\"!=\", :\"=~\", :\"===\""
-    parse_operator :logical_or, :logical_and, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"|\", :\"^\""
-    parse_operator :logical_and, :shift, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"&\""
-    parse_operator :shift, :add_or_sub, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"<<\", :\">>\""
+    parse_operator :equality, :cmp, "Call.new left, method, [right] of ASTNode, nil, nil, nil, false, method_column_number", ":\"<\", :\"<=\", :\">\", :\">=\", :\"<=>\""
+    parse_operator :cmp, :logical_or, "Call.new left, method, [right] of ASTNode, nil, nil, nil, false, method_column_number", ":\"==\", :\"!=\", :\"=~\", :\"===\""
+    parse_operator :logical_or, :logical_and, "Call.new left, method, [right] of ASTNode, nil, nil, nil, false, method_column_number", ":\"|\", :\"^\""
+    parse_operator :logical_and, :shift, "Call.new left, method, [right] of ASTNode, nil, nil, nil, false, method_column_number", ":\"&\""
+    parse_operator :shift, :add_or_sub, "Call.new left, method, [right] of ASTNode, nil, nil, nil, false, method_column_number", ":\"<<\", :\">>\""
 
     def parse_add_or_sub
       location = @token.location
@@ -399,14 +399,14 @@ module Crystal
           method_column_number = @token.column_number
           next_token_skip_space_or_newline
           right = parse_mul_or_div
-          left = Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number
+          left = Call.new left, method, [right] of ASTNode, nil, nil, nil, false, method_column_number
         when :NUMBER
           case @token.value.to_s[0]
           when '+'
-            left = Call.new left, "+", [NumberLiteral.new(@token.value.to_s, @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
+            left = Call.new left, "+", [NumberLiteral.new(@token.value.to_s, @token.number_kind)] of ASTNode, nil, nil, nil, false, @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, "-", [NumberLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1], @token.number_kind)] of ASTNode, nil, nil, false, @token.column_number
+            left = Call.new left, "-", [NumberLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1], @token.number_kind)] of ASTNode, nil, nil, nil, false, @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -417,29 +417,29 @@ module Crystal
       end
     end
 
-    parse_operator :mul_or_div, :prefix, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"*\", :\"/\", :\"%\""
+    parse_operator :mul_or_div, :prefix, "Call.new left, method, [right] of ASTNode, nil, nil, nil, false, method_column_number", ":\"*\", :\"/\", :\"%\""
 
     def parse_prefix
       column_number = @token.column_number
       case @token.type
       when :"!"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "!", [] of ASTNode, nil, nil, false, column_number
+        Call.new parse_prefix, "!", [] of ASTNode, nil, nil, nil, false, column_number
       when :"+"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "+", [] of ASTNode, nil, nil, false, column_number
+        Call.new parse_prefix, "+", [] of ASTNode, nil, nil, nil, false, column_number
       when :"-"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "-", [] of ASTNode, nil, nil, false, column_number
+        Call.new parse_prefix, "-", [] of ASTNode, nil, nil, nil, false, column_number
       when :"~"
         next_token_skip_space_or_newline
-        Call.new parse_prefix, "~", [] of ASTNode, nil, nil, false, column_number
+        Call.new parse_prefix, "~", [] of ASTNode, nil, nil, nil, false, column_number
       else
         parse_pow
       end
     end
 
-    parse_operator :pow, :atomic_with_method, "Call.new left, method, [right] of ASTNode, nil, nil, false, method_column_number", ":\"**\""
+    parse_operator :pow, :atomic_with_method, "Call.new left, method, [right] of ASTNode, nil, nil, nil, false, method_column_number", ":\"**\""
 
     AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"==="]
 
@@ -507,7 +507,7 @@ module Crystal
               next_token_skip_space_or_newline
               args = [parse_op_assign] of ASTNode
 
-              atomic = Call.new(atomic, "#{name}=", args, nil, nil, false, name_column_number)
+              atomic = Call.new(atomic, "#{name}=", args, nil, nil, nil, false, name_column_number)
               atomic.location = location
               next
             when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
@@ -515,7 +515,7 @@ module Crystal
               method = @token.type.to_s[0, @token.type.to_s.length - 1]
               next_token_skip_space
               value = parse_expression
-              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, [] of ASTNode, nil, nil, false, name_column_number), method, [value] of ASTNode, nil, nil, false, name_column_number)] of ASTNode, nil, nil, false, name_column_number)
+              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, [] of ASTNode, nil, nil, nil, false, name_column_number), method, [value] of ASTNode, nil, nil, nil, false, name_column_number)] of ASTNode, nil, nil, nil, false, name_column_number)
               atomic.location = location
               next
             when :"||="
@@ -561,9 +561,9 @@ module Crystal
 
             block = parse_block(block)
             if block || block_arg
-              atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, false, name_column_number
+              atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, nil, false, name_column_number
             else
-              atomic = args ? (Call.new atomic, name, args, nil, nil, false, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, nil, false, name_column_number)
+              atomic = args ? (Call.new atomic, name, args, nil, nil, nil, false, name_column_number) : (Call.new atomic, name, [] of ASTNode, nil, nil, nil, false, name_column_number)
             end
 
             atomic = check_special_call(atomic)
@@ -572,7 +572,7 @@ module Crystal
         when :"[]"
           column_number = @token.column_number
           next_token_skip_space
-          atomic = Call.new atomic, "[]", [] of ASTNode, nil, nil, false, column_number
+          atomic = Call.new atomic, "[]", [] of ASTNode, nil, nil, nil, false, column_number
           atomic.location = location
           atomic.name_length = 0 if atomic.is_a?(Call)
           atomic
@@ -603,7 +603,7 @@ module Crystal
             skip_space
           end
 
-          atomic = Call.new atomic, method_name, args, nil, nil, false, column_number
+          atomic = Call.new atomic, method_name, args, nil, nil, nil, false, column_number
           atomic.location = location
           atomic.name_length = 0 if atomic.is_a?(Call)
           atomic
@@ -1022,7 +1022,7 @@ module Crystal
         skip_space
       end
 
-      CallArgs.new args, block, block_arg, false
+      CallArgs.new args, block, block_arg, nil, false
     end
 
     def parse_class_def(is_abstract = false, is_struct = false)
@@ -2387,6 +2387,7 @@ module Crystal
         args = call_args.args
         block = call_args.block
         block_arg = call_args.block_arg
+        named_args = call_args.named_args
       end
 
       if call_args && call_args.stopped_on_do_after_space
@@ -2408,7 +2409,7 @@ module Crystal
       @last_call_has_parenthesis = old_last_call_has_parenthesis
 
       if block || block_arg || global
-        Call.new nil, name, (args || [] of ASTNode), block, block_arg, global, name_column_number, last_call_has_parenthesis
+        Call.new nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, last_call_has_parenthesis
       else
         if args
           if (!force_call && is_var) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
@@ -2416,7 +2417,7 @@ module Crystal
             num.value = num.value[1, num.value.length - 1]
             Call.new(Var.new(name), sign, args)
           else
-            Call.new(nil, name, args, nil, block_arg, global, name_column_number, last_call_has_parenthesis)
+            Call.new(nil, name, args, nil, block_arg, named_args, global, name_column_number, last_call_has_parenthesis)
           end
         else
           if @token.type == :"::"
@@ -2435,7 +2436,7 @@ module Crystal
             end
             Var.new name
           else
-            Call.new nil, name, [] of ASTNode, nil, block_arg, global, name_column_number, last_call_has_parenthesis
+            Call.new nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_column_number, last_call_has_parenthesis
           end
         end
       end
@@ -2496,7 +2497,7 @@ module Crystal
       Block.new(block_args, block_body)
     end
 
-    make_named_tuple CallArgs, [args, block, block_arg, stopped_on_do_after_space]
+    make_named_tuple CallArgs, [args, block, block_arg, named_args, stopped_on_do_after_space]
 
     def parse_call_args(stop_on_do_after_space = false, allow_curly = false)
       case @token.type
@@ -2515,7 +2516,14 @@ module Crystal
               end
             end
 
-            args << parse_call_arg
+            if @token.type == :IDENT && current_char == ':'
+              named_args = parse_named_args
+              check :")"
+              next_token_skip_space
+              return CallArgs.new args, nil, nil, named_args, false
+            else
+              args << parse_call_arg
+            end
 
             skip_space_or_newline
             if @token.type == :","
@@ -2526,13 +2534,13 @@ module Crystal
           @last_call_has_parenthesis = true
         end
 
-        CallArgs.new args, nil, nil, false
+        CallArgs.new args, nil, nil, nil, false
       when :SPACE
         next_token
         @last_call_has_parenthesis = false
 
         if stop_on_do_after_space && @token.keyword?(:do)
-          return CallArgs.new nil, nil, nil, true
+          return CallArgs.new nil, nil, nil, nil, true
         end
 
         parse_call_args_space_consumed(true, allow_curly)
@@ -2581,7 +2589,13 @@ module Crystal
           end
         end
 
-        args << parse_call_arg
+        if @token.type == :IDENT && current_char == ':'
+          named_args = parse_named_args
+          skip_space
+          return CallArgs.new args, nil, nil, named_args, false
+        else
+          args << parse_call_arg
+        end
 
         skip_space
 
@@ -2591,7 +2605,28 @@ module Crystal
           break
         end
       end
-      CallArgs.new args, nil, nil, false
+      CallArgs.new args, nil, nil, nil, false
+    end
+
+    def parse_named_args
+      named_args = [] of NamedArgument
+      while true
+        location = @token.location
+        name = @token.value.to_s
+        next_token
+        check :":"
+        next_token_skip_space_or_newline
+        value = parse_op_assign
+        named_arg = NamedArgument.new(name, value)
+        named_arg.location = location
+        named_args << named_arg
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        else
+          break
+        end
+      end
+      named_args
     end
 
     def parse_call_arg

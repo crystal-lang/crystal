@@ -285,15 +285,25 @@ module Crystal
         else
           @str << decorate_call(node, node.name)
 
-          call_args_need_parens = !node.args.empty? || node.block_arg
+          call_args_need_parens = !node.args.empty? || node.block_arg || node.named_args
 
           @str << "(" if call_args_need_parens
+
+          printed_arg = false
           node.args.each_with_index do |arg, i|
-            @str << ", " if i > 0
+            @str << ", " if printed_arg
             arg.accept self
+            printed_arg = true
+          end
+          if named_args = node.named_args
+            named_args.each do |named_arg|
+              @str << ", " if printed_arg
+              named_arg.accept self
+              printed_arg = true
+            end
           end
           if block_arg = node.block_arg
-            @str << ", " if node.args.length > 0
+            @str << ", " if printed_arg
             @str << "&"
             block_arg.accept self
           end
@@ -304,6 +314,13 @@ module Crystal
         @str << " "
         block.accept self
       end
+      false
+    end
+
+    def visit(node : NamedArgument)
+      @str << node.name
+      @str << ": "
+      node.value.accept self
       false
     end
 

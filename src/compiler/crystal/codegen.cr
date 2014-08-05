@@ -793,14 +793,14 @@ module Crystal
     end
 
     def type_cast_exception_call(to_type)
-      call = Call.new(nil, "raise", [StringLiteral.new("cast to #{to_type} failed")] of ASTNode, nil, nil, true)
+      call = Call.new(nil, "raise", [StringLiteral.new("cast to #{to_type} failed")] of ASTNode, nil, nil, nil, true)
       @mod.infer_type call
       call
     end
 
     def index_out_of_bounds_exception_call
       @index_out_of_bounds_exception_call ||= begin
-        call = Call.new(nil, "raise", [StringLiteral.new("index out of bounds")] of ASTNode, nil, nil, true)
+        call = Call.new(nil, "raise", [StringLiteral.new("index out of bounds")] of ASTNode, nil, nil, nil, true)
         @mod.infer_type call
         call
       end
@@ -808,7 +808,7 @@ module Crystal
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
-        call = Call.new(nil, "raise", [StringLiteral.new("passing a closure to C is not allowed")] of ASTNode, nil, nil, true)
+        call = Call.new(nil, "raise", [StringLiteral.new("passing a closure to C is not allowed")] of ASTNode, nil, nil, nil, true)
         @mod.infer_type call
         call
       end

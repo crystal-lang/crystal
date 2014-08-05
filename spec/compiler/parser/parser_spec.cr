@@ -281,7 +281,7 @@ describe "Parser" do
   it_parses "foo(1 + 2)", "foo".call([Call.new(1.int32, "+", [2.int32] of ASTNode)] of ASTNode)
   it_parses "foo -1.0, -2.0", "foo".call([-1.float64, -2.float64] of ASTNode)
   it_parses "foo(\n1)", "foo".call([1.int32] of ASTNode)
-  it_parses "::foo", Call.new(nil, "foo", [] of ASTNode, nil, nil, true)
+  it_parses "::foo", Call.new(nil, "foo", [] of ASTNode, nil, nil, nil, true)
 
   it_parses "foo + 1", Call.new("foo".call, "+", [1.int32] of ASTNode)
   it_parses "foo +1", Call.new(nil, "foo", [1.int32] of ASTNode)
@@ -305,6 +305,12 @@ describe "Parser" do
   it_parses "foo &.[0]", Call.new(nil, "foo", [] of ASTNode, Block.new([Var.new("#arg0")], Call.new(Var.new("#arg0"), "[]", [0.int32] of ASTNode)))
   it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", [] of ASTNode, Block.new([Var.new("#arg0")], IsA.new(Var.new("#arg0"), "T".path)))
   it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", [] of ASTNode, Block.new([Var.new("#arg0")], RespondsTo.new(Var.new("#arg0"), "foo".symbol)))
+
+  it_parses "foo(a: 1, b: 2)", Call.new(nil, "foo", [] of ASTNode, nil, nil, [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], false)
+  it_parses "foo(1, a: 1, b: 2)", Call.new(nil, "foo", [1.int32] of ASTNode, nil, nil, [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], false)
+  it_parses "foo a: 1, b: 2", Call.new(nil, "foo", [] of ASTNode, nil, nil, [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], false)
+  it_parses "foo 1, a: 1, b: 2", Call.new(nil, "foo", [1.int32] of ASTNode, nil, nil, [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], false)
+  it_parses "foo 1, a: 1, b: 2\n1", [Call.new(nil, "foo", [1.int32] of ASTNode, nil, nil, [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)], false), 1.int32]
 
   it_parses "x = 1; foo x do\nend", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", ["x".var] of ASTNode, Block.new)]
   it_parses "x = 1; foo x { }", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", [] of ASTNode, Block.new)] of ASTNode)]

@@ -481,12 +481,13 @@ module Crystal
     property :args
     property :block
     property :block_arg
+    property :named_args
     property :global
     property :name_column_number
     property :has_parenthesis
     property :name_length
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @global = false, @name_column_number = 0, @has_parenthesis = false)
+    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, @global = false, @name_column_number = 0, @has_parenthesis = false)
       @name_length = nil
     end
 
@@ -497,21 +498,42 @@ module Crystal
     def accept_children(visitor)
       @obj.try &.accept visitor
       @args.each &.accept visitor
+      @named_args.try &.each &.accept visitor
       @block_arg.try &.accept visitor
       @block.try &.accept visitor
     end
 
     def ==(other : self)
-      other.obj == obj && other.name == name && other.args == args && other.block_arg == block_arg && other.block == block && other.global == global
+      other.obj == obj && other.name == name && other.args == args && other.named_args == named_args && other.block_arg == block_arg && other.block == block && other.global == global
     end
 
     def clone_without_location
-      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @global, @name_column_number, @has_parenthesis)
+      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global, @name_column_number, @has_parenthesis)
       clone.name_length = name_length
       clone
     end
 
     generate_hash [obj, name, args, block, block_arg, global, has_parenthesis]
+  end
+
+  class NamedArgument < ASTNode
+    property :name
+    property :value
+
+    def initialize(@name, @value)
+    end
+
+    def accept_children(visitor)
+      @value.accept visitor
+    end
+
+    def ==(other : self)
+      other.name == name && other.value == value
+    end
+
+    def clone_without_location
+      NamedArgument.new(name, value.clone)
+    end
   end
 
   # An if expression.

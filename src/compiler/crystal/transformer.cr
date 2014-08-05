@@ -50,6 +50,15 @@ module Crystal
         node.block_arg = node_block_arg.transform(self)
       end
 
+      if named_args = node.named_args
+        named_args.map! { |named_arg| named_arg.transform(self) as NamedArgument }
+      end
+
+      node
+    end
+
+    def transform(node : NamedArgument)
+      node.value = node.value.transform(self)
       node
     end
 
