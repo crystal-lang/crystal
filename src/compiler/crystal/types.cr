@@ -440,7 +440,7 @@ module Crystal
     end
   end
 
-  make_named_tuple DefSignature, [name, arg_types, block]
+  make_named_tuple CallSignature, [name, arg_types, block]
 
   module MatchesLookup
     def self.match_def_args(arg_types, a_def, context)

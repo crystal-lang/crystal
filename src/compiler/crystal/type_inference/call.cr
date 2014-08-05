@@ -124,7 +124,7 @@ module Crystal
     def lookup_matches_in_type(owner, self_type, def_name)
       arg_types = args.map &.type
 
-      signature = DefSignature.new(def_name, arg_types, block)
+      signature = CallSignature.new(def_name, arg_types, block)
 
       matches = check_tuple_indexer(owner, def_name, args, arg_types)
       matches ||= owner.lookup_matches signature
@@ -877,12 +877,14 @@ module Crystal
       # First check if this type has any initialize
       initializers = instance_type.lookup_defs_with_modules("initialize")
 
-      # If there are no initialize at all, use parent's initialize
+      signature = CallSignature.new("initialize", arg_types, block)
+
       if initializers.empty?
-        matches = instance_type.lookup_matches DefSignature.new("initialize", arg_types, block)
+        # If there are no initialize at all, use parent's initialize
+        matches = instance_type.lookup_matches signature
       else
-        # Otherwise, use this type initializers
-        matches = instance_type.lookup_matches_with_modules DefSignature.new("initialize", arg_types, block)
+        # Otherwise, use this type's initializers
+        matches = instance_type.lookup_matches_with_modules signature
       end
 
       if matches.empty?
