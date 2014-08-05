@@ -4,7 +4,8 @@ before_install:
 install:
   - brew install bdw-gc
   - bin/crystal --setup
+  - curl "http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz" | tar xz -C deps
 script:
-  - make spec
+  - PATH=$PATH:deps/clang+llvm-3.3-x86_64-apple-darwin12/bin make spec
 notifications:
   irc: "irc.freenode.net#crystal-lang"
