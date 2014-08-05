@@ -828,4 +828,6 @@ describe "Parser" do
   assert_syntax_error "1 2", "unexpected token: 2"
   assert_syntax_error "macro foo(*x, *y); end", "unexpected token: *"
   assert_syntax_error "def foo(*x, y = 1); end", "unexpected token: ="
+
+  assert_syntax_error "foo x: 1, x: 1", "duplicated named argument: x", 1, 11
 end

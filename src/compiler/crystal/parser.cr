@@ -2614,6 +2614,11 @@ module Crystal
       while true
         location = @token.location
         name = @token.value.to_s
+
+        if named_args.any? { |arg| arg.name == name }
+          raise "duplicated named argument: #{name}", @token
+        end
+
         next_token
         check :":"
         next_token_skip_space_or_newline
