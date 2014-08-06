@@ -151,6 +151,6 @@ struct Char
       chars[i] = byte
       i += 1
     end
-    io.write chars.buffer, i
+    io.write chars.to_slice, i
   end
 end

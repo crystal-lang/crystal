@@ -712,7 +712,7 @@ class String
   end
 
   def to_s(io)
-    io.write cstr, @length
+    io.write Slice.new(cstr, @length)
   end
 
   def cstr

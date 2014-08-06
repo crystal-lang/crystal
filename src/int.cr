@@ -210,7 +210,7 @@ struct Int
       end
 
       length = {{capacity}} - 1 - position
-      io.write(chars.buffer + position + 1, length)
+      io.write(chars.to_slice + position + 1, length)
       length
     end
   end

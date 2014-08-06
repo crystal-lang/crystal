@@ -8,12 +8,12 @@ class FileDescriptorIO
   def initialize(@fd)
   end
 
-  def read(buffer : UInt8*, count)
-    C.read(@fd, buffer, count.to_sizet)
+  def read(buffer : Slice(UInt8), count)
+    C.read(@fd, buffer.pointer, count.to_sizet)
   end
 
-  def write(buffer : UInt8*, count)
-    C.write(@fd, buffer, count.to_sizet)
+  def write(buffer : Slice(UInt8), count)
+    C.write(@fd, buffer.pointer, count.to_sizet)
   end
 
   def seek(amount, whence)

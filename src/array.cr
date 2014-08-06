@@ -499,10 +499,7 @@ class Array(T)
   def to_s(io : IO)
     executed = exec_recursive(:to_s) do
       io << "["
-      each_with_index do |elem, i|
-        io << ", " if i > 0
-        elem.inspect io
-      end
+      join ", ", io, &.inspect(io)
       io << "]"
     end
     io << "[...]" unless executed

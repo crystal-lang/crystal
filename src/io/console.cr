@@ -229,7 +229,7 @@ struct CFileIO
 
     begin
       String.new_with_capacity_and_length(length) do |buffer|
-        read_length = read(buffer, length)
+        read_length = read Slice.new(buffer, length)
         if read_length == 0 || C.errno == C::EWOULDBLOCK || C.errno == C::EAGAIN
           raise "exception in read_nonblock"
         else

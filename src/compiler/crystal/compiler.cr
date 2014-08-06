@@ -199,7 +199,10 @@ module Crystal
           program.flags = cross_compile
         end
 
-        node = timing("Parsing") do
+        node = nil
+        require_node = nil
+
+        timing("Parse") do
           nodes = sources.map do |source|
             program.add_to_requires source.filename
 
@@ -207,15 +210,16 @@ module Crystal
             parser.filename = source.filename
             parser.parse
           end
-          Expressions.from(nodes)
-        end
+          node = Expressions.from(nodes)
 
-        require_node = Require.new(@prelude)
-
-        timing("Parsing") do
+          require_node = Require.new(@prelude)
           require_node = program.normalize(require_node)
+
           node = program.normalize(node)
         end
+
+        node = node.not_nil!
+        require_node = require_node.not_nil!
 
         original_node = node
         node = Expressions.new([require_node, node] of ASTNode)

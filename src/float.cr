@@ -71,6 +71,6 @@ struct Float64
     chars :: UInt8[22]
     chars.set_all_to 0_u8
     C.sprintf(chars, "%g", self)
-    io.write(chars.buffer, C.strlen(chars.buffer))
+    io.write(chars.to_slice, C.strlen(chars.buffer))
   end
 end

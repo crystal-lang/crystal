@@ -171,7 +171,7 @@ class File < FileDescriptorIO
       size = file.tell
       file.seek 0, SEEK_SET
       String.new_with_length(size.to_i) do |buffer|
-        file.read(buffer, size)
+        file.read Slice.new(buffer, size)
       end
     end
   end
@@ -261,12 +261,12 @@ class Pipe
     end
   end
 
-  def read(buffer : UInt8*, count)
-    C.fread(buffer, 1.to_sizet, count.to_sizet, @pipe)
+  def read(buffer : Slice(UInt8), count)
+    C.fread(buffer.pointer, 1.to_sizet, count.to_sizet, @pipe)
   end
 
-  def write(buffer : UInt8*, count)
-    C.fwrite(buffer, 1.to_sizet, count.to_sizet, @pipe)
+  def write(buffer : Slice(UInt8), count)
+    C.fwrite(buffer.pointer, 1.to_sizet, count.to_sizet, @pipe)
   end
 
   def close

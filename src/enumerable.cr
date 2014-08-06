@@ -97,9 +97,15 @@ module Enumerable(T)
   end
 
   def join(separator, io)
+    join(separator, io) do |elem|
+      elem.to_s(io)
+    end
+  end
+
+  def join(separator, io)
     each_with_index do |elem, i|
       io << separator if i > 0
-      elem.to_s(io)
+      yield elem, io
     end
   end
 

@@ -61,16 +61,17 @@ struct StaticArray(T, N)
     pointerof(@buffer)
   end
 
+  def to_slice
+    Slice.new(buffer, length)
+  end
+
   def to_unsafe
     buffer
   end
 
   def to_s(io : IO)
     io << "["
-    each_with_index do |elem, i|
-      io << ", " if i > 0
-      elem.inspect(io)
-    end
+    join ", ", io, &.inspect(io)
     io << "]"
   end
 end

@@ -18,7 +18,7 @@ describe "StringIO" do
 
   it "writes to a buffer with count" do
     str = String.build do |io|
-      io.write "hello".cstr, 3
+      io.write Slice.new("hello".cstr, 3)
     end
     str.should eq("hel")
   end

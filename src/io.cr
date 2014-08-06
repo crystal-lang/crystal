@@ -46,11 +46,19 @@ lib C
 end
 
 module IO
-  # Reads count bytes from this IO into buffer
-  abstract def read(buffer : UInt8*, count)
+  # Reads count bytes from this IO into slice
+  abstract def read(slice : Slice(UInt8), count)
 
-  # Writes count bytes from buffer into this IO
-  abstract def write(buffer : UInt8*, count)
+  # Writes count bytes from slice into this IO
+  abstract def write(slice : Slice(UInt8), count)
+
+  def read(slice : Slice(UInt8))
+    read slice, slice.length
+  end
+
+  def write(slice : Slice(UInt8))
+    write slice, slice.length
+  end
 
   # Writes the given object into this IO.
   # This ends up calling `to_s(io)` on the object.
@@ -77,7 +85,7 @@ module IO
 
   def read_byte
     byte :: UInt8
-    if read(pointerof(byte), 1) == 1
+    if read(Slice.new(pointerof(byte), 1)) == 1
       byte
     else
       nil
@@ -109,7 +117,7 @@ module IO
   end
 
   def read(length)
-    buffer_pointer = buffer = Pointer(UInt8).malloc(length)
+    buffer_pointer = buffer = Slice(UInt8).new(length)
     remaining_length = length
     while remaining_length > 0
       read_length = read(buffer_pointer, remaining_length)
@@ -120,7 +128,7 @@ module IO
       remaining_length -= read_length
       buffer_pointer += read_length
     end
-    String.new(buffer as UInt8*, length.to_i)
+    String.new(buffer.pointer, length.to_i)
   end
 
   def write(array : Array(UInt8))
@@ -129,7 +137,7 @@ module IO
 
   def write_byte(byte : UInt8)
     x = byte
-    write pointerof(x), 1
+    write Slice.new(pointerof(x), 1)
   end
 end
 

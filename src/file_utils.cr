@@ -16,8 +16,8 @@ module FileUtils
     buf2 :: UInt8[1024]
 
     while true
-      read1 = stream1.read(buf1.buffer, 1024)
-      read2 = stream2.read(buf2.buffer, 1024)
+      read1 = stream1.read buf1.to_slice
+      read2 = stream2.read buf2.to_slice
 
       return false if read1 != read2
       return false if !buf1.buffer.memcmp(buf2.buffer, read1)

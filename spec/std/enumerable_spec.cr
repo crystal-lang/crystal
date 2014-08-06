@@ -128,4 +128,10 @@ describe "Enumerable" do
   it "rejects" do
     [1, 2, 3, 4].reject(&.even?).should eq([1, 3])
   end
+
+  it "joins with io and block" do
+    str = StringIO.new
+    [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
+    str.to_s.should eq("2, 3, 4")
+  end
 end

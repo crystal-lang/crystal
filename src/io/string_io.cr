@@ -17,20 +17,20 @@ class StringIO
     io
   end
 
-  def read(buffer, count)
+  def read(buffer : Slice(UInt8), count)
     count = Math.min(count, @length - @pos)
-    buffer.memcpy(@buffer + @pos, count)
+    buffer.pointer.memcpy(@buffer + @pos, count)
     @pos += count
     count
   end
 
-  def write(buffer : UInt8*, count)
+  def write(buffer : Slice(UInt8), count)
     new_length = length + count
     if new_length > @capacity
       resize_to_capacity(Math.pw2ceil(new_length))
     end
 
-    (@buffer + @length).memcpy(buffer, count)
+    (@buffer + @length).memcpy(buffer.pointer, count)
     @length += count
 
     self
@@ -49,7 +49,7 @@ class StringIO
   end
 
   def to_s(io)
-    io.write @buffer, @length
+    io.write Slice.new(@buffer, @length)
   end
 
   # private
