@@ -126,7 +126,7 @@ module Crystal
       # the subsequent times will make program execution faster.
       compiler.release = true
 
-      compiler.compile(filename, source)
+      compiler.compile Source.new(filename, source)
 
       CompiledFile.new(output_filename, tmp_fd)
     end

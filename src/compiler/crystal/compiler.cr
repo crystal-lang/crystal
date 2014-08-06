@@ -73,38 +73,40 @@ module Crystal
 
     def process_options(options = ARGV)
       begin
-        options_parser, command = process_options_internal(options)
+        options_parser, inline_exp, filenames, arguments = process_options_internal(options)
       rescue ex : OptionParser::Exception
         print "Error: ".colorize.red.bold
         puts ex.message.colorize.white.bold
         exit 1
       end
 
-      if command
-        source = command
-        filename = "-"
+      if inline_exp
+        sources = [Source.new("-e", inline_exp)] of Source
         @run = true
       else
-        if options.length == 0
+        if filenames.length == 0
           puts options_parser
           exit 1
         end
 
-        filename = options.shift
-        unless File.exists?(filename)
-          puts "File #{filename} does not exist"
-          exit 1
+        sources = filenames.map do |filename|
+          unless File.exists?(filename)
+            puts "File #{filename} does not exist"
+            exit 1
+          end
+          filename = File.expand_path(filename)
+          Source.new(filename, File.read(filename))
         end
-
-        filename = File.expand_path(filename)
-        source = File.read filename
       end
 
-      compile filename, source, options
+      compile sources, arguments
     end
 
     def process_options_internal(options)
-      command = nil
+      inline_exp = nil
+      filenames = nil
+      arguments = nil
+
       option_parser = OptionParser.parse(options) do |opts|
         opts.banner = "Usage: crystal [switches] [--] [programfile] [arguments]"
         opts.on("--browser", "Opens an http server to browse the code") do
@@ -116,8 +118,8 @@ module Crystal
         opts.on("-d", "--debug", "Add symbolic debug info") do
           @debug = true
         end
-        opts.on("-e 'command'", "One line script. Omit [programfile]") do |the_command|
-          command = the_command
+        opts.on("-e 'command'", "One line script. Omit [programfile]") do |the_inline_exp|
+          inline_exp = inline_exp
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
@@ -166,11 +168,19 @@ module Crystal
         opts.on("--verbose", "Display executed commands") do
           @verbose = true
         end
+        opts.unknown_args do |before, after|
+          filenames = before
+          arguments = after
+        end
       end
-      {option_parser, command}
+      {option_parser, inline_exp, filenames.not_nil!, arguments.not_nil!}
     end
 
-    def compile(filename, source, run_args = [] of String)
+    def compile(source : Source, run_args = [] of String)
+      compile [source], run_args
+    end
+
+    def compile(sources : Array(Source), run_args = [] of String)
       output_filename = @output_filename
       unless output_filename
         if @run
@@ -179,7 +189,7 @@ module Crystal
           raise "Error creating temp file #{output_filename}" if tmp_fd == -1
           C.close tmp_fd
         else
-          output_filename = File.basename(filename, File.extname(filename))
+          output_filename = File.basename(sources.first.filename, File.extname(sources.first.filename))
         end
       end
 
@@ -189,12 +199,18 @@ module Crystal
           program.flags = cross_compile
         end
 
-        parser = Parser.new(source)
-        parser.filename = filename
-        node = parser.parse
+        node = timing("Parsing") do
+          nodes = sources.map do |source|
+            program.add_to_requires source.filename
+
+            parser = Parser.new(source.code)
+            parser.filename = source.filename
+            parser.parse
+          end
+          Expressions.from(nodes)
+        end
 
         require_node = Require.new(@prelude)
-        require_node.location = Location.new(1, 1, filename)
 
         timing("Parsing") do
           require_node = program.normalize(require_node)
@@ -221,10 +237,12 @@ module Crystal
           program.build node, options
         end
 
+        cache_filename = sources.first.filename
+
         if @cross_compile
           output_dir = "."
         else
-          output_dir = ".crystal/#{filename}"
+          output_dir = ".crystal/#{cache_filename}"
         end
 
         Dir.mkdir_p(output_dir)
