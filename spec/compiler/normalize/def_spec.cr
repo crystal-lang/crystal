@@ -120,4 +120,10 @@ describe "Normalize: def" do
     other_def = a_def.expand_default_arguments(1, ["y"])
     other_def.should be(a_def)
   end
+
+  it "expands with more named arg which come in the correct order" do
+    a_def = parse("def foo(x, y = 1, z = 2); x; end") as Def
+    other_def = a_def.expand_default_arguments(1, ["y", "z"])
+    other_def.should be(a_def)
+  end
 end
