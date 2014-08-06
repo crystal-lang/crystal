@@ -107,4 +107,17 @@ describe "Normalize: def" do
     actual = a_def.expand_default_arguments(0, ["y"])
     actual.to_s.should eq("def foo:y(y)\n  x = 1\n  yield x + y\nend")
   end
+
+  # Small optimizations: no need to create a separate def in these cases
+  it "expands with one named arg that is the only one (1)" do
+    a_def = parse("def foo(x = 1); x; end") as Def
+    other_def = a_def.expand_default_arguments(0, ["x"])
+    other_def.should be(a_def)
+  end
+
+  it "expands with one named arg that is the only one (2)" do
+    a_def = parse("def foo(x, y = 1); x; end") as Def
+    other_def = a_def.expand_default_arguments(1, ["y"])
+    other_def.should be(a_def)
+  end
 end

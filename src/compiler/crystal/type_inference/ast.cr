@@ -297,6 +297,12 @@ module Crystal
     end
 
     def expand_default_arguments(args_length, named_args = nil)
+      # If there's only one named argument and it's the last one, we can
+      # safely return this def without needing a useless indirection.
+      if named_args.try(&.length) == 1 && args_length + 1 == args.length
+        return self
+      end
+
       retain_body = yields || args.any? { |arg| arg.default_value && arg.restriction } || splat_index
 
       splat_index = splat_index() || -1
