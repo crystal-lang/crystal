@@ -1064,7 +1064,13 @@ module Crystal
         next_token_skip_space_or_newline
         while @token.type != :")"
           check :CONST
-          type_vars.push @token.value.to_s
+          type_var_name = @token.value.to_s
+
+          if type_vars.includes? type_var_name
+            raise "duplicated type var name: #{type_var_name}", @token
+          end
+
+          type_vars.push type_var_name
 
           next_token_skip_space_or_newline
           if @token.type == :","
@@ -2119,6 +2125,10 @@ module Crystal
 
       arg_location = @token.location
       arg_name, uses_arg = parse_arg_name(arg_location, extra_assigns)
+
+      if args.any? { |arg| arg.name == arg_name }
+        raise "duplicated argument name: #{arg_name}", @token
+      end
 
       default_value = nil
       restriction = nil

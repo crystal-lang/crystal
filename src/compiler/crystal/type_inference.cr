@@ -1180,6 +1180,21 @@ module Crystal
         if node.superclass && type.superclass != superclass
           node.raise "superclass mismatch for class #{type} (#{superclass} for #{type.superclass})"
         end
+
+        if type_vars = node.type_vars
+          if type.is_a?(GenericType)
+            type_type_vars = type.type_vars
+            if type_vars != type_type_vars
+              if type_type_vars.length == 1
+                node.raise "type var must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
+              else
+                node.raise "type vars must be #{type_type_vars.join ", "}, not #{type_vars.join ", "}"
+              end
+            end
+          else
+            node.raise "#{name} is not a generic #{type.type_desc}"
+          end
+        end
       else
         unless superclass.is_a?(NonGenericClassType)
           node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"

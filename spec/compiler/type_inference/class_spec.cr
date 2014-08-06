@@ -661,4 +661,37 @@ describe "Type inference: class" do
       ),
       "can't instantiate abstract class Foo"
   end
+
+  it "errors if reopening non-generic class as generic" do
+    assert_error %(
+      class Foo
+      end
+
+      class Foo(T)
+      end
+      ),
+      "Foo is not a generic class"
+  end
+
+  it "errors if reopening generic class with different type vars" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Foo(U)
+      end
+      ),
+      "type var must be T, not U"
+  end
+
+  it "errors if reopening generic class with different type vars (2)" do
+    assert_error %(
+      class Foo(A, B)
+      end
+
+      class Foo(C)
+      end
+      ),
+      "type vars must be A, B, not C"
+  end
 end
