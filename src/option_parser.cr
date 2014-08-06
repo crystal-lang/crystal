@@ -41,6 +41,18 @@ class OptionParser
     @handlers.each do |handler|
       parse_flag(handler.flag, &handler.block)
     end
+
+    if unknown_args = @unknown_args
+      double_dash_index = @double_dash_index
+      if double_dash_index
+        before_dash = @args[0 ... double_dash_index]
+        after_dash = @args[double_dash_index .. -1]
+      else
+        before_dash = @args
+        after_dash = [] of String
+      end
+      unknown_args.call(before_dash, after_dash)
+    end
   end
 
   def banner=(@banner)
@@ -55,6 +67,9 @@ class OptionParser
     append_flag "#{short_flag}, #{long_flag}", description
     @handlers << Handler.new(short_flag, block)
     @handlers << Handler.new(long_flag, block)
+  end
+
+  def unknown_args(&@unknown_args : Array(String), Array(String) -> )
   end
 
   def to_s(io : IO)

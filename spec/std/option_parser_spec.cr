@@ -212,5 +212,39 @@ describe "OptionParser" do
       g.should be_nil
       args.should eq(["x", "baz", "qux", "--g", "lala"])
     end
+
+    it "returns a pair with things coming before and after --" do
+      args = %w(--f bar baz -- qux)
+      f = nil
+      unknown_args = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("--f FLAG", "some flag") do |v|
+          f = v
+        end
+        opts.unknown_args do |before_dash, after_dash|
+          unknown_args = {before_dash, after_dash}
+        end
+      end
+      f.should eq("bar")
+      args.should eq(["baz", "qux"])
+      unknown_args.should eq({["baz"], ["qux"]})
+    end
+
+    it "returns a pair with things coming before and after --, without --" do
+      args = %w(--f bar baz)
+      f = nil
+      unknown_args = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("--f FLAG", "some flag") do |v|
+          f = v
+        end
+        opts.unknown_args do |before_dash, after_dash|
+          unknown_args = {before_dash, after_dash}
+        end
+      end
+      f.should eq("bar")
+      args.should eq(["baz"])
+      unknown_args.should eq({["baz"], [] of String})
+    end
   end
 end
