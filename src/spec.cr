@@ -146,6 +146,24 @@ module Spec
     end
   end
 
+  class BeExpectation(T)
+    def initialize(@value : T)
+    end
+
+    def match(value)
+      @target = value
+      value.same? @value
+    end
+
+    def failure_message
+      "expected: #{@value.inspect} (object_id: #{@value.object_id})\n     got: #{@target.inspect} (object_id: #{@target.object_id})"
+    end
+
+    def negative_failure_message
+      "expected: value.same? #{@value.inspect} (object_id: #{@value.object_id})\n     got: #{@target.inspect} (object_id: #{@target.object_id})"
+    end
+  end
+
   class CloseExpectation
     def initialize(@expected, @delta)
     end
@@ -195,6 +213,10 @@ end
 
 def eq(value)
   Spec::EqualExpectation.new value
+end
+
+def be(value)
+  Spec::BeExpectation.new value
 end
 
 def be_true
