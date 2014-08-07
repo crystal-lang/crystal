@@ -22,12 +22,10 @@ class Regex
   getter source
 
   def initialize(@source, modifiers = 0)
-    errptr = Pointer(UInt8).malloc(0)
+    errptr = Pointer(UInt8).null
     erroffset = 1
     @re = PCRE.compile(@source, modifiers, pointerof(errptr), pointerof(erroffset), nil)
-    if @re == 0
-      raise "#{String.new(errptr)} at #{erroffset}"
-    end
+    raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.nil?
     @captures = 0
     PCRE.full_info(@re, nil, PCRE::INFO_CAPTURECOUNT, pointerof(@captures) as Void*)
   end

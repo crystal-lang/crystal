@@ -51,4 +51,8 @@ describe "Regex" do
     /foo/.to_s.should eq("/foo/")
     /f(o)(x)/.match("fox").to_s.should eq(%(MatchData("fox" ["o", "x"])))
   end
+
+  it "raises exception with invalid regex" do
+    expect_raises ArgumentError { Regex.new("+") }
+  end
 end
