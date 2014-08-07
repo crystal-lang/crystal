@@ -2817,6 +2817,10 @@ module Crystal
       base_type.lookup_instance_var(name, create)
     end
 
+    def lookup_instance_var?(name, create = false)
+      base_type.lookup_instance_var?(name, create)
+    end
+
     def index_of_instance_var(name)
       base_type.index_of_instance_var(name)
     end
@@ -2843,6 +2847,10 @@ module Crystal
 
     def all_instance_vars
       base_type.all_instance_vars
+    end
+
+    def owned_instance_vars
+      base_type.owned_instance_vars
     end
 
     def abstract

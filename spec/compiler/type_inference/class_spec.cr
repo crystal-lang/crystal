@@ -521,6 +521,21 @@ describe "Type inference: class" do
       )) { int32 }
   end
 
+  it "reads a virtual type instance var" do
+    assert_type(%(
+      class Foo
+        def initialize(@x)
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      foo = Foo.new(1) || Bar.new(2)
+      foo.@x
+      )) { int32 }
+  end
+
   it "errors if reading non-existent ivar" do
     assert_error %(
       class Foo

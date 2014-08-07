@@ -299,6 +299,21 @@ describe "Code gen: class" do
       )).to_i.should eq(1)
   end
 
+  it "reads a virtual type instance var" do
+    run(%(
+      class Foo
+        def initialize(@x)
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      foo = Foo.new(1) || Bar.new(2)
+      foo.@x
+      )).to_i.should eq(1)
+  end
+
   it "runs with nil instance var" do
     run("
       struct Nil
