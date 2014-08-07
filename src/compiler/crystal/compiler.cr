@@ -338,13 +338,13 @@ module Crystal
         puts ex
         exit 1
       rescue ex
-        print "Error: ".colorize.red.bold
-        puts "you've found a bug in the Crystal compiler. Please open an issue: https://github.com/manastech/crystal/issues".colorize.white.bright
-        puts
         puts ex
         ex.backtrace.each do |frame|
           puts frame
         end
+        puts
+        print "Error: ".colorize.red.bold
+        puts "you've found a bug in the Crystal compiler. Please open an issue: https://github.com/manastech/crystal/issues".colorize.white.bright
         exit 2
       end
     end
