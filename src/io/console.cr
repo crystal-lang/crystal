@@ -1,6 +1,6 @@
 lib Termios
   alias Cc = Char
-  alias Tcflag = UInt32
+  alias Tcflag = UInt64
 
   struct Struct
     iflag : Tcflag
