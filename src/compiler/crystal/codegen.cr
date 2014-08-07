@@ -44,13 +44,20 @@ module Crystal
 
     def evaluate(node)
       llvm_mod = build(node, BuildOptions.single_module)[""]
+      main = llvm_mod.functions[MAIN_NAME]
+      wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LibLLVM::TypeRef, main.return_type) do |func|
+        func.append_basic_block("entry") do |builder|
+          argc = LLVM.int(LLVM::Int32, 0)
+          argv = LLVM.null(LLVM.pointer_type(LLVM::VoidPointer))
+          ret = builder.call(main, [argc, argv])
+          node.type.void? ? builder.ret : builder.ret(ret)
+        end
+      end
+
       llvm_mod.verify
+
       engine = LLVM::JITCompiler.new(llvm_mod)
-
-      argc = LibLLVM.create_generic_value_of_int(LLVM::Int32, 0_u64, 1)
-      argv = LibLLVM.create_generic_value_of_pointer(nil)
-
-      engine.run_function llvm_mod.functions[MAIN_NAME], [argc, argv]
+      engine.run_function wrapper, [] of LibLLVM::GenericValueRef
     end
 
     def build(node, build_options)

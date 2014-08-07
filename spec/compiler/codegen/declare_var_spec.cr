@@ -39,6 +39,7 @@ describe "Code gen: declare var" do
       end
 
       Foo.new.x
+      nil
       ")
   end
 
