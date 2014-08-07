@@ -110,8 +110,8 @@ module Crystal
 
     alias LLVMVars = Hash(String, LLVMVar)
 
-    make_named_tuple Handler, [node, catch_block, vars]
-    make_named_tuple StringKey, [mod, string]
+    record Handler, [node, catch_block, vars]
+    record StringKey, [mod, string]
 
     def initialize(@mod, @node, build_options = BuildOptions.new)
       @llvm_mod = build_options.llvm_mod

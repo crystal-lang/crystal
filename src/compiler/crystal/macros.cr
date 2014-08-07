@@ -78,7 +78,7 @@ module Crystal
   end
 
   class MacroExpander
-    make_named_tuple CompiledFile, [name, handle]
+    record CompiledFile, [name, handle]
 
     def initialize(@mod)
       @cache = {} of String => CompiledFile

@@ -5,7 +5,7 @@ GamesPerSeries = 10  # The number of games per series to simulate
 
 # A score includes scores accumulated in previous turns for each player,
 # as well as the points scored by the current player in this turn.
-make_named_tuple Score, [player, opponent, this_turn]
+record Score, [player, opponent, this_turn]
 
 # let the compiler infer the type of a Score
 # (oterwise you get a "can't infer block type" at the Array.new(Win) line)

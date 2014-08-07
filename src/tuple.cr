@@ -65,16 +65,3 @@ class Tuple
     io << "}"
   end
 end
-
-macro make_named_tuple(name, fields)
-  struct {{name.id}}
-    {% for field in fields %}
-      getter :{{field.id}}
-    {% end %}
-
-    def initialize({{ (fields.map { |field| "@#{field.id}" }.join ", ").id }})
-    end
-
-    {{yield}}
-  end
-end

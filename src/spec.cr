@@ -1,7 +1,7 @@
 require "colorize"
 
 module Spec
-  make_named_tuple Result, [kind, description, exception]
+  record Result, [kind, description, exception]
 
   abstract class Context
   end

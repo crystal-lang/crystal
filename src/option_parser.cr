@@ -14,7 +14,7 @@ class OptionParser
     end
   end
 
-  make_named_tuple Handler, [flag, block]
+  record Handler, [flag, block]
 
   def self.parse(args)
     parser = OptionParser.new(args)

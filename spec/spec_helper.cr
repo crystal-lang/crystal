@@ -28,7 +28,7 @@ class Crystal::Program
   end
 end
 
-make_named_tuple InferTypeResult, [program, node]
+record InferTypeResult, [program, node]
 
 def assert_type(str)
   program = Program.new

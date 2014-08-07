@@ -440,7 +440,7 @@ module Crystal
     end
   end
 
-  make_named_tuple CallSignature, [name, arg_types, block, named_args]
+  record CallSignature, [name, arg_types, block, named_args]
 
   module MatchesLookup
     def self.match_def(signature, def_metadata, context)
@@ -750,12 +750,12 @@ module Crystal
     end
   end
 
-  make_named_tuple DefWithMetadata, [min_length, max_length, yields, :def]
+  record DefWithMetadata, [min_length, max_length, yields, :def]
 
   module DefContainer
     include MatchesLookup
 
-    make_named_tuple Hook, [kind, :macro]
+    record Hook, [kind, :macro]
 
     getter defs
     getter macros
@@ -842,7 +842,7 @@ module Crystal
     end
   end
 
-  make_named_tuple DefInstanceKey, [def_object_id, arg_types, block_type, named_args]
+  record DefInstanceKey, [def_object_id, arg_types, block_type, named_args]
 
   module DefInstanceContainer
     def def_instances
@@ -1166,7 +1166,7 @@ module Crystal
       end
     end
 
-    make_named_tuple InstanceVarInitializer, [name, value, meta_vars]
+    record InstanceVarInitializer, [name, value, meta_vars]
 
     def add_instance_var_initializer(name, value, meta_vars)
       initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer

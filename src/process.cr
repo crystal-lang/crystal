@@ -57,7 +57,7 @@ module Process
     pid
   end
 
-  make_named_tuple Tms, [utime, stime, cutime, cstime]
+  record Tms, [utime, stime, cutime, cstime]
 
   def times
     hertz = C.sysconf(C::SC_CLK_TCK).to_f

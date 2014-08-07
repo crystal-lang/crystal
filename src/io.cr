@@ -184,7 +184,3 @@ def system(command)
   C.waitpid(pid, out stat, 0)
   stat
 end
-
-macro pp(var)
-  puts "{{var}} = #{ {{var}} }"
-end
