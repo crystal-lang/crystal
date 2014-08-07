@@ -111,7 +111,7 @@ describe "Block inference" do
 
       bar { |x| x.foo }
       ") do
-      (types["Foo"] as GenericClassType).instantiate([float64] of Type | ASTNode)
+      (types["Foo"] as GenericClassType).instantiate([float64] of TypeVar)
     end
     mod = result.program
     type = result.node.type as GenericClassInstanceType
@@ -135,7 +135,7 @@ describe "Block inference" do
         10.5
       end
       ") do
-      (types["Foo"] as GenericClassType).instantiate([float64] of Type | ASTNode)
+      (types["Foo"] as GenericClassType).instantiate([float64] of TypeVar)
     end
   end
 
@@ -221,7 +221,7 @@ describe "Block inference" do
 
       foo { Foo(Float64).new }
       ") do
-      (types["Foo"] as GenericClassType).instantiate([float64] of Type | ASTNode)
+      (types["Foo"] as GenericClassType).instantiate([float64] of TypeVar)
     end
   end
 

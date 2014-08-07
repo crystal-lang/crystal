@@ -42,7 +42,7 @@ describe "Type inference: union" do
 
       foo(1 || 'a')
     ") do
-      (types["Bar"] as GenericClassType).instantiate([union_of(int32, char)] of Type | ASTNode)
+      (types["Bar"] as GenericClassType).instantiate([union_of(int32, char)] of TypeVar)
     end
   end
 end

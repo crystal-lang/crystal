@@ -64,7 +64,7 @@ module Crystal
         end
       end
 
-      type_vars = [] of Type | ASTNode
+      type_vars = [] of TypeVar
       node.type_vars.each do |type_var|
         type_var.accept self
         type_vars.push @type.not_nil!

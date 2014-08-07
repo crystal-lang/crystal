@@ -620,7 +620,7 @@ describe "Type inference: virtual" do
       ") {
         foo = types["Foo"]
         bar = types["Bar"] as GenericClassType
-        bar.instantiate([foo.virtual_type] of Type | ASTNode)
+        bar.instantiate([foo.virtual_type] of TypeVar)
       }
   end
 
@@ -639,7 +639,7 @@ describe "Type inference: virtual" do
       ") {
         foo = types["Foo"]
         bar = types["Bar"] as GenericClassType
-        bar.instantiate([union_of(foo.virtual_type, int32)] of Type | ASTNode)
+        bar.instantiate([union_of(foo.virtual_type, int32)] of TypeVar)
       }
   end
 

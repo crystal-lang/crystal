@@ -287,7 +287,7 @@ describe "Type inference: def overload" do
 
       foo 1
     ") {
-      (types["Foo"] as GenericClassType).instantiate([int32] of Type | ASTNode)
+      (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar)
     }
   end
 

@@ -37,7 +37,7 @@ describe "Type inference: is_a?" do
     mod, nodes = result.program, result.node as Expressions
 
     foo = mod.types["Foo"] as GenericClassType
-    (nodes.last as If).then.type.should eq(foo.instantiate([mod.int32] of Type | ASTNode))
+    (nodes.last as If).then.type.should eq(foo.instantiate([mod.int32] of TypeVar))
   end
 
   it "restricts type inside if scope 3" do

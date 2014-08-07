@@ -84,8 +84,12 @@ class String
     SymbolLiteral.new self
   end
 
-  def static_array_of(size)
-    Generic.new(Path.new(["StaticArray"], true), [Path.new([self]), NumberLiteral.new(size, :i32)])
+  def static_array_of(size : Int)
+    static_array_of NumberLiteral.new(size, :i32)
+  end
+
+  def static_array_of(size : ASTNode)
+    Generic.new(Path.new(["StaticArray"], true), [Path.new([self]), size] of ASTNode)
   end
 
   def macro_literal
@@ -238,6 +242,7 @@ describe "Parser" do
   it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", nil, Fun.new(["Int".path, "Float".path] of ASTNode, "Double".path))], nil)
   it_parses "def foo(var : (Int, Float) -> Double); end", Def.new("foo", [Arg.new("var", nil, Fun.new(["Int".path, "Float".path] of ASTNode, "Double".path))], nil)
   it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", nil, "Char".static_array_of(256))], nil)
+  it_parses "def foo(var : Char[N]); end", Def.new("foo", [Arg.new("var", nil, "Char".static_array_of(Path.new(["N"])))], nil)
   it_parses "def foo(var : Foo+); end", Def.new("foo", [Arg.new("var", nil, Virtual.new("Foo".path))], nil)
   it_parses "def foo(var = 1 : Int32); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".path)], nil)
   it_parses "def foo; yield; end", Def.new("foo", [] of Arg, [Yield.new] of ASTNode, nil, nil, nil, 0)

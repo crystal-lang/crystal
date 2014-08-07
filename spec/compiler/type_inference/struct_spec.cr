@@ -23,7 +23,7 @@ describe "Type inference: struct" do
       str = types["Foo"] as GenericClassType
       str.struct?.should be_true
 
-      str_inst = str.instantiate([int32] of Type | ASTNode )
+      str_inst = str.instantiate([int32] of TypeVar )
       str_inst.struct?.should be_true
       str_inst.metaclass
     end

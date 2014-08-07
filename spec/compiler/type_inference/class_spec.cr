@@ -30,7 +30,7 @@ describe "Type inference: class" do
       f.set
       f
     ") do
-      (types["Foo"] as GenericClassType).instantiate([int32] of Type | ASTNode)
+      (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar)
     end
     mod = result.program
     type = result.node.type as GenericClassInstanceType
@@ -50,8 +50,8 @@ describe "Type inference: class" do
       f
     ") do
       foo = types["Foo"] as GenericClassType
-      foo_i32 = foo.instantiate([int32] of Type | ASTNode)
-      foo_foo_i32 = foo.instantiate([foo_i32] of Type | ASTNode)
+      foo_i32 = foo.instantiate([int32] of TypeVar)
+      foo_foo_i32 = foo.instantiate([foo_i32] of TypeVar)
     end
   end
 
@@ -74,10 +74,10 @@ describe "Type inference: class" do
     mod, node = result.program, result.node as Expressions
     foo = mod.types["Foo"] as GenericClassType
 
-    node[1].type.should eq(foo.instantiate([mod.int32] of Type | ASTNode))
+    node[1].type.should eq(foo.instantiate([mod.int32] of TypeVar))
     (node[1].type as InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
 
-    node[3].type.should eq(foo.instantiate([mod.float64] of Type | ASTNode))
+    node[3].type.should eq(foo.instantiate([mod.float64] of TypeVar))
     (node[3].type as InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.float64))
   end
 
@@ -155,7 +155,7 @@ describe "Type inference: class" do
 
       Foo(Int32 | Float64).new
       ") do
-        (types["Foo"] as GenericClassType).instantiate([union_of(int32, float64)] of Type | ASTNode)
+        (types["Foo"] as GenericClassType).instantiate([union_of(int32, float64)] of TypeVar)
       end
   end
 
@@ -211,7 +211,7 @@ describe "Type inference: class" do
 
       b = Box.new(10)
       ") do
-        (types["Box"] as GenericClassType).instantiate([int32] of Type | ASTNode)
+        (types["Box"] as GenericClassType).instantiate([int32] of TypeVar)
       end
     mod = result.program
     type = result.node.type as GenericClassInstanceType
@@ -230,7 +230,7 @@ describe "Type inference: class" do
       b1 = Box.new(1, 10)
       b2 = Box.new(1, false)
       ") do
-        (types["Box"] as GenericClassType).instantiate([bool] of Type | ASTNode)
+        (types["Box"] as GenericClassType).instantiate([bool] of TypeVar)
     end
     mod = result.program
     type = result.node.type as GenericClassInstanceType
@@ -318,7 +318,7 @@ describe "Type inference: class" do
       Reference.new
       Foo(Int32).new
       ") do
-        (types["Foo"] as GenericClassType).instantiate([int32] of Type | ASTNode)
+        (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar)
       end
   end
 
@@ -420,7 +420,7 @@ describe "Type inference: class" do
 
       Foo(1).new
       ") do
-        (types["Foo"] as GenericClassType).instantiate([NumberLiteral.new("1", :i32)] of Type | ASTNode)
+        (types["Foo"] as GenericClassType).instantiate([NumberLiteral.new("1", :i32)] of TypeVar)
       end
   end
 
@@ -449,7 +449,7 @@ describe "Type inference: class" do
 
       Bar.coco.new
       ") do
-        (types["Foo"] as GenericClassType).instantiate([types["Bar"]] of Type | ASTNode)
+        (types["Foo"] as GenericClassType).instantiate([types["Bar"]] of TypeVar)
       end
   end
 
@@ -469,7 +469,7 @@ describe "Type inference: class" do
 
       Baz.coco.new
       ") do
-        (types["Foo"] as GenericClassType).instantiate([types["Baz"]] of Type | ASTNode)
+        (types["Foo"] as GenericClassType).instantiate([types["Baz"]] of TypeVar)
       end
   end
 

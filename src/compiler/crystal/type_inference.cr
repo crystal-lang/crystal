@@ -239,12 +239,15 @@ module Crystal
           ivar.bind_to node
           var.bind_to node
         end
-        if type.is_a?(NonGenericClassType)
+        case type
+        when NonGenericClassType
           node.declared_type.accept self
           node.type = node.declared_type.type.instance_type
           type.declare_instance_var(var.name, node.type)
-        elsif type.is_a?(GenericClassType)
+        when GenericClassType
           type.declare_instance_var(var.name, node.declared_type)
+        when GenericClassInstanceType
+          # OK
         else
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end

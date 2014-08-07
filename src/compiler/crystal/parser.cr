@@ -2783,9 +2783,9 @@ module Crystal
       end
     end
 
-    def parse_single_type
+    def parse_single_type(allow_primitives = false)
       location = @token.location
-      type = parse_type(false)
+      type = parse_type(allow_primitives)
       case type
       when Array
         raise "unexpected ',' in type (use parenthesis to disambiguate)", location
@@ -2947,9 +2947,7 @@ module Crystal
           next_token_skip_space
         when :"["
           next_token_skip_space
-          check :NUMBER
-          size = @token.value.to_s.to_i
-          next_token_skip_space
+          size = parse_single_type true
           check :"]"
           next_token_skip_space
           type = make_static_array_type(type, size)
@@ -3035,7 +3033,9 @@ module Crystal
     end
 
     def make_static_array_type(type, size)
-      Generic.new(Path.new(["StaticArray"], true), [type, NumberLiteral.new(size, :i32)] of ASTNode)
+      node = Generic.new(Path.new(["StaticArray"], true), [type, size] of ASTNode)
+      node.location = type.location
+      node
     end
 
     def make_tuple_type(types)

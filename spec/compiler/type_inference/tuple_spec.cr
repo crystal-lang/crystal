@@ -3,15 +3,15 @@ require "../../spec_helper"
 
 describe "Type inference: tuples" do
   it "types tuple of one element" do
-    assert_type("{1}") { tuple_of([int32] of Type | ASTNode) }
+    assert_type("{1}") { tuple_of([int32] of TypeVar) }
   end
 
   it "types tuple of three elements" do
-    assert_type("{1, 2.5, 'a'}") { tuple_of([int32, float64, char] of Type | ASTNode) }
+    assert_type("{1, 2.5, 'a'}") { tuple_of([int32, float64, char] of TypeVar) }
   end
 
   it "types tuple of one element and then two elements" do
-    assert_type("{1}; {1, 2}") { tuple_of([int32, int32] of Type | ASTNode) }
+    assert_type("{1}; {1, 2}") { tuple_of([int32, int32] of TypeVar) }
   end
 
   it "types tuple length" do

@@ -1461,12 +1461,14 @@ module Crystal
     end
   end
 
+  alias TypeVar = Type | ASTNode
+
   module GenericType
     getter type_vars
     property variadic
 
     def generic_types
-      @generic_types ||= {} of Array(Type | ASTNode) => Type
+      @generic_types ||= {} of Array(TypeVar) => Type
     end
 
     def instantiate(type_vars)
@@ -1478,7 +1480,7 @@ module Crystal
       last_index = self.type_vars.length - 1
       self.type_vars.each_with_index do |name, index|
         if variadic && index == last_index
-          types = [] of Type | ASTNode
+          types = [] of TypeVar
           index.upto(type_vars.length - 1) do |second_index|
             types << type_vars[second_index]
           end
@@ -1789,6 +1791,11 @@ module Crystal
 
   class StaticArrayType < GenericClassType
     def new_generic_instance(program, generic_type, type_vars)
+      n = type_vars["N"]
+      unless n.is_a?(NumberLiteral)
+        raise "can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
+      end
+
       StaticArrayInstanceType.new program, generic_type, type_vars
     end
   end

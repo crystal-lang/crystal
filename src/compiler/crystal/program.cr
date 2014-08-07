@@ -164,7 +164,7 @@ module Crystal
     end
 
     def array_of(type)
-      @array.instantiate [type] of Type | ASTNode
+      @array.instantiate [type] of TypeVar
     end
 
     def tuple_of(types)
@@ -386,11 +386,11 @@ module Crystal
     end
 
     def pointer_of(type)
-      @pointer.instantiate([type] of Type | ASTNode)
+      @pointer.instantiate([type] of TypeVar)
     end
 
     def static_array_of(type, num)
-      @static_array.instantiate([type, NumberLiteral.new(num, :i32)] of Type | ASTNode)
+      @static_array.instantiate([type, NumberLiteral.new(num, :i32)] of TypeVar)
     end
 
     def new_temp_var

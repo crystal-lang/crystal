@@ -54,7 +54,7 @@ describe "type inference: alias" do
     foo = mod.types["Foo"] as GenericClassType
     a = mod.types["Alias"] as AliasType
 
-    foo_alias = foo.instantiate([a] of Type | ASTNode)
+    foo_alias = foo.instantiate([a] of TypeVar)
 
     aliased_type = a.aliased_type as UnionType
     aliased_type.union_types[0].should eq(mod.int32)

@@ -234,8 +234,13 @@ module Crystal
     @in_type_args = false
 
     def update(from = nil)
-      type_vars_types = [] of Type | ASTNode
+      type_vars_types = [] of TypeVar
+
       type_vars.each do |node|
+        if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
+          node = syntax_replacement
+        end
+
         case node
         when NumberLiteral
           type_vars_types << node
@@ -253,7 +258,12 @@ module Crystal
         end
       end
 
-      generic_type = instance_type.instantiate(type_vars_types)
+      begin
+        generic_type = instance_type.instantiate(type_vars_types)
+      rescue ex
+        raise ex.message
+      end
+
       generic_type = generic_type.metaclass unless @in_type_args
       self.type = generic_type
     end
@@ -265,7 +275,7 @@ module Crystal
     def update(from = nil)
       return unless elements.all? &.type?
 
-      types = [] of Type | ASTNode
+      types = [] of TypeVar
       elements.each { |exp| types << exp.type }
       self.type = mod.tuple_of types
     end
