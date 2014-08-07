@@ -22,7 +22,7 @@ module Benchmark
 
       C.sprintf(chars, "  %.6f   %.6f   %.6f (  %.6f)", utime, stime, total, real)
 
-      io.write(chars.buffer, C.strlen(chars.buffer))
+      io.write Slice.new(chars.buffer, C.strlen(chars.buffer))
     end
   end
 
