@@ -107,7 +107,7 @@ module Crystal
       Expressions.new(@expressions.clone)
     end
 
-    generate_equals_and_hash [expressions]
+    def_equals_and_hash [expressions]
   end
 
   # The nil literal.
@@ -142,7 +142,7 @@ module Crystal
       BoolLiteral.new(@value)
     end
 
-    generate_equals_and_hash [value]
+    def_equals_and_hash [value]
   end
 
   # Any number literal.
@@ -174,7 +174,7 @@ module Crystal
       NumberLiteral.new(@value, @kind)
     end
 
-    generate_hash [value, kind]
+    def_hash [value, kind]
   end
 
   # A char literal.
@@ -191,7 +191,7 @@ module Crystal
       CharLiteral.new(@value)
     end
 
-    generate_equals_and_hash [value]
+    def_equals_and_hash [value]
   end
 
   class StringLiteral < ASTNode
@@ -204,7 +204,7 @@ module Crystal
       StringLiteral.new(@value)
     end
 
-    generate_equals_and_hash [value]
+    def_equals_and_hash [value]
   end
 
   class StringInterpolation < ASTNode
@@ -221,7 +221,7 @@ module Crystal
       StringInterpolation.new(@expressions.clone)
     end
 
-    generate_equals_and_hash [expressions]
+    def_equals_and_hash [expressions]
   end
 
   class SymbolLiteral < ASTNode
@@ -234,7 +234,7 @@ module Crystal
       SymbolLiteral.new(@value)
     end
 
-    generate_equals_and_hash [value]
+    def_equals_and_hash [value]
   end
 
   # An array literal.
@@ -257,7 +257,7 @@ module Crystal
       ArrayLiteral.new(@elements.clone, @of.clone)
     end
 
-    generate_equals_and_hash [@elements, @of]
+    def_equals_and_hash [@elements, @of]
   end
 
   class HashLiteral < ASTNode
@@ -280,7 +280,7 @@ module Crystal
       HashLiteral.new(@keys.clone, @values.clone, @of_key.clone, @of_value.clone)
     end
 
-    generate_equals_and_hash [@keys, @values, @of_key, @of_value]
+    def_equals_and_hash [@keys, @values, @of_key, @of_value]
   end
 
   class RangeLiteral < ASTNode
@@ -300,7 +300,7 @@ module Crystal
       RangeLiteral.new(@from.clone, @to.clone, @exclusive.clone)
     end
 
-    generate_equals_and_hash [@from, @to, @exclusive]
+    def_equals_and_hash [@from, @to, @exclusive]
   end
 
   class RegexLiteral < ASTNode
@@ -314,7 +314,7 @@ module Crystal
       RegexLiteral.new(@value, @modifiers)
     end
 
-    generate_equals_and_hash [@value, @modifiers]
+    def_equals_and_hash [@value, @modifiers]
   end
 
   class TupleLiteral < ASTNode
@@ -331,7 +331,7 @@ module Crystal
       TupleLiteral.new(elements.clone)
     end
 
-    generate_equals_and_hash [elements]
+    def_equals_and_hash [elements]
   end
 
   # A local variable or block argument.
@@ -360,8 +360,8 @@ module Crystal
       Var.new(@name)
     end
 
-    generate_equals [name, type?]
-    generate_hash [name]
+    def_equals [name, type?]
+    def_hash [name]
   end
 
   # A code block.
@@ -389,7 +389,7 @@ module Crystal
       Block.new(@args.clone, @body.clone)
     end
 
-    generate_equals_and_hash [args, body]
+    def_equals_and_hash [args, body]
   end
 
   # A method call.
@@ -442,7 +442,7 @@ module Crystal
       clone
     end
 
-    generate_equals_and_hash [obj, name, args, block, block_arg, named_args, global]
+    def_equals_and_hash [obj, name, args, block, block_arg, named_args, global]
   end
 
   class NamedArgument < ASTNode
@@ -460,7 +460,7 @@ module Crystal
       NamedArgument.new(name, value.clone)
     end
 
-    generate_equals_and_hash [name, value]
+    def_equals_and_hash [name, value]
   end
 
   # An if expression.
@@ -498,7 +498,7 @@ module Crystal
       a_if
     end
 
-    generate_equals_and_hash [@cond, @then, @else]
+    def_equals_and_hash [@cond, @then, @else]
   end
 
   class Unless < ASTNode
@@ -522,7 +522,7 @@ module Crystal
       Unless.new(@cond.clone, @then.clone, @else.clone)
     end
 
-    generate_equals_and_hash [@cond, @then, @else]
+    def_equals_and_hash [@cond, @then, @else]
   end
 
   # An ifdef expression.
@@ -557,7 +557,7 @@ module Crystal
       IfDef.new(@cond.clone, @then.clone, @else.clone)
     end
 
-    generate_equals_and_hash [@cond, @then, @else]
+    def_equals_and_hash [@cond, @then, @else]
   end
 
   # Assign expression.
@@ -580,7 +580,7 @@ module Crystal
       Assign.new(@target.clone, @value.clone)
     end
 
-    generate_equals_and_hash [@target, @value]
+    def_equals_and_hash [@target, @value]
   end
 
   # Assign expression.
@@ -607,7 +607,7 @@ module Crystal
       MultiAssign.new(@targets.clone, @values.clone)
     end
 
-    generate_hash [@targets, @values]
+    def_hash [@targets, @values]
   end
 
   # An instance variable.
@@ -625,7 +625,7 @@ module Crystal
       InstanceVar.new(@name)
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   class ReadInstanceVar < ASTNode
@@ -643,7 +643,7 @@ module Crystal
       ReadInstanceVar.new(@obj.clone, @name)
     end
 
-    generate_equals_and_hash [@obj, @name]
+    def_equals_and_hash [@obj, @name]
   end
 
   class ClassVar < ASTNode
@@ -656,7 +656,7 @@ module Crystal
       ClassVar.new(@name)
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   # A global variable.
@@ -679,7 +679,7 @@ module Crystal
       Global.new(@name)
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   abstract class BinaryOp < ASTNode
@@ -694,7 +694,7 @@ module Crystal
       @right.accept visitor
     end
 
-    generate_equals_and_hash [left, right]
+    def_equals_and_hash [left, right]
   end
 
   # Expressions and.
@@ -749,7 +749,7 @@ module Crystal
       Arg.new(@name, @default_value.clone, @restriction.clone)
     end
 
-    generate_equals_and_hash [name, default_value, restriction]
+    def_equals_and_hash [name, default_value, restriction]
   end
 
   class Fun < ASTNode
@@ -768,7 +768,7 @@ module Crystal
       Fun.new(@inputs.clone, @output.clone)
     end
 
-    generate_equals_and_hash [inputs, output]
+    def_equals_and_hash [inputs, output]
   end
 
   class BlockArg < ASTNode
@@ -790,7 +790,7 @@ module Crystal
       BlockArg.new(@name, @fun.clone)
     end
 
-    generate_equals_and_hash [@name, @fun]
+    def_equals_and_hash [@name, @fun]
   end
 
   # A method definition.
@@ -874,8 +874,8 @@ module Crystal
       a_def
     end
 
-    # TODO: changing this to generate_equals_and_hash crashes the compiler: investigate.
-    generate_hash [@name, @args, @body, @receiver, @block_arg, @return_type, @yields, @abstract, @splat_index]
+    # TODO: changing this to def_equals_and_hash crashes the compiler: investigate.
+    def_hash [@name, @args, @body, @receiver, @block_arg, @return_type, @yields, @abstract, @splat_index]
   end
 
   class Macro < ASTNode
@@ -915,7 +915,7 @@ module Crystal
       Macro.new(@name, @args.clone, @body.clone, @block_arg.clone, @splat_index)
     end
 
-    generate_equals_and_hash [@name, @args, @body, @block_arg, @splat_index]
+    def_equals_and_hash [@name, @args, @body, @block_arg, @splat_index]
   end
 
   abstract class UnaryExpression < ASTNode
@@ -928,7 +928,7 @@ module Crystal
       @exp.accept visitor
     end
 
-    generate_equals_and_hash [exp]
+    def_equals_and_hash [exp]
   end
 
   # Used only for flags
@@ -978,7 +978,7 @@ module Crystal
       IsA.new(@obj.clone, @const.clone)
     end
 
-    generate_equals_and_hash [@obj, @const]
+    def_equals_and_hash [@obj, @const]
   end
 
   class RespondsTo < ASTNode
@@ -997,7 +997,7 @@ module Crystal
       RespondsTo.new(@obj.clone, @name)
     end
 
-    generate_equals_and_hash [@obj, @name]
+    def_equals_and_hash [@obj, @name]
   end
 
   class Require < ASTNode
@@ -1010,7 +1010,7 @@ module Crystal
       Require.new(@string)
     end
 
-    generate_equals_and_hash [string]
+    def_equals_and_hash [string]
   end
 
   class When < ASTNode
@@ -1030,7 +1030,7 @@ module Crystal
       When.new(@conds.clone, @body.clone)
     end
 
-    generate_equals_and_hash [@conds, @body]
+    def_equals_and_hash [@conds, @body]
   end
 
   class Case < ASTNode
@@ -1050,7 +1050,7 @@ module Crystal
       Case.new(@cond.clone, @whens.clone, @else.clone)
     end
 
-    generate_equals_and_hash [@cond, @whens, @else]
+    def_equals_and_hash [@cond, @whens, @else]
   end
 
   # Node that represents an implicit obj in:
@@ -1091,7 +1091,7 @@ module Crystal
       ident
     end
 
-    generate_equals_and_hash [@names, @global]
+    def_equals_and_hash [@names, @global]
   end
 
   # Class definition:
@@ -1127,7 +1127,7 @@ module Crystal
       ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_column_number)
     end
 
-    generate_equals_and_hash [@name, @body, @superclass, @type_vars, @abstract, @struct]
+    def_equals_and_hash [@name, @body, @superclass, @type_vars, @abstract, @struct]
   end
 
   # Module definition:
@@ -1154,7 +1154,7 @@ module Crystal
       ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_column_number)
     end
 
-    generate_equals_and_hash [@name, @body, @type_vars]
+    def_equals_and_hash [@name, @body, @type_vars]
   end
 
   # While expression.
@@ -1181,7 +1181,7 @@ module Crystal
       While.new(@cond.clone, @body.clone, @run_once)
     end
 
-    generate_equals_and_hash [@cond, @body, @run_once]
+    def_equals_and_hash [@cond, @body, @run_once]
   end
 
   # Until expression.
@@ -1208,7 +1208,7 @@ module Crystal
       Until.new(@cond.clone, @body.clone, @run_once)
     end
 
-    generate_equals_and_hash [@cond, @body, @run_once]
+    def_equals_and_hash [@cond, @body, @run_once]
   end
 
   class Generic < ASTNode
@@ -1227,7 +1227,7 @@ module Crystal
       Generic.new(@name.clone, @type_vars.clone)
     end
 
-    generate_equals_and_hash [@name, @type_vars]
+    def_equals_and_hash [@name, @type_vars]
   end
 
   class DeclareVar < ASTNode
@@ -1258,7 +1258,7 @@ module Crystal
       DeclareVar.new(@var.clone, @declared_type.clone)
     end
 
-    generate_equals_and_hash [@var, @declared_type]
+    def_equals_and_hash [@var, @declared_type]
   end
 
   class Rescue < ASTNode
@@ -1279,7 +1279,7 @@ module Crystal
       Rescue.new(@body.clone, @types.clone, @name)
     end
 
-    generate_equals_and_hash [@body, @types, @name]
+    def_equals_and_hash [@body, @types, @name]
   end
 
   class ExceptionHandler < ASTNode
@@ -1303,7 +1303,7 @@ module Crystal
       ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
     end
 
-    generate_equals_and_hash [@body, @rescues, @else, @ensure]
+    def_equals_and_hash [@body, @rescues, @else, @ensure]
   end
 
   class FunLiteral < ASTNode
@@ -1320,7 +1320,7 @@ module Crystal
       FunLiteral.new(@def.clone)
     end
 
-    generate_equals_and_hash [@def]
+    def_equals_and_hash [@def]
   end
 
   class FunPointer < ASTNode
@@ -1340,7 +1340,7 @@ module Crystal
       FunPointer.new(@obj.clone, @name, @args.clone)
     end
 
-    generate_equals_and_hash [@obj, @name, @args]
+    def_equals_and_hash [@obj, @name, @args]
   end
 
   class Union < ASTNode
@@ -1357,7 +1357,7 @@ module Crystal
       Union.new(@types.clone)
     end
 
-    generate_equals_and_hash [types]
+    def_equals_and_hash [types]
   end
 
   class Virtual < ASTNode
@@ -1374,7 +1374,7 @@ module Crystal
       Virtual.new(@name.clone)
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   class Self < ASTNode
@@ -1401,7 +1401,7 @@ module Crystal
       @exp.try &.accept visitor
     end
 
-    generate_equals_and_hash [exp]
+    def_equals_and_hash [exp]
   end
 
   class Return < ControlExpression
@@ -1438,7 +1438,7 @@ module Crystal
       Yield.new(@exps.clone, @scope.clone)
     end
 
-    generate_equals_and_hash [@exps, @scope]
+    def_equals_and_hash [@exps, @scope]
   end
 
   class Include < ASTNode
@@ -1455,7 +1455,7 @@ module Crystal
       Include.new(@name)
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   class Extend < ASTNode
@@ -1472,7 +1472,7 @@ module Crystal
       Extend.new(@name)
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   class Undef < ASTNode
@@ -1485,7 +1485,7 @@ module Crystal
       Undef.new(@name)
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   class LibDef < ASTNode
@@ -1506,7 +1506,7 @@ module Crystal
       LibDef.new(@name, @libname, @body.clone, @name_column_number)
     end
 
-    generate_equals_and_hash [@name, @libname, @body]
+    def_equals_and_hash [@name, @libname, @body]
   end
 
   class FunDef < ASTNode
@@ -1535,7 +1535,7 @@ module Crystal
       FunDef.new(@name, @args.clone, @return_type.clone, @varargs, @body.clone, @real_name)
     end
 
-    generate_equals_and_hash [@name, @args, @return_type, @varargs, @body, @real_name]
+    def_equals_and_hash [@name, @args, @return_type, @varargs, @body, @real_name]
   end
 
   class TypeDef < ASTNode
@@ -1554,7 +1554,7 @@ module Crystal
       TypeDef.new(@name, @type_spec.clone, @name_column_number)
     end
 
-    generate_equals_and_hash [@name, @type_spec]
+    def_equals_and_hash [@name, @type_spec]
   end
 
   abstract class StructOrUnionDef < ASTNode
@@ -1572,8 +1572,8 @@ module Crystal
       @fields.each &.accept visitor
     end
 
-    # TODO: changing this to generate_equals_and_hash crashes the compiler: investigate.
-    generate_hash [@name, @fields]
+    # TODO: changing this to def_equals_and_hash crashes the compiler: investigate.
+    def_hash [@name, @fields]
   end
 
   class StructDef < StructOrUnionDef
@@ -1611,7 +1611,7 @@ module Crystal
       EnumDef.new(@name, @constants.clone, @base_type.clone)
     end
 
-    generate_equals_and_hash [@name, @constants, @base_type]
+    def_equals_and_hash [@name, @constants, @base_type]
   end
 
   class ExternalVar < ASTNode
@@ -1635,7 +1635,7 @@ module Crystal
       ExternalVar.new(@name, @type_spec.clone, @real_name)
     end
 
-    generate_equals_and_hash [@name, @type_spec, @real_name]
+    def_equals_and_hash [@name, @type_spec, @real_name]
   end
 
   class External < Def
@@ -1674,7 +1674,7 @@ module Crystal
       external
     end
 
-    generate_hash [@real_name, @varargs, @fun_def]
+    def_hash [@real_name, @varargs, @fun_def]
   end
 
   class Alias < ASTNode
@@ -1692,7 +1692,7 @@ module Crystal
       Alias.new(@name, @value.clone)
     end
 
-    generate_equals_and_hash [@name, @value]
+    def_equals_and_hash [@name, @value]
   end
 
   class Metaclass < ASTNode
@@ -1709,7 +1709,7 @@ module Crystal
       Metaclass.new(@name.clone)
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   # obj as to
@@ -1729,7 +1729,7 @@ module Crystal
       Cast.new(@obj.clone, @to.clone)
     end
 
-    generate_equals_and_hash [@obj, @to]
+    def_equals_and_hash [@obj, @to]
   end
 
   # typeof(exp, exp, ...)
@@ -1747,7 +1747,7 @@ module Crystal
       TypeOf.new(@expressions.clone)
     end
 
-    generate_equals_and_hash [expressions]
+    def_equals_and_hash [expressions]
   end
 
   class Attribute < ASTNode
@@ -1764,7 +1764,7 @@ module Crystal
       attributes.try &.any? { |attr| attr.name == name }
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   # A macro expression, surrounded by {{ ... }}
@@ -1782,7 +1782,7 @@ module Crystal
       MacroExpression.new(@exp.clone)
     end
 
-    generate_equals_and_hash [exp]
+    def_equals_and_hash [exp]
   end
 
   # Free text that is part of a macro
@@ -1796,7 +1796,7 @@ module Crystal
       self
     end
 
-    generate_equals_and_hash [value]
+    def_equals_and_hash [value]
   end
 
   # if inside a macro
@@ -1828,7 +1828,7 @@ module Crystal
       MacroIf.new(@cond.clone, @then.clone, @else.clone)
     end
 
-    generate_equals_and_hash [@cond, @then, @else]
+    def_equals_and_hash [@cond, @then, @else]
   end
 
   # for inside a macro:
@@ -1854,7 +1854,7 @@ module Crystal
       MacroFor.new(@vars.clone, @exp.clone, @body.clone)
     end
 
-    generate_equals_and_hash [@vars, @exp, @body]
+    def_equals_and_hash [@vars, @exp, @body]
   end
 
   # An underscore matches against any type
@@ -1889,7 +1889,7 @@ module Crystal
       Primitive.new(@name, @type)
     end
 
-    generate_equals_and_hash [name]
+    def_equals_and_hash [name]
   end
 
   # Ficticious node to represent a tuple indexer
@@ -1904,7 +1904,7 @@ module Crystal
       TupleIndexer.new(index)
     end
 
-    generate_equals_and_hash [index]
+    def_equals_and_hash [index]
   end
 
   # Ficticious node to represent an id inside a macro
@@ -1922,7 +1922,7 @@ module Crystal
       self
     end
 
-    generate_equals_and_hash [value]
+    def_equals_and_hash [value]
   end
 
   # Ficticious node to represent a type inside a macro
@@ -1938,7 +1938,7 @@ module Crystal
       self
     end
 
-    generate_equals_and_hash [type]
+    def_equals_and_hash [type]
   end
 end
 
