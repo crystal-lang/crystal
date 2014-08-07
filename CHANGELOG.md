@@ -3,6 +3,8 @@
 * Support splats in macros.
 * Support splats in defs and calls.
 * Added named arguments.
+* Renamed the `make_named_tuple` macro to `record`.
+* Added `def_equals`, `def_hash` and `def_equals_and_hash` macros to generate them from a list of fields.
 
 ## 0.3.5 (2014-07-29)
 
