@@ -119,7 +119,7 @@ end
 
 fun __crystal_raise(unwind_ex : ABI::UnwindException*) : NoReturn
   ret = ABI.unwind_raise_exception(unwind_ex)
-  puts "Could not raise"
+  C.printf "Could not raise"
   # caller.each do |point|
     # puts point
   # end

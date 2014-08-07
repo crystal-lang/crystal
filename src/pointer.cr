@@ -82,6 +82,10 @@ class Pointer(T)
   end
 
   def self.malloc(size : Int)
+    if size < 0
+      raise ArgumentError.new("negative Pointer#malloc size")
+    end
+
     malloc(size.to_u64)
   end
 

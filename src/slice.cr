@@ -16,13 +16,16 @@ struct Slice(T)
     new(pointer, length)
   end
 
+  def self.new(length : Int32, value : T)
+    new(length) { value }
+  end
+
   def +(offset : Int)
-    new_length = @length - offset
-    if new_length < 0
+    unless 0 <= offset <= length
       raise IndexOutOfBounds.new
     end
 
-    Slice.new(@pointer + offset, new_length)
+    Slice.new(@pointer + offset, @length - offset)
   end
 
   def [](index : Int)
@@ -44,7 +47,14 @@ struct Slice(T)
   end
 
   def [](start, count)
-    # TODO: validate
+    unless 0 <= start <= @length
+      raise IndexOutOfBounds.new
+    end
+
+    unless 0 <= count <= @length - start
+      raise IndexOutOfBounds.new
+    end
+
     Slice.new(@pointer + start, count)
   end
 

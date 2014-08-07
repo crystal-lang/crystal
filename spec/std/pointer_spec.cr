@@ -95,4 +95,8 @@ describe "Pointer" do
     a[1].should eq(3)
     a[2].should eq(4)
   end
+
+  it "raises if mallocs negative size" do
+    expect_raises ArgumentError { Pointer.malloc(-1, 0) }
+  end
 end
