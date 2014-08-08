@@ -68,6 +68,22 @@ struct Slice(T)
     end
   end
 
+  def pointer(length)
+    unless 0 <= length <= @length
+      raise IndexOutOfBounds.new
+    end
+
+    @pointer
+  end
+
+  def copy_from(source : Pointer(T), count)
+    pointer(count).copy_from(source, count)
+  end
+
+  def copy_to(target : Pointer(T), count)
+    pointer(count).copy_to(target, count)
+  end
+
   def inspect(io)
     to_s(io)
   end
@@ -79,14 +95,6 @@ struct Slice(T)
   end
 
   def to_unsafe
-    @pointer
-  end
-
-  def pointer(length = @length)
-    unless 0 <= length <= @length
-      raise IndexOutOfBounds.new
-    end
-
     @pointer
   end
 end

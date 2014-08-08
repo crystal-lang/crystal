@@ -17,20 +17,20 @@ class StringIO
     io
   end
 
-  def read(buffer : Slice(UInt8), count)
+  def read(slice : Slice(UInt8), count)
     count = Math.min(count, @length - @pos)
-    buffer.pointer.copy_from(@buffer + @pos, count)
+    slice.copy_from(@buffer + @pos, count)
     @pos += count
     count
   end
 
-  def write(buffer : Slice(UInt8), count)
+  def write(slice : Slice(UInt8), count)
     new_length = length + count
     if new_length > @capacity
       resize_to_capacity(Math.pw2ceil(new_length))
     end
 
-    (@buffer + @length).copy_from(buffer.pointer, count)
+    slice.copy_to(@buffer + @length, count)
     @length += count
 
     self

@@ -52,12 +52,12 @@ struct CFileIO
   def initialize(@file)
   end
 
-  def read(buffer : Slice(UInt8), count)
-    C.fread(buffer, 1.to_sizet, count.to_sizet, @file)
+  def read(slice : Slice(UInt8), count)
+    C.fread(slice.pointer(count), 1.to_sizet, count.to_sizet, @file)
   end
 
-  def write(buffer : Slice(UInt8), count)
-    C.fwrite(buffer, 1.to_sizet, count.to_sizet, @file)
+  def write(slice : Slice(UInt8), count)
+    C.fwrite(slice.pointer(count), 1.to_sizet, count.to_sizet, @file)
   end
 
   def flush

@@ -261,12 +261,12 @@ class Pipe
     end
   end
 
-  def read(buffer : Slice(UInt8), count)
-    C.fread(buffer.pointer, 1.to_sizet, count.to_sizet, @pipe)
+  def read(slice : Slice(UInt8), count)
+    C.fread(slice.pointer(count), 1.to_sizet, count.to_sizet, @pipe)
   end
 
-  def write(buffer : Slice(UInt8), count)
-    C.fwrite(buffer.pointer, 1.to_sizet, count.to_sizet, @pipe)
+  def write(slice : Slice(UInt8), count)
+    C.fwrite(slice.pointer(count), 1.to_sizet, count.to_sizet, @pipe)
   end
 
   def close

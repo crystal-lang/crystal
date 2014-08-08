@@ -4,8 +4,8 @@ struct PointerIO
   def initialize(@pointer : UInt8**)
   end
 
-  def write(buffer : Slice(UInt8), count)
-    @pointer.value.copy_from(buffer.pointer, count)
+  def write(slice : Slice(UInt8), count)
+    slice.copy_to(@pointer.value, count)
     @pointer.value += count
   end
 end

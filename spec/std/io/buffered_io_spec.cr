@@ -8,4 +8,13 @@ describe "BufferedIO" do
     io.gets.should eq("world\n")
     io.gets.should be_nil
   end
+
+  it "does puts" do
+    str = StringIO.new
+    io = BufferedIO.new(str)
+    io.puts "Hello"
+    str.to_s.should eq("")
+    io.flush
+    str.to_s.should eq("Hello\n")
+  end
 end

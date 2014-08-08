@@ -22,28 +22,27 @@ class BufferedIO(T)
 
         endl = @buffer_rem.index('\n'.ord.to_u8)
         if endl
-          buffer << String.new(@buffer_rem.pointer, endl + 1)
+          buffer << String.new(@buffer_rem[0, endl + 1])
           @buffer_rem += (endl + 1)
           break
         else
-          buffer << String.new(@buffer_rem.pointer, @buffer_rem.length)
+          buffer << String.new(@buffer_rem)
           @buffer_rem += @buffer_rem.length
         end
       end
     end
   end
 
-  def read(buffer : Slice(UInt8), count)
+  def read(slice : Slice(UInt8), count)
     fill_buffer if @buffer_rem_size == 0
     count = Math.min(count, @buffer_rem_size)
-    buffer.copy_from(@buffer_rem, count)
+    slice.copy_from(@buffer_rem, count)
     @buffer_rem += count
-    # @buffer_rem_size -= count
     count
   end
 
-  def write(buffer : Slice(UInt8), count)
-    @out_buffer.write buffer, count
+  def write(slice : Slice(UInt8), count)
+    @out_buffer.write slice, count
   end
 
   def flush

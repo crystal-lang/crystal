@@ -13,12 +13,12 @@ class OpenSSL::SSL::Socket
     end
   end
 
-  def read(buffer : UInt8*, count)
-    LibSSL.ssl_read(@ssl, buffer, count)
+  def read(slice : Slice(UInt8), count)
+    LibSSL.ssl_read(@ssl, slice.pointer(count), count)
   end
 
-  def write(buffer : UInt8*, count)
-    LibSSL.ssl_write(@ssl, buffer, count)
+  def write(slice : Slice(UInt8), count)
+    LibSSL.ssl_write(@ssl, slice.pointer(count), count)
   end
 
   def close

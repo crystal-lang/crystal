@@ -128,7 +128,7 @@ module IO
       remaining_length -= read_length
       buffer_pointer += read_length
     end
-    String.new(buffer.pointer, length.to_i)
+    String.new(buffer[0, length])
   end
 
   def write(array : Array(UInt8))

@@ -14,6 +14,10 @@ class String
 
   getter length
 
+  def self.new(slice : Slice(UInt8))
+    new(slice.pointer(slice.length), slice.length)
+  end
+
   def self.new(chars : UInt8*)
     new(chars, C.strlen(chars))
   end
