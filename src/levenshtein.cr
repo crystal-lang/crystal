@@ -27,7 +27,7 @@ def levenshtein(s, t)
       v1[j + 1] = Math.min(Math.min(v1[j] + 1, v0[j + 1] + 1), v0[j] + cost)
     end
 
-    v0.memcpy(v1, t_len + 1)
+    v0.copy_from(v1, t_len + 1)
   end
 
   v1[t_len]

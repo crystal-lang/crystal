@@ -42,7 +42,7 @@ class Array(T)
   end
 
   def at(index : Int)
-    at(index) { raise IndexOutOfBounds.new }
+    at(index) { raise IndexOutOfBounds.new("#{index} of #{self}") }
   end
 
   def at(index : Int)
@@ -134,7 +134,7 @@ class Array(T)
     else
       value = @buffer[0]
       @length -=1
-      @buffer.memmove(@buffer + 1, @length)
+      @buffer.move_from(@buffer + 1, @length)
       value
     end
   end
@@ -147,7 +147,7 @@ class Array(T)
     n = Math.min(n, @length)
     ary = Array(T).new(n) { |i| @buffer[i] }
 
-    @buffer.memmove(@buffer + n, @length - n)
+    @buffer.move_from(@buffer + n, @length - n)
     @length -= n
 
     ary
@@ -183,7 +183,7 @@ class Array(T)
   def insert(index : Int, obj : T)
     check_needs_resize
     index += length if index < 0
-    (@buffer + index + 1).memmove(@buffer + index, length - index)
+    (@buffer + index + 1).move_from(@buffer + index, length - index)
     @buffer[index] = obj
     @length += 1
     self
@@ -194,7 +194,7 @@ class Array(T)
     raise IndexOutOfBounds.new if index < 0 || index >= length
 
     elem = @buffer[index]
-    (@buffer + index).memmove(@buffer + index + 1, length - index - 1)
+    (@buffer + index).move_from(@buffer + index + 1, length - index - 1)
     @length -= 1
     elem
   end
@@ -312,7 +312,7 @@ class Array(T)
   def dup
     ary = Array(T).new(length)
     ary.length = length
-    ary.buffer.memcpy(buffer, length)
+    ary.buffer.copy_from(buffer, length)
     ary
   end
 
@@ -328,7 +328,7 @@ class Array(T)
   def replace(other : Array)
     @length = other.length
     resize_to_capacity(@length) if @length > @capacity
-    @buffer.memcpy(other.buffer, other.length)
+    @buffer.copy_from(other.buffer, other.length)
     self
   end
 
@@ -412,8 +412,8 @@ class Array(T)
     new_length = length + other.length
     ary = Array(T | U).new(new_length)
     ary.length = new_length
-    ary.buffer.memcpy(buffer, length)
-    (ary.buffer + length).memcpy(other.buffer, other.length)
+    ary.buffer.copy_from(buffer, length)
+    (ary.buffer + length).copy_from(other.buffer, other.length)
     ary
   end
 
@@ -424,7 +424,7 @@ class Array(T)
       resize_to_capacity(Math.pw2ceil(new_length))
     end
 
-    (@buffer + @length).memcpy(other.buffer, other_length)
+    (@buffer + @length).copy_from(other.buffer, other_length)
     @length += other_length
 
     self

@@ -36,7 +36,7 @@ class BufferedIO(T)
   def read(buffer : Slice(UInt8), count)
     fill_buffer if @buffer_rem_size == 0
     count = Math.min(count, @buffer_rem_size)
-    buffer.memcpy(@buffer_rem, count)
+    buffer.copy_from(@buffer_rem, count)
     @buffer_rem += count
     # @buffer_rem_size -= count
     count

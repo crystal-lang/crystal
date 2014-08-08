@@ -19,7 +19,7 @@ class StringIO
 
   def read(buffer : Slice(UInt8), count)
     count = Math.min(count, @length - @pos)
-    buffer.pointer.memcpy(@buffer + @pos, count)
+    buffer.pointer.copy_from(@buffer + @pos, count)
     @pos += count
     count
   end
@@ -30,7 +30,7 @@ class StringIO
       resize_to_capacity(Math.pw2ceil(new_length))
     end
 
-    (@buffer + @length).memcpy(buffer.pointer, count)
+    (@buffer + @length).copy_from(buffer.pointer, count)
     @length += count
 
     self

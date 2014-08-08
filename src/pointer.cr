@@ -25,14 +25,22 @@ class Pointer(T)
     (self + offset).value = value
   end
 
-  def memcpy(source : Pointer(T), count : Int)
+  def copy_from(source : Pointer(T), count : Int)
     Intrinsics.memcpy(self as Void*, source as Void*, (count * sizeof(T)).to_u32, 0_u32, false)
     self
   end
 
-  def memmove(source : Pointer(T), count : Int)
+  def copy_to(target : Pointer(T), count : Int)
+    target.copy_from(self, count)
+  end
+
+  def move_from(source : Pointer(T), count : Int)
     Intrinsics.memmove(self as Void*, source as Void*, (count * sizeof(T)).to_u32, 0_u32, false)
     self
+  end
+
+  def move_to(target : Pointer(T), count : Int)
+    target.move_from(self, count)
   end
 
   def memcmp(other : Pointer(T), count : Int)

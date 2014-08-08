@@ -22,7 +22,7 @@ class String
     str = GC.malloc_atomic((length + 9).to_u32) as UInt8*
     (str as Int32*).value = "".crystal_type_id
     ((str as Int32*) + 1).value = length
-    ((str as UInt8*) + 8).memcpy(chars, length)
+    ((str as UInt8*) + 8).copy_from(chars, length)
     ((str + length + 8) as UInt8*).value = 0_u8
     str as String
   end
@@ -136,7 +136,7 @@ class String
 
   def [](start : Int, count : Int)
     String.new_with_length(count) do |buffer|
-      buffer.memcpy(cstr + start, count)
+      buffer.copy_from(cstr + start, count)
     end
   end
 
@@ -364,8 +364,8 @@ class String
 
   def +(other : self)
     String.new_with_length(length + other.length) do |buffer|
-      buffer.memcpy(cstr, length)
-      (buffer + length).memcpy(other.cstr, other.length)
+      buffer.copy_from(cstr, length)
+      (buffer + length).copy_from(other.cstr, other.length)
     end
   end
 
@@ -380,15 +380,15 @@ class String
 
     total_length = length * times
     String.new_with_length(total_length) do |buffer|
-      buffer.memcpy(cstr, length)
+      buffer.copy_from(cstr, length)
       n = length
 
       while n <= total_length / 2
-        (buffer + n).memcpy(buffer, n)
+        (buffer + n).copy_from(buffer, n)
         n *= 2
       end
 
-      (buffer + n).memcpy(buffer, total_length - n)
+      (buffer + n).copy_from(buffer, total_length - n)
     end
   end
 

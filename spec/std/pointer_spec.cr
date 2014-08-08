@@ -22,21 +22,32 @@ describe "Pointer" do
     p1.as_enumerable(4).index(5).should be_nil
   end
 
-  describe "memcpy" do
+  describe "copy_from" do
     it "performs" do
       p1 = Pointer.malloc(4) { |i| i }
       p2 = Pointer.malloc(4) { 0 }
-      p2.memcpy(p1, 4)
+      p2.copy_from(p1, 4)
       4.times do |i|
         p2[0].should eq(p1[0])
       end
     end
   end
 
-  describe "memmove" do
+  describe "copy_to" do
+    it "performs" do
+      p1 = Pointer.malloc(4) { |i| i }
+      p2 = Pointer.malloc(4) { 0 }
+      p1.copy_to(p2, 4)
+      4.times do |i|
+        p2[0].should eq(p1[0])
+      end
+    end
+  end
+
+  describe "move_from" do
     it "performs with overlap right to left" do
       p1 = Pointer.malloc(4) { |i| i }
-      (p1 + 1).memmove(p1 + 2, 2)
+      (p1 + 1).move_from(p1 + 2, 2)
       p1[0].should eq(0)
       p1[1].should eq(2)
       p1[2].should eq(3)
@@ -45,7 +56,27 @@ describe "Pointer" do
 
     it "performs with overlap left to right" do
       p1 = Pointer.malloc(4) { |i| i }
-      (p1 + 2).memmove(p1 + 1, 2)
+      (p1 + 2).move_from(p1 + 1, 2)
+      p1[0].should eq(0)
+      p1[1].should eq(1)
+      p1[2].should eq(1)
+      p1[3].should eq(2)
+    end
+  end
+
+  describe "move_to" do
+    it "performs with overlap right to left" do
+      p1 = Pointer.malloc(4) { |i| i }
+      (p1 + 2).move_to(p1 + 1, 2)
+      p1[0].should eq(0)
+      p1[1].should eq(2)
+      p1[2].should eq(3)
+      p1[3].should eq(3)
+    end
+
+    it "performs with overlap left to right" do
+      p1 = Pointer.malloc(4) { |i| i }
+      (p1 + 1).move_to(p1 + 2, 2)
       p1[0].should eq(0)
       p1[1].should eq(1)
       p1[2].should eq(1)
