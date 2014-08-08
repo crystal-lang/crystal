@@ -42,7 +42,7 @@ class Array(T)
   end
 
   def at(index : Int)
-    at(index) { raise IndexOutOfBounds.new("#{index} of #{self}") }
+    at(index) { raise IndexOutOfBounds.new }
   end
 
   def at(index : Int)
