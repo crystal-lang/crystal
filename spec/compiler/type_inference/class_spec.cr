@@ -709,4 +709,21 @@ describe "Type inference: class" do
       ),
       "type vars must be A, B, not C"
   end
+
+  it "allows declaring a variable in an initialize and using it" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x :: Int32
+          @x + 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
 end

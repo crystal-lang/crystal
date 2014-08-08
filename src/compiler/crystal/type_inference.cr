@@ -238,7 +238,12 @@ module Crystal
           ivar = lookup_instance_var var
           ivar.bind_to node
           var.bind_to node
+
+          if @is_initialize
+            @vars[var.name] = MetaVar.new(var.name, node.type)
+          end
         end
+
         case type
         when NonGenericClassType
           node.declared_type.accept self
