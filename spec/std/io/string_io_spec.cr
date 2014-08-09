@@ -69,6 +69,11 @@ describe "StringIO" do
     io.gets.should eq(nil)
   end
 
+  it "reads utf-8 string" do
+    io = StringIO.new("há日本語")
+    io.gets.should eq("há日本語")
+  end
+
   it "reads N chars" do
     io = StringIO.new("foobarbaz")
     io.read(3).should eq("foo")
@@ -91,5 +96,15 @@ describe "StringIO" do
     io = StringIO.new
     io.puts
     io.to_s.should eq("\n")
+  end
+
+  it "read chars from UTF-8 string" do
+    io = StringIO.new("há日本語")
+    io.read_char.should eq('h')
+    io.read_char.should eq('á')
+    io.read_char.should eq('日')
+    io.read_char.should eq('本')
+    io.read_char.should eq('語')
+    io.read_char.should eq(nil)
   end
 end

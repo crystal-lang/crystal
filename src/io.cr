@@ -92,6 +92,30 @@ module IO
     end
   end
 
+  def read_char
+    first = read_byte
+    return nil unless first
+
+    first = first.to_u32
+    return first.chr if first < 0x80
+
+    second = read_utf8_masked_byte
+    return ((first & 0x1f) << 6 | second).chr if first < 0xe0
+
+    third = read_utf8_masked_byte
+    return ((first & 0x0f) << 12 | (second << 6) | third).chr if first < 0xf0
+
+    fourth = read_utf8_masked_byte
+    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr if first < 0xf8
+
+    raise "Invalid byte sequence in UTF-8 string"
+  end
+
+  def read_utf8_masked_byte # private
+    byte = read_byte || raise "Incomplete UTF-8 byte sequence"
+    (byte & 0x3f).to_u32
+  end
+
   def read_fully(buffer : UInt8*, count)
     while count > 0
       read_bytes = read(buffer, count)
@@ -105,11 +129,10 @@ module IO
   def gets
     buffer = StringIO.new
     while true
-      unless ch = read_byte
+      unless ch = read_char
         return buffer.empty? ? nil : buffer.to_s
       end
 
-      ch = ch.chr
       buffer << ch
       break if ch == '\n'
     end
