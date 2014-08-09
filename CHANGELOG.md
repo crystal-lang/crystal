@@ -1,5 +1,11 @@
 ## Next
 
+* Fixed [#185](https://github.com/manastech/crystal/issues/185): `-e` flag stopped working.
+* Added a `@length` compile-time variable available inside tuples that allows to do loop unrolling.
+* Some bug fixes.
+
+## 0.4.0 (2014-08-08)
+
 * Support splats in macros.
 * Support splats in defs and calls.
 * Added named arguments.
