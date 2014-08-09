@@ -556,7 +556,7 @@ module Crystal
               raise "expected block to return #{output}, not #{block_type}"
             end
           end
-          block.body.freeze_type = true
+          block.body.freeze_type = block_type
         end
       end
 

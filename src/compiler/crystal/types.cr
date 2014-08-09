@@ -1333,7 +1333,7 @@ module Crystal
     def declare_instance_var(name, type)
       ivar = Var.new(name, type)
       ivar.bind_to ivar
-      ivar.freeze_type = true
+      ivar.freeze_type = type
       instance_vars[name] = ivar
     end
   end
@@ -1575,7 +1575,7 @@ module Crystal
 
         ivar = Var.new(name, visitor.type)
         ivar.bind_to ivar
-        ivar.freeze_type = true
+        ivar.freeze_type = visitor.type
         instance.instance_vars[name] = ivar
       end
     end
@@ -1588,7 +1588,7 @@ module Crystal
 
           ivar = Var.new(name, visitor.type)
           ivar.bind_to ivar
-          ivar.freeze_type = true
+          ivar.freeze_type = visitor.type
           instance.instance_vars[name] = ivar
         end
       end

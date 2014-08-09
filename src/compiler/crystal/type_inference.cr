@@ -558,7 +558,8 @@ module Crystal
             unless exp.type.is_restriction_of?(var.type, exp.type)
               exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp.type}"
             end
-            exp.freeze_type = true
+
+            exp.freeze_type = var.type
           elsif !var.type.nil_type?
             node.raise "missing argument ##{i + 1} of yield with type #{var.type}"
           end
@@ -2095,7 +2096,7 @@ module Crystal
           unified_type = @mod.exception.virtual_type
         end
         var.set_type(unified_type)
-        var.freeze_type = true
+        var.freeze_type = unified_type
 
         node.set_type(var.type)
       end

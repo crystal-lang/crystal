@@ -411,4 +411,22 @@ describe "Block inference" do
       end
       )) { int32 }
   end
+
+  it "allows yielding multiple types when a union is expected" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        include Enumerable(Int32 | Float64)
+
+        def each
+          yield 1
+          yield 1.5
+        end
+      end
+
+      foo = Foo.new
+      foo.map &.to_f
+      )) { array_of(float64) }
+  end
 end

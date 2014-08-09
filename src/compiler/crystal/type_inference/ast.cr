@@ -9,14 +9,13 @@ module Crystal
     property observers
     property input_observers
 
-    @freeze_type = false
     @dirty = false
 
     def set_type(type : Type)
       type = type.remove_alias_if_simple
       # TODO: this should really be "type.implements?(my_type)"
-      if @freeze_type && (my_type = @type) && !my_type.is_restriction_of_all?(type)
-        raise "type must be #{my_type}, not #{type}", nil, Crystal::FrozenTypeException
+      if (freeze_type = @freeze_type) && !freeze_type.is_restriction_of_all?(type)
+        raise "type must be #{freeze_type}, not #{type}", nil, Crystal::FrozenTypeException
       end
       @type = type
     end
