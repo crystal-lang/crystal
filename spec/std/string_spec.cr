@@ -44,7 +44,7 @@ describe "String" do
     "1234123412341234".to_i64.should eq(1234123412341234_i64)
   end
 
-  pending "does to_u64" do
+  it "does to_u64" do
     "9223372036854775808".to_u64.should eq(9223372036854775808_u64)
   end
 
@@ -368,11 +368,15 @@ describe "String" do
     "\033a"[1].should eq('a')
   end
 
-  pending "escapes with hex" do
-    "\x12"[0].should eq(1 * 16 + 2)
-    "\xA"[0].should eq(10)
-    "\xAB"[0].should eq(10 * 16 + 11)
-    "\xAB1"[1].should eq('1'.ord)
+  it "escapes with hex" do
+    "\x12".codepoint_at(0).should eq(1 * 16 + 2)
+    "\xA".codepoint_at(0).should eq(10)
+    "\xAB".codepoint_at(0).should eq(10 * 16 + 11)
+    "\xAB1".codepoint_at(1).should eq('1'.ord)
+  end
+
+  it "does char_at" do
+    "いただきます".char_at(2).should eq('だ')
   end
 
   it "allows creating a string with zeros" do

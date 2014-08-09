@@ -144,6 +144,22 @@ class String
     end
   end
 
+  def codepoint_at(index)
+    char_at(index).ord
+  end
+
+  def char_at(index)
+    i = 0
+    each_char do |char|
+      if i == index
+        return char
+      end
+      i += 1
+    end
+
+    raise IndexOutOfBounds.new
+  end
+
   def downcase
     String.new_with_length(length) do |buffer|
       length.times do |i|

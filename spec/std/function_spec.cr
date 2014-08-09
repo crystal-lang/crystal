@@ -17,13 +17,13 @@ describe "Function" do
     str.to_s.should eq("#<(Int32 -> Float64):0x#{f.pointer.address.to_s(16)}:closure>")
   end
 
-  pending "does to_s" do
+  it "does to_s" do
     str = StringIO.new
     f = ->(x : Int32) { x.to_f }
     f.to_s.should eq("#<(Int32 -> Float64):0x#{f.pointer.address.to_s(16)}>")
   end
 
-  pending "does to_s when closured" do
+  it "does to_s when closured" do
     str = StringIO.new
     a = 1.5
     f = ->(x : Int32) { x + a }
