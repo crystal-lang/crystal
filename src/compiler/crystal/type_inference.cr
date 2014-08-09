@@ -418,6 +418,7 @@ module Crystal
         current_type = current_type()
         if current_type.is_a?(ClassType)
           ivar_visitor = TypeVisitor.new(mod)
+          ivar_visitor.scope = current_type
           value.accept ivar_visitor
 
           current_type.add_instance_var_initializer(target.name, value, ivar_visitor.meta_vars)

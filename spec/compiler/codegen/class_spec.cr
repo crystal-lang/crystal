@@ -387,4 +387,19 @@ describe "Code gen: class" do
       B.new(A.new).foo
       ").to_i.should eq(1)
   end
+
+  it "allows initializing var with constant" do
+    run(%(
+      class Foo
+        A = 1
+        @x = A
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )).to_i.should eq(1)
+  end
 end
