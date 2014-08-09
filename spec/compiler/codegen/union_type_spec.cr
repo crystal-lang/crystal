@@ -77,7 +77,7 @@ describe "Code gen: union type" do
       class Foo
         def foo(x)
           @x = x
-          @x = @x
+          @x = @x || 1
         end
 
         def x

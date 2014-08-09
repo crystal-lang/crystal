@@ -98,6 +98,10 @@ module Crystal
 
       node = super
 
+      if node.target == node.value
+        node.raise "expression has no effect"
+      end
+
       # We don't want to transform constant assignments into no return
       unless node.target.is_a?(Path)
         if node.value.type?.try &.no_return?
