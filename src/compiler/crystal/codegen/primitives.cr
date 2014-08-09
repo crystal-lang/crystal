@@ -498,7 +498,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     index = call_args[1]
     Phi.open(self, node, @needs_value) do |phi|
       type.tuple_types.each_with_index do |tuple_type, i|
-        current_index_label, next_index_label = new_blocks({"current_index", "next_index"})
+        current_index_label, next_index_label = new_blocks "current_index", "next_index"
         cond equal?(index, int(i)), current_index_label, next_index_label
 
         position_at_end current_index_label

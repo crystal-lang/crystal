@@ -143,7 +143,7 @@ module Crystal
       @modules = {"" => @main_mod} of String => LLVM::Module
       @types_to_modules = {} of Type => LLVM::Module
 
-      @alloca_block, @entry_block = new_entry_block_chain({"alloca", "entry"})
+      @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
       @main_alloca_block = @alloca_block
 
       @in_lib = false
@@ -522,7 +522,7 @@ module Crystal
     end
 
     def visit(node : If)
-      then_block, else_block = new_blocks({"then", "else"})
+      then_block, else_block = new_blocks "then", "else"
 
       request_value do
         codegen_cond_branch node.cond, then_block, else_block
@@ -544,7 +544,7 @@ module Crystal
 
     def visit(node : While)
       with_cloned_context do
-        while_block, body_block, exit_block = new_blocks({"while", "body", "exit"})
+        while_block, body_block, exit_block = new_blocks "while", "body", "exit"
 
         context.while_block = while_block
         context.while_exit_block = exit_block
@@ -786,7 +786,7 @@ module Crystal
         type_id = type_id last_value, obj_type
         cmp = match_type_id obj_type, resulting_type, type_id
 
-        matches_block, doesnt_match_block = new_blocks({"matches", "doesnt_match"})
+        matches_block, doesnt_match_block = new_blocks "matches", "doesnt_match"
         cond cmp, matches_block, doesnt_match_block
 
         position_at_end doesnt_match_block
@@ -1012,7 +1012,7 @@ module Crystal
 
         if node_rescues = node.rescues
           node_rescues.each do |a_rescue|
-            this_rescue_block, next_rescue_block = new_blocks({"this_rescue", "next_rescue"})
+            this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
             if a_rescue_types = a_rescue.types
               cond = nil
               a_rescue_types.each do |type|
@@ -1308,7 +1308,7 @@ module Crystal
               result = and(result, match_type_id(node.args[i].type, arg.type, arg_type_ids[i]))
             end
 
-            current_def_label, next_def_label = new_blocks({"current_def", "next_def"})
+            current_def_label, next_def_label = new_blocks "current_def", "next_def"
             cond result, current_def_label, next_def_label
 
             position_at_end current_def_label
@@ -1454,7 +1454,7 @@ module Crystal
     end
 
     def type_id(value, type : NilableReferenceUnionType)
-      nil_block, not_nil_block, exit_block = new_blocks({"nil", "not_nil", "exit"})
+      nil_block, not_nil_block, exit_block = new_blocks "nil", "not_nil", "exit"
       phi_table = LLVM::PhiTable.new
 
       cond null_pointer?(value), nil_block, not_nil_block
@@ -1572,11 +1572,11 @@ module Crystal
     end
 
     def new_entry_block
-      @alloca_block, @entry_block = new_entry_block_chain({"alloca", "entry"})
+      @alloca_block, @entry_block = new_entry_block_chain "alloca", "entry"
     end
 
-    def new_entry_block_chain names
-      blocks = new_blocks names
+    def new_entry_block_chain(*names)
+      blocks = new_blocks *names
       position_at_end blocks.last
       blocks
     end
@@ -1606,7 +1606,7 @@ module Crystal
       context.fun.append_basic_block(name)
     end
 
-    def new_blocks(names)
+    def new_blocks(*names)
       names.map { |name| new_block name }
     end
 

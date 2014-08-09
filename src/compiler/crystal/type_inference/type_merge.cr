@@ -37,7 +37,7 @@ module Crystal
 
           if first.nil_type?
             if second.is_a?(UnionType) && second.union_types.includes?(first)
-              return({true, second})
+              return true, second
             end
           end
 
