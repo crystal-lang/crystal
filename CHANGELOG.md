@@ -5,6 +5,8 @@
 * Added named arguments.
 * Renamed the `make_named_tuple` macro to `record`.
 * Added `def_equals`, `def_hash` and `def_equals_and_hash` macros to generate them from a list of fields.
+* Added `Slice(T)`, which is a struct having a pointer and a length. Use this in IO for a safe API.
+* Some `StaticArray` fixes and enhancements.
 
 ## 0.3.5 (2014-07-29)
 
