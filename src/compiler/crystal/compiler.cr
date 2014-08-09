@@ -119,7 +119,7 @@ module Crystal
           @debug = true
         end
         opts.on("-e 'command'", "One line script. Omit [programfile]") do |the_inline_exp|
-          inline_exp = inline_exp
+          inline_exp = the_inline_exp
         end
         opts.on("-h", "--help", "Show this message") do
           puts opts
