@@ -679,4 +679,21 @@ describe "Type inference: def overload" do
       foo({1, 2.5})
       ") { tuple_of([int32, float64] of Type) }
   end
+
+  it "gives correct error message, looking up parent defs, when no overload matches" do
+    assert_error %(
+      class Foo
+        def foo(x : Int32)
+        end
+      end
+
+      class Bar < Foo
+        def foo
+        end
+      end
+
+      Bar.new.foo(1.5)
+      ),
+      "no overload matches"
+  end
 end

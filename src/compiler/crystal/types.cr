@@ -610,16 +610,21 @@ module Crystal
     end
 
     def lookup_defs(name)
+      all_defs = [] of Def
+
       if (defs = self.defs) && (list = defs[name]?)
-        return list.map(&.def) unless list.empty?
+        list.each do |item|
+          all_defs << item.def
+        end
       end
 
-      parents.try &.each do |parent|
-        parent_defs = parent.lookup_defs(name)
-        return parent_defs unless parent_defs.empty?
+      unless name == "new" || name == "initialize"
+        parents.try &.each do |parent|
+          all_defs.concat parent.lookup_defs(name)
+        end
       end
 
-      [] of Def
+      all_defs
     end
 
     def lookup_defs_with_modules(name)
