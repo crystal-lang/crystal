@@ -37,6 +37,16 @@ describe "Regex" do
     $~.not_nil!["g2"].should eq("ba")
   end
 
+  it "capture empty group" do
+    ("foo" =~ /(?<g1>.*)foo/).should eq(0)
+    $~.not_nil!["g1"].should eq("")
+  end
+
+  it "raises exception when named group doesn't exist" do
+    ("foo" =~ /foo/).should eq(0)
+    expect_raises ArgumentError  { $~.not_nil!["group"] }
+  end
+
   it "matches multiline" do
     ("foo\n<bar\n>baz" =~ /<bar.*?>/).should be_nil
     ("foo\n<bar\n>baz" =~ /<bar.*?>/m).should eq(4)
