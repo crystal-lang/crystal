@@ -135,4 +135,16 @@ describe "Code gen: tuple" do
       foo2.x
       )).to_i.should eq(2)
   end
+
+  it "gets length at compile time" do
+    run(%(
+      class Tuple
+        def my_length
+          {{ @length }}
+        end
+      end
+
+      {1, 1}.my_length
+      )).to_i.should eq(2)
+  end
 end

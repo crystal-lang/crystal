@@ -544,14 +544,18 @@ module Crystal
       def visit(node : InstanceVar)
         case node.name
         when "@class_name"
-          @last = StringLiteral.new(@scope.to_s)
+          return @last = StringLiteral.new(@scope.to_s)
         when "@instance_vars"
-          @last = MacroType.instance_vars(@scope)
+          return @last = MacroType.instance_vars(@scope)
         when "@superclass"
-          @last = MacroType.superclass(@scope)
-        else
-          node.raise "unknown macro instance var: '#{node.name}'"
+          return @last = MacroType.superclass(@scope)
+        when "@length"
+          if (scope = @scope).is_a?(TupleInstanceType)
+            return @last = NumberLiteral.new(scope.tuple_types.length)
+          end
         end
+
+        node.raise "unknown macro instance var: '#{node.name}'"
       end
 
       def visit(node : MetaVar)
