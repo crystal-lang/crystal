@@ -279,7 +279,7 @@ module Crystal
             arg.raise "splat expects a tuple, not #{arg_type}"
           end
           arg_type.tuple_types.each_index do |index|
-            tuple_indexer = Call.new(arg.exp, "[]", [NumberLiteral.new(index, :i32)] of ASTNode)
+            tuple_indexer = Call.new(arg.exp, "[]", [NumberLiteral.new(index)] of ASTNode)
             tuple_indexer.accept parent_visitor
             new_args << tuple_indexer
             arg.remove_input_observer(self)
@@ -997,14 +997,14 @@ module Crystal
       var = Var.new("x")
       alloc = Call.new(nil, "allocate")
       assign = Assign.new(var, alloc)
-      call_gc = Call.new(Path.new(["GC"], true), "add_finalizer", [var] of ASTNode)
+      call_gc = Call.new(Path.global("GC"), "add_finalizer", [var] of ASTNode)
 
       exps = Array(ASTNode).new(3)
       exps << assign
       exps << call_gc unless scope.instance_type.struct?
       exps << var
 
-      match_def = Def.new("new", [] of Arg, exps)
+      match_def = Def.new("new", body: exps)
       match = Match.new(match_def, arg_types, MatchContext.new(scope, scope))
 
       scope.add_def match_def
@@ -1033,9 +1033,9 @@ module Crystal
         if instance_type.is_a?(GenericClassType)
           generic_type_args = Array(ASTNode).new(instance_type.type_vars.length)
           instance_type.type_vars.each do |type_var|
-            generic_type_args << Path.new([type_var])
+            generic_type_args << Path.new(type_var)
           end
-          new_generic = Generic.new(Path.new([instance_type.name] of String), generic_type_args)
+          new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
           alloc = Call.new(new_generic, "allocate")
         else
           alloc = Call.new(nil, "allocate")
@@ -1054,7 +1054,7 @@ module Crystal
         end
 
         assign = Assign.new(var, alloc)
-        call_gc = Call.new(Path.new(["GC"], true), "add_finalizer", [var] of ASTNode)
+        call_gc = Call.new(Path.global("GC"), "add_finalizer", [var] of ASTNode)
         init = Call.new(var, "initialize", new_vars)
 
         exps = Array(ASTNode).new(4)

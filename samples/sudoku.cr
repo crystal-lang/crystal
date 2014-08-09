@@ -59,7 +59,7 @@ def sd_update(mr, mc, sr, sc, r, v)
 end
 
 def sd_solve(mr, mc, s)
-  ret = Array(Array(Int32)).new
+  ret = [] of Array(Int32)
   sr, sc, hints = Array.new(729, 0), Array.new(324, 9), 0
   (0...81).each do |i|
     a = (s[i].chr >= '1' && s[i].chr <= '9') ? s[i].to_i32 - 49 : -1
@@ -141,10 +141,10 @@ sudoku = "
 def solve_all(sudoku)
   mr, mc = sd_genmat()
   sudoku.split("\n").map do |line|
-  if line.length >= 81
-    ret = sd_solve(mr, mc, line)
-    ret.map { |s2| s2.join }
-  end
+    if line.length >= 81
+      ret = sd_solve(mr, mc, line)
+      ret.map { |s2| s2.join }
+    end
   end.compact
 end
 

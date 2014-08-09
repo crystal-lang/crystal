@@ -14,26 +14,6 @@ module Crystal
   REALLOC_NAME = "__crystal_realloc"
 
   class Program
-    struct BuildOptions
-      property single_module
-      property debug
-      property llvm_mod
-      property use_host_flags
-
-      def initialize
-        @single_module = false
-        @debug = false
-        @llvm_mod = LLVM::Module.new("main_module")
-        @use_host_flags = false
-      end
-
-      def self.single_module
-        options = BuildOptions.new
-        options.single_module = true
-        options
-      end
-    end
-
     def run(code)
       node = Parser.parse(code)
       node = normalize node
@@ -43,7 +23,7 @@ module Crystal
     end
 
     def evaluate(node)
-      llvm_mod = build(node, BuildOptions.single_module)[""]
+      llvm_mod = build(node, single_module: true)[""]
       main = llvm_mod.functions[MAIN_NAME]
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LibLLVM::TypeRef, main.return_type) do |func|
         func.append_basic_block("entry") do |builder|
@@ -60,8 +40,8 @@ module Crystal
       engine.run_function wrapper, [] of LibLLVM::GenericValueRef
     end
 
-    def build(node, build_options)
-      visitor = CodeGenVisitor.new(self, node, build_options)
+    def build(node, single_module = false, debug = false, use_host_flags = false, llvm_mod = LLVM::Module.new("main_module"))
+      visitor = CodeGenVisitor.new self, node, single_module: single_module, debug: debug, use_host_flags: false, llvm_mod: llvm_mod
       begin
         node.accept visitor
         visitor.finish
@@ -113,12 +93,7 @@ module Crystal
     record Handler, [node, catch_block, vars]
     record StringKey, [mod, string]
 
-    def initialize(@mod, @node, build_options = BuildOptions.new)
-      @llvm_mod = build_options.llvm_mod
-      @single_module = build_options.single_module
-      @use_host_flags = build_options.use_host_flags
-      @debug = build_options.debug
-
+    def initialize(@mod, @node, @single_module = false, @debug = false, @use_host_flags = false, @llvm_mod = LLVM::Module.new("main_module"))
       @main_mod = @llvm_mod
       @llvm_typer = LLVMTyper.new
       @llvm_id = LLVMId.new(@mod)
@@ -207,7 +182,7 @@ module Crystal
       end
 
       @unused_fun_defs.each do |node|
-        codegen_fun node.real_name, node.external, @mod, true
+        codegen_fun node.real_name, node.external, @mod, is_exported_fun: true
       end
 
       env_dump = ENV["DUMP"]?
@@ -238,14 +213,14 @@ module Crystal
 
       unless node.external.dead
         if node.external.used
-          codegen_fun node.real_name, node.external, @mod, true
+          codegen_fun node.real_name, node.external, @mod, is_exported_fun: true
         else
           # If the fun is not invoked we codegen it at the end so
           # we don't have issues with constants being used before
           # they are declared.
           # But, apparenty, llvm requires us to define them so that
           # calls can find them, so we do so.
-          codegen_fun node.real_name, node.external, @mod, false
+          codegen_fun node.real_name, node.external, @mod, is_exported_fun: false
           @unused_fun_defs << node
         end
       end
@@ -346,7 +321,7 @@ module Crystal
       fun_literal_name = "~fun_literal_#{@fun_literal_count}"
       is_closure = node.def.closure
 
-      the_fun = codegen_fun(fun_literal_name, node.def, context.type, false, @main_mod, true, is_closure)
+      the_fun = codegen_fun fun_literal_name, node.def, context.type, fun_module: @main_mod, is_fun_literal: true, is_closure: is_closure
       the_fun = check_main_fun fun_literal_name, the_fun
 
       fun_ptr = bit_cast(the_fun, LLVM::VoidPointer)
@@ -800,14 +775,14 @@ module Crystal
     end
 
     def type_cast_exception_call(to_type)
-      call = Call.new(nil, "raise", [StringLiteral.new("cast to #{to_type} failed")] of ASTNode, nil, nil, nil, true)
+      call = Call.new(nil, "raise", [StringLiteral.new("cast to #{to_type} failed")] of ASTNode, global: true)
       @mod.infer_type call
       call
     end
 
     def index_out_of_bounds_exception_call
       @index_out_of_bounds_exception_call ||= begin
-        call = Call.new(nil, "raise", [StringLiteral.new("index out of bounds")] of ASTNode, nil, nil, nil, true)
+        call = Call.new(nil, "raise", [StringLiteral.new("index out of bounds")] of ASTNode, global: true)
         @mod.infer_type call
         call
       end
@@ -815,7 +790,7 @@ module Crystal
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
-        call = Call.new(nil, "raise", [StringLiteral.new("passing a closure to C is not allowed")] of ASTNode, nil, nil, nil, true)
+        call = Call.new(nil, "raise", [StringLiteral.new("passing a closure to C is not allowed")] of ASTNode, global: true)
         @mod.infer_type call
         call
       end

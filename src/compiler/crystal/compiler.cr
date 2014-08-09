@@ -235,10 +235,7 @@ module Crystal
         return if @no_build
 
         llvm_modules = timing("Codegen (crystal)") do
-          options = Program::BuildOptions.new
-          options.single_module = @single_module || @release || @cross_compile
-          options.debug = @debug
-          program.build node, options
+          program.build node, debug: @debug, single_module: @single_module || @release || @cross_compile
         end
 
         cache_filename = sources.first.filename

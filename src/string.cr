@@ -486,7 +486,7 @@ class String
     ary
   end
 
-  def split(separator : Char, count = -1)
+  def split(separator : Char, limit = -1)
     if separator == ' '
       return split
     end
@@ -496,12 +496,12 @@ class String
     buffer = cstr
     len = length
 
-    unless count == 1
+    unless limit == 1
       len.times do |j|
         if buffer[j] == separator
           ary.push String.new(buffer + index, j - index)
           index = j + 1
-          break if ary.length + 1 == count
+          break if ary.length + 1 == limit
         end
       end
     end

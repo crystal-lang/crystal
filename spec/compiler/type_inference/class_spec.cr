@@ -420,7 +420,7 @@ describe "Type inference: class" do
 
       Foo(1).new
       ") do
-        (types["Foo"] as GenericClassType).instantiate([NumberLiteral.new("1", :i32)] of TypeVar)
+        (types["Foo"] as GenericClassType).instantiate([NumberLiteral.new(1)] of TypeVar)
       end
   end
 

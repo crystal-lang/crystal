@@ -515,12 +515,6 @@ module Crystal
       arg.set_type(type)
       arg
     end
-
-    def self.new_with_restriction(name, restriction)
-      arg = Arg.new(name)
-      arg.restriction = restriction
-      arg
-    end
   end
 
   class Call

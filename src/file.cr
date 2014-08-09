@@ -198,7 +198,11 @@ class File < FileDescriptorIO
     end
   end
 
-  def self.join(parts = [] of String)
+  def self.join(*parts)
+    join parts
+  end
+
+  def self.join(parts : Array | Tuple)
     return "" if parts.empty?
 
     parts.map_with_index do |part, index|

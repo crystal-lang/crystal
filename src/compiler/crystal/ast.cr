@@ -151,10 +151,10 @@ module Crystal
     property :value
     property :kind
 
-    def initialize(@value : String, @kind)
+    def initialize(@value : String, @kind = :i32)
     end
 
-    def initialize(value : Number, @kind)
+    def initialize(value : Number, @kind = :i32)
       @value = value.to_s
     end
 
@@ -824,7 +824,7 @@ module Crystal
     property :attributes
     property :splat_index
 
-    def initialize(@name, @args : Array(Arg), body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @yields = nil, @abstract = false, @splat_index = nil)
+    def initialize(@name, @args = [] of Arg, body = nil, @receiver = nil, @block_arg = nil, @return_type = nil, @yields = nil, @abstract = false, @splat_index = nil)
       @body = Expressions.from body
       @calls_super = false
       @calls_initialize = false
@@ -843,10 +843,6 @@ module Crystal
       @block_arg.try &.accept visitor
       @return_type.try &.accept visitor
       @body.accept visitor
-    end
-
-    def ==(other : self)
-      other.receiver == receiver && other.name == name && other.args == args && other.body == body && other.yields == yields && other.block_arg == block_arg && other.return_type == return_type && @abstract == other.abstract && splat_index == other.splat_index
     end
 
     def name_length
@@ -874,8 +870,7 @@ module Crystal
       a_def
     end
 
-    # TODO: changing this to def_equals_and_hash crashes the compiler: investigate.
-    def_hash [@name, @args, @body, @receiver, @block_arg, @return_type, @yields, @abstract, @splat_index]
+    def_equals_and_hash [@name, @args, @body, @receiver, @block_arg, @return_type, @yields, @abstract, @splat_index]
   end
 
   class Macro < ASTNode
@@ -886,7 +881,7 @@ module Crystal
     property :name_column_number
     property :splat_index
 
-    def initialize(@name, @args, @body, @block_arg = nil, @splat_index = nil)
+    def initialize(@name, @args = [] of ASTNode, @body = Nop.new, @block_arg = nil, @splat_index = nil)
       @name_column_number = 0
     end
 
@@ -1081,8 +1076,16 @@ module Crystal
     property :global
     property :name_length
 
-    def initialize(@names, @global = false)
+    def initialize(@names : Array, @global = false)
       @name_length = 0
+    end
+
+    def self.new(name : String, global = false)
+      new [name], global
+    end
+
+    def self.global(names)
+      new names, true
     end
 
     def clone_without_location
@@ -1309,7 +1312,7 @@ module Crystal
   class FunLiteral < ASTNode
     property :def
 
-    def initialize(@def = Def.new("->", [] of Arg))
+    def initialize(@def = Def.new("->"))
     end
 
     def accept_children(visitor)
@@ -1494,7 +1497,7 @@ module Crystal
     property :body
     property :name_column_number
 
-    def initialize(@name, @libname = nil, body = nil, @name_column_number = 0)
+    def initialize(@name, body = nil, @libname = nil, @name_column_number = 0)
       @body = Expressions.from body
     end
 
@@ -1503,7 +1506,7 @@ module Crystal
     end
 
     def clone_without_location
-      LibDef.new(@name, @libname, @body.clone, @name_column_number)
+      LibDef.new(@name, @body.clone, @libname, @name_column_number)
     end
 
     def_equals_and_hash [@name, @libname, @body]
@@ -1564,16 +1567,11 @@ module Crystal
     def initialize(@name, @fields = [] of Arg)
     end
 
-    def ==(other : self)
-      other.name == name && other.fields == fields
-    end
-
     def accept_children(visitor)
       @fields.each &.accept visitor
     end
 
-    # TODO: changing this to def_equals_and_hash crashes the compiler: investigate.
-    def_hash [@name, @fields]
+    def_equals_and_hash [@name, @fields]
   end
 
   class StructDef < StructOrUnionDef
@@ -1599,7 +1597,7 @@ module Crystal
     property :constants
     property :base_type
 
-    def initialize(@name, @constants, @base_type = nil)
+    def initialize(@name, @constants = [] of Arg, @base_type = nil)
     end
 
     def accept_children(visitor)

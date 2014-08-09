@@ -91,7 +91,7 @@ class Dir
     end
 
     components.each do |component|
-      subpath = File.join({subpath, component})
+      subpath = File.join subpath, component
 
       mkdir(subpath, mode) unless Dir.exists?(subpath)
     end

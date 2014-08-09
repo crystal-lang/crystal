@@ -134,11 +134,11 @@ describe "MacroExpander" do
     end
 
     it "expands macro with for over range literal, evaluating elements" do
-      assert_macro "x, y", "{%for e in x..y %}{{e}}{%end%}", [NumberLiteral.new(3, :i32), NumberLiteral.new(6, :i32)] of ASTNode, "3456"
+      assert_macro "x, y", "{%for e in x..y %}{{e}}{%end%}", [NumberLiteral.new(3), NumberLiteral.new(6)] of ASTNode, "3456"
     end
 
     it "expands macro with for over range literal, evaluating elements (exclusive)" do
-      assert_macro "x, y", "{%for e in x...y %}{{e}}{%end%}", [NumberLiteral.new(3, :i32), NumberLiteral.new(6, :i32)] of ASTNode, "345"
+      assert_macro "x, y", "{%for e in x...y %}{{e}}{%end%}", [NumberLiteral.new(3), NumberLiteral.new(6)] of ASTNode, "345"
     end
   end
 
@@ -157,7 +157,7 @@ describe "MacroExpander" do
       end
 
       it "expands macro with stringify call on number" do
-        assert_macro "x", "{{x.stringify}}", [NumberLiteral.new(1, :i32)] of ASTNode, %("1")
+        assert_macro "x", "{{x.stringify}}", [NumberLiteral.new(1)] of ASTNode, %("1")
       end
     end
 
@@ -175,7 +175,7 @@ describe "MacroExpander" do
       end
 
       it "expands macro with id call on number" do
-        assert_macro "x", "{{x.id}}", [NumberLiteral.new(1, :i32)] of ASTNode, %(1)
+        assert_macro "x", "{{x.id}}", [NumberLiteral.new(1)] of ASTNode, %(1)
       end
     end
 

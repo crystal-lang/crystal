@@ -15,8 +15,8 @@ module Crystal
     end
 
     def define_object_primitives
-      object.add_def Def.new("class", [] of Arg, Primitive.new(:class))
-      # object.metaclass.add_def Def.new("name", [] of Arg, Primitive.new(:class_name))
+      object.add_def Def.new("class", body: Primitive.new(:class))
+      # object.metaclass.add_def Def.new("name", body: Primitive.new(:class_name))
     end
 
     def define_primitive_types_primitives
@@ -53,40 +53,40 @@ module Crystal
       end
 
       %w(to_i to_i8 to_i16 to_i32 to_i64 to_u to_u8 to_u16 to_u32 to_u64 to_f to_f32 to_f64).each do |op|
-        number.add_def Def.new(op, [] of Arg, cast)
+        number.add_def Def.new(op, body: cast)
       end
 
-      int.add_def Def.new("chr", [] of Arg, cast)
-      char.add_def Def.new("ord", [] of Arg, cast)
-      symbol.add_def Def.new("to_i", [] of Arg, cast)
+      int.add_def Def.new("chr", body: cast)
+      char.add_def Def.new("ord", body: cast)
+      symbol.add_def Def.new("to_i", body: cast)
     end
 
     def define_reference_primitives
-      reference.add_def Def.new("object_id", [] of Arg, Primitive.new(:object_id))
+      reference.add_def Def.new("object_id", body: Primitive.new(:object_id))
 
       [object, value, bool, char, int32, int64, float32, float64, symbol, reference].each do |type|
-        type.add_def Def.new("crystal_type_id", [] of Arg, Primitive.new(:object_crystal_type_id))
+        type.add_def Def.new("crystal_type_id", body: Primitive.new(:object_crystal_type_id))
       end
     end
 
     def define_pointer_primitives
       pointer.metaclass.add_def Def.new("malloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_malloc))
-      pointer.metaclass.add_def Def.new("new", [Arg.new_with_restriction("address", Path.new(["UInt64"], true))], Primitive.new(:pointer_new))
-      pointer.add_def Def.new("value", [] of Arg, Primitive.new(:pointer_get))
-      pointer.add_def Def.new("value=", [Arg.new_with_restriction("value", Path.new(["T"]))], Primitive.new(:pointer_set))
-      pointer.add_def Def.new("address", [] of Arg, Primitive.new(:pointer_address))
+      pointer.metaclass.add_def Def.new("new", [Arg.new("address", restriction: Path.global("UInt64"))], Primitive.new(:pointer_new))
+      pointer.add_def Def.new("value", body: Primitive.new(:pointer_get))
+      pointer.add_def Def.new("value=", [Arg.new("value", restriction: Path.new("T"))], Primitive.new(:pointer_set))
+      pointer.add_def Def.new("address", body: Primitive.new(:pointer_address))
       pointer.add_def Def.new("realloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_realloc))
       pointer.add_def Def.new("+", [Arg.new_with_type("offset", int64)], Primitive.new(:pointer_add))
-      pointer.add_def Def.new("-", [Arg.new_with_restriction("other", Self.new)], Primitive.new(:pointer_diff))
+      pointer.add_def Def.new("-", [Arg.new("other", restriction: Self.new)], Primitive.new(:pointer_diff))
     end
 
     def define_static_array_primitives
-      static_array.metaclass.add_def Def.new("new", [] of Arg, Primitive.new(:static_array_new))
+      static_array.metaclass.add_def Def.new("new", body: Primitive.new(:static_array_new))
     end
 
     def define_symbol_primitives
-      symbol.add_def Def.new("hash", [] of Arg, Primitive.new(:symbol_hash))
-      symbol.add_def Def.new("to_s", [] of Arg, Primitive.new(:symbol_to_s))
+      symbol.add_def Def.new("hash", body: Primitive.new(:symbol_hash))
+      symbol.add_def Def.new("to_s", body: Primitive.new(:symbol_to_s))
     end
 
     def sprintf(llvm_mod)

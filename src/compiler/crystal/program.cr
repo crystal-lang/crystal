@@ -63,7 +63,7 @@ module Crystal
 
       @static_array = @types["StaticArray"] = StaticArrayType.new self, self, "StaticArray", @value, ["T", "N"]
       @static_array.struct = true
-      @static_array.declare_instance_var("@buffer", Path.new(["T"]))
+      @static_array.declare_instance_var("@buffer", Path.new("T"))
       @static_array.instance_vars_in_initialize = Set.new(["@buffer"])
       @static_array.allocated = true
 
@@ -390,7 +390,7 @@ module Crystal
     end
 
     def static_array_of(type, num)
-      @static_array.instantiate([type, NumberLiteral.new(num, :i32)] of TypeVar)
+      @static_array.instantiate([type, NumberLiteral.new(num)] of TypeVar)
     end
 
     def new_temp_var

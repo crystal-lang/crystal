@@ -143,9 +143,9 @@ module Crystal
       end
 
       if capacity <= 64
-        call = Call.new(Path.new(["StringIO"], true), "new")
+        call = Call.new(Path.global("StringIO"), "new")
       else
-        call = Call.new(Path.new(["StringIO"], true), "new", [NumberLiteral.new(capacity, :i32)] of ASTNode)
+        call = Call.new(Path.global("StringIO"), "new", [NumberLiteral.new(capacity)] of ASTNode)
       end
 
       node.expressions.each do |piece|
@@ -176,7 +176,7 @@ module Crystal
     def transform(node : RangeLiteral)
       super
 
-      Call.new(Path.new(["Range"], true), "new", [node.from, node.to, BoolLiteral.new(node.exclusive)])
+      Call.new(Path.global("Range"), "new", [node.from, node.to, BoolLiteral.new(node.exclusive)])
     end
 
     # Transform a multi assign into many assigns.
@@ -203,7 +203,7 @@ module Crystal
         assigns << assign
 
         node.targets.each_with_index do |target, i|
-          call = Call.new(temp_var.clone, "[]", [NumberLiteral.new(i, :i32)] of ASTNode)
+          call = Call.new(temp_var.clone, "[]", [NumberLiteral.new(i)] of ASTNode)
           call.location = value.location
           assigns << transform_multi_assign_target(target, call)
         end

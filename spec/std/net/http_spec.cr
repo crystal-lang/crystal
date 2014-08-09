@@ -12,7 +12,7 @@ describe "HTTP" do
     end
 
     it "serialize POST (with body)" do
-      request = HTTP::Request.new :post, "/", nil, "thisisthebody"
+      request = HTTP::Request.new :post, "/", body: "thisisthebody"
       io = StringIO.new
       request.to_io(io)
       io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")

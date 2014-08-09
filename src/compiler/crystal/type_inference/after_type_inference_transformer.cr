@@ -281,7 +281,7 @@ module Crystal
         end
       end
 
-      call = Call.new(nil, "raise", [StringLiteral.new(ex_msg)] of ASTNode, nil, nil, nil, true)
+      call = Call.new(nil, "raise", [StringLiteral.new(ex_msg)] of ASTNode, global: true)
       call.accept TypeVisitor.new(@program)
       call
     end

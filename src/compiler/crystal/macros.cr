@@ -250,7 +250,7 @@ module Crystal
           exp.elements.each_with_index do |element, index|
             @vars[element_var.name] = element
             if index_var
-              @vars[index_var.name] = NumberLiteral.new(index, :i32)
+              @vars[index_var.name] = NumberLiteral.new(index)
             end
             node.body.accept self
           end
@@ -269,7 +269,7 @@ module Crystal
               @vars[value_var.name] = value
             end
             if index_var
-              @vars[index_var.name] = NumberLiteral.new(i, :i32)
+              @vars[index_var.name] = NumberLiteral.new(i)
             end
 
             node.body.accept self
@@ -306,9 +306,9 @@ module Crystal
 
           range = Range.new(from, to, exclusive)
           range.each_with_index do |element, index|
-            @vars[element_var.name] = NumberLiteral.new(element, :i32)
+            @vars[element_var.name] = NumberLiteral.new(element)
             if index_var
-              @vars[index_var.name] = NumberLiteral.new(index, :i32)
+              @vars[index_var.name] = NumberLiteral.new(index)
             end
             node.body.accept self
           end
@@ -729,7 +729,7 @@ module Crystal
       when "identify"
         interpret_argless_method(method, args) { StringLiteral.new(@value.tr(":", "_")) }
       when "length"
-        interpret_argless_method(method, args) { NumberLiteral.new(@value.length, :i32) }
+        interpret_argless_method(method, args) { NumberLiteral.new(@value.length) }
       when "lines"
         interpret_argless_method(method, args) { create_array_literal_from_values(@value.lines) }
       when "split"
@@ -811,7 +811,7 @@ module Crystal
       when "last"
         interpret_argless_method(method, args) { elements.last? || NilLiteral.new }
       when "length"
-        interpret_argless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
+        interpret_argless_method(method, args) { NumberLiteral.new(elements.length) }
       when "map"
         interpret_argless_method(method, args) do
           raise "map expects a block" unless block
@@ -866,7 +866,7 @@ module Crystal
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(keys.empty?) }
       when "length"
-        interpret_argless_method(method, args) { NumberLiteral.new(keys.length, :i32) }
+        interpret_argless_method(method, args) { NumberLiteral.new(keys.length) }
       when "[]"
         case args.length
         when 1
@@ -893,7 +893,7 @@ module Crystal
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
       when "length"
-        interpret_argless_method(method, args) { NumberLiteral.new(elements.length, :i32) }
+        interpret_argless_method(method, args) { NumberLiteral.new(elements.length) }
       when "[]"
         case args.length
         when 1

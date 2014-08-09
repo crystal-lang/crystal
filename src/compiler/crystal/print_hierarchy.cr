@@ -73,23 +73,7 @@ module Crystal
       puts
     end
 
-    # TODO: merge this and the next method
-    def print_type(type : NonGenericClassType)
-      print_type_name type
-
-      subtypes = type.subclasses.select { |sub| must_print?(sub) }
-      print_instance_vars type, !subtypes.empty?
-
-      with_indent do
-        print_subtypes subtypes.select { |t| !t.is_a?(GenericClassInstanceType) }
-      end
-
-      if type.is_a?(NonGenericClassType)
-        print_types type.types
-      end
-    end
-
-    def print_type(type : GenericClassInstanceType)
+    def print_type(type : NonGenericClassType | GenericClassInstanceType)
       print_type_name type
 
       subtypes = type.subclasses.select { |sub| must_print?(sub) }

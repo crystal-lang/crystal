@@ -130,7 +130,7 @@ end
 def build(code)
   node = parse code
   result = infer_type node
-  result.program.build result.node, Program::BuildOptions.single_module
+  result.program.build result.node, single_module: true
 end
 
 def run(code)

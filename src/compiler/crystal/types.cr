@@ -1307,7 +1307,7 @@ module Crystal
     def metaclass
       @metaclass ||= begin
         metaclass = MetaclassType.new(program, self)
-        metaclass.add_def Def.new("allocate", [] of Arg, Primitive.new(:allocate))
+        metaclass.add_def Def.new("allocate", body: Primitive.new(:allocate))
         metaclass
       end
     end
@@ -1597,7 +1597,7 @@ module Crystal
     def metaclass
       @metaclass ||= begin
         metaclass = MetaclassType.new(program, self)
-        metaclass.add_def Def.new("allocate", [] of Arg, Primitive.new(:allocate))
+        metaclass.add_def Def.new("allocate", body: Primitive.new(:allocate))
         metaclass
       end
     end
@@ -1829,8 +1829,8 @@ module Crystal
   class TupleType < GenericClassType
     def initialize(program, container, name, superclass, type_vars, add_subclass = true)
       super
-      add_def Def.new("length", [] of Arg, Primitive.new(:tuple_length))
-      add_def Def.new("[]", ([Arg.new_with_restriction("index", Path.new(["Int32"], true))]), Primitive.new(:tuple_indexer))
+      add_def Def.new("length", body: Primitive.new(:tuple_length))
+      add_def Def.new("[]", [Arg.new("index", restriction: Path.global("Int32"))], Primitive.new(:tuple_indexer))
       @variadic = true
     end
 
@@ -2207,14 +2207,14 @@ module Crystal
       vars.each do |var|
         @vars[var.name] = var
         add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:struct_set))
-        add_def Def.new(var.name, [] of Arg, Primitive.new(:struct_get))
+        add_def Def.new(var.name, body: Primitive.new(:struct_get))
       end
     end
 
     def metaclass
       @metaclass ||= begin
         metaclass = MetaclassType.new(program, self)
-        metaclass.add_def Def.new("new", [] of Arg, Primitive.new(:struct_new))
+        metaclass.add_def Def.new("new", body: Primitive.new(:struct_new))
         metaclass
       end
     end
@@ -2233,14 +2233,14 @@ module Crystal
       vars.each do |var|
         @vars[var.name] = var
         add_def Def.new("#{var.name}=", [Arg.new_with_type("value", var.type)], Primitive.new(:union_set))
-        add_def Def.new(var.name, [] of Arg, Primitive.new(:union_get))
+        add_def Def.new(var.name, body: Primitive.new(:union_get))
       end
     end
 
     def metaclass
       @metaclass ||= begin
         metaclass = MetaclassType.new(program, self)
-        metaclass.add_def Def.new("new", [] of Arg, Primitive.new(:union_new))
+        metaclass.add_def Def.new("new", body: Primitive.new(:union_new))
         metaclass
       end
     end
@@ -3073,9 +3073,9 @@ module Crystal
 
       args = arg_types.map_with_index { |type, i| Arg.new_with_type("arg#{i}", type) }
       add_def Def.new("call", args, Primitive.new(:fun_call, return_type))
-      add_def Def.new("arity", [] of Arg, NumberLiteral.new(fun_types.length - 1, :i32))
-      add_def Def.new("pointer", [] of Arg, Primitive.new(:fun_pointer, @program.pointer_of(@program.void)))
-      add_def Def.new("closure?", [] of Arg, Primitive.new(:fun_closure?, @program.bool))
+      add_def Def.new("arity", body: NumberLiteral.new(fun_types.length - 1))
+      add_def Def.new("pointer", body: Primitive.new(:fun_pointer, @program.pointer_of(@program.void)))
+      add_def Def.new("closure?", body: Primitive.new(:fun_closure?, @program.bool))
     end
 
     def struct?

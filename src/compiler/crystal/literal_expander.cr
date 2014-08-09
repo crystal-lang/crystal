@@ -30,7 +30,7 @@ module Crystal
     def expand(node : ArrayLiteral)
       if node_of = node.of
         if node.elements.length == 0
-          generic = Generic.new(Path.new(["Array"], true), [node_of] of ASTNode)
+          generic = Generic.new(Path.global("Array"), [node_of] of ASTNode)
           generic.location = node.location
 
           call = Call.new(generic, "new")
@@ -46,17 +46,17 @@ module Crystal
       length = node.elements.length
       capacity = length
 
-      generic = Generic.new(Path.new(["Array"], true), [type_var] of ASTNode)
+      generic = Generic.new(Path.global("Array"), [type_var] of ASTNode)
       generic.location = node.location
 
-      constructor = Call.new(generic, "new", [NumberLiteral.new(capacity, :i32)] of ASTNode)
+      constructor = Call.new(generic, "new", [NumberLiteral.new(capacity)] of ASTNode)
       constructor.location = node.location
 
       temp_var = new_temp_var
       assign = Assign.new(temp_var.clone, constructor)
       assign.location = node.location
 
-      set_length = Call.new(temp_var.clone, "length=", [NumberLiteral.new(length, :i32)] of ASTNode)
+      set_length = Call.new(temp_var.clone, "length=", [NumberLiteral.new(length)] of ASTNode)
       set_length.location = node.location
 
       get_buffer = Call.new(temp_var.clone, "buffer")
@@ -71,7 +71,7 @@ module Crystal
       exps = [assign, set_length, assign_buffer] of ASTNode
 
       node.elements.each_with_index do |elem, i|
-        assign_index = Call.new(buffer.clone, "[]=", [NumberLiteral.new(i, :i32), elem] of ASTNode)
+        assign_index = Call.new(buffer.clone, "[]=", [NumberLiteral.new(i), elem] of ASTNode)
         assign_index.location = node.location
 
         exps << assign_index
@@ -117,7 +117,7 @@ module Crystal
         type_vars = [typeof_key, typeof_value] of ASTNode
       end
 
-      generic = Generic.new(Path.new(["Hash"], true), type_vars)
+      generic = Generic.new(Path.global("Hash"), type_vars)
       generic.location = node.location
 
       constructor = Call.new(generic, "new")
@@ -164,7 +164,7 @@ module Crystal
       global_name = "$Regex:#{index}"
       temp_name = @program.new_temp_var_name
       first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
-      regex = Call.new(Path.new(["Regex"], true), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers, :i32)] of ASTNode)
+      regex = Call.new(Path.global("Regex"), "new", [StringLiteral.new(node.value), NumberLiteral.new(node.modifiers)] of ASTNode)
       second_assign = Assign.new(Global.new(global_name), regex)
       If.new(first_assign, Var.new(temp_name), second_assign)
     end

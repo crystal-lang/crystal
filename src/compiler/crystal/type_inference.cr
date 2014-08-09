@@ -2268,7 +2268,7 @@ module Crystal
 
             mapping = {} of String => ASTNode
             type.type_vars.zip(current_type.type_vars) do |type_var, current_type_var|
-              mapping[type_var] = Path.new([current_type_var])
+              mapping[type_var] = Path.new(current_type_var)
             end
             module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
           else

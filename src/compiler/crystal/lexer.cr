@@ -200,9 +200,9 @@ module Crystal
         when '>'
           next_char :"->"
         when '0'
-          scan_zero_number(start, -1, true)
+          scan_zero_number start, multiplier: -1, negative: true
         when '1', '2', '3', '4', '5', '6', '7', '8', '9'
-          scan_number(start, true)
+          scan_number start, negative: true
         else
           @token.type = :"-"
         end
