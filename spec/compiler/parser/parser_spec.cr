@@ -760,6 +760,9 @@ describe "Parser" do
   it_parses "def foo(x, *y); 1; end", Def.new("foo", [Arg.new("x"), Arg.new("y")], 1.int32, nil, nil, nil, nil, false, 1)
   it_parses "macro foo(x, *y);end", Macro.new("foo", [Arg.new("x"), Arg.new("y")], Expressions.from([] of ASTNode), nil, 1)
 
+  it_parses "def foo *y; 1; end", Def.new("foo", [Arg.new("y")], 1.int32, nil, nil, nil, nil, false, 0)
+  it_parses "macro foo *y;end", Macro.new("foo", [Arg.new("y")], Expressions.from([] of ASTNode), nil, 0)
+
   it_parses "def foo(x = 1, *y); 1; end", Def.new("foo", [Arg.new("x", 1.int32), Arg.new("y")], 1.int32, nil, nil, nil, nil, false, 1)
 
   it_parses "foo *bar", Call.new(nil, "foo", ["bar".call.splat] of ASTNode)

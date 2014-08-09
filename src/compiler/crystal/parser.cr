@@ -1694,7 +1694,7 @@ module Crystal
           index += 1
         end
         next_token
-      when :IDENT
+      when :IDENT, :"*"
         while @token.type != :NEWLINE && @token.type != :";"
           extras = parse_arg(args, nil, false, found_default_value, found_splat)
           if !found_default_value && extras.default_value
@@ -2015,7 +2015,7 @@ module Crystal
           index += 1
         end
         next_token_skip_space
-      when :IDENT, :INSTANCE_VAR
+      when :IDENT, :INSTANCE_VAR, :"*"
         while @token.type != :NEWLINE && @token.type != :";"
           extras = parse_arg(args, extra_assigns, false, found_default_value, found_splat)
           if !found_default_value && extras.default_value
