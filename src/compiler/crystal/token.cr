@@ -12,9 +12,9 @@ module Crystal
     property :string_state
     property :macro_state
 
-    record MacroState, [whitespace, nest, string_state, beginning_of_line] do
+    record MacroState, [whitespace, nest, string_state, beginning_of_line, yields] do
       def self.default
-        MacroState.new(true, 0, nil, true)
+        MacroState.new(true, 0, nil, true, false)
       end
     end
 

@@ -516,4 +516,20 @@ describe "Code gen: macro" do
       foo "yellow", 1, 1, 1, "cool"
       )).to_string.should eq("cool")
   end
+
+  it "expands macro that yields" do
+    run(%(
+      def foo
+        {% for i in 0 .. 2 %}
+          yield {{i}}
+        {% end %}
+      end
+
+      a = 0
+      foo do |x|
+        a += x
+      end
+      a
+      )).to_i.should eq(3)
+  end
 end

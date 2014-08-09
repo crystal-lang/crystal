@@ -1741,6 +1741,10 @@ module Crystal
       while true
         next_macro_token macro_state, skip_whitespace
         macro_state = @token.macro_state
+        if macro_state.yields
+          @yields = 1
+        end
+
         skip_whitespace = false
 
         case @token.type

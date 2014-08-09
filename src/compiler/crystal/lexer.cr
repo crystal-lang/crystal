@@ -1449,6 +1449,7 @@ module Crystal
       whitespace = macro_state.whitespace
       string_state = macro_state.string_state
       beginning_of_line = macro_state.beginning_of_line
+      yields = false
 
       if skip_whitespace
         while current_char.whitespace?
@@ -1488,7 +1489,7 @@ module Crystal
         next_char
         @token.type = :MACRO_LITERAL
         @token.value = "{"
-        @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line)
+        @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line, yields)
         return @token
       end
 
@@ -1498,13 +1499,13 @@ module Crystal
           beginning_of_line = false
           next_char
           @token.type = :MACRO_EXPRESSION_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line, yields)
           return @token
         when '%'
           beginning_of_line = false
           next_char
           @token.type = :MACRO_CONTROL_START
-          @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line, yields)
           return @token
         end
       end
@@ -1561,6 +1562,11 @@ module Crystal
             !next_char.ident_part_or_end?
           char = current_char
           nest += 1
+          whitespace = true
+          beginning_of_line = false
+        elsif !string_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !next_char.ident_part_or_end?
+          yields = true
+          char = current_char
           whitespace = true
           beginning_of_line = false
         else
@@ -1640,7 +1646,7 @@ module Crystal
 
       @token.type = :MACRO_LITERAL
       @token.value = string_range(start)
-      @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line)
+      @token.macro_state = Token::MacroState.new(whitespace, nest, string_state, beginning_of_line, yields)
 
       @token
     end
