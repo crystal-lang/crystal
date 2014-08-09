@@ -1916,10 +1916,6 @@ module Crystal
         node.type = mod.int64
       when :class_name
         node.type = mod.string
-      when :tuple_length
-        node.type = mod.int32
-      when :tuple_indexer
-        visit_tuple_indexer node
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"
       end
@@ -2015,11 +2011,6 @@ module Crystal
     def visit_union_get(node)
       scope = @scope as CUnionType
       node.bind_to scope.vars[untyped_def.name]
-    end
-
-    def visit_tuple_indexer(node)
-      tuple_type = scope as TupleInstanceType
-      node.type = @mod.type_merge tuple_type.tuple_types
     end
 
     def visit(node : Self)

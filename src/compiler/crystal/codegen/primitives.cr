@@ -72,12 +72,8 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
               codegen_primitive_fun_pointer node, target_def, call_args
             when :pointer_diff
               codegen_primitive_pointer_diff node, target_def, call_args
-            when :tuple_length
-              codegen_primitive_tuple_length node, target_def, call_args
             when :tuple_indexer_known_index
               codegen_primitive_tuple_indexer_known_index node, target_def, call_args
-            when :tuple_indexer
-              codegen_primitive_tuple_indexer node, target_def, call_args
             else
               raise "Bug: unhandled primitive in codegen: #{node.name}"
             end
@@ -474,36 +470,10 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
     @builder.exact_sdiv sub, ptr2int(gep(LLVM.pointer_null(type_of(call_args[0])), 1), LLVM::Int64)
   end
 
-  def codegen_primitive_tuple_length(node, target_def, call_args)
-    type = context.type as TupleInstanceType
-    int(type.tuple_types.length)
-  end
-
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)
     type = context.type as TupleInstanceType
     index = (node as TupleIndexer).index
     ptr = aggregate_index call_args[0], index
     to_lhs ptr, type.tuple_types[index]
-  end
-
-  def codegen_primitive_tuple_indexer(node, target_def, call_args)
-    type = context.type as TupleInstanceType
-    tuple = call_args[0]
-    index = call_args[1]
-    Phi.open(self, node, @needs_value) do |phi|
-      type.tuple_types.each_with_index do |tuple_type, i|
-        current_index_label, next_index_label = new_blocks "current_index", "next_index"
-        cond equal?(index, int(i)), current_index_label, next_index_label
-
-        position_at_end current_index_label
-
-        ptr = aggregate_index tuple, i
-        value = to_lhs(ptr, tuple_type)
-        phi.add value, tuple_type
-
-        position_at_end next_index_label
-      end
-      accept index_out_of_bounds_exception_call
-    end
   end
 end

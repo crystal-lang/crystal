@@ -14,20 +14,12 @@ describe "Type inference: tuples" do
     assert_type("{1}; {1, 2}") { tuple_of([int32, int32] of TypeVar) }
   end
 
-  it "types tuple length" do
-    assert_type("{1, 2}.length") { int32 }
-  end
-
   it "types tuple [0]" do
     assert_type("{1, 'a'}[0]") { int32 }
   end
 
   it "types tuple [1]" do
     assert_type("{1, 'a'}[1]") { char }
-  end
-
-  it "types tuple [i]" do
-    assert_type("x = 1; {1, 'a'}[x]") { union_of(int32, char) }
   end
 
   it "gives error when indexing out of range" do

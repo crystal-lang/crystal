@@ -780,14 +780,6 @@ module Crystal
       call
     end
 
-    def index_out_of_bounds_exception_call
-      @index_out_of_bounds_exception_call ||= begin
-        call = Call.new(nil, "raise", [StringLiteral.new("index out of bounds")] of ASTNode, global: true)
-        @mod.infer_type call
-        call
-      end
-    end
-
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
         call = Call.new(nil, "raise", [StringLiteral.new("passing a closure to C is not allowed")] of ASTNode, global: true)

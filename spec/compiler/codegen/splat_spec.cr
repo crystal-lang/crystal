@@ -4,6 +4,10 @@ require "../../spec_helper"
 describe "Code gen: splat" do
   it "splats" do
     run(%(
+      class Tuple
+        def length; {{@length}}; end
+      end
+
       def foo(*args)
         args.length
       end
@@ -14,6 +18,10 @@ describe "Code gen: splat" do
 
   it "splats with another arg" do
     run(%(
+      class Tuple
+        def length; {{@length}}; end
+      end
+
       def foo(x, *args)
         x + args.length
       end
@@ -24,6 +32,10 @@ describe "Code gen: splat" do
 
   it "splats with two other args" do
     run(%(
+      class Tuple
+        def length; {{@length}}; end
+      end
+
       def foo(x, *args, z)
         x + args.length + z
       end
@@ -45,6 +57,10 @@ describe "Code gen: splat" do
 
   it "splats without args" do
     run(%(
+      class Tuple
+        def length; {{@length}}; end
+      end
+
       def foo(*args)
         args.length
       end
@@ -55,6 +71,10 @@ describe "Code gen: splat" do
 
   it "splats with default value" do
     run(%(
+      class Tuple
+        def length; {{@length}}; end
+      end
+
       def foo(x = 100, *args)
         x + args.length
       end
@@ -65,6 +85,10 @@ describe "Code gen: splat" do
 
   it "splats with default value (2)" do
     run(%(
+      class Tuple
+        def length; {{@length}}; end
+      end
+
       def foo(x, y = 100, *args)
         x + y + args.length
       end
@@ -75,6 +99,10 @@ describe "Code gen: splat" do
 
   it "splats with default value (3)" do
     run(%(
+      class Tuple
+        def length; {{@length}}; end
+      end
+
       def foo(x, y = 100, *args)
         x + y + args.length
       end

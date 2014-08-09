@@ -1834,8 +1834,6 @@ module Crystal
   class TupleType < GenericClassType
     def initialize(program, container, name, superclass, type_vars, add_subclass = true)
       super
-      add_def Def.new("length", body: Primitive.new(:tuple_length))
-      add_def Def.new("[]", [Arg.new("index", restriction: Path.global("Int32"))], Primitive.new(:tuple_indexer))
       @variadic = true
     end
 

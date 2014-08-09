@@ -1,7 +1,38 @@
 #!/usr/bin/env bin/crystal --run
 require "spec"
 
+class TupleSpecObj
+  getter x
+
+  def initialize(@x)
+  end
+
+  def clone
+    TupleSpecObj.new(@x)
+  end
+end
+
 describe "Tuple" do
+  it "does length" do
+    {1, 2, 1, 2}.length.should eq(4)
+  end
+
+  it "does []" do
+    a = {1, 2.5}
+    i = 0
+    a[i].should eq(1)
+    i = 1
+    a[i].should eq(2.5)
+  end
+
+  pending "does [] raises index out of bounds" do
+    a = {1, 2.5}
+    i = 2
+    expect_raises IndexOutOfBounds { a[i] }
+    i = -1
+    expect_raises IndexOutOfBounds { a[i] }
+  end
+
   it "does ==" do
     a = {1, 2}
     b = {3, 4}
@@ -49,5 +80,25 @@ describe "Tuple" do
       a += i
     end
     a.should eq(6)
+  end
+
+  it "does dup" do
+    r1, r2 = TupleSpecObj.new(10), TupleSpecObj.new(20)
+    t = {r1, r2}
+    u = t.dup
+    u.length.should eq(2)
+    u[0].should be(r1)
+    u[1].should be(r2)
+  end
+
+  it "does clone" do
+    r1, r2 = TupleSpecObj.new(10), TupleSpecObj.new(20)
+    t = {r1, r2}
+    u = t.clone
+    u.length.should eq(2)
+    u[0].x.should eq(r1.x)
+    u[0].should_not be(r1)
+    u[1].x.should eq(r2.x)
+    u[1].should_not be(r2)
   end
 end

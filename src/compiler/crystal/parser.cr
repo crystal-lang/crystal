@@ -1742,7 +1742,7 @@ module Crystal
         next_macro_token macro_state, skip_whitespace
         macro_state = @token.macro_state
         if macro_state.yields
-          @yields = 1
+          @yields = 0
         end
 
         skip_whitespace = false
