@@ -1,5 +1,13 @@
+ifdef darwin
+  lib LibCpp("c++")
+  end
+end
 
-lib LibLLVM("`#{__DIR__}/lib_llvm.sh`")
+lib LibStdcpp("stdc++")
+end
+
+
+lib LibLLVM("`(llvm-config-3.3 --libs 2> /dev/null; llvm-config-3.3 --ldflags 2> /dev/null) || (llvm-config --libs 2>/dev/null; llvm-config --ldflags 2>/dev/null)`")
   type ContextRef : Void*
   type ModuleRef : Void*
   type TypeRef : Void*
