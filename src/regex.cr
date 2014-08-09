@@ -34,7 +34,6 @@ class Regex
     if ret > 0
       $~ = MatchData.new(self, @re, str, pos, ovector, @captures)
     else
-      $~ = MatchData::EMPTY
       nil
     end
   end
@@ -51,8 +50,6 @@ class Regex
 end
 
 class MatchData
-  EMPTY = MatchData.new("", nil, "", 0, Pointer(Int32).null, 0)
-
   getter regex
   getter length
   getter string
@@ -81,7 +78,7 @@ class MatchData
   end
 
   def [](group_name : String)
-    PCRE.get_named_substring(@code.not_nil!, @string, @ovector, @length + 1, group_name, out value)
+    PCRE.get_named_substring(@code, @string, @ovector, @length + 1, group_name, out value)
     String.new(value)
   end
 
@@ -105,5 +102,3 @@ class MatchData
     raise IndexOutOfBounds.new if index > @length
   end
 end
-
-$~ = MatchData::EMPTY

@@ -4,7 +4,7 @@ require "spec"
 describe "Regex" do
   it "matches with =~ and captures" do
     ("fooba" =~ /f(o+)(bar?)/).should eq(0)
-    $~.length.should eq(2)
+    $~.not_nil!.length.should eq(2)
     $1.should eq("oo")
     $2.should eq("ba")
   end
@@ -12,7 +12,7 @@ describe "Regex" do
   it "matches with === and captures" do
     "foo" =~ /foo/
     (/f(o+)(bar?)/ === "fooba").should be_true
-    $~.length.should eq(2)
+    $~.not_nil!.length.should eq(2)
     $1.should eq("oo")
     $2.should eq("ba")
   end
@@ -33,8 +33,8 @@ describe "Regex" do
 
   it "capture named group" do
     ("fooba" =~ /f(?<g1>o+)(?<g2>bar?)/).should eq(0)
-    $~["g1"].should eq("oo")
-    $~["g2"].should eq("ba")
+    $~.not_nil!["g1"].should eq("oo")
+    $~.not_nil!["g2"].should eq("ba")
   end
 
   it "matches multiline" do
