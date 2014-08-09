@@ -2,7 +2,7 @@ struct StaticArray(T, N)
   include Enumerable(T)
 
   def self.new
-    array = new
+    array :: self
     N.times do |i|
       array.buffer[i] = yield i
     end
@@ -41,7 +41,7 @@ struct StaticArray(T, N)
     N
   end
 
-  def set_all_to(value)
+  def []=(value : T)
     length.times do |i|
       buffer[i] = value
     end

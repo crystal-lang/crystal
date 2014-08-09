@@ -2,7 +2,7 @@ class BufferedIO(T)
   include IO
 
   def initialize(@io : T)
-    @buffer = StaticArray(UInt8, 16384).new
+    @buffer :: UInt8[16384]
     @buffer_rem = @buffer.to_slice[0, 0]
     @out_buffer = StringIO.new
   end

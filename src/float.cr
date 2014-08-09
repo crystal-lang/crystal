@@ -68,8 +68,7 @@ struct Float64
   end
 
   def to_s(io : IO)
-    chars :: UInt8[22]
-    chars.set_all_to 0_u8
+    chars = StaticArray(UInt8, 22).new(0_u8)
     C.sprintf(chars, "%g", self)
     io.write(chars.to_slice, C.strlen(chars.buffer))
   end

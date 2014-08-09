@@ -3,12 +3,12 @@ require "spec"
 
 describe "StaticArray" do
   it "creates with new" do
-    a = StaticArray(Int32, 3).new
+    a = StaticArray(Int32, 3).new 0
     a.length.should eq(3)
   end
 
   it "creates with new and value" do
-    a = StaticArray(Int32, 3).new(1)
+    a = StaticArray(Int32, 3).new 1
     a.length.should eq(3)
     a[0].should eq(1)
     a[1].should eq(1)
@@ -24,14 +24,14 @@ describe "StaticArray" do
   end
 
   it "raises index out of bounds on read" do
-    a = StaticArray(Int32, 3).new
+    a = StaticArray(Int32, 3).new 0
     expect_raises IndexOutOfBounds do
       a[4]
     end
   end
 
   it "raises index out of bounds on write" do
-    a = StaticArray(Int32, 3).new
+    a = StaticArray(Int32, 3).new 0
     expect_raises IndexOutOfBounds do
       a[4] = 1
     end

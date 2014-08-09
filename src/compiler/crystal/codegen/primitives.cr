@@ -38,8 +38,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
               codegen_primitive_pointer_realloc node, target_def, call_args
             when :pointer_add
               codegen_primitive_pointer_add node, target_def, call_args
-            when :static_array_new
-              codegen_primitive_static_array_new node, target_def, call_args
             when :struct_new
               codegen_primitive_struct_new node, target_def, call_args
             when :struct_set
@@ -300,10 +298,6 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
 
   def codegen_primitive_pointer_add(node, target_def, call_args)
     gep call_args[0], call_args[1]
-  end
-
-  def codegen_primitive_static_array_new(node, target_def, call_args)
-    alloca(llvm_type(node.type))
   end
 
   def codegen_primitive_struct_new(node, target_def, call_args)

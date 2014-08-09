@@ -10,7 +10,6 @@ module Crystal
       define_primitive_types_primitives
       define_reference_primitives
       define_pointer_primitives
-      define_static_array_primitives
       define_symbol_primitives
     end
 
@@ -78,10 +77,6 @@ module Crystal
       pointer.add_def Def.new("realloc", [Arg.new_with_type("size", uint64)], Primitive.new(:pointer_realloc))
       pointer.add_def Def.new("+", [Arg.new_with_type("offset", int64)], Primitive.new(:pointer_add))
       pointer.add_def Def.new("-", [Arg.new("other", restriction: Self.new)], Primitive.new(:pointer_diff))
-    end
-
-    def define_static_array_primitives
-      static_array.metaclass.add_def Def.new("new", body: Primitive.new(:static_array_new))
     end
 
     def define_symbol_primitives
