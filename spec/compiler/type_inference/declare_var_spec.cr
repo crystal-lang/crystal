@@ -110,4 +110,30 @@ describe "Type inference: declare var" do
       Bar.new.x
       ") { int32 }
   end
+
+  it "errors if declaring generic type without type vars" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      x :: Foo
+      ),
+      "can't declare variable of generic non-instantiated type Foo"
+  end
+
+  it "errors if declaring generic type without type vars (with instance var)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar
+        def initialize
+          @x :: Foo
+        end
+      end
+
+      Bar.new
+      ),
+      "can't declare variable of generic non-instantiated type Foo"
+  end
 end

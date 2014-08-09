@@ -222,7 +222,8 @@ module Crystal
       case var = node.var
       when Var
         node.declared_type.accept self
-        node.type = node.declared_type.type.instance_type
+        node.type = check_declare_var_type node
+
         var.bind_to node
 
         meta_var = new_meta_var(var.name)
@@ -234,7 +235,7 @@ module Crystal
         type = scope? || current_type
         if @untyped_def
           node.declared_type.accept self
-          node.type = node.declared_type.type.instance_type
+          node.type = check_declare_var_type node
           ivar = lookup_instance_var var
           ivar.bind_to node
           var.bind_to node
@@ -247,7 +248,7 @@ module Crystal
         case type
         when NonGenericClassType
           node.declared_type.accept self
-          node.type = node.declared_type.type.instance_type
+          node.type = check_declare_var_type node
           type.declare_instance_var(var.name, node.type)
         when GenericClassType
           type.declare_instance_var(var.name, node.declared_type)
@@ -259,6 +260,16 @@ module Crystal
       end
 
       false
+    end
+
+    def check_declare_var_type(node)
+      type = node.declared_type.type.instance_type
+
+      if type.is_a?(GenericClassType)
+        node.raise "can't declare variable of generic non-instantiated type #{type}"
+      end
+
+      type
     end
 
     def visit(node : Global)
