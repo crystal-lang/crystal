@@ -1,4 +1,4 @@
-## Next
+## 0.4.1 (2014-08-09)
 
 * Fixed [#185](https://github.com/manastech/crystal/issues/185): `-e` flag stopped working.
 * Added a `@length` compile-time variable available inside tuples that allows to do loop unrolling.
