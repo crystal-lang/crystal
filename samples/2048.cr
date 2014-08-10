@@ -60,27 +60,25 @@ module Screen
     STDIN.raw do |io|
       input = io.read 1
       if input == "\e"
-        remaining = io.read_nonblock 3
-        remaining = io.read_nonblock 2 unless remaining
+        remaining = io.read_nonblock(2)
+        remaining = io.read_nonblock(1) rescue remaining
         input = input+remaining if remaining
       end
 
       case input
-      when "\x1B[A"
+      when "\x1B[A", "w"
         :up
-      when "\x1B[B"
+      when "\x1B[B", "s"
         :down
-      when "\x1B[C"
+      when "\x1B[C", "d"
         :right
-      when "\x1B[D"
+      when "\x1B[D", "a"
         :left
       when "\x1B"
         :escape
       when "\x03"
         :ctrl_c
-      when "q"
-        :q
-      when "Q"
+      when "q", "Q"
         :q
       else
         :unknown

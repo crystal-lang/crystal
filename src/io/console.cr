@@ -1,6 +1,6 @@
 lib Termios
   alias Cc = Char
-  alias Tcflag = UInt32
+  alias Tcflag = UInt64
 
   struct Struct
     iflag : Tcflag
@@ -230,8 +230,10 @@ struct CFileIO
     begin
       String.new_with_capacity_and_length(length) do |buffer|
         read_length = read Slice.new(buffer, length)
-        if read_length == 0 || C.errno == C::EWOULDBLOCK || C.errno == C::EAGAIN
-          raise "exception in read_nonblock"
+        if read_length == 0
+          raise "read_nonblock: read nothing"
+        elsif C.errno == C::EWOULDBLOCK
+          raise Errno.new "exception in read_nonblock"
         else
           read_length.to_i
         end
