@@ -180,18 +180,18 @@ struct CFileIO
 
   def cooked!
     mode = Pointer(Termios::Struct).malloc 1_u64
-    mode.value.iflag = mode.value.iflag | Termios::IFlag::BRKINT |
-                  Termios::IFlag::ISTRIP |
-                  Termios::IFlag::ICRNL |
-                  Termios::IFlag::IXON
-    mode.value.oflag = mode.value.oflag | Termios::OFlag::OPOST
-    mode.value.lflag = mode.value.lflag | Termios::LFlag::ECHO |
-                  Termios::LFlag::ECHOE |
-                  Termios::LFlag::ECHOK |
-                  Termios::LFlag::ECHONL |
-                  Termios::LFlag::ICANON |
-                  Termios::LFlag::ISIG |
-                  Termios::LFlag::IEXTEN
+    mode.value.iflag |= Termios::IFlag::BRKINT |
+                        Termios::IFlag::ISTRIP |
+                        Termios::IFlag::ICRNL  |
+                        Termios::IFlag::IXON
+    mode.value.oflag |= Termios::OFlag::OPOST
+    mode.value.lflag |= Termios::LFlag::ECHO   |
+                        Termios::LFlag::ECHOE  |
+                        Termios::LFlag::ECHOK  |
+                        Termios::LFlag::ECHONL |
+                        Termios::LFlag::ICANON |
+                        Termios::LFlag::ISIG   |
+                        Termios::LFlag::IEXTEN
     self.tc_mode = mode
   end
 
@@ -225,7 +225,7 @@ struct CFileIO
 
   def read_nonblock(length)
     before = C.fcntl(fd, C::FCNTL::F_GETFL)
-    C.fcntl(fd, C::FCNTL::F_SETFL, before | C::FD::O_NONBLOCK)
+    C.fcntl(fd, C::FCNTL::F_SETFL, before | C::O_NONBLOCK)
 
     begin
       String.new_with_capacity_and_length(length) do |buffer|

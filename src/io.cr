@@ -11,6 +11,7 @@ lib C
     O_APPEND   = 00002000
     O_CREAT    = 00000100
     O_TRUNC    = 00001000
+    O_NONBLOCK = 00004000
   elsif darwin
     O_RDONLY   = 0x0000
     O_WRONLY   = 0x0001
@@ -18,13 +19,10 @@ lib C
     O_APPEND   = 0x0008
     O_CREAT    = 0x0200
     O_TRUNC    = 0x0400
+    O_NONBLOCK = 0x0004
   end
 
   S_IRWXU    = 0000700
-
-  enum FD
-    O_NONBLOCK = 04000
-  end
 
   EWOULDBLOCK = 140
   EAGAIN      = 11

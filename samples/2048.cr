@@ -60,9 +60,10 @@ module Screen
     STDIN.raw do |io|
       input = io.read 1
       if input == "\e"
-        remaining = io.read_nonblock(2)
-        remaining = io.read_nonblock(1) rescue remaining
-        input = input+remaining if remaining
+        next_two_bytes = io.read_nonblock(2) rescue nil
+        third_byte = io.read_nonblock(1) rescue nil
+        input += next_two_bytes if next_two_bytes
+        input += third_byte if third_byte
       end
 
       case input
