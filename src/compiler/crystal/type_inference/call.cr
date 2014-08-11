@@ -1053,6 +1053,10 @@ module Crystal
           new_vars.push Var.new(arg.name)
         end
 
+        if splat_index = match.def.splat_index
+          new_vars[splat_index] = Splat.new(new_vars[splat_index])
+        end
+
         assign = Assign.new(var, alloc)
         call_gc = Call.new(Path.global("GC"), "add_finalizer", [var] of ASTNode)
         init = Call.new(var, "initialize", new_vars)
@@ -1063,7 +1067,10 @@ module Crystal
         exps << init
         exps << var
 
-        match_def = Def.new("new", match.def.args.clone, exps)
+        def_args = match.def.args.clone
+
+        match_def = Def.new("new", def_args, exps)
+        match_def.splat_index = match.def.splat_index
 
         # Forward block argument if any
         if match.def.uses_block_arg

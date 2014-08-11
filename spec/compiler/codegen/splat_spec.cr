@@ -110,4 +110,25 @@ describe "Code gen: splat" do
       foo 10, 20, 30, 40
       )).to_i.should eq(32)
   end
+
+  it "splats in initialize" do
+    run(%(
+      class Foo
+        def initialize(*args)
+          @x, @y = args
+        end
+
+        def x
+          @x
+        end
+
+        def y
+          @y
+        end
+      end
+
+      foo = Foo.new 1, 2
+      foo.x + foo.y
+      )).to_i.should eq(3)
+  end
 end
