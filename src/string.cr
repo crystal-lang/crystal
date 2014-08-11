@@ -631,6 +631,14 @@ class String
     self
   end
 
+  def chars
+    chars = Array(Char).new(length)
+    each_char do |char|
+      chars << char
+    end
+    chars
+  end
+
   def each_byte
     cstr.as_enumerable(length).each do |byte|
       yield byte

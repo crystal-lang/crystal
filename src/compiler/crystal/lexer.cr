@@ -451,7 +451,7 @@ module Crystal
             value = consume_hex_escape
             @token.value = value.chr
           when 'u'
-            value = consume_unicode_escape
+            value = consume_char_unicode_escape
             @token.value = value.chr
           when '0', '1', '2', '3', '4', '5', '6', '7', '8'
             char_value = consume_octal_escape(char2)
@@ -1401,6 +1401,11 @@ module Crystal
           next_char
           @token.type = :STRING
           @token.value = value.chr.to_s
+        when 'u'
+          value = consume_string_unicode_escape
+          next_char
+          @token.type = :STRING
+          @token.value = value
         when '0', '1', '2', '3', '4', '5', '6', '7', '8'
           char_value = consume_octal_escape(char)
           next_char
@@ -1674,52 +1679,87 @@ module Crystal
       value
     end
 
-    def consume_unicode_escape
+    def consume_char_unicode_escape
       char = peek_next_char
       if char == '{'
-        consume_unicode_brace_escape
+        next_char
+        consume_braced_unicode_escape
       else
-        total_value = 0
-        4.times do
-          hex_value = char_to_hex(next_char) { expected_hexacimal_character_in_unicode_escape }
-          total_value = 16 * total_value + hex_value
-        end
-        total_value
+        consume_non_braced_unicode_escape
       end
     end
 
-    def consume_unicode_brace_escape
-      char = next_char
+    def consume_string_unicode_escape
+      char = peek_next_char
+      if char == '{'
+        next_char
+        consume_string_unicode_brace_escape
+      else
+        consume_non_braced_unicode_escape.chr.to_s
+      end
+    end
 
-      total_value = 0
+    def consume_string_unicode_brace_escape
+      String.build do |str|
+        while true
+          str << consume_braced_unicode_escape(allow_spaces: true).chr
+          break unless current_char == ' '
+        end
+      end
+    end
+
+    def consume_non_braced_unicode_escape
+      codepoint = 0
+      4.times do
+        hex_value = char_to_hex(next_char) { expected_hexacimal_character_in_unicode_escape }
+        codepoint = 16 * codepoint + hex_value
+      end
+      codepoint
+    end
+
+    def consume_braced_unicode_escape(allow_spaces = false)
+      codepoint = 0
       found_curly = false
+      found_space = false
+      char = '\0'
       6.times do
         char = next_char
-        if char == '}'
+        case char
+        when '}'
           found_curly = true
           break
+        when ' '
+          if allow_spaces
+            found_space = true
+            break
+          else
+            expected_hexacimal_character_in_unicode_escape
+          end
         else
           hex_value = char_to_hex(char) { expected_hexacimal_character_in_unicode_escape }
-          total_value = 16 * total_value + hex_value
+          codepoint = 16 * codepoint + hex_value
         end
       end
 
-      if total_value == 0
+      if codepoint == 0
         expected_hexacimal_character_in_unicode_escape
-      elsif total_value > 0x10FFFF
+      elsif codepoint > 0x10FFFF
         raise "invalid unicode codepoint (too large)"
       end
 
-      unless found_curly
-        char = next_char
+      unless found_space
+        unless found_curly
+          char = next_char
+        end
+
+        unless char == '}'
+          raise "expected '}' to close unicode escape"
+        end
       end
 
-      unless char == '}'
-        raise "expected '}' to close unicode escape"
-      end
-
-      total_value
+      codepoint
     end
+
 
     def expected_hexacimal_character_in_unicode_escape
       raise "expected hexadecimal character in unicode escape"

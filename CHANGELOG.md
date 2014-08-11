@@ -1,6 +1,8 @@
 ## Next
 
 * Fixed [#187](https://github.com/manastech/crystal/issues/185): mixing `yield` and `block.call` crashes the compiler.
+* Added `\u` unicode escape sequences inside strings and chars (similar to Ruby). `\x` will be deprecated as it can generate strings with invalid UTF-8 byte sequences.
+* Added `String#chars`.
 
 ## 0.4.1 (2014-08-09)
 

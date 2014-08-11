@@ -338,4 +338,36 @@ describe "Lexer string" do
     token = lexer.next_token
     token.type.should eq(:EOF)
   end
+
+  it "lexes string with unicode codepoint" do
+    lexer = Lexer.new "\"\\uFEDA\""
+    token = lexer.next_token
+    token.type.should eq(:STRING_START)
+    token = lexer.next_string_token(token.string_state)
+    token.type.should eq(:STRING)
+    (token.value as String).char_at(0).ord.should eq(0xFEDA)
+  end
+
+  it "lexes string with unicode codepoint in curly" do
+    lexer = Lexer.new "\"\\u{A5}\""
+    token = lexer.next_token
+    token.type.should eq(:STRING_START)
+    token = lexer.next_string_token(token.string_state)
+    token.type.should eq(:STRING)
+    (token.value as String).char_at(0).ord.should eq(0xA5)
+  end
+
+  it "lexes string with unicode codepoint in curly multiple times" do
+    lexer = Lexer.new "\"\\u{A5 A6 10FFFF}\""
+    token = lexer.next_token
+    token.type.should eq(:STRING_START)
+    token = lexer.next_string_token(token.string_state)
+    token.type.should eq(:STRING)
+    string = token.value as String
+    string.chars.map(&.ord).should eq([0xA5, 0xA6, 0x10FFFF])
+  end
+
+  assert_syntax_error "\"\\uFEDZ\"", "expected hexadecimal character in unicode escape"
+  assert_syntax_error "\"\\u{}\"", "expected hexadecimal character in unicode escape"
+  assert_syntax_error "\"\\u{110000}\"", "invalid unicode codepoint (too large)"
 end

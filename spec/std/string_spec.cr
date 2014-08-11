@@ -379,6 +379,10 @@ describe "String" do
     "いただきます".char_at(2).should eq('だ')
   end
 
+  it "does chars" do
+    "ぜんぶ".chars.should eq(['ぜ', 'ん', 'ぶ'])
+  end
+
   it "allows creating a string with zeros" do
     p = Pointer(UInt8).malloc(3)
     p[0] = 'a'.ord.to_u8
