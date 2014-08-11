@@ -297,7 +297,7 @@ module Crystal
         vars = [] of Var
         args = [] of ASTNode
         block_arg_type.arg_types.map_with_index do |type, i|
-          arg = Var.new("#arg#{i}")
+          arg = Var.new("__arg#{i}")
           vars << arg
           args << arg
         end

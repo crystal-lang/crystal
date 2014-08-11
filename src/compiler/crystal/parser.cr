@@ -1001,7 +1001,7 @@ module Crystal
       next_token_skip_space
 
       if @token.type == :"."
-        block_arg_name = "#arg#{@block_arg_count}"
+        block_arg_name = "__arg#{@block_arg_count}"
         @block_arg_count += 1
 
         obj = Var.new(block_arg_name)

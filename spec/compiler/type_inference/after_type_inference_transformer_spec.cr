@@ -44,7 +44,7 @@ describe "after type inference transformer" do
 
   it "keeps then of if with is_a? that is always true" do
     assert_after_type_inference "a = 1 || 1.5; if a.is_a?(Number); 2; end",
-      "a = if #temp_1 = 1\n  #temp_1\nelse\n  1.5\nend\n2"
+      "a = if __temp_1 = 1\n  __temp_1\nelse\n  1.5\nend\n2"
   end
 
   it "keeps then of if with responds_to? that is always true" do

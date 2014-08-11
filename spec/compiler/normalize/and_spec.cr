@@ -3,7 +3,7 @@ require "../../spec_helper"
 
 describe "Normalize: and" do
   it "normalizes and without variable" do
-    assert_normalize "a && b", "if #temp_1 = a\n  b\nelse\n  #temp_1\nend"
+    assert_normalize "a && b", "if __temp_1 = a\n  b\nelse\n  __temp_1\nend"
   end
 
   it "normalizes and with variable on the left" do
@@ -15,7 +15,7 @@ describe "Normalize: and" do
   end
 
   it "normalizes and with is_a? on exp" do
-    assert_normalize "a = 1; 1.is_a?(Foo) && b", "a = 1\nif #temp_1 = 1.is_a?(Foo)\n  b\nelse\n  #temp_1\nend"
+    assert_normalize "a = 1; 1.is_a?(Foo) && b", "a = 1\nif __temp_1 = 1.is_a?(Foo)\n  b\nelse\n  __temp_1\nend"
   end
 
   it "normalizes and with assignment" do

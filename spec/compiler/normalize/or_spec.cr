@@ -3,7 +3,7 @@ require "../../spec_helper"
 
 describe "Normalize: or" do
   it "normalizes or without variable" do
-    assert_normalize "a || b", "if #temp_1 = a\n  #temp_1\nelse\n  b\nend"
+    assert_normalize "a || b", "if __temp_1 = a\n  __temp_1\nelse\n  b\nend"
   end
 
   it "normalizes or with variable on the left" do
