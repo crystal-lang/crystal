@@ -989,25 +989,9 @@ module Crystal
         end
       end
 
-      # This creates:
-      #
-      #    x = allocate
-      #    GC.add_finalizer x
-      #    x
-      var = Var.new("x")
-      alloc = Call.new(nil, "allocate")
-      assign = Assign.new(var, alloc)
-      call_gc = Call.new(Path.global("GC"), "add_finalizer", [var] of ASTNode)
-
-      exps = Array(ASTNode).new(3)
-      exps << assign
-      exps << call_gc unless scope.instance_type.struct?
-      exps << var
-
-      match_def = Def.new("new", body: exps)
-      match = Match.new(match_def, arg_types, MatchContext.new(scope, scope))
-
-      scope.add_def match_def
+      new_def = Def.argless_new(scope.instance_type)
+      match = Match.new(new_def, arg_types, MatchContext.new(scope, scope))
+      scope.add_def new_def
 
       Matches.new([match], true)
     end
@@ -1030,59 +1014,9 @@ module Crystal
           end
         end
 
-        if instance_type.is_a?(GenericClassType)
-          generic_type_args = Array(ASTNode).new(instance_type.type_vars.length)
-          instance_type.type_vars.each do |type_var|
-            generic_type_args << Path.new(type_var)
-          end
-          new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
-          alloc = Call.new(new_generic, "allocate")
-        else
-          alloc = Call.new(nil, "allocate")
-        end
-
-        # This creates:
-        #
-        #    x = allocate
-        #    GC.add_finalizer x
-        #    x.initialize ..., &block
-        #    x
-        var = Var.new("_")
-        new_vars = Array(ASTNode).new(match.def.args.length)
-        match.def.args.each do |arg|
-          new_vars.push Var.new(arg.name)
-        end
-
-        if splat_index = match.def.splat_index
-          new_vars[splat_index] = Splat.new(new_vars[splat_index])
-        end
-
-        assign = Assign.new(var, alloc)
-        call_gc = Call.new(Path.global("GC"), "add_finalizer", [var] of ASTNode)
-        init = Call.new(var, "initialize", new_vars)
-
-        exps = Array(ASTNode).new(4)
-        exps << assign
-        exps << call_gc unless instance_type.struct?
-        exps << init
-        exps << var
-
-        def_args = match.def.args.clone
-
-        match_def = Def.new("new", def_args, exps)
-        match_def.splat_index = match.def.splat_index
-
-        # Forward block argument if any
-        if match.def.uses_block_arg
-          block_arg = match.def.block_arg.not_nil!
-          init.block_arg = Var.new(block_arg.name)
-          match_def.block_arg = block_arg.clone
-          match_def.uses_block_arg = true
-        end
-
-        new_match = Match.new(match_def, match.arg_types, MatchContext.new(scope, scope, match.context.free_vars))
-
-        scope.add_def match_def
+        new_def = match.def.expand_new_from_initialize(instance_type)
+        new_match = Match.new(new_def, match.arg_types, MatchContext.new(scope, scope, match.context.free_vars))
+        scope.add_def new_def
 
         new_match
       end
