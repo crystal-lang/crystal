@@ -601,4 +601,8 @@ module Crystal
   class EnumDef
     property! c_enum_type
   end
+
+  class Yield
+    property :expanded
+  end
 end

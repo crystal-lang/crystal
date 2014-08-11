@@ -895,6 +895,11 @@ module Crystal
     end
 
     def visit(node : Yield)
+      if expanded = node.expanded
+        expanded.accept self
+        return
+      end
+
       block_context = context.block_context.not_nil!
       block = context.block
 

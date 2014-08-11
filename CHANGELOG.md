@@ -1,3 +1,7 @@
+## Next
+
+* Fixed [#187](https://github.com/manastech/crystal/issues/185): mixing `yield` and `block.call` crashes the compiler.
+
 ## 0.4.1 (2014-08-09)
 
 * Fixed [#185](https://github.com/manastech/crystal/issues/185): `-e` flag stopped working.

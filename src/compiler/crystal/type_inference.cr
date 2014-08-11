@@ -542,13 +542,28 @@ module Crystal
     end
 
     def visit(node : Yield)
-      node.raise "can't yield from function literal" if @fun_literal_context
-      true
-    end
+      if @fun_literal_context
+        node.raise "can't yield from function literal"
+      end
 
-    def end_visit(node : Yield)
       call = @call.not_nil!
       block = call.block || node.raise("no block given")
+
+      # This is the case of a yield when there's a captured block
+      if block.fun_literal
+        block_arg_name = typed_def.block_arg.not_nil!.name
+        block_var = Var.new(block_arg_name)
+        block_var.location = node.location
+        call = Call.new(block_var, "call", node.exps)
+        call.location = node.location
+        call.accept self
+        node.bind_to call
+        node.expanded = call
+        return false
+      end
+
+      node.scope.try &.accept self
+      node.exps.each &.accept self
 
       if (yield_vars = @yield_vars) && !node.scope
         yield_vars.each_with_index do |var, i|
@@ -582,6 +597,7 @@ module Crystal
       node.bind_to block
 
       @type_filters = nil
+      false
     end
 
     def bind_block_args_to_yield_exps(block, node)

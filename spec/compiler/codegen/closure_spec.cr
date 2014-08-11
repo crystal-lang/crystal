@@ -562,4 +562,17 @@ describe "Code gen: closure" do
       foo &f
       ").to_i.should eq(2)
   end
+
+  it "allows mixing yield and block.call" do
+    run(%(
+      def foo(&block : Int32 ->)
+        yield 1
+        block.call 2
+      end
+
+      a = 0
+      foo { |x| a += x }
+      a
+      )).to_i.should eq(3)
+  end
 end
