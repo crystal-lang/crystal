@@ -2245,6 +2245,12 @@ module Crystal
       false
     end
 
+    def visit(node : VisibilityModifier)
+      node.exp.visibility = node.modifier
+      node.exp.accept self
+      false
+    end
+
     def include_in(current_type, node, kind)
       node_name = node.name
       if node_name.is_a?(Generic)

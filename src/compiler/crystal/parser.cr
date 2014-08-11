@@ -6,6 +6,8 @@ module Crystal
   class Parser < Lexer
     record Unclosed, [name, location]
 
+    property visibility
+
     def self.parse(str, def_vars = [Set(String).new])
       new(str, def_vars).parse
     end
@@ -808,6 +810,8 @@ module Crystal
           parse_typeof
         when :undef
           parse_undef
+        when :private
+          parse_private
         else
           parse_var_or_call
         end
@@ -2124,6 +2128,7 @@ module Crystal
 
       node = Def.new name, args, body, receiver, block_arg, return_type, @yields, is_abstract, splat_index
       node.name_column_number = name_column_number
+      node.visibility = @visibility
       node
     end
 
@@ -3071,6 +3076,12 @@ module Crystal
       name = @token.value.to_s
       next_token_skip_space_or_newline
       Undef.new name
+    end
+
+    def parse_private
+      next_token_skip_space
+      exp = parse_op_assign
+      VisibilityModifier.new(:private, exp)
     end
 
     def parse_yield_with_scope

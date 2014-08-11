@@ -189,6 +189,7 @@ module Crystal
         # Discard abstract defs for abstract classes
         next if match.def.abstract && match.context.owner.abstract
 
+        check_visibility match
         check_not_abstract match
 
         yield_vars = match_block_arg(match)
@@ -256,6 +257,12 @@ module Crystal
         end
       end
       nil
+    end
+
+    def check_visibility(match)
+      if obj && match.def.private?
+        raise "private method '#{match.def.name}' called for #{match.def.owner}"
+      end
     end
 
     def check_not_abstract(match)

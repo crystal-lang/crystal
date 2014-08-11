@@ -833,6 +833,13 @@ module Crystal
       false
     end
 
+    def visit(node : VisibilityModifier)
+      @str << node.modifier
+      @str << ' '
+      node.exp.accept self
+      false
+    end
+
     def visit(node : TypeFilteredNode)
       false
     end

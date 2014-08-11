@@ -703,6 +703,10 @@ module Crystal
           if next_char == 'i' && next_char == 'n' && next_char == 't' && next_char == 'e' && next_char == 'r' && next_char == 'o' && next_char == 'f'
             return check_ident_or_keyword(:pointerof, start)
           end
+        when 'r'
+          if next_char == 'i' && next_char == 'v' && next_char == 'a' && next_char == 't' && next_char == 'e'
+            return check_ident_or_keyword(:private, start)
+          end
         end
         scan_ident(start)
       when 'r'

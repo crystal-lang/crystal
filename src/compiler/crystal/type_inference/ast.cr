@@ -155,6 +155,13 @@ module Crystal
     def raise(message, inner = nil, exception_type = Crystal::TypeException)
       ::raise exception_type.for_node(self, message, inner)
     end
+
+    def visibility=(visibility)
+    end
+
+    def visibility
+      nil
+    end
   end
 
   class PointerOf
@@ -362,6 +369,7 @@ module Crystal
 
   class Call
     property :before_vars
+    property :visibility
   end
 
   class Block

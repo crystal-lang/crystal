@@ -957,6 +957,24 @@ module Crystal
     end
   end
 
+  class VisibilityModifier < ASTNode
+    property modifier
+    property exp
+
+    def initialize(@modifier, @exp)
+    end
+
+    def accept_children(visitor)
+      @exp.accept visitor
+    end
+
+    def clone_without_location
+      VisibilityModifier.new(@modifier, @exp.clone)
+    end
+
+    def_equals_and_hash [modifier, exp]
+  end
+
   class IsA < ASTNode
     property :obj
     property :const
