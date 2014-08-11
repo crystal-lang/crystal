@@ -39,9 +39,7 @@ module Crystal
     end
 
     def visit(node : CharLiteral)
-      @str << "'"
-      @str << node.value.dump
-      @str << "'"
+      @str << node.value.inspect
     end
 
     def visit(node : SymbolLiteral)
@@ -589,7 +587,7 @@ module Crystal
     end
 
     def visit(node : MacroLiteral)
-      @str << node.value.dump
+      @str << node.value
       false
     end
 

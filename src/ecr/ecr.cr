@@ -16,9 +16,9 @@ module ECR
         case token.type
         when :STRING
           str << buffer_name
-          str << " << \""
-          str << token.value.dump
-          str << "\"\n"
+          str << " << "
+          token.value.inspect(str)
+          str << "\n"
         when :OUTPUT
           str << "("
           append_loc(str, filename, token)

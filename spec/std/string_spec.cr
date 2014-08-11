@@ -301,11 +301,33 @@ describe "String" do
   end
 
   it "dumps" do
-    "\" \\ \f \n \r \t \v \e \#{ cool \x1 \x1F \x79".dump.should eq("\\\" \\\\ \\f \\n \\r \\t \\v \\e \\\#{ cool \\x01 \\x1F y")
+    "a".dump.should eq("\"a\"")
+    "\\".dump.should eq("\"\\\\\"")
+    "\"".dump.should eq("\"\\\"\"")
+    "\e".dump.should eq("\"\\e\"")
+    "\f".dump.should eq("\"\\f\"")
+    "\n".dump.should eq("\"\\n\"")
+    "\r".dump.should eq("\"\\r\"")
+    "\t".dump.should eq("\"\\t\"")
+    "\v".dump.should eq("\"\\v\"")
+    "\#{".dump.should eq("\"\\\#{\"")
+    "á".dump.should eq("\"\\u{e1}\"")
+    "\x81".dump.should eq("\"\\u{81}\"")
   end
 
   it "inspects" do
-    "\" \\ \f \n \r \t \v \e cool".inspect.should eq("\"\\\" \\\\ \\f \\n \\r \\t \\v \\e cool\"")
+    "a".inspect.should eq("\"a\"")
+    "\\".inspect.should eq("\"\\\\\"")
+    "\"".inspect.should eq("\"\\\"\"")
+    "\e".inspect.should eq("\"\\e\"")
+    "\f".inspect.should eq("\"\\f\"")
+    "\n".inspect.should eq("\"\\n\"")
+    "\r".inspect.should eq("\"\\r\"")
+    "\t".inspect.should eq("\"\\t\"")
+    "\v".inspect.should eq("\"\\v\"")
+    "\#{".inspect.should eq("\"\\\#{\"")
+    "á".inspect.should eq("\"á\"")
+    "\x81".inspect.should eq("\"\\u{81}\"")
   end
 
   it "does *" do

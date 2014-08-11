@@ -647,9 +647,15 @@ class String
   end
 
   def inspect(io)
-    io << "\""
-    dump io
-    io << "\""
+    dump_or_inspect(io) do |char|
+      if char.control?
+        io << "\\u{"
+        char.ord.to_s(16, io)
+        io << "}"
+      else
+        io << char
+      end
+    end
   end
 
   def dump
@@ -659,18 +665,31 @@ class String
   end
 
   def dump(io)
+    dump_or_inspect(io) do |char|
+      if char.control? || char.ord >= 0x80
+        io << "\\u{"
+        char.ord.to_s(16, io)
+        io << "}"
+      else
+        io << char
+      end
+    end
+  end
+
+  def dump_or_inspect(io) # private
+    io << "\""
     reader = CharReader.new(self)
     while reader.has_next?
       current_char = reader.current_char
       case current_char
       when '"'  then io << "\\\""
+      when '\\' then io << "\\\\"
+      when '\e' then io << "\\e"
       when '\f' then io << "\\f"
       when '\n' then io << "\\n"
       when '\r' then io << "\\r"
       when '\t' then io << "\\t"
       when '\v' then io << "\\v"
-      when '\e' then io << "\\e"
-      when '\\' then io << "\\\\"
       when '#'
         current_char = reader.next_char
         if current_char == '{'
@@ -682,21 +701,11 @@ class String
           next
         end
       else
-        ord = current_char.ord
-        if ord < 32 || ord > 127
-          high = ord / 16
-          low = ord % 16
-          high = high < 10 ? ('0'.ord + high).chr : ('A'.ord + high - 10).chr
-          low = low < 10 ? ('0'.ord + low).chr : ('A'.ord + low - 10).chr
-          io << "\\x"
-          io << high
-          io << low
-        else
-          io << current_char
-        end
+        yield current_char
       end
       reader.next_char
     end
+    io << "\""
   end
 
   def starts_with?(str : String)

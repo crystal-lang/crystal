@@ -65,6 +65,19 @@ describe "Json serialization" do
       "hel\"lo".to_json.should eq("\"hel\\\"lo\"")
     end
 
+    it "does for String with slash" do
+      "hel\\lo".to_json.should eq("\"hel\\\\lo\"")
+    end
+
+    it "does for String with control codes" do
+      "\b".to_json.should eq("\"\\b\"")
+      "\f".to_json.should eq("\"\\f\"")
+      "\n".to_json.should eq("\"\\n\"")
+      "\r".to_json.should eq("\"\\r\"")
+      "\t".to_json.should eq("\"\\t\"")
+      "\x19".to_json.should eq("\"\\u0019\"")
+    end
+
     it "does for Array" do
       [1, 2, 3].to_json.should eq("[1,2,3]")
     end

@@ -81,10 +81,35 @@ end
 
 class String
   def to_json(io)
-    io << "\""
-    # TODO: dump is OK for Crystal but not for JSON, do correct escaping
-    dump io
-    io << "\""
+    io << '"'
+    each_char do |char|
+      case char
+      when '\\'
+        io << "\\\\"
+      when '"'
+        io << "\\\""
+      when '\b'
+        io << "\\b"
+      when '\f'
+        io << "\\f"
+      when '\n'
+        io << "\\n"
+      when '\r'
+        io << "\\r"
+      when '\t'
+        io << "\\t"
+      when .control?
+        io << "\\u"
+        ord = char.ord
+        io << '0' if ord < 0x1000
+        io << '0' if ord < 0x100
+        io << '0' if ord < 0x10
+        ord.to_s(16, io)
+      else
+        io << char
+      end
+    end
+    io << '"'
   end
 end
 

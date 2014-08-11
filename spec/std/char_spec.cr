@@ -18,8 +18,30 @@ describe "Char" do
     end
   end
 
-  describe "inspect" do
+  it "dumps" do
+    'a'.dump.should eq("'a'")
+    '\\'.dump.should eq("'\\\\'")
+    '\e'.dump.should eq("'\\e'")
+    '\f'.dump.should eq("'\\f'")
+    '\n'.dump.should eq("'\\n'")
+    '\r'.dump.should eq("'\\r'")
+    '\t'.dump.should eq("'\\t'")
+    '\v'.dump.should eq("'\\v'")
+    'á'.dump.should eq("'\\u{e1}'")
+    '\x81'.dump.should eq("'\\u{81}'")
+  end
+
+  it "inspects" do
     'a'.inspect.should eq("'a'")
+    '\\'.inspect.should eq("'\\\\'")
+    '\e'.inspect.should eq("'\\e'")
+    '\f'.inspect.should eq("'\\f'")
+    '\n'.inspect.should eq("'\\n'")
+    '\r'.inspect.should eq("'\\r'")
+    '\t'.inspect.should eq("'\\t'")
+    '\v'.inspect.should eq("'\\v'")
+    'á'.inspect.should eq("'á'")
+    '\x81'.inspect.should eq("'\\u{81}'")
   end
 
   it "escapes" do

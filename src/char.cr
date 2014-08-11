@@ -50,27 +50,59 @@ struct Char
     (ord + 1).chr
   end
 
+  def control?
+    ord < 0x20 || (0x7F <= ord <= 0x9F)
+  end
+
   def inspect
-    "'#{dump}'"
+    dump_or_inspect do |io|
+      if control?
+        io << "\\u{"
+        ord.to_s(16, io)
+        io << "}"
+      else
+        to_s(io)
+      end
+    end
+  end
+
+  def inspect(io)
+    io << inspect
   end
 
   def dump
-    case self
-    when '\''  then "\\'"
-    when '\f' then "\\f"
-    when '\n' then "\\n"
-    when '\r' then "\\r"
-    when '\t' then "\\t"
-    when '\v' then "\\v"
-    else
-      if ord < 32 || ord > 127
-        high = ord / 16
-        low = ord % 16
-        high = high < 10 ? ('0'.ord + high).chr : ('A'.ord + high - 10).chr
-        low = low < 10 ? ('0'.ord + low).chr : ('A'.ord + low - 10).chr
-        "\\x#{high}#{low}"
+    dump_or_inspect do |io|
+      if control? || ord >= 0x80
+        io << "\\u{"
+        ord.to_s(16, io)
+        io << "}"
       else
-        self.to_s
+        to_s(io)
+      end
+    end
+  end
+
+  def dump(io)
+    io << '\''
+    io << dump
+    io << '\''
+  end
+
+  def dump_or_inspect #private
+    case self
+    when '\''  then "'\\''"
+    when '\\'  then "'\\\\'"
+    when '\e' then "'\\e'"
+    when '\f' then "'\\f'"
+    when '\n' then "'\\n'"
+    when '\r' then "'\\r'"
+    when '\t' then "'\\t'"
+    when '\v' then "'\\v'"
+    else
+      String.build do |io|
+        io << '\''
+        yield io
+        io << '\''
       end
     end
   end

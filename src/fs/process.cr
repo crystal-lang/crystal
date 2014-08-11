@@ -14,7 +14,7 @@ def embed(indent, ctx, entry : FS::DirectoryEntry)
 end
 
 def embed(indent, ctx, entry : FS::FileEntry)
-  puts "#{"  " * indent}#{ctx}.add_file \"#{entry.name}\", \"#{entry.read.dump}\""
+  puts "#{"  " * indent}#{ctx}.add_file \"#{entry.name}\", #{entry.read.inspect}"
   nil
 end
 
