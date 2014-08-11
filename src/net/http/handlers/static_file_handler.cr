@@ -18,6 +18,9 @@ class HTTP::StaticFileHandler < HTTP::Handler
   def mime_type(path)
     case File.extname(path)
     when ".txt" then "text/plain"
+    when ".htm", ".html" then "text/html"
+    when ".css" then "text/css"
+    when ".js" then "application/javascript"
     else "application/octet-stream"
     end
   end
