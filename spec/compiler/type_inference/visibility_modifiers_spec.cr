@@ -181,4 +181,13 @@ describe "Visibility modifiers" do
       ),
       "protected method 'foo' called for Foo"
   end
+
+  it "errors if applying visibility modifier to non-def or non-call" do
+    assert_error %(
+      class Foo
+        private 1
+      end
+      ),
+      "can't apply visibility modifier"
+  end
 end

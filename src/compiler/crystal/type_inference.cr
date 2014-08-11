@@ -2248,7 +2248,18 @@ module Crystal
     def visit(node : VisibilityModifier)
       node.exp.visibility = node.modifier
       node.exp.accept self
-      false
+
+      # Can only apply visibility modifier to def or a macro call
+      case exp = node.exp
+      when Def
+        return false
+      when Call
+        if exp.expanded
+          return false
+        end
+      end
+
+      node.raise "can't apply visibility modifier"
     end
 
     def include_in(current_type, node, kind)
