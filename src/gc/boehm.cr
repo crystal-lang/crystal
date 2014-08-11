@@ -9,6 +9,7 @@ lib LibGC("gc")
   fun add_roots = GC_add_roots(low : Void*, high : Void*)
   fun enable = GC_enable
   fun disable = GC_disable
+  fun set_handle_fork = GC_set_handle_fork(value : Int32)
 
   type Finalizer : Void*, Void* ->
   fun register_finalizer = GC_register_finalizer(obj : Void*, fn : Finalizer, cd : Void*, ofn : Finalizer*, ocd : Void**)
@@ -48,6 +49,7 @@ end
 
 module GC
   def self.init
+    LibGC.set_handle_fork(1)
     LibGC.init
   end
 

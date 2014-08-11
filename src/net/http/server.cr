@@ -25,29 +25,43 @@ class HTTP::Server
 
   def listen
     server = TCPServer.new(@port)
+    loop { handle_client(server.accept) }
+  end
 
-    while true
-      io = sock = server.accept
-      io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
-      io = BufferedIO.new(io)
+  def listen_fork(workers = 8)
+    server = TCPServer.new(@port)
+    workers.times do
+      fork do
+        loop { handle_client(server.accept) }
+      end
+    end
 
+    puts "Ready"
+    gets
+  end
+
+
+  def handle_client(sock)
+    io = sock
+    io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
+    io = BufferedIO.new(io)
+
+    begin
       begin
-        begin
-          request = HTTP::Request.from_io(io)
-        rescue
-          # HACK: these lines can be removed once #171 is fixed
-          ssl_sock.try &.close if @ssl
-          sock.close
-
-          next
-        end
-        response = @handler.call(request)
-        response.to_io io
-        io.flush
-      ensure
+        request = HTTP::Request.from_io(io)
+      rescue
+        # HACK: these lines can be removed once #171 is fixed
         ssl_sock.try &.close if @ssl
         sock.close
+
+        return
       end
+      response = @handler.call(request)
+      response.to_io io
+      io.flush
+    ensure
+      ssl_sock.try &.close if @ssl
+      sock.close
     end
   end
 
