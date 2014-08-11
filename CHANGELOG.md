@@ -4,7 +4,7 @@
 * Added `\u` unicode escape sequences inside strings and chars (similar to Ruby). `\x` will be deprecated as it can generate strings with invalid UTF-8 byte sequences.
 * Added `String#chars`.
 * Fixed: splats weren't working in `initialize`.
-* Added the `private` visibility modifier.
+* Added the `private` and `protected` visibility modifiers, with the same semantics as Ruby. The difference is that you must place them before a `def` or a macro call.
 * Some bug fixes.
 
 ## 0.4.1 (2014-08-09)

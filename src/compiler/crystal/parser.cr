@@ -811,9 +811,11 @@ module Crystal
         when :undef
           parse_undef
         when :private
-          parse_private
+          parse_visibility_modifier :private
+        when :protected
+          parse_visibility_modifier :protected
         else
-          parse_var_or_call
+          set_visibility parse_var_or_call
         end
       when :CONST
         parse_ident
@@ -2390,6 +2392,13 @@ module Crystal
       end
     end
 
+    def set_visibility(node)
+      if visibility = @visibility
+        node.visibility = visibility
+      end
+      node
+    end
+
     def parse_var_or_call(global = false, force_call = false)
       location = @token.location
 
@@ -2728,7 +2737,7 @@ module Crystal
 
       case @token.type
       when :IDENT
-        parse_var_or_call global: true
+        set_visibility parse_var_or_call global: true
       when :CONST
         parse_ident_after_colons(location, true, true)
       else
@@ -3078,10 +3087,10 @@ module Crystal
       Undef.new name
     end
 
-    def parse_private
+    def parse_visibility_modifier(modifier)
       next_token_skip_space
       exp = parse_op_assign
-      VisibilityModifier.new(:private, exp)
+      VisibilityModifier.new(modifier, exp)
     end
 
     def parse_yield_with_scope

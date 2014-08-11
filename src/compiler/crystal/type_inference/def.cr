@@ -17,10 +17,6 @@ module Crystal
 
     property :visibility
 
-    def private?
-      visibility == :private
-    end
-
     def macro_owner=(@macro_owner)
     end
 

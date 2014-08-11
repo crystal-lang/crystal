@@ -774,6 +774,7 @@ describe "Parser" do
   it_parses "foo.bar = (1).abs", Call.new("foo".call, "bar=", [Call.new(1.int32, "abs")] of ASTNode)
 
   it_parses "private def foo; end", VisibilityModifier.new(:private, Def.new("foo"))
+  it_parses "protected def foo; end", VisibilityModifier.new(:protected, Def.new("foo"))
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)

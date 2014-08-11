@@ -704,8 +704,15 @@ module Crystal
             return check_ident_or_keyword(:pointerof, start)
           end
         when 'r'
-          if next_char == 'i' && next_char == 'v' && next_char == 'a' && next_char == 't' && next_char == 'e'
-            return check_ident_or_keyword(:private, start)
+          case next_char
+          when 'i'
+            if next_char == 'v' && next_char == 'a' && next_char == 't' && next_char == 'e'
+              return check_ident_or_keyword(:private, start)
+            end
+          when 'o'
+            if next_char == 't' && next_char == 'e' && next_char == 'c' && next_char == 't' && next_char == 'e' && next_char == 'd'
+              return check_ident_or_keyword(:protected, start)
+            end
           end
         end
         scan_ident(start)

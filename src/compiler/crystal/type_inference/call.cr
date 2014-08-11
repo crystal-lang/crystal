@@ -260,8 +260,15 @@ module Crystal
     end
 
     def check_visibility(match)
-      if obj && match.def.private?
-        raise "private method '#{match.def.name}' called for #{match.def.owner}"
+      case match.def.visibility
+      when :private
+        if obj
+          raise "private method '#{match.def.name}' called for #{match.def.owner}"
+        end
+      when :protected
+        unless scope.implements?(match.def.owner.not_nil!)
+          raise "protected method '#{match.def.name}' called for #{match.def.owner}"
+        end
       end
     end
 
