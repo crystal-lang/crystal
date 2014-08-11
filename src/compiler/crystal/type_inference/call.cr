@@ -266,7 +266,7 @@ module Crystal
           raise "private method '#{match.def.name}' called for #{match.def.owner}"
         end
       when :protected
-        unless scope.implements?(match.def.owner.not_nil!)
+        unless scope.implements?(match.def.owner)
           raise "protected method '#{match.def.name}' called for #{match.def.owner}"
         end
       end
@@ -357,7 +357,7 @@ module Crystal
 
       # TODO: do this better
       untyped_def = parent_visitor.untyped_def
-      lookup = untyped_def.owner.not_nil!
+      lookup = untyped_def.owner
       if lookup.is_a?(VirtualType)
         parents = lookup.base_type.parents
       else

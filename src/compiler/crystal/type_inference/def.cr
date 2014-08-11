@@ -2,7 +2,7 @@ require "../ast"
 
 module Crystal
   class Def
-    property :owner
+    property! :owner
     property :vars
     property :raises
 

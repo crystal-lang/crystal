@@ -336,7 +336,7 @@ module Crystal
     end
 
     def visit(node : FunPointer)
-      owner = node.call.target_def.owner.not_nil!
+      owner = node.call.target_def.owner
       if obj = node.obj
         accept obj
         call_self = @last
@@ -1056,7 +1056,7 @@ module Crystal
         return false
       end
 
-      owner = node.name == "super" ? node.scope : node.target_def.owner.not_nil!
+      owner = node.name == "super" ? node.scope : node.target_def.owner
 
       call_args, has_out = prepare_call_args node, owner
 
@@ -1097,7 +1097,7 @@ module Crystal
       if (obj = node.obj) && obj.type.passed_as_self?
         @needs_value = true
         accept obj
-        call_args << downcast(@last, target_def.owner.not_nil!, obj.type, true)
+        call_args << downcast(@last, target_def.owner, obj.type, true)
       elsif owner.passed_as_self?
         if yield_scope = context.vars["%scope"]?
           call_args << yield_scope.pointer
@@ -1275,7 +1275,7 @@ module Crystal
         Phi.open(self, node, old_needs_value) do |phi|
           # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
           target_defs.each do |a_def|
-            result = match_type_id(owner, a_def.owner.not_nil!, obj_type_id)
+            result = match_type_id(owner, a_def.owner, obj_type_id)
             a_def.args.each_with_index do |arg, i|
               result = and(result, match_type_id(node.args[i].type, arg.type, arg_type_ids[i]))
             end

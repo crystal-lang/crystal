@@ -179,7 +179,7 @@ module Crystal
         end
 
         target_defs.each do |target_def|
-          allocated = target_def.owner.try(&.allocated) && target_def.args.all? &.type.allocated
+          allocated = target_def.owner.allocated && target_def.args.all? &.type.allocated
           if allocated
             allocated_defs << target_def
 
@@ -243,7 +243,7 @@ module Crystal
             arg.raise message
           end
 
-          owner = arg.call.target_def.owner.not_nil!
+          owner = arg.call.target_def.owner
           if owner.passed_as_self?
             arg.raise message
           end

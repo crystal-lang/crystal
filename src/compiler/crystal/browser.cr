@@ -24,7 +24,7 @@ class Crystal::Browser
     render_html do
       String.build do |str|
         str << "<h2>"
-        owner = node.owner
+        owner = node.owner?
         if owner && !owner.is_a?(Program)
           if owner.metaclass?
             str << "<span class=\"path\">#{owner.instance_type}</span>::"

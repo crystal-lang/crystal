@@ -23,7 +23,7 @@ module Crystal
       the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body)
       the_macro.location = target_def.location
 
-      owner = target_def.owner.not_nil!
+      owner = target_def.owner
 
       case owner
       when VirtualType
