@@ -1,19 +1,9 @@
 # Based on 2048 by Gabriele Cirulli - gabrielecirulli.github.io/2048
 
 require "io/console"
+require "colorize"
 
 module Screen
-  COLORS = {
-    :black => 0,
-    :red => 1,
-    :green => 2,
-    :yellow => 3,
-    :blue => 4,
-    :pink => 5,
-    :cyan => 6,
-    :white => 7
-  }
-
   TILES = {
         0 => {:white, :black},
         2 => {:black, :white},
@@ -21,9 +11,9 @@ module Screen
         8 => {:black, :yellow},
        16 => {:white, :red},
        32 => {:black, :red},
-       64 => {:white, :pink},
+       64 => {:white, :magenta},
       128 => {:red,   :yellow},
-      256 => {:pink,  :yellow},
+      256 => {:magenta,  :yellow},
       512 => {:white, :yellow},
      1024 => {:white, :yellow},
      2048 => {:white, :yellow},
@@ -34,23 +24,12 @@ module Screen
     65536 => {:white, :black}
   }
 
-  def self.set_for tile
+  def self.colorize_for(tile)
     fg_color, bg_color = TILES[tile]
-    set_fg fg_color
-    set_bg bg_color
+    with_color(fg_color).on(bg_color).surround do
+      yield
+    end
   end
-
-   def self.set_fg fg_color
-     print  "\x1b[#{COLORS[fg_color]+30}m"
-   end
-
-   def self.set_bg bg_color
-     print  "\x1b[;#{COLORS[bg_color]+40}m"
-   end
-
-   def self.reset
-     print  "\x1b[0m"
-   end
 
   def self.clear
     print "\x1b[2J\x1b[1;1H"
@@ -184,12 +163,13 @@ class Drawer
     fill_size -= 2
 
     print fill
-    Screen.set_for tile_value
-    print fill*fill_size
-    print content
-    print fill*fill_size
-    print fill if content.length % 2 == 0
-    Screen.reset
+
+    Screen.colorize_for(tile_value) do
+      print fill*fill_size
+      print content
+      print fill*fill_size
+      print fill if content.length % 2 == 0
+    end
     print fill
   end
 end
