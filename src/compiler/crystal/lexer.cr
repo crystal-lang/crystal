@@ -450,6 +450,9 @@ module Crystal
           when 'x'
             value = consume_hex_escape
             @token.value = value.chr
+          when 'u'
+            value = consume_unicode_escape
+            @token.value = value.chr
           when '0', '1', '2', '3', '4', '5', '6', '7', '8'
             char_value = consume_octal_escape(char2)
             @token.value = char_value.chr
@@ -1144,15 +1147,14 @@ module Crystal
 
       while true
         char = next_char
-        if char.digit?
-          num = num * 16 + (char - '0')
-        elsif ('a' <= char <= 'f')
-          num = num * 16 + 10 + (char - 'a')
-        elsif ('A' <= char <= 'F')
-          num = num * 16 + 10 + (char - 'A')
-        elsif char == '_'
+        if char == '_'
         else
-          break
+          hex_value = char_to_hex(char) { nil }
+          if hex_value
+            num = 16 * num + hex_value
+          else
+            break
+          end
         end
       end
 
@@ -1663,30 +1665,64 @@ module Crystal
     end
 
     def consume_hex_escape
-      after_x = next_char
-      if '0' <= after_x <= '9'
-        value = after_x - '0'
-      elsif 'a' <= after_x <= 'f'
-        value = 10 + (after_x - 'a')
-      elsif 'A' <= after_x <= 'F'
-        value = 10 + (after_x - 'A')
-      else
-        raise "invalid hex escape", @line_number, @column_number
-      end
-
-      after_x2 = peek_next_char
-      if '0' <= after_x2 <= '9'
-        value = 16 * value + (after_x2 - '0')
-        next_char
-      elsif 'a' <= after_x2 <= 'f'
-        value = 16 * value + (10 + (after_x2 - 'a'))
-        next_char
-      elsif 'A' <= after_x2 <= 'F'
-        value = 16 * value + (10 + (after_x2 - 'A'))
+      value = char_to_hex(next_char) { raise "invalid hex escape", @line_number, @column_number }
+      second_value = char_to_hex(peek_next_char) { nil }
+      if second_value
+        value = 16 * value + second_value
         next_char
       end
-
       value
+    end
+
+    def consume_unicode_escape
+      char = peek_next_char
+      if char == '{'
+        consume_unicode_brace_escape
+      else
+        total_value = 0
+        4.times do
+          hex_value = char_to_hex(next_char) { expected_hexacimal_character_in_unicode_escape }
+          total_value = 16 * total_value + hex_value
+        end
+        total_value
+      end
+    end
+
+    def consume_unicode_brace_escape
+      char = next_char
+
+      total_value = 0
+      found_curly = false
+      6.times do
+        char = next_char
+        if char == '}'
+          found_curly = true
+          break
+        else
+          hex_value = char_to_hex(char) { expected_hexacimal_character_in_unicode_escape }
+          total_value = 16 * total_value + hex_value
+        end
+      end
+
+      if total_value == 0
+        expected_hexacimal_character_in_unicode_escape
+      elsif total_value > 0x10FFFF
+        raise "invalid unicode codepoint (too large)"
+      end
+
+      unless found_curly
+        char = next_char
+      end
+
+      unless char == '}'
+        raise "expected '}' to close unicode escape"
+      end
+
+      total_value
+    end
+
+    def expected_hexacimal_character_in_unicode_escape
+      raise "expected hexadecimal character in unicode escape"
     end
 
     def string_token_escape_value(value)
@@ -1729,6 +1765,18 @@ module Crystal
       @token.value = string_range(start)
 
       @token
+    end
+
+    def char_to_hex(char)
+      if '0' <= char <= '9'
+        char - '0'
+      elsif 'a' <= char <= 'f'
+        10 + (char - 'a')
+      elsif 'A' <= char <= 'F'
+        10 + (char - 'A')
+      else
+        yield
+      end
     end
 
     def consume_loc_pragma

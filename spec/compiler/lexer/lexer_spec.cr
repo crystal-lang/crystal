@@ -348,4 +348,29 @@ describe "Lexer" do
   end
 
   assert_syntax_error "\r1", "expected '\\n' after '\\r'"
+
+  it "lexes char with unicode codepoint" do
+    lexer = Lexer.new "'\\uFEDA'"
+    token = lexer.next_token
+    token.type.should eq(:CHAR)
+    (token.value as Char).ord.should eq(0xFEDA)
+  end
+
+  it "lexes char with unicode codepoint and curly" do
+    lexer = Lexer.new "'\\u{A5}'"
+    token = lexer.next_token
+    token.type.should eq(:CHAR)
+    (token.value as Char).ord.should eq(0xA5)
+  end
+
+  it "lexes char with unicode codepoint and curly with six hex digits" do
+    lexer = Lexer.new "'\\u{10FFFF}'"
+    token = lexer.next_token
+    token.type.should eq(:CHAR)
+    (token.value as Char).ord.should eq(0x10FFFF)
+  end
+
+  assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"
+  assert_syntax_error "'\\u{}'", "expected hexadecimal character in unicode escape"
+  assert_syntax_error "'\\u{110000}'", "invalid unicode codepoint (too large)"
 end
