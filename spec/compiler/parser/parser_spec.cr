@@ -769,6 +769,9 @@ describe "Parser" do
   it_parses "foo(*bar)", Call.new(nil, "foo", ["bar".call.splat] of ASTNode)
   it_parses "foo x, *bar", Call.new(nil, "foo", ["x".call, "bar".call.splat] of ASTNode)
   it_parses "foo(x, *bar, *baz, y)", Call.new(nil, "foo", ["x".call, "bar".call.splat, "baz".call.splat, "y".call] of ASTNode)
+  it_parses "foo.bar=(*baz)", Call.new("foo".call, "bar=", ["baz".call.splat] of ASTNode)
+  it_parses "foo.bar= *baz", Call.new("foo".call, "bar=", ["baz".call.splat] of ASTNode)
+  it_parses "foo.bar = (1).abs", Call.new("foo".call, "bar=", [Call.new(1.int32, "abs")] of ASTNode)
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)

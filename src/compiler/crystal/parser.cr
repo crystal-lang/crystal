@@ -504,10 +504,19 @@ module Crystal
             case @token.type
             when :"="
               # Rewrite 'f.x = arg' as f.x=(arg)
-              next_token_skip_space_or_newline
-              args = [parse_op_assign] of ASTNode
+              next_token
 
-              atomic = Call.new(atomic, "#{name}=", args, name_column_number: name_column_number)
+              if @token.type == :"("
+                next_token_skip_space
+                arg = parse_single_arg
+                check :")"
+                next_token
+              else
+                skip_space_or_newline
+                arg = parse_single_arg
+              end
+
+              atomic = Call.new(atomic, "#{name}=", [arg] of ASTNode, name_column_number: name_column_number)
               atomic.location = location
               next
             when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
@@ -614,6 +623,16 @@ module Crystal
       end
 
       atomic
+    end
+
+    def parse_single_arg
+      if @token.type == :"*"
+        next_token_skip_space
+        arg = parse_op_assign
+        Splat.new(arg)
+      else
+        parse_op_assign
+      end
     end
 
     def parse_is_a(atomic)
