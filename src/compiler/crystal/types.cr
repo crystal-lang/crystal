@@ -1668,9 +1668,10 @@ module Crystal
     delegate instance_vars_initializers, @generic_class
     delegate macros, @generic_class
     delegate :abstract, @generic_class
-    delegate :struct?, @generic_class
-    delegate :passed_by_value?, @generic_class
-    delegate :type_desc, @generic_class
+    delegate struct?, @generic_class
+    delegate passed_by_value?, @generic_class
+    delegate type_desc, @generic_class
+    delegate check_method_missing, @generic_class
 
     def filter_by_responds_to(name)
       @generic_class.filter_by_responds_to(name) ? self : nil
@@ -1727,10 +1728,6 @@ module Crystal
       end
 
       nil
-    end
-
-    def check_method_missing(signature)
-      @generic_class.check_method_missing(signature)
     end
 
     def to_s(io)
@@ -1934,42 +1931,16 @@ module Crystal
     delegate parents, @module
     delegate defs, @module
     delegate macros, @module
-
-    def implements?(other_type)
-      @module.implements?(other_type)
-    end
-
-    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
-      @module.lookup_matches(signature, owner, type_lookup, matches_array)
-    end
-
-    def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
-      @module.lookup_matches_without_parents(signature, owner, type_lookup, matches_array)
-    end
-
-    def lookup_defs(name)
-      @module.lookup_defs(name)
-    end
-
-    def lookup_defs_with_modules(name)
-      @module.lookup_defs_with_modules(name)
-    end
-
-    def lookup_similar_def_name(name)
-      @module.lookup_similar_def_name(name)
-    end
-
-    def lookup_macro(name, args_length)
-      @module.lookup_macro(name, args_length)
-    end
-
-    def lookup_macros(name)
-      @module.lookup_macros(name)
-    end
-
-    def has_def?(name)
-      @module.has_def?(name)
-    end
+    delegate implements?, @module
+    delegate lookup_matches, @module
+    delegate lookup_matches_without_parents, @module
+    delegate lookup_defs, @module
+    delegate lookup_defs_with_modules, @module
+    delegate lookup_similar_def_name, @module
+    delegate lookup_macro, @module
+    delegate lookup_macros, @module
+    delegate has_def?, @module
+    delegate lookup_similar_type_name, @module
 
     def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       if (names.length == 1) && (m = @mapping[names[0]]?)
@@ -1982,10 +1953,6 @@ module Crystal
       end
 
       @module.lookup_type(names, already_looked_up, lookup_in_container)
-    end
-
-    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      @module.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
     end
 
     def to_s(io)
@@ -2066,10 +2033,7 @@ module Crystal
     delegate pointer?, typedef
     delegate defs, typedef
     delegate macros, typedef
-
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      typedef.lookup_type(names, already_looked_up, lookup_in_container)
-    end
+    delegate lookup_type, typedef
 
     def parents
       typedef_parents = typedef.parents
@@ -2108,45 +2072,18 @@ module Crystal
       @simple = true
     end
 
-    def lookup_matches(signature, owner = self, type_lookup = self)
-      aliased_type.lookup_matches(signature, owner, type_lookup)
-    end
-
-    def lookup_defs(name)
-      aliased_type.lookup_defs(name)
-    end
-
-    def lookup_defs_with_modules(name)
-      aliased_type.lookup_defs_with_modules(name)
-    end
-
-    def lookup_first_def(name, block)
-      aliased_type.lookup_first_def(name, block)
-    end
-
-    def lookup_similar_def_name(name)
-      aliased_type.lookup_similar_def_name(name)
-    end
-
-    def def_instances
-      aliased_type.def_instances
-    end
-
-    def add_def_instance(key, typed_def)
-      aliased_type.add_def_instance(key, typed_def)
-    end
-
-    def lookup_def_instance(key)
-      aliased_type.lookup_def_instance(key)
-    end
-
-    def lookup_macro(name, args_length)
-      aliased_type.lookup_macro(name, args_length)
-    end
-
-    def lookup_macros(name)
-      aliased_type.lookup_macros(name)
-    end
+    delegate lookup_matches, aliased_type
+    delegate lookup_defs, aliased_type
+    delegate lookup_defs_with_modules, aliased_type
+    delegate lookup_first_def, aliased_type
+    delegate lookup_similar_def_name, aliased_type
+    delegate def_instances, aliased_type
+    delegate add_def_instance, aliased_type
+    delegate lookup_def_instance, aliased_type
+    delegate lookup_macro, aliased_type
+    delegate lookup_macros, aliased_type
+    delegate cover, aliased_type
+    delegate cover_length, aliased_type
 
     def remove_alias
       if aliased_type = @aliased_type
@@ -2163,14 +2100,6 @@ module Crystal
       else
         self
       end
-    end
-
-    def cover
-      aliased_type.cover
-    end
-
-    def cover_length
-      aliased_type.cover_length
     end
 
     def type_desc
@@ -2314,14 +2243,8 @@ module Crystal
       @program.class_type
     end
 
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      instance_type.lookup_type(names, already_looked_up, lookup_in_container)
-    end
-
-    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
-    end
-
+    delegate lookup_type, instance_type
+    delegate lookup_similar_type_name, instance_type
     delegate :abstract, instance_type
 
     def class_var_owner
@@ -2364,22 +2287,13 @@ module Crystal
       @parents ||= [instance_type.superclass.try(&.metaclass) || @program.class_type] of Type
     end
 
-    def add_def(a_def)
-      instance_type.generic_class.metaclass.add_def a_def
-    end
-
-    delegate defs, :"instance_type.generic_class.metaclass"
-    delegate macros, :"instance_type.generic_class.metaclass"
+    delegate add_def, instance_type.generic_class.metaclass
+    delegate defs, instance_type.generic_class.metaclass
+    delegate macros, instance_type.generic_class.metaclass
     delegate type_vars, instance_type
     delegate :abstract, instance_type
-
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      instance_type.lookup_type(names, already_looked_up, lookup_in_container)
-    end
-
-    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
-    end
+    delegate lookup_type, instance_type
+    delegate lookup_similar_type_name, instance_type
 
     def metaclass?
       true
@@ -2799,77 +2713,25 @@ module Crystal
       defined
     end
 
-    def leaf?
-      base_type.leaf?
-    end
-
-    def superclass
-      base_type.superclass
-    end
-
-    def lookup_first_def(name, block)
-      base_type.lookup_first_def(name, block)
-    end
-
-    def lookup_defs(name)
-      base_type.lookup_defs(name)
-    end
-
-    def lookup_defs_with_modules(name)
-      base_type.lookup_defs_with_modules(name)
-    end
-
-    def lookup_similar_def_name(name)
-      base_type.lookup_similar_def_name(name)
-    end
-
-    def lookup_instance_var(name, create = true)
-      base_type.lookup_instance_var(name, create)
-    end
-
-    def lookup_instance_var?(name, create = false)
-      base_type.lookup_instance_var?(name, create)
-    end
-
-    def index_of_instance_var(name)
-      base_type.index_of_instance_var(name)
-    end
-
-    def lookup_macro(name, args_length)
-      base_type.lookup_macro(name, args_length)
-    end
-
-    def lookup_macros(name)
-      base_type.lookup_macros(name)
-    end
-
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      base_type.lookup_type(names, already_looked_up, lookup_in_container)
-    end
-
-    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      base_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
-    end
-
-    def has_instance_var_in_initialize?(name)
-      base_type.has_instance_var_in_initialize?(name)
-    end
-
-    def all_instance_vars
-      base_type.all_instance_vars
-    end
-
-    def owned_instance_vars
-      base_type.owned_instance_vars
-    end
-
-    def abstract
-      base_type.abstract
-    end
-
-    def allocated
-      base_type.allocated
-    end
+    delegate leaf?, base_type
+    delegate superclass, base_type
+    delegate lookup_first_def, base_type
+    delegate lookup_defs, base_type
+    delegate lookup_defs_with_modules, base_type
+    delegate lookup_similar_def_name, base_type
+    delegate lookup_instance_var, base_type
+    delegate lookup_instance_var?, base_type
+    delegate index_of_instance_var, base_type
+    delegate lookup_macro, base_type
+    delegate lookup_macros, base_type
+    delegate lookup_type, base_type
+    delegate lookup_similar_type_name, base_type
+    delegate has_instance_var_in_initialize?, base_type
+    delegate all_instance_vars, base_type
+    delegate owned_instance_vars, base_type
+    delegate :abstract, base_type
+    delegate allocated, base_type
+    delegate is_subclass_of?, base_type
 
     def allocated=(allocated)
       base_type.allocated = allocated
@@ -2877,10 +2739,6 @@ module Crystal
 
     def metaclass
       @metaclass ||= VirtualMetaclassType.new(program, self)
-    end
-
-    def is_subclass_of?(other)
-      base_type.is_subclass_of?(other)
     end
 
     def virtual?
@@ -2984,18 +2842,9 @@ module Crystal
 
     delegate base_type, instance_type
     delegate cover, instance_type
-
-    def lookup_first_def(name, block)
-      instance_type.base_type.metaclass.lookup_first_def(name, block)
-    end
-
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      instance_type.lookup_type(names, already_looked_up, lookup_in_container)
-    end
-
-    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      instance_type.lookup_similar_type_name(names, already_looked_up, lookup_in_container)
-    end
+    delegate lookup_first_def, instance_type
+    delegate lookup_type, instance_type
+    delegate lookup_similar_type_name, instance_type
 
     def virtual_lookup(type)
       type.metaclass

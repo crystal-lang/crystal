@@ -93,8 +93,8 @@ class Object
   end
 
   macro delegate(method, to)
-    def {{method.id}}
-      {{to.id}}.{{method.id}}
+    def {{method.id}}(*args)
+      {{to.id}}.{{method.id}}(*args)
     end
   end
 
