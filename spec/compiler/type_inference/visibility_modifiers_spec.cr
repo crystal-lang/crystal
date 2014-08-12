@@ -190,4 +190,20 @@ describe "Visibility modifiers" do
       ),
       "can't apply visibility modifier"
   end
+
+  it "allows invoking protected from instance to class" do
+    assert_type(%(
+      class Foo
+        def instance_foo
+          Foo.class_foo
+        end
+
+        protected def self.class_foo
+          1
+        end
+      end
+
+      Foo.new.instance_foo
+      )) { int32 }
+  end
 end

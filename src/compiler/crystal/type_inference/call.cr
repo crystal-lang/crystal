@@ -266,7 +266,7 @@ module Crystal
           raise "private method '#{match.def.name}' called for #{match.def.owner}"
         end
       when :protected
-        unless scope.implements?(match.def.owner)
+        unless scope.instance_type.implements?(match.def.owner.instance_type)
           raise "protected method '#{match.def.name}' called for #{match.def.owner}"
         end
       end
