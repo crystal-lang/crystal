@@ -118,4 +118,14 @@ describe "Type inference: did you mean" do
       ex.to_s.includes?("did you mean").should be_false
     end
   end
+
+  it "says did you mean for named argument" do
+    assert_error "
+      def foo(barbara = 1)
+      end
+
+      foo bazbaza: 1
+      ",
+      "did you mean 'barbara'"
+  end
 end

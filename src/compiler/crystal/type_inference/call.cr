@@ -2,6 +2,7 @@ require "../ast"
 require "../types"
 require "../primitives"
 require "type_lookup"
+require "levenshtein"
 
 module Crystal
   class Call
@@ -837,19 +838,8 @@ module Crystal
         end
 
         if named_args = @named_args
-          # Check if there was a mistmatched named argument
           defs_matching_args_length.each do |a_def|
-            named_args.each do |named_arg|
-              found_index = a_def.args.index { |arg| arg.name == named_arg.name }
-              if found_index
-                min_length, max_length = a_def.min_max_args_lengths
-                if found_index < min_length
-                  named_arg.raise "argument '#{named_arg.name}' already specified"
-                end
-              else
-                named_arg.raise "no argument named '#{named_arg.name}'"
-              end
-            end
+            check_named_args_mismatch named_args, a_def
           end
         end
       end
@@ -916,6 +906,47 @@ module Crystal
       end
 
       raise message, owner_trace
+    end
+
+    def check_named_args_mismatch(named_args, a_def)
+      named_args.each do |named_arg|
+        found_index = a_def.args.index { |arg| arg.name == named_arg.name }
+        if found_index
+          min_length, max_length = a_def.min_max_args_lengths
+          if found_index < min_length
+            named_arg.raise "argument '#{named_arg.name}' already specified"
+          end
+        else
+          similar_arg = find_similar_arg(named_arg.name, a_def)
+
+          msg = String.build do |str|
+            str << "no argument named '"
+            str << named_arg.name
+            str << "'"
+            if similar_arg
+              str << " (did you mean '#{similar_arg}'?)".colorize.yellow.bold
+            end
+          end
+          named_arg.raise msg
+        end
+      end
+    end
+
+    def find_similar_arg(name, a_def)
+      tolerance = (name.length / 5.0).ceil
+      candidates = [] of String
+
+      a_def.args.each do |arg|
+        if arg.default_value && levenshtein(name, arg.name) <= tolerance
+          candidates << arg.name
+        end
+      end
+
+      if candidates.empty?
+        nil
+      else
+        candidates.min_by { |candidate| levenshtein(candidate, name) }
+      end
     end
 
     def raise_matches_not_found_for_virtual_metaclass_new(owner)
@@ -1016,16 +1047,8 @@ module Crystal
 
       ms = matches.map do |match|
         # Check that this call doesn't have a named arg not mentioned in new
-        @named_args.try &.each do |named_arg|
-          found_index = match.def.args.index { |arg| arg.name == named_arg.name }
-          if found_index
-            min_length, max_length = match.def.min_max_args_lengths
-            if found_index < min_length
-              named_arg.raise "argument '#{named_arg.name}' already specified"
-            end
-          else
-            named_arg.raise "no argument named '#{named_arg.name}'"
-          end
+        if named_args = @named_args
+          check_named_args_mismatch named_args, match.def
         end
 
         new_def = match.def.expand_new_from_initialize(instance_type)
