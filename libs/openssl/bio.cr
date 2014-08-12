@@ -8,13 +8,13 @@ struct OpenSSL::BIO
 
     crystal_bio.bwrite = -> (bio : LibCrypto::Bio*, data : UInt8*, len : Int32) do
       io = Box(IO).unbox(bio.value.ptr)
-      io.write(data, len)
+      io.write Slice.new(data, len)
       len
     end
 
     crystal_bio.bread = -> (bio : LibCrypto::Bio*, buffer : UInt8*, len : Int32) do
       io = Box(IO).unbox(bio.value.ptr)
-      io.read(buffer, len).to_i
+      io.read(Slice.new(buffer, len)).to_i
     end
 
     crystal_bio.ctrl = -> (bio : LibCrypto::Bio*, cmd : Int32, num : Int64, ptr : Void*) do
