@@ -1,8 +1,8 @@
 require "../ast"
 require "../types"
 require "../primitives"
+require "../similar_name"
 require "type_lookup"
-require "levenshtein"
 
 module Crystal
   class Call
@@ -917,35 +917,18 @@ module Crystal
             named_arg.raise "argument '#{named_arg.name}' already specified"
           end
         else
-          similar_arg = find_similar_arg(named_arg.name, a_def)
+          similar_name = SimilarName.find(named_arg.name, a_def.args.select(&.default_value).map(&.name))
 
           msg = String.build do |str|
             str << "no argument named '"
             str << named_arg.name
             str << "'"
-            if similar_arg
-              str << " (did you mean '#{similar_arg}'?)".colorize.yellow.bold
+            if similar_name
+              str << " (did you mean '#{similar_name}'?)".colorize.yellow.bold
             end
           end
           named_arg.raise msg
         end
-      end
-    end
-
-    def find_similar_arg(name, a_def)
-      tolerance = (name.length / 5.0).ceil
-      candidates = [] of String
-
-      a_def.args.each do |arg|
-        if arg.default_value && levenshtein(name, arg.name) <= tolerance
-          candidates << arg.name
-        end
-      end
-
-      if candidates.empty?
-        nil
-      else
-        candidates.min_by { |candidate| levenshtein(candidate, name) }
       end
     end
 

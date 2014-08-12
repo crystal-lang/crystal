@@ -128,4 +128,22 @@ describe "Type inference: did you mean" do
       ",
       "did you mean 'barbara'"
   end
+
+  it "says did you mean for instance var" do
+    assert_error %(
+      class Foo
+        def initialize
+          @barbara = 1
+        end
+
+        def foo
+          @bazbaza.abs
+        end
+      end
+
+      Foo.new.foo
+      ),
+      "did you mean @barbara"
+
+  end
 end

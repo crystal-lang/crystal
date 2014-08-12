@@ -1,4 +1,4 @@
-require "levenshtein"
+require "similar_name"
 
 module Crystal
   alias TypeIdSet = Set(Int32)
@@ -647,25 +647,19 @@ module Crystal
     def lookup_similar_def_name(name, args_length, block)
       return nil unless name =~ SuggestableName
 
-      tolerance = (name.length / 5.0).ceil
-      candidates = [] of String
-
       if (defs = self.defs)
+        similar_name = SimilarName.new(name)
         defs.each do |def_name, hash|
           if def_name =~ SuggestableName
             hash.each do |filter, overload|
               if filter.max_length == args_length && filter.yields == !!block
-                if levenshtein(def_name, name) <= tolerance
-                  candidates << def_name
-                end
+                similar_name.test(def_name)
               end
             end
           end
         end
-      end
-
-      unless candidates.empty?
-        return candidates.min_by { |candidate| levenshtein(candidate, name) }
+        best_match = similar_name.best_match
+        return best_match if best_match
       end
 
       parents.try &.each do |parent|
@@ -920,21 +914,16 @@ module Crystal
         previous_type = type
         type = previous_type.types[name]?
         unless type
-          tolerance = (name.length / 5.0).ceil
-          name_downcase = name.downcase
-          candidates = [] of String
-
+          similar_name = SimilarName.new(name.downcase)
           previous_type.types.each_key do |type_name|
-            if levenshtein(type_name.downcase, name_downcase) <= tolerance
-              candidates.push type_name
-            end
+            similar_name.test(type_name.downcase, type_name)
           end
+          best_match = similar_name.best_match
 
-          if candidates.empty?
-            break
+          if best_match
+            return (names[0 ... idx] + [best_match]).join "::"
           else
-            similar_name = candidates.min_by { |candidate| levenshtein(candidate, name) }
-            return (names[0 ... idx] + [similar_name]).join "::"
+            break
           end
         end
       end
@@ -1286,20 +1275,7 @@ module Crystal
     end
 
     def lookup_similar_instance_var_name(name)
-      tolerance = (name.length / 5.0).ceil
-      candidates = [] of String
-
-      all_instance_vars.each_key do |ivar_name|
-        if name != ivar_name && levenshtein(name, ivar_name) <= tolerance
-          candidates << ivar_name
-        end
-      end
-
-      if candidates.empty?
-        nil
-      else
-        candidates.min_by { |candidate| levenshtein(candidate, name) }
-      end
+      SimilarName.find(name, all_instance_vars.keys.select { |key| key != name })
     end
   end
 
