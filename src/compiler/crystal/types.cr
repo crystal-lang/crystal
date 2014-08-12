@@ -594,7 +594,11 @@ module Crystal
       if (my_parents = parents) && !(signature.name == "new" && owner.metaclass?)
         my_parents.each do |parent|
           matches = parent.lookup_matches(signature, owner, parent, matches_array)
-          return matches if matches.cover_all?
+          if matches.cover_all?
+            return matches
+          else
+            matches_array = matches.matches
+          end
         end
       end
 

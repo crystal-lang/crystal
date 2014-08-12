@@ -537,4 +537,29 @@ describe "Type inference: module" do
       x
       ") { union_of(int32, char) }
   end
+
+  it "allows overloading with included generic module" do
+    assert_type(%(
+      module Foo(T)
+        def foo(x : T)
+          bar(x)
+        end
+      end
+
+      class Bar
+        include Foo(Int32)
+        include Foo(String)
+
+        def bar(x : Int32)
+          1
+        end
+
+        def bar(x : String)
+          "a"
+        end
+      end
+
+      Bar.new.foo(1 || "hello")
+      )) { union_of(int32, string) }
+  end
 end
