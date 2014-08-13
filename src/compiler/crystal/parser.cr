@@ -37,81 +37,94 @@ module Crystal
     end
 
     def parse_expressions
+      if is_end_token
+        return Nop.new
+      end
+
+      exp = parse_multi_assign
+      skip_statement_end
+
+      if is_end_token
+        return exp
+      end
+
       exps = [] of ASTNode
-      while @token.type != :EOF && !is_end_token
+      exps.push exp
+
+      begin
         exps << parse_multi_assign
         skip_statement_end
-      end
+      end until is_end_token
+
       Expressions.from(exps)
     end
 
     def parse_multi_assign
       location = @token.location
 
-      exps = [] of ASTNode
-      i = 0
-      assign_index = -1
-      exps << (last = parse_expression)
-      while true
-        case @token.type
-        when :SPACE
-          next_token
-        when :","
-          if assign_index == -1 && is_multi_assign_middle?(last)
-            assign_index = i
-          end
+      last = parse_expression
+      skip_space
 
-          i += 1
-
-          next_token_skip_space_or_newline
-          exps << (last = parse_expression)
-        else
-          break
-        end
+      unless @token.type == :","
+        return last
       end
 
-      if exps.length == 1
-        exps[0]
-      else
+      exps = [] of ASTNode
+      exps << last
+
+      i = 0
+      assign_index = -1
+
+      while @token.type == :","
         if assign_index == -1 && is_multi_assign_middle?(last)
           assign_index = i
         end
 
-        if assign_index == -1
-          unexpected_token
-        end
+        i += 1
 
-        targets = exps[0 ... assign_index].map { |exp| to_lhs(exp) }
-        if ivars = @instance_vars
-          targets.each do |target|
-            ivars.add target.name if target.is_a?(InstanceVar)
-          end
-        end
-
-        assign = exps[assign_index]
-        values = [] of ASTNode
-
-        case assign
-        when Assign
-          targets << to_lhs(assign.target)
-          values << assign.value
-        when Call
-          assign.name = assign.name[0, assign.name.length - 1]
-          targets << assign
-          values << assign.args.pop
-        else
-          raise "Bug: mutliassign index expression can only be Assign or Call"
-        end
-
-        values.concat exps[assign_index + 1 .. -1]
-        if values.length != 1 && targets.length != 1 && targets.length != values.length
-          raise "Multiple assignment count mismatch", location
-        end
-
-        multi = MultiAssign.new(targets, values)
-        multi.location = location
-        multi
+        next_token_skip_space_or_newline
+        exps << (last = parse_expression)
+        skip_space
       end
+
+      if assign_index == -1 && is_multi_assign_middle?(last)
+        assign_index = i
+      end
+
+      if assign_index == -1
+        unexpected_token
+      end
+
+      targets = exps[0 ... assign_index].map { |exp| to_lhs(exp) }
+      if ivars = @instance_vars
+        targets.each do |target|
+          ivars.add target.name if target.is_a?(InstanceVar)
+        end
+      end
+
+      assign = exps[assign_index]
+      values = [] of ASTNode
+
+      case assign
+      when Assign
+        targets << to_lhs(assign.target)
+        values << assign.value
+      when Call
+        assign.name = assign.name[0, assign.name.length - 1]
+        targets << assign
+        values << assign.args.pop
+      else
+        raise "Bug: mutliassign index expression can only be Assign or Call"
+      end
+
+      values.concat exps[assign_index + 1 .. -1]
+      if values.length != 1 && targets.length != 1 && targets.length != values.length
+        raise "Multiple assignment count mismatch", location
+      end
+
+      multi = MultiAssign.new(targets, values)
+      multi.location = location
+      multi
     end
 
     def is_multi_assign_middle?(exp)
@@ -3538,15 +3551,19 @@ module Crystal
     end
 
     def is_end_token
-      return true if @token.type == :"}" || @token.type == :"]"
-      return false unless @token.type == :IDENT
-
-      case @token.value
-      when :do, :end, :else, :elsif, :when, :rescue, :ensure
-        true
-      else
-        false
+      case @token.type
+      when :"}", :"]", :EOF
+        return true
       end
+
+      if @token.type == :IDENT
+        case @token.value
+        when :do, :end, :else, :elsif, :when, :rescue, :ensure
+          return true
+        end
+      end
+
+      false
     end
 
     def can_be_assigned?(node)
