@@ -15,7 +15,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
     end
   end
 
-  def mime_type(path)
+  private def mime_type(path)
     case File.extname(path)
     when ".txt" then "text/plain"
     when ".htm", ".html" then "text/html"
@@ -25,7 +25,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
     end
   end
 
-  def directory_listing(request_path, path)
+  private def directory_listing(request_path, path)
     HTML::Builder.new.build do
       html do
         title { text "Directory listing for #{request_path}" }

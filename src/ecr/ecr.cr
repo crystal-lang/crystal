@@ -37,7 +37,7 @@ module ECR
     end
   end
 
-  def append_loc(str, filename, token)
+  private def append_loc(str, filename, token)
     str << %(#<loc:")
     str << filename
     str << %(",)

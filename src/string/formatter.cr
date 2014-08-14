@@ -137,11 +137,11 @@ class String::Formatter
     end
   end
 
-  def append_string
+  private def append_string
     append_arg(@args[@arg_index]) { |arg, arg_s| yield arg, arg_s }
   end
 
-  def append_integer
+  private def append_integer
     arg = @args[@arg_index]
     unless arg.responds_to?(:to_i)
       raise "expected a number for %d, not #{arg.inspect}"
@@ -150,14 +150,14 @@ class String::Formatter
     append_arg(arg.to_i) { |arg_i, arg_s| yield arg_i, arg_s }
   end
 
-  def append_arg(arg)
+  private def append_arg(arg)
     arg_s = arg.to_s
     yield arg, arg_s
     @arg_index += 1
     @i += 1
   end
 
-  def append_with_left_padding(fill_char)
+  private def append_with_left_padding(fill_char)
     append_with_padding do |arg, arg_s, num|
       num -= arg_s.length
       num.times { @buffer << fill_char }
@@ -165,7 +165,7 @@ class String::Formatter
     end
   end
 
-  def append_with_padding
+  private def append_with_padding
     num = consume_number
     case char = current_char
     when 'd'
@@ -181,7 +181,7 @@ class String::Formatter
     end
   end
 
-  def consume_number
+  private def consume_number
     num = current_char.ord - '0'.ord
     @i += 1
     while @i < @length
@@ -197,7 +197,7 @@ class String::Formatter
     num
   end
 
-  def current_char
+  private def current_char
     @str[@i].chr
   end
 end

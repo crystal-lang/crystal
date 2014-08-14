@@ -40,8 +40,7 @@ class HTTP::Server
     gets
   end
 
-
-  def handle_client(sock)
+  private def handle_client(sock)
     io = sock
     io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
     io = BufferedIO.new(io)
@@ -65,7 +64,7 @@ class HTTP::Server
     end
   end
 
-  def self.build_middleware(handlers)
+  private def self.build_middleware(handlers)
     if handlers.empty?
       raise ArgumentError.new "no handlers specified"
     end

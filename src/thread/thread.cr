@@ -14,13 +14,13 @@ class Thread(T, R)
       }, self as Void*)
   end
 
-  def start
-    ret = Pointer(R).malloc_one(@func.call(@arg))
-    PThread.exit(ret as Void*)
-  end
-
   def join
     PThread.join(@th, out ret)
     (ret as R*).value
+  end
+
+  protected def start
+    ret = Pointer(R).malloc_one(@func.call(@arg))
+    PThread.exit(ret as Void*)
   end
 end

@@ -47,7 +47,7 @@ class ECR::Lexer
     consume_string
   end
 
-  def consume_string
+  private def consume_string
     start_pos = current_pos
     while true
       case current_char
@@ -69,7 +69,7 @@ class ECR::Lexer
     @token
   end
 
-  def consume_control(is_output)
+  private def consume_control(is_output)
     start_pos = current_pos
     while true
       case current_char
@@ -97,37 +97,37 @@ class ECR::Lexer
     @token
   end
 
-  def copy_location_info_to_token
+  private def copy_location_info_to_token
     @token.line_number = @line_number
     @token.column_number = @column_number
   end
 
-  def current_char
+  private def current_char
     @reader.current_char
   end
 
-  def next_char
+  private def next_char
     @column_number += 1
     next_char_no_column_increment
   end
 
-  def next_char_no_column_increment
+  private def next_char_no_column_increment
     @reader.next_char
   end
 
-  def peek_next_char
+  private def peek_next_char
     @reader.peek_next_char
   end
 
-  def current_pos
+  private def current_pos
     @reader.pos
   end
 
-  def string_range(start_pos)
+  private def string_range(start_pos)
     string_range(start_pos, current_pos)
   end
 
-  def string_range(start_pos, end_pos)
+  private def string_range(start_pos, end_pos)
     @reader.string[start_pos, end_pos - start_pos]
   end
 end

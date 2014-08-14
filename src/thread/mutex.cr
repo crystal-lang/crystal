@@ -4,15 +4,15 @@ class Mutex
   end
 
   def lock
-    PThread.mutex_lock(pointerof(@mutex))
+    PThread.mutex_lock(self)
   end
 
   def try_lock
-    PThread.mutex_trylock(pointerof(@mutex))
+    PThread.mutex_trylock(self)
   end
 
   def unlock
-    PThread.mutex_unlock(pointerof(@mutex))
+    PThread.mutex_unlock(self)
   end
 
   def synchronize
@@ -23,10 +23,10 @@ class Mutex
   end
 
   def destroy
-    PThread.mutex_destroy(pointerof(@mutex))
+    PThread.mutex_destroy(self)
   end
 
-  def mutex_ptr
+  def to_unsafe
     pointerof(@mutex)
   end
 end

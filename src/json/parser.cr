@@ -10,7 +10,7 @@ class Json::Parser
     json
   end
 
-  def parse_array_or_object
+  private def parse_array_or_object
     case @token.type
     when :"["
       parse_array
@@ -21,7 +21,7 @@ class Json::Parser
     end
   end
 
-  def parse_array
+  private def parse_array
     next_token
 
     ary = [] of Type
@@ -45,7 +45,7 @@ class Json::Parser
     ary
   end
 
-  def parse_object
+  private def parse_object
     next_token
 
     object = {} of String => Type
@@ -79,7 +79,7 @@ class Json::Parser
     object
   end
 
-  def parse_value
+  private def parse_value
     case @token.type
     when :INT
       value_and_next_token @token.int_value
@@ -98,20 +98,20 @@ class Json::Parser
     end
   end
 
-  def value_and_next_token(value)
+  private def value_and_next_token(value)
     next_token
     value
   end
 
-  def check(token_type)
+  private def check(token_type)
     unexpected_token unless @token.type == token_type
   end
 
-  def next_token
+  private def next_token
     @token = @lexer.next_token
   end
 
-  def unexpected_token
+  private def unexpected_token
     raise ParseException.new("unexpected token '#{@token}'", @token.line_number, @token.column_number)
   end
 end

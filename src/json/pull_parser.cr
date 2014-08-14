@@ -177,7 +177,7 @@ class Json::PullParser
     end
   end
 
-  def begin_array
+  private def begin_array
     @kind = :begin_array
     @object_stack << :array
 
@@ -187,7 +187,7 @@ class Json::PullParser
     end
   end
 
-  def begin_object
+  private def begin_object
     @kind = :begin_object
     @object_stack << :object
 
@@ -199,15 +199,15 @@ class Json::PullParser
     end
   end
 
-  def current_object
+  private def current_object
     @object_stack.last?
   end
 
-  def next_token
+  private def next_token
     @token = @lexer.next_token
   end
 
-  def next_token_after_value
+  private def next_token_after_value
     case next_token.type
     when :",", :"]", :"}"
       # Ok
@@ -216,7 +216,7 @@ class Json::PullParser
     end
   end
 
-  def next_token_after_array_or_object
+  private def next_token_after_array_or_object
     unless @object_stack.pop?
       unexpected_token
     end
@@ -232,11 +232,11 @@ class Json::PullParser
     end
   end
 
-  def expect_kind(kind)
+  private def expect_kind(kind)
     raise ParseException.new("expected #{kind} but was #{@kind}", @token.line_number, @token.column_number) unless @kind == kind
   end
 
-  def unexpected_token
+  private def unexpected_token
     raise ParseException.new("unexpected token: #{@token}", @token.line_number, @token.column_number)
   end
 end

@@ -20,9 +20,9 @@ struct Complex
   end
 
   def to_s(io : IO)
-    real.to_s io
+    io << real
     io << " + "
-    real.to_s imag
+    io << imag
     io << "i"
   end
 end

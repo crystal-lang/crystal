@@ -43,7 +43,7 @@ class Json::Lexer
     @token
   end
 
-  def skip_whitespace
+  private def skip_whitespace
     while current_char.whitespace?
       if current_char == '\n'
         @line_number += 1
@@ -53,7 +53,7 @@ class Json::Lexer
     end
   end
 
-  def consume_true
+  private def consume_true
     if next_char == 'r' && next_char == 'u' && next_char == 'e'
       next_char
       @token.type = :true
@@ -62,7 +62,7 @@ class Json::Lexer
     end
   end
 
-  def consume_false
+  private def consume_false
     if next_char == 'a' && next_char == 'l' && next_char == 's' && next_char == 'e'
       next_char
       @token.type = :false
@@ -71,7 +71,7 @@ class Json::Lexer
     end
   end
 
-  def consume_null
+  private def consume_null
     if next_char == 'u' && next_char == 'l' && next_char == 'l'
       next_char
       @token.type = :null
@@ -80,7 +80,7 @@ class Json::Lexer
     end
   end
 
-  def consume_string
+  private def consume_string
     @string_io.clear
     buffer = @string_io
     while true
@@ -126,7 +126,7 @@ class Json::Lexer
     @token.string_value = buffer.to_s
   end
 
-  def read_hex_number
+  private def read_hex_number
     hexnum = 0
     4.times do
       char = next_char
@@ -135,7 +135,7 @@ class Json::Lexer
     hexnum
   end
 
-  def consume_number
+  private def consume_number
     integer = 0_i64
     negative = false
 
@@ -179,7 +179,7 @@ class Json::Lexer
     end
   end
 
-  def consume_float(negative, integer)
+  private def consume_float(negative, integer)
     divisor = 1
     char = next_char
     while '0' <= char <= '9'
@@ -198,7 +198,7 @@ class Json::Lexer
     end
   end
 
-  def consume_exponent(negative, float)
+  private def consume_exponent(negative, float)
     exponent = 0
     negative_exponent = false
 
@@ -227,29 +227,29 @@ class Json::Lexer
     @token.float_value = negative ? -float : float
   end
 
-  def next_char
+  private def next_char
     @column_number += 1
     next_char_no_column_increment
   end
 
-  def next_char_no_column_increment
+  private def next_char_no_column_increment
     @reader.next_char
   end
 
-  def next_char(token_type)
+  private def next_char(token_type)
     @token.type = token_type
     next_char
   end
 
-  def current_char
+  private def current_char
     @reader.current_char
   end
 
-  def unexpected_char(char = current_char)
+  private def unexpected_char(char = current_char)
     raise "unexpected char '#{char}'"
   end
 
-  def raise(msg)
+  private def raise(msg)
     ::raise ParseException.new(msg, @line_number, @column_number)
   end
 end

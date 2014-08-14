@@ -48,8 +48,8 @@ struct Range(B, E)
   end
 
   def to_s(io : IO)
-    @begin.to_s(io)
+    io << @begin
     io << (@exclusive ? "..." : "..")
-    @end.to_s(io)
+    io << @end
   end
 end

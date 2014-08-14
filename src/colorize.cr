@@ -170,7 +170,7 @@ struct ColorizedObject(T)
     end
   end
 
-  def append_start(io, reset = false)
+  protected def append_start(io, reset = false)
     fore_is_default = @fore == FORE_DEFAULT
     back_is_default = @back == BACK_DEFAULT
     mode_is_default = @mode == 0
@@ -242,7 +242,7 @@ struct ColorizedObject(T)
     end
   end
 
-  def append_end(io)
+  protected def append_end(io)
     io << "\e[0m"
   end
 end

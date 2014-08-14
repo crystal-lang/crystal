@@ -50,7 +50,7 @@ class BufferedIO(T)
     @out_buffer = StringIO.new
   end
 
-  def fill_buffer
+  private def fill_buffer
     length = @io.read(@buffer.to_slice).to_i
     @buffer_rem = @buffer.to_slice[0, length]
   end

@@ -12,7 +12,7 @@ module Crypto
       end
     end
 
-    def self.to_hex(c)
+    private def self.to_hex(c)
       ((c < 10 ? 48_u8 : 87_u8) + c)
     end
   end
