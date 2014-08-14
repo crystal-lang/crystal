@@ -39,7 +39,9 @@ lib C
   fun dup2(fd : Int32, fd2 : Int32) : Int32
   fun read(fd : Int32, buffer : UInt8*, nbyte : C::SizeT) : C::SizeT
   fun write(fd : Int32, buffer : UInt8*, nbyte : C::SizeT)
-  fun lseek(fd : Int32, offset : Int64, whence : Int32) : Int32
+
+  # In fact lseek's offset is off_t, but it matches the definition of size_t
+  fun lseek(fd : Int32, offset : C::SizeT, whence : Int32) : Int32
   fun close(fd : Int32) : Int32
 end
 

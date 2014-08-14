@@ -17,11 +17,11 @@ class FileDescriptorIO
   end
 
   def seek(amount, whence)
-    C.lseek(@fd, amount.to_i64, whence)
+    C.lseek(@fd, amount.to_sizet, whence)
   end
 
   def tell
-    C.lseek(@fd, 0_i64, C::SEEK_CUR)
+    C.lseek(@fd, 0.to_sizet, C::SEEK_CUR)
   end
 
   def stat
