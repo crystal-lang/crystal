@@ -1,3 +1,7 @@
+## 0.4.3 (2014-08-14)
+
+* Reverted a commit that introduced random crashes.
+
 ## 0.4.2 (2014-08-13)
 
 * Fixed [#187](https://github.com/manastech/crystal/issues/185): mixing `yield` and `block.call` crashes the compiler.
