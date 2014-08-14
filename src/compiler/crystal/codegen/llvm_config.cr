@@ -1,11 +1,7 @@
 module Crystal
   class LLVMConfig
     def bin(name)
-      if system("which #{name} > /dev/null 2>&1") == 0
-        Program.exec("which #{name}").not_nil!
-      else
-        "#{bin_dir}/#{name}"
-      end
+      "#{bin_dir}/#{name}"
     end
 
     def llvm_config
