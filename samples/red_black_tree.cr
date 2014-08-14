@@ -214,9 +214,7 @@ class RedBlackTree
     height
   end
 
-#private
-
-  def left_rotate(x)
+  private def left_rotate(x)
     raise "x.right is nil!" if x.right.nil?
     y = x.right
     x.right = y.left
@@ -235,7 +233,7 @@ class RedBlackTree
     x.parent = y
   end
 
-  def right_rotate(x)
+  private def right_rotate(x)
     raise "x.left is nil!" if x.left.nil?
     y = x.left
     x.left = y.right
@@ -254,7 +252,7 @@ class RedBlackTree
     x.parent = y
   end
 
-  def insert_helper(z)
+  private def insert_helper(z)
     y = NilNode.instance
     x = root
     while !x.nil?
@@ -270,7 +268,7 @@ class RedBlackTree
     self.size += 1
   end
 
-  def delete_fixup(x)
+  private def delete_fixup(x)
     while x != root && x.color == Node::BLACK
       if x == x.parent.left
         w = x.parent.right

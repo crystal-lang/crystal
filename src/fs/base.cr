@@ -94,9 +94,7 @@ module FS
       @fs.entry @fs.combine(path, file_name)
     end
 
-    # private
-
-    def scoped_file_name(file_name)
+    private def scoped_file_name(file_name)
       @fs.combine path, file_name
     end
   end

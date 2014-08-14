@@ -80,9 +80,7 @@ class OptionParser
     @flags.join "\n", io
   end
 
-  # private
-
-  def append_flag(flag, description)
+  private def append_flag(flag, description)
     @flags << String.build do |str|
       str << "    "
       str << flag
@@ -93,7 +91,7 @@ class OptionParser
     end
   end
 
-  def parse_flag(flag)
+  private def parse_flag(flag)
     case flag
     when /--(\S+)\s+\[\S+\]/
       value = double_flag_value("--#{$1}")
@@ -114,7 +112,7 @@ class OptionParser
     end
   end
 
-  def flag_present?(flag)
+  private def flag_present?(flag)
     index = args_index(flag)
     if index
       delete_arg_at_index(index)
@@ -124,7 +122,7 @@ class OptionParser
     false
   end
 
-  def double_flag_value(flag, raise_if_missing = false)
+  private def double_flag_value(flag, raise_if_missing = false)
     each_arg_with_index do |arg, index|
       if arg.starts_with?(flag)
         if arg.length == flag.length
@@ -152,7 +150,7 @@ class OptionParser
     nil
   end
 
-  def single_flag_value(flag, raise_if_missing = false)
+  private def single_flag_value(flag, raise_if_missing = false)
     index = args_index { |arg| arg.starts_with?(flag) }
     if index
       arg = delete_arg_at_index(index)
@@ -172,7 +170,7 @@ class OptionParser
     end
   end
 
-  def each_arg_with_index
+  private def each_arg_with_index
     if double_dash_index = @double_dash_index
       @args.each_with_index do |arg, index|
         break if index == double_dash_index
@@ -185,15 +183,15 @@ class OptionParser
     end
   end
 
-  def args_length
+  private def args_length
     @double_dash_index || @args.length
   end
 
-  def args_index(flag)
+  private def args_index(flag)
     args_index { |arg| arg == flag }
   end
 
-  def args_index
+  private def args_index
     index = @args.index { |arg| yield arg }
     if index
       if (double_dash_index = @double_dash_index) && index >= double_dash_index
@@ -203,19 +201,19 @@ class OptionParser
     index
   end
 
-  def delete_arg_at_index(index)
+  private def delete_arg_at_index(index)
     arg = @args.delete_at(index)
     decrement_double_dash_index
     arg
   end
 
-  def decrement_double_dash_index
+  private def decrement_double_dash_index
     if double_dash_index = @double_dash_index
       @double_dash_index = double_dash_index - 1
     end
   end
 
-  def check_invalid_options
+  protected def check_invalid_options
     @args.each_with_index do |arg, index|
       return if (double_dash_index = @double_dash_index) && index >= double_dash_index
 

@@ -55,9 +55,7 @@ module FS
       end
     end
 
-    # private
-
-    def memory_entry_for_path(path)
+    private def memory_entry_for_path(path)
       current = nil
       current_entries = @data
 

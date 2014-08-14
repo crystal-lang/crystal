@@ -211,18 +211,6 @@ struct CFileIO
     self.tc_mode = mode
   end
 
-  # private
-
-  def tc_mode
-    mode = Pointer(Termios::Struct).malloc 1_u64
-    Termios.tcgetattr(fd, mode)
-    mode
-  end
-
-  def tc_mode=(mode)
-    Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, mode)
-  end
-
   def read_nonblock(length)
     before = C.fcntl(fd, C::FCNTL::F_GETFL)
     C.fcntl(fd, C::FCNTL::F_SETFL, before | C::O_NONBLOCK)
@@ -241,5 +229,15 @@ struct CFileIO
     ensure
       C.fcntl(fd, C::FCNTL::F_SETFL, before)
     end
+  end
+
+  private def tc_mode
+    mode = Pointer(Termios::Struct).malloc 1_u64
+    Termios.tcgetattr(fd, mode)
+    mode
+  end
+
+  private def tc_mode=(mode)
+    Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, mode)
   end
 end

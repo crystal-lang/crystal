@@ -676,7 +676,7 @@ class String
     end
   end
 
-  def dump_or_inspect(io) # private
+  private def dump_or_inspect(io)
     io << "\""
     reader = CharReader.new(self)
     while reader.has_next?

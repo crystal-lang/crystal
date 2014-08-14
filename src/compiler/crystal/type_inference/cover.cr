@@ -28,16 +28,14 @@ module Crystal
       missing
     end
 
-    # private
-
-    def compute_cover
+    private def compute_cover
       cover = BitArray.new(cover_length)
       cover_arg_types = arg_types.map(&.cover)
       matches.each { |match| mark_cover(match, cover, cover_arg_types) }
       {cover, cover_arg_types}
     end
 
-    def compute_fast_cover
+    private def compute_fast_cover
       # Check which arg indices of the matches have types or type restrictions
       indices = BitArray.new(arg_types.length)
       matches.each do |match|
@@ -56,13 +54,13 @@ module Crystal
       cover
     end
 
-    def cover_length
+    private def cover_length
       arg_types.inject(1) do |num, type|
         num * type.cover_length
       end
     end
 
-    def cover_length(indices)
+    private def cover_length(indices)
       i = 0
       arg_types.inject(1) do |num, type|
         if indices[i]
@@ -75,7 +73,7 @@ module Crystal
       end
     end
 
-    def mark_cover(match, cover, cover_arg_types, indices = nil, index = 0, position = 0, multiplier = 1)
+    private def mark_cover(match, cover, cover_arg_types, indices = nil, index = 0, position = 0, multiplier = 1)
       if index == cover_arg_types.length
         cover[position] = true
         return
@@ -108,7 +106,7 @@ module Crystal
       end
     end
 
-    def add_missing(missing, cover, cover_arg_types, types = [] of Type, index = 0, position = 0, multiplier = 1)
+    private def add_missing(missing, cover, cover_arg_types, types = [] of Type, index = 0, position = 0, multiplier = 1)
       if index == cover_arg_types.length
         unless cover[position]
           missing.push types.dup

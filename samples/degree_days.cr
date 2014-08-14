@@ -1,7 +1,6 @@
 # Copied with little modifications from: https://github.com/rubinius/rubinius-benchmark/blob/master/real_world/bench_degree_days.rb
 
 class DegreeDays
-
   def initialize(@daily_temperatures, @options = {} of Symbol => Float)
   end
 
@@ -36,64 +35,61 @@ class DegreeDays
     }
   end
 
-#private
-
-  def sum(ary)
+  private def sum(ary)
     ary.inject(0) { |a,i| a + i }
   end
 
-  def avg(ary)
+  private def avg(ary)
     sum(ary).to_f / ary.size.to_f
   end
 
-  def heating_day(temps)
+  private def heating_day(temps)
     heat = avg temps.map {|temp| heating_degree(temp)}
     (heat > heating_threshold) ? heat : nil
   end
 
-  def cooling_day(temps)
+  private def cooling_day(temps)
     cool = avg temps.map {|temp| cooling_degree(temp)}
     (cool > cooling_threshold) ? cool : nil
   end
 
-  def heating_degree(temp)
+  private def heating_degree(temp)
     deg = base_temperature - (temp + heating_insulation)
     {deg, 0}.max
   end
 
-  def cooling_degree(temp)
+  private def cooling_degree(temp)
     deg = (temp - cooling_insulation) - base_temperature
     {deg, 0}.max
   end
 
-  def base_temperature
+  private def base_temperature
     @options[:base_temperature]? || 65.0
   end
 
-  def heating_insulation
+  private def heating_insulation
     @options[:heating_insulation]? || insulation_factor || 3
   end
 
-  def cooling_insulation
+  private def cooling_insulation
     @options[:cooling_insulation]? || insulation_factor || 0
   end
 
-  def insulation_factor
+  private def insulation_factor
     @options[:insulation_factor]?
   end
 
-  def heating_threshold
+  private def heating_threshold
     @options[:heating_threshold]? || threshold || 6
   end
 
-  def cooling_threshold
+  private def cooling_threshold
     @options[:cooling_threshold]? || threshold || 3
   end
 
-  def threshold
+  private def threshold
     @options[:threshold]?
   end
-
 end
 
 (ARGV[0]? || 300).to_i.times do |i|

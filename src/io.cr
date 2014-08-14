@@ -111,7 +111,7 @@ module IO
     raise "Invalid byte sequence in UTF-8 string"
   end
 
-  def read_utf8_masked_byte # private
+  private def read_utf8_masked_byte
     byte = read_byte || raise "Incomplete UTF-8 byte sequence"
     (byte & 0x3f).to_u32
   end

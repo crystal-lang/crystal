@@ -37,9 +37,7 @@ class HTTP::Client
     end
   end
 
-  # private
-
-  def self.exec_url(url)
+  private def self.exec_url(url)
     uri = URI.parse(url)
     host_header = uri.port ? "#{uri.host}:#{uri.port}" : uri.host
     request = yield uri.full_path, {"Host" => host_header}

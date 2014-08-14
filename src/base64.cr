@@ -60,19 +60,17 @@ module Base64
     decode64(str)
   end
 
-# private
-
-  def encode_size(str_size, new_lines = false)
+  private def encode_size(str_size, new_lines = false)
     size = (str_size * 4 / 3.0).to_i + 6
     size += size / LINE_SIZE if new_lines
     size
   end
 
-  def decode_size(str_size)
+  private def decode_size(str_size)
     (str_size * 3 / 4.0).to_i + 6
   end
 
-  def to_base64(str, chars, pad = false)
+  private def to_base64(str, chars, pad = false)
     bytes = chars.cstr
     len = str.length
     cstr = str.cstr
@@ -104,7 +102,7 @@ module Base64
     end
   end
 
-  def from_base64(str)
+  private def from_base64(str)
     buf = 0
     mod = 0
     dt = DECODE_TABLE.buffer

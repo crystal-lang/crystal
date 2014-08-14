@@ -88,7 +88,7 @@ struct Char
     io << '\''
   end
 
-  def dump_or_inspect #private
+  private def dump_or_inspect
     case self
     when '\''  then "'\\''"
     when '\\'  then "'\\\\'"

@@ -27,37 +27,35 @@ module Crystal
       @ids[type]?
     end
 
-    # private
-
-    def assign_id(type : NonGenericClassType)
+    private def assign_id(type : NonGenericClassType)
       assign_id_from_subtypes type, type.subclasses
     end
 
-    def assign_id(type : MetaclassType)
+    private def assign_id(type : MetaclassType)
       # Skip for now
       0
     end
 
-    def assign_id(type : GenericClassType)
+    private def assign_id(type : GenericClassType)
       assign_id_from_subtypes type, type.generic_types.values
     end
 
-    def assign_id(type : GenericClassInstanceType | PrimitiveType)
+    private def assign_id(type : GenericClassInstanceType | PrimitiveType)
       id = next_id
       put_id type, id, id
       id
     end
 
-    def assign_id(type : NilType)
+    private def assign_id(type : NilType)
       put_id type, 0, 0
       0
     end
 
-    def assign_id(type)
+    private def assign_id(type)
       raise "Bug: unhandled type in assign id: #{type}"
     end
 
-    def assign_id_from_subtypes(type, subtypes)
+    private def assign_id_from_subtypes(type, subtypes)
       if subtypes.empty?
         id = next_id
         put_id type, id, id
@@ -78,11 +76,11 @@ module Crystal
       end
     end
 
-    def put_id(type, min, max)
+    private def put_id(type, min, max)
       @ids[type] = {min, max}
     end
 
-    def next_id
+    private def next_id
       @next_id += 1
     end
   end

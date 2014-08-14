@@ -52,13 +52,11 @@ class StringIO
     io.write Slice.new(@buffer, @length)
   end
 
-  # private
-
-  def check_needs_resize
+  private def check_needs_resize
     resize_to_capacity(@capacity * 2) if @length == @capacity
   end
 
-  def resize_to_capacity(capacity)
+  private def resize_to_capacity(capacity)
     @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
   end

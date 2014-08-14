@@ -299,15 +299,27 @@ class Hash(K, V)
     io << "{...}" unless executed
   end
 
-  # private
+  def rehash
+    new_size = calculate_new_size(@length)
+    @buckets = @buckets.realloc(new_size)
+    new_size.times { |i| @buckets[i] = nil }
+    @buckets_length = new_size
+    entry = @first
+    while entry
+      entry.next = nil
+      index = bucket_index entry.key
+      insert_in_bucket_end index, entry
+      entry = entry.fore
+    end
+  end
 
-  def find_entry(key)
+  protected def find_entry(key)
     index = bucket_index key
     entry = @buckets[index]
     find_entry_in_bucket entry, key
   end
 
-  def insert_in_bucket(index, key, value)
+  private def insert_in_bucket(index, key, value)
     entry = @buckets[index]
     if entry
       while entry
@@ -326,7 +338,7 @@ class Hash(K, V)
     end
   end
 
-  def insert_in_bucket_end(index, existing_entry)
+  private def insert_in_bucket_end(index, existing_entry)
     entry = @buckets[index]
     if entry
       while entry
@@ -341,7 +353,7 @@ class Hash(K, V)
     end
   end
 
-  def find_entry_in_bucket(entry, key)
+  private def find_entry_in_bucket(entry, key)
     while entry
       if @comp.equals?(entry.key, key)
         return entry
@@ -351,25 +363,11 @@ class Hash(K, V)
     nil
   end
 
-  def bucket_index(key)
+  private def bucket_index(key)
     (@comp.hash(key).abs % @buckets_length).to_i
   end
 
-  def rehash
-    new_size = calculate_new_size(@length)
-    @buckets = @buckets.realloc(new_size)
-    new_size.times { |i| @buckets[i] = nil }
-    @buckets_length = new_size
-    entry = @first
-    while entry
-      entry.next = nil
-      index = bucket_index entry.key
-      insert_in_bucket_end index, entry
-      entry = entry.fore
-    end
-  end
-
-  def calculate_new_size(size)
+  private def calculate_new_size(size)
     new_size = 8
     HASH_PRIMES.each do |hash_size|
       return hash_size if new_size > size
@@ -426,5 +424,4 @@ class Hash(K, V)
     1073741824 + 85,
     0
   ]
-
 end

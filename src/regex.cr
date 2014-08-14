@@ -97,9 +97,7 @@ class MatchData
     io << ")"
   end
 
-  # private
-
-  def check_index_out_of_bounds(index)
+  private def check_index_out_of_bounds(index)
     raise IndexOutOfBounds.new if index > @length
   end
 end

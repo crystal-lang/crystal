@@ -32,9 +32,7 @@ module FS
       end
     end
 
-    # private
-
-    def create_entry(entry, type)
+    private def create_entry(entry, type)
       if type == C::DirType::DIR
         DirectoryEntry.new(self, entry)
       # else
@@ -45,7 +43,7 @@ module FS
       end
     end
 
-    def scoped_file_name(file_name)
+    private def scoped_file_name(file_name)
       combine @path, file_name
     end
   end

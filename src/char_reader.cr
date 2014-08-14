@@ -69,9 +69,7 @@ struct CharReader
     self
   end
 
-  # private
-
-  def decode_char_at(pos)
+  private def decode_char_at(pos)
     first = byte_at(pos)
     if first < 0x80
       return yield first, 1
@@ -95,7 +93,7 @@ struct CharReader
     raise "Invalid byte sequence in UTF-8 string"
   end
 
-  def decode_current_char
+  private def decode_current_char
     decode_char_at(@pos) do |code_point, width|
       @current_char_width = width
       @end = @pos == @string.length
@@ -103,11 +101,11 @@ struct CharReader
     end
   end
 
-  def byte_at(i)
+  private def byte_at(i)
     @string.cstr[i].to_u32
   end
 
-  def byte_masked_at(i)
+  private def byte_masked_at(i)
     byte_at(i) & 0x3f
   end
 end

@@ -577,19 +577,15 @@ class Array(T)
     dup.shuffle!
   end
 
-  # protected
-
   def length=(length)
     @length = length
   end
 
-  # private
-
-  def check_needs_resize
+  private def check_needs_resize
     resize_to_capacity(@capacity * 2) if @length == @capacity
   end
 
-  def resize_to_capacity(capacity)
+  private def resize_to_capacity(capacity)
     @capacity = capacity
     @buffer = @buffer.realloc(@capacity)
   end
@@ -606,7 +602,7 @@ class Array(T)
   #   false
   # end
 
-  def self.quicksort!(a, n, comp)
+  protected def self.quicksort!(a, n, comp)
     return if (n < 2)
     p = a[n / 2]
     l = a
@@ -628,7 +624,7 @@ class Array(T)
     quicksort!(l, (a + n) - l, comp)
   end
 
-  def self.quicksort!(a, n)
+  protected def self.quicksort!(a, n)
     return if (n < 2)
     p = a[n / 2]
     l = a
