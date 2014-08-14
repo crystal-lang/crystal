@@ -1778,6 +1778,11 @@ module Crystal
         raise "can't instantiate StaticArray(T, N) with N = #{n.type} (N must be an integer)"
       end
 
+      value = n.value.to_i
+      if value < 0
+        raise "can't instantiate StaticArray(T, N) with N = #{value} (N must be positive)"
+      end
+
       StaticArrayInstanceType.new program, generic_type, type_vars
     end
   end

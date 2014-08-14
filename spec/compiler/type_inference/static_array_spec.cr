@@ -45,4 +45,11 @@ describe "Type inference: static array" do
       Foo(1).new.x
       ") { static_array_of(char, 1) }
   end
+
+  it "errors on negative static array size" do
+    assert_error %(
+      x :: Int32[-1]
+      ),
+      "can't instantiate StaticArray(T, N) with N = -1 (N must be positive)"
+  end
 end
