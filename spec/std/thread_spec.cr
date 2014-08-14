@@ -18,7 +18,7 @@ describe "Thread" do
 end
 
 describe "ConditionVariable" do
-  it "waits and send signal" do
+  pending "waits and send signal" do
     a = 0
     cv1 = ConditionVariable.new
     cv2 = ConditionVariable.new
