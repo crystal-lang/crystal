@@ -206,4 +206,17 @@ describe "Visibility modifiers" do
       Foo.new.instance_foo
       )) { int32 }
   end
+
+  it "automatically makes initialize be protected" do
+    assert_error %(
+      class Foo
+        def initialize(x)
+        end
+      end
+
+      foo = Foo.new(1)
+      foo.initialize(2)
+      ),
+      "protected method 'initialize' called for Foo"
+  end
 end

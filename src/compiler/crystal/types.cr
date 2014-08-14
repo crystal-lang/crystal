@@ -767,6 +767,10 @@ module Crystal
     def add_def(a_def)
       a_def.owner = self
 
+      if a_def.name == "initialize"
+        a_def.visibility = :protected
+      end
+
       min_length, max_length = a_def.min_max_args_lengths
       item = DefWithMetadata.new(min_length, max_length, !!a_def.yields, a_def)
 
@@ -2717,6 +2721,7 @@ module Crystal
     delegate :abstract, base_type
     delegate allocated, base_type
     delegate is_subclass_of?, base_type
+    delegate implements?, base_type
 
     def allocated=(allocated)
       base_type.allocated = allocated
