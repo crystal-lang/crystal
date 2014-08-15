@@ -34,9 +34,9 @@ class BufferedIO(T)
   end
 
   def read(slice : Slice(UInt8), count)
-    fill_buffer if @buffer_rem_size == 0
-    count = Math.min(count, @buffer_rem_size)
-    slice.copy_from(@buffer_rem, count)
+    fill_buffer if @buffer_rem.empty?
+    count = Math.min(count, @buffer_rem.length)
+    slice.copy_from(@buffer_rem.pointer(count), count)
     @buffer_rem += count
     count
   end

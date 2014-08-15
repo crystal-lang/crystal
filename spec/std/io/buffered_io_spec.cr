@@ -17,4 +17,11 @@ describe "BufferedIO" do
     io.flush
     str.to_s.should eq("Hello\n")
   end
+
+  it "does read" do
+    io = BufferedIO.new(StringIO.new("hello world"))
+    io.read(5).should eq("hello")
+    io.read(10).should eq(" world")
+    io.read(5).should eq("")
+  end
 end
