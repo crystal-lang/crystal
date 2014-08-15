@@ -573,7 +573,7 @@ module Crystal
               atomic.location = location
               next
             else
-              call_args = space_consumed ? parse_call_args_space_consumed : parse_call_args
+              call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis { space_consumed ? parse_call_args_space_consumed : parse_call_args }
               if call_args
                 args = call_args.args
                 block = call_args.block
@@ -2441,9 +2441,9 @@ module Crystal
         @calls_initialize = true
       end
 
-      old_last_call_has_parenthesis = @last_call_has_parenthesis
-
-      call_args = parse_call_args stop_on_do_after_space: is_var && !@last_call_has_parenthesis
+      call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis do
+        parse_call_args stop_on_do_after_space: !@last_call_has_parenthesis
+      end
       if call_args
         args = call_args.args
         block = call_args.block
@@ -2465,9 +2465,6 @@ module Crystal
       else
         block = parse_block(block)
       end
-
-      last_call_has_parenthesis = @last_call_has_parenthesis
-      @last_call_has_parenthesis = old_last_call_has_parenthesis
 
       if block || block_arg || global
         Call.new nil, name, (args || [] of ASTNode), block, block_arg, named_args, global, name_column_number, last_call_has_parenthesis
@@ -2501,6 +2498,14 @@ module Crystal
           end
         end
       end
+    end
+
+    def preserve_last_call_has_parenthesis
+      old_last_call_has_parenthesis = @last_call_has_parenthesis
+      value = yield
+      last_call_has_parenthesis = @last_call_has_parenthesis
+      @last_call_has_parenthesis = old_last_call_has_parenthesis
+      {value, last_call_has_parenthesis}
     end
 
     def parse_block(block)
@@ -3121,7 +3126,7 @@ module Crystal
     def parse_yield(scope = nil, location = @token.location)
       next_token
 
-      call_args = parse_call_args
+      call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis { parse_call_args }
       args = call_args.args if call_args
 
       yields = (@yields ||= 0)
@@ -3149,7 +3154,7 @@ module Crystal
     def parse_control_expression(klass)
       next_token
 
-      call_args = parse_call_args allow_curly: true
+      call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis { parse_call_args allow_curly: true }
       args = call_args.args if call_args
 
       location = @token.location
