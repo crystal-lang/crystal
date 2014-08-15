@@ -136,7 +136,7 @@ class OptionParser
               return nil
             end
           end
-        elsif arg[flag.length].chr == '='
+        elsif arg[flag.length] == '='
           delete_arg_at_index(index)
           value = arg[flag.length + 1 .. -1]
           if value.empty?

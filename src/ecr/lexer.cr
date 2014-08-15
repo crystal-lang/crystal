@@ -128,6 +128,6 @@ class ECR::Lexer
   end
 
   private def string_range(start_pos, end_pos)
-    @reader.string[start_pos, end_pos - start_pos]
+    @reader.string.byte_slice(start_pos, end_pos - start_pos)
   end
 end

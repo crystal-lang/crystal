@@ -95,8 +95,8 @@ class Exception
 
   def self.unescape_linux_backtrace_frame(frame)
     frame.replace(/_(\d|A|B|C|D|E|F)(\d|A|B|C|D|E|F)_/) do |match|
-      first = match[1].chr.to_i(16) * 16
-      second = match[2].chr.to_i(16)
+      first = match[1].to_i(16) * 16
+      second = match[2].to_i(16)
       value = first + second
       value.chr
     end

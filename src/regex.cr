@@ -18,11 +18,12 @@ class Regex
   MULTILINE = 4
   EXTENDED = 8
   ANCHORED = 16
+  UTF_8 = 0x00000800
 
   getter source
 
   def initialize(@source, modifiers = 0)
-    @re = PCRE.compile(@source, modifiers, out errptr, out erroffset, nil)
+    @re = PCRE.compile(@source, modifiers | UTF_8, out errptr, out erroffset, nil)
     raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.nil?
     PCRE.full_info(@re, nil, PCRE::INFO_CAPTURECOUNT, out @captures)
   end
@@ -74,7 +75,7 @@ class MatchData
 
     start = @ovector[n * 2]
     finish = @ovector[n * 2 + 1]
-    @string[start, finish - start]
+    @string.byte_slice(start, finish - start)
   end
 
   def [](group_name : String)
