@@ -22,11 +22,11 @@ class BufferedIO(T)
 
         endl = @buffer_rem.index('\n'.ord.to_u8)
         if endl
-          buffer << String.new(@buffer_rem[0, endl + 1])
+          buffer.write @buffer_rem, endl + 1
           @buffer_rem += (endl + 1)
           break
         else
-          buffer << String.new(@buffer_rem)
+          buffer.write @buffer_rem
           @buffer_rem += @buffer_rem.length
         end
       end

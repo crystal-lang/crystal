@@ -9,6 +9,12 @@ describe "BufferedIO" do
     io.gets.should be_nil
   end
 
+  it "does gets with big line" do
+    big_line = "a" * 20_000
+    io = BufferedIO.new(StringIO.new("#{big_line}\nworld\n"))
+    io.gets.should eq("#{big_line}\n")
+  end
+
   it "does puts" do
     str = StringIO.new
     io = BufferedIO.new(str)
