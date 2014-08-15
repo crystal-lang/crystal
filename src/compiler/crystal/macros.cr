@@ -79,7 +79,7 @@ module Crystal
   end
 
   class MacroExpander
-    record CompiledFile, [name, handle]
+    record CompiledFile, name, handle
 
     def initialize(@mod)
       @cache = {} of String => CompiledFile

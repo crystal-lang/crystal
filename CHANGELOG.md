@@ -1,3 +1,9 @@
+## Next
+
+* The `record` macro is now variadic, so instead of `record Vec3, [x, y, z]` write `record Vec3, x, y, z`.
+* The `def_equals`, `def_hash` and `def_equals_and_hash` macros are now variadic.
+* The `property`, `getter` and `setter` macros are now variadic.
+
 ## 0.4.3 (2014-08-14)
 
 * Reverted a commit that introduced random crashes.

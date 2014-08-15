@@ -4,7 +4,7 @@ require "set"
 
 module Crystal
   class Parser < Lexer
-    record Unclosed, [name, location]
+    record Unclosed, name, location
 
     property visibility
 
@@ -2147,7 +2147,7 @@ module Crystal
       node
     end
 
-    record ArgExtras, [block_arg, default_value, splat]
+    record ArgExtras, block_arg, default_value, splat
 
     def parse_arg(args, extra_assigns, parenthesis, found_default_value, found_splat)
       if @token.type == :"&"
@@ -2558,7 +2558,7 @@ module Crystal
       Block.new(block_args, block_body)
     end
 
-    record CallArgs, [args, block, block_arg, named_args, stopped_on_do_after_space]
+    record CallArgs, args, block, block_arg, named_args, stopped_on_do_after_space
 
     def parse_call_args(stop_on_do_after_space = false, allow_curly = false)
       case @token.type

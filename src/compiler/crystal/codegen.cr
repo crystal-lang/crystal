@@ -90,8 +90,8 @@ module Crystal
 
     alias LLVMVars = Hash(String, LLVMVar)
 
-    record Handler, [node, catch_block, vars]
-    record StringKey, [mod, string]
+    record Handler, node, catch_block, vars
+    record StringKey, mod, string
 
     def initialize(@mod, @node, @single_module = false, @debug = false, @use_host_flags = false, @llvm_mod = LLVM::Module.new("main_module"))
       @main_mod = @llvm_mod

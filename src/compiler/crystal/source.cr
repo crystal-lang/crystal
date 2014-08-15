@@ -1,1 +1,1 @@
-record Crystal::Source, [filename, code]
+record Crystal::Source, filename, code

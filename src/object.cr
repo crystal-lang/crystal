@@ -61,35 +61,45 @@ class Object
     self
   end
 
-  macro getter(name)
-    def {{name.id}}
-      @{{name.id}}
-    end
+  macro getter(*names)
+    {% for name in names %}
+      def {{name.id}}
+        @{{name.id}}
+      end
+    {% end %}
   end
 
-  macro getter!(name)
-    def {{name.id}}?
-      @{{name.id}}
-    end
+  macro getter!(*names)
+    {% for name in names %}
+      def {{name.id}}?
+        @{{name.id}}
+      end
 
-    def {{name.id}}
-      @{{name.id}}.not_nil!
-    end
+      def {{name.id}}
+        @{{name.id}}.not_nil!
+      end
+    {% end %}
   end
 
-  macro setter(name)
-    def {{name.id}}=(@{{name.id}})
-    end
+  macro setter(*names)
+    {% for name in names %}
+      def {{name.id}}=(@{{name.id}})
+      end
+    {% end %}
   end
 
-  macro property(name)
-    getter :{{name.id}}
-    setter :{{name.id}}
+  macro property(*names)
+    {% for name in names %}
+      getter {{name}}
+      setter {{name}}
+    {% end %}
   end
 
-  macro property!(name)
-    getter! :{{name.id}}
-    setter :{{name.id}}
+  macro property!(*names)
+    {% for name in names %}
+      getter! {{name}}
+      setter {{name}}
+    {% end %}
   end
 
   macro delegate(method, to)
@@ -98,7 +108,7 @@ class Object
     end
   end
 
-  macro def_hash(fields)
+  macro def_hash(*fields)
     def hash
       hash = 0
       {% for field in fields %}
@@ -108,7 +118,7 @@ class Object
     end
   end
 
-  macro def_equals(fields)
+  macro def_equals(*fields)
     def ==(other : self)
       {% for field in fields %}
         return false unless {{field.id}} == other.{{field.id}}
@@ -117,8 +127,8 @@ class Object
     end
   end
 
-  macro def_equals_and_hash(fields)
-    def_equals {{fields}}
-    def_hash {{fields}}
+  macro def_equals_and_hash(*fields)
+    def_equals {{fields.argify}}
+    def_hash {{fields.argify}}
   end
 end

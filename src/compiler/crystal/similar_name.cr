@@ -2,7 +2,7 @@ require "levenshtein"
 
 module Crystal
   class SimilarName
-    record Entry, [value, distance]
+    record Entry, value, distance
 
     def initialize(@name)
       @tolerance = (name.length / 5.0).ceil

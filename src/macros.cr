@@ -1,7 +1,7 @@
-macro record(name, fields)
+macro record(name, *fields)
   struct {{name.id}}
     {% for field in fields %}
-      getter :{{field.id}}
+      getter {{field}}
     {% end %}
 
     def initialize({{ (fields.map { |field| "@#{field.id}" }.join ", ").id }})

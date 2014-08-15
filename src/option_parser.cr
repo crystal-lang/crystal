@@ -14,7 +14,7 @@ class OptionParser
     end
   end
 
-  record Handler, [flag, block]
+  record Handler, flag, block
 
   def self.parse(args)
     parser = OptionParser.new(args)

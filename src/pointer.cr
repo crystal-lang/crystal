@@ -51,9 +51,7 @@ class Pointer(T)
     self[i], self[j] = self[j], self[i]
   end
 
-  def hash
-    address.hash
-  end
+  def_hash address
 
   def to_s(io : IO)
     io << "Pointer("
