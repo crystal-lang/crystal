@@ -803,7 +803,7 @@ module Crystal
         end
       when "argify"
         interpret_argless_method(method, args) do
-          MacroId.new(elements.map(&.to_macro_id).join ", ")
+          MacroId.new(elements.join ", ")
         end
       when "empty?"
         interpret_argless_method(method, args) { BoolLiteral.new(elements.empty?) }
