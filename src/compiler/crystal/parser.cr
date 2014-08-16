@@ -110,7 +110,7 @@ module Crystal
         targets << to_lhs(assign.target)
         values << assign.value
       when Call
-        assign.name = assign.name[0, assign.name.length - 1]
+        assign.name = assign.name.byte_slice(0, assign.name.bytesize - 1)
         targets << assign
         values << assign.args.pop
       else
@@ -269,7 +269,7 @@ module Crystal
 
           push_var atomic
 
-          method = @token.type.to_s[0, @token.type.to_s.length - 1]
+          method = @token.type.to_s.byte_slice(0, @token.to_s.bytesize - 1)
           method_column_number = @token.column_number
 
           token_type = @token.type
@@ -421,7 +421,7 @@ module Crystal
             left = Call.new left, "+", [NumberLiteral.new(@token.value.to_s, @token.number_kind)] of ASTNode, name_column_number: @token.column_number
             next_token_skip_space_or_newline
           when '-'
-            left = Call.new left, "-", [NumberLiteral.new(@token.value.to_s[1, @token.value.to_s.length - 1], @token.number_kind)] of ASTNode, name_column_number: @token.column_number
+            left = Call.new left, "-", [NumberLiteral.new(@token.value.to_s.byte_slice(1), @token.number_kind)] of ASTNode, name_column_number: @token.column_number
             next_token_skip_space_or_newline
           else
             return left
@@ -536,7 +536,7 @@ module Crystal
               next
             when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
               # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
-              method = @token.type.to_s[0, @token.type.to_s.length - 1]
+              method = @token.type.to_s.byte_slice(0, @token.type.to_s.length - 1)
               next_token_skip_space
               value = parse_expression
               atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number)
@@ -2471,8 +2471,8 @@ module Crystal
       else
         if args
           if (!force_call && is_var) && args.length == 1 && (num = args[0]) && (num.is_a?(NumberLiteral) && num.has_sign?)
-            sign = num.value[0].chr.to_s
-            num.value = num.value[1, num.value.length - 1]
+            sign = num.value[0].to_s
+            num.value = num.value.byte_slice(1)
             Call.new(Var.new(name), sign, args)
           else
             Call.new(nil, name, args, nil, block_arg, named_args, global, name_column_number, last_call_has_parenthesis)

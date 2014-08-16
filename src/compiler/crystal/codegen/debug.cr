@@ -170,8 +170,8 @@ module Crystal
     def metadata args
       values = args.map do |value|
         case value
-        when String then LibLLVM.md_string(value, value.length)
-        when Symbol then LibLLVM.md_string(value.to_s, value.to_s.length)
+        when String then LibLLVM.md_string(value, value.bytesize)
+        when Symbol then LibLLVM.md_string(value.to_s, value.to_s.bytesize)
         when Number then int32(value)
         when Bool then int1(value ? 1 : 0)
         when LibLLVM::ValueRef then value

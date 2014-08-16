@@ -146,7 +146,7 @@ describe "Code gen: cast" do
       c[9] = 'i'.ord.to_u8
       c[10] = '\0'.ord.to_u8
       str = c as String
-      str.length
+      str.bytesize
       )).to_i.should eq(2)
   end
 

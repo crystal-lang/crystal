@@ -645,7 +645,7 @@ module Crystal
         unless actual_type.compatible_with?(expected_type) || actual_type.is_implicitly_converted_in_c_to?(expected_type)
           implicit_call = try_to_unsafe(self_arg) do |ex|
             if ex.message.not_nil!.includes?("undefined method 'to_unsafe'")
-              arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
+              arg_name = typed_def_arg.name.bytesize > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
               self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
             else
               self_arg.raise ex.message, ex
@@ -656,7 +656,7 @@ module Crystal
             if implicit_call_type.compatible_with?(expected_type)
               self.args[i] = implicit_call
             else
-              arg_name = typed_def_arg.name.length > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
+              arg_name = typed_def_arg.name.bytesize > 0 ? "'#{typed_def_arg.name}'" : "##{i + 1}"
               self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type} (nor #{implicit_call_type} returned by '#{actual_type}#to_unsafe')"
             end
           else

@@ -10,7 +10,7 @@ module Base64
   class Error < Exception; end
 
   def encode64(str)
-    String.new_with_capacity_and_length(encode_size(str.length, true)) do |buf|
+    String.new_with_capacity_and_length(encode_size(str.bytesize, true)) do |buf|
       inc = 0
       appender = buf.appender
       to_base64(str, CHARS_STD, true) do |byte|
@@ -29,7 +29,7 @@ module Base64
   end
 
   def strict_encode64(str : String)
-    String.new_with_capacity_and_length(encode_size(str.length)) do |buf|
+    String.new_with_capacity_and_length(encode_size(str.bytesize)) do |buf|
       appender = buf.appender
       to_base64(str, CHARS_STD, true) { |byte| appender << byte }
       appender.count
@@ -37,7 +37,7 @@ module Base64
   end
 
   def urlsafe_encode64(str)
-    String.new_with_capacity_and_length(encode_size(str.length)) do |buf|
+    String.new_with_capacity_and_length(encode_size(str.bytesize)) do |buf|
       appender = buf.appender
       to_base64(str, CHARS_SAFE, false) { |byte| appender << byte }
       appender.count
@@ -45,7 +45,7 @@ module Base64
   end
 
   def decode64(str)
-    String.new_with_capacity_and_length(decode_size(str.length)) do |buf|
+    String.new_with_capacity_and_length(decode_size(str.bytesize)) do |buf|
       appender = buf.appender
       from_base64(str) { |byte| appender << byte }
       appender.count
@@ -72,7 +72,7 @@ module Base64
 
   private def to_base64(str, chars, pad = false)
     bytes = chars.cstr
-    len = str.length
+    len = str.bytesize
     cstr = str.cstr
     i = 0
     while i < len - len % 3
@@ -86,7 +86,7 @@ module Base64
 
     pd = len % 3
     if pd == 1
-      n = (str[i].to_u32 << 16)
+      n = (str.byte_at(i).to_u32 << 16)
       yield bytes[(n >> 18) & 63]
       yield bytes[(n >> 12) & 63]
       if pad
@@ -94,7 +94,7 @@ module Base64
         yield PAD
       end
     elsif pd == 2
-      n = (str[i].to_u32 << 16) | (str[i + 1].to_u32 << 8)
+      n = (str.byte_at(i).to_u32 << 16) | (str.byte_at(i + 1).to_u32 << 8)
       yield bytes[(n >> 18) & 63]
       yield bytes[(n >> 12) & 63]
       yield bytes[(n >> 6) & 63]

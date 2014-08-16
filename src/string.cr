@@ -12,8 +12,6 @@ end
 class String
   include Comparable(self)
 
-  getter length
-
   def self.new(slice : Slice(UInt8))
     new(slice.pointer(slice.length), slice.length)
   end
@@ -70,6 +68,10 @@ class String
     builder.to_s
   end
 
+  def bytesize
+    @length
+  end
+
   def to_i
     C.atoi cstr
   end
@@ -123,7 +125,7 @@ class String
   end
 
   def [](index : Int)
-    index += chars_length if index < 0
+    index += length if index < 0
 
     each_char_with_index do |char, i|
       if index == i
@@ -136,9 +138,9 @@ class String
 
   def [](range : Range(Int, Int))
     from = range.begin
-    from += chars_length if from < 0
+    from += length if from < 0
     to = range.end
-    to += chars_length if to < 0
+    to += length if to < 0
     to -= 1 if range.excludes_end?
     length = to - from + 1
     self[from, length]
@@ -174,16 +176,20 @@ class String
   def byte_slice(start : Int, count : Int)
     return "" if count <= 0
 
-    start += length if start < 0
-    count = @length - start if start + count > @length
+    start += bytesize if start < 0
+    count = bytesize - start if start + count > bytesize
 
-    if 0 <= start < length
+    if 0 <= start < bytesize
       String.new_with_length(count) do |buffer|
         buffer.copy_from(cstr + start, count)
       end
     else
       ""
     end
+  end
+
+  def byte_slice(start : Int)
+    byte_slice start, bytesize - start
   end
 
   def codepoint_at(index)
@@ -195,8 +201,8 @@ class String
   end
 
   def byte_at(index)
-    index += length if index < 0
-    unless 0 <= index < length
+    index += bytesize if index < 0
+    unless 0 <= index < bytesize
       raise IndexOutOfBounds.new
     end
 
@@ -220,7 +226,7 @@ class String
   end
 
   def capitalize
-    return self if length == 0
+    return self if bytesize == 0
 
     String.build do |io|
       each_char_with_index do |char, i|
@@ -235,20 +241,20 @@ class String
 
   def chomp
     excess = 0
-    while (c = cstr[length - 1 - excess]) == '\r' || c == '\n'
+    while (c = cstr[bytesize - 1 - excess]) == '\r' || c == '\n'
       excess += 1
     end
 
     if excess == 0
       self
     else
-      byte_slice 0, length - excess
+      byte_slice 0, bytesize - excess
     end
   end
 
   def strip
     excess_right = 0
-    while cstr[length - 1 - excess_right].chr.whitespace?
+    while cstr[bytesize - 1 - excess_right].chr.whitespace?
       excess_right += 1
     end
 
@@ -260,20 +266,20 @@ class String
     if excess_right == 0 && excess_left == 0
       self
     else
-      byte_slice excess_left, length - excess_left - excess_right
+      byte_slice excess_left, bytesize - excess_left - excess_right
     end
   end
 
   def rstrip
     excess_right = 0
-    while cstr[length - 1 - excess_right].chr.whitespace?
+    while cstr[bytesize - 1 - excess_right].chr.whitespace?
       excess_right += 1
     end
 
     if excess_right == 0
       self
     else
-      byte_slice 0, length - excess_right
+      byte_slice 0, bytesize - excess_right
     end
   end
 
@@ -286,7 +292,7 @@ class String
     if excess_left == 0
       self
     else
-      byte_slice excess_left, length - excess_left
+      byte_slice excess_left
     end
   end
 
@@ -310,7 +316,7 @@ class String
       end
     end
 
-    String.build(length) do |buffer|
+    String.build(bytesize) do |buffer|
       each_char do |ch|
         if ch.ord < 256
           if (a = table[ch.ord]) >= 0
@@ -330,7 +336,7 @@ class String
   end
 
   def replace(&block : Char -> String)
-    String.build(length) do |buffer|
+    String.build(bytesize) do |buffer|
       each_char do |my_char|
         replacement = yield my_char
         if replacement
@@ -361,18 +367,18 @@ class String
   def replace(pattern : Regex)
     byte_offset = 0
 
-    String.build(length) do |buffer|
+    String.build(bytesize) do |buffer|
       while match = pattern.match(self, byte_offset)
         index = match.begin(0)
 
         buffer << byte_slice(byte_offset, index - byte_offset)
         str = match[0]
         buffer << yield str
-        byte_offset = index + str.length
+        byte_offset = index + str.bytesize
       end
 
-      if byte_offset < length
-        buffer << byte_slice(byte_offset, length - byte_offset)
+      if byte_offset < bytesize
+        buffer << byte_slice(byte_offset)
       end
     end
   end
@@ -382,7 +388,7 @@ class String
   end
 
   def delete(char : Char)
-    String.build(length) do |buffer|
+    String.build(bytesize) do |buffer|
       each_char do |my_char|
         buffer << my_char unless my_char == char
       end
@@ -395,15 +401,15 @@ class String
 
   def ==(other : self)
     return true if same?(other)
-    return false unless length == other.length
-    cstr.memcmp(other.cstr, length)
+    return false unless bytesize == other.bytesize
+    cstr.memcmp(other.cstr, bytesize)
   end
 
   def <=>(other : self)
     return 0 if same?(other)
-    min_length = Math.min(length, other.length)
-    cmp = C.memcmp(cstr as Void*, other.cstr as Void*, length.to_sizet)
-    cmp == 0 ? (length <=> other.length) : cmp
+    min_bytesize = Math.min(bytesize, other.bytesize)
+    cmp = C.memcmp(cstr as Void*, other.cstr as Void*, min_bytesize.to_sizet)
+    cmp == 0 ? (bytesize <=> other.bytesize) : cmp
   end
 
   def =~(regex : Regex)
@@ -415,37 +421,37 @@ class String
   end
 
   def +(other : self)
-    String.new_with_length(length + other.length) do |buffer|
-      buffer.copy_from(cstr, length)
-      (buffer + length).copy_from(other.cstr, other.length)
+    String.new_with_length(bytesize + other.bytesize) do |buffer|
+      buffer.copy_from(cstr, bytesize)
+      (buffer + bytesize).copy_from(other.cstr, other.bytesize)
     end
   end
 
   def *(times : Int)
-    if times <= 0 || length == 0
+    if times <= 0 || bytesize == 0
       return ""
-    elsif length == 1
+    elsif bytesize == 1
       return String.new_with_length(times) do |buffer|
         Intrinsics.memset(buffer as Void*, cstr[0], times.to_u32, 0_u32, false)
       end
     end
 
-    total_length = length * times
-    String.new_with_length(total_length) do |buffer|
-      buffer.copy_from(cstr, length)
-      n = length
+    total_bytesize = bytesize * times
+    String.new_with_length(total_bytesize) do |buffer|
+      buffer.copy_from(cstr, bytesize)
+      n = bytesize
 
-      while n <= total_length / 2
+      while n <= total_bytesize / 2
         (buffer + n).copy_from(buffer, n)
         n *= 2
       end
 
-      (buffer + n).copy_from(buffer, total_length - n)
+      (buffer + n).copy_from(buffer, total_bytesize - n)
     end
   end
 
   def index(c : Char, offset = 0)
-    offset += chars_length if offset < 0
+    offset += length if offset < 0
     return nil if offset < 0
 
     each_char_with_index do |char, i|
@@ -458,15 +464,15 @@ class String
   end
 
   def index(c : String, offset = 0)
-    offset += chars_length if offset < 0
+    offset += length if offset < 0
     return nil if offset < 0
 
-    end_length = length - c.chars_length
+    end_pos = bytesize - c.bytesize
 
     reader = CharReader.new(self)
     reader.each_with_index do |char, i|
-      if reader.pos <= end_length
-        if i >= offset && (cstr + reader.pos).memcmp(c.cstr, c.length)
+      if reader.pos <= end_pos
+        if i >= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize)
           return i
         end
       else
@@ -496,16 +502,14 @@ class String
     offset += length if offset < 0
     return nil if offset < 0
 
-    end_length = length - c.chars_length
+    end_length = length - c.length
 
     last_index = nil
 
     reader = CharReader.new(self)
     reader.each_with_index do |char, i|
-      if reader.pos <= end_length
-        if i <= offset && (cstr + reader.pos).memcmp(c.cstr, c.length)
-          last_index = i
-        end
+      if i <= end_length && i <= offset && (cstr + reader.pos).memcmp(c.cstr, c.bytesize)
+        last_index = i
       end
     end
 
@@ -523,12 +527,11 @@ class String
   def split
     ary = Array(String).new
     index = 0
-    len = length
     i = 0
     looking_for_space = false
-    while i < len
+    while i < bytesize
       if looking_for_space
-        while i < len
+        while i < bytesize
           c = cstr[i]
           i += 1
           if c.chr.whitespace?
@@ -538,7 +541,7 @@ class String
           end
         end
       else
-        while i < len
+        while i < bytesize
           c = cstr[i]
           i += 1
           unless c.chr.whitespace?
@@ -550,7 +553,7 @@ class String
       end
     end
     if looking_for_space
-      ary.push String.new(cstr + index, len - index)
+      ary.push String.new(cstr + index, bytesize - index)
     end
     ary
   end
@@ -566,19 +569,19 @@ class String
 
     ary = Array(String).new
 
-    index = 0
+    byte_offset = 0
 
     reader = CharReader.new(self)
     reader.each_with_index do |char, i|
       if char == separator
-        ary.push byte_slice(index, reader.pos - index)
-        index = reader.pos + reader.current_char_width
+        ary.push byte_slice(byte_offset, reader.pos - byte_offset)
+        byte_offset = reader.pos + reader.current_char_width
         break if limit && ary.length + 1 == limit
       end
     end
 
-    if index != length
-      ary.push byte_slice(index, length - index)
+    if byte_offset != bytesize
+      ary.push byte_slice(byte_offset)
     end
 
     ary
@@ -586,9 +589,9 @@ class String
 
   def split(separator : String)
     ary = Array(String).new
-    index = 0
+    byte_offset = 0
     buffer = cstr
-    separator_length = separator.length
+    separator_bytesize = separator.bytesize
 
     if separator.empty?
       # Special case: return all chars as strings
@@ -602,17 +605,17 @@ class String
     end
 
     i = 0
-    stop = length - separator.length + 1
+    stop = bytesize - separator.bytesize + 1
     while i < stop
-      if (buffer + i).memcmp(separator.cstr, separator_length)
-        ary.push byte_slice(index, i - index)
-        index = i + separator_length
-        i += separator_length - 1
+      if (buffer + i).memcmp(separator.cstr, separator_bytesize)
+        ary.push byte_slice(byte_offset, i - byte_offset)
+        byte_offset = i + separator_bytesize
+        i += separator_bytesize - 1
       end
       i += 1
     end
-    if index != length
-      ary.push byte_slice(index, length - index)
+    if byte_offset != bytesize
+      ary.push byte_slice(byte_offset)
     end
     ary
   end
@@ -625,7 +628,7 @@ class String
     first = true
     last_is_downcase = false
 
-    String.build(length + 10) do |str|
+    String.build(bytesize + 10) do |str|
       each_char do |char|
         downcase = 'a' <= char <= 'z'
         upcase = 'A' <= char <= 'Z'
@@ -649,7 +652,7 @@ class String
     first = true
     last_is_underscore = false
 
-    String.build(length) do |str|
+    String.build(bytesize) do |str|
       each_char do |char|
         if first
           str << char.upcase
@@ -667,8 +670,8 @@ class String
   end
 
   def reverse
-    String.new_with_length(length) do |buffer|
-      buffer += length
+    String.new_with_length(bytesize) do |buffer|
+      buffer += bytesize
       reader = CharReader.new(self)
       reader.each do |char|
         buffer -= reader.current_char_width
@@ -695,7 +698,7 @@ class String
   end
 
   def chars
-    chars = Array(Char).new(length)
+    chars = Array(Char).new(bytesize)
     each_char do |char|
       chars << char
     end
@@ -703,7 +706,7 @@ class String
   end
 
   def each_byte
-    cstr.as_enumerable(length).each do |byte|
+    cstr.as_enumerable(bytesize).each do |byte|
       yield byte
     end
     self
@@ -772,8 +775,8 @@ class String
   end
 
   def starts_with?(str : String)
-    return false if str.length > length
-    C.memcmp(cstr as Void*, str.cstr as Void*, str.length.to_sizet) == 0
+    return false if str.bytesize > bytesize
+    C.memcmp(cstr as Void*, str.cstr as Void*, str.bytesize.to_sizet) == 0
   end
 
   def starts_with?(char : Char)
@@ -781,8 +784,8 @@ class String
   end
 
   def ends_with?(str : String)
-    return false if str.length > length
-    C.memcmp((cstr + length - str.length) as Void*, str.cstr as Void*, str.length.to_sizet) == 0
+    return false if str.bytesize > bytesize
+    C.memcmp((cstr + bytesize - str.bytesize) as Void*, str.cstr as Void*, str.bytesize.to_sizet) == 0
   end
 
   def ends_with?(char : Char)
@@ -797,7 +800,7 @@ class String
   end
 
   def %(args : Array)
-    String.build(length) do |buffer|
+    String.build(bytesize) do |buffer|
       String::Formatter.new(self, args, buffer).format
     end
   end
@@ -814,7 +817,7 @@ class String
     h
   end
 
-  def chars_length
+  def length
     CharReader.new(self).count
   end
 

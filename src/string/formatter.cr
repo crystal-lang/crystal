@@ -1,8 +1,9 @@
+# TODO: this is not UTF-8 aware
 class String::Formatter
   def initialize(string, @args, @buffer)
     @i = 0
     @arg_index = 0
-    @length = string.length
+    @length = string.bytesize
     @str = string.cstr
   end
 
@@ -34,7 +35,7 @@ class String::Formatter
             end
           when '0'
             append_with_padding do |arg, arg_s, num|
-              num -= arg_s.length
+              num -= arg_s.bytesize
               num -= 1 if arg >= 0
               @buffer << '+' if arg >= 0
               num.times { @buffer << '0' }
@@ -42,7 +43,7 @@ class String::Formatter
             end
           when '1' .. '9'
             append_with_padding do |arg, arg_s, num|
-              num -= arg_s.length
+              num -= arg_s.bytesize
               num -= 1 if arg >= 0
               num.times { @buffer << ' ' }
               @buffer << '+' if arg >= 0
@@ -61,7 +62,7 @@ class String::Formatter
             end
           when '0'
             append_with_padding do |arg, arg_s, num|
-              num -= arg_s.length
+              num -= arg_s.bytesize
               num -= 1 if arg >= 0
               @buffer << ' ' if arg >= 0
               num.times { @buffer << '0' }
@@ -85,7 +86,7 @@ class String::Formatter
             end
           when '1' .. '9'
             append_with_padding do |arg, arg_s, num|
-              num -= arg_s.length
+              num -= arg_s.bytesize
               @buffer << arg_s
               num.times { @buffer << ' ' }
             end
@@ -94,7 +95,7 @@ class String::Formatter
             case char = current_char
             when '1' .. '9'
               append_with_padding do |arg, arg_s, num|
-                num -= arg_s.length
+                num -= arg_s.bytesize
                 if arg >= 0
                   num -= 1
                   @buffer << '+'
@@ -110,7 +111,7 @@ class String::Formatter
             case char = current_char
             when '1' .. '9'
               append_with_padding do |arg, arg_s, num|
-                num -= arg_s.length
+                num -= arg_s.bytesize
                 if arg >= 0
                   num -= 1
                   @buffer << ' '
@@ -159,7 +160,7 @@ class String::Formatter
 
   private def append_with_left_padding(fill_char)
     append_with_padding do |arg, arg_s, num|
-      num -= arg_s.length
+      num -= arg_s.bytesize
       num.times { @buffer << fill_char }
       @buffer << arg_s
     end

@@ -12,7 +12,7 @@ class StringIO
   end
 
   def self.new(string : String)
-    io = new(string.length)
+    io = new(string.bytesize)
     io << string
     io
   end

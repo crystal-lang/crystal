@@ -13,7 +13,7 @@ class HTTP::Request
 
     if (body = @body)
       new_headers = @headers ||= {} of String => String
-      new_headers["Content-Length"] = body.length.to_s
+      new_headers["Content-Length"] = body.bytesize.to_s
     end
   end
 

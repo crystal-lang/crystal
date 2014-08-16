@@ -4,7 +4,9 @@ require "spec"
 describe "String" do
   describe "[]" do
     it "gets with positive index" do
-      "hello!"[1].should eq('e')
+      c = "hello!"[1]
+      (c.is_a?(Char)).should be_true
+      c.should eq('e')
     end
 
     it "gets with negative index" do
@@ -25,6 +27,44 @@ describe "String" do
 
     it "gets with start and count" do
       "hello"[1, 3].should eq("ell")
+    end
+
+    it "gets with exclusive range with unicode" do
+      "há日本語"[1 .. 3].should eq("á日本")
+    end
+
+    it "gets with exclusive with start and count" do
+      "há日本語"[1, 3].should eq("á日本")
+    end
+
+    it "gets with exclusive with start and count to end" do
+      "há日本語"[1, 4].should eq("á日本語")
+    end
+
+    it "gets with single char" do
+      ";"[0 .. -2].should eq("")
+    end
+  end
+
+  describe "byte_slice" do
+    it "gets byte_slice" do
+      "hello".byte_slice(1, 3).should eq("ell")
+    end
+
+    it "gets byte_slice with negative count" do
+      "hello".byte_slice(1, -10).should eq("")
+    end
+
+    it "gets byte_slice with start out of bounds" do
+      "hello".byte_slice(10, 3).should eq("")
+    end
+
+    it "gets byte_slice with large count" do
+      "hello".byte_slice(1, 10).should eq("ello")
+    end
+
+    it "gets byte_slice with negative index" do
+      "hello".byte_slice(-2, 3).should eq("lo")
     end
   end
 
@@ -118,21 +158,33 @@ describe "String" do
     assert { "hello\r".chomp.should eq("hello") }
     assert { "hello\r\n".chomp.should eq("hello") }
     assert { "hello".chomp.should eq("hello") }
+    assert { "hello".chomp.should eq("hello") }
+    assert { "かたな\n".chomp.should eq("かたな") }
+    assert { "かたな\r".chomp.should eq("かたな") }
+    assert { "かたな\r\n".chomp.should eq("かたな") }
   end
 
   describe "strip" do
     assert { "  hello  \n\t\f\v\r".strip.should eq("hello") }
     assert { "hello".strip.should eq("hello") }
+    assert { "かたな \n\f\v".strip.should eq("かたな") }
+    assert { "  \n\t かたな \n\f\v".strip.should eq("かたな") }
+    assert { "  \n\t かたな".strip.should eq("かたな") }
+    assert { "かたな".strip.should eq("かたな") }
   end
 
   describe "rstrip" do
     assert { "  hello  ".rstrip.should eq("  hello") }
     assert { "hello".rstrip.should eq("hello") }
+    assert { "  かたな \n\f\v".rstrip.should eq("  かたな") }
+    assert { "かたな".rstrip.should eq("かたな") }
   end
 
   describe "lstrip" do
     assert { "  hello  ".lstrip.should eq("hello  ") }
     assert { "hello".lstrip.should eq("hello") }
+    assert { "  \n\v かたな  ".lstrip.should eq("かたな  ") }
+    assert { "  かたな".lstrip.should eq("かたな") }
   end
 
   describe "empty?" do
@@ -145,12 +197,14 @@ describe "String" do
       assert { "foo".index('o').should eq(1) }
       assert { "foo".index('g').should be_nil }
       assert { "bar".index('r').should eq(2) }
+      assert { "日本語".index('本').should eq(1) }
 
       describe "with offset" do
         assert { "foobarbaz".index('a', 5).should eq(7) }
         assert { "foobarbaz".index('a', -4).should eq(7) }
         assert { "foo".index('g', 1).should be_nil }
         assert { "foo".index('g', -20).should be_nil }
+        assert { "日本語日本語".index('本', 2).should eq(4) }
       end
     end
 
@@ -159,12 +213,14 @@ describe "String" do
       assert { "foo".index("fg").should be_nil }
       assert { "foo".index("").should eq(0) }
       assert { "foo".index("foo").should eq(0) }
+      assert { "日本語日本語".index("本語").should eq(1) }
 
       describe "with offset" do
         assert { "foobarbaz".index("ba", 4).should eq(6) }
         assert { "foobarbaz".index("ba", -5).should eq(6) }
         assert { "foo".index("ba", 1).should be_nil }
         assert { "foo".index("ba", -20).should be_nil }
+        assert { "日本語日本語".index("本語", 2).should eq(4) }
       end
     end
   end
@@ -173,16 +229,25 @@ describe "String" do
     describe "by char" do
       assert { "foobar".rindex('a').should eq(4) }
       assert { "foobar".rindex('g').should be_nil }
+      assert { "日本語日本語".rindex('本').should eq(4) }
 
       describe "with offset" do
         assert { "faobar".rindex('a', 3).should eq(1) }
         assert { "faobarbaz".rindex('a', -3).should eq(4) }
+        assert { "日本語日本語".rindex('本', 3).should eq(1) }
       end
     end
 
     describe "by string" do
       assert { "foo baro baz".rindex("o b").should eq(7) }
       assert { "foo baro baz".rindex("fg").should be_nil }
+      assert { "日本語日本語".rindex("日本").should eq(3) }
+
+      describe "with offset" do
+        assert { "foo baro baz".rindex("o b", 6).should eq(2) }
+        assert { "foo baro baz".rindex("fg").should be_nil }
+        assert { "日本語日本語".rindex("日本", 2).should eq(0) }
+      end
     end
   end
 
@@ -214,6 +279,8 @@ describe "String" do
       assert { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
       assert { "foo,bar,baz,qux".split(',', 3).should eq(["foo", "bar", "baz,qux"]) }
       assert { "foo,bar,baz,qux".split(',', 30).should eq(["foo", "bar", "baz", "qux"]) }
+      assert { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
+      assert { "日本ん語日本ん語".split('ん').should eq(["日本", "語日本", "語"]) }
     end
 
     describe "by string" do
@@ -221,6 +288,7 @@ describe "String" do
       assert { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(":-").should eq(["foo"]) }
       assert { "foo".split("").should eq(["f", "o", "o"]) }
+      assert { "日本さん語日本さん語".split("さん").should eq(["日本", "語日本", "語"]) }
     end
   end
 
@@ -231,6 +299,8 @@ describe "String" do
     assert { "foobar".starts_with?("foox").should be_false }
     assert { "foobar".starts_with?('f').should be_true }
     assert { "foobar".starts_with?('g').should be_false }
+    assert { "よし".starts_with?('よ').should be_true }
+    assert { "よし!".starts_with?("よし").should be_true }
   end
 
   describe "ends_with?" do
@@ -240,6 +310,7 @@ describe "String" do
     assert { "foobar".ends_with?("xbar").should be_false }
     assert { "foobar".ends_with?('r').should be_true }
     assert { "foobar".ends_with?('x').should be_false }
+    assert { "よし".ends_with?('し').should be_true }
   end
 
   describe "=~" do
@@ -252,23 +323,30 @@ describe "String" do
 
   it "deletes one char" do
     deleted = "foobar".delete('o')
-    deleted.length.should eq(4)
+    deleted.bytesize.should eq(4)
     deleted.should eq("fbar")
 
     deleted = "foobar".delete('x')
-    deleted.length.should eq(6)
+    deleted.bytesize.should eq(6)
     deleted.should eq("foobar")
   end
 
   it "reverses string" do
     reversed = "foobar".reverse
-    reversed.length.should eq(6)
+    reversed.bytesize.should eq(6)
     reversed.should eq("raboof")
+  end
+
+  it "reverses utf-8 string" do
+    reversed = "こんいちは".reverse
+    reversed.bytesize.should eq(15)
+    reversed.length.should eq(5)
+    reversed.should eq("はちいんこ")
   end
 
   it "replaces char with string" do
     replaced = "foobar".replace('o', "ex")
-    replaced.length.should eq(8)
+    replaced.bytesize.should eq(8)
     replaced.should eq("fexexbar")
   end
 
@@ -285,7 +363,7 @@ describe "String" do
         nil
       end
     end
-    replaced.length.should eq(18)
+    replaced.bytesize.should eq(18)
     replaced.should eq("somethingthingbexr")
   end
 
@@ -298,6 +376,10 @@ describe "String" do
 
   it "replaces with regex and string" do
     "foo boor booooz".replace(/o+/, "a").should eq("fa bar baz")
+  end
+
+  it "replaces with regex and string (utf-8)" do
+    "fここ bここr bここここz".replace(/こ+/, "そこ").should eq("fそこ bそこr bそこz")
   end
 
   it "dumps" do
@@ -332,13 +414,13 @@ describe "String" do
 
   it "does *" do
     str = "foo" * 10
-    str.length.should eq(30)
+    str.bytesize.should eq(30)
     str.should eq("foofoofoofoofoofoofoofoofoofoo")
   end
 
   it "does +" do
     str = "foo" + "bar"
-    str.length.should eq(6)
+    str.bytesize.should eq(6)
     str.should eq("foobar")
   end
 
@@ -401,6 +483,10 @@ describe "String" do
     "いただきます".char_at(2).should eq('だ')
   end
 
+  it "does byte_at" do
+    "hello".byte_at(1).should eq('e'.ord)
+  end
+
   it "does chars" do
     "ぜんぶ".chars.should eq(['ぜ', 'ん', 'ぶ'])
   end
@@ -414,7 +500,7 @@ describe "String" do
     s[0].should eq('a')
     s[1].should eq('\0')
     s[2].should eq('b')
-    s.length.should eq(3)
+    s.bytesize.should eq(3)
   end
 
   it "tr" do

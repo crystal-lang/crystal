@@ -15,6 +15,7 @@ struct CharReader
 
   getter string
   getter current_char
+  getter current_char_width
   getter pos
 
   def initialize(@string)
@@ -31,7 +32,7 @@ struct CharReader
 
   def next_char
     @pos += @current_char_width
-    if @pos > @string.length
+    if @pos > @string.bytesize
       raise IndexOutOfBounds.new
     end
 
@@ -41,7 +42,7 @@ struct CharReader
   def peek_next_char
     next_pos = @pos + @current_char_width
 
-    if next_pos > @string.length
+    if next_pos > @string.bytesize
       raise IndexOutOfBounds.new
     end
 
@@ -51,7 +52,7 @@ struct CharReader
   end
 
   def pos=(pos)
-    if pos > @string.length
+    if pos > @string.bytesize
       raise IndexOutOfBounds.new
     end
 
@@ -96,7 +97,7 @@ struct CharReader
   private def decode_current_char
     decode_char_at(@pos) do |code_point, width|
       @current_char_width = width
-      @end = @pos == @string.length
+      @end = @pos == @string.bytesize
       @current_char = code_point.chr
     end
   end

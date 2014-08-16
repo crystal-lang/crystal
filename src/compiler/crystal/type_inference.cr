@@ -2590,6 +2590,7 @@ module Crystal
       end
     end
 
+    # TODO: use SimilarName
     def lookup_similar_var_name(name)
       tolerance = (name.length / 5.0).ceil
       # TODO: check this

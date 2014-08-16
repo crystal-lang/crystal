@@ -1,8 +1,9 @@
+# TODO: this is not UTF-8 aware
 def levenshtein(s, t)
   return 0 if s == t
 
-  s_len = s.length
-  t_len = t.length
+  s_len = s.bytesize
+  t_len = t.bytesize
 
   return t_len if s_len == 0
   return s_len if t_len == 0

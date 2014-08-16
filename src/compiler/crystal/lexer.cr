@@ -1139,7 +1139,7 @@ module Crystal
       if num_length == 20
         i = 0
         "18446744073709551615".each_byte do |byte|
-          if string_value[i] > byte
+          if string_value.byte_at(i) > byte
             raise_value_doesnt_fit_in_uint64 string_value, start
           end
           i += 1
@@ -1959,7 +1959,7 @@ module Crystal
     end
 
     def string_range(start_pos, end_pos)
-      @reader.string[start_pos, end_pos - start_pos]
+      @reader.string.byte_slice(start_pos, end_pos - start_pos)
     end
 
     def skip_space

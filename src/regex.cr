@@ -31,7 +31,7 @@ class Regex
   def match(str, pos = 0, options = 0)
     ovector_size = (@captures + 1) * 3
     ovector = Pointer(Int32).malloc(ovector_size * 4)
-    ret = PCRE.exec(@re, nil, str, str.length, pos, options, ovector, ovector_size)
+    ret = PCRE.exec(@re, nil, str, str.bytesize, pos, options, ovector, ovector_size)
     if ret > 0
       $~ = MatchData.new(self, @re, str, pos, ovector, @captures)
     else

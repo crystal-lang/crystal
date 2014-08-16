@@ -1881,10 +1881,10 @@ module Crystal
       name = name.replace '@', '.'
       key = StringKey.new(@llvm_mod, str)
       @strings[key] ||= begin
-        global = @llvm_mod.globals.add(LLVM.struct_type([LLVM::Int32, LLVM::Int32, LLVM.array_type(LLVM::Int8, str.length + 1)]), name)
+        global = @llvm_mod.globals.add(LLVM.struct_type([LLVM::Int32, LLVM::Int32, LLVM.array_type(LLVM::Int8, str.bytesize + 1)]), name)
         LLVM.set_linkage global, LibLLVM::Linkage::Private
         LLVM.set_global_constant global, true
-        LLVM.set_initializer global, LLVM.struct([type_id(@mod.string), int32(str.length), LLVM.string(str)])
+        LLVM.set_initializer global, LLVM.struct([type_id(@mod.string), int32(str.bytesize), LLVM.string(str)])
         cast_to global, @mod.string
       end
     end

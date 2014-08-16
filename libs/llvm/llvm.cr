@@ -122,7 +122,7 @@ module LLVM
   end
 
   def self.string(string)
-    LibLLVM.const_string(string.cstr, string.length.to_u32, 0)
+    LibLLVM.const_string(string.cstr, string.bytesize.to_u32, 0)
   end
 
   def self.set_initializer(value, initializer)

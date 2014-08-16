@@ -79,7 +79,7 @@ class File < FileDescriptorIO
   end
 
   def self.basename(filename)
-    return "" if filename.length == 0
+    return "" if filename.bytesize == 0
 
     last = filename.length - 1
     last -= 1 if filename[last] == SEPARATOR
