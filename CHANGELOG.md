@@ -3,7 +3,7 @@
 * The `record` macro is now variadic, so instead of `record Vec3, [x, y, z]` write `record Vec3, x, y, z`.
 * The `def_equals`, `def_hash` and `def_equals_and_hash` macros are now variadic.
 * The `property`, `getter` and `setter` macros are now variadic.
-* All String methods are not UTF-8 aware.
+* All String methods are now UTF-8 aware.
 * `String#length` returns the number of characters, while `String#bytesize` return the number of bytes (previously `length` returned the number of bytes and `bytesize` didn't exist).
 * `String#[](index)` now returns a `Char` instead of an `UInt8`, where index is counted in characters. There's also `String#byte_at(index)`.
 
