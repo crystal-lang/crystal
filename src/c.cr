@@ -17,22 +17,6 @@ lib C
   fun realloc(ptr : Void*, size : UInt32) : Void*
   fun free(ptr : Void*)
   fun time(t : Int64) : Int64
-  fun sleep(seconds : UInt32) : UInt32
   fun free(ptr : Void*)
   fun memcmp(p1 : Void*, p2 : Void*, size : C::SizeT) : Int32
-end
-
-def sleep(seconds)
-  if seconds < 0
-    raise ArgumentError.new "sleep seconds must be positive"
-  end
-  C.sleep seconds.to_u32
-end
-
-def fork
-  Process.fork { yield }
-end
-
-def fork()
-  Process.fork()
 end

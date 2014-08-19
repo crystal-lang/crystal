@@ -23,6 +23,8 @@ lib C
 
   fun times(buffer : Tms*) : ClockT
   fun sysconf(name : Int32) : Int64
+
+  fun sleep(seconds : UInt32) : UInt32
 end
 
 module Process
@@ -64,4 +66,19 @@ module Process
     C.times(out tms)
     Tms.new(tms.utime / hertz, tms.stime / hertz, tms.cutime / hertz, tms.cstime / hertz)
   end
+end
+
+def fork
+  Process.fork { yield }
+end
+
+def fork()
+  Process.fork()
+end
+
+def sleep(seconds)
+  if seconds < 0
+    raise ArgumentError.new "sleep seconds must be positive"
+  end
+  C.sleep seconds.to_u32
 end
