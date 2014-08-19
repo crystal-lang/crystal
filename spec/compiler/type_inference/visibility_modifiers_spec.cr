@@ -219,4 +219,20 @@ describe "Visibility modifiers" do
       ),
       "protected method 'initialize' called for Foo"
   end
+
+  it "allows invoking private setter with self" do
+    assert_type(%(
+      class Foo
+        private def x=(x)
+          x
+        end
+
+        def foo
+          self.x = 1
+        end
+      end
+
+      Foo.new.foo
+      )) { int32 }
+  end
 end

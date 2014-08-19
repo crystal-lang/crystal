@@ -263,7 +263,11 @@ module Crystal
     def check_visibility(match)
       case match.def.visibility
       when :private
-        if obj
+        if obj = @obj
+          if obj.is_a?(Var) && obj.name == "self" && match.def.name.ends_with?('=')
+            # Special case: private setter can be called with self
+            return
+          end
           raise "private method '#{match.def.name}' called for #{match.def.owner}"
         end
       when :protected
