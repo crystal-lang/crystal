@@ -75,7 +75,7 @@ describe "Json serialization" do
       "\n".to_json.should eq("\"\\n\"")
       "\r".to_json.should eq("\"\\r\"")
       "\t".to_json.should eq("\"\\t\"")
-      "\x19".to_json.should eq("\"\\u0019\"")
+      "\u{19}".to_json.should eq("\"\\u0019\"")
     end
 
     it "does for Array" do

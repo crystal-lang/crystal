@@ -231,13 +231,13 @@ struct CFileIO
     end
   end
 
-  private def tc_mode
+  protected def tc_mode
     mode = Pointer(Termios::Struct).malloc 1_u64
     Termios.tcgetattr(fd, mode)
     mode
   end
 
-  private def tc_mode=(mode)
+  protected def tc_mode=(mode)
     Termios.tcsetattr(fd, Termios::OptionalActions::TCSANOW, mode)
   end
 end

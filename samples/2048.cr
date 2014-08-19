@@ -32,7 +32,7 @@ module Screen
   end
 
   def self.clear
-    print "\x1b[2J\x1b[1;1H"
+    print "\e[2J\e[1;1H"
   end
 
   def self.read_keypress
@@ -46,17 +46,17 @@ module Screen
       end
 
       case input
-      when "\x1B[A", "w"
+      when "\e[A", "w"
         :up
-      when "\x1B[B", "s"
+      when "\e[B", "s"
         :down
-      when "\x1B[C", "d"
+      when "\e[C", "d"
         :right
-      when "\x1B[D", "a"
+      when "\e[D", "a"
         :left
-      when "\x1B"
+      when "\e"
         :escape
-      when "\x03"
+      when "\u{3}"
         :ctrl_c
       when "q", "Q"
         :q

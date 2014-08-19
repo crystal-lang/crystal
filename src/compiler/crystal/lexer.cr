@@ -447,9 +447,6 @@ module Crystal
             @token.value = '\t'
           when 'v'
             @token.value = '\v'
-          when 'x'
-            value = consume_hex_escape
-            @token.value = value.chr
           when 'u'
             value = consume_char_unicode_escape
             @token.value = value.chr
@@ -1407,11 +1404,6 @@ module Crystal
           string_token_escape_value "\f"
         when 'e'
           string_token_escape_value "\e"
-        when 'x'
-          value = consume_hex_escape
-          next_char
-          @token.type = :STRING
-          @token.value = value.chr.to_s
         when 'u'
           value = consume_string_unicode_escape
           next_char
@@ -1678,16 +1670,6 @@ module Crystal
         count += 1
       end
       char_value
-    end
-
-    def consume_hex_escape
-      value = char_to_hex(next_char) { raise "invalid hex escape", @line_number, @column_number }
-      second_value = char_to_hex(peek_next_char) { nil }
-      if second_value
-        value = 16 * value + second_value
-        next_char
-      end
-      value
     end
 
     def consume_char_unicode_escape

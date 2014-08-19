@@ -28,7 +28,7 @@ describe "Char" do
     '\t'.dump.should eq("'\\t'")
     '\v'.dump.should eq("'\\v'")
     'á'.dump.should eq("'\\u{e1}'")
-    '\x81'.dump.should eq("'\\u{81}'")
+    '\u{81}'.dump.should eq("'\\u{81}'")
   end
 
   it "inspects" do
@@ -41,7 +41,7 @@ describe "Char" do
     '\t'.inspect.should eq("'\\t'")
     '\v'.inspect.should eq("'\\v'")
     'á'.inspect.should eq("'á'")
-    '\x81'.inspect.should eq("'\\u{81}'")
+    '\u{81}'.inspect.should eq("'\\u{81}'")
   end
 
   it "escapes" do
@@ -63,10 +63,10 @@ describe "Char" do
     '\033'.ord.should eq((3 * 8) + 3)
   end
 
-  it "escapes with hex" do
-    '\x12'.ord.should eq(1 * 16 + 2)
-    '\xA'.ord.should eq(10)
-    '\xAB'.ord.should eq(10 * 16 + 11)
+  it "escapes with unicode" do
+    '\u{12}'.ord.should eq(1 * 16 + 2)
+    '\u{A}'.ord.should eq(10)
+    '\u{AB}'.ord.should eq(10 * 16 + 11)
   end
 
   it "does to_i without a base" do
