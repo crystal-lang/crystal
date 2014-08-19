@@ -791,17 +791,6 @@ class String
   def ends_with?(char : Char)
     return false unless @length > 0
 
-    last = nil
-    each_char_with_index do |c, index|
-      last = c
-    end
-
-    last == char
-  end
-
-  def ends_with2?(char : Char)
-    return false unless @length > 0
-
     bytes :: UInt8[4]
 
     count = 0
