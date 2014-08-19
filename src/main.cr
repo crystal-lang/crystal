@@ -2,19 +2,38 @@ lib CrystalMain
   fun __crystal_main(argc : Int32, argv : UInt8**)
 end
 
-$at_exit_handlers = nil
+module AtExitHandlers
+  @@handlers = nil
 
-def at_exit(&handler)
-  handlers = $at_exit_handlers ||= [] of ->
-  handlers << handler
+  def self.add(handler)
+    handlers = @@handlers ||= [] of ->
+    handlers << handler
+  end
+
+  def self.run
+    return if @@running
+    @@running = true
+
+    begin
+      @@handlers.try &.each &.call
+    rescue handler_ex
+      puts "Error running at_exit handler: #{handler_ex}"
+    end
+  end
 end
 
-def run_at_exit
-  begin
-    $at_exit_handlers.try &.each &.call
-  rescue handler_ex
-    puts "Error running at_exit handler: #{handler_ex}"
-  end
+def at_exit(&handler)
+  AtExitHandlers.add(handler)
+end
+
+def exit(status = 0)
+  AtExitHandlers.run
+  Process.exit(status)
+end
+
+def abort(message, status = 1)
+  puts message
+  exit status
 end
 
 macro redefine_main(name = main)
@@ -29,7 +48,7 @@ macro redefine_main(name = main)
     end
     1
   ensure
-    run_at_exit
+    AtExitHandlers.run
   end
 end
 

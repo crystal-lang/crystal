@@ -22,16 +22,6 @@ lib C
   fun memcmp(p1 : Void*, p2 : Void*, size : C::SizeT) : Int32
 end
 
-def exit(status = 0)
-  run_at_exit
-  Process.exit(status)
-end
-
-def abort(message, status = 1)
-  puts message
-  exit status
-end
-
 def sleep(seconds)
   if seconds < 0
     raise ArgumentError.new "sleep seconds must be positive"
