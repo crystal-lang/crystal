@@ -780,7 +780,11 @@ class String
   end
 
   def starts_with?(char : Char)
-    @length > 0 && self[0] == char
+    each_char do |c|
+      return c == char
+    end
+
+    false
   end
 
   def ends_with?(str : String)
