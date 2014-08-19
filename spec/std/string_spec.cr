@@ -311,6 +311,7 @@ describe "String" do
     assert { "foobar".ends_with?('r').should be_true }
     assert { "foobar".ends_with?('x').should be_false }
     assert { "よし".ends_with?('し').should be_true }
+    assert { "よし".ends_with?('な').should be_false }
   end
 
   describe "=~" do

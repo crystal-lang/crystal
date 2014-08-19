@@ -799,6 +799,26 @@ class String
     last == char
   end
 
+  def ends_with2?(char : Char)
+    return false unless @length > 0
+
+    bytes :: UInt8[4]
+
+    count = 0
+    char.each_byte do |byte|
+      bytes[count] = byte
+      count += 1
+    end
+
+    return false if bytesize < count
+
+    count.times do |i|
+      return false unless cstr[@length - count + i] == bytes[i]
+    end
+
+    true
+  end
+
   def %(args : Array)
     String.build(bytesize) do |buffer|
       String::Formatter.new(self, args, buffer).format
