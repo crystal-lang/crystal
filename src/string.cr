@@ -396,7 +396,7 @@ class String
   end
 
   def empty?
-    @length == 0
+    bytesize == 0
   end
 
   def ==(other : self)
@@ -793,7 +793,7 @@ class String
   end
 
   def ends_with?(char : Char)
-    return false unless @length > 0
+    return false unless bytesize > 0
 
     bytes :: UInt8[4]
 
@@ -806,7 +806,7 @@ class String
     return false if bytesize < count
 
     count.times do |i|
-      return false unless cstr[@length - count + i] == bytes[i]
+      return false unless cstr[bytesize - count + i] == bytes[i]
     end
 
     true
@@ -830,8 +830,31 @@ class String
     h
   end
 
+  def bytes
+    Array.new(bytesize) { |i| cstr[i] }
+  end
+
   def length
-    CharReader.new(self).count
+    i = 0
+    count = 0
+
+    while i < bytesize
+      c = cstr[i]
+      break if c == 0
+
+      if c < 0x80
+        i += 1
+      elsif c < 0xe0
+        i += 2
+      elsif c < 0xf0
+        i += 3
+      else
+        i += 4
+      end
+
+      count += 1
+    end
+    count
   end
 
   def to_s
@@ -839,7 +862,7 @@ class String
   end
 
   def to_s(io)
-    io.write Slice.new(cstr, @length)
+    io.write Slice.new(cstr, bytesize)
   end
 
   def cstr
