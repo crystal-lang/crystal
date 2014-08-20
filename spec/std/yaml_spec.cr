@@ -8,7 +8,7 @@ describe "Yaml" do
     assert { Yaml.load("- foo\n- bar").should eq(["foo", "bar"]) }
     assert { Yaml.load_all("---\nfoo\n---\nbar\n").should eq(["foo", "bar"]) }
     assert { Yaml.load("foo: bar").should eq({"foo" => "bar"}) }
-    assert { Yaml.load("--- []\n").should eq([] of YamlType) }
+    assert { Yaml.load("--- []\n").should eq([] of Yaml::Type) }
     assert { Yaml.load("---\n...").should eq("") }
 
     it "parses recursive sequence" do
