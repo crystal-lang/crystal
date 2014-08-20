@@ -123,3 +123,9 @@ end
 
 class MissingKey < Exception
 end
+
+class DivisionByZero < Exception
+  def initialize(message = "Division by zero")
+    super(message)
+  end
+end

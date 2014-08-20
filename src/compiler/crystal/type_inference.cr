@@ -1939,7 +1939,7 @@ module Crystal
 
     def visit_binary(node)
       case typed_def.name
-      when "+", "-", "*", "/"
+      when "+", "-", "*", "/", "unsafe_div"
         t1 = scope
         t2 = typed_def.args[0].type
         node.type = t1.integer? && t2.float? ? t2 : t1

@@ -126,7 +126,7 @@ class Crystal::CodeGenVisitor < Crystal::Visitor
             when "+" then @builder.add p1, p2
             when "-" then @builder.sub p1, p2
             when "*" then @builder.mul p1, p2
-            when "/" then t1.signed? ? @builder.sdiv(p1, p2) : @builder.udiv(p1, p2)
+            when "/", "unsafe_div" then t1.signed? ? @builder.sdiv(p1, p2) : @builder.udiv(p1, p2)
             when "%" then t1.signed? ? @builder.srem(p1, p2) : @builder.urem(p1, p2)
             when "<<" then @builder.shl(p1, p2)
             when ">>" then t1.signed? ? @builder.ashr(p1, p2) : @builder.lshr(p1, p2)
