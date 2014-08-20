@@ -429,4 +429,19 @@ describe "Type inference: fun" do
       foo ->(x : Int32) { x + 1 }
       )) { int32.metaclass }
   end
+
+  it "forwards block and computes correct type (bug)" do
+    assert_type(%(
+      def foo(&block : -> _)
+        bar &block
+      end
+
+      def bar(&block : -> _)
+        block
+      end
+
+      foo { 1 }
+      foo { "hello" }.call
+      )) { string }
+  end
 end

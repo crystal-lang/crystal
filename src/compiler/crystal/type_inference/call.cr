@@ -195,7 +195,17 @@ module Crystal
 
         yield_vars = match_block_arg(match)
         use_cache = !block || match.def.block_arg
-        block_type = block && block.body && match.def.block_arg ? block.body.type? : nil
+
+        if block && match.def.block_arg
+          if fun_literal = block.fun_literal
+            block_type = fun_literal.type
+          elsif block.body
+            block_type = block.body.type?
+          end
+
+          use_cache = false unless block_type
+        end
+
         lookup_self_type = self_type || match.context.owner
         if self_type
           lookup_arg_types = Array(Type).new(match.arg_types.length + 1)
