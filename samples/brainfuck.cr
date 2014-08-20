@@ -30,14 +30,14 @@ struct Tape
 end
 
 class Program
-  def initialize(@text, @bracket_map)
+  def initialize(@chars, @bracket_map)
   end
 
   def run
     tape = Tape.new
     pc = 0
-    while pc < @text.length
-      case @text[pc]
+    while pc < @chars.length
+      case @chars[pc]
         when '>'; tape.advance
         when '<'; tape.devance
         when '+'; tape.inc
@@ -51,13 +51,13 @@ class Program
   end
 
   def self.parse(text)
-    parsed = ""
+    parsed = [] of Char
     bracket_map = {} of Int32 => Int32
     leftstack = [] of Int32
     pc = 0
     text.each_char do |char|
       if "[]<>+-,.".includes?(char)
-        parsed += char.to_s
+        parsed << char
         if char == '['
           leftstack << pc
         elsif char == ']' && !leftstack.empty?
