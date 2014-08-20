@@ -5,9 +5,28 @@ class Json::Parser
   end
 
   def parse
-    json = parse_array_or_object
+    json = parse_value
     check :EOF
     json
+  end
+
+  private def parse_value
+    case @token.type
+    when :INT
+      value_and_next_token @token.int_value
+    when :FLOAT
+      value_and_next_token @token.float_value
+    when :STRING
+      value_and_next_token @token.string_value
+    when :null
+      value_and_next_token nil
+    when :true
+      value_and_next_token true
+    when :false
+      value_and_next_token false
+    else
+      parse_array_or_object
+    end
   end
 
   private def parse_array_or_object
@@ -77,25 +96,6 @@ class Json::Parser
     next_token
 
     object
-  end
-
-  private def parse_value
-    case @token.type
-    when :INT
-      value_and_next_token @token.int_value
-    when :FLOAT
-      value_and_next_token @token.float_value
-    when :STRING
-      value_and_next_token @token.string_value
-    when :null
-      value_and_next_token nil
-    when :true
-      value_and_next_token true
-    when :false
-      value_and_next_token false
-    else
-      parse_array_or_object
-    end
   end
 
   private def value_and_next_token(value)

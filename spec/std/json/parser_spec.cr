@@ -16,6 +16,13 @@ def it_raises_on_parse_json(string)
 end
 
 describe "Json::Parser" do
+  it_parses_json "1", 1
+  it_parses_json "2.5", 2.5
+  it_parses_json %("hello"), "hello"
+  it_parses_json "true", true
+  it_parses_json "false", false
+  it_parses_json "null", nil
+
   it_parses_json "[]", [] of Int32
   it_parses_json "[1]", [1]
   it_parses_json "[1, 2, 3]", [1, 2, 3]
