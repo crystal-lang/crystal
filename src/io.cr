@@ -183,6 +183,7 @@ end
 
 def puts(obj = "")
   STDOUT.puts obj
+  nil
 end
 
 def p(obj)
