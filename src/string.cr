@@ -241,7 +241,7 @@ class String
 
   def chomp
     excess = 0
-    while (c = cstr[bytesize - 1 - excess]) == '\r' || c == '\n'
+    while (c = cstr[bytesize - 1 - excess].chr) == '\r' || c == '\n'
       excess += 1
     end
 

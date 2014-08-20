@@ -466,10 +466,10 @@ describe "String" do
   end
 
   it "escapes with octal" do
-    "\3"[0].should eq(3)
-    "\23"[0].should eq((2 * 8) + 3)
-    "\123"[0].should eq((1 * 8 * 8) + (2 * 8) + 3)
-    "\033"[0].should eq((3 * 8) + 3)
+    "\3"[0].ord.should eq(3)
+    "\23"[0].ord.should eq((2 * 8) + 3)
+    "\123"[0].ord.should eq((1 * 8 * 8) + (2 * 8) + 3)
+    "\033"[0].ord.should eq((3 * 8) + 3)
     "\033a"[1].should eq('a')
   end
 
