@@ -849,4 +849,6 @@ describe "Parser" do
   assert_syntax_error "foo x: 1, x: 1", "duplicated named argument: x", 1, 11
   assert_syntax_error "def foo(x, x); end", "duplicated argument name: x", 1, 12
   assert_syntax_error "class Foo(T, T); end", "duplicated type var name: T", 1, 14
+
+  it_parses "if (\ntrue\n)\n1\nend", If.new(true.bool, 1.int32)
 end

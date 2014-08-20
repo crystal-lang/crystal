@@ -1168,6 +1168,11 @@ module Crystal
           break
         when :NEWLINE, :";"
           next_token_skip_space
+          if @token.type == :")"
+            @wants_regex = false
+            next_token_skip_space
+            break
+          end
         else
           raise "unterminated parenthesized expression", location
         end
@@ -2291,7 +2296,7 @@ module Crystal
 
       next_token_skip_space_or_newline
 
-      cond = parse_expression
+      cond = parse_op_assign
       skip_statement_end
 
       a_then = parse_expressions
