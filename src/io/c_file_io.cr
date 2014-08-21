@@ -1,5 +1,12 @@
 lib C
-  type File : Void*
+  ifdef windows
+    struct IoBuf
+      data : Int32[8]
+    end
+    type File : IoBuf*
+  else
+    type File : Void*
+  end
 
   fun fopen(filename : UInt8*, mode : UInt8*) : File
   fun fwrite(buf : UInt8*, size : C::SizeT, count : C::SizeT, fp : File) : SizeT
@@ -34,6 +41,8 @@ lib C
     $stdin : File
     $stdout : File
     $stderr : File
+  elsif windows
+    fun __iob_func : File
   end
 
   SEEK_SET = 0
@@ -73,6 +82,12 @@ struct CFileIO
   end
 end
 
-STDIN = CFileIO.new(C.stdin)
-STDOUT = CFileIO.new(C.stdout)
-STDERR = CFileIO.new(C.stderr)
+ifdef windows
+  STDIN = CFileIO.new(C.__iob_func)
+  STDOUT = CFileIO.new(C.__iob_func + 1)
+  STDERR = CFileIO.new(C.__iob_func + 2)
+else
+  STDIN = CFileIO.new(C.stdin)
+  STDOUT = CFileIO.new(C.stdout)
+  STDERR = CFileIO.new(C.stderr)
+end
