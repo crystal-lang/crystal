@@ -2,6 +2,9 @@ class TCPServer
   def initialize(port, backlog = 128)
     @sock = C.socket(C::AF_INET, C::SOCK_STREAM, 0)
 
+    optval = 1
+    C.setsockopt(@sock, C::SOL_SOCKET, C::SO_REUSEADDR, pointerof(optval) as Void*, sizeof(Int32))
+
     addr = C::SockAddrIn.new
     addr.family = C::AF_INET
     addr.addr = 0_u32
