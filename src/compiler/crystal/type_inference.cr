@@ -1997,7 +1997,7 @@ module Crystal
     end
 
     def visit_pointer_set(node)
-      scope = @scope as PointerInstanceType
+      scope = scope().remove_typedef as PointerInstanceType
 
       value = @vars["value"]
 
@@ -2006,7 +2006,7 @@ module Crystal
     end
 
     def visit_pointer_get(node)
-      scope = @scope as PointerInstanceType
+      scope = scope().remove_typedef as PointerInstanceType
 
       node.bind_to scope.var
     end

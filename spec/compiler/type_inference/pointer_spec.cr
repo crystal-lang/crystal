@@ -86,4 +86,15 @@ describe "Type inference: pointer" do
   it "pointer of value error" do
     assert_error "pointerof(1)", "can't take address of 1"
   end
+
+  it "types pointer value on typedef" do
+    assert_type(%(
+      lib C
+        type Foo : Int32*
+        fun foo : Foo
+      end
+
+      C.foo.value
+      )) { int32 }
+  end
 end
