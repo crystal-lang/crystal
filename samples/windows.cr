@@ -44,7 +44,7 @@ require "hash"
 require "set"
 require "tuple"
 require "box"
-# require "math"
+require "math"
 # require "process"
 require "io"
 require "argv"
@@ -53,11 +53,15 @@ require "argv"
 # require "file"
 # require "dir"
 # require "time"
-# require "random"
+require "random"
 # require "regex"
 # require "raise"
 # require "errno"
 # require "main"
+
+lib C
+  fun exit(status : Int32) : NoReturn
+end
 
 class Exception
   getter message
@@ -98,7 +102,18 @@ class DivisionByZero < Exception
   end
 end
 
-def raise(*args)
+def raise(message : String)
+  raise Exception.new(message)
 end
 
-puts "Hello Windows!"
+def raise(ex : Exception)
+  if msg = ex.message
+    puts msg
+  end
+
+  C.exit(1)
+end
+
+rand(1..10).times do |i|
+  puts "Hello Windows #{i}!"
+end
