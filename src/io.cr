@@ -126,6 +126,15 @@ module IO
     count
   end
 
+  def gets_to_end
+    buffer :: UInt8[2048]
+    String.build do |str|
+      while (read_bytes = read(buffer.to_slice)) > 0
+        str.write(buffer.to_slice, read_bytes)
+      end
+    end
+  end
+
   def gets
     buffer = StringIO.new
     while true

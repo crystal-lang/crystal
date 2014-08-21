@@ -69,6 +69,12 @@ describe "StringIO" do
     io.gets.should eq(nil)
   end
 
+  it "reads all remaining content" do
+    io = StringIO.new("foo\nbar\nbaz\n")
+    io.gets.should eq("foo\n")
+    io.gets_to_end.should eq("bar\nbaz\n")
+  end
+
   it "reads utf-8 string" do
     io = StringIO.new("há日本語")
     io.gets.should eq("há日本語")
