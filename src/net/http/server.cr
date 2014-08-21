@@ -64,7 +64,7 @@ class HTTP::Server
     end
   end
 
-  private def self.build_middleware(handlers)
+  def self.build_middleware(handlers)
     if handlers.empty?
       raise ArgumentError.new "no handlers specified"
     end
