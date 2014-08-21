@@ -47,10 +47,7 @@ def exec(command, args = nil, output = nil)
   if output && output_pipe
     C.close(output_pipe[1])
     output_io = FileDescriptorIO.new(output_pipe[0])
-    status.output = status_output = [] of String
-    while line = output_io.gets
-      status_output << line.chomp
-    end
+    status.output = output_io.gets_to_end
     output_io.close
   end
 

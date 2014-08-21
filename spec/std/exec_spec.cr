@@ -32,6 +32,6 @@ describe "Exec" do
   end
 
   it "gets output as string" do
-    exec("/bin/sh", {"-c", "echo hello"}, output: true).output.should eq(["hello"])
+    exec("/bin/sh", {"-c", "echo hello"}, output: true).output.should eq("hello\n")
   end
 end
