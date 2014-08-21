@@ -199,7 +199,7 @@ module Crystal
         if block && match.def.block_arg
           if fun_literal = block.fun_literal
             block_type = fun_literal.type
-          elsif block.body
+          else
             block_type = block.body.type?
           end
 
