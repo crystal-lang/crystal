@@ -240,11 +240,14 @@ def fail(msg)
 end
 
 macro expect_raises
+  raised = false
   begin
     {{yield}}
-    fail "expected to raise"
   rescue
+    raised = true
   end
+
+  fail "expected to raise" unless raised
 end
 
 macro expect_raises(klass)
