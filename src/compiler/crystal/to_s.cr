@@ -52,17 +52,21 @@ module Crystal
 
     def visit(node : StringInterpolation)
       @str << %(")
+      visit_interpolation node, &.replace('"', "\\\"")
+      @str << %(")
+      false
+    end
+
+    def visit_interpolation(node)
       node.expressions.each do |exp|
         if exp.is_a?(StringLiteral)
-          @str << exp.value.replace('"', "\\\"")
+          @str << yield exp.value.replace('"', "\\\"")
         else
           @str << "\#{"
           exp.accept(self)
           @str << "}"
         end
       end
-      @str << %(")
-      false
     end
 
     def visit(node : ArrayLiteral)
@@ -681,6 +685,19 @@ module Crystal
     def visit(node : Splat)
       @str << "*"
       node.exp.accept self
+      false
+    end
+
+    def visit(node : BackQuote)
+      @str << '`'
+      exp = node.exp
+      case exp
+      when StringLiteral
+        @str << exp.value.inspect[1 .. -2]
+      when StringInterpolation
+        visit_interpolation exp, &.replace('`', "\\`")
+      end
+      @str << '`'
       false
     end
 

@@ -463,10 +463,11 @@ module Crystal
           raise "unterminated char literal", line, column
         end
         next_char
-      when '"'
+      when '"', '`'
+        delimiter = current_char
         next_char
         @token.type = :STRING_START
-        @token.string_state = Token::StringState.new('"', '"', 0)
+        @token.string_state = Token::StringState.new(delimiter, delimiter, 0)
       when '0'
         scan_zero_number(start)
       when '1', '2', '3', '4', '5', '6', '7', '8', '9'

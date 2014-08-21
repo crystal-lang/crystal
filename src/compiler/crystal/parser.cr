@@ -1300,6 +1300,7 @@ module Crystal
       end
 
       string_state = @token.string_state
+      is_back_quote = string_state.end == '`'
 
       check :STRING_START
 
@@ -1345,10 +1346,16 @@ module Crystal
         pieces = pieces.map do |piece|
           piece.is_a?(String) ? StringLiteral.new(piece) : piece
         end
-        StringInterpolation.new(pieces)
+        result = StringInterpolation.new(pieces)
       else
-        StringLiteral.new pieces.join
+        result = StringLiteral.new pieces.join
       end
+
+      if is_back_quote
+        result = BackQuote.new(result)
+      end
+
+      result
     end
 
     def parse_string_without_interpolation

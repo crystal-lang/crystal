@@ -523,6 +523,11 @@ module Crystal
       node
     end
 
+    def transform(node : BackQuote)
+      node.exp = node.exp.transform(self)
+      node
+    end
+
     def transform(node : TupleIndexer)
       node
     end
