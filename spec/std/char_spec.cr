@@ -86,6 +86,8 @@ describe "Char" do
     ('A'..'F').each_with_index do |c, i|
       c.to_i(16).should eq(10 + i)
     end
+    'Z'.to_i(16).should eq(0)
+    'Z'.to_i(16, or_else: -1).should eq(-1)
   end
 
   it "does ord for multibyte char" do

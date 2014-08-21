@@ -103,7 +103,7 @@ struct CharReader
   end
 
   private def byte_at(i)
-    @string.cstr[i].to_u32
+    @string.unsafe_byte_at(i).to_u32
   end
 
   private def byte_masked_at(i)

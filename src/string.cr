@@ -209,6 +209,10 @@ class String
     cstr[index]
   end
 
+  def unsafe_byte_at(index)
+    cstr[index]
+  end
+
   def downcase
     String.build do |io|
       each_char do |char|

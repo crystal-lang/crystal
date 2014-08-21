@@ -115,8 +115,8 @@ struct Char
     end
   end
 
-  def to_i(base)
-    to_i(base) { 0 }
+  def to_i(base, or_else = 0)
+    to_i(base) { or_else }
   end
 
   def to_i(base)
