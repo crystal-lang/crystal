@@ -76,7 +76,7 @@ module Crystal
         options_parser, inline_exp, filenames, arguments = process_options_internal(options)
       rescue ex : OptionParser::Exception
         print "Error: ".colorize.red.bold
-        puts ex.message.colorize.white.bold
+        puts ex.message.colorize.bold
         exit 1
       end
 
@@ -341,7 +341,7 @@ module Crystal
         end
         puts
         print "Error: ".colorize.red.bold
-        puts "you've found a bug in the Crystal compiler. Please open an issue: https://github.com/manastech/crystal/issues".colorize.white.bright
+        puts "you've found a bug in the Crystal compiler. Please open an issue: https://github.com/manastech/crystal/issues".colorize.bright
         exit 2
       end
     end
