@@ -208,6 +208,11 @@ module Crystal
     end
 
     def visit(node : Call)
+      if node.name == "`"
+        visit_backtick(node.args[0])
+        return false
+      end
+
       node_obj = node.obj
       case node_obj
       when Call
@@ -335,6 +340,19 @@ module Crystal
       node.type.to_s(@str)
       false
     end
+
+    def visit_backtick(exp)
+      @str << '`'
+      case exp
+      when StringLiteral
+        @str << exp.value.inspect[1 .. -2]
+      when StringInterpolation
+        visit_interpolation exp, &.replace('`', "\\`")
+      end
+      @str << '`'
+      false
+    end
+
 
     def keyword(str)
       str
@@ -685,19 +703,6 @@ module Crystal
     def visit(node : Splat)
       @str << "*"
       node.exp.accept self
-      false
-    end
-
-    def visit(node : BackQuote)
-      @str << '`'
-      exp = node.exp
-      case exp
-      when StringLiteral
-        @str << exp.value.inspect[1 .. -2]
-      when StringInterpolation
-        visit_interpolation exp, &.replace('`', "\\`")
-      end
-      @str << '`'
       false
     end
 

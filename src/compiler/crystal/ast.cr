@@ -1887,12 +1887,6 @@ module Crystal
     end
   end
 
-  class BackQuote < UnaryExpression
-    def clone_without_location
-      BackQuote.new(@exp.clone)
-    end
-  end
-
   # Ficticious node to represent primitives
   class Primitive < ASTNode
     getter name

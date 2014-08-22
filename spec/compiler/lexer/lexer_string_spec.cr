@@ -371,7 +371,7 @@ describe "Lexer string" do
   assert_syntax_error "\"\\u{}\"", "expected hexadecimal character in unicode escape"
   assert_syntax_error "\"\\u{110000}\"", "invalid unicode codepoint (too large)"
 
-  it "lexes backquote string" do
+  it "lexes backtick string" do
     lexer = Lexer.new(%(`hello`))
 
     token = lexer.next_token

@@ -1300,7 +1300,7 @@ module Crystal
       end
 
       string_state = @token.string_state
-      is_back_quote = string_state.end == '`'
+      is_backtick = string_state.end == '`'
 
       check :STRING_START
 
@@ -1351,8 +1351,8 @@ module Crystal
         result = StringLiteral.new pieces.join
       end
 
-      if is_back_quote
-        result = BackQuote.new(result)
+      if is_backtick
+        result = Call.new(nil, "`", [result] of ASTNode)
       end
 
       result
@@ -1967,6 +1967,10 @@ module Crystal
       when '/'
         next_char
         @token.type = :"/"
+        @token.column_number += 1
+      when '`'
+        next_char
+        @token.type = :"`"
         @token.column_number += 1
       else
         skip_space_or_newline

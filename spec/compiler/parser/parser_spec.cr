@@ -779,9 +779,11 @@ describe "Parser" do
   it_parses "private def foo; end", VisibilityModifier.new(:private, Def.new("foo"))
   it_parses "protected def foo; end", VisibilityModifier.new(:protected, Def.new("foo"))
 
-  it_parses "`foo`", BackQuote.new("foo".string)
-  it_parses "`foo\#{1}bar`", BackQuote.new(StringInterpolation.new(["foo".string, 1.int32, "bar".string] of ASTNode))
-  it_parses "`foo\\``", BackQuote.new("foo`".string)
+  it_parses "`foo`", Call.new(nil, "`", ["foo".string] of ASTNode)
+  it_parses "`foo\#{1}bar`", Call.new(nil, "`", [StringInterpolation.new(["foo".string, 1.int32, "bar".string] of ASTNode)] of ASTNode)
+  it_parses "`foo\\``", Call.new(nil, "`", ["foo`".string] of ASTNode)
+
+  it_parses "def `(cmd); 1; end", Def.new("`", ["cmd".arg], 1.int32)
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
     it_parses "def foo\n#{keyword}\nend", Def.new("foo", body: keyword.call)
