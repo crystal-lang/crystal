@@ -1,16 +1,11 @@
 class Crystal::CodeGenVisitor < Crystal::Visitor
-  # Can only happen in a Const or as an argument cast,
-  # or for primitives where we want a body, like Struct#hash and Struct#==
+  # Can only happen in a Const or as an argument cast.
   def visit(node : Primitive)
     @last = case node.name
             when :argc
               @argc
             when :argv
               @argv
-            when :float32_infinity
-              LLVM.float(Float32::INFINITY)
-            when :float64_infinity
-              LLVM.double(Float64::INFINITY)
             else
               raise "Bug: unhandled primitive in codegen visit: #{node.name}"
             end

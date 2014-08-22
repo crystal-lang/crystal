@@ -1896,10 +1896,6 @@ module Crystal
         node.type = @mod.int32
       when :argv
         node.type = @mod.pointer_of(@mod.pointer_of(@mod.uint8))
-      when :float32_infinity
-        node.type = @mod.float32
-      when :float64_infinity
-        node.type = @mod.float64
       when :struct_new
         node.type = scope.instance_type
       when :struct_set

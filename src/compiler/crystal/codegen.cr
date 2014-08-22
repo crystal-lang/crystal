@@ -152,8 +152,6 @@ module Crystal
 
       declare_const(@mod.types["ARGC_UNSAFE"] as Const)
       declare_const(@mod.types["ARGV_UNSAFE"] as Const)
-      declare_const(@mod.types["Float32"].types["INFINITY"] as Const)
-      declare_const(@mod.types["Float64"].types["INFINITY"] as Const)
 
       @unused_fun_defs = [] of FunDef
     end
