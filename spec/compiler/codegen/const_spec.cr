@@ -208,4 +208,33 @@ describe "Codegen: const" do
       COCO
       )).to_i.should eq(1)
   end
+
+  it "works with variable declared inside if" do
+    run(%(
+      FOO = begin
+        if 1 == 2
+          x = 3
+        else
+          x = 4
+        end
+        x
+      end
+      FOO
+      )).to_i.should eq(4)
+  end
+
+  it "works with const referred from a method" do
+    run(%(
+      module Foo
+        BAR = bar
+        BAZ = 1
+
+        def self.bar
+          BAZ
+        end
+      end
+
+      Foo::BAR
+      )).to_i.should eq(1)
+  end
 end

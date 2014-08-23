@@ -1561,12 +1561,12 @@ module Crystal
       when Const
         unless type.value.type?
           meta_vars = MetaVars.new
-          dummy_def = Def.new("const", [] of Arg)
-          type_visitor = TypeVisitor.new(@mod, meta_vars, dummy_def)
+          const_def = Def.new("const", [] of Arg)
+          type_visitor = TypeVisitor.new(@mod, meta_vars, const_def)
           type_visitor.types = type.scope_types
           type_visitor.scope = type.scope
           type.value.accept type_visitor
-          type.vars = meta_vars
+          type.vars = const_def.vars
         end
         node.target_const = type
         node.bind_to type.value

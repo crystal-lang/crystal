@@ -833,7 +833,11 @@ module Crystal
     def visit(node : Path)
       if const = node.target_const
         global_name = const.llvm_name
-        global = @main_mod.globals[global_name]#? || declare_const(const).not_nil!
+
+        # TODO: the `||` part is to take care of constants that, for their
+        # initialization, depend on a constant that comes later in the code.
+        # We should maybe give an error in the type inference phase in this case.
+        global = @main_mod.globals[global_name]? || declare_const(const).not_nil!
 
         if @llvm_mod != @main_mod
           global = @llvm_mod.globals[global_name]?
