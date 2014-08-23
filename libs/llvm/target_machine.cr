@@ -14,6 +14,22 @@ struct LLVM::TargetMachine
     triple
   end
 
+  def emit_obj_to_file(llvm_mod, filename)
+    emit_to_file llvm_mod, filename, LibLLVM::CodeGenFileType::ObjectFile
+  end
+
+  def emit_asm_to_file(llvm_mod, filename)
+    emit_to_file llvm_mod, filename, LibLLVM::CodeGenFileType::AssemblyFile
+  end
+
+  private def emit_to_file(llvm_mod, filename, type)
+    status = LibLLVM.target_machine_emit_to_file(self, llvm_mod, filename, type, out error_msg)
+    unless status == 0
+      raise String.new(error_msg)
+    end
+    true
+  end
+
   def to_unsafe
     @unwrap
   end

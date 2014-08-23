@@ -129,6 +129,11 @@ lib LibLLVM("`(llvm-config-3.3 --libs 2> /dev/null; llvm-config-3.3 --ldflags 2>
     Aggressive
   end
 
+  enum CodeGenFileType
+    AssemblyFile
+    ObjectFile
+  end
+
   enum RelocMode
     Default
     Static
@@ -242,6 +247,7 @@ lib LibLLVM("`(llvm-config-3.3 --libs 2> /dev/null; llvm-config-3.3 --ldflags 2>
   fun double_type = LLVMDoubleType : TypeRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
+  fun target_machine_emit_to_file = LLVMTargetMachineEmitToFile(t : TargetMachineRef, m : ModuleRef, filename : UInt8*, codegen : CodeGenFileType, error_msg : UInt8**) : Int32
   fun float_type = LLVMFloatType : TypeRef
   fun function_type = LLVMFunctionType(return_type : TypeRef, param_types : TypeRef*, param_count : UInt32, is_var_arg : Int32) : TypeRef
   fun generic_value_to_float = LLVMGenericValueToFloat(type : TypeRef, value : GenericValueRef) : Float64

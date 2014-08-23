@@ -470,6 +470,7 @@ module Crystal
             system "#{compiler.llc} #{bc_name} -filetype=obj -o #{o_name} #{compiler.llc_flags}"
           else
             system "#{compiler.clang} -c #{bc_name} -o #{o_name}"
+            # Crystal::TargetMachine::DEFAULT.emit_obj_to_file @llvm_mod, o_name
           end
         end
 
