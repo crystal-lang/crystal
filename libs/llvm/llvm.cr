@@ -1,7 +1,12 @@
 require "./*"
 
 module LLVM
+  @@initialized = false
+
   def self.init_x86
+    return if @@initialized
+    @@initialized = true
+
     LibLLVM.initialize_x86_target_info
     LibLLVM.initialize_x86_target
     LibLLVM.initialize_x86_target_mc

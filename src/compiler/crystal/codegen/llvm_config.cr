@@ -19,9 +19,5 @@ module Crystal
     def bin_dir
       @bin_dir ||= Program.exec "#{llvm_config} --bindir"
     end
-
-    def host_target
-      @host_target ||= Program.exec("#{llvm_config} --host-target").not_nil!
-    end
   end
 end

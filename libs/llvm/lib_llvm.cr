@@ -238,6 +238,7 @@ lib LibLLVM("`(llvm-config-3.3 --libs 2> /dev/null; llvm-config-3.3 --ldflags 2>
   fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : UInt8**) : Int32
   fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : CodeGenOptLevel, reloc : RelocMode, code_model : CodeModel) : TargetMachineRef
   fun delete_basic_block = LLVMDeleteBasicBlock(block : BasicBlockRef)
+  fun dispose_message = LLVMDisposeMessage(msg : UInt8*)
   fun double_type = LLVMDoubleType : TypeRef
   fun dump_module = LLVMDumpModule(module : ModuleRef)
   fun dump_value = LLVMDumpValue(val : ValueRef)
@@ -261,6 +262,7 @@ lib LibLLVM("`(llvm-config-3.3 --libs 2> /dev/null; llvm-config-3.3 --ldflags 2>
   fun get_target_name = LLVMGetTargetName(target : TargetRef) : UInt8*
   fun get_target_description = LLVMGetTargetDescription(target : TargetRef) : UInt8*
   fun get_target_machine_data = LLVMGetTargetMachineData(t : TargetMachineRef) : TargetDataRef
+  fun get_target_machine_triple = LLVMGetTargetMachineTriple(t : TargetMachineRef) : UInt8*
   fun get_type_kind = LLVMGetTypeKind(ty : TypeRef) : TypeKind
   fun get_undef = LLVMGetUndef(ty : TypeRef) : ValueRef
   fun get_value_name = LLVMGetValueName(value : ValueRef) : UInt8*

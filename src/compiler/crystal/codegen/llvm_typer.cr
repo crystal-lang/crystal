@@ -18,8 +18,7 @@ module Crystal
       @embedded_cache = TypeCache.new
       @embedded_c_cache = TypeCache.new
 
-      target = LLVM::Target.first
-      machine = target.create_target_machine("i686-unknown-linux").not_nil!
+      machine = Crystal::TargetMachine::DEFAULT
       @layout = machine.data_layout.not_nil!
       @landing_pad_type = LLVM.struct_type([LLVM::VoidPointer, LLVM::Int32], "landing_pad")
     end

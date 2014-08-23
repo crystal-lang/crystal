@@ -295,11 +295,13 @@ module Crystal
           @llc_flags_changed = llc_flags_changed
 
           msg = multithreaded ? "Codegen (bitcode+llc+clang)" : "Codegen (llc+clang)"
+          target_triple = Crystal::TargetMachine::DEFAULT.triple
+
           timing(msg) do
             threads = Array.new(@n_threads) do
               Thread.new do
                 while unit = mutex.synchronize { units.shift? }
-                  unit.llvm_mod.target = @config.host_target
+                  unit.llvm_mod.target = target_triple
                   ifdef x86_64
                     unit.llvm_mod.data_layout = DataLayout64
                   else
