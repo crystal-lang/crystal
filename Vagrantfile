@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision :shell, :privileged => false, :inline => %(
     sudo apt-get update
-    sudo apt-get install -y build-essential git libpcre3-dev libunwind7-dev libgc-dev curl llvm-3.3-dev clang-3.3 libyaml-dev
+    sudo apt-get install -y build-essential git libpcre3-dev libunwind7-dev libgc-dev curl llvm-3.3-dev clang-3.3 libyaml-dev libgmp3-dev
 
     git clone /vagrant crystal
     cd crystal

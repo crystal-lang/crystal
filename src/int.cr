@@ -308,3 +308,6 @@ struct UInt64
 
   generate_to_s 22
 end
+
+alias SignedInt = Int8 | Int16 | Int32 | Int64
+alias UnsignedInt = UInt8 | UInt16 | UInt32 | UInt64

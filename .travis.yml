@@ -3,6 +3,7 @@ before_install:
   - brew update
 install:
   - brew install bdw-gc
+  - brew install gmp
   - bin/crystal --setup
   - curl "http://llvm.org/releases/3.3/clang+llvm-3.3-x86_64-apple-darwin12.tar.gz" | tar xz -C deps
 script:
