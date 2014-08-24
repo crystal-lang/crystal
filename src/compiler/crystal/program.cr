@@ -134,6 +134,10 @@ module Crystal
       flags
     end
 
+    def add_flag(flag)
+      flags.add(flag)
+    end
+
     def self.exec(command)
       Pipe.open(command, "r") do |pipe|
         pipe.gets.try &.strip

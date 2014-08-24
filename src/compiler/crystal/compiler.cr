@@ -199,6 +199,10 @@ module Crystal
           program.flags = cross_compile
         end
 
+        if @release
+          program.add_flag "release"
+        end
+
         node = nil
         require_node = nil
 

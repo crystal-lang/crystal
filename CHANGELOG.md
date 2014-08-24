@@ -12,6 +12,7 @@
 * Added backticks (`...`) and `%x(...)` for command execution.
 * Added `%r(...)` for regular expression literals.
 * Allow interpolations in regular expresion literals.
+* Compiling with `--release` sets a `release` flag that you can test with `ifdef`.
 
 ## 0.4.3 (2014-08-14)
 
